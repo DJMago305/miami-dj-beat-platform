@@ -109,4 +109,22 @@ git --version
 ❌ **Tú ejecutas.** (Control manual del commit final).
 
 ---
+
+## 10. Regla Fortune 500 — "No Inline CSS"
+🔐 **Regla 10: No style="" en producción**
+- Todo estilo nuevo debe ir dentro de `#rentals-visual-lock` (o el equivalente local).
+- O en un archivo dedicado (`.css`).
+- Prohibido el uso de `style=""` disperso en el HTML para evitar deuda técnica.
+
+---
+
+## 11. Regla de Integridad — "Pre-Commit Test"
+🔐 **Regla 11: Inspección Final Obligatoria**
+Antes de cada commit, es obligatorio ejecutar:
+```bash
+git diff --stat
+```
+Para confirmar visualmente que solo se están enviando los cambios planeados.
+
+---
 **MDJPRO Engineering Standard**
