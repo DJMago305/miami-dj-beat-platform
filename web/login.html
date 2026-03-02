@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>MDJPRO — Iniciar Sesión</title>
+    <link rel="stylesheet" href="./styles.css?v=20260226-1" />
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: 80px auto;
+            padding: 40px;
+            background: var(--panel);
+            border-radius: 24px;
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+        }
+
+        .auth-toggle {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .auth-tab {
+            padding: 10px 0;
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--muted);
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .auth-tab.active {
+            color: var(--gold);
+            border-bottom-color: var(--gold);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Header más alto para cubrir el branding completo */
+        .header {
+            min-height: 90px;
+        }
+
+        .header-top .container {
+            padding-bottom: 12px;
+        }
+    </style>
+</head>
+
+<body class="notranslate">
+    <header class="header">
+        <div class="header-top">
+            <div class="container">
+                <div class="brand">
+                    <img src="./assets/logo-transparent.png" alt="Logo" class="logo-img">
+                    <div class="brand-text">
+                        <div class="brand-name">Miami DJ Beat</div>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <div class="lang-switcher">
+                        <a href="mailto:support@miamidjbeat.com" class="lang-btn" data-i18n="nav-support">Soporte</a>
+                        <span class="lang-btn active" data-lang="es">ES</span>
+                        <span class="lang-pipe">|</span>
+                        <span class="lang-btn" data-lang="en">EN</span>
+                    </div>
+                    <a href="./index.html" class="btn-pill" data-i18n="nav-home">Inicio</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="login-container">
+            <div class="auth-toggle">
+                <div class="auth-tab active" id="tab-login" data-i18n="login-tab">Entrar</div>
+                <div class="auth-tab" id="tab-signup" data-i18n="signup-tab">Crear Cuenta</div>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="form">
+                <label><span data-i18n="login-email-label">Email</span><input type="email" id="login-email" required
+                        placeholder="tu@email.com"></label>
+                <label><span data-i18n="login-password-label">Contraseña</span><input type="password"
+                        id="login-password" required placeholder="••••••••"></label>
+                <button class="btn primary full" type="submit" data-i18n="login-btn-submit">Iniciar Sesión</button>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signup-form" class="form hidden">
+                <input type="hidden" id="signup-usertype" name="user_type" value="client">
+                <label><span>Nombre Real *</span><input type="text" id="signup-fullname" required
+                        placeholder="Tu nombre completo"></label>
+                <div id="talent-fields" style="display:none;">
+                    <label><span>Nombre Artístico <small style="color:var(--muted);font-weight:400;">(opcional — se usa
+                                como
+                                username)</small></span><input type="text" id="signup-name"
+                            placeholder="DJ Mago"></label>
+                </div>
+                <label><span data-i18n="login-signup-email-label">Email *</span><input type="email" id="signup-email"
+                        required placeholder="tu@email.com"></label>
+                <label><span data-i18n="login-signup-password-label">Contraseña *</span><input type="password"
+                        id="signup-password" required placeholder="Mínimo 6 caracteres"></label>
+                <label><span>Teléfono <small style="color:var(--muted);font-weight:400;">(opcional)</small></span>
+                    <input type="tel" id="signup-phone" placeholder="+1 (305) 000-0000"></label>
+                <label><span>Ciudad <small style="color:var(--muted);font-weight:400;">(opcional)</small></span>
+                    <input type="text" id="signup-city" placeholder="Miami, FL"></label>
+                <div id="talent-fields-2" style="display:none;">
+                    <label><span>Instagram <small style="color:var(--muted);font-weight:400;">(opcional)</small></span>
+                        <input type="text" id="signup-instagram" placeholder="@tuinstagram"></label>
+                </div>
+                <button class="btn primary full" type="submit" data-i18n="login-btn-register">Registrarme</button>
+            </form>
+
+            <p id="auth-error" class="fineprint"
+                style="color: #ff4d4d; margin-top: 15px; text-align: center; display: none;"></p>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container" style="text-align: center;">
+            <div data-i18n="footer-rights-llc">© 2026 Miami DJ Beat LLC. Pro Division Access.</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=20260226-1"></script>
+    <script src="./translations.js?v=20260226-1"></script>
+    <script src="./i18n.js?v=20260226-1"></script>
+    <script src="./auth.js?v=20260226-1"></script>
+
+    <script>
+        const tabLogin = document.getElementById('tab-login');
+        const tabSignup = document.getElementById('tab-signup');
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+
+        // ── Tab switchers ─────────────────────────────────────────
+        tabLogin.onclick = () => {
+            tabLogin.classList.add('active'); tabSignup.classList.remove('active');
+            loginForm.classList.remove('hidden'); signupForm.classList.add('hidden');
+        };
+        tabSignup.onclick = () => {
+            tabSignup.classList.add('active'); tabLogin.classList.remove('active');
+            signupForm.classList.remove('hidden'); loginForm.classList.add('hidden');
+        };
+
+        // ── Auto-open signup tab when coming from jobs ─────────────
+        const params = new URLSearchParams(window.location.search);
+        const mode = params.get('mode');      // 'signup' → open Crear Cuenta tab
+        const redirect = params.get('redirect');  // 'jobs'   → go back after auth
+
+        if (mode === 'signup') {
+            tabSignup.click();
+        }
+
+        const userType = params.get('user_type') || (redirect === 'jobs' ? 'talent' : 'client');
+        document.getElementById('signup-usertype').value = userType;
+        if (userType === 'talent') {
+            document.getElementById('talent-fields').style.display = 'block';
+            document.getElementById('talent-fields-2').style.display = 'block';
+        }
+
+        // ── After successful login or signup → redirect back ───────
+        // Uses lazy singleton to avoid CDN race condition
+        (function waitAndListen(attempt) {
+            const db = window.getSupabaseClient();
+            if (!db) {
+                if (attempt < 10) setTimeout(() => waitAndListen(attempt + 1), 300);
+                return;
+            }
+            db.auth.onAuthStateChange((event) => {
+                if (event === 'SIGNED_IN' && redirect) {
+                    const params = new URLSearchParams(window.location.search);
+                    const lead = params.get('lead');
+                    const eventType = params.get('type');
+                    const ref = params.get('ref');
+                    const dj = params.get('dj');
+
+                    let finalUrl = `./${redirect}.html?`;
+                    if (lead) finalUrl += `lead=${encodeURIComponent(lead)}&`;
+                    if (eventType) finalUrl += `type=${encodeURIComponent(eventType)}&`;
+                    if (ref) finalUrl += `ref=${encodeURIComponent(ref)}&`;
+                    if (dj) finalUrl += `dj=${encodeURIComponent(dj)}&`;
+
+                    window.location.href = finalUrl.replace(/[&?]$/, '');
+                }
+            });
+        })(0);
+    </script>
+</body>
+
+</html>

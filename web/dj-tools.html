@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>DJ Tools — Miami DJ Beat</title>
+    <link rel="stylesheet" href="./styles.css?v=20260226-1" />
+    <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+</head>
+
+<body class="notranslate">
+    <header class="header">
+        <div class="header-top">
+            <div class="container">
+                <div class="brand">
+                    <img src="./assets/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img">
+                    <div class="brand-text">
+                        <div class="brand-name">Miami DJ Beat</div>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <div class="lang-switcher">
+                        <span class="lang-btn active" data-lang="es">ES</span>
+                        <span class="lang-pipe">|</span>
+                        <span class="lang-btn" data-lang="en">EN</span>
+                    </div>
+                    <a href="login.html" class="btn-pill gold" data-i18n="btn-get-pro">Obtener PRO</a>
+                    <a href="login.html" id="header-login-btn" class="btn-pill" data-i18n="btn-login">Login</a>
+
+                    <div class="account" id="header-auth-zone" style="display: none;">
+                        <button class="account-btn" id="accountBtn">
+                            <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="Avatar" />
+                            <span class="caret">▾</span>
+                        </button>
+                        <div class="account-menu" id="accountMenu">
+                            <a href="./dj-profile.html" class="menu-item" data-i18n="menu-account">👤 Perfil</a>
+                            <a href="./dj-dashboard.html" class="menu-item" data-i18n="menu-rewards">💎 Dashboard</a>
+                            <a href="mailto:support@miamidjbeat.com" class="menu-item"
+                                data-i18n="nav-support">Soporte</a>
+                            <div class="menu-divider"></div>
+                            <a href="#" class="menu-item danger" id="logoutBtn" data-i18n="menu-logout">↪ Salir</a>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+
+        <div class="header-bottom">
+            <div class="container">
+                <nav class="nav top-nav" id="mainNav">
+                    <a href="./index.html" data-i18n="nav-home">Inicio</a>
+                    <a href="./index.html#services" data-i18n="nav-services">Servicios</a>
+                    <a href="./rentals.html" data-i18n="nav-rentals">Servicios de Evento</a>
+                    <a href="./dj-tools.html" class="active" data-i18n="nav-tools">Herramientas</a>
+                    <a href="./jobs.html" data-i18n="nav-jobs">Trabajos</a>
+                    <a href="./index.html#contact" data-i18n="nav-contact">Contacto</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="section" style="padding-top: 60px;">
+            <div class="container">
+                <div
+                    style="text-align: center; margin-bottom: 60px; max-width: 900px; margin-left: auto; margin-right: auto;">
+                    <div
+                        style="font-size: 13px; font-weight: 700; letter-spacing: 4px; color: var(--gold); text-transform: uppercase; margin-bottom: 24px; opacity: 0.85;">
+                        MDJPRO SUITE</div>
+                    <h1 style="font-size: 56px; font-weight: 900; line-height: 1.1; margin-bottom: 32px; letter-spacing: -1px;"
+                        data-i18n="tools-hero-title">
+                        El espacio de trabajo definitivo<br>para DJs modernos.
+                    </h1>
+                    <div style="width: 60px; height: 2px; background: var(--gold); margin: 0 auto 32px; opacity: 0.7;">
+                    </div>
+                    <p style="font-size: 22px; font-weight: 600; color: rgba(255,255,255,0.75); letter-spacing: 0.5px; line-height: 1.6; margin: 0 auto; max-width: 680px;"
+                        data-i18n="tools-hero-sub">
+                        Organiza tu librería. Protege tu trabajo.<br>Actúa con <span
+                            style="color: var(--gold); font-weight: 700;">absoluta certeza.</span>
+                    </p>
+                    <div class="cta-row" style="justify-content: center; margin-top: 40px;">
+                        <a href="./downloads.html" class="btn primary" style="padding: 16px 32px; font-size: 18px;"
+                            data-i18n="tools-btn-download">Descargar MDJPRO</a>
+                        <a href="#early-access" class="btn" style="padding: 16px 32px; font-size: 18px;"
+                            data-i18n="tools-btn-early-access">Acceso Anticipado</a>
+                    </div>
+                </div>
+
+                <h2 style="text-align: center; margin-bottom: 40px;" data-i18n="tools-features-title">Pro Features</h2>
+                <div class="grid3">
+                    <div class="tile">
+                        <div style="font-size: 32px; margin-bottom: 16px;">⚡️</div>
+                        <h3 data-i18n="tools-feature-clean-title">Library Cleaning</h3>
+                        <p data-i18n="tools-feature-clean-desc">Remove duplicates, fix metadata, and standardize tags in
+                            seconds.</p>
+                    </div>
+                    <div class="tile">
+                        <div style="font-size: 32px; margin-bottom: 16px;">📂</div>
+                        <h3 data-i18n="tools-feature-smart-title">Smart Crates</h3>
+                        <p data-i18n="tools-feature-smart-desc">Logical organization based on energy, genre, and key.
+                        </p>
+                    </div>
+                    <div class="tile">
+                        <div style="font-size: 32px; margin-bottom: 16px;">💎</div>
+                        <h3 data-i18n="tools-feature-latin-title">Latin Mastery</h3>
+                        <p data-i18n="tools-feature-latin-desc">Native support for Latin transitions and genre-specific
+                            tagging.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section alt">
+            <div class="container">
+                <h2 style="text-align: center; margin-bottom: 40px;" data-i18n="tools-pricing-title">Choose Your Power
+                </h2>
+                <div style="max-width: 800px; margin: 0 auto;">
+                    <div class="table-row table-head">
+                        <div data-i18n="tools-table-head-feature">Feature</div>
+                        <div style="text-align: center;" data-i18n="tools-table-head-free">Free</div>
+                        <div style="text-align: center;" data-i18n="tools-table-head-premium">Premium</div>
+                    </div>
+                    <div class="table-row">
+                        <div data-i18n="tools-feature-org">Library Organization</div>
+                        <div style="text-align: center;" data-i18n="tools-feature-org-free">Basic</div>
+                        <div style="text-align: center;" data-i18n="tools-feature-org-premium">Advanced</div>
+                    </div>
+                    <div class="table-row">
+                        <div data-i18n="tools-feature-tagging">Batch Tagging</div>
+                        <div style="text-align: center;" data-i18n="tools-feature-tagging-free">10 tracks</div>
+                        <div style="text-align: center;" data-i18n="tools-feature-tagging-premium">Unlimited</div>
+                    </div>
+                    <div class="table-row">
+                        <div data-i18n="tools-feature-sync">Multi-DJ Sync</div>
+                        <div style="text-align: center;">—</div>
+                        <div style="text-align: center;">✅</div>
+                    </div>
+                    <div class="table-row">
+                        <div data-i18n="tools-feature-backup">Cloud Backup</div>
+                        <div style="text-align: center;">—</div>
+                        <div style="text-align: center;">✅</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="early-access" class="section">
+            <div class="container">
+                <div class="grid2" style="align-items: center;">
+                    <div>
+                        <h2 data-i18n="tools-early-access-title">Lead the Network</h2>
+                        <p class="sub" data-i18n="tools-early-access-sub">MDJPRO is more than an app. It's the technical
+                            foundation of the Miami DJ Beat
+                            network. Get in early.</p>
+                    </div>
+                    <div class="tile">
+                        <form class="form" action="https://formspree.io/f/mqakvjge" method="POST">
+                            <label><span data-i18n="tools-form-name">Name</span><input type="text" name="name"
+                                    required /></label>
+                            <label><span data-i18n="tools-form-email">Email</span><input type="email" name="email"
+                                    required /></label>
+                            <button class="btn primary full" type="submit" data-i18n="tools-form-btn">Join Founder's
+                                List</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container" style="text-align: center;">
+            <div data-i18n="footer-rights-digital">© 2026 Miami DJ Beat LLC. Digital Asset Division.</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=20260226-1"></script>
+    <script src="./translations.js?v=20260226-1"></script>
+    <script src="./i18n.js?v=20260226-1"></script>
+    <script>
+        async function updateHeaderAuth() {
+            const { data: { session } } = await supabase.auth.getSession();
+            const loginBtn = document.getElementById('header-login-btn');
+            const authZone = document.getElementById('header-auth-zone');
+            if (session) {
+                if (loginBtn) loginBtn.style.display = 'none';
+                if (authZone) authZone.style.display = 'block';
+                const { data: profile } = await supabase.from('dj_profiles').select('photo_url').eq('user_id', session.user.id).single();
+                if (profile && profile.photo_url) document.querySelector('.avatar').src = profile.photo_url;
+            }
+        }
+        document.addEventListener('DOMContentLoaded', updateHeaderAuth);
+
+        const btn = document.getElementById('accountBtn');
+        const menu = document.getElementById('accountMenu');
+        if (btn && menu) {
+            btn.onclick = (e) => { e.stopPropagation(); menu.classList.toggle('open'); };
+            document.onclick = () => menu.classList.remove('open');
+        }
+    </script>
+    <link rel="stylesheet" href="./mdj-assistant.css" />
+    <script src="./mdj-assistant.js"></script>
+
+</body>
+
+</html>

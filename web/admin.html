@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Miami DJ Beat — Admin</title>
+    <link rel="stylesheet" href="./certification.css" />
+    <style>
+        .actionRow {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .btn.danger {
+            border-color: rgba(239, 68, 68, 0.5);
+            color: #ef4444;
+        }
+
+        .btn.danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .btn.amber {
+            border-color: rgba(245, 158, 11, 0.5);
+            color: #f59e0b;
+        }
+
+        .btn.amber:hover {
+            background: rgba(245, 158, 11, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <main class="container">
+
+        <!-- ── PATCH: Practical Evaluation ─────────────────────── -->
+        <section class="card">
+            <h1>Admin — Practical Update</h1>
+            <p class="muted">Server-side PATCH via Edge Function. No DB keys in browser.</p>
+
+            <label class="field">
+                <span>ADMIN_PASS</span>
+                <input id="pass" type="password" placeholder="Admin password" />
+            </label>
+
+            <label class="field" style="margin-top:10px;">
+                <span>Certification ID</span>
+                <input id="cert_id" type="text" placeholder="MDB-YYYYMMDD-XXXX" maxlength="25" />
+            </label>
+
+            <div class="grid2" style="margin-top:10px;">
+                <label class="field">
+                    <span>Practical Score (0-100)</span>
+                    <input id="p_score" type="number" min="0" max="100" value="0" />
+                </label>
+                <label class="field">
+                    <span>Practical %</span>
+                    <input id="p_pct" type="number" min="0" max="100" value="0" />
+                </label>
+            </div>
+
+            <div class="grid2" style="margin-top:10px;">
+                <label class="field">
+                    <span>Instructor</span>
+                    <input id="instructor" type="text" placeholder="Instructor name" />
+                </label>
+                <label class="field">
+                    <span>Venue</span>
+                    <input id="venue" type="text" placeholder="Venue" />
+                </label>
+            </div>
+
+            <label class="checkRow" style="margin-top:12px;">
+                <input id="graduated" type="checkbox" />
+                <span>Graduated (PRO)</span>
+            </label>
+
+            <div class="actions">
+                <button id="btnPatch" class="btn primary">PATCH Certificate</button>
+            </div>
+
+            <div id="out" class="kpi" style="margin-top:12px; display:none;"></div>
+        </section>
+
+        <!-- ── GOVERNANCE CONTROLS ─────────────────────────────── -->
+        <section class="card">
+            <div class="sectionHeader">
+                <h2>Governance Controls</h2>
+                <p class="muted">Revocation, suspension, and renewal. Uses the same cert_id + pass above.</p>
+            </div>
+
+            <!-- Revoke -->
+            <div class="kpi">
+                <strong>🔴 Revoke Certificate</strong>
+                <label class="field" style="margin-top:8px;">
+                    <span>Reason (required)</span>
+                    <input id="revokeReason" type="text" placeholder="e.g. Fraudulent use of seal at venue X" />
+                </label>
+                <div class="actionRow">
+                    <button id="btnRevoke" class="btn danger">Revoke</button>
+                    <button id="btnUnrevoke" class="btn">Clear Revocation</button>
+                </div>
+            </div>
+
+            <!-- Suspend -->
+            <div class="kpi" style="margin-top:12px;">
+                <strong>🟡 Suspension</strong>
+                <div class="actionRow">
+                    <button id="btnSuspend" class="btn amber">Suspend</button>
+                    <button id="btnUnsuspend" class="btn">Unsuspend</button>
+                </div>
+            </div>
+
+            <!-- Renew -->
+            <div class="kpi" style="margin-top:12px;">
+                <strong>🔁 Renew Certification</strong>
+                <p class="muted" style="font-size:12px; margin:4px 0 8px;">Extends expires_at by 12 months from today.
+                </p>
+                <div class="actionRow">
+                    <button id="btnRenew" class="btn primary">Renew 12 Months</button>
+                </div>
+            </div>
+
+            <div id="govOut" class="kpi" style="margin-top:12px; display:none;"></div>
+        </section>
+
+    </main>
+
+    <script>
+        const OUT = document.getElementById("out");
+        const GOV = document.getElementById("govOut");
+        const FN_URL = "https://hkuvuqupbxwkiykxvqdr.supabase.co/functions/v1/admin-update";
+
+        function escapeHtml(s) {
+            return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+        }
+        function showOut(el, obj) {
+            el.style.display = "block";
+            el.innerHTML = `<strong>Response</strong><pre style="white-space:pre-wrap;color:#9ca3af;margin:8px 0 0;">${escapeHtml(JSON.stringify(obj, null, 2))}</pre>`;
+        }
+        function creds() {
+            return {
+                pass: document.getElementById("pass").value.trim(),
+                cert_id: document.getElementById("cert_id").value.trim(),
+            };
+        }
+        async function callFn(payload, outEl) {
+            try {
+                const r = await fetch(FN_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
+                const data = await r.json().catch(() => ({ ok: false, error: "Bad JSON" }));
+                showOut(outEl, data);
+            } catch (e) {
+                showOut(outEl, { ok: false, error: String(e) });
+            }
+        }
+
+        // ── PATCH ──────────────────────────────────────────────
+        document.getElementById("btnPatch").addEventListener("click", () => {
+            callFn({
+                ...creds(),
+                practical_score: Number(document.getElementById("p_score").value || 0),
+                practical_pct: Number(document.getElementById("p_pct").value || 0),
+                instructor: document.getElementById("instructor").value.trim(),
+                venue: document.getElementById("venue").value.trim(),
+                graduated: document.getElementById("graduated").checked,
+            }, OUT);
+        });
+
+        // ── REVOKE ─────────────────────────────────────────────
+        document.getElementById("btnRevoke").addEventListener("click", () => {
+            const reason = document.getElementById("revokeReason").value.trim();
+            if (!reason) { alert("Please enter a revoke reason."); return; }
+            callFn({ ...creds(), revoked: true, revoked_reason: reason }, GOV);
+        });
+        document.getElementById("btnUnrevoke").addEventListener("click", () => {
+            callFn({ ...creds(), revoked: false }, GOV);
+        });
+
+        // ── SUSPEND ────────────────────────────────────────────
+        document.getElementById("btnSuspend").addEventListener("click", () => {
+            callFn({ ...creds(), suspended: true }, GOV);
+        });
+        document.getElementById("btnUnsuspend").addEventListener("click", () => {
+            callFn({ ...creds(), suspended: false }, GOV);
+        });
+
+        // ── RENEW ──────────────────────────────────────────────
+        document.getElementById("btnRenew").addEventListener("click", () => {
+            callFn({ ...creds(), action: "renew" }, GOV);
+        });
+    </script>
+</body>
+
+</html>

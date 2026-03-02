@@ -1,0 +1,1193 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Miami DJ Beat — DJs & Event Production</title>
+  <meta name="description"
+    content="Miami DJ Beat provides professional DJs and event production for corporate, private, and venue events across Miami-Dade and the Florida Keys." />
+  <link rel="stylesheet" href="./styles.css?v=20260226-1" />
+  <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+  <style>
+    /* Cinematic Home Hero — FULL VIEWPORT */
+    .hero {
+      position: relative;
+      width: 100vw;
+      min-height: 100vh;
+      margin-left: calc(-50vw + 50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding-top: 120px;
+      padding-bottom: 60px;
+      box-sizing: border-box;
+      background: #000;
+    }
+
+    .hero-bg-video {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: cover;
+      z-index: 0;
+      opacity: 1;
+    }
+
+    .hero-video-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 80%, rgba(2, 2, 2, 0.4) 100%);
+      z-index: 1;
+    }
+
+    .hero-kb-bg {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      z-index: 0;
+      animation: kenBurnsHome 20s ease-in-out infinite alternate;
+      opacity: 1;
+    }
+
+    @keyframes kenBurnsHome {
+      0% {
+        transform: scale(1);
+      }
+
+      100% {
+        transform: scale(1.1);
+      }
+    }
+
+    .hero-grid {
+      position: relative;
+      z-index: 5;
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 50px;
+      align-items: center;
+      padding: 0 40px;
+    }
+
+    .hero-text-block h1 {
+      font-size: clamp(48px, 6vw, 90px);
+      font-weight: 700;
+      /* Original weight for Playfair */
+      line-height: 1.1;
+      text-transform: none;
+      /* Serifs usually look better without full uppercase in this brand */
+      font-family: 'Playfair Display', serif;
+      background: transparent;
+      -webkit-text-fill-color: rgba(197, 160, 89, 0.15);
+      /* Subtle gold fill */
+      -webkit-text-stroke: 1.2px var(--gold);
+      filter: drop-shadow(0 0 20px rgba(197, 160, 89, 0.3));
+      margin-bottom: 20px;
+    }
+
+    /* Glassmorphism Header */
+    .header {
+      background: transparent !important;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: all 0.4s ease;
+    }
+
+    .header.scrolled {
+      background: rgba(2, 2, 2, 0.9) !important;
+      backdrop-filter: blur(20px);
+    }
+
+    @media (max-width: 968px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+        padding-top: 40px;
+      }
+
+      .hero {
+        height: auto;
+        min-height: 120vh;
+      }
+    }
+
+    /* Primary Button — Ultra Transparent to let video breathe */
+    .btn.primary {
+      background: rgba(197, 160, 89, 0.05) !important;
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      border: 1px solid rgba(197, 160, 89, 0.4) !important;
+      color: var(--gold) !important;
+      opacity: 0.75;
+      transition: all 0.3s ease;
+    }
+
+    .btn.primary:hover {
+      opacity: 1;
+      background: rgba(197, 160, 89, 0.2) !important;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(197, 160, 89, 0.1);
+    }
+  </style>
+</head>
+
+<body class="notranslate">
+  <header class="header" id="mainHeader">
+    <div class="header-top">
+      <div class="container">
+        <div class="brand">
+          <img src="./assets/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img">
+          <div class="brand-text" style="padding-left:8px; padding-top: 4px;">
+            <div class="brand-name">Miami DJ Beat</div>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <div class="lang-switcher">
+            <span class="lang-btn active" data-lang="es">ES</span>
+            <span class="lang-pipe">|</span>
+            <span class="lang-btn" data-lang="en">EN</span>
+          </div>
+          <a href="login.html" class="btn-pill gold" data-i18n="btn-get-pro">Obtener PRO</a>
+          <a href="login.html" id="header-login-btn" class="btn-pill" data-i18n="btn-login">Login</a>
+
+          <div class="account" id="header-auth-zone" style="display: none;">
+            <button class="account-btn" id="accountBtn" aria-haspopup="true" aria-expanded="false">
+              <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="Avatar" />
+              <span class="caret">▾</span>
+            </button>
+            <div class="account-menu" id="accountMenu" aria-hidden="true">
+              <a href="./dj-profile.html" class="menu-item" data-i18n="menu-account">Mi Perfil</a>
+              <a href="./account-settings.html" class="menu-item">Configuración</a>
+              <a href="./jobs.html" class="menu-item" data-i18n="menu-jobs">Trabajos</a>
+              <div class="menu-divider"></div>
+              <a href="#" class="menu-item danger" id="logoutBtn" data-i18n="menu-logout">Cerrar Sesión</a>
+            </div>
+          </div>
+        </div>
+
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <!-- Mobile Menu Overlay -->
+        <div class="mobile-overlay" id="mobileMenu">
+          <nav class="mobile-nav">
+            <a href="./index.html" class="active" data-i18n="nav-home">Inicio</a>
+            <a href="#services" data-i18n="nav-services">Servicios</a>
+            <a href="./rentals.html" data-i18n="nav-rentals">Servicios de Evento</a>
+            <a href="./dj-tools.html" data-i18n="nav-tools">Herramientas</a>
+            <a href="./jobs.html" data-i18n="nav-jobs">Trabajos</a>
+            <a href="./directory.html">Directory</a>
+            <a href="./find-dj.html" style="color:#c5a059;font-weight:800;">🎧 Encuentra DJ</a>
+            <a href="#contact" data-i18n="nav-contact">Contacto</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+    <div class="header-bottom">
+      <div class="container">
+        <nav class="nav top-nav" id="mainNav">
+          <a href="./index.html" class="active" data-i18n="nav-home">Inicio</a>
+          <a href="#services" data-i18n="nav-services">Servicios</a>
+          <a href="./rentals.html" data-i18n="nav-rentals">Servicios de Evento</a>
+          <a href="./dj-tools.html" data-i18n="nav-tools">Herramientas</a>
+          <a href="./jobs.html" data-i18n="nav-jobs">Trabajos</a>
+          <a href="./directory.html">Directory</a>
+          <a href="./find-dj.html" style="color:#c5a059;font-weight:800;">🎧 Encuentra DJ</a>
+          <a href="#contact" data-i18n="nav-contact">Contacto</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+  <main>
+    <!-- ══ CINEMATIC HERO ══ -->
+    <section class="hero" id="home-hero">
+      <!-- Ken Burns placeholder -->
+      <div class="hero-kb-bg" id="home-hero-kb" style="background-image: url('./assets/home_hero_4k_wide.png');"></div>
+
+      <!-- Video Background -->
+      <video id="home-hero-video" class="hero-bg-video" autoplay muted loop playsinline></video>
+
+      <!-- Overlay Cinematic -->
+      <div class="hero-video-overlay"></div>
+
+      <div class="hero-grid">
+        <div class="hero-text-block">
+          <h1 id="home-hero-headline" data-i18n="hero-title">Luxury Entertainment & Event Production.</h1>
+          <p class="sub" data-i18n="hero-sub">
+            Fast booking, elite production, and superior crowd control — serving
+            <span style="color: var(--gold); font-weight: 700;">Miami-Dade</span> and the <span
+              style="color: var(--gold); font-weight: 700;">Florida Keys</span>.
+          </p>
+          <div class="cta-row" style="margin-top: 40px; display: flex; gap: 20px;">
+            <a class="btn primary" href="#contact"
+              style="padding: 18px 36px; font-size: 16px; font-weight: 700; border-radius: 50px;"
+              data-i18n="hero-btn-request">Get Started Now</a>
+            <a class="btn" href="#services"
+              style="padding: 18px 36px; font-size: 16px; font-weight: 600; border-radius: 50px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);"
+              data-i18n="hero-btn-services">Our Portfolio</a>
+          </div>
+          <div class="badges" style="margin-top: 50px; display: flex; flex-wrap: wrap; gap: 15px;">
+            <span class="badge" data-i18n="badge-exclusive-weddings"
+              style="background: rgba(197, 160, 89, 0.1); border: 1px solid rgba(197, 160, 89, 0.3); color: var(--gold); padding: 8px 16px; border-radius: 30px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Exclusive
+              Weddings</span>
+            <span class="badge" data-i18n="badge-enterprise-corporate"
+              style="background: rgba(197, 160, 89, 0.1); border: 1px solid rgba(197, 160, 89, 0.3); color: var(--gold); padding: 8px 16px; border-radius: 30px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Enterprise
+              Corporate</span>
+            <span class="badge" data-i18n="badge-luxury-venues"
+              style="background: rgba(197, 160, 89, 0.1); border: 1px solid rgba(197, 160, 89, 0.3); color: var(--gold); padding: 8px 16px; border-radius: 30px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Luxury
+              Venues</span>
+          </div>
+        </div>
+
+        <!-- Registration Form Card -->
+        <div class="hero-card"
+          style="background: rgba(0,0,0,0.15); backdrop-filter: blur(8px); border: 2px solid var(--gold); border-radius: 28px; padding: 30px; box-shadow: 0 0 20px rgba(197, 160, 89, 0.2);">
+          <div class="card-title" data-i18n="hero-reg-title"
+            style="color: var(--gold); font-size: 24px; font-weight: 800; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">
+            Crea tu cuenta</div>
+          <p style="font-size: 13px; color: #fff; opacity: 0.8; margin-bottom: 20px;" data-i18n="hero-reg-sub">
+            Únete a la red elite de entretenimiento en Miami.
+          </p>
+          <form class="form" id="hero-registration-form">
+            <div style="margin-bottom: 12px;">
+              <span data-i18n="label-name"
+                style="display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); margin-bottom: 6px; font-weight: 700;">Nombre
+                Completo</span>
+              <input type="text" name="full_name" placeholder="Tu nombre y apellido" required
+                style="width: 100%; padding: 12px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;" />
+            </div>
+
+            <div style="margin-bottom: 12px;">
+              <span data-i18n="label-email"
+                style="display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); margin-bottom: 6px; font-weight: 700;">Email</span>
+              <input type="email" name="email" placeholder="nombre@ejemplo.com" required
+                style="width: 100%; padding: 12px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;" />
+            </div>
+
+            <div style="margin-bottom: 15px;">
+              <span data-i18n="label-password"
+                style="display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); margin-bottom: 6px; font-weight: 700;">Contraseña</span>
+              <input type="password" name="password" placeholder="Mínimo 6 caracteres" required minlength="6"
+                style="width: 100%; padding: 12px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;" />
+            </div>
+
+            <div id="hero-reg-status" style="font-size: 12px; margin-top: 10px; display: none;"></div>
+
+            <button class="btn primary full" type="submit" id="hero-reg-btn"
+              style="margin-top: 10px; font-size: 16px; padding: 15px; font-weight: 800; border-radius: 50px; text-transform: uppercase; letter-spacing: 1px; cursor: pointer;"
+              data-i18n="btn-register">
+              Crear mi cuenta »
+            </button>
+
+            <p class="fineprint" style="margin-top:15px; text-align: center; opacity: 0.6;" data-i18n="reg-fineprint">
+              Al registrarte, aceptas nuestros términos.
+            </p>
+          </form>
+        </div>
+      </div>
+    </section>
+    <section class="big-day-section" style="background-image: url('./assets/luxury_wedding_blurred_bg.png');">
+      <div class="container">
+        <h2 data-i18n="bigday-title">CHECK THE AVAILABILITY FOR YOUR BIG DAY NOW!</h2>
+        <p style="font-size: 12px; color: #ccc; margin-bottom: 30px;">Fields marked with an <span
+            style="color:red">*</span> are required</p>
+
+        <div class="availability-form-mini" style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+          <div style="display:flex; gap:10px;">
+            <select id="avail_month">
+              <option selected disabled data-i18n="option-month">Month...</option>
+            </select>
+            <select id="avail_day">
+              <option selected disabled data-i18n="option-day">Day</option>
+            </select>
+            <select id="avail_year">
+              <option selected disabled data-i18n="option-year">Year</option>
+            </select>
+          </div>
+          <button type="button" class="btn primary" onclick="checkBigDayAvailability()"
+            style="padding:10px 24px; font-size:14px; width:fit-content;">Verificar Disponibilidad →</button>
+        </div>
+
+        <div class="features-box">
+          <!-- Column 1 -->
+          <div class="feature-col">
+            <div class="feature-item">
+              <div class="check-circle"><svg viewBox="0 0 24 24">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                </svg></div>
+              <div class="feature-text" data-i18n="feat-exp">PROFESSIONAL, FUN AND EXPERIENCED!</div>
+              <div class="feature-connector"></div>
+            </div>
+            <div class="feature-item">
+              <div class="check-circle"><svg viewBox="0 0 24 24">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                </svg></div>
+              <div class="feature-text" data-i18n="feat-setup">FREE SET UP AND BREAKDOWN, WE ARRIVE ONE HOUR PRIOR TO
+                THE EVENT.</div>
+              <div class="feature-connector"></div>
+            </div>
+            <div class="feature-item">
+              <div class="check-circle"><svg viewBox="0 0 24 24">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                </svg></div>
+              <div class="feature-text" data-i18n="feat-mc">PROFESSIONAL MASTER OF CEREMONIES.</div>
+              <div class="feature-connector"></div>
+            </div>
+            <div class="feature-item">
+              <div class="check-circle"><svg viewBox="0 0 24 24">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                </svg></div>
+              <div class="feature-text" data-i18n="feat-songs">OVER 100,000 SONGS TO CHOOSE FROM.</div>
+            </div>
+          </div>
+          <!-- Column 2 -->
+          <div class="feature-col">
+            <div class="feature-item">
+              <div class="check-circle"><svg viewBox="0 0 24 24">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                </svg></div>
+              <div class="feature-text" data-i18n="feat-years">MINIMUM OF 5 YEARS WITH AN AVERAGE OF 14 YEARS DJING
+              </div>
+              <div class="feature-connector"></div>
+            </div>
+            <div class="feature-item">
+              <div class="check-circle"><svg viewBox="0 0 24 24">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                </svg></div>
+              <div class="feature-text" data-i18n="feat-weddings">WE HAVE DJS THAT ARE EXPERIENCED IN WEDDINGS AS WELL
+                AS PARTIES.</div>
+              <div class="feature-connector"></div>
+            </div>
+            <div class="feature-item">
+              <div class="check-circle"><svg viewBox="0 0 24 24">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                </svg></div>
+              <div class="feature-text" data-i18n="feat-dressed">PROFESSIONALLY DRESSED DJS, UNLESS YOU TELL US
+                DIFFERENTLY.</div>
+              <div class="feature-connector"></div>
+            </div>
+            <div class="feature-item">
+              <div class="check-circle"><svg viewBox="0 0 24 24">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                </svg></div>
+              <div class="feature-text" data-i18n="feat-tools">ONLINE PLANNING TOOLS.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="services" class="section">
+      <div class="container">
+        <h2 data-i18n="services-title">Services</h2>
+        <div class="grid3">
+          <div class="tile">
+            <h3 data-i18n="services-dj-title">DJ + Sound</h3>
+            <p data-i18n="services-dj-desc">Professional audio, clean setup, reliable performance.</p>
+          </div>
+          <div class="tile">
+            <h3 data-i18n="services-light-title">Lighting + FX</h3>
+            <p data-i18n="services-light-desc">Uplights, dance lighting, haze/FX options for impact.</p>
+          </div>
+          <div class="tile">
+            <h3 data-i18n="services-mc-title">MC + Coordination</h3>
+            <p data-i18n="services-mc-desc">Timeline control, announcements, and event flow.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ¿QUÉ TIPO DE DJ NECESITAS? ───────────────────────── -->
+    <section id="dj-types" class="section alt">
+      <div class="container">
+        <h2 style="text-align:center;margin-bottom:10px;">🎚️ Tipos de DJ — Clasificación Profesional</h2>
+        <p
+          style="text-align:center;color:var(--muted);margin-bottom:40px;max-width:580px;margin-left:auto;margin-right:auto;line-height:1.6;">
+          Antes de tocar un mixer, debes entender algo crítico: no todos los DJs hacen lo mismo. Uno de los errores más
+          comunes es querer estar en todos los escenarios sin dominar ninguno.
+        </p>
+
+        <div class="grid2" style="gap:28px;">
+
+          <!-- Wedding & Social DJ -->
+          <div class="experience-card">
+            <div class="exp-img" style="background-image:url('./assets/course/reel-slide4-wedding.png');"></div>
+            <div class="exp-content">
+              <div class="exp-venue">Wedding & Social DJ</div>
+              <div class="exp-type">Bodas · Quinces · Eventos sociales</div>
+              <p class="exp-quote">El DJ que actúa como director de experiencia. Coordina entrada, brindis, primer baile
+                y mantiene la energía del evento con precisión protocolar.</p>
+              <div style="margin-top:10px;font-size:12px;color:var(--gold);font-weight:700;">✓ Ideal si buscas:
+                elegancia, emoción y coordinación perfecta</div>
+            </div>
+          </div>
+
+          <!-- Club / Resident DJ -->
+          <div class="experience-card">
+            <div class="exp-img" style="background-image:url('./assets/course/reel-slide3-club.png');"></div>
+            <div class="exp-content">
+              <div class="exp-venue">Club / Resident DJ</div>
+              <div class="exp-type">Clubs · Bares · Residencias nocturnas</div>
+              <p class="exp-quote">Especialista en mantener la pista llena de principio a fin. Domina la lectura del
+                público y la mezcla fluida para maximizar la energía del lugar.</p>
+              <div style="margin-top:10px;font-size:12px;color:var(--gold);font-weight:700;">✓ Ideal si buscas: alta
+                energía y pista de baile que no para</div>
+            </div>
+          </div>
+
+          <!-- Open Format DJ -->
+          <div class="experience-card">
+            <div class="exp-img" style="background-image:url('./assets/course/reel-slide5-clubbing.png');"></div>
+            <div class="exp-content">
+              <div class="exp-venue">Open Format DJ</div>
+              <div class="exp-type">Fiestas privadas · Corporativos · Brunchs</div>
+              <p class="exp-quote">El DJ versátil. Fluye entre géneros — salsa, reggaeton, hip-hop, pop — leyendo la
+                sala en tiempo real y adaptándose a cualquier audiencia.</p>
+              <div style="margin-top:10px;font-size:12px;color:var(--gold);font-weight:700;">✓ Ideal si buscas: variedad
+                musical y flexibilidad total</div>
+            </div>
+          </div>
+
+          <!-- Festival / Performance DJ -->
+          <div class="experience-card">
+            <div class="exp-img" style="background-image:url('./assets/course/reel-slide2-festival.png');"></div>
+            <div class="exp-content">
+              <div class="exp-venue">Festival / Performance DJ</div>
+              <div class="exp-type">Festivales · Grandes eventos · Conciertos</div>
+              <p class="exp-quote">Diseñado para el escenario grande. Maneja multitudes masivas, producción en vivo y
+                momentos de impacto máximo con setlists de alto octanaje.</p>
+              <div style="margin-top:10px;font-size:12px;color:var(--gold);font-weight:700;">✓ Ideal si buscas: impacto
+                visual y sonoro a gran escala</div>
+            </div>
+          </div>
+
+          <!-- DJ Corporativo -->
+          <div class="experience-card">
+            <div class="exp-img" style="background-image:url('./assets/course/tipo06-corporate.png');"></div>
+            <div class="exp-content">
+              <div class="exp-venue">DJ Corporativo</div>
+              <div class="exp-type">Lanzamientos · Convenciones · Networking</div>
+              <p class="exp-quote">Imagen impecable y protocolo empresarial. El DJ más sobre-exigido en presentación —
+                aquí tu presencia es el contrato.</p>
+              <div style="margin-top:10px;font-size:12px;color:var(--gold);font-weight:700;">✓ Ideal si buscas:
+                profesionalismo, elegancia ejecutiva y marca</div>
+            </div>
+          </div>
+
+          <!-- DJ Animador / MC -->
+          <div class="experience-card">
+            <div class="exp-img" style="background-image:url('./assets/course/tipo07-animator.png');"></div>
+            <div class="exp-content">
+              <div class="exp-venue">DJ Animador / MC</div>
+              <div class="exp-type">Fiestas · Shows en vivo · Hora loca</div>
+              <p class="exp-quote">El showman. Combina DJ con animación, dinámicas y hora loca. El alma visible del
+                evento — carisma genuino o no improvises este rol.</p>
+              <div style="margin-top:10px;font-size:12px;color:var(--gold);font-weight:700;">✓ Ideal si buscas: energía
+                extrema, participación total del público</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="text-align:center;margin-top:40px;">
+          <p style="color:var(--muted);margin-bottom:16px;font-size:14px;">¿No estás seguro cuál DJ es el correcto para
+            tu evento?</p>
+          <a href="login.html" class="btn-pill" style="padding:12px 32px;font-size:14px;">Consúltanos gratis →</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="areas" class="section alt">
+      <div class="container">
+        <h2 data-i18n="areas-title">Coverage</h2>
+        <div class="grid2">
+          <div class="tile">
+            <h3 data-i18n="areas-miami-title">Miami-Dade</h3>
+            <p data-i18n="areas-miami-desc">Brickell, Downtown, Wynwood, South Beach, Hialeah, Coral Gables.</p>
+          </div>
+          <div class="tile">
+            <h3 data-i18n="areas-keys-title">Florida Keys</h3>
+            <p data-i18n="areas-keys-desc">Key Largo, Islamorada, Marathon, Key West (by request).</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="experience" class="section">
+      <div class="container">
+        <h2 style="text-align: center; margin-bottom: 34px;" data-i18n="venues-title">Featured Venues & Live Experience
+        </h2>
+        <div class="grid3">
+          <div class="experience-card">
+            <div class="exp-img" style="background-image: url('./assets/mojitos_featured.png');"></div>
+            <div class="exp-content">
+              <div class="exp-venue">Mojitos Calle 8, Miami</div>
+              <div class="exp-type" data-i18n="exp-type-latin">Latin Luxury Nightlife</div>
+              <p class="exp-quote" data-i18n="exp-quote-mojitos">"The heartbeat of Calle 8, elevated with premium
+                production and energy."</p>
+            </div>
+          </div>
+          <div class="experience-card">
+            <div class="exp-img" style="background-image: url('./assets/el_valle_featured.png');"></div>
+            <div class="exp-content">
+              <div class="exp-venue">El Valle Restaurant</div>
+              <div class="exp-type" data-i18n="exp-type-dining">Sophisticated Dining</div>
+              <p class="exp-quote" data-i18n="exp-quote-valle">"Where high-end gastronomy meets a tailored acoustic
+                experience."</p>
+            </div>
+          </div>
+          <div class="experience-card">
+            <div class="exp-img" style="background-image: url('./assets/sundowners_featured.png');"></div>
+            <div class="exp-content">
+              <div class="exp-venue">Sundowners, Key Largo</div>
+              <div class="exp-type" data-i18n="exp-type-waterfront">Waterfront Weekend Brunch</div>
+              <p class="exp-quote" data-i18n="exp-quote-sundowners">"Signature coastal vibes for the ultimate oceanfront
+                weekend."</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="residencies" class="section alt">
+      <div class="container">
+        <h2 style="text-align: center; margin-bottom: 12px;" data-i18n="residencies-title">Weekly Residencies</h2>
+        <p style="text-align: center; color: var(--gold); font-weight: 700; margin-bottom: 34px; letter-spacing: 1px; text-transform: uppercase; font-size: 13px;"
+          data-i18n="residencies-sub">Catch the Network in Action</p>
+        <div class="grid3">
+          <div class="tile residency-card">
+            <div class="residency-day" data-i18n="residencies-friday">Every Friday</div>
+            <div class="residency-venue">Mojitos Calle 8</div>
+            <p data-i18n="residencies-desc-mojitos">Miami Latin Vibes & Open Format Mastery.</p>
+          </div>
+          <div class="tile residency-card">
+            <div class="residency-day" data-i18n="residencies-saturday">Every Saturday</div>
+            <div class="residency-venue">El Valle Restaurant</div>
+            <p data-i18n="residencies-desc-valle">Premium Gastronomy & Sophisticated Beats.</p>
+          </div>
+          <div class="tile residency-card">
+            <div class="residency-day" data-i18n="residencies-weekend">Fri - Sat - Sun</div>
+            <div class="residency-venue">Sundowners Key Largo</div>
+            <div class="residency-time">12:00 PM - 5:00 PM</div>
+            <p data-i18n="residencies-desc-sundowners">The Ultimate Waterfront Weekend Brunch Experience.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="marketplace" class="section">
+      <div class="container">
+        <h2 style="text-align: center; margin-bottom: 34px;" data-i18n="mkt-title">Additional Solutions</h2>
+        <div class="grid2">
+          <a href="rentals.html" class="tile marketplace-card">
+            <div class="mkt-icon">🎭</div>
+            <h3 data-i18n="mkt-rent-title">Event Services</h3>
+            <p data-i18n="mkt-rent-desc">Full event production: MCs, Sound, LED screens, Furniture, and Entertainment.
+            </p>
+            <div class="mkt-cta" data-i18n="mkt-view-catalog">View Catalog →</div>
+          </a>
+          <a href="dj-tools.html" class="tile marketplace-card">
+            <div class="mkt-icon">📥</div>
+            <h3 data-i18n="mkt-tools-title">DJ Tools Downloads</h3>
+            <p data-i18n="mkt-tools-desc">Free lead magnets and premium professional downloads for modern DJs and
+              producers.</p>
+            <div class="mkt-cta" data-i18n="mkt-browse-tools">Browse Tools →</div>
+          </a>
+        </div>
+      </div>
+    </section>
+    <section id="proof" class="section">
+      <div class="container">
+        <h2 data-i18n="proof-title">Operational Proof</h2>
+        <div class="grid3">
+          <div class="tile">
+            <h3 data-i18n="proof-vetted-title">Vetted Talent</h3>
+            <p data-i18n="proof-vetted-desc">Only DJs that meet reliability and performance standards.</p>
+          </div>
+          <div class="tile">
+            <h3 data-i18n="proof-prod-title">Production Discipline</h3>
+            <p data-i18n="proof-prod-desc">Setup plans, redundancy mindset, professional execution.</p>
+          </div>
+          <div class="tile">
+            <h3 data-i18n="proof-local-title">Apalancamiento Local</h3>
+            <p data-i18n="proof-local-desc">Anclas en los mercados de Key Largo + Miami + Hialeah markets.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="contact" class="section alt">
+      <div class="container">
+        <h2 data-i18n="contact-title">Reserva tu Evento</h2>
+        <p class="sub" data-i18n="contact-sub">Cuéntanos sobre tu evento y un manager te contactará en menos de 24
+          horas.</p>
+        <form id="bottom-contact-form" class="admin-card" action="https://formspree.io/f/mqakvjge" method="post"
+          style="max-width: 600px; margin: 40px auto; background: var(--panel);">
+          <div style="margin-bottom: 20px;">
+            <label><span data-i18n="label-name">Nombre Completo</span><input type="text" name="name"
+                placeholder="Nombre Completo" data-i18n-hold="hold-name" required /></label>
+          </div>
+          <div class="grid2">
+            <div class="tile">
+              <label data-i18n="label-event-type">Tipo de Evento</label>
+              <select name="event_type" id="event_type" required>
+                <option value="" disabled selected data-i18n="option-select">Select Type</option>
+                <option value="BabyShower" data-i18n="option-babyshower">Baby Shower</option>
+                <option value="Bar" data-i18n="option-bar">Bar / Lounge</option>
+                <option value="Wedding" data-i18n="option-wedding">Wedding / Social</option>
+                <option value="Brunch" data-i18n="option-brunch">Brunch</option>
+                <option value="Venue" data-i18n="option-venue">Club / Venue / Restaurant</option>
+                <option value="Corporate" data-i18n="option-corporate">Corporate Event</option>
+                <option value="NYE" data-i18n="option-nye">New Year's Eve</option>
+                <option value="Quince" data-i18n="option-quince">Quinceañera / Sweet 16</option>
+                <option value="Private" data-i18n="option-private">Private Party</option>
+                <option value="Graduation" data-i18n="option-graduation">Graduation</option>
+                <option value="Halloween" data-i18n="option-halloween">Halloween Party</option>
+                <option value="Beach" data-i18n="option-beach">Beach / Beach Club</option>
+                <option value="Restaurant" data-i18n="option-restaurant">Restaurant</option>
+                <option value="Terrace" data-i18n="option-terrace">Terrace / Rooftop</option>
+                <option value="Other" data-i18n="option-other">Other</option>
+              </select>
+            </div>
+            <div class="tile">
+              <label data-i18n="label-date">Fecha</label>
+              <div style="display:flex; gap:4px; margin-top:8px;">
+                <select name="event_day" required
+                  style="flex:1; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; font-size:14px; color-scheme:dark;">
+                  <option value="">Día</option>
+                </select>
+                <select name="event_month" required
+                  style="flex:2; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; font-size:14px; color-scheme:dark;">
+                  <option value="">Mes</option>
+                  <option value="01">Enero</option>
+                  <option value="02">Febrero</option>
+                  <option value="03">Marzo</option>
+                  <option value="04">Abril</option>
+                  <option value="05">Mayo</option>
+                  <option value="06">Junio</option>
+                  <option value="07">Julio</option>
+                  <option value="08">Agosto</option>
+                  <option value="09">Septiembre</option>
+                  <option value="10">Octubre</option>
+                  <option value="11">Noviembre</option>
+                  <option value="12">Diciembre</option>
+                </select>
+                <select name="event_year" required
+                  style="flex:1.5; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; font-size:14px; color-scheme:dark;">
+                  <option value="">Año</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="grid2" style="margin-top: 15px;">
+            <div class="tile"><label data-i18n="label-location">Ubicación</label><input type="text" name="location"
+                id="location" placeholder="Ej: Brickell, Miami Beach..." data-i18n-hold="hold-location-bottom" required>
+            </div>
+            <div class="tile"><label data-i18n="label-budget">Presupuesto Estimado</label><input type="text"
+                name="budget" id="budget" placeholder="Opcional" data-i18n-hold="hold-optional"></div>
+          </div>
+          <div style="margin-top: 15px;"><label data-i18n="label-referred">Referido por (Nombre o Email)</label><input
+              type="text" name="referred_by" id="referred_by" placeholder="Opcional"></div>
+          <div style="margin-top: 15px;"><label data-i18n="label-email">Email de Contacto</label><input type="email"
+              name="email" id="email" required></div>
+          <div style="margin-top: 15px;"><label data-i18n="label-phone">WhatsApp / Teléfono</label><input type="tel"
+              name="phone" id="phone" required></div>
+          <div id="bottom-form-status" style="margin-top: 15px; display: none; font-size: 14px;"></div>
+          <button type="submit" id="bottom-submit-btn" class="btn primary full" style="margin-top: 25px;"
+            data-i18n="btn-request">Solicitar Disponibilidad</button>
+        </form>
+      </div>
+  </main>
+
+  <section class="action-cards-section">
+    <div class="container action-cards-grid">
+      <a href="./dj-tools.html" class="action-card">
+        <div class="action-card-bg" style="background-image: url('./assets/luxury_music_library_bg.png');"></div>
+        <div class="action-card-content">
+          <div class="action-card-sub" data-i18n="card-music-sub">Library</div>
+          <div class="action-card-title" data-i18n="card-music-title">Browse Our Music</div>
+        </div>
+      </a>
+      <a href="login.html" class="action-card">
+        <div class="action-card-bg" style="background-image: url('./assets/luxury_customer_login_bg.png');"></div>
+        <div class="action-card-content">
+          <div class="action-card-sub" data-i18n="card-login-sub">Portal</div>
+          <div class="action-card-title" data-i18n="card-login-title">Customer Log-in</div>
+        </div>
+      </a>
+      <a href="#contact" class="action-card">
+        <div class="action-card-bg" style="background-image: url('./assets/luxury_payment_secure_bg.png');"></div>
+        <div class="action-card-content">
+          <div class="action-card-sub" data-i18n="card-pay-sub">Secure</div>
+          <div class="action-card-title" data-i18n="card-pay-title">Make a Payment</div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <!-- Column 1: Social -->
+        <div class="footer-col">
+          <h4 data-i18n="footer-social-title">Follow Along</h4>
+          <div class="social-links-minimal">
+            <a href="#" class="social-item-minimal">
+              <div class="social-icon-box">f</div>
+              <span>Facebook</span>
+            </a>
+            <a href="#" class="social-item-minimal">
+              <div class="social-icon-box">ig</div>
+              <span>Instagram</span>
+            </a>
+            <a href="#" class="social-item-minimal">
+              <div class="social-icon-box">sc</div>
+              <span>Snapchat</span>
+            </a>
+            <a href="#" class="social-item-minimal">
+              <div class="social-icon-box">tw</div>
+              <span>Twitter</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Column 2: Quick Contact -->
+        <div class="footer-col">
+          <h4 data-i18n="footer-contact-title">Quick Contact</h4>
+          <form class="footer-form" action="https://formspree.io/f/mqakvjge" method="post">
+            <div class="form-group"><input type="text" name="name" placeholder="Name" data-i18n-hold="hold-name"
+                required></div>
+            <div class="form-group"><input type="tel" name="phone" placeholder="Phone" data-i18n-hold="hold-phone"
+                required></div>
+            <div class="form-group"><input type="email" name="email" placeholder="Email" data-i18n-hold="hold-email"
+                required></div>
+            <div class="form-group">
+              <div style="display:flex; gap:4px;">
+                <select name="event_day" required
+                  style="flex:1; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; font-size:12px; color-scheme:dark;">
+                  <option value="">Día</option>
+                </select>
+                <select name="event_month" required
+                  style="flex:2; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; font-size:12px; color-scheme:dark;">
+                  <option value="">Mes</option>
+                  <option value="01">Ene</option>
+                  <option value="02">Feb</option>
+                  <option value="03">Mar</option>
+                  <option value="04">Abr</option>
+                  <option value="05">May</option>
+                  <option value="06">Jun</option>
+                  <option value="07">Jul</option>
+                  <option value="08">Ago</option>
+                  <option value="09">Sep</option>
+                  <option value="10">Oct</option>
+                  <option value="11">Nov</option>
+                  <option value="12">Dic</option>
+                </select>
+                <select name="event_year" required
+                  style="flex:1.5; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; font-size:12px; color-scheme:dark;">
+                  <option value="">Año</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group"><textarea name="message" placeholder="How Can We Help You?"
+                data-i18n-hold="hold-message" rows="2"></textarea>
+            </div>
+            <div class="form-group" style="position:relative;">
+              <input type="text" id="requested-talent" name="requested_talent"
+                placeholder="Nombre del DJ/Artista (Opcional)" data-i18n-hold="hold-talent">
+              <div id="talent-status" style="font-size: 10px; margin-top: 4px; display: none;"></div>
+            </div>
+            <button type="submit" class="btn primary small" data-i18n="btn-send">Send »</button>
+          </form>
+        </div>
+
+        <!-- Column 3: Availability -->
+        <div class="footer-col">
+          <h4 data-i18n="footer-avail-title">Check Availability</h4>
+          <div class="footer-availability">
+            <select id="avail-month"
+              style="flex:2; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px; font-size:12px; color-scheme:dark;">
+              <option selected disabled data-i18n="option-month">Month</option>
+              <option value="01">Ene</option>
+              <option value="02">Feb</option>
+              <option value="03">Mar</option>
+              <option value="04">Abr</option>
+              <option value="05">May</option>
+              <option value="06">Jun</option>
+              <option value="07">Jul</option>
+              <option value="08">Ago</option>
+              <option value="09">Sep</option>
+              <option value="10">Oct</option>
+              <option value="11">Nov</option>
+              <option value="12">Dic</option>
+            </select>
+            <select id="avail-day"
+              style="flex:1; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px; font-size:12px; color-scheme:dark;">
+              <option selected disabled data-i18n="option-day">Day</option>
+            </select>
+            <select id="avail-year"
+              style="flex:1.5; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px; font-size:12px; color-scheme:dark;">
+              <option selected disabled data-i18n="option-year">Year</option>
+            </select>
+            <div style="margin-top: 10px;">
+              <input type="text" id="check-talent-name" placeholder="Nombre del DJ"
+                style="width: 100%; margin-bottom: 5px;">
+              <button class="btn secondary small"
+                style="background: rgba(102, 163, 255, 0.2); border-color: rgba(102, 163, 255, 0.4); width: 100%;"
+                onclick="checkTalentAvailability()" data-i18n="btn-check">Check Availability »</button>
+              <div id="availability-result" style="font-size: 12px; margin-top: 8px; text-align: center;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        style="margin-top: 60px; padding-top: 30px; border-top: 1px solid var(--line); text-align: center; font-size: 13px; color: var(--muted);">
+        © <span id="year"></span> Miami DJ Beat. <span data-i18n="footer-rights">All rights reserved.</span>
+      </div>
+    </div>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-config.js?v=20260226-1"></script>
+  <script src="./translations.js?v=20260226-1"></script>
+  <script src="./i18n.js?v=20260226-1"></script>
+  <script src="./form-handler.js"></script>
+  <script>
+    async function updateHeaderAuth() {
+      const { data: { session } } = await supabase.auth.getSession();
+      const loginBtn = document.getElementById('header-login-btn');
+      const authZone = document.getElementById('header-auth-zone');
+      const logoutBtn = document.getElementById('logoutBtn');
+      if (session) {
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (authZone) authZone.style.display = 'block';
+        const { data: profile } = await supabase.from('dj_profiles').select('photo_url').eq('user_id', session.user.id).single();
+        if (profile && profile.photo_url) { document.querySelector('.avatar').src = profile.photo_url; }
+      } else {
+        if (loginBtn) loginBtn.style.display = 'block';
+        if (authZone) authZone.style.display = 'none';
+      }
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', async (e) => {
+          e.preventDefault(); await supabase.auth.signOut(); window.location.reload();
+        });
+      }
+    }
+    const btn = document.getElementById('accountBtn');
+    const menu = document.getElementById('accountMenu');
+    if (btn && menu) {
+      function closeMenu() { btn.setAttribute('aria-expanded', 'false'); menu.setAttribute('aria-hidden', 'true'); menu.classList.remove('open'); }
+      btn.addEventListener('click', (e) => { e.stopPropagation(); const isOpen = menu.classList.contains('open'); if (isOpen) closeMenu(); else { btn.setAttribute('aria-expanded', 'true'); menu.setAttribute('aria-hidden', 'false'); menu.classList.add('open'); } });
+      document.addEventListener('click', closeMenu);
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+    }
+    document.addEventListener('DOMContentLoaded', updateHeaderAuth);
+  </script>
+  <script>
+    // Auto-fill Referral Code, DJ name, and Event Date from URL
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+
+      // Referral code
+      const ref = urlParams.get('ref');
+      if (ref) {
+        document.querySelectorAll('input[name="referred_by"]').forEach(input => {
+          input.value = ref;
+          input.style.borderColor = 'var(--gold)';
+        });
+      }
+
+      // DJ name pre-fill (from RESERVAR button on DJ profile)
+      const djParam = urlParams.get('dj');
+      if (djParam) {
+        const talentInputs = document.querySelectorAll('input[name="requested_talent"], #requested-talent, #check-talent-name');
+        talentInputs.forEach(input => {
+          input.value = djParam;
+          input.style.borderColor = 'var(--gold)';
+        });
+        // Scroll to contact section
+        const contactSection = document.getElementById('contact');
+        if (contactSection) { setTimeout(() => contactSection.scrollIntoView({ behavior: 'smooth' }), 400); }
+      }
+
+      // Event date pre-fill (Support ISO date from URL)
+      const dateParam = urlParams.get('date');
+      if (dateParam && dateParam.includes('-')) {
+        const parts = dateParam.split('-');
+        if (parts.length === 3) {
+          const ySel = document.querySelectorAll('[name="event_year"]');
+          const mSel = document.querySelectorAll('[name="event_month"]');
+          const dSel = document.querySelectorAll('[name="event_day"]');
+          ySel.forEach(s => s.value = parts[0]);
+          mSel.forEach(s => s.value = parts[1]);
+          dSel.forEach(s => s.value = parts[2]);
+        }
+      }
+    });
+  </script>
+  <script>
+    const header = document.getElementById('mainHeader');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) {
+        header.classList.add('scrolled');
+      } else {
+        header.classList.remove('scrolled');
+      }
+    });
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // Mobile Menu Toggle
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    if (mobileBtn && mobileMenu) {
+      mobileBtn.addEventListener('click', () => {
+        mobileBtn.classList.toggle('active');
+        mobileMenu.classList.toggle('active');
+        document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+      });
+
+      // Close on link click
+      mobileMenu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          mobileBtn.classList.remove('active');
+          mobileMenu.classList.remove('active');
+          document.body.style.overflow = '';
+        });
+      });
+    }
+
+    // --- SCROLL SPY: activa la línea dorada en el nav según sección visible ---
+    (function () {
+      const navLinks = document.querySelectorAll('#mainNav a[href^="#"], #mainNav a[href="./index.html"]');
+      const sections = ['services', 'dj-types', 'areas', 'experience', 'residencies', 'marketplace', 'proof', 'contact'];
+
+      function setActive(sectionId) {
+        navLinks.forEach(link => {
+          const href = link.getAttribute('href');
+          const isHome = href === './index.html' || href === '/' || href === '';
+          if (!sectionId && isHome) {
+            link.classList.add('active');
+          } else if (href === '#' + sectionId) {
+            link.classList.add('active');
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            setActive(entry.target.id);
+          }
+        });
+      }, { rootMargin: '-30% 0px -60% 0px', threshold: 0 });
+
+      sections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) observer.observe(el);
+      });
+
+      // Si estamos al top (hero), activa INICIO
+      window.addEventListener('scroll', () => {
+        if (window.scrollY < 200) setActive(null);
+      }, { passive: true });
+    })();
+
+    // Availability Check Population Logic
+    function initAvailabilityForm() {
+      const currentYear = new Date().getFullYear();
+
+      const setupDateGroup = (mField, dField, yField) => {
+        const mSel = (typeof mField === 'string') ? document.getElementById(mField) : mField;
+        const dSel = (typeof dField === 'string') ? document.getElementById(dField) : dField;
+        const ySel = (typeof yField === 'string') ? document.getElementById(yField) : yField;
+
+        if (!mSel || !dSel || !ySel) return;
+
+        // Reset and populate Years (Current + 10)
+        ySel.innerHTML = `<option value="" disabled selected data-i18n="option-year">Año</option>`;
+        for (let i = 0; i <= 10; i++) {
+          const y = currentYear + i;
+          const opt = document.createElement('option');
+          opt.value = y;
+          opt.textContent = y;
+          if (y === 2026) opt.selected = true;
+          ySel.appendChild(opt);
+        }
+
+        // Reset and populate Months
+        mSel.innerHTML = `<option value="" disabled selected data-i18n="option-month">Mes</option>`;
+        for (let i = 1; i <= 12; i++) {
+          const opt = document.createElement('option');
+          const mStr = String(i).padStart(2, '0');
+          opt.value = mStr;
+          opt.setAttribute('data-i18n', `month-${i}`);
+          opt.textContent = `Mes ${i}`;
+          mSel.appendChild(opt);
+        }
+
+        // Day Updater
+        const updateDays = () => {
+          const month = parseInt(mSel.value);
+          if (isNaN(month)) {
+            dSel.innerHTML = `<option value="" disabled selected data-i18n="option-day">Día</option>`;
+            return;
+          }
+          const year = parseInt(ySel.value) || currentYear;
+          const daysInMonth = new Date(year, month, 0).getDate();
+          const currentVal = dSel.value;
+
+          dSel.innerHTML = `<option value="" disabled selected data-i18n="option-day">Día</option>`;
+          for (let d = 1; d <= daysInMonth; d++) {
+            const dStr = String(d).padStart(2, '0');
+            const opt = document.createElement('option');
+            opt.value = dStr;
+            opt.textContent = d;
+            if (dStr === currentVal) opt.selected = true;
+            dSel.appendChild(opt);
+          }
+        };
+
+        mSel.addEventListener('change', updateDays);
+        ySel.addEventListener('change', updateDays);
+        updateDays(); // Initial call to show empty or pre-filled days
+      };
+
+      // 1. Hero / Registration (removed in this page but setup anyway if it exists)
+      setupDateGroup('event_month', 'event_day', 'event_year');
+
+      // 2. Big Day Section (underscored)
+      setupDateGroup('avail_month', 'avail_day', 'avail_year');
+
+      // 3. Footer Section (hyphenated)
+      setupDateGroup('avail-month', 'avail-day', 'avail-year');
+
+      // 4. Any other forms with [name=...]
+      const nameMonths = document.querySelectorAll('select[name="event_month"]');
+      nameMonths.forEach(m => {
+        const parent = m.closest('div');
+        if (parent) {
+          const d = parent.querySelector('select[name="event_day"]');
+          const y = parent.querySelector('select[name="event_year"]');
+          if (d && y) setupDateGroup(m, d, y);
+        }
+      });
+
+      if (window.i18n) window.i18n.updateUI();
+    }
+
+    function checkBigDayAvailability() {
+      const m = document.getElementById('avail_month')?.value;
+      const d = document.getElementById('avail_day')?.value;
+      const y = document.getElementById('avail_year')?.value;
+      if (m && d && y && !isNaN(parseInt(m)) && !isNaN(parseInt(d)) && !isNaN(parseInt(y))) {
+        window.location.href = `./find-dj.html?date=${y}-${m}-${d}`;
+      } else {
+        alert('Por favor selecciona una fecha completa.');
+      }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      initAvailabilityForm();
+      loadHomeHeroSettings();
+    });
+
+    async function loadHomeHeroSettings() {
+      const db = window.getSupabaseClient();
+      if (!db) return;
+
+      const { data } = await db.from('platform_settings').select('key, value');
+      if (!data) return;
+
+      const settings = {};
+      data.forEach(row => settings[row.key] = row.value);
+
+      const video = document.getElementById('home-hero-video');
+      const placeholder = document.getElementById('home-hero-kb');
+      const headline = document.getElementById('home-hero-headline');
+      const isHomeActive = settings.home_hero_active !== 'false'; // Quarantine Logic
+
+      // Video Source
+      const defaultVideo = "https://cdn.pixabay.com/video/2021/04/12/70860-536979203_large.mp4"; // Luxury Party Placeholder
+      const videoSrc = (settings.home_hero_video_url && isHomeActive) ? settings.home_hero_video_url : defaultVideo;
+
+      if (video) {
+        if (isHomeActive && settings.home_hero_video_url) {
+          video.src = settings.home_hero_video_url;
+          video.style.display = 'block';
+        } else {
+          // QUARANTINE: Show placeholder, hide or reset video
+          if (placeholder) placeholder.style.display = 'block';
+          video.src = "";
+          video.style.display = 'none';
+        }
+
+        video.load();
+        video.onloadeddata = () => {
+          if (placeholder && isHomeActive && settings.home_hero_video_url) placeholder.style.display = 'none';
+        };
+      }
+
+      // Video Volume & Interaction
+      if (video && isHomeActive) {
+        const vol = parseFloat(settings.home_hero_video_volume) || 0;
+        video.muted = true; // Always start muted for autoplay
+
+        const tryUnmute = () => {
+          if (vol > 0) {
+            video.muted = false;
+            video.volume = vol;
+          }
+          window.removeEventListener('click', tryUnmute);
+          window.removeEventListener('scroll', tryUnmute);
+        };
+        window.addEventListener('click', tryUnmute);
+        window.addEventListener('scroll', tryUnmute);
+      }
+
+      // Headlines (Dynamic Text) — Respect Quarantine
+      if (isHomeActive) {
+        const isEnglish = document.documentElement.lang === 'en' ||
+          (document.querySelector('.lang-btn[data-lang="en"]')?.classList.contains('active'));
+
+        if (isEnglish && settings.home_hero_title_en && headline) {
+          headline.innerHTML = settings.home_hero_title_en;
+          headline.removeAttribute('data-i18n'); // Override i18n
+        } else if (!isEnglish && settings.home_hero_title_es && headline) {
+          headline.innerHTML = settings.home_hero_title_es;
+          headline.removeAttribute('data-i18n');
+        }
+      }
+
+      // Audio/Video Control based on Visibility
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (video) {
+            if (entry.isIntersecting) {
+              video.play().catch(e => console.log("Autoplay blocked:", e));
+            } else {
+              video.pause();
+            }
+          }
+        });
+      }, { threshold: 0.1 });
+      const heroSection = document.getElementById('home-hero');
+      if (heroSection) observer.observe(heroSection);
+    }
+  </script>
+  <link rel="stylesheet" href="./mdj-assistant.css" />
+  <script src="./mdj-assistant.js"></script>
+</body>
+
+</html>

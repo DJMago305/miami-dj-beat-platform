@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Miami DJ Beat — Verify Certificate</title>
+    <link rel="stylesheet" href="./certification.css" />
+</head>
+
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <div class="logoMark">M</div>
+            <div>
+                <div class="brandTitle">MIAMI DJ BEAT</div>
+                <div class="brandSub">Certificate Verification</div>
+            </div>
+        </div>
+        <nav class="nav">
+            <a class="navLink" href="./index.html">Home</a>
+            <a class="navLink" href="./certification-about.html">About</a>
+            <a class="navLink active" href="./verify.html">Verify</a>
+            <a class="navLink" href="./directory.html">Directory</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="hero card">
+            <h1>Verify a Miami DJ Beat Certificate</h1>
+            <p class="muted">
+                Enter the Certification ID or open a verification link like:
+                <strong>verify.html?id=MDB-YYYYMMDD-XXXX</strong>
+            </p>
+
+            <div class="grid2">
+                <label class="field">
+                    <span>Certification ID</span>
+                    <input id="certId" type="text" placeholder="MDB-YYYYMMDD-XXXX" maxlength="25" />
+                </label>
+                <div class="field">
+                    <span>&nbsp;</span>
+                    <button id="btnVerify" class="btn primary">Verify</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="result" class="card hidden">
+            <div class="sectionHeader">
+                <h2>Verification Result</h2>
+                <p class="muted" id="subline"></p>
+            </div>
+
+            <div class="badgeLine">
+                <span id="statusBadge" class="badge">—</span>
+                <span id="idLine" class="scoreLine">—</span>
+            </div>
+
+            <div id="statusMessage" class="kpi" style="margin-top:12px; display:none;"></div>
+
+            <div id="aboutLink" style="margin-top:12px; display:none;">
+                <a class="btn secondary" href="./certification-about.html">
+                    ¿Qué significa esta certificación?
+                </a>
+            </div>
+
+            <div class="divider"></div>
+
+            <div id="details" class="feedback"></div>
+        </section>
+
+        <footer class="footer muted">
+            © <span id="year"></span> Miami DJ Beat LLC — Verify v1
+        </footer>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=20260226-1"></script>
+    <script>
+        const supabaseClient = supabase.createClient(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY);
+    </script>
+    <script>
+        (function () {
+            const $ = (id) => document.getElementById(id);
+
+            function escapeHtml(str) {
+                return String(str)
+                    .replaceAll("&", "&amp;")
+                    .replaceAll("<", "&lt;")
+                    .replaceAll(">", "&gt;")
+                    .replaceAll('"', "&quot;")
+                    .replaceAll("'", "&#039;");
+            }
+
+            function getQueryId() {
+                const p = new URLSearchParams(location.search);
+                return (p.get("id") || "").trim();
+            }
+
+            async function verify() {
+                const id = $("certId").value.trim();
+                const ok = /^MDB-\d{8}-[0-9A-Z]{4}$/.test(id);
+
+                $("result").classList.remove("hidden");
+                $("aboutLink").style.display = "block";
+                $("year").textContent = new Date().getFullYear();
+                $("idLine").textContent = `ID: ${id || "—"}`;
+
+                if (!id) {
+                    $("statusBadge").textContent = "Missing ID";
+                    $("statusBadge").style.borderColor = "var(--bad)";
+                    $("subline").textContent = "No ID provided.";
+                    $("details").innerHTML = `<div class="kpi"><strong>Action:</strong> Please enter an ID to verify.</div>`;
+                    return;
+                }
+
+                if (!ok) {
+                    $("statusBadge").textContent = "Invalid Format";
+                    $("statusBadge").style.borderColor = "var(--bad)";
+                    $("subline").textContent = "The ID format is not valid.";
+                    $("details").innerHTML = `<div class="kpi"><strong>Expected:</strong> MDB-YYYYMMDD-XXXX (letters/numbers only)</div>`;
+                    return;
+                }
+
+                const { data, error } = await supabaseClient
+                    .from("certificates")
+                    .select("*")
+                    .eq("cert_id", id)
+                    .single();
+
+                if (error || !data) {
+                    $("statusBadge").textContent = "NOT FOUND";
+                    $("statusBadge").style.borderColor = "var(--bad)";
+                    $("subline").textContent = "No certificate found for this ID.";
+                    $("details").innerHTML = `<div class="kpi">Invalid or non-existent certificate.</div>`;
+                    return;
+                }
+
+                const graduated = data.graduated;
+                const preGrad = data.pre_graduated;
+                const reg = (data.public_year && data.public_seq)
+                    ? `${data.public_year}-${String(data.public_seq).padStart(6, "0")}`
+                    : "—";
+
+                // 1) REVOKED ────────────────────────────────────────
+                if (data.revoked) {
+                    $("statusBadge").textContent = "REVOKED — NOT VALID";
+                    $("statusBadge").style.borderColor = "var(--bad)";
+                    $("subline").textContent = "This credential has been revoked by Miami DJ Beat.";
+                    const reason = (data.revoked_reason || "No reason provided.").trim();
+                    const revokedAt = data.revoked_at ? new Date(data.revoked_at).toLocaleString() : "—";
+                    $("details").innerHTML = `
+                        <div class="kpi">
+                            <strong>Status:</strong> REVOKED<br>
+                            <strong>Reason:</strong> ${escapeHtml(reason)}<br>
+                            <strong>Revoked at:</strong> ${escapeHtml(revokedAt)}<br>
+                            <span class="muted">ID is not valid for booking under MDB certification.</span>
+                        </div>
+                        <div class="kpi">
+                            <a class="btn secondary" href="./certification-about.html">¿Qué significa esta certificación?</a>
+                            <a class="btn" href="./standards.html">Ver Standards</a>
+                            <a class="btn secondary" href="mailto:compliance@miamidjbeat.com?subject=MDB+Report+-+${encodeURIComponent(id)}&body=Certificate+ID:+${encodeURIComponent(id)}%0AIncident+description:">Reportar incidencia</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 2) SUSPENDED ────────────────────────────────────
+                if (data.suspended) {
+                    $("statusBadge").textContent = "SUSPENDED — UNDER REVIEW";
+                    $("statusBadge").style.borderColor = "var(--warn)";
+                    $("subline").textContent = "This credential is temporarily suspended pending review.";
+                    $("details").innerHTML = `
+                        <div class="kpi">
+                            <strong>Status:</strong> SUSPENDED<br>
+                            <span class="muted">Venues should request clarification before confirming a booking under MDB certification.</span>
+                        </div>
+                        <div class="kpi">
+                            <a class="btn secondary" href="./certification-about.html">¿Qué significa esta certificación?</a>
+                            <a class="btn" href="./standards.html">Ver Standards</a>
+                            <a class="btn secondary" href="mailto:compliance@miamidjbeat.com?subject=MDB+Report+-+${encodeURIComponent(id)}&body=Certificate+ID:+${encodeURIComponent(id)}%0AIncident+description:">Reportar incidencia</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 3) EXPIRED ──────────────────────────────────────
+                const now = new Date();
+                const expiresAt = data.expires_at ? new Date(data.expires_at) : null;
+                const isExpired = !!(expiresAt && expiresAt.getTime() < now.getTime());
+
+                if (isExpired) {
+                    $("statusBadge").textContent = "EXPIRED — RENEWAL REQUIRED";
+                    $("statusBadge").style.borderColor = "var(--warn)";
+                    $("subline").textContent = "This credential has expired and must be renewed.";
+                    $("details").innerHTML = `
+                        <div class="kpi">
+                            <strong>Status:</strong> EXPIRED<br>
+                            <strong>Expired at:</strong> ${escapeHtml(expiresAt.toLocaleString())}<br>
+                            <span class="muted">Renewal is required to be considered active under Miami DJ Beat.</span>
+                        </div>
+                        <div class="kpi">
+                            <a class="btn primary" href="./certification.html">DJ: Renew / Re-test</a>
+                            <a class="btn" href="./standards.html">Ver Standards</a>
+                            <a class="btn secondary" href="mailto:compliance@miamidjbeat.com?subject=MDB+Report+-+${encodeURIComponent(id)}&body=Certificate+ID:+${encodeURIComponent(id)}%0AIncident+description:">Reportar incidencia</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 4) NORMAL ───────────────────────────────────────
+                $("statusBadge").textContent = graduated ? "VERIFIED — GRADUADO"
+                    : preGrad ? "VERIFIED — PRE-GRADUADO"
+                        : "RECORDED — THEORY FAILED";
+                $("statusBadge").style.borderColor = graduated ? "var(--good)"
+                    : preGrad ? "var(--warn)" : "var(--bad)";
+                $("subline").textContent = "Official Miami DJ Beat record found.";
+
+                supabaseClient.rpc("increment_verify_hits", { p_cert_id: id })
+                    .then(({ error }) => { if (error) console.warn("verify_hits RPC:", error); });
+
+                const statusBox = $("statusMessage");
+                statusBox.style.display = "block";
+                if (graduated) {
+                    statusBox.innerHTML = `<strong style="color:var(--good);">Apto para operación profesional en cabina real.</strong>
+                        <div class="muted" style="margin-top:6px;">Cumple estándar Miami DJ Beat en teoría y práctica.</div>`;
+                } else if (preGrad) {
+                    statusBox.innerHTML = `<strong style="color:var(--warn);">Conocimiento validado.</strong>
+                        <div class="muted" style="margin-top:6px;">Pendiente evaluación práctica en cabina física.</div>`;
+                } else {
+                    statusBox.innerHTML = `<strong style="color:var(--bad);">No alcanza el estándar de certificación.</strong>
+                        <div class="muted" style="margin-top:6px;">Requiere formación adicional antes de presentarse como DJ profesional certificado.</div>`;
+                }
+
+                const expLine = expiresAt
+                    ? `Active until: <strong>${escapeHtml(expiresAt.toLocaleString())}</strong><br>`
+                    : "";
+                $("details").innerHTML = `
+                  <div class="kpi">
+                    <strong>DJ:</strong> ${escapeHtml(data.dj_name)}<br>
+                    <strong>Registry:</strong> ${escapeHtml(reg)}<br>
+                    <strong>ID:</strong> ${escapeHtml(id)}<br>
+                    <strong>Theory Score:</strong> ${escapeHtml(String(data.theory_score))} (${escapeHtml(String(data.theory_pct))}%)<br>
+                    ${expLine}
+                    <strong>Status:</strong> ${graduated ? "GRADUADO (PRO)" : preGrad ? "PRE-GRADUADO" : "NOT CERTIFIED"}<br>
+                    <span class="muted">Issued: ${new Date(data.created_at).toLocaleString()}</span>
+                  </div>
+                `;
+            }
+
+            document.addEventListener("DOMContentLoaded", () => {
+                $("year").textContent = new Date().getFullYear();
+                const qid = getQueryId();
+                if (qid) $("certId").value = qid;
+                $("btnVerify").addEventListener("click", verify);
+                if (qid) verify();
+            });
+        })();
+    </script>
+</body>
+
+</html>

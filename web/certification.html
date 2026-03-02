@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Miami DJ Beat — DJ Workflow Certification</title>
+    <meta name="description"
+        content="Evaluación oficial DJ Workflow Professional — Miami DJ Beat. Teoría, Serato, Rekordbox y escenarios reales de cabina." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="./certification.css" />
+</head>
+
+<body>
+
+    <!-- ── TOP BAR ──────────────────────────────────────────── -->
+    <header class="topbar">
+        <div class="brand">
+            <div class="logoMark">M</div>
+            <div>
+                <div class="brandTitle">MIAMI DJ BEAT</div>
+                <div class="brandSub">DJ Workflow Certification — Pre-Graduation</div>
+            </div>
+        </div>
+        <nav class="nav">
+            <a class="navLink" href="./index.html">Home</a>
+            <a class="navLink" href="./certification-about.html">About</a>
+            <a class="navLink" href="./verify.html">Verify</a>
+            <a class="navLink" href="./directory.html">Directory</a>
+            <a class="navLink" href="./courses.html">Courses</a>
+            <a class="navLink active" href="./certification.html">Certification</a>
+        </nav>
+    </header>
+
+    <main class="container">
+
+        <!-- ── HERO / INTRO ──────────────────────────────────── -->
+        <section class="hero card">
+            <div class="certBadge">🏆 CERTIFICACIÓN OFICIAL — MIAMI DJ BEAT</div>
+            <h1>DJ Workflow Professional</h1>
+            <p class="muted heroSub">
+                Evaluación técnica de organización, Serato, Rekordbox y mentalidad de cabina.<br />
+                <strong>32 preguntas</strong> · Múltiple opción + desarrollo corto con rúbrica · Duración estimada:
+                <strong>30–45 min</strong>
+            </p>
+
+            <div class="levelGrid">
+                <div class="levelPill gold">80–100% → DJ Estructurado Profesional</div>
+                <div class="levelPill silver">65–79% → Nivel Intermedio Alto</div>
+                <div class="levelPill bronze">50–64% → Nivel Intermedio</div>
+                <div class="levelPill dim">0–49% → No Apto Profesional</div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="grid2">
+                <label class="field">
+                    <span>Nombre DJ <span class="req">*</span></span>
+                    <input id="djName" type="text" placeholder="Tu nombre artístico" maxlength="50"
+                        autocomplete="off" />
+                </label>
+                <label class="field">
+                    <span>Email (opcional)</span>
+                    <input id="djEmail" type="email" placeholder="name@email.com" maxlength="80" />
+                </label>
+            </div>
+
+            <div class="notice">
+                <strong>Código Profesional — Declaración Obligatoria</strong>
+                <p class="noticeSub">Debes firmar antes de recibir tu resultado final.</p>
+                <label class="checkRow">
+                    <input id="codeAgree" type="checkbox" />
+                    <span>
+                        Reconozco que el DJing es una disciplina cultural con historia, técnica y ética.
+                        Me comprometo a respetar la cabina, a otros DJs y al público.
+                        Entiendo que acceso no significa mérito y que la preparación es obligatoria.
+                    </span>
+                </label>
+            </div>
+        </section>
+
+        <!-- ── STEP-BY-STEP QUIZ ──────────────────────────────────────── -->
+        <section id="quizRoot" class="card">
+
+            <!-- Intro header — shown before exam starts -->
+            <div id="quizIntro" class="sectionHeader" style="text-align:center;padding-bottom:24px;">
+                <h2>Evaluación</h2>
+                <p class="muted">32 preguntas — múltiple opción con corrección automática + respuesta corta con rúbrica
+                    de auto-evaluación.</p>
+                <button id="btnStart" class="btn primary" style="margin-top:24px;min-width:220px;font-size:15px;">▶
+                    COMENZAR EXAMEN</button>
+            </div>
+
+            <!-- Step shell — hidden until exam starts -->
+            <div id="quizShell" class="hidden">
+                <!-- Progress bar -->
+                <div class="stepProgress">
+                    <div class="stepProgressInfo">
+                        <span id="stepLabel" class="stepLabel">Pregunta 1 de 32</span>
+                    </div>
+                    <div class="stepProgressBar">
+                        <div id="stepBar" class="stepBarFill" style="width:3%;"></div>
+                    </div>
+                </div>
+
+                <!-- Section badge -->
+                <div id="stepSection" class="stepSectionBadge"></div>
+
+                <!-- Question card -->
+                <div class="stepCard" id="quizCard">
+                    <div class="stepCardTop">
+                        <span id="stepNum" class="stepNum">PREGUNTA 1 DE 32</span>
+                        <span id="stepPoints" class="stepPts"></span>
+                    </div>
+                    <p id="stepText" class="stepText"></p>
+
+                    <!-- MC Options -->
+                    <div id="stepOpts" class="stepOpts"></div>
+
+                    <!-- MC Feedback banner -->
+                    <div id="stepFeedback" class="stepFeedback hidden"></div>
+
+                    <!-- Short answer zone (type:'short' only) -->
+                    <div id="stepShort" class="hidden">
+                        <textarea id="stepTxt" placeholder="Escribe tu respuesta aquí (mínimo 4 líneas)..."
+                            rows="5"></textarea>
+                        <div id="stepRubric" class="rubricBox"></div>
+                        <div class="sliderSection">
+                            <label class="sliderLabel">
+                                <span>Mi puntuación</span>
+                                <strong id="stepScoreLbl" class="sliderVal">0</strong>
+                            </label>
+                            <input id="stepSlider" type="range" min="0" max="10" value="0" step="1"
+                                aria-label="Puntuación auto-evaluada">
+                            <p class="rubricNote">Sé honesto. Esta puntuación determina tu elegibilidad Pre-Graduado.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="stepNav">
+                    <button id="btnNext" class="stepNextBtn" disabled>SIGUIENTE →</button>
+                    <button id="btnReset" class="btn stepResetBtn">🔄 Reiniciar</button>
+                </div>
+            </div>
+
+            <!-- Result inline — unchanged -->
+            <div id="result" class="result hidden">
+                <div class="divider"></div>
+                <div class="resultTop">
+                    <div>
+                        <div class="badgeLine">
+                            <span id="levelBadge" class="badge">—</span>
+                            <span id="scoreLine" class="scoreLine muted">—</span>
+                        </div>
+                        <div id="preGradLine" class="preGradLine"></div>
+                        <div id="sectionBars" style="margin-top:16px;"></div>
+                    </div>
+                    <div class="resultActions">
+                        <button id="btnPrint" class="btn">🖨 Imprimir / PDF</button>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div id="feedback" class="feedback"></div>
+            </div>
+
+        </section>
+
+        <footer class="footer muted">
+            © <span id="year"></span> Miami DJ Beat LLC — Certification Engine v1 · Historia + Técnica + Ética
+        </footer>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=20260226-1"></script>
+    <script>
+        const supabaseClient = supabase.createClient(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY);
+    </script>
+    <script src="./certification.js"></script>
+</body>
+
+</html>

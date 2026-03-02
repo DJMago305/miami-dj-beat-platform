@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Miami DJ Beat — Standards & Code of Conduct</title>
+    <link rel="stylesheet" href="./certification.css" />
+    <style>
+        .heroAccent {
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 3px;
+            color: var(--gold);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .codeArticle {
+            counter-reset: article;
+        }
+
+        .codeArticle .kpi {
+            counter-increment: article;
+            position: relative;
+            padding-left: 52px;
+        }
+
+        .codeArticle .kpi::before {
+            content: counter(article, decimal-leading-zero);
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-size: 28px;
+            font-weight: 900;
+            color: rgba(197, 160, 89, 0.18);
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .prohibitionList {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .prohibitionList li {
+            display: flex;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            background: rgba(239, 68, 68, 0.04);
+            font-size: 13px;
+            color: var(--muted);
+            align-items: flex-start;
+        }
+
+        .prohibitionList li .icon {
+            font-size: 16px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .commitBox {
+            border: 1px solid rgba(197, 160, 89, 0.35);
+            background: rgba(197, 160, 89, 0.06);
+            border-radius: 16px;
+            padding: 24px 28px;
+            margin-top: 8px;
+        }
+
+        .commitBox p {
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--muted);
+        }
+
+        .commitBox strong {
+            color: var(--text);
+        }
+
+        .sealLine {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .sealBadge {
+            padding: 8px 18px;
+            border: 1px solid rgba(197, 160, 89, 0.4);
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: var(--gold);
+            background: rgba(197, 160, 89, 0.08);
+        }
+
+        .splitVenue {
+            display: grid;
+            gap: 12px;
+        }
+
+        @media(min-width:900px) {
+            .splitVenue {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <div class="logoMark">M</div>
+            <div>
+                <div class="brandTitle">MIAMI DJ BEAT</div>
+                <div class="brandSub">Standards & Code of Conduct</div>
+            </div>
+        </div>
+        <nav class="nav">
+            <a class="navLink" href="./index.html">Home</a>
+            <a class="navLink" href="./certification-about.html">About</a>
+            <a class="navLink" href="./verify.html">Verify</a>
+            <a class="navLink" href="./directory.html">Directory</a>
+            <a class="navLink active" href="./standards.html">Standards</a>
+        </nav>
+    </header>
+
+    <main class="container">
+
+        <!-- HERO -->
+        <section class="card">
+            <div class="heroAccent">MDB Código de Conducta — Versión 1.0</div>
+            <h1>Standards & Code of Conduct</h1>
+            <p class="muted" style="max-width:640px;">
+                La certificación Miami DJ Beat no es solo teoría y técnica.
+                Es un <strong>compromiso público</strong> con el estándar profesional de la cabina.
+                Cada DJ con sello MDB ha aceptado este código al presentar el examen.
+            </p>
+            <div class="sealLine">
+                <div class="sealBadge">MDB CERTIFIED</div>
+                <span class="muted" style="font-size:13px;">Teoría · Práctica · Ética · Responsabilidad</span>
+            </div>
+        </section>
+
+        <!-- PRINCIPIO FUNDADOR -->
+        <section class="card">
+            <div class="sectionHeader">
+                <h2>El principio fundador</h2>
+                <p class="muted">Por qué existe este código.</p>
+            </div>
+            <div class="kpi">
+                <p class="muted" style="line-height:1.9; margin:0;">
+                    Miami es una de las ciudades con mayor densidad de DJs del mundo.
+                    El problema no es la cantidad: es la <strong>falta de un estándar común</strong>.
+                    Venues contratan DJs sin poder verificar preparación real.
+                    Clientes pagan sin saber qué esperan recibir.
+                    DJs compiten en precio en lugar de competir en calidad.
+                    <br><br>
+                    El <strong>Miami DJ Beat Standards Code</strong> existe para cambiar eso.
+                    Un DJ certificado no solo sabe operar equipo — entiende que la cabina
+                    es una responsabilidad hacia el cliente, el venue y la cultura.
+                </p>
+            </div>
+        </section>
+
+        <!-- LOS 5 ESTÁNDARES -->
+        <section class="card">
+            <div class="sectionHeader">
+                <h2>Los 5 Estándares MDB</h2>
+                <p class="muted">Lo que un DJ certificado demuestra en cabina.</p>
+            </div>
+
+            <div class="feedback codeArticle">
+
+                <div class="kpi">
+                    <strong>Preparación Técnica</strong>
+                    <div class="muted" style="margin-top:6px; line-height:1.8;">
+                        El DJ llega con biblioteca organizada, metadata correcta, cues marcados,
+                        beatgrid calibrado y backup físico independiente. La preparación no es opcional:
+                        es el primer acto de respeto al venue.
+                    </div>
+                </div>
+
+                <div class="kpi">
+                    <strong>Control de Energía y Estructura</strong>
+                    <div class="muted" style="margin-top:6px; line-height:1.8;">
+                        El DJ entiende la curva de energía de una noche y ejecuta sets estructurados:
+                        apertura, construcción, peak, descenso. No improvisa sin criterio.
+                        No sube el BPM sin razón. No cierran un set por cansancio — lo cierran por diseño.
+                    </div>
+                </div>
+
+                <div class="kpi">
+                    <strong>Operación Open Format</strong>
+                    <div class="muted" style="margin-top:6px; line-height:1.8;">
+                        El DJ transita entre géneros con intención musical, no con aleatoriedad.
+                        Conoce la diferencia entre diversidad de repertorio y pérdida de hilo.
+                        Una transición de 95 a 124 BPM tiene lógica — y la puede ejecutar limpiamente.
+                    </div>
+                </div>
+
+                <div class="kpi">
+                    <strong>Conducta Profesional en Cabina</strong>
+                    <div class="muted" style="margin-top:6px; line-height:1.8;">
+                        El DJ no negocia en cabina durante el servicio. No consume alcohol en exceso
+                        mientras opera. No abandona la cabina sin reemplazo designado.
+                        No usa el micrófono para llamar la atención sobre sí mismo.
+                        La noche pertenece al cliente, no al DJ.
+                    </div>
+                </div>
+
+                <div class="kpi">
+                    <strong>Responsabilidad con el Venue</strong>
+                    <div class="muted" style="margin-top:6px; line-height:1.8;">
+                        El DJ llega con tiempo suficiente. Coordina el setup con anticipación.
+                        Informa si hay un problema técnico antes de que el cliente lo note.
+                        Al terminar, entrega el equipo en el estado en que lo encontró.
+                        El venue no es su estudio — es un cliente.
+                    </div>
+                </div>
+
+                <div class="kpi">
+                    <strong>Cultura Miami — Versatilidad y Respeto Cultural</strong>
+                    <div class="muted" style="margin-top:6px; line-height:1.8;">
+                        Un DJ certificado por Miami DJ Beat demuestra competencia cultural y versatilidad
+                        propia del mercado Miami: capacidad de navegar transiciones y contextos entre
+                        <strong>latinx (reggaetón/dembow), salsa, bachata, merengue, crossover, hip hop y house</strong>
+                        sin perder la pista ni faltar el respeto a la identidad del venue.
+                    </div>
+                    <ul class="prohibitionList" style="margin-top:10px; background:none;">
+                        <li style="background:rgba(197,160,89,0.04); border-color:rgba(197,160,89,0.15);">
+                            <span class="icon">✓</span>
+                            <span>Respeta el <em>sound identity</em> del venue y su público principal.</span>
+                        </li>
+                        <li style="background:rgba(197,160,89,0.04); border-color:rgba(197,160,89,0.15);">
+                            <span class="icon">✓</span>
+                            <span>No ridiculiza géneros, culturas o audiencias — en cabina ni en redes.</span>
+                        </li>
+                        <li style="background:rgba(197,160,89,0.04); border-color:rgba(197,160,89,0.15);">
+                            <span class="icon">✓</span>
+                            <span>Ejecuta transiciones limpias entre géneros con criterio, no por impulso ni ego.</span>
+                        </li>
+                        <li style="background:rgba(197,160,89,0.04); border-color:rgba(197,160,89,0.15);">
+                            <span class="icon">✓</span>
+                            <span>Mantiene lenguaje profesional y apropiado al ambiente del evento.</span>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- LO QUE UN DJ MDB NO HACE -->
+        <section class="card">
+            <div class="sectionHeader">
+                <h2>Lo que un DJ MDB Certified no hace</h2>
+                <p class="muted">Prohibiciones explícitas. Sin zona gris.</p>
+            </div>
+
+            <ol class="prohibitionList" style="list-style:none; counter-reset:prohib;">
+                <li style="counter-increment:prohib;">
+                    <span class="icon">🚫</span>
+                    <span><strong>Sabotaje de energía:</strong> elevar BPM/energía deliberadamente para perjudicar al
+                        siguiente DJ o al flujo del venue.</span>
+                </li>
+                <li style="counter-increment:prohib;">
+                    <span class="icon">🚫</span>
+                    <span><strong>Manipulación de cabina ajena:</strong> tocar ganancias, limitadores o settings
+                        críticos del sistema sin autorización explícita.</span>
+                </li>
+                <li style="counter-increment:prohib;">
+                    <span class="icon">🚫</span>
+                    <span><strong>Red-lining:</strong> operar consistentemente en clipping o niveles inseguros que
+                        pongan en riesgo equipo o audiencia.</span>
+                </li>
+                <li style="counter-increment:prohib;">
+                    <span class="icon">🚫</span>
+                    <span><strong>Falta de backups:</strong> presentarse a un set profesional sin plan offline mínimo
+                        (emergency crate o USB).</span>
+                </li>
+                <li style="counter-increment:prohib;">
+                    <span class="icon">🚫</span>
+                    <span><strong>Conducta irrespetuosa:</strong> insultos, amenazas, discriminación o humillación hacia
+                        staff, DJs, promoters o público — en persona o en redes.</span>
+                </li>
+                <li style="counter-increment:prohib;">
+                    <span class="icon">🚫</span>
+                    <span><strong>Uso fraudulento del sello:</strong> reclamar certificación activa si está suspendida o
+                        revocada. Usar ID ajeno. Falsificar estado MDB ante venues o clientes.</span>
+                </li>
+                <li style="counter-increment:prohib;">
+                    <span class="icon">🚫</span>
+                    <span><strong>Incumplimiento grave repetido:</strong> patrón documentado de fallas que demuestre
+                        negligencia profesional persistente, independientemente de la gravedad individual.</span>
+                </li>
+            </ol>
+        </section>
+
+
+        <!-- FIRMA IMPLÍCITA + REVOCACIÓN -->
+        <section class="card">
+            <div class="sectionHeader">
+                <h2>La firma implícita</h2>
+                <p class="muted">Qué significa presentar el examen MDB.</p>
+            </div>
+
+            <div class="commitBox">
+                <p>
+                    Al presentar el examen teórico o participar en la evaluación práctica, el DJ declara que
+                    <strong>ha leído, entiende y acepta</strong> este Código.
+                    El desconocimiento del Código no es defensa válida para evitar consecuencias.
+                </p>
+            </div>
+
+            <div class="sectionHeader" style="margin-top:24px;">
+                <h2>Revocación y cumplimiento</h2>
+                <p class="muted">El estándar tiene dientes.</p>
+            </div>
+
+            <div class="kpi">
+                <p class="muted" style="line-height:1.8; margin:0 0 14px;">
+                    Miami DJ Beat se reserva el derecho de <strong>suspender o revocar</strong> una certificación
+                    si existe evidencia razonable, documentada y verificable de una violación seria de este Código.
+                    La decisión puede basarse en reportes de venues, promoters, instructores, colegas
+                    y/o evidencia audiovisual.
+                </p>
+
+                <div class="feedback">
+                    <div class="kpi">
+                        <strong>⚠️ Suspensión</strong>
+                        <div class="muted" style="margin-top:4px;">
+                            Estado temporal mientras se investiga o se exige corrección formal.
+                            El ID MDB queda en estado <em>suspended</em> en el sistema de verificación.
+                        </div>
+                    </div>
+                    <div class="kpi">
+                        <strong>🚫 Revocación</strong>
+                        <div class="muted" style="margin-top:4px;">
+                            Pérdida definitiva del estatus MDB. El ID queda marcado como
+                            <em>revoked</em> en verify — visible a venues y bookers.
+                        </div>
+                    </div>
+                    <div class="kpi">
+                        <strong>🔄 Re-certificación</strong>
+                        <div class="muted" style="margin-top:4px;">
+                            Puede requerir re-entrenamiento formal, re-examen teórico completo
+                            y re-evaluación práctica presencial ante instructor.
+                        </div>
+                    </div>
+                </div>
+
+                <p class="muted" style="margin-top:14px; font-size:12px; line-height:1.7;">
+                    <strong>Nota:</strong> La certificación MDB es una credencial privada emitida por Miami DJ Beat LLC.
+                    No constituye licencia gubernamental, habilitación laboral legal, ni membresía sindical.
+                    Su valor es reputacional y operacional dentro de la comunidad DJ de Miami y mercados asociados.
+                </p>
+            </div>
+
+            <div class="sealLine" style="margin-top:20px;">
+                <div class="sealBadge">MDB — HISTORIA · TÉCNICA · ÉTICA</div>
+            </div>
+        </section>
+
+        <!-- RENOVACIÓN -->
+        <section class="card">
+            <div class="sectionHeader">
+                <h2>Renovación</h2>
+                <p class="muted">El sello MDB no es permanente por defecto.</p>
+            </div>
+            <div class="kpi">
+                <p class="muted" style="line-height:1.8; margin:0 0 14px;">
+                    La certificación Miami DJ Beat requiere renovación periódica para asegurar vigencia técnica,
+                    ética y adaptación a los estándares de cabina actuales.
+                    Una certificación no renovada pierde estado <em>active</em> en el sistema de verificación.
+                </p>
+                <div class="feedback">
+                    <div class="kpi">
+                        <strong>⏱ Período</strong>
+                        <div class="muted" style="margin-top:4px;">
+                            <strong>12 meses</strong> desde la fecha de emisión original.
+                            El sistema muestra fecha de vencimiento en verify.html.
+                        </div>
+                    </div>
+                    <div class="kpi">
+                        <strong>📋 Proceso de renovación</strong>
+                        <div class="muted" style="margin-top:4px;">
+                            Puede incluir: mini-examen de actualización de estándares, revisión de conducta
+                            y/o evaluación práctica abreviada ante instructor.
+                        </div>
+                    </div>
+                    <div class="kpi">
+                        <strong>🔄 Si no renueva</strong>
+                        <div class="muted" style="margin-top:4px;">
+                            El ID MDB queda marcado como <em>expired</em> en verify.
+                            El DJ puede reiniciar el proceso completo para recuperar estado <em>active</em>.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA VENUE -->
+        <section class="card">
+            <div class="sectionHeader">
+                <h2>Para venues y bookers</h2>
+                <p class="muted">Cómo usar el sello en tu proceso de contratación.</p>
+            </div>
+
+            <div class="splitVenue">
+                <div class="kpi">
+                    <strong>Antes del booking</strong>
+                    <div class="muted" style="margin-top:6px; line-height:1.8;">
+                        Pide el ID MDB al DJ. Verifícalo en Verify antes de firmar contrato.
+                        Un DJ con sello válido ha pasado evaluación de preparación técnica
+                        y ha aceptado este código formalmente.
+                    </div>
+                    <div class="actions" style="margin-top:12px;">
+                        <a class="btn primary" href="./verify.html">Verificar ID MDB</a>
+                    </div>
+                </div>
+
+                <div class="kpi">
+                    <strong>Si el DJ no cumple</strong>
+                    <div class="muted" style="margin-top:6px; line-height:1.8;">
+                        Si un DJ con sello MDB no cumple los estándares documentados aquí,
+                        puedes reportarlo. El sistema de certificación es tan fuerte
+                        como la responsabilidad que exigimos a quienes lo portan.
+                    </div>
+                    <div class="actions" style="margin-top:12px;">
+                        <a class="btn" href="./certification-about.html">¿Qué evalúa el sistema?</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer muted">
+            © <span id="year"></span> Miami DJ Beat LLC — Standards v1.0
+        </footer>
+
+    </main>
+
+    <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+</body>
+
+</html>

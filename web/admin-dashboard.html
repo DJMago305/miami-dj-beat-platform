@@ -1,0 +1,1344 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>MDJPRO — Manager Panel</title>
+    <link rel="stylesheet" href="./styles.css?v=20260226-1" />
+    <style>
+        :root {
+            --admin-accent: #00ff88;
+        }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .sidebar {
+            background: var(--panel);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid var(--line);
+            height: fit-content;
+        }
+
+        .side-link {
+            display: block;
+            padding: 12px 15px;
+            color: var(--muted);
+            text-decoration: none;
+            border-radius: 10px;
+            margin-bottom: 5px;
+            transition: all 0.3s;
+        }
+
+        .side-link:hover,
+        .side-link.active {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--admin-accent);
+        }
+
+        .admin-card {
+            background: var(--panel);
+            border-radius: 24px;
+            padding: 30px;
+            border: 1px solid var(--line);
+            margin-bottom: 20px;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .status-pending {
+            background: rgba(255, 165, 0, 0.1);
+            color: orange;
+            border: 1px solid orange;
+        }
+
+        .status-new {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--admin-accent);
+            border: 1px solid var(--admin-accent);
+        }
+
+        .manager-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th {
+            text-align: left;
+            color: var(--muted);
+            padding: 10px;
+            border-bottom: 1px solid var(--line);
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 15px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 40px;
+            color: var(--muted);
+        }
+    </style>
+</head>
+
+<body class="notranslate">
+    <header class="header" id="mainHeader">
+        <div class="header-top">
+            <div class="container">
+                <div class="brand">
+                    <img src="./assets/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img">
+                    <div class="brand-text">
+                        <div class="brand-name">Miami DJ Beat</div>
+                        <div class="brand-tagline">Manager Panel</div>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <div class="lang-switcher">
+                        <a href="mailto:support@miamidjbeat.com" class="lang-btn" data-i18n="nav-support">Soporte</a>
+                        <span class="status-badge"
+                            style="border: 1px solid var(--admin-accent); color: var(--admin-accent); margin-right: 15px;">Admin
+                            Mode Active</span>
+                        <span class="lang-btn active" data-lang="es">ES</span>
+                        <span class="lang-pipe">|</span>
+                        <span class="lang-btn" data-lang="en">EN</span>
+                    </div>
+                    <a href="login.html" class="btn-pill gold" data-i18n="btn-get-pro"
+                        style="margin-right: 15px;">Obtener PRO</a>
+
+                    <div class="account" id="header-auth-zone" style="display: none;">
+                        <button class="account-btn" id="accountBtn">
+                            <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="Avatar" />
+                            <span class="caret">▾</span>
+                        </button>
+                    </div>
+                    <a href="./index.html" class="btn-pill" data-i18n="nav-logout">Cerrar Sesión</a>
+                </div>
+
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+        <div class="header-bottom">
+            <div class="container">
+                <nav class="nav top-nav" id="mainNav">
+                    <a href="./index.html" data-i18n="nav-home">Inicio</a>
+                    <a href="./index.html#services" data-i18n="nav-services">Servicios</a>
+                    <a href="./rentals.html" data-i18n="nav-rentals">Servicios de Evento</a>
+                    <a href="./dj-tools.html" data-i18n="nav-tools">Herramientas</a>
+                    <a href="./jobs.html" data-i18n="nav-jobs">Trabajos</a>
+                    <a href="./index.html#contact" data-i18n="nav-contact">Contacto</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="admin-grid">
+            <aside class="sidebar">
+                <a href="#leads" class="side-link active">🎯 Leads de Clientes</a>
+                <a href="#djs" class="side-link">🎧 Gestión de DJs</a>
+                <a href="#analytics" class="side-link" onclick="loadAnalytics()">📊 Analytics</a>
+                <a href="#content" class="side-link">🖼️ Contenido y Precios</a>
+                <a href="#apps" class="side-link">📦 Hosting de Apps</a>
+            </aside>
+
+            <section class="content">
+                <div class="manager-header">
+                    <h1>Panel de Control del Manager</h1>
+                    <div id="role-badge" class="status-badge"
+                        style="background: rgba(183,148,62,0.1); color: var(--gold); border: 1px solid var(--gold);">
+                        Detectando Rol...</div>
+                </div>
+
+                <!-- Leads Section -->
+                <div class="admin-card" id="leads">
+                    <h3>Nuevas Solicitudes de Clientes</h3>
+                    <div id="leads-container">
+                        <div class="loading-spinner">Cargando leads...</div>
+                    </div>
+                </div>
+
+                <!-- DJ Applications -->
+                <div class="admin-card" id="djs">
+                    <h3>Solicitudes de DJ Pendientes</h3>
+                    <div id="djs-container">
+                        <div class="loading-spinner">Cargando aplicaciones...</div>
+                    </div>
+                </div>
+
+                <!-- Analytics Dashboard -->
+                <div class="admin-card" id="analytics" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                        <h3>📊 Analytics del Negocio</h3>
+                        <button class="btn secondary small" onclick="loadAnalytics()">↺ Actualizar</button>
+                    </div>
+
+                    <!-- KPI Cards -->
+                    <div id="analytics-kpis"
+                        style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:16px; margin-bottom:28px;">
+                        <div class="fineprint" style="grid-column:1/-1; text-align:center; padding:20px; opacity:0.5;">
+                            Cargando métricas...</div>
+                    </div>
+
+                    <!-- Status Breakdown -->
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px;">
+                        <div class="tile" style="border:1px solid var(--line);">
+                            <h4 style="margin-bottom:16px; color:var(--gold);">📋 Pipeline de Leads</h4>
+                            <div id="analytics-pipeline"></div>
+                        </div>
+                        <div class="tile" style="border:1px solid var(--line);">
+                            <h4 style="margin-bottom:16px; color:var(--gold);">💳 Estado de Pagos</h4>
+                            <div id="analytics-payments"></div>
+                        </div>
+                    </div>
+
+                    <!-- Top DJs by events -->
+                    <div class="tile" style="border:1px solid var(--line);">
+                        <h4 style="margin-bottom:16px; color:var(--gold);">🎧 Top DJs por Eventos Asignados</h4>
+                        <div id="analytics-top-djs"></div>
+                    </div>
+
+                    <!-- Recent Revenue -->
+                    <div class="tile" style="border:1px solid var(--line); margin-top:20px;">
+                        <h4 style="margin-bottom:16px; color:var(--gold);">📅 Próximos Eventos (30 días)</h4>
+                        <div id="analytics-upcoming"></div>
+                    </div>
+                </div>
+
+                <!-- Content Manager (Prices) -->
+                <div class="admin-card" id="content">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>Gestión de Tarifas de Mercado</h3>
+                        <button class="btn primary" onclick="saveAllPrices()">Guardar Todo</button>
+                    </div>
+                    <p class="fineprint" style="margin-bottom: 20px;">Actualiza los precios base que se usarán para
+                        generar facturas.</p>
+
+                    <div
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                        <!-- Category: A/V -->
+                        <div class="tile">
+                            <h4 style="color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 5px;">
+                                A/V & Stage</h4>
+                            <div style="margin-top: 10px;">
+                                <label class="fineprint">Audio Base (RCF 712 x2)</label>
+                                <input type="number" id="price-audio-base" value="120" class="price-input">
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <label class="fineprint">Pantalla LED (Per Panel/Sqm)</label>
+                                <input type="number" id="price-led-screen" value="600" class="price-input">
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <label class="fineprint">Tarima / Stage (Standard)</label>
+                                <input type="number" id="price-staging" value="350" class="price-input">
+                            </div>
+                        </div>
+
+                        <!-- Category: Talent -->
+                        <div class="tile">
+                            <h4 style="color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 5px;">
+                                Talent & MC</h4>
+                            <div style="margin-top: 10px;">
+                                <label class="fineprint">MC / Presentador Pro</label>
+                                <input type="number" id="price-mc-pro" value="450" class="price-input">
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <label class="fineprint">Timbalero / Percussion</label>
+                                <input type="number" id="price-talent-percussion" value="300" class="price-input">
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <label class="fineprint">Hora Loca (Standard Troupe)</label>
+                                <input type="number" id="price-hora-loca" value="650" class="price-input">
+                            </div>
+                        </div>
+
+                        <!-- Category: Decor & FX -->
+                        <div class="tile">
+                            <h4 style="color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 5px;">
+                                FX & Decor</h4>
+                            <div style="margin-top: 10px;">
+                                <label class="fineprint">Cold Sparks (x2 Machines)</label>
+                                <input type="number" id="price-fx-sparks" value="250" class="price-input">
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <label class="fineprint">Humo Bajo (Dry Ice effect)</label>
+                                <input type="number" id="price-fx-clouds" value="350" class="price-input">
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <label class="fineprint">Decoración Floral (Pack)</label>
+                                <input type="number" id="price-decor-flowers" value="250" class="price-input">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PRO Plan Pricing & Labels (Supabase-backed) -->
+                    <div style="margin-top:24px;border-top:1px solid var(--line);padding-top:20px;">
+                        <h4 style="color:var(--gold);margin-bottom:4px;">💰 Plan PRO — Precios Públicos (jobs.html)</h4>
+                        <p class="fineprint" style="margin-bottom:14px;">Estos valores se muestran en tiempo real en la
+                            página de reclutamiento.</p>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">
+
+                            <div class="tile">
+                                <h5 style="color:var(--gold);margin-bottom:10px;">MENSUAL</h5>
+                                <label class="fineprint">Precio ($)</label>
+                                <input type="number" id="setting-pro_price_monthly" value="80"
+                                    class="price-input settings-input" data-setting="pro_price_monthly">
+                                <label class="fineprint" style="margin-top:10px;display:block;">Etiqueta</label>
+                                <input type="text" id="setting-pro_label_monthly" value="Founder Price"
+                                    class="price-input settings-input" data-setting="pro_label_monthly"
+                                    style="font-size:13px;">
+                            </div>
+
+                            <div class="tile">
+                                <h5 style="color:var(--gold);margin-bottom:10px;">6 MESES</h5>
+                                <label class="fineprint">Precio ($)</label>
+                                <input type="number" id="setting-pro_price_semestral" value="400"
+                                    class="price-input settings-input" data-setting="pro_price_semestral">
+                                <label class="fineprint" style="margin-top:10px;display:block;">Etiqueta</label>
+                                <input type="text" id="setting-pro_label_semestral" value="1 mes gratis"
+                                    class="price-input settings-input" data-setting="pro_label_semestral"
+                                    style="font-size:13px;">
+                            </div>
+
+                            <div class="tile">
+                                <h5 style="color:var(--gold);margin-bottom:10px;">ANUAL</h5>
+                                <label class="fineprint">Precio ($)</label>
+                                <input type="number" id="setting-pro_price_annual" value="720"
+                                    class="price-input settings-input" data-setting="pro_price_annual">
+                                <label class="fineprint" style="margin-top:10px;display:block;">Etiqueta</label>
+                                <input type="text" id="setting-pro_label_annual" value="3 meses gratis"
+                                    class="price-input settings-input" data-setting="pro_label_annual"
+                                    style="font-size:13px;">
+                            </div>
+
+                        </div>
+                        <div style="margin-top:16px;display:flex;align-items:center;gap:14px;">
+                            <button class="btn primary" onclick="savePlatformSettings()">💾 Guardar Precios PRO</button>
+                            <small id="settings-save-status" style="color:var(--admin-accent);display:none;">✅ Guardado
+                                en Supabase</small>
+                        </div>
+                    </div>
+
+                    <!-- ── HERO BRANDING MANAGER ─────────────────────────────── -->
+                    <div style="margin-top:28px;border-top:1px solid var(--line);padding-top:22px;">
+                        <h4 style="color:var(--gold);margin-bottom:4px;">🎬 Hero Video & Branding (jobs.html)</h4>
+                        <p class="fineprint" style="margin-bottom:16px;">
+                            El video corre en loop automático. Sin controles visibles para el usuario. Volumen 0 =
+                            silencio total.
+                        </p>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                            <div class="tile" style="grid-column:1/-1;">
+                                <label class="fineprint">URL del Video (.mp4 / CDN / Supabase Storage)</label>
+                                <input type="text" id="setting-hero_video_url" class="price-input settings-input"
+                                    data-setting="hero_video_url" placeholder="https://... o ./assets/hero-video.mp4"
+                                    style="font-size:13px;width:100%;margin-top:6px;">
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Volumen del Video (0 = mute · 0.5 = medio · 1 = máx)</label>
+                                <input type="number" id="setting-hero_video_volume" class="price-input settings-input"
+                                    data-setting="hero_video_volume" min="0" max="1" step="0.1" value="0"
+                                    style="margin-top:6px;">
+                                <small style="color:rgba(255,255,255,0.3);font-size:10px;">
+                                    ⚠️ Audio &gt;0 requiere que el usuario haya interactuado con la página primero.
+                                </small>
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Titular Hero — Español (HTML permitido, ej: DOMINA&lt;br&gt;EL
+                                    MERCADO)</label>
+                                <input type="text" id="setting-hero_title_es" class="price-input settings-input"
+                                    data-setting="hero_title_es" placeholder="DOMINA EL&lt;br&gt;MERCADO DJ"
+                                    style="font-size:13px;margin-top:6px;">
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Titular Hero — English</label>
+                                <input type="text" id="setting-hero_title_en" class="price-input settings-input"
+                                    data-setting="hero_title_en" placeholder="DOMINATE&lt;br&gt;THE DJ MARKET"
+                                    style="font-size:13px;margin-top:6px;">
+                            </div>
+                            <div class="tile"
+                                style="grid-column:1/-1; border:1px dashed var(--gold); background:rgba(197,160,89,0.05);">
+                                <label class="fineprint" style="color:var(--gold);">⚠️ ESTADO DE PUBLICIDAD
+                                    (QUARANTINE)</label>
+                                <select id="setting-hero_active" class="price-input settings-input"
+                                    data-setting="hero_active"
+                                    style="width:100%; margin-top:6px; background:#000; border-color:var(--gold);">
+                                    <option value="true">✅ ACTIVA (Mostrar Video y Títulos)</option>
+                                    <option value="false">🚫 EN CUARENTENA (Mostrar Placeholder/Ken Burns)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="margin-top:14px;display:flex;align-items:center;gap:14px;">
+                            <button class="btn primary" onclick="savePlatformSettings()">🎬 Guardar Branding Hero
+                                Jobs</button>
+                            <small style="color:rgba(255,255,255,0.4);font-size:11px;">Cambios activos en
+                                jobs.html</small>
+                        </div>
+                    </div>
+
+                    <!-- ── TALENT & HORA LOCA INVENTORY ─────────────────────────────── -->
+                    <div style="margin-top:28px;border-top:1px solid var(--line);padding-top:22px;">
+                        <h4 style="color:var(--gold);margin-bottom:4px;">🎭 Inventario de Hora Loca y Talento</h4>
+                        <p class="fineprint" style="margin-bottom:16px;">
+                            Gestiona los personajes y músicos que aparecen en la página de Eventos.
+                        </p>
+
+                        <div id="talent-inventory-list"
+                            style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:15px;">
+                            <!-- Items appear here -->
+                        </div>
+
+                        <div
+                            style="margin-top:20px; padding:20px; background:rgba(255,165,0,0.05); border:1px dashed var(--gold); border-radius:15px;">
+                            <h5 style="color:var(--gold); margin-bottom:15px;">Añadir Nuevo Talento / Personaje</h5>
+                            <div style="display:grid; grid-template-columns: 1fr 100px; gap:10px;">
+                                <input type="text" id="new-talent-name" placeholder="Ej: Robot LED Gigante"
+                                    class="price-input" style="font-size:13px;">
+                                <input type="number" id="new-talent-price" placeholder="450" class="price-input">
+                                <input type="text" id="new-talent-img" placeholder="URL de la imagen (https://...)"
+                                    class="price-input" style="grid-column: 1 / -1; font-size:12px;">
+                                <select id="new-talent-cat" class="price-input"
+                                    style="grid-column: 1 / -1; background:#000;">
+                                    <option value="horaloca">Hora Loca</option>
+                                    <option value="musicians">Músicos en Vivo</option>
+                                    <option value="visuals">Captura & Visuales</option>
+                                </select>
+                                <button class="btn primary" onclick="addTalentToInventory()"
+                                    style="grid-column: 1 / -1;">+ Añadir al Catálogo</button>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:20px; display:flex; align-items:center; gap:14px;">
+                            <button class="btn gold" onclick="saveTalentInventory()">💾 Guardar Catálogo
+                                Completo</button>
+                            <small id="talent-save-status" style="color:var(--admin-accent); display:none;">✅ Catálogo
+                                sincronizado</small>
+                        </div>
+                    </div>
+
+                    <!-- ── HOME HERO BRANDING MANAGER ────────────────────────── -->
+                    <div style="margin-top:28px;border-top:1px solid var(--line);padding-top:22px;">
+                        <h4 style="color:var(--gold);margin-bottom:4px;">🏠 Home Hero Branding (index.html)</h4>
+                        <p class="fineprint" style="margin-bottom:16px;">
+                            Configura el video y los textos publicitarios de la página principal.
+                        </p>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                            <div class="tile" style="grid-column:1/-1;">
+                                <label class="fineprint">URL del Video Home (.mp4 / CDN)</label>
+                                <input type="text" id="setting-home_hero_video_url" class="price-input settings-input"
+                                    data-setting="home_hero_video_url" placeholder="https://..."
+                                    style="font-size:13px;width:100%;margin-top:6px;">
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Volumen Home (0 a 1)</label>
+                                <input type="number" id="setting-home_hero_video_volume"
+                                    class="price-input settings-input" data-setting="home_hero_video_volume" min="0"
+                                    max="1" step="0.1" value="0" style="margin-top:6px;">
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Home Title — Español (Publicitario)</label>
+                                <input type="text" id="setting-home_hero_title_es" class="price-input settings-input"
+                                    data-setting="home_hero_title_es" placeholder="Miami DJs & Event Production"
+                                    style="font-size:13px;margin-top:6px;">
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Home Title — English</label>
+                                <input type="text" id="setting-home_hero_title_en" class="price-input settings-input"
+                                    data-setting="home_hero_title_en" placeholder="Luxury Entertainment"
+                                    style="font-size:13px;margin-top:6px;">
+                            </div>
+                            <div class="tile"
+                                style="grid-column:1/-1; border:1px dashed var(--gold); background:rgba(197,160,89,0.05);">
+                                <label class="fineprint" style="color:var(--gold);">⚠️ ESTADO DE PUBLICIDAD HOME</label>
+                                <select id="setting-home_hero_active" class="price-input settings-input"
+                                    data-setting="home_hero_active"
+                                    style="width:100%; margin-top:6px; background:#000; border-color:var(--gold);">
+                                    <option value="true">✅ ACTIVA (Mostrar Video Home)</option>
+                                    <option value="false">🚫 EN CUARENTENA (Mostrar Ken Burns Home)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="margin-top:14px;display:flex;align-items:center;gap:14px;">
+                            <button class="btn primary" onclick="savePlatformSettings()">🏠 Guardar Branding
+                                Home</button>
+                            <small style="color:rgba(255,255,255,0.4);font-size:11px;">Cambios activos en
+                                index.html</small>
+                        </div>
+                    </div>
+
+                    <!-- ── SEASONAL QR MANAGER ──────────────────────────────── -->
+                    <div style="margin-top:28px;border-top:1px solid var(--line);padding-top:22px;">
+                        <h4 style="color:var(--gold);margin-bottom:4px;">🎁 QR de Temporada (Global Promo)</h4>
+                        <p class="fineprint" style="margin-bottom:16px;">
+                            Configura la promoción que verán todos los visitantes. El QR se genera automáticamente con
+                            este link.
+                        </p>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                            <div class="tile" style="grid-column:1/-1;">
+                                <label class="fineprint">Link de Destino (ej: Subscripción con promo)</label>
+                                <input type="text" id="setting-seasonal_qr_url" class="price-input settings-input"
+                                    data-setting="seasonal_qr_url" placeholder="https://..."
+                                    style="font-size:13px;width:100%;margin-top:6px;">
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Título de la Promo (ej: DESCUENTO VERANO)</label>
+                                <input type="text" id="setting-seasonal_qr_title" class="price-input settings-input"
+                                    data-setting="seasonal_qr_title" placeholder="OFERTA DE TEMPORADA"
+                                    style="font-size:13px;margin-top:6px;">
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Texto Descuento (ej: $20 OFF)</label>
+                                <input type="text" id="setting-seasonal_qr_subtitle" class="price-input settings-input"
+                                    data-setting="seasonal_qr_subtitle" placeholder="$20 DE DESCUENTO"
+                                    style="font-size:13px;margin-top:6px;">
+                            </div>
+                            <div class="tile" style="grid-column:1/-1;">
+                                <label class="fineprint">Estado de la Promo</label>
+                                <select id="setting-seasonal_qr_active" class="price-input settings-input"
+                                    data-setting="seasonal_qr_active"
+                                    style="width:100%; margin-top:6px; background:#000; border-color:var(--gold);">
+                                    <option value="true">✅ ACTIVA (Mostrar en Perfiles)</option>
+                                    <option value="false">🚫 INACTIVA (Ocultar QR Promo)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="margin-top:14px;display:flex;align-items:center;gap:14px;">
+                            <button class="btn primary" onclick="savePlatformSettings()">🎁 Guardar QR Promo</button>
+                            <small id="qr-save-status" style="color:var(--admin-accent);display:none;">✅
+                                Actualizado</small>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </div>
+        <footer class="footer">
+            <div class="container" style="text-align: center;">
+                <div data-i18n="footer-rights-llc">© 2026 Miami DJ Beat LLC. Pro Division Access.</div>
+            </div>
+        </footer>
+
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script src="./supabase-config.js?v=20260226-1"></script>
+        <script src="./invoice-generator.js"></script>
+        <script>
+            async function loadAdminData() {
+                // Initialize Supabase client (lazy singleton — avoids CDN race condition)
+                const supabase = window.getSupabaseClient();
+                if (!supabase) {
+                    console.error('Supabase not ready');
+                    setTimeout(loadAdminData, 500);
+                    return;
+                }
+
+                // SECURITY LOCKDOWN: Check for Manager Role
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) {
+                    window.location.href = './login.html';
+                    return;
+                }
+
+                const { data: profile, error: profileError } = await supabase
+                    .from('dj_profiles')
+                    .select('role')
+                    .eq('user_id', session.user.id)
+                    .single();
+
+                const isManager = (profile && profile.role === 'MANAGER') ||
+                    (session.user.app_metadata && session.user.app_metadata.role === 'manager');
+
+                if (profileError || !isManager) {
+                    console.error("Unauthorized access attempt blocked.");
+                    document.body.innerHTML = `
+                    <div style="height: 100vh; display: flex; align-items: center; justify-content: center; background: #000; color: #ff3333; text-align: center; font-family: sans-serif;">
+                        <div>
+                            <h1>⛔ ACCESO DENEGADO</h1>
+                            <p>No tienes permisos de Manager para ver esta área.</p>
+                            <a href="./index.html" style="color: #fff;">Volver al Inicio</a>
+                        </div>
+                    </div>
+                `;
+                    return;
+                }
+
+                // Load Leads
+                const { data: leads, error: leadError } = await supabase
+                    .from('leads')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                const leadsContainer = document.getElementById('leads-container');
+                if (leads && leads.length > 0) {
+                    leadsContainer.innerHTML = `
+                    <table>
+                        <thead>
+                                <tr>
+                                    <th>Tier</th>
+                                    <th>Cliente / Evento</th>
+                                    <th>Contacto</th>
+                                    <th>Fecha / Ubicación</th>
+                                    <th>Presupuesto</th>
+                                    <th>Estado</th>
+                                    <th>DJ Asignado</th>
+                                    <th>Blueprint</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${leads.map(lead => {
+                        const count = leads.filter(l => l.email === lead.email).length;
+                        const tier = getLoyaltyTier(count);
+                        const djLabel = lead.assigned_dj_name
+                            ? `<span style="color:var(--admin-accent); font-weight:700;">🎧 ${lead.assigned_dj_name}</span><br><button class="btn-pill" style="margin-top:4px; font-size:10px;" onclick='openMatchModal("${lead.id}", "${lead.event_type}", "${lead.event_date}")'>Cambiar</button>`
+                            : `<button class="btn-pill gold" onclick='openMatchModal("${lead.id}", "${lead.event_type}", "${lead.event_date}")'>🎯 Asignar DJ</button>`;
+                        const statusClass = lead.status === 'MATCHED' ? 'status-approved'
+                            : lead.status === 'CONFIRMED' ? 'status-approved'
+                                : 'status-new';
+                        return `
+                                    <tr>
+                                        <td>${tier}</td>
+                                        <td><strong>${lead.full_name || 'Sin Nombre'}</strong><br><small>${lead.email}</small><br><span class="badge" style="font-size:9px;">${lead.event_type}</span></td>
+                                        <td><small>${lead.phone || '—'}</small></td>
+                                        <td><strong>${lead.event_date || '—'}</strong><br><small>${lead.location || '—'}</small></td>
+                                        <td style="color:var(--gold); font-weight:700;">${lead.budget || '—'}</td>
+                                        <td><span class="status-badge ${statusClass}">${lead.status}</span></td>
+                                        <td>${djLabel}</td>
+                                        <td>
+                                            ${lead.notes ? `<button class="btn-pill" style="border-color:var(--gold); color:var(--gold);" onclick='showBlueprint("${lead.id}")'>👁️ Ver</button>` : '<small style="opacity:0.5;">Pendiente</small>'}
+                                        </td>
+                                        <td style="white-space:nowrap;">
+                                            <button class="btn-pill" onclick='window.open("./client-portal.html?lead=${lead.id}&mode=manager", "_blank")' title="Abrir Portal">Portal</button>
+                                            <button class="btn-pill gold" onclick='showInvoiceModal("${lead.id}")' title="Generar Factura">Factura</button>
+                                        </td>
+                                    </tr>
+                                `;
+                    }).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    leadsContainer.innerHTML = '<p class="fineprint">No hay leads registrados aún.</p>';
+                }
+
+                function getLoyaltyTier(count) {
+                    if (count >= 10) return '<span class="status-badge" style="background:#00d2ff; color:#000;">💎 DIAMOND</span>';
+                    if (count >= 5) return '<span class="status-badge" style="background:#d4af37; color:#000;">🏆 GOLD</span>';
+                    if (count >= 2) return '<span class="status-badge" style="background:#bdc3c7; color:#000;">🥈 SILVER</span>';
+                    return '<span class="status-badge" style="background:rgba(255,255,255,0.1); color:#fff;">🌱 NEW</span>';
+                }
+
+                window.showBlueprint = (id) => {
+                    const lead = leads.find(l => l.id == id);
+                    if (!lead) return;
+                    try {
+                        const data = JSON.parse(lead.notes);
+                        let details = `
+                            <div style="margin-bottom:20px; border-bottom:1px solid var(--line); padding-bottom:15px;">
+                                <div style="font-size:11px; font-weight:800; color:var(--gold); letter-spacing:2px; margin-bottom:4px;">EVENT BLUEPRINT</div>
+                                <h3 style="margin:0;">📝 Guion de Planificación</h3>
+                                <p class="fineprint">Cliente: ${lead.email} | Evento: ${lead.event_type}</p>
+                            </div>
+                            <div style="display:grid; gap:12px;">
+                        `;
+                        for (const [key, val] of Object.entries(data)) {
+                            const label = key.replace(/_/g, ' ').toUpperCase();
+                            details += `
+                                <div class="tile" style="padding:10px; border:1px solid rgba(255,255,255,0.05);">
+                                    <div style="font-size:10px; color:var(--muted); margin-bottom:4px;">${label}</div>
+                                    <div style="font-size:13px; color:#fff;">${val}</div>
+                                </div>
+                            `;
+                        }
+                        details += '</div>';
+
+                        const modal = document.createElement('div');
+                        modal.id = 'blueprint-modal';
+                        modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); display:flex; align-items:center; justify-content:center; z-index:2000; backdrop-filter:blur(6px);";
+                        modal.innerHTML = `
+                            <div class="admin-card" style="max-width:600px; width:95%; max-height:85vh; overflow-y:auto; position:relative;">
+                                <button onclick="this.parentElement.parentElement.remove()" style="position:absolute; top:14px; right:14px; background:none; border:none; color:#fff; font-size:22px; cursor:pointer;">&times;</button>
+                                ${details}
+                            </div>
+                        `;
+                        document.body.appendChild(modal);
+                    } catch (e) {
+                        console.error("Error parsing blueprint data:", e);
+                        alert("Error al cargar los datos del guion.");
+                    }
+                };
+
+                // ─────────────────────────────────────────────────────────────
+                // MATCHING ENGINE — Assign a DJ to a Lead
+                // ─────────────────────────────────────────────────────────────
+                window.openMatchModal = async (leadId, eventType, eventDate) => {
+                    // Remove stale modal if exists
+                    document.getElementById('match-modal')?.remove();
+
+                    const modal = document.createElement('div');
+                    modal.id = 'match-modal';
+                    modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); display:flex; align-items:center; justify-content:center; z-index:2000; backdrop-filter:blur(6px);";
+                    modal.innerHTML = `
+                        <div class="admin-card" style="max-width:720px; width:95%; max-height:85vh; overflow-y:auto; position:relative;">
+                            <button onclick="document.getElementById('match-modal').remove()" style="position:absolute; top:14px; right:14px; background:none; border:none; color:#fff; font-size:22px; cursor:pointer; z-index:1;">&times;</button>
+                            <div style="margin-bottom:20px;">
+                                <div style="font-size:11px; font-weight:800; color:var(--admin-accent); letter-spacing:2px; margin-bottom:6px;">MOTOR DE ASIGNACIÓN</div>
+                                <h3 style="margin:0;">🎯 Seleccionar DJ para este Lead</h3>
+                                <p class="fineprint" style="margin-top:6px;">Evento: <strong>${eventType}</strong> | Fecha: <strong>${eventDate || 'Sin definir'}</strong></p>
+                            </div>
+                            <input id="match-search" type="text" placeholder="Buscar DJ por nombre o especialidad..."
+                                style="width:100%; padding:10px 16px; border-radius:50px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:#fff; font-size:14px; margin-bottom:18px; box-sizing:border-box;"
+                                oninput="filterDJCards()">
+                            <div id="match-dj-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px;">
+                                <div class="fineprint" style="text-align:center; padding:30px; grid-column:1/-1;">Cargando roster...</div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+
+                    // Load available DJs
+                    const db = window.getSupabaseClient();
+                    if (!db) return;
+                    const { data: djList } = await db
+                        .from('dj_profiles')
+                        .select('id, dj_name, stage_name, photo_url, specialties, status, plan')
+                        .in('status', ['ACTIVE', 'APPROVED', 'VERIFIED'])
+                        .order('dj_name');
+
+                    window._matchLeadId = leadId;
+                    window._matchDJList = djList || [];
+                    renderDJCards(window._matchDJList);
+                };
+
+                window.renderDJCards = (djList) => {
+                    const grid = document.getElementById('match-dj-grid');
+                    if (!grid) return;
+                    if (!djList || djList.length === 0) {
+                        grid.innerHTML = `<div class="fineprint" style="text-align:center; padding:30px; grid-column:1/-1;">No hay DJs ACTIVOS en el roster. Aprueba aplicaciones primero.</div>`;
+                        return;
+                    }
+                    grid.innerHTML = djList.map(dj => {
+                        const name = dj.stage_name || dj.dj_name || 'Sin Nombre';
+                        const photo = dj.photo_url || './assets/dj-avatar-placeholder.png';
+                        const planBadge = dj.plan === 'PRO'
+                            ? `<span style="font-size:9px; background:var(--gold); color:#000; padding:2px 6px; border-radius:10px; font-weight:900;">PRO</span>`
+                            : `<span style="font-size:9px; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:10px;">LITE</span>`;
+                        return `
+                            <div class="admin-card" data-djname="${name.toLowerCase()}" style="padding:16px; cursor:pointer; transition:all 0.2s; border:2px solid transparent;"
+                                onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='transparent'"
+                                onclick="assignDJ('${dj.id}', '${name.replace(/'/g, '&#39;')}')">
+                                <div style="text-align:center; margin-bottom:12px;">
+                                    <img src="${photo}" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,255,255,0.1);" onerror="this.src='./assets/dj-avatar-placeholder.png'">
+                                </div>
+                                <div style="text-align:center;">
+                                    <div style="font-weight:800; font-size:13px; margin-bottom:4px;">${name}</div>
+                                    <div style="margin-bottom:8px;">${planBadge}</div>
+                                    <button class="btn-pill gold" style="width:100%; font-size:12px; pointer-events:none;">Asignar ✓</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                };
+
+                window.filterDJCards = () => {
+                    const q = document.getElementById('match-search')?.value.toLowerCase() || '';
+                    const filtered = (window._matchDJList || []).filter(dj => {
+                        const name = (dj.stage_name || dj.dj_name || '').toLowerCase();
+                        return name.includes(q);
+                    });
+                    renderDJCards(filtered);
+                };
+
+                window.assignDJ = async (djId, djName) => {
+                    const leadId = window._matchLeadId;
+                    if (!leadId) return;
+                    const db = window.getSupabaseClient();
+                    if (!db) return;
+
+                    const { error } = await db.from('leads').update({
+                        assigned_dj_id: djId,
+                        assigned_dj_name: djName,
+                        assigned_at: new Date().toISOString(),
+                        status: 'MATCHED'
+                    }).eq('id', leadId);
+
+                    if (error) {
+                        alert('Error asignando DJ: ' + error.message);
+                        return;
+                    }
+
+                    document.getElementById('match-modal')?.remove();
+
+                    // ── Fire notification email to DJ & Manager ──────────
+                    const NOTIFY_FN = 'https://hkuvuqupbxwkiykxvqdr.supabase.co/functions/v1/notify-dj-assignment';
+                    try {
+                        const { data: { session } } = await db.auth.getSession();
+                        const resp = await fetch(NOTIFY_FN, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${session?.access_token ?? ''}`,
+                            },
+                            body: JSON.stringify({
+                                lead_id: leadId,
+                                dj_id: djId,
+                                dj_name: djName,
+                            }),
+                        });
+                        const result = await resp.json();
+                        const emailNote = result.dj_email_sent
+                            ? `📧 Email enviado a ${result.dj_email}`
+                            : '⚠️ Email al DJ no enviado (sin email en perfil o RESEND no configurado)';
+
+                        alert(`✅ ${djName} asignado exitosamente.\n${emailNote}\n\nRecargando leads...`);
+                    } catch (notifyErr) {
+                        console.warn('Notification function failed:', notifyErr);
+                        alert(`✅ ${djName} asignado. (Notificación email no disponible)\n\nRecargando leads...`);
+                    }
+
+                    // Refresh the admin data to show the new assignment
+                    await loadAdminData();
+                };
+
+
+                // ── Platform Settings (Supabase) ──────────────────────────────
+                window.savePlatformSettings = async () => {
+                    const inputs = document.querySelectorAll('.settings-input');
+                    const upserts = [];
+                    inputs.forEach(inp => {
+                        if (inp.dataset.setting) {
+                            upserts.push({ key: inp.dataset.setting, value: inp.value, updated_at: new Date().toISOString() });
+                        }
+                    });
+                    const { error } = await supabase.from('platform_settings').upsert(upserts, { onConflict: 'key' });
+                    const status = document.getElementById('settings-save-status');
+                    if (error) {
+                        alert('Error guardando: ' + error.message);
+                    } else {
+                        status.style.display = 'block';
+                        setTimeout(() => { status.style.display = 'none'; }, 3000);
+                    }
+                };
+
+                window.loadPlatformSettings = async () => {
+                    const { data } = await supabase.from('platform_settings').select('key, value');
+                    if (!data) return;
+                    data.forEach(row => {
+                        const inp = document.getElementById('setting-' + row.key);
+                        if (inp) inp.value = row.value;
+                    });
+                };
+
+                // Pricing Persistence Logic (invoice prices — localStorage)
+                window.saveAllPrices = () => {
+                    const inputs = document.querySelectorAll('.price-input:not(.settings-input)');
+                    const prices = {};
+                    inputs.forEach(input => {
+                        prices[input.id] = input.value;
+                    });
+                    localStorage.setItem('mdj_market_prices', JSON.stringify(prices));
+                    alert('Precios de factura guardados localmente.');
+                };
+
+                window.loadSavedPrices = () => {
+                    const saved = localStorage.getItem('mdj_market_prices');
+                    if (saved) {
+                        const prices = JSON.parse(saved);
+                        for (const [id, val] of Object.entries(prices)) {
+                            const input = document.getElementById(id);
+                            if (input) input.value = val;
+                        }
+                    }
+                };
+
+                // Inject Invoice Modal
+                window.showInvoiceModal = (id) => {
+                    const lead = leads.find(l => l.id == id);
+                    if (!lead) return;
+
+                    let blueprint = {};
+                    if (lead.notes) {
+                        try { blueprint = JSON.parse(lead.notes); } catch (e) { }
+                    }
+
+                    // Get current manager prices
+                    const saved = localStorage.getItem('mdj_market_prices');
+                    const mPrices = saved ? JSON.parse(saved) : {
+                        "price-audio-base": "120",
+                        "price-mc-pro": "450",
+                        "price-fx-sparks": "250",
+                        "price-led-screen": "600",
+                        "price-hora-loca": "650"
+                    };
+
+                    const modal = document.createElement('div');
+                    modal.id = "invoice-modal";
+                    modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:1000;";
+                    modal.innerHTML = `
+                        <div class="admin-card" style="max-width:650px; width:90%; position:relative; max-height: 85vh; overflow-y: auto;">
+                            <button onclick="this.parentElement.parentElement.remove()" style="position:absolute; top:10px; right:10px; background:none; border:none; color:#fff; font-size:20px; cursor:pointer;">&times;</button>
+                            <h3>Generar Factura Profesional</h3>
+                            <p class="fineprint">Lead: ${lead.email} | Evento: ${lead.event_type}</p>
+                            
+                            <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button class="btn-pill" onclick="addCustomItem('Professional MC', ${mPrices['price-mc-pro']})">+ MC</button>
+                                <button class="btn-pill" onclick="addCustomItem('LED Screen Setup', ${mPrices['price-led-screen']})">+ LED Window</button>
+                                <button class="btn-pill" onclick="addCustomItem('Sparkular FX (x2)', ${mPrices['price-fx-sparks']})">+ Chispas</button>
+                                <button class="btn-pill" onclick="addCustomItem('Hora Loca Troupe', ${mPrices['price-hora-loca']})">+ Hora Loca</button>
+                            </div>
+
+                            <div id="invoice-items" style="margin-top: 20px; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 15px;">
+                                <div class="item-row" style="display:flex; gap:10px; margin-bottom:10px;">
+                                    <input type="text" placeholder="Service" value="DJ Performance Fee" class="item-name" style="flex:2">
+                                    <input type="number" placeholder="Price" value="500" class="item-price" style="flex:1">
+                                    <button onclick="this.parentElement.remove()" style="background:none; border:none; color:red; cursor:pointer;">&times;</button>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                <button class="btn-pill" onclick="addInvoiceItem()">+ Item Personalizado</button>
+                            </div>
+                            
+                            <div style="margin-top:20px; border-top:1px solid var(--line); padding-top:20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div>
+                                    <label class="fineprint">Depósito de Reserva ($)</label>
+                                    <input type="number" id="invoice-deposit" value="150" style="width:100%; margin-top:5px;">
+                                </div>
+                                <div>
+                                    <label class="fineprint">Tax ID for IRS (Opcional)</label>
+                                    <input type="text" id="invoice-taxid" placeholder="Ex: 12-3456789" style="width:100%; margin-top:5px;">
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top:30px;">
+                                <button class="btn primary full" onclick="processInvoice('${id}')">Descargar PDF Oficial</button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                };
+
+                window.addCustomItem = (name, price) => {
+                    const row = document.createElement('div');
+                    row.className = "item-row";
+                    row.style = "display:flex; gap:10px; margin-bottom:10px;";
+                    row.innerHTML = `<input type="text" placeholder="Equip/Service" value="${name}" class="item-name" style="flex:2">
+                                     <input type="number" placeholder="Price" value="${price}" class="item-price" style="flex:1">
+                                     <button onclick="this.parentElement.remove()" style="background:none; border:none; color:red; cursor:pointer;">&times;</button>`;
+                    document.getElementById('invoice-items').appendChild(row);
+                };
+
+                window.addInvoiceItem = () => {
+                    const row = document.createElement('div');
+                    row.className = "item-row";
+                    row.style = "display:flex; gap:10px; margin-bottom:10px;";
+                    row.innerHTML = `<input type="text" placeholder="Equip/Service" class="item-name" style="flex:2">
+                                     <input type="number" placeholder="Price" class="item-price" style="flex:1">`;
+                    document.getElementById('invoice-items').appendChild(row);
+                };
+
+                window.processInvoice = (id) => {
+                    const lead = leads.find(l => l.id == id);
+                    const itemRows = document.querySelectorAll('.item-row');
+                    const deposit = parseFloat(document.getElementById('invoice-deposit').value) || 0;
+
+                    const items = [];
+                    itemRows.forEach(row => {
+                        const name = row.querySelector('.item-name').value;
+                        const price = parseFloat(row.querySelector('.item-price').value);
+                        if (name && !isNaN(price)) {
+                            items.push({
+                                equip: name,
+                                model: "Service/Rental",
+                                date: lead.event_date || "TBD",
+                                tracking: "MDJ-" + Math.floor(Math.random() * 1000),
+                                tax: "7%",
+                                unit: price,
+                                total: price
+                            });
+                        }
+                    });
+
+                    window.generateInvoice(lead, items, deposit);
+                    document.getElementById('invoice-modal').remove();
+                };
+
+                // Load DJ Apps
+                const { data: djs, error: djError } = await supabase
+                    .from('dj_profiles')
+                    .select('*')
+                    .eq('status', 'PENDING_REVIEW');
+
+                const djsContainer = document.getElementById('djs-container');
+                if (djs && djs.length > 0) {
+                    djsContainer.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Foto</th>
+                                <th>DJ / Artista</th>
+                                <th>Email</th>
+                                <th>Plan</th>
+                                <th>Foto Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${djs.map(dj => {
+                        const photoThumb = dj.photo_url
+                            ? `<img src="${dj.photo_url}" alt="Foto" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid rgba(197,160,89,0.4);">`
+                            : `<div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.05);border:2px dashed rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;">👤</div>`;
+                        const photoStatus = dj.photo_status || 'pending';
+                        const statusColors = { pending: 'orange', approved: '#00ff88', rejected: '#ff5555' };
+                        const statusBadge = `<span class="status-badge" style="border:1px solid ${statusColors[photoStatus]};color:${statusColors[photoStatus]};background:rgba(0,0,0,0.2);">${photoStatus.toUpperCase()}</span>`;
+                        const safeEmail = (dj.email || '').replace(/'/g, "&#39;");
+                        const safeName = (dj.full_name || dj.stage_name || 'DJ').replace(/'/g, "&#39;");
+                        return `
+                                <tr id="dj-row-${dj.user_id}">
+                                    <td>${photoThumb}</td>
+                                    <td><strong>${dj.full_name || 'Sin Nombre'}</strong>${dj.stage_name ? '<br><small style="color:var(--gold);">' + dj.stage_name + '</small>' : ''}</td>
+                                    <td><small>${safeEmail || dj.user_id}</small></td>
+                                    <td>${dj.plan}</td>
+                                    <td>${statusBadge}</td>
+                                    <td>
+                                        <div style="display:flex;flex-direction:column;gap:8px;min-width:220px;">
+                                            <button class="btn-pill gold" onclick="approveDJ('${dj.user_id}')">✅ Aprobar Solicitud</button>
+                                            ${dj.photo_url ? `
+                                            <select id="photo-reason-${dj.user_id}" style="background:#1a1a1a;color:#fff;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;">
+                                                <option value="Publicidad o texto promocional detectado en la foto">📢 Publicidad / Texto</option>
+                                                <option value="Número de teléfono visible en la foto">📞 Número de teléfono</option>
+                                                <option value="Branding, logo o marca externa visible en la foto">🏷️ Branding / Logo</option>
+                                                <option value="La imagen no cumple los estándares de calidad profesional">❌ Baja calidad</option>
+                                                <option value="Otro incumplimiento de los Términos de Uso">⚠️ Otro</option>
+                                            </select>
+                                            <button class="btn-pill" style="border-color:rgba(255,80,80,0.5);color:#ff5555;" onclick="rejectPhoto('${dj.user_id}','${safeEmail}','${safeName}')">🚫 Rechazar Foto + Notificar</button>
+                                            <button class="btn-pill" style="border-color:rgba(0,255,136,0.4);color:#00ff88;" onclick="approvePhoto('${dj.user_id}')">📸 Aprobar Foto</button>
+                                            ` : `<small style="color:var(--muted);">Sin foto cargada</small>`}
+                                        </div>
+                                    </td>
+                                </tr>`;
+                    }).join('')}
+                        </tbody>
+                    </table>
+                `;
+                } else {
+                    djsContainer.innerHTML = '<p class="fineprint">No hay solicitudes de DJ pendientes.</p>';
+                }
+
+
+
+                async function approveDJ(userId) {
+                    const { error } = await supabase
+                        .from('dj_profiles')
+                        .update({ status: 'PRO_VERIFIED' })
+                        .eq('user_id', userId);
+
+                    if (error) alert(error.message);
+                    else {
+                        alert('DJ Aprobado con éxito.');
+                        loadAdminData();
+                    }
+                }
+
+                // ── Photo Moderation ─────────────────────────────────────
+                const PHOTO_FN_URL = 'https://hkuvuqupbxwkiykxvqdr.supabase.co/functions/v1/notify-photo-rejection';
+
+                async function rejectPhoto(userId, djEmail, djName) {
+                    const adminPass = prompt('⚠️ Ingresa la clave Admin para rechazar la foto:');
+                    if (!adminPass) return;
+
+                    const reasonSel = document.getElementById('photo-reason-' + userId);
+                    const reason = reasonSel ? reasonSel.value : 'Incumplimiento de los Términos de Uso';
+
+                    const confirmMsg = `¿Rechazar y eliminar la foto de ${djName}?\n\nMotivo: ${reason}\n\nSe le enviará un email de notificación automáticamente.`;
+                    if (!confirm(confirmMsg)) return;
+
+                    const row = document.getElementById('dj-row-' + userId);
+                    if (row) row.style.opacity = '0.5';
+
+                    try {
+                        const r = await fetch(PHOTO_FN_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ pass: adminPass, user_id: userId, dj_email: djEmail, dj_name: djName, reason })
+                        });
+                        const data = await r.json();
+                        if (data.ok) {
+                            alert('✅ Foto eliminada y DJ notificado por email correctamente.');
+                            loadAdminData();
+                        } else {
+                            alert('❌ Error: ' + (data.error || JSON.stringify(data)));
+                            if (row) row.style.opacity = '1';
+                        }
+                    } catch (e) {
+                        alert('Error de red: ' + e);
+                        if (row) row.style.opacity = '1';
+                    }
+                }
+
+                async function approvePhoto(userId) {
+                    const { error } = await supabase
+                        .from('dj_profiles')
+                        .update({ photo_status: 'approved', photo_rejected_reason: null })
+                        .eq('user_id', userId);
+                    if (error) alert(error.message);
+                    else { alert('✅ Foto aprobada.'); loadAdminData(); }
+                }
+
+                async function checkAccess() {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (!user) {
+                        // For demo/local if no auth, default to Super Admin
+                        window.userRole = 'SUPER_ADMIN';
+                    } else {
+                        // Logic: Check user meta or a custom table. 
+                        // For now, let's assume 'SALES' in metadata or certain email.
+                        const isSales = user.email.includes('sales') || user.user_metadata.role === 'SALES';
+                        window.userRole = isSales ? 'SALES_STAFF' : 'SUPER_ADMIN';
+                    }
+
+                    applyRoleRestrictions();
+                }
+
+                function applyRoleRestrictions() {
+                    const roleBadge = document.getElementById('role-badge');
+                    if (window.userRole === 'SALES_STAFF') {
+                        roleBadge.textContent = "Acceso: Equipo de Ventas";
+                        // Hide sensitive sections (Manager only)
+                        const itemsToHide = ['content', 'analytics', 'apps'];
+                        itemsToHide.forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el) el.style.display = 'none';
+                            const link = document.querySelector(`a[href="#${id}"]`);
+                            if (link) link.style.display = 'none';
+                        });
+
+                        // Restrict Leads to only basic view (e.g. no delete)
+                        document.querySelectorAll('.btn-pill.red').forEach(b => b.style.display = 'none');
+                    } else {
+                        roleBadge.textContent = "Acceso: Super Admin (Full Control)";
+                    }
+                }
+
+            } // end loadAdminData()
+
+            document.addEventListener('DOMContentLoaded', async () => {
+                await loadAdminData();
+                loadSavedPrices();
+                loadPlatformSettings();
+            });
+            // ── Sidebar Navigation: show/hide sections ────────
+            document.querySelectorAll('.side-link').forEach(link => {
+                link.addEventListener('click', function () {
+                    document.querySelectorAll('.side-link').forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                    const target = this.getAttribute('href')?.replace('#', '');
+                    if (!target) return;
+                    // Show analytics, hide others on #analytics click
+                    const analyticsEl = document.getElementById('analytics');
+                    if (target === 'analytics' && analyticsEl) {
+                        analyticsEl.style.display = 'block';
+                        // Scroll to it
+                        setTimeout(() => analyticsEl.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                    } else if (analyticsEl) {
+                        analyticsEl.style.display = 'none';
+                    }
+                });
+            });
+
+            // ── Analytics Dashboard ────────────────────────────
+            window.loadAnalytics = async function () {
+                const supabase = window.getSupabaseClient();
+                if (!supabase) return;
+
+                const kpis = document.getElementById('analytics-kpis');
+                const pipeline = document.getElementById('analytics-pipeline');
+                const paymentsEl = document.getElementById('analytics-payments');
+                const topDJsEl = document.getElementById('analytics-top-djs');
+                const upcomingEl = document.getElementById('analytics-upcoming');
+
+                if (kpis) kpis.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;opacity:0.5;">⏳ Calculando...</div>';
+
+                try {
+                    // Fetch all leads
+                    const { data: leads } = await supabase.from('leads').select('id, status, payment_status, balance_paid, total_amount, assigned_dj_name, event_date, event_type, email');
+                    if (!leads) return;
+
+                    // Fetch active DJs count
+                    const { count: djCount } = await supabase.from('dj_profiles').select('*', { count: 'exact', head: true }).in('status', ['ACTIVE', 'APPROVED', 'VERIFIED']);
+
+                    // ── KPIs ───────────────────────────────────────
+                    const totalLeads = leads.length;
+                    const matchedLeads = leads.filter(l => ['MATCHED', 'CONFIRMED', 'COMPLETED'].includes(l.status)).length;
+                    const conversionRate = totalLeads > 0 ? Math.round(matchedLeads / totalLeads * 100) : 0;
+                    const totalRevenue = leads.reduce((sum, l) => sum + (parseFloat(l.balance_paid) || 0), 0);
+                    const pendingRevenue = leads.reduce((sum, l) => {
+                        const bal = (parseFloat(l.total_amount) || 0) - (parseFloat(l.balance_paid) || 0);
+                        return sum + (bal > 0 ? bal : 0);
+                    }, 0);
+
+                    const kpiData = [
+                        { icon: '💰', label: 'Ingresos Cobrados', value: '$' + totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }), color: '#22c55e' },
+                        { icon: '⏳', label: 'Por Cobrar', value: '$' + pendingRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }), color: '#f59e0b' },
+                        { icon: '📋', label: 'Total Leads', value: totalLeads, color: '#c5a059' },
+                        { icon: '🎧', label: 'DJs Activos', value: djCount ?? '—', color: '#818cf8' },
+                        { icon: '🎯', label: 'Tasa Conversión', value: conversionRate + '%', color: conversionRate >= 50 ? '#22c55e' : '#f59e0b' },
+                        { icon: '✅', label: 'Matcheados', value: matchedLeads, color: '#22c55e' },
+                    ];
+
+                    if (kpis) {
+                        kpis.innerHTML = kpiData.map(k => `
+                            <div class="tile" style="border:1px solid ${k.color}33; background:${k.color}08; text-align:center; padding:20px;">
+                                <div style="font-size:28px; margin-bottom:6px;">${k.icon}</div>
+                                <div style="font-size:22px; font-weight:900; color:${k.color};">${k.value}</div>
+                                <div style="font-size:11px; color:rgba(255,255,255,0.5); margin-top:4px; font-weight:700; letter-spacing:1px; text-transform:uppercase;">${k.label}</div>
+                            </div>`).join('');
+                    }
+
+                    // ── Pipeline breakdown ─────────────────────────
+                    const statusGroups = { 'NEW': '#94a3b8', 'CONTACTED': '#818cf8', 'MATCHED': '#c5a059', 'CONFIRMED': '#22c55e', 'COMPLETED': '#64748b', 'CANCELLED': '#ef4444' };
+                    const statusCounts = {};
+                    leads.forEach(l => { statusCounts[l.status] = (statusCounts[l.status] || 0) + 1; });
+                    const maxCount = Math.max(...Object.values(statusCounts), 1);
+
+                    if (pipeline) {
+                        pipeline.innerHTML = Object.entries(statusGroups).map(([status, color]) => {
+                            const count = statusCounts[status] || 0;
+                            const pct = Math.round(count / maxCount * 100);
+                            return `<div style="margin-bottom:12px;">
+                                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+                                    <span style="color:${color};font-weight:700;">${status}</span>
+                                    <span style="color:rgba(255,255,255,0.6);">${count} lead${count !== 1 ? 's' : ''}</span>
+                                </div>
+                                <div style="background:rgba(255,255,255,0.05);border-radius:4px;height:8px;overflow:hidden;">
+                                    <div style="background:${color};width:${pct}%;height:100%;border-radius:4px;transition:width 0.5s;"></div>
+                                </div>
+                            </div>`;
+                        }).join('') || '<div class="fineprint" style="opacity:0.5;">Sin datos</div>';
+                    }
+
+                    // ── Payment status breakdown ───────────────────
+                    const payGroups = { 'PAID': '#22c55e', 'PARTIAL': '#f59e0b', 'PENDING': '#c5a059', 'UNPAID': '#ef4444' };
+                    const payCounts = {};
+                    leads.forEach(l => { const ps = l.payment_status || 'UNPAID'; payCounts[ps] = (payCounts[ps] || 0) + 1; });
+                    const maxPay = Math.max(...Object.values(payCounts), 1);
+
+                    if (paymentsEl) {
+                        paymentsEl.innerHTML = Object.entries(payGroups).map(([status, color]) => {
+                            const count = payCounts[status] || 0;
+                            const pct = Math.round(count / maxPay * 100);
+                            return `<div style="margin-bottom:12px;">
+                                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+                                    <span style="color:${color};font-weight:700;">${status}</span>
+                                    <span style="color:rgba(255,255,255,0.6);">${count}</span>
+                                </div>
+                                <div style="background:rgba(255,255,255,0.05);border-radius:4px;height:8px;overflow:hidden;">
+                                    <div style="background:${color};width:${pct}%;height:100%;border-radius:4px;"></div>
+                                </div>
+                            </div>`;
+                        }).join('');
+                    }
+
+                    // ── Top DJs ────────────────────────────────────
+                    const djEventCounts = {};
+                    leads.filter(l => l.assigned_dj_name).forEach(l => {
+                        djEventCounts[l.assigned_dj_name] = (djEventCounts[l.assigned_dj_name] || 0) + 1;
+                    });
+                    const sortedDJs = Object.entries(djEventCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+                    if (topDJsEl) {
+                        if (sortedDJs.length === 0) {
+                            topDJsEl.innerHTML = '<div class="fineprint" style="opacity:0.5;text-align:center;padding:16px;">Sin asignaciones aún.</div>';
+                        } else {
+                            const maxDJ = sortedDJs[0][1];
+                            topDJsEl.innerHTML = `<div style="display:flex;flex-direction:column;gap:10px;">` +
+                                sortedDJs.map(([dj, count], i) => `
+                                    <div style="display:flex;align-items:center;gap:12px;">
+                                        <div style="width:24px;height:24px;border-radius:50%;background:var(--gold);color:#000;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;">${i + 1}</div>
+                                        <div style="flex:1;">
+                                            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+                                                <span style="font-weight:700;color:#fff;">${dj}</span>
+                                                <span style="color:var(--gold);font-weight:700;">${count} evento${count !== 1 ? 's' : ''}</span>
+                                            </div>
+                                            <div style="background:rgba(255,255,255,0.05);border-radius:4px;height:6px;">
+                                                <div style="background:var(--gold);width:${Math.round(count / maxDJ * 100)}%;height:100%;border-radius:4px;"></div>
+                                            </div>
+                                        </div>
+                                    </div>`).join('') + '</div>';
+                        }
+                    }
+
+                    // ── Upcoming events (next 30 days) ─────────────
+                    const today = new Date();
+                    const in30 = new Date(today); in30.setDate(in30.getDate() + 30);
+                    const todayStr = today.toISOString().split('T')[0];
+                    const in30Str = in30.toISOString().split('T')[0];
+                    const upcoming = leads.filter(l => l.event_date >= todayStr && l.event_date <= in30Str)
+                        .sort((a, b) => a.event_date.localeCompare(b.event_date));
+
+                    if (upcomingEl) {
+                        if (upcoming.length === 0) {
+                            upcomingEl.innerHTML = '<div class="fineprint" style="opacity:0.5;text-align:center;padding:16px;">Sin eventos próximos en 30 días.</div>';
+                        } else {
+                            upcomingEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+                                <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                    <th style="text-align:left;padding:8px 12px;color:rgba(255,255,255,0.5);font-size:11px;font-weight:800;">FECHA</th>
+                                    <th style="text-align:left;padding:8px 12px;color:rgba(255,255,255,0.5);font-size:11px;font-weight:800;">TIPO</th>
+                                    <th style="text-align:left;padding:8px 12px;color:rgba(255,255,255,0.5);font-size:11px;font-weight:800;">CLIENTE</th>
+                                    <th style="text-align:left;padding:8px 12px;color:rgba(255,255,255,0.5);font-size:11px;font-weight:800;">DJ</th>
+                                    <th style="text-align:left;padding:8px 12px;color:rgba(255,255,255,0.5);font-size:11px;font-weight:800;">PAGO</th>
+                                </tr></thead>
+                                <tbody>${upcoming.map(ev => {
+                                const daysLeft = Math.ceil((new Date(ev.event_date) - today) / 86400000);
+                                const urgentStyle = daysLeft <= 7 ? 'color:var(--gold);font-weight:900;' : '';
+                                const pStatusColor = ev.payment_status === 'PAID' ? '#22c55e' : ev.payment_status === 'PARTIAL' ? '#f59e0b' : '#ef4444';
+                                return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding:10px 12px;${urgentStyle}">${ev.event_date} <span style="font-size:10px;color:var(--muted);">(${daysLeft}d)</span></td>
+                                        <td style="padding:10px 12px;">${ev.event_type || '—'}</td>
+                                        <td style="padding:10px 12px;color:rgba(255,255,255,0.7);">${ev.email || '—'}</td>
+                                        <td style="padding:10px 12px;color:var(--gold);">${ev.assigned_dj_name || '<span style="color:rgba(255,255,255,0.3);">Sin asignar</span>'}</td>
+                                        <td style="padding:10px 12px;"><span style="color:${pStatusColor};font-weight:700;font-size:11px;">${ev.payment_status || 'UNPAID'}</span></td>
+                                    </tr>`;
+                            }).join('')}</tbody>
+                            </table>`;
+                        }
+                    }
+
+                } catch (e) {
+                    console.error('Analytics error:', e);
+                    if (kpis) kpis.innerHTML = '<div class="fineprint" style="color:#ff5555;grid-column:1/-1;text-align:center;padding:20px;">Error cargando analytics.</div>';
+                }
+            };
+
+        </script>
+</body>
+
+</html>

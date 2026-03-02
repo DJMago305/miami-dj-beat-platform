@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>MDJPRO — Portal del Cliente</title>
+    <link rel="stylesheet" href="./styles.css?v=20260226-1" />
+    <link rel="stylesheet" href="./mdj-assistant.css" />
+    <style>
+        :root {
+            --client-accent: #b7943e;
+            /* Gold */
+            --glass-bg: rgba(26, 43, 86, 0.05);
+            /* Navy transparent */
+        }
+
+        .client-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 992px) {
+            .client-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .portal-header {
+            background: linear-gradient(135deg, #1a2b56 0%, #000 100%);
+            padding: 80px 20px 40px;
+            border-radius: 0 0 40px 40px;
+            text-align: center;
+            color: #fff;
+            margin-top: -80px;
+        }
+
+        .countdown-box {
+            display: inline-flex;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px 40px;
+            border-radius: 30px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .countdown-item {
+            text-align: center;
+        }
+
+        .countdown-num {
+            font-size: 32px;
+            font-weight: 800;
+            display: block;
+            color: var(--gold);
+        }
+
+        .countdown-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .info-card {
+            background: var(--panel);
+            border-radius: 24px;
+            padding: 25px;
+            border: 1px solid var(--line);
+            margin-bottom: 20px;
+        }
+
+        .info-card h3 {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logistics-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .logistics-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .logistics-list li:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .val {
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.02);
+            margin-bottom: 10px;
+        }
+
+        .payment-bar {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .payment-fill {
+            height: 100%;
+            background: var(--gold);
+            width: 0%;
+            transition: width 1s ease-out;
+        }
+
+        .btn-pay {
+            background: var(--gold);
+            color: #000;
+            width: 100%;
+            margin-top: 15px;
+            font-weight: 800;
+        }
+
+        .status-pill {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            background: rgba(183, 148, 62, 0.1);
+            color: var(--gold);
+        }
+
+        /* Star Rating */
+        .stars {
+            display: flex;
+            gap: 5px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .star {
+            color: #555;
+            transition: color 0.3s;
+        }
+
+        .star.active {
+            color: var(--gold);
+        }
+
+        /* Loyalty Tiers */
+        .loyalty-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .tier-new {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .tier-silver {
+            background: linear-gradient(90deg, #bdc3c7, #2c3e50);
+            border-color: #bdc3c7;
+            color: #fff;
+        }
+
+        .tier-gold {
+            background: linear-gradient(90deg, #d4af37, #8a6d3b);
+            border-color: #d4af37;
+            color: #fff;
+        }
+
+        .tier-diamond {
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            border-color: #00d2ff;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.4);
+        }
+    </style>
+</head>
+
+<body class="notranslate">
+    <header class="header" id="mainHeader">
+        <div class="header-top">
+            <div class="container">
+                <div class="brand">
+                    <img src="./assets/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img">
+                    <div class="brand-text">
+                        <div class="brand-name">Miami DJ Beat</div>
+                        <div class="brand-tagline">Client Portal</div>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <div class="lang-switcher">
+                        <a href="mailto:support@miamidjbeat.com" class="lang-btn" data-i18n="nav-support">Soporte</a>
+                        <span class="status-pill" style="margin-right: 15px;">EVENTO CONFIRMADO</span>
+                        <span class="lang-btn active" data-lang="es">ES</span>
+                        <span class="lang-pipe">|</span>
+                        <span class="lang-btn" data-lang="en">EN</span>
+                    </div>
+                    <a href="login.html" class="btn-pill gold" data-i18n="btn-get-pro">Obtener PRO</a>
+                    <a href="login.html" id="header-login-btn" class="btn-pill" data-i18n="btn-login"
+                        style="display:none;">Login</a>
+
+                    <div class="account" id="header-auth-zone">
+                        <button class="account-btn" id="accountBtn">
+                            <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="Avatar" />
+                            <span class="caret">▾</span>
+                        </button>
+                        <div class="account-menu" id="accountMenu">
+                            <a href="./dj-profile.html" class="menu-item" data-i18n="menu-account">👤 Perfil</a>
+                            <a href="./dj-dashboard.html" class="menu-item" data-i18n="menu-rewards">💎 Dashboard</a>
+                            <div class="menu-divider"></div>
+                            <a href="#" class="menu-item danger" id="logoutBtn" data-i18n="menu-logout">↪ Salir</a>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+        <div class="header-bottom">
+            <div class="container">
+                <nav class="nav top-nav" id="mainNav">
+                    <a href="./index.html" data-i18n="nav-home">Inicio</a>
+                    <a href="./index.html#services" data-i18n="nav-services">Servicios</a>
+                    <a href="./rentals.html" data-i18n="nav-rentals">Servicios de Evento</a>
+                    <a href="./dj-tools.html" data-i18n="nav-tools">Herramientas</a>
+                    <a href="./jobs.html" data-i18n="nav-jobs">Trabajos</a>
+                    <a href="./index.html#contact" data-i18n="nav-contact">Contacto</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── DJ Pre-selected Banner ────────────────────────── -->
+    <div id="dj-preselect-banner"
+        style="display:none; background:linear-gradient(90deg,rgba(197,160,89,0.12),rgba(197,160,89,0.05)); border-bottom:1px solid rgba(197,160,89,0.25); padding:14px 24px;">
+        <div class="container" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+            <div style="font-size:24px;">🎧</div>
+            <div style="flex:1;">
+                <div
+                    style="font-size:11px;font-weight:800;color:rgba(197,160,89,0.7);letter-spacing:2px;margin-bottom:2px;">
+                    DJ SELECCIONADO</div>
+                <div style="font-size:15px;font-weight:900;color:#fff;">Estás cotizando con <span id="preselect-dj-name"
+                        style="color:#c5a059;">—</span></div>
+            </div>
+            <a href="./directory.html"
+                style="font-size:12px;color:rgba(255,255,255,0.4);text-decoration:none;white-space:nowrap;">← Cambiar
+                DJ</a>
+        </div>
+    </div>
+
+    <section class="portal-header">
+        <div class="container">
+            <div id="loyalty-tier-container"></div>
+            <h1 id="client-welcome">¡Hola, Gerardo!</h1>
+            <p>Tu evento está siendo planificado por expertos.</p>
+            <div class="countdown-box" id="countdown">
+                <div class="countdown-item">
+                    <span class="countdown-num" id="days">00</span>
+                    <span class="countdown-label">Días</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-num" id="hours">00</span>
+                    <span class="countdown-label">Horas</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-num" id="mins">00</span>
+                    <span class="countdown-label">Mins</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main class="container">
+        <div class="client-grid">
+            <div class="left-col">
+                <!-- Logistics Card -->
+                <div class="info-card">
+                    <h3>📍 Logística del Evento</h3>
+                    <ul class="logistics-list">
+                        <li>
+                            <span class="label">Ubicación:</span>
+                            <span class="val" id="log-location">Loading...</span>
+                        </li>
+                        <li>
+                            <span class="label">Fecha y Hora:</span>
+                            <span class="val" id="log-datetime">Loading...</span>
+                        </li>
+                        <li>
+                            <span class="label">Código de Acceso / Gate:</span>
+                            <span class="val" id="log-gate">A confirmar</span>
+                        </li>
+                        <li>
+                            <span class="label">Contacto en Sitio:</span>
+                            <span class="val" id="log-contact">Loading...</span>
+                        </li>
+                    </ul>
+                    <button class="btn primary" style="margin-top: 15px; width: 100%;" onclick="openMap()">Ver en
+                        Mapas</button>
+                </div>
+
+                <!-- Shopping Cart / Services -->
+                <div class="info-card">
+                    <h3>🛒 Mi Pack de Servicios</h3>
+                    <div id="cart-container">
+                        <!-- Items populated by JS -->
+                    </div>
+                    <div style="border-top: 1px solid var(--line); margin-top: 20px; padding-top: 20px;">
+                        <div class="logistics-list">
+                            <li>
+                                <span class="label">Subtotal:</span>
+                                <span class="val" id="cart-subtotal">$0.00</span>
+                            </li>
+                            <li id="cart-discount-row"
+                                style="display: none; border-bottom: 1px dashed var(--gold); padding: 10px 0;">
+                                <span class="label" style="color: var(--gold);">Descuentos/Créditos:</span>
+                                <span class="val" id="cart-discount"
+                                    style="text-align: right; font-size: 11px;">$0.00</span>
+                            </li>
+                            <li>
+                                <span class="label">Tax (7%):</span>
+                                <span class="val" id="cart-tax">$0.00</span>
+                            </li>
+                            <li style="font-size: 20px; color: #fff;">
+                                <span class="label" style="color: #fff;">Total:</span>
+                                <span class="val" id="cart-total">$0.00</span>
+                            </li>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DJ Feedback -->
+                <div class="info-card" id="feedback-card" style="display: none;">
+                    <h3>⭐ Califica tu Experiencia</h3>
+                    <p class="fineprint">Tu opinión nos ayuda a mantener el estándar de calidad MDJPRO.</p>
+                    <div class="stars" id="star-rating">
+                        <span class="star" data-val="1">★</span>
+                        <span class="star" data-val="2">★</span>
+                        <span class="star" data-val="3">★</span>
+                        <span class="star" data-val="4">★</span>
+                        <span class="star" data-val="5">★</span>
+                    </div>
+                    <div id="low-rating-feedback" style="display: none; margin-top: 20px;">
+                        <label class="fineprint">¿Qué podríamos haber mejorado?</label>
+                        <textarea id="feedback-text" rows="3"
+                            placeholder="Tu comentario es privado y corporativo."></textarea>
+                    </div>
+                    <button class="btn primary" style="margin-top: 15px;" id="submit-review">Enviar Reseña</button>
+                </div>
+            </div>
+
+            <!-- Payment Status -->
+            <div class="info-card" style="background: var(--glass-bg); border-color: var(--gold);">
+                <h3 style="color: var(--gold);">
+                    💳 Estado de Cuenta
+                    &nbsp;<span id="pay-status-badge"
+                        style="font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px; background:rgba(197,160,89,0.12); border:1px solid rgba(197,160,89,0.3);">UNPAID</span>
+                </h3>
+                <ul class="logistics-list">
+                    <li>
+                        <span class="label">Total del Evento:</span>
+                        <span class="val" id="pay-total">$0.00</span>
+                    </li>
+                    <li>
+                        <span class="label">Abonado (Pagado):</span>
+                        <span class="val" style="color: #00ff88;" id="pay-paid">$0.00</span>
+                    </li>
+                </ul>
+                <div class="payment-bar">
+                    <div class="payment-fill" id="pay-progress"></div>
+                </div>
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <span class="label">Saldo Pendiente:</span>
+                    <div style="font-size: 32px; font-weight: 800; color: #fff;" id="pay-balance">$0.00</div>
+                </div>
+                <!-- Stripe pay button injected dynamically by client-portal.js -->
+                <p class="fineprint" style="text-align: center; margin-top: 15px;">
+                    ⚠️ Fecha limite pago final: <br>
+                    <strong id="pay-deadline">A confirmar</strong>
+                </p>
+            </div>
+
+
+            <!-- Calendar Widget -->
+            <div class="info-card">
+                <h3>📅 Agenda de Citas</h3>
+                <div id="calendar-widget">
+                    <!-- Populated by client-portal.js -->
+                </div>
+            </div>
+
+            <!-- AI Translation Chat -->
+            <div class="info-card" id="chat-section">
+                <h3>💬 Chat con Manager (AI Sync)</h3>
+                <div id="chat-messages"
+                    style="height: 200px; overflow-y: auto; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px;">
+                    <div class="fineprint" style="text-align: center; opacity: 0.5;">Iniciando canal seguro...
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="chat-input" placeholder="Escribe un mensaje..."
+                        style="flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--line); border-radius: 10px; padding: 10px; color: #fff;">
+                    <button class="btn primary" id="chat-send" style="padding: 10px 20px;">➔</button>
+                </div>
+                <p class="fineprint" style="margin-top: 10px; opacity: 0.7;">✨ AI Bridge: Messages are
+                    translated automatically.</p>
+            </div>
+        </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container" style="text-align: center;">
+            <p>© 2026 Miami DJ Beat LLC. Portal Seguro del Cliente.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=20260226-1"></script>
+    <script src="./client-portal.js"></script>
+    <script src="./mdj-assistant.js"></script>
+
+    <script>
+        // ── DJ Pre-selection from URL params ─────────────────────
+        (function () {
+            const params = new URLSearchParams(window.location.search);
+            const djName = params.get('dj_name');
+            const djId = params.get('dj_id');
+
+            if (djName || djId) {
+                const banner = document.getElementById('dj-preselect-banner');
+                const nameEl = document.getElementById('preselect-dj-name');
+                if (banner) banner.style.display = 'block';
+                if (nameEl) nameEl.textContent = djName ? decodeURIComponent(djName) : 'DJ Seleccionado';
+
+                // Persist for later use by client-portal.js
+                if (djId) sessionStorage.setItem('preferred_dj_id', djId);
+                if (djName) sessionStorage.setItem('preferred_dj_name', decodeURIComponent(djName));
+            }
+        })();
+    </script>
+</body>
+
+</html>
