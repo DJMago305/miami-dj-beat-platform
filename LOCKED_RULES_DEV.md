@@ -124,7 +124,19 @@ Antes de cada commit, es obligatorio ejecutar:
 ```bash
 git diff --stat
 ```
-Para confirmar visualmente que solo se están enviando los cambios planeados.
+**Acción Crítica**: Revisar manualmente que:
+- No se tocaron archivos inesperados.
+- No hay cambios accidentales.
+
+---
+
+## 12. Regla de Estabilidad — "Tag de Estabilidad"
+🔐 **Regla 12: Sellado del Hito**
+Cuando un componente (ej. Rentals) esté sólido y verificado tras una serie de cambios:
+```bash
+git tag STABLE_RENTALS_V1
+```
+Para marcar puntos de restauración permanentes.
 
 ---
 **MDJPRO Engineering Standard**
