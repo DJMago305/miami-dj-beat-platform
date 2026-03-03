@@ -100,11 +100,15 @@ serve(async (req) => {
         const priceId = billing === "annual" ? STRIPE_PRICE_ANNUAL : STRIPE_PRICE_MONTHLY;
 
         // ── Get or create Stripe Customer ─────────────────────
-        const { data: profile } = await adminAuth
+        const { data: profile, error: profileError } = await adminAuth
             .from("dj_profiles")
             .select("stripe_customer_id, full_name")
             .eq("user_id", user.id)
             .single();
+
+        if (profileError && profileError.code !== 'PGRST116') {
+            console.error("[ERROR] Fetching profile:", profileError);
+        }
 
         let customerId = profile?.stripe_customer_id;
 
@@ -128,12 +132,16 @@ serve(async (req) => {
         let discountCouponId: string | null = null;
 
         if (referralCode) {
-            const { data: referrer } = await adminAuth
+            const { data: referrer, error: refError } = await adminAuth
                 .from("dj_profiles")
                 .select("user_id")
                 .eq("referral_code", referralCode)
                 .neq("user_id", user.id) // can't self-refer
                 .single();
+
+            if (refError && refError.code !== 'PGRST116') {
+                console.error("[ERROR] Referral validation:", refError);
+            }
 
             if (referrer) {
                 referrerId = referrer.user_id;

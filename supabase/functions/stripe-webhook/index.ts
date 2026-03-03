@@ -60,6 +60,20 @@ serve(async (req) => {
     const event = JSON.parse(body);
     console.log("Stripe webhook event:", event.type);
 
+    // ── FASE A: Idempotency Check (Militar Guard) ───────
+    const { data: alreadyProcessed } = await supabase
+        .from("processed_webhooks")
+        .select("event_id")
+        .eq("event_id", event.id)
+        .maybeSingle();
+
+    if (alreadyProcessed) {
+        console.log(`[Webhook] Duplicate event ignored: ${event.id}`);
+        return new Response(JSON.stringify({ received: true, duplicate: true }), {
+            headers: { "Content-Type": "application/json" }
+        });
+    }
+
     try {
         switch (event.type) {
 
@@ -204,6 +218,9 @@ serve(async (req) => {
                 break;
             }
         }
+
+        // ── FASE A: Register successful processing ───────────
+        await supabase.from("processed_webhooks").insert({ event_id: event.id });
 
         return new Response(JSON.stringify({ received: true }), {
             headers: { "Content-Type": "application/json" }

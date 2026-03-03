@@ -222,6 +222,7 @@
           <a href="./index.html" class="active" data-i18n="nav-home">Inicio</a>
           <a href="#services" data-i18n="nav-services">Servicios</a>
           <a href="./rentals.html" data-i18n="nav-rentals">Servicios de Evento</a>
+          <a href="./find-dj.html" style="color:var(--gold); font-weight:800;">🎧 Talentos</a>
           <a href="./dj-tools.html" data-i18n="nav-tools">Herramientas</a>
           <a href="./dj-profile.html?tab=flow" id="nav-flow-link"
             style="color:var(--gold); display:none; font-weight:800;">Flujo</a>
@@ -1060,12 +1061,10 @@
         // Day Updater
         const updateDays = () => {
           const month = parseInt(mSel.value);
-          if (isNaN(month)) {
-            dSel.innerHTML = `<option value="" disabled selected data-i18n="option-day">Día</option>`;
-            return;
-          }
           const year = parseInt(ySel.value) || currentYear;
-          const daysInMonth = new Date(year, month, 0).getDate();
+
+          // Default to 31 if month is not selected, otherwise get actual days
+          const daysInMonth = isNaN(month) ? 31 : new Date(year, month, 0).getDate();
           const currentVal = dSel.value;
 
           dSel.innerHTML = `<option value="" disabled selected data-i18n="option-day">Día</option>`;
@@ -1081,7 +1080,9 @@
 
         mSel.addEventListener('change', updateDays);
         ySel.addEventListener('change', updateDays);
-        updateDays(); // Initial call to show empty or pre-filled days
+
+        // Populate days initially (1-31 by default)
+        updateDays();
       };
 
       // 1. Hero / Registration (removed in this page but setup anyway if it exists)
@@ -1152,7 +1153,10 @@
         // 3. Fetch profile for PRO check & Role
         try {
           const { data: p } = await sb.from('dj_profiles').select('role, photo_url, plan_type, plan_status, plan_expires_at').eq('user_id', session.user.id).single();
-          if (p && p.photo_url) document.querySelector('.avatar').src = p.photo_url;
+          if (p && p.photo_url) {
+            const avatarElems = document.querySelectorAll('.avatar');
+            avatarElems.forEach(img => img.src = p.photo_url);
+          }
 
           // 4. Show Flow link if PRO
           const navFlow = document.getElementById('nav-flow-link');
@@ -1205,9 +1209,9 @@
           }
 
           // Update avatar image
-          if (profile?.photo_url) {
+          if (p?.photo_url) {
             const avatarImg = document.querySelector('#accountBtn .avatar');
-            if (avatarImg) avatarImg.src = profile.photo_url;
+            if (avatarImg) avatarImg.src = p.photo_url;
           }
         } catch (e) { console.error('Error fetching profile for nav:', e); }
       }

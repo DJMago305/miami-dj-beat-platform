@@ -1037,7 +1037,7 @@
 
             // Build query
             let q = db.from('public_dj_profiles')
-                .select('dj_slug,stage_name,photo_url,bio_short,city,roles,genres,category,available,availability_schedule,plan,social_instagram')
+                .select('dj_slug,stage_name,photo_url,bio_short,city,roles,genres,category,available,availability_schedule,plan,plan_status,social_instagram')
                 .eq('available', true);
 
             if (genre) q = q.ilike('genres', `%${genre}%`);
@@ -1079,11 +1079,17 @@
                 const availDiff = (order[a._avail] || 3) - (order[b._avail] || 3);
                 if (availDiff !== 0) return availDiff;
 
-                // Within same availability tier: PRO first
+                // Within same availability tier: PRO first (Only if plan_status is 'active')
                 const aPlan = (a.plan || '').toUpperCase();
                 const bPlan = (b.plan || '').toUpperCase();
-                if (aPlan === 'PRO' && bPlan !== 'PRO') return -1;
-                if (aPlan !== 'PRO' && bPlan === 'PRO') return 1;
+                const aStatus = (a.plan_status || 'active').toLowerCase();
+                const bStatus = (b.plan_status || 'active').toLowerCase();
+
+                const isAProActive = aPlan === 'PRO' && aStatus === 'active';
+                const isBProActive = bPlan === 'PRO' && bStatus === 'active';
+
+                if (isAProActive && !isBProActive) return -1;
+                if (!isAProActive && isBProActive) return 1;
                 return 0;
             });
 

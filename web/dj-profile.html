@@ -1537,7 +1537,7 @@
                 if (p.verified) {
                     badge.textContent = '💎';
                     badge.title = 'DJ Verificado por MDJPRO';
-                } else if (p.plan === 'PRO') {
+                } else if (p.plan === 'PRO' && (p.plan_status || 'active').toLowerCase() === 'active') {
                     badge.textContent = '⭐';
                     badge.title = 'Miembro PRO — Verificación pendiente';
                 } else {
@@ -1622,7 +1622,7 @@
 
 
             // ── PRO tag en hero si aplica ──
-            if (p.plan === 'PRO') {
+            if (p.plan === 'PRO' && (p.plan_status || 'active').toLowerCase() === 'active') {
                 const roleEl = document.getElementById('pub-role-label');
                 if (roleEl) {
                     const span = document.createElement('span');
@@ -1640,9 +1640,12 @@
                 const sc = document.getElementById('status-sidebar-card');
                 if (sc) sc.style.display = 'block';
                 const pb = document.getElementById('sidebar-plan-badge');
-                if (pb) pb.innerHTML = p.plan === 'PRO'
-                    ? '<span class="plan-badge-pro">PRO</span>'
-                    : '<span class="plan-badge-lite">LITE</span>';
+                if (pb) {
+                    const isProActive = p.plan === 'PRO' && (p.plan_status || 'active').toLowerCase() === 'active';
+                    pb.innerHTML = isProActive
+                        ? '<span class="plan-badge-pro">PRO</span>'
+                        : '<span class="plan-badge-lite">LITE</span>';
+                }
                 const sv = document.getElementById('sidebar-verified');
                 if (sv) { sv.textContent = p.verified ? '✅ Sí' : '⏳ Pendiente'; if (p.verified) sv.classList.add('green'); }
             }
