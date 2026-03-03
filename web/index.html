@@ -9,6 +9,8 @@
     content="Miami DJ Beat provides professional DJs and event production for corporate, private, and venue events across Miami-Dade and the Florida Keys." />
   <link rel="stylesheet" href="./styles.css?v=20260226-1" />
   <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-config.js?v=20260226-1"></script>
   <style>
     /* Cinematic Home Hero — FULL VIEWPORT */
     .hero {
@@ -138,6 +140,19 @@
       transform: translateY(-2px);
       box-shadow: 0 5px 15px rgba(197, 160, 89, 0.1);
     }
+
+    /* Account Menu Header Fix */
+    .account-menu {
+      right: 0 !important;
+      top: calc(100% + 10px) !important;
+      transform: none !important;
+      background: rgba(10, 10, 10, 0.98) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .account-menu.open {
+      display: block !important;
+    }
   </style>
 </head>
 
@@ -193,6 +208,10 @@
             <a href="./directory.html">Directory</a>
             <a href="./find-dj.html" style="color:#c5a059;font-weight:800;">🎧 Encuentra DJ</a>
             <a href="#contact" data-i18n="nav-contact">Contacto</a>
+            <a href="login.html" id="header-login-btn-mobile" data-i18n="btn-login"
+              style="color:var(--gold); font-weight:800;">Login</a>
+            <a href="./dj-profile.html" id="nav-my-profile-mobile"
+              style="display:none; color:var(--gold); font-weight:900;">MI PERFIL</a>
           </nav>
         </div>
       </div>
@@ -204,9 +223,9 @@
           <a href="#services" data-i18n="nav-services">Servicios</a>
           <a href="./rentals.html" data-i18n="nav-rentals">Servicios de Evento</a>
           <a href="./dj-tools.html" data-i18n="nav-tools">Herramientas</a>
+          <a href="./dj-profile.html?tab=flow" id="nav-flow-link"
+            style="color:var(--gold); display:none; font-weight:800;">Flujo</a>
           <a href="./jobs.html" data-i18n="nav-jobs">Trabajos</a>
-          <a href="./directory.html">Directory</a>
-          <a href="./find-dj.html" style="color:#c5a059;font-weight:800;">🎧 Encuentra DJ</a>
           <a href="#contact" data-i18n="nav-contact">Contacto</a>
         </nav>
       </div>
@@ -1101,6 +1120,120 @@
     document.addEventListener('DOMContentLoaded', () => {
       initAvailabilityForm();
       loadHomeHeroSettings();
+      checkSessionForNav();
+    });
+
+    async function checkSessionForNav() {
+      const sb = window.getSupabaseClient ? window.getSupabaseClient() : null;
+      if (!sb) return;
+      const { data: { session } } = await sb.auth.getSession();
+
+      if (session) {
+        // 1. Transform Login buttons (Desktop & Mobile)
+        const loginBtn = document.getElementById('header-login-btn');
+        const loginBtnMobile = document.getElementById('header-login-btn-mobile');
+        const getProBtn = document.querySelector('.btn-pill.gold[href="login.html"]');
+
+        if (loginBtn) {
+          loginBtn.setAttribute('data-i18n', 'btn-my-account');
+          loginBtn.textContent = 'Mi Perfil'; // Initial placeholder
+          loginBtn.classList.add('gold');
+        }
+        if (loginBtnMobile) {
+          loginBtnMobile.textContent = 'Mi Perfil';
+        }
+
+        if (getProBtn) getProBtn.style.display = 'none';
+
+        // 2. Show auth zone (avatar/menu)
+        const authZone = document.getElementById('header-auth-zone');
+        if (authZone) authZone.style.display = 'block';
+
+        // 3. Fetch profile for PRO check & Role
+        try {
+          const { data: p } = await sb.from('dj_profiles').select('role, photo_url, plan_type, plan_status, plan_expires_at').eq('user_id', session.user.id).single();
+          if (p && p.photo_url) document.querySelector('.avatar').src = p.photo_url;
+
+          // 4. Show Flow link if PRO
+          const navFlow = document.getElementById('nav-flow-link');
+          if (navFlow && p) {
+            const isPro = ['pro_monthly', 'pro_annual', 'PRO'].includes(p.plan_type);
+            const isActive = p.plan_status === 'active';
+            const isNotExpired = p.plan_expires_at ? (new Date() < new Date(p.plan_expires_at)) : true;
+            if (isPro && isActive && isNotExpired) {
+              navFlow.style.display = 'inline-block';
+            }
+          }
+
+          const isClient = p?.role === 'client';
+          const profileUrl = isClient ? './client-portal.html' : './dj-profile.html';
+          const profileText = isClient ? 'Mi Portal' : 'Mi Perfil';
+
+          const loginLinks = [
+            document.getElementById('header-login-btn'),
+            document.getElementById('header-login-btn-mobile'),
+            document.getElementById('nav-my-profile-mobile')
+          ];
+          loginLinks.forEach(link => {
+            if (link) {
+              if (link.id === 'nav-my-profile-mobile') link.style.display = 'block';
+              link.href = profileUrl;
+              link.textContent = profileText;
+            }
+          });
+
+          // Update other menu links
+          const profileLinks = document.querySelectorAll('a[href="./dj-profile.html"]');
+          profileLinks.forEach(link => {
+            link.href = profileUrl;
+            if (isClient && link.getAttribute('data-i18n') === 'menu-account') {
+              link.textContent = 'Mi Portal';
+            }
+          });
+
+          // Show specific "MI PERFIL" button in main nav
+          const myProfileBtn = document.getElementById('nav-my-profile');
+          if (myProfileBtn) {
+            myProfileBtn.href = profileUrl;
+            myProfileBtn.style.display = 'inline-block';
+          }
+
+          const mobileProfileBtn = document.getElementById('nav-my-profile-mobile');
+          if (mobileProfileBtn) {
+            mobileProfileBtn.href = profileUrl;
+            mobileProfileBtn.style.display = 'block';
+          }
+
+          // Update avatar image
+          if (profile?.photo_url) {
+            const avatarImg = document.querySelector('#accountBtn .avatar');
+            if (avatarImg) avatarImg.src = profile.photo_url;
+          }
+        } catch (e) { console.error('Error fetching profile for nav:', e); }
+      }
+    }
+
+    // Account Menu Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      const accBtn = document.getElementById('accountBtn');
+      const accMenu = document.getElementById('accountMenu');
+      if (accBtn && accMenu) {
+        accBtn.onclick = (e) => {
+          e.stopPropagation();
+          accMenu.classList.toggle('open');
+        };
+        document.addEventListener('click', () => accMenu.classList.remove('open'));
+      }
+
+      const logoutBtn = document.getElementById('logoutBtn');
+      if (logoutBtn) {
+        logoutBtn.onclick = async (e) => {
+          e.preventDefault();
+          const sb = window.getSupabaseClient();
+          await sb.auth.signOut();
+          window.location.reload();
+        };
+      }
     });
 
     async function loadHomeHeroSettings() {

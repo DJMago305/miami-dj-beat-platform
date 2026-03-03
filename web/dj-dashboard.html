@@ -11,6 +11,9 @@
         rel="stylesheet">
     <link rel="stylesheet" href="./styles.css?v=20260226-1" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=20260226-1"></script>
+    <script src="./role-guard.js?v=20260226-2" data-role="dj"></script>
     <style>
         /* ── Dashboard overrides — clean Serato-level aesthetic ── */
         h1,
@@ -61,16 +64,186 @@
             color: var(--gold, #c5a059);
             border-bottom-color: var(--gold, #c5a059);
         }
+
+        /* ── Influence Analytics Styles ── */
+        .flow-dashboard {
+            background: #0a0a0b;
+            color: #fff;
+            padding: 32px;
+            font-family: 'Inter', sans-serif;
+            animation: fadeIn0 0.6s ease-out;
+        }
+
+        @keyframes fadeIn0 {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .flow-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .flow-card {
+            background: #111114;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .flow-card:hover {
+            border-color: rgba(197, 160, 89, 0.3);
+        }
+
+        .flow-card-label {
+            font-size: 11px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .flow-card-value {
+            font-size: 28px;
+            font-weight: 900;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .flow-card-trend {
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .flow-card-trend.up {
+            color: #00ff88;
+        }
+
+        .flow-card-trend.down {
+            color: #ff5555;
+        }
+
+        .chart-container-large {
+            background: #111114;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 900;
+            color: #fff;
+            margin: 0;
+        }
+
+        .flow-table-card {
+            background: #111114;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .flow-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .flow-table th {
+            text-align: left;
+            padding: 18px 24px;
+            font-size: 10px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .flow-table td {
+            padding: 18px 24px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .status-pill {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .status-pill.available {
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .status-pill.pending {
+            background: rgba(255, 204, 0, 0.1);
+            color: #ffcc00;
+            border: 1px solid rgba(255, 204, 0, 0.2);
+        }
+
+        .status-pill.held {
+            background: rgba(255, 85, 85, 0.1);
+            color: #ff5555;
+            border: 1px solid rgba(255, 85, 85, 0.2);
+        }
+
+        .ledger-filter-row {
+            padding: 16px 24px;
+            display: flex;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .ledger-filter-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.6);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ledger-filter-btn.active {
+            background: var(--gold);
+            color: #000;
+            border-color: var(--gold);
+        }
     </style>
 </head>
 
 <body class="notranslate">
-    <script>
-        // Guard: redirect to official DJ profile page unless explicitly bypassed
-        if (!location.search.includes('stay=1')) {
-            window.location.replace('./dj-profile.html');
-        }
-    </script>
     <header class="header">
         <div class="header-top">
             <div class="container">
@@ -81,34 +254,37 @@
                     </div>
                 </div>
 
-                <nav class="nav top-nav">
-                    <a href="./index.html" data-i18n="nav-home">Inicio</a>
-                    <a href="./rentals.html" data-i18n="nav-rentals">Alquileres</a>
-                    <a href="./dj-tools.html" data-i18n="nav-tools">Herramientas DJ</a>
-                    <a href="./jobs.html" data-i18n="nav-jobs">Trabajos</a>
-                </nav>
-
                 <div class="header-actions">
                     <div class="lang-switcher">
-                        <a href="mailto:support@miamidjbeat.com" class="lang-btn" data-i18n="nav-support">Soporte</a>
-                        <span class="lang-btn active" data-lang="es">ES</span>
+                        <span class="lang-btn active" data-lang="en">EN</span>
                         <span class="lang-pipe">|</span>
-                        <span class="lang-btn" data-lang="en">EN</span>
+                        <span class="lang-btn" data-lang="es">ES</span>
                     </div>
-
-                    <div class="account" id="header-auth-zone" style="display: block;">
+                    <div class="account" id="header-auth-zone" style="display:none;">
                         <button class="account-btn" id="accountBtn">
                             <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="Avatar" />
                             <span class="caret">▾</span>
                         </button>
                         <div class="account-menu" id="accountMenu">
-                            <a href="./dj-profile.html" class="menu-item">Mi Perfil</a>
                             <a href="./account-settings.html" class="menu-item">Configuración</a>
                             <div class="menu-divider"></div>
                             <a href="#" class="menu-item danger" id="logoutBtn">Cerrar Sesión</a>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+        <div class="header-bottom">
+            <div class="container">
+                <nav class="nav top-nav" id="mainNav">
+                    <a href="./index.html" data-i18n="nav-home">Inicio</a>
+                    <a href="./jobs.html" data-i18n="nav-jobs">Trabajos</a>
+                    <a href="./dj-tools.html" data-i18n="nav-tools">Herramientas</a>
+                    <a href="./dj-profile.html?tab=flow" id="nav-flow-link"
+                        style="color:var(--gold); display:none;">Flujo</a>
+                    <a href="./account-settings.html">Configuración</a>
+                    <a href="#" id="nav-logout-btn" style="color:rgba(255,80,80,0.85);">Cerrar Sesión</a>
+                </nav>
             </div>
         </div>
     </header>
@@ -131,188 +307,148 @@
             </div>
         </div>
 
-        <!-- ── DJ PROFILE HERO BANNER ───────────────────────────────── -->
-        <div id="dj-hero-banner"
-            style="display:none; position:relative; width:100%; height:220px; overflow:hidden; margin-bottom:0;">
-            <!-- Background cover image (blurred + darkened) -->
-            <div id="hero-bg" style="
-                position:absolute; inset:0;
-                background-size:cover; background-position:center 20%;
-                filter:blur(18px) brightness(0.38) saturate(1.2);
-                transform:scale(1.08);
-                transition:background-image 0.5s ease;
-            "></div>
-            <!-- Dark gradient overlay -->
-            <div
-                style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,0.82) 0%,rgba(0,0,0,0.2) 60%,rgba(0,0,0,0) 100%);">
-            </div>
 
-            <!-- Content -->
-            <div
-                style="position:relative;z-index:2;display:flex;align-items:flex-end;height:100%;padding:0 48px 28px 48px;gap:0;">
-                <!-- Left: text + socials -->
-                <div style="flex:1;min-width:0;">
-                    <!-- Category label -->
-                    <div id="hero-category" style="
-                        font-size:11px; font-weight:700; letter-spacing:2px;
-                        text-transform:uppercase; color:rgba(255,255,255,0.55);
-                        margin-bottom:6px;
-                    ">—</div>
-                    <!-- DJ Name -->
-                    <div style="display:flex;align-items:baseline;gap:3px;">
-                        <h1 id="hero-dj-name" style="
-                            font-size:clamp(32px,4vw,54px); font-weight:900;
-                            color:#fff; margin:0; line-height:1; letter-spacing:-1px;
-                            text-shadow:0 2px 24px rgba(0,0,0,0.8);
-                            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-                            max-width:60vw;
-                        ">DJMago305</h1>
-                        <span
-                            style="color:var(--gold,#C5A059);font-size:clamp(32px,4vw,54px);font-weight:900;line-height:1;">.</span>
-                    </div>
-
-                    <!-- Social icons row -->
-                    <div id="hero-socials" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;"></div>
-                </div>
-
-                <!-- Right: profile photo -->
-                <div style="margin-left:32px;flex-shrink:0;">
-                    <img id="hero-avatar" src="./assets/dj-avatar-placeholder.png" alt="DJ Photo" style="
-                        width:110px; height:130px; object-fit:cover;
-                        border-radius:10px;
-                        border:2px solid rgba(255,255,255,0.15);
-                        box-shadow:0 8px 32px rgba(0,0,0,0.6);
-                    ">
-                </div>
-            </div>
-        </div>
-        <!-- ── END DJ PROFILE HERO BANNER ────────────────────────────── -->
 
         <!-- ── DASHBOARD TAB NAV ────────────────────────────────────── -->
-        <div style="background:rgba(0,0,0,0.5); border-bottom:1px solid rgba(255,255,255,0.07);">
-            <div class="container" style="display:flex;gap:0;padding-top:0;padding-bottom:0;">
-                <a href="./dj-profile.html" class="dash-tab-btn" style="text-decoration:none;">
-                    Mi Perfil
-                </a>
-                <button class="dash-tab-btn active" data-tab="dashboard" onclick="switchDashTab('dashboard')">
-                    Dashboard
-                </button>
-                <button class="dash-tab-btn" data-tab="settings" onclick="switchDashTab('settings')">
-                    Configuración
-                </button>
+        <nav class="dj-owner-tabs" id="owner-tabs">
+            <div class="container">
+                <a href="./dj-profile.html" class="dj-tab-btn">Vista Pública</a>
+                <button class="dj-tab-btn" data-tab="flow" onclick="switchDashTab('flow')">Flujo de Caja</button>
+                <button class="dj-tab-btn" data-tab="dashboard" onclick="switchDashTab('dashboard')">Agenda</button>
+                <button class="dj-tab-btn" data-tab="settings"
+                    onclick="switchDashTab('settings')">Configuración</button>
             </div>
-        </div>
+        </nav>
         <style>
-            .dash-tab:hover {
-                color: #fff !important;
+            /* ── DJ OWNER TABS ── */
+            .dj-owner-tabs {
+                background: #0a0a0a;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                position: sticky;
+                top: 0;
+                z-index: 1000;
+                display: flex;
             }
 
-            .dash-tab.active {
-                color: var(--gold, #C5A059) !important;
-                border-bottom-color: var(--gold, #C5A059) !important;
+            .dj-owner-tabs .container {
+                display: flex;
+                gap: 40px;
+                padding: 0 56px;
+            }
+
+            .dj-tab-btn {
+                background: none;
+                border: none;
+                color: rgba(255, 255, 255, 0.4);
+                font-size: 15px;
+                font-weight: 900;
+                letter-spacing: 4px;
+                padding: 32px 0;
+                cursor: pointer;
+                text-transform: uppercase;
+                position: relative;
+                transition: color 0.2s;
+                text-decoration: none;
+            }
+
+            .dj-tab-btn:hover {
+                color: #fff;
+            }
+
+            .dj-tab-btn.active {
+                color: var(--gold);
+            }
+
+            .dj-tab-btn.active::after {
+                content: '';
+                position: absolute;
+                bottom: -1px;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: var(--gold);
             }
 
             .dash-tab-panel {
                 display: none;
+                animation: fadeIn 0.4s ease-out;
             }
 
             .dash-tab-panel.active {
                 display: block;
             }
 
-            .cfg-input {
-                width: 100%;
-                background: rgba(255, 255, 255, 0.06);
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                border-radius: 10px;
-                padding: 11px 14px;
-                color: #fff;
-                font-size: 14px;
-                box-sizing: border-box;
-                transition: border-color .2s;
-                outline: none;
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
 
-            .cfg-input:focus {
-                border-color: var(--gold, #C5A059);
+            .hero-grid {
+                display: grid;
+                grid-template-columns: 1fr 500px;
+                gap: 30px;
+                align-items: start;
             }
 
-            .cfg-label {
-                font-size: 11px;
-                color: rgba(255, 255, 255, 0.5);
-                font-weight: 700;
-                letter-spacing: 1px;
-                text-transform: uppercase;
-                margin-bottom: 6px;
-                display: block;
+            @media (max-width: 992px) {
+                .hero-grid {
+                    grid-template-columns: 1fr;
+                }
             }
 
-            .cfg-save-btn {
-                background: var(--gold, #C5A059);
-                color: #000;
-                border: none;
-                border-radius: 10px;
-                padding: 12px 28px;
-                font-weight: 900;
-                font-size: 14px;
-                cursor: pointer;
-                transition: opacity .2s;
+            /* Almanaque Read-only styles */
+            .read-only-cal {
+                pointer-events: none;
+                opacity: 0.9;
             }
 
-            .cfg-save-btn:hover {
-                opacity: .85;
+            .read-only-cal .cal-nav-btn {
+                pointer-events: auto;
             }
 
-            .cfg-save-btn:disabled {
-                opacity: .5;
-                cursor: not-allowed;
+            /* Allow Mes/Año navigation */
+            .rec-day-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #5078ff;
+            }
+
+            .dash-cal-cell:hover {
+                transform: translateY(-5px);
+                filter: brightness(1.2);
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
             }
         </style>
 
+
         <!-- TAB 1: Dashboard (existing content) -->
         <div id="tab-dashboard" class="dash-tab-panel active">
-            <section class="hero" style="padding-top:34px">
+            <section style="padding: 40px 0;">
                 <div class="container hero-grid">
-                    <div>
-                        <h1 data-i18n="dash-your-profile">Your DJ Profile</h1>
+                    <!-- Left Column: Business Logic -->
+                    <div class="agenda-main">
+                        <h1 data-i18n="dash-your-profile">Agenda</h1>
                         <p class="sub" data-i18n="dash-sub-desc">
-                            This dashboard shows your subscription status and gives you access to MDJPRO downloads.
+                            Este panel gestiona tus eventos programados, mensajes y notas de Miami DJ Beat.
                         </p>
 
-                        <div class="badges">
-                            <span class="badge"><span data-i18n="profile-label-plan">Plan:</span> <strong
-                                    id="display-plan">LITE</strong></span>
-                            <span class="badge" style="background: var(--gold); color: #000;"><span
-                                    data-i18n="profile-label-status">Estado:</span> <strong
-                                    id="display-status">Active</strong></span>
-                            <span class="badge"><span data-i18n="profile-label-id">ID:</span> <strong
-                                    id="display-member-id">DJ-0001</strong></span>
-                        </div>
-
-                        <div class="cta-row" style="margin-top: 24px;">
-                            <a class="btn primary" href="./downloads.html" data-i18n="dash-download-btn">Download MDJPRO
-                                (.pkg)</a>
-                            <a class="btn" href="./dj-tools.html" data-i18n="dash-release-notes">View Release Notes</a>
-                        </div>
-
-
-
-                        <!-- Talent Availability Section -->
+                        <!-- Talent Availability Section (Keeping for context, but will hide if redundant) -->
                         <div class="admin-card"
-                            style="margin-top: 20px; border: 1px solid var(--admin-accent); background: rgba(0, 255, 136, 0.05);">
+                            style="margin-top: 20px; border: 1px solid var(--admin-accent); background: rgba(0, 255, 136, 0.05); display: none;">
                             <div
                                 style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                <h2 class="gold" style="color:var(--admin-accent,#00c27a);">Disponibilidad y Agenda</h2>
-                                <button class="btn secondary small" onclick="addBusyDate()">+ Marcar Fecha
-                                    Ocupada</button>
+                                <h2 class="gold" style="color:var(--admin-accent,#00c27a);">Disponibilidad</h2>
+                                <button class="btn secondary small" onclick="addBusyDate()">+ Marcar Fecha</button>
                             </div>
-                            <p class="fineprint" style="margin-bottom: 20px;">Gestiona los días que no estás disponible.
-                                Nuestro algoritmo usará esto para recomendarte a los clientes.</p>
-
-                            <div id="busy-dates-container" style="display: flex; flex-wrap: wrap; gap: 10px;">
-                                <!-- Populated by profile-loader.js -->
-                                <div class="fineprint" style="opacity: 0.5;">Cargando agenda...</div>
-                            </div>
+                            <div id="busy-dates-container" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
                         </div>
 
                         <!-- ── SECCIÓN: MIS EVENTOS ASIGNADOS ─────────── -->
@@ -328,64 +464,226 @@
                                 <div class="fineprint" style="opacity: 0.5; text-align:center; padding: 20px;">Cargando
                                     eventos...</div>
                             </div>
+                        </div>
 
-                            <!-- ── VISIBILIDAD EN BÚSQUEDAS ────────────────── -->
-                            <div class="admin-card" id="visibility-card"
-                                style="margin-top:20px;border:1px solid rgba(99,102,241,0.35);background:rgba(99,102,241,0.05);">
-                                <div
-                                    style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                                    <h2 style="color:#818cf8;margin:0;">📊 Tu Visibilidad</h2>
-                                    <span id="vis-plan-badge"
-                                        style="font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;"></span>
-                                </div>
-                                <p style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:18px;">
-                                    Cuántas veces apareciste en búsquedas de clientes.
-                                </p>
-                                <div id="vis-stats"
-                                    style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
-                                    <div
-                                        style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;text-align:center;">
-                                        <div id="vis-today" style="font-size:28px;font-weight:900;color:#818cf8;">—
-                                        </div>
-                                        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;">HOY
-                                        </div>
-                                    </div>
-                                    <div
-                                        style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;text-align:center;">
-                                        <div id="vis-week" style="font-size:28px;font-weight:900;color:#818cf8;">—</div>
-                                        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;">ESTA
-                                            SEMANA</div>
-                                    </div>
-                                    <div
-                                        style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;text-align:center;">
-                                        <div id="vis-total" style="font-size:28px;font-weight:900;color:#818cf8;">—
-                                        </div>
-                                        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;">TOTAL
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="vis-upgrade-teaser"
-                                    style="display:none;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.3);border-radius:12px;padding:14px;">
-                                    <div style="font-size:13px;font-weight:800;color:#c5a059;margin-bottom:4px;">⚡ DJs
-                                        PRO aparecen hasta 9× más en búsquedas</div>
-                                    <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:12px;">PRO =
-                                        prioridad en ranking + perfil destacado para clientes.</div>
-                                    <a href="./account-settings.html#plan"
-                                        style="display:inline-block;background:#c5a059;color:#000;font-weight:900;font-size:12px;padding:8px 18px;border-radius:8px;text-decoration:none;">Upgrade
-                                        a PRO →</a>
-                                </div>
-                                <div id="vis-loading"
-                                    style="text-align:center;color:rgba(255,255,255,0.3);font-size:12px;padding:8px;">
-                                    Cargando estadísticas...</div>
+                        <!-- ── SECCIÓN: NOTAS Y COMUNICACIÓN ─────────── -->
+                        <div class="admin-card" id="communication-section"
+                            style="margin-top: 20px; border: 1px solid rgba(197,160,89,0.35); background: rgba(197,160,89,0.04);">
+                            <div
+                                style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <h2 class="gold">Notas del Manager / Comunicación</h2>
                             </div>
+                            <div id="manager-notes-container">
+                                <p class="fineprint" style="margin-bottom: 15px;">Aquí verás detalles y actualizaciones
+                                    enviadas por Miami DJ Beat.</p>
+                                <div
+                                    style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 8px; border: 1px dashed rgba(255,255,255,0.1); text-align: center;">
+                                    <p style="color: rgba(255,255,255,0.4); font-size: 13px; font-style: italic;">No hay
+                                        notas nuevas.</p>
+                                </div>
+                            </div>
+                        </div>
 
+                        <!-- ── DETALLES DEL EVENTO (IZQUIERDA) ── -->
+                        <div id="dash-left-event-details" style="margin-top: 20px;">
+                            <div id="dash-event-detail-card"
+                                style="background: #111114; border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 40px; text-align: left; min-height: 300px; display: flex; flex-direction: column; justify-content: center; transition: all 0.3s ease;">
+                                <div id="dash-event-detail-empty" style="text-align: center;">
+                                    <div style="font-size: 40px; margin-bottom: 15px;">📅</div>
+                                    <h3 style="color: #fff; font-size: 20px; font-weight: 800; margin-bottom: 10px;">
+                                        Selecciona una fecha</h3>
+                                    <p style="color: var(--muted); font-size: 14px;">Toca un día en el Almanaque para
+                                        ver los detalles.</p>
+                                </div>
+                                <div id="dash-event-detail-data" style="display: none;">
+                                    <!-- Dynamic content goes here -->
+                                </div>
+                            </div>
                         </div>
                     </div>
 
+                    <!-- Right Column: Interactive Almanac (Read-Only) -->
+                    <div class="agenda-sidebar">
+                        <div class="admin-card" style="padding: 24px; border: 1px solid rgba(197,160,89,0.25);">
+                            <div
+                                style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+                                <h2 class="gold" style="margin:0; font-size:18px;">📅 Mi Almanaque</h2>
+                                <div style="display:flex; gap:5px;">
+                                    <button onclick="dashPrevMonth()" class="btn secondary small cal-nav-btn"
+                                        style="padding:5px 10px;">‹</button>
+                                    <button onclick="dashNextMonth()" class="btn secondary small cal-nav-btn"
+                                        style="padding:5px 10px;">›</button>
+                                </div>
+                            </div>
 
+                            <div id="dash-cal-header"
+                                style="text-align:center; font-weight:900; color:#fff; margin-bottom:15px; text-transform:uppercase; letter-spacing:1px; font-size:14px;">
+                                CARGANDO...
+                            </div>
 
+                            <div
+                                style="display:grid; grid-template-columns:repeat(7, 1fr); gap:5px; margin-bottom:8px;">
+                                <div
+                                    style="text-align:center; font-size:9px; font-weight:800; color:rgba(255,255,255,0.3);">
+                                    LUN</div>
+                                <div
+                                    style="text-align:center; font-size:9px; font-weight:800; color:rgba(255,255,255,0.3);">
+                                    MAR</div>
+                                <div
+                                    style="text-align:center; font-size:9px; font-weight:800; color:rgba(255,255,255,0.3);">
+                                    MIE</div>
+                                <div
+                                    style="text-align:center; font-size:9px; font-weight:800; color:rgba(255,255,255,0.3);">
+                                    JUE</div>
+                                <div
+                                    style="text-align:center; font-size:9px; font-weight:800; color:rgba(255,255,255,0.3);">
+                                    VIE</div>
+                                <div
+                                    style="text-align:center; font-size:9px; font-weight:800; color:rgba(255,255,255,0.3);">
+                                    SAB</div>
+                                <div
+                                    style="text-align:center; font-size:9px; font-weight:800; color:rgba(255,255,255,0.3);">
+                                    DOM</div>
+                            </div>
+
+                            <div id="dash-cal-grid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:5px;"
+                                class="read-only-cal">
+                                <!-- Grid populated by profile-loader.js -->
+                            </div>
+
+                            <div
+                                style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.05); padding-top:15px;">
+                                <div style="display:flex; gap:15px; flex-wrap:wrap;">
+                                    <div
+                                        style="display:flex; align-items:center; gap:6px; font-size:10px; color:rgba(255,255,255,0.4);">
+                                        <div
+                                            style="width:8px; height:8px; border-radius:2px; background:rgba(80,120,255,0.3); border:1px solid #5078ff;">
+                                        </div> Residencia
+                                    </div>
+                                    <div
+                                        style="display:flex; align-items:center; gap:6px; font-size:10px; color:rgba(255,255,255,0.4);">
+                                        <div
+                                            style="width:8px; height:8px; border-radius:2px; background:rgba(0,255,136,0.3); border:1px solid #00ff88;">
+                                        </div> Confirmado
+                                    </div>
+                                    <div
+                                        style="display:flex; align-items:center; gap:6px; font-size:10px; color:rgba(255,255,255,0.4);">
+                                        <div
+                                            style="width:8px; height:8px; border-radius:2px; background:rgba(255,85,85,0.3); border:1px solid #ff5555;">
+                                        </div> Cancelado
+                                    </div>
+                                </div>
+                                <p
+                                    style="font-size:10px; color:rgba(255,255,255,0.3); margin-top:10px; line-height:1.4;">
+                                    Este calendario es informativo. Para modificar tu disponibilidad, ve a la pestaña de
+                                    <b>Configuraciones</b>.
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </section>
+        </div>
+
+        <!-- TAB 3: FLUJO (Professional Analytics Dashboard) -->
+        <div id="tab-flow" class="dash-tab-panel">
+            <section style="padding: 40px 0;">
+                <div class="container">
+                    <h1 data-i18n="dash-flow-title">Flujo de Caja</h1>
+
+                    <!-- ── VISIBILIDAD EN BÚSQUEDAS (Moved here) ────── -->
+                    <div class="admin-card" id="visibility-card"
+                        style="margin-bottom:32px;border:1px solid rgba(99,102,241,0.35);background:rgba(99,102,241,0.05);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                            <h2 style="color:#818cf8;margin:0;">📊 Tu Visibilidad</h2>
+                            <span id="vis-plan-badge"
+                                style="font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;"></span>
+                        </div>
+                        <p style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:18px;">
+                            Cuántas veces apareciste en búsquedas de clientes.
+                        </p>
+                        <div id="vis-stats"
+                            style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+                            <div
+                                style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;text-align:center;">
+                                <div id="vis-today" style="font-size:28px;font-weight:900;color:#818cf8;">—
+                                </div>
+                                <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;">HOY
+                                </div>
+                            </div>
+                            <div
+                                style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;text-align:center;">
+                                <div id="vis-week" style="font-size:28px;font-weight:900;color:#818cf8;">—</div>
+                                <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;">ESTA
+                                    SEMANA</div>
+                            </div>
+                            <div
+                                style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;text-align:center;">
+                                <div id="vis-total" style="font-size:28px;font-weight:900;color:#818cf8;">—
+                                </div>
+                                <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;">TOTAL
+                                </div>
+                            </div>
+                        </div>
+                        <div id="vis-upgrade-teaser"
+                            style="display:none;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.3);border-radius:12px;padding:14px;">
+                            <div style="font-size:13px;font-weight:800;color:#c5a059;margin-bottom:4px;">⚡ DJs
+                                PRO aparecen hasta 9× más en búsquedas</div>
+                            <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:12px;">PRO =
+                                prioridad en ranking + perfil destacado para clientes.</div>
+                            <a href="./account-settings.html#plan"
+                                style="display:inline-block;background:#c5a059;color:#000;font-weight:900;font-size:12px;padding:8px 18px;border-radius:8px;text-decoration:none;">Upgrade
+                                a PRO →</a>
+                        </div>
+                        <div id="vis-loading"
+                            style="text-align:center;color:rgba(255,255,255,0.3);font-size:12px;padding:8px;">
+                            Cargando estadísticas...</div>
+                    </div>
+
+                    <div
+                        style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-bottom:32px;">
+                        <div class="admin-card" style="padding:20px;">
+                            <div
+                                style="font-size:10px; font-weight:800; color:rgba(255,255,255,0.4); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">
+                                NETO (Tuyo)</div>
+                            <div id="kpi-net" style="font-size:24px; font-weight:900; color:var(--gold);">$0.00
+                            </div>
+                        </div>
+                        <div class="admin-card" style="padding:20px;">
+                            <div
+                                style="font-size:10px; font-weight:800; color:rgba(255,255,255,0.4); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">
+                                PENDIENTE</div>
+                            <div id="kpi-pending" style="font-size:24px; font-weight:900; color:#fff;">$0.00
+                            </div>
+                        </div>
+                        <div class="admin-card"
+                            style="padding:20px; border:1px solid rgba(59, 130, 246, 0.3); background:rgba(59, 130, 246, 0.05);">
+                            <div
+                                style="font-size:10px; font-weight:800; color:rgba(59, 130, 246, 0.6); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">
+                                TOTAL GENERADO</div>
+                            <div id="kpi-paid" style="font-size:24px; font-weight:900; color:#3b82f6;">$0.00
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div id="free-upgrade-teaser"
+                    style="display:none; text-align:center; padding:80px 40px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:20px;">
+                    <div style="font-size:48px; margin-bottom:20px;">💰</div>
+                    <h2 style="font-size:24px; font-weight:900; margin-bottom:12px;">Tu Historial Financiero es
+                        PRO</h2>
+                    <p style="color:rgba(255,255,255,0.5); max-width:500px; margin:0 auto 30px;">
+                        Actualiza a Plan PRO para ver el flujo de caja, detalle de comisiones, gráficas
+                        motivacionales y métricas avanzadas de tu negocio.
+                    </p>
+                    <a href="./account-settings.html#plan" class="btn primary">Obtener Acceso PRO →</a>
+                </div>
+        </div>
+
+        </div>
+        </section>
         </div>
 
         <!-- ══ PAYMENT MODAL ═════════════════════════════════════════ -->
@@ -2254,7 +2552,6 @@
                 if (!events || events.length === 0) {
                     container.innerHTML = `
                         <div style="text-align:center; padding:30px;">
-                            <div style="font-size:40px; margin-bottom:12px;">🎧</div>
                             <p class="fineprint" style="opacity:0.6;">Aún no tienes eventos asignados.<br>El manager te notificará cuando hayas sido seleccionado.</p>
                         </div>`;
                     return;
@@ -2336,7 +2633,8 @@
 
         window.markEventComplete = async (leadId) => {
             if (!confirm('¿Marcar este evento como COMPLETADO?')) return;
-            const { error } = await supabase.from('leads').update({ status: 'COMPLETED' }).eq('id', leadId);
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            const { error } = await sb.from('leads').update({ status: 'COMPLETED' }).eq('id', leadId);
             if (error) { alert('Error: ' + error.message); return; }
             loadAssignedEvents();
         };
@@ -2379,7 +2677,22 @@
             } catch (e) { }
         });
 
+        function switchDashTab(tabId) {
+            document.querySelectorAll('.dash-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.dash-tab-panel').forEach(p => p.classList.remove('active'));
+            const targetBtn = document.querySelector(`.dash-tab-btn[data-tab="${tabId}"]`);
+            const targetPanel = document.getElementById(`tab-${tabId}`);
+            if (targetBtn) targetBtn.classList.add('active');
+            if (targetPanel) targetPanel.classList.add('active');
+            if (tabId === 'flow' && window.loadFlowData) {
+                window.loadFlowData('30d');
+            }
+        }
+
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="./profile-loader.js"></script>
+    <script src="./flow-handler.js"></script>
     <link rel="stylesheet" href="./mdj-assistant.css" />
     <script src="./mdj-assistant.js"></script>
 

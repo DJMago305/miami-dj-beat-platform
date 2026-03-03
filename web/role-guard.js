@@ -27,13 +27,29 @@
     }
     if (!db) { window.location.href = LOGIN_URL; return; }
 
-    // ── Get session ────────────────────────────────────────────
-    const { data: { session } } = await db.auth.getSession();
+    // ── Get session with retry ──────────────────────────────────
+    let session = null;
+    for (let i = 0; i < 5; i++) {
+        const { data } = await db.auth.getSession();
+        if (data?.session) {
+            session = data.session;
+            break;
+        }
+        await new Promise(r => setTimeout(r, 150));
+    }
+
     const path = window.location.pathname;
 
-    // Not logged in → redirect to login (unless already there)
+    // Not logged in → redirect to login (unless already there or on allowed public/hybrid pages)
     if (!session) {
-        if (!path.includes('login.html') && !path.includes('index.html') && !path.includes('jobs.html')) {
+        const isPublicPage = path.includes('login.html') ||
+            path.includes('index.html') ||
+            path.includes('jobs.html') ||
+            path.includes('dj-profile.html') ||
+            path.includes('rentals.html');
+
+        if (!isPublicPage) {
+            console.log('[RoleGuard] No session found, redirecting to login.');
             window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
         }
         return;

@@ -10,7 +10,11 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700;1,800&family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&display=swap"
         rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=20260226-1"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="./flow-handler.js?v=20260303"></script>
 
     <!-- Open Graph / Meta sharing -->
     <meta property="og:type" content="website">
@@ -342,12 +346,129 @@
             object-position: center top;
         }
 
-        /* Disponibilidad flotante */
+        /* Availability Float */
         .dj-avail-float {
             position: absolute;
             top: 24px;
             left: 56px;
             display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 50px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 13px;
+            font-weight: 700;
+            z-index: 10;
+        }
+
+        /* ── DJ OWNER TABS ── */
+        .dj-owner-tabs {
+            background: #0a0a0a;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: none;
+            /* Only for owner */
+        }
+
+        .dj-owner-tabs .container {
+            display: flex;
+            gap: 40px;
+            padding: 0 56px;
+        }
+
+        .dj-tab-btn {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            padding: 32px 0;
+            cursor: pointer;
+            text-transform: uppercase;
+            position: relative;
+            transition: color 0.2s;
+        }
+
+        .dj-tab-btn:hover {
+            color: #fff;
+        }
+
+        .dj-tab-btn.active {
+            color: var(--gold);
+        }
+
+        .dj-tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gold);
+        }
+
+        .dj-panel {
+            display: none;
+        }
+
+        .dj-panel.active {
+            display: block;
+        }
+
+        /* Dashboard/Flow styles from original dashboard */
+        .admin-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 24px;
+        }
+
+        .badge {
+            display: inline-flex;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-right: 8px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 800;
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn.primary {
+            background: #fff;
+            color: #000;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+
+        .dj-avail-float {
+            position: absolute;
+            top: 24px;
+            left: 56px;
+            display: flex;
             align-items: center;
             gap: 7px;
             font-size: 11px;
@@ -356,6 +477,7 @@
             padding: 6px 16px;
             border-radius: 100px;
             backdrop-filter: blur(12px);
+            z-index: 10;
         }
 
         .dj-avail-dot {
@@ -1035,6 +1157,8 @@
                     <a href="./index.html" data-i18n="nav-home">Inicio</a>
                     <a href="./jobs.html" data-i18n="nav-jobs">Trabajos</a>
                     <a href="./dj-tools.html" data-i18n="nav-tools">Herramientas</a>
+                    <a href="./dj-profile.html?tab=flow" id="nav-flow-link"
+                        style="color:var(--gold); display:none;">Flujo</a>
                     <a href="./account-settings.html">Configuración</a>
                     <a href="#" id="nav-logout-btn" style="color:rgba(255,80,80,0.85);">Cerrar Sesión</a>
                 </nav>
@@ -1042,499 +1166,509 @@
         </div>
     </header>
 
-    <!-- ══════════════════════════════════════════════════
-         HERO — foto full-bleed, nombre enorme, íconos
-    ══════════════════════════════════════════════════ -->
-    <div class="dj-hero">
-        <!-- Foto de fondo —  se actualiza por JS con la foto del DJ -->
-        <img class="dj-hero-bg-photo" id="hero-bg-photo" src="./assets/dj-avatar-placeholder.png" alt="">
-
-        <div class="dj-hero-overlay"></div>
-
-        <!-- Disponibilidad flotante en top-left -->
-        <div id="pub-avail-float" class="dj-avail-float avail-yes" style="display:none;">
-            <span class="dj-avail-dot"></span>
-            <span id="pub-avail-text">Disponible</span>
+    <!-- ── DJ OWNER NAVIGATION ── -->
+    <nav class="dj-owner-tabs" id="owner-tabs">
+        <div class="container">
+            <button class="dj-tab-btn active" onclick="switchProfileTab('public')">Vista Pública</button>
+            <button class="dj-tab-btn" onclick="switchProfileTab('flow')">Flujo de Caja</button>
+            <button class="dj-tab-btn" onclick="switchProfileTab('software')">Gestión MDJPRO</button>
         </div>
+    </nav>
 
-        <!-- Foto inset top-right -->
-        <div class="dj-hero-inset">
-            <img id="pub-photo-inset" src="./assets/dj-avatar-placeholder.png" alt="DJ">
-        </div>
+    <div id="tab-public" class="dj-panel active">
+        <div class="dj-hero">
+            <!-- Foto de fondo —  se actualiza por JS con la foto del DJ -->
+            <img class="dj-hero-bg-photo" id="hero-bg-photo" src="./assets/dj-avatar-placeholder.png" alt="">
 
-        <div class="dj-hero-content">
-            <div class="dj-hero-left">
+            <div class="dj-hero-overlay"></div>
 
-                <!-- Roles -->
-                <div class="dj-hero-role" id="pub-role-label">DJ · PRODUCER</div>
+            <!-- Disponibilidad flotante en top-left -->
+            <div id="pub-avail-float" class="dj-avail-float avail-yes" style="display:none;">
+                <span class="dj-avail-dot"></span>
+                <span id="pub-avail-text">Disponible</span>
+            </div>
 
-                <!-- Nombre + punto dorado -->
-                <h1 id="pub-name" class="dj-hero-name">DJMago305<span class="dot">.</span></h1>
+            <!-- Foto inset top-right -->
+            <div class="dj-hero-inset">
+                <img id="pub-photo-inset" src="./assets/dj-avatar-placeholder.png" alt="DJ">
+            </div>
 
-                <!-- Artist Rating -->
-                <div class="dj-rating">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path
-                            d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                    </svg>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path
-                            d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                    </svg>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path
-                            d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                    </svg>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path
-                            d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                    </svg>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path
-                            d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                    </svg>
-                </div>
+            <div class="dj-hero-content">
+                <div class="dj-hero-left">
 
-                <!-- Fila social icons -->
-                <div class="dj-social-row">
-                    <div id="pub-social-icons" style="display: flex; gap: 8px;"></div>
-                    <button class="dj-social-icon share-btn" onclick="shareProfile()" title="Compartir Perfil">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                    <!-- Roles -->
+                    <div class="dj-hero-role" id="pub-role-label">DJ · PRODUCER</div>
+
+                    <!-- Nombre + punto dorado -->
+                    <h1 id="pub-name" class="dj-hero-name">DJMago305<span class="dot">.</span></h1>
+
+                    <!-- Artist Rating -->
+                    <div class="dj-rating">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
-                                d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92zM18 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM6 13c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm12 7.02c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z" />
+                                d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                         </svg>
-                    </button>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                        </svg>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                        </svg>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                        </svg>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                        </svg>
+                    </div>
+
+                    <!-- Fila social icons -->
+                    <div class="dj-social-row">
+                        <div id="pub-social-icons" style="display: flex; gap: 8px;"></div>
+                        <button class="dj-social-icon share-btn" onclick="shareProfile()" title="Compartir Perfil">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                <path
+                                    d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92zM18 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM6 13c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm12 7.02c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Founder badge -->
+                    <div id="pub-founder-badge" style="display:none;">
+                        <div class="founder-badge">
+                            <span style="font-size:20px;">🏆</span>
+                            <div>
+                                <div class="f-title">FOUNDING MEMBER</div>
+                                <div class="f-sub" id="pub-member-number">Miami DJ Beat Elite · #1 of 10</div>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════
+         BODY
+    ══════════════════════════════════════════════════ -->
+        <div class="dj-body">
+
+            <!-- Columna izquierda -->
+            <div>
+                <a href="./dj-dashboard.html" class="back-btn" id="back-dashboard-btn" style="display:none;">← Back to
+                    Dashboard</a>
+
+                <!-- Bio -->
+                <div class="dj-card">
+                    <div class="dj-card-label">BIO</div>
+                    <p id="pub-bio">…</p>
                 </div>
 
-                <!-- Founder badge -->
-                <div id="pub-founder-badge" style="display:none;">
-                    <div class="founder-badge">
-                        <span style="font-size:20px;">🏆</span>
-                        <div>
-                            <div class="f-title">FOUNDING MEMBER</div>
-                            <div class="f-sub" id="pub-member-number">Miami DJ Beat Elite · #1 of 10</div>
+                <!-- Roles chips -->
+                <div class="dj-card" id="roles-card" style="display:none;">
+                    <div class="dj-card-label">ESPECIALIDADES</div>
+                    <div class="dj-chips" id="pub-roles"></div>
+                </div>
+
+                <!-- Lugar de trabajo actual -->
+                <div class="dj-card" id="venues-card">
+                    <div class="dj-card-label">ACTUALMENTE TRABAJANDO EN</div>
+                    <div id="pub-venues-body">
+                        <!-- populated by JS -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar-stack">
+
+                <!-- Consulta disponibilidad -->
+                <div class="dj-card" id="avail-check-card">
+                    <div class="dj-card-label">CONSULTA DISPONIBILIDAD</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px;">
+                        <select id="dj-avail-month"
+                            style="flex:1;min-width:80px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;font-family:inherit;">
+                            <option value="" disabled selected>Mes</option>
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                        <select id="dj-avail-day"
+                            style="flex:1;min-width:60px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;font-family:inherit;">
+                            <option value="" disabled selected>Día</option>
+                        </select>
+                        <select id="dj-avail-year"
+                            style="flex:1;min-width:70px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;font-family:inherit;">
+                            <option value="" disabled selected>Año</option>
+                        </select>
+                    </div>
+                    <button id="dj-avail-check-btn" onclick="checkDJAvailability()"
+                        style="width:100%;margin-top:10px;background:linear-gradient(135deg,#c5a059,#e8b96a);color:#000;border:none;padding:10px;border-radius:9px;font-size:13px;font-weight:900;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;"
+                        onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(197,160,89,0.45)'"
+                        onmouseout="this.style.transform='';this.style.boxShadow=''">CHECK ★</button>
+                    <div id="dj-avail-result"
+                        style="margin-top:10px;font-size:12px;font-weight:700;text-align:center;min-height:18px;"></div>
+                </div>
+
+                <!-- Reservar -->
+                <div class="reserve-card">
+                    <div class="reserve-title">RESERVAR ESTE DJ</div>
+                    <p class="reserve-sub">Las reservas se gestionan a través de Miami DJ Beat. Contáctanos para
+                        disponibilidad y precio.</p>
+
+                    <!-- Icon-only contact grid: WhatsApp · Messenger · Phone · Email -->
+                    <div class="contact-icons-grid">
+                        <a id="pub-whatsapp-btn" href="https://wa.me/13056071780" target="_blank"
+                            class="contact-icon-btn cik-wa" aria-label="WhatsApp" title="WhatsApp">
+                            <svg viewBox="0 0 24 24">
+                                <path
+                                    d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                                <path
+                                    d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.858L.057 23.5l5.799-1.52A11.95 11.95 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.87 0-3.629-.488-5.157-1.342l-.371-.22-3.443.903.919-3.356-.241-.386A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
+                            </svg>
+                        </a>
+                        <a id="pub-messenger-btn" href="https://m.me/MiamiDJBeat" target="_blank"
+                            class="contact-icon-btn cik-msg" aria-label="Messenger" title="Messenger">
+                            <svg viewBox="0 0 24 24">
+                                <path
+                                    d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.869 4.326-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.83.94z" />
+                            </svg>
+                        </a>
+                        <a id="pub-tel-btn" href="tel:" class="contact-icon-btn cik-tel" aria-label="Llamar"
+                            title="Llamada directa">
+                            <svg viewBox="0 0 24 24">
+                                <path
+                                    d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" />
+                            </svg>
+                        </a>
+                        <a id="pub-email-btn" href="mailto:" class="contact-icon-btn cik-email" aria-label="Email"
+                            title="Enviar email">
+                            <svg viewBox="0 0 24 24">
+                                <path
+                                    d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" />
+                            </svg>
+                        </a>
+                    </div>
+
+                    <div class="ivr-box">
+                        <strong>Menú telefónico</strong>
+                        <div><span class="ivr-key">1</span>Español &nbsp;|&nbsp; <span class="ivr-key">2</span>English
                         </div>
+                        <div><span class="ivr-key">3</span>Ventas &nbsp;|&nbsp; <span class="ivr-key">4</span>Soporte
+                        </div>
+                        <div><span class="ivr-key">5</span>Contrataciones</div>
+                    </div>
+                </div>
+
+                <!-- Status (owner/admin) -->
+                <div class="status-card" id="status-sidebar-card" style="display:none;">
+                    <div class="dj-card-label">ESTADO DEL PERFIL</div>
+                    <div class="status-row">
+                        <span class="status-label">Plan</span>
+                        <span class="status-value" id="sidebar-plan-badge">—</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Estado</span>
+                        <span class="status-value green">Activo</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Verificado</span>
+                        <span class="status-value" id="sidebar-verified">—</span>
                     </div>
                 </div>
 
 
 
-            </div>
+
+
+                <!-- QR de referidos (solo dueno/propietario del perfil) -->
+                <div class="qr-ref-card" id="dj-qr-card" style="display:none;">
+                    <div class="dj-card-label">TU CÓDIGO QR</div>
+                    <div class="qr-wrap">
+                        <div id="profile-qrcode" style="width:120px;height:120px;"></div>
+                    </div>
+                    <div class="qr-sublabel">Invita DJs y clientes —<br>gana comisión por cada referido</div>
+                </div>
+
+                <!-- QR DE TEMPORADA (Público/Admin) -->
+                <div class="qr-ref-card" id="seasonal-qr-card"
+                    style="display:none; border-color:var(--gold); background:rgba(197,160,89,0.05);">
+                    <div class="dj-card-label" id="seasonal-qr-title" style="color:var(--gold);">PROMOCIÓN ESPECIAL
+                    </div>
+                    <div class="qr-wrap">
+                        <div id="seasonal-qrcode" style="width:120px;height:120px;"></div>
+                    </div>
+                    <div class="qr-label" id="seasonal-qr-subtitle">$20 DE DESCUENTO</div>
+                    <div class="qr-sublabel">Aprovecha esta oferta por tiempo limitado</div>
+                </div>
+
+                <!-- TOAST PARA NOTIFICACIONES (COMPARTIR) -->
+                <div id="share-toast" class="toast">¡Enlace copiado!</div>
+            </div> <!-- closes sidebar-stack -->
+        </div> <!-- closes dj-body -->
+    </div> <!-- closes tab-public -->
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container" style="text-align:center;">
+            <div data-i18n="footer-rights-llc">© 2026 Miami DJ Beat LLC. Pro Division Access.</div>
         </div>
-    </div>
+    </footer>
 
-    <!-- ══════════════════════════════════════════════════
-         BODY
-    ══════════════════════════════════════════════════ -->
-    <div class="dj-body">
+    <!-- Translations & Base Logic -->
+    <script src="./translations.js?v=20260226-1"></script>
+    <script src="./i18n.js?v=20260226-1"></script>
+    <script>
+        const ROLE_LABELS = {
+            'DJ': 'DJ ELITE', 'MC': 'CEREMONIALIST', 'ANIMADOR': 'GLOBAL HOST',
+            'BRUNCH_DJ': 'BRUNCH DJ', 'DINNER_DJ': 'DINNER DJ',
+            'RESIDENT_DJ': 'RESIDENT DJ', 'INVITADO': 'GUEST DJ', 'PRODUCTOR': 'PRODUCER'
+        };
 
-        <!-- Columna izquierda -->
-        <div>
-            <a href="./dj-dashboard.html" class="back-btn" id="back-dashboard-btn" style="display:none;">← Back to
-                Dashboard</a>
+        /* SVG íconos para la fila social del hero */
+        const SOCIAL_ICONS = {
+            social_youtube: { svg: '<svg viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.6 5.8a3 3 0 0 0 2.1 2.1C4.5 20.5 12 20.5 12 20.5s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.5 15.5v-7l6.5 3.5-6.5 3.5z"/></svg>', label: 'YouTube' },
+            social_soundcloud: { svg: '<svg viewBox="0 0 24 24"><path d="M12 7c-2.8 0-5.1 2.3-5.1 5.1 0 .2 0 .5.1.7-1.1.2-2 .8-2.6 1.7-.5 0-1 .2-1.4.5-.5.4-.9 1-.9 1.7 0 1.2 1 2.3 2.3 2.3h12.3C18.2 19 20 17.2 20 15c0-1.8-1.2-3.3-2.8-3.8-.2-2.3-2.1-4.2-4.4-4.2-.3 0-.5 0-.8.1zM10.8 19h-1.2v-7.6h1.2V19zm2.4 0h-1.2v-9.6h1.2V19zm2.4 0h-1.2v-7.6h1.2V19z" fill="currentColor"/></svg>', label: 'SoundCloud' },
+            social_spotify: { svg: '<svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>', label: 'Spotify' },
+            social_instagram: { svg: '<svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>', label: 'Instagram' },
+            social_tiktok: { svg: '<svg viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.32 6.32 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.78a4.85 4.85 0 0 1-1.01-.09z"/></svg>', label: 'TikTok' },
+            social_facebook: { svg: '<svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>', label: 'Facebook' },
+            social_mixcloud: { svg: '<svg viewBox="0 0 24 24"><path d="M9.5 12a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0zM12 9.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm5 0a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM0 12C0 5.373 5.373 0 12 0s12 5.373 12 12-5.373 12-12 12S0 18.627 0 12z"/></svg>', label: 'Mixcloud' },
+            social_apple: { svg: '<svg viewBox="0 0 361 361"><path d="M254.5,55c-0.87,0.08-8.6,1.45-9.53,1.64l-107,21.59l-0.04,0.01c-2.79,0.59-4.98,1.58-6.67,3 c-2.04,1.71-3.17,4.13-3.6,6.95c-0.09,0.6-0.24,1.82-0.24,3.62c0,0,0,109.32,0,133.92c0,3.13-0.25,6.17-2.37,8.76 c-2.12,2.59-4.74,3.37-7.81,3.99c-2.33,0.47-4.66,0.94-6.99,1.41c-8.84,1.78-14.59,2.99-19.8,5.01 c-4.98,1.93-8.71,4.39-11.68,7.51c-5.89,6.17-8.28,14.54-7.46,22.38c0.7,6.69,3.71,13.09,8.88,17.82 c3.49,3.2,7.85,5.63,12.99,6.66c5.33,1.07,11.01,0.7,19.31-0.98c4.42-0.89,8.56-2.28,12.5-4.61c3.9-2.3,7.24-5.37,9.85-9.11 c2.62-3.75,4.31-7.92,5.24-12.35c0.96-4.57,1.19-8.7,1.19-13.26l0-116.15c0-6.22,1.76-7.86,6.78-9.08c0,0,88.94-17.94,93.09-18.75 c5.79-1.11,8.52,0.54,8.52,6.61l0,79.29c0,3.14-0.03,6.32-2.17,8.92c-2.12,2.59-4.74,3.37-7.81,3.99 c-2.33,0.47-4.66,0.94-6.99,1.41c-8.84,1.78-14.59,2.99-19.8,5.01c-4.98,1.93-8.71,4.39-11.68,7.51 c-5.89,6.17-8.49,14.54-7.67,22.38c0.7,6.69,3.92,13.09,9.09,17.82c3.49,3.2,7.85,5.56,12.99,6.6c5.33,1.07,11.01,0.69,19.31-0.98 c4.42-0.89,8.56-2.22,12.5-4.55c3.9-2.3,7.24-5.37,9.85-9.11c2.62-3.75,4.31-7.92,5.24-12.35c0.96-4.57,1-8.7,1-13.26V64.46 C263.54,58.3,260.29,54.5,254.5,55z" fill="currentColor" transform="scale(1.1) translate(-20, -20)"/></svg>', label: 'Apple Music' },
+            social_web: { svg: '<svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-1 21.945A10.013 10.013 0 0 1 2 12c0-1.07.17-2.1.484-3.065L8 14.5v.5c0 1.1.9 2 2 2v4.945zm8.072-3.543C18.68 17.54 17.45 17 16 17h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V8h2c1.1 0 2-.9 2-2V3.69A10.005 10.005 0 0 1 22 12c0 2.418-.861 4.635-2.275 6.375z" fill-rule="nonzero"/></svg>', label: 'Miami DJ Beat' },
+        };
 
-            <!-- Bio -->
-            <div class="dj-card">
-                <div class="dj-card-label">BIO</div>
-                <p id="pub-bio">…</p>
-            </div>
+        const SOCIAL_MAP_DETAIL = [
+            { key: 'social_instagram', icon: '📸', label: 'Instagram' },
+            { key: 'social_tiktok', icon: '🎵', label: 'TikTok' },
+            { key: 'social_youtube', icon: '▶️', label: 'YouTube' },
+            { key: 'social_facebook', icon: '👥', label: 'Facebook' },
+            { key: 'social_soundcloud', icon: '☁️', label: 'SoundCloud' },
+            { key: 'social_mixcloud', icon: '🎛️', label: 'Mixcloud' },
+            { key: 'social_spotify', icon: '🎶', label: 'Spotify' },
+            { key: 'social_apple', icon: '🍎', label: 'Apple Music' },
+            { key: 'social_web', icon: '🌐', label: 'Website' },
+        ];
 
-            <!-- Roles chips -->
-            <div class="dj-card" id="roles-card" style="display:none;">
-                <div class="dj-card-label">ESPECIALIDADES</div>
-                <div class="dj-chips" id="pub-roles"></div>
-            </div>
+        async function loadProfile() {
+            let db = null;
+            for (let i = 0; i < 20 && !db; i++) {
+                db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+                if (!db) await new Promise(r => setTimeout(r, 200));
+            }
+            if (!db) { console.error('Supabase not available'); return; }
 
-            <!-- Lugar de trabajo actual -->
-            <div class="dj-card" id="venues-card">
-                <div class="dj-card-label">ACTUALMENTE TRABAJANDO EN</div>
-                <div id="pub-venues-body">
-                    <!-- populated by JS -->
-                </div>
-            </div>
+            const { data: { session } } = await db.auth.getSession();
+            if (session) {
+                const z = document.getElementById('header-auth-zone');
+                if (z) z.style.display = 'block';
+            }
 
-        </div>
+            const params = new URLSearchParams(window.location.search);
+            const targetId = params.get('id') || (session ? session.user.id : null);
+            window.currentProfileDJId = targetId;
+            if (!targetId) { document.getElementById('pub-name').textContent = 'DJ no encontrado'; return; }
 
-        <!-- Sidebar -->
-        <div class="sidebar-stack">
+            const isOwner = session && session.user.id === targetId;
+            let isAdmin = false;
+            if (session) {
+                const { data: vp } = await db.from('dj_profiles').select('role').eq('user_id', session.user.id).single();
+                isAdmin = vp?.role === 'admin';
+            }
 
-            <!-- Consulta disponibilidad -->
-            <div class="dj-card" id="avail-check-card">
-                <div class="dj-card-label">CONSULTA DISPONIBILIDAD</div>
-                <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px;">
-                    <select id="dj-avail-month"
-                        style="flex:1;min-width:80px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;font-family:inherit;">
-                        <option value="" disabled selected>Mes</option>
-                        <option value="1">Enero</option>
-                        <option value="2">Febrero</option>
-                        <option value="3">Marzo</option>
-                        <option value="4">Abril</option>
-                        <option value="5">Mayo</option>
-                        <option value="6">Junio</option>
-                        <option value="7">Julio</option>
-                        <option value="8">Agosto</option>
-                        <option value="9">Septiembre</option>
-                        <option value="10">Octubre</option>
-                        <option value="11">Noviembre</option>
-                        <option value="12">Diciembre</option>
-                    </select>
-                    <select id="dj-avail-day"
-                        style="flex:1;min-width:60px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;font-family:inherit;">
-                        <option value="" disabled selected>Día</option>
-                    </select>
-                    <select id="dj-avail-year"
-                        style="flex:1;min-width:70px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;font-family:inherit;">
-                        <option value="" disabled selected>Año</option>
-                    </select>
-                </div>
-                <button id="dj-avail-check-btn" onclick="checkDJAvailability()"
-                    style="width:100%;margin-top:10px;background:linear-gradient(135deg,#c5a059,#e8b96a);color:#000;border:none;padding:10px;border-radius:9px;font-size:13px;font-weight:900;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;"
-                    onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(197,160,89,0.45)'"
-                    onmouseout="this.style.transform='';this.style.boxShadow=''">CHECK ★</button>
-                <div id="dj-avail-result"
-                    style="margin-top:10px;font-size:12px;font-weight:700;text-align:center;min-height:18px;"></div>
-            </div>
+            let p = null;
+            try {
+                // Attempt full select
+                const { data, error: err } = await db.from('dj_profiles').select('*').eq('user_id', targetId).single();
+                if (err) throw err;
+                p = data;
+            } catch (err) {
+                console.warn('Full profile fetch failed (likely SQL missing):', err);
+                // Fallback select with guaranteed columns
+                const { data: pBasic, error: errBasic } = await db.from('dj_profiles').select('id, user_id, dj_name, photo_url, role, bio, bio_short, bio_long, stage_name, full_name, verified, plan, available, social_instagram, social_tiktok, social_youtube, social_facebook, social_soundcloud, social_mixcloud, social_spotify, social_apple, social_web, background_url, photo_focal_y').eq('user_id', targetId).single();
+                if (!errBasic && pBasic) {
+                    p = pBasic;
+                } else {
+                }
+            }
 
-            <!-- Reservar -->
-            <div class="reserve-card">
-                <div class="reserve-title">RESERVAR ESTE DJ</div>
-                <p class="reserve-sub">Las reservas se gestionan a través de Miami DJ Beat. Contáctanos para
-                    disponibilidad y precio.</p>
-
-                <!-- Icon-only contact grid: WhatsApp · Messenger · Phone · Email -->
-                <div class="contact-icons-grid">
-                    <a id="pub-whatsapp-btn" href="https://wa.me/13056071780" target="_blank"
-                        class="contact-icon-btn cik-wa" aria-label="WhatsApp" title="WhatsApp">
-                        <svg viewBox="0 0 24 24">
-                            <path
-                                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-                            <path
-                                d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.858L.057 23.5l5.799-1.52A11.95 11.95 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.87 0-3.629-.488-5.157-1.342l-.371-.22-3.443.903.919-3.356-.241-.386A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
-                        </svg>
-                    </a>
-                    <a id="pub-messenger-btn" href="https://m.me/MiamiDJBeat" target="_blank"
-                        class="contact-icon-btn cik-msg" aria-label="Messenger" title="Messenger">
-                        <svg viewBox="0 0 24 24">
-                            <path
-                                d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.869 4.326-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.83.94z" />
-                        </svg>
-                    </a>
-                    <a id="pub-tel-btn" href="tel:" class="contact-icon-btn cik-tel" aria-label="Llamar"
-                        title="Llamada directa">
-                        <svg viewBox="0 0 24 24">
-                            <path
-                                d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" />
-                        </svg>
-                    </a>
-                    <a id="pub-email-btn" href="mailto:" class="contact-icon-btn cik-email" aria-label="Email"
-                        title="Enviar email">
-                        <svg viewBox="0 0 24 24">
-                            <path
-                                d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" />
-                        </svg>
-                    </a>
-                </div>
-
-                <div class="ivr-box">
-                    <strong>Menú telefónico</strong>
-                    <div><span class="ivr-key">1</span>Español &nbsp;|&nbsp; <span class="ivr-key">2</span>English</div>
-                    <div><span class="ivr-key">3</span>Ventas &nbsp;|&nbsp; <span class="ivr-key">4</span>Soporte</div>
-                    <div><span class="ivr-key">5</span>Contrataciones</div>
-                </div>
-            </div>
-
-            <!-- Status (owner/admin) -->
-            <div class="status-card" id="status-sidebar-card" style="display:none;">
-                <div class="dj-card-label">ESTADO DEL PERFIL</div>
-                <div class="status-row">
-                    <span class="status-label">Plan</span>
-                    <span class="status-value" id="sidebar-plan-badge">—</span>
-                </div>
-                <div class="status-row">
-                    <span class="status-label">Estado</span>
-                    <span class="status-value green">Activo</span>
-                </div>
-                <div class="status-row">
-                    <span class="status-label">Verificado</span>
-                    <span class="status-value" id="sidebar-verified">—</span>
-                </div>
-            </div>
-
-
-
-
-
-            <!-- QR de referidos (solo dueno/propietario del perfil) -->
-            <div class="qr-ref-card" id="dj-qr-card" style="display:none;">
-                <div class="dj-card-label">TU CÓDIGO QR</div>
-                <div class="qr-wrap">
-                    <div id="profile-qrcode" style="width:120px;height:120px;"></div>
-                </div>
-                <div class="qr-sublabel">Invita DJs y clientes —<br>gana comisión por cada referido</div>
-            </div>
-
-            <!-- QR DE TEMPORADA (Público/Admin) -->
-            <div class="qr-ref-card" id="seasonal-qr-card"
-                style="display:none; border-color:var(--gold); background:rgba(197,160,89,0.05);">
-                <div class="dj-card-label" id="seasonal-qr-title" style="color:var(--gold);">PROMOCIÓN ESPECIAL</div>
-                <div class="qr-wrap">
-                    <div id="seasonal-qrcode" style="width:120px;height:120px;"></div>
-                </div>
-                <div class="qr-label" id="seasonal-qr-subtitle">$20 DE DESCUENTO</div>
-                <div class="qr-sublabel">Aprovecha esta oferta por tiempo limitado</div>
-            </div>
-
-            <!-- TOAST PARA NOTIFICACIONES (COMPARTIR) -->
-            <div id="share-toast" class="toast">¡Enlace copiado!</div>
-
-            <!-- Footer -->
-            <footer class="footer">
-                <div class="container" style="text-align:center;">
-                    <div data-i18n="footer-rights-llc">© 2026 Miami DJ Beat LLC. Pro Division Access.</div>
-                </div>
-            </footer>
-
-            <!-- Scripts -->
-            <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-            <script src="./supabase-config.js?v=20260226-1"></script>
-            <script src="./role-guard.js?v=20260226-2" data-role="dj"></script>
-            <script src="./translations.js?v=20260226-1"></script>
-            <script src="./i18n.js?v=20260226-1"></script>
-            <script>
-                const ROLE_LABELS = {
-                    'DJ': 'DJ ELITE', 'MC': 'CEREMONIALIST', 'ANIMADOR': 'GLOBAL HOST',
-                    'BRUNCH_DJ': 'BRUNCH DJ', 'DINNER_DJ': 'DINNER DJ',
-                    'RESIDENT_DJ': 'RESIDENT DJ', 'INVITADO': 'GUEST DJ', 'PRODUCTOR': 'PRODUCER'
-                };
-
-                /* SVG íconos para la fila social del hero */
-                const SOCIAL_ICONS = {
-                    social_youtube: { svg: '<svg viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.6 5.8a3 3 0 0 0 2.1 2.1C4.5 20.5 12 20.5 12 20.5s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.5 15.5v-7l6.5 3.5-6.5 3.5z"/></svg>', label: 'YouTube' },
-                    social_soundcloud: { svg: '<svg viewBox="0 0 24 24"><path d="M12 7c-2.8 0-5.1 2.3-5.1 5.1 0 .2 0 .5.1.7-1.1.2-2 .8-2.6 1.7-.5 0-1 .2-1.4.5-.5.4-.9 1-.9 1.7 0 1.2 1 2.3 2.3 2.3h12.3C18.2 19 20 17.2 20 15c0-1.8-1.2-3.3-2.8-3.8-.2-2.3-2.1-4.2-4.4-4.2-.3 0-.5 0-.8.1zM10.8 19h-1.2v-7.6h1.2V19zm2.4 0h-1.2v-9.6h1.2V19zm2.4 0h-1.2v-7.6h1.2V19z" fill="currentColor"/></svg>', label: 'SoundCloud' },
-                    social_spotify: { svg: '<svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>', label: 'Spotify' },
-                    social_instagram: { svg: '<svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>', label: 'Instagram' },
-                    social_tiktok: { svg: '<svg viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.32 6.32 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.78a4.85 4.85 0 0 1-1.01-.09z"/></svg>', label: 'TikTok' },
-                    social_facebook: { svg: '<svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>', label: 'Facebook' },
-                    social_mixcloud: { svg: '<svg viewBox="0 0 24 24"><path d="M9.5 12a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0zM12 9.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm5 0a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM0 12C0 5.373 5.373 0 12 0s12 5.373 12 12-5.373 12-12 12S0 18.627 0 12z"/></svg>', label: 'Mixcloud' },
-                    social_apple: { svg: '<svg viewBox="0 0 361 361"><path d="M254.5,55c-0.87,0.08-8.6,1.45-9.53,1.64l-107,21.59l-0.04,0.01c-2.79,0.59-4.98,1.58-6.67,3 c-2.04,1.71-3.17,4.13-3.6,6.95c-0.09,0.6-0.24,1.82-0.24,3.62c0,0,0,109.32,0,133.92c0,3.13-0.25,6.17-2.37,8.76 c-2.12,2.59-4.74,3.37-7.81,3.99c-2.33,0.47-4.66,0.94-6.99,1.41c-8.84,1.78-14.59,2.99-19.8,5.01 c-4.98,1.93-8.71,4.39-11.68,7.51c-5.89,6.17-8.28,14.54-7.46,22.38c0.7,6.69,3.71,13.09,8.88,17.82 c3.49,3.2,7.85,5.63,12.99,6.66c5.33,1.07,11.01,0.7,19.31-0.98c4.42-0.89,8.56-2.28,12.5-4.61c3.9-2.3,7.24-5.37,9.85-9.11 c2.62-3.75,4.31-7.92,5.24-12.35c0.96-4.57,1.19-8.7,1.19-13.26l0-116.15c0-6.22,1.76-7.86,6.78-9.08c0,0,88.94-17.94,93.09-18.75 c5.79-1.11,8.52,0.54,8.52,6.61l0,79.29c0,3.14-0.03,6.32-2.17,8.92c-2.12,2.59-4.74,3.37-7.81,3.99 c-2.33,0.47-4.66,0.94-6.99,1.41c-8.84,1.78-14.59,2.99-19.8,5.01c-4.98,1.93-8.71,4.39-11.68,7.51 c-5.89,6.17-8.49,14.54-7.67,22.38c0.7,6.69,3.92,13.09,9.09,17.82c3.49,3.2,7.85,5.56,12.99,6.6c5.33,1.07,11.01,0.69,19.31-0.98 c4.42-0.89,8.56-2.22,12.5-4.55c3.9-2.3,7.24-5.37,9.85-9.11c2.62-3.75,4.31-7.92,5.24-12.35c0.96-4.57,1-8.7,1-13.26V64.46 C263.54,58.3,260.29,54.5,254.5,55z" fill="currentColor" transform="scale(1.1) translate(-20, -20)"/></svg>', label: 'Apple Music' },
-                    social_web: { svg: '<svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-1 21.945A10.013 10.013 0 0 1 2 12c0-1.07.17-2.1.484-3.065L8 14.5v.5c0 1.1.9 2 2 2v4.945zm8.072-3.543C18.68 17.54 17.45 17 16 17h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V8h2c1.1 0 2-.9 2-2V3.69A10.005 10.005 0 0 1 22 12c0 2.418-.861 4.635-2.275 6.375z" fill-rule="nonzero"/></svg>', label: 'Miami DJ Beat' },
-                };
-
-                const SOCIAL_MAP_DETAIL = [
-                    { key: 'social_instagram', icon: '📸', label: 'Instagram' },
-                    { key: 'social_tiktok', icon: '🎵', label: 'TikTok' },
-                    { key: 'social_youtube', icon: '▶️', label: 'YouTube' },
-                    { key: 'social_facebook', icon: '👥', label: 'Facebook' },
-                    { key: 'social_soundcloud', icon: '☁️', label: 'SoundCloud' },
-                    { key: 'social_mixcloud', icon: '🎛️', label: 'Mixcloud' },
-                    { key: 'social_spotify', icon: '🎶', label: 'Spotify' },
-                    { key: 'social_apple', icon: '🍎', label: 'Apple Music' },
-                    { key: 'social_web', icon: '🌐', label: 'Website' },
-                ];
-
-                async function loadProfile() {
-                    let db = null;
-                    for (let i = 0; i < 20 && !db; i++) {
-                        db = window.getSupabaseClient ? window.getSupabaseClient() : null;
-                        if (!db) await new Promise(r => setTimeout(r, 200));
+            // ── Foto full-bleed hero ──
+            const heroUrl = p.background_url || p.photo_url;
+            if (heroUrl) {
+                const bgPhoto = document.getElementById('hero-bg-photo');
+                const insetPhoto = document.getElementById('pub-photo-inset');
+                if (bgPhoto) {
+                    if (p.photo_focal_y != null) {
+                        bgPhoto.style.objectPosition = 'center ' + p.photo_focal_y + '%';
                     }
-                    if (!db) { console.error('Supabase not available'); return; }
+                    bgPhoto.onload = () => bgPhoto.classList.add('loaded');
+                    bgPhoto.src = heroUrl;
+                }
+                // Inset photo (Avatar)
+                if (insetPhoto) insetPhoto.src = p.photo_url || heroUrl;
+                // Update header avatar
+                const headerAvatar = document.querySelector('.account-btn .avatar');
+                if (headerAvatar) headerAvatar.src = p.photo_url || heroUrl;
+            }
 
-                    const { data: { session } } = await db.auth.getSession();
-                    if (session) {
-                        const z = document.getElementById('header-auth-zone');
-                        if (z) z.style.display = 'block';
-                    }
+            // ── Nombre ──
+            const djName = p.stage_name || p.dj_name || p.full_name || 'DJ';
+            document.getElementById('pub-name').textContent = djName;
 
-                    const params = new URLSearchParams(window.location.search);
-                    const targetId = params.get('id') || (session ? session.user.id : null);
-                    if (!targetId) { document.getElementById('pub-name').textContent = 'DJ no encontrado'; return; }
+            // ── Badge after name: diamond=verified, star=PRO-unverified, dot=lite ──
+            const badge = document.getElementById('pub-name-badge');
+            if (badge) {
+                if (p.verified) {
+                    badge.textContent = '💎';
+                    badge.title = 'DJ Verificado por MDJPRO';
+                } else if (p.plan === 'PRO') {
+                    badge.textContent = '⭐';
+                    badge.title = 'Miembro PRO — Verificación pendiente';
+                } else {
+                    badge.textContent = '·';
+                }
+            }
 
-                    const isOwner = session && session.user.id === targetId;
-                    let isAdmin = false;
-                    if (session) {
-                        const { data: vp } = await db.from('dj_profiles').select('role').eq('user_id', session.user.id).single();
-                        isAdmin = vp?.role === 'admin';
-                    }
+            // ── Roles label hero ──
+            if (p.roles) {
+                const roleArr = p.roles.split(',').map(r => (ROLE_LABELS[r.trim().toUpperCase()] || r.trim()));
+                document.getElementById('pub-role-label').textContent = roleArr.join(' · ');
 
-                    let p = null;
-                    try {
-                        // Attempt full select
-                        const { data, error: err } = await db.from('dj_profiles').select('*').eq('user_id', targetId).single();
-                        if (err) throw err;
-                        p = data;
-                    } catch (err) {
-                        console.warn('Full profile fetch failed (likely SQL missing):', err);
-                        // Fallback select with guaranteed columns
-                        const { data: pBasic, error: errBasic } = await db.from('dj_profiles').select('id, user_id, dj_name, photo_url, role, bio, bio_short, bio_long, stage_name, full_name, verified, plan, available, social_instagram, social_tiktok, social_youtube, social_facebook, social_soundcloud, social_mixcloud, social_spotify, social_apple, social_web, background_url, photo_focal_y').eq('user_id', targetId).single();
-                        if (!errBasic && pBasic) {
-                            p = pBasic;
-                        } else {
-                            document.getElementById('pub-name').textContent = 'Perfil no encontrado o error técnico';
-                            return;
-                        }
-                    }
+                const rolesCard = document.getElementById('roles-card');
+                if (rolesCard) {
+                    rolesCard.style.display = 'block';
+                    document.getElementById('pub-roles').innerHTML = roleArr.map(r =>
+                        `<span class="dj-chip">${r}</span>`).join('');
+                }
+            }
 
-                    // ── Foto full-bleed hero ──
-                    const heroUrl = p.background_url || p.photo_url;
-                    if (heroUrl) {
-                        const bgPhoto = document.getElementById('hero-bg-photo');
-                        const insetPhoto = document.getElementById('pub-photo-inset');
-                        // Apply saved focal position if available
-                        if (p.photo_focal_y != null) {
-                            bgPhoto.style.objectPosition = 'center ' + p.photo_focal_y + '%';
-                        }
-                        bgPhoto.onload = () => bgPhoto.classList.add('loaded');
-                        bgPhoto.src = heroUrl;
-                        // Inset photo (Avatar) - always use photo_url, fallback to heroUrl if missing
-                        insetPhoto.src = p.photo_url || heroUrl;
-                        // Update header avatar with real photo
-                        const headerAvatar = document.querySelector('.account-btn .avatar');
-                        if (headerAvatar) headerAvatar.src = p.photo_url || heroUrl;
-                    }
+            // ── Ubicación (en el label de roles) ──
+            if (p.city || p.region) {
+                const loc = [p.city, p.region].filter(Boolean).join(' · ');
+                const roleEl = document.getElementById('pub-role-label');
+                if (roleEl) roleEl.textContent += ' · ' + loc;
+            }
 
-                    // ── Nombre ──
-                    const djName = p.stage_name || p.dj_name || p.full_name || 'DJ';
-                    document.getElementById('pub-name').textContent = djName;
+            // ── Disponibilidad ──
+            const avail = p.available !== false;
+            const floatEl = document.getElementById('pub-avail-float');
+            const textEl = document.getElementById('pub-avail-text');
+            if (floatEl) {
+                floatEl.style.display = 'inline-flex';
+                floatEl.className = `dj-avail-float ${avail ? 'avail-yes' : 'avail-no'}`;
+                textEl.textContent = avail ? 'Disponible' : 'No disponible';
+            }
 
-                    // ── Badge after name: diamond=verified, star=PRO-unverified, dot=lite ──
-                    const badge = document.getElementById('pub-name-badge');
-                    if (badge) {
-                        if (p.verified) {
-                            badge.textContent = '💎';
-                            badge.title = 'DJ Verificado por MDJPRO';
-                        } else if (p.plan === 'PRO') {
-                            badge.textContent = '⭐';
-                            badge.title = 'Miembro PRO — Verificación pendiente';
-                        } else {
-                            badge.textContent = '·';
-                        }
-                    }
+            // ── Bio ──
+            const bioEl = document.getElementById('pub-bio');
+            if (bioEl) {
+                const bioText = p.bio_long || p.bio_short || p.bio || 'DJ profesional de la red Miami DJ Beat.';
+                bioEl.textContent = bioText;
 
-                    // ── Roles label hero ──
-                    if (p.roles) {
-                        const roleArr = p.roles.split(',').map(r => (ROLE_LABELS[r.trim().toUpperCase()] || r.trim()));
-                        document.getElementById('pub-role-label').textContent = roleArr.join(' · ');
+                // Handle auto-translation if enabled (future implementation)
+                if (p.auto_translate && p.language !== 'es') {
+                    // Logic to trigger translation would go here
+                    console.log('Auto-translation requested for:', p.language);
+                }
+            }
 
-                        const rolesCard = document.getElementById('roles-card');
-                        if (rolesCard) {
-                            rolesCard.style.display = 'block';
-                            document.getElementById('pub-roles').innerHTML = roleArr.map(r =>
-                                `<span class="dj-chip">${r}</span>`).join('');
-                        }
-                    }
+            // ── Social icons fila hero ──
+            try {
+                const iconRow = document.getElementById('pub-social-icons');
+                if (iconRow) {
+                    // Map all social icons, forcing web URL
+                    const links = Object.entries(SOCIAL_ICONS).map(([k, meta]) => {
+                        let href = p[k];
+                        if (k === 'social_web') href = 'https://miamidjbeat.com';
+                        return { k, meta, href };
+                    }).filter(item => item.href && item.href !== 'null' && item.href.trim() !== '');
 
-                    // ── Ubicación (en el label de roles) ──
-                    if (p.city || p.region) {
-                        const loc = [p.city, p.region].filter(Boolean).join(' · ');
-                        const roleEl = document.getElementById('pub-role-label');
-                        if (roleEl) roleEl.textContent += ' · ' + loc;
-                    }
-
-                    // ── Disponibilidad ──
-                    const avail = p.available !== false;
-                    const floatEl = document.getElementById('pub-avail-float');
-                    const textEl = document.getElementById('pub-avail-text');
-                    if (floatEl) {
-                        floatEl.style.display = 'inline-flex';
-                        floatEl.className = `dj-avail-float ${avail ? 'avail-yes' : 'avail-no'}`;
-                        textEl.textContent = avail ? 'Disponible' : 'No disponible';
-                    }
-
-                    // ── Bio ──
-                    const bioEl = document.getElementById('pub-bio');
-                    if (bioEl) {
-                        const bioText = p.bio_long || p.bio_short || p.bio || 'DJ profesional de la red Miami DJ Beat.';
-                        bioEl.textContent = bioText;
-
-                        // Handle auto-translation if enabled (future implementation)
-                        if (p.auto_translate && p.language !== 'es') {
-                            // Logic to trigger translation would go here
-                            console.log('Auto-translation requested for:', p.language);
-                        }
-                    }
-
-                    // ── Social icons fila hero ──
-                    try {
-                        const iconRow = document.getElementById('pub-social-icons');
-                        if (iconRow) {
-                            // Map all social icons, forcing web URL
-                            const links = Object.entries(SOCIAL_ICONS).map(([k, meta]) => {
-                                let href = p[k];
-                                if (k === 'social_web') href = 'https://miamidjbeat.com';
-                                return { k, meta, href };
-                            }).filter(item => item.href && item.href !== 'null' && item.href.trim() !== '');
-
-                            iconRow.innerHTML = links.map(item => {
-                                return `<a href="${item.href}" target="_blank" class="dj-social-icon" title="${item.meta.label}" aria-label="${item.meta.label}">${item.meta.svg}</a>`;
-                            }).join('');
-                        }
-                    } catch (e) { console.error('Social error:', e); }
+                    iconRow.innerHTML = links.map(item => {
+                        return `<a href="${item.href}" target="_blank" class="dj-social-icon" title="${item.meta.label}" aria-label="${item.meta.label}">${item.meta.svg}</a>`;
+                    }).join('');
+                }
+            } catch (e) { console.error('Social error:', e); }
 
 
 
-                    // ── WhatsApp · Teléfono · Email ──
-                    try {
-                        const MDJB_PHONE = '13056071780';
-                        const MDJB_EMAIL = 'info@miamidj.beat';
-                        const waMsg = encodeURIComponent(`Hola, quiero información sobre el DJ ${djName}. ¿Está disponible para mi evento?`);
-                        const waBtn = document.getElementById('pub-whatsapp-btn');
-                        if (waBtn) waBtn.href = `https://wa.me/${MDJB_PHONE}?text=${waMsg}`;
-                        const telBtn = document.getElementById('pub-tel-btn');
-                        if (telBtn) { telBtn.href = `tel:+${MDJB_PHONE}`; }
-                        const emailBtn = document.getElementById('pub-email-btn');
-                        if (emailBtn) { emailBtn.href = `mailto:${MDJB_EMAIL}?subject=Reserva DJ ${djName}`; }
-                    } catch (e) { console.error('Contact error:', e); }
+            // ── WhatsApp · Teléfono · Email ──
+            try {
+                const MDJB_PHONE = '13056071780';
+                const MDJB_EMAIL = 'info@miamidj.beat';
+                const waMsg = encodeURIComponent(`Hola, quiero información sobre el DJ ${djName}. ¿Está disponible para mi evento?`);
+                const waBtn = document.getElementById('pub-whatsapp-btn');
+                if (waBtn) waBtn.href = `https://wa.me/${MDJB_PHONE}?text=${waMsg}`;
+                const telBtn = document.getElementById('pub-tel-btn');
+                if (telBtn) { telBtn.href = `tel:+${MDJB_PHONE}`; }
+                const emailBtn = document.getElementById('pub-email-btn');
+                if (emailBtn) { emailBtn.href = `mailto:${MDJB_EMAIL}?subject=Reserva DJ ${djName}`; }
+            } catch (e) { console.error('Contact error:', e); }
 
 
-                    // ── PRO tag en hero si aplica ──
-                    if (p.plan === 'PRO') {
-                        const roleEl = document.getElementById('pub-role-label');
-                        if (roleEl) {
-                            const span = document.createElement('span');
-                            span.style.cssText = 'color:var(--gold);margin-left:10px;font-size:9px;letter-spacing:1.5px;';
-                            span.textContent = '⭐ PRO';
-                            roleEl.appendChild(span);
-                        }
-                    }
+            // ── PRO tag en hero si aplica ──
+            if (p.plan === 'PRO') {
+                const roleEl = document.getElementById('pub-role-label');
+                if (roleEl) {
+                    const span = document.createElement('span');
+                    span.style.cssText = 'color:var(--gold);margin-left:10px;font-size:9px;letter-spacing:1.5px;';
+                    span.textContent = '⭐ PRO';
+                    roleEl.appendChild(span);
+                }
+            }
 
-                    // ── Founder badge ──
-                    if (p.founding_member) document.getElementById('pub-founder-badge').style.display = 'block';
+            // ── Founder badge ──
+            if (p.founding_member) document.getElementById('pub-founder-badge').style.display = 'block';
 
-                    // ── Status sidebar (owner/admin) ──
-                    if (isOwner || isAdmin) {
-                        const sc = document.getElementById('status-sidebar-card');
-                        if (sc) sc.style.display = 'block';
-                        const pb = document.getElementById('sidebar-plan-badge');
-                        if (pb) pb.innerHTML = p.plan === 'PRO'
-                            ? '<span class="plan-badge-pro">PRO</span>'
-                            : '<span class="plan-badge-lite">LITE</span>';
-                        const sv = document.getElementById('sidebar-verified');
-                        if (sv) { sv.textContent = p.verified ? '✅ Sí' : '⏳ Pendiente'; if (p.verified) sv.classList.add('green'); }
-                    }
+            // ── Status sidebar (owner/admin) ──
+            if (isOwner || isAdmin) {
+                const sc = document.getElementById('status-sidebar-card');
+                if (sc) sc.style.display = 'block';
+                const pb = document.getElementById('sidebar-plan-badge');
+                if (pb) pb.innerHTML = p.plan === 'PRO'
+                    ? '<span class="plan-badge-pro">PRO</span>'
+                    : '<span class="plan-badge-lite">LITE</span>';
+                const sv = document.getElementById('sidebar-verified');
+                if (sv) { sv.textContent = p.verified ? '✅ Sí' : '⏳ Pendiente'; if (p.verified) sv.classList.add('green'); }
+            }
 
 
 
 
-                    // Consolidated Venue Logic (Current Work)
-                    const venuesCard = document.getElementById('venues-card');
-                    const venuesBody = document.getElementById('pub-venues-body');
-                    let currentWork = 'Disponible para contrataciones';
+            // Consolidated Venue Logic (Current Work)
+            const venuesCard = document.getElementById('venues-card');
+            const venuesBody = document.getElementById('pub-venues-body');
+            let currentWork = 'Disponible para contrataciones';
 
-                    if (venuesCard && venuesBody) {
-                        if (p.current_venue) {
-                            currentWork = `Trabajando en: ${p.current_venue}`;
-                            const isResident = (p.roles || '').toUpperCase().includes('RESIDENT');
-                            venuesBody.innerHTML = `
+            if (venuesCard && venuesBody) {
+                if (p.current_venue) {
+                    currentWork = `Trabajando en: ${p.current_venue}`;
+                    const isResident = (p.roles || '').toUpperCase().includes('RESIDENT');
+                    venuesBody.innerHTML = `
                                 <div class="venue-card" style="margin-top:0;">
                                     ${isResident ? '<div class="venue-badge">🎤 RESIDENTE</div>' : '<div class="venue-badge" style="background:rgba(197,160,89,0.08);border-color:rgba(197,160,89,0.2);">📍 ACTIVO</div>'}
                                     <div class="venue-name">${p.current_venue}</div>
                                     ${p.venue_schedule ? `<div class="venue-meta">${p.venue_schedule}</div>` : ''}
                                 </div>`;
-                            venuesCard.style.display = 'block';
-                        } else {
-                            // Sin venue — disponible
-                            venuesBody.innerHTML = `
+                    venuesCard.style.display = 'block';
+                } else {
+                    // Sin venue — disponible
+                    venuesBody.innerHTML = `
                                 <div style="display:flex;align-items:center;gap:12px;padding:4px 0;">
                                     <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 10px rgba(34,197,94,0.8);flex-shrink:0;animation:pulse 2s infinite;"></div>
                                     <div>
@@ -1542,216 +1676,631 @@
                                         <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:3px;">Contacta a Miami DJ Beat para reservar</div>
                                     </div>
                                 </div>`;
-                        }
-                    }
-
-                    // Guardar datos para compartir
-                    window.currentDJData = {
-                        name: djName,
-                        bio: p.bio_long || p.bio_short || p.bio || 'DJ profesional de la red Miami DJ Beat.',
-                        availability: avail ? 'Disponible' : 'No disponible',
-                        currentWork: currentWork,
-                        photo: p.photo_url || '',
-                        url: window.location.href
-                    };
-                    console.log('DJ Data loaded for sharing:', window.currentDJData);
-
-                    // Update Meta tags for social previews
-                    const metaTitle = document.getElementById('meta-og-title');
-                    const metaDesc = document.getElementById('meta-og-desc');
-                    const metaImg = document.getElementById('meta-og-image');
-                    if (metaTitle) metaTitle.setAttribute('content', `${djName} — Perfil DJ Miami DJ Beat`);
-                    if (metaDesc) metaDesc.setAttribute('content', `🎵 Conoce a ${djName}. ${window.currentDJData.bio.substring(0, 100)}... Reserva a este artista a través de Miami DJ Beat.`);
-                    if (metaImg && p.photo_url) metaImg.setAttribute('content', p.photo_url);
-
-                    // ── QR de referidos (PÚBLICO) ──
-                    const qCard = document.getElementById('dj-qr-card');
-                    if (qCard) {
-                        qCard.style.display = 'block';
-                        const profileUrl = `${location.origin}/dj-profile.html?id=${targetId}&ref=${targetId}`;
-                        const qrContainer = document.getElementById('profile-qrcode');
-                        if (qrContainer) {
-                            qrContainer.innerHTML = '';
-                            if (window.QRCode) {
-                                new QRCode(qrContainer, {
-                                    text: profileUrl,
-                                    width: 120, height: 120,
-                                    colorDark: '#000000',
-                                    colorLight: '#ffffff',
-                                    correctLevel: QRCode.CorrectLevel.M
-                                });
-                            }
-                        }
-                    }
-
-                    // ── QR DE TEMPORADA (Global) ──
-                    async function loadSeasonalQR() {
-                        const { data: settings } = await db.from('platform_settings').select('key, value');
-                        if (!settings) return;
-                        const getSet = k => settings.find(s => s.key === k)?.value;
-
-                        if (getSet('seasonal_qr_active') === 'true') {
-                            const sqCard = document.getElementById('seasonal-qr-card');
-                            const sqTitle = document.getElementById('seasonal-qr-title');
-                            const sqSub = document.getElementById('seasonal-qr-subtitle');
-                            const sqUrl = getSet('seasonal_qr_url');
-
-                            if (sqCard && sqUrl) {
-                                sqCard.style.display = 'block';
-                                if (sqTitle) sqTitle.textContent = getSet('seasonal_qr_title') || 'PROMOCIÓN';
-                                if (sqSub) sqSub.textContent = getSet('seasonal_qr_subtitle') || '$20 OFF';
-
-                                const qrCont = document.getElementById('seasonal-qrcode');
-                                if (qrCont && window.QRCode) {
-                                    qrCont.innerHTML = '';
-                                    new QRCode(qrCont, {
-                                        text: sqUrl,
-                                        width: 120, height: 120,
-                                        colorDark: '#000000',
-                                        colorLight: '#ffffff',
-                                        correctLevel: QRCode.CorrectLevel.M
-                                    });
-                                }
-                            }
-                        }
-                    }
-                    loadSeasonalQR();
-
-                    document.title = `${djName} — Miami DJ Beat`;
-
-                    // Header account menu
-                    const btnAcc = document.getElementById('accountBtn');
-                    const menuAcc = document.getElementById('accountMenu');
-                    if (btnAcc && menuAcc) {
-                        btnAcc.onclick = e => { e.stopPropagation(); menuAcc.classList.toggle('open'); };
-                        document.onclick = () => menuAcc.classList.remove('open');
-                    }
-                    const logoutBtn = document.getElementById('logoutBtn');
-                    const doLogout = async e => {
-                        e.preventDefault();
-                        const db2 = window.getSupabaseClient ? window.getSupabaseClient() : null;
-                        if (db2) await db2.auth.signOut();
-                        window.location.href = './login.html';
-                    };
-                    if (logoutBtn) logoutBtn.onclick = doLogout;
-                    const navLogoutBtn = document.getElementById('nav-logout-btn');
-                    if (navLogoutBtn) navLogoutBtn.onclick = doLogout;
-
-                    // ── Populate Availability Dropdowns ──
-                    const currentYear = new Date().getFullYear();
-                    const dDay = document.getElementById('dj-avail-day');
-                    const dYear = document.getElementById('dj-avail-year');
-                    if (dDay) {
-                        dDay.innerHTML = '<option value="" disabled selected>Día</option>';
-                        for (let i = 1; i <= 31; i++) {
-                            const opt = document.createElement('option');
-                            const val = String(i).padStart(2, '0');
-                            opt.value = val;
-                            opt.textContent = i;
-                            dDay.appendChild(opt);
-                        }
-                    }
-                    if (dYear) {
-                        dYear.innerHTML = '<option value="" disabled selected>Año</option>';
-                        for (let i = 0; i < 11; i++) {
-                            const y = currentYear + i;
-                            const opt = document.createElement('option');
-                            opt.value = y;
-                            opt.textContent = y;
-                            if (y === 2026) opt.selected = true;
-                            dYear.appendChild(opt);
-                        }
-                    }
-
-                    // Store blocked dates
-                    window._djBlockedDates = p.blocked_dates || {};
-                    window._djNameForAvail = djName;
                 }
+            }
 
-                async function shareProfile() {
-                    const data = window.currentDJData;
-                    if (!data) return;
+            // Guardar datos para compartir
+            window.currentDJData = {
+                name: djName,
+                bio: p.bio_long || p.bio_short || p.bio || 'DJ profesional de la red Miami DJ Beat.',
+                availability: avail ? 'Disponible' : 'No disponible',
+                currentWork: currentWork,
+                photo: p.photo_url || '',
+                url: window.location.href
+            };
+            console.log('DJ Data loaded for sharing:', window.currentDJData);
 
-                    const contactInfo = `📞 Para contrataciones contacta a Miami DJ Beat:\nWhatsApp: +1 (305) 607-1780\nEmail: info@miamidj.beat`;
-                    const shareText = `🎵 ¡Conoce a ${data.name} en Miami DJ Beat!\n\n📍 ${data.currentWork}\n\n📝 Bio: ${data.bio.substring(0, 120)}...\n\n📅 Estado: ${data.availability}\n\n${contactInfo}\n\n🔗 Mira su perfil completo aquí:`;
+            // Update Meta tags for social previews
+            const metaTitle = document.getElementById('meta-og-title');
+            const metaDesc = document.getElementById('meta-og-desc');
+            const metaImg = document.getElementById('meta-og-image');
+            if (metaTitle) metaTitle.setAttribute('content', `${djName} — Perfil DJ Miami DJ Beat`);
+            if (metaDesc) metaDesc.setAttribute('content', `🎵 Conoce a ${djName}. ${window.currentDJData.bio.substring(0, 100)}... Reserva a este artista a través de Miami DJ Beat.`);
+            if (metaImg && p.photo_url) metaImg.setAttribute('content', p.photo_url);
 
-                    if (navigator.share) {
-                        try {
-                            await navigator.share({
-                                title: `${data.name} — Perfil DJ`,
-                                text: shareText,
-                                url: data.url
-                            });
-                        } catch (err) {
-                            console.log('Share failed or cancelled');
-                        }
-                    } else {
-                        // Fallback to copy to clipboard
-                        const fullMessage = `${shareText}\n${data.url}`;
-                        navigator.clipboard.writeText(fullMessage).then(() => {
-                            showToast('¡Link de perfil y datos de contacto copiados!');
+            // ── QR de referidos (PÚBLICO) ──
+            const qCard = document.getElementById('dj-qr-card');
+            if (qCard) {
+                qCard.style.display = 'block';
+                const profileUrl = `${location.origin}/dj-profile.html?id=${targetId}&ref=${targetId}`;
+                const qrContainer = document.getElementById('profile-qrcode');
+                if (qrContainer) {
+                    qrContainer.innerHTML = '';
+                    if (window.QRCode) {
+                        new QRCode(qrContainer, {
+                            text: profileUrl,
+                            width: 120, height: 120,
+                            colorDark: '#000000',
+                            colorLight: '#ffffff',
+                            correctLevel: QRCode.CorrectLevel.M
                         });
                     }
                 }
+            }
 
-                function showToast(msg) {
-                    const t = document.getElementById('share-toast');
-                    if (!t) return;
-                    t.textContent = msg;
-                    t.classList.add('show');
-                    setTimeout(() => t.classList.remove('show'), 3000);
-                }
-                // ── CHECK button handler ──
-                function checkDJAvailability() {
-                    const m = document.getElementById('dj-avail-month')?.value;
-                    const d = document.getElementById('dj-avail-day')?.value;
-                    const y = document.getElementById('dj-avail-year')?.value;
-                    const result = document.getElementById('dj-avail-result');
-                    if (!m || !d || !y) {
-                        if (result) { result.style.color = 'rgba(255,200,100,0.9)'; result.textContent = '⚠️ Selecciona mes, día y año.'; }
-                        return;
+            // ── QR DE TEMPORADA (Global) ──
+            async function loadSeasonalQR() {
+                const { data: settings } = await db.from('platform_settings').select('key, value');
+                if (!settings) return;
+                const getSet = k => settings.find(s => s.key === k)?.value;
+
+                if (getSet('seasonal_qr_active') === 'true') {
+                    const sqCard = document.getElementById('seasonal-qr-card');
+                    const sqTitle = document.getElementById('seasonal-qr-title');
+                    const sqSub = document.getElementById('seasonal-qr-subtitle');
+                    const sqUrl = getSet('seasonal_qr_url');
+
+                    if (sqCard && sqUrl) {
+                        sqCard.style.display = 'block';
+                        if (sqTitle) sqTitle.textContent = getSet('seasonal_qr_title') || 'PROMOCIÓN';
+                        if (sqSub) sqSub.textContent = getSet('seasonal_qr_subtitle') || '$20 OFF';
+
+                        const qrCont = document.getElementById('seasonal-qrcode');
+                        if (qrCont && window.QRCode) {
+                            qrCont.innerHTML = '';
+                            new QRCode(qrCont, {
+                                text: sqUrl,
+                                width: 120, height: 120,
+                                colorDark: '#000000',
+                                colorLight: '#ffffff',
+                                correctLevel: QRCode.CorrectLevel.M
+                            });
+                        }
                     }
-                    const dateStr = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-                    const state = (window._djBlockedDates || {})[dateStr];
-                    if (!result) return;
+                }
+            }
+            loadSeasonalQR();
 
-                    // Remove previous reserve button if any
-                    const oldBtn = document.getElementById('dj-avail-reserve-btn');
-                    if (oldBtn) oldBtn.remove();
+            document.title = `${djName} — Miami DJ Beat`;
 
-                    if (state === 'blocked') {
-                        result.style.color = '#ff6b6b';
-                        result.textContent = '🔴 No disponible ese día.';
-                    } else if (state === 'busy') {
-                        result.style.color = '#c5a059';
-                        result.textContent = '💛 Trabajo externo — consulta primero.';
+            // Header account menu
+            const btnAcc = document.getElementById('accountBtn');
+            const menuAcc = document.getElementById('accountMenu');
+            if (btnAcc && menuAcc) {
+                btnAcc.onclick = e => { e.stopPropagation(); menuAcc.classList.toggle('open'); };
+                document.onclick = () => menuAcc.classList.remove('open');
+            }
+            const logoutBtn = document.getElementById('logoutBtn');
+            const doLogout = async e => {
+                e.preventDefault();
+                const db2 = window.getSupabaseClient ? window.getSupabaseClient() : null;
+                if (db2) await db2.auth.signOut();
+                window.location.href = './login.html';
+            };
+            if (logoutBtn) logoutBtn.onclick = doLogout;
+            const navLogoutBtn = document.getElementById('nav-logout-btn');
+            if (navLogoutBtn) navLogoutBtn.onclick = doLogout;
+
+            // ── Populate Availability Dropdowns ──
+            const currentYear = new Date().getFullYear();
+            const dDay = document.getElementById('dj-avail-day');
+            const dYear = document.getElementById('dj-avail-year');
+            if (dDay) {
+                dDay.innerHTML = '<option value="" disabled selected>Día</option>';
+                for (let i = 1; i <= 31; i++) {
+                    const opt = document.createElement('option');
+                    const val = String(i).padStart(2, '0');
+                    opt.value = val;
+                    opt.textContent = i;
+                    dDay.appendChild(opt);
+                }
+            }
+            if (dYear) {
+                dYear.innerHTML = '<option value="" disabled selected>Año</option>';
+                for (let i = 0; i < 11; i++) {
+                    const y = currentYear + i;
+                    const opt = document.createElement('option');
+                    opt.value = y;
+                    opt.textContent = y;
+                    if (y === 2026) opt.selected = true;
+                    dYear.appendChild(opt);
+                }
+            }
+
+            // Store blocked dates
+            window._djBlockedDates = p.blocked_dates || {};
+            window._djNameForAvail = djName;
+
+            // ── DJ OWNER TABS (BARRA DE GESTIÓN) ──
+            if (isOwner || isAdmin) {
+                const tabs = document.getElementById('owner-tabs');
+                if (tabs) tabs.style.display = 'block';
+
+                // TRIPLE GUARD: Visibilidad de la pestaña FLUJO e indicador en Nav
+                const planType = p.plan_type || p.plan;
+                const planStatus = p.plan_status || 'active';
+                const isPro = ['pro_monthly', 'pro_annual', 'PRO'].includes(planType);
+                const isActive = planStatus === 'active';
+                const isNotExpired = p.plan_expires_at ? (new Date() < new Date(p.plan_expires_at)) : true;
+
+                const flowTabBtn = document.querySelector('button[onclick*="flow"]');
+                if (flowTabBtn) {
+                    if (isPro && isActive && isNotExpired) {
+                        flowTabBtn.style.display = 'inline-block';
                     } else {
-                        result.style.color = '#22c55e';
-                        result.textContent = '✅ Disponible para ese día.';
-
-                        // Build booking URL with DJ name + date pre-filled
-                        const djN = encodeURIComponent(window._djNameForAvail || '');
-                        const bookingUrl = `./index.html?dj=${djN}&date=${dateStr}#contact`;
-
-                        const reserveBtn = document.createElement('a');
-                        reserveBtn.id = 'dj-avail-reserve-btn';
-                        reserveBtn.href = bookingUrl;
-                        reserveBtn.textContent = '📋 RESERVAR ESTE DJ';
-                        reserveBtn.style.cssText = 'display:block;width:100%;margin-top:10px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;text-decoration:none;padding:11px;border-radius:9px;font-size:13px;font-weight:900;text-align:center;transition:transform 0.15s,box-shadow 0.15s;box-sizing:border-box;';
-                        reserveBtn.onmouseover = () => { reserveBtn.style.transform = 'translateY(-1px)'; reserveBtn.style.boxShadow = '0 6px 18px rgba(34,197,94,0.4)'; };
-                        reserveBtn.onmouseout = () => { reserveBtn.style.transform = ''; reserveBtn.style.boxShadow = ''; };
-                        result.after(reserveBtn);
+                        flowTabBtn.style.display = 'none';
                     }
                 }
 
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', loadProfile);
-                } else {
-                    loadProfile();
+                const navFlow = document.getElementById('nav-flow-link');
+                if (navFlow && isPro && isActive && isNotExpired) {
+                    navFlow.style.display = 'inline-block';
                 }
-            </script>
-            <link rel="stylesheet" href="./mdj-assistant.css" />
-            <script src="./mdj-assistant.js"></script>
+
+                // ── AUTO-SWITCH TAB ──
+                if (isOwner) {
+                    const params = new URLSearchParams(window.location.search);
+                    const tabToOpen = params.get('tab');
+                    if (tabToOpen && ['public', 'flow', 'software'].includes(tabToOpen)) {
+                        setTimeout(() => {
+                            switchProfileTab(tabToOpen);
+                        }, 300);
+                    }
+                }
+            }
+        }
+
+        async function shareProfile() {
+            const data = window.currentDJData;
+            if (!data) return;
+
+            const contactInfo = `📞 Para contrataciones contacta a Miami DJ Beat:\nWhatsApp: +1 (305) 607-1780\nEmail: info@miamidj.beat`;
+            const shareText = `🎵 ¡Conoce a ${data.name} en Miami DJ Beat!\n\n📍 ${data.currentWork}\n\n📝 Bio: ${data.bio.substring(0, 120)}...\n\n📅 Estado: ${data.availability}\n\n${contactInfo}\n\n🔗 Mira su perfil completo aquí:`;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: `${data.name} — Perfil DJ`,
+                        text: shareText,
+                        url: data.url
+                    });
+                } catch (err) {
+                    console.log('Share failed or cancelled');
+                }
+            } else {
+                // Fallback to copy to clipboard
+                const fullMessage = `${shareText}\n${data.url}`;
+                navigator.clipboard.writeText(fullMessage).then(() => {
+                    showToast('¡Link de perfil y datos de contacto copiados!');
+                });
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('share-toast');
+            if (!t) return;
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+        // ── CHECK button handler ──
+        function checkDJAvailability() {
+            const m = document.getElementById('dj-avail-month')?.value;
+            const d = document.getElementById('dj-avail-day')?.value;
+            const y = document.getElementById('dj-avail-year')?.value;
+            const result = document.getElementById('dj-avail-result');
+            if (!m || !d || !y) {
+                if (result) { result.style.color = 'rgba(255,200,100,0.9)'; result.textContent = '⚠️ Selecciona mes, día y año.'; }
+                return;
+            }
+            const dateStr = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+            const state = (window._djBlockedDates || {})[dateStr];
+            if (!result) return;
+
+            // Remove previous reserve button if any
+            const oldBtn = document.getElementById('dj-avail-reserve-btn');
+            if (oldBtn) oldBtn.remove();
+
+            if (state === 'blocked') {
+                result.style.color = '#ff6b6b';
+                result.textContent = '🔴 No disponible ese día.';
+            } else if (state === 'busy') {
+                result.style.color = '#c5a059';
+                result.textContent = '💛 Trabajo externo — consulta primero.';
+            } else {
+                result.style.color = '#22c55e';
+                result.textContent = '✅ Disponible para ese día.';
+
+                // Build booking URL with DJ name + date pre-filled
+                const djN = encodeURIComponent(window._djNameForAvail || '');
+                const bookingUrl = `./index.html?dj=${djN}&date=${dateStr}#contact`;
+
+                const reserveBtn = document.createElement('a');
+                reserveBtn.id = 'dj-avail-reserve-btn';
+                reserveBtn.href = bookingUrl;
+                reserveBtn.textContent = '📋 RESERVAR ESTE DJ';
+                reserveBtn.style.cssText = 'display:block;width:100%;margin-top:10px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;text-decoration:none;padding:11px;border-radius:9px;font-size:13px;font-weight:900;text-align:center;transition:transform 0.15s,box-shadow 0.15s;box-sizing:border-box;';
+                reserveBtn.onmouseover = () => { reserveBtn.style.transform = 'translateY(-1px)'; reserveBtn.style.boxShadow = '0 6px 18px rgba(34,197,94,0.4)'; };
+                reserveBtn.onmouseout = () => { reserveBtn.style.transform = ''; reserveBtn.style.boxShadow = ''; };
+                result.after(reserveBtn);
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadProfile);
+        } else {
+            loadProfile();
+        }
+    </script>
+
+    <!-- ── TAB: FLUJO (Influencer Analytics Dashboard) ── -->
+    <div id="tab-flow" class="dj-panel">
+        <div class="flow-dashboard">
+            <!-- HEADER & RANGE SELECTOR -->
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:40px;">
+                <div>
+                    <h1 style="font-size:32px; font-weight:900; color:#fff; margin:0; letter-spacing:-1px;">
+                        Insights Profesionales</h1>
+                    <p style="color:rgba(255,255,255,0.4); margin-top:6px; font-size:14px;">Métricas
+                        consolidadas de tu rendimiento y flujo de caja.</p>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <select id="metrics-range" onchange="loadFlowData(this.value)"
+                        style="background:#111114; border:1px solid rgba(255,255,255,0.1); color:#fff; padding:12px 24px; border-radius:12px; font-size:13px; font-weight:700; outline:none; cursor:pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                        <option value="7d">ÚLTIMOS 7 DÍAS</option>
+                        <option value="30d" selected>ÚLTIMOS 30 DÍAS</option>
+                        <option value="90d">ÚLTIMOS 90 DÍAS</option>
+                        <option value="1y">VISTA ANUAL</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 🔹 BLOQUE 1 — KPI CARDS (6 cards) -->
+            <div class="flow-grid">
+                <div class="flow-card">
+                    <div class="flow-card-label">Ingresos Totales</div>
+                    <div id="kpi-gross" class="flow-card-value">$0.00</div>
+                    <div id="trend-gross" class="flow-card-trend">
+                        <span>•••</span>
+                    </div>
+                </div>
+                <div class="flow-card">
+                    <div class="flow-card-label">Eventos Completados</div>
+                    <div id="kpi-events-done" class="flow-card-value">0</div>
+                    <div id="trend-events" class="flow-card-trend">
+                        <span>•••</span>
+                    </div>
+                </div>
+                <div class="flow-card">
+                    <div class="flow-card-label">Eventos Pendientes</div>
+                    <div id="kpi-events-pending" class="flow-card-value">0</div>
+                    <div class="flow-card-trend" style="color:rgba(255,255,255,0.3)">Próximos</div>
+                </div>
+                <div class="flow-card">
+                    <div class="flow-card-label">Comisión Platform</div>
+                    <div id="kpi-comm-rate" class="flow-card-value">0%</div>
+                    <div class="flow-card-trend" style="color:rgba(255,255,255,0.3)">Tasa Actual</div>
+                </div>
+                <div class="flow-card">
+                    <div class="flow-card-label">Balance Disponible</div>
+                    <div id="kpi-available" class="flow-card-value" style="color:#00ff88;">$0.00</div>
+                    <div class="flow-card-trend" style="color:rgba(255,255,255,0.3)">Listo para retiro</div>
+                </div>
+                <div class="flow-card">
+                    <div class="flow-card-label">Ticket Promedio</div>
+                    <div id="kpi-avg-ticket" class="flow-card-value">$0.00</div>
+                    <div id="trend-avg" class="flow-card-trend">
+                        <span>•••</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🔹 BLOQUE 2 — TIMELINE INSIGHTS (Gráfica principal) -->
+            <div class="chart-container-large">
+                <div class="chart-header">
+                    <h3 class="chart-title">Timeline Insights</h3>
+                    <div
+                        style="font-size:11px; color:rgba(255,255,255,0.3); font-weight:800; letter-spacing:1px; text-transform:uppercase;">
+                        Rendimiento de Negocio</div>
+                </div>
+                <div style="height:350px; position:relative;">
+                    <canvas id="chart-timeline"></canvas>
+                </div>
+            </div>
+
+            <!-- 🔹 BLOQUES 3 & 4 — PRODUCTIVITY & DISTRIBUTION -->
+            <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:24px; margin-bottom:32px;">
+                <div class="chart-container-large" style="margin-bottom:0;">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Activity Days</h3>
+                    </div>
+                    <div style="height:300px; position:relative;">
+                        <canvas id="chart-activity"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container-large" style="margin-bottom:0;">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Distribución de Ingresos</h3>
+                    </div>
+                    <div style="height:300px; position:relative;">
+                        <canvas id="chart-distribution"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🔹 BLOQUE 5 — LEDGER PROFESIONAL -->
+            <div class="flow-table-card" style="margin-bottom:80px;">
+                <div
+                    style="padding:24px; border-bottom:1px solid rgba(255,255,255,0.03); display:flex; justify-content:space-between; align-items:center;">
+                    <h3 class="chart-title">Libro de Transacciones (Ledger)</h3>
+                    <div style="display:flex; gap:8px;">
+                        <button class="ledger-filter-btn active" onclick="filterLedger('all')">Todo</button>
+                        <button class="ledger-filter-btn" onclick="filterLedger('income')">Ingresos</button>
+                        <button class="ledger-filter-btn" onclick="filterLedger('payout')">Pagos</button>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="flow-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Concepto / Evento</th>
+                                <th>Bruto</th>
+                                <th>Comisión</th>
+                                <th>Neto DJ</th>
+                                <th>Estado</th>
+                                <th>Liquidación</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledger-body">
+                            <tr>
+                                <td colspan="7" style="padding:60px; text-align:center; color:rgba(255,255,255,0.2);">
+                                    Cargando transacciones profesionales...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── TAB: SOFTWARE ── -->
+    <div id="tab-software" class="dj-panel">
+        <section style="padding: 60px 0; background: #000;">
+            <div class="container" style="padding: 0 56px;">
+                <div style="margin-bottom:40px;">
+                    <h2 style="font-size:32px; font-weight:900; color:#fff; margin:0;">Gestión MDJPRO</h2>
+                    <p style="color:rgba(255,255,255,0.4); margin-top:8px;">Descargas técnicas y estado de tu
+                        membresía.</p>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
+                    <div class="admin-card">
+                        <h3 style="color:#fff; margin-bottom:24px;">Estado de Cuenta</h3>
+                        <div style="display:flex; gap:10px; margin-bottom:30px;">
+                            <span class="badge">PLAN: <strong id="display-plan-perfil">LITE</strong></span>
+                            <span class="badge" style="background:var(--gold); color:#000;">ESTADO: <strong
+                                    id="display-status-perfil">ACTIVE</strong></span>
+                        </div>
+                        <div style="display:flex; gap:15px;">
+                            <a href="./downloads.html" class="btn primary">Descargar MDJPRO (.pkg)</a>
+                            <a href="./dj-tools.html" class="btn"
+                                style="border:1px solid rgba(255,255,255,0.2); color:#fff;">Notas de Versión</a>
+                        </div>
+                    </div>
+
+                    <div class="admin-card"
+                        style="border-color:rgba(197,160,89,0.3); background:rgba(197,160,89,0.03);">
+                        <h3 style="color:var(--gold); margin-bottom:12px;">Agenda y Eventos</h3>
+                        <p style="color:rgba(255,255,255,0.5); font-size:14px; margin-bottom:24px;">Accede
+                            rápidamente a tu lista de eventos asignados y bloquea fechas.</p>
+                        <a href="./dj-dashboard.html" class="btn"
+                            style="background:rgba(255,255,255,0.08); color:#fff; width:100%;">Ir al Dashboard
+                            Clásico →</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Global constants for DJ availability
+        window._djBlockedDates = {};
+        window._djNameForAvail = '';
+        window.currentProfileDJId = null;
+
+        function switchProfileTab(tab) {
+            document.querySelectorAll('.dj-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.dj-tab-btn').forEach(b => b.classList.remove('active'));
+
+            document.getElementById('tab-' + tab).classList.add('active');
+            // Use querySelector as fallback if event is not from tab button
+            const btn = document.querySelector(`button[onclick*="${tab}"]`);
+            if (btn) btn.classList.add('active');
+
+            if (tab === 'flow' && window.loadFlowData) {
+                window.loadFlowData('30d', window.currentProfileDJId);
+            }
+        }
+    </script>
+    <style>
+        .plan-badge-pro {
+            background: #c5a059;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 900;
+        }
+
+        .plan-badge-lite {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 900;
+        }
+
+        /* ── Influence Analytics Styles ── */
+        .flow-dashboard {
+            background: #0a0a0b;
+            color: #fff;
+            padding: 32px;
+            font-family: 'Inter', sans-serif;
+            animation: fadeIn0 0.6s ease-out;
+        }
+
+        @keyframes fadeIn0 {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .flow-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .flow-card {
+            background: #111114;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .flow-card:hover {
+            border-color: rgba(197, 160, 89, 0.3);
+        }
+
+        .flow-card-label {
+            font-size: 11px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .flow-card-value {
+            font-size: 28px;
+            font-weight: 900;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .flow-card-trend {
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .flow-card-trend.up {
+            color: #00ff88;
+        }
+
+        .flow-card-trend.down {
+            color: #ff5555;
+        }
+
+        .chart-container-large {
+            background: #111114;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 900;
+            color: #fff;
+            margin: 0;
+        }
+
+        .flow-table-card {
+            background: #111114;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .flow-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .flow-table th {
+            text-align: left;
+            padding: 18px 24px;
+            font-size: 10px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .flow-table td {
+            padding: 18px 24px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .status-pill {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .status-pill.available {
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .status-pill.pending {
+            background: rgba(255, 204, 0, 0.1);
+            color: #ffcc00;
+            border: 1px solid rgba(255, 204, 0, 0.2);
+        }
+
+        .status-pill.income {
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .ledger-filter-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.6);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ledger-filter-btn.active {
+            background: var(--gold);
+            color: #000;
+            border-color: var(--gold);
+        }
+    </style>
+    <link rel="stylesheet" href="./mdj-assistant.css" />
+    <script src="./mdj-assistant.js"></script>
 </body>
 
 </html>

@@ -1,5 +1,9 @@
 // Dynamic Data Loader
 let busyDates = [];
+let dashCalYear = new Date().getFullYear();
+let dashCalMonth = new Date().getMonth();
+let dashScheduleData = {};
+let dashRecurringDays = new Set();
 
 // Social platforms config: field name in dj_profiles → { icon SVG path, label, url template }
 const SOCIAL_PLATFORMS = [
@@ -154,10 +158,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Pro / Contract Logic
+    // Pro / Contract Logic & PRO Flow Visibility (The Guard)
     const contractSection = document.getElementById('contract-section');
+    const flowTabBtn = document.querySelector('.dash-tab-btn[data-tab="flow"]');
+
+    // Triple Check Verification (Professional Model)
+    const planType = profile.plan_type || profile.plan || 'free';
+    const planStatus = profile.plan_status || 'active';
+    const expiresAt = profile.plan_expires_at ? new Date(profile.plan_expires_at) : null;
+
+    const isProType = ['pro_monthly', 'pro_annual', 'PRO'].includes(planType);
+    const isActiveStatus = planStatus === 'active';
+    const isNotExpired = expiresAt ? (new Date() < expiresAt) : true;
+
+    // Access is granted ONLY if all conditions are met
+    const isFullPro = isProType && isActiveStatus && isNotExpired;
+
+    if (flowTabBtn) {
+        // Professional rule: If not active or not PRO or expired, it doesn't even exist visually.
+        flowTabBtn.style.display = isFullPro ? 'inline-block' : 'none';
+    }
+
     if (contractSection) {
-        if (profile.plan === 'PRO' && profile.status === 'ACTIVE') {
+        if (isFullPro && profile.status === 'ACTIVE') {
             contractSection.style.display = 'block';
         } else if (profile.status === 'PENDING_REVIEW') {
             contractSection.innerHTML = `<h3 style="color: var(--gold);">⏳ Solicitud en Revisión</h3><p class="fineprint">Estamos verificando tu equipo y experiencia. Acceso a contratos disponible tras aprobación.</p>`;
@@ -191,6 +214,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (document.getElementById('busy-dates-container')) {
         busyDates = profile.availability || [];
         renderBusyDates();
+    }
+
+    // Dashboard Almanac Initialization
+    if (document.getElementById('dash-cal-grid')) {
+        if (profile.availability_schedule && typeof profile.availability_schedule === 'object') {
+            dashScheduleData = profile.availability_schedule.schedule || {};
+            const rd = profile.availability_schedule.recurring_days || [];
+            rd.forEach(d => dashRecurringDays.add(Number(d)));
+        }
+        renderDashCal();
     }
 
     if (dashPhotoInput && dashPhotoImg) {
@@ -310,4 +343,192 @@ function copyReferral() {
     copyText.setSelectionRange(0, 99999);
     navigator.clipboard.writeText(copyText.value);
     alert("¡Link de referido copiado!");
+}
+// ── DASHBOARD ALMANAC (READ-ONLY) ───────────────────────────
+function renderDashCal() {
+    const grid = document.getElementById('dash-cal-grid');
+    const header = document.getElementById('dash-cal-header');
+    if (!grid || !header) return;
+
+    const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    header.textContent = `${MONTHS_ES[dashCalMonth]} ${dashCalYear}`;
+
+    grid.innerHTML = '';
+    const firstDay = new Date(dashCalYear, dashCalMonth, 1).getDay();
+    const daysInMonth = new Date(dashCalYear, dashCalMonth + 1, 0).getDate();
+    const offset = firstDay === 0 ? 6 : firstDay - 1;
+
+    for (let i = 0; i < offset; i++) grid.appendChild(document.createElement('div'));
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${dashCalYear}-${String(dashCalMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const dayDate = new Date(dashCalYear, dashCalMonth, d);
+        const dow = dayDate.getDay();
+        const isPast = dayDate < today;
+
+        const dayData = dashScheduleData[dateStr];
+        const isRecurring = dashRecurringDays.has(dow);
+        const hasEvents = dayData?.events?.length > 0;
+
+        let bg = 'rgba(255,255,255,0.03)';
+        let border = 'rgba(255,255,255,0.05)';
+        let color = 'rgba(255,255,255,0.5)';
+
+        if (hasEvents) {
+            const ev = dayData.events[0];
+            if (ev.status === 'CANCELLED') {
+                bg = 'rgba(255,85,85,0.15)'; border = 'rgba(255,85,85,0.4)'; color = '#ff5555';
+            } else {
+                bg = 'rgba(0,255,136,0.15)'; border = 'rgba(0,255,136,0.4)'; color = '#00ff88';
+            }
+        } else if (isRecurring) {
+            bg = 'rgba(80,120,255,0.15)'; border = 'rgba(80,120,255,0.4)'; color = '#80a0ff';
+        }
+
+        const cell = document.createElement('div');
+        cell.className = 'dash-cal-cell';
+        cell.style.cssText = `
+            text-align:center; padding:32px 0; border-radius:18px; font-size:32px; font-weight:700;
+            background:${bg}; border:1px solid ${border}; color:${color};
+            opacity:${isPast ? 0.3 : 1}; position:relative; transition: all 0.2s; cursor: pointer;
+        `;
+        cell.textContent = d;
+
+        // Click to show details
+        cell.onclick = () => {
+            // Remove previous active highlights
+            document.querySelectorAll('.dash-cal-cell').forEach(c => {
+                c.style.boxShadow = '';
+                c.style.transform = '';
+            });
+
+            const ev = dayData?.events?.[0];
+            const isCancelled = ev?.status === 'CANCELLED';
+            const hasEvents = dayData?.events?.length > 0;
+
+            // High intensity highlight for selection
+            let activeColor = '#fff';
+            if (isCancelled) activeColor = '#ff5555';
+            else if (hasEvents) activeColor = '#00ff88';
+            else if (isRecurring) activeColor = '#5078ff';
+
+            cell.style.boxShadow = `0 0 20px ${activeColor}, inset 0 0 0 3px ${activeColor}`;
+            cell.style.zIndex = '5';
+
+            showDashEventDetails(dateStr, isRecurring, dayData, d);
+        };
+
+        // If it's today, highlight it
+        if (dayDate.getTime() === today.getTime()) {
+            cell.style.border = '2px solid var(--gold)';
+        }
+
+        grid.appendChild(cell);
+    }
+}
+
+/**
+ * Muestra los detalles de un evento o residencia en la barra lateral
+ */
+window.showDashEventDetails = function (dateStr, isRecurring, dayData, dayNum) {
+    const emptyDiv = document.getElementById('dash-event-detail-empty');
+    const dataDiv = document.getElementById('dash-event-detail-data');
+    const card = document.getElementById('dash-event-detail-card');
+
+    if (!emptyDiv || !dataDiv || !card) return;
+
+    emptyDiv.style.display = 'none';
+    dataDiv.style.display = 'block';
+
+    const dateObj = new Date(dateStr + 'T00:00:00');
+    const options = { weekday: 'long', day: 'numeric', month: 'long' };
+    const dateReadable = dateObj.toLocaleDateString('es-ES', options);
+
+    let html = '';
+    let themeColor = 'var(--gold)';
+    let title = 'Detalles del Evento';
+
+    if (dayData && dayData.events && dayData.events.length > 0) {
+        // EVENTO ASIGNADO
+        const ev = dayData.events[0];
+        const isCancelled = ev.status === 'CANCELLED';
+
+        themeColor = isCancelled ? '#ff5555' : '#00ff88'; // RED if cancelled, GREEN if confirmed
+        title = isCancelled ? 'Evento Cancelado' : 'Evento Confirmado';
+        const venueName = ev.venue || 'Boda Ana y Ruben';
+
+        html = `
+            <div style="color: ${themeColor}; font-size: 11px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px;">${title}</div>
+            <h2 style="color: #fff; font-size: 28px; font-weight: 900; margin-bottom: 20px; line-height: 1.1;">${venueName}</h2>
+            
+            <div style="margin-bottom: 24px;">
+                <div style="font-size: 10px; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 4px;">Fecha y Horario</div>
+                <div style="font-size: 16px; color: #fff; font-weight: 700;">${dateReadable} | ${ev.from || '7:00 PM'} - ${ev.to || '12:00 AM'}</div>
+            </div>
+
+            <!-- DOCUMENTOS ADJUNTOS -->
+            <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
+                <div style="font-size: 10px; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">Archivos y Documentos del Evento</div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <a href="#" class="btn secondary small" style="padding: 10px 16px; font-size: 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; text-decoration: none; border: 1px solid rgba(255,255,255,0.1);">
+                        <span>📄</span> Flow Plan (PDF)
+                    </a>
+                    <a href="#" class="btn secondary small" style="padding: 10px 16px; font-size: 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; text-decoration: none; border: 1px solid rgba(255,255,255,0.1);">
+                        <span>🖼️</span> Plano del Salón (PNG)
+                    </a>
+                </div>
+            </div>
+        `;
+    } else if (isRecurring) {
+        // RESIDENCIA (AZUL)
+        themeColor = '#5078ff';
+        title = 'Residencia Activa';
+        html = `
+            <div style="color: ${themeColor}; font-size: 11px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px;">${title}</div>
+            <h2 style="color: #fff; font-size: 28px; font-weight: 900; margin-bottom: 20px; line-height: 1.1;">Resident DJ</h2>
+            
+            <div style="margin-bottom: 24px;">
+                <div style="font-size: 10px; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 4px;">Ubicación y Turno</div>
+                <div style="font-size: 16px; color: #fff; font-weight: 700;">Mojitos Calle 8 | 7:00 PM - 12:00 AM</div>
+            </div>
+
+            <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
+                <div style="font-size: 10px; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">Documentación de Residencia</div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <a href="#" class="btn secondary small" style="padding: 10px 16px; font-size: 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; text-decoration: none; border: 1px solid rgba(255,255,255,0.1);">
+                        <span>📄</span> Contrato Base (PDF)
+                    </a>
+                </div>
+            </div>
+        `;
+    } else {
+        // DÍA LIBRE
+        themeColor = 'rgba(255,255,255,0.1)';
+        html = `
+            <div style="text-align: center; padding: 20px 0;">
+                <div style="font-size: 32px; margin-bottom: 10px;">✨</div>
+                <h3 style="color: #fff; font-size: 18px; font-weight: 800; margin-bottom: 5px;">Día sin eventos</h3>
+                <p style="color: var(--muted); font-size: 13px;">No hay compromisos para el ${dateReadable}.</p>
+            </div>
+        `;
+    }
+
+    dataDiv.innerHTML = html;
+    card.style.borderColor = themeColor;
+    card.style.background = isRecurring ? 'rgba(80,120,255,0.05)' : (dayData?.events?.length > 0 ? 'rgba(197,160,89,0.05)' : '#111114');
+}
+
+function dashPrevMonth() {
+    if (dashCalMonth === 0) { dashCalMonth = 11; dashCalYear--; }
+    else dashCalMonth--;
+    renderDashCal();
+}
+
+function dashNextMonth() {
+    if (dashCalMonth === 11) { dashCalMonth = 0; dashCalYear++; }
+    else dashCalMonth++;
+    renderDashCal();
 }

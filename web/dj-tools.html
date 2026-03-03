@@ -60,6 +60,8 @@
                     <a href="./index.html#services" data-i18n="nav-services">Servicios</a>
                     <a href="./rentals.html" data-i18n="nav-rentals">Servicios de Evento</a>
                     <a href="./dj-tools.html" class="active" data-i18n="nav-tools">Herramientas</a>
+                    <a href="./dj-profile.html?tab=flow" id="nav-flow-link"
+                        style="color:var(--gold); display:none;">Flujo</a>
                     <a href="./jobs.html" data-i18n="nav-jobs">Trabajos</a>
                     <a href="./index.html#contact" data-i18n="nav-contact">Contacto</a>
                 </nav>
@@ -108,11 +110,12 @@
                         <p data-i18n="tools-feature-smart-desc">Logical organization based on energy, genre, and key.
                         </p>
                     </div>
-                    <div class="tile">
-                        <div style="font-size: 32px; margin-bottom: 16px;">💎</div>
-                        <h3 data-i18n="tools-feature-latin-title">Latin Mastery</h3>
-                        <p data-i18n="tools-feature-latin-desc">Native support for Latin transitions and genre-specific
-                            tagging.</p>
+                    <div class="tile" style="border: 1px solid var(--gold); background: rgba(197,160,89,0.05);">
+                        <div style="font-size: 32px; margin-bottom: 16px;">📈</div>
+                        <h3 style="color: var(--gold);">Flujo de Caja</h3>
+                        <p>Control total de tus ingresos y métricas financieras en tiempo real.</p>
+                        <a href="./dj-profile.html?tab=flow" class="btn primary"
+                            style="margin-top: 16px; padding: 8px 16px; font-size: 13px;">Acceder a Flujo</a>
                     </div>
                 </div>
             </div>
@@ -194,8 +197,19 @@
             if (session) {
                 if (loginBtn) loginBtn.style.display = 'none';
                 if (authZone) authZone.style.display = 'block';
-                const { data: profile } = await supabase.from('dj_profiles').select('photo_url').eq('user_id', session.user.id).single();
+                const { data: profile } = await supabase.from('dj_profiles').select('photo_url, plan_type, plan_status, plan_expires_at').eq('user_id', session.user.id).single();
                 if (profile && profile.photo_url) document.querySelector('.avatar').src = profile.photo_url;
+
+                // Show Flow link if PRO
+                const navFlow = document.getElementById('nav-flow-link');
+                if (navFlow && profile) {
+                    const isPro = ['pro_monthly', 'pro_annual', 'PRO'].includes(profile.plan_type);
+                    const isActive = profile.plan_status === 'active';
+                    const isNotExpired = profile.plan_expires_at ? (new Date() < new Date(profile.plan_expires_at)) : true;
+                    if (isPro && isActive && isNotExpired) {
+                        navFlow.style.display = 'inline-block';
+                    }
+                }
             }
         }
         document.addEventListener('DOMContentLoaded', updateHeaderAuth);
