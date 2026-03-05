@@ -646,6 +646,29 @@
         </div>
       </div>
     </section>
+    <!-- ── BEATS & TIPS — EDUCATIONAL SECTION ───────────────── -->
+    <section id="beats-tips" class="section">
+      <div class="container">
+        <h2 style="text-align:center; margin-bottom:12px;">🎧 Beats & Tips</h2>
+        <p
+          style="text-align:center; color:var(--muted); margin-bottom:40px; max-width:600px; margin-left:auto; margin-right:auto;">
+          Tu dosis diaria de educación musical, consejos profesionales y las últimas novedades de la industria.
+        </p>
+
+        <div id="articles-grid" class="grid3">
+          <!-- Dinamycally loaded from Supabase -->
+          <div style="text-align:center; grid-column: 1 / -1; padding: 40px; opacity: 0.6;">
+            <p>Cargando artículos...</p>
+          </div>
+        </div>
+
+        <div style="text-align:center; margin-top:50px;">
+          <a href="#" class="btn secondary" style="border-radius:30px; padding:12px 30px;">Explorar Archivo Completo
+            →</a>
+        </div>
+      </div>
+    </section>
+
     <section id="contact" class="section alt">
       <div class="container">
         <h2 data-i18n="contact-title">Reserva tu Evento</h2>
@@ -882,6 +905,7 @@
   <script src="./translations.js?v=20260226-1"></script>
   <script src="./i18n.js?v=20260226-1"></script>
   <script src="./form-handler.js"></script>
+  <script src="./articles-loader.js"></script>
   <script>
     async function updateHeaderAuth() {
       const { data: { session } } = await supabase.auth.getSession();

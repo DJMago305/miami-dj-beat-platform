@@ -14,11 +14,46 @@ const SOCIAL_PLATFORMS = [
     { key: 'instagram_url', label: 'Instagram', icon: 'M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z', fill: true },
     { key: 'tiktok_url', label: 'TikTok', icon: 'M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.77a8.18 8.18 0 004.79 1.53V6.87a4.85 4.85 0 01-1.02-.18z', fill: true },
     { key: 'shazam_url', label: 'Shazam', icon: 'M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm1.5 14.5h-3v-1.5h.75V11H10v-1.5h2.25v5.5h1.25v1.5zM12 9a1 1 0 110-2 1 1 0 010 2z', fill: true },
-    { key: 'apple_music_url', label: 'Apple Music', icon: 'M23.994 6.124a9.23 9.23 0 00-.24-2.19c-.317-1.31-1.062-2.31-2.18-3.043a5.022 5.022 0 00-1.877-.726 10.496 10.496 0 00-1.564-.15c-.04-.003-.083-.01-.124-.013H5.986c-.152.01-.303.017-.455.026C4.786.07 4.043.15 3.34.428 2.004.958 1.04 1.88.475 3.208A8.196 8.196 0 00.062 5.15c-.04.602-.05 1.21-.053 1.814L0 12.064v4.38c.006.5.014 1.002.043 1.5.05.87.2 1.726.51 2.55.66 1.74 1.95 2.89 3.76 3.38.58.16 1.18.25 1.79.29.5.04 1.01.05 1.52.05h11.27c.5 0 1.01-.01 1.51-.05.59-.04 1.19-.13 1.76-.29 1.88-.51 3.15-1.71 3.77-3.54.22-.65.34-1.33.38-2.01.05-.76.06-1.53.06-2.3 0-2.7-.01-5.4-.02-8.1-.01-.65-.02-1.3-.05-1.95M12.79 8.1l-5.86 3.38c-.08.05-.16.09-.25.16-.32.27-.26.61.08.81l5.86 3.39c.14.08.28.12.43.12.15 0 .28-.04.43-.12l5.87-3.39c.33-.19.4-.53.09-.81a1.59 1.59 0 00-.24-.16l-5.87-3.38c-.15-.08-.29-.12-.44-.12-.15 0-.29.04-.44.12z', fill: true },
+    { key: 'apple_music_url', label: 'Apple Music', icon: 'M12,2C6.477,2,2,6.477,2,12s4.477,10,10,10s10-4.477,10-10S17.523,2,12,2z M15,14c-1.105,0-2,0.895-2,2s0.895,2,2,2s2-0.895,2-2 S16.105,14,15,14z M17,7v5.5C17,13.328,16.328,14,15.5,14S14,13.328,14,12.5S14.672,11,15.5,11c0.166,0,0.32,0.027,0.5,0.076V7h1V7z', fill: true },
     { key: 'twitter_url', label: 'X (Twitter)', icon: 'M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z', fill: true },
     { key: 'facebook_url', label: 'Facebook', icon: 'M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z', fill: true },
     { key: 'website_url', label: 'Web', icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z', fill: true },
 ];
+
+/**
+ * MDJPRO - Dynamic Manuals Loader (SQL Integration)
+ */
+async function loadDynamicManuals(supabase) {
+    const listContainer = document.getElementById('manual-downloads-list');
+    if (!listContainer) return;
+
+    const { data: manuals, error } = await supabase
+        .from('mdjpro_manuals')
+        .select('*')
+        .eq('is_active', true)
+        .order('lang', { ascending: true });
+
+    if (error) {
+        console.error('[SQL SHIELD] Error loading manuals:', error);
+        return;
+    }
+
+    if (manuals && manuals.length > 0) {
+        listContainer.innerHTML = manuals.map(m => `
+            <div class="manual-card" style="margin-bottom: 20px;">
+                <a href="${m.file_path}" download style="text-decoration:none; display: flex; align-items: center; gap: 20px; padding: 20px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; transition: all 0.2s;">
+                    <div style="font-size: 24px;">📄</div>
+                    <div>
+                        <div style="font-size: 14px; font-weight: 800; color: #fff;">${m.title} [${m.lang.toUpperCase()}]</div>
+                        <div style="font-size: 11px; opacity: 0.5;">Versión: ${m.version} | MDJPRO Oficial</div>
+                    </div>
+                    <div style="margin-left: auto; font-size: 12px; color: var(--gold); font-weight: 900;">DESCARGAR ↓</div>
+                </a>
+            </div>
+        `).join('');
+        console.log('[SQL SHIELD] Dynamic Manuals injected successfully.');
+    }
+}
 
 function buildHeroBanner(profile) {
     const banner = document.getElementById('dj-hero-banner');
@@ -112,6 +147,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ── Build the profile hero banner (Spotify-style) ──
     buildHeroBanner(profile);
+
+    // ── Load Dynamic Manuals [SQL SHIELD] ──
+    loadDynamicManuals(supabase);
 
     // Update UI elements if they exist
 
