@@ -1,7 +1,16 @@
 -- web/sql/migrations/05_security_alerts_infra.sql
 -- SECURITY ALERTS INFRASTRUCTURE - MODO MILITAR
 
--- 1. Extend DJ Profiles with Security Fields
+-- 1. Ensure client_profiles table exists before extending
+CREATE TABLE IF NOT EXISTS public.client_profiles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
+    full_name TEXT,
+    email TEXT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 2. Extend DJ Profiles with Security Fields
 DO $$ 
 BEGIN 
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='dj_profiles' AND column_name='security_preference') THEN
