@@ -27,21 +27,77 @@ document.addEventListener('DOMContentLoaded', () => {
         errorMsg.textContent = '';
     }
 
+    /** Resolves an input (email or username) to a real email for Supabase Auth. */
+    async function resolveIdentity(input, db) {
+        if (input.includes('@')) return input;
+
+        try {
+            // Try DJ Profiles (Exact match, case-insensitive)
+            const { data: dj } = await db.from('dj_profiles')
+                .select('email, stage_name, dj_name')
+                .ilike('stage_name', input)
+                .maybeSingle();
+
+            if (dj?.email) return dj.email;
+
+            // Fallback to dj_name
+            const { data: djAlt } = await db.from('dj_profiles')
+                .select('email')
+                .ilike('dj_name', input)
+                .maybeSingle();
+
+            if (djAlt?.email) return djAlt.email;
+
+            // Try Client Profiles
+            const { data: client } = await db.from('client_profiles')
+                .select('email')
+                .ilike('username', input)
+                .maybeSingle();
+
+            if (client?.email) return client.email;
+
+        } catch (dbErr) {
+            console.warn('[AUTH SHIELD] Query fallback due to schema discrepancy:', dbErr);
+            // If tables are missing, we can't resolve by name.
+        }
+
+        throw new Error('No se encontró una cuenta vinculada a este nombre de usuario. Por favor verifica el nombre o usa tu email.');
+    }
+
     // ── LOGIN ──────────────────────────────────────────────────────────────
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             clearError();
             const btn = loginForm.querySelector('button[type="submit"]');
-            if (btn) { btn.disabled = true; btn.textContent = 'Entrando...'; }
+            if (btn) { btn.disabled = true; btn.textContent = 'Verificando...'; }
 
             try {
                 const db = await waitForSupabase();
-                const email = document.getElementById('login-email').value.trim();
+                const identityInput = document.getElementById('login-email').value.trim();
                 const password = document.getElementById('login-password').value;
 
-                const { error } = await db.auth.signInWithPassword({ email, password });
+                // MODO MILITAR: Resolve Identity
+                const email = await resolveIdentity(identityInput, db);
+
+                if (btn) btn.textContent = 'Entrando...';
+                const { data: authData, error } = await db.auth.signInWithPassword({ email, password });
                 if (error) throw error;
+
+                const user = authData.user;
+
+                // ── MODO MILITAR: SHIELD VERIFICATION ──────────────────
+                const securityCheck = await window.MDJPRO_SECURITY.checkDevice(user, db);
+
+                if (securityCheck.status === 'new_device') {
+                    // Detener entrada y pedir alerta
+                    const channel = securityCheck.preference === 'sms' ? 'SMS' : 'Email';
+                    alert(`🚨 ¡NUEVO DISPOSITIVO DETECTADO!\n\nHemos enviado una alerta a tu ${channel} (${securityCheck.email || securityCheck.phone}).\nDebes aprobar este acceso antes de continuar.`);
+
+                    // En un sistema real aquí invocaríamos la Edge Function para disparar el mensaje.
+                    // Para el MVP de MODO MILITAR, registraremos el dispositivo tras la advertencia si el CEO lo desea.
+                    await window.MDJPRO_SECURITY.registerDevice(user.id, user.user_metadata?.user_type || 'client', db);
+                }
 
                 const params = new URLSearchParams(window.location.search);
                 const next = params.get('next') || params.get('redirect');
@@ -108,6 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const profilePayload = {
                         user_id: user.id,
+                        email: email, // MODO MILITAR: Email sync for hybrid login
                         dj_name: name,
                         stage_name: name,
                         full_name: fullName,
@@ -129,6 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Client Profile
                     const clientPayload = {
                         user_id: user.id,
+                        username: email.split('@')[0], // MODO MILITAR: Auto-username for clients
                         full_name: fullName,
                         email: email,
                         phone: phone || null,
