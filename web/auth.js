@@ -29,36 +29,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /** Resolves an input (email or username) to a real email for Supabase Auth. */
     async function resolveIdentity(input, db) {
-        if (input.includes('@')) return input;
+        const cleanInput = input.trim();
+        if (cleanInput.includes('@')) return cleanInput;
 
         try {
+            console.log(`[AUTH RESOLVER] Buscando identidad para: "${cleanInput}"`);
+
             // Try DJ Profiles (Exact match, case-insensitive)
-            const { data: dj } = await db.from('dj_profiles')
+            const { data: dj, error: djErr } = await db.from('dj_profiles')
                 .select('email, stage_name, dj_name')
-                .ilike('stage_name', input)
+                .ilike('stage_name', cleanInput)
                 .maybeSingle();
 
+            if (djErr) console.error('[AUTH RESOLVER] Error en dj_profiles:', djErr);
             if (dj?.email) return dj.email;
 
             // Fallback to dj_name
-            const { data: djAlt } = await db.from('dj_profiles')
+            const { data: djAlt, error: djAltErr } = await db.from('dj_profiles')
                 .select('email')
-                .ilike('dj_name', input)
+                .ilike('dj_name', cleanInput)
                 .maybeSingle();
 
+            if (djAltErr) console.error('[AUTH RESOLVER] Error en dj_profiles (alt):', djAltErr);
             if (djAlt?.email) return djAlt.email;
 
             // Try Client Profiles
-            const { data: client } = await db.from('client_profiles')
+            const { data: client, error: clErr } = await db.from('client_profiles')
                 .select('email')
-                .ilike('username', input)
+                .ilike('username', cleanInput)
                 .maybeSingle();
 
+            if (clErr) console.error('[AUTH RESOLVER] Error en client_profiles:', clErr);
             if (client?.email) return client.email;
 
         } catch (dbErr) {
             console.warn('[AUTH SHIELD] Query fallback due to schema discrepancy:', dbErr);
-            // If tables are missing, we can't resolve by name.
         }
 
         throw new Error('No se encontró una cuenta vinculada a este nombre de usuario. Por favor verifica el nombre o usa tu email.');
