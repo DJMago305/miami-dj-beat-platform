@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>MDJPRO — DJ Profile</title>
+    <title>MDJPRO App — DJ Professional Infrastructure</title>
     <link rel="stylesheet" href="./styles.css?v=20260226-1" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
     <link
@@ -18,9 +18,9 @@
 
     <!-- Open Graph / Meta sharing -->
     <meta property="og:type" content="website">
-    <meta property="og:title" id="meta-og-title" content="Miami DJ Beat — Perfil DJ">
+    <meta property="og:title" id="meta-og-title" content="MDJPRO App — Infraestructura para DJs">
     <meta property="og:description" id="meta-og-desc"
-        content="Conoce a nuestros mejores DJs. Calidad y profesionalismo garantizado por Miami DJ Beat.">
+        content="Plataforma profesional para DJs. Una división de Miami DJ Beat LLC.">
     <meta property="og:image" id="meta-og-image" content="">
     <style>
         :root {
@@ -1170,8 +1170,10 @@
     <nav class="dj-owner-tabs" id="owner-tabs">
         <div class="container">
             <button class="dj-tab-btn active" onclick="switchProfileTab('public')">Vista Pública</button>
+            <a href="./dj-dashboard.html" class="dj-tab-btn">Agenda</a>
             <button class="dj-tab-btn" onclick="switchProfileTab('flow')">Flujo de Caja</button>
             <button class="dj-tab-btn" onclick="switchProfileTab('software')">Gestión MDJPRO</button>
+            <a href="./account-settings.html" class="dj-tab-btn">Configuración</a>
         </div>
     </nav>
 
@@ -2067,29 +2069,96 @@
                         membresía.</p>
                 </div>
 
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
-                    <div class="admin-card">
-                        <h3 style="color:#fff; margin-bottom:24px;">Estado de Cuenta</h3>
-                        <div style="display:flex; gap:10px; margin-bottom:30px;">
-                            <span class="badge">PLAN: <strong id="display-plan-perfil">LITE</strong></span>
-                            <span class="badge" style="background:var(--gold); color:#000;">ESTADO: <strong
-                                    id="display-status-perfil">ACTIVE</strong></span>
+                <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:30px; align-items: start;">
+                    <!-- LEFT: ACCOUNT STATUS -->
+                    <div class="admin-card" style="height: 100%;">
+                        <h3
+                            style="color:#fff; margin-bottom:24px; font-size:18px; letter-spacing:1px; text-transform:uppercase;">
+                            Estado de Cuenta</h3>
+                        <div style="display:flex; flex-direction:column; gap:20px; margin-bottom:30px;">
+                            <div
+                                style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(255,255,255,0.03); border-radius:8px;">
+                                <span
+                                    style="color:rgba(255,255,255,0.5); font-size:12px; text-transform:uppercase;">Plan
+                                    Actual</span>
+                                <span class="badge" style="margin:0;">APP MDJPRO <strong id="display-plan-perfil"
+                                        style="color:var(--gold);">LITE</strong></span>
+                            </div>
+                            <div
+                                style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(255,255,255,0.03); border-radius:8px;">
+                                <span
+                                    style="color:rgba(255,255,255,0.5); font-size:12px; text-transform:uppercase;">Estado</span>
+                                <span class="badge" style="background:var(--gold); color:#000; margin:0;">ACTIVO</span>
+                            </div>
                         </div>
-                        <div style="display:flex; gap:15px;">
-                            <a href="./downloads.html" class="btn primary">Descargar MDJPRO (.pkg)</a>
+                        <div style="display:flex; flex-direction:column; gap:12px;">
+                            <a href="./downloads.html" class="btn primary"
+                                style="width:100%; text-align:center;">Descargar App (.pkg)</a>
                             <a href="./dj-tools.html" class="btn"
-                                style="border:1px solid rgba(255,255,255,0.2); color:#fff;">Notas de Versión</a>
+                                style="border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.6); width:100%; text-align:center; font-size:13px;">Notas
+                                de Versión</a>
                         </div>
                     </div>
 
-                    <div class="admin-card"
-                        style="border-color:rgba(197,160,89,0.3); background:rgba(197,160,89,0.03);">
-                        <h3 style="color:var(--gold); margin-bottom:12px;">Agenda y Eventos</h3>
-                        <p style="color:rgba(255,255,255,0.5); font-size:14px; margin-bottom:24px;">Accede
-                            rápidamente a tu lista de eventos asignados y bloquea fechas.</p>
-                        <a href="./dj-dashboard.html" class="btn"
-                            style="background:rgba(255,255,255,0.08); color:#fff; width:100%;">Ir al Dashboard
-                            Clásico →</a>
+                    <!-- RIGHT: INTERACTIVE MANUAL & DOWNLOADS -->
+                    <div style="display:flex; flex-direction:column; gap:30px;">
+
+                        <!-- PREMIUM MANUAL CARD -->
+                        <div class="admin-card"
+                            style="position:relative; overflow:hidden; border:1px solid rgba(197,160,89,0.3); background: linear-gradient(145deg, rgba(197,160,89,0.08) 0%, rgba(0,0,0,1) 100%); padding:0;">
+                            <div style="padding:30px; position:relative; z-index:2;">
+                                <h3
+                                    style="color:var(--gold); margin-bottom:8px; font-size:20px; font-weight:900; text-transform:uppercase; letter-spacing:1px;">
+                                    Manual Interactivo</h3>
+                                <p
+                                    style="color:rgba(255,255,255,0.6); font-size:14px; line-height:1.6; max-width:240px; margin-bottom:24px;">
+                                    Domina cada función de la plataforma con nuestra guía visual de alta fidelidad.</p>
+                                <a href="./manuals/MDJPRO_Manual/es/index.html" target="_blank" class="btn"
+                                    style="background:var(--gold); color:#000; font-weight:800; padding:12px 24px;">ABRIR
+                                    MANUAL →</a>
+                            </div>
+                            <img src="./assets/mdj_logo.png" alt="MDJPRO Logo"
+                                style="position:absolute; right:25px; bottom:-10px; width:240px; opacity:1; pointer-events:none; filter: drop-shadow(0 0 20px rgba(0,0,0,0.6));">
+                        </div>
+
+                        <!-- DOWNLOADS SECTION -->
+                        <div class="admin-card"
+                            style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05);">
+                            <h3
+                                style="color:#fff; margin-bottom:20px; font-size:16px; text-transform:uppercase; letter-spacing:1px;">
+                                Documentación y PDF</h3>
+                            <div style="display:flex; flex-direction:column; gap:12px;">
+                                <!-- PDF ITEM -->
+                                <div style="display:flex; align-items:center; justify-content:space-between; padding:15px; background:rgba(255,255,255,0.03); border-radius:10px; transition: all 0.3s ease; border:1px solid transparent;"
+                                    onmouseover="this.style.borderColor='rgba(197,160,89,0.3)'; this.style.background='rgba(197,160,89,0.03)'"
+                                    onmouseout="this.style.borderColor='transparent'; this.style.background='rgba(255,255,255,0.03)'">
+                                    <div style="display:flex; align-items:center; gap:15px;">
+                                        <div
+                                            style="width:40px; height:40px; background:rgba(255,59,48,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff3b30"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
+                                                </path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                                <polyline points="10 9 9 9 8 9"></polyline>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div style="color:#fff; font-weight:600; font-size:14px;">DJ Event Checklist
+                                            </div>
+                                            <div
+                                                style="color:rgba(255,255,255,0.4); font-size:11px; text-transform:uppercase;">
+                                                Protocolo Profesional • PDF</div>
+                                        </div>
+                                    </div>
+                                    <a href="./downloads/DJ-Event-Checklist-Free.pdf" download
+                                        style="color:var(--gold); font-size:20px; text-decoration:none;">⤓</a>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
