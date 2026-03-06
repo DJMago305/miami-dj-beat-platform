@@ -41,7 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 .ilike('stage_name', cleanInput)
                 .maybeSingle();
 
-            if (djErr) console.error('[AUTH RESOLVER] Error en dj_profiles:', djErr);
+            if (djErr) {
+                console.error('[AUTH RESOLVER] Error en dj_profiles:', djErr);
+                throw new Error(`Error de Seguridad (RLS): ${djErr.message || 'Acceso denegado'}`);
+            }
             if (dj?.email) return dj.email;
 
             // Fallback to dj_name

@@ -325,16 +325,77 @@
                 <!-- Accordion Section -->
                 <div class="accordion-section" style="max-width: 1000px; margin: 60px auto 0; text-align: left;">
                     <div class="accordion-item">
-                        <button class="accordion-btn"><span class="icon">+</span> Manuals & Downloads</button>
+                        <button class="accordion-btn"><span class="icon">+</span> Manual Interactivo</button>
+                        <div class="accordion-content"
+                            style="display: none; padding: 30px; background: rgba(255,255,255,0.02); border-left: 2px solid var(--gold);">
+                            <div style="max-width: 650px;">
+                                <!-- Botón Destacado: Visor Web -->
+                                <div
+                                    style="background: rgba(197, 160, 89, 0.05); border: 1px solid rgba(197, 160, 89, 0.2); padding: 25px; border-radius: 12px;">
+                                    <h3
+                                        style="color: var(--gold); margin-bottom: 12px; font-weight: 900; letter-spacing: 1px;">
+                                        MODO INTERACTIVO (WEB)</h3>
+                                    <p style="font-size: 14px; opacity: 0.8; line-height: 1.6; margin-bottom: 20px;">
+                                        Navega por la topología de archivos y el Library Wizard directamente desde tu
+                                        navegador. Sin descargas.
+                                    </p>
+                                    <a href="./manuals/MDJPRO_Manual/es/index.html" class="btn primary"
+                                        style="background: var(--gold); color:#000; font-weight:900; text-decoration:none; padding: 12px 25px; border-radius: 8px; display: inline-block; font-size: 13px;">
+                                        📖 Abrir Visor en Tiempo Real
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="accordion-item">
                         <button class="accordion-btn"><span class="icon">+</span> Quickstart Guides</button>
+                        <div class="accordion-content"
+                            style="display: none; padding: 30px; background: rgba(255,255,255,0.02); border-left: 2px solid var(--gold);">
+                            <p style="font-size: 14px; opacity: 0.7; margin-bottom: 20px;">Manuales oficiales y guías de
+                                configuración rápida (v18):</p>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <a href="./downloads/MDJPRO-Manual-ES.pdf" class="btn primary small"
+                                    style="text-decoration:none; text-align:left; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.03); color: #fff; padding: 12px 20px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; font-weight: 700;">
+                                    <span><span style="color: var(--gold); margin-right: 12px;">📄</span> Manual de
+                                        Usuario (ES)</span>
+                                    <span style="font-size: 11px; opacity: 0.5;">PDF ⤓</span>
+                                </a>
+                                <a href="./downloads/MDJPRO-Manual-EN.pdf" class="btn primary small"
+                                    style="text-decoration:none; text-align:left; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.03); color: #fff; padding: 12px 20px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; font-weight: 700;">
+                                    <span><span style="color: var(--gold); margin-right: 12px;">📄</span> User Manual
+                                        (EN)</span>
+                                    <span style="font-size: 11px; opacity: 0.5;">PDF ⤓</span>
+                                </a>
+                                <a href="./downloads/MDJPRO-Manual-PT.pdf" class="btn primary small"
+                                    style="text-decoration:none; text-align:left; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.03); color: #fff; padding: 12px 20px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; font-weight: 700;">
+                                    <span><span style="color: var(--gold); margin-right: 12px;">📄</span> Manual do
+                                        Usuário (PT)</span>
+                                    <span style="font-size: 11px; opacity: 0.5;">PDF ⤓</span>
+                                </a>
+                                <a href="./downloads/DJ-Event-Checklist-Free.pdf" class="btn primary small"
+                                    style="text-decoration:none; text-align:left; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.03); color: #fff; padding: 12px 20px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; font-weight: 700;">
+                                    <span><span style="color: var(--gold); margin-right: 12px;">📋</span> DJ Event
+                                        Checklist</span>
+                                    <span style="font-size: 11px; opacity: 0.5;">PDF ⤓</span>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                     <div class="accordion-item">
                         <button class="accordion-btn"><span class="icon">+</span> Support & Learning</button>
+                        <div class="accordion-content"
+                            style="display: none; padding: 20px; background: rgba(255,255,255,0.02); border-left: 2px solid var(--gold);">
+                            <p style="font-size: 14px; opacity: 0.7;">Visita nuestra sección de tutoriales en video para
+                                dominar el Library Wizard.</p>
+                        </div>
                     </div>
                     <div class="accordion-item">
                         <button class="accordion-btn"><span class="icon">+</span> Download Archive</button>
+                        <div class="accordion-content"
+                            style="display: none; padding: 20px; background: rgba(255,255,255,0.02); border-left: 2px solid var(--gold);">
+                            <p style="font-size: 14px; opacity: 0.7;">Versiones anteriores de MDJPRO v3.x disponibles
+                                bajo solicitud al soporte corporativo.</p>
+                        </div>
                     </div>
                 </div>
 
@@ -416,6 +477,24 @@
                 link.classList.add('active');
                 const targetId = link.getAttribute('data-target');
                 document.getElementById(targetId).style.display = 'block';
+            });
+        });
+
+        // Accordion Toggle Logic
+        document.querySelectorAll('.accordion-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const content = btn.nextElementSibling;
+                const icon = btn.querySelector('.icon');
+                const isOpen = content.style.display === 'block';
+
+                // Close all others
+                document.querySelectorAll('.accordion-content').forEach(c => c.style.display = 'none');
+                document.querySelectorAll('.accordion-btn .icon').forEach(i => i.textContent = '+');
+
+                if (!isOpen) {
+                    content.style.display = 'block';
+                    icon.textContent = '-';
+                }
             });
         });
 
