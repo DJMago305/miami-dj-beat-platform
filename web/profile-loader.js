@@ -181,10 +181,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         photoEl.src = profile.photo_url;
     }
 
-    const avatarEl = document.querySelector('.avatar');
-    if (avatarEl && profile.photo_url) {
-        avatarEl.src = profile.photo_url;
-    }
+    const avatars = document.querySelectorAll('.avatar');
+    avatars.forEach(av => {
+        if (profile.photo_url) av.src = profile.photo_url;
+    });
 
     // Link Management (Handle Logout)
     const logoutBtn = document.getElementById('logoutBtn');

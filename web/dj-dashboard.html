@@ -266,7 +266,8 @@
                     </div>
                     <div class="account" id="header-auth-zone" style="display:none;">
                         <button class="account-btn" id="accountBtn">
-                            <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="Avatar" />
+                            <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="Avatar"
+                                id="header-avatar-img" />
                             <span class="caret">▾</span>
                         </button>
                         <div class="account-menu" id="accountMenu">
@@ -329,8 +330,8 @@
                 background: #0a0a0a;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.08);
                 position: sticky;
-                top: 200px;
-                /* Alineado exactamente con el final de la cabecera fija de 200px */
+                top: 0;
+                /* Alineado exactamente con el inicio al hacer scroll */
                 z-index: 1001;
                 display: flex;
             }
