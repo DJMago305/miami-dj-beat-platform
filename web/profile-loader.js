@@ -435,9 +435,63 @@ window.switchDashTab = function (tabId) {
  * 🍏 EVENT WEATHER CALENDAR ENGINE
  * Integración de FullCalendar + Real-time Weather + iOS Animations
  */
-window.initEventWeatherCalendar = function (events = []) {
+window.initEventWeatherCalendar = async function (assignedEvents = []) {
     const calendarEl = document.getElementById('calendar-master');
     if (!calendarEl) return;
+
+    // 1. FESTIVOS NACIONALES 2026 (ESTÁNDAR CEO - ISO FORMAT) 🇺🇸
+    const holidays = {
+        '2026-01-01': 'Año Nuevo',
+        '2026-01-19': 'Martin Luther King Jr.',
+        '2026-02-16': 'Presidents Day',
+        '2026-05-25': 'Memorial Day',
+        '2026-06-19': 'Juneteenth',
+        '2026-07-04': 'Independence Day',
+        '2026-09-07': 'Labor Day',
+        '2026-10-12': 'Columbus Day',
+        '2026-11-11': 'Veterans Day',
+        '2026-11-26': 'Thanksgiving',
+        '2026-12-25': 'Navidad'
+    };
+
+    // 2. OBTENER DISPONIBILIDAD (RESIDENCIAS/VACACIONES) SINCRONIZADA
+    let availabilityEvents = [];
+    try {
+        const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) {
+            // Usamos select('*') para evitar errores de columna si el esquema cambió ligeramente
+            const { data: profile, error: profError } = await sb
+                .from('dj_profiles')
+                .select('availability')
+                .eq('user_id', session.user.id)
+                .maybeSingle();
+
+            if (profError) console.warn("Supabase profile fetch warning:", profError);
+
+            if (profile?.availability && Array.isArray(profile.availability)) {
+                availabilityEvents = profile.availability.map(date => ({
+                    title: 'Residencia/Bloqueado',
+                    start: date,
+                    allDay: true,
+                    backgroundColor: '#007AFF',
+                    extendedProps: { type: 'residence' }
+                }));
+            }
+        }
+    } catch (e) {
+        console.error("Critical failure in calendar sync:", e);
+    }
+
+    // 3. COMBINAR TODAS LAS FUENTES
+    const allEvents = [
+        ...(assignedEvents || []).map(e => ({
+            ...e,
+            backgroundColor: '#34C759', // Verde (Eventos Privados/Confirmados)
+            extendedProps: { type: 'private-event' }
+        })),
+        ...availabilityEvents
+    ];
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
@@ -447,21 +501,53 @@ window.initEventWeatherCalendar = function (events = []) {
             right: ''
         },
         locale: 'es',
-        firstDay: 1, // Lunes
+        firstDay: 0, // Iniciar en Domingo (Estándar US)
         themeSystem: 'standard',
         height: 'auto',
-        events: events,
+        events: allEvents,
+
         eventClick: function (info) {
+            // Efecto Glow Visual de Selección
+            document.querySelectorAll('.fc-daygrid-day').forEach(d => d.classList.remove('fc-day-selected'));
+            const cell = info.el.closest('.fc-daygrid-day');
+            if (cell) cell.classList.add('fc-day-selected');
             window.showEventWeatherDetails(info.event);
         },
-        datesSet: function () {
-            // Placeholder para updates de clima estacionales
+
+        dateClick: function (info) {
+            // Glow al hacer click en el día vacío
+            document.querySelectorAll('.fc-daygrid-day').forEach(d => d.classList.remove('fc-day-selected'));
+            info.dayEl.classList.add('fc-day-selected');
+            window.showEventWeatherDetails(info.dateStr);
         },
+
+        dayCellDidMount: function (arg) {
+            // Normalizar fecha para comparación con el mapa de festivos
+            const d = arg.date;
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const dateKey = `${year}-${month}-${day}`;
+
+            if (holidays[dateKey]) {
+                const hLabel = document.createElement('div');
+                hLabel.className = 'holiday-label';
+                hLabel.textContent = holidays[dateKey];
+                arg.el.appendChild(hLabel);
+            }
+        },
+
         eventContent: function (arg) {
             let dot = document.createElement('div');
             dot.className = 'apple-status-dot';
-            dot.style.backgroundColor = arg.event.backgroundColor;
-            dot.style.color = arg.event.backgroundColor;
+
+            // Lógica cromática (Estándar CEO)
+            // Azul: Residencia, Verde: Privado, Amarillo: Vacaciones (Fallback)
+            const type = arg.event.extendedProps?.type;
+            dot.style.backgroundColor = type === 'residence' ? '#007AFF' :
+                (type === 'private-event' ? '#34C759' : '#FFCC00');
+            dot.style.color = dot.style.backgroundColor;
+
             return { domNodes: [dot] };
         }
     });
@@ -731,30 +817,58 @@ window.showEventWeatherDetails = async function (eventOrDate) {
         `).join('');
     }
 
-    // 6. INYECTAR DETALLES LOGÍSTICOS (BLOQUE INFERIOR)
+    // 6. INYECTAR DETALLES LOGÍSTICOS (FORMATO PREMIUM CEO - MDJPRO 2026)
+    const eventDayName = new Date(dateStr).toLocaleDateString('es-ES', { weekday: 'long' });
+    const capitalizedDay = eventDayName.charAt(0).toUpperCase() + eventDayName.slice(1);
+
     dataDiv.innerHTML = `
-        <div style="animation: fadeIn 0.4s ease-out;">
-            <div style="color: ${themeColor}; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+        <div style="animation: fadeIn 0.4s ease-out; color: #fff; font-family: 'Inter', sans-serif;">
+            <!-- Status Pill Superior -->
+            <div style="color: ${themeColor}; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
                 <span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor;"></span>
                 ${statusLabel}
             </div>
-            <h2 style="color: #fff; font-size: 24px; font-weight: 800; margin-bottom: 20px; line-height: 1.2;">${eventTitle}</h2>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
-                <div>
-                    <div style="font-size: 9px; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 5px;">Ubicación</div>
-                    <div style="font-size: 14px; color: #fff; font-weight: 600;">${city}</div>
-                </div>
-                <div>
-                    <div style="font-size: 9px; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 5px;">Horario</div>
-                    <div style="font-size: 14px; color: #fff; font-weight: 600;">${isEvent ? '20:00 - 02:00' : 'Todo el día'}</div>
-                </div>
-            </div>
 
-            <div style="background: ${isEvent ? 'rgba(197,160,89,0.1)' : 'rgba(255,255,255,0.03)'}; border-radius: 20px; padding: 20px; margin-top: 20px; border: 1px solid rgba(197,160,89,0.2);">
-                <div style="font-size: 12px; color: var(--gold); font-weight: 900; letter-spacing: 1px; margin-bottom: 8px;">LOGÍSTICA MDJPRO</div>
-                <div style="font-size: 13px; opacity: 0.8; line-height: 1.5; color: #fff;">
-                    ${isEvent ? 'Recuerda cargar tu equipo 2 horas antes. La temperatura exterior podría afectar el rendimiento térmico de los controladores.' : 'Día libre para mantenimiento de equipo y gestión de biblioteca.'}
+            <!-- GRID DE INFORMACIÓN CRÍTICA (FORMATO CEO) -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: rgba(0,0,0,0.2); backdrop-filter: blur(20px); padding: 25px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05);">
+                
+                <!-- Fila 1: Evento y Lugar -->
+                <div>
+                    <div style="font-size: 10px; color: var(--gold); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Evento</div>
+                    <div style="font-size: 18px; font-weight: 800; color: #fff;">${eventTitle}</div>
+                </div>
+                <div>
+                    <div style="font-size: 10px; color: var(--gold); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Lugar</div>
+                    <div style="font-size: 18px; font-weight: 700; color: #fff;">${city}</div>
+                </div>
+
+                <!-- Fila 2: Fecha y Clima Previsto -->
+                <div>
+                    <div style="font-size: 10px; color: var(--gold); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Fecha</div>
+                    <div style="font-size: 18px; font-weight: 700; color: #fff;">${isEvent ? capitalizedDay : 'Disponible'}</div>
+                </div>
+                <div>
+                    <div style="font-size: 10px; color: var(--gold); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Clima previsto</div>
+                    <div style="font-size: 16px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 22px;">${condition === 'Sunny' ? '☀️' : (condition === 'Cloudy' ? '🌤' : '🌧')}</span>
+                        <span>${heroCond ? heroCond.textContent : '—'} 78°F</span>
+                    </div>
+                </div>
+
+                <!-- Fila 3: Atardecer y Alerta Logística -->
+                <div>
+                    <div style="font-size: 10px; color: var(--gold); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Atardecer</div>
+                    <div style="font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px;">
+                        <span>🌇</span> 6:32 PM
+                    </div>
+                </div>
+                <div style="grid-column: span 2; margin-top: 10px; padding: 15px; background: rgba(197,160,89,0.1); border-radius: 16px; border: 1px solid rgba(197,160,89,0.2);">
+                    <div style="font-size: 10px; color: var(--gold); font-weight: 900; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                         ⚠️ Alerta logística
+                    </div>
+                    <div style="font-size: 13px; font-weight: 500; line-height: 1.5; color: rgba(255,255,255,0.9);">
+                        ${isEvent ? 'Posible viento moderado. Traer protección para equipos (faldas de mesa pesadas y cobertores).' : 'Sin alertas operativas. Equipo en mantenimiento.'}
+                    </div>
                 </div>
             </div>
         </div>

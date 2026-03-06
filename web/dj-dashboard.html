@@ -564,11 +564,13 @@
                                     }
 
                                     #calendar-master .fc-col-header-cell-cushion {
-                                        font-size: 11px;
-                                        font-weight: 800;
+                                        font-size: 10px;
+                                        font-weight: 900;
                                         text-transform: uppercase;
-                                        color: rgba(255, 255, 255, 0.4);
+                                        color: var(--gold);
+                                        opacity: 0.8;
                                         text-decoration: none !important;
+                                        letter-spacing: 1px;
                                     }
 
                                     #calendar-master .fc-daygrid-day-top {
@@ -580,18 +582,40 @@
                                         display: none !important;
                                     }
 
-                                    /* Hide bars */
+                                    /* Glow y Borde Blanco para Hoy 🍏 */
+                                    #calendar-master .fc-day-today {
+                                        background: rgba(255, 255, 255, 0.05) !important;
+                                        border: 2px solid #fff !important;
+                                        border-radius: 12px !important;
+                                        box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.1);
+                                    }
+
+                                    /* Efecto Glow Selección Activa */
+                                    #calendar-master .fc-day-selected {
+                                        background: radial-gradient(circle, rgba(197, 160, 89, 0.2) 0%, rgba(0, 0, 0, 0) 70%) !important;
+                                        box-shadow: inset 0 0 20px rgba(197, 160, 89, 0.1) !important;
+                                        transition: background 0.3s ease;
+                                    }
+
                                     .apple-status-dot {
                                         width: 6px;
                                         height: 6px;
                                         border-radius: 50%;
-                                        margin-top: 4px;
-                                        box-shadow: 0 0 10px currentColor;
+                                        margin: 4px auto;
+                                        box-shadow: 0 0 8px currentColor;
                                     }
 
-                                    .fc-day-today {
-                                        background: rgba(255, 255, 255, 0.05) !important;
-                                        border-radius: 50%;
+                                    .holiday-label {
+                                        position: absolute;
+                                        bottom: 4px;
+                                        width: 100%;
+                                        text-align: center;
+                                        font-size: 7.5px;
+                                        font-weight: 700;
+                                        color: rgba(255, 255, 255, 0.4);
+                                        text-transform: uppercase;
+                                        letter-spacing: 0.5px;
+                                        pointer-events: none;
                                     }
                                 </style>
                                 <div id="calendar-master"
@@ -2601,6 +2625,11 @@
                     .order('event_date', { ascending: true });
 
                 if (error) throw error;
+
+                // 3. Inicializar Calendario Maestro con Eventos Asignados
+                if (window.initEventWeatherCalendar) {
+                    window.initEventWeatherCalendar(events);
+                }
 
                 if (!events || events.length === 0) {
                     container.innerHTML = `
