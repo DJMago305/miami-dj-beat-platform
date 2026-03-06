@@ -9,9 +9,13 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700;1,800&display=swap"
         rel="stylesheet">
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css' rel='stylesheet' />
     <link rel="stylesheet" href="./styles.css?v=20260226-1" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+    <link rel="stylesheet" href="./weather-effects.css?v=20260305-1" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <script src="./supabase-config.js?v=20260226-1"></script>
     <script src="./role-guard.js?v=20260226-2" data-role="dj"></script>
     <style>
@@ -325,8 +329,9 @@
                 background: #0a0a0a;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.08);
                 position: sticky;
-                top: 0;
-                z-index: 1000;
+                top: 200px;
+                /* Alineado exactamente con el final de la cabecera fija de 200px */
+                z-index: 1001;
                 display: flex;
             }
 
@@ -431,14 +436,74 @@
 
         <!-- TAB 1: Dashboard (existing content) -->
         <div id="tab-dashboard" class="dash-tab-panel active">
-            <section style="padding: 40px 0;">
-                <div class="container hero-grid">
+            <section style="padding: 60px 0; margin-top: 20px;">
+                <div class="container hero-grid" style="align-items: flex-start;">
                     <!-- Left Column: Business Logic -->
-                    <div class="agenda-main">
-                        <h1 data-i18n="dash-your-profile">Agenda</h1>
-                        <p class="sub" data-i18n="dash-sub-desc">
-                            Este panel gestiona tus eventos programados, mensajes y notas de Miami DJ Beat.
-                        </p>
+                    <div class="agenda-main" style="padding-top: 10px;">
+                        <!-- ── FUSIÓN HERO-ATMOSFÉRA TOTAL (IZQUIERDA) ── -->
+                        <div id="weather-hero-container"
+                            style="position: relative; border-radius: 32px; overflow: hidden; min-height: 480px; background: transparent; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+
+                            <!-- Master Weather Overlay Layer (Fondo Dinámico) -->
+                            <div id="weather-master-overlay" class="weather-master-overlay"
+                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;">
+                                <div id="weather-sunny" class="weather-sunny-glow" style="display:none;"></div>
+                                <div id="weather-rain" class="weather-rain-canvas" style="display:none;"></div>
+                                <div id="weather-clouds" class="weather-clouds-container" style="display:none;">
+                                </div>
+                                <div id="weather-storm" class="weather-lightning" style="display:none;"></div>
+                                <div id="weather-fog" class="weather-fog" style="display:none;"></div>
+                            </div>
+
+                            <!-- Datos del Hero (Capa Superior PNG-style) -->
+                            <div id="weather-hero-content"
+                                style="position: relative; z-index: 5; text-align: center; color: #fff; width: 100%; padding: 40px 20px;">
+                                <div id="hero-location"
+                                    style="font-size: 14px; font-weight: 600; letter-spacing: 2px; opacity: 0.9; text-transform: uppercase; margin-bottom: 4px; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
+                                    Mi Ubicación</div>
+                                <div id="hero-city"
+                                    style="font-size: 32px; font-weight: 500; margin-bottom: 5px; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
+                                    Miami</div>
+                                <div id="hero-temp"
+                                    style="font-size: 120px; font-weight: 200; margin: -15px 0; letter-spacing: -6px; font-family: 'Inter', sans-serif; text-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                                    82°</div>
+                                <div id="hero-condition"
+                                    style="font-size: 20px; font-weight: 500; opacity: 0.9; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
+                                    Mayormente nublado</div>
+                                <div id="hero-high-low"
+                                    style="font-size: 16px; font-weight: 500; opacity: 0.7; margin-top: 5px; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
+                                    Máxima: 82° | Mínima: 72°</div>
+
+                                <!-- WEATHER SUMMARY (Apple Style) -->
+                                <div id="weather-hero-description"
+                                    style="margin-top: 30px; background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(20px); border-radius: 20px; padding: 20px; border: 1px solid rgba(255,255,255,0.05); text-align: left; font-size: 14px; line-height: 1.4; color: #fff;">
+                                    Pronóstico de cielos parcialmente nublados como a las 4 p.m.. Ráfagas de viento de
+                                    hasta 17 mi/h.
+                                </div>
+
+                                <!-- HOURLY CAROUSEL DENTRO DEL CLIMA (Glass Module) -->
+                                <div id="hourly-forecast-permanent"
+                                    style="margin-top: 40px; background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(20px); border-radius: 20px; padding: 20px; border: 1px solid rgba(255,255,255,0.05);">
+                                    <div id="hourly-scroller-main"
+                                        style="overflow-x: auto; display: flex; gap: 24px; padding-bottom: 10px; scrollbar-width: none; -ms-overflow-style: none;">
+                                        <!-- Inyectado vía profile-loader.js -->
+                                    </div>
+                                </div>
+
+                                <!-- 10-DAY FORECAST (Apple Style) -->
+                                <div id="daily-forecast-container"
+                                    style="margin-top: 15px; background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(20px); border-radius: 20px; padding: 20px; border: 1px solid rgba(255,255,255,0.05); text-align: left;">
+                                    <div
+                                        style="font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                                        <span>📅</span> PRONÓSTICO PARA 10 DÍAS
+                                    </div>
+                                    <div id="daily-forecast-list"
+                                        style="display: flex; flex-direction: column; gap: 12px;">
+                                        <!-- Inyectado vía profile-loader.js -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Talent Availability Section (Keeping for context, but will hide if redundant) -->
                         <div class="admin-card"
@@ -451,136 +516,124 @@
                             <div id="busy-dates-container" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
                         </div>
 
-                        <!-- ── SECCIÓN: MIS EVENTOS ASIGNADOS ─────────── -->
-                        <div class="admin-card" id="assigned-events-section"
-                            style="margin-top: 20px; border: 1px solid rgba(197,160,89,0.35); background: rgba(197,160,89,0.04);">
-                            <div
-                                style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                <h2 class="gold">Mis Eventos Asignados</h2>
-                                <button class="btn secondary small" onclick="loadAssignedEvents()" title="Actualizar">↺
-                                    Actualizar</button>
-                            </div>
-                            <div id="assigned-events-container">
-                                <div class="fineprint" style="opacity: 0.5; text-align:center; padding: 20px;">Cargando
-                                    eventos...</div>
-                            </div>
-                        </div>
-
-                        <!-- ── SECCIÓN: NOTAS Y COMUNICACIÓN ─────────── -->
-                        <div class="admin-card" id="communication-section"
-                            style="margin-top: 20px; border: 1px solid rgba(197,160,89,0.35); background: rgba(197,160,89,0.04);">
-                            <div
-                                style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                <h2 class="gold">Notas del Manager / Comunicación</h2>
-                            </div>
-                            <div id="manager-notes-container">
-                                <p class="fineprint" style="margin-bottom: 15px;">Aquí verás detalles y actualizaciones
-                                    enviadas por Miami DJ Beat.</p>
-                                <div
-                                    style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 8px; border: 1px dashed rgba(255,255,255,0.1); text-align: center;">
-                                    <p style="color: rgba(255,255,255,0.4); font-size: 13px; font-style: italic;">No hay
-                                        notas nuevas.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- ── DETALLES DEL EVENTO (IZQUIERDA) ── -->
+                        <!-- ── DETALLES DEL EVENTO SELECCIONADO ── -->
                         <div id="dash-left-event-details" style="margin-top: 20px;">
                             <div id="dash-event-detail-card"
-                                style="background: #111114; border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 40px; text-align: left; min-height: 300px; display: flex; flex-direction: column; justify-content: center; transition: all 0.3s ease;">
-                                <div id="dash-event-detail-empty" style="text-align: center;">
-                                    <div style="font-size: 40px; margin-bottom: 15px;">📅</div>
-                                    <h3 style="color: #fff; font-size: 20px; font-weight: 800; margin-bottom: 10px;">
-                                        Selecciona una fecha</h3>
-                                    <p style="color: var(--muted); font-size: 14px;">Toca un día en el Almanaque para
-                                        ver los detalles.</p>
+                                style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 32px; text-align: left; min-height: 200px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden;">
+                                <div id="dash-event-detail-empty" style="text-align: center; opacity: 0.4;">
+                                    <div style="font-size: 32px; margin-bottom: 15px;">✨</div>
+                                    <h3 style="color: #fff; font-size: 16px; font-weight: 700;">Selecciona una fecha
+                                        en
+                                        la Agenda</h3>
                                 </div>
                                 <div id="dash-event-detail-data" style="display: none;">
-                                    <!-- Dynamic content goes here -->
+                                    <!-- Contenido dinámico inyectado -->
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Right Column: Interactive Almanac (Read-Only) -->
-                    <div class="agenda-sidebar">
-                        <div class="admin-card" style="padding: 24px; border: 1px solid rgba(197,160,89,0.25);">
-                            <div
-                                style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
-                                <h2 class="gold" style="margin:0; font-size:18px;">📅 Mi Almanaque</h2>
-                                <div style="display:flex; gap:5px;">
-                                    <button onclick="dashPrevMonth()" class="btn secondary small cal-nav-btn"
-                                        style="padding:5px 10px;">‹</button>
-                                    <button onclick="dashNextMonth()" class="btn secondary small cal-nav-btn"
-                                        style="padding:5px 10px;">›</button>
-                                </div>
-                            </div>
+                    <!-- Right Column: Event Weather Calendar 🍏☀️ -->
+                    <div class="agenda-sidebar" style="position: relative; z-index: 10;">
+                        <div class="admin-card weather-card-container"
+                            style="padding: 0; position: relative; overflow: hidden; border: 1px solid rgba(197,160,89,0.25); min-height: 500px; background: transparent !important; backdrop-filter: blur(10px); z-index: 5;">
 
-                            <div id="dash-cal-header"
-                                style="text-align:center; font-weight:900; color:#fff; margin-bottom:15px; text-transform:uppercase; letter-spacing:1px; font-size:14px;">
-                                CARGANDO...
-                            </div>
-
-                            <div
-                                style="display:grid; grid-template-columns:repeat(7, 1fr); gap:5px; margin-bottom:8px;">
+                            <div style="padding: 24px; position: relative; z-index: 2;">
                                 <div
-                                    style="text-align:center; font-size:9px; font-weight:800; color:rgba(255,255,255,0.3);">
-                                    LUN</div>
-                                <div
-                                    style="text-align:center; font-size:9px; font-weight:800; color:rgba(255,255,255,0.3);">
-                                    MAR</div>
-                                <div
-                                    style="text-align:center; font-size:9px; font-weight:800; color:rgba(255,255,255,0.3);">
-                                    MIE</div>
-                                <div
-                                    style="text-align:center; font-size:9px; font-weight:800; color:rgba(255,255,255,0.3);">
-                                    JUE</div>
-                                <div
-                                    style="text-align:center; font-size:9px; font-weight:800; color:rgba(255,255,255,0.3);">
-                                    VIE</div>
-                                <div
-                                    style="text-align:center; font-size:9px; font-weight:800; color:rgba(255,255,255,0.3);">
-                                    SAB</div>
-                                <div
-                                    style="text-align:center; font-size:9px; font-weight:800; color:rgba(255,255,255,0.3);">
-                                    DOM</div>
-                            </div>
-
-                            <div id="dash-cal-grid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:5px;"
-                                class="read-only-cal">
-                                <!-- Grid populated by profile-loader.js -->
-                            </div>
-
-                            <div
-                                style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.05); padding-top:15px;">
-                                <div style="display:flex; gap:15px; flex-wrap:wrap;">
-                                    <div
-                                        style="display:flex; align-items:center; gap:6px; font-size:10px; color:rgba(255,255,255,0.4);">
-                                        <div
-                                            style="width:8px; height:8px; border-radius:2px; background:rgba(80,120,255,0.3); border:1px solid #5078ff;">
-                                        </div> Residencia
-                                    </div>
-                                    <div
-                                        style="display:flex; align-items:center; gap:6px; font-size:10px; color:rgba(255,255,255,0.4);">
-                                        <div
-                                            style="width:8px; height:8px; border-radius:2px; background:rgba(0,255,136,0.3); border:1px solid #00ff88;">
-                                        </div> Confirmado
-                                    </div>
-                                    <div
-                                        style="display:flex; align-items:center; gap:6px; font-size:10px; color:rgba(255,255,255,0.4);">
-                                        <div
-                                            style="width:8px; height:8px; border-radius:2px; background:rgba(255,85,85,0.3); border:1px solid #ff5555;">
-                                        </div> Cancelado
+                                    style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+                                    <h2 class="gold" style="margin:0; font-size:18px;">📅 Agenda Climática</h2>
+                                    <div id="current-weather-badge"
+                                        style="font-size: 12px; color: #fff; font-weight: 800; background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 20px; display: none;">
+                                        <!-- Real-time weather label -->
                                     </div>
                                 </div>
-                                <p
-                                    style="font-size:10px; color:rgba(255,255,255,0.3); margin-top:10px; line-height:1.4;">
-                                    Este calendario es informativo. Para modificar tu disponibilidad, ve a la pestaña de
-                                    <b>Configuraciones</b>.
-                                </p>
+
+                                <!-- FullCalendar Container CSS Overwrite (Apple Style) -->
+                                <style>
+                                    #calendar-master .fc-scrollgrid,
+                                    #calendar-master .fc-theme-standard td,
+                                    #calendar-master .fc-theme-standard th {
+                                        border: none !important;
+                                    }
+
+                                    #calendar-master .fc-daygrid-day-number {
+                                        font-size: 16px;
+                                        font-weight: 300;
+                                        opacity: 0.9;
+                                        padding: 10px !important;
+                                    }
+
+                                    #calendar-master .fc-col-header-cell-cushion {
+                                        font-size: 11px;
+                                        font-weight: 800;
+                                        text-transform: uppercase;
+                                        color: rgba(255, 255, 255, 0.4);
+                                        text-decoration: none !important;
+                                    }
+
+                                    #calendar-master .fc-daygrid-day-top {
+                                        flex-direction: column !important;
+                                        align-items: center !important;
+                                    }
+
+                                    #calendar-master .fc-daygrid-event-harness {
+                                        display: none !important;
+                                    }
+
+                                    /* Hide bars */
+                                    .apple-status-dot {
+                                        width: 6px;
+                                        height: 6px;
+                                        border-radius: 50%;
+                                        margin-top: 4px;
+                                        box-shadow: 0 0 10px currentColor;
+                                    }
+
+                                    .fc-day-today {
+                                        background: rgba(255, 255, 255, 0.05) !important;
+                                        border-radius: 50%;
+                                    }
+                                </style>
+                                <div id="calendar-master"
+                                    style="min-height: 400px; color: #fff; background: transparent;"></div>
+
+                                <!-- Logistics Alerts Area -->
+                                <div id="logistics-alerts" style="margin-top: 20px;"></div>
                             </div>
                         </div>
 
+                        <!-- ── SECCIÓN: NOTAS Y COMUNICACIÓN ─────────── -->
+                        <div class="admin-card" id="communication-section"
+                            style="margin-top: 15px; border: 1px solid rgba(197,160,89,0.15); background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border-radius: 16px; padding: 20px;">
+                            <div
+                                style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h2 class="gold" style="font-size: 11px;">Notas del Manager</h2>
+                            </div>
+                            <div id="manager-notes-container">
+                                <div
+                                    style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; border: 1px dashed rgba(255,255,255,0.05); text-align: center;">
+                                    <p style="color: rgba(255,255,255,0.3); font-size: 11px; font-style: italic;">No
+                                        hay
+                                        notas.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── SECCIÓN: MIS EVENTOS ASIGNADOS ─────────── -->
+                        <div class="admin-card" id="assigned-events-section"
+                            style="margin-top: 15px; border: 1px solid rgba(197,160,89,0.15); background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border-radius: 16px; padding: 20px;">
+                            <div
+                                style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h2 class="gold" style="font-size: 11px;">Mis Eventos Asignados</h2>
+                                <button class="btn secondary small" onclick="loadAssignedEvents()" title="Actualizar"
+                                    style="padding: 4px 8px; font-size: 10px;">↺</button>
+                            </div>
+                            <div id="assigned-events-container">
+                                <div class="fineprint"
+                                    style="opacity: 0.5; text-align:center; padding: 10px; font-size: 12px;">
+                                    Cargando...</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -2695,6 +2748,18 @@
     <script src="./flow-handler.js"></script>
     <link rel="stylesheet" href="./mdj-assistant.css" />
     <script src="./mdj-assistant.js"></script>
+
+    <!-- MDJPRO BOOTLOADER: Fuerza el renderizado inmediato del clima HERO 🍏 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            setTimeout(() => {
+                if (window.showEventWeatherDetails) {
+                    console.log('[MDJPRO] Forzando renderizado de clima inicial...');
+                    window.showEventWeatherDetails(new Date().toISOString().split('T')[0]);
+                }
+            }, 1000);
+        });
+    </script>
 
 </body>
 

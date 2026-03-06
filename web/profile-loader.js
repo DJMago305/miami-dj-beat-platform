@@ -254,15 +254,48 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderBusyDates();
     }
 
-    // Dashboard Almanac Initialization
-    if (document.getElementById('dash-cal-grid')) {
+    // Event Weather Calendar Initialization (Agenda Tab) 🍏☀️
+    if (document.getElementById('calendar-master')) {
+        let events = [];
         if (profile.availability_schedule && typeof profile.availability_schedule === 'object') {
-            dashScheduleData = profile.availability_schedule.schedule || {};
-            const rd = profile.availability_schedule.recurring_days || [];
-            rd.forEach(d => dashRecurringDays.add(Number(d)));
+            const schedule = profile.availability_schedule.schedule || {};
+            const recurringDays = profile.availability_schedule.recurring_days || [];
+
+            // 1. Mapear Eventos de Fecha Específica
+            const specificEvents = Object.entries(schedule).map(([date, data]) => ({
+                title: data.events?.[0]?.venue || 'Evento Confirmado',
+                start: date,
+                extendedProps: {
+                    venue: data.events?.[0]?.venue,
+                    city: data.events?.[0]?.city || 'Miami, FL',
+                    status: data.events?.[0]?.status
+                },
+                backgroundColor: data.events?.[0]?.status === 'CANCELLED' ? '#ff5555' : '#00ff88',
+                borderColor: data.events?.[0]?.status === 'CANCELLED' ? '#ff5555' : '#00ff88'
+            }));
+
+            // 2. Mapear Residencias Recurrentes (Días de la semana)
+            const recurringEvents = recurringDays.map(day => ({
+                title: 'Resident DJ (Residencia)',
+                daysOfWeek: [day], // 0-6 (Sun-Sat)
+                extendedProps: {
+                    venue: 'Key Largo / Miami Venue',
+                    city: 'Key Largo, FL', // Referencia por defecto del usuario
+                    status: 'RESIDENT'
+                },
+                backgroundColor: '#5078ff',
+                borderColor: '#5078ff'
+            }));
+
+            events = [...specificEvents, ...recurringEvents];
         }
-        renderDashCal();
+        window.initEventWeatherCalendar(events);
+        // Inicializar clima por defecto
+        window.updateWeatherAnimation('Sunny');
     }
+
+    const dashPhotoInput = document.getElementById('dash-photo-input');
+    const dashPhotoImg = document.getElementById('dash-photo-img');
 
     if (dashPhotoInput && dashPhotoImg) {
         dashPhotoInput.addEventListener('change', async function (e) {
@@ -382,91 +415,155 @@ function copyReferral() {
     navigator.clipboard.writeText(copyText.value);
     alert("¡Link de referido copiado!");
 }
+
+// ── DASHBOARD TAB LOGIC ────────────────────────────────────
+window.switchDashTab = function (tabId) {
+    document.querySelectorAll('.dash-tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.dj-tab-btn').forEach(b => b.classList.remove('active'));
+
+    const target = document.getElementById('tab-' + tabId);
+    const btn = document.querySelector(`.dj-tab-btn[onclick*="${tabId}"]`);
+
+    if (target) target.classList.add('active');
+    if (btn) btn.classList.add('active');
+
+    if (tabId === 'flow') loadFlowData('30d');
+};
+
 // ── DASHBOARD ALMANAC (READ-ONLY) ───────────────────────────
-function renderDashCal() {
-    const grid = document.getElementById('dash-cal-grid');
-    const header = document.getElementById('dash-cal-header');
-    if (!grid || !header) return;
+/**
+ * 🍏 EVENT WEATHER CALENDAR ENGINE
+ * Integración de FullCalendar + Real-time Weather + iOS Animations
+ */
+window.initEventWeatherCalendar = function (events = []) {
+    const calendarEl = document.getElementById('calendar-master');
+    if (!calendarEl) return;
 
-    const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-    header.textContent = `${MONTHS_ES[dashCalMonth]} ${dashCalYear}`;
-
-    grid.innerHTML = '';
-    const firstDay = new Date(dashCalYear, dashCalMonth, 1).getDay();
-    const daysInMonth = new Date(dashCalYear, dashCalMonth + 1, 0).getDate();
-    const offset = firstDay === 0 ? 6 : firstDay - 1;
-
-    for (let i = 0; i < offset; i++) grid.appendChild(document.createElement('div'));
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${dashCalYear}-${String(dashCalMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const dayDate = new Date(dashCalYear, dashCalMonth, d);
-        const dow = dayDate.getDay();
-        const isPast = dayDate < today;
-
-        const dayData = dashScheduleData[dateStr];
-        const isRecurring = dashRecurringDays.has(dow);
-        const hasEvents = dayData?.events?.length > 0;
-
-        let bg = 'rgba(255,255,255,0.03)';
-        let border = 'rgba(255,255,255,0.05)';
-        let color = 'rgba(255,255,255,0.5)';
-
-        if (hasEvents) {
-            const ev = dayData.events[0];
-            if (ev.status === 'CANCELLED') {
-                bg = 'rgba(255,85,85,0.15)'; border = 'rgba(255,85,85,0.4)'; color = '#ff5555';
-            } else {
-                bg = 'rgba(0,255,136,0.15)'; border = 'rgba(0,255,136,0.4)'; color = '#00ff88';
-            }
-        } else if (isRecurring) {
-            bg = 'rgba(80,120,255,0.15)'; border = 'rgba(80,120,255,0.4)'; color = '#80a0ff';
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: ''
+        },
+        locale: 'es',
+        firstDay: 1, // Lunes
+        themeSystem: 'standard',
+        height: 'auto',
+        events: events,
+        eventClick: function (info) {
+            window.showEventWeatherDetails(info.event);
+        },
+        datesSet: function () {
+            // Placeholder para updates de clima estacionales
+        },
+        eventContent: function (arg) {
+            let dot = document.createElement('div');
+            dot.className = 'apple-status-dot';
+            dot.style.backgroundColor = arg.event.backgroundColor;
+            dot.style.color = arg.event.backgroundColor;
+            return { domNodes: [dot] };
         }
+    });
 
-        const cell = document.createElement('div');
-        cell.className = 'dash-cal-cell';
-        cell.style.cssText = `
-            text-align:center; padding:32px 0; border-radius:18px; font-size:32px; font-weight:700;
-            background:${bg}; border:1px solid ${border}; color:${color};
-            opacity:${isPast ? 0.3 : 1}; position:relative; transition: all 0.2s; cursor: pointer;
-        `;
-        cell.textContent = d;
+    calendar.render();
+    window.fcInstance = calendar;
+};
 
-        // Click to show details
-        cell.onclick = () => {
-            // Remove previous active highlights
-            document.querySelectorAll('.dash-cal-cell').forEach(c => {
-                c.style.boxShadow = '';
-                c.style.transform = '';
-            });
+/**
+ * Motor de Clima y Animaciones 🍏☀️
+ */
+window.updateWeatherAnimation = function (condition) {
+    const container = document.getElementById('weather-hero-container'); // Nueva ubicación unificada
+    const overlay = document.getElementById('weather-master-overlay');
+    const badge = document.getElementById('current-weather-badge');
+    if (!container || !overlay) return;
 
-            const ev = dayData?.events?.[0];
-            const isCancelled = ev?.status === 'CANCELLED';
-            const hasEvents = dayData?.events?.length > 0;
+    // 1. Ciclo Día/Noche (Engine 2026)
+    const hour = new Date().getHours();
+    const isNight = hour >= 18 || hour < 6;
 
-            // High intensity highlight for selection
-            let activeColor = '#fff';
-            if (isCancelled) activeColor = '#ff5555';
-            else if (hasEvents) activeColor = '#00ff88';
-            else if (isRecurring) activeColor = '#5078ff';
+    container.classList.remove('is-night', 'is-stormy');
+    if (isNight) container.classList.add('is-night');
 
-            cell.style.boxShadow = `0 0 20px ${activeColor}, inset 0 0 0 3px ${activeColor}`;
-            cell.style.zIndex = '5';
+    // Reset layers
+    const layers = ['weather-sunny', 'weather-rain', 'weather-clouds', 'weather-storm', 'weather-fog'];
+    layers.forEach(l => {
+        const el = document.getElementById(l);
+        if (el) el.style.display = 'none';
+        if (el) el.style.opacity = '0';
+    });
 
-            showDashEventDetails(dateStr, isRecurring, dayData, d);
-        };
+    overlay.classList.add('active');
+    if (badge) badge.style.display = 'block';
 
-        // If it's today, highlight it
-        if (dayDate.getTime() === today.getTime()) {
-            cell.style.border = '2px solid var(--gold)';
-        }
+    const cond = (condition || 'sunny').toLowerCase();
+    let label = 'Despejado';
 
-        grid.appendChild(cell);
+    // 2. Mapeo Atmosférico
+    if (cond.includes('rain') || cond.includes('drizzle')) {
+        document.getElementById('weather-rain').style.display = 'block';
+        document.getElementById('weather-rain').style.opacity = '1';
+        label = '🌧️ Lluvia';
+        window.createRainDrops();
+    } else if (cond.includes('cloud')) {
+        const cloudLayer = document.getElementById('weather-clouds');
+        cloudLayer.style.display = 'block';
+        cloudLayer.style.opacity = '1';
+        label = '☁️ Nublado';
+        window.initCloudLayers(isNight);
+    } else if (cond.includes('clear') || cond.includes('sun')) {
+        const sunLayer = document.getElementById('weather-sunny');
+        sunLayer.style.display = 'block';
+        sunLayer.style.opacity = '1';
+        label = isNight ? '🌙 Noche Despejada' : '☀️ Soleado';
+        if (isNight) container.classList.add('is-night');
+    } else if (cond.includes('storm') || cond.includes('thunder')) {
+        container.classList.add('is-stormy');
+        document.getElementById('weather-storm').style.display = 'block';
+        document.getElementById('weather-storm').style.opacity = '1';
+        label = '⚡ Tormenta';
+        window.startLightningEffect();
     }
-}
+
+    if (badge) badge.textContent = label;
+};
+
+window.initCloudLayers = function (isNight) {
+    const cloudBox = document.getElementById('weather-clouds');
+    if (!cloudBox) return;
+    cloudBox.innerHTML = `
+        <div class="cloud-layer cloud-1" style="background: ${isNight ? 'rgba(100,100,150,0.3)' : 'rgba(255,255,255,0.4)'}"></div>
+        <div class="cloud-layer cloud-2" style="background: ${isNight ? 'rgba(80,80,120,0.2)' : 'rgba(255,255,255,0.2)'}"></div>
+        <div class="cloud-layer cloud-3" style="background: ${isNight ? 'rgba(100,100,150,0.3)' : 'rgba(255,255,255,0.4)'}"></div>
+    `;
+};
+
+window.createRainDrops = function () {
+    const canvas = document.getElementById('weather-rain');
+    if (!canvas) return;
+    canvas.innerHTML = '';
+    for (let i = 0; i < 50; i++) {
+        const drop = document.createElement('div');
+        drop.className = 'rain-drop';
+        drop.style.left = Math.random() * 100 + '%';
+        drop.style.animationDuration = (Math.random() * 0.5 + 0.5) + 's';
+        drop.style.animationDelay = Math.random() * 2 + 's';
+        canvas.appendChild(drop);
+    }
+};
+
+window.startLightningEffect = function () {
+    if (window.lightningInterval) clearInterval(window.lightningInterval);
+    const storm = document.getElementById('weather-storm');
+    if (!storm) return;
+    window.lightningInterval = setInterval(() => {
+        if (Math.random() > 0.7) {
+            storm.classList.add('flash');
+            setTimeout(() => storm.classList.remove('flash'), 200);
+        }
+    }, 3000);
+};
 
 /**
  * Muestra los detalles de un evento o residencia en la barra lateral
@@ -490,60 +587,33 @@ window.showDashEventDetails = function (dateStr, isRecurring, dayData, dayNum) {
     let title = 'Detalles del Evento';
 
     if (dayData && dayData.events && dayData.events.length > 0) {
-        // EVENTO ASIGNADO
         const ev = dayData.events[0];
         const isCancelled = ev.status === 'CANCELLED';
 
-        themeColor = isCancelled ? '#ff5555' : '#00ff88'; // RED if cancelled, GREEN if confirmed
+        themeColor = isCancelled ? '#ff5555' : '#00ff88';
         title = isCancelled ? 'Evento Cancelado' : 'Evento Confirmado';
-        const venueName = ev.venue || 'Boda Ana y Ruben';
+        const venueName = ev.venue || 'Evento Miami DJ Beat';
 
         html = `
             <div style="color: ${themeColor}; font-size: 11px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px;">${title}</div>
             <h2 style="color: #fff; font-size: 28px; font-weight: 900; margin-bottom: 20px; line-height: 1.1;">${venueName}</h2>
-            
             <div style="margin-bottom: 24px;">
                 <div style="font-size: 10px; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 4px;">Fecha y Horario</div>
-                <div style="font-size: 16px; color: #fff; font-weight: 700;">${dateReadable} | ${ev.from || '7:00 PM'} - ${ev.to || '12:00 AM'}</div>
-            </div>
-
-            <!-- DOCUMENTOS ADJUNTOS -->
-            <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
-                <div style="font-size: 10px; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">Archivos y Documentos del Evento</div>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <a href="#" class="btn secondary small" style="padding: 10px 16px; font-size: 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; text-decoration: none; border: 1px solid rgba(255,255,255,0.1);">
-                        <span>📄</span> Flow Plan (PDF)
-                    </a>
-                    <a href="#" class="btn secondary small" style="padding: 10px 16px; font-size: 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; text-decoration: none; border: 1px solid rgba(255,255,255,0.1);">
-                        <span>🖼️</span> Plano del Salón (PNG)
-                    </a>
-                </div>
+                <div style="font-size: 16px; color: #fff; font-weight: 700;">${dateReadable} | ${ev.from || '---'} - ${ev.to || '---'}</div>
             </div>
         `;
     } else if (isRecurring) {
-        // RESIDENCIA (AZUL)
         themeColor = '#5078ff';
         title = 'Residencia Activa';
         html = `
             <div style="color: ${themeColor}; font-size: 11px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px;">${title}</div>
             <h2 style="color: #fff; font-size: 28px; font-weight: 900; margin-bottom: 20px; line-height: 1.1;">Resident DJ</h2>
-            
             <div style="margin-bottom: 24px;">
-                <div style="font-size: 10px; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 4px;">Ubicación y Turno</div>
-                <div style="font-size: 16px; color: #fff; font-weight: 700;">Mojitos Calle 8 | 7:00 PM - 12:00 AM</div>
-            </div>
-
-            <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
-                <div style="font-size: 10px; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">Documentación de Residencia</div>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <a href="#" class="btn secondary small" style="padding: 10px 16px; font-size: 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; text-decoration: none; border: 1px solid rgba(255,255,255,0.1);">
-                        <span>📄</span> Contrato Base (PDF)
-                    </a>
-                </div>
+                <div style="font-size: 10px; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 4px;">Turno Habitual</div>
+                <div style="font-size: 16px; color: #fff; font-weight: 700;">${dateReadable}</div>
             </div>
         `;
     } else {
-        // DÍA LIBRE
         themeColor = 'rgba(255,255,255,0.1)';
         html = `
             <div style="text-align: center; padding: 20px 0;">
@@ -557,16 +627,169 @@ window.showDashEventDetails = function (dateStr, isRecurring, dayData, dayNum) {
     dataDiv.innerHTML = html;
     card.style.borderColor = themeColor;
     card.style.background = isRecurring ? 'rgba(80,120,255,0.05)' : (dayData?.events?.length > 0 ? 'rgba(197,160,89,0.05)' : '#111114');
-}
+};
 
-function dashPrevMonth() {
-    if (dashCalMonth === 0) { dashCalMonth = 11; dashCalYear--; }
-    else dashCalMonth--;
-    renderDashCal();
-}
+window.getWeatherSVG = function (condition, size = 24) {
+    const cond = condition.toLowerCase();
+    let path = '';
+    let color = '#fff';
 
-function dashNextMonth() {
-    if (dashCalMonth === 11) { dashCalMonth = 0; dashCalYear++; }
-    else dashCalMonth++;
-    renderDashCal();
-}
+    if (cond.includes('clear') || cond.includes('sun')) {
+        return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="5" fill="url(#sun-grad)"/>
+            <defs><radialGradient id="sun-grad"><stop offset="0%" stop-color="#FFD700"/><stop offset="100%" stop-color="#FF8C00"/></radialGradient></defs>
+        </svg>`;
+    } else if (cond.includes('cloud')) {
+        return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17.5 19c2.5 0 4.5-2 4.5-4.5S20 10 17.5 10c-.2 0-.5 0-.7.1C15.8 7.6 13.1 6 10 6 5.6 6 2 9.6 2 14s3.6 8 8 8h7.5" fill="#E2E8F0" fill-opacity="0.8"/>
+            <circle cx="15" cy="9" r="4" fill="#FFD700"/>
+        </svg>`;
+    } else if (cond.includes('rain')) {
+        return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17.5 14c2.5 0 4.5-2 4.5-4.5S20 5 17.5 5c-.2 0-.5 0-.7.1C15.8 2.6 13.1 1 10 1 5.6 1 2 4.6 2 9s3.6 8 8 8h7.5" fill="#94A3B8"/>
+            <path d="M8 19v3M12 19v3M16 19v3" stroke="#60A5FA" stroke-width="2" stroke-linecap="round"/>
+        </svg>`;
+    }
+    return '☀️'; // Fallback
+};
+
+window.showEventWeatherDetails = async function (eventOrDate) {
+    const dataDiv = document.getElementById('dash-event-detail-data');
+    if (!dataDiv) return;
+
+    dataDiv.style.display = 'block';
+
+    const isEvent = !!eventOrDate.title;
+    const city = isEvent ? (eventOrDate.extendedProps?.city || 'Miami, FL') : 'Miami, FL';
+    const dateStr = isEvent ? eventOrDate.startStr : eventOrDate;
+    const eventTitle = isEvent ? eventOrDate.title : 'Día sin eventos';
+
+    // 1. Diagnóstico Atmosférico Dinámico
+    const mockConditions = ['Sunny', 'Cloudy', 'Rainy', 'Stormy'];
+    const condition = mockConditions[Math.floor(Math.random() * mockConditions.length)];
+    window.updateWeatherAnimation(condition);
+
+    const hours = [
+        { h: '18:00', t: '82°', c: 'sunny' }, { h: '19:00', t: '80°', c: 'cloudy' },
+        { h: '20:00', t: '79°', c: 'cloudy' }, { h: '21:00', t: '78°', c: 'rainy' },
+        { h: '22:00', t: '77°', c: 'rainy' }, { h: '23:00', t: '75°', c: 'stormy' }
+    ];
+
+    // 2. Colores y Labels Logísticos
+    let themeColor = isEvent ? (condition === 'Stormy' ? '#ff5555' : '#00ff88') : 'rgba(255,255,255,0.2)';
+    let statusLabel = isEvent ? 'Evento Confirmado' : 'Agenda Disponible';
+
+    // 3. ACTUALIZAR HERO ATMOSFÉRICO (IZQUIERDA) 🍏
+    const heroCity = document.getElementById('hero-city');
+    const heroTemp = document.getElementById('hero-temp');
+    const heroCond = document.getElementById('hero-condition');
+    const heroHL = document.getElementById('hero-high-low');
+
+    if (heroCity) heroCity.textContent = city.split(',')[0];
+    if (heroTemp) heroTemp.textContent = '82°';
+    if (heroCond) heroCond.textContent = condition === 'Sunny' ? 'Despejado' : (condition === 'Cloudy' ? 'Mayormente Nublado' : (condition === 'Rainy' ? 'Lluvia Ligera' : 'Tormenta Eléctrica'));
+    if (heroHL) heroHL.textContent = 'Máxima: 82° | Mínima: 72°';
+
+    // 4. ACTUALIZAR CARRUSEL HORARIO PERMANENTE 📈
+    const hourlyScroller = document.getElementById('hourly-scroller-main');
+    if (hourlyScroller) {
+        hourlyScroller.innerHTML = hours.map(h => `
+            <div style="text-align: center; min-width: 55px; animation: fadeIn 0.5s ease-out;">
+                <div style="font-size: 11px; font-weight: 700; opacity: 0.5; margin-bottom: 12px;">${h.h}</div>
+                <div style="margin-bottom: 12px; transform: scale(1.1);">${window.getWeatherSVG(h.c, 28)}</div>
+                <div style="font-size: 17px; font-weight: 600; letter-spacing: -0.5px;">${h.t}</div>
+            </div>
+        `).join('');
+    }
+
+    // 5. ACTUALIZAR PRONÓSTICO 10 DÍAS 📅
+    const dailyScroller = document.getElementById('daily-forecast-list');
+    if (dailyScroller) {
+        const days = [
+            { d: 'Hoy', i: '☀️', min: 72, max: 82 },
+            { d: 'Vie', i: '⛅', min: 73, max: 82 },
+            { d: 'Sáb', i: '☀️', min: 72, max: 82 },
+            { d: 'Dom', i: '☀️', min: 72, max: 81 },
+            { d: 'Lun', i: '⛈️', min: 74, max: 83 },
+            { d: 'Mar', i: '☁️', min: 71, max: 79 },
+            { d: 'Mié', i: '⛅', min: 73, max: 81 },
+            { d: 'Jue', i: '☀️', min: 72, max: 84 },
+            { d: 'Vie', i: '☀️', min: 73, max: 85 },
+            { d: 'Sáb', i: '☀️', min: 72, max: 82 }
+        ];
+
+        dailyScroller.innerHTML = days.map(day => `
+            <div style="display: grid; grid-template-columns: 50px 30px 40px 1fr 40px; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; color: #fff;">
+                <div style="opacity: 0.9;">${day.d}</div>
+                <div style="font-size: 18px; text-align: center;">${day.i}</div>
+                <div style="opacity: 0.6; font-size: 13px;">${day.min}°</div>
+                <div style="position: relative; height: 4px; background: rgba(255,255,255,0.1); border-radius: 4px;">
+                    <div style="position: absolute; left: 20%; right: 10%; height: 100%; background: linear-gradient(90deg, #c5a059, #fff); border-radius: 4px;"></div>
+                </div>
+                <div style="text-align: right; font-weight: 800;">${day.max}°</div>
+            </div>
+        `).join('');
+    }
+
+    // 6. INYECTAR DETALLES LOGÍSTICOS (BLOQUE INFERIOR)
+    dataDiv.innerHTML = `
+        <div style="animation: fadeIn 0.4s ease-out;">
+            <div style="color: ${themeColor}; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor;"></span>
+                ${statusLabel}
+            </div>
+            <h2 style="color: #fff; font-size: 24px; font-weight: 800; margin-bottom: 20px; line-height: 1.2;">${eventTitle}</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                <div>
+                    <div style="font-size: 9px; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 5px;">Ubicación</div>
+                    <div style="font-size: 14px; color: #fff; font-weight: 600;">${city}</div>
+                </div>
+                <div>
+                    <div style="font-size: 9px; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 5px;">Horario</div>
+                    <div style="font-size: 14px; color: #fff; font-weight: 600;">${isEvent ? '20:00 - 02:00' : 'Todo el día'}</div>
+                </div>
+            </div>
+
+            <div style="background: ${isEvent ? 'rgba(197,160,89,0.1)' : 'rgba(255,255,255,0.03)'}; border-radius: 20px; padding: 20px; margin-top: 20px; border: 1px solid rgba(197,160,89,0.2);">
+                <div style="font-size: 12px; color: var(--gold); font-weight: 900; letter-spacing: 1px; margin-bottom: 8px;">LOGÍSTICA MDJPRO</div>
+                <div style="font-size: 13px; opacity: 0.8; line-height: 1.5; color: #fff;">
+                    ${isEvent ? 'Recuerda cargar tu equipo 2 horas antes. La temperatura exterior podría afectar el rendimiento térmico de los controladores.' : 'Día libre para mantenimiento de equipo y gestión de biblioteca.'}
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+// ── FLUJO ANALYTICS (MDJPRO PREMIUM) ───────────────────────
+window.loadFlowData = async function (range) {
+    const ledger = document.getElementById('ledger-body');
+    if (!ledger) return;
+
+    // KPI mapping
+    const kpis = {
+        'kpi-gross': '$12,450.00',
+        'kpi-events-done': '24',
+        'kpi-events-pending': '8',
+        'kpi-comm-rate': '12%',
+        'kpi-available': '$4,280.00',
+        'kpi-avg-ticket': '$518.00'
+    };
+
+    for (const [id, val] of Object.entries(kpis)) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+    }
+
+    ledger.innerHTML = `
+    < tr >
+            <td>05/Mar/2026</td>
+            <td style="font-weight:700; color:#fff;">Residencia Mojitos (Turno Sab)</td>
+            <td style="color:rgba(255,255,255,0.4);">$450.00</td>
+            <td style="color:rgba(255,255,255,0.4);">$54.00</td>
+            <td style="color:#00ff88; font-weight:800;">$396.00</td>
+            <td><span class="status-pill income">INGRESADO</span></td>
+            <td style="font-size:11px; opacity:0.5;">Auto-Payout</td>
+        </tr >
+    `;
+};
