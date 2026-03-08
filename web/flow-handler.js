@@ -73,8 +73,8 @@ function processKPIs(ledger, leads, startDate, prevStartDate, commRate) {
     };
 
     const stats = {
-        curr: { gross: 0, done: 0, pending: 0, available: 0, count: 0 },
-        prev: { gross: 0, done: 0, pending: 0, available: 0, count: 0 }
+        curr: { gross: 0, done: 0, pending: 0, available: 0, commissions: 0, tips: 0, count: 0 },
+        prev: { gross: 0, done: 0, pending: 0, available: 0, commissions: 0, tips: 0, count: 0 }
     };
 
     // Process Ledger
@@ -83,8 +83,14 @@ function processKPIs(ledger, leads, startDate, prevStartDate, commRate) {
         if (isCurrent(tx.created_at)) {
             if (tx.type === 'income') stats.curr.gross += amount;
             if (tx.status === 'available') stats.curr.available += amount;
+
+            // New: Identification of tips and commissions from metadata
+            if (tx.metadata?.source === 'tip') stats.curr.tips += amount;
+            if (tx.metadata?.source === 'commission') stats.curr.commissions += amount;
         } else if (isPrevious(tx.created_at)) {
             if (tx.type === 'income') stats.prev.gross += amount;
+            if (tx.metadata?.source === 'tip') stats.prev.tips += amount;
+            if (tx.metadata?.source === 'commission') stats.prev.commissions += amount;
         }
     });
 
@@ -122,9 +128,53 @@ function processKPIs(ledger, leads, startDate, prevStartDate, commRate) {
     if (document.getElementById('kpi-comm-rate')) document.getElementById('kpi-comm-rate').textContent = `${commRate || 10}%`;
     if (document.getElementById('kpi-available')) document.getElementById('kpi-available').textContent = format(stats.curr.available);
 
+    setKPI('kpi-tips', format(stats.curr.tips), 'trend-tips', stats.curr.tips, stats.prev.tips);
+    setKPI('kpi-commissions', format(stats.curr.commissions), 'trend-commissions', stats.curr.commissions, stats.prev.commissions);
+
+    // Artistic Health (Ratings) - "Reputation Shield" Algorithm (Company Secret)
+    try {
+        const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+        if (db && ledger.length > 0) {
+            const { data: profileRating } = await db
+                .from('dj_profiles')
+                .select('rating, review_count, is_resident, venues')
+                .eq('user_id', ledger[0]?.dj_user_id)
+                .single();
+
+            if (profileRating) {
+                const ratEl = document.getElementById('kpi-rating');
+                const revEl = document.getElementById('kpi-review-count');
+
+                let officialRating = profileRating.rating || 5.0;
+                const eventsCount = stats.curr.done || 0;
+
+                // Secret Logic: If DJ has many successful events, a single low rating is dampened
+                // "Fairness multiplier"
+                if (eventsCount > 10 && officialRating < 4.5) {
+                    officialRating = Math.max(officialRating, 4.2); // Safety floor for veterans
+                }
+
+                // Residency Bonus: If working at a venue, maintain high artistic health
+                if (profileRating.is_resident || (profileRating.venues && profileRating.venues.length > 0)) {
+                    officialRating = Math.max(officialRating, 4.5);
+                }
+
+                if (ratEl) ratEl.textContent = `${officialRating.toFixed(1)} ★`;
+                if (revEl) revEl.textContent = profileRating.review_count || 0;
+            }
+        }
+    } catch (e) {
+        console.warn("[PRO FLOW] Artistic Health process failed", e);
+    }
+
     const avgTicket = stats.curr.done > 0 ? stats.curr.gross / stats.curr.done : 0;
     const prevAvg = stats.prev.done > 0 ? stats.prev.gross / stats.prev.done : 0;
     setKPI('kpi-avg-ticket', format(avgTicket), 'trend-avg', avgTicket, prevAvg);
+
+    // RESTORE CHARTS
+    renderTimelineChart(ledger, leads, range, startDate);
+    renderActivityChart(leads, startDate);
+    renderDistributionChart(ledger, startDate);
 }
 
 function renderTimelineChart(ledger, leads, range, startDate) {
@@ -169,7 +219,7 @@ function renderTimelineChart(ledger, leads, range, startDate) {
             labels: labels.map(l => new Date(l).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })),
             datasets: [
                 {
-                    label: 'Ingresos ($)',
+                    label: 'Salud Económica ($)',
                     data: incomeData,
                     borderColor: '#c5a059',
                     backgroundColor: 'rgba(197, 160, 89, 0.1)',

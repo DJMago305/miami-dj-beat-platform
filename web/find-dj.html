@@ -30,39 +30,94 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
+            background-color: var(--bg);
             color: var(--text);
-            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
         }
 
-        /* ── HERO SEARCH ── */
+        /* Glassmorphism Header */
+        .header {
+            background: transparent !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.4s ease;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .header.scrolled {
+            background: rgba(2, 2, 2, 0.9) !important;
+            backdrop-filter: blur(20px);
+        }
+
+        .header-top {
+            padding: 15px 0;
+        }
+    </style>
+</head>
+
+<body class="notranslate">
+    <header class="header" id="mainHeader">
+        <div class="header-top">
+            <div class="container"
+                style="max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 40px;">
+                <div class="brand">
+                    <img src="./assets/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+                    <div class="brand-letters-wrapper">
+                        <img src="./assets/logo-transparent Letras.png" alt="Miami DJ Beat Letters"
+                            class="brand-letters-img">
+                    </div>
+                </div>
+                <nav class="nav top-nav" style="display: flex; gap: 24px; align-items: center;">
+                    <a href="./index.html"
+                        style="color: #fff; text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Home</a>
+                    <a href="./index.html#services"
+                        style="color: #fff; text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Services</a>
+                    <a href="./rentals.html"
+                        style="color: #fff; text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Event
+                        Services</a>
+                    <a href="./find-dj.html"
+                        style="color: var(--gold); text-decoration: none; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">Talents</a>
+                    <a href="./jobs.html"
+                        style="color: #fff; text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Jobs</a>
+                    <a href="./index.html#contact"
+                        style="color: #fff; text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Contact</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <style>
         .hero {
-            background: linear-gradient(160deg, #0d1525 0%, #080c14 60%);
-            border-bottom: 1px solid var(--border);
-            padding: 48px 24px 36px;
+            padding: 140px 20px 60px;
             text-align: center;
+            background: radial-gradient(circle at top, rgba(197, 160, 89, 0.08) 0%, transparent 70%);
         }
 
         .hero-badge {
             display: inline-block;
-            background: rgba(197, 160, 89, .12);
-            border: 1px solid rgba(197, 160, 89, .3);
-            color: var(--gold);
             font-size: 11px;
             font-weight: 800;
             letter-spacing: 1.5px;
             text-transform: uppercase;
             border-radius: 999px;
             padding: 5px 14px;
-            margin-bottom: 16px;
+            margin-bottom: 24px;
+            background: rgba(197, 160, 89, 0.1);
+            color: var(--gold);
+            border: 1px solid rgba(197, 160, 89, 0.3);
         }
 
         .hero h1 {
-            font-size: clamp(26px, 5vw, 48px);
+            font-size: clamp(32px, 6vw, 56px);
             font-weight: 900;
             line-height: 1.1;
-            margin-bottom: 10px;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
         }
 
         .hero h1 span {
@@ -71,8 +126,9 @@
 
         .hero p {
             color: var(--muted);
-            font-size: 15px;
-            margin-bottom: 32px;
+            font-size: 16px;
+            max-width: 600px;
+            margin: 0 auto 40px;
         }
 
         /* ── SEARCH CARD ── */
@@ -84,11 +140,12 @@
             border-radius: 20px;
             padding: 24px;
             backdrop-filter: blur(12px);
+            text-align: left;
         }
 
         .search-grid {
             display: grid;
-            gap: 12px;
+            gap: 16px;
             grid-template-columns: 1fr;
         }
 
@@ -111,7 +168,7 @@
             color: var(--muted);
             letter-spacing: 1px;
             text-transform: uppercase;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         .field input,
@@ -125,437 +182,17 @@
             font-size: 13px;
             font-family: inherit;
             outline: none;
-            transition: border-color .2s;
+            transition: all .2s;
         }
 
         .field input:focus,
         .field select:focus {
             border-color: var(--gold);
-        }
-
-        .field select option {
-            background: #0d1a2e;
+            background: rgba(0, 0, 0, .5);
         }
 
         .btn-search {
             width: 100%;
-            padding: 13px;
-            background: var(--gold);
-            color: #000;
-            font-weight: 900;
-            font-size: 14px;
-            font-family: inherit;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            margin-top: 12px;
-            transition: all .2s;
-            letter-spacing: .5px;
-        }
-
-        .btn-search:hover {
-            background: var(--gold2);
-            transform: translateY(-1px);
-        }
-
-        /* ── RESULTS ── */
-        .results-bar {
-            max-width: 1100px;
-            margin: 24px auto 0;
-            padding: 0 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .results-count {
-            font-size: 13px;
-            color: var(--muted);
-        }
-
-        .results-count strong {
-            color: var(--text);
-        }
-
-        .dj-grid {
-            max-width: 1100px;
-            margin: 16px auto 60px;
-            padding: 0 20px;
-            display: grid;
-            gap: 16px;
-            grid-template-columns: 1fr;
-        }
-
-        @media(min-width:640px) {
-            .dj-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media(min-width:1000px) {
-            .dj-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
-        /* ── DJ CARD ── */
-        .dj-card {
-            background: var(--card);
-            border: 1.5px solid var(--border);
-            border-radius: 18px;
-            padding: 18px;
-            position: relative;
-            transition: all .25s;
-            overflow: hidden;
-        }
-
-        .dj-card:hover {
-            border-color: rgba(197, 160, 89, .3);
-            transform: translateY(-2px);
-            box-shadow: 0 12px 36px rgba(0, 0, 0, .5);
-        }
-
-        .dj-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--gold), transparent);
-            opacity: 0;
-            transition: .3s;
-        }
-
-        .dj-card:hover::before {
-            opacity: 1;
-        }
-
-        .card-top {
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-            margin-bottom: 12px;
-        }
-
-        .avatar {
-            width: 54px;
-            height: 54px;
-            border-radius: 14px;
-            object-fit: cover;
-            flex-shrink: 0;
-            border: 2px solid rgba(255, 255, 255, .1);
-            background: rgba(30, 40, 60, .5);
-        }
-
-        .dj-name {
-            font-size: 16px;
-            font-weight: 900;
-            line-height: 1.2;
-        }
-
-        .dj-sub {
-            font-size: 11px;
-            color: var(--muted);
-            margin-top: 3px;
-        }
-
-        .avail-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 11px;
-            font-weight: 700;
-            border-radius: 999px;
-            padding: 4px 10px;
-            margin-bottom: 10px;
-        }
-
-        .avail-badge.free {
-            background: rgba(34, 197, 94, .12);
-            border: 1px solid rgba(34, 197, 94, .35);
-            color: #4ade80;
-        }
-
-        .avail-badge.busy {
-            background: rgba(239, 68, 68, .1);
-            border: 1px solid rgba(239, 68, 68, .3);
-            color: #f87171;
-        }
-
-        .avail-badge.partial {
-            background: rgba(245, 158, 11, .1);
-            border: 1px solid rgba(245, 158, 11, .3);
-            color: #fbbf24;
-        }
-
-        .avail-badge.unknown {
-            background: rgba(255, 255, 255, .06);
-            border: 1px solid var(--border);
-            color: var(--muted);
-        }
-
-        .tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-bottom: 12px;
-        }
-
-        .tag {
-            font-size: 11px;
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            padding: 3px 9px;
-            color: var(--muted);
-            background: rgba(255, 255, 255, .04);
-        }
-
-        .card-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn-profile {
-            flex: 1;
-            padding: 9px 12px;
-            background: rgba(255, 255, 255, .06);
-            border: 1px solid rgba(255, 255, 255, .12);
-            border-radius: 10px;
-            color: #fff;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            font-family: inherit;
-            text-decoration: none;
-            text-align: center;
-            transition: .2s;
-        }
-
-        .btn-profile:hover {
-            background: rgba(255, 255, 255, .1);
-        }
-
-        .btn-book {
-            flex: 1;
-            padding: 9px 12px;
-            background: rgba(197, 160, 89, .15);
-            border: 1px solid rgba(197, 160, 89, .4);
-            border-radius: 10px;
-            color: var(--gold);
-            font-size: 12px;
-            font-weight: 900;
-            cursor: pointer;
-            font-family: inherit;
-            transition: .2s;
-        }
-
-        .btn-book:hover {
-            background: rgba(197, 160, 89, .25);
-            color: var(--gold2);
-        }
-
-        /* ── MULTI-SELECT DROPDOWN ── */
-        .multi-select-container {
-            position: relative;
-            width: 100%;
-        }
-
-        .multi-select-display {
-            width: 100%;
-            background: rgba(0, 0, 0, .4);
-            border: 1.5px solid rgba(255, 255, 255, .1);
-            border-radius: 10px;
-            padding: 10px 12px;
-            color: #fff;
-            font-size: 13px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .multi-select-display::after {
-            content: '▼';
-            font-size: 10px;
-            color: #fff;
-            opacity: 0.8;
-        }
-
-        .multi-select-options {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: #1e293b;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            margin-top: 8px;
-            max-height: 250px;
-            overflow-y: auto;
-            z-index: 100;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            padding: 8px;
-        }
-
-        .multi-select-options.active {
-            display: block;
-        }
-
-        .multi-option {
-            padding: 8px 12px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            transition: .2s;
-        }
-
-        .multi-option:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .multi-option input {
-            cursor: pointer;
-            width: 16px;
-            height: 16px;
-            accent-color: var(--gold);
-        }
-
-        .multi-option label {
-            font-size: 13px;
-            color: #ffffff !important;
-            cursor: pointer;
-            flex: 1;
-        }
-
-        .btn-confirm-roles {
-            width: 100%;
-            background: var(--gold);
-            color: #000;
-            border: none;
-            border-radius: 8px;
-            padding: 8px;
-            font-size: 12px;
-            font-weight: 800;
-            margin-top: 8px;
-            cursor: pointer;
-        }
-
-        /* ── BOOKING PANEL ── */
-        .book-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, .7);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
-            align-items: flex-end;
-            justify-content: center;
-        }
-
-        .book-overlay.active {
-            display: flex;
-        }
-
-        .book-panel {
-            width: 100%;
-            max-width: 520px;
-            background: #0f172a;
-            border: 1px solid rgba(197, 160, 89, .25);
-            border-radius: 24px 24px 0 0;
-            padding: 28px 24px 36px;
-            animation: slideUp .3s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateY(100%)
-            }
-
-            to {
-                transform: translateY(0)
-            }
-        }
-
-        .book-panel h3 {
-            font-size: 18px;
-            font-weight: 900;
-            margin-bottom: 4px;
-        }
-
-        .book-panel .sub {
-            font-size: 12px;
-            color: var(--muted);
-            margin-bottom: 20px;
-        }
-
-        .panel-close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, .06);
-            border: 1px solid var(--border);
-            color: var(--muted);
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 18px;
-            line-height: 32px;
-            text-align: center;
-            font-family: inherit;
-        }
-
-        .panel-field {
-            margin-bottom: 12px;
-        }
-
-        .panel-field label {
-            display: block;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--muted);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-
-        .panel-field input,
-        .panel-field select,
-        .panel-field textarea {
-            width: 100%;
-            background: rgba(0, 0, 0, .4);
-            border: 1.5px solid rgba(255, 255, 255, .1);
-            border-radius: 10px;
-            padding: 10px 12px;
-            color: #fff;
-            font-size: 13px;
-            font-family: inherit;
-            outline: none;
-            transition: .2s;
-            resize: vertical;
-        }
-
-        .panel-field input:focus,
-        .panel-field select:focus,
-        .panel-field textarea:focus {
-            border-color: var(--gold);
-        }
-
-        .panel-two {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .btn-submit {
-            width: 100%;
-            margin-top: 16px;
             padding: 14px;
             background: var(--gold);
             color: #000;
@@ -565,756 +202,235 @@
             border: none;
             border-radius: 12px;
             cursor: pointer;
-            transition: .2s;
+            margin-top: 16px;
+            transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: .5px;
+            box-shadow: 0 4px 15px rgba(197, 160, 89, 0.2);
         }
 
-        .btn-submit:hover {
+        .btn-search:hover {
             background: var(--gold2);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(197, 160, 89, 0.3);
         }
 
-        .btn-submit:disabled {
-            opacity: .5;
-            cursor: not-allowed;
+        /* ── MULTI-SELECT ── */
+        .multi-select-container {
+            position: relative;
         }
 
-        /* ── EMPTY / LOADING ── */
-        .state-msg {
-            max-width: 1100px;
-            margin: 40px auto;
-            padding: 0 20px;
-            text-align: center;
-            color: var(--muted);
+        .multi-select-display {
+            width: 100%;
+            background: rgba(0, 0, 0, .35);
+            border: 1.5px solid rgba(255, 255, 255, .1);
+            border-radius: 10px;
+            padding: 10px 12px;
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .state-msg svg {
-            margin: 0 auto 16px;
+        .multi-select-options {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-top: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            padding: 8px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
+
+        .multi-select-options.active {
             display: block;
         }
 
-        .state-msg p {
-            font-size: 14px;
+        /* ── DJ GRID & CARDS ── */
+        .dj-grid {
+            max-width: 1200px;
+            margin: 40px auto 100px;
+            padding: 0 20px;
+            display: grid;
+            gap: 24px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
         }
 
-        /* ── BACK BUTTON ── */
-        .btn-back {
-            position: absolute;
-            top: 24px;
-            left: 24px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--muted);
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 600;
-            transition: .2s;
-            z-index: 100;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 8px 16px;
-            border-radius: 999px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(8px);
+        .dj-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            transition: all .4s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
         }
 
-        .btn-back:hover {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateX(-4px);
+        .dj-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--gold);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
         }
 
-        .btn-back svg {
-            width: 16px;
-            height: 16px;
+        .avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            object-fit: cover;
+            border: 2px solid var(--border);
+        }
+
+        .btn-book {
+            width: 100%;
+            padding: 12px;
+            background: rgba(197, 160, 89, 0.1);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all .3s;
+        }
+
+        .btn-book:hover {
+            background: var(--gold);
+            color: #000;
         }
     </style>
-</head>
 
-<body>
-
-    <!-- ── HERO ── -->
-    <div class="hero" style="position: relative;">
-        <a href="./index.html" class="btn-back">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-            Volver al Inicio
-        </a>
-        <div class="hero-badge">⚡ Matching Engine</div>
-        <h1>Encuentra tu <span>Talento perfecto</span></h1>
-        <p>Filtra por fecha, categoría y ciudad. Ve quién está disponible en tiempo real.</p>
+    <section class="hero">
+        <div class="hero-badge">Verified Talent Network</div>
+        <h1>Find the Perfect <span>DJ Beat</span></h1>
+        <p>Book certified professional artists in Miami. Real-time availability matching.</p>
 
         <div class="search-card">
             <div class="search-grid">
-                <div class="field" style="min-width:260px;">
-                    <label>📅 Fecha del evento</label>
-                    <div style="display:flex; gap:4px; margin-top:8px;">
-                        <select id="f-day"
-                            style="flex:1; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px; font-size:12px; color-scheme:dark;">
-                            <option value="">Día</option>
-                        </select>
-                        <select id="f-month"
-                            style="flex:2; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px; font-size:12px; color-scheme:dark;">
-                            <option value="">Mes</option>
-                            <option value="01">Enero</option>
-                            <option value="02">Febrero</option>
-                            <option value="03">Marzo</option>
-                            <option value="04">Abril</option>
-                            <option value="05">Mayo</option>
-                            <option value="06">Junio</option>
-                            <option value="07">Julio</option>
-                            <option value="08">Agosto</option>
-                            <option value="09">Septiembre</option>
-                            <option value="10">Octubre</option>
-                            <option value="11">Noviembre</option>
-                            <option value="12">Diciembre</option>
-                        </select>
-                        <select id="f-year"
-                            style="flex:1.5; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px; font-size:12px; color-scheme:dark;">
-                            <option value="">Año</option>
-                        </select>
+                <div class="field">
+                    <label>📅 Event Date</label>
+                    <div style="display:flex; gap:6px;">
+                        <input type="date" id="f-date" style="color-scheme: dark;">
                     </div>
                 </div>
                 <div class="field">
-                    <label>🎭 Categorías (Elige varios)</label>
+                    <label>🎭 Talent Category</label>
                     <div class="multi-select-container">
-                        <div class="multi-select-display" id="role-display" onclick="toggleRoleDropdown()">Cualquiera
-                        </div>
+                        <div class="multi-select-display" id="role-display" onclick="toggleRoleDropdown()">Anyone</div>
                         <div class="multi-select-options" id="role-options">
-                            <div class="multi-option" onclick="event.stopPropagation()">
-                                <input type="checkbox" value="DJ" id="role-dj">
-                                <label for="role-dj">DJ</label>
-                            </div>
-                            <div class="multi-option" onclick="event.stopPropagation()">
-                                <input type="checkbox" value="MC" id="role-mc">
-                                <label for="role-mc">MC / Animador</label>
-                            </div>
-                            <div class="multi-option" onclick="event.stopPropagation()">
-                                <input type="checkbox" value="SAXOFONISTA" id="role-saxo">
-                                <label for="role-saxo">Saxofonista</label>
-                            </div>
-                            <div class="multi-option" onclick="event.stopPropagation()">
-                                <input type="checkbox" value="PERCUSIONISTA" id="role-percu">
-                                <label for="role-percu">Percusionista (Drums / Timbalero)</label>
-                            </div>
-                            <div class="multi-option" onclick="event.stopPropagation()">
-                                <input type="checkbox" value="CANTANTE" id="role-cantante">
-                                <label for="role-cantante">Cantante</label>
-                            </div>
-                            <div class="multi-option" onclick="event.stopPropagation()">
-                                <input type="checkbox" value="LIVE_BAND" id="role-band">
-                                <label for="role-band">Live Band</label>
-                            </div>
-                            <div class="multi-option" onclick="event.stopPropagation()">
-                                <input type="checkbox" value="INFLUENCER" id="role-influ">
-                                <label for="role-influ">Influencer</label>
-                            </div>
-                            <div class="multi-option" onclick="event.stopPropagation()">
-                                <input type="checkbox" value="FOTOGRAFO" id="role-foto">
-                                <label for="role-foto">Fotógrafo & Video</label>
-                            </div>
-                            <div class="multi-option" onclick="event.stopPropagation()">
-                                <input type="checkbox" value="PRODUCTOR" id="role-prod">
-                                <label for="role-prod">Productor de Eventos</label>
-                            </div>
-                            <div class="multi-option" onclick="event.stopPropagation()">
-                                <input type="checkbox" value="PROMOTOR" id="role-prom">
-                                <label for="role-prom">Promotor</label>
-                            </div>
-                            <div class="multi-option" onclick="event.stopPropagation()">
-                                <input type="checkbox" value="MANAGER" id="role-mana">
-                                <label for="role-mana">Artistic Manager</label>
-                            </div>
-                            <button class="btn-confirm-roles" onclick="confirmRoles(event)">CONFIRMAR SELECCIÓN
-                                ✓</button>
+                            <div style="padding: 10px;"><input type="checkbox" value="DJ"> DJ</div>
+                            <div style="padding: 10px;"><input type="checkbox" value="MC"> MC / Host</div>
+                            <div style="padding: 10px;"><input type="checkbox" value="SAX"> Saxophonist</div>
+                            <div style="padding: 10px;"><input type="checkbox" value="PERC"> Percussionist</div>
                         </div>
                     </div>
                 </div>
                 <div class="field">
-                    <label>🎵 Género (DJs)</label>
-                    <select id="f-genre">
-                        <option value="">Todos los géneros</option>
-                        <option>Reggaeton</option>
-                        <option>Salsa</option>
-                        <option>Hip Hop</option>
-                        <option>EDM / House</option>
-                        <option>Bachata</option>
-                        <option>Merengue</option>
-                        <option>Pop Latino</option>
-                        <option>Top 40</option>
-                        <option>R&B / Soul</option>
-                        <option>Afrobeats</option>
-                        <option>Electrónica</option>
-                        <option>Multigenero</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label>📍 Ciudad / Zona</label>
+                    <label>📍 Area</label>
                     <select id="f-city">
-                        <option value="">Toda Miami</option>
+                        <option value="">All Miami</option>
                         <option>Miami</option>
                         <option>Miami Beach</option>
-                        <option>Hialeah</option>
                         <option>Coral Gables</option>
                         <option>Doral</option>
-                        <option>Key Largo</option>
-                        <option>Fort Lauderdale</option>
-                        <option>Homestead</option>
                     </select>
                 </div>
                 <div class="field">
-                    <label>💰 Presupuesto</label>
+                    <label>💰 Budget</label>
                     <select id="f-budget">
-                        <option value="">Sin límite</option>
-                        <option value="500">Hasta $500</option>
-                        <option value="1000">Hasta $1,000</option>
-                        <option value="2000">Hasta $2,000</option>
-                        <option value="5000">Hasta $5,000</option>
+                        <option value="">Any</option>
+                        <option value="500">$500</option>
+                        <option value="1000">$1,000</option>
+                        <option value="2000">$2,000</option>
                     </select>
                 </div>
             </div>
-            <button class="btn-search" onclick="searchDJs()">🔍 Buscar talentos disponibles</button>
+            <button class="btn-search" onclick="searchDJs()">🔍 SEARCH TALENT</button>
         </div>
-    </div>
+    </section>
 
-    <!-- ── RESULTS ── -->
-    <div class="results-bar" id="results-bar" style="display:none;">
-        <div class="results-count" id="results-count"></div>
-        <div id="avail-note" style="font-size:11px;color:var(--muted);"></div>
-    </div>
-
+    <div id="state-msg" style="text-align: center; color: var(--muted); padding: 40px;">Select filters and search.</div>
     <div class="dj-grid" id="dj-grid"></div>
 
-    <div class="state-msg" id="state-msg">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.5">
-            <circle cx="11" cy="11" r="8" />
-            <path d="M21 21l-4.35-4.35" />
-        </svg>
-        <p>Elige una fecha y haz clic en <strong>Buscar</strong> para ver DJs disponibles.</p>
-    </div>
-
-    <!-- ── BOOKING PANEL ── -->
-    <div class="book-overlay" id="book-overlay" onclick="closePanel(event)">
-        <div class="book-panel" style="position:relative;">
-            <h3>💌 Reservar Talento</h3>
-            <div class="sub" id="panel-sub">Completa el formulario y el artista recibirá tu solicitud.</div>
-            <input type="hidden" id="p-dj-id" />
-            <input type="hidden" id="p-dj-name" />
-
-            <div class="panel-field">
-                <label>Tu nombre</label>
-                <input type="text" id="p-name" placeholder="Nombre completo" />
-            </div>
-            <div class="panel-two">
-                <div class="panel-field">
-                    <label>Email</label>
-                    <input type="email" id="p-email" placeholder="tu@email.com" />
-                </div>
-                <div class="panel-field">
-                    <label>WhatsApp</label>
-                    <input type="tel" id="p-phone" placeholder="+1 305..." />
-                </div>
-            </div>
-            <div class="panel-two">
-                <div class="panel-field">
-                    <label>Fecha del evento</label>
-                    <div style="display:flex; gap:4px;">
-                        <select id="p-day"
-                            style="flex:1; background:rgba(0,0,0,.3); border:1px solid rgba(255,255,255,.1); color:#fff; padding:6px; border-radius:8px; font-size:11px;">
-                            ${Array.from({length:31}, (_,i)=>String(i+1).padStart(2,'0')).map(d => `<option
-                                value="${d}">${d}</option>`).join('')}
-                        </select>
-                        <select id="p-month"
-                            style="flex:2; background:rgba(0,0,0,.3); border:1px solid rgba(255,255,255,.1); color:#fff; padding:6px; border-radius:8px; font-size:11px;">
-                            <option value="01">Ene</option>
-                            <option value="02">Feb</option>
-                            <option value="03">Mar</option>
-                            <option value="04">Abr</option>
-                            <option value="05">May</option>
-                            <option value="06">Jun</option>
-                            <option value="07">Jul</option>
-                            <option value="08">Ago</option>
-                            <option value="09">Sep</option>
-                            <option value="10">Oct</option>
-                            <option value="11">Nov</option>
-                            <option value="12">Dic</option>
-                        </select>
-                        <select id="s-p-year"
-                            style="flex:1.5; background:rgba(0,0,0,.3); border:1px solid rgba(255,255,255,.1); color:#fff; padding:6px; border-radius:8px; font-size:11px;">
-                            ${Array.from({length:10}, (_,i)=>2025+i).map(y => `<option value="${y}"
-                                ${y==2026?'selected':''}>${y}</option>`).join('')}
-                        </select>
-                    </div>
-                </div>
-                <div class="panel-field">
-                    <label>Tipo de evento</label>
-                    <select id="p-type">
-                        <option>Cumpleaños</option>
-                        <option>Boda</option>
-                        <option>Corporativo</option>
-                        <option>Quinceañera</option>
-                        <option>Club / Bar</option>
-                        <option>Pool Party</option>
-                        <option>Festival</option>
-                        <option>Otro</option>
-                    </select>
-                </div>
-            </div>
-            <div class="panel-two">
-                <div class="panel-field">
-                    <label>Lugar (dirección/venue)</label>
-                    <input type="text" id="p-location" placeholder="Miami Beach, FL" />
-                </div>
-                <div class="panel-field">
-                    <label>Presupuesto estimado</label>
-                    <input type="text" id="p-budget" placeholder="$800" />
-                </div>
-            </div>
-            <div class="panel-field">
-                <label>Notas adicionales</label>
-                <textarea id="p-notes" rows="2"
-                    placeholder="Géneros preferidos, horario, número de horas..."></textarea>
-            </div>
-            <button class="btn-submit" id="p-submit" onclick="submitBooking()">Enviar solicitud →</button>
-            <div id="p-result" style="margin-top:12px;text-align:center;font-size:13px;"></div>
-        </div>
-    </div>
-
-    <!-- ── SCRIPTS ── -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./supabase-config.js?v=20260227-1"></script>
+    <script src="./supabase-config.js"></script>
     <script>
-        const db = (() => {
-            if (window.getSupabaseClient) return window.getSupabaseClient();
-            return supabase.createClient(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY);
-        })();
+        const db = supabase.createClient(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY);
 
-        // ── Multi-select Helpers ───────────────────────────────────────────
         function toggleRoleDropdown() {
             document.getElementById('role-options').classList.toggle('active');
         }
-        function confirmRoles(e) {
-            e.stopPropagation();
-            const checked = Array.from(document.querySelectorAll('#role-options input:checked')).map(cb => cb.parentNode.querySelector('label').textContent);
-            const display = document.getElementById('role-display');
-            if (checked.length === 0) display.textContent = "Cualquiera";
-            else if (checked.length === 1) display.textContent = checked[0];
-            else display.textContent = checked.length + " Seleccionados";
-            document.getElementById('role-options').classList.remove('active');
-        }
-        window.addEventListener('click', e => {
-            if (!e.target.closest('.multi-select-container')) {
-                document.getElementById('role-options')?.classList.remove('active');
-            }
-        });
 
-        // Set today's date as min for date inputs
-        // Set today's date in dropdowns
-        // ── Populate Date Dropdowns ──
-        const currentYear = new Date().getFullYear();
-        const fDay = document.getElementById('f-day');
-        const fMonth = document.getElementById('f-month');
-        const fYear = document.getElementById('f-year');
-
-        if (fDay) {
-            for (let i = 1; i <= 31; i++) {
-                const opt = document.createElement('option');
-                const val = String(i).padStart(2, '0');
-                opt.value = val;
-                opt.textContent = i;
-                fDay.appendChild(opt);
-            }
-        }
-        if (fYear) {
-            for (let i = 0; i < 11; i++) {
-                const y = currentYear + i;
-                const opt = document.createElement('option');
-                opt.value = y;
-                opt.textContent = y;
-                if (y === 2026) opt.selected = true;
-                fYear.appendChild(opt);
-            }
-        }
-
-        const todaySearch = new Date();
-        const curD = String(todaySearch.getDate()).padStart(2, '0');
-        const curM = String(todaySearch.getMonth() + 1).padStart(2, '0');
-        const curY = String(todaySearch.getFullYear());
-        if (fDay) fDay.value = curD;
-        if (fMonth) fMonth.value = curM;
-        if (fYear) fYear.value = curY;
-
-        function updateDays(mSel, ySel, dSel) {
-            if (!mSel || !ySel || !dSel) return;
-            const month = parseInt(mSel.value);
-            if (isNaN(month)) return;
-            const year = parseInt(ySel.value) || currentYear;
-            const daysInMonth = new Date(year, month, 0).getDate();
-            const currentVal = dSel.value;
-            dSel.innerHTML = '';
-            for (let d = 1; d <= daysInMonth; d++) {
-                const dStr = String(d).padStart(2, '0');
-                const opt = document.createElement('option');
-                opt.value = dStr;
-                opt.textContent = d;
-                if (dStr === currentVal) opt.selected = true;
-                dSel.appendChild(opt);
-            }
-        }
-
-        if (fMonth && fYear && fDay) {
-            fMonth.addEventListener('change', () => updateDays(fMonth, fYear, fDay));
-            fYear.addEventListener('change', () => updateDays(fMonth, fYear, fDay));
-            updateDays(fMonth, fYear, fDay);
-        }
-
-        // Also for the booking panel if it exists on load or via openBookPanel
-        document.addEventListener('DOMContentLoaded', () => {
-            const pMonth = document.getElementById('p-month');
-            const pYear = document.getElementById('s-p-year');
-            const pDay = document.getElementById('p-day');
-            if (pMonth && pYear && pDay) {
-                pMonth.addEventListener('change', () => updateDays(pMonth, pYear, pDay));
-                pYear.addEventListener('change', () => updateDays(pMonth, pYear, pDay));
-            }
-        });
-
-        let allDJs = [];
-
-        // ── Check availability against schedule ─────────────────────────────────
-        function checkAvailability(profile, dateStr) {
-            if (!dateStr) return 'unknown';
-            // Explicit unavailable flag
-            if (profile.available === false) return 'busy';
-
-            const sched = profile.availability_schedule;
-            if (!sched) return 'unknown';
-
-            const dayData = sched.schedule?.[dateStr];
-            if (!dayData) {
-                // Check recurring days
-                const dow = new Date(dateStr).getDay();
-                const recurring = sched.recurring_days || [];
-                if (recurring.includes(dow)) return 'partial'; // has residency, may fit another slot
-                return 'free';
-            }
-            if (dayData.status === 'blocked') return 'busy';
-            if ((dayData.events || []).length > 0) return 'partial'; // has events but might have slots
-            return 'free';
-        }
-
-        function availLabel(status) {
-            const map = {
-                free: ['free', '✅ Disponible'],
-                partial: ['partial', '⚠️ Parcialmente libre'],
-                busy: ['busy', '🔴 Ocupado'],
-                unknown: ['unknown', '❓ Consultar disponibilidad'],
-            };
-            return map[status] || map.unknown;
-        }
-
-        // ── Main search ─────────────────────────────────────────────────────────
         async function searchDJs() {
-            const dY = document.getElementById('f-year')?.value;
-            const dM = document.getElementById('f-month')?.value;
-            const dD = document.getElementById('f-day')?.value;
-            const dateStr = (dY && dM && dD) ? `${dY}-${dM}-${dD}` : '';
-            const genre = document.getElementById('f-genre').value;
+            const grid = document.getElementById('dj-grid');
+            const msg = document.getElementById('state-msg');
+            msg.innerHTML = 'Searching...';
+            grid.innerHTML = '';
+
             const city = document.getElementById('f-city').value;
-            const budget = document.getElementById('f-budget').value;
-            const selectedRoles = Array.from(document.querySelectorAll('#role-options input:checked')).map(cb => cb.value);
 
-            document.getElementById('state-msg').innerHTML = `
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" style="animation:spin 1s linear infinite;margin:0 auto 16px;display:block;">
-                <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-                <circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20"/>
-            </svg>
-            <p>Buscando talentos disponibles...</p>`;
-            document.getElementById('state-msg').style.display = 'block';
-            document.getElementById('dj-grid').innerHTML = '';
-            document.getElementById('results-bar').style.display = 'none';
-
-            // Build query
             let q = db.from('public_dj_profiles')
-                .select('dj_slug,stage_name,photo_url,bio_short,city,roles,genres,category,available,availability_schedule,plan,plan_status,social_instagram')
+                .select('dj_slug, stage_name, photo_url, bio_short, city, roles, plan')
                 .eq('available', true);
 
-            if (genre) q = q.ilike('genres', `%${genre}%`);
             if (city) q = q.ilike('city', `%${city}%`);
 
-            // For multiple roles, we use a more complex filter
-            // Note: Supabase JS library doesn't easily support ORs across multiple ILIKEs gracefully in a chain
-            // We'll filter the results manually or use an array filter if roles was an array Column
-            // Since it's a comma-separated text column, we'll fetch and filter in JS if multiple roles selected
-            // or use a single ilike if one role. 
-            // For true multi-role search, we'll fetch the batch and then filter.
+            const { data, error } = await q.limit(50);
 
-            const { data, error } = await q.limit(150);
             if (error) {
-                document.getElementById('state-msg').innerHTML = `<p>Error al cargar: ${error.message}</p>`;
+                msg.innerHTML = `Error: ${error.message}`;
                 return;
             }
 
-            let filtered = data || [];
-            if (selectedRoles.length > 0) {
-                filtered = filtered.filter(dj => {
-                    const djRoles = (dj.roles || '').toUpperCase();
-                    return selectedRoles.some(r => djRoles.includes(r.toUpperCase()));
-                });
-            }
-            if (error) {
-                document.getElementById('state-msg').innerHTML = `<p>Error al cargar: ${error.message}</p>`;
-                return;
-            }
-
-            allDJs = filtered.map(dj => ({
-                ...dj,
-                _avail: checkAvailability(dj, dateStr)
-            }));
-
-            // Sort: availability first, then PRO before LITE within same tier
-            const order = { free: 0, partial: 1, unknown: 2, busy: 3 };
-            allDJs.sort((a, b) => {
-                const availDiff = (order[a._avail] || 3) - (order[b._avail] || 3);
-                if (availDiff !== 0) return availDiff;
-
-                // Within same availability tier: PRO first (Only if plan_status is 'active')
-                const aPlan = (a.plan || '').toUpperCase();
-                const bPlan = (b.plan || '').toUpperCase();
-                const aStatus = (a.plan_status || 'active').toLowerCase();
-                const bStatus = (b.plan_status || 'active').toLowerCase();
-
-                const isAProActive = aPlan === 'PRO' && aStatus === 'active';
-                const isBProActive = bPlan === 'PRO' && bStatus === 'active';
-
-                if (isAProActive && !isBProActive) return -1;
-                if (!isAProActive && isBProActive) return 1;
-                return 0;
-            });
-
-            // Budget filter (client-side — rates is text like "$500-$1200")
-            let resultList = allDJs;
-            if (budget) {
-                const cap = parseInt(budget);
-                resultList = allDJs.filter(dj => {
-                    if (!dj.rates) return true;
-                    const nums = String(dj.rates).replace(/[^\d]/g, ' ').trim().split(/\s+/).map(Number).filter(n => n > 0);
-                    if (!nums.length) return true;
-                    return Math.min(...nums) <= cap;
-                });
-            }
-
-            renderDJs(resultList, dateStr);
-        }
-
-        // ── Render DJ cards ─────────────────────────────────────────────────────
-        function renderDJs(djs, dateStr) {
-            const grid = document.getElementById('dj-grid');
-            document.getElementById('state-msg').style.display = 'none';
-
-            if (!djs.length) {
-                document.getElementById('state-msg').style.display = 'block';
-                document.getElementById('state-msg').innerHTML = `
-                <p>No encontramos DJs con esos filtros.</p>
-                <p style="margin-top:6px;font-size:12px;">Prueba ampliar el presupuesto o cambiar el género.</p>`;
-                return;
-            }
-
-            const free = djs.filter(d => d._avail === 'free').length;
-            const dateLabel = dateStr ? new Date(dateStr + 'T12:00:00').toLocaleDateString('es-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '';
-            document.getElementById('results-bar').style.display = 'flex';
-            document.getElementById('results-count').innerHTML = `<strong>${djs.length}</strong> DJ(s) encontrados`;
-            document.getElementById('avail-note').textContent = dateStr ? `${free} disponibles el ${dateLabel}` : '';
-
-            grid.innerHTML = djs.map(dj => {
-                const [cls, label] = availLabel(dj._avail);
-                const name = esc(dj.stage_name || 'DJ');
-                const city = dj.city ? `📍 ${esc(dj.city)}` : '';
-                const plan = dj.plan === 'PRO' ? `<span style="color:var(--gold);font-size:10px;font-weight:800;background:rgba(197,160,89,.12);border:1px solid rgba(197,160,89,.3);border-radius:999px;padding:2px 7px;">PRO</span>` : '';
-                const roles = (dj.roles || '').split(',').filter(Boolean).slice(0, 2).map(r => `<span class="tag" style="background:rgba(197,160,89,0.1); color:var(--gold); border:1px solid rgba(197,160,89,0.3);">${esc(r.trim())}</span>`).join('');
-                const genresPreview = (dj.genres || '').split(',').filter(Boolean).slice(0, 2).map(g => `<span class="tag">${esc(g.trim())}</span>`).join('');
-                const avatar = dj.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(dj.stage_name || 'DJ')}&background=1e293b&color=94a3b8&size=54`;
-                const headline = dj.bio_short ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;">${esc(dj.bio_short)}</div>` : '';
-
-                return `
-            <div class="dj-card">
-                <div class="card-top">
-                    <img class="avatar" src="${esc(avatar)}" alt="${name}" loading="lazy" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(dj.stage_name || 'DJ')}&background=1e293b&color=94a3b8&size=54'"/>
-                    <div style="flex:1;min-width:0;">
-                        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                            <div class="dj-name">${name}</div>${plan}
-                        </div>
-                        <div class="dj-sub">${city}</div>
-                        ${headline}
-                    </div>
+            msg.innerHTML = `Found ${data.length} talents.`;
+            grid.innerHTML = data.map(dj => `
+                <div class="dj-card">
+                    <img class="avatar" src="${dj.photo_url || 'https://via.placeholder.com/64'}" />
+                    <h3 style="margin: 15px 0 5px;">${dj.stage_name}</h3>
+                    <p style="font-size: 12px; color: var(--muted);">${dj.city || 'Miami, FL'}</p>
+                    <p style="font-size: 13px; margin: 10px 0;">${dj.bio_short || ''}</p>
+                    <button class="btn-book">BOOK NOW</button>
                 </div>
-                <div class="avail-badge ${cls}">${label}</div>
-                <div class="tags" style="display:flex; flex-wrap:wrap; gap:4px;">${roles}${genresPreview}</div>
-                <div class="card-actions">
-                    <a class="btn-profile" href="./dj-profile.html?slug=${encodeURIComponent(dj.dj_slug)}" target="_blank">Ver perfil</a>
-                    <button class="btn-book" onclick="openBookPanel('${encodeURIComponent(dj.dj_slug)}','${encodeURIComponent(dj.stage_name || 'DJ')}','${encodeURIComponent(dateStr || '')}')">💌 Contratar</button>
-                </div>
-            </div>`;
-            }).join('');
-
-            // Log impressions silently (powers analytics dashboard)
-            const dY2 = document.getElementById('f-year')?.value;
-            const dM2 = document.getElementById('f-month')?.value;
-            const dD2 = document.getElementById('f-day')?.value;
-            const dateStr2 = (dY2 && dM2 && dD2) ? `${dY2}-${dM2}-${dD2}` : '';
-            const genre2 = document.getElementById('f-genre').value;
-            const city2 = document.getElementById('f-city').value;
-            logImpressions(djs, dateStr2, genre2, city2);
+            `).join('');
         }
-
-        // ── Booking panel ────────────────────────────────────────────────────────
-        function openBookPanel(djIdEnc, djNameEnc, dateEnc) {
-            const djId = decodeURIComponent(djIdEnc);
-            const djName = decodeURIComponent(djNameEnc);
-            const date = decodeURIComponent(dateEnc);
-            document.getElementById('p-dj-id').value = djId;
-            document.getElementById('p-dj-name').value = djName;
-            document.getElementById('p-date').value = date;
-            document.getElementById('panel-sub').textContent = `Solicitud para: ${djName}`;
-            document.getElementById('p-result').textContent = '';
-            document.getElementById('p-submit').disabled = false;
-            document.getElementById('book-overlay').classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeBookPanel() {
-            document.getElementById('book-overlay').classList.remove('active');
-            document.body.style.overflow = '';
-        }
-
-        function closePanel(e) {
-            if (e.target === document.getElementById('book-overlay')) closeBookPanel();
-        }
-
-        async function submitBooking() {
-            const name = document.getElementById('p-name').value.trim();
-            const email = document.getElementById('p-email').value.trim();
-            const phone = document.getElementById('p-phone').value.trim();
-            const date = document.getElementById('p-date').value;
-            const type = document.getElementById('p-type').value;
-            const location = document.getElementById('p-location').value.trim();
-            const budget = document.getElementById('p-budget').value.trim();
-            const notes = document.getElementById('p-notes').value.trim();
-            const djId = document.getElementById('p-dj-id').value;
-            const djName = document.getElementById('p-dj-name').value;
-
-            if (!name || !email || !date) {
-                document.getElementById('p-result').innerHTML = '<span style="color:#f87171;">⚠️ Nombre, email y fecha son obligatorios.</span>';
-                return;
-            }
-
-            const btn = document.getElementById('p-submit');
-            btn.disabled = true;
-            btn.textContent = 'Enviando...';
-
-            const { error } = await db.from('leads').insert({
-                client_name: name,
-                client_email: email,
-                client_phone: phone,
-                event_date: date,
-                event_type: type,
-                event_location: location,
-                budget_estimate: budget,
-                notes: notes,
-                dj_slug_requested: djId || null,  // safe slug, not raw UUID
-                dj_name_requested: djName,
-                status: 'NEW',
-                source: 'find-dj-page',
-            });
-
-            if (error) {
-                document.getElementById('p-result').innerHTML = `<span style="color:#f87171;">Error: ${esc(error.message)}</span>`;
-                btn.disabled = false;
-                btn.textContent = 'Enviar solicitud →';
-            } else {
-                document.getElementById('p-result').innerHTML = '<span style="color:#4ade80;">✅ ¡Solicitud enviada! El DJ te contactará pronto.</span>';
-                btn.textContent = '✅ Enviado';
-                setTimeout(closeBookPanel, 2800);
-            }
-        }
-
-        function esc(s) {
-            return String(s ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
-        }
-
-
-        // ── Anon session fingerprint (no PII) ─────────────────────────────────
-        function getSessionId() {
-            let sid = sessionStorage.getItem('_mdb_sid');
-            if (!sid) {
-                sid = Date.now().toString(36) + Math.random().toString(36).slice(2);
-                sessionStorage.setItem('_mdb_sid', sid);
-            }
-            return sid;
-        }
-
-        // ── Silent impression logger ───────────────────────────────────────────
-        // Fire-and-forget: logs each DJ card shown in search results
-        // Powers the "Esta semana apareciste X veces" dashboard widget
-        async function logImpressions(djs, searchDate, searchGenre, searchCity) {
-            if (!djs.length) return;
-            // Get current user if logged in (null for anon)
-            const { data: { user } } = await db.auth.getUser().catch(() => ({ data: { user: null } }));
-            const sessionId = getSessionId();
-
-            const records = djs.slice(0, 50).map((dj, idx) => ({
-                dj_slug: dj.dj_slug,
-                search_date: searchDate || null,
-                search_genre: searchGenre || null,
-                search_city: searchCity || null,
-                avail_status: dj._avail,
-                session_id: sessionId,
-                user_id: user?.id || null,
-                position: idx + 1,
-            }));
-
-            // Best-effort insert — don't block UI, ignore errors
-            db.from('search_impressions').insert(records).then(({ error }) => {
-                if (error) console.debug('Impression log skipped:', error.message);
-            });
-        }
-        // Auto-search on load if date or roles are pre-filled (e.g. from Party Planner)
-        window.addEventListener('load', () => {
-            const params = new URLSearchParams(window.location.search);
-            const rolesParam = params.get('roles');
-            const dateParam = params.get('date');
-
-            if (dateParam && dateParam.includes('-')) {
-                const parts = dateParam.split('-');
-                if (parts.length === 3) {
-                    const ySel = document.getElementById('f-year');
-                    const mSel = document.getElementById('f-month');
-                    const dSel = document.getElementById('f-day');
-                    if (ySel) ySel.value = parts[0];
-                    if (mSel) mSel.value = parts[1];
-                    if (dSel) dSel.value = parts[2];
-                }
-            }
-
-            if (rolesParam) {
-                const rolesArray = rolesParam.split(',').map(r => r.trim());
-                const checkboxes = document.querySelectorAll('#role-options input[type="checkbox"]');
-                checkboxes.forEach(cb => {
-                    const label = cb.parentNode.querySelector('label')?.textContent || '';
-                    if (rolesArray.some(role => label.toUpperCase().includes(role.toUpperCase()))) {
-                        cb.checked = true;
-                    }
-                });
-                confirmRoles({ stopPropagation: () => { } });
-            }
-
-            const hasDateVal = document.getElementById('f-day')?.value && document.getElementById('f-month')?.value;
-            if (hasDateVal || rolesParam) {
-                searchDJs();
-            }
-        });
     </script>
+
+    <!-- MDJ Assistant Booth (AI Sales Agent) -->
+    <link rel="stylesheet" href="./mdj-assistant.css" />
+    <script src="./mdj-assistant.js"></script>
+    <div id="mdj-assistant-booth">
+        <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
+        <div class="booth-window">
+            <div class="booth-header">
+                <div class="status-dot"></div>
+                <div style="flex: 1;">
+                    <h3>Booth Assistant</h3>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700;">Sales & Negotiation
+                        Expert</div>
+                </div>
+            </div>
+            <div class="booth-messages"></div>
+            <div class="booth-input-area">
+                <input type="text" placeholder="Type your message here..." />
+                <button class="booth-send-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="booth-trigger" title="Talk to Booth Assistant">
+            <div class="avatar-glow"></div>
+            <div style="font-size: 30px; z-index: 10;">🤖</div>
+        </div>
+    </div>
 </body>
 
 </html>

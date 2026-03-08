@@ -4,8 +4,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>MDJPRO — DJ Dashboard</title>
-    <meta name="description" content="DJ Dashboard for MDJPRO: profile, subscription status, and downloads." />
+    <title>MDJPRO — Agenda y Control</title>
+    <meta name="description" content="Agenda y Control para MDJPRO: perfil, estado de suscripción y descargas." />
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700;1,800&display=swap"
         rel="stylesheet">
@@ -13,17 +13,26 @@
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css' rel='stylesheet' />
     <link rel="stylesheet" href="./styles.css?v=20260226-1" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
-    <link rel="stylesheet" href="./weather-effects.css?v=20260305-1" />
+    <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <script src="./supabase-config.js?v=20260226-1"></script>
     <script src="./role-guard.js?v=20260226-2" data-role="dj"></script>
     <style>
+        body {
+            padding-top: 20px !important;
+        }
+
         /* ── Dashboard overrides — clean Serato-level aesthetic ── */
         h1,
         h2,
         h3 {
             font-family: 'Inter', sans-serif;
+        }
+
+        .header {
+            z-index: 1000 !important;
+            top: 20px !important;
         }
 
         .admin-card h2 {
@@ -219,80 +228,101 @@
             color: #ff5555;
             border: 1px solid rgba(255, 85, 85, 0.2);
         }
-
-        .ledger-filter-row {
-            padding: 16px 24px;
-            display: flex;
-            gap: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-        }
-
-        .ledger-filter-btn {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            color: rgba(255, 255, 255, 0.6);
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .ledger-filter-btn.active {
-            background: var(--gold);
-            color: #000;
-            border-color: var(--gold);
-        }
     </style>
 </head>
 
 <body class="notranslate">
-    <header class="header">
-        <div class="header-top">
-            <div class="container">
-                <div class="brand">
-                    <img src="./assets/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img">
-                    <div class="brand-text">
-                        <div class="brand-name">Miami DJ Beat</div>
-                    </div>
+    <div class="topbar">
+        <div class="topbar-left" style="height: 100%; gap: 30px;">
+            <div class="brand">
+                <img src="./assets/logo-transparent.png" alt="Branding" class="logo-img-eagle">
+                <div class="brand-letters-wrapper">
+                    <img src="./assets/logo-transparent Letras.png" alt="Miami DJ Beat Letters"
+                        class="brand-letters-img">
                 </div>
+            </div>
 
-                <div class="header-actions">
-                    <div class="lang-switcher">
-                        <span class="lang-btn active" data-lang="en">EN</span>
-                        <span class="lang-pipe">|</span>
-                        <span class="lang-btn" data-lang="es">ES</span>
-                    </div>
-                    <div class="account" id="header-auth-zone" style="display:none;">
-                        <button class="account-btn" id="accountBtn">
-                            <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="Avatar"
-                                id="header-avatar-img" />
-                            <span class="caret">▾</span>
-                        </button>
-                        <div class="account-menu" id="accountMenu">
-                            <a href="./account-settings.html" class="menu-item">Configuración</a>
-                            <div class="menu-divider"></div>
-                            <a href="#" class="menu-item danger" id="logoutBtn">Cerrar Sesión</a>
-                        </div>
-                    </div>
+            <div class="topbar-title active">AGENDA</div>
+
+            <a href="./account-settings.html" class="topbar-tab">CONFIGURACIÓN</a>
+
+            <a href="./dj-profile.html" class="topbar-tab">PERFIL PÚBLICO</a>
+
+            <a href="./dj-profile.html?tab=flow" class="topbar-tab">FLUJO DE CAJA</a>
+        </div>
+        <div class="header-actions" style="margin-right: 20px;">
+            <div class="account" id="header-auth-zone" style="display:flex;">
+                <button class="account-btn" id="accountBtn">
+                    <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="Avatar" id="header-avatar-img" />
+                    <span class="caret">▾</span>
+                </button>
+                <div class="account-menu" id="accountMenu">
+                    <a href="./account-settings.html" class="menu-item">Configuración</a>
+                    <div class="menu-divider"></div>
+                    <a href="#" class="menu-item danger" id="logoutBtn">Cerrar Sesión</a>
                 </div>
             </div>
         </div>
-        <div class="header-bottom">
-            <div class="container">
-                <nav class="nav top-nav" id="mainNav">
-                    <a href="./index.html" data-i18n="nav-home">Inicio</a>
-                    <a href="./jobs.html" data-i18n="nav-jobs">Trabajos</a>
-                    <a href="./dj-tools.html" data-i18n="nav-tools">Herramientas</a>
-                    <a href="./dj-profile.html?tab=flow" id="nav-flow-link"
-                        style="color:var(--gold); display:none;">Flujo</a>
-                    <a href="./account-settings.html">Configuración</a>
-                    <a href="#" id="nav-logout-btn" style="color:rgba(255,80,80,0.85);">Cerrar Sesión</a>
-                </nav>
-            </div>
-        </div>
-    </header>
+    </div>
+
+    <style>
+        .topbar {
+            height: 80px;
+            background: #000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            position: sticky;
+            top: 0;
+            z-index: 2000;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .topbar-title {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--gold);
+            position: relative;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+        }
+
+        .topbar-title::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gold);
+            box-shadow: 0 -2px 10px var(--gold);
+        }
+
+        .topbar-tab {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: color .2s;
+            padding: 0 12px;
+        }
+
+        .topbar-tab:hover {
+            color: #fff;
+        }
+    </style>
 
     <main>
         <!-- Photo Rejection Banner — shown dynamically if photo_status === 'rejected' -->
@@ -317,11 +347,11 @@
         <!-- ── DASHBOARD TAB NAV ────────────────────────────────────── -->
         <nav class="dj-owner-tabs" id="owner-tabs">
             <div class="container">
-                <a href="./dj-profile.html" class="dj-tab-btn">Vista Pública</a>
-                <button class="dj-tab-btn" data-tab="flow" onclick="switchDashTab('flow')">Flujo de Caja</button>
-                <button class="dj-tab-btn" data-tab="dashboard" onclick="switchDashTab('dashboard')">Agenda</button>
-                <button class="dj-tab-btn" data-tab="settings"
-                    onclick="switchDashTab('settings')">Configuración</button>
+                <button class="dj-tab-btn active" data-tab="dashboard"
+                    onclick="switchDashTab('dashboard')">AGENDA</button>
+                <button class="dj-tab-btn" data-tab="influence" onclick="switchDashTab('influence')">RESEÑAS</button>
+                <button class="dj-tab-btn" data-tab="flow" onclick="switchDashTab('flow')">💰 FLUJO DE CAJA</button>
+                <a href="./account-settings.html" class="dj-tab-btn" style="text-decoration:none;">CONFIGURACIÓN</a>
             </div>
         </nav>
         <style>
@@ -435,49 +465,42 @@
         </style>
 
 
-        <!-- TAB 1: Dashboard (existing content) -->
+        <!-- TAB 1: Agenda (existing content) -->
         <div id="tab-dashboard" class="dash-tab-panel active">
             <section style="padding: 60px 0; margin-top: 20px;">
                 <div class="container hero-grid" style="align-items: flex-start;">
                     <!-- Left Column: Business Logic -->
                     <div class="agenda-main" style="padding-top: 10px;">
-                        <!-- ── FUSIÓN HERO-ATMOSFÉRA TOTAL (IZQUIERDA) ── -->
-                        <div id="weather-hero-container"
-                            style="position: relative; border-radius: 32px; overflow: hidden; min-height: 480px; background: transparent; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-
-                            <!-- Master Weather Overlay Layer (Fondo Dinámico) -->
-                            <div id="weather-master-overlay" class="weather-master-overlay"
-                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;">
-                                <div id="weather-sunny" class="weather-sunny-glow" style="display:none;"></div>
-                                <div id="weather-rain" class="weather-rain-canvas" style="display:none;"></div>
-                                <div id="weather-clouds" class="weather-clouds-container" style="display:none;">
-                                </div>
-                                <div id="weather-storm" class="weather-lightning" style="display:none;"></div>
-                                <div id="weather-fog" class="weather-fog" style="display:none;"></div>
+                        <!-- ── CLIMA HERO SECTION ── -->
+                        <div id="booth-hero-container" class="booth-card"
+                            style="margin-bottom: 20px; min-height: 480px; position: relative; border-radius: 24px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+                            <!-- Capa 1: Lienzo Azul (Background Layer en CSS) -->
+                            <div class="weather-sky-bg"
+                                style="position: absolute; inset: 0; background: linear-gradient(180deg, #1e3a8a 0%, #000 100%); z-index: 1;">
                             </div>
 
-                            <!-- Datos del Hero (Capa Superior PNG-style) -->
-                            <div id="weather-hero-content"
-                                style="position: relative; z-index: 5; text-align: center; color: #fff; width: 100%; padding: 40px 20px;">
-                                <div id="hero-location"
-                                    style="font-size: 14px; font-weight: 600; letter-spacing: 2px; opacity: 0.9; text-transform: uppercase; margin-bottom: 4px; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
-                                    Mi Ubicación</div>
-                                <div id="hero-city"
-                                    style="font-size: 32px; font-weight: 500; margin-bottom: 5px; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
-                                    Miami</div>
-                                <div id="hero-temp"
-                                    style="font-size: 120px; font-weight: 200; margin: -15px 0; letter-spacing: -6px; font-family: 'Inter', sans-serif; text-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-                                    82°</div>
-                                <div id="hero-condition"
-                                    style="font-size: 20px; font-weight: 500; opacity: 0.9; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
-                                    Mayormente nublado</div>
-                                <div id="hero-high-low"
-                                    style="font-size: 16px; font-weight: 500; opacity: 0.7; margin-top: 5px; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
-                                    Máxima: 82° | Mínima: 72°</div>
+                            <!-- Weather Content Overlay -->
+                            <div
+                                style="position: relative; z-index: 5; padding: 40px; color: #fff; text-align: center;">
+                                <div id="weather-location"
+                                    style="font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.6); margin-bottom: 10px; letter-spacing: 2px; text-transform: uppercase;">
+                                    Miami, FL — USA
+                                </div>
+                                <div id="weather-main-temp"
+                                    style="font-size: 96px; font-weight: 200; margin-bottom: 5px; font-family: 'Inter', sans-serif;">
+                                    74°
+                                </div>
+                                <div id="weather-condition-label"
+                                    style="font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 5px;">
+                                    Soleado
+                                </div>
+                                <div id="weather-high-low"
+                                    style="font-size: 14px; color: rgba(255,255,255,0.8); font-weight: 600;">
+                                    Máx: 78° Mín: 68°
+                                </div>
 
-                                <!-- WEATHER SUMMARY (Apple Style) -->
-                                <div id="weather-hero-description"
-                                    style="margin-top: 30px; background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(20px); border-radius: 20px; padding: 20px; border: 1px solid rgba(255,255,255,0.05); text-align: left; font-size: 14px; line-height: 1.4; color: #fff;">
+                                <div id="weather-description-text"
+                                    style="margin-top: 25px; font-size: 13px; color: rgba(255,255,255,0.6); max-width: 320px; margin-left: auto; margin-right: auto; line-height: 1.6;">
                                     Pronóstico de cielos parcialmente nublados como a las 4 p.m.. Ráfagas de viento de
                                     hasta 17 mi/h.
                                 </div>
@@ -506,18 +529,7 @@
                             </div>
                         </div>
 
-                        <!-- Talent Availability Section (Keeping for context, but will hide if redundant) -->
-                        <div class="admin-card"
-                            style="margin-top: 20px; border: 1px solid var(--admin-accent); background: rgba(0, 255, 136, 0.05); display: none;">
-                            <div
-                                style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                <h2 class="gold" style="color:var(--admin-accent,#00c27a);">Disponibilidad</h2>
-                                <button class="btn secondary small" onclick="addBusyDate()">+ Marcar Fecha</button>
-                            </div>
-                            <div id="busy-dates-container" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
-                        </div>
-
-                        <!-- ── DETALLES DEL EVENTO SELECCIONADO ── -->
+                        <!-- DETALLES DEL EVENTO SELECCIONADO -->
                         <div id="dash-left-event-details" style="margin-top: 20px;">
                             <div id="dash-event-detail-card"
                                 style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 32px; text-align: left; min-height: 200px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden;">
@@ -534,19 +546,15 @@
                         </div>
                     </div>
 
-                    <!-- Right Column: Event Weather Calendar 🍏☀️ -->
-                    <div class="agenda-sidebar" style="position: relative; z-index: 10;">
-                        <div class="admin-card weather-card-container"
+                    <!-- Right Column: Event Agenda 📅 -->
+                    <div class="agenda-sidebar calendar-column" style="position: relative; z-index: 10;">
+                        <div class="admin-card agenda-card-container calendar-card"
                             style="padding: 0; position: relative; overflow: hidden; border: 1px solid rgba(197,160,89,0.25); min-height: 500px; background: transparent !important; backdrop-filter: blur(10px); z-index: 5;">
 
                             <div style="padding: 24px; position: relative; z-index: 2;">
                                 <div
                                     style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
                                     <h2 class="gold" style="margin:0; font-size:18px;">📅 Agenda Climática</h2>
-                                    <div id="current-weather-badge"
-                                        style="font-size: 12px; color: #fff; font-weight: 800; background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 20px; display: none;">
-                                        <!-- Real-time weather label -->
-                                    </div>
                                 </div>
 
                                 <!-- FullCalendar Container CSS Overwrite (Apple Style) -->
@@ -668,7 +676,7 @@
         <div id="tab-flow" class="dash-tab-panel">
             <section style="padding: 40px 0;">
                 <div class="container">
-                    <h1 data-i18n="dash-flow-title">Flujo de Caja</h1>
+                    <h1 data-i18n="dash-flow-title">💰 Flujo de Caja</h1>
 
                     <!-- ── VISIBILIDAD EN BÚSQUEDAS (Moved here) ────── -->
                     <div class="admin-card" id="visibility-card"
@@ -2628,9 +2636,6 @@
                 if (error) throw error;
 
                 // 3. Inicializar Calendario Maestro con Eventos Asignados
-                if (window.initEventWeatherCalendar) {
-                    window.initEventWeatherCalendar(events);
-                }
 
                 if (!events || events.length === 0) {
                     container.innerHTML = `
@@ -2776,6 +2781,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="./profile-loader.js"></script>
     <script src="./flow-handler.js"></script>
+    <script src="./mdj-assistant.js"></script>
 
     <!-- MDJPRO BOOTLOADER: Fuerza el renderizado inmediato del clima HERO 🍏 -->
     <script>
@@ -2789,6 +2795,28 @@
         });
     </script>
 
+    <!-- BOOTH ASSISTANT FLOATING WIDGET -->
+    <div id="mdj-assistant-booth">
+        <div class="booth-trigger" title="Hablar con Booth Assistant">
+            <div class="avatar-glow"></div>
+            <span style="font-size: 32px; z-index: 2;">🤖</span>
+        </div>
+        <div class="booth-window">
+            <div class="booth-header">
+                <div class="status-dot"></div>
+                <div style="flex: 1;">
+                    <h3>Booth Assistant</h3>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700;">Sales & Negotiation
+                        Expert</div>
+                </div>
+            </div>
+            <div class="booth-messages"></div>
+            <div class="booth-input-area">
+                <input type="text" placeholder="Hablemos de negocios / Let's talk business...">
+                <button class="booth-send-btn">➔</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

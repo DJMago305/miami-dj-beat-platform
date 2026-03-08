@@ -4,9 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configuración de Cuenta — MDJPRO</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    <title>Configuración — Miami DJ Beat</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,800;1,700;1,800&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css?v=20260306-1" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=20260226-1"></script>
     <style>
@@ -30,13 +32,14 @@
             color: #fff;
             font-family: 'Inter', sans-serif;
             min-height: 100vh;
+            padding-top: 20px !important;
         }
 
         /* ── TOP BAR ── */
         .topbar {
             position: sticky;
-            top: 0;
-            z-index: 100;
+            top: 20px;
+            z-index: 1000;
             background: rgba(9, 9, 9, 0.96);
             backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--line);
@@ -44,7 +47,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 28px;
-            height: 60px;
+            height: 85px;
         }
 
         .topbar-left {
@@ -303,8 +306,8 @@
             padding: 20px 12px;
             border-right: 1px solid var(--line);
             position: sticky;
-            top: 60px;
-            height: calc(100vh - 60px);
+            top: 105px;
+            height: calc(100vh - 105px);
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -313,9 +316,9 @@
 
         /* Accordion header */
         .sb-acc-header {
-            display: flex;
+            display: grid;
+            grid-template-columns: 40px 1fr 20px;
             align-items: center;
-            justify-content: space-between;
             width: 100%;
             background: none;
             border: none;
@@ -323,31 +326,28 @@
             font-family: 'Inter', sans-serif;
             font-size: 14px;
             font-weight: 700;
-            padding: 11px 12px;
+            padding: 8px 0px;
             border-radius: 10px;
             cursor: pointer;
             text-align: left;
             transition: background .15s;
         }
 
-        .sb-acc-header:hover {
-            background: rgba(255, 255, 255, 0.05);
+        .sb-acc-header svg {
+            grid-column: 1;
+            justify-self: center;
+            width: 18px;
+            height: 18px;
+            opacity: 0.8;
+            transition: color 0.2s;
         }
 
-        .sb-acc-header.open {
-            color: var(--gold);
-        }
-
-        .sb-caret {
+        .sb-acc-header .sb-caret {
+            grid-column: 3;
+            justify-self: center;
             font-size: 12px;
             color: var(--muted);
             transition: transform .2s;
-            display: inline-block;
-        }
-
-        .sb-acc-header.open .sb-caret {
-            transform: rotate(90deg);
-            color: var(--gold);
         }
 
         /* Accordion body */
@@ -363,10 +363,10 @@
 
         /* Sub-links */
         .sb-link {
-            display: flex;
+            display: grid;
+            grid-template-columns: 40px 1fr;
             align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
+            padding: 8px 0px;
             border-radius: 8px;
             color: var(--muted);
             text-decoration: none;
@@ -374,6 +374,14 @@
             font-weight: 600;
             transition: background .15s, color .15s;
             margin-bottom: 1px;
+        }
+
+        .sb-link svg {
+            grid-column: 1;
+            justify-self: center;
+            width: 16px;
+            height: 16px;
+            opacity: 0.6;
         }
 
         .sb-link:hover {
@@ -388,7 +396,9 @@
 
         /* Direct section link */
         .sb-direct {
-            display: block;
+            display: grid;
+            grid-template-columns: 40px 1fr;
+            align-items: center;
             width: 100%;
             background: none;
             border: none;
@@ -396,7 +406,7 @@
             font-family: 'Inter', sans-serif;
             font-size: 14px;
             font-weight: 700;
-            padding: 11px 12px;
+            padding: 11px 0px;
             border-radius: 10px;
             cursor: pointer;
             text-align: left;
@@ -404,8 +414,16 @@
             transition: background .15s;
         }
 
-        .sb-direct:hover {
-            background: rgba(255, 255, 255, 0.05);
+        .sb-direct svg,
+        .sb-direct span {
+            grid-column: 1;
+            justify-self: center;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
         }
 
         /* Log out */
@@ -1127,9 +1145,17 @@
 <body>
 
     <div class="topbar">
-        <div class="topbar-left" style="height: 100%; gap: 0;">
-            <a href="./dj-dashboard.html" class="topbar-tab" style="padding-left: 0; margin-right: 20px;">
-                DASHBOARD
+        <div class="topbar-left" style="height: 100%; gap: 30px;">
+            <div class="brand">
+                <img src="./assets/logo-transparent.png" alt="Branding" class="logo-img-eagle">
+                <div class="brand-letters-wrapper">
+                    <img src="./assets/logo-transparent Letras.png" alt="Miami DJ Beat Letters"
+                        class="brand-letters-img">
+                </div>
+            </div>
+
+            <a href="./dj-dashboard.html" class="topbar-tab">
+                AGENDA
             </a>
 
             <div class="topbar-title active">CONFIGURACIÓN</div>
@@ -1210,12 +1236,7 @@
                     <!-- NEW TOOL LINK -->
                     <a class="sb-link" href="./dj-profile.html?tab=flow" id="sb-flow-link"
                         style="display:none; color:var(--gold);">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-                            <polyline points="16 7 22 7 22 13" />
-                        </svg>
-                        Flujo de Caja ↗
+                        💰 Flujo de Caja
                     </a>
                 </div>
             </div>
@@ -1611,7 +1632,7 @@
 
                         // Monitor all profile and social inputs
                         document.addEventListener('DOMContentLoaded', () => {
-                            const containers = ['sec-foto', 'sec-bio', 'sec-social', 'sec-tipo', 'sec-residency', 'sec-servicios'];
+                            const containers = ['sec-foto', 'sec-bio', 'sec-social', 'sec-tipo', 'sec-residency', 'sec-servicios', 'sec-disponibilidad'];
                             containers.forEach(id => {
                                 const section = document.getElementById(id);
                                 if (section) {
@@ -1752,6 +1773,20 @@
                         </button>
                     </div>
                     <div id="exp-entries-container"></div>
+
+                    <!-- Botón de Guardado para Experiencias & Residencias -->
+                    <div
+                        style="margin-top: 20px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
+                        <button class="bio-save-btn global-save-btn" onclick="saveAll()"
+                            style="width: auto; padding: 10px 30px; opacity: 0.3; background: #333; cursor: default; filter: grayscale(1);"
+                            disabled>
+                            Aceptar cambios de Experiencia
+                        </button>
+                        <span class="save-hint"
+                            style="font-size: 11px; color: var(--gold); opacity: 0.8; display: none; font-weight: 600;">
+                            ⚠️ Cambios detectados en tus residencias o experiencia.
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -1761,6 +1796,50 @@
                 <div class="section-title">Disponibilidad</div>
                 <div class="section-desc">Gestiona tu agenda: marca días fijos de residencia y agrega eventos
                     específicos con horario. Todo se sincroniza en tiempo real.</div>
+
+                <style>
+                    .vacation-badge {
+                        background: rgba(255, 193, 7, 0.15);
+                        border: 1px solid rgba(255, 193, 7, 0.3);
+                        color: #ffc107;
+                        padding: 2px 8px;
+                        border-radius: 999px;
+                        font-size: 10px;
+                        font-weight: 800;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                    }
+                </style>
+
+                <!-- ── MODO VACACIONES (NUEVO) ── -->
+                <div class="card"
+                    style="margin-bottom:16px; border: 1px solid rgba(255, 193, 7, 0.2); background: rgba(255, 193, 7, 0.02);">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                        <div
+                            style="font-size:11px;font-weight:700;color:#ffc107;letter-spacing:1px;text-transform:uppercase;">
+                            🏖️ Modo Vacaciones</div>
+                        <span class="vacation-badge" id="vacation-status-badge" style="display:none;">Activo</span>
+                    </div>
+                    <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:16px;line-height:1.5;">
+                        Programa un rango de fechas en las que <strong style="color:#ffc107;">no estarás
+                            disponible</strong>.
+                        Tu perfil mostrará estos días como bloqueados automáticamente.
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                        <div class="field">
+                            <label style="color:rgba(255,255,255,0.5); font-size:10px;">FECHA INICIO</label>
+                            <input type="date" id="s-vacation-start" class="cfg-input"
+                                style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); color:#fff; padding:8px; border-radius:8px; width:100%;"
+                                onchange="markAsChanged()">
+                        </div>
+                        <div class="field">
+                            <label style="color:rgba(255,255,255,0.5); font-size:10px;">FECHA FIN</label>
+                            <input type="date" id="s-vacation-end" class="cfg-input"
+                                style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); color:#fff; padding:8px; border-radius:8px; width:100%;"
+                                onchange="markAsChanged()">
+                        </div>
+                    </div>
+                </div>
 
                 <!-- ── DÍAS FIJOS DE RESIDENCIA ── -->
                 <div class="card" style="margin-bottom:16px;">
@@ -1876,67 +1955,68 @@
                         DOM</div>
                 </div>
                 <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;"></div>
-            </div>
 
-            <!-- ── EVENT DRAWER (slide up when day is clicked) ── -->
-            <div id="cal-drawer" style="display:none;margin-top:4px;">
-                <div class="card" style="border-color:rgba(197,160,89,.3);">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <div id="drawer-title" style="font-size:14px;font-weight:800;"></div>
-                        <button onclick="closeDrawer()"
-                            style="background:none;border:none;color:rgba(255,255,255,.4);font-size:20px;cursor:pointer;line-height:1;">×</button>
-                    </div>
 
-                    <!-- Quick actions -->
-                    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-                        <button onclick="setDayStatus('free')" id="btn-free" class="day-status-btn"
-                            style="--sc:rgba(255,255,255,.15);">✅ Libre</button>
-                        <button onclick="setDayStatus('blocked')" id="btn-blocked" class="day-status-btn"
-                            style="--sc:rgba(239,68,68,.25);">🔴 Bloqueado</button>
-                    </div>
-
-                    <!-- Events list for this day -->
-                    <div id="drawer-events" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
-                    </div>
-
-                    <!-- Add event form -->
-                    <div id="add-event-form"
-                        style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;">
-                        <div
-                            style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">
-                            Agregar Evento</div>
-                        <div class="field" style="margin-bottom:8px;">
-                            <input type="text" id="ev-venue" placeholder="Nombre del lugar / evento"
-                                style="font-size:13px;">
+                <!-- ── EVENT DRAWER (slide up when day is clicked) ── -->
+                <div id="cal-drawer" style="display:none;margin-top:4px;">
+                    <div class="card" style="border-color:rgba(197,160,89,.3);">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                            <div id="drawer-title" style="font-size:14px;font-weight:800;"></div>
+                            <button onclick="closeDrawer()"
+                                style="background:none;border:none;color:rgba(255,255,255,.4);font-size:20px;cursor:pointer;line-height:1;">×</button>
                         </div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-                            <div class="field">
-                                <label>Hora inicio</label>
-                                <input type="time" id="ev-from">
+
+                        <!-- Quick actions -->
+                        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+                            <button onclick="setDayStatus('free')" id="btn-free" class="day-status-btn"
+                                style="--sc:rgba(255,255,255,.15);">✅ Libre</button>
+                            <button onclick="setDayStatus('blocked')" id="btn-blocked" class="day-status-btn"
+                                style="--sc:rgba(239,68,68,.25);">🔴 Bloqueado</button>
+                        </div>
+
+                        <!-- Events list for this day -->
+                        <div id="drawer-events" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+                        </div>
+
+                        <!-- Add event form -->
+                        <div id="add-event-form"
+                            style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;">
+                            <div
+                                style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">
+                                Agregar Evento</div>
+                            <div class="field" style="margin-bottom:8px;">
+                                <input type="text" id="ev-venue" placeholder="Nombre del lugar / evento"
+                                    style="font-size:13px;">
                             </div>
-                            <div class="field">
-                                <label>Hora fin</label>
-                                <input type="time" id="ev-to">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                                <div class="field">
+                                    <label>Hora inicio</label>
+                                    <input type="time" id="ev-from">
+                                </div>
+                                <div class="field">
+                                    <label>Hora fin</label>
+                                    <input type="time" id="ev-to">
+                                </div>
                             </div>
+                            <div class="field" style="margin-bottom:12px;">
+                                <label>Buffer de viaje después</label>
+                                <select id="ev-buffer">
+                                    <option value="0">Sin buffer</option>
+                                    <option value="30">30 min</option>
+                                    <option value="60">1 hora</option>
+                                    <option value="90" selected>1h 30min (recomendado)</option>
+                                    <option value="120">2 horas</option>
+                                    <option value="180">3 horas</option>
+                                </select>
+                            </div>
+                            <button onclick="addEventToDay()"
+                                style="width:100%;background:var(--gold);color:#000;border:none;border-radius:8px;padding:10px;font-weight:900;font-size:13px;cursor:pointer;">+
+                                Agregar</button>
                         </div>
-                        <div class="field" style="margin-bottom:12px;">
-                            <label>Buffer de viaje después</label>
-                            <select id="ev-buffer">
-                                <option value="0">Sin buffer</option>
-                                <option value="30">30 min</option>
-                                <option value="60">1 hora</option>
-                                <option value="90" selected>1h 30min (recomendado)</option>
-                                <option value="120">2 horas</option>
-                                <option value="180">3 horas</option>
-                            </select>
-                        </div>
-                        <button onclick="addEventToDay()"
-                            style="width:100%;background:var(--gold);color:#000;border:none;border-radius:8px;padding:10px;font-weight:900;font-size:13px;cursor:pointer;">+
-                            Agregar</button>
                     </div>
                 </div>
 
-                <!-- ── HORARIO GENERAL ── -->
+                <!-- ── HORARIO GENERAL (FUERA DEL DRAWER PARA SER VISIBLE) ── -->
                 <div class="card" style="margin-top:16px;">
                     <div
                         style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">
@@ -1977,219 +2057,231 @@
                         </div>
                     </div>
 
-                    <!-- Save changes button for Social Medias section -->
                     <div
                         style="margin-top: 24px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px;">
                         <button class="bio-save-btn global-save-btn" onclick="saveAll()"
                             style="width: auto; padding: 12px 40px; opacity: 0.3; background: #333; cursor: default; filter: grayscale(1);"
                             disabled>
-                            Guardar cambios
+                            Aceptar cambios de Disponibilidad
                         </button>
                         <span class="save-hint"
                             style="font-size: 11px; color: var(--gold); opacity: 0.8; display: none; font-weight: 600;">
-                            ⚠️ No olvides guardar tus links de redes sociales.
+                            ⚠️ No olvides guardar tus cambios en la disponibilidad o vacaciones.
                         </span>
                     </div>
                 </div>
-            </div>
 
-            <!-- CALENDAR SCRIPT -->
-            <script>
-                // ── State ────────────────────────────────────────────────────
-                let calYear = new Date().getFullYear();
-                let calMonth = new Date().getMonth();
-                // scheduleData: { 'YYYY-MM-DD': { status: 'free'|'blocked', events: [{venue,from,to,buffer_mins}] } }
-                let scheduleData = {};
-                let activeDrawerDate = null;
+                <!-- CALENDAR SCRIPT -->
+                <script>
+                    // ── State ────────────────────────────────────────────────────
+                    let calYear = new Date().getFullYear();
+                    let calMonth = new Date().getMonth();
+                    // scheduleData: { 'YYYY-MM-DD': { status: 'free'|'blocked', events: [{venue,from,to,buffer_mins}] } }
+                    let scheduleData = {};
+                    let activeDrawerDate = null;
 
-                const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-                const DAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                    const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                    const DAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-                // ── Calendar render ──────────────────────────────────────────
-                function calRender() {
-                    const monthSel = document.getElementById('cal-jump-month');
-                    const yearSel = document.getElementById('cal-jump-year');
-                    if (monthSel) monthSel.value = calMonth;
-                    if (yearSel) {
-                        // Ensure current year is in dropdown if it changed by buttons
-                        if (!Array.from(yearSel.options).some(o => o.value == calYear)) {
-                            let opt = document.createElement('option');
-                            opt.value = calYear; opt.textContent = calYear; opt.style.background = "#1e293b";
-                            yearSel.appendChild(opt);
-                            // sort years
-                            let sorted = Array.from(yearSel.options).sort((a, b) => a.value - b.value);
-                            yearSel.innerHTML = '';
-                            sorted.forEach(o => yearSel.appendChild(o));
+                    // ── Calendar render ──────────────────────────────────────────
+                    function calRender() {
+                        const monthSel = document.getElementById('cal-jump-month');
+                        const yearSel = document.getElementById('cal-jump-year');
+                        if (monthSel) monthSel.value = calMonth;
+                        if (yearSel) {
+                            // Ensure current year is in dropdown if it changed by buttons
+                            if (!Array.from(yearSel.options).some(o => o.value == calYear)) {
+                                let opt = document.createElement('option');
+                                opt.value = calYear; opt.textContent = calYear; opt.style.background = "#1e293b";
+                                yearSel.appendChild(opt);
+                                // sort years
+                                let sorted = Array.from(yearSel.options).sort((a, b) => a.value - b.value);
+                                yearSel.innerHTML = '';
+                                sorted.forEach(o => yearSel.appendChild(o));
+                            }
+                            yearSel.value = calYear;
                         }
-                        yearSel.value = calYear;
+                        const grid = document.getElementById('cal-grid');
+                        grid.innerHTML = '';
+                        const today = new Date();
+                        const firstDay = new Date(calYear, calMonth, 1).getDay();
+                        const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+                        const offset = firstDay === 0 ? 6 : firstDay - 1;
+
+                        for (let i = 0; i < offset; i++) grid.appendChild(document.createElement('div'));
+
+                        for (let d = 1; d <= daysInMonth; d++) {
+                            const dateStr = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                            const dow = new Date(calYear, calMonth, d).getDay();
+                            const isPast = new Date(calYear, calMonth, d) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                            const dayData = scheduleData[dateStr];
+                            const isRecurring = (typeof recurringDays !== 'undefined') && recurringDays.has(dow);
+                            const isActive = dateStr === activeDrawerDate;
+
+                            // Determine visual state
+                            const hasEvents = dayData?.events?.length > 0;
+                            const isBlocked = dayData?.status === 'blocked';
+
+                            const vacationStart = document.getElementById('s-vacation-start')?.value;
+                            const vacationEnd = document.getElementById('s-vacation-end')?.value;
+                            let isVacation = false;
+                            if (vacationStart && vacationEnd) {
+                                const vStart = new Date(vacationStart + 'T00:00:00');
+                                const vEnd = new Date(vacationEnd + 'T00:00:00');
+                                const vCurr = new Date(calYear, calMonth, d);
+                                if (vCurr >= vStart && vCurr <= vEnd) isVacation = true;
+                            }
+
+                            let bg, border, color;
+                            if (isBlocked) {
+                                bg = 'rgba(239,68,68,.25)'; border = 'rgba(239,68,68,.55)'; color = '#ff9090';
+                            } else if (isVacation) {
+                                bg = 'rgba(255,193,7,.25)'; border = 'rgba(255,193,7,.6)'; color = '#ffc107';
+                            } else if (hasEvents) {
+                                bg = 'rgba(197,160,89,.2)'; border = 'rgba(197,160,89,.5)'; color = 'var(--gold)';
+                            } else if (isRecurring) {
+                                bg = 'rgba(80,120,255,.18)'; border = 'rgba(80,120,255,.45)'; color = 'rgba(140,170,255,.9)';
+                            } else {
+                                bg = 'rgba(255,255,255,.04)'; border = 'rgba(255,255,255,.07)'; color = 'rgba(255,255,255,.75)';
+                            }
+                            if (isActive) border = 'var(--gold)';
+
+                            const cell = document.createElement('div');
+                            cell.style.cssText = `text-align:center;padding:6px 2px;border-radius:8px;font-size:12px;font-weight:700;cursor:${isPast ? 'default' : 'pointer'};opacity:${isPast ? .35 : 1};background:${bg};border:1.5px solid ${border};color:${color};transition:all .15s;position:relative;`;
+                            cell.innerHTML = d + (hasEvents ? '<div style="display:flex;justify-content:center;gap:2px;margin-top:2px;">' + (dayData.events || []).map(() => '<div style="width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.7;"></div>').join('') + '</div>' : '');
+
+                            if (!isPast) {
+                                cell.addEventListener('click', () => openDrawer(dateStr, d));
+                            }
+                            grid.appendChild(cell);
+                        }
                     }
-                    const grid = document.getElementById('cal-grid');
-                    grid.innerHTML = '';
-                    const today = new Date();
-                    const firstDay = new Date(calYear, calMonth, 1).getDay();
-                    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-                    const offset = firstDay === 0 ? 6 : firstDay - 1;
 
-                    for (let i = 0; i < offset; i++) grid.appendChild(document.createElement('div'));
+                    // ── Drawer ───────────────────────────────────────────────────
+                    function openDrawer(dateStr, dayNum) {
+                        activeDrawerDate = dateStr;
+                        const dow = new Date(dateStr).getDay();
+                        document.getElementById('drawer-title').textContent = DAY_NAMES[dow] + ' ' + dayNum + ' de ' + MONTHS_ES[calMonth];
+                        document.getElementById('cal-drawer').style.display = 'block';
+                        document.getElementById('ev-venue').value = '';
+                        document.getElementById('ev-from').value = '';
+                        document.getElementById('ev-to').value = '';
+                        refreshDrawerEvents();
+                        calRender();
+                        // Scroll into view
+                        setTimeout(() => document.getElementById('cal-drawer').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+                    }
 
-                    for (let d = 1; d <= daysInMonth; d++) {
-                        const dateStr = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-                        const dow = new Date(calYear, calMonth, d).getDay();
-                        const isPast = new Date(calYear, calMonth, d) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                        const dayData = scheduleData[dateStr];
-                        const isRecurring = (typeof recurringDays !== 'undefined') && recurringDays.has(dow);
-                        const isActive = dateStr === activeDrawerDate;
+                    function closeDrawer() {
+                        activeDrawerDate = null;
+                        document.getElementById('cal-drawer').style.display = 'none';
+                        calRender();
+                    }
 
-                        // Determine visual state
-                        const hasEvents = dayData?.events?.length > 0;
-                        const isBlocked = dayData?.status === 'blocked';
-
-                        let bg, border, color;
-                        if (isBlocked) {
-                            bg = 'rgba(239,68,68,.25)'; border = 'rgba(239,68,68,.55)'; color = '#ff9090';
-                        } else if (hasEvents) {
-                            bg = 'rgba(197,160,89,.2)'; border = 'rgba(197,160,89,.5)'; color = 'var(--gold)';
-                        } else if (isRecurring) {
-                            bg = 'rgba(80,120,255,.18)'; border = 'rgba(80,120,255,.45)'; color = 'rgba(140,170,255,.9)';
+                    function setDayStatus(status) {
+                        if (!activeDrawerDate) return;
+                        if (!scheduleData[activeDrawerDate]) scheduleData[activeDrawerDate] = { events: [] };
+                        if (status === 'free') {
+                            delete scheduleData[activeDrawerDate];
                         } else {
-                            bg = 'rgba(255,255,255,.04)'; border = 'rgba(255,255,255,.07)'; color = 'rgba(255,255,255,.75)';
+                            scheduleData[activeDrawerDate].status = status;
                         }
-                        if (isActive) border = 'var(--gold)';
+                        calRender();
+                        refreshDrawerEvents();
+                    }
 
-                        const cell = document.createElement('div');
-                        cell.style.cssText = `text-align:center;padding:6px 2px;border-radius:8px;font-size:12px;font-weight:700;cursor:${isPast ? 'default' : 'pointer'};opacity:${isPast ? .35 : 1};background:${bg};border:1.5px solid ${border};color:${color};transition:all .15s;position:relative;`;
-                        cell.innerHTML = d + (hasEvents ? '<div style="display:flex;justify-content:center;gap:2px;margin-top:2px;">' + (dayData.events || []).map(() => '<div style="width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.7;"></div>').join('') + '</div>' : '');
-
-                        if (!isPast) {
-                            cell.addEventListener('click', () => openDrawer(dateStr, d));
+                    function refreshDrawerEvents() {
+                        if (!activeDrawerDate) return;
+                        const dayData = scheduleData[activeDrawerDate] || { events: [] };
+                        const events = dayData.events || [];
+                        const container = document.getElementById('drawer-events');
+                        container.innerHTML = '';
+                        if (events.length === 0) {
+                            container.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,.3);text-align:center;padding:8px;">Sin eventos — día libre</div>';
+                            return;
                         }
-                        grid.appendChild(cell);
-                    }
-                }
-
-                // ── Drawer ───────────────────────────────────────────────────
-                function openDrawer(dateStr, dayNum) {
-                    activeDrawerDate = dateStr;
-                    const dow = new Date(dateStr).getDay();
-                    document.getElementById('drawer-title').textContent = DAY_NAMES[dow] + ' ' + dayNum + ' de ' + MONTHS_ES[calMonth];
-                    document.getElementById('cal-drawer').style.display = 'block';
-                    document.getElementById('ev-venue').value = '';
-                    document.getElementById('ev-from').value = '';
-                    document.getElementById('ev-to').value = '';
-                    refreshDrawerEvents();
-                    calRender();
-                    // Scroll into view
-                    setTimeout(() => document.getElementById('cal-drawer').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
-                }
-
-                function closeDrawer() {
-                    activeDrawerDate = null;
-                    document.getElementById('cal-drawer').style.display = 'none';
-                    calRender();
-                }
-
-                function setDayStatus(status) {
-                    if (!activeDrawerDate) return;
-                    if (!scheduleData[activeDrawerDate]) scheduleData[activeDrawerDate] = { events: [] };
-                    if (status === 'free') {
-                        delete scheduleData[activeDrawerDate];
-                    } else {
-                        scheduleData[activeDrawerDate].status = status;
-                    }
-                    calRender();
-                    refreshDrawerEvents();
-                }
-
-                function refreshDrawerEvents() {
-                    if (!activeDrawerDate) return;
-                    const dayData = scheduleData[activeDrawerDate] || { events: [] };
-                    const events = dayData.events || [];
-                    const container = document.getElementById('drawer-events');
-                    container.innerHTML = '';
-                    if (events.length === 0) {
-                        container.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,.3);text-align:center;padding:8px;">Sin eventos — día libre</div>';
-                        return;
-                    }
-                    events.forEach((ev, idx) => {
-                        const row = document.createElement('div');
-                        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;background:rgba(197,160,89,.08);border:1px solid rgba(197,160,89,.2);border-radius:10px;padding:10px 12px;gap:10px;';
-                        row.innerHTML = `
+                        events.forEach((ev, idx) => {
+                            const row = document.createElement('div');
+                            row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;background:rgba(197,160,89,.08);border:1px solid rgba(197,160,89,.2);border-radius:10px;padding:10px 12px;gap:10px;';
+                            row.innerHTML = `
                             <div style="flex:1;">
                                 <div style="font-size:13px;font-weight:700;color:var(--gold);">${ev.venue || 'Evento'}</div>
                                 <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">${ev.from || '?'}–${ev.to || '?'}${ev.buffer_mins > 0 ? ' · +' + ev.buffer_mins + 'min buffer' : ''}</div>
                             </div>
                             <button onclick="removeEvent(${idx})" style="background:rgba(255,60,60,.12);border:1px solid rgba(255,60,60,.25);color:rgba(255,100,100,.8);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">✕</button>
                         `;
-                        container.appendChild(row);
-                    });
-                }
-
-                function addEventToDay() {
-                    if (!activeDrawerDate) return;
-                    const venue = document.getElementById('ev-venue').value.trim();
-                    const from = document.getElementById('ev-from').value;
-                    const to = document.getElementById('ev-to').value;
-                    const buffer = parseInt(document.getElementById('ev-buffer').value) || 0;
-                    if (!venue && !from) { alert('Agrega al menos el nombre del lugar o la hora de inicio.'); return; }
-                    if (!scheduleData[activeDrawerDate]) scheduleData[activeDrawerDate] = { events: [] };
-                    scheduleData[activeDrawerDate].events.push({ venue, from, to, buffer_mins: buffer });
-                    document.getElementById('ev-venue').value = '';
-                    document.getElementById('ev-from').value = '';
-                    document.getElementById('ev-to').value = '';
-                    refreshDrawerEvents();
-                    calRender();
-                }
-
-                function removeEvent(idx) {
-                    if (!activeDrawerDate || !scheduleData[activeDrawerDate]) return;
-                    scheduleData[activeDrawerDate].events.splice(idx, 1);
-                    if (scheduleData[activeDrawerDate].events.length === 0 && !scheduleData[activeDrawerDate].status) {
-                        delete scheduleData[activeDrawerDate];
+                            container.appendChild(row);
+                        });
                     }
-                    refreshDrawerEvents();
-                    calRender();
-                }
 
-                function calPrev() { if (calMonth === 0) { calMonth = 11; calYear--; } else calMonth--; calRender(); }
-                function calNext() { if (calMonth === 11) { calMonth = 0; calYear++; } else calMonth++; calRender(); }
-                function calPrevYear() { calYear--; calRender(); }
-                function calNextYear() { calYear++; calRender(); }
-                function jumpCal() {
-                    calMonth = parseInt(document.getElementById('cal-jump-month').value);
-                    calYear = parseInt(document.getElementById('cal-jump-year').value);
-                    calRender();
-                }
+                    function addEventToDay() {
+                        if (!activeDrawerDate) return;
+                        const venue = document.getElementById('ev-venue').value.trim();
+                        const from = document.getElementById('ev-from').value;
+                        const to = document.getElementById('ev-to').value;
+                        const buffer = parseInt(document.getElementById('ev-buffer').value) || 0;
+                        if (!venue && !from) { alert('Agrega al menos el nombre del lugar o la hora de inicio.'); return; }
+                        if (!scheduleData[activeDrawerDate]) scheduleData[activeDrawerDate] = { events: [] };
+                        scheduleData[activeDrawerDate].events.push({ venue, from, to, buffer_mins: buffer });
+                        document.getElementById('ev-venue').value = '';
+                        document.getElementById('ev-from').value = '';
+                        document.getElementById('ev-to').value = '';
+                        refreshDrawerEvents();
+                        calRender();
+                    }
 
-                // ── Data helpers (used by saveAll / loadCalendarData) ─────────
-                function getCalendarData() {
-                    return {
-                        schedule: scheduleData,
-                        recurring_days: Array.from(typeof recurringDays !== 'undefined' ? recurringDays : []),
-                        work_start: document.getElementById('s-work-start')?.value || '',
-                        work_end: document.getElementById('s-work-end')?.value || '',
-                        advance_notice_hours: document.getElementById('s-advance-notice')?.value || ''
-                    };
-                }
-
-                function loadCalendarData(p) {
-                    if (p.availability_schedule && typeof p.availability_schedule === 'object') {
-                        scheduleData = p.availability_schedule.schedule || {};
-                        const rd = p.availability_schedule.recurring_days || [];
-                        if (typeof recurringDays !== 'undefined') {
-                            rd.forEach(d => recurringDays.add(Number(d)));
-                            // Re-check buttons
-                            document.querySelectorAll('#recurring-day-btns input[type=checkbox]').forEach(cb => {
-                                cb.checked = recurringDays.has(Number(cb.value));
-                                cb.closest('.rec-day-btn').classList.toggle('active', cb.checked);
-                            });
-                            renderRecurringSlots();
+                    function removeEvent(idx) {
+                        if (!activeDrawerDate || !scheduleData[activeDrawerDate]) return;
+                        scheduleData[activeDrawerDate].events.splice(idx, 1);
+                        if (scheduleData[activeDrawerDate].events.length === 0 && !scheduleData[activeDrawerDate].status) {
+                            delete scheduleData[activeDrawerDate];
                         }
+                        refreshDrawerEvents();
+                        calRender();
                     }
-                    // Database Warning Logic
-                    function showDbWarning(missingColumns) {
-                        const warn = document.createElement('div');
-                        warn.id = 'db-warning-banner';
-                        warn.style = `
+
+                    function calPrev() { if (calMonth === 0) { calMonth = 11; calYear--; } else calMonth--; calRender(); }
+                    function calNext() { if (calMonth === 11) { calMonth = 0; calYear++; } else calMonth++; calRender(); }
+                    function calPrevYear() { calYear--; calRender(); }
+                    function calNextYear() { calYear++; calRender(); }
+                    function jumpCal() {
+                        calMonth = parseInt(document.getElementById('cal-jump-month').value);
+                        calYear = parseInt(document.getElementById('cal-jump-year').value);
+                        calRender();
+                    }
+
+                    // ── Data helpers (used by saveAll / loadCalendarData) ─────────
+                    function getCalendarData() {
+                        return {
+                            schedule: scheduleData,
+                            recurring_days: Array.from(typeof recurringDays !== 'undefined' ? recurringDays : []),
+                            work_start: document.getElementById('s-work-start')?.value || '',
+                            work_end: document.getElementById('s-work-end')?.value || '',
+                            advance_notice_hours: document.getElementById('s-advance-notice')?.value || '',
+                            vacation_start: document.getElementById('s-vacation-start')?.value || '',
+                            vacation_end: document.getElementById('s-vacation-end')?.value || ''
+                        };
+                    }
+
+                    function loadCalendarData(p) {
+                        if (p.availability_schedule && typeof p.availability_schedule === 'object') {
+                            scheduleData = p.availability_schedule.schedule || {};
+                            const rd = p.availability_schedule.recurring_days || [];
+                            if (typeof recurringDays !== 'undefined') {
+                                rd.forEach(d => recurringDays.add(Number(d)));
+                                // Re-check buttons
+                                document.querySelectorAll('#recurring-day-btns input[type=checkbox]').forEach(cb => {
+                                    cb.checked = recurringDays.has(Number(cb.value));
+                                    cb.closest('.rec-day-btn').classList.toggle('active', cb.checked);
+                                });
+                                renderRecurringSlots();
+                            }
+                        }
+                        // Database Warning Logic
+                        function showDbWarning(missingColumns) {
+                            const warn = document.createElement('div');
+                            warn.id = 'db-warning-banner';
+                            warn.style = `
                     position: fixed; bottom: 20px; right: 20px; 
                     background: #331a00; color: #ffcc00; 
                     padding: 16px 24px; border-radius: 12px; 
@@ -2198,7 +2290,7 @@
                     max-width: 350px; font-size: 13px; font-weight: 600;
                     display: flex; flex-direction: column; gap: 10px;
                 `;
-                        warn.innerHTML = `
+                            warn.innerHTML = `
                     <div style="display:flex; align-items:center; gap:10px;">
                         <span style="font-size:20px;">⚠️</span>
                         <span>Falta actualizar la base de datos (Script SQL)</span>
@@ -2211,20 +2303,35 @@
                        VER INSTRUCCIONES SQL
                     </a>
                 `;
-                        document.body.appendChild(warn);
+                            document.body.appendChild(warn);
+                        }
+                        if (p.work_start) { const el = document.getElementById('s-work-start'); if (el) el.value = p.work_start; }
+                        if (p.work_end) { const el = document.getElementById('s-work-end'); if (el) el.value = p.work_end; }
+                        if (p.advance_notice_hours) { const el = document.getElementById('s-advance-notice'); if (el) el.value = p.advance_notice_hours; }
+                        if (p.vacation_start) { const el = document.getElementById('s-vacation-start'); if (el) el.value = p.vacation_start; }
+                        if (p.vacation_end) { const el = document.getElementById('s-vacation-end'); if (el) el.value = p.vacation_end; }
+
+                        // Update badge visibility
+                        const badge = document.getElementById('vacation-status-badge');
+                        if (badge) {
+                            const todayStr = new Date().toISOString().split('T')[0];
+                            const start = p.vacation_start || '';
+                            const end = p.vacation_end || '';
+                            if (start && end && todayStr >= start && todayStr <= end) {
+                                badge.style.display = 'inline-block';
+                            } else {
+                                badge.style.display = 'none';
+                            }
+                        }
+                        calRender();
                     }
-                    if (p.work_start) { const el = document.getElementById('s-work-start'); if (el) el.value = p.work_start; }
-                    if (p.work_end) { const el = document.getElementById('s-work-end'); if (el) el.value = p.work_end; }
-                    if (p.advance_notice_hours) { const el = document.getElementById('s-advance-notice'); if (el) el.value = p.advance_notice_hours; }
+
+                    // Init
                     calRender();
-                }
 
-                // Init
-                calRender();
-
-                // CSS for day-status-btn
-                const calStyle = document.createElement('style');
-                calStyle.textContent = `
+                    // CSS for day-status-btn
+                    const calStyle = document.createElement('style');
+                    calStyle.textContent = `
                     .day-status-btn {
                         flex:1;min-width:120px;padding:8px 14px;border-radius:9px;border:1.5px solid rgba(255,255,255,.12);
                         background:rgba(255,255,255,.05);color:#fff;font-size:12px;font-weight:700;cursor:pointer;
@@ -2232,394 +2339,423 @@
                     }
                     .day-status-btn:hover { background:var(--sc,rgba(255,255,255,.1)); border-color:rgba(255,255,255,.25); }
                 `;
-                document.head.appendChild(calStyle);
-            </script>
+                    document.head.appendChild(calStyle);
+                </script>
 
 
-            <div class="divider"></div>
+                <div class="divider"></div>
 
-            <!-- ═══ PLAN & PAGOS ═══ -->
-            <div class="section" id="sec-plan">
-                <div class="section-title">Plan & Pagos</div>
-                <div class="section-desc">Tu membresía y método de pago.</div>
-                <div class="card">
-                    <div id="plan-chip" class="plan-chip">⭐ Cargando...</div>
-                    <div class="info-row"><span class="info-label">Estado</span><span id="plan-status">—</span></div>
-                    <div class="info-row"><span class="info-label">Próxima renovación</span><span
-                            id="plan-renewal">—</span>
+                <!-- ═══ PLAN & PAGOS ═══ -->
+                <div class="section" id="sec-plan">
+                    <div class="section-title">Plan & Pagos</div>
+                    <div class="section-desc">Tu membresía y método de pago.</div>
+                    <div class="card">
+                        <div id="plan-chip" class="plan-chip">⭐ Cargando...</div>
+                        <div class="info-row"><span class="info-label">Estado</span><span id="plan-status">—</span>
+                        </div>
+                        <div class="info-row"><span class="info-label">Próxima renovación</span><span
+                                id="plan-renewal">—</span>
+                        </div>
                     </div>
-                </div>
-                <div class="card" id="card-section">
-                    <div
-                        style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">
-                        Método de pago</div>
-                    <div id="card-display" style="display:none">
-                        <div class="card-chip-row">
-                            <span class="chip">💳</span>
-                            <div>
-                                <div class="card-num" id="disp-num">•••• •••• •••• ----</div>
-                                <div class="card-meta">Vence: <span id="disp-exp">--/--</span> · <span
-                                        id="disp-holder">--</span></div>
+                    <div class="card" id="card-section">
+                        <div
+                            style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">
+                            Método de pago</div>
+                        <div id="card-display" style="display:none">
+                            <div class="card-chip-row">
+                                <span class="chip">💳</span>
+                                <div>
+                                    <div class="card-num" id="disp-num">•••• •••• •••• ----</div>
+                                    <div class="card-meta">Vence: <span id="disp-exp">--/--</span> · <span
+                                            id="disp-holder">--</span></div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div id="no-card" style="color:var(--muted);font-size:13px;">No hay método de pago configurado.
-                    </div>
-                </div>
-                <div id="upgrade-block" class="upgrade-block" style="display:none">
-                    <h3>Hazte PRO</h3>
-                    <p>Perfil destacado, badge verificado, más visibilidad y acceso a eventos exclusivos de Miami DJ
-                        Beat.</p>
-                    <div class="upgrade-btns">
-                        <a href="./jobs.html?plan=PRO&billing=monthly" class="btn-gold">Mensual</a>
-                        <a href="./jobs.html?plan=PRO&billing=annual" class="btn-outline">Anual</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="divider"></div>
-
-            <!-- ═══ SERVICIOS ═══ -->
-            <div class="section" id="sec-servicios">
-                <div class="section-title">Servicios</div>
-                <div class="section-desc">Apps y servicios activos en tu ecosistema MDJPRO.</div>
-                <div class="card">
-                    <div style="display:flex;align-items:center;gap:14px;padding:8px 0;">
-                        <div
-                            style="width:44px;height:44px;border-radius:12px;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:22px;">
-                            🎧</div>
-                        <div>
-                            <div style="font-weight:700;font-size:14px;">App MDJPRO</div>
-                            <div style="font-size:12px;color:var(--muted);margin-top:2px;">Acceso activo · iOS & Android
-                            </div>
+                        <div id="no-card" style="color:var(--muted);font-size:13px;">No hay método de pago configurado.
                         </div>
-                        <span id="app-badge"
-                            style="margin-left:auto;font-size:11px;font-weight:800;color:var(--gold);background:var(--gold-dim);border:1px solid rgba(197,160,89,0.2);border-radius:50px;padding:4px 12px;">ACTIVO</span>
                     </div>
-                </div>
-                <div class="card">
-                    <div style="display:flex;align-items:center;gap:14px;padding:8px 0;">
-                        <div
-                            style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;font-size:22px;">
-                            📚</div>
-                        <div>
-                            <div style="font-weight:700;font-size:14px;">Manuales & Cursos</div>
-                            <div style="font-size:12px;color:var(--muted);margin-top:2px;">Acceso según tu plan</div>
+                    <div id="upgrade-block" class="upgrade-block" style="display:none">
+                        <h3>Hazte PRO</h3>
+                        <p>Perfil destacado, badge verificado, más visibilidad y acceso a eventos exclusivos de Miami DJ
+                            Beat.</p>
+                        <div class="upgrade-btns">
+                            <a href="./jobs.html?plan=PRO&billing=monthly" class="btn-gold">Mensual</a>
+                            <a href="./jobs.html?plan=PRO&billing=annual" class="btn-outline">Anual</a>
                         </div>
-                        <span id="manual-badge"
-                            style="margin-left:auto;font-size:11px;font-weight:800;color:var(--gold);background:var(--gold-dim);border:1px solid rgba(197,160,89,0.2);border-radius:50px;padding:4px 12px;">ACTIVO</span>
                     </div>
                 </div>
-                <!-- Nuevo: Flujo MDJPRO -->
-                <div class="card">
-                    <div style="display:flex;align-items:center;gap:14px;padding:8px 0;">
-                        <div
-                            style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;font-size:22px;">
-                            📈</div>
-                        <div>
-                            <div style="font-weight:700;font-size:14px;">Flujo Activo</div>
-                            <div style="font-size:12px;color:var(--muted);margin-top:2px;">Métricas y herramientas
-                                financieras
-                            </div>
-                        </div>
-                        <span id="flow-badge"
-                            style="margin-left:auto;font-size:11px;font-weight:800;color:var(--muted);background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:50px;padding:4px 12px;">INACTIVO</span>
-                    </div>
-                </div>
-            </div>
 
-            <div class="divider"></div>
+                <div class="divider"></div>
 
-            <!-- ═══ FACTURACIÓN ═══ -->
-            <div class="section" id="sec-facturacion">
-                <div class="section-title">Facturación</div>
-                <div class="section-desc">Información de facturación para tus recibos, contratos e historial de pagos.
-                </div>
-
-                <!-- Plan activo & método de pago -->
-                <div class="card">
-                    <div
-                        style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">
-                        Plan &amp; Método de Pago
-                    </div>
-
-                    <!-- Cycle selector -->
-                    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
-                        <button type="button" onclick="selectCycle('monthly',this)" class="cycle-btn cycle-active"
-                            id="cycle-monthly">
-                            <div style="font-size:15px;font-weight:900;">Mensual</div>
-                            <div style="font-size:12px;opacity:.7;" id="price-monthly">$29.99 / mes</div>
-                        </button>
-                        <button type="button" onclick="selectCycle('biannual',this)" class="cycle-btn"
-                            id="cycle-biannual">
-                            <div style="font-size:15px;font-weight:900;">6 Meses</div>
-                            <div style="font-size:12px;opacity:.7;" id="price-biannual">$149.99 — ahorra 2 meses</div>
-                        </button>
-                        <button type="button" onclick="selectCycle('annual',this)" class="cycle-btn" id="cycle-annual">
-                            <div style="font-size:15px;font-weight:900;">Anual</div>
-                            <div style="font-size:12px;opacity:.7;" id="price-annual">$279.99 — ahorra 4 meses</div>
-                        </button>
-                    </div>
-
-                    <!-- Current payment method -->
-                    <div
-                        style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
-                        <div style="display:flex;align-items:center;gap:12px;">
+                <!-- ═══ SERVICIOS ═══ -->
+                <div class="section" id="sec-servicios">
+                    <div class="section-title">Servicios</div>
+                    <div class="section-desc">Apps y servicios activos en tu ecosistema MDJPRO.</div>
+                    <div class="card">
+                        <div style="display:flex;align-items:center;gap:14px;padding:8px 0;">
                             <div
-                                style="background:rgba(197,160,89,.15);border:1px solid rgba(197,160,89,.3);border-radius:8px;padding:8px 12px;">
-                                <svg width="22" height="16" viewBox="0 0 24 16" fill="none">
-                                    <rect width="24" height="16" rx="3" fill="rgba(197,160,89,.2)" />
-                                    <rect y="3" width="24" height="4" fill="rgba(197,160,89,.4)" />
-                                    <rect x="2" y="10" width="5" height="2" rx="1" fill="rgba(197,160,89,.7)" />
-                                </svg>
-                            </div>
+                                style="width:44px;height:44px;border-radius:12px;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:22px;">
+                                🎧</div>
                             <div>
-                                <div id="card-display-number"
-                                    style="font-size:14px;font-weight:700;letter-spacing:2px;">
-                                    ••••
-                                    •••• •••• ––––</div>
-                                <div id="card-display-exp" style="font-size:11px;color:var(--muted);margin-top:2px;">Sin
-                                    tarjeta registrada</div>
+                                <div style="font-weight:700;font-size:14px;">App MDJPRO</div>
+                                <div style="font-size:12px;color:var(--muted);margin-top:2px;">Acceso activo · iOS &
+                                    Android
+                                </div>
                             </div>
+                            <span id="app-badge"
+                                style="margin-left:auto;font-size:11px;font-weight:800;color:var(--gold);background:var(--gold-dim);border:1px solid rgba(197,160,89,0.2);border-radius:50px;padding:4px 12px;">ACTIVO</span>
                         </div>
+                    </div>
+                    <div class="card">
+                        <div style="display:flex;align-items:center;gap:14px;padding:8px 0;">
+                            <div
+                                style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;font-size:22px;">
+                                📚</div>
+                            <div>
+                                <div style="font-weight:700;font-size:14px;">Manuales & Cursos</div>
+                                <div style="font-size:12px;color:var(--muted);margin-top:2px;">Acceso según tu plan
+                                </div>
+                            </div>
+                            <span id="manual-badge"
+                                style="margin-left:auto;font-size:11px;font-weight:800;color:var(--gold);background:var(--gold-dim);border:1px solid rgba(197,160,89,0.2);border-radius:50px;padding:4px 12px;">ACTIVO</span>
+                        </div>
+                    </div>
+                    <!-- Nuevo: Flujo MDJPRO -->
+                    <div class="card">
+                        <div style="display:flex;align-items:center;gap:14px;padding:8px 0;">
+                            <div
+                                style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;font-size:22px;">
+                                📈</div>
+                            <div>
+                                <div style="font-weight:700;font-size:14px;">Flujo Activo</div>
+                                <div style="font-size:12px;color:var(--muted);margin-top:2px;">Métricas y herramientas
+                                    financieras
+                                </div>
+                            </div>
+                            <span id="flow-badge"
+                                style="margin-left:auto;font-size:11px;font-weight:800;color:var(--muted);background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:50px;padding:4px 12px;">INACTIVO</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- ═══ FACTURACIÓN ═══ -->
+                <div class="section" id="sec-facturacion">
+                    <div class="section-title">Facturación</div>
+                    <div class="section-desc">Información de facturación para tus recibos, contratos e historial de
+                        pagos.
+                    </div>
+
+                    <!-- Plan activo & método de pago -->
+                    <div class="card">
+                        <div
+                            style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">
+                            Plan &amp; Método de Pago
+                        </div>
+
+                        <!-- Cycle selector -->
+                        <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+                            <button type="button" onclick="selectCycle('monthly',this)" class="cycle-btn cycle-active"
+                                id="cycle-monthly">
+                                <div style="font-size:15px;font-weight:900;">Mensual</div>
+                                <div style="font-size:12px;opacity:.7;" id="price-monthly">$29.99 / mes</div>
+                            </button>
+                            <button type="button" onclick="selectCycle('biannual',this)" class="cycle-btn"
+                                id="cycle-biannual">
+                                <div style="font-size:15px;font-weight:900;">6 Meses</div>
+                                <div style="font-size:12px;opacity:.7;" id="price-biannual">$149.99 — ahorra 2 meses
+                                </div>
+                            </button>
+                            <button type="button" onclick="selectCycle('annual',this)" class="cycle-btn"
+                                id="cycle-annual">
+                                <div style="font-size:15px;font-weight:900;">Anual</div>
+                                <div style="font-size:12px;opacity:.7;" id="price-annual">$279.99 — ahorra 4 meses</div>
+                            </button>
+                        </div>
+
+                        <!-- Current payment method -->
+                        <div
+                            style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <div
+                                    style="background:rgba(197,160,89,.15);border:1px solid rgba(197,160,89,.3);border-radius:8px;padding:8px 12px;">
+                                    <svg width="22" height="16" viewBox="0 0 24 16" fill="none">
+                                        <rect width="24" height="16" rx="3" fill="rgba(197,160,89,.2)" />
+                                        <rect y="3" width="24" height="4" fill="rgba(197,160,89,.4)" />
+                                        <rect x="2" y="10" width="5" height="2" rx="1" fill="rgba(197,160,89,.7)" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div id="card-display-number"
+                                        style="font-size:14px;font-weight:700;letter-spacing:2px;">
+                                        ••••
+                                        •••• •••• ––––</div>
+                                    <div id="card-display-exp"
+                                        style="font-size:11px;color:var(--muted);margin-top:2px;">Sin
+                                        tarjeta registrada</div>
+                                </div>
+                            </div>
+                            <button type="button" onclick="openStripePortal()"
+                                style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;"
+                                onmouseover="this.style.background='rgba(197,160,89,.15)'"
+                                onmouseout="this.style.background='rgba(255,255,255,.08)'">
+                                Cambiar tarjeta
+                            </button>
+                        </div>
+
                         <button type="button" onclick="openStripePortal()"
-                            style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;"
-                            onmouseover="this.style.background='rgba(197,160,89,.15)'"
-                            onmouseout="this.style.background='rgba(255,255,255,.08)'">
-                            Cambiar tarjeta
+                            style="width:100%;background:var(--gold);color:#000;border:none;border-radius:10px;padding:13px;font-weight:900;font-size:14px;cursor:pointer;transition:opacity .2s;letter-spacing:.3px;"
+                            onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                            Gestionar Suscripción &amp; Pagos →
+                        </button>
+                        <div style="font-size:11px;color:rgba(255,255,255,.3);text-align:center;margin-top:8px;">
+                            Administrado de forma segura por Stripe</div>
+                    </div>
+
+                    <!-- Dirección de facturación -->
+                    <div class="card">
+                        <div
+                            style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">
+                            Dirección de Facturación
+                        </div>
+                        <div class="row">
+                            <div class="field">
+                                <label>Nombre completo / Empresa</label>
+                                <input type="text" id="b-name" placeholder="Ej. DJMago305 Entertainment LLC">
+                            </div>
+                            <div class="field">
+                                <label>RFC / EIN / Tax ID</label>
+                                <input type="text" id="b-taxid" placeholder="Número de identificación fiscal">
+                            </div>
+                        </div>
+                        <div class="field" style="margin-top:4px;">
+                            <label>Dirección</label>
+                            <input type="text" id="b-address" placeholder="Ej. 123 SW 8th St, Miami FL 33130">
+                        </div>
+                        <div class="row" style="margin-top:4px;">
+                            <div class="field">
+                                <label>Ciudad</label>
+                                <input type="text" id="b-city" placeholder="Miami">
+                            </div>
+                            <div class="field">
+                                <label>Estado / País</label>
+                                <input type="text" id="b-state" placeholder="FL, USA">
+                            </div>
+                            <div class="field" style="max-width:120px;">
+                                <label>ZIP</label>
+                                <input type="text" id="b-zip" placeholder="33130">
+                            </div>
+                        </div>
+                        <div class="field" style="margin-top:12px;">
+                            <label>Email para recibos</label>
+                            <input type="email" id="b-email" placeholder="facturacion@correo.com">
+                        </div>
+                    </div>
+
+                    <!-- Historial de pagos -->
+                    <div class="card" style="margin-top:16px;">
+                        <div
+                            style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">
+                            Historial de Pagos
+                        </div>
+                        <div id="invoice-list">
+                            <div style="text-align:center;padding:28px;color:rgba(255,255,255,.3);font-size:13px;">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5" style="opacity:.3;margin-bottom:10px;">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <polyline points="14 2 14 8 20 8" />
+                                </svg>
+                                <div>No hay pagos registrados aún</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notas de facturación -->
+                    <div class="card" style="margin-top:16px;">
+                        <div
+                            style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">
+                            Notas para Facturas
+                        </div>
+                        <div class="brand">
+                            <img src="./assets/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img">
+                            <div class="brand-text" style="padding-left:12px;">
+                                <div class="brand-name">Miami DJ Beat LLC</div>
+                                <div class="brand-tagline">Entertainment & Events Corporation</div>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Términos de pago preferido</label>
+                            <select id="b-terms">
+                                <option value="">Selecciona...</option>
+                                <option value="50pct">50% adelanto / 50% al finalizar</option>
+                                <option value="100pct">100% adelanto</option>
+                                <option value="net7">Net 7 días</option>
+                                <option value="net15">Net 15 días</option>
+                                <option value="net30">Net 30 días</option>
+                            </select>
+                        </div>
+                        <div class="field" style="margin-top:10px;">
+                            <label>Nota en facturas (opcional)</label>
+                            <input type="text" id="b-note" placeholder="Ej. Pagos por Zelle / Venmo @djmago305">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- ═══ SEGURIDAD ═══ -->
+                <div class="section" id="sec-seguridad">
+                    <div class="section-title">Seguridad</div>
+                    <div class="section-desc">Protege tu cuenta y tu información financiera.</div>
+
+                    <!-- Security status badges -->
+                    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+                        <div
+                            style="display:flex;align-items:center;gap:8px;background:rgba(29,185,84,.1);border:1px solid rgba(29,185,84,.3);border-radius:10px;padding:8px 14px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1DB954"
+                                stroke-width="2.5">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                            </svg>
+                            <span style="font-size:12px;font-weight:700;color:#1DB954;">Conexión SSL segura</span>
+                        </div>
+                        <div
+                            style="display:flex;align-items:center;gap:8px;background:rgba(29,185,84,.1);border:1px solid rgba(29,185,84,.3);border-radius:10px;padding:8px 14px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1DB954"
+                                stroke-width="2.5">
+                                <rect x="3" y="11" width="18" height="11" rx="2" />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                            <span style="font-size:12px;font-weight:700;color:#1DB954;">Datos cifrados en reposo</span>
+                        </div>
+                        <div
+                            style="display:flex;align-items:center;gap:8px;background:rgba(29,185,84,.1);border:1px solid rgba(29,185,84,.3);border-radius:10px;padding:8px 14px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1DB954"
+                                stroke-width="2.5">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                <polyline points="9 12 11 14 15 10" />
+                            </svg>
+                            <span style="font-size:12px;font-weight:700;color:#1DB954;">PCI DSS via Stripe</span>
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="card">
+                        <div
+                            style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">
+                            Email de cuenta</div>
+                        <div class="field">
+                            <input type="email" id="s-email" placeholder="tu@email.com" disabled
+                                style="opacity:.45;cursor:not-allowed">
+                        </div>
+                        <p style="font-size:12px;color:var(--muted);margin-top:6px;">Para cambiar el email escribe a <a
+                                href="mailto:soporte@miamidjbeat.com"
+                                style="color:var(--gold);">soporte@miamidjbeat.com</a>
+                        </p>
+                    </div>
+
+                    <!-- Cambiar contraseña -->
+                    <div class="card" style="margin-top:16px;">
+                        <div
+                            style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">
+                            Cambiar Contraseña</div>
+                        <div class="row full">
+                            <div class="field">
+                                <label>Nueva contraseña</label>
+                                <input type="password" id="s-pwd" placeholder="Mínimo 8 caracteres" minlength="8">
+                            </div>
+                            <div class="field">
+                                <label>Confirmar contraseña</label>
+                                <input type="password" id="s-pwd2" placeholder="Repite la contraseña">
+                            </div>
+                        </div>
+                        <!-- Password strength indicator -->
+                        <div style="margin-top:8px;">
+                            <div style="display:flex;gap:4px;margin-bottom:4px;" id="pwd-strength-bars">
+                                <div style="height:3px;flex:1;border-radius:2px;background:rgba(255,255,255,.1);"
+                                    id="ps1">
+                                </div>
+                                <div style="height:3px;flex:1;border-radius:2px;background:rgba(255,255,255,.1);"
+                                    id="ps2">
+                                </div>
+                                <div style="height:3px;flex:1;border-radius:2px;background:rgba(255,255,255,.1);"
+                                    id="ps3">
+                                </div>
+                                <div style="height:3px;flex:1;border-radius:2px;background:rgba(255,255,255,.1);"
+                                    id="ps4">
+                                </div>
+                            </div>
+                            <div id="pwd-strength-label" style="font-size:11px;color:var(--muted);"></div>
+                        </div>
+                        <button onclick="changePwd()"
+                            style="margin-top:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:#fff;padding:10px 20px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;">
+                            Actualizar contraseña
                         </button>
                     </div>
 
-                    <button type="button" onclick="openStripePortal()"
-                        style="width:100%;background:var(--gold);color:#000;border:none;border-radius:10px;padding:13px;font-weight:900;font-size:14px;cursor:pointer;transition:opacity .2s;letter-spacing:.3px;"
-                        onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-                        Gestionar Suscripción &amp; Pagos →
-                    </button>
-                    <div style="font-size:11px;color:rgba(255,255,255,.3);text-align:center;margin-top:8px;">
-                        Administrado de forma segura por Stripe</div>
-                </div>
-
-                <!-- Dirección de facturación -->
-                <div class="card">
-                    <div
-                        style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">
-                        Dirección de Facturación
-                    </div>
-                    <div class="row">
-                        <div class="field">
-                            <label>Nombre completo / Empresa</label>
-                            <input type="text" id="b-name" placeholder="Ej. DJMago305 Entertainment LLC">
-                        </div>
-                        <div class="field">
-                            <label>RFC / EIN / Tax ID</label>
-                            <input type="text" id="b-taxid" placeholder="Número de identificación fiscal">
-                        </div>
-                    </div>
-                    <div class="field" style="margin-top:4px;">
-                        <label>Dirección</label>
-                        <input type="text" id="b-address" placeholder="Ej. 123 SW 8th St, Miami FL 33130">
-                    </div>
-                    <div class="row" style="margin-top:4px;">
-                        <div class="field">
-                            <label>Ciudad</label>
-                            <input type="text" id="b-city" placeholder="Miami">
-                        </div>
-                        <div class="field">
-                            <label>Estado / País</label>
-                            <input type="text" id="b-state" placeholder="FL, USA">
-                        </div>
-                        <div class="field" style="max-width:120px;">
-                            <label>ZIP</label>
-                            <input type="text" id="b-zip" placeholder="33130">
-                        </div>
-                    </div>
-                    <div class="field" style="margin-top:12px;">
-                        <label>Email para recibos</label>
-                        <input type="email" id="b-email" placeholder="facturacion@correo.com">
-                    </div>
-                </div>
-
-                <!-- Historial de pagos -->
-                <div class="card" style="margin-top:16px;">
-                    <div
-                        style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">
-                        Historial de Pagos
-                    </div>
-                    <div id="invoice-list">
-                        <div style="text-align:center;padding:28px;color:rgba(255,255,255,.3);font-size:13px;">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="1.5" style="opacity:.3;margin-bottom:10px;">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                <polyline points="14 2 14 8 20 8" />
-                            </svg>
-                            <div>No hay pagos registrados aún</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Notas de facturación -->
-                <div class="card" style="margin-top:16px;">
-                    <div
-                        style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">
-                        Notas para Facturas
-                    </div>
-                    <div class="field">
-                        <label>Términos de pago preferido</label>
-                        <select id="b-terms">
-                            <option value="">Selecciona...</option>
-                            <option value="50pct">50% adelanto / 50% al finalizar</option>
-                            <option value="100pct">100% adelanto</option>
-                            <option value="net7">Net 7 días</option>
-                            <option value="net15">Net 15 días</option>
-                            <option value="net30">Net 30 días</option>
-                        </select>
-                    </div>
-                    <div class="field" style="margin-top:10px;">
-                        <label>Nota en facturas (opcional)</label>
-                        <input type="text" id="b-note" placeholder="Ej. Pagos por Zelle / Venmo @djmago305">
-                    </div>
-                </div>
-            </div>
-
-            <div class="divider"></div>
-
-            <!-- ═══ SEGURIDAD ═══ -->
-            <div class="section" id="sec-seguridad">
-                <div class="section-title">Seguridad</div>
-                <div class="section-desc">Protege tu cuenta y tu información financiera.</div>
-
-                <!-- Security status badges -->
-                <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
-                    <div
-                        style="display:flex;align-items:center;gap:8px;background:rgba(29,185,84,.1);border:1px solid rgba(29,185,84,.3);border-radius:10px;padding:8px 14px;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1DB954" stroke-width="2.5">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                        </svg>
-                        <span style="font-size:12px;font-weight:700;color:#1DB954;">Conexión SSL segura</span>
-                    </div>
-                    <div
-                        style="display:flex;align-items:center;gap:8px;background:rgba(29,185,84,.1);border:1px solid rgba(29,185,84,.3);border-radius:10px;padding:8px 14px;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1DB954" stroke-width="2.5">
-                            <rect x="3" y="11" width="18" height="11" rx="2" />
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        </svg>
-                        <span style="font-size:12px;font-weight:700;color:#1DB954;">Datos cifrados en reposo</span>
-                    </div>
-                    <div
-                        style="display:flex;align-items:center;gap:8px;background:rgba(29,185,84,.1);border:1px solid rgba(29,185,84,.3);border-radius:10px;padding:8px 14px;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1DB954" stroke-width="2.5">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                            <polyline points="9 12 11 14 15 10" />
-                        </svg>
-                        <span style="font-size:12px;font-weight:700;color:#1DB954;">PCI DSS via Stripe</span>
-                    </div>
-                </div>
-
-                <!-- Email -->
-                <div class="card">
-                    <div
-                        style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">
-                        Email de cuenta</div>
-                    <div class="field">
-                        <input type="email" id="s-email" placeholder="tu@email.com" disabled
-                            style="opacity:.45;cursor:not-allowed">
-                    </div>
-                    <p style="font-size:12px;color:var(--muted);margin-top:6px;">Para cambiar el email escribe a <a
-                            href="mailto:soporte@miamidjbeat.com" style="color:var(--gold);">soporte@miamidjbeat.com</a>
-                    </p>
-                </div>
-
-                <!-- Cambiar contraseña -->
-                <div class="card" style="margin-top:16px;">
-                    <div
-                        style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">
-                        Cambiar Contraseña</div>
-                    <div class="row full">
-                        <div class="field">
-                            <label>Nueva contraseña</label>
-                            <input type="password" id="s-pwd" placeholder="Mínimo 8 caracteres" minlength="8">
-                        </div>
-                        <div class="field">
-                            <label>Confirmar contraseña</label>
-                            <input type="password" id="s-pwd2" placeholder="Repite la contraseña">
-                        </div>
-                    </div>
-                    <!-- Password strength indicator -->
-                    <div style="margin-top:8px;">
-                        <div style="display:flex;gap:4px;margin-bottom:4px;" id="pwd-strength-bars">
-                            <div style="height:3px;flex:1;border-radius:2px;background:rgba(255,255,255,.1);" id="ps1">
-                            </div>
-                            <div style="height:3px;flex:1;border-radius:2px;background:rgba(255,255,255,.1);" id="ps2">
-                            </div>
-                            <div style="height:3px;flex:1;border-radius:2px;background:rgba(255,255,255,.1);" id="ps3">
-                            </div>
-                            <div style="height:3px;flex:1;border-radius:2px;background:rgba(255,255,255,.1);" id="ps4">
-                            </div>
-                        </div>
-                        <div id="pwd-strength-label" style="font-size:11px;color:var(--muted);"></div>
-                    </div>
-                    <button onclick="changePwd()"
-                        style="margin-top:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:#fff;padding:10px 20px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;">
-                        Actualizar contraseña
-                    </button>
-                </div>
-
-                <!-- 2FA -->
-                <div class="card" style="margin-top:16px;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-                        <div>
-                            <div style="font-size:13px;font-weight:800;margin-bottom:4px;">Autenticación de 2 Factores
-                                (2FA)</div>
-                            <div style="font-size:12px;color:var(--muted);max-width:360px;line-height:1.5;">Agrega una
-                                capa extra de seguridad. Al activarlo, necesitarás un código de tu celular para entrar.
-                            </div>
-                        </div>
-                        <label class="toggle-switch" id="2fa-toggle">
-                            <input type="checkbox" id="s-2fa" onchange="toggle2FA(this.checked)">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <div id="2fa-status" style="margin-top:10px;font-size:12px;color:var(--muted);">Estado: <span
-                            id="2fa-status-text" style="color:rgba(255,80,80,.8);font-weight:700;">Desactivado</span>
-                    </div>
-                </div>
-
-                <!-- Sesiones activas -->
-                <div class="card" style="margin-top:16px;">
-                    <div
-                        style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;">
-                        Sesión Activa</div>
-                    <div
-                        style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(29,185,84,.07);border:1px solid rgba(29,185,84,.2);border-radius:10px;padding:12px 14px;flex-wrap:wrap;">
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <div
-                                style="width:8px;height:8px;border-radius:50%;background:#1DB954;box-shadow:0 0 6px #1DB954;flex-shrink:0;">
-                            </div>
+                    <!-- 2FA -->
+                    <div class="card" style="margin-top:16px;">
+                        <div
+                            style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
                             <div>
-                                <div style="font-size:13px;font-weight:700;" id="session-device">Este dispositivo</div>
-                                <div style="font-size:11px;color:var(--muted);margin-top:2px;" id="session-time">Sesión
-                                    actual</div>
+                                <div style="font-size:13px;font-weight:800;margin-bottom:4px;">Autenticación de 2
+                                    Factores
+                                    (2FA)</div>
+                                <div style="font-size:12px;color:var(--muted);max-width:360px;line-height:1.5;">Agrega
+                                    una
+                                    capa extra de seguridad. Al activarlo, necesitarás un código de tu celular para
+                                    entrar.
+                                </div>
                             </div>
+                            <label class="toggle-switch" id="2fa-toggle">
+                                <input type="checkbox" id="s-2fa" onchange="toggle2FA(this.checked)">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div id="2fa-status" style="margin-top:10px;font-size:12px;color:var(--muted);">Estado: <span
+                                id="2fa-status-text"
+                                style="color:rgba(255,80,80,.8);font-weight:700;">Desactivado</span>
+                        </div>
+                    </div>
+
+                    <!-- Sesiones activas -->
+                    <div class="card" style="margin-top:16px;">
+                        <div
+                            style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;">
+                            Sesión Activa</div>
+                        <div
+                            style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(29,185,84,.07);border:1px solid rgba(29,185,84,.2);border-radius:10px;padding:12px 14px;flex-wrap:wrap;">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <div
+                                    style="width:8px;height:8px;border-radius:50%;background:#1DB954;box-shadow:0 0 6px #1DB954;flex-shrink:0;">
+                                </div>
+                                <div>
+                                    <div style="font-size:13px;font-weight:700;" id="session-device">Este dispositivo
+                                    </div>
+                                    <div style="font-size:11px;color:var(--muted);margin-top:2px;" id="session-time">
+                                        Sesión
+                                        actual</div>
+                                </div>
+                            </div>
+                            <button onclick="logoutAll()"
+                                style="background:rgba(255,60,60,.12);border:1px solid rgba(255,60,60,.3);color:rgba(255,100,100,.9);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;">
+                                Cerrar sesión
+                            </button>
                         </div>
                         <button onclick="logoutAll()"
-                            style="background:rgba(255,60,60,.12);border:1px solid rgba(255,60,60,.3);color:rgba(255,100,100,.9);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;">
-                            Cerrar sesión
+                            style="width:100%;margin-top:10px;background:none;border:1px solid rgba(255,60,60,.2);color:rgba(255,100,100,.7);border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;">
+                            Cerrar todas las sesiones
                         </button>
                     </div>
-                    <button onclick="logoutAll()"
-                        style="width:100%;margin-top:10px;background:none;border:1px solid rgba(255,60,60,.2);color:rgba(255,100,100,.7);border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;">
-                        Cerrar todas las sesiones
-                    </button>
-                </div>
 
-                <!-- Zona de riesgo -->
-                <div class="danger-box" style="margin-top:16px;">
-                    <div class="danger-label">⚠️ Zona de riesgo</div>
-                    <button class="danger-btn"
-                        onclick="if(confirm('¿Eliminar tu cuenta permanentemente? Esta acción no se puede deshacer.')) deleteAccount()">Eliminar
-                        cuenta permanentemente</button>
+                    <!-- Zona de riesgo -->
+                    <div class="danger-box" style="margin-top:16px;">
+                        <div class="danger-label">⚠️ Zona de riesgo</div>
+                        <button class="danger-btn"
+                            onclick="if(confirm('¿Eliminar tu cuenta permanentemente? Esta acción no se puede deshacer.')) deleteAccount()">Eliminar
+                            cuenta permanentemente</button>
+                    </div>
                 </div>
-            </div>
 
         </main>
     </div>
@@ -3374,6 +3510,37 @@
     </script>
     <!-- Toast Container -->
     <div class="toast" id="toast"></div>
+    <!-- MDJ Assistant Booth (AI Sales Agent) -->
+    <link rel="stylesheet" href="./mdj-assistant.css" />
+    <script src="./mdj-assistant.js"></script>
+    <div id="mdj-assistant-booth">
+        <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
+        <div class="booth-window">
+            <div class="booth-header">
+                <div class="status-dot"></div>
+                <div style="flex: 1;">
+                    <h3>Booth Assistant</h3>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700;">Sales & Negotiation
+                        Expert</div>
+                </div>
+            </div>
+            <div class="booth-messages"></div>
+            <div class="booth-input-area">
+                <input type="text" placeholder="Type your message here..." />
+                <button class="booth-send-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="booth-trigger" title="Talk to Booth Assistant">
+            <div class="avatar-glow"></div>
+            <div style="font-size: 30px; z-index: 10;">🤖</div>
+        </div>
+    </div>
 </body>
 
 </html>

@@ -16,6 +16,13 @@
             --card-bg: #0d1117;
         }
 
+        #sidebar-logo img {
+            width: 150px !important;
+            margin-bottom: 20px !important;
+            border: none !important;
+            background: none !important;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
@@ -573,6 +580,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="../../mdj-assistant.css?v=20260306-1" />
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
         console.log("MDJPRO Mermaid Engine Initializing...");
@@ -1524,7 +1532,8 @@
                             style="color: #007AFF; font-size: 11px; font-weight: 900; letter-spacing: 1px; margin-bottom: 10px; text-transform: uppercase;">
                             ZONA DE EDICIÓN (LIMPIEZA)</div>
                         <p style="font-size: 12px; margin: 0 0 10px 0; color: #fff; opacity: 0.9;">
-                            <strong>Descripción:</strong> 7 zonas de edición + Limpiador Mágico de Emojis.</p>
+                            <strong>Descripción:</strong> 7 zonas de edición + Limpiador Mágico de Emojis.
+                        </p>
                         <p
                             style="font-size: 11px; margin: 0; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">
                             Campos Core:</p>
@@ -1585,9 +1594,11 @@
                         <div
                             style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; font-size: 10px; color: #aaa;">
                             <div style="border: 1px solid rgba(255,255,255,0.05); padding: 8px; border-radius: 4px;">📂
-                                <b>Modo Pausa:</b> Gestión de Carátulas.</div>
+                                <b>Modo Pausa:</b> Gestión de Carátulas.
+                            </div>
                             <div style="border: 1px solid rgba(255,255,255,0.05); padding: 8px; border-radius: 4px;">🎬
-                                <b>Modo Play:</b> Visor MP4 Dinámico.</div>
+                                <b>Modo Play:</b> Visor MP4 Dinámico.
+                            </div>
                         </div>
                     </div>
 
@@ -2437,6 +2448,36 @@
         </section>
         <hr>
     </div>
+    <!-- MDJ Assistant Booth (AI Sales Agent) -->
+    <div id="mdj-assistant-booth">
+        <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
+        <div class="booth-window">
+            <div class="booth-header">
+                <div class="status-dot"></div>
+                <div style="flex: 1;">
+                    <h3>Booth Assistant</h3>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700;">Sales & Negotiation
+                        Expert</div>
+                </div>
+            </div>
+            <div class="booth-messages"></div>
+            <div class="booth-input-area">
+                <input type="text" placeholder="Type your message here..." />
+                <button class="booth-send-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="booth-trigger" title="Talk to Booth Assistant">
+            <div class="avatar-glow"></div>
+            <div style="font-size: 30px; z-index: 10;">🤖</div>
+        </div>
+    </div>
+    <script src="../../mdj-assistant.js?v=20260306-1"></script>
 </body>
 
 </html>

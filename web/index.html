@@ -161,9 +161,9 @@
     <div class="header-top">
       <div class="container">
         <div class="brand">
-          <img src="./assets/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img">
-          <div class="brand-text" style="padding-left:8px; padding-top: 4px;">
-            <div class="brand-name">Miami DJ Beat</div>
+          <img src="./assets/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+          <div class="brand-letters-wrapper">
+            <img src="./assets/logo-transparent Letras.png" alt="Miami DJ Beat Letters" class="brand-letters-img">
           </div>
         </div>
 
@@ -182,9 +182,9 @@
               <span class="caret">▾</span>
             </button>
             <div class="account-menu" id="accountMenu" aria-hidden="true">
-              <a href="./dj-profile.html" class="menu-item" data-i18n="menu-account">Mi Perfil</a>
-              <a href="./account-settings.html" class="menu-item">Configuración</a>
-              <a href="./jobs.html" class="menu-item" data-i18n="menu-jobs">Trabajos</a>
+              <a href="./dj-profile.html" class="menu-item" data-i18n="menu-account">My Profile</a>
+              <a href="./account-settings.html" class="menu-item">Settings</a>
+              <a href="./jobs.html" class="menu-item" data-i18n="menu-jobs">Jobs</a>
               <div class="menu-divider"></div>
               <a href="#" class="menu-item danger" id="logoutBtn" data-i18n="menu-logout">Cerrar Sesión</a>
             </div>
@@ -200,18 +200,18 @@
         <!-- Mobile Menu Overlay -->
         <div class="mobile-overlay" id="mobileMenu">
           <nav class="mobile-nav">
-            <a href="./index.html" class="active" data-i18n="nav-home">Inicio</a>
-            <a href="#services" data-i18n="nav-services">Servicios</a>
-            <a href="./rentals.html" data-i18n="nav-rentals">Servicios de Evento</a>
-            <a href="./dj-tools.html" data-i18n="nav-tools">Herramientas</a>
-            <a href="./jobs.html" data-i18n="nav-jobs">Trabajos</a>
+            <a href="./index.html" class="active" data-i18n="nav-home">Home</a>
+            <a href="#services" data-i18n="nav-services">Services</a>
+            <a href="./rentals.html" data-i18n="nav-rentals">Event Services</a>
+            <a href="./dj-tools.html" data-i18n="nav-tools">Tools</a>
+            <a href="./jobs.html" data-i18n="nav-jobs">Jobs</a>
             <a href="./directory.html">Directory</a>
-            <a href="./find-dj.html" style="color:#c5a059;font-weight:800;">🎧 Encuentra DJ</a>
+            <a href="./find-dj.html" style="color:#c5a059;font-weight:800;">🎧 Find DJ</a>
             <a href="#contact" data-i18n="nav-contact">Contacto</a>
             <a href="login.html" id="header-login-btn-mobile" data-i18n="btn-login"
               style="color:var(--gold); font-weight:800;">Login</a>
             <a href="./dj-profile.html" id="nav-my-profile-mobile"
-              style="display:none; color:var(--gold); font-weight:900;">MI PERFIL</a>
+              style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY PROFILE</a>
           </nav>
         </div>
       </div>
@@ -219,15 +219,15 @@
     <div class="header-bottom">
       <div class="container">
         <nav class="nav top-nav" id="mainNav">
-          <a href="./index.html" class="active" data-i18n="nav-home">Inicio</a>
-          <a href="#services" data-i18n="nav-services">Servicios</a>
-          <a href="./rentals.html" data-i18n="nav-rentals">Servicios de Evento</a>
-          <a href="./find-dj.html" style="color:var(--gold); font-weight:800;">🎧 Talentos</a>
-          <a href="./dj-tools.html" data-i18n="nav-tools">Herramientas</a>
+          <a href="./index.html" class="active" data-i18n="nav-home">Home</a>
+          <a href="#services" data-i18n="nav-services">Services</a>
+          <a href="./rentals.html" data-i18n="nav-rentals">Event Services</a>
+          <a href="./find-dj.html" style="color:var(--gold); font-weight:800;">🎧 Talents</a>
+          <a href="./dj-tools.html" data-i18n="nav-tools">Tools</a>
           <a href="./dj-profile.html?tab=flow" id="nav-flow-link"
-            style="color:var(--gold); display:none; font-weight:800;">Flujo</a>
-          <a href="./jobs.html" data-i18n="nav-jobs">Trabajos</a>
-          <a href="#contact" data-i18n="nav-contact">Contacto</a>
+            style="color:var(--gold); display:none; font-weight:800;">Flow</a>
+          <a href="./jobs.html" data-i18n="nav-jobs">Jobs</a>
+          <a href="#contact" data-i18n="nav-contact">Contact</a>
         </nav>
       </div>
     </div>
@@ -434,7 +434,7 @@
     <!-- ── ¿QUÉ TIPO DE DJ NECESITAS? ───────────────────────── -->
     <section id="dj-types" class="section alt">
       <div class="container">
-        <h2 style="text-align:center;margin-bottom:10px;">🎚️ Tipos de DJ — Clasificación Profesional</h2>
+        <h2 style="text-align:center;margin-bottom:10px;">Tipos de DJ</h2>
         <p
           style="text-align:center;color:var(--muted);margin-bottom:40px;max-width:580px;margin-left:auto;margin-right:auto;line-height:1.6;">
           Antes de tocar un mixer, debes entender algo crítico: no todos los DJs hacen lo mismo. Uno de los errores más
@@ -1139,7 +1139,7 @@
       if (m && d && y && !isNaN(parseInt(m)) && !isNaN(parseInt(d)) && !isNaN(parseInt(y))) {
         window.location.href = `./find-dj.html?date=${y}-${m}-${d}`;
       } else {
-        alert('Por favor selecciona una fecha completa.');
+        alert('Please select a complete date.');
       }
     }
     document.addEventListener('DOMContentLoaded', () => {
@@ -1349,6 +1349,38 @@
   </script>
   <link rel="stylesheet" href="./mdj-assistant.css" />
   <script src="./mdj-assistant.js"></script>
+  <!-- MDJ Assistant Booth (AI Sales Agent) -->
+  <div id="mdj-assistant-booth">
+    <!-- Chat Window -->
+    <div class="booth-window">
+      <div class="booth-header">
+        <div class="status-dot"></div>
+        <div style="flex: 1;">
+          <h3>Booth Assistant</h3>
+          <div style="font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700;">Sales & Negotiation Expert</div>
+        </div>
+      </div>
+      <div class="booth-messages">
+        <!-- Messages will be injected here -->
+      </div>
+      <div class="booth-input-area">
+        <input type="text" placeholder="Type your message here..." />
+        <button class="booth-send-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Trigger Button -->
+    <div class="booth-trigger" title="Talk to Booth Assistant">
+      <div class="avatar-glow"></div>
+      <div style="font-size: 30px; z-index: 10;">🤖</div>
+    </div>
+  </div>
 </body>
 
 </html>

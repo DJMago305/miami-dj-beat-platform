@@ -399,7 +399,7 @@ a:hover {
 .logo-img {
   height: 80px !important;
   width: auto !important;
-  border-radius: 6px;
+  border-radius: 50%;
   filter: brightness(1.15) contrast(1.2);
   padding: 2px;
   position: relative;
@@ -412,28 +412,66 @@ a:hover {
   transform: scale(1.04);
 }
 
-.brand-name {
-  font-family: 'Playfair Display', serif;
-  font-weight: 800;
-  font-size: 32px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  background: linear-gradient(90deg,
-      #c8851e 0%,
-      #f0c040 22%,
-      #fff8d0 48%,
-      #f0c040 74%,
-      #b87318 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 12px rgba(255, 210, 80, 0.5));
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  padding-top: 2px;
+  padding-bottom: 6px;
 }
 
-.brand-tag {
-  gap: 14px;
-  font-size: 14px;
-  color: var(--muted);
+/* Double underline effect from PNG */
+.brand-text::before {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg,
+      transparent 0%,
+      #c8851e 15%,
+      #f0c040 50%,
+      #c8851e 85%,
+      transparent 100%);
+}
+
+/* Imponing Branding Styles */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 100%;
+  position: relative;
+}
+
+.logo-img-eagle {
+  height: 75px;
+  width: auto;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+.brand-letters-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 85px;
+  width: 300px;
+  /* Un poco más de ancho para el logo más grande */
+  overflow: visible;
+  margin-left: -20px;
+  /* Menos negativo = más espacio a la derecha */
+}
+
+.brand-letters-img {
+  height: 240px;
+  /* De 220px a 240px para más presencia */
+  width: auto;
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 /* Mobile Menu Button */
