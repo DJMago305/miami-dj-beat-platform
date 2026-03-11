@@ -5,7 +5,54 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Miami DJ Beat — Verify Certificate</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Montserrat:wght@700;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="./certification.css" />
+    <style>
+        :root {
+            --gold: #c5a059;
+            --gold-bright: #e5c386;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(197, 160, 89, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn.primary {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: #000;
+            font-weight: 900;
+        }
+
+        .badge {
+            border-color: var(--gold);
+            color: var(--gold);
+            font-weight: 900;
+        }
+
+        h1 {
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--gold);
+        }
+
+        .muted {
+            color: #888;
+        }
+    </style>
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
 </head>
 
@@ -126,7 +173,7 @@
                 const { data, error } = await supabaseClient
                     .from("certificates")
                     .select("*")
-                    .eq("cert_id", id)
+                    .eq("cert_number", id)
                     .single();
 
                 if (error || !data) {
@@ -238,7 +285,7 @@
                     : "";
                 $("details").innerHTML = `
                   <div class="kpi">
-                    <strong>DJ:</strong> ${escapeHtml(data.dj_name)}<br>
+                    <strong>DJ:</strong> ${escapeHtml(data.student_name)}<br>
                     <strong>Registry:</strong> ${escapeHtml(reg)}<br>
                     <strong>ID:</strong> ${escapeHtml(id)}<br>
                     <strong>Theory Score:</strong> ${escapeHtml(String(data.theory_score))} (${escapeHtml(String(data.theory_pct))}%)<br>
