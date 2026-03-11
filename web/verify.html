@@ -58,63 +58,105 @@
 
 <body>
     <header class="topbar">
-        <div class="brand">
-            <div class="logoMark">M</div>
-            <div>
-                <div class="brandTitle">MIAMI DJ BEAT</div>
-                <div class="brandSub">Certificate Verification</div>
+        <div class="topbar-inner" style="display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 1200px; margin: 0 auto; height: 100%;">
+            <div class="brand" style="display: flex; align-items: center; gap: 15px;">
+                <img src="./assets/logo-transparent.png" alt="Miami DJ Beat Logo" style="height: 45px; width: auto; filter: drop-shadow(0 0 10px rgba(197,160,89,0.3));">
+                <div class="brand-letters-wrapper" style="display: flex; align-items: center; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px; height: 30px;">
+                    <img src="./assets/logo-transparent Letras.png" alt="Miami DJ Beat" style="height: 60px; width: auto; object-fit: contain;">
+                </div>
             </div>
+            
+            <nav class="nav" style="display: flex; gap: 30px; align-items: center;">
+                <div class="lang-switcher" style="display: flex; gap: 10px; margin-right: 20px;">
+                    <span class="lang-btn active" data-lang="es" style="cursor:pointer; font-size: 11px; font-weight: 800;">ES</span>
+                    <span style="opacity: 0.3; font-size: 11px;">|</span>
+                    <span class="lang-btn" data-lang="en" style="cursor:pointer; font-size: 11px; font-weight: 800;">EN</span>
+                </div>
+                <a class="navLink" href="./index.html" data-i18n="nav-home" style="text-decoration: none; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;">Home</a>
+                <a class="navLink" href="./certification-about.html" style="text-decoration: none; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;">About</a>
+                <a class="navLink active" href="./verify.html" style="text-decoration: none; color: var(--gold); font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;">Verify</a>
+            </nav>
         </div>
-        <nav class="nav">
-            <a class="navLink" href="./index.html">Home</a>
-            <a class="navLink" href="./certification-about.html">About</a>
-            <a class="navLink active" href="./verify.html">Verify</a>
-            <a class="navLink" href="./directory.html">Directory</a>
-        </nav>
     </header>
+
+    <script src="./translations.js"></script>
+    <script src="./i18n.js"></script>
 
     <main class="container">
         <section class="hero card">
-            <h1>Verify a Miami DJ Beat Certificate</h1>
-            <p class="muted">
-                Enter the Certification ID or open a verification link like:
-                <strong>verify.html?id=MDB-YYYYMMDD-XXXX</strong>
+            <h1 data-i18n="cert-verify-title">Verify a Miami DJ Beat Certificate</h1>
+            <p class="muted" data-i18n="cert-verify-sub">
+                Enter the Certification ID or open a verification link.
             </p>
 
             <div class="grid2">
                 <label class="field">
-                    <span>Certification ID</span>
+                    <span data-i18n="cert-label-id">Certification ID</span>
                     <input id="certId" type="text" placeholder="MDB-YYYYMMDD-XXXX" maxlength="25" />
                 </label>
                 <div class="field">
                     <span>&nbsp;</span>
-                    <button id="btnVerify" class="btn primary">Verify</button>
+                    <button id="btnVerify" class="btn primary" data-i18n="cert-btn-verify">Verify</button>
                 </div>
             </div>
         </section>
 
-        <section id="result" class="card hidden">
-            <div class="sectionHeader">
-                <h2>Verification Result</h2>
-                <p class="muted" id="subline"></p>
+        <section id="result" class="card hidden" style="padding: 40px; text-align: center;">
+            <div id="status-valid-header" style="margin-bottom: 30px;">
+                <div data-i18n="cert-status-title" style="font-size: 11px; font-weight: 900; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; margin-bottom: 8px;">Certificate Status</div>
+                <div id="status-badge-text" style="font-size: 52px; font-weight: 900; color: #00ff88; letter-spacing: -1px; text-shadow: 0 0 20px rgba(0,255,136,0.3);">VALID</div>
+                <div style="margin-top: 15px;">
+                    <div style="font-size: 12px; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase;">Miami DJ Beat LLC</div>
+                    <div style="font-size: 10px; font-weight: 800; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px;">Official Credential Registry</div>
+                    <div style="font-size: 9px; font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 4px;">Professional DJ Certification Authority</div>
+                </div>
+                <div style="width: 60px; height: 2px; background: var(--gold); margin: 24px auto;"></div>
             </div>
 
-            <div class="badgeLine">
-                <span id="statusBadge" class="badge">—</span>
-                <span id="idLine" class="scoreLine">—</span>
+            <div class="cert-details-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: left; max-width: 800px; margin: 0 auto;">
+                <div class="cert-field">
+                    <div data-i18n="cert-field-name" style="font-size: 10px; font-weight: 800; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase;">Name</div>
+                    <div id="display-full-name" style="font-size: 20px; font-weight: 700; color: #fff; margin-top: 5px;">—</div>
+                </div>
+                <div class="cert-field">
+                    <div data-i18n="cert-field-artist" style="font-size: 10px; font-weight: 800; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase;">Artist Name</div>
+                    <div id="display-artist-name" style="font-size: 20px; font-weight: 700; color: var(--gold); margin-top: 5px;">—</div>
+                </div>
+                <div class="cert-field">
+                    <div data-i18n="cert-status-theory" style="font-size: 10px; font-weight: 800; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase;">Certification</div>
+                    <div style="font-size: 18px; font-weight: 700; color: #fff; margin-top: 5px;">Certified DJ</div>
+                </div>
+                <div class="cert-field">
+                    <div data-i18n="cert-field-program" style="font-size: 10px; font-weight: 800; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase;">Program</div>
+                    <div style="font-size: 18px; font-weight: 700; color: #fff; margin-top: 5px;">Elite DJ Workflow Masterclass</div>
+                </div>
+                <div class="cert-field">
+                    <div data-i18n="cert-field-date" style="font-size: 10px; font-weight: 800; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase;">Date Issued</div>
+                    <div id="display-date-issued" style="font-size: 18px; font-weight: 700; color: #fff; margin-top: 5px;">—</div>
+                </div>
+                <div class="cert-field">
+                    <div data-i18n="cert-field-issued" style="font-size: 10px; font-weight: 800; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase;">Issued by</div>
+                    <div style="font-size: 18px; font-weight: 700; color: #fff; margin-top: 5px;">Miami DJ Beat LLC</div>
+                </div>
+                <div class="cert-field" id="practical-row" style="display:none;">
+                    <div data-i18n="cert-field-practical" style="font-size: 10px; font-weight: 800; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase;">Practical Assessment</div>
+                    <div id="practical-val" style="font-size: 18px; font-weight: 700; color: #ffa500; margin-top: 5px;">Pending ⏳</div>
+                </div>
+                <div class="cert-field" style="grid-column: span 2;">
+                    <div data-i18n="cert-field-hash" style="font-size: 10px; font-weight: 800; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase;">System Security Signature (Hash)</div>
+                    <div id="display-security-hash" style="font-size: 14px; font-family: monospace; font-weight: 700; color: var(--gold); margin-top: 5px; opacity: 0.8; letter-spacing: 2px;">—</div>
+                </div>
             </div>
 
-            <div id="statusMessage" class="kpi" style="margin-top:12px; display:none;"></div>
+            <div style="margin-top: 50px;">
+                <div id="id-badge" style="display: inline-block; padding: 8px 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; font-family: monospace; font-size: 14px; color: var(--muted);">ID: —</div>
+            </div>
 
-            <div id="aboutLink" style="margin-top:12px; display:none;">
-                <a class="btn secondary" href="./certification-about.html">
+            <div id="aboutLink" style="margin-top: 30px;">
+                <a class="btn secondary" href="./certification-about.html" style="font-size: 12px; color: var(--gold); text-decoration: none; border: 1px solid var(--gold); padding: 10px 20px; border-radius: 50px;">
                     ¿Qué significa esta certificación?
                 </a>
             </div>
-
-            <div class="divider"></div>
-
-            <div id="details" class="feedback"></div>
         </section>
 
         <footer class="footer muted">
@@ -147,7 +189,7 @@
 
             async function verify() {
                 const id = $("certId").value.trim();
-                const ok = /^MDB-\d{8}-[0-9A-Z]{4}$/.test(id);
+                const ok = /^MDB-\d{4}-[0-9A-Z]+$/.test(id);
 
                 $("result").classList.remove("hidden");
                 $("aboutLink").style.display = "block";
@@ -257,43 +299,64 @@
                 }
 
                 // 4) NORMAL ───────────────────────────────────────
-                $("statusBadge").textContent = graduated ? "VERIFIED — GRADUADO"
-                    : preGrad ? "VERIFIED — PRE-GRADUADO"
-                        : "RECORDED — THEORY FAILED";
-                $("statusBadge").style.borderColor = graduated ? "var(--good)"
-                    : preGrad ? "var(--warn)" : "var(--bad)";
-                $("subline").textContent = "Official Miami DJ Beat record found.";
+                const statusBox = $("status-badge-text");
+                const headerText = document.querySelector("#status-valid-header div");
+                const practicalRow = document.getElementById('practical-row');
+                const practicalVal = document.getElementById('practical-val');
+                
+                const l = i18n ? i18n.currentLang : 'en';
+                const lang = translations[l];
 
-                supabaseClient.rpc("increment_verify_hits", { p_cert_id: id })
-                    .then(({ error }) => { if (error) console.warn("verify_hits RPC:", error); });
-
-                const statusBox = $("statusMessage");
-                statusBox.style.display = "block";
                 if (graduated) {
-                    statusBox.innerHTML = `<strong style="color:var(--good);">Apto para operación profesional en cabina real.</strong>
-                        <div class="muted" style="margin-top:6px;">Cumple estándar Miami DJ Beat en teoría y práctica.</div>`;
+                    statusBox.textContent = lang["cert-status-valid-pro"];
+                    statusBox.style.color = "#00ff88";
+                    statusBox.style.textShadow = "0 0 20px rgba(0,255,136,0.3)";
+                    headerText.textContent = lang["cert-status-certified"];
+                    
+                    if (practicalRow && practicalVal) {
+                        practicalRow.style.display = 'block';
+                        practicalVal.textContent = lang["cert-practical-approved"];
+                        practicalVal.style.color = '#00ff88';
+                    }
                 } else if (preGrad) {
-                    statusBox.innerHTML = `<strong style="color:var(--warn);">Conocimiento validado.</strong>
-                        <div class="muted" style="margin-top:6px;">Pendiente evaluación práctica en cabina física.</div>`;
+                    statusBox.textContent = "IN PROGRESS";
+                    statusBox.style.color = "var(--gold)";
+                    statusBox.style.textShadow = "0 0 20px rgba(197,160,89,0.3)";
+                    headerText.textContent = lang["cert-status-theory"];
+
+                    if (practicalRow && practicalVal) {
+                        practicalRow.style.display = 'block';
+                        practicalVal.textContent = lang["cert-practical-pending"];
+                        practicalVal.style.color = '#ffa500';
+                    }
                 } else {
-                    statusBox.innerHTML = `<strong style="color:var(--bad);">No alcanza el estándar de certificación.</strong>
-                        <div class="muted" style="margin-top:6px;">Requiere formación adicional antes de presentarse como DJ profesional certificado.</div>`;
+                    statusBox.textContent = "NOT CERTIFIED";
+                    statusBox.style.color = "#ff4444";
+                    statusBox.style.textShadow = "0 0 20px rgba(255,68,68,0.3)";
+                    headerText.textContent = lang["cert-status-result"];
                 }
 
-                const expLine = expiresAt
-                    ? `Active until: <strong>${escapeHtml(expiresAt.toLocaleString())}</strong><br>`
-                    : "";
-                $("details").innerHTML = `
-                  <div class="kpi">
-                    <strong>DJ:</strong> ${escapeHtml(data.student_name)}<br>
-                    <strong>Registry:</strong> ${escapeHtml(reg)}<br>
-                    <strong>ID:</strong> ${escapeHtml(id)}<br>
-                    <strong>Theory Score:</strong> ${escapeHtml(String(data.theory_score))} (${escapeHtml(String(data.theory_pct))}%)<br>
-                    ${expLine}
-                    <strong>Status:</strong> ${graduated ? "GRADUADO (PRO)" : preGrad ? "PRE-GRADUADO" : "NOT CERTIFIED"}<br>
-                    <span class="muted">Issued: ${new Date(data.created_at).toLocaleString()}</span>
-                  </div>
-                `;
+                $("display-full-name").textContent = data.student_name || "—";
+                $("display-artist-name").textContent = data.dj_name || "—";
+                
+                const issuedDate = new Date(data.created_at);
+                $("display-date-issued").textContent = issuedDate.toLocaleDateString('en-US', { 
+                    year: 'numeric', month: 'long', day: 'numeric' 
+                });
+                
+                const idBox = $("id-badge");
+                if (idBox) idBox.textContent = `ID: ${id}`;
+
+                // Display Security Hash (Paso 2)
+                if (data.security_hash) {
+                    $("display-security-hash").textContent = data.security_hash;
+                } else {
+                    // Fallback for older certs
+                    const studentId = data.student_id_mdjb || "STUDENT";
+                    const hashInput = `${id}-${studentId}-MDB-SALT-2025`;
+                    const securityHash = btoa(hashInput).substring(0, 16).toUpperCase();
+                    $("display-security-hash").textContent = securityHash;
+                }
             }
 
             document.addEventListener("DOMContentLoaded", () => {

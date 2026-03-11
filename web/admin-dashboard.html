@@ -167,6 +167,7 @@
             <aside class="sidebar">
                 <a href="#leads" class="side-link active">🎯 Leads de Clientes</a>
                 <a href="#djs" class="side-link">🎧 Gestión de DJs</a>
+                <a href="#registry-section" class="side-link" onclick="loadCertificationRegistry()">📜 Registro de Certificados</a>
                 <a href="#analytics" class="side-link" onclick="loadAnalytics()">📊 Analytics</a>
                 <a href="#content" class="side-link">🖼️ Contenido y Precios</a>
                 <a href="#apps" class="side-link">📦 Hosting de Apps</a>
@@ -193,6 +194,25 @@
                     <h3>Solicitudes de DJ Pendientes</h3>
                     <div id="djs-container">
                         <div class="loading-spinner">Cargando aplicaciones...</div>
+                    </div>
+                </div>
+
+                <!-- Certification Registry Section -->
+                <div class="admin-card" id="registry-section" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <div>
+                            <h3 style="margin:0;">📜 Libro Oficial de Certificados</h3>
+                            <p class="fineprint">Registro institucional de graduados MDJPRO</p>
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <input type="text" id="registry-search" placeholder="Buscar por ID o Nombre..." 
+                                style="padding:8px 15px; border-radius:50px; border:1px solid var(--line); background:rgba(255,255,255,0.05); color:#fff; font-size:12px;"
+                                oninput="filterRegistry()">
+                            <button class="btn secondary small" onclick="loadCertificationRegistry()">↺ Actualizar</button>
+                        </div>
+                    </div>
+                    <div id="registry-container">
+                        <div class="loading-spinner">Cargando registro oficial...</div>
                     </div>
                 </div>
 
@@ -1163,14 +1183,18 @@
                     this.classList.add('active');
                     const target = this.getAttribute('href')?.replace('#', '');
                     if (!target) return;
-                    // Show analytics, hide others on #analytics click
-                    const analyticsEl = document.getElementById('analytics');
-                    if (target === 'analytics' && analyticsEl) {
-                        analyticsEl.style.display = 'block';
-                        // Scroll to it
+                    // Show target section, hide others
+                    const sections = ['leads', 'djs', 'registry-section', 'analytics', 'content', 'apps'];
+                    sections.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (!el) return;
+                        el.style.display = (id === target) ? 'block' : 'none';
+                    });
+
+                    // Special scroll behavior for analytics (if kept in view)
+                    if (target === 'analytics') {
+                        const analyticsEl = document.getElementById('analytics');
                         setTimeout(() => analyticsEl.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
-                    } else if (analyticsEl) {
-                        analyticsEl.style.display = 'none';
                     }
                 });
             });
@@ -1337,6 +1361,90 @@
                     console.error('Analytics error:', e);
                     if (kpis) kpis.innerHTML = '<div class="fineprint" style="color:#ff5555;grid-column:1/-1;text-align:center;padding:20px;">Error cargando analytics.</div>';
                 }
+            };
+
+            // ── Certification Registry ────────────────────────
+            window.loadCertificationRegistry = async function() {
+                const db = window.getSupabaseClient();
+                if (!db) return;
+
+                const container = document.getElementById('registry-container');
+                container.innerHTML = '<div class="loading-spinner">Cargando registro oficial...</div>';
+
+                const { data: certs, error } = await db
+                    .from('certificates')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    container.innerHTML = `<div class="fineprint" style="color:#ff5555;">Error: ${error.message}</div>`;
+                    return;
+                }
+
+                window._fullRegistryData = certs || [];
+                renderRegistryTable(window._fullRegistryData);
+            };
+
+            window.renderRegistryTable = (certs) => {
+                const container = document.getElementById('registry-container');
+                if (!certs || certs.length === 0) {
+                    container.innerHTML = '<p class="fineprint">No hay certificados registrados aún.</p>';
+                    return;
+                }
+
+                container.innerHTML = `
+                    <table style="font-size:12px;">
+                        <thead>
+                            <tr>
+                                <th data-i18n="cert-field-name">Name</th>
+                                <th data-i18n="cert-field-artist">Artist Name</th>
+                                <th data-i18n="cert-label-id">Certificate ID</th>
+                                <th data-i18n="cert-field-date">Date Issued</th>
+                                <th data-i18n="dash-status-label">Status</th>
+                                <th data-i18n="cert-field-score">Score</th>
+                                <th data-i18n="cert-field-practical">Practical</th>
+                                <th data-i18n="cert-field-actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${certs.map(c => {
+                                const statusColor = c.graduated ? '#00ff88' : c.pre_graduated ? 'var(--gold)' : '#ff5555';
+                                const statusLabel = c.graduated ? (translations[lang]['cert-status-graduated'] || 'PRO VERIFIED') : c.pre_graduated ? (translations[lang]['cert-status-theory'] || 'THEORY OK') : (translations[lang]['cert-status-failed'] || 'FAILED');
+                                const practicalLabel = c.graduated ? (translations[lang]['cert-practical-approved'] || '✅ YES') : (translations[lang]['cert-practical-pending'] || '⏳ PENDING');
+                                
+                                return `
+                                    <tr>
+                                        <td><strong>${c.student_name}</strong></td>
+                                        <td><span style="color:var(--gold); font-weight:700;">${c.dj_name || '—'}</span></td>
+                                        <td style="font-family:monospace; font-size:11px;">${c.cert_number}</td>
+                                        <td>${new Date(c.created_at).toLocaleDateString()}</td>
+                                        <td><span class="status-badge" style="border:1px solid ${statusColor}; color:${statusColor}; background:rgba(0,0,0,0.2);">${statusLabel}</span></td>
+                                        <td><strong>${c.theory_pct}%</strong></td>
+                                        <td>${practicalLabel}</td>
+                                        <td>
+                                            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                                <a href="./dj-profile.html?id=${c.user_id || ''}" class="btn-pill" style="text-decoration:none;">${translations[lang]['nav-profile'] || 'Profile'}</a>
+                                                <a href="./verify.html?id=${c.cert_number}" class="btn-pill" style="text-decoration:none; border-color:rgba(255,255,255,0.2);" target="_blank">${translations[lang]['cert-btn-verify'] || 'Verify'}</a>
+                                                ${!c.graduated ? `<a href="./dj-profile.html?id=${c.user_id || ''}&evaluate=true" class="btn-pill gold" style="text-decoration:none;">${translations[lang]['cert-eval-btn-evaluate'] || 'Evaluate Practical'}</a>` : ''}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                `;
+            };
+
+            window.filterRegistry = () => {
+                const q = document.getElementById('registry-search')?.value.toLowerCase() || '';
+                const filtered = (window._fullRegistryData || []).filter(c => {
+                    const sName = (c.student_name || '').toLowerCase();
+                    const aName = (c.dj_name || '').toLowerCase();
+                    const cNum = (c.cert_number || '').toLowerCase();
+                    return sName.includes(q) || aName.includes(q) || cNum.includes(q);
+                });
+                renderRegistryTable(filtered);
             };
 
         </script>

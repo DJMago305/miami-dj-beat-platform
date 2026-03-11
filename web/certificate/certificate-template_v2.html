@@ -11,6 +11,7 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@700;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="./certificate.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 </head>
 
 <body>
@@ -72,14 +73,18 @@
                     <div class="course-description">
                         <p class="lorem" id="course-title">ELITE DJ WORKFLOW<br>MASTERCLASS</p>
                         <p class="description-text" id="course-desc">
-                            Awarded upon the successful completion of all theoretical examinations and artistic
-                            performance
-                            assessments, demonstrating professional competence in Miami DJ Beat standards and
-                            performance
-                            practices.
+                            Granting the professional title of <strong>CERTIFIED DJ</strong> upon the successful completion 
+                            of all theoretical examinations and artistic performance assessments, 
+                            demonstrating professional competence in Miami DJ Beat standards.
                         </p>
                     </div>
                 </div>
+
+                <div class="official-seal-wrap">
+                    <img src="../assets/certified-badge.png" class="official-seal" alt="Official Certification Seal">
+                </div>
+
+                <div class="qr-code-wrap" id="qrcode"></div>
 
                 <footer class="cert-footer">
                     <div class="footer-grid">
@@ -105,6 +110,11 @@
                         <div class="meta-row highlight-meta">
                             <span class="meta-label">STUDENT ID / CÉDULA:</span>
                             <span class="meta-val" id="student-id-display">MDJB-2574</span>
+                        </div>
+
+                        <div class="meta-row highlight-meta">
+                            <span class="meta-label">SECURITY HASH:</span>
+                            <span class="meta-val" id="security-hash-display" style="font-family: monospace; font-size: 9pt; opacity: 0.7;">—</span>
                         </div>
 
                         <div class="meta-legal-info">
@@ -139,10 +149,30 @@
                 }
             }
             const certNo = params.get('cert_no') || '2025-001';
-            const link = document.getElementById('cert-link');
             // Ensure consistency in verification URL
-            link.href = `./verify.html?id=${certNo}`;
+            const verifyUrl = `https://miamidjbeat.com/verify.html?id=${certNo}`;
+            link.href = verifyUrl;
             link.textContent = `miamidjbeat.com/verify?id=${certNo}`;
+
+            // Generate Security Hash (Simulated Cryptographic Signature)
+            const studentId = params.get('id') || 'STUDENT';
+            const hashInput = `${certNo}-${studentId}-MDB-SALT-2025`;
+            const securityHash = btoa(hashInput).substring(0, 16).toUpperCase();
+            document.getElementById('security-hash-display').textContent = securityHash;
+
+            // Generate QR Code
+            const qrContainer = document.getElementById('qrcode');
+            if (qrContainer) {
+                qrContainer.innerHTML = '';
+                new QRCode(qrContainer, {
+                    text: verifyUrl,
+                    width: 128,
+                    height: 128,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+            }
         }
 
         function scaleCertificate() {

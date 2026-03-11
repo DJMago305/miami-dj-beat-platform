@@ -309,6 +309,44 @@ body {
     width: 100%;
 }
 
+.official-seal-wrap {
+    position: absolute;
+    bottom: 50mm;
+    right: 35mm;
+    width: 38mm;
+    height: 38mm;
+    z-index: 20;
+    pointer-events: none;
+}
+
+.official-seal {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    opacity: 0.95;
+}
+
+.qr-code-wrap {
+    position: absolute;
+    bottom: 50mm;
+    left: 35mm;
+    width: 25mm;
+    height: 25mm;
+    z-index: 20;
+    background: #fff;
+    padding: 2mm;
+    border: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qr-code-wrap canvas, .qr-code-wrap img {
+    width: 100% !important;
+    height: 100% !important;
+}
+
 .cert-meta-container {
     width: 100%;
     display: flex;
@@ -424,7 +462,6 @@ body {
         background-image: url('./assets/Certificate Transparent.png') !important;
         background-size: cover !important;
         -webkit-print-color-adjust: exact !important;
-        color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
 

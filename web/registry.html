@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Graduate Registry — Miami DJ Beat LLC</title>
+    <link rel="stylesheet" href="./styles.css">
+    <style>
+        :root {
+            --gold: #c5a059;
+            --panel: #0a0a0a;
+            --line: rgba(255,255,255,0.1);
+        }
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+        }
+        .registry-container {
+            max-width: 1000px;
+            margin: 60px auto;
+            padding: 40px;
+            background: var(--panel);
+            border-radius: 24px;
+            border: 1px solid var(--line);
+            text-align: center;
+        }
+        .header-institutional {
+            margin-bottom: 50px;
+        }
+        .registry-title {
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            color: var(--gold);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+        .registry-main-title {
+            font-size: 42px;
+            font-weight: 900;
+            margin-bottom: 8px;
+        }
+        .registry-list {
+            margin-top: 40px;
+            text-align: left;
+        }
+        .registry-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--line);
+            transition: background 0.3s;
+        }
+        .registry-item:hover {
+            background: rgba(255,255,255,0.02);
+        }
+        .dj-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+        }
+        .dj-title {
+            font-size: 12px;
+            color: var(--gold);
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+        .status-pill {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 900;
+            background: rgba(0,255,136,0.1);
+            color: #00ff88;
+            border: 1px solid rgba(0,255,136,0.3);
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar" style="padding: 20px 0; border-bottom: 1px solid var(--line);">
+        <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 40px;">
+            <img src="./assets/logo-transparent.png" alt="Logo" style="height: 40px;">
+            <div class="lang-switcher" style="display: flex; gap: 10px;">
+                <span class="lang-btn active" data-lang="es" style="cursor:pointer; font-size: 11px; font-weight: 800;">ES</span>
+                <span style="opacity: 0.3; font-size: 11px;">|</span>
+                <span class="lang-btn" data-lang="en" style="cursor:pointer; font-size: 11px; font-weight: 800;">EN</span>
+            </div>
+        </div>
+    </header>
+
+    <script src="./translations.js"></script>
+    <script src="./i18n.js"></script>
+
+    <main class="container">
+        <div class="registry-container">
+            <div class="header-institutional">
+                <div class="registry-title" data-i18n="cert-registry-title">Official Graduate Registry</div>
+                <div class="registry-main-title">Miami DJ Beat LLC</div>
+                <div style="width: 50px; height: 2px; background: var(--gold); margin: 24px auto;"></div>
+                <p class="muted" data-i18n="cert-registry-sub">Listado oficial de DJs certificados por los estándares de excelencia MDJPRO.</p>
+            </div>
+
+            <div id="registry-list" class="registry-list">
+                <div style="text-align:center; padding:40px; opacity:0.5;" data-i18n="cert-registry-loading">Cargando registro oficial...</div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const supabase = window.getSupabaseClient();
+            const list = document.getElementById('registry-list');
+            
+            const { data: certs, error } = await supabase
+                .from('certificates')
+                .select('*')
+                .eq('graduated', true)
+                .order('student_name', { ascending: true });
+
+            if (certs && certs.length > 0) {
+                list.innerHTML = certs.map(c => `
+                    <div class="registry-item">
+                        <div>
+                            <div class="dj-name">${c.dj_name || c.student_name}</div>
+                            <div class="dj-title">Certified DJ</div>
+                        </div>
+                        <div class="status-pill">VALID — ${new Date(c.created_at).getFullYear()}</div>
+                    </div>
+                `).join('');
+            } else {
+                const emptyMsg = (translations[i18n.currentLang] || translations.en)["cert-registry-empty"];
+                list.innerHTML = `<div style="text-align:center; padding:40px; opacity:0.5;">${emptyMsg}</div>`;
+            }
+        });
+    </script>
+</body>
+</html>

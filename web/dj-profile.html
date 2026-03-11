@@ -423,6 +423,62 @@
         }
 
         /* Dashboard/Flow styles from original dashboard */
+        /* ── Certification Badge ── */
+        .cert-badge-block {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, rgba(197, 160, 89, 0.1), rgba(197, 160, 89, 0.03));
+            border: 1px solid rgba(197, 160, 89, 0.35);
+            border-radius: 16px;
+            padding: 12px 18px;
+            margin-top: 15px;
+            margin-right: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .cert-badge-block:hover {
+            border-color: var(--gold);
+            background: rgba(197, 160, 89, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .cert-badge-icon {
+            font-size: 24px;
+        }
+
+        .cert-badge-info {
+            text-align: left;
+        }
+
+        .cert-badge-title {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--gold);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .cert-badge-id {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 2px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .cert-badge-status {
+            font-size: 10px;
+            color: #00ff88;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
         .admin-card {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -733,12 +789,115 @@
         }
 
         /* ── SIDEBAR ── */
-        .sidebar-stack {
-            position: sticky;
-            top: 100px;
+        .reserve-card {
+            background: rgba(197, 160, 89, 0.04);
+            border: 1px solid rgba(197, 160, 89, 0.18);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .assessment-card {
+            background: linear-gradient(135deg, rgba(197, 160, 89, 0.12), rgba(0, 0, 0, 0.4));
+            border: 2px solid var(--gold);
+            border-radius: 16px;
+            padding: 24px;
+            display: none; /* Shown for managers */
+        }
+
+        .assessment-title {
+            font-size: 14px;
+            font-weight: 900;
+            color: var(--gold);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .assessment-field {
+            margin-bottom: 18px;
+        }
+
+        .assessment-field label {
+            display: block;
+            font-size: 10px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .assessment-field input[type="range"] {
+            width: 100%;
+            accent-color: var(--gold);
+            cursor: pointer;
+        }
+
+        .assessment-score-display {
             display: flex;
-            flex-direction: column;
-            gap: 16px;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 4px;
+        }
+
+        .score-val {
+            font-size: 14px;
+            font-weight: 900;
+            color: #fff;
+        }
+
+        .assessment-total {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .avg-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+
+        .avg-value {
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--gold);
+        }
+
+        .assessment-notes {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            color: #fff;
+            font-size: 13px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+            margin-bottom: 20px;
+        }
+
+        .assessment-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn-fail {
+            background: rgba(255, 80, 80, 0.1);
+            border: 1px solid rgba(255, 80, 80, 0.4);
+            color: #ff5555;
+        }
+
+        .btn-pass {
+            background: var(--gold);
+            color: #000;
         }
 
         .reserve-card {
@@ -1145,7 +1304,7 @@
                             <span class="caret">▾</span>
                         </button>
                         <div class="account-menu" id="accountMenu">
-                            <a href="./account-settings.html" class="menu-item">Configuración</a>
+                            <a href="./index.html" class="menu-item">Inicio</a>
                             <div class="menu-divider"></div>
                             <a href="#" class="menu-item danger" id="logoutBtn">Cerrar Sesión</a>
                         </div>
@@ -1175,7 +1334,8 @@
             <a href="./dj-dashboard.html" class="dj-tab-btn">Agenda</a>
             <button class="dj-tab-btn" onclick="switchProfileTab('flow')">💰 Flujo de Caja</button>
             <button class="dj-tab-btn" onclick="switchProfileTab('software')">Gestión MDJPRO</button>
-            <a href="./account-settings.html" class="dj-tab-btn">Configuración</a>
+            <a href="./courses.html" class="dj-tab-btn">Academia</a>
+            <a href="./index.html" class="dj-tab-btn">Home</a>
         </div>
     </nav>
 
@@ -1241,13 +1401,35 @@
                         </button>
                     </div>
 
+                    <!-- Verified Certification Badge -->
+                    <div id="pub-cert-badge" style="display:none; margin-top: 15px;">
+                        <a id="cert-verify-link" href="#" style="text-decoration:none; display:inline-block;">
+                            <div class="cert-badge-block">
+                                <span class="cert-badge-icon">🏆</span>
+                                <div class="cert-badge-info">
+                                    <div class="cert-badge-title" id="display-cert-title">Miami DJ Beat Certified DJ</div>
+                                    <div class="cert-badge-id" id="display-cert-id">Credential ID: MDB-2025-001</div>
+                                    <div class="cert-badge-status">
+                                        <span id="display-cert-status-label">Verified Credential</span>
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
                     <!-- Founder badge -->
-                    <div id="pub-founder-badge" style="display:none;">
+                    <div id="pub-founder-badge" style="display:none; margin-top: 15px;">
                         <div class="founder-badge">
                             <span style="font-size:20px;">🏆</span>
                             <div>
                                 <div class="f-title">FOUNDING MEMBER</div>
-                                <div class="f-sub" id="pub-member-number">Miami DJ Beat Elite · #1 of 10</div>
+                                <div class="f-sub" id="pub-member-number" style="display:flex; align-items:center; gap:8px;">
+                                    <img src="./assets/certified-badge.png" style="width:24px; height:24px; object-fit:contain;" alt="Certified Badge">
+                                    <span>Miami DJ Beat Certified · #1 of 10</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1328,6 +1510,86 @@
                         onmouseout="this.style.transform='';this.style.boxShadow=''">CHECK ★</button>
                     <div id="dj-avail-result"
                         style="margin-top:10px;font-size:12px;font-weight:700;text-align:center;min-height:18px;"></div>
+                </div>
+
+                <!-- Practical Assessment (Manager Only) -->
+                <div class="assessment-card" id="manager-assessment-card">
+                    <div class="assessment-title" data-i18n="cert-practical-eval-title">Practical Assessment (Manager Only)</div>
+                    
+                    <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="font-size: 9px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;" data-i18n="cert-eval-dj-label">Evaluating DJ:</div>
+                        <div id="eval-dj-name" style="font-size: 14px; font-weight: 800; color: #fff;">...</div>
+                        <div id="eval-cert-id" style="font-size: 10px; color: var(--gold); margin-top: 2px;">...</div>
+                    </div>
+
+                    <div id="assessment-form">
+                        <div class="assessment-field">
+                            <label data-i18n="cert-eval-tech">Technique</label>
+                            <input type="range" id="score-tech" min="1" max="10" step="0.5" value="5" oninput="updateAverage()">
+                            <div class="assessment-score-display">
+                                <span class="score-val" id="val-tech">5.0</span>
+                            </div>
+                        </div>
+
+                        <div class="assessment-field">
+                            <label data-i18n="cert-eval-beatmatching">Beatmatching</label>
+                            <input type="range" id="score-beat" min="1" max="10" step="0.5" value="5" oninput="updateAverage()">
+                            <div class="assessment-score-display">
+                                <span class="score-val" id="val-beat">5.0</span>
+                            </div>
+                        </div>
+
+                        <div class="assessment-field">
+                            <label data-i18n="cert-eval-selection">Selection</label>
+                            <input type="range" id="score-select" min="1" max="10" step="0.5" value="5" oninput="updateAverage()">
+                            <div class="assessment-score-display">
+                                <span class="score-val" id="val-select">5.0</span>
+                            </div>
+                        </div>
+
+                        <div class="assessment-field">
+                            <label data-i18n="cert-eval-crowd">Crowd Reading</label>
+                            <input type="range" id="score-crowd" min="1" max="10" step="0.5" value="5" oninput="updateAverage()">
+                            <div class="assessment-score-display">
+                                <span class="score-val" id="val-crowd">5.0</span>
+                            </div>
+                        </div>
+
+                        <div class="assessment-field">
+                            <label data-i18n="cert-eval-presence">Presence</label>
+                            <input type="range" id="score-presence" min="1" max="10" step="0.5" value="5" oninput="updateAverage()">
+                            <div class="assessment-score-display">
+                                <span class="score-val" id="val-presence">5.0</span>
+                            </div>
+                        </div>
+
+                        <div class="assessment-total">
+                            <div class="avg-label" data-i18n="cert-eval-avg-label">AVERAGE SCORE</div>
+                            <div class="avg-value" id="avg-total">5.0</div>
+                        </div>
+
+                        <textarea id="assessment-notes" class="assessment-notes" placeholder="Instructor Notes (Required)..." data-i18n-placeholder="cert-eval-notes-placeholder"></textarea>
+
+                        <div class="assessment-actions">
+                            <button class="btn btn-fail" onclick="submitAssessment('FAIL')" data-i18n="cert-eval-btn-fail">FAIL</button>
+                            <button class="btn btn-pass" onclick="submitAssessment('PASS')" data-i18n="cert-eval-btn-approve">APPROVE</button>
+                        </div>
+                    </div>
+
+                    <div id="assessment-success" style="display:none; text-align:center; padding: 20px 0;">
+                        <div style="font-size: 40px; margin-bottom: 15px;">✅</div>
+                        <div style="color: var(--gold); font-weight: 800;" data-i18n="cert-practical-approved">Assessment Approved</div>
+                        <p style="font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 8px;" data-i18n="cert-practical-already">This DJ is already fully certified.</p>
+                    </div>
+
+                    <div id="assessment-blocked" style="display:none; text-align:center; padding: 20px 0;">
+                        <div style="font-size: 40px; margin-bottom: 15px;">⏳</div>
+                        <div style="color: #ff5555; font-weight: 800;" data-i18n="cert-practical-blocked">Evaluation Blocked</div>
+                        <p style="font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 8px;">
+                            <span data-i18n="cert-practical-wait">Please wait until: </span>
+                            <span id="unlock-date" style="color: #fff; font-weight: 800;"></span>
+                        </p>
+                    </div>
                 </div>
 
                 <!-- Reservar (Público) -->
@@ -1420,7 +1682,7 @@
     <script src="./i18n.js?v=20260226-1"></script>
     <script>
         const ROLE_LABELS = {
-            'DJ': 'DJ ELITE', 'MC': 'CEREMONIALIST', 'ANIMADOR': 'GLOBAL HOST',
+            'DJ': 'Certified DJ', 'MC': 'CEREMONIALIST', 'ANIMADOR': 'GLOBAL HOST',
             'BRUNCH_DJ': 'BRUNCH DJ', 'DINNER_DJ': 'DINNER DJ',
             'RESIDENT_DJ': 'RESIDENT DJ', 'INVITADO': 'GUEST DJ', 'PRODUCTOR': 'PRODUCER'
         };
@@ -1614,7 +1876,16 @@
 
 
             // ── PRO tag en hero si aplica ──
-            if (p.plan === 'PRO' && (p.plan_status || 'active').toLowerCase() === 'active') {
+            const isFullyCertified = p.certification_score >= 70 && p.graduated;
+            if (isFullyCertified) {
+                const roleEl = document.getElementById('pub-role-label');
+                if (roleEl) {
+                    const span = document.createElement('span');
+                    span.style.cssText = 'color:var(--gold);margin-left:10px;font-size:9px;letter-spacing:1.5px;font-weight:900;';
+                    span.textContent = '⭐ FULLY CERTIFIED';
+                    roleEl.appendChild(span);
+                }
+            } else if (p.plan === 'PRO' && (p.plan_status || 'active').toLowerCase() === 'active') {
                 const roleEl = document.getElementById('pub-role-label');
                 if (roleEl) {
                     const span = document.createElement('span');
@@ -1624,7 +1895,30 @@
                 }
             }
 
-            // ── Founder badge ──
+            // ── Certification badge ──
+            if (p.certification_score && p.certification_score >= 70) {
+                const certBadge = document.getElementById('pub-cert-badge');
+                if (certBadge) {
+                    certBadge.style.display = 'block';
+                    
+                    // Generate ID like MDB-2025-XXXX
+                    const year = p.certification_date ? new Date(p.certification_date).getFullYear() : 2026;
+                    const suffix = (p.id || '').split('-')[0].toUpperCase() || 'PRO';
+                    const certID = `MDB-${year}-${suffix}`;
+                    
+                    document.getElementById('display-cert-id').textContent = `Credential ID: ${certID}`;
+                    
+                    if (p.graduated) {
+                        const badgTitle = document.querySelector('.cert-badge-title');
+                        if (badgTitle) badgTitle.textContent = "Fully Certified DJ";
+                        const badgStatus = document.querySelector('.cert-badge-status span');
+                        if (badgStatus) badgStatus.textContent = "Verified (PRO)";
+                    }
+
+                    document.getElementById('cert-verify-link').href = `./verify.html?id=${certID}`;
+                }
+            }
+
             if (p.founding_member) document.getElementById('pub-founder-badge').style.display = 'block';
 
             // ── Status sidebar (owner/admin) ──
@@ -1664,6 +1958,15 @@
                 // Ocultar sección de reserva para el dueño
                 const prc = document.getElementById('public-reserve-card');
                 if (prc) prc.style.display = 'none';
+
+                // Mostrar Módulo de Evaluación para Manager (si es Admin o Manager)
+                if (isAdmin) {
+                    const assessmentCard = document.getElementById('manager-assessment-card');
+                    if (assessmentCard) {
+                        assessmentCard.style.display = 'block';
+                        checkAssessmentStatus(targetId);
+                    }
+                }
             }
 
 
@@ -1859,14 +2162,22 @@
                 }
 
                 // ── AUTO-SWITCH TAB ──
+                const params = new URLSearchParams(window.location.search);
                 if (isOwner) {
-                    const params = new URLSearchParams(window.location.search);
                     const tabToOpen = params.get('tab');
                     if (tabToOpen && ['public', 'flow'].includes(tabToOpen)) {
                         setTimeout(() => {
                             switchProfileTab(tabToOpen);
                         }, 300);
                     }
+                }
+
+                // ── AUTO-EVALUATE SCROLL ──
+                if (params.get('evaluate') === 'true') {
+                    setTimeout(() => {
+                        const card = document.getElementById('manager-assessment-card');
+                        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 800);
                 }
             }
         }
@@ -1946,6 +2257,151 @@
                 result.after(reserveBtn);
             }
         }
+
+        // ── Security & Cryptography (Paso 2) ──────────────────
+        async function generateSecurityHash(certNumber, userId, instructorId) {
+            const secretSalt = "MDB_INTERNAL_SALT_2026_STRICT";
+            const dataStr = `${certNumber}|${userId}|${instructorId}|${secretSalt}`;
+            const msgBuffer = new TextEncoder().encode(dataStr);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 32).toUpperCase();
+        }
+
+        // ── Practical Assessment Logic ──────────────────
+        window.updateAverage = () => {
+            const tech = parseFloat(document.getElementById('score-tech').value);
+            const beat = parseFloat(document.getElementById('score-beat').value);
+            const select = parseFloat(document.getElementById('score-select').value);
+            const crowd = parseFloat(document.getElementById('score-crowd').value);
+            const presence = parseFloat(document.getElementById('score-presence').value);
+
+            document.getElementById('val-tech').textContent = tech.toFixed(1);
+            document.getElementById('val-beat').textContent = beat.toFixed(1);
+            document.getElementById('val-select').textContent = select.toFixed(1);
+            document.getElementById('val-crowd').textContent = crowd.toFixed(1);
+            document.getElementById('val-presence').textContent = presence.toFixed(1);
+
+            const avg = (tech + beat + select + crowd + presence) / 5;
+            const avgEl = document.getElementById('avg-total');
+            avgEl.textContent = avg.toFixed(1);
+            
+            // Visual feedback on total
+            avgEl.style.color = avg >= 7 ? 'var(--gold)' : '#ff5555';
+        };
+
+        window.checkAssessmentStatus = async (userId) => {
+            const db = window.getSupabaseClient();
+            if (!db) return;
+
+            // 1. Check if graduated
+            const { data: cert } = await db.from('certificates').select('id, graduated, cert_number, student_name').eq('user_id', userId).single();
+            
+            if (cert) {
+                document.getElementById('eval-dj-name').textContent = cert.student_name;
+                document.getElementById('eval-cert-id').textContent = cert.cert_number;
+                
+                if (cert.graduated) {
+                    document.getElementById('assessment-form').style.display = 'none';
+                    document.getElementById('assessment-success').style.display = 'block';
+                    return;
+                }
+            }
+
+            // 2. Check last failure in history
+            const { data: history } = await db.from('practical_history')
+                .select('*')
+                .eq('user_id', userId)
+                .eq('result', 'FAIL')
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (history && history.length > 0) {
+                const lastFail = new Date(history[0].created_at);
+                const diffDays = Math.ceil((new Date() - lastFail) / (1000 * 60 * 60 * 24));
+                
+                if (diffDays < 30) {
+                    const unlockDate = new Date(lastFail);
+                    unlockDate.setDate(unlockDate.getDate() + 30);
+                    
+                    document.getElementById('assessment-form').style.display = 'none';
+                    document.getElementById('assessment-blocked').style.display = 'block';
+                    document.getElementById('unlock-date').textContent = unlockDate.toLocaleDateString();
+                }
+            }
+        };
+
+        window.submitAssessment = async (result) => {
+            const db = window.getSupabaseClient();
+            if (!db) return;
+
+            const targetDJ = window.currentProfileDJId;
+            const notes = document.getElementById('assessment-notes').value;
+            const avg = parseFloat(document.getElementById('avg-total').textContent);
+            
+            if (result === 'PASS' && avg < 7) {
+                if (!confirm(`El promedio es ${avg}, que es menor al mínimo de 7.0. ¿Aprobar de todas formas?`)) return;
+            }
+
+            if (!notes || notes.length < 10) {
+                alert('Por favor, ingresa notas detalladas del instructor (mínimo 10 caracteres).');
+                return;
+            }
+
+            const confirmMsg = result === 'PASS' ? '¿Confirmar graduación oficial del DJ?' : '¿Confirmar reprobación? El DJ no podrá ser evaluado en 30 días.';
+            if (!confirm(confirmMsg)) return;
+
+            const { data: { user } } = await db.auth.getUser();
+            const instructorId = user?.id;
+
+            const scores = {
+                tech: document.getElementById('score-tech').value,
+                beat: document.getElementById('score-beat').value,
+                select: document.getElementById('score-select').value,
+                crowd: document.getElementById('score-crowd').value,
+                presence: document.getElementById('score-presence').value
+            };
+
+            // 1. Save History
+            const { error: histError } = await db.from('practical_history').insert({
+                user_id: targetDJ,
+                instructor_id: instructorId,
+                scores: scores,
+                notes: notes,
+                result: result,
+                avg_score: avg
+            });
+
+            if (histError) {
+                alert('Error guardando historial: ' + histError.message);
+                return;
+            }
+
+            // 2. Update Certificate if PASS
+            if (result === 'PASS') {
+                // Generate Security Hash (Paso 2)
+                const { data: certData } = await db.from('certificates').select('cert_number').eq('user_id', targetDJ).single();
+                const secHash = await generateSecurityHash(certData?.cert_number || 'UNKNOWN', targetDJ, instructorId);
+
+                const { error: certError } = await db.from('certificates')
+                    .update({ 
+                        graduated: true, 
+                        status: 'PRO_VERIFIED',
+                        practical_score: avg, 
+                        practical_date: new Date().toISOString(),
+                        security_hash: secHash
+                    })
+                    .eq('user_id', targetDJ);
+
+                if (certError) alert('Error actualizando certificado: ' + certError.message);
+                
+                // 3. Update Profile Status
+                await db.from('dj_profiles').update({ verified: true }).eq('user_id', targetDJ);
+            }
+
+            alert(result === 'PASS' ? '✅ DJ Graduado Oficialmente.' : '❌ Evaluación registrada como fallida.');
+            location.reload();
+        };
 
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', loadProfile);
