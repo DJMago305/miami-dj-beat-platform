@@ -85,7 +85,15 @@ function mapWeatherToScene(data) {
 
     if (main === "Thunderstorm") return "storm";
     if (main === "Rain" || main === "Drizzle") return isNight ? "rain-night" : "rain";
-    if (main === "Clouds" || main === "Mist" || main === "Fog" || main === "Haze" || main === "Smoke") return isNight ? "cloudy-night" : "cloudy-day";
+    
+    if (main === "Clouds") {
+        const cloudId = data.weather?.[0]?.id;
+        if (cloudId === 801 || cloudId === 802 || data.weather?.[0]?.description?.includes("few") || data.weather?.[0]?.description?.includes("scattered") || data.weather?.[0]?.description?.includes("dispersas") || data.weather?.[0]?.description?.includes("poco")) {
+             return isNight ? "partly-cloudy-night" : "partly-cloudy";
+        }
+        return isNight ? "cloudy-night" : "cloudy-day";
+    }
+    if (main === "Mist" || main === "Fog" || main === "Haze" || main === "Smoke") return isNight ? "cloudy-night" : "cloudy-day";
     
     return isNight ? "clear-night" : "clear-day";
 }
@@ -311,7 +319,7 @@ function applyWeatherScene(scene, weatherMain) {
 
     if (weatherContainer) {
         // Remove all scene-* classes
-        weatherContainer.classList.remove('scene-clear-day', 'scene-partly-cloudy', 'scene-sunset', 'scene-clear-night', 'scene-cloudy-day', 'scene-cloudy-night', 'scene-rain', 'scene-rain-night', 'scene-rain-day', 'scene-storm', 'scene-storm-day', 'scene-snow');
+        weatherContainer.classList.remove('scene-clear-day', 'scene-partly-cloudy', 'scene-sunset', 'scene-clear-night', 'scene-cloudy-day', 'scene-cloudy-night', 'scene-partly-cloudy-night', 'scene-rain', 'scene-rain-night', 'scene-rain-day', 'scene-storm', 'scene-storm-day', 'scene-snow');
         
         // --- STRICT HARD JS RESET ---
         // Rule: "Before activating any scene, first disable ALL weather layers and reset all scene-specific opacity/top/display values."
