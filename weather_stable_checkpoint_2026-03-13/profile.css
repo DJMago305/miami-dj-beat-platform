@@ -1,0 +1,154 @@
+.header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px
+}
+
+/* Language Switcher */
+.lang-switcher {
+    display: flex;
+    gap: 10px;
+    margin-right: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.lang-btn {
+    cursor: pointer;
+    color: var(--muted);
+    transition: color 0.3s;
+    text-decoration: none;
+}
+
+.lang-btn.active {
+    color: var(--gold);
+}
+
+.lang-btn:hover {
+    color: #fff;
+}
+
+.account {
+    position: relative
+}
+
+.account-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .03);
+    cursor: pointer;
+}
+
+.avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    object-fit: cover;
+}
+
+.caret {
+    color: var(--muted);
+    font-size: 12px
+}
+
+.account-menu {
+    position: absolute;
+    right: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    width: auto;
+    min-width: 160px;
+    border: 1px solid var(--line);
+    background: rgba(12, 19, 32, .98);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 6px;
+    display: none;
+    z-index: 1000;
+    white-space: nowrap;
+}
+
+.account-menu.open {
+    display: block
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 10px;
+    border-radius: 12px;
+    color: var(--text);
+    opacity: .92;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.menu-item:hover {
+    background: rgba(255, 255, 255, .04);
+    opacity: 1;
+    color: var(--gold);
+}
+
+.menu-item.danger {
+    color: #ffb4b4
+}
+
+.menu-sep {
+    margin: 10px 8px 6px;
+    font-size: 11px;
+    letter-spacing: .12em;
+    color: var(--muted);
+    opacity: .7;
+}
+
+.menu-divider {
+    height: 1px;
+    background: var(--line);
+    margin: 8px 0
+}
+
+.profile-card {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 8px
+}
+
+.profile-photo {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    object-fit: cover;
+    background: rgba(255, 255, 255, .04);
+}
+
+.profile-name {
+    font-weight: 900
+}
+
+.profile-meta {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 2px
+}
+
+.profile-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px
+}
+
+.links {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap
+}

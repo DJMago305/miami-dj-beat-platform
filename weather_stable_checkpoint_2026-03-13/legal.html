@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal — Miami DJ Beat</title>
+    <link rel="stylesheet" href="./styles.css?v=20260226-1">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
+    <style>
+        .legal-container {
+            padding: 120px 20px 80px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .legal-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .legal-card h1 {
+            color: var(--gold);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            border-bottom: 2px solid var(--gold);
+            padding-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .legal-card h2 {
+            color: var(--gold);
+            margin-top: 40px;
+            font-size: 1.4rem;
+            text-transform: uppercase;
+        }
+
+        .legal-card p,
+        .legal-card li {
+            color: #ccc;
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        .legal-card ul {
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        .last-updated {
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin-bottom: 40px;
+            display: block;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: var(--gold);
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .back-link:hover {
+            transform: translateX(-5px);
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header" id="mainHeader">
+        <div class="header-top">
+            <div class="container">
+                <div class="logo">
+                    <img src="./assets/logo-transparent.png" alt="Miami DJ Beat" style="height: 40px;">
+                </div>
+                <div class="header-actions">
+                    <div class="lang-switcher">
+                        <span class="lang-btn active" data-lang="es">ES</span>
+                        <span class="lang-pipe">|</span>
+                        <span class="lang-btn" data-lang="en">EN</span>
+                    </div>
+                    <a href="login.html" class="btn-pill gold">Obtener PRO</a>
+                    <a href="login.html" id="header-login-btn" class="btn-pill">Login</a>
+                </div>
+            </div>
+        </div>
+        <div class="header-bottom">
+            <div class="container">
+                <nav class="nav top-nav" id="mainNav">
+                    <a href="./index.html">Inicio</a>
+                    <a href="./rentals.html">Servicios de Evento</a>
+                    <a href="./dj-tools.html">Herramientas</a>
+                    <a href="./jobs.html">Trabajos</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="legal-container"
+        style="display:grid;grid-template-columns:240px 1fr;gap:28px;align-items:start;max-width:1100px;">
+
+        <!-- ── SIDEBAR NAVIGATION ── -->
+        <nav id="legalNav" style="position:sticky;top:100px;">
+            <div
+                style="font-size:10px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:14px;padding-left:4px;">
+                DOCUMENTOS LEGALES</div>
+            <div id="navLinks" style="display:flex;flex-direction:column;gap:6px;">
+                <a class="legal-nav-btn active" data-doc="PRIVACY_POLICY.md" href="#"
+                    onclick="loadDoc(this);return false;">
+                    🔒 Política de Privacidad
+                </a>
+                <a class="legal-nav-btn" data-doc="CLIENT_TERMS.md" href="#" onclick="loadDoc(this);return false;">
+                    📋 Términos del Cliente
+                </a>
+                <a class="legal-nav-btn" data-doc="DJ_AGREEMENT.md" href="#" onclick="loadDoc(this);return false;">
+                    🎧 Contrato DJ
+                </a>
+                <a class="legal-nav-btn" data-doc="PRO_PARTNER_POLICY.md" href="#"
+                    onclick="loadDoc(this);return false;">
+                    🤝 Política Pro Partner
+                </a>
+            </div>
+            <div style="margin-top:24px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.07);">
+                <a href="javascript:history.back()"
+                    style="font-size:13px;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:6px;transition:.2s;"
+                    onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--muted)'">←
+                    Volver</a>
+            </div>
+        </nav>
+
+        <!-- ── DOCUMENT CONTENT ── -->
+        <div class="legal-card" id="legal-content">
+            <span class="last-updated" id="lastUpdated">Última actualización: 24 de Febrero, 2026</span>
+            <div id="content-body"></div>
+        </div>
+
+    </main>
+
+    <style>
+        .legal-nav-btn {
+            display: block;
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all .2s;
+        }
+
+        .legal-nav-btn:hover {
+            background: rgba(197, 160, 89, 0.08);
+            border-color: rgba(197, 160, 89, 0.25);
+            color: #fff;
+        }
+
+        .legal-nav-btn.active {
+            background: rgba(197, 160, 89, 0.12);
+            border-color: rgba(197, 160, 89, 0.4);
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        @media(max-width:700px) {
+            main.legal-container {
+                grid-template-columns: 1fr !important;
+            }
+
+            #legalNav {
+                position: static;
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            #navLinks {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .legal-nav-btn {
+                font-size: 12px;
+                padding: 8px 12px;
+            }
+        }
+    </style>
+
+
+    <footer class="footer">
+        <div class="container" style="text-align: center; padding: 40px 0;">
+            <p>© 2026 Miami DJ Beat. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        const DOC_TITLES = {
+            'PRIVACY_POLICY.md': 'Política de Privacidad',
+            'CLIENT_TERMS.md': 'Términos y Condiciones del Cliente',
+            'DJ_AGREEMENT.md': 'Contrato de Servicios DJ',
+            'PRO_PARTNER_POLICY.md': 'Política de Socio Pro'
+        };
+
+        async function loadDoc(linkEl) {
+            const doc = linkEl ? linkEl.dataset.doc : null;
+            const urlParams = new URLSearchParams(window.location.search);
+            const target = doc || urlParams.get('doc') || 'PRIVACY_POLICY.md';
+
+            // Update active nav state
+            document.querySelectorAll('.legal-nav-btn').forEach(a => {
+                a.classList.toggle('active', a.dataset.doc === target);
+            });
+
+            const body = document.getElementById('content-body');
+            body.innerHTML = `<p style="color:var(--muted);text-align:center;padding:40px;">Cargando...</p>`;
+
+            try {
+                const response = await fetch(target);
+                if (!response.ok) throw new Error('Documento no encontrado');
+                const text = await response.text();
+
+                // Strip first H1 (use sidebar label instead as implicit title)
+                const cleanText = text.replace(/^# .*\n/, '');
+                body.innerHTML = marked.parse(cleanText);
+
+                // Update page title and header
+                const title = DOC_TITLES[target] || target;
+                document.title = title + ' — Miami DJ Beat';
+
+                // Update URL without reload (deep link support)
+                history.replaceState(null, '', `?doc=${encodeURIComponent(target)}`);
+
+                // Scroll to top of card
+                document.getElementById('legal-content').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch (err) {
+                body.innerHTML = `<p style="color:#fc8181;">Error: ${err.message}</p>`;
+            }
+        }
+
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('mainHeader');
+            if (window.scrollY > 50) header.classList.add('scrolled');
+            else header.classList.remove('scrolled');
+        });
+
+        // Initial load
+        loadDoc(null);
+    </script>
+</body>
+
+</html>

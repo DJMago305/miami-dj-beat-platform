@@ -27,7 +27,7 @@
     <script src="./role-guard.js?v=20260226-2" data-role="dj"></script>
     <style>
         body {
-            padding-top: 20px !important;
+            padding-top: 110px !important;
         }
 
         /* ── Dashboard overrides — clean Serato-level aesthetic ── */
@@ -38,8 +38,44 @@
         }
 
         .header {
-            z-index: 1000 !important;
-            top: 20px !important;
+            z-index: 1005 !important;
+            top: 0px !important;
+            background: #0a0a0a !important;
+            border-bottom: none !important;
+            box-shadow: none !important;
+        }
+
+        .header .brand::before {
+            display: none !important;
+            content: none !important;
+        }
+
+        /* ── Header avatar fixes ── */
+        .account-btn {
+            background: transparent;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        .account-btn .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+            border: 2px solid rgba(197, 160, 89, 0.5);
+            flex-shrink: 0;
+        }
+
+        .account-btn .caret {
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.4);
+            line-height: 1;
         }
 
         .admin-card h2 {
@@ -239,6 +275,14 @@
 </head>
 
 <body class="notranslate">
+    <!-- 
+    ================================================================================
+    [ZONE 1 LOCKED] HEADER / TOP NAV
+    Rule: Changing the header layout or navigation styling must NEVER touch, overlap, 
+    or alter the positioning of the Weather Sky Engine below it.
+    Scope: Logo, Tabs, Avatar, Navigation Bar.
+    ================================================================================ 
+    -->
     <header class="header" id="mainHeader">
         <div class="header-top">
             <div class="container">
@@ -283,10 +327,6 @@
         </div>
     </header>
     <style>
-        .header .brand::before {
-            content: none !important;
-            display: none !important;
-        }
 
         .topbar-left {
             display: flex;
@@ -375,14 +415,13 @@
             </div>
         </nav>
         <style>
-            /* ── DJ OWNER TABS ── */
             .dj-owner-tabs {
                 background: #0a0a0a;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.08);
                 position: sticky;
-                top: 0;
-                /* Alineado exactamente con el inicio al hacer scroll */
-                z-index: 1001;
+                top: 85px;
+                /* Alineado exactamente debajo del header al hacer scroll */
+                z-index: 1000;
                 display: flex;
             }
 
@@ -492,10 +531,18 @@
                     <!-- Left Column: Business Logic -->
                     <div class="agenda-main" style="padding-top: 10px;">
                         <!-- ── CLIMA HERO SECTION ── -->
+                        <!-- 
+                        ================================================================================
+                        [ZONE 2 LOCKED] WEATHER SKY ENGINE
+                        Rule: This is a physically stacked z-index engine relying on panoramic math and precise infinite 
+                        loop transformations (translate(-50%)). Changing weather behavior must NEVER touch header layout, nor calendar side-panels.
+                        Scope: Panoramic banner, .sky-base, .sky-clouds, .sky-astral-front, etc.
+                        ================================================================================ 
+                        -->
                         <div id="booth-hero-container" class="booth-card weather-widget scene-cloudy-day"
                             style="margin-bottom: 20px; min-height: 480px; position: relative; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05);">
                             
-                            <div class="weather-scene">
+                            <div class="weather-scene" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; border-radius: 24px; z-index: 0;">
                                 <!-- Layer 1: Sky Base Layer -->
                                 <div class="sky-base clear-day" id="weather-layer-base">
                                     <img class="sky-base-img" src="./assets/weather/Cielo Azul.png" alt="">
@@ -503,8 +550,8 @@
 
                                 <!-- Layer 1b: Stars Layer (Behind clouds for night scenes) -->
                                 <div class="sky-stars" id="weather-stars">
-                                    <img class="stars-img" src="./assets/weather/stars.png" alt="">
-                                    <img class="milky-way-img" src="./assets/weather/cielo estrellado hermoso.png"
+                                    <img class="stars-img" src="./assets/weather/Stars%20Night.png" alt="">
+                                    <img class="milky-way-img" src="./assets/weather/cielo%20estrellado%20hermoso.png"
                                         alt="">
                                 </div>
 
@@ -570,27 +617,27 @@
                                 </div>
                             </div>
 
-                            <!-- Weather Content Overlay (z-index 2) -->
-                            <div class="weather-content" style="padding: 40px; color: #fff; text-align: center; position: relative; z-index: 2;">
+                            <!-- Weather Content Overlay (z-index 100) -->
+                            <div class="weather-content" style="padding: 40px; color: #fff; text-align: center; position: relative; z-index: 100;">
                                 <div id="weather-location"
-                                    style="font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.6); margin-bottom: 10px; letter-spacing: 2px; text-transform: uppercase;">
+                                    style="font-size: 13px; font-weight: 800; color: #ffffff; margin-bottom: 10px; letter-spacing: 2px; text-transform: uppercase;">
                                     Miami, FL — USA
                                 </div>
                                 <div id="weather-main-temp"
-                                    style="font-size: 96px; font-weight: 200; margin-bottom: 5px; font-family: 'Inter', sans-serif;">
+                                    style="font-size: 96px; font-weight: 200; margin-bottom: 5px; font-family: 'Inter', sans-serif; text-shadow: 0px 4px 15px rgba(0,0,0,0.3);">
                                     74°
                                 </div>
                                 <div id="weather-condition-label"
-                                    style="font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 5px;">
+                                    style="font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 5px; text-shadow: 0px 2px 8px rgba(0,0,0,0.3);">
                                     Soleado
                                 </div>
                                 <div id="weather-high-low"
-                                    style="font-size: 14px; color: rgba(255,255,255,0.8); font-weight: 600;">
+                                    style="font-size: 14px; color: #ffffff; font-weight: 600; text-shadow: 0px 2px 8px rgba(0,0,0,0.3);">
                                     Máx: 78° Mín: 68°
                                 </div>
 
                                 <div id="weather-description-text"
-                                    style="margin-top: 25px; font-size: 13px; color: rgba(255,255,255,0.6); max-width: 320px; margin-left: auto; margin-right: auto; line-height: 1.6;">
+                                    style="margin-top: 25px; font-size: 13px; color: #ffffff; max-width: 320px; margin-left: auto; margin-right: auto; line-height: 1.6; text-shadow: 0px 2px 8px rgba(0,0,0,0.3);">
                                     Pronóstico de cielos parcialmente nublados como a las 4 p.m.. Ráfagas de viento de
                                     hasta 17 mi/h.
                                 </div>
@@ -637,6 +684,13 @@
                     </div>
 
                     <!-- Right Column: Event Agenda 📅 -->
+                    <!-- 
+                    ================================================================================
+                    [ZONE 3 LOCKED] AGENDA / CALENDAR PANEL
+                    Rule: Fixing calendar layout issues or date overlays must NEVER touch the hero sky structure or page-level padding.
+                    Scope: #calendar-master, FullCalendar overrides.
+                    ================================================================================ 
+                    -->
                     <div class="agenda-sidebar calendar-column" style="position: relative; z-index: 10;">
                         <div class="admin-card agenda-card-container calendar-card"
                             style="padding: 0; position: relative; overflow: hidden; border: 1px solid rgba(197,160,89,0.25); min-height: 500px; background: transparent !important; backdrop-filter: blur(10px); z-index: 5;">
@@ -717,7 +771,7 @@
                                         flex-wrap: nowrap;
                                         align-items: flex-start;
                                         justify-content: flex-start;
-                                        width: max-content;
+                                        width: 600vw !important; /* Total width: 6 images * 100vw. IMPORTANT to override .cloud-layer-front 120% */
                                         height: 100% !important;
                                         margin: 0;
                                         padding: 0;
@@ -734,16 +788,19 @@
                                     */
                                     .nubes-largas-fast-container img {
                                         position: static !important;
-                                        width: 150vw;
+                                        width: 110vw; /* Create a 10vw overlap */
                                         height: 100%;
                                         max-width: none;
                                         flex-shrink: 0;
                                         display: block;
-                                        margin: 0;
+                                        margin: 0 0 0 -10vw; /* Overlap the previous image's tail */
                                         padding: 0;
                                         border: none;
                                         object-fit: cover !important;
                                         object-position: top center;
+                                        /* Feather the left and right edges so the overlapping clouds blend perfectly */
+                                        -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+                                        mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
                                     }
                                     
                                     .nubes-largas-fast-container .cloud-gap {
@@ -804,29 +861,34 @@
                                         z-index: 20;
                                     }
 
-                                    /* Clouds Layer (Higher Z-Index to physically block Moon/Sun) */
+                                    /* Clouds Layer (Stacking context released to allow lightning interleaving) */
                                     .sky-clouds {
                                         position: absolute;
                                         inset: 0;
-                                        z-index: 30;
-                                        pointer-events: none;
-                                        opacity: 1;
-                                    }
-
-                                    .sky-precipitation,
-                                    .sky-rain-layer,
-                                    .sky-snow-layer,
-                                    .sky-storm-layer {
-                                        position: absolute;
-                                        inset: 0;
-                                        z-index: 40;
                                         pointer-events: none;
                                     }
 
                                     .sky-lightning {
                                         position: absolute;
                                         inset: 0;
-                                        z-index: 50;
+                                        z-index: 35; /* Locked Weather Engine Matrix */
+                                        pointer-events: none;
+                                    }
+
+                                    .sky-precipitation,
+                                    .sky-rain-layer {
+                                        position: absolute;
+                                        inset: 0;
+                                        z-index: 45;
+                                        pointer-events: none;
+                                    }
+
+                                    /* Preserving omitted snow/storm layers for other engines */
+                                    .sky-snow-layer,
+                                    .sky-storm-layer {
+                                        position: absolute;
+                                        inset: 0;
+                                        z-index: 45;
                                         pointer-events: none;
                                     }
 
@@ -890,18 +952,32 @@
 
                                     /* Natural Asset Sizing & Opacity Transitions */
                                     .sky-base-img {
-                                        width: 100%;
-                                        height: 100%;
+                                        position: absolute;
+                                        top: -15%;
+                                        left: -15%;
+                                        width: 130%; /* Oversize bleed */
+                                        height: 130%; /* Oversize bleed */
                                         object-fit: cover;
                                         opacity: 0;
                                         transition: opacity 1.5s ease;
+                                        z-index: 0 !important; /* Force to absolute bottom */
                                     }
 
-                                    .stars-img,
+                                    .stars-img {
+                                        width: 100%;
+                                        height: 100%;
+                                        object-fit: cover !important;
+                                        position: absolute;
+                                        top: 0;
+                                        left: 0;
+                                        opacity: 0;
+                                        transition: opacity 1.5s ease-in-out;
+                                    }
+
                                     .milky-way-img {
                                         width: 100%;
                                         height: 100%;
-                                        object-fit: contain;
+                                        object-fit: cover !important;
                                         position: absolute;
                                         top: 0;
                                         left: 0;
@@ -961,25 +1037,30 @@
                                         will-change: transform, left, top, opacity, filter;
                                     }
 
+                                    /* Redundant .sky-lightning block removed by user request (now handled at line 883) */
+
                                     .rayo-storm-asset {
                                         position: absolute;
-                                        top: 0;
-                                        left: 0;
-                                        width: 100%;
-                                        height: 100%;
+                                        top: 50%;
+                                        left: 50%;
+                                        width: 650px;
+                                        height: 650px;
+                                        transform: translate(-50%, -50%);
+                                        opacity: 0; /* Base opacity unlocked */
+                                        display: none !important; /* Hides definitively in other scenes */
+                                        visibility: hidden !important;
+                                        mix-blend-mode: normal;
+                                        filter: brightness(2) contrast(1.3);
+                                        /* Retaining core safety bounds */
+                                        pointer-events: none;
                                         object-fit: cover;
                                         object-position: top center;
-                                        opacity: 0;
-                                        pointer-events: none;
-                                        mix-blend-mode: screen;
-                                        z-index: 100;
                                     }
 
                                     /* Edge Blending Masks (Parches Rectangulares Fix) */
                                     .moon-asset,
                                     .sun-rays-asset,
                                     .sun-rays-intense-asset,
-                                    .stars-img,
                                     .milky-way-img {
                                         -webkit-mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 30%, rgba(0, 0, 0, 0) 70%);
                                         mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 30%, rgba(0, 0, 0, 0) 70%);
@@ -1059,6 +1140,15 @@
                                         }
                                     }
 
+                                    @keyframes breatheZoom {
+                                        0% {
+                                            transform: scale(1) translateZ(-10px);
+                                        }
+                                        100% {
+                                            transform: scale(1.05) translateZ(-10px); /* Pure cinematic slow zoom on a massive pre-bled canvas */
+                                        }
+                                    }
+
                                     @keyframes rainFallAsset {
                                         0% {
                                             background-position: 0px 0px;
@@ -1080,32 +1170,33 @@
                                     }
 
                                     @keyframes flashRayoStorm {
-
-                                        0%,
-                                        98.5% {
+                                        0%, 60% {
                                             opacity: 0;
                                             filter: brightness(1);
                                         }
 
-                                        98.8% {
+                                        /* First fierce strike */
+                                        62% {
                                             opacity: 1;
-                                            filter: brightness(1.5);
+                                            filter: brightness(2) contrast(1.5);
                                         }
-
-                                        99.1% {
-                                            opacity: 0;
-                                        }
-
-                                        99.4% {
-                                            opacity: 0.8;
+                                        65% {
+                                            opacity: 0.3;
                                             filter: brightness(1.2);
                                         }
 
-                                        99.7% {
-                                            opacity: 0;
+                                        /* Second fierce strike */
+                                        68% {
+                                            opacity: 1;
+                                            filter: brightness(2) contrast(1.5);
                                         }
 
-                                        100% {
+                                        /* Fade out */
+                                        72% {
+                                            opacity: 0.2;
+                                            filter: brightness(1);
+                                        }
+                                        75%, 100% {
                                             opacity: 0;
                                         }
                                     }
@@ -1147,8 +1238,7 @@
                                     .weather-widget[class*="scene-"] .cloud-layer-back,
                                     .weather-widget[class*="scene-"] .cloud-layer-front,
                                     .weather-widget[class*="scene-"] .sky-rain-layer,
-                                    .weather-widget[class*="scene-"] .sky-snow-layer,
-                                    .weather-widget[class*="scene-"] .rayo-storm-asset {
+                                    .weather-widget[class*="scene-"] .sky-snow-layer {
                                         opacity: 0 !important;
                                         display: none !important;
                                     }
@@ -1187,36 +1277,47 @@
                                     .static-cloud-muy-nublado {
                                         position: absolute;
                                         top: -10%;
-                                        left: 0;
-                                        width: 100vw;
-                                        height: 110%;
+                                        left: -10%;
+                                        width: 120%;
+                                        height: 120%;
                                         object-fit: cover;
                                         object-position: top center;
                                         opacity: 0;
                                         visibility: hidden;
                                         pointer-events: none;
-                                        z-index: 1;
-                                        transition: opacity 1.5s ease-in-out, visibility 1.5s ease-in-out;
+                                        z-index: 15 !important; /* Firmly tucked behind lightning z:35 */
+                                        transform-origin: center center;
+                                        transform-style: preserve-3d;
+                                        will-change: transform;
+                                        content: url('./assets/weather/Cielo%20parcialmente%20Nublado.png') !important;
                                     }
 
-                                    /* Activating Static Cloud exclusively for Muy Nublado and Rain Day */
+                                    /* Activating Static Cloud exclusively for Muy Nublado, Rain Day, and Storm Day */
                                     .weather-widget.scene-cloudy-day .static-cloud-muy-nublado,
-                                    .weather-widget.scene-rain-day .static-cloud-muy-nublado {
-                                        opacity: 1 !important;
+                                    .weather-widget.scene-rain-day .static-cloud-muy-nublado,
+                                    .weather-widget.scene-storm-day .static-cloud-muy-nublado {
+                                        opacity: 0.8 !important; /* Reduced from 1 to avoid washing out the entire widget */
                                         visibility: visible !important;
+                                        animation: breatheZoom 120s ease-in-out infinite alternate; /* Slow zoom in and out */
                                     }
 
-                                    /* Carousel for Cloudy Day and Rain Day */
+                                    /* Use darker Nublado.png specifically for Storm Day while keeping the same animation */
+                                    .weather-widget.scene-storm-day .static-cloud-muy-nublado {
+                                        content: url('./assets/weather/Nublado.png') !important;
+                                    }
+
+                                    /* Carousel for Cloudy Day, Rain Day, and Storm Day */
                                     .weather-widget.scene-cloudy-day .cloud-layer-front.nubes-largas-fast-container,
-                                    .weather-widget.scene-rain-day .cloud-layer-front.nubes-largas-fast-container {
-                                        position: relative !important;
-                                        z-index: 2 !important;
+                                    .weather-widget.scene-rain-day .cloud-layer-front.nubes-largas-fast-container,
+                                    .weather-widget.scene-storm-day .cloud-layer-front.nubes-largas-fast-container {
+                                        position: absolute !important; /* Fixed stacking context by guaranteeing absolute layout */
+                                        z-index: 30 !important; /* Locked Weather Engine Matrix */
                                         opacity: 1 !important;
                                         display: flex !important;
                                         left: 0%;
                                         top: -10% !important;
                                         height: 110% !important;
-                                        animation: carouselLoopFast 60s linear infinite !important;
+                                        animation: carouselLoopFast 120s linear infinite !important;
                                     }
 
                                     /* SCENE STATE 2: Sunset */
@@ -1256,13 +1357,27 @@
 
                                     /* SCENE STATE 3: Clear Night ("despejado") */
                                     /* Needs: stars, milky way, moon */
+                                    /* SCENE STATE 3: Clear Night ("despejado") */
+                                    /* Needs: stars, milky way, moon */
+                                    .weather-widget.scene-clear-night {
+                                        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+                                    }
+
+                                    .weather-widget.scene-clear-night .sky-base-img,
+                                    .weather-widget.scene-clear-night .sun-asset,
+                                    .weather-widget.scene-clear-night .sun-rays-asset,
+                                    .weather-widget.scene-clear-night .sun-rays-intense-asset {
+                                        opacity: 0 !important;
+                                        display: none !important;
+                                    }
+
                                     .weather-widget.scene-clear-night .sky-stars {
                                         opacity: 1 !important;
                                         display: block !important;
                                     }
 
                                     .weather-widget.scene-clear-night .stars-img {
-                                        opacity: 0.8 !important;
+                                        opacity: 1 !important;
                                         display: block !important;
                                     }
 
@@ -1274,49 +1389,71 @@
                                     .weather-widget.scene-clear-night .moon-asset {
                                         opacity: 1 !important;
                                         display: block !important;
+                                        top: 5% !important;
+                                        left: 80% !important;
+                                        width: 15% !important;
+                                    }
+
+                                    /* 1. Clear Night Clouds (Hidden for 'Despejado') */
+                                    .weather-widget.scene-clear-night .cloud-layer-front.nubes-largas-fast-container {
+                                        display: none !important;
+                                        opacity: 0 !important;
                                     }
 
 
 
                                     /* SCENE STATE 4b: Cloudy Night */
-                                    .weather-widget.scene-cloudy-night .stars-img {
-                                        opacity: 0.8;
+                                    /* SCENE STATE 4b: Cloudy Night */
+                                    .weather-widget.scene-cloudy-night {
+                                        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
                                     }
 
-                                    .weather-widget.scene-cloudy-night .milky-way-img {
-                                        opacity: 0.4;
-                                    }
-
-                                    .weather-widget.scene-cloudy-night .moon-asset {
-                                        opacity: 0.5;
-                                    }
-
+                                    .weather-widget.scene-cloudy-night .sky-base-img,
                                     .weather-widget.scene-cloudy-night .sun-asset,
-                                    .weather-widget.scene-cloudy-night .sun-rays-asset {
+                                    .weather-widget.scene-cloudy-night .sun-rays-asset,
+                                    .weather-widget.scene-cloudy-night .sun-rays-intense-asset {
                                         opacity: 0 !important;
                                         display: none !important;
                                     }
 
-                                    .weather-widget.scene-cloudy-night .cloud-layer-back.night-cloud-p {
+                                    .weather-widget.scene-cloudy-night .sky-stars {
                                         opacity: 1 !important;
-                                        object-fit: cover;
-                                        object-position: top center;
-                                        width: 160%;
-                                        height: 110%;
-                                        left: 50%;
-                                        top: -10%;
-                                        animation: cloudDrift 160s ease-in-out infinite alternate;
+                                        display: block !important;
                                     }
 
-                                    .weather-widget.scene-cloudy-night .cloud-layer-front.night-cloud-o {
+                                    .weather-widget.scene-cloudy-night .stars-img {
                                         opacity: 1 !important;
-                                        object-fit: cover;
-                                        object-position: top center;
-                                        width: 160%;
-                                        height: 110%;
-                                        left: 50%;
-                                        top: -10%;
-                                        animation: cloudDrift 100s ease-in-out infinite alternate;
+                                        display: block !important;
+                                    }
+
+                                    .weather-widget.scene-cloudy-night .milky-way-img {
+                                        opacity: 0.4 !important;
+                                        display: block !important;
+                                    }
+
+                                    .weather-widget.scene-cloudy-night .moon-asset {
+                                        opacity: 1 !important;
+                                        display: block !important;
+                                        top: 5% !important;
+                                        left: 80% !important;
+                                        width: 15% !important;
+                                    }
+
+                                    /* 1. Cloudy Night Clouds (Cloud Engine) */
+                                    .weather-widget.scene-cloudy-night .cloud-layer-front.nubes-largas-fast-container {
+                                        display: flex !important;
+                                        opacity: 1 !important;
+                                        left: 0%;
+                                        top: -10% !important;
+                                        height: 110% !important;
+                                        animation: carouselLoopFast 200s linear infinite !important;
+                                        filter: brightness(0.85) contrast(1.1) drop-shadow(0px -10px 40px rgba(0, 0, 0, 0.4)) !important;
+                                    }
+
+                                    /* Hide the old static clouds to let the carousel shine */
+                                    .weather-widget.scene-cloudy-night .cloud-layer-back.night-cloud-p,
+                                    .weather-widget.scene-cloudy-night .cloud-layer-front.night-cloud-o {
+                                        display: none !important;
                                     }
 
                                     /* SCENE STATE 5: Rain (Day/Standard) */
@@ -1352,6 +1489,7 @@
                                         height: 110%;
                                         left: 50%;
                                         top: -10%;
+                                        z-index: 1 !important; /* Force to background */
                                         animation: cloudDrift 70s ease-in-out infinite alternate;
                                     }
 
@@ -1367,14 +1505,14 @@
                                     }
 
                                     .weather-widget.scene-rain .cloud-layer-front.nubes-largas-fast-container {
-                                        display: flex;
+                                        display: flex !important;
+                                        position: absolute !important; /* Critical to enforce stacking context */
+                                        z-index: 10 !important; /* Critical to render OVER the static background */
                                         left: 0%;
                                         top: -10% !important;
                                         height: 110% !important;
                                         opacity: 1 !important;
-                                        animation: carouselLoopFast 240s linear infinite;
-                                        -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-                                        mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+                                        animation: carouselLoopFast 120s linear infinite !important;
                                     }
 
                                     .weather-widget.scene-rain .sky-rain-layer {
@@ -1383,54 +1521,64 @@
                                     }
 
                                     /* SCENE STATE 5: Rain Night */
+                                    .weather-widget.scene-rain-night {
+                                        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+                                    }
+
                                     .weather-widget.scene-rain-night .sky-stars {
-                                        opacity: 0 !important;
-                                        display: none !important;
+                                        opacity: 1 !important;
+                                        display: block !important;
                                     }
 
                                     .weather-widget.scene-rain-night .stars-img {
-                                        opacity: 0.8 !important;
+                                        opacity: 1 !important;
+                                        display: block !important;
                                     }
 
-                                    .weather-widget.scene-rain-night .milky-way-img {
-                                        opacity: 0.4 !important;
-                                    }
-
-                                    .weather-widget.scene-rain-night .moon-asset {
-                                        opacity: 0.25 !important;
-                                    }
-
+                                    .weather-widget.scene-rain-night .milky-way-img,
                                     .weather-widget.scene-rain-night .sun-asset,
-                                    .weather-widget.scene-rain-night .sun-rays-asset {
+                                    .weather-widget.scene-rain-night .sun-rays-asset,
+                                    .weather-widget.scene-rain-night .sun-rays-intense-asset,
+                                    .weather-widget.scene-rain-night .sky-base-img {
                                         opacity: 0 !important;
                                         display: none !important;
                                     }
 
-                                    .weather-widget.scene-rain-night .cloud-layer-back.night-cloud-p {
+                                    .weather-widget.scene-rain-night .moon-asset {
                                         opacity: 1 !important;
-                                        object-fit: cover;
-                                        object-position: top center;
-                                        width: 160%;
-                                        height: 110%;
-                                        left: 50%;
-                                        top: -10%;
-                                        animation: cloudDrift 70s ease-in-out infinite alternate;
+                                        display: block !important;
+                                        top: 5% !important;
+                                        left: 80% !important;
+                                        width: 15% !important;
                                     }
 
-                                    .weather-widget.scene-rain-night .cloud-layer-front.night-cloud-o {
+                                    /* 2. Night Rain Clouds (Cloud Engine baseline) */
+                                    .weather-widget.scene-rain-night .cloud-layer-front.nubes-largas-fast-container {
+                                        display: flex !important;
                                         opacity: 1 !important;
-                                        object-fit: cover;
-                                        object-position: top center;
-                                        width: 160%;
-                                        height: 110%;
-                                        left: 50%;
-                                        top: -10%;
-                                        animation: cloudDrift 50s ease-in-out infinite alternate;
+                                        left: 0%;
+                                        top: -10% !important;
+                                        height: 110% !important;
+                                        animation: carouselLoopFast 120s linear infinite !important; /* Faster for rain */
+                                        filter: brightness(0.7) contrast(1.1) drop-shadow(0px -10px 40px rgba(0, 0, 0, 0.4)) !important;
                                     }
 
+                                    /* 3. Night Rain Asset */
                                     .weather-widget.scene-rain-night .sky-rain-layer {
-                                        opacity: 0.6;
-                                        animation: rainFallAsset 4s linear infinite;
+                                        position: absolute;
+                                        top: 0;
+                                        left: 0;
+                                        width: 100%;
+                                        height: 300%;
+                                        background-image: url('./assets/weather/Rain%20Day.png') !important;
+                                        background-repeat: repeat;
+                                        background-size: auto 1500px;
+                                        opacity: 0.8 !important;
+                                        visibility: visible !important;
+                                        display: block !important;
+                                        z-index: 45;
+                                        pointer-events: none;
+                                        animation: rainFallAsset 3s linear infinite !important;
                                     }
 
                                     /* SCENE STATE 5B: Rain Day */
@@ -1479,97 +1627,39 @@
                                     }
 
                                     /* SCENE STATE 6: Storm Night */
+                                    .weather-widget.scene-storm {
+                                        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+                                    }
+
                                     .weather-widget.scene-storm .sky-stars {
-                                        opacity: 0 !important;
-                                        display: none !important;
+                                        opacity: 1 !important;
+                                        display: block !important;
                                     }
 
                                     .weather-widget.scene-storm .stars-img {
-                                        opacity: 0 !important;
+                                        opacity: 1 !important;
+                                        display: block !important;
                                     }
 
-                                    .weather-widget.scene-storm .milky-way-img {
+                                    .weather-widget.scene-storm .milky-way-img,
+                                    .weather-widget.scene-storm .sun-asset,
+                                    .weather-widget.scene-storm .sun-rays-asset,
+                                    .weather-widget.scene-storm .sun-rays-intense-asset,
+                                    .weather-widget.scene-storm .sky-base-img {
                                         opacity: 0 !important;
+                                        display: none !important;
                                     }
 
                                     .weather-widget.scene-storm .moon-asset {
-                                        opacity: 0 !important;
-                                        display: none !important;
-                                    }
-
-                                    .weather-widget.scene-storm .sun-asset,
-                                    .weather-widget.scene-storm .sun-rays-asset {
-                                        opacity: 0 !important;
-                                        display: none !important;
-                                    }
-
-                                    /* Background Storm Cloud Layer */
-                                    .weather-widget.scene-storm .cloud-layer-back.storm-cloud {
                                         opacity: 1 !important;
-                                        object-fit: cover;
-                                        object-position: top center;
-                                        width: 180%;
-                                        height: 110%;
-                                        left: 50%;
-                                        top: -10%;
-                                        transform: translateX(-50%);
-                                        transform-origin: top center;
-                                        animation: none !important;
+                                        display: block !important;
+                                        top: 5% !important;
+                                        left: 80% !important;
+                                        width: 15% !important;
                                     }
 
-                                    /* Foreground Storm Cloud Layer */
-                                    .weather-widget.scene-storm .cloud-layer-front.storm-cloud-front {
-                                        opacity: 1 !important;
-                                        object-fit: cover;
-                                        object-position: top center;
-                                        width: 180%;
-                                        height: 110%;
-                                        left: 50%;
-                                        top: -10%;
-                                        transform: translateX(-50%);
-                                        transform-origin: top center;
-                                        animation: none !important;
-                                    }
-
-                                    /* Fast Looping Nubes Largas Layer */
-                                    .weather-widget.scene-storm .cloud-layer-front.nubes-largas-fast-container {
-                                        display: flex;
-                                        opacity: 1 !important;
-                                        height: 110% !important;
-                                        left: 0%;
-                                        top: -10% !important;
-                                        animation: carouselLoopFast 240s linear infinite;
-                                    }
-
-                                    /* Storm specifics */
-
-                                    /* SCENE STATE 7: Storm Day */
-                                    .weather-widget.scene-storm-day .sky-stars {
-                                        opacity: 0 !important;
-                                        display: none !important;
-                                    }
-
-                                    .weather-widget.scene-storm-day .stars-img {
-                                        opacity: 0 !important;
-                                    }
-
-                                    .weather-widget.scene-storm-day .milky-way-img {
-                                        opacity: 0 !important;
-                                    }
-
-                                    .weather-widget.scene-storm-day .moon-asset {
-                                        opacity: 0 !important;
-                                        display: none !important;
-                                    }
-
-                                    .weather-widget.scene-storm-day .sun-asset,
-                                    .weather-widget.scene-storm-day .sun-rays-asset {
-                                        opacity: 0 !important;
-                                        display: none !important;
-                                    }
-
-                                    /* 1. Slow Drifting Backdrop (Using Nubes Oscuras for depth, brightened for DAY) */
-                                    .weather-widget.scene-storm-day .cloud-layer-back.night-cloud-p {
+                                    /* 1. Backdrop (Nubes Oscuras Para Tormenta) */
+                                    .weather-widget.scene-storm .cloud-layer-back.night-cloud-p {
                                         opacity: 1 !important;
                                         visibility: visible !important;
                                         position: absolute;
@@ -1580,34 +1670,69 @@
                                         height: 110%;
                                         left: 0;
                                         top: -10%;
-                                        filter: brightness(1.1) contrast(1.1) blur(4px);
+                                        filter: brightness(0.7) contrast(1.1) blur(4px); /* Dark for night */
                                         animation: cloudDrift 120s ease-in-out infinite alternate !important;
                                         z-index: 1;
                                     }
 
-                                    /* Disable Nublado for Storm Day */
-                                    .weather-widget.scene-storm-day .static-cloud-muy-nublado {
-                                        opacity: 0 !important;
-                                        visibility: hidden !important;
-                                        display: none !important;
-                                    }
-
                                     /* 2. Fast Looping Nubes Oscuras Carousel */
-                                    .weather-widget.scene-storm-day .cloud-layer-front.nubes-largas-fast-container {
-                                        position: relative !important;
-                                        z-index: 2 !important;
+                                    .weather-widget.scene-storm .cloud-layer-front.nubes-largas-fast-container {
+                                        position: absolute !important; /* Fix stacking context */
+                                        z-index: 10 !important; /* Placed explicitly above the z-index: 1 backdrop */
                                         opacity: 1 !important;
                                         display: flex !important;
                                         left: 0%;
                                         top: -10% !important;
                                         height: 110% !important;
-                                        animation: carouselLoopFast 40s linear infinite !important;
+                                        animation: carouselLoopFast 60s linear infinite !important; /* Sped up to match storm intensity */
+                                        filter: brightness(0.5) contrast(1.1) grayscale(0.2); /* Brightened slightly so clouds are visible against black night sky */
                                     }
 
-                                    /* Force the Carousel to use Storm Clouds (Brightened for DAY) */
-                                    .weather-widget.scene-storm-day .cloud-layer-front.nubes-largas-fast-container img {
-                                        content: url('./assets/weather/Nubes%20Oscuras%20Para%20Tormenta.png') !important;
-                                        filter: brightness(1.0) contrast(1.1);
+                                    /* 3. Storm Night Rain Asset */
+                                    .weather-widget.scene-storm .sky-rain-layer {
+                                        position: absolute;
+                                        top: 0;
+                                        left: 0;
+                                        width: 100%;
+                                        height: 300%;
+                                        background-image: url('./assets/weather/Rain%20Slow.png') !important;
+                                        background-repeat: repeat;
+                                        background-size: auto 1500px;
+                                        opacity: 0.9 !important;
+                                        visibility: visible !important;
+                                        display: block !important;
+                                        z-index: 45;
+                                        pointer-events: none;
+                                        animation: rainFallAsset 1.5s linear infinite !important; /* Fast heavy rain */
+                                    }
+
+                                    /* 4. Lightning Overlay */
+                                    .weather-widget[class*="scene-storm"] .rayo-storm-asset {
+                                        display: block !important;
+                                        visibility: visible !important;
+                                        opacity: 0; /* Reset for keyframes */
+                                        animation: flashRayoStorm 7s ease-in-out -1.5s infinite !important;
+                                    }
+
+                                    /* Storm Day specifics (Inherits clouds from Muy Nublado) */
+                                    .weather-widget.scene-storm-day {
+                                        background: linear-gradient(180deg, #36485e 0%, #5b7088 45%, #bfcad6 100%) !important;
+                                    }
+
+                                    /* SCENE STATE 7: Storm Day */
+                                    .weather-widget.scene-storm-day .sky-stars,
+                                    .weather-widget.scene-storm-day .stars-img,
+                                    .weather-widget.scene-storm-day .milky-way-img,
+                                    .weather-widget.scene-storm-day .moon-asset {
+                                        opacity: 0 !important;
+                                        display: none !important;
+                                    }
+
+                                    .weather-widget.scene-storm-day .sun-asset,
+                                    .weather-widget.scene-storm-day .sun-rays-asset,
+                                    .weather-widget.scene-storm-day .sun-rays-intense-asset {
+                                        opacity: 0 !important;
+                                        display: none !important;
                                     }
 
                                     /* 3. Storm Day Heavy Rain */
@@ -1617,7 +1742,7 @@
                                         left: 0;
                                         width: 100%;
                                         height: 300%;
-                                        background-image: url('./assets/weather/Rain%20Day.png') !important;
+                                        background-image: url('./assets/weather/Rain%20Slow.png') !important;
                                         background-repeat: repeat;
                                         background-size: auto 1500px; /* User explicit request: don't zoom */
                                         opacity: 1 !important;
@@ -1628,13 +1753,7 @@
                                         animation: rainFallAsset 1.5s linear infinite !important;
                                     }
 
-                                    /* 4. Lightning Flashes */
-                                    .weather-widget.scene-storm-day .rayo-storm-asset {
-                                        opacity: 0;
-                                        visibility: visible !important;
-                                        display: block !important;
-                                        animation: flashRayoStorm 7s ease-in-out infinite !important;
-                                    }
+                                    /* Day Storm lightning handled by [class*="scene-storm"] above */
 
                                     /* SCENE STATE 8: Snow */
                                     .weather-widget.scene-snow .sky-stars {
@@ -1692,10 +1811,7 @@
                                         animation: snowFallAsset 8s linear infinite;
                                     }
 
-                                    /* Rayo Storm PNG Flash Effect */
-                                    .weather-widget.scene-storm .rayo-storm-asset {
-                                        animation: flashRayoStorm 60s infinite;
-                                    }
+                                    /* Rayo Storm PNG Flash Effect (Handled individually by rayo-1 and rayo-2) */
 
                                     /* --- DYNAMIC LIGHTNING MANAGER CSS --- */
                                     .dynamic-lightning-svg {
@@ -1764,8 +1880,8 @@
                                             style="background: rgba(0,100,255,0.3); border: 1px solid rgba(0,150,255,0.5); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">🌧
                                             lluvia</button>
                                         <button onclick="window.forceQAScene('storm-day')"
-                                            style="background: rgba(150,150,180,0.3); border: 1px solid rgba(255,255,255,0.4); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">⛈
-                                            tormenta</button>
+                                            style="background: rgba(150,150,180,0.3); border: 1px solid rgba(255,255,255,0.4); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">🌩️
+                                            Day Storm</button>
                                     </div>
                                     <div class="scene-filters" style="display: flex; gap: 8px; flex-wrap: wrap;">
                                         <button onclick="window.forceQAScene('clear-night')"
@@ -1781,8 +1897,8 @@
                                             style="background: rgba(0,20,80,0.6); border: 1px solid rgba(0,150,255,0.5); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">🌧️🌙
                                             Rain Night</button>
                                         <button onclick="window.forceQAScene('storm')"
-                                            style="background: rgba(255,50,50,0.2); border: 1px solid rgba(255,50,50,0.6); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">⛈🌙
-                                            tormenta</button>
+                                            style="background: rgba(255,50,50,0.2); border: 1px solid rgba(255,50,50,0.6); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">🌩️🌙
+                                            Night Storm</button>
                                         <button onclick="window.forceQAScene('sunset')"
                                             style="background: rgba(255,165,0,0.2); border: 1px solid rgba(255,165,0,0.4); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">🌅
                                             Sunset</button>
@@ -4047,6 +4163,22 @@
 
     <!-- Weather Astral Engine -->
     <script src="./weather-astral.js?v=20260312-3"></script>
+<script>
+  setTimeout(() => {
+    const w = document.getElementById("booth-hero-container");
+    if(w) w.className = "booth-card weather-widget scene-clear-night";
+    const b = document.getElementById("weather-condition-label");
+    if(b) b.innerText = "Noche Despejada";
+  }, 100);
+</script>
+<script>
+  setTimeout(() => {
+    const w = document.getElementById("booth-hero-container");
+    if(w) w.className = "booth-card weather-widget scene-clear-night";
+    const b = document.getElementById("weather-condition-label");
+    if(b) b.innerText = "Noche Despejada";
+  }, 100);
+</script>
 </body>
 
 </html>

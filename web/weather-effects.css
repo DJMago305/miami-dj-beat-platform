@@ -180,3 +180,30 @@
     background: rgba(255, 255, 255, 0.1) !important;
     border: 1px solid rgba(255, 255, 255, 0.3) !important;
 }
+
+/* ── CALENDAR ARCHITECTURE STATES ── */
+.state-event { background: rgba(52, 199, 89, 0.15) !important; border-color: rgba(52, 199, 89, 0.3) !important; }
+.state-resident { background: rgba(0, 122, 255, 0.15) !important; border-color: rgba(0, 122, 255, 0.3) !important; }
+.state-vacation { background: rgba(255, 204, 0, 0.15) !important; border-color: rgba(255, 204, 0, 0.3) !important; }
+.state-holiday { background: rgba(255, 255, 255, 0.02) !important; }
+.state-today { 
+    border: 1.5px solid rgba(255, 255, 255, 0.8) !important; 
+    box-shadow: inset 0 0 15px rgba(255,255,255,0.1), 0 0 10px rgba(255,255,255,0.2) !important;
+    backdrop-filter: blur(10px);
+}
+
+.apple-status-container {
+    display: flex;
+    gap: 3px;
+    justify-content: center;
+    margin-top: 4px;
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+.apple-status-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    box-shadow: 0 0 5px currentColor;
+    display: inline-block;
+}

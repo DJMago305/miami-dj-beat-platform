@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Miami DJ Beat — Directorio de DJs Certificados</title>
+    <meta name="description"
+        content="Directorio público de DJs con certificación activa Miami DJ Beat. Solo credenciales vigentes — sin revocar, suspender o expirar." />
+    <link rel="stylesheet" href="./certification.css" />
+    <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
+    <style>
+        .filters {
+            display: grid;
+            gap: 10px;
+        }
+
+        @media(min-width:900px) {
+            .filters {
+                grid-template-columns: 2fr 1fr 1fr;
+                align-items: end
+            }
+        }
+
+        .cards {
+            display: grid;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        @media(min-width:900px) {
+            .cards {
+                grid-template-columns: repeat(3, 1fr)
+            }
+        }
+
+        .djCard {
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: rgba(11, 15, 22, .25);
+            padding: 12px
+        }
+
+        .djTop {
+            display: flex;
+            gap: 10px;
+            align-items: center
+        }
+
+        .avatar {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            background: rgba(17, 24, 39, .35);
+            object-fit: cover
+        }
+
+        .djName {
+            font-weight: 900
+        }
+
+        .djMeta {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 2px
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px
+        }
+
+        .tag {
+            font-size: 12px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 6px 10px;
+            color: var(--muted);
+            background: rgba(17, 24, 39, .25);
+            text-decoration: none
+        }
+
+        .tag:hover {
+            border-color: rgba(255, 255, 255, .2);
+            color: #e2e8f0
+        }
+
+        .badge.good {
+            border-color: rgba(34, 197, 94, .5);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, .12)
+        }
+
+        .badge.warn {
+            border-color: rgba(245, 158, 11, .5);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, .12)
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap
+        }
+
+        .btn.small {
+            padding: 10px 12px;
+            border-radius: 12px;
+            font-size: 13px
+        }
+
+        .mutedSmall {
+            color: var(--muted);
+            font-size: 12px
+        }
+    </style>
+</head>
+
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <div class="logoMark">M</div>
+            <div>
+                <div class="brandTitle">MIAMI DJ BEAT</div>
+                <div class="brandSub">Directorio público — Solo DJs ACTIVE</div>
+            </div>
+        </div>
+        <nav class="nav">
+            <a class="navLink" href="./index.html">Home</a>
+            <a class="navLink" href="./certification-about.html">About</a>
+            <a class="navLink" href="./verify.html">Verify</a>
+            <a class="navLink active" href="./directory.html">Directory</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h1>Directorio de DJs Certificados (ACTIVE)</h1>
+            <p class="muted">
+                Solo aparecen DJs con credencial vigente: <strong>no revocada</strong>, <strong>no suspendida</strong> y
+                <strong>no expirada</strong>.
+            </p>
+
+            <div class="filters">
+                <label class="field">
+                    <span>Buscar por nombre</span>
+                    <input id="q" type="text" placeholder="Ej: DJ Mago" />
+                </label>
+
+                <label class="field">
+                    <span>Status</span>
+                    <select id="status">
+                        <option value="all">Todos</option>
+                        <option value="graduated">GRADUADO PRO</option>
+                        <option value="pre">PRE-GRADUADO</option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span>Año</span>
+                    <select id="year">
+                        <option value="all">Todos</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="actions">
+                <button id="btnLoad" class="btn primary">Cargar Directorio</button>
+                <button id="btnClear" class="btn">Limpiar filtros</button>
+            </div>
+
+            <div id="count" class="mutedSmall" style="margin-top:10px;"></div>
+            <div id="cards" class="cards"></div>
+        </section>
+
+        <footer class="footer muted">
+            © <span id="yearNow"></span> Miami DJ Beat LLC — Directory
+        </footer>
+    </main>
+
+    <!-- Supabase client + config -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=20260226-1"></script>
+    <script>
+        const supabaseClient = supabase.createClient(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY);
+        const $ = (id) => document.getElementById(id);
+
+        document.getElementById('yearNow').textContent = new Date().getFullYear();
+
+        function esc(s) {
+            return String(s ?? "")
+                .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+        }
+
+        function registry(public_year, public_seq) {
+            if (!public_year || !public_seq) return "—";
+            return `${public_year}-${String(public_seq).padStart(6, "0")}`;
+        }
+
+        function normalizeInstagram(v) {
+            if (!v) return "";
+            const s = String(v).trim();
+            if (!s) return "";
+            if (s.startsWith("http")) return s;
+            if (s.startsWith("@")) return `https://instagram.com/${s.slice(1)}`;
+            return `https://instagram.com/${s}`;
+        }
+
+        async function loadDirectory() {
+            $("cards").innerHTML = "";
+            $("count").textContent = "Cargando...";
+
+            const q = $("q").value.trim().toLowerCase();
+            const status = $("status").value;
+            const year = $("year").value;
+
+            const { data, error } = await supabaseClient
+                .from("certificates")
+                .select("dj_name, cert_id, public_year, public_seq, graduated, pre_graduated, expires_at, city, genres, instagram, photo_url, headline")
+                .eq("revoked", false)
+                .eq("suspended", false);
+
+            if (error) {
+                console.error(error);
+                $("count").textContent = "Error cargando directorio.";
+                return;
+            }
+
+            // Client-side expires filter (avoids SQL function issues on fresh deploys)
+            const now = new Date();
+            let rows = (data || []).filter(r => {
+                if (!r.expires_at) return true;
+                return new Date(r.expires_at).getTime() > now.getTime();
+            });
+
+            // Populate year dropdown (once)
+            const years = [...new Set((data || []).map(r => r.public_year).filter(Boolean))].sort((a, b) => b - a);
+            const ySel = $("year");
+            if (ySel.options.length <= 1) {
+                years.forEach(y => {
+                    const opt = document.createElement("option");
+                    opt.value = String(y);
+                    opt.textContent = String(y);
+                    ySel.appendChild(opt);
+                });
+            }
+
+            // Filters
+            if (year !== "all") rows = rows.filter(r => String(r.public_year) === String(year));
+            if (status === "graduated") rows = rows.filter(r => !!r.graduated);
+            if (status === "pre") rows = rows.filter(r => !r.graduated && !!r.pre_graduated);
+            if (q) rows = rows.filter(r => String(r.dj_name || "").toLowerCase().includes(q));
+
+            // Sort: newest year first, lowest seq first (most senior within year)
+            rows.sort((a, b) => {
+                const ay = a.public_year || 0, by = b.public_year || 0;
+                if (by !== ay) return by - ay;
+                return (a.public_seq || 0) - (b.public_seq || 0);
+            });
+
+            $("count").textContent = `${rows.length} DJ(s) ACTIVE`;
+
+            if (!rows.length) {
+                $("cards").innerHTML = `<div class="kpi">No hay DJs que coincidan con los filtros.</div>`;
+                return;
+            }
+
+            $("cards").innerHTML = rows.map(r => {
+                const reg = registry(r.public_year, r.public_seq);
+                const statusBadge = r.graduated
+                    ? `<span class="badge good">GRADUADO PRO</span>`
+                    : `<span class="badge warn">PRE-GRADUADO</span>`;
+
+                const ig = normalizeInstagram(r.instagram);
+                const igTag = ig
+                    ? `<a class="tag" href="${esc(ig)}" target="_blank" rel="noopener noreferrer">📷 Instagram</a>`
+                    : "";
+
+                const cityTag = r.city ? `<span class="tag">📍 ${esc(r.city)}</span>` : "";
+                const genresTags = r.genres
+                    ? r.genres.split(",").map(g => `<span class="tag">${esc(g.trim())}</span>`).join("")
+                    : "";
+
+                const avatarSrc = r.photo_url
+                    ? esc(r.photo_url)
+                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(r.dj_name)}&background=1e293b&color=94a3b8&size=54`;
+
+                const headlineTxt = r.headline ? `<div class="djMeta" style="margin-top:6px;">${esc(r.headline)}</div>` : "";
+                const expiryTxt = r.expires_at
+                    ? `<div class="djMeta">Vigente hasta: ${new Date(r.expires_at).toLocaleDateString("es-MX")}</div>`
+                    : "";
+
+                return `
+        <div class="djCard">
+          <div class="djTop">
+            <img class="avatar" src="${avatarSrc}" alt="${esc(r.dj_name)}" loading="lazy" />
+            <div>
+              <div class="djName">${esc(r.dj_name)}</div>
+              <div class="djMeta">Registry: <strong>${esc(reg)}</strong></div>
+            </div>
+          </div>
+          ${headlineTxt}
+          ${expiryTxt}
+          <div class="row" style="margin-top:8px;">
+            ${statusBadge}
+          </div>
+          <div class="row">
+            ${cityTag}${genresTags}${igTag}
+          </div>
+          <div class="actions">
+            <a class="btn primary small" href="./verify.html?id=${encodeURIComponent(r.cert_id)}">Ver certificado →</a>
+            <a class="btn small" href="./client-portal.html?dj_name=${encodeURIComponent(r.dj_name)}" style="background:rgba(197,160,89,0.12);border:1px solid rgba(197,160,89,0.3);color:#c5a059;font-weight:800;">💌 Contratar</a>
+          </div>
+        </div>`;
+            }).join("");
+        }
+
+        // Wire events
+        $("btnLoad").addEventListener("click", loadDirectory);
+        $("btnClear").addEventListener("click", () => {
+            $("q").value = "";
+            $("status").value = "all";
+            $("year").value = "all";
+            loadDirectory();
+        });
+        $("q").addEventListener("input", loadDirectory);
+        $("status").addEventListener("change", loadDirectory);
+        $("year").addEventListener("change", loadDirectory);
+
+        // Auto-load on page open
+        loadDirectory();
+    </script>
+    <!-- MDJ Assistant Booth (AI Sales Agent) -->
+    <div id="mdj-assistant-booth">
+        <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
+        <div class="booth-window">
+            <div class="booth-header">
+                <div class="status-dot"></div>
+                <div style="flex: 1;">
+                    <h3>Booth Assistant</h3>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700;">Sales & Negotiation
+                        Expert</div>
+                </div>
+            </div>
+            <div class="booth-messages"></div>
+            <div class="booth-input-area">
+                <input type="text" placeholder="Type your message here..." />
+                <button class="booth-send-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="booth-trigger" title="Talk to Booth Assistant">
+            <div class="avatar-glow"></div>
+            <div style="font-size: 30px; z-index: 10;">🤖</div>
+        </div>
+    </div>
+    <script src="./mdj-assistant.js?v=20260306-1"></script>
+</body>
+
+</html>

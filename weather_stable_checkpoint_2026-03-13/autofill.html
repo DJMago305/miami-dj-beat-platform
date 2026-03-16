@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Cargando...</title>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <p>Cargando formulario...</p>
+    <script>
+        // Store autofill data in localStorage so jobs.html can read it
+        localStorage.setItem('mdjpro_autofill', JSON.stringify({
+            firstName: 'Gerardo',
+            middleInitial: 'A',
+            lastName: 'Valle',
+            stageName: 'DJMago305',
+            email: 'djmago305@gmail.com',
+            password: 'MiamiDJ2026!',
+            languages: ['ES', 'EN'],
+            roles: ['EVENTOS', 'RESIDENTE'],
+            bioShort: 'DJ & Producer based in Miami. Founder of SoundCaribe Record Corp. Afro-Latin & Electronic music specialist.',
+            bioLong: 'With over two decades immersed in the industry, DJMago305 has crafted a distinctive style that merges energy, technique, and a deep connection with the crowd.\n\nFrom his early days performing in legendary clubs across Cuba and Europe to establishing his name in Miami, DJMago305 has kept the magic of the decks alive, turning every performance into a sensory experience that transcends music. His sound merges Afro, Latin, and electronic elements with an elegant balance between cultural heritage and contemporary vision.\n\nToday, DJMago305 stands as the creative force behind SoundCaribe Record Corp, promoting new talent and projects that are reshaping the Latin-electronic landscape.',
+            instagram: '@djmago305',
+            youtube: 'https://youtube.com/@djmago305',
+            tiktok: '@djmago305',
+            soundcloud: 'https://soundcloud.com/djmago305',
+            bioLanguage: 'es',
+            bioAutoTranslate: true
+        }));
+        // Redirect to jobs.html
+        window.location.href = './jobs.html?autofill=1';
+    </script>
+</body>
+
+</html>

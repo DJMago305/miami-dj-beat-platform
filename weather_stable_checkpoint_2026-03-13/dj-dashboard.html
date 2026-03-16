@@ -1,0 +1,3310 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>MDJPRO — Agenda y Control</title>
+    <meta name="description" content="Agenda y Control para MDJPRO: perfil, estado de suscripción y descargas." />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700;1,800&display=swap"
+        rel="stylesheet">
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css' rel='stylesheet' />
+    <link rel="stylesheet" href="./styles.css?v=20260226-1" />
+    <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+    <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <script src="./supabase-config.js?v=20260226-1"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="./dashboard-youtube.js?v=20260216-1"></script>
+
+    <!-- DJ Knowledge / Dashboard General Logic -->
+    <script src="./dj-knowledge.js?v=20260216-1"></script>
+
+    <!-- Weather Astral Engine -->
+    <script src="./role-guard.js?v=20260226-2" data-role="dj"></script>
+    <style>
+        body {
+            padding-top: 20px !important;
+        }
+
+        /* ── Dashboard overrides — clean Serato-level aesthetic ── */
+        h1,
+        h2,
+        h3 {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .header {
+            z-index: 1000 !important;
+            top: 20px !important;
+        }
+
+        .admin-card h2 {
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 0 0 6px;
+        }
+
+        .admin-card h2.gold {
+            color: var(--gold, #c5a059);
+        }
+
+        .admin-card h2.white {
+            color: #fff;
+        }
+
+        .admin-card h2.danger {
+            color: #ff5555;
+        }
+
+        .dash-tab-btn {
+            padding: 16px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all .2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .dash-tab-btn:hover {
+            color: #fff;
+        }
+
+        .dash-tab-btn.active {
+            color: var(--gold, #c5a059);
+            border-bottom-color: var(--gold, #c5a059);
+        }
+
+        /* ── Influence Analytics Styles ── */
+        .flow-dashboard {
+            background: #0a0a0b;
+            color: #fff;
+            padding: 32px;
+            font-family: 'Inter', sans-serif;
+            animation: fadeIn0 0.6s ease-out;
+        }
+
+        @keyframes fadeIn0 {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .flow-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .flow-card {
+            background: #111114;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .flow-card:hover {
+            border-color: rgba(197, 160, 89, 0.3);
+        }
+
+        .flow-card-label {
+            font-size: 11px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .flow-card-value {
+            font-size: 28px;
+            font-weight: 900;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .flow-card-trend {
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .flow-card-trend.up {
+            color: #00ff88;
+        }
+
+        .flow-card-trend.down {
+            color: #ff5555;
+        }
+
+        .chart-container-large {
+            background: #111114;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 900;
+            color: #fff;
+            margin: 0;
+        }
+
+        .flow-table-card {
+            background: #111114;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .flow-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .flow-table th {
+            text-align: left;
+            padding: 18px 24px;
+            font-size: 10px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .flow-table td {
+            padding: 18px 24px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .status-pill {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .status-pill.available {
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .status-pill.pending {
+            background: rgba(255, 204, 0, 0.1);
+            color: #ffcc00;
+            border: 1px solid rgba(255, 204, 0, 0.2);
+        }
+
+        .status-pill.held {
+            background: rgba(255, 85, 85, 0.1);
+            color: #ff5555;
+            border: 1px solid rgba(255, 85, 85, 0.2);
+        }
+    </style>
+</head>
+
+<body class="notranslate">
+    <header class="header" id="mainHeader">
+        <div class="header-top">
+            <div class="container">
+                <div class="brand">
+                    <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+                    <div class="brand-letters-wrapper">
+                        <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters" class="brand-letters-img">
+                    </div>
+                </div>
+                
+                <div class="header-actions">
+                    <div class="lang-switcher">
+                        <span class="lang-btn active" data-lang="es">ES</span>
+                        <span class="lang-pipe">|</span>
+                        <span class="lang-btn" data-lang="en">EN</span>
+                    </div>
+                    
+                    <div class="account" id="header-auth-zone" style="display: flex;">
+                        <button class="account-btn" id="accountBtn" aria-haspopup="true" aria-expanded="false">
+                            <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="Avatar" id="header-avatar-img" />
+                            <span class="caret">▾</span>
+                        </button>
+                        <div class="account-menu" id="accountMenu" aria-hidden="true">
+                            <a href="./dj-profile.html" class="menu-item" data-i18n="menu-account">My Profile</a>
+                            <a href="./account-settings.html" class="menu-item">Settings</a>
+                            <a href="./jobs.html" class="menu-item" data-i18n="menu-jobs">Jobs</a>
+                            <div class="menu-divider"></div>
+                            <a href="#" class="menu-item danger" id="logoutBtn" data-i18n="menu-logout">Cerrar Sesión</a>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+    <style>
+        .header .brand::before {
+            content: none !important;
+            display: none !important;
+        }
+        .topbar-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .topbar-title {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--gold);
+            position: relative;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+        }
+
+        .topbar-title::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gold);
+            box-shadow: 0 -2px 10px var(--gold);
+        }
+
+        .topbar-tab {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: color .2s;
+            padding: 0 12px;
+        }
+
+        .topbar-tab:hover {
+            color: #fff;
+        }
+    </style>
+
+    <main>
+        <!-- Photo Rejection Banner — shown dynamically if photo_status === 'rejected' -->
+        <div id="photo-rejection-banner"
+            style="display:none; background:rgba(255,50,50,0.1); border-bottom:2px solid rgba(255,80,80,0.4); padding:16px 24px;">
+            <!-- LOCKED SECTION: DO NOT MODIFY -->
+        <div class="container" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+                <span style="font-size:22px;">🚫</span>
+                <div style="flex:1;">
+                    <strong style="color:#ff5555;">Tu foto de perfil fue eliminada por incumplir nuestros Términos de
+                        Uso.</strong>
+                    <p id="photo-rejection-reason" style="margin:4px 0 0;font-size:13px;color:rgba(255,200,200,0.9);">
+                    </p>
+                </div>
+                <a href="./jobs.html"
+                    style="background:#ff5555;color:#fff;padding:10px 22px;border-radius:10px;font-weight:800;font-size:13px;text-decoration:none;white-space:nowrap;">📸
+                    Actualizar Foto</a>
+            </div>
+        </div>
+
+
+
+        <!-- ── DASHBOARD TAB NAV ────────────────────────────────────── -->
+        <nav class="dj-owner-tabs" id="owner-tabs">
+            <!-- LOCKED SECTION: DO NOT MODIFY -->
+        <div class="container">
+                <button class="dj-tab-btn active" data-tab="dashboard"
+                    onclick="switchDashTab('dashboard')">AGENDA</button>
+                <button class="dj-tab-btn" data-tab="influence" onclick="switchDashTab('influence')">RESEÑAS</button>
+                <a href="./dj-profile.html" class="dj-tab-btn" style="text-decoration:none;">PERFIL PÚBLICO</a>
+                <button class="dj-tab-btn" data-tab="flow" onclick="switchDashTab('flow')">💰 FLUJO DE CAJA</button>
+                <div class="nav-item-dropdown" style="display: flex; align-items: center;">
+                    <a href="#" class="dj-tab-btn" style="text-decoration:none; cursor: default; padding: 0;">ACADEMIA <span class="caret">▾</span></a>
+                    <div class="nav-dropdown-menu" style="top: calc(100% + 15px);">
+                        <a href="./courses.html">Cursos y Certificación</a>
+                        <a href="./dj-knowledge.html">Cultura y Biblioteca DJ</a>
+                    </div>
+                </div>
+                <a href="./index.html" class="dj-tab-btn" style="text-decoration:none;">HOME</a>
+            </div>
+        </nav>
+        <style>
+            /* ── DJ OWNER TABS ── */
+            .dj-owner-tabs {
+                background: #0a0a0a;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                position: sticky;
+                top: 0;
+                /* Alineado exactamente con el inicio al hacer scroll */
+                z-index: 1001;
+                display: flex;
+            }
+
+            .dj-owner-tabs .container {
+                display: flex;
+                gap: 40px;
+                padding: 0 56px;
+            }
+
+            .dj-tab-btn {
+                background: none;
+                border: none;
+                color: rgba(255, 255, 255, 0.4);
+                font-size: 15px;
+                font-weight: 900;
+                letter-spacing: 4px;
+                padding: 32px 0;
+                cursor: pointer;
+                text-transform: uppercase;
+                position: relative;
+                transition: color 0.2s;
+                text-decoration: none;
+            }
+
+            .dj-tab-btn:hover {
+                color: #fff;
+            }
+
+            .dj-tab-btn.active {
+                color: var(--gold);
+            }
+
+            .dj-tab-btn.active::after {
+                content: '';
+                position: absolute;
+                bottom: -1px;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: var(--gold);
+            }
+
+            .dash-tab-panel {
+                display: none;
+                animation: fadeIn 0.4s ease-out;
+            }
+
+            .dash-tab-panel.active {
+                display: block;
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .hero-grid {
+                display: grid;
+                grid-template-columns: 1fr 500px;
+                gap: 30px;
+                align-items: start;
+            }
+
+            @media (max-width: 992px) {
+                .hero-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            /* Almanaque Read-only styles */
+            .read-only-cal {
+                pointer-events: none;
+                opacity: 0.9;
+            }
+
+            .read-only-cal .cal-nav-btn {
+                pointer-events: auto;
+            }
+
+            /* Allow Mes/Año navigation */
+            .rec-day-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #5078ff;
+            }
+
+            .dash-cal-cell:hover {
+                transform: translateY(-5px);
+                filter: brightness(1.2);
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            }
+        </style>
+
+
+        <!-- TAB 1: Agenda (existing content) -->
+        <div id="tab-dashboard" class="dash-tab-panel active">
+            <section style="padding: 60px 0; margin-top: 20px;">
+                <div class="container hero-grid" style="align-items: flex-start;">
+                    <!-- Left Column: Business Logic -->
+                    <div class="agenda-main" style="padding-top: 10px;">
+                        <!-- ── CLIMA HERO SECTION ── -->
+                        <div id="booth-hero-container" class="booth-card weather-widget"
+                            style="margin-bottom: 20px; min-height: 480px; position: relative; border-radius: 24px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+                            <div class="weather-scene">
+                                <!-- Capa 1: Fondo Base (CSS + PNG option) -->
+                                <div class="sky-base clear-day" id="weather-layer-base">
+                                    <img class="sky-base-img" src="./assets/weather/Cielo Azul.png" alt="">
+                                </div>
+                                
+                                <!-- Capa 2: Efectos de Fondo Astrales -->
+                                <div class="sky-stars" id="weather-stars">
+                                    <img class="stars-img" src="./assets/weather/stars.png" alt="">
+                                    <img class="milky-way-img" src="./assets/weather/cielo estrellado hermoso.png" alt="">
+                                </div>
+                                
+                                <!-- Capa 3: Astros y Rayos -->
+                                <div class="sky-astral" id="weather-layer-astral">
+                                    <img class="sun-asset" id="sun-element" src="./assets/weather/Sunny%20Real.png" alt="">
+                                    <img class="moon-asset" id="moon-element" src="./assets/weather/moon.png" alt="">
+                                    <img class="sun-rays-asset" id="sun-rays-element" src="./assets/weather/Rayos De Sol.png" alt="">
+                                    <!-- Rays intense option -->
+                                    <img class="sun-rays-intense-asset" src="./assets/weather/Rayos De Sol.png" alt="">
+                                </div>
+
+                                <!-- Capa 4: Nubes de Fondo -->
+                                <div class="sky-clouds-back" id="weather-clouds-back">
+                                    <img class="cloud-layer-back light-cloud" src="./assets/weather/Bellas Nubes.png" alt="">
+                                    <img class="cloud-layer-back night-cloud-p" src="./assets/weather/Pequenas Nubes Negras.png" alt="">
+                                    <img class="cloud-layer-back rain-cloud" src="./assets/weather/Nublado.png" alt="">
+                                    <img class="cloud-layer-back storm-cloud" src="./assets/weather/Nublado.png" alt="">
+                                    <img class="cloud-layer-back storm-day-cloud" src="./assets/weather/Rain%20Day.png" alt="">
+                                    <img class="cloud-layer-back long-cloud" src="./assets/weather/Nubes Largas .png" alt="">
+                                </div>
+                                
+                                <!-- Capa 5: Nubes Frontales -->
+                                <div class="sky-clouds-front" id="weather-clouds-front">
+                                    <img class="cloud-layer-front hero-cloud" src="./assets/weather/hero-clouds-front.png" alt="">
+                                    <img class="cloud-layer-front dark-cloud" src="./assets/weather/Nublado.png" alt="">
+                                    <img class="cloud-layer-front night-cloud-o" src="./assets/weather/Nubes Oscuras Para Tormenta.png" alt="">
+                                    <!-- Added heavy storm cloud for the front layer to increase density -->
+                                    <img class="cloud-layer-front storm-cloud-front" src="./assets/weather/Nublado.png" alt="">
+                                    <img class="cloud-layer-front storm-day-cloud-front" src="./assets/weather/Rain%20Day.png" alt="">
+                                    <!-- Added Fast Looping Long Clouds as explicitly requested -->
+                                    <div class="cloud-layer-front nubes-largas-fast-container">
+                                        <img src="./assets/weather/Nubes Largas .png" alt="">
+                                        <img src="./assets/weather/Nubes Largas .png" alt="">
+                                    </div>
+                                </div>
+                                
+                                <!-- Capa 6: Efectos de Frente -->
+                                <div class="sky-effects-front" id="weather-effects-front">
+                                    <div class="sky-rain-layer" id="weather-layer-rain"></div>
+                                    <div class="sky-snow-layer" id="weather-layer-snow"></div>
+                                    <div class="sky-storm-layer" id="weather-layer-storm"></div>
+                                    <img class="rayo-storm-asset" src="./assets/weather/Rayo%20Storm.png" alt="">
+                                </div>
+                            </div>
+
+                            <!-- Weather Content Overlay -->
+                            <div class="weather-content"
+                                style="padding: 40px; color: #fff; text-align: center;">
+                                <div id="weather-location"
+                                    style="font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.6); margin-bottom: 10px; letter-spacing: 2px; text-transform: uppercase;">
+                                    Miami, FL — USA
+                                </div>
+                                <div id="weather-main-temp"
+                                    style="font-size: 96px; font-weight: 200; margin-bottom: 5px; font-family: 'Inter', sans-serif;">
+                                    74°
+                                </div>
+                                <div id="weather-condition-label"
+                                    style="font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 5px;">
+                                    Soleado
+                                </div>
+                                <div id="weather-high-low"
+                                    style="font-size: 14px; color: rgba(255,255,255,0.8); font-weight: 600;">
+                                    Máx: 78° Mín: 68°
+                                </div>
+
+                                <div id="weather-description-text"
+                                    style="margin-top: 25px; font-size: 13px; color: rgba(255,255,255,0.6); max-width: 320px; margin-left: auto; margin-right: auto; line-height: 1.6;">
+                                    Pronóstico de cielos parcialmente nublados como a las 4 p.m.. Ráfagas de viento de
+                                    hasta 17 mi/h.
+                                </div>
+
+                                <!-- HOURLY CAROUSEL DENTRO DEL CLIMA (Glass Module) -->
+                                <div id="hourly-forecast-permanent"
+                                    style="margin-top: 40px; background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(20px); border-radius: 20px; padding: 20px; border: 1px solid rgba(255,255,255,0.05);">
+                                    <div id="hourly-scroller-main"
+                                        style="overflow-x: auto; display: flex; gap: 24px; padding-bottom: 10px; scrollbar-width: none; -ms-overflow-style: none;">
+                                        <!-- Inyectado vía profile-loader.js -->
+                                    </div>
+                                </div>
+
+                                <!-- 10-DAY FORECAST (Apple Style) -->
+                                <div id="daily-forecast-container"
+                                    style="margin-top: 15px; background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(20px); border-radius: 20px; padding: 20px; border: 1px solid rgba(255,255,255,0.05); text-align: left;">
+                                    <div
+                                        style="font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                                        <span>📅</span> PRONÓSTICO PARA 10 DÍAS
+                                    </div>
+                                    <div id="daily-forecast-list"
+                                        style="display: flex; flex-direction: column; gap: 12px;">
+                                        <!-- Inyectado vía profile-loader.js -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- DETALLES DEL EVENTO SELECCIONADO -->
+                        <div id="dash-left-event-details" style="margin-top: 20px;">
+                            <div id="dash-event-detail-card"
+                                style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 32px; text-align: left; min-height: 200px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden;">
+                                <div id="dash-event-detail-empty" style="text-align: center; opacity: 0.4;">
+                                    <div style="font-size: 32px; margin-bottom: 15px;">✨</div>
+                                    <h3 style="color: #fff; font-size: 16px; font-weight: 700;">Selecciona una fecha
+                                        en
+                                        la Agenda</h3>
+                                </div>
+                                <div id="dash-event-detail-data" style="display: none;">
+                                    <!-- Contenido dinámico inyectado -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Event Agenda 📅 -->
+                    <div class="agenda-sidebar calendar-column" style="position: relative; z-index: 10;">
+                        <div class="admin-card agenda-card-container calendar-card"
+                            style="padding: 0; position: relative; overflow: hidden; border: 1px solid rgba(197,160,89,0.25); min-height: 500px; background: transparent !important; backdrop-filter: blur(10px); z-index: 5;">
+
+                            <div style="padding: 24px; position: relative; z-index: 2;">
+                                <div
+                                    style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+                                    <h2 class="gold" style="margin:0; font-size:18px;">📅 Agenda Climática</h2>
+                                </div>
+
+                                <!-- FullCalendar Container CSS Overwrite (Apple Style) -->
+                                <style>
+                                    #calendar-master .fc-scrollgrid,
+                                    #calendar-master .fc-theme-standard td,
+                                    #calendar-master .fc-theme-standard th {
+                                        border: none !important;
+                                    }
+
+                                    #calendar-master .fc-daygrid-day-number {
+                                        font-size: 16px;
+                                        font-weight: 300;
+                                        opacity: 0.9;
+                                        padding: 10px !important;
+                                    }
+
+                                    #calendar-master .fc-col-header-cell-cushion {
+                                        font-size: 10px;
+                                        font-weight: 900;
+                                        text-transform: uppercase;
+                                        color: var(--gold);
+                                        opacity: 0.8;
+                                        text-decoration: none !important;
+                                        letter-spacing: 1px;
+                                    }
+
+                                    #calendar-master .fc-daygrid-day-top {
+                                        flex-direction: column !important;
+                                        align-items: center !important;
+                                    }
+
+                                    #calendar-master .fc-daygrid-event-harness {
+                                        display: none !important;
+                                    }
+
+                                    /* Glow y Borde Blanco para Hoy 🍏 */
+                                    #calendar-master .fc-day-today {
+                                        background: rgba(255, 255, 255, 0.05) !important;
+                                        border: 2px solid #fff !important;
+                                        border-radius: 12px !important;
+                                        box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.1);
+                                    }
+
+                                    /* Efecto Glow Selección Activa */
+                                    #calendar-master .fc-day-selected {
+                                        background: radial-gradient(circle, rgba(197, 160, 89, 0.2) 0%, rgba(0, 0, 0, 0) 70%) !important;
+                                        box-shadow: inset 0 0 20px rgba(197, 160, 89, 0.1) !important;
+                                        transition: background 0.3s ease;
+                                    }
+            /* --- REFINED WEATHER STYLES --- */
+            .weather-widget { position: relative; overflow: hidden; }
+
+            .cloud-layer-back,
+            .cloud-layer-front {
+                position: absolute;
+                pointer-events: none;
+                z-index: 2;
+                transition: opacity 1s ease-in-out;
+            }
+
+            .nubes-largas-fast-container {
+                display: none;
+                flex-direction: row;
+                flex-wrap: nowrap;
+                align-items: flex-start;
+                justify-content: flex-start;
+                width: 300%; /* Expands enough to comfortably cover the screen */
+                height: 25%; /* Explicitly set height to constraint the stretch to only the top bounds */
+                margin: 0;
+                padding: 0;
+                /* Ensure 0 gap for seamless images */
+                gap: 0;
+            }
+            .nubes-largas-fast-container img {
+                position: static !important; /* Extremely important to override .weather-scene img absolute positioning for flex */
+                width: 50%;
+                height: 100%; /* Force to fill container height */
+                flex-shrink: 0; /* Guarantee exact 50% width */
+                display: block;
+                margin: 0;
+                padding: 0;
+                border: none;
+                object-fit: fill; /* Stretch to shape, preventing transparent gaps that cause the "brinco" jump */
+                object-position: top center; /* Force image pixels to ceiling */
+            }
+
+            .weather-scene {
+                position: absolute;
+                inset: 0;
+                z-index: 0;
+                pointer-events: none;
+                overflow: hidden;
+                border-radius: 24px;
+            }
+            .weather-scene img {
+                position: absolute;
+                display: block;
+                max-width: none;
+                object-fit: contain;
+                pointer-events: none;
+            }
+
+            /* Natural Order Z-Index */
+            .sky-base         { position:absolute; inset:0; z-index:0; transition: background 1s ease-in-out; }
+            .sky-stars        { position:absolute; inset:0; z-index:1; }
+            .sky-astral       { position:absolute; inset:0; z-index:2; }
+            .sky-clouds-back  { position:absolute; inset:0; z-index:3; pointer-events: none; }
+            .sky-clouds-front { position:absolute; inset:0; z-index:4; pointer-events: none; }
+            .sky-effects-front{ position:absolute; inset:0; z-index:5; pointer-events: none; }
+            .sky-rain-layer   { position:absolute; inset:0; z-index:6; pointer-events: none; }
+            .sky-snow-layer   { position:absolute; inset:0; z-index:7; pointer-events: none; } /* Added this line */
+            .sky-storm-layer  { position:absolute; inset:0; z-index:8; pointer-events: none; } /* Adjusted z-index */
+
+            /* CSS Skies */
+            .sky-base.clear-day { background: linear-gradient(to bottom, #1e4a8b 0%, #4f86d9 38%, #cce6f4 100%); }
+            .sky-base.sunset { background: linear-gradient(to bottom, #321b4f 0%, #6a356f 38%, #d38a6e 100%); }
+            .sky-base.clear-night { background: linear-gradient(to bottom, #070914 0%, #152342 45%, #1f2f52 100%); }
+            .sky-base.cloudy { background: linear-gradient(to bottom, #36485e 0%, #5b7088 45%, #bfcad6 100%); }
+            .sky-base.rain { background: linear-gradient(to bottom, #283445 0%, #44566b 45%, #7f8d9b 100%); }
+            .sky-base.storm { background: linear-gradient(to bottom, #04070a 0%, #10161f 45%, #18202d 100%); }
+            .sky-base.snow { background: linear-gradient(to bottom, #5e7a9e 0%, #8faac7 45%, #d0e0ed 100%); } /* Added this line */
+
+            .weather-content {
+                position: relative;
+                z-index: 10;
+            }
+
+            /* Natural Asset Sizing & Opacity Transitions */
+            .sky-base-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.5s ease; }
+            .stars-img, .milky-way-img {
+                width: 100%; height: 100%; object-fit: contain; position: absolute; top:0; left:0;
+                opacity: 0; transition: opacity 1.5s ease-in-out;
+            }
+            .cloud-layer-back {
+                position: absolute; width: 120%; height: 100%; object-fit: contain; left: 50%; top: 10%; transform: translateX(-50%);
+                opacity: 0; transition: opacity 1.5s ease-in-out;
+            }
+            .cloud-layer-front {
+                position: absolute; width: 120%; height: 100%; object-fit: contain; left: 50%; top: 20%; transform: translateX(-50%);
+                opacity: 0; transition: opacity 1.5s ease-in-out;
+            }
+
+            .sun-asset {
+                position: absolute;
+                width: 450px;
+                height: 450px;
+                object-fit: contain;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 1.5s ease, filter 1.5s ease, transform 1.5s ease;
+                z-index: 2; /* Flare over background */
+                mix-blend-mode: screen; /* Knock out any dark fringes */
+                -webkit-mask-image: radial-gradient(circle closest-side, black 65%, transparent 100%);
+                mask-image: radial-gradient(circle closest-side, black 65%, transparent 100%);
+            }
+            .moon-asset, .sun-rays-asset, .sun-rays-intense-asset {
+                position: absolute; 
+                left: 50%; top: 30%; 
+                opacity: 0; 
+                transition: all 1.5s ease-out; 
+                object-fit: contain; 
+                pointer-events: none;
+                transform-origin: center center;
+                will-change: transform, left, top, opacity, filter;
+            }
+            .rayo-storm-asset {
+                position: absolute;
+                top: -5%;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                object-position: top center;
+                opacity: 0;
+                pointer-events: none;
+                mix-blend-mode: screen;
+                z-index: 100;
+            }
+
+            /* Edge Blending Masks (Parches Rectangulares Fix) */
+            .moon-asset, .sun-rays-asset, .sun-rays-intense-asset, .stars-img, .milky-way-img {
+                -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 70%);
+                mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 70%);
+                mix-blend-mode: screen;
+            }
+            .cloud-layer-back, .cloud-layer-front {
+                -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
+                mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
+                /* Smooth linear fade removes any hard bottom lines but keeps left/right edges full */
+            }
+            .sun-rays-asset { width: 34%; }
+            .sun-rays-intense-asset { width: 50%; }
+            .moon-asset { width: 16%; left: 70%; top: 20%; }
+
+            /* --- CLOUD ANIMATIONS --- */
+            @keyframes cloudDrift {
+                0% { transform: translateX(-45%); }
+                100% { transform: translateX(-55%); }
+            }
+            @keyframes stormDriftback {
+                0% { transform: translateX(-48%) translateY(-30%) scale(1.6); }
+                100% { transform: translateX(-52%) translateY(-30%) scale(1.6); }
+            }
+            @keyframes stormDriftfront {
+                0% { transform: translateX(-48%) translateY(-35%) scale(1.8); }
+                100% { transform: translateX(-52%) translateY(-35%) scale(1.8); }
+            }
+            @keyframes stormDriftFastLargas {
+                0% { transform: translateX(0%) translateY(-5%) scale(1.4); }
+                100% { transform: translateX(-50%) translateY(-5%) scale(1.4); }
+            }
+            @keyframes carouselLoopFast {
+                0% { transform: translate3d(0, 0, 0); }
+                100% { transform: translate3d(-50%, 0, 0); }
+            }
+            @keyframes rainFallAsset {
+                0% { background-position: 0px 0px; }
+                100% { background-position: 0px 1500px; }
+            }
+            @keyframes snowFallAsset {
+                0% { background-position: 0px 0px; }
+                100% { background-position: 150px 1500px; }
+            }
+            
+            @keyframes flashRayoStorm {
+                0%, 98.5% { opacity: 0; filter: brightness(1); }
+                98.8% { opacity: 1; filter: brightness(1.5); }
+                99.1% { opacity: 0; }
+                99.4% { opacity: 0.8; filter: brightness(1.2); }
+                99.7% { opacity: 0; }
+                100% { opacity: 0; }
+            }
+            
+            /* CSS Diagonal/Vertical Rain Layer */
+            .sky-rain-layer {
+                opacity: 0;
+                transition: opacity 1s ease;
+                background-image: url('./assets/weather/Rain%20Slow.png');
+                background-repeat: repeat;
+                background-size: cover; 
+                pointer-events: none;
+                mix-blend-mode: screen;
+            }
+
+            /* CSS Snow Layer */
+            .sky-snow-layer {
+                opacity: 0;
+                transition: opacity 1s ease;
+                background-image: url('./assets/weather/Snow.png');
+                background-repeat: repeat;
+                background-size: cover; 
+                pointer-events: none;
+                mix-blend-mode: screen;
+                position: absolute;
+                inset: -20px;
+                z-index: 10;
+            }
+
+            /* SCENE STATE 1: Clear Day */
+            .weather-widget.scene-clear-day .sky-stars { opacity: 0 !important; display: none !important; }
+            .weather-widget.scene-clear-day .stars-img { opacity: 0 !important; }
+            .weather-widget.scene-clear-day .milky-way-img { opacity: 0 !important; }
+            .weather-widget.scene-clear-day .moon-asset { opacity: 0 !important; display: none !important; }
+            .weather-widget.scene-clear-day .sky-base-img { opacity: 0 !important; display: none !important; } 
+            .weather-widget.scene-clear-day .cloud-layer-back { opacity: 0 !important; display: none !important; } 
+            
+            /* Sun Visibility Base */
+            .weather-widget.scene-clear-day .sun-asset { opacity: 1 !important; display: block !important; filter: none !important; mix-blend-mode: screen !important; }
+            /* Static override just for QA mode to ensure it sits nicely in the middle */
+            .weather-widget[data-qa-forced="true"].scene-clear-day .sun-asset { top: 25% !important; left: 50% !important; transform: translate(-50%, -50%) scale(1.1) !important; }
+            
+            .weather-widget.scene-clear-day .sun-rays-asset { opacity: 0 !important; display: none !important; }
+            .weather-widget.scene-clear-day .cloud-layer-front.hero-cloud { opacity: 0.9; object-fit: cover; object-position: top center; width: 200%; top: -15%; left: 50%; transform: translateX(-50%); animation: cloudDrift 100s ease-in-out infinite alternate; mix-blend-mode: normal; -webkit-mask-image: radial-gradient(ellipse at 50% -10%, black 40%, transparent 85%); mask-image: radial-gradient(ellipse at 50% -10%, black 40%, transparent 85%); }
+
+            /* SCENE STATE 2: Sunset */
+            .weather-widget.scene-sunset .sky-base-img { opacity: 0.1; }
+            .weather-widget.scene-sunset .sun-asset { opacity: 1; top: 65%; transform: translate(-50%, -50%) scale(1.1); }
+            .weather-widget.scene-sunset .sun-rays-intense-asset { opacity: 0.6; top: 60%; }
+            .weather-widget.scene-sunset .cloud-layer-back.long-cloud { opacity: 0.6; object-fit: contain; width: 120%; left: 50%; animation: cloudDrift 110s ease-in-out infinite alternate; }
+            .weather-widget.scene-sunset .cloud-layer-front.hero-cloud { opacity: 0.7; object-fit: contain; width: 120%; left: 50%; animation: cloudDrift 85s ease-in-out infinite alternate; }
+
+            /* SCENE STATE 3: Clear Night */
+            .weather-widget.scene-clear-night .stars-img { opacity: 0.8; }
+            .weather-widget.scene-clear-night .milky-way-img { opacity: 0.4; }
+            .weather-widget.scene-clear-night .moon-asset { opacity: 1; }
+            .weather-widget.scene-clear-night .cloud-layer-back.light-cloud { opacity: 0.35; object-fit: cover; object-position: top center; width: 160%; left: 50%; top: -25%; animation: cloudDrift 180s ease-in-out infinite alternate; -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%); mask-image: linear-gradient(to bottom, black 40%, transparent 100%); }
+            .weather-widget.scene-clear-night .cloud-layer-front.hero-cloud { opacity: 0.15; object-fit: cover; object-position: top center; width: 160%; left: 50%; top: -15%; animation: cloudDrift 120s ease-in-out infinite alternate; -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%); mask-image: linear-gradient(to bottom, black 40%, transparent 100%); }
+
+            /* SCENE STATE 4: Cloudy Day */
+            .weather-widget.scene-cloudy-day .sky-stars { opacity: 0 !important; display: none !important; }
+            .weather-widget.scene-cloudy-day .stars-img { opacity: 0 !important; }
+            .weather-widget.scene-cloudy-day .milky-way-img { opacity: 0 !important; }
+            .weather-widget.scene-cloudy-day .moon-asset { opacity: 0 !important; display: none !important; }
+            .weather-widget.scene-cloudy-day .sun-asset { opacity: 0.15 !important; display: block !important; }
+            .weather-widget.scene-cloudy-day .cloud-layer-back.night-cloud-p { opacity: 0.85; object-fit: cover; object-position: top center; width: 160%; left: 50%; top: -25%; animation: cloudDrift 160s ease-in-out infinite alternate; -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%); mask-image: linear-gradient(to bottom, black 40%, transparent 100%); }
+            .weather-widget.scene-cloudy-day .cloud-layer-front.night-cloud-o { opacity: 0.7; object-fit: cover; object-position: top center; width: 160%; left: 50%; top: -15%; animation: cloudDrift 100s ease-in-out infinite alternate; -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%); mask-image: linear-gradient(to bottom, black 50%, transparent 100%); }
+            
+            /* SCENE STATE 4b: Cloudy Night */
+            .weather-widget.scene-cloudy-night .stars-img { opacity: 0.8; }
+            .weather-widget.scene-cloudy-night .milky-way-img { opacity: 0.4; }
+            .weather-widget.scene-cloudy-night .moon-asset { opacity: 0.5; }
+            .weather-widget.scene-cloudy-night .cloud-layer-back.night-cloud-p { opacity: 0.85; object-fit: cover; object-position: top center; width: 160%; left: 50%; top: -25%; animation: cloudDrift 160s ease-in-out infinite alternate; -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%); mask-image: linear-gradient(to bottom, black 40%, transparent 100%); }
+            .weather-widget.scene-cloudy-night .cloud-layer-front.night-cloud-o { opacity: 0.7; object-fit: cover; object-position: top center; width: 160%; left: 50%; top: -15%; animation: cloudDrift 100s ease-in-out infinite alternate; -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%); mask-image: linear-gradient(to bottom, black 50%, transparent 100%); }
+
+            /* SCENE STATE 5: Rain (Day/Standard) */
+            .weather-widget.scene-rain .sky-stars { opacity: 0 !important; display: none !important; }
+            .weather-widget.scene-rain .stars-img { opacity: 0 !important; }
+            .weather-widget.scene-rain .milky-way-img { opacity: 0 !important; }
+            .weather-widget.scene-rain .moon-asset { opacity: 0 !important; display: none !important; }
+            .weather-widget.scene-rain .sun-asset { opacity: 0.15 !important; display: block !important; }
+            .weather-widget.scene-rain .cloud-layer-back.rain-cloud { opacity: 1; object-fit: cover; object-position: top center; width: 160%; left: 50%; top: -25%; animation: cloudDrift 70s ease-in-out infinite alternate; -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%); mask-image: linear-gradient(to bottom, black 50%, transparent 100%); }
+            .weather-widget.scene-rain .cloud-layer-front.dark-cloud { opacity: 0.85; object-fit: cover; object-position: top center; width: 160%; left: 50%; top: -15%; animation: cloudDrift 50s ease-in-out infinite alternate; -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%); mask-image: linear-gradient(to bottom, black 60%, transparent 100%); }
+            .weather-widget.scene-rain .cloud-layer-front.nubes-largas-fast-container { display: flex; left: 0%; top: -2%; opacity: 0.75; filter: brightness(0.85); animation: carouselLoopFast 240s linear infinite; -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%); mask-image: linear-gradient(to bottom, black 60%, transparent 100%); }
+            .weather-widget.scene-rain .sky-rain-layer { opacity: 0.6; animation: rainFallAsset 4s linear infinite; }
+
+            /* SCENE STATE 5: Rain Night */
+            .weather-widget.scene-rain-night .sky-stars { opacity: 0 !important; display: none !important; }
+            .weather-widget.scene-rain-night .stars-img { opacity: 0.8 !important; }
+            .weather-widget.scene-rain-night .milky-way-img { opacity: 0.4 !important; }
+            .weather-widget.scene-rain-night .moon-asset { opacity: 0.25 !important; }
+            .weather-widget.scene-rain-night .sun-asset { opacity: 0 !important; display: none !important; }
+            .weather-widget.scene-rain-night .cloud-layer-back.night-cloud-p { opacity: 0.95; object-fit: cover; object-position: top center; width: 160%; left: 50%; top: -25%; animation: cloudDrift 70s ease-in-out infinite alternate; -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%); mask-image: linear-gradient(to bottom, black 50%, transparent 100%); }
+            .weather-widget.scene-rain-night .cloud-layer-front.night-cloud-o { opacity: 0.85; object-fit: cover; object-position: top center; width: 160%; left: 50%; top: -15%; animation: cloudDrift 50s ease-in-out infinite alternate; -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%); mask-image: linear-gradient(to bottom, black 60%, transparent 100%); }
+            .weather-widget.scene-rain-night .sky-rain-layer { opacity: 0.6; animation: rainFallAsset 4s linear infinite; }
+
+            /* SCENE STATE 5B: Rain Day */
+            .weather-widget.scene-rain-day .sky-stars { opacity: 0 !important; display: none !important; }
+            .weather-widget.scene-rain-day .stars-img { opacity: 0 !important; }
+            .weather-widget.scene-rain-day .milky-way-img { opacity: 0 !important; }
+            .weather-widget.scene-rain-day .moon-asset { opacity: 0 !important; display: none !important; }
+            .weather-widget.scene-rain-day .sun-asset { opacity: 0.05 !important; display: block !important; }
+            .weather-widget.scene-rain-day .cloud-layer-back.rain-cloud { opacity: 1; object-fit: cover; object-position: top center; width: 160%; left: 50%; top: -25%; filter: brightness(1.1); animation: cloudDrift 70s ease-in-out infinite alternate; -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%); mask-image: linear-gradient(to bottom, black 50%, transparent 100%); }
+            .weather-widget.scene-rain-day .cloud-layer-front.dark-cloud { opacity: 0.85; object-fit: cover; object-position: top center; width: 160%; left: 50%; top: -15%; filter: brightness(1.0); animation: cloudDrift 50s ease-in-out infinite alternate; -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%); mask-image: linear-gradient(to bottom, black 60%, transparent 100%); }
+            .weather-widget.scene-rain-day .cloud-layer-front.nubes-largas-fast-container { display: flex; left: 0%; top: -2%; opacity: 0.75; filter: brightness(0.85); animation: carouselLoopFast 240s linear infinite; -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%); mask-image: linear-gradient(to bottom, black 60%, transparent 100%); }
+            .weather-widget.scene-rain-day .sky-rain-layer { opacity: 0.6; animation: rainFallAsset 4s linear infinite; }
+
+            /* SCENE STATE 6: Storm Night */
+            .weather-widget.scene-storm .sky-stars { opacity: 0 !important; display: none !important; }
+            .weather-widget.scene-storm .stars-img { opacity: 0 !important; }
+            .weather-widget.scene-storm .milky-way-img { opacity: 0 !important; }
+            .weather-widget.scene-storm .moon-asset { opacity: 0 !important; display: none !important; }
+            .weather-widget.scene-storm .sun-asset { opacity: 0 !important; display: none !important; }
+            
+            /* Background Storm Cloud Layer */
+            .weather-widget.scene-storm .cloud-layer-back.storm-cloud { opacity: 0.95; object-fit: cover; object-position: top center; width: 180%; left: 50%; top: -20%; filter: brightness(0.55) contrast(1.4); transform: translateX(-50%); transform-origin: top center; animation: none !important; -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%); mask-image: linear-gradient(to bottom, black 70%, transparent 100%); }
+            
+            /* Foreground Storm Cloud Layer */
+            .weather-widget.scene-storm .cloud-layer-front.storm-cloud-front { opacity: 1; object-fit: cover; object-position: top center; width: 180%; left: 50%; top: -15%; filter: brightness(0.45) contrast(1.4); transform: translateX(-50%); transform-origin: top center; animation: none !important; -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%); mask-image: linear-gradient(to bottom, black 60%, transparent 100%); }
+
+            /* Fast Looping Nubes Largas Layer */
+            .weather-widget.scene-storm .cloud-layer-front.nubes-largas-fast-container { display: flex; opacity: 0.55; left: 0%; top: -2%; filter: brightness(0.5) contrast(1.2); animation: carouselLoopFast 240s linear infinite; -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%); mask-image: linear-gradient(to bottom, black 60%, transparent 100%); }
+            
+            /* Storm specifics */
+
+            /* SCENE STATE 7: Storm Day */
+            .weather-widget.scene-storm-day .sky-stars { opacity: 0 !important; display: none !important; }
+            .weather-widget.scene-storm-day .stars-img { opacity: 0 !important; }
+            .weather-widget.scene-storm-day .milky-way-img { opacity: 0 !important; }
+            .weather-widget.scene-storm-day .moon-asset { opacity: 0 !important; display: none !important; }
+            .weather-widget.scene-storm-day .sun-asset { opacity: 0.05 !important; display: block !important; }
+            
+            /* Background Storm Cloud Layer (Brighter for Day using Rain Day.png) */
+            .weather-widget.scene-storm-day .cloud-layer-back.storm-day-cloud { opacity: 1; object-fit: cover; object-position: top center; width: 180%; left: 50%; top: -20%; filter: brightness(0.75) contrast(1.2); transform: translateX(-50%); transform-origin: top center; animation: none !important; -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%); mask-image: linear-gradient(to bottom, black 70%, transparent 100%); }
+            
+            /* Foreground Storm Cloud Layer (Brighter for Day using Rain Day.png) */
+            .weather-widget.scene-storm-day .cloud-layer-front.storm-day-cloud-front { opacity: 1; object-fit: cover; object-position: top center; width: 180%; left: 50%; top: -15%; filter: brightness(0.65) contrast(1.2); transform: translateX(-50%); transform-origin: top center; animation: none !important; -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%); mask-image: linear-gradient(to bottom, black 60%, transparent 100%); }
+
+            /* Fast Looping Nubes Largas Layer */
+            .weather-widget.scene-storm-day .cloud-layer-front.nubes-largas-fast-container { display: flex; opacity: 0.55; left: 0%; top: -2%; filter: brightness(0.7) contrast(1.1); animation: carouselLoopFast 240s linear infinite; -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%); mask-image: linear-gradient(to bottom, black 60%, transparent 100%); }
+            
+            /* Lightning Day specifics */
+            
+            /* Storm Rain Effect */
+            .weather-widget.scene-storm .sky-rain-layer { opacity: 0.8; animation: rainFallAsset 2.5s linear infinite; filter: contrast(1.2); }
+            .weather-widget.scene-storm-day .sky-rain-layer { opacity: 0.7; animation: rainFallAsset 2.5s linear infinite; filter: contrast(1.1); }
+            
+            /* SCENE STATE 8: Snow */
+            .weather-widget.scene-snow .sky-stars { opacity: 0 !important; display: none !important; }
+            .weather-widget.scene-snow .stars-img { opacity: 0 !important; }
+            .weather-widget.scene-snow .milky-way-img { opacity: 0 !important; }
+            .weather-widget.scene-snow .moon-asset { opacity: 0 !important; display: none !important; }
+            .weather-widget.scene-snow .sun-asset { opacity: 0.1 !important; display: block !important; }
+            .weather-widget.scene-snow .cloud-layer-back.light-cloud { opacity: 1; object-fit: cover; object-position: top center; width: 160%; left: 50%; top: -20%; filter: brightness(1.2); animation: cloudDrift 90s ease-in-out infinite alternate; -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%); mask-image: linear-gradient(to bottom, black 50%, transparent 100%); }
+            .weather-widget.scene-snow .cloud-layer-front.hero-cloud { opacity: 0.8; object-fit: cover; object-position: top center; width: 160%; left: 50%; top: -10%; filter: brightness(1.1); animation: cloudDrift 70s ease-in-out infinite alternate; -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%); mask-image: linear-gradient(to bottom, black 60%, transparent 100%); }
+            .weather-widget.scene-snow .sky-snow-layer { opacity: 0.8; animation: snowFallAsset 8s linear infinite; }
+
+            /* Rayo Storm PNG Flash Effect */
+            .weather-widget.scene-storm .rayo-storm-asset {
+                animation: flashRayoStorm 60s infinite;
+            }
+
+            /* --- DYNAMIC LIGHTNING MANAGER CSS --- */
+            .dynamic-lightning-svg {
+                mix-blend-mode: screen;
+                /* Note: svg path animations are handled directly via element.animate() in JS */
+            }
+
+
+                                    .apple-status-dot {
+                                        width: 6px;
+                                        height: 6px;
+                                        border-radius: 50%;
+                                        margin: 4px auto;
+                                        box-shadow: 0 0 8px currentColor;
+                                    }
+
+                                    .holiday-label {
+                                        position: absolute;
+                                        bottom: 4px;
+                                        width: 100%;
+                                        text-align: center;
+                                        font-size: 7.5px;
+                                        font-weight: 700;
+                                        color: rgba(255, 255, 255, 0.4);
+                                        text-transform: uppercase;
+                                        letter-spacing: 0.5px;
+                                        pointer-events: none;
+                                    }
+                                </style>
+                                <div id="calendar-master"
+                                    style="min-height: 400px; color: #fff; background: transparent;"></div>
+
+                                <!-- Logistics Alerts Area -->
+                                <div id="logistics-alerts" style="margin-top: 20px;"></div>
+                                
+                                <!-- QA/DEMO WEATHER CONTROLS (ART DIRECTION V1) -->
+                                <div id="qa-weather-controls" style="margin-top: 25px; padding: 20px; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border-radius: 16px; border: 1px dashed rgba(197,160,89,0.3);">
+                                    <div style="font-size: 11px; color: var(--gold); font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px;">🛠 MDJPRO WEATHER QA DEMO</div>
+                                    <div class="scene-filters"
+                                        style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+                                        <button onclick="window.forceQAScene('clear-day')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">☀️ sol</button>
+                                        <button onclick="window.forceQAScene('cloudy-day')" style="background: rgba(150,150,150,0.3); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">☁️ nubes</button>
+                                        <button onclick="window.forceQAScene('rain-day')" style="background: rgba(0,100,255,0.3); border: 1px solid rgba(0,150,255,0.5); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">🌧 lluvia</button>
+                                        <button onclick="window.forceQAScene('storm-day')" style="background: rgba(150,150,180,0.3); border: 1px solid rgba(255,255,255,0.4); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">⛈ tormenta</button>
+                                    </div>
+                                    <div class="scene-filters"
+                                        style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                        <button onclick="window.forceQAScene('clear-night')" style="background: rgba(0,0,50,0.6); border: 1px solid rgba(100,100,255,0.3); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">🌙 despejado</button>
+                                        <button onclick="window.forceQAScene('cloudy-night')" style="background: rgba(100,100,120,0.4); border: 1px solid rgba(150,150,200,0.5); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">☁️🌙 un poco nublado</button>
+                                        <button onclick="window.forceQAScene('rain')" style="background: rgba(0,100,255,0.3); border: 1px solid rgba(0,150,255,0.5); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">🌧️⛅ Rain Day</button>
+                                        <button onclick="window.forceQAScene('rain-night')" style="background: rgba(0,20,80,0.6); border: 1px solid rgba(0,150,255,0.5); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">🌧️🌙 Rain Night</button>
+                                        <button onclick="window.forceQAScene('storm')" style="background: rgba(255,50,50,0.2); border: 1px solid rgba(255,50,50,0.6); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">⛈🌙 tormenta</button>
+                                        <button onclick="window.forceQAScene('sunset')" style="background: rgba(255,165,0,0.2); border: 1px solid rgba(255,165,0,0.4); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">🌅 Sunset</button>
+                                        <button onclick="window.forceQAScene('snow')" style="background: rgba(200,220,255,0.3); border: 1px solid rgba(255,255,255,0.7); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">❄️ Snow</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── SECCIÓN: NOTAS Y COMUNICACIÓN ─────────── -->
+                        <div class="admin-card" id="communication-section"
+                            style="margin-top: 15px; border: 1px solid rgba(197,160,89,0.15); background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border-radius: 16px; padding: 20px;">
+                            <div
+                                style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h2 class="gold" style="font-size: 11px;">Notas del Manager</h2>
+                            </div>
+                            <div id="manager-notes-container">
+                                <div
+                                    style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; border: 1px dashed rgba(255,255,255,0.05); text-align: center;">
+                                    <p style="color: rgba(255,255,255,0.3); font-size: 11px; font-style: italic;">No
+                                        hay
+                                        notas.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── SECCIÓN: MIS EVENTOS ASIGNADOS ─────────── -->
+                        <div class="admin-card" id="assigned-events-section"
+                            style="margin-top: 15px; border: 1px solid rgba(197,160,89,0.15); background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border-radius: 16px; padding: 20px;">
+                            <div
+                                style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h2 class="gold" style="font-size: 11px;">Mis Eventos Asignados</h2>
+                                <button class="btn secondary small" onclick="loadAssignedEvents()" title="Actualizar"
+                                    style="padding: 4px 8px; font-size: 10px;">↺</button>
+                            </div>
+                            <div id="assigned-events-container">
+                                <div class="fineprint"
+                                    style="opacity: 0.5; text-align:center; padding: 10px; font-size: 12px;">
+                                    Cargando...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- TAB 3: FLUJO (Professional Analytics Dashboard) -->
+        <div id="tab-flow" class="dash-tab-panel">
+            <section style="padding: 40px 0;">
+                <!-- LOCKED SECTION: DO NOT MODIFY -->
+        <div class="container">
+                    <h1 data-i18n="dash-flow-title">💰 Flujo de Caja</h1>
+
+                    <!-- ── VISIBILIDAD EN BÚSQUEDAS (Moved here) ────── -->
+                    <div class="admin-card" id="visibility-card"
+                        style="margin-bottom:32px;border:1px solid rgba(99,102,241,0.35);background:rgba(99,102,241,0.05);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                            <h2 style="color:#818cf8;margin:0;">📊 Tu Visibilidad</h2>
+                            <span id="vis-plan-badge"
+                                style="font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;"></span>
+                        </div>
+                        <p style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:18px;">
+                            Cuántas veces apareciste en búsquedas de clientes.
+                        </p>
+                        <div id="vis-stats"
+                            style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+                            <div
+                                style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;text-align:center;">
+                                <div id="vis-today" style="font-size:28px;font-weight:900;color:#818cf8;">—
+                                </div>
+                                <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;">HOY
+                                </div>
+                            </div>
+                            <div
+                                style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;text-align:center;">
+                                <div id="vis-week" style="font-size:28px;font-weight:900;color:#818cf8;">—</div>
+                                <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;">ESTA
+                                    SEMANA</div>
+                            </div>
+                            <div
+                                style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;text-align:center;">
+                                <div id="vis-total" style="font-size:28px;font-weight:900;color:#818cf8;">—
+                                </div>
+                                <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;">TOTAL
+                                </div>
+                            </div>
+                        </div>
+                        <div id="vis-upgrade-teaser"
+                            style="display:none;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.3);border-radius:12px;padding:14px;">
+                            <div style="font-size:13px;font-weight:800;color:#c5a059;margin-bottom:4px;">⚡ DJs
+                                PRO aparecen hasta 9× más en búsquedas</div>
+                            <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:12px;">PRO =
+                                prioridad en ranking + perfil destacado para clientes.</div>
+                            <a href="./account-settings.html#plan"
+                                style="display:inline-block;background:#c5a059;color:#000;font-weight:900;font-size:12px;padding:8px 18px;border-radius:8px;text-decoration:none;">Upgrade
+                                a PRO →</a>
+                        </div>
+                        <div id="vis-loading"
+                            style="text-align:center;color:rgba(255,255,255,0.3);font-size:12px;padding:8px;">
+                            Cargando estadísticas...</div>
+                    </div>
+
+                    <div
+                        style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-bottom:32px;">
+                        <div class="admin-card" style="padding:20px;">
+                            <div
+                                style="font-size:10px; font-weight:800; color:rgba(255,255,255,0.4); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">
+                                NETO (Tuyo)</div>
+                            <div id="kpi-net" style="font-size:24px; font-weight:900; color:var(--gold);">$0.00
+                            </div>
+                        </div>
+                        <div class="admin-card" style="padding:20px;">
+                            <div
+                                style="font-size:10px; font-weight:800; color:rgba(255,255,255,0.4); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">
+                                PENDIENTE</div>
+                            <div id="kpi-pending" style="font-size:24px; font-weight:900; color:#fff;">$0.00
+                            </div>
+                        </div>
+                        <div class="admin-card"
+                            style="padding:20px; border:1px solid rgba(59, 130, 246, 0.3); background:rgba(59, 130, 246, 0.05);">
+                            <div
+                                style="font-size:10px; font-weight:800; color:rgba(59, 130, 246, 0.6); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">
+                                TOTAL GENERADO</div>
+                            <div id="kpi-paid" style="font-size:24px; font-weight:900; color:#3b82f6;">$0.00
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div id="free-upgrade-teaser"
+                    style="display:none; text-align:center; padding:80px 40px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:20px;">
+                    <div style="font-size:48px; margin-bottom:20px;">💰</div>
+                    <h2 style="font-size:24px; font-weight:900; margin-bottom:12px;">Tu Historial Financiero es
+                        PRO</h2>
+                    <p style="color:rgba(255,255,255,0.5); max-width:500px; margin:0 auto 30px;">
+                        Actualiza a Plan PRO para ver el flujo de caja, detalle de comisiones, gráficas
+                        motivacionales y métricas avanzadas de tu negocio.
+                    </p>
+                    <a href="./account-settings.html#plan" class="btn primary">Obtener Acceso PRO →</a>
+                </div>
+        </div>
+
+        </div>
+        </section>
+        </div>
+
+        <!-- ══ PAYMENT MODAL ═════════════════════════════════════════ -->
+        <div id="payment-modal"
+            style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);align-items:center;justify-content:center;">
+            <div
+                style="background:#111;border:1px solid rgba(197,160,89,0.25);border-radius:24px;padding:36px;max-width:420px;width:90%;position:relative;">
+                <button onclick="closePaymentModal()"
+                    style="position:absolute;top:16px;right:16px;background:none;border:none;color:rgba(255,255,255,0.4);font-size:20px;cursor:pointer;">×</button>
+                <h3 style="margin:0 0 4px;font-size:18px;font-weight:900;">Método de Pago</h3>
+                <p style="font-size:13px;color:rgba(255,255,255,0.4);margin:0 0 24px;">Registra tu tarjeta de referencia
+                    para la plataforma MDJPRO.</p>
+                <form id="payment-form" onsubmit="savePaymentMethod(event)"
+                    style="display:flex;flex-direction:column;gap:14px;">
+                    <label
+                        style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:1px;">
+                        NOMBRE DEL TITULAR
+                        <input type="text" id="pay-holder" required placeholder="Como aparece en la tarjeta"
+                            autocomplete="cc-name"
+                            style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;font-family:inherit;">
+                    </label>
+                    <label
+                        style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:1px;">
+                        NÚMERO DE TARJETA
+                        <input type="text" id="pay-number" required placeholder="•••• •••• •••• ••••" maxlength="19"
+                            autocomplete="cc-number" oninput="formatCard(this)"
+                            style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 14px;color:#fff;font-size:15px;letter-spacing:3px;font-family:inherit;">
+                    </label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <label
+                            style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:1px;">
+                            VENCIMIENTO
+                            <input type="text" id="pay-expiry" required placeholder="MM/AA" maxlength="5"
+                                autocomplete="cc-exp" oninput="formatExpiry(this)"
+                                style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;font-family:inherit;">
+                        </label>
+                        <label
+                            style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:1px;">
+                            CVV
+                            <input type="password" id="pay-cvv" required placeholder="•••" maxlength="4"
+                                autocomplete="cc-csc"
+                                style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;font-family:inherit;">
+                        </label>
+                    </div>
+                    <p id="pay-error" style="color:#ff5555;font-size:12px;margin:0;display:none;"></p>
+                    <button type="submit" id="pay-btn"
+                        style="padding:16px;background:var(--gold);color:#000;font-weight:900;font-size:15px;letter-spacing:1px;border:none;border-radius:12px;cursor:pointer;margin-top:4px;">
+                        GUARDAR TARJETA
+                    </button>
+                    <p style="font-size:11px;color:rgba(255,255,255,0.25);text-align:center;margin:0;">Solo guardamos
+                        referencia (últimos 4 dígitos). No procesamos pagos aquí.</p>
+                </form>
+            </div>
+        </div>
+
+        <!-- ══ TAB 2: ACCOUNT SETTINGS — Serato Style ═══════════════ -->
+        <div id="tab-settings" class="dash-tab-panel">
+            <style>
+                .acct-wrap {
+                    display: grid;
+                    grid-template-columns: 220px 1fr;
+                    min-height: calc(100vh - 160px);
+                }
+
+                .acct-side {
+                    background: #0d0d0d;
+                    border-right: 1px solid rgba(255, 255, 255, 0.07);
+                    padding: 40px 0;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                }
+
+                .acct-side-avatar {
+                    width: 90px;
+                    height: 90px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 2px solid rgba(255, 255, 255, 0.15);
+                    margin-bottom: 14px;
+                }
+
+                .acct-side-name {
+                    font-size: 16px;
+                    font-weight: 800;
+                    color: #fff;
+                    text-align: center;
+                    padding: 0 20px;
+                    margin-bottom: 3px;
+                }
+
+                .acct-side-email {
+                    font-size: 11px;
+                    color: var(--gold, #c5a059);
+                    text-align: center;
+                    padding: 0 16px;
+                    margin-bottom: 28px;
+                    word-break: break-all;
+                }
+
+                .acct-side nav {
+                    width: 100%;
+                }
+
+                .acct-side-link {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 13px 24px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: rgba(255, 255, 255, 0.5);
+                    cursor: pointer;
+                    border-left: 3px solid transparent;
+                    text-decoration: none;
+                    transition: all .15s;
+                    background: none;
+                    border-top: none;
+                    border-right: none;
+                    border-bottom: none;
+                    width: 100%;
+                    text-align: left;
+                    font-family: inherit;
+                }
+
+                .acct-side-link:hover {
+                    color: #fff;
+                    background: rgba(255, 255, 255, 0.04);
+                }
+
+                .acct-side-link.active {
+                    color: #fff;
+                    font-weight: 800;
+                    border-left-color: var(--gold, #c5a059);
+                    background: rgba(255, 255, 255, 0.06);
+                }
+
+                .acct-side-link svg {
+                    flex-shrink: 0;
+                    opacity: .65;
+                }
+
+                .acct-side-link.active svg {
+                    opacity: 1;
+                }
+
+                .acct-side-link.danger {
+                    color: rgba(255, 80, 80, 0.6);
+                }
+
+                .acct-side-link.danger:hover {
+                    color: #ff5555;
+                }
+
+                .acct-body {
+                    background: #0a0a0a;
+                    padding: 52px;
+                    overflow-y: auto;
+                }
+
+                .acct-h1 {
+                    font-size: 26px;
+                    font-weight: 800;
+                    color: #fff;
+                    margin: 0 0 30px;
+                    letter-spacing: -0.5px;
+                }
+
+                .acct-panel {
+                    display: none;
+                }
+
+                .acct-panel.active {
+                    display: block;
+                }
+
+                /* Section cards */
+                .acct-card {
+                    background: rgba(255, 255, 255, 0.025);
+                    border: 1px solid rgba(255, 255, 255, 0.07);
+                    border-radius: 14px;
+                    overflow: hidden;
+                    margin-bottom: 18px;
+                }
+
+                .acct-row {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                    padding: 18px 24px;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                }
+
+                .acct-row:last-child {
+                    border-bottom: none;
+                }
+
+                .acct-row-info {
+                    flex: 1;
+                    min-width: 0;
+                }
+
+                .acct-lbl {
+                    font-size: 10px;
+                    font-weight: 800;
+                    letter-spacing: 2px;
+                    color: rgba(255, 255, 255, 0.35);
+                    text-transform: uppercase;
+                    margin-bottom: 4px;
+                }
+
+                .acct-val {
+                    font-size: 14px;
+                    color: #fff;
+                    font-weight: 500;
+                }
+
+                .acct-val.dim {
+                    color: rgba(255, 255, 255, 0.4);
+                    font-size: 13px;
+                }
+
+                .acct-edit {
+                    font-size: 13px;
+                    font-weight: 700;
+                    color: var(--gold, #c5a059);
+                    cursor: pointer;
+                    white-space: nowrap;
+                    flex-shrink: 0;
+                    transition: opacity .15s;
+                    text-decoration: none;
+                    border: none;
+                    background: none;
+                    font-family: inherit;
+                }
+
+                .acct-edit:hover {
+                    opacity: .7;
+                }
+
+                .acct-edit.red {
+                    color: #ff5555;
+                }
+
+                .acct-photo-thumb {
+                    width: 110px;
+                    height: 130px;
+                    object-fit: cover;
+                    border-radius: 10px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    display: block;
+                }
+
+                /* Section divider label */
+                .acct-sec-lbl {
+                    font-size: 10px;
+                    font-weight: 800;
+                    letter-spacing: 2px;
+                    color: rgba(255, 255, 255, 0.3);
+                    text-transform: uppercase;
+                    margin: 28px 0 12px;
+                    padding-bottom: 8px;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+                }
+
+                /* Reward cards grid */
+                .reward-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 16px;
+                }
+
+                .reward-card {
+                    background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 14px;
+                    padding: 24px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+
+                .reward-card h3 {
+                    font-size: 22px;
+                    font-weight: 900;
+                    color: #fff;
+                    margin: 0;
+                    line-height: 1.1;
+                }
+
+                .reward-card p {
+                    font-size: 12px;
+                    color: rgba(255, 255, 255, 0.5);
+                    margin: 0;
+                    line-height: 1.5;
+                    flex: 1;
+                }
+
+                .reward-redeem {
+                    display: inline-block;
+                    padding: 10px 18px;
+                    background: var(--gold, #c5a059);
+                    color: #000;
+                    font-weight: 900;
+                    font-size: 12px;
+                    border-radius: 8px;
+                    text-decoration: none;
+                    text-align: center;
+                    cursor: pointer;
+                    border: none;
+                    font-family: inherit;
+                }
+
+                .reward-redeem:hover {
+                    opacity: .85;
+                }
+
+                /* Device cards */
+                .device-card {
+                    background: rgba(255, 255, 255, 0.025);
+                    border: 1px solid rgba(255, 255, 255, 0.07);
+                    border-radius: 12px;
+                    padding: 20px 24px;
+                    margin-bottom: 12px;
+                }
+
+                .device-name {
+                    font-weight: 800;
+                    font-size: 15px;
+                    color: #fff;
+                    margin-bottom: 6px;
+                }
+
+                .device-last {
+                    font-size: 11px;
+                    color: rgba(255, 255, 255, 0.35);
+                }
+
+                .device-tags {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 6px;
+                    margin: 12px 0;
+                }
+
+                .device-tag {
+                    font-size: 11px;
+                    font-weight: 700;
+                    padding: 3px 10px;
+                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    border-radius: 20px;
+                    color: rgba(255, 255, 255, 0.6);
+                }
+
+                /* Toggles */
+                .acct-toggle-row {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 18px 24px;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                }
+
+                .acct-toggle-row:last-child {
+                    border-bottom: none;
+                }
+
+                .toggle-switch {
+                    position: relative;
+                    width: 44px;
+                    height: 24px;
+                    flex-shrink: 0;
+                }
+
+                .toggle-switch input {
+                    opacity: 0;
+                    width: 0;
+                    height: 0;
+                }
+
+                .toggle-slider {
+                    position: absolute;
+                    inset: 0;
+                    background: rgba(255, 255, 255, 0.12);
+                    border-radius: 24px;
+                    cursor: pointer;
+                    transition: .2s;
+                }
+
+                .toggle-slider:before {
+                    content: '';
+                    position: absolute;
+                    height: 18px;
+                    width: 18px;
+                    left: 3px;
+                    bottom: 3px;
+                    background: #fff;
+                    border-radius: 50%;
+                    transition: .2s;
+                }
+
+                .toggle-switch input:checked+.toggle-slider {
+                    background: var(--gold, #c5a059);
+                }
+
+                .toggle-switch input:checked+.toggle-slider:before {
+                    transform: translateX(20px);
+                }
+
+                /* Product license card */
+                .prod-card {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 16px 20px;
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 12px;
+                    margin-bottom: 10px;
+                }
+
+                .prod-name {
+                    font-weight: 800;
+                    font-size: 14px;
+                    color: #fff;
+                }
+
+                .prod-badge {
+                    font-size: 11px;
+                    font-weight: 800;
+                    padding: 4px 12px;
+                    border-radius: 20px;
+                }
+
+                .prod-badge.active {
+                    background: rgba(34, 197, 94, 0.15);
+                    color: #22c55e;
+                    border: 1px solid rgba(34, 197, 94, 0.3);
+                }
+
+                .prod-badge.lite {
+                    background: rgba(255, 255, 255, 0.06);
+                    color: rgba(255, 255, 255, 0.5);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                }
+
+                /* Modal */
+                .acct-modal-bg {
+                    display: none;
+                    position: fixed;
+                    inset: 0;
+                    z-index: 9999;
+                    background: rgba(0, 0, 0, 0.75);
+                    backdrop-filter: blur(8px);
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .acct-modal-bg.open {
+                    display: flex;
+                }
+
+                .acct-modal {
+                    background: #161616;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 18px;
+                    padding: 32px;
+                    max-width: 480px;
+                    width: 92%;
+                }
+
+                .acct-modal-hdr {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 22px;
+                }
+
+                .acct-modal-title {
+                    font-size: 18px;
+                    font-weight: 800;
+                    color: #fff;
+                }
+
+                .acct-modal-x {
+                    font-size: 13px;
+                    font-weight: 700;
+                    color: var(--gold, #c5a059);
+                    cursor: pointer;
+                }
+
+                .acct-modal-x:hover {
+                    opacity: .7;
+                }
+
+                .m-label {
+                    font-size: 11px;
+                    font-weight: 800;
+                    letter-spacing: 1.5px;
+                    color: rgba(255, 255, 255, 0.4);
+                    text-transform: uppercase;
+                    display: block;
+                    margin-bottom: 6px;
+                    margin-top: 14px;
+                }
+
+                .m-input {
+                    width: 100%;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    border-radius: 10px;
+                    padding: 12px 14px;
+                    color: #fff;
+                    font-size: 14px;
+                    box-sizing: border-box;
+                    outline: none;
+                    font-family: inherit;
+                    transition: border-color .2s;
+                }
+
+                .m-input:focus {
+                    border-color: var(--gold, #c5a059);
+                }
+
+                .m-btn {
+                    width: 100%;
+                    padding: 14px;
+                    border-radius: 10px;
+                    font-size: 14px;
+                    font-weight: 800;
+                    cursor: pointer;
+                    border: none;
+                    font-family: inherit;
+                    margin-top: 6px;
+                    transition: opacity .15s;
+                }
+
+                .m-btn:hover {
+                    opacity: .85;
+                }
+
+                .m-btn-gold {
+                    background: var(--gold, #c5a059);
+                    color: #000;
+                }
+
+                .m-btn-sec {
+                    background: rgba(255, 255, 255, 0.1);
+                    color: #fff;
+                }
+
+                .m-btn-del {
+                    background: rgba(255, 60, 60, 0.1);
+                    color: #ff5555;
+                    border: 1px solid rgba(255, 60, 60, 0.25);
+                }
+
+                .m-cancel {
+                    display: block;
+                    text-align: center;
+                    margin-top: 12px;
+                    font-size: 13px;
+                    font-weight: 700;
+                    color: var(--gold, #c5a059);
+                    cursor: pointer;
+                }
+
+                .m-cancel:hover {
+                    opacity: .7;
+                }
+
+                .m-err {
+                    color: #ff5555;
+                    font-size: 12px;
+                    margin: 6px 0;
+                    display: none;
+                    min-height: 16px;
+                }
+
+                .m-ok {
+                    color: #22c55e;
+                    font-size: 12px;
+                    margin: 6px 0;
+                    display: none;
+                }
+
+                .cfg-input {
+                    width: 100%;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    border-radius: 10px;
+                    padding: 11px 14px;
+                    color: #fff;
+                    font-size: 14px;
+                    box-sizing: border-box;
+                    outline: none;
+                    font-family: inherit;
+                    transition: border-color .2s;
+                }
+
+                .cfg-input:focus {
+                    border-color: var(--gold, #c5a059);
+                }
+
+                .cfg-label {
+                    font-size: 10px;
+                    font-weight: 800;
+                    letter-spacing: 2px;
+                    color: rgba(255, 255, 255, 0.4);
+                    text-transform: uppercase;
+                    display: block;
+                    margin-bottom: 5px;
+                }
+
+                .cfg-save-btn {
+                    background: var(--gold, #c5a059);
+                    color: #000;
+                    border: none;
+                    border-radius: 10px;
+                    padding: 12px 28px;
+                    font-weight: 900;
+                    font-size: 14px;
+                    cursor: pointer;
+                    font-family: inherit;
+                    transition: opacity .2s;
+                }
+
+                .cfg-save-btn:hover {
+                    opacity: .85;
+                }
+
+                @media(max-width:700px) {
+                    .acct-wrap {
+                        grid-template-columns: 1fr;
+                    }
+
+                    .acct-body {
+                        padding: 28px 18px;
+                    }
+
+                    .reward-grid {
+                        grid-template-columns: 1fr;
+                    }
+                }
+            </style>
+
+            <div class="acct-wrap">
+                <!-- ── Sidebar ── -->
+                <aside class="acct-side">
+                    <img id="acct-avatar" src="./assets/dj-avatar-placeholder.png" alt="Avatar"
+                        class="acct-side-avatar">
+                    <div class="acct-side-name" id="acct-name">—</div>
+                    <div class="acct-side-email" id="acct-email">—</div>
+                    <nav>
+                        <button class="acct-side-link active" onclick="showPanel('account',this)">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <circle cx="12" cy="8" r="4" />
+                                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                            </svg>
+                            Account
+                        </button>
+                        <button class="acct-side-link" onclick="showPanel('rewards',this)">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <polygon
+                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                            Rewards
+                        </button>
+                        <button class="acct-side-link" onclick="showPanel('products',this)">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <rect x="2" y="7" width="20" height="14" rx="2" />
+                                <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+                            </svg>
+                            Products
+                        </button>
+                        <button class="acct-side-link" onclick="showPanel('notifications',this)">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                            </svg>
+                            Notifications
+                        </button>
+                        <button class="acct-side-link" onclick="showPanel('billing',this)">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <rect x="1" y="4" width="22" height="16" rx="2" />
+                                <line x1="1" y1="10" x2="23" y2="10" />
+                            </svg>
+                            Subscriptions &amp; Payments
+                        </button>
+                        <button class="acct-side-link" onclick="showPanel('devices',this)">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <rect x="2" y="3" width="20" height="14" rx="2" />
+                                <line x1="8" y1="21" x2="16" y2="21" />
+                                <line x1="12" y1="17" x2="12" y2="21" />
+                            </svg>
+                            Manage Devices
+                        </button>
+                        <button class="acct-side-link danger" onclick="showPanel('danger',this)">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path
+                                    d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                                <line x1="12" y1="9" x2="12" y2="13" />
+                                <line x1="12" y1="17" x2="12.01" y2="17" />
+                            </svg>
+                            Danger Zone
+                        </button>
+                    </nav>
+                </aside>
+
+                <!-- ── Main body ── -->
+                <div class="acct-body">
+
+                    <!-- ACCOUNT -->
+                    <div id="panel-account" class="acct-panel active">
+                        <h1 class="acct-h1">Account Overview</h1>
+
+                        <div class="acct-card">
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-lbl">Profile picture</div>
+                                    <div class="acct-val dim">PNG, JPEG · min. 600×600 px · max 1 MB</div>
+                                </div>
+                                <button class="acct-edit" onclick="openModal('m-photo')">Edit</button>
+                            </div>
+                            <div class="acct-row">
+                                <img id="acct-photo-thumb" src="./assets/dj-avatar-placeholder.png"
+                                    class="acct-photo-thumb" alt="Photo">
+                            </div>
+                        </div>
+
+                        <div class="acct-card">
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-lbl">Email</div>
+                                    <div class="acct-val" id="acct-show-email">—</div>
+                                </div>
+                                <button class="acct-edit" onclick="openModal('m-email')">Change email</button>
+                            </div>
+                        </div>
+
+                        <div class="acct-card">
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-lbl">Password</div>
+                                    <div class="acct-val dim">A reset link will be sent to your email</div>
+                                </div>
+                                <button class="acct-edit" onclick="sendPasswordReset()">Change password</button>
+                            </div>
+                        </div>
+
+                        <div class="acct-card">
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-lbl">Display &amp; DJ Name</div>
+                                    <div class="acct-val" id="acct-show-djname">—</div>
+                                </div>
+                                <button class="acct-edit" onclick="openModal('m-djname')">Edit</button>
+                            </div>
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-lbl">Category / Specialty</div>
+                                    <div class="acct-val" id="acct-show-cat">—</div>
+                                </div>
+                                <button class="acct-edit" onclick="openModal('m-djname')">Edit</button>
+                            </div>
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-lbl">Bio</div>
+                                    <div class="acct-val dim" id="acct-show-bio"
+                                        style="max-width:460px;line-height:1.5;">—</div>
+                                </div>
+                                <button class="acct-edit" onclick="openModal('m-bio')">Edit</button>
+                            </div>
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-lbl">City</div>
+                                    <div class="acct-val" id="acct-show-city">—</div>
+                                </div>
+                                <button class="acct-edit" onclick="openModal('m-city')">Edit</button>
+                            </div>
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-lbl">Phone</div>
+                                    <div class="acct-val" id="acct-show-phone">—</div>
+                                </div>
+                                <button class="acct-edit" onclick="openModal('m-phone')">Edit</button>
+                            </div>
+                        </div>
+
+                        <p class="acct-sec-lbl">Social &amp; Music Links</p>
+                        <div class="acct-card">
+                            <form id="cfg-socials-form" onsubmit="saveSocials(event)">
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:20px 24px;">
+                                    <div><label class="cfg-label">YouTube</label><input class="cfg-input" type="url"
+                                            id="cfg-youtube" placeholder="https://youtube.com/@..."></div>
+                                    <div><label class="cfg-label">Spotify</label><input class="cfg-input" type="url"
+                                            id="cfg-spotify" placeholder="https://open.spotify.com/..."></div>
+                                    <div><label class="cfg-label">SoundCloud</label><input class="cfg-input" type="url"
+                                            id="cfg-soundcloud" placeholder="https://soundcloud.com/..."></div>
+                                    <div><label class="cfg-label">Instagram</label><input class="cfg-input" type="url"
+                                            id="cfg-instagram" placeholder="https://instagram.com/..."></div>
+                                    <div><label class="cfg-label">TikTok</label><input class="cfg-input" type="url"
+                                            id="cfg-tiktok" placeholder="https://tiktok.com/@..."></div>
+                                    <div><label class="cfg-label">Facebook</label><input class="cfg-input" type="url"
+                                            id="cfg-facebook" placeholder="https://facebook.com/..."></div>
+                                    <div><label class="cfg-label">Beatport</label><input class="cfg-input" type="url"
+                                            id="cfg-beatport" placeholder="https://beatport.com/..."></div>
+                                    <div><label class="cfg-label">Apple Music</label><input class="cfg-input" type="url"
+                                            id="cfg-apple-music" placeholder="https://music.apple.com/..."></div>
+                                    <div><label class="cfg-label">Twitter / X</label><input class="cfg-input" type="url"
+                                            id="cfg-twitter" placeholder="https://x.com/..."></div>
+                                    <div><label class="cfg-label">Website</label><input class="cfg-input" type="url"
+                                            id="cfg-website" placeholder="https://tudominio.com"></div>
+                                </div>
+                                <div style="padding:0 24px 20px;display:flex;gap:14px;align-items:center;">
+                                    <button type="submit" class="cfg-save-btn">Save Social Links</button>
+                                    <span id="socials-msg"
+                                        style="font-size:13px;color:var(--gold);display:none;font-weight:700;"></span>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- REWARDS -->
+                    <div id="panel-rewards" class="acct-panel">
+                        <h1 class="acct-h1">MDJPRO Rewards</h1>
+                        <p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 24px;">Gana comisiones
+                            recomendando nuestros servicios. Comparte tu link o QR exclusivo.</p>
+                        <div class="acct-card" style="margin-bottom:24px;">
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-lbl">Saldo acumulado</div>
+                                    <div class="acct-val" id="rewards-balance">$0.00</div>
+                                </div>
+                            </div>
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-lbl">Tu Link de Referido</div>
+                                    <div class="acct-val dim"><input id="referral-link" readonly
+                                            style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:13px;width:100%;outline:none;">
+                                    </div>
+                                </div>
+                                <button class="acct-edit" onclick="copyReferral()">Copy</button>
+                            </div>
+                        </div>
+                        <div class="reward-grid">
+                            <div class="reward-card">
+                                <div
+                                    style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:2px;">
+                                    EVENTO REFERIDO</div>
+                                <h3>$50<br>por reserva</h3>
+                                <p>Cada cliente que reserva un DJ a través de tu link te genera una comisión directa.
+                                </p>
+                                <button class="reward-redeem" onclick="copyReferral()">Compartir link</button>
+                            </div>
+                            <div class="reward-card">
+                                <div
+                                    style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:2px;">
+                                    PLAN PRO</div>
+                                <h3>Perfil<br>Verificado</h3>
+                                <p>Con plan PRO tu perfil aparece primero en búsquedas y recibe eventos asignados
+                                    automáticamente.</p>
+                                <a href="./jobs.html?plan=PRO" class="reward-redeem">Activar PRO</a>
+                            </div>
+                            <div class="reward-card">
+                                <div
+                                    style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:2px;">
+                                    QR EXCLUSIVO</div>
+                                <h3>Escanear<br>para cotizar</h3>
+                                <p>Imprime tu QR en tu equipo, tarjeta o flyer. Cada escaneo te trae un potencial
+                                    cliente.</p>
+                                <div id="qrcode"
+                                    style="width:80px;height:80px;background:#eee;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#000;text-align:center;">
+                                    Generando QR...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PRODUCTS -->
+                    <div id="panel-products" class="acct-panel">
+                        <h1 class="acct-h1">Manage Products</h1>
+                        <p class="acct-sec-lbl">Product Licenses</p>
+                        <div id="products-list">
+                            <div class="prod-card">
+                                <div class="prod-name">MDJPRO App</div>
+                                <span class="prod-badge lite">LITE</span>
+                            </div>
+                        </div>
+                        <p class="acct-sec-lbl">Add a New Product License</p>
+                        <div class="acct-card">
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-lbl">License Code</div>
+                                    <input id="license-code-input" class="cfg-input" style="margin-top:6px;" type="text"
+                                        placeholder="XXXX-XXXX-XXXX-XXXX">
+                                </div>
+                                <button class="acct-edit" onclick="addLicense()">Add</button>
+                            </div>
+                        </div>
+                        <p style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:10px;">Los códigos de licencia
+                            se encuentran en tu correo de confirmación de compra.</p>
+                    </div>
+
+                    <!-- NOTIFICATIONS -->
+                    <div id="panel-notifications" class="acct-panel">
+                        <h1 class="acct-h1">Notification Settings</h1>
+                        <p class="acct-sec-lbl">Email Notifications</p>
+                        <div class="acct-card">
+                            <div class="acct-toggle-row">
+                                <div>
+                                    <div class="acct-lbl">Nuevos eventos asignados</div>
+                                    <div class="acct-val dim">Te avisamos cuando te asignan un evento</div>
+                                </div>
+                                <label class="toggle-switch"><input type="checkbox" id="notif-events" checked><span
+                                        class="toggle-slider"></span></label>
+                            </div>
+                            <div class="acct-toggle-row">
+                                <div>
+                                    <div class="acct-lbl">Mensajes de clientes</div>
+                                    <div class="acct-val dim">Recibe un email cuando un cliente te contacta</div>
+                                </div>
+                                <label class="toggle-switch"><input type="checkbox" id="notif-msgs" checked><span
+                                        class="toggle-slider"></span></label>
+                            </div>
+                            <div class="acct-toggle-row">
+                                <div>
+                                    <div class="acct-lbl">Actualizaciones de plataforma</div>
+                                    <div class="acct-val dim">Novedades y nuevas funciones de MDJPRO</div>
+                                </div>
+                                <label class="toggle-switch"><input type="checkbox" id="notif-updates"><span
+                                        class="toggle-slider"></span></label>
+                            </div>
+                            <div class="acct-toggle-row">
+                                <div>
+                                    <div class="acct-lbl">Recordatorios de agenda</div>
+                                    <div class="acct-val dim">24h antes de cada evento asignado</div>
+                                </div>
+                                <label class="toggle-switch"><input type="checkbox" id="notif-reminders" checked><span
+                                        class="toggle-slider"></span></label>
+                            </div>
+                        </div>
+                        <p class="acct-sec-lbl">Language</p>
+                        <div class="acct-card">
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-lbl">Preferred language for emails</div>
+                                    <select class="cfg-input" id="notif-lang"
+                                        style="margin-top:6px;width:auto;min-width:180px;">
+                                        <option value="es">Español</option>
+                                        <option value="en">English</option>
+                                    </select>
+                                </div>
+                                <button class="acct-edit" onclick="saveNotifSettings()">Save</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BILLING -->
+                    <div id="panel-billing" class="acct-panel">
+                        <h1 class="acct-h1">Subscriptions &amp; Payments</h1>
+                        <p class="acct-sec-lbl">Subscriptions</p>
+                        <div class="acct-card">
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-lbl">Current plan</div>
+                                    <div class="acct-val" id="billing-plan">—</div>
+                                </div>
+                                <a href="./jobs.html?plan=PRO" class="acct-edit">Upgrade</a>
+                            </div>
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-lbl">Status</div>
+                                    <div class="acct-val" style="color:#22c55e;" id="billing-status">Active</div>
+                                </div>
+                            </div>
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-lbl">Next renewal</div>
+                                    <div class="acct-val" id="billing-renewal">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="acct-sec-lbl">Payments</p>
+                        <div class="acct-card">
+                            <div
+                                style="padding:14px 24px;font-size:11px;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,0.3);text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,0.05);">
+                                Saved payment methods</div>
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-lbl">Card on file</div>
+                                    <div class="acct-val" id="billing-card">•••• •••• •••• ————</div>
+                                </div>
+                                <button class="acct-edit" onclick="openPaymentModal()">Update</button>
+                            </div>
+                            <div
+                                style="padding:14px 24px;font-size:11px;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,0.3);text-transform:uppercase;border-top:1px solid rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.05);">
+                                Manage in Stripe</div>
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-val dim">Change card, cancel subscription, download invoices</div>
+                                </div>
+                                <a id="stripe-portal-btn" href="#" onclick="openStripePortal(event)"
+                                    class="acct-edit">Open Stripe →</a>
+                            </div>
+                            <div id="stripe-portal-note"
+                                style="display:none;padding:14px 24px;font-size:12px;color:rgba(255,150,150,0.9);">Only
+                                available for active PRO/ELITE subscribers.</div>
+                        </div>
+                        <div id="cfg-lite-notice"
+                            style="display:none;margin-top:16px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.3);border-radius:12px;padding:16px 20px;">
+                            <strong style="color:var(--gold);">Public profile visibility — PRO/ELITE only</strong>
+                            <p style="font-size:12px;margin:6px 0 0;color:rgba(255,255,255,0.6);">Your profile won't be
+                                listed on Google with the LITE plan. <a href="./jobs.html"
+                                    style="color:var(--gold);">Upgrade to PRO →</a></p>
+                        </div>
+                    </div>
+
+                    <!-- DEVICES -->
+                    <div id="panel-devices" class="acct-panel">
+                        <h1 class="acct-h1">Manage Devices</h1>
+                        <p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 24px;">Devices where the MDJPRO
+                            app is activated. Deactivate a device to transfer your license to a new machine.</p>
+                        <div id="devices-list">
+                            <div class="device-card">
+                                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                                    <div class="device-name" id="device-main-name">MacBook Pro</div>
+                                    <span class="device-last" id="device-main-last">Last used recently</span>
+                                </div>
+                                <div class="device-tags">
+                                    <span class="device-tag" id="device-main-plan">MDJPRO · LITE</span>
+                                </div>
+                                <a href="#" class="acct-edit" onclick="deactivateDevice(event)">Deactivate this
+                                    device</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DANGER -->
+                    <div id="panel-danger" class="acct-panel">
+                        <h1 class="acct-h1" style="color:#ff5555;">Danger Zone</h1>
+                        <div class="acct-card" style="border-color:rgba(255,60,60,0.2);">
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-lbl" style="color:rgba(255,80,80,0.6);">Delete account</div>
+                                    <div class="acct-val dim">This action is irreversible. All your data will be
+                                        permanently deleted.</div>
+                                </div>
+                                <button class="acct-edit red" onclick="confirmDeleteAccount()">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ══ MODALS ══ -->
+
+            <!-- Photo -->
+            <div id="m-photo" class="acct-modal-bg" onclick="closeModal('m-photo')">
+                <div class="acct-modal" onclick="event.stopPropagation()">
+                    <div class="acct-modal-hdr"><span class="acct-modal-title">Profile picture</span><span
+                            class="acct-modal-x" onclick="closeModal('m-photo')">Close</span></div>
+                    <p style="font-size:12px;color:rgba(255,255,255,0.4);margin:0 0 16px;">Suggested size: 600×600 px.
+                        PNG or JPEG format. Less than 1 MB.</p>
+                    <img id="m-photo-preview" src="./assets/dj-avatar-placeholder.png"
+                        style="width:200px;height:200px;object-fit:cover;border-radius:12px;display:block;margin:0 auto 20px;">
+                    <input type="file" id="m-photo-file" accept="image/*" style="display:none;"
+                        onchange="previewNewPhoto(this)">
+                    <div style="display:flex;gap:10px;margin-bottom:10px;">
+                        <button class="m-btn m-btn-sec"
+                            onclick="document.getElementById('m-photo-file').click()">Change</button>
+                        <button class="m-btn m-btn-del" onclick="deleteProfilePhoto()">Delete</button>
+                    </div>
+                    <button class="m-btn m-btn-gold" onclick="uploadProfilePhoto()">Set as profile picture</button>
+                    <span class="m-cancel" onclick="closeModal('m-photo')">Cancel</span>
+                    <p id="m-photo-msg" class="m-ok" style="text-align:center;"></p>
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div id="m-email" class="acct-modal-bg" onclick="closeModal('m-email')">
+                <div class="acct-modal" onclick="event.stopPropagation()">
+                    <div class="acct-modal-hdr"><span class="acct-modal-title">Change email</span><span
+                            class="acct-modal-x" onclick="closeModal('m-email')">Close</span></div>
+                    <div style="margin-bottom:16px;">
+                        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.4);">Current email</div>
+                        <div style="font-size:14px;color:#fff;margin-top:3px;" id="m-current-email">—</div>
+                    </div>
+                    <form onsubmit="changeEmail(event)">
+                        <label class="m-label">New email address</label>
+                        <input type="email" id="m-new-email" required class="m-input" placeholder="">
+                        <label class="m-label">Confirm new email address</label>
+                        <input type="email" id="m-confirm-email" required class="m-input" placeholder="">
+                        <p id="m-email-err" class="m-err"></p>
+                        <button type="submit" class="m-btn m-btn-gold">Continue</button>
+                        <span class="m-cancel" onclick="closeModal('m-email')">Cancel</span>
+                    </form>
+                </div>
+            </div>
+
+            <!-- DJ Name -->
+            <div id="m-djname" class="acct-modal-bg" onclick="closeModal('m-djname')">
+                <div class="acct-modal" onclick="event.stopPropagation()">
+                    <div class="acct-modal-hdr"><span class="acct-modal-title">Your display and DJ name</span><span
+                            class="acct-modal-x" onclick="closeModal('m-djname')">Close</span></div>
+                    <form onsubmit="saveDjName(event)">
+                        <label class="m-label">Display name</label>
+                        <input type="text" id="cfg-dj-name" class="m-input" placeholder="DJ Mago">
+                        <p style="font-size:11px;color:rgba(255,255,255,0.35);margin:6px 0 0;">Display name appears in
+                            bookings and on your public profile.</p>
+                        <label class="m-label">DJ name</label>
+                        <input type="text" id="cfg-dj-alias" class="m-input" placeholder="DJMago305">
+                        <label class="m-label">Category / Specialty</label>
+                        <input type="text" id="cfg-category" class="m-input" placeholder="DJ &amp; Producer">
+                        <p id="m-djname-err" class="m-err"></p>
+                        <button type="submit" class="m-btn m-btn-gold">Save changes</button>
+                        <span class="m-cancel" onclick="closeModal('m-djname')">Cancel</span>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Bio -->
+            <div id="m-bio" class="acct-modal-bg" onclick="closeModal('m-bio')">
+                <div class="acct-modal" onclick="event.stopPropagation()">
+                    <div class="acct-modal-hdr"><span class="acct-modal-title">Bio</span><span class="acct-modal-x"
+                            onclick="closeModal('m-bio')">Close</span></div>
+                    <form onsubmit="saveBio(event)">
+                        <label class="m-label">Public bio</label>
+                        <textarea id="cfg-bio" class="m-input" rows="5" style="resize:vertical;"
+                            placeholder="Your story..."></textarea>
+                        <button type="submit" class="m-btn m-btn-gold">Save changes</button>
+                        <span class="m-cancel" onclick="closeModal('m-bio')">Cancel</span>
+                    </form>
+                </div>
+            </div>
+
+            <!-- City -->
+            <div id="m-city" class="acct-modal-bg" onclick="closeModal('m-city')">
+                <div class="acct-modal" onclick="event.stopPropagation()">
+                    <div class="acct-modal-hdr"><span class="acct-modal-title">City</span><span class="acct-modal-x"
+                            onclick="closeModal('m-city')">Close</span></div>
+                    <form onsubmit="saveCity(event)">
+                        <label class="m-label">City</label>
+                        <input type="text" id="cfg-city" class="m-input" placeholder="Miami">
+                        <button type="submit" class="m-btn m-btn-gold">Save changes</button>
+                        <span class="m-cancel" onclick="closeModal('m-city')">Cancel</span>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Phone -->
+            <div id="m-phone" class="acct-modal-bg" onclick="closeModal('m-phone')">
+                <div class="acct-modal" onclick="event.stopPropagation()">
+                    <div class="acct-modal-hdr"><span class="acct-modal-title">Phone</span><span class="acct-modal-x"
+                            onclick="closeModal('m-phone')">Close</span></div>
+                    <form onsubmit="savePhone(event)">
+                        <label class="m-label">Phone number</label>
+                        <input type="tel" id="cfg-phone" class="m-input" placeholder="+1 (305) 000-0000">
+                        <button type="submit" class="m-btn m-btn-gold">Save changes</button>
+                        <span class="m-cancel" onclick="closeModal('m-phone')">Cancel</span>
+                    </form>
+                </div>
+            </div>
+
+        </div><!-- end tab-settings panel -->
+
+    </main>
+
+
+    <footer class="footer">
+        <!-- LOCKED SECTION: DO NOT MODIFY -->
+        <div class="container" style="text-align: center;">
+            <div data-i18n="footer-rights-llc">© 2026 Miami DJ Beat LLC. Pro Division Access.</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=20260226-1"></script>
+    <script src="./role-guard.js?v=20260226-2" data-role="dj"></script>
+    <script src="./auth-check.js?v=20260226-1"></script>
+    <script src="./translations.js?v=20260226-1"></script>
+    <script src="./i18n.js?v=20260226-1"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="./profile-loader.js"></script>
+    <script>
+        const btn = document.getElementById('accountBtn');
+        const menu = document.getElementById('accountMenu');
+        if (btn && menu) {
+            btn.onclick = (e) => { e.stopPropagation(); menu.classList.toggle('open'); };
+            document.onclick = () => menu.classList.remove('open');
+        }
+
+        // ── Wire 'Ver mi perfil' links with user ID ───────────
+        (async () => {
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            if (!sb) return;
+            const { data: { session } } = await sb.auth.getSession();
+            if (session) {
+                const uid = session.user.id;
+                ['ver-perfil-lite', 'ver-perfil-pro'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.href = `./dj-profile.html?id=${uid}`;
+                });
+            }
+        })();
+
+        // ── Tab Switching ──────────────────────────────────────
+
+        // ── Visibilidad widget ────────────────────────────────────────────────
+        async function loadVisibilityStats() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            // Compute DJ slug (SHA256 of user_id — matches the view)
+            const msgBuffer = new TextEncoder().encode(user.id);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const djSlug = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+            const { data, error } = await supabase
+                .from('dj_weekly_impressions')
+                .select('impressions_today,impressions_week,impressions_total')
+                .eq('dj_slug', djSlug)
+                .single();
+
+            document.getElementById('vis-loading').style.display = 'none';
+
+            if (error || !data) {
+                document.getElementById('vis-today').textContent = '0';
+                document.getElementById('vis-week').textContent = '0';
+                document.getElementById('vis-total').textContent = '0';
+            } else {
+                document.getElementById('vis-today').textContent = data.impressions_today || 0;
+                document.getElementById('vis-week').textContent = data.impressions_week || 0;
+                document.getElementById('vis-total').textContent = data.impressions_total || 0;
+            }
+
+            // Show plan badge + upgrade teaser for LITE
+            const { data: profile } = await supabase
+                .from('dj_profiles').select('plan').eq('user_id', user.id).single();
+            const plan = (profile?.plan || 'LITE').toUpperCase();
+            const badge = document.getElementById('vis-plan-badge');
+            if (plan === 'PRO') {
+                badge.textContent = '⭐ PRO';
+                badge.style.cssText += ';background:rgba(197,160,89,0.15);border:1px solid rgba(197,160,89,0.4);color:#c5a059;';
+            } else {
+                badge.textContent = 'LITE';
+                badge.style.cssText += ';background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);';
+                document.getElementById('vis-upgrade-teaser').style.display = 'block';
+            }
+        }
+        loadVisibilityStats();
+
+        function switchDashTab(tabId) {
+            document.querySelectorAll('.dash-tab-panel').forEach(p => p.classList.remove('active'));
+            // Support both old .dash-tab and new .dash-tab-btn classes
+            document.querySelectorAll('.dash-tab-btn, .dash-tab').forEach(t => {
+                const isActive = t.dataset.tab === tabId;
+                t.classList.toggle('active', isActive);
+            });
+            const panel = document.getElementById('tab-' + tabId);
+            if (panel) panel.classList.add('active');
+            if (tabId === 'settings') loadSettingsForm();
+        }
+
+        // ── Settings Sidebar Panels ────────────────────────────
+        function showPanel(id, btn) {
+            document.querySelectorAll('.acct-panel').forEach(p => p.classList.remove('active'));
+            const target = document.getElementById('panel-' + id);
+            if (target) target.classList.add('active');
+            document.querySelectorAll('.acct-side-link').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+        }
+
+        // ── Modal helpers ──────────────────────────────────────
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('open');
+            // Pre-fill modal values for email
+            if (id === 'm-email') {
+                const em = document.getElementById('m-current-email');
+                const acctEm = document.getElementById('acct-show-email');
+                if (em && acctEm) em.textContent = acctEm.textContent;
+            }
+            // Pre-fill photo preview
+            if (id === 'm-photo') {
+                const thumb = document.getElementById('acct-photo-thumb');
+                const prev = document.getElementById('m-photo-preview');
+                if (thumb && prev) prev.src = thumb.src;
+            }
+            // Pre-fill name modal
+            if (id === 'm-djname') {
+                const n = document.getElementById('cfg-dj-name');
+                const av = document.getElementById('cfg-dj-alias');
+                const ct = document.getElementById('cfg-category');
+                const dn = document.getElementById('acct-show-djname');
+                const dc = document.getElementById('acct-show-cat');
+                if (n && dn) n.value = dn.textContent !== '—' ? dn.textContent : '';
+                if (ct && dc) ct.value = dc.textContent !== '—' ? dc.textContent : '';
+            }
+        }
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('open');
+        }
+
+        // ── Photo upload ───────────────────────────────────────
+        function previewNewPhoto(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                document.getElementById('m-photo-preview').src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        async function uploadProfilePhoto() {
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            if (!sb) return;
+            const file = document.getElementById('m-photo-file').files[0];
+            const msg = document.getElementById('m-photo-msg');
+            if (!file) { msg.style.display = 'block'; msg.textContent = 'Select a photo first.'; msg.style.color = '#ff5555'; return; }
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) return;
+            const ext = file.name.split('.').pop();
+            const path = `avatars/${user.id}.${ext}`;
+            const { error: upErr } = await sb.storage.from('dj-photos').upload(path, file, { upsert: true });
+            if (upErr) { msg.style.display = 'block'; msg.textContent = 'Upload error: ' + upErr.message; msg.style.color = '#ff5555'; return; }
+            const { data: { publicUrl } } = sb.storage.from('dj-photos').getPublicUrl(path);
+            await sb.from('dj_profiles').update({ photo_url: publicUrl }).eq('user_id', user.id);
+            // Update UI
+            document.getElementById('acct-avatar').src = publicUrl + '?t=' + Date.now();
+            document.getElementById('acct-photo-thumb').src = publicUrl + '?t=' + Date.now();
+            document.getElementById('m-photo-preview').src = publicUrl + '?t=' + Date.now();
+            msg.style.display = 'block'; msg.textContent = 'Profile photo updated!'; msg.style.color = '#22c55e';
+            setTimeout(() => closeModal('m-photo'), 1500);
+        }
+        async function deleteProfilePhoto() {
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            if (!sb) return;
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) return;
+            await sb.from('dj_profiles').update({ photo_url: null }).eq('user_id', user.id);
+            const ph = './assets/dj-avatar-placeholder.png';
+            document.getElementById('acct-avatar').src = ph;
+            document.getElementById('acct-photo-thumb').src = ph;
+            document.getElementById('m-photo-preview').src = ph;
+            closeModal('m-photo');
+        }
+
+        // ── Email change ───────────────────────────────────────
+        async function changeEmail(e) {
+            e.preventDefault();
+            const newEmail = document.getElementById('m-new-email').value.trim();
+            const confirm = document.getElementById('m-confirm-email').value.trim();
+            const errEl = document.getElementById('m-email-err');
+            if (newEmail !== confirm) { errEl.textContent = 'Emails do not match.'; errEl.style.display = 'block'; return; }
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            const { error } = await sb.auth.updateUser({ email: newEmail });
+            if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; return; }
+            errEl.style.display = 'none';
+            document.getElementById('acct-show-email').textContent = newEmail;
+            document.getElementById('acct-email').textContent = newEmail;
+            closeModal('m-email');
+            alert('Check your new email inbox for a confirmation link.');
+        }
+
+        // ── Password reset ─────────────────────────────────────
+        async function sendPasswordReset() {
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            if (!sb) return;
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) return;
+            await sb.auth.resetPasswordForEmail(user.email);
+            alert('A password reset link has been sent to ' + user.email);
+        }
+
+        // ── DJ Name save ───────────────────────────────────────
+        async function saveDjName(e) {
+            e.preventDefault();
+            const n = document.getElementById('cfg-dj-name').value.trim();
+            const alias = document.getElementById('cfg-dj-alias').value.trim();
+            const cat = document.getElementById('cfg-category').value.trim();
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            const { data: { user } } = await sb.auth.getUser();
+            await sb.from('dj_profiles').update({ dj_name: alias || n, category: cat }).eq('user_id', user.id);
+            document.getElementById('acct-show-djname').textContent = alias || n || '—';
+            document.getElementById('acct-show-cat').textContent = cat || '—';
+            document.getElementById('acct-name').textContent = n || alias || '—';
+            closeModal('m-djname');
+        }
+
+        // ── Bio save ───────────────────────────────────────────
+        async function saveBio(e) {
+            e.preventDefault();
+            const bio = document.getElementById('cfg-bio').value.trim();
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            const { data: { user } } = await sb.auth.getUser();
+            await sb.from('dj_profiles').update({ bio }).eq('user_id', user.id);
+            document.getElementById('acct-show-bio').textContent = bio || '—';
+            closeModal('m-bio');
+        }
+
+        // ── City save ──────────────────────────────────────────
+        async function saveCity(e) {
+            e.preventDefault();
+            const city = document.getElementById('cfg-city').value.trim();
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            const { data: { user } } = await sb.auth.getUser();
+            await sb.from('dj_profiles').update({ city }).eq('user_id', user.id);
+            document.getElementById('acct-show-city').textContent = city || '—';
+            closeModal('m-city');
+        }
+
+        // ── Phone save ─────────────────────────────────────────
+        async function savePhone(e) {
+            e.preventDefault();
+            const phone = document.getElementById('cfg-phone').value.trim();
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            const { data: { user } } = await sb.auth.getUser();
+            await sb.from('dj_profiles').update({ phone }).eq('user_id', user.id);
+            document.getElementById('acct-show-phone').textContent = phone || '—';
+            closeModal('m-phone');
+        }
+
+        // ── Socials save ───────────────────────────────────────
+        async function saveSocials(e) {
+            e.preventDefault();
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            const { data: { user } } = await sb.auth.getUser();
+            const updates = {
+                youtube_url: document.getElementById('cfg-youtube').value.trim() || null,
+                spotify_url: document.getElementById('cfg-spotify').value.trim() || null,
+                soundcloud_url: document.getElementById('cfg-soundcloud').value.trim() || null,
+                instagram_url: document.getElementById('cfg-instagram').value.trim() || null,
+                tiktok_url: document.getElementById('cfg-tiktok').value.trim() || null,
+                facebook_url: document.getElementById('cfg-facebook').value.trim() || null,
+                beatport_url: document.getElementById('cfg-beatport').value.trim() || null,
+                apple_music_url: document.getElementById('cfg-apple-music').value.trim() || null,
+                twitter_url: document.getElementById('cfg-twitter').value.trim() || null,
+                website_url: document.getElementById('cfg-website').value.trim() || null,
+            };
+            await sb.from('dj_profiles').update(updates).eq('user_id', user.id);
+            const msg = document.getElementById('socials-msg');
+            msg.textContent = 'Saved!'; msg.style.display = 'block';
+            setTimeout(() => msg.style.display = 'none', 2500);
+        }
+
+        // ── Notifications save ─────────────────────────────────
+        function saveNotifSettings() {
+            // TODO: save preferences to DB
+            alert('Notification preferences saved.');
+        }
+
+        // ── License add ────────────────────────────────────────
+        function addLicense() {
+            const code = document.getElementById('license-code-input').value.trim();
+            if (!code) return;
+            alert('License code "' + code + '" submitted. Contact support to activate.');
+        }
+
+        // ── Referral link copy ─────────────────────────────────
+        function copyReferral() {
+            const link = document.getElementById('referral-link');
+            if (link) { link.select(); document.execCommand('copy'); alert('Referral link copied!'); }
+        }
+
+        // ── Deactivate device ──────────────────────────────────
+        function deactivateDevice(e) {
+            e.preventDefault();
+            if (confirm('Deactivate this device? You can reactivate it later from another device.')) {
+                alert('Device deactivated. Your license has been freed.');
+            }
+        }
+
+        // ── Load Settings Form ─────────────────────────────────
+        async function loadSettingsForm() {
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            if (!sb) return;
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) return;
+
+            const { data: p } = await sb.from('dj_profiles').select('*').eq('user_id', session.user.id).single();
+            if (!p) return;
+
+            // Fill fields
+            const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+            set('cfg-dj-name', p.dj_name);
+            set('cfg-category', p.category || p.specialties);
+            set('cfg-bio', p.bio);
+            set('cfg-city', p.city);
+            set('cfg-phone', p.phone);
+            set('cfg-youtube', p.youtube_url);
+            set('cfg-beatport', p.beatport_url);
+            set('cfg-spotify', p.spotify_url);
+            set('cfg-soundcloud', p.soundcloud_url);
+            set('cfg-instagram', p.instagram_url);
+            set('cfg-tiktok', p.tiktok_url);
+            set('cfg-apple-music', p.apple_music_url);
+            set('cfg-twitter', p.twitter_url);
+            set('cfg-facebook', p.facebook_url);
+            set('cfg-website', p.website_url);
+            set('cfg-photo-url', p.photo_url);
+            set('cfg-bg-url', p.background_url || p.cover_url);
+
+            // PRO/ELITE condition for public profile
+            const isPro = ['PRO', 'ELITE'].includes(p.plan);
+            const liteNotice = document.getElementById('cfg-lite-notice');
+            if (liteNotice) liteNotice.style.display = isPro ? 'none' : 'block';
+
+            // Stripe portal button: only show for PRO/ELITE
+            const portalNote = document.getElementById('stripe-portal-note');
+            if (portalNote) portalNote.style.display = isPro ? 'none' : 'block';
+        }
+
+        // ── Save Profile Settings ──────────────────────────────
+        async function saveProfileSettings(e) {
+            e.preventDefault();
+            const btn = document.getElementById('cfg-profile-save-btn');
+            const msg = document.getElementById('cfg-profile-msg');
+            btn.disabled = true; btn.textContent = 'Guardando...';
+
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) return;
+
+            const get = id => document.getElementById(id)?.value.trim() || null;
+
+            const updates = {
+                dj_name: get('cfg-dj-name'),
+                category: get('cfg-category'),
+                bio: get('cfg-bio'),
+                city: get('cfg-city'),
+                phone: get('cfg-phone'),
+                youtube_url: get('cfg-youtube'),
+                beatport_url: get('cfg-beatport'),
+                spotify_url: get('cfg-spotify'),
+                soundcloud_url: get('cfg-soundcloud'),
+                instagram_url: get('cfg-instagram'),
+                tiktok_url: get('cfg-tiktok'),
+                apple_music_url: get('cfg-apple-music'),
+                twitter_url: get('cfg-twitter'),
+                facebook_url: get('cfg-facebook'),
+                website_url: get('cfg-website'),
+                photo_url: get('cfg-photo-url') || undefined,
+                background_url: get('cfg-bg-url') || undefined,
+            };
+            // Remove undefined keys
+            Object.keys(updates).forEach(k => updates[k] === undefined && delete updates[k]);
+
+            const { error } = await sb.from('dj_profiles').update(updates).eq('user_id', session.user.id);
+
+            btn.disabled = false; btn.textContent = '💾 Guardar Cambios';
+            msg.style.display = 'inline';
+            if (error) {
+                msg.textContent = '❌ ' + error.message;
+                msg.style.color = '#ff5555';
+            } else {
+                msg.textContent = '✅ ¡Guardado! El hero banner se actualizará al recargar.';
+                msg.style.color = 'var(--gold)';
+                // Refresh hero banner immediately
+                buildHeroBanner({ ...updates, dj_name: updates.dj_name });
+                setTimeout(() => { msg.style.display = 'none'; }, 4000);
+            }
+        }
+
+        // ── Change Password ────────────────────────────────────
+        async function changePassword(e) {
+            e.preventDefault();
+            const newPw = document.getElementById('cfg-new-password').value;
+            const confPw = document.getElementById('cfg-confirm-password').value;
+            const msg = document.getElementById('cfg-pass-msg');
+            const btn = document.getElementById('cfg-pass-btn');
+
+            if (newPw !== confPw) { msg.textContent = '❌ Las contraseñas no coinciden.'; msg.style.color = '#ff5555'; return; }
+            if (newPw.length < 8) { msg.textContent = '❌ Mínimo 8 caracteres.'; msg.style.color = '#ff5555'; return; }
+
+            btn.disabled = true; btn.textContent = 'Cambiando...';
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            const { error } = await sb.auth.updateUser({ password: newPw });
+            btn.disabled = false; btn.textContent = 'Cambiar';
+
+            if (error) { msg.textContent = '❌ ' + error.message; msg.style.color = '#ff5555'; }
+            else { msg.textContent = '✅ Contraseña actualizada.'; msg.style.color = '#22c55e'; document.getElementById('cfg-password-form').reset(); }
+        }
+
+        // ── Stripe Customer Portal ─────────────────────────────
+        async function openStripePortal(e) {
+            e.preventDefault();
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) return;
+
+            // Call our edge function to create a portal session
+            try {
+                const resp = await fetch(`https://hkuvuqupbxwkiykxvqdr.supabase.co/functions/v1/create-portal-session`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ return_url: window.location.href })
+                });
+                const { url, error } = await resp.json();
+                if (url) { window.open(url, '_blank'); }
+                else { alert('No se pudo abrir el portal: ' + (error || 'Plan LITE no tiene suscripción activa.')); }
+            } catch (err) {
+                alert('Error conectando con Stripe. Intenta de nuevo.');
+            }
+        }
+
+        // ── Confirm Delete Account ─────────────────────────────
+        async function confirmDeleteAccount() {
+            if (!confirm('¿Estás seguro? Esta acción es IRREVERSIBLE y eliminará tu cuenta y todos tus datos.')) return;
+            const code = prompt('Escribe "ELIMINAR" para confirmar:');
+            if (code !== 'ELIMINAR') { alert('Cancelado.'); return; }
+            alert('Contacta support@miamidjbeat.com para procesar la eliminación de tu cuenta.');
+        }
+
+
+        // ── Payment Modal ─────────────────────────────────────
+        function openPaymentModal() {
+            const m = document.getElementById('payment-modal');
+            m.style.display = 'flex';
+        }
+        function closePaymentModal() {
+            document.getElementById('payment-modal').style.display = 'none';
+            document.getElementById('pay-error').style.display = 'none';
+            document.getElementById('payment-form').reset();
+        }
+        // Close on backdrop click
+        document.getElementById('payment-modal').addEventListener('click', e => {
+            if (e.target === e.currentTarget) closePaymentModal();
+        });
+
+        function formatCard(input) {
+            let v = input.value.replace(/\D/g, '').substring(0, 16);
+            input.value = v.match(/.{1,4}/g)?.join(' ') || v;
+        }
+        function formatExpiry(input) {
+            let v = input.value.replace(/\D/g, '');
+            if (v.length >= 2) v = v.substring(0, 2) + '/' + v.substring(2, 4);
+            input.value = v;
+        }
+
+        async function savePaymentMethod(e) {
+            e.preventDefault();
+            const btn = document.getElementById('pay-btn');
+            const errEl = document.getElementById('pay-error');
+            const holder = document.getElementById('pay-holder').value.trim();
+            const number = document.getElementById('pay-number').value.replace(/\s/g, '');
+            const expiry = document.getElementById('pay-expiry').value.trim();
+
+            if (number.length < 13) {
+                errEl.textContent = 'Please enter a valid card number.';
+                errEl.style.display = 'block'; return;
+            }
+
+            const last4 = number.slice(-4);
+            // Simple brand detection
+            const brand = number[0] === '4' ? 'Visa' : number[0] === '5' ? 'Mastercard' : number[0] === '3' ? 'Amex' : 'Card';
+
+            btn.textContent = 'Guardando...';
+            btn.disabled = true;
+
+            try {
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                const { data: { session } } = await sb.auth.getSession();
+                if (!session) throw new Error('Not authenticated');
+
+                const { error } = await sb.from('dj_profiles').update({
+                    card_last4: last4,
+                    card_brand: brand,
+                    card_holder: holder,
+                    card_expiry: expiry
+                }).eq('user_id', session.user.id);
+
+                if (error) throw error;
+
+                // Update display
+                const nameDisplay = document.getElementById('card-name-display');
+                if (nameDisplay) nameDisplay.textContent = `Titular: ${holder}`;
+                const numDisplay = document.querySelector('[style*="letter-spacing:3px"]');
+                if (numDisplay) numDisplay.textContent = `${brand} •••• •••• •••• ${last4}`;
+
+                closePaymentModal();
+                // Flash success
+                const flash = document.createElement('div');
+                flash.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#22c55e;color:#000;padding:12px 24px;border-radius:12px;font-weight:800;z-index:99999;';
+                flash.textContent = '✅ Tarjeta registrada correctamente';
+                document.body.appendChild(flash);
+                setTimeout(() => flash.remove(), 3000);
+
+            } catch (err) {
+                errEl.textContent = err.message || 'Error al guardar. Inténtalo de nuevo.';
+                errEl.style.display = 'block';
+                btn.textContent = '💾 GUARDAR TARJETA';
+                btn.disabled = false;
+            }
+        }
+
+        // ── Load subscription data for PRO section ────────────
+        async function loadSubscriptionData() {
+            const params = new URLSearchParams(window.location.search);
+
+            // Show success toast if returning from Stripe
+            if (params.get('payment') === 'success') {
+                const toast = document.createElement('div');
+                toast.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#22c55e;color:#000;padding:14px 28px;border-radius:14px;font-weight:900;font-size:15px;z-index:99999;box-shadow:0 8px 32px rgba(34,197,94,0.4);';
+                toast.textContent = '✅ ¡Plan PRO activado! Bienvenido a la élite.';
+                document.body.appendChild(toast);
+                setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s'; setTimeout(() => toast.remove(), 500); }, 5000);
+                // Clean URL
+                window.history.replaceState({}, '', window.location.pathname);
+            }
+
+            try {
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                const { data: { session } } = await sb.auth.getSession();
+                if (!session) return;
+
+                const { data: p } = await sb
+                    .from('dj_profiles')
+                    .select('plan, subscription_status, next_renewal, card_last4, card_brand, card_holder')
+                    .eq('user_id', session.user.id)
+                    .single();
+
+                if (!p) return;
+
+                // Status label
+                const statusEl = document.getElementById('pro-status-label');
+                if (statusEl && p.subscription_status) {
+                    const map = { active: 'ACTIVO', past_due: 'PAGO PENDIENTE', cancelled: 'CANCELADO', inactive: 'INACTIVO' };
+                    const colorMap = { active: '#22c55e', past_due: '#f59e0b', cancelled: '#ef4444', inactive: 'rgba(255,255,255,0.3)' };
+                    statusEl.textContent = map[p.subscription_status] || p.subscription_status.toUpperCase();
+                    statusEl.style.color = colorMap[p.subscription_status] || '#fff';
+                }
+
+                // Renewal date
+                const renewalEl = document.getElementById('pro-renewal-date');
+                if (renewalEl && p.next_renewal) {
+                    renewalEl.textContent = new Date(p.next_renewal).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                }
+
+                // Card display (from saved reference)
+                if (p.card_last4) {
+                    const nameDisplay = document.getElementById('card-name-display');
+                    const numDisplay = document.querySelector('[style*="letter-spacing:3px"]');
+                    if (nameDisplay) nameDisplay.textContent = `Titular: ${p.card_holder || '—'}`;
+                    if (numDisplay) numDisplay.textContent = `${p.card_brand || 'Card'} •••• •••• •••• ${p.card_last4}`;
+                }
+            } catch (e) {
+                console.warn('loadSubscriptionData:', e.message);
+            }
+        }
+        loadSubscriptionData();
+
+
+        async function checkPhotoStatus() {
+            try {
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                const { data: { session } } = await sb.auth.getSession();
+                if (!session) return;
+
+                const { data: profile } = await sb
+                    .from('dj_profiles')
+                    .select('photo_status, photo_rejected_reason, roles, stage_name, full_name')
+                    .eq('user_id', session.user.id)
+                    .single();
+
+                if (profile) {
+                    // Show role badge
+                    if (profile.roles) {
+                        const roleEl = document.getElementById('dash-dj-role');
+                        const heroCat = document.getElementById('hero-category');
+                        if (roleEl) {
+                            const roleLabels = {
+                                'DJ': 'Certified DJ',
+                                'MC': 'CEREMONIALIST',
+                                'ANIMADOR': 'GLOBAL HOST',
+                                'PRODUCTOR': 'EVENT PRODUCER',
+                                'PROMOTOR': 'PROMOTER',
+                                'INFLUENCER': 'INFLUENCER',
+                                'LIVE_BAND': 'LIVE BAND',
+                                'MANAGER': 'ARTISTIC MANAGER',
+                                'CANTANTE': 'SINGER',
+                                'FOTOGRAFO': 'VISUAL ARTIST',
+                                'SAXOFONISTA': 'SAXOPHONIST',
+                                'PERCUSIONISTA': 'PERCUSSIONIST (DRUMS / TIMBALERO)'
+                            };
+                            const rolesArray = profile.roles.split(',').map(r => r.trim());
+                            const displayed = rolesArray.map(r => roleLabels[r.toUpperCase()] || r).join(' · ');
+                            roleEl.textContent = displayed;
+                            roleEl.style.display = 'block';
+                            if (heroCat) heroCat.textContent = rolesArray[0] || 'TALENT';
+                        }
+                    }
+
+                    // ── Plan-based UI: LITE vs PRO ────────────────────
+                    const isPro = (profile.plan === 'PRO');
+                    const liteSec = document.getElementById('section-lite');
+                    const proSec = document.getElementById('section-pro');
+                    if (liteSec) liteSec.style.display = isPro ? 'none' : 'block';
+                    if (proSec) proSec.style.display = isPro ? 'block' : 'none';
+                    // Update status badge for PRO
+                    if (isPro) {
+                        const statusLabel = document.getElementById('pro-status-label');
+                        if (statusLabel) {
+                            const st = (profile.status || 'ACTIVO').toUpperCase();
+                            statusLabel.textContent = st;
+                            statusLabel.style.color = st === 'ACTIVO' || st === 'ACTIVE' ? '#22c55e' : '#f59e0b';
+                        }
+                    }
+                    // Show photo rejection banner
+                    if (profile.photo_status === 'rejected') {
+                        const banner = document.getElementById('photo-rejection-banner');
+                        const reasonEl = document.getElementById('photo-rejection-reason');
+                        if (banner) banner.style.display = 'block';
+                        if (reasonEl) {
+                            const reason = profile.photo_rejected_reason || 'Publicidad, número de teléfono o branding detectado.';
+                            reasonEl.textContent = `Motivo: ${reason} — Por favor sube una nueva foto limpia sin nombres, marcas ni publicidad.`;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Profile check error:', e);
+            }
+        }
+
+        // ── Mis Eventos Asignados ─────────────────────────────
+        window.loadAssignedEvents = async function () {
+            const container = document.getElementById('assigned-events-container');
+            if (!container) return;
+            container.innerHTML = '<div class="fineprint" style="text-align:center; padding:20px; opacity:0.5;">⏳ Cargando...</div>';
+
+            try {
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                const { data: { session } } = await sb.auth.getSession();
+                if (!session) {
+                    container.innerHTML = '<div class="fineprint" style="text-align:center;padding:20px;opacity:0.5;">Inicia sesión para ver tus eventos.</div>';
+                    return;
+                }
+
+                // Get this DJ's profile UUID (different from user_id)
+                const { data: profile } = await sb
+                    .from('dj_profiles')
+                    .select('id')
+                    .eq('user_id', session.user.id)
+                    .single();
+
+                if (!profile) {
+                    container.innerHTML = '<div class="fineprint" style="text-align:center;padding:20px;opacity:0.5;">No se encontró tu perfil de DJ.</div>';
+                    return;
+                }
+
+                const { data: events, error } = await sb
+                    .from('leads')
+                    .select('id, event_type, event_date, location, status, email, phone, budget, assigned_at')
+                    .eq('assigned_dj_id', profile.id)
+                    .order('event_date', { ascending: true });
+
+                if (error) throw error;
+
+                // 3. Inicializar Calendario Maestro con Eventos Asignados
+
+                if (!events || events.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align:center; padding:30px;">
+                            <p class="fineprint" style="opacity:0.6;">Aún no tienes eventos asignados.<br>El manager te notificará cuando hayas sido seleccionado.</p>
+                        </div>`;
+                    return;
+                }
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                container.innerHTML = `
+                    <div style="display:flex; flex-direction:column; gap:14px;">
+                        ${events.map(ev => {
+                    const evDate = ev.event_date ? new Date(ev.event_date + 'T00:00:00') : null;
+                    const isPast = evDate && evDate < today;
+                    const daysUntil = evDate ? Math.ceil((evDate - today) / 86400000) : null;
+                    const urgency = daysUntil !== null && daysUntil <= 7 && !isPast;
+
+                    const statusColor = ev.status === 'CONFIRMED' ? '#22c55e'
+                        : ev.status === 'MATCHED' ? '#c5a059'
+                            : ev.status === 'COMPLETED' ? '#64748b'
+                                : '#94a3b8';
+
+                    const phoneVal = (ev.phone || '').replace(/\D/g, '');
+                    const waLink = phoneVal ? `https://wa.me/${phoneVal}?text=${encodeURIComponent('Hola, soy tu DJ asignado de Miami DJ Beat para tu evento el ' + (ev.event_date || ''))}` : null;
+
+                    return `
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid ${urgency ? 'rgba(197,160,89,0.6)' : isPast ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.1)'}; border-radius:16px; padding:18px; ${isPast ? 'opacity:0.6;' : ''}">
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; gap:10px; flex-wrap:wrap;">
+                                    <div>
+                                        <div style="font-weight:900; font-size:16px; color:#fff;">${ev.event_type || 'Evento'}</div>
+                                        <div style="font-size:12px; color:var(--muted); margin-top:3px;">📍 ${ev.location || 'Sin ubicación'}</div>
+                                    </div>
+                                    <div style="text-align:right; display:flex; flex-direction:column; gap:5px; align-items:flex-end;">
+                                        <span style="background:${statusColor}22; color:${statusColor}; border:1px solid ${statusColor}55; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:800;">${ev.status}</span>
+                                        ${urgency ? '<span style="background:rgba(197,160,89,0.15); color:var(--gold); border-radius:20px; padding:3px 10px; font-size:11px; font-weight:800;">⚡ ' + daysUntil + ' días</span>' : ''}
+                                        ${isPast ? '<span style="color:var(--muted); font-size:11px;">Pasado</span>' : ''}
+                                    </div>
+                                </div>
+                                <div style="display:flex; gap:16px; margin-bottom:14px; flex-wrap:wrap;">
+                                    <div>
+                                        <div style="font-size:10px; color:var(--muted); font-weight:800; letter-spacing:1px;">FECHA</div>
+                                        <div style="font-size:14px; font-weight:700; color:${urgency ? 'var(--gold)' : '#fff'};">${ev.event_date || '—'}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size:10px; color:var(--muted); font-weight:800; letter-spacing:1px;">PRESUPUESTO</div>
+                                        <div style="font-size:14px; font-weight:700; color:var(--gold);">${ev.budget ? '$' + ev.budget : '—'}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size:10px; color:var(--muted); font-weight:800; letter-spacing:1px;">CLIENTE</div>
+                                        <div style="font-size:13px; color:#fff;">${ev.email || '—'}</div>
+                                    </div>
+                                </div>
+                                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                    <a href="./client-portal.html?lead=${ev.id}" target="_blank"
+                                        style="padding:8px 16px; background:rgba(197,160,89,0.15); border:1px solid rgba(197,160,89,0.4); border-radius:20px; color:var(--gold); font-size:12px; font-weight:800; text-decoration:none;">
+                                        🎯 Ver Portal
+                                    </a>
+                                    ${waLink ? `<a href="${waLink}" target="_blank"
+                                        style="padding:8px 16px; background:rgba(37,211,102,0.12); border:1px solid rgba(37,211,102,0.35); border-radius:20px; color:#25d366; font-size:12px; font-weight:800; text-decoration:none;">
+                                        💬 WhatsApp
+                                    </a>` : ''}
+                                    ${!isPast && ev.status !== 'COMPLETED' ? `<button onclick="markEventComplete('${ev.id}')"
+                                        style="padding:8px 16px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:20px; color:rgba(255,255,255,0.5); font-size:12px; font-weight:800; cursor:pointer;">
+                                        ✅ Marcar Completado
+                                    </button>` : ''}
+                                </div>
+                                ${ev.assigned_at ? `<div style="margin-top:10px; font-size:10px; color:var(--muted);">Asignado el ${new Date(ev.assigned_at).toLocaleDateString('es-US', { dateStyle: 'medium' })}</div>` : ''}
+                            </div>`;
+                }).join('')}
+                    </div>
+                    <div style="margin-top:16px; text-align:right;">
+                        <span class="fineprint" style="opacity:0.4;">${events.length} evento${events.length !== 1 ? 's' : ''} asignado${events.length !== 1 ? 's' : ''}</span>
+                    </div>`;
+
+            } catch (e) {
+                console.error('loadAssignedEvents error:', e);
+                container.innerHTML = '<div class="fineprint" style="color:#ff5555; padding:20px; text-align:center;">Error cargando eventos. Intenta de nuevo.</div>';
+            }
+        };
+
+        window.markEventComplete = async (leadId) => {
+            if (!confirm('¿Marcar este evento como COMPLETADO?')) return;
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            const { error } = await sb.from('leads').update({ status: 'COMPLETED' }).eq('id', leadId);
+            if (error) { alert('Error: ' + error.message); return; }
+            loadAssignedEvents();
+        };
+
+        document.addEventListener('DOMContentLoaded', checkPhotoStatus);
+        document.addEventListener('DOMContentLoaded', loadAssignedEvents);
+
+        // ── Photo position slider ─────────────────────────────────
+        window.previewPhotoPos = function (val) {
+            var label = document.getElementById('photo-pos-label');
+            if (label) label.textContent = val + '%';
+        };
+
+        window.savePhotoPos = async function (val) {
+            window.previewPhotoPos(val);
+            try {
+                var sup = window.getSupabaseClient ? window.getSupabaseClient() : null;
+                if (!sup) return;
+                var sess = (await sup.auth.getSession()).data.session;
+                if (!sess) return;
+                await sup.from('dj_profiles')
+                    .update({ photo_focal_y: parseInt(val) })
+                    .eq('user_id', sess.user.id);
+            } catch (e) { console.warn('photo pos save:', e.message); }
+        };
+
+        // Load saved photo position on startup
+        document.addEventListener('DOMContentLoaded', async function () {
+            try {
+                var sup = window.getSupabaseClient ? window.getSupabaseClient() : null;
+                if (!sup) return;
+                var sess = (await sup.auth.getSession()).data.session;
+                if (!sess) return;
+                var { data } = await sup.from('dj_profiles').select('photo_focal_y').eq('user_id', sess.user.id).single();
+                if (data && data.photo_focal_y != null) {
+                    var slider = document.getElementById('photo-position-slider');
+                    if (slider) slider.value = data.photo_focal_y;
+                    window.previewPhotoPos(data.photo_focal_y);
+                }
+            } catch (e) { }
+        });
+
+        function switchDashTab(tabId) {
+            document.querySelectorAll('.dash-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.dash-tab-panel').forEach(p => p.classList.remove('active'));
+            const targetBtn = document.querySelector(`.dash-tab-btn[data-tab="${tabId}"]`);
+            const targetPanel = document.getElementById(`tab-${tabId}`);
+            if (targetBtn) targetBtn.classList.add('active');
+            if (targetPanel) targetPanel.classList.add('active');
+            if (tabId === 'flow' && window.loadFlowData) {
+                window.loadFlowData('30d');
+            }
+        }
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/flow-metrics.js"></script>
+    <script>
+        // QA WEATHER OVERRIDE HOOK
+        window.forceQAScene = function(sceneType) {
+            console.log("🛠 Forcing QA Visual Scene:", sceneType);
+            const weatherContainer = document.querySelector('.weather-widget');
+            const baseSky = document.getElementById('weather-layer-base');
+
+             if(weatherContainer) {
+                weatherContainer.setAttribute('data-qa-forced', 'true');
+                // Remove all existing scene classes
+                weatherContainer.classList.remove('scene-clear-day', 'scene-sunset', 'scene-clear-night', 'scene-cloudy-day', 'scene-cloudy-night', 'scene-rain', 'scene-rain-night', 'scene-rain-day', 'scene-storm', 'scene-storm-day', 'scene-snow');
+                // Add the new target scene class
+                weatherContainer.classList.add(`scene-${sceneType}`);
+            }
+
+            if(baseSky) {
+                baseSky.className = 'sky-base'; // clear old classes
+                baseSky.classList.add(sceneType);
+            }
+            
+            // clear canvas if exists
+            if(window.clearWeatherAnimations) window.clearWeatherAnimations();
+
+            // Dynamic Lightning Orchestration
+            if (sceneType === 'storm' || sceneType === 'storm-day') {
+                if (window.startDynamicLightning) window.startDynamicLightning();
+            } else {
+                if (window.stopDynamicLightning) window.stopDynamicLightning();
+            }
+
+            // Trigger Specific Canvas logic if applicable
+            switch(sceneType) {
+                case 'rain':
+                case 'rain-day':
+                    if(window.updateWeatherAnimation) window.updateWeatherAnimation('Rain');
+                    break;
+                case 'storm':
+                case 'storm-day':
+                    if(window.updateWeatherAnimation) window.updateWeatherAnimation('Thunderstorm');
+                    break;
+            }
+        };
+    </script>
+    <script src="./mdj-assistant.js"></script>
+
+    <!-- MDJPRO BOOTLOADER: Fuerza el renderizado inmediato del clima HERO 🍏 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            setTimeout(() => {
+                if (window.showEventWeatherDetails) {
+                    console.log('[MDJPRO] Forzando renderizado de clima inicial...');
+                    window.showEventWeatherDetails(new Date().toISOString().split('T')[0]);
+                }
+            }, 1000);
+        });
+    </script>
+
+    <!-- BOOTH ASSISTANT FLOATING WIDGET -->
+    <div id="mdj-assistant-booth">
+        <div class="booth-trigger" title="Hablar con Booth Assistant">
+            <div class="avatar-glow"></div>
+            <span style="font-size: 32px; z-index: 2;">🤖</span>
+        </div>
+        <div class="booth-window">
+            <div class="booth-header">
+                <div class="status-dot"></div>
+                <div style="flex: 1;">
+                    <h3>Booth Assistant</h3>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700;">Sales & Negotiation
+                        Expert</div>
+                </div>
+            </div>
+            <div class="booth-messages"></div>
+            <div class="booth-input-area">
+                <input type="text" placeholder="Hablemos de negocios / Let's talk business...">
+                <button class="booth-send-btn">➔</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weather Orchestration & API -->
+    <script src="./js/event-weather.js?v=20260312-4"></script>
+    
+    <!-- Weather Astral Engine -->
+    <script src="./weather-astral.js?v=20260312-3"></script>
+</body>
+
+</html>

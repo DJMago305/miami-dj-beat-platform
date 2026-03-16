@@ -1,0 +1,101 @@
+**Exact Comment Added:**
+```html
+<!-- 
+================================================================================
+[LOCKED] WEATHER SKY ENGINE BASELINE
+DO NOT MODIFY CLOUD ENGINE LOGIC WITHOUT EXPLICIT USER APPROVAL.
+This system is locked because it controls:
+- panoramic hero sizing
+- physical cloud occlusion (clouds naturally blocking sun/moon)
+- infinite loop sequencing (Sequence A + Clone Sequence B)
+- PNG proportion rules
+
+Do not refactor, simplify, replace assets, optimize, or clean up this system 
+unless explicitly instructed to by the user. 
+Source of truth: .agents/workflows/weather_widget_clouds_blueprint.md
+================================================================================
+-->
+```
+
+**Exact Code Block Marked as Locked (HTML):**
+```html
+<!-- 
+================================================================================
+[LOCKED] WEATHER SKY ENGINE BASELINE
+DO NOT MODIFY CLOUD ENGINE LOGIC WITHOUT EXPLICIT USER APPROVAL.
+...
+-->
+<div class="cloud-layer-front nubes-largas-fast-container" id="cloud-carousel-layer">
+    <!-- Sequence A (First Train) -->
+    <img src="./assets/weather/Bellas Nubes Seamless.png" alt="">
+    <img src="./assets/weather/Nubes Blancas.png" alt="">
+    <img src="./assets/weather/Nubes Bonitas decorativas .png" alt="">
+    <!-- Sequence B (Clone Train for Seamless -50% Loop) -->
+    <img src="./assets/weather/Bellas Nubes Seamless.png" alt="">
+    <img src="./assets/weather/Nubes Blancas.png" alt="">
+    <img src="./assets/weather/Nubes Bonitas decorativas .png" alt="">
+</div>
+<!-- ==================== END LOCKED ENGINE HTML ==================== -->
+```
+
+**Exact Code Block Marked as Locked (CSS):**
+```css
+/* 
+================================================================================
+[LOCKED] WEATHER SKY ENGINE CSS ARCHITECTURE
+DO NOT MODIFY WITHOUT EXPLICIT USER APPROVAL.
+Controls physical occlusion between clouds (z:30) and astral bodies (z:20).
+Never change z-index, simplify, or refactor.
+================================================================================
+*/
+/* Celestial Layer (Sun, Moon, Rays) */
+.sky-astral-front {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+}
+
+/* Clouds Layer (Higher Z-Index to physically block Moon/Sun) */
+.sky-clouds {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    pointer-events: none;
+    opacity: 1;
+}
+
+/* 
+================================================================================
+[LOCKED] CLOUD SIZING RULES
+DO NOT alter height/object-fit. These values force the PNG to hide straight edges.
+================================================================================
+*/
+.nubes-largas-fast-container img {
+    position: static !important;
+    width: 150vw;
+    height: 100%;
+    max-width: none;
+    flex-shrink: 0;
+    display: block;
+    margin: 0;
+    padding: 0;
+    border: none;
+    object-fit: cover !important;
+    object-position: top center;
+}
+
+/* 
+================================================================================
+[LOCKED] CLOUD LOOP KEYFRAME
+DO NOT touch translateX(-50%) under any circumstance.
+This mathematically completes the Sequence A -> Sequence B seamless clone train.
+================================================================================
+*/
+@keyframes carouselLoopFast {
+    0% { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(-50%, 0, 0); }
+}
+```
+
+**Confirmation:**
+I confirm that the cloud baseline is strictly locked. Future weather scene work (rain, snow, night, etc.) will absolutely NOT modify this cloud baseline, panoramic behavior, sequence, infinite loop logic, z-index, or PNG proportion sizing without explicit user approval.

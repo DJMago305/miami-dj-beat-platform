@@ -439,7 +439,24 @@ window.initEventWeatherCalendar = async function (assignedEvents = []) {
     const calendarEl = document.getElementById('calendar-master');
     if (!calendarEl) return;
 
-    // 1. FESTIVOS NACIONALES 2026 (ESTÁNDAR CEO - ISO FORMAT) 🇺🇸
+    // DAY_STATE Definition 
+    const DAY_STATE = {
+        EVENT: 'event',
+        RESIDENT: 'resident',
+        VACATION: 'vacation',
+        HOLIDAY: 'holiday',
+        AVAILABLE: 'available'
+    };
+    
+    // Priority Dictionary
+    const STATE_PRIORITY = {
+        [DAY_STATE.EVENT]: 5,
+        [DAY_STATE.RESIDENT]: 4,
+        [DAY_STATE.VACATION]: 3,
+        [DAY_STATE.HOLIDAY]: 2,
+        [DAY_STATE.AVAILABLE]: 1
+    };
+
     const holidays = {
         '2026-01-01': 'Año Nuevo',
         '2026-01-19': 'Martin Luther King Jr.',
@@ -454,19 +471,22 @@ window.initEventWeatherCalendar = async function (assignedEvents = []) {
         '2026-12-25': 'Navidad'
     };
 
-    // 2. OBTENER DISPONIBILIDAD (RESIDENCIAS/VACACIONES) SINCRONIZADA
     let availabilityEvents = [];
+    let schedule = {};
+    let recurringDays = [];
+    let vacationStart = '';
+    let vacationEnd = '';
+
     try {
         const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
         const { data: { session } } = await sb.auth.getSession();
         if (session) {
-            // Usamos select('*') para evitar errores de columna si el esquema cambió ligeramente
             const { data: profile, error: profError } = await sb
                 .from('dj_profiles')
-                .select('availability')
+                .select('availability, availability_schedule')
                 .eq('user_id', session.user.id)
                 .maybeSingle();
-
+                
             if (profError) console.warn("Supabase profile fetch warning:", profError);
 
             if (profile?.availability && Array.isArray(profile.availability)) {
@@ -474,55 +494,136 @@ window.initEventWeatherCalendar = async function (assignedEvents = []) {
                     title: 'Residencia/Bloqueado',
                     start: date,
                     allDay: true,
-                    backgroundColor: '#007AFF',
-                    extendedProps: { type: 'residence' }
+                    extendedProps: { type: DAY_STATE.RESIDENT }
                 }));
+            }
+            if (profile?.availability_schedule) {
+                schedule = profile.availability_schedule.schedule || {};
+                recurringDays = profile.availability_schedule.recurring_days || [];
+                vacationStart = profile.availability_schedule.vacation_start || '';
+                vacationEnd = profile.availability_schedule.vacation_end || '';
             }
         }
     } catch (e) {
         console.error("Critical failure in calendar sync:", e);
     }
 
-    // 3. COMBINAR TODAS LAS FUENTES
-    const allEvents = [
-        ...(assignedEvents || []).map(e => ({
-            ...e,
-            backgroundColor: '#34C759', // Verde (Eventos Privados/Confirmados)
-            extendedProps: { type: 'private-event' }
-        })),
-        ...availabilityEvents
-    ];
+    // Helper: Build Days Range
+    const getDatesInRange = (startStr, endStr) => {
+        if (!startStr || !endStr) return [];
+        const dates = [];
+        let curr = new Date(startStr + 'T00:00:00');
+        const end = new Date(endStr + 'T00:00:00');
+        if (curr > end) return [];
+        while (curr <= end) {
+            dates.push(curr.toISOString().split('T')[0]);
+            curr.setDate(curr.getDate() + 1);
+        }
+        return dates;
+    };
+    const vacationDates = getDatesInRange(vacationStart, vacationEnd);
+
+    // ── CALENDAR DATA MAPPING & PRIORITY ENGINE ──
+    const dayStateMap = {};
+    const registerDayState = (dateStr, state) => {
+        const current = dayStateMap[dateStr] || DAY_STATE.AVAILABLE;
+        if (STATE_PRIORITY[state] > STATE_PRIORITY[current]) {
+            dayStateMap[dateStr] = state;
+        }
+    };
+
+    // 1. Vacations
+    const vacEvents = vacationDates.map(date => {
+        registerDayState(date, DAY_STATE.VACATION);
+        return {
+            title: 'Vacaciones',
+            start: date,
+            allDay: true,
+            extendedProps: { type: DAY_STATE.VACATION }
+        };
+    });
+
+    // 2. Specific Events
+    const specificEvents = [];
+    Object.entries(schedule).forEach(([dateStr, data]) => {
+        (data.events || []).forEach(ev => {
+            const isBlocked = data.status === 'blocked';
+            const type = isBlocked ? DAY_STATE.VACATION : DAY_STATE.EVENT;
+            registerDayState(dateStr, type);
+            specificEvents.push({
+                title: isBlocked ? 'Día Bloqueado' : (ev.venue || 'Evento Confirmado'),
+                start: dateStr,
+                extendedProps: {
+                    venue: ev.venue || '',
+                    city: ev.city || 'Miami, FL',
+                    start_time: ev.from || '',
+                    end_time: ev.to || '',
+                    buffer_time: ev.buffer_mins || 0,
+                    status: ev.status || 'CONFIRMED',
+                    type: type
+                }
+            });
+        });
+    });
+
+    // 3. Recurring Residencies (Stored differently, don't map absolute dates directly yet)
+    const recurringEvents = recurringDays.map(day => ({
+        title: 'Resident DJ (Residencia)',
+        daysOfWeek: [day], // 0-6
+        extendedProps: {
+            venue: 'Key Largo / Miami Venue',
+            city: 'Key Largo, FL',
+            type: DAY_STATE.RESIDENT
+        }
+    }));
+
+    // 4. Assigned Events (Fallback from args)
+    const extraEvents = (assignedEvents || []).map(e => {
+        if (e.start) registerDayState(e.start, DAY_STATE.EVENT);
+        return { ...e, extendedProps: { ...e.extendedProps, type: DAY_STATE.EVENT } };
+    });
+
+    const allEvents = [...specificEvents, ...recurringEvents, ...vacEvents, ...extraEvents, ...availabilityEvents];
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: ''
-        },
+        headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
         locale: 'es',
-        firstDay: 0, // Iniciar en Domingo (Estándar US)
+        firstDay: 0, 
         themeSystem: 'standard',
         height: 'auto',
         events: allEvents,
 
-        eventClick: function (info) {
-            // Efecto Glow Visual de Selección
-            document.querySelectorAll('.fc-daygrid-day').forEach(d => d.classList.remove('fc-day-selected'));
-            const cell = info.el.closest('.fc-daygrid-day');
-            if (cell) cell.classList.add('fc-day-selected');
-            window.showEventWeatherDetails(info.event);
-        },
+        dayCellClassNames: function(arg) {
+            const d = arg.date;
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+            const dow = d.getDay();
+            
+            const classes = [];
+            
+            // Re-evaluate current priority based on recurring & holidays dynamically
+            let finalState = dayStateMap[dateStr] || DAY_STATE.AVAILABLE;
+            
+            if (holidays[dateStr] && STATE_PRIORITY[DAY_STATE.HOLIDAY] > STATE_PRIORITY[finalState]) {
+                finalState = DAY_STATE.HOLIDAY;
+            }
+            if (recurringDays.includes(dow) && STATE_PRIORITY[DAY_STATE.RESIDENT] > STATE_PRIORITY[finalState]) {
+                finalState = DAY_STATE.RESIDENT;
+            }
 
-        dateClick: function (info) {
-            // Glow al hacer click en el día vacío
-            document.querySelectorAll('.fc-daygrid-day').forEach(d => d.classList.remove('fc-day-selected'));
-            info.dayEl.classList.add('fc-day-selected');
-            window.showEventWeatherDetails(info.dateStr);
+            classes.push(`state-${finalState}`);
+
+            // Overlay: TODAY
+            if (arg.isToday) {
+                classes.push('state-today');
+            }
+            return classes;
         },
 
         dayCellDidMount: function (arg) {
-            // Normalizar fecha para comparación con el mapa de festivos
             const d = arg.date;
             const year = d.getFullYear();
             const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -540,15 +641,36 @@ window.initEventWeatherCalendar = async function (assignedEvents = []) {
         eventContent: function (arg) {
             let dot = document.createElement('div');
             dot.className = 'apple-status-dot';
-
-            // Lógica cromática (Estándar CEO)
-            // Azul: Residencia, Verde: Privado, Amarillo: Vacaciones (Fallback)
             const type = arg.event.extendedProps?.type;
-            dot.style.backgroundColor = type === 'residence' ? '#007AFF' :
-                (type === 'private-event' ? '#34C759' : '#FFCC00');
-            dot.style.color = dot.style.backgroundColor;
+            
+            if (type === DAY_STATE.EVENT) {
+                dot.style.backgroundColor = '#00ff88'; dot.style.color = '#00ff88';
+            } else if (type === DAY_STATE.RESIDENT) {
+                dot.style.backgroundColor = '#5078ff'; dot.style.color = '#5078ff';
+            } else if (type === DAY_STATE.VACATION) {
+                dot.style.backgroundColor = '#ffc107'; dot.style.color = '#ffc107';
+            } else {
+                dot.style.display = 'none';
+            }
 
             return { domNodes: [dot] };
+        },
+
+        eventClick: function (info) {
+            document.querySelectorAll('.fc-daygrid-day').forEach(d => d.classList.remove('fc-day-selected'));
+            const cell = info.el.closest('.fc-daygrid-day');
+            if (cell) cell.classList.add('fc-day-selected');
+            if (window.handleEventWeather) {
+                window.handleEventWeather(info.event);
+            }
+        },
+
+        dateClick: function (info) {
+            document.querySelectorAll('.fc-daygrid-day').forEach(d => d.classList.remove('fc-day-selected'));
+            info.dayEl.classList.add('fc-day-selected');
+            if (window.handleEventWeather) {
+                window.handleEventWeather(info.dateStr);
+            }
         }
     });
 

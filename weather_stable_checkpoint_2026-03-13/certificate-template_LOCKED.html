@@ -1,0 +1,190 @@
+<!-- LOCKED MASTER TEMPLATE
+Do not modify.
+All changes must be done in certificate-template_v2.html
+This is the baseline reference for Phase 1 visual approval.
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miami DJ Beat — Certificate of Completion (v2)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@700;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="./certificate.css">
+</head>
+
+<body>
+    <!-- Desktop Presentation Layer -->
+    <div class="presentation-layer">
+        <!-- Left Side: Institutional Controls -->
+        <div class="controls-container">
+            <div class="deco-button-wrapper" onclick="window.close()">
+                <img src="./assets/decorative-cap.png" class="deco-item" alt="Exit">
+                <span class="deco-label">EXIT</span>
+            </div>
+            <div class="deco-button-wrapper" onclick="window.print()">
+                <img src="./assets/decorative-scroll.png" class="deco-item" alt="Print">
+                <span class="deco-label">PRINT / PDF</span>
+            </div>
+            <div class="deco-button-wrapper" onclick="window.location.href='./dj-profile.html'">
+                <img src="./assets/decorative-books.png" class="deco-item" alt="Profile">
+                <span class="deco-label">VIEW PROFILE</span>
+            </div>
+        </div>
+
+        <!-- Right Side: Motivational Message (Champions) -->
+        <div class="motivational-anchor">
+            <div class="message-box">
+                <h3 class="message-title" id="msg-title">¡FELICIDADES, CAMPEÓN!</h3>
+                <div class="message-separator"></div>
+                <div id="dynamic-message" class="message-body">
+                    <!-- Language versions are toggled via Script -->
+                    <div id="lang-es" class="lang-content">
+                        <p>Bienvenido a una nueva etapa en tu vida. Has completado este curso con éxito, y eso es motivo
+                            de orgullo y celebración.</p>
+                        <p>A partir de hoy comienza un nuevo camino como profesional. Sin embargo, recuerda que el
+                            verdadero valor de este logro no está únicamente en poseer un certificado, sino en demostrar
+                            cada día tu compromiso con la excelencia, la disciplina y los estándares que definen a un
+                            verdadero profesional en la industria musical.</p>
+                        <p>Luce este certificado con honor y mantén siempre la disciplina de los campeones. Desde hoy
+                            formas parte de un movimiento universal que impulsa la cultura del DJ.</p>
+                        <p class="highlight-text">De ahora en adelante, dejarás de ser el “DJ invisible” para
+                            convertirte en aquello que decidas ser.</p>
+                        <p>Recuerda siempre que en la industria musical los límites no existen… salvo los que nosotros
+                            mismos aceptamos.</p>
+                    </div>
+                    <div id="lang-en" class="lang-content" style="display: none;">
+                        <p>Congratulations, Champion! Welcome to a new stage in your life. You have successfully
+                            completed this course, and that is a cause for pride and celebration.</p>
+                        <p>From today, a new path as a professional begins. However, remember that the true value of
+                            this achievement is not only in possessing a certificate, but in demonstrating every day
+                            your commitment to excellence, discipline and the standards that define a true professional
+                            in the music industry.</p>
+                        <p>Wear this certificate with honor and always maintain the discipline of champions. From today
+                            you are part of a universal movement that drives the DJ culture.</p>
+                        <p class="highlight-text">From now on, you will stop being the "invisible DJ" to become whatever
+                            you decide to be.</p>
+                        <p>Always remember that in the music industry limits do not exist... except the ones we accept
+                            ourselves.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="a4-page">
+        <!-- The border and branding are now part of the background image in CSS -->
+        <div class="certificate-content">
+            <!-- Dynamic Content Overlay -->
+            <div class="main-body">
+                <div class="recipient-name" id="dj-name-display">
+                    Gerardo A Valle
+                </div>
+                <div class="dj-alias" id="dj-alias-display">
+                    DJMAGO305
+                </div>
+
+                <div class="course-description">
+                    <p class="lorem" id="course-title">ELITE DJ WORKFLOW<br>MASTERCLASS</p>
+                    <p class="description-text" id="course-desc">
+                        Awarded upon the successful completion of all theoretical examinations and artistic performance
+                        assessments, demonstrating professional competence in Miami DJ Beat standards and performance
+                        practices.
+                    </p>
+                    <p class="authority-text" id="authority-name">
+                        Issued under the authority of Miami DJ Beat LLC<br>
+                        in recognition of professional achievement and artistic discipline.
+                    </p>
+                </div>
+            </div>
+
+            <footer class="cert-footer">
+                <div class="footer-grid">
+                    <div class="footer-item">
+                        <p id="cert-date" class="val">MARCH 09 2025</p>
+                        <div class="signature-line"></div>
+                        <p class="label">DATE</p>
+                    </div>
+
+                    <div class="footer-item">
+                        <p class="val signature-font">Miami DJ Beat LLC</p>
+                        <div class="signature-line"></div>
+                        <p class="label">SIGNATURE</p>
+                    </div>
+                </div>
+
+                <div class="cert-meta-container">
+                    <div class="meta-metadata-row">
+                        <div class="meta-item">
+                            <span class="meta-label">CERTIFICATE NO:</span>
+                            <span class="meta-val" id="cert-no-display">2025-001</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">STUDENT ID / CÉDULA:</span>
+                            <span class="meta-val" id="student-id-display">MDJB-2574</span>
+                        </div>
+                    </div>
+
+                    <div class="meta-company-info">
+                        Miami DJ Beat LLC — Florida Registered Entity No: L26000066740
+                    </div>
+
+                    <div class="meta-verification">
+                        CERTIFICATE VERIFICATION: <a href="https://mdb.dj/verify/-2025-001"
+                            id="cert-link">mdb.dj/verify/-2025-001</a>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        function injectParams() {
+            const params = new URLSearchParams(window.location.search);
+
+            const elements = {
+                'name': 'dj-name-display',
+                'cert_no': 'cert-no-display',
+                'id': 'student-id-display',
+                'date': 'cert-date'
+            };
+
+            for (const [param, id] of Object.entries(elements)) {
+                const val = params.get(param);
+                if (val && document.getElementById(id)) {
+                    document.getElementById(id).textContent = val;
+                }
+            }
+
+            // Update verification link if needed
+            const certNo = params.get('cert_no') || '2025-001';
+            const link = document.getElementById('cert-link');
+            link.href = `https://mdb.dj/verify/-${certNo}`;
+            link.textContent = `mdb.dj/verify/-${certNo}`;
+
+            // Language Toggle for Motivational Message
+            const lang = params.get('lang') || 'es';
+            const esContent = document.getElementById('lang-es');
+            const enContent = document.getElementById('lang-en');
+            const title = document.getElementById('msg-title');
+
+            if (lang === 'en') {
+                esContent.style.display = 'none';
+                enContent.style.display = 'block';
+                title.textContent = 'CONGRATULATIONS, CHAMPION!';
+            } else {
+                esContent.style.display = 'block';
+                enContent.style.display = 'none';
+                title.textContent = '¡FELICIDADES, CAMPEÓN!';
+            }
+        }
+        window.onload = injectParams;
+    </script>
+</body>
+
+</html>
