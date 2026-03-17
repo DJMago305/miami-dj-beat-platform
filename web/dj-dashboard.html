@@ -591,21 +591,21 @@
                                     <!-- Sunset Specific Infinite Carousel -->
                                     <div class="cloud-layer-front nubes-sunset-carousel" id="sunset-carousel-layer">
                                         <!-- Sequence A -->
+                                        <img src="./assets/weather/Bellas Nubes Seamless.png" alt="">
                                         <img src="./assets/weather/Nubes Blancas.png" alt="">
-                                        <img src="./assets/weather/Bellas Nubes.png" alt="">
-                                        <img src="./assets/weather/Nubes Blancas.png" alt="">
+                                        <img src="./assets/weather/Nubes Bonitas decorativas .png" alt="">
                                         <!-- Sequence B -->
+                                        <img src="./assets/weather/Bellas Nubes Seamless.png" alt="">
                                         <img src="./assets/weather/Nubes Blancas.png" alt="">
-                                        <img src="./assets/weather/Bellas Nubes.png" alt="">
-                                        <img src="./assets/weather/Nubes Blancas.png" alt="">
+                                        <img src="./assets/weather/Nubes Bonitas decorativas .png" alt="">
                                     </div>
                                     <!-- ==================== END LOCKED ENGINE HTML ==================== -->
                                     <!-- Static/Drifting Cloud PNGs for rain/storm scenes -->
                                     <img class="cloud-layer-back night-cloud-p"
-                                        src="./assets/weather/dusky%20cloud,%20thick%20clouds.png" alt="">
+                                        src="./assets/weather/Nubes%20Oscuras%20Para%20Tormenta.png" alt="">
                                     <img class="cloud-layer-back rain-cloud" src="./assets/weather/Nublado.png" alt="">
                                     <img class="cloud-layer-back storm-cloud" src="./assets/weather/Cumulus%20Cloud%20Cumulonimbus.png" alt="">
-                                    <img class="cloud-layer-back storm-day-cloud" src="./assets/weather/Rain%20Day.png"
+                                    <img class="cloud-layer-back storm-day-cloud" src="./assets/weather/Nublado.png"
                                         alt="">
                                 </div>
 
@@ -1166,13 +1166,22 @@
                                         }
                                     }
 
-                                    @keyframes breatheZoom {
+                                    @keyframes heavyBreathe {
                                         0% {
-                                            transform: scale(1) translateZ(-10px);
+                                            transform: translateX(-50%) scale(1.0);
                                         }
                                         100% {
-                                            transform: scale(1.05) translateZ(-10px); /* Pure cinematic slow zoom on a massive pre-bled canvas */
+                                            transform: translateX(-50%) scale(1.06); /* Motor zoom in zoom out */
                                         }
+                                    }
+
+                                    /* Global Motor Zun In Zun Out para Nubes Pesadas Estaticas */
+                                    .weather-widget .cloud-layer-back.night-cloud-p,
+                                    .weather-widget .cloud-layer-back.rain-cloud,
+                                    .weather-widget .cloud-layer-back.storm-cloud,
+                                    .weather-widget .cloud-layer-back.storm-day-cloud,
+                                    .weather-widget .static-cloud-muy-nublado {
+                                        animation: heavyBreathe 30s ease-in-out infinite alternate !important;
                                     }
 
                                     @keyframes rainFallAsset {
