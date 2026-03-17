@@ -587,6 +587,18 @@
                                         <img src="./assets/weather/Nubes Blancas.png" alt="">
                                         <img src="./assets/weather/Nubes Bonitas decorativas .png" alt="">
                                     </div>
+                                    
+                                    <!-- Sunset Specific Infinite Carousel -->
+                                    <div class="cloud-layer-front nubes-sunset-carousel" id="sunset-carousel-layer">
+                                        <!-- Sequence A -->
+                                        <img src="./assets/weather/Nubes Blancas.png" alt="">
+                                        <img src="./assets/weather/Bellas Nubes.png" alt="">
+                                        <img src="./assets/weather/Nubes Blancas.png" alt="">
+                                        <!-- Sequence B -->
+                                        <img src="./assets/weather/Nubes Blancas.png" alt="">
+                                        <img src="./assets/weather/Bellas Nubes.png" alt="">
+                                        <img src="./assets/weather/Nubes Blancas.png" alt="">
+                                    </div>
                                     <!-- ==================== END LOCKED ENGINE HTML ==================== -->
                                     <!-- Static/Drifting Cloud PNGs for rain/storm scenes -->
                                     <img class="cloud-layer-back night-cloud-p"
@@ -767,7 +779,8 @@
                                         transition: opacity 1s ease-in-out;
                                     }
 
-                                    .nubes-largas-fast-container {
+                                    .nubes-largas-fast-container,
+                                    .nubes-sunset-carousel {
                                         position: absolute;
                                         display: flex;
                                         flex-direction: row;
@@ -789,7 +802,8 @@
                                     DO NOT alter height/object-fit. These values force the PNG to hide straight edges.
                                     ================================================================================
                                     */
-                                    .nubes-largas-fast-container img {
+                                    .nubes-largas-fast-container img,
+                                    .nubes-sunset-carousel img {
                                         position: static !important;
                                         width: 110vw; /* Create a 10vw overlap */
                                         height: 100%;
@@ -806,7 +820,8 @@
                                         mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
                                     }
                                     
-                                    .nubes-largas-fast-container .cloud-gap {
+                                    .nubes-largas-fast-container .cloud-gap,
+                                    .nubes-sunset-carousel .cloud-gap {
                                         position: static !important;
                                         width: 0vw;
                                         height: 100%;
@@ -1332,6 +1347,13 @@
                                         content: url('./assets/weather/Nublado.png') !important;
                                     }
 
+                                    /* Use Borded Cloud.png specifically for Rain Day */
+                                    .weather-widget.scene-rain-day .static-cloud-muy-nublado {
+                                        content: url('./assets/weather/Borded%20Cloud.png') !important;
+                                        opacity: 1 !important; /* Force full visibility for the new asset */
+                                        z-index: 15 !important;
+                                    }
+
                                     /* Activating Static Cloud for Night Heavy Weather (Rain Night, Storm) */
                                     .weather-widget.scene-rain-night .static-cloud-muy-nublado,
                                     .weather-widget.scene-storm .static-cloud-muy-nublado {
@@ -1343,9 +1365,8 @@
                                         z-index: 25 !important; /* Positioned IN FRONT of the moon (z=20) */
                                     }
 
-                                    /* Carousel for Cloudy Day, Rain Day, and Storm Day */
+                                    /* Carousel for Cloudy Day and Storm Day */
                                     .weather-widget.scene-cloudy-day .cloud-layer-front.nubes-largas-fast-container,
-                                    .weather-widget.scene-rain-day .cloud-layer-front.nubes-largas-fast-container,
                                     .weather-widget.scene-storm-day .cloud-layer-front.nubes-largas-fast-container {
                                         position: absolute !important; /* Fixed stacking context by guaranteeing absolute layout */
                                         z-index: 50 !important; /* Locked Weather Engine Matrix - Forces Carousel in front of ANY png */
@@ -1373,26 +1394,27 @@
                                         opacity: 0.6;
                                     }
 
-                                    .weather-widget.scene-sunset .cloud-layer-back.long-cloud {
-                                        opacity: 1 !important;
-                                        object-fit: cover;
-                                        object-position: top center;
-                                        width: 120%;
-                                        height: 110%;
-                                        left: 50%;
-                                        top: -10%;
-                                        animation: cloudDrift 110s ease-in-out infinite alternate;
+                                    /* Disable old legacy drifting clouds for Sunset */
+                                    .weather-widget.scene-sunset .cloud-layer-back.long-cloud,
+                                    .weather-widget.scene-sunset .cloud-layer-front.hero-cloud {
+                                        display: none !important;
+                                        opacity: 0 !important;
                                     }
 
-                                    .weather-widget.scene-sunset .cloud-layer-front.hero-cloud {
+                                    /* Enable Sunset-exclusive infinite carousel */
+                                    .weather-widget.scene-sunset .cloud-layer-front.nubes-sunset-carousel {
+                                        position: absolute !important;
+                                        z-index: 50 !important;
                                         opacity: 1 !important;
-                                        object-fit: cover;
-                                        object-position: top center;
-                                        width: 120%;
-                                        height: 110%;
-                                        left: 50%;
-                                        top: -10%;
-                                        animation: cloudDrift 85s ease-in-out infinite alternate;
+                                        display: flex !important;
+                                        left: 0%;
+                                        top: -10% !important;
+                                        height: 110% !important;
+                                        animation: carouselLoopFast 140s linear infinite !important; /* Slower, majestic sunset drift */
+                                        -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+                                        mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+                                        /* Miami Golden Hour Filter */
+                                        filter: sepia(0.3) saturate(2.5) hue-rotate(-10deg) brightness(0.9) contrast(1.2) !important;
                                     }
 
                                     /* SCENE STATE 3: Clear Night ("despejado") */
@@ -4255,8 +4277,12 @@
 
             if (weatherContainer) {
                 weatherContainer.setAttribute('data-qa-forced', 'true');
-                // Remove all existing scene classes
-                weatherContainer.classList.remove('scene-clear-day', 'scene-sunset', 'scene-clear-night', 'scene-partly-cloudy', 'scene-cloudy-day', 'scene-cloudy-night', 'scene-rain', 'scene-rain-night', 'scene-rain-day', 'scene-storm', 'scene-storm-day', 'scene-snow');
+                // Remove all existing scene classes dynamically to prevent bleeding bugs
+                Array.from(weatherContainer.classList).forEach(cls => {
+                    if (cls.startsWith('scene-')) {
+                        weatherContainer.classList.remove(cls);
+                    }
+                });
 
                 // --- STRICT HARD JS RESET ---
                 // Rule: "Before activating any scene, first disable ALL weather layers and reset all scene-specific opacity/top/display values."
