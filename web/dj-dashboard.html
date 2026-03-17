@@ -1521,17 +1521,35 @@
 
                                     /* Nublado Noche: Full Cloud Carousel */
                                     .weather-widget.scene-cloudy-night .cloud-layer-front.nubes-largas-fast-container {
+                                        position: absolute !important;
+                                        z-index: 30 !important;
                                         display: flex !important;
-                                        opacity: 1 !important;
                                         left: 0%;
                                         top: -10% !important;
                                         height: 110% !important;
                                         animation: carouselLoopFast 200s linear infinite !important;
-                                        filter: brightness(0.4) contrast(1.1) drop-shadow(0px -10px 40px rgba(0, 0, 0, 0.4)) !important;
+                                        -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+                                        mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
                                     }
-                                    .weather-widget.scene-cloudy-night .cloud-layer-back.night-cloud-p,
+                                    .weather-widget.scene-cloudy-night .cloud-layer-back.night-cloud-p {
+                                        display: block !important;
+                                        opacity: 0.85 !important;
+                                        width: 120%; /* Slight bleed to prevent edge clipping during zoom */
+                                        height: 120%;
+                                        top: -10%;
+                                        left: -10%;
+                                        object-fit: cover;
+                                        z-index: 26 !important; /* In front of the moon (25) to occlude it */
+                                        transform-origin: center center; /* Natural zoom center */
+                                        animation: cloudPulse 45s ease-in-out infinite alternate !important;
+                                    }
                                     .weather-widget.scene-cloudy-night .cloud-layer-front.night-cloud-o {
                                         display: none !important;
+                                    }
+                                    
+                                    @keyframes cloudPulse {
+                                        0% { transform: scale(1); }
+                                        100% { transform: scale(1.1); }
                                     }
 
                                     /* SCENE STATE 5: Rain (Day/Standard) */
