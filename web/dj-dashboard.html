@@ -1412,19 +1412,15 @@
                                     /* Enable Sunset-exclusive infinite carousel */
                                     .weather-widget.scene-sunset .cloud-layer-front.nubes-sunset-carousel {
                                         position: absolute !important;
-                                        z-index: 50 !important;
+                                        z-index: 10 !important; /* Lowered from 50 so it respects the parent's overflow: hidden */
                                         opacity: 1 !important;
                                         display: flex !important;
                                         left: 0%;
                                         top: -10% !important;
                                         height: 110% !important;
                                         animation: carouselLoopFast 140s linear infinite !important; /* Slower, majestic sunset drift */
-                                        -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-                                        mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
                                         /* Miami Golden Hour Filter */
                                         filter: sepia(0.3) saturate(2.5) hue-rotate(-10deg) brightness(0.9) contrast(1.2) !important;
-                                        overflow: hidden !important;
-                                        border-radius: 24px !important;
                                     }
 
                                     /* SCENE STATE 3: Clear Night ("despejado") */
