@@ -1344,6 +1344,7 @@
                                     .weather-widget.scene-storm-day .cloud-layer-front.nubes-largas-fast-container {
                                         position: absolute !important; /* Fixed stacking context by guaranteeing absolute layout */
                                         z-index: 30 !important; /* Locked Weather Engine Matrix */
+                                        opacity: 1 !important;
                                         display: flex !important;
                                         left: 0%;
                                         top: -10% !important;
@@ -1524,6 +1525,7 @@
                                     .weather-widget.scene-cloudy-night .cloud-layer-front.nubes-largas-fast-container {
                                         position: absolute !important;
                                         z-index: 30 !important;
+                                        opacity: 1 !important;
                                         display: flex !important;
                                         left: 0%;
                                         top: -10% !important;
@@ -1602,14 +1604,16 @@
                                     }
 
                                     .weather-widget.scene-rain .cloud-layer-front.nubes-largas-fast-container {
-                                        display: flex !important;
                                         position: absolute !important; /* Critical to enforce stacking context */
-                                        z-index: 10 !important; /* Critical to render OVER the static background */
+                                        z-index: 30 !important; /* Critical to render OVER the static background */
+                                        opacity: 1 !important;
+                                        display: flex !important;
                                         left: 0%;
                                         top: -10% !important;
                                         height: 110% !important;
-                                        opacity: 1 !important;
                                         animation: carouselLoopFast 120s linear infinite !important;
+                                        -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+                                        mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
                                     }
 
                                     .weather-widget.scene-rain .sky-rain-layer {
@@ -1651,13 +1655,16 @@
 
                                     /* 2. Night Rain Clouds (Inherits Cloudy Night Base) */
                                     .weather-widget.scene-rain-night .cloud-layer-front.nubes-largas-fast-container {
-                                        display: flex !important;
+                                        position: absolute !important;
+                                        z-index: 30 !important;
                                         opacity: 1 !important;
+                                        display: flex !important;
                                         left: 0%;
                                         top: -10% !important;
                                         height: 110% !important;
                                         animation: carouselLoopFast 150s linear infinite !important; /* Slightly faster than cloudy */
-                                        filter: brightness(0.35) contrast(1.15) drop-shadow(0px -10px 40px rgba(0, 0, 0, 0.4)) !important;
+                                        -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+                                        mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
                                     }
                                     .weather-widget.scene-rain-night .cloud-layer-back.night-cloud-p,
                                     .weather-widget.scene-rain-night .cloud-layer-front.night-cloud-o {
@@ -1782,13 +1789,16 @@
 
                                     /* 2. Fast Looping Nubes Oscuras Carousel */
                                     .weather-widget.scene-storm .cloud-layer-front.nubes-largas-fast-container {
-                                        display: flex !important;
+                                        position: absolute !important;
+                                        z-index: 30 !important;
                                         opacity: 1 !important;
+                                        display: flex !important;
                                         left: 0%;
                                         top: -10% !important;
                                         height: 110% !important;
                                         animation: carouselLoopFast 100s linear infinite !important; /* Fast and threatening */
-                                        filter: brightness(0.25) contrast(1.3) drop-shadow(0px -10px 40px rgba(0, 0, 0, 0.6)) !important; /* Peak darkness */
+                                        -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+                                        mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
                                     }
 
                                     /* 3. Storm Night Rain Asset */
