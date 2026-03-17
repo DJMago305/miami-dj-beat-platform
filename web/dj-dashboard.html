@@ -1791,11 +1791,28 @@
                                         width: 15% !important;
                                     }
 
-                                    /* 1. Backdrop (Remove static, rely purely on deep dark carousel) */
+                                    /* 1. Backdrop */
                                     .weather-widget.scene-storm .cloud-layer-back.night-cloud-p,
                                     .weather-widget.scene-storm .cloud-layer-front.night-cloud-o {
                                         display: none !important;
                                         opacity: 0 !important;
+                                    }
+
+                                    /* 1b. Cumulonimbus Base Cloud */
+                                    .weather-widget.scene-storm .cloud-layer-back.storm-cloud {
+                                        display: block !important;
+                                        opacity: 1 !important;
+                                        content: url('./assets/weather/Cumulus%20Cloud%20Cumulonimbus.png') !important;
+                                        position: absolute;
+                                        width: 140%;
+                                        height: 140%;
+                                        left: -20%;
+                                        top: -20%;
+                                        object-fit: cover;
+                                        z-index: 15 !important; /* High enough to block moon (z:5), but behind lightning (z:35) */
+                                        filter: brightness(0.4) contrast(1.1); /* Darken to fit the night storm atmosphere */
+                                        animation: breatheZoom 100s ease-in-out infinite alternate;
+                                        transform-origin: center bottom;
                                     }
 
                                     /* 2. Fast Looping Nubes Oscuras Carousel */
