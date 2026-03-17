@@ -943,7 +943,8 @@
                                     }
 
                                     .sky-base.sunset {
-                                        background: linear-gradient(to bottom, #321b4f 0%, #6a356f 38%, #d38a6e 100%);
+                                        /* Authentic Miami Sunset: Deep Purple at very top, fading to magenta, strong orange, and golden at horizon */
+                                        background: linear-gradient(180deg, #2A1B38 0%, #E66465 40%, #FA8B56 70%, #FDDD72 100%) !important;
                                     }
 
                                     .sky-base.clear-night {
@@ -1388,11 +1389,17 @@
                                     }
 
                                     .weather-widget.scene-sunset .sun-asset {
-                                        opacity: 1;
+                                        opacity: 1 !important;
+                                        display: block !important;
+                                        /* Warm, Golden Sunset Filter for the bright yellow sun */
+                                        filter: sepia(0.6) hue-rotate(-15deg) saturate(2) brightness(1.2) drop-shadow(0 0 50px rgba(250, 139, 86, 0.8)) !important;
                                     }
 
+                                    .weather-widget.scene-sunset .sun-rays-asset,
                                     .weather-widget.scene-sunset .sun-rays-intense-asset {
-                                        opacity: 0.6;
+                                        opacity: 0.8 !important;
+                                        display: block !important;
+                                        filter: sepia(0.8) hue-rotate(-20deg) saturate(3) brightness(1.5) !important;
                                     }
 
                                     /* Disable old legacy drifting clouds for Sunset */
