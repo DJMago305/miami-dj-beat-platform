@@ -590,7 +590,7 @@
                                     <!-- ==================== END LOCKED ENGINE HTML ==================== -->
                                     <!-- Static/Drifting Cloud PNGs for rain/storm scenes -->
                                     <img class="cloud-layer-back night-cloud-p"
-                                        src="./assets/weather/Pequenas Nubes Negras.png" alt="">
+                                        src="./assets/weather/dusky%20cloud,%20thick%20clouds.png" alt="">
                                     <img class="cloud-layer-back rain-cloud" src="./assets/weather/Nublado.png" alt="">
                                     <img class="cloud-layer-back storm-cloud" src="./assets/weather/Nublado.png" alt="">
                                     <img class="cloud-layer-back storm-day-cloud" src="./assets/weather/Rain%20Day.png"
@@ -1344,12 +1344,13 @@
                                     .weather-widget.scene-storm-day .cloud-layer-front.nubes-largas-fast-container {
                                         position: absolute !important; /* Fixed stacking context by guaranteeing absolute layout */
                                         z-index: 30 !important; /* Locked Weather Engine Matrix */
-                                        opacity: 1 !important;
                                         display: flex !important;
                                         left: 0%;
                                         top: -10% !important;
                                         height: 110% !important;
                                         animation: carouselLoopFast 120s linear infinite !important;
+                                        -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+                                        mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
                                     }
 
                                     /* SCENE STATE 2: Sunset */
