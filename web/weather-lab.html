@@ -1180,9 +1180,6 @@
                                     .weather-widget .cloud-layer-back.storm-day-cloud,
                                     .weather-widget .static-cloud-muy-nublado {
                                         animation: heavyBreathe 30s ease-in-out infinite alternate !important;
-                                        left: 50% !important;
-                                        transform: translateX(-50%) !important;
-                                        transform-origin: center center;
                                     }
 
                                     @keyframes rainFallAsset {
@@ -1321,8 +1318,7 @@
                                     .static-cloud-muy-nublado {
                                         position: absolute;
                                         top: -10%;
-                                        left: 50%;
-                                        transform: translateX(-50%);
+                                        left: -10%;
                                         width: 120%;
                                         height: 120%;
                                         object-fit: cover;
@@ -1352,9 +1348,11 @@
                                         opacity: 1 !important; /* Full solid opacity per rules */
                                         visibility: visible !important;
                                         animation: heavyBreathe 30s ease-in-out infinite alternate !important;
-                                        left: 50% !important;
-                                        transform: translateX(-50%) !important;
-                                        transform-origin: center center;
+                                    }
+
+                                    /* Specific Anchor Fix ONLY for Muy Nublado (Day) */
+                                    .weather-widget.scene-cloudy-day .static-cloud-muy-nublado {
+                                        left: 50% !important; /* Anchors the layer so heavyBreathe's translateX(-50%) centers it visually */
                                     }
 
                                     /* Use darker Nublado.png specifically for Storm Day while keeping the same animation */
