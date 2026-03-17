@@ -592,7 +592,7 @@
                                     <img class="cloud-layer-back night-cloud-p"
                                         src="./assets/weather/dusky%20cloud,%20thick%20clouds.png" alt="">
                                     <img class="cloud-layer-back rain-cloud" src="./assets/weather/Nublado.png" alt="">
-                                    <img class="cloud-layer-back storm-cloud" src="./assets/weather/Nublado.png" alt="">
+                                    <img class="cloud-layer-back storm-cloud" src="./assets/weather/Cumulus%20Cloud%20Cumulonimbus.png" alt="">
                                     <img class="cloud-layer-back storm-day-cloud" src="./assets/weather/Rain%20Day.png"
                                         alt="">
                                 </div>
@@ -1803,16 +1803,16 @@
                                         display: block !important;
                                         opacity: 1 !important;
                                         content: url('./assets/weather/Cumulus%20Cloud%20Cumulonimbus.png') !important;
-                                        position: absolute;
-                                        width: 140%;
-                                        height: 140%;
-                                        left: -20%;
-                                        top: -20%;
-                                        object-fit: cover;
-                                        z-index: 15 !important; /* High enough to block moon (z:5), but behind lightning (z:35) */
-                                        filter: brightness(0.4) contrast(1.1); /* Darken to fit the night storm atmosphere */
-                                        animation: breatheZoom 100s ease-in-out infinite alternate;
-                                        transform-origin: center bottom;
+                                        position: absolute !important;
+                                        width: 140% !important;
+                                        height: 140% !important;
+                                        left: -20% !important;
+                                        top: -20% !important;
+                                        object-fit: cover !important;
+                                        z-index: 25 !important; /* MUST BE > 20 (moon) and < 45 (rain) / 50 (lightning) */
+                                        filter: brightness(0.4) contrast(1.1) !important; /* Darken to fit the night storm atmosphere */
+                                        animation: breatheZoom 100s ease-in-out infinite alternate !important;
+                                        transform-origin: center bottom !important;
                                     }
 
                                     /* 2. Fast Looping Nubes Oscuras Carousel */
