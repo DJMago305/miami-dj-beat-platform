@@ -1173,13 +1173,12 @@
                                         }
                                     }
 
-                                    /* Global Motor Zun In Zun Out para Nubes Pesadas Estaticas */
+                                    /* Original cloudDrift Animations Restored */
                                     .weather-widget .cloud-layer-back.night-cloud-p,
                                     .weather-widget .cloud-layer-back.rain-cloud,
                                     .weather-widget .cloud-layer-back.storm-cloud,
-                                    .weather-widget .cloud-layer-back.storm-day-cloud,
-                                    .weather-widget .static-cloud-muy-nublado {
-                                        animation: heavyBreathe 30s ease-in-out infinite alternate !important;
+                                    .weather-widget .cloud-layer-back.storm-day-cloud {
+                                        animation: cloudDrift 70s ease-in-out infinite alternate;
                                     }
 
                                     @keyframes rainFallAsset {
@@ -1341,13 +1340,19 @@
                                         z-index: 1;
                                     }
 
-                                    /* Activating Static Cloud exclusively for Muy Nublado, Rain Day, and Storm Day */
-                                    .weather-widget.scene-cloudy-day .static-cloud-muy-nublado,
+                                    /* Restored Original CSS exclusively for Muy Nublado (Day) */
+                                    .weather-widget.scene-cloudy-day .static-cloud-muy-nublado {
+                                        opacity: 0.8 !important; /* Reduced from 1 to avoid washing out the entire widget */
+                                        visibility: visible !important;
+                                        animation: breatheZoom 120s ease-in-out infinite alternate !important; /* Slow zoom in and out - fixes left shift */
+                                    }
+
+                                    /* Activating Static Cloud exclusively for Rain Day, and Storm Day */
                                     .weather-widget.scene-rain-day .static-cloud-muy-nublado,
                                     .weather-widget.scene-storm-day .static-cloud-muy-nublado {
                                         opacity: 1 !important; /* Full solid opacity per rules */
                                         visibility: visible !important;
-                                        animation: heavyBreathe 30s ease-in-out infinite alternate !important;
+                                        animation: breatheZoom 120s ease-in-out infinite alternate !important;
                                     }
 
                                     /* Use darker Nublado.png specifically for Storm Day while keeping the same animation */
