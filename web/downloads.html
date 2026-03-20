@@ -7,6 +7,81 @@
     <title>Descargar MDJPRO — Miami DJ Beat</title>
     <link rel="stylesheet" href="./styles.css?v=20260226-1" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+    <style id="downloads-mobile-safeguard">
+        /* ── CLASES LIMPIAS (Reemplazo de Inline Styles) ── */
+        .features-grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        .manuals-list-layout {
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px;
+        }
+        .accordion-wrapper {
+            max-width: 1000px; 
+            margin: 60px auto 0; 
+            text-align: left;
+        }
+
+        /* ── MEDIA QUERIES (Mobile Breakpoints) ── */
+        @media (max-width: 850px) {
+            /* 1. Bloque Principal de Descarga (.dl-card) -> 1 Columna */
+            .dl-card {
+                flex-direction: column;
+                padding: 30px 20px;
+                gap: 30px;
+            }
+            .dl-info {
+                text-align: center !important;
+            }
+            .app-branding {
+                justify-content: center;
+            }
+            
+            /* 2. Bloque Features -> 1 Columna */
+            .features-grid-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            /* 3. Requisitos de Sistema (Evitar overflow y aplastamiento de texto) */
+            .spec-row {
+                flex-direction: column;
+                padding: 12px 0;
+                gap: 6px;
+            }
+            .spec-label {
+                width: 100%; /* Rompe el width: 150px duro y lo hace fluido */
+                color: var(--gold);
+            }
+            
+            /* 4. Ajustes generales de texto para Mobile */
+            .dl-title { font-size: 34px; }
+            .dl-subtitle { margin-bottom: 30px; }
+            .accordion-wrapper { margin: 40px auto 0; }
+            
+            /* 5. Forzar botón principal de descarga a 100% width en Mobile */
+            .dl-info .btn-download {
+                display: flex !important;
+                width: 100% !important;
+                justify-content: center;
+                align-items: center;
+                box-sizing: border-box;
+                padding: 14px 20px !important;
+            }
+        }
+        
+        /* Salvaguardas para botones en teléfonos estrechos (ej. iPhone SE) */
+        @media (max-width: 400px) {
+            .btn-download {
+                white-space: normal; /* Permite que textos largos quiebren en 2 líneas sin cruzar la pantalla */
+                height: auto;
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+        }
+    </style>
 </head>
 
 <body class="notranslate">
@@ -14,9 +89,9 @@
         <div class="header-top">
             <div class="container">
                 <div class="brand">
-                    <img src="./assets/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img">
-                    <div class="brand-text">
-                        <div class="brand-name">Miami DJ Beat</div>
+                    <img src="./assets/logo-transparent.png" class="logo-img">
+                    <div class="brand-letters-wrapper">
+                        <img src="./assets/logo-transparent Letras.png" class="brand-letters-img">
                     </div>
                 </div>
 
@@ -106,24 +181,18 @@
                         </div>
 
                         <ul class="specs-list">
-                            <li><strong data-i18n="dl-version-lbl">Version:</strong> <span
-                                    data-i18n="dl-version-val">MDJPRO 4.0.2</span></li>
-                            <li><strong data-i18n="dl-size-lbl">File size:</strong> <span data-i18n="dl-size-val">959.80
-                                    MB</span></li>
-                            <li><strong data-i18n="dl-platform-lbl">Platform:</strong> <span
-                                    data-i18n="dl-platform-val">Mac</span></li>
+                            <li><strong data-i18n="dl-version-lbl">Version:</strong> <span id="app-version"></span></li>
+                            <li><strong data-i18n="dl-size-lbl">File size:</strong> <span id="app-size"></span></li>
+                            <li><strong data-i18n="dl-platform-lbl">Platform:</strong> <span>Mac</span></li>
                         </ul>
 
-                        <a href="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/installers/mdjpro_v4.0.2.pkg"
-                            class="btn-download">
+                        <a id="download-btn" href="#" class="btn-download">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"
                                 style="margin-right: 8px;">
                                 <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
                             </svg>
-                            <span data-i18n="dash-download-btn">Download v4.0.2 (macOS)</span>
+                            <span data-i18n="dash-download-btn">Download MDJPRO (.pkg)</span>
                         </a>
-                        <a class="btn primary small" href="./manuals/mdj-pro.html"
-                            style="display:inline-block; margin-top:12px;">📖 Manual Web</a>
                     </div>
                 </div>
 
@@ -145,8 +214,7 @@
                                 digital, MDJPRO estructura tu biblioteca bajo principios de Control de Riesgos y Memoria
                                 Muscular, convirtiendo tu repertorio en un arsenal a prueba de fallos.</p>
 
-                            <div class="features-grid"
-                                style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                            <div class="features-grid features-grid-layout">
                                 <!-- Feature 1 -->
                                 <div class="feature-box"
                                     style="background: rgba(255,255,255,0.03); padding: 30px; border-radius: 16px; border: 1px solid var(--glass-border); position: relative; overflow: hidden;">
@@ -323,7 +391,7 @@
                 </div>
 
                 <!-- Accordion Section -->
-                <div class="accordion-section" style="max-width: 1000px; margin: 60px auto 0; text-align: left;">
+                <div class="accordion-section accordion-wrapper">
                     <div class="accordion-item">
                         <button class="accordion-btn"><span class="icon">+</span> Manual Interactivo</button>
                         <div class="accordion-content"
@@ -353,7 +421,7 @@
                             style="display: none; padding: 30px; background: rgba(255,255,255,0.02); border-left: 2px solid var(--gold);">
                             <p style="font-size: 14px; opacity: 0.7; margin-bottom: 20px;">Manuales oficiales y guías de
                                 configuración rápida (v18):</p>
-                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <div class="manuals-list-layout">
                                 <a href="./downloads/MDJPRO-Manual-ES.pdf" class="btn primary small"
                                     style="text-decoration:none; text-align:left; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.03); color: #fff; padding: 12px 20px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; font-weight: 700;">
                                     <span><span style="color: var(--gold); margin-right: 12px;">📄</span> Manual de
@@ -372,12 +440,7 @@
                                         Usuário (PT)</span>
                                     <span style="font-size: 11px; opacity: 0.5;">PDF ⤓</span>
                                 </a>
-                                <a href="./downloads/DJ-Event-Checklist-Free.pdf" class="btn primary small"
-                                    style="text-decoration:none; text-align:left; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.03); color: #fff; padding: 12px 20px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; font-weight: 700;">
-                                    <span><span style="color: var(--gold); margin-right: 12px;">📋</span> DJ Event
-                                        Checklist</span>
-                                    <span style="font-size: 11px; opacity: 0.5;">PDF ⤓</span>
-                                </a>
+
                             </div>
                         </div>
                     </div>
@@ -530,7 +593,7 @@
         </div>
     </div>
     <script src="./mdj-assistant.js?v=20260306-1"></script>
-
+    <script src="./js/downloads.js"></script>
 </body>
 
 </html>
