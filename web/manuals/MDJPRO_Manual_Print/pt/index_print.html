@@ -1,0 +1,1571 @@
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>MDJPRO Manual - pt</title>
+    <style>
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background-color: #ffffff;
+    color: #000000;
+    margin: 0;
+    padding: 40px;
+    line-height: 1.6;
+}
+
+#content {
+    max-width: 850px;
+    margin: 0 auto;
+}
+
+h1, h2, h3 { color: #000000; border-bottom: 2px solid #333; padding-bottom: 10px; margin-top: 40px; }
+img { width: 100%; height: auto; border: 1.5px solid #000; margin: 25px 0; display: block; border-radius: 4px; }
+
+/* Réplica Exacta Manual Web (Layout Horizontal Integraciones) */
+.integration-card {
+    display: flex !important;
+    align-items: center !important;
+    gap: 20px !important;
+    margin: 15px 0 !important;
+    padding: 15px !important;
+    border-radius: 8px !important;
+    background: #fdfdfd !important;
+    border: 1px solid #eee !important;
+    page-break-inside: avoid;
+}
+
+.card-serato { border-left: 5px solid #007AFF !important; }
+.card-rekordbox { border-left: 5px solid #34C759 !important; }
+.card-vdj { border-left: 5px solid #FF2D55 !important; }
+
+.icon-wrapper { flex: 0 0 70px !important; display: flex !important; justify-content: center !important; }
+.icon-wrapper img { width: 60px !important; border: none !important; margin: 0 !important; background: transparent !important; }
+
+/* Réplica Command Grid (2 Columnas) */
+.command-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 15px !important;
+    margin: 30px 0 !important;
+}
+
+.command-card {
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+    padding: 12px !important;
+    background: #f9f9f9 !important;
+    border: 1px solid #ddd !important;
+    border-radius: 6px !important;
+    page-break-inside: avoid;
+}
+
+.command-card .icon-circle {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    background: #fff !important;
+    border: 1px solid #eee !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.command-card div { flex: 1 !important; }
+.command-card div div:first-child { color: #000 !important; font-weight: 800 !important; font-size: 11px !important; }
+.command-card div div:last-child { color: #666 !important; font-size: 9px !important; }
+
+/* Corrección de Texto */
+.integration-card p, .integration-card strong, .command-card p, .command-card strong {
+    color: #000 !important;
+}
+
+section { page-break-after: always; margin-bottom: 40px; }
+p, li { font-size: 18px; }
+
+/* Alerts for print */
+.alert {
+    padding: 15px;
+    border: 2px solid #333;
+    margin: 20px 0;
+    background: #f9f9f9;
+}
+.alert-badge {
+    font-weight: bold;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 5px;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+th, td {
+    border: 1px solid #333;
+    padding: 10px;
+    text-align: left;
+}
+th { background: #eee; }
+
+/* Legend & Process Guides (Fidelity Fix) */
+.process-guide { display: flex; flex-direction: column; gap: 10px; margin: 20px 0; }
+.process-item { 
+    display: flex !important; 
+    align-items: center !important; 
+    gap: 15px !important; 
+    padding: 10px 15px !important; 
+    background: #fdfdfd !important; 
+    border: 1px solid #eee !important; 
+    border-radius: 8px !important;
+}
+.process-circle {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: white !important;
+    font-weight: 900 !important;
+    font-size: 12px !important;
+}
+.step-green .process-circle { background: #34C759 !important; }
+.step-orange .process-circle { background: #FF9500 !important; }
+.step-purple .process-circle { background: #AF52DE !important; }
+.step-blue .process-circle { background: #007AFF !important; }
+.step-red .process-circle { background: #FF3B30 !important; }
+.step-teal .process-circle { background: #5AC8FA !important; }
+
+.process-content { flex: 1; font-size: 14px; color: #000; }
+.process-content strong { color: #333; display: block; margin-bottom: 2px; }
+
+/* Screenshots Indicators */
+.indicator-dot {
+    position: absolute !important;
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: white !important;
+    font-weight: 900 !important;
+    font-size: 10px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+    z-index: 100 !important;
+}
+
+.visual-guide {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 30px 0;
+}
+.visual-guide-header {
+    background: #f8f9fa;
+    padding: 10px 20px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.guide-badge {
+    font-size: 10px;
+    font-weight: 800;
+    color: #666;
+}
+
+/* Hide web elements */
+#sidebar, .lang-selector, hr { display: none; }
+</style>
+</head>
+<body>
+    <div id="content">
+        <div style="text-align:center; margin-bottom:50px;">
+            <img src="assets/manual_logo.png" style="width:200px; border:none;">
+            <h1>MANUAL OFICIAL MDJPRO - VERSÃO IMPRESSA</h1>
+            <p>Idioma: Português</p>
+        </div>
+        <section id="00-intro.md"><!-- 🚨🚨🚨 QUARANTINE: MANUAL LOCKED - BINGO SERRADO 🚨🚨🚨 -->
+<!-- DO NOT MODIFY THIS FILE. ANY CHANGE WILL CAUSE REGRESSION. -->
+<!-- STATUS: FINAL SECURE STATE - AUTHORIZED BY USER DJMAGO -->
+<!-- Any change MUST pass linguistic QA. -->
+<!-- Source Version: 1.0.0 -->
+
+<h1>0. Introdução Geral – MDJPRO</h1>
+<div class="alert"><div class="alert-badge">INFO NOTE</div><div>**AVISO IMPORTANTE:** O MDJPRO trabalha diretamente com ficheiros e estruturas reais do sistema. Embora o software tenha sido concebido com protocolos de segurança, **a responsabilidade final pela utilização correta recai sobre o utilizador.** Recomenda-se sempre trabalhar com cópias de segurança.</div></div>
+<h2>Introdução</h2>
+<p><strong>MDJPRO (Magic DJ Pro)</strong> é uma plataforma profissional de gestão, auditoria e organização musical projetada para DJs, produtores e operadores de eventos que trabalham sob os padrões reais da indústria.</p>
+<p>Desenvolvido pela <strong>Miami DJ Beat</strong>, o MDJPRO não é um reprodutor, nem um simples organizador de ficheiros. É um sistema de controlo de biblioteca musical criado para proteger, estruturar e otimizar um dos ativos mais valiosos de um DJ profissional: <strong>a sua base de dados musical.</strong></p>
+<p>Num ambiente onde erros de organização, metadados corrompidos ou digitalizações incorretas podem comprometer uma performance ao vivo, o MDJPRO atua como um <strong>firewall operacional</strong> entre o caos do disco rígido e a estabilidade exigida por softwares como Serato DJ, Rekordbox e VirtualDJ.</p>
+<h2>Filosofia do Sistema</h2>
+<p>O MDJPRO foi construído sobre um princípio fundamental:</p>
+<blockquote>
+<p>"A música profissional não se improvisa. Estrutura-se, valida-se e protege-se."</p>
+</blockquote>
+<p>Por esta razão, a aplicação opera através de fluxos de trabalho controlados, regras claras e validações constantes. Cada ação dentro do sistema — desde o carregamento de uma pasta raiz até à edição de um metadado — responde a uma lógica concebida para prevenir erros humanos, perda de dados e desorganização progressiva.</p>
+<p><strong>O MDJPRO não substitui o software de DJ.</strong> Prepara-o, alimenta-o corretamente e mantém-no estável.</p>
+<h2>Para quem é o MDJPRO?</h2>
+<ul>
+<li>DJs profissionais e residentes</li>
+<li>DJs de eventos móveis e especiais</li>
+<li>Produtores e curadores musicais</li>
+<li>Academias e escolas de DJ</li>
+<li>Empresas de entretenimento e eventos</li>
+<li>Utilizadores que trabalham com bibliotecas grandes e multi-dispositivo</li>
+</ul>
+<p>Se a sua música faz parte da sua identidade profissional e do seu sostento, o <strong>MDJPRO foi projetado para si.</strong></p>
+<h2>O que o MDJPRO Resolve</h2>
+<ul>
+<li>Bibliotecas desordenadas e difíceis de manter</li>
+<li>Metadados incompletos, falsos ou inconsistentes</li>
+<li>Erros de digitalização no Serato ou noutros softwares</li>
+<li>Perda de caminhos ao mover discos ou pastas</li>
+<li>Falta de estrutura para eventos, sets e décadas</li>
+<li>Risco de danificar a base de dados original</li>
+</ul>
+<p>O sistema introduz <strong>ordem, rastreabilidade e controlo</strong> sem interferir no fluxo criativo do DJ.</p>
+<h2>Bem-vindo ao MDJPRO</h2>
+<p>A solução de engenharia de software mais avanzata para a gestão inteligente de bibliotecas musicais no macOS.</p>
+<h3>O Teu Novo Padrão:</h3>
+<p>Concebido para DJs profissionais e colecionadores que exigem perfeição na organização dos seus metadados. O MDJPRO não apenas organiza; transforma o teu fluxo de trabalho através de algoritmos DNA e uma automatização sem precedentes.</p>
+<h2>Como usar este manual</h2>
+<p>Este manual foi concebido como um guia técnico e operacional, não como material promocional. Aqui encontrará explicações claras de cada módulo, regras de utilização, avisos críticos, fluxos de trabalho recomendados e boas práticas profissionais.</p>
+<p>Recomenda-se a leitura integral do manual antes de utilizar funções avançadas, especialmente aquelas que interagem com estruturas de pastas e metadados.</p>
+<hr />
+<p>© 2026 MDJPRO – Official Documentation.</p></section><section id="01-requirements.md"><!-- 🚨🚨🚨 QUARANTINE: MANUAL LOCKED - BINGO SERRADO 🚨🚨🚨 -->
+<!-- DO NOT MODIFY THIS FILE. ANY CHANGE WILL CAUSE REGRESSION. -->
+<!-- STATUS: FINAL SECURE STATE - AUTHORIZED BY USER DJMAGO -->
+<!-- Any change MUST pass linguistic QA. -->
+<!-- Source Version: 1.0.0 -->
+
+<h1>1. REQUISITOS DO SISTEMA – MDJPRO</h1>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">COMPONENTE</th>
+<th style="text-align: left;">REQUISITO</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><span class="label-700">Sistema Operativo</span></td>
+<td style="text-align: left;"><span class="requirement-text">macOS 12 (Monterey) ou superior. <strong>macOS 14 (Sonoma) Recomendado.</strong></span></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="label-700">Processador</span></td>
+<td style="text-align: left;"><span class="requirement-text"><strong>Apenas Apple Silicon</strong> (M1, M2, M3, M4). Macs Intel NÃO suportados.</span></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="label-700">Memória (RAM)</span></td>
+<td style="text-align: left;"><span class="requirement-text">8 GB Mínimo. <strong>16 GB Recomendado</strong> para bibliotecas grandes (&gt;50k músicas).</span></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="label-700">Armazenamento</span></td>
+<td style="text-align: left;"><span class="requirement-text">SSD necessário para alojar a biblioteca.</span></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="label-700">Formatos Suportados</span></td>
+<td style="text-align: left;"><span class="requirement-text">MP3, AAC, WAV, AIFF, MP4, MOV.</span></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="label-700">Software DJ</span></td>
+<td style="text-align: left;"><span class="requirement-text"><strong>Serato DJ Pro (100% Nativo).</strong> Compatível com Rekordbox e VirtualDJ.</span></td>
+</tr>
+</tbody>
+</table>
+<div class="alert alert-protocol">
+<div class="alert-icon">🛡️</div>
+<div>
+<div class="alert-badge">👁 ALERT PROTOCOLS</div>
+<div style="font-weight: 500;">
+Sistema operativo recomendado: macOS 14 (Sonoma) ou superior.
+</div>
+</div>
+</div>
+
+<div class="alert alert-important">
+<div class="alert-icon">⚠️</div>
+<div>
+<div class="alert-badge">⚠️ ALERT WARNING</div>
+<div style="font-weight: 700; font-style: italic;">
+A utilização de hardware não certificado (ex: Macs Intel) pode resultar em latência ou instabilidade gráfica.
+</div>
+</div>
+</div>
+
+<hr />
+<p>© 2026 MDJPRO – Documentação Oficial.</p></section><section id="02-install.md"><!-- 🚨🚨🚨 QUARANTINE: MANUAL LOCKED - BINGO SERRADO 🚨🚨🚨 -->
+<!-- DO NOT MODIFY THIS FILE. ANY CHANGE WILL CAUSE REGRESSION. -->
+<!-- STATUS: FINAL SECURE STATE - AUTHORIZED BY USER DJMAGO -->
+<!-- Any change MUST pass linguistic QA. -->
+<!-- Source Version: 1.0.0 -->
+
+<h1>2. Instalação – MDJPRO</h1>
+<div style="margin: 30px 0;">
+
+<div class="alert"><div class="alert-badge">RULE PROTOCOL</div><div>**INSTALADOR NATIVO:** Processo padrão Apple (PKG).</div></div>
+<div class="process-guide">
+
+<!-- STEP 1 -->
+<div class="process-item step-blue">
+<div class="process-circle">1</div>
+<div class="process-content">
+<strong>**EXECUÇÃO DO INSTALADOR:**</strong> Clique duas vezes no ficheiro <code>MDJPRO_Installer.pkg</code> descarregado. O assistente nativo da Apple será iniciado para guiá-lo com segurança.
+</div>
+</div>
+
+<!-- STEP 2 -->
+<div class="process-item step-purple">
+<div class="process-circle">2</div>
+<div class="process-content">
+<strong>**ACORDO DE LICENÇA:**</strong> Leia os termos do EULA. Deve clicar em <strong>'Aceitar'</strong> para confirmar a sua conformidade com as políticas de utilização e privacidade.
+</div>
+</div>
+
+<!-- STEP 3 -->
+<div class="process-item step-orange">
+<div class="process-circle ">3</div>
+<div class="process-content">
+<strong>**AUTENTICAÇÃO SEGURA:**</strong> o macOS solicitará permissões de administrador. Use a sua <strong>Impressão digital (Touch ID)</strong> ou palavra-passe para autorizar a escrita na pasta das Aplicações.
+</div>
+</div>
+
+<!-- STEP 4 -->
+<div class="process-item step-green">
+<div class="process-circle">4</div>
+<div class="process-content">
+<strong>**INSTALAÇÃO BEM-SUCEDIDA:**</strong> Ao terminar, verá uma mensagem com um <strong>Visto Verde</strong>. A aplicação <strong>MDJPRO</strong> está agora pronta no seu sistema.
+</div>
+</div>
+
+</div>
+
+<div class="alert"><div class="alert-badge">!!! IMPORTANT</div><div>**AVISO:** PRIVACIDADE E SEGURANÇA: A aplicação permanecerá BLOQUEADA após a instalação até que uma licença válida seja ativada.</div></div>
+</div>
+
+<hr />
+<p>© 2026 MDJPRO – Documentação Oficial.</p></section><section id="03-welcome.md"><!-- 🚨🚨🚨 QUARANTINE: MANUAL LOCKED - BINGO SERRADO 🚨🚨🚨 -->
+<!-- DO NOT MODIFY THIS FILE. ANY CHANGE WILL CAUSE REGRESSION. -->
+<!-- STATUS: FINAL SECURE STATE - AUTHORIZED BY USER DJMAGO -->
+<!-- Any change MUST pass linguistic QA. -->
+<!-- Source Version: 1.0.0 -->
+
+<h1>3. Primeiros Passos – MDJPRO</h1>
+<p>Esta secção guia o utilizador através do processo de registo, ativação e validação da licença. A arquitetura de ativação vincula a sua licença ao identificador de hardware (Hardware ID) único do seu Mac para garantir a segurança da sua subscrição.</p>
+<div class="alert"><div class="alert-badge">RULE PROTOCOL</div><div>**REQUISITO LEGAL:** A licença é intransferível e está sujeita aos termos do EULA de Miami DJ Beat LLC.</div></div>
+<div class="alert"><div class="alert-badge">!!! IMPORTANT</div><div>**SEGURANÇA DO CHAVEIRO (KEYCHAIN):** O MDJPRO utiliza o Chaveiro do macOS para o armazenamento blindado da sua licença. O sistema requererá uma **Autorização de Sistema (Touch ID ou Palavra-passe)** para aceder a estes dados protegidos. Este mecanismo garante a persistência da sua licença mesmo após a reinstalação da aplicação.</div></div>
+<div class="visual-guide">
+<div class="visual-guide-header">
+<strong style="font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">PAINEL DE ATIVAÇÃO</strong>
+<div class="guide-badge">GUIA VISUAL</div>
+</div>
+
+<div style="padding: 30px;">
+<div style="font-size: 20px; font-weight: 800; margin-bottom: 30px;">Interface de gestão de licenças MDJPRO.</div>
+
+<div style="display: flex; gap: 40px; align-items: center; flex-wrap: wrap;">
+
+<!-- LEFT: CALLOUT LIST -->
+<div style="flex: 1.2; min-width: 300px;">
+<div class="process-guide">
+<div class="process-item step-green">
+<div class="process-circle">1</div>
+<div class="process-content">
+<strong>ESTADO ATIVO</strong>
+INDICADOR DE VALIDAÇÃO INSTANTÂNEA. CONFIRMA QUE O SOFTWARE ESTÁ AUTORIZADO PARA USO COMERCIAL.
+</div>
+</div>
+<div class="process-item step-orange">
+<div class="process-circle">2</div>
+<div class="process-content">
+<strong>ENTRADA DE LICENÇA</strong>
+INSERÇÃO DE CHAVE ENTERPRISE. VALIDAÇÃO ATÓMICA CONTRA O SERVIDOR DE SEGURANÇA.
+</div>
+</div>
+<div class="process-item step-purple">
+<div class="process-circle ">3</div>
+<div class="process-content">
+<strong>SELEÇÃO DE PLANO</strong>
+SELETOR DE NÍVEL DE SERVIÇO (STANDARD/PREMIUM). DETERMINA AS FUNÇÕES DESBLOQUEADAS.
+</div>
+</div>
+<div class="process-item step-blue">
+<div class="process-circle">4</div>
+<div class="process-content">
+<strong>DADOS DE UTILIZADOR</strong>
+PERFIL VINCULADO À ESTAÇÃO DE TRABALHO ATUAL (PROPRIETÁRIO LEGAL).
+</div>
+</div>
+</div>
+</div>
+
+<!-- RIGHT: SCREENSHOT WITH SVG SIGNALS -->
+<div style="flex: 1; min-width: 300px; position: relative;">
+<div style="position: relative; width: 100%; isolation: isolate;">
+<img src="assets/MDJPRO_ACCOUNT.png" style="width:100%;"/>
+<!-- SVG Overlay for Surgical Brackets -->
+<svg style="position:absolute; top:0; left:0; width:100%; height:100%; z-index: 10; pointer-events: none;" viewbox="0 0 500 500">
+<path d="M 0 10 L 180 10 L 180 0" fill="none" stroke="#6EDC8B" stroke-width="2"></path>
+<path d="M 0 100 L 250 100 L 250 90" fill="none" stroke="#FF9F0A" stroke-width="2"></path>
+<path d="M 0 340 L 280 340 L 280 320" fill="none" stroke="#BF5AF2" stroke-width="2"></path>
+<path d="M 0 490 L 220 490 L 220 510" fill="none" stroke="#0A84FF" stroke-width="2"></path>
+</svg>
+<!-- Indicators -->
+<div class="indicator-dot" style="top: 150px; left: -15px; background: #6EDC8B;">1</div>
+<div class="indicator-dot" style="top: 220px; left: -15px; background: #FF9F0A;">2</div>
+<div class="indicator-dot " style="top: 400px; left: -15px; background: #BF5AF2;">3</div>
+<div class="indicator-dot" style="top: 510px; left: -15px; background: #0A84FF;">4</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+<div class="alert"><div class="alert-badge">ATTENTION WARNING</div><div>**AVISO:** REQUISITO LEGAL: A licença é intransferível e está sujeita aos termos do EULA (Miami DJ Beat LLC).</div></div>
+<hr />
+<p>© 2026 MDJPRO – Documentação Oficial.</p></section><section id="04-interface.md"><!-- 🚨🚨🚨 QUARANTINE: MANUAL LOCKED - BINGO SERRADO 🚨🚨🚨 -->
+<!-- DO NOT MODIFY THIS FILE. ANY CHANGE WILL CAUSE REGRESSION. -->
+<!-- STATUS: FINAL SECURE STATE - AUTHORIZED BY USER DJMAGO -->
+<!-- Any change MUST pass linguistic QA. -->
+<!-- Source Version: 1.0.0 -->
+
+<h1>4. Interface de Usuário – MDJPRO</h1>
+<p><strong>ARQUITETURA DE INTERFACE:</strong></p>
+<p>O <strong>Command Hub</strong> é a interface central de operações. Sua arquitetura unificada permite a execução de comandos e monitoramento de status em tempo real, eliminando a navegação por menus profundos.</p>
+<div class="visual-guide">
+<div class="visual-guide-header">
+<strong style="font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">PAINEL DO CENTRO DE COMANDO</strong>
+<div class="guide-badge">GUIA VISUAL</div>
+</div>
+
+<div style="padding: 30px;">
+<div style="font-size: 20px; font-weight: 800; margin-bottom: 30px;">Arquitetura de controle e monitorização MDJPRO.</div>
+
+<div style="display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap;">
+
+<!-- LEFT: SCREENSHOT WITH SVG SIGNALS -->
+<div style="flex: 1; min-width: 360px; position: relative;">
+<div style="position: relative; width: 100%; isolation: isolate;">
+<img src="assets/mdj_command_hub.png" style="width:100%;"/>
+<!-- SVG Overlay for Surgical Brackets -->
+<svg style="position:absolute; top:0; left:0; width:100%; height:100%; z-index: 10; pointer-events: none;" viewbox="0 0 500 650">
+<path d="M 0 55 L 200 55 L 200 20" fill="none" stroke="#0A84FF" stroke-width="2"></path>
+<path d="M 0 342 L 175 342 L 175 364" fill="none" stroke="#FF9F0A" stroke-width="2"></path>
+<path d="M 0 600 L 340 600 L 340 620" fill="none" stroke="#BF5AF2" stroke-width="2"></path>
+<path d="M 0 195 L 140 195 L 140 210" fill="none" stroke="#34C759" stroke-width="2"></path>
+</svg>
+<!-- Indicators mapped 1:1 -->
+<div class="indicator-dot" style="top: 95px; left: -15px; background: #0A84FF;">1</div>
+<div class="indicator-dot" style="top: 302px; left: -15px; background: #FF9F0A;">2</div>
+<div class="indicator-dot" style="top: 492px; left: -15px; background: #BF5AF2;">4</div>
+<div class="indicator-dot" style="top: 187px; left: -15px; background: #34C759;">3</div>
+</div>
+<p style="font-size: 9px; color: #888; text-align: center; margin-top: 15px; font-style: italic;">Figura 4.1: Vista Geral do Centro de Comando (Command Hub)</p>
+</div>
+
+<!-- RIGHT: LEGEND -->
+<div style="flex: 1.2; min-width: 300px;">
+<!-- COMMAND HUB LEGEND (UNIFIED EXECUTIVE STYLE) -->
+<div class="process-guide">
+
+    <!-- ITEM 1 -->
+    <div class="process-item step-blue">
+        <div class="process-circle">1</div>
+        <div class="process-content">
+            <strong>Barra de Comandos (Top Bar)</strong>
+            <span>Seletor de Software (Serato, RB, VDJ), Idioma, Acesso Web, Academia e Encerramento Seguro.</span>
+        </div>
+    </div>
+
+    <!-- ITEM 2 -->
+    <div class="process-item step-orange">
+        <div class="process-circle">2</div>
+        <div class="process-content">
+            <strong>Painel Central (Dashboard)</strong>
+            <span>Comandos principais: Load Root, WizardDNA, Tag Master e Start Scan.</span>
+        </div>
+    </div>
+
+    <!-- ITEM 3 -->
+    <div class="process-item step-green">
+        <div class="process-circle">3</div>
+        <div class="process-content">
+            <strong>Métricas (Contadores)</strong>
+            <span>Visualização de status e resultados do scan em tempo real.</span>
+        </div>
+    </div>
+
+    <!-- ITEM 4 -->
+    <div class="process-item step-purple">
+        <div class="process-circle">4</div>
+        <div class="process-content">
+            <strong>Zona de Metrónomo</strong>
+            <span>Estado da coleção: Total de itens, Música, Vídeo e Novas adições.</span>
+        </div>
+    </div>
+
+</div>
+
+<div class="alert"><div class="alert-badge">RULE PROTOCOL</div><div>**IMPORTANTE:** O Painel de Controlo é o coração operacional. Monitorize as métricas 'New' para verificar as suas importações em tempo real.</div></div>
+</div>
+
+</div>
+</div>
+</div>
+
+<div class="alert"><div class="alert-badge">ATTENTION WARNING</div><div>**AVISO:** O Seletor de Software na Top Bar reconfigura o algoritmo de validação de acordo com o destino (ex: Serato vs Rekordbox).</div></div>
+<hr />
+<p>© 2026 MDJPRO – Documentação Oficial.</p></section><section id="05-control-panel.md"><!-- 🚨🚨🚨 QUARANTINE: MANUAL LOCKED - BINGO SERRADO 🚨🚨🚨 -->
+<!-- DO NOT MODIFY THIS FILE. ANY CHANGE WILL CAUSE REGRESSION. -->
+<!-- STATUS: FINAL SECURE STATE - AUTHORIZED BY USER DJMAGO -->
+<!-- Any change MUST pass linguistic QA. -->
+<!-- Source Version: 1.0.0 -->
+
+<h1>5. ZONA DE CONTROLO – MDJPRO</h1>
+<div class="glass-container">
+<h3 style="font-size: 13px; font-weight: 800; text-transform: uppercase; margin-top: 10px; opacity: 0.8; letter-spacing: 1px;">Compatível com as principais plataformas de software para DJ</h3>
+
+<div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
+
+    <!-- SERATO DJ CARD -->
+    <div class="integration-card card-serato">
+        <div class="icon-wrapper">
+            <img src="assets/serato_logo.png" alt="Serato DJ Pro"/>
+        </div>
+        <div style="flex:1;">
+            <strong style="color: #007AFF; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">SERATO DJ:</strong>
+            <p style="font-size: 12px; color: #fff; margin: 4px 0; line-height: 1.5; opacity: 0.9;">
+                Integração Nativa: O sistema replica a estrutura de diretórios como Crates e Subcrates, mantendo a hierarquia original do disco rígido.
+            </p>
+        </div>
+    </div>
+
+    <!-- REKORDBOX CARD -->
+    <div class="integration-card card-rekordbox">
+        <div class="icon-wrapper">
+            <img src="assets/rekordbox_logo.png" alt="Rekordbox"/>
+        </div>
+        <div style="flex:1;">
+            <strong style="color: #34C759; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">REKORDBOX:</strong>
+            <p style="font-size: 12px; color: #fff; margin: 4px 0; line-height: 1.5; opacity: 0.9;">
+                Protocolo XML Bridge: Requer a ativação de 'rekordbox xml' em Preferências > Visualização. Permite a importação de estruturas através de Drag & Drop.
+            </p>
+        </div>
+    </div>
+
+    <!-- VIRTUAL DJ CARD -->
+    <div class="integration-card card-vdj">
+        <div class="icon-wrapper">
+            <img src="assets/vdj_logo.png" alt="Virtual DJ"/>
+        </div>
+        <div style="flex:1;">
+            <strong style="color: #FF2D55; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">VIRTUAL DJ:</strong>
+            <p style="font-size: 12px; color: #fff; margin: 4px 0; line-height: 1.5; opacity: 0.9;">
+                Suporte de Virtual Folders: O software reconhece a base de dados pré-analisada como uma extensão do sistema de arquivos, optimizando os tempos de leitura.
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<!-- ALERT NOTE -->
+<div class="alert alert-note" style="margin-bottom: 30px; border-radius: 8px; justify-content: center; text-align: center;">
+    <div style="font-style: italic; font-weight: 700; font-size: 13px; color: #000;">
+        Esta interface garante o controlo total e acesso instantâneo às funções vitais do sistema.
+    </div>
+</div>
+
+<div class="command-grid">
+    <!-- 1. LOAD ROOT -->
+    <div class="command-card cmd-orange">
+        <div class="icon-circle">
+            <span style="font-size: 24px;">📁</span>
+        </div>
+        <div>
+            <div style="font-size: 13px; font-weight: 900; color: var(--header-color); text-transform: uppercase;">1. LOAD ROOT</div>
+            <div style="font-size: 11px; opacity: 0.7;">Selecione a sua pasta mestre.</div>
+        </div>
+    </div>
+
+    <!-- 2. WIZARD -->
+    <div class="command-card cmd-blue">
+        <div class="icon-circle">
+            <span style="font-size: 24px;">🪄</span>
+        </div>
+        <div>
+            <div style="font-size: 13px; font-weight: 900; color: #007AFF; text-transform: uppercase;">2. WIZARD</div>
+            <div style="font-size: 11px; opacity: 0.7;">Criador de pastas inteligente.</div>
+        </div>
+    </div>
+
+    <!-- 3. TAG MASTER -->
+    <div class="command-card cmd-purple">
+        <div class="icon-circle">
+            <span style="font-size: 24px;">🏷️</span>
+        </div>
+        <div>
+            <div style="font-size: 13px; font-weight: 900; color: #AF52DE; text-transform: uppercase;">3. TAG MASTER</div>
+            <div style="font-size: 11px; opacity: 0.7;">Editor massivo de metadados.</div>
+        </div>
+    </div>
+
+    <!-- 4. START SCAN -->
+    <div class="command-card cmd-green">
+        <div class="icon-circle">
+            <span style="font-size: 24px;">▶️</span>
+        </div>
+        <div>
+            <div style="font-size: 13px; font-weight: 900; color: #34C759; text-transform: uppercase;">4. START SCAN</div>
+            <div style="font-size: 11px; opacity: 0.7;">Injete pastas no Serato/VDJ.</div>
+        </div>
+    </div>
+
+    <!-- 5. RESULTS -->
+    <div class="command-card cmd-blue">
+        <div class="icon-circle">
+            <span style="font-size: 24px;">📋</span>
+        </div>
+        <div>
+            <div style="font-size: 13px; font-weight: 900; color: #007AFF; text-transform: uppercase;">5. RESULTS</div>
+            <div style="font-size: 11px; opacity: 0.7;">Relatório de processo detalhado.</div>
+        </div>
+    </div>
+
+    <!-- 6. RESET -->
+    <div class="command-card cmd-red">
+        <div class="icon-circle">
+            <span style="font-size: 24px;">🗑️</span>
+        </div>
+        <div>
+            <div style="font-size: 13px; font-weight: 900; color: #FF2D55; text-transform: uppercase;">6. RESET</div>
+            <div style="font-size: 11px; opacity: 0.7;">Limpar base de dados local.</div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<hr />
+<p>© 2026 MDJPRO – Documentação Oficial.</p>
+<div class="alert"><div class="alert-badge">!!! IMPORTANT</div><div>**AVISO:** O comando 'Reset' não elimina arquivos do disco; apenas limpa a sessão de trabalho atual.</div></div>
+<hr />
+<p>© 2026 MDJPRO – Documentação Oficial.</p></section><section id="06-library-wizard.md"><!-- 🚨🚨🚨 QUARANTINE: MANUAL LOCKED - BINGO SERRADO 🚨🚨🚨 -->
+<!-- DO NOT MODIFY THIS FILE. ANY CHANGE WILL CAUSE REGRESSION. -->
+<!-- STATUS: FINAL SECURE STATE - AUTHORIZED BY USER DJMAGO -->
+<!-- Any change MUST pass linguistic QA. -->
+<!-- Source Version: 1.0.0 -->
+
+<h1>6. Biblioteca e Organização 🔒 PREMIUM ONLY</h1>
+<p><strong>LIBRARY WIZARD (Gestor de Estrutura):</strong> <em>(Utilização apenas com subscrições Premium)</em>
+Módulo de automação que gera hierarquias de diretórios padronizadas no disco físico.</p>
+<div class="glass-container">
+<div style="display:flex; gap:30px; align-items:flex-start; flex-wrap:wrap;">
+
+<!-- LEFT COLUMN: VISUAL DNA -->
+<div style="flex:0 0 380px; max-width:380px;">
+<img alt="Library Wizard Pro DNA" src="assets/MDJPRO_WIZARD_DNA.png" style="width: 100%; height: auto; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);"/>
+</div>
+
+<!-- RIGHT COLUMN: MODES -->
+<div style="flex:1; min-width:400px;">
+<h3 style="font-size:16px; border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-bottom:20px; text-transform: uppercase; letter-spacing: 1px;">ESPECIFICAÇÕES DE PASTAS (DNA)</h3>
+
+<div class="process-guide">
+
+<div class="process-item step-blue">
+<div class="process-circle">1</div>
+<div class="process-content">
+<strong>DÉCADAS (CRONOLÓGICO)</strong>
+Segrega o conteúdo por eras (anos 70, 80, 90). Ideal para sessões 'Open Format' onde a navegação temporal é prioritária.
+</div>
+</div>
+
+<div class="process-item step-purple">
+<div class="process-circle">2</div>
+<div class="process-content">
+<strong>INTERNATIONAL (REGIÕES)</strong>
+Organização por origem ou macro-regiões (Latim, Euro, Afro). Isola tendências culturais mantendo a independência regional.
+</div>
+</div>
+
+<div class="process-item step-orange">
+<div class="process-circle">3</div>
+<div class="process-content">
+<strong>POR GÉNEROS (TÉCNICO)</strong>
+Agrupa ficheiros por características sonoras fundamentais (House, Techno, Urban) independentemente da sua época ou procedência.
+</div>
+</div>
+
+<div class="process-item step-green">
+<div class="process-circle">4</div>
+<div class="process-content">
+<strong>EVENTOS ESPECIAIS (MOBILE DJ)</strong>
+Concebido para eventos específicos (Casamentos, Corporativos) onde a funcionalidade operacional prima sobre o género musical.
+</div>
+</div>
+
+<div class="process-item step-teal">
+<div class="process-circle">5</div>
+<div class="process-content">
+<strong>O MEU LEGADO (HERANÇA)</strong>
+Repositório de longo prazo para material de alto valor (Rips de vinil, Masters). Prioriza a integridade do ficheiro sobre o acesso rápido.
+</div>
+</div>
+
+<div class="process-item step-blue">
+<div class="process-circle">6</div>
+<div class="process-content">
+<strong>PERFORMANCE SET</strong>
+Ambiente de baixa latência otimizado para rotinas, tone-play e competição. Contém apenas material verificado para palco.
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+
+<!-- FLOW DIAGRAM (ARCHITECTURE) -->
+<h3 style="font-size:13px; font-weight: 800; text-transform: uppercase; margin-top: 40px; text-align: center; letter-spacing: 1.5px; color: #58a6ff;">Fluxo de Implementação (Wizard Architecture)</h3>
+
+<div class="mermaid" style="background: rgba(255,255,255,0.01); padding: 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-top: 15px;">
+graph LR
+    A[Início Wizard] --> B{Raiz?}
+    B -->|Atual| C[Build Repo]
+    B -->|Selecionar| D[Escolher Disco]
+    D --> C
+    C --> E[Verificar Meta]
+    E --> F[Implementar Estrutura]
+    F --> G[Fim]
+
+    style A fill:#161b22,stroke:#007AFF,stroke-width:2px
+    style G fill:#238636,stroke:#fff,stroke-width:2px
+    style B fill:#161b22,stroke:#AF52DE
+    style C fill:#161b22,stroke:#FF9500
+</div>
+
+</div>
+
+<!-- BOTTOM ACTIONS LEGEND -->
+<div class="glass-container" style="background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1); margin-top: 30px;">
+<strong style="display: block; font-size: 12px; text-transform: uppercase; color: #58a6ff; margin-bottom: 20px; letter-spacing: 1px;">AÇÕES DE IMPLEMENTAÇÃO (COMANDOS DE EXECUÇÃO)</strong>
+
+<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+    <!-- LEFT: DEFINITIONS -->
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 12px; background: rgba(0, 122, 255, 0.1); border-radius: 6px; padding: 10px; border-left: 3px solid #007AFF;">
+            <div style="min-width: 22px; height: 22px; border-radius: 50%; background: #007AFF; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: #fff;">1</div>
+            <div style="font-size: 11px; color: #fff;"><b style="text-transform: uppercase; font-size: 10px;">Current Root:</b> Cria a estrutura na pasta de execução atual.</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; background: rgba(175, 82, 222, 0.1); border-radius: 6px; padding: 10px; border-left: 3px solid #AF52DE;">
+            <div style="min-width: 22px; height: 22px; border-radius: 50%; background: #AF52DE; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: #fff;">2</div>
+            <div style="font-size: 11px; color: #fff;"><b style="text-transform: uppercase; font-size: 10px;">Select Drive:</b> Define o destino num disco externo ou caminho personalizado.</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; background: rgba(255, 149, 0, 0.1); border-radius: 6px; padding: 10px; border-left: 3px solid #FF9500;">
+            <div style="min-width: 22px; height: 22px; border-radius: 50%; background: #FF9500; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: #fff;">3</div>
+            <div style="font-size: 11px; color: #fff;"><b style="text-transform: uppercase; font-size: 10px;">Build:</b> Inicia a injeção atómica da hierarquia DNA.</div>
+        </div>
+    </div>
+
+    <!-- RIGHT: VISUAL GUIDE -->
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 15px; background: #000; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 15px;">
+            <span style="font-size: 18px;">📁</span>
+            <div style="flex: 1;">
+                <div style="font-size: 10px; font-weight: 900; color: #fff; text-transform: uppercase;">USAR PASTA ATUAL</div>
+            </div>
+            <div style="min-width: 18px; height: 18px; border-radius: 50%; background: #007AFF; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: #fff;">1</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px; background: #000; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 15px;">
+            <span style="font-size: 18px;">💽</span>
+            <div style="flex: 1;">
+                <div style="font-size: 10px; font-weight: 900; color: #fff; text-transform: uppercase;">ESCOLHER DISCO / CAMINHO</div>
+            </div>
+            <div style="min-width: 18px; height: 18px; border-radius: 50%; background: #AF52DE; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: #fff;">2</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px; background: #000; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 15px;">
+            <span style="font-size: 18px;">🪄</span>
+            <div style="flex: 1;">
+                <div style="font-size: 10px; font-weight: 900; color: #fff; text-transform: uppercase;">CONSTRUIR ESTRUTURA</div>
+            </div>
+            <div style="min-width: 18px; height: 18px; border-radius: 50%; background: #FF9500; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: #fff;">3</div>
+        </div>
+    </div>
+</div>
+</div>
+
+<div class="alert"><div class="alert-badge">!!! IMPORTANT</div><div>**AVISO:** Não misture arquiteturas sem planeamento. Selecione um ADN primário para a Raiz (Root) e utilize os outros como subestruturas apenas se for estritamente necessário para evitar a fragmentação da base de dados.</div></div>
+<hr />
+<p>© 2026 MDJPRO – Documentação Oficial.</p></section><section id="07-editor-tag.md"><!-- 🚨🚨🚨 QUARANTINE: MANUAL LOCKED - BINGO SERRADO 🚨🚨🚨 -->
+<!-- DO NOT MODIFY THIS FILE. ANY CHANGE WILL CAUSE REGRESSION. -->
+<!-- STATUS: FINAL SECURE STATE - AUTHORIZED BY USER DJMAGO -->
+<!-- Any change MUST pass linguistic QA. -->
+<!-- Source Version: 1.0.0 -->
+
+<h1>7. Editor Tag – MDJPRO</h1>
+<p><strong>EDITOR DE METADADOS (ID3):</strong></p>
+<p>Gestão avançada de etiquetas para a padronização da biblioteca. As alterações efetuadas são destrutivas e são gravadas fisicamente no ficheiro para garantir a compatibilidade universal com o software DJ.</p>
+<div class="visual-guide">
+<div class="visual-guide-header">
+<strong style="font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">EDITOR DE METADADOS (TAG MASTER)</strong>
+<div class="guide-badge">GUIA VISUAL</div>
+</div>
+
+<div style="padding: 30px;">
+<div style="font-size: 20px; font-weight: 800; margin-bottom: 30px;">Interface de edição atómica de metadados.</div>
+
+<div style="display: flex; gap: 60px; align-items: flex-start; flex-wrap: wrap;">
+
+<!-- LEFT COLUMN: DESCRIPTIONS -->
+<div style="flex: 1; min-width: 350px;">
+<div class="process-guide">
+<div class="process-item step-blue">
+<div class="process-circle">1</div>
+<div class="process-content">
+<strong>EDITOR PRINCIPAL</strong>
+Campo central para metadados (Título, Artista, Álbum) com validação em tempo réel.
+</div>
+</div>
+<div class="process-item step-purple">
+<div class="process-circle">2</div>
+<div class="process-content">
+<strong>BARRA DE FERRAMENTAS</strong>
+Acesso rápido a funções de pesquisa, filtragem e processamento em lote.
+</div>
+</div>
+<div class="process-item step-orange">
+<div class="process-circle">3</div>
+<div class="process-content">
+<strong>GRID DE VISUALIZAÇÃO</strong>
+Tabela dinâmica que mostra o estado atual dos ficheiros carregados.
+</div>
+</div>
+<div class="process-item step-teal">
+<div class="process-circle">4</div>
+<div class="process-content">
+<strong>CAMINHO E ESTATÍSTICAS</strong>
+Monitor de localização absoluta e contador de ativos processados.
+</div>
+</div>
+<div class="process-item step-red">
+<div class="process-circle">5</div>
+<div class="process-content">
+<strong>SUPORTE MULTIMÉDIA</strong>
+Visualizador de arte de capa (Cover Art) e leitor de pré-escuta.
+</div>
+</div>
+</div>
+</div>
+
+<!-- RIGHT COLUMN: IMAGE WITH SVG SIGNALS -->
+<div style="flex: 1.2; min-width: 400px; position: relative;">
+<div style="position: relative; width: 100%; height: 420px; margin-bottom: 20px; border-radius: 8px;">
+<img src="assets/MDJPRO_EDITOR_PREVIEW.png" style="width: 100%;"/>
+<!-- SVG Overlay -->
+<svg style="position:absolute; top:0; left:0; width:100%; height:100%; z-index: 10; pointer-events: none;" viewbox="0 0 500 420">
+<path d="M 0 30 L 0 -2 L 100 -2 L 100 60" fill="none" stroke="#007AFF" stroke-width="2"></path>
+<path d="M 0 138 L 0 130 L 290 130 L 290 30" fill="none" stroke="#AF52DE" stroke-width="2"></path>
+<path d="M 0 262 L 0 182 L 380 182" fill="none" stroke="#FF9500" stroke-width="2"></path>
+<path d="M 0 300 L 0 312 L 250 312 L 250 270" fill="none" stroke="#32ADE6" stroke-width="2"></path>
+<path d="M 0 360 L 0 380 L 70 380 L 70 198" fill="none" stroke="#FF2D55" stroke-width="2"></path>
+</svg>
+<!-- Badges -->
+<div class="indicator-dot" style="top: 18px; left: -15px; background: #007AFF; width: 24px; height: 24px;">1</div>
+<div class="indicator-dot" style="top: 126px; left: -15px; background: #AF52DE; width: 24px; height: 24px;">2</div>
+<div class="indicator-dot" style="top: 250px; left: -15px; background: #FF9500; width: 24px; height: 24px;">3</div>
+<div class="indicator-dot" style="top: 288px; left: -15px; background: #32ADE6; width: 24px; height: 24px;">4</div>
+<div class="indicator-dot" style="top: 348px; left: -15px; background: #FF2D55; width: 24px; height: 24px;">5</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+<div class="alert"><div class="alert-badge">!!! IMPORTANT</div><div>**IMPORTANTE: ALTERAÇÕES DESTRUTIVAS:** As edições no Editor Tag modificam o ficheiro original permanentemente. Não podem ser anuladas após a gravação. Verifique sempre a integridade dos metadatos antes da ingestão final.</div></div>
+<hr />
+<p>© 2026 MDJPRO – Documentação Oficial.</p></section><section id="08-workflow-basic.md"><!-- 🚨🚨🚨 QUARANTINE: MANUAL LOCKED - BINGO SERRADO 🚨🚨🚨 -->
+<!-- DO NOT MODIFY THIS FILE. ANY CHANGE WILL CAUSE REGRESSION. -->
+<!-- STATUS: FINAL SECURE STATE - AUTHORIZED BY USER DJMAGO -->
+<!-- Any change MUST pass linguistic QA. -->
+<!-- Source Version: 1.0.0 -->
+
+<h1>8. MODO OPERATIVO – MDJPRO</h1>
+<h2>ANATOMIA DO EDITOR :</h2>
+<div style="display: flex; gap: 30px; margin-top: 25px;">
+
+<!-- LEFT COLUMN: ANATOMIA -->
+<div style="flex: 1.2;">
+
+    <!-- BLOQUE 1: ZONA DE EDIÇÃO -->
+    <div style="border-left: 4px solid #007AFF; background: rgba(255,255,255,0.02); border-radius: 4px; padding: 20px; margin-bottom: 25px; transition: all 0.3s ease;">
+        <div style="color: #007AFF; font-size: 11px; font-weight: 900; letter-spacing: 1px; margin-bottom: 10px; text-transform: uppercase;">ZONA DE EDIÇÃO (LIMPEZA)</div>
+        <p style="font-size: 12px; margin: 0 0 10px 0; color: #fff; opacity: 0.9;"><strong>Descrição :</strong> 7 zonas de edição + Limpador Mágico de Emojis.</p>
+        <p style="font-size: 11px; margin: 0; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">Campos Core :</p>
+        <ul style="font-size: 11px; margin: 8px 0 0 15px; padding: 0; color: #fff; opacity: 0.8; line-height: 1.6;">
+            <li><strong>TÍTULO :</strong> Dados visíveis nos leitores.</li>
+            <li><strong>INTÉRPRETE :</strong> Créditos de artista e colaborações.</li>
+            <li><strong>ÁLBUM :</strong> Agrupamento por volume ou set.</li>
+            <li><strong>OUTROS DADOS :</strong> Metadados operacionais (Ano, Disco).</li>
+        </ul>
+    </div>
+
+    <!-- BLOQUE 2: PRÉ-VISUALIZAÇÃO -->
+    <div style="border-left: 4px solid #FF9F0A; background: rgba(255,255,255,0.02); border-radius: 4px; padding: 20px; margin-bottom: 25px;">
+        <div style="color: #FF9F0A; font-size: 11px; font-weight: 900; letter-spacing: 1px; margin-bottom: 10px; text-transform: uppercase;">MONITOR DE ESTADO : PRÉ-VISUALIZAÇÃO</div>
+        <p style="font-size: 12px; margin: 0 0 10px 0; color: #fff; opacity: 0.9;">Visualização técnica de metadados em tempo real :</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 10px; color: #aaa;">
+            <div>• Miniatura de Arte</div>
+            <div>• Caminho Absoluto</div>
+            <div>• Bitrate / Samplerate</div>
+            <div>• Duração / Tons</div>
+        </div>
+        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px;">
+            <span style="color: #FF9F0A; font-size: 14px;">↔</span>
+            <span style="font-size: 10px; color: #888;"><strong>GRID DINÂMICO :</strong> Colunas ajustáveis para personalização técnica.</span>
+        </div>
+    </div>
+
+    <!-- BLOQUE 3: CAMINHO E ESTATÍSTICAS -->
+    <div style="border-left: 4px solid #34C759; background: rgba(255,255,255,0.02); border-radius: 4px; padding: 20px; margin-bottom: 25px;">
+        <div style="color: #34C759; font-size: 11px; font-weight: 900; letter-spacing: 1px; margin-bottom: 10px; text-transform: uppercase;">RODAPÉ OPERACIONAL : ESTATÍSTICAS</div>
+        <p style="font-size: 12px; margin: 0; color: #fff; opacity: 0.9;">Controlo do fluxo de trabalho localizado no rodapé do editor :</p>
+        <ul style="font-size: 11px; margin: 10px 0 0 15px; padding: 0; color: #fff; opacity: 0.8;">
+            <li><strong>TRACK COUNTER :</strong> Volume total de ativos na sessão.</li>
+            <li><strong>ACTIVE PATH :</strong> Monitor de localização em tempo real.</li>
+        </ul>
+    </div>
+
+    <!-- BLOQUE 4: MULTIMÉDIA -->
+    <div style="border-left: 4px solid #FF3B30; background: rgba(255,255,255,0.02); border-radius: 4px; padding: 20px;">
+        <div style="color: #FF3B30; font-size: 11px; font-weight: 900; letter-spacing: 1px; margin-bottom: 10px; text-transform: uppercase;">PAINEL MULTIMÉDIA : VÍDEO & ARTE</div>
+        <p style="font-size: 12px; margin: 0; color: #fff; opacity: 0.9;">Gestão visual avançada e reprodução :</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; font-size: 10px; color: #aaa;">
+            <div style="border: 1px solid rgba(255,255,255,0.05); padding: 8px; border-radius: 4px;">📂 <b>Modo Pausa :</b> Gestão de Capas.</div>
+            <div style="border: 1px solid rgba(255,255,255,0.05); padding: 8px; border-radius: 4px;">🎬 <b>Modo Play :</b> Visualizador MP4 Dinâmico.</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- RIGHT COLUMN: UTILIDADES -->
+<div style="flex: 1; min-width: 320px;">
+    <div style="background: rgba(191, 90, 242, 0.1); border: 1px solid rgba(191, 90, 242, 0.2); padding: 12px 20px; border-radius: 4px; margin-bottom: 20px;">
+        <h3 style="font-size: 11px; font-weight: 900; color: #D99AFF; text-transform: uppercase; margin: 0; letter-spacing: 1.5px;">UTILIDADES E FERRAMENTAS</h3>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+        <div style="display: flex; align-items: center; gap: 15px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+            <div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; opacity: 0.8;">💾</div>
+            <div style="font-size: 11px;"><b style="color: #fff;">GUARDAR ALTERAÇÕES</b> • <span style="color: #888;">Persistência atómica das tags ID3.</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+            <div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; opacity: 0.8;">📁</div>
+            <div style="font-size: 11px;"><b style="color: #fff;">IMPORTAR</b> • <span style="color: #888;">Carga de ativos no fluxo de trabalho.</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+            <div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; opacity: 0.8;">💿</div>
+            <div style="font-size: 11px;"><b style="color: #fff;">DISCO DESTINO</b> • <span style="color: #888;">Target de saída do processamento.</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+            <div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; opacity: 0.8;">☸️</div>
+            <div style="font-size: 11px;"><b style="color: #fff;">DISTRIBUIÇÃO (MDJ)</b> • <span style="color: #888;">Ação principal de classificação.</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+            <div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; opacity: 0.8;">✨</div>
+            <div style="font-size: 11px;"><b style="color: #fff;">AUTO-ETIQUETAGEM</b> • <span style="color: #888;">Limpeza de erros e sintaxe.</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+            <div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; opacity: 0.8;">ABC</div>
+            <div style="font-size: 11px;"><b style="color: #fff;">FILENAME TO TAG</b> • <span style="color: #888;">Mapeamento de nomes para estruturas ID3.</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+            <div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; opacity: 0.8;">🧼</div>
+            <div style="font-size: 11px;"><b style="color: #fff;">GOMA MÁGICA</b> • <span style="color: #888;">Eliminação massiva de strings.</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+            <div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; opacity: 0.8;">🔄</div>
+            <div style="font-size: 11px;"><b style="color: #fff;">SINCRONIZAR</b> • <span style="color: #888;">Auditoria de alterações externas.</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+            <div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; opacity: 0.8;">🗑️</div>
+            <div style="font-size: 11px;"><b style="color: #fff;">ESVAZIAR LISTA</b> • <span style="color: #888;">Soft Reset do Sandbox.</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+            <div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; opacity: 0.8;">🔍</div>
+            <div style="font-size: 11px;"><b style="color: #fff;">FILTRO</b> • <span style="color: #888;">Localização instantânea de ativos.</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px; padding: 10px;">
+            <div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; opacity: 0.8;">❌</div>
+            <div style="font-size: 11px;"><b style="color: #fff;">FECHAR</b> • <span style="color: #888;">Terminar sessão de edição.</span></div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<div class="alert"><div class="alert-badge">RULE PROTOCOL</div><div>**PROTOCOLOS ESTABELECIDOS :** Mantenha um fluxo unidirecional. Não modifique ficheiros externamente durante o processo.</div></div>
+<hr />
+<p>© 2026 MDJPRO – Documentação Oficial.</p></section><section id="09-shortcuts.md"><!-- 🚨🚨🚨 QUARANTINE: MANUAL LOCKED - BINGO SERRADO 🚨🚨🚨 -->
+<!-- DO NOT MODIFY THIS FILE. ANY CHANGE WILL CAUSE REGRESSION. -->
+<!-- STATUS: FINAL SECURE STATE - AUTHORIZED BY USER DJMAGO -->
+<!-- Any change MUST pass linguistic QA. -->
+<!-- Source Version: 1.0.0 -->
+
+<h1>9. Atalhos de Teclado – MDJPRO</h1>
+<p>Otimize o seu fluxo de trabalho através da utilização de comandos rápidos. Estas combinações permitem executar ações críticas sem interromper a sua sessão de mistura ou edição.</p>
+<div class="glass-container">
+<div style="border-left: 4px solid #007AFF; padding-left: 15px; margin-bottom: 25px;">
+<h3 style="color: var(--header-color); font-size: 16px; font-weight: 800; text-transform: uppercase; margin: 0; letter-spacing: 0.5px;">Lista de Comandos Essenciais</h3>
+</div>
+
+<div class="key-grid">
+    <div class="key-card">
+        <span class="key-label">Confirmar / Guardar Alterações</span>
+        <span class="key-combo">Enter</span>
+    </div>
+    <div class="key-card">
+        <span class="key-label">Reprodução / Pausa (Pré-visualização)</span>
+        <span class="key-combo">Espaço</span>
+    </div>
+    <div class="key-card">
+        <span class="key-label">Navegação vertical</span>
+        <span class="key-combo">↑ / ↓</span>
+    </div>
+    <div class="key-card">
+        <span class="key-label">Selecionar Tudo</span>
+        <span class="key-combo">Cmd + A</span>
+    </div>
+    <div class="key-card">
+        <span class="key-label">Forçar recarga do diretório</span>
+        <span class="key-combo">Cmd + R</span>
+    </div>
+    <div class="key-card">
+        <span class="key-label">Localizar faixa no Finder</span>
+        <span class="key-combo">Cmd + Ctrl + R</span>
+    </div>
+    <div class="key-card">
+        <span class="key-label">Seleção múltipla alternada</span>
+        <span class="key-combo">Cmd + Clique</span>
+    </div>
+    <div class="key-card">
+        <span class="key-label">Cancelar ação ou fechar modal</span>
+        <span class="key-combo">Esc</span>
+    </div>
+</div>
+</div>
+
+<div class="alert"><div class="alert-badge">!!! IMPORTANT</div><div>**CONSELHO PROFISSIONAL :** O uso constante de atalhos reduz o tempo de preparação da biblioteca em 40%. Recomenda-se a memorização dos comandos de navegação e gravação.</div></div>
+<hr />
+<p>© 2026 MDJPRO – Documentação Oficial.</p></section><section id="10-scan-results.md"><!-- 🚨🚨🚨 QUARANTINE: MANUAL LOCKED - BINGO SERRADO 🚨🚨🚨 -->
+<!-- DO NOT MODIFY THIS FILE. ANY CHANGE WILL CAUSE REGRESSION. -->
+<!-- STATUS: FINAL SECURE STATE - AUTHORIZED BY USER DJMAGO -->
+<!-- Any change MUST pass linguistic QA. -->
+<!-- Source Version: 1.0.0 -->
+
+<h1>10. Ações e Relatórios – MDJPRO</h1>
+<p><strong>PAINEL DE RESULTADOS :</strong></p>
+<p>O centro de monitorização do MDJPRO fornece um relatório detalhado do estado da biblioteca e da integridade do sistema após cada operação de digitalização ou distribuição.</p>
+<div class="visual-guide">
+<div class="visual-guide-header">
+<strong style="font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">PAINEL DE RESULTADOS E CONTROLO</strong>
+<div class="guide-badge">GUIA VISUAL</div>
+</div>
+
+<div style="padding: 30px;">
+<div style="font-size: 20px; font-weight: 800; margin-bottom: 30px;">Controlo de processos e gestão de base de dados.</div>
+
+<div style="display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap;">
+
+<!-- LEFT COLUMN: DESCRIPTIONS -->
+<div style="flex: 1; min-width: 350px;">
+<div class="process-guide">
+<div class="process-item step-blue">
+<div class="process-circle">1</div>
+<div class="process-content">
+<strong>GESTOR DE BASES DE DADOS</strong>
+Gestão de pastas 'Master'. Permite apagar registos da base de dados de pastas e ficheiros.
+</div>
+</div>
+<div class="process-item step-purple">
+<div class="process-circle">2</div>
+<div class="process-content">
+<strong>CONTADOR DE FICHEIROS</strong>
+Inventário atual de ficheiros de Áudio/Vídeo. Otimiza o fluxo evitando novas digitalizações.
+</div>
+</div>
+<div class="process-item step-orange">
+<div class="process-circle">3</div>
+<div class="process-content">
+<strong>TUTORIAIS</strong>
+Acesso ao Guia de Funções Rápidas e assistente interactivo de configuração.
+</div>
+</div>
+<div class="process-item step-red">
+<div class="process-circle">4</div>
+<div class="process-content">
+<strong>ENCERRAMENTO SEGURO</strong>
+Finaliza processos ativos e integridade de dados para um encerramento limpo da app.
+</div>
+</div>
+</div>
+</div>
+
+<!-- RIGHT COLUMN: IMAGE WITH SVG SIGNALS -->
+<div style="flex: 1; min-width: 350px; position: relative;">
+<div style="position: relative; width: 100%; isolation: isolate;">
+<img src="assets/mdj_results.png" style="width: 100%;"/>
+<!-- SVG Overlay -->
+<svg style="position:absolute; top:0; left:0; width:100%; height:100%; z-index: 10; pointer-events: none;" viewbox="0 0 350 620">
+<path d="M 0 132 L 175 132" fill="none" stroke="#007AFF" stroke-width="2" stroke-opacity="1"></path>
+<path d="M 0 292 L 175 292" fill="none" stroke="#AF52DE" stroke-width="2" stroke-opacity="1"></path>
+<path d="M 0 502 L 150 502 L 150 422" fill="none" stroke="#FF9500" stroke-width="2" stroke-opacity="1"></path>
+<path d="M 0 599 L 200 599 L 200 522" fill="none" stroke="#FF2D55" stroke-width="2" stroke-opacity="1"></path>
+</svg>
+<!-- Badges -->
+<div class="indicator-dot" style="top: 132px; left: -15px; background: #007AFF;">1</div>
+<div class="indicator-dot" style="top: 292px; left: -15px; background: #AF52DE;">2</div>
+<div class="indicator-dot" style="top: 502px; left: -15px; background: #FF9500;">3</div>
+<div class="indicator-dot" style="top: 599px; left: -15px; background: #FF2D55;">4</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+<div class="alert"><div class="alert-badge">RULE PROTOCOL</div><div>**PROTOCOLOS ESTABELECIDOS :**
+• START SCAN : Inicia o processamento final de injeção estrutural.
+• SHOW RESULTS : Relatório detalhado da operação e deteção de erros.
+• RESET SISTEMA : Repõe todos os parâmetros conforme o estado de fábrica.</div></div>
+<div class="alert"><div class="alert-badge">!!! IMPORTANT</div><div>**AVISO :** O sistema ignora automaticamente pastas de sistema ou ficheiros ocultos para evitar a corrupção da base de dados do macOS e falhas de integridade.</div></div>
+<hr />
+<p>© 2026 MDJPRO – Documentazione Ufficiale.</p></section><section id="11-visual-guide.md"><!-- 🚨🚨🚨 QUARANTINE: MANUAL LOCKED - BINGO SERRADO 🚨🚨🚨 -->
+<!-- DO NOT MODIFY THIS FILE. ANY CHANGE WILL CAUSE REGRESSION. -->
+<!-- STATUS: FINAL SECURE STATE - AUTHORIZED BY USER DJMAGO -->
+<!-- Any change MUST pass linguistic QA. -->
+<!-- Source Version: 1.0.0 -->
+
+<h1>11. Guia Visual de Funções – MDJPRO</h1>
+<p>Referência rápida das principais interfaces do software. Este ecossistema garante um fluxo de trabalho unificado, desde a ativação até à exportação final.</p>
+<div class="key-grid">
+    <!-- Card 1: Welcome -->
+    <div class="key-card" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 24px; height: 24px; background: #32ADE6; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 800;">1</div>
+                <strong style="font-size: 14px;">Ecrã de Boas-vindas</strong>
+            </div>
+            <img src="assets/mdj_splash.png" style="width: 70px; height: 70px; object-fit: contain; border-radius: 4px;"/>
+        </div>
+        <p style="font-size: 11px; opacity: 0.8; margin: 0;">Ecrã de abertura. Identifica a sua versão e confirma a sua identidade como utilizador oficial.</p>
+    </div>
+
+    <!-- Card 2: Account -->
+    <div class="key-card" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 24px; height: 24px; background: #007AFF; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 800;">2</div>
+                <strong style="font-size: 14px;">Conta / Início</strong>
+            </div>
+            <img src="assets/MDJPRO_ACCOUNT.png" style="width: 70px; height: 70px; object-fit: contain; border-radius: 4px;"/>
+        </div>
+        <p style="font-size: 11px; opacity: 0.8; margin: 0;">Gestão de subscrição, ativação de licença e verificação do estado Premium.</p>
+    </div>
+
+    <!-- Card 3: Command Hub -->
+    <div class="key-card" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 24px; height: 24px; background: #AF52DE; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 800;">3</div>
+                <strong style="font-size: 14px;">Command Hub</strong>
+            </div>
+            <img src="assets/mdj_command_hub.png" style="width: 70px; height: 70px; object-fit: contain; border-radius: 4px;"/>
+        </div>
+        <p style="font-size: 11px; opacity: 0.8; margin: 0;">Launchpad primário para Library Wizard, Tag Master e gestão de discos.</p>
+    </div>
+
+    <!-- Card 4: Scan Engine -->
+    <div class="key-card" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 24px; height: 24px; background: #FF2D55; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 800;">4</div>
+                <strong style="font-size: 14px;">Scan Engine</strong>
+            </div>
+            <img src="assets/mdj_results.png" style="width: 70px; height: 70px; object-fit: contain; border-radius: 4px;"/>
+        </div>
+        <p style="font-size: 11px; opacity: 0.8; margin: 0;">Relatórios em tempo real. Visualize ficheiros processados, novas adições e alertas de integridade.</p>
+    </div>
+
+    <!-- Card 5: Protocols -->
+    <div class="key-card" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 24px; height: 24px; background: #34C759; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 800;">5</div>
+                <strong style="font-size: 14px;">Protocolos & Estado</strong>
+            </div>
+            <div style="display: flex; gap: 3px;">
+                <div style="width: 8px; height: 8px; background: #34C759; border-radius: 50%;"></div>
+                <div style="width: 8px; height: 8px; background: #FFCC00; border-radius: 50%;"></div>
+                <div style="width: 8px; height: 8px; background: #FF3B30; border-radius: 50%;"></div>
+            </div>
+        </div>
+        <p style="font-size: 11px; opacity: 0.8; margin: 0;">Centro de controlo de integridade. Gere luzes de estado, permissões Apple e Serato Link.</p>
+    </div>
+
+    <!-- Card 6: Tag Master -->
+    <div class="key-card" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 24px; height: 24px; background: #FF9500; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 800;">6</div>
+                <strong style="font-size: 14px;">Tag Master</strong>
+            </div>
+            <img src="assets/MDJPRO_EDITOR_PREVIEW.png" style="width: 70px; height: 70px; object-fit: contain; border-radius: 4px;"/>
+        </div>
+        <p style="font-size: 11px; opacity: 0.8; margin: 0;">O cérebro editor de metadados. Padronização ID3 compatível com Serato e Rekordbox.</p>
+    </div>
+</div>
+
+<div class="alert alert-important" style="margin-top: 40px;">
+<div class="alert-icon">💡</div>
+<div>
+<div class="alert-title">CONSISTÊNCIA VISUAL</div>
+<p style="font-weight: 600; font-size: 13px;">Todas as interfaces utilizam o motor de renderização unificado da Apple para garantir nitidez em ecrãs Retina e um desempenho otimizado.</p>
+</div>
+</div>
+
+<hr />
+<p>© 2026 MDJPRO – Documentação Oficial.</p></section><section id="12-files-media.md"><!-- 🚨🚨🚨 QUARANTINE: MANUAL LOCKED - BINGO SERRADO 🚨🚨🚨 -->
+<!-- DO NOT MODIFY THIS FILE. ANY CHANGE WILL CAUSE REGRESSION. -->
+<!-- STATUS: FINAL SECURE STATE - AUTHORIZED BY USER DJMAGO -->
+<!-- Any change MUST pass linguistic QA. -->
+<!-- Source Version: 1.0.0 -->
+
+<h1>12. MOTOR DE FICHEIROS E MULTIMÉDIA – MDJPRO</h1>
+<p>O MDJPRO permite um controlo granular sobre as colunas dos seus ficheiros para garantir a integridade da base de dados.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">COLUNA</th>
+<th style="text-align: left;">DESCRIÇÃO</th>
+<th style="text-align: center;">EDITÁVEL?</th>
+<th style="text-align: center;">NÍVEL DE RISCO</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><span class="label-700">Nome do Ficheiro</span></td>
+<td style="text-align: left;"><span class="requirement-text">Nome físico no disco.</span></td>
+<td style="text-align: center;"><span style="color: #34C759; font-weight: 800;">✔ SIM</span></td>
+<td style="text-align: center;"><span style="background: #FF9500; color: white; padding: 2px 10px; border-radius: 4px; font-size: 10px; font-weight: 800;">MÉDIO</span></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="label-700">Título / Artista</span></td>
+<td style="text-align: left;"><span class="requirement-text">Metadados ID3 internos do ficheiro.</span></td>
+<td style="text-align: center;"><span style="color: #34C759; font-weight: 800;">✔ SIM</span></td>
+<td style="text-align: center;"><span style="background: #34C759; color: white; padding: 2px 10px; border-radius: 4px; font-size: 10px; font-weight: 800;">SEGURO</span></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="label-700">Caminho (Path)</span></td>
+<td style="text-align: left;"><span class="requirement-text">Localização absoluta no sistema de ficheiros.</span></td>
+<td style="text-align: center;"><span style="color: #FF3B30; font-weight: 800;">🚫 NÃO</span></td>
+<td style="text-align: center;"><span style="color: #888; font-size: 10px; font-weight: 800; text-transform: uppercase;">INFRAESTRUTURA</span></td>
+</tr>
+</tbody>
+</table>
+<div class="alert"><div class="alert-badge">ATTENTION WARNING</div><div>Renomear ficheiros que já fazem parte dos Serato Crates sem usar a função "Serato Link" do MDJPRO resultará em ficheiros perdidos "Missing Files" no seu software DJ.</div></div>
+<p>O MDJPRO utiliza uma política de 'Zero Trust' para ficheiros multimédia para prevenir a corrupção da base de dados.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">FORMATO</th>
+<th style="text-align: center;">ESTADO</th>
+<th style="text-align: left;">ESPECIFICAÇÃO TÉCNICA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><span class="label-700">MP4</span></td>
+<td style="text-align: center;"><span style="border: 1px solid #34C759; color: #34C759; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 900; background: rgba(52, 199, 89, 0.1);">ELEGÍVEL</span></td>
+<td style="text-align: left;"><span class="requirement-text">Contentor padrão MPEG-4 Part 14.</span></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="label-700">MOV</span></td>
+<td style="text-align: center;"><span style="border: 1px solid #34C759; color: #34C759; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 900; background: rgba(52, 199, 89, 0.1);">ELEGÍVEL</span></td>
+<td style="text-align: left;"><span class="requirement-text">Apple QuickTime Movie (Nativo macOS).</span></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="label-700">M4V</span></td>
+<td style="text-align: center;"><span style="border: 1px solid #34C759; color: #34C759; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 900; background: rgba(52, 199, 89, 0.1);">ELEGÍVEL</span></td>
+<td style="text-align: left;"><span class="requirement-text">Vídeo do iTunes / Apple (Protegido ou livre).</span></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="label-700">MKV / AVI</span></td>
+<td style="text-align: center;"><span style="border: 1px solid #FF9500; color: #FF9500; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 900; background: rgba(255, 149, 0, 0.1);">BYPASS</span></td>
+<td style="text-align: left;"><span class="requirement-text">Formatos omitidos por segurança estrutural.</span></td>
+</tr>
+</tbody>
+</table>
+<div class="alert"><div class="alert-badge">RULE PROTOCOL</div><div>**PROTOCOLO DRY-RUN (ANÁLISE ESTRUTURAL):**
+• Verificação do átomo 'moov' (metadados).
+• Validação de integridade de fim de ficheiro (EOF).
+• Consistência lógica de tamanhos e offsets.</div></div>
+<div class="alert"><div class="alert-badge">DANGER CAUTION</div><div>Se um ficheiro falhar o Dry-Run, o MDJPRO RECUSARÁ processá-lo. Este é um comportamento de segurança para evitar a corrupção na sua base de dados e falhas em direto.</div></div>
+<hr />
+<p>© 2026 MDJPRO – Documentação Oficial.</p></section><section id="13-security.md"><!-- 🚨🚨🚨 QUARANTINE: MANUAL LOCKED - BINGO SERRADO 🚨🚨🚨 -->
+<!-- DO NOT MODIFY THIS FILE. ANY CHANGE WILL CAUSE REGRESSION. -->
+<!-- STATUS: FINAL SECURE STATE - AUTHORIZED BY USER DJMAGO -->
+<!-- Any change MUST pass linguistic QA. -->
+<!-- Source Version: 1.0.0 -->
+
+<h1>13. Segurança e Boas Práticas – MDJPRO</h1>
+<p>A integridade da sua biblioteca musical é a nossa prioridade máxima. O MDJPRO implementa múltiplas camadas de segurança para garantir uma operação estável e livre de riscos.</p>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin-bottom: 30px;">
+    <!-- Protocol Card -->
+    <div class="glass-container" style="margin: 0;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+            <span style="font-size: 22px;">🛡️</span>
+            <strong style="font-size: 14px; color: #007AFF; text-transform: uppercase;">Protocolo Apple Sandbox</strong>
+        </div>
+        <p style="font-size: 12px; line-height: 1.6; opacity: 0.9;">O MDJPRO opera sob isolamento seguro. O acesso a discos externos requer **autorização explícita** através de marcadores de segurança (SSB) persistentes.</p>
+    </div>
+
+    <!-- Keychain Card -->
+    <div class="glass-container" style="margin: 0; background: rgba(175, 82, 222, 0.05); border: 1px solid rgba(175, 82, 222, 0.2);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+            <span style="font-size: 22px;">🔑</span>
+            <strong style="font-size: 14px; color: #AF52DE; text-transform: uppercase;">Autorização Keychain (Biometria)</strong>
+        </div>
+        <p style="font-size: 12px; line-height: 1.6; opacity: 0.9;">As suas credenciais SaaS são guardadas no Chaveiro encriptado do macOS. No primeiro arranque, o macOS solicitará **Touch ID ou Password** para criar o contexto de segurança silencioso.</p>
+    </div>
+
+    <!-- Integrity Card -->
+    <div class="glass-container" style="margin: 0;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+            <span style="font-size: 22px;">💎</span>
+            <strong style="font-size: 14px; color: #34C759; text-transform: uppercase;">Estado 'BINGO' (Integridade)</strong>
+        </div>
+        <ul style="list-style: none; padding: 0; margin: 0; font-size: 11px; line-height: 1.8;">
+            <li><span style="color: #34C759;">✔️</span> Permissões de escrita ativas.</li>
+            <li><span style="color: #34C759;">✔️</span> Caminho de origem validado fisicamente.</li>
+            <li><span style="color: #34C759;">✔️</span> Hash de integridade 1:1 confirmado.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="glass-container" style="background: linear-gradient(135deg, rgba(0, 122, 255, 0.2), rgba(0, 122, 255, 0.05)); border: 1px solid rgba(0, 122, 255, 0.3);">
+    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+        <span style="font-size: 32px;">👑</span>
+        <div style="flex: 1;">
+            <h3 style="margin: 0; font-size: 18px; text-transform: uppercase; letter-spacing: 1px; color: #fff;">Regras de Ouro</h3>
+            <p style="margin: 4px 0 0 0; font-size: 11px; opacity: 0.8; color: #fff;">Infraestrutura crítica recomendada para o MDJPRO Enterprise.</p>
+        </div>
+        <div style="background: rgba(255, 255, 255, 0.2); padding: 5px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #fff;">OBRIGATÓRIO</div>
+    </div>
+
+    <div class="process-guide" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;">
+        <div>
+            <div class="process-item step-orange" style="margin-bottom: 15px;">
+                <div class="process-circle">1</div>
+                <div class="process-content"><strong>Hardware:</strong> Use cabos Thunderbolt oficiais ou certificados USB-IF para evitar quedas de tensão.</div>
+            </div>
+            <div class="process-item step-orange">
+                <div class="process-circle">2</div>
+                <div class="process-content"><strong>Energia:</strong> Mantenha a UPS (No-break) carregada para proteger a base de dados contra cortes elétricos.</div>
+            </div>
+        </div>
+        <div>
+            <div class="process-item step-orange" style="margin-bottom: 15px;">
+                <div class="process-circle">3</div>
+                <div class="process-content"><strong>Ambiente:</strong> Verifique a temperatura (Máx 30°C para discos NVMe) para prevenir o thermal throttling.</div>
+            </div>
+            <div class="process-item step-orange">
+                <div class="process-circle">4</div>
+                <div class="process-content"><strong>Protocolo:</strong> Nunca desligue volumes durante os processos de indexação ativa.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="alert"><div class="alert-badge">RULE PROTOCOL</div><div>**PROTOCOLOS DE SEGURANÇA MDJPRO:** O incumprimento das regras de ouro pode invalidar as garantias de recuperação de dados automatizada fornecidas pelo motor do MDJPRO.</div></div>
+<hr />
+<p>© 2026 MDJPRO – Documentação Oficial.</p></section><section id="14-troubleshooting.md"><!-- 🚨🚨🚨 QUARANTINE: MANUAL LOCKED - BINGO SERRADO 🚨🚨🚨 -->
+<!-- DO NOT MODIFY THIS FILE. ANY CHANGE WILL CAUSE REGRESSION. -->
+<!-- STATUS: FINAL SECURE STATE - AUTHORIZED BY USER DJMAGO -->
+<!-- Any change MUST pass linguistic QA. -->
+<!-- Source Version: 1.0.0 -->
+
+<h1>14. Resolução de Problemas – MDJPRO</h1>
+<p>Guia técnico para a resolução de incidentes e terminologia padrão do ecossistema MDJPRO.</p>
+<div class="glass-container">
+<h3 style="color: var(--header-color); font-size: 16px; font-weight: 800; text-transform: uppercase; margin-bottom: 25px;">Guia de Resolução de Incidentes</h3>
+
+<div style="display: flex; flex-direction: column; gap: 15px;">
+    <div style="display: flex; gap: 15px; background: rgba(255, 255, 255, 0.02); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+        <span style="font-size: 20px;">🔴</span>
+        <div style="font-size: 13px;">
+            <strong>Erro de Permissões:</strong> O acesso ao disco expirou por segurança do macOS.<br/>
+            <span style="color: #34C759;">➜ Ação:</span> Execute a função **'Load Root'** novamente para renovar o marcador SSB.
+        </div>
+    </div>
+    <div style="display: flex; gap: 15px; background: rgba(255, 255, 255, 0.02); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+        <span style="font-size: 20px;">📂</span>
+        <div style="font-size: 13px;">
+            <strong>Ficheiros Perdidos (Missing):</strong> O caminho físico do ficheiro mudou fora do MDJPRO.<br/>
+            <span style="color: #34C759;">➜ Ação:</span> Utilize a função **'Relocate'** no seu software DJ ou reimporte a pasta Master.
+        </div>
+    </div>
+    <div style="display: flex; gap: 15px; background: rgba(255, 255, 255, 0.02); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+        <span style="font-size: 20px;">🎬</span>
+        <div style="font-size: 13px;">
+            <strong>Falha de Vídeo:</strong> Codec não compatível com o motor nativo AVFoundation.<br/>
+            <span style="color: #34C759;">➜ Ação:</span> Recodifique para **H.264/AAC** utilizando ferramentas padrão (ex. Handbrake).
+        </div>
+    </div>
+    <div style="display: flex; gap: 15px; background: rgba(255, 255, 255, 0.02); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+        <span style="font-size: 20px;">🔑</span>
+        <div style="font-size: 13px;">
+            <strong>Erro de Licença:</strong> Falha de comunicação com o servidor de validação.<br/>
+            <span style="color: #34C759;">➜ Ação:</span> Verifique a sua ligação e reintroduza as suas credenciais no painel **Conta**.
+        </div>
+    </div>
+</div>
+</div>
+
+<div class="glass-container">
+<h3 style="color: var(--header-color); font-size: 16px; font-weight: 800; text-transform: uppercase; margin-bottom: 25px;">Glossário Técnico</h3>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+    <div style="font-size: 12px; line-height: 1.6;">
+        <p><strong>ASSET:</strong> Unidade individual de ficheiro de média (Áudio/Vídeo).</p>
+        <p><strong>CRATE:</strong> Contentor lógico de organização específico do Serato DJ.</p>
+        <p><strong>ID3 TAG:</strong> Padrão industrial de metadados incorporados em ficheiros.</p>
+    </div>
+    <div style="font-size: 12px; line-height: 1.6;">
+        <p><strong>ROOT:</strong> Diretório raiz ou ponto de montagem de um volume de dados.</p>
+        <p><strong>SANDBOX:</strong> Mecanismo de segurança nativo do macOS para isolamento de processos.</p>
+        <p><strong>XML:</strong> Linguagem de marcação usada para a troca de bases de dados.</p>
+    </div>
+</div>
+</div>
+
+<div class="alert"><div class="alert-badge">RULE PROTOCOL</div><div>**PROTOCOLOS DE SUPORTE:** Em caso de comportamento errático persistente, reinicie a aplicação para limpar a cache temporária de processos da Apple.</div></div>
+<hr />
+<p>© 2026 MDJPRO – Documentação Oficial.</p></section><section id="15-legal.md"><!-- 🚨🚨🚨 QUARANTINE: MANUAL LOCKED - BINGO SERRADO 🚨🚨🚨 -->
+<!-- DO NOT MODIFY THIS FILE. ANY CHANGE WILL CAUSE REGRESSION. -->
+<!-- STATUS: FINAL SECURE STATE - AUTHORIZED BY USER DJMAGO -->
+<!-- Any change MUST pass linguistic QA. -->
+<!-- Source Version: 1.0.0 -->
+
+<h1>15. Privacidade e Termos Legais – MDJPRO</h1>
+<p>O MDJPRO respeita profundamente a privacidade do utilizador. O software opera num ambiente local, garantindo que o controlo da informação permanece na sua estação de trabalho.</p>
+<div class="glass-container">
+<h3 style="color: var(--header-color); font-size: 16px; font-weight: 800; text-transform: uppercase; margin-bottom: 25px;">Acordos de Privacidade</h3>
+
+<div style="display: flex; flex-direction: column; gap: 20px; font-size: 13px; line-height: 1.6;">
+    <div>
+        <strong style="color: #007AFF;">1. PROPRIEDADE INTELECTUAL:</strong><br/>
+        © 2024-2026 Miami DJ Beat LLC. Todos os direitos reservados. MDJPRO, o logótipo e 'Library Wizard' são marcas registadas.
+    </div>
+    <div>
+        <strong style="color: #007AFF;">2. PROTEÇÃO DE DADOS:</strong><br/>
+        A Miami DJ Beat LLC garante que não vende nem transfere informações a terceiros. O acesso é restrito exclusivamente a áreas autorizadas do sistema de ficheiros.
+    </div>
+    <div>
+        <strong style="color: #007AFF;">3. PRIVACIDADE MUSICAL:</strong><br/>
+        O sistema não recolhe, indexa nem transmite o conteúdo musical do utilizador para servidores externos. Todos os metadados são processados localmente.
+    </div>
+    <div style="background: rgba(255, 255, 255, 0.02); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+        <strong style="color: #FF9F0A;">4. LIMITAÇÃO DE RESPONSABILIDADE:</strong><br/>
+        O software é fornecido 'tal como está'. O programador não assume qualquer responsabilidade por perda de dados resultante de falhas de hardware ou utilização indevida.
+    </div>
+</div>
+</div>
+
+<div class="alert alert-important" style="margin-top: 30px;">
+<div class="alert-icon">⚖️</div>
+<div>
+<div class="alert-title">RESTRIÇÕES LEGAIS</div>
+<div style="font-weight: 800; font-size: 13px; font-style: italic;">Engenharia reversa, descompilação ou distribuição não autorizada deste binário é estritamente proibida pelas leis internacionais de direitos de autor.</div>
+</div>
+</div>
+
+<hr />
+<p>© 2026 MDJPRO – Documentação Oficial.</p></section><section id="16-support.md"><!-- 🚨🚨🚨 QUARANTINE: MANUAL LOCKED - BINGO SERRADO 🚨🚨🚨 -->
+<!-- DO NOT MODIFY THIS FILE. ANY CHANGE WILL CAUSE REGRESSION. -->
+<!-- STATUS: FINAL SECURE STATE - AUTHORIZED BY USER DJMAGO -->
+<!-- Any change MUST pass linguistic QA. -->
+<!-- Source Version: 1.0.0 -->
+
+<h1>16. Suporte Técnico – MDJPRO</h1>
+<p>A Miami DJ Beat LLC está empenhada em fornecer uma infraestrutura operacional estável e escalável para todos os seus utilizadores profissionais.</p>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+    <!-- Phone Card -->
+    <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); padding: 25px; border-radius: 12px; display: flex; align-items: center; gap: 20px;">
+        <div style="width: 50px; height: 50px; background: rgba(50, 173, 230, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #32ADE6; font-size: 24px;">📞</div>
+        <div>
+            <p style="font-size: 10px; font-weight: 900; color: #32ADE6; text-transform: uppercase; margin: 0; letter-spacing: 1px;">Linha Direta</p>
+            <p style="font-size: 20px; font-weight: 800; color: var(--header-color); margin: 0;">305-423-5814</p>
+        </div>
+    </div>
+
+    <!-- Email Card -->
+    <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); padding: 25px; border-radius: 12px; display: flex; align-items: center; gap: 20px;">
+        <div style="width: 50px; height: 50px; background: rgba(52, 199, 89, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #34C759; font-size: 24px;">✉️</div>
+        <div>
+            <p style="font-size: 10px; font-weight: 900; color: #34C759; text-transform: uppercase; margin: 0; letter-spacing: 1px;">Suporte Técnico</p>
+            <p style="font-size: 16px; font-weight: 800; color: var(--header-color); margin: 0;">Miamidjbeat@Soport.com</p>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 40px;">
+    <div class="glass-container" style="text-align: center; margin: 0; padding: 20px;">
+        <div style="font-size: 24px; margin-bottom: 10px;">🕒</div>
+        <p style="font-size: 10px; font-weight: 900; color: #888; text-transform: uppercase; margin: 0 0 8px 0;">Horário</p>
+        <p style="font-size: 12px; line-height: 1.4;"><strong>Tel:</strong> Seg-Qua<br/>13:00 - 17:00<br/><strong>SMS:</strong> 24 Horas</p>
+    </div>
+    <div class="glass-container" style="text-align: center; margin: 0; padding: 20px;">
+        <div style="font-size: 24px; margin-bottom: 10px;">🛡️</div>
+        <p style="font-size: 10px; font-weight: 900; color: #888; text-transform: uppercase; margin: 0 0 8px 0;">Âmbito</p>
+        <p style="font-size: 12px; line-height: 1.4;">Licenças e<br/>erros técnicos de infraestrutura</p>
+    </div>
+    <div class="glass-container" style="text-align: center; margin: 0; padding: 20px;">
+        <div style="font-size: 24px; margin-bottom: 10px;">🔄</div>
+        <p style="font-size: 10px; font-weight: 900; color: #888; text-transform: uppercase; margin: 0 0 8px 0;">Resposta</p>
+        <p style="font-size: 12px; line-height: 1.4;">Comunicação imediata<br/>após validação de conta</p>
+    </div>
+</div>
+
+<div class="alert alert-protocol">
+<div class="alert-icon">🚫</div>
+<div>
+<div class="alert-title">EXCLUSÕES DE SUPORTE</div>
+<div style="font-weight: 700; font-size: 12px; font-style: italic;">
+O suporte técnico oficial NÃO inclui:
+• Organização manual de bibliotecas.<br/>
+• Recuperação de ficheiros eliminados pelo utilizador.<br/>
+• Assistência para software de terceiros (Serato, Rekordbox, VDJ).
+</div>
+</div>
+</div>
+
+<div style="text-align: center; color: #666; font-size: 11px; margin-top: 60px; padding: 40px 0; border-top: 1px solid var(--border-color); opacity: 0.6;">
+    <p style="letter-spacing: 3px; font-weight: 900; color: var(--text-color); margin-bottom: 10px;">MDJPRO — MIAMI DJ BEAT LLC</p>
+    <p>© 2026. Todos os direitos reservados. Infraestrutura Técnica para Operações Musicais.</p>
+    <p style="font-size: 9px; margin-top: 15px; font-family: 'SF Mono', monospace; opacity: 0.4;">SYSTEM VALIDATED BY ANTIGRAVITY AI ENGINE // TWIN PARITY ACHIEVED // REV 1.9.0</p>
+</div>
+
+<hr />
+<p>© 2026 MDJPRO – Documentação Oficial.</p></section>
+    </div>
+</body>
+</html>

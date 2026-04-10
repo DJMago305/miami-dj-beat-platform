@@ -1,0 +1,1278 @@
+<!--
+🔒 LOCKED VIEW LAYER
+
+Este archivo conecta la data con el render.
+
+No modificar estructura ni scripts sin validación.
+Riesgo: romper carga del catálogo.
+-->
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Rentals — Miami DJ Beat</title>
+    <link rel="stylesheet" href="./styles.css?v=20260322-6" />
+    <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+    <style id="rentals-visual-lock">
+        /* RENTALS VISUAL LOCK — DO NOT EDIT */
+
+        /* 1. CLEAN CARDS — No images in service grid */
+        .tile img,
+        .service-card img,
+        .card img {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+
+        .tile,
+        .service-card,
+        .card {
+            background-image: none !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+        }
+
+        /* 2. CTA BUTTONS — Stable Layout */
+        .tile .btn.primary.full,
+        .service-card .btn.primary.full,
+        .card .btn.primary.full {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            margin: 18px auto 0 !important;
+            padding-left: 18px !important;
+            padding-right: 18px !important;
+            outline: 0 !important;
+        }
+
+        /* 3. HOVER EFFECT — Consistent Across All Cards */
+        @media (hover: hover) and (pointer: fine) {
+
+            .tile,
+            .service-card,
+            .card {
+                transition: transform 220ms ease, box-shadow 220ms ease;
+                will-change: transform;
+                transform: translateZ(0);
+            }
+
+            .tile:hover,
+            .service-card:hover,
+            .card:hover {
+                transform: scale(1.03);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            }
+        }
+
+        /* 4. BACKGROUND FIX — Full viewport coverage */
+        body {
+            min-height: 100vh !important;
+            background-attachment: fixed !important;
+            background-size: cover !important;
+        }
+
+        /* 5. OVERFLOW FIX — Prevent Clipping */
+        .grid3,
+        .services-grid,
+        .rentals-grid,
+        .cards-grid,
+        .services-section {
+            overflow: visible !important;
+        }
+
+        /* Preserve Gallery display (bottom only) */
+        #rentals-gallery img {
+            display: block !important;
+            width: 100% !important;
+            height: 250px !important;
+        }
+    </style>
+</head>
+
+<body class="notranslate">
+    <header class="header" id="mainHeader">
+        <div class="header-top">
+            <!-- LOCKED SECTION: DO NOT MODIFY -->
+            <div class="container">
+                <div class="brand">
+                    <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+                    <div class="brand-letters-wrapper">
+                        <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters"
+                            class="brand-letters-img">
+                    </div>
+                </div>
+
+                <div class="header-actions"
+                    style="gap: 12px !important; background: rgba(255,255,255,0.03); padding: 6px 14px; border-radius: 999px;">
+                    <div class="lang-switcher">
+                        <span class="lang-btn active" data-lang="es">ES</span>
+                        <span class="lang-pipe">|</span>
+                        <span class="lang-btn" data-lang="en">EN</span>
+                    </div>
+                    <a href="login.html" class="btn-pill gold" data-i18n="btn-get-pro">Obtener PRO</a>
+                    <a href="./login.html" id="header-login-btn" class="btn-pill gold">Mi Perfil</a>
+
+                    <div class="account" id="header-auth-zone" style="display: none;">
+                        <button class="account-btn" id="accountBtn"
+                            onclick="document.getElementById('accountMenu').classList.toggle('open'); event.stopPropagation();">
+                            <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="Avatar" />
+                            <span class="caret">▾</span>
+                        </button>
+                        <div class="account-menu" id="accountMenu" aria-hidden="true">
+                            <a href="./dj-profile.html" class="menu-item">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                My Profile
+                            </a>
+                            <a href="./dj-dashboard.html?tab=settings" class="menu-item">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path
+                                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                                    </path>
+                                </svg>
+                                Settings
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+
+                <!-- Mobile Menu Overlay -->
+                <div class="mobile-overlay" id="mobileMenu">
+                    <nav class="mobile-nav">
+                        <a href="./index.html" class="active" data-i18n="nav-home">Home</a>
+                        <a href="#services" data-i18n="nav-services">Services</a>
+                        <a href="./rentals.html" data-i18n="nav-rentals">Event Services</a>
+                        <a href="./shop.html" style="color:#c5a059;font-weight:800;">Shop</a>
+                        <a href="./dj-tools.html" data-i18n="nav-tools">Tools</a>
+                        <a href="./courses.html">🎓 Academia: Cursos</a>
+                        <a href="./dj-knowledge.html">📚 Academia: Cultura DJ</a>
+                        <a href="./jobs.html" data-i18n="nav-jobs">Jobs</a>
+                        <a href="#contact" data-i18n="nav-contact">Contacto</a>
+                        <a href="login.html" id="header-login-btn-mobile" data-i18n="btn-login"
+                            style="color:var(--gold); font-weight:800;">Login</a>
+                        <a href="./dj-profile.html" id="nav-my-profile-mobile"
+                            style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY
+                            PROFILE</a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        <div class="header-bottom">
+            <!-- LOCKED SECTION: DO NOT MODIFY -->
+            <div class="container">
+                <nav class="nav top-nav" id="mainNav">
+                    <a href="./index.html" class="active" data-i18n="nav-home">Home</a>
+                    <a href="#services" data-i18n="nav-services">Services</a>
+                    <a href="./rentals.html" data-i18n="nav-rentals">Event Services</a>
+                    <a href="./shop.html" style="color:var(--gold); font-weight:800;">Shop</a>
+                    <a href="./dj-tools.html" data-i18n="nav-tools">Tools</a>
+                    <div class="nav-item-dropdown">
+                        <a href="#" style="cursor: default;">Academia <span class="caret">▾</span></a>
+                        <div class="nav-dropdown-menu">
+                            <a href="./courses.html">Cursos y Certificación</a>
+                            <a href="./dj-knowledge.html">Cultura y Biblioteca DJ</a>
+                        </div>
+                    </div>
+                    <a href="./dj-profile.html?tab=flow" id="nav-flow-link"
+                        style="color:var(--gold); display:none; font-weight:800;">Flow</a>
+                    <a href="./jobs.html" data-i18n="nav-jobs">Jobs</a>
+                    <a href="#contact" data-i18n="nav-contact">Contact</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- ══ CINEMATIC BACKGROUND ══ -->
+    <div class="hero-kb-bg"
+        style="background-image: url('./assets/home_hero_4k_wide.png'); opacity: 0.3; filter: blur(5px);"></div>
+    <div class="hero-video-overlay"
+        style="background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
+
+    <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
+        <div style="text-align: center; margin-bottom: 80px;">
+            <h1 id="rentals-headline"
+                style="font-family: 'Playfair Display', serif; font-size: clamp(40px, 5vw, 70px); -webkit-text-fill-color: rgba(197, 160, 89, 0.15); -webkit-text-stroke: 1px var(--gold); filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.2)); opacity: 0; transform: translateY(30px); animation: revealText 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;"
+                data-i18n="rentals-title">Producción de Eventos y Servicios</h1>
+            <p style="color: var(--gold); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 3px; margin-top: 15px; opacity: 0; animation: revealText 1s 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;"
+                data-i18n="rentals-hero-subtitle">
+                Exclusive Event Solutions & Gear</p>
+        </div>
+
+        <div class="grid3" style="gap: 30px;">
+
+
+            <div class="tile glass-card" id="talent-tile"
+                style="opacity: 0; animation: revealText 0.8s 0.6s ease-out forwards;">
+                <h3 data-i18n="rentals-wireless-title"
+                    style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
+                    Entretenimiento y Talento</h3>
+                <p data-i18n="rentals-wireless-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">Hora Loca,
+                    Timbaleros, Bailarines, Cantantes y Presentadores (MC) profesionales.</p>
+                <div class="value"
+                    style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
+                    data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
+                <a href="#" class="btn primary full" data-action="open-talent" id="open-talent-selector"
+                    style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
+                    Disponibilidad</a>
+            </div>
+
+            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 0.7s ease-out forwards;">
+                <h3 data-i18n="rentals-pa-pack-title"
+                    style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
+                    Audio y Sonido Profesional</h3>
+                <p data-i18n="rentals-pa-pack-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">Sistemas de
+                    escala completa para cualquier capacidad. Desde equipos íntimos hasta sonido de concierto.</p>
+                <div class="value"
+                    style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
+                    data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
+                <a href="#" class="btn primary full" data-action="open-rental-category" data-category="audio"
+                    style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
+                    Disponibilidad</a>
+            </div>
+
+            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 0.8s ease-out forwards;">
+                <h3 data-i18n="rentals-lighting-title"
+                    style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
+                    Iluminación y Pantallas LED</h3>
+                <p data-i18n="rentals-lighting-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">Cabezas
+                    móviles, pantallas LED gigantes, efectos visuales y tarimas para artistas.</p>
+                <div class="value"
+                    style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
+                    data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
+                <a href="#" class="btn primary full" data-action="open-lighting-modal" style="border-radius: 50px;"
+                    data-i18n="rentals-check-availability">Consultar
+                    Disponibilidad</a>
+            </div>
+
+            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 0.9s ease-out forwards;">
+                <h3 data-i18n="rentals-decor-title"
+                    style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
+                    Mobiliario y Decoración</h3>
+                <p data-i18n="rentals-decor-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">Mesas, sillas,
+                    ramos de flores y decoración personalizada para tu temática.</p>
+                <div class="value"
+                    style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
+                    data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
+                <a href="#" class="btn primary full" data-action="open-rental-category" data-category="furniture"
+                    style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
+                    Disponibilidad</a>
+            </div>
+
+            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 1.0s ease-out forwards;">
+                <h3 data-i18n="rentals-fx-title"
+                    style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
+                    Efectos Especiales</h3>
+                <p data-i18n="rentals-fx-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">Máquinas de
+                    chispas frías, humo estilo niebla, CO2 y más.</p>
+                <div class="value"
+                    style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
+                    data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
+                <a href="#" class="btn primary full" data-action="open-fx-modal" style="border-radius: 50px;"
+                    data-i18n="rentals-check-availability">Consultar
+                    Disponibilidad</a>
+            </div>
+
+            <!-- TENTS CARD INJECTION (Phase 5) -->
+            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 1.1s ease-out forwards;">
+                <h3 data-i18n="rentals-tents-title"
+                    style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
+                    Carpas y Estructuras</h3>
+                <p data-i18n="rentals-tents-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">Carpas
+                    transparentes, blancas, pisos y climatización A/C outdoor.</p>
+                <div class="value"
+                    style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
+                    data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
+                <a href="#" class="btn primary full" data-action="open-rental-category" data-category="tents"
+                    style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
+                    Disponibilidad</a>
+            </div>
+
+            <!-- STAGES CARD INJECTION (Operación Quirúrgica) -->
+            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 1.2s ease-out forwards;">
+                <h3 data-i18n="rentals-stages-main-title"
+                    style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
+                    Stage & Event Structures</h3>
+                <p data-i18n="rentals-stages-main-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">
+                    Professional staging solutions for concerts, DJs, and live productions.</p>
+                <div class="value"
+                    style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
+                    data-i18n="rentals-stages-price">Presupuesto a medida</div>
+                <a href="#" class="btn primary full" data-action="open-rental-category" data-category="stages"
+                    style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
+                    Disponibilidad</a>
+            </div>
+        </div>
+
+        <!-- DO NOT add images inside the service grid. Gallery is the only place for images. -->
+        <!-- ══ GALLERY SECTION ══ -->
+        <section id="rentals-gallery" style="margin-top: 80px; text-align: center;">
+            <h2 class="section-title"
+                style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 32px; margin-bottom: 40px;"
+                data-i18n="rentals-gallery-title">Galería de Eventos</h2>
+            <div class="grid3" style="gap: 20px;">
+                <div class="glass-card" style="padding: 0; overflow: hidden; border-radius: 15px;">
+                    <img src="./assets/luxury_wedding_blurred_bg.png" alt="Gallery 1"
+                        style="width: 100%; height: 250px; object-fit: cover;">
+                </div>
+                <div class="glass-card" style="padding: 0; overflow: hidden; border-radius: 15px;">
+                    <img src="./assets/luxury_miami_wedding_hero_v2.png" alt="Gallery 2"
+                        style="width: 100%; height: 250px; object-fit: cover;">
+                </div>
+                <div class="glass-card" style="padding: 0; overflow: hidden; border-radius: 15px;">
+                    <img src="./assets/home_hero_luxury_vibe.png" alt="Gallery 3"
+                        style="width: 100%; height: 250px; object-fit: cover;">
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container" style="text-align: center;">
+            <div data-i18n="footer-rights-llc">© 2026 Miami DJ Beat LLC. Pro Division Access.</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=20260226-1"></script>
+    <script src="./translations.js?v=20260322-2"></script>
+    <script src="./i18n.js?v=20260322-2"></script>
+    <script>
+        // ── 1) UTILIDADES DE SESIÓN & SEGURIDAD ──
+        async function getSessionSafe() {
+            try {
+                const db = window.getSupabaseClient?.();
+                if (!db) return null;
+                const { data: { session } } = await db.auth.getSession();
+                return session || null;
+            } catch (e) {
+                console.error('Session error:', e);
+                return null;
+            }
+        }
+
+        function redirectToLogin(action) {
+            try {
+                const base = new URL('./', window.location.href);
+                const url = new URL('login.html', base);
+                url.searchParams.set('redirect', 'rentals');
+                if (action) url.searchParams.set('action', action);
+                window.location.href = url.toString();
+            } catch (e) {
+                console.error('Redirect error:', e);
+                window.location.href = 'login.html';
+            }
+        }
+
+        function openModalSafe(modalId) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return console.warn('Modal not found:', modalId);
+
+            modal.classList.remove('modal-hidden');
+            modal.classList.add('modal-visible');
+
+            document.body.classList.add('body-modal-lock');
+
+            if (window.i18n) {
+                window.i18n.updateUI();
+            }
+        }
+
+        // ── 2) UI DEL HEADER (Blindado) ──
+        async function syncHeaderUI() {
+            try {
+                const session = await getSessionSafe();
+                if (!session) return;
+
+                const db = window.getSupabaseClient?.();
+                if (!db) return;
+
+                const loginBtn = document.getElementById('header-login-btn');
+                const authZone = document.getElementById('header-auth-zone');
+                if (loginBtn) loginBtn.style.display = 'none';
+                if (authZone) authZone.style.display = 'block';
+
+                const { data: dj } = await db.from('dj_profiles').select('photo_url').eq('user_id', session.user.id).single();
+                const avatar = document.querySelector('.avatar');
+                if (avatar && dj?.photo_url) {
+                    avatar.src = dj.photo_url;
+                }
+            } catch (err) {
+                console.warn('syncHeaderUI failed:', err);
+            }
+        }
+
+        // ── 3) ROUTER DE CLICKS CENTRALIZADO ──
+        document.addEventListener('DOMContentLoaded', async () => {
+            syncHeaderUI();
+
+            // Único punto de entrada para acciones de usuario
+            document.addEventListener('click', async (e) => {
+                const btn = e.target.closest('[data-action]');
+                if (!btn) return;
+
+                e.preventDefault();
+                const action = btn.getAttribute('data-action');
+                const session = await getSessionSafe();
+
+                // Protocolo Público: Si no hay sesión -> Login
+                const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                if (!session && !isLocalDev) {
+                    redirectToLogin(action);
+                    return;
+                }
+
+                // sesión activa -> Proceso por pasos
+                switch (action) {
+                    case 'open-talent':
+                        openModalSafe('talent-selector-modal');
+                        break;
+
+                    case 'open-dj':
+                        openModalSafe('dj-modal');
+                        if (window.renderDjHero) window.renderDjHero('weddings', false);
+                        break;
+
+                    case 'open-audio':
+                        window.location.href = 'index.html#contact';
+                        break;
+                }
+            });
+
+            // Lógica interna de cierre
+            window.closeModal = (id) => {
+                const m = document.getElementById(id);
+                if (m) {
+                    m.classList.add('modal-hidden');
+                    m.classList.remove('modal-visible');
+                }
+
+                document.body.classList.remove('body-modal-lock');
+            };
+
+            // Botones de cierre manual
+            document.getElementById('close-mc-modal')?.addEventListener('click', () => closeModal('mc-modal'));
+
+            // Categorías de talento (movidas al router delegador)
+
+            // Lógica interna del MC Modal
+            document.getElementById('check-mc-availability-btn')?.addEventListener('click', async () => {
+                const c1 = document.getElementById('mc-check-view');
+                const c2 = document.getElementById('mc-loading');
+                const c3 = document.getElementById('mc-result-view');
+                if (c1) c1.style.display = 'none';
+                if (c2) c2.style.display = 'block';
+                await new Promise(r => setTimeout(r, 1500));
+                if (c2) c2.style.display = 'none';
+                if (c3) c3.style.display = 'block';
+            });
+        });
+
+    </script>
+    <script src="./data/rentalsData.js?v=20260329-hotfix"></script>
+    <script src="./js/rentals.js?v=20260326-v1"></script>
+    <!-- ── MC MODAL ── -->
+    <div id="mc-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content cinematic-hero-shell">
+
+            <div class="modal-header-nav">
+                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="back-to-selector-mc"
+                        data-i18n="btn-back">Back</button>
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                        data-i18n="btn-home">Home</button>
+                </div>
+            </div>
+
+            <!-- Dual Video Background for Seamless Transitions -->
+            <video class="hero-shell-video" id="mc-video-host" autoplay muted loop playsinline preload="auto"
+                style="transition: opacity 0.6s ease; opacity: 1;">
+                <source src="./assets/mc-club-host/mc-club-host.mp4" type="video/mp4">
+            </video>
+            <video class="hero-shell-video" id="mc-video-maestro" autoplay muted loop playsinline preload="auto"
+                style="transition: opacity 0.6s ease; opacity: 0;">
+                <source src="./assets/mc-club-host/MC.mp4" type="video/mp4">
+            </video>
+
+            <div class="hero-shell-overlay"></div>
+
+            <div class="hero-shell-content">
+
+                <div
+                    style="display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%; width: 100%; z-index: 10; position: relative; padding: 1vh 40px 8vh 40px; box-sizing: border-box;">
+
+                    <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+                        <p class="hero-eyebrow" data-i18n="mc_presentadores_eyebrow"
+                            style="color: var(--gold); font-size: 12px; letter-spacing: 4px; font-weight: 700; margin-bottom: 25px; text-transform: uppercase; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">
+                            Miami DJ Beat Exclusive Talent
+                        </p>
+
+                        <h1 class="cinematic-hero-title" data-i18n="mc_presentadores_title"
+                            style="font-family: 'Playfair Display', serif; font-size: clamp(40px, 6vw, 75px); text-transform: uppercase; margin: 0 auto 30px auto; text-shadow: 0 6px 20px rgba(0,0,0,0.7); line-height: 1.25; text-align: center;">
+                            MC & Presentadores
+                        </h1>
+
+                        <p class="modal-nav-subtitle" data-i18n="mc_presentadores_desc"
+                            style="font-size: clamp(12px, 1.5vw, 17px); color: rgba(255,255,255,0.85); width: 100%; max-width: 1200px; white-space: nowrap; text-align: center; margin: 0 auto; text-shadow: 0 2px 5px rgba(0,0,0,0.8); line-height: 1.5;">
+                            Selecciona el estilo de conducción ideal para llevar la energía y elegancia de tu evento al
+                            siguiente nivel.
+                        </p>
+                    </div>
+
+                    <div
+                        style="display: flex; justify-content: center; gap: 15px; width: 100%; max-width: 1400px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px; margin-top: auto;">
+
+                        <div class="talent-cat-card hero-glass-card hl-type-card" id="mc-card-maestro"
+                            style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
+                            <div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">🎙️</div>
+                            <h3 class="hl-card-title" data-i18n="mc_maestro_title"
+                                style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">
+                                Maestro de Ceremonias</h3>
+                            <p class="hl-card-desc" data-i18n="mc_maestro_desc"
+                                style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">
+                                Dirección formal, protocolo impecable y animación bilingüe elegante.</p>
+                            <div class="hl-card-price" data-i18n="mc_maestro_price"
+                                style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">
+                                Desde $450</div>
+                            <button class="hl-action-btn" data-i18n="mc_cta" data-action="open-contact"
+                                data-service="mc-maestro"
+                                style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;">VER
+                                PRECIO Y DISP</button>
+                        </div>
+
+                        <div class="talent-cat-card hero-glass-card hl-type-card" id="mc-card-host"
+                            style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
+                            <div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">🔥</div>
+                            <h3 class="hl-card-title" data-i18n="mc_host_title"
+                                style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">
+                                Club Host</h3>
+                            <p class="hl-card-desc" data-i18n="mc_host_desc"
+                                style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">
+                                Energía en vivo, hype al máximo y conexión total con el público de la pista.</p>
+                            <div class="hl-card-price" data-i18n="mc_host_price"
+                                style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">
+                                Desde $250</div>
+                            <button class="hl-action-btn" data-i18n="mc_cta" data-action="open-contact"
+                                data-service="mc-host"
+                                style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;">VER
+                                PRECIO Y DISP</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const videoHost = document.getElementById('mc-video-host');
+            const videoMaestro = document.getElementById('mc-video-maestro');
+            const cardMaestro = document.getElementById('mc-card-maestro');
+            const cardHost = document.getElementById('mc-card-host');
+
+            // Set initial state
+            if (videoHost) videoHost.style.opacity = '1';
+            if (videoMaestro) videoMaestro.style.opacity = '0';
+
+            if (cardMaestro) {
+                cardMaestro.addEventListener('mouseenter', () => {
+                    if (videoMaestro) videoMaestro.style.opacity = '1';
+                    if (videoHost) videoHost.style.opacity = '0';
+                });
+            }
+            if (cardHost) {
+                cardHost.addEventListener('mouseenter', () => {
+                    if (videoHost) videoHost.style.opacity = '1';
+                    if (videoMaestro) videoMaestro.style.opacity = '0';
+                });
+            }
+        });
+    </script>
+
+    <div id="talent-selector-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content cinematic-hero-shell">
+
+            <div class="modal-header-nav">
+                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                        data-i18n="btn-home">Home</button>
+                </div>
+                <button class="modal-close-btn cinematic-glass-btn" data-action="close-all">✕</button>
+            </div>
+
+            <!-- Native Background Video Engine -->
+            <video class="hero-shell-video" autoplay muted loop playsinline preload="metadata">
+                <source src="./assets/home/Home for Miami DJ Beat.mp4" type="video/mp4">
+            </video>
+            <div class="hero-shell-overlay"></div>
+
+            <div class="hero-shell-content">
+                <div style="text-align: center; margin-bottom: 40px;">
+                    <p class="hero-eyebrow" data-i18n="talent_selector_eyebrow"
+                        style="margin: 0 auto 10px auto; text-align: center; color: var(--gold); letter-spacing: 3px; font-weight: 600;">
+                        ELEVATING CELEBRATIONS TO UNFORGETTABLE EXPERIENCES
+                    </p>
+                    <h1 data-i18n="talent_selector_title"
+                        style="font-family: 'Playfair Display', serif; font-size: clamp(24px, 3.5vw, 40px); font-weight: 500; text-transform: uppercase; letter-spacing: 1px; line-height: 1.3; max-width: 900px; margin: 0 auto; color: #ffffff; text-shadow: 0 4px 15px rgba(0,0,0,0.6), 0 1px 3px rgba(0,0,0,0.4); padding: 0 20px;">
+                        Select the type of talent you wish to add to your package
+                    </h1>
+                </div>
+
+                <div class="grid5 cinematic-hero-cards">
+                    <!-- DJ / Performance -->
+                    <div class="talent-cat-card hero-glass-card" id="cat-dj" data-action="open-dj">
+                        <div class="hero-card-emoji">🎧</div>
+                        <h3 class="hero-card-title" data-i18n="dj_cat_title">DJ / Performance</h3>
+                        <p class="hero-card-text" data-i18n="dj_cat_desc">The core DJ booking entry point for
+                            specialized events.</p>
+                    </div>
+
+                    <!-- Hora Loca -->
+                    <div class="talent-cat-card hero-glass-card" id="cat-hora-loca" data-action="open-horaloca">
+                        <div class="hero-card-emoji">🎭</div>
+                        <h3 class="hero-card-title" data-i18n="hl_cat_title_1">Hora Loca Experience</h3>
+                        <p class="hero-card-text" data-i18n="hl_cat_desc_1">Personajes temáticos, robots LED y
+                            bailarines.</p>
+                    </div>
+
+                    <!-- Músicos -->
+                    <div class="talent-cat-card hero-glass-card" id="cat-musicians" data-action="open-musicians">
+                        <div class="hero-card-emoji">🎷</div>
+                        <h3 class="hero-card-title" data-i18n="hl_cat_title_2">Músicos en Vivo</h3>
+                        <p class="hero-card-text" data-i18n="hl_cat_desc_2">Saxofonistas, Timbaleros y Cantantes pro.
+                        </p>
+                    </div>
+
+                    <!-- Visuales -->
+                    <div class="talent-cat-card hero-glass-card" id="cat-visuals" data-action="open-visuals">
+                        <div class="hero-card-emoji">📸</div>
+                        <h3 class="hero-card-title" data-i18n="hl_cat_title_3">Captura y Visuales</h3>
+                        <p class="hero-card-text" data-i18n="hl_cat_desc_3">Fotógrafos, Videógrafos y VJs.</p>
+                    </div>
+
+                    <!-- MC y Presentadores -->
+                    <div class="talent-cat-card hero-glass-card" id="cat-mc" data-action="open-mc">
+                        <div class="hero-card-emoji">🎙️</div>
+                        <h3 class="hero-card-title" data-i18n="mc_cat_title">MC y Presentadores</h3>
+                        <p class="hero-card-text" data-i18n="mc_cat_desc">Bilingual Hosts and Professional Event
+                            Masters.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── HORA LOCA CUSTOMIZER MODAL (Step 2) ── -->
+    <div id="horaloca-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content glass-card hl-catalogue-card">
+
+            <div class="modal-header-nav">
+                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="back-to-selector"
+                        data-i18n="btn-back">Back</button>
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                        data-i18n="btn-home">Home</button>
+                </div>
+                <h2 class="modal-nav-title" data-i18n="hl_cat_title_1"
+                    style="opacity: 0; pointer-events: none; margin: 0; padding: 0; position: absolute;">Hora Loca
+                    Experience</h2>
+            </div>
+
+            <div class="hl-hero-container"
+                style="position: relative; width: 100%; height: 100vh; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 12vh;">
+                <video id="hl-hero-video" autoplay muted loop playsinline class="hl-hero-video"
+                    preload="metadata"></video>
+                <div class="hl-hero-overlay"></div>
+
+                <!-- Letras Originales Intactas -->
+                <div class="hl-hero-global-overlay">
+                    <p class="hero-eyebrow hl-hero-global-eyebrow" data-i18n="horaloca_hero_eyebrow">
+                        ELEVATING CELEBRATIONS TO UNFORGETTABLE EXPERIENCES
+                    </p>
+                    <h1 class="cinematic-hero-title hl-hero-global-title" data-i18n="horaloca_hero_title">
+                        HORA LOCA SHOW IN MIAMI
+                    </h1>
+                    <p class="modal-nav-subtitle hl-hero-global-subtitle" data-i18n="horaloca_hero_subtitle">
+                        Select the type of talent you wish to add to your package.
+                    </p>
+                </div>
+
+                <!-- Grilla Inyectada Aislada en el Bottom -->
+                <div id="horaloca-grid"
+                    style="display: flex; justify-content: center; gap: 15px; width: 100%; max-width: 1400px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px;">
+                    <div class="loading-spinner" data-i18n="rental_loading_cat">Cargando catálogo...</div>
+                </div>
+            </div>
+            <!-- Nivel 2: Extras por Paquete -->
+            <div class="hl-extras-section">
+                <div class="hl-extras-header">
+                    <h3 class="hl-extras-title" data-i18n="hl_custom_exp">Personaliza tu experiencia</h3>
+                    <p class="hl-extras-subtitle" data-i18n="hl_add_extras">Agrega personajes adicionales y efectos
+                        especiales a tu paquete base
+                    </p>
+                </div>
+
+                <!-- Grilla preparada para la inyección del Paso 2B -->
+                <div id="hl-extras-grid" class="hl-extras-grid">
+                    <!-- Render dinámico según paquete activo -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── TALENT ROSTER MODAL (Musicians / Visuals) ── -->
+    <div id="roster-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content glass-card live-hero-shell">
+
+            <div class="modal-header-nav">
+                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="back-to-selector-roster"
+                        data-i18n="btn-back">Back</button>
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                        data-i18n="btn-home">Home</button>
+                </div>
+            </div>
+
+            <div class="live-hero-container"
+                style="position: relative; width: 100%; height: 100%; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 12vh;">
+                <video id="live-hero-video" class="live-hero-video" autoplay muted loop playsinline
+                    preload="metadata"></video>
+
+                <div class="live-hero-overlay"></div>
+
+                <!-- Letras Globales Centradas en Top -->
+                <div class="hl-hero-global-overlay" style="z-index: 10;">
+                    <p class="hero-eyebrow hl-hero-global-eyebrow" id="live-hero-eyebrow"
+                        data-i18n="live_music_eyebrow">
+                        PREMIUM LIVE ENTERTAINMENT FOR LUXURY EVENTS
+                    </p>
+                    <h1 class="cinematic-hero-title hl-hero-global-title" id="live-hero-title"
+                        data-i18n="data_mus_sax_name">
+                        Live Saxophone
+                    </h1>
+                    <p class="modal-nav-subtitle hl-hero-global-subtitle" id="live-hero-subtitle"
+                        data-i18n="live_music_subtitle">
+                        Select the top-tier talent you wish to add to your package.
+                    </p>
+                </div>
+
+                <!-- Grilla Inyectada Aislada en el Bottom (Reemplaza Tabs) -->
+                <div id="roster-grid"
+                    style="display: flex; justify-content: center; gap: 15px; width: 100%; max-width: 1400px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px;">
+                    <div class="loading-spinner" data-i18n="rental_loading_cat">Cargando catálogo...</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── DJ PERFORMANCE MODAL (Phase 12 Expansion) ── -->
+    <div id="dj-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content glass-card live-hero-shell">
+
+            <div class="modal-header-nav">
+                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="back-to-selector-dj"
+                        data-i18n="btn-back">Back</button>
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                        data-i18n="btn-home">Home</button>
+                </div>
+            </div>
+
+            <div class="live-hero-container"
+                style="position: relative; width: 100%; height: 100%; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 12vh;">
+                <!-- Dynamic Background Media -->
+                <video id="dj-hero-video" class="live-hero-video" autoplay muted loop playsinline preload="auto"
+                    style="filter: brightness(0.7);"></video>
+
+                <div class="live-hero-overlay"></div>
+
+                <div class="hl-hero-global-overlay" style="z-index: 10;">
+                    <p class="hero-eyebrow hl-hero-global-eyebrow" id="dj-hero-eyebrow" data-i18n="dj_perf_eyebrow">
+                        PREMIUM DJ CURATION
+                    </p>
+                    <h1 class="cinematic-hero-title hl-hero-global-title" id="dj-hero-title" data-i18n="dj_perf_title">
+                        DJ / Performance
+                    </h1>
+                    <p class="modal-nav-subtitle hl-hero-global-subtitle" id="dj-hero-subtitle"
+                        data-i18n="dj_perf_subtitle">
+                        Select the specialized DJ talent for your specific event type.
+                    </p>
+                </div>
+
+                <!-- Empty Internal Category Grid -->
+                <div id="dj-roster-grid"
+                    style="display: flex; justify-content: center; gap: 15px; width: 100%; max-width: 1400px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px;">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── FX CINEMATIC HERO MODAL (Phase 14) ── -->
+    <div id="fx-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content cinematic-hero-shell">
+
+            <div class="modal-header-nav">
+                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="back-to-selector-fx"
+                        data-i18n="btn-back">Back</button>
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                        data-i18n="btn-home">Home</button>
+                </div>
+            </div>
+
+            <video class="hero-shell-video" id="fx-hero-video" autoplay muted loop playsinline preload="auto"
+                style="opacity: 0.9; filter: brightness(0.9); object-fit: cover; width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 0; pointer-events: none;">
+                <source src="./assets/Special_Effects/SPARKULAR.mp4" type="video/mp4">
+            </video>
+
+            <div class="hero-shell-overlay" style="pointer-events: none; z-index: 2;"></div>
+
+            <div class="hero-shell-content" style="max-width: 100%; padding: 120px 0 40px 0;">
+                <div
+                    style="display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%; width: 100%; z-index: 10; position: relative; padding: 4vh 0 8vh 0; box-sizing: border-box;">
+
+                    <div
+                        style="display: flex; flex-direction: column; align-items: center; width: 100%; padding: 0 40px;">
+                        <p class="hero-eyebrow" id="fx-hero-eyebrow" data-i18n="fx_eyebrow"
+                            style="color: var(--gold); font-size: 12px; letter-spacing: 4px; font-weight: 700; margin-bottom: 20px; text-transform: uppercase; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">
+                            PREMIUM VISUAL FX
+                        </p>
+
+                        <h1 class="cinematic-hero-title" id="fx-hero-title" data-i18n="fx_title"
+                            style="font-family: 'Playfair Display', serif; font-size: clamp(40px, 6vw, 75px); text-transform: uppercase; margin: 0 auto 20px auto; text-shadow: 0 6px 20px rgba(0,0,0,0.7); line-height: 1.25; text-align: center;">
+                            Efectos Especiales
+                        </h1>
+
+                        <p class="modal-nav-subtitle" id="fx-hero-subtitle" data-i18n="fx_subtitle"
+                            style="font-size: clamp(12px, 1.5vw, 17px); color: rgba(255,255,255,0.85); width: 100%; max-width: 1200px; white-space: nowrap; text-align: center; margin: 0 auto; text-shadow: 0 2px 5px rgba(0,0,0,0.8); line-height: 1.5;">
+                            Elevate the energy of your event with stunning visual effects.
+                        </p>
+                    </div>
+
+                    <div id="fx-roster-grid"
+                        style="display: flex; justify-content: center; gap: 15px; width: 100%; max-width: 100%; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 80px 20px 80px; align-items: stretch;">
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── LIGHTING CINEMATIC HERO MODAL (Phase 15) ── -->
+    <div id="lighting-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content cinematic-hero-shell">
+
+            <div class="modal-header-nav">
+                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="back-to-selector-lighting"
+                        data-i18n="btn-back">Back</button>
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                        data-i18n="btn-home">Home</button>
+                </div>
+            </div>
+
+            <video class="hero-shell-video" id="lighting-hero-video" autoplay muted loop playsinline preload="auto"
+                style="opacity: 0.9; filter: brightness(0.9); object-fit: cover; width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 0; pointer-events: none;">
+                <source src="./assets/Special_Effects/Moving_Head_Lights.mp4" type="video/mp4">
+            </video>
+
+            <div class="hero-shell-overlay" style="pointer-events: none; z-index: 2;"></div>
+
+            <div class="hero-shell-content" style="max-width: 100%; padding: 120px 0 40px 0;">
+                <div
+                    style="display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%; width: 100%; z-index: 10; position: relative; padding: 4vh 0 8vh 0; box-sizing: border-box;">
+
+                    <div
+                        style="display: flex; flex-direction: column; align-items: center; width: 100%; padding: 0 40px;">
+                        <p class="hero-eyebrow" id="lighting-hero-eyebrow" data-i18n="lighting_eyebrow"
+                            style="color: var(--gold); font-size: 12px; letter-spacing: 4px; font-weight: 700; margin-bottom: 20px; text-transform: uppercase; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">
+                            PREMIUM CLUB & ARCHITECTURAL
+                        </p>
+
+                        <h1 class="cinematic-hero-title" id="lighting-hero-title" data-i18n="lighting_title"
+                            style="font-family: 'Playfair Display', serif; font-size: clamp(40px, 6vw, 75px); text-transform: uppercase; margin: 0 auto 20px auto; text-shadow: 0 6px 20px rgba(0,0,0,0.7); line-height: 1.25; text-align: center;">
+                            Iluminación & Pantallas LED
+                        </h1>
+
+                        <p class="modal-nav-subtitle" id="lighting-hero-subtitle" data-i18n="lighting_subtitle"
+                            style="font-size: clamp(12px, 1.5vw, 17px); color: rgba(255,255,255,0.85); width: 100%; max-width: 1200px; white-space: nowrap; text-align: center; margin: 0 auto; text-shadow: 0 2px 5px rgba(0,0,0,0.8); line-height: 1.5;">
+                            Transform any venue into an elite nightlife experience.
+                        </p>
+                    </div>
+
+                    <div id="lighting-roster-grid"
+                        style="display: flex; justify-content: center; gap: 15px; width: 100%; max-width: 100%; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 80px 20px 80px; align-items: stretch;">
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── DJ CHECKOUT MODAL (Phase 2) ── -->
+    <div id="dj-checkout-modal" class="modal-overlay modal-hidden" style="z-index: 9999;">
+        <div class="modal-content glass-card checkout-glass-shell"
+            style="max-width: 600px; padding: 40px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+
+            <div class="checkout-header"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h2 class="cinematic-hero-title"
+                    style="font-size: 2rem; margin: 0; background: linear-gradient(90deg, #fff, #a0a0a0); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                    Secure Booking</h2>
+                <button class="modal-nav-btn cinematic-glass-btn" onclick="closeCheckoutModal()"
+                    style="padding: 8px 15px; font-size: 0.9rem;">Close</button>
+            </div>
+
+            <!-- STEP 1: EVENT DETAILS FORM -->
+            <div id="checkout-step-1" class="checkout-step active">
+                <p style="color: rgba(255,255,255,0.7); margin-bottom: 25px;">Please provide the mandatory event details
+                    to generate your official quote.</p>
+                <form id="checkout-discovery-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label
+                            style="color: #fff; font-size: 0.85rem; font-weight: 500; margin-bottom: 5px; display: block;">Full
+                            Name</label>
+                        <input type="text" id="chk-name" required
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group">
+                        <label
+                            style="color: #fff; font-size: 0.85rem; font-weight: 500; margin-bottom: 5px; display: block;">Email</label>
+                        <input type="email" id="chk-email" required
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group">
+                        <label
+                            style="color: #fff; font-size: 0.85rem; font-weight: 500; margin-bottom: 5px; display: block;">Phone
+                            Number</label>
+                        <input type="tel" id="chk-phone" required
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group">
+                        <label
+                            style="color: #fff; font-size: 0.85rem; font-weight: 500; margin-bottom: 5px; display: block;">Event
+                            Date</label>
+                        <input type="date" id="chk-date" required
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; color-scheme: dark; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group">
+                        <label
+                            style="color: #fff; font-size: 0.85rem; font-weight: 500; margin-bottom: 5px; display: block;">City
+                            / Location</label>
+                        <input type="text" id="chk-city" required
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group">
+                        <label
+                            style="color: #fff; font-size: 0.85rem; font-weight: 500; margin-bottom: 5px; display: block;">Specific
+                            Event Type</label>
+                        <input type="text" id="chk-type" placeholder="e.g. 30th Birthday" required
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group">
+                        <label
+                            style="color: #fff; font-size: 0.85rem; font-weight: 500; margin-bottom: 5px; display: block;">Estimated
+                            Hours</label>
+                        <input type="number" id="chk-hours" value="4" min="1" required
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2; margin-top: 15px;">
+                        <button type="button" onclick="checkoutNextStep()" class="cinematic-play-btn"
+                            style="width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(255, 62, 236, 0.4);">
+                            <span style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                                Generate Invoice Preview <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path d="M5 12h14M12 5l7 7-7 7" />
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- STEP 2: OFFICAL A4 INVOICE PREVIEW -->
+            <div id="checkout-step-2" class="checkout-step"
+                style="display: none; width: 100%; max-width: 800px; margin: 0 auto; background: #eee; padding: 20px 0; border-radius: 8px;">
+
+                <!-- START A4 PRINTABLE ZONE -->
+                <div id="rentals-print-zone"
+                    style="background: #fff; width: 210mm; min-height: 297mm; margin: 0 auto; color: #000; display:block; padding-bottom: 50px;">
+
+                    <!-- ========================================== -->
+                    <!-- PÁGINA 1: RESUMEN EJECUTIVO (AGRUPADO)     -->
+                    <!-- ========================================== -->
+                    <div class="a4-page page-1" style="padding: 15mm; box-sizing: border-box; position: relative;">
+                        <!-- HEADER SIMILAR AL SHOP -->
+                        <div
+                            style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px;">
+                            <div style="width: 140px;">
+                                <img src="./assets/branding/logo-black.png" alt="MDJ Logo"
+                                    style="width: 100%; height: auto;">
+                            </div>
+                            <div style="text-align: right; margin-top: 10px;">
+                                <h1
+                                    style="font-size: 26px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin: 0; color: #111;">
+                                    OFFICIAL QUOTE</h1>
+                                <p style="font-size: 13px; color: #555; margin: 5px 0 0 0; font-weight: 500;">MIAMI DJ
+                                    ENTERTAINMENT & EVENTS LLC</p>
+                                <p style="font-size: 12px; color: #888; margin: 2px 0 0 0;">(305) 555-0199 |
+                                    miamidjbeat@gmail.com</p>
+                            </div>
+                        </div>
+
+                        <!-- META INFO -->
+                        <div
+                            style="display: flex; justify-content: space-between; margin-bottom: 30px; font-size: 13px;">
+                            <div style="max-width: 60%;">
+                                <h3 style="margin: 0 0 5px 0; font-size: 14px; text-transform: uppercase;">Billed To /
+                                    Event Details</h3>
+                                <div style="font-weight: 700; font-size: 18px; margin-bottom: 5px;"
+                                    id="inv-client-name">Loading...</div>
+                                <div id="inv-client-email" style="color:#555;">...</div>
+                                <div id="inv-client-phone" style="color:#555;">...</div>
+                            </div>
+                            <div
+                                style="display: grid; grid-template-columns: max-content max-content; gap: 8px 15px; text-align: right; background: #fafafa; padding: 15px; border-radius: 6px;">
+                                <span style="color:#888;">Date:</span> <strong id="inv-date-display">TBD</strong>
+                                <span style="color:#888;">Location:</span> <strong id="inv-city-display">TBD</strong>
+                                <span style="color:#888;">Hours:</span> <strong id="inv-hours-display">TBD</strong>
+                            </div>
+                        </div>
+
+                        <!-- TABLA RESUMEN -->
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                            <thead>
+                                <tr>
+                                    <th
+                                        style="background: #f4f4f4; padding: 12px 15px; text-align: left; font-size: 11px; text-transform: uppercase; color: #666; border: 1px solid #ddd; border-bottom: 2px solid #ddd;">
+                                        Official Service Packages</th>
+                                    <th
+                                        style="background: #f4f4f4; padding: 12px 15px; text-align: right; font-size: 11px; text-transform: uppercase; color: #666; border: 1px solid #ddd; border-bottom: 2px solid #ddd; width: 120px;">
+                                        Line Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inv-summary-body">
+                                <!-- JS INJECTS CATEGORY GROUPS HERE -->
+                            </tbody>
+                        </table>
+
+                        <!-- TOTALS EXCEL GRID -->
+                        <div style="width: 380px; margin-left: auto; display: grid; gap: 10px; padding-top: 10px;">
+                            <div
+                                style="display: grid; grid-template-columns: 1fr 100px; gap: 20px; text-align: right; font-size: 14px; font-weight: 600; color: #555;">
+                                <span>Subtotal</span><span id="inv-subtotal" style="color:#000;">$0.00</span>
+                            </div>
+                            <div
+                                style="display: grid; grid-template-columns: 1fr 100px; gap: 20px; text-align: right; font-size: 14px; font-weight: 600; color: #cc0c39; border-top: 1px solid #eee; padding-top: 10px;">
+                                <span>Deposit Required (30%)</span><span id="inv-deposit"
+                                    style="color:#cc0c39;">$0.00</span>
+                            </div>
+                            <div
+                                style="display: grid; grid-template-columns: 1fr 100px; gap: 20px; text-align: right; font-size: 20px; font-weight: 900; color: #000; border-top: 2px solid #000; padding-top: 10px; margin-top: 5px;">
+                                <span>Total / Balance</span><span id="inv-balance" style="color:#000;">$0.00</span>
+                            </div>
+                        </div>
+
+                    </div> <!-- FIN PÁGINA 1 -->
+
+                    <div style="page-break-before: always; height: 1px; background: #eee; margin: 40px 0; width: 100%;">
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- PÁGINA 2: ITEMIZATION TÉCNICA (DETALLADA)  -->
+                    <!-- ========================================== -->
+                    <div class="a4-page page-2"
+                        style="padding: 15mm; box-sizing: border-box; page-break-inside: avoid;">
+
+                        <div style="margin-bottom: 20px;">
+                            <h2
+                                style="font-size: 18px; font-weight: 800; text-transform: uppercase; margin: 0; color: #111;">
+                                Technical Addendum & Inventory</h2>
+                            <p style="font-size: 12px; color: #777; margin: 2px 0 0 0;">Itemized breakdown for inventory
+                                allocation and technical review.</p>
+                        </div>
+
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                            <thead>
+                                <tr>
+                                    <th
+                                        style="background: #f4f4f4; padding: 10px 15px; text-align: left; font-size: 10px; text-transform: uppercase; color: #666; border: 1px solid #ddd; border-bottom: 2px solid #ddd;">
+                                        QTY</th>
+                                    <th
+                                        style="background: #f4f4f4; padding: 10px 15px; text-align: left; font-size: 10px; text-transform: uppercase; color: #666; border: 1px solid #ddd; border-bottom: 2px solid #ddd; width: 60%;">
+                                        Detailed Item Description</th>
+                                    <th
+                                        style="background: #f4f4f4; padding: 10px 15px; text-align: right; font-size: 10px; text-transform: uppercase; color: #666; border: 1px solid #ddd; border-bottom: 2px solid #ddd;">
+                                        Unit Price</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inv-detailed-body">
+                                <!-- JS INJECTS EVERY SINGLE ITEM HERE -->
+                            </tbody>
+                        </table>
+
+                    </div> <!-- FIN PÁGINA 2 -->
+
+                </div> <!-- END A4 PRINTABLE ZONE -->
+
+
+                <div style="display: flex; gap: 15px;">
+                    <button type="button" onclick="checkoutPrevStep()" class="cinematic-glass-btn"
+                        style="flex: 1; padding: 15px; border-radius: 8px;">Edit Details</button>
+                    <button id="chk-reserve-btn" type="button" onclick="checkoutSubmit()" class="cinematic-play-btn"
+                        style="flex: 2; border-radius: 8px; box-shadow: 0 0 20px rgba(255, 62, 236, 0.4);">
+                        <span style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                            </svg>
+                            Reserve Your Date
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── DYNAMIC RENTAL CATALOG MODAL (Phase 6 Universal Engine) ── -->
+    <div id="rental-dynamic-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content cinematic-hero-shell">
+
+            <!-- Dynamic Background Multi-Video Engine -->
+            <div id="rental-multi-video-container"
+                style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;">
+                <video class="hero-shell-video rental-bg-vid active-vid" data-category="furniture" autoplay muted loop
+                    playsinline preload="metadata">
+                    <source src="./assets/furniture-decor/dining-tables.mp4" type="video/mp4">
+                </video>
+                <video class="hero-shell-video rental-bg-vid" data-category="tents" autoplay muted loop playsinline
+                    preload="metadata">
+                    <source src="./assets/tents/carpas-main.mp4" type="video/mp4">
+                </video>
+                <video class="hero-shell-video rental-bg-vid" data-category="inflatables" autoplay muted loop
+                    playsinline preload="metadata">
+                    <source src="./assets/inflatables/lite-castle.mp4" type="video/mp4">
+                </video>
+                <video class="hero-shell-video rental-bg-vid" data-category="stages" autoplay muted loop playsinline
+                    preload="metadata">
+                    <source src="./assets/Tent & Event Structures/stage-small.mp4" type="video/mp4">
+                </video>
+                <video class="hero-shell-video rental-bg-vid" data-category="audio" autoplay muted loop playsinline
+                    preload="metadata">
+                    <source src="./assets/audio/pa-small.mp4" type="video/mp4">
+                </video>
+                <video class="hero-shell-video rental-bg-vid" data-category="lighting" autoplay muted loop playsinline
+                    preload="metadata">
+                    <source src="./assets/lighting/led-small.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="hero-shell-overlay" style="z-index: 1;"></div>
+
+            <!-- TOP BLOCK: Header and Text -->
+            <div class="rentals-header"
+                style="background: transparent; border: none; padding-top: 0; width: 100%; position: relative; z-index: 10;">
+                <div class="rentals-header-inner"
+                    style="max-width: 1400px; margin: 0 auto 2vh auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;">
+                    <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                        <button class="modal-nav-btn cinematic-glass-btn" data-action="close-all"
+                            data-i18n="btn-back">Back</button>
+                        <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                            data-i18n="btn-home">Home</button>
+                    </div>
+
+                    <!-- Botonera de pestañas internas eliminada. El modal ahora es exclusivo de la tarjeta que lo invoca. -->
+
+                    <button class="modal-close-btn cinematic-glass-btn" data-action="close-all"
+                        style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;">✕</button>
+                </div>
+
+                <div style="text-align: center; padding-bottom: 0;">
+                    <h2 id="rental-dynamic-title"
+                        style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: clamp(40px, 6vw, 75px); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2; margin: 0 auto 12px auto; text-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                        Catalog</h2>
+                    <p id="rental-dynamic-desc"
+                        style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.85); font-size: clamp(12px, 1.5vw, 17px); font-weight: 300; line-height: 1.6; letter-spacing: 0.3px; max-width: 650px; margin: 0 auto;">
+                        Select quantities from our premium rental catalog.</p>
+                </div>
+            </div>
+
+            <!-- BOTTOM BLOCK: Product Grid Marquee -->
+            <div id="rental-dynamic-grid" style="width: 100%; box-sizing: border-box;">
+                <!-- dynamically injected by rentals.js renderRentalCatalog(categoryId) -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ── DYNAMIC PACKAGE SUMMARY BAR (Phase 1 UI Concept) ── -->
+    <!-- Mantenemos display:flex explícito para visualizar el diseño estático,
+         aunque el JS legacy pueda interactuar con él, no se ha añadido nueva lógica -->
+    <div class="package-summary-bar package-entrance-anim" style="display: none;">
+        <div class="package-summary-content">
+            <div class="package-summary-info">
+                <span class="package-label">Selected</span>
+                <span class="package-item-name">Live Saxophone</span>
+            </div>
+            <div class="package-summary-action">
+                <span class="package-total">$450.00</span>
+                <button class="btn primary package-checkout-btn">Finalizar Selección</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- MDJ Assistant Booth (AI Sales Agent) -->
+    <link rel="stylesheet" href="./mdj-assistant.css" />
+    <script src="./mdj-assistant.js"></script>
+    <div id="mdj-assistant-booth">
+        <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
+        <div class="booth-window">
+            <div class="booth-header">
+                <div class="status-dot"></div>
+                <div style="flex: 1;">
+                    <h3>Booth Assistant</h3>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700;">Sales & Negotiation
+                        Expert</div>
+                </div>
+            </div>
+            <div class="booth-messages"></div>
+            <div class="booth-input-area">
+                <input type="text" placeholder="Type your message here..." />
+                <button class="booth-send-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="booth-trigger" title="Talk to Booth Assistant">
+            <div class="avatar-glow"></div>
+            <div style="font-size: 30px; z-index: 10;">🤖</div>
+        </div>
+    </div>
+
+    <script src="./auth.js"></script>
+</body>
+
+</html>

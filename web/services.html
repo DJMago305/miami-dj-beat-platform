@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Services — Miami DJ Beat</title>
+    <link rel="stylesheet" href="./styles.css?v=20260320-1" />
+    <link rel="stylesheet" href="./profile.css?v=20260320-1" />
+
+</head>
+
+<body class="notranslate">
+    <!-- ESTILO INYECTADO CONTRA EL BRINCO Y PARA PESTAÑAS MAESTRAS -->
+    <style>
+        /* Bloqueo del Modelo de Caja para evitar el "Brinco" de Idioma */
+        .lang-btn {
+            width: 34px !important;
+            text-align: center !important;
+            display: inline-block;
+            box-sizing: border-box;
+            padding: 4px 0 !important;
+            border-radius: 999px !important;
+            opacity: 0.4 !important;
+            transition: all 0.22s ease !important;
+        }
+
+        .lang-btn.active {
+            background: var(--gold) !important;
+            box-shadow: 0 0 12px rgba(197, 160, 89, 0.5) !important;
+            opacity: 1 !important;
+            color: #fff !important;
+        }
+    </style>
+
+    <header class="header" id="mainHeader">
+        <div class="header-top">
+            <div class="container">
+                <div class="brand">
+                    <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+                    <div class="brand-letters-wrapper">
+                        <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters"
+                            class="brand-letters-img">
+                    </div>
+                </div>
+
+                <div class="header-actions" style="gap: 12px !important; background: rgba(255,255,255,0.03); padding: 6px 14px; border-radius: 999px;">
+                    <div class="lang-switcher">
+                        <span class="lang-btn active" data-lang="en">EN</span>
+                        <span class="lang-pipe">|</span>
+                        <span class="lang-btn" data-lang="es">ES</span>
+                    </div>
+
+                    <a href="login.html" class="btn-pill gold" data-i18n="btn-get-pro" id="header-pro-btn" style="display:none;">Obtener PRO</a>
+                    <a href="./login.html" id="header-login-btn" class="btn-pill gold" style="display:none;">Mi Perfil</a>
+
+                    <div class="account" id="header-auth-zone" style="display: flex;">
+                        <button class="account-btn" id="accountBtn" onclick="document.getElementById('accountMenu').classList.toggle('open'); event.stopPropagation();">
+                            <img class="avatar" id="header-avatar-img" src="./assets/dj-avatar-placeholder.png" alt="Avatar" />
+                            <span class="caret">▾</span>
+                        </button>
+                        
+                        <!-- BOTÓN ROJO MAESTRO (Alineado con diseño blindado) -->
+                        <button id="header-logout-btn-visible" class="btn-pill danger" onclick="window.doLogout(event)" style="border: 1px solid rgba(255,0,0,0.8); color: #fff; background: rgba(255,0,0,0.5); cursor: pointer; padding: 6px 14px; border-radius: 20px; font-weight: 600; font-size: 12px; margin-left: 10px; transition: all 0.3s ease;" data-i18n="menu-logout" onmouseover="this.style.background='rgba(255,0,0,1)'; this.style.boxShadow='0 0 15px rgba(255,0,0,0.8)';" onmouseout="this.style.background='rgba(255,0,0,0.5)'; this.style.boxShadow='none';">Logout</button>
+
+                        <!-- Bloque Menú Maestro Limpio -->
+                        <div class="account-menu" id="accountMenu" aria-hidden="true">
+                            <a href="./dj-profile.html" class="menu-item" data-i18n="menu-account">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                My Profile
+                            </a>
+                            <a href="./dj-dashboard.html?tab=settings" class="menu-item" data-i18n="nav-settings">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                                Settings
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <span></span><span></span><span></span>
+                </button>
+                
+                <!-- Overlay Base from Home -->
+                <div class="mobile-overlay" id="mobileMenu">
+                    <nav class="mobile-nav">
+                        <a href="./index.html" data-i18n="nav-home">Home</a>
+                        <a href="./index.html#services" data-i18n="nav-services">Services</a>
+                        <a href="./rentals.html" data-i18n="nav-rentals">Event Services</a>
+                        <a href="./shop.html" style="color:#c5a059;font-weight:800;">Shop</a>
+                        <a href="./dj-tools.html" data-i18n="nav-tools">Tools</a>
+                        <a href="./courses.html">🎓 Academia: Cursos</a>
+                        <a href="./dj-knowledge.html">📚 Academia: Cultura DJ</a>
+                        <a href="./jobs.html" data-i18n="nav-jobs">Jobs</a>
+                        <a href="./index.html#contact" data-i18n="nav-contact">Contacto</a>
+                        <a href="login.html" id="header-login-btn-mobile" data-i18n="btn-login" style="color:var(--gold); font-weight:800;">Login</a>
+                        <a href="./dj-profile.html" id="nav-my-profile-mobile" style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY PROFILE</a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-bottom">
+            <div class="container">
+                <nav class="nav top-nav" id="mainNav">
+                    <a href="./index.html" data-i18n="nav-home">Home</a>
+                    <a href="./index.html#services" data-i18n="nav-services" class="active">Services</a>
+                    <a href="./rentals.html" data-i18n="nav-rentals">Event Services</a>
+                    <a href="./shop.html" style="color:var(--gold); font-weight:800;">Shop</a>
+                    <a href="./dj-tools.html" data-i18n="nav-tools">Tools</a>
+                    <div class="nav-item-dropdown">
+                        <a href="#" style="cursor: default;">Academia <span class="caret">▾</span></a>
+                        <div class="nav-dropdown-menu">
+                            <a href="./courses.html">Cursos y Certificación</a>
+                            <a href="./dj-knowledge.html">Cultura y Biblioteca DJ</a>
+                        </div>
+                    </div>
+                    <a href="./dj-profile.html?tab=flow" id="nav-flow-link" style="color:var(--gold); display:none; font-weight:800;">Flow</a>
+                    <a href="./jobs.html" data-i18n="nav-jobs">Jobs</a>
+                    <a href="./index.html#contact" data-i18n="nav-contact">Contact</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- ══ CINEMATIC BACKGROUND ══ -->
+    <div class="hero-kb-bg"
+        style="background-image: url('./assets/home_hero_4k_wide.png'); opacity: 0.3; filter: blur(5px);"></div>
+    <div class="hero-video-overlay"
+        style="background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
+
+    <main class="container services-page-container">
+        <!-- SECTION 1: HERO / HOOK -->
+        <div class="services-header-region" style="margin-top: 80px; text-align: center; margin-bottom: 60px;">
+            <h1 class="services-headline"
+                style="font-size: 3rem; font-weight: 800; background: linear-gradient(90deg, #c5a059, #f9df9f); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                Miami DJ Beat Services</h1>
+            <p class="services-subheadline"
+                style="font-size: 1.2rem; color: #a0a0a0; max-width: 600px; margin: 20px auto 30px;">
+                Luxury DJ, MC, sound, and event experiences designed to move the crowd.
+            </p>
+            <a href="#contact" class="btn primary gold" style="padding: 15px 40px; font-size: 1.1rem;">Request a
+                Quote</a>
+        </div>
+
+        <!-- SECTION 2: PACKAGES -->
+        <h2
+            style="text-align: center; font-size: 2rem; border-bottom: 2px solid #c5a059; display: inline-block; padding-bottom: 10px; margin: 40px auto; width: 100%;">
+            Elite Service Packages</h2>
+
+        <div class="grid3" style="gap: 30px; margin-bottom: 80px;">
+
+            <!-- Nightclub & Festival -->
+            <div class="glass-card"
+                style="padding: 30px; text-align: left; border-top: 4px solid #c5a059; display: flex; flex-direction: column;">
+                <h3 style="font-size: 1.5rem; color: #fff; margin-bottom: 10px;">Nightclub & Festival Experience</h3>
+                <p style="color: #c5a059; font-weight: 700; font-size: 1.1rem; margin-bottom: 25px;">Custom quote based
+                    on event scope</p>
+                <ul style="list-style: none; padding: 0; margin-bottom: 30px; flex-grow: 1; color: #ccc;">
+                    <li style="margin-bottom: 10px;">✓ <b>DJ performance</b> (High-energy sets)</li>
+                    <li style="margin-bottom: 10px;">✓ <b>MC</b> (Optional / Add-on)</li>
+                    <li style="margin-bottom: 10px;">✓ <b>Sound System:</b> Rider-compliant Club Setup</li>
+                    <li style="margin-bottom: 10px;">✓ <b>Hours of Service:</b> Extended blocks</li>
+                    <li style="margin-bottom: 10px;">✓ <b>Planning / Coordination:</b> Setlist curating & Rider check
+                    </li>
+                    <li style="margin-bottom: 10px;">✓ <b>Add-ons:</b> FX, CO2 Jets, Visuals Sync</li>
+                </ul>
+                <a href="#contact" class="btn outline full" style="border-color: #c5a059; color: #c5a059;">Select
+                    Package</a>
+            </div>
+
+            <!-- Elite Corporate -->
+            <div class="glass-card"
+                style="padding: 30px; text-align: left; border-top: 4px solid #fff; display: flex; flex-direction: column; transform: scale(1.05); z-index: 2; box-shadow: 0 10px 40px rgba(197, 160, 89, 0.2);">
+                <div
+                    style="background: #c5a059; color: #000; text-align: center; font-weight: 800; font-size: 0.8rem; padding: 5px; border-radius: 4px; margin-bottom: 15px;">
+                    MOST POPULAR</div>
+                <h3 style="font-size: 1.5rem; color: #fff; margin-bottom: 10px;">Elite Corporate Experience</h3>
+                <p style="color: #c5a059; font-weight: 700; font-size: 1.1rem; margin-bottom: 25px;">Pricing available
+                    upon inquiry</p>
+                <ul style="list-style: none; padding: 0; margin-bottom: 30px; flex-grow: 1; color: #ccc;">
+                    <li style="margin-bottom: 10px;">✓ <b>DJ performance</b> (Brand-aligned aesthetic)</li>
+                    <li style="margin-bottom: 10px;">✓ <b>MC</b> (Professional Hosting included)</li>
+                    <li style="margin-bottom: 10px;">✓ <b>Sound System:</b> Discreet Corporate Audio Setup</li>
+                    <li style="margin-bottom: 10px;">✓ <b>Hours of Service:</b> Cocktail to Dancefloor</li>
+                    <li style="margin-bottom: 10px;">✓ <b>Planning / Coordination:</b> Timeline & Run of Show</li>
+                    <li style="margin-bottom: 10px;">✓ <b>Add-ons:</b> Wireless Mics, Uplighting</li>
+                </ul>
+                <a href="#contact" class="btn primary full gold" style="color: #000;">Select Package</a>
+            </div>
+
+            <!-- Premium Wedding -->
+            <div class="glass-card"
+                style="padding: 30px; text-align: left; border-top: 4px solid #c5a059; display: flex; flex-direction: column;">
+                <h3 style="font-size: 1.5rem; color: #fff; margin-bottom: 10px;">Premium Wedding Experience</h3>
+                <p style="color: #c5a059; font-weight: 700; font-size: 1.1rem; margin-bottom: 25px;">Pricing available
+                    upon inquiry</p>
+                <ul style="list-style: none; padding: 0; margin-bottom: 30px; flex-grow: 1; color: #ccc;">
+                    <li style="margin-bottom: 10px;">✓ <b>DJ performance</b> (Open format & tailored)</li>
+                    <li style="margin-bottom: 10px;">✓ <b>MC</b> (Bilingual Master of Ceremonies)</li>
+                    <li style="margin-bottom: 10px;">✓ <b>Sound System:</b> Multi-zone Setup (Ceremony to Reception)
+                    </li>
+                    <li style="margin-bottom: 10px;">✓ <b>Hours of Service:</b> Full-day coverage options</li>
+                    <li style="margin-bottom: 10px;">✓ <b>Planning / Coordination:</b> Music Curation Meetings</li>
+                    <li style="margin-bottom: 10px;">✓ <b>Add-ons:</b> Hora Loca, Cinematic Lighting</li>
+                </ul>
+                <a href="#contact" class="btn outline full" style="border-color: #c5a059; color: #c5a059;">Select
+                    Package</a>
+            </div>
+
+        </div>
+
+        <!-- SECTION 3: SOCIAL PROOF -->
+        <div class="glass-card"
+            style="padding: 40px; text-align: center; margin-bottom: 80px; border: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.5);">
+            <h3 style="color: #c5a059; margin-bottom: 15px; font-weight: 700; letter-spacing: 2px;">TRUSTED BY TOP
+                VENUES & BRANDS IN MIAMI</h3>
+            <p style="color: #a0a0a0; max-width: 600px; margin: 0 auto; font-style: italic; font-size: 1.1rem;">"Not
+                just a playlist. An orchestrated experience driven by energy, timing, and crowd reading."</p>
+        </div>
+
+        <!-- SECTION 4: BOOKING / CONTACT FORM -->
+        <div id="contact" class="glass-card"
+            style="padding: 50px; text-align: center; max-width: 800px; margin: 0 auto 100px; border-top: 4px solid #c5a059;">
+            <h2 style="font-size: 2.2rem; color: #fff; margin-bottom: 15px;">Ready to elevate your event?</h2>
+            <p style="color: #ccc; margin-bottom: 30px;">Fill out the form below to receive a custom quote. Dates lock
+                in fast.</p>
+
+            <form action="https://formsubmit.co/booking@miamidjbeat.com" method="POST"
+                style="display: flex; flex-direction: column; gap: 20px; text-align: left;">
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <label style="display: block; margin-bottom: 5px; color: #fff; font-size: 0.9rem;">Full
+                            Name</label>
+                        <input type="text" name="Nombre" placeholder="John Doe"
+                            style="width: 100%; padding: 12px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4); color: #fff; box-sizing: border-box;"
+                            required>
+                    </div>
+                    <div style="flex: 1; min-width: 250px;">
+                        <label style="display: block; margin-bottom: 5px; color: #fff; font-size: 0.9rem;">Phone /
+                            Email</label>
+                        <input type="text" name="Contacto_Telefono_Email" placeholder="Contact info"
+                            style="width: 100%; padding: 12px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4); color: #fff; box-sizing: border-box;"
+                            required>
+                    </div>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; color: #fff; font-size: 0.9rem;">Event Type &
+                        Scope (Package)</label>
+                    <select name="Tipo_de_Evento_Paquete"
+                        style="width: 100%; padding: 12px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4); color: #fff; box-sizing: border-box;">
+                        <option value="Nightclub & Festival">Nightclub & Festival</option>
+                        <option value="Elite Corporate">Elite Corporate</option>
+                        <option value="Premium Wedding">Premium Wedding</option>
+                        <option value="Other / Custom">Other / Custom</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; color: #fff; font-size: 0.9rem;">Event Details
+                        (Date, Venue, Estimated Guests)</label>
+                    <textarea name="Detalles_Evento" rows="4" placeholder="Tell us about your event..."
+                        style="width: 100%; padding: 12px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4); color: #fff; resize: vertical; box-sizing: border-box;"
+                        required></textarea>
+                </div>
+                <button type="submit" class="btn primary gold"
+                    style="padding: 15px; font-size: 1.1rem; border: none; cursor: pointer; color: #000; font-weight: 800; margin-top: 10px;">Request
+                    a Quote</button>
+            </form>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container" style="text-align: center;">
+            <div data-i18n="footer-rights-llc">© 2026 Miami DJ Beat LLC. Pro Division Access.</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=20260226-1"></script>
+    <script src="./translations.js?v=20260226-1"></script>
+    <script src="./i18n.js?v=20260226-1"></script>
+    <script>
+        // ── 1) UTILIDADES DE SESIÓN & SEGURIDAD ──
+        async function getSessionSafe() {
+            try {
+                const db = window.getSupabaseClient?.();
+                if (!db) return null;
+                const { data: { session } } = await db.auth.getSession();
+                return session || null;
+            } catch (e) {
+                console.error('Session error:', e);
+                return null;
+            }
+        }
+
+        function redirectToLogin(action) {
+            try {
+                const base = new URL('./', window.location.href);
+                const url = new URL('login.html', base);
+                url.searchParams.set('redirect', 'rentals');
+                if (action) url.searchParams.set('action', action);
+                window.location.href = url.toString();
+            } catch (e) {
+                console.error('Redirect error:', e);
+                window.location.href = 'login.html';
+            }
+        }
+
+        function openModalSafe(modalId) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return console.warn('Modal not found:', modalId);
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        // ── 2) UI DEL HEADER (Blindado) ──
+        async function syncHeaderUI() {
+            try {
+                const session = await getSessionSafe();
+                if (!session) return;
+
+                const db = window.getSupabaseClient?.();
+                if (!db) return;
+
+                const loginBtn = document.getElementById('header-login-btn');
+                const authZone = document.getElementById('header-auth-zone');
+                if (loginBtn) loginBtn.style.display = 'none';
+                if (authZone) authZone.style.display = 'block';
+
+                const { data: dj } = await db.from('dj_profiles').select('photo_url').eq('user_id', session.user.id).single();
+                const avatar = document.querySelector('.avatar');
+                if (avatar && dj?.photo_url) {
+                    avatar.src = dj.photo_url;
+                }
+            } catch (err) {
+                console.warn('syncHeaderUI failed:', err);
+            }
+        }
+
+        // ── 3) ROUTER DE CLICKS CENTRALIZADO ──
+        document.addEventListener('DOMContentLoaded', async () => {
+            syncHeaderUI();
+
+            // Único punto de entrada para acciones de usuario
+            document.addEventListener('click', async (e) => {
+                const btn = e.target.closest('[data-action]');
+                if (!btn) return;
+
+                e.preventDefault();
+                const action = btn.getAttribute('data-action');
+                const session = await getSessionSafe();
+
+                // Protocolo Público: Si no hay sesión -> Login
+                if (!session) {
+                    redirectToLogin(action);
+                    return;
+                }
+
+                // sesión activa -> Proceso por pasos
+                switch (action) {
+                    case 'open-mc':
+                        openModalSafe('mc-modal');
+                        const v1 = document.getElementById('mc-check-view');
+                        const v2 = document.getElementById('mc-result-view');
+                        const v3 = document.getElementById('mc-loading');
+                        if (v1) v1.style.display = 'block';
+                        if (v2) v2.style.display = 'none';
+                        if (v3) v3.style.display = 'none';
+                        break;
+
+                    case 'open-talent':
+                        openModalSafe('talent-selector-modal');
+                        break;
+
+                    case 'open-audio':
+                        window.location.href = 'index.html#contact';
+                        break;
+                }
+            });
+
+            // Lógica interna de cierre
+            window.closeModal = (id) => {
+                const m = document.getElementById(id);
+                if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+            };
+
+            // Botones de cierre manual
+            document.getElementById('close-mc-modal')?.addEventListener('click', () => closeModal('mc-modal'));
+            document.getElementById('close-talent-modal')?.addEventListener('click', () => closeModal('talent-selector-modal'));
+            document.getElementById('close-horaloca-modal')?.addEventListener('click', () => closeModal('horaloca-modal'));
+            document.getElementById('close-roster-modal')?.addEventListener('click', () => closeModal('roster-modal'));
+
+            // Navegación entre modales
+            document.getElementById('back-to-selector')?.addEventListener('click', () => {
+                document.getElementById('horaloca-modal').style.display = 'none';
+                document.getElementById('talent-selector-modal').style.display = 'flex';
+            });
+            document.getElementById('back-to-selector-roster')?.addEventListener('click', () => {
+                document.getElementById('roster-modal').style.display = 'none';
+                document.getElementById('talent-selector-modal').style.display = 'flex';
+            });
+
+            // Categorías de talento
+            document.getElementById('cat-hora-loca')?.addEventListener('click', () => {
+                document.getElementById('talent-selector-modal').style.display = 'none';
+                document.getElementById('horaloca-modal').style.display = 'flex';
+                if (typeof renderHoraLocaCharacters === 'function') renderHoraLocaCharacters();
+            });
+            document.getElementById('cat-musicians')?.addEventListener('click', () => {
+                document.getElementById('talent-selector-modal').style.display = 'none';
+                document.getElementById('roster-modal').style.display = 'flex';
+                if (typeof renderRoster === 'function') renderRoster('musicians');
+            });
+            document.getElementById('cat-visuals')?.addEventListener('click', () => {
+                document.getElementById('talent-selector-modal').style.display = 'none';
+                document.getElementById('roster-modal').style.display = 'flex';
+                if (typeof renderRoster === 'function') renderRoster('visuals');
+            });
+
+            // Lógica interna del MC Modal
+            document.getElementById('check-mc-availability-btn')?.addEventListener('click', async () => {
+                const c1 = document.getElementById('mc-check-view');
+                const c2 = document.getElementById('mc-loading');
+                const c3 = document.getElementById('mc-result-view');
+                if (c1) c1.style.display = 'none';
+                if (c2) c2.style.display = 'block';
+                await new Promise(r => setTimeout(r, 1500));
+                if (c2) c2.style.display = 'none';
+                if (c3) c3.style.display = 'block';
+            });
+        });
+
+    </script>
+    <!-- Removed services-catalog.js as per funnel refactor -->
+    <!-- MDJ Assistant Booth (AI Sales Agent) -->
+    <link rel="stylesheet" href="./mdj-assistant.css" />
+    <script src="./mdj-assistant.js"></script>
+    <div id="mdj-assistant-booth">
+        <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
+        <div class="booth-window">
+            <div class="booth-header">
+                <div class="status-dot"></div>
+                <div style="flex: 1;">
+                    <h3>Booth Assistant</h3>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700;">Sales & Negotiation
+                        Expert</div>
+                </div>
+            </div>
+            <div class="booth-messages"></div>
+            <div class="booth-input-area">
+                <input type="text" placeholder="Type your message here..." />
+                <button class="booth-send-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="booth-trigger" title="Talk to Booth Assistant">
+            <div class="avatar-glow"></div>
+            <div style="font-size: 30px; z-index: 10;">🤖</div>
+        </div>
+    </div>
+
+</body>
+
+</html>

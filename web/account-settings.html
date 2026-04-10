@@ -1,0 +1,1190 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Account Settings — Miami DJ Beat</title>
+  <meta name="description" content="Manage your account settings and preferences." />
+  <link rel="stylesheet" href="./styles.css?v=20260226-1" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-config.js?v=20260226-1"></script>
+  <style>
+    .lang-switcher {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 4px !important;
+      padding: 3px !important;
+      border-radius: 999px !important;
+      background: rgba(255, 255, 255, 0.06) !important;
+      user-select: none !important;
+      -webkit-user-select: none !important;
+    }
+
+    .lang-pipe {
+      display: none !important;
+    }
+
+    .lang-btn {
+      padding: 4px 10px !important;
+      border-radius: 999px !important;
+      opacity: 0.65 !important;
+      transition: all 0.22s ease !important;
+    }
+
+    .lang-btn.active {
+      background: rgba(212, 175, 55, 0.22) !important;
+      box-shadow: 0 0 10px rgba(212, 175, 55, 0.22) !important;
+      opacity: 1 !important;
+      color: #fff !important;
+    }
+
+    .lang-btn:hover {
+      opacity: 0.9 !important;
+    }
+
+
+
+    /* Account Base */
+
+    /* Account Menu Header */
+    #accountMenu {
+      background: rgba(28, 28, 30, 0.85) !important;
+      backdrop-filter: blur(20px) saturate(180%) !important;
+      -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      border-radius: 12px !important;
+      padding: 6px !important;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset !important;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+      min-width: 170px !important;
+
+      /* Positioning & Animation */
+      position: absolute !important;
+      top: calc(100% + 12px) !important;
+      right: 0 !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      transform: translateY(-8px) scale(0.95) !important;
+      transform-origin: top right !important;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+      z-index: 9999 !important;
+      pointer-events: none !important;
+    }
+
+    #accountMenu.open {
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: translateY(0) scale(1) !important;
+      pointer-events: auto !important;
+    }
+
+    #accountMenu .menu-item {
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+      padding: 8px 12px !important;
+      color: rgba(255, 255, 255, 0.85) !important;
+      font-size: 13px !important;
+      font-weight: 500 !important;
+      letter-spacing: -0.1px !important;
+      border-radius: 8px !important;
+      transition: background 0.15s ease, color 0.15s ease !important;
+      text-decoration: none !important;
+      background: transparent !important;
+    }
+
+    #accountMenu .menu-item svg {
+      opacity: 0.55 !important;
+      transition: opacity 0.15s ease !important;
+    }
+
+    #accountMenu .menu-item:hover {
+      background: rgba(255, 255, 255, 0.12) !important;
+      color: #fff !important;
+    }
+
+    #accountMenu .menu-item:hover svg {
+      opacity: 0.9 !important;
+    }
+
+
+    /* =========================================
+       ACCOUNT SETTINGS (MAC OS STYLE)
+       ========================================= */
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Centrado de Pantalla y Prevención de Solapamiento con Header */
+    .account-layout {
+      max-width: 680px;
+      margin: 160px auto 80px auto; /* 160px despeja el header global */
+      padding: 0 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* System Cards Base */
+    .system-card {
+      background: #111112;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      width: 100%;
+      max-width: 640px;
+      box-sizing: border-box;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+
+
+    .system-card-header {
+      padding: 20px 32px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+
+    .system-card-header h3 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: -0.1px;
+    }
+
+
+    .system-card-header svg {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+
+    .system-card-body {
+      padding: 24px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+
+    .system-card-footer {
+      padding: 16px 32px;
+      background: rgba(0, 0, 0, 0.2);
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      display: flex;
+      justify-content: flex-end;
+    }
+
+
+    /* Forms & Inputs */
+    .form-row {
+      display: flex;
+      gap: 20px;
+    }
+
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.45);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+
+    .sys-input {
+      background: #1c1c1e;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-family: inherit;
+      font-size: 14px;
+      color: #fff;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+      outline: none;
+    }
+
+
+    .sys-input:focus {
+      border-color: rgba(255, 255, 255, 0.3);
+      background: #242426;
+    }
+
+
+    .sys-input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+
+    select.sys-input {
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 16px;
+      padding-right: 40px;
+    }
+
+
+    /* Avatar specific group */
+    .avatar-group {
+      flex-direction: row;
+      align-items: center;
+      gap: 20px;
+      padding-bottom: 8px;
+    }
+
+
+    .system-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+
+    /* Buttons */
+    .sys-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background-color 0.2s ease, color 0.2s ease;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+
+
+    .sys-btn.primary {
+      background: #fff;
+      color: #000;
+    }
+
+
+    .sys-btn.primary:hover {
+      background: #e5e5ea;
+    }
+
+    /* Antisalteo & Success Feedback para Tooling */
+    #btn-save-personal {
+      min-width: 95px; /* Congela el tamaño para que Saving... no lo estire */
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    #btn-save-personal.success-pulse {
+      background: #D4AF37 !important;
+      color: #000 !important;
+      box-shadow: 0 0 15px rgba(212, 175, 55, 0.6) !important;
+      transform: scale(1.05) !important;
+    }
+
+
+    .sys-btn.secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+
+
+    .sys-btn.secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+
+    .sys-btn.ghost {
+      background: transparent;
+      border: 1px solid transparent;
+      color: rgba(255, 255, 255, 0.7);
+      padding: 8px 12px;
+    }
+
+
+    .sys-btn.ghost:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+
+    /* Payment Placeholder State */
+    .payment-placeholder {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+    }
+
+
+    .payment-placeholder svg {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+
+    .payment-placeholder-text {
+      flex: 1;
+    }
+
+
+    .payment-placeholder-text h4 {
+      margin: 0 0 2px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      letter-spacing: -0.1px;
+    }
+
+
+    .payment-placeholder-text p {
+      margin: 0;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+
+    /* Payment Methods Refinement */
+    .payment-options-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .payment-option-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .payment-option-row:first-child {
+      border-top: none;
+      padding-top: 0;
+    }
+
+    .payment-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .payment-info {
+      flex: 1;
+    }
+
+    .payment-info h4 {
+      margin: 0 0 4px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: -0.1px;
+    }
+
+    .payment-info p {
+      margin: 0;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.45);
+      line-height: 1.4;
+    }
+
+    .sys-btn.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .payment-subpanel {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 12px;
+      margin-bottom: 4px;
+    }
+
+    .payment-subpanel h5 {
+      margin: 0 0 8px 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: #D4AF37;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .payment-subpanel p {
+      margin: 0;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.6);
+      line-height: 1.5;
+    }
+
+    /* Target Exit Button override */
+    .exit-btn-override:hover {
+      background: rgba(255, 255, 255, 0.12) !important;
+      color: #fff !important;
+      border-color: rgba(255, 255, 255, 0.25) !important;
+    }
+
+
+    /* Apple Toggle Switch */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+    }
+
+
+    .toggle-row .toggle-label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+
+    .toggle-row .toggle-label span {
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+
+    .toggle-row .toggle-label p {
+      margin: 0;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+
+    .apple-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+
+    .apple-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.15);
+      transition: .2s;
+      border-radius: 34px;
+    }
+
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+
+    input:checked+.slider {
+      background-color: #30D158;
+    }
+
+
+    input:checked+.slider:before {
+      transform: translateX(20px);
+    }
+
+
+    @media (max-width: 768px) {
+      .form-row {
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .system-card-header,
+      .system-card-body,
+      .system-card-footer {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+
+      .payment-placeholder {
+        flex-direction: column;
+        text-align: center;
+      }
+
+    }
+  </style>
+</head>
+
+<body class="notranslate">
+  <!-- CABECERA ESTÁNDAR GLOBAL -->
+  <header class="header" id="mainHeader">
+    <div class="header-top">
+      <div class="container">
+
+        <div class="brand">
+          <a href="./index.html" style="display:flex; align-items:center; text-decoration:none;">
+            <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+            <div class="brand-letters-wrapper">
+              <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters"
+                class="brand-letters-img">
+            </div>
+          </a>
+        </div>
+
+        <div class="header-actions"
+          style="gap: 12px !important; background: rgba(255,255,255,0.03); padding: 6px 14px; border-radius: 999px;">
+          <div class="lang-switcher" translate="no">
+            <span class="lang-btn active" data-lang="es">ES</span>
+            <span class="lang-pipe">|</span>
+            <span class="lang-btn" data-lang="en">EN</span>
+          </div>
+
+          <a href="login.html" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Obtener PRO</a>
+
+          <a href="./index.html" id="header-home-return-btn" class="btn-pill" data-i18n="nav-home">Inicio</a>
+
+          <div class="account" id="header-auth-zone" style="visibility: hidden; opacity: 0; pointer-events: none;">
+            <button class="account-btn" id="accountBtn"
+              onclick="document.getElementById('accountMenu').classList.toggle('open'); event.stopPropagation();">
+              <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="Avatar" id="navAvatarImg" />
+              <span class="caret">▾</span>
+            </button>
+
+            <div class="account-menu" id="accountMenu" aria-hidden="true">
+              <a href="./account-profile.html" class="menu-item">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                My Profile
+              </a>
+              <a href="./account-settings.html" class="menu-item" style="background: rgba(255,255,255,0.05);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path
+                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                  </path>
+                </svg>
+                Settings
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+          <span></span><span></span><span></span>
+        </button>
+
+        <div class="mobile-overlay" id="mobileMenu">
+          <nav class="mobile-nav">
+            <a href="./index.html">Home</a>
+            <a href="./rentals.html">Event Services</a>
+            <a href="./shop.html">Shop</a>
+            <a href="./rentals.html" id="global-logout-btn-mobile"
+              style="color:#D4AF37; font-weight:700; padding:12px 20px;">Continue to Event Services</a>
+            <a href="./account-profile.html" id="nav-my-profile-mobile">MY PROFILE</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="account-layout">
+
+    <!-- SECCIÓN EYEBROW MINIMALISTA (Reemplazo del Hero Gigante) -->
+    <div style="width: 100%; display: flex; justify-content: flex-start; margin-bottom: 24px;">
+      <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 99px; color: rgba(255, 255, 255, 0.7); font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path
+          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+        </path>
+      </svg>
+      <span data-i18n="account-settings-title">Settings</span>
+      </div>
+    </div>
+
+    <!-- 1. PERSONAL INFORMATION -->
+    <div class="system-card">
+      <div class="system-card-header">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <h3>Personal Information</h3>
+      </div>
+
+      <div class="system-card-body">
+        <div class="form-group avatar-group">
+          <div class="system-avatar" id="avatar-preview-container">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <button class="sys-btn secondary" id="btn-change-photo" type="button">Change Photo</button>
+          <input type="file" id="avatar-upload" hidden accept="image/jpeg, image/png, image/webp" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" class="sys-input" id="input-fname" placeholder="Your full name" />
+          </div>
+          <div class="form-group">
+            <label>Username (Optional)</label>
+            <input type="text" class="sys-input" id="input-username" placeholder="@username" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" class="sys-input" id="input-email" disabled placeholder="Loading..."
+              title="Email cannot be changed here." />
+          </div>
+          <div class="form-group">
+            <label>Phone Number</label>
+            <input type="tel" class="sys-input" id="input-phone" placeholder="+1 (555) 000-0000" />
+          </div>
+        </div>
+
+        <!-- ADDRESS BLOCK -->
+        <h3 style="font-size: 11px; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; letter-spacing: 2px; margin: 32px 0 16px 0;">Billing & Event Address</h3>
+        
+        <div class="form-group">
+          <label>Street Address</label>
+          <input type="text" class="sys-input" id="input-street" placeholder="e.g. 1 Infinite Loop" />
+        </div>
+        
+        <div class="form-group" style="margin-top: 16px;">
+          <label>Apt, Suite, Unit (Optional)</label>
+          <input type="text" class="sys-input" id="input-apt" placeholder="e.g. Apt 4B" />
+        </div>
+        
+        <div class="form-row" style="margin-top: 16px;">
+          <div class="form-group">
+            <label>City</label>
+            <input type="text" class="sys-input" id="input-city" placeholder="e.g. Cupertino" />
+          </div>
+          <div class="form-group">
+            <label>State / Province</label>
+            <input type="text" class="sys-input" id="input-state" placeholder="e.g. CA" />
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-top: 16px;">
+          <div class="form-group">
+            <label>ZIP / Postal Code</label>
+            <input type="text" class="sys-input" id="input-zip" placeholder="e.g. 95014" />
+          </div>
+          <div class="form-group">
+            <label>Country</label>
+            <input type="text" class="sys-input" id="input-country" placeholder="e.g. United States" />
+          </div>
+        </div>
+      </div>
+
+      <div class="system-card-footer">
+        <button class="sys-btn primary" id="btn-save-personal">Save</button>
+      </div>
+    </div>
+
+    <!-- 2. PAYMENT METHOD -->
+    <div class="system-card">
+      <div class="system-card-header">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+          <line x1="1" y1="10" x2="23" y2="10"></line>
+        </svg>
+        <h3>Payment Method</h3>
+      </div>
+
+      <div class="system-card-body" style="padding-bottom: 12px;">
+        <div class="payment-placeholder" style="margin-bottom: 24px;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+            <line x1="1" y1="10" x2="23" y2="10"></line>
+          </svg>
+          <div class="payment-placeholder-text">
+            <h4>No active connections</h4>
+            <p>Setup a preferred payment method to streamline event booking and services verification.</p>
+          </div>
+        </div>
+
+        <div class="payment-options-list">
+          <!-- Stripe / Credit Card -->
+          <div class="payment-option-row">
+            <div class="payment-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                <line x1="1" y1="10" x2="23" y2="10"></line>
+              </svg>
+            </div>
+            <div class="payment-info">
+              <h4>Credit / Debit Card</h4>
+              <p>Secure automated connection via Stripe. Pending infrastructure rollout.</p>
+            </div>
+            <button class="sys-btn secondary disabled">Connect Card</button>
+          </div>
+
+          <!-- PayPal -->
+          <div class="payment-option-row">
+            <div class="payment-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.11c-.473 0-.867.319-.98.776l-1.27 6.182-.416 2.012a.64.64 0 0 1-.634.512l.006-.476z" />
+              </svg>
+            </div>
+            <div class="payment-info">
+              <h4>PayPal</h4>
+              <p>Link your PayPal account for fast automated checkout. Coming soon.</p>
+            </div>
+            <button class="sys-btn secondary disabled">Connect PayPal</button>
+          </div>
+
+          <!-- Zelle -->
+          <div class="payment-option-row" style="flex-wrap: wrap;">
+            <div style="display:flex; align-items:center; width:100%; gap:16px;">
+              <div class="payment-icon" style="background:#7418EC; border:none; color:#fff;">
+                <span style="font-weight:900; font-size:16px;">Z</span>
+              </div>
+              <div class="payment-info">
+                <h4>Zelle (Manual Processing)</h4>
+                <p>Direct bank transfers using our verified corporate profile. Requires transaction receipt.</p>
+              </div>
+              <button class="sys-btn secondary"
+                onclick="const p = document.getElementById('zelle-flow-panel'); p.style.display = p.style.display === 'none' ? 'block' : 'none';">Setup
+                flow</button>
+            </div>
+
+            <!-- Zelle Subpanel -->
+            <div id="zelle-flow-panel" class="payment-subpanel" style="display: none; width: 100%;">
+              <h5>Manual Zelle Authorization</h5>
+              <p style="margin-bottom: 8px;">For immediate invoice clearing or deposit hold without processing fees:</p>
+              <p>1. Open your banking application and select Zelle Transfer.<br>
+                2. Add corporate recipient: <strong>payments@miamidjbeat.com</strong><br>
+                3. Coordinate receipt capture with your assigned event manager directly.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. SECURITY -->
+    <div class="system-card">
+      <div class="system-card-header">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        <h3>Security</h3>
+      </div>
+
+      <div class="system-card-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Current Password</label>
+            <input type="password" class="sys-input" placeholder="••••••••" />
+          </div>
+          <div class="form-group">
+            <label>New Password</label>
+            <input type="password" class="sys-input" placeholder="••••••••" />
+          </div>
+        </div>
+      </div>
+
+      <div class="system-card-footer">
+        <button class="sys-btn secondary">Update Password</button>
+      </div>
+    </div>
+
+    <!-- 4. PREFERENCES -->
+    <div class="system-card">
+      <div class="system-card-header">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+          </path>
+        </svg>
+        <h3>Preferences</h3>
+      </div>
+
+      <div class="system-card-body">
+
+        <div class="form-group" style="padding-bottom: 8px;">
+          <label>Platform Language</label>
+          <select class="sys-input" style="max-width: 200px;">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+          </select>
+        </div>
+
+        <div style="height: 1px; background: rgba(255,255,255,0.06); margin: 8px 0;"></div>
+
+        <div class="toggle-row">
+          <div class="toggle-label">
+            <span>Email Notifications</span>
+            <p>Receive alerts about your bookings and account activity.</p>
+          </div>
+          <label class="apple-switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <div class="toggle-label">
+            <span>Marketing Updates</span>
+            <p>Occasional news on platform updates and premium event services.</p>
+          </div>
+          <label class="apple-switch">
+            <input type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- AUTH LOGIC & COMPATIBILITY -->
+  <script src="./auth.js"></script>
+  <script src="./translations.js"></script>
+  <script src="./i18n.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Mobile Menu Toggle
+      const mobileBtn = document.getElementById('mobileMenuBtn');
+      const mobileMenu = document.getElementById('mobileMenu');
+      if (mobileBtn && mobileMenu) {
+        mobileBtn.addEventListener('click', () => {
+          mobileBtn.classList.toggle('active');
+          mobileMenu.classList.toggle('active');
+        });
+      }
+
+      // Dropdown interaction
+      document.addEventListener('click', (e) => {
+        const m = document.getElementById('accountMenu');
+        const b = document.getElementById('accountBtn');
+        if (m && m.classList.contains('open')) {
+          if ((m.contains(e.target) && e.target.closest('a')) || (b && !b.contains(e.target) && !m.contains(e.target))) {
+            m.classList.remove('open');
+          }
+        }
+      });
+
+      // Strict session enforcement
+      try {
+        const db = window.getSupabaseClient();
+        const { data: { session }, error } = await db.auth.getSession();
+        if (session && session.user) {
+          const meta = session.user.user_metadata || {};
+
+          // --- Controladores Aislados de Roles (Fase 1: Preparación) ---
+          window.handleClientSettingsSubmit = async (uid, data, dbInstance) => {
+            const { error: clientErr } = await dbInstance.from('client_profiles')
+              .update({ 
+                 full_name: data.full_name, 
+                 username: data.username, 
+                 phone: data.phone, 
+                 city: data.address_city 
+              }).eq('user_id', uid);
+            if(clientErr) console.warn('[SYNC DB ERROR CLIENT]', clientErr);
+          };
+
+          window.handleArtistSettingsSubmit = async (uid, data, dbInstance) => {
+            const { error: artistErr } = await dbInstance.from('dj_profiles')
+              .update({ 
+                 dj_name: data.full_name, 
+                 stage_name: data.username, 
+                 phone: data.phone, 
+                 city: data.address_city 
+              }).eq('user_id', uid);
+            if(artistErr) console.warn('[SYNC DB ERROR ARTIST]', artistErr);
+          };
+          // --------------------------------------------------------------
+
+          if (meta.full_name) document.getElementById('input-fname').value = meta.full_name;
+          if (meta.username) document.getElementById('input-username').value = meta.username;
+
+          document.getElementById('input-email').value = session.user.email;
+
+          if (meta.phone) document.getElementById('input-phone').value = meta.phone;
+          
+          if (meta.address_street) document.getElementById('input-street').value = meta.address_street;
+          if (meta.address_apt) document.getElementById('input-apt').value = meta.address_apt;
+          if (meta.address_city) document.getElementById('input-city').value = meta.address_city;
+          if (meta.address_state) document.getElementById('input-state').value = meta.address_state;
+          if (meta.address_zip) document.getElementById('input-zip').value = meta.address_zip;
+          if (meta.address_country) document.getElementById('input-country').value = meta.address_country;
+
+          // -- Avatar Bind Initial Render
+          if (meta.avatar_url) {
+            const avContainer = document.getElementById('avatar-preview-container');
+            if (avContainer) {
+              avContainer.innerHTML = `<img src="${meta.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+              avContainer.style.border = 'none';
+            }
+          }
+
+          // -- Avatar Upload Engine
+          const btnPhoto = document.getElementById('btn-change-photo');
+          const fileInput = document.getElementById('avatar-upload');
+          const previewTarget = document.getElementById('avatar-preview-container');
+
+          if (btnPhoto && fileInput) {
+            btnPhoto.addEventListener('click', (e) => {
+              e.preventDefault();
+              fileInput.click();
+            });
+
+            fileInput.addEventListener('change', async (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+
+              // 1. Instant Local Preview
+              const previewUrl = URL.createObjectURL(file);
+              btnPhoto.textContent = 'Uploading...';
+              btnPhoto.disabled = true;
+
+              if (previewTarget) {
+                previewTarget.innerHTML = `<img src="${previewUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+                previewTarget.style.border = 'none';
+              }
+
+              // 2. Server Pipeline
+              try {
+                // Generar path consistente para reemplazar la imagen vieja (upsert=true) sin acumular basura en Storage
+                const fileExt = file.name.split('.').pop();
+                const filePath = `${session.user.id}/avatar.${fileExt}`;
+
+                const { error: uploadError } = await db.storage
+                  .from('avatars')
+                  .upload(filePath, file, { upsert: true, cacheControl: '3600' });
+
+                if (uploadError) throw uploadError;
+
+                // 3. Atrapar URL final
+                const { data: publicData } = db.storage.from('avatars').getPublicUrl(filePath);
+                if (!publicData) throw new Error("No se pudo obtener URL pública");
+
+                // Inyectar hash temporal dinámico en el query param para reventar caché visual inmediatamente
+                const finalPublicUrl = publicData.publicUrl + '?v=' + Date.now();
+
+                // 🚀 OPTIMIZACIÓN EXTREMA: Caché sincrónico inmediato ultra-seguro (evita robo de token auth y latencia)
+                const { data: { session: freshSession } } = await db.auth.getSession();
+                const sessionUser = freshSession?.user || session.user;
+                const fallbackMeta = sessionUser?.user_metadata || {};
+                
+                const { error: updateError } = await db.auth.updateUser({
+                  data: Object.assign({}, fallbackMeta, { avatar_url: finalPublicUrl })
+                });
+                if (updateError) throw updateError;
+
+                // UPDATE THE GLOBAL NAVBAR AVATAR IMMEDIATELY!
+                const globalNavAvatars = document.querySelectorAll('.avatar, #accountBtn .avatar, #navAvatarImg');
+                globalNavAvatars.forEach(av => {
+                    if(av) av.src = finalPublicUrl;
+                });
+
+                // 5. Persistencia profunda en Base de Datos para asegurar la restauración
+                const rRole = sessionUser?.app_metadata?.role || fallbackMeta.user_type || 'client';
+                if (rRole === 'dj') {
+                   const { error: djErr } = await db.from('dj_profiles').update({ photo_url: finalPublicUrl }).eq('user_id', sessionUser.id);
+                   if (djErr) console.warn('[SYNC AVATAR DJ]', djErr);
+                } else {
+                   // Intento seguro de backup para persistencia de cliente por si existe columna en la BD
+                   const { error: clErr } = await db.from('client_profiles').update({ photo_url: finalPublicUrl }).eq('user_id', sessionUser.id);
+                   if (clErr) console.warn('[SYNC AVATAR CLIENT]', clErr);
+                }
+
+                btnPhoto.textContent = 'Change Photo';
+                btnPhoto.disabled = false;
+
+              } catch (err) {
+                console.error('Core avatar module crashed:', err);
+                btnPhoto.textContent = 'Upload Failed';
+                setTimeout(() => {
+                  btnPhoto.textContent = 'Change Photo';
+                  btnPhoto.disabled = false;
+                }, 3000);
+              }
+            });
+          }
+
+          // -- Save Personal Info Engine
+          const btnSavePersonal = document.getElementById('btn-save-personal');
+          if (btnSavePersonal) {
+            btnSavePersonal.addEventListener('click', async (e) => {
+              e.preventDefault();
+              btnSavePersonal.textContent = 'Saving...';
+              btnSavePersonal.classList.add('saving-state');
+              btnSavePersonal.disabled = true;
+
+              try {
+                const newFname = document.getElementById('input-fname').value.trim();
+                const newUsername = document.getElementById('input-username').value.trim();
+                const newPhone = document.getElementById('input-phone').value.trim();
+                
+                const newStreet = document.getElementById('input-street').value.trim();
+                const newApt = document.getElementById('input-apt').value.trim();
+                const newCity = document.getElementById('input-city').value.trim();
+                const newState = document.getElementById('input-state').value.trim();
+                const newZip = document.getElementById('input-zip').value.trim();
+                const newCountry = document.getElementById('input-country').value.trim();
+
+                // 🚀 OPTIMIZACIÓN EXTREMA: Leer sesión local fresca en microsegundos en lugar de ir al Servidor (Ahorra 1 HTTP Request largo)
+                const { data: { session: freshSession } } = await db.auth.getSession();
+                const sessionUser = freshSession?.user || session.user;
+                const currentSessionMeta = sessionUser?.user_metadata || {};
+                
+                const newData = Object.assign({}, currentSessionMeta, {
+                  full_name: newFname,
+                  username: newUsername,
+                  phone: newPhone,
+                  address_street: newStreet,
+                  address_apt: newApt,
+                  address_city: newCity,
+                  address_state: newState,
+                  address_zip: newZip,
+                  address_country: newCountry
+                });
+
+                // Propagación real de datos separada (Fase 1: Preparación estructural)
+                const userId = sessionUser.id;
+                // Sustituimos 'dj' por uso del canon aprobado 'artist' validando contra app_metadata prioritariamente
+                const canonRole = sessionUser?.app_metadata?.role || currentSessionMeta.role || currentSessionMeta.user_type || 'client';
+                
+                // Secuencia segura para evitar colisión de tokens (Lock Stolen error en Supabase)
+                const { error: authUpdateError } = await db.auth.updateUser({ data: newData });
+                if (authUpdateError) throw authUpdateError;
+
+                // Delegación fragmentada obligatoria por Roles 
+                // (Mapeamos 'dj' temporalmente a 'artist' si viene de registro viejo)
+                if (canonRole === 'artist' || canonRole === 'dj') {
+                  await window.handleArtistSettingsSubmit(userId, newData, db);
+                } else {
+                  await window.handleClientSettingsSubmit(userId, newData, db);
+                }
+
+                btnSavePersonal.textContent = 'Saved!';
+                btnSavePersonal.classList.remove('saving-state');
+                btnSavePersonal.classList.add('success-pulse');
+                btnSavePersonal.style.opacity = '1';
+
+                // RE: Update the global username if possible
+                const globalNavAvatar = document.getElementById('navAvatarImg');
+                if(currentSessionMeta.avatar_url && globalNavAvatar) {
+                   globalNavAvatar.src = currentSessionMeta.avatar_url; // Ensure the record stays visible
+                }
+
+                setTimeout(() => {
+                  btnSavePersonal.textContent = 'Save';
+                  btnSavePersonal.classList.remove('success-pulse');
+                  btnSavePersonal.disabled = false;
+                }, 2000);
+
+              } catch (err) {
+                console.error('Core save module crashed:', err);
+                btnSavePersonal.textContent = 'Save Failed';
+                btnSavePersonal.classList.remove('saving-state');
+                btnSavePersonal.style.opacity = '1';
+                setTimeout(() => {
+                  btnSavePersonal.textContent = 'Save';
+                  btnSavePersonal.disabled = false;
+                }, 3000);
+              }
+            });
+          }
+
+        } else {
+          // No session -> bounce to login
+          window.location.href = './login.html';
+        }
+      } catch (err) {
+        window.location.href = './login.html';
+      }
+    });
+
+    window.doLogout = async function (e) {
+      if (e) e.preventDefault();
+      try {
+        await supabase.auth.signOut();
+        window.location.href = './index.html';
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+
+</html>

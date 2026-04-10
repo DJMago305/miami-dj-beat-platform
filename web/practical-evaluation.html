@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Miami DJ Beat — Practical Evaluation</title>
+    <link rel="stylesheet" href="./certification.css" />
+    <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
+</head>
+
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <div class="logoMark">M</div>
+            <div>
+                <div class="brandTitle">MIAMI DJ BEAT</div>
+                <div class="brandSub">Practical Evaluation — Instructor Scoring</div>
+            </div>
+        </div>
+        <nav class="nav">
+            <a class="navLink" href="./courses.html">Courses</a>
+            <a class="navLink" href="./certification.html">Certification</a>
+            <a class="navLink active" href="./practical-evaluation.html">Practical</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="hero card">
+            <h1>Practical Evaluation</h1>
+            <p class="muted">
+                Instructor-only scoring. Passing requires <strong>≥ 85%</strong> overall.
+                Use the DJ's Certification ID (MDB-YYYYMMDD-XXXX) from the theory exam.
+            </p>
+
+            <div class="grid2">
+                <label class="field">
+                    <span>DJ Name</span>
+                    <input id="djName" type="text" placeholder="DJ name" maxlength="50" />
+                </label>
+
+                <label class="field">
+                    <span>Certification ID (from theory)</span>
+                    <input id="certId" type="text" placeholder="MDB-YYYYMMDD-XXXX" maxlength="25" />
+                </label>
+            </div>
+
+            <div class="grid2">
+                <label class="field">
+                    <span>Instructor Name</span>
+                    <input id="instructor" type="text" placeholder="Instructor" maxlength="60" />
+                </label>
+
+                <label class="field">
+                    <span>Venue / Location (optional)</span>
+                    <input id="venue" type="text" placeholder="Club / Studio / Remote" maxlength="80" />
+                </label>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="sectionHeader">
+                <h2>4 Stations</h2>
+                <p class="muted">Score each station. Use notes for evidence.</p>
+            </div>
+
+            <!-- Station 1 -->
+            <div class="q">
+                <div class="qTop">
+                    <div class="qTitle">Station 1 — USB Prep (20 min)</div>
+                    <div class="qMeta">25 pts</div>
+                </div>
+                <p class="muted">
+                    Must curate/export a set-ready selection: correct playlists, consistent tags, no duplicates,
+                    emergency folder present.
+                </p>
+                <textarea id="s1_notes"
+                    placeholder="Notes: structure, speed, mistakes, duplicates, export quality..."></textarea>
+                <div class="sliderRow">
+                    <label for="s1"><span>Score</span><span id="s1_label">0</span></label>
+                    <input id="s1" type="range" min="0" max="25" value="0" step="1">
+                </div>
+            </div>
+
+            <!-- Station 2 -->
+            <div class="q">
+                <div class="qTop">
+                    <div class="qTitle">Station 2 — Open Format Transition (95 → 124 BPM)</div>
+                    <div class="qMeta">25 pts</div>
+                </div>
+                <p class="muted">
+                    Must transition without losing the floor: bridge strategy, phrasing, energy control, clean
+                    execution.
+                </p>
+                <textarea id="s2_notes"
+                    placeholder="Notes: bridge track, loops, breakdown timing, EQ discipline, crowd control..."></textarea>
+                <div class="sliderRow">
+                    <label for="s2"><span>Score</span><span id="s2_label">0</span></label>
+                    <input id="s2" type="range" min="0" max="25" value="0" step="1">
+                </div>
+            </div>
+
+            <!-- Station 3 -->
+            <div class="q">
+                <div class="qTop">
+                    <div class="qTitle">Station 3 — 20-Min Set Structure</div>
+                    <div class="qMeta">25 pts</div>
+                </div>
+                <p class="muted">
+                    Must show structure: warm/build/peak/control/clean close (adapted to scenario).
+                </p>
+                <textarea id="s3_notes"
+                    placeholder="Notes: pacing, track selection logic, structure clarity, overplaying, dead moments..."></textarea>
+                <div class="sliderRow">
+                    <label for="s3"><span>Score</span><span id="s3_label">0</span></label>
+                    <input id="s3" type="range" min="0" max="25" value="0" step="1">
+                </div>
+            </div>
+
+            <!-- Station 4 -->
+            <div class="q">
+                <div class="qTop">
+                    <div class="qTitle">Station 4 — Technical Readiness</div>
+                    <div class="qMeta">25 pts</div>
+                </div>
+                <p class="muted">
+                    Beatgrid correction, cue discipline, gain staging, emergency workflow, no red-lining, backups.
+                </p>
+                <textarea id="s4_notes"
+                    placeholder="Notes: beatgrid fixes, cues, gains, clipping, emergency crate, professionalism..."></textarea>
+                <div class="sliderRow">
+                    <label for="s4"><span>Score</span><span id="s4_label">0</span></label>
+                    <input id="s4" type="range" min="0" max="25" value="0" step="1">
+                </div>
+            </div>
+
+            <div class="actions">
+                <button id="btnGrade" class="btn primary">Calculate Result</button>
+                <button id="btnReset" class="btn">Reset</button>
+                <button id="btnPrint" class="btn">Print / Save PDF</button>
+            </div>
+
+            <div id="result" class="result hidden">
+                <div class="resultTop">
+                    <div>
+                        <div class="badgeLine">
+                            <span id="levelBadge" class="badge">—</span>
+                            <span id="scoreLine" class="scoreLine">—</span>
+                        </div>
+                        <div id="gradLine" class="preGradLine"></div>
+                        <div class="muted" id="verifyLine" style="margin-top:6px;"></div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div id="summary" class="feedback"></div>
+            </div>
+        </section>
+
+        <footer class="footer muted">
+            © <span id="year"></span> Miami DJ Beat LLC — Practical Evaluation v1
+        </footer>
+    </main>
+
+    <script>
+        (function () {
+            const $ = (id) => document.getElementById(id);
+            const MAX = 100;
+            const PASS = 85;
+
+            function bindSlider(id) {
+                const s = $(id);
+                const l = $(id + "_label");
+                s.addEventListener("input", () => l.textContent = s.value);
+            }
+
+            function escapeHtml(str) {
+                return String(str)
+                    .replaceAll("&", "&amp;")
+                    .replaceAll("<", "&lt;")
+                    .replaceAll(">", "&gt;")
+                    .replaceAll('"', "&quot;")
+                    .replaceAll("'", "&#039;");
+            }
+
+            function calc() {
+                const name = $("djName").value.trim();
+                const certId = $("certId").value.trim();
+                const instructor = $("instructor").value.trim();
+
+                if (!name) { alert("Enter DJ Name."); return; }
+                if (!certId || !/^MDB-\d{8}-[0-9A-Z]{4}$/.test(certId)) {
+                    alert("Enter a valid Certification ID (MDB-YYYYMMDD-XXXX).");
+                    return;
+                }
+                if (!instructor) { alert("Enter Instructor Name."); return; }
+
+                const s1 = Number($("s1").value || 0);
+                const s2 = Number($("s2").value || 0);
+                const s3 = Number($("s3").value || 0);
+                const s4 = Number($("s4").value || 0);
+
+                const total = s1 + s2 + s3 + s4;
+                const pct = Math.round((total / MAX) * 100);
+
+                let level = "No Apto (Needs Work)";
+                let color = "var(--bad)";
+                if (pct >= 95) { level = "DJ PRO — Elite Pass"; color = "var(--good)"; }
+                else if (pct >= PASS) { level = "DJ PRO — GRADUADO"; color = "var(--good)"; }
+                else if (pct >= 70) { level = "Intermedio (Re-test Required)"; color = "var(--warn)"; }
+                else { level = "Básico (Training Required)"; color = "var(--bad)"; }
+
+                const graduated = (pct >= PASS);
+
+                $("result").classList.remove("hidden");
+                $("levelBadge").textContent = level;
+                $("levelBadge").style.borderColor = color;
+                $("levelBadge").style.boxShadow = `0 0 0 3px ${color}22`;
+
+                $("scoreLine").textContent = `${total}/100 points (${pct}%) — Pass line: ${PASS}%`;
+
+                $("gradLine").innerHTML = graduated
+                    ? `✅ <span style="color:var(--good)">GRADUADO</span> — Certified Miami DJ Beat PRO.`
+                    : `❌ <span style="color:var(--bad)">NO GRADUADO</span> — Must re-test practical stations.`;
+
+                const verifyUrl = `verify.html?id=${encodeURIComponent(certId)}`;
+                $("verifyLine").innerHTML = `Verification link: <strong>${escapeHtml(verifyUrl)}</strong>`;
+
+                const venue = $("venue").value.trim();
+                const summary = [];
+                summary.push(`<div class="kpi"><strong>DJ:</strong> ${escapeHtml(name)}<br><strong>ID:</strong> ${escapeHtml(certId)}<br><strong>Instructor:</strong> ${escapeHtml(instructor)}${venue ? `<br><strong>Venue:</strong> ${escapeHtml(venue)}` : ""}<br><span class="muted">Date: ${new Date().toLocaleString()}</span></div>`);
+                summary.push(`<div class="kpi"><strong>Station Breakdown</strong>
+          <ul>
+            <li>USB Prep: <strong>${s1}/25</strong></li>
+            <li>Open Format Transition: <strong>${s2}/25</strong></li>
+            <li>20-Min Set Structure: <strong>${s3}/25</strong></li>
+            <li>Technical Readiness: <strong>${s4}/25</strong></li>
+          </ul>
+        </div>`);
+
+                function noteBlock(title, txt) {
+                    if (!txt) return "";
+                    return `<div class="kpi"><strong>${escapeHtml(title)}</strong><div class="muted" style="margin-top:6px;white-space:pre-wrap;">${escapeHtml(txt)}</div></div>`;
+                }
+                summary.push(noteBlock("Station 1 Notes", $("s1_notes").value.trim()));
+                summary.push(noteBlock("Station 2 Notes", $("s2_notes").value.trim()));
+                summary.push(noteBlock("Station 3 Notes", $("s3_notes").value.trim()));
+                summary.push(noteBlock("Station 4 Notes", $("s4_notes").value.trim()));
+
+                $("summary").innerHTML = summary.join("");
+
+                // persist last practical attempt
+                localStorage.setItem("mdb_practical_last", JSON.stringify({
+                    name, certId, instructor, venue, total, pct, graduated, at: Date.now()
+                }));
+
+                $("result").scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+
+            function reset() {
+                if (!confirm("Reset all fields?")) return;
+                ["djName", "certId", "instructor", "venue"].forEach(id => $(id).value = "");
+                ["s1", "s2", "s3", "s4"].forEach(id => { $(id).value = 0; $(id + "_label").textContent = "0"; });
+                ["s1_notes", "s2_notes", "s3_notes", "s4_notes"].forEach(id => $(id).value = "");
+                $("result").classList.add("hidden");
+                $("summary").innerHTML = "";
+            }
+
+            document.addEventListener("DOMContentLoaded", () => {
+                $("year").textContent = new Date().getFullYear();
+                ["s1", "s2", "s3", "s4"].forEach(bindSlider);
+
+                // 1. Pre-fill from URL params (coming from certification flow)
+                const params = new URLSearchParams(window.location.search);
+                if (params.get("name")) $("djName").value = params.get("name");
+                if (params.get("certId")) $("certId").value = params.get("certId");
+
+                // 2. Fallback: preload from last theory attempt in localStorage
+                if (!$("djName").value || !$("certId").value) {
+                    try {
+                        const last = JSON.parse(localStorage.getItem("mdb_cert_last") || "null");
+                        if (last && last.name && !$("djName").value) $("djName").value = last.name;
+                        if (last && last.certId && !$("certId").value) $("certId").value = last.certId;
+                    } catch (e) { }
+                }
+
+                $("btnGrade").addEventListener("click", calc);
+                $("btnReset").addEventListener("click", reset);
+                $("btnPrint").addEventListener("click", () => window.print());
+            });
+        })();
+    </script>
+    <!-- MDJ Assistant Booth (AI Sales Agent) -->
+    <div id="mdj-assistant-booth">
+        <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
+        <div class="booth-window">
+            <div class="booth-header">
+                <div class="status-dot"></div>
+                <div style="flex: 1;">
+                    <h3>Booth Assistant</h3>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700;">Sales & Negotiation
+                        Expert</div>
+                </div>
+            </div>
+            <div class="booth-messages"></div>
+            <div class="booth-input-area">
+                <input type="text" placeholder="Type your message here..." />
+                <button class="booth-send-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="booth-trigger" title="Talk to Booth Assistant">
+            <div class="avatar-glow"></div>
+            <div style="font-size: 30px; z-index: 10;">🤖</div>
+        </div>
+    </div>
+    <script src="./mdj-assistant.js?v=20260306-1"></script>
+</body>
+
+</html>
