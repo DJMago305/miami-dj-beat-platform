@@ -557,7 +557,7 @@ document.addEventListener('DOMContentLoaded', () => {
         doc.setFontSize(10);
         doc.text("Professional Event Production & Management", 120, 23);
         doc.text("www.miamidjbeat.com | Miami, FL", 120, 30);
-        doc.text("contact@miamidjbeat.com", 120, 37);
+        doc.text("miamidjbeat@gmail.com", 120, 37);
 
         // --- EVENT HEADER ---
         doc.setTextColor(0, 0, 0);

@@ -125,7 +125,7 @@ serve(async (req) => {
   <div class="footer">
     Miami DJ Beat LLC · Sistema automatizado de moderación de contenido<br>
     Este mensaje fue generado automáticamente — no responder directamente.<br>
-    Consultas: <a href="mailto:support@miamidjbeat.com" style="color:#c5a059;">support@miamidjbeat.com</a>
+    Consultas: <a href="mailto:miamidjbeat@gmail.com" style="color:#c5a059;">miamidjbeat@gmail.com</a>
   </div>
 </div></body></html>`;
 

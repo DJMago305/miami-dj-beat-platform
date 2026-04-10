@@ -51,4 +51,4 @@ Any disputes regarding data privacy will be handled in accordance with the **Bin
 ## 7. CONTACT US
 
 For any questions regarding your privacy, contact our support team at:
-**support@miamidjbeat.com**
+**miamidjbeat@gmail.com**

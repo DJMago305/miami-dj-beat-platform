@@ -44,7 +44,7 @@ window.generateInvoice = (leadData, items = [], depositAmount = 0, taxId = "N/A"
     doc.text("1005 W 77 St Apt 105", 190, 45, { align: 'right' });
     doc.text("Hialeah FL 33014", 190, 50, { align: 'right' });
     doc.text("Phone: (305)-543-4814", 190, 55, { align: 'right' });
-    doc.text("Mail: miamidjbeat@soporte.com", 190, 60, { align: 'right' });
+    doc.text("Mail: miamidjbeat@gmail.com", 190, 60, { align: 'right' });
     doc.text("Web: Miamidjbeat.com", 190, 65, { align: 'right' });
 
     // --- 3. CUSTOMER INFO ---

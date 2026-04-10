@@ -2243,7 +2243,7 @@
             // ── WhatsApp · Teléfono · Email ──
             try {
                 const MDJB_PHONE = '13056071780';
-                const MDJB_EMAIL = 'info@miamidj.beat';
+                const MDJB_EMAIL = 'miamidjbeat@gmail.com';
                 const waMsg = encodeURIComponent(`Hola, quiero información sobre el DJ ${djName}. ¿Está disponible para mi evento?`);
                 const waBtn = document.getElementById('pub-whatsapp-btn');
                 if (waBtn) waBtn.href = `https://wa.me/${MDJB_PHONE}?text=${waMsg}`;
@@ -2567,7 +2567,7 @@
             const data = window.currentDJData;
             if (!data) return;
 
-            const contactInfo = `📞 Para contrataciones contacta a Miami DJ Beat:\nWhatsApp: +1 (305) 607-1780\nEmail: info@miamidj.beat`;
+            const contactInfo = `📞 Para contrataciones contacta a Miami DJ Beat:\nWhatsApp: +1 (305) 607-1780\nEmail: miamidjbeat@gmail.com`;
             const shareText = `🎵 ¡Conoce a ${data.name} en Miami DJ Beat!\n\n📍 ${data.currentWork}\n\n📝 Bio: ${data.bio.substring(0, 120)}...\n\n📅 Estado: ${data.availability}\n\n${contactInfo}\n\n🔗 Mira su perfil completo aquí:`;
 
             if (navigator.share) {

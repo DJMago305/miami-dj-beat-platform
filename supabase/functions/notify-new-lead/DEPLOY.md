@@ -9,7 +9,7 @@ Agrega estos secrets en tu proyecto Supabase:
 |---|---|
 | `RESEND_API_KEY` | Tu API key de [resend.com](https://resend.com) |
 | `MANAGER_EMAIL` | Tu email de manager (ej: `you@gmail.com`) |
-| `FROM_EMAIL` | Email verificado en Resend (ej: `Miami DJ Beat <no-reply@miamidjbeat.com>`) |
+| `FROM_EMAIL` | Remitente **verificado en Resend** (dominio o buzón aprobado; no mezclar con el correo de contacto público salvo que Resend lo tenga verificado) |
 | `DASHBOARD_URL` | URL de tu dashboard (ej: `https://miamidjbeat.vercel.app/admin-dashboard.html`) |
 
 > ⚠️ `FROM_EMAIL` debe ser un dominio verificado en Resend o usa `onboarding@resend.dev` para pruebas.

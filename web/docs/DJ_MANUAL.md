@@ -28,7 +28,7 @@ La sección de **Trabajos (Jobs)** es donde seleccionas tu rol y postulas a la r
 ## 5. Soporte y Contacto
 Para cualquier duda técnica o sobre contrataciones:
 - **WhatsApp:** +1 (305) 607-1780
-- **Email:** info@miamidj.beat
+- **Email:** miamidjbeat@gmail.com
  
 ---
 *Vision 2027 — Transformando talento en autoridad.*

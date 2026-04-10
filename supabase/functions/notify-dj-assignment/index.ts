@@ -186,7 +186,7 @@ function buildDJEmail(p: { dj_name: string; event_type: string; event_date: stri
   <div class="footer">
     Miami DJ Beat LLC · Sistema automático de asignación de eventos<br>
     Este mensaje fue generado automáticamente.<br>
-    Consultas: <a href="mailto:support@miamidjbeat.com" style="color:#c5a059;">support@miamidjbeat.com</a>
+    Consultas: <a href="mailto:miamidjbeat@gmail.com" style="color:#c5a059;">miamidjbeat@gmail.com</a>
   </div>
 </div></body></html>`;
 }
