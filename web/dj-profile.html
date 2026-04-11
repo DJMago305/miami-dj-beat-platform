@@ -1637,10 +1637,9 @@
                         </div>
                     </div>
 
-                    <!-- SoundForTips: oculto hasta lanzamiento (solicitud producto 2026-04) -->
-                    <button type="button" id="soundfortips-quarantine-btn" aria-hidden="true" hidden
-                        onclick="alert('SOUNDFORTIPS™ entrará en operación oficial muy pronto con pagos asegurados vía Stripe. ¡Mantenete atento!');"
-                        style="display:none !important; width:100%; align-items:center; justify-content:center; gap:10px; background:linear-gradient(135deg, #444, #222); color:rgba(255,255,255,0.5); border:1px dashed #666; padding:20px; border-radius:12px; font-size:16px; font-weight:900; letter-spacing:1px; cursor:not-allowed; text-transform:uppercase; transition:all 0.2s;">
+                    <button type="button" id="soundfortips-launch-btn"
+                        onclick="openSoundForTipsModal()"
+                        style="width:100%; display:flex; align-items:center; justify-content:center; gap:10px; background:linear-gradient(135deg, #2a2418, #1a1510); color:#fff; border:1px solid rgba(197,160,89,0.55); padding:20px; border-radius:12px; font-size:16px; font-weight:900; letter-spacing:1px; cursor:pointer; text-transform:uppercase; transition:all 0.2s;">
                         <span style="font-size:22px;">🎵</span> SOUNDFORTIPS™ <span
                             style="font-size:10px; background:var(--gold); color:#000; padding:2px 6px; border-radius:4px; margin-left:6px;">BETA</span>
                     </button>
