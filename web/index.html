@@ -119,18 +119,9 @@
       background-size: cover;
       background-position: center;
       z-index: 0;
-      animation: kenBurnsHome 24s ease-in-out infinite alternate;
-      opacity: 1;
-    }
-
-    /* Referencia visual: hero con foto (boda) como capa principal; vídeo opcional muy suave */
-    #home-hero.hero-ref-photo #home-hero-video {
-      display: none !important;
-    }
-
-    #home-hero.hero-ref-photo .hero-kb-bg {
-      background-image: url('./assets/luxury_wedding_blurred_bg.png');
-      opacity: 1 !important;
+      animation: kenBurnsHome 20s ease-in-out infinite alternate;
+      /* hidden unless there's no video */
+      opacity: 0;
     }
 
     .hero-text-block .sub.hero-sub-goldbox {
@@ -340,8 +331,7 @@
   </header>
   <main>
     <!-- ══ CINEMATIC HERO ══ -->
-    <section class="hero hero-ref-photo" id="home-hero">
-      <div class="hero-kb-bg" id="home-hero-kb" aria-hidden="true"></div>
+    <section class="hero" id="home-hero">
       <video id="home-hero-video" class="hero-bg-video" autoplay muted loop playsinline>
         <source src="./assets/home/Home for Miami DJ Beat.mp4" type="video/mp4">
       </video>
