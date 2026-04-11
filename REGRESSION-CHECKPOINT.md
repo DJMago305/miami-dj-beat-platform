@@ -18,6 +18,8 @@ Si algo falla **después** de este punto, revisar primero estas áreas antes de 
 
 **Backend:** Stripe/Edge debe reflejar la misma política; migración comentada: `web/sql/migrations/13_referral_policy_flat_2026.sql`. Vercel **no** aplica SQL en Supabase automáticamente.
 
+**Aplicar SQL y funciones en orden:** ver **`SUPABASE-RUNBOOK.md`** en la raíz del repo.
+
 ---
 
 ## 2. Suscripción gratis (headers)
