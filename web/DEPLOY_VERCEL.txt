@@ -1,0 +1,8 @@
+Configuración mínima en Vercel (Project → Settings → Build and Deployment):
+
+  Root Directory:  web
+  Build Command:   npm run build   (o vacío si Vercel no exige script)
+  Output Directory: (vacío) o un solo punto: .
+
+Si Output Directory está fijado en "build" y la carpeta web/build no existe, el deploy falla en segundos.
+Borra "build" del campo Output o déjalo vacío para servir los HTML desde web/.
