@@ -1,5 +1,6 @@
 -- Miami DJ Beat — Referral attribution, first-purchase commission, Soundfortip ledger
 -- Run after 10_subscription_hwid_wallet.sql
+-- Re-ejecutable: políticas RLS con DROP IF EXISTS antes de CREATE (evita error 42710).
 
 -- ── First-purchase commission when client was attributed via ?ref=DJ_UUID ─────
 CREATE TABLE IF NOT EXISTS referral_sale_commissions (
@@ -22,6 +23,9 @@ CREATE INDEX IF NOT EXISTS idx_ref_sale_comm_status ON referral_sale_commissions
 COMMENT ON TABLE referral_sale_commissions IS '10% first-purchase commission to DJ when client entered with ?ref=dj_id.';
 
 ALTER TABLE referral_sale_commissions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "DJ reads own referral commissions" ON referral_sale_commissions;
+DROP POLICY IF EXISTS "Service role manages referral commissions" ON referral_sale_commissions;
 
 CREATE POLICY "DJ reads own referral commissions"
   ON referral_sale_commissions FOR SELECT TO authenticated
@@ -49,6 +53,9 @@ CREATE INDEX IF NOT EXISTS idx_sft_splits_dj ON soundfortip_splits(dj_user_id);
 COMMENT ON TABLE soundfortip_splits IS 'Per-tip breakdown; release to artist wallet after night session ends.';
 
 ALTER TABLE soundfortip_splits ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "DJ reads own tip splits" ON soundfortip_splits;
+DROP POLICY IF EXISTS "Service role manages tip splits" ON soundfortip_splits;
 
 CREATE POLICY "DJ reads own tip splits"
   ON soundfortip_splits FOR SELECT TO authenticated
