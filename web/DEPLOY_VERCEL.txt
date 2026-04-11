@@ -1,8 +1,13 @@
-Configuración mínima en Vercel (Project → Settings → Build and Deployment):
+Configuración en Vercel (Project → Settings → Build and Deployment):
 
-  Root Directory:  web
-  Build Command:   dejado en web/vercel.json (echo; sitio estático sin npm)
-  Output Directory: (vacío) o un solo punto: .
+  Root Directory:   web
+  Framework:        Other
+  Install Command:  npm install   (por defecto; sin dependencias, termina al instante)
+  Build Command:    npm run build (usa web/package.json → exit 0; sitio estático)
+  Output Directory: (vacío) o .
 
-Si Output Directory está fijado en "build" y la carpeta web/build no existe, el deploy falla en segundos.
-Borra "build" del campo Output o déjalo vacío para servir los HTML desde web/.
+Si Output Directory está en "build" y no existe web/build, el deploy falla en segundos.
+
+Si el deploy falla SIN logs de build, suele ser vercel.json inválido o Git LFS.
+Este repo usa Git LFS para muchos .mp4: abre el deploy → Building → busca "lfs" o "smudge".
+En ese caso copia el error y revisamos (a veces hace falta ampliar cuota LFS en GitHub o mover vídeos fuera del repo).
