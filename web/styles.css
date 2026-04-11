@@ -17,6 +17,8 @@
   --glass: rgba(15, 22, 35, 0.7);
   --glass-border: rgba(255, 255, 255, 0.1);
   --header-height: 85px;
+  /* Segunda fila (#mainNav: Home, Services…) en desktop; en ≤1000px está oculta */
+  --header-nav-band: 52px;
 }
 
 * {
@@ -27,7 +29,7 @@ html,
 body {
   margin: 0;
   padding: 0;
-  scroll-padding-top: var(--header-height);
+  scroll-padding-top: calc(var(--header-height) + var(--header-nav-band));
 }
 
 body {
@@ -36,7 +38,7 @@ body {
     radial-gradient(900px 600px at 90% 10%, rgba(102, 163, 255, .06), transparent 55%),
     var(--bg);
   color: var(--text);
-  padding-top: var(--header-height);
+  padding-top: calc(var(--header-height) + var(--header-nav-band));
 }
 
 a {
@@ -188,6 +190,18 @@ a:hover {
   min-width: 95px;
 }
 
+/* Suscripción gratuita (visitantes nuevos) — distinto de PRO */
+#header-subscribe-free-btn {
+  min-width: 118px;
+  border-color: rgba(197, 160, 89, 0.45);
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(197, 160, 89, 0.1);
+}
+#header-subscribe-free-btn:hover {
+  border-color: var(--gold);
+  background: rgba(197, 160, 89, 0.2);
+}
+
 /* Antisalteo de Interfaz & Glassmorphism: Pestañas de Navegación Principal */
 .nav a[data-i18n="nav-home"],
 .nav a[data-i18n="nav-services"],
@@ -227,6 +241,101 @@ a:hover {
   min-width: 80px;
 }
 
+/**
+ * #mainNav — fila editorial (misma apariencia que home): línea fina + subrayado oro activo.
+ * Desktop ≥1001px. No aplica en perfil DJ / hubs academia (allí .header-bottom se oculta o es otra barra).
+ */
+@media (min-width: 1001px) {
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainHeader .header-bottom {
+    padding: 8px 0 10px;
+    background: linear-gradient(180deg, rgba(6, 5, 4, 0.45) 0%, rgba(2, 2, 2, 0.72) 100%);
+    border-top: 1px solid rgba(197, 160, 89, 0.2);
+    box-shadow: inset 0 1px 0 rgba(197, 160, 89, 0.06);
+  }
+
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav.nav.top-nav {
+    position: relative;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: clamp(10px, 1.8vw, 32px);
+    row-gap: 6px;
+    padding: 6px 12px 18px;
+    max-width: min(1180px, 100%);
+    margin: 0 auto;
+  }
+
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav.nav.top-nav::after {
+    content: '';
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 8px;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(138, 115, 71, 0.35) 12%,
+      rgba(160, 132, 75, 0.55) 50%,
+      rgba(138, 115, 71, 0.35) 88%,
+      transparent 100%
+    );
+    pointer-events: none;
+  }
+
+  /* Anula pastillas cristal de .nav (misma fila, mismo orden de ítems) */
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav.nav.top-nav a {
+    background: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    min-width: 0 !important;
+    padding: 9px 6px 16px !important;
+    box-shadow: none !important;
+    display: inline-block !important;
+    position: relative;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.11em !important;
+    text-transform: uppercase !important;
+    color: rgba(245, 236, 220, 0.82) !important;
+    transition: color 0.2s ease, text-shadow 0.2s ease;
+  }
+
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav.nav.top-nav a[data-i18n='nav-shop'],
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav.nav.top-nav a[href='./shop.html'] {
+    color: rgba(224, 195, 130, 0.95) !important;
+    font-weight: 700 !important;
+  }
+
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav.nav.top-nav a:hover {
+    color: rgba(255, 252, 245, 0.98) !important;
+    text-shadow: 0 0 18px rgba(197, 160, 89, 0.25);
+  }
+
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav.nav.top-nav a.active {
+    color: var(--gold) !important;
+    text-shadow: 0 0 22px rgba(197, 160, 89, 0.4);
+  }
+
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav.nav.top-nav a:not(.active)::after {
+    content: none !important;
+  }
+
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav.nav.top-nav a.active::after {
+    content: '' !important;
+    display: block !important;
+    position: absolute;
+    bottom: 7px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #8a6f3a 0%, #e8cf8f 35%, #c5a059 50%, #e8cf8f 65%, #8a6f3a 100%);
+    box-shadow: 0 0 16px rgba(197, 160, 89, 0.55), 0 0 28px rgba(197, 160, 89, 0.22);
+  }
+}
+
 .btn-pill:hover {
   background: #fff;
   color: #000;
@@ -240,6 +349,41 @@ a:hover {
 .btn-pill.gold:hover {
   background: var(--gold);
   color: #000;
+}
+
+/**
+ * Pares de etiquetas / CTAs (mismo embace al cambiar idioma: solo cambia la tipografía interior; evita salto visual).
+ * Uso: envuelve dos botones o enlaces hermanos en <div class="mdj-paired-pills">…</div>
+ * Opcional: --mdj-paired-gap, --mdj-paired-pill-max, --mdj-paired-row-max
+ */
+.mdj-paired-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mdj-paired-gap, 14px);
+  justify-content: center;
+  align-items: stretch;
+  width: 100%;
+  max-width: var(--mdj-paired-row-max, 720px);
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+.mdj-paired-pills > * {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: var(--mdj-paired-pill-max, 340px);
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .mdj-paired-pills > * {
+    max-width: 100%;
+  }
 }
 
 /* --- DOWNLOADS PAGE LAYOUT --- */
@@ -610,7 +754,7 @@ a:hover {
   align-items: center;
   justify-content: center;
   padding: 80px 0;
-  margin-top: calc(-1 * var(--header-height));
+  margin-top: calc(-1 * (var(--header-height) + var(--header-nav-band)));
   overflow: hidden;
   background: #000;
 }
@@ -1692,6 +1836,10 @@ select:focus {
 }
 
 @media (max-width: 1000px) {
+  :root {
+    --header-nav-band: 0px;
+  }
+
   .header-bottom {
     display: none;
   }
@@ -3965,6 +4113,11 @@ body:has(.lang-btn.active[data-lang="es"]) #roster-modal .live-tab[data-live-tab
   padding: 0;
 }
 
+a.account-btn {
+  text-decoration: none;
+  color: inherit;
+}
+
 .account-btn .avatar {
   width: 36px;
   height: 36px;
@@ -4261,6 +4414,11 @@ body:has(.lang-btn.active[data-lang="es"]) #roster-modal .live-tab[data-live-tab
   transition: transform 0.2s ease;
 }
 
+a.account-btn {
+  text-decoration: none;
+  color: inherit;
+}
+
 .account-btn:hover {
   transform: scale(1.02);
 }
@@ -4393,4 +4551,664 @@ body:has(.lang-btn.active[data-lang="es"]) #roster-modal .live-tab[data-live-tab
 
 .lang-btn:hover {
   opacity: 0.9 !important;
+}
+
+/* ============================================================
+   GLOBAL RESPONSIVE & ACCESSIBILITY (site-wide)
+   Mobile / tablet / notch / older or low-GPU devices
+   ============================================================ */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+img,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+svg {
+  max-width: 100%;
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --header-height: 72px;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --header-height: 64px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --header-height: 58px;
+  }
+}
+
+.header {
+  box-sizing: border-box;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+@media (max-width: 1200px) {
+  .header-top .container {
+    flex-wrap: wrap;
+    row-gap: 10px;
+    column-gap: 12px;
+  }
+
+  .nav.top-nav,
+  .nav {
+    gap: min(28px, 4vw);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 1024px) {
+  .container {
+    padding-left: max(16px, calc(env(safe-area-inset-left, 0px) + 8px));
+    padding-right: max(16px, calc(env(safe-area-inset-right, 0px) + 8px));
+  }
+
+  .header-actions {
+    gap: min(20px, 3vw);
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .container {
+    padding-left: max(12px, calc(env(safe-area-inset-left, 0px) + 8px));
+    padding-right: max(12px, calc(env(safe-area-inset-right, 0px) + 8px));
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: max(16px, 1rem);
+  }
+}
+
+/* Ampliar zona táctil del menú hamburguesa sin romper la animación */
+@media (max-width: 1000px) {
+  .mobile-menu-btn {
+    padding: 12px;
+    margin: -12px;
+  }
+}
+
+/* Menos blur en pantallas pequeñas = mejor en tablets y equipos antiguos */
+@media (max-width: 768px) {
+  .header {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .mobile-overlay {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Toques fluidos (menos “ruido” visual en iOS/Android) */
+@media (hover: none) and (pointer: coarse) {
+  .dj-tab-btn,
+  .btn-pill,
+  .account-btn,
+  .mobile-menu-btn,
+  .header-cart-btn {
+    -webkit-tap-highlight-color: rgba(197, 160, 89, 0.12);
+    touch-action: manipulation;
+  }
+}
+
+/* ============================================================
+   SHARED SITE HEADER (all pages — same bar as index #mainHeader)
+   ============================================================ */
+/* Barra superior: ~50% opacidad + cristal (alineado a referencia visual) */
+#mainHeader.header {
+  background: rgba(10, 8, 6, 0.5) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: background 0.35s ease, backdrop-filter 0.35s ease;
+  border-bottom: 1px solid rgba(197, 160, 89, 0.12);
+}
+
+#mainHeader.header.scrolled {
+  background: rgba(6, 5, 4, 0.72) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom-color: rgba(197, 160, 89, 0.22);
+}
+
+/* Fila #mainNav por encima del bloque superior (evita que sticky/scroll tapen Home/Services) */
+#mainHeader .header-bottom {
+  position: relative;
+  z-index: 101;
+}
+
+#global-logout-btn-desktop,
+#global-logout-btn-mobile {
+  display: none !important;
+}
+
+#mainHeader .lang-switcher {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 3px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+#mainHeader .lang-pipe {
+  display: none !important;
+}
+
+#mainHeader .header-actions {
+  flex-wrap: wrap !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+}
+
+#header-get-pro-btn {
+  white-space: nowrap;
+}
+
+.header-djpro-badge {
+  display: none;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #1a1208;
+  background: linear-gradient(145deg, #e8cf8f, #c5a059);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 2px 10px rgba(197, 160, 89, 0.35);
+}
+
+.header-cart-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(197, 160, 89, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(197, 160, 89, 0.12), 0 2px 10px rgba(0, 0, 0, 0.2);
+  color: var(--gold);
+  text-decoration: none;
+  font-size: 20px;
+  line-height: 1;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease,
+    filter 0.3s ease;
+}
+
+.header-cart-btn:hover {
+  background: rgba(197, 160, 89, 0.22);
+  border-color: rgba(197, 160, 89, 0.95);
+  box-shadow: 0 0 22px rgba(197, 160, 89, 0.55), 0 0 42px rgba(197, 160, 89, 0.28),
+    inset 0 0 20px rgba(197, 160, 89, 0.15);
+  transform: translateY(-1px);
+}
+
+.header-cart-btn.has-items {
+  background: rgba(197, 160, 89, 0.14);
+  border-color: rgba(197, 160, 89, 0.65);
+  box-shadow: 0 0 14px rgba(197, 160, 89, 0.35), inset 0 0 12px rgba(197, 160, 89, 0.12);
+  animation: mdj-cart-glow-pulse 2.1s ease-in-out infinite;
+}
+
+.header-cart-btn.has-items:hover {
+  animation: none;
+  box-shadow: 0 0 26px rgba(197, 160, 89, 0.6), 0 0 48px rgba(197, 160, 89, 0.3),
+    inset 0 0 18px rgba(197, 160, 89, 0.2);
+}
+
+@keyframes mdj-cart-glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 12px rgba(197, 160, 89, 0.32), inset 0 0 10px rgba(197, 160, 89, 0.1);
+    border-color: rgba(197, 160, 89, 0.6);
+  }
+
+  50% {
+    box-shadow: 0 0 26px rgba(197, 160, 89, 0.55), 0 0 38px rgba(197, 160, 89, 0.28),
+      inset 0 0 16px rgba(197, 160, 89, 0.2);
+    border-color: rgba(232, 200, 120, 0.95);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header-cart-btn.has-items {
+    animation: none;
+  }
+}
+
+.header-cart-btn:focus-visible {
+  outline: none;
+  border-color: rgba(197, 160, 89, 0.95);
+  box-shadow: 0 0 20px rgba(197, 160, 89, 0.5);
+}
+
+.header-cart-count {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #c0392b;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+}
+
+.header-cart-count:empty,
+.header-cart-count[data-count="0"] {
+  display: none;
+}
+
+/* Barra tipo “Google Search”: lupa anclada a la izquierda + texto con padding generoso (sin solapar) */
+.header-search-wrap {
+  position: relative;
+  flex: 1 1 220px;
+  min-width: min(100%, 200px);
+  max-width: min(440px, 100%);
+}
+
+.header-search-wrap::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.88;
+  background: no-repeat center / contain;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%239aa0a6' d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
+}
+
+.header-smart-search {
+  width: 100%;
+  min-height: 44px;
+  line-height: 1.35;
+  padding: 10px 18px 10px 56px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  color: #222;
+  font-size: 15px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.header-smart-search::-webkit-search-decoration,
+.header-smart-search::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.header-smart-search::placeholder {
+  color: #777;
+}
+
+.header-smart-search:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 1px 8px rgba(197, 160, 89, 0.35);
+}
+
+/* Tema oscuro en #mainHeader — icono 16px + texto desde 56px (hueco tipo Google, sin solapar) */
+#mainHeader .header-smart-search {
+  background: rgba(8, 7, 6, 0.55);
+  color: #f0f0f0;
+  border: 1px solid rgba(197, 160, 89, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 12px rgba(0, 0, 0, 0.25);
+  padding: 10px 18px 10px 56px;
+}
+
+#mainHeader .header-smart-search::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+#mainHeader .header-smart-search:focus {
+  border-color: rgba(197, 160, 89, 0.55);
+  box-shadow: 0 0 0 1px rgba(197, 160, 89, 0.25), 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+#mainHeader .header-search-wrap::before {
+  left: 16px;
+  width: 18px;
+  height: 18px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23e8dcc8' fill-opacity='0.88' d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
+}
+
+.header-avatar-cart-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+#header-auth-zone.session-pending {
+  display: none !important;
+}
+
+@media (max-width: 1100px) {
+  .header-search-wrap {
+    order: 10;
+    max-width: 100%;
+    flex-basis: 100%;
+    margin-top: 8px;
+  }
+}
+
+/* ============================================================
+   DJ OWNER STRIP — barra “parte artística” (perfil / dashboard / cursos)
+   Negro sólido, inactivos gris, activo oro + línea inferior.
+   ============================================================ */
+.dj-owner-tabs {
+  background: #000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: sticky;
+  /* Debajo de header-top + #mainNav (no tapar la fila Home/Services) */
+  top: calc(var(--header-height) + var(--header-nav-band));
+  z-index: 990;
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dj-owner-tabs .container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0;
+  padding: 0 clamp(16px, 4vw, 56px);
+  /* visible: el submenú Academia no queda recortado por overflow-x: auto */
+  overflow: visible;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dj-tab-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  cursor: pointer;
+  text-transform: uppercase;
+  position: relative;
+  transition: color 0.2s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px clamp(20px, 3vw, 40px);
+  min-width: 96px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.dj-tab-btn:hover {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.dj-tab-btn.active {
+  color: var(--gold);
+}
+
+.dj-tab-btn.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: clamp(20px, 3vw, 40px);
+  right: clamp(20px, 3vw, 40px);
+  height: 1px;
+  background: var(--gold);
+}
+
+.dj-tab-btn:focus-visible {
+  outline: 2px solid rgba(197, 160, 89, 0.65);
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dj-tab-btn {
+    transition: none;
+  }
+}
+
+/* Perfil DJ + hub Academia + cursos/biblioteca artista: sin #mainNav — barra artística */
+body.dj-profile,
+body.mdj-academia-hub,
+body.mdj-artist-academy {
+  --header-nav-band: 0px;
+}
+
+body.dj-profile #mainHeader .header-bottom,
+body.mdj-academia-hub #mainHeader .header-bottom,
+body.mdj-artist-academy #mainHeader .header-bottom {
+  display: none !important;
+}
+
+/* Barra artística: tipografía legible; 2ª línea solo si falta ancho */
+body.dj-profile .dj-owner-tabs,
+body.mdj-academia-hub .dj-owner-tabs,
+body.mdj-artist-academy .dj-owner-tabs {
+  position: sticky;
+  z-index: 1200;
+  isolation: isolate;
+  min-height: 0;
+}
+
+/* Una sola fila: scroll horizontal suave (perfil, academia, dashboard, cursos…) */
+body.dj-profile .dj-owner-tabs .container,
+body.mdj-academia-hub .dj-owner-tabs .container,
+body.mdj-artist-academy .dj-owner-tabs .container {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-content: stretch;
+  row-gap: 0;
+  column-gap: 0;
+  padding: 10px clamp(14px, 2.5vw, 40px);
+  padding-left: max(14px, env(safe-area-inset-left, 0px));
+  padding-right: max(14px, env(safe-area-inset-right, 0px));
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  overscroll-behavior-x: contain;
+}
+
+body.dj-profile .dj-owner-tabs .dj-tab-btn,
+body.dj-profile .dj-owner-tabs .dj-owner-academy-btn,
+body.mdj-academia-hub .dj-owner-tabs .dj-tab-btn,
+body.mdj-academia-hub .dj-owner-tabs .dj-owner-academy-btn,
+body.mdj-artist-academy .dj-owner-tabs .dj-tab-btn,
+body.mdj-artist-academy .dj-owner-tabs .dj-owner-academy-btn {
+  font-size: clamp(14px, 1.05vw, 16px);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 14px clamp(12px, 1.4vw, 20px);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+body.dj-profile .dj-owner-tabs .nav-item-dropdown.dj-owner-academy-dd,
+body.mdj-academia-hub .dj-owner-tabs .nav-item-dropdown.dj-owner-academy-dd,
+body.mdj-artist-academy .dj-owner-tabs .nav-item-dropdown.dj-owner-academy-dd {
+  flex-shrink: 0;
+}
+
+body.dj-profile .dj-owner-tabs .dj-tab-btn.active::after,
+body.mdj-academia-hub .dj-owner-tabs .dj-tab-btn.active::after,
+body.mdj-artist-academy .dj-owner-tabs .dj-tab-btn.active::after {
+  left: clamp(10px, 1.2vw, 16px);
+  right: clamp(10px, 1.2vw, 16px);
+  bottom: 0;
+}
+
+/* Modelo perfil DJ: misma caja para <a> y <button>; enlaces sin color de visitado distinto */
+body.dj-profile .dj-owner-tabs .container a.dj-tab-btn,
+body.mdj-academia-hub .dj-owner-tabs .container a.dj-tab-btn,
+body.mdj-artist-academy .dj-owner-tabs .container a.dj-tab-btn,
+body.dj-profile .dj-owner-tabs .container button.dj-tab-btn,
+body.mdj-academia-hub .dj-owner-tabs .container button.dj-tab-btn,
+body.mdj-artist-academy .dj-owner-tabs .container button.dj-tab-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+  text-decoration: none;
+  vertical-align: baseline;
+}
+
+body.dj-profile .dj-owner-tabs .container a.dj-tab-btn:link,
+body.dj-profile .dj-owner-tabs .container a.dj-tab-btn:visited,
+body.mdj-academia-hub .dj-owner-tabs .container a.dj-tab-btn:link,
+body.mdj-academia-hub .dj-owner-tabs .container a.dj-tab-btn:visited,
+body.mdj-artist-academy .dj-owner-tabs .container a.dj-tab-btn:link,
+body.mdj-artist-academy .dj-owner-tabs .container a.dj-tab-btn:visited {
+  color: rgba(255, 255, 255, 0.52);
+}
+
+body.dj-profile .dj-owner-tabs .container a.dj-tab-btn:hover,
+body.mdj-academia-hub .dj-owner-tabs .container a.dj-tab-btn:hover,
+body.mdj-artist-academy .dj-owner-tabs .container a.dj-tab-btn:hover {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+body.dj-profile .dj-owner-tabs .container a.dj-tab-btn.active,
+body.mdj-academia-hub .dj-owner-tabs .container a.dj-tab-btn.active,
+body.mdj-artist-academy .dj-owner-tabs .container a.dj-tab-btn.active {
+  color: var(--gold);
+}
+
+body.dj-profile .dj-owner-tabs .container::-webkit-scrollbar,
+body.mdj-academia-hub .dj-owner-tabs .container::-webkit-scrollbar,
+body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar {
+  height: 6px;
+}
+
+body.dj-profile .dj-owner-tabs .container::-webkit-scrollbar-thumb,
+body.mdj-academia-hub .dj-owner-tabs .container::-webkit-scrollbar-thumb,
+body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
+  background: rgba(197, 160, 89, 0.35);
+  border-radius: 3px;
+}
+
+/* Weather Lab: segunda fila de pestañas — mismo comportamiento en móvil/tablet */
+.dj-weather-subtabs .container {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  overscroll-behavior-x: contain;
+  padding-left: max(14px, env(safe-area-inset-left, 0px));
+  padding-right: max(14px, env(safe-area-inset-right, 0px));
+}
+
+.dj-weather-subtabs .container::-webkit-scrollbar {
+  height: 5px;
+}
+
+.dj-weather-subtabs .container::-webkit-scrollbar-thumb {
+  background: rgba(197, 160, 89, 0.3);
+  border-radius: 3px;
+}
+
+@media (max-width: 768px) {
+  body.dj-profile .dj-owner-tabs .dj-tab-btn,
+  body.dj-profile .dj-owner-tabs .dj-owner-academy-btn,
+  body.mdj-academia-hub .dj-owner-tabs .dj-tab-btn,
+  body.mdj-academia-hub .dj-owner-tabs .dj-owner-academy-btn,
+  body.mdj-artist-academy .dj-owner-tabs .dj-tab-btn,
+  body.mdj-artist-academy .dj-owner-tabs .dj-owner-academy-btn {
+    min-height: 44px;
+  }
+
+  .dj-weather-subtabs .dj-tab-btn.dash-tab-btn {
+    min-height: 44px;
+  }
+}
+
+/* Academia: submenú (Cursos + Biblioteca) solo en barra artista — perfil / dashboard */
+.dj-owner-tabs .nav-item-dropdown.dj-owner-academy-dd {
+  padding: 0;
+  margin: 0;
+  align-self: stretch;
+  align-items: stretch;
+}
+
+.dj-owner-tabs .nav-item-dropdown.dj-owner-academy-dd > .dj-owner-academy-btn {
+  height: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: center;
+}
+
+.dj-owner-tabs .nav-item-dropdown.dj-owner-academy-dd .nav-dropdown-menu {
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  z-index: 6000;
+}
+
+.dj-owner-tabs .nav-item-dropdown.dj-owner-academy-dd:hover .nav-dropdown-menu {
+  transform: translateX(-50%) translateY(0);
 }

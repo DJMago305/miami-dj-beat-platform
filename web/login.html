@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Miami DJ Beat — Iniciar Sesión</title>
-    <link rel="stylesheet" href="./styles.css?v=20260226-1" />
+    <link rel="stylesheet" href="./styles.css?v=20260411-search-google" />
     <style>
         .login-container {
             max-width: 420px;
@@ -106,29 +106,86 @@
 </head>
 
 <body class="notranslate">
-    <header class="header" id="mainHeader">
-        <div class="header-top">
-            <div class="container">
-                <div class="brand">
-                    <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
-                    <div class="brand-letters-wrapper">
-                        <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters"
-                            class="brand-letters-img">
-                    </div>
-                </div>
-
-                <div class="header-actions">
-                    <div class="lang-switcher">
-                        <a href="mailto:miamidjbeat@gmail.com" class="lang-btn" data-i18n="nav-support">Soporte</a>
-                        <span class="lang-btn active" data-lang="es">ES</span>
-                        <span class="lang-pipe">|</span>
-                        <span class="lang-btn" data-lang="en">EN</span>
-                    </div>
-                    <a href="./index.html" class="btn-pill" data-i18n="nav-home">Inicio</a>
-                </div>
-            </div>
+    <!-- MDJ canonical site header — keep in sync with index #mainHeader; use ./index.html# anchors for subpages -->
+<header class="header" id="mainHeader">
+  <div class="header-top">
+    <div class="container">
+      <div class="brand">
+        <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+        <div class="brand-letters-wrapper">
+          <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters" class="brand-letters-img">
         </div>
-    </header>
+      </div>
+
+      <div class="header-actions"
+        style="display: flex; gap: 12px !important; background: rgba(255,255,255,0.03); padding: 8px 14px; border-radius: 999px;">
+        <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
+        <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
+        <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
+        <div class="lang-switcher">
+          <span class="lang-btn" data-lang="es">ES</span>
+          <span class="lang-pipe">|</span>
+          <span class="lang-btn active" data-lang="en">EN</span>
+        </div>
+        <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-i18n="btn-login">Log in</a>
+
+        <div class="header-avatar-cart-row" aria-label="Account and cart">
+          <div class="account session-pending" id="header-auth-zone" style="display: none;">
+            <a class="account-btn" id="accountBtn" href="./dj-profile.html" title="Mi perfil" aria-label="Mi perfil">
+              <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
+            </a>
+</div>
+
+          <a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart" aria-label="Shopping cart">
+            <span aria-hidden="true">🛒</span>
+            <span id="header-cart-count" class="header-cart-count" hidden></span>
+          </a>
+        </div>
+        <div class="header-search-wrap">
+          <input type="search" id="header-smart-search" class="header-smart-search"
+            placeholder="Search DJs, gear, services…" autocomplete="off" enterkeyhint="search" />
+        </div>
+      </div>
+
+      <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <div class="mobile-overlay" id="mobileMenu">
+        <nav class="mobile-nav">
+          <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+          <a href="./index.html#services" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+          <a href="./rentals.html" data-i18n="nav-rentals" data-mdj-nav="rentals">Event Services</a>
+          <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
+          <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+          <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+          <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+          <a href="./login.html?signup=free" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free"
+            style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
+          <a href="./login.html" id="header-login-btn-mobile" data-i18n="btn-login"
+            style="color:var(--gold); font-weight:800;">Entrar</a>
+          <a href="./dj-profile.html" id="nav-my-profile-mobile"
+            style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY PROFILE</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <div class="container">
+      <nav class="nav top-nav" id="mainNav">
+        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+        <a href="./index.html#services" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+        <a href="./rentals.html" data-i18n="nav-rentals" data-mdj-nav="rentals">Event Services</a>
+        <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-mdj-nav="shop">Shop</a>
+        <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+        <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
+      </nav>
+    </div>
+  </div>
+</header>
 
     <!-- 
     ================================================================================
@@ -140,6 +197,7 @@
     <main class="container">
         <div class="login-container">
             <p class="login-hero">MDJPRO · Acceso seguro</p>
+            <p id="login-free-hint" class="fineprint" data-i18n="login-free-hint" style="display:none;text-align:center;color:rgba(197,160,89,0.85);margin:-18px 0 22px;font-size:12px;font-weight:600;letter-spacing:0.04em;">Cuenta gratuita · sin tarjeta</p>
             <div class="auth-toggle">
                 <div class="auth-tab active" id="tab-login" data-i18n="login-tab">Entrar</div>
                 <div class="auth-tab" id="tab-signup" data-i18n="signup-tab">Crear Cuenta</div>
@@ -170,7 +228,7 @@
                     <label><span>Nombre Artístico <small style="color:var(--muted);font-weight:400;">(opcional — se usa
                                 como
                                 username)</small></span><input type="text" id="signup-name"
-                            placeholder="DJ Mago"></label>
+                            placeholder="ej. DJMago305"></label>
                 </div>
                 <label><span data-i18n="login-signup-email-label">Email *</span><input type="email" id="signup-email"
                         name="email" autocomplete="email" required placeholder="tu@email.com"></label>
@@ -213,9 +271,20 @@
     <script src="./translations.js?v=20260226-1"></script>
     <script src="./i18n.js?v=20260226-1"></script>
     <script src="./security-shield.js?v=20260305-1"></script>
-    <script src="./auth.js?v=20260226-1"></script>
+    <script src="./auth.js?v=20260411-ref"></script>
 
     <script>
+        (function syncReferralFromUrl() {
+            try {
+                var r = new URLSearchParams(window.location.search).get('ref');
+                if (r && String(r).trim()) {
+                    r = String(r).trim();
+                    localStorage.setItem('mdb_referral_dj_id', r);
+                    localStorage.setItem('mdj_active_affiliate_dj', r);
+                }
+            } catch (e) { void e; }
+        })();
+
         const tabLogin = document.getElementById('tab-login');
         const tabSignup = document.getElementById('tab-signup');
         const loginForm = document.getElementById('login-form');
@@ -247,8 +316,13 @@
         const mode = params.get('mode');      // 'signup' → open Crear Cuenta tab
         const redirect = params.get('redirect');  // 'jobs'   → go back after auth
 
-        if (mode === 'signup') {
+        if (mode === 'signup' || params.get('signup') === 'free') {
             tabSignup.click();
+            const freeHint = document.getElementById('login-free-hint');
+            if (freeHint) {
+                freeHint.style.display = 'block';
+                if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
+            }
         }
 
         const userType = params.get('user_type') || (redirect === 'jobs' ? 'talent' : 'client');
@@ -289,7 +363,7 @@
     </script>
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
-    <script src="./mdj-assistant.js?v=20260306-1"></script>
+    <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
     <div id="mdj-assistant-booth">
         <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
         <div class="booth-window">
@@ -318,6 +392,10 @@
             <div style="font-size: 30px; z-index: 10;">🤖</div>
         </div>
     </div>
+
+    <script src="./header-smart-search.js?v=20260411-search-google"></script>
+    <script src="./mdj-shared-header.js?v=20260411-avatar-profileid"></script>
+  <script src="./mdj-social-bar.js?v=20260411-14"></script>
 </body>
 
 </html>

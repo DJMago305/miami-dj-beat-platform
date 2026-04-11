@@ -1,6 +1,24 @@
 // ─── MIAMI DJ BEAT Auth — Login & DJ Registration ──────────────────────────────────
 // Uses window.getSupabaseClient() (lazy singleton, avoids CDN race condition).
 
+/**
+ * DJ que refiere (promoción / QR / botón WEB en perfil): ?ref= en URL, o localStorage
+ * tras index.html?ref= o gotoAffiliateWeb() desde dj-profile.
+ */
+function mdjGetReferralDjId() {
+    try {
+        const fromUrl = new URLSearchParams(window.location.search).get('ref');
+        if (fromUrl && String(fromUrl).trim()) return String(fromUrl).trim();
+    } catch (e) { /* ignore */ }
+    try {
+        const a = localStorage.getItem('mdb_referral_dj_id');
+        const b = localStorage.getItem('mdj_active_affiliate_dj');
+        return (a || b || '').trim();
+    } catch (e) {
+        return '';
+    }
+}
+
 /** Wait for the Supabase client to be ready (max ~3 sec). */
 async function waitForSupabase(maxAttempts = 10) {
     for (let i = 0; i < maxAttempts; i++) {
@@ -161,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // 1. Create Auth user
                 const userType = document.getElementById('signup-usertype')?.value || 'client';
-                const refCode = new URLSearchParams(window.location.search).get('ref') || '';
+                const refCode = mdjGetReferralDjId();
 
                 const { data, error: authErr } = await db.auth.signUp({
                     email,

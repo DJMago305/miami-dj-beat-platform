@@ -10,12 +10,12 @@
     --booth-border: rgba(197, 160, 89, 0.3);
 }
 
-/* ── BOOTH TRIGGER (LA BURBUJA) ── */
+/* ── BOOTH TRIGGER — esquina inferior derecha (barra social: mdj-social-bar.js) ── */
 #mdj-assistant-booth {
     position: fixed;
-    bottom: 30px;
-    right: 30px;
-    z-index: 10000;
+    bottom: max(18px, env(safe-area-inset-bottom, 0px));
+    right: max(16px, env(safe-area-inset-right, 0px));
+    z-index: 10100;
     transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
 }
 

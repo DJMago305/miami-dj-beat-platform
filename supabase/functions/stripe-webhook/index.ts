@@ -110,6 +110,25 @@ serve(async (req) => {
                     break;
                 }
 
+                // ── Branch: DJ Professional Course (one-time, Stripe Checkout) ──
+                if (session.metadata?.product === "miami_dj_course") {
+                    const email =
+                        (session.customer_details?.email as string | undefined) ||
+                        (session.customer_email as string | undefined) ||
+                        "unknown";
+                    const { error: cpErr } = await supabase.from("course_purchases").insert({
+                        stripe_session_id: session.id,
+                        stripe_payment_intent: (session.payment_intent as string) ?? null,
+                        customer_email: email,
+                        amount_cents: session.amount_total ?? 0,
+                        currency: session.currency ?? "usd",
+                        product: "dj_professional_course",
+                    });
+                    if (cpErr) console.error("[Webhook] course_purchases:", cpErr.message);
+                    else console.log(`✅ Course purchase: ${session.id} | ${email} | $${((session.amount_total ?? 0) / 100).toFixed(2)}`);
+                    break;
+                }
+
                 // ── Branch B: DJ PRO Subscription ──────────────────
                 const subId = session.subscription;
                 const referrerId = (session.metadata?.referrer_id || "") as string;

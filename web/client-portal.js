@@ -296,10 +296,11 @@ const PortalApp = {
         let discount = 0;
         let discountNote = "";
 
-        // 1. Referral Discount (Source Ref)
-        if (this.clientProfile?.source_ref) {
-            discount += 50; // Flat $50 discount for referral
-            discountNote += `• Crédito Referido (${this.clientProfile.source_ref}): -$50.00<br>`;
+        // 1. Referral — primera compra: $30 salvo promo MDJ distinta o discount_eligible === false
+        const refEligible = this.clientProfile?.source_ref && this.clientProfile?.discount_eligible !== false;
+        if (refEligible) {
+            discount += 30;
+            discountNote += `• Crédito referido MDJ (1ª compra): -$30.00<br>`;
         }
 
         // 2. Loyalty Discount (Returning Client)

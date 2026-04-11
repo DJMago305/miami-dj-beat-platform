@@ -1,6 +1,8 @@
 /**
  * MDJPRO — Booth Assistant AI Logic
- * Handles AI Sales Agent, Negotiation, and Multilingual Support
+ * Sales / negotiation helper with a human tone. Uses scripted states + keyword routing (not a hosted LLM).
+ * Policy: never disclose internal credentials, unreleased roadmap, private user data, or “company secrets”.
+ * For anything outside public MDJ knowledge, deflect to support or give general business criteria only.
  */
 
 // ==========================================
@@ -26,6 +28,19 @@ window.MDJ_Assistant = {
     isOpen: false,
     sessionState: "DISCOVERY", // "DISCOVERY", "B2C_QUALIFICATION", "B2C_PRICING", "B2C_OBJECTION", "B2C_CLOSING", "B2B_EVANGELIST"
     userLanguage: null, // "es" or "en"
+    /** Declines confidential / sensitive requests; returns reply string or null */
+    confidentialityAndSafetyReply: function (rawInput, isSpanish) {
+        var t = (rawInput || '').toLowerCase();
+        var confidential = /contraseña|password|passwd|api[_\s-]?key|secret[o]?|confidencial|confidential|credencial|credential|token\s*(priv|secret)|stripe\s*secret|supabase\s*key|\.env|hack|exploit|sql\s*injection|ddos|breach|filtraci[oó]n|salario de\s+\w+|cu[aá]nto gana\s+\w+\s+en la empresa|employee\s+id|ssn|n[uú]mero de tarjeta|iban\s+interno|base de datos interna|dump\s+de|internal\s+only|roadmap\s+secreto|no publicado/i.test(t);
+        var askSecrets = /secreto[s]?\s+de\s+(la\s+)?empresa|company\s+secrets|informaci[oó]n\s+privada\s+de\s+(usuarios|djs)|datos\s+internos|acuerdo[s]?\s+privad/i.test(t);
+        if (confidential || askSecrets) {
+            return isSpanish
+                ? "Por seguridad y ética profesional no comparto credenciales, datos internos, acuerdos privados ni secretos comerciales. Sí puedo orientarte en ventas, propuesta de valor, objeciones y buenas prácticas públicas de Miami DJ Beat. ¿Qué tema de negocio quieres trabajar?"
+                : "For security and professional ethics I don’t share credentials, internal data, private agreements, or trade secrets. I can still help with sales, value proposition, objections, and public best practices for Miami DJ Beat. What business topic should we tackle?";
+        }
+        return null;
+    },
+
     knowledgeBase: {
         platform: "Miami DJ Beat es la plataforma líder para DJs y entretenimiento en Florida.",
         plans: {
@@ -72,7 +87,7 @@ window.MDJ_Assistant = {
         if (this.isOpen) {
             booth.classList.add('active');
             if (document.querySelectorAll('.message').length === 0) {
-                this.addMessage("assistant", "Hello! I am Booth, your MDJPRO assistant. / ¡Hola! Soy Booth, tu asistente de MDJPRO. How can I help you today?");
+                this.addMessage("assistant", "Hello! I’m Booth — I help with bookings, plans, and DJ business in a clear, human way. I don’t share confidential or internal company data. / ¡Hola! Soy Booth: te ayudo con reservas, planes y negocio DJ con criterio claro. No comparto información confidencial ni secretos internos. ¿En qué te apoyo?");
             }
         } else {
             booth.classList.remove('active');
@@ -114,6 +129,12 @@ window.MDJ_Assistant = {
             else this.userLanguage = "es"; // Default to Spanish in Miami if mixed or unsure
         }
         const isSpanish = this.userLanguage === "es";
+
+        var safety = this.confidentialityAndSafetyReply(userInput, isSpanish);
+        if (safety) {
+            this.addMessage("assistant", safety);
+            return;
+        }
 
         // GLOBAL INTENT DETECTORS
         const isClientLaunch = /fiesta|dj|cuanto cuesta|cuesta|música|musica|evento|contratar|book|hire|party|wedding|boda|quince|15 años|15 anos|fecha|city|ciudad/.test(input);
@@ -235,8 +256,13 @@ window.MDJ_Assistant = {
                 const b2bFinance = /dinero|money|pago|finanzas|finance|dashboard|ingresos|cobrar|propinas|tips/.test(input);
                 const b2bCalendar = /calendario|calendar|clima|weather|lluvia|organizar|planificar/.test(input);
                 const b2bPlan = /plan|pro\b|suscripcion|subscription|membresia|precio/.test(input);
+                const b2bStrategy = /estrategia|strategy|margen|margin|objetivo|kpi|objeci[oó]n|objection|negocio|business|pricing|precio justo|fee|honorario|criterio|decisi[oó]n|problema de negocio/.test(input);
 
-                if (b2bPlan) {
+                if (b2bStrategy && !b2bPlan && !b2bProfile && !b2bFinance && !b2bCalendar) {
+                    response = isSpanish
+                        ? "Te doy criterios prácticos, sin datos internos: (1) define tu paquete por valor percibido — horas, producción, equipo y riesgo; (2) ancla con reseñas y perfil verificado; (3) maneja objeciones separando precio vs. resultado; (4) sube ticket con add-ons claros (horas extra, MC, luces). Si quieres, bajamos esto a tu perfil MDJ o a tu flujo de cotización en la plataforma."
+                        : "Here’s practical criteria—no internal data: (1) package by perceived value—hours, production, gear, risk; (2) anchor with reviews and a verified profile; (3) handle objections by splitting price vs. outcome; (4) raise ticket size with clear add-ons. Want to map this to your MDJ profile or quoting flow?";
+                } else if (b2bPlan) {
                     response = isSpanish
                         ? "¡Excelente pregunta! El Plan PRO es la herramienta definitiva que usa la élite de DJs en la ciudad para tener máxima prioridad en búsquedas. ¿Quieres que elevemos tu perfil hoy mismo?"
                         : "Great question! The PRO Plan is the definitive tool used by the elite DJs in the city to have maximum search priority. Should we elevate your profile today?";
@@ -258,6 +284,12 @@ window.MDJ_Assistant = {
                         : "As I mentioned, our Booking Engine is designed to attract high-tier clients. At Miami DJ Beat, we demand excellence. Do you have the level required to start receiving these exclusive events?";
                 }
                 break;
+        }
+
+        if (!response || !String(response).trim()) {
+            response = isSpanish
+                ? "Puedo ayudarte con ventas, objeciones y criterios de negocio de forma clara; no manejo datos confidenciales ni secretos internos. ¿Buscas contratar un DJ, o eres DJ y quieres mejorar perfil, ingresos o plan?"
+                : "I can help with sales, objections, and business criteria clearly—I don’t handle confidential data or internal secrets. Are you hiring a DJ, or are you a DJ looking to improve profile, income, or your plan?";
         }
 
         this.addMessage("assistant", response);

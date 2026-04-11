@@ -7,10 +7,10 @@
   <title>Miami DJ Beat — DJs & Event Production</title>
   <meta name="description"
     content="Miami DJ Beat provides professional DJs and event production for corporate, private, and venue events across Miami-Dade and the Florida Keys." />
-  <link rel="stylesheet" href="./styles.css?v=20260226-1" />
+  <link rel="stylesheet" href="./styles.css?v=20260411-search-google" />
   <link rel="stylesheet" href="./profile.css?v=20260226-1" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./supabase-config.js?v=20260226-1"></script>
+  <script src="./supabase-config.js?v=20260411-7"></script>
   <style>
     /* Neutralizar inyección de auth.js en index.html para usar botón dinámico único */
     #global-logout-btn-desktop,
@@ -165,12 +165,6 @@
       max-width: 720px;
     }
 
-    .header-bottom .top-nav a {
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      font-size: 11px;
-    }
-
     @keyframes kenBurnsHome {
       0% {
         transform: scale(1);
@@ -220,13 +214,15 @@
       max-width: 720px;
     }
 
-    /* CTAs hero: visibles, mismo color de texto, hover luminoso */
-    .hero .cta-row > a.btn {
+    /* CTAs hero: fondo 50% opacidad, texto oro (#c5a059 fuerza sobre cualquier .btn global) */
+    .hero .hero-text-block .cta-row > a.btn,
+    .hero .hero-text-block .cta-row > a.btn.primary {
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      background: rgba(42, 34, 26, 0.68) !important;
+      background: rgba(10, 8, 6, 0.5) !important;
       border: 1.5px solid rgba(197, 160, 89, 0.9) !important;
-      color: #fff8ec !important;
+      color: #c5a059 !important;
+      -webkit-text-fill-color: #c5a059 !important;
       opacity: 1 !important;
       text-decoration: none;
       transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease,
@@ -234,12 +230,27 @@
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.32);
     }
 
-    .hero .cta-row > a.btn:hover {
-      background: rgba(197, 160, 89, 0.42) !important;
+    .hero .hero-text-block .cta-row > a.btn:hover,
+    .hero .hero-text-block .cta-row > a.btn.primary:hover {
+      background: rgba(10, 8, 6, 0.58) !important;
       border-color: #f0dcaa !important;
-      color: #ffffff !important;
+      color: #c5a059 !important;
+      -webkit-text-fill-color: #c5a059 !important;
       transform: translateY(-2px);
       box-shadow: 0 0 32px rgba(197, 160, 89, 0.65), 0 0 56px rgba(197, 160, 89, 0.35), 0 8px 28px rgba(0, 0, 0, 0.5);
+    }
+
+    @media (max-width: 560px) {
+      .hero .hero-text-block .cta-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px !important;
+      }
+
+      .hero .hero-text-block .cta-row > a.btn {
+        width: 100%;
+        box-sizing: border-box;
+      }
     }
 
     /* Carrito: mismo lenguaje que pestañas — cristal, dorado, hover bombilla, marcado con ítems */
@@ -276,11 +287,33 @@
       background: rgba(197, 160, 89, 0.14);
       border-color: rgba(197, 160, 89, 0.65);
       box-shadow: 0 0 14px rgba(197, 160, 89, 0.35), inset 0 0 12px rgba(197, 160, 89, 0.12);
+      animation: mdj-cart-glow-pulse 2.1s ease-in-out infinite;
     }
 
     .header-cart-btn.has-items:hover {
+      animation: none;
       box-shadow: 0 0 26px rgba(197, 160, 89, 0.6), 0 0 48px rgba(197, 160, 89, 0.3),
         inset 0 0 18px rgba(197, 160, 89, 0.2);
+    }
+
+    @keyframes mdj-cart-glow-pulse {
+      0%,
+      100% {
+        box-shadow: 0 0 12px rgba(197, 160, 89, 0.32), inset 0 0 10px rgba(197, 160, 89, 0.1);
+        border-color: rgba(197, 160, 89, 0.6);
+      }
+
+      50% {
+        box-shadow: 0 0 26px rgba(197, 160, 89, 0.55), 0 0 38px rgba(197, 160, 89, 0.28),
+          inset 0 0 16px rgba(197, 160, 89, 0.2);
+        border-color: rgba(232, 200, 120, 0.95);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .header-cart-btn.has-items {
+        animation: none;
+      }
     }
 
     .header-cart-btn:focus-visible {
@@ -310,35 +343,13 @@
       display: none;
     }
 
+    /* Búsqueda + lupa: reglas canónicas en styles.css (#mainHeader .header-*) */
+
     .header-search-wrap {
+      position: relative;
       flex: 1 1 160px;
       min-width: 140px;
       max-width: 280px;
-    }
-
-    .header-smart-search {
-      width: 100%;
-      padding: 10px 16px 10px 40px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      background: rgba(255, 255, 255, 0.95);
-      color: #222;
-      font-size: 14px;
-      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
-      box-sizing: border-box;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='%23555' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: 12px center;
-    }
-
-    .header-smart-search::placeholder {
-      color: #777;
-    }
-
-    .header-smart-search:focus {
-      outline: none;
-      border-color: var(--gold);
-      box-shadow: 0 1px 8px rgba(197, 160, 89, 0.35);
     }
 
     /* Avatar inmediatamente a la izquierda del carrito (misma fila visual) */
@@ -347,6 +358,11 @@
       align-items: center;
       gap: 10px;
       flex-shrink: 0;
+    }
+
+    /* Evita que .account { display:flex } (styles.css) muestre el avatar antes de conocer la sesión */
+    #header-auth-zone.session-pending {
+      display: none !important;
     }
 
     @media (max-width: 1100px) {
@@ -358,18 +374,7 @@
       }
     }
 
-    /* Glassmorphism Header */
-    .header {
-      background: transparent !important;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      transition: all 0.4s ease;
-    }
-
-    .header.scrolled {
-      background: rgba(2, 2, 2, 0.9) !important;
-      backdrop-filter: blur(20px);
-    }
+    /* Cristal / scroll del header: #mainHeader en styles.css (misma barra que el resto del sitio) */
 
     @media (max-width: 968px) {
       .hero-grid {
@@ -385,7 +390,7 @@
   </style>
 </head>
 
-<body class="notranslate">
+<body class="notranslate page-home">
   <!-- LOCKED SECTION: DO NOT MODIFY -->
   <header class="header" id="mainHeader">
     <div class="header-top">
@@ -401,43 +406,22 @@
 
         <div class="header-actions"
           style="display: flex; gap: 12px !important; background: rgba(255,255,255,0.03); padding: 8px 14px; border-radius: 999px;">
-          <a href="login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
+          <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
+          <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
           <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
           <div class="lang-switcher">
-            <span class="lang-btn active" data-lang="es">ES</span>
+            <span class="lang-btn" data-lang="es">ES</span>
             <span class="lang-pipe">|</span>
-            <span class="lang-btn" data-lang="en">EN</span>
+            <span class="lang-btn active" data-lang="en">EN</span>
           </div>
           <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-i18n="btn-login">Log in</a>
 
           <div class="header-avatar-cart-row" aria-label="Account and cart">
-            <div class="account" id="header-auth-zone" style="display: none;">
-              <button class="account-btn" id="accountBtn"
-                onclick="document.getElementById('accountMenu').classList.toggle('open'); event.stopPropagation();">
-                <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="Avatar" />
-                <span class="caret">▾</span>
-              </button>
-              <div class="account-menu" id="accountMenu" aria-hidden="true">
-                <a href="./dj-profile.html" class="menu-item">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
-                  Mi perfil
-                </a>
-                <a href="./dj-dashboard.html?tab=settings" class="menu-item">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path
-                      d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                    </path>
-                  </svg>
-                  Configuración
-                </a>
-              </div>
-            </div>
+            <div class="account session-pending" id="header-auth-zone" style="display: none;">
+              <a class="account-btn" id="accountBtn" href="./dj-profile.html" title="Mi perfil" aria-label="Mi perfil">
+              <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
+            </a>
+</div>
 
             <a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart" aria-label="Shopping cart">
               <span aria-hidden="true">🛒</span>
@@ -450,7 +434,8 @@
           </div>
         </div>
 
-        <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu" aria-controls="mobileMenu"
+          aria-expanded="false">
           <span></span>
           <span></span>
           <span></span>
@@ -462,16 +447,10 @@
             <a href="./index.html" class="active" data-i18n="nav-home">Home</a>
             <a href="#services" data-i18n="nav-services">Services</a>
             <a href="./rentals.html" data-i18n="nav-rentals">Event Services</a>
-            <a href="./shop.html" style="color:#c5a059;font-weight:800;">Shop</a>
+            <a href="./shop.html" data-i18n="nav-shop">Shop</a>
             <a href="./dj-tools.html" data-i18n="nav-tools">DJ Tools</a>
-            <a href="./courses.html" data-i18n="nav-academia">Academia</a>
-            <a href="./dj-profile.html?tab=flow" style="color:#c5a059;font-weight:800;">Flow</a>
             <a href="./jobs.html" data-i18n="nav-jobs">Jobs</a>
             <a href="#contact" data-i18n="nav-contact">Contacto</a>
-            <a href="login.html" id="header-login-btn-mobile" data-i18n="btn-login"
-              style="color:var(--gold); font-weight:800;">Entrar</a>
-            <a href="./dj-profile.html" id="nav-my-profile-mobile"
-              style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY PROFILE</a>
           </nav>
         </div>
       </div>
@@ -483,10 +462,8 @@
           <a href="./index.html" class="active" data-i18n="nav-home">Home</a>
           <a href="#services" data-i18n="nav-services">Services</a>
           <a href="./rentals.html" data-i18n="nav-rentals">Event Services</a>
-          <a href="./shop.html" style="color:var(--gold); font-weight:800;">Shop</a>
+          <a href="./shop.html" data-i18n="nav-shop">Shop</a>
           <a href="./dj-tools.html" data-i18n="nav-tools">DJ Tools</a>
-          <a href="./courses.html" data-i18n="nav-academia">Academia <span aria-hidden="true">▾</span></a>
-          <a href="./dj-profile.html?tab=flow" id="nav-flow-link" style="color:var(--gold); font-weight:800;">Flow</a>
           <a href="./jobs.html" data-i18n="nav-jobs">Jobs</a>
           <a href="#contact" data-i18n="nav-contact">Contact</a>
         </nav>
@@ -513,10 +490,10 @@
           <div class="cta-row" style="margin-top: 40px; display: flex; gap: 20px;">
             <a class="btn primary" href="#contact"
               style="padding: 18px 36px; font-size: 16px; font-weight: 700; border-radius: 50px;"
-              data-i18n="hero-btn-request">Get Started Now</a>
+              data-i18n="hero-btn-request">Request Availability</a>
             <a class="btn" href="#services"
               style="padding: 18px 36px; font-size: 16px; font-weight: 600; border-radius: 50px;"
-              data-i18n="hero-btn-services">Our Portfolio</a>
+              data-i18n="hero-btn-services">View Services</a>
           </div>
         </div>
 
@@ -949,6 +926,7 @@
           horas.</p>
         <form id="bottom-contact-form" class="admin-card" action="https://formspree.io/f/mqakvjge" method="post"
           style="max-width: 600px; margin: 40px auto; background: var(--panel);">
+          <input type="hidden" name="_subject" value="[MDJB] Home — Reserva (bloque inferior)">
 
           <!-- PREMIUM CHECKOUT PAYLOAD INJECTION -->
           <div id="checkout-cart-container" class="glass-card"
@@ -1098,7 +1076,8 @@
         <!-- Column 2: Quick Contact -->
         <div class="footer-col">
           <h4 data-i18n="footer-contact-title">Quick Contact</h4>
-          <form class="footer-form" action="https://formspree.io/f/mqakvjge" method="post">
+          <form id="footer-contact-form" class="footer-form" action="https://formspree.io/f/mqakvjge" method="post">
+            <input type="hidden" name="_subject" value="[MDJB] Home — Quick contact (footer)">
             <div class="form-group"><input type="text" name="name" placeholder="Name" data-i18n-hold="hold-name"
                 required></div>
             <div class="form-group"><input type="tel" name="phone" placeholder="Phone" data-i18n-hold="hold-phone"
@@ -1141,7 +1120,8 @@
                 placeholder="Nombre del DJ/Artista (Opcional)" data-i18n-hold="hold-talent">
               <div id="talent-status" style="font-size: 10px; margin-top: 4px; display: none;"></div>
             </div>
-            <button type="submit" class="btn primary small" data-i18n="btn-send">Send »</button>
+            <div id="footer-form-status" style="margin-top: 10px; display: none; font-size: 12px;"></div>
+            <button type="submit" id="footer-submit-btn" class="btn primary small" data-i18n="btn-send">Send »</button>
           </form>
         </div>
 
@@ -1191,21 +1171,13 @@
       </div>
     </div>
   </footer>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./supabase-config.js?v=20260226-1"></script>
-  <script src="./translations.js?v=20260226-1"></script>
-  <script src="./i18n.js?v=20260226-1"></script>
-  <script src="./form-handler.js"></script>
+  <script src="./translations.js?v=20260411-15"></script>
+  <script src="./i18n.js?v=20260411-14"></script>
+  <script src="./form-handler.js?v=20260411-7"></script>
   <script src="./articles-loader.js"></script>
-  <script>
-    // Motor auxiliar global para cierre
-    window.closeAccountMenu = function () {
-      const m = document.getElementById('accountMenu');
-      if (m) m.classList.remove('open');
-    };
-    document.addEventListener('click', window.closeAccountMenu);
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.closeAccountMenu(); });
-  </script>
+  <script src="./header-smart-search.js?v=20260411-search-google"></script>
+  <script>window.MDJ_SKIP_SHARED_HEADER_INIT = true;</script>
+  <script src="./mdj-shared-header.js?v=20260411-avatar-profileid"></script>
   <script>
     // Auto-fill Referral Code, DJ name, and Event Date from URL
     document.addEventListener('DOMContentLoaded', () => {
@@ -1241,7 +1213,19 @@
               payloadText += `\nEstimated Investment: $${total}.00`;
               try {
                 var refDj = localStorage.getItem('mdb_referral_dj_id');
-                if (refDj) payloadText += `\n[Referral DJ id: ${refDj} — comisión 10% primera compra]`;
+                var M = window.MDB_MONETIZATION;
+                if (refDj && M && typeof M.referralCommissionFromGross === 'function') {
+                  var grossCents = Math.round(Number(total) * 100);
+                  var first = (typeof M.isFirstReferralOrderPending === 'function') ? M.isFirstReferralOrderPending() : true;
+                  var commCents = M.referralCommissionFromGross(grossCents, { referringDjId: refDj, isFirstReferralPurchase: first });
+                  var discCents = (typeof M.clientReferralFirstPurchaseDiscountCents === 'function') ? M.clientReferralFirstPurchaseDiscountCents({}) : 0;
+                  payloadText += `\n[Referral DJ id: ${refDj}]`;
+                  if (discCents > 0) payloadText += `\n- Descuento cliente (1ª compra con ref): hasta $${(discCents / 100).toFixed(2)}`;
+                  payloadText += `\n- Bono DJ si 1ª compra > $500: $${(commCents / 100).toFixed(2)} (si aplica)`;
+                  if (typeof M.describeReferralPolicyLines === 'function') payloadText += `\n${M.describeReferralPolicyLines()}`;
+                } else if (refDj) {
+                  payloadText += `\n[Referral DJ id: ${refDj}]`;
+                }
               } catch (e) { void e; }
 
               payloadEl.value = payloadText;
@@ -1265,7 +1249,7 @@
 
       const urlParams = new URLSearchParams(window.location.search);
 
-      // Referral code (?ref=DJ_UUID) — formulario + localStorage para comisión 10% en checkout
+      // Referral (?ref=DJ_UUID): localStorage + formulario; política en monetization.js ($30 1ª compra cliente / $20 DJ si >$500)
       const ref = urlParams.get('ref');
       if (ref) {
         try { localStorage.setItem('mdb_referral_dj_id', ref); } catch (e) { void e; }
@@ -1322,7 +1306,9 @@
       mobileBtn.addEventListener('click', () => {
         mobileBtn.classList.toggle('active');
         mobileMenu.classList.toggle('active');
-        document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+        const open = mobileMenu.classList.contains('active');
+        document.body.style.overflow = open ? 'hidden' : '';
+        mobileBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
       });
 
       // Close on link click
@@ -1331,6 +1317,7 @@
           mobileBtn.classList.remove('active');
           mobileMenu.classList.remove('active');
           document.body.style.overflow = '';
+          mobileBtn.setAttribute('aria-expanded', 'false');
         });
       });
     }
@@ -1469,158 +1456,11 @@
     document.addEventListener('DOMContentLoaded', () => {
       initAvailabilityForm();
       loadHomeHeroSettings();
-      checkSessionForNav();
-      updateHeaderCartCount();
-      initHeaderSmartSearch();
+      if (typeof window.checkSessionForNav === 'function') window.checkSessionForNav();
+      if (typeof window.updateHeaderCartCount === 'function') window.updateHeaderCartCount();
+      if (window.MdjHeaderSmartSearch) window.MdjHeaderSmartSearch.init();
     });
-    window.addEventListener('focus', updateHeaderCartCount);
-    window.addEventListener('storage', function (e) {
-      if (e.key === 'mdjpro_checkout_cart') updateHeaderCartCount();
-    });
-
-    async function checkSessionForNav() {
-      const sb = window.getSupabaseClient ? window.getSupabaseClient() : null;
-      if (!sb) return;
-      const { data: { session } } = await sb.auth.getSession();
-
-      const navFlowEl = document.getElementById('nav-flow-link');
-      if (navFlowEl) navFlowEl.style.display = 'inline-block';
-
-      if (session) {
-        // 1. Transform Login buttons (Desktop & Mobile)
-        const loginBtnMobile = document.getElementById('header-login-btn-mobile');
-        const getProBtn = document.getElementById('header-get-pro-btn');
-
-        if (loginBtnMobile) {
-          loginBtnMobile.textContent = 'Mi Perfil';
-        }
-
-        // 2. Show auth zone (avatar/menu)
-        const authZone = document.getElementById('header-auth-zone');
-        if (authZone) authZone.style.display = 'block';
-
-        // 3. Fetch profile for PRO check & Role
-        try {
-          const { data: p } = await sb.from('dj_profiles').select('role, photo_url, plan_type, plan, plan_status, plan_expires_at, is_premium, hardware_token').eq('user_id', session.user.id).maybeSingle();
-
-          const isProUser = p && (
-            p.is_premium === true
-            || ['PRO', 'ELITE'].includes(p.plan)
-            || (['pro_monthly', 'pro_annual', 'PRO'].includes(p.plan_type) && (p.plan_status || 'active') === 'active' && (!p.plan_expires_at || new Date(p.plan_expires_at) > new Date()))
-          );
-          const djproBadge = document.getElementById('header-djpro-badge');
-          if (getProBtn) getProBtn.style.display = isProUser ? 'none' : '';
-          if (djproBadge) djproBadge.style.display = isProUser ? 'inline-flex' : 'none';
-
-          const sessionAvatar = session.user?.user_metadata?.avatar_url;
-          const finalAvatar = sessionAvatar || p?.photo_url;
-
-          if (finalAvatar) {
-            const avatarElems = document.querySelectorAll('.avatar, #accountBtn .avatar');
-            avatarElems.forEach(img => img.src = finalAvatar);
-          }
-
-          const isClient = p?.role === 'client';
-          const profileUrl = isClient ? './client-portal.html' : './dj-profile.html';
-          const profileText = isClient ? 'Mi Portal' : 'Mi Perfil';
-
-          ['header-login-btn', 'header-login-btn-mobile'].forEach(id => {
-            const btn = document.getElementById(id);
-            if (btn) {
-              btn.textContent = 'Logout';
-              btn.removeAttribute('data-i18n');
-              btn.classList.remove('gold');
-              btn.classList.add('danger');
-              btn.href = '#';
-              btn.onclick = function (e) { e.preventDefault(); window.doLogout(); };
-            }
-          });
-
-          const navMobile = document.getElementById('nav-my-profile-mobile');
-          if (navMobile) {
-            navMobile.style.display = 'block';
-            navMobile.href = profileUrl;
-            navMobile.textContent = profileText;
-          }
-
-          // Update other menu links
-          const profileLinks = document.querySelectorAll('a[href="./dj-profile.html"]');
-          profileLinks.forEach(link => {
-            link.href = profileUrl;
-            if (isClient && link.getAttribute('data-i18n') === 'menu-account') {
-              link.textContent = 'Mi Portal';
-            }
-          });
-
-          // Show specific "MI PERFIL" button in main nav
-          const myProfileBtn = document.getElementById('nav-my-profile');
-          if (myProfileBtn) {
-            myProfileBtn.href = profileUrl;
-            myProfileBtn.style.display = 'inline-block';
-          }
-
-          const mobileProfileBtn = document.getElementById('nav-my-profile-mobile');
-          if (mobileProfileBtn) {
-            mobileProfileBtn.href = profileUrl;
-            mobileProfileBtn.style.display = 'block';
-          }
-
-          // Propagación cubierta en la fase superior
-        } catch (e) { console.error('Error fetching profile for nav:', e); }
-      } else {
-        const djproBadge = document.getElementById('header-djpro-badge');
-        const getProBtn = document.getElementById('header-get-pro-btn');
-        if (djproBadge) djproBadge.style.display = 'none';
-        if (getProBtn) getProBtn.style.display = '';
-      }
-    }
-
-    function updateHeaderCartCount() {
-      const el = document.getElementById('header-cart-count');
-      const link = document.getElementById('header-cart-link');
-      if (!el) return;
-      let n = 0;
-      try {
-        const raw = sessionStorage.getItem('mdjpro_checkout_cart');
-        if (raw) {
-          const data = JSON.parse(raw);
-          n = Array.isArray(data) ? data.length : (data && typeof data === 'object' ? 1 : 0);
-        }
-      } catch (e) { /* ignore */ }
-      el.textContent = n > 0 ? String(n) : '';
-      el.hidden = n === 0;
-      if (link) link.classList.toggle('has-items', n > 0);
-    }
-
-    function initHeaderSmartSearch() {
-      const input = document.getElementById('header-smart-search');
-      if (!input) return;
-      input.addEventListener('keydown', function (e) {
-        if (e.key !== 'Enter') return;
-        const q = input.value.trim();
-        if (q) window.location.href = './find-dj.html?q=' + encodeURIComponent(q);
-      });
-    }
-
-    // 🔧 Motor Principal de Logout Universal
-    window.doLogout = async function doLogout(e) {
-      if (e) e.preventDefault();
-      try {
-        const sb = window.getSupabaseClient ? window.getSupabaseClient() : null;
-        if (sb) await sb.auth.signOut();
-      } catch (err) {
-        console.warn("Supabase signOut error:", err);
-      }
-      if (typeof window.mdjClearClientStorageOnLogout === 'function') {
-        window.mdjClearClientStorageOnLogout();
-      } else {
-        localStorage.removeItem("user");
-        localStorage.removeItem("token");
-      }
-      sessionStorage.removeItem("mdj_session");
-      sessionStorage.removeItem("mdj_cart");
-      window.location.reload();
-    };
+    /* focus/storage del carrito: mdj-shared-header.js (siempre registrados) */
 
     async function loadHomeHeroSettings() {
       const db = window.getSupabaseClient();
@@ -1703,8 +1543,8 @@
       if (heroSection) observer.observe(heroSection);
     }
   </script>
-  <link rel="stylesheet" href="./css/mdj-assistant.css" />
-  <script src="./mdj-assistant.js"></script>
+  <link rel="stylesheet" href="./mdj-assistant.css?v=20260411-7" />
+  <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
   <!-- MDJ Assistant Booth (AI Sales Agent) -->
   <div id="mdj-assistant-booth">
     <!-- Chat Window -->
@@ -1737,9 +1577,9 @@
       <div style="font-size: 30px; z-index: 10;">🤖</div>
     </div>
   </div>
-  <script src="./i18n.js?v=20260404"></script>
   <script src="./subscription.js?v=20260226-1"></script>
-  <script src="./monetization.js?v=20260226-1"></script>
+  <script src="./monetization.js?v=20260411-policy"></script>
+  <script src="./mdj-social-bar.js?v=20260411-14"></script>
 </body>
 
 </html>

@@ -361,6 +361,10 @@ inspector_port = 8083
 # The Deno major version to use.
 deno_version = 2
 
+# Public checkout (browser fetch, no user JWT) — same pattern as create-event-payment
+[functions.create-course-checkout]
+verify_jwt = false
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 

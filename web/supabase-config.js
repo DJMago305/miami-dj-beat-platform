@@ -4,6 +4,12 @@
 window.MDB_SUPABASE_URL = "https://hkuvuqupbxwkiykxvqdr.supabase.co";
 window.MDB_SUPABASE_ANON_KEY = "sb_publishable_IMhi16lHj2dAk51AdUOK8w_U7s89-Ff";
 
+/** Bandeja única de contacto: formularios, mailto y notificaciones deben apuntar aquí salvo excepción documentada. */
+window.MDB_OFFICIAL_CONTACT_EMAIL = "miamidjbeat@gmail.com";
+
+/** Formulario Formspree único (action= en HTML debe coincidir). Notificaciones en panel Formspree → correo oficial. */
+window.MDJ_FORMSPREE_ENDPOINT = "https://formspree.io/f/mqakvjge";
+
 // Lazy singleton — avoids race condition with CDN async load.
 // Any script can call window.getSupabaseClient() to get the initialized client.
 let _supabaseClient = null;

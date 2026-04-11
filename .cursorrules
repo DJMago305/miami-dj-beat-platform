@@ -20,3 +20,49 @@ DO NOT:
 - modify navigation layout
 
 EDIT ONLY targeted blocks and specific functionalities as strictly instructed by the user. "Trust, but verify" before touching these files.
+
+# DJ profile artist strip — do not touch (unless the user asks)
+
+The owner navigation bar on the DJ public profile is **finished and frozen**:
+
+- **Markup:** `#owner-tabs` / `.dj-owner-tabs` and its **direct contents** (links, buttons, Academia dropdown) inside `web/dj-profile.html`.
+- **Styles:** rules in `web/styles.css` scoped with **`body.dj-profile .dj-owner-tabs`** (and children) that exist **only** for that strip.
+
+**Do not** change order, labels, sizing, spacing, wrapping, z-index, or structure of that bar **unless the user explicitly requests** a change to this bar. No drive-by tweaks or “consistency” edits elsewhere that alter this strip.
+
+# Subscription tiers (product model — 3 types)
+
+When reasoning about access, billing, badges, or “who sees what”, use this model:
+
+1. **Cliente (client)** — end customer / buyer, **not** a roster DJ.  
+   - **No “artistic profile”** requirement: this tier is **account + information** to **purchase services** (bookings, shop, etc.), not the DJ public artist strip / owner nav.  
+   - **VIP client (loyalty):** clients who have been with the brand for a long time **or** have completed **several events** with MDJB receive **discount coupons** and graduate to **Cliente VIP**.  
+   - **UI:** in their account, next to the name, show a **gold crown** and a **“VIP”** label (crown + VIP).
+
+2. **Artista (artist)** — DJ on the platform; base artist tier (non‑paid or included perks per product rules). Uses the **artistic profile** / artist flows where applicable.
+
+3. **Artista PRO / DJPRO** — **paid** subscription tier for artists (premium features, PRO badge, `plan=pro` flows where applicable).
+
+Do not collapse these into a generic “user” when the task is about permissions, paywalls, or copy.
+
+# Legal name vs artistic / stage name (DJs)
+
+- **Artistic / stage / brand** (e.g. **DJMago305**) — public profile, promos, social, stage. **Not** for formal documents.
+- **Legal full name** (e.g. **Gerardo A Valle**) — **certificates**, **courses** (instructor attribution), **contracts**, invoices, and any **official** copy.
+- UI and data should keep both distinct (`full_name` vs `stage_name` / display DJ brand). Do not use the stage handle as the sole name on certificates or legal surfaces.
+
+# Scope of changes (default: local)
+
+- Unless the user explicitly asks for a **global**, **general**, or **site-wide** change, treat every request as **scoped** to the area they describe (one page, one component, one selector, one file).
+- Do **not** propagate the same edit to other pages, shared CSS, or shared JS “for consistency” unless they asked for that scope.
+- Prefer **local overrides** (page wrapper class, `#id`, scoped block) over changing shared rules when the user only pointed at one screen or one bar.
+- If a global change would be cleaner but was not requested, **ask** or **state the tradeoff** instead of applying it silently.
+
+# I18N (bilingual site)
+
+- The site is **bilingual: Spanish and English** across UI copy where practical.
+- **Official / canonical language is English (`en`).** Spanish (`es`) is the secondary language.
+- Prefer **English** for legal, technical, product, and brand strings when in doubt.
+- If a Spanish string is awkward, unclear, or untranslatable, **keep the English** (do not force Spanish).
+- New `[data-i18n]` keys: add **English first** in `translations.js`, then Spanish when available.
+- Runtime behavior: `i18n.js` falls back to the other locale when a key is missing in the active language.

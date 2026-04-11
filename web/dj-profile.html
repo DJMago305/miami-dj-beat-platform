@@ -4,15 +4,16 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>MDJPRO App — DJ Professional Infrastructure</title>
-    <link rel="stylesheet" href="./styles.css?v=20260226-1" />
+    <link rel="stylesheet" href="./styles.css?v=20260411-search-google" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260307-1" />
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700;1,800&family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&display=swap"
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./supabase-config.js?v=20260226-1"></script>
+    <script src="./supabase-config.js?v=20260411-7"></script>
     <script>
         (function djProfileAuthGuard() {
             document.documentElement.classList.add('dj-profile-auth-check');
@@ -47,7 +48,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="./flow-handler.js?v=20260303"></script>
+    <script src="./flow-handler.js?v=20260411-ledger"></script>
 
     <!-- Open Graph / Meta sharing -->
     <meta property="og:type" content="website">
@@ -359,16 +360,18 @@
             fill: currentColor;
         }
 
-        /* Foto secundaria (inset — top right) */
+        /* Foto secundaria (inset top-right): despejar #mdj-social-sticky-bar (~72px desde la derecha) + margen */
         .dj-hero-inset {
             position: absolute;
-            top: 24px;
-            right: 40px;
+            top: 88px;
+            right: max(96px, calc(14px + 58px + 24px));
+            left: auto;
             width: 180px;
             height: 220px;
             border-radius: 6px;
             overflow: hidden;
-            box-shadow: -8px 8px 40px rgba(0, 0, 0, 0.7);
+            z-index: 12;
+            box-shadow: 8px 8px 40px rgba(0, 0, 0, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
@@ -397,65 +400,9 @@
             z-index: 10;
         }
 
-        /* ── DJ OWNER TABS ── */
+        /* ── DJ OWNER TABS: base en styles.css; solo ocultar hasta que el dueño cargue ── */
         .dj-owner-tabs {
-            background: #0a0a0a;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
             display: none;
-            /* Only for owner */
-        }
-
-        .dj-owner-tabs .container {
-            display: flex;
-            gap: 0;
-            /* Espacio transferido al hitbox */
-            padding: 0 56px;
-        }
-
-        .dj-tab-btn {
-            background: none;
-            border: none;
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 15px;
-            font-weight: 900;
-            letter-spacing: 4px;
-            cursor: pointer;
-            text-transform: uppercase;
-            position: relative;
-            transition: color 0.2s;
-            text-decoration: none;
-
-            /* ÁREA CLICKEABLE (Refinamiento Usuario) */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 32px 40px;
-            /* Área expandida para absorber el gap anterior */
-            min-width: 100px;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        .dj-tab-btn:hover {
-            color: #fff;
-        }
-
-        .dj-tab-btn.active {
-            color: var(--gold);
-        }
-
-        .dj-tab-btn.active::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 40px;
-            /* Sincronizado con padding horizontal */
-            right: 40px;
-            height: 2px;
-            background: var(--gold);
         }
 
         .dj-panel {
@@ -633,6 +580,13 @@
             display: grid;
             grid-template-columns: 1fr 320px;
             gap: 32px;
+        }
+
+        @media (min-width: 901px) and (max-width: 1200px) {
+            .dj-hero-inset {
+                right: max(88px, min(108px, 11vw));
+                top: 82px;
+            }
         }
 
         @media(max-width: 900px) {
@@ -1367,101 +1321,100 @@
     <!-- LOCKED SECTION: DO NOT MODIFY -->
     <!-- ── Header ── -->
     <!-- LOCKED SECTION: DO NOT MODIFY -->
-    <header class="header" id="mainHeader">
-        <div class="header-top">
-            <!-- LOCKED SECTION: DO NOT MODIFY -->
-            <div class="container">
-                <div class="brand">
-                    <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
-                    <div class="brand-letters-wrapper">
-                        <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters"
-                            class="brand-letters-img">
-                    </div>
-                </div>
-
-                <div class="header-actions"
-                    style="gap: 12px !important; background: rgba(255,255,255,0.03); padding: 6px 14px; border-radius: 999px;">
-                    <div class="lang-switcher">
-                        <span class="lang-btn active" data-lang="es">ES</span>
-                        <span class="lang-pipe">|</span>
-                        <span class="lang-btn" data-lang="en">EN</span>
-                    </div>
-                    <a href="login.html" class="btn-pill gold" data-i18n="btn-get-pro">Obtener PRO</a>
-                    <a href="./login.html" id="header-login-btn" class="btn-pill gold" style="display:none;">Mi panel</a>
-
-                    <div class="account" id="header-auth-zone" style="display: none;">
-                        <button class="account-btn" id="accountBtn"
-                            onclick="document.getElementById('accountMenu').classList.toggle('open'); event.stopPropagation();">
-                            <img class="avatar" id="header-avatar-img" src="./assets/dj-avatar-placeholder.png"
-                                alt="Avatar" />
-                            <span class="caret">▾</span>
-                        </button>
-                        <div class="account-menu" id="accountMenu" aria-hidden="true">
-                            <a href="./dj-dashboard.html" class="menu-item" id="account-menu-dashboard">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="12" cy="7" r="4"></circle>
-                                </svg>
-                                Panel principal
-                            </a>
-                            <a href="./dj-dashboard.html?tab=settings" class="menu-item">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                    <path
-                                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                                    </path>
-                                </svg>
-                                Ajustes
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <button class="mobile-menu-btn" id="mobileMenuBtn">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-
-                <!-- Mobile Menu Overlay -->
-                <div class="mobile-overlay" id="mobileMenu">
-                    <nav class="mobile-nav">
-                        <a href="./index.html" class="active" data-i18n="nav-home">Inicio</a>
-                        <a href="#services" data-i18n="nav-services">Servicios</a>
-                        <a href="./rentals.html" data-i18n="nav-rentals">Eventos y alquileres</a>
-                        <a href="./shop.html" style="color:#c5a059;font-weight:800;">Tienda</a>
-                        <a href="./dj-tools.html" data-i18n="nav-tools">Herramientas</a>
-                        <a href="./courses.html">🎓 Academia: Cursos</a>
-                        <a href="./dj-knowledge.html">📚 Academia: Cultura DJ</a>
-                        <a href="./jobs.html" data-i18n="nav-jobs">Empleos</a>
-                        <a href="#contact" data-i18n="nav-contact">Contacto</a>
-                        <a href="login.html" id="header-login-btn-mobile" data-i18n="btn-login"
-                            style="display:none; color:var(--gold); font-weight:800;">Entrar</a>
-                        <a href="./dj-dashboard.html" id="nav-my-profile-mobile"
-                            style="display:none; color:var(--gold); font-weight:900;">Mi panel</a>
-                    </nav>
-                </div>
-            </div>
+    <!-- MDJ canonical site header — keep in sync with index #mainHeader; use ./index.html# anchors for subpages -->
+<header class="header" id="mainHeader">
+  <div class="header-top">
+    <div class="container">
+      <div class="brand">
+        <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+        <div class="brand-letters-wrapper">
+          <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters" class="brand-letters-img">
         </div>
-    </header>
+      </div>
+
+      <div class="header-actions"
+        style="display: flex; gap: 12px !important; background: rgba(255,255,255,0.03); padding: 8px 14px; border-radius: 999px;">
+        <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
+        <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
+        <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
+        <div class="lang-switcher">
+          <span class="lang-btn" data-lang="es">ES</span>
+          <span class="lang-pipe">|</span>
+          <span class="lang-btn active" data-lang="en">EN</span>
+        </div>
+        <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-i18n="btn-login">Log in</a>
+
+        <div class="header-avatar-cart-row" aria-label="Account and cart">
+          <div class="account session-pending" id="header-auth-zone" style="display: none;">
+            <a class="account-btn" id="accountBtn" href="./dj-profile.html" title="Mi perfil" aria-label="Mi perfil">
+              <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
+            </a>
+</div>
+
+          <a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart" aria-label="Shopping cart">
+            <span aria-hidden="true">🛒</span>
+            <span id="header-cart-count" class="header-cart-count" hidden></span>
+          </a>
+        </div>
+        <div class="header-search-wrap">
+          <input type="search" id="header-smart-search" class="header-smart-search"
+            placeholder="Search DJs, gear, services…" autocomplete="off" enterkeyhint="search" />
+        </div>
+      </div>
+
+      <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <div class="mobile-overlay" id="mobileMenu">
+        <nav class="mobile-nav">
+          <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+          <a href="./index.html#services" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+          <a href="./rentals.html" data-i18n="nav-rentals" data-mdj-nav="rentals">Event Services</a>
+          <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
+          <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+          <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+          <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+          <a href="./login.html?signup=free" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free"
+            style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
+          <a href="./login.html" id="header-login-btn-mobile" data-i18n="btn-login"
+            style="color:var(--gold); font-weight:800;">Entrar</a>
+          <a href="./dj-profile.html" id="nav-my-profile-mobile"
+            style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY PROFILE</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <div class="container">
+      <nav class="nav top-nav" id="mainNav">
+        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+        <a href="./index.html#services" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+        <a href="./rentals.html" data-i18n="nav-rentals" data-mdj-nav="rentals">Event Services</a>
+        <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-mdj-nav="shop">Shop</a>
+        <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+        <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
+      </nav>
+    </div>
+  </div>
+</header>
 
     <!-- ── DJ OWNER NAVIGATION ── -->
     <nav class="dj-owner-tabs" id="owner-tabs">
-        <!-- LOCKED SECTION: DO NOT MODIFY -->
         <div class="container">
-            <button class="dj-tab-btn active" data-tab="public" data-i18n="menu-account"
-                onclick="switchProfileTab('public')">Vista Pública</button>
-            <a href="./dj-dashboard.html" class="dj-tab-btn" data-i18n="dash-your-profile"
-                style="text-decoration:none;">Agenda</a>
-            <button class="dj-tab-btn" data-tab="flow" data-i18n="flow-dash" onclick="switchProfileTab('flow')">💰 Flujo
-                de Caja</button>
-            <a href="./dj-dashboard.html?tab=settings" class="dj-tab-btn" data-i18n="nav-settings"
-                style="text-decoration:none;">⚙️ Configuración</a>
-            <a href="./courses.html" class="dj-tab-btn" data-i18n="nav-features"
-                style="text-decoration:none;">Academia</a>
-            <a href="./index.html" class="dj-tab-btn" data-i18n="nav-home" style="text-decoration:none;">Home</a>
+            <a href="./index.html" class="dj-tab-btn dj-tab-btn--home" data-i18n="nav-home">Home</a>
+            <a href="./jobs.html" class="dj-tab-btn" data-i18n="nav-jobs">Jobs</a>
+            <a href="./shop.html" class="dj-tab-btn" data-i18n="nav-shop">Shop</a>
+            <button type="button" class="dj-tab-btn active" data-tab="public" data-i18n="menu-account"
+                onclick="switchProfileTab('public')">Mi Perfil</button>
+            <a href="./dj-dashboard.html" class="dj-tab-btn" data-i18n="dash-your-profile">Agenda</a>
+            <a href="./dj-dashboard.html?tab=settings" class="dj-tab-btn" data-i18n="nav-settings">⚙️ CONFIG</a>
+            <a href="./academia.html" class="dj-tab-btn" data-i18n="nav-academia">Academia</a>
+            <a href="./dj-tools.html" class="dj-tab-btn" data-i18n="nav-tools">DJ Tools</a>
+            <button type="button" class="dj-tab-btn" data-tab="flow" data-i18n="flow-dash" onclick="switchProfileTab('flow')">FLOW</button>
         </div>
     </nav>
 
@@ -1480,11 +1433,11 @@
                     <p style="margin: 14px auto 0; max-width: 60ch; color: rgba(255,255,255,0.6); line-height: 1.6;">
                         Vuelve pronto. Este perfil está temporalmente oculto al público mientras el artista no está en días libres.
                     </p>
-                    <div style="margin-top: 22px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-                        <a href="./index.html" class="btn primary" style="min-width: 220px; justify-content:center;">
+                    <div class="mdj-paired-pills" style="margin-top:22px;--mdj-paired-gap:10px;">
+                        <a href="./index.html" class="btn primary">
                             Volver a Home
                         </a>
-                        <a href="./directory.html" class="btn" style="min-width: 220px; justify-content:center;">
+                        <a href="./directory.html" class="btn">
                             Ver Directorio
                         </a>
                     </div>
@@ -1907,15 +1860,9 @@
     </footer>
 
     <!-- Translations & Base Logic -->
-    <script src="./translations.js?v=20260226-1"></script>
-    <script src="./i18n.js?v=20260226-1"></script>
+    <script src="./translations.js?v=20260411-7"></script>
+    <script src="./i18n.js?v=20260411-14"></script>
     <script>
-        // Cierre de dropdowns al hacer click fuera
-        document.addEventListener('click', () => {
-            const m = document.getElementById('accountMenu');
-            if (m) m.classList.remove('open');
-        });
-
         // 🔧 Motor Principal de Logout (A prueba de fallos)
         window.doLogout = async function doLogout(e) {
             if (e) e.preventDefault();
@@ -2242,7 +2189,7 @@
             // ── WhatsApp · Teléfono · Email ──
             try {
                 const MDJB_PHONE = '13056071780';
-                const MDJB_EMAIL = 'miamidjbeat@gmail.com';
+                const MDJB_EMAIL = window.MDB_OFFICIAL_CONTACT_EMAIL || 'miamidjbeat@gmail.com';
                 const waMsg = encodeURIComponent(`Hola, quiero información sobre el DJ ${djName}. ¿Está disponible para mi evento?`);
                 const waBtn = document.getElementById('pub-whatsapp-btn');
                 if (waBtn) waBtn.href = `https://wa.me/${MDJB_PHONE}?text=${waMsg}`;
@@ -2511,39 +2458,51 @@
             window._djBlockedDates = p.blocked_dates || {};
             window._djNameForAvail = djName;
 
+            (function stripFlowTabFromUrlIfUnauthorized() {
+                const rp = new URLSearchParams(window.location.search);
+                if (rp.get('tab') !== 'flow') return;
+                if (!isOwner) {
+                    rp.delete('tab');
+                    const qs = rp.toString();
+                    window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+                }
+            })();
+
             // ── DJ OWNER TABS (BARRA DE GESTIÓN) ──
             if (isOwner || isAdmin) {
                 const tabs = document.getElementById('owner-tabs');
-                if (tabs) tabs.style.display = 'block';
+                if (tabs) tabs.style.display = 'flex';
 
-                // TRIPLE GUARD: Visibilidad de la pestaña FLUJO e indicador en Nav
-                const planType = p.plan_type || p.plan;
-                const planStatus = p.plan_status || 'active';
-                const isPro = ['pro_monthly', 'pro_annual', 'PRO'].includes(planType);
-                const isActive = planStatus === 'active';
-                const isNotExpired = p.plan_expires_at ? (new Date() < new Date(p.plan_expires_at)) : true;
+                // Misma regla PRO que badges / VIP (is_premium, ELITE, plan_type, etc.), más caducidad
+                const isNotExpired = !p.plan_expires_at || (new Date() < new Date(p.plan_expires_at));
+                window._flowTabAllowed = !!(isOwner && mdbProfileIsVipPro(p) && isNotExpired);
 
-                const flowTabBtn = document.querySelector('button[onclick*="flow"]');
+                const flowTabBtn = document.querySelector('button[data-tab="flow"]');
                 if (flowTabBtn) {
-                    if (isPro && isActive && isNotExpired) {
+                    if (isOwner) {
                         flowTabBtn.style.display = 'inline-block';
                     } else {
                         flowTabBtn.style.display = 'none';
                     }
                 }
+                const flowProReq = document.getElementById('flow-pro-required');
+                if (flowProReq && isOwner) {
+                    flowProReq.style.display = 'none';
+                }
 
-                const navFlow = document.getElementById('nav-flow-link');
-                if (navFlow && isPro && isActive && isNotExpired) {
-                    navFlow.style.display = 'inline-block';
+                const params = new URLSearchParams(window.location.search);
+                const tabFromUrl = params.get('tab');
+                if (tabFromUrl === 'flow' && !window._flowTabAllowed && !isOwner) {
+                    params.delete('tab');
+                    const qs = params.toString();
+                    window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
                 }
 
                 // ── AUTO-SWITCH TAB ──
-                const params = new URLSearchParams(window.location.search);
                 if (isOwner) {
-                    const tabToOpen = params.get('tab');
-                    if (tabToOpen && ['public', 'flow'].includes(tabToOpen)) {
+                    if (tabFromUrl && ['public', 'flow'].includes(tabFromUrl)) {
                         setTimeout(() => {
-                            switchProfileTab(tabToOpen);
+                            switchProfileTab(tabFromUrl);
                         }, 300);
                     }
                 }
@@ -2826,6 +2785,10 @@
 
     <!-- ── TAB: FLUJO (Artist Personal Financials) ── -->
     <div id="tab-flow" class="dj-panel serato-pane">
+        <div id="flow-pro-required" style="display:none; max-width:900px; margin: 20px auto 0; padding: 16px 20px; background: rgba(197,160,89,0.12); border: 1px solid rgba(197,160,89,0.35); border-radius: 12px; color: rgba(255,255,255,0.9); font-size: 14px; text-align: center;" role="status">
+            <span data-i18n="flow-pro-required-msg">Activa un plan PRO para ver métricas completas y el panel FLOW.</span>
+            <a href="./shop.html" style="color: var(--gold); margin-left: 8px; font-weight: 800;" data-i18n="flow-pro-shop">Ver planes</a>
+        </div>
 
         <!-- SOUNDFORTIPS LIVE QUEUE -->
         <div class="sft-queue-panel" id="sftLiveQueueContainer">
@@ -2981,6 +2944,10 @@
                     </table>
                 </div>
             </div>
+            <p class="flow-privacy-notice" style="font-size:11px;line-height:1.55;color:rgba(255,255,255,0.42);max-width:720px;margin:28px auto 8px;padding:0 20px;text-align:center;">
+                <span data-i18n="flow-privacy-notice">Datos confidenciales solo para tu cuenta. No compartas capturas ni accesos con terceros.</span>
+                <a href="./legal.html" style="color:rgba(197,160,89,0.88);font-weight:600;margin-left:6px;" data-i18n="flow-privacy-legal">Aviso legal y privacidad</a>
+            </p>
         </div>
     </div>
 
@@ -3237,8 +3204,10 @@
         window._djBlockedDates = {};
         window._djNameForAvail = '';
         window.currentProfileDJId = null;
+        window._flowTabAllowed = false;
 
         function switchProfileTab(tab) {
+            // FLOW: siempre visible para el dueño; datos sensibles solo si _flowTabAllowed
             // Lógica de Pestañas Principales
             document.querySelectorAll('.dj-panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.dj-tab-btn').forEach(b => b.classList.remove('active'));
@@ -3247,7 +3216,16 @@
             const btn = document.querySelector('button[onclick*="' + tab + '"]');
             if (btn) btn.classList.add('active');
 
-            if (tab === 'flow' && window.loadFlowData) {
+            var flowGate = document.getElementById('flow-pro-required');
+            if (flowGate) {
+                if (tab === 'flow') {
+                    flowGate.style.display = window._flowTabAllowed ? 'none' : 'block';
+                } else {
+                    flowGate.style.display = 'none';
+                }
+            }
+
+            if (tab === 'flow' && window.loadFlowData && window._flowTabAllowed === true) {
                 window.loadFlowData('30d', window.currentProfileDJId);
             }
         }
@@ -3501,7 +3479,7 @@
             <div style="font-size: 30px; z-index: 10;">🤖</div>
         </div>
     </div>
-    <script src="./mdj-assistant.js?v=20260306-1"></script>
+    <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
 
     <style>
         .sft-overlay {
@@ -4164,8 +4142,12 @@
         // --- AFFILIATE / REFERRAL ROUTING ---
         function gotoAffiliateWeb() {
             if (window.currentProfileDJId) {
-                localStorage.setItem('mdj_active_affiliate_dj', window.currentProfileDJId);
-                window.location.href = './index.html?ref=' + window.currentProfileDJId;
+                try {
+                    var id = window.currentProfileDJId;
+                    localStorage.setItem('mdb_referral_dj_id', id);
+                    localStorage.setItem('mdj_active_affiliate_dj', id);
+                } catch (e) { void e; }
+                window.location.href = './index.html?ref=' + encodeURIComponent(window.currentProfileDJId);
             } else {
                 window.location.href = './index.html';
             }
@@ -4366,7 +4348,11 @@
         }
     </script>
     <script src="./subscription.js?v=20260226-1"></script>
-    <script src="./monetization.js?v=20260226-1"></script>
+    <script src="./monetization.js?v=20260411-policy"></script>
+
+    <script src="./header-smart-search.js?v=20260411-search-google"></script>
+    <script src="./mdj-shared-header.js?v=20260411-avatar-profileid"></script>
+  <script src="./mdj-social-bar.js?v=20260411-14"></script>
 </body>
 
 </html>

@@ -33,6 +33,20 @@ document.addEventListener('DOMContentLoaded', function () {
             const raw = new FormData(event.target);
             const formData = Object.fromEntries(raw);
 
+            const postFormspree = async () => {
+                const endpoint = (form.action && String(form.action).includes('formspree'))
+                    ? form.action.trim()
+                    : (window.MDJ_FORMSPREE_ENDPOINT || '').trim();
+                if (!endpoint || !endpoint.includes('formspree')) return false;
+                const fd = new FormData(form);
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'Accept': 'application/json' }
+                });
+                return res.ok;
+            };
+
             // ── 1. Save to Supabase (primary) ────────────────────────
             let leadId = null;
             let dbError = null;
@@ -73,25 +87,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (!error && saved) {
                     leadId = saved.id;
-                    console.log('✅ Lead saved to Supabase:', leadId);
                 } else {
                     dbError = error;
-                    console.warn('Supabase insert failed:', error);
                 }
             } catch (err) {
                 dbError = err;
-                console.warn('Supabase insert exception:', err);
             }
 
-            // ── 2. Formspree fallback (if Supabase failed) ────────────
+            let formspreeOk = false;
+
+            // ── 2. Formspree: copia al correo del proyecto cuando el lead se guardó en Supabase ──
+            if (leadId) {
+                try {
+                    formspreeOk = await postFormspree();
+                    if (formspreeOk) { /* notified */ }
+                } catch (e) { /* silent */ }
+            }
+
+            // ── 2b. Formspree fallback (si Supabase falló) ───────────
             if (dbError && form.action && form.action.includes('formspree')) {
                 try {
-                    await fetch(form.action, {
-                        method: 'POST',
-                        body: raw,
-                        headers: { 'Accept': 'application/json' }
-                    });
-                    console.log('Formspree fallback used.');
+                    formspreeOk = await postFormspree();
+                    if (formspreeOk) { /* fallback ok */ }
                 } catch (e) {
                     console.warn('Formspree also failed:', e);
                 }
@@ -128,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function () {
             */
 
             // ── 4. UX: show success / error ───────────────────────────
-            if (!dbError || leadId) {
+            if (!dbError || leadId || formspreeOk) {
                 // Success
                 const eventType = formData.event_type || 'Other';
                 const refParam = formData.referred_by ? `&ref=${encodeURIComponent(formData.referred_by)}` : '';

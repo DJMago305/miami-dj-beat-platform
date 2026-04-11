@@ -13,9 +13,13 @@ async function loadFlowData(range = '30d', targetUserId = null) {
     if (!supabase) return;
 
     const { data: { session } } = await supabase.auth.getSession();
-    const userId = targetUserId || (session ? session.user.id : null);
-    if (!userId) return;
-    console.log(`[PRO FLOW] Loading Analytics Insight (${range}) for user ${userId}`);
+    if (!session) return;
+
+    const sessionUid = session.user.id;
+    if (targetUserId && targetUserId !== sessionUid) {
+        return;
+    }
+    const userId = sessionUid;
 
     // 1. GET DJ PROFILE ID
     const { data: profile } = await supabase
@@ -47,14 +51,27 @@ async function loadFlowData(range = '30d', targetUserId = null) {
         supabase.from('leads').select('*').eq('assigned_dj_id', profile.id).gte('event_date', prevStartDate.toISOString().split('T')[0])
     ]);
 
-    if (ledgerRes.error) { console.error("Error fetching ledger:", ledgerRes.error); return; }
+    if (ledgerRes.error) {
+        var lb = document.getElementById('ledger-body');
+        if (lb) {
+            var lang = (typeof localStorage !== 'undefined' && localStorage.getItem('mdj_current_lang')) || 'es';
+            var errMsg = lang === 'en'
+                ? 'Could not load this data. If it continues, contact support.'
+                : 'No se pudieron cargar los datos. Si persiste, contacta a soporte.';
+            lb.innerHTML = '<tr><td colspan="7" style="padding:40px;text-align:center;color:rgba(255,255,255,0.35);">' + errMsg + '</td></tr>';
+        }
+        return;
+    }
 
     const ledger = ledgerRes.data;
-    const leads = leadsRes.data || [];
+    var leads = leadsRes.data || [];
+    if (leadsRes.error) {
+        leads = [];
+    }
     currentLedger = ledger.filter(tx => new Date(tx.created_at) >= startDate);
 
     // 4. PROCESS KPIs
-    processKPIs(ledger, leads, startDate, prevStartDate, profile.commission_rate);
+    await processKPIs(ledger, leads, startDate, prevStartDate, profile.commission_rate, userId);
 
     // 5. RENDER CHARTS
     renderTimelineChart(ledger, leads, range, startDate);
@@ -65,7 +82,7 @@ async function loadFlowData(range = '30d', targetUserId = null) {
     renderLedgerTable(currentLedger);
 }
 
-function processKPIs(ledger, leads, startDate, prevStartDate, commRate) {
+async function processKPIs(ledger, leads, startDate, prevStartDate, commRate, sessionUid) {
     const isCurrent = (date) => new Date(date) >= startDate;
     const isPrevious = (date) => {
         const d = new Date(date);
@@ -144,11 +161,11 @@ function processKPIs(ledger, leads, startDate, prevStartDate, commRate) {
     // Artistic Health (Ratings) - "Reputation Shield" Algorithm (Company Secret)
     try {
         const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
-        if (db && ledger.length > 0) {
+        if (db && sessionUid) {
             const { data: profileRating } = await db
                 .from('dj_profiles')
                 .select('rating, review_count, is_resident, venues')
-                .eq('user_id', ledger[0]?.dj_user_id)
+                .eq('user_id', sessionUid)
                 .single();
 
             if (profileRating) {
@@ -174,17 +191,12 @@ function processKPIs(ledger, leads, startDate, prevStartDate, commRate) {
             }
         }
     } catch (e) {
-        console.warn("[PRO FLOW] Artistic Health process failed", e);
+        /* omitir detalle en consola (datos personales / cumplimiento) */
     }
 
     const avgTicket = stats.curr.done > 0 ? stats.curr.gross / stats.curr.done : 0;
     const prevAvg = stats.prev.done > 0 ? stats.prev.gross / stats.prev.done : 0;
     setKPI('kpi-avg-ticket', format(avgTicket), 'trend-avg', avgTicket, prevAvg);
-
-    // RESTORE CHARTS
-    renderTimelineChart(ledger, leads, range, startDate);
-    renderActivityChart(leads, startDate);
-    renderDistributionChart(ledger, startDate);
 }
 
 function renderTimelineChart(ledger, leads, range, startDate) {
