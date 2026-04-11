@@ -2,7 +2,10 @@
   "name": "miami-dj-beat-web",
   "private": true,
   "version": "1.0.0",
-  "description": "Static site: build is a no-op; Vercel serves from outputDirectory \".\" (see web/vercel.json).",
+  "description": "Static HTML/CSS/JS. Root Directory en Vercel debe ser web/ (usa web/vercel.json).",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "build": "node -e \"require('fs').accessSync(require('path').join(__dirname,'index.html')); console.log('[build] static ok');\""
   }
