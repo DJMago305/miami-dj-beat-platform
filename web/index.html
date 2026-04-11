@@ -341,6 +341,14 @@
       box-shadow: 0 1px 8px rgba(197, 160, 89, 0.35);
     }
 
+    /* Avatar inmediatamente a la izquierda del carrito (misma fila visual) */
+    .header-avatar-cart-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
     @media (max-width: 1100px) {
       .header-search-wrap {
         order: 10;
@@ -402,38 +410,40 @@
           </div>
           <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-i18n="btn-login">Log in</a>
 
-          <div class="account" id="header-auth-zone" style="display: none;">
-            <button class="account-btn" id="accountBtn"
-              onclick="document.getElementById('accountMenu').classList.toggle('open'); event.stopPropagation();">
-              <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="Avatar" />
-              <span class="caret">▾</span>
-            </button>
-            <div class="account-menu" id="accountMenu" aria-hidden="true">
-              <a href="./dj-profile.html" class="menu-item">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-                Mi perfil
-              </a>
-              <a href="./dj-dashboard.html?tab=settings" class="menu-item">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="3"></circle>
-                  <path
-                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                  </path>
-                </svg>
-                Configuración
-              </a>
+          <div class="header-avatar-cart-row" aria-label="Account and cart">
+            <div class="account" id="header-auth-zone" style="display: none;">
+              <button class="account-btn" id="accountBtn"
+                onclick="document.getElementById('accountMenu').classList.toggle('open'); event.stopPropagation();">
+                <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="Avatar" />
+                <span class="caret">▾</span>
+              </button>
+              <div class="account-menu" id="accountMenu" aria-hidden="true">
+                <a href="./dj-profile.html" class="menu-item">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  Mi perfil
+                </a>
+                <a href="./dj-dashboard.html?tab=settings" class="menu-item">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                      d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                  </svg>
+                  Configuración
+                </a>
+              </div>
             </div>
-          </div>
 
-          <a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart" aria-label="Shopping cart">
-            <span aria-hidden="true">🛒</span>
-            <span id="header-cart-count" class="header-cart-count" hidden></span>
-          </a>
+            <a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart" aria-label="Shopping cart">
+              <span aria-hidden="true">🛒</span>
+              <span id="header-cart-count" class="header-cart-count" hidden></span>
+            </a>
+          </div>
           <div class="header-search-wrap">
             <input type="search" id="header-smart-search" class="header-smart-search"
               placeholder="Search DJs, gear, services…" autocomplete="off" enterkeyhint="search" />
