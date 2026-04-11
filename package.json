@@ -1,8 +1,8 @@
 {
   "name": "miami-dj-beat-platform",
   "private": true,
-  "description": "Monorepo root: Vercel may build from here if Root Directory is not set to web/.",
+  "description": "If Vercel Root Directory is repo root (not web/), output must be ./build at root — see build script.",
   "scripts": {
-    "build": "cd web && npm run build"
+    "build": "cd web && node vercel-build.cjs && cd .. && rm -rf build && mkdir -p build && cp -R web/build/. build/"
   }
 }
