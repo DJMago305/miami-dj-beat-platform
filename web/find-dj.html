@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Encuentra tu DJ — Miami DJ Beat</title>
+    <meta name="description"
+        content="Busca y contrata DJs certificados en Miami. Filtra por fecha, género musical, ciudad y presupuesto. Disponibilidad en tiempo real." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #080c14;
+            --card: rgba(14, 20, 32, .85);
+            --border: rgba(255, 255, 255, .09);
+            --gold: #c5a059;
+            --gold2: #e2ba72;
+            --muted: rgba(255, 255, 255, .38);
+            --text: #e4eaf5;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Header */
+        .header {
+            background: transparent !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.4s ease;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .header.scrolled {
+            background: rgba(2, 2, 2, 0.9) !important;
+            backdrop-filter: blur(20px);
+        }
+
+        .header-top {
+            padding: 15px 0;
+        }
+    </style>
+</head>
+
+<body class="notranslate">
+    <header class="header" id="mainHeader">
+        <div class="header-top">
+            <div class="container"
+                style="max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 40px;">
+                <div class="brand">
+                    <img src="./assets/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+                    <div class="brand-letters-wrapper">
+                        <img src="./assets/logo-transparent Letras.png" alt="Miami DJ Beat Letters"
+                            class="brand-letters-img">
+                    </div>
+                </div>
+                <nav class="nav top-nav" style="display: flex; gap: 24px; align-items: center;">
+                    <a href="./index.html"
+                        style="color: #fff; text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Home</a>
+                    <a href="./index.html#services"
+                        style="color: #fff; text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Services</a>
+                    <a href="./rentals.html"
+                        style="color: #fff; text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Event
+                        Services</a>
+                    <a href="./find-dj.html"
+                        style="color: var(--gold); text-decoration: none; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">Talents</a>
+                    <div class="nav-item-dropdown">
+                        <a href="#"
+                            style="cursor: default; color: #fff; text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Academia <span class="caret">▾</span></a>
+                        <div class="nav-dropdown-menu" style="text-transform: none; letter-spacing: normal;">
+                            <a href="./courses.html">Cursos y Certificación</a>
+                            <a href="./dj-knowledge.html">Cultura y Biblioteca DJ</a>
+                        </div>
+                    </div>
+                    <a href="./jobs.html"
+                        style="color: #fff; text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Jobs</a>
+                    <a href="./index.html#contact"
+                        style="color: #fff; text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Contact</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <style>
+        .hero {
+            padding: 140px 20px 60px;
+            text-align: center;
+            background: radial-gradient(circle at top, rgba(197, 160, 89, 0.08) 0%, transparent 70%);
+        }
+
+        .hero-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            border-radius: 999px;
+            padding: 5px 14px;
+            margin-bottom: 24px;
+            background: rgba(197, 160, 89, 0.1);
+            color: var(--gold);
+            border: 1px solid rgba(197, 160, 89, 0.3);
+        }
+
+        .hero h1 {
+            font-size: clamp(32px, 6vw, 56px);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+        }
+
+        .hero h1 span {
+            color: var(--gold);
+        }
+
+        .hero p {
+            color: var(--muted);
+            font-size: 16px;
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        /* ── SEARCH CARD ── */
+        .search-card {
+            max-width: 860px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: 20px;
+            padding: 24px;
+            backdrop-filter: blur(12px);
+            text-align: left;
+        }
+
+        .search-grid {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: 1fr;
+        }
+
+        @media(min-width:700px) {
+            .search-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media(min-width:1000px) {
+            .search-grid {
+                grid-template-columns: 1.2fr 1fr 1fr 1fr;
+            }
+        }
+
+        .field label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .field input,
+        .field select {
+            width: 100%;
+            background: rgba(0, 0, 0, .35);
+            border: 1.5px solid rgba(255, 255, 255, .1);
+            border-radius: 10px;
+            padding: 10px 12px;
+            color: #fff;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            transition: all .2s;
+        }
+
+        .field input:focus,
+        .field select:focus {
+            border-color: var(--gold);
+            background: rgba(0, 0, 0, .5);
+        }
+
+        .btn-search {
+            width: 100%;
+            padding: 14px;
+            background: var(--gold);
+            color: #000;
+            font-weight: 900;
+            font-size: 14px;
+            font-family: inherit;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: .5px;
+            box-shadow: 0 4px 15px rgba(197, 160, 89, 0.2);
+        }
+
+        .btn-search:hover {
+            background: var(--gold2);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(197, 160, 89, 0.3);
+        }
+
+        /* ── MULTI-SELECT ── */
+        .multi-select-container {
+            position: relative;
+        }
+
+        .multi-select-display {
+            width: 100%;
+            background: rgba(0, 0, 0, .35);
+            border: 1.5px solid rgba(255, 255, 255, .1);
+            border-radius: 10px;
+            padding: 10px 12px;
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .multi-select-options {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-top: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            padding: 8px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
+
+        .multi-select-options.active {
+            display: block;
+        }
+
+        /* ── DJ GRID & CARDS ── */
+        .dj-grid {
+            max-width: 1200px;
+            margin: 40px auto 100px;
+            padding: 0 20px;
+            display: grid;
+            gap: 24px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        }
+
+        .dj-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            transition: all .4s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+        }
+
+        .dj-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--gold);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            object-fit: cover;
+            border: 2px solid var(--border);
+        }
+
+        .btn-book {
+            width: 100%;
+            padding: 12px;
+            background: rgba(197, 160, 89, 0.1);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all .3s;
+        }
+
+        .btn-book:hover {
+            background: var(--gold);
+            color: #000;
+        }
+    </style>
+
+    <section class="hero">
+        <div class="hero-badge">Verified Talent Network</div>
+        <h1>Find the Perfect <span>DJ Beat</span></h1>
+        <p>Book certified professional artists in Miami. Real-time availability matching.</p>
+
+        <div class="search-card">
+            <div class="search-grid">
+                <div class="field">
+                    <label>📅 Event Date</label>
+                    <div style="display:flex; gap:6px;">
+                        <input type="date" id="f-date" style="color-scheme: dark;">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>🎭 Talent Category</label>
+                    <div class="multi-select-container">
+                        <div class="multi-select-display" id="role-display" onclick="toggleRoleDropdown()">Anyone</div>
+                        <div class="multi-select-options" id="role-options">
+                            <div style="padding: 10px;"><input type="checkbox" value="DJ"> DJ</div>
+                            <div style="padding: 10px;"><input type="checkbox" value="MC"> MC / Host</div>
+                            <div style="padding: 10px;"><input type="checkbox" value="SAX"> Saxophonist</div>
+                            <div style="padding: 10px;"><input type="checkbox" value="PERC"> Percussionist</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>📍 Area</label>
+                    <select id="f-city">
+                        <option value="">All Miami</option>
+                        <option>Miami</option>
+                        <option>Miami Beach</option>
+                        <option>Coral Gables</option>
+                        <option>Doral</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>💰 Budget</label>
+                    <select id="f-budget">
+                        <option value="">Any</option>
+                        <option value="500">$500</option>
+                        <option value="1000">$1,000</option>
+                        <option value="2000">$2,000</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn-search" onclick="searchDJs()">🔍 SEARCH TALENT</button>
+        </div>
+    </section>
+
+    <div id="state-msg" style="text-align: center; color: var(--muted); padding: 40px;">Select filters and search.</div>
+    <div class="dj-grid" id="dj-grid"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js"></script>
+    <script>
+        const db = supabase.createClient(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY);
+
+        function toggleRoleDropdown() {
+            document.getElementById('role-options').classList.toggle('active');
+        }
+
+        async function searchDJs() {
+            const grid = document.getElementById('dj-grid');
+            const msg = document.getElementById('state-msg');
+            msg.innerHTML = 'Searching...';
+            grid.innerHTML = '';
+
+            const city = document.getElementById('f-city').value;
+
+            let q = db.from('public_dj_profiles')
+                .select('dj_slug, stage_name, photo_url, bio_short, city, roles, plan')
+                .eq('available', true);
+
+            if (city) q = q.ilike('city', `%${city}%`);
+
+            const { data, error } = await q.limit(50);
+
+            if (error) {
+                msg.innerHTML = `Error: ${error.message}`;
+                return;
+            }
+
+            msg.innerHTML = `Found ${data.length} talents.`;
+            grid.innerHTML = data.map(dj => `
+                <div class="dj-card">
+                    <img class="avatar" src="${dj.photo_url || 'https://via.placeholder.com/64'}" />
+                    <h3 style="margin: 15px 0 5px;">${dj.stage_name}</h3>
+                    <p style="font-size: 12px; color: var(--muted);">${dj.city || 'Miami, FL'}</p>
+                    <p style="font-size: 13px; margin: 10px 0;">${dj.bio_short || ''}</p>
+                    <button class="btn-book">BOOK NOW</button>
+                </div>
+            `).join('');
+        }
+    </script>
+
+    <!-- MDJ Assistant Booth (AI Sales Agent) -->
+    <link rel="stylesheet" href="./mdj-assistant.css" />
+    <script src="./mdj-assistant.js"></script>
+    <div id="mdj-assistant-booth">
+        <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
+        <div class="booth-window">
+            <div class="booth-header">
+                <div class="status-dot"></div>
+                <div style="flex: 1;">
+                    <h3>Booth Assistant</h3>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700;">Sales & Negotiation
+                        Expert</div>
+                </div>
+            </div>
+            <div class="booth-messages"></div>
+            <div class="booth-input-area">
+                <input type="text" placeholder="Type your message here..." />
+                <button class="booth-send-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="booth-trigger" title="Talk to Booth Assistant">
+            <div class="avatar-glow"></div>
+            <div style="font-size: 30px; z-index: 10;">🤖</div>
+        </div>
+    </div>
+</body>
+
+</html>

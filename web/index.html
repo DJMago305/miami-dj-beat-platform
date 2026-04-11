@@ -153,8 +153,10 @@
       line-height: 1.1;
       text-transform: none;
       font-family: 'Playfair Display', serif;
-      color: var(--gold);
-      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+      background: transparent;
+      -webkit-text-fill-color: rgba(197, 160, 89, 0.15);
+      -webkit-text-stroke: 1.2px var(--gold);
+      filter: drop-shadow(0 0 20px rgba(197, 160, 89, 0.3));
       margin-bottom: 20px;
     }
 
@@ -165,11 +167,28 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       font-size: clamp(12px, 1.5vw, 16px);
       margin-bottom: 40px;
-      /* Micro-Adjustment 1 */
       margin-top: 14px;
       line-height: 1.5;
       letter-spacing: 0.4px;
       max-width: 720px;
+    }
+
+    /* Primary CTA — Phase 2.1 parity (ultra light over video) */
+    .hero .btn.primary {
+      background: rgba(197, 160, 89, 0.05) !important;
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      border: 1px solid rgba(197, 160, 89, 0.4) !important;
+      color: var(--gold) !important;
+      opacity: 0.75;
+      transition: all 0.3s ease;
+    }
+
+    .hero .btn.primary:hover {
+      opacity: 1;
+      background: rgba(197, 160, 89, 0.2) !important;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(197, 160, 89, 0.1);
     }
 
     /* Glassmorphism Header */
@@ -264,6 +283,7 @@
             <a href="./index.html" class="active" data-i18n="nav-home">Home</a>
             <a href="#services" data-i18n="nav-services">Services</a>
             <a href="./rentals.html" data-i18n="nav-rentals">Event Services</a>
+            <a href="./find-dj.html" style="color:#c5a059;font-weight:800;">🎧 Find DJ</a>
             <a href="./shop.html" style="color:#c5a059;font-weight:800;">Shop</a>
             <a href="./dj-tools.html" data-i18n="nav-tools">Tools</a>
             <a href="./courses.html">🎓 Academia: Cursos</a>
@@ -285,6 +305,7 @@
           <a href="./index.html" class="active" data-i18n="nav-home">Home</a>
           <a href="#services" data-i18n="nav-services">Services</a>
           <a href="./rentals.html" data-i18n="nav-rentals">Event Services</a>
+          <a href="./find-dj.html" style="color:var(--gold); font-weight:800;">🎧 Talents</a>
           <a href="./shop.html" style="color:var(--gold); font-weight:800;">Shop</a>
           <a href="./dj-tools.html" data-i18n="nav-tools">Tools</a>
           <div class="nav-item-dropdown">
@@ -315,11 +336,10 @@
       <div class="hero-grid">
         <div class="hero-text-block">
           <h1 id="home-hero-headline" data-i18n="hero-title">Luxury Entertainment & Event Production.</h1>
-          <p class="sub" data-i18n="hero-sub"
-            style="background: rgba(212, 175, 55, 0.5); padding: 12px 24px; border-radius: 8px; font-weight: 700; color: #fff; display: inline-block;">
+          <p class="sub" data-i18n="hero-sub">
             Fast booking, elite production, and superior crowd control — serving
-            <span style="color: #fff; font-weight: 900;">Miami-Dade</span> and the <span
-              style="color: #fff; font-weight: 900;">Florida Keys</span>.
+            <span style="color: var(--gold); font-weight: 700;">Miami-Dade</span> and the <span
+              style="color: var(--gold); font-weight: 700;">Florida Keys</span>.
           </p>
           <div class="cta-row" style="margin-top: 40px; display: flex; gap: 20px;">
             <a class="btn primary" href="#contact"
@@ -328,6 +348,17 @@
             <a class="btn" href="#services"
               style="padding: 18px 36px; font-size: 16px; font-weight: 600; border-radius: 50px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);"
               data-i18n="hero-btn-services">Our Portfolio</a>
+          </div>
+          <div class="badges" style="margin-top: 50px; display: flex; flex-wrap: wrap; gap: 15px;">
+            <span class="badge" data-i18n="badge-exclusive-weddings"
+              style="background: rgba(197, 160, 89, 0.1); border: 1px solid rgba(197, 160, 89, 0.3); color: var(--gold); padding: 8px 16px; border-radius: 30px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Exclusive
+              Weddings</span>
+            <span class="badge" data-i18n="badge-enterprise-corporate"
+              style="background: rgba(197, 160, 89, 0.1); border: 1px solid rgba(197, 160, 89, 0.3); color: var(--gold); padding: 8px 16px; border-radius: 30px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Enterprise
+              Corporate</span>
+            <span class="badge" data-i18n="badge-luxury-venues"
+              style="background: rgba(197, 160, 89, 0.1); border: 1px solid rgba(197, 160, 89, 0.3); color: var(--gold); padding: 8px 16px; border-radius: 30px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Luxury
+              Venues</span>
           </div>
         </div>
 
@@ -728,8 +759,8 @@
         </div>
       </div>
     </section>
-    <!-- ── BEATS & TIPS — EDUCATIONAL SECTION ───────────────── -->
-    <section id="beats-tips" class="section">
+    <!-- ── BEATS & TIPS — oculto (paridad Phase 2.1 / no activar en home hasta decisión de producto) ── -->
+    <section id="beats-tips" class="section" style="display: none !important;" aria-hidden="true" hidden>
       <!-- LOCKED SECTION: DO NOT MODIFY -->
       <div class="container">
         <h2 style="text-align:center; margin-bottom:12px;">🎧 Beats & Tips</h2>
