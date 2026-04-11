@@ -119,9 +119,33 @@
       background-size: cover;
       background-position: center;
       z-index: 0;
-      animation: kenBurnsHome 20s ease-in-out infinite alternate;
-      /* hidden unless there's no video */
-      opacity: 0;
+      animation: kenBurnsHome 24s ease-in-out infinite alternate;
+      opacity: 1;
+    }
+
+    /* Referencia visual: hero con foto (boda) como capa principal; vídeo opcional muy suave */
+    #home-hero.hero-ref-photo #home-hero-video {
+      display: none !important;
+    }
+
+    #home-hero.hero-ref-photo .hero-kb-bg {
+      background-image: url('./assets/luxury_wedding_blurred_bg.png');
+      opacity: 1 !important;
+    }
+
+    .hero-text-block .sub.hero-sub-goldbox {
+      display: block;
+      padding: 16px 20px;
+      background: rgba(197, 160, 89, 0.18);
+      border: 1px solid rgba(197, 160, 89, 0.45);
+      border-radius: 12px;
+      max-width: 720px;
+    }
+
+    .header-bottom .top-nav a {
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 11px;
     }
 
     @keyframes kenBurnsHome {
@@ -283,9 +307,10 @@
             <a href="./index.html" class="active" data-i18n="nav-home">Home</a>
             <a href="#services" data-i18n="nav-services">Services</a>
             <a href="./rentals.html" data-i18n="nav-rentals">Event Services</a>
-            <a href="./find-dj.html" style="color:#c5a059;font-weight:800;">🎧 Find DJ</a>
             <a href="./shop.html" style="color:#c5a059;font-weight:800;">Shop</a>
-            <a href="./dj-tools.html" data-i18n="nav-tools">Tools</a>
+            <a href="./dj-tools.html" data-i18n="nav-tools">DJ Tools</a>
+            <a href="./courses.html" data-i18n="nav-academia">Academia</a>
+            <a href="./dj-profile.html?tab=flow" style="color:#c5a059;font-weight:800;">Flow</a>
             <a href="./jobs.html" data-i18n="nav-jobs">Jobs</a>
             <a href="#contact" data-i18n="nav-contact">Contacto</a>
             <a href="login.html" id="header-login-btn-mobile" data-i18n="btn-login"
@@ -303,11 +328,10 @@
           <a href="./index.html" class="active" data-i18n="nav-home">Home</a>
           <a href="#services" data-i18n="nav-services">Services</a>
           <a href="./rentals.html" data-i18n="nav-rentals">Event Services</a>
-          <a href="./find-dj.html" style="color:var(--gold); font-weight:800;">🎧 Talents</a>
           <a href="./shop.html" style="color:var(--gold); font-weight:800;">Shop</a>
-          <a href="./dj-tools.html" data-i18n="nav-tools">Tools</a>
-          <a href="./dj-profile.html?tab=flow" id="nav-flow-link"
-            style="color:var(--gold); display:none; font-weight:800;">Flow</a>
+          <a href="./dj-tools.html" data-i18n="nav-tools">DJ Tools</a>
+          <a href="./courses.html" data-i18n="nav-academia">Academia <span aria-hidden="true">▾</span></a>
+          <a href="./dj-profile.html?tab=flow" id="nav-flow-link" style="color:var(--gold); font-weight:800;">Flow</a>
           <a href="./jobs.html" data-i18n="nav-jobs">Jobs</a>
           <a href="#contact" data-i18n="nav-contact">Contact</a>
         </nav>
@@ -316,7 +340,8 @@
   </header>
   <main>
     <!-- ══ CINEMATIC HERO ══ -->
-    <section class="hero" id="home-hero">
+    <section class="hero hero-ref-photo" id="home-hero">
+      <div class="hero-kb-bg" id="home-hero-kb" aria-hidden="true"></div>
       <video id="home-hero-video" class="hero-bg-video" autoplay muted loop playsinline>
         <source src="./assets/home/Home for Miami DJ Beat.mp4" type="video/mp4">
       </video>
@@ -326,11 +351,10 @@
 
       <div class="hero-grid">
         <div class="hero-text-block">
-          <h1 id="home-hero-headline" data-i18n="hero-title">Luxury Entertainment & Event Production.</h1>
-          <p class="sub" data-i18n="hero-sub">
-            Fast booking, elite production, and superior crowd control — serving
-            <span style="color: var(--gold); font-weight: 700;">Miami-Dade</span> and the <span
-              style="color: var(--gold); font-weight: 700;">Florida Keys</span>.
+          <h1 id="home-hero-headline" data-i18n="hero-title">Miami DJs &amp; Event Production</h1>
+          <p class="sub hero-sub-goldbox" data-i18n="hero-sub">
+            Professional DJs and event production for corporate, private, and venue events across Miami-Dade and the
+            Florida Keys.
           </p>
           <div class="cta-row" style="margin-top: 40px; display: flex; gap: 20px;">
             <a class="btn primary" href="#contact"
@@ -382,7 +406,7 @@
               <span data-i18n="label-password"
                 style="display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); margin-bottom: 6px; font-weight: 700;">Contraseña</span>
               <div style="position: relative; display: flex; align-items: center; width: 100%;">
-                <input type="password" name="password" placeholder="Mínimo 6 caracteres" required minlength="6"
+                <input type="password" name="password" placeholder="Mínimo 8 caracteres" required minlength="8"
                   style="width: 100%; padding: 12px 16px; padding-right: 40px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;" />
                 <button type="button" class="hero-pwd-toggle" tabindex="-1" aria-label="Mostrar contraseña"
                   style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; font-size: 18px; padding: 0; opacity: 0.5; color: #fff;">👁️</button>
@@ -394,7 +418,7 @@
                 style="display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); margin-bottom: 6px; font-weight: 700;">Confirmar
                 Contraseña</span>
               <div style="position: relative; display: flex; align-items: center; width: 100%;">
-                <input type="password" name="password_confirm" placeholder="Repite la contraseña" required minlength="6"
+                <input type="password" name="password_confirm" placeholder="Repite la contraseña" required minlength="8"
                   style="width: 100%; padding: 12px 16px; padding-right: 40px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;" />
                 <button type="button" class="hero-pwd-toggle" tabindex="-1" aria-label="Mostrar contraseña"
                   style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; font-size: 18px; padding: 0; opacity: 0.5; color: #fff;">👁️</button>
@@ -1310,6 +1334,9 @@
       if (!sb) return;
       const { data: { session } } = await sb.auth.getSession();
 
+      const navFlowEl = document.getElementById('nav-flow-link');
+      if (navFlowEl) navFlowEl.style.display = 'inline-block';
+
       if (session) {
         // 1. Transform Login buttons (Desktop & Mobile)
         const loginBtnMobile = document.getElementById('header-login-btn-mobile');
@@ -1340,12 +1367,6 @@
           if (finalAvatar) {
             const avatarElems = document.querySelectorAll('.avatar, #accountBtn .avatar');
             avatarElems.forEach(img => img.src = finalAvatar);
-          }
-
-          // 4. Show Flow link if PRO
-          const navFlow = document.getElementById('nav-flow-link');
-          if (navFlow && p && isProUser) {
-            navFlow.style.display = 'inline-block';
           }
 
           const isClient = p?.role === 'client';
