@@ -1,8 +1,0 @@
-{
-  "name": "miami-dj-beat-platform",
-  "private": true,
-  "description": "If Vercel Root Directory is repo root (not web/), output must be ./build at root — see build script.",
-  "scripts": {
-    "build": "cd web && node vercel-build.cjs && cd .. && rm -rf build && mkdir -p build && cp -R web/build/. build/"
-  }
-}
