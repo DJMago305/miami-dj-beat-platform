@@ -33,16 +33,48 @@
     }
 
     /* ESTILOS BLINDADOS - BOTÓN DE SESIÓN */
+    .header-actions {
+      flex-wrap: wrap !important;
+      justify-content: flex-end !important;
+      align-items: center !important;
+    }
+
+    #header-get-pro-btn {
+      white-space: nowrap;
+    }
+
+    .header-djpro-badge {
+      display: none;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      color: #1a1208;
+      background: linear-gradient(145deg, #e8cf8f, #c5a059);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 2px 10px rgba(197, 160, 89, 0.35);
+      white-space: nowrap;
+    }
+
+    #header-login-btn:not(.danger) {
+      background: linear-gradient(180deg, #e4c97f 0%, #c5a059 100%) !important;
+      border: 1px solid #f0e0b8 !important;
+      color: #1a1510 !important;
+      font-weight: 700 !important;
+    }
+
+    #header-login-btn:not(.danger):hover {
+      filter: brightness(1.08);
+      box-shadow: 0 0 18px rgba(197, 160, 89, 0.55) !important;
+    }
+
     #header-login-btn {
-      background: rgba(197, 160, 89, 0.5) !important;
-      border: 1px solid var(--gold) !important;
-      color: #fff !important;
       transition: all 0.3s ease !important;
     }
 
-    #header-login-btn:hover {
-      background: var(--gold) !important;
-      box-shadow: 0 0 15px rgba(197, 160, 89, 0.6) !important;
+    #header-login-btn:hover:not(.danger) {
+      background: linear-gradient(180deg, #f0d78f 0%, #cfa24d 100%) !important;
     }
 
     #header-login-btn.danger {
@@ -210,6 +242,88 @@
       box-shadow: 0 0 32px rgba(197, 160, 89, 0.65), 0 0 56px rgba(197, 160, 89, 0.35), 0 8px 28px rgba(0, 0, 0, 0.5);
     }
 
+    .header-cart-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(197, 160, 89, 0.45);
+      color: var(--gold);
+      text-decoration: none;
+      font-size: 20px;
+      transition: background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .header-cart-btn:hover {
+      background: rgba(197, 160, 89, 0.2);
+      box-shadow: 0 0 14px rgba(197, 160, 89, 0.35);
+    }
+
+    .header-cart-count {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: #c0392b;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 18px;
+      text-align: center;
+    }
+
+    .header-cart-count:empty,
+    .header-cart-count[data-count="0"] {
+      display: none;
+    }
+
+    .header-search-wrap {
+      flex: 1 1 160px;
+      min-width: 140px;
+      max-width: 280px;
+    }
+
+    .header-smart-search {
+      width: 100%;
+      padding: 10px 16px 10px 40px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.95);
+      color: #222;
+      font-size: 14px;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
+      box-sizing: border-box;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='%23555' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: 12px center;
+    }
+
+    .header-smart-search::placeholder {
+      color: #777;
+    }
+
+    .header-smart-search:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 1px 8px rgba(197, 160, 89, 0.35);
+    }
+
+    @media (max-width: 1100px) {
+      .header-search-wrap {
+        order: 10;
+        max-width: 100%;
+        flex-basis: 100%;
+        margin-top: 8px;
+      }
+    }
+
     /* Glassmorphism Header */
     .header {
       background: transparent !important;
@@ -252,14 +366,15 @@
         </div>
 
         <div class="header-actions"
-          style="gap: 12px !important; background: rgba(255,255,255,0.03); padding: 6px 14px; border-radius: 999px;">
+          style="display: flex; gap: 12px !important; background: rgba(255,255,255,0.03); padding: 8px 14px; border-radius: 999px;">
+          <a href="login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
+          <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
           <div class="lang-switcher">
             <span class="lang-btn active" data-lang="es">ES</span>
             <span class="lang-pipe">|</span>
             <span class="lang-btn" data-lang="en">EN</span>
           </div>
-          <a href="login.html" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Obtener PRO</a>
-          <a href="./login.html" id="header-login-btn" class="btn-pill gold">Mi Perfil</a>
+          <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-i18n="btn-login">Log in</a>
 
           <div class="account" id="header-auth-zone" style="display: none;">
             <button class="account-btn" id="accountBtn"
@@ -287,6 +402,15 @@
                 Configuración
               </a>
             </div>
+          </div>
+
+          <a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart" aria-label="Shopping cart">
+            <span aria-hidden="true">🛒</span>
+            <span id="header-cart-count" class="header-cart-count" hidden></span>
+          </a>
+          <div class="header-search-wrap">
+            <input type="search" id="header-smart-search" class="header-smart-search"
+              placeholder="Search DJs, gear, services…" autocomplete="off" enterkeyhint="search" />
           </div>
         </div>
 
@@ -1310,6 +1434,12 @@
       initAvailabilityForm();
       loadHomeHeroSettings();
       checkSessionForNav();
+      updateHeaderCartCount();
+      initHeaderSmartSearch();
+    });
+    window.addEventListener('focus', updateHeaderCartCount);
+    window.addEventListener('storage', function (e) {
+      if (e.key === 'mdjpro_checkout_cart') updateHeaderCartCount();
     });
 
     async function checkSessionForNav() {
@@ -1342,7 +1472,9 @@
             || ['PRO', 'ELITE'].includes(p.plan)
             || (['pro_monthly', 'pro_annual', 'PRO'].includes(p.plan_type) && (p.plan_status || 'active') === 'active' && (!p.plan_expires_at || new Date(p.plan_expires_at) > new Date()))
           );
+          const djproBadge = document.getElementById('header-djpro-badge');
           if (getProBtn) getProBtn.style.display = isProUser ? 'none' : '';
+          if (djproBadge) djproBadge.style.display = isProUser ? 'inline-flex' : 'none';
 
           const sessionAvatar = session.user?.user_metadata?.avatar_url;
           const finalAvatar = sessionAvatar || p?.photo_url;
@@ -1399,7 +1531,37 @@
 
           // Propagación cubierta en la fase superior
         } catch (e) { console.error('Error fetching profile for nav:', e); }
+      } else {
+        const djproBadge = document.getElementById('header-djpro-badge');
+        const getProBtn = document.getElementById('header-get-pro-btn');
+        if (djproBadge) djproBadge.style.display = 'none';
+        if (getProBtn) getProBtn.style.display = '';
       }
+    }
+
+    function updateHeaderCartCount() {
+      const el = document.getElementById('header-cart-count');
+      if (!el) return;
+      let n = 0;
+      try {
+        const raw = sessionStorage.getItem('mdjpro_checkout_cart');
+        if (raw) {
+          const data = JSON.parse(raw);
+          n = Array.isArray(data) ? data.length : (data && typeof data === 'object' ? 1 : 0);
+        }
+      } catch (e) { /* ignore */ }
+      el.textContent = n > 0 ? String(n) : '';
+      el.hidden = n === 0;
+    }
+
+    function initHeaderSmartSearch() {
+      const input = document.getElementById('header-smart-search');
+      if (!input) return;
+      input.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') return;
+        const q = input.value.trim();
+        if (q) window.location.href = './find-dj.html?q=' + encodeURIComponent(q);
+      });
     }
 
     // 🔧 Motor Principal de Logout Universal
