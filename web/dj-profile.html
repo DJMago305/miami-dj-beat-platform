@@ -3836,6 +3836,47 @@
             transform: scale(1.02);
         }
 
+        .sft-escrow-banner {
+            font-size: 12px;
+            line-height: 1.45;
+            color: rgba(255, 255, 255, 0.88);
+            background: rgba(197, 160, 89, 0.12);
+            border: 1px solid rgba(197, 160, 89, 0.38);
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+        }
+
+        .sft-escrow-banner strong {
+            color: var(--gold);
+        }
+
+        .sft-tip-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .sft-tip-chip {
+            flex: 1;
+            min-width: 54px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(197, 160, 89, 0.45);
+            background: rgba(0, 0, 0, 0.35);
+            color: #fff;
+            font-weight: 800;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .sft-tip-chip:hover,
+        .sft-tip-chip.sft-tip-chip--on {
+            background: rgba(197, 160, 89, 0.22);
+            border-color: var(--gold);
+        }
+
         .sft-selected-card img {
             width: 70px;
             height: 70px;
@@ -3971,24 +4012,21 @@
             <button class="sft-close" onclick="closeSoundForTipsModal()">&times;</button>
             <div class="sft-header">
                 <h2>SOUNDFORTIPS™</h2>
-                <p id="sftSubtitle">Pide tu canción directamente al DJ.</p>
+                <p id="sftSubtitle">Busca tu canción y envía tu petición.</p>
             </div>
 
-            <!-- PASO 1: PETICIÓN MUSICAL APPLE MUSIC -->
+            <!-- PASO 1: búsqueda real (catálogo Apple/iTunes — portada, título, artista) -->
             <div id="sftStep1">
-                <div class="sft-group" id="sftSenderGroup">
-                    <label>👤 Tu Nombre</label>
-                    <input type="text" class="sft-input" id="sftSenderName" placeholder="Ej: Martha, Mesa VIP 4...">
-                </div>
-
                 <div class="sft-group" id="sftSearchGroup">
-                    <label>🎵 Buscador Apple Music</label>
+                    <label>🎵 Buscar canción</label>
+                    <p style="font-size:11px; color:rgba(255,255,255,0.45); margin:-6px 0 10px 0; line-height:1.4;">Como
+                        en Apple Music o Spotify: solo portada, título y artista.</p>
                     <div class="sft-search-wrapper">
                         <input type="text" class="sft-input" id="sftSearchInput"
-                            placeholder="Busca canción y artista..." autocomplete="off">
+                            placeholder="Título o artista (mín. 3 letras)…" autocomplete="off">
                         <div class="sft-results" id="sftResults"></div>
                     </div>
-                    <div style="font-size:10px; color:#aaa; margin-top:5px; text-align:right;">Powered by iTunes API
+                    <div style="font-size:10px; color:#666; margin-top:6px; text-align:right;">Catálogo Apple / iTunes
                     </div>
                 </div>
 
@@ -4001,51 +4039,78 @@
                             <div id="sftTrackArtist" style="color:var(--gold); font-size:13px; font-weight:600;"></div>
                         </div>
                     </div>
-                    <button class="sft-submit" onclick="goToStep2()">CONTINUAR (SEND) ➔</button>
-                    <button
+                    <button type="button" class="sft-submit" onclick="goToStep2()">
+                        Enviar <span style="opacity:0.75; font-weight:700; font-size:12px; display:block; margin-top:4px;">Send</span>
+                    </button>
+                    <button type="button"
                         style="width:100%; background:none; border:none; color:#888; font-size:12px; margin-top:15px; cursor:pointer; text-decoration:underline;"
                         onclick="clearSftSelection()">← Buscar otra canción</button>
                 </div>
             </div>
 
-            <!-- PASO 2: PROPINA Y PAGO -->
+            <!-- PASO 2: SOUNDFORTIPS — datos, método de cobro, propina retenida (escrow) hasta el DJ -->
             <div id="sftStep2" style="display:none;">
+                <div class="sft-escrow-banner" id="sftEscrowBanner">
+                    El pago queda <strong>retenido</strong> hasta que el DJ acepte tu petición (como propina en restaurante).
+                </div>
+
                 <div class="sft-group">
-                    <label>💳 Método de Envío de Propina</label>
+                    <label>👤 Tu nombre o mesa</label>
+                    <input type="text" class="sft-input" id="sftClientName" placeholder="Ej: Martha · Mesa VIP 4" autocomplete="name">
+                </div>
+                <div class="sft-group">
+                    <label>✉️ Email</label>
+                    <input type="email" class="sft-input" id="sftClientEmail" placeholder="Para comprobante / reembolso" autocomplete="email">
+                </div>
+                <div class="sft-group">
+                    <label>📱 Teléfono / WhatsApp</label>
+                    <input type="tel" class="sft-input" id="sftClientPhone" placeholder="+1 … (opcional)" autocomplete="tel">
+                </div>
+
+                <div class="sft-group">
+                    <label>💳 Método de pago</label>
+                    <p style="font-size:11px; color:rgba(255,255,255,0.45); margin:-6px 0 10px 0;">Zelle, PayPal, tarjeta u otro — elige cómo envías la propina.</p>
                     <div class="sft-pay-grid">
-                        <button class="sft-pay-btn selected" onclick="selectSftPayment('Zelle', this)">
+                        <button type="button" class="sft-pay-btn selected" onclick="selectSftPayment('Zelle', this)">
                             <span class="pm-check" style="font-size:12px; color:var(--gold);">✔</span> Zelle
                         </button>
-                        <button class="sft-pay-btn" onclick="selectSftPayment('Venmo', this)">
+                        <button type="button" class="sft-pay-btn" onclick="selectSftPayment('Venmo', this)">
                             <span class="pm-check" style="font-size:12px;"></span> Venmo
                         </button>
-                        <button class="sft-pay-btn" onclick="selectSftPayment('PayPal', this)">
+                        <button type="button" class="sft-pay-btn" onclick="selectSftPayment('PayPal', this)">
                             <span class="pm-check" style="font-size:12px;"></span> PayPal
                         </button>
-                        <button class="sft-pay-btn" onclick="selectSftPayment('Tarjeta', this)">
+                        <button type="button" class="sft-pay-btn" onclick="selectSftPayment('Tarjeta', this)">
                             <span class="pm-check" style="font-size:12px;"></span> Tarjeta
                         </button>
                     </div>
                 </div>
 
                 <div class="sft-group">
-                    <label>💸 Monto de la Propina (Sin Límite)</label>
-                    <div style="position:relative;">
+                    <label>💵 Propina</label>
+                    <div class="sft-tip-chips" id="sftTipChips">
+                        <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(5, this)">$5</button>
+                        <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(10, this)">$10</button>
+                        <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(15, this)">$15</button>
+                        <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(20, this)">$20</button>
+                        <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(50, this)">$50</button>
+                    </div>
+                    <div style="position:relative; margin-top:12px;">
                         <span
                             style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--gold); font-size:18px; font-weight:900;">$</span>
-                        <input type="number" class="sft-input" id="sftCustomTip" placeholder="Ingresa la cantidad..."
-                            style="padding-left:35px; font-size:18px; font-weight:800;" min="1">
+                        <input type="number" class="sft-input" id="sftCustomTip" placeholder="Otro monto…"
+                            style="padding-left:35px; font-size:18px; font-weight:800;" min="1" step="0.01">
                     </div>
                 </div>
 
-                <button class="sft-submit" id="sftSubmitBtn" onclick="processSoundForTips()">CONFIRMAR PROPINA
+                <button type="button" class="sft-submit" id="sftSubmitBtn" onclick="processSoundForTips()">Enviar propina
                     ➔</button>
                 <div style="text-align:center; margin-top:15px;">
-                    <button onclick="backToStep1()"
+                    <button type="button" onclick="backToStep1()"
                         style="background:none; border:none; color:#888; font-size:12px; text-decoration:underline; cursor:pointer;">←
-                        Modificar mi petición</button>
+                        Cambiar canción</button>
                 </div>
-                <div class="sft-disclaimer">Todo aporte incrementa la probabilidad de ser complacido al instante.</div>
+                <div class="sft-disclaimer">El importe se procesa y queda en custodia hasta la decisión del DJ; si rechaza la petición, se devuelve según política del método de pago.</div>
             </div>
 
             <!-- Estado Cargando / Éxito -->
@@ -4153,15 +4218,32 @@
             }
         }
 
+        function applySftTipPreset(amount, btn) {
+            var inp = document.getElementById('sftCustomTip');
+            if (inp) inp.value = String(amount);
+            document.querySelectorAll('.sft-tip-chip').forEach(function (b) {
+                b.classList.remove('sft-tip-chip--on');
+            });
+            if (btn) btn.classList.add('sft-tip-chip--on');
+        }
+
         function openSoundForTipsModal() {
             document.getElementById('sftOverlay').classList.add('active');
             document.getElementById('sftStep1').style.display = 'block';
             document.getElementById('sftStep2').style.display = 'none';
             document.getElementById('sftResultMode').style.display = 'none';
-            document.getElementById('sftSubtitle').innerText = "Pide tu canción directamente al DJ.";
+            document.getElementById('sftSubtitle').innerText = "Busca tu canción y envía tu petición.";
 
-            document.getElementById('sftSenderName').value = '';
+            var cn = document.getElementById('sftClientName');
+            var ce = document.getElementById('sftClientEmail');
+            var cp = document.getElementById('sftClientPhone');
+            if (cn) cn.value = '';
+            if (ce) ce.value = '';
+            if (cp) cp.value = '';
             document.getElementById('sftCustomTip').value = '';
+            document.querySelectorAll('.sft-tip-chip').forEach(function (b) {
+                b.classList.remove('sft-tip-chip--on');
+            });
             clearSftSelection();
         }
 
@@ -4170,26 +4252,20 @@
         }
 
         function goToStep2() {
-            const sender = document.getElementById('sftSenderName').value.trim();
-            if (!sender) {
-                alert("Por favor escribe 'Tu Nombre' al principio del formulario.");
-                return;
-            }
             if (!activeRequestInfo.song) {
-                alert("Por favor busca y selecciona una canción del catálogo.");
+                alert("Busca y elige una canción del catálogo (portada, título y artista).");
                 return;
             }
-            activeRequestInfo.sender = sender;
 
             document.getElementById('sftStep1').style.display = 'none';
             document.getElementById('sftStep2').style.display = 'block';
-            document.getElementById('sftSubtitle').innerText = "Realiza tu aporte para asegurar tu petición.";
+            document.getElementById('sftSubtitle').innerText = "SOUNDFORTIPS™ — Propina retenida hasta que el DJ responda.";
         }
 
         function backToStep1() {
             document.getElementById('sftStep1').style.display = 'block';
             document.getElementById('sftStep2').style.display = 'none';
-            document.getElementById('sftSubtitle').innerText = "Modifica tu petición musical.";
+            document.getElementById('sftSubtitle').innerText = "Busca tu canción y envía tu petición.";
         }
 
         function selectSftPayment(method, btnEl) {
@@ -4205,21 +4281,33 @@
         }
 
         function processSoundForTips() {
+            const sender = (document.getElementById('sftClientName') && document.getElementById('sftClientName').value || '').trim();
+            const email = (document.getElementById('sftClientEmail') && document.getElementById('sftClientEmail').value || '').trim();
+            const phone = (document.getElementById('sftClientPhone') && document.getElementById('sftClientPhone').value || '').trim();
             const rawTip = document.getElementById('sftCustomTip').value.trim();
             const tipVal = parseFloat(rawTip) || 0;
 
-            if (tipVal <= 0) return alert("Por favor ingresa un monto válido de propina.");
-            activeRequestInfo.tip = tipVal;
+            if (!sender) return alert("Indica tu nombre o mesa.");
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                return alert("Indica un email válido (comprobante y reembolsos).");
+            }
+            if (tipVal <= 0) return alert("Elige un monto de propina (rápido o personalizado).");
 
-            // Activar UI Procesamiento
+            activeRequestInfo.sender = sender;
+            activeRequestInfo.clientEmail = email;
+            activeRequestInfo.clientPhone = phone || null;
+            activeRequestInfo.tip = tipVal;
+            activeRequestInfo.paymentMethod = sftSelectedPayment;
+
+            // Activar UI Procesamiento (demo: en producción aquí iría Stripe / pasarela; el importe queda en escrow hasta el DJ)
             document.getElementById('sftStep2').style.display = 'none';
             document.getElementById('sftResultMode').style.display = 'block';
             document.getElementById('sftSpinner').style.display = 'block';
             document.getElementById('sftSuccess').style.display = 'none';
             document.getElementById('sftDoneBtn').style.display = 'none';
-            document.getElementById('sftStatusText').innerText = "Procesando...";
+            document.getElementById('sftStatusText').innerText = "Procesando…";
             document.getElementById('sftStatusText').style.color = "#fff";
-            document.getElementById('sftSubText').innerText = `Conectando con ${sftSelectedPayment}... (Stripe/Bank)`;
+            document.getElementById('sftSubText').innerText = `Reteniendo $${tipVal.toFixed(2)} vía ${sftSelectedPayment} hasta respuesta del DJ…`;
 
             setTimeout(() => {
                 // Reparto: 10% plataforma / 90% artista (igual que monetization.js + SQL soundfortip_split_amounts)
@@ -4233,7 +4321,7 @@
 
                 // 1. Mostrar SMS Interactivo al DJ (Decide Aceptar o Rechazar)
                 const smsToast = document.getElementById('mockSmsToast');
-                document.getElementById('mockSmsBody').innerHTML = `<span style="color:var(--gold);">${activeRequestInfo.sender}</span> te envió <b>$${tipVal}</b> por ${activeRequestInfo.song}`;
+                document.getElementById('mockSmsBody').innerHTML = `<span style="color:var(--gold);">${activeRequestInfo.sender}</span> · $${tipVal.toFixed(2)} · ${activeRequestInfo.song}<br><span style="font-size:11px;color:#888;">${activeRequestInfo.clientEmail}</span>`;
 
                 // Actualizar ícono de SMS
                 const smsIcon = document.querySelector('.mock-sms-icon');
