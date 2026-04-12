@@ -1,0 +1,15 @@
+Handoff — cierre 12 abr 2026 (Miami DJ Beat)
+
+HECHO HOY (resumen)
+- Biografía: perfil público lee bio / bio_long / bio_short / bio_en; dashboard guarda bio + bio_en + bio_short con reintento si falla columna; carga de config alineada con el mismo texto que el perfil.
+- Migración SQL: supabase/migrations/20260412140000_dj_profiles_bio_columns_and_update_rls.sql (columnas bio + RLS UPDATE propio usuario).
+- Otros cambios locales: SoundForTips (migraciones/edge functions), vercel.json, .gitignore web, ajustes dj-profile (auth guard, cache bust), config.toml.
+
+PENDIENTE MAÑANA (operativo)
+1) Supabase: aplicar migraciones pendientes en el proyecto real (SQL Editor o supabase db push), especialmente 20260412140000 y las de SoundForTips si aún no están en prod.
+2) Deploy: subir web actualizado (Vercel/host) para que dashboard + dj-profile coincidan con el repo.
+3) QA rápido: guardar biografía en dashboard → abrir perfil público con otro navegador/sesión → comprobar find-dj si usáis bio_short.
+4) Opcional: comparar Cursor vs web oficial (rama, caché CDN, proyecto Supabase correcto).
+
+NOTA
+- Si algo falla al guardar bio, el dashboard ya muestra alert con el error de Supabase.

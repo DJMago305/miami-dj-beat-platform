@@ -4094,7 +4094,22 @@
             const bio_en = document.getElementById('cfg-bio-en').value.trim();
             const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
             const { data: { user } } = await sb.auth.getUser();
-            await sb.from('dj_profiles').update({ bio, bio_en }).eq('user_id', user.id);
+            if (!user) {
+                alert('Sesión no válida. Vuelve a iniciar sesión.');
+                return;
+            }
+            // bio_short alinea listados (p. ej. find-dj). Si la columna no existe aún en DB, el update falla entero;
+            // reintentamos solo bio/bio_en.
+            const bio_short = bio || bio_en || null;
+            let { error } = await sb.from('dj_profiles').update({ bio, bio_en, bio_short }).eq('user_id', user.id);
+            // Reintento sin bio_short: columna ausente o caché de esquema; RLS fallará igual en ambos.
+            if (error) {
+                ({ error } = await sb.from('dj_profiles').update({ bio, bio_en }).eq('user_id', user.id));
+            }
+            if (error) {
+                alert('No se pudo guardar la biografía: ' + (error.message || 'error desconocido'));
+                return;
+            }
             document.getElementById('acct-show-bio').textContent = bio || '—';
             closeModal('m-bio');
         }
@@ -4255,7 +4270,9 @@
             set('cfg-dj-name', p.full_name || '');
             set('cfg-dj-alias', p.stage_name || p.dj_name || '');
             set('cfg-category', p.category || p.specialties);
-            set('cfg-bio', p.bio);
+            // Misma prioridad que el perfil público: jobs guarda bio_long/bio_short; dashboard guarda bio.
+            const bioEsDisplay = (p.bio || p.bio_long || p.bio_short || '').trim();
+            set('cfg-bio', bioEsDisplay);
             set('cfg-bio-en', p.bio_en || '');
             set('cfg-city', p.city);
             set('cfg-phone', p.phone);
@@ -4312,7 +4329,7 @@
                 const artistPublic = p.stage_name || p.dj_name;
                 setText('acct-show-djname', artistPublic || p.full_name);
                 setText('acct-name', artistPublic || p.full_name);
-                setText('acct-show-bio', p.bio);
+                setText('acct-show-bio', bioEsDisplay);
                 setText('acct-show-cat', p.category || p.specialties);
                 setText('acct-show-city', p.city);
                 setText('acct-show-email', session.user.email);
