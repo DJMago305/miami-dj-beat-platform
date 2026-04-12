@@ -3310,17 +3310,84 @@
                     <div id="panel-account" class="acct-panel active">
                         <h1 class="acct-h1">Resumen de cuenta</h1>
 
-                        <div class="acct-card">
-                            <div class="acct-row">
-                                <div class="acct-row-info">
-                                    <div class="acct-lbl">Foto de perfil</div>
-                                    <div class="acct-val dim">PNG, JPEG · min. 600×600 px · max 1 MB</div>
+                        <div class="acct-card" id="acct-photo-hero-card">
+                            <div
+                                style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start;padding:4px 0 8px;">
+                                <div style="flex:0 1 220px;min-width:160px;">
+                                    <div class="acct-row">
+                                        <div class="acct-row-info">
+                                            <div class="acct-lbl">Foto de perfil</div>
+                                            <div class="acct-val dim">PNG, JPEG · min. 600×600 px · max 1 MB</div>
+                                        </div>
+                                        <button class="acct-edit" onclick="openModal('m-photo')">Editar</button>
+                                    </div>
+                                    <div class="acct-row">
+                                        <img id="acct-photo-thumb" src="./assets/dj-avatar-placeholder.png"
+                                            class="acct-photo-thumb" alt="Photo">
+                                    </div>
                                 </div>
-                                <button class="acct-edit" onclick="openModal('m-photo')">Editar</button>
-                            </div>
-                            <div class="acct-row">
-                                <img id="acct-photo-thumb" src="./assets/dj-avatar-placeholder.png"
-                                    class="acct-photo-thumb" alt="Photo">
+                                <div id="hero-cover-card" style="flex:1;min-width:min(100%,280px);max-width:100%;">
+                                    <div class="acct-lbl" style="margin-bottom:10px;">Portada</div>
+                                    <input class="cfg-input" type="url" id="cfg-bg-url"
+                                        placeholder="URL opcional (https://…)"
+                                        style="margin-bottom:12px;"
+                                        onchange="window.mdjHeroSyncPreviewSrc && window.mdjHeroSyncPreviewSrc()">
+                                    <div style="width:100%;">
+                                        <div style="font-size:10px;font-weight:800;letter-spacing:0.18em;color:rgba(255,255,255,0.38);margin-bottom:8px;text-transform:uppercase;">Vista previa</div>
+                                        <div id="hero-cover-preview-wrap"
+                                            title=""
+                                            style="position:relative;width:100%;aspect-ratio:1920/380;border-radius:10px;overflow:hidden;border:1px solid rgba(197,160,89,0.35);background:linear-gradient(180deg,#1a1a1a,#0a0a0a);box-shadow:inset 0 0 0 1px rgba(0,0,0,0.4);">
+                                            <img id="hero-cover-preview-img" src="./assets/dj-avatar-placeholder.png"
+                                                alt=""
+                                                style="width:100%;height:100%;object-fit:cover;object-position:50% 50%;transform:scale(1);transform-origin:50% 50%;display:block;position:relative;z-index:0;">
+                                            <!-- Controles flotantes dentro del hero (ahorra espacio vertical) -->
+                                            <div class="mdj-hero-float-ctl"
+                                                title="Ajuste de encuadre — separado de la barra social"
+                                                style="position:absolute;right:58px;bottom:8px;z-index:4;display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 12px;max-width:min(280px,calc(100% - 76px));pointer-events:auto;padding:9px 12px;border-radius:12px;background:linear-gradient(155deg,rgba(197,160,89,0.14) 0%,rgba(197,160,89,0.02) 38%,transparent 55%),linear-gradient(to top,rgba(0,0,0,0.42) 0%,rgba(10,9,12,0.22) 45%,rgba(255,255,255,0.06) 100%);backdrop-filter:blur(14px) saturate(1.15);-webkit-backdrop-filter:blur(14px) saturate(1.15);border:1px solid rgba(197,160,89,0.22);box-shadow:0 10px 32px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.07);">
+                                                <div>
+                                                    <span style="font-size:9px;font-weight:800;letter-spacing:0.12em;color:rgba(255,255,255,0.72);display:block;margin-bottom:4px;text-shadow:0 1px 10px rgba(0,0,0,0.85);">MOVER</span>
+                                                    <div style="display:grid;grid-template-columns:repeat(3,30px);gap:4px;justify-items:center;">
+                                                        <span></span>
+                                                        <button type="button" class="m-btn m-btn-sec" style="padding:4px 0;width:30px;font-size:13px;line-height:1;"
+                                                            onclick="window.mdjHeroNudge && window.mdjHeroNudge(0,-5)" title="Arriba">↑</button>
+                                                        <span></span>
+                                                        <button type="button" class="m-btn m-btn-sec" style="padding:4px 0;width:30px;font-size:13px;line-height:1;"
+                                                            onclick="window.mdjHeroNudge && window.mdjHeroNudge(-5,0)" title="Izquierda">←</button>
+                                                        <button type="button" class="m-btn m-btn-sec" style="padding:4px 0;width:30px;font-size:10px;line-height:1;"
+                                                            onclick="window.mdjHeroNudge && window.mdjHeroNudge(0,0,true)" title="Centrar">⊙</button>
+                                                        <button type="button" class="m-btn m-btn-sec" style="padding:4px 0;width:30px;font-size:13px;line-height:1;"
+                                                            onclick="window.mdjHeroNudge && window.mdjHeroNudge(5,0)" title="Derecha">→</button>
+                                                        <span></span>
+                                                        <button type="button" class="m-btn m-btn-sec" style="padding:4px 0;width:30px;font-size:13px;line-height:1;"
+                                                            onclick="window.mdjHeroNudge && window.mdjHeroNudge(0,5)" title="Abajo">↓</button>
+                                                    </div>
+                                                    <div style="font-size:9px;color:rgba(255,255,255,0.78);margin-top:5px;white-space:nowrap;text-shadow:0 1px 8px rgba(0,0,0,0.9);">
+                                                        X <span id="hero-focal-x-disp">50</span>% · Y <span id="hero-focal-y-disp">50</span>%
+                                                    </div>
+                                                </div>
+                                                <div style="min-width:100px;max-width:140px;">
+                                                    <span style="font-size:9px;font-weight:800;letter-spacing:0.12em;color:rgba(255,255,255,0.72);display:block;margin-bottom:4px;text-shadow:0 1px 10px rgba(0,0,0,0.85);">ZOOM</span>
+                                                    <input type="range" id="hero-bg-zoom-slider" min="80" max="180" value="100"
+                                                        style="width:100%;max-width:140px;height:6px;accent-color:var(--gold,#c5a059);"
+                                                        oninput="window.mdjHeroZoomPreview && window.mdjHeroZoomPreview(this.value)">
+                                                    <div id="hero-zoom-disp" style="font-size:11px;color:var(--gold);font-weight:800;margin-top:3px;">100%</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="file" id="hero-cover-file" accept="image/jpeg,image/png,image/webp,image/jpg"
+                                        style="display:none;"
+                                        onchange="window.uploadHeroCoverFromFile && window.uploadHeroCoverFromFile(this)">
+                                    <div style="display:flex;gap:10px;margin-top:14px;align-items:stretch;max-width:420px;">
+                                        <button type="button" class="m-btn m-btn-sec"
+                                            style="flex:1;min-width:0;padding:11px 14px;font-weight:800;font-size:13px;border-radius:10px;"
+                                            onclick="document.getElementById('hero-cover-file').click()">Edit</button>
+                                        <button type="button" class="m-btn m-btn-gold"
+                                            style="flex:1;min-width:0;padding:11px 14px;font-weight:800;font-size:13px;border-radius:10px;"
+                                            onclick="window.saveHeroCoverSettings && window.saveHeroCoverSettings(event)">Save</button>
+                                    </div>
+                                    <span id="hero-cover-msg" style="font-size:12px;display:none;font-weight:600;margin-top:8px;"></span>
+                                </div>
                             </div>
                         </div>
 
@@ -3697,22 +3764,26 @@
             <!-- Photo -->
             <div id="m-photo" class="acct-modal-bg" onclick="closeModal('m-photo')">
                 <div class="acct-modal" onclick="event.stopPropagation()">
-                    <div class="acct-modal-hdr"><span class="acct-modal-title">Profile picture</span><span
-                            class="acct-modal-x" onclick="closeModal('m-photo')">Close</span></div>
-                    <p style="font-size:12px;color:rgba(255,255,255,0.4);margin:0 0 16px;">Suggested size: 600×600 px.
-                        PNG or JPEG format. Less than 1 MB.</p>
+                    <div class="acct-modal-hdr"><span class="acct-modal-title">Foto de perfil</span><span
+                            class="acct-modal-x" onclick="closeModal('m-photo')">Cerrar</span></div>
+                    <p style="font-size:12px;color:rgba(255,255,255,0.4);margin:0 0 16px;">Tamaño sugerido: 600×600 px.
+                        PNG o JPEG. Menos de 1 MB.</p>
                     <img id="m-photo-preview" src="./assets/dj-avatar-placeholder.png"
                         style="width:200px;height:200px;object-fit:cover;border-radius:12px;display:block;margin:0 auto 20px;">
                     <input type="file" id="m-photo-file" accept="image/*" style="display:none;"
                         onchange="previewNewPhoto(this)">
-                    <div style="display:flex;gap:10px;margin-bottom:10px;">
-                        <button class="m-btn m-btn-sec"
-                            onclick="document.getElementById('m-photo-file').click()">Change</button>
-                        <button class="m-btn m-btn-del" onclick="deleteProfilePhoto()">Delete</button>
+                    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:8px;">
+                        <button type="button" class="m-btn m-btn-sec"
+                            onclick="document.getElementById('m-photo-file').click()">Seleccionar foto…</button>
+                        <button type="button" class="m-btn m-btn-gold" onclick="uploadProfilePhoto()">Guardar</button>
                     </div>
-                    <button class="m-btn m-btn-gold" onclick="uploadProfilePhoto()">Set as profile picture</button>
-                    <span class="m-cancel" onclick="closeModal('m-photo')">Cancel</span>
-                    <p id="m-photo-msg" class="m-ok" style="text-align:center;"></p>
+                    <p style="text-align:center;margin:0;font-size:12px;">
+                        <button type="button"
+                            style="background:none;border:none;color:rgba(255,150,150,0.75);cursor:pointer;text-decoration:underline;padding:4px;font-size:12px;"
+                            onclick="if(confirm('¿Quitar la foto de perfil? Se usará la imagen por defecto.')) deleteProfilePhoto()">Quitar foto actual</button>
+                    </p>
+                    <span class="m-cancel" onclick="closeModal('m-photo')" style="display:block;text-align:center;margin-top:10px;">Cancelar</span>
+                    <p id="m-photo-msg" class="m-ok" style="text-align:center;margin-top:8px;"></p>
                 </div>
             </div>
 
@@ -3972,6 +4043,9 @@
         function openModal(id) {
             const el = document.getElementById(id);
             if (el) el.classList.add('open');
+            if (id === 'm-bio' && typeof loadSettingsForm === 'function') {
+                loadSettingsForm().catch(function () { /* noop */ });
+            }
             // Pre-fill modal values for email
             if (id === 'm-email') {
                 const em = document.getElementById('m-current-email');
@@ -3983,6 +4057,10 @@
                 const thumb = document.getElementById('acct-photo-thumb');
                 const prev = document.getElementById('m-photo-preview');
                 if (thumb && prev) prev.src = thumb.src;
+                const pmsg = document.getElementById('m-photo-msg');
+                if (pmsg) { pmsg.style.display = 'none'; pmsg.textContent = ''; }
+                const pfile = document.getElementById('m-photo-file');
+                if (pfile) pfile.value = '';
             }
             // Pre-fill name modal
             if (id === 'm-djname') {
@@ -3996,10 +4074,165 @@
             if (el) el.classList.remove('open');
         }
 
+        // ── Portada hero (dj-profile): URL + focal X/Y + zoom ─────────────────
+        window.mdjHeroFocal = { x: 50, y: 50, zoom: 100 };
+
+        window.mdjHeroNudge = function (dx, dy, center) {
+            if (!window.mdjHeroFocal) window.mdjHeroFocal = { x: 50, y: 50, zoom: 100 };
+            if (center) {
+                window.mdjHeroFocal.x = 50;
+                window.mdjHeroFocal.y = 50;
+            } else {
+                window.mdjHeroFocal.x = Math.max(0, Math.min(100, window.mdjHeroFocal.x + (dx || 0)));
+                window.mdjHeroFocal.y = Math.max(0, Math.min(100, window.mdjHeroFocal.y + (dy || 0)));
+            }
+            window.mdjHeroUpdatePreview();
+        };
+
+        window.mdjHeroZoomPreview = function (z) {
+            if (!window.mdjHeroFocal) window.mdjHeroFocal = { x: 50, y: 50, zoom: 100 };
+            window.mdjHeroFocal.zoom = Math.max(80, Math.min(200, parseInt(z, 10) || 100));
+            var d = document.getElementById('hero-zoom-disp');
+            if (d) d.textContent = window.mdjHeroFocal.zoom + '%';
+            window.mdjHeroUpdatePreview();
+        };
+
+        window.mdjHeroUpdatePreview = function () {
+            var f = window.mdjHeroFocal || { x: 50, y: 50, zoom: 100 };
+            var x = f.x, y = f.y, z = f.zoom;
+            var xd = document.getElementById('hero-focal-x-disp');
+            var yd = document.getElementById('hero-focal-y-disp');
+            if (xd) xd.textContent = String(x);
+            if (yd) yd.textContent = String(y);
+            var img = document.getElementById('hero-cover-preview-img');
+            if (!img) return;
+            img.style.objectPosition = x + '% ' + y + '%';
+            img.style.transform = 'scale(' + (z / 100) + ')';
+            img.style.transformOrigin = x + '% ' + y + '%';
+        };
+
+        window.mdjHeroSyncPreviewSrc = function () {
+            var inp = document.getElementById('cfg-bg-url');
+            var img = document.getElementById('hero-cover-preview-img');
+            if (!inp || !img) return;
+            var u = inp.value.trim();
+            if (u) {
+                img.src = u;
+                img.onerror = function () { img.src = './assets/dj-avatar-placeholder.png'; };
+            }
+            window.mdjHeroUpdatePreview();
+        };
+
+        window.saveHeroCoverSettings = async function (e) {
+            if (e && e.preventDefault) e.preventDefault();
+            var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            var msg = document.getElementById('hero-cover-msg');
+            if (!sb) return;
+            var { data: { session } } = await sb.auth.getSession();
+            if (!session) {
+                alert('Sesión requerida.');
+                return;
+            }
+            var bgEl = document.getElementById('cfg-bg-url');
+            var bgUrl = bgEl ? bgEl.value.trim() : '';
+            var f = window.mdjHeroFocal || { x: 50, y: 50, zoom: 100 };
+            var updates = {
+                background_url: bgUrl || null,
+                photo_focal_x: f.x,
+                photo_focal_y: f.y,
+                hero_bg_zoom: f.zoom
+            };
+            var { error } = await sb.from('dj_profiles').update(updates).eq('user_id', session.user.id);
+            if (msg) {
+                msg.style.display = 'block';
+                if (error) {
+                    msg.textContent = 'No se pudo guardar: ' + (error.message || 'error');
+                    msg.style.color = '#ff5555';
+                } else {
+                    msg.textContent = 'Saved. Check your public profile to verify.';
+                    msg.style.color = 'var(--gold)';
+                    setTimeout(function () { msg.style.display = 'none'; }, 6000);
+                }
+            }
+        };
+
+        /** Sube la portada hero a Storage (mismo bucket que avatares: carpeta covers/) y actualiza background_url */
+        window.uploadHeroCoverFromFile = async function (input) {
+            var file = input && input.files && input.files[0];
+            var msg = document.getElementById('hero-cover-msg');
+            if (msg) {
+                msg.style.display = 'block';
+                msg.style.color = 'rgba(255,255,255,0.5)';
+                msg.textContent = 'Subiendo portada…';
+            }
+            if (!file) {
+                if (msg) { msg.style.display = 'none'; }
+                return;
+            }
+            if (file.size > 6 * 1024 * 1024) {
+                if (msg) {
+                    msg.textContent = 'Archivo demasiado grande (máx. ~6 MB).';
+                    msg.style.color = '#ff5555';
+                }
+                input.value = '';
+                return;
+            }
+            var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            if (!sb) return;
+            var user = (await sb.auth.getUser()).data.user;
+            if (!user) {
+                if (msg) { msg.textContent = 'Sesión requerida.'; msg.style.color = '#ff5555'; }
+                return;
+            }
+            var ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (ext === 'jpeg') ext = 'jpg';
+            var path = 'covers/' + user.id + '.' + ext;
+            var { error: upErr } = await sb.storage.from('dj-photos').upload(path, file, { upsert: true, contentType: file.type || undefined });
+            if (upErr) {
+                if (msg) {
+                    msg.textContent = 'Error al subir: ' + (upErr.message || 'storage');
+                    msg.style.color = '#ff5555';
+                }
+                input.value = '';
+                return;
+            }
+            var pub = sb.storage.from('dj-photos').getPublicUrl(path);
+            var bgUrl = pub.data.publicUrl;
+            var bgEl = document.getElementById('cfg-bg-url');
+            if (bgEl) bgEl.value = bgUrl;
+            var prev = document.getElementById('hero-cover-preview-img');
+            if (prev) {
+                prev.src = bgUrl + '?t=' + Date.now();
+                prev.onerror = function () { prev.src = './assets/dj-avatar-placeholder.png'; };
+            }
+            if (typeof window.mdjHeroUpdatePreview === 'function') window.mdjHeroUpdatePreview();
+            var f = window.mdjHeroFocal || { x: 50, y: 50, zoom: 100 };
+            var { error: dbErr } = await sb.from('dj_profiles').update({
+                background_url: bgUrl,
+                photo_focal_x: f.x,
+                photo_focal_y: f.y,
+                hero_bg_zoom: f.zoom
+            }).eq('user_id', user.id);
+            if (msg) {
+                msg.style.display = 'block';
+                if (dbErr) {
+                    msg.textContent = 'Subida OK, pero no se guardó en perfil: ' + (dbErr.message || '');
+                    msg.style.color = '#ff5555';
+                } else {
+                    msg.textContent = 'Imagen subida. Si cambias encuadre o zoom, pulsa Save.';
+                    msg.style.color = 'var(--gold)';
+                    setTimeout(function () { if (msg) msg.style.display = 'none'; }, 7000);
+                }
+            }
+            input.value = '';
+        };
+
         // ── Photo upload ───────────────────────────────────────
         function previewNewPhoto(input) {
             const file = input.files[0];
             if (!file) return;
+            const msg = document.getElementById('m-photo-msg');
+            if (msg) { msg.style.display = 'none'; msg.textContent = ''; }
             const reader = new FileReader();
             reader.onload = e => {
                 document.getElementById('m-photo-preview').src = e.target.result;
@@ -4011,21 +4244,36 @@
             if (!sb) return;
             const file = document.getElementById('m-photo-file').files[0];
             const msg = document.getElementById('m-photo-msg');
-            if (!file) { msg.style.display = 'block'; msg.textContent = 'Select a photo first.'; msg.style.color = '#ff5555'; return; }
+            if (!file) {
+                msg.style.display = 'block';
+                msg.textContent = 'Primero pulsa «Seleccionar foto…» y elige un archivo.';
+                msg.style.color = '#ff5555';
+                return;
+            }
             const { data: { user } } = await sb.auth.getUser();
             if (!user) return;
             const ext = file.name.split('.').pop();
             const path = `avatars/${user.id}.${ext}`;
             const { error: upErr } = await sb.storage.from('dj-photos').upload(path, file, { upsert: true });
-            if (upErr) { msg.style.display = 'block'; msg.textContent = 'Upload error: ' + upErr.message; msg.style.color = '#ff5555'; return; }
+            if (upErr) {
+                msg.style.display = 'block';
+                msg.textContent = 'Error al subir: ' + upErr.message;
+                msg.style.color = '#ff5555';
+                return;
+            }
             const { data: { publicUrl } } = sb.storage.from('dj-photos').getPublicUrl(path);
             await sb.from('dj_profiles').update({ photo_url: publicUrl }).eq('user_id', user.id);
             // Update UI
             document.getElementById('acct-avatar').src = publicUrl + '?t=' + Date.now();
             document.getElementById('acct-photo-thumb').src = publicUrl + '?t=' + Date.now();
             document.getElementById('m-photo-preview').src = publicUrl + '?t=' + Date.now();
-            msg.style.display = 'block'; msg.textContent = 'Profile photo updated!'; msg.style.color = '#22c55e';
-            setTimeout(() => closeModal('m-photo'), 1500);
+            var headAv = document.getElementById('header-avatar-img');
+            if (headAv) headAv.src = publicUrl + '?t=' + Date.now();
+            document.querySelectorAll('#accountBtn .avatar').forEach(function (im) { im.src = publicUrl + '?t=' + Date.now(); });
+            msg.style.display = 'block';
+            msg.textContent = 'Foto guardada.';
+            msg.style.color = '#22c55e';
+            setTimeout(() => closeModal('m-photo'), 1200);
         }
         async function deleteProfilePhoto() {
             const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
@@ -4037,6 +4285,9 @@
             document.getElementById('acct-avatar').src = ph;
             document.getElementById('acct-photo-thumb').src = ph;
             document.getElementById('m-photo-preview').src = ph;
+            var headAv2 = document.getElementById('header-avatar-img');
+            if (headAv2) headAv2.src = ph;
+            document.querySelectorAll('#accountBtn .avatar').forEach(function (im) { im.src = ph; });
             closeModal('m-photo');
         }
 
@@ -4288,6 +4539,29 @@
             set('cfg-website', p.website_url);
             set('cfg-photo-url', p.photo_url);
             set('cfg-bg-url', p.background_url || p.cover_url);
+            (function initHeroCoverFromProfile() {
+                var fx = p.photo_focal_x != null ? Number(p.photo_focal_x) : 50;
+                var fy = p.photo_focal_y != null ? Number(p.photo_focal_y) : 50;
+                var hz = p.hero_bg_zoom != null ? Number(p.hero_bg_zoom) : 100;
+                window.mdjHeroFocal = {
+                    x: Math.max(0, Math.min(100, fx)),
+                    y: Math.max(0, Math.min(100, fy)),
+                    zoom: Math.max(80, Math.min(200, hz))
+                };
+                var zSl = document.getElementById('hero-bg-zoom-slider');
+                if (zSl) zSl.value = String(window.mdjHeroFocal.zoom);
+                var zd = document.getElementById('hero-zoom-disp');
+                if (zd) zd.textContent = window.mdjHeroFocal.zoom + '%';
+                var prevImg = document.getElementById('hero-cover-preview-img');
+                if (prevImg) {
+                    var src = (p.background_url || p.cover_url || p.photo_url || '').trim();
+                    if (src) {
+                        prevImg.src = src;
+                        prevImg.onerror = function () { prevImg.src = './assets/dj-avatar-placeholder.png'; };
+                    }
+                    if (typeof window.mdjHeroUpdatePreview === 'function') window.mdjHeroUpdatePreview();
+                }
+            })();
 
             // Carga aislada de Agenda/Operaciones con blindaje de arrays/strings
             set('cfg-agenda-available', p.available ? 'true' : 'false');
@@ -4316,7 +4590,18 @@
                 renderWeeklyAgendaFields(p.weekly_schedule || {});
             }
 
-            // Inyección a la Vista Resumen (Soluciona el fallo auditado)
+            const setTextSummary = (id, val) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const s = val === undefined || val === null ? '' : String(val).trim();
+                el.textContent = s.length ? s : '—';
+            };
+            // Bio y email: siempre desde DB (antes solo se rellenaban si había dj_name/stage_name/full_name)
+            setTextSummary('acct-show-bio', bioEsDisplay);
+            setTextSummary('acct-show-email', session.user.email);
+            setTextSummary('acct-email', session.user.email);
+
+            // Inyección a la Vista Resumen (avatar + nombre artístico)
             if (p.dj_name || p.stage_name || p.full_name) {
                 const headAv = document.getElementById('header-avatar-img');
                 const thumbAv = document.getElementById('acct-photo-thumb');
@@ -4325,15 +4610,11 @@
                 if (thumbAv && p.photo_url) thumbAv.src = p.photo_url;
                 if (mainAv && p.photo_url) mainAv.src = p.photo_url;
 
-                const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || '—'; };
                 const artistPublic = p.stage_name || p.dj_name;
-                setText('acct-show-djname', artistPublic || p.full_name);
-                setText('acct-name', artistPublic || p.full_name);
-                setText('acct-show-bio', bioEsDisplay);
-                setText('acct-show-cat', p.category || p.specialties);
-                setText('acct-show-city', p.city);
-                setText('acct-show-email', session.user.email);
-                setText('acct-email', session.user.email);
+                setTextSummary('acct-show-djname', artistPublic || p.full_name);
+                setTextSummary('acct-name', artistPublic || p.full_name);
+                setTextSummary('acct-show-cat', p.category || p.specialties);
+                setTextSummary('acct-show-city', p.city);
             }
 
             // Load Notifications Settings (Protegido asumiendo p existe)
@@ -4385,12 +4666,27 @@
             }
         }
 
+        // Cargar ajustes al abrir el dashboard (antes solo al entrar en CONFIG: bio vacía y modal sin datos)
+        document.addEventListener('DOMContentLoaded', function () {
+            (async function dashInitialProfileLoad() {
+                try {
+                    const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                    if (!sb) return;
+                    const { data: { session } } = await sb.auth.getSession();
+                    if (!session) return;
+                    await loadSettingsForm();
+                } catch (e) {
+                    console.warn('loadSettingsForm (initial):', e);
+                }
+            })();
+        });
+
         // ── Save Profile Settings ──────────────────────────────
         async function saveProfileSettings(e) {
             e.preventDefault();
             const btn = document.getElementById('cfg-profile-save-btn');
             const msg = document.getElementById('cfg-profile-msg');
-            btn.disabled = true; btn.textContent = 'Guardando...';
+            if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
 
             const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
             const { data: { session } } = await sb.auth.getSession();
@@ -4400,12 +4696,16 @@
 
             const legalName = get('cfg-dj-name');
             const stageName = get('cfg-dj-alias');
+            const bioVal = get('cfg-bio');
+            const bioEnVal = get('cfg-bio-en');
             const updates = {
                 full_name: legalName,
                 stage_name: stageName,
                 dj_name: stageName || legalName,
                 category: get('cfg-category'),
-                bio: get('cfg-bio'),
+                bio: bioVal,
+                bio_en: bioEnVal,
+                bio_short: bioVal || bioEnVal || null,
                 city: get('cfg-city'),
                 phone: get('cfg-phone'),
                 youtube_url: get('cfg-youtube'),
@@ -4421,12 +4721,19 @@
                 photo_url: get('cfg-photo-url') || undefined,
                 background_url: get('cfg-bg-url') || undefined,
             };
+            var hf = window.mdjHeroFocal;
+            if (hf && typeof hf.x === 'number') {
+                updates.photo_focal_x = hf.x;
+                updates.photo_focal_y = hf.y;
+                updates.hero_bg_zoom = hf.zoom;
+            }
             // Remove undefined keys
             Object.keys(updates).forEach(k => updates[k] === undefined && delete updates[k]);
 
             const { error } = await sb.from('dj_profiles').update(updates).eq('user_id', session.user.id);
 
-            btn.disabled = false; btn.textContent = '💾 Guardar Cambios';
+            if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar Cambios'; }
+            if (!msg) return;
             msg.style.display = 'inline';
             if (error) {
                 msg.textContent = '❌ ' + error.message;
@@ -4434,6 +4741,9 @@
             } else {
                 msg.textContent = '✅ ¡Guardado! El hero banner se actualizará al recargar.';
                 msg.style.color = 'var(--gold)';
+                const showBio = (bioVal || '').trim() || (bioEnVal || '').trim() || '';
+                const acctBio = document.getElementById('acct-show-bio');
+                if (acctBio) acctBio.textContent = showBio.length ? showBio : '—';
                 // Refresh hero banner immediately
                 buildHeroBanner({ ...updates, dj_name: updates.dj_name });
                 setTimeout(() => { msg.style.display = 'none'; }, 4000);
@@ -4637,7 +4947,7 @@
 
                 const { data: profile } = await sb
                     .from('dj_profiles')
-                    .select('photo_status, photo_rejected_reason, roles, stage_name, full_name')
+                    .select('photo_status, photo_rejected_reason, roles, stage_name, full_name, plan, status')
                     .eq('user_id', session.user.id)
                     .single();
 

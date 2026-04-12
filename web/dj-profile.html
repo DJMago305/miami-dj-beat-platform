@@ -2374,7 +2374,7 @@
                 p = data;
             } catch (err) {
                 // Fallback select with guaranteed columns + new fallback URLs
-                const { data: pBasic, error: errBasic } = await db.from('dj_profiles').select('id, user_id, dj_name, photo_url, role, bio_en, bio, bio_short, bio_long, stage_name, full_name, verified, plan, available, soundfortips_active, social_instagram, social_tiktok, social_youtube, social_facebook, social_soundcloud, social_mixcloud, social_spotify, social_apple, social_web, background_url, photo_focal_y, instagram_url, facebook_url, tiktok_url, youtube_url, website_url, soundcloud_url, spotify_url, apple_music_url').eq('user_id', targetId).single();
+                const { data: pBasic, error: errBasic } = await db.from('dj_profiles').select('id, user_id, dj_name, photo_url, role, bio_en, bio, bio_short, bio_long, stage_name, full_name, verified, plan, available, soundfortips_active, social_instagram, social_tiktok, social_youtube, social_facebook, social_soundcloud, social_mixcloud, social_spotify, social_apple, social_web, background_url, photo_focal_x, photo_focal_y, hero_bg_zoom, instagram_url, facebook_url, tiktok_url, youtube_url, website_url, soundcloud_url, spotify_url, apple_music_url').eq('user_id', targetId).single();
                 if (!errBasic && pBasic) {
                     p = pBasic;
                 }
@@ -2394,9 +2394,15 @@
                 const bgPhoto = document.getElementById('hero-bg-photo');
                 const insetPhoto = document.getElementById('pub-photo-inset');
                 if (bgPhoto) {
-                    if (p.photo_focal_y != null) {
-                        bgPhoto.style.objectPosition = 'center ' + p.photo_focal_y + '%';
-                    }
+                    var fxp = (p.photo_focal_x != null && p.photo_focal_x !== undefined) ? Number(p.photo_focal_x) : 50;
+                    var fyp = (p.photo_focal_y != null && p.photo_focal_y !== undefined) ? Number(p.photo_focal_y) : 50;
+                    var zm = (p.hero_bg_zoom != null && p.hero_bg_zoom !== undefined) ? Number(p.hero_bg_zoom) : 100;
+                    fxp = Math.max(0, Math.min(100, fxp));
+                    fyp = Math.max(0, Math.min(100, fyp));
+                    zm = Math.max(80, Math.min(200, zm));
+                    bgPhoto.style.objectPosition = fxp + '% ' + fyp + '%';
+                    bgPhoto.style.transform = 'scale(' + (zm / 100) + ')';
+                    bgPhoto.style.transformOrigin = fxp + '% ' + fyp + '%';
                     bgPhoto.onload = () => bgPhoto.classList.add('loaded');
                     bgPhoto.src = heroUrl;
                 }
