@@ -4222,11 +4222,13 @@
             document.getElementById('sftSubText').innerText = `Conectando con ${sftSelectedPayment}... (Stripe/Bank)`;
 
             setTimeout(() => {
-                // Matemática de Comisiones 
-                const houseFee = tipVal * 0.20;
-                const djCut = tipVal - houseFee;
-
-                // ESCROW: Save tentantive tip
+                // Reparto: 10% plataforma / 90% artista (igual que monetization.js + SQL soundfortip_split_amounts)
+                var tipCents = Math.round(tipVal * 100);
+                var djCut = tipVal * 0.9;
+                if (window.MDB_MONETIZATION && typeof window.MDB_MONETIZATION.soundfortipSplit === 'function') {
+                    var sp = window.MDB_MONETIZATION.soundfortipSplit(tipCents);
+                    djCut = sp.artistCents / 100;
+                }
                 pendingTipCut = djCut;
 
                 // 1. Mostrar SMS Interactivo al DJ (Decide Aceptar o Rechazar)
