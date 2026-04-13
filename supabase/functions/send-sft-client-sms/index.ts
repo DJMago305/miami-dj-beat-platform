@@ -20,6 +20,26 @@ function toE164(input: string): string | null {
   return null;
 }
 
+async function stripeRefundPaymentIntent(pi: string): Promise<{ ok: boolean; err?: string }> {
+  const key = Deno.env.get("STRIPE_SECRET_KEY");
+  if (!key) return { ok: false, err: "STRIPE_SECRET_KEY missing" };
+  const res = await fetch("https://api.stripe.com/v1/refunds", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({ payment_intent: pi }).toString(),
+  });
+  const j = await res.json();
+  if (!res.ok) {
+    const msg = String(j.error?.message ?? JSON.stringify(j));
+    if (msg.includes("already been refunded") || msg.includes("Already refunded")) return { ok: true };
+    return { ok: false, err: msg };
+  }
+  return { ok: true };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -123,12 +143,16 @@ serve(async (req) => {
   let phone: string | null = null;
   let song = "";
   let artist = "";
+  let paymentChannel: string | null = null;
+  let stripePaymentIntentId: string | null = null;
   const requestId = body.request_id != null ? String(body.request_id).trim() : "";
+  /** When RPC accept_my_soundfortips_request ran first, avoid double UPDATE; SMS still sends. */
+  let skipStatusUpdate = false;
 
   if (requestId) {
     const { data: row, error: rowErr } = await supabaseAdmin
       .from("soundfortips_fan_requests")
-      .select("id, dj_user_id, client_phone, song, artist, status")
+      .select("id, dj_user_id, client_phone, song, artist, status, payment_channel, stripe_payment_intent_id")
       .eq("id", requestId)
       .maybeSingle();
 
@@ -139,12 +163,22 @@ serve(async (req) => {
       });
     }
 
+    /** RPC accept_* / deny_* ya actualizó fila: seguimos para SMS sin segundo UPDATE (Cash Flow ya coherente). */
     if (row.status !== "pending") {
-      return new Response(JSON.stringify({ ok: true, skipped: true, reason: "already_resolved" }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (kind === "accept" && row.status === "accepted") {
+        skipStatusUpdate = true;
+      } else if (kind === "deny" && row.status === "denied") {
+        skipStatusUpdate = true;
+      } else {
+        return new Response(JSON.stringify({ ok: true, skipped: true, reason: "already_resolved" }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
+
+    paymentChannel = row.payment_channel != null ? String(row.payment_channel) : null;
+    stripePaymentIntentId = row.stripe_payment_intent_id != null ? String(row.stripe_payment_intent_id).trim() : null;
 
     song = (row.song || "").trim() || "tu canción";
     artist = (row.artist || "").trim();
@@ -158,6 +192,17 @@ serve(async (req) => {
     artist = (body.artist || "").trim();
   }
 
+  if (kind === "deny" && !skipStatusUpdate && paymentChannel === "stripe" && stripePaymentIntentId) {
+    const ref = await stripeRefundPaymentIntent(stripePaymentIntentId);
+    if (!ref.ok) {
+      console.error("[send-sft-client-sms] Stripe refund:", ref.err);
+      return new Response(JSON.stringify({ error: ref.err ?? "Refund failed" }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
   const newStatus = kind === "accept" ? "accepted" : "denied";
 
   let msgBody = "";
@@ -167,7 +212,9 @@ serve(async (req) => {
       `Miami DJ Beat: ${djName} aceptó tu SOUNDFORTIPS. «${song}»${extra} estará sonando en pocos minutos. ¡Gracias!`;
   } else {
     msgBody =
-      "Miami DJ Beat: Disculpa, esta canción no está en la playlist del DJ o no es adecuada para este evento. No se realizó ningún cargo.";
+      paymentChannel === "stripe"
+        ? "Miami DJ Beat: el DJ no pudo reproducir tu petición. Si pagaste con tarjeta, el reembolso se envió a la misma tarjeta (Stripe); puede tardar unos días en verse en tu banco."
+        : "Miami DJ Beat: Disculpa, esta canción no está en la playlist del DJ o no es adecuada para este evento. No se realizó ningún cargo.";
   }
 
   if (msgBody.length > 1500) {
@@ -199,7 +246,7 @@ serve(async (req) => {
 
     const payload = await twilioRes.json();
 
-    if (requestId) {
+    if (requestId && !skipStatusUpdate) {
       await supabaseAdmin
         .from("soundfortips_fan_requests")
         .update({ status: newStatus })
@@ -213,8 +260,8 @@ serve(async (req) => {
     });
   }
 
-  // Sin teléfono: igual actualizamos estado en servidor
-  if (requestId) {
+  // Sin teléfono: igual actualizamos estado en servidor (salvo si ya estaba accepted vía RPC)
+  if (requestId && !skipStatusUpdate) {
     await supabaseAdmin
       .from("soundfortips_fan_requests")
       .update({ status: newStatus })

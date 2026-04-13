@@ -77,7 +77,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="./flow-handler.js?v=20260412-profile"></script>
+    <script src="./flow-handler.js?v=20260418-sft-accept-rpc"></script>
 
     <!-- Open Graph / Meta sharing -->
     <meta property="og:type" content="website">
@@ -1880,7 +1880,7 @@
                                         style="font-size:11px; font-weight:800; color:var(--gold); letter-spacing:0.06em;">
                                         SOUNDFORTIPS™ LIVE <span style="opacity:0.75;">· PRO</span></div>
                                     <div style="font-size:11px; color:rgba(255,255,255,0.48); margin-top:5px; line-height:1.35;">
-                                        ON = el público ve el botón de peticiones. OFF = no recibes pedidos. Al activar se abre la cabina en una pestaña nueva.</div>
+                                        ON = el público puede enviar peticiones. OFF = no recibes pedidos. El interruptor también está en la cabina.</div>
                                 </div>
                                 <label class="sft-owner-switch" title="SoundForTips ON / OFF">
                                     <input type="checkbox" id="soundfortips-active-toggle" autocomplete="off" />
@@ -2137,7 +2137,7 @@
     </footer>
 
     <!-- Translations & Base Logic -->
-    <script src="./translations.js?v=20260426-sft-col-apoyo"></script>
+    <script src="./translations.js?v=20260412-sft-copy-track"></script>
     <script src="./i18n.js?v=20260412-profile"></script>
     <script>
         // 🔧 Motor Principal de Logout (A prueba de fallos)
@@ -2366,7 +2366,7 @@
                 }
             } else {
                 btn.classList.add('sft-launch-btn--offline');
-                btn.disabled = true;
+                btn.disabled = false;
                 btn.setAttribute('aria-label', 'SoundForTips — offline');
                 if (pill) {
                     pill.textContent = 'OFF';
@@ -2382,40 +2382,57 @@
 
         function syncSftTabOnlineButton() {
             var t = document.getElementById('soundfortips-active-toggle');
-            var b = document.getElementById('sft-tab-online-btn');
-            var lo = document.querySelector('#sft-tab-online-btn .sft-tab-online-label--off');
-            var ln = document.querySelector('#sft-tab-online-btn .sft-tab-online-label--on');
-            if (!b) return;
+            var buttons = [
+                document.getElementById('sft-tab-online-btn'),
+                document.getElementById('sft-cab-online-btn')
+            ];
+            var hasAny = false;
+            for (var i = 0; i < buttons.length; i++) {
+                if (buttons[i]) { hasAny = true; break; }
+            }
+            if (!hasAny) return;
             if (!t || t.disabled) {
-                b.disabled = true;
-                b.classList.remove('sft-tab-online-btn--on');
-                b.classList.add('sft-tab-online-btn--off');
-                b.setAttribute('aria-pressed', 'false');
-                if (lo) lo.style.display = '';
-                if (ln) ln.style.display = 'none';
+                buttons.forEach(function (b) {
+                    if (!b) return;
+                    var lo = b.querySelector('.sft-tab-online-label--off');
+                    var ln = b.querySelector('.sft-tab-online-label--on');
+                    b.disabled = true;
+                    b.classList.remove('sft-tab-online-btn--on');
+                    b.classList.add('sft-tab-online-btn--off');
+                    b.setAttribute('aria-pressed', 'false');
+                    if (lo) lo.style.display = '';
+                    if (ln) ln.style.display = 'none';
+                });
                 return;
             }
-            b.disabled = false;
             var on = !!t.checked;
-            b.classList.toggle('sft-tab-online-btn--on', on);
-            b.classList.toggle('sft-tab-online-btn--off', !on);
-            b.setAttribute('aria-pressed', on ? 'true' : 'false');
-            if (lo) lo.style.display = on ? 'none' : '';
-            if (ln) ln.style.display = on ? '' : 'none';
+            buttons.forEach(function (b) {
+                if (!b) return;
+                var lo = b.querySelector('.sft-tab-online-label--off');
+                var ln = b.querySelector('.sft-tab-online-label--on');
+                b.disabled = false;
+                b.classList.toggle('sft-tab-online-btn--on', on);
+                b.classList.toggle('sft-tab-online-btn--off', !on);
+                b.setAttribute('aria-pressed', on ? 'true' : 'false');
+                if (lo) lo.style.display = on ? 'none' : '';
+                if (ln) ln.style.display = on ? '' : 'none';
+            });
         }
 
         var __sftTabOnlineBtnWired = false;
         function wireSftTabOnlineButtonOnce() {
             if (__sftTabOnlineBtnWired) return;
-            var btn = document.getElementById('sft-tab-online-btn');
-            if (!btn) return;
             __sftTabOnlineBtnWired = true;
-            btn.addEventListener('click', function () {
+            function clickMirror() {
                 var tg = document.getElementById('soundfortips-active-toggle');
                 if (!tg || tg.disabled) return;
                 tg.checked = !tg.checked;
                 tg.dispatchEvent(new Event('change', { bubbles: true }));
-            });
+            }
+            var btn = document.getElementById('sft-tab-online-btn');
+            if (btn) btn.addEventListener('click', clickMirror);
+            var cabBtn = document.getElementById('sft-cab-online-btn');
+            if (cabBtn) cabBtn.addEventListener('click', clickMirror);
         }
 
         var __sftOwnerToggleInited = false;
@@ -2443,14 +2460,15 @@
                 if (window.currentDJData) window.currentDJData.soundfortips_active = v;
                 applySoundForTipsPublicVisibility(v);
                 syncSftTabOnlineButton();
+                try {
+                    if (typeof window.sftNotifySoundForTipsActiveChanged === 'function') window.sftNotifySoundForTipsActiveChanged(v);
+                } catch (eN) { void eN; }
                 if (v) {
-                    var u = window.location.pathname + '?id=' + encodeURIComponent(targetId) + '&sft_booth=1&sft_cab=list';
-                    window.open(u, '_blank', 'noopener,noreferrer');
                     setTimeout(function () {
                         try {
                             if (typeof window.openSoundForTipsDjLibrary === 'function') window.openSoundForTipsDjLibrary();
                         } catch (eLib) { void eLib; }
-                    }, 220);
+                    }, 120);
                 }
             });
             syncSftTabOnlineButton();
@@ -3160,7 +3178,14 @@
                     } else if (tabFromUrl === 'flow') {
                         setTimeout(function () { switchProfileTab('flow'); }, 300);
                     } else if (tabFromUrl === 'sft') {
-                        setTimeout(function () { switchProfileTab('sft'); }, 300);
+                        setTimeout(function () {
+                            switchProfileTab('sft');
+                            if (window._mdjSftProAllowed && typeof window.openSoundForTipsDjLibrary === 'function') {
+                                setTimeout(function () {
+                                    try { window.openSoundForTipsDjLibrary(); } catch (eS) { void eS; }
+                                }, 140);
+                            }
+                        }, 300);
                     }
                 }
 
@@ -3531,7 +3556,7 @@
                 <div class="flow-card">
                     <div class="flow-card-label">Propinas (Tips)</div>
                     <div id="kpi-tips" class="flow-card-value" style="color:#f0cc80;">$0.00</div>
-                    <div class="flow-card-trend" style="color:rgba(255,255,255,0.3)">Fuentes Externas</div>
+                    <div id="trend-tips" class="flow-card-trend" style="color:rgba(255,255,255,0.3)">SoundForTips™ aceptadas · tu parte (~90%)</div>
                 </div>
                 <div class="flow-card">
                     <div class="flow-card-label">Comisiones Referidos</div>
@@ -3931,6 +3956,11 @@
                 ev.stopPropagation();
             }
             switchProfileTab('sft');
+            if (window._mdjSftViewerIsOwner && window._mdjSftProAllowed && typeof window.openSoundForTipsDjLibrary === 'function') {
+                setTimeout(function () {
+                    try { window.openSoundForTipsDjLibrary(); } catch (eC) { void eC; }
+                }, 120);
+            }
         };
 
         function switchProfileTab(tab) {
@@ -3950,7 +3980,9 @@
             }
 
             if (tab === 'flow' && window.loadFlowData && window._flowTabAllowed) {
-                window.loadFlowData('30d', window.currentProfileDJId);
+                var rangeSel = document.getElementById('metrics-range');
+                var flowRange = (rangeSel && rangeSel.value) ? rangeSel.value : '30d';
+                window.loadFlowData(flowRange, window.currentProfileDJId);
             }
         }
 
@@ -4285,6 +4317,21 @@
             margin: 0;
         }
 
+        .sft-offline-hold-banner {
+            display: none;
+            margin: 14px auto 0;
+            max-width: 42ch;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(248, 113, 113, 0.35);
+            background: rgba(127, 29, 29, 0.35);
+            color: rgba(255, 237, 213, 0.95);
+            font-size: 12px;
+            line-height: 1.45;
+            font-weight: 600;
+            text-align: center;
+        }
+
         .sft-group {
             margin-bottom: 15px;
             text-align: left;
@@ -4521,21 +4568,24 @@
             margin-bottom: 10px;
         }
 
+        /* fixed + coords en JS: si fuera absolute, .sft-modal (overflow-y:auto) recorta la lista a una franja */
         .sft-results {
-            position: absolute;
-            top: 100%;
+            position: fixed;
             left: 0;
-            right: 0;
+            top: 0;
+            width: min(100vw - 16px, 500px);
+            margin: 0;
             background: rgba(10, 10, 10, 0.95);
             backdrop-filter: blur(15px);
             border: 1px solid rgba(197, 160, 89, 0.3);
             border-radius: 14px;
-            margin-top: 8px;
-            max-height: 280px;
+            max-height: min(320px, 55dvh);
             overflow-y: auto;
-            z-index: 1000;
+            -webkit-overflow-scrolling: touch;
+            z-index: 10002;
             box-shadow: 0 15px 40px rgba(0, 0, 0, 0.9);
             display: none;
+            box-sizing: border-box;
         }
 
         .sft-result-item {
@@ -4568,6 +4618,7 @@
 
         .sft-result-info {
             flex: 1;
+            min-width: 0;
         }
 
         .sft-result-title {
@@ -4576,6 +4627,9 @@
             font-weight: 800;
             display: block;
             margin-bottom: 2px;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
         }
 
         .sft-result-artist {
@@ -4585,6 +4639,9 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
         }
 
         .sft-selected-card {
@@ -4757,6 +4814,7 @@
 
         #tab-sft .sft-tab-online-btn:not(:disabled):active {
             transform: scale(0.98);
+            filter: brightness(0.96);
         }
 
         #tab-sft .sft-tab-online-dot {
@@ -4789,6 +4847,34 @@
         #tab-sft .sft-tab-online-btn--on .sft-tab-online-dot {
             background: #facc15;
             box-shadow: 0 0 18px rgba(250, 204, 21, 0.9);
+        }
+
+        #tab-sft .sft-tab-online-btn--off:not(:disabled):hover {
+            filter: brightness(1.14);
+            box-shadow:
+                0 18px 52px rgba(248, 113, 113, 0.72),
+                0 0 28px rgba(248, 113, 113, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.18);
+            transform: translateY(-2px);
+            border-color: rgba(254, 202, 202, 0.75);
+        }
+
+        #tab-sft .sft-tab-online-btn--off:not(:disabled):hover .sft-tab-online-dot {
+            box-shadow: 0 0 22px rgba(254, 202, 202, 0.95);
+        }
+
+        #tab-sft .sft-tab-online-btn--on:not(:disabled):hover {
+            filter: brightness(1.1);
+            box-shadow:
+                0 20px 56px rgba(250, 204, 21, 0.58),
+                0 0 32px rgba(212, 162, 74, 0.45),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            border-color: rgba(253, 230, 138, 0.95);
+        }
+
+        #tab-sft .sft-tab-online-btn--on:not(:disabled):hover .sft-tab-online-dot {
+            box-shadow: 0 0 26px rgba(250, 204, 21, 1);
         }
 
         #tab-sft .sft-tab-live-hint {
@@ -5562,24 +5648,101 @@
 
         .sft-cab-pl-act {
             text-align: right;
+            vertical-align: middle;
             white-space: nowrap;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 4px;
         }
 
-        .sft-cab-btn-copy {
+        .sft-cab-pl-act-row {
+            display: inline-flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .sft-cab-btn--cab-action {
+            min-width: 72px;
+            padding: 7px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 800;
+            line-height: 1.1;
+            cursor: pointer;
+            transition: transform 0.16s ease, box-shadow 0.2s ease, filter 0.2s ease, border-color 0.2s ease;
+        }
+
+        .sft-cab-pl-act .sft-cab-btn-yes.sft-cab-btn--cab-action {
+            background: linear-gradient(180deg, #15803d 0%, #14532d 100%);
+            border: 1px solid #22c55e;
+            color: #f0fdf4;
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);
+        }
+
+        .sft-cab-pl-act .sft-cab-btn-yes.sft-cab-btn--cab-action:hover {
+            filter: brightness(1.12);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(34, 197, 94, 0.45), 0 0 16px rgba(74, 222, 128, 0.2);
+            border-color: #4ade80;
+        }
+
+        .sft-cab-pl-act .sft-cab-btn-yes.sft-cab-btn--cab-action:active {
+            transform: translateY(0);
+            filter: brightness(0.98);
+        }
+
+        .sft-cab-pl-act .sft-cab-btn-no.sft-cab-btn--cab-action {
+            background: linear-gradient(180deg, #991b1b 0%, #450a0a 100%);
+            border: 1px solid #dc2626;
+            color: #fef2f2;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.22);
+        }
+
+        .sft-cab-pl-act .sft-cab-btn-no.sft-cab-btn--cab-action:hover {
+            filter: brightness(1.14);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(248, 113, 113, 0.4), 0 0 16px rgba(239, 68, 68, 0.2);
+            border-color: #f87171;
+        }
+
+        .sft-cab-pl-act .sft-cab-btn-no.sft-cab-btn--cab-action:active {
+            transform: translateY(0);
+            filter: brightness(0.98);
+        }
+
+        .sft-cab-btn-copy.sft-cab-btn--cab-copy-icon {
+            width: 32px;
+            min-width: 32px;
+            height: 30px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
             background: #27272f;
             border: 1px solid #3f3f4c;
             color: #c4c4d4;
+            cursor: pointer;
+            transition: transform 0.16s ease, box-shadow 0.2s ease, filter 0.2s ease, border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
         }
 
-        .sft-cab-btn-copy:hover {
+        .sft-cab-btn-copy.sft-cab-btn--cab-copy-icon:hover {
             background: #32323c;
-            border-color: rgba(197, 160, 89, 0.45);
-            color: var(--gold-light);
+            border-color: rgba(197, 160, 89, 0.65);
+            color: var(--gold-light, #e8d5a3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(197, 160, 89, 0.28), 0 0 12px rgba(197, 160, 89, 0.12);
+            filter: brightness(1.08);
+        }
+
+        .sft-cab-btn-copy.sft-cab-btn--cab-copy-icon:active {
+            transform: translateY(0);
+        }
+
+        .sft-cab-copy-svg {
+            display: block;
+            flex-shrink: 0;
+            pointer-events: none;
         }
 
         .sft-cab-btn--compact {
@@ -5587,23 +5750,6 @@
             font-size: 11px;
             min-width: auto;
             border-radius: 2px;
-        }
-
-        .sft-cab-pl-act .sft-cab-btn-yes {
-            background: #14532d;
-            border: 1px solid #166534;
-            color: #e5e5e5;
-        }
-
-        .sft-cab-pl-act .sft-cab-btn-no {
-            background: #450a0a;
-            border: 1px solid #7f1d1d;
-            color: #e5e5e5;
-        }
-
-        .sft-cab-pl-act .sft-cab-btn-yes:hover,
-        .sft-cab-pl-act .sft-cab-btn-no:hover {
-            filter: brightness(1.12);
         }
 
         @media (max-width: 720px) {
@@ -5962,10 +6108,22 @@
             letter-spacing: 0.06em;
             cursor: pointer;
             text-transform: uppercase;
+            transition: transform 0.2s ease, box-shadow 0.22s ease, filter 0.2s ease, border-color 0.2s ease, background 0.22s ease;
         }
 
         .sft-cab-btn-cash:hover {
-            filter: brightness(1.06);
+            filter: brightness(1.18);
+            border-color: rgba(253, 230, 138, 0.85);
+            background: linear-gradient(135deg, rgba(212, 162, 74, 0.55), rgba(197, 160, 89, 0.28));
+            box-shadow:
+                0 12px 40px rgba(197, 160, 89, 0.42),
+                0 0 28px rgba(212, 162, 74, 0.28);
+            transform: translateY(-2px);
+        }
+
+        .sft-cab-btn-cash:active {
+            transform: translateY(0);
+            filter: brightness(1.05);
         }
 
         .sft-cab-footer-hint {
@@ -6244,6 +6402,102 @@
             font-size: 18px;
         }
 
+        .sft-am-topbar-actions {
+            display: flex;
+            flex-shrink: 0;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Cabina: mismos ON/OFF que la pestaña (fuera de #tab-sft el botón no heredaba colores). */
+        #sftDjAmOverlay .sft-tab-online-btn {
+            appearance: none;
+            border-radius: 999px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            text-transform: uppercase;
+            transition: transform 0.18s ease, box-shadow 0.22s ease, background 0.22s ease, border-color 0.22s ease, filter 0.2s ease;
+        }
+
+        #sftDjAmOverlay .sft-tab-online-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+            filter: none;
+        }
+
+        #sftDjAmOverlay .sft-tab-online-btn:not(:disabled):active {
+            transform: scale(0.98);
+        }
+
+        #sftDjAmOverlay .sft-tab-online-btn--off {
+            color: #fff;
+            background: linear-gradient(165deg, #b91c1c 0%, #7f1d1d 55%, #450a0a 100%);
+            border: 1px solid rgba(248, 113, 113, 0.45);
+            box-shadow: 0 10px 28px rgba(127, 29, 29, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        }
+
+        #sftDjAmOverlay .sft-tab-online-btn--off .sft-tab-online-dot {
+            background: #fecaca;
+            box-shadow: 0 0 12px rgba(254, 202, 202, 0.75);
+        }
+
+        #sftDjAmOverlay .sft-tab-online-btn--on {
+            color: #1a1206;
+            background: linear-gradient(165deg, #f5e6c8 0%, #d4a24a 42%, #a16207 100%);
+            border: 1px solid rgba(253, 230, 138, 0.65);
+            box-shadow: 0 12px 32px rgba(197, 160, 89, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        }
+
+        #sftDjAmOverlay .sft-tab-online-btn--on .sft-tab-online-dot {
+            background: #facc15;
+            box-shadow: 0 0 16px rgba(250, 204, 21, 0.9);
+        }
+
+        #sftDjAmOverlay .sft-tab-online-btn--off:not(:disabled):hover {
+            filter: brightness(1.14);
+            box-shadow:
+                0 14px 40px rgba(248, 113, 113, 0.68),
+                0 0 24px rgba(248, 113, 113, 0.32),
+                inset 0 1px 0 rgba(255, 255, 255, 0.18);
+            transform: translateY(-1px);
+            border-color: rgba(254, 202, 202, 0.8);
+        }
+
+        #sftDjAmOverlay .sft-tab-online-btn--off:not(:disabled):hover .sft-tab-online-dot {
+            box-shadow: 0 0 20px rgba(254, 202, 202, 0.95);
+        }
+
+        #sftDjAmOverlay .sft-tab-online-btn--on:not(:disabled):hover {
+            filter: brightness(1.1);
+            box-shadow:
+                0 16px 44px rgba(250, 204, 21, 0.52),
+                0 0 28px rgba(212, 162, 74, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            transform: translateY(-1px);
+            border-color: rgba(253, 230, 138, 0.95);
+        }
+
+        #sftDjAmOverlay .sft-tab-online-btn--on:not(:disabled):hover .sft-tab-online-dot {
+            box-shadow: 0 0 22px rgba(250, 204, 21, 1);
+        }
+
+        #sftDjAmOverlay .sft-cab-online-btn {
+            min-width: 0;
+            padding: 8px 14px;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            gap: 8px;
+        }
+
+        #sftDjAmOverlay .sft-cab-online-btn .sft-tab-online-dot {
+            width: 9px;
+            height: 9px;
+        }
+
         .sft-am-titles {
             flex: 1;
             text-align: center;
@@ -6517,6 +6771,8 @@
             <div class="sft-header">
                 <h2>SOUNDFORTIPS™</h2>
                 <p id="sftSubtitle">Busca tu canción y envía tu petición.</p>
+                <div id="sftOfflineHoldBanner" class="sft-offline-hold-banner" style="display:none;" role="status"
+                    data-i18n="sft-offline-hold-banner">The DJ is offline. You can pick a song and your details are saved on this device; finish payment when they go live.</div>
             </div>
 
             <!-- PASO 1: buscador inteligente (Apple iTunes Search API — typeahead, portada/título/artista) -->
@@ -6542,7 +6798,8 @@
                         </div>
                     </div>
                     <button type="button" class="sft-submit" onclick="goToStep2()">
-                        Enviar <span style="opacity:0.75; font-weight:700; font-size:12px; display:block; margin-top:4px;">Send</span>
+                        <span id="sftStep1PrimaryLabel">Enviar</span>
+                        <span id="sftStep1SecondaryLabel" style="opacity:0.75; font-weight:700; font-size:12px; display:block; margin-top:4px;">Send</span>
                     </button>
                     <button type="button"
                         style="width:100%; background:none; border:none; color:#888; font-size:12px; margin-top:15px; cursor:pointer; text-decoration:underline;"
@@ -6675,8 +6932,16 @@
                     <h1 id="sftAmHeading" class="sft-am-h1">SoundForTips · Cabina</h1>
                     <p class="sft-am-sub" id="sftDjAmSubtitle">Cola de peticiones en vivo</p>
                 </div>
-                <button type="button" class="sft-am-refresh" onclick="sftRenderDjLibraryList()"
-                    title="Actualizar lista" aria-label="Actualizar lista">↻</button>
+                <div class="sft-am-topbar-actions">
+                    <button type="button" id="sft-cab-online-btn" class="sft-tab-online-btn sft-cab-online-btn sft-tab-online-btn--off"
+                        aria-pressed="false" aria-label="SoundForTips live on/off">
+                        <span class="sft-tab-online-dot" aria-hidden="true"></span>
+                        <span class="sft-tab-online-label sft-tab-online-label--off" data-i18n="sft-tab-status-offline">OFFLINE</span>
+                        <span class="sft-tab-online-label sft-tab-online-label--on" data-i18n="sft-tab-status-online" style="display:none">ONLINE</span>
+                    </button>
+                    <button type="button" class="sft-am-refresh" onclick="sftRenderDjLibraryList()"
+                        title="Actualizar lista" aria-label="Actualizar lista">↻</button>
+                </div>
             </header>
             <div class="sft-cab-deskbar" id="sftCabDeskbar">
                 <div class="sft-cab-deskbar-row">
@@ -6741,7 +7006,7 @@
                 <div class="sft-cab-total-bar-inner">
                     <div class="sft-cab-total-bar-text">
                         <span class="sft-cab-total-bar-lbl" data-i18n="sft-cab-total-bar-lbl">Total</span>
-                        <span class="sft-cab-total-bar-sub" data-i18n="sft-cab-total-bar-sub">Tu parte acumulada (aceptadas)</span>
+                        <span class="sft-cab-total-bar-sub" data-i18n="sft-cab-total-bar-sub">Tu parte: cola pendiente + aceptadas en la sesión</span>
                     </div>
                     <div class="sft-cab-total-bar-amt" id="sftCabTotalDjUsd" aria-label="Total acumulado">$0.00</div>
                 </div>
@@ -6765,7 +7030,7 @@
             Zelle: '<strong>Zelle</strong> — Use the Miami DJ Beat business address provided at the venue or on printed materials. Memo: table + DJ name.',
             Venmo: '<strong>Venmo</strong> — Pay the official @handle published for the event (override <strong>MDB_SFT_PAY_RECIPIENTS</strong> in your site script).',
             PayPal: '<strong>PayPal</strong> — Friends &amp; family to the PayPal email or PayPal.me link published for Miami DJ Beat.',
-            Tarjeta: '<strong>Card</strong> — Production can connect Stripe/Square. Until then, use Zelle, Venmo, or PayPal.'
+            Tarjeta: '<strong>Card (Stripe)</strong> — Secure checkout. Your request reaches the DJ <em>after</em> payment. If the DJ declines, the card charge is refunded automatically.'
         };
 
         function sftSyncPayInstructionPanel() {
@@ -6777,6 +7042,11 @@
         }
 
         function sftGoToStep2b() {
+            if (!soundForTipsAcceptingRequests()) {
+                alert(sftT('sft-offline-cannot-pay-yet', 'The DJ is offline. Your song and details stay saved on this device — come back to tip and send when they go live.'));
+                sftSaveFanHoldDraft();
+                return;
+            }
             var sender = (document.getElementById('sftClientName') && document.getElementById('sftClientName').value || '').trim();
             var email = (document.getElementById('sftClientEmail') && document.getElementById('sftClientEmail').value || '').trim();
             var phone = (document.getElementById('sftClientPhone') && document.getElementById('sftClientPhone').value || '').trim();
@@ -6814,6 +7084,38 @@
         // --- APPLE MUSIC TYPEAHEAD LOGIC ---
         let sftSearchTimeout = null;
 
+        function sftPositionSftResultsDropdown() {
+            var resultsBox = document.getElementById('sftResults');
+            var inp = document.getElementById('sftSearchInput');
+            if (!resultsBox || !inp || resultsBox.style.display === 'none') return;
+            var r = inp.getBoundingClientRect();
+            if (r.width < 2 || r.height < 2) return;
+            var pad = 8;
+            var left = Math.max(pad, r.left);
+            var maxW = window.innerWidth - left - pad;
+            var w = Math.min(r.width, maxW);
+            resultsBox.style.position = 'fixed';
+            resultsBox.style.left = left + 'px';
+            resultsBox.style.width = w + 'px';
+            resultsBox.style.top = (r.bottom + pad) + 'px';
+            resultsBox.style.right = 'auto';
+            var avail = window.innerHeight - r.bottom - pad * 2;
+            var cap = Math.min(320, Math.max(160, avail));
+            resultsBox.style.maxHeight = cap + 'px';
+        }
+
+        (function sftWireSftResultsDropdownReposition() {
+            if (window.__sftResultsDropdownPosWired) return;
+            window.__sftResultsDropdownPosWired = true;
+            function rep() {
+                sftPositionSftResultsDropdown();
+            }
+            window.addEventListener('resize', rep);
+            window.addEventListener('scroll', rep, true);
+            var modal = document.querySelector('#sftOverlay .sft-modal');
+            if (modal) modal.addEventListener('scroll', rep, true);
+        })();
+
         document.getElementById('sftSearchInput').addEventListener('input', function (e) {
             clearTimeout(sftSearchTimeout);
             const query = e.target.value.trim();
@@ -6827,14 +7129,16 @@
             // Muestra mensaje de carga
             resultsBox.innerHTML = '<div style="padding:15px; text-align:center; color:#888; font-size:12px;">Buscando...</div>';
             resultsBox.style.display = 'block';
+            requestAnimationFrame(sftPositionSftResultsDropdown);
 
             sftSearchTimeout = setTimeout(() => {
-                fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=5`)
+                fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=10`)
                     .then(res => res.json())
                     .then(data => {
                         resultsBox.innerHTML = '';
                         if (data.results.length === 0) {
                             resultsBox.innerHTML = '<div style="padding:15px; text-align:center; color:#888; font-size:12px;">No se encontraron canciones. Intenta de nuevo.</div>';
+                            requestAnimationFrame(sftPositionSftResultsDropdown);
                             return;
                         }
 
@@ -6858,9 +7162,11 @@
                             );
                             resultsBox.appendChild(item);
                         });
+                        requestAnimationFrame(sftPositionSftResultsDropdown);
                     })
                     .catch(err => {
                         resultsBox.innerHTML = '<div style="padding:15px; text-align:center; color:#ef4444; font-size:12px;">Error conectando con Apple Music.</div>';
+                        requestAnimationFrame(sftPositionSftResultsDropdown);
                     });
             }, 500); // 500ms debounce
         });
@@ -6878,6 +7184,7 @@
             document.getElementById('sftTrackName').innerText = trackName;
             document.getElementById('sftTrackArtist').innerText = artistName;
             document.getElementById('sftTrackImg').src = imgUrl;
+            sftSaveFanHoldDraft();
         }
 
         function clearSftSelection() {
@@ -6886,6 +7193,7 @@
             document.getElementById('sftSearchInput').value = '';
             document.getElementById('sftSearchInput').focus();
             activeRequestInfo = {};
+            sftClearFanHoldDraft();
         }
 
         // --- AFFILIATE / REFERRAL ROUTING ---
@@ -6915,6 +7223,158 @@
             return window.currentDJData && window.currentDJData.soundfortips_active === true && window.currentDJData.soundfortips_eligible === true;
         }
 
+        function soundForTipsFanMayOpenModal() {
+            return window.currentDJData && window.currentDJData.soundfortips_eligible === true;
+        }
+
+        function sftT(key, fallback) {
+            try {
+                if (window.i18n && typeof window.i18n.t === 'function') {
+                    var x = window.i18n.t(key);
+                    if (x && String(x).trim()) return x;
+                }
+            } catch (e) { void e; }
+            return fallback;
+        }
+
+        function sftFanHoldStorageKey() {
+            var id = window.currentProfileDJId;
+            if (!id) return null;
+            return 'mdj_sft_fan_hold_' + String(id);
+        }
+
+        function sftClearFanHoldDraft() {
+            var k = sftFanHoldStorageKey();
+            if (!k) return;
+            try { localStorage.removeItem(k); } catch (e) { void e; }
+        }
+
+        function sftSaveFanHoldDraft() {
+            var k = sftFanHoldStorageKey();
+            if (!k || !soundForTipsFanMayOpenModal()) return;
+            try {
+                var step2El = document.getElementById('sftStep2');
+                var onStep2 = step2El && step2El.style.display !== 'none';
+                var payload = {
+                    v: 1,
+                    song: activeRequestInfo.song || '',
+                    artist: activeRequestInfo.artist || '',
+                    poster: activeRequestInfo.poster || '',
+                    album: activeRequestInfo.album || '',
+                    step: onStep2 ? 2 : 1,
+                    sender: (document.getElementById('sftClientName') && document.getElementById('sftClientName').value) || '',
+                    email: (document.getElementById('sftClientEmail') && document.getElementById('sftClientEmail').value) || '',
+                    phone: (document.getElementById('sftClientPhone') && document.getElementById('sftClientPhone').value) || ''
+                };
+                if (!payload.song) {
+                    sftClearFanHoldDraft();
+                    return;
+                }
+                localStorage.setItem(k, JSON.stringify(payload));
+            } catch (e) { void e; }
+        }
+
+        function sftApplyFanHoldDraft() {
+            var k = sftFanHoldStorageKey();
+            if (!k) return;
+            try {
+                var raw = localStorage.getItem(k);
+                if (!raw) return;
+                var d = JSON.parse(raw);
+                if (!d || d.v !== 1 || !d.song) return;
+                activeRequestInfo.song = d.song;
+                activeRequestInfo.artist = d.artist || '';
+                activeRequestInfo.poster = d.poster || '';
+                activeRequestInfo.album = d.album || '';
+                var sg = document.getElementById('sftSearchGroup');
+                var st = document.getElementById('sftSelectedTrack');
+                if (sg) sg.style.display = 'none';
+                if (st) st.style.display = 'block';
+                var tn = document.getElementById('sftTrackName');
+                var ta = document.getElementById('sftTrackArtist');
+                var ti = document.getElementById('sftTrackImg');
+                if (tn) tn.innerText = d.song;
+                if (ta) ta.innerText = d.artist || '';
+                if (ti && d.poster) ti.src = d.poster;
+                if (d.step === 2) {
+                    var cn = document.getElementById('sftClientName');
+                    var ce = document.getElementById('sftClientEmail');
+                    var cp = document.getElementById('sftClientPhone');
+                    if (cn) cn.value = d.sender || '';
+                    if (ce) ce.value = d.email || '';
+                    if (cp) cp.value = d.phone || '';
+                    var s1 = document.getElementById('sftStep1');
+                    var s2 = document.getElementById('sftStep2');
+                    if (s1) s1.style.display = 'none';
+                    if (s2) s2.style.display = 'block';
+                    var s2a = document.getElementById('sftStep2a');
+                    var s2b = document.getElementById('sftStep2b');
+                    if (s2a) s2a.style.display = 'block';
+                    if (s2b) s2b.style.display = 'none';
+                    var sub = document.getElementById('sftSubtitle');
+                    if (sub) sub.innerText = sftT('sft-modal-subtitle-step2', 'SOUNDFORTIPS™ — request details.');
+                }
+            } catch (e) { void e; }
+        }
+
+        function sftUpdateOfflineHoldBanner() {
+            var ban = document.getElementById('sftOfflineHoldBanner');
+            if (!ban) return;
+            var ov = document.getElementById('sftOverlay');
+            if (!ov || !ov.classList.contains('active')) {
+                ban.style.display = 'none';
+                return;
+            }
+            var show = soundForTipsFanMayOpenModal() && !soundForTipsAcceptingRequests();
+            ban.style.display = show ? 'block' : 'none';
+            try {
+                if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
+            } catch (eI) { void eI; }
+        }
+
+        function sftSyncFanModalLabels() {
+            var p = document.getElementById('sftStep1PrimaryLabel');
+            var s = document.getElementById('sftStep1SecondaryLabel');
+            if (!p || !s) return;
+            if (soundForTipsAcceptingRequests()) {
+                p.setAttribute('data-i18n', 'sft-modal-send-step1');
+                s.setAttribute('data-i18n', 'sft-modal-send-step1-sub');
+                p.textContent = sftT('sft-modal-send-step1', 'Send');
+                s.textContent = sftT('sft-modal-send-step1-sub', 'Next');
+            } else {
+                p.setAttribute('data-i18n', 'sft-modal-hold-step1');
+                s.setAttribute('data-i18n', 'sft-modal-hold-step1-sub');
+                p.textContent = sftT('sft-modal-hold-step1', 'Continue');
+                s.textContent = sftT('sft-modal-hold-step1-sub', 'Saved on this device until the DJ is live');
+            }
+            try {
+                if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
+            } catch (e2) { void e2; }
+        }
+
+        window.sftNotifySoundForTipsActiveChanged = function sftNotifySoundForTipsActiveChanged() {
+            try {
+                var ov = document.getElementById('sftOverlay');
+                if (ov && ov.classList.contains('active')) {
+                    sftUpdateOfflineHoldBanner();
+                    sftSyncFanModalLabels();
+                }
+            } catch (e) { void e; }
+        };
+
+        (function sftWireFanHoldInputs() {
+            function bind(id) {
+                var el = document.getElementById(id);
+                if (!el || el.dataset.mdjSftHoldWired === '1') return;
+                el.dataset.mdjSftHoldWired = '1';
+                el.addEventListener('input', function () { sftSaveFanHoldDraft(); });
+                el.addEventListener('change', function () { sftSaveFanHoldDraft(); });
+            }
+            bind('sftClientName');
+            bind('sftClientEmail');
+            bind('sftClientPhone');
+        })();
+
         /** Mensaje solo para el público (cliente). El dueño del perfil ve instrucciones de OWNER MODE. */
         function sftAlertNotAccepting() {
             if (window.currentDJData && window.currentDJData.soundfortips_active === true && !window.currentDJData.soundfortips_eligible) {
@@ -6925,10 +7385,18 @@
                 }
                 return;
             }
+            if (window.currentDJData && window.currentDJData.soundfortips_eligible && window.currentDJData.soundfortips_active !== true) {
+                if (window._mdjSftViewerIsOwner) {
+                    alert(sftT('sft-alert-owner-offline', 'Turn SoundForTips LIVE on from the booth (ONLINE) so fans can send requests.'));
+                } else {
+                    alert(sftT('sft-alert-dj-offline-public', 'This DJ is offline right now. Requests open when they go live.'));
+                }
+                return;
+            }
             if (window._mdjSftViewerIsOwner) {
-                alert('Activa «SOUNDFORTIPS LIVE» en OWNER MODE para que el público pueda enviar peticiones.');
+                alert(sftT('sft-alert-owner-enable-live', 'Turn SoundForTips LIVE on so the public can send requests.'));
             } else {
-                alert('Este DJ no está aceptando peticiones en este momento. Vuelve más tarde o contacta por contrataciones.');
+                alert(sftT('sft-alert-not-accepting-public', 'This DJ is not accepting requests right now. Try again later or book through Miami DJ Beat.'));
             }
         }
 
@@ -6944,6 +7412,17 @@
             var c = Math.round(Math.max(0, Number(grossTipUsd) || 0) * 100);
             var pc = Math.floor((c * 1000) / 10000);
             return (c - pc) / 100;
+        }
+
+        /** Suma la parte DJ (90 %) de las propinas aún en cola — al rechazar, esto baja y el total de la barra refleja la realidad. */
+        function sftCabPendingQueueArtistTotal(djId) {
+            if (!djId || typeof sftQueueRead !== 'function') return 0;
+            var items = sftQueueRead(djId);
+            var sum = 0;
+            for (var i = 0; i < items.length; i++) {
+                sum += sftCabArtistUsdFromGrossTip(items[i].tip);
+            }
+            return sum;
         }
 
         function sftCabSessionEarningsKey(djId) {
@@ -6974,11 +7453,52 @@
             } catch (e) { void e; }
         }
 
+        /** Evita que la sync RPC vuelva a meter una fila ya aceptada/denegada mientras el Edge aún deja `pending` en BD. */
+        function sftCabResolvedIdsKey(djId) {
+            return 'mdj_sft_cab_resolved_req_v1_' + String(djId || '');
+        }
+
+        function sftCabResolvedIdsRead(djId) {
+            try {
+                var raw = sessionStorage.getItem(sftCabResolvedIdsKey(djId));
+                if (!raw) return Object.create(null);
+                var o = JSON.parse(raw);
+                return o && typeof o === 'object' ? o : Object.create(null);
+            } catch (e) { return Object.create(null); }
+        }
+
+        function sftCabResolvedIdsMark(djId, requestId, kind) {
+            if (!djId || requestId == null) return;
+            var id = String(requestId);
+            if (!id || id.indexOf('idx-') === 0) return;
+            try {
+                var cur = sftCabResolvedIdsRead(djId);
+                cur[id] = kind === 'deny' ? 'deny' : 'accept';
+                sessionStorage.setItem(sftCabResolvedIdsKey(djId), JSON.stringify(cur));
+            } catch (e2) { void e2; }
+        }
+
+        function sftCabResolvedIdsHas(djId, requestId) {
+            if (!djId || requestId == null) return false;
+            var id = String(requestId);
+            var cur = sftCabResolvedIdsRead(djId);
+            return !!cur[id];
+        }
+
+        function sftCabResolvedIdsClear(djId) {
+            if (!djId) return;
+            try {
+                sessionStorage.removeItem(sftCabResolvedIdsKey(djId));
+            } catch (e) { void e; }
+        }
+
         window.sftCabUpdateTotalBarDisplay = function sftCabUpdateTotalBarDisplay() {
             var djId = window.currentProfileDJId;
             var el = document.getElementById('sftCabTotalDjUsd');
             if (!el) return;
-            var n = djId ? sftCabSessionEarningsRead(djId) : 0;
+            var accepted = djId ? sftCabSessionEarningsRead(djId) : 0;
+            var pendingEst = djId ? sftCabPendingQueueArtistTotal(djId) : 0;
+            var n = accepted + pendingEst;
             el.textContent = '$' + n.toFixed(2);
         };
 
@@ -7011,7 +7531,15 @@
             }
         };
 
-        /** Fila de cola → portapapeles: cabecera + datos separados por tabulador (Excel / Sheets). */
+        /** Solo canción + artista (Serato / rekordbox / búsqueda); sin cliente ni propina. */
+        window.sftClipTrackArtistForSoftware = function sftClipTrackArtistForSoftware(song, artist) {
+            var s = song != null ? String(song).trim() : '';
+            var a = artist != null ? String(artist).trim() : '';
+            if (s && a) return s + ' – ' + a;
+            return s || a || '';
+        };
+
+        /** Cabina: copiar fila → portapapeles = título + artista únicamente. */
         window.sftCabCopyQueueRowById = function sftCabCopyQueueRowById(requestId) {
             var djId = window.currentProfileDJId;
             if (!djId || requestId == null) return;
@@ -7021,22 +7549,12 @@
                 if (String(items[i].id) === String(requestId)) { row = items[i]; break; }
             }
             if (!row) return;
-            var song = row.song != null ? String(row.song) : '—';
-            var artist = row.artist != null ? String(row.artist) : '—';
-            var album = row.album != null && String(row.album).trim() !== '' ? String(row.album) : '—';
-            var fan = row.sender != null ? String(row.sender) : '—';
-            var tipN = typeof row.tip === 'number' ? row.tip : parseFloat(row.tip);
-            if (isNaN(tipN)) tipN = 0;
-            var es = window.i18n && window.i18n.currentLang === 'es';
-            var colSupport = (window.i18n && typeof window.i18n.t === 'function')
-                ? window.i18n.t('sft-cab-col-support')
-                : (es ? 'Apoyo' : 'Support');
-            var head = es
-                ? ('CANCIÓN\tARTISTA\tÁLBUM\t' + colSupport + '\tPROPINA')
-                : ('TRACK\tARTIST\tALBUM\t' + colSupport + '\tTIP');
-            var data = [song, artist, album, fan, '$' + tipN.toFixed(2)].join('\t');
+            var line = typeof window.sftClipTrackArtistForSoftware === 'function'
+                ? window.sftClipTrackArtistForSoftware(row.song, row.artist)
+                : '';
+            if (!line) return;
             if (typeof window.sftCopySongTitleToClipboard === 'function') {
-                window.sftCopySongTitleToClipboard(head + '\n' + data);
+                window.sftCopySongTitleToClipboard(line);
             }
         };
 
@@ -7338,6 +7856,10 @@
             el.classList.add('active');
             el.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
+            if (typeof syncSftTabOnlineButton === 'function') syncSftTabOnlineButton();
+            try {
+                if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
+            } catch (eI) { void eI; }
             __sftDjLibOnKey = function (ev) {
                 if (ev.key === 'Escape') window.closeSoundForTipsDjLibrary();
             };
@@ -7358,6 +7880,45 @@
             if (typeof sftRefreshLaunchBadge === 'function') sftRefreshLaunchBadge();
         };
 
+        function sftIsServerSftRequestId(id) {
+            return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(id || ''));
+        }
+
+        /** pending → accepted en Supabase (Cash Flow / KPI); SMS sigue en sftMaybeNotifyClientSms. */
+        function sftRpcAcceptSoundForTipsForFlow(requestUuid) {
+            if (!sftIsServerSftRequestId(requestUuid)) return;
+            var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+            if (!sb) return;
+            sb.rpc('accept_my_soundfortips_request', { p_request_id: String(requestUuid).trim() }).then(function (res) {
+                if (res.error) {
+                    console.warn('[SFT accept RPC]', res.error.message || res.error);
+                    return;
+                }
+                if (typeof window.mdjFlowReloadIfAllowed === 'function') {
+                    window.mdjFlowReloadIfAllowed(window.currentProfileDJId);
+                } else if (typeof window.loadFlowData === 'function' && window._flowTabAllowed && window.currentProfileDJId) {
+                    var rs = document.getElementById('metrics-range');
+                    window.loadFlowData((rs && rs.value) ? rs.value : '30d', window.currentProfileDJId);
+                }
+            }).catch(function (e) {
+                console.warn('[SFT accept RPC]', e);
+            });
+        }
+
+        /** manual: pending → denied en BD; Stripe no (refund en Edge). Luego sftMaybeNotifyClientSms. */
+        function sftRpcDenySoundForTipsManualFirst(requestUuid) {
+            if (!sftIsServerSftRequestId(requestUuid)) return;
+            var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+            if (!sb) return;
+            sb.rpc('deny_my_soundfortips_request', { p_request_id: String(requestUuid).trim() }).then(function (res) {
+                if (res.error) {
+                    console.warn('[SFT deny RPC]', res.error.message || res.error);
+                }
+            }).catch(function (e) {
+                console.warn('[SFT deny RPC]', e);
+            });
+        }
+
         /** SMS al fan vía send-sft-client-sms: el teléfono solo existe en servidor (request_id); el DJ nunca lo envía ni lo ve. */
         function sftMaybeNotifyClientSms(kind, row) {
             if (kind !== 'accept' && kind !== 'deny') return;
@@ -7372,40 +7933,68 @@
                         kind: kind
                     }
                 }).then(function (res) {
-                    if (res.error) console.warn('[SFT cliente SMS]', res.error);
-                }).catch(function (e) { console.warn('[SFT cliente SMS]', e); });
+                    if (res.error) {
+                        console.warn('[SFT SMS fan] Error al invocar send-sft-client-sms:', res.error.message || res.error);
+                        return;
+                    }
+                    var d = res.data;
+                    if (d && d.skipped && d.reason === 'no_phone') {
+                        console.warn('[SFT SMS fan] No se envió SMS: el fan no dejó un teléfono válido en la petición (el campo es opcional). Revisa Twilio en Supabase si sí hubo número.');
+                    } else if (d && d.skipped && d.reason === 'already_resolved') {
+                        console.warn('[SFT SMS fan] Omitido: la petición ya estaba marcada aceptada/rechazada en el servidor.');
+                    } else if (d && d.ok && d.sid) {
+                        console.info('[SFT SMS fan] Enviado (Twilio).');
+                    }
+                }).catch(function (e) { console.warn('[SFT SMS fan]', e); });
             })();
         }
 
         window.sftDjCabRowAccept = function sftDjCabRowAccept(requestId) {
             var djId = window.currentProfileDJId;
             if (!djId || requestId == null) return;
-            var items = typeof sftQueueRead === 'function' ? sftQueueRead(djId) : [];
-            var row = null;
-            for (var i = 0; i < items.length; i++) {
-                if (String(items[i].id) === String(requestId)) { row = items[i]; break; }
+            var rid = String(requestId);
+            if (sftCabResolvedIdsHas(djId, rid)) return;
+            window.__sftCabAcceptLocks = window.__sftCabAcceptLocks || Object.create(null);
+            if (window.__sftCabAcceptLocks[rid]) return;
+            window.__sftCabAcceptLocks[rid] = true;
+            try {
+                var items = typeof sftQueueRead === 'function' ? sftQueueRead(djId) : [];
+                var row = null;
+                for (var i = 0; i < items.length; i++) {
+                    if (String(items[i].id) === String(requestId)) { row = items[i]; break; }
+                }
+                if (!row) return;
+                sftCabResolvedIdsMark(djId, rid, 'accept');
+                sftRpcAcceptSoundForTipsForFlow(rid);
+                var tip = Number(row.tip) || 0;
+                sftCabSessionEarningsAddFromGrossTip(djId, tip);
+                sftReleasePaymentOnAccept(tip);
+                sftMaybeNotifyClientSms('accept', row);
+                if (typeof sftQueueRemoveById === 'function') sftQueueRemoveById(djId, requestId);
+                if (typeof sftRefreshLaunchBadge === 'function') sftRefreshLaunchBadge();
+                if (typeof window.sftRefreshOwnerWalletEconomy === 'function') window.sftRefreshOwnerWalletEconomy();
+                window.sftRenderDjLibraryList();
+                if (typeof window.refreshSftNightLogList === 'function') window.refreshSftNightLogList();
+            } finally {
+                delete window.__sftCabAcceptLocks[rid];
             }
-            if (!row) return;
-            var tip = Number(row.tip) || 0;
-            sftCabSessionEarningsAddFromGrossTip(djId, tip);
-            sftReleasePaymentOnAccept(tip);
-            sftMaybeNotifyClientSms('accept', row);
-            if (typeof sftQueueRemoveById === 'function') sftQueueRemoveById(djId, requestId);
-            if (typeof sftRefreshLaunchBadge === 'function') sftRefreshLaunchBadge();
-            if (typeof window.sftRefreshOwnerWalletEconomy === 'function') window.sftRefreshOwnerWalletEconomy();
-            window.sftRenderDjLibraryList();
-            if (typeof window.refreshSftNightLogList === 'function') window.refreshSftNightLogList();
         };
 
         window.sftDjCabRowDeny = function sftDjCabRowDeny(requestId) {
             var djId = window.currentProfileDJId;
             if (!djId || requestId == null) return;
+            var rid = String(requestId);
+            if (sftCabResolvedIdsHas(djId, rid)) return;
             var items = typeof sftQueueRead === 'function' ? sftQueueRead(djId) : [];
             var row = null;
             for (var j = 0; j < items.length; j++) {
                 if (String(items[j].id) === String(requestId)) { row = items[j]; break; }
             }
-            if (row) sftMaybeNotifyClientSms('deny', row);
+            if (row) {
+                sftCabResolvedIdsMark(djId, rid, 'deny');
+                sftRpcDenySoundForTipsManualFirst(rid);
+                sftMaybeNotifyClientSms('deny', row);
+            }
             if (typeof sftQueueRemoveById === 'function') sftQueueRemoveById(djId, requestId);
             if (typeof sftRefreshLaunchBadge === 'function') sftRefreshLaunchBadge();
             window.sftRenderDjLibraryList();
@@ -7422,12 +8011,29 @@
             }
             try {
                 var djId = window.currentProfileDJId;
-                if (djId) sftCabSessionEarningsClear(djId);
+                if (djId) {
+                    sftCabSessionEarningsClear(djId);
+                    sftCabResolvedIdsClear(djId);
+                }
                 if (typeof window.sftCabUpdateTotalBarDisplay === 'function') window.sftCabUpdateTotalBarDisplay();
             } catch (eClr) { void eClr; }
+            if (typeof window.closeSoundForTipsDjLibrary === 'function') {
+                window.closeSoundForTipsDjLibrary();
+            }
             try {
-                alert('Sesión acreditada: el pendiente de cabina se volcó a saldo DJ y registro de casa (demo local).');
-            } catch (e) { void e; }
+                if (typeof switchProfileTab === 'function') {
+                    switchProfileTab('flow');
+                }
+            } catch (eTab) { void eTab; }
+            /* RPC accept + Supabase a veces llegan después del primer loadFlowData; segundo refresh asegura KPI. */
+            setTimeout(function () {
+                if (typeof window.mdjFlowReloadIfAllowed === 'function') {
+                    window.mdjFlowReloadIfAllowed(window.currentProfileDJId);
+                } else if (typeof window.loadFlowData === 'function' && window._flowTabAllowed && window.currentProfileDJId) {
+                    var rs2 = document.getElementById('metrics-range');
+                    window.loadFlowData((rs2 && rs2.value) ? rs2.value : '30d', window.currentProfileDJId);
+                }
+            }, 900);
         };
 
         window._sftNightLogSinceMode = '24h';
@@ -7475,7 +8081,7 @@
                         ? dt.toLocaleString('es-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' })
                         : '—';
                     html += '<tr style="border-top:1px solid rgba(255,255,255,0.06);"><td style="padding:8px 6px;vertical-align:top;">' + stLabel(r.status) + '</td>';
-                    html += '<td style="padding:8px 6px;color:#fff;font-weight:700;"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span>' + esc(r.song) + '</span><button type="button" class="sft-queue-copy" onclick="sftCopyFromBtn(this,event)" data-sft-copy="' + encodeURIComponent(r.song || '') + '" title="Copiar título" aria-label="Copiar">📋</button></div><div style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.45);">' + esc(r.artist) + '</div></td>';
+                    html += '<td style="padding:8px 6px;color:#fff;font-weight:700;"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span>' + esc(r.song) + '</span><button type="button" class="sft-queue-copy" onclick="sftCopyFromBtn(this,event)" data-sft-copy="' + encodeURIComponent(typeof window.sftClipTrackArtistForSoftware === 'function' ? window.sftClipTrackArtistForSoftware(r.song, r.artist) : (r.song || '')) + '" title="Copiar canción y artista" aria-label="Copiar canción y artista">📋</button></div><div style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.45);">' + esc(r.artist) + '</div></td>';
                     html += '<td style="padding:8px 6px;text-align:right;font-variant-numeric:tabular-nums;">$' + Number(r.tip_usd || 0).toFixed(2) + '</td>';
                     html += '<td style="padding:8px 6px;color:rgba(197,160,89,0.95);">' + esc(r.sender_label) + '</td>';
                     html += '<td style="padding:8px 6px;font-size:11px;color:rgba(255,255,255,0.4);white-space:nowrap;">' + esc(tstr) + '</td></tr>';
@@ -7528,7 +8134,62 @@
             else wire();
         })();
 
-        window.sftRenderDjLibraryList = function sftRenderDjLibraryList() {
+        /** Cabina del DJ: trae peticiones `pending` del servidor y las fusiona en la cola local (otro dispositivo del fan). */
+        function sftSyncServerPendingIntoLocalQueue(djId) {
+            return new Promise(function (resolve) {
+                if (!djId || !window._mdjSftViewerIsOwner) {
+                    resolve();
+                    return;
+                }
+                var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+                if (!sb) {
+                    resolve();
+                    return;
+                }
+                sb.rpc('get_my_soundfortips_pending_requests').then(function (res) {
+                    if (res.error || !Array.isArray(res.data) || res.data.length === 0) {
+                        resolve();
+                        return;
+                    }
+                    try {
+                        var local = typeof sftQueueRead === 'function' ? sftQueueRead(djId) : [];
+                        var have = Object.create(null);
+                        var i;
+                        for (i = 0; i < local.length; i++) {
+                            have[String(local[i].id)] = true;
+                        }
+                        var merged = local.slice();
+                        var added = false;
+                        res.data.forEach(function (row) {
+                            var id = row.id != null ? String(row.id) : '';
+                            if (!id || have[id]) return;
+                            if (sftCabResolvedIdsHas(djId, id)) return;
+                            have[id] = true;
+                            added = true;
+                            merged.push({
+                                id: id,
+                                t: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+                                song: row.song || '',
+                                artist: row.artist || '',
+                                album: '',
+                                sender: row.sender_label || '',
+                                tip: Number(row.tip_usd) || 0,
+                                poster: row.poster_url || '',
+                                fromServerPending: true
+                            });
+                        });
+                        if (added && typeof sftQueueWrite === 'function') {
+                            merged.sort(function (a, b) { return (a.t || 0) - (b.t || 0); });
+                            sftQueueWrite(djId, merged);
+                            if (typeof sftBroadcastQueueBump === 'function') sftBroadcastQueueBump();
+                        }
+                    } catch (e) { void e; }
+                    resolve();
+                }).catch(function () { resolve(); });
+            });
+        }
+
+        function sftRenderDjLibraryListSync() {
             var mount = document.getElementById('sftDjAmListMount');
             var strip = document.getElementById('sftDjAmTotalStrip');
             var sub = document.getElementById('sftDjAmSubtitle');
@@ -7676,7 +8337,7 @@
             var html = '<div class="sft-cab-pl-wrap"><table class="sft-cab-pl-table sft-cab-pl-table--grid ' + gCls + '" role="grid">';
             html += sftCabPlTheadHtml() + '<tbody>';
 
-            var copyTitle = sftCabT('sft-cab-copy-row-title', 'Copiar fila');
+            var copyTitle = sftCabT('sft-cab-copy-row-title', 'Copiar canción y artista');
             items.forEach(function (row, idx) {
                 var tipN = typeof row.tip === 'number' ? row.tip : parseFloat(row.tip);
                 if (isNaN(tipN)) tipN = 0;
@@ -7698,10 +8359,11 @@
                 html += '<td class="sft-cab-pl-fan">' + sftEscStr(row.sender || '—') + '</td>';
                 html += '<td class="sft-cab-pl-genre">$' + sftEscStr(tipN.toFixed(2)) + '</td>';
                 html += '<td class="sft-cab-pl-act">';
-                html += '<button type="button" class="sft-cab-btn-yes sft-cab-btn--compact" data-sft-cab="ok" data-req-id="' + sftEscStr(rid) + '" title="Aceptar">✓</button> ';
-                html += '<button type="button" class="sft-cab-btn-no sft-cab-btn--compact" data-sft-cab="no" data-req-id="' + sftEscStr(rid) + '" title="Denegar">✕</button> ';
-                html += '<button type="button" class="sft-cab-btn-copy sft-cab-btn--compact" data-sft-cab="copy" data-req-id="' + sftEscStr(rid) + '" title="' + sftEscStr(copyTitle) + '">⎘</button>';
-                html += '</td></tr>';
+                html += '<div class="sft-cab-pl-act-row" role="group">';
+                html += '<button type="button" class="sft-cab-btn-yes sft-cab-btn--cab-action" data-sft-cab="ok" data-req-id="' + sftEscStr(rid) + '" title="Aceptar">✓</button>';
+                html += '<button type="button" class="sft-cab-btn-no sft-cab-btn--cab-action" data-sft-cab="no" data-req-id="' + sftEscStr(rid) + '" title="Denegar">✕</button>';
+                html += '<button type="button" class="sft-cab-btn-copy sft-cab-btn--cab-copy-icon" data-sft-cab="copy" data-req-id="' + sftEscStr(rid) + '" title="' + sftEscStr(copyTitle) + '" aria-label="' + sftEscStr(copyTitle) + '"><svg class="sft-cab-copy-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></button>';
+                html += '</div></td></tr>';
             });
 
             html += '</tbody></table></div>';
@@ -7713,8 +8375,9 @@
             if (typeof window.sftCabApplyQueueFilter === 'function') window.sftCabApplyQueueFilter();
 
             mount.onclick = function (ev) {
-                var act = ev.target.getAttribute && ev.target.getAttribute('data-sft-cab');
-                var reqId = ev.target.getAttribute && ev.target.getAttribute('data-req-id');
+                var cabBtn = ev.target.closest && ev.target.closest('[data-sft-cab]');
+                var act = cabBtn ? cabBtn.getAttribute('data-sft-cab') : null;
+                var reqId = cabBtn ? cabBtn.getAttribute('data-req-id') : null;
                 if (act === 'ok' && reqId) {
                     ev.stopPropagation();
                     window.sftDjCabRowAccept(reqId);
@@ -7734,6 +8397,18 @@
                 mount.querySelectorAll('.sft-cab-pl-tr--sel').forEach(function (x) { x.classList.remove('sft-cab-pl-tr--sel'); });
                 if (line) line.classList.add('sft-cab-pl-tr--sel');
             };
+        }
+
+        window.sftRenderDjLibraryList = function sftRenderDjLibraryList() {
+            var djId = window.currentProfileDJId;
+            if (window._mdjSftViewerIsOwner && djId) {
+                sftSyncServerPendingIntoLocalQueue(djId).then(
+                    function () { sftRenderDjLibraryListSync(); },
+                    function () { sftRenderDjLibraryListSync(); }
+                );
+            } else {
+                sftRenderDjLibraryListSync();
+            }
         };
 
         function sftCabRowSearchHaystack(tr) {
@@ -7850,7 +8525,7 @@
         })();
 
         function openSoundForTipsModal() {
-            if (!soundForTipsAcceptingRequests()) {
+            if (!soundForTipsFanMayOpenModal()) {
                 sftAlertNotAccepting();
                 return;
             }
@@ -7864,7 +8539,7 @@
             document.getElementById('sftResultMode').style.display = 'none';
             var ups = document.getElementById('sftUpsellBlock');
             if (ups) ups.style.display = 'none';
-            document.getElementById('sftSubtitle').innerText = "Busca tu canción y envía tu petición.";
+            document.getElementById('sftSubtitle').innerText = sftT('sft-modal-subtitle-step1', 'Search your song and send your request.');
 
             var cn = document.getElementById('sftClientName');
             var ce = document.getElementById('sftClientEmail');
@@ -7878,7 +8553,16 @@
             document.querySelectorAll('.sft-tip-chip').forEach(function (b) {
                 b.classList.remove('sft-tip-chip--on');
             });
-            clearSftSelection();
+            activeRequestInfo = {};
+            document.getElementById('sftSelectedTrack').style.display = 'none';
+            document.getElementById('sftSearchGroup').style.display = 'block';
+            document.getElementById('sftSearchInput').value = '';
+            sftApplyFanHoldDraft();
+            sftUpdateOfflineHoldBanner();
+            sftSyncFanModalLabels();
+            try {
+                if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
+            } catch (eI) { void eI; }
         }
 
         function closeSoundForTipsModal() {
@@ -7886,13 +8570,12 @@
         }
 
         function goToStep2() {
-            if (!soundForTipsAcceptingRequests()) {
+            if (!soundForTipsFanMayOpenModal()) {
                 sftAlertNotAccepting();
-                closeSoundForTipsModal();
                 return;
             }
             if (!activeRequestInfo.song) {
-                alert("Busca y elige una canción del catálogo (portada, título y artista).");
+                alert(sftT('sft-alert-pick-song', 'Search and pick a song from the catalog (artwork, title, and artist).'));
                 return;
             }
 
@@ -7902,7 +8585,10 @@
             var s2b = document.getElementById('sftStep2b');
             if (s2a) s2a.style.display = 'block';
             if (s2b) s2b.style.display = 'none';
-            document.getElementById('sftSubtitle').innerText = "SOUNDFORTIPS™ — datos de la petición.";
+            document.getElementById('sftSubtitle').innerText = sftT('sft-modal-subtitle-step2', 'SOUNDFORTIPS™ — request details.');
+            sftSaveFanHoldDraft();
+            sftUpdateOfflineHoldBanner();
+            sftSyncFanModalLabels();
         }
 
         function backToStep1() {
@@ -7912,7 +8598,10 @@
             var s2b = document.getElementById('sftStep2b');
             if (s2a) s2a.style.display = 'block';
             if (s2b) s2b.style.display = 'none';
-            document.getElementById('sftSubtitle').innerText = "Busca tu canción y envía tu petición.";
+            document.getElementById('sftSubtitle').innerText = sftT('sft-modal-subtitle-step1', 'Search your song and send your request.');
+            sftSaveFanHoldDraft();
+            sftUpdateOfflineHoldBanner();
+            sftSyncFanModalLabels();
         }
 
         function selectSftPayment(method, btnEl) {
@@ -7949,8 +8638,8 @@
             if (phone && phoneDigits.length > 0 && phoneDigits.length < 7) {
                 return alert("Si completas el teléfono, usa al menos 7 dígitos (o déjalo vacío).");
             }
-            if (!payerHandle || payerHandle.length < 3) {
-                return alert("Indica tu dato para conciliar el pago (Zelle / PayPal / Venmo / tarjeta) — así podemos asociar tu transferencia a esta petición.");
+            if (sftSelectedPayment !== 'Tarjeta' && (!payerHandle || payerHandle.length < 3)) {
+                return alert("Indica tu dato para conciliar el pago (Zelle / PayPal / Venmo) — así podemos asociar tu transferencia a esta petición.");
             }
             if (tipVal <= 0) return alert("Elige un monto de propina (rápido o personalizado).");
 
@@ -7962,6 +8651,59 @@
             activeRequestInfo.paymentMethod = sftSelectedPayment;
             activeRequestInfo.payerHandle = payerHandle;
             activeRequestInfo.serverRequestId = null;
+
+            if (sftSelectedPayment === 'Tarjeta') {
+                document.getElementById('sftStep2').style.display = 'none';
+                document.getElementById('sftResultMode').style.display = 'block';
+                var upsStripe = document.getElementById('sftUpsellBlock');
+                if (upsStripe) upsStripe.style.display = 'none';
+                document.getElementById('sftSpinner').style.display = 'block';
+                document.getElementById('sftSuccess').style.display = 'none';
+                document.getElementById('sftDoneBtn').style.display = 'none';
+                document.getElementById('sftStatusText').innerText = 'Conectando con pago seguro (Stripe)…';
+                document.getElementById('sftStatusText').style.color = '#fff';
+                document.getElementById('sftSubText').innerText = 'Te redirigimos para pagar con tarjeta. Tras el pago, tu petición entra en la cabina del DJ.';
+
+                (async function sftStripeCheckoutLaunch() {
+                    try {
+                        var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+                        var djUid = window.currentProfileDJId;
+                        if (!sb || !djUid || !activeRequestInfo.song) {
+                            alert('No se pudo iniciar el pago. Recarga la página e inténtalo de nuevo.');
+                            document.getElementById('sftResultMode').style.display = 'none';
+                            document.getElementById('sftStep2').style.display = 'block';
+                            return;
+                        }
+                        var inv = await sb.functions.invoke('create-sft-tip-checkout', {
+                            body: {
+                                dj_user_id: djUid,
+                                sender_label: sender,
+                                song: activeRequestInfo.song,
+                                artist: activeRequestInfo.artist || '',
+                                tip_usd: tipVal,
+                                poster_url: activeRequestInfo.poster || null,
+                                client_phone: phoneForApi,
+                                client_email: emailForApi
+                            }
+                        });
+                        var payUrl = inv.data && inv.data.url ? inv.data.url : null;
+                        if (inv.error || !payUrl) {
+                            var msg = (inv.error && inv.error.message) ? inv.error.message : (inv.data && inv.data.error ? String(inv.data.error) : 'Error desconocido');
+                            alert('No se pudo abrir el pago con tarjeta: ' + msg);
+                            document.getElementById('sftResultMode').style.display = 'none';
+                            document.getElementById('sftStep2').style.display = 'block';
+                            return;
+                        }
+                        window.location.href = payUrl;
+                    } catch (eStripe) {
+                        console.warn('[SFT Stripe]', eStripe);
+                        alert('Error al conectar con el pago. Inténtalo de nuevo.');
+                        document.getElementById('sftResultMode').style.display = 'none';
+                        document.getElementById('sftStep2').style.display = 'block';
+                    }
+                })();
+                return;
+            }
 
             document.getElementById('sftStep2').style.display = 'none';
             document.getElementById('sftResultMode').style.display = 'block';
@@ -8002,7 +8744,8 @@
                 activeRequestInfo.serverRequestId = reqId;
 
                 var qid = reqId || ('r-' + Date.now());
-                if (djUid && activeRequestInfo.song) {
+                /* Cola local solo en cabina del DJ; el fan usa otro dispositivo y la cola vive en servidor + sync RPC. */
+                if (djUid && activeRequestInfo.song && window._mdjSftViewerIsOwner) {
                     sftQueuePush(djUid, {
                         id: qid,
                         t: Date.now(),
@@ -8023,15 +8766,18 @@
                 }
                 pendingTipCut = djCut;
 
-                const smsToast = document.getElementById('mockSmsToast');
-                document.getElementById('mockSmsBody').innerHTML = '<span style="color:var(--gold);">' + activeRequestInfo.sender + '</span> · $' + tipVal.toFixed(2) + ' · ' + activeRequestInfo.song + '<br><span style="font-size:11px;color:#888;">Contacto del fan solo en Miami DJ Beat</span>';
+                /* Simulación “SMS al DJ”: solo en la sesión del dueño del perfil, no en el teléfono del fan. */
+                if (window._mdjSftViewerIsOwner) {
+                    const smsToast = document.getElementById('mockSmsToast');
+                    document.getElementById('mockSmsBody').innerHTML = '<span style="color:var(--gold);">' + activeRequestInfo.sender + '</span> · $' + tipVal.toFixed(2) + ' · ' + activeRequestInfo.song + '<br><span style="font-size:11px;color:#888;">Contacto del fan solo en Miami DJ Beat</span>';
 
-                const smsIcon = document.querySelector('.mock-sms-icon');
-                smsIcon.style.backgroundImage = `url(${activeRequestInfo.poster})`;
-                smsIcon.style.backgroundSize = 'cover';
-                smsIcon.innerText = '';
+                    const smsIcon = document.querySelector('.mock-sms-icon');
+                    smsIcon.style.backgroundImage = `url(${activeRequestInfo.poster})`;
+                    smsIcon.style.backgroundSize = 'cover';
+                    smsIcon.innerText = '';
 
-                smsToast.classList.add('show');
+                    smsToast.classList.add('show');
+                }
 
                 document.getElementById('sftSpinner').style.display = 'none';
                 document.getElementById('sftSuccess').style.display = 'block';
@@ -8055,6 +8801,7 @@
                 }
 
                 document.getElementById('sftDoneBtn').style.display = 'inline-block';
+                sftClearFanHoldDraft();
             }, 2000);
         }
 
@@ -8103,10 +8850,7 @@
                 owb.style.animation = 'pulse 1s';
             }
 
-            var kpiTips = document.getElementById('kpi-tips');
-            if (kpiTips) {
-                kpiTips.innerText = '$' + tipsCredited.toFixed(2);
-            }
+            /* kpi-tips lo rellena solo loadFlowData (Supabase + SoundForTips aceptadas); no pisar con localStorage demo. */
 
             var djId = window.currentProfileDJId;
             var pendDj = 0;
@@ -8255,6 +8999,9 @@
             document.getElementById('mockSmsBody').innerHTML = "<span style='color:#ef4444;'>❌ Petición Rechazada. Fondo devuelto al cliente.</span>";
             setTimeout(() => { document.getElementById('mockSmsToast').classList.remove('show'); }, 2000);
 
+            if (activeRequestInfo.serverRequestId) {
+                sftRpcDenySoundForTipsManualFirst(activeRequestInfo.serverRequestId);
+            }
             sftMaybeNotifyClientSms('deny', {
                 id: activeRequestInfo.serverRequestId,
                 song: activeRequestInfo.song,
@@ -8283,6 +9030,9 @@
                     "</strong> · DJ <strong>$" + rel.artistUsd.toFixed(2) + "</strong><br><span style='font-size:11px;color:#888;'>Partición 10% / 90% (Miami DJ Beat). Cola lista para reproducir.</span>");
             setTimeout(() => { document.getElementById('mockSmsToast').classList.remove('show'); }, 3200);
 
+            if (activeRequestInfo.serverRequestId) {
+                sftRpcAcceptSoundForTipsForFlow(activeRequestInfo.serverRequestId);
+            }
             sftMaybeNotifyClientSms('accept', {
                 id: activeRequestInfo.serverRequestId,
                 song: activeRequestInfo.song,
@@ -8298,6 +9048,10 @@
                 const itemId = 'queue-item-' + Date.now();
                 const djCutCached = rel.artistUsd;
                 var qSong = activeRequestInfo.song != null ? String(activeRequestInfo.song) : '';
+                var qArtist = activeRequestInfo.artist != null ? String(activeRequestInfo.artist) : '';
+                var qClip = typeof window.sftClipTrackArtistForSoftware === 'function'
+                    ? window.sftClipTrackArtistForSoftware(qSong, qArtist)
+                    : qSong;
                 var qSender = activeRequestInfo.sender != null ? String(activeRequestInfo.sender) : '';
                 var qPoster = activeRequestInfo.poster || './assets/dj-avatar-placeholder.png';
                 var htmlQ = '<div class="sft-queue-item" id="' + itemId + '">' +
@@ -8306,7 +9060,7 @@
                     '<div class="sft-queue-meta">' +
                     '<div class="sft-queue-title-row"><span>' + sftEscStr(qSong) +
                     ' <span style="display:inline; color:var(--gold);">+$' + djCutCached.toFixed(2) + '</span></span>' +
-                    '<button type="button" class="sft-queue-copy" onclick="sftCopyFromBtn(this,event)" data-sft-copy="' + encodeURIComponent(qSong) + '" title="Copiar nombre de la canción" aria-label="Copiar título">📋</button></div>' +
+                    '<button type="button" class="sft-queue-copy" onclick="sftCopyFromBtn(this,event)" data-sft-copy="' + encodeURIComponent(qClip) + '" title="Copiar canción y artista" aria-label="Copiar canción y artista">📋</button></div>' +
                     '<span>De: ' + sftEscStr(qSender) + '</span>' +
                     '</div></div>' +
                     '<button class="sft-play-btn" onclick="executePlayNow(\'' + itemId + '\')">▶️ Play Now</button>' +

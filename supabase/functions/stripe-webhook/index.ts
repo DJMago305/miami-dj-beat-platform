@@ -110,6 +110,28 @@ serve(async (req) => {
                     break;
                 }
 
+                // ── SOUNDFORTIPS: card tip (Checkout) → DJ queue after payment ──
+                if (session.metadata?.product === "soundfortips_tip" && session.metadata?.sft_request_id) {
+                    const sftRid = String(session.metadata.sft_request_id).trim();
+                    const piRaw = session.payment_intent;
+                    const piId = typeof piRaw === "string" ? piRaw : (piRaw && typeof piRaw === "object" && "id" in piRaw ? String((piRaw as { id: string }).id) : null);
+                    const { error: sftUpdErr } = await supabase
+                        .from("soundfortips_fan_requests")
+                        .update({
+                            stripe_payment_intent_id: piId,
+                            status: "pending",
+                        })
+                        .eq("id", sftRid)
+                        .eq("status", "awaiting_payment");
+
+                    if (sftUpdErr) {
+                        console.error("[Webhook] soundfortips_fan_requests:", sftUpdErr.message);
+                    } else {
+                        console.log(`✅ SoundForTips card paid → pending DJ queue: ${sftRid}`);
+                    }
+                    break;
+                }
+
                 // ── Branch: DJ Professional Course (one-time, Stripe Checkout) ──
                 if (session.metadata?.product === "miami_dj_course") {
                     const email =

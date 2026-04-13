@@ -1,5 +1,6 @@
-// Registra petición SOUNDFORTIPS: PII solo en servidor (promos / SMS). verify_jwt false (fan anónimo).
-// Deploy: supabase functions deploy register-sft-fan-request
+// SOUNDFORTIPS: Stripe Checkout (pago con tarjeta). Tras pagar, webhook pasa la fila a status=pending.
+// verify_jwt false (fan anónimo). Env: STRIPE_SECRET_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SITE_URL
+// Deploy: supabase functions deploy create-sft-tip-checkout
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -23,10 +24,12 @@ serve(async (req) => {
     });
   }
 
+  const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const SITE_URL = (Deno.env.get("SITE_URL") || "https://miamidjbeat.vercel.app").replace(/\/$/, "");
 
-  if (!supabaseUrl || !serviceKey) {
+  if (!STRIPE_SECRET_KEY || !supabaseUrl || !serviceKey) {
     return new Response(JSON.stringify({ error: "Server configuration incomplete" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -77,14 +80,16 @@ serve(async (req) => {
     });
   }
 
-  const emailRaw = body.client_email != null ? String(body.client_email).trim() : "";
-  const emailOk = emailRaw.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRaw);
-  if (emailRaw.length > 0 && !emailOk) {
-    return new Response(JSON.stringify({ error: "Invalid email format" }), {
+  const amountCents = Math.round(tipUsd * 100);
+  if (amountCents < 50) {
+    return new Response(JSON.stringify({ error: "Minimum card tip is $0.50 USD" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
+  const emailRaw = body.client_email != null ? String(body.client_email).trim() : "";
+  const emailOk = emailRaw.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRaw);
 
   const phoneRaw =
     body.client_phone != null && String(body.client_phone).trim() !== ""
@@ -131,6 +136,9 @@ serve(async (req) => {
     });
   }
 
+  const song = String(body.song ?? "").slice(0, 500);
+  const artist = String(body.artist ?? "").slice(0, 500);
+
   const { data: inserted, error: insErr } = await supabaseAdmin
     .from("soundfortips_fan_requests")
     .insert({
@@ -142,22 +150,73 @@ serve(async (req) => {
       poster_url: body.poster_url != null ? String(body.poster_url).slice(0, 4000) : null,
       client_phone: phoneInsert,
       client_email: emailInsert,
-      status: "pending",
-      payment_channel: "manual",
+      status: "awaiting_payment",
+      payment_channel: "stripe",
     })
     .select("id")
     .single();
 
   if (insErr || !inserted?.id) {
-    console.error("[register-sft-fan-request]", insErr);
+    console.error("[create-sft-tip-checkout] insert", insErr);
     return new Response(JSON.stringify({ error: "Insert failed" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  return new Response(JSON.stringify({ request_id: inserted.id }), {
-    status: 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  const requestId = inserted.id as string;
+  const desc = [song || "Song request", artist ? `— ${artist}` : ""].join(" ").slice(0, 450);
+
+  const successUrl = `${SITE_URL}/dj-profile.html?id=${encodeURIComponent(djId)}&sft_tip=success`;
+  const cancelUrl = `${SITE_URL}/dj-profile.html?id=${encodeURIComponent(djId)}&sft_tip=cancel`;
+
+  const checkoutParams: Record<string, string> = {
+    mode: "payment",
+    "line_items[0][price_data][currency]": "usd",
+    "line_items[0][price_data][unit_amount]": String(amountCents),
+    "line_items[0][price_data][product_data][name]": "SoundForTips™ tip",
+    "line_items[0][price_data][product_data][description]": desc,
+    "line_items[0][quantity]": "1",
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    "metadata[sft_request_id]": requestId,
+    "metadata[dj_user_id]": djId,
+    "metadata[product]": "soundfortips_tip",
+  };
+
+  if (emailInsert) {
+    checkoutParams["customer_email"] = emailInsert;
+  }
+
+  const checkoutRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams(checkoutParams).toString(),
   });
+
+  const session = await checkoutRes.json();
+  if (session.error) {
+    await supabaseAdmin.from("soundfortips_fan_requests").delete().eq("id", requestId);
+    return new Response(JSON.stringify({ error: session.error.message || "Stripe error" }), {
+      status: 502,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  await supabaseAdmin
+    .from("soundfortips_fan_requests")
+    .update({ stripe_checkout_session_id: session.id as string })
+    .eq("id", requestId);
+
+  return new Response(
+    JSON.stringify({
+      url: session.url as string,
+      request_id: requestId,
+      session_id: session.id,
+    }),
+    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+  );
 });

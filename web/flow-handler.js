@@ -1,11 +1,39 @@
 /**
  * FLOW HANDLER - Miami DJ Beat Professional Analytics (Influencer Style)
- * Carga datos financieros / eventos y gráficas para la pestaña Cash Flow (dueño del perfil; LITE o PRO). SoundForTips™ es otra superficie (solo MDJPRO de pago).
+ * Carga datos financieros / eventos y gráficas para la pestaña Cash Flow (dueño del perfil; LITE o PRO).
+ * SoundForTips™: propinas aceptadas vía RPC get_my_soundfortips_accepted_for_flow → KPI Propinas + libro mayor + timeline.
  */
 
 let flowCharts = { timeline: null, activity: null, distribution: null };
 let currentLedger = [];
 let currentRange = '30d';
+
+/** Convierte filas SFT apertura tipo dj_ledger (bruto en amount_cents; comisión 10% en metadata). */
+function soundfortipsAcceptedToLedgerRows(userId, rows) {
+    if (!rows || !rows.length) return [];
+    return rows.map(function (row) {
+        var gross = Number(row.tip_usd) || 0;
+        var grossCents = Math.round(gross * 100);
+        var song = row.song != null ? String(row.song).trim() : '';
+        var label = song ? 'SoundForTips™ · ' + song.slice(0, 100) : 'SoundForTips™';
+        return {
+            id: 'sft-flow-' + String(row.id),
+            dj_user_id: userId,
+            type: 'income',
+            amount_cents: grossCents,
+            status: 'available',
+            unlock_at: null,
+            event_id: String(row.id),
+            metadata: {
+                source: 'tip',
+                commission_rate: 10,
+                event_name: label,
+                soundfortips: true,
+            },
+            created_at: row.created_at,
+        };
+    });
+}
 
 async function loadFlowData(range = '30d', targetUserId = null) {
     currentRange = range;
@@ -46,10 +74,15 @@ async function loadFlowData(range = '30d', targetUserId = null) {
 
     // 3. FETCH DATA (Ledger + Leads)
     // We fetch from prevStartDate to now to have trend data
-    const [ledgerRes, leadsRes] = await Promise.all([
+    const [ledgerRes, leadsRes, sftRes] = await Promise.all([
         supabase.from('dj_ledger').select('*').eq('dj_user_id', userId).gte('created_at', prevStartDate.toISOString()).order('created_at', { ascending: false }),
-        supabase.from('leads').select('*').eq('assigned_dj_id', profile.id).gte('event_date', prevStartDate.toISOString().split('T')[0])
+        supabase.from('leads').select('*').eq('assigned_dj_id', profile.id).gte('event_date', prevStartDate.toISOString().split('T')[0]),
+        supabase.rpc('get_my_soundfortips_accepted_for_flow', { p_since: prevStartDate.toISOString() }),
     ]);
+
+    if (sftRes.error) {
+        console.warn('[Flow] SoundForTips RPC:', sftRes.error.message || sftRes.error);
+    }
 
     if (ledgerRes.error) {
         var lb = document.getElementById('ledger-body');
@@ -63,11 +96,18 @@ async function loadFlowData(range = '30d', targetUserId = null) {
         return;
     }
 
-    const ledger = ledgerRes.data;
+    var ledger = ledgerRes.data || [];
     var leads = leadsRes.data || [];
     if (leadsRes.error) {
         leads = [];
     }
+
+    var sftLedger = soundfortipsAcceptedToLedgerRows(userId, sftRes.data || []);
+    ledger = ledger.concat(sftLedger);
+    ledger.sort(function (a, b) {
+        return new Date(b.created_at) - new Date(a.created_at);
+    });
+
     currentLedger = ledger.filter(tx => new Date(tx.created_at) >= startDate);
 
     // 4. PROCESS KPIs
@@ -94,7 +134,7 @@ async function processKPIs(ledger, leads, startDate, prevStartDate, commRate, se
         prev: { gross: 0, done: 0, pending: 0, available: 0, paidOut: 0, commissions: 0, tips: 0, count: 0 }
     };
 
-    // Process Ledger
+    // Process Ledger (+ filas sintéticas SoundForTips con metadata.soundfortips)
     ledger.forEach(tx => {
         const amount = tx.amount_cents / 100;
         if (isCurrent(tx.created_at)) {
@@ -102,13 +142,26 @@ async function processKPIs(ledger, leads, startDate, prevStartDate, commRate, se
             if (tx.status === 'available') stats.curr.available += amount;
             if (tx.type === 'payout' || tx.status === 'paid') stats.curr.paidOut += amount;
 
-            // New: Identification of tips and commissions from metadata
-            if (tx.metadata?.source === 'tip') stats.curr.tips += amount;
+            if (tx.metadata?.source === 'tip') {
+                if (tx.metadata?.soundfortips === true) {
+                    const rate = tx.metadata.commission_rate != null ? Number(tx.metadata.commission_rate) : 10;
+                    stats.curr.tips += amount * (100 - rate) / 100;
+                } else {
+                    stats.curr.tips += amount;
+                }
+            }
             if (tx.metadata?.source === 'commission') stats.curr.commissions += amount;
         } else if (isPrevious(tx.created_at)) {
             if (tx.type === 'income') stats.prev.gross += amount;
             if (tx.type === 'payout' || tx.status === 'paid') stats.prev.paidOut += amount;
-            if (tx.metadata?.source === 'tip') stats.prev.tips += amount;
+            if (tx.metadata?.source === 'tip') {
+                if (tx.metadata?.soundfortips === true) {
+                    const rateP = tx.metadata.commission_rate != null ? Number(tx.metadata.commission_rate) : 10;
+                    stats.prev.tips += amount * (100 - rateP) / 100;
+                } else {
+                    stats.prev.tips += amount;
+                }
+            }
             if (tx.metadata?.source === 'commission') stats.prev.commissions += amount;
         }
     });
@@ -407,6 +460,12 @@ function filterLedger(type) {
     const filtered = type === 'all' ? currentLedger : currentLedger.filter(tx => tx.type === type);
     renderLedgerTable(filtered);
 }
+
+// Refrescar Cash Flow tras aceptar SOUNDFORTIPS en cabina (mantiene el rango del selector).
+window.mdjFlowReloadIfAllowed = function (targetUserId) {
+    if (!targetUserId || !window._flowTabAllowed || typeof loadFlowData !== 'function') return;
+    loadFlowData(currentRange, targetUserId);
+};
 
 // Global expose
 window.loadFlowData = loadFlowData;
