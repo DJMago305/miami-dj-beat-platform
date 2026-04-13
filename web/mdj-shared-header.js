@@ -110,6 +110,18 @@
         try {
           var pr = await sb.from('dj_profiles').select('role, photo_url, plan_type, plan, plan_status, plan_expires_at, is_premium, hardware_token').eq('user_id', session.user.id).maybeSingle();
           var p = pr.data;
+          // Clientes solo tienen client_profiles; si no hay fila en dj_profiles debemos detectarlos o el avatar apunta a dj-profile y esa página expulsa al home.
+          var hasClientRow = false;
+          if (!p) {
+            try {
+              var cpr = await sb.from('client_profiles').select('user_id').eq('user_id', session.user.id).maybeSingle();
+              hasClientRow = !!(cpr && cpr.data && cpr.data.user_id);
+            } catch (cErr) { /* ignore */ }
+          }
+          var metaUt = session.user && session.user.user_metadata && session.user.user_metadata.user_type;
+          var appRole = session.user && session.user.app_metadata && session.user.app_metadata.role;
+          var jwtArtist = metaUt === 'talent' || metaUt === 'dj' || (appRole && String(appRole).toLowerCase() === 'artist');
+          var isClient = (p && p.role === 'client') || (!p && hasClientRow);
           var isProUser = p && (
             p.is_premium === true
             || ['PRO', 'ELITE'].includes(p.plan)
@@ -125,13 +137,16 @@
             document.querySelectorAll('.avatar, #accountBtn .avatar').forEach(function (img) { img.src = finalAvatar; });
           }
 
-          var isClient = p && p.role === 'client';
           var uid = session.user && session.user.id;
           var profileUrl;
           var profileText;
           if (isClient) {
             profileUrl = './client-portal.html';
             profileText = 'Mi Portal';
+          } else if (!p && !jwtArtist) {
+            // Sesión sin fila en dj_profiles y sin señal JWT de artista: evitar dj-profile (expulsa al home). Cuenta / ajustes.
+            profileUrl = './account-settings.html';
+            profileText = 'Mi cuenta';
           } else {
             profileUrl = uid
               ? './dj-profile.html?id=' + encodeURIComponent(uid)
@@ -142,7 +157,7 @@
           var accountBtnEl = document.getElementById('accountBtn');
           if (accountBtnEl && accountBtnEl.tagName === 'A') {
             accountBtnEl.href = profileUrl;
-            var accLabel = isClient ? 'Mi Portal' : 'Mi perfil';
+            var accLabel = isClient ? 'Mi Portal' : (!p && !jwtArtist ? 'Mi cuenta' : 'Mi perfil');
             accountBtnEl.setAttribute('title', accLabel);
             accountBtnEl.setAttribute('aria-label', accLabel);
           }
@@ -168,11 +183,13 @@
 
           document.querySelectorAll('a[href="./dj-profile.html"]').forEach(function (link) {
             if (link.id === 'accountBtn') return;
-            if (p && isClient) {
+            if (isClient) {
               link.href = './client-portal.html';
               if (link.getAttribute('data-i18n') === 'menu-account') {
                 link.textContent = 'Mi Portal';
               }
+            } else if (!p && !jwtArtist) {
+              link.href = './account-settings.html';
             }
           });
 
@@ -252,6 +269,14 @@
     window.addEventListener('hashchange', mdjNavHighlight);
     window.updateHeaderCartCount();
     whenSupabaseReady(function () {
+      var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+      if (sb && sb.auth && typeof sb.auth.onAuthStateChange === 'function') {
+        sb.auth.onAuthStateChange(function (event) {
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED' || event === 'SIGNED_OUT') {
+            if (typeof window.checkSessionForNav === 'function') window.checkSessionForNav();
+          }
+        });
+      }
       if (typeof window.checkSessionForNav === 'function') {
         return window.checkSessionForNav();
       }

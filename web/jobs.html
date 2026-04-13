@@ -159,6 +159,7 @@
             background: radial-gradient(ellipse at center, rgba(197, 160, 89, 0.08) 0%, transparent 70%);
         }
 
+        /* Hero title — mismo tratamiento oro sólido que index (Playfair + var(--gold)) */
         .kinetic-title {
             font-family: 'Playfair Display', serif;
             font-size: clamp(44px, 9vw, 110px);
@@ -167,14 +168,16 @@
             padding-bottom: 20px;
             letter-spacing: 0;
             text-transform: none;
-            /* ── Subtle gold fill: video shows through ── */
-            background: transparent;
-            -webkit-text-fill-color: rgba(197, 160, 89, 0.15);
-            /* Gold stroke outline so letters remain readable */
-            -webkit-text-stroke: 1.2px var(--gold);
+            color: var(--gold);
+            -webkit-text-fill-color: var(--gold);
+            -webkit-text-stroke: 0;
+            background: none;
             margin-bottom: 15px;
+            text-shadow:
+                0 2px 18px rgba(0, 0, 0, 0.55),
+                0 0 28px rgba(197, 160, 89, 0.38);
             filter:
-                drop-shadow(0 0 50px rgba(197, 160, 89, 0.55)) drop-shadow(0 0 100px rgba(197, 160, 89, 0.25));
+                drop-shadow(0 0 40px rgba(197, 160, 89, 0.45)) drop-shadow(0 0 88px rgba(197, 160, 89, 0.2));
             animation: titleReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             position: relative;
             z-index: 2;
@@ -184,16 +187,15 @@
             from {
                 opacity: 0;
                 transform: translateY(20px);
-                filter: blur(10px);
             }
 
             to {
                 opacity: 1;
                 transform: translateY(0);
-                filter: blur(0);
             }
         }
 
+        /* «LA ERA DE LA IA» — JetBrains Mono + caja (invariante; no mezclar con párrafos) */
         .kinetic-subtitle {
             font-family: 'JetBrains Mono', monospace;
             font-size: 13px;
@@ -207,10 +209,49 @@
             border: 1.5px solid rgba(197, 160, 89, 0.4);
             border-radius: 6px;
             background: rgba(197, 160, 89, 0.08);
-            /* Very transparent */
             backdrop-filter: blur(5px);
             position: relative;
             z-index: 2;
+        }
+
+        /* Línea cuántica + párrafo portal — tipografía de cuerpo (Inter), distinta del rótulo ERA */
+        .hero-2027 .hero-desc {
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            font-size: clamp(15px, 2.2vw, 20px);
+            font-weight: 500;
+            color: rgba(228, 201, 127, 0.96);
+            letter-spacing: 0.035em;
+            line-height: 1.65;
+            margin: 0 auto 10px;
+            max-width: 38rem;
+        }
+
+        .hero-2027 .jobs-hero-welcome {
+            max-width: 600px;
+            margin: 26px auto 0;
+            padding: 0 16px;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            font-size: clamp(14px, 1.85vw, 17px);
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.78);
+            font-weight: 400;
+            letter-spacing: 0.02em;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-2027 .jobs-hero-welcome strong {
+            color: rgba(236, 214, 160, 0.98);
+            font-weight: 700;
+        }
+
+        .hero-2027 .scroll-indicator {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.35em;
+            color: rgba(197, 160, 89, 0.75);
+            text-transform: uppercase;
         }
 
         /* HUD Selection Portals - Vision 2027 Extreme */
@@ -223,7 +264,7 @@
 
         .level-portal {
             background: rgba(10, 10, 10, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(197, 160, 89, 0.45);
             padding: 60px 40px;
             position: relative;
             transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
@@ -251,9 +292,13 @@
         }
 
         .level-portal:hover {
-            border-color: rgba(197, 160, 89, 0.4);
+            border-color: rgba(228, 199, 122, 0.95);
             transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 20px rgba(197, 160, 89, 0.1);
+            box-shadow:
+                0 30px 60px rgba(0, 0, 0, 0.6),
+                0 0 20px rgba(197, 160, 89, 0.45),
+                0 0 40px rgba(197, 160, 89, 0.35),
+                inset 0 0 24px rgba(197, 160, 89, 0.08);
         }
 
         .level-portal.selected {
@@ -289,7 +334,7 @@
             position: absolute;
             width: 30px;
             height: 30px;
-            border: 1.5px solid rgba(255, 255, 255, 0.1);
+            border: 1.5px solid rgba(197, 160, 89, 0.4);
             transition: 0.3s;
         }
 
@@ -445,6 +490,31 @@
             display: none !important;
         }
 
+        /* Tarjetas con foto: el input va encima del círculo/palomita (clic fiable); el resto del <label> sigue toggling */
+        label.role-photo-card > input[type="checkbox"] {
+            display: block !important;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            margin: 0 !important;
+            padding: 0 !important;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 12;
+            flex-shrink: 0;
+        }
+
+        label.role-photo-card .role-photo-bg,
+        label.role-photo-card .role-photo-gradient,
+        label.role-photo-card .role-photo-content,
+        div.role-photo-card.role-photo-card--carousel .role-photo-bg,
+        div.role-photo-card.role-photo-card--carousel .role-photo-gradient,
+        div.role-photo-card.role-photo-card--carousel .role-photo-content {
+            pointer-events: none;
+        }
+
         .role-pro-card .role-name {
             font-weight: 800;
             font-size: 11px;
@@ -473,16 +543,63 @@
             transform: scale(1.2) rotateY(360deg);
         }
 
-        /* ── Photo Role Cards ────────────────────────────────── */
+        /* ── Photo Role Cards — foto + selector visible (anillo / ✓) ── */
         .role-photo-card {
             position: relative;
-            height: 200px;
+            height: 220px;
             padding: 0 !important;
             overflow: hidden;
             border-radius: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(197, 160, 89, 0.5);
+            box-shadow: 0 0 0 1px rgba(197, 160, 89, 0.12), inset 0 0 24px rgba(197, 160, 89, 0.06);
             cursor: pointer;
             transition: border-color 0.35s, box-shadow 0.35s, transform 0.3s;
+        }
+
+        .role-photo-card:not(.active):hover {
+            border-color: rgba(228, 199, 122, 0.95);
+            box-shadow:
+                0 0 8px rgba(197, 160, 89, 0.45),
+                0 0 28px rgba(197, 160, 89, 0.55),
+                0 0 52px rgba(197, 160, 89, 0.25),
+                inset 0 0 32px rgba(197, 160, 89, 0.14);
+            transform: translateY(-3px);
+        }
+
+        .role-photo-card:not(.active):hover::before {
+            border-color: var(--gold);
+            box-shadow: 0 0 16px rgba(197, 160, 89, 0.85);
+        }
+
+        /* Indicador fijo arriba-derecha: sin seleccionar = círculo vacío; seleccionado = ✓ dorado */
+        .role-photo-card::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 6;
+            pointer-events: none;
+            box-sizing: border-box;
+            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+        }
+
+        .role-photo-card.active::before {
+            content: '✓';
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            font-weight: 900;
+            color: #000;
+            border-color: var(--gold);
+            background: var(--gold);
+            line-height: 1;
+            box-shadow: 0 0 14px rgba(197, 160, 89, 0.65);
         }
 
         .role-photo-bg {
@@ -568,6 +685,157 @@
 
         .role-photo-card.active .role-subtitle {
             color: rgba(197, 160, 89, 0.8);
+        }
+
+        /* Post–carousel CTA: gold ~50% opacity, brightens on hover */
+        .jobs-after-roles-cta {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 14px;
+            padding: 14px 22px;
+            border-radius: 14px;
+            border: 1px solid rgba(197, 160, 89, 0.55);
+            background: rgba(197, 160, 89, 0.5);
+            color: #0a0a0a;
+            font-weight: 800;
+            font-size: 13px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, color 0.2s;
+        }
+
+        .jobs-after-roles-cta:hover {
+            background: rgba(197, 160, 89, 0.88);
+            border-color: rgba(255, 220, 150, 0.95);
+            box-shadow: 0 0 32px rgba(197, 160, 89, 0.5);
+            color: #000;
+        }
+
+        .jobs-after-roles-cta:focus-visible {
+            outline: 2px solid rgba(197, 160, 89, 0.95);
+            outline-offset: 3px;
+        }
+
+        /* Cartel mediano sobre el carrusel de categorías */
+        .jobs-role-carousel-sign {
+            text-align: center;
+            margin: 0 auto 16px;
+            padding: 0 12px;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-size: clamp(16px, 2.4vw, 22px);
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--gold);
+            -webkit-text-fill-color: var(--gold);
+            text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45), 0 0 28px rgba(197, 160, 89, 0.35);
+        }
+
+        /* Carrusel de roles (Jobs — plazas disponibles) */
+        .jobs-role-carousel-shell {
+            display: flex;
+            align-items: stretch;
+            gap: 10px;
+            margin-top: 0;
+        }
+
+        .jobs-role-carousel-btn {
+            flex: 0 0 auto;
+            align-self: center;
+            width: 44px;
+            min-height: 120px;
+            border-radius: 14px;
+            border: 1px solid rgba(197, 160, 89, 0.45);
+            background: rgba(197, 160, 89, 0.08);
+            color: var(--gold);
+            font-size: 18px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .jobs-role-carousel-btn:hover {
+            background: rgba(197, 160, 89, 0.2);
+            border-color: var(--gold);
+        }
+
+        .jobs-role-carousel {
+            flex: 1;
+            min-width: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(197, 160, 89, 0.5) rgba(255, 255, 255, 0.06);
+            padding: 4px 2px 14px;
+        }
+
+        .jobs-role-carousel.jobs-role-carousel--marquee {
+            overflow: hidden;
+            padding-bottom: 10px;
+        }
+
+        .jobs-role-marquee-anim {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            width: max-content;
+            will-change: transform;
+            animation: jobsRoleMarqueeLoop 70s linear infinite;
+        }
+
+        /* Pausa solo al pasar el mouse sobre la franja del carrusel (no sobre el título/textos) */
+        .jobs-role-carousel--marquee:hover .jobs-role-marquee-anim {
+            animation-play-state: paused;
+        }
+
+        @keyframes jobsRoleMarqueeLoop {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .jobs-role-marquee-anim {
+                animation: none;
+            }
+        }
+
+        .jobs-role-carousel-shell--marquee .jobs-role-carousel-btn {
+            display: none;
+        }
+
+        .jobs-role-carousel-track {
+            display: flex;
+            flex-direction: row;
+            gap: 16px;
+            width: max-content;
+            padding: 2px 4px;
+            flex: 0 0 auto;
+        }
+
+        .role-photo-card.role-photo-card--carousel {
+            flex: 0 0 288px;
+            width: 288px;
+            max-width: 90vw;
+        }
+
+        @media (max-width: 640px) {
+            .jobs-role-carousel-shell {
+                flex-wrap: wrap;
+            }
+
+            .jobs-role-carousel-shell:not(.jobs-role-carousel-shell--marquee) .jobs-role-carousel-btn {
+                width: 100%;
+                min-height: 44px;
+            }
         }
 
         /* Cyber Form Elements — Matching Home Luxury */
@@ -1165,8 +1433,8 @@
 
       <div class="header-actions"
         style="display: flex; gap: 12px !important; background: rgba(255,255,255,0.03); padding: 8px 14px; border-radius: 999px;">
-        <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
-        <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
+        <a href="./login.html?plan=pro&amp;redirect=jobs" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
+        <a href="./login.html?signup=free&amp;redirect=jobs" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
         <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
         <div class="lang-switcher">
           <span class="lang-btn" data-lang="es">ES</span>
@@ -1208,7 +1476,7 @@
           <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
           <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
           <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
-          <a href="./login.html?signup=free" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free"
+          <a href="./login.html?signup=free&amp;redirect=jobs" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free"
             style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
           <a href="./login.html" id="header-login-btn-mobile" data-i18n="btn-login"
             style="color:var(--gold); font-weight:800;">Entrar</a>
@@ -1254,9 +1522,9 @@
                 Entretenimiento Global.</p>
         </div>
 
-        <p style="max-width:600px;margin:30px auto 0;color:var(--muted);line-height:1.8;font-size:18px;position:relative;z-index:2;"
+        <p class="jobs-hero-welcome"
             data-i18n="jobs-hero-welcome">Bienvenido al portal Pro de Miami DJ Beat. La tecnología te permite
-            escalar, nosotros te damos el escenario. <br><strong style="color:#fff;">Transformamos talento en
+            escalar, nosotros te damos el escenario. <br><strong>Transformamos talento en
                 autoridad.</strong></p>
 
         <!-- Indicador de Scroll -->
@@ -1342,7 +1610,177 @@
         </section>
 
         <section class="section" id="selection-screen">
-            <div class="form-section-title" data-i18n="jobs-selection-title">LEVEL SELECTION</div>
+            <div class="jobs-role-roles-block" style="max-width:72rem;margin:0 auto 28px;">
+                <p class="jobs-role-carousel-sign" data-i18n="jobs-role-carousel-heading">Selecciona tus categorías</p>
+                <div class="jobs-role-carousel-shell" role="region"
+                    aria-label="Open roles — select one or more; hover the row to pause the strip.">
+                    <button type="button" class="jobs-role-carousel-btn" id="jobs-role-carousel-prev"
+                        aria-label="Anterior" onclick="jobsRoleCarouselScroll(-1)">◀</button>
+                    <div class="jobs-role-carousel" id="jobs-role-carousel">
+                        <div class="jobs-role-carousel-track">
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="DJ">
+                                <input type="checkbox" name="roles" value="DJ" form="employment-form">
+                                <div class="role-photo-bg"
+                                    style="background-image:url('./assets/Jobs/DJ.jpg?v=4');background-position:center;"></div>
+                                <div class="role-photo-gradient"></div>
+                                <div class="role-photo-content">
+                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
+                                    <span class="role-name">DJ</span>
+                                    <span class="role-subtitle">Mezcla · club · evento</span>
+                                </div>
+                            </label>
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="MC">
+                                <input type="checkbox" name="roles" value="MC" form="employment-form">
+                                <div class="role-photo-bg"
+                                    style="background-image:url('./assets/Jobs/MC.jpg?v=4');background-position:center;"></div>
+                                <div class="role-photo-gradient"></div>
+                                <div class="role-photo-content">
+                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
+                                    <span class="role-name">MC</span>
+                                    <span class="role-subtitle">Maestro de ceremonias · animación</span>
+                                </div>
+                            </label>
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="CANTANTE">
+                                <input type="checkbox" name="roles" value="CANTANTE" form="employment-form">
+                                <div class="role-photo-bg"
+                                    style="background-image:url('./assets/Jobs/CANTANTE.jpg?v=4');background-position:center;"></div>
+                                <div class="role-photo-gradient"></div>
+                                <div class="role-photo-content">
+                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
+                                    <span class="role-name">CANTANTES</span>
+                                    <span class="role-subtitle">Vocal · banda · playback</span>
+                                </div>
+                            </label>
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="LIVE_BAND">
+                                <input type="checkbox" name="roles" value="LIVE_BAND" form="employment-form">
+                                <div class="role-photo-bg"
+                                    style="background-image:url('./assets/Jobs/LIVE_BAND.jpg?v=4');background-position:center;"></div>
+                                <div class="role-photo-gradient"></div>
+                                <div class="role-photo-content">
+                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
+                                    <span class="role-name">LIVE BAND</span>
+                                    <span class="role-subtitle">Grupo en vivo · ensamble</span>
+                                </div>
+                            </label>
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="PERCUSIONISTA">
+                                <input type="checkbox" name="roles" value="PERCUSIONISTA" form="employment-form">
+                                <div class="role-photo-bg"
+                                    style="background-image:url('./assets/Jobs/PERCUSIONISTA.jpg?v=4');background-position:center;"></div>
+                                <div class="role-photo-gradient"></div>
+                                <div class="role-photo-content">
+                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
+                                    <span class="role-name">PERCUSIONISTAS</span>
+                                    <span class="role-subtitle">Timbal · bongó · percusión live</span>
+                                </div>
+                            </label>
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="SAXOFONISTA">
+                                <input type="checkbox" name="roles" value="SAXOFONISTA" form="employment-form">
+                                <div class="role-photo-bg"
+                                    style="background-image:url('./assets/Jobs/SAXOFONISTA.jpg?v=4');background-position:center;"></div>
+                                <div class="role-photo-gradient"></div>
+                                <div class="role-photo-content">
+                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
+                                    <span class="role-name">SAXOFONISTAS</span>
+                                    <span class="role-subtitle">Sax live · house · jazz</span>
+                                </div>
+                            </label>
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="VIOLINISTA">
+                                <input type="checkbox" name="roles" value="VIOLINISTA" form="employment-form">
+                                <div class="role-photo-bg"
+                                    style="background-image:url('./assets/Jobs/VIOLINISTA.jpg?v=4');background-position:center 30%;"></div>
+                                <div class="role-photo-gradient"></div>
+                                <div class="role-photo-content">
+                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
+                                    <span class="role-name">VIOLINISTAS</span>
+                                    <span class="role-subtitle">Violín eléctrico / clásico · show</span>
+                                </div>
+                            </label>
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="PAYASO">
+                                <input type="checkbox" name="roles" value="PAYASO" form="employment-form">
+                                <div class="role-photo-bg"
+                                    style="background-image:url('./assets/Jobs/PAYASO.jpg?v=4');background-position:center 20%;"></div>
+                                <div class="role-photo-gradient"></div>
+                                <div class="role-photo-content">
+                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
+                                    <span class="role-name">PAYASOS</span>
+                                    <span class="role-subtitle">Animación · infantil / evento</span>
+                                </div>
+                            </label>
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="HORA_LOCA">
+                                <input type="checkbox" name="roles" value="HORA_LOCA" form="employment-form">
+                                <div class="role-photo-bg"
+                                    style="background-image:url('./assets/Jobs/HORA_LOCA.jpg?v=4');background-position:center 40%;"></div>
+                                <div class="role-photo-gradient"></div>
+                                <div class="role-photo-content">
+                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
+                                    <span class="role-name">HORA LOCA</span>
+                                    <span class="role-subtitle">Show · conga · props · fiesta</span>
+                                </div>
+                            </label>
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="BARTENDER">
+                                <input type="checkbox" name="roles" value="BARTENDER" form="employment-form">
+                                <div class="role-photo-bg"
+                                    style="background-image:url('./assets/Jobs/BARTENDER.jpg?v=4');background-position:center;"></div>
+                                <div class="role-photo-gradient"></div>
+                                <div class="role-photo-content">
+                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
+                                    <span class="role-name">BARTENDERS</span>
+                                    <span class="role-subtitle">Barra · coctelería · evento</span>
+                                </div>
+                            </label>
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="MESERO">
+                                <input type="checkbox" name="roles" value="MESERO" form="employment-form">
+                                <div class="role-photo-bg"
+                                    style="background-image:url('./assets/Jobs/MESERO.jpg?v=4');background-position:center;"></div>
+                                <div class="role-photo-gradient"></div>
+                                <div class="role-photo-content">
+                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
+                                    <span class="role-name">MESEROS</span>
+                                    <span class="role-subtitle">Servicio · banquetes · VIP</span>
+                                </div>
+                            </label>
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="MANAGER_ARTISTICO">
+                                <input type="checkbox" name="roles" value="MANAGER_ARTISTICO" form="employment-form">
+                                <div class="role-photo-bg"
+                                    style="background-image:url('./assets/Jobs/MANAGER_ARTISTICO.jpg?v=4');background-position:center;"></div>
+                                <div class="role-photo-gradient"></div>
+                                <div class="role-photo-content">
+                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
+                                    <span class="role-name">MANAGER ARTÍSTICO</span>
+                                    <span class="role-subtitle">Booking · carrera · representación</span>
+                                </div>
+                            </label>
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="PRODUCTOR_MUSICAL">
+                                <input type="checkbox" name="roles" value="PRODUCTOR_MUSICAL" form="employment-form">
+                                <div class="role-photo-bg"
+                                    style="background-image:url('./assets/Jobs/PRODUCTOR_MUSICAL.jpg?v=4');background-position:center;"></div>
+                                <div class="role-photo-gradient"></div>
+                                <div class="role-photo-content">
+                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
+                                    <span class="role-name">PRODUCTOR MUSICAL</span>
+                                    <span class="role-subtitle">Estudio · beats · arreglos</span>
+                                </div>
+                            </label>
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="INFLUENCER_PROMOTOR">
+                                <input type="checkbox" name="roles" value="INFLUENCER_PROMOTOR" form="employment-form">
+                                <div class="role-photo-bg"
+                                    style="background-image:url('./assets/Jobs/INFLUENCER_PROMOTOR.jpg?v=4');background-position:center;"></div>
+                                <div class="role-photo-gradient"></div>
+                                <div class="role-photo-content">
+                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
+                                    <span class="role-name">INFLUENCERS / PROMOTORES</span>
+                                    <span class="role-subtitle">Redes · promoción · alcance</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <button type="button" class="jobs-role-carousel-btn" id="jobs-role-carousel-next"
+                        aria-label="Siguiente" onclick="jobsRoleCarouselScroll(1)">▶</button>
+                </div>
+                <button type="button" class="jobs-after-roles-cta" id="jobs-after-roles-cta"
+                    data-i18n="jobs-after-roles-cta-signup"
+                    onclick="jobsAfterRolesCtaClick()">Create account</button>
+            </div>
 
             <div class="level-portal-container">
                 <!-- Portal 1: LITE -->
@@ -1369,7 +1807,7 @@
                 </div>
 
                 <!-- Portal 2: PRO (FOUNDER PRICE) -->
-                <div class="level-portal" onclick="selectPlan(this, 'pro')" style="border-color:rgba(197,160,89,0.2);">
+                <div class="level-portal" onclick="selectPlan(this, 'pro')">
                     <div class="portal-clip clip-tl" style="border-color:var(--gold);"></div>
                     <div class="portal-clip clip-tr" style="border-color:var(--gold);"></div>
                     <div class="portal-clip clip-bl" style="border-color:var(--gold);"></div>
@@ -1623,288 +2061,6 @@
 
                     <input type="file" id="cover-photo-input" accept="image/*" style="display: none;">
                     <input type="file" id="profile-photo-input" accept="image/*" style="display: none;">
-
-                    <!-- ── CONFIGURACIÓN DE ROL ────────────────────── -->
-                    <div style="margin-top: 50px;">
-                        <div class="form-section-title">CONFIGURACIÓN DE ROL</div>
-                        <p style="font-size:12px;color:rgba(255,255,255,0.4);margin:-10px 0 24px;letter-spacing:1px;">
-                            Selecciona el o los roles que describen tu especialidad. Puedes marcar más de uno.
-                        </p>
-                        <div class="role-grid" style="grid-template-columns: repeat(2, 1fr); gap: 20px;">
-
-                            <!-- 1. DJ RESIDENTE -->
-                            <label class="role-pro-card role-photo-card" onclick="toggleRole(this)"
-                                data-role="RESIDENTE">
-                                <input type="checkbox" name="roles" value="RESIDENTE">
-                                <div class="role-photo-bg"
-                                    style="background-image: url('./assets/role-dj-elite.jpg'); background-position: center 60%;">
-                                </div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">DJ RESIDENTE</span>
-                                    <span class="role-subtitle">Club Permanente · Residencia Semanal · Venue
-                                        Oficial</span>
-                                </div>
-                            </label>
-
-                            <!-- 2. DJ DE EVENTOS -->
-                            <label class="role-pro-card role-photo-card" onclick="toggleRole(this)" data-role="EVENTOS">
-                                <input type="checkbox" name="roles" value="EVENTOS">
-                                <div class="role-photo-bg"
-                                    style="background-image: url('https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600&q=80&fit=crop&auto=format'); background-position: center 35%;">
-                                </div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">DJ DE EVENTOS</span>
-                                    <span class="role-subtitle">Bodas · Fiestas Privadas · Corporate · Galas</span>
-                                </div>
-                            </label>
-
-                            <!-- 3. MC / ANIMADOR -->
-                            <label class="role-pro-card role-photo-card" onclick="toggleRole(this)" data-role="MC">
-                                <input type="checkbox" name="roles" value="MC">
-                                <div class="role-photo-bg"
-                                    style="background-image: url('https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&q=80&fit=crop&auto=format'); background-position: center;">
-                                </div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">MC / ANIMADOR</span>
-                                    <span class="role-subtitle">Maestro de Ceremonias · Discotecas · Shows</span>
-                                </div>
-                            </label>
-
-                            <!-- 4. BRUNCH / DINNER DJ -->
-                            <label class="role-pro-card role-photo-card" onclick="toggleRole(this)" data-role="BRUNCH">
-                                <input type="checkbox" name="roles" value="BRUNCH">
-                                <div class="role-photo-bg"
-                                    style="background-image: url('./assets/role-brunch-dj.jpg'); background-position: center 30%;">
-                                </div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">BRUNCH / DINNER DJ</span>
-                                    <span class="role-subtitle">Restaurantes · Show en Vivo · Ambiente · Danza</span>
-                                </div>
-                            </label>
-
-                            <!-- 5. DJ CLUB RESIDENTE -->
-                            <label class="role-pro-card role-photo-card" onclick="toggleRole(this)"
-                                data-role="CLUB_RESIDENTE">
-                                <input type="checkbox" name="roles" value="CLUB_RESIDENTE">
-                                <div class="role-photo-bg"
-                                    style="background-image: url('https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=600&q=80&fit=crop&auto=format'); background-position: center;">
-                                </div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">DJ CLUB RESIDENTE</span>
-                                    <span class="role-subtitle">Underground · Techno · Tech House · Dark Room</span>
-                                </div>
-                            </label>
-
-                            <!-- 6. PERFORMANCE DJ -->
-                            <label class="role-pro-card role-photo-card" onclick="toggleRole(this)"
-                                data-role="PERFORMANCE">
-                                <input type="checkbox" name="roles" value="PERFORMANCE">
-                                <div class="role-photo-bg"
-                                    style="background-image: url('./assets/role-dj-artista.jpg'); background-position: center 20%;">
-                                </div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">PERFORMANCE DJ</span>
-                                    <span class="role-subtitle">Artistas · Cantantes · Comediantes · Urbano ·
-                                        Show</span>
-                                </div>
-                            </label>
-
-                            <!-- 7. DJ INVITADO -->
-                            <label class="role-pro-card role-photo-card" onclick="toggleRole(this)"
-                                data-role="INVITADO">
-                                <input type="checkbox" name="roles" value="INVITADO">
-                                <div class="role-photo-bg"
-                                    style="background-image: url('./assets/role-dj-invitado.jpg'); background-position: center 30%;">
-                                </div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">DJ INVITADO</span>
-                                    <span class="role-subtitle">Guest DJ · Fecha Única · Club · Festival · Evento</span>
-                                </div>
-                            </label>
-
-                            <!-- 8. DJ PRODUCTOR -->
-                            <label class="role-pro-card role-photo-card" onclick="toggleRole(this)"
-                                data-role="DJ_PRODUCTOR">
-                                <input type="checkbox" name="roles" value="DJ_PRODUCTOR">
-                                <div class="role-photo-bg"
-                                    style="background-image: url('./assets/role-dj-productor.jpg'); background-position: center 25%;">
-                                </div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">DJ PRODUCTOR</span>
-                                    <span class="role-subtitle">Estudio · Lanzamientos Propios · Artista
-                                        Independiente</span>
-                                </div>
-                            </label>
-
-                            <!-- 9. PERCUSIONISTA -->
-                            <label class="role-pro-card role-photo-card" onclick="toggleRole(this)"
-                                data-role="PERCUSIONISTA">
-                                <input type="checkbox" name="roles" value="PERCUSIONISTA">
-                                <div class="role-photo-bg"
-                                    style="background-image: url('https://images.unsplash.com/photo-1525413183955-fd95ea715201?w=600&q=80&fit=crop&auto=format'); background-position: center;">
-                                </div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">PERCUSIONISTA (DRUMS / TIMBALERO)</span>
-                                    <span class="role-subtitle">Bongos · Congas · Timbales · Drums · Show Live</span>
-                                </div>
-                            </label>
-
-                            <!-- 10. SAXOFONISTA -->
-                            <label class="role-pro-card role-photo-card" onclick="toggleRole(this)"
-                                data-role="SAXOFONISTA">
-                                <input type="checkbox" name="roles" value="SAXOFONISTA">
-                                <div class="role-photo-bg"
-                                    style="background-image: url('https://images.unsplash.com/photo-1528645238311-159bcc05ca91?w=600&q=80&fit=crop&auto=format'); background-position: center;">
-                                </div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">SAXOFONISTA</span>
-                                    <span class="role-subtitle">Solo Sax · Deep House · Jazz · Show Live</span>
-                                </div>
-                            </label>
-
-                            <!-- 11. OTROS TALENTOS -->
-                            <label class="role-pro-card role-photo-card" onclick="toggleRole(this)"
-                                data-role="OTROS_TALENTOS">
-                                <input type="checkbox" name="roles" value="OTROS">
-                                <div class="role-photo-bg"
-                                    style="background-image: url('https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&q=80&fit=crop&auto=format'); background-position: center;">
-                                </div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">OTROS TALENTOS</span>
-                                    <span class="role-subtitle">Músicos · Magos · Bailarines · Performance</span>
-                                </div>
-                            </label>
-
-                            <!-- 12. PRODUCTOR DE EVENTOS -->
-                            <label class="role-pro-card role-photo-card" onclick="toggleRole(this)"
-                                data-role="EVENT_PRODUCER">
-                                <input type="checkbox" name="roles" value="EVENT_PRODUCER">
-                                <div class="role-photo-bg"
-                                    style="background-image: url('https://images.unsplash.com/photo-1511578314322-379afb476865?w=600&q=80&fit=crop&auto=format'); background-position: center;">
-                                </div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">PRODUCTOR DE EVENTOS</span>
-                                    <span class="role-subtitle">Logística · Planificación · Coordinación</span>
-                                </div>
-                            </label>
-
-                            <!-- 13. PROMOTORES -->
-                            <label class="role-pro-card role-photo-card" onclick="toggleRole(this)"
-                                data-role="PROMOTOR">
-                                <input type="checkbox" name="roles" value="PROMOTOR">
-                                <div class="role-photo-bg"
-                                    style="background-image: url('https://images.unsplash.com/photo-1540575861501-7cf05a4b125a?w=600&q=80&fit=crop&auto=format'); background-position: center;">
-                                </div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">PROMOTORES</span>
-                                    <span class="role-subtitle">Relaciones Públicas · Marketing · Redes</span>
-                                </div>
-                            </label>
-
-                            <!-- 14. INFLUENCERS -->
-                            <label class="role-pro-card role-photo-card" onclick="toggleRole(this)"
-                                data-role="INFLUENCER">
-                                <input type="checkbox" name="roles" value="INFLUENCER">
-                                <div class="role-photo-bg"
-                                    style="background-image: url('https://images.unsplash.com/photo-1533727937480-da3a97967e95?w=600&q=80&fit=crop&auto=format'); background-position: center;">
-                                </div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">INFLUENCERS</span>
-                                    <span class="role-subtitle">Content Creators · Social Reach · Ambassadors</span>
-                                </div>
-                            </label>
-
-                            <!-- 15. LIVE BAND -->
-                            <label class="role-pro-card role-photo-card" onclick="toggleRole(this)"
-                                data-role="LIVE_BAND">
-                                <input type="checkbox" name="roles" value="LIVE_BAND">
-                                <div class="role-photo-bg"
-                                    style="background-image: url('https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600&q=80&fit=crop&auto=format'); background-position: center;">
-                                </div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">LIVE BAND</span>
-                                    <span class="role-subtitle">Grupos · Bandas · Orquestas · Show Completo</span>
-                                </div>
-                            </label>
-
-                            <!-- 16. ARTISTIC MANAGER -->
-                            <label class="role-pro-card role-photo-card" onclick="toggleRole(this)" data-role="MANAGER">
-                                <input type="checkbox" name="roles" value="MANAGER">
-                                <div class="role-photo-bg"
-                                    style="background-image: url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=600&q=80&fit=crop&auto=format'); background-position: center;">
-                                </div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">ARTISTIC MANAGER</span>
-                                    <span class="role-subtitle">Representación · Booking · Carrera Artística</span>
-                                </div>
-                            </label>
-
-                            <!-- 17. CANTANTES -->
-                            <label class="role-pro-card role-photo-card" onclick="toggleRole(this)"
-                                data-role="CANTANTE">
-                                <input type="checkbox" name="roles" value="CANTANTE">
-                                <div class="role-photo-bg"
-                                    style="background-image: url('https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&q=80&fit=crop&auto=format'); background-position: center;">
-                                </div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">CANTANTES</span>
-                                    <span class="role-subtitle">Solistas · Dúos · Vocalistas Live Pa</span>
-                                </div>
-                            </label>
-
-                            <!-- 18. FOTÓGRAFOS & VIDEO -->
-                            <label class="role-pro-card role-photo-card" onclick="toggleRole(this)"
-                                data-role="FOTOGRAFO">
-                                <input type="checkbox" name="roles" value="FOTOGRAFO">
-                                <div class="role-photo-bg"
-                                    style="background-image: url('https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&q=80&fit=crop&auto=format'); background-position: center;">
-                                </div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">FOTÓGRAFOS & VIDEO</span>
-                                    <span class="role-subtitle">Footage · Aftermovies · Social Media Content</span>
-                                </div>
-                            </label>
-
-                        </div>
-                    </div>
-
-
 
                     <div class="form-section-title">BIOGRAFÍA</div>
 
@@ -2169,7 +2325,6 @@
             </div>
         </section>
 
-        </section>
     </main>
 
     <footer class="footer">
@@ -2181,7 +2336,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=20260226-1"></script>
-    <script src="./translations.js?v=20260226-1"></script>
+    <script src="./translations.js?v=20260413-jobs-cta-profile-flow"></script>
     <script src="./i18n.js?v=20260226-1"></script>
     <script>
         /* --- [x] Vision 2027 UI Transformation
@@ -2197,10 +2352,128 @@
             if (session) {
                 if (loginBtn) loginBtn.style.display = 'none';
                 if (authZone) authZone.style.display = 'block';
-                const { data: profile } = await supabase.from('dj_profiles').select('photo_url').eq('user_id', session.user.id).single();
+                const { data: profile } = await supabase.from('dj_profiles').select('photo_url').eq('user_id', session.user.id).maybeSingle();
                 if (profile && profile.photo_url) document.querySelector('.avatar').src = profile.photo_url;
             }
+            void updateJobsAfterRolesCta();
         }
+
+        /** Alineado con role-guard.js: cliente ≠ artista (perfil profesional solo artistas). */
+        function getSessionAccountRole(session) {
+            if (!session || !session.user) return 'client';
+            var r = session.user.app_metadata && session.user.app_metadata.role;
+            if (!r && session.user.user_metadata) r = session.user.user_metadata.user_type;
+            if (!r) r = 'client';
+            if (r === 'talent' || r === 'dj') r = 'artist';
+            return r;
+        }
+
+        function normalizeProfileRoles(roles) {
+            if (roles == null || roles === '') return [];
+            if (Array.isArray(roles)) {
+                return roles.map(function (x) { return String(x).trim().toUpperCase(); }).filter(Boolean).sort();
+            }
+            return String(roles).split(',').map(function (x) { return x.trim().toUpperCase(); }).filter(Boolean).sort();
+        }
+
+        function getJobsSelectedRolesSorted() {
+            return Array.from(document.querySelectorAll('#selection-screen input[name="roles"]:checked'))
+                .map(function (c) { return c.value.toUpperCase(); })
+                .sort();
+        }
+
+        function rolesArrayEqual(a, b) {
+            if (a.length !== b.length) return false;
+            for (var i = 0; i < a.length; i++) {
+                if (a[i] !== b[i]) return false;
+            }
+            return true;
+        }
+
+        /**
+         * Perfil de artista listo al 100 % para ofrecer «Mi perfil» (nombre, foto, bio, roles guardados).
+         */
+        function isArtistProfileCompleteForJobs(p) {
+            if (!p) return false;
+            var name = (p.full_name && String(p.full_name).trim()) ||
+                (p.stage_name && String(p.stage_name).trim()) ||
+                (p.dj_name && String(p.dj_name).trim());
+            if (!name) return false;
+            if (!p.photo_url || String(p.photo_url).trim().length < 6) return false;
+            var bio = (p.bio && String(p.bio).trim()) ||
+                (p.bio_long && String(p.bio_long).trim()) ||
+                (p.bio_short && String(p.bio_short).trim());
+            if (!bio) return false;
+            return normalizeProfileRoles(p.roles).length > 0;
+        }
+
+        /** true → configuración (cuenta nueva, perfil incompleto o categorías distintas a las guardadas). */
+        function artistJobsCtaTargetSettings(p) {
+            if (!p) return true;
+            if (!isArtistProfileCompleteForJobs(p)) return true;
+            if (!rolesArrayEqual(normalizeProfileRoles(p.roles), getJobsSelectedRolesSorted())) return true;
+            return false;
+        }
+
+        /** Label + data-i18n key for the gold CTA under the role carousel */
+        async function updateJobsAfterRolesCta() {
+            const btn = document.getElementById('jobs-after-roles-cta');
+            if (!btn) return;
+            const { data: { session } } = await supabase.auth.getSession();
+            var key = 'jobs-after-roles-cta-signup';
+            if (session) {
+                var role = getSessionAccountRole(session);
+                if (role === 'client') {
+                    key = 'jobs-after-roles-cta-client-account';
+                } else if (role === 'admin' || role === 'manager') {
+                    key = 'jobs-after-roles-cta-staff-panel';
+                } else {
+                    const { data: p } = await supabase
+                        .from('dj_profiles')
+                        .select('user_id, full_name, stage_name, dj_name, photo_url, bio, bio_long, bio_short, roles')
+                        .eq('user_id', session.user.id)
+                        .maybeSingle();
+                    key = artistJobsCtaTargetSettings(p)
+                        ? 'jobs-after-roles-cta-artist-setup'
+                        : 'jobs-after-roles-cta-artist-public';
+                }
+            }
+            btn.setAttribute('data-i18n', key);
+            if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
+        }
+
+        async function jobsAfterRolesCtaClick() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                const gate = document.getElementById('auth-gate');
+                if (gate) {
+                    gate.style.display = 'block';
+                    if (typeof switchGateTab === 'function') switchGateTab('signup');
+                    gate.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                return;
+            }
+            var role = getSessionAccountRole(session);
+            if (role === 'client') {
+                window.location.href = './client-portal.html';
+                return;
+            }
+            if (role === 'admin' || role === 'manager') {
+                window.location.href = './admin-dashboard.html';
+                return;
+            }
+            const { data: p } = await supabase
+                .from('dj_profiles')
+                .select('user_id, full_name, stage_name, dj_name, photo_url, bio, bio_long, bio_short, roles')
+                .eq('user_id', session.user.id)
+                .maybeSingle();
+            if (artistJobsCtaTargetSettings(p)) {
+                window.location.href = './dj-dashboard.html?tab=settings';
+            } else {
+                window.location.href = './dj-profile.html';
+            }
+        }
+        window.jobsAfterRolesCtaClick = jobsAfterRolesCtaClick;
 
         // ── Auth Gate: decide what to show on load ───────────────────
         async function initAuthGate() {
@@ -2210,22 +2483,33 @@
             const proForm = document.getElementById('pro-form-section');
 
             if (session) {
-                // Already logged in — hide gate, prefill will handle the rest
                 if (gate) gate.style.display = 'none';
-                if (selection) selection.style.display = '';   // shown by default unless prefill hides it
+                if (selection) selection.style.display = '';
             } else {
-                // Not logged in — show gate, hide everything else
-                if (gate) gate.style.display = 'block';
-                if (selection) selection.style.display = 'none';
+                /* Carousel + tiers visible first; auth gate opens from CTA or header */
+                if (gate) gate.style.display = 'none';
+                if (selection) selection.style.display = '';
                 if (proForm) proForm.classList.add('hidden');
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('languageChanged', () => {
+            void updateJobsAfterRolesCta();
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
             updateHeaderAuth();
             initAuthGate();
+            initRolePhotoCardPickers();
+            initJobsRoleMarquee();
             addExperienceEntry();
-            prefillProfileForm();
+            await prefillProfileForm();
+            await updateJobsAfterRolesCta();
+            document.querySelectorAll('.role-photo-card input[name="roles"]').forEach(cb => {
+                const lab = cb.closest('.role-photo-card');
+                if (lab) lab.classList.toggle('active', cb.checked);
+            });
+            syncJobsRoleMarqueeClones();
             loadPlatformPricing(); // ← fetch prices from Supabase
 
             // Auto-read ?ref= URL param → pre-fill referral code
@@ -2290,6 +2574,22 @@
                     if (note) note.style.display = 'none';
                 });
             }
+
+            // Tras login/signup con login.html?redirect=jobs — limpiar ?from_auth= y llevar al flujo de solicitud (configurar perfil / plan)
+            (function () {
+                try {
+                    const p = new URLSearchParams(window.location.search);
+                    if (p.get('from_auth') !== '1') return;
+                    p.delete('from_auth');
+                    const qs = p.toString();
+                    const nu = window.location.pathname + (qs ? '?' + qs : '') + window.location.hash;
+                    window.history.replaceState(null, '', nu);
+                    setTimeout(function () {
+                        const el = document.getElementById('selection-screen');
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 400);
+                } catch (e) { void e; }
+            })();
         });
 
         // ── Billing period toggle ────────────────────────────────────
@@ -2408,7 +2708,7 @@
             }
 
             // Success — hide gate, show plan selector
-            onGateSuccess();
+            await onGateSuccess();
         }
 
         // ── Gate: LOGIN ──────────────────────────────────────────────
@@ -2431,17 +2731,18 @@
             }
 
             // Success
-            onGateSuccess();
+            await onGateSuccess();
         }
 
         // ── After successful auth: hide gate, reveal form ────────────
-        function onGateSuccess() {
+        async function onGateSuccess() {
             const gate = document.getElementById('auth-gate');
             const selection = document.getElementById('selection-screen');
             if (gate) gate.style.display = 'none';
             if (selection) selection.style.display = '';
-            updateHeaderAuth();
-            prefillProfileForm(); // Load existing data if any
+            await updateHeaderAuth();
+            await prefillProfileForm();
+            await updateJobsAfterRolesCta();
         }
 
 
@@ -2492,14 +2793,14 @@
                     });
                 }
 
-                // ── Roles (checkboxes) ───────────────────────────────
+                // ── Roles (checkboxes) — sincronizar tarjeta con foto (.active)
                 if (p.roles) {
                     const roles = Array.isArray(p.roles) ? p.roles : p.roles.split(',');
                     document.querySelectorAll('input[name="roles"]').forEach(cb => {
                         if (roles.map(r => r.trim().toUpperCase()).includes(cb.value.toUpperCase())) {
                             cb.checked = true;
-                            // Trigger visual highlight if the card has toggle logic
-                            cb.closest('.role-pro-card')?.classList.add('selected');
+                            const card = cb.closest('.role-photo-card');
+                            if (card) card.classList.add('active');
                         }
                     });
                 }
@@ -2572,25 +2873,104 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // ── Role Card Toggle + Profile Persistence ────────────────
-        function toggleRole(label) {
-            const cb = label.querySelector('input[type="checkbox"]');
-            if (!cb) return;
-            cb.checked = !cb.checked;
-            label.classList.toggle('active', cb.checked);
+        window.jobsRoleCarouselScroll = function (dir) {
+            var el = document.getElementById('jobs-role-carousel');
+            if (!el || el.classList.contains('jobs-role-carousel--marquee')) return;
+            var step = Math.min(360, Math.max(220, Math.floor(el.clientWidth * 0.72) + 16));
+            el.scrollBy({ left: dir * step, behavior: 'smooth' });
+        };
 
-            // Persist roles immediately to dj_profiles if the user is already logged in
+        // ── Role photo cards: clic en la foto = checkbox nativo (un solo toggle) + persistencia ──
+        function persistJobRolesToProfile() {
             const selectedRoles = Array.from(document.querySelectorAll('input[name="roles"]:checked')).map(c => c.value);
-
             supabase.auth.getSession().then(({ data: { session } }) => {
-                if (!session) return; // Not logged in yet — roles will be saved at form submit
+                if (!session) return;
                 supabase
                     .from('dj_profiles')
                     .update({ roles: selectedRoles.join(', ') })
                     .eq('user_id', session.user.id)
                     .then(({ error }) => {
                         if (error) console.warn('Role save error:', error.message);
+                        void updateJobsAfterRolesCta();
                     });
+            });
+        }
+
+        function syncJobsRoleMarqueeClones() {
+            const wrap = document.getElementById('jobs-role-carousel');
+            if (!wrap || wrap.dataset.marqueeReady !== '1') return;
+            const t0 = wrap.querySelector('.jobs-role-carousel-track:not(.jobs-role-carousel-track--marquee-clone)');
+            const t1 = wrap.querySelector('.jobs-role-carousel-track--marquee-clone');
+            if (!t0 || !t1) return;
+            t0.querySelectorAll('.role-photo-card').forEach((a) => {
+                const role = a.getAttribute('data-role');
+                if (!role) return;
+                const b = t1.querySelector('.role-photo-card[data-role="' + role + '"]');
+                if (b) b.classList.toggle('active', a.classList.contains('active'));
+            });
+        }
+
+        function initJobsRoleMarquee() {
+            const wrap = document.getElementById('jobs-role-carousel');
+            if (!wrap || wrap.dataset.marqueeReady === '1') return;
+            const track = wrap.querySelector('.jobs-role-carousel-track');
+            if (!track) return;
+
+            const anim = document.createElement('div');
+            anim.className = 'jobs-role-marquee-anim';
+            anim.setAttribute('role', 'presentation');
+
+            track.parentNode.insertBefore(anim, track);
+            anim.appendChild(track);
+
+            const clone = track.cloneNode(true);
+            clone.classList.add('jobs-role-carousel-track--marquee-clone');
+            clone.setAttribute('aria-hidden', 'true');
+            clone.querySelectorAll('label.role-photo-card').forEach((lab) => {
+                const role = lab.getAttribute('data-role');
+                const div = document.createElement('div');
+                div.className = lab.className;
+                div.setAttribute('data-role', role || '');
+                div.setAttribute('role', 'button');
+                div.tabIndex = 0;
+                div.innerHTML = lab.innerHTML;
+                const inp = div.querySelector('input');
+                if (inp) inp.remove();
+                div.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const o = track.querySelector('.role-photo-card[data-role="' + role + '"] input');
+                    if (o) {
+                        o.checked = !o.checked;
+                        o.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+                div.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        div.click();
+                    }
+                });
+                lab.replaceWith(div);
+            });
+            anim.appendChild(clone);
+
+            wrap.classList.add('jobs-role-carousel--marquee');
+            const shell = wrap.closest('.jobs-role-carousel-shell');
+            if (shell) shell.classList.add('jobs-role-carousel-shell--marquee');
+            wrap.dataset.marqueeReady = '1';
+        }
+
+        function initRolePhotoCardPickers() {
+            document.querySelectorAll('.role-photo-card input[name="roles"]').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const label = cb.closest('.role-photo-card');
+                    if (label) label.classList.toggle('active', cb.checked);
+                    syncJobsRoleMarqueeClones();
+                    persistJobRolesToProfile();
+                    void updateJobsAfterRolesCta();
+                });
+                const label = cb.closest('.role-photo-card');
+                if (label) label.classList.toggle('active', cb.checked);
             });
         }
 
@@ -3185,9 +3565,6 @@
             }; // end submitProForm
         }  // end if(form)
     </script>
-    <link rel="stylesheet" href="./mdj-assistant.css" />
-    <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
-
 
     <script>
         // ── Hero: Carga configuración desde platform_settings (Admin Manager) ──────
@@ -3292,9 +3669,9 @@
     <script src="./auth.js"></script>
 
     <script src="./header-smart-search.js?v=20260411-search-google"></script>
-    <script src="./mdj-shared-header.js?v=20260411-avatar-profileid"></script>
+    <script src="./mdj-shared-header.js?v=20260413-auth-state-header"></script>
     <script src="./mdj-profile-nav-context.js?v=20260412b"></script>
-  <script src="./mdj-social-bar.js?v=20260411-14"></script>
+  <script src="./mdj-social-bar.js?v=20260413-scrollhide"></script>
 </body>
 
 </html>

@@ -368,7 +368,7 @@
                     const dj = params.get('dj');
                     const profileId = params.get('id');
 
-                    let finalUrl = `./${redirect}.html?`;
+                    let finalUrl = `./${redirect}.html?from_auth=1&`;
                     if (lead) finalUrl += `lead=${encodeURIComponent(lead)}&`;
                     if (eventType) finalUrl += `type=${encodeURIComponent(eventType)}&`;
                     if (ref) finalUrl += `ref=${encodeURIComponent(ref)}&`;
@@ -413,8 +413,8 @@
     </div>
 
     <script src="./header-smart-search.js?v=20260411-search-google"></script>
-    <script src="./mdj-shared-header.js?v=20260411-avatar-profileid"></script>
-  <script src="./mdj-social-bar.js?v=20260411-14"></script>
+    <script src="./mdj-shared-header.js?v=20260413-auth-state-header"></script>
+  <script src="./mdj-social-bar.js?v=20260413-scrollhide"></script>
 </body>
 
 </html>

@@ -2577,9 +2577,22 @@
                 }
             }
 
-            // 🛡️ FIREWALL MODO MILITAR: Expulsar si no hay entidad
+            // Sin fila en dj_profiles para targetId: solo redirigir a portal/cuenta si el visitante es el dueño de ese id (evita confundir con otro DJ borrado o id inválido).
             if (!p) {
-                window.location.replace('./index.html');
+                if (session && session.user.id === targetId) {
+                    var __cp = null;
+                    try {
+                        var __cr = await db.from('client_profiles').select('user_id').eq('user_id', session.user.id).maybeSingle();
+                        __cp = __cr && __cr.data;
+                    } catch (e0) { void e0; }
+                    if (__cp && __cp.user_id) {
+                        window.location.replace('./client-portal.html');
+                    } else {
+                        window.location.replace('./account-settings.html');
+                    }
+                } else {
+                    window.location.replace('./index.html');
+                }
                 return;
             }
 
@@ -9191,8 +9204,8 @@
     <script src="./monetization.js?v=20260422-sft-math"></script>
 
     <script src="./header-smart-search.js?v=20260412-profile"></script>
-    <script src="./mdj-shared-header.js?v=20260412-profile"></script>
-  <script src="./mdj-social-bar.js?v=20260412-profile"></script>
+    <script src="./mdj-shared-header.js?v=20260413-owner-missing-profile"></script>
+  <script src="./mdj-social-bar.js?v=20260413-scrollhide"></script>
 </body>
 
 </html>

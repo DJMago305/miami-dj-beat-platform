@@ -116,6 +116,22 @@
             box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
             opacity: 1;
         }
+        /* Tablet + móvil: ocultar al hacer scroll, reaparecer al parar (ver initSocialBarScrollHide) */
+        @media (max-width: 1024px) {
+            .social-sticky-bar {
+                transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.28s ease;
+                will-change: transform;
+            }
+            .social-sticky-bar.social-sticky-bar--scroll-hidden {
+                pointer-events: none;
+                opacity: 0.92;
+            }
+        }
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .social-sticky-bar.social-sticky-bar--scroll-hidden {
+                transform: translateY(-50%) translateX(calc(100% + 32px));
+            }
+        }
         @media (max-width: 768px) {
             .social-sticky-bar {
                 top: auto;
@@ -128,6 +144,9 @@
                 max-height: calc(100vh - 120px);
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
+            }
+            .social-sticky-bar.social-sticky-bar--scroll-hidden {
+                transform: translateX(calc(100% + 36px));
             }
             .social-sticky-bar .mdj-sticky-chip {
                 width: 36px;
@@ -173,6 +192,50 @@
     </div>
     `;
         document.body.insertAdjacentHTML('beforeend', socialHTML);
+        initSocialBarScrollHide();
+    }
+
+    /** Móvil y tablet (≤1024px): esconde la barra a la derecha mientras hay scroll; vuelve al parar. */
+    function initSocialBarScrollHide() {
+        const bar = document.getElementById('mdj-social-sticky-bar');
+        if (!bar) return;
+
+        const mq = window.matchMedia('(max-width: 1024px)');
+        let idleTimer = null;
+        const IDLE_MS = 200;
+
+        function showBar() {
+            bar.classList.remove('social-sticky-bar--scroll-hidden');
+        }
+
+        function hideBar() {
+            bar.classList.add('social-sticky-bar--scroll-hidden');
+        }
+
+        function onScroll() {
+            if (!mq.matches) {
+                showBar();
+                return;
+            }
+            hideBar();
+            if (idleTimer) clearTimeout(idleTimer);
+            idleTimer = setTimeout(function () {
+                idleTimer = null;
+                showBar();
+            }, IDLE_MS);
+        }
+
+        function onResize() {
+            if (!mq.matches) showBar();
+        }
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onResize, { passive: true });
+        if (typeof mq.addEventListener === 'function') {
+            mq.addEventListener('change', onResize);
+        } else if (typeof mq.addListener === 'function') {
+            mq.addListener(onResize);
+        }
     }
 
     if (document.readyState === 'loading') {

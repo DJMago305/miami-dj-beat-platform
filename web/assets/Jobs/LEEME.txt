@@ -1,0 +1,52 @@
+Carpeta correcta para las fotos del carrusel "OPEN ROLES" (jobs.html)
+======================================================================
+
+Ruta en tu Mac (proyecto Miami DJ Beat):
+
+  miami-dj-beat-platform / web / assets / Jobs /
+
+Ahí es donde hiciste bien los cambios. Las fotos que ve la página son los archivos
+**.jpg** con el nombre de cada categoría (ver lista abajo).
+
+JPG vs SVG
+----------
+- El carrusel en la web usa solo **.jpg** (está definido así en jobs.html).
+- Los **.svg** en esta carpeta no se usan para el fondo de las tarjetas del carrusel;
+  puedes dejarlos o borrarlos si ya no los necesitas; no sustituyen al .jpg.
+
+Nombres exactos (mismo nombre = mismo archivo que pide la web):
+
+  DJ.jpg
+  MC.jpg
+  CANTANTE.jpg
+  LIVE_BAND.jpg
+  PERCUSIONISTA.jpg
+  SAXOFONISTA.jpg
+  VIOLINISTA.jpg
+  PAYASO.jpg
+  HORA_LOCA.jpg
+  BARTENDER.jpg
+  MESERO.jpg
+  MANAGER_ARTISTICO.jpg
+  PRODUCTOR_MUSICAL.jpg
+  INFLUENCER_PROMOTOR.jpg
+
+Cómo volver a cambiar fotos en el futuro
+----------------------------------------
+1. Sustituye el archivo **.jpg** en esta misma carpeta (mismo nombre; sobreescribe).
+2. En el navegador: recarga forzada **Cmd+Shift+R** (Mac).
+3. Si aún ves la foto vieja: en **web/jobs.html** busca `assets/Jobs` y sube el número
+   **?v=** (ej. de ?v=4 a ?v=5) en las líneas del carrusel; eso obliga al navegador a
+   pedir la imagen otra vez.
+
+Probar que el archivo se sirve bien (servidor local desde carpeta web, puerto ej. 8000):
+
+  http://127.0.0.1:8000/assets/Jobs/DJ.jpg
+
+Si esa URL muestra tu foto nueva, la ruta y el nombre son correctos.
+
+Otros
+-----
+- Extensión debe ser **.jpg** como en la lista (no solo renombrar .png a .jpg sin convertir,
+  o puede verse mal en algunos navegadores).
+- Servidor local: ejecutar `python3 -m http.server` **desde la carpeta web**.
