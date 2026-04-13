@@ -105,7 +105,7 @@ serve(async (req) => {
 
   const { data: dj, error: djErr } = await supabaseAdmin
     .from("dj_profiles")
-    .select("user_id, soundfortips_active")
+    .select("user_id, soundfortips_active, soundfortips_platform_fee_blocked")
     .eq("user_id", djId)
     .maybeSingle();
 
@@ -129,6 +129,19 @@ serve(async (req) => {
       status: 403,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+  }
+
+  if (dj.soundfortips_platform_fee_blocked === true) {
+    return new Response(
+      JSON.stringify({
+        error:
+          "This DJ must settle the SoundForTips platform fee on file (billing card). Try again later or use card tip if available.",
+      }),
+      {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 
   const { data: inserted, error: insErr } = await supabaseAdmin

@@ -3729,6 +3729,11 @@
                     <!-- SOUNDFORTIPS: instrucciones Zelle / Venmo / PayPal para fans (perfil público) -->
                     <div id="panel-soundfortips" class="acct-panel">
                         <h1 class="acct-h1">SoundForTips™ — dónde te pagan los fans</h1>
+                        <div id="cfg-sft-fee-alert" style="display:none;margin:0 0 18px;padding:14px 18px;border-radius:12px;border:1px solid rgba(239,68,68,0.45);background:rgba(239,68,68,0.12);color:#fecaca;font-size:13px;line-height:1.5;">
+                            <strong>Comisión pendiente</strong> — no se pudo cobrar el 10% sobre tips manuales a tu tarjeta. Actualiza el método en <strong>Suscripción y pagos</strong> y pulsa «Liquidar ahora» abajo. Mientras tanto las nuevas peticiones públicas pueden estar bloqueadas.
+                            <div id="cfg-sft-fee-alert-detail" style="margin-top:8px;font-size:11px;opacity:0.9;"></div>
+                        </div>
+                        <p style="font-size:12px;color:rgba(255,255,255,0.45);margin:-8px 0 16px;">Sobre tips <strong>manuales</strong> (Zelle/Venmo/PayPal), Miami DJ Beat cobra un <strong>10%</strong> a tu tarjeta de facturación PRO al cerrar sesión de cabina (o al acumular el mínimo). Sin tarjeta válida, el importe se acumula hasta poder cobrarse.</p>
                         <p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 22px;max-width:640px;line-height:1.55;">
                             Esto es lo que verán en tu perfil cuando elijan <strong>Zelle</strong>, <strong>Venmo</strong> o <strong>PayPal</strong> (transferencias manuales; la web no cobra sola). Usa URLs completas, p. ej. <code style="color:#c5a059;">https://venmo.com/u/tuusuario</code>. Evita abrir solo <code style="color:rgba(255,255,255,0.4);">account.venmo.com</code> sin perfil — suele dar 404.
                         </p>
@@ -3751,8 +3756,9 @@
                                 <textarea id="cfg-sft-pay-paypal" rows="3"
                                     style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.35);color:#fff;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
                             </div>
-                            <div style="padding:16px 24px 22px;border-top:1px solid rgba(255,255,255,0.05);">
+                            <div style="padding:16px 24px 22px;border-top:1px solid rgba(255,255,255,0.05);display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
                                 <button type="button" class="acct-btn-primary" id="btn-save-sft-pay" onclick="saveSftFanPaymentInstructions(event)">Guardar instrucciones de cobro</button>
+                                <button type="button" class="acct-edit" id="btn-sft-settle-fee" onclick="retrySftManualFeeSettlement(event)">Liquidar comisión ahora (tarjeta)</button>
                             </div>
                         </div>
                     </div>
@@ -4578,6 +4584,23 @@
             set('cfg-sft-pay-zelle', p.sft_pay_zelle_instructions != null ? String(p.sft_pay_zelle_instructions) : '');
             set('cfg-sft-pay-venmo', p.sft_pay_venmo_instructions != null ? String(p.sft_pay_venmo_instructions) : '');
             set('cfg-sft-pay-paypal', p.sft_pay_paypal_instructions != null ? String(p.sft_pay_paypal_instructions) : '');
+            (function hydrateSftFeeAlert() {
+                var box = document.getElementById('cfg-sft-fee-alert');
+                var det = document.getElementById('cfg-sft-fee-alert-detail');
+                if (!box) return;
+                var blocked = p.soundfortips_platform_fee_blocked === true;
+                var pend = Number(p.sft_manual_fee_pending_cents) || 0;
+                var err = p.sft_platform_fee_last_error != null ? String(p.sft_platform_fee_last_error) : '';
+                if (blocked) {
+                    box.style.display = 'block';
+                    if (det) {
+                        det.textContent = (err ? err + ' · ' : '') + 'Pendiente acumulado: ~$' + (pend / 100).toFixed(2);
+                    }
+                } else {
+                    box.style.display = 'none';
+                    if (det) det.textContent = '';
+                }
+            })();
             set('cfg-photo-url', p.photo_url);
             set('cfg-bg-url', p.background_url || p.cover_url);
             (function initHeroCoverFromProfile() {
@@ -4732,6 +4755,36 @@
                 alert('No se pudo guardar. Revisa la sesión e inténtalo de nuevo.');
             } finally {
                 if (btn) { btn.disabled = false; btn.textContent = 'Guardar instrucciones de cobro'; }
+            }
+        }
+
+        async function retrySftManualFeeSettlement(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            if (!sb) return;
+            const btn = document.getElementById('btn-sft-settle-fee');
+            if (btn) { btn.disabled = true; btn.textContent = 'Procesando...'; }
+            try {
+                const res = await sb.functions.invoke('settle-sft-manual-platform-fee', { body: {} });
+                if (res.error) throw res.error;
+                const d = res.data || {};
+                if (d.blocked === true) {
+                    alert('No se pudo cobrar la comisión. Revisa la tarjeta en Suscripción y pagos.');
+                } else if (d.charged === true && d.fee_cents != null) {
+                    alert('Comisión liquidada: $' + (Number(d.fee_cents) / 100).toFixed(2) + ' USD.');
+                } else if (d.reason === 'below_minimum' && d.accumulated_cents != null) {
+                    alert('Aún no alcanza el mínimo de cargo (~$0.50). Acumulado: $' + (Number(d.accumulated_cents) / 100).toFixed(2));
+                } else if (d.needs_payment_method === true || d.needs_stripe_customer === true) {
+                    alert('Necesitas una tarjeta en la cuenta (Suscripción y pagos / Stripe).');
+                } else if (d.message) {
+                    alert(String(d.message));
+                }
+                await loadSettingsForm();
+            } catch (err) {
+                console.warn('[retrySftManualFeeSettlement]', err);
+                alert('Error al liquidar. Intenta de nuevo.');
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = 'Liquidar comisión ahora (tarjeta)'; }
             }
         }
 

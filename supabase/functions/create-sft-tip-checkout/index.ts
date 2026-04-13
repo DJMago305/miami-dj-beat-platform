@@ -110,7 +110,7 @@ serve(async (req) => {
 
   const { data: dj, error: djErr } = await supabaseAdmin
     .from("dj_profiles")
-    .select("user_id, soundfortips_active")
+    .select("user_id, soundfortips_active, soundfortips_platform_fee_blocked")
     .eq("user_id", djId)
     .maybeSingle();
 
@@ -134,6 +134,15 @@ serve(async (req) => {
       status: 403,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+  }
+
+  if (dj.soundfortips_platform_fee_blocked === true) {
+    return new Response(
+      JSON.stringify({
+        error: "DJ must settle platform fee (billing card) before accepting new SoundForTips.",
+      }),
+      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 
   const song = String(body.song ?? "").slice(0, 500);
@@ -182,6 +191,8 @@ serve(async (req) => {
     "metadata[sft_request_id]": requestId,
     "metadata[dj_user_id]": djId,
     "metadata[product]": "soundfortips_tip",
+    /** Contabilidad: el cargo completo entra en la cuenta Stripe de la plataforma; fee al DJ/liquidar vía Connect si se activa. */
+    "metadata[platform_fee_bps_note]": "1000",
   };
 
   if (emailInsert) {

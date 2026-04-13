@@ -8084,6 +8084,32 @@
                     window.loadFlowData((rs2 && rs2.value) ? rs2.value : '30d', window.currentProfileDJId);
                 }
             }, 900);
+            setTimeout(function () {
+                if (typeof window.sftInvokeSettleManualPlatformFee === 'function') {
+                    window.sftInvokeSettleManualPlatformFee();
+                }
+            }, 450);
+        };
+
+        /** Tras cerrar cabina: liquida comisión 10% sobre tips manuales (cargo a tarjeta Stripe del DJ). */
+        window.sftInvokeSettleManualPlatformFee = function sftInvokeSettleManualPlatformFee() {
+            var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+            if (!sb) return;
+            sb.functions.invoke('settle-sft-manual-platform-fee', { body: {} }).then(function (res) {
+                if (res.error) {
+                    console.warn('[SFT settle platform fee]', res.error.message || res.error);
+                    return;
+                }
+                var d = res.data;
+                if (!d || typeof d !== 'object') return;
+                if (d.blocked === true) {
+                    try {
+                        alert('No se pudo cobrar la comisión de plataforma (10%) sobre tips manuales a tu tarjeta. Actualiza el pago en Dashboard → CONFIG → Suscripción y pagos. Las nuevas peticiones SoundForTips quedan bloqueadas hasta regularizar.');
+                    } catch (eA) { void eA; }
+                }
+            }).catch(function (e) {
+                console.warn('[SFT settle platform fee]', e);
+            });
         };
 
         window._sftNightLogSinceMode = '24h';
