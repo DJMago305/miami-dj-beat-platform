@@ -1,5 +1,9 @@
 -- Liquidación comisión plataforma (10%) sobre propinas manuales aceptadas; cargo Stripe al DJ.
 
+-- Si en PROD no se aplicó aún 20260417100000_soundfortips_stripe_payment.sql, hace falta payment_channel para el índice:
+ALTER TABLE public.soundfortips_fan_requests
+  ADD COLUMN IF NOT EXISTS payment_channel text NOT NULL DEFAULT 'manual';
+
 ALTER TABLE public.soundfortips_fan_requests
   ADD COLUMN IF NOT EXISTS manual_platform_fee_settled_at timestamptz;
 
