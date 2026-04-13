@@ -3278,6 +3278,14 @@
                             </svg>
                             Suscripción y pagos
                         </button>
+                        <button class="acct-side-link" onclick="showPanel('soundfortips',this)">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path d="M12 2v4M8 6h8M6 10h12v10a2 2 0 01-2 2H8a2 2 0 01-2-2V10z" />
+                                <path d="M9 14h6M9 18h4" />
+                            </svg>
+                            SoundForTips · Cobros
+                        </button>
                         <button class="acct-side-link" onclick="showPanel('devices',this)">
                             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
                                 viewBox="0 0 24 24">
@@ -3714,6 +3722,37 @@
                                     <p style="font-size:11px;color:rgba(255,255,255,0.35);margin:10px 0 0;line-height:1.45;">Una estación de trabajo por licencia. El código se asigna al activar PRO; contacta soporte si cambias de equipo.</p>
                                 </div>
                                 <button type="button" class="acct-edit" id="pro-hw-copy-btn" onclick="copyProHwToken(event)">Copiar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SOUNDFORTIPS: instrucciones Zelle / Venmo / PayPal para fans (perfil público) -->
+                    <div id="panel-soundfortips" class="acct-panel">
+                        <h1 class="acct-h1">SoundForTips™ — dónde te pagan los fans</h1>
+                        <p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 22px;max-width:640px;line-height:1.55;">
+                            Esto es lo que verán en tu perfil cuando elijan <strong>Zelle</strong>, <strong>Venmo</strong> o <strong>PayPal</strong> (transferencias manuales; la web no cobra sola). Usa URLs completas, p. ej. <code style="color:#c5a059;">https://venmo.com/u/tuusuario</code>. Evita abrir solo <code style="color:rgba(255,255,255,0.4);">account.venmo.com</code> sin perfil — suele dar 404.
+                        </p>
+                        <div class="acct-card">
+                            <div style="padding:18px 24px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <div class="acct-lbl">Zelle</div>
+                                <p style="font-size:11px;color:rgba(255,255,255,0.38);margin:4px 0 10px;">Email o teléfono de negocio, memo sugerido (mesa + nombre artístico).</p>
+                                <textarea id="cfg-sft-pay-zelle" rows="4"
+                                    style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.35);color:#fff;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
+                            </div>
+                            <div style="padding:18px 24px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <div class="acct-lbl">Venmo</div>
+                                <p style="font-size:11px;color:rgba(255,255,255,0.38);margin:4px 0 10px;">Enlace al perfil o @handle (una línea o varias).</p>
+                                <textarea id="cfg-sft-pay-venmo" rows="3"
+                                    style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.35);color:#fff;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
+                            </div>
+                            <div style="padding:18px 24px 8px;">
+                                <div class="acct-lbl">PayPal / PayPal.me</div>
+                                <p style="font-size:11px;color:rgba(255,255,255,0.38);margin:4px 0 10px;">Email de PayPal o enlace PayPal.me.</p>
+                                <textarea id="cfg-sft-pay-paypal" rows="3"
+                                    style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.35);color:#fff;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
+                            </div>
+                            <div style="padding:16px 24px 22px;border-top:1px solid rgba(255,255,255,0.05);">
+                                <button type="button" class="acct-btn-primary" id="btn-save-sft-pay" onclick="saveSftFanPaymentInstructions(event)">Guardar instrucciones de cobro</button>
                             </div>
                         </div>
                     </div>
@@ -4536,6 +4575,9 @@
             set('cfg-twitter', p.twitter_url);
             set('cfg-facebook', p.facebook_url);
             set('cfg-website', p.website_url);
+            set('cfg-sft-pay-zelle', p.sft_pay_zelle_instructions != null ? String(p.sft_pay_zelle_instructions) : '');
+            set('cfg-sft-pay-venmo', p.sft_pay_venmo_instructions != null ? String(p.sft_pay_venmo_instructions) : '');
+            set('cfg-sft-pay-paypal', p.sft_pay_paypal_instructions != null ? String(p.sft_pay_paypal_instructions) : '');
             set('cfg-photo-url', p.photo_url);
             set('cfg-bg-url', p.background_url || p.cover_url);
             (function initHeroCoverFromProfile() {
@@ -4662,6 +4704,34 @@
             } else if (rb) {
                 var wv = p.wallet_balance != null ? p.wallet_balance : (p.rewards_balance != null ? p.rewards_balance : p.referral_credits);
                 rb.textContent = '$' + (Number(wv) || 0).toFixed(2);
+            }
+        }
+
+        /** SoundForTips: Zelle / Venmo / PayPal — texto que ve el fan en el perfil público (transferencias manuales). */
+        async function saveSftFanPaymentInstructions(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const btn = document.getElementById('btn-save-sft-pay');
+            if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
+            try {
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb) throw new Error('No client');
+                const { data: { session } } = await sb.auth.getSession();
+                if (!session) throw new Error('No session');
+                const z = (document.getElementById('cfg-sft-pay-zelle') && document.getElementById('cfg-sft-pay-zelle').value || '').trim();
+                const ve = (document.getElementById('cfg-sft-pay-venmo') && document.getElementById('cfg-sft-pay-venmo').value || '').trim();
+                const pa = (document.getElementById('cfg-sft-pay-paypal') && document.getElementById('cfg-sft-pay-paypal').value || '').trim();
+                const { error } = await sb.from('dj_profiles').update({
+                    sft_pay_zelle_instructions: z || null,
+                    sft_pay_venmo_instructions: ve || null,
+                    sft_pay_paypal_instructions: pa || null
+                }).eq('user_id', session.user.id);
+                if (error) throw error;
+                alert('Instrucciones de cobro guardadas. Se verán en tu perfil público al enviar propina (Zelle / Venmo / PayPal).');
+            } catch (err) {
+                console.warn('[dashboard] save SFT pay instructions', err);
+                alert('No se pudo guardar. Revisa la sesión e inténtalo de nuevo.');
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = 'Guardar instrucciones de cobro'; }
             }
         }
 
@@ -5396,8 +5466,23 @@
         document.addEventListener('DOMContentLoaded', () => {
             const qs = new URLSearchParams(window.location.search);
             const externalTab = (qs.get('tab') || '').trim();
+            const settingsPanel = (qs.get('panel') || '').trim();
             if (externalTab && typeof switchDashTab === 'function' && MDJ_DASH_TABS[externalTab]) {
-                setTimeout(() => switchDashTab(externalTab), 50);
+                setTimeout(() => {
+                    switchDashTab(externalTab);
+                    if (externalTab === 'settings' && settingsPanel && typeof showPanel === 'function') {
+                        var pid = settingsPanel.replace(/[^a-z0-9_-]/gi, '');
+                        if (!pid) return;
+                        var hitBtn = null;
+                        document.querySelectorAll('.acct-side-link').forEach(function (b) {
+                            var oc = b.getAttribute('onclick') || '';
+                            if (oc.indexOf("showPanel('" + pid + "'") !== -1 || oc.indexOf('showPanel("' + pid + '"') !== -1) {
+                                hitBtn = b;
+                            }
+                        });
+                        showPanel(pid, hitBtn);
+                    }
+                }, 80);
             }
         });
     </script>
