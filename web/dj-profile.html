@@ -1909,6 +1909,19 @@
                     </div>
                 </div>
 
+                <!-- Instrucciones de pago manual (dueño PRO): el fan las ve al elegir Zelle / Venmo / PayPal -->
+                <div class="dj-card" id="sft-owner-pay-instructions-card" style="display:none;">
+                    <div class="dj-card-label" data-i18n="sft-owner-pay-card-title">Fan payments — Zelle / Venmo / PayPal</div>
+                    <p class="owner-wallet-sub" style="margin:0 0 10px;font-size:11px;line-height:1.45;" data-i18n="sft-owner-pay-card-lead">Fans see this when they pick each method. Use full URLs.</p>
+                    <label style="display:block;font-size:10px;font-weight:800;letter-spacing:0.06em;color:rgba(197,160,89,0.95);margin-bottom:4px;" data-i18n="sft-owner-pay-zelle-lbl">Zelle (business email/phone, memo…)</label>
+                    <textarea id="sft-owner-pay-zelle" rows="3" style="width:100%;box-sizing:border-box;margin-bottom:10px;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(0,0,0,0.35);color:#fff;font-size:12px;font-family:inherit;resize:vertical;" placeholder="e.g. Send to businessname@email.com — Memo: table + DJ"></textarea>
+                    <label style="display:block;font-size:10px;font-weight:800;letter-spacing:0.06em;color:rgba(197,160,89,0.95);margin-bottom:4px;" data-i18n="sft-owner-pay-venmo-lbl">Venmo (URL or @handle)</label>
+                    <textarea id="sft-owner-pay-venmo" rows="2" style="width:100%;box-sizing:border-box;margin-bottom:10px;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(0,0,0,0.35);color:#fff;font-size:12px;font-family:inherit;resize:vertical;" placeholder="https://venmo.com/u/your-handle or @YourVenmo"></textarea>
+                    <label style="display:block;font-size:10px;font-weight:800;letter-spacing:0.06em;color:rgba(197,160,89,0.95);margin-bottom:4px;" data-i18n="sft-owner-pay-paypal-lbl">PayPal / PayPal.me</label>
+                    <textarea id="sft-owner-pay-paypal" rows="2" style="width:100%;box-sizing:border-box;margin-bottom:12px;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(0,0,0,0.35);color:#fff;font-size:12px;font-family:inherit;resize:vertical;" placeholder="PayPal.me/yourname or email"></textarea>
+                    <button type="button" id="sft-owner-pay-save-btn" onclick="if(typeof window.sftSaveOwnerPaymentInstructions==='function')window.sftSaveOwnerPaymentInstructions();" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid rgba(197,160,89,0.45);background:linear-gradient(135deg,rgba(197,160,89,0.35),rgba(197,160,89,0.15));color:#f5e6c8;font-weight:900;font-size:12px;cursor:pointer;" data-i18n="sft-owner-pay-save">Save payment instructions</button>
+                </div>
+
                 <!-- Registro nocturno SOUNDFORTIPS (dueño): aceptadas / rechazadas / pendientes — sin email ni teléfono -->
                 <div class="dj-card" id="sft-night-log-card" style="display:none;">
                     <div class="dj-card-label">REGISTRO DE LA NOCHE · SOUNDFORTIPS</div>
@@ -2584,7 +2597,7 @@
                 p = data;
             } catch (err) {
                 // Fallback select with guaranteed columns + new fallback URLs
-                const { data: pBasic, error: errBasic } = await db.from('dj_profiles').select('id, user_id, dj_name, photo_url, role, bio_en, bio, bio_short, bio_long, stage_name, full_name, verified, plan, available, soundfortips_active, social_instagram, social_tiktok, social_youtube, social_facebook, social_soundcloud, social_mixcloud, social_spotify, social_apple, social_web, background_url, photo_focal_x, photo_focal_y, hero_bg_zoom, instagram_url, facebook_url, tiktok_url, youtube_url, website_url, soundcloud_url, spotify_url, apple_music_url').eq('user_id', targetId).single();
+                const { data: pBasic, error: errBasic } = await db.from('dj_profiles').select('id, user_id, dj_name, photo_url, role, bio_en, bio, bio_short, bio_long, stage_name, full_name, verified, plan, available, soundfortips_active, social_instagram, social_tiktok, social_youtube, social_facebook, social_soundcloud, social_mixcloud, social_spotify, social_apple, social_web, background_url, photo_focal_x, photo_focal_y, hero_bg_zoom, instagram_url, facebook_url, tiktok_url, youtube_url, website_url, soundcloud_url, spotify_url, apple_music_url, sft_pay_zelle_instructions, sft_pay_venmo_instructions, sft_pay_paypal_instructions').eq('user_id', targetId).single();
                 if (!errBasic && pBasic) {
                     p = pBasic;
                 }
@@ -2594,6 +2607,10 @@
             if (!p) {
                 window.location.replace('./index.html');
                 return;
+            }
+
+            if (typeof window.sftSetProfilePaymentInstructions === 'function') {
+                window.sftSetProfilePaymentInstructions(p);
             }
 
             // Cabina / cola / wallet SFT: solo PRO de pago (ver mdbProfileSoundForTipsEligible).
@@ -2845,6 +2862,18 @@
 
                 const oc = document.getElementById('owner-actions-card');
                 if (oc) oc.style.display = isOwner ? 'flex' : 'none';
+
+                const spic = document.getElementById('sft-owner-pay-instructions-card');
+                if (spic) {
+                    if (isOwner && window._mdjSftProAllowed) {
+                        spic.style.display = 'block';
+                        if (typeof window.sftSetProfilePaymentInstructions === 'function' && typeof p !== 'undefined' && p) {
+                            window.sftSetProfilePaymentInstructions(p);
+                        }
+                    } else {
+                        spic.style.display = 'none';
+                    }
+                }
 
                 const owc = document.getElementById('owner-wallet-card');
                 const owb = document.getElementById('owner-wallet-balance');
@@ -7025,20 +7054,92 @@
         let activeRequestInfo = {}; // Stores song details for queue
         let queueCount = 0;
 
-        /** Texto HTML: a dónde envía el cliente la propina (configura por marca / evento). */
+        /** Texto HTML por defecto si el DJ no guardó instrucciones en su perfil (columnas sft_pay_*). */
         window.MDB_SFT_PAY_RECIPIENTS = window.MDB_SFT_PAY_RECIPIENTS || {
-            Zelle: '<strong>Zelle</strong> — Use the Miami DJ Beat business address provided at the venue or on printed materials. Memo: table + DJ name.',
-            Venmo: '<strong>Venmo</strong> — Pay the official @handle published for the event (override <strong>MDB_SFT_PAY_RECIPIENTS</strong> in your site script).',
-            PayPal: '<strong>PayPal</strong> — Friends &amp; family to the PayPal email or PayPal.me link published for Miami DJ Beat.',
+            Zelle: '<strong>Zelle</strong> — Use the Miami DJ Beat business address provided at the venue or on printed materials. Memo: table + DJ name. <span style="opacity:0.85">(The DJ can set exact Zelle details in the owner sidebar.)</span>',
+            Venmo: '<strong>Venmo</strong> — Ask the DJ for their Venmo profile link. Use a full URL like <strong>https://venmo.com/u/yourname</strong> — the bare <strong>account.venmo.com</strong> page often 404s.',
+            PayPal: '<strong>PayPal</strong> — Friends &amp; family to the PayPal email or PayPal.me link the DJ publishes in their profile.',
             Tarjeta: '<strong>Card (Stripe)</strong> — Secure checkout. Your request reaches the DJ <em>after</em> payment. If the DJ declines, the card charge is refunded automatically.'
+        };
+
+        /** Texto plano del perfil → HTML seguro (saltos de línea + enlaces http(s)). */
+        window.sftFormatPlainPayCopy = function (raw) {
+            if (raw == null || !String(raw).trim()) return '';
+            var s = String(raw);
+            var esc = s
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+            esc = esc.replace(/\r\n/g, '\n').replace(/\n/g, '<br>');
+            esc = esc.replace(/(https?:\/\/[^\s<"&]+)/gi, function (m) {
+                return '<a href="' + m + '" target="_blank" rel="noopener noreferrer" style="color:#c5a059;font-weight:700;text-decoration:underline;">' + m + '</a>';
+            });
+            return esc;
+        };
+
+        window.__sftProfilePayInstructions = window.__sftProfilePayInstructions || { Zelle: '', Venmo: '', PayPal: '', Tarjeta: '' };
+
+        window.sftSetProfilePaymentInstructions = function (prof) {
+            if (!prof) return;
+            var z = prof.sft_pay_zelle_instructions != null ? String(prof.sft_pay_zelle_instructions).trim() : '';
+            var v = prof.sft_pay_venmo_instructions != null ? String(prof.sft_pay_venmo_instructions).trim() : '';
+            var pp = prof.sft_pay_paypal_instructions != null ? String(prof.sft_pay_paypal_instructions).trim() : '';
+            window.__sftProfilePayInstructions = { Zelle: z, Venmo: v, PayPal: pp, Tarjeta: '' };
+            var ez = document.getElementById('sft-owner-pay-zelle');
+            var ev = document.getElementById('sft-owner-pay-venmo');
+            var ep = document.getElementById('sft-owner-pay-paypal');
+            if (ez) ez.value = z;
+            if (ev) ev.value = v;
+            if (ep) ep.value = pp;
+            if (typeof sftSyncPayInstructionPanel === 'function') sftSyncPayInstructionPanel();
+        };
+
+        function sftHtmlForPaymentMethod(method) {
+            var ov = window.__sftProfilePayInstructions || {};
+            var custom = ov[method] != null ? String(ov[method]).trim() : '';
+            if (custom && window.sftFormatPlainPayCopy) {
+                var built = window.sftFormatPlainPayCopy(custom);
+                if (built) return built;
+            }
+            var def = window.MDB_SFT_PAY_RECIPIENTS[method];
+            if (!def) def = window.MDB_SFT_PAY_RECIPIENTS.Zelle;
+            return def;
+        }
+
+        window.sftSaveOwnerPaymentInstructions = async function () {
+            var btn = document.getElementById('sft-owner-pay-save-btn');
+            if (btn) btn.disabled = true;
+            try {
+                var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+                if (!sb) throw new Error('no client');
+                var sessRes = await sb.auth.getSession();
+                var session = sessRes && sessRes.data && sessRes.data.session;
+                if (!session) throw new Error('no session');
+                var z = (document.getElementById('sft-owner-pay-zelle') && document.getElementById('sft-owner-pay-zelle').value || '').trim();
+                var ve = (document.getElementById('sft-owner-pay-venmo') && document.getElementById('sft-owner-pay-venmo').value || '').trim();
+                var pa = (document.getElementById('sft-owner-pay-paypal') && document.getElementById('sft-owner-pay-paypal').value || '').trim();
+                var up = await sb.from('dj_profiles').update({
+                    sft_pay_zelle_instructions: z || null,
+                    sft_pay_venmo_instructions: ve || null,
+                    sft_pay_paypal_instructions: pa || null
+                }).eq('user_id', session.user.id);
+                if (up.error) throw up.error;
+                window.__sftProfilePayInstructions = { Zelle: z, Venmo: ve, PayPal: pa, Tarjeta: '' };
+                if (typeof sftSyncPayInstructionPanel === 'function') sftSyncPayInstructionPanel();
+                alert(typeof sftT === 'function' ? sftT('sft-owner-pay-saved', 'Payment instructions saved.') : 'Saved.');
+            } catch (e) {
+                console.warn('[SFT] save payment instructions', e);
+                alert(typeof sftT === 'function' ? sftT('sft-owner-pay-err', 'Could not save. Try again.') : 'Error.');
+            } finally {
+                if (btn) btn.disabled = false;
+            }
         };
 
         function sftSyncPayInstructionPanel() {
             var box = document.getElementById('sftPayRecipientBlock');
             if (!box || !window.MDB_SFT_PAY_RECIPIENTS) return;
-            var html = window.MDB_SFT_PAY_RECIPIENTS[sftSelectedPayment];
-            if (!html) html = window.MDB_SFT_PAY_RECIPIENTS.Zelle;
-            box.innerHTML = html;
+            box.innerHTML = sftHtmlForPaymentMethod(sftSelectedPayment);
         }
 
         function sftGoToStep2b() {
