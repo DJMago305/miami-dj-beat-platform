@@ -442,7 +442,8 @@
                 <a href="./dj-dashboard.html?tab=settings" class="dj-tab-btn" data-i18n="nav-settings">⚙️ CONFIG</a>
                 <a href="./academia.html" class="dj-tab-btn" data-i18n="nav-academia">Academia</a>
                 <a href="./dj-tools.html" class="dj-tab-btn" data-i18n="nav-tools">DJ Tools</a>
-                <a href="./dj-profile.html?tab=flow" class="dj-tab-btn" data-i18n="flow-dash">FLOW</a>
+                <a href="./weather-lab.html?tab=flow" class="dj-tab-btn" data-i18n="flow-dash"
+                    title="Cash Flow — same page (economic panel)">Cash Flow</a>
             </div>
         </nav>
         <!-- Pestañas internas del Weather Lab (agenda / reseñas / flujo) -->
@@ -453,7 +454,7 @@
                 <button type="button" class="dj-tab-btn dash-tab-btn" data-tab="influence"
                     onclick="switchDashTab('influence')">RESEÑAS</button>
                 <button type="button" class="dj-tab-btn dash-tab-btn" data-tab="flow"
-                    onclick="switchDashTab('flow')">💰 FLUJO DE CAJA</button>
+                    data-i18n="flow-weather-subtab" onclick="switchDashTab('flow')">💰 Cash Flow</button>
             </div>
         </nav>
         <style>
@@ -2193,12 +2194,27 @@
             </section>
         </div>
 
-        <!-- TAB 3: FLUJO (Professional Analytics Dashboard) -->
+        <!-- TAB 2: RESEÑAS (panel dedicado; contenido detallado vive en el perfil público) -->
+        <div id="tab-influence" class="dash-tab-panel">
+            <section style="padding: 48px 0;">
+                <div class="container">
+                    <h1 style="font-size: 22px; font-weight: 900; margin-bottom: 12px;">Reseñas</h1>
+                    <p style="color: rgba(255,255,255,0.55); max-width: 560px; line-height: 1.6;">
+                        Las opiniones de clientes se muestran en tu
+                        <a href="./dj-profile.html" style="color: var(--gold); font-weight: 800;">perfil público</a>.
+                        Esta pestaña confirma la sección; usa <strong>AGENDA</strong> para el calendario y
+                        <strong>Flujo de caja</strong> para ingresos y métricas.
+                    </p>
+                </div>
+            </section>
+        </div>
+
+        <!-- TAB 3: Cash Flow (economic analytics) -->
         <div id="tab-flow" class="dash-tab-panel">
             <section style="padding: 40px 0;">
                 <!-- LOCKED SECTION: DO NOT MODIFY -->
                 <div class="container">
-                    <h1 data-i18n="dash-flow-title">FLOW</h1>
+                    <h1 data-i18n="dash-flow-title">Cash Flow</h1>
 
                     <!-- ── VISIBILIDAD EN BÚSQUEDAS (Moved here) ────── -->
                     <div class="admin-card" id="visibility-card"
@@ -2288,10 +2304,7 @@
                     </p>
                     <a href="./account-settings.html#plan" class="btn primary">Obtener Acceso PRO →</a>
                 </div>
-        </div>
-
-        </div>
-        </section>
+            </section>
         </div>
 
         <!-- ══ PAYMENT MODAL ═════════════════════════════════════════ -->
@@ -3546,17 +3559,27 @@
         }
         loadVisibilityStats();
 
+        var MDJ_WEATHER_TABS = { dashboard: 1, influence: 1, flow: 1, settings: 1 };
+
         function switchDashTab(tabId) {
+            if (!tabId || !MDJ_WEATHER_TABS[tabId]) return;
             document.querySelectorAll('.dash-tab-panel').forEach(p => p.classList.remove('active'));
-            // Support both old .dash-tab and new .dash-tab-btn classes
-            document.querySelectorAll('.dash-tab-btn, .dash-tab').forEach(t => {
-                const isActive = t.dataset.tab === tabId;
-                t.classList.toggle('active', isActive);
+            document.querySelectorAll('#weather-subtabs .dash-tab-btn[data-tab]').forEach(t => {
+                t.classList.toggle('active', t.getAttribute('data-tab') === tabId);
             });
             const panel = document.getElementById('tab-' + tabId);
             if (panel) panel.classList.add('active');
-            if (tabId === 'settings') loadSettingsForm();
+            if (tabId === 'settings' && typeof loadSettingsForm === 'function') loadSettingsForm();
+            if (tabId === 'flow' && window.loadFlowData) window.loadFlowData('30d');
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var qs = new URLSearchParams(window.location.search);
+            var externalTab = (qs.get('tab') || '').trim();
+            if (externalTab && MDJ_WEATHER_TABS[externalTab]) {
+                setTimeout(function () { switchDashTab(externalTab); }, 50);
+            }
+        });
 
         // ── Settings Sidebar Panels ────────────────────────────
         function showPanel(id, btn) {
@@ -4288,18 +4311,6 @@
                 }
             } catch (e) { }
         });
-
-        function switchDashTab(tabId) {
-            document.querySelectorAll('.dash-tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.dash-tab-panel').forEach(p => p.classList.remove('active'));
-            const targetBtn = document.querySelector(`.dash-tab-btn[data-tab="${tabId}"]`);
-            const targetPanel = document.getElementById(`tab-${tabId}`);
-            if (targetBtn) targetBtn.classList.add('active');
-            if (targetPanel) targetPanel.classList.add('active');
-            if (tabId === 'flow' && window.loadFlowData) {
-                window.loadFlowData('30d');
-            }
-        }
 
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

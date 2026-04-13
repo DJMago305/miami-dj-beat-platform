@@ -21,6 +21,13 @@ DO NOT:
 
 EDIT ONLY targeted blocks and specific functionalities as strictly instructed by the user. "Trust, but verify" before touching these files.
 
+# MANDATORY — selected zone only (no drive-by edits)
+
+- Work is allowed **only** in what the user **explicitly selects** for this task: named file(s), feature, component, or block.
+- **Forbidden:** moving, restyling, refactoring, or “finishing” **any** area the user did **not** ask to change — including layouts, copy, nav, shared JS/CSS, or sections that are **already done / locked / frozen**.
+- Do **not** “improve consistency”, dedupe, or tidy unrelated code as part of another task.
+- If you notice a problem **outside** the selected zone, **describe it** and wait for scope expansion; do **not** fix it silently.
+
 # DJ profile artist strip — do not touch (unless the user asks)
 
 The owner navigation bar on the DJ public profile is **finished and frozen**:
@@ -29,6 +36,23 @@ The owner navigation bar on the DJ public profile is **finished and frozen**:
 - **Styles:** rules in `web/styles.css` scoped with **`body.dj-profile .dj-owner-tabs`** (and children) that exist **only** for that strip.
 
 **Do not** change order, labels, sizing, spacing, wrapping, z-index, or structure of that bar **unless the user explicitly requests** a change to this bar. No drive-by tweaks or “consistency” edits elsewhere that alter this strip.
+
+# Artist nav context — satellite pages (`mdj_nav=profile`) — **SEALED / CONFIRMED**
+
+This chapter is **closed**. The dual-nav behavior (site “Home/Services…” vs artist strip) is **done**. Do **not** refactor, remove, or “simplify” it unless the user **explicitly** asks to change this flow.
+
+**Contract**
+
+- Query param: **`mdj_nav=profile`**. Artist links from profile/dashboard/academia strips to Jobs / Shop / DJ Tools / Agenda / etc. **must** preserve it. **`index.html` and public entry points do not** add it (normal site bar).
+- **Home** in the artist strip is **`./index.html` without** `mdj_nav` (returns to public site nav).
+
+**Implementation (do not rip out or merge casually)**
+
+- **`web/mdj-profile-nav-context.js`** — If URL has `mdj_nav=profile`: adds `body.mdj-from-profile`, **hides** `#mainHeader .header-bottom` (so the public nav row does not stack with the artist strip), patches cart/mobile links, injects **`#owner-tabs`** when missing. Loaded by **`web/jobs.html`**, **`web/shop.html`**, **`web/dj-tools.html`** — do not drop those script tags without a replacement plan.
+- **`web/styles.css`** — Rules grouping **`body.mdj-from-profile`** with **`body.dj-profile`** for the artist strip / hiding `#mainHeader .header-bottom`. Do not strip these selectors in a “cleanup”.
+- **Owner-strip `href`s** that append `mdj_nav=profile` live in **`web/dj-profile.html`**, **`web/dj-dashboard.html`**, **`web/academia.html`** (targeted link updates only; do not restructure the strips).
+
+**Do not** reintroduce a visible **`#mainHeader .header-bottom`** on those satellite pages when `mdj_nav=profile` is present (no duplicate bars).
 
 # Subscription tiers (product model — 3 types)
 
@@ -42,6 +66,10 @@ When reasoning about access, billing, badges, or “who sees what”, use this m
 2. **Artista (artist)** — DJ on the platform; base artist tier (non‑paid or included perks per product rules). Uses the **artistic profile** / artist flows where applicable.
 
 3. **Artista PRO / DJPRO** — **paid** subscription tier for artists (premium features, PRO badge, `plan=pro` flows where applicable).
+
+**SoundForTips™** — **paid DJ PRO only** (active MDJPRO subscription, not LITE). Do not treat it like general “artist features”; gate it with the same PRO/paid rules in UI and backend. **Cash Flow** (economic tab/panel for artists) is separate and may apply to all artist accounts unless product says otherwise.
+
+**SoundForTips implementation (keep aligned):** eligibility is enforced by Postgres `public.dj_soundfortips_plan_ok(uid)` (Edge: `register-sft-fan-request`, `send-sft-client-sms`; RPC: night log) and by `mdbProfileSoundForTipsEligible` in `web/dj-profile.html`. Use explicit PRO signals (`plan` PRO/ELITE, `plan_type` pro_monthly/pro_annual, or `is_premium`); do not grant SFT from generic `subscription_status` alone. If you change one side, update the other and add a migration.
 
 Do not collapse these into a generic “user” when the task is about permissions, paywalls, or copy.
 

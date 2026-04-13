@@ -1,6 +1,6 @@
 /**
  * FLOW HANDLER - Miami DJ Beat Professional Analytics (Influencer Style)
- * Responsable de la carga de datos financieros, eventos y renderizado de gráficas PRO.
+ * Carga datos financieros / eventos y gráficas para la pestaña Cash Flow (dueño del perfil; LITE o PRO). SoundForTips™ es otra superficie (solo MDJPRO de pago).
  */
 
 let flowCharts = { timeline: null, activity: null, distribution: null };

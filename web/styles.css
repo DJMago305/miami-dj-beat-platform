@@ -5034,13 +5034,16 @@ svg {
 }
 
 /* Perfil DJ + hub Academia + cursos/biblioteca artista: sin #mainNav — barra artística */
+/* mdj-from-profile: Jobs/Shop/DJ Tools con ?mdj_nav=profile (misma barra que perfil) */
 body.dj-profile,
+body.mdj-from-profile,
 body.mdj-academia-hub,
 body.mdj-artist-academy {
   --header-nav-band: 0px;
 }
 
 body.dj-profile #mainHeader .header-bottom,
+body.mdj-from-profile #mainHeader .header-bottom,
 body.mdj-academia-hub #mainHeader .header-bottom,
 body.mdj-artist-academy #mainHeader .header-bottom {
   display: none !important;
@@ -5048,6 +5051,7 @@ body.mdj-artist-academy #mainHeader .header-bottom {
 
 /* Barra artística: tipografía legible; 2ª línea solo si falta ancho */
 body.dj-profile .dj-owner-tabs,
+body.mdj-from-profile .dj-owner-tabs,
 body.mdj-academia-hub .dj-owner-tabs,
 body.mdj-artist-academy .dj-owner-tabs {
   position: sticky;
@@ -5058,6 +5062,7 @@ body.mdj-artist-academy .dj-owner-tabs {
 
 /* Una sola fila: scroll horizontal suave (perfil, academia, dashboard, cursos…) */
 body.dj-profile .dj-owner-tabs .container,
+body.mdj-from-profile .dj-owner-tabs .container,
 body.mdj-academia-hub .dj-owner-tabs .container,
 body.mdj-artist-academy .dj-owner-tabs .container {
   flex-wrap: nowrap;
@@ -5077,6 +5082,8 @@ body.mdj-artist-academy .dj-owner-tabs .container {
 
 body.dj-profile .dj-owner-tabs .dj-tab-btn,
 body.dj-profile .dj-owner-tabs .dj-owner-academy-btn,
+body.mdj-from-profile .dj-owner-tabs .dj-tab-btn,
+body.mdj-from-profile .dj-owner-tabs .dj-owner-academy-btn,
 body.mdj-academia-hub .dj-owner-tabs .dj-tab-btn,
 body.mdj-academia-hub .dj-owner-tabs .dj-owner-academy-btn,
 body.mdj-artist-academy .dj-owner-tabs .dj-tab-btn,
@@ -5090,12 +5097,14 @@ body.mdj-artist-academy .dj-owner-tabs .dj-owner-academy-btn {
 }
 
 body.dj-profile .dj-owner-tabs .nav-item-dropdown.dj-owner-academy-dd,
+body.mdj-from-profile .dj-owner-tabs .nav-item-dropdown.dj-owner-academy-dd,
 body.mdj-academia-hub .dj-owner-tabs .nav-item-dropdown.dj-owner-academy-dd,
 body.mdj-artist-academy .dj-owner-tabs .nav-item-dropdown.dj-owner-academy-dd {
   flex-shrink: 0;
 }
 
 body.dj-profile .dj-owner-tabs .dj-tab-btn.active::after,
+body.mdj-from-profile .dj-owner-tabs .dj-tab-btn.active::after,
 body.mdj-academia-hub .dj-owner-tabs .dj-tab-btn.active::after,
 body.mdj-artist-academy .dj-owner-tabs .dj-tab-btn.active::after {
   left: clamp(10px, 1.2vw, 16px);
@@ -5105,9 +5114,11 @@ body.mdj-artist-academy .dj-owner-tabs .dj-tab-btn.active::after {
 
 /* Modelo perfil DJ: misma caja para <a> y <button>; enlaces sin color de visitado distinto */
 body.dj-profile .dj-owner-tabs .container a.dj-tab-btn,
+body.mdj-from-profile .dj-owner-tabs .container a.dj-tab-btn,
 body.mdj-academia-hub .dj-owner-tabs .container a.dj-tab-btn,
 body.mdj-artist-academy .dj-owner-tabs .container a.dj-tab-btn,
 body.dj-profile .dj-owner-tabs .container button.dj-tab-btn,
+body.mdj-from-profile .dj-owner-tabs .container button.dj-tab-btn,
 body.mdj-academia-hub .dj-owner-tabs .container button.dj-tab-btn,
 body.mdj-artist-academy .dj-owner-tabs .container button.dj-tab-btn {
   -webkit-appearance: none;
@@ -5119,6 +5130,8 @@ body.mdj-artist-academy .dj-owner-tabs .container button.dj-tab-btn {
 
 body.dj-profile .dj-owner-tabs .container a.dj-tab-btn:link,
 body.dj-profile .dj-owner-tabs .container a.dj-tab-btn:visited,
+body.mdj-from-profile .dj-owner-tabs .container a.dj-tab-btn:link,
+body.mdj-from-profile .dj-owner-tabs .container a.dj-tab-btn:visited,
 body.mdj-academia-hub .dj-owner-tabs .container a.dj-tab-btn:link,
 body.mdj-academia-hub .dj-owner-tabs .container a.dj-tab-btn:visited,
 body.mdj-artist-academy .dj-owner-tabs .container a.dj-tab-btn:link,
@@ -5127,24 +5140,28 @@ body.mdj-artist-academy .dj-owner-tabs .container a.dj-tab-btn:visited {
 }
 
 body.dj-profile .dj-owner-tabs .container a.dj-tab-btn:hover,
+body.mdj-from-profile .dj-owner-tabs .container a.dj-tab-btn:hover,
 body.mdj-academia-hub .dj-owner-tabs .container a.dj-tab-btn:hover,
 body.mdj-artist-academy .dj-owner-tabs .container a.dj-tab-btn:hover {
   color: rgba(255, 255, 255, 0.92);
 }
 
 body.dj-profile .dj-owner-tabs .container a.dj-tab-btn.active,
+body.mdj-from-profile .dj-owner-tabs .container a.dj-tab-btn.active,
 body.mdj-academia-hub .dj-owner-tabs .container a.dj-tab-btn.active,
 body.mdj-artist-academy .dj-owner-tabs .container a.dj-tab-btn.active {
   color: var(--gold);
 }
 
 body.dj-profile .dj-owner-tabs .container::-webkit-scrollbar,
+body.mdj-from-profile .dj-owner-tabs .container::-webkit-scrollbar,
 body.mdj-academia-hub .dj-owner-tabs .container::-webkit-scrollbar,
 body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar {
   height: 6px;
 }
 
 body.dj-profile .dj-owner-tabs .container::-webkit-scrollbar-thumb,
+body.mdj-from-profile .dj-owner-tabs .container::-webkit-scrollbar-thumb,
 body.mdj-academia-hub .dj-owner-tabs .container::-webkit-scrollbar-thumb,
 body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
   background: rgba(197, 160, 89, 0.35);
@@ -5175,6 +5192,8 @@ body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
 @media (max-width: 768px) {
   body.dj-profile .dj-owner-tabs .dj-tab-btn,
   body.dj-profile .dj-owner-tabs .dj-owner-academy-btn,
+  body.mdj-from-profile .dj-owner-tabs .dj-tab-btn,
+  body.mdj-from-profile .dj-owner-tabs .dj-owner-academy-btn,
   body.mdj-academia-hub .dj-owner-tabs .dj-tab-btn,
   body.mdj-academia-hub .dj-owner-tabs .dj-owner-academy-btn,
   body.mdj-artist-academy .dj-owner-tabs .dj-tab-btn,

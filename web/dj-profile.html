@@ -25,8 +25,18 @@
                 clearTimeout(fallbackClear);
                 document.documentElement.classList.remove('dj-profile-auth-check');
             }
+            function isPublicProfileView() {
+                try {
+                    return new URLSearchParams(window.location.search).get('view') === 'public';
+                } catch (e) { return false; }
+            }
             async function go() {
                 try {
+                    /* QR / enlace ?view=public: perfil público sin login (no redirigir a suscripción/login). */
+                    if (isPublicProfileView()) {
+                        clearAuthCheck();
+                        return;
+                    }
                     var t = 0;
                     while (t < 80 && (!window.supabase || typeof window.getSupabaseClient !== 'function')) {
                         await new Promise(function (r) { setTimeout(r, 40); });
@@ -54,6 +64,7 @@
                 } catch (e) {
                     clearAuthCheck();
                     try { console.warn('[dj-profile auth guard]', e); } catch (e2) { void e2; }
+                    if (isPublicProfileView()) return;
                     var qe = new URLSearchParams(window.location.search);
                     var ide = qe.get('id');
                     var urle = './login.html?redirect=dj-profile';
@@ -378,26 +389,32 @@
             fill: currentColor;
         }
 
-        /* Foto secundaria (inset top-right): despejar #mdj-social-sticky-bar (~72px desde la derecha) + margen */
+        /* Avatar redondo (estilo Facebook) — portada = hero-bg; esta es la foto de perfil */
         .dj-hero-inset {
             position: absolute;
-            top: 88px;
+            top: 72px;
             right: max(96px, calc(14px + 58px + 24px));
             left: auto;
-            width: 180px;
-            height: 220px;
-            border-radius: 6px;
+            width: 168px;
+            height: 168px;
+            border-radius: 50%;
             overflow: hidden;
             z-index: 12;
-            box-shadow: 8px 8px 40px rgba(0, 0, 0, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 28px rgba(0, 0, 0, 0.75), 0 0 0 3px rgba(10, 10, 10, 0.95);
+            border: 2px solid rgba(255, 255, 255, 0.22);
         }
 
         .dj-hero-inset img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            object-position: center top;
+            object-position: center 28%;
+            opacity: 0;
+            transition: opacity 0.45s ease;
+        }
+
+        .dj-hero-inset img.loaded {
+            opacity: 1;
         }
 
         /* Availability Float */
@@ -421,6 +438,24 @@
         /* ── DJ OWNER TABS: base en styles.css; solo ocultar hasta que el dueño cargue ── */
         .dj-owner-tabs {
             display: none;
+        }
+
+        /*
+         * Jobs / Shop: enlaces externos — deben quedar por encima del banner cabina SFT (z-index 9001 en esta página)
+         * y leerse como navegación activa (no como pestaña in-page atenuada).
+         */
+        body.dj-profile #owner-tabs {
+            z-index: 10050;
+        }
+
+        body.dj-profile #owner-tabs a.dj-tab-btn[href="./jobs.html"],
+        body.dj-profile #owner-tabs a.dj-tab-btn[href="./shop.html"] {
+            color: rgba(255, 255, 255, 0.92);
+        }
+
+        body.dj-profile #owner-tabs a.dj-tab-btn[href="./jobs.html"]:hover,
+        body.dj-profile #owner-tabs a.dj-tab-btn[href="./shop.html"]:hover {
+            color: var(--gold);
         }
 
         .dj-panel {
@@ -625,7 +660,12 @@
             }
 
             .dj-hero-inset {
-                display: none;
+                display: block;
+                width: 112px;
+                height: 112px;
+                top: 56px;
+                right: 20px;
+                left: auto;
             }
 
             .dj-avail-float {
@@ -1266,6 +1306,49 @@
             animation: mdj-sft-btn-glow 1.7s ease-in-out infinite;
         }
 
+        /* Público: PRO + en cabina = oro; PRO + fuera de línea = rojo */
+        #soundfortips-launch-btn.sft-launch-btn--online {
+            background: linear-gradient(145deg, #3d3318, #1e180c) !important;
+            border-color: rgba(250, 204, 21, 0.85) !important;
+            box-shadow: 0 0 22px rgba(250, 204, 21, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            color: #fff !important;
+        }
+
+        #soundfortips-launch-btn.sft-launch-btn--offline {
+            background: linear-gradient(145deg, #2a1212, #140808) !important;
+            border-color: rgba(220, 38, 38, 0.75) !important;
+            box-shadow: 0 4px 16px rgba(127, 29, 29, 0.45);
+            color: rgba(255, 255, 255, 0.88) !important;
+            opacity: 0.95;
+            cursor: not-allowed;
+        }
+
+        .sft-launch-status-pill {
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            padding: 4px 10px;
+            border-radius: 999px;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            text-transform: uppercase;
+        }
+
+        .sft-launch-status-pill--on {
+            background: linear-gradient(180deg, #fde68a, #eab308);
+            color: #1a1408;
+            border: 1px solid rgba(250, 204, 21, 0.9);
+        }
+
+        .sft-launch-status-pill--off {
+            background: linear-gradient(180deg, #fecaca, #b91c1c);
+            color: #fff;
+            border: 1px solid rgba(185, 28, 28, 0.85);
+        }
+
         @keyframes mdj-sft-btn-glow {
 
             0%,
@@ -1549,15 +1632,16 @@
     <nav class="dj-owner-tabs" id="owner-tabs">
         <div class="container">
             <a href="./index.html" class="dj-tab-btn dj-tab-btn--home" data-i18n="nav-home">Home</a>
-            <a href="./jobs.html" class="dj-tab-btn" data-i18n="nav-jobs">Jobs</a>
-            <a href="./shop.html" class="dj-tab-btn" data-i18n="nav-shop">Shop</a>
+            <a href="./jobs.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-jobs">Jobs</a>
+            <a href="./shop.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-shop">Shop</a>
             <button type="button" class="dj-tab-btn active" data-tab="public" data-i18n="menu-account"
                 onclick="switchProfileTab('public')">Mi Perfil</button>
-            <a href="./dj-dashboard.html" class="dj-tab-btn" data-i18n="dash-your-profile">Agenda</a>
-            <a href="./dj-dashboard.html?tab=settings" class="dj-tab-btn" data-i18n="nav-settings">⚙️ CONFIG</a>
-            <a href="./academia.html" class="dj-tab-btn" data-i18n="nav-academia">Academia</a>
-            <a href="./dj-tools.html" class="dj-tab-btn" data-i18n="nav-tools">DJ Tools</a>
-            <button type="button" class="dj-tab-btn" data-tab="flow" data-i18n="flow-dash" id="dj-tab-flow-btn" onclick="mdjFlowTabClick(event)">FLOW <span class="dj-tab-lock-icon" aria-hidden="true" style="display:none;">🔒</span></button>
+            <a href="./dj-dashboard.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="dash-your-profile">Agenda</a>
+            <a href="./dj-dashboard.html?tab=settings&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-settings">⚙️ CONFIG</a>
+            <a href="./academia.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-academia">Academia</a>
+            <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-tools">DJ Tools</a>
+            <button type="button" class="dj-tab-btn" data-tab="flow" data-i18n="flow-dash" id="dj-tab-flow-btn" onclick="mdjFlowTabClick(event)">Cash Flow <span class="dj-tab-lock-icon" aria-hidden="true" style="display:none;">🔒</span></button>
+            <button type="button" class="dj-tab-btn" data-tab="sft" data-i18n="nav-soundfortips" id="dj-tab-sft-btn" onclick="mdjSftTabClick(event)">SoundForTips™ <span class="dj-tab-lock-icon" aria-hidden="true" style="display:none;">🔒</span></button>
         </div>
     </nav>
 
@@ -1739,6 +1823,8 @@
                         style="width:100%; display:none; align-items:center; justify-content:center; gap:10px; background:linear-gradient(135deg, #2a2418, #1a1510); color:#fff; border:1px solid rgba(197,160,89,0.55); padding:20px; border-radius:12px; font-size:16px; font-weight:900; letter-spacing:1px; cursor:pointer; text-transform:uppercase; transition:all 0.2s;">
                         <span id="soundfortips-launch-badge" class="sft-pending-badge" style="display:none;"
                             aria-hidden="true"></span>
+                        <span id="soundfortips-launch-status-pill" class="sft-launch-status-pill" style="display:none;"
+                            data-i18n="sft-public-pill-off" aria-hidden="true">OFF</span>
                         <span style="font-size:22px;">🎵</span> SOUNDFORTIPS™ <span
                             style="font-size:10px; background:var(--gold); color:#000; padding:2px 6px; border-radius:4px; margin-left:6px;">BETA</span>
                     </button>
@@ -1803,9 +1889,9 @@
                             </div>
                         </div>
                         <div id="sft-owner-lite-block" style="display:none;">
-                            <div style="font-size:11px; font-weight:800; color:var(--gold); letter-spacing:0.06em;">SOUNDFORTIPS™ LIVE</div>
+                            <div style="font-size:11px; font-weight:800; color:var(--gold); letter-spacing:0.06em;">SOUNDFORTIPS™ LIVE <span style="opacity:0.75;">· PRO de pago</span></div>
                             <p style="font-size:11px; color:rgba(255,255,255,0.55); margin:8px 0 0; line-height:1.4;">
-                                Incluido con <strong>plan PRO</strong> activo: peticiones con propina, cabina, SMS al fan y registro de la noche.</p>
+                                SoundForTips es solo para <strong>DJ PRO con suscripción de pago</strong> (MDJPRO): peticiones con propina, cabina, SMS al fan y registro de la noche. LITE no incluye esta función.</p>
                             <a href="./shop.html" style="display:inline-block;margin-top:10px;font-size:12px;font-weight:800;color:var(--gold);text-decoration:underline;">Ver planes PRO →</a>
                         </div>
                     </div>
@@ -2051,7 +2137,7 @@
     </footer>
 
     <!-- Translations & Base Logic -->
-    <script src="./translations.js?v=20260412-profile"></script>
+    <script src="./translations.js?v=20260426-sft-col-apoyo"></script>
     <script src="./i18n.js?v=20260412-profile"></script>
     <script>
         // 🔧 Motor Principal de Logout (A prueba de fallos)
@@ -2085,13 +2171,30 @@
         };
 
         /**
+         * Base URL para QR público: nunca usar 127.0.0.1/localhost en el código del QR (otro móvil no alcanza tu PC).
+         * LAN: define window.MDB_QR_PROFILE_BASE = 'http://192.168.x.x:PUERTO' para pruebas en la misma red.
+         */
+        function mdbPublicProfileQrBase() {
+            if (window.MDB_QR_PROFILE_BASE) return String(window.MDB_QR_PROFILE_BASE).replace(/\/$/, '');
+            try {
+                var u = new URL(location.origin);
+                var h = (u.hostname || '').replace(/^\[|\]$/g, '').toLowerCase();
+                if (h === 'localhost' || h === '127.0.0.1' || h === '::1') {
+                    return 'https://miamidjbeat.com';
+                }
+            } catch (e) { void e; }
+            if (typeof location !== 'undefined' && location.origin) return String(location.origin).replace(/\/$/, '');
+            return 'https://miamidjbeat.com';
+        }
+
+        /**
          * URL pública para QR: id + ref (UUID) + rcode (referral_code legible) + view=public.
          * @param {string} userId - user_id del DJ
          * @param {string|null} referralCode - dj_profiles.referral_code (ej. DJ-ABC123)
          */
         window.buildMiamiPublicQrUrl = function (userId, referralCode) {
             if (!userId) return '';
-            var base = (window.MDB_QR_PROFILE_BASE || 'https://miamidjbeat.com').replace(/\/$/, '');
+            var base = mdbPublicProfileQrBase();
             var path = window.MDB_QR_PROFILE_PATH || '/dj-profile.html';
             if (path.charAt(0) !== '/') path = '/' + path;
             var id = encodeURIComponent(userId);
@@ -2119,11 +2222,16 @@
             return false;
         }
 
-        /** SOUNDFORTIPS: solo plan PRO (o equivalente) y suscripción no caducada. */
+        /** SoundForTips™: solo MDJPRO de pago — alineado con DB `dj_soundfortips_plan_ok` (no usar solo subscription_status). Cash Flow es distinto. */
         function mdbProfileSoundForTipsEligible(p) {
-            if (!p || !mdbProfileIsVipPro(p)) return false;
+            if (!p) return false;
             if (p.plan_expires_at && new Date() >= new Date(p.plan_expires_at)) return false;
-            return true;
+            var ps = (p.plan_status || 'active').toLowerCase();
+            if (ps !== 'active') return false;
+            if (p.is_premium === true) return true;
+            if (p.plan === 'PRO' || p.plan === 'ELITE') return true;
+            if (['pro_monthly', 'pro_annual'].indexOf(p.plan_type || '') !== -1) return true;
+            return false;
         }
 
         var SFT_QUEUE_LS_KEY = 'mdj_sft_pending_requests_v1';
@@ -2234,14 +2342,80 @@
             var btn = document.getElementById('soundfortips-launch-btn');
             if (!btn) return;
             var pro = window._mdjSftProAllowed === true;
-            if (active && pro) {
-                btn.style.display = 'flex';
-                btn.removeAttribute('aria-hidden');
-            } else {
+            var pill = document.getElementById('soundfortips-launch-status-pill');
+            btn.classList.remove('sft-launch-btn--online', 'sft-launch-btn--offline');
+            if (!pro) {
                 btn.style.display = 'none';
                 btn.setAttribute('aria-hidden', 'true');
+                btn.disabled = false;
+                if (pill) pill.style.display = 'none';
+                sftRefreshLaunchBadge();
+                return;
+            }
+            btn.style.display = 'flex';
+            btn.removeAttribute('aria-hidden');
+            if (pill) pill.style.display = 'inline-flex';
+            if (active) {
+                btn.classList.add('sft-launch-btn--online');
+                btn.disabled = false;
+                btn.setAttribute('aria-label', 'SoundForTips — live');
+                if (pill) {
+                    pill.textContent = 'ON';
+                    pill.className = 'sft-launch-status-pill sft-launch-status-pill--on';
+                    pill.setAttribute('data-i18n', 'sft-public-pill-on');
+                }
+            } else {
+                btn.classList.add('sft-launch-btn--offline');
+                btn.disabled = true;
+                btn.setAttribute('aria-label', 'SoundForTips — offline');
+                if (pill) {
+                    pill.textContent = 'OFF';
+                    pill.className = 'sft-launch-status-pill sft-launch-status-pill--off';
+                    pill.setAttribute('data-i18n', 'sft-public-pill-off');
+                }
             }
             sftRefreshLaunchBadge();
+            try {
+                if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
+            } catch (eI18n) { void eI18n; }
+        }
+
+        function syncSftTabOnlineButton() {
+            var t = document.getElementById('soundfortips-active-toggle');
+            var b = document.getElementById('sft-tab-online-btn');
+            var lo = document.querySelector('#sft-tab-online-btn .sft-tab-online-label--off');
+            var ln = document.querySelector('#sft-tab-online-btn .sft-tab-online-label--on');
+            if (!b) return;
+            if (!t || t.disabled) {
+                b.disabled = true;
+                b.classList.remove('sft-tab-online-btn--on');
+                b.classList.add('sft-tab-online-btn--off');
+                b.setAttribute('aria-pressed', 'false');
+                if (lo) lo.style.display = '';
+                if (ln) ln.style.display = 'none';
+                return;
+            }
+            b.disabled = false;
+            var on = !!t.checked;
+            b.classList.toggle('sft-tab-online-btn--on', on);
+            b.classList.toggle('sft-tab-online-btn--off', !on);
+            b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            if (lo) lo.style.display = on ? 'none' : '';
+            if (ln) ln.style.display = on ? '' : 'none';
+        }
+
+        var __sftTabOnlineBtnWired = false;
+        function wireSftTabOnlineButtonOnce() {
+            if (__sftTabOnlineBtnWired) return;
+            var btn = document.getElementById('sft-tab-online-btn');
+            if (!btn) return;
+            __sftTabOnlineBtnWired = true;
+            btn.addEventListener('click', function () {
+                var tg = document.getElementById('soundfortips-active-toggle');
+                if (!tg || tg.disabled) return;
+                tg.checked = !tg.checked;
+                tg.dispatchEvent(new Event('change', { bubbles: true }));
+            });
         }
 
         var __sftOwnerToggleInited = false;
@@ -2251,6 +2425,7 @@
             if (!mdbProfileSoundForTipsEligible(p)) {
                 toggle.disabled = true;
                 toggle.checked = false;
+                syncSftTabOnlineButton();
                 return;
             }
             __sftOwnerToggleInited = true;
@@ -2262,15 +2437,23 @@
                 if (res.error) {
                     alert('No se pudo guardar. Ejecuta en Supabase la migración soundfortips_active (columna en dj_profiles).\n' + (res.error.message || ''));
                     toggle.checked = rollback;
+                    syncSftTabOnlineButton();
                     return;
                 }
                 if (window.currentDJData) window.currentDJData.soundfortips_active = v;
                 applySoundForTipsPublicVisibility(v);
+                syncSftTabOnlineButton();
                 if (v) {
-                    var u = window.location.pathname + '?id=' + encodeURIComponent(targetId) + '&sft_booth=1';
+                    var u = window.location.pathname + '?id=' + encodeURIComponent(targetId) + '&sft_booth=1&sft_cab=list';
                     window.open(u, '_blank', 'noopener,noreferrer');
+                    setTimeout(function () {
+                        try {
+                            if (typeof window.openSoundForTipsDjLibrary === 'function') window.openSoundForTipsDjLibrary();
+                        } catch (eLib) { void eLib; }
+                    }, 220);
                 }
             });
+            syncSftTabOnlineButton();
         }
 
         /* SVG íconos para la fila social del hero */
@@ -2299,53 +2482,62 @@
         ];
 
         async function loadProfile() {
+            const params = new URLSearchParams(window.location.search);
+            const isPublicQrView = params.get('view') === 'public';
+
             let db = null;
             for (let i = 0; i < 20 && !db; i++) {
                 db = window.getSupabaseClient ? window.getSupabaseClient() : null;
                 if (!db) await new Promise(r => setTimeout(r, 200));
             }
             if (!db) {
-                const rp = new URLSearchParams(window.location.search);
-                const rid = rp.get('id');
-                let lu = './login.html?redirect=dj-profile';
-                if (rid) lu += '&id=' + encodeURIComponent(rid);
-                window.location.replace(lu);
+                if (!isPublicQrView) {
+                    const rid = params.get('id');
+                    let lu = './login.html?redirect=dj-profile';
+                    if (rid) lu += '&id=' + encodeURIComponent(rid);
+                    window.location.replace(lu);
+                } else {
+                    try { console.warn('[dj-profile] Supabase client unavailable; public profile cannot load.'); } catch (e) { void e; }
+                }
                 return;
             }
 
             const { data: { session } } = await db.auth.getSession();
-            if (!session) {
-                const rp = new URLSearchParams(window.location.search);
-                const rid = rp.get('id');
+            if (!session && !isPublicQrView) {
+                const rid = params.get('id');
                 let lu = './login.html?redirect=dj-profile';
                 if (rid) lu += '&id=' + encodeURIComponent(rid);
                 window.location.replace(lu);
                 return;
             }
 
-            const z = document.getElementById('header-auth-zone');
-            if (z) z.style.display = 'block';
+            if (session) {
+                const z = document.getElementById('header-auth-zone');
+                if (z) z.style.display = 'block';
 
-            (async function syncDjProfileHeaderLinks() {
-                const { data: pnav } = await db.from('dj_profiles').select('role').eq('user_id', session.user.id).maybeSingle();
-                const dashUrl = pnav?.role === 'client' ? './client-portal.html' : './dj-dashboard.html';
-                const dash = document.getElementById('account-menu-dashboard');
-                if (dash) dash.href = dashUrl;
-                const navM = document.getElementById('nav-my-profile-mobile');
-                if (navM) {
-                    navM.href = dashUrl;
-                    navM.style.display = 'block';
-                }
-                const hlbm = document.getElementById('header-login-btn-mobile');
-                if (hlbm) hlbm.style.display = 'none';
-            })();
+                (async function syncDjProfileHeaderLinks() {
+                    const { data: pnav } = await db.from('dj_profiles').select('role').eq('user_id', session.user.id).maybeSingle();
+                    const dashUrl = pnav?.role === 'client' ? './client-portal.html' : './dj-dashboard.html';
+                    const dash = document.getElementById('account-menu-dashboard');
+                    if (dash) dash.href = dashUrl;
+                    const navM = document.getElementById('nav-my-profile-mobile');
+                    if (navM) {
+                        navM.href = dashUrl;
+                        navM.style.display = 'block';
+                    }
+                    const hlbm = document.getElementById('header-login-btn-mobile');
+                    if (hlbm) hlbm.style.display = 'none';
+                })();
+            }
 
-            const params = new URLSearchParams(window.location.search);
-            const targetId = params.get('id') || session.user.id;
+            const targetId = params.get('id') || (session ? session.user.id : null);
             window.currentProfileDJId = targetId;
             if (!targetId) {
-                let lu = './login.html?redirect=dj-profile';
-                window.location.replace(lu);
+                if (isPublicQrView) {
+                    window.location.replace('./index.html');
+                } else {
+                    window.location.replace('./login.html?redirect=dj-profile');
+                }
                 return;
             }
 
@@ -2386,31 +2578,49 @@
                 return;
             }
 
+            // Cabina / cola / wallet SFT: solo PRO de pago (ver mdbProfileSoundForTipsEligible).
             window._mdjSftProAllowed = mdbProfileSoundForTipsEligible(p);
 
-            // ── Foto full-bleed hero ──
-            const heroUrl = p.background_url || p.photo_url;
-            if (heroUrl) {
-                const bgPhoto = document.getElementById('hero-bg-photo');
-                const insetPhoto = document.getElementById('pub-photo-inset');
-                if (bgPhoto) {
-                    var fxp = (p.photo_focal_x != null && p.photo_focal_x !== undefined) ? Number(p.photo_focal_x) : 50;
-                    var fyp = (p.photo_focal_y != null && p.photo_focal_y !== undefined) ? Number(p.photo_focal_y) : 50;
-                    var zm = (p.hero_bg_zoom != null && p.hero_bg_zoom !== undefined) ? Number(p.hero_bg_zoom) : 100;
-                    fxp = Math.max(0, Math.min(100, fxp));
-                    fyp = Math.max(0, Math.min(100, fyp));
-                    zm = Math.max(80, Math.min(200, zm));
-                    bgPhoto.style.objectPosition = fxp + '% ' + fyp + '%';
-                    bgPhoto.style.transform = 'scale(' + (zm / 100) + ')';
-                    bgPhoto.style.transformOrigin = fxp + '% ' + fyp + '%';
-                    bgPhoto.onload = () => bgPhoto.classList.add('loaded');
-                    bgPhoto.src = heroUrl;
+            const djName = p.stage_name || p.dj_name || p.full_name || 'DJ';
+
+            // ── Portada (cover) + avatar redondo — mismo patrón que Facebook: banner + foto de perfil ──
+            var bgTrim = p.background_url && String(p.background_url).trim();
+            var phTrim = p.photo_url && String(p.photo_url).trim();
+            var coverUrl = bgTrim || phTrim || '';
+            var avatarUrl = phTrim || bgTrim || coverUrl || '';
+            var fxp = (p.photo_focal_x != null && p.photo_focal_x !== undefined) ? Number(p.photo_focal_x) : 50;
+            var fyp = (p.photo_focal_y != null && p.photo_focal_y !== undefined) ? Number(p.photo_focal_y) : 50;
+            var zm = (p.hero_bg_zoom != null && p.hero_bg_zoom !== undefined) ? Number(p.hero_bg_zoom) : 100;
+            fxp = Math.max(0, Math.min(100, fxp));
+            fyp = Math.max(0, Math.min(100, fyp));
+            zm = Math.max(80, Math.min(200, zm));
+
+            const bgPhoto = document.getElementById('hero-bg-photo');
+            const insetPhoto = document.getElementById('pub-photo-inset');
+
+            if (coverUrl && bgPhoto) {
+                bgPhoto.style.objectPosition = fxp + '% ' + fyp + '%';
+                bgPhoto.style.transform = 'scale(' + (zm / 100) + ')';
+                bgPhoto.style.transformOrigin = fxp + '% ' + fyp + '%';
+                bgPhoto.alt = 'Cover — ' + djName;
+                bgPhoto.onload = function () { bgPhoto.classList.add('loaded'); };
+                bgPhoto.src = coverUrl;
+            }
+            if (avatarUrl && insetPhoto) {
+                if (coverUrl && avatarUrl === coverUrl) {
+                    insetPhoto.style.objectPosition = fxp + '% ' + fyp + '%';
+                } else {
+                    insetPhoto.style.objectPosition = 'center 28%';
                 }
-                // Inset photo (Avatar)
-                if (insetPhoto) insetPhoto.src = p.photo_url || heroUrl;
-                // Update header avatar
-                const headerAvatar = document.querySelector('.account-btn .avatar');
-                if (headerAvatar) headerAvatar.src = p.photo_url || heroUrl;
+                insetPhoto.alt = djName;
+                insetPhoto.onload = function () { insetPhoto.classList.add('loaded'); };
+                insetPhoto.src = avatarUrl;
+            }
+
+            const headerAvatar = document.querySelector('.account-btn .avatar');
+            if (headerAvatar && avatarUrl) {
+                headerAvatar.src = avatarUrl;
+                headerAvatar.alt = djName;
             }
 
             // ── Cleanup Redundancy (Owner only) ──
@@ -2422,7 +2632,6 @@
                 const mobileNav = document.getElementById('mainNav');
                 if (mobileNav && window.innerWidth < 768) mobileNav.style.display = 'none';
             }
-            const djName = p.stage_name || p.dj_name || p.full_name || 'DJ';
             document.getElementById('pub-name').textContent = djName;
 
             // ── Badge after name: diamond=verified, star=PRO-unverified, dot=lite ──
@@ -2668,6 +2877,14 @@
                 if (sftQc && isOwner && !window._mdjSftProAllowed) {
                     sftQc.style.display = 'none';
                 }
+                var sftGateTab = document.getElementById('sft-tab-pro-required');
+                if (sftGateTab && (isOwner || isAdmin)) {
+                    sftGateTab.style.display = window._mdjSftProAllowed ? 'none' : 'block';
+                }
+                var sftLiveAct = document.getElementById('sft-tab-live-actions');
+                if (sftLiveAct) {
+                    sftLiveAct.hidden = !(isOwner && window._mdjSftProAllowed);
+                }
 
                 const os = document.getElementById('owner-software-card');
                 if (os) os.style.display = 'block';
@@ -2766,7 +2983,7 @@
             // ── QR de referidos (PÚBLICO): incluye referral_code como rcode= si existe ──
             const profileUrl = typeof window.buildMiamiPublicQrUrl === 'function'
                 ? window.buildMiamiPublicQrUrl(targetId, p.referral_code || null)
-                : (`${location.origin}/dj-profile.html?id=${targetId}&view=public&ref=${targetId}`);
+                : (`${mdbPublicProfileQrBase()}/dj-profile.html?id=${targetId}&view=public&ref=${targetId}`);
             window._mdjPublicProfileQrUrl = profileUrl;
             try {
                 var cabQrReset = document.getElementById('sft-cab-qr-mount');
@@ -2832,7 +3049,9 @@
                 if (btnVerText) btnVerText.textContent = appVer;
                 if (downloadBtn) downloadBtn.href = downloadUrl;
             }
-            loadSeasonalQR();
+            loadSeasonalQR().catch(function (e) {
+                try { console.warn('[dj-profile] seasonal QR / settings', e); } catch (e2) { void e2; }
+            });
 
             document.title = `${djName} — Miami DJ Beat`;
 
@@ -2872,14 +3091,13 @@
 
             (function stripFlowTabFromUrlIfUnauthorized() {
                 const rp = new URLSearchParams(window.location.search);
-                if (rp.get('tab') !== 'flow') return;
-                const isNotExpired = !p.plan_expires_at || (new Date() < new Date(p.plan_expires_at));
-                const canFlow = !!(isOwner && mdbProfileIsVipPro(p) && isNotExpired);
-                if (!isOwner || !canFlow) {
-                    rp.delete('tab');
-                    const qs = rp.toString();
-                    window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
-                }
+                const t = rp.get('tab');
+                if (t !== 'flow' && t !== 'sft') return;
+                // Solo quitar ?tab=flow|sft a visitantes; el dueño puede enlazar la pestaña.
+                if (isOwner) return;
+                rp.delete('tab');
+                const qs = rp.toString();
+                window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
             })();
 
             // ── DJ OWNER TABS (BARRA DE GESTIÓN) ──
@@ -2887,24 +3105,17 @@
                 const tabs = document.getElementById('owner-tabs');
                 if (tabs) tabs.style.display = 'flex';
 
-                // Misma regla PRO que badges / VIP (is_premium, ELITE, plan_type, etc.), más caducidad
-                const isNotExpired = !p.plan_expires_at || (new Date() < new Date(p.plan_expires_at));
-                window._flowTabAllowed = !!(isOwner && mdbProfileIsVipPro(p) && isNotExpired);
+                // Cash Flow: pestaña disponible para todo artista dueño del perfil (LITE y PRO). PRO/VIP afecta upsells y SFT vía otras reglas.
+                window._flowTabAllowed = !!isOwner;
 
                 const flowTabBtn = document.getElementById('dj-tab-flow-btn') || document.querySelector('button[data-tab="flow"]');
                 var flowLockIcon = document.querySelector('#dj-tab-flow-btn .dj-tab-lock-icon');
                 if (flowTabBtn) {
                     if (isOwner) {
                         flowTabBtn.style.display = 'inline-block';
-                        if (window._flowTabAllowed) {
-                            flowTabBtn.classList.remove('dj-tab-btn--locked');
-                            flowTabBtn.title = '';
-                            if (flowLockIcon) flowLockIcon.style.display = 'none';
-                        } else {
-                            flowTabBtn.classList.add('dj-tab-btn--locked');
-                            flowTabBtn.title = 'Plan PRO requerido para FLOW y SOUNDFORTIPS — clic para suscribirte';
-                            if (flowLockIcon) flowLockIcon.style.display = 'inline';
-                        }
+                        flowTabBtn.classList.remove('dj-tab-btn--locked');
+                        flowTabBtn.title = '';
+                        if (flowLockIcon) flowLockIcon.style.display = 'none';
                     } else {
                         flowTabBtn.style.display = 'none';
                     }
@@ -2917,18 +3128,39 @@
 
                 const params = new URLSearchParams(window.location.search);
                 const tabFromUrl = params.get('tab');
-                if (tabFromUrl === 'flow' && !window._flowTabAllowed && !isOwner) {
+                if ((tabFromUrl === 'flow' || tabFromUrl === 'sft') && !isOwner) {
                     params.delete('tab');
                     const qs = params.toString();
                     window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+                }
+
+                const sftTabBtn = document.getElementById('dj-tab-sft-btn');
+                var sftLockIcon = document.querySelector('#dj-tab-sft-btn .dj-tab-lock-icon');
+                if (sftTabBtn) {
+                    if (isOwner) {
+                        sftTabBtn.style.display = 'inline-block';
+                        if (window._mdjSftProAllowed) {
+                            sftTabBtn.classList.remove('dj-tab-btn--locked');
+                            sftTabBtn.title = '';
+                            if (sftLockIcon) sftLockIcon.style.display = 'none';
+                        } else {
+                            sftTabBtn.classList.add('dj-tab-btn--locked');
+                            sftTabBtn.title = 'SoundForTips™ requiere MDJPRO de pago activo.';
+                            if (sftLockIcon) sftLockIcon.style.display = 'inline';
+                        }
+                    } else {
+                        sftTabBtn.style.display = 'none';
+                    }
                 }
 
                 // ── AUTO-SWITCH TAB ──
                 if (isOwner) {
                     if (tabFromUrl === 'public') {
                         setTimeout(function () { switchProfileTab('public'); }, 300);
-                    } else if (tabFromUrl === 'flow' && window._flowTabAllowed) {
+                    } else if (tabFromUrl === 'flow') {
                         setTimeout(function () { switchProfileTab('flow'); }, 300);
+                    } else if (tabFromUrl === 'sft') {
+                        setTimeout(function () { switchProfileTab('sft'); }, 300);
                     }
                 }
 
@@ -2947,9 +3179,11 @@
 
             initSftQueueListeners();
             applySoundForTipsPublicVisibility(!!p.soundfortips_active);
+            wireSftTabOnlineButtonOnce();
             if (isOwner) {
                 initSoundForTipsOwnerToggle(p, db, session, targetId);
             }
+            syncSftTabOnlineButton();
             try {
                 if (new URLSearchParams(window.location.search).get('sft_booth') === '1') {
                     var bb = document.getElementById('mdjSftBoothBanner');
@@ -3236,22 +3470,11 @@
         }
     </script>
 
-    <!-- ── TAB: FLUJO (Artist Personal Financials) ── -->
+    <!-- ── TAB: Cash Flow (artist economics) ── -->
     <div id="tab-flow" class="dj-panel serato-pane">
         <div id="flow-pro-required" style="display:none; max-width:900px; margin: 20px auto 0; padding: 16px 20px; background: rgba(197,160,89,0.12); border: 1px solid rgba(197,160,89,0.35); border-radius: 12px; color: rgba(255,255,255,0.9); font-size: 14px; text-align: center;" role="status">
-            <span data-i18n="flow-pro-required-msg">Suscríbete al plan PRO para usar FLOW, métricas completas y herramientas SOUNDFORTIPS.</span>
+            <span data-i18n="flow-pro-required-msg">Flujo de caja: disponible para todos los artistas. SoundForTips™ requiere MDJPRO de pago.</span>
             <a href="./shop.html" style="color: var(--gold); margin-left: 8px; font-weight: 800;" data-i18n="flow-pro-shop">Suscribirse PRO</a>
-        </div>
-
-        <!-- SOUNDFORTIPS LIVE QUEUE -->
-        <div class="sft-queue-panel" id="sftLiveQueueContainer">
-            <div class="sft-queue-header">
-                <h2><span style="animation: pulse 2s infinite;">🔴</span> Bandeja de Peticiones (Live Queue)</h2>
-                <span style="font-size:11px; color:#aaa;">Pistas Pendientes en Escrow</span>
-            </div>
-            <div id="sftQueueList">
-                <!-- Se inyectan las canciones aquí por JS -->
-            </div>
         </div>
 
         <div class="flow-dashboard">
@@ -3401,6 +3624,41 @@
                 <span data-i18n="flow-privacy-notice">Datos confidenciales solo para tu cuenta. No compartas capturas ni accesos con terceros.</span>
                 <a href="./legal.html" style="color:rgba(197,160,89,0.88);font-weight:600;margin-left:6px;" data-i18n="flow-privacy-legal">Aviso legal y privacidad</a>
             </p>
+        </div>
+    </div>
+
+    <!-- ── TAB: SoundForTips™ (cabina / cola en vivo; solo MDJPRO de pago) ── -->
+    <div id="tab-sft" class="dj-panel serato-pane sft-tab-root">
+        <header class="sft-tab-hero" aria-labelledby="sft-tab-heading">
+            <p class="sft-tab-kicker" data-i18n="sft-tab-kicker">LIVE BOOTH</p>
+            <h2 id="sft-tab-heading" class="sft-tab-title" data-i18n="nav-soundfortips">SoundForTips™</h2>
+            <p class="sft-tab-sub" data-i18n="sft-tab-sub">Requests from your shared profile land here — tip-backed queue in escrow.</p>
+            <div class="sft-tab-live-actions" id="sft-tab-live-actions" hidden>
+                <button type="button" id="sft-tab-online-btn" class="sft-tab-online-btn sft-tab-online-btn--off"
+                    aria-pressed="false">
+                    <span class="sft-tab-online-dot" aria-hidden="true"></span>
+                    <span class="sft-tab-online-label sft-tab-online-label--off" data-i18n="sft-tab-status-offline">OFFLINE</span>
+                    <span class="sft-tab-online-label sft-tab-online-label--on" data-i18n="sft-tab-status-online" style="display:none">ONLINE</span>
+                </button>
+                <p class="sft-tab-live-hint" data-i18n="sft-tab-live-hint">Tap to turn public requests on or off.</p>
+            </div>
+        </header>
+        <div id="sft-tab-pro-required" class="sft-tab-gate" style="display:none;" role="status">
+            <span class="sft-tab-gate-icon" aria-hidden="true">🎧</span>
+            <div class="sft-tab-gate-copy">
+                <span data-i18n="sft-tab-gate-msg">SoundForTips™ requiere MDJPRO de pago activo.</span>
+                <a href="./shop.html" class="sft-tab-gate-cta" data-i18n="flow-pro-shop">Ver planes PRO</a>
+            </div>
+        </div>
+        <!-- SOUNDFORTIPS LIVE QUEUE -->
+        <div class="sft-queue-panel sft-tab-queue" id="sftLiveQueueContainer">
+            <div class="sft-queue-header">
+                <h2><span class="sft-live-dot">🔴</span> Bandeja de Peticiones (Live Queue)</h2>
+                <span class="sft-queue-eyebrow">Pistas Pendientes en Escrow</span>
+            </div>
+            <div id="sftQueueList">
+                <!-- Se inyectan las canciones aquí por JS -->
+            </div>
         </div>
     </div>
 
@@ -3664,19 +3922,19 @@
                 ev.preventDefault();
                 ev.stopPropagation();
             }
-            if (window._flowTabAllowed === true) {
-                switchProfileTab('flow');
-            } else {
-                window.location.href = './shop.html';
+            switchProfileTab('flow');
+        };
+
+        window.mdjSftTabClick = function mdjSftTabClick(ev) {
+            if (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
             }
+            switchProfileTab('sft');
         };
 
         function switchProfileTab(tab) {
-            if (tab === 'flow' && window._flowTabAllowed !== true) {
-                window.location.href = './shop.html';
-                return;
-            }
-            // FLOW: datos sensibles solo si _flowTabAllowed
+            // FLOW: nunca redirigir a Shop; dueño siempre puede ver la pestaña (LITE/PRO).
             // Lógica de Pestañas Principales
             document.querySelectorAll('.dj-panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.dj-tab-btn').forEach(b => b.classList.remove('active'));
@@ -3687,14 +3945,11 @@
 
             var flowGate = document.getElementById('flow-pro-required');
             if (flowGate) {
-                if (tab === 'flow') {
-                    flowGate.style.display = window._flowTabAllowed ? 'none' : 'block';
-                } else {
-                    flowGate.style.display = 'none';
-                }
+                // Banner PRO genérico desactivado para la pestaña: Cash Flow es para todos los artistas; upsell PRO va en contenido/SFT si aplica.
+                flowGate.style.display = 'none';
             }
 
-            if (tab === 'flow' && window.loadFlowData && window._flowTabAllowed === true) {
+            if (tab === 'flow' && window.loadFlowData && window._flowTabAllowed) {
                 window.loadFlowData('30d', window.currentProfileDJId);
             }
         }
@@ -4097,6 +4352,31 @@
             line-height: 1.4;
         }
 
+        .sft-upsell-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 18px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            text-decoration: none;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            color: rgba(255, 255, 255, 0.92);
+            background: rgba(0, 0, 0, 0.28);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .sft-upsell-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .sft-upsell-btn--primary {
+            border-color: rgba(197, 160, 89, 0.55);
+            background: linear-gradient(135deg, #c5a059, #e8b96a);
+            color: #000;
+        }
+
         /* Payment Methods */
         .sft-pay-grid {
             display: grid;
@@ -4375,6 +4655,265 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        /* ── SoundForTips tab: layout shell (solo #tab-sft) ── */
+        #tab-sft.sft-tab-root {
+            position: relative;
+            overflow: hidden;
+            padding: 32px 18px 56px;
+            min-height: min(520px, 72vh);
+            background:
+                radial-gradient(ellipse 90% 55% at 50% -15%, rgba(197, 160, 89, 0.22), transparent 58%),
+                radial-gradient(ellipse 60% 40% at 100% 30%, rgba(59, 130, 246, 0.06), transparent 45%),
+                linear-gradient(180deg, #0c0c0f 0%, #070708 48%, #050506 100%);
+        }
+
+        #tab-sft.sft-tab-root::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 28px 28px;
+            opacity: 0.35;
+            pointer-events: none;
+            mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.12) 55%, transparent 100%);
+        }
+
+        #tab-sft .sft-tab-hero {
+            position: relative;
+            z-index: 1;
+            max-width: 920px;
+            margin: 0 auto 32px;
+            padding: 8px 12px 0;
+            text-align: center;
+        }
+
+        #tab-sft .sft-tab-kicker {
+            margin: 0 0 14px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.38em;
+            text-transform: uppercase;
+            color: rgba(197, 160, 89, 0.78);
+        }
+
+        #tab-sft .sft-tab-title {
+            margin: 0 0 12px;
+            font-size: clamp(26px, 4.2vw, 38px);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            line-height: 1.12;
+            color: #fafafa;
+            text-shadow: 0 2px 28px rgba(0, 0, 0, 0.55);
+        }
+
+        #tab-sft .sft-tab-sub {
+            margin: 0 auto;
+            max-width: 48ch;
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.55;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        #tab-sft .sft-tab-live-actions {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        #tab-sft .sft-tab-live-actions[hidden] {
+            display: none !important;
+        }
+
+        #tab-sft .sft-tab-online-btn {
+            appearance: none;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-width: 220px;
+            padding: 16px 28px;
+            border-radius: 999px;
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            transition: transform 0.18s ease, box-shadow 0.22s ease, background 0.22s ease, border-color 0.22s ease;
+        }
+
+        #tab-sft .sft-tab-online-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #tab-sft .sft-tab-online-btn:not(:disabled):active {
+            transform: scale(0.98);
+        }
+
+        #tab-sft .sft-tab-online-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
+        }
+
+        #tab-sft .sft-tab-online-btn--off {
+            color: #fff;
+            background: linear-gradient(165deg, #b91c1c 0%, #7f1d1d 55%, #450a0a 100%);
+            border: 1px solid rgba(248, 113, 113, 0.45);
+            box-shadow: 0 14px 36px rgba(127, 29, 29, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        }
+
+        #tab-sft .sft-tab-online-btn--off .sft-tab-online-dot {
+            background: #fecaca;
+            box-shadow: 0 0 14px rgba(254, 202, 202, 0.75);
+        }
+
+        #tab-sft .sft-tab-online-btn--on {
+            color: #1a1206;
+            background: linear-gradient(165deg, #f5e6c8 0%, #d4a24a 42%, #a16207 100%);
+            border: 1px solid rgba(253, 230, 138, 0.65);
+            box-shadow: 0 16px 44px rgba(197, 160, 89, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        }
+
+        #tab-sft .sft-tab-online-btn--on .sft-tab-online-dot {
+            background: #facc15;
+            box-shadow: 0 0 18px rgba(250, 204, 21, 0.9);
+        }
+
+        #tab-sft .sft-tab-live-hint {
+            margin: 0;
+            max-width: 40ch;
+            font-size: 12px;
+            line-height: 1.45;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.42);
+            text-align: center;
+        }
+
+        #tab-sft .sft-tab-gate {
+            position: relative;
+            z-index: 1;
+            display: none;
+            max-width: 920px;
+            margin: 0 auto 28px;
+            padding: 20px 22px;
+            border-radius: 16px;
+            border: 1px solid rgba(197, 160, 89, 0.38);
+            background: linear-gradient(135deg, rgba(197, 160, 89, 0.14) 0%, rgba(10, 10, 12, 0.92) 55%);
+            box-shadow:
+                0 18px 48px rgba(0, 0, 0, 0.45),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        #tab-sft .sft-tab-gate[style*="display: block"],
+        #tab-sft .sft-tab-gate[style*="display:block"] {
+            display: flex !important;
+        }
+
+        #tab-sft .sft-tab-gate-icon {
+            flex-shrink: 0;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        #tab-sft .sft-tab-gate-copy {
+            flex: 1;
+            min-width: 0;
+            font-size: 14px;
+            line-height: 1.55;
+            color: rgba(255, 255, 255, 0.88);
+            text-align: left;
+        }
+
+        #tab-sft .sft-tab-gate-cta {
+            display: inline-block;
+            margin-top: 10px;
+            font-weight: 800;
+            color: var(--gold);
+            text-decoration: none;
+            border-bottom: 1px solid rgba(197, 160, 89, 0.45);
+            padding-bottom: 1px;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        #tab-sft .sft-tab-gate-cta:hover {
+            color: #fff;
+            border-bottom-color: rgba(255, 255, 255, 0.35);
+        }
+
+        #tab-sft .sft-tab-queue.sft-queue-panel,
+        #tab-sft .sft-queue-panel.sft-tab-queue {
+            position: relative;
+            z-index: 1;
+            max-width: 920px;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 0;
+            border-radius: 22px;
+            border: 1px solid rgba(197, 160, 89, 0.42);
+            background: linear-gradient(165deg, rgba(18, 18, 22, 0.92) 0%, rgba(6, 6, 8, 0.88) 100%);
+            box-shadow:
+                0 24px 64px rgba(0, 0, 0, 0.55),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+                inset 0 -32px 64px rgba(197, 160, 89, 0.04);
+        }
+
+        #tab-sft .sft-queue-header {
+            border-bottom-color: rgba(197, 160, 89, 0.28);
+        }
+
+        #tab-sft .sft-live-dot {
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        #tab-sft .sft-queue-eyebrow {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.38);
+        }
+
+        @media (max-width: 540px) {
+            #tab-sft.sft-tab-root {
+                padding: 24px 12px 40px;
+            }
+
+            #tab-sft .sft-tab-gate[style*="display: block"],
+            #tab-sft .sft-tab-gate[style*="display:block"] {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            #tab-sft .sft-tab-gate-copy {
+                text-align: center;
+            }
+        }
+
         /* Queue Panel inside Dashboard Premium */
         .sft-queue-panel {
             background: rgba(10, 10, 10, 0.8);
@@ -4504,28 +5043,31 @@
             box-shadow: 0 8px 25px rgba(34, 197, 94, 0.5);
         }
 
-        /* DJ: cabina SoundForTips — tabla estilo biblioteca (Rekordbox / Music) */
+        /* DJ: cabina SoundForTips — vista playlist (Apple Music / Serato) */
         .sft-am-overlay {
             display: none;
             position: fixed;
             inset: 0;
             z-index: 12000;
             flex-direction: column;
-            background: #0d0d0f;
-            color: #e8e8ed;
+            background: #000000;
+            color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
             -webkit-font-smoothing: antialiased;
         }
 
         .sft-am-overlay.active {
             display: flex;
+            align-items: stretch;
+            min-height: 100vh;
+            min-height: 100dvh;
         }
 
         .sft-am-overlay::before {
             content: "";
             position: absolute;
             inset: 0;
-            background: linear-gradient(180deg, rgba(30, 58, 138, 0.12) 0%, transparent 35%);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 22%);
             pointer-events: none;
         }
 
@@ -4534,34 +5076,657 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            max-width: 1024px;
             width: 100%;
+            max-width: min(98vw, 1680px);
+            min-height: 0;
             margin: 0 auto;
-            padding: max(10px, env(safe-area-inset-top)) 14px max(12px, env(safe-area-inset-bottom));
+            padding: max(8px, env(safe-area-inset-top)) clamp(10px, 2.2vw, 32px) max(10px, env(safe-area-inset-bottom));
             box-sizing: border-box;
             overflow: hidden;
+        }
+
+        /* Barra superior — referencia Serato (captura): gris oscuro, pestaña activa */
+        .sft-cab-deskbar {
+            position: relative;
+            z-index: 2;
+            flex-shrink: 0;
+            margin-bottom: 8px;
+            border-radius: 2px;
+            border: 1px solid #222222;
+            background: #141414;
+            box-shadow: none;
+        }
+
+        .sft-cab-deskbar-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 6px 10px 6px 8px;
+            border-bottom: 1px solid #222222;
+        }
+
+        .sft-cab-desk-left {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sft-cab-desk-pill {
+            padding: 5px 10px;
+            border-radius: 2px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: #999999;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            cursor: pointer;
+            transition: background 0.12s, color 0.12s;
+        }
+
+        .sft-cab-desk-pill:disabled {
+            opacity: 0.55;
+            cursor: default;
+        }
+
+        .sft-cab-desk-pill:not(:disabled):hover {
+            color: #cccccc;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .sft-cab-desk-pill--tab.sft-cab-desk-pill--on {
+            color: #ffffff;
+            background: #0a0a0a;
+            border-color: #222222;
+            box-shadow: inset 0 -2px 0 #ea580c;
+        }
+
+        .sft-cab-desk-sep {
+            display: inline-block;
+            width: 1px;
+            height: 16px;
+            margin: 0 2px;
+            background: #222222;
+        }
+
+        .sft-cab-desk-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1 1 auto;
+            min-width: 0;
+            justify-content: flex-end;
+        }
+
+        .sft-cab-desk-search-field {
+            flex: 1 1 240px;
+            max-width: min(560px, 56vw);
+            min-width: 160px;
+        }
+
+        .sft-cab-desk-todo {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            color: #666666;
+        }
+
+        /* Búsqueda estilo Google (modo oscuro): barra elevada, píldora, Material / Search */
+        .sft-cab-desk-search-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 10px 12px 10px 16px;
+            border-radius: 9999px;
+            border: 1px solid #5f6368;
+            background: #303134;
+            box-shadow:
+                0 1px 2px rgba(0, 0, 0, 0.3),
+                0 2px 6px rgba(0, 0, 0, 0.22),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .sft-cab-desk-search-wrap:hover {
+            background: #3c4043;
+            border-color: #70757a;
+            box-shadow:
+                0 1px 3px rgba(0, 0, 0, 0.35),
+                0 4px 12px rgba(0, 0, 0, 0.28),
+                inset 0 1px 0 rgba(255, 255, 255, 0.07);
+        }
+
+        .sft-cab-desk-search-wrap:focus-within {
+            background: #3c4043;
+            border-color: #8ab4f8;
+            box-shadow:
+                0 1px 3px rgba(0, 0, 0, 0.35),
+                0 2px 8px rgba(0, 0, 0, 0.25),
+                0 0 0 1px rgba(138, 180, 248, 0.45),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .sft-cab-desk-search-ico {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            color: #9aa0a6;
+            line-height: 0;
+        }
+
+        .sft-cab-desk-search-ico svg {
+            width: 18px;
+            height: 18px;
+            display: block;
+            opacity: 0.95;
+        }
+
+        .sft-cab-desk-search-wrap:focus-within .sft-cab-desk-search-ico {
+            color: #bdc1c6;
+        }
+
+        .sft-cab-desk-search {
+            flex: 1;
+            min-width: 0;
+            border: none;
+            background: transparent;
+            color: #e8eaed;
+            font-size: 16px;
+            font-weight: 400;
+            font-family: Roboto, Arial, "Helvetica Neue", Helvetica, system-ui, sans-serif;
+            letter-spacing: 0.01em;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .sft-cab-desk-search::-webkit-search-cancel-button,
+        .sft-cab-desk-search::-webkit-search-decoration {
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .sft-cab-desk-search::placeholder {
+            color: #9aa0a6;
+            font-weight: 400;
+        }
+
+        .sft-cab-desk-search-clear {
+            flex-shrink: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            margin: 0;
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            color: #9aa0a6;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+
+        .sft-cab-desk-search-wrap--has-text .sft-cab-desk-search-clear {
+            display: flex;
+        }
+
+        .sft-cab-desk-search-clear:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e8eaed;
+        }
+
+        .sft-cab-grid-sel-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .sft-cab-grid-sel-lbl {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #777777;
+            white-space: nowrap;
+        }
+
+        .sft-cab-grid-sel {
+            appearance: none;
+            -webkit-appearance: none;
+            padding: 4px 22px 4px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #e0e0e0;
+            background: #1a1a1a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23888' d='M0 0h10L5 6z'/%3E%3C/svg%3E") no-repeat right 6px center;
+            border: 1px solid #333333;
+            border-radius: 2px;
+            cursor: pointer;
+            max-width: 7.5rem;
+        }
+
+        .sft-cab-grid-sel:focus {
+            outline: 1px solid rgba(197, 160, 89, 0.5);
+            outline-offset: 1px;
+        }
+
+        .sft-cab-desk-meta {
+            margin: 0;
+            padding: 8px 12px 9px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #a8a8b0;
+            line-height: 1.4;
+            border-top: 1px solid #2a2a2a;
+            background: #121214;
+        }
+
+        .sft-cab-desk-meta--money {
+            padding: 10px 12px 11px;
+            font-size: 12px;
+            color: #d4d4dc;
+            background: linear-gradient(180deg, #16161a 0%, #121214 100%);
+            border-top: 1px solid #333340;
+        }
+
+        .sft-cab-desk-meta--money .sft-cab-strip-metrics--desk {
+            justify-content: flex-start;
+            flex-wrap: nowrap;
+            gap: 8px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 2px;
+        }
+
+        /* Tabla cabina: aspecto hoja de cálculo (rejilla fuerte, columnas alineadas, rayado) */
+        .sft-cab-pl-wrap {
+            width: 100%;
+        }
+
+        .sft-cab-pl-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            background: #111111;
+        }
+
+        .sft-cab-pl-table--grid {
+            --sft-excel-line: #5a5a5a;
+            --sft-excel-line-soft: #454545;
+            --sft-grid-vw: 1px;
+            border: 2px solid var(--sft-excel-line);
+            font-size: 13px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .sft-cab-pl-table--grid.sft-cab-grid--thin {
+            --sft-excel-line: #404048;
+            --sft-excel-line-soft: #2c2c34;
+            --sft-grid-vw: 1px;
+            border-width: 1px;
+        }
+
+        .sft-cab-pl-table--grid.sft-cab-grid--medium {
+            --sft-excel-line: #5a5a5a;
+            --sft-excel-line-soft: #454545;
+            --sft-grid-vw: 1px;
+        }
+
+        .sft-cab-pl-table--grid.sft-cab-grid--strong {
+            --sft-excel-line: #8a8a96;
+            --sft-excel-line-soft: #666678;
+            --sft-grid-vw: 2px;
+            border-width: 2px;
+        }
+
+        .sft-cab-pl-table--grid thead th,
+        .sft-cab-pl-table--grid tbody td {
+            border-width: var(--sft-grid-vw);
+            border-style: solid;
+            border-color: var(--sft-excel-line-soft);
+        }
+
+        .sft-cab-pl-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            padding: 7px 8px;
+            text-align: left;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #999999;
+            background: #1a1a1a;
+            border-bottom: 1px solid #222222;
+            white-space: nowrap;
+        }
+
+        .sft-cab-pl-table--grid thead th {
+            padding: 12px 11px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.09em;
+            color: #f2f2f6;
+            text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+            background: linear-gradient(180deg, #3a3a42 0%, #2c2c34 100%);
+            border-bottom: 3px solid rgba(197, 160, 89, 0.65);
+            border-right-width: var(--sft-grid-vw);
+            border-right-style: solid;
+            border-right-color: var(--sft-excel-line-soft);
+            box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+        }
+
+        .sft-cab-pl-table--grid thead th:last-child {
+            border-right-color: var(--sft-excel-line-soft);
+        }
+
+        .sft-cab-pl-th-art {
+            width: 56px;
+        }
+
+        .sft-cab-pl-th-act {
+            text-align: right;
+            width: 1%;
+        }
+
+        .sft-cab-pl-table tbody tr.sft-cab-pl-tr {
+            cursor: pointer;
+            transition: background 0.08s;
+            background: #121212;
+        }
+
+        .sft-cab-pl-table--grid tbody tr.sft-cab-pl-tr:nth-child(odd) {
+            background: #101010;
+        }
+
+        .sft-cab-pl-table--grid tbody tr.sft-cab-pl-tr:nth-child(even) {
+            background: #171717;
+        }
+
+        .sft-cab-pl-table tbody tr.sft-cab-pl-tr:hover {
+            background: #1f2430 !important;
+        }
+
+        .sft-cab-pl-table tbody tr.sft-cab-pl-tr--sel {
+            outline: none;
+            background: #252a33 !important;
+            box-shadow: inset 3px 0 0 #ea580c;
+        }
+
+        .sft-cab-pl-table td {
+            padding: 5px 8px;
+            vertical-align: middle;
+            border-bottom: 1px solid #222222;
+        }
+
+        .sft-cab-pl-table--grid tbody td {
+            padding: 8px 10px;
+            min-height: 48px;
+        }
+
+        .sft-cab-pl-empty-row {
+            background: #161616;
+            vertical-align: middle;
+        }
+
+        .sft-cab-pl-empty-inner {
+            text-align: center;
+            padding: 24px 16px 28px;
+        }
+
+        .sft-cab-pl-empty-ico {
+            display: block;
+            font-size: 30px;
+            line-height: 1;
+            opacity: 0.45;
+        }
+
+        .sft-cab-pl-empty-title {
+            font-weight: 700;
+            color: #f0f0f0;
+            margin: 12px 0 8px;
+            font-size: 15px;
+            letter-spacing: -0.02em;
+        }
+
+        .sft-cab-pl-empty-desc {
+            color: #9a9a9a;
+            font-size: 12px;
+            line-height: 1.5;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        .sft-cab-thumb--table {
+            width: 40px;
+            height: 40px;
+            border-radius: 2px;
+            display: block;
+            object-fit: cover;
+        }
+
+        .sft-cab-pl-title {
+            font-weight: 600;
+            color: #ffffff;
+            line-height: 1.3;
+            letter-spacing: -0.01em;
+        }
+
+        .sft-cab-pl-muted {
+            color: #cccccc;
+            font-size: 12px;
+            max-width: 22vw;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .sft-cab-pl-album {
+            color: #cccccc;
+            font-size: 12px;
+            max-width: 18vw;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .sft-cab-pl-fan {
+            color: #d4d4d4;
+            font-size: 12px;
+            font-weight: 600;
+            max-width: 16vw;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .sft-cab-pl-genre {
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+            color: #cccccc;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .sft-cab-pl-act {
+            text-align: right;
+            white-space: nowrap;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .sft-cab-btn-copy {
+            background: #27272f;
+            border: 1px solid #3f3f4c;
+            color: #c4c4d4;
+        }
+
+        .sft-cab-btn-copy:hover {
+            background: #32323c;
+            border-color: rgba(197, 160, 89, 0.45);
+            color: var(--gold-light);
+        }
+
+        .sft-cab-btn--compact {
+            padding: 4px 8px;
+            font-size: 11px;
+            min-width: auto;
+            border-radius: 2px;
+        }
+
+        .sft-cab-pl-act .sft-cab-btn-yes {
+            background: #14532d;
+            border: 1px solid #166534;
+            color: #e5e5e5;
+        }
+
+        .sft-cab-pl-act .sft-cab-btn-no {
+            background: #450a0a;
+            border: 1px solid #7f1d1d;
+            color: #e5e5e5;
+        }
+
+        .sft-cab-pl-act .sft-cab-btn-yes:hover,
+        .sft-cab-pl-act .sft-cab-btn-no:hover {
+            filter: brightness(1.12);
+        }
+
+        @media (max-width: 720px) {
+            .sft-cab-pl-table thead th:nth-child(4),
+            .sft-cab-pl-table tbody td:nth-child(4) {
+                display: none;
+            }
         }
 
         .sft-cab-strip {
             flex-shrink: 0;
             display: flex;
             flex-wrap: wrap;
-            align-items: center;
+            align-items: stretch;
             justify-content: space-between;
-            gap: 10px;
-            padding: 10px 14px;
+            gap: 12px 14px;
+            padding: 12px 12px;
             margin-bottom: 8px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            background: linear-gradient(180deg, #1a1a20 0%, #141418 100%);
+            border: 1px solid #353542;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
             font-size: 12px;
-            font-weight: 700;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            color: #c4c4cc;
+        }
+
+        .sft-cab-strip-queue {
+            align-self: center;
+            font-size: 13px;
+            font-weight: 800;
+            color: #e8e8ee;
             letter-spacing: 0.02em;
         }
 
+        .sft-cab-strip-metrics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: flex-end;
+            align-items: stretch;
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .sft-cab-strip-chip {
+            flex: 1 1 7rem;
+            min-width: 6.75rem;
+            max-width: 12rem;
+            padding: 10px 12px;
+            border-radius: 4px;
+            border: 1px solid #3a3a46;
+            background: linear-gradient(180deg, #1e1e26 0%, #18181e 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .sft-cab-strip-chip--dj {
+            border-color: rgba(197, 160, 89, 0.5);
+            box-shadow: 0 0 0 1px rgba(197, 160, 89, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        .sft-cab-strip-chip--house {
+            border-color: #3d3d4a;
+        }
+
+        .sft-cab-strip-chip-lbl {
+            display: block;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: #8e8e9a;
+            margin-bottom: 5px;
+            line-height: 1.2;
+        }
+
+        .sft-cab-strip-pct {
+            font-weight: 700;
+            font-size: 9px;
+            letter-spacing: 0.02em;
+            text-transform: none;
+            opacity: 0.85;
+            color: #a0a0ac;
+        }
+
+        .sft-cab-strip-chip-val {
+            display: block;
+            font-size: 19px;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            color: #f4f4f8;
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+        }
+
+        .sft-cab-strip-chip-val--gross {
+            color: #eeeeff;
+        }
+
+        .sft-cab-strip-chip--dj .sft-cab-strip-chip-val {
+            color: var(--gold-light);
+        }
+
+        .sft-cab-strip-metrics--desk .sft-cab-strip-chip {
+            flex: 0 0 auto;
+            min-width: 5.75rem;
+            max-width: none;
+            padding: 7px 10px;
+        }
+
+        .sft-cab-strip-metrics--desk .sft-cab-strip-chip-lbl {
+            font-size: 9px;
+            margin-bottom: 3px;
+        }
+
+        .sft-cab-strip-metrics--desk .sft-cab-strip-chip-val {
+            font-size: 15px;
+        }
+
         .sft-cab-strip strong {
-            color: #86efac;
-            font-weight: 900;
+            color: #e8e8ee;
+            font-weight: 800;
             font-variant-numeric: tabular-nums;
         }
 
@@ -4570,9 +5735,29 @@
             min-height: 0;
             overflow: auto;
             -webkit-overflow-scrolling: touch;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            background: rgba(0, 0, 0, 0.35);
+            border-radius: 2px;
+            border: 1px solid #222222;
+            background: #111111;
+        }
+
+        @media (min-width: 1000px) {
+            .sft-am-shell .sft-cab-pl-table--grid {
+                font-size: 14px;
+            }
+
+            .sft-am-shell .sft-cab-pl-table--grid thead th {
+                font-size: 13px;
+                padding: 13px 12px;
+            }
+
+            .sft-am-shell .sft-cab-pl-title {
+                font-size: 15px;
+            }
+
+            .sft-am-shell .sft-cab-thumb--table {
+                width: 44px;
+                height: 44px;
+            }
         }
 
         .sft-cab-table {
@@ -4698,9 +5883,67 @@
             filter: brightness(1.08);
         }
 
+        .sft-cab-total-bar {
+            flex-shrink: 0;
+            margin-top: auto;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(197, 160, 89, 0.35);
+            background: linear-gradient(180deg, rgba(30, 28, 22, 0.98) 0%, rgba(18, 18, 20, 0.99) 100%);
+            box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        .sft-cab-total-bar-inner {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px 16px;
+        }
+
+        .sft-cab-total-bar-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+
+        .sft-cab-total-bar-lbl {
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(240, 204, 128, 0.95);
+        }
+
+        .sft-cab-total-bar-sub {
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.45);
+            line-height: 1.3;
+        }
+
+        .sft-cab-total-bar-amt {
+            font-size: 26px;
+            font-weight: 900;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.03em;
+            color: var(--gold-light);
+            line-height: 1;
+            text-shadow: 0 1px 12px rgba(197, 160, 89, 0.35);
+        }
+
+        @media (max-width: 520px) {
+            .sft-cab-total-bar-amt {
+                font-size: 22px;
+                width: 100%;
+                text-align: right;
+            }
+        }
+
         .sft-cab-footer {
             flex-shrink: 0;
-            margin-top: 12px;
+            margin-top: 10px;
             padding-top: 12px;
             border-top: 1px solid rgba(255, 255, 255, 0.08);
             text-align: center;
@@ -4740,11 +5983,17 @@
         }
 
         .sft-cab-group {
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.03);
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-left: 3px solid rgba(234, 88, 12, 0.35);
+            background: rgba(255, 255, 255, 0.035);
             overflow: hidden;
-            transition: box-shadow 0.15s, outline 0.15s;
+            transition: box-shadow 0.15s, outline 0.15s, border-color 0.15s, transform 0.12s;
+        }
+
+        .sft-cab-group:hover {
+            border-left-color: rgba(234, 88, 12, 0.95);
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
         }
 
         .sft-cab-group--selected {
@@ -4761,17 +6010,17 @@
         /* Cabecera tipo captura: columnas alineadas */
         .sft-cab-mini-thead {
             display: grid;
-            grid-template-columns: 48px 1fr 88px minmax(132px, auto);
-            gap: 8px;
+            grid-template-columns: 56px 1fr 96px minmax(132px, auto);
+            gap: 10px;
             align-items: center;
-            padding: 8px 12px 6px;
-            background: #161618;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 10px 14px 8px;
+            background: rgba(22, 22, 24, 0.98);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             font-size: 10px;
             font-weight: 800;
             letter-spacing: 0.1em;
             text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.42);
+            color: rgba(255, 255, 255, 0.38);
         }
 
         .sft-cab-mini-thead span:nth-child(1) {
@@ -4812,7 +6061,7 @@
         }
 
         .sft-cab-mini-thead--song {
-            grid-template-columns: 48px 1fr 1fr auto;
+            grid-template-columns: 56px 1fr 1fr auto;
             margin-top: 0;
         }
 
@@ -4820,27 +6069,27 @@
             text-align: right;
         }
 
-        /* Portada mini tipo biblioteca / Rekordbox (columna ARTE) */
+        /* Portadas estilo Apple Music (filas playlist) */
         .sft-cab-thumb {
-            width: 40px;
-            height: 40px;
-            border-radius: 4px;
+            width: 56px;
+            height: 56px;
+            border-radius: 10px;
             object-fit: cover;
             flex-shrink: 0;
-            background: #141414;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+            background: linear-gradient(145deg, #2a2a2e, #121214);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(0, 0, 0, 0.35);
         }
 
         .sft-cab-req-line {
             display: grid;
-            grid-template-columns: 48px 1fr 88px minmax(132px, auto);
-            gap: 8px;
+            grid-template-columns: 56px 1fr 96px minmax(132px, auto);
+            gap: 10px;
             align-items: center;
-            padding: 8px 12px;
-            min-height: 48px;
-            background: rgba(0, 0, 0, 0.25);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 10px 14px;
+            min-height: 56px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
             cursor: pointer;
         }
 
@@ -4853,7 +6102,7 @@
         }
 
         .sft-cab-req-line:hover {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.06);
         }
 
         .sft-cab-req-line--sel {
@@ -4878,13 +6127,13 @@
 
         .sft-cab-song-block {
             display: grid;
-            grid-template-columns: 48px 1fr 1fr auto;
-            gap: 8px;
+            grid-template-columns: 56px 1fr 1fr auto;
+            gap: 10px;
             align-items: center;
-            padding: 8px 12px 10px;
-            min-height: 48px;
-            background: rgba(255, 255, 255, 0.02);
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 12px 14px 14px;
+            min-height: 64px;
+            background: rgba(255, 255, 255, 0.03);
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
         }
 
         .sft-cab-song-block .sft-cab-thumb {
@@ -5050,6 +6299,48 @@
             box-shadow: inset 0 -2px 0 rgba(197, 160, 89, 0.85);
         }
 
+        .sft-cab-panes {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sft-am-shell.sft-cab--pane-both .sft-cab-panes {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        @media (min-width: 900px) {
+            .sft-am-shell.sft-cab--pane-both .sft-cab-panes {
+                flex-direction: row;
+                align-items: stretch;
+                gap: 0;
+            }
+
+            .sft-am-shell.sft-cab--pane-both #sft-cab-pane-list {
+                flex: 1.35;
+                min-width: 0;
+                border-right: 1px solid #222222;
+            }
+
+            .sft-am-shell.sft-cab--pane-both #sft-cab-pane-qr {
+                flex: 0 0 min(360px, 38vw);
+                max-width: 100%;
+            }
+        }
+
+        .sft-am-shell.sft-cab--pane-both #sft-cab-pane-qr {
+            border-top: 1px solid #222222;
+        }
+
+        @media (min-width: 900px) {
+            .sft-am-shell.sft-cab--pane-both #sft-cab-pane-qr {
+                border-top: none;
+            }
+        }
+
         .sft-cab-pane-list {
             flex: 1;
             min-height: 0;
@@ -5063,10 +6354,21 @@
             display: none;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 16px 12px;
+            justify-content: flex-start;
+            padding: 12px 12px 16px;
             overflow: auto;
             -webkit-overflow-scrolling: touch;
+        }
+
+        .sft-cab-qr-multi-hint {
+            margin: 0 0 14px;
+            padding: 0 8px;
+            max-width: 52ch;
+            font-size: 11px;
+            line-height: 1.45;
+            font-weight: 600;
+            color: #777777;
+            text-align: center;
         }
 
         .sft-cab-qr-card {
@@ -5094,6 +6396,66 @@
             line-height: 1.45;
         }
 
+        .sft-cab-qr-actions {
+            margin-top: 14px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .sft-cab-qr-dl-btn {
+            appearance: none;
+            border: 1px solid #222222;
+            border-radius: 4px;
+            padding: 10px 16px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #111111;
+            background: linear-gradient(180deg, #f5f5f5, #e2e2e2);
+            cursor: pointer;
+            transition: filter 0.15s, transform 0.1s;
+        }
+
+        .sft-cab-qr-dl-btn:hover {
+            filter: brightness(1.05);
+        }
+
+        .sft-cab-qr-dl-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Vista solo QR: QR grande en pantalla del móvil para que el DJ lo muestre y escaneen */
+        .sft-am-shell.sft-cab--pane-qr:not(.sft-cab--pane-both) #sft-cab-qr-mount canvas,
+        .sft-am-shell.sft-cab--pane-qr:not(.sft-cab--pane-both) #sft-cab-qr-mount img {
+            display: block;
+            margin: 0 auto;
+            width: min(82vmin, 400px) !important;
+            height: auto !important;
+        }
+
+        @media (max-width: 600px) {
+            .sft-am-shell.sft-cab--pane-qr:not(.sft-cab--pane-both) #sft-cab-qr-mount canvas,
+            .sft-am-shell.sft-cab--pane-qr:not(.sft-cab--pane-both) #sft-cab-qr-mount img {
+                width: min(88vmin, 440px) !important;
+            }
+
+            .sft-am-shell.sft-cab--pane-qr:not(.sft-cab--pane-both) #sft-cab-pane-qr {
+                justify-content: center;
+                padding: 16px 10px 24px;
+            }
+        }
+
+        .sft-am-shell.sft-cab--pane-both #sft-cab-qr-mount canvas,
+        .sft-am-shell.sft-cab--pane-both #sft-cab-qr-mount img {
+            width: 200px !important;
+            height: auto !important;
+            display: block;
+            margin: 0 auto;
+        }
+
         .sft-am-shell.sft-cab--pane-qr .sft-am-refresh {
             visibility: hidden;
             pointer-events: none;
@@ -5101,27 +6463,32 @@
 
         .sft-am-empty {
             text-align: center;
-            padding: 48px 20px;
-            color: rgba(255, 255, 255, 0.35);
+            padding: 56px 24px 64px;
+            color: rgba(255, 255, 255, 0.4);
         }
 
         .sft-am-empty-icon {
-            font-size: 56px;
-            margin-bottom: 16px;
-            opacity: 0.5;
+            font-size: 64px;
+            margin: 0 auto 20px;
+            opacity: 0.55;
+            filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.45));
         }
 
         .sft-am-empty-title {
             margin: 0;
-            font-size: 18px;
-            font-weight: 700;
-            color: rgba(255, 255, 255, 0.55);
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: rgba(255, 255, 255, 0.72);
         }
 
         .sft-am-empty-desc {
-            margin: 10px 0 0;
+            margin: 12px auto 0;
+            max-width: 38ch;
             font-size: 14px;
-            line-height: 1.45;
+            line-height: 1.5;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.42);
         }
     </style>
 
@@ -5152,19 +6519,17 @@
                 <p id="sftSubtitle">Busca tu canción y envía tu petición.</p>
             </div>
 
-            <!-- PASO 1: búsqueda real (catálogo Apple/iTunes — portada, título, artista) -->
+            <!-- PASO 1: buscador inteligente (Apple iTunes Search API — typeahead, portada/título/artista) -->
             <div id="sftStep1">
                 <div class="sft-group" id="sftSearchGroup">
-                    <label>🎵 Buscar canción</label>
-                    <p style="font-size:11px; color:rgba(255,255,255,0.45); margin:-6px 0 10px 0; line-height:1.4;">Como
-                        en Apple Music o Spotify: solo portada, título y artista.</p>
+                    <label data-i18n="sft-modal-search-label">🎵 Buscador inteligente de canciones</label>
+                    <p data-i18n="sft-modal-search-hint" style="font-size:11px; color:rgba(255,255,255,0.45); margin:-6px 0 10px 0; line-height:1.4;">Mientras escribes, buscamos en el catálogo Apple: portada, título y artista (estilo Apple Music / Spotify).</p>
                     <div class="sft-search-wrapper">
                         <input type="text" class="sft-input" id="sftSearchInput"
-                            placeholder="Título o artista (mín. 3 letras)…" autocomplete="off">
+                            data-i18n-hold="sft-modal-search-placeholder" placeholder="Título o artista (mín. 3 letras)…" autocomplete="off">
                         <div class="sft-results" id="sftResults"></div>
                     </div>
-                    <div style="font-size:10px; color:#666; margin-top:6px; text-align:right;">Catálogo Apple / iTunes
-                    </div>
+                    <div data-i18n="sft-modal-search-catalog" style="font-size:10px; color:#666; margin-top:6px; text-align:right;">Catálogo Apple / iTunes</div>
                 </div>
 
                 <!-- Tarjeta de Canción Seleccionada -->
@@ -5185,70 +6550,94 @@
                 </div>
             </div>
 
-            <!-- PASO 2: SOUNDFORTIPS — datos, método de cobro, propina retenida (escrow) hasta el DJ -->
+            <!-- PASO 2a: identificación — email/tel opcionales (no hace falta ambos) -->
+            <!-- PASO 2b: propina + método de pago + dato del pagador para conciliar -->
             <div id="sftStep2" style="display:none;">
-                <div class="sft-escrow-banner" id="sftEscrowBanner">
-                    El pago queda <strong>retenido</strong> hasta que el DJ acepte tu petición (como propina en restaurante).
-                </div>
-
-                <div class="sft-group">
-                    <label>👤 Tu nombre o mesa</label>
-                    <input type="text" class="sft-input" id="sftClientName" placeholder="Ej: Martha · Mesa VIP 4" autocomplete="name">
-                </div>
-                <div class="sft-group">
-                    <label>✉️ Email</label>
-                    <input type="email" class="sft-input" id="sftClientEmail" placeholder="Para comprobante / reembolso" autocomplete="email">
-                </div>
-                <div class="sft-group">
-                    <label>📱 Teléfono / WhatsApp</label>
-                    <input type="tel" class="sft-input" id="sftClientPhone" placeholder="+1 … (opcional)" autocomplete="tel">
-                    <p style="font-size:10px; color:rgba(255,255,255,0.42); margin:8px 0 0 0; line-height:1.35;">Correo y teléfono quedan solo en Miami DJ Beat (comprobantes, SMS y promociones). El DJ no ve tu email ni tu número.</p>
-                </div>
-
-                <div class="sft-group">
-                    <label>💳 Método de pago</label>
-                    <p style="font-size:11px; color:rgba(255,255,255,0.45); margin:-6px 0 10px 0;">Zelle, PayPal, tarjeta u otro — elige cómo envías la propina.</p>
-                    <div class="sft-pay-grid">
-                        <button type="button" class="sft-pay-btn selected" onclick="selectSftPayment('Zelle', this)">
-                            <span class="pm-check" style="font-size:12px; color:var(--gold);">✔</span> Zelle
-                        </button>
-                        <button type="button" class="sft-pay-btn" onclick="selectSftPayment('Venmo', this)">
-                            <span class="pm-check" style="font-size:12px;"></span> Venmo
-                        </button>
-                        <button type="button" class="sft-pay-btn" onclick="selectSftPayment('PayPal', this)">
-                            <span class="pm-check" style="font-size:12px;"></span> PayPal
-                        </button>
-                        <button type="button" class="sft-pay-btn" onclick="selectSftPayment('Tarjeta', this)">
-                            <span class="pm-check" style="font-size:12px;"></span> Tarjeta
-                        </button>
+                <div id="sftStep2a">
+                    <div class="sft-escrow-banner" id="sftEscrowBannerA">
+                        Paso 1 de 2: <strong>quién pide</strong>. Email y teléfono son opcionales; con uno basta para comprobantes o SMS.
+                    </div>
+                    <div class="sft-group">
+                        <label>👤 Tu nombre o mesa <span style="color:#f87171;font-size:11px;">*</span></label>
+                        <input type="text" class="sft-input" id="sftClientName" placeholder="Ej: Martha · Mesa VIP 4" autocomplete="name">
+                    </div>
+                    <div class="sft-group">
+                        <label>✉️ Email <span style="font-size:10px;color:rgba(255,255,255,0.45);font-weight:600;">(opcional)</span></label>
+                        <input type="email" class="sft-input" id="sftClientEmail" placeholder="Si ya pones teléfono, el email no es obligatorio" autocomplete="email">
+                    </div>
+                    <div class="sft-group">
+                        <label>📱 Teléfono / WhatsApp <span style="font-size:10px;color:rgba(255,255,255,0.45);font-weight:600;">(opcional)</span></label>
+                        <input type="tel" class="sft-input" id="sftClientPhone" placeholder="+1 …" autocomplete="tel">
+                        <p style="font-size:10px; color:rgba(255,255,255,0.42); margin:8px 0 0 0; line-height:1.35;" data-i18n="sft-contact-privacy-hint">Solo Miami DJ Beat usa estos datos (comprobantes, SMS). El DJ no ve tu email ni tu número.</p>
+                    </div>
+                    <button type="button" class="sft-submit" onclick="sftGoToStep2b()">Continuar: propina y pago →</button>
+                    <div style="text-align:center; margin-top:15px;">
+                        <button type="button" onclick="backToStep1()"
+                            style="background:none; border:none; color:#888; font-size:12px; text-decoration:underline; cursor:pointer;">←
+                            Cambiar canción</button>
                     </div>
                 </div>
 
-                <div class="sft-group">
-                    <label>💵 Propina</label>
-                    <div class="sft-tip-chips" id="sftTipChips">
-                        <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(5, this)">$5</button>
-                        <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(10, this)">$10</button>
-                        <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(15, this)">$15</button>
-                        <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(20, this)">$20</button>
-                        <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(50, this)">$50</button>
+                <div id="sftStep2b" style="display:none;">
+                    <div class="sft-escrow-banner" id="sftEscrowBannerB">
+                        Paso 2 de 2: elige <strong>propina</strong> y cómo pagas. El importe queda <strong>retenido</strong> hasta que el DJ responda.
                     </div>
-                    <div style="position:relative; margin-top:12px;">
-                        <span
-                            style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--gold); font-size:18px; font-weight:900;">$</span>
-                        <input type="number" class="sft-input" id="sftCustomTip" placeholder="Otro monto…"
-                            style="padding-left:35px; font-size:18px; font-weight:800;" min="1" step="0.01">
-                    </div>
-                </div>
 
-                <button type="button" class="sft-submit" id="sftSubmitBtn" onclick="processSoundForTips()">Enviar propina
-                    ➔</button>
-                <div style="text-align:center; margin-top:15px;">
-                    <button type="button" onclick="backToStep1()"
-                        style="background:none; border:none; color:#888; font-size:12px; text-decoration:underline; cursor:pointer;">←
-                        Cambiar canción</button>
+                    <div class="sft-group">
+                        <label>💳 Método de pago</label>
+                        <p style="font-size:11px; color:rgba(255,255,255,0.45); margin:-6px 0 10px 0;" data-i18n="sft-pay-method-hint">Zelle, PayPal, Venmo, tarjeta — elige cómo envías la propina.</p>
+                        <div class="sft-pay-grid">
+                            <button type="button" class="sft-pay-btn selected" onclick="selectSftPayment('Zelle', this)">
+                                <span class="pm-check" style="font-size:12px; color:var(--gold);">✔</span> Zelle
+                            </button>
+                            <button type="button" class="sft-pay-btn" onclick="selectSftPayment('Venmo', this)">
+                                <span class="pm-check" style="font-size:12px;"></span> Venmo
+                            </button>
+                            <button type="button" class="sft-pay-btn" onclick="selectSftPayment('PayPal', this)">
+                                <span class="pm-check" style="font-size:12px;"></span> PayPal
+                            </button>
+                            <button type="button" class="sft-pay-btn" onclick="selectSftPayment('Tarjeta', this)">
+                                <span class="pm-check" style="font-size:12px;"></span> Tarjeta
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="sft-group" id="sftPayRecipientWrap">
+                        <label data-i18n="sft-pay-where-label">Dónde enviar la propina (Miami DJ Beat)</label>
+                        <div id="sftPayRecipientBlock" class="sft-pay-recipient-box" style="font-size:12px; line-height:1.45; color:rgba(255,255,255,0.78); padding:12px 14px; border-radius:12px; border:1px solid rgba(197,160,89,0.28); background:rgba(0,0,0,0.35);"></div>
+                    </div>
+
+                    <div class="sft-group">
+                        <label>🔑 Tu dato para conciliar el pago <span style="color:#f87171;font-size:11px;">*</span></label>
+                        <p style="font-size:11px; color:rgba(255,255,255,0.45); margin:-4px 0 8px 0;" data-i18n="sft-payer-handle-hint">Indica el email o teléfono desde el que envías (Zelle), tu PayPal, @Venmo, o los últimos 4 dígitos de la tarjeta — según el método elegido.</p>
+                        <input type="text" class="sft-input" id="sftPayerPaymentHandle" placeholder="Ej: tu email de Zelle / @venmo / últimos 4 dígitos…" autocomplete="off">
+                    </div>
+
+                    <div class="sft-group">
+                        <label>💵 Propina</label>
+                        <div class="sft-tip-chips" id="sftTipChips">
+                            <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(5, this)">$5</button>
+                            <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(10, this)">$10</button>
+                            <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(15, this)">$15</button>
+                            <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(20, this)">$20</button>
+                            <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(50, this)">$50</button>
+                        </div>
+                        <div style="position:relative; margin-top:12px;">
+                            <span
+                                style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--gold); font-size:18px; font-weight:900;">$</span>
+                            <input type="number" class="sft-input" id="sftCustomTip" placeholder="Otro monto…"
+                                style="padding-left:35px; font-size:18px; font-weight:800;" min="1" step="0.01">
+                        </div>
+                    </div>
+
+                    <button type="button" class="sft-submit" id="sftSubmitBtn" onclick="processSoundForTips()">Enviar petición con propina ➔</button>
+                    <div style="text-align:center; margin-top:15px;">
+                        <button type="button" onclick="sftBackToStep2a()"
+                            style="background:none; border:none; color:#888; font-size:12px; text-decoration:underline; cursor:pointer;">←
+                            Volver a tus datos</button>
+                    </div>
+                    <div class="sft-disclaimer">El importe se procesa y queda en custodia hasta la decisión del DJ; si rechaza la petición, se devuelve según política del método de pago.</div>
                 </div>
-                <div class="sft-disclaimer">El importe se procesa y queda en custodia hasta la decisión del DJ; si rechaza la petición, se devuelve según política del método de pago.</div>
             </div>
 
             <!-- Estado Cargando / Éxito -->
@@ -5260,6 +6649,14 @@
                 <h3 id="sftStatusText" style="color:#fff; font-size:20px; font-weight:800;">Procesando Tip...</h3>
                 <p id="sftSubText" style="color:#aaa; font-size:14px; margin-top:10px; line-height:1.5;">Validando
                     transacción elegida.</p>
+                <div id="sftUpsellBlock" style="display:none; max-width:420px; margin:20px auto 0; padding:18px; border-radius:16px; border:1px solid rgba(197,160,89,0.35); background:rgba(197,160,89,0.08); text-align:left;">
+                    <p id="sftUpsellTitle" style="font-weight:800; color:#fff; margin:0 0 8px; font-size:15px;" data-i18n="sft-upsell-title">Create a free client account</p>
+                    <p id="sftUpsellBody" style="font-size:13px; color:rgba(255,255,255,0.72); line-height:1.45; margin:0 0 14px;" data-i18n="sft-upsell-body">Save your details for next time: book DJs, shop, track events, and send requests faster.</p>
+                    <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-start;">
+                        <a id="sftUpsellSignup" href="./login.html?redirect=dj-profile&amp;mode=signup" class="sft-upsell-btn sft-upsell-btn--primary" data-i18n="sft-upsell-signup">New account</a>
+                        <a id="sftUpsellLogin" href="./login.html?redirect=dj-profile" class="sft-upsell-btn" data-i18n="sft-upsell-login">I already have an account</a>
+                    </div>
+                </div>
                 <button id="sftDoneBtn" onclick="closeSoundForTipsModal()"
                     style="display:none; background:#22c55e; color:#000; border:none; padding:12px 30px; border-radius:30px; font-weight:900; margin-top:20px; cursor:pointer; font-size:14px; letter-spacing: 1px;">LISTO</button>
             </div>
@@ -5281,20 +6678,72 @@
                 <button type="button" class="sft-am-refresh" onclick="sftRenderDjLibraryList()"
                     title="Actualizar lista" aria-label="Actualizar lista">↻</button>
             </header>
-            <div class="sft-cab-seg-row" role="tablist" aria-label="Vista cabina">
-                <button type="button" class="sft-cab-seg sft-cab-seg--on" id="sftCabSegList" role="tab" aria-selected="true"
-                    onclick="sftCabSetPane('list')">Cola</button>
-                <button type="button" class="sft-cab-seg" id="sftCabSegQr" role="tab" aria-selected="false"
-                    onclick="sftCabSetPane('qr')">QR escanear</button>
+            <div class="sft-cab-deskbar" id="sftCabDeskbar">
+                <div class="sft-cab-deskbar-row">
+                    <div class="sft-cab-desk-left">
+                        <button type="button" class="sft-cab-desk-pill" disabled title="Próximamente">Archivos</button>
+                        <button type="button" class="sft-cab-desk-pill" disabled title="Próximamente">Preparar</button>
+                        <span class="sft-cab-desk-sep" aria-hidden="true"></span>
+                        <button type="button" class="sft-cab-desk-pill sft-cab-desk-pill--tab sft-cab-desk-pill--on" id="sftCabSegList" role="tab" aria-selected="true"
+                            onclick="sftCabSetPane('list')">Historia</button>
+                        <button type="button" class="sft-cab-desk-pill sft-cab-desk-pill--tab" id="sftCabSegQr" role="tab" aria-selected="false"
+                            onclick="sftCabSetPane('qr')">QR</button>
+                        <button type="button" class="sft-cab-desk-pill sft-cab-desk-pill--tab" id="sftCabSegBoth" role="tab" aria-selected="false"
+                            onclick="sftCabSetPane('both')" data-i18n="sft-cab-both-tab">Ambos</button>
+                    </div>
+                    <div class="sft-cab-desk-right">
+                        <span class="sft-cab-desk-todo" data-i18n="sft-cab-desk-todo">TODO</span>
+                        <div class="sft-cab-grid-sel-wrap">
+                            <span class="sft-cab-grid-sel-lbl" data-i18n="sft-cab-grid-lines-lbl">Líneas</span>
+                            <select id="sftCabGridLinesSel" class="sft-cab-grid-sel" title="Grosor líneas verticales / rejilla" aria-label="Grosor de rejilla">
+                                <option value="thin">Fina</option>
+                                <option value="medium" selected>Media</option>
+                                <option value="strong">Gruesa</option>
+                            </select>
+                        </div>
+                        <div class="sft-cab-desk-search-field" role="search">
+                            <div class="sft-cab-desk-search-wrap" id="sftCabSearchWrap">
+                                <span class="sft-cab-desk-search-ico" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <circle cx="11" cy="11" r="6.5" />
+                                        <path d="M16.5 16.5L21 21" />
+                                    </svg>
+                                </span>
+                                <input type="search" class="sft-cab-desk-search" id="sftCabSearchInput" autocomplete="off"
+                                    enterkeyhint="search" spellcheck="false" autocorrect="off" autocapitalize="off"
+                                    aria-label="Buscar en peticiones" data-i18n-hold="sft-cab-desk-search-ph">
+                                <button type="button" class="sft-cab-desk-search-clear" id="sftCabSearchClear" tabindex="-1"
+                                    title="Borrar búsqueda" aria-label="Borrar búsqueda">×</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="sft-cab-desk-meta" id="sftAmPlaylistMeta">—</p>
             </div>
+            <div class="sft-cab-panes" id="sftCabPanes">
             <div id="sft-cab-pane-list" class="sft-cab-pane-list">
                 <div class="sft-cab-strip" id="sftDjAmTotalStrip" role="status"></div>
                 <div class="sft-am-body sft-cab-scroll" id="sftDjAmListMount"></div>
             </div>
             <div id="sft-cab-pane-qr" class="sft-cab-pane-qr" style="display:none;">
+                <p class="sft-cab-qr-multi-hint" data-i18n="sft-cab-qr-phone-hint">On a second device, add &amp;sft_cab=qr to show only the QR.</p>
                 <div class="sft-cab-qr-card">
                     <div id="sft-cab-qr-mount"></div>
+                    <div class="sft-cab-qr-actions">
+                        <button type="button" class="sft-cab-qr-dl-btn" id="sftCabQrDownloadBtn" onclick="sftCabDownloadQrPng(event)"
+                            data-i18n="sft-cab-qr-download">Descargar PNG (cuadrado, imprimir)</button>
+                    </div>
                     <p class="sft-cab-qr-hint">Muestra esta pantalla: el cliente escanea y abre tu perfil para pedir tema con propina.</p>
+                </div>
+            </div>
+            </div>
+            <div class="sft-cab-total-bar" id="sftCabTotalBar" role="status" aria-live="polite">
+                <div class="sft-cab-total-bar-inner">
+                    <div class="sft-cab-total-bar-text">
+                        <span class="sft-cab-total-bar-lbl" data-i18n="sft-cab-total-bar-lbl">Total</span>
+                        <span class="sft-cab-total-bar-sub" data-i18n="sft-cab-total-bar-sub">Tu parte acumulada (aceptadas)</span>
+                    </div>
+                    <div class="sft-cab-total-bar-amt" id="sftCabTotalDjUsd" aria-label="Total acumulado">$0.00</div>
                 </div>
             </div>
             <footer class="sft-cab-footer" id="sftCabFooterBar">
@@ -5310,6 +6759,57 @@
         let pendingTipCut = 0; // Escrow funds
         let activeRequestInfo = {}; // Stores song details for queue
         let queueCount = 0;
+
+        /** Texto HTML: a dónde envía el cliente la propina (configura por marca / evento). */
+        window.MDB_SFT_PAY_RECIPIENTS = window.MDB_SFT_PAY_RECIPIENTS || {
+            Zelle: '<strong>Zelle</strong> — Use the Miami DJ Beat business address provided at the venue or on printed materials. Memo: table + DJ name.',
+            Venmo: '<strong>Venmo</strong> — Pay the official @handle published for the event (override <strong>MDB_SFT_PAY_RECIPIENTS</strong> in your site script).',
+            PayPal: '<strong>PayPal</strong> — Friends &amp; family to the PayPal email or PayPal.me link published for Miami DJ Beat.',
+            Tarjeta: '<strong>Card</strong> — Production can connect Stripe/Square. Until then, use Zelle, Venmo, or PayPal.'
+        };
+
+        function sftSyncPayInstructionPanel() {
+            var box = document.getElementById('sftPayRecipientBlock');
+            if (!box || !window.MDB_SFT_PAY_RECIPIENTS) return;
+            var html = window.MDB_SFT_PAY_RECIPIENTS[sftSelectedPayment];
+            if (!html) html = window.MDB_SFT_PAY_RECIPIENTS.Zelle;
+            box.innerHTML = html;
+        }
+
+        function sftGoToStep2b() {
+            var sender = (document.getElementById('sftClientName') && document.getElementById('sftClientName').value || '').trim();
+            var email = (document.getElementById('sftClientEmail') && document.getElementById('sftClientEmail').value || '').trim();
+            var phone = (document.getElementById('sftClientPhone') && document.getElementById('sftClientPhone').value || '').trim();
+            if (!sender) {
+                alert('Indica tu nombre o mesa para el DJ.');
+                return;
+            }
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                alert('Si completas el email, usa un formato válido (o déjalo vacío).');
+                return;
+            }
+            var pd = phone.replace(/\D/g, '');
+            if (phone && pd.length > 0 && pd.length < 7) {
+                alert('Si completas el teléfono, usa al menos 7 dígitos (o déjalo vacío).');
+                return;
+            }
+            var a = document.getElementById('sftStep2a');
+            var b = document.getElementById('sftStep2b');
+            if (a) a.style.display = 'none';
+            if (b) b.style.display = 'block';
+            var sub = document.getElementById('sftSubtitle');
+            if (sub) sub.innerText = 'SOUNDFORTIPS™ — propina y método de pago.';
+            sftSyncPayInstructionPanel();
+        }
+
+        function sftBackToStep2a() {
+            var a = document.getElementById('sftStep2a');
+            var b = document.getElementById('sftStep2b');
+            if (b) b.style.display = 'none';
+            if (a) a.style.display = 'block';
+            var sub = document.getElementById('sftSubtitle');
+            if (sub) sub.innerText = 'SOUNDFORTIPS™ — datos de la petición.';
+        }
 
         // --- APPLE MUSIC TYPEAHEAD LOGIC ---
         let sftSearchTimeout = null;
@@ -5350,7 +6850,12 @@
                                     <span class="sft-result-artist">${track.artistName}</span>
                                 </div>
                             `;
-                            item.onclick = () => selectAppleMusicTrack(track.trackName, track.artistName, imgUrl);
+                            item.onclick = () => selectAppleMusicTrack(
+                                track.trackName,
+                                track.artistName,
+                                imgUrl,
+                                track.collectionName || ''
+                            );
                             resultsBox.appendChild(item);
                         });
                     })
@@ -5360,10 +6865,11 @@
             }, 500); // 500ms debounce
         });
 
-        function selectAppleMusicTrack(trackName, artistName, imgUrl) {
+        function selectAppleMusicTrack(trackName, artistName, imgUrl, collectionName) {
             activeRequestInfo.song = trackName;
             activeRequestInfo.artist = artistName;
             activeRequestInfo.poster = imgUrl;
+            activeRequestInfo.album = (collectionName && String(collectionName).trim()) || '';
 
             document.getElementById('sftResults').style.display = 'none';
             document.getElementById('sftSearchGroup').style.display = 'none';
@@ -5431,6 +6937,51 @@
             return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
+        function sftCabArtistUsdFromGrossTip(grossTipUsd) {
+            if (window.MDB_MONETIZATION && typeof window.MDB_MONETIZATION.soundfortipSplitFromGrossUsdNumber === 'function') {
+                return window.MDB_MONETIZATION.soundfortipSplitFromGrossUsdNumber(grossTipUsd).artistUsd;
+            }
+            var c = Math.round(Math.max(0, Number(grossTipUsd) || 0) * 100);
+            var pc = Math.floor((c * 1000) / 10000);
+            return (c - pc) / 100;
+        }
+
+        function sftCabSessionEarningsKey(djId) {
+            return 'mdj_sft_cabin_session_dj_usd_' + String(djId || '');
+        }
+
+        function sftCabSessionEarningsRead(djId) {
+            try {
+                var v = parseFloat(sessionStorage.getItem(sftCabSessionEarningsKey(djId)) || '0');
+                if (isNaN(v) || v < 0) return 0;
+                return v;
+            } catch (e) { return 0; }
+        }
+
+        function sftCabSessionEarningsAddFromGrossTip(djId, grossTipUsd) {
+            var add = sftCabArtistUsdFromGrossTip(grossTipUsd);
+            if (add <= 0) return sftCabSessionEarningsRead(djId);
+            var next = sftCabSessionEarningsRead(djId) + add;
+            try {
+                sessionStorage.setItem(sftCabSessionEarningsKey(djId), String(Number(next.toFixed(4))));
+            } catch (e2) { void e2; }
+            return next;
+        }
+
+        function sftCabSessionEarningsClear(djId) {
+            try {
+                sessionStorage.removeItem(sftCabSessionEarningsKey(djId));
+            } catch (e) { void e; }
+        }
+
+        window.sftCabUpdateTotalBarDisplay = function sftCabUpdateTotalBarDisplay() {
+            var djId = window.currentProfileDJId;
+            var el = document.getElementById('sftCabTotalDjUsd');
+            if (!el) return;
+            var n = djId ? sftCabSessionEarningsRead(djId) : 0;
+            el.textContent = '$' + n.toFixed(2);
+        };
+
         function sftSafePosterUrl(u) {
             if (!u || typeof u !== 'string') return './assets/dj-avatar-placeholder.png';
             var t = u.trim();
@@ -5439,6 +6990,56 @@
         }
 
         /** Copia el nombre de la canción al portapapeles (Rekordbox, Serato, etc.). */
+        window.sftCabGetGridLineClass = function sftCabGetGridLineClass() {
+            try {
+                var p = localStorage.getItem('mdj_sft_cab_grid_w') || 'medium';
+                if (p === 'thin' || p === 'medium' || p === 'strong') return 'sft-cab-grid--' + p;
+            } catch (e) { void e; }
+            return 'sft-cab-grid--medium';
+        };
+
+        window.sftCabSyncGridOptionLabelsFromI18n = function sftCabSyncGridOptionLabelsFromI18n() {
+            var sel = document.getElementById('sftCabGridLinesSel');
+            if (!sel || !window.i18n || typeof window.i18n.t !== 'function') return;
+            var pairs = [['thin', 'sft-cab-grid-thin'], ['medium', 'sft-cab-grid-medium'], ['strong', 'sft-cab-grid-strong']];
+            for (var j = 0; j < pairs.length; j++) {
+                var opt = sel.querySelector('option[value="' + pairs[j][0] + '"]');
+                if (opt) {
+                    var tx = window.i18n.t(pairs[j][1]);
+                    if (tx) opt.textContent = tx;
+                }
+            }
+        };
+
+        /** Fila de cola → portapapeles: cabecera + datos separados por tabulador (Excel / Sheets). */
+        window.sftCabCopyQueueRowById = function sftCabCopyQueueRowById(requestId) {
+            var djId = window.currentProfileDJId;
+            if (!djId || requestId == null) return;
+            var items = typeof sftQueueRead === 'function' ? sftQueueRead(djId) : [];
+            var row = null;
+            for (var i = 0; i < items.length; i++) {
+                if (String(items[i].id) === String(requestId)) { row = items[i]; break; }
+            }
+            if (!row) return;
+            var song = row.song != null ? String(row.song) : '—';
+            var artist = row.artist != null ? String(row.artist) : '—';
+            var album = row.album != null && String(row.album).trim() !== '' ? String(row.album) : '—';
+            var fan = row.sender != null ? String(row.sender) : '—';
+            var tipN = typeof row.tip === 'number' ? row.tip : parseFloat(row.tip);
+            if (isNaN(tipN)) tipN = 0;
+            var es = window.i18n && window.i18n.currentLang === 'es';
+            var colSupport = (window.i18n && typeof window.i18n.t === 'function')
+                ? window.i18n.t('sft-cab-col-support')
+                : (es ? 'Apoyo' : 'Support');
+            var head = es
+                ? ('CANCIÓN\tARTISTA\tÁLBUM\t' + colSupport + '\tPROPINA')
+                : ('TRACK\tARTIST\tALBUM\t' + colSupport + '\tTIP');
+            var data = [song, artist, album, fan, '$' + tipN.toFixed(2)].join('\t');
+            if (typeof window.sftCopySongTitleToClipboard === 'function') {
+                window.sftCopySongTitleToClipboard(head + '\n' + data);
+            }
+        };
+
         window.sftCopySongTitleToClipboard = function sftCopySongTitleToClipboard(text) {
             if (text == null || text === '') return;
             var t = String(text);
@@ -5541,6 +7142,101 @@
             }
         };
 
+        /** PNG cuadrado (2048px) con margen blanco — imprimir tarjeta / cartel / fondo de pantalla */
+        window.sftCabDownloadQrPng = function sftCabDownloadQrPng(ev) {
+            if (ev) {
+                ev.stopPropagation();
+                ev.preventDefault();
+            }
+            var profileUrl = window._mdjPublicProfileQrUrl;
+            if (!profileUrl) {
+                try { alert('Carga el perfil para generar el enlace del QR.'); } catch (e0) { void e0; }
+                return;
+            }
+            if (typeof QRCode === 'undefined') {
+                try { alert('Librería QR no disponible.'); } catch (e1) { void e1; }
+                return;
+            }
+            var outPx = 2048;
+            var padPx = 140;
+            var innerPx = outPx - padPx * 2;
+            var holder = document.createElement('div');
+            holder.setAttribute('aria-hidden', 'true');
+            holder.style.cssText = 'position:fixed;left:-9999px;top:0;width:' + innerPx + 'px;height:' + innerPx + 'px;overflow:hidden;';
+            document.body.appendChild(holder);
+            try {
+                new QRCode(holder, {
+                    text: profileUrl,
+                    width: innerPx,
+                    height: innerPx,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            } catch (e2) {
+                console.warn('[SFT QR PNG]', e2);
+                document.body.removeChild(holder);
+                try { alert('No se pudo generar el PNG.'); } catch (e3) { void e3; }
+                return;
+            }
+
+            setTimeout(function () {
+                var srcCanvas = holder.querySelector('canvas');
+                var srcImg = holder.querySelector('img');
+                var out = document.createElement('canvas');
+                out.width = outPx;
+                out.height = outPx;
+                var ctx = out.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, outPx, outPx);
+
+                function finalize(source) {
+                    try {
+                        ctx.drawImage(source, padPx, padPx, innerPx, innerPx);
+                    } catch (e4) {
+                        console.warn('[SFT QR PNG draw]', e4);
+                        document.body.removeChild(holder);
+                        try { alert('No se pudo componer la imagen.'); } catch (e5) { void e5; }
+                        return;
+                    }
+                    out.toBlob(function (blob) {
+                        document.body.removeChild(holder);
+                        if (!blob) {
+                            try { alert('Exportación PNG no disponible en este navegador.'); } catch (e6) { void e6; }
+                            return;
+                        }
+                        var base = 'SoundForTips-QR';
+                        try {
+                            if (window.currentProfileDJId) base += '-' + String(window.currentProfileDJId).slice(0, 8);
+                        } catch (e7) { void e7; }
+                        var a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob);
+                        a.download = base + '.png';
+                        a.click();
+                        URL.revokeObjectURL(a.href);
+                    }, 'image/png', 1);
+                }
+
+                if (srcCanvas) finalize(srcCanvas);
+                else if (srcImg) {
+                    if (srcImg.complete && srcImg.naturalWidth) finalize(srcImg);
+                    else srcImg.onload = function () { finalize(srcImg); };
+                } else {
+                    document.body.removeChild(holder);
+                    try { alert('No se encontró el código QR generado.'); } catch (e8) { void e8; }
+                }
+            }, 120);
+        };
+
+        window.sftCabRefreshQrDownloadI18n = function sftCabRefreshQrDownloadI18n() {
+            var dl = document.getElementById('sftCabQrDownloadBtn');
+            if (!dl || !window.i18n || typeof window.i18n.t !== 'function') return;
+            var lab = window.i18n.t('sft-cab-qr-download');
+            var tit = window.i18n.t('sft-cab-qr-download-title');
+            if (lab) dl.textContent = lab;
+            if (tit) dl.setAttribute('title', tit);
+        };
+
         window.sftCabSetPane = function sftCabSetPane(pane) {
             var listPane = document.getElementById('sft-cab-pane-list');
             var qrPane = document.getElementById('sft-cab-pane-qr');
@@ -5548,41 +7244,79 @@
             var foot = document.getElementById('sftCabFooterBar');
             var segL = document.getElementById('sftCabSegList');
             var segQ = document.getElementById('sftCabSegQr');
+            var segB = document.getElementById('sftCabSegBoth');
             var sub = document.getElementById('sftDjAmSubtitle');
             if (!listPane || !qrPane) return;
+
+            function cabClearSeg() {
+                [segL, segQ, segB].forEach(function (el) {
+                    if (!el) return;
+                    el.classList.remove('sft-cab-desk-pill--on');
+                    el.setAttribute('aria-selected', 'false');
+                });
+            }
+
+            function cabSubBoth() {
+                if (!sub) return;
+                if (window.i18n && typeof window.i18n.t === 'function') {
+                    var t = window.i18n.t('sft-cab-sub-both');
+                    if (t) { sub.textContent = t; return; }
+                }
+                sub.textContent = 'Queue + QR: on your phone, use the same link with sft_cab=qr for a QR-only screen.';
+            }
+
+            if (pane === 'both') {
+                listPane.style.display = 'flex';
+                qrPane.style.display = 'flex';
+                if (foot) foot.style.display = '';
+                if (shell) {
+                    shell.classList.remove('sft-cab--pane-qr');
+                    shell.classList.add('sft-cab--pane-both');
+                }
+                cabClearSeg();
+                if (segB) {
+                    segB.classList.add('sft-cab-desk-pill--on');
+                    segB.setAttribute('aria-selected', 'true');
+                }
+                cabSubBoth();
+                if (typeof window.sftCabEnsureQrRendered === 'function') window.sftCabEnsureQrRendered();
+                if (typeof window.sftCabRefreshQrDownloadI18n === 'function') window.sftCabRefreshQrDownloadI18n();
+                if (typeof window.sftRenderDjLibraryList === 'function') window.sftRenderDjLibraryList();
+                return;
+            }
+
+            if (shell) shell.classList.remove('sft-cab--pane-both');
+
             if (pane === 'qr') {
                 listPane.style.display = 'none';
                 qrPane.style.display = 'flex';
                 if (foot) foot.style.display = 'none';
                 if (shell) shell.classList.add('sft-cab--pane-qr');
-                if (segL) {
-                    segL.classList.remove('sft-cab-seg--on');
-                    segL.setAttribute('aria-selected', 'false');
-                }
+                cabClearSeg();
                 if (segQ) {
-                    segQ.classList.add('sft-cab-seg--on');
+                    segQ.classList.add('sft-cab-desk-pill--on');
                     segQ.setAttribute('aria-selected', 'true');
                 }
                 if (sub) sub.textContent = 'QR del perfil — muestra al cliente';
                 if (typeof window.sftCabEnsureQrRendered === 'function') window.sftCabEnsureQrRendered();
-            } else {
-                listPane.style.display = '';
-                qrPane.style.display = 'none';
-                if (foot) foot.style.display = '';
-                if (shell) shell.classList.remove('sft-cab--pane-qr');
-                if (segL) {
-                    segL.classList.add('sft-cab-seg--on');
-                    segL.setAttribute('aria-selected', 'true');
-                }
-                if (segQ) {
-                    segQ.classList.remove('sft-cab-seg--on');
-                    segQ.setAttribute('aria-selected', 'false');
-                }
-                if (typeof window.sftRenderDjLibraryList === 'function') window.sftRenderDjLibraryList();
+                if (typeof window.sftCabRefreshQrDownloadI18n === 'function') window.sftCabRefreshQrDownloadI18n();
+                return;
             }
+
+            listPane.style.display = 'flex';
+            qrPane.style.display = 'none';
+            if (foot) foot.style.display = '';
+            if (shell) shell.classList.remove('sft-cab--pane-qr');
+            cabClearSeg();
+            if (segL) {
+                segL.classList.add('sft-cab-desk-pill--on');
+                segL.setAttribute('aria-selected', 'true');
+            }
+            if (sub) sub.textContent = 'Cola de peticiones en vivo';
+            if (typeof window.sftRenderDjLibraryList === 'function') window.sftRenderDjLibraryList();
         };
 
-        window.openSoundForTipsDjLibrary = function openSoundForTipsDjLibrary() {
+        window.openSoundForTipsDjLibrary = function openSoundForTipsDjLibrary(forcedPane) {
             if (!window.currentDJData || !window.currentDJData.soundfortips_eligible) {
                 if (window._mdjSftViewerIsOwner) {
                     try { alert('Cabina SOUNDFORTIPS: requiere plan PRO activo.'); } catch (eC) { void eC; }
@@ -5591,7 +7325,15 @@
             }
             var el = document.getElementById('sftDjAmOverlay');
             if (!el) return;
-            if (typeof window.sftCabSetPane === 'function') window.sftCabSetPane('list');
+            var cabPane = forcedPane;
+            if (cabPane !== 'list' && cabPane !== 'qr' && cabPane !== 'both') {
+                try {
+                    var sp = new URLSearchParams(window.location.search);
+                    var c = sp.get('sft_cab');
+                    if (c === 'list' || c === 'qr' || c === 'both') cabPane = c;
+                } catch (eP) { void eP; }
+            }
+            if (typeof window.sftCabSetPane === 'function') window.sftCabSetPane(cabPane || 'list');
             else if (typeof window.sftRenderDjLibraryList === 'function') window.sftRenderDjLibraryList();
             el.classList.add('active');
             el.setAttribute('aria-hidden', 'false');
@@ -5645,6 +7387,7 @@
             }
             if (!row) return;
             var tip = Number(row.tip) || 0;
+            sftCabSessionEarningsAddFromGrossTip(djId, tip);
             sftReleasePaymentOnAccept(tip);
             sftMaybeNotifyClientSms('accept', row);
             if (typeof sftQueueRemoveById === 'function') sftQueueRemoveById(djId, requestId);
@@ -5677,6 +7420,11 @@
             if (typeof window.sftRefreshOwnerWalletEconomy === 'function') {
                 window.sftRefreshOwnerWalletEconomy();
             }
+            try {
+                var djId = window.currentProfileDJId;
+                if (djId) sftCabSessionEarningsClear(djId);
+                if (typeof window.sftCabUpdateTotalBarDisplay === 'function') window.sftCabUpdateTotalBarDisplay();
+            } catch (eClr) { void eClr; }
             try {
                 alert('Sesión acreditada: el pendiente de cabina se volcó a saldo DJ y registro de casa (demo local).');
             } catch (e) { void e; }
@@ -5780,32 +7528,90 @@
             else wire();
         })();
 
-        function sftGroupQueueBySong(items) {
-            var order = [];
-            var map = Object.create(null);
-            items.forEach(function (row) {
-                var sk = String(row.song || '').trim().toLowerCase() + '\t' + String(row.artist || '').trim().toLowerCase();
-                if (!map[sk]) {
-                    map[sk] = {
-                        song: row.song != null ? row.song : '—',
-                        artist: row.artist != null ? row.artist : '—',
-                        poster: row.poster,
-                        rows: []
-                    };
-                    order.push(sk);
-                }
-                map[sk].rows.push(row);
-            });
-            return order.map(function (k) { return map[k]; });
-        }
-
         window.sftRenderDjLibraryList = function sftRenderDjLibraryList() {
             var mount = document.getElementById('sftDjAmListMount');
             var strip = document.getElementById('sftDjAmTotalStrip');
             var sub = document.getElementById('sftDjAmSubtitle');
+            var metaEl = document.getElementById('sftAmPlaylistMeta');
             if (!mount) return;
+            if (typeof window.sftCabUpdateTotalBarDisplay === 'function') window.sftCabUpdateTotalBarDisplay();
             var djId = window.currentProfileDJId;
             var items = typeof sftQueueRead === 'function' ? sftQueueRead(djId) : [];
+
+            (function sftCabSyncGridSelFromStorage() {
+                var gsl = document.getElementById('sftCabGridLinesSel');
+                if (!gsl) return;
+                try {
+                    var v = localStorage.getItem('mdj_sft_cab_grid_w') || 'medium';
+                    if (v === 'thin' || v === 'medium' || v === 'strong') gsl.value = v;
+                } catch (eG) { void eG; }
+            })();
+
+            function sftCabT(key, fb) {
+                try {
+                    if (window.i18n && typeof window.i18n.t === 'function') {
+                        var s = window.i18n.t(key);
+                        if (s != null && String(s).trim() !== '') return String(s);
+                    }
+                } catch (eT) { void eT; }
+                return fb;
+            }
+
+            function sftCabQueueLabel(n) {
+                if (n === 0) return sftCabT('sft-cab-strip-queue-empty', 'Lista vacía');
+                var es = window.i18n && window.i18n.currentLang === 'es';
+                if (es) return n + ' petición' + (n === 1 ? '' : 'es');
+                return n + ' request' + (n === 1 ? '' : 's');
+            }
+
+            function sftCabMetricsBlock(grossUsd, djUsd, houseUsd, showPct, deskCompact) {
+                var g = grossUsd.toFixed(2);
+                var d = djUsd.toFixed(2);
+                var h = houseUsd.toFixed(2);
+                var lblG = sftCabT('sft-cab-strip-lbl-gross', 'Bruto');
+                var lblDj = sftCabT('sft-cab-strip-lbl-dj', 'Tu parte');
+                var lblH = sftCabT('sft-cab-strip-lbl-house', 'Casa');
+                var aria = sftCabT('sft-cab-strip-aria-totals', 'Totales de la sesión');
+                var pctDj = showPct ? ' <span class="sft-cab-strip-pct">(90%)</span>' : '';
+                var pctHs = showPct ? ' <span class="sft-cab-strip-pct">(10%)</span>' : '';
+                var wrap = 'sft-cab-strip-metrics' + (deskCompact ? ' sft-cab-strip-metrics--desk' : '');
+                return '<div class="' + wrap + '" role="group" aria-label="' + sftEscStr(aria) + '">'
+                    + '<div class="sft-cab-strip-chip"><span class="sft-cab-strip-chip-lbl">' + sftEscStr(lblG) + '</span>'
+                    + '<span class="sft-cab-strip-chip-val sft-cab-strip-chip-val--gross">$' + g + '</span></div>'
+                    + '<div class="sft-cab-strip-chip sft-cab-strip-chip--dj"><span class="sft-cab-strip-chip-lbl">' + sftEscStr(lblDj) + pctDj + '</span>'
+                    + '<span class="sft-cab-strip-chip-val">≈ $' + d + '</span></div>'
+                    + '<div class="sft-cab-strip-chip sft-cab-strip-chip--house"><span class="sft-cab-strip-chip-lbl">' + sftEscStr(lblH) + pctHs + '</span>'
+                    + '<span class="sft-cab-strip-chip-val">≈ $' + h + '</span></div>'
+                    + '</div>';
+            }
+
+            function sftCabPlTheadHtml() {
+                return '<thead><tr>'
+                    + '<th scope="col" class="sft-cab-pl-th-art">ARTE</th>'
+                    + '<th scope="col">CANCIÓN</th>'
+                    + '<th scope="col">ARTISTA</th>'
+                    + '<th scope="col">ÁLBUM</th>'
+                    + '<th scope="col" data-i18n="sft-cab-col-support">Support</th>'
+                    + '<th scope="col">PROPINA</th>'
+                    + '<th scope="col" class="sft-cab-pl-th-act">ACCIÓN</th>'
+                    + '</tr></thead>';
+            }
+
+            function sftCabI18nRefresh() {
+                try {
+                    if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
+                } catch (eI) { void eI; }
+            }
+
+            function sftCabMetaEmptyText() {
+                try {
+                    var lg = window.i18n && window.i18n.currentLang;
+                    if (window.translations && lg && window.translations[lg] && window.translations[lg]['sft-cab-playlist-meta-empty']) {
+                        return window.translations[lg]['sft-cab-playlist-meta-empty'];
+                    }
+                } catch (e0) { void e0; }
+                return 'No tracks in queue';
+            }
 
             if (sub) {
                 sub.textContent = items.length === 0
@@ -5813,98 +7619,100 @@
                     : (items.length + ' petición(es) · misma canción agrupada (personas arriba, tema abajo)');
             }
 
-            var grossCents = 0;
-            items.forEach(function (r) {
-                grossCents += Math.round((parseFloat(r.tip) || 0) * 100);
-            });
-            var estDj = 0;
-            var estHouse = 0;
-            if (grossCents > 0) {
-                if (window.MDB_MONETIZATION && typeof window.MDB_MONETIZATION.soundfortipSplit === 'function') {
-                    var sp = window.MDB_MONETIZATION.soundfortipSplit(grossCents);
-                    estDj = sp.artistCents / 100;
-                    estHouse = sp.platformCents / 100;
-                } else {
-                    var pc = Math.floor((grossCents * 1000) / 10000);
-                    estHouse = pc / 100;
-                    estDj = (grossCents - pc) / 100;
-                }
+            var aggSft;
+            if (window.MDB_MONETIZATION && typeof window.MDB_MONETIZATION.soundfortipAggregateFromTipItems === 'function') {
+                aggSft = window.MDB_MONETIZATION.soundfortipAggregateFromTipItems(items);
+            } else {
+                var gc = 0;
+                items.forEach(function (r) {
+                    gc += Math.round((parseFloat(r.tip) || 0) * 100);
+                });
+                gc = Math.max(0, gc);
+                var pc0 = Math.floor((gc * 1000) / 10000);
+                aggSft = {
+                    grossUsd: gc / 100,
+                    artistUsd: (gc - pc0) / 100,
+                    platformUsd: pc0 / 100
+                };
             }
+            var grossUsd = aggSft.grossUsd;
+            var estDj = aggSft.artistUsd;
+            var estHouse = aggSft.platformUsd;
             if (strip) {
+                var ql = sftCabQueueLabel(items.length);
+                strip.innerHTML = '<span class="sft-cab-strip-queue">' + sftEscStr(ql) + '</span>'
+                    + sftCabMetricsBlock(grossUsd, estDj, estHouse, items.length > 0, false);
+            }
+
+            if (metaEl) {
                 if (items.length === 0) {
-                    strip.innerHTML = '<span>Lista vacía</span><span>Bruto <strong>$0.00</strong> · Tu parte ≈ <strong>$0.00</strong> · Casa ≈ <strong>$0.00</strong></span>';
+                    metaEl.className = 'sft-cab-desk-meta';
+                    metaEl.textContent = sftCabMetaEmptyText();
                 } else {
-                    strip.innerHTML = '<span>' + items.length + ' petición(es)</span><span>Bruto <strong>$' + (grossCents / 100).toFixed(2) +
-                        '</strong> · Tu parte (90%) ≈ <strong>$' + estDj.toFixed(2) + '</strong> · Casa (10%) ≈ <strong>$' + estHouse.toFixed(2) + '</strong></span>';
+                    metaEl.className = 'sft-cab-desk-meta sft-cab-desk-meta--money';
+                    metaEl.innerHTML = sftCabMetricsBlock(grossUsd, estDj, estHouse, true, true);
                 }
             }
 
+            var gCls = typeof window.sftCabGetGridLineClass === 'function' ? window.sftCabGetGridLineClass() : 'sft-cab-grid--medium';
+
             if (items.length === 0) {
-                mount.innerHTML = '<div class="sft-am-empty"><div class="sft-am-empty-icon">♪</div><p class="sft-am-empty-title">Sin peticiones</p><p class="sft-am-empty-desc">Varias personas pueden pedir la misma canción: verás una línea por persona (nombre y propina) y debajo el tema.</p></div>';
+                mount.innerHTML = ''
+                    + '<div class="sft-cab-pl-wrap">'
+                    + '<table class="sft-cab-pl-table sft-cab-pl-table--grid ' + gCls + '" role="grid">'
+                    + sftCabPlTheadHtml()
+                    + '<tbody><tr><td colspan="7" class="sft-cab-pl-empty-row">'
+                    + '<div class="sft-cab-pl-empty-inner">'
+                    + '<span class="sft-cab-pl-empty-ico" aria-hidden="true">♪</span>'
+                    + '<p class="sft-cab-pl-empty-title" data-i18n="sft-cab-empty-title">Sin peticiones en vivo</p>'
+                    + '<p class="sft-cab-pl-empty-desc" data-i18n="sft-cab-empty-desc">Cuando lleguen pedidos, aparecerán en esta grilla (arte, canción, artista, álbum, apoyo, propina, acción).</p>'
+                    + '</div></td></tr></tbody></table></div>';
+                sftCabI18nRefresh();
+                if (typeof window.sftCabSyncGridOptionLabelsFromI18n === 'function') window.sftCabSyncGridOptionLabelsFromI18n();
+                if (typeof window.sftCabSyncSearchChromeI18n === 'function') window.sftCabSyncSearchChromeI18n();
                 return;
             }
 
-            var groups = sftGroupQueueBySong(items);
-            var html = '<div class="sft-cab-groups">';
+            var html = '<div class="sft-cab-pl-wrap"><table class="sft-cab-pl-table sft-cab-pl-table--grid ' + gCls + '" role="grid">';
+            html += sftCabPlTheadHtml() + '<tbody>';
 
-            groups.forEach(function (g) {
-                var n = g.rows.length;
-                var multi = n > 1;
-                html += '<div class="sft-cab-group">';
-                html += '<div class="sft-cab-band-contrib">Contribuyentes</div>';
-                html += '<div class="sft-cab-mini-thead" aria-hidden="true">';
-                html += '<span>Arte</span><span>Contribuyente</span><span>Propina</span><span>Acción</span>';
-                html += '</div>';
-                html += '<div class="sft-cab-req-stack">';
-
-                g.rows.forEach(function (row, idx) {
-                    var tipN = typeof row.tip === 'number' ? row.tip : parseFloat(row.tip);
-                    if (isNaN(tipN)) tipN = 0;
-                    var rid = row.id != null ? String(row.id) : 'idx-' + idx + '-' + String(g.song);
-                    var artSrc = row.poster != null && String(row.poster).trim() !== '' ? row.poster : g.poster;
-                    html += '<div class="sft-cab-req-line" data-req-id="' + sftEscStr(rid) + '">';
-                    html += '<img class="sft-cab-thumb" src="' + sftSafePosterUrl(artSrc) + '" alt="" width="40" height="40">';
-                    html += '<span class="sft-cab-req-name">' + sftEscStr(row.sender || '—') + '</span>';
-                    html += '<span class="sft-cab-req-amt">$' + sftEscStr(tipN.toFixed(2)) + '</span>';
-                    html += '<div class="sft-cab-actions">';
-                    html += '<button type="button" class="sft-cab-btn-yes" data-sft-cab="ok" data-req-id="' + sftEscStr(rid) + '">Aceptar</button>';
-                    html += '<button type="button" class="sft-cab-btn-no" data-sft-cab="no" data-req-id="' + sftEscStr(rid) + '">Denegar</button>';
-                    html += '</div>';
-                    html += '</div>';
-                });
-
-                html += '</div>';
-                html += '<div class="sft-cab-sep-song">Canción</div>';
-                html += '<div class="sft-cab-mini-thead sft-cab-mini-thead--song" aria-hidden="true">';
-                html += '<span>Arte</span><span>Canción</span><span>Artista</span><span></span>';
-                html += '</div>';
-                html += '<div class="sft-cab-song-block">';
-                html += '<img class="sft-cab-thumb" src="' + sftSafePosterUrl(g.poster) + '" alt="" width="40" height="40">';
-                html += '<div class="sft-cab-track-cell">';
-                html += '<div class="sft-cab-track">' + sftEscStr(g.song) + '</div>';
-                html += '<button type="button" class="sft-cab-copy" data-sft-copy="' + encodeURIComponent(g.song != null ? String(g.song) : '') + '" title="Copiar nombre de la canción" aria-label="Copiar título al portapapeles">📋</button>';
-                html += '</div>';
-                html += '<div class="sft-cab-artist">' + sftEscStr(g.artist) + '</div>';
-                if (multi) {
-                    html += '<span class="sft-cab-badge-multi">' + n + ' solicitudes</span>';
-                } else {
-                    html += '<span class="sft-cab-badge-multi sft-cab-badge-multi--empty" aria-hidden="true"></span>';
-                }
-                html += '</div>';
-                html += '</div>';
+            var copyTitle = sftCabT('sft-cab-copy-row-title', 'Copiar fila');
+            items.forEach(function (row, idx) {
+                var tipN = typeof row.tip === 'number' ? row.tip : parseFloat(row.tip);
+                if (isNaN(tipN)) tipN = 0;
+                var rid = row.id != null ? String(row.id) : 'idx-' + idx;
+                var artSrc = row.poster != null && String(row.poster).trim() !== '' ? row.poster : '';
+                var song = row.song != null ? row.song : '—';
+                var artist = row.artist != null ? row.artist : '—';
+                var albumDisp = row.album != null && String(row.album).trim() !== '' ? String(row.album) : '—';
+                var qPayload = { s: String(song), a: String(artist), al: String(albumDisp), f: String(row.sender || ''), t: '$' + tipN.toFixed(2) };
+                var qAttr = '';
+                try {
+                    qAttr = encodeURIComponent(JSON.stringify(qPayload));
+                } catch (eq) { void eq; }
+                html += '<tr class="sft-cab-pl-tr" data-req-id="' + sftEscStr(rid) + '"' + (qAttr ? ' data-sft-q="' + qAttr + '"' : '') + '">';
+                html += '<td><img class="sft-cab-thumb sft-cab-thumb--table" src="' + sftSafePosterUrl(artSrc) + '" alt="" width="40" height="40"></td>';
+                html += '<td><div class="sft-cab-pl-title">' + sftEscStr(song) + '</div></td>';
+                html += '<td class="sft-cab-pl-muted">' + sftEscStr(artist) + '</td>';
+                html += '<td class="sft-cab-pl-album">' + sftEscStr(albumDisp) + '</td>';
+                html += '<td class="sft-cab-pl-fan">' + sftEscStr(row.sender || '—') + '</td>';
+                html += '<td class="sft-cab-pl-genre">$' + sftEscStr(tipN.toFixed(2)) + '</td>';
+                html += '<td class="sft-cab-pl-act">';
+                html += '<button type="button" class="sft-cab-btn-yes sft-cab-btn--compact" data-sft-cab="ok" data-req-id="' + sftEscStr(rid) + '" title="Aceptar">✓</button> ';
+                html += '<button type="button" class="sft-cab-btn-no sft-cab-btn--compact" data-sft-cab="no" data-req-id="' + sftEscStr(rid) + '" title="Denegar">✕</button> ';
+                html += '<button type="button" class="sft-cab-btn-copy sft-cab-btn--compact" data-sft-cab="copy" data-req-id="' + sftEscStr(rid) + '" title="' + sftEscStr(copyTitle) + '">⎘</button>';
+                html += '</td></tr>';
             });
 
-            html += '</div>';
+            html += '</tbody></table></div>';
             mount.innerHTML = html;
+            sftCabI18nRefresh();
+            if (typeof window.sftCabSyncGridOptionLabelsFromI18n === 'function') window.sftCabSyncGridOptionLabelsFromI18n();
+            if (typeof window.sftCabSyncSearchChromeI18n === 'function') window.sftCabSyncSearchChromeI18n();
+
+            if (typeof window.sftCabApplyQueueFilter === 'function') window.sftCabApplyQueueFilter();
 
             mount.onclick = function (ev) {
-                var cpBtn = ev.target.closest && ev.target.closest('[data-sft-copy]');
-                if (cpBtn && mount.contains(cpBtn)) {
-                    ev.stopPropagation();
-                    ev.preventDefault();
-                    window.sftCopyFromBtn(cpBtn, ev);
-                    return;
-                }
                 var act = ev.target.getAttribute && ev.target.getAttribute('data-sft-cab');
                 var reqId = ev.target.getAttribute && ev.target.getAttribute('data-req-id');
                 if (act === 'ok' && reqId) {
@@ -5917,18 +7725,114 @@
                     window.sftDjCabRowDeny(reqId);
                     return;
                 }
-                var line = ev.target.closest && ev.target.closest('.sft-cab-req-line');
-                var grp = ev.target.closest && ev.target.closest('.sft-cab-group');
-                mount.querySelectorAll('.sft-cab-req-line--sel').forEach(function (x) { x.classList.remove('sft-cab-req-line--sel'); });
-                mount.querySelectorAll('.sft-cab-group--selected').forEach(function (x) { x.classList.remove('sft-cab-group--selected'); });
-                if (line) {
-                    line.classList.add('sft-cab-req-line--sel');
-                    if (grp) grp.classList.add('sft-cab-group--selected');
-                } else if (grp) {
-                    grp.classList.add('sft-cab-group--selected');
+                if (act === 'copy' && reqId) {
+                    ev.stopPropagation();
+                    if (typeof window.sftCabCopyQueueRowById === 'function') window.sftCabCopyQueueRowById(reqId);
+                    return;
                 }
+                var line = ev.target.closest && ev.target.closest('.sft-cab-pl-tr');
+                mount.querySelectorAll('.sft-cab-pl-tr--sel').forEach(function (x) { x.classList.remove('sft-cab-pl-tr--sel'); });
+                if (line) line.classList.add('sft-cab-pl-tr--sel');
             };
         };
+
+        function sftCabRowSearchHaystack(tr) {
+            var raw = tr.getAttribute && tr.getAttribute('data-sft-q');
+            if (raw) {
+                try {
+                    var o = JSON.parse(decodeURIComponent(raw));
+                    return [o.s, o.a, o.al, o.f, o.t].join(' ').toLowerCase();
+                } catch (e) { void e; }
+            }
+            return (tr.textContent || '').toLowerCase();
+        }
+
+        function sftCabQueryMatchesHaystack(haystack, qNorm) {
+            if (!qNorm) return true;
+            var tokens = qNorm.split(/\s+/).filter(function (x) { return x.length > 0; });
+            for (var i = 0; i < tokens.length; i++) {
+                if (haystack.indexOf(tokens[i]) === -1) return false;
+            }
+            return true;
+        }
+
+        window.sftCabApplyQueueFilter = function sftCabApplyQueueFilter() {
+            var inp = document.getElementById('sftCabSearchInput');
+            var m = document.getElementById('sftDjAmListMount');
+            var wrap = document.getElementById('sftCabSearchWrap');
+            if (!inp || !m) return;
+            var qNorm = (inp.value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+            m.querySelectorAll('tbody tr.sft-cab-pl-tr').forEach(function (tr) {
+                var h = sftCabRowSearchHaystack(tr);
+                tr.style.display = sftCabQueryMatchesHaystack(h, qNorm) ? '' : 'none';
+            });
+            if (wrap) wrap.classList.toggle('sft-cab-desk-search-wrap--has-text', qNorm.length > 0);
+        };
+
+        window.sftCabSyncSearchChromeI18n = function sftCabSyncSearchChromeI18n() {
+            var b = document.getElementById('sftCabSearchClear');
+            if (!b || !window.i18n || typeof window.i18n.t !== 'function') return;
+            var t = window.i18n.t('sft-cab-search-clear');
+            if (t) {
+                b.setAttribute('aria-label', t);
+                b.setAttribute('title', t);
+            }
+        };
+
+        (function sftCabWireSearchFilterOnce() {
+            if (window.__sftCabSearchWired) return;
+            window.__sftCabSearchWired = true;
+            var debMs = 70;
+            var tmr = null;
+            function schedule() {
+                clearTimeout(tmr);
+                tmr = setTimeout(function () {
+                    if (typeof window.sftCabApplyQueueFilter === 'function') window.sftCabApplyQueueFilter();
+                }, debMs);
+            }
+            document.addEventListener('input', function (ev) {
+                if (ev.target && ev.target.id === 'sftCabSearchInput') {
+                    var wrap = document.getElementById('sftCabSearchWrap');
+                    if (wrap) {
+                        var v = (ev.target.value || '').trim();
+                        wrap.classList.toggle('sft-cab-desk-search-wrap--has-text', v.length > 0);
+                    }
+                    schedule();
+                }
+            });
+            document.addEventListener('click', function (ev) {
+                if (ev.target && ev.target.id === 'sftCabSearchClear') {
+                    ev.preventDefault();
+                    var inp = document.getElementById('sftCabSearchInput');
+                    if (inp) {
+                        inp.value = '';
+                        inp.focus();
+                    }
+                    if (typeof window.sftCabApplyQueueFilter === 'function') window.sftCabApplyQueueFilter();
+                }
+            });
+            document.addEventListener('keydown', function (ev) {
+                if (ev.target && ev.target.id === 'sftCabSearchInput' && ev.key === 'Escape') {
+                    ev.target.value = '';
+                    if (typeof window.sftCabApplyQueueFilter === 'function') window.sftCabApplyQueueFilter();
+                }
+            });
+            document.addEventListener('languageChanged', function () {
+                if (typeof window.sftCabSyncSearchChromeI18n === 'function') window.sftCabSyncSearchChromeI18n();
+            });
+        })();
+
+        (function sftCabWireGridLinesOnce() {
+            if (window.__sftCabGridLinesWired) return;
+            window.__sftCabGridLinesWired = true;
+            document.addEventListener('change', function (ev) {
+                if (!ev.target || ev.target.id !== 'sftCabGridLinesSel') return;
+                try {
+                    localStorage.setItem('mdj_sft_cab_grid_w', ev.target.value);
+                } catch (e) { void e; }
+                if (typeof window.sftRenderDjLibraryList === 'function') window.sftRenderDjLibraryList();
+            });
+        })();
 
         (function sftDjLibBindQueueSync() {
             function refreshIfOpen() {
@@ -5953,15 +7857,23 @@
             document.getElementById('sftOverlay').classList.add('active');
             document.getElementById('sftStep1').style.display = 'block';
             document.getElementById('sftStep2').style.display = 'none';
+            var s2a = document.getElementById('sftStep2a');
+            var s2b = document.getElementById('sftStep2b');
+            if (s2a) s2a.style.display = 'block';
+            if (s2b) s2b.style.display = 'none';
             document.getElementById('sftResultMode').style.display = 'none';
+            var ups = document.getElementById('sftUpsellBlock');
+            if (ups) ups.style.display = 'none';
             document.getElementById('sftSubtitle').innerText = "Busca tu canción y envía tu petición.";
 
             var cn = document.getElementById('sftClientName');
             var ce = document.getElementById('sftClientEmail');
             var cp = document.getElementById('sftClientPhone');
+            var ph = document.getElementById('sftPayerPaymentHandle');
             if (cn) cn.value = '';
             if (ce) ce.value = '';
             if (cp) cp.value = '';
+            if (ph) ph.value = '';
             document.getElementById('sftCustomTip').value = '';
             document.querySelectorAll('.sft-tip-chip').forEach(function (b) {
                 b.classList.remove('sft-tip-chip--on');
@@ -5986,12 +7898,20 @@
 
             document.getElementById('sftStep1').style.display = 'none';
             document.getElementById('sftStep2').style.display = 'block';
-            document.getElementById('sftSubtitle').innerText = "SOUNDFORTIPS™ — Propina retenida hasta que el DJ responda.";
+            var s2a = document.getElementById('sftStep2a');
+            var s2b = document.getElementById('sftStep2b');
+            if (s2a) s2a.style.display = 'block';
+            if (s2b) s2b.style.display = 'none';
+            document.getElementById('sftSubtitle').innerText = "SOUNDFORTIPS™ — datos de la petición.";
         }
 
         function backToStep1() {
             document.getElementById('sftStep1').style.display = 'block';
             document.getElementById('sftStep2').style.display = 'none';
+            var s2a = document.getElementById('sftStep2a');
+            var s2b = document.getElementById('sftStep2b');
+            if (s2a) s2a.style.display = 'block';
+            if (s2b) s2b.style.display = 'none';
             document.getElementById('sftSubtitle').innerText = "Busca tu canción y envía tu petición.";
         }
 
@@ -6005,6 +7925,7 @@
             let check = btnEl.querySelector('.pm-check');
             if (check) { check.innerText = '✔'; check.style.color = 'var(--gold)'; }
             sftSelectedPayment = method;
+            sftSyncPayInstructionPanel();
         }
 
         function processSoundForTips() {
@@ -6016,23 +7937,36 @@
             const sender = (document.getElementById('sftClientName') && document.getElementById('sftClientName').value || '').trim();
             const email = (document.getElementById('sftClientEmail') && document.getElementById('sftClientEmail').value || '').trim();
             const phone = (document.getElementById('sftClientPhone') && document.getElementById('sftClientPhone').value || '').trim();
+            const payerHandle = (document.getElementById('sftPayerPaymentHandle') && document.getElementById('sftPayerPaymentHandle').value || '').trim();
             const rawTip = document.getElementById('sftCustomTip').value.trim();
             const tipVal = parseFloat(rawTip) || 0;
 
             if (!sender) return alert("Indica tu nombre o mesa.");
-            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                return alert("Indica un email válido (comprobante y reembolsos).");
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                return alert("Si completas el email, usa un formato válido (o déjalo vacío).");
+            }
+            var phoneDigits = phone.replace(/\D/g, '');
+            if (phone && phoneDigits.length > 0 && phoneDigits.length < 7) {
+                return alert("Si completas el teléfono, usa al menos 7 dígitos (o déjalo vacío).");
+            }
+            if (!payerHandle || payerHandle.length < 3) {
+                return alert("Indica tu dato para conciliar el pago (Zelle / PayPal / Venmo / tarjeta) — así podemos asociar tu transferencia a esta petición.");
             }
             if (tipVal <= 0) return alert("Elige un monto de propina (rápido o personalizado).");
+
+            var emailForApi = (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ? email : null;
+            var phoneForApi = (phoneDigits.length >= 7) ? phone : null;
 
             activeRequestInfo.sender = sender;
             activeRequestInfo.tip = tipVal;
             activeRequestInfo.paymentMethod = sftSelectedPayment;
+            activeRequestInfo.payerHandle = payerHandle;
             activeRequestInfo.serverRequestId = null;
 
-            // Activar UI Procesamiento (demo: en producción aquí iría Stripe / pasarela; el importe queda en escrow hasta el DJ)
             document.getElementById('sftStep2').style.display = 'none';
             document.getElementById('sftResultMode').style.display = 'block';
+            var ups0 = document.getElementById('sftUpsellBlock');
+            if (ups0) ups0.style.display = 'none';
             document.getElementById('sftSpinner').style.display = 'block';
             document.getElementById('sftSuccess').style.display = 'none';
             document.getElementById('sftDoneBtn').style.display = 'none';
@@ -6054,8 +7988,8 @@
                                 artist: activeRequestInfo.artist || '',
                                 tip_usd: tipVal,
                                 poster_url: activeRequestInfo.poster || null,
-                                client_phone: phone || null,
-                                client_email: email
+                                client_phone: phoneForApi,
+                                client_email: emailForApi
                             }
                         });
                         if (inv && inv.data && inv.data.request_id) reqId = inv.data.request_id;
@@ -6074,27 +8008,24 @@
                         t: Date.now(),
                         song: activeRequestInfo.song,
                         artist: activeRequestInfo.artist || '',
+                        album: activeRequestInfo.album || '',
                         sender: activeRequestInfo.sender,
                         tip: tipVal,
-                        poster: activeRequestInfo.poster || ''
+                        poster: activeRequestInfo.poster || '',
+                        payerHandle: payerHandle
                     });
                 }
                 sftRefreshLaunchBadge();
 
-                // Reparto: 10% plataforma / 90% artista (igual que monetization.js + SQL soundfortip_split_amounts)
-                var tipCents = Math.round(tipVal * 100);
                 var djCut = tipVal * 0.9;
-                if (window.MDB_MONETIZATION && typeof window.MDB_MONETIZATION.soundfortipSplit === 'function') {
-                    var sp = window.MDB_MONETIZATION.soundfortipSplit(tipCents);
-                    djCut = sp.artistCents / 100;
+                if (window.MDB_MONETIZATION && typeof window.MDB_MONETIZATION.soundfortipSplitFromGrossUsdNumber === 'function') {
+                    djCut = window.MDB_MONETIZATION.soundfortipSplitFromGrossUsdNumber(tipVal).artistUsd;
                 }
                 pendingTipCut = djCut;
 
-                // 1. Mostrar aviso al DJ (sin email ni teléfono del cliente)
                 const smsToast = document.getElementById('mockSmsToast');
                 document.getElementById('mockSmsBody').innerHTML = '<span style="color:var(--gold);">' + activeRequestInfo.sender + '</span> · $' + tipVal.toFixed(2) + ' · ' + activeRequestInfo.song + '<br><span style="font-size:11px;color:#888;">Contacto del fan solo en Miami DJ Beat</span>';
 
-                // Actualizar ícono de SMS
                 const smsIcon = document.querySelector('.mock-sms-icon');
                 smsIcon.style.backgroundImage = `url(${activeRequestInfo.poster})`;
                 smsIcon.style.backgroundSize = 'cover';
@@ -6102,12 +8033,27 @@
 
                 smsToast.classList.add('show');
 
-                // 2. Éxito Público local para el Cliente 
                 document.getElementById('sftSpinner').style.display = 'none';
                 document.getElementById('sftSuccess').style.display = 'block';
                 document.getElementById('sftStatusText').innerText = `¡PETICIÓN ENVIADA VÍA ${sftSelectedPayment.toUpperCase()}!`;
                 document.getElementById('sftStatusText').style.color = "#22c55e";
                 document.getElementById('sftSubText').innerHTML = `"${activeRequestInfo.song}" está esperando la aprobación del DJ.<br><br><span style="color:#666; font-size:11px;">(Importe retenido $${tipVal.toFixed(2)})</span>`;
+
+                var djId = window.currentProfileDJId || '';
+                var loginBase = './login.html?redirect=dj-profile' + (djId ? '&id=' + encodeURIComponent(djId) : '');
+                var su = document.getElementById('sftUpsellSignup');
+                var lu = document.getElementById('sftUpsellLogin');
+                /* mode=signup abre pestaña «Crear cuenta» en login.html (nueva cuenta / registro) */
+                if (su) su.href = loginBase + (loginBase.indexOf('?') >= 0 ? '&' : '?') + 'mode=signup';
+                if (lu) lu.href = loginBase;
+                var ups = document.getElementById('sftUpsellBlock');
+                if (ups) {
+                    ups.style.display = 'block';
+                    try {
+                        if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
+                    } catch (eI) { void eI; }
+                }
+
                 document.getElementById('sftDoneBtn').style.display = 'inline-block';
             }, 2000);
         }
@@ -6246,13 +8192,10 @@
             if (tipCents <= 0) {
                 return { grossUsd: 0, platformUsd: 0, artistUsd: 0, deferred: false };
             }
-            var sp = null;
-            if (window.MDB_MONETIZATION && typeof window.MDB_MONETIZATION.soundfortipSplit === 'function') {
-                sp = window.MDB_MONETIZATION.soundfortipSplit(tipCents);
-            }
-            if (sp) {
-                platformUsd = sp.platformCents / 100;
-                artistUsd = sp.artistCents / 100;
+            if (window.MDB_MONETIZATION && typeof window.MDB_MONETIZATION.soundfortipSplitFromGrossUsdNumber === 'function') {
+                var su = window.MDB_MONETIZATION.soundfortipSplitFromGrossUsdNumber(grossTipUsd);
+                platformUsd = su.platformUsd;
+                artistUsd = su.artistUsd;
             } else {
                 var pc = Math.floor((tipCents * 1000) / 10000);
                 platformUsd = pc / 100;
@@ -6415,7 +8358,7 @@
         }
     </script>
     <script src="./subscription.js?v=20260412-profile"></script>
-    <script src="./monetization.js?v=20260412-profile"></script>
+    <script src="./monetization.js?v=20260422-sft-math"></script>
 
     <script src="./header-smart-search.js?v=20260412-profile"></script>
     <script src="./mdj-shared-header.js?v=20260412-profile"></script>

@@ -117,7 +117,10 @@
         ].join('\n');
     }
 
-    /** Tip: platform 10%, artist 90% (amounts in cents, integers). */
+    /**
+     * SoundForTips — reparto fijo: plataforma PLATFORM_TIP_BPS (1000 = 10.00%), resto al artista.
+     * Todo en centavos USD enteros (sin deriva float). Alineado con SQL soundfortip_split_amounts.
+     */
     function soundfortipSplit(totalCents) {
         var gross = Math.max(0, Math.floor(Number(totalCents) || 0));
         var platformCents = Math.floor((gross * PLATFORM_TIP_BPS) / 10000);
@@ -128,6 +131,52 @@
             artistCents: artistCents,
             platformRate: PLATFORM_TIP_BPS / 10000,
             artistRate: 1 - PLATFORM_TIP_BPS / 10000
+        };
+    }
+
+    /** Suma bruta en centavos desde filas de cola { tip: number } (cada tip redondeado a centavo antes de sumar). */
+    function soundfortipTipSumCentsFromItems(items) {
+        if (!items || !items.length) return 0;
+        var sum = 0;
+        for (var i = 0; i < items.length; i++) {
+            var t = items[i] && items[i].tip;
+            sum += Math.round((parseFloat(t) || 0) * 100);
+        }
+        return Math.max(0, sum);
+    }
+
+    /**
+     * Cola completa → bruto + split en un solo objeto (UI cabina, banners).
+     * @returns {{ grossCents: number, platformCents: number, artistCents: number, grossUsd: number, platformUsd: number, artistUsd: number, platformRate: number, artistRate: number }}
+     */
+    function soundfortipAggregateFromTipItems(items) {
+        var grossCents = soundfortipTipSumCentsFromItems(items);
+        var sp = soundfortipSplit(grossCents);
+        return {
+            grossCents: sp.grossCents,
+            platformCents: sp.platformCents,
+            artistCents: sp.artistCents,
+            grossUsd: sp.grossCents / 100,
+            platformUsd: sp.platformCents / 100,
+            artistUsd: sp.artistCents / 100,
+            platformRate: sp.platformRate,
+            artistRate: sp.artistRate
+        };
+    }
+
+    /** Importe bruto en USD (decimal) → mismo contrato que soundfortipSplit (escrow, toast). */
+    function soundfortipSplitFromGrossUsdNumber(grossUsd) {
+        var cents = Math.round(Math.max(0, Number(grossUsd) || 0) * 100);
+        var sp = soundfortipSplit(cents);
+        return {
+            grossCents: sp.grossCents,
+            platformCents: sp.platformCents,
+            artistCents: sp.artistCents,
+            grossUsd: sp.grossCents / 100,
+            platformUsd: sp.platformCents / 100,
+            artistUsd: sp.artistCents / 100,
+            platformRate: sp.platformRate,
+            artistRate: sp.artistRate
         };
     }
 
@@ -191,6 +240,10 @@
         clientReferralFirstPurchaseDiscountCents: clientReferralFirstPurchaseDiscountCents,
         describeReferralPolicyLines: describeReferralPolicyLines,
         soundfortipSplit: soundfortipSplit,
+        soundfortipTipSumCentsFromItems: soundfortipTipSumCentsFromItems,
+        soundfortipAggregateFromTipItems: soundfortipAggregateFromTipItems,
+        soundfortipSplitFromGrossUsdNumber: soundfortipSplitFromGrossUsdNumber,
+        PLATFORM_TIP_BPS: PLATFORM_TIP_BPS,
         buildPurchaseAttributionPayload: buildPurchaseAttributionPayload,
         formatDjWalletUsd: formatDjWalletUsd,
         clearClientStorageOnLogout: mdjClearClientStorageOnLogout

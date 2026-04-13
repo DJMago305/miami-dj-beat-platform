@@ -77,13 +77,29 @@ serve(async (req) => {
     });
   }
 
-  const email = body.client_email != null ? String(body.client_email).trim() : "";
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return new Response(JSON.stringify({ error: "Valid client_email required" }), {
+  const emailRaw = body.client_email != null ? String(body.client_email).trim() : "";
+  const emailOk = emailRaw.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRaw);
+  if (emailRaw.length > 0 && !emailOk) {
+    return new Response(JSON.stringify({ error: "Invalid email format" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
+  const phoneRaw =
+    body.client_phone != null && String(body.client_phone).trim() !== ""
+      ? String(body.client_phone).trim()
+      : "";
+  const phoneDigits = phoneRaw.replace(/\D/g, "");
+  if (phoneRaw.length > 0 && phoneDigits.length < 7) {
+    return new Response(JSON.stringify({ error: "Phone number looks incomplete" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const emailInsert: string | null = emailOk ? emailRaw : null;
+  const phoneInsert: string | null = phoneDigits.length >= 7 ? phoneRaw : null;
 
   const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
@@ -108,11 +124,6 @@ serve(async (req) => {
     });
   }
 
-  const phone =
-    body.client_phone != null && String(body.client_phone).trim() !== ""
-      ? String(body.client_phone).trim()
-      : null;
-
   const { data: inserted, error: insErr } = await supabaseAdmin
     .from("soundfortips_fan_requests")
     .insert({
@@ -122,8 +133,8 @@ serve(async (req) => {
       artist: String(body.artist ?? "").slice(0, 2000),
       tip_usd: Math.round(tipUsd * 100) / 100,
       poster_url: body.poster_url != null ? String(body.poster_url).slice(0, 4000) : null,
-      client_phone: phone,
-      client_email: email,
+      client_phone: phoneInsert,
+      client_email: emailInsert,
       status: "pending",
     })
     .select("id")

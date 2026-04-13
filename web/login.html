@@ -311,17 +311,36 @@
             });
         });
 
-        // ── Auto-open signup tab when coming from jobs ─────────────
+        // ── Auto-open signup tab (Crear cuenta / nueva cuenta) ────
         const params = new URLSearchParams(window.location.search);
-        const mode = params.get('mode');      // 'signup' → open Crear Cuenta tab
-        const redirect = params.get('redirect');  // 'jobs'   → go back after auth
+        const mode = (params.get('mode') || '').toLowerCase();
+        const redirect = params.get('redirect');  // e.g. dj-profile → go back after auth
+        const signupParam = (params.get('signup') || '').toLowerCase();
+        const wantsSignup =
+            mode === 'signup' ||
+            signupParam === 'free' ||
+            signupParam === '1' ||
+            signupParam === 'true' ||
+            signupParam === 'yes';
 
-        if (mode === 'signup' || params.get('signup') === 'free') {
-            tabSignup.click();
+        function mdbOpenSignupTabIfRequested() {
+            if (!wantsSignup || !tabSignup || !tabLogin || !loginForm || !signupForm) return;
+            tabSignup.classList.add('active');
+            tabLogin.classList.remove('active');
+            signupForm.classList.remove('hidden');
+            loginForm.classList.add('hidden');
             const freeHint = document.getElementById('login-free-hint');
             if (freeHint) {
                 freeHint.style.display = 'block';
                 if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
+            }
+        }
+        /* Después de i18n y otros scripts que tocan el DOM */
+        if (wantsSignup) {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function () { mdbOpenSignupTabIfRequested(); });
+            } else {
+                requestAnimationFrame(function () { mdbOpenSignupTabIfRequested(); });
             }
         }
 

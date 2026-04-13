@@ -272,8 +272,8 @@ window.MDJ_Assistant = {
                         : "Exactly. Your Public Profile is your executive business card, and VIP clients book you directly there. Great reviews here open the doors to the best events. Is your profile already at the level Miami demands?";
                 } else if (b2bFinance) {
                     response = isSpanish
-                        ? "Hablemos de negocios serios. El Cash Flow Dashboard te da control total de ingresos y propinas, dándote la solidez para subir de nivel. ¿Ya activaste tu visión financiera en la plataforma?"
-                        : "Let's talk serious business. The Cash Flow Dashboard gives you total control of income and tips, giving you the solidity to level up. Have you activated your financial vision on the platform yet?";
+                        ? "Hablemos de negocios serios. El panel Flujo de caja te da visibilidad de ingresos y métricas; SoundForTips™ (propinas en cabina) va aparte y es MDJPRO de pago. ¿Ya revisaste tu Cash Flow?"
+                        : "Let's talk serious business. Cash Flow shows your income and metrics; SoundForTips™ (live booth tips) is separate and requires paid DJ PRO. Have you checked your Cash Flow yet?";
                 } else if (b2bCalendar) {
                     response = isSpanish
                         ? "Una ventaja crítica. Con el Radar de Clima y Calendario integrado, blindas tu agenda corporativa y mitigas riesgos de equipo protegido. ¿Tu agenda ya está sincronizada al 100%?"
