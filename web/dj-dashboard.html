@@ -3689,9 +3689,13 @@
                             <div class="acct-row">
                                 <div class="acct-row-info">
                                     <div class="acct-lbl">Card on file</div>
-                                    <div class="acct-val" id="billing-card">•••• •••• •••• ————</div>
+                                    <div class="acct-val" id="billing-card">Sin tarjeta de referencia guardada</div>
+                                    <div id="billing-card-meta"
+                                        style="display:none;font-size:12px;color:rgba(255,255,255,0.45);margin-top:6px;line-height:1.35;">
+                                    </div>
                                 </div>
-                                <button class="acct-edit" onclick="openPaymentModal()">Update</button>
+                                <button type="button" class="acct-edit" id="billing-card-update-btn"
+                                    onclick="openPaymentModal()">Actualizar tarjeta</button>
                             </div>
                             <div
                                 style="padding:14px 24px;font-size:11px;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,0.3);text-transform:uppercase;border-top:1px solid rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.05);">
@@ -4081,6 +4085,9 @@
             if (target) target.classList.add('active');
             document.querySelectorAll('.acct-side-link').forEach(b => b.classList.remove('active'));
             if (btn) btn.classList.add('active');
+            if (id === 'billing' && typeof refreshBillingPanel === 'function') {
+                refreshBillingPanel();
+            }
         }
 
         // ── Modal helpers ──────────────────────────────────────
@@ -4542,6 +4549,73 @@
             }
         }
 
+        /** Rellena el panel CONFIG → Suscripción y pagos (#billing-*). Antes el código tocaba IDs inexistentes y un querySelector que pegaba al input del modal de tarjeta. */
+        function hydrateBillingPanelFromProfile(p) {
+            if (!p) return;
+            const planEl = document.getElementById('billing-plan');
+            if (planEl) {
+                const pl = p.plan != null ? String(p.plan).trim() : '';
+                planEl.textContent = pl ? pl.toUpperCase() : '—';
+            }
+            const statEl = document.getElementById('billing-status');
+            if (statEl && p.subscription_status) {
+                const map = { active: 'Active', past_due: 'Past due', cancelled: 'Cancelled', inactive: 'Inactive' };
+                const colorMap = { active: '#22c55e', past_due: '#f59e0b', cancelled: '#ef4444', inactive: 'rgba(255,255,255,0.3)' };
+                statEl.textContent = map[p.subscription_status] || String(p.subscription_status);
+                statEl.style.color = colorMap[p.subscription_status] || '#fff';
+            }
+            const renEl = document.getElementById('billing-renewal');
+            if (renEl) {
+                renEl.textContent = p.next_renewal
+                    ? new Date(p.next_renewal).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    : '—';
+            }
+            const cardEl = document.getElementById('billing-card');
+            const cardMeta = document.getElementById('billing-card-meta');
+            if (cardEl) {
+                const last4 = p.card_last4 != null ? String(p.card_last4).replace(/\D/g, '').slice(-4) : '';
+                if (last4.length === 4) {
+                    const brand = (p.card_brand != null && String(p.card_brand).trim()) ? String(p.card_brand).trim() : 'Card';
+                    cardEl.textContent = brand + '  ···· ···· ' + last4;
+                    if (cardMeta) {
+                        const holder = p.card_holder != null ? String(p.card_holder).trim() : '';
+                        if (holder) {
+                            cardMeta.style.display = 'block';
+                            cardMeta.textContent = 'Titular: ' + holder;
+                        } else {
+                            cardMeta.style.display = 'none';
+                            cardMeta.textContent = '';
+                        }
+                    }
+                } else {
+                    cardEl.textContent = 'Sin tarjeta de referencia guardada';
+                    if (cardMeta) {
+                        cardMeta.style.display = 'block';
+                        cardMeta.textContent = 'Pulsa «Actualizar tarjeta» para registrar una tarjeta (solo guardamos marca y últimos 4 dígitos).';
+                    }
+                }
+            }
+        }
+
+        /** Recarga solo datos de facturación al abrir el panel (evita ver la tarjeta vacía si no corrió loadSettingsForm). */
+        async function refreshBillingPanel() {
+            try {
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb) return;
+                const { data: { session } } = await sb.auth.getSession();
+                if (!session) return;
+                const { data: p, error } = await sb
+                    .from('dj_profiles')
+                    .select('plan, subscription_status, next_renewal, card_last4, card_brand, card_holder')
+                    .eq('user_id', session.user.id)
+                    .single();
+                if (error || !p) return;
+                hydrateBillingPanelFromProfile(p);
+            } catch (e) {
+                console.warn('refreshBillingPanel', e);
+            }
+        }
+
         // ── Load Settings Form ─────────────────────────────────
         async function loadSettingsForm() {
             const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
@@ -4728,6 +4802,8 @@
                 var wv = p.wallet_balance != null ? p.wallet_balance : (p.rewards_balance != null ? p.rewards_balance : p.referral_credits);
                 rb.textContent = '$' + (Number(wv) || 0).toFixed(2);
             }
+
+            hydrateBillingPanelFromProfile(p);
         }
 
         /** SoundForTips: Zelle / Venmo / PayPal — texto que ve el fan en el perfil público (transferencias manuales). */
@@ -4924,9 +5000,24 @@
 
 
         // ── Payment Modal ─────────────────────────────────────
-        function openPaymentModal() {
+        async function openPaymentModal() {
             const m = document.getElementById('payment-modal');
-            m.style.display = 'flex';
+            if (m) m.style.display = 'flex';
+            try {
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb) return;
+                const { data: { session } } = await sb.auth.getSession();
+                if (!session) return;
+                const { data: p } = await sb
+                    .from('dj_profiles')
+                    .select('card_holder')
+                    .eq('user_id', session.user.id)
+                    .single();
+                const h = document.getElementById('pay-holder');
+                if (h && p && p.card_holder) h.value = String(p.card_holder).trim();
+            } catch (e) {
+                console.warn('openPaymentModal prefill', e);
+            }
         }
         function closePaymentModal() {
             document.getElementById('payment-modal').style.display = 'none';
@@ -4982,11 +5073,18 @@
 
                 if (error) throw error;
 
-                // Update display
-                const nameDisplay = document.getElementById('card-name-display');
-                if (nameDisplay) nameDisplay.textContent = `Titular: ${holder}`;
-                const numDisplay = document.querySelector('[style*="letter-spacing:3px"]');
-                if (numDisplay) numDisplay.textContent = `${brand} •••• •••• •••• ${last4}`;
+                const cardEl = document.getElementById('billing-card');
+                const cardMeta = document.getElementById('billing-card-meta');
+                if (cardEl) cardEl.textContent = brand + '  ···· ···· ' + last4;
+                if (cardMeta) {
+                    if (holder) {
+                        cardMeta.style.display = 'block';
+                        cardMeta.textContent = 'Titular: ' + holder;
+                    } else {
+                        cardMeta.style.display = 'none';
+                        cardMeta.textContent = '';
+                    }
+                }
 
                 closePaymentModal();
                 // Flash success
@@ -5032,28 +5130,7 @@
 
                 if (!p) return;
 
-                // Status label
-                const statusEl = document.getElementById('pro-status-label');
-                if (statusEl && p.subscription_status) {
-                    const map = { active: 'ACTIVO', past_due: 'PAGO PENDIENTE', cancelled: 'CANCELADO', inactive: 'INACTIVO' };
-                    const colorMap = { active: '#22c55e', past_due: '#f59e0b', cancelled: '#ef4444', inactive: 'rgba(255,255,255,0.3)' };
-                    statusEl.textContent = map[p.subscription_status] || p.subscription_status.toUpperCase();
-                    statusEl.style.color = colorMap[p.subscription_status] || '#fff';
-                }
-
-                // Renewal date
-                const renewalEl = document.getElementById('pro-renewal-date');
-                if (renewalEl && p.next_renewal) {
-                    renewalEl.textContent = new Date(p.next_renewal).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                }
-
-                // Card display (from saved reference)
-                if (p.card_last4) {
-                    const nameDisplay = document.getElementById('card-name-display');
-                    const numDisplay = document.querySelector('[style*="letter-spacing:3px"]');
-                    if (nameDisplay) nameDisplay.textContent = `Titular: ${p.card_holder || '—'}`;
-                    if (numDisplay) numDisplay.textContent = `${p.card_brand || 'Card'} •••• •••• •••• ${p.card_last4}`;
-                }
+                hydrateBillingPanelFromProfile(p);
             } catch (e) {
                 console.warn('loadSubscriptionData:', e.message);
             }
