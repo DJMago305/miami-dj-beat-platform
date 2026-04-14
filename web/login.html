@@ -426,35 +426,54 @@
         applySignupUserTypeFromUrl();
 
         // ── After successful login or signup → redirect back ───────
-        // Uses lazy singleton to avoid CDN race condition
+        // Uses lazy singleton to avoid CDN race condition.
+        // Important: do not rely only on onAuthStateChange(SIGNED_IN) — Supabase often emits that when
+        // rehydrating a stored session, which used to redirect guests away before they could use «Crear cuenta».
         (function waitAndListen(attempt) {
             const db = window.getSupabaseClient();
             if (!db) {
                 if (attempt < 10) setTimeout(() => waitAndListen(attempt + 1), 300);
                 return;
             }
-            db.auth.onAuthStateChange((event) => {
-                if (event === 'SIGNED_IN' && redirect) {
-                    const params = new URLSearchParams(window.location.search);
-                    const lead = params.get('lead');
-                    const eventType = params.get('type');
-                    const ref = params.get('ref');
-                    const dj = params.get('dj');
-                    const profileId = params.get('id');
-                    const tabRedirect = params.get('tab');
-                    const panelRedirect = params.get('panel');
+            if (!redirect) return;
 
-                    let finalUrl = `./${redirect}.html?from_auth=1&`;
-                    if (lead) finalUrl += `lead=${encodeURIComponent(lead)}&`;
-                    if (eventType) finalUrl += `type=${encodeURIComponent(eventType)}&`;
-                    if (ref) finalUrl += `ref=${encodeURIComponent(ref)}&`;
-                    if (dj) finalUrl += `dj=${encodeURIComponent(dj)}&`;
-                    if (profileId) finalUrl += `id=${encodeURIComponent(profileId)}&`;
-                    if (tabRedirect) finalUrl += `tab=${encodeURIComponent(tabRedirect)}&`;
-                    if (panelRedirect) finalUrl += `panel=${encodeURIComponent(panelRedirect)}&`;
+            const qp = new URLSearchParams(window.location.search);
+            function buildPostAuthReturnUrl() {
+                const lead = qp.get('lead');
+                const eventType = qp.get('type');
+                const ref = qp.get('ref');
+                const dj = qp.get('dj');
+                const profileId = qp.get('id');
+                const tabRedirect = qp.get('tab');
+                const panelRedirect = qp.get('panel');
 
-                    window.location.href = finalUrl.replace(/[&?]$/, '');
-                }
+                let finalUrl = `./${redirect}.html?from_auth=1&`;
+                if (lead) finalUrl += `lead=${encodeURIComponent(lead)}&`;
+                if (eventType) finalUrl += `type=${encodeURIComponent(eventType)}&`;
+                if (ref) finalUrl += `ref=${encodeURIComponent(ref)}&`;
+                if (dj) finalUrl += `dj=${encodeURIComponent(dj)}&`;
+                if (profileId) finalUrl += `id=${encodeURIComponent(profileId)}&`;
+                if (tabRedirect) finalUrl += `tab=${encodeURIComponent(tabRedirect)}&`;
+                if (panelRedirect) finalUrl += `panel=${encodeURIComponent(panelRedirect)}&`;
+
+                return finalUrl.replace(/[&?]$/, '');
+            }
+
+            let navigated = false;
+            function goPostAuth() {
+                if (navigated) return;
+                navigated = true;
+                window.location.href = buildPostAuthReturnUrl();
+            }
+
+            db.auth.getSession().then(function (res) {
+                var sess = res && res.data && res.data.session;
+                if (sess) goPostAuth();
+            });
+
+            db.auth.onAuthStateChange(function (event, session) {
+                if (event === 'INITIAL_SESSION') return;
+                if (event === 'SIGNED_IN' && session) goPostAuth();
             });
         })(0);
     </script>
