@@ -2607,7 +2607,12 @@
             const loginBtn = document.getElementById('header-login-btn');
             const authZone = document.getElementById('header-auth-zone');
             if (session) {
-                if (loginBtn) loginBtn.style.display = 'none';
+                /* Nunca ocultar #header-login-btn: auth.js lo convierte en «Logout» con doLogout.
+                   Ocultarlo dejaba a usuarios logueados sin forma visible de cerrar sesión en Jobs. */
+                if (loginBtn) {
+                    loginBtn.style.display = '';
+                    loginBtn.style.visibility = 'visible';
+                }
                 if (authZone) authZone.style.display = 'block';
                 const { data: profile } = await supabase.from('dj_profiles').select('photo_url').eq('user_id', session.user.id).maybeSingle();
                 if (profile && profile.photo_url) document.querySelector('.avatar').src = profile.photo_url;
