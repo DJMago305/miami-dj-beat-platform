@@ -37,6 +37,41 @@ https://miamidjbeat.com/booth.html?intent=booking&source=crystal&ref=ad-991&utm_
 - Edge chat function must inject **`getAgentSystemHint()`** (or equivalent) into the system prompt; never echo raw URL in full to the user if it contains tokens.
 - **Sanitization** happens in the browser before insert; the server should still validate on tools.
 
+## Learning telemetry (v2 foundation)
+
+- Booth now tracks session telemetry via RPC:
+  - `public.booth_track_event(p_session_key, p_event_type, p_payload)`
+  - `public.booth_set_outcome(p_session_key, p_outcome, p_reason, p_lead_id)` (authenticated only)
+- Backing tables:
+  - `public.ai_booth_sessions`
+  - `public.ai_booth_events`
+  - `public.ai_booth_session_training` (view: session + events for internal training rows)
+  - `public.ai_booth_learning_examples` (table: **anonymous** win/loss lessons; filled by trigger on `leads.lead_outcome`)
+- Current event baseline from `web/booth.html`:
+  - `booth_open`
+  - `lead_submit_attempt`
+  - `lead_submit_success`
+  - `lead_submit_error` / `lead_submit_exception`
+
+## Widget Booth (`mdj-assistant.js`) — carrito + fechas conmemorativas (borrador local)
+
+Además de la página dedicada `booth.html`, el widget **Booth** en el sitio puede dejar datos en `sessionStorage` para ventas asistidas y remarketing **cuando exista integración** con CRM / proveedor SMS-email-WhatsApp.
+
+| Key | Contenido | Uso |
+|-----|-----------|-----|
+| `mdj_booth_cart_recommendations` | Array JSON (picks de talento, rol, fecha, tier) | Lista previa “tipo carrito” hasta checkout real. |
+| `mdj_booth_life_events` | Array JSON: `kind` (`birthday` \| `anniversary` \| `other`), `honoree_name`, `client_first_name`, `milestone_date`, `preferred_channel`, `notes_raw`, `ts` | **Borrador** para recordatorio anual (cumple / aniversario); el envío automático exige **opt-in**, enlace a **lead/cuenta** y cumplimiento (p. ej. TCPA / política de privacidad). |
+
+**Plantilla de mensaje (ES)** — tono comercial; personalizar `X` / nombres:
+
+- *«Hola **[Cliente]** — soy Miami DJ Beat. El año pasado te ayudamos con tu fiesta **(X)**… se acerca otra vez esa fecha; ¿te gustaría revivir ese momento icónico con nosotros?»*
+- Variante con homenajeado: *«Hola, por parte de **[Homenajeado]**, Miami DJ Beat…»*
+
+**English (canonical product string):**
+
+- *“Hi **[Client]** — Miami DJ Beat here. Last year we helped with your **[event]**… that date is coming up again. Want to plan another iconic night with us?”*
+
 ## Version
 
 - **v1** — 2026-04-13 — Adds `campaign` and `customer_interest`; aligns with `web/booth.html`.
+- **v1.1** — 2026-04-14 — Documents `mdj_booth_cart_recommendations` + `mdj_booth_life_events` and annual outreach templates.

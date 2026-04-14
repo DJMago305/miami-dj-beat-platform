@@ -616,6 +616,7 @@
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
         <script src="./supabase-config.js?v=20260226-1"></script>
+        <script src="./subscription.js?v=20260422-find-dj-rank"></script>
         <script src="./invoice-generator.js"></script>
         <script>
             async function loadAdminData() {
@@ -675,6 +676,7 @@
                                     <th>Fecha / Ubicación</th>
                                     <th>Presupuesto</th>
                                     <th>Estado</th>
+                                    <th>Resultado</th>
                                     <th>DJ Asignado</th>
                                     <th>Blueprint</th>
                                     <th>Acciones</th>
@@ -690,6 +692,17 @@
                         const statusClass = lead.status === 'MATCHED' ? 'status-approved'
                             : lead.status === 'CONFIRMED' ? 'status-approved'
                                 : 'status-new';
+                        const lo = lead.lead_outcome || 'open';
+                        const outcomeSel = `
+                            <select class="btn-pill" style="max-width:140px;font-size:10px;padding:4px 8px;"
+                              onchange="applyLeadOutcome('${lead.id}', this.value)"
+                              title="Lección aprendida — Ganado / Perdido">
+                              <option value="open" ${lo === 'open' ? 'selected' : ''}>Abierto</option>
+                              <option value="follow_up" ${lo === 'follow_up' ? 'selected' : ''}>Seguimiento</option>
+                              <option value="closed_won" ${lo === 'closed_won' ? 'selected' : ''}>Ganado</option>
+                              <option value="closed_lost" ${lo === 'closed_lost' ? 'selected' : ''}>Perdido</option>
+                              <option value="no_show" ${lo === 'no_show' ? 'selected' : ''}>No show</option>
+                            </select>`;
                         return `
                                     <tr>
                                         <td>${tier}</td>
@@ -698,6 +711,7 @@
                                         <td><strong>${lead.event_date || '—'}</strong><br><small>${lead.location || '—'}</small></td>
                                         <td style="color:var(--gold); font-weight:700;">${lead.budget || '—'}</td>
                                         <td><span class="status-badge ${statusClass}">${lead.status}</span></td>
+                                        <td style="white-space:nowrap;">${outcomeSel}</td>
                                         <td>${djLabel}</td>
                                         <td>
                                             ${lead.notes ? `<button class="btn-pill" style="border-color:var(--gold); color:var(--gold);" onclick='showBlueprint("${lead.id}")'>👁️ Ver</button>` : '<small style="opacity:0.5;">Pendiente</small>'}
@@ -722,6 +736,44 @@
                     if (count >= 2) return '<span class="status-badge" style="background:#bdc3c7; color:#000;">🥈 SILVER</span>';
                     return '<span class="status-badge" style="background:rgba(255,255,255,0.1); color:#fff;">🌱 NEW</span>';
                 }
+
+                window.applyLeadOutcome = async (leadId, outcome) => {
+                    const lead = leads.find(l => l.id == leadId);
+                    if (!lead) return;
+                    const prev = lead.lead_outcome || 'open';
+                    if (prev === outcome) return;
+                    let reason = '';
+                    if (outcome === 'closed_lost' || outcome === 'closed_won') {
+                        reason = window.prompt('Motivo breve (opcional, para aprendizaje — sin datos personales):', lead.lead_outcome_reason || '') || '';
+                    }
+                    let sessionKey = null;
+                    if (lead.notes) {
+                        try {
+                            const n = JSON.parse(lead.notes);
+                            sessionKey = n.booth_session_key || n.boothSessionKey;
+                        } catch (e) { /* ignore */ }
+                    }
+                    if (sessionKey && ['closed_won', 'closed_lost', 'follow_up', 'no_show'].includes(outcome)) {
+                        const { error: rpcErr } = await supabase.rpc('booth_set_outcome', {
+                            p_session_key: sessionKey,
+                            p_outcome: outcome,
+                            p_reason: reason || null,
+                            p_lead_id: leadId
+                        });
+                        if (rpcErr) console.warn('booth_set_outcome', rpcErr);
+                    }
+                    const { error: updErr } = await supabase.from('leads').update({
+                        lead_outcome: outcome,
+                        lead_outcome_reason: reason || null,
+                        lead_outcome_at: new Date().toISOString()
+                    }).eq('id', leadId);
+                    if (updErr) {
+                        alert('No se pudo guardar: ' + (updErr.message || ''));
+                        await loadAdminData();
+                        return;
+                    }
+                    await loadAdminData();
+                };
 
                 window.showBlueprint = (id) => {
                     const lead = leads.find(l => l.id == id);
@@ -796,12 +848,24 @@
                     if (!db) return;
                     const { data: djList } = await db
                         .from('dj_profiles')
-                        .select('id, dj_name, stage_name, photo_url, specialties, status, plan, email')
-                        .in('status', ['ACTIVE', 'APPROVED', 'VERIFIED'])
-                        .order('dj_name');
+                        .select('id, dj_name, stage_name, photo_url, specialties, status, plan, plan_type, plan_status, plan_expires_at, is_premium, subscription_status, email')
+                        .in('status', ['ACTIVE', 'APPROVED', 'VERIFIED']);
+
+                    var ranked = djList || [];
+                    if (window.MDB_SUBSCRIPTION && typeof window.MDB_SUBSCRIPTION.searchRankScore === 'function') {
+                        ranked = ranked.slice().sort(function (a, b) {
+                            return window.MDB_SUBSCRIPTION.searchRankScore(b) - window.MDB_SUBSCRIPTION.searchRankScore(a);
+                        });
+                    } else {
+                        ranked = ranked.slice().sort(function (a, b) {
+                            var an = (a.stage_name || a.dj_name || '').toLowerCase();
+                            var bn = (b.stage_name || b.dj_name || '').toLowerCase();
+                            return an.localeCompare(bn);
+                        });
+                    }
 
                     window._matchLeadId = leadId;
-                    window._matchDJList = djList || [];
+                    window._matchDJList = ranked;
                     renderDJCards(window._matchDJList);
                 };
 
@@ -815,7 +879,8 @@
                     grid.innerHTML = djList.map(dj => {
                         const name = dj.stage_name || dj.dj_name || 'Sin Nombre';
                         const photo = dj.photo_url || './assets/dj-avatar-placeholder.png';
-                        const planBadge = dj.plan === 'PRO'
+                        const isPaying = window.MDB_SUBSCRIPTION && typeof window.MDB_SUBSCRIPTION.isPremiumTier === 'function' && window.MDB_SUBSCRIPTION.isPremiumTier(dj);
+                        const planBadge = isPaying
                             ? `<span style="font-size:9px; background:var(--gold); color:#000; padding:2px 6px; border-radius:10px; font-weight:900;">PRO</span>`
                             : `<span style="font-size:9px; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:10px;">LITE</span>`;
                         return `

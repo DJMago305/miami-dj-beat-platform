@@ -270,6 +270,76 @@
             margin-top: 80px;
         }
 
+        /* Franja sobre LITE/PRO: categorías elegidas (matching / búsqueda interna) */
+        .jobs-portal-roles-strip {
+            grid-column: 1 / -1;
+            margin: 0 0 8px;
+            padding: 16px 18px;
+            border-radius: 16px;
+            border: 1px solid rgba(197, 160, 89, 0.38);
+            background: rgba(197, 160, 89, 0.07);
+        }
+
+        .jobs-portal-roles-strip-kicker {
+            display: block;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(197, 160, 89, 0.95);
+            margin-bottom: 8px;
+        }
+
+        .jobs-portal-roles-strip-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 28px;
+            align-items: center;
+        }
+
+        .jobs-portal-roles-strip-chips.is-empty {
+            color: rgba(255, 255, 255, 0.48);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .jobs-portal-role-chip {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 999px;
+            background: rgba(197, 160, 89, 0.22);
+            border: 1px solid rgba(197, 160, 89, 0.5);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+        }
+
+        .jobs-portal-roles-strip-hint {
+            margin: 10px 0 0;
+            font-size: 10px;
+            line-height: 1.45;
+            color: rgba(255, 255, 255, 0.42);
+            font-weight: 600;
+        }
+
+        .jobs-portal-roles-mirror-label {
+            margin: 14px 0 4px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(197, 160, 89, 0.82);
+        }
+
+        .jobs-portal-roles-mirror-values {
+            font-size: 12px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.88);
+            line-height: 1.45;
+        }
+
         .level-portal {
             background: rgba(10, 10, 10, 0.6);
             border: 2px solid rgba(197, 160, 89, 0.45);
@@ -494,24 +564,32 @@
             text-align: center;
         }
 
-        .role-pro-card input[type="checkbox"] {
+        /* Solo tarjetas legacy sin foto */
+        .role-pro-card:not(.role-photo-card) input[type="checkbox"] {
             display: none !important;
         }
 
-        /* Tarjetas con foto: el input va encima del círculo/palomita (clic fiable); el resto del <label> sigue toggling */
-        label.role-photo-card > input[type="checkbox"] {
+        /*
+         * Checkbox a pantalla completa (invisible): toda la tarjeta activa la categoría (algoritmos / perfil).
+         * Capas de foto tienen pointer-events:none → el hit va al input.
+         */
+        #selection-screen label.role-photo-card > input[type="checkbox"] {
             display: block !important;
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 30px;
-            height: 30px;
+            position: absolute !important;
+            inset: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
-            opacity: 0;
-            cursor: pointer;
-            z-index: 12;
+            opacity: 0.02 !important;
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            z-index: 30 !important;
             flex-shrink: 0;
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            border: none !important;
+            background: transparent !important;
         }
 
         label.role-photo-card .role-photo-bg,
@@ -521,6 +599,12 @@
         div.role-photo-card.role-photo-card--carousel .role-photo-gradient,
         div.role-photo-card.role-photo-card--carousel .role-photo-content {
             pointer-events: none;
+        }
+
+        .jobs-role-carousel label.role-photo-card .role-photo-bg,
+        .jobs-role-carousel label.role-photo-card .role-photo-gradient,
+        .jobs-role-carousel label.role-photo-card .role-photo-content {
+            pointer-events: none !important;
         }
 
         .role-pro-card .role-name {
@@ -562,6 +646,15 @@
             box-shadow: 0 0 0 1px rgba(197, 160, 89, 0.12), inset 0 0 24px rgba(197, 160, 89, 0.06);
             cursor: pointer;
             transition: border-color 0.35s, box-shadow 0.35s, transform 0.3s;
+        }
+
+        /*
+         * Hit-test fiable: styles.css define `label { display: grid }` y aquí mezclaba con flex + hijos absolute,
+         * lo que en algunos navegadores dejaba la palomita/checkbox sin togglear al clicar la tarjeta.
+         */
+        label.role-pro-card.role-photo-card.role-photo-card--carousel {
+            display: block !important;
+            touch-action: manipulation;
         }
 
         .role-photo-card:not(.active):hover {
@@ -696,7 +789,17 @@
         }
 
         /* Post–carousel CTA: gold ~50% opacity, brightens on hover */
+        a.jobs-after-roles-cta,
+        button.jobs-after-roles-cta {
+            text-decoration: none;
+            font: inherit;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
         .jobs-after-roles-cta {
+            position: relative;
+            z-index: 1;
             display: block;
             width: 100%;
             box-sizing: border-box;
@@ -711,6 +814,7 @@
             letter-spacing: 0.12em;
             text-transform: uppercase;
             cursor: pointer;
+            text-align: center;
             transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, color 0.2s;
         }
 
@@ -724,6 +828,31 @@
         .jobs-after-roles-cta:focus-visible {
             outline: 2px solid rgba(197, 160, 89, 0.95);
             outline-offset: 3px;
+        }
+
+        /*
+         * El wrap del CTA no debe capturar clics en “aire”: solo el enlace. Así no hay capa invisible
+         * encima del carrusel aunque el z-index falle en algún motor.
+         */
+        .jobs-after-roles-cta-wrap {
+            margin-top: 14px;
+            position: relative;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .jobs-after-roles-cta-wrap .jobs-after-roles-cta {
+            pointer-events: auto;
+        }
+
+        .jobs-after-roles-cta-subline {
+            margin: 12px 0 0;
+            padding: 0 8px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
+            line-height: 1.5;
         }
 
         /* Cartel mediano sobre el carrusel de categorías */
@@ -741,12 +870,20 @@
             text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45), 0 0 28px rgba(197, 160, 89, 0.35);
         }
 
-        /* Carrusel de roles (Jobs — plazas disponibles) */
+        #selection-screen .jobs-role-roles-block {
+            position: relative;
+            z-index: 1;
+            isolation: isolate;
+        }
+
+        /* Strip siempre encima del bloque CTA en el mismo contenedor. */
         .jobs-role-carousel-shell {
             display: flex;
             align-items: stretch;
             gap: 10px;
             margin-top: 0;
+            position: relative;
+            z-index: 2;
         }
 
         .jobs-role-carousel-btn {
@@ -770,6 +907,8 @@
         }
 
         .jobs-role-carousel {
+            position: relative;
+            z-index: 1;
             flex: 1;
             min-width: 0;
             overflow-x: auto;
@@ -781,6 +920,7 @@
             padding: 4px 2px 14px;
         }
 
+        /* Mismo modelo que hosting: bucle continuo por CSS (transform), pausa al hover; sin física JS. */
         .jobs-role-carousel.jobs-role-carousel--marquee {
             overflow: hidden;
             padding-bottom: 10px;
@@ -795,7 +935,6 @@
             animation: jobsRoleMarqueeLoop 70s linear infinite;
         }
 
-        /* Pausa solo al pasar el mouse sobre la franja del carrusel (no sobre el título/textos) */
         .jobs-role-carousel--marquee:hover .jobs-role-marquee-anim {
             animation-play-state: paused;
         }
@@ -816,8 +955,14 @@
             }
         }
 
+        /* Modo loop (hosting): sin flechas; el strip va solo. No tocar lógica de checkboxes. */
+        .jobs-role-carousel-shell.jobs-role-carousel-shell--marquee {
+            gap: 0;
+        }
+
         .jobs-role-carousel-shell--marquee .jobs-role-carousel-btn {
-            display: none;
+            display: none !important;
+            pointer-events: none !important;
         }
 
         .jobs-role-carousel-track {
@@ -827,12 +972,64 @@
             width: max-content;
             padding: 2px 4px;
             flex: 0 0 auto;
+            touch-action: manipulation;
         }
 
         .role-photo-card.role-photo-card--carousel {
             flex: 0 0 288px;
             width: 288px;
             max-width: 90vw;
+        }
+
+        /* Nota final: no es rol seleccionable — solo informa que nuevas categorías las añade el equipo (LEEME.txt) */
+        .jobs-role-card-catalog-note {
+            flex: 0 0 288px;
+            width: 288px;
+            max-width: 90vw;
+            min-height: 140px;
+            border-radius: 14px;
+            border: 1px dotted rgba(197, 160, 89, 0.35);
+            background: rgba(0, 0, 0, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 16px;
+            box-sizing: border-box;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .jobs-role-card-catalog-note-inner {
+            text-align: center;
+        }
+
+        .jobs-role-card-catalog-note-kicker {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(197, 160, 89, 0.75);
+            margin-bottom: 8px;
+        }
+
+        .jobs-role-card-catalog-note-title {
+            display: block;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: none;
+            color: rgba(255, 255, 255, 0.78);
+            line-height: 1.35;
+        }
+
+        .jobs-role-card-catalog-note-sub {
+            display: block;
+            margin-top: 10px;
+            font-size: 10px;
+            letter-spacing: 0.04em;
+            line-height: 1.45;
+            color: rgba(255, 255, 255, 0.45);
         }
 
         @media (max-width: 640px) {
@@ -1779,17 +1976,52 @@
                                     <span class="role-subtitle">Redes · promoción · alcance</span>
                                 </div>
                             </label>
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="FOTO_BOOTH_360">
+                                <input type="checkbox" name="roles" value="FOTO_BOOTH_360" form="employment-form">
+                                <div class="role-photo-bg"
+                                    style="background-image:url('./assets/Jobs/FOTO_BOOTH_360.png?v=2');background-position:center;background-size:cover;"></div>
+                                <div class="role-photo-gradient"></div>
+                                <div class="role-photo-content">
+                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
+                                    <span class="role-name">FOTO BOOTH 360</span>
+                                    <span class="role-subtitle">Cabina · video 360 · experiencias</span>
+                                </div>
+                            </label>
+                            <!-- Nota: no es seleccionable. Nuevas categorías solo vía equipo interno (LEEME.txt). -->
+                            <div class="jobs-role-card-catalog-note" role="note"
+                                aria-label="Aviso: las nuevas categorías de este listado las añade solo el equipo interno de Miami DJ Beat. No es un formulario para solicitar alta.">
+                                <div class="jobs-role-card-catalog-note-inner">
+                                    <span class="jobs-role-card-catalog-note-kicker" data-i18n="jobs-role-carousel-catalog-note-kicker">Equipo Miami DJ Beat</span>
+                                    <span class="jobs-role-card-catalog-note-title" data-i18n="jobs-role-carousel-catalog-note-title">Las nuevas plazas las definimos nosotros; no es un alta público desde aquí.</span>
+                                    <span class="jobs-role-card-catalog-note-sub" data-i18n="jobs-role-carousel-catalog-note-sub">Esta tarjeta es solo informativa — no hay casilla ni envío.</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <button type="button" class="jobs-role-carousel-btn" id="jobs-role-carousel-next"
                         aria-label="Siguiente" onclick="jobsRoleCarouselScroll(1)">▶</button>
                 </div>
-                <button type="button" class="jobs-after-roles-cta" id="jobs-after-roles-cta"
-                    data-i18n="jobs-after-roles-cta-signup"
-                    onclick="jobsAfterRolesCtaClick()">Create account</button>
+                <div class="jobs-after-roles-cta-wrap" id="jobs-after-roles-cta-wrap">
+                    <!-- Enlace real (como header): invitado navega aunque falle JS; sesión → data-jobs-cta-mode=account + handler. -->
+                    <a class="jobs-after-roles-cta" id="jobs-after-roles-cta"
+                        href="./login.html?signup=free&amp;user_type=talent&amp;redirect=jobs"
+                        data-jobs-signup-href="./login.html?signup=free&amp;user_type=talent&amp;redirect=jobs"
+                        data-jobs-cta-mode="signup"
+                        data-i18n="jobs-after-roles-cta-signup">Crea tu cuenta</a>
+                    <p class="jobs-after-roles-cta-subline" id="jobs-after-roles-cta-subline"
+                        data-i18n="jobs-after-roles-cta-auth-hint">En la siguiente pantalla podrás iniciar sesión o registrarte como talento.</p>
+                </div>
             </div>
 
             <div class="level-portal-container">
+                <div id="jobs-portal-roles-strip" class="jobs-portal-roles-strip" role="region"
+                    aria-label="Selected roster categories for subscription">
+                    <span class="jobs-portal-roles-strip-kicker" data-i18n="jobs-portal-roles-strip-kicker">Default roster categories</span>
+                    <div id="jobs-portal-roles-strip-chips" class="jobs-portal-roles-strip-chips is-empty">
+                        <span data-i18n="jobs-portal-roles-strip-empty">Select at least one category above.</span>
+                    </div>
+                    <p class="jobs-portal-roles-strip-hint" data-i18n="jobs-portal-roles-strip-hint">These tags are stored with your application so Miami DJ Beat can match client requests (e.g. orchestra) and staff can search by role and date.</p>
+                </div>
                 <!-- Portal 1: LITE -->
                 <div class="level-portal" onclick="selectPlan(this, 'lite')">
                     <div class="portal-clip clip-tl"></div>
@@ -1805,12 +2037,18 @@
                         <br><span style="color:var(--gold); font-size:11px; margin-top:5px; display:block;">Ideal para:
                             Promotores, Influencers, Fotógrafos y Managers.</span>
                     </p>
+                    <p class="jobs-portal-roles-mirror-label" data-i18n="jobs-portal-card-roles-label">Your roster categories</p>
+                    <div class="jobs-portal-roles-mirror-values jobs-portal-roles-mirror-values--lite" aria-live="polite">—</div>
                     <div
                         style="margin-top:16px;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.07);">
                         <div style="font-size:22px;font-weight:900;color:#fff;">FREE</div>
                         <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;"
                             data-i18n="jobs-lite-price-note">Basic network access</div>
                     </div>
+                    <p class="jobs-lite-free-note" data-i18n="jobs-lite-free-note"
+                        style="margin:12px 0 0;font-size:11px;line-height:1.45;color:rgba(255,255,255,0.45);font-weight:600;">
+                        Cuenta gratuita (LITE). Puedes pasar a PRO cuando quieras desde esta misma página o desde tu
+                        panel.</p>
                 </div>
 
                 <!-- Portal 2: PRO (FOUNDER PRICE) -->
@@ -1833,6 +2071,8 @@
                         <br><span style="color:var(--gold); font-size:11px; margin-top:5px; display:block;">Recomendado
                             para: DJs, MCs, Cantantes y Live Bands.</span>
                     </p>
+                    <p class="jobs-portal-roles-mirror-label" data-i18n="jobs-portal-card-roles-label">Your roster categories</p>
+                    <div class="jobs-portal-roles-mirror-values jobs-portal-roles-mirror-values--pro" aria-live="polite">—</div>
 
                     <!-- Billing toggle -->
                     <div style="margin-top:16px;" onclick="event.stopPropagation();">
@@ -1863,17 +2103,17 @@
                             </div>
                             <div id="price-semestral-display" style="display:none;">
                                 <span style="font-size:26px;font-weight:900;color:#fff;">$400</span>
-                                <span style="font-size:13px;color:rgba(255,255,255,0.4);">/6 meses · Ahorra $80</span>
+                                <span style="font-size:13px;color:rgba(255,255,255,0.4);" data-i18n="jobs-pro-price-semestral-line">/6 meses · Ahorra $80</span>
                                 <div
-                                    style="margin-top:6px;display:inline-block;background:rgba(197,160,89,0.12);border:1px solid rgba(197,160,89,0.3);color:var(--gold);font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;">
-                                    🎁 1 MES GRATIS</div>
+                                    style="margin-top:6px;display:inline-block;background:rgba(197,160,89,0.12);border:1px solid rgba(197,160,89,0.3);color:var(--gold);font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;"
+                                    data-i18n="jobs-pro-promo-semestral-tag">🎁 Promo 6 meses + 1 mes gratis</div>
                             </div>
                             <div id="price-annual-display" style="display:none;">
                                 <span style="font-size:26px;font-weight:900;color:var(--gold);">$720</span>
-                                <span style="font-size:13px;color:rgba(255,255,255,0.4);">/año · Ahorra $240</span>
+                                <span style="font-size:13px;color:rgba(255,255,255,0.4);" data-i18n="jobs-pro-price-annual-line">/año · Ahorra $240</span>
                                 <div
-                                    style="margin-top:6px;display:inline-block;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#22c55e;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;">
-                                    🎁 3 MESES GRATIS</div>
+                                    style="margin-top:6px;display:inline-block;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#22c55e;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;"
+                                    data-i18n="jobs-pro-promo-annual-tag">🎁 Promo anual + 3 meses gratis</div>
                             </div>
                         </div>
 
@@ -1885,6 +2125,11 @@
                                 style="display:none;font-size:11px;color:#22c55e;margin-top:5px;font-weight:700;">✅
                                 Código válido — $20 de descuento en tu primer mes</div>
                         </div>
+                        <p class="jobs-pro-billing-note" data-i18n="jobs-pro-billing-note"
+                            style="margin:14px 0 0;font-size:11px;line-height:1.45;color:rgba(255,255,255,0.5);font-weight:600;">
+                            Al continuar, el pago es con Stripe en modo suscripción: cobros automáticos según el periodo
+                            elegido. La tarjeta queda asociada a tu cuenta; la gestionas en el dashboard → configuración
+                            de pagos.</p>
                     </div>
                 </div>
             </div>
@@ -2343,7 +2588,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=20260226-1"></script>
-    <script src="./translations.js?v=20260413-jobs-cta-profile-flow"></script>
+    <script src="./translations.js?v=20260422-jobs-portal-roles"></script>
     <script src="./i18n.js?v=20260226-1"></script>
     <script>
         /* --- [x] Vision 2027 UI Transformation
@@ -2352,7 +2597,12 @@
            - [x] Implement CSS reveal animations
         */
 
+        const supabase = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+        /** Misma URL que header «Suscripción gratis» / selectPlan(PRO) — registro talento + vuelta a Jobs. */
+        const JOBS_GUEST_SIGNUP_URL = './login.html?signup=free&user_type=talent&redirect=jobs';
+
         async function updateHeaderAuth() {
+            if (!supabase) return;
             const { data: { session } } = await supabase.auth.getSession();
             const loginBtn = document.getElementById('header-login-btn');
             const authZone = document.getElementById('header-auth-zone');
@@ -2389,6 +2639,64 @@
                 .sort();
         }
 
+        /** Nombre visible de la tarjeta del carrusel (pista principal, no clon marquee). */
+        function getJobsRoleDisplayLabel(roleCode) {
+            var code = (roleCode || '').toUpperCase();
+            if (!code) return '';
+            var track = document.querySelector('#jobs-role-carousel .jobs-role-carousel-track:not(.jobs-role-carousel-track--marquee-clone)');
+            if (track) {
+                var card = track.querySelector('.role-photo-card[data-role="' + code + '"] .role-name');
+                if (card && card.textContent) return card.textContent.trim();
+            }
+            return code.replace(/_/g, ' ');
+        }
+
+        /** Franja LITE/PRO + espejos en tarjetas; sessionStorage para flujos futuros (matching / staff). */
+        function updateJobsPortalRolesStrip() {
+            var chips = document.getElementById('jobs-portal-roles-strip-chips');
+            var codes = getJobsSelectedRolesSorted();
+            var labels = codes.map(function (c) { return getJobsRoleDisplayLabel(c); });
+            var summary = labels.length ? labels.join(' · ') : '—';
+
+            document.querySelectorAll('.jobs-portal-roles-mirror-values').forEach(function (el) {
+                el.textContent = summary;
+            });
+
+            if (chips) {
+                chips.textContent = '';
+                if (!codes.length) {
+                    chips.classList.add('is-empty');
+                    var ph = document.createElement('span');
+                    ph.setAttribute('data-i18n', 'jobs-portal-roles-strip-empty');
+                    ph.textContent = (window.i18n && typeof window.i18n.t === 'function')
+                        ? window.i18n.t('jobs-portal-roles-strip-empty')
+                        : 'Select at least one category above.';
+                    chips.appendChild(ph);
+                } else {
+                    chips.classList.remove('is-empty');
+                    codes.forEach(function (code, i) {
+                        var chip = document.createElement('span');
+                        chip.className = 'jobs-portal-role-chip';
+                        chip.setAttribute('data-role-code', code);
+                        chip.textContent = labels[i] || code;
+                        chips.appendChild(chip);
+                    });
+                }
+            }
+
+            try {
+                sessionStorage.setItem('mdj_jobs_roster_categories', JSON.stringify({
+                    codes: codes,
+                    labels: labels,
+                    ts: Date.now()
+                }));
+            } catch (e) { void e; }
+
+            if (window.i18n && typeof window.i18n.updateUI === 'function') {
+                window.i18n.updateUI();
+            }
+        }
+
         function rolesArrayEqual(a, b) {
             if (a.length !== b.length) return false;
             for (var i = 0; i < a.length; i++) {
@@ -2422,68 +2730,152 @@
             return false;
         }
 
-        /** Label + data-i18n key for the gold CTA under the role carousel */
+        /** Texto i18n + modo enlace: invitado = href real (como header); con sesión = # + data-jobs-cta-mode=account. */
         async function updateJobsAfterRolesCta() {
-            const btn = document.getElementById('jobs-after-roles-cta');
-            if (!btn) return;
-            const { data: { session } } = await supabase.auth.getSession();
-            var key = 'jobs-after-roles-cta-signup';
-            if (session) {
-                var role = getSessionAccountRole(session);
-                if (role === 'client') {
-                    key = 'jobs-after-roles-cta-client-account';
-                } else if (role === 'admin' || role === 'manager') {
-                    key = 'jobs-after-roles-cta-staff-panel';
-                } else {
-                    const { data: p } = await supabase
-                        .from('dj_profiles')
-                        .select('user_id, full_name, stage_name, dj_name, photo_url, bio, bio_long, bio_short, roles')
-                        .eq('user_id', session.user.id)
-                        .maybeSingle();
-                    key = artistJobsCtaTargetSettings(p)
-                        ? 'jobs-after-roles-cta-artist-setup'
-                        : 'jobs-after-roles-cta-artist-public';
-                }
+            const el = document.getElementById('jobs-after-roles-cta');
+            const subline = document.getElementById('jobs-after-roles-cta-subline');
+            if (!el) return;
+
+            function setGuestCtaLink() {
+                el.setAttribute('href', JOBS_GUEST_SIGNUP_URL);
+                el.setAttribute('data-jobs-signup-href', JOBS_GUEST_SIGNUP_URL);
+                el.setAttribute('data-jobs-cta-mode', 'signup');
             }
-            btn.setAttribute('data-i18n', key);
+
+            var key = 'jobs-after-roles-cta-signup';
+            if (!supabase) {
+                if (subline) subline.style.display = '';
+                setGuestCtaLink();
+                el.setAttribute('data-i18n', key);
+                if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
+                return;
+            }
+
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    if (subline) subline.style.display = 'none';
+                    el.setAttribute('href', '#');
+                    el.removeAttribute('data-jobs-signup-href');
+                    el.setAttribute('data-jobs-cta-mode', 'account');
+                    var role = getSessionAccountRole(session);
+                    if (role === 'client') {
+                        key = 'jobs-after-roles-cta-client-account';
+                    } else if (role === 'admin' || role === 'manager') {
+                        key = 'jobs-after-roles-cta-staff-panel';
+                    } else {
+                        const { data: p } = await supabase
+                            .from('dj_profiles')
+                            .select('user_id, full_name, stage_name, dj_name, photo_url, bio, bio_long, bio_short, roles')
+                            .eq('user_id', session.user.id)
+                            .maybeSingle();
+                        key = artistJobsCtaTargetSettings(p)
+                            ? 'jobs-after-roles-cta-artist-setup'
+                            : 'jobs-after-roles-cta-artist-edit';
+                    }
+                } else {
+                    if (subline) subline.style.display = '';
+                    setGuestCtaLink();
+                }
+            } catch (err) {
+                console.warn('[jobs] updateJobsAfterRolesCta session/profile:', err);
+                if (subline) subline.style.display = '';
+                setGuestCtaLink();
+                key = 'jobs-after-roles-cta-signup';
+            }
+            el.setAttribute('data-i18n', key);
             if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
         }
 
-        async function jobsAfterRolesCtaClick() {
-            const { data: { session } } = await supabase.auth.getSession();
+        function jobsPromiseWithTimeout(promise, ms, label) {
+            return Promise.race([
+                promise,
+                new Promise(function (_, reject) {
+                    setTimeout(function () {
+                        reject(new Error(label || 'timeout'));
+                    }, ms);
+                })
+            ]);
+        }
+
+        /** Con sesión: misma acción que el avatar (#accountBtn) — solo se llama con data-jobs-cta-mode=account. */
+        async function jobsAfterRolesCtaAccountNavigate() {
+            if (!supabase) {
+                window.location.href = JOBS_GUEST_SIGNUP_URL;
+                return;
+            }
+            let session = null;
+            try {
+                const { data } = await jobsPromiseWithTimeout(
+                    supabase.auth.getSession(),
+                    4500,
+                    'getSession'
+                );
+                session = data && data.session;
+            } catch (e) {
+                console.warn('[jobs] jobsAfterRolesCtaAccountNavigate getSession:', e);
+                window.location.href = JOBS_GUEST_SIGNUP_URL;
+                return;
+            }
             if (!session) {
-                const gate = document.getElementById('auth-gate');
-                if (gate) {
-                    gate.style.display = 'block';
-                    if (typeof switchGateTab === 'function') switchGateTab('signup');
-                    gate.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                window.location.href = JOBS_GUEST_SIGNUP_URL;
+                return;
+            }
+            try {
+                if (typeof window.checkSessionForNav === 'function') {
+                    try {
+                        await jobsPromiseWithTimeout(window.checkSessionForNav(), 6500, 'checkSessionForNav');
+                    } catch (toErr) {
+                        console.warn('[jobs] checkSessionForNav slow or failed, using fallbacks:', toErr && toErr.message);
+                    }
                 }
-                return;
+                const acc = document.getElementById('accountBtn');
+                if (acc && acc.tagName === 'A') {
+                    var raw = acc.getAttribute('href');
+                    if (raw && raw !== '#' && raw.indexOf('javascript:') !== 0) {
+                        window.location.href = acc.href;
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn('[jobs] jobsAfterRolesCtaAccountNavigate:', e);
             }
-            var role = getSessionAccountRole(session);
-            if (role === 'client') {
-                window.location.href = './client-portal.html';
-                return;
+            if (session.user && session.user.id) {
+                window.location.href = './dj-profile.html?id=' + encodeURIComponent(session.user.id);
             }
-            if (role === 'admin' || role === 'manager') {
-                window.location.href = './admin-dashboard.html';
-                return;
-            }
-            const { data: p } = await supabase
-                .from('dj_profiles')
-                .select('user_id, full_name, stage_name, dj_name, photo_url, bio, bio_long, bio_short, roles')
-                .eq('user_id', session.user.id)
-                .maybeSingle();
-            if (artistJobsCtaTargetSettings(p)) {
-                window.location.href = './dj-dashboard.html?tab=settings';
-            } else {
-                window.location.href = './dj-profile.html';
-            }
+        }
+
+        function initJobsAfterRolesCtaClick() {
+            const el = document.getElementById('jobs-after-roles-cta');
+            if (!el || el.dataset.jobsCtaBound === '1') return;
+            el.dataset.jobsCtaBound = '1';
+            el.addEventListener('click', function (e) {
+                var mode = el.getAttribute('data-jobs-cta-mode');
+                if (mode === 'account') {
+                    e.preventDefault();
+                    void jobsAfterRolesCtaAccountNavigate();
+                    return;
+                }
+                if (mode === 'signup') {
+                    var href = el.getAttribute('href') || el.getAttribute('data-jobs-signup-href') || JOBS_GUEST_SIGNUP_URL;
+                    if (!href || href === '#' || (href.indexOf('javascript:') === 0)) {
+                        href = JOBS_GUEST_SIGNUP_URL;
+                    }
+                    e.preventDefault();
+                    window.location.assign(href);
+                }
+            });
+        }
+
+        /** onclick="jobsAfterRolesCtaClick()" (HTML legacy) + barra dorada: invitado → login; sesión → cuenta. */
+        async function jobsAfterRolesCtaClick() {
+            await jobsAfterRolesCtaAccountNavigate();
         }
         window.jobsAfterRolesCtaClick = jobsAfterRolesCtaClick;
 
         // ── Auth Gate: decide what to show on load ───────────────────
         async function initAuthGate() {
+            if (!supabase) return;
             const { data: { session } } = await supabase.auth.getSession();
             const gate = document.getElementById('auth-gate');
             const selection = document.getElementById('selection-screen');
@@ -2501,22 +2893,32 @@
         }
 
         document.addEventListener('languageChanged', () => {
-            void updateJobsAfterRolesCta();
+            void updateJobsAfterRolesCta().then(function () {
+                syncJobsRoleLabelsFromInputs();
+            });
         });
 
+        /** Sincroniza .active en tarjetas + clon del carrusel (tras i18n o prefill). */
+        function syncJobsRoleLabelsFromInputs() {
+            document.querySelectorAll('.role-photo-card input[name="roles"]').forEach(function (cb) {
+                const lab = cb.closest('.role-photo-card');
+                if (lab) lab.classList.toggle('active', cb.checked);
+            });
+            if (typeof syncJobsRoleMarqueeClones === 'function') syncJobsRoleMarqueeClones();
+            updateJobsPortalRolesStrip();
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
+            initJobsAfterRolesCtaClick();
             updateHeaderAuth();
             initAuthGate();
-            initRolePhotoCardPickers();
             initJobsRoleMarquee();
             addExperienceEntry();
             await prefillProfileForm();
             await updateJobsAfterRolesCta();
-            document.querySelectorAll('.role-photo-card input[name="roles"]').forEach(cb => {
-                const lab = cb.closest('.role-photo-card');
-                if (lab) lab.classList.toggle('active', cb.checked);
-            });
-            syncJobsRoleMarqueeClones();
+            /* Después de i18n.updateUI (CTA, etc.): un solo listener delegado en #selection-screen no se pierde si el DOM del carrusel tocara a regenerarse. */
+            initRolePhotoCardPickers();
+            syncJobsRoleLabelsFromInputs();
             loadPlatformPricing(); // ← fetch prices from Supabase
 
             // Auto-read ?ref= URL param → pre-fill referral code
@@ -2624,6 +3026,7 @@
         // ── Validate referral code ────────────────────────────────────
         async function validateReferralCode(code) {
             if (!code || code.length < 4) return;
+            if (!supabase) return;
             const { data } = await supabase.from('dj_profiles').select('user_id').eq('referral_code', code.toUpperCase()).maybeSingle();
             const note = document.getElementById('referral-discount-note');
             if (note) note.style.display = data ? 'block' : 'none';
@@ -2631,6 +3034,7 @@
 
         // ── Load platform pricing from Supabase (admin-configurable) ──
         async function loadPlatformPricing() {
+            if (!supabase) return;
             try {
                 const { data } = await supabase
                     .from('platform_settings')
@@ -2694,6 +3098,7 @@
         // ── Gate: CREATE ACCOUNT ─────────────────────────────────────
         async function gateSignup(e) {
             e.preventDefault();
+            if (!supabase) return;
             const btn = document.getElementById('gate-signup-btn');
             const err = document.getElementById('gate-signup-error');
             const name = document.getElementById('gate-name').value.trim();
@@ -2721,6 +3126,7 @@
         // ── Gate: LOGIN ──────────────────────────────────────────────
         async function gateLogin(e) {
             e.preventDefault();
+            if (!supabase) return;
             const btn = document.getElementById('gate-login-btn');
             const err = document.getElementById('gate-login-error');
             const email = document.getElementById('gate-login-email').value.trim();
@@ -2756,6 +3162,7 @@
         // ── Pre-fill form with saved profile data ────────────────────
         async function prefillProfileForm() {
             try {
+                if (!supabase) return;
                 const { data: { session } } = await supabase.auth.getSession();
                 if (!session) return; // Not logged in — nothing to fill
 
@@ -2853,6 +3260,29 @@
 
         let selectedPlan = null;
         function selectPlan(el, type) {
+            /* PRO exige cuenta: primero registro/login; LITE se puede explorar sin sesión. */
+            if (type === 'pro') {
+                if (!supabase) {
+                    window.location.href = './login.html?signup=free&user_type=talent&redirect=jobs';
+                    return;
+                }
+                supabase.auth.getSession().then(function (res) {
+                    var session = res && res.data && res.data.session;
+                    if (!session) {
+                        window.location.href = './login.html?signup=free&user_type=talent&redirect=jobs';
+                        return;
+                    }
+                    document.querySelectorAll('.level-portal').forEach(p => p.classList.remove('selected'));
+                    el.classList.add('selected');
+                    selectedPlan = type;
+                    var ac = document.getElementById('activate-container');
+                    if (ac) {
+                        ac.classList.add('visible');
+                        ac.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
+                return;
+            }
             document.querySelectorAll('.level-portal').forEach(p => p.classList.remove('selected'));
             el.classList.add('selected');
             selectedPlan = type;
@@ -2882,13 +3312,14 @@
 
         window.jobsRoleCarouselScroll = function (dir) {
             var el = document.getElementById('jobs-role-carousel');
-            if (!el || el.classList.contains('jobs-role-carousel--marquee')) return;
+            if (!el) return;
             var step = Math.min(360, Math.max(220, Math.floor(el.clientWidth * 0.72) + 16));
-            el.scrollBy({ left: dir * step, behavior: 'smooth' });
+            el.scrollBy({ left: dir * step, behavior: 'auto' });
         };
 
         // ── Role photo cards: clic en la foto = checkbox nativo (un solo toggle) + persistencia ──
         function persistJobRolesToProfile() {
+            if (!supabase) return;
             const selectedRoles = Array.from(document.querySelectorAll('input[name="roles"]:checked')).map(c => c.value);
             supabase.auth.getSession().then(({ data: { session } }) => {
                 if (!session) return;
@@ -2945,9 +3376,11 @@
                 if (inp) inp.remove();
                 div.addEventListener('click', (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     const o = track.querySelector('.role-photo-card[data-role="' + role + '"] input');
                     if (o) {
                         o.checked = !o.checked;
+                        o.dispatchEvent(new Event('input', { bubbles: true }));
                         o.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 });
@@ -2967,18 +3400,49 @@
             wrap.dataset.marqueeReady = '1';
         }
 
+        /**
+         * Mismo patrón que el build que ya funcionaba en hosting: un listener `change` por checkbox
+         * del track principal (el clon del marquee no tiene inputs).
+         */
         function initRolePhotoCardPickers() {
-            document.querySelectorAll('.role-photo-card input[name="roles"]').forEach(cb => {
-                cb.addEventListener('change', () => {
-                    const label = cb.closest('.role-photo-card');
-                    if (label) label.classList.toggle('active', cb.checked);
-                    syncJobsRoleMarqueeClones();
+            const root = document.getElementById('selection-screen');
+            const car = document.getElementById('jobs-role-carousel');
+            if (!root || !car || root.dataset.jobsRolesBound === '1') return;
+            root.dataset.jobsRolesBound = '1';
+            root.querySelectorAll('.role-photo-card input[name="roles"]').forEach(function (cb) {
+                cb.addEventListener('change', function () {
+                    syncJobsRoleLabelsFromInputs();
                     persistJobRolesToProfile();
                     void updateJobsAfterRolesCta();
                 });
-                const label = cb.closest('.role-photo-card');
-                if (label) label.classList.toggle('active', cb.checked);
             });
+            /*
+             * Delegación solo en #jobs-role-carousel (no en todo #selection-screen).
+             * Captura + toggle explícito cuando el target no es el input (p. ej. WebKit + transform).
+             */
+            car.addEventListener(
+                'click',
+                function (e) {
+                    var t = e.target;
+                    if (!t || t.nodeType !== 1) return;
+                    if (t.matches && t.matches('input[name="roles"]')) return;
+                    if (t.closest && t.closest('.jobs-role-carousel-track--marquee-clone')) return;
+                    if (t.closest && t.closest('.jobs-role-card-catalog-note')) return;
+                    var lab = t.closest && t.closest('label.role-pro-card.role-photo-card');
+                    if (!lab || !car.contains(lab)) return;
+                    var cbx = lab.querySelector('input[name="roles"]');
+                    if (!cbx) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    cbx.checked = !cbx.checked;
+                    cbx.dispatchEvent(new Event('input', { bubbles: true }));
+                    cbx.dispatchEvent(new Event('change', { bubbles: true }));
+                    syncJobsRoleLabelsFromInputs();
+                    persistJobRolesToProfile();
+                    void updateJobsAfterRolesCta();
+                },
+                true
+            );
         }
 
         // Enterprise Address Modal Logic
@@ -3371,6 +3835,10 @@
             window.submitProForm = async function () {
                 const submitBtn = document.getElementById('pro-submit-btn');
                 const originalText = submitBtn ? submitBtn.innerHTML : '';
+                if (!supabase) {
+                    alert('No se pudo iniciar la conexión de sesión. Recarga la página o entra desde «Suscripción gratis» en el menú.');
+                    return;
+                }
 
                 // ── Unified validation with visible error banner ────────
                 const errors = [];
@@ -3482,12 +3950,15 @@
                 aggregateExperience();
                 const experienceData = document.getElementById('experience-data-hidden')?.value || '';
 
+                const billingPeriodVal = (document.getElementById('billing-period')?.value || 'monthly').toLowerCase();
+
                 const { error } = await supabase
                     .from('dj_profiles')
                     .upsert({
                         user_id: currentSession.user.id,
                         email: emailVal || currentSession.user.email,
                         plan: 'none', // MODO MILITAR: Solo Stripe puede poner esto en 'PRO'
+                        billing_period: planSelected === 'PRO' ? billingPeriodVal : 'lite',
                         plan_status: planSelected === 'PRO' ? 'pending_payment' : 'active',
                         status: 'PENDING_REVIEW',
                         full_name: fullName,
@@ -3644,7 +4115,7 @@
     </script>
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
     <link rel="stylesheet" href="./mdj-assistant.css" />
-    <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
+    <script src="./mdj-assistant.js?v=20260414-booth-roster-jobs"></script>
     <div id="mdj-assistant-booth">
         <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
         <div class="booth-window">
@@ -3676,7 +4147,7 @@
     <script src="./auth.js"></script>
 
     <script src="./header-smart-search.js?v=20260411-search-google"></script>
-    <script src="./mdj-shared-header.js?v=20260414-mobile-hamburger"></script>
+    <script src="./mdj-shared-header.js?v=20260422-get-pro-to-jobs-plans"></script>
     <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
     <script src="./mdj-profile-nav-context.js?v=20260418-owner-nav-parity"></script>
   <script src="./mdj-social-bar.js?v=20260413-scrollhide"></script>

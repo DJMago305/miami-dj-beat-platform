@@ -334,6 +334,37 @@
             background: var(--gold);
             color: #000;
         }
+
+        .find-dj-priority-note {
+            max-width: 720px;
+            margin: -20px auto 28px;
+            padding: 0 20px;
+            font-size: 12px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.48);
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .find-dj-tier {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 9px;
+            border-radius: 999px;
+            display: inline-block;
+            margin-top: 8px;
+            letter-spacing: 0.04em;
+        }
+
+        .find-dj-tier--pro {
+            background: var(--gold);
+            color: #000;
+        }
+
+        .find-dj-tier--lite {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.55);
+        }
     </style>
 
     <section class="hero">
@@ -385,11 +416,18 @@
         </div>
     </section>
 
+    <p id="find-dj-priority-note" class="find-dj-priority-note" data-i18n="find-dj-priority-note">MDJPRO partners
+        (paid) appear first when you search. Free LITE profiles stay visible for backup when PRO talent is busy,
+        away, or unavailable.</p>
+
     <div id="state-msg" style="text-align: center; color: var(--muted); padding: 40px;">Select filters and search.</div>
     <div class="dj-grid" id="dj-grid"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js"></script>
+    <script src="./translations.js?v=20260422-find-dj-rank"></script>
+    <script src="./i18n.js?v=20260226-1"></script>
+    <script src="./subscription.js?v=20260422-find-dj-rank"></script>
     <script>
         const db = supabase.createClient(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY);
 
@@ -406,6 +444,16 @@
             document.getElementById('role-options').classList.toggle('active');
         }
 
+        function tierBadgeHtml(dj) {
+            var sub = window.MDB_SUBSCRIPTION;
+            var pro = sub && typeof sub.isPremiumTier === 'function' && sub.isPremiumTier(dj);
+            if (pro) return '<span class="find-dj-tier find-dj-tier--pro">PRO</span>';
+            var lite = (window.i18n && typeof window.i18n.t === 'function')
+                ? window.i18n.t('find-dj-tier-lite')
+                : 'LITE · backup pool';
+            return '<span class="find-dj-tier find-dj-tier--lite">' + lite + '</span>';
+        }
+
         async function searchDJs() {
             const grid = document.getElementById('dj-grid');
             const msg = document.getElementById('state-msg');
@@ -417,36 +465,57 @@
             const nameQ = sanitizeSearchToken(params.get('q') || '');
             const intent = params.get('intent');
 
-            let q = db.from('public_dj_profiles')
-                .select('dj_slug, stage_name, photo_url, bio_short, city, roles, plan')
-                .eq('available', true);
+            var selectFull = 'dj_slug, stage_name, photo_url, bio_short, city, roles, plan, plan_type, plan_status, plan_expires_at, is_premium, subscription_status';
+            var selectMin = 'dj_slug, stage_name, photo_url, bio_short, city, roles, plan';
 
-            if (city) q = q.ilike('city', `%${city}%`);
-
-            if (nameQ) {
-                q = q.or('stage_name.ilike.%' + nameQ + '%,dj_slug.ilike.%' + nameQ + '%');
+            function buildQuery(sel) {
+                var q = db.from('public_dj_profiles').select(sel).eq('available', true);
+                if (city) q = q.ilike('city', '%' + city + '%');
+                if (nameQ) q = q.or('stage_name.ilike.%' + nameQ + '%,dj_slug.ilike.%' + nameQ + '%');
+                return q.limit(120);
             }
 
-            const { data, error } = await q.limit(50);
+            var res = await buildQuery(selectFull);
+            if (res.error) res = await buildQuery(selectMin);
+
+            const { data: raw, error } = res;
 
             if (error) {
-                msg.innerHTML = `Error: ${error.message}`;
+                msg.innerHTML = 'Error: ' + error.message;
                 return;
             }
 
-            let line = `Found ${data.length} talents.`;
-            if (nameQ) line += ` (name/slug: “${nameQ}”)`;
+            var data = raw || [];
+            if (window.MDB_SUBSCRIPTION && typeof window.MDB_SUBSCRIPTION.searchRankScore === 'function') {
+                data = data.slice().sort(function (a, b) {
+                    return window.MDB_SUBSCRIPTION.searchRankScore(b) - window.MDB_SUBSCRIPTION.searchRankScore(a);
+                });
+            }
+
+            let line = 'Found ' + data.length + ' talents.';
+            if (nameQ) line += ' (name/slug: “' + nameQ + '”)';
             if (intent === 'availability') line += ' — refine date & filters for availability.';
             msg.innerHTML = line;
-            grid.innerHTML = data.map(dj => `
-                <div class="dj-card">
-                    <img class="avatar" src="${dj.photo_url || 'https://via.placeholder.com/64'}" />
-                    <h3 style="margin: 15px 0 5px;">${dj.stage_name}</h3>
-                    <p style="font-size: 12px; color: var(--muted);">${dj.city || 'Miami, FL'}</p>
-                    <p style="font-size: 13px; margin: 10px 0;">${dj.bio_short || ''}</p>
-                    <button class="btn-book">BOOK NOW</button>
-                </div>
-            `).join('');
+            grid.innerHTML = data.map(function (dj) {
+                var esc = function (s) {
+                    return String(s == null ? '' : s)
+                        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                };
+                var name = esc(dj.stage_name);
+                var cityL = esc(dj.city || 'Miami, FL');
+                var bio = esc(dj.bio_short || '');
+                var img = esc(dj.photo_url || '');
+                return (
+                    '<div class="dj-card">' +
+                    '<img class="avatar" src="' + (img || 'https://via.placeholder.com/64') + '" alt="" />' +
+                    '<h3 style="margin: 15px 0 5px;">' + name + '</h3>' +
+                    tierBadgeHtml(dj) +
+                    '<p style="font-size: 12px; color: var(--muted);">' + cityL + '</p>' +
+                    '<p style="font-size: 13px; margin: 10px 0;">' + bio + '</p>' +
+                    '<button type="button" class="btn-book">BOOK NOW</button>' +
+                    '</div>'
+                );
+            }).join('');
         }
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -457,7 +526,7 @@
 
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
     <link rel="stylesheet" href="./mdj-assistant.css" />
-    <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
+    <script src="./mdj-assistant.js?v=20260414-booth-roster-jobs"></script>
     <div id="mdj-assistant-booth">
         <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
         <div class="booth-window">

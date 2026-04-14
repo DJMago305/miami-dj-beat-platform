@@ -93,6 +93,41 @@
         .pwd-toggle:hover {
             color: var(--gold);
         }
+
+        .login-form-footer-hint {
+            margin: 18px 0 0;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.52);
+            line-height: 1.45;
+        }
+
+        .login-form-footer-hint button {
+            display: inline;
+            margin: 0;
+            padding: 0;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 800;
+            color: var(--gold);
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            text-decoration-color: rgba(197, 160, 89, 0.45);
+        }
+
+        .login-form-footer-hint button:hover {
+            color: #fff;
+            text-decoration-color: rgba(255, 255, 255, 0.45);
+        }
+
+        .login-form-footer-hint button:focus-visible {
+            outline: 2px solid var(--gold);
+            outline-offset: 3px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 
@@ -207,6 +242,10 @@
                     <a href="./forgot-password.html" style="color: rgba(255,255,255,0.5); font-size: 13px; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">¿Olvidaste tu contraseña?</a>
                 </div>
                 <button class="btn primary full" type="submit" data-i18n="login-btn-submit">Iniciar Sesión</button>
+                <p class="login-form-footer-hint" role="status">
+                    <span data-i18n="login-no-account-prompt">¿No tienes cuenta?</span>
+                    <button type="button" id="login-switch-to-signup-btn" data-i18n="login-switch-to-signup">Crear cuenta</button>
+                </p>
             </form>
 
             <!-- Signup Form -->
@@ -258,7 +297,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=20260226-1"></script>
-    <script src="./translations.js?v=20260226-1"></script>
+    <script src="./translations.js?v=20260422-login-footer-hint"></script>
     <script src="./i18n.js?v=20260226-1"></script>
     <script src="./security-shield.js?v=20260305-1"></script>
     <script src="./auth.js?v=20260411-ref"></script>
@@ -285,10 +324,60 @@
             tabLogin.classList.add('active'); tabSignup.classList.remove('active');
             loginForm.classList.remove('hidden'); signupForm.classList.add('hidden');
         };
+        /** Misma regla que al cargar la página: tipo de cuenta + campos de artista según URL (user_type, redirect, signup). */
+        function applySignupUserTypeFromUrl() {
+            try {
+                var p = new URLSearchParams(window.location.search);
+                var explicitUserType = (p.get('user_type') || '').toLowerCase();
+                var redirect = p.get('redirect');
+                var signupParam = (p.get('signup') || '').toLowerCase();
+                var userType = explicitUserType || ((redirect === 'jobs' || signupParam === 'free') ? 'talent' : 'client');
+                var su = document.getElementById('signup-usertype');
+                if (su) su.value = userType;
+                var tf = document.getElementById('talent-fields');
+                var tf2 = document.getElementById('talent-fields-2');
+                if (tf && tf2) {
+                    if (userType === 'talent') {
+                        tf.style.display = 'block';
+                        tf2.style.display = 'block';
+                    } else {
+                        tf.style.display = 'none';
+                        tf2.style.display = 'none';
+                    }
+                }
+            } catch (e) { void e; }
+        }
+
         tabSignup.onclick = () => {
             tabSignup.classList.add('active'); tabLogin.classList.remove('active');
             signupForm.classList.remove('hidden'); loginForm.classList.add('hidden');
+            applySignupUserTypeFromUrl();
         };
+
+        /** Desde la pestaña Entrar: pasar a «Crear cuenta» sin recargar; reflejar signup=free en la URL y recalcular tipo (equivalente a enlace directo al alta). */
+        (function bindLoginToSignupHint() {
+            var btn = document.getElementById('login-switch-to-signup-btn');
+            if (!btn || !tabSignup) return;
+            btn.addEventListener('click', function () {
+                try {
+                    var u = new URL(window.location.href);
+                    if (!u.searchParams.get('signup')) {
+                        u.searchParams.set('signup', 'free');
+                        history.replaceState(null, '', u.pathname + u.search + u.hash);
+                    }
+                } catch (e) { void e; }
+                tabSignup.classList.add('active');
+                tabLogin.classList.remove('active');
+                signupForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+                applySignupUserTypeFromUrl();
+                var fh = document.getElementById('login-free-hint');
+                if (fh) {
+                    fh.style.display = 'block';
+                    if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
+                }
+            });
+        })();
 
         // ── Eye Toggle (Mostrar/Ocultar Password) ──────────────────
         document.querySelectorAll('.pwd-toggle').forEach(btn => {
@@ -334,13 +423,7 @@
             }
         }
 
-        const explicitUserType = (params.get('user_type') || '').toLowerCase();
-        const userType = explicitUserType || ((redirect === 'jobs' || signupParam === 'free') ? 'talent' : 'client');
-        document.getElementById('signup-usertype').value = userType;
-        if (userType === 'talent') {
-            document.getElementById('talent-fields').style.display = 'block';
-            document.getElementById('talent-fields-2').style.display = 'block';
-        }
+        applySignupUserTypeFromUrl();
 
         // ── After successful login or signup → redirect back ───────
         // Uses lazy singleton to avoid CDN race condition
@@ -358,6 +441,8 @@
                     const ref = params.get('ref');
                     const dj = params.get('dj');
                     const profileId = params.get('id');
+                    const tabRedirect = params.get('tab');
+                    const panelRedirect = params.get('panel');
 
                     let finalUrl = `./${redirect}.html?from_auth=1&`;
                     if (lead) finalUrl += `lead=${encodeURIComponent(lead)}&`;
@@ -365,6 +450,8 @@
                     if (ref) finalUrl += `ref=${encodeURIComponent(ref)}&`;
                     if (dj) finalUrl += `dj=${encodeURIComponent(dj)}&`;
                     if (profileId) finalUrl += `id=${encodeURIComponent(profileId)}&`;
+                    if (tabRedirect) finalUrl += `tab=${encodeURIComponent(tabRedirect)}&`;
+                    if (panelRedirect) finalUrl += `panel=${encodeURIComponent(panelRedirect)}&`;
 
                     window.location.href = finalUrl.replace(/[&?]$/, '');
                 }
@@ -404,7 +491,7 @@
     </div>
 
     <script src="./header-smart-search.js?v=20260411-search-google"></script>
-    <script src="./mdj-shared-header.js?v=20260414-mobile-hamburger"></script>
+    <script src="./mdj-shared-header.js?v=20260422-get-pro-to-jobs-plans"></script>
   <script src="./mdj-social-bar.js?v=20260413-scrollhide"></script>
 </body>
 

@@ -130,6 +130,10 @@
           var djproBadge = document.getElementById('header-djpro-badge');
           if (getProBtn) getProBtn.style.display = isProUser ? 'none' : '';
           if (djproBadge) djproBadge.style.display = isProUser ? 'inline-flex' : 'none';
+          /* Con cuenta y sin PRO: el CTA lleva a Jobs — mismas tarjetas de abajo (LITE free o PRO de pago), no a login. */
+          if (getProBtn && !isProUser && !isClient) {
+            getProBtn.href = './jobs.html#selection-screen';
+          }
 
           var sessionAvatar = session.user && session.user.user_metadata && session.user.user_metadata.avatar_url;
           var finalAvatar = sessionAvatar || (p && p.photo_url);
@@ -212,7 +216,8 @@
         var subFreeDesk2 = document.getElementById('header-subscribe-free-btn');
         var subFreeMob2 = document.getElementById('header-subscribe-free-mobile');
         if (djproBadge) djproBadge.style.display = 'none';
-        if (getProBtn) getProBtn.style.display = '';
+        /* PRO: solo tras tener cuenta; primero alta / login (no invitar a plan=pro en frío). */
+        if (getProBtn) getProBtn.style.display = 'none';
         if (subFreeDesk2) subFreeDesk2.style.display = '';
         if (subFreeMob2) subFreeMob2.style.display = '';
       }

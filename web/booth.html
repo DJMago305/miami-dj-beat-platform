@@ -605,8 +605,10 @@
     (function () {
       'use strict';
       var STORAGE_KEY = 'mdj_booth_capture_v1';
+      var SESSION_KEY_STORAGE = 'mdj_booth_session_key_v1';
       var MAX_REF_LEN = 240;
       var L = { intent: 80, source: 60, campaign: 120, customer_interest: 100, utm: 120 };
+      var boothSessionKey = '';
 
       function getLang() {
         var a = document.querySelector('.lang-btn.active');
@@ -726,6 +728,66 @@
         };
       }
 
+      function getSupabaseDb() {
+        try {
+          return window.getSupabaseClient && window.getSupabaseClient();
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function getOrCreateBoothSessionKey() {
+        if (boothSessionKey) return boothSessionKey;
+        try {
+          var existing = sessionStorage.getItem(SESSION_KEY_STORAGE);
+          if (existing && existing.trim()) {
+            boothSessionKey = existing.trim();
+            return boothSessionKey;
+          }
+        } catch (e1) { /* ignore */ }
+        var rand = '';
+        try {
+          if (window.crypto && window.crypto.randomUUID) rand = window.crypto.randomUUID();
+        } catch (e2) { /* ignore */ }
+        if (!rand) rand = 'booth-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+        boothSessionKey = rand;
+        try { sessionStorage.setItem(SESSION_KEY_STORAGE, boothSessionKey); } catch (e3) { /* ignore */ }
+        return boothSessionKey;
+      }
+
+      function boothTrack(eventType, payload) {
+        var db = getSupabaseDb();
+        if (!db) return;
+        var key = getOrCreateBoothSessionKey();
+        if (!key || !eventType) return;
+        var p = payload && typeof payload === 'object' ? payload : {};
+        try {
+          p.context = p.context && typeof p.context === 'object' ? p.context : {};
+          if (!p.context.intent && raw && raw.intent) p.context.intent = raw.intent;
+          if (!p.context.source && raw && raw.source) p.context.source = raw.source;
+          if (!p.context.campaign && raw && raw.campaign) p.context.campaign = raw.campaign;
+          if (!p.context.customer_interest && raw && raw.customer_interest) p.context.customer_interest = raw.customer_interest;
+          if (!p.context.utm_source && raw && raw.utm_source) p.context.utm_source = raw.utm_source;
+          if (!p.context.utm_medium && raw && raw.utm_medium) p.context.utm_medium = raw.utm_medium;
+          if (!p.context.utm_campaign && raw && raw.utm_campaign) p.context.utm_campaign = raw.utm_campaign;
+          if (!p.context.utm_content && raw && raw.utm_content) p.context.utm_content = raw.utm_content;
+          p.page = 'booth';
+          p.path = window.location.pathname || '/booth.html';
+          p.lang = getLang();
+          p.client_ts = new Date().toISOString();
+        } catch (e4) { /* ignore */ }
+
+        db.rpc('booth_track_event', {
+          p_session_key: key,
+          p_event_type: String(eventType),
+          p_payload: p
+        }).then(function () {
+          /* noop */
+        }).catch(function (err) {
+          try { console.warn('[booth_track_event]', err && err.message ? err.message : err); } catch (e5) { /* ignore */ }
+        });
+      }
+
       function getAgentSystemHint() {
         var r = window.MDJBoothCapture && window.MDJBoothCapture.raw;
         if (!r || !isVipCapture(r)) {
@@ -826,6 +888,7 @@
         if (!form) return;
         form.addEventListener('submit', async function (e) {
           e.preventDefault();
+          boothTrack('lead_submit_attempt', { has_capture: isVipCapture(raw) });
           var status = document.getElementById('booth-lead-status');
           status.textContent = 'Guardando prospecto…';
           status.style.color = 'var(--accent)';
@@ -850,25 +913,26 @@
           } catch (err) { /* ignore */ }
           attribution = finalizeCapture(attribution);
 
+          var notesObj = {};
           if (isVipCapture(attribution)) {
-            payload.notes = JSON.stringify({
-              booth_attribution: {
-                intent: attribution.intent || null,
-                source: attribution.source || null,
-                campaign: attribution.campaign || null,
-                customer_interest: attribution.customer_interest || null,
-                ref: attribution.ref || null,
-                utm: {
-                  utm_source: attribution.utm_source || null,
-                  utm_medium: attribution.utm_medium || null,
-                  utm_campaign: attribution.utm_campaign || null,
-                  utm_content: attribution.utm_content || null
-                },
-                captured_at: attribution.captured_at || null
+            notesObj.booth_attribution = {
+              intent: attribution.intent || null,
+              source: attribution.source || null,
+              campaign: attribution.campaign || null,
+              customer_interest: attribution.customer_interest || null,
+              ref: attribution.ref || null,
+              utm: {
+                utm_source: attribution.utm_source || null,
+                utm_medium: attribution.utm_medium || null,
+                utm_campaign: attribution.utm_campaign || null,
+                utm_content: attribution.utm_content || null
               },
-              agent_context_hint: getAgentSystemHint()
-            });
+              captured_at: attribution.captured_at || null
+            };
+            notesObj.agent_context_hint = getAgentSystemHint();
           }
+          notesObj.booth_session_key = getOrCreateBoothSessionKey();
+          payload.notes = JSON.stringify(notesObj);
           if (attribution.ref && attribution.ref.length <= MAX_REF_LEN) {
             payload.referred_by = attribution.ref;
           }
@@ -882,11 +946,13 @@
             }
             var res = await db.from('leads').insert([payload]).select('id').single();
             if (res.error) {
+              boothTrack('lead_submit_error', { error: res.error.message || 'insert_failed' });
               status.textContent = 'No se pudo guardar: ' + (res.error.message || 'error');
               status.style.color = '#f66';
               return;
             }
             var data = res.data;
+            boothTrack('lead_submit_success', { lead_id: data && data.id ? data.id : null });
             status.textContent = 'Prospecto guardado. ID: ' + (data && data.id ? data.id : 'ok') + '. El equipo será notificado si el trigger está activo.';
             status.style.color = 'var(--gold)';
             e.target.reset();
@@ -898,6 +964,7 @@
               if (m2) et2.value = m2;
             }
           } catch (err) {
+            boothTrack('lead_submit_exception', { error: err && err.message ? err.message : String(err) });
             status.textContent = 'Error: ' + (err && err.message ? err.message : err);
             status.style.color = '#f66';
           }
@@ -929,6 +996,10 @@
 
       function boot() {
         applyUi();
+        boothTrack('booth_open', {
+          has_capture: isVipCapture(raw),
+          referrer: document.referrer || null
+        });
         wireForm();
         wireTts();
       }

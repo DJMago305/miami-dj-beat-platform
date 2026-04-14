@@ -1,6 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+/**
+ * Checkout MDJPRO (modo subscription).
+ * Secretos: STRIPE_SECRET_KEY, STRIPE_PRICE_MONTHLY, STRIPE_PRICE_ANNUAL,
+ * STRIPE_PRICE_SEMESTRAL (opcional — Price cada 6 meses),
+ * STRIPE_COUPON_ANNUAL / STRIPE_COUPON_SEMESTRAL (opcional — IDs de cupón promocional en Stripe para quien paga anual o semestral; se combinan con cupón de referido si existe),
+ * SITE_URL.
+ */
 // ── CORS: production + any localhost for dev ──────────────────────────────────
 const PROD_ORIGINS = ["https://miamidjbeat.com", "https://www.miamidjbeat.com"];
 
@@ -89,15 +96,40 @@ serve(async (req) => {
         }).then(() => { }).catch(() => { }); // non-blocking, best-effort
 
 
-        const billing = body.billing || "monthly"; // "monthly" | "annual"
+        const billingRaw = String(body.billing || "monthly").toLowerCase().trim();
+        /** Alineado con Jobs: monthly | semestral | annual (cobro recurrente en Stripe según cada Price). */
+        const billing: "monthly" | "semestral" | "annual" =
+            billingRaw === "annual" || billingRaw === "yearly"
+                ? "annual"
+                : billingRaw === "semestral" || billingRaw === "semester" || billingRaw === "6m" || billingRaw === "biannual"
+                ? "semestral"
+                : "monthly";
+
         const referralCode = (body.ref || "").trim().toUpperCase();
 
         const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY")!;
         const STRIPE_PRICE_MONTHLY = Deno.env.get("STRIPE_PRICE_MONTHLY")!;
         const STRIPE_PRICE_ANNUAL = Deno.env.get("STRIPE_PRICE_ANNUAL")!;
+        const STRIPE_PRICE_SEMESTRAL = (Deno.env.get("STRIPE_PRICE_SEMESTRAL") || "").trim();
         const SITE_URL = Deno.env.get("SITE_URL") || "http://localhost:3000";
 
-        const priceId = billing === "annual" ? STRIPE_PRICE_ANNUAL : STRIPE_PRICE_MONTHLY;
+        let priceId: string;
+        if (billing === "annual") {
+            priceId = STRIPE_PRICE_ANNUAL;
+        } else if (billing === "semestral") {
+            if (!STRIPE_PRICE_SEMESTRAL) {
+                return new Response(
+                    JSON.stringify({
+                        error: "Semestral price not configured.",
+                        detail: "Create a Stripe Price with 6-month billing (e.g. recurring interval month, interval_count 6) and set STRIPE_PRICE_SEMESTRAL in Supabase Edge Function secrets.",
+                    }),
+                    { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+                );
+            }
+            priceId = STRIPE_PRICE_SEMESTRAL;
+        } else {
+            priceId = STRIPE_PRICE_MONTHLY;
+        }
 
         // ── Get or create Stripe Customer ─────────────────────
         const { data: profile, error: profileError } = await adminAuth
@@ -126,6 +158,9 @@ serve(async (req) => {
             customerId = customer.id;
             await adminAuth.from("dj_profiles").update({ stripe_customer_id: customerId }).eq("user_id", user.id);
         }
+
+        // Preferencia de facturación elegida en Jobs (se refleja en Config → Pagos; el cargo recurrente lo gestiona Stripe).
+        await adminAuth.from("dj_profiles").update({ billing_period: billing }).eq("user_id", user.id);
 
         // ── Referral code validation ───────────────────────────
         let referrerId: string | null = null;
@@ -178,8 +213,22 @@ serve(async (req) => {
             allow_promotion_codes: "true",
         };
 
+        /** Cupones promocionales por periodo (creados en Stripe Dashboard: % o monto, duración según producto). */
+        const STRIPE_COUPON_ANNUAL = (Deno.env.get("STRIPE_COUPON_ANNUAL") || "").trim();
+        const STRIPE_COUPON_SEMESTRAL = (Deno.env.get("STRIPE_COUPON_SEMESTRAL") || "").trim();
+        const periodPromoCoupon =
+            billing === "annual" ? STRIPE_COUPON_ANNUAL
+            : billing === "semestral" ? STRIPE_COUPON_SEMESTRAL
+            : "";
+
+        let discountIdx = 0;
         if (discountCouponId) {
-            checkoutParams["discounts[0][coupon]"] = discountCouponId;
+            checkoutParams[`discounts[${discountIdx}][coupon]`] = discountCouponId;
+            discountIdx++;
+        }
+        if (periodPromoCoupon) {
+            checkoutParams[`discounts[${discountIdx}][coupon]`] = periodPromoCoupon;
+            discountIdx++;
         }
 
         const checkoutRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {

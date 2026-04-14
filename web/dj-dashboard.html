@@ -3679,6 +3679,12 @@
                                     <div class="acct-val" id="billing-renewal">—</div>
                                 </div>
                             </div>
+                            <div class="acct-row">
+                                <div class="acct-row-info">
+                                    <div class="acct-lbl" data-i18n="billing-cadence-lbl">Billing schedule</div>
+                                    <div class="acct-val" id="billing-cadence">—</div>
+                                </div>
+                            </div>
                         </div>
                         <p class="acct-sec-lbl">Payments</p>
                         <div class="acct-card">
@@ -4572,6 +4578,13 @@
                     ? new Date(p.next_renewal).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                     : '—';
             }
+            const cadenceEl = document.getElementById('billing-cadence');
+            if (cadenceEl) {
+                var bp = p.billing_period != null ? String(p.billing_period).toLowerCase().trim() : '';
+                var key = bp ? ('billing-cadence-' + bp) : '';
+                var tx = (key && window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t(key) : '';
+                cadenceEl.textContent = (tx && tx.length && tx !== key) ? tx : (bp || '—');
+            }
             const cardEl = document.getElementById('billing-card');
             const cardMeta = document.getElementById('billing-card-meta');
             if (cardEl) {
@@ -4608,7 +4621,7 @@
                 if (!session) return;
                 const { data: p, error } = await sb
                     .from('dj_profiles')
-                    .select('plan, subscription_status, next_renewal, card_last4, card_brand, card_holder')
+                    .select('plan, subscription_status, next_renewal, billing_period, card_last4, card_brand, card_holder')
                     .eq('user_id', session.user.id)
                     .single();
                 if (error || !p) return;

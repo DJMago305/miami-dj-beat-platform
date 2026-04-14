@@ -23,7 +23,8 @@
     }
 
     /**
-     * Premium = explicit is_premium OR active PRO subscription fields.
+     * Premium = explicit is_premium OR active Stripe subscription OR active PRO/ELITE plan row.
+     * Used for search ordering: paying roster first, free/LITE after (tie-break by name).
      * @param {object|null} row - dj_profiles row
      */
     function isPremiumTier(row) {
@@ -31,6 +32,8 @@
         if (row.is_premium === true) return true;
         var sub = (row.subscription_status || '').toLowerCase();
         if (sub === 'active' || sub === 'trialing') return true;
+        var pl = String(row.plan || '').toUpperCase();
+        if ((pl === 'PRO' || pl === 'ELITE') && isPlanActive(row)) return true;
         if (PRO_PLAN_TYPES.indexOf(row.plan_type) !== -1 && isPlanActive(row)) return true;
         return false;
     }
