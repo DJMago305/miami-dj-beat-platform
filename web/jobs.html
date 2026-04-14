@@ -4023,12 +4023,28 @@
                                     'Authorization': `Bearer ${authSession.access_token}`,
                                     'Content-Type': 'application/json'
                                 },
-                                body: JSON.stringify({ billing, ref: refCode, successUrl: window.location.origin + '/web/dj-profile.html' })
+                                /* success_url lo fija la Edge (SITE_URL + dj-dashboard); esto es solo metadato futuro — sin /web/ (en Vercel el sitio vive en la raíz). */
+                                body: JSON.stringify({
+                                    billing,
+                                    ref: refCode,
+                                    successUrl: new URL('dj-profile.html', window.location.origin + '/').href
+                                })
                             }
                         );
-                        const { url, error: checkoutError } = await res.json();
-                        if (checkoutError) throw new Error(checkoutError);
-                        window.location.href = url; // → Stripe hosted checkout → dj-profile.html on success
+                        var payload;
+                        try {
+                            payload = await res.json();
+                        } catch (parseErr) {
+                            throw new Error('Respuesta inválida del servidor de pago (HTTP ' + res.status + ').');
+                        }
+                        if (!res.ok) {
+                            var errMsg = typeof payload.error === 'string'
+                                ? payload.error
+                                : (payload.detail || (payload.error && payload.error.message) || JSON.stringify(payload.error || payload));
+                            throw new Error(errMsg || ('HTTP ' + res.status));
+                        }
+                        if (!payload.url) throw new Error('No se recibió URL de checkout.');
+                        window.location.href = payload.url; // Stripe → vuelta según create-checkout (p. ej. dj-dashboard?payment=success)
                     } catch (stripeErr) {
                         alert('Error conectando con el sistema de pago: ' + stripeErr.message);
                         submitBtn.disabled = false;
