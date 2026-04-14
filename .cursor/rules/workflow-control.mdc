@@ -1,0 +1,28 @@
+---
+description: Control de trabajo — evitar regresiones en auth, header, deploy y locked files
+alwaysApply: true
+---
+
+# Control de trabajo (obligatorio)
+
+## Antes de dar por cerrada una tarea
+
+1. **`git status`**: si hay cambios locales relevantes para el fix, deben ir en **commit** y **push** explícito; no asumir que “ya está en el Mac” = producción.
+2. **Locked / scope**: `.cursorrules` — no tocar layout/nav/copy de archivos LOCKED salvo bloque acotado que el usuario pidió; cero refactors colaterales.
+3. **Auth y sesión** (cualquier cambio en `login.html`, `auth.js`, `mdj-shared-header.js`, header en `jobs.html` u otras páginas con `#header-login-btn` / `doLogout`):
+   - No ocultar (`display:none` / `visibility`) controles que **otro script** convierte en **Logout** o **Login**.
+   - Tras tocar `onAuthStateChange` en login: distinguir **hidratar sesión** (`INITIAL_SESSION`) de **login real** (`SIGNED_IN`); no redirigir invitados antes de tiempo.
+4. **Rutas en cliente**: en Vercel con raíz = `web/`, las URLs públicas son **`/pagina.html`**, no **`/web/pagina.html`**. Revisar `fetch` a Edge y `successUrl` / redirects.
+5. **Checkout / Edge**: respuestas HTTP ≠ 200 deben mostrar **mensaje del cuerpo** (`error` / `detail`); no asumir `{ url }` sin comprobar `res.ok`.
+6. **Supabase**: migraciones SQL en repo **no se aplican solas** al subir el sitio; Edge Functions necesitan **deploy** y **secretos** en el proyecto.
+
+## Si el usuario reporta “en local sí, en producción no”
+
+- Confirmar **último commit en `origin/main`** y deploy Vercel **Ready**.
+- Probar con **hard refresh** o ventana privada (caché HTML/JS).
+
+## Incidentes ya vistos (no repetir)
+
+- `updateHeaderAuth` en Jobs ocultaba `#header-login-btn` → usuarios sin **Logout** visible.
+- Fix de `login.html` sin **push** → prod distinta de local.
+- `successUrl` con prefijo `/web/` incompatible con deploy en raíz.
