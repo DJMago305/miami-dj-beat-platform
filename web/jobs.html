@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260412-mdj-nav" />
+    <link rel="stylesheet" href="./styles.css?v=20260419-header-global" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
     <style>
         :root {
@@ -217,35 +217,40 @@
             z-index: 2;
         }
 
-        /* Subtítulo cuántico + portal empleo — misma familia que «ERA OF AI» (JetBrains Mono) */
+        /* Subtítulo cuántico + portal empleo — JetBrains Mono, un solo oro, todo en mayúsculas */
         .hero-2027 .hero-desc {
             font-family: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'SF Mono', monospace;
             font-size: clamp(12px, 1.85vw, 16px);
-            font-weight: 500;
-            color: rgba(228, 201, 127, 0.96);
-            letter-spacing: 0.06em;
-            line-height: 1.75;
+            font-weight: 600;
+            color: var(--gold);
+            -webkit-text-fill-color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            line-height: 1.7;
             margin: 0 auto 10px;
-            max-width: 42rem;
+            max-width: 46rem;
         }
 
         .hero-2027 .jobs-hero-welcome {
-            max-width: 600px;
+            max-width: 640px;
             margin: 26px auto 0;
             padding: 0 16px;
             font-family: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'SF Mono', monospace;
             font-size: clamp(11px, 1.65vw, 14px);
-            line-height: 1.85;
-            color: rgba(255, 255, 255, 0.82);
-            font-weight: 400;
-            letter-spacing: 0.05em;
+            line-height: 1.75;
+            color: var(--gold);
+            -webkit-text-fill-color: var(--gold);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
             position: relative;
             z-index: 2;
         }
 
         .hero-2027 .jobs-hero-welcome strong {
-            color: rgba(236, 214, 160, 0.98);
-            font-weight: 700;
+            color: var(--gold);
+            -webkit-text-fill-color: var(--gold);
+            font-weight: 800;
         }
 
         .hero-2027 .scroll-indicator {
@@ -1434,8 +1439,7 @@
         </div>
       </div>
 
-      <div class="header-actions"
-        style="display: flex; gap: 12px !important; background: rgba(255,255,255,0.03); padding: 8px 14px; border-radius: 999px;">
+      <div class="header-actions">
         <a href="./login.html?plan=pro&amp;redirect=jobs" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
         <a href="./login.html?signup=free&amp;redirect=jobs" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
         <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
@@ -3672,8 +3676,9 @@
     <script src="./auth.js"></script>
 
     <script src="./header-smart-search.js?v=20260411-search-google"></script>
-    <script src="./mdj-shared-header.js?v=20260413-auth-state-header"></script>
-    <script src="./mdj-profile-nav-context.js?v=20260412b"></script>
+    <script src="./mdj-shared-header.js?v=20260414-mobile-hamburger"></script>
+    <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
+    <script src="./mdj-profile-nav-context.js?v=20260418-owner-nav-parity"></script>
   <script src="./mdj-social-bar.js?v=20260413-scrollhide"></script>
 </body>
 

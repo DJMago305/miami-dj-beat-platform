@@ -7,10 +7,8 @@
   <title>Miami DJ Beat — DJs & Event Production</title>
   <meta name="description"
     content="Miami DJ Beat provides professional DJs and event production for corporate, private, and venue events across Miami-Dade and the Florida Keys." />
-  <link rel="stylesheet" href="./styles.css?v=20260411-search-google" />
+  <link rel="stylesheet" href="./styles.css?v=20260414-index-header-ref-arch" />
   <link rel="stylesheet" href="./profile.css?v=20260226-1" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./supabase-config.js?v=20260411-7"></script>
   <style>
     /* Neutralizar inyección de auth.js en index.html para usar botón dinámico único */
     #global-logout-btn-desktop,
@@ -32,11 +30,379 @@
       display: none !important;
     }
 
-    /* ESTILOS BLINDADOS - BOTÓN DE SESIÓN */
-    .header-actions {
-      flex-wrap: wrap !important;
+    /*
+     * INDEX — Arquitectura referencia home: 2 franjas (90px marca|acciones + nav).
+     * #mainNav: misma familia tipográfica que .dj-owner-tabs .dj-tab-btn (perfil), con franja más alta.
+     */
+    html body.page-home {
+      --header-height: 90px;
+      --header-nav-band: 88px;
+      --mdj-index-header-total: 178px;
+      padding-top: calc(var(--mdj-index-header-total) + env(safe-area-inset-top, 0px));
+      scroll-padding-top: calc(var(--mdj-index-header-total) + env(safe-area-inset-top, 0px));
+    }
+
+    body.page-home #mainHeader.header {
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      min-height: calc(var(--mdj-index-header-total) + env(safe-area-inset-top, 0px));
+      padding-top: env(safe-area-inset-top, 0px);
+      overflow: visible;
+      /* Referencia “Header Maestro”: cristal oscuro + blur (una sola pieza visual) */
+      background: linear-gradient(180deg, rgba(10, 8, 6, 0.55) 0%, rgba(6, 5, 4, 0.68) 100%) !important;
+      backdrop-filter: blur(14px) saturate(115%);
+      -webkit-backdrop-filter: blur(14px) saturate(115%);
+      border-bottom: 1px solid rgba(197, 160, 89, 0.12);
+      box-shadow: 0 2px 28px rgba(0, 0, 0, 0.42);
+    }
+
+    body.page-home #mainHeader .header-top {
+      flex: 0 0 90px;
+      height: 90px;
+      min-height: 90px;
+      max-height: 90px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: center;
+      box-sizing: border-box;
+      overflow-x: auto;
+      overflow-y: visible;
+      /* Un solo trazo respecto a .header-bottom (evita “doble costura” visual) */
+      border-bottom: none;
+    }
+
+    body.page-home #mainHeader .header-top .container {
+      flex: 1 1 auto;
+      height: 100%;
+      min-height: 90px;
+      max-height: 90px;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: space-between;
+      box-sizing: border-box;
+      overflow-x: auto;
+      overflow-y: visible;
+    }
+
+    /* Referencia: marca izquierda; utilidades + búsqueda agrupadas a la derecha */
+    body.page-home #mainHeader .header-top .container > .brand {
+      justify-content: flex-start;
+    }
+
+    body.page-home #mainHeader .header-top .container > .header-actions {
+      flex: 1 1 auto;
       justify-content: flex-end !important;
       align-items: center !important;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    body.page-home #mainHeader .brand {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: center;
+      align-self: center;
+      box-sizing: border-box;
+      height: auto;
+      min-height: 0;
+      max-height: 90px;
+      margin: 0 !important;
+      padding: 0;
+      overflow: visible;
+      flex-shrink: 0;
+      /* Centro de etiqueta basado en el tamaño real del águila por breakpoint */
+      --mdj-eagle-w: 72px;
+      --mdj-gold-label: 68px;
+    }
+
+    /* Etiqueta dorada: más pequeña y centrada en el emblema; el .logo-img-eagle conserva su tamaño */
+    body.page-home #mainHeader .brand::before {
+      content: '' !important;
+      display: block !important;
+      position: absolute;
+      left: 0;
+      top: 50%;
+      width: var(--mdj-gold-label) !important;
+      height: var(--mdj-gold-label) !important;
+      border-radius: 8px;
+      background: linear-gradient(145deg, rgba(224, 195, 130, 0.98), rgba(197, 160, 89, 0.94));
+      box-shadow: 0 2px 14px rgba(0, 0, 0, 0.38);
+      z-index: 0;
+      pointer-events: none;
+      transform: translate(
+        calc(0.5 * var(--mdj-eagle-w) - 0.5 * var(--mdj-gold-label)),
+        -50%
+      ) !important;
+    }
+
+    body.page-home #mainHeader .brand .logo-img-eagle {
+      position: relative;
+      z-index: 1;
+      height: 72px !important;
+      width: auto;
+      max-height: none !important;
+      min-height: 0;
+      object-fit: contain;
+      display: block;
+      flex-shrink: 0;
+      align-self: center;
+    }
+
+    body.page-home #mainHeader .brand .brand-letters-wrapper {
+      display: flex;
+      align-items: center;
+      align-self: center;
+      max-height: 90px;
+      flex-shrink: 0;
+      min-width: min(300px, 48vw);
+      width: min(700px, 64vw);
+      margin-left: 10px;
+      margin-right: 0;
+    }
+
+    /* Anula img{max-width:100%;height:auto} global: si no, el PNG se aplasta o desaparece en flex */
+    body.page-home #mainHeader .brand .brand-letters-img {
+      height: 104px !important;
+      width: auto !important;
+      max-width: none !important;
+      max-height: 108px !important;
+      min-width: 0;
+      object-fit: contain;
+      object-position: left center;
+      display: block;
+      flex-shrink: 0;
+    }
+
+    @media (min-width: 1024px) {
+      body.page-home #mainHeader .brand {
+        --mdj-eagle-w: 78px;
+        --mdj-gold-label: 74px;
+      }
+
+      body.page-home #mainHeader .brand .logo-img-eagle {
+        height: 78px !important;
+      }
+
+      body.page-home #mainHeader .brand .brand-letters-img {
+        height: 178px !important;
+        max-height: 180px !important;
+      }
+
+      body.page-home #mainHeader .brand .brand-letters-wrapper {
+        width: min(860px, 58vw);
+      }
+    }
+
+    @media (max-width: 900px) {
+      body.page-home #mainHeader .brand {
+        margin: 0 !important;
+      }
+
+      body.page-home #mainHeader .brand .logo-img-eagle {
+        height: 72px !important;
+        max-height: none !important;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body.page-home #mainHeader .brand .logo-img-eagle {
+        height: 72px !important;
+        max-height: none !important;
+      }
+    }
+
+    @media (max-width: 400px) {
+      body.page-home #mainHeader .brand {
+        --mdj-eagle-w: 64px;
+        --mdj-gold-label: 62px;
+      }
+
+      body.page-home #mainHeader .brand .logo-img-eagle {
+        height: 64px !important;
+        max-height: none !important;
+      }
+
+      body.page-home #mainHeader .brand .brand-letters-img {
+        height: 92px !important;
+        max-height: 92px !important;
+      }
+    }
+
+    body.page-home #mainHeader .header-actions {
+      display: flex !important;
+      justify-content: flex-end !important;
+      align-items: center !important;
+      align-self: center;
+      flex-wrap: nowrap !important;
+      /* Aire real en la píldora: sin max-height que apriete LOGOUT / avatar / carrito */
+      max-height: none;
+      min-height: 52px;
+      padding: 12px 20px !important;
+      gap: 14px !important;
+      box-sizing: border-box;
+      overflow: visible;
+    }
+
+    body.page-home #mainHeader .header-actions .btn-pill,
+    body.page-home #mainHeader .header-djpro-badge,
+    body.page-home #mainHeader .lang-switcher {
+      flex-shrink: 0;
+    }
+
+    body.page-home #mainHeader .header-avatar-cart-row {
+      flex-shrink: 0;
+      align-items: center;
+      gap: 12px;
+    }
+
+    body.page-home #mainHeader .account-btn .avatar {
+      width: 40px;
+      height: 40px;
+      border-width: 2px;
+    }
+
+    body.page-home #mainHeader .header-bottom {
+      flex: 0 0 88px !important;
+      height: 88px !important;
+      min-height: 88px !important;
+      max-height: 88px !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      overflow: hidden;
+      padding: 0 !important;
+      margin: 0;
+      background: linear-gradient(180deg, rgba(6, 5, 4, 0.45) 0%, rgba(2, 2, 2, 0.9) 100%);
+      border-top: 1px solid rgba(197, 160, 89, 0.22);
+    }
+
+    body.page-home #mainHeader .header-bottom .container {
+      height: 100%;
+      max-height: 88px !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    body.page-home #mainHeader #mainNav.nav.top-nav {
+      box-sizing: border-box;
+      height: 100%;
+      max-height: 88px !important;
+      min-height: 0;
+      width: 100%;
+      margin: 0 auto;
+      /* Paralelo a body… .dj-owner-tabs .container: un poco más de aire vertical que 10px */
+      padding: 8px clamp(14px, 2.5vw, 40px) !important;
+      align-items: center;
+      justify-content: center !important;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    /*
+     * Referencia menú perfil: body.dj-profile .dj-owner-tabs .dj-tab-btn
+     * (clamp + 800 + 0.12em + padding lateral). Aquí +1 paso en escala para la barra pública.
+     */
+    body.page-home #mainHeader #mainNav.nav.top-nav a {
+      font-size: clamp(15px, 1.12vw, 18px) !important;
+      line-height: 1.2 !important;
+      font-weight: 800 !important;
+      letter-spacing: 0.12em !important;
+      padding: 14px clamp(14px, 1.5vw, 22px) !important;
+      box-sizing: border-box;
+      text-transform: uppercase;
+      color: rgba(197, 160, 89, 0.96) !important;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /*
+     * Búsqueda inteligente: no usar min-width:0 (recortaba solo la lupa). Misma base que .header-search-wrap global.
+     */
+    body.page-home #mainHeader .header-search-wrap {
+      order: 2;
+      flex: 2 1 300px;
+      min-width: min(100%, clamp(220px, 34vw, 320px)) !important;
+      max-width: min(540px, 100%);
+      box-sizing: border-box;
+    }
+
+    body.page-home #mainHeader .header-search-wrap .header-smart-search {
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    body.page-home #mainHeader #mainNav.nav.top-nav a:hover {
+      color: #f5e6c8 !important;
+    }
+
+    body.page-home #mainHeader #mainNav.nav.top-nav a.active {
+      color: var(--gold) !important;
+    }
+
+    /*
+     * Refuerzo vs styles.css (#mainHeader @max-width 1000px fuerza 140px en .header-top .container).
+     * Home = 90px + 88px nav = 178px totales; sin esto la franja superior “crece” y la marca queda mal centrada.
+     */
+    @media (max-width: 1000px) {
+      body.page-home #mainHeader.header {
+        min-height: calc(var(--mdj-index-header-total) + env(safe-area-inset-top, 0px)) !important;
+      }
+
+      body.page-home #mainHeader .header-top {
+        flex: 0 0 90px !important;
+        height: 90px !important;
+        min-height: 90px !important;
+        max-height: 90px !important;
+      }
+
+      body.page-home #mainHeader .header-top .container {
+        min-height: 90px !important;
+        max-height: 90px !important;
+        height: 100% !important;
+      }
+
+      body.page-home #mainHeader .header-bottom {
+        flex: 0 0 88px !important;
+        height: 88px !important;
+        min-height: 88px !important;
+        max-height: 88px !important;
+      }
+    }
+
+    /* Escritorio ancho: refuerzo vs #mainHeader global (180px / 140+40) en styles.css */
+    @media (min-width: 1001px) {
+      body.page-home #mainHeader.header {
+        min-height: calc(var(--mdj-index-header-total) + env(safe-area-inset-top, 0px)) !important;
+      }
+
+      body.page-home #mainHeader .header-top {
+        flex: 0 0 90px !important;
+        height: 90px !important;
+        min-height: 90px !important;
+        max-height: 90px !important;
+      }
+
+      body.page-home #mainHeader .header-top .container {
+        min-height: 90px !important;
+        max-height: 90px !important;
+      }
+
+      body.page-home #mainHeader .header-bottom {
+        flex: 0 0 88px !important;
+        height: 88px !important;
+        min-height: 88px !important;
+        max-height: 88px !important;
+      }
     }
 
     #header-get-pro-btn {
@@ -78,15 +444,15 @@
     }
 
     #header-login-btn.danger {
-      background: rgba(255, 0, 0, 0.5) !important;
-      border: 1px solid rgba(255, 0, 0, 0.8) !important;
+      background: linear-gradient(180deg, #c0392b 0%, #922b21 100%) !important;
+      border: 1px solid rgba(255, 120, 100, 0.55) !important;
       color: #fff !important;
     }
 
     #header-login-btn.danger:hover {
-      background: rgba(255, 0, 0, 1) !important;
-      box-shadow: 0 0 15px rgba(255, 0, 0, 0.8) !important;
-      border-color: rgba(255, 0, 0, 1) !important;
+      background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%) !important;
+      box-shadow: 0 0 16px rgba(192, 57, 43, 0.55) !important;
+      border-color: rgba(255, 180, 160, 0.65) !important;
       color: #fff !important;
     }
 
@@ -108,7 +474,7 @@
       opacity: 0.9 !important;
     }
 
-    /* Cinematic Home Hero — FULL VIEWPORT */
+    /* Cinematic Home Hero — FULL VIEWPORT (body ya reserva 178px del Header Maestro fijo) */
     .hero {
       position: relative;
       width: 100vw;
@@ -118,7 +484,7 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      padding-top: 120px;
+      padding-top: 40px;
       padding-bottom: 60px;
       box-sizing: border-box;
       background: #000;
@@ -343,15 +709,6 @@
       display: none;
     }
 
-    /* Búsqueda + lupa: reglas canónicas en styles.css (#mainHeader .header-*) */
-
-    .header-search-wrap {
-      position: relative;
-      flex: 1 1 160px;
-      min-width: 140px;
-      max-width: 280px;
-    }
-
     /* Avatar inmediatamente a la izquierda del carrito (misma fila visual) */
     .header-avatar-cart-row {
       display: inline-flex;
@@ -364,17 +721,6 @@
     #header-auth-zone.session-pending {
       display: none !important;
     }
-
-    @media (max-width: 1100px) {
-      .header-search-wrap {
-        order: 10;
-        max-width: 100%;
-        flex-basis: 100%;
-        margin-top: 8px;
-      }
-    }
-
-    /* Cristal / scroll del header: #mainHeader en styles.css (misma barra que el resto del sitio) */
 
     @media (max-width: 968px) {
       .hero-grid {
@@ -404,8 +750,7 @@
           </div>
         </div>
 
-        <div class="header-actions"
-          style="display: flex; gap: 12px !important; background: rgba(255,255,255,0.03); padding: 8px 14px; border-radius: 999px;">
+        <div class="header-actions">
           <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
           <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
           <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
@@ -430,7 +775,7 @@
           </div>
           <div class="header-search-wrap">
             <input type="search" id="header-smart-search" class="header-smart-search"
-              placeholder="Search DJs, gear, services…" autocomplete="off" enterkeyhint="search" />
+              placeholder="Search DJs, shop, courses, booking…" autocomplete="off" enterkeyhint="search" />
           </div>
         </div>
 
@@ -445,12 +790,18 @@
         <div class="mobile-overlay" id="mobileMenu">
           <nav class="mobile-nav">
             <a href="./index.html" class="active" data-i18n="nav-home" data-mdj-nav="home">Home</a>
-            <a href="#services" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+            <a href="./index.html#services" data-i18n="nav-services" data-mdj-nav="services">Services</a>
             <a href="./rentals.html" data-i18n="nav-rentals" data-mdj-nav="rentals">Event Services</a>
-            <a href="./shop.html" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
+            <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
             <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
             <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
-            <a href="#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+            <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+            <a href="./login.html?signup=free" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free"
+              style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
+            <a href="./login.html" id="header-login-btn-mobile" data-i18n="btn-login"
+              style="color:var(--gold); font-weight:800;">Entrar</a>
+            <a href="./dj-profile.html" id="nav-my-profile-mobile"
+              style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY PROFILE</a>
           </nav>
         </div>
       </div>
@@ -460,12 +811,12 @@
       <div class="container">
         <nav class="nav top-nav" id="mainNav">
           <a href="./index.html" class="active" data-i18n="nav-home" data-mdj-nav="home">Home</a>
-          <a href="#services" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+          <a href="./index.html#services" data-i18n="nav-services" data-mdj-nav="services">Services</a>
           <a href="./rentals.html" data-i18n="nav-rentals" data-mdj-nav="rentals">Event Services</a>
-          <a href="./shop.html" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
+          <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
           <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
           <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
-          <a href="#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
+          <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
         </nav>
       </div>
     </div>
@@ -1171,13 +1522,13 @@
       </div>
     </div>
   </footer>
-  <script src="./translations.js?v=20260411-15"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-config.js?v=20260411-7"></script>
+  <script src="./translations.js?v=20260415-header-search-ph"></script>
   <script src="./i18n.js?v=20260411-14"></script>
   <script src="./form-handler.js?v=20260411-7"></script>
-  <script src="./articles-loader.js"></script>
-  <script src="./header-smart-search.js?v=20260411-search-google"></script>
-  <script>window.MDJ_SKIP_SHARED_HEADER_INIT = true;</script>
-  <script src="./mdj-shared-header.js?v=20260411-avatar-profileid"></script>
+  <script src="./header-smart-search.js?v=20260415-i18n-placeholder"></script>
+  <script src="./mdj-shared-header.js?v=20260414-mobile-hamburger"></script>
   <script>
     // Auto-fill Referral Code, DJ name, and Event Date from URL
     document.addEventListener('DOMContentLoaded', () => {
@@ -1288,52 +1639,26 @@
     });
   </script>
   <script>
-    const header = document.getElementById('mainHeader');
-    window.addEventListener('scroll', () => {
-      if (window.scrollY > 50) {
-        header.classList.add('scrolled');
-      } else {
-        header.classList.remove('scrolled');
-      }
-    });
-
-    document.getElementById("year").textContent = new Date().getFullYear();
-
-    // Mobile Menu Toggle
-    const mobileBtn = document.getElementById('mobileMenuBtn');
-    const mobileMenu = document.getElementById('mobileMenu');
-    if (mobileBtn && mobileMenu) {
-      mobileBtn.addEventListener('click', () => {
-        mobileBtn.classList.toggle('active');
-        mobileMenu.classList.toggle('active');
-        const open = mobileMenu.classList.contains('active');
-        document.body.style.overflow = open ? 'hidden' : '';
-        mobileBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-      });
-
-      // Close on link click
-      mobileMenu.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', () => {
-          mobileBtn.classList.remove('active');
-          mobileMenu.classList.remove('active');
-          document.body.style.overflow = '';
-          mobileBtn.setAttribute('aria-expanded', 'false');
-        });
-      });
-    }
-
     // --- SCROLL SPY: activa la línea dorada en el nav según sección visible ---
+    // Href alineados con site-header: ./index.html#services (mismo contrato que el resto del sitio).
     (function () {
-      const navLinks = document.querySelectorAll('#mainNav a[href^="#"], #mainNav a[href="./index.html"]');
+      const navLinks = document.querySelectorAll('#mainNav a');
       const sections = ['services', 'dj-types', 'areas', 'experience', 'residencies', 'marketplace', 'proof', 'contact'];
+
+      function hashIdFromHref(href) {
+        if (!href) return '';
+        const i = href.indexOf('#');
+        return i === -1 ? '' : href.slice(i + 1);
+      }
 
       function setActive(sectionId) {
         navLinks.forEach(link => {
-          const href = link.getAttribute('href');
-          const isHome = href === './index.html' || href === '/' || href === '';
+          const href = link.getAttribute('href') || '';
+          const hashId = hashIdFromHref(href);
+          const isHome = href === './index.html' || href === '/' || href === '' || href === './';
           if (!sectionId && isHome) {
             link.classList.add('active');
-          } else if (href === '#' + sectionId) {
+          } else if (sectionId && hashId === sectionId) {
             link.classList.add('active');
           } else {
             link.classList.remove('active');
@@ -1454,11 +1779,10 @@
       }
     }
     document.addEventListener('DOMContentLoaded', () => {
+      var yearEl = document.getElementById('year');
+      if (yearEl) yearEl.textContent = new Date().getFullYear();
       initAvailabilityForm();
       loadHomeHeroSettings();
-      if (typeof window.checkSessionForNav === 'function') window.checkSessionForNav();
-      if (typeof window.updateHeaderCartCount === 'function') window.updateHeaderCartCount();
-      if (window.MdjHeaderSmartSearch) window.MdjHeaderSmartSearch.init();
     });
     /* focus/storage del carrito: mdj-shared-header.js (siempre registrados) */
 

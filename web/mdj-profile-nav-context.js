@@ -72,9 +72,7 @@
         var hrefProfile = uid
             ? './dj-profile.html?id=' + encodeURIComponent(uid) + '&' + PARAM + '=' + VALUE
             : './dj-profile.html?' + PARAM + '=' + VALUE;
-        var hrefFlow = uid
-            ? './dj-profile.html?id=' + encodeURIComponent(uid) + '&tab=flow&' + PARAM + '=' + VALUE
-            : './dj-profile.html?tab=flow&' + PARAM + '=' + VALUE;
+        var hrefFlow = withProfileNav('./dj-dashboard.html?tab=flow');
         var hrefSft = uid
             ? './dj-profile.html?id=' + encodeURIComponent(uid) + '&tab=sft&' + PARAM + '=' + VALUE
             : './dj-profile.html?tab=sft&' + PARAM + '=' + VALUE;
@@ -93,11 +91,22 @@
             '<a href="' + withProfileNav('./dj-dashboard.html?tab=settings') + '" class="dj-tab-btn" data-i18n="nav-settings">⚙️ CONFIG</a>' +
             '<a href="' + withProfileNav('./academia.html') + '" class="dj-tab-btn" data-i18n="nav-academia">Academia</a>' +
             '<a href="' + withProfileNav('./dj-tools.html') + '" class="dj-tab-btn' + active('tools') + '" data-i18n="nav-tools">DJ Tools</a>' +
-            '<a href="' + hrefSft + '" class="dj-tab-btn" data-i18n="nav-soundfortips">SoundForTips™</a>' +
             '<a href="' + hrefFlow + '" class="dj-tab-btn" data-i18n="flow-dash">Cash Flow</a>' +
+            '<a href="' + hrefSft + '" class="dj-tab-btn" data-i18n="nav-soundfortips">SoundForTips™</a>' +
             '</div>';
 
         header.insertAdjacentElement('afterend', nav);
+
+        try {
+            if (typeof window.mdjOwnerTabsMarqueeRefresh === 'function') {
+                window.mdjOwnerTabsMarqueeRefresh();
+                setTimeout(function () {
+                    try {
+                        window.mdjOwnerTabsMarqueeRefresh();
+                    } catch (e2) { /* noop */ }
+                }, 0);
+            }
+        } catch (e) { /* noop */ }
 
         if (window.i18n && typeof window.i18n.updateUI === 'function') {
             try {

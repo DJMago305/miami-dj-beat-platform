@@ -241,6 +241,15 @@ html.dj-profile-qr-view body.dj-profile {
     padding-top: 0 !important;
 }
 
+/* Enlace ?view=public: el usuario ya abrió el perfil; no mostrar QR redundante en su teléfono */
+html.dj-profile-qr-view .pub-qr-share-block {
+    display: none !important;
+}
+
+html.dj-profile-qr-view #seasonal-qr-card .qr-wrap {
+    display: none !important;
+}
+
 /* Owner wallet strip (dj-profile sidebar) */
 #owner-wallet-card .owner-wallet-luxury {
     font-size: 26px;

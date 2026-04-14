@@ -129,16 +129,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 const params = new URLSearchParams(window.location.search);
                 const next = params.get('next') || params.get('redirect');
 
-                // Canon of Role: app_metadata.role is the source of truth
+                // Canon of role + DB fallback to prevent wrong redirects on partially provisioned users.
                 const rawRole = user?.app_metadata?.role || user?.user_metadata?.user_type || 'client';
                 const role = (rawRole === 'talent' || rawRole === 'dj') ? 'artist' : rawRole;
 
-                let targetUrl = './dj-profile.html'; // Default para artist
-
-                if (role === 'client') {
-                    targetUrl = './client-portal.html'; 
-                } else if (role === 'admin' || role === 'manager') {
+                let targetUrl = './dj-profile.html'; // Default artist
+                if (role === 'admin' || role === 'manager') {
                     targetUrl = './admin-dashboard.html';
+                } else if (role === 'client') {
+                    targetUrl = './client-portal.html';
+                    try {
+                        const { data: djRow } = await db.from('dj_profiles').select('role').eq('user_id', user.id).maybeSingle();
+                        if (djRow && djRow.role !== 'client') {
+                            targetUrl = './dj-profile.html?id=' + encodeURIComponent(user.id);
+                        }
+                    } catch (roleFallbackErr) {
+                        console.warn('[AUTH] Role fallback check failed:', roleFallbackErr);
+                    }
+                } else {
+                    targetUrl = './dj-profile.html?id=' + encodeURIComponent(user.id);
                 }
 
                 window.location.assign(next ? next : targetUrl);
@@ -226,7 +235,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (city) profilePayload.city = city;
                     if (instagram) profilePayload.social_instagram = `https://instagram.com/${instagram.replace(/^@/, '')}`;
 
-                    await db.from('dj_profiles').insert([profilePayload]);
+                    const { error: djProfileErr } = await db.from('dj_profiles').insert([profilePayload]);
+                    if (djProfileErr) throw new Error(`No se pudo crear tu perfil de artista: ${djProfileErr.message || 'error desconocido'}`);
                 } else {
                     // Client Profile
                     const clientPayload = {
@@ -239,7 +249,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         source_ref: refCode || null,
                         discount_eligible: true
                     };
-                    await db.from('client_profiles').insert([clientPayload]);
+                    const { error: clientProfileErr } = await db.from('client_profiles').insert([clientPayload]);
+                    if (clientProfileErr) throw new Error(`No se pudo crear tu cuenta de cliente: ${clientProfileErr.message || 'error desconocido'}`);
                 }
 
                 // 3. Success

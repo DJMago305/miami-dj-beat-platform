@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>MDJPRO App — DJ Professional Infrastructure</title>
-    <link rel="stylesheet" href="./styles.css?v=20260412-profile" />
-    <link rel="stylesheet" href="./profile.css?v=20260412-profile" />
+    <link rel="stylesheet" href="./styles.css?v=20260413-header-120-80-40" />
+    <link rel="stylesheet" href="./profile.css?v=20260414-qr-view-hide" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260412-profile" />
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700;1,800&family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&display=swap"
@@ -689,6 +689,19 @@
                 font-size: 42px;
                 letter-spacing: -2px;
             }
+
+            /* Más aire bajo la fila de redes / compartir para que no roce el borde del hero ni el bloque siguiente */
+            #tab-public .dj-hero .dj-hero-content {
+                padding-bottom: 48px;
+            }
+
+            .dj-social-row {
+                margin-top: 8px;
+            }
+
+            #tab-public > .dj-body {
+                padding-top: 36px;
+            }
         }
 
         /* Cards */
@@ -805,57 +818,6 @@
             color: rgba(255, 255, 255, 0.35);
             text-transform: uppercase;
             min-width: 50px;
-        }
-
-        /* ── Contact icon grid ── */
-        .contact-icons-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin: 16px 0;
-        }
-
-        .contact-icon-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            aspect-ratio: 1;
-            border-radius: 14px;
-            transition: transform 0.18s, filter 0.18s, box-shadow 0.18s;
-            color: #fff;
-            position: relative;
-        }
-
-        .contact-icon-btn:hover {
-            transform: translateY(-3px);
-            filter: brightness(1.2);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-        }
-
-        .contact-icon-btn svg {
-            width: 24px;
-            height: 24px;
-            fill: #fff;
-        }
-
-        .cik-wa {
-            background: #25D366;
-        }
-
-        .cik-msg {
-            background: linear-gradient(135deg, #0084FF, #0062CC);
-        }
-
-        .cik-tel {
-            background: var(--gold);
-        }
-
-        .cik-tel svg {
-            fill: #000;
-        }
-
-        .cik-email {
-            background: #EA4335;
         }
 
         /* ── SIDEBAR ── */
@@ -1003,7 +965,51 @@
             font-size: 12px;
             color: rgba(255, 255, 255, 0.4);
             line-height: 1.7;
-            margin-bottom: 22px;
+            margin-bottom: 0;
+        }
+
+        .reserve-contact-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        @media (max-width: 420px) {
+            .reserve-contact-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .reserve-cta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 14px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 12px;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .reserve-cta:active {
+            transform: scale(0.98);
+        }
+
+        .reserve-cta--wa {
+            background: linear-gradient(180deg, #2fe676 0%, #25d366 55%, #1da851 100%);
+            color: #fff;
+            box-shadow: 0 6px 18px rgba(37, 211, 102, 0.25);
+        }
+
+        .reserve-cta--mail {
+            background: rgba(197, 160, 89, 0.1);
+            border: 1px solid rgba(197, 160, 89, 0.45);
+            color: var(--gold);
         }
 
         .cta-btn {
@@ -1069,40 +1075,6 @@
         .cta-tel:hover {
             background: rgba(197, 160, 89, 0.18);
             transform: translateY(-2px);
-        }
-
-        .ivr-box {
-            margin-top: 14px;
-            padding: 14px 16px;
-            background: rgba(255, 255, 255, 0.025);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 10px;
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.32);
-            line-height: 2;
-        }
-
-        .ivr-box strong {
-            display: block;
-            font-size: 9px;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.45);
-            margin-bottom: 6px;
-        }
-
-        .ivr-key {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 20px;
-            height: 20px;
-            border-radius: 5px;
-            background: rgba(255, 255, 255, 0.08);
-            font-weight: 800;
-            font-size: 10px;
-            color: rgba(255, 255, 255, 0.55);
-            margin-right: 4px;
         }
 
         /* Status card */
@@ -1273,6 +1245,15 @@
 
         .mdj-sft-booth-banner strong {
             color: var(--gold);
+        }
+
+        /* Cabina (?sft_booth=1): separar la franja dorada de la barra de pestañas (evita que se vean pegadas en iPhone) */
+        body.dj-profile.dj-profile-sft-booth-banner-visible .mdj-sft-booth-banner {
+            padding-bottom: 16px;
+        }
+
+        body.dj-profile.dj-profile-sft-booth-banner-visible #owner-tabs {
+            margin-top: 14px;
         }
 
         /* SOUNDFORTIPS: badge + brillo cuando hay peticiones pendientes (solo DJ / cabina) */
@@ -1549,8 +1530,7 @@
         </div>
       </div>
 
-      <div class="header-actions"
-        style="display: flex; gap: 12px !important; background: rgba(255,255,255,0.03); padding: 8px 14px; border-radius: 999px;">
+      <div class="header-actions">
         <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
         <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
         <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
@@ -1640,7 +1620,7 @@
             <a href="./dj-dashboard.html?tab=settings&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-settings">⚙️ CONFIG</a>
             <a href="./academia.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-academia">Academia</a>
             <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-tools">DJ Tools</a>
-            <button type="button" class="dj-tab-btn" data-tab="flow" data-i18n="flow-dash" id="dj-tab-flow-btn" onclick="mdjFlowTabClick(event)">Cash Flow <span class="dj-tab-lock-icon" aria-hidden="true" style="display:none;">🔒</span></button>
+            <a href="./dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="flow-dash" id="dj-tab-flow-btn">Cash Flow <span class="dj-tab-lock-icon" aria-hidden="true" style="display:none;">🔒</span></a>
             <button type="button" class="dj-tab-btn" data-tab="sft" data-i18n="nav-soundfortips" id="dj-tab-sft-btn" onclick="mdjSftTabClick(event)">SoundForTips™ <span class="dj-tab-lock-icon" aria-hidden="true" style="display:none;">🔒</span></button>
         </div>
     </nav>
@@ -1805,8 +1785,8 @@
                     INTERACTUAR</div>
                 <div style="display:flex; flex-direction:column; gap:16px;">
 
-                    <!-- QR Element Full Width (De Primero) -->
-                    <div style="width:100%; margin-bottom:10px;">
+                    <!-- QR Element Full Width (De Primero); oculto en ?view=public vía profile.css -->
+                    <div class="pub-qr-share-block" style="width:100%; margin-bottom:10px;">
                         <div id="qr-export-area"
                             style="background:#fff; padding:20px; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; box-sizing:border-box; width:100%;">
                             <div id="profile-qrcode" style="width:180px; height:180px;" onclick="downloadMyQR()"
@@ -2047,50 +2027,11 @@
                 <!-- Reservar (Público) -->
                 <div class="reserve-card" id="public-reserve-card">
                     <div class="reserve-title">RESERVAR ESTE DJ</div>
-                    <p class="reserve-sub">Las reservas se gestionan a través de Miami DJ Beat. Contáctanos para
-                        disponibilidad y precio.</p>
-
-                    <!-- Icon-only contact grid: WhatsApp · Messenger · Phone · Email -->
-                    <div class="contact-icons-grid">
-                        <a id="pub-whatsapp-btn" href="https://wa.me/13056071780" target="_blank"
-                            class="contact-icon-btn cik-wa" aria-label="WhatsApp" title="WhatsApp">
-                            <svg viewBox="0 0 24 24">
-                                <path
-                                    d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-                                <path
-                                    d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.858L.057 23.5l5.799-1.52A11.95 11.95 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.87 0-3.629-.488-5.157-1.342l-.371-.22-3.443.903.919-3.356-.241-.386A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
-                            </svg>
-                        </a>
-                        <a id="pub-messenger-btn" href="https://m.me/MiamiDJBeat" target="_blank"
-                            class="contact-icon-btn cik-msg" aria-label="Messenger" title="Messenger">
-                            <svg viewBox="0 0 24 24">
-                                <path
-                                    d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.869 4.326-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.83.94z" />
-                            </svg>
-                        </a>
-                        <a id="pub-tel-btn" href="tel:" class="contact-icon-btn cik-tel" aria-label="Llamar"
-                            title="Llamada directa">
-                            <svg viewBox="0 0 24 24">
-                                <path
-                                    d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" />
-                            </svg>
-                        </a>
-                        <a id="pub-email-btn" href="mailto:" class="contact-icon-btn cik-email" aria-label="Email"
-                            title="Enviar email">
-                            <svg viewBox="0 0 24 24">
-                                <path
-                                    d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" />
-                            </svg>
-                        </a>
-                    </div>
-
-                    <div class="ivr-box">
-                        <strong>Menú telefónico</strong>
-                        <div><span class="ivr-key">1</span>Español &nbsp;|&nbsp; <span class="ivr-key">2</span>English
-                        </div>
-                        <div><span class="ivr-key">3</span>Ventas &nbsp;|&nbsp; <span class="ivr-key">4</span>Soporte
-                        </div>
-                        <div><span class="ivr-key">5</span>Contrataciones</div>
+                    <p class="reserve-sub" data-i18n="profile-reserve-sub">Las reservas las gestiona Miami DJ Beat. Escríbenos por WhatsApp o correo para disponibilidad y precio.</p>
+                    <div class="reserve-contact-actions">
+                        <a id="pub-whatsapp-btn" href="https://wa.me/13056071780" target="_blank" rel="noopener noreferrer"
+                            class="reserve-cta reserve-cta--wa" data-i18n="profile-reserve-cta-wa">WhatsApp</a>
+                        <a id="pub-email-btn" href="mailto:" class="reserve-cta reserve-cta--mail" data-i18n="profile-reserve-cta-email">Email</a>
                     </div>
                 </div>
                 <!-- QR de referidos (solo dueno/propietario del perfil) -->
@@ -2124,7 +2065,7 @@
     </footer>
 
     <!-- Translations & Base Logic -->
-    <script src="./translations.js?v=20260412-sft-copy-track"></script>
+    <script src="./translations.js?v=20260414-reserve-card"></script>
     <script src="./i18n.js?v=20260412-profile"></script>
     <script>
         // 🔧 Motor Principal de Logout (A prueba de fallos)
@@ -2487,8 +2428,60 @@
         ];
 
         async function loadProfile() {
+            /** Vuelta desde Stripe Checkout (create-sft-tip-checkout): limpiar URL y mostrar tostada al final del load. */
+            let mdjSftStripeReturn = null;
+            try {
+                const _sp = new URLSearchParams(window.location.search);
+                const _tip = _sp.get('sft_tip');
+                if (_tip === 'success' || _tip === 'cancel') {
+                    mdjSftStripeReturn = _tip;
+                    _sp.delete('sft_tip');
+                    const _qs = _sp.toString();
+                    window.history.replaceState({}, '', window.location.pathname + (_qs ? '?' + _qs : '') + window.location.hash);
+                }
+            } catch (_eSftTip) { void _eSftTip; }
+
             const params = new URLSearchParams(window.location.search);
             const isPublicQrView = params.get('view') === 'public';
+
+            if (mdjSftStripeReturn) {
+                setTimeout(function () {
+                    try {
+                        var key = mdjSftStripeReturn === 'success' ? 'sft-stripe-return-success' : 'sft-stripe-return-cancel';
+                        var fb = mdjSftStripeReturn === 'success'
+                            ? 'Payment received. Your request joins the DJ booth queue.'
+                            : 'Checkout was canceled. No charge was made.';
+                        var msg = typeof sftT === 'function' ? sftT(key, fb) : fb;
+                        var ok = mdjSftStripeReturn === 'success';
+                        var prev = document.getElementById('mdjSftStripeReturnBanner');
+                        if (prev) prev.remove();
+                        var el = document.createElement('div');
+                        el.id = 'mdjSftStripeReturnBanner';
+                        el.setAttribute('role', 'status');
+                        el.style.cssText = [
+                            'position:fixed', 'z-index:10060', 'left:16px', 'right:16px',
+                            'top:max(12px, env(safe-area-inset-top, 0px))', 'padding:14px 44px 14px 16px',
+                            'border-radius:12px', 'font-size:14px', 'font-weight:700', 'line-height:1.45',
+                            'box-shadow:0 8px 32px rgba(0,0,0,0.45)',
+                            ok ? 'background:rgba(22,63,38,0.96)' : 'background:rgba(45,36,18,0.96)',
+                            ok ? 'border:1px solid rgba(0,255,130,0.35)' : 'border:1px solid rgba(197,160,89,0.45)',
+                            ok ? 'color:#ecfdf5' : 'color:rgba(255,255,255,0.92)',
+                            '-webkit-backdrop-filter:blur(12px)', 'backdrop-filter:blur(12px)'
+                        ].join(';');
+                        var txt = document.createElement('span');
+                        txt.textContent = msg;
+                        var close = document.createElement('button');
+                        close.type = 'button';
+                        close.setAttribute('aria-label', typeof sftT === 'function' ? sftT('sft-stripe-return-dismiss', 'Close') : 'Close');
+                        close.textContent = '\u00d7';
+                        close.style.cssText = 'position:absolute;top:8px;right:10px;border:none;background:transparent;color:inherit;font-size:22px;line-height:1;cursor:pointer;padding:4px;opacity:0.88';
+                        close.onclick = function () { el.remove(); };
+                        el.appendChild(txt);
+                        el.appendChild(close);
+                        document.body.appendChild(el);
+                    } catch (eBanner) { void eBanner; }
+                }, 480);
+            }
 
             let db = null;
             for (let i = 0; i < 20 && !db; i++) {
@@ -2780,20 +2773,16 @@
                 document.body.classList.remove('dj-profile-contact-locked');
             }
 
-
-
-            // ── WhatsApp · Teléfono · Email ──
+            // ── RESERVAR: enlaces WhatsApp + email (Miami DJ Beat) ──
             try {
                 const MDJB_PHONE = '13056071780';
                 const MDJB_EMAIL = window.MDB_OFFICIAL_CONTACT_EMAIL || 'miamidjbeat@gmail.com';
                 const waMsg = encodeURIComponent(`Hola, quiero información sobre el DJ ${djName}. ¿Está disponible para mi evento?`);
                 const waBtn = document.getElementById('pub-whatsapp-btn');
                 if (waBtn) waBtn.href = `https://wa.me/${MDJB_PHONE}?text=${waMsg}`;
-                const telBtn = document.getElementById('pub-tel-btn');
-                if (telBtn) { telBtn.href = `tel:+${MDJB_PHONE}`; }
                 const emailBtn = document.getElementById('pub-email-btn');
-                if (emailBtn) { emailBtn.href = `mailto:${MDJB_EMAIL}?subject=Reserva DJ ${djName}`; }
-            } catch (e) { console.error('Contact error:', e); }
+                if (emailBtn) emailBtn.href = `mailto:${MDJB_EMAIL}?subject=${encodeURIComponent('Reserva DJ — ' + djName)}`;
+            } catch (e) { console.error('Reserve contact links:', e); }
 
 
             // ── PRO tag en hero si aplica ──
@@ -3014,7 +3003,8 @@
                 }
             } catch (eQrR) { void eQrR; }
             const qrContainer = document.getElementById('profile-qrcode');
-            if (qrContainer) {
+            const skipPubQr = document.documentElement.classList.contains('dj-profile-qr-view');
+            if (qrContainer && !skipPubQr) {
                 qrContainer.innerHTML = '';
                 if (window.QRCode) {
                     new QRCode(qrContainer, {
@@ -3045,7 +3035,7 @@
                         if (sqSub) sqSub.textContent = getSet('seasonal_qr_subtitle') || '$20 OFF';
 
                         const qrCont = document.getElementById('seasonal-qrcode');
-                        if (qrCont && window.QRCode) {
+                        if (qrCont && window.QRCode && !document.documentElement.classList.contains('dj-profile-qr-view')) {
                             qrCont.innerHTML = '';
                             new QRCode(qrCont, {
                                 text: sqUrl,
@@ -3179,7 +3169,9 @@
                     if (tabFromUrl === 'public') {
                         setTimeout(function () { switchProfileTab('public'); }, 300);
                     } else if (tabFromUrl === 'flow') {
-                        setTimeout(function () { switchProfileTab('flow'); }, 300);
+                        /* Cash Flow canónico vive en dj-dashboard?tab=flow (evita dos rutas distintas). */
+                        window.location.replace('./dj-dashboard.html?tab=flow&mdj_nav=profile');
+                        return;
                     } else if (tabFromUrl === 'sft') {
                         setTimeout(function () {
                             switchProfileTab('sft');
@@ -3224,6 +3216,9 @@
                             if (typeof window.sftUpdateBoothBannerPending === 'function') window.sftUpdateBoothBannerPending();
                             if (typeof window.sftRefreshOwnerWalletEconomy === 'function') window.sftRefreshOwnerWalletEconomy();
                         }
+                        try {
+                            document.body.classList.add('dj-profile-sft-booth-banner-visible');
+                        } catch (eCls) { void eCls; }
                     }
                     /* Pestaña cabina (Mac / escritorio): abrir sola la cola de peticiones para trabajar sin mirar el móvil */
                     if (isOwner && window._mdjSftProAllowed && typeof window.openSoundForTipsDjLibrary === 'function') {
@@ -3501,7 +3496,7 @@
     <!-- ── TAB: Cash Flow (artist economics) ── -->
     <div id="tab-flow" class="dj-panel serato-pane">
         <div id="flow-pro-required" style="display:none; max-width:900px; margin: 20px auto 0; padding: 16px 20px; background: rgba(197,160,89,0.12); border: 1px solid rgba(197,160,89,0.35); border-radius: 12px; color: rgba(255,255,255,0.9); font-size: 14px; text-align: center;" role="status">
-            <span data-i18n="flow-pro-required-msg">Flujo de caja: disponible para todos los artistas. SoundForTips™ requiere MDJPRO de pago.</span>
+            <span data-i18n="flow-pro-required-msg">Flujo de Caja: disponible para todos los artistas. SoundForTips™ requiere MDJPRO de pago.</span>
             <a href="./shop.html" style="color: var(--gold); margin-left: 8px; font-weight: 800;" data-i18n="flow-pro-shop">Suscribirse PRO</a>
         </div>
 
@@ -4308,6 +4303,19 @@
             transform: translate(-50%, -50%) scale(1);
         }
 
+        /* Fan / contribuyente — móvil: modal anclado arriba para que el teclado no tape tanto el buscador (iOS/Android) */
+        @media (max-width: 600px) {
+            #sftOverlay .sft-modal {
+                top: max(10px, env(safe-area-inset-top, 0px));
+                transform: translate(-50%, 0) scale(0.98);
+                max-height: min(92dvh, calc(100svh - max(10px, env(safe-area-inset-top, 0px)) - max(12px, env(safe-area-inset-bottom, 0px)) - 8px));
+            }
+
+            #sftOverlay.active .sft-modal {
+                transform: translate(-50%, 0) scale(1);
+            }
+        }
+
         .sft-close {
             position: absolute;
             top: 15px;
@@ -4330,11 +4338,13 @@
         }
 
         .sft-header h2 {
-            font-size: 24px;
+            font-size: 22px;
             color: var(--gold);
+            -webkit-text-fill-color: var(--gold);
             font-weight: 900;
             margin: 0 0 5px;
-            letter-spacing: -1px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
         }
 
         .sft-header p {
@@ -4387,6 +4397,11 @@
         .sft-input:focus {
             border-color: var(--gold);
             outline: none;
+        }
+
+        #sftOverlay .sft-input[type="search"] {
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         .sft-submit {
@@ -4594,7 +4609,7 @@
             margin-bottom: 10px;
         }
 
-        /* fixed + coords en JS: si fuera absolute, .sft-modal (overflow-y:auto) recorta la lista a una franja */
+        /* fixed al viewport: el nodo #sftResults está en body (no dentro de .sft-modal con transform/overflow). */
         .sft-results {
             position: fixed;
             left: 0;
@@ -4608,7 +4623,7 @@
             max-height: min(320px, 55dvh);
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            z-index: 10002;
+            z-index: 10050;
             box-shadow: 0 15px 40px rgba(0, 0, 0, 0.9);
             display: none;
             box-sizing: border-box;
@@ -6394,11 +6409,26 @@
         }
 
         .sft-am-topbar {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 12px;
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 10px 12px;
             margin-bottom: 10px;
+        }
+
+        .sft-am-topbar > .sft-am-close {
+            justify-self: start;
+        }
+
+        .sft-am-cabina-lbl {
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--gold);
+            -webkit-text-fill-color: var(--gold);
+            white-space: nowrap;
+            margin-right: 2px;
         }
 
         .sft-am-close,
@@ -6431,8 +6461,12 @@
         .sft-am-topbar-actions {
             display: flex;
             flex-shrink: 0;
+            flex-wrap: wrap;
             align-items: center;
-            gap: 8px;
+            justify-content: flex-end;
+            gap: 10px;
+            justify-self: end;
+            min-width: 0;
         }
 
         /* Cabina: mismos ON/OFF que la pestaña (fuera de #tab-sft el botón no heredaba colores). */
@@ -6525,16 +6559,46 @@
         }
 
         .sft-am-titles {
-            flex: 1;
             text-align: center;
             padding-top: 2px;
+            min-width: 0;
+            justify-self: center;
+            width: 100%;
+        }
+
+        @media (max-width: 720px) {
+            .sft-am-topbar {
+                grid-template-columns: auto 1fr;
+                grid-template-rows: auto auto;
+            }
+
+            .sft-am-titles {
+                grid-column: 1 / -1;
+                grid-row: 1;
+            }
+
+            .sft-am-close {
+                grid-column: 1;
+                grid-row: 2;
+                align-self: center;
+            }
+
+            .sft-am-topbar-actions {
+                grid-column: 2;
+                grid-row: 2;
+                justify-self: end;
+                align-self: center;
+            }
         }
 
         .sft-am-h1 {
             margin: 0;
             font-size: 22px;
             font-weight: 800;
-            letter-spacing: -0.02em;
+            color: var(--gold);
+            -webkit-text-fill-color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
         }
 
         .sft-am-sub {
@@ -6807,9 +6871,10 @@
                     <label data-i18n="sft-modal-search-label">🎵 Buscador inteligente de canciones</label>
                     <p data-i18n="sft-modal-search-hint" style="font-size:11px; color:rgba(255,255,255,0.45); margin:-6px 0 10px 0; line-height:1.4;">Mientras escribes, buscamos en el catálogo Apple: portada, título y artista (estilo Apple Music / Spotify).</p>
                     <div class="sft-search-wrapper">
-                        <input type="text" class="sft-input" id="sftSearchInput"
-                            data-i18n-hold="sft-modal-search-placeholder" placeholder="Título o artista (mín. 3 letras)…" autocomplete="off">
-                        <div class="sft-results" id="sftResults"></div>
+                        <input type="search" class="sft-input" id="sftSearchInput"
+                            data-i18n-hold="sft-modal-search-placeholder" placeholder="Título o artista (mín. 3 letras)…"
+                            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                            enterkeyhint="search" inputmode="search">
                     </div>
                     <div data-i18n="sft-modal-search-catalog" style="font-size:10px; color:#666; margin-top:6px; text-align:right;">Catálogo Apple / iTunes</div>
                 </div>
@@ -6946,6 +7011,9 @@
         </div>
     </div>
 
+    <!-- Resultados iTunes: fuera de .sft-modal — si #sftResults va dentro, transform + overflow del modal recortan position:fixed a ~1 fila -->
+    <div class="sft-results" id="sftResults" aria-live="polite" role="listbox" aria-label="Song search results"></div>
+
     <!-- DJ: cabina SoundForTips — tabla estilo biblioteca / Rekordbox -->
     <div id="sftDjAmOverlay" class="sft-am-overlay" role="dialog" aria-modal="true" aria-hidden="true"
         aria-labelledby="sftAmHeading"
@@ -6955,10 +7023,11 @@
                 <button type="button" class="sft-am-close" onclick="closeSoundForTipsDjLibrary()"
                     aria-label="Cerrar">&times;</button>
                 <div class="sft-am-titles">
-                    <h1 id="sftAmHeading" class="sft-am-h1">SoundForTips · Cabina</h1>
+                    <h1 id="sftAmHeading" class="sft-am-h1">SoundForTips™</h1>
                     <p class="sft-am-sub" id="sftDjAmSubtitle">Cola de peticiones en vivo</p>
                 </div>
                 <div class="sft-am-topbar-actions">
+                    <span class="sft-am-cabina-lbl" data-i18n="sft-cab-header-cabina">Cabina</span>
                     <button type="button" id="sft-cab-online-btn" class="sft-tab-online-btn sft-cab-online-btn sft-tab-online-btn--off"
                         aria-pressed="false" aria-label="SoundForTips live on/off">
                         <span class="sft-tab-online-dot" aria-hidden="true"></span>
@@ -6980,7 +7049,7 @@
                         <button type="button" class="sft-cab-desk-pill sft-cab-desk-pill--tab" id="sftCabSegQr" role="tab" aria-selected="false"
                             onclick="sftCabSetPane('qr')">QR</button>
                         <button type="button" class="sft-cab-desk-pill sft-cab-desk-pill--tab" id="sftCabSegBoth" role="tab" aria-selected="false"
-                            onclick="sftCabSetPane('both')" data-i18n="sft-cab-both-tab">Ambos</button>
+                            onclick="sftCabSetPane('both')" data-i18n="sft-cab-both-tab">QR</button>
                     </div>
                     <div class="sft-cab-desk-right">
                         <span class="sft-cab-desk-todo" data-i18n="sft-cab-desk-todo">TODO</span>
@@ -7179,6 +7248,25 @@
             if (modal) modal.addEventListener('scroll', rep, true);
         })();
 
+        (function sftWireFanModalFocusScroll() {
+            if (window.__sftFanModalFocusWired) return;
+            window.__sftFanModalFocusWired = true;
+            var ov = document.getElementById('sftOverlay');
+            if (!ov) return;
+            ov.addEventListener('focusin', function (e) {
+                if (!ov.classList.contains('active')) return;
+                var t = e.target;
+                if (!t || (t.tagName !== 'INPUT' && t.tagName !== 'TEXTAREA' && t.tagName !== 'SELECT')) return;
+                requestAnimationFrame(function () {
+                    try {
+                        t.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                    } catch (err) {
+                        try { t.scrollIntoView(true); } catch (e2) { /* noop */ }
+                    }
+                });
+            });
+        })();
+
         document.getElementById('sftSearchInput').addEventListener('input', function (e) {
             clearTimeout(sftSearchTimeout);
             const query = e.target.value.trim();
@@ -7195,7 +7283,7 @@
             requestAnimationFrame(sftPositionSftResultsDropdown);
 
             sftSearchTimeout = setTimeout(() => {
-                fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=10`)
+                fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=25`)
                     .then(res => res.json())
                     .then(data => {
                         resultsBox.innerHTML = '';
@@ -7666,6 +7754,47 @@
         };
 
         var __sftDjLibOnKey = null;
+        var __sftCabAutoRefreshTimer = null;
+        var __sftCabAutoRefreshBusy = false;
+
+        function sftCabIsOverlayOpen() {
+            var el = document.getElementById('sftDjAmOverlay');
+            return !!(el && el.classList.contains('active'));
+        }
+
+        function sftCabStopAutoRefresh() {
+            if (__sftCabAutoRefreshTimer) {
+                clearInterval(__sftCabAutoRefreshTimer);
+                __sftCabAutoRefreshTimer = null;
+            }
+            __sftCabAutoRefreshBusy = false;
+        }
+
+        function sftCabAutoRefreshTick() {
+            if (__sftCabAutoRefreshBusy) return;
+            if (!sftCabIsOverlayOpen()) return;
+            var djId = window.currentProfileDJId;
+            if (!djId || !window._mdjSftViewerIsOwner) return;
+            __sftCabAutoRefreshBusy = true;
+            sftSyncServerPendingIntoLocalQueue(djId).then(function () {
+                if (typeof window.sftRenderDjLibraryListSync === 'function') {
+                    window.sftRenderDjLibraryListSync();
+                } else if (typeof window.sftRenderDjLibraryList === 'function') {
+                    window.sftRenderDjLibraryList();
+                }
+            }).catch(function () {
+                /* noop */
+            }).finally(function () {
+                __sftCabAutoRefreshBusy = false;
+            });
+        }
+
+        function sftCabStartAutoRefresh() {
+            sftCabStopAutoRefresh();
+            if (!window._mdjSftViewerIsOwner) return;
+            sftCabAutoRefreshTick(); // first hit immediately
+            __sftCabAutoRefreshTimer = setInterval(sftCabAutoRefreshTick, 2500);
+        }
 
         window.handleSoundForTipsLaunchClick = function handleSoundForTipsLaunchClick() {
             if (!window.currentDJData || !window.currentDJData.soundfortips_eligible) {
@@ -7919,6 +8048,7 @@
             el.classList.add('active');
             el.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
+            sftCabStartAutoRefresh();
             if (typeof syncSftTabOnlineButton === 'function') syncSftTabOnlineButton();
             try {
                 if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
@@ -7933,6 +8063,7 @@
             if (typeof window.sftCabSetPane === 'function') window.sftCabSetPane('list');
             var el = document.getElementById('sftDjAmOverlay');
             if (!el) return;
+            sftCabStopAutoRefresh();
             el.classList.remove('active');
             el.setAttribute('aria-hidden', 'true');
             document.body.style.overflow = '';
@@ -7942,6 +8073,14 @@
             }
             if (typeof sftRefreshLaunchBadge === 'function') sftRefreshLaunchBadge();
         };
+
+        window.addEventListener('visibilitychange', function () {
+            if (document.hidden) return;
+            if (sftCabIsOverlayOpen()) sftCabAutoRefreshTick();
+        });
+        window.addEventListener('focus', function () {
+            if (sftCabIsOverlayOpen()) sftCabAutoRefreshTick();
+        });
 
         function sftIsServerSftRequestId(id) {
             return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(id || ''));
@@ -8619,6 +8758,10 @@
                 return;
             }
             document.getElementById('sftOverlay').classList.add('active');
+            try {
+                document.body.dataset.mdjSftFanModalOpen = '1';
+                document.body.style.overflow = 'hidden';
+            } catch (eBody) { void eBody; }
             document.getElementById('sftStep1').style.display = 'block';
             document.getElementById('sftStep2').style.display = 'none';
             var s2a = document.getElementById('sftStep2a');
@@ -8656,6 +8799,14 @@
 
         function closeSoundForTipsModal() {
             document.getElementById('sftOverlay').classList.remove('active');
+            try {
+                var sftRes = document.getElementById('sftResults');
+                if (sftRes) sftRes.style.display = 'none';
+            } catch (eR) { void eR; }
+            try {
+                delete document.body.dataset.mdjSftFanModalOpen;
+                document.body.style.overflow = '';
+            } catch (eBody) { void eBody; }
         }
 
         function goToStep2() {
@@ -9204,8 +9355,9 @@
     <script src="./monetization.js?v=20260422-sft-math"></script>
 
     <script src="./header-smart-search.js?v=20260412-profile"></script>
-    <script src="./mdj-shared-header.js?v=20260413-owner-missing-profile"></script>
-  <script src="./mdj-social-bar.js?v=20260413-scrollhide"></script>
+    <script src="./mdj-shared-header.js?v=20260414-mobile-hamburger"></script>
+  <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
+  <script src="./mdj-social-bar.js?v=20260414-skip-on-profile"></script>
 </body>
 
 </html>

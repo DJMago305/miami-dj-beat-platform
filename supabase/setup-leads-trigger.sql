@@ -19,10 +19,10 @@ begin
       'lead_id',    NEW.id,
       'event_type', coalesce(NEW.event_type, '—'),
       'event_date', coalesce(NEW.event_date::text, '—'),
-      'location',   coalesce(NEW.event_location, '—'),
-      'email',      coalesce(NEW.client_email, '—'),
-      'phone',      coalesce(NEW.client_phone, '—'),
-      'budget',     coalesce(NEW.budget_estimate, '—')
+      'location',   coalesce(NEW.location, '—'),
+      'email',      coalesce(NEW.email, '—'),
+      'phone',      coalesce(NEW.phone, '—'),
+      'budget',     coalesce(NEW.budget, '—')
     )
   );
   return NEW;

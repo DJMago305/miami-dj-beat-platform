@@ -16,9 +16,9 @@
   --shadow: 0 18px 60px rgba(0, 0, 0, .45);
   --glass: rgba(15, 22, 35, 0.7);
   --glass-border: rgba(255, 255, 255, 0.1);
-  --header-height: 85px;
-  /* Segunda fila (#mainNav: Home, Services…) en desktop; en ≤1000px está oculta */
-  --header-nav-band: 52px;
+  /* #mainHeader: fila superior 90px + fila #mainNav 88px = 178px (desktop, alineado a home) */
+  --header-height: 90px;
+  --header-nav-band: 88px;
 }
 
 * {
@@ -247,19 +247,21 @@ a:hover {
  */
 @media (min-width: 1001px) {
   body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainHeader .header-bottom {
-    padding: 8px 0 10px;
+    /* Misma altura visual de franja: tipografía más grande, padding vertical un poco menor */
+    padding: 6px 0 8px;
     background: linear-gradient(180deg, rgba(6, 5, 4, 0.45) 0%, rgba(2, 2, 2, 0.72) 100%);
     border-top: 1px solid rgba(197, 160, 89, 0.2);
     box-shadow: inset 0 1px 0 rgba(197, 160, 89, 0.06);
   }
 
+  /* Espaciado entre ítems alineado con .dj-owner-tabs .dj-tab-btn (padding lateral, sin gap extra) */
   body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav.nav.top-nav {
     position: relative;
     flex-wrap: wrap;
     justify-content: center;
-    gap: clamp(10px, 1.8vw, 32px);
-    row-gap: 6px;
-    padding: 6px 12px 18px;
+    gap: 0;
+    row-gap: 4px;
+    padding: 4px 12px 14px;
     max-width: min(1180px, 100%);
     margin: 0 auto;
   }
@@ -269,7 +271,7 @@ a:hover {
     position: absolute;
     left: 12px;
     right: 12px;
-    bottom: 8px;
+    bottom: 6px;
     height: 1px;
     background: linear-gradient(
       90deg,
@@ -283,6 +285,7 @@ a:hover {
   }
 
   /* Anula pastillas cristal de .nav (misma fila, mismo orden de ítems) */
+  /* Tipografía = barra artista (.dj-owner-tabs .dj-tab-btn): clamp + 0.12em; altura de franja sin cambiar */
   body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav.nav.top-nav a {
     background: none !important;
     backdrop-filter: none !important;
@@ -290,13 +293,14 @@ a:hover {
     border: none !important;
     border-radius: 0 !important;
     min-width: 0 !important;
-    padding: 9px 6px 16px !important;
+    padding: 5px clamp(12px, 1.4vw, 20px) 11px !important;
     box-shadow: none !important;
     display: inline-block !important;
     position: relative;
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.11em !important;
+    font-size: clamp(14px, 1.05vw, 16px) !important;
+    line-height: 1.12 !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.12em !important;
     text-transform: uppercase !important;
     color: rgba(245, 236, 220, 0.82) !important;
     transition: color 0.2s ease, text-shadow 0.2s ease;
@@ -305,7 +309,7 @@ a:hover {
   body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav.nav.top-nav a[data-i18n='nav-shop'],
   body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav.nav.top-nav a[href='./shop.html'] {
     color: rgba(224, 195, 130, 0.95) !important;
-    font-weight: 700 !important;
+    font-weight: 800 !important;
   }
 
   body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav.nav.top-nav a:hover {
@@ -326,13 +330,165 @@ a:hover {
     content: '' !important;
     display: block !important;
     position: absolute;
-    bottom: 7px;
+    bottom: 4px;
     left: 0;
     width: 100%;
     height: 3px;
     border-radius: 2px;
     background: linear-gradient(90deg, #8a6f3a 0%, #e8cf8f 35%, #c5a059 50%, #e8cf8f 65%, #8a6f3a 100%);
     box-shadow: 0 0 16px rgba(197, 160, 89, 0.55), 0 0 28px rgba(197, 160, 89, 0.22);
+  }
+
+  /* ── #mainNav: desplegable “More” (estilo Facebook: pestaña + panel) ── */
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav .nav-more-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: stretch;
+    vertical-align: bottom;
+  }
+
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav .nav-more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 5px clamp(12px, 1.4vw, 20px) 11px !important;
+    font: inherit;
+    font-size: clamp(14px, 1.05vw, 16px) !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    color: rgba(245, 236, 220, 0.88) !important;
+    background: none !important;
+    border: none !important;
+    border-radius: 8px !important;
+    cursor: pointer;
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav .nav-more-btn:hover,
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav .nav-more-wrap.is-open .nav-more-btn {
+    color: rgba(255, 252, 245, 0.98) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+  }
+
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav .nav-more-chevron {
+    font-size: 0.75em;
+    opacity: 0.85;
+    transition: transform 0.2s ease;
+  }
+
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav .nav-more-wrap.is-open .nav-more-chevron {
+    transform: rotate(-180deg);
+  }
+
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav .nav-more-menu {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 6px);
+    min-width: 240px;
+    padding: 8px 0;
+    margin: 0;
+    list-style: none;
+    background: rgba(14, 12, 10, 0.98);
+    border: 1px solid rgba(197, 160, 89, 0.35);
+    border-radius: 12px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+    z-index: 1200;
+  }
+
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav .nav-more-menu[hidden] {
+    display: none !important;
+  }
+
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav .nav-more-menu a {
+    display: block !important;
+    width: 100%;
+    padding: 12px 20px !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    font-size: 13px !important;
+    letter-spacing: 0.1em !important;
+    text-align: left !important;
+    color: rgba(245, 240, 230, 0.92) !important;
+    text-decoration: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav .nav-more-menu a:last-child {
+    border-bottom: none !important;
+  }
+
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav .nav-more-menu a:hover {
+    background: rgba(197, 160, 89, 0.12) !important;
+    color: #fff !important;
+  }
+
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav .nav-more-menu a.active {
+    color: var(--gold) !important;
+    background: rgba(197, 160, 89, 0.08) !important;
+  }
+
+  body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav .nav-more-menu a.active::after {
+    content: none !important;
+  }
+
+  /*
+   * #mainHeader: franja #mainNav 88px (90px arriba + 88px aquí = 178px), misma referencia que body.page-home en index.html.
+   * Home sigue pudiendo refinar en index.html; el resto del sitio reutiliza estas medidas.
+   */
+  body:not(.page-home):not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainHeader .header-bottom {
+    padding: 0 !important;
+    height: 88px !important;
+    min-height: 88px !important;
+    max-height: 88px !important;
+    box-sizing: border-box;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  body:not(.page-home):not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainHeader .header-bottom .container {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 0;
+    padding-bottom: 0;
+    max-height: 88px !important;
+  }
+
+  body:not(.page-home):not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainHeader #mainNav.nav.top-nav {
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: center;
+    row-gap: 0 !important;
+    padding: 8px clamp(14px, 2.5vw, 40px) !important;
+    margin: 0 auto !important;
+    max-height: 88px !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  body:not(.page-home):not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainHeader #mainNav.nav.top-nav::after {
+    bottom: 6px !important;
+  }
+
+  body:not(.page-home):not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainHeader #mainNav.nav.top-nav a {
+    padding: 14px clamp(14px, 1.5vw, 22px) !important;
+    font-size: clamp(15px, 1.12vw, 18px) !important;
+    line-height: 1.2 !important;
+  }
+
+  body:not(.page-home):not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainHeader #mainNav.nav.top-nav a.active::after {
+    bottom: 6px !important;
+    height: 3px !important;
+  }
+
+  body:not(.page-home):not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainHeader #mainNav .nav-more-btn {
+    padding: 8px clamp(12px, 1.4vw, 20px) !important;
+    font-size: clamp(15px, 1.12vw, 18px) !important;
   }
 }
 
@@ -638,6 +794,8 @@ a:hover {
   gap: 0;
   height: 100%;
   position: relative;
+  flex-shrink: 0;
+  overflow: visible;
 }
 
 .logo-img-eagle {
@@ -652,20 +810,254 @@ a:hover {
   align-items: center;
   justify-content: center;
   height: 85px;
-  width: 300px;
-  /* Un poco más de ancho para el logo más grande */
+  width: 380px;
   overflow: visible;
-  margin-left: -20px;
-  /* Menos negativo = más espacio a la derecha */
+  margin-left: -28px;
+  flex-shrink: 0;
+  /* Cerca del águila; sin tirar la marca fuera del área visible */
 }
 
 .brand-letters-img {
-  height: 240px;
-  /* De 220px a 240px para más presencia */
+  height: 276px;
   width: auto;
   object-fit: contain;
   image-rendering: -webkit-optimize-contrast;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/*
+ * Wordmark (#mainHeader solo): PNG de letras más grande, pegado al águila.
+ * No altera hamburguesa, #mainNav ni .header-actions — solo .brand interno.
+ * display:flex + align-items:center: fénix y wordmark alineados; sin height:100% global.
+ */
+#mainHeader .brand {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  align-self: center;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+#mainHeader .brand .logo-img-eagle,
+#mainHeader .brand .brand-letters-img {
+  display: block;
+}
+
+/* Fila 140px: fénix + wordmark a escala x2 (sin max-height limitante en el PNG) */
+#mainHeader .brand .logo-img-eagle {
+  height: 120px;
+  width: auto;
+  max-height: none;
+  object-fit: contain;
+}
+
+#mainHeader .brand::before {
+  width: 112px;
+  height: 112px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+#mainHeader .brand .brand-letters-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-left: 8px;
+  width: min(960px, 92vw);
+  height: auto;
+  max-height: none;
+  margin-top: 0;
+  line-height: 0;
+}
+
+#mainHeader .brand .brand-letters-img {
+  height: 112px;
+  width: auto;
+  max-height: none;
+  object-fit: contain;
+}
+
+/*
+ * Solo página de inicio (body.page-home): acota wordmark para juntar #mainNav con la franja superior.
+ * No usar en Agenda/perfil/resto — rompe el branding PNG en esas pantallas.
+ */
+@media (min-width: 901px) {
+  /* Home: mismo hitbox x2 que el resto del sitio (#mainHeader) */
+  body.page-home #mainHeader .brand::before {
+    width: 128px;
+    height: 128px;
+    border-radius: 9px;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  body.page-home #mainHeader .brand {
+    align-items: center;
+  }
+
+  body.page-home #mainHeader .brand .brand-letters-wrapper {
+    width: min(840px, 80vw);
+    align-items: center;
+    align-self: center;
+  }
+
+  body.page-home #mainHeader .brand .brand-letters-img {
+    max-height: none;
+    height: 112px;
+    width: auto;
+    image-rendering: auto;
+  }
+
+  body.page-home #mainHeader .logo-img-eagle {
+    max-height: none;
+    height: 120px;
+    width: auto;
+  }
+}
+
+@media (min-width: 1001px) and (max-width: 1200px) {
+  body.page-home #mainHeader .header-top .container {
+    row-gap: 0;
+  }
+}
+
+/* Tablets / móviles: el wordmark a 240px desborda la barra; escalar como en app */
+@media (max-width: 900px) {
+  .brand {
+    margin-top: 12px;
+    gap: 0;
+    flex-shrink: 0;
+  }
+
+  /* #mainHeader: sin margin-top extra — debe compartir centro vertical con .header-actions */
+  #mainHeader .brand {
+    margin-top: 0;
+  }
+
+  .brand::before {
+    width: 58px;
+    height: 58px;
+  }
+
+  .logo-img-eagle {
+    height: 52px !important;
+  }
+
+  .brand-letters-wrapper {
+    height: auto;
+    width: min(340px, 68vw);
+    margin-left: -22px;
+    flex-shrink: 0;
+  }
+
+  .brand-letters-img {
+    height: 112px !important;
+    max-height: 112px;
+  }
+}
+
+@media (max-width: 640px) {
+  .brand {
+    gap: 0;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .brand::before {
+    width: 44px;
+    height: 44px;
+    left: 0;
+  }
+
+  .logo-img-eagle {
+    height: 40px !important;
+  }
+
+  .brand-letters-wrapper {
+    height: auto;
+    width: min(280px, 76vw);
+    margin-left: -14px;
+    flex-shrink: 0;
+  }
+
+  .brand-letters-img {
+    height: 76px !important;
+    max-height: 76px;
+  }
+}
+
+@media (max-width: 400px) {
+  .brand-letters-wrapper {
+    width: min(248px, 82vw);
+    margin-left: -10px;
+  }
+
+  .brand-letters-img {
+    height: 62px !important;
+    max-height: 62px;
+  }
+
+  .logo-img-eagle {
+    height: 36px !important;
+  }
+
+  .brand::before {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 900px) {
+  #mainHeader .brand .brand-letters-wrapper {
+    margin-left: 18px;
+    width: min(640px, 90vw);
+  }
+
+  #mainHeader .brand .brand-letters-img {
+    height: 112px;
+    max-height: none;
+  }
+}
+
+@media (max-width: 640px) {
+  #mainHeader .brand .brand-letters-wrapper {
+    margin-left: 22px;
+    width: min(520px, 92vw);
+  }
+
+  #mainHeader .brand .brand-letters-img {
+    height: 96px;
+    max-height: none;
+  }
+
+  #mainHeader .brand .logo-img-eagle {
+    height: 100px;
+    max-height: none;
+  }
+}
+
+@media (max-width: 400px) {
+  #mainHeader .brand .brand-letters-wrapper {
+    margin-left: 24px;
+    width: min(420px, 94vw);
+  }
+
+  #mainHeader .brand .brand-letters-img {
+    height: 80px;
+    max-height: none;
+  }
+
+  #mainHeader .brand .logo-img-eagle {
+    height: 88px;
+    max-height: none;
+  }
 }
 
 /* Mobile Menu Button */
@@ -4575,21 +4967,25 @@ svg {
   max-width: 100%;
 }
 
-@media (max-width: 1024px) {
-  :root {
-    --header-height: 72px;
+/*
+ * Contexto perfil (dj-profile y satélites con mdj_nav=profile):
+ * sin fila #mainNav — offset = altura real de .header-top.
+ * Escritorio: 90px. ≤1000px: fila alta móvil/tablet (140px).
+ * Nunca aplica en inicio: excluido con :not(:has(body.page-home)).
+ */
+@media (min-width: 1001px) {
+  html:not(:has(body.page-home)):has(body.dj-profile),
+  html:not(:has(body.page-home)):has(body.mdj-from-profile) {
+    --header-height: 90px;
+    --header-nav-band: 0px;
   }
 }
 
-@media (max-width: 768px) {
-  :root {
-    --header-height: 64px;
-  }
-}
-
-@media (max-width: 480px) {
-  :root {
-    --header-height: 58px;
+@media (max-width: 1000px) {
+  html:not(:has(body.page-home)):has(body.dj-profile),
+  html:not(:has(body.page-home)):has(body.mdj-from-profile) {
+    --header-height: 140px;
+    --header-nav-band: 0px;
   }
 }
 
@@ -4604,6 +5000,12 @@ svg {
     flex-wrap: wrap;
     row-gap: 10px;
     column-gap: 12px;
+  }
+
+  /* No envolver marca + acciones en dos filas: solo #mainHeader site bar */
+  #mainHeader .header-top .container {
+    flex-wrap: nowrap;
+    row-gap: 0;
   }
 
   .nav.top-nav,
@@ -4699,15 +5101,52 @@ svg {
 }
 
 /* ============================================================
-   SHARED SITE HEADER (all pages — same bar as index #mainHeader)
+   SHARED SITE HEADER — three horizontal bands (mental model)
+   (1) #mainHeader .header-top — PHOENIX / BRANDING + pill (DJPRO, lang, cart,
+       search). GLOBAL: same markup + SHARED rules on the entire site (home,
+       services, auth, artist tools, etc.). Do not fork this row per page.
+   (2) #mainHeader .header-bottom — public site nav (#mainNav). Same seven links
+       and order as index: Home → Services → Event Services → Shop → DJ Tools →
+       Jobs → Contact (no “More” split in the canonical include).
+   (3) .dj-owner-tabs — artist strip: same ten items and order everywhere
+       (Home → Jobs → Shop → Mi Perfil → Agenda → CONFIG → Academia → DJ Tools
+       → Cash Flow → SoundForTips™). Home is ./index.html (public site); Cash
+       Flow targets dj-dashboard ?tab=flow; SFT targets dj-profile ?tab=sft;
+       cross-links use ?mdj_nav=profile where applicable.
+   Reference row (1): brand left (eagle + wordmark PNG close together),
+   utilities + search in the dark pill on the right. Glass tint + blur; do not
+   override with flat #0a or ad-hoc .header min-height on individual pages.
+   Single source: do not re-define .header-search-wrap / .header-actions widths
+   in page <style> blocks — use these #mainHeader rules so home matches the rest.
    ============================================================ */
 /* Barra superior: ~50% opacidad + cristal (alineado a referencia visual) */
 #mainHeader.header {
+  display: flex;
+  flex-direction: column;
+  /* Global (igual que home): 90px (marca + acciones) + 88px (#mainNav) */
+  min-height: calc(178px + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
+  box-sizing: border-box;
   background: rgba(10, 8, 6, 0.5) !important;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   transition: background 0.35s ease, backdrop-filter 0.35s ease;
   border-bottom: 1px solid rgba(197, 160, 89, 0.12);
+  overflow: visible;
+}
+
+/* Solo franja superior (sin #mainNav visible): 90px */
+@media (max-width: 1000px) {
+  #mainHeader.header {
+    min-height: calc(90px + env(safe-area-inset-top, 0px));
+  }
+}
+
+body.dj-profile #mainHeader.header,
+body.mdj-from-profile #mainHeader.header,
+body.mdj-academia-hub #mainHeader.header,
+body.mdj-artist-academy #mainHeader.header {
+  min-height: calc(90px + env(safe-area-inset-top, 0px));
 }
 
 #mainHeader.header.scrolled {
@@ -4717,10 +5156,60 @@ svg {
   border-bottom-color: rgba(197, 160, 89, 0.22);
 }
 
-/* Fila #mainNav por encima del bloque superior (evita que sticky/scroll tapen Home/Services) */
+/* Franja 1 — 90px: branding + acciones. Franja 2 — 88px: #mainNav. */
+#mainHeader .header-top {
+  flex: 0 0 90px;
+  height: 90px;
+  min-height: 90px;
+  max-height: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: visible;
+}
+
+#mainHeader .header-top .container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  height: 100%;
+  min-height: 0;
+  max-height: 90px;
+  box-sizing: border-box;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  overflow: visible;
+}
+
+/* Franja 2 — 88px: #mainNav */
 #mainHeader .header-bottom {
+  flex: 0 0 88px;
+  height: 88px;
+  min-height: 88px;
+  max-height: 88px;
   position: relative;
   z-index: 101;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 #global-logout-btn-desktop,
@@ -4741,10 +5230,92 @@ svg {
   display: none !important;
 }
 
+/* Píldora de utilidades: misma fila que la marca; el wrap interno (p. ej. búsqueda) no baja el bloque entero */
 #mainHeader .header-actions {
-  flex-wrap: wrap !important;
+  display: flex !important;
+  gap: 14px !important;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 12px 20px;
+  border-radius: 999px;
+  box-sizing: border-box;
+  flex-wrap: nowrap !important;
   justify-content: flex-end !important;
   align-items: center !important;
+  align-self: center;
+  margin: 0;
+  min-width: 0;
+  max-height: none;
+  min-height: 52px;
+  overflow: visible;
+}
+
+/*
+ * La píldora debe estirarse en la fila (marca | … | menú). Si no tiene flex-grow, solo mide
+ * el ancho intrínseco de sus hijos y subir max-width del search no alarga nada “a la derecha”.
+ */
+#mainHeader .header-top .container > .header-actions {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Sin esto, flex-wrap + muchos botones empujan la búsqueda a 2.ª fila aunque el viewport sea “desktop” */
+@media (min-width: 821px) {
+  #mainHeader .header-actions {
+    flex-wrap: nowrap !important;
+  }
+
+  #mainHeader .header-search-wrap {
+    min-width: min(100%, 260px);
+  }
+}
+
+/* ≤1000px: sin #mainNav; fila superior 140px; avatar/carrito en flujo (sin position:absolute) */
+@media (max-width: 1000px) {
+  #mainHeader .header-top .container {
+    justify-content: flex-start;
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    min-height: 140px;
+    height: 140px;
+    max-height: 140px;
+  }
+
+  /* Refuerzo: la marca no debe desaparecer por flex-shrink del cartel */
+  #mainHeader .header-top .container > .brand {
+    flex-shrink: 0;
+  }
+
+  #mainHeader .header-actions {
+    justify-content: flex-end !important;
+    align-items: center !important;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-right: 0;
+    box-sizing: border-box;
+    flex-wrap: nowrap !important;
+  }
+
+  #mainHeader .header-avatar-cart-row {
+    position: static;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    z-index: 20;
+  }
+
+  #mainHeader .mobile-menu-btn {
+    margin-left: auto;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 21;
+  }
 }
 
 #header-get-pro-btn {
@@ -4856,9 +5427,9 @@ svg {
 /* Barra tipo “Google Search”: lupa anclada a la izquierda + texto con padding generoso (sin solapar) */
 .header-search-wrap {
   position: relative;
-  flex: 1 1 220px;
-  min-width: min(100%, 200px);
-  max-width: min(440px, 100%);
+  flex: 1 1 280px;
+  min-width: min(100%, 260px);
+  max-width: min(500px, 100%);
 }
 
 .header-search-wrap::before {
@@ -4933,6 +5504,77 @@ svg {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23e8dcc8' fill-opacity='0.88' d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
 }
 
+/* === Global header snapshot parity with home (top zone frozen) === */
+#mainHeader .brand {
+  --mdj-eagle-w: 72px;
+  --mdj-gold-label: 68px;
+}
+
+#mainHeader .brand::before {
+  left: 0 !important;
+  top: 50% !important;
+  width: var(--mdj-gold-label) !important;
+  height: var(--mdj-gold-label) !important;
+  border-radius: 8px;
+  transform: translate(calc(0.5 * var(--mdj-eagle-w) - 0.5 * var(--mdj-gold-label)), -50%) !important;
+}
+
+#mainHeader .brand .logo-img-eagle {
+  height: 72px !important;
+  max-height: none !important;
+}
+
+#mainHeader .brand .brand-letters-wrapper {
+  min-width: min(300px, 48vw);
+  width: min(700px, 64vw);
+  max-height: 90px;
+  margin-left: 10px;
+}
+
+#mainHeader .brand .brand-letters-img {
+  height: 104px !important;
+  max-height: 108px !important;
+  width: auto !important;
+  max-width: none !important;
+}
+
+#mainHeader .header-search-wrap {
+  order: 2;
+  flex: 2 1 300px;
+  min-width: min(100%, clamp(220px, 34vw, 320px));
+  max-width: min(540px, 100%);
+}
+
+#mainHeader .header-avatar-cart-row {
+  gap: 12px;
+}
+
+#mainHeader .account-btn .avatar {
+  width: 40px;
+  height: 40px;
+  border-width: 2px;
+}
+
+@media (min-width: 1024px) {
+  #mainHeader .brand {
+    --mdj-eagle-w: 78px;
+    --mdj-gold-label: 74px;
+  }
+
+  #mainHeader .brand .logo-img-eagle {
+    height: 78px !important;
+  }
+
+  #mainHeader .brand .brand-letters-wrapper {
+    width: min(860px, 58vw);
+  }
+
+  #mainHeader .brand .brand-letters-img {
+    height: 178px !important;
+    max-height: 180px !important;
+  }
+}
+
 .header-avatar-cart-row {
   display: inline-flex;
   align-items: center;
@@ -4944,12 +5586,19 @@ svg {
   display: none !important;
 }
 
-@media (max-width: 1100px) {
-  .header-search-wrap {
-    order: 10;
-    max-width: 100%;
-    flex-basis: 100%;
-    margin-top: 8px;
+/* Viewport estrecho: una sola fila de 140px (sin wrap de la píldora) */
+@media (max-width: 820px) {
+  #mainHeader .header-actions {
+    flex-wrap: nowrap !important;
+  }
+
+  #mainHeader .header-search-wrap {
+    order: 0;
+    flex: 1 1 100px;
+    min-width: 0;
+    max-width: none;
+    flex-basis: auto;
+    margin-top: 0;
   }
 }
 
@@ -4978,6 +5627,8 @@ svg {
   /* visible: el submenú Academia no queda recortado por overflow-x: auto */
   overflow: visible;
   width: 100%;
+  max-width: none;
+  /* Evita bandas negras laterales del cap global .container (1200px) en la franja artista */
   box-sizing: border-box;
 }
 
@@ -5055,6 +5706,9 @@ body.mdj-from-profile .dj-owner-tabs,
 body.mdj-academia-hub .dj-owner-tabs,
 body.mdj-artist-academy .dj-owner-tabs {
   position: sticky;
+  /* Justo debajo de la franja superior fija (safe area + altura reservada en --header-height). */
+  top: calc(env(safe-area-inset-top, 0px) + var(--header-height));
+  margin-top: 0;
   z-index: 1200;
   isolation: isolate;
   min-height: 0;
@@ -5066,6 +5720,7 @@ body.mdj-from-profile .dj-owner-tabs .container,
 body.mdj-academia-hub .dj-owner-tabs .container,
 body.mdj-artist-academy .dj-owner-tabs .container {
   flex-wrap: nowrap;
+  /* Móvil / overflow: alinear al inicio para scroll natural */
   justify-content: flex-start;
   align-content: stretch;
   row-gap: 0;
@@ -5078,6 +5733,16 @@ body.mdj-artist-academy .dj-owner-tabs .container {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   overscroll-behavior-x: contain;
+}
+
+/* Escritorio / pantalla ancha: centrar el bloque de pestañas en la franja (sin cambiar markup) */
+@media (min-width: 900px) {
+  body.dj-profile .dj-owner-tabs .container,
+  body.mdj-from-profile .dj-owner-tabs .container,
+  body.mdj-academia-hub .dj-owner-tabs .container,
+  body.mdj-artist-academy .dj-owner-tabs .container {
+    justify-content: center;
+  }
 }
 
 body.dj-profile .dj-owner-tabs .dj-tab-btn,
@@ -5094,6 +5759,11 @@ body.mdj-artist-academy .dj-owner-tabs .dj-owner-academy-btn {
   padding: 14px clamp(12px, 1.4vw, 20px);
   flex-shrink: 0;
   white-space: nowrap;
+  line-height: 1.2;
+  /* Una sola línea estable en pantallas grandes (p. ej. Mac Studio) — sin solapar glifos */
+  align-items: center;
+  justify-content: center;
+  -webkit-font-smoothing: antialiased;
 }
 
 body.dj-profile .dj-owner-tabs .nav-item-dropdown.dj-owner-academy-dd,
@@ -5166,6 +5836,64 @@ body.mdj-academia-hub .dj-owner-tabs .container::-webkit-scrollbar-thumb,
 body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
   background: rgba(197, 160, 89, 0.35);
   border-radius: 3px;
+}
+
+/* Marquee opcional (mdj-owner-tabs-marquee.js): bucle horizontal, pausa al hover */
+.dj-owner-tabs.dj-owner-tabs--marquee .container {
+  overflow-x: hidden !important;
+  scrollbar-width: none;
+  align-items: center;
+}
+
+.dj-owner-tabs.dj-owner-tabs--marquee .container::-webkit-scrollbar {
+  display: none;
+}
+
+.dj-owner-tabs.dj-owner-tabs--marquee .mdj-owner-tabs-marquee-viewport {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+.dj-owner-tabs.dj-owner-tabs--marquee .mdj-owner-tabs-marquee-anim {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  width: max-content;
+  will-change: transform;
+  animation: mdjOwnerTabsMarqueeLoop var(--mdj-owner-marquee-dur, 50s) linear infinite;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.dj-owner-tabs.dj-owner-tabs--marquee:hover .mdj-owner-tabs-marquee-anim {
+  animation-play-state: paused;
+}
+
+.dj-owner-tabs.dj-owner-tabs--marquee .mdj-owner-tabs-marquee-track {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+@keyframes mdjOwnerTabsMarqueeLoop {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dj-owner-tabs .mdj-owner-tabs-marquee-anim {
+    animation: none !important;
+  }
 }
 
 /* Weather Lab: segunda fila de pestañas — mismo comportamiento en móvil/tablet */

@@ -7,7 +7,7 @@
     <title>MDJPRO — Academia DJ: Cursos y Certificaciones</title>
     <meta name="description"
         content="Aprende el arte de ser DJ desde cero. Obtén tu Certificado de DJ Profesional con Miami DJ Beat. Técnica, mezcla, software, contratos y mentalidad." />
-    <link rel="stylesheet" href="./styles.css?v=20260411-search-google" />
+    <link rel="stylesheet" href="./styles.css?v=20260419-header-global" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
     <style>
         :root {
@@ -401,8 +401,7 @@
         </div>
       </div>
 
-      <div class="header-actions"
-        style="display: flex; gap: 12px !important; background: rgba(255,255,255,0.03); padding: 8px 14px; border-radius: 999px;">
+      <div class="header-actions">
         <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
         <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
         <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
@@ -475,14 +474,15 @@
     <nav class="dj-owner-tabs" id="owner-tabs" aria-label="Artist navigation">
         <div class="container">
             <a href="./index.html" class="dj-tab-btn dj-tab-btn--home" data-i18n="nav-home">Home</a>
-            <a href="./jobs.html" class="dj-tab-btn" data-i18n="nav-jobs">Jobs</a>
-            <a href="./shop.html" class="dj-tab-btn" data-i18n="nav-shop">Shop</a>
-            <a href="./dj-profile.html" class="dj-tab-btn" data-i18n="menu-account">Mi Perfil</a>
-            <a href="./dj-dashboard.html" class="dj-tab-btn" data-i18n="dash-your-profile">Agenda</a>
-            <a href="./dj-dashboard.html?tab=settings" class="dj-tab-btn" data-i18n="nav-settings">⚙️ CONFIG</a>
-            <a href="./academia.html" class="dj-tab-btn active" data-i18n="nav-academia">Academia</a>
-            <a href="./dj-tools.html" class="dj-tab-btn" data-i18n="nav-tools">DJ Tools</a>
-            <a href="./dj-profile.html?tab=flow" class="dj-tab-btn" data-i18n="flow-dash">Cash Flow</a>
+            <a href="./jobs.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-jobs">Jobs</a>
+            <a href="./shop.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-shop">Shop</a>
+            <a href="./dj-profile.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="menu-account">Mi Perfil</a>
+            <a href="./dj-dashboard.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="dash-your-profile">Agenda</a>
+            <a href="./dj-dashboard.html?tab=settings&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-settings">⚙️ CONFIG</a>
+            <a href="./academia.html?mdj_nav=profile" class="dj-tab-btn active" data-i18n="nav-academia">Academia</a>
+            <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-tools">DJ Tools</a>
+            <a href="./dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="flow-dash">Cash Flow</a>
+            <a href="./dj-profile.html?tab=sft&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-soundfortips">SoundForTips™</a>
         </div>
     </nav>
 
@@ -3546,7 +3546,8 @@
 
 
     <script src="./header-smart-search.js?v=20260411-search-google"></script>
-    <script src="./mdj-shared-header.js?v=20260411-avatar-profileid"></script>
+    <script src="./mdj-shared-header.js?v=20260414-mobile-hamburger"></script>
+  <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
   <script src="./mdj-social-bar.js?v=20260413-scrollhide"></script>
 </body>
 

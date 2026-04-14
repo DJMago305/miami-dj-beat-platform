@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Vista previa iPhone — Miami DJ Beat (local)</title>
+    <style>
+        :root {
+            --phone-w: 390px;
+            --phone-h: 844px;
+            --frame: #1a1a1e;
+            --bezel: #0d0d0f;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            background: radial-gradient(1200px 800px at 50% 20%, #252530 0%, #121218 55%, #0a0a0c 100%);
+            color: rgba(255, 255, 255, 0.88);
+            padding: 20px 16px 40px;
+        }
+
+        h1 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            margin: 0 0 6px;
+        }
+
+        .sub {
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin: 0 0 18px;
+            max-width: 56ch;
+            line-height: 1.45;
+        }
+
+        .panel {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            max-width: 720px;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: rgba(255, 255, 255, 0.45);
+        }
+
+        input[type="text"] {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.45);
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        button {
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(197, 160, 89, 0.45);
+            background: linear-gradient(135deg, rgba(197, 160, 89, 0.25), rgba(197, 160, 89, 0.08));
+            color: #f5e6c8;
+            font-weight: 800;
+            font-size: 0.82rem;
+            cursor: pointer;
+        }
+
+        button:hover {
+            filter: brightness(1.08);
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .chip {
+            font-size: 0.72rem;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.75);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .chip:hover {
+            border-color: rgba(197, 160, 89, 0.4);
+            color: var(--gold, #c5a059);
+        }
+
+        .stage {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 8px 0 40px;
+        }
+
+        /* Marco tipo iPhone 14/15 (aprox.) */
+        .iphone {
+            position: relative;
+            width: var(--phone-w);
+            height: var(--phone-h);
+            max-width: calc(100vw - 32px);
+            max-height: min(90vh, calc(100vw * 844 / 390));
+            background: var(--bezel);
+            border-radius: 48px;
+            padding: 10px;
+            box-shadow:
+                0 0 0 2px rgba(255, 255, 255, 0.06),
+                0 24px 80px rgba(0, 0, 0, 0.65),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+        }
+
+        .iphone-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 38px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .dynamic-island {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 110px;
+            height: 28px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        /* El contenido empieza debajo de la Dynamic Island para que el header no quede “bajo el nicho” */
+        .iphone iframe {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            top: 44px;
+            width: 100%;
+            height: calc(100% - 44px);
+            border: none;
+            background: #fff;
+        }
+
+        .hint {
+            margin-top: 10px;
+            font-size: 0.78rem;
+            color: rgba(255, 255, 255, 0.42);
+            line-height: 1.4;
+        }
+
+        .hint code {
+            font-size: 0.85em;
+            background: rgba(0, 0, 0, 0.35);
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
+
+        @media (max-width: 480px) {
+            .iphone {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 390 / 844;
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Vista previa estilo iPhone</h1>
+    <p class="sub">
+        Herramienta solo para desarrollo local. Carga cualquier página del sitio dentro de un marco (~390×844px).
+        Añade en la URL el <code>id</code> del DJ y <code>view=public</code> para simular el escaneo del QR.
+    </p>
+
+    <div class="panel">
+        <label for="pathInput">Ruta (desde /web)</label>
+        <div class="row" style="margin-top: 8px;">
+            <input type="text" id="pathInput" placeholder="dj-profile.html?view=public&amp;id=TU_UUID"
+                autocomplete="off" spellcheck="false">
+            <button type="button" id="btnLoad">Abrir en marco</button>
+        </div>
+        <div class="chips" id="presets"></div>
+        <p class="hint">
+            El servidor debe escuchar en <code>0.0.0.0</code> si quieres abrir esta misma URL desde un iPhone real.
+            Ejemplo: <code>python3 -m http.server 8000 --bind 0.0.0.0</code>
+        </p>
+    </div>
+
+    <div class="stage">
+        <div class="iphone" aria-hidden="true">
+            <div class="iphone-inner">
+                <div class="dynamic-island"></div>
+                <iframe id="previewFrame" title="Vista previa móvil" src="about:blank"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var input = document.getElementById('pathInput');
+            var frame = document.getElementById('previewFrame');
+            var presets = document.getElementById('presets');
+
+            function safePath(raw) {
+                var s = String(raw || '').trim();
+                if (!s) return 'index.html';
+                if (/^https?:\/\//i.test(s)) {
+                    try {
+                        var u = new URL(s);
+                        return u.pathname.replace(/^\//, '') + u.search + u.hash;
+                    } catch (e) {
+                        return 'index.html';
+                    }
+                }
+                return s.replace(/^\//, '');
+            }
+
+            function loadFrame() {
+                var p = safePath(input.value);
+                frame.src = p;
+                try {
+                    var u = new URL(window.location.href);
+                    u.searchParams.set('path', p);
+                    history.replaceState({}, '', u.pathname + '?' + u.searchParams.toString());
+                } catch (e) { /* noop */ }
+            }
+
+            document.getElementById('btnLoad').addEventListener('click', loadFrame);
+
+            input.addEventListener('keydown', function (ev) {
+                if (ev.key === 'Enter') loadFrame();
+            });
+
+            var qs = new URLSearchParams(window.location.search);
+            var fromQs = qs.get('path');
+            if (fromQs) {
+                input.value = fromQs;
+            } else {
+                input.value = 'index.html';
+            }
+
+            var examples = [
+                { label: 'Home', path: 'index.html' },
+                { label: 'Perfil (añade ?id=)', path: 'dj-profile.html' },
+                { label: 'Perfil QR público (reemplaza ID)', path: 'dj-profile.html?view=public&id=' }
+            ];
+            examples.forEach(function (ex) {
+                var b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'chip';
+                b.textContent = ex.label;
+                b.addEventListener('click', function () {
+                    input.value = ex.path;
+                    loadFrame();
+                });
+                presets.appendChild(b);
+            });
+
+            loadFrame();
+        })();
+    </script>
+</body>
+
+</html>

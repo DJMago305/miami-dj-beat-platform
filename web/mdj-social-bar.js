@@ -7,6 +7,12 @@
         if (document.getElementById('mdj-social-sticky-bar')) {
             return;
         }
+        /* Perfil DJ: contacto vive en el bloque "RESERVAR ESTE DJ" (sin duplicar WhatsApp/mail/SMS a la derecha). */
+        try {
+            if (document.body && document.body.classList.contains('dj-profile')) {
+                return;
+            }
+        } catch (e) { /* noop */ }
         const MDJ_OFFICIAL_EMAIL = window.MDB_OFFICIAL_CONTACT_EMAIL || 'miamidjbeat@gmail.com';
         const socialHTML = `
     <style>

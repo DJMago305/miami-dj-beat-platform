@@ -377,6 +377,10 @@ verify_jwt = false
 [functions.create-sft-tip-checkout]
 verify_jwt = false
 
+# The AI Booth — TTS vía ElevenLabs (clave solo en servidor; navegador usa anon key)
+[functions.booth-tts]
+verify_jwt = false
+
 # DJ autenticado: liquida comisión 10% sobre tips manuales (cargo Stripe)
 [functions.settle-sft-manual-platform-fee]
 verify_jwt = true

@@ -158,6 +158,13 @@
   }
 
   function applyPlaceholder(input) {
+    if (window.i18n && typeof window.i18n.t === 'function') {
+      var ph = window.i18n.t('header-search-placeholder');
+      if (ph) {
+        input.setAttribute('placeholder', ph);
+        return;
+      }
+    }
     var lang = (document.documentElement.getAttribute('lang') || 'en').toLowerCase();
     if (lang.indexOf('es') === 0) {
       input.setAttribute('placeholder', 'Buscar DJs, tienda, cursos, reservas…');
@@ -172,6 +179,12 @@
 
     injectStyles();
     applyPlaceholder(input);
+    if (!input.dataset.mdjLangPlaceholderBound) {
+      input.dataset.mdjLangPlaceholderBound = '1';
+      document.addEventListener('languageChanged', function () {
+        applyPlaceholder(input);
+      });
+    }
     input.setAttribute('autocomplete', 'off');
     input.setAttribute('spellcheck', 'false');
     input.setAttribute(
