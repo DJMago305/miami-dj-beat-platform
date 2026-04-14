@@ -2074,8 +2074,8 @@
                     <p class="jobs-portal-roles-mirror-label" data-i18n="jobs-portal-card-roles-label">Your roster categories</p>
                     <div class="jobs-portal-roles-mirror-values jobs-portal-roles-mirror-values--pro" aria-live="polite">—</div>
 
-                    <!-- Billing toggle -->
-                    <div style="margin-top:16px;" onclick="event.stopPropagation();">
+                    <!-- Billing toggle: do NOT stopPropagation here — it blocked selectPlan on the parent .level-portal when the user clicked billing/price/referral first, leaving selectedPlan null and "ENVIAR SOLICITUD" inert. -->
+                    <div style="margin-top:16px;">
                         <div
                             style="display:flex;border:1px solid rgba(197,160,89,0.3);border-radius:10px;overflow:hidden;margin-bottom:12px;">
                             <button id="billing-monthly-btn" onclick="setBilling('monthly')"
