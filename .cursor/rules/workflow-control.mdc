@@ -1,9 +1,15 @@
 ---
-description: Control de trabajo — evitar regresiones en auth, header, deploy y locked files
+description: Control de trabajo — alcance pactado, botones, auth, deploy; sin tocar el resto del proyecto
 alwaysApply: true
 ---
 
 # Control de trabajo (obligatorio)
+
+## Alcance y gobernanza (Capitán + Arquitecto)
+
+- El trabajo es **solo** la zona **seleccionada y pactada** en el ticket (archivo, bloque, feature). **Prohibido** cambiar otras partes del proyecto “de paso”.
+- **Acceso restringido:** no abrir archivos no mencionados para refactors, estilo o “consistencia”. El resto del repo queda **fuera de alcance** hasta que **Capitán** (dueño de producto) y **Arquitecto** (técnico) **amplíen el alcance por escrito** en la tarea.
+- **Lógica ya programada de botones y controles:** no romper `onclick`, listeners, `#header-login-btn` / Logout, `doLogout`, CTAs del header, gates de auth, checkout, ni enlaces con `data-i18n`. Si el cambio puede tocar eso, **parar** y pedir alcance explícito que incluya verificación de ese cableado.
 
 ## Antes de dar por cerrada una tarea
 

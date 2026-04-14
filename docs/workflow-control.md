@@ -6,6 +6,14 @@ La regla automática para asistentes IA está en [`.cursor/rules/workflow-contro
 
 ---
 
+## 0. Alcance pactado (Capitán + Arquitecto)
+
+- **Capitán:** define *qué* se pide (producto). **Arquitecto:** define *dónde* puede tocarse el código sin romper el resto.
+- Cada tarea debe nombrar **zona permitida** (p. ej. “solo bloque X en `jobs.html`”). Fuera de eso: **sin cambios**, salvo ampliación explícita del ticket.
+- **Protección de UI ya cableada:** botones, header (login/logout), formularios de pago y auth no se reescriben “por coherencia”; solo se tocan si el ticket lo incluye y se valida el comportamiento.
+
+---
+
 ## 1. Cierre de tarea (Definition of Done)
 
 | Paso | Acción |

@@ -24,7 +24,10 @@ EDIT ONLY targeted blocks and specific functionalities as strictly instructed by
 # MANDATORY — selected zone only (no drive-by edits)
 
 - Work is allowed **only** in what the user **explicitly selects** for this task: named file(s), feature, component, or block.
+- **Governance:** Changes must match the **zone agreed** with the **Captain** (product owner) and the **Architect** (technical lead). Anything outside that agreement is **out of scope** until they explicitly expand the ticket.
 - **Forbidden:** moving, restyling, refactoring, or “finishing” **any** area the user did **not** ask to change — including layouts, copy, nav, shared JS/CSS, or sections that are **already done / locked / frozen**.
+- **Access to the rest of the project is restricted:** do not open unrelated files for “cleanup”, do not edit shared behavior to support a local tweak unless the ticket names that shared file and the expected behavior.
+- **Programmed button / control logic — do not break:** preserve existing `onclick`, `addEventListener`, `href`, `data-*`, `id`s used by `auth.js`, `mdj-shared-header.js`, `i18n`, checkout, gates, and modals. If a change could affect those, **stop** and ask for scope that explicitly includes wiring verification.
 - Do **not** “improve consistency”, dedupe, or tidy unrelated code as part of another task.
 - If you notice a problem **outside** the selected zone, **describe it** and wait for scope expansion; do **not** fix it silently.
 
