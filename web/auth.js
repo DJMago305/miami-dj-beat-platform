@@ -5,6 +5,64 @@
  * DJ que refiere (promoción / QR / botón WEB en perfil): ?ref= en URL, o localStorage
  * tras index.html?ref= o gotoAffiliateWeb() desde dj-profile.
  */
+/** Supabase GoTrue: duplicate signup */
+function mdjIsUserAlreadyRegisteredError(err) {
+    const msg = String(err?.message || err?.error_description || '').toLowerCase();
+    return msg.includes('user already registered') || msg.includes('already been registered');
+}
+
+/** Wrong password / bad credentials on signInWithPassword */
+function mdjIsInvalidCredentialsError(err) {
+    const code = String(err?.code || err?.name || '').toLowerCase();
+    const msg = String(err?.message || err?.error_description || '').toLowerCase();
+    if (code === 'invalid_credentials' || code === 'invalid_grant') return true;
+    return msg.includes('invalid login credentials') || msg.includes('invalid_credentials');
+}
+
+/**
+ * Same contract as login.html buildPostAuthReturnUrl: ?redirect=party-planner&lead=… → ./party-planner.html?from_auth=1&…
+ * Restricts redirect slug to safe filename stem (no path / open redirect).
+ */
+function mdjBuildPostAuthReturnUrlFromQuery(search) {
+    try {
+        const qp = new URLSearchParams(search || '');
+        const raw = (qp.get('redirect') || '').trim();
+        if (!raw) return null;
+        if (!/^[a-z][a-z0-9_-]{0,80}$/i.test(raw)) return null;
+        const lead = qp.get('lead');
+        const eventType = qp.get('type');
+        const ref = qp.get('ref');
+        const dj = qp.get('dj');
+        const profileId = qp.get('id');
+        const tabRedirect = qp.get('tab');
+        const panelRedirect = qp.get('panel');
+
+        let finalUrl = `./${raw}.html?from_auth=1&`;
+        if (lead) finalUrl += `lead=${encodeURIComponent(lead)}&`;
+        if (eventType) finalUrl += `type=${encodeURIComponent(eventType)}&`;
+        if (ref) finalUrl += `ref=${encodeURIComponent(ref)}&`;
+        if (dj) finalUrl += `dj=${encodeURIComponent(dj)}&`;
+        if (profileId) finalUrl += `id=${encodeURIComponent(profileId)}&`;
+        if (tabRedirect) finalUrl += `tab=${encodeURIComponent(tabRedirect)}&`;
+        if (panelRedirect) finalUrl += `panel=${encodeURIComponent(panelRedirect)}&`;
+
+        return finalUrl.replace(/[&?]$/, '');
+    } catch (e) {
+        return null;
+    }
+}
+
+function mdjAuthT(key, esFallback, enFallback) {
+    try {
+        if (window.i18n && typeof window.i18n.t === 'function') {
+            const s = window.i18n.t(key);
+            if (s) return s;
+        }
+    } catch (e) { /* ignore */ }
+    const lang = (typeof document !== 'undefined' && document.documentElement && document.documentElement.lang || 'es').toLowerCase();
+    return lang.startsWith('en') ? enFallback : esFallback;
+}
+
 function mdjGetReferralDjId() {
     try {
         const fromUrl = new URLSearchParams(window.location.search).get('ref');
@@ -34,58 +92,84 @@ document.addEventListener('DOMContentLoaded', () => {
     const signupForm = document.getElementById('signup-form');
     const errorMsg = document.getElementById('auth-error');
 
-    function showError(msg) {
+    function showError(msg, opts) {
         if (!errorMsg) return;
-        errorMsg.textContent = msg;
+        if (opts && opts.html) {
+            errorMsg.innerHTML = msg;
+        } else {
+            errorMsg.innerHTML = '';
+            errorMsg.textContent = msg;
+        }
         errorMsg.style.display = 'block';
+        if (opts && opts.tone === 'info') {
+            errorMsg.style.color = 'var(--gold)';
+        } else {
+            errorMsg.style.color = '#ff4d4d';
+        }
     }
     function clearError() {
         if (!errorMsg) return;
         errorMsg.style.display = 'none';
+        errorMsg.innerHTML = '';
         errorMsg.textContent = '';
+        errorMsg.style.color = '#ff4d4d';
+    }
+
+    /** Misma lógica que el submit de login: interior del sistema o redirect=party-planner, etc. */
+    async function performPostAuthRedirect(db, user) {
+        const params = new URLSearchParams(window.location.search);
+        const rawRole = user?.app_metadata?.role || user?.user_metadata?.user_type || 'client';
+        const role = (rawRole === 'talent' || rawRole === 'dj') ? 'artist' : rawRole;
+
+        let targetUrl = './dj-profile.html';
+        if (role === 'admin' || role === 'manager') {
+            targetUrl = './admin-dashboard.html';
+        } else if (role === 'client') {
+            targetUrl = './client-portal.html';
+            try {
+                const { data: djRow } = await db.from('dj_profiles').select('role').eq('user_id', user.id).maybeSingle();
+                if (djRow && djRow.role !== 'client') {
+                    targetUrl = './dj-profile.html?id=' + encodeURIComponent(user.id);
+                }
+            } catch (roleFallbackErr) {
+                console.warn('[AUTH] Role fallback check failed:', roleFallbackErr);
+            }
+        } else {
+            targetUrl = './dj-profile.html?id=' + encodeURIComponent(user.id);
+        }
+
+        const postAuthFromRedirect = mdjBuildPostAuthReturnUrlFromQuery(window.location.search);
+        if (postAuthFromRedirect) {
+            window.location.assign(postAuthFromRedirect);
+            return;
+        }
+
+        const nextRaw = (params.get('next') || '').trim();
+        if (nextRaw) {
+            const nextUrl = (nextRaw.startsWith('./') || nextRaw.startsWith('/')) ? nextRaw : `./${nextRaw.replace(/^\//, '')}`;
+            window.location.assign(nextUrl);
+            return;
+        }
+
+        window.location.assign(targetUrl);
     }
 
     /** Resolves an input (email or username) to a real email for Supabase Auth. */
     async function resolveIdentity(input, db) {
         const cleanInput = input.trim();
-        if (cleanInput.includes('@')) return cleanInput;
-
-        try {
-            console.log(`[AUTH RESOLVER] Buscando identidad para: "${cleanInput}"`);
-
-            // Try DJ Profiles (Exact match, case-insensitive)
-            const { data: dj, error: djErr } = await db.from('dj_profiles')
-                .select('email, stage_name, dj_name')
-                .ilike('stage_name', cleanInput)
-                .maybeSingle();
-
-            if (djErr) {
-                console.error('[AUTH RESOLVER] Error en dj_profiles:', djErr);
-                throw new Error(`Error de Seguridad (RLS): ${djErr.message || 'Acceso denegado'}`);
-            }
-            if (dj?.email) return dj.email;
-
-            // Fallback to dj_name
-            const { data: djAlt, error: djAltErr } = await db.from('dj_profiles')
-                .select('email')
-                .ilike('dj_name', cleanInput)
-                .maybeSingle();
-
-            if (djAltErr) console.error('[AUTH RESOLVER] Error en dj_profiles (alt):', djAltErr);
-            if (djAlt?.email) return djAlt.email;
-
-            // Try Client Profiles
-            const { data: client, error: clErr } = await db.from('client_profiles')
-                .select('email')
-                .ilike('username', cleanInput)
-                .maybeSingle();
-
-            if (clErr) console.error('[AUTH RESOLVER] Error en client_profiles:', clErr);
-            if (client?.email) return client.email;
-
-        } catch (dbErr) {
-            console.warn('[AUTH SHIELD] Query fallback due to schema discrepancy:', dbErr);
+        if (!cleanInput) {
+            throw new Error('Introduce tu email o nombre de usuario.');
         }
+
+        const { data: rpcEmail, error: rpcErr } = await db.rpc('mdj_resolve_email_for_login', {
+            p_identity: cleanInput
+        });
+
+        if (rpcErr) {
+            console.error('[AUTH RESOLVER] mdj_resolve_email_for_login:', rpcErr);
+            throw new Error(rpcErr.message || 'No se pudo resolver el inicio de sesión.');
+        }
+        if (rpcEmail) return rpcEmail;
 
         throw new Error('No se encontró una cuenta vinculada a este nombre de usuario. Por favor verifica el nombre o usa tu email.');
     }
@@ -126,34 +210,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 */
 
-                const params = new URLSearchParams(window.location.search);
-                const next = params.get('next') || params.get('redirect');
-
-                // Canon of role + DB fallback to prevent wrong redirects on partially provisioned users.
-                const rawRole = user?.app_metadata?.role || user?.user_metadata?.user_type || 'client';
-                const role = (rawRole === 'talent' || rawRole === 'dj') ? 'artist' : rawRole;
-
-                let targetUrl = './dj-profile.html'; // Default artist
-                if (role === 'admin' || role === 'manager') {
-                    targetUrl = './admin-dashboard.html';
-                } else if (role === 'client') {
-                    targetUrl = './client-portal.html';
-                    try {
-                        const { data: djRow } = await db.from('dj_profiles').select('role').eq('user_id', user.id).maybeSingle();
-                        if (djRow && djRow.role !== 'client') {
-                            targetUrl = './dj-profile.html?id=' + encodeURIComponent(user.id);
-                        }
-                    } catch (roleFallbackErr) {
-                        console.warn('[AUTH] Role fallback check failed:', roleFallbackErr);
-                    }
-                } else {
-                    targetUrl = './dj-profile.html?id=' + encodeURIComponent(user.id);
-                }
-
-                window.location.assign(next ? next : targetUrl);
+                try {
+                    sessionStorage.setItem('mdj_vip_welcome_pending', '1');
+                } catch (e) { /* ignore */ }
+                await performPostAuthRedirect(db, user);
 
             } catch (err) {
-                showError(err.message || 'Error al iniciar sesión.');
+                if (mdjIsInvalidCredentialsError(err)) {
+                    const html = (window.i18n && typeof window.i18n.t === 'function')
+                        ? window.i18n.t('auth-password-invalid')
+                        : mdjAuthT(
+                            'auth-password-invalid',
+                            'Contraseña incorrecta. <a class="auth-inline-link" href="./forgot-password.html">¿No la recuerdas? Restablecer aquí</a>',
+                            'Incorrect password. <a class="auth-inline-link" href="./forgot-password.html">Forgot it? Reset here</a>'
+                        );
+                    showError(html, { tone: 'error', html: true });
+                } else {
+                    showError(err.message || 'Error al iniciar sesión.');
+                }
                 if (btn) { btn.disabled = false; btn.textContent = 'Iniciar Sesión'; }
             }
         });
@@ -253,14 +327,71 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (clientProfileErr) throw new Error(`No se pudo crear tu cuenta de cliente: ${clientProfileErr.message || 'error desconocido'}`);
                 }
 
-                // 3. Success
-                alert(`✅ ¡Cuenta creada, ${name || fullName}!\n\nRevisa tu email para confirmar tu cuenta.\nLuego inicia sesión para acceder a tu portal.`);
+                // 3. Sesión inmediata: mismo email/contraseña → interior sin pedir login otra vez (si el proyecto lo permite)
+                let userForRedirect = user;
+                if (!data.session) {
+                    const { data: siData, error: siErr } = await db.auth.signInWithPassword({ email, password });
+                    if (!siErr && siData?.user) {
+                        userForRedirect = siData.user;
+                    } else {
+                        const emLow = String(siErr?.message || '').toLowerCase();
+                        if (emLow.includes('email not confirmed') || emLow.includes('not confirmed')) {
+                            showError(
+                                mdjAuthT(
+                                    'auth-signup-confirm-email',
+                                    'Cuenta creada. Revisa tu correo para confirmar; luego entra con tu email y contraseña.',
+                                    'Account created. Check your email to confirm, then sign in with your password.'
+                                ),
+                                { tone: 'info' }
+                            );
+                            const tabLoginGo = document.getElementById('tab-login');
+                            if (tabLoginGo) tabLoginGo.click();
+                            const loginEmailGo = document.getElementById('login-email');
+                            if (loginEmailGo) loginEmailGo.value = email;
+                            if (btn) { btn.disabled = false; btn.textContent = 'Registrarme'; }
+                            return;
+                        }
+                        throw siErr || new Error('No se pudo abrir sesión automáticamente.');
+                    }
+                }
 
-                // Switch to login tab
-                const tabLogin = document.getElementById('tab-login');
-                if (tabLogin) tabLogin.click();
+                showError(
+                    mdjAuthT(
+                        'auth-welcome-new',
+                        '¡Gracias por unirte a Miami DJ Beat! Ya estamos procesando tu solicitud.',
+                        'Thanks for joining Miami DJ Beat! We\'re processing your request.'
+                    ),
+                    { tone: 'info' }
+                );
+                if (btn) { btn.disabled = false; btn.textContent = 'Registrarme'; }
+
+                try {
+                    sessionStorage.setItem('mdj_vip_welcome_pending', '1');
+                } catch (e) { /* ignore */ }
+                setTimeout(function () {
+                    void performPostAuthRedirect(db, userForRedirect);
+                }, 1000);
 
             } catch (err) {
+                if (mdjIsUserAlreadyRegisteredError(err)) {
+                    const em = document.getElementById('signup-email')?.value.trim() || '';
+                    const loginEmailEl = document.getElementById('login-email');
+                    if (loginEmailEl) loginEmailEl.value = em;
+                    showError(
+                        mdjAuthT(
+                            'auth-already-member',
+                            '¡Bienvenido de nuevo! Introduce tu contraseña para asegurar tu fecha.',
+                            'Welcome back! Enter your password to secure your event date.'
+                        ),
+                        { tone: 'info' }
+                    );
+                    const tabLoginEl = document.getElementById('tab-login');
+                    if (tabLoginEl) tabLoginEl.click();
+                    if (btn) { btn.disabled = false; btn.textContent = 'Registrarme'; }
+                    const pwEl = document.getElementById('login-password');
+                    if (pwEl) setTimeout(function () { pwEl.focus(); }, 0);
+                    return;
+                }
                 showError(err.message || 'Error al crear la cuenta.');
                 if (btn) { btn.disabled = false; btn.textContent = 'Registrarme'; }
             }
@@ -281,22 +412,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const loginBtn = document.getElementById('header-login-btn');
             const loginBtnMob = document.getElementById('header-login-btn-mobile');
             const authZone = document.getElementById('header-auth-zone');
-
-            console.log('[AUTH HEADER]', {
-              hasSession: !!session,
-              loginBtn: !!document.getElementById('header-login-btn'),
-              authZone: !!document.getElementById('header-auth-zone'),
-              navAvatarImg: !!document.getElementById('navAvatarImg')
-            });
+            const headerDelegated = window.__MDJ_HEADER_SESSION_OWNER && document.getElementById('mainHeader');
 
             if (session) {
-                // UI Core Toggles (Morph Login to Logout — labels from i18n btn-logout)
-                const logoutLabel = (window.i18n && typeof window.i18n.t === 'function')
-                    ? window.i18n.t('btn-logout')
-                    : ((document.documentElement && document.documentElement.lang === 'es') ? 'SALIR' : 'LOGOUT');
+                if (!headerDelegated) {
+                // UI Core Toggles (Morph Login to Logout — copy via window.updateAuthButtons + document.lang)
                 if (loginBtn) {
                     loginBtn.setAttribute('data-i18n', 'btn-logout');
-                    loginBtn.textContent = logoutLabel || 'LOGOUT';
                     loginBtn.classList.remove('gold');
                     loginBtn.classList.add('danger');
                     loginBtn.href = '#';
@@ -307,7 +429,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (loginBtnMob) {
                     loginBtnMob.setAttribute('data-i18n', 'btn-logout');
-                    loginBtnMob.textContent = logoutLabel || 'LOGOUT';
                     loginBtnMob.classList.remove('gold');
                     loginBtnMob.classList.add('danger');
                     loginBtnMob.href = '#';
@@ -334,6 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }).catch(e => console.warn('[AUTH] Error loading avatar:', e.message));
                 }
+                }
 
                 // ── Inyección Manager (Productividad Interna) ──
                 const role = session.user?.app_metadata?.role || session.user?.user_metadata?.user_type || 'client';
@@ -350,13 +472,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
             } else {
-                // Revert to strict unconnected state (Layout-Safe) — btn-login from i18n
-                const loginLabel = (window.i18n && typeof window.i18n.t === 'function')
-                    ? window.i18n.t('btn-login')
-                    : ((document.documentElement && document.documentElement.lang === 'es') ? 'ENTRAR' : 'LOGIN');
+                if (!headerDelegated) {
+                // Revert to strict unconnected state (Layout-Safe) — copy via updateAuthButtons
                 if (loginBtn) {
                     loginBtn.setAttribute('data-i18n', 'btn-login');
-                    loginBtn.textContent = loginLabel || 'LOGIN';
+                    loginBtn.classList.remove('danger');
+                    loginBtn.classList.add('gold');
                     loginBtn.href = './login.html';
                     loginBtn.onclick = null;
                     loginBtn.style.visibility = 'visible';
@@ -365,7 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (loginBtnMob) {
                     loginBtnMob.setAttribute('data-i18n', 'btn-login');
-                    loginBtnMob.textContent = loginLabel || 'LOGIN';
+                    loginBtnMob.classList.remove('danger');
                     loginBtnMob.href = './login.html';
                     loginBtnMob.onclick = null;
                     loginBtnMob.style.visibility = 'visible';
@@ -377,7 +498,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     authZone.style.opacity = '0';
                     authZone.style.pointerEvents = 'none';
                 }
+                }
                 document.getElementById('manager-link')?.remove();
+            }
+            if (typeof window.updateAuthButtons === 'function') {
+                window.updateAuthButtons();
             }
         };
 

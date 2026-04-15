@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>My Profile — Miami DJ Beat</title>
   <meta name="description" content="Manage your personal account information." />
-  <link rel="stylesheet" href="./styles.css?v=20260419-header-global" />
+  <link rel="stylesheet" href="./styles.css?v=20260415-TOTAL-SYNC" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./supabase-config.js?v=20260226-1"></script>
   <style>
@@ -354,19 +354,50 @@
           document.getElementById('ui-email').textContent = session.user.email;
 
           if (meta.phone) document.getElementById('ui-phone').textContent = meta.phone;
-          
+
+          const addrFromMeta = {
+            address_street: meta.address_street,
+            address_apt: meta.address_apt,
+            address_city: meta.address_city,
+            address_state: meta.address_state,
+            address_zip: meta.address_zip,
+            address_country: meta.address_country
+          };
+          try {
+            const role = (liveUser?.app_metadata && liveUser.app_metadata.role) ||
+              (session.user.app_metadata && session.user.app_metadata.role) ||
+              meta.user_type || meta.role || 'client';
+            const isArtist = role === 'artist' || role === 'dj' || role === 'talent';
+            if (!isArtist) {
+              const { data: cp } = await db.from('client_profiles')
+                .select('city, address_street, address_apt, address_state, address_zip, address_country')
+                .eq('user_id', session.user.id)
+                .maybeSingle();
+              if (cp) {
+                if (cp.address_street != null && cp.address_street !== '') addrFromMeta.address_street = cp.address_street;
+                if (cp.address_apt != null && cp.address_apt !== '') addrFromMeta.address_apt = cp.address_apt;
+                if (cp.city != null && cp.city !== '') addrFromMeta.address_city = cp.city;
+                if (cp.address_state != null && cp.address_state !== '') addrFromMeta.address_state = cp.address_state;
+                if (cp.address_zip != null && cp.address_zip !== '') addrFromMeta.address_zip = cp.address_zip;
+                if (cp.address_country != null && cp.address_country !== '') addrFromMeta.address_country = cp.address_country;
+              }
+            }
+          } catch (e) {
+            console.warn('[PROFILE] client_profiles address merge', e);
+          }
+
           // Formateo de dirección unificada estilo Apple
           const addrParts = [];
-          if (meta.address_street) addrParts.push(meta.address_street);
-          if (meta.address_apt) addrParts.push(meta.address_apt);
-          
+          if (addrFromMeta.address_street) addrParts.push(addrFromMeta.address_street);
+          if (addrFromMeta.address_apt) addrParts.push(addrFromMeta.address_apt);
+
           const regionalParts = [];
-          if (meta.address_city) regionalParts.push(meta.address_city);
-          if (meta.address_state) regionalParts.push(meta.address_state);
-          if (meta.address_zip) regionalParts.push(meta.address_zip);
+          if (addrFromMeta.address_city) regionalParts.push(addrFromMeta.address_city);
+          if (addrFromMeta.address_state) regionalParts.push(addrFromMeta.address_state);
+          if (addrFromMeta.address_zip) regionalParts.push(addrFromMeta.address_zip);
           if (regionalParts.length > 0) addrParts.push(regionalParts.join(' ')); // e.g. "Miami FL 33132"
-          
-          if (meta.address_country) addrParts.push(meta.address_country);
+
+          if (addrFromMeta.address_country) addrParts.push(addrFromMeta.address_country);
 
           if (addrParts.length > 0) {
             document.getElementById('ui-address').textContent = addrParts.join(', ');
@@ -427,7 +458,7 @@
     </div>
     <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
     <script src="./header-smart-search.js?v=20260411-search-google"></script>
-    <script src="./mdj-shared-header.js?v=20260414-mobile-hamburger"></script>
+    <script src="./mdj-shared-header.js?v=20260415-TOTAL-SYNC"></script>
   <script src="./mdj-social-bar.js?v=20260413-scrollhide"></script>
 </body>
 

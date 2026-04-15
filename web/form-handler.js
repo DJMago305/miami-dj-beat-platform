@@ -18,6 +18,14 @@ document.addEventListener('DOMContentLoaded', function () {
         form.addEventListener('submit', async function (event) {
             event.preventDefault();
 
+            if (form.dataset && form.dataset.mdjLeadSent === '1') {
+                if (status) {
+                    status.style.display = 'block';
+                    status.innerHTML = '<span style="color:var(--gold);">✓ Esta solicitud ya fue enviada.</span> <small style="display:block;margin-top:8px;opacity:.9;">Usa <strong>Crear Cuenta y Personalizar</strong> abajo con el mismo email, o espera el contacto del equipo.</small>';
+                }
+                return;
+            }
+
             // UI feedback
             if (submitBtn) {
                 submitBtn.disabled = true;
@@ -146,18 +154,42 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // ── 4. UX: show success / error ───────────────────────────
             if (!dbError || leadId || formspreeOk) {
-                // Success
+                // Success — NO reset: datos visibles + sessionStorage para signup
                 const eventType = formData.event_type || 'Other';
                 const refParam = formData.referred_by ? `&ref=${encodeURIComponent(formData.referred_by)}` : '';
                 const djParam = formData.requested_talent ? `&dj=${encodeURIComponent(formData.requested_talent)}` : '';
+                const emailQ = formData.email ? `&prefill_email=${encodeURIComponent(formData.email)}` : '';
+
+                let combinedDate = formData.event_date || null;
+                if (!combinedDate && formData.event_year && formData.event_month && formData.event_day) {
+                    combinedDate = `${formData.event_year}-${formData.event_month}-${formData.event_day}`;
+                }
+
+                try {
+                    sessionStorage.setItem('mdj_lead_prefill_v1', JSON.stringify({
+                        name: (formData.name || '').trim(),
+                        email: (formData.email || '').trim(),
+                        phone: (formData.phone || '').trim(),
+                        event_type: formData.event_type || '',
+                        event_date: combinedDate || '',
+                        location: (formData.location || '').trim(),
+                        budget: (formData.budget || '').trim(),
+                        referred_by: (formData.referred_by || '').trim(),
+                        lead_id: leadId,
+                        source: source,
+                        ts: Date.now()
+                    }));
+                } catch (e) { /* ignore quota */ }
+
+                form.dataset.mdjLeadSent = '1';
 
                 if (status) {
                     status.innerHTML = `
                         <div class="success-message">
                             <span style="font-size:24px;">✅</span>
                             <p>¡Solicitud recibida!</p>
-                            <small>Para elegir tus talentos y personalizar tu evento, primero crea tu cuenta segura.</small>
-                            <a href="login.html?mode=signup&user_type=client&redirect=party-planner&type=${encodeURIComponent(eventType)}${leadId ? `&lead=${leadId}` : ''}${refParam}${djParam}"
+                            <small style="display:block;line-height:1.45;opacity:.95;">Tus datos siguen en el formulario para que los revises. El siguiente paso es opcional: crea tu cuenta con el <strong>mismo email</strong> y personaliza talentos y detalles en el portal.</small>
+                            <a href="login.html?mode=signup&user_type=client&redirect=party-planner&from_contact=1&type=${encodeURIComponent(eventType)}${leadId ? `&lead=${leadId}` : ''}${refParam}${djParam}${emailQ}"
                                class="btn primary" style="margin-top:15px;display:inline-block;">
                                 🔐 Crear Cuenta y Personalizar
                             </a>
@@ -166,15 +198,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     status.style.color = 'var(--accent2)';
                 }
 
-                form.reset();
                 if (submitBtn) {
-                    submitBtn.textContent = submitBtn._origText || 'Send';
+                    submitBtn.textContent = '✓ Solicitud enviada';
                     submitBtn.disabled = false;
                 }
-                setTimeout(() => {
-                    form.style.opacity = '0.5';
-                    form.style.pointerEvents = 'none';
-                }, 500);
 
             } else {
                 // Error

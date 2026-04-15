@@ -26,29 +26,37 @@ const i18n = {
     },
 
     updateUI() {
-        const primary = translations[this.currentLang];
-        if (!primary) return;
+        /* Siempre: <html lang> + pills auth (data-auth-btn). Nunca abortar si translations[lang] falta. */
         if (document.documentElement) {
             document.documentElement.lang = this.currentLang === 'es' ? 'es' : 'en';
         }
 
-        document.querySelectorAll('[data-i18n]').forEach(el => {
-            const key = el.getAttribute('data-i18n');
-            const text = this.t(key);
-            if (text) el.innerHTML = text;
-        });
+        const primary = translations[this.currentLang];
+        if (primary) {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                if (el.hasAttribute && el.hasAttribute('data-auth-btn')) return;
+                const key = el.getAttribute('data-i18n');
+                const text = this.t(key);
+                if (text) el.innerHTML = text;
+            });
 
-        // Placeholder support
-        document.querySelectorAll('[data-i18n-hold]').forEach(el => {
-            const key = el.getAttribute('data-i18n-hold');
-            const text = this.t(key);
-            if (text) el.placeholder = text;
-        });
+            document.querySelectorAll('[data-i18n-hold]').forEach(el => {
+                const key = el.getAttribute('data-i18n-hold');
+                const text = this.t(key);
+                if (text) el.placeholder = text;
+            });
+        }
 
-        // Update active state on switchers
         document.querySelectorAll('.lang-btn').forEach(btn => {
             btn.classList.toggle('active', btn.getAttribute('data-lang') === this.currentLang);
         });
+
+        if (typeof window.updateAuthButtons === 'function') {
+            window.updateAuthButtons();
+            requestAnimationFrame(() => {
+                if (typeof window.updateAuthButtons === 'function') window.updateAuthButtons();
+            });
+        }
     },
 
     setupSwitchers() {

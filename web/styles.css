@@ -255,15 +255,23 @@ a:hover {
   }
 
   /* Espaciado entre ítems alineado con .dj-owner-tabs .dj-tab-btn (padding lateral, sin gap extra) */
+  /* NO-STACKING POLICY (desktop): una sola fila; sin flex-wrap; scroll horizontal si hiciera falta. */
   body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav.nav.top-nav {
     position: relative;
-    flex-wrap: wrap;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
     justify-content: center;
-    gap: 0;
-    row-gap: 4px;
-    padding: 4px 12px 14px;
-    max-width: min(1180px, 100%);
+    align-items: center;
+    column-gap: clamp(6px, 1.1vw, 14px);
+    row-gap: 0 !important;
+    padding: 4px clamp(8px, 1.2vw, 24px) 14px;
+    max-width: min(1320px, 100%);
     margin: 0 auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(197, 160, 89, 0.35) transparent;
   }
 
   body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav.nav.top-nav::after {
@@ -292,18 +300,27 @@ a:hover {
     -webkit-backdrop-filter: none !important;
     border: none !important;
     border-radius: 0 !important;
-    min-width: 0 !important;
-    padding: 5px clamp(12px, 1.4vw, 20px) 11px !important;
+    max-width: none;
+    padding: 5px clamp(7px, 1.05vw, 16px) 11px !important;
     box-shadow: none !important;
-    display: inline-block !important;
+    display: inline-flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: center !important;
     position: relative;
-    font-size: clamp(14px, 1.05vw, 16px) !important;
+    font-size: clamp(13px, 1vw, 16px) !important;
     line-height: 1.12 !important;
     font-weight: 800 !important;
-    letter-spacing: 0.12em !important;
+    letter-spacing: 0.1em !important;
     text-transform: uppercase !important;
     color: rgba(245, 236, 220, 0.82) !important;
     transition: color 0.2s ease, text-shadow 0.2s ease;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    min-width: max-content !important;
+    word-break: keep-all;
+    overflow-wrap: normal;
   }
 
   body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav.nav.top-nav a[data-i18n='nav-shop'],
@@ -460,15 +477,20 @@ a:hover {
   }
 
   body:not(.page-home):not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainHeader #mainNav.nav.top-nav {
+    flex-direction: row !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
     justify-content: center;
+    column-gap: clamp(6px, 1.1vw, 14px);
     row-gap: 0 !important;
-    padding: 8px clamp(14px, 2.5vw, 40px) !important;
+    padding: 8px clamp(8px, 1.5vw, 32px) !important;
     margin: 0 auto !important;
     max-height: 88px !important;
+    max-width: min(1320px, 100%);
     overflow-x: auto;
     overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(197, 160, 89, 0.35) transparent;
   }
 
   body:not(.page-home):not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainHeader #mainNav.nav.top-nav::after {
@@ -476,9 +498,20 @@ a:hover {
   }
 
   body:not(.page-home):not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainHeader #mainNav.nav.top-nav a {
-    padding: 14px clamp(14px, 1.5vw, 22px) !important;
-    font-size: clamp(15px, 1.12vw, 18px) !important;
+    display: inline-flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 12px clamp(7px, 1.05vw, 18px) !important;
+    font-size: clamp(13px, 1.05vw, 17px) !important;
     line-height: 1.2 !important;
+    letter-spacing: 0.1em !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    min-width: max-content !important;
+    word-break: keep-all;
+    overflow-wrap: normal;
   }
 
   body:not(.page-home):not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainHeader #mainNav.nav.top-nav a.active::after {

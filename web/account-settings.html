@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Account Settings — Miami DJ Beat</title>
   <meta name="description" content="Manage your account settings and preferences." />
-  <link rel="stylesheet" href="./styles.css?v=20260419-header-global" />
+  <link rel="stylesheet" href="./styles.css?v=20260415-TOTAL-SYNC" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./supabase-config.js?v=20260226-1"></script>
   <style>
@@ -120,14 +120,15 @@
       padding: 0;
     }
 
-    /* Centrado de Pantalla y Prevención de Solapamiento con Header */
+    /* Centrado de Pantalla y Prevención de Solapamiento con Header (franja VIP + #mainNav) */
     .account-layout {
       max-width: 680px;
-      margin: 160px auto 80px auto; /* 160px despeja el header global */
-      padding: 0 20px;
+      margin: 196px auto 80px auto;
+      padding: 12px 20px 0;
       display: flex;
       flex-direction: column;
       align-items: center;
+      box-sizing: border-box;
     }
 
     /* System Cards Base */
@@ -244,6 +245,20 @@
       padding-right: 40px;
     }
 
+    select.sys-input.sys-select-gold,
+    input.sys-input.sys-select-gold {
+      border: 1px solid rgba(197, 160, 89, 0.38);
+      background: rgba(12, 12, 14, 0.96);
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    select.sys-input.sys-select-gold:focus,
+    input.sys-input.sys-select-gold:focus {
+      border-color: rgba(197, 160, 89, 0.65);
+      background: #1a1a1c;
+      box-shadow: 0 0 0 1px rgba(197, 160, 89, 0.15);
+    }
+
 
     /* Avatar specific group */
     .avatar-group {
@@ -307,6 +322,25 @@
       color: #000 !important;
       box-shadow: 0 0 15px rgba(212, 175, 55, 0.6) !important;
       transform: scale(1.05) !important;
+    }
+
+    #save-personal-feedback {
+      width: 100%;
+      margin: 0 0 10px 0;
+      font-size: 13px;
+      font-weight: 600;
+      min-height: 1.25em;
+      text-align: right;
+      letter-spacing: 0.02em;
+    }
+
+    #save-personal-feedback.success {
+      color: rgba(212, 175, 55, 0.95);
+      text-shadow: 0 0 12px rgba(212, 175, 55, 0.35);
+    }
+
+    #save-personal-feedback.err {
+      color: rgba(255, 120, 120, 0.95);
     }
 
 
@@ -698,8 +732,12 @@
             <input type="text" class="sys-input" id="input-fname" placeholder="Your full name" />
           </div>
           <div class="form-group">
-            <label>Username (Optional)</label>
-            <input type="text" class="sys-input" id="input-username" placeholder="@username" />
+            <label data-i18n="account-username-label">Nombre de usuario / Username</label>
+            <input type="text" class="sys-input" id="input-username" placeholder="@YourHandle" maxlength="32"
+              autocomplete="nickname" spellcheck="false" />
+            <p class="fineprint" style="margin-top:6px;font-size:11px;opacity:0.55;line-height:1.4;" data-i18n="account-username-hint">
+              Shown next to your avatar in the header. Your legal name stays off the bar until you leave this empty—then we show your short name.
+            </p>
           </div>
         </div>
 
@@ -731,28 +769,36 @@
         <div class="form-row" style="margin-top: 16px;">
           <div class="form-group">
             <label>City</label>
-            <input type="text" class="sys-input" id="input-city" placeholder="e.g. Cupertino" />
+            <input type="text" class="sys-input sys-select-gold" id="input-city" placeholder="e.g. Miami" />
           </div>
-          <div class="form-group">
+          <div class="form-group" id="wrap-state-us">
+            <label>State</label>
+            <select id="select-state-us" class="sys-input sys-select-gold" aria-label="State"></select>
+            <p class="fineprint" style="margin:4px 0 0;font-size:11px;opacity:0.5;">With the list open, press a letter to jump (e.g. F → Florida). Press the same letter again to cycle when several states match (e.g. T → Tennessee / Texas).</p>
+          </div>
+          <div class="form-group" id="wrap-state-intl" style="display:none;">
             <label>State / Province</label>
-            <input type="text" class="sys-input" id="input-state" placeholder="e.g. CA" />
+            <input type="text" class="sys-input sys-select-gold" id="input-state-intl" placeholder="e.g. Ontario" />
           </div>
         </div>
 
         <div class="form-row" style="margin-top: 16px;">
           <div class="form-group">
             <label>ZIP / Postal Code</label>
-            <input type="text" class="sys-input" id="input-zip" placeholder="e.g. 95014" />
+            <input type="text" class="sys-input sys-select-gold" id="input-zip" placeholder="e.g. 33101" maxlength="12"
+              title="US: 5 digits — Miami-area ZIPs can auto-fill city &amp; state." />
           </div>
           <div class="form-group">
             <label>Country</label>
-            <input type="text" class="sys-input" id="input-country" placeholder="e.g. United States" />
+            <input type="search" class="sys-input sys-select-gold" id="input-country-filter" placeholder="Filter countries…" autocomplete="off" />
+            <select id="select-country" class="sys-input sys-select-gold" aria-label="Country"></select>
           </div>
         </div>
       </div>
 
-      <div class="system-card-footer">
-        <button class="sys-btn primary" id="btn-save-personal">Save</button>
+      <div class="system-card-footer" style="flex-direction: column; align-items: flex-end;">
+        <p id="save-personal-feedback" class="fineprint" style="display: none;" aria-live="polite"></p>
+        <button type="button" class="sys-btn primary" id="btn-save-personal">Save</button>
       </div>
     </div>
 
@@ -925,7 +971,29 @@
   <script src="./auth.js"></script>
   <script src="./translations.js"></script>
   <script src="./i18n.js"></script>
+  <script src="./account-address-data.js?v=20260429"></script>
+  <script src="./account-address-selectors.js?v=20260429"></script>
   <script>
+    function mdjNormalizeUsernameForStorage(s) {
+      if (s == null || typeof s !== 'string') return null;
+      var t = s.trim();
+      if (!t) return null;
+      if (t.charAt(0) === '@') t = t.slice(1).trim();
+      return t || null;
+    }
+    /** @returns {{ ok: boolean, value: string|null, msg?: string }} */
+    function mdjValidateUsernameOptional(s) {
+      var n = mdjNormalizeUsernameForStorage(s);
+      if (!n) return { ok: true, value: null };
+      if (!/^[a-zA-Z0-9_]{3,30}$/.test(n)) {
+        return {
+          ok: false,
+          msg: 'Username: 3–30 characters, letters, numbers, or underscore only (optional leading @ in the field).'
+        };
+      }
+      return { ok: true, value: n };
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
       // Mobile Menu Toggle
       const mobileBtn = document.getElementById('mobileMenuBtn');
@@ -946,47 +1014,130 @@
 
           // --- Controladores Aislados de Roles (Fase 1: Preparación) ---
           window.handleClientSettingsSubmit = async (uid, data, dbInstance) => {
+            var email = null;
+            var metaFromAuth = {};
+            try {
+              var gu = await dbInstance.auth.getUser();
+              if (gu && gu.data && gu.data.user) {
+                email = gu.data.user.email || null;
+                metaFromAuth = gu.data.user.user_metadata || {};
+              }
+            } catch (ge) { /* non-fatal */ }
+            var existing = null;
+            try {
+              var er = await dbInstance.from('client_profiles').select('*').eq('user_id', uid).maybeSingle();
+              existing = er && er.data ? er.data : null;
+            } catch (re) { /* non-fatal */ }
+            var avatarFromJwt =
+              (metaFromAuth.avatar_url || metaFromAuth.picture || (data && data.avatar_url) || '').trim();
+            var stableAvatar = avatarFromJwt ? avatarFromJwt.split('?')[0] : '';
+
+            var row = Object.assign({}, existing || {}, {
+              user_id: uid,
+              full_name: data.full_name || null,
+              username:
+                data.username === undefined || data.username === null || data.username === ''
+                  ? null
+                  : mdjNormalizeUsernameForStorage(String(data.username)),
+              phone: data.phone || null,
+              email: email || (existing && existing.email) || null,
+              city: data.address_city || null,
+              address_street: data.address_street || null,
+              address_apt: data.address_apt || null,
+              address_state: data.address_state || null,
+              address_zip: data.address_zip || null,
+              address_country: data.address_country || null
+            });
+            if (stableAvatar) {
+              row.avatar_url = stableAvatar;
+              row.photo_url = stableAvatar;
+            }
             const { error: clientErr } = await dbInstance.from('client_profiles')
-              .update({ 
-                 full_name: data.full_name, 
-                 username: data.username, 
-                 phone: data.phone, 
-                 city: data.address_city 
-              }).eq('user_id', uid);
-            if(clientErr) console.warn('[SYNC DB ERROR CLIENT]', clientErr);
+              .upsert(row, { onConflict: 'user_id' });
+            if (clientErr) {
+              console.error('[MDJ-SYSTEM] client_profiles upsert FAILED', clientErr.code || '', clientErr.message, clientErr);
+              throw clientErr;
+            }
           };
 
           window.handleArtistSettingsSubmit = async (uid, data, dbInstance) => {
+            var un =
+              data.username === undefined || data.username === null || data.username === ''
+                ? null
+                : mdjNormalizeUsernameForStorage(String(data.username));
             const { error: artistErr } = await dbInstance.from('dj_profiles')
-              .update({ 
-                 dj_name: data.full_name, 
-                 stage_name: data.username, 
-                 phone: data.phone, 
-                 city: data.address_city 
+              .update({
+                dj_name: data.full_name,
+                username: un,
+                phone: data.phone,
+                city: data.address_city
               }).eq('user_id', uid);
-            if(artistErr) console.warn('[SYNC DB ERROR ARTIST]', artistErr);
+            if (artistErr) {
+              console.error('[MDJ-SYSTEM] dj_profiles update FAILED', artistErr);
+              throw artistErr;
+            }
           };
           // --------------------------------------------------------------
 
           if (meta.full_name) document.getElementById('input-fname').value = meta.full_name;
-          if (meta.username) document.getElementById('input-username').value = meta.username;
 
           document.getElementById('input-email').value = session.user.email;
 
           if (meta.phone) document.getElementById('input-phone').value = meta.phone;
           
-          if (meta.address_street) document.getElementById('input-street').value = meta.address_street;
-          if (meta.address_apt) document.getElementById('input-apt').value = meta.address_apt;
-          if (meta.address_city) document.getElementById('input-city').value = meta.address_city;
-          if (meta.address_state) document.getElementById('input-state').value = meta.address_state;
-          if (meta.address_zip) document.getElementById('input-zip').value = meta.address_zip;
-          if (meta.address_country) document.getElementById('input-country').value = meta.address_country;
+          var addrMerged = {
+            address_street: meta.address_street,
+            address_apt: meta.address_apt,
+            address_city: meta.address_city,
+            address_state: meta.address_state,
+            address_zip: meta.address_zip,
+            address_country: meta.address_country
+          };
+          var cp = null;
+          try {
+            var cpRes = await db.from('client_profiles').select('*').eq('user_id', session.user.id).maybeSingle();
+            cp = cpRes && cpRes.data ? cpRes.data : null;
+            if (cp) {
+              if (cp.address_street != null && cp.address_street !== '') addrMerged.address_street = cp.address_street;
+              if (cp.address_apt != null && cp.address_apt !== '') addrMerged.address_apt = cp.address_apt;
+              if (cp.city != null && cp.city !== '') addrMerged.address_city = cp.city;
+              if (cp.address_state != null && cp.address_state !== '') addrMerged.address_state = cp.address_state;
+              if (cp.address_zip != null && cp.address_zip !== '') addrMerged.address_zip = cp.address_zip;
+              if (cp.address_country != null && cp.address_country !== '') addrMerged.address_country = cp.address_country;
+            }
+          } catch (cpErr) { /* non-fatal */ }
+          try {
+            var uEl = document.getElementById('input-username');
+            if (uEl) {
+              if (cp && cp.username && String(cp.username).trim()) {
+                uEl.value = String(cp.username).trim();
+              } else {
+                var djU = await db.from('dj_profiles').select('username').eq('user_id', session.user.id).maybeSingle();
+                if (djU && djU.data && djU.data.username && String(djU.data.username).trim()) {
+                  uEl.value = String(djU.data.username).trim();
+                } else if (meta.username) {
+                  uEl.value = meta.username;
+                }
+              }
+            }
+          } catch (uHydrate) { /* non-fatal */ }
+          if (typeof window.mdjInitAccountAddressSelectors === 'function') {
+            window.mdjInitAccountAddressSelectors();
+          }
+          if (typeof window.mdjHydrateAccountAddress === 'function') {
+            window.mdjHydrateAccountAddress(addrMerged);
+          }
 
-          // -- Avatar Bind Initial Render
-          if (meta.avatar_url) {
+          // -- Avatar Bind Initial Render (JWT + client_profiles)
+          var initialAvatarSrc =
+            (meta.avatar_url || meta.picture || '').trim() ||
+            (cp && ((cp.avatar_url || cp.photo_url || '').trim())) ||
+            '';
+          if (initialAvatarSrc) {
             const avContainer = document.getElementById('avatar-preview-container');
             if (avContainer) {
-              avContainer.innerHTML = `<img src="${meta.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+              const safe = String(initialAvatarSrc).replace(/"/g, '&quot;');
+              avContainer.innerHTML = `<img src="${safe}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
               avContainer.style.border = 'none';
             }
           }
@@ -1005,6 +1156,15 @@
             fileInput.addEventListener('change', async (e) => {
               const file = e.target.files[0];
               if (!file) return;
+
+              var uploadWatchdog = setTimeout(function () {
+                if (btnPhoto.textContent === 'Uploading...' && btnPhoto.disabled) {
+                  console.error('[MDJ-SYSTEM] avatar upload watchdog: 90s timeout — reset UI');
+                  btnPhoto.textContent = 'Upload Failed';
+                  btnPhoto.disabled = false;
+                  setTimeout(function () { btnPhoto.textContent = 'Change Photo'; }, 4000);
+                }
+              }, 90000);
 
               // 1. Instant Local Preview
               const previewUrl = URL.createObjectURL(file);
@@ -1026,16 +1186,20 @@
                   .from('avatars')
                   .upload(filePath, file, { upsert: true, cacheControl: '3600' });
 
-                if (uploadError) throw uploadError;
+                if (uploadError) {
+                  console.error('[MDJ-SYSTEM] storage upload FAILED', uploadError.message || uploadError, uploadError);
+                  throw uploadError;
+                }
 
                 // 3. Atrapar URL final
                 const { data: publicData } = db.storage.from('avatars').getPublicUrl(filePath);
                 if (!publicData) throw new Error("No se pudo obtener URL pública");
 
-                // Inyectar hash temporal dinámico en el query param para reventar caché visual inmediatamente
-                const finalPublicUrl = publicData.publicUrl + '?v=' + Date.now();
+                var basePublicUrl = publicData.publicUrl;
+                // Bust cache in browser + JWT metadata; store stable base URL in client_profiles
+                const finalPublicUrl = basePublicUrl + '?v=' + Date.now();
 
-                // 🚀 OPTIMIZACIÓN EXTREMA: Caché sincrónico inmediato ultra-seguro (evita robo de token auth y latencia)
+                // Refresh JWT metadata + VIP header; persist stable URL in client_profiles / dj_profiles
                 const { data: { session: freshSession } } = await db.auth.getSession();
                 const sessionUser = freshSession?.user || session.user;
                 const fallbackMeta = sessionUser?.user_metadata || {};
@@ -1043,68 +1207,163 @@
                 const { error: updateError } = await db.auth.updateUser({
                   data: Object.assign({}, fallbackMeta, { avatar_url: finalPublicUrl })
                 });
-                if (updateError) throw updateError;
+                if (updateError) {
+                  console.error('[MDJ-SYSTEM] auth.updateUser avatar FAILED', updateError);
+                  throw updateError;
+                }
+                try {
+                  await db.auth.refreshSession();
+                } catch (rsErr) {
+                  console.error('[MDJ-SYSTEM] auth.refreshSession after avatar', rsErr);
+                }
 
-                // UPDATE THE GLOBAL NAVBAR AVATAR IMMEDIATELY!
-                const globalNavAvatars = document.querySelectorAll('.avatar, #accountBtn .avatar, #navAvatarImg');
-                globalNavAvatars.forEach(av => {
-                    if(av) av.src = finalPublicUrl;
-                });
-
-                // 5. Persistencia profunda en Base de Datos para asegurar la restauración
-                const rRole = sessionUser?.app_metadata?.role || fallbackMeta.user_type || 'client';
-                if (rRole === 'dj') {
-                   const { error: djErr } = await db.from('dj_profiles').update({ photo_url: finalPublicUrl }).eq('user_id', sessionUser.id);
-                   if (djErr) console.warn('[SYNC AVATAR DJ]', djErr);
+                // Header VIP: sustituir iniciales por foto al instante (sin esperar a checkSessionForNav)
+                if (typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
+                  window.mdjHeaderVipApplyPhotoUrl(basePublicUrl);
                 } else {
-                   // Intento seguro de backup para persistencia de cliente por si existe columna en la BD
-                   const { error: clErr } = await db.from('client_profiles').update({ photo_url: finalPublicUrl }).eq('user_id', sessionUser.id);
-                   if (clErr) console.warn('[SYNC AVATAR CLIENT]', clErr);
+                  document.querySelectorAll('img.avatar, img.mdj-header-vip-avatar, #navAvatarImg').forEach(function (av) {
+                    if (av) av.src = finalPublicUrl;
+                  });
+                }
+
+                // 5. Persistencia: usar fila dj_profiles como verdad (no solo app_metadata.role, que puede desalinearse)
+                var persistAsArtist = false;
+                try {
+                  var djPeek = await db.from('dj_profiles').select('role').eq('user_id', sessionUser.id).maybeSingle();
+                  var djRole = djPeek && djPeek.data && djPeek.data.role ? String(djPeek.data.role).toLowerCase() : '';
+                  if (djRole && djRole !== 'client') persistAsArtist = true;
+                } catch (djPeekErr) { /* non-fatal */ }
+
+                if (persistAsArtist) {
+                  const { error: djErr } = await db.from('dj_profiles').update({ photo_url: basePublicUrl }).eq('user_id', sessionUser.id);
+                  if (djErr) console.error('[MDJ-SYSTEM] dj_profiles photo_url FAILED', djErr);
+                } else {
+                  var exRow = null;
+                  try {
+                    var exRes = await db.from('client_profiles').select('*').eq('user_id', sessionUser.id).maybeSingle();
+                    exRow = exRes && exRes.data ? exRes.data : null;
+                  } catch (exE) { /* non-fatal */ }
+                  var mergedAv = Object.assign({}, exRow || {}, {
+                    user_id: sessionUser.id,
+                    email: (sessionUser.email || (exRow && exRow.email)) || null,
+                    photo_url: basePublicUrl,
+                    avatar_url: basePublicUrl
+                  });
+                  const { error: clErr } = await db.from('client_profiles').upsert(mergedAv, { onConflict: 'user_id' });
+                  if (clErr) console.error('[MDJ-SYSTEM] client_profiles avatar upsert FAILED', clErr.code || '', clErr.message, clErr);
                 }
 
                 btnPhoto.textContent = 'Change Photo';
                 btnPhoto.disabled = false;
 
+                if (typeof window.checkSessionForNav === 'function') {
+                  Promise.resolve(window.checkSessionForNav()).catch(function (navErr) {
+                    console.error('[MDJ-SYSTEM] checkSessionForNav after avatar', navErr);
+                  });
+                }
+
               } catch (err) {
-                console.error('Core avatar module crashed:', err);
+                console.error('[MDJ-SYSTEM] avatar upload FAILED', err && err.message ? err.message : err, err);
+                if (err && err.statusCode) console.error('[MDJ-SYSTEM] storage statusCode', err.statusCode);
                 btnPhoto.textContent = 'Upload Failed';
                 setTimeout(() => {
                   btnPhoto.textContent = 'Change Photo';
                   btnPhoto.disabled = false;
                 }, 3000);
+              } finally {
+                try { clearTimeout(uploadWatchdog); } catch (fw) { /* ignore */ }
               }
             });
           }
 
           // -- Save Personal Info Engine
           const btnSavePersonal = document.getElementById('btn-save-personal');
+          const savePersonalFeedback = document.getElementById('save-personal-feedback');
+          function setSavePersonalFeedback(kind, msg) {
+            if (!savePersonalFeedback) return;
+            if (!msg) {
+              savePersonalFeedback.style.display = 'none';
+              savePersonalFeedback.textContent = '';
+              savePersonalFeedback.className = 'fineprint';
+              return;
+            }
+            savePersonalFeedback.style.display = 'block';
+            savePersonalFeedback.className = 'fineprint ' + (kind === 'ok' ? 'success' : kind === 'err' ? 'err' : '');
+            savePersonalFeedback.textContent = msg;
+          }
+
           if (btnSavePersonal) {
+            function mdjSaveWithTimeout(promise, ms, label) {
+              return Promise.race([
+                Promise.resolve(promise),
+                new Promise(function (_, reject) {
+                  setTimeout(function () {
+                    reject(new Error((label || 'Save') + ' timed out after ' + ms + 'ms — check network or Supabase.'));
+                  }, ms);
+                })
+              ]);
+            }
+
             btnSavePersonal.addEventListener('click', async (e) => {
               e.preventDefault();
+              setSavePersonalFeedback('', '');
               btnSavePersonal.textContent = 'Saving...';
               btnSavePersonal.classList.add('saving-state');
               btnSavePersonal.disabled = true;
 
+              var watchdog = setTimeout(function () {
+                if (btnSavePersonal.textContent === 'Saving...') {
+                  console.error('[MDJ-SYSTEM] save watchdog: still Saving… after 45s — forcing UI reset');
+                  var esW = document.documentElement.lang && String(document.documentElement.lang).toLowerCase().indexOf('es') === 0;
+                  btnSavePersonal.classList.remove('saving-state');
+                  btnSavePersonal.disabled = false;
+                  btnSavePersonal.textContent = esW ? 'Confirmar cambios' : 'Save';
+                  setSavePersonalFeedback('err', esW
+                    ? 'La petición tardó demasiado. Comprueba la red e inténtalo de nuevo.'
+                    : 'Request took too long. Check your connection and try again.');
+                }
+              }, 45000);
+
               try {
                 const newFname = document.getElementById('input-fname').value.trim();
-                const newUsername = document.getElementById('input-username').value.trim();
+                const newUsernameRaw = document.getElementById('input-username').value.trim();
                 const newPhone = document.getElementById('input-phone').value.trim();
+                var uVal = mdjValidateUsernameOptional(newUsernameRaw);
+                if (!uVal.ok) {
+                  clearTimeout(watchdog);
+                  btnSavePersonal.classList.remove('saving-state');
+                  btnSavePersonal.disabled = false;
+                  var esU = document.documentElement.lang && String(document.documentElement.lang).toLowerCase().indexOf('es') === 0;
+                  btnSavePersonal.textContent = esU ? 'Confirmar cambios' : 'Save';
+                  setSavePersonalFeedback('err', esU
+                    ? 'Usuario: 3–30 caracteres; solo letras, números o guion bajo (el @ al inicio es opcional).'
+                    : (uVal.msg || 'Invalid username.'));
+                  return;
+                }
                 
                 const newStreet = document.getElementById('input-street').value.trim();
                 const newApt = document.getElementById('input-apt').value.trim();
                 const newCity = document.getElementById('input-city').value.trim();
-                const newState = document.getElementById('input-state').value.trim();
+                const newState = typeof window.mdjGetAddressStateForSave === 'function'
+                  ? window.mdjGetAddressStateForSave()
+                  : '';
                 const newZip = document.getElementById('input-zip').value.trim();
-                const newCountry = document.getElementById('input-country').value.trim();
+                const newCountry = typeof window.mdjGetAddressCountryForSave === 'function'
+                  ? window.mdjGetAddressCountryForSave()
+                  : '';
 
-                // 🚀 OPTIMIZACIÓN EXTREMA: Leer sesión local fresca en microsegundos en lugar de ir al Servidor (Ahorra 1 HTTP Request largo)
-                const { data: { session: freshSession } } = await db.auth.getSession();
-                const sessionUser = freshSession?.user || session.user;
+                /* getSession también puede colgar — si no hay timeout, el botón nunca sale de “Saving…” */
+                var sessRes = await mdjSaveWithTimeout(db.auth.getSession(), 12000, 'auth.getSession');
+                if (sessRes && sessRes.error) {
+                  throw sessRes.error;
+                }
+                var freshSession = sessRes && sessRes.data && sessRes.data.session ? sessRes.data.session : null;
+                var sessionUser = freshSession && freshSession.user ? freshSession.user : session.user;
                 const currentSessionMeta = sessionUser?.user_metadata || {};
-                
+
                 const newData = Object.assign({}, currentSessionMeta, {
                   full_name: newFname,
-                  username: newUsername,
+                  username: uVal.value != null ? uVal.value : '',
                   phone: newPhone,
                   address_street: newStreet,
                   address_apt: newApt,
@@ -1113,50 +1372,100 @@
                   address_zip: newZip,
                   address_country: newCountry
                 });
+                try {
+                  if (cp && (cp.avatar_url || cp.photo_url) && !newData.avatar_url) {
+                    newData.avatar_url = cp.avatar_url || cp.photo_url;
+                  }
+                } catch (cpAv) { /* ignore */ }
 
-                // Propagación real de datos separada (Fase 1: Preparación estructural)
                 const userId = sessionUser.id;
-                // Sustituimos 'dj' por uso del canon aprobado 'artist' validando contra app_metadata prioritariamente
                 const canonRole = sessionUser?.app_metadata?.role || currentSessionMeta.role || currentSessionMeta.user_type || 'client';
-                
-                // Secuencia segura para evitar colisión de tokens (Lock Stolen error en Supabase)
-                const { error: authUpdateError } = await db.auth.updateUser({ data: newData });
-                if (authUpdateError) throw authUpdateError;
 
-                // Delegación fragmentada obligatoria por Roles 
-                // (Mapeamos 'dj' temporalmente a 'artist' si viene de registro viejo)
-                if (canonRole === 'artist' || canonRole === 'dj') {
-                  await window.handleArtistSettingsSubmit(userId, newData, db);
-                } else {
-                  await window.handleClientSettingsSubmit(userId, newData, db);
+                const { error: authUpdateError } = await mdjSaveWithTimeout(
+                  db.auth.updateUser({ data: newData }),
+                  28000,
+                  'auth.updateUser'
+                );
+                if (authUpdateError) {
+                  console.error('[MDJ-SYSTEM] auth.updateUser FAILED', authUpdateError);
+                  throw authUpdateError;
+                }
+                try {
+                  await db.auth.refreshSession();
+                } catch (rs2) {
+                  console.error('[MDJ-SYSTEM] auth.refreshSession after save', rs2);
                 }
 
-                btnSavePersonal.textContent = 'Saved!';
+                clearTimeout(watchdog);
+
+                var langEs = document.documentElement.lang && String(document.documentElement.lang).toLowerCase().indexOf('es') === 0;
+                var labelSave = langEs ? 'Confirmar cambios' : 'Save';
+                var labelSaved = langEs ? '¡Cambios guardados!' : 'Changes saved!';
+
+                try {
+                  var guAv = await mdjSaveWithTimeout(db.auth.getUser(), 8000, 'auth.getUser avatar');
+                  var mAv =
+                    guAv &&
+                    guAv.data &&
+                    guAv.data.user &&
+                    guAv.data.user.user_metadata
+                      ? guAv.data.user.user_metadata
+                      : currentSessionMeta;
+                  var avRefresh = (mAv.avatar_url || mAv.picture || '').trim();
+                  if (avRefresh && typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
+                    window.mdjHeaderVipApplyPhotoUrl(avRefresh.split('?')[0]);
+                  }
+                } catch (avEx) { /* non-fatal */ }
+
+                /* Éxito inmediato tras updateUser; perfil en tabla + header en segundo plano (no bloquea la UI). */
+                btnSavePersonal.textContent = langEs ? '¡Listo!' : 'Saved!';
                 btnSavePersonal.classList.remove('saving-state');
                 btnSavePersonal.classList.add('success-pulse');
                 btnSavePersonal.style.opacity = '1';
+                setSavePersonalFeedback('ok', labelSaved);
 
-                // RE: Update the global username if possible
-                const globalNavAvatar = document.getElementById('navAvatarImg');
-                if(currentSessionMeta.avatar_url && globalNavAvatar) {
-                   globalNavAvatar.src = currentSessionMeta.avatar_url; // Ensure the record stays visible
-                }
-
-                setTimeout(() => {
-                  btnSavePersonal.textContent = 'Save';
+                setTimeout(function () {
+                  btnSavePersonal.textContent = labelSave;
                   btnSavePersonal.classList.remove('success-pulse');
                   btnSavePersonal.disabled = false;
-                }, 2000);
+                  setSavePersonalFeedback('', '');
+                }, 2800);
+
+                Promise.resolve().then(function () {
+                  if (canonRole === 'artist' || canonRole === 'dj') {
+                    return window.handleArtistSettingsSubmit(userId, newData, db);
+                  }
+                  return window.handleClientSettingsSubmit(userId, newData, db);
+                }).then(function () {
+                  if (typeof window.checkSessionForNav === 'function') {
+                    return window.checkSessionForNav();
+                  }
+                }).catch(function (bgErr) {
+                  console.error('[MDJ-SYSTEM] background profile/nav sync FAILED', bgErr);
+                  var esBg = document.documentElement.lang && String(document.documentElement.lang).toLowerCase().indexOf('es') === 0;
+                  setSavePersonalFeedback('err', esBg
+                    ? 'Cuenta actualizada; falló la sincronización con el perfil. Reintenta en unos segundos.'
+                    : 'Account updated; profile sync failed. Please try again in a moment.');
+                });
 
               } catch (err) {
-                console.error('Core save module crashed:', err);
-                btnSavePersonal.textContent = 'Save Failed';
+                clearTimeout(watchdog);
+                console.error('[MDJ-SYSTEM] save FAILED', err && err.message ? err.message : err, err);
+                var langEs2 = document.documentElement.lang && String(document.documentElement.lang).toLowerCase().indexOf('es') === 0;
+                var labelSaveErr = langEs2 ? 'Confirmar cambios' : 'Save';
+                btnSavePersonal.textContent = langEs2 ? 'Error al guardar' : 'Save failed';
                 btnSavePersonal.classList.remove('saving-state');
+                btnSavePersonal.classList.remove('success-pulse');
                 btnSavePersonal.style.opacity = '1';
-                setTimeout(() => {
-                  btnSavePersonal.textContent = 'Save';
-                  btnSavePersonal.disabled = false;
-                }, 3000);
+                btnSavePersonal.disabled = false;
+                var errDetail = (err && (err.message || err.error_description || err.msg)) ? String(err.message || err.error_description || err.msg) : '';
+                setSavePersonalFeedback('err', langEs2
+                  ? ('No se pudieron guardar los cambios.' + (errDetail ? ' ' + errDetail : ' Revisa la consola (F12).'))
+                  : ('Could not save changes.' + (errDetail ? ' ' + errDetail : ' Check the console (F12).')));
+                setTimeout(function () {
+                  btnSavePersonal.textContent = labelSaveErr;
+                  setSavePersonalFeedback('', '');
+                }, 6000);
               }
             });
           }
@@ -1169,16 +1478,6 @@
         window.location.href = './login.html';
       }
     });
-
-    window.doLogout = async function (e) {
-      if (e) e.preventDefault();
-      try {
-        await supabase.auth.signOut();
-        window.location.href = './index.html';
-      } catch (err) {
-        console.error(err);
-      }
-    }
   </script>
 
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260411-booth-policy" />
@@ -1204,7 +1503,7 @@
     </div>
     <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
     <script src="./header-smart-search.js?v=20260411-search-google"></script>
-    <script src="./mdj-shared-header.js?v=20260414-mobile-hamburger"></script>
+    <script src="./mdj-shared-header.js?v=20260415-TOTAL-SYNC"></script>
   <script src="./mdj-social-bar.js?v=20260413-scrollhide"></script>
 </body>
 

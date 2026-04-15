@@ -5,16 +5,551 @@
 (function () {
   'use strict';
 
-  /** Header login / logout copy — aligned with document.lang + i18n.currentLang (no layout/CSS changes). */
-  function mdjHeaderAuthLabel(key) {
-    if (window.i18n && typeof window.i18n.t === 'function') {
-      var s = window.i18n.t(key);
-      if (s) return s;
+  /**
+   * Auth pills marcados con `data-auth-btn`: texto **fijo** según `document.documentElement.lang`
+   * (sin translations JSON). `es` → ENTRAR/SALIR; cualquier otro (p. ej. `en`) → LOGIN/LOGOUT.
+   * Estado sesión: `.danger` = logout.
+   */
+  window.updateAuthButtons = window.updateAuthButtons || function updateAuthButtons() {
+    var root = document.documentElement;
+    var raw = '';
+    if (root) {
+      raw = String(root.getAttribute('lang') || root.lang || '').trim().toLowerCase();
     }
-    var es = (document.documentElement && document.documentElement.lang === 'es')
-      || (window.i18n && window.i18n.currentLang === 'es');
-    if (key === 'btn-logout') return es ? 'SALIR' : 'LOGOUT';
-    return es ? 'ENTRAR' : 'LOGIN';
+    var isEs = raw === 'es' || raw.indexOf('es-') === 0;
+    var txtIn = isEs ? 'ENTRAR' : 'LOGIN';
+    var txtOut = isEs ? 'SALIR' : 'LOGOUT';
+    document.querySelectorAll('[data-auth-btn]').forEach(function (btn) {
+      var logout = btn.classList.contains('danger');
+      btn.textContent = logout ? txtOut : txtIn;
+    });
+  };
+
+  function mdjEnsureAuthLangObserver() {
+    if (window.__mdjAuthLangObs || !document.documentElement) return;
+    try {
+      window.__mdjAuthLangObs = new MutationObserver(function () {
+        if (typeof window.updateAuthButtons === 'function') window.updateAuthButtons();
+      });
+      window.__mdjAuthLangObs.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['lang']
+      });
+    } catch (err) { /* ignore */ }
+  }
+
+  mdjEnsureAuthLangObserver();
+
+  /** Oculta ENTRAR/LOGIN hasta conocer sesión (evita flash si ya hay cuenta). */
+  function mdjEnsureAuthPendingCss() {
+    if (document.getElementById('mdj-auth-pending-css')) return;
+    var s = document.createElement('style');
+    s.id = 'mdj-auth-pending-css';
+    s.textContent =
+      '#header-login-btn.mdj-auth-pending, #header-login-btn-mobile.mdj-auth-pending { visibility: hidden !important; }';
+    document.head.appendChild(s);
+  }
+
+  function mdjSetHeaderAuthPillsPending(pending) {
+    mdjEnsureAuthPendingCss();
+    ['header-login-btn', 'header-login-btn-mobile'].forEach(function (id) {
+      var b = document.getElementById(id);
+      if (!b) return;
+      if (pending) b.classList.add('mdj-auth-pending');
+      else b.classList.remove('mdj-auth-pending');
+    });
+  }
+
+  /**
+   * Pastillas ENTRAR/SALIR: siempre `data-auth-btn` + clase danger para que updateAuthButtons()
+   * no sea pisado por i18n (data-i18n en el HTML inicial).
+   */
+  function mdjApplyHeaderAuthPillSession(loggedIn) {
+    ['header-login-btn', 'header-login-btn-mobile'].forEach(function (id) {
+      var btn = document.getElementById(id);
+      if (!btn) return;
+      btn.setAttribute('data-auth-btn', '');
+      btn.removeAttribute('data-i18n');
+      if (loggedIn) {
+        btn.classList.remove('gold');
+        btn.classList.add('danger');
+        btn.href = '#';
+        /* Estable (QA / hooks): no sustituye #header-login-btn — el CSS del sitio depende de ese id. */
+        btn.setAttribute('data-mdj-logout-id', id === 'header-login-btn' ? 'btn-logout-vip' : 'btn-logout-vip-mobile');
+        btn.onclick = function (e) {
+          e.preventDefault();
+          void window.doLogout(e);
+        };
+      } else {
+        btn.classList.remove('danger');
+        btn.classList.add('gold');
+        btn.href = './login.html';
+        btn.onclick = null;
+        btn.removeAttribute('data-mdj-logout-id');
+      }
+    });
+    if (typeof window.updateAuthButtons === 'function') window.updateAuthButtons();
+  }
+
+  function mdjEnsureHeaderVipCss() {
+    if (document.getElementById('mdj-header-vip-css')) return;
+    var l = document.createElement('link');
+    l.id = 'mdj-header-vip-css';
+    l.rel = 'stylesheet';
+    l.href = './mdj-header-vip.css?v=20260415-TOTAL-SYNC';
+    document.head.appendChild(l);
+  }
+
+  function mdjHideMiPortalButton() {
+    var el = document.getElementById('header-mi-portal-btn');
+    if (el) el.style.display = 'none';
+    var mob = document.getElementById('header-mi-portal-mobile');
+    if (mob) mob.style.display = 'none';
+    var navL = document.getElementById('mainNav-mi-portal-link');
+    if (navL) navL.style.display = 'none';
+  }
+
+  /**
+   * MI PORTAL en la fila inferior (#mainNav), mismo ritmo que Home/Services/…; dorado vía CSS.
+   * Si existe #mainNav, no duplicamos el CTA en .header-actions (se oculta #header-mi-portal-btn).
+   */
+  function mdjEnsureMiPortalInMainNav(href) {
+    var nav = document.getElementById('mainNav');
+    if (!nav) return;
+    mdjEnsureHeaderVipCss();
+    var link = document.getElementById('mainNav-mi-portal-link');
+    if (!link) {
+      link = document.createElement('a');
+      link.id = 'mainNav-mi-portal-link';
+      link.setAttribute('data-i18n', 'header-mi-portal');
+      link.setAttribute('data-mdj-nav', 'mi-portal');
+      nav.appendChild(link);
+    }
+    link.className = 'mdj-mi-portal-mainnav mdj-mi-portal-gold';
+    link.href = href || './client-portal.html';
+    link.style.display = '';
+    mdjApplyMiPortalLinkLabel(link);
+  }
+
+  function mdjApplyMiPortalLinkLabel(el) {
+    if (!el) return;
+    try {
+      if (window.i18n && typeof window.i18n.t === 'function') {
+        var tx = window.i18n.t('header-mi-portal');
+        if (tx) el.textContent = tx;
+      } else {
+        var rawLang = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+        el.textContent = rawLang.indexOf('es') === 0 ? 'MI PORTAL' : 'MY PORTAL';
+      }
+    } catch (err) { /* ignore */ }
+    try {
+      var es = document.documentElement && String(document.documentElement.lang || '').toLowerCase().indexOf('es') === 0;
+      el.setAttribute('aria-label', es ? 'Mi portal' : 'My portal');
+    } catch (e2) { /* ignore */ }
+  }
+
+  /**
+   * CTA dorado "MI PORTAL": solo con sesión; enlace directo al hub (cliente → portal, artista → dashboard).
+   * Colocado justo antes de `.header-avatar-cart-row` (no interfiere con `.lang-switcher`).
+   */
+  function mdjEnsureMiPortalButton(href) {
+    var actions = document.querySelector('#mainHeader .header-actions');
+    if (!actions) return;
+    mdjEnsureHeaderVipCss();
+    var row = document.querySelector('#mainHeader .header-avatar-cart-row');
+    var btn = document.getElementById('header-mi-portal-btn');
+    if (!btn) {
+      btn = document.createElement('a');
+      btn.id = 'header-mi-portal-btn';
+      btn.setAttribute('data-i18n', 'header-mi-portal');
+      btn.setAttribute('aria-label', 'My portal');
+      if (row && row.parentNode === actions) {
+        actions.insertBefore(btn, row);
+      } else {
+        actions.appendChild(btn);
+      }
+    }
+    btn.className = 'mdj-mi-portal-gold mdj-mi-portal-navlink';
+    btn.href = href || './client-portal.html';
+    btn.style.display = '';
+    mdjApplyMiPortalLinkLabel(btn);
+  }
+
+  /**
+   * Mismo destino que MI PORTAL desktop: primer ítem del menú hamburguesa (móvil).
+   */
+  function mdjEnsureMiPortalMobile(href) {
+    var nav = document.querySelector('#mobileMenu .mobile-nav');
+    if (!nav) return;
+    mdjEnsureHeaderVipCss();
+    var btn = document.getElementById('header-mi-portal-mobile');
+    if (!btn) {
+      btn = document.createElement('a');
+      btn.id = 'header-mi-portal-mobile';
+      btn.setAttribute('data-i18n', 'header-mi-portal');
+      btn.setAttribute('aria-label', 'My portal');
+      btn.href = href || './client-portal.html';
+      nav.insertBefore(btn, nav.firstChild);
+    }
+    btn.className = 'mdj-mi-portal-mobile mdj-mi-portal-gold';
+    btn.href = href || './client-portal.html';
+    btn.style.display = '';
+    mdjApplyMiPortalLinkLabel(btn);
+    if (nav.firstChild !== btn) {
+      nav.insertBefore(btn, nav.firstChild);
+    }
+  }
+
+  function mdjEscapeHtml(s) {
+    if (s == null) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function mdjEscapeAttr(s) {
+    return mdjEscapeHtml(s).replace(/'/g, '&#39;');
+  }
+
+  /** Cliente: "Wendy Example" → "Wendy E." */
+  function mdjFormatClientShortName(fullName) {
+    var parts = String(fullName || '')
+      .trim()
+      .split(/\s+/)
+      .filter(function (x) {
+        return !!x;
+      });
+    if (parts.length === 0) return '';
+    if (parts.length === 1) return parts[0];
+    var first = parts[0];
+    var last = parts[parts.length - 1];
+    if (first === last) return first;
+    return first + ' ' + last.charAt(0).toUpperCase() + '.';
+  }
+
+  /** Handle público en cabecera VIP (@handle); almacenado sin @ obligatorio en BD. */
+  function mdjVipFormatHandle(raw) {
+    if (!raw || !String(raw).trim()) return '';
+    var t = String(raw).trim();
+    return t.charAt(0) === '@' ? t : '@' + t;
+  }
+
+  function mdjVipMetaUsername(metaObj) {
+    if (!metaObj || typeof metaObj.username !== 'string') return '';
+    var t = String(metaObj.username).trim();
+    if (!t) return '';
+    return mdjVipFormatHandle(t.replace(/^@+/, ''));
+  }
+
+  function mdjComputeInitials(displayName, email) {
+    var d = String(displayName || '').trim();
+    if (d) {
+      var w = d.split(/\s+/).filter(Boolean);
+      if (w.length >= 2) return (w[0].charAt(0) + w[w.length - 1].charAt(0)).toUpperCase();
+      if (w.length === 1 && w[0].length >= 2) return w[0].substring(0, 2).toUpperCase();
+      if (w.length === 1) return w[0].charAt(0).toUpperCase();
+    }
+    var e = String(email || '').split('@')[0] || '';
+    if (e.length >= 2) return e.substring(0, 2).toUpperCase();
+    return e ? e.charAt(0).toUpperCase() : '?';
+  }
+
+  function mdjIsRealPhotoUrl(url) {
+    if (!url || !String(url).trim()) return false;
+    var u = String(url).trim();
+    if (/placeholder|dj-avatar-placeholder\.png/i.test(u)) return false;
+    return /^https?:\/\//i.test(u) || u.indexOf('data:image/') === 0;
+  }
+
+  function mdjShowFamilyWelcomeToast() {
+    if (document.getElementById('mdj-family-welcome-toast')) return;
+    var msg = '¡Bienvenido a la familia de Miami DJ Beat! Es un honor tenerte aquí.';
+    try {
+      if (window.i18n && typeof window.i18n.t === 'function') {
+        var t = window.i18n.t('vip-welcome-family');
+        if (t) msg = t;
+      }
+    } catch (err) { /* ignore */ }
+    var div = document.createElement('div');
+    div.id = 'mdj-family-welcome-toast';
+    div.setAttribute('role', 'status');
+    div.style.cssText =
+      'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);max-width:min(520px,92vw);z-index:99999;padding:16px 22px;background:rgba(15,22,35,.97);border:1px solid rgba(197,160,89,.5);border-radius:16px;color:#e8eefc;font-size:14px;font-weight:600;box-shadow:0 14px 44px rgba(0,0,0,.55);text-align:center;line-height:1.45;';
+    div.textContent = msg;
+    document.body.appendChild(div);
+    setTimeout(function () {
+      try {
+        if (div.parentNode) div.parentNode.removeChild(div);
+      } catch (e2) { /* ignore */ }
+    }, 9000);
+  }
+
+  /** Invitación por correo (Edge opcional; falla en silencio si no está desplegada). SMS no incluido aquí. */
+  function mdjTryMemberWelcomeNotify(user) {
+    try {
+      var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+      if (!sb || !sb.functions || !user) return;
+      sb.functions
+        .invoke('member-welcome', {
+          body: { user_id: user.id, email: user.email || null }
+        })
+        .catch(function () { /* optional */ });
+    } catch (e) { /* ignore */ }
+  }
+
+  function mdjMaybeRunVipWelcomeProtocol(session) {
+    try {
+      if (sessionStorage.getItem('mdj_vip_welcome_pending') !== '1' || !session || !session.user) return;
+      sessionStorage.removeItem('mdj_vip_welcome_pending');
+      mdjShowFamilyWelcomeToast();
+      mdjTryMemberWelcomeNotify(session.user);
+    } catch (e) { /* ignore */ }
+  }
+
+  function mdjCloseAccountMenu() {
+    var m = document.getElementById('accountMenu');
+    var tr = document.getElementById('mdjAccountVipTrigger');
+    if (m) m.classList.remove('open');
+    if (tr) tr.setAttribute('aria-expanded', 'false');
+  }
+
+  function mdjBindVipAccountInteractionsOnce() {
+    if (window.__mdjVipAcctBound) return;
+    window.__mdjVipAcctBound = true;
+    document.addEventListener('click', function (e) {
+      var menu = document.getElementById('accountMenu');
+      var tr = document.getElementById('mdjAccountVipTrigger');
+      if (tr && tr.contains(e.target)) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!menu) return;
+        menu.classList.toggle('open');
+        tr.setAttribute('aria-expanded', menu.classList.contains('open') ? 'true' : 'false');
+        return;
+      }
+      if (menu && menu.contains(e.target) && e.target && e.target.classList && e.target.classList.contains('mdj-menu-logout')) {
+        e.preventDefault();
+        mdjCloseAccountMenu();
+        if (typeof window.doLogout === 'function') window.doLogout(e);
+        return;
+      }
+      mdjCloseAccountMenu();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') mdjCloseAccountMenu();
+    });
+  }
+
+  function mdjGetBillingMenuLabel() {
+    try {
+      if (window.i18n && typeof window.i18n.t === 'function') {
+        var t = window.i18n.t('client-menu-billing');
+        if (t) return t;
+      }
+    } catch (err) { /* ignore */ }
+    var lang = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+    return lang.indexOf('en') === 0 ? 'Payment methods & billing' : 'Métodos de Pago y Facturación';
+  }
+
+  function mdjGetAccountSettingsLabel() {
+    try {
+      if (window.i18n && typeof window.i18n.t === 'function') {
+        var t2 = window.i18n.t('client-menu-account-settings');
+        if (t2) return t2;
+      }
+    } catch (err2) { /* ignore */ }
+    var lang2 = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+    return lang2.indexOf('en') === 0 ? 'Account settings' : 'Ajustes de cuenta';
+  }
+
+  /** Primer ítem del menú VIP (cliente): acceso rápido a foto/datos — mismo destino que Ajustes, etiqueta corta. */
+  function mdjGetVipProfileShortcutLabel() {
+    try {
+      if (window.i18n && typeof window.i18n.t === 'function') {
+        var tp = window.i18n.t('client-menu-profile-shortcut');
+        if (tp) return tp;
+      }
+    } catch (e0) { /* ignore */ }
+    var langP = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+    return langP.indexOf('en') === 0 ? 'My profile' : 'Mi perfil';
+  }
+
+  function mdjGetLogoutLabel() {
+    try {
+      if (window.i18n && typeof window.i18n.t === 'function') {
+        var t3 = window.i18n.t('client-menu-logout');
+        if (t3) return t3;
+      }
+    } catch (err3) { /* ignore */ }
+    var lang3 = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+    return lang3.indexOf('en') === 0 ? 'Log out' : 'Cerrar sesión';
+  }
+
+  /**
+   * Avatar circular + nombre (misma línea); clic abre #accountMenu.
+   * Cliente: sin enlaces de artista; incluye facturación.
+   */
+  function mdjBuildAvatarSlotHtml(ctx) {
+    var useInit = !!ctx.useAvatarInitials;
+    var initials = ctx.avatarInitials || '?';
+    var url = ctx.avatarUrl || '';
+    if (useInit) {
+      return (
+        '<span id="mdjHeaderAvatarSlot" class="mdj-avatar-slot">' +
+        '<span class="mdj-avatar-ring mdj-avatar-ring--init">' +
+        '<span class="mdj-avatar-initials" aria-hidden="true">' +
+        mdjEscapeHtml(initials) +
+        '</span></span></span>'
+      );
+    }
+    return (
+      '<span id="mdjHeaderAvatarSlot" class="mdj-avatar-slot">' +
+      '<span class="mdj-avatar-ring">' +
+      '<img class="avatar mdj-header-vip-avatar" src="' +
+      mdjEscapeAttr(url) +
+      '" alt="" data-mdj-av-init="' +
+      mdjEscapeAttr(initials) +
+      '" /></span></span>'
+    );
+  }
+
+  function mdjBindHeaderAvatarImgFallbackOnce() {
+    var img = document.querySelector('#mdjHeaderAvatarSlot img.mdj-header-vip-avatar');
+    if (!img || img.getAttribute('data-mdj-av-bound') === '1') return;
+    img.setAttribute('data-mdj-av-bound', '1');
+    img.addEventListener(
+      'error',
+      function () {
+        try {
+          var init = img.getAttribute('data-mdj-av-init') || '?';
+          var ring = img.closest('.mdj-avatar-ring');
+          if (!ring) return;
+          ring.classList.add('mdj-avatar-ring--init');
+          ring.innerHTML =
+            '<span class="mdj-avatar-initials" aria-hidden="true">' + mdjEscapeHtml(init) + '</span>';
+        } catch (e) { /* ignore */ }
+      },
+      { once: true }
+    );
+  }
+
+  /**
+   * Actualización instantánea del avatar VIP tras subir/guardar foto (account-settings), sin recargar.
+   * Sustituye iniciales por <img> si hacía falta.
+   */
+  window.mdjHeaderVipApplyPhotoUrl = function (url) {
+    if (!url || !String(url).trim()) return;
+    var raw = String(url).trim();
+    var base = raw.split('?')[0];
+    if (!mdjIsRealPhotoUrl(base)) return;
+    var bust = raw.indexOf('?') >= 0 ? raw : raw + '?v=' + Date.now();
+    var nm = document.getElementById('mdjAccountDisplayName');
+    var initials = '?';
+    if (nm && nm.textContent) {
+      initials = mdjComputeInitials(nm.textContent, '');
+    }
+    var html = mdjBuildAvatarSlotHtml({
+      useAvatarInitials: false,
+      avatarInitials: initials,
+      avatarUrl: bust
+    });
+    var slot = document.getElementById('mdjHeaderAvatarSlot');
+    if (!slot) {
+      if (typeof window.checkSessionForNav === 'function') void window.checkSessionForNav();
+      return;
+    }
+    slot.outerHTML = html;
+    mdjBindHeaderAvatarImgFallbackOnce();
+    try {
+      document.querySelectorAll('#mainHeader img.avatar, #navAvatarImg').forEach(function (im) {
+        if (!im) return;
+        if (im.closest && im.closest('#mdjAccountVipRoot')) return;
+        im.src = bust;
+      });
+    } catch (e) { /* ignore */ }
+  };
+
+  function mdjMountOrUpdateVipAccountZone(ctx) {
+    var zone = document.getElementById('header-auth-zone');
+    if (!zone) return;
+    mdjEnsureHeaderVipCss();
+    mdjBindVipAccountInteractionsOnce();
+    document.body.classList.add('mdj-logged-in-header');
+
+    var displayName = ctx.displayName || 'Member';
+    var isClient = !!ctx.isClient;
+    var profileUrl = ctx.profileUrl;
+    if (!profileUrl) profileUrl = isClient ? './account-settings.html' : './client-portal.html';
+    var showDjDash = !!ctx.showDjDashboard;
+    var profileLabel =
+      ctx.profileLabel ||
+      (isClient ? mdjGetVipProfileShortcutLabel() : !ctx.hasDjProfile ? 'Mi cuenta' : 'Mi perfil');
+    var useAvatarInitials = !!ctx.useAvatarInitials;
+    var avatarInitials = ctx.avatarInitials || '?';
+    var avatarUrl = ctx.avatarUrl || '';
+
+    var menuHtml = '';
+    menuHtml += '<a id="accountBtn" class="mdj-menu-item mdj-menu-profile" href="' + mdjEscapeAttr(profileUrl) + '">' + mdjEscapeHtml(profileLabel) + '</a>';
+    if (isClient) {
+      menuHtml += '<a class="mdj-menu-item" href="./client-billing.html">' + mdjEscapeHtml(mdjGetBillingMenuLabel()) + '</a>';
+    }
+    if (showDjDash) {
+      menuHtml += '<a class="mdj-menu-item" href="./dj-dashboard.html">DJ Dashboard</a>';
+    }
+    /* Cliente: el primer ítem ya va a account-settings; no duplicar. */
+    if (!isClient) {
+      menuHtml += '<a class="mdj-menu-item" href="./account-settings.html">' + mdjEscapeHtml(mdjGetAccountSettingsLabel()) + '</a>';
+    }
+    menuHtml += '<button type="button" class="mdj-menu-item mdj-menu-logout">' + mdjEscapeHtml(mdjGetLogoutLabel()) + '</button>';
+
+    var avatarSlotHtml = mdjBuildAvatarSlotHtml({
+      useAvatarInitials: useAvatarInitials,
+      avatarInitials: avatarInitials,
+      avatarUrl: avatarUrl
+    });
+
+    var root = document.getElementById('mdjAccountVipRoot');
+    if (root) {
+      var slot = document.getElementById('mdjHeaderAvatarSlot');
+      if (slot) {
+        slot.outerHTML = avatarSlotHtml;
+      } else {
+        var trg = document.getElementById('mdjAccountVipTrigger');
+        var nmEl = document.getElementById('mdjAccountDisplayName');
+        if (trg && nmEl) {
+          var ph = document.createElement('div');
+          ph.innerHTML = avatarSlotHtml;
+          var newSlot = ph.firstElementChild;
+          if (newSlot) trg.insertBefore(newSlot, nmEl);
+        }
+      }
+      var nm = document.getElementById('mdjAccountDisplayName');
+      if (nm) nm.textContent = displayName;
+      var ab = document.getElementById('accountBtn');
+      if (ab) {
+        ab.href = profileUrl;
+        ab.textContent = profileLabel;
+      }
+      var menu = document.getElementById('accountMenu');
+      if (menu) menu.innerHTML = menuHtml;
+      mdjBindHeaderAvatarImgFallbackOnce();
+      return;
+    }
+
+    zone.innerHTML =
+      '<div class="mdj-account-vip" id="mdjAccountVipRoot">' +
+      '<button type="button" class="mdj-account-vip-trigger" id="mdjAccountVipTrigger" aria-expanded="false" aria-haspopup="true">' +
+      avatarSlotHtml +
+      '<span class="mdj-account-display-name" id="mdjAccountDisplayName">' +
+      mdjEscapeHtml(displayName) +
+      '</span>' +
+      '</button>' +
+      '<nav id="accountMenu" class="mdj-account-dropdown" role="menu">' +
+      menuHtml +
+      '</nav>' +
+      '</div>';
+    mdjBindHeaderAvatarImgFallbackOnce();
   }
 
   function mdjCountCheckoutCartUnits(parsed) {
@@ -64,8 +599,8 @@
     else if (path === 'rentals.html') key = 'rentals';
     else if (path === 'find-dj.html') key = 'home';
     else if (path === 'dj-profile.html') key = 'flow';
-    else if (path === 'dj-dashboard.html') key = 'home';
-    else if (path === 'client-portal.html') key = 'home';
+    else if (path === 'dj-dashboard.html') key = 'mi-portal';
+    else if (path === 'client-portal.html' || path === 'client-billing.html') key = 'mi-portal';
 
     document.querySelectorAll('#mainNav a[data-mdj-nav], .mobile-nav a[data-mdj-nav]').forEach(function (el) {
       el.classList.toggle('active', key && el.getAttribute('data-mdj-nav') === key);
@@ -74,13 +609,24 @@
 
   window.mdjNavHighlight = mdjNavHighlight;
 
-  window.doLogout = window.doLogout || async function doLogout(e) {
+  window.doLogout = async function doLogout(e) {
     if (e) e.preventDefault();
+    var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+    if (!sb && window.supabase && window.MDB_SUPABASE_URL && window.MDB_SUPABASE_ANON_KEY) {
+      try {
+        sb = window.supabase.createClient(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY);
+      } catch (e0) { /* ignore */ }
+    }
     try {
-      var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
-      if (sb) await sb.auth.signOut();
+      if (sb && sb.auth && typeof sb.auth.signOut === 'function') {
+        try {
+          await sb.auth.signOut({ scope: 'global' });
+        } catch (eScope) {
+          await sb.auth.signOut();
+        }
+      }
     } catch (err) {
-      console.warn('Supabase signOut error:', err);
+      console.warn('[MDJ-SYSTEM] Supabase signOut error:', err);
     }
     if (typeof window.mdjClearClientStorageOnLogout === 'function') {
       window.mdjClearClientStorageOnLogout();
@@ -94,19 +640,33 @@
       sessionStorage.removeItem('mdj_session');
       sessionStorage.removeItem('mdj_cart');
     } catch (x2) { /* ignore */ }
-    window.location.reload();
+    window.location.href = './index.html';
   };
 
   window.checkSessionForNav = window.checkSessionForNav || async function checkSessionForNav() {
     var authZone = document.getElementById('header-auth-zone');
+    mdjSetHeaderAuthPillsPending(true);
     try {
       var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
       if (!sb) {
+        mdjHideMiPortalButton();
         if (authZone) authZone.style.display = 'none';
+        mdjApplyHeaderAuthPillSession(false);
         return;
+      }
+      if (authZone && !window.__mdjDefaultAuthZoneHtml && authZone.innerHTML && authZone.innerHTML.trim()) {
+        window.__mdjDefaultAuthZoneHtml = authZone.innerHTML;
       }
       var res = await sb.auth.getSession();
       var session = res.data && res.data.session;
+      if (session) {
+        try {
+          var ur = await sb.auth.getUser();
+          if (ur && ur.data && ur.data.user) {
+            session = Object.assign({}, session, { user: ur.data.user });
+          }
+        } catch (eGu) { /* ignore */ }
+      }
 
       if (session) {
         var subFreeDesk = document.getElementById('header-subscribe-free-btn');
@@ -114,53 +674,131 @@
         if (subFreeDesk) subFreeDesk.style.display = 'none';
         if (subFreeMob) subFreeMob.style.display = 'none';
 
-        var loginBtnMobile = document.getElementById('header-login-btn-mobile');
         var getProBtn = document.getElementById('header-get-pro-btn');
-        if (loginBtnMobile) loginBtnMobile.textContent = 'Mi Perfil';
         if (authZone) authZone.style.display = 'block';
 
         try {
-          var pr = await sb.from('dj_profiles').select('role, photo_url, plan_type, plan, plan_status, plan_expires_at, is_premium, hardware_token').eq('user_id', session.user.id).maybeSingle();
+          var pr = await sb.from('dj_profiles').select('role, photo_url, dj_name, stage_name, username, plan_type, plan, plan_status, plan_expires_at, is_premium, hardware_token').eq('user_id', session.user.id).maybeSingle();
           var p = pr.data;
-          // Clientes solo tienen client_profiles; si no hay fila en dj_profiles debemos detectarlos o el avatar apunta a dj-profile y esa página expulsa al home.
-          var hasClientRow = false;
-          if (!p) {
-            try {
-              var cpr = await sb.from('client_profiles').select('user_id').eq('user_id', session.user.id).maybeSingle();
-              hasClientRow = !!(cpr && cpr.data && cpr.data.user_id);
-            } catch (cErr) { /* ignore */ }
-          }
+          var clientRow = null;
+          try {
+            var cpr = await sb
+              .from('client_profiles')
+              .select('user_id, full_name, email, photo_url, avatar_url, username')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+            clientRow = cpr && cpr.data ? cpr.data : null;
+          } catch (cErr) { /* ignore */ }
+          var hasClientRow = !!(clientRow && clientRow.user_id);
           var metaUt = session.user && session.user.user_metadata && session.user.user_metadata.user_type;
           var appRole = session.user && session.user.app_metadata && session.user.app_metadata.role;
           var jwtArtist = metaUt === 'talent' || metaUt === 'dj' || (appRole && String(appRole).toLowerCase() === 'artist');
-          var isClient = (p && p.role === 'client') || (!p && hasClientRow);
+          var metaUtLower = metaUt ? String(metaUt).toLowerCase() : '';
+          var appRoleLower = appRole ? String(appRole).toLowerCase() : '';
+          var metadataSaysClient = metaUtLower === 'client' || appRoleLower === 'client';
+          var isClient =
+            (p && String(p.role || '').toLowerCase() === 'client') ||
+            (!p && hasClientRow) ||
+            (!p && metadataSaysClient && !jwtArtist);
           var isProUser = p && (
             p.is_premium === true
             || ['PRO', 'ELITE'].includes(p.plan)
             || (['pro_monthly', 'pro_annual', 'PRO'].includes(p.plan_type) && (p.plan_status || 'active') === 'active' && (!p.plan_expires_at || new Date(p.plan_expires_at) > new Date()))
           );
           var djproBadge = document.getElementById('header-djpro-badge');
-          if (getProBtn) getProBtn.style.display = isProUser ? 'none' : '';
+          if (getProBtn) {
+            if (isClient) {
+              getProBtn.style.display = 'none';
+            } else {
+              getProBtn.style.display = isProUser ? 'none' : '';
+            }
+          }
           if (djproBadge) djproBadge.style.display = isProUser ? 'inline-flex' : 'none';
           /* Con cuenta y sin PRO: el CTA lleva a Jobs — mismas tarjetas de abajo (LITE free o PRO de pago), no a login. */
           if (getProBtn && !isProUser && !isClient) {
             getProBtn.href = './jobs.html#selection-screen';
           }
 
-          var sessionAvatar = session.user && session.user.user_metadata && session.user.user_metadata.avatar_url;
-          var finalAvatar = sessionAvatar || (p && p.photo_url);
-          if (finalAvatar) {
-            document.querySelectorAll('.avatar, #accountBtn .avatar').forEach(function (img) { img.src = finalAvatar; });
+          var meta = session.user && session.user.user_metadata ? session.user.user_metadata : {};
+          var sessionAvatar = meta.avatar_url || meta.picture || meta.picture_url;
+          var clientPic = '';
+          if (clientRow) {
+            clientPic = (clientRow.avatar_url || clientRow.photo_url || '').trim();
           }
+          /* Cliente: client_profiles es fuente de verdad (JWT puede ir rezagado tras updateUser). */
+          var rawPhoto = '';
+          if (isClient) {
+            rawPhoto =
+              clientPic ||
+              (sessionAvatar && String(sessionAvatar).trim()) ||
+              (p && p.photo_url && String(p.photo_url).trim()) ||
+              '';
+          } else {
+            rawPhoto =
+              (sessionAvatar && String(sessionAvatar).trim()) ||
+              clientPic ||
+              (p && p.photo_url && String(p.photo_url).trim()) ||
+              '';
+          }
+          var hasRealPhoto = mdjIsRealPhotoUrl(rawPhoto.split('?')[0]);
+
+          var displayName = '';
+          if (isClient) {
+            var clientHandle =
+              (clientRow && clientRow.username && String(clientRow.username).trim()) ||
+              mdjVipMetaUsername(meta) ||
+              '';
+            if (clientHandle) {
+              displayName = mdjVipFormatHandle(clientHandle.replace(/^@+/, ''));
+            } else if (clientRow && clientRow.full_name && String(clientRow.full_name).trim()) {
+              displayName = mdjFormatClientShortName(String(clientRow.full_name).trim());
+            } else if (meta.full_name && String(meta.full_name).trim()) {
+              displayName = mdjFormatClientShortName(String(meta.full_name).trim());
+            }
+          } else {
+            var djHandle =
+              (p && p.username && String(p.username).trim()) ||
+              mdjVipMetaUsername(meta) ||
+              '';
+            if (djHandle) {
+              displayName = mdjVipFormatHandle(djHandle.replace(/^@+/, ''));
+            } else if (p) {
+              var st = p.stage_name && String(p.stage_name).trim();
+              var dj = p.dj_name && String(p.dj_name).trim();
+              if (st) displayName = st;
+              else if (dj) displayName = dj;
+            }
+            if (!displayName && meta.artistic_name && String(meta.artistic_name).trim()) {
+              displayName = String(meta.artistic_name).trim();
+            }
+            if (!displayName && meta.stage_name && String(meta.stage_name).trim()) {
+              displayName = String(meta.stage_name).trim();
+            }
+            if (!displayName && p && (p.stage_name || p.dj_name)) {
+              displayName = String(p.stage_name || p.dj_name).trim();
+            }
+            if (!displayName && meta.full_name && String(meta.full_name).trim()) {
+              displayName = String(meta.full_name).trim();
+            }
+          }
+          if (!displayName && meta.display_name && String(meta.display_name).trim()) {
+            displayName = String(meta.display_name).trim();
+          }
+          if (!displayName && session.user && session.user.email) {
+            displayName = String(session.user.email).split('@')[0];
+          }
+          if (!displayName) displayName = 'Member';
+
+          var avatarInitials = mdjComputeInitials(displayName, session.user && session.user.email);
+          var useAvatarInitials = !hasRealPhoto;
 
           var uid = session.user && session.user.id;
           var profileUrl;
           var profileText;
           if (isClient) {
-            profileUrl = './client-portal.html';
-            profileText = 'Mi Portal';
+            profileUrl = './account-settings.html';
+            profileText = mdjGetVipProfileShortcutLabel();
           } else if (!p && !jwtArtist) {
-            // Sesión sin fila en dj_profiles y sin señal JWT de artista: evitar dj-profile (expulsa al home). Cuenta / ajustes.
             profileUrl = './account-settings.html';
             profileText = 'Mi cuenta';
           } else {
@@ -170,31 +808,58 @@
             profileText = 'Mi perfil';
           }
 
-          var accountBtnEl = document.getElementById('accountBtn');
-          if (accountBtnEl && accountBtnEl.tagName === 'A') {
-            accountBtnEl.href = profileUrl;
-            var accLabel = isClient ? 'Mi Portal' : (!p && !jwtArtist ? 'Mi cuenta' : 'Mi perfil');
-            accountBtnEl.setAttribute('title', accLabel);
-            accountBtnEl.setAttribute('aria-label', accLabel);
+          var hasDjProfile = !!(p && String(p.role || '').toLowerCase() !== 'client');
+          var showDjDashboard = !!(hasDjProfile && !isClient);
+
+          var miPortalHref = './client-portal.html';
+          if (isClient) {
+            miPortalHref = './client-portal.html';
+          } else if (hasDjProfile) {
+            miPortalHref = './dj-dashboard.html';
+          } else if (!p && !jwtArtist) {
+            miPortalHref = './account-settings.html';
+          } else {
+            miPortalHref = profileUrl;
           }
 
-          ['header-login-btn', 'header-login-btn-mobile'].forEach(function (id) {
-            var btn = document.getElementById(id);
-            if (btn) {
-              btn.setAttribute('data-i18n', 'btn-logout');
-              btn.textContent = mdjHeaderAuthLabel('btn-logout');
-              btn.classList.remove('gold');
-              btn.classList.add('danger');
-              btn.href = '#';
-              btn.onclick = function (e) { e.preventDefault(); window.doLogout(); };
-            }
+          mdjMountOrUpdateVipAccountZone({
+            displayName: displayName,
+            avatarUrl: hasRealPhoto ? String(rawPhoto).trim() : '',
+            useAvatarInitials: useAvatarInitials,
+            avatarInitials: avatarInitials,
+            profileUrl: profileUrl,
+            profileLabel: profileText,
+            isClient: isClient,
+            showDjDashboard: showDjDashboard,
+            hasDjProfile: hasDjProfile
           });
+          if (hasRealPhoto && rawPhoto && typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
+            window.mdjHeaderVipApplyPhotoUrl(String(rawPhoto).trim());
+          }
+
+          mdjMaybeRunVipWelcomeProtocol(session);
+
+          if (document.getElementById('mainNav')) {
+            mdjEnsureMiPortalInMainNav(miPortalHref);
+            var hdrDup = document.getElementById('header-mi-portal-btn');
+            if (hdrDup) hdrDup.style.display = 'none';
+          } else {
+            mdjEnsureMiPortalButton(miPortalHref);
+          }
+          mdjEnsureMiPortalMobile(miPortalHref);
+          mdjNavHighlight();
+
+          mdjApplyHeaderAuthPillSession(true);
 
           var navMobile = document.getElementById('nav-my-profile-mobile');
           if (navMobile) {
-            navMobile.style.display = 'block';
-            navMobile.href = profileUrl;
-            navMobile.textContent = profileText;
+            if (miPortalHref === profileUrl) {
+              navMobile.style.display = 'none';
+            } else {
+              navMobile.style.display = 'block';
+              navMobile.href = profileUrl;
+              navMobile.textContent = profileText;
+            }
           }
 
           document.querySelectorAll('a[href="./dj-profile.html"]').forEach(function (link) {
@@ -214,15 +879,22 @@
             myProfileBtn.href = profileUrl;
             myProfileBtn.style.display = 'inline-block';
           }
-
-          var mobileProfileBtn = document.getElementById('nav-my-profile-mobile');
-          if (mobileProfileBtn) {
-            mobileProfileBtn.href = profileUrl;
-            mobileProfileBtn.style.display = 'block';
-          }
-        } catch (e) { console.error('Error fetching profile for nav:', e); }
+        } catch (e) {
+          console.error('[MDJ-SYSTEM] Error fetching profile for nav:', e);
+          try {
+            mdjApplyHeaderAuthPillSession(true);
+          } catch (e2) { /* ignore */ }
+        }
       } else {
-        if (authZone) authZone.style.display = 'none';
+        mdjHideMiPortalButton();
+        document.body.classList.remove('mdj-logged-in-header');
+        if (authZone) {
+          if (window.__mdjDefaultAuthZoneHtml) {
+            authZone.innerHTML = window.__mdjDefaultAuthZoneHtml;
+          }
+          authZone.style.display = 'none';
+        }
+        mdjApplyHeaderAuthPillSession(false);
         var djproBadge = document.getElementById('header-djpro-badge');
         var getProBtn = document.getElementById('header-get-pro-btn');
         var subFreeDesk2 = document.getElementById('header-subscribe-free-btn');
@@ -232,12 +904,18 @@
         if (getProBtn) getProBtn.style.display = 'none';
         if (subFreeDesk2) subFreeDesk2.style.display = '';
         if (subFreeMob2) subFreeMob2.style.display = '';
+        var npmGuest = document.getElementById('nav-my-profile-mobile');
+        if (npmGuest) npmGuest.style.display = 'none';
       }
     } catch (err) {
-      console.error('checkSessionForNav:', err);
+      console.error('[MDJ-SYSTEM] checkSessionForNav:', err);
+      mdjHideMiPortalButton();
       if (authZone) authZone.style.display = 'none';
+      mdjApplyHeaderAuthPillSession(false);
     } finally {
+      mdjSetHeaderAuthPillsPending(false);
       if (authZone) authZone.classList.remove('session-pending');
+      if (typeof window.updateAuthButtons === 'function') window.updateAuthButtons();
     }
   };
 
@@ -271,20 +949,13 @@
       mobileBtn.addEventListener('click', function () {
         setMobileOpen(!mobileMenu.classList.contains('active'));
       });
-      mobileMenu.querySelectorAll('a').forEach(function (link) {
-        link.addEventListener('click', function () {
-          setMobileOpen(false);
-        });
+      mobileMenu.addEventListener('click', function (e) {
+        if (e.target && e.target.closest && e.target.closest('a')) setMobileOpen(false);
       });
       document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && mobileMenu.classList.contains('active')) setMobileOpen(false);
       });
     }
-
-    document.addEventListener('click', function () {
-      var m = document.getElementById('accountMenu');
-      if (m) m.classList.remove('open');
-    });
 
     /** #mainNav “More” — panel estilo Facebook (solo desktop ≥1001px donde .header-bottom es visible) */
     (function bindNavMoreDropdown() {
@@ -330,6 +1001,9 @@
   }
 
   window.mdjInitSharedHeader = function () {
+    mdjSetHeaderAuthPillsPending(true);
+    mdjEnsureAuthLangObserver();
+    if (typeof window.updateAuthButtons === 'function') window.updateAuthButtons();
     bindHeaderChrome();
     mdjNavHighlight();
     window.addEventListener('hashchange', mdjNavHighlight);
@@ -353,8 +1027,10 @@
     if (window.i18n && typeof window.i18n.updateUI === 'function') {
       window.i18n.updateUI();
     }
+    if (typeof window.updateAuthButtons === 'function') window.updateAuthButtons();
 
     document.addEventListener('languageChanged', function () {
+      if (typeof window.updateAuthButtons === 'function') window.updateAuthButtons();
       if (typeof window.checkSessionForNav === 'function') {
         void window.checkSessionForNav();
       }
@@ -375,4 +1051,7 @@
       window.updateHeaderCartCount();
     }
   });
+
+  /** `auth.js` delega ENTRAR/SALIR + zona VIP aquí para no pisar `data-auth-btn`. */
+  window.__MDJ_HEADER_SESSION_OWNER = true;
 })();

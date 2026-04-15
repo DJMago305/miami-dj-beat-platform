@@ -11,7 +11,7 @@
     content="Central de operaciones Miami DJ Beat: prospectos de eventos y DJs. Experiencia dedicada (no widget)." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./styles.css?v=20260419-header-global" />
+  <link rel="stylesheet" href="./styles.css?v=20260415-TOTAL-SYNC" />
   <link rel="stylesheet" href="./profile.css?v=20260226-1" />
   <style>
     /*
@@ -601,6 +601,11 @@
   <script src="./i18n.js?v=20260330"></script>
   <script src="./js/booth-elevenlabs.js?v=20260413"></script>
   <script>
+    /*
+     * PLAN DE LA BESTIA (persistencia Booth) — TODO este bloque vive en web/booth.html.
+     * RPC: booth_track_event, booth_log_learning_interaction, booth_save_ai_interaction.
+     * No pegar este JavaScript en el SQL Editor de Supabase.
+     */
     /* Booth — URL radar (Crystal / ads) + sanitization + Supabase + agent context */
     (function () {
       'use strict';
@@ -609,6 +614,7 @@
       var MAX_REF_LEN = 240;
       var L = { intent: 80, source: 60, campaign: 120, customer_interest: 100, utm: 120 };
       var boothSessionKey = '';
+      var boothLeadSaved = false;
 
       function getLang() {
         var a = document.querySelector('.lang-btn.active');
@@ -788,6 +794,105 @@
         });
       }
 
+      /** Motor de aprendizaje: filas interaction_turn en public.ai_booth_learning_examples (RPC; sin PII). */
+      function boothLogLearningInteraction(leadId, userExcerpt, assistantExcerpt) {
+        var db = getSupabaseDb();
+        if (!db) return Promise.resolve();
+        var key = getOrCreateBoothSessionKey();
+        var extra = {
+          intent: raw.intent || null,
+          source: raw.source || null,
+          campaign: raw.campaign || null,
+          customer_interest: raw.customer_interest || null,
+          utm_source: raw.utm_source || null,
+          utm_medium: raw.utm_medium || null,
+          utm_campaign: raw.utm_campaign || null,
+          utm_content: raw.utm_content || null
+        };
+        return db.rpc('booth_log_learning_interaction', {
+          p_session_key: key,
+          p_lead_id: leadId != null ? leadId : null,
+          p_user_excerpt: userExcerpt || null,
+          p_assistant_excerpt: assistantExcerpt || null,
+          p_extra: extra
+        }).then(function (result) {
+          var err = result && result.error;
+          if (err) try { console.warn('[booth_log_learning_interaction]', err.message || err); } catch (e) { /* ignore */ }
+          return result;
+        }).catch(function (err) {
+          try { console.warn('[booth_log_learning_interaction]', err && err.message ? err.message : err); } catch (e2) { /* ignore */ }
+        });
+      }
+
+      function buildSessionContextRadar() {
+        return {
+          intent: raw.intent || null,
+          source: raw.source || null,
+          campaign: raw.campaign || null
+        };
+      }
+
+      function buildNegotiationSummaryFromFd(fd) {
+        var parts = [];
+        var et = sanitizeNullable(fd.get('event_type'), 80);
+        var ed = sanitizeNullable(fd.get('event_date'), 32);
+        var loc = sanitizeNullable(fd.get('location'), 200);
+        var budget = sanitizeNullable(fd.get('budget'), 120);
+        var tal = sanitizeNullable(fd.get('requested_talent'), 500);
+        if (et) parts.push('event_type:' + et);
+        if (ed) parts.push('event_date:' + ed);
+        if (loc) parts.push('location:' + loc);
+        if (budget) parts.push('budget:' + budget);
+        if (tal) parts.push('requests:' + tal);
+        var s = parts.join(' | ');
+        return s.length > 2000 ? s.slice(0, 2000) : s;
+      }
+
+      function boothSaveAiInteractionRow(opts) {
+        var db = getSupabaseDb();
+        if (!db) return Promise.resolve();
+        opts = opts || {};
+        var ctx = opts.session_context != null ? opts.session_context : buildSessionContextRadar();
+        return db.rpc('booth_save_ai_interaction', {
+          p_lead_id: opts.lead_id != null ? opts.lead_id : null,
+          p_session_context: ctx,
+          p_chat_summary: opts.chat_summary != null ? opts.chat_summary : null,
+          p_outcome: opts.outcome || 'pending',
+          p_ai_lessons: opts.ai_lessons != null ? opts.ai_lessons : null
+        }).then(function (result) {
+          var err = result && result.error;
+          if (err) try { console.warn('[booth_save_ai_interaction]', err.message || err); } catch (e) { /* ignore */ }
+          return result;
+        }).catch(function (err) {
+          try { console.warn('[booth_save_ai_interaction]', err && err.message ? err.message : err); } catch (e2) { /* ignore */ }
+        });
+      }
+
+      window.MDJBoothSaveAiInteraction = boothSaveAiInteractionRow;
+      window.MDJBoothLogLearning = boothLogLearningInteraction;
+
+      /** Cierre de sesión sin lead: una fila por session_key (evita spam al recargar). */
+      function wireBoothSessionEndCapture() {
+        window.addEventListener('pagehide', function () {
+          if (boothLeadSaved) return;
+          var sk = '';
+          try {
+            sk = getOrCreateBoothSessionKey();
+            if (sessionStorage.getItem('mdj_booth_exit_done_' + sk)) return;
+            sessionStorage.setItem('mdj_booth_exit_done_' + sk, '1');
+          } catch (e) { return; }
+          var summary = 'session_end | no_lead_submit | radar=' + JSON.stringify(buildSessionContextRadar());
+          boothLogLearningInteraction(null, summary, 'VISITOR_LEFT_PAGE');
+          boothSaveAiInteractionRow({
+            lead_id: null,
+            session_context: buildSessionContextRadar(),
+            chat_summary: 'Session ended before prospect form submit.',
+            outcome: 'pending',
+            ai_lessons: null
+          });
+        }, { capture: false });
+      }
+
       function getAgentSystemHint() {
         var r = window.MDJBoothCapture && window.MDJBoothCapture.raw;
         if (!r || !isVipCapture(r)) {
@@ -952,10 +1057,25 @@
               return;
             }
             var data = res.data;
+            boothLeadSaved = true;
             boothTrack('lead_submit_success', { lead_id: data && data.id ? data.id : null });
+            var negSummary = buildNegotiationSummaryFromFd(fd);
+            await boothLogLearningInteraction(
+              data && data.id ? data.id : null,
+              negSummary || 'lead_form_submit',
+              'LEAD_INSERT_OK: prospect saved; team queue.'
+            );
+            if (data && data.id) {
+              await boothSaveAiInteractionRow({
+                lead_id: data.id,
+                session_context: buildSessionContextRadar(),
+                chat_summary: negSummary,
+                outcome: 'pending',
+                ai_lessons: null
+              });
+            }
             status.textContent = 'Prospecto guardado. ID: ' + (data && data.id ? data.id : 'ok') + '. El equipo será notificado si el trigger está activo.';
             status.style.color = 'var(--gold)';
-            e.target.reset();
             var hid = document.getElementById('booth-capture-json');
             if (hid) hid.value = JSON.stringify(raw);
             var et2 = document.getElementById('booth-event-type');
@@ -1000,8 +1120,10 @@
           has_capture: isVipCapture(raw),
           referrer: document.referrer || null
         });
+        boothLogLearningInteraction(null, 'session_start', 'BOOTH_PAGE_OPEN | radar=' + JSON.stringify(buildSessionContextRadar()));
         wireForm();
         wireTts();
+        wireBoothSessionEndCapture();
       }
 
       if (document.readyState === 'loading') {
@@ -1012,7 +1134,7 @@
     })();
   </script>
   <script src="./header-smart-search.js?v=20260411-search-google"></script>
-  <script src="./mdj-shared-header.js?v=20260414-mobile-hamburger"></script>
+  <script src="./mdj-shared-header.js?v=20260415-TOTAL-SYNC"></script>
   <script src="./mdj-social-bar.js?v=20260413-scrollhide"></script>
 </body>
 

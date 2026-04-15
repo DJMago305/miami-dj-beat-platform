@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Miami DJ Beat — Iniciar Sesión</title>
-    <link rel="stylesheet" href="./styles.css?v=20260419-header-global" />
+    <link rel="stylesheet" href="./styles.css?v=20260415-TOTAL-SYNC" />
     <style>
         .login-container {
             max-width: 420px;
@@ -33,14 +33,31 @@
             pointer-events: none;
         }
 
-        .login-hero {
+        /* Identidad premium: marca primero, seguridad después (no tocar inputs) */
+        .login-brand-block {
             text-align: center;
             margin-bottom: 28px;
-            letter-spacing: 0.12em;
-            font-size: 11px;
+        }
+
+        .login-brand-title {
+            margin: 0 0 10px;
+            font-family: 'Playfair Display', 'Bodoni Moda', Georgia, serif;
+            font-size: clamp(1.35rem, 4.2vw, 1.85rem);
             font-weight: 700;
+            letter-spacing: 0.16em;
             text-transform: uppercase;
-            color: rgba(197, 160, 89, 0.85);
+            color: var(--gold);
+            line-height: 1.2;
+            text-shadow: 0 0 48px rgba(197, 160, 89, 0.28), 0 2px 0 rgba(0, 0, 0, 0.25);
+        }
+
+        .login-brand-subtitle {
+            margin: 0;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.26em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.4);
         }
 
         .auth-toggle {
@@ -127,6 +144,17 @@
             outline: 2px solid var(--gold);
             outline-offset: 3px;
             border-radius: 4px;
+        }
+
+        #auth-error .auth-inline-link {
+            color: var(--gold);
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            font-weight: 700;
+        }
+
+        #auth-error .auth-inline-link:hover {
+            color: #fff;
         }
     </style>
 </head>
@@ -221,8 +249,10 @@
     -->
     <main class="container">
         <div class="login-container">
-            <p class="login-hero">MDJPRO · Acceso seguro</p>
-            <p id="login-free-hint" class="fineprint" data-i18n="login-free-hint" style="display:none;text-align:center;color:rgba(197,160,89,0.85);margin:-18px 0 22px;font-size:12px;font-weight:600;letter-spacing:0.04em;">Cuenta gratuita · sin tarjeta</p>
+            <header class="login-brand-block" aria-labelledby="login-brand-heading">
+                <h1 id="login-brand-heading" class="login-brand-title">Miami DJ Beat</h1>
+                <p class="login-brand-subtitle" data-i18n="login-brand-subtitle">Acceso seguro</p>
+            </header>
             <div class="auth-toggle">
                 <div class="auth-tab active" id="tab-login" data-i18n="login-tab">Entrar</div>
                 <div class="auth-tab" id="tab-signup" data-i18n="signup-tab">Crear Cuenta</div>
@@ -297,10 +327,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=20260226-1"></script>
-    <script src="./translations.js?v=20260422-login-footer-hint"></script>
+    <script src="./translations.js?v=20260414-vip-identity"></script>
     <script src="./i18n.js?v=20260226-1"></script>
     <script src="./security-shield.js?v=20260305-1"></script>
-    <script src="./auth.js?v=20260411-ref"></script>
+    <script src="./auth.js?v=20260415-TOTAL-SYNC"></script>
 
     <script>
         (function syncReferralFromUrl() {
@@ -352,6 +382,7 @@
             tabSignup.classList.add('active'); tabLogin.classList.remove('active');
             signupForm.classList.remove('hidden'); loginForm.classList.add('hidden');
             applySignupUserTypeFromUrl();
+            applyContactLeadPrefill();
         };
 
         /** Desde la pestaña Entrar: pasar a «Crear cuenta» sin recargar; reflejar signup=free en la URL y recalcular tipo (equivalente a enlace directo al alta). */
@@ -371,11 +402,7 @@
                 signupForm.classList.remove('hidden');
                 loginForm.classList.add('hidden');
                 applySignupUserTypeFromUrl();
-                var fh = document.getElementById('login-free-hint');
-                if (fh) {
-                    fh.style.display = 'block';
-                    if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
-                }
+                applyContactLeadPrefill();
             });
         })();
 
@@ -408,18 +435,39 @@
             tabLogin.classList.remove('active');
             signupForm.classList.remove('hidden');
             loginForm.classList.add('hidden');
-            const freeHint = document.getElementById('login-free-hint');
-            if (freeHint) {
-                freeHint.style.display = 'block';
-                if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
-            }
+        }
+
+        /** Datos del formulario «Reserva tu Evento» (sessionStorage) → alta sin pedirlos de nuevo */
+        function applyContactLeadPrefill() {
+            try {
+                var p = new URLSearchParams(window.location.search);
+                var raw = sessionStorage.getItem('mdj_lead_prefill_v1');
+                if (p.get('from_contact') !== '1' && !raw) return;
+                var d = raw ? JSON.parse(raw) : {};
+                var pem = p.get('prefill_email');
+                var emEl = document.getElementById('signup-email');
+                var fnEl = document.getElementById('signup-fullname');
+                var phEl = document.getElementById('signup-phone');
+                if (emEl) {
+                    if (pem) emEl.value = decodeURIComponent(pem);
+                    else if (d.email) emEl.value = d.email;
+                }
+                if (fnEl && d.name) fnEl.value = d.name;
+                if (phEl && d.phone) phEl.value = d.phone;
+            } catch (e) { void e; }
         }
         /* Después de i18n y otros scripts que tocan el DOM */
         if (wantsSignup) {
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function () { mdbOpenSignupTabIfRequested(); });
+                document.addEventListener('DOMContentLoaded', function () {
+                    mdbOpenSignupTabIfRequested();
+                    applyContactLeadPrefill();
+                });
             } else {
-                requestAnimationFrame(function () { mdbOpenSignupTabIfRequested(); });
+                requestAnimationFrame(function () {
+                    mdbOpenSignupTabIfRequested();
+                    applyContactLeadPrefill();
+                });
             }
         }
 
@@ -510,7 +558,7 @@
     </div>
 
     <script src="./header-smart-search.js?v=20260411-search-google"></script>
-    <script src="./mdj-shared-header.js?v=20260422-get-pro-to-jobs-plans"></script>
+    <script src="./mdj-shared-header.js?v=20260415-TOTAL-SYNC"></script>
   <script src="./mdj-social-bar.js?v=20260413-scrollhide"></script>
 </body>
 

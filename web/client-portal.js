@@ -3,11 +3,283 @@
  * Handles real-time event tracking, installments, and feedback.
  */
 
+function portalEscapeHtml(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/** Short display e.g. "Wendy Example" → "Wendy E." (aligned with header VIP) */
+function portalFormatShortName(fullName) {
+    var parts = String(fullName || '')
+        .trim()
+        .split(/\s+/)
+        .filter(function (x) {
+            return !!x;
+        });
+    if (parts.length === 0) return '';
+    if (parts.length === 1) return parts[0];
+    var first = parts[0];
+    var last = parts[parts.length - 1];
+    if (first === last) return first;
+    return first + ' ' + last.charAt(0).toUpperCase() + '.';
+}
+
+var PORTAL_I18N_FB = {
+    en: {
+        'portal-welcome-recognized': 'Hello, {name}!',
+        'portal-welcome-recognized-sub': 'Welcome to your events panel.',
+        'portal-default-tagline': 'Welcome to your events panel.',
+        'portal-pick-event-intro': 'Choose an event to open your dashboard.',
+        'portal-no-events-title': 'No events linked to this account yet',
+        'portal-no-events-body': 'When you book with Miami DJ Beat, your timeline and payments will appear here.',
+        'portal-no-events-cta': 'Explore services & booking',
+        'portal-guest-title': 'Access your portal',
+        'portal-guest-body': 'Enter the email you used when booking to see your event status.',
+        'portal-guest-search': 'Find my event',
+        'portal-guest-searching': 'Searching…',
+        'portal-guest-not-found': 'We could not find events for that email.',
+        'portal-guest-error': 'Connection error. Please try again.',
+        'portal-financial-title': 'Financial summary',
+        'portal-financial-subtitle': 'Contract, payments, and balance in one place.',
+        'portal-financial-contract-total': 'Total contract',
+        'portal-financial-deposit-paid': 'Payments to date (deposit / installments)',
+        'portal-financial-balance-label': 'Balance due',
+        'portal-financial-deadline-label': 'Final payment due date',
+        'portal-payment-stripe-note': 'Card payments are processed securely by Stripe (PCI DSS). We never store your full card number in this portal.',
+        'portal-payment-paypal-soon': 'PayPal: integration in progress — use the card payment button for now.',
+        'portal-payment-security-title': 'Saved payment methods',
+        'portal-payment-security-body': 'To save or update cards securely for future events, use the billing section on your account (Stripe Customer).',
+        'portal-payment-security-link': 'Billing & payment methods →',
+        'portal-reservation-bonus-line': 'Immediate reservation bonus (48h+)',
+        'portal-reservation-bonus-banner': '<strong>Immediate reservation bonus applied.</strong> Because this booking has been open 48+ hours with no payment yet, we applied a <strong>${amount}</strong> courtesy credit to your pack total. It is reflected in “Discounts / credits” and in your deposit calculation.',
+        'portal-pay-now': 'PAY NOW'
+    },
+    es: {
+        'portal-welcome-recognized': '¡Hola, {name}!',
+        'portal-welcome-recognized-sub': 'Bienvenido a tu panel de eventos.',
+        'portal-default-tagline': 'Bienvenido a tu panel de eventos.',
+        'portal-pick-event-intro': 'Elige un evento para abrir tu panel.',
+        'portal-no-events-title': 'Aún no hay eventos vinculados a esta cuenta',
+        'portal-no-events-body': 'Cuando reserves con Miami DJ Beat, tu cronograma y pagos aparecerán aquí.',
+        'portal-no-events-cta': 'Ver servicios y reservas',
+        'portal-guest-title': 'Accede a tu Portal',
+        'portal-guest-body': 'Ingresa el email que usaste al reservar para ver el estado de tu evento.',
+        'portal-guest-search': 'Buscar mi evento',
+        'portal-guest-searching': 'Buscando…',
+        'portal-guest-not-found': 'No encontramos eventos para ese email.',
+        'portal-guest-error': 'Error de conexión. Intenta de nuevo.',
+        'portal-financial-title': 'Resumen financiero',
+        'portal-financial-subtitle': 'Contrato, pagos y saldo en un solo lugar.',
+        'portal-financial-contract-total': 'Total del contrato',
+        'portal-financial-deposit-paid': 'Pagos realizados (depósito / abonos)',
+        'portal-financial-balance-label': 'Saldo pendiente',
+        'portal-financial-deadline-label': 'Fecha límite pago final',
+        'portal-payment-stripe-note': 'Pagos con tarjeta procesados de forma segura por Stripe (PCI DSS). No almacenamos el número completo de tu tarjeta en este portal.',
+        'portal-payment-paypal-soon': 'PayPal: en integración; mientras tanto usa el botón de pago con tarjeta.',
+        'portal-payment-security-title': 'Métodos de pago guardados',
+        'portal-payment-security-body': 'Para guardar o actualizar tarjetas de forma segura para futuros eventos, usa la sección de facturación de tu cuenta (Stripe Customer).',
+        'portal-payment-security-link': 'Facturación y métodos de pago →',
+        'portal-reservation-bonus-line': 'Bono de reserva inmediata (48h+)',
+        'portal-reservation-bonus-banner': '<strong>Bono de Reserva Inmediata activo.</strong> Como esta reserva lleva más de 48 horas sin pago, aplicamos un crédito de cortesía de <strong>${amount}</strong> a tu pack. Ya está reflejado en “Descuentos/Créditos” y en el cálculo del depósito.',
+        'portal-pay-now': 'PAGAR AHORA'
+    }
+};
+
+function portalLang() {
+    if (window.i18n && window.i18n.currentLang) return window.i18n.currentLang === 'es' ? 'es' : 'en';
+    var h = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+    return h.indexOf('es') === 0 ? 'es' : 'en';
+}
+
+function portalT(key, name) {
+    var loc = portalLang();
+    var tpl = '';
+    try {
+        if (window.i18n && typeof window.i18n.t === 'function') {
+            tpl = window.i18n.t(key);
+        }
+    } catch (e) { /* ignore */ }
+    if (!tpl) tpl = (PORTAL_I18N_FB[loc] && PORTAL_I18N_FB[loc][key]) || PORTAL_I18N_FB.en[key] || '';
+    if (name != null && name !== '') tpl = tpl.replace(/\{name\}/g, String(name));
+    else tpl = tpl.replace(/\{name\}/g, '');
+    return tpl;
+}
+
+function portalTAmount(key, amountUsd) {
+    var s = portalT(key);
+    var amt = parseFloat(amountUsd) || 0;
+    return s.replace(/\$\{amount\}/g, '$' + amt.toFixed(2));
+}
+
+/** Misma heurística que el header VIP (URL pública real). */
+function portalIsRealPhotoUrl(url) {
+    if (!url || !String(url).trim()) return false;
+    var u = String(url).trim();
+    if (/placeholder|dj-avatar-placeholder\.png/i.test(u)) return false;
+    return /^https?:\/\//i.test(u) || u.indexOf('data:image/') === 0;
+}
+
+function portalGetAvatarUrl(session, clientProfile) {
+    var meta = session && session.user && session.user.user_metadata ? session.user.user_metadata : {};
+    var u = meta.avatar_url || meta.picture || meta.picture_url;
+    if (portalIsRealPhotoUrl(u)) return String(u).split('?')[0];
+    if (clientProfile) {
+        var c = (clientProfile.avatar_url || clientProfile.photo_url || '').trim();
+        if (portalIsRealPhotoUrl(c)) return c.split('?')[0];
+    }
+    return '';
+}
+
+function portalComputeInitials(displayName, email) {
+    var d = String(displayName || '').trim();
+    if (d) {
+        var w = d.split(/\s+/).filter(Boolean);
+        if (w.length >= 2) return (w[0].charAt(0) + w[w.length - 1].charAt(0)).toUpperCase();
+        if (w.length === 1 && w[0].length >= 2) return w[0].substring(0, 2).toUpperCase();
+        if (w.length === 1) return w[0].charAt(0).toUpperCase();
+    }
+    var e = String(email || '').split('@')[0] || '';
+    if (e.length >= 2) return e.substring(0, 2).toUpperCase();
+    return e ? e.charAt(0).toUpperCase() : '?';
+}
+
+function portalFormatHandleDisplay(raw) {
+    if (!raw || !String(raw).trim()) return '';
+    var t = String(raw).trim();
+    return t.charAt(0) === '@' ? t : '@' + t.replace(/^@+/, '');
+}
+
+/**
+ * Saludo: username (@handle) si existe; si no, nombre corto u otras fuentes.
+ */
+function portalResolveWelcomeName(session, clientProfile, lead) {
+    var meta = session && session.user && session.user.user_metadata ? session.user.user_metadata : {};
+    var email = session && session.user && session.user.email ? String(session.user.email).trim() : '';
+    if (clientProfile && clientProfile.username && String(clientProfile.username).trim()) {
+        return portalFormatHandleDisplay(clientProfile.username);
+    }
+    if (typeof meta.username === 'string' && meta.username.trim()) {
+        return portalFormatHandleDisplay(meta.username);
+    }
+    if (clientProfile && clientProfile.full_name && String(clientProfile.full_name).trim()) {
+        return portalFormatShortName(String(clientProfile.full_name).trim());
+    }
+    var m =
+        meta.full_name ||
+        meta.display_name ||
+        meta.artistic_name ||
+        '';
+    if (m && String(m).trim()) return portalFormatShortName(String(m).trim());
+    if (lead && lead.contact_person && String(lead.contact_person).trim()) {
+        return portalFormatShortName(String(lead.contact_person).trim());
+    }
+    if (email) {
+        var local = email.split('@')[0] || '';
+        if (local.length >= 2) return local.charAt(0).toUpperCase() + local.slice(1);
+        if (local.length === 1) return local.toUpperCase();
+    }
+    return 'VIP';
+}
+
 const PortalApp = {
+    /** Lead abierto 48h+ sin pago → crédito de enganche (portal + IA pueden referenciarlo). */
+    RESERVATION_BONUS_HOURS: 48,
+    RESERVATION_BONUS_USD: 75,
+
+    /** Evita mostrar el formulario de email si Supabase aún no está listo pero el usuario ya tiene sesión. */
+    async waitForSupabaseClient(maxMs) {
+        var step = 50;
+        var waited = 0;
+        maxMs = typeof maxMs === 'number' ? maxMs : 5000;
+        while (waited <= maxMs) {
+            if (typeof window.getSupabaseClient === 'function' && window.getSupabaseClient()) return true;
+            await new Promise(function (r) {
+                setTimeout(r, step);
+            });
+            waited += step;
+        }
+        return false;
+    },
+
     currentLead: null,
     items: [],
     installments: [],
     isManager: false,
+    clientProfile: null,
+    _sessionSnapshot: null,
+
+    getNotesObject() {
+        if (!this.currentLead || !this.currentLead.notes) return {};
+        try {
+            var n = JSON.parse(this.currentLead.notes);
+            return typeof n === 'object' && n !== null ? n : {};
+        } catch (e) {
+            return {};
+        }
+    },
+
+    getHoursSinceLeadCreated() {
+        if (!this.currentLead || !this.currentLead.created_at) return null;
+        var created = new Date(this.currentLead.created_at);
+        if (isNaN(created.getTime())) return null;
+        return (Date.now() - created.getTime()) / 3600000;
+    },
+
+    computeReservationBonusUsd() {
+        if (this.isManager || !this.currentLead) return 0;
+        var st = this.currentLead.payment_status || 'UNPAID';
+        if (st === 'PAID') return 0;
+        var paid = parseFloat(this.currentLead.balance_paid) || 0;
+        if (paid > 0) return 0;
+        var hours = this.getHoursSinceLeadCreated();
+        if (hours == null || hours < this.RESERVATION_BONUS_HOURS) return 0;
+        var n = this.getNotesObject();
+        if (n.reservation_bonus_opt_out === true) return 0;
+        return this.RESERVATION_BONUS_USD;
+    },
+
+    updateReservationBonusBanner() {
+        var el = document.getElementById('portal-reservation-bonus-banner');
+        if (!el) return;
+        var usd = this.computeReservationBonusUsd();
+        if (usd > 0 && !this.isManager) {
+            el.classList.add('is-visible');
+            el.innerHTML = portalTAmount('portal-reservation-bonus-banner', usd);
+        } else {
+            el.classList.remove('is-visible');
+            el.innerHTML = '';
+        }
+    },
+
+    exportFinanceMeta() {
+        try {
+            if (!this.currentLead) {
+                delete window.__MDJ_PORTAL_FINANCE__;
+                return;
+            }
+            var total = parseFloat(this.currentLead.total_amount) || 0;
+            var paid = parseFloat(this.currentLead.balance_paid) || 0;
+            var bonus = this.computeReservationBonusUsd();
+            window.__MDJ_PORTAL_FINANCE__ = {
+                leadId: this.currentLead.id,
+                totalContract: total,
+                depositPaid: paid,
+                balanceDue: Math.max(0, total - paid),
+                paymentStatus: this.currentLead.payment_status || 'UNPAID',
+                reservationBonusEligible: bonus > 0,
+                reservationBonusUsd: bonus,
+                hoursSinceLeadCreated: this.getHoursSinceLeadCreated(),
+                stripeCheckout: true,
+                paypalComingSoon: true,
+                savedMethodsHint: './client-billing.html'
+            };
+        } catch (e) {
+            delete window.__MDJ_PORTAL_FINANCE__;
+        }
+    },
 
     async init() {
         const params = new URLSearchParams(window.location.search);
@@ -15,6 +287,15 @@ const PortalApp = {
         this.isManager = params.get('mode') === 'manager';
 
         if (!leadId) {
+            try {
+                document.body.classList.add('portal-resolving-session');
+            } catch (e0) { /* ignore */ }
+            await this.waitForSupabaseClient(6000);
+            var resolved = await this.tryResolvePortalFromSession();
+            if (resolved) return;
+            try {
+                document.body.classList.remove('portal-resolving-session');
+            } catch (e1) { /* ignore */ }
             this.showNoLeadScreen();
             return;
         }
@@ -62,29 +343,48 @@ const PortalApp = {
                 contact_person: "Gerardo V.",
                 gate_code: "1234#",
                 total_amount: 0,
-                balance_paid: 1000,
-                status: "CONFIRMED"
+                balance_paid: 0,
+                payment_status: "UNPAID",
+                status: "CONFIRMED",
+                created_at: new Date(Date.now() - 72 * 3600000).toISOString()
             };
         }
 
         this.currentLead = leadData;
-        this.renderLeadInfo();
         await this.loadLeadItems(leadId);
         await this.fetchClientProfile(leadData.email);
+        this.renderLeadInfo();
         this.startCountdown();
     },
 
     async fetchClientProfile(email) {
-        if (!email) return;
+        this.clientProfile = null;
+        this._sessionSnapshot = null;
         try {
             const db = window.getSupabaseClient();
-            if (db) {
-                const { data } = await db.from('client_profiles').select('*').eq('email', email).single();
-                if (data) this.clientProfile = data;
+            if (!db) return;
+            const { data: sessWrap } = await db.auth.getSession();
+            this._sessionSnapshot = sessWrap && sessWrap.session ? sessWrap.session : null;
+            try {
+                var gu = await db.auth.getUser();
+                if (gu && gu.data && gu.data.user && this._sessionSnapshot && this._sessionSnapshot.user) {
+                    this._sessionSnapshot.user = gu.data.user;
+                }
+            } catch (guErr) { /* ignore */ }
+            var uid = this._sessionSnapshot && this._sessionSnapshot.user && this._sessionSnapshot.user.id;
+            if (uid) {
+                var pr = await db.from('client_profiles').select('*').eq('user_id', uid).maybeSingle();
+                if (pr.data) this.clientProfile = pr.data;
             }
-        } catch (e) { console.warn("Client profile fetch skipped"); }
+            if (!this.clientProfile && email) {
+                var pr2 = await db.from('client_profiles').select('*').eq('email', email).maybeSingle();
+                if (pr2.data) this.clientProfile = pr2.data;
+            }
+        } catch (e) {
+            console.warn('Client profile fetch skipped', e);
+        }
         this.renderLoyaltyBadge(this.clientProfile?.total_events_booked || 1);
-        this.renderCart(); // Re-render cart with potential discounts
+        this.renderCart();
     },
 
     async loadLoyaltyTier(email) {
@@ -216,7 +516,13 @@ const PortalApp = {
 
     renderLeadInfo() {
         const l = this.currentLead;
-        document.getElementById('client-welcome').textContent = `¡Hola, ${l.contact_person || 'Cliente'}!`;
+        var welcomeEl = document.getElementById('client-welcome');
+        var subEl = document.getElementById('client-welcome-sub');
+        var nameWelcome = portalResolveWelcomeName(this._sessionSnapshot, this.clientProfile, l);
+
+        if (welcomeEl) welcomeEl.textContent = portalT('portal-welcome-recognized', nameWelcome);
+        if (subEl) subEl.textContent = portalT('portal-welcome-recognized-sub');
+        this.renderPortalWelcomeAvatar();
         document.getElementById('log-location').textContent = l.location;
         document.getElementById('log-datetime').textContent = `${l.event_date} - 7:00 PM`;
         document.getElementById('log-gate').textContent = l.gate_code || "A confirmar";
@@ -233,6 +539,54 @@ const PortalApp = {
 
         if (this.isManager) {
             this.makeLogisticsEditable();
+        }
+    },
+
+    /** Avatar circular (misma fuente que header VIP: JWT + client_profiles). */
+    renderPortalWelcomeAvatar: function () {
+        var el = document.getElementById('portal-welcome-avatar');
+        if (!el) return;
+        var s = this._sessionSnapshot;
+        var cp = this.clientProfile;
+        var url = portalGetAvatarUrl(s, cp);
+        var nm = portalResolveWelcomeName(s, cp, this.currentLead);
+        var initials = portalComputeInitials(nm, s && s.user && s.user.email ? s.user.email : '');
+        if (portalIsRealPhotoUrl(url)) {
+            var bust = url.indexOf('?') >= 0 ? url : url + '?v=' + Date.now();
+            el.style.display = '';
+            el.classList.remove('portal-welcome-avatar--initials');
+            el.innerHTML =
+                '<span class="portal-vip-avatar-ring">' +
+                '<img src="' +
+                portalEscapeHtml(bust) +
+                '" alt="" class="portal-vip-avatar-img" data-portal-av-init="' +
+                portalEscapeHtml(initials) +
+                '" /></span>';
+            var img = el.querySelector('img.portal-vip-avatar-img');
+            if (img) {
+                img.addEventListener(
+                    'error',
+                    function onAvErr() {
+                        img.removeEventListener('error', onAvErr);
+                        var init = img.getAttribute('data-portal-av-init') || '?';
+                        el.classList.add('portal-welcome-avatar--initials');
+                        el.innerHTML =
+                            '<span class="portal-vip-avatar-ring portal-vip-avatar-ring--init">' +
+                            '<span class="portal-vip-avatar-initials">' +
+                            portalEscapeHtml(init) +
+                            '</span></span>';
+                    },
+                    { once: true }
+                );
+            }
+        } else {
+            el.style.display = '';
+            el.classList.add('portal-welcome-avatar--initials');
+            el.innerHTML =
+                '<span class="portal-vip-avatar-ring portal-vip-avatar-ring--init">' +
+                '<span class="portal-vip-avatar-initials">' +
+                portalEscapeHtml(initials) +
+                '</span></span>';
         }
     },
 
@@ -310,6 +664,15 @@ const PortalApp = {
             discountNote += `• Beneficio Cliente Oficial (5%): -$${loyaltyDisc.toFixed(2)}<br>`;
         }
 
+        // 3. Bono de Reserva Inmediata (48h+ sin ningún pago — enganche)
+        var bonusUsd = this.computeReservationBonusUsd();
+        if (bonusUsd > 0) {
+            discount += bonusUsd;
+            discountNote += `• ${portalT('portal-reservation-bonus-line')}: -$${bonusUsd.toFixed(2)}<br>`;
+        }
+
+        if (discount > sub) discount = sub;
+
         const tax = (sub - discount) * 0.07;
         const total = (sub - discount) + tax;
 
@@ -380,10 +743,14 @@ const PortalApp = {
         const balance = total - paid;
         const progress = total > 0 ? (paid / total) * 100 : 0;
 
-        document.getElementById('pay-total').textContent = `$${total.toFixed(2)}`;
-        document.getElementById('pay-paid').textContent = `$${paid.toFixed(2)}`;
-        document.getElementById('pay-balance').textContent = `$${balance.toFixed(2)}`;
-        document.getElementById('pay-progress').style.width = `${progress}%`;
+        var pt = document.getElementById('pay-total');
+        var pp = document.getElementById('pay-paid');
+        var pb = document.getElementById('pay-balance');
+        var pf = document.getElementById('pay-progress');
+        if (pt) pt.textContent = `$${total.toFixed(2)}`;
+        if (pp) pp.textContent = `$${paid.toFixed(2)}`;
+        if (pb) pb.textContent = `$${balance.toFixed(2)}`;
+        if (pf) pf.style.width = `${progress}%`;
 
         // Payment status badge
         const pStatus = l.payment_status || 'UNPAID';
@@ -394,6 +761,13 @@ const PortalApp = {
             payStatusEl.style.color = statusColors[pStatus] || '#fff';
         }
 
+        var oldPay = document.getElementById('btn-stripe-pay');
+        if (oldPay) oldPay.remove();
+        if (!this.isManager) {
+            var abx = document.getElementById('btn-add-abono');
+            if (abx) abx.remove();
+        }
+
         // Show Stripe pay button to CLIENT if balance > 0 and not PAID
         if (!this.isManager && balance > 0 && pStatus !== 'PAID') {
             this.showStripePayButton(balance);
@@ -402,24 +776,27 @@ const PortalApp = {
         if (this.isManager && balance > 0) {
             this.showAbonoButton();
         }
+
+        this.exportFinanceMeta();
+        this.updateReservationBonusBanner();
     },
 
     showStripePayButton(balance) {
-        let btn = document.getElementById('btn-stripe-pay');
-        if (btn) return; // already shown
-        btn = document.createElement('button');
+        var host = document.getElementById('portal-pay-cta-host');
+        if (!host || !this.currentLead) return;
+        var paid = parseFloat(this.currentLead.balance_paid) || 0;
+        var st = this.currentLead.payment_status || 'UNPAID';
+        var needsGold = st === 'UNPAID' || paid < 0.01;
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
         btn.id = 'btn-stripe-pay';
-        btn.className = 'btn primary full';
-        btn.style.marginTop = '14px';
-        btn.style.background = 'linear-gradient(135deg, #635bff, #4b44e8)';
-        btn.style.display = 'flex';
-        btn.style.alignItems = 'center';
-        btn.style.justifyContent = 'center';
-        btn.style.gap = '8px';
-        btn.innerHTML = `<span style="font-size:18px;">💳</span> Pagar Depósito ($${balance.toFixed(2)}) con Stripe`;
+        btn.className = needsGold ? 'portal-pay-now-gold' : 'portal-pay-secondary';
+        btn.innerHTML = needsGold
+            ? `<span style="font-size:18px;">💳</span> ${portalT('portal-pay-now')} &nbsp;·&nbsp; $${balance.toFixed(2)}`
+            : `<span style="font-size:16px;">💳</span> Pagar saldo ($${balance.toFixed(2)}) — Stripe`;
         btn.onclick = () => this.payDepositStripe(balance);
-        const card = document.querySelector('.right-col .info-card');
-        if (card) card.appendChild(btn);
+        host.appendChild(btn);
     },
 
     async payDepositStripe(balance) {
@@ -448,7 +825,10 @@ const PortalApp = {
             window.location.href = result.url;
         } catch (err) {
             alert('Error al conectar con Stripe: ' + err.message);
-            if (btn) { btn.textContent = '💳 Reintentar Pago'; btn.disabled = false; }
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = `<span style="font-size:18px;">💳</span> ${portalT('portal-pay-now')} · Reintentar`;
+            }
         }
     },
 
@@ -492,6 +872,8 @@ const PortalApp = {
     },
 
     showAbonoButton() {
+        var host = document.getElementById('portal-pay-cta-host');
+        if (!host) return;
         let btn = document.getElementById('btn-add-abono');
         if (!btn) {
             btn = document.createElement('button');
@@ -500,8 +882,7 @@ const PortalApp = {
             btn.style.marginTop = '10px';
             btn.textContent = "+ Registrar Abono (Pagar cuota)";
             btn.onclick = () => this.registerAbono();
-            const card = document.querySelector('.right-col .info-card');
-            if (card) card.appendChild(btn);
+            host.appendChild(btn);
         }
     },
 
@@ -673,18 +1054,130 @@ const PortalApp = {
         container.scrollTop = container.scrollHeight;
     },
 
+    /**
+     * Sesión activa sin ?lead=: resuelve por email del usuario — sin formulario de email.
+     */
+    async tryResolvePortalFromSession() {
+        try {
+            var db = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+            if (!db) return false;
+            var session = null;
+            var attempt = 0;
+            while (attempt < 5 && (!session || !session.user)) {
+                var res = await db.auth.getSession();
+                session = res.data && res.data.session;
+                if (!session || !session.user) {
+                    try {
+                        var ur = await db.auth.getUser();
+                        if (ur && ur.data && ur.data.user) {
+                            session = { user: ur.data.user };
+                        }
+                    } catch (eU) { /* ignore */ }
+                }
+                if (session && session.user) break;
+                await new Promise(function (r) {
+                    setTimeout(r, 120 * (attempt + 1));
+                });
+                attempt++;
+            }
+            if (!session || !session.user) return false;
+            var email = String(session.user.email || '').trim().toLowerCase();
+            if (!email) return false;
+
+            var clientRow = null;
+            try {
+                var rUid = await db.from('client_profiles').select('full_name, email, user_id, avatar_url, photo_url').eq('user_id', session.user.id).maybeSingle();
+                if (rUid.data) clientRow = rUid.data;
+                if (!clientRow) {
+                    var rEm = await db.from('client_profiles').select('full_name, email, user_id, avatar_url, photo_url').eq('email', email).maybeSingle();
+                    if (rEm.data) clientRow = rEm.data;
+                }
+            } catch (e) { /* ignore */ }
+
+            var q = await db
+                .from('leads')
+                .select('id, event_type, event_date, status')
+                .eq('email', email)
+                .order('created_at', { ascending: false })
+                .limit(5);
+
+            if (q.error) {
+                console.warn('portal leads query', q.error);
+                this._sessionSnapshot = session;
+                this.clientProfile = clientRow || this.clientProfile;
+                this.showLoggedInNoEvents(session, clientRow);
+                return true;
+            }
+            var leads = q.data || [];
+            /* Con sesión: siempre al panel del evento más reciente (misma búsqueda por email, sin formulario). */
+            if (leads.length >= 1) {
+                var path = (window.location.pathname || '/client-portal.html').split('?')[0];
+                window.location.replace(path + '?lead=' + encodeURIComponent(leads[0].id));
+                return true;
+            }
+            this.showLoggedInNoEvents(session, clientRow);
+            return true;
+        } catch (err) {
+            console.warn('tryResolvePortalFromSession', err);
+            try {
+                document.body.classList.remove('portal-resolving-session');
+            } catch (e2) { /* ignore */ }
+            return false;
+        }
+    },
+
+    showLoggedInNoEvents(session, clientRow) {
+        try {
+            document.body.classList.remove('portal-resolving-session');
+        } catch (eR) { /* ignore */ }
+        var displayName = portalResolveWelcomeName(session || null, clientRow || null, null);
+        var head = document.querySelector('.portal-header');
+        if (!head) return;
+        this._sessionSnapshot = session || this._sessionSnapshot;
+        this.clientProfile = clientRow || this.clientProfile;
+        this.currentLead = null;
+        head.innerHTML =
+            '<div class="container" style="padding: 40px 20px;">' +
+            '<div class="portal-header-identity portal-header-identity--solo" style="display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;margin-bottom:12px;">' +
+            '<div id="portal-welcome-avatar" class="portal-welcome-avatar" aria-hidden="true"></div>' +
+            '<div style="text-align:center;">' +
+            '<div style="font-size: 42px; margin-bottom: 16px;">🎧</div>' +
+            '<h1 id="client-welcome" style="font-size: 26px; margin-bottom: 12px; line-height: 1.35;">' +
+            portalEscapeHtml(portalT('portal-welcome-recognized', displayName)) +
+            '</h1>' +
+            '<p id="client-welcome-sub" style="opacity: 0.85;">' + portalEscapeHtml(portalT('portal-welcome-recognized-sub')) + '</p>' +
+            '</div></div>';
+        this.renderPortalWelcomeAvatar();
+        var main = document.querySelector('main');
+        if (main) {
+            main.innerHTML =
+                '<div class="container" style="padding: 20px 0 60px;">' +
+                '<div class="info-card" style="max-width: 560px; margin: 0 auto; text-align: center;">' +
+                '<h3 style="margin-bottom: 12px;">' + portalEscapeHtml(portalT('portal-no-events-title')) + '</h3>' +
+                '<p class="fineprint" style="margin-bottom: 22px; line-height: 1.5;">' + portalEscapeHtml(portalT('portal-no-events-body')) + '</p>' +
+                '<a href="./jobs.html" class="btn primary" style="display: inline-block;">' + portalEscapeHtml(portalT('portal-no-events-cta')) + '</a>' +
+                '</div></div>';
+        }
+    },
+
     showNoLeadScreen() {
+        try {
+            document.body.classList.remove('portal-resolving-session');
+        } catch (eG) { /* ignore */ }
+        var guestTitle = portalT('portal-guest-title');
+        var guestBody = portalT('portal-guest-body');
+        var guestSearch = portalT('portal-guest-search');
         document.querySelector('.portal-header').innerHTML = `
             <div class="container" style="padding: 40px 20px;">
                 <div style="font-size: 48px; margin-bottom: 20px;">🎧</div>
-                <h1 style="font-size: 28px; margin-bottom: 10px;">Accede a tu Portal</h1>
-                <p style="opacity: 0.7; margin-bottom: 30px;">Ingresa tu email para ver el estado de tu evento.</p>
+                <h1 style="font-size: 28px; margin-bottom: 10px;">${portalEscapeHtml(guestTitle)}</h1>
+                <p style="opacity: 0.7; margin-bottom: 30px;">${portalEscapeHtml(guestBody)}</p>
                 <div style="max-width: 400px; margin: 0 auto;">
                     <input type="email" id="portal-email-input" placeholder="tu@email.com"
                         style="width: 100%; padding: 14px 20px; border-radius: 50px; border: 1px solid rgba(197,160,89,0.4); background: rgba(255,255,255,0.05); color: #fff; font-size: 16px; margin-bottom: 15px; box-sizing: border-box;">
                     <button onclick="PortalApp.searchByEmail()" class="btn primary"
                         style="width: 100%; padding: 14px; border-radius: 50px; font-size: 16px; font-weight: 900;">
-                        🔍 Buscar mi Evento
+                        🔍 ${portalEscapeHtml(guestSearch)}
                     </button>
                     <p id="portal-search-status" style="margin-top: 15px; font-size: 14px; opacity: 0.7;"></p>
                 </div>
@@ -694,11 +1187,11 @@ const PortalApp = {
     },
 
     async searchByEmail() {
-        const email = document.getElementById('portal-email-input')?.value.trim();
+        const email = document.getElementById('portal-email-input')?.value.trim().toLowerCase();
         const statusEl = document.getElementById('portal-search-status');
         if (!email) return;
 
-        if (statusEl) statusEl.textContent = 'Buscando...';
+        if (statusEl) statusEl.textContent = portalT('portal-guest-searching');
 
         try {
             const db = window.getSupabaseClient();
@@ -711,7 +1204,7 @@ const PortalApp = {
                 .limit(5);
 
             if (error || !data || data.length === 0) {
-                if (statusEl) statusEl.textContent = '❌ No encontramos eventos para ese email.';
+                if (statusEl) statusEl.textContent = '❌ ' + portalT('portal-guest-not-found');
                 return;
             }
 
@@ -731,7 +1224,7 @@ const PortalApp = {
                 if (statusEl) statusEl.innerHTML = `<div style="margin-top:10px;">${list}</div>`;
             }
         } catch (e) {
-            if (statusEl) statusEl.textContent = 'Error de conexión. Intenta de nuevo.';
+            if (statusEl) statusEl.textContent = portalT('portal-guest-error');
         }
     },
 
