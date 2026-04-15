@@ -3100,7 +3100,7 @@
             }
         }
 
-        // ── Gate: CREATE ACCOUNT ─────────────────────────────────────
+        // ── Gate: CREATE ACCOUNT — mismo contrato que login.html + auth.js (talent + dj_profiles)
         async function gateSignup(e) {
             e.preventDefault();
             if (!supabase) return;
@@ -3113,9 +3113,18 @@
             btn.disabled = true; btn.textContent = 'Creando cuenta...';
             err.style.display = 'none';
 
-            const { error } = await supabase.auth.signUp({
-                email, password: pass,
-                options: { data: { full_name: name } }
+            const { data: signData, error } = await supabase.auth.signUp({
+                email,
+                password: pass,
+                options: {
+                    data: {
+                        full_name: name,
+                        artistic_name: name,
+                        user_type: 'talent',
+                        plan: 'LITE',
+                        username: email.split('@')[0]
+                    }
+                }
             });
 
             if (error) {
@@ -3124,7 +3133,46 @@
                 return;
             }
 
-            // Success — hide gate, show plan selector
+            const user = signData && signData.user;
+            if (!user) {
+                err.textContent = 'No se pudo crear la sesión. Revisa el email de confirmación o intenta desde login.';
+                err.style.display = 'block';
+                btn.disabled = false; btn.innerHTML = '🚀 CREAR MI CUENTA';
+                return;
+            }
+
+            try {
+                const memberId = 'DJ-' + user.id.substring(0, 6).toUpperCase();
+                const referralCode = 'REF' + memberId.replace('DJ-', '').substring(0, 5);
+                const { error: djErr } = await supabase.from('dj_profiles').insert([{
+                    user_id: user.id,
+                    email: email,
+                    dj_name: name,
+                    stage_name: name,
+                    full_name: name,
+                    plan: 'LITE',
+                    status: 'ACTIVE',
+                    member_id: memberId,
+                    referral_code: referralCode,
+                    photo_status: 'pending',
+                    rating: 1.0,
+                    review_count: 0
+                }]);
+                if (djErr) {
+                    console.warn('[gateSignup] dj_profiles:', djErr);
+                    err.textContent = djErr.message || 'No se pudo crear el perfil de artista.';
+                    err.style.display = 'block';
+                    btn.disabled = false; btn.innerHTML = '🚀 CREAR MI CUENTA';
+                    return;
+                }
+            } catch (insErr) {
+                console.warn('[gateSignup] insert:', insErr);
+                err.textContent = (insErr && insErr.message) ? insErr.message : 'Error al crear perfil.';
+                err.style.display = 'block';
+                btn.disabled = false; btn.innerHTML = '🚀 CREAR MI CUENTA';
+                return;
+            }
+
             await onGateSuccess();
         }
 
