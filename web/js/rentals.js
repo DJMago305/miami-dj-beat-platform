@@ -1729,7 +1729,7 @@ window.checkoutPrevStep = function() {
     document.getElementById('checkout-step-1').style.display = 'block';
 };
 
-window.checkoutSubmit = function() {
+window.checkoutSubmit = async function() {
     const btn = document.getElementById('chk-reserve-btn');
     if(btn) {
         btn.innerText = "Processing...";
@@ -1752,14 +1752,92 @@ window.checkoutSubmit = function() {
     console.log("Lead capturado:", leadData);
     
     sessionStorage.setItem('mdjpro_checkout_cart', JSON.stringify(leadData));
-    
-    // Redirección controlada al canal general tras estado visual transaccional
-    setTimeout(() => {
+
+    var subtotal = 0;
+    (leadData.cart || []).forEach(function (item) {
+        subtotal += item.total || (item.price * (item.quantity || 1));
+    });
+
+    var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+    var session = null;
+    if (sb) {
+        try {
+            var wr = await sb.auth.getSession();
+            session = wr && wr.data && wr.data.session;
+        } catch (eS) { /* ignore */ }
+    }
+
+    var notesObj = {
+        rental_cart: leadData.cart,
+        rental_hours: leadData.hours,
+        rental_subtotal_usd: subtotal,
+        source_detail: 'rentals_checkout'
+    };
+    if (session && session.user) {
+        notesObj.client_user_id = session.user.id;
+    }
+
+    var payload = {
+        event_type: (leadData.type && String(leadData.type).trim()) || 'Event rental',
+        event_date: leadData.date || null,
+        location: leadData.city || null,
+        email: leadData.email || null,
+        phone: leadData.phone || null,
+        contact_person: leadData.name || null,
+        budget: subtotal > 0 ? String(Math.round(subtotal * 100) / 100) : null,
+        status: 'NEW',
+        source: 'rentals_checkout',
+        notes: JSON.stringify(notesObj)
+    };
+    if (session && session.user) {
+        payload.client_user_id = session.user.id;
+    }
+
+    if (sb && payload.email) {
+        try {
+            var ins = await sb.from('leads').insert([payload]).select('id').single();
+            if (!ins.error && ins.data && ins.data.id) {
+                try {
+                    sessionStorage.removeItem('mdj_rentals_cart_backup');
+                } catch (eR) { /* ignore */ }
+                window.location.href = './client-portal.html?lead=' + encodeURIComponent(ins.data.id);
+                return;
+            }
+            if (ins.error) {
+                console.error('[rentals checkout] leads insert', ins.error);
+                var msg = (ins.error.message || 'Could not save reservation') + '';
+                if (btn) {
+                    btn.innerText = btn.getAttribute('data-label-default') || 'Confirm';
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                }
+                try {
+                    window.alert(msg);
+                } catch (eA) { /* ignore */ }
+                return;
+            }
+        } catch (eIns) {
+            console.error('[rentals checkout] leads insert exception', eIns);
+            if (btn) {
+                btn.innerText = btn.getAttribute('data-label-default') || 'Confirm';
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+            return;
+        }
+    }
+
+    setTimeout(function () {
+        if (btn) {
+            btn.innerText = btn.getAttribute('data-label-default') || 'Confirm';
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        }
         window.location.href = 'index.html#contact';
-    }, 1200);
+    }, 800);
 };
 
-document.addEventListener('click', (e) => {
+document.addEventListener('click', async (e) => {
     const packCard = e.target.closest('[data-action="select-hl-package"]');
     if (packCard) {
         window.updateHoraLocaHero(packCard.getAttribute('data-id'));
@@ -1778,9 +1856,33 @@ document.addEventListener('click', (e) => {
         return;
     }
 
-    // CHECKOUT MODAL OPEN
+    // CHECKOUT MODAL OPEN — login at “moment of truth” (hunger flow)
     if (e.target.closest('.package-checkout-btn')) {
         e.preventDefault();
+        var sbCheckout = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+        var sessCheckout = null;
+        if (sbCheckout) {
+            try {
+                var wr = await sbCheckout.auth.getSession();
+                sessCheckout = wr && wr.data && wr.data.session;
+            } catch (eCh) { /* ignore */ }
+        }
+        if (!sessCheckout) {
+            try {
+                sessionStorage.setItem('mdj_rentals_cart_backup', JSON.stringify(window.selectedPackage || []));
+            } catch (eBk) { /* ignore */ }
+            try {
+                var uLogin = new URL('./login.html', window.location.href);
+                var baseNext = window.location.pathname + window.location.search;
+                var sep = baseNext.indexOf('?') >= 0 ? '&' : '?';
+                uLogin.searchParams.set('next', baseNext + sep + 'resume_checkout=1');
+                uLogin.searchParams.set('reason', 'checkout');
+                window.location.href = uLogin.toString();
+            } catch (eUrl) {
+                window.location.href = './login.html?reason=checkout';
+            }
+            return;
+        }
         if (window.selectedPackage && window.selectedPackage.length > 0) {
             const chkModal = document.getElementById('dj-checkout-modal');
             if(chkModal) {
@@ -2203,6 +2305,37 @@ document.addEventListener('languageChanged', () => {
     }
 });
 
+function mdjRentalsTryResumeCheckoutAfterAuth() {
+    try {
+        var sp = new URLSearchParams(window.location.search);
+        if (sp.get('resume_checkout') !== '1') return;
+        if (window.history && window.history.replaceState) {
+            var u = new URL(window.location.href);
+            u.searchParams.delete('resume_checkout');
+            var qs = u.search || '';
+            window.history.replaceState({}, '', u.pathname + qs + (window.location.hash || ''));
+        }
+        var backup = sessionStorage.getItem('mdj_rentals_cart_backup');
+        if (backup) {
+            try {
+                var arr = JSON.parse(backup);
+                if (Array.isArray(arr) && arr.length) {
+                    window.selectedPackage = arr;
+                    if (typeof window.updatePackageSummary === 'function') {
+                        window.updatePackageSummary();
+                    }
+                }
+            } catch (eJ) { /* ignore */ }
+        }
+        if (window.selectedPackage && window.selectedPackage.length > 0) {
+            var chkModal = document.getElementById('dj-checkout-modal');
+            if (chkModal) {
+                chkModal.classList.remove('modal-hidden');
+            }
+        }
+    } catch (e) { /* ignore */ }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // 2. Direct Back Button Binding (No global interception)
     document.querySelectorAll('[data-action="go-back"], .back-btn').forEach(btn => {
@@ -2213,4 +2346,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     loadRentalsData();
+    mdjRentalsTryResumeCheckoutAfterAuth();
 });
