@@ -35,7 +35,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
             z-index: 8000;
             box-shadow:
                 0 4px 18px rgba(0, 0, 0, 0.18),

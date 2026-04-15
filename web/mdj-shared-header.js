@@ -121,7 +121,7 @@
     var l = document.createElement('link');
     l.id = 'mdj-header-vip-css';
     l.rel = 'stylesheet';
-    l.href = './mdj-header-vip.css?v=20260415-TOTAL-FREEDOM';
+    l.href = './mdj-header-vip.css?v=20260415-UI-BREATH-FIX';
     document.head.appendChild(l);
   }
 
@@ -682,19 +682,36 @@
     window.location.href = './index.html';
   };
 
+  function mdjApplyGuestHeaderAvatar() {
+    var z = document.getElementById('header-auth-zone');
+    if (!z) return;
+    if (window.__mdjDefaultAuthZoneHtml) {
+      z.innerHTML = window.__mdjDefaultAuthZoneHtml;
+    }
+    z.classList.remove('session-pending');
+    z.style.display = 'inline-flex';
+    z.style.alignItems = 'center';
+    var ab = document.getElementById('accountBtn');
+    if (ab) {
+      ab.href = './login.html';
+      ab.setAttribute('aria-label', 'Log in');
+      ab.setAttribute('title', 'Log in');
+    }
+  }
+
   window.checkSessionForNav = window.checkSessionForNav || async function checkSessionForNav() {
     var authZone = document.getElementById('header-auth-zone');
+    if (authZone && !window.__mdjDefaultAuthZoneHtml && authZone.innerHTML && authZone.innerHTML.trim()) {
+      window.__mdjDefaultAuthZoneHtml = authZone.innerHTML;
+    }
     mdjSetHeaderAuthPillsPending(true);
     try {
       var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
       if (!sb) {
         mdjHideMiPortalButton();
-        if (authZone) authZone.style.display = 'none';
+        mdjApplyGuestHeaderAvatar();
         mdjApplyHeaderAuthPillSession(false);
         return;
-      }
-      if (authZone && !window.__mdjDefaultAuthZoneHtml && authZone.innerHTML && authZone.innerHTML.trim()) {
-        window.__mdjDefaultAuthZoneHtml = authZone.innerHTML;
       }
       var res = await sb.auth.getSession();
       var session = res.data && res.data.session;
@@ -917,12 +934,7 @@
       } else {
         mdjHideMiPortalButton();
         document.body.classList.remove('mdj-logged-in-header');
-        if (authZone) {
-          if (window.__mdjDefaultAuthZoneHtml) {
-            authZone.innerHTML = window.__mdjDefaultAuthZoneHtml;
-          }
-          authZone.style.display = 'none';
-        }
+        mdjApplyGuestHeaderAvatar();
         mdjApplyHeaderAuthPillSession(false);
         var djproBadge = document.getElementById('header-djpro-badge');
         var getProBtn = document.getElementById('header-get-pro-btn');
