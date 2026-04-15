@@ -285,7 +285,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 const user = data?.user;
                 if (!user) throw new Error('No se pudo crear el usuario. Intenta de nuevo.');
 
-                // 2. Create Profile record (DJ or Client)
+                // 2. Sesión JWT antes de INSERT en tablas con RLS (anon → 403 en dj_profiles / client_profiles)
+                let userForRedirect = user;
+                if (!data.session) {
+                    const { data: siData, error: siErr } = await db.auth.signInWithPassword({ email, password });
+                    if (!siErr && siData?.user) {
+                        userForRedirect = siData.user;
+                    } else {
+                        const emLow = String(siErr?.message || '').toLowerCase();
+                        if (emLow.includes('email not confirmed') || emLow.includes('not confirmed')) {
+                            showError(
+                                mdjAuthT(
+                                    'auth-signup-confirm-email',
+                                    'Cuenta creada. Revisa tu correo para confirmar; luego entra con tu email y contraseña.',
+                                    'Account created. Check your email to confirm, then sign in with your password.'
+                                ),
+                                { tone: 'info' }
+                            );
+                            const tabLoginGo = document.getElementById('tab-login');
+                            if (tabLoginGo) tabLoginGo.click();
+                            const loginEmailGo = document.getElementById('login-email');
+                            if (loginEmailGo) loginEmailGo.value = email;
+                            if (btn) { btn.disabled = false; btn.textContent = 'Registrarme'; }
+                            return;
+                        }
+                        throw siErr || new Error('No se pudo abrir sesión automáticamente.');
+                    }
+                }
+
+                // 3. Crear perfil (solo con sesión activa → políticas RLS)
                 if (userType === 'talent') {
                     const memberId = `DJ-${user.id.substring(0, 6).toUpperCase()}`;
                     const referralCode = `REF${memberId.replace('DJ-', '').substring(0, 5)}`;
@@ -312,7 +340,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const { error: djProfileErr } = await db.from('dj_profiles').insert([profilePayload]);
                     if (djProfileErr) throw new Error(`No se pudo crear tu perfil de artista: ${djProfileErr.message || 'error desconocido'}`);
                 } else {
-                    // Client Profile
                     const clientPayload = {
                         user_id: user.id,
                         username: email.split('@')[0],
@@ -325,34 +352,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                     const { error: clientProfileErr } = await db.from('client_profiles').insert([clientPayload]);
                     if (clientProfileErr) throw new Error(`No se pudo crear tu cuenta de cliente: ${clientProfileErr.message || 'error desconocido'}`);
-                }
-
-                // 3. Sesión inmediata: mismo email/contraseña → interior sin pedir login otra vez (si el proyecto lo permite)
-                let userForRedirect = user;
-                if (!data.session) {
-                    const { data: siData, error: siErr } = await db.auth.signInWithPassword({ email, password });
-                    if (!siErr && siData?.user) {
-                        userForRedirect = siData.user;
-                    } else {
-                        const emLow = String(siErr?.message || '').toLowerCase();
-                        if (emLow.includes('email not confirmed') || emLow.includes('not confirmed')) {
-                            showError(
-                                mdjAuthT(
-                                    'auth-signup-confirm-email',
-                                    'Cuenta creada. Revisa tu correo para confirmar; luego entra con tu email y contraseña.',
-                                    'Account created. Check your email to confirm, then sign in with your password.'
-                                ),
-                                { tone: 'info' }
-                            );
-                            const tabLoginGo = document.getElementById('tab-login');
-                            if (tabLoginGo) tabLoginGo.click();
-                            const loginEmailGo = document.getElementById('login-email');
-                            if (loginEmailGo) loginEmailGo.value = email;
-                            if (btn) { btn.disabled = false; btn.textContent = 'Registrarme'; }
-                            return;
-                        }
-                        throw siErr || new Error('No se pudo abrir sesión automáticamente.');
-                    }
                 }
 
                 showError(
