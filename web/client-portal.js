@@ -11,7 +11,20 @@ function portalEscapeHtml(s) {
         .replace(/'/g, '&#39;');
 }
 
-/** Short display e.g. "Wendy Example" → "Wendy E." (aligned with header VIP) */
+/** Primer nombre para saludo humano: quita @, minúsculas salvo la inicial (ej. @WENDY → Wendy). */
+function portalFirstNameOnly(str) {
+    var cleaned = String(str || '')
+        .replace(/@+/g, ' ')
+        .trim();
+    var parts = cleaned.split(/\s+/).filter(function (x) {
+        return !!x;
+    });
+    if (!parts.length) return '';
+    var w = parts[0];
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+}
+
+/** Short display e.g. "Wendy Example" → "Wendy E." (legacy; saludos usan portalFirstNameOnly) */
 function portalFormatShortName(fullName) {
     var parts = String(fullName || '')
         .trim()
@@ -36,6 +49,12 @@ var PORTAL_I18N_FB = {
         'portal-no-events-title': 'No events linked to this account yet',
         'portal-no-events-body': 'When you book with Miami DJ Beat, your timeline and payments will appear here.',
         'portal-no-events-cta': 'Explore services & booking',
+        'portal-events-title': 'My events',
+        'portal-events-upcoming': 'Upcoming',
+        'portal-events-past': 'Past & history',
+        'portal-events-open': 'Open',
+        'portal-events-status': 'Status',
+        'portal-events-date': 'Date',
         'portal-guest-title': 'Access your portal',
         'portal-guest-body': 'Enter the email you used when booking to see your event status.',
         'portal-guest-search': 'Find my event',
@@ -55,7 +74,24 @@ var PORTAL_I18N_FB = {
         'portal-payment-security-link': 'Billing & payment methods →',
         'portal-reservation-bonus-line': 'Immediate reservation bonus (48h+)',
         'portal-reservation-bonus-banner': '<strong>Immediate reservation bonus applied.</strong> Because this booking has been open 48+ hours with no payment yet, we applied a <strong>${amount}</strong> courtesy credit to your pack total. It is reflected in “Discounts / credits” and in your deposit calculation.',
-        'portal-pay-now': 'PAY NOW'
+        'portal-pay-now': 'PAY NOW',
+        'portal-lead-login-required-title': 'Private event',
+        'portal-lead-login-required-body': 'To view your contract, payments, and assigned DJ details, sign in with the email you used when booking.',
+        'portal-lead-login-required-cta': 'Sign in',
+        'portal-lead-access-denied-title': 'Not available on this account',
+        'portal-lead-access-denied-body': 'This event is not linked to your email. Sign in with the account you used to book, or contact support.',
+        'portal-lead-access-denied-back': 'Back to home',
+        'portal-welcome-name-fallback': 'Friend',
+        'portal-log-contact-placeholder': 'On file with your booking',
+        'portal-dup-wedding-banner':
+            'Hello, {name}! We see two different wedding dates on your account. If one celebration is before or after your wedding, we would love to host it — but please correct what that event actually is in your details. We would rather you did not get married twice in the same month!',
+        'portal-dup-wedding-cta': 'How to fix event types',
+        'portal-dup-wedding-fix-title': 'Clarify your celebrations',
+        'portal-dup-wedding-fix-intro':
+            'Pick a clearer category for one of the events (for example Pre-Wedding Party, Engagement, or After-Party). Saving updates your record for the team.',
+        'portal-dup-wedding-save': 'Save type',
+        'portal-dup-wedding-saved': 'Updated.',
+        'portal-dup-wedding-save-err': 'Could not save. Try again or message your manager in chat.'
     },
     es: {
         'portal-welcome-recognized': '¡Hola, {name}!',
@@ -65,6 +101,12 @@ var PORTAL_I18N_FB = {
         'portal-no-events-title': 'Aún no hay eventos vinculados a esta cuenta',
         'portal-no-events-body': 'Cuando reserves con Miami DJ Beat, tu cronograma y pagos aparecerán aquí.',
         'portal-no-events-cta': 'Ver servicios y reservas',
+        'portal-events-title': 'Mis eventos',
+        'portal-events-upcoming': 'Próximos',
+        'portal-events-past': 'Pasados e historial',
+        'portal-events-open': 'Abrir',
+        'portal-events-status': 'Estado',
+        'portal-events-date': 'Fecha',
         'portal-guest-title': 'Accede a tu Portal',
         'portal-guest-body': 'Ingresa el email que usaste al reservar para ver el estado de tu evento.',
         'portal-guest-search': 'Buscar mi evento',
@@ -84,7 +126,24 @@ var PORTAL_I18N_FB = {
         'portal-payment-security-link': 'Facturación y métodos de pago →',
         'portal-reservation-bonus-line': 'Bono de reserva inmediata (48h+)',
         'portal-reservation-bonus-banner': '<strong>Bono de Reserva Inmediata activo.</strong> Como esta reserva lleva más de 48 horas sin pago, aplicamos un crédito de cortesía de <strong>${amount}</strong> a tu pack. Ya está reflejado en “Descuentos/Créditos” y en el cálculo del depósito.',
-        'portal-pay-now': 'PAGAR AHORA'
+        'portal-pay-now': 'PAGAR AHORA',
+        'portal-lead-login-required-title': 'Evento privado',
+        'portal-lead-login-required-body': 'Para ver contrato, pagos y detalles del DJ, inicia sesión con el correo que usaste al reservar.',
+        'portal-lead-login-required-cta': 'Iniciar sesión',
+        'portal-lead-access-denied-title': 'No disponible con esta cuenta',
+        'portal-lead-access-denied-body': 'Este evento no está vinculado a tu correo. Usa la cuenta con la que reservaste o contacta a soporte.',
+        'portal-lead-access-denied-back': 'Volver al inicio',
+        'portal-welcome-name-fallback': 'Amigo',
+        'portal-log-contact-placeholder': 'En tu reserva (no mostramos el correo aquí)',
+        'portal-dup-wedding-banner':
+            '¡Hola, {name}! Veo que tienes dos fechas de boda distintas. Si quieres hacer una fiesta de celebración antes o después de casarte, estaremos muy contentos de hacerlo, pero debes corregir de qué se trata esa fiesta en tus ajustes. ¡No queremos que te cases dos veces el mismo mes!',
+        'portal-dup-wedding-cta': 'Cómo corregir el tipo de evento',
+        'portal-dup-wedding-fix-title': 'Aclara tus celebraciones',
+        'portal-dup-wedding-fix-intro':
+            'Elige una categoría más clara para uno de los eventos (por ejemplo Pre-Wedding Party, Engagement o After-Party). Al guardar, actualizamos tu registro para el equipo.',
+        'portal-dup-wedding-save': 'Guardar tipo',
+        'portal-dup-wedding-saved': 'Listo, actualizado.',
+        'portal-dup-wedding-save-err': 'No se pudo guardar. Intenta de nuevo o escribe a tu manager en el chat.'
     }
 };
 
@@ -148,40 +207,87 @@ function portalComputeInitials(displayName, email) {
 
 function portalFormatHandleDisplay(raw) {
     if (!raw || !String(raw).trim()) return '';
-    var t = String(raw).trim();
-    return t.charAt(0) === '@' ? t : '@' + t.replace(/^@+/, '');
+    var t = String(raw).trim().replace(/^@+/, '');
+    if (!t) return '';
+    return '@' + t;
+}
+
+function portalEventDayStartMs(eventDate) {
+    if (!eventDate) return null;
+    var s = String(eventDate).trim();
+    var m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+    var d = m ? new Date(m[1] + 'T12:00:00') : new Date(s);
+    if (isNaN(d.getTime())) return null;
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+}
+
+function portalLeadIsPast(lead) {
+    var ms = portalEventDayStartMs(lead && lead.event_date);
+    if (ms == null) return false;
+    var t = new Date();
+    t.setHours(0, 0, 0, 0);
+    return ms < t.getTime();
+}
+
+/** Boda / wedding-like (para detector anti-duplicados). */
+function portalLeadIsWeddingType(lead) {
+    var t = String(lead && lead.event_type ? lead.event_type : '').toLowerCase();
+    return /\b(wedding|boda|matrimon|casam(iento)?|nupcial|nuptial|bridal)\b/i.test(t);
 }
 
 /**
- * Saludo: username (@handle) si existe; si no, nombre corto u otras fuentes.
+ * Dos bodas con fechas dentro de ~12 meses → posible error de categoría.
+ * @returns {{ first: object, second: object } | null}
+ */
+function portalDetectDoubleWeddingWithinTwelveMonths(leads) {
+    var cand = (leads || []).filter(function (L) {
+        return portalLeadIsWeddingType(L) && portalEventDayStartMs(L.event_date) != null;
+    });
+    if (cand.length < 2) return null;
+    var maxGapMs = 366 * 24 * 60 * 60 * 1000;
+    cand.sort(function (a, b) {
+        return portalEventDayStartMs(a.event_date) - portalEventDayStartMs(b.event_date);
+    });
+    var i, j;
+    for (i = 0; i < cand.length; i++) {
+        for (j = i + 1; j < cand.length; j++) {
+            var da = portalEventDayStartMs(cand[i].event_date);
+            var db = portalEventDayStartMs(cand[j].event_date);
+            if (Math.abs(db - da) <= maxGapMs) {
+                return { first: cand[i], second: cand[j] };
+            }
+        }
+    }
+    return null;
+}
+
+/**
+ * Saludo: solo primer nombre (trato de anfitrión). Sin @, sin apellidos, sin correo en pantalla.
  */
 function portalResolveWelcomeName(session, clientProfile, lead) {
     var meta = session && session.user && session.user.user_metadata ? session.user.user_metadata : {};
-    var email = session && session.user && session.user.email ? String(session.user.email).trim() : '';
-    if (clientProfile && clientProfile.username && String(clientProfile.username).trim()) {
-        return portalFormatHandleDisplay(clientProfile.username);
-    }
-    if (typeof meta.username === 'string' && meta.username.trim()) {
-        return portalFormatHandleDisplay(meta.username);
-    }
     if (clientProfile && clientProfile.full_name && String(clientProfile.full_name).trim()) {
-        return portalFormatShortName(String(clientProfile.full_name).trim());
+        var a = portalFirstNameOnly(String(clientProfile.full_name).trim());
+        if (a) return a;
     }
-    var m =
-        meta.full_name ||
-        meta.display_name ||
-        meta.artistic_name ||
-        '';
-    if (m && String(m).trim()) return portalFormatShortName(String(m).trim());
+    if (meta.full_name && String(meta.full_name).trim()) {
+        var b = portalFirstNameOnly(String(meta.full_name).trim());
+        if (b) return b;
+    }
+    if (meta.display_name && String(meta.display_name).trim()) {
+        var c = portalFirstNameOnly(String(meta.display_name).trim());
+        if (c) return c;
+    }
+    if (meta.artistic_name && String(meta.artistic_name).trim()) {
+        var d = portalFirstNameOnly(String(meta.artistic_name).trim());
+        if (d) return d;
+    }
     if (lead && lead.contact_person && String(lead.contact_person).trim()) {
-        return portalFormatShortName(String(lead.contact_person).trim());
+        var e = portalFirstNameOnly(String(lead.contact_person).trim());
+        if (e) return e;
     }
-    if (email) {
-        var local = email.split('@')[0] || '';
-        if (local.length >= 2) return local.charAt(0).toUpperCase() + local.slice(1);
-        if (local.length === 1) return local.toUpperCase();
-    }
-    return 'VIP';
+    return portalT('portal-welcome-name-fallback') || 'Friend';
 }
 
 const PortalApp = {
@@ -204,6 +310,7 @@ const PortalApp = {
         return false;
     },
 
+    _localeRefreshWired: false,
     currentLead: null,
     items: [],
     installments: [],
@@ -281,18 +388,71 @@ const PortalApp = {
         }
     },
 
+    wireLocaleRefresh() {
+        if (this._localeRefreshWired) return;
+        this._localeRefreshWired = true;
+        var self = this;
+        function applyPortalLocale() {
+            try {
+                if (window.i18n && typeof window.i18n.updateUI === 'function') {
+                    window.i18n.updateUI();
+                }
+            } catch (e0) { /* ignore */ }
+            if (self.currentLead) {
+                try {
+                    self.renderLeadInfo();
+                } catch (e1) { /* ignore */ }
+                try {
+                    self.renderCart();
+                } catch (e2) { /* ignore */ }
+                try {
+                    self.updatePayments();
+                } catch (e3) { /* ignore */ }
+            }
+        }
+        document.addEventListener('languageChanged', applyPortalLocale);
+        window.addEventListener('storage', function (e) {
+            if (!e || (e.key !== 'mdjpro_lang' && e.key !== 'mdj_lang_sync_tick')) return;
+            if (e.key === 'mdjpro_lang' && e.newValue && window.i18n) {
+                window.i18n.currentLang = e.newValue === 'es' ? 'es' : 'en';
+            }
+            if (e.key === 'mdj_lang_sync_tick') {
+                try {
+                    var v = localStorage.getItem('mdjpro_lang');
+                    if (window.i18n && v) {
+                        window.i18n.currentLang = v === 'es' ? 'es' : 'en';
+                    }
+                } catch (ex) { /* ignore */ }
+            }
+            applyPortalLocale();
+        });
+    },
+
     async init() {
+        this.wireLocaleRefresh();
         const params = new URLSearchParams(window.location.search);
         const leadId = params.get('lead');
         this.isManager = params.get('mode') === 'manager';
+
+        if (!leadId && (params.get('access_denied') === '1' || params.get('forbidden') === '1')) {
+            this.showLeadAccessDenied();
+            return;
+        }
 
         if (!leadId) {
             try {
                 document.body.classList.add('portal-resolving-session');
             } catch (e0) { /* ignore */ }
-            await this.waitForSupabaseClient(6000);
-            var resolved = await this.tryResolvePortalFromSession();
-            if (resolved) return;
+            await this.waitForSupabaseClient(10000);
+            var resolved = false;
+            var ar;
+            for (ar = 0; ar < 12; ar++) {
+                resolved = await this.tryResolvePortalFromSession();
+                if (resolved) return;
+                await new Promise(function (r) {
+                    setTimeout(r, 280);
+                });
+            }
             try {
                 document.body.classList.remove('portal-resolving-session');
             } catch (e1) { /* ignore */ }
@@ -302,6 +462,28 @@ const PortalApp = {
 
         if (this.isManager) {
             this.showManagerNotice();
+        }
+
+        if (!this.isManager) {
+            await this.waitForSupabaseClient(6000);
+            var dbGate = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+            var sessGate = null;
+            if (dbGate) {
+                var rg = await dbGate.auth.getSession();
+                sessGate = rg && rg.data && rg.data.session;
+                if (!sessGate || !sessGate.user) {
+                    try {
+                        var ug = await dbGate.auth.getUser();
+                        if (ug && ug.data && ug.data.user) {
+                            sessGate = { user: ug.data.user };
+                        }
+                    } catch (eG) { /* ignore */ }
+                }
+            }
+            if (!sessGate || !sessGate.user) {
+                this.showLeadLoginRequired(leadId);
+                return;
+            }
         }
 
         await this.loadLeadData(leadId);
@@ -320,19 +502,132 @@ const PortalApp = {
         if (header) header.style.marginTop = "40px";
     },
 
+    showLeadLoginRequired(leadId) {
+        try {
+            document.body.classList.remove('portal-resolving-session');
+        } catch (e0) { /* ignore */ }
+        var loginUrl = './login.html?redirect=client-portal&lead=' + encodeURIComponent(leadId || '');
+        var head = document.querySelector('.portal-header');
+        var main = document.querySelector('main');
+        var title = portalT('portal-lead-login-required-title');
+        var body = portalT('portal-lead-login-required-body');
+        var cta = portalT('portal-lead-login-required-cta');
+        if (head) {
+            head.innerHTML =
+                '<div class="container" style="padding: 40px 20px;">' +
+                '<div style="font-size: 48px; margin-bottom: 20px;">🔒</div>' +
+                '<h1 style="font-size: 26px; margin-bottom: 12px;">' +
+                portalEscapeHtml(title) +
+                '</h1>' +
+                '<p style="opacity: 0.85; max-width: 520px; margin: 0 auto 24px; line-height: 1.5;">' +
+                portalEscapeHtml(body) +
+                '</p>' +
+                '<a href="' +
+                portalEscapeHtml(loginUrl) +
+                '" class="btn primary" style="display:inline-block;padding:14px 28px;border-radius:50px;font-weight:900;">' +
+                portalEscapeHtml(cta) +
+                '</a></div>';
+        }
+        if (main) main.innerHTML = '';
+    },
+
+    showLeadAccessDenied() {
+        try {
+            document.body.classList.remove('portal-resolving-session');
+        } catch (e1) { /* ignore */ }
+        var head = document.querySelector('.portal-header');
+        var main = document.querySelector('main');
+        var title = portalT('portal-lead-access-denied-title');
+        var body = portalT('portal-lead-access-denied-body');
+        var back = portalT('portal-lead-access-denied-back');
+        if (head) {
+            head.innerHTML =
+                '<div class="container" style="padding: 40px 20px;">' +
+                '<div style="font-size: 48px; margin-bottom: 20px;">🛡️</div>' +
+                '<h1 style="font-size: 26px; margin-bottom: 12px;">' +
+                portalEscapeHtml(title) +
+                '</h1>' +
+                '<p style="opacity: 0.85; max-width: 520px; margin: 0 auto 24px; line-height: 1.5;">' +
+                portalEscapeHtml(body) +
+                '</p>' +
+                '<a href="./index.html" class="btn primary" style="display:inline-block;padding:14px 28px;border-radius:50px;font-weight:900;">' +
+                portalEscapeHtml(back) +
+                '</a></div>';
+        }
+        if (main) main.innerHTML = '';
+        try {
+            window.history.replaceState({}, '', window.location.pathname + '?access_denied=1');
+        } catch (eH) { /* ignore */ }
+    },
+
     async loadLeadData(leadId) {
         let leadData = null;
+        const db = window.getSupabaseClient();
+
+        if (!this.isManager && db) {
+            var sessionEmail = '';
+            var sessionUserId = '';
+            try {
+                const { data: sessWrap } = await db.auth.getSession();
+                var u = sessWrap && sessWrap.session && sessWrap.session.user;
+                if (!u) {
+                    const gu = await db.auth.getUser();
+                    u = gu && gu.data && gu.data.user;
+                }
+                sessionEmail = u && u.email ? String(u.email).trim().toLowerCase() : '';
+                sessionUserId = u && u.id ? String(u.id) : '';
+            } catch (e0) { /* ignore */ }
+            if (!sessionEmail) {
+                this.showLeadLoginRequired(leadId);
+                return;
+            }
+            try {
+                const { data: rowPeek, error: eEm } = await db
+                    .from('leads')
+                    .select('email, client_user_id')
+                    .eq('id', leadId)
+                    .maybeSingle();
+                if (eEm || !rowPeek) {
+                    this.showLeadAccessDenied();
+                    return;
+                }
+                var rowEmail = rowPeek.email ? String(rowPeek.email).trim().toLowerCase() : '';
+                var emailOk = rowEmail && rowEmail === sessionEmail;
+                var uidOk =
+                    sessionUserId &&
+                    rowPeek.client_user_id &&
+                    String(rowPeek.client_user_id) === sessionUserId;
+                if (!emailOk && !uidOk) {
+                    this.showLeadAccessDenied();
+                    return;
+                }
+            } catch (e1) {
+                this.showLeadAccessDenied();
+                return;
+            }
+        }
+
         try {
-            const db = window.getSupabaseClient();
             if (db) {
                 const { data, error } = await db.from('leads').select('*').eq('id', leadId).single();
                 if (data) leadData = data;
+                else if (!this.isManager && error) {
+                    var ec = String(error.code || '');
+                    if (ec === 'PGRST116' || ec === '42501') {
+                        this.showLeadAccessDenied();
+                        return;
+                    }
+                }
             }
         } catch (e) {
             console.warn("Supabase fetch failed, using local fallback");
         }
 
         if (!leadData) {
+            if (!this.isManager) {
+                this.showLeadAccessDenied();
+                return;
+            }
             const saved = localStorage.getItem(`lead_${leadId}`);
             leadData = saved ? JSON.parse(saved) : {
                 id: leadId,
@@ -383,6 +678,12 @@ const PortalApp = {
         } catch (e) {
             console.warn('Client profile fetch skipped', e);
         }
+        try {
+            var lp = this.clientProfile && this.clientProfile.language_preference;
+            if ((lp === 'es' || lp === 'en') && window.i18n && typeof window.i18n.setLanguage === 'function') {
+                window.i18n.setLanguage(lp);
+            }
+        } catch (eLang) { /* ignore */ }
         this.renderLoyaltyBadge(this.clientProfile?.total_events_booked || 1);
         this.renderCart();
     },
@@ -526,7 +827,10 @@ const PortalApp = {
         document.getElementById('log-location').textContent = l.location;
         document.getElementById('log-datetime').textContent = `${l.event_date} - 7:00 PM`;
         document.getElementById('log-gate').textContent = l.gate_code || "A confirmar";
-        document.getElementById('log-contact').textContent = l.contact_person || l.email;
+        var contactLine = l.contact_person && String(l.contact_person).trim()
+            ? portalFirstNameOnly(String(l.contact_person).trim())
+            : portalT('portal-log-contact-placeholder');
+        document.getElementById('log-contact').textContent = contactLine;
 
         const eventDate = new Date(l.event_date);
         const deadline = new Date(eventDate);
@@ -901,7 +1205,8 @@ const PortalApp = {
             const now = new Date().getTime();
             const diff = target - now;
             if (diff < 0) {
-                document.getElementById('countdown').innerHTML = "<span class='btn-pill'>EVENTO FINALIZADO</span>";
+                var doneTxt = portalEscapeHtml(portalT('portal-event-finished'));
+                document.getElementById('countdown').innerHTML = "<span class='btn-pill'>" + doneTxt + '</span>';
                 return;
             }
 
@@ -1086,20 +1391,27 @@ const PortalApp = {
 
             var clientRow = null;
             try {
-                var rUid = await db.from('client_profiles').select('full_name, email, user_id, avatar_url, photo_url').eq('user_id', session.user.id).maybeSingle();
+                var rUid = await db.from('client_profiles').select('*').eq('user_id', session.user.id).maybeSingle();
                 if (rUid.data) clientRow = rUid.data;
                 if (!clientRow) {
-                    var rEm = await db.from('client_profiles').select('full_name, email, user_id, avatar_url, photo_url').eq('email', email).maybeSingle();
+                    var rEm = await db.from('client_profiles').select('*').eq('email', email).maybeSingle();
                     if (rEm.data) clientRow = rEm.data;
                 }
             } catch (e) { /* ignore */ }
+
+            try {
+                var lp0 = clientRow && clientRow.language_preference;
+                if ((lp0 === 'es' || lp0 === 'en') && window.i18n && typeof window.i18n.setLanguage === 'function') {
+                    window.i18n.setLanguage(lp0);
+                }
+            } catch (eLang0) { /* ignore */ }
 
             var q = await db
                 .from('leads')
                 .select('id, event_type, event_date, status')
                 .eq('email', email)
                 .order('created_at', { ascending: false })
-                .limit(5);
+                .limit(50);
 
             if (q.error) {
                 console.warn('portal leads query', q.error);
@@ -1109,10 +1421,18 @@ const PortalApp = {
                 return true;
             }
             var leads = q.data || [];
-            /* Con sesión: siempre al panel del evento más reciente (misma búsqueda por email, sin formulario). */
-            if (leads.length >= 1) {
-                var path = (window.location.pathname || '/client-portal.html').split('?')[0];
-                window.location.replace(path + '?lead=' + encodeURIComponent(leads[0].id));
+            if (leads.length === 1) {
+                var path1 = (window.location.pathname || '/client-portal.html').split('?')[0];
+                window.location.replace(path1 + '?lead=' + encodeURIComponent(leads[0].id));
+                return true;
+            }
+            if (leads.length > 1) {
+                try {
+                    document.body.classList.remove('portal-resolving-session');
+                } catch (eHub) { /* ignore */ }
+                this._sessionSnapshot = session;
+                this.clientProfile = clientRow || this.clientProfile;
+                this.showMyEventsHub(session, clientRow, leads);
                 return true;
             }
             this.showLoggedInNoEvents(session, clientRow);
@@ -1123,6 +1443,241 @@ const PortalApp = {
                 document.body.classList.remove('portal-resolving-session');
             } catch (e2) { /* ignore */ }
             return false;
+        }
+    },
+
+    /**
+     * Varios leads: lista "Mis eventos" con próximos / pasados (sin redirigir solo al primero).
+     */
+    showMyEventsHub(session, clientRow, leads) {
+        try {
+            document.body.classList.remove('portal-resolving-session');
+        } catch (e0) { /* ignore */ }
+        var displayName = portalResolveWelcomeName(session || null, clientRow || null, null);
+        var head = document.querySelector('.portal-header');
+        if (!head) return;
+        this._sessionSnapshot = session || this._sessionSnapshot;
+        this.clientProfile = clientRow || this.clientProfile;
+        this.currentLead = null;
+        head.innerHTML =
+            '<div class="container" style="padding: 32px 20px 20px;">' +
+            '<div id="loyalty-tier-container"></div>' +
+            '<div class="portal-header-identity portal-header-identity--solo" style="display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;margin-bottom:8px;">' +
+            '<div id="portal-welcome-avatar" class="portal-welcome-avatar" aria-hidden="true"></div>' +
+            '<div style="text-align:center;">' +
+            '<div style="font-size: 36px; margin-bottom: 10px;">🎧</div>' +
+            '<h1 id="client-welcome" style="font-size: 26px; margin-bottom: 8px; line-height: 1.35;">' +
+            portalEscapeHtml(portalT('portal-welcome-recognized', displayName)) +
+            '</h1>' +
+            '<p id="client-welcome-sub" style="opacity: 0.85;">' + portalEscapeHtml(portalT('portal-welcome-recognized-sub')) + '</p>' +
+            '</div></div></div>';
+        this.renderPortalWelcomeAvatar();
+        try {
+            this.renderLoyaltyBadge(this.clientProfile && this.clientProfile.total_events_booked ? this.clientProfile.total_events_booked : leads.length);
+        } catch (eL) { /* ignore */ }
+
+        var upcoming = (leads || []).filter(function (L) {
+            return !portalLeadIsPast(L);
+        });
+        var past = (leads || []).filter(function (L) {
+            return portalLeadIsPast(L);
+        });
+
+        function cardHtml(l) {
+            var dt = l.event_date ? portalEscapeHtml(String(l.event_date)) : '—';
+            var ty = l.event_type ? portalEscapeHtml(String(l.event_type)) : 'Event';
+            var st = l.status ? portalEscapeHtml(String(l.status)) : '';
+            var href = '?lead=' + encodeURIComponent(l.id);
+            return (
+                '<a href="' +
+                href +
+                '" class="portal-event-card" style="display:block;padding:14px 18px;margin-bottom:10px;border-radius:14px;text-decoration:none;color:#fff;border:1px solid rgba(197,160,89,0.35);background:rgba(197,160,89,0.08);">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">' +
+                '<div><strong style="color:var(--gold);">' +
+                ty +
+                '</strong><div class="fineprint" style="margin-top:4px;opacity:0.75;">' +
+                portalEscapeHtml(portalT('portal-events-date')) +
+                ': ' +
+                dt +
+                '</div></div>' +
+                '<div style="text-align:right;"><span class="fineprint" style="opacity:0.65;">' +
+                portalEscapeHtml(portalT('portal-events-status')) +
+                '</span><br><span style="font-weight:800;">' +
+                st +
+                '</span><br><span style="font-size:12px;color:var(--gold);font-weight:800;">' +
+                portalEscapeHtml(portalT('portal-events-open')) +
+                ' →</span></div></div></a>'
+            );
+        }
+
+        var sectionUp =
+            '<h3 style="margin:0 0 12px;font-size:15px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(197,160,89,0.9);">' +
+            portalEscapeHtml(portalT('portal-events-upcoming')) +
+            '</h3><div class="portal-events-sublist">' +
+            (upcoming.length
+                ? upcoming.map(cardHtml).join('')
+                : '<p class="fineprint" style="opacity:0.6;">—</p>') +
+            '</div>';
+        var sectionPast =
+            '<h3 style="margin:24px 0 12px;font-size:15px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.45);">' +
+            portalEscapeHtml(portalT('portal-events-past')) +
+            '</h3><div class="portal-events-sublist portal-events-sublist--past">' +
+            (past.length ? past.map(cardHtml).join('') : '<p class="fineprint" style="opacity:0.45;">—</p>') +
+            '</div>';
+
+        var main = document.querySelector('main');
+        if (main) {
+            main.innerHTML =
+                '<div class="container" style="padding: 20px 0 60px;max-width:720px;margin:0 auto;">' +
+                '<div class="info-card" style="margin-bottom:20px;">' +
+                '<h2 style="margin:0 0 6px;font-size:22px;">' +
+                portalEscapeHtml(portalT('portal-events-title')) +
+                '</h2>' +
+                '<p class="fineprint" style="opacity:0.7;margin:0;">' +
+                portalEscapeHtml(portalT('portal-pick-event-intro')) +
+                '</p></div>' +
+                '<div id="events-list" class="portal-events-list">' +
+                sectionUp +
+                sectionPast +
+                '</div></div>';
+            this.portalInjectDupWeddingIfNeeded(leads, session, clientRow, main);
+        }
+        try {
+            var cb = document.getElementById('countdown');
+            if (cb) cb.style.display = 'none';
+        } catch (eC) { /* ignore */ }
+    },
+
+    portalBuildEventTypeSelectOptions(lead) {
+        var cur = String(lead && lead.event_type ? lead.event_type : '').trim();
+        var choices = [
+            'Wedding / Social',
+            'Boda / Social',
+            'Premium Wedding',
+            'Pre-Wedding Party',
+            'Engagement',
+            'After-Party',
+            'Private Party',
+            'Corporate Event',
+            'Other / Custom'
+        ];
+        var html = '';
+        var i;
+        var hasExact = false;
+        for (i = 0; i < choices.length; i++) {
+            if (choices[i] === cur) hasExact = true;
+        }
+        if (cur && !hasExact) {
+            html +=
+                '<option value="' +
+                portalEscapeHtml(cur) +
+                '" selected>' +
+                portalEscapeHtml(cur) +
+                '</option>';
+        }
+        for (i = 0; i < choices.length; i++) {
+            var c = choices[i];
+            var sel = cur === c || String(cur).toLowerCase() === String(c).toLowerCase() ? ' selected' : '';
+            html += '<option value="' + portalEscapeHtml(c) + '"' + sel + '>' + portalEscapeHtml(c) + '</option>';
+        }
+        return html;
+    },
+
+    portalInjectDupWeddingIfNeeded(leads, session, clientRow, main) {
+        var dup = portalDetectDoubleWeddingWithinTwelveMonths(leads);
+        if (!dup || !main) return;
+        var intro = main.querySelector('.container > .info-card');
+        var listEl = document.getElementById('events-list');
+        if (!intro || !listEl) return;
+        var firstName = portalResolveWelcomeName(session || null, clientRow || null, null);
+        var msg = portalT('portal-dup-wedding-banner', firstName);
+        var banner = document.createElement('div');
+        banner.className = 'info-card portal-dup-wedding-banner-wrap';
+        banner.style.cssText =
+            'margin-bottom:18px;border:1px solid rgba(255,200,120,0.45);background:rgba(197,160,89,0.14);';
+        banner.innerHTML =
+            '<p style="margin:0 0 12px;line-height:1.55;font-size:15px;">' +
+            portalEscapeHtml(msg) +
+            '</p>' +
+            '<a href="#portal-event-type-cleanup" class="btn secondary" style="display:inline-block;text-decoration:none;">' +
+            portalEscapeHtml(portalT('portal-dup-wedding-cta')) +
+            '</a>';
+        intro.insertAdjacentElement('afterend', banner);
+
+        var self = this;
+        function rowBlock(lead) {
+            var id = String(lead.id);
+            return (
+                '<div style="padding:14px;margin-bottom:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:rgba(0,0,0,0.22);">' +
+                '<div class="fineprint" style="opacity:0.8;margin-bottom:6px;">' +
+                portalEscapeHtml(portalT('portal-events-date')) +
+                ': ' +
+                portalEscapeHtml(String(lead.event_date || '—')) +
+                '</div>' +
+                '<select id="portal-hub-type-' +
+                portalEscapeHtml(id) +
+                '" style="width:100%;max-width:380px;padding:10px;border-radius:10px;margin:8px 0;background:rgba(255,255,255,0.06);color:#fff;border:1px solid rgba(197,160,89,0.35);">' +
+                self.portalBuildEventTypeSelectOptions(lead) +
+                '</select>' +
+                '<button type="button" class="btn primary" style="margin-top:8px;" data-portal-hub-save="' +
+                portalEscapeHtml(id) +
+                '">' +
+                portalEscapeHtml(portalT('portal-dup-wedding-save')) +
+                '</button>' +
+                '<p class="fineprint" id="portal-hub-type-msg-' +
+                portalEscapeHtml(id) +
+                '" style="margin-top:8px;display:none;" aria-live="polite"></p></div>'
+            );
+        }
+
+        var fix = document.createElement('div');
+        fix.id = 'portal-event-type-cleanup';
+        fix.className = 'info-card';
+        fix.style.marginTop = '8px';
+        fix.innerHTML =
+            '<h3 style="margin:0 0 8px;font-size:18px;">' +
+            portalEscapeHtml(portalT('portal-dup-wedding-fix-title')) +
+            '</h3>' +
+            '<p class="fineprint" style="line-height:1.5;margin-bottom:16px;opacity:0.88;">' +
+            portalEscapeHtml(portalT('portal-dup-wedding-fix-intro')) +
+            '</p>' +
+            rowBlock(dup.first) +
+            rowBlock(dup.second);
+        listEl.insertAdjacentElement('afterend', fix);
+
+        fix.querySelectorAll('[data-portal-hub-save]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var lid = btn.getAttribute('data-portal-hub-save');
+                if (lid) void self.portalSaveHubEventType(lid);
+            });
+        });
+    },
+
+    async portalSaveHubEventType(leadId) {
+        var sel = document.getElementById('portal-hub-type-' + leadId);
+        var msgEl = document.getElementById('portal-hub-type-msg-' + leadId);
+        if (!sel) return;
+        var newType = String(sel.value || '').trim();
+        if (!newType) return;
+        try {
+            var db = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+            if (!db) throw new Error('no db');
+            var res = await db.from('leads').update({ event_type: newType }).eq('id', leadId);
+            if (res.error) throw res.error;
+            if (msgEl) {
+                msgEl.style.display = 'block';
+                msgEl.style.color = 'rgba(180,255,200,0.95)';
+                msgEl.textContent = portalT('portal-dup-wedding-saved');
+            }
+            setTimeout(function () {
+                window.location.reload();
+            }, 900);
+        } catch (e) {
+            if (msgEl) {
+                msgEl.style.display = 'block';
+                msgEl.style.color = 'rgba(255,160,160,0.95)';
+                msgEl.textContent = portalT('portal-dup-wedding-save-err');
+            }
         }
     },
 
@@ -1209,18 +1764,20 @@ const PortalApp = {
             }
 
             if (data.length === 1) {
-                // Go directly to the portal
-                window.location.href = `?lead=${data[0].id}`;
+                window.location.href =
+                    './login.html?redirect=client-portal&lead=' + encodeURIComponent(data[0].id);
             } else {
-                // Show list
-                const list = data.map(l => `
-                    <a href="?lead=${l.id}" style="display:block; padding: 12px 20px; margin-bottom: 10px;
+                const list = data.map(l => {
+                    const href =
+                        './login.html?redirect=client-portal&lead=' + encodeURIComponent(l.id);
+                    return `
+                    <a href="${href}" style="display:block; padding: 12px 20px; margin-bottom: 10px;
                         background: rgba(197,160,89,0.1); border: 1px solid rgba(197,160,89,0.3);
                         border-radius: 15px; text-decoration: none; color: #fff;">
-                        <strong>${l.event_type}</strong> — ${l.event_date}
-                        <span style="float:right; font-size:12px; color: var(--gold);">${l.status}</span>
-                    </a>
-                `).join('');
+                        <strong>${portalEscapeHtml(String(l.event_type || ''))}</strong> — ${portalEscapeHtml(String(l.event_date || ''))}
+                        <span style="float:right; font-size:12px; color: var(--gold);">${portalEscapeHtml(String(l.status || ''))}</span>
+                    </a>`;
+                }).join('');
                 if (statusEl) statusEl.innerHTML = `<div style="margin-top:10px;">${list}</div>`;
             }
         } catch (e) {

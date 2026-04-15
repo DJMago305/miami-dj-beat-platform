@@ -1791,6 +1791,10 @@ window.checkoutSubmit = async function() {
     };
     if (session && session.user) {
         payload.client_user_id = session.user.id;
+        var se = session.user.email && String(session.user.email).trim();
+        if (se) {
+            payload.email = se.toLowerCase();
+        }
     }
 
     if (sb && payload.email) {
