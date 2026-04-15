@@ -290,10 +290,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (session) {
-                // UI Core Toggles (Morph Login to Logout, Layout-Safe)
+                // UI Core Toggles (Morph Login to Logout — labels from i18n btn-logout)
+                const logoutLabel = (window.i18n && typeof window.i18n.t === 'function')
+                    ? window.i18n.t('btn-logout')
+                    : ((document.documentElement && document.documentElement.lang === 'es') ? 'SALIR' : 'LOGOUT');
                 if (loginBtn) {
-                    loginBtn.removeAttribute('data-i18n');
-                    loginBtn.textContent = 'Logout';
+                    loginBtn.setAttribute('data-i18n', 'btn-logout');
+                    loginBtn.textContent = logoutLabel || 'LOGOUT';
                     loginBtn.classList.remove('gold');
                     loginBtn.classList.add('danger');
                     loginBtn.href = '#';
@@ -303,8 +306,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     loginBtn.style.pointerEvents = 'auto';
                 }
                 if (loginBtnMob) {
-                    loginBtnMob.removeAttribute('data-i18n');
-                    loginBtnMob.textContent = 'Logout';
+                    loginBtnMob.setAttribute('data-i18n', 'btn-logout');
+                    loginBtnMob.textContent = logoutLabel || 'LOGOUT';
                     loginBtnMob.classList.remove('gold');
                     loginBtnMob.classList.add('danger');
                     loginBtnMob.href = '#';
@@ -347,10 +350,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
             } else {
-                // Revert to strict unconnected state (Layout-Safe)
+                // Revert to strict unconnected state (Layout-Safe) — btn-login from i18n
+                const loginLabel = (window.i18n && typeof window.i18n.t === 'function')
+                    ? window.i18n.t('btn-login')
+                    : ((document.documentElement && document.documentElement.lang === 'es') ? 'ENTRAR' : 'LOGIN');
                 if (loginBtn) {
                     loginBtn.setAttribute('data-i18n', 'btn-login');
-                    loginBtn.textContent = 'Login';
+                    loginBtn.textContent = loginLabel || 'LOGIN';
                     loginBtn.href = './login.html';
                     loginBtn.onclick = null;
                     loginBtn.style.visibility = 'visible';
@@ -359,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (loginBtnMob) {
                     loginBtnMob.setAttribute('data-i18n', 'btn-login');
-                    loginBtnMob.textContent = 'Login';
+                    loginBtnMob.textContent = loginLabel || 'LOGIN';
                     loginBtnMob.href = './login.html';
                     loginBtnMob.onclick = null;
                     loginBtnMob.style.visibility = 'visible';

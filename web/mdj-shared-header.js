@@ -5,6 +5,18 @@
 (function () {
   'use strict';
 
+  /** Header login / logout copy — aligned with document.lang + i18n.currentLang (no layout/CSS changes). */
+  function mdjHeaderAuthLabel(key) {
+    if (window.i18n && typeof window.i18n.t === 'function') {
+      var s = window.i18n.t(key);
+      if (s) return s;
+    }
+    var es = (document.documentElement && document.documentElement.lang === 'es')
+      || (window.i18n && window.i18n.currentLang === 'es');
+    if (key === 'btn-logout') return es ? 'SALIR' : 'LOGOUT';
+    return es ? 'ENTRAR' : 'LOGIN';
+  }
+
   function mdjCountCheckoutCartUnits(parsed) {
     if (parsed == null) return 0;
     if (Array.isArray(parsed)) {
@@ -169,8 +181,8 @@
           ['header-login-btn', 'header-login-btn-mobile'].forEach(function (id) {
             var btn = document.getElementById(id);
             if (btn) {
-              btn.textContent = 'Logout';
-              btn.removeAttribute('data-i18n');
+              btn.setAttribute('data-i18n', 'btn-logout');
+              btn.textContent = mdjHeaderAuthLabel('btn-logout');
               btn.classList.remove('gold');
               btn.classList.add('danger');
               btn.href = '#';
@@ -341,6 +353,12 @@
     if (window.i18n && typeof window.i18n.updateUI === 'function') {
       window.i18n.updateUI();
     }
+
+    document.addEventListener('languageChanged', function () {
+      if (typeof window.checkSessionForNav === 'function') {
+        void window.checkSessionForNav();
+      }
+    });
   };
 
   document.addEventListener('DOMContentLoaded', function () {
