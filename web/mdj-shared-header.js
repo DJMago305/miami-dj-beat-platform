@@ -1,6 +1,10 @@
 /**
  * Miami DJ Beat — shared top header behavior (session, cart, search, mobile, nav highlight).
  * Load after: supabase CDN, supabase-config.js, header-smart-search.js (optional), translations/i18n (optional).
+ *
+ * OMNIPRESENCE: cuando existe `#mainHeader`, este script es el **único** dueño de ENTRAR/SALIR (y zona VIP)
+ * en `#header-login-btn` / `#header-login-btn-mobile`. `checkSessionForNav()` usa `supabase.auth.getSession()`
+ * al cargar y en `onAuthStateChange`. `window.doLogout` limpia sesión y envía al Home.
  */
 (function () {
   'use strict';
@@ -39,6 +43,27 @@
   }
 
   mdjEnsureAuthLangObserver();
+
+  /**
+   * DJ Tools en `#mainHeader`: oculto para cuentas **cliente** (no artistas).
+   * `window.__mdjLastNavIsClient` lo reutiliza `dj-tools.html` para bloquear acceso directo por URL.
+   */
+  function mdjApplyDjToolsNavForClientSession(isClient) {
+    window.__mdjLastNavIsClient = !!isClient;
+    var header = document.getElementById('mainHeader');
+    if (!header) return;
+    header.querySelectorAll('a[href*="dj-tools"]').forEach(function (a) {
+      if (!isClient) {
+        a.style.removeProperty('display');
+        a.removeAttribute('aria-hidden');
+        a.removeAttribute('data-mdj-tools-suppressed');
+        return;
+      }
+      a.style.display = 'none';
+      a.setAttribute('aria-hidden', 'true');
+      a.setAttribute('data-mdj-tools-suppressed', '1');
+    });
+  }
 
   /** Oculta ENTRAR/LOGIN hasta conocer sesión (evita flash si ya hay cuenta). */
   function mdjEnsureAuthPendingCss() {
@@ -96,7 +121,7 @@
     var l = document.createElement('link');
     l.id = 'mdj-header-vip-css';
     l.rel = 'stylesheet';
-    l.href = './mdj-header-vip.css?v=20260415-TOTAL-SYNC';
+    l.href = './mdj-header-vip.css?v=20260415-TOTAL-FREEDOM';
     document.head.appendChild(l);
   }
 
@@ -228,18 +253,32 @@
     return first + ' ' + last.charAt(0).toUpperCase() + '.';
   }
 
-  /** Handle público en cabecera VIP (@handle); almacenado sin @ obligatorio en BD. */
+  /** Saludo VIP (cliente): solo primer nombre — sin @ ni apellidos. */
+  function mdjVipFirstNameOnly(fullName) {
+    var parts = String(fullName || '')
+      .trim()
+      .split(/\s+/)
+      .filter(function (x) {
+        return !!x;
+      });
+    if (!parts.length) return '';
+    var w = parts[0];
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  }
+
+  /** Handle público: un solo @ visual; la BD puede traer "wendy", "@wendy" o "@@wendy". */
   function mdjVipFormatHandle(raw) {
     if (!raw || !String(raw).trim()) return '';
-    var t = String(raw).trim();
-    return t.charAt(0) === '@' ? t : '@' + t;
+    var t = String(raw).trim().replace(/^@+/, '');
+    if (!t) return '';
+    return '@' + t;
   }
 
   function mdjVipMetaUsername(metaObj) {
     if (!metaObj || typeof metaObj.username !== 'string') return '';
     var t = String(metaObj.username).trim();
     if (!t) return '';
-    return mdjVipFormatHandle(t.replace(/^@+/, ''));
+    return mdjVipFormatHandle(t);
   }
 
   function mdjComputeInitials(displayName, email) {
@@ -744,25 +783,15 @@
 
           var displayName = '';
           if (isClient) {
-            var clientHandle =
-              (clientRow && clientRow.username && String(clientRow.username).trim()) ||
-              mdjVipMetaUsername(meta) ||
-              '';
-            if (clientHandle) {
-              displayName = mdjVipFormatHandle(clientHandle.replace(/^@+/, ''));
-            } else if (clientRow && clientRow.full_name && String(clientRow.full_name).trim()) {
-              displayName = mdjFormatClientShortName(String(clientRow.full_name).trim());
+            if (clientRow && clientRow.full_name && String(clientRow.full_name).trim()) {
+              displayName = mdjVipFirstNameOnly(String(clientRow.full_name).trim());
             } else if (meta.full_name && String(meta.full_name).trim()) {
-              displayName = mdjFormatClientShortName(String(meta.full_name).trim());
+              displayName = mdjVipFirstNameOnly(String(meta.full_name).trim());
+            } else if (meta.display_name && String(meta.display_name).trim()) {
+              displayName = mdjVipFirstNameOnly(String(meta.display_name).trim());
             }
           } else {
-            var djHandle =
-              (p && p.username && String(p.username).trim()) ||
-              mdjVipMetaUsername(meta) ||
-              '';
-            if (djHandle) {
-              displayName = mdjVipFormatHandle(djHandle.replace(/^@+/, ''));
-            } else if (p) {
+            if (p) {
               var st = p.stage_name && String(p.stage_name).trim();
               var dj = p.dj_name && String(p.dj_name).trim();
               if (st) displayName = st;
@@ -778,14 +807,11 @@
               displayName = String(p.stage_name || p.dj_name).trim();
             }
             if (!displayName && meta.full_name && String(meta.full_name).trim()) {
-              displayName = String(meta.full_name).trim();
+              displayName = mdjVipFirstNameOnly(String(meta.full_name).trim());
             }
           }
           if (!displayName && meta.display_name && String(meta.display_name).trim()) {
-            displayName = String(meta.display_name).trim();
-          }
-          if (!displayName && session.user && session.user.email) {
-            displayName = String(session.user.email).split('@')[0];
+            displayName = mdjVipFirstNameOnly(String(meta.display_name).trim());
           }
           if (!displayName) displayName = 'Member';
 
@@ -837,6 +863,8 @@
             window.mdjHeaderVipApplyPhotoUrl(String(rawPhoto).trim());
           }
 
+          mdjApplyDjToolsNavForClientSession(isClient);
+
           mdjMaybeRunVipWelcomeProtocol(session);
 
           if (document.getElementById('mainNav')) {
@@ -884,6 +912,7 @@
           try {
             mdjApplyHeaderAuthPillSession(true);
           } catch (e2) { /* ignore */ }
+          mdjApplyDjToolsNavForClientSession(false);
         }
       } else {
         mdjHideMiPortalButton();
@@ -906,6 +935,7 @@
         if (subFreeMob2) subFreeMob2.style.display = '';
         var npmGuest = document.getElementById('nav-my-profile-mobile');
         if (npmGuest) npmGuest.style.display = 'none';
+        mdjApplyDjToolsNavForClientSession(false);
       }
     } catch (err) {
       console.error('[MDJ-SYSTEM] checkSessionForNav:', err);

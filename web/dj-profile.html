@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>MDJPRO App — DJ Professional Infrastructure</title>
-    <link rel="stylesheet" href="./styles.css?v=20260415-TOTAL-SYNC" />
+    <link rel="stylesheet" href="./styles.css?v=20260415-TOTAL-FREEDOM" />
     <link rel="stylesheet" href="./profile.css?v=20260414-qr-view-hide" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260412-profile" />
     <link
@@ -27,7 +27,8 @@
             }
             function isPublicProfileView() {
                 try {
-                    return new URLSearchParams(window.location.search).get('view') === 'public';
+                    var p = new URLSearchParams(window.location.search);
+                    return p.get('view') === 'public' || !!p.get('id');
                 } catch (e) { return false; }
             }
             async function go() {
@@ -45,6 +46,7 @@
                     var client = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
                     if (!client) {
                         clearAuthCheck();
+                        if (isPublicProfileView()) return;
                         var q0 = new URLSearchParams(window.location.search);
                         var id0 = q0.get('id');
                         var u0 = './login.html?redirect=dj-profile';
@@ -56,6 +58,10 @@
                     var sess = out && out.data && out.data.session;
                     clearAuthCheck();
                     if (sess) return;
+                    if (isPublicProfileView()) {
+                        clearAuthCheck();
+                        return;
+                    }
                     var q = new URLSearchParams(window.location.search);
                     var id = q.get('id');
                     var url = './login.html?redirect=dj-profile';
@@ -2443,6 +2449,7 @@
 
             const params = new URLSearchParams(window.location.search);
             const isPublicQrView = params.get('view') === 'public';
+            const allowPublicProfileBrowse = isPublicQrView || !!params.get('id');
 
             if (mdjSftStripeReturn) {
                 setTimeout(function () {
@@ -2489,7 +2496,7 @@
                 if (!db) await new Promise(r => setTimeout(r, 200));
             }
             if (!db) {
-                if (!isPublicQrView) {
+                if (!allowPublicProfileBrowse) {
                     const rid = params.get('id');
                     let lu = './login.html?redirect=dj-profile';
                     if (rid) lu += '&id=' + encodeURIComponent(rid);
@@ -2501,7 +2508,7 @@
             }
 
             const { data: { session } } = await db.auth.getSession();
-            if (!session && !isPublicQrView) {
+            if (!session && !allowPublicProfileBrowse) {
                 const rid = params.get('id');
                 let lu = './login.html?redirect=dj-profile';
                 if (rid) lu += '&id=' + encodeURIComponent(rid);
@@ -9354,8 +9361,8 @@
     <script src="./subscription.js?v=20260412-profile"></script>
     <script src="./monetization.js?v=20260422-sft-math"></script>
 
-    <script src="./header-smart-search.js?v=20260412-profile"></script>
-    <script src="./mdj-shared-header.js?v=20260415-TOTAL-SYNC"></script>
+    <script src="./header-smart-search.js?v=20260415-TOTAL-FREEDOM"></script>
+    <script src="./mdj-shared-header.js?v=20260415-TOTAL-FREEDOM"></script>
   <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
   <script src="./mdj-social-bar.js?v=20260414-skip-on-profile"></script>
 </body>

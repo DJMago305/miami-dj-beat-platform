@@ -44,11 +44,28 @@
 
     // Not logged in → redirect to login (unless already there or on allowed public/hybrid pages)
     if (!session) {
-        const isPublicPage = path.includes('login.html') ||
-            path.includes('index.html') ||
-            path.includes('jobs.html') ||
-            path.includes('dj-profile.html') ||
-            path.includes('rentals.html');
+        const p = (path || '').toLowerCase();
+        const isPublicPage =
+            p.includes('login.html') ||
+            p === '/' ||
+            p.endsWith('/') ||
+            p.includes('index.html') ||
+            p.includes('jobs.html') ||
+            p.includes('dj-profile.html') ||
+            p.includes('rentals.html') ||
+            p.includes('shop.html') ||
+            p.includes('find-dj.html') ||
+            p.includes('directory.html') ||
+            p.includes('courses.html') ||
+            p.includes('standards.html') ||
+            p.includes('article.html') ||
+            p.includes('forgot-password.html') ||
+            p.includes('reset-password.html') ||
+            p.includes('certification.html') ||
+            p.includes('client-portal.html') ||
+            p.includes('dj-tools.html') ||
+            p.includes('booth.html') ||
+            p.includes('academia.html');
 
         if (!isPublicPage) {
             console.log('[RoleGuard] No session found, redirecting to login.');

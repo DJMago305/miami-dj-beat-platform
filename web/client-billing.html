@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Miami DJ Beat — Pagos y facturación</title>
-    <link rel="stylesheet" href="./styles.css?v=20260415-TOTAL-SYNC" />
+    <link rel="stylesheet" href="./styles.css?v=20260415-TOTAL-FREEDOM" />
     <style>
         .billing-wrap {
             max-width: 640px;
@@ -150,11 +150,11 @@
         <p class="fineprint" style="color:var(--muted);margin-bottom:24px;">Gestiona tarjetas y consulta recibos de tus
             eventos (integración de cobro en despliegue).</p>
 
-        <div class="billing-card">
+        <div class="billing-card" id="saved-payments">
             <h2 data-i18n="client-billing-payments-title">Pagos guardados</h2>
             <p data-i18n="client-billing-payments-body">Aquí podrás añadir y administrar métodos de pago para reservas y
                 saldos de eventos. El equipo activará el cargador seguro en producción.</p>
-            <button type="button" class="btn primary" disabled data-i18n="client-billing-soon">Próximamente</button>
+            <button type="button" class="btn primary" id="client-billing-launch-setup" data-i18n="client-billing-launch-setup">Open account payment methods</button>
         </div>
 
         <div class="billing-card">
@@ -188,8 +188,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=20260226-1"></script>
     <script src="./role-guard.js" data-role="client"></script>
-    <script src="./translations.js?v=20260414-vip-identity"></script>
-    <script src="./i18n.js?v=20260226-1"></script>
+    <script src="./translations.js?v=20260415-TOTAL-FREEDOM"></script>
+    <script src="./i18n.js?v=20260415-TOTAL-FREEDOM"></script>
+    <script src="./account-billing.js?v=20260415-TOTAL-FREEDOM"></script>
     <script>
         (function () {
             var save = document.getElementById('client-avatar-save');
@@ -236,9 +237,9 @@
             }
         })();
     </script>
-    <script src="./header-smart-search.js?v=20260411-search-google"></script>
-    <script src="./mdj-shared-header.js?v=20260415-TOTAL-SYNC"></script>
-    <script src="./mdj-social-bar.js?v=20260413-scrollhide"></script>
+    <script src="./header-smart-search.js?v=20260415-TOTAL-FREEDOM"></script>
+    <script src="./mdj-shared-header.js?v=20260415-TOTAL-FREEDOM"></script>
+    <script src="./mdj-social-bar.js?v=20260415-TOTAL-FREEDOM"></script>
 </body>
 
 </html>
