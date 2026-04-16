@@ -35,7 +35,7 @@ window.MDJ_RENTALS_DATA = {
       "name": "Hora Loca Brasil",
       "price": 850,
       "desc": "Energía de carnaval VIP (4 Personas: 3 Bailarinas de Samba profesionales + 1 Baterista/Percusionista de Batucada en vivo).",
-      "video": "./assets/hora-loca/hora-loca-brasil.mp4",
+      "video": "./assets/hora-loca/hora-loca-brasil.mp4?v=20260414-under90mb",
       "image": "",
       "active": true,
       "order": 2,

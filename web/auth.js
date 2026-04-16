@@ -5,10 +5,125 @@
  * DJ que refiere (promoción / QR / botón WEB en perfil): ?ref= en URL, o localStorage
  * tras index.html?ref= o gotoAffiliateWeb() desde dj-profile.
  */
-/** Supabase GoTrue: duplicate signup */
+/** Supabase GoTrue: duplicate signup / email already in use */
 function mdjIsUserAlreadyRegisteredError(err) {
+    const code = String(err?.code || err?.status || '').toLowerCase();
     const msg = String(err?.message || err?.error_description || '').toLowerCase();
-    return msg.includes('user already registered') || msg.includes('already been registered');
+    if (code === 'user_already_registered' || code === 'email_exists') return true;
+    return (
+        msg.includes('user already registered') ||
+        msg.includes('already been registered') ||
+        msg.includes('already registered') ||
+        msg.includes('email address is already') ||
+        msg.includes('user already exists') ||
+        msg.includes('database error finding user') ||
+        msg.includes('duplicate key value') ||
+        msg.includes('already in use')
+    );
+}
+
+/** Public IP hint (best-effort); included in device fingerprint. No auth. */
+async function mdjGetPublicIpHint() {
+    try {
+        const r = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+        if (!r.ok) return '';
+        const j = await r.json();
+        return String(j && j.ip ? j.ip : '').trim().slice(0, 45);
+    } catch (e) {
+        return '';
+    }
+}
+
+/** Stable device fingerprint (UA + screen + TZ + optional IP); stored in public.user_login_devices (perfil de dispositivos). */
+async function mdjBuildDeviceFingerprint() {
+    try {
+        const ipHint = await mdjGetPublicIpHint();
+        const ua = navigator.userAgent || '';
+        const scr = typeof screen !== 'undefined' ? `${screen.width}x${screen.height}x${screen.colorDepth}` : '';
+        const tz = (typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? (Intl.DateTimeFormat().resolvedOptions().timeZone || '') : '';
+        const raw = ua + '|' + scr + '|' + tz + '|' + (navigator.hardwareConcurrency || '') + '|ip:' + ipHint;
+        if (window.crypto && window.crypto.subtle) {
+            const enc = new TextEncoder().encode(raw);
+            const buf = await window.crypto.subtle.digest('SHA-256', enc);
+            return Array.from(new Uint8Array(buf))
+                .map(function (b) { return b.toString(16).padStart(2, '0'); })
+                .join('');
+        }
+    } catch (e) { /* ignore */ }
+    var fallback = (navigator.userAgent || '') + '|' + String(Date.now());
+    try {
+        return btoa(unescape(encodeURIComponent(fallback))).replace(/[^a-z0-9]/gi, '').slice(0, 64);
+    } catch (e2) {
+        return fallback.replace(/[^a-z0-9]/gi, '').slice(0, 64);
+    }
+}
+
+function mdjGuessPlatformLabel() {
+    var ua = (navigator.userAgent || '').toLowerCase();
+    if (ua.indexOf('iphone') >= 0 || ua.indexOf('ipad') >= 0) return 'iOS';
+    if (ua.indexOf('android') >= 0) return 'Android';
+    if (ua.indexOf('mac os') >= 0 || ua.indexOf('macintosh') >= 0) return 'Mac';
+    if (ua.indexOf('windows') >= 0) return 'Windows PC';
+    if (ua.indexOf('linux') >= 0) return 'Linux';
+    return 'Web';
+}
+
+/**
+ * Tras login con contraseña: compara UA + huella (+ IP si disponible) con `public.user_login_devices` vía RPC;
+ * si es nuevo, encola email (Edge) con protocolo anti-phishing. Staff admin/manager: sin alerta.
+ * Alias público: `mdjCheckNewDevice` (no existe `public.profiles` de dispositivos en este proyecto).
+ */
+async function mdjPostLoginDeviceRoutine(db, session) {
+    try {
+        var user = session && session.user;
+        if (!user || !db) return;
+        var rawRole = String((user.app_metadata && user.app_metadata.role) || (user.user_metadata && user.user_metadata.user_type) || '').toLowerCase();
+        if (rawRole === 'admin' || rawRole === 'manager') return;
+
+        var fp = await mdjBuildDeviceFingerprint();
+        var tz = (typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? (Intl.DateTimeFormat().resolvedOptions().timeZone || '') : '';
+        var platform = mdjGuessPlatformLabel();
+
+        var rpc = await db.rpc('mdj_record_login_device', {
+            p_fingerprint: fp,
+            p_user_agent: navigator.userAgent || '',
+            p_platform_label: platform,
+            p_approx_tz: tz
+        });
+        if (rpc.error) {
+            console.warn('[AUTH] mdj_record_login_device', rpc.error);
+            return;
+        }
+        var isNew = rpc.data === true;
+        if (!isNew) return;
+
+        var base = (typeof window.MDB_SUPABASE_URL === 'string' && window.MDB_SUPABASE_URL) ? window.MDB_SUPABASE_URL.replace(/\/$/, '') : '';
+        var key = typeof window.MDB_SUPABASE_ANON_KEY === 'string' ? window.MDB_SUPABASE_ANON_KEY : '';
+        if (!base || !key || !session.access_token) return;
+
+        var ipPublic = await mdjGetPublicIpHint();
+
+        var url = base + '/functions/v1/notify-new-device-login';
+        await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: 'Bearer ' + session.access_token,
+                apikey: key
+            },
+            body: JSON.stringify({ device_label: platform, approx_tz: tz, public_ip: ipPublic })
+        });
+    } catch (e) {
+        console.warn('[AUTH] mdjPostLoginDeviceRoutine', e);
+    }
+}
+
+/** @see mdjPostLoginDeviceRoutine */
+async function mdjCheckNewDevice(db, session) {
+    return mdjPostLoginDeviceRoutine(db, session);
+}
+if (typeof window !== 'undefined') {
+    window.mdjCheckNewDevice = mdjCheckNewDevice;
 }
 
 /** Wrong password / bad credentials on signInWithPassword */
@@ -45,6 +160,8 @@ function mdjBuildPostAuthReturnUrlFromQuery(search) {
         if (profileId) finalUrl += `id=${encodeURIComponent(profileId)}&`;
         if (tabRedirect) finalUrl += `tab=${encodeURIComponent(tabRedirect)}&`;
         if (panelRedirect) finalUrl += `panel=${encodeURIComponent(panelRedirect)}&`;
+        var modeNav = qp.get('mode');
+        if (modeNav) finalUrl += `mode=${encodeURIComponent(modeNav)}&`;
 
         return finalUrl.replace(/[&?]$/, '');
     } catch (e) {
@@ -185,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (opts && opts.tone === 'info') {
             errorMsg.style.color = 'var(--gold)';
         } else {
-            errorMsg.style.color = '#ff4d4d';
+            errorMsg.style.color = '#D32F2F';
         }
     }
     function clearError() {
@@ -193,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
         errorMsg.style.display = 'none';
         errorMsg.innerHTML = '';
         errorMsg.textContent = '';
-        errorMsg.style.color = '#ff4d4d';
+        errorMsg.style.color = '#D32F2F';
     }
 
     /** Misma lógica que el submit de login: interior del sistema o redirect=party-planner, etc. */
@@ -268,6 +385,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 const identityInput = document.getElementById('login-email').value.trim();
                 const password = document.getElementById('login-password').value;
 
+                if (!identityInput) {
+                    showError(
+                        mdjAuthT(
+                            'auth-validation-email-required',
+                            'Indica tu email o nombre de usuario.',
+                            'Enter your email or username.'
+                        ),
+                        { tone: 'error' }
+                    );
+                    if (btn) { btn.disabled = false; btn.textContent = 'Iniciar Sesión'; }
+                    return;
+                }
+                if (!password) {
+                    showError(
+                        mdjAuthT(
+                            'auth-validation-password-required',
+                            'Introduce tu contraseña.',
+                            'Enter your password.'
+                        ),
+                        { tone: 'error' }
+                    );
+                    if (btn) { btn.disabled = false; btn.textContent = 'Iniciar Sesión'; }
+                    return;
+                }
+
                 // Resolve Identity
                 const email = await resolveIdentity(identityInput, db);
 
@@ -298,6 +440,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     await mdjEnsureAuthProfileRows(db, user);
                 } catch (ensureErr) {
                     console.warn('[AUTH] ensure profile after login:', ensureErr);
+                }
+                try {
+                    await mdjCheckNewDevice(db, authData.session);
+                } catch (devErr) {
+                    console.warn('[AUTH] device routine after login:', devErr);
                 }
                 await performPostAuthRedirect(db, user);
 
@@ -466,17 +613,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (loginEmailEl) loginEmailEl.value = em;
                     showError(
                         mdjAuthT(
-                            'auth-already-member',
-                            '¡Bienvenido de nuevo! Introduce tu contraseña para asegurar tu fecha.',
-                            'Welcome back! Enter your password to secure your event date.'
+                            'auth-account-exists-redirecting',
+                            'Esta cuenta ya existe. Redirigiendo al inicio de sesión…',
+                            'This account already exists. Redirecting to sign in…'
                         ),
                         { tone: 'info' }
                     );
-                    const tabLoginEl = document.getElementById('tab-login');
-                    if (tabLoginEl) tabLoginEl.click();
-                    if (btn) { btn.disabled = false; btn.textContent = 'Registrarme'; }
-                    const pwEl = document.getElementById('login-password');
-                    if (pwEl) setTimeout(function () { pwEl.focus(); }, 0);
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.textContent = '…';
+                    }
+                    try {
+                        window.history.replaceState({}, '', './login.html?tab=login&email=' + encodeURIComponent(em));
+                    } catch (h) { /* ignore */ }
+                    setTimeout(function () {
+                        window.location.href = './login.html?tab=login&email=' + encodeURIComponent(em);
+                    }, 2000);
                     return;
                 }
                 showError(err.message || 'Error al crear la cuenta.');

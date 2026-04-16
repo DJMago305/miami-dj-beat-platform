@@ -215,9 +215,16 @@ const translations = {
         "nav-tools-client-gate-body": "Esta sección es el espacio de trabajo de DJs y talento. Las cuentas de cliente usan el portal para eventos y pagos. ¿Quieres unirte al roster? Crea una cuenta de artista (gratis) para acceder a DJ Tools.",
         "nav-tools-client-gate-cta": "Crear cuenta de artista",
         "nav-tools-client-gate-portal": "Ir a mi portal de cliente",
+        "header-client-loyalty": "Cliente recurrente",
         "btn-get-pro": "Obtener PRO",
         "btn-subscribe-free": "GRATIS",
         "login-brand-subtitle": "Acceso seguro",
+        "auth-account-exists-redirecting":
+            "Esta cuenta ya existe. Redirigiendo al inicio de sesión…",
+        "auth-validation-email-required": "Indica tu email o nombre de usuario.",
+        "auth-validation-password-required": "Introduce tu contraseña.",
+        "auth-account-exists-login-recover":
+            "Esta cuenta ya existe. Por favor, inicia sesión o recupera tu contraseña.",
         "auth-already-member": "¡Bienvenido de nuevo! Introduce tu contraseña para asegurar tu fecha.",
         "auth-welcome-new": "¡Gracias por unirte a Miami DJ Beat! Ya estamos procesando tu solicitud.",
         "auth-signup-confirm-email": "Cuenta creada. Revisa tu correo para confirmar; luego entra con tu email y contraseña.",
@@ -1439,9 +1446,16 @@ const translations = {
         "nav-tools-client-gate-body": "This area is for performing artists and talent. Client accounts use the portal for events and billing. Want to join the roster? Create a free artist account to unlock DJ Tools.",
         "nav-tools-client-gate-cta": "Create artist account",
         "nav-tools-client-gate-portal": "Go to my client portal",
+        "header-client-loyalty": "Returning client",
         "btn-get-pro": "Get PRO",
         "btn-subscribe-free": "FREE",
         "login-brand-subtitle": "Secure access",
+        "auth-account-exists-redirecting":
+            "This account already exists. Redirecting to sign in…",
+        "auth-validation-email-required": "Enter your email or username.",
+        "auth-validation-password-required": "Enter your password.",
+        "auth-account-exists-login-recover":
+            "This account already exists. Please sign in or reset your password.",
         "auth-already-member": "Welcome back! Enter your password to secure your event date.",
         "auth-welcome-new": "Thanks for joining Miami DJ Beat! We're processing your request.",
         "auth-signup-confirm-email": "Account created. Check your email to confirm, then sign in with your password.",

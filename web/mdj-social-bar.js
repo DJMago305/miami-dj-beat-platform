@@ -36,7 +36,7 @@
             flex-direction: column;
             align-items: center;
             gap: 15px;
-            z-index: 8000;
+            z-index: 11000;
             box-shadow:
                 0 4px 18px rgba(0, 0, 0, 0.18),
                 inset 0 1px 0 rgba(255, 255, 255, 0.22);
@@ -121,6 +121,15 @@
             border-top: 1px solid rgba(80, 64, 40, 0.28);
             box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
             opacity: 1;
+        }
+        @media (min-width: 1200px) {
+            .social-sticky-bar {
+                gap: 22px;
+                padding: 14px 11px;
+            }
+            .social-sticky-bar .social-sticky-divider {
+                margin: 6px 0 0;
+            }
         }
         /* Tablet + móvil: ocultar al hacer scroll, reaparecer al parar (ver initSocialBarScrollHide) */
         @media (max-width: 1024px) {

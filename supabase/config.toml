@@ -385,6 +385,14 @@ verify_jwt = false
 [functions.settle-sft-manual-platform-fee]
 verify_jwt = true
 
+# Post-login security email (caller = end-user session)
+[functions.notify-new-device-login]
+verify_jwt = true
+
+# Manager unlocks billing pane in client-portal (caller = staff session)
+[functions.verify-client-billing-unlock]
+verify_jwt = true
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 

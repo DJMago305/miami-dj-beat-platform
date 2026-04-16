@@ -109,7 +109,7 @@ window.activeLiveTab = "sax"; window.liveMusicTabs = {
         descKey: "data_mus_singer_desc",
         priceLabelKey: "live_singer_price",
         ctaKey: "btn_add_to_pack",
-        video: "./assets/live-music/live-singer.mp4",
+        video: "./assets/live-music/live-singer.mp4?v=20260414-under90mb",
         fallbackName: "Live Singer",
         fallbackSubtitle: "Select the live music talent you wish to add to your package.",
         fallbackDesc: "A premium vocalist for elegant ceremonies, curated moments, and unforgettable live show experiences.",
@@ -1055,12 +1055,12 @@ window.rentalCatalogs = {
         title: "Stage & Event Structures",
         subtitle: "Professional staging solutions for concerts, DJs, and live productions.",
         items: [
-            { id: "stage_small", name: "Small DJ Stage", price: 300, img: "./assets/Tent & Event Structures/stage-small.jpg", video: "./assets/Tent & Event Structures/stage-small.mp4" },
+            { id: "stage_small", name: "Small DJ Stage", price: 300, img: "./assets/Tent & Event Structures/stage-small.jpg", video: "./assets/Tent & Event Structures/stage-small.mp4?v=20260414-under90mb" },
             { id: "stage_medium", name: "Medium Event Stage", price: 600, img: "./assets/Tent & Event Structures/stage-medium.jpg", video: "./assets/Tent & Event Structures/stage-medium.mp4" },
             { id: "stage_large", name: "Large Concert Stage", price: 1200, img: "./assets/Tent & Event Structures/stage-large.jpg", video: "./assets/Tent & Event Structures/stage-large.mp4" },
             { id: "truss_arch", name: "Goal Post Truss System", price: 350, img: "./assets/Tent & Event Structures/goal-post-truss.jpg", video: "./assets/Tent & Event Structures/goal-post-truss.mp4" },
             { id: "truss_box_full", name: "Full Box Truss Structure", price: 1800, img: "./assets/Tent & Event Structures/full-box-truss.jpg", video: "./assets/Tent & Event Structures/full-box-truss.mp4" },
-            { id: "truss_ultra", name: "Ultra Truss System", price: 3500, img: "./assets/Tent & Event Structures/ultra-truss-system.jpg", video: "./assets/Tent & Event Structures/ultra-truss-system.mp4" }
+            { id: "truss_ultra", name: "Ultra Truss System", price: 3500, img: "./assets/Tent & Event Structures/ultra-truss-system.jpg", video: "./assets/Tent & Event Structures/ultra-truss-system.mp4?v=20260414-under90mb" }
         ]
     },
     audio: {

@@ -91,7 +91,20 @@ var PORTAL_I18N_FB = {
             'Pick a clearer category for one of the events (for example Pre-Wedding Party, Engagement, or After-Party). Saving updates your record for the team.',
         'portal-dup-wedding-save': 'Save type',
         'portal-dup-wedding-saved': 'Updated.',
-        'portal-dup-wedding-save-err': 'Could not save. Try again or message your manager in chat.'
+        'portal-dup-wedding-save-err': 'Could not save. Try again or message your manager in chat.',
+        'portal-manager-billing-lock-title': 'Billing & payment methods locked',
+        'portal-manager-billing-lock-body':
+            'For PCI and privacy, payment details and manual payment tools stay hidden until the client account password is verified. Use Stripe payment links or automated flows — do not type the client’s card or bank data here.',
+        'portal-manager-billing-unlock-cta': 'Unlock with client password',
+        'portal-manager-billing-password-prompt':
+            'Client account password (the email on this lead must match the Miami DJ Beat login):',
+        'portal-manager-billing-fail': 'Could not verify. Check the password or try again later.',
+        'portal-manager-billing-config-miss': 'Payment unlock is not available (missing site configuration).',
+        'portal-manager-stripe-link-cta': 'Generate Stripe payment link (for client)',
+        'portal-manager-stripe-link-busy': 'Creating link…',
+        'portal-manager-stripe-link-copied': 'Payment link copied. Send it only to the client by a channel you already use with them. Never ask them to type card data in chat.',
+        'portal-manager-stripe-link-prompt': 'Copy this link and send it to the client:',
+        'portal-manager-stripe-link-fail': 'Could not create the payment link. Try again or use the automated flow from the client account.'
     },
     es: {
         'portal-welcome-recognized': '¡Hola, {name}!',
@@ -143,7 +156,21 @@ var PORTAL_I18N_FB = {
             'Elige una categoría más clara para uno de los eventos (por ejemplo Pre-Wedding Party, Engagement o After-Party). Al guardar, actualizamos tu registro para el equipo.',
         'portal-dup-wedding-save': 'Guardar tipo',
         'portal-dup-wedding-saved': 'Listo, actualizado.',
-        'portal-dup-wedding-save-err': 'No se pudo guardar. Intenta de nuevo o escribe a tu manager en el chat.'
+        'portal-dup-wedding-save-err': 'No se pudo guardar. Intenta de nuevo o escribe a tu manager en el chat.',
+        'portal-manager-billing-lock-title': 'Facturación y métodos de pago bloqueados',
+        'portal-manager-billing-lock-body':
+            'Por privacidad y PCI, los detalles de pago y herramientas manuales quedan ocultos hasta verificar la contraseña de la cuenta del cliente. Usa enlaces de pago Stripe o flujos automáticos: no ingreses datos de tarjeta o banco del cliente aquí.',
+        'portal-manager-billing-unlock-cta': 'Desbloquear con contraseña del cliente',
+        'portal-manager-billing-password-prompt':
+            'Contraseña de la cuenta del cliente (el email del lead debe coincidir con el login MDJ):',
+        'portal-manager-billing-fail': 'No se pudo verificar. Revisa la contraseña o intenta más tarde.',
+        'portal-manager-billing-config-miss': 'Desbloqueo no disponible (falta configuración del sitio).',
+        'portal-manager-stripe-link-cta': 'Generar enlace de pago Stripe (para el cliente)',
+        'portal-manager-stripe-link-busy': 'Creando enlace…',
+        'portal-manager-stripe-link-copied':
+            'Enlace de pago copiado. Envíaselo solo al cliente por un canal que ya usen con él. Nunca pidas datos de tarjeta por chat.',
+        'portal-manager-stripe-link-prompt': 'Copia este enlace y envíaselo al cliente:',
+        'portal-manager-stripe-link-fail': 'No se pudo crear el enlace de pago. Reintenta o usa el flujo automático desde la cuenta del cliente.'
     }
 };
 
@@ -334,6 +361,10 @@ async function portalFetchLeadsForLoggedInUser(db, sessionUserId, emailNorm) {
     return { data: rows, error: rows.length ? null : lastErr };
 }
 
+/** Omit Stripe / token wiring from browser selects (Edge + webhooks use service_role). */
+var MDJ_LEADS_SAFE_COLUMNS =
+    'id,email,full_name,phone,event_date,location,gate_code,contact_person,budget,status,notes,lead_outcome,lead_outcome_reason,event_type,assigned_dj_id,assigned_dj_name,client_contact,name,client_name,service_type,created_at,payment_status,balance_paid,total_amount,client_user_id';
+
 const PortalApp = {
     /** Lead abierto 48h+ sin pago → crédito de enganche (portal + IA pueden referenciarlo). */
     RESERVATION_BONUS_HOURS: 48,
@@ -477,6 +508,40 @@ const PortalApp = {
         const params = new URLSearchParams(window.location.search);
         const leadId = params.get('lead');
         this.isManager = params.get('mode') === 'manager';
+
+        if (this.isManager && leadId) {
+            await this.waitForSupabaseClient(8000);
+            var dbM = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+            if (!dbM) {
+                this.showLeadAccessDenied();
+                return;
+            }
+            var sm = await dbM.auth.getSession();
+            var sessM = sm && sm.data && sm.data.session;
+            if (!sessM || !sessM.user) {
+                window.location.href =
+                    './login.html?redirect=client-portal&lead=' +
+                    encodeURIComponent(leadId) +
+                    '&mode=manager';
+                return;
+            }
+            var jwtRole = String(
+                (sessM.user.app_metadata && sessM.user.app_metadata.role) ||
+                    (sessM.user.user_metadata && sessM.user.user_metadata.user_type) ||
+                    ''
+            ).toLowerCase();
+            var prM = await dbM.from('dj_profiles').select('role').eq('user_id', sessM.user.id).maybeSingle();
+            var djRole = String((prM && prM.data && prM.data.role) || '').toUpperCase();
+            var staffOk =
+                jwtRole === 'admin' ||
+                jwtRole === 'manager' ||
+                djRole === 'MANAGER' ||
+                djRole === 'ADMIN';
+            if (!staffOk) {
+                this.showLeadAccessDenied();
+                return;
+            }
+        }
 
         if (!leadId && (params.get('access_denied') === '1' || params.get('forbidden') === '1')) {
             this.showLeadAccessDenied();
@@ -653,7 +718,11 @@ const PortalApp = {
 
         try {
             if (db) {
-                const { data, error } = await db.from('leads').select('*').eq('id', leadId).single();
+                const { data, error } = await db
+                    .from('leads')
+                    .select(MDJ_LEADS_SAFE_COLUMNS)
+                    .eq('id', leadId)
+                    .single();
                 if (data) leadData = data;
                 else if (!this.isManager && error) {
                     var ec = String(error.code || '');
@@ -694,6 +763,9 @@ const PortalApp = {
         await this.fetchClientProfile(leadData.email);
         this.renderLeadInfo();
         this.startCountdown();
+        if (this.isManager) {
+            this.setupManagerBillingBarrier();
+        }
     },
 
     async fetchClientProfile(email) {
@@ -938,6 +1010,115 @@ const PortalApp = {
         }
     },
 
+    getManagerBillingUnlocked: function () {
+        if (!this.isManager || !this.currentLead || !this.currentLead.id) return true;
+        try {
+            return sessionStorage.getItem('mdj_portal_staff_billing_' + this.currentLead.id) === '1';
+        } catch (e) {
+            return false;
+        }
+    },
+
+    setupManagerBillingBarrier: function () {
+        if (!this.isManager) return;
+        var card = document.getElementById('portal-financial-card');
+        if (!card) return;
+        var old = document.getElementById('mdj-manager-billing-mask');
+        if (old) old.remove();
+        if (this.getManagerBillingUnlocked()) {
+            card.style.position = '';
+            return;
+        }
+        card.style.position = 'relative';
+        var mask = document.createElement('div');
+        mask.id = 'mdj-manager-billing-mask';
+        mask.setAttribute('role', 'dialog');
+        mask.setAttribute('aria-label', 'Facturación bloqueada');
+        mask.style.cssText = [
+            'position:absolute',
+            'inset:0',
+            'z-index:30',
+            'border-radius:inherit',
+            'background:rgba(6,10,18,0.88)',
+            'backdrop-filter:blur(4px)',
+            '-webkit-backdrop-filter:blur(4px)',
+            'display:flex',
+            'flex-direction:column',
+            'align-items:center',
+            'justify-content:center',
+            'padding:24px',
+            'text-align:center',
+            'gap:14px',
+            'box-sizing:border-box'
+        ].join(';');
+        mask.innerHTML =
+            '<p style="margin:0;font-size:15px;font-weight:900;color:var(--gold);">' +
+            portalEscapeHtml(portalT('portal-manager-billing-lock-title')) +
+            '</p>' +
+            '<p style="margin:0;font-size:13px;opacity:0.9;line-height:1.45;max-width:420px;">' +
+            portalEscapeHtml(portalT('portal-manager-billing-lock-body')) +
+            '</p>' +
+            '<button type="button" class="btn primary" id="mdj-manager-billing-unlock-btn" style="margin-top:6px;">' +
+            portalEscapeHtml(portalT('portal-manager-billing-unlock-cta')) +
+            '</button>';
+        card.appendChild(mask);
+        var self = this;
+        var ub = document.getElementById('mdj-manager-billing-unlock-btn');
+        if (ub) {
+            ub.onclick = function () {
+                void self.promptManagerBillingUnlock();
+            };
+        }
+    },
+
+    clearManagerBillingBarrier: function () {
+        var m = document.getElementById('mdj-manager-billing-mask');
+        if (m) m.remove();
+        var c = document.getElementById('portal-financial-card');
+        if (c) c.style.position = '';
+    },
+
+    promptManagerBillingUnlock: async function () {
+        var pw = prompt(portalT('portal-manager-billing-password-prompt'));
+        if (pw == null || !String(pw).length) return;
+        var db = window.getSupabaseClient();
+        if (!db || !this.currentLead) return;
+        var sm = await db.auth.getSession();
+        var tok = sm && sm.data && sm.data.session && sm.data.session.access_token;
+        if (!tok) return;
+        var base = (typeof window.MDB_SUPABASE_URL === 'string' && window.MDB_SUPABASE_URL)
+            ? window.MDB_SUPABASE_URL.replace(/\/$/, '')
+            : '';
+        var key = typeof window.MDB_SUPABASE_ANON_KEY === 'string' ? window.MDB_SUPABASE_ANON_KEY : '';
+        if (!base || !key) {
+            alert(portalT('portal-manager-billing-config-miss'));
+            return;
+        }
+        try {
+            var r = await fetch(base + '/functions/v1/verify-client-billing-unlock', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: 'Bearer ' + tok,
+                    apikey: key
+                },
+                body: JSON.stringify({ lead_id: this.currentLead.id, client_password: String(pw) })
+            });
+            var j = await r.json().catch(function () {
+                return {};
+            });
+            if (!j || !j.ok) {
+                alert(portalT('portal-manager-billing-fail'));
+                return;
+            }
+            sessionStorage.setItem('mdj_portal_staff_billing_' + this.currentLead.id, '1');
+            this.clearManagerBillingBarrier();
+            this.updatePayments();
+        } catch (e) {
+            alert(portalT('portal-manager-billing-fail'));
+        }
+    },
+
     makeLogisticsEditable() {
         const labels = ['log-location', 'log-gate', 'log-contact'];
         labels.forEach(id => {
@@ -1111,6 +1292,8 @@ const PortalApp = {
 
         var oldPay = document.getElementById('btn-stripe-pay');
         if (oldPay) oldPay.remove();
+        var mgrPay = document.getElementById('btn-manager-stripe-link');
+        if (mgrPay) mgrPay.remove();
         if (!this.isManager) {
             var abx = document.getElementById('btn-add-abono');
             if (abx) abx.remove();
@@ -1121,8 +1304,8 @@ const PortalApp = {
             this.showStripePayButton(balance);
         }
 
-        if (this.isManager && balance > 0) {
-            this.showAbonoButton();
+        if (this.isManager && balance > 0 && this.getManagerBillingUnlocked()) {
+            this.showManagerStripeLinkButton(balance);
         }
 
         this.exportFinanceMeta();
@@ -1219,28 +1402,70 @@ const PortalApp = {
         }
     },
 
-    showAbonoButton() {
+    /** Cobro vía enlace Stripe (PCI): el staff no ingresa datos bancarios. */
+    showManagerStripeLinkButton(balance) {
         var host = document.getElementById('portal-pay-cta-host');
         if (!host) return;
-        let btn = document.getElementById('btn-add-abono');
+        var btn = document.getElementById('btn-manager-stripe-link');
         if (!btn) {
             btn = document.createElement('button');
-            btn.id = 'btn-add-abono';
+            btn.type = 'button';
+            btn.id = 'btn-manager-stripe-link';
             btn.className = 'btn secondary full';
             btn.style.marginTop = '10px';
-            btn.textContent = "+ Registrar Abono (Pagar cuota)";
-            btn.onclick = () => this.registerAbono();
+            btn.textContent = portalT('portal-manager-stripe-link-cta');
+            var self = this;
+            btn.onclick = function () {
+                void self.managerGenerateClientStripeLink(balance);
+            };
             host.appendChild(btn);
         }
     },
 
-    registerAbono() {
-        const amount = parseFloat(prompt("Monto a registrar ($):"));
-        if (isNaN(amount) || amount <= 0) return;
-
-        this.currentLead.balance_paid = (parseFloat(this.currentLead.balance_paid) || 0) + amount;
-        alert(`Abono de $${amount} registrado con éxito.`);
-        this.syncLead();
+    async managerGenerateClientStripeLink(balance) {
+        var btn = document.getElementById('btn-manager-stripe-link');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = portalT('portal-manager-stripe-link-busy');
+        }
+        try {
+            var amountCents = Math.max(Math.round(parseFloat(balance) * 100), 100);
+            var CHECKOUT_FN = 'https://hkuvuqupbxwkiykxvqdr.supabase.co/functions/v1/create-event-payment';
+            var resp = await fetch(CHECKOUT_FN, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    lead_id: this.currentLead.id,
+                    amount_cents: amountCents,
+                    description:
+                        'Pago de evento — ' +
+                        (this.currentLead.event_type || 'Evento') +
+                        ' · ' +
+                        (this.currentLead.event_date || '')
+                })
+            });
+            var result = await resp.json();
+            if (!result || !result.ok || !result.url) {
+                throw new Error((result && result.error) || 'checkout');
+            }
+            var url = String(result.url);
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(url);
+                    alert(portalT('portal-manager-stripe-link-copied'));
+                } else {
+                    window.prompt(portalT('portal-manager-stripe-link-prompt'), url);
+                }
+            } catch (clip) {
+                window.prompt(portalT('portal-manager-stripe-link-prompt'), url);
+            }
+        } catch (e) {
+            alert(portalT('portal-manager-stripe-link-fail'));
+        }
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = portalT('portal-manager-stripe-link-cta');
+        }
     },
 
     startCountdown() {

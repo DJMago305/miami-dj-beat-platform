@@ -259,7 +259,7 @@
             </div>
 
             <!-- Login Form -->
-            <form id="login-form" class="form">
+            <form id="login-form" class="form" novalidate>
                 <label><span>Email o Username</span><input type="text"
                         id="login-email" name="email" autocomplete="username" required placeholder="tu@email.com o DJNombre"></label>
                 <label><span data-i18n="login-password-label">Contraseña</span>
@@ -279,7 +279,7 @@
             </form>
 
             <!-- Signup Form -->
-            <form id="signup-form" class="form hidden">
+            <form id="signup-form" class="form hidden" novalidate>
                 <input type="hidden" id="signup-usertype" name="user_type" value="client">
                 <label><span>Nombre Real *</span><input type="text" id="signup-fullname" required
                         placeholder="Tu nombre completo"></label>
@@ -315,7 +315,7 @@
             </form>
 
             <p id="auth-error" class="fineprint"
-                style="color: #ff4d4d; margin-top: 15px; text-align: center; display: none;"></p>
+                style="color: #D32F2F; margin-top: 15px; text-align: center; display: none;"></p>
         </div>
     </main>
 
@@ -330,7 +330,7 @@
     <script src="./translations.js?v=20260414-vip-identity"></script>
     <script src="./i18n.js?v=20260226-1"></script>
     <script src="./security-shield.js?v=20260305-1"></script>
-    <script src="./auth.js?v=20260416-ENSURE-PROFILE-LOGIN"></script>
+    <script src="./auth.js?v=20260414-MAC-DESKTOP-SYNC"></script>
 
     <script>
         (function syncReferralFromUrl() {
@@ -471,6 +471,26 @@
             }
         }
 
+        /** ?tab=login&email=… (p. ej. registro duplicado) → pestaña Entrar + email */
+        function mdbOpenLoginTabFromQuery() {
+            try {
+                var p = new URLSearchParams(window.location.search);
+                if (p.get('tab') !== 'login' || !tabLogin || !tabSignup || !loginForm || !signupForm) return;
+                tabLogin.classList.add('active');
+                tabSignup.classList.remove('active');
+                loginForm.classList.remove('hidden');
+                signupForm.classList.add('hidden');
+                var em = p.get('email');
+                var le = document.getElementById('login-email');
+                if (em && le) le.value = decodeURIComponent(em);
+            } catch (e) { void e; }
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', mdbOpenLoginTabFromQuery);
+        } else {
+            requestAnimationFrame(mdbOpenLoginTabFromQuery);
+        }
+
         applySignupUserTypeFromUrl();
 
         // ── After successful login or signup → redirect back ───────
@@ -503,6 +523,8 @@
                 if (profileId) finalUrl += `id=${encodeURIComponent(profileId)}&`;
                 if (tabRedirect) finalUrl += `tab=${encodeURIComponent(tabRedirect)}&`;
                 if (panelRedirect) finalUrl += `panel=${encodeURIComponent(panelRedirect)}&`;
+                const modeRedirect = qp.get('mode');
+                if (modeRedirect) finalUrl += `mode=${encodeURIComponent(modeRedirect)}&`;
 
                 return finalUrl.replace(/[&?]$/, '');
             }
@@ -558,8 +580,8 @@
     </div>
 
     <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script src="./mdj-shared-header.js?v=20260415-CORE-CONNECTIONS"></script>
-  <script src="./mdj-social-bar.js?v=20260413-scrollhide"></script>
+    <script src="./mdj-shared-header.js?v=20260414-MAC-DESKTOP-SYNC"></script>
+  <script src="./mdj-social-bar.js?v=20260414-MAC-DESKTOP-SYNC"></script>
 </body>
 
 </html>

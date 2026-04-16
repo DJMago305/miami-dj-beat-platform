@@ -121,8 +121,57 @@
     var l = document.createElement('link');
     l.id = 'mdj-header-vip-css';
     l.rel = 'stylesheet';
-    l.href = './mdj-header-vip.css?v=20260415-NAV-RETINA-FIX';
+    l.href = './mdj-header-vip.css?v=20260414-MAC-DESKTOP-SYNC';
     document.head.appendChild(l);
+  }
+
+  /** Phase 1 desktop audit: guest ring, loyalty pill, ≥1200px spacing (no change <1200px layout intent). */
+  function mdjEnsureDesktopAuditCss() {
+    if (document.getElementById('mdj-header-desktop-audit-css')) return;
+    var l = document.createElement('link');
+    l.id = 'mdj-header-desktop-audit-css';
+    l.rel = 'stylesheet';
+    l.href = './mdj-header-desktop-audit.css?v=20260414-MAC-DESKTOP-SYNC';
+    document.head.appendChild(l);
+  }
+
+  function mdjSyncClientLoyaltyIndicator(isClientSession) {
+    var el = document.getElementById('header-client-loyalty-indicator');
+    var actions = document.querySelector('#mainHeader .header-actions');
+    if (!isClientSession) {
+      if (el) {
+        el.style.display = 'none';
+        el.textContent = '';
+      }
+      return;
+    }
+    if (!actions) return;
+    if (!el) {
+      el = document.createElement('span');
+      el.id = 'header-client-loyalty-indicator';
+      el.className = 'header-client-loyalty-indicator';
+      el.setAttribute('role', 'status');
+      var lang = actions.querySelector('.lang-switcher');
+      if (lang && lang.parentNode === actions) {
+        if (lang.nextSibling) actions.insertBefore(el, lang.nextSibling);
+        else actions.appendChild(el);
+      } else {
+        actions.appendChild(el);
+      }
+    }
+    var label = 'Returning client';
+    try {
+      if (window.i18n && typeof window.i18n.t === 'function') {
+        var tx = window.i18n.t('header-client-loyalty');
+        if (tx) label = tx;
+      }
+    } catch (e) { /* ignore */ }
+    if (!window.i18n) {
+      var raw = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+      if (raw.indexOf('es') === 0) label = 'Cliente recurrente';
+    }
+    el.textContent = label;
+    el.style.display = 'inline-flex';
   }
 
   function mdjHideMiPortalButton() {
@@ -685,18 +734,19 @@
   function mdjApplyGuestHeaderAvatar() {
     var z = document.getElementById('header-auth-zone');
     if (!z) return;
-    if (window.__mdjDefaultAuthZoneHtml) {
-      z.innerHTML = window.__mdjDefaultAuthZoneHtml;
-    }
+    mdjEnsureDesktopAuditCss();
+    var guestHtml =
+      '<a class="account-btn mdj-guest-access-trigger" id="accountBtn" href="./login.html" title="Log in" aria-label="Log in">' +
+      '<span class="mdj-guest-access-ring" aria-hidden="true">' +
+      '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">' +
+      '<path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z" stroke="currentColor" stroke-width="1.75"/>' +
+      '<path d="M5 20v-1a7 7 0 0 1 14 0v1" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>' +
+      '</svg></span></a>';
+    z.innerHTML = guestHtml;
+    window.__mdjDefaultAuthZoneHtml = guestHtml;
     z.classList.remove('session-pending');
     z.style.display = 'inline-flex';
     z.style.alignItems = 'center';
-    var ab = document.getElementById('accountBtn');
-    if (ab) {
-      ab.href = './login.html';
-      ab.setAttribute('aria-label', 'Log in');
-      ab.setAttribute('title', 'Log in');
-    }
   }
 
   window.checkSessionForNav = window.checkSessionForNav || async function checkSessionForNav() {
@@ -708,9 +758,17 @@
     try {
       var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
       if (!sb) {
+        mdjEnsureDesktopAuditCss();
         mdjHideMiPortalButton();
         mdjApplyGuestHeaderAvatar();
         mdjApplyHeaderAuthPillSession(false);
+        mdjSyncClientLoyaltyIndicator(false);
+        var gp0 = document.getElementById('header-get-pro-btn');
+        var sfd0 = document.getElementById('header-subscribe-free-btn');
+        var sfm0 = document.getElementById('header-subscribe-free-mobile');
+        if (gp0) gp0.style.display = 'none';
+        if (sfd0) sfd0.style.display = 'none';
+        if (sfm0) sfm0.style.display = 'none';
         return;
       }
       var res = await sb.auth.getSession();
@@ -769,7 +827,8 @@
               getProBtn.style.display = isProUser ? 'none' : '';
             }
           }
-          if (djproBadge) djproBadge.style.display = isProUser ? 'inline-flex' : 'none';
+          if (djproBadge) djproBadge.style.display = isProUser && !isClient ? 'inline-flex' : 'none';
+          mdjSyncClientLoyaltyIndicator(!!isClient);
           /* Con cuenta y sin PRO: el CTA lleva a Jobs — mismas tarjetas de abajo (LITE free o PRO de pago), no a login. */
           if (getProBtn && !isProUser && !isClient) {
             getProBtn.href = './jobs.html#selection-screen';
@@ -930,6 +989,7 @@
             mdjApplyHeaderAuthPillSession(true);
           } catch (e2) { /* ignore */ }
           mdjApplyDjToolsNavForClientSession(false);
+          mdjSyncClientLoyaltyIndicator(false);
         }
       } else {
         mdjHideMiPortalButton();
@@ -941,10 +1001,11 @@
         var subFreeDesk2 = document.getElementById('header-subscribe-free-btn');
         var subFreeMob2 = document.getElementById('header-subscribe-free-mobile');
         if (djproBadge) djproBadge.style.display = 'none';
-        /* PRO: solo tras tener cuenta; primero alta / login (no invitar a plan=pro en frío). */
+        /* Sin sesión: no mostrar CTA de monetización ni “gratis” hasta login (Fase 1 auditoría). */
         if (getProBtn) getProBtn.style.display = 'none';
-        if (subFreeDesk2) subFreeDesk2.style.display = '';
-        if (subFreeMob2) subFreeMob2.style.display = '';
+        if (subFreeDesk2) subFreeDesk2.style.display = 'none';
+        if (subFreeMob2) subFreeMob2.style.display = 'none';
+        mdjSyncClientLoyaltyIndicator(false);
         var npmGuest = document.getElementById('nav-my-profile-mobile');
         if (npmGuest) npmGuest.style.display = 'none';
         mdjApplyDjToolsNavForClientSession(false);
@@ -954,6 +1015,7 @@
       mdjHideMiPortalButton();
       if (authZone) authZone.style.display = 'none';
       mdjApplyHeaderAuthPillSession(false);
+      mdjSyncClientLoyaltyIndicator(false);
     } finally {
       mdjSetHeaderAuthPillsPending(false);
       if (authZone) authZone.classList.remove('session-pending');
@@ -1043,6 +1105,7 @@
   }
 
   window.mdjInitSharedHeader = function () {
+    mdjEnsureDesktopAuditCss();
     mdjSetHeaderAuthPillsPending(true);
     mdjEnsureAuthLangObserver();
     if (typeof window.updateAuthButtons === 'function') window.updateAuthButtons();

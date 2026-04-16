@@ -1,0 +1,103 @@
+/**
+ * Phase 1 — Desktop (27") audit: min-width 1200px only.
+ * Guest / loyalty base styles are lightweight and safe on small viewports.
+ * Do not change MacBook/laptop layout below 1200px beyond neutral guest chrome.
+ */
+
+/* ── Guest login trigger (gold ring, universal access icon) ── */
+.mdj-guest-access-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.mdj-guest-access-trigger .mdj-guest-access-ring {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 2px solid rgba(197, 160, 89, 0.85);
+  background: linear-gradient(160deg, rgba(197, 160, 89, 0.18) 0%, rgba(20, 16, 10, 0.55) 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 4px 14px rgba(0, 0, 0, 0.35);
+  color: rgba(232, 208, 160, 0.95);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.mdj-guest-access-trigger:hover .mdj-guest-access-ring,
+.mdj-guest-access-trigger:focus-visible .mdj-guest-access-ring {
+  border-color: rgba(232, 208, 160, 0.95);
+  box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.35) inset,
+    0 0 22px rgba(197, 160, 89, 0.45);
+  transform: translateY(-1px);
+}
+
+.mdj-guest-access-trigger svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+/* ── Client loyalty (not a sales CTA) ── */
+.header-client-loyalty-indicator {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(232, 220, 200, 0.92);
+  background: rgba(197, 160, 89, 0.12);
+  border: 1px solid rgba(197, 160, 89, 0.35);
+  white-space: nowrap;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+/* ── Desktop ≥1200px: air for 27" without touching <1200px flex math ── */
+@media (min-width: 1200px) {
+  #mainHeader .header-actions {
+    gap: 22px !important;
+  }
+
+  /* Breathing between language and status pills / badges */
+  #mainHeader .lang-switcher {
+    margin-right: 10px;
+  }
+
+  #mainHeader .header-djpro-badge,
+  #mainHeader #header-client-loyalty-indicator {
+    margin-left: 4px;
+  }
+
+  /* Search: wider “Google bar”, separated from cart cluster */
+  #mainHeader .header-search-wrap {
+    flex: 2 1 420px !important;
+    min-width: min(100%, 320px) !important;
+    max-width: min(720px, 52vw) !important;
+    margin-right: 28px !important;
+  }
+
+  #mainHeader .header-avatar-cart-row {
+    margin-left: 8px;
+    gap: 16px !important;
+  }
+
+  /* Main nav: reserve vertical space to reduce layout shift when fonts swap */
+  #mainHeader .header-bottom .nav a[data-mdj-nav],
+  #mainHeader #mainNav a[data-mdj-nav] {
+    min-height: 44px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+  }
+}

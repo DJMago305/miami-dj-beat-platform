@@ -641,8 +641,17 @@
                     .eq('user_id', session.user.id)
                     .single();
 
-                const isManager = (profile && profile.role === 'MANAGER') ||
-                    (session.user.app_metadata && session.user.app_metadata.role === 'manager');
+                const roleRaw = String(profile && profile.role ? profile.role : '').toUpperCase();
+                const jwtRole = String(
+                    (session.user.app_metadata && session.user.app_metadata.role) ||
+                        (session.user.user_metadata && session.user.user_metadata.user_type) ||
+                        ''
+                ).toLowerCase();
+                const isManager =
+                    roleRaw === 'MANAGER' ||
+                    roleRaw === 'ADMIN' ||
+                    jwtRole === 'manager' ||
+                    jwtRole === 'admin';
 
                 if (profileError || !isManager) {
                     console.error("Unauthorized access attempt blocked.");
@@ -658,10 +667,12 @@
                     return;
                 }
 
-                // Load Leads
+                // Load Leads (explicit columns — no stripe_customer_id / payment tokens in staff UI)
+                const MDJ_ADMIN_LEADS_COLUMNS =
+                    'id,email,full_name,phone,event_date,location,gate_code,contact_person,budget,status,notes,lead_outcome,lead_outcome_reason,event_type,assigned_dj_id,assigned_dj_name,client_contact,name,client_name,service_type,created_at,payment_status,balance_paid,total_amount,client_user_id';
                 const { data: leads, error: leadError } = await supabase
                     .from('leads')
-                    .select('*')
+                    .select(MDJ_ADMIN_LEADS_COLUMNS)
                     .order('created_at', { ascending: false });
 
                 const leadsContainer = document.getElementById('leads-container');
@@ -1212,9 +1223,11 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 };
 
                 // Load DJ Apps
+                const MDJ_ADMIN_DJ_PENDING_COLUMNS =
+                    'user_id,email,full_name,stage_name,plan,photo_status,photo_url,status';
                 const { data: djs, error: djError } = await supabase
                     .from('dj_profiles')
-                    .select('*')
+                    .select(MDJ_ADMIN_DJ_PENDING_COLUMNS)
                     .eq('status', 'PENDING_REVIEW');
 
                 const djsContainer = document.getElementById('djs-container');
@@ -1413,7 +1426,11 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
                 try {
                     // Fetch all leads
-                    const { data: leads } = await supabase.from('leads').select('id, status, payment_status, balance_paid, total_amount, assigned_dj_name, event_date, event_type, email');
+                    const { data: leads } = await supabase
+                        .from('leads')
+                        .select(
+                            'id, status, payment_status, balance_paid, total_amount, assigned_dj_name, event_date, event_type, email'
+                        );
                     if (!leads) return;
 
                     // Fetch active DJs count
@@ -1760,8 +1777,8 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
         <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
 
     <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script src="./mdj-shared-header.js?v=20260415-CORE-CONNECTIONS"></script>
-  <script src="./mdj-social-bar.js?v=20260413-scrollhide"></script>
+    <script src="./mdj-shared-header.js?v=20260414-MAC-DESKTOP-SYNC"></script>
+  <script src="./mdj-social-bar.js?v=20260414-MAC-DESKTOP-SYNC"></script>
 </body>
 
 </html>

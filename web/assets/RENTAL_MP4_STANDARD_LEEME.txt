@@ -1,0 +1,32 @@
+Rental / catálogo — vídeos MP4 (peso y estándar)
+================================================
+
+Estándar de producto (deploy y rendimiento)
+-------------------------------------------
+- Cada MP4 de loop promocional en **rentals** debe pesar **menos de 90 MB**.
+- Si re-exportas con menor bitrate, **sobrescribe el mismo nombre** de archivo
+  y sube el `?v=` en las rutas (rentalsData.js, js/rentals.js, rentals.json,
+  rentals.html `<source>`) para invalidar caché del navegador/CDN.
+
+Referencias actuales (nombres en repo)
+----------------------------------------
+- `assets/hora-loca/hora-loca-brasil.mp4` — Hora Loca Brasil
+- `assets/live-music/live-singer.mp4` — Live singer (música en vivo)
+- `assets/Tent & Event Structures/stage-small.mp4` — Small DJ Stage (hero stages)
+- `assets/Tent & Event Structures/ultra-truss-system.mp4` — Ultra Truss System
+
+Comprobar tamaño en Mac / terminal (desde la carpeta `web/`):
+
+  ls -lh "assets/hora-loca/hora-loca-brasil.mp4" \
+         "assets/live-music/live-singer.mp4" \
+         "assets/Tent & Event Structures/stage-small.mp4" \
+         "assets/Tent & Event Structures/ultra-truss-system.mp4"
+
+Re-encode ejemplo (ffmpeg; ajusta -crf según calidad deseada):
+
+  ffmpeg -y -i ENTRADA.mp4 -c:v libx264 -crf 28 -preset slow -an -movflags +faststart SALIDA.mp4
+
+English (canonical policy)
+--------------------------
+Rental catalog loop videos: **keep each MP4 under 90 MB**. After replacing a file,
+bump the `?v=` query on its URL in the data/JS/HTML listed above so clients fetch the new bytes.
