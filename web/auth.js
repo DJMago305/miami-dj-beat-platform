@@ -314,12 +314,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // 3. Crear perfil (solo con sesión activa → políticas RLS)
+                // user_id debe coincidir con auth.uid() del JWT (tras signUp o signInWithPassword).
+                const profileUid = userForRedirect.id;
                 if (userType === 'talent') {
-                    const memberId = `DJ-${user.id.substring(0, 6).toUpperCase()}`;
+                    const memberId = `DJ-${profileUid.substring(0, 6).toUpperCase()}`;
                     const referralCode = `REF${memberId.replace('DJ-', '').substring(0, 5)}`;
 
                     const profilePayload = {
-                        user_id: user.id,
+                        user_id: profileUid,
                         email: email,
                         dj_name: name,
                         stage_name: name,
@@ -341,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (djProfileErr) throw new Error(`No se pudo crear tu perfil de artista: ${djProfileErr.message || 'error desconocido'}`);
                 } else {
                     const clientPayload = {
-                        user_id: user.id,
+                        user_id: profileUid,
                         username: email.split('@')[0],
                         full_name: fullName,
                         email: email,

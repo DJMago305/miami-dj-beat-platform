@@ -3980,7 +3980,9 @@ select:focus {
 
 /* 🎯 CEO Specificity Fix: Override any parent constraints explicitly */
 #roster-modal .modal-content.live-hero-shell,
-#dj-modal .modal-content.live-hero-shell {
+#dj-modal .modal-content.live-hero-shell,
+#staff-modal .modal-content.live-hero-shell,
+#payasos-modal .modal-content.live-hero-shell {
   width: 96vw !important;
   height: 94vh !important;
   max-width: none !important;
@@ -3988,7 +3990,9 @@ select:focus {
 }
 
 #roster-modal.modal-visible,
-#dj-modal.modal-visible {
+#dj-modal.modal-visible,
+#staff-modal.modal-visible,
+#payasos-modal.modal-visible {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -5993,22 +5997,81 @@ body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
   transform: translateX(-50%) translateY(0);
 }
 
-/* ========== 20260415-UI-BREATH-FIX: header rhythm + rental heroes + tabs + system-card ========== */
+/* ========== 20260415-NAV-RETINA-FIX: nav tabs + roster video crop + Regresar flow ========== */
 #mainHeader #mainNav.top-nav a.category-tab,
 #mainHeader #mainNav.nav.top-nav a {
   width: auto !important;
   min-width: 0 !important;
   flex: 0 0 auto !important;
-  max-width: none !important;
+  flex-grow: 0 !important;
+  max-width: fit-content !important;
 }
 
 .category-tab {
   box-sizing: border-box;
-  width: auto !important;
-  max-width: none !important;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: fit-content !important;
+  max-width: fit-content !important;
   flex: 0 0 auto !important;
+  flex-grow: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   padding-left: clamp(14px, 1.6vw, 22px) !important;
   padding-right: clamp(14px, 1.6vw, 22px) !important;
+}
+
+@media (min-width: 1600px) {
+  #mainHeader .header-bottom .container {
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  #mainHeader #mainNav.nav.top-nav,
+  #mainHeader #mainNav.top-nav {
+    width: fit-content !important;
+    max-width: min(96vw, 1180px) !important;
+    flex: 0 1 auto !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+}
+
+@media (min-width: 1601px) {
+  #mainHeader #mainNav.nav.top-nav,
+  #mainHeader #mainNav.top-nav {
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .cinematic-hero-shell .grid5.cinematic-hero-cards {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    max-width: 1400px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    gap: clamp(16px, 2vw, 24px) !important;
+  }
+
+  .cinematic-hero-shell .grid5.cinematic-hero-cards .hero-glass-card,
+  .cinematic-hero-shell .grid5.cinematic-hero-cards .talent-cat-card {
+    flex: 0 1 auto !important;
+    width: fit-content !important;
+    min-width: min(200px, 100%) !important;
+    max-width: 280px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    align-self: center !important;
+  }
 }
 
 .cinematic-hero-shell .grid5.cinematic-hero-cards {
@@ -6048,47 +6111,160 @@ body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
   }
 }
 
-/* Rental modals — video fills frame (object-fit cover + centered), MC reference */
-#roster-modal .live-hero-container,
-#dj-modal .live-hero-container {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: flex-end !important;
-  padding-bottom: 10vh !important;
-  box-sizing: border-box !important;
-  background: #000 !important;
+/* Modal — Regresar (arrow + glass) */
+.modal-nav-btn.mdj-modal-regresar {
+  gap: 8px;
+  padding-left: 18px;
+  padding-right: 20px;
 }
 
-#roster-modal .live-hero-video,
-#dj-modal .live-hero-video {
+.modal-nav-btn.mdj-modal-regresar::before {
+  content: '';
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  margin-right: 2px;
+  border-left: 2px solid rgba(255, 255, 255, 0.75);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.75);
+  transform: rotate(45deg) translate(1px, -1px);
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .modal-header-nav {
+    padding: 16px 16px !important;
+  }
+}
+
+/* Full-bleed video layer (MC-style crop; content stacks above z-index) */
+.mdj-hero-modal-root {
+  position: relative;
+  width: 100%;
+  min-height: min(100vh, 100%);
+  flex: 1 1 auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: clamp(8vh, 11vh, 120px);
+  box-sizing: border-box;
+  background: #000;
+}
+
+#horaloca-modal .hl-catalogue-card .mdj-hero-modal-root {
+  min-height: 100vh;
+}
+
+/* Evita que .hl-hero-container { flex:1; height:100% } deforme el crop del video */
+#horaloca-modal .hl-hero-container.mdj-hero-modal-root {
+  flex: 1 1 auto !important;
+  height: auto !important;
+}
+
+.mdj-hero-media-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #000;
+  z-index: 0;
+}
+
+.mdj-hero-media-layer .hl-hero-overlay,
+.mdj-hero-media-layer .live-hero-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.mdj-hero-media-layer .hl-hero-video,
+.mdj-hero-media-layer .live-hero-video {
+  position: relative !important;
+  z-index: 0;
+  flex: 0 0 auto;
+  width: auto !important;
+  height: auto !important;
+  min-width: 100%;
+  min-height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: center center;
+}
+
+/* Roster / DJ / Staff (Música en vivo, Captura, Staff): crop centrado full-bleed — mismo ADN */
+#roster-modal .mdj-hero-media-layer .live-hero-video,
+#dj-modal .mdj-hero-media-layer .live-hero-video,
+#staff-modal .mdj-hero-media-layer .live-hero-video,
+#payasos-modal .mdj-hero-media-layer .live-hero-video {
   position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  flex: none !important;
   min-width: 100% !important;
   min-height: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: none !important;
   object-fit: cover !important;
   object-position: center center !important;
 }
 
-#horaloca-modal .hl-hero-container {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: flex-end !important;
-  padding-bottom: 10vh !important;
-  box-sizing: border-box !important;
-  background: #000 !important;
+@media (min-width: 1800px) {
+  #roster-modal .mdj-hero-media-layer,
+  #dj-modal .mdj-hero-media-layer,
+  #staff-modal .mdj-hero-media-layer,
+  #payasos-modal .mdj-hero-media-layer {
+    min-height: 100%;
+  }
+
+  #roster-modal .live-hero-shell,
+  #dj-modal .live-hero-shell,
+  #staff-modal .live-hero-shell,
+  #payasos-modal .live-hero-shell {
+    min-height: min(94vh, 1080px);
+  }
 }
 
-#horaloca-modal .hl-hero-video {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
+#fx-modal .cinematic-hero-shell,
+#lighting-modal .cinematic-hero-shell {
+  position: relative;
+  overflow: hidden;
+}
+
+.mdj-hero-media-layer--shell {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 0;
+  background: #000;
+}
+
+.mdj-hero-media-layer--shell .hero-shell-video {
+  position: relative !important;
+  flex: 0 0 auto;
+  width: auto !important;
+  height: auto !important;
   min-width: 100% !important;
   min-height: 100% !important;
+  max-width: none !important;
   object-fit: cover !important;
   object-position: center center !important;
+  top: auto !important;
+  left: auto !important;
+}
+
+#horaloca-grid,
+#roster-grid,
+#dj-roster-grid {
+  position: relative;
+  z-index: 10;
 }

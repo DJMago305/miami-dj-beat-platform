@@ -290,6 +290,50 @@ function portalResolveWelcomeName(session, clientProfile, lead) {
     return portalT('portal-welcome-name-fallback') || 'Friend';
 }
 
+/**
+ * Lista de leads para sesión autenticada: prioriza public.leads.client_user_id = auth user id;
+ * fusiona con filas legacy solo vinculadas por email. Orden por created_at.
+ */
+async function portalFetchLeadsForLoggedInUser(db, sessionUserId, emailNorm) {
+    var cols = 'id, event_type, event_date, status, created_at';
+    var seen = {};
+    var rows = [];
+    function absorb(data) {
+        (data || []).forEach(function (row) {
+            if (row && row.id && !seen[row.id]) {
+                seen[row.id] = true;
+                rows.push(row);
+            }
+        });
+    }
+    var lastErr = null;
+    if (sessionUserId) {
+        var r1 = await db
+            .from('leads')
+            .select(cols)
+            .eq('client_user_id', sessionUserId)
+            .order('created_at', { ascending: false })
+            .limit(50);
+        if (r1.error) lastErr = r1.error;
+        absorb(r1.data);
+    }
+    if (emailNorm) {
+        var r2 = await db
+            .from('leads')
+            .select(cols)
+            .eq('email', emailNorm)
+            .order('created_at', { ascending: false })
+            .limit(50);
+        if (r2.error && !lastErr) lastErr = r2.error;
+        absorb(r2.data);
+    }
+    rows.sort(function (a, b) {
+        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    });
+    if (rows.length > 50) rows = rows.slice(0, 50);
+    return { data: rows, error: rows.length ? null : lastErr };
+}
+
 const PortalApp = {
     /** Lead abierto 48h+ sin pago → crédito de enganche (portal + IA pueden referenciarlo). */
     RESERVATION_BONUS_HOURS: 48,
@@ -1406,12 +1450,7 @@ const PortalApp = {
                 }
             } catch (eLang0) { /* ignore */ }
 
-            var q = await db
-                .from('leads')
-                .select('id, event_type, event_date, status')
-                .eq('email', email)
-                .order('created_at', { ascending: false })
-                .limit(50);
+            var q = await portalFetchLeadsForLoggedInUser(db, session.user.id, email);
 
             if (q.error) {
                 console.warn('portal leads query', q.error);

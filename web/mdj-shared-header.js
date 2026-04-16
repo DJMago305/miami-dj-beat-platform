@@ -121,7 +121,7 @@
     var l = document.createElement('link');
     l.id = 'mdj-header-vip-css';
     l.rel = 'stylesheet';
-    l.href = './mdj-header-vip.css?v=20260415-UI-BREATH-FIX';
+    l.href = './mdj-header-vip.css?v=20260415-NAV-RETINA-FIX';
     document.head.appendChild(l);
   }
 

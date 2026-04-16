@@ -16,6 +16,20 @@ if (typeof window.t !== 'function') {
 
 const t = (k, def) => (window.translations?.[window.i18n?.currentLang]?.[k]) || def;
 
+/** Hero/cinematic background videos: muted + loop + inline (autoplay policy). Call before load()/play() when swapping src. */
+window.mdjHeroVideoPrime = function (el) {
+    if (!el) return;
+    try {
+        el.muted = true;
+        el.defaultMuted = true;
+        el.loop = true;
+        el.playsInline = true;
+        el.setAttribute("playsinline", "");
+        el.setAttribute("muted", "");
+        el.setAttribute("loop", "");
+    } catch (e) { /* ignore */ }
+};
+
 window.djTabs = {
     weddings: {
         id: "dj_weddings",
@@ -72,6 +86,20 @@ window.djTabs = {
         fallbackDesc: "Fun, engaging, and clean entertainment guaranteed to keep every generation dancing. (Base: 4 Hours | Extra: $100/hr)",
         fallbackPrice: "From $350.00",
         price: 350
+    },
+    seasonalParties: {
+        id: "dj_seasonal_parties",
+        nameKey: "talent_seasonal_title",
+        subtitleKey: "dj_music_subtitle",
+        descKey: "talent_seasonal_desc",
+        priceLabelKey: "dj_holiday_price",
+        ctaKey: "btn_add_to_pack",
+        video: "./assets/DJ_Performance/Halloween.mp4",
+        fallbackName: "Seasonal Parties",
+        fallbackSubtitle: "Select Your DJ Experience",
+        fallbackDesc: "Halloween, St. Patrick's Day, 4th of July. Custom pricing by setup ($600 – $1,500).",
+        fallbackPrice: "$600 – $1,500",
+        price: 900
     },
     holiday: {
         id: "dj_holiday",
@@ -181,6 +209,36 @@ window.visualTabs = {
         fallbackPrice: "From $250.00",
         price: 250,
         tabLabel: "Drone"
+    },
+    booth360: {
+        id: "visuals_booth360",
+        nameKey: "data_vis_booth360_name",
+        subtitleKey: "visuals_subtitle",
+        descKey: "data_vis_booth360_desc",
+        priceLabelKey: "vis_booth360_price",
+        ctaKey: "btn_add_to_pack",
+        video: "./assets/capture-visuals/Photo_Video_Booth_360.mp4",
+        fallbackName: "Photo Booth 360",
+        fallbackSubtitle: "Select the coverage talent you wish to add.",
+        fallbackDesc: "Experiencia inmersiva de video en 360 grados.",
+        fallbackPrice: "From $400.00",
+        price: 400,
+        tabLabel: "360"
+    },
+    magicMirror: {
+        id: "visuals_magic_mirror",
+        nameKey: "data_vis_magic_mirror_name",
+        subtitleKey: "visuals_subtitle",
+        descKey: "data_vis_magic_mirror_desc",
+        priceLabelKey: "vis_magic_mirror_price",
+        ctaKey: "btn_add_to_pack",
+        video: "./assets/capture-visuals/Espejo_M\u00e1gico.mp4",
+        fallbackName: "Magic Mirror",
+        fallbackSubtitle: "Select the coverage talent you wish to add.",
+        fallbackDesc: "Interactive full-length mirror photo experience for your guests.",
+        fallbackPrice: "From $350.00",
+        price: 350,
+        tabLabel: "Mirror"
     }
 };
 
@@ -218,6 +276,524 @@ window.mcTabs = {
 };
 
 window.activeCategory = "live";
+
+window.activeVisualTabLocked = "photo";
+window.activeLiveTabLocked = "sax";
+window.activeDjTabLocked = "weddings";
+window.activeFxTabLocked = "sparks";
+window.activeLightingTabLocked = "movingHeads";
+window.activeStaffTabLocked = "bartender";
+window.activePayasosTabLocked = "gif";
+
+/** Payasos modal: hero + 4 reels (mismo ADN que Staff). */
+window.payasosRoles = {
+    gif: {
+        nameKey: "payasos_gif_title",
+        fallbackName: "GIF / energy",
+        descKey: "payasos_gif_desc",
+        fallbackDesc: "High-energy clips and comedic timing for kids and families.",
+        video: "./assets/mdj-payasos/pallasos-gif.mp4"
+    },
+    show: {
+        nameKey: "payasos_show_title",
+        fallbackName: "Clown show",
+        descKey: "payasos_show_desc",
+        fallbackDesc: "Full stage show with classic clown performance and audience interaction.",
+        video: "./assets/mdj-payasos/show-de-pallasos.mp4"
+    },
+    circo: {
+        nameKey: "payasos_circo_title",
+        fallbackName: "Circus",
+        descKey: "payasos_circo_desc",
+        fallbackDesc: "Circus-style acts, gags, and variety entertainment.",
+        video: "./assets/mdj-payasos/circo.mp4"
+    },
+    santa: {
+        nameKey: "payasos_santa_title",
+        fallbackName: "Santa & seasonal",
+        descKey: "payasos_santa_desc",
+        fallbackDesc: "Holiday appearances and themed seasonal entertainment.",
+        video: "./assets/mdj-payasos/Santaclous_Para_christmas.mp4"
+    }
+};
+
+/** Staff modal (Bartender / Meseros / Chef): mismo ADN que roster — hero + vídeo por tarjeta. */
+window.staffRoles = {
+    bartender: {
+        nameKey: "staff_bartender_title",
+        fallbackName: "Bartender",
+        descKey: "staff_bartender_desc",
+        fallbackDesc: "Bar service and premium cocktail experience.",
+        video: "./assets/mdj-staff-videos/Bartender.mp4"
+    },
+    meseros: {
+        nameKey: "staff_meseros_title",
+        fallbackName: "Meseros",
+        descKey: "staff_meseros_desc",
+        fallbackDesc: "Professional table service for your guests.",
+        video: "./assets/mdj-staff-videos/Meseros.mp4"
+    },
+    chef: {
+        nameKey: "staff_chef_title",
+        fallbackName: "Chef",
+        descKey: "staff_chef_desc",
+        fallbackDesc: "Live kitchen and catering presentation.",
+        video: "./assets/mdj-staff-videos/Cheff.mp4"
+    }
+};
+
+window.renderStaffHero = function (tabKey = "bartender", animate = true) {
+    window.activeStaffTabLocked = tabKey || window.activeStaffTabLocked || "bartender";
+    const key = window.activeStaffTabLocked;
+    const item = (window.staffRoles && window.staffRoles[key]) || window.staffRoles.bartender;
+
+    const eyebrowEl = document.getElementById("staff-hero-eyebrow");
+    const titleEl = document.getElementById("staff-hero-title");
+    const subtitleEl = document.getElementById("staff-hero-subtitle");
+    const videoEl = document.getElementById("staff-hero-video");
+
+    if (eyebrowEl) {
+        eyebrowEl.setAttribute("data-i18n", "staff_modal_eyebrow");
+        eyebrowEl.textContent = t("staff_modal_eyebrow", "EVENT STAFF & SERVICE");
+    }
+    if (titleEl) {
+        titleEl.setAttribute("data-i18n", item.nameKey);
+        titleEl.textContent = t(item.nameKey, item.fallbackName);
+    }
+    if (subtitleEl) {
+        subtitleEl.setAttribute("data-i18n", item.descKey);
+        subtitleEl.textContent = t(item.descKey, item.fallbackDesc);
+    }
+
+    if (videoEl && item.video) {
+        const v = item.video;
+        const changed = videoEl.getAttribute("src") !== v;
+        if (changed) videoEl.src = v;
+        if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (changed) videoEl.load();
+        videoEl.play().catch(() => {});
+    }
+
+    document.querySelectorAll("#staff-roster-grid .hl-type-card[data-staff-key]").forEach(function (el) {
+        const k = el.getAttribute("data-staff-key");
+        if (k === key) el.classList.add("active");
+        else el.classList.remove("active");
+    });
+
+    if (window.i18n) window.i18n.updateUI();
+};
+
+window._bindStaffGridHeroHover = function () {
+    const gridEl = document.getElementById("staff-roster-grid");
+    const shell = document.querySelector("#staff-modal .modal-content.live-hero-shell");
+    if (!gridEl || !shell) return;
+    if (gridEl._mdjStaffMagicBound) return;
+    gridEl._mdjStaffMagicBound = true;
+
+    let lastKey = null;
+
+    gridEl.addEventListener("pointerover", function (e) {
+        const card = e.target.closest && e.target.closest(".hl-type-card[data-staff-key]");
+        if (!card || !gridEl.contains(card)) return;
+        const k = card.getAttribute("data-staff-key");
+        if (!k || k === lastKey) return;
+        lastKey = k;
+        window.activeStaffTabLocked = k;
+        if (window.renderStaffHero) window.renderStaffHero(k, false);
+        shell.classList.add("mdj-staff-hero-preview-on");
+    });
+
+    gridEl.addEventListener("pointerout", function (e) {
+        const rt = e.relatedTarget;
+        if (rt && gridEl.contains(rt)) return;
+        lastKey = null;
+        shell.classList.remove("mdj-staff-hero-preview-on");
+        const restore = window.activeStaffTabLocked || "bartender";
+        if (window.renderStaffHero) window.renderStaffHero(restore, false);
+    });
+};
+
+window.renderPayasosHero = function (tabKey = "gif", animate = true) {
+    window.activePayasosTabLocked = tabKey || window.activePayasosTabLocked || "gif";
+    const key = window.activePayasosTabLocked;
+    const item = (window.payasosRoles && window.payasosRoles[key]) || window.payasosRoles.gif;
+
+    const eyebrowEl = document.getElementById("payasos-hero-eyebrow");
+    const titleEl = document.getElementById("payasos-hero-title");
+    const subtitleEl = document.getElementById("payasos-hero-subtitle");
+    const videoEl = document.getElementById("payasos-hero-video");
+
+    if (eyebrowEl) {
+        eyebrowEl.setAttribute("data-i18n", "payasos_modal_eyebrow");
+        eyebrowEl.textContent = t("payasos_modal_eyebrow", "KIDS & FAMILY ENTERTAINMENT");
+    }
+    if (titleEl) {
+        titleEl.setAttribute("data-i18n", item.nameKey);
+        titleEl.textContent = t(item.nameKey, item.fallbackName);
+    }
+    if (subtitleEl) {
+        subtitleEl.setAttribute("data-i18n", item.descKey);
+        subtitleEl.textContent = t(item.descKey, item.fallbackDesc);
+    }
+
+    if (videoEl && item.video) {
+        const v = item.video;
+        const changed = videoEl.getAttribute("src") !== v;
+        if (changed) videoEl.src = v;
+        if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (changed) videoEl.load();
+        videoEl.play().catch(() => {});
+    }
+
+    document.querySelectorAll("#payasos-roster-grid .hl-type-card[data-payasos-key]").forEach(function (el) {
+        const k = el.getAttribute("data-payasos-key");
+        if (k === key) el.classList.add("active");
+        else el.classList.remove("active");
+    });
+
+    if (window.i18n) window.i18n.updateUI();
+};
+
+window._bindPayasosGridHeroHover = function () {
+    const gridEl = document.getElementById("payasos-roster-grid");
+    const shell = document.querySelector("#payasos-modal .modal-content.live-hero-shell");
+    if (!gridEl || !shell) return;
+    if (gridEl._mdjPayasosMagicBound) return;
+    gridEl._mdjPayasosMagicBound = true;
+
+    let lastKey = null;
+
+    gridEl.addEventListener("pointerover", function (e) {
+        const card = e.target.closest && e.target.closest(".hl-type-card[data-payasos-key]");
+        if (!card || !gridEl.contains(card)) return;
+        const k = card.getAttribute("data-payasos-key");
+        if (!k || k === lastKey) return;
+        lastKey = k;
+        window.activePayasosTabLocked = k;
+        if (window.renderPayasosHero) window.renderPayasosHero(k, false);
+        shell.classList.add("mdj-payasos-hero-preview-on");
+    });
+
+    gridEl.addEventListener("pointerout", function (e) {
+        const rt = e.relatedTarget;
+        if (rt && gridEl.contains(rt)) return;
+        lastKey = null;
+        shell.classList.remove("mdj-payasos-hero-preview-on");
+        const restore = window.activePayasosTabLocked || "gif";
+        if (window.renderPayasosHero) window.renderPayasosHero(restore, false);
+    });
+};
+
+/** Roster modal (musicians / Captura y Visuales): hero por hover; el botón del pack sigue con su propio handler. */
+window._rosterCardClick = function (key) {
+    if (window.activeCategory === "visuals") window.activeVisualTabLocked = key;
+    if (window.activeCategory === "live") window.activeLiveTabLocked = key;
+    window.renderLiveHero(key, true);
+};
+
+/** Hover en roster: solo hero + vídeo + .active (sin reinyectar el grid; evita flicker y cortes de hover). */
+window._rosterHeroPreviewOnly = function (key) {
+    if (window.activeCategory !== "visuals" && window.activeCategory !== "live") return;
+    const dataset = window.activeCategory === "visuals" ? window.visualTabs : window.liveMusicTabs;
+    const item = dataset[key];
+    if (!item) return;
+
+    const titleEl = document.getElementById("live-hero-title");
+    const subtitleEl = document.getElementById("live-hero-subtitle");
+    const eyebrowEl = document.getElementById("live-hero-eyebrow");
+    const videoEl = document.getElementById("live-hero-video");
+
+    if (eyebrowEl) {
+        if (window.activeCategory === "live") {
+            eyebrowEl.setAttribute("data-i18n", "live_music_eyebrow");
+            eyebrowEl.textContent = t("live_music_eyebrow", "PREMIUM LIVE ENTERTAINMENT FOR LUXURY EVENTS");
+        } else {
+            eyebrowEl.setAttribute("data-i18n", "visuals_eyebrow");
+            eyebrowEl.textContent = t("visuals_eyebrow", "PREMIUM EVENT COVERAGE");
+        }
+    }
+
+    if (titleEl) {
+        titleEl.setAttribute("data-i18n", item.nameKey);
+        titleEl.textContent = t(item.nameKey, item.fallbackName);
+    }
+    if (subtitleEl) {
+        subtitleEl.setAttribute("data-i18n", item.descKey);
+        subtitleEl.textContent = t(item.descKey, item.fallbackDesc);
+    }
+
+    if (videoEl && item.video) {
+        const v = item.video;
+        const changed = videoEl.getAttribute("src") !== v;
+        if (changed) videoEl.src = v;
+        if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (changed) videoEl.load();
+        videoEl.play().catch(() => {});
+    }
+
+    document.querySelectorAll("#roster-grid .hl-type-card").forEach(function (el) {
+        const k = el.getAttribute("data-roster-key");
+        if (k === key) el.classList.add("active");
+        else el.classList.remove("active");
+    });
+
+    if (window.i18n) window.i18n.updateUI();
+};
+
+window._bindRosterGridHeroHover = function () {
+    const grid = document.getElementById("roster-grid");
+    const shell = document.querySelector("#roster-modal .modal-content.live-hero-shell");
+    if (!grid || !shell) return;
+    if (grid._mdjRosterHoverBound) return;
+    grid._mdjRosterHoverBound = true;
+
+    let lastHoverKey = null;
+
+    grid.addEventListener("pointerover", function (e) {
+        const card = e.target.closest && e.target.closest(".hl-type-card");
+        if (!card || !grid.contains(card)) return;
+        const key = card.getAttribute("data-roster-key");
+        if (!key || key === lastHoverKey) return;
+        lastHoverKey = key;
+        if (window.activeCategory === "visuals") window.activeVisualTabLocked = key;
+        if (window.activeCategory === "live") window.activeLiveTabLocked = key;
+        if (window._rosterHeroPreviewOnly) window._rosterHeroPreviewOnly(key);
+        shell.classList.add("mdj-roster-hero-preview-on");
+    });
+
+    grid.addEventListener("pointerout", function (e) {
+        const rt = e.relatedTarget;
+        if (rt && grid.contains(rt)) return;
+        lastHoverKey = null;
+        shell.classList.remove("mdj-roster-hero-preview-on");
+        const restore =
+            window.activeCategory === "visuals"
+                ? window.activeVisualTabLocked || "photo"
+                : window.activeLiveTabLocked || "sax";
+        if (window.renderLiveHero) window.renderLiveHero(restore, false);
+    });
+};
+
+/** DJ Performance — mismo ADN que Captura y Visuales: hover → hero + vídeo + .active */
+window._djHeroPreviewOnly = function (key) {
+    const item = window.djTabs && window.djTabs[key];
+    if (!item) return;
+    const titleEl = document.getElementById("dj-hero-title");
+    const subtitleEl = document.getElementById("dj-hero-subtitle");
+    const eyebrowEl = document.getElementById("dj-hero-eyebrow");
+    const videoEl = document.getElementById("dj-hero-video");
+    if (eyebrowEl) {
+        eyebrowEl.setAttribute("data-i18n", "dj_perf_eyebrow");
+        eyebrowEl.textContent = t("dj_perf_eyebrow", "PREMIUM DJ CURATION");
+    }
+    if (titleEl) {
+        titleEl.setAttribute("data-i18n", item.nameKey);
+        titleEl.textContent = t(item.nameKey, item.fallbackName);
+    }
+    if (subtitleEl) {
+        subtitleEl.setAttribute("data-i18n", item.subtitleKey);
+        subtitleEl.textContent = t(item.subtitleKey, item.fallbackSubtitle);
+    }
+    if (videoEl && item.video) {
+        const v = item.video;
+        const changed = videoEl.getAttribute("src") !== v;
+        if (changed) {
+            videoEl.setAttribute("src", v);
+            videoEl.src = v;
+            videoEl.innerHTML = `<source src="${v}" type="video/mp4">`;
+        }
+        if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (changed) videoEl.load();
+        videoEl.play().catch(() => {});
+    }
+    document.querySelectorAll("#dj-roster-grid .hl-type-card").forEach(function (el) {
+        const k = el.getAttribute("data-dj-tab-key");
+        if (k === key) el.classList.add("active");
+        else el.classList.remove("active");
+    });
+    if (window.i18n) window.i18n.updateUI();
+};
+
+window._lightingHeroPreviewOnly = function (key) {
+    const item = window.lightingItems && window.lightingItems[key];
+    if (!item) return;
+    const videoEl = document.getElementById("lighting-hero-video");
+    const titleEl = document.getElementById("lighting-hero-title");
+    const subtitleEl = document.getElementById("lighting-hero-subtitle");
+    const eyebrowEl = document.getElementById("lighting-hero-eyebrow");
+    const activeVideo =
+        item.video || "./assets/Special_Effects/Iluminacio\u0301n.mp4";
+    if (eyebrowEl) {
+        eyebrowEl.setAttribute("data-i18n", "lighting_eyebrow");
+        eyebrowEl.textContent = t("lighting_eyebrow", "PREMIUM CLUB & ARCHITECTURAL");
+    }
+    if (titleEl) {
+        titleEl.setAttribute("data-i18n", item.nameKey);
+        titleEl.textContent = t(item.nameKey, item.fallbackName);
+    }
+    if (subtitleEl) {
+        if (item.descKey) {
+            subtitleEl.setAttribute("data-i18n", item.descKey);
+            subtitleEl.textContent = t(item.descKey, item.fallbackDesc);
+        } else {
+            subtitleEl.textContent = item.fallbackDesc || "";
+        }
+    }
+    if (videoEl && activeVideo) {
+        const v = activeVideo;
+        const changed = videoEl.getAttribute("src") !== v;
+        if (changed) videoEl.src = v;
+        if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (changed) videoEl.load();
+        videoEl.play().catch(() => {});
+    }
+    document.querySelectorAll("#lighting-roster-grid .hl-type-card").forEach(function (el) {
+        const k = el.getAttribute("data-lighting-key");
+        if (k === key) el.classList.add("active");
+        else el.classList.remove("active");
+    });
+    if (window.i18n) window.i18n.updateUI();
+};
+
+window._fxHeroPreviewOnly = function (key) {
+    const item = window.fxItems && window.fxItems[key];
+    if (!item) return;
+    const videoEl = document.getElementById("fx-hero-video");
+    const titleEl = document.getElementById("fx-hero-title");
+    const subtitleEl = document.getElementById("fx-hero-subtitle");
+    const eyebrowEl = document.getElementById("fx-hero-eyebrow");
+    if (eyebrowEl) {
+        eyebrowEl.setAttribute("data-i18n", "fx_eyebrow");
+        eyebrowEl.textContent = t("fx_eyebrow", "PREMIUM VISUAL FX");
+    }
+    if (titleEl) {
+        titleEl.setAttribute("data-i18n", item.nameKey);
+        titleEl.textContent = t(item.nameKey, item.fallbackName);
+    }
+    if (subtitleEl) {
+        subtitleEl.textContent = item.fallbackDesc || "";
+    }
+    if (videoEl && item.video) {
+        const v = item.video;
+        const changed = videoEl.getAttribute("src") !== v;
+        if (changed) videoEl.src = v;
+        if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (changed) videoEl.load();
+        videoEl.play().catch(() => {});
+    }
+    document.querySelectorAll("#fx-roster-grid [data-fx-key]").forEach(function (el) {
+        const k = el.getAttribute("data-fx-key");
+        if (k === key) el.classList.add("active");
+        else el.classList.remove("active");
+    });
+    if (window.i18n) window.i18n.updateUI();
+};
+
+window._bindLightingGridHeroHover = function () {
+    const gridEl = document.getElementById("lighting-roster-grid");
+    const shell = document.querySelector("#lighting-modal .modal-content.cinematic-hero-shell");
+    if (!gridEl || !shell) return;
+    if (gridEl._mdjLightingMagicBound) return;
+    gridEl._mdjLightingMagicBound = true;
+
+    let lastKey = null;
+
+    gridEl.addEventListener("pointerover", function (e) {
+        const card = e.target.closest && e.target.closest(".hl-type-card[data-lighting-key]");
+        if (!card || !gridEl.contains(card)) return;
+        const key = card.getAttribute("data-lighting-key");
+        if (!key || key === lastKey) return;
+        lastKey = key;
+        window.activeLightingTabLocked = key;
+        if (window._lightingHeroPreviewOnly) window._lightingHeroPreviewOnly(key);
+        shell.classList.add("mdj-lighting-hero-preview-on");
+    });
+
+    gridEl.addEventListener("pointerout", function (e) {
+        const rt = e.relatedTarget;
+        if (rt && gridEl.contains(rt)) return;
+        lastKey = null;
+        shell.classList.remove("mdj-lighting-hero-preview-on");
+        const restore = window.activeLightingTabLocked || "movingHeads";
+        if (window.renderLightingHero) window.renderLightingHero(restore, false);
+    });
+};
+
+window._bindFxGridHeroHover = function () {
+    const gridEl = document.getElementById("fx-roster-grid");
+    const shell = document.querySelector("#fx-modal .modal-content.cinematic-hero-shell");
+    if (!gridEl || !shell) return;
+    if (gridEl._mdjFxMagicBound) return;
+    gridEl._mdjFxMagicBound = true;
+
+    let lastKey = null;
+
+    gridEl.addEventListener("pointerover", function (e) {
+        const card = e.target.closest && e.target.closest(".talent-cat-card[data-fx-key]");
+        if (!card || !gridEl.contains(card)) return;
+        const key = card.getAttribute("data-fx-key");
+        if (!key || key === lastKey) return;
+        lastKey = key;
+        window.activeFxTabLocked = key;
+        if (window._fxHeroPreviewOnly) window._fxHeroPreviewOnly(key);
+        shell.classList.add("mdj-fx-hero-preview-on");
+    });
+
+    gridEl.addEventListener("pointerout", function (e) {
+        const rt = e.relatedTarget;
+        if (rt && gridEl.contains(rt)) return;
+        lastKey = null;
+        shell.classList.remove("mdj-fx-hero-preview-on");
+        const restore = window.activeFxTabLocked || "sparks";
+        if (window.renderFxHero) window.renderFxHero(restore, false);
+    });
+};
+
+/** MC & Presentadores: mismo ADN que Captura y Visuales (pointerenter → vídeo en hero; salida de la fila → estado base). */
+window.initMcModalMagicHover = function () {
+    const shell = document.querySelector("#mc-modal .modal-content.cinematic-hero-shell");
+    const vHost = document.getElementById("mc-video-host");
+    const vMaestro = document.getElementById("mc-video-maestro");
+    const cardMaestro = document.getElementById("mc-card-maestro");
+    const cardHost = document.getElementById("mc-card-host");
+    if (!shell || !vHost || !vMaestro || !cardMaestro || !cardHost) return;
+    if (shell._mdjMcMagicBound) return;
+    shell._mdjMcMagicBound = true;
+
+    const rowWrap = cardMaestro.parentElement;
+    if (!rowWrap || rowWrap !== cardHost.parentElement) return;
+
+    const showMaestro = function () {
+        vMaestro.style.opacity = "1";
+        vHost.style.opacity = "0";
+        shell.classList.add("mdj-mc-hero-preview-on");
+        cardMaestro.classList.add("active");
+        cardHost.classList.remove("active");
+    };
+    const showHost = function () {
+        vHost.style.opacity = "1";
+        vMaestro.style.opacity = "0";
+        shell.classList.add("mdj-mc-hero-preview-on");
+        cardHost.classList.add("active");
+        cardMaestro.classList.remove("active");
+    };
+    const reset = function () {
+        shell.classList.remove("mdj-mc-hero-preview-on");
+        cardMaestro.classList.remove("active");
+        cardHost.classList.remove("active");
+        vHost.style.opacity = "1";
+        vMaestro.style.opacity = "0";
+    };
+
+    cardMaestro.addEventListener("pointerenter", showMaestro);
+    cardHost.addEventListener("pointerenter", showHost);
+
+    rowWrap.addEventListener("pointerleave", function (e) {
+        const rt = e.relatedTarget;
+        if (rt && rowWrap.contains(rt)) return;
+        reset();
+    });
+};
 
 window.renderLiveHero = (tabKey = null, animate = true) => {
     let dataset;
@@ -285,16 +861,16 @@ window.renderLiveHero = (tabKey = null, animate = true) => {
                 const activeStateClass = isActive ? " active" : "";
 
                 let emoji = '🎙️';
-                if (item.id.includes('sax')) emoji = '🎷';
-                if (item.id.includes('percussion') || item.id.includes('timbal')) emoji = '🥁';
-                if (item.id.includes('photo')) emoji = '📸';
-                if (item.id.includes('video') && !item.id.includes('drone')) emoji = '🎥';
-                if (item.id.includes('drone')) emoji = '🚁';
-
-                const clickBinding = `onclick="window.renderLiveHero('${key}', true)"`;
+                if (item.id === 'visuals_booth360' || key === 'booth360') emoji = '🎥🔄';
+                else if (item.id === 'visuals_magic_mirror' || key === 'magicMirror') emoji = '🪞';
+                else if (item.id.includes('sax')) emoji = '🎷';
+                else if (item.id.includes('percussion') || item.id.includes('timbal')) emoji = '🥁';
+                else if (item.id.includes('photo')) emoji = '📸';
+                else if (item.id.includes('video') && !item.id.includes('drone')) emoji = '🎥';
+                else if (item.id.includes('drone')) emoji = '🚁';
 
                 return `
-                    <div class="talent-cat-card hero-glass-card hl-type-card${activeStateClass}" ${clickBinding} style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card${activeStateClass}" data-roster-key="${key}" style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
                         <div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">${emoji}</div>
                         <h3 class="hl-card-title" data-i18n="${item.nameKey}" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">
                             ${t(item.nameKey, item.fallbackName)}
@@ -315,14 +891,17 @@ window.renderLiveHero = (tabKey = null, animate = true) => {
         }
 
         if (videoEl && activeVideo) {
-            if (videoEl.getAttribute("src") !== activeVideo) {
-                videoEl.src = activeVideo;
-                videoEl.load();
-                videoEl.play().catch(() => { });
-            }
+            const v = activeVideo;
+            const changed = videoEl.getAttribute("src") !== v;
+            if (changed) videoEl.src = v;
+            if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+            if (changed) videoEl.load();
+            videoEl.play().catch(() => { });
         }
 
         if (window.i18n) window.i18n.updateUI();
+
+        if (typeof window._bindRosterGridHeroHover === "function") window._bindRosterGridHeroHover();
 
         if (animate) {
             requestAnimationFrame(() => {
@@ -344,7 +923,39 @@ window.renderLiveHero = (tabKey = null, animate = true) => {
     }
 };
 
+/** DJ roster: mismo patrón que Captura y Visuales (pointerover → preview; salida del grid → restaurar tab bloqueada). */
+window._bindDjRosterHeroHover = function (activeTabKey) {
+    const gridEl = document.getElementById("dj-roster-grid");
+    const shell = document.querySelector("#dj-modal .modal-content.live-hero-shell");
+    if (!gridEl || !shell || !window.djTabs) return;
+    if (gridEl._mdjDjMagicBound) return;
+    gridEl._mdjDjMagicBound = true;
+
+    let lastKey = null;
+
+    gridEl.addEventListener("pointerover", function (e) {
+        const card = e.target.closest && e.target.closest(".hl-type-card[data-dj-tab-key]");
+        if (!card || !gridEl.contains(card)) return;
+        const key = card.getAttribute("data-dj-tab-key");
+        if (!key || key === lastKey) return;
+        lastKey = key;
+        window.activeDjTabLocked = key;
+        if (window._djHeroPreviewOnly) window._djHeroPreviewOnly(key);
+        shell.classList.add("mdj-dj-hero-preview-on");
+    });
+
+    gridEl.addEventListener("pointerout", function (e) {
+        const rt = e.relatedTarget;
+        if (rt && gridEl.contains(rt)) return;
+        lastKey = null;
+        shell.classList.remove("mdj-dj-hero-preview-on");
+        const restore = window.activeDjTabLocked || activeTabKey || "weddings";
+        if (window.renderDjHero) window.renderDjHero(restore, false);
+    });
+};
+
 window.renderDjHero = (tabKey = 'weddings', animate = true) => {
+    window.activeDjTabLocked = tabKey || window.activeDjTabLocked || "weddings";
     const dataset = window.djTabs;
     const activeItem = dataset[tabKey] || Object.values(dataset)[0];
 
@@ -390,13 +1001,15 @@ window.renderDjHero = (tabKey = 'weddings', animate = true) => {
                 if (item.id.includes('private')) emoji = '🥂';
                 if (item.id.includes('clubs')) emoji = '🪩';
                 if (item.id.includes('family')) emoji = '🎈';
+                if (item.id === 'dj_seasonal_parties') emoji = '🎃☘️';
                 if (item.id.includes('holiday')) emoji = '🎇';
 
-                const clickBinding = `onclick="window.renderDjHero('${key}', true)"`;
                 const btnText = isSelected ? t('btn_remove_extra', 'Remove') : t(item.ctaKey, 'Activar');
 
                 const isVIP = item.id === 'dj_weddings';
-                const priceDisplay = isVIP
+                const priceDisplay = item.id === 'dj_seasonal_parties'
+                    ? `<span style="font-size: 16px; font-weight: 700; color: var(--gold);">$600 – $1,500</span>`
+                    : isVIP
                     ? `<span style="font-size: 10px; opacity: 0.7; display: block; font-weight: 500; font-family: -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0.5px; margin-bottom: 2px; text-transform: uppercase;">Starting at</span>$${item.price}.00`
                     : `$${item.price}.00`;
 
@@ -405,7 +1018,7 @@ window.renderDjHero = (tabKey = 'weddings', animate = true) => {
                     : `<div style="margin-bottom: 12px;"></div>`;
 
                 return `
-                    <div class="talent-cat-card hero-glass-card hl-type-card${activeStateClass}" ${clickBinding} style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; min-height: 320px; transition: transform 0.3s ease;">
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card${activeStateClass}" data-dj-tab-key="${key}" style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; min-height: 320px; transition: transform 0.3s ease;">
                         <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-start; align-items: center;">
                             <div class="hero-card-emoji" style="font-size: 28px; margin-bottom: 12px;">${emoji}</div>
                             <h3 class="hero-card-title hl-type-name" data-i18n="${item.nameKey}" style="font-size: 15px; line-height: 1.2; margin-bottom: 8px; color: var(--gold); font-family: 'Playfair Display', serif;">${t(item.nameKey, item.fallbackName)}</h3>
@@ -423,19 +1036,20 @@ window.renderDjHero = (tabKey = 'weddings', animate = true) => {
         }
 
         if (videoEl && activeItem.video) {
-            if (videoEl.getAttribute("src") !== activeItem.video) {
-                console.log("[DJ Module] Updating video source to:", activeItem.video);
-                videoEl.setAttribute("src", activeItem.video);
-                videoEl.src = activeItem.video;
-
-                // Clear any existing source children just to be safe
-                videoEl.innerHTML = `<source src="${activeItem.video}" type="video/mp4">`;
-
-                videoEl.load();
-                videoEl.play().catch((e) => {
-                    console.warn("[DJ Module] Video autoplay prevented by browser policy:", e);
-                });
+            const v = activeItem.video;
+            const changed = videoEl.getAttribute("src") !== v;
+            if (changed) {
+                videoEl.setAttribute("src", v);
+                videoEl.src = v;
+                videoEl.innerHTML = `<source src="${v}" type="video/mp4">`;
             }
+            if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+            if (changed) videoEl.load();
+            videoEl.play().catch(() => { });
+        }
+
+        if (typeof window._bindDjRosterHeroHover === 'function') {
+            window._bindDjRosterHeroHover(tabKey);
         }
 
         if (window.i18n) window.i18n.updateUI();
@@ -575,6 +1189,7 @@ window.fxItems = {
 };
 
 window.renderFxHero = (currentTabKey = 'sparks', animate = true) => {
+    window.activeFxTabLocked = currentTabKey;
     const dataset = window.fxItems;
     const gridEl = document.getElementById("fx-roster-grid");
     const videoEl = document.getElementById("fx-hero-video");
@@ -583,110 +1198,73 @@ window.renderFxHero = (currentTabKey = 'sparks', animate = true) => {
         let activeVideo = dataset[currentTabKey] ? dataset[currentTabKey].video : "";
 
         if (gridEl && dataset) {
-            let track = gridEl.querySelector('.fx-marquee-track');
+            if (typeof window.mdjTeardownFxCarousel === 'function') {
+                window.mdjTeardownFxCarousel();
+            }
 
-            // Si el track no existe, inyectamos el DOM completo duplicado para el loop infinito
-            if (!track) {
-                const buildCards = () => Object.entries(dataset).map(([key, item]) => {
-                    const clickBinding = `onclick="window.renderFxHero('${key}', true)"`;
-
-                    return `
-                        <div class="talent-cat-card hero-glass-card hl-type-card" data-fx-key="${key}" ${clickBinding} style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
+            const buildCards = () => Object.entries(dataset).map(([key, item]) => {
+                const isActive = key === currentTabKey;
+                const isSelected = window.selectedPackage && window.selectedPackage.some(p => p.id === item.id);
+                const activeStateClass = isActive ? ' active' : '';
+                const btnClass = isSelected ? 'hl-action-btn added' : 'btn-premium-cta full hl-action-btn';
+                const btnBg = isSelected ? 'rgba(197,160,89,0.2)' : 'transparent';
+                const btnLabel = isSelected ? t('btn_remove_extra', 'Remove') : t(item.ctaKey, 'Consultar');
+                const iconHtml = isSelected ? '<span class="hl-btn-icon">✓</span>' : '<span class="hl-btn-icon"></span>';
+                return `
+                        <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card${activeStateClass}" data-fx-key="${key}" style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
                             <div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">${item.emoji || '✨'}</div>
                             <h3 class="hl-card-title" data-i18n="${item.nameKey}" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">
                                 ${t(item.nameKey, item.fallbackName)}
                             </h3>
-                            <p class="hl-card-desc" data-i18n="${item.descKey}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">
-                                ${t(item.descKey, item.fallbackDesc)}
+                            <p class="hl-card-desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">
+                                ${item.fallbackDesc || ""}
                             </p>
                             <div class="hl-card-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">
                                 ${item.priceString ? item.priceString : (item.price ? '$' + item.price + '.00' : 'Cotizar')}
                             </div>
-                            <button class="btn-premium-cta full hl-action-btn" data-action="open-fx" style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="event.stopPropagation();">
-                                <span class="hl-btn-icon"></span>
-                                <span class="hl-btn-text"></span>
+                            <button class="${btnClass}" data-action="open-fx" style="width: 100%; border: 1px solid var(--gold); background: ${btnBg}; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="event.stopPropagation();">
+                                ${iconHtml}
+                                <span class="hl-btn-text">${btnLabel}</span>
                             </button>
                         </div>
                     `;
-                }).join('');
+            }).join('');
 
-                const singleSetHtml = buildCards();
+            gridEl.className = 'mdj-fx-catalog-carousel grid5 cinematic-hero-cards';
+            gridEl.style.boxSizing = 'border-box';
+            gridEl.style.position = 'relative';
+            gridEl.style.zIndex = '10';
+            gridEl.style.width = '100%';
+            gridEl.style.maxWidth = '100%';
+            gridEl.innerHTML = buildCards();
 
-                // Sobrescribir comportamiento del grid original para alojar el track
-                gridEl.style.overflowX = 'hidden';
-                gridEl.style.justifyContent = 'flex-start';
+            if (window.i18n) window.i18n.updateUI();
 
-                gridEl.innerHTML = `
-                    <style>
-                        @keyframes fxMarqueeLoop {
-                            0% { transform: translateX(0); }
-                            100% { transform: translateX(calc(-50% - 7.5px)); }
-                        }
-                        .fx-marquee-track {
-                            display: flex;
-                            gap: 15px;
-                            animation: fxMarqueeLoop 35s linear infinite;
-                            width: max-content;
-                            will-change: transform;
-                        }
-                        .fx-marquee-track:hover {
-                            animation-play-state: paused;
-                        }
-                    </style>
-                    <div class="fx-marquee-track">
-                        ${singleSetHtml}${singleSetHtml}
-                    </div>
-                `;
-                track = gridEl.querySelector('.fx-marquee-track');
+            if (typeof window.initFxInfiniteCarousel === 'function') {
+                window.initFxInfiniteCarousel();
             }
-
-            // --- ACTUALIZACIÓN DIFERENCIAL ---
-            // Solo alteramos clases para no resetear la posición del Marquee Loop
-            const allCards = track.querySelectorAll('.talent-cat-card');
-
-            allCards.forEach(card => {
-                const key = card.getAttribute('data-fx-key');
-                if (!key) return;
-
-                const item = dataset[key];
-                const isActive = (key === currentTabKey);
-                const isSelected = window.selectedPackage && window.selectedPackage.some(p => p.id === item.id);
-
-                // Clase Active (Halo Glow)
-                if (isActive) {
-                    card.classList.add('active');
-                } else {
-                    card.classList.remove('active');
-                }
-
-                // Actualización del Botón Principal
-                const btn = card.querySelector('.hl-action-btn');
-                const btnIcon = card.querySelector('.hl-btn-icon');
-                const btnText = card.querySelector('.hl-btn-text');
-
-                if (btn && btnIcon && btnText) {
-                    if (isSelected) {
-                        btn.className = "hl-action-btn added";
-                        btn.style.background = 'rgba(197,160,89,0.2)';
-                        btnIcon.textContent = "✓";
-                        btnText.textContent = t('btn_remove_extra', 'Remove');
-                    } else {
-                        btn.className = "btn-premium-cta full hl-action-btn";
-                        btn.style.background = 'transparent';
-                        btnIcon.textContent = "";
-                        btnText.textContent = t(item.ctaKey, 'Consultar');
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    if (typeof window.mdjFxInfiniteApply === 'function') {
+                        window.mdjFxInfiniteApply();
                     }
-                }
+                });
             });
+            if (typeof window.initFxDragClickGuard === 'function') {
+                window.initFxDragClickGuard();
+            }
         }
 
         if (videoEl && activeVideo) {
-            if (videoEl.getAttribute("src") !== activeVideo) {
-                videoEl.src = activeVideo;
-                videoEl.load();
-                videoEl.play().catch(() => { });
-            }
+            const v = activeVideo;
+            const changed = videoEl.getAttribute("src") !== v;
+            if (changed) videoEl.src = v;
+            if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+            if (changed) videoEl.load();
+            videoEl.play().catch(() => { });
         }
+
+        if (typeof window._bindFxGridHeroHover === "function") window._bindFxGridHeroHover();
     };
 
     if (animate) {
@@ -740,11 +1318,16 @@ window.lightingItems = {
 };
 
 window.renderLightingHero = (currentTabKey = 'movingHeads', animate = true) => {
+    window.activeLightingTabLocked = currentTabKey;
     const dataset = window.lightingItems;
     const gridEl = document.getElementById("lighting-roster-grid");
     const videoEl = document.getElementById("lighting-hero-video");
 
     const performRender = () => {
+        if (typeof window.mdjTeardownLightingCarousel === 'function') {
+            window.mdjTeardownLightingCarousel();
+        }
+
         let activeVideo = dataset[currentTabKey] && dataset[currentTabKey].video ? dataset[currentTabKey].video : "./assets/Special_Effects/Iluminación.mp4";
 
         if (gridEl && dataset) {
@@ -755,18 +1338,15 @@ window.renderLightingHero = (currentTabKey = 'movingHeads', animate = true) => {
                 const icon = isSelected ? "✓" : "";
                 const btnText = isSelected ? t('btn_remove_extra', 'Remove') : t(item.ctaKey, 'Consultar');
                 const activeStateClass = isActive ? " active" : "";
-                const borderFlicker = isActive ? "box-shadow: 0 0 25px rgba(212,175,55,0.4); border: 1px solid rgba(212,175,55,1);" : "box-shadow: 0 0 15px rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.3);";
-
-                const clickBinding = `onclick="window.renderLightingHero('${key}', true)"`;
 
                 return `
-                    <div class="talent-cat-card hero-glass-card hl-type-card${activeStateClass}" ${clickBinding} style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card${activeStateClass}" data-lighting-key="${key}" style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
                         <div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">${item.emoji || '💡'}</div>
                         <h3 class="hl-card-title" data-i18n="${item.nameKey}" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">
                             ${t(item.nameKey, item.fallbackName)}
                         </h3>
-                        <p class="hl-card-desc" data-i18n="${item.descKey}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">
-                            ${t(item.descKey, item.fallbackDesc)}
+                        <p class="hl-card-desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">
+                            ${item.fallbackDesc || ""}
                         </p>
                         <div class="hl-card-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">
                             ${item.priceString ? item.priceString : (item.price ? '$' + item.price + '.00' : 'Cotizar')}
@@ -781,11 +1361,28 @@ window.renderLightingHero = (currentTabKey = 'movingHeads', animate = true) => {
         }
 
         if (videoEl && activeVideo) {
-            if (videoEl.getAttribute("src") !== activeVideo) {
-                videoEl.src = activeVideo;
-                videoEl.load();
-                videoEl.play().catch(() => { });
-            }
+            const v = activeVideo;
+            const changed = videoEl.getAttribute("src") !== v;
+            if (changed) videoEl.src = v;
+            if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+            if (changed) videoEl.load();
+            videoEl.play().catch(() => { });
+        }
+
+        if (typeof window._bindLightingGridHeroHover === "function") window._bindLightingGridHeroHover();
+
+        if (typeof window.initLightingInfiniteCarousel === 'function') {
+            window.initLightingInfiniteCarousel();
+        }
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                if (typeof window.mdjLightingInfiniteApply === 'function') {
+                    window.mdjLightingInfiniteApply();
+                }
+            });
+        });
+        if (typeof window.initLightingDragClickGuard === 'function') {
+            window.initLightingDragClickGuard();
         }
     };
 
@@ -896,11 +1493,12 @@ window.updateHoraLocaHero = (id) => {
 
     const videoEl = document.getElementById('hl-hero-video');
     if (videoEl && pack.video) {
-        if (videoEl.getAttribute('src') !== pack.video) {
-            videoEl.src = pack.video;
-            videoEl.load();
-            videoEl.play().catch(e => console.warn('Video auto-play prevented:', e));
-        }
+        const v = pack.video;
+        const changed = videoEl.getAttribute('src') !== v;
+        if (changed) videoEl.src = v;
+        if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(videoEl);
+        if (changed) videoEl.load();
+        videoEl.play().catch(e => console.warn('Video auto-play prevented:', e));
     }
 
     if (window.i18n) {
@@ -1120,21 +1718,37 @@ window.renderRentalCatalog = (categoryId) => {
 
     if (!grid || !catalog) return;
 
+    if (typeof window.mdjTeardownRentalCatalogCarousel === 'function') {
+        window.mdjTeardownRentalCatalogCarousel();
+    }
+
     // Dynamically Inject Catalog Meta
     const titleEl = document.getElementById('rental-dynamic-title');
     const descEl = document.getElementById('rental-dynamic-desc');
     if (titleEl) titleEl.innerText = catalog.title;
     if (descEl) descEl.innerText = catalog.subtitle;
 
-    // ARQUITECTURA PURA MULTI-VIDEO (SOLO ESTADOS CSS)
+    // Fondo multi-vídeo (hero) — omitir si el modal es solo contenedor catálogo, salvo Audio y Sonido (vídeos visibles + hover por ítem).
+    const rentalModal = document.getElementById('rental-dynamic-modal');
+    const showRentalHeroVideo =
+        categoryId === 'audio' ||
+        categoryId === 'furniture' ||
+        categoryId === 'tents' ||
+        categoryId === 'stages' ||
+        categoryId === 'inflatables';
+    if (rentalModal) {
+        rentalModal.classList.toggle('mdj-rental-hero-video-on', showRentalHeroVideo);
+    }
+    const skipBgVideo = rentalModal && rentalModal.getAttribute('data-mdj-catalog-no-bg') === '1' && !showRentalHeroVideo;
     const videoContainer = document.getElementById('rental-multi-video-container');
-    if (videoContainer) {
+    if (videoContainer && !skipBgVideo) {
         const allVideos = videoContainer.querySelectorAll('.rental-bg-vid');
         let hasActive = false;
 
         allVideos.forEach(vid => {
             if (vid.getAttribute('data-category') === categoryId) {
                 vid.classList.add('active-vid');
+                if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(vid);
                 vid.play().catch(() => {});
                 hasActive = true;
             } else {
@@ -1143,13 +1757,18 @@ window.renderRentalCatalog = (categoryId) => {
             }
         });
 
-        // Fallback de ultra-seguridad: Si mandan una key mala (como 'stage' vs 'stages') 
-        // Nunca apagamos todo. Forzamos el encendido del primer video (furniture)
-        // para que la interfaz nunca quede muerta en negro.
         if (!hasActive && allVideos.length > 0) {
             allVideos[0].classList.add('active-vid');
+            if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(allVideos[0]);
             allVideos[0].play().catch(() => {});
         }
+    } else if (videoContainer && skipBgVideo) {
+        videoContainer.querySelectorAll('.rental-bg-vid').forEach((vid) => {
+            vid.classList.remove('active-vid');
+            try {
+                vid.pause();
+            } catch (e) { /* ignore */ }
+        });
     }
 
     // Tab active state update
@@ -1161,15 +1780,13 @@ window.renderRentalCatalog = (categoryId) => {
         }
     });
 
-    // Drop static grid classes to allow horizontal Marquee track
+    /* Todas las categorías: scroll horizontal + carrusel infinito (mismo ADN que hub de talento). */
     grid.className = "";
-    grid.style.display = 'flex';
-    grid.style.flexWrap = 'nowrap';
-    grid.style.overflowX = 'hidden';
-    grid.style.justifyContent = 'flex-start';
-    grid.style.alignItems = 'stretch';
-    grid.style.gap = '0';
-    grid.style.padding = '0 80px 20px 80px'; // Match FX modal padding
+    grid.style.display = 'block';
+    grid.style.width = '100%';
+    grid.style.boxSizing = 'border-box';
+    grid.style.padding = '0';
+    grid.style.overflow = 'visible';
     grid.style.position = 'relative';
     grid.style.zIndex = '10';
 
@@ -1218,22 +1835,6 @@ window.renderRentalCatalog = (categoryId) => {
                 background: rgba(255,255,255,0.2) !important;
                 border: 1px solid rgba(255,255,255,0.6) !important;
                 color: white !important;
-            }
-
-            /* --- DYNAMIC MARQUEE TRACK --- */
-            @keyframes dynamicMarqueeLoop {
-                0% { transform: translateX(0); }
-                100% { transform: translateX(calc(-50% - 7.5px)); } /* 7.5px is half of 15px gap */
-            }
-            .dynamic-marquee-track {
-                display: flex;
-                gap: 15px;
-                animation: dynamicMarqueeLoop 35s linear infinite;
-                width: max-content;
-                will-change: transform;
-            }
-            .dynamic-marquee-track:hover {
-                animation-play-state: paused;
             }
 
             .product-card {
@@ -1403,7 +2004,7 @@ window.renderRentalCatalog = (categoryId) => {
                 gap: 8px;
             }
         </style>
-        <div class="dynamic-marquee-track">
+        <div class="mdj-rental-catalog-carousel">
     `;
 
     let cardsHtml = '';
@@ -1460,22 +2061,7 @@ window.renderRentalCatalog = (categoryId) => {
         `;
     });
 
-    // INFINITE MARQUEE MATH CORRECTION: 
-    // Prevent 4K screen underflow when category has very few items (e.g. Tents)
-    const minItemsNeeded = 10;
-    let baseSequenceHtml = cardsHtml;
-
-    if (catalog.items.length < minItemsNeeded) {
-        const repeatCount = Math.ceil(minItemsNeeded / catalog.items.length);
-        baseSequenceHtml = '';
-        for (let i = 0; i < repeatCount; i++) {
-            baseSequenceHtml += cardsHtml;
-        }
-    }
-
-    // Now baseSequenceHtml is guaranteed to be wider than the screens, 
-    // Double inject it for a seamless 50% translation loop
-    html += baseSequenceHtml + baseSequenceHtml;
+    html += cardsHtml;
     html += '</div>'; // Close track
 
     grid.innerHTML = html;
@@ -1485,7 +2071,7 @@ window.renderRentalCatalog = (categoryId) => {
     const catBgVideo = catalog.bgVideo || (catalog.items[0] && catalog.items[0].video ? catalog.items[0].video : '');
 
     // --- RESTAURACIÓN DEL HOVER (PEDIDO EXPRESO DEL USUARIO) ---
-    document.querySelectorAll('.product-card').forEach(card => {
+    document.querySelectorAll('#rental-dynamic-modal .product-card').forEach(card => {
         card.addEventListener('mouseenter', () => {
             const itemId = card.getAttribute('data-rental-id');
             const itemDef = catalog.items.find(i => i.id === itemId);
@@ -1497,6 +2083,7 @@ window.renderRentalCatalog = (categoryId) => {
                 const cleanItemVid = itemDef.video.split('/').pop().replace(/%20/g, ' ');
                 if (source && !source.src.includes(encodeURI(cleanItemVid)) && !source.src.includes(cleanItemVid)) {
                     source.src = itemDef.video;
+                    if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(heroVid);
                     heroVid.load();
                     heroVid.play().catch(() => {});
                 }
@@ -1505,7 +2092,7 @@ window.renderRentalCatalog = (categoryId) => {
     });
 
     // Revertir a Video Base cuando el mouse sale de la colección de cartas
-    const track = document.querySelector('.dynamic-marquee-track') || document.querySelector('.rental-items-grid');
+    const track = document.querySelector('#rental-dynamic-modal .mdj-rental-catalog-carousel');
     if (track) {
         track.addEventListener('mouseleave', () => {
             const heroVid = document.querySelector('#rental-multi-video-container .active-vid');
@@ -1514,12 +2101,473 @@ window.renderRentalCatalog = (categoryId) => {
                 const cleanCatBg = catBgVideo.split('/').pop().replace(/%20/g, ' ');
                 if (source && !source.src.includes(encodeURI(cleanCatBg)) && !source.src.includes(cleanCatBg)) {
                     source.src = catBgVideo;
+                    if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(heroVid);
                     heroVid.load();
                     heroVid.play().catch(() => {});
                 }
             }
         });
     }
+
+    if (typeof window.initRentalCatalogInfiniteCarousel === 'function') {
+        window.initRentalCatalogInfiniteCarousel();
+    }
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+            if (typeof window.mdjRentalCatalogInfiniteApply === 'function') {
+                window.mdjRentalCatalogInfiniteApply();
+            }
+        });
+    });
+    if (typeof window.initRentalCatalogDragClickGuard === 'function') {
+        window.initRentalCatalogDragClickGuard();
+    }
+};
+
+/**
+ * Catálogo rental-dynamic-modal (todas las categorías): scroll + clones infinitos, mismo ADN que hub de talento.
+ */
+window.mdjTeardownRentalCatalogCarousel = function () {
+    const track = document.querySelector('#rental-dynamic-modal .mdj-rental-catalog-carousel');
+    if (!track) return;
+    track.querySelectorAll('.mdj-rental-carousel-clone').forEach((n) => n.remove());
+    track.classList.remove('mdj-rental-carousel-infinite');
+    track.dataset.mdjInfiniteCarousel = '';
+    delete track._mdjInfiniteSetWidth;
+    if (track._mdjInfiniteScrollHandler) {
+        track.removeEventListener('scroll', track._mdjInfiniteScrollHandler);
+        delete track._mdjInfiniteScrollHandler;
+    }
+    if (track._mdjInfiniteResizeHandler) {
+        window.removeEventListener('resize', track._mdjInfiniteResizeHandler);
+        delete track._mdjInfiniteResizeHandler;
+    }
+};
+
+window.mdjRentalCatalogInfiniteApply = function () {
+    const track = document.querySelector('#rental-dynamic-modal .mdj-rental-catalog-carousel');
+    if (!track || track.dataset.mdjInfiniteCarousel !== '1') {
+        if (track) track.scrollLeft = 0;
+        return;
+    }
+    const originals = Array.from(track.querySelectorAll(':scope > .product-card:not(.mdj-rental-carousel-clone)'));
+    const n = originals.length;
+    if (n < 2) {
+        track.scrollLeft = 0;
+        return;
+    }
+    const firstO = originals[0];
+    const lastO = originals[n - 1];
+    let sw = Math.round(lastO.offsetLeft + lastO.offsetWidth - firstO.offsetLeft);
+    if (!sw || sw < 10) {
+        const tri = Math.round(track.scrollWidth / 3);
+        if (tri > 10) sw = tri;
+    }
+    if (!sw || sw < 10) return;
+    track._mdjInfiniteSetWidth = sw;
+    track.scrollLeft = sw;
+};
+
+window.initRentalCatalogInfiniteCarousel = function () {
+    const track = document.querySelector('#rental-dynamic-modal .mdj-rental-catalog-carousel');
+    if (!track || track.dataset.mdjInfiniteCarousel === '1') return;
+
+    const originals = Array.from(track.querySelectorAll(':scope > .product-card:not(.mdj-rental-carousel-clone)'));
+    const n = originals.length;
+    if (n < 2) return;
+
+    function cloneCard(el) {
+        const c = el.cloneNode(true);
+        c.classList.add('mdj-rental-carousel-clone');
+        c.removeAttribute('id');
+        c.setAttribute('tabindex', '-1');
+        c.setAttribute('aria-hidden', 'true');
+        return c;
+    }
+
+    const fragBefore = document.createDocumentFragment();
+    originals.forEach((el) => fragBefore.appendChild(cloneCard(el)));
+    track.insertBefore(fragBefore, track.firstChild);
+    originals.forEach((el) => track.appendChild(cloneCard(el)));
+
+    track.classList.add('mdj-rental-carousel-infinite');
+    track.dataset.mdjInfiniteCarousel = '1';
+
+    let jumping = false;
+    track._mdjInfiniteScrollHandler = function () {
+        if (jumping) return;
+        const sw = track._mdjInfiniteSetWidth;
+        if (!sw) return;
+        const max = track.scrollWidth - track.clientWidth;
+        if (max <= 0) return;
+        const buf = 8;
+        if (track.scrollLeft <= buf) {
+            jumping = true;
+            track.scrollLeft += sw;
+            requestAnimationFrame(function () { jumping = false; });
+        } else if (track.scrollLeft >= max - buf) {
+            jumping = true;
+            track.scrollLeft -= sw;
+            requestAnimationFrame(function () { jumping = false; });
+        }
+    };
+    track.addEventListener('scroll', track._mdjInfiniteScrollHandler, { passive: true });
+
+    let resizeT = null;
+    track._mdjInfiniteResizeHandler = function () {
+        clearTimeout(resizeT);
+        resizeT = setTimeout(function () {
+            if (typeof window.mdjRentalCatalogInfiniteApply === 'function') {
+                window.mdjRentalCatalogInfiniteApply();
+            }
+        }, 120);
+    };
+    window.addEventListener('resize', track._mdjInfiniteResizeHandler, { passive: true });
+};
+
+/** Evita click en tarjetas cuando el usuario estaba arrastrando el carrusel (igual que hub de talento). */
+window.initRentalCatalogDragClickGuard = function () {
+    const carousel = document.querySelector('#rental-dynamic-modal .mdj-rental-catalog-carousel');
+    if (!carousel || carousel.dataset.mdjDragClickGuard === '1') return;
+    carousel.dataset.mdjDragClickGuard = '1';
+
+    let originX = 0;
+    let originY = 0;
+    let pointerDown = false;
+    let moved = false;
+    let scrollAtPointerDown = 0;
+    const MOVE_PX = 5;
+
+    carousel.addEventListener('pointerdown', (e) => {
+        if (e.button != null && e.button !== 0) return;
+        pointerDown = true;
+        moved = false;
+        originX = e.clientX;
+        originY = e.clientY;
+        scrollAtPointerDown = carousel.scrollLeft;
+    }, true);
+
+    carousel.addEventListener('pointermove', (e) => {
+        if (!pointerDown) return;
+        if (Math.abs(e.clientX - originX) >= MOVE_PX || Math.abs(e.clientY - originY) >= MOVE_PX) {
+            moved = true;
+        }
+    }, { passive: true });
+
+    carousel.addEventListener('scroll', () => {
+        if (pointerDown) moved = true;
+    }, { passive: true });
+
+    const endPointer = () => {
+        pointerDown = false;
+    };
+    carousel.addEventListener('pointerup', endPointer);
+    carousel.addEventListener('pointercancel', endPointer);
+
+    carousel.addEventListener('click', (e) => {
+        const scrolled = carousel.scrollLeft !== scrollAtPointerDown;
+        if (!moved && !scrolled) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        moved = false;
+    }, true);
+};
+
+/**
+ * Iluminación & Pantallas LED (#lighting-modal): mismo carrusel infinito que hub de talento.
+ */
+window.mdjTeardownLightingCarousel = function () {
+    const track = document.querySelector('#lighting-modal #lighting-roster-grid');
+    if (!track) return;
+    track.querySelectorAll('.mdj-lighting-carousel-clone').forEach((n) => n.remove());
+    track.classList.remove('mdj-lighting-carousel-infinite');
+    track.dataset.mdjInfiniteCarousel = '';
+    delete track._mdjInfiniteSetWidth;
+    if (track._mdjInfiniteScrollHandler) {
+        track.removeEventListener('scroll', track._mdjInfiniteScrollHandler);
+        delete track._mdjInfiniteScrollHandler;
+    }
+    if (track._mdjInfiniteResizeHandler) {
+        window.removeEventListener('resize', track._mdjInfiniteResizeHandler);
+        delete track._mdjInfiniteResizeHandler;
+    }
+};
+
+window.mdjLightingInfiniteApply = function () {
+    const track = document.querySelector('#lighting-modal #lighting-roster-grid');
+    if (!track || track.dataset.mdjInfiniteCarousel !== '1') {
+        if (track) track.scrollLeft = 0;
+        return;
+    }
+    const originals = Array.from(track.querySelectorAll(':scope > .talent-cat-card:not(.mdj-lighting-carousel-clone)'));
+    const n = originals.length;
+    if (n < 2) {
+        track.scrollLeft = 0;
+        return;
+    }
+    const firstO = originals[0];
+    const lastO = originals[n - 1];
+    let sw = Math.round(lastO.offsetLeft + lastO.offsetWidth - firstO.offsetLeft);
+    if (!sw || sw < 10) {
+        const tri = Math.round(track.scrollWidth / 3);
+        if (tri > 10) sw = tri;
+    }
+    if (!sw || sw < 10) return;
+    track._mdjInfiniteSetWidth = sw;
+    track.scrollLeft = sw;
+};
+
+window.initLightingInfiniteCarousel = function () {
+    const track = document.querySelector('#lighting-modal #lighting-roster-grid');
+    if (!track || track.dataset.mdjInfiniteCarousel === '1') return;
+
+    const originals = Array.from(track.querySelectorAll(':scope > .talent-cat-card:not(.mdj-lighting-carousel-clone)'));
+    const n = originals.length;
+    if (n < 2) return;
+
+    function cloneCard(el) {
+        const c = el.cloneNode(true);
+        c.classList.add('mdj-lighting-carousel-clone');
+        c.removeAttribute('id');
+        c.setAttribute('tabindex', '-1');
+        c.setAttribute('aria-hidden', 'true');
+        return c;
+    }
+
+    const fragBefore = document.createDocumentFragment();
+    originals.forEach((el) => fragBefore.appendChild(cloneCard(el)));
+    track.insertBefore(fragBefore, track.firstChild);
+    originals.forEach((el) => track.appendChild(cloneCard(el)));
+
+    track.classList.add('mdj-lighting-carousel-infinite');
+    track.dataset.mdjInfiniteCarousel = '1';
+
+    let jumping = false;
+    track._mdjInfiniteScrollHandler = function () {
+        if (jumping) return;
+        const sw = track._mdjInfiniteSetWidth;
+        if (!sw) return;
+        const max = track.scrollWidth - track.clientWidth;
+        if (max <= 0) return;
+        const buf = 8;
+        if (track.scrollLeft <= buf) {
+            jumping = true;
+            track.scrollLeft += sw;
+            requestAnimationFrame(function () { jumping = false; });
+        } else if (track.scrollLeft >= max - buf) {
+            jumping = true;
+            track.scrollLeft -= sw;
+            requestAnimationFrame(function () { jumping = false; });
+        }
+    };
+    track.addEventListener('scroll', track._mdjInfiniteScrollHandler, { passive: true });
+
+    let resizeT = null;
+    track._mdjInfiniteResizeHandler = function () {
+        clearTimeout(resizeT);
+        resizeT = setTimeout(function () {
+            if (typeof window.mdjLightingInfiniteApply === 'function') {
+                window.mdjLightingInfiniteApply();
+            }
+        }, 120);
+    };
+    window.addEventListener('resize', track._mdjInfiniteResizeHandler, { passive: true });
+};
+
+window.initLightingDragClickGuard = function () {
+    const carousel = document.querySelector('#lighting-modal #lighting-roster-grid');
+    if (!carousel || carousel.dataset.mdjDragClickGuard === '1') return;
+    carousel.dataset.mdjDragClickGuard = '1';
+
+    let originX = 0;
+    let originY = 0;
+    let pointerDown = false;
+    let moved = false;
+    let scrollAtPointerDown = 0;
+    const MOVE_PX = 5;
+
+    carousel.addEventListener('pointerdown', (e) => {
+        if (e.button != null && e.button !== 0) return;
+        pointerDown = true;
+        moved = false;
+        originX = e.clientX;
+        originY = e.clientY;
+        scrollAtPointerDown = carousel.scrollLeft;
+    }, true);
+
+    carousel.addEventListener('pointermove', (e) => {
+        if (!pointerDown) return;
+        if (Math.abs(e.clientX - originX) >= MOVE_PX || Math.abs(e.clientY - originY) >= MOVE_PX) {
+            moved = true;
+        }
+    }, { passive: true });
+
+    carousel.addEventListener('scroll', () => {
+        if (pointerDown) moved = true;
+    }, { passive: true });
+
+    const endPointer = () => {
+        pointerDown = false;
+    };
+    carousel.addEventListener('pointerup', endPointer);
+    carousel.addEventListener('pointercancel', endPointer);
+
+    carousel.addEventListener('click', (e) => {
+        const scrolled = carousel.scrollLeft !== scrollAtPointerDown;
+        if (!moved && !scrolled) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        moved = false;
+    }, true);
+};
+
+/** Efectos Especiales (#fx-modal): carrusel horizontal + infinito (mismo ADN que Iluminación / hub talento). */
+window.mdjTeardownFxCarousel = function () {
+    const track = document.querySelector('#fx-modal #fx-roster-grid');
+    if (!track) return;
+    track.querySelectorAll('.mdj-fx-carousel-clone').forEach((n) => n.remove());
+    track.classList.remove('mdj-fx-carousel-infinite');
+    track.dataset.mdjInfiniteCarousel = '';
+    delete track._mdjInfiniteSetWidth;
+    if (track._mdjInfiniteScrollHandler) {
+        track.removeEventListener('scroll', track._mdjInfiniteScrollHandler);
+        delete track._mdjInfiniteScrollHandler;
+    }
+    if (track._mdjInfiniteResizeHandler) {
+        window.removeEventListener('resize', track._mdjInfiniteResizeHandler);
+        delete track._mdjInfiniteResizeHandler;
+    }
+};
+
+window.mdjFxInfiniteApply = function () {
+    const track = document.querySelector('#fx-modal #fx-roster-grid');
+    if (!track || track.dataset.mdjInfiniteCarousel !== '1') {
+        if (track) track.scrollLeft = 0;
+        return;
+    }
+    const originals = Array.from(track.querySelectorAll(':scope > .talent-cat-card:not(.mdj-fx-carousel-clone)'));
+    const n = originals.length;
+    if (n < 2) {
+        track.scrollLeft = 0;
+        return;
+    }
+    const firstO = originals[0];
+    const lastO = originals[n - 1];
+    let sw = Math.round(lastO.offsetLeft + lastO.offsetWidth - firstO.offsetLeft);
+    if (!sw || sw < 10) {
+        const tri = Math.round(track.scrollWidth / 3);
+        if (tri > 10) sw = tri;
+    }
+    if (!sw || sw < 10) return;
+    track._mdjInfiniteSetWidth = sw;
+    track.scrollLeft = sw;
+};
+
+window.initFxInfiniteCarousel = function () {
+    const track = document.querySelector('#fx-modal #fx-roster-grid');
+    if (!track || track.dataset.mdjInfiniteCarousel === '1') return;
+
+    const originals = Array.from(track.querySelectorAll(':scope > .talent-cat-card:not(.mdj-fx-carousel-clone)'));
+    const n = originals.length;
+    if (n < 2) return;
+
+    function cloneCard(el) {
+        const c = el.cloneNode(true);
+        c.classList.add('mdj-fx-carousel-clone');
+        c.removeAttribute('id');
+        c.setAttribute('tabindex', '-1');
+        c.setAttribute('aria-hidden', 'true');
+        return c;
+    }
+
+    const fragBefore = document.createDocumentFragment();
+    originals.forEach((el) => fragBefore.appendChild(cloneCard(el)));
+    track.insertBefore(fragBefore, track.firstChild);
+    originals.forEach((el) => track.appendChild(cloneCard(el)));
+
+    track.classList.add('mdj-fx-carousel-infinite');
+    track.dataset.mdjInfiniteCarousel = '1';
+
+    let jumping = false;
+    track._mdjInfiniteScrollHandler = function () {
+        if (jumping) return;
+        const sw = track._mdjInfiniteSetWidth;
+        if (!sw) return;
+        const max = track.scrollWidth - track.clientWidth;
+        if (max <= 0) return;
+        const buf = 8;
+        if (track.scrollLeft <= buf) {
+            jumping = true;
+            track.scrollLeft += sw;
+            requestAnimationFrame(function () { jumping = false; });
+        } else if (track.scrollLeft >= max - buf) {
+            jumping = true;
+            track.scrollLeft -= sw;
+            requestAnimationFrame(function () { jumping = false; });
+        }
+    };
+    track.addEventListener('scroll', track._mdjInfiniteScrollHandler, { passive: true });
+
+    let resizeT = null;
+    track._mdjInfiniteResizeHandler = function () {
+        clearTimeout(resizeT);
+        resizeT = setTimeout(function () {
+            if (typeof window.mdjFxInfiniteApply === 'function') {
+                window.mdjFxInfiniteApply();
+            }
+        }, 120);
+    };
+    window.addEventListener('resize', track._mdjInfiniteResizeHandler, { passive: true });
+};
+
+window.initFxDragClickGuard = function () {
+    const carousel = document.querySelector('#fx-modal #fx-roster-grid');
+    if (!carousel || carousel.dataset.mdjDragClickGuard === '1') return;
+    carousel.dataset.mdjDragClickGuard = '1';
+
+    let originX = 0;
+    let originY = 0;
+    let pointerDown = false;
+    let moved = false;
+    let scrollAtPointerDown = 0;
+    const MOVE_PX = 5;
+
+    carousel.addEventListener('pointerdown', (e) => {
+        if (e.button != null && e.button !== 0) return;
+        pointerDown = true;
+        moved = false;
+        originX = e.clientX;
+        originY = e.clientY;
+        scrollAtPointerDown = carousel.scrollLeft;
+    }, true);
+
+    carousel.addEventListener('pointermove', (e) => {
+        if (!pointerDown) return;
+        if (Math.abs(e.clientX - originX) >= MOVE_PX || Math.abs(e.clientY - originY) >= MOVE_PX) {
+            moved = true;
+        }
+    }, { passive: true });
+
+    carousel.addEventListener('scroll', () => {
+        if (pointerDown) moved = true;
+    }, { passive: true });
+
+    const endPointer = () => {
+        pointerDown = false;
+    };
+    carousel.addEventListener('pointerup', endPointer);
+    carousel.addEventListener('pointercancel', endPointer);
+
+    carousel.addEventListener('click', (e) => {
+        const scrolled = carousel.scrollLeft !== scrollAtPointerDown;
+        if (!moved && !scrolled) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        moved = false;
+    }, true);
 };
 
 window.selectedPackage = [];
@@ -1594,7 +2642,7 @@ window.premiumTransition = (outId, inId, callback) => {
 
         if (callback) callback();
 
-        const inModal = document.getElementById(inId);
+        const inModal = inId ? document.getElementById(inId) : null;
         if (inModal) {
             inModal.classList.remove('modal-hidden');
             inModal.classList.add('modal-visible', 'modal-fade-in');
@@ -1603,9 +2651,18 @@ window.premiumTransition = (outId, inId, callback) => {
             setTimeout(() => {
                 inModal.classList.remove('modal-fade-in');
             }, 600);
+
+            if (inId === 'talent-selector-modal' && typeof window.mdjResetTalentSelectorCarousel === 'function') {
+                requestAnimationFrame(() => window.mdjResetTalentSelectorCarousel());
+            }
+        } else {
+            document.body.classList.remove('body-modal-lock');
         }
 
         if (window.i18n) window.i18n.updateUI();
+        if (inId === 'talent-selector-modal' && typeof window.mdjSyncTalentSelectorCopy === 'function') {
+            window.mdjSyncTalentSelectorCopy();
+        }
     }, 400);
 };
 
@@ -1965,8 +3022,29 @@ document.addEventListener('click', async (e) => {
         return;
     }
 
+    if (e.target.closest('[data-action="back-from-talent-selector"]')) {
+        window.premiumTransition('talent-selector-modal', null);
+        return;
+    }
+
+    if (e.target.closest('[data-action="back-from-rental-dynamic"]')) {
+        window.premiumTransition('rental-dynamic-modal', null);
+        return;
+    }
+
     if (e.target.closest('[data-action="close-all"]')) {
-        const modals = ['talent-selector-modal', 'horaloca-modal', 'roster-modal', 'rental-dynamic-modal'];
+        const modals = [
+            'talent-selector-modal',
+            'horaloca-modal',
+            'roster-modal',
+            'staff-modal',
+            'payasos-modal',
+            'dj-modal',
+            'mc-modal',
+            'fx-modal',
+            'lighting-modal',
+            'rental-dynamic-modal'
+        ];
         modals.forEach(id => {
             const m = document.getElementById(id);
             if (m && m.classList.contains('modal-visible')) {
@@ -2060,6 +3138,7 @@ document.addEventListener('click', async (e) => {
                     const source = heroVideo.querySelector('source');
                     if (source && baseSrc) {
                         source.src = baseSrc;
+                        if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(heroVideo);
                         heroVideo.load();
                         heroVideo.play().catch(() => {});
                     }
@@ -2098,6 +3177,7 @@ document.addEventListener('click', async (e) => {
 
                 if (source) {
                     source.src = item.video;
+                    if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(heroVideo);
                     heroVideo.load();
                     heroVideo.play().catch(() => {});
                 }
@@ -2124,6 +3204,36 @@ document.addEventListener('click', async (e) => {
             if (rsVideo) {
                 rsVideo.pause();
                 rsVideo.src = '';
+            }
+        });
+        return;
+    }
+
+    // 3.2 SOFT BACK STAFF
+    if (e.target.closest('[data-action="back-to-selector-staff"]')) {
+        window.premiumTransition('staff-modal', 'talent-selector-modal', () => {
+            const sv = document.getElementById('staff-hero-video');
+            if (sv) {
+                try {
+                    sv.pause();
+                    sv.removeAttribute('src');
+                    sv.load();
+                } catch (e) { /* ignore */ }
+            }
+        });
+        return;
+    }
+
+    // 3.3 SOFT BACK PAYASOS
+    if (e.target.closest('[data-action="back-to-selector-payasos"]')) {
+        window.premiumTransition('payasos-modal', 'talent-selector-modal', () => {
+            const pv = document.getElementById('payasos-hero-video');
+            if (pv) {
+                try {
+                    pv.pause();
+                    pv.removeAttribute('src');
+                    pv.load();
+                } catch (e) { /* ignore */ }
             }
         });
         return;
@@ -2161,8 +3271,29 @@ document.addEventListener('click', async (e) => {
     // OPEN MUSICIANS
     if (e.target.closest('[data-action="open-musicians"]')) {
         window.activeCategory = 'live';
+        window.activeLiveTabLocked = 'sax';
         window.premiumTransition('talent-selector-modal', 'roster-modal', () => {
             if (window.renderLiveHero) window.renderLiveHero('sax', false);
+        });
+        return;
+    }
+
+    // OPEN STAFF (modal propio: hero + Bartender / Meseros / Chef — mismo ADN que Músicos en Vivo)
+    if (e.target.closest('[data-action="open-staff"]')) {
+        window.activeStaffTabLocked = 'bartender';
+        window.premiumTransition('talent-selector-modal', 'staff-modal', () => {
+            if (window.renderStaffHero) window.renderStaffHero('bartender', false);
+            if (window._bindStaffGridHeroHover) window._bindStaffGridHeroHover();
+        });
+        return;
+    }
+
+    // OPEN PAYASOS (modal propio: hero + 4 reels — mismo ADN que Staff)
+    if (e.target.closest('[data-action="open-payasos"]')) {
+        window.activePayasosTabLocked = 'gif';
+        window.premiumTransition('talent-selector-modal', 'payasos-modal', () => {
+            if (window.renderPayasosHero) window.renderPayasosHero('gif', false);
+            if (window._bindPayasosGridHeroHover) window._bindPayasosGridHeroHover();
         });
         return;
     }
@@ -2176,9 +3307,25 @@ document.addEventListener('click', async (e) => {
     // OPEN VISUALS
     if (e.target.closest('[data-action="open-visuals"]')) {
         window.activeCategory = 'visuals';
+        window.activeVisualTabLocked = 'photo';
         window.premiumTransition('talent-selector-modal', 'roster-modal', () => {
             if (window.renderLiveHero) window.renderLiveHero('photo', false);
         });
+        return;
+    }
+
+    // Booth & Magic Mirror (Rentals home tile) → Captura y Visuales, tab Photo Booth 360
+    if (e.target.closest('[data-action="open-booth-visuals"]')) {
+        e.preventDefault();
+        window.activeCategory = 'visuals';
+        window.activeVisualTabLocked = 'booth360';
+        const m = document.getElementById('roster-modal');
+        if (m) {
+            m.classList.remove('modal-hidden');
+            m.classList.add('modal-visible');
+            document.body.classList.add('body-modal-lock');
+            if (window.renderLiveHero) window.renderLiveHero('booth360', false);
+        }
         return;
     }
 
@@ -2194,14 +3341,9 @@ document.addEventListener('click', async (e) => {
         return;
     }
 
-    // BACK TO SELECTOR FX
+    // BACK TO SELECTOR FX (vuelve al hub Talent / Entretenimiento sin cortar el flujo modal)
     if (e.target.closest('[data-action="back-to-selector-fx"]')) {
-        const m = document.getElementById('fx-modal');
-        if (m) {
-            m.classList.add('modal-hidden');
-            m.classList.remove('modal-visible');
-            document.body.classList.remove('body-modal-lock');
-        }
+        window.premiumTransition('fx-modal', 'talent-selector-modal');
         return;
     }
 
@@ -2234,12 +3376,7 @@ document.addEventListener('click', async (e) => {
 
     // BACK TO SELECTOR LIGHTING
     if (e.target.closest('[data-action="back-to-selector-lighting"]')) {
-        const m = document.getElementById('lighting-modal');
-        if (m) {
-            m.classList.add('modal-hidden');
-            m.classList.remove('modal-visible');
-            document.body.classList.remove('body-modal-lock');
-        }
+        window.premiumTransition('lighting-modal', 'talent-selector-modal');
         return;
     }
 
@@ -2307,6 +3444,14 @@ document.addEventListener('languageChanged', () => {
             window.renderLiveHero(activeTab.dataset.talent);
         }
     }
+    const staffModal = document.getElementById('staff-modal');
+    if (staffModal && !staffModal.classList.contains('modal-hidden') && window.renderStaffHero && window.activeStaffTabLocked) {
+        window.renderStaffHero(window.activeStaffTabLocked, false);
+    }
+    const payasosModal = document.getElementById('payasos-modal');
+    if (payasosModal && !payasosModal.classList.contains('modal-hidden') && window.renderPayasosHero && window.activePayasosTabLocked) {
+        window.renderPayasosHero(window.activePayasosTabLocked, false);
+    }
 });
 
 function mdjRentalsTryResumeCheckoutAfterAuth() {
@@ -2340,6 +3485,247 @@ function mdjRentalsTryResumeCheckoutAfterAuth() {
     } catch (e) { /* ignore */ }
 }
 
+/**
+ * Carrusel infinito del hub de talento: [copia][originales][copia] para scroll sin “fin” a la derecha.
+ * Los clones no llevan id; tabindex -1; aria-hidden. El ancho del bloque central se guarda en track._mdjInfiniteSetWidth.
+ */
+window.mdjRebuildTalentSelectorInfiniteCarousel = function () {
+    const track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+    if (!track) return;
+    track.querySelectorAll('.mdj-talent-carousel-clone').forEach((n) => n.remove());
+    track.classList.remove('mdj-talent-carousel-infinite');
+    track.dataset.mdjInfiniteCarousel = '';
+    delete track._mdjInfiniteSetWidth;
+    if (track._mdjInfiniteScrollHandler) {
+        track.removeEventListener('scroll', track._mdjInfiniteScrollHandler);
+        delete track._mdjInfiniteScrollHandler;
+    }
+    if (track._mdjInfiniteResizeHandler) {
+        window.removeEventListener('resize', track._mdjInfiniteResizeHandler);
+        delete track._mdjInfiniteResizeHandler;
+    }
+    if (typeof window.initTalentSelectorInfiniteCarousel === 'function') {
+        window.initTalentSelectorInfiniteCarousel();
+    }
+    const tm = document.getElementById('talent-selector-modal');
+    if (tm && tm.classList.contains('modal-visible') && typeof window.mdjTalentSelectorInfiniteApply === 'function') {
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                window.mdjTalentSelectorInfiniteApply();
+            });
+        });
+    }
+};
+
+/**
+ * Mide y centra el carrusel en el bloque del medio. Debe llamarse con el modal YA visible (si no, anchos = 0).
+ */
+window.mdjTalentSelectorInfiniteApply = function () {
+    const track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+    if (!track || track.dataset.mdjInfiniteCarousel !== '1') {
+        if (track) track.scrollLeft = 0;
+        return;
+    }
+    const originals = Array.from(track.querySelectorAll(':scope > .talent-cat-card:not(.mdj-talent-carousel-clone)'));
+    const n = originals.length;
+    if (n < 2) {
+        track.scrollLeft = 0;
+        return;
+    }
+    const firstO = originals[0];
+    const lastO = originals[n - 1];
+    let sw = Math.round(lastO.offsetLeft + lastO.offsetWidth - firstO.offsetLeft);
+    if (!sw || sw < 10) {
+        const tri = Math.round(track.scrollWidth / 3);
+        if (tri > 10) sw = tri;
+    }
+    if (!sw || sw < 10) return;
+    track._mdjInfiniteSetWidth = sw;
+    track.scrollLeft = sw;
+};
+
+window.initTalentSelectorInfiniteCarousel = function () {
+    const track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+    if (!track || track.dataset.mdjInfiniteCarousel === '1') return;
+
+    const originals = Array.from(track.querySelectorAll(':scope > .talent-cat-card:not(.mdj-talent-carousel-clone)'));
+    const n = originals.length;
+    if (n < 2) return;
+
+    function cloneCard(el) {
+        const c = el.cloneNode(true);
+        c.classList.add('mdj-talent-carousel-clone');
+        c.removeAttribute('id');
+        c.setAttribute('tabindex', '-1');
+        c.setAttribute('aria-hidden', 'true');
+        return c;
+    }
+
+    const fragBefore = document.createDocumentFragment();
+    originals.forEach((el) => fragBefore.appendChild(cloneCard(el)));
+    track.insertBefore(fragBefore, track.firstChild);
+    originals.forEach((el) => track.appendChild(cloneCard(el)));
+
+    track.classList.add('mdj-talent-carousel-infinite');
+    track.dataset.mdjInfiniteCarousel = '1';
+
+    let jumping = false;
+    track._mdjInfiniteScrollHandler = function () {
+        if (jumping) return;
+        const sw = track._mdjInfiniteSetWidth;
+        if (!sw) return;
+        const max = track.scrollWidth - track.clientWidth;
+        if (max <= 0) return;
+        const buf = 8;
+        if (track.scrollLeft <= buf) {
+            jumping = true;
+            track.scrollLeft += sw;
+            requestAnimationFrame(function () { jumping = false; });
+        } else if (track.scrollLeft >= max - buf) {
+            jumping = true;
+            track.scrollLeft -= sw;
+            requestAnimationFrame(function () { jumping = false; });
+        }
+    };
+    track.addEventListener('scroll', track._mdjInfiniteScrollHandler, { passive: true });
+
+    let resizeT = null;
+    track._mdjInfiniteResizeHandler = function () {
+        clearTimeout(resizeT);
+        resizeT = setTimeout(function () {
+            if (typeof window.mdjTalentSelectorInfiniteApply === 'function') {
+                window.mdjTalentSelectorInfiniteApply();
+            }
+        }, 120);
+    };
+    window.addEventListener('resize', track._mdjInfiniteResizeHandler, { passive: true });
+};
+
+/** Talent selector — hover en tarjetas con data-talent-hero-src: preview en #talent-shell-focus (object-fit cover). */
+window.mdjResetTalentSelectorCarousel = function () {
+    const track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+    if (!track) return;
+    const apply = function () {
+        if (track.dataset.mdjInfiniteCarousel === '1' && typeof window.mdjTalentSelectorInfiniteApply === 'function') {
+            window.mdjTalentSelectorInfiniteApply();
+        } else {
+            track.scrollLeft = 0;
+        }
+    };
+    requestAnimationFrame(function () {
+        requestAnimationFrame(apply);
+    });
+};
+
+window.initTalentSelectorShellHover = function () {
+    const amb = document.getElementById('talent-shell-ambient');
+    const foc = document.getElementById('talent-shell-focus');
+    const shell = document.querySelector('#talent-selector-modal .cinematic-hero-shell');
+    if (!amb || !foc || !shell) return;
+
+    const heroEls = function () {
+        return document.querySelectorAll('#talent-selector-modal [data-talent-hero-src]');
+    };
+
+    const applyFocus = (url, el) => {
+        if (!url) return;
+        foc.muted = true;
+        foc.setAttribute('src', url);
+        foc.src = url;
+        foc.innerHTML = `<source src="${url}" type="video/mp4">`;
+        if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(foc);
+        foc.load();
+        foc.play().catch(() => { });
+        foc.classList.add('is-visible');
+        amb.classList.add('talent-shell-ambient-dim');
+        shell.classList.add('talent-shell-hero-preview-on');
+        heroEls().forEach((n) => n.classList.remove('active'));
+        if (el) el.classList.add('active');
+    };
+
+    const clearFocus = () => {
+        foc.classList.remove('is-visible');
+        amb.classList.remove('talent-shell-ambient-dim');
+        shell.classList.remove('talent-shell-hero-preview-on');
+        heroEls().forEach((n) => n.classList.remove('active'));
+        try {
+            foc.pause();
+            foc.removeAttribute('src');
+            foc.load();
+        } catch (e) { /* ignore */ }
+    };
+
+    foc.addEventListener('error', clearFocus);
+
+    heroEls().forEach((node) => {
+        /* Hub categorías: sin swap del vídeo full-bleed; el ambiente sigue. Los hovers de preview van en cada modal interno. */
+        if (node.closest && node.closest('.talent-selector-carousel')) return;
+        const url = node.getAttribute('data-talent-hero-src');
+        if (!url) return;
+        node.addEventListener('pointerenter', () => applyFocus(url, node));
+        node.addEventListener('pointerleave', (e) => {
+            const rt = e.relatedTarget;
+            if (rt && rt.closest && rt.closest('[data-talent-hero-src]')) return;
+            clearFocus();
+        });
+        node.addEventListener('focusin', () => applyFocus(url, node));
+        node.addEventListener('focusout', clearFocus);
+    });
+};
+
+/**
+ * Hub Entretenimiento: arrastrar/scroll horizontal dispara un `click` fantasma al soltar → abre otro modal.
+ * Suprimimos el click si (1) hubo arrastre con puntero o (2) el scrollLeft del carrusel cambió desde el pointerdown.
+ * pointerdown en capture para capturar aunque el target sea una tarjeta hija.
+ */
+window.initTalentCarouselDragClickGuard = function () {
+    const carousel = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+    if (!carousel || carousel.dataset.mdjDragClickGuard === '1') return;
+    carousel.dataset.mdjDragClickGuard = '1';
+
+    let originX = 0;
+    let originY = 0;
+    let pointerDown = false;
+    let moved = false;
+    let scrollAtPointerDown = 0;
+    const MOVE_PX = 5;
+
+    carousel.addEventListener('pointerdown', (e) => {
+        if (e.button != null && e.button !== 0) return;
+        pointerDown = true;
+        moved = false;
+        originX = e.clientX;
+        originY = e.clientY;
+        scrollAtPointerDown = carousel.scrollLeft;
+    }, true);
+
+    carousel.addEventListener('pointermove', (e) => {
+        if (!pointerDown) return;
+        if (Math.abs(e.clientX - originX) >= MOVE_PX || Math.abs(e.clientY - originY) >= MOVE_PX) {
+            moved = true;
+        }
+    }, { passive: true });
+
+    carousel.addEventListener('scroll', () => {
+        if (pointerDown) moved = true;
+    }, { passive: true });
+
+    const endPointer = () => {
+        pointerDown = false;
+    };
+    carousel.addEventListener('pointerup', endPointer);
+    carousel.addEventListener('pointercancel', endPointer);
+
+    carousel.addEventListener('click', (e) => {
+        const scrolled = carousel.scrollLeft !== scrollAtPointerDown;
+        if (!moved && !scrolled) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        moved = false;
+    }, true);
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     // 2. Direct Back Button Binding (No global interception)
     document.querySelectorAll('[data-action="go-back"], .back-btn').forEach(btn => {
@@ -2351,4 +3737,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadRentalsData();
     mdjRentalsTryResumeCheckoutAfterAuth();
+    if (typeof window.initTalentSelectorShellHover === 'function') {
+        window.initTalentSelectorShellHover();
+    }
+    if (typeof window.initTalentCarouselDragClickGuard === 'function') {
+        window.initTalentCarouselDragClickGuard();
+    }
+    if (typeof window.initTalentSelectorInfiniteCarousel === 'function') {
+        window.initTalentSelectorInfiniteCarousel();
+    }
+    document.addEventListener('languageChanged', function () {
+        if (typeof window.mdjRebuildTalentSelectorInfiniteCarousel === 'function') {
+            window.mdjRebuildTalentSelectorInfiniteCarousel();
+        }
+    });
+    if (typeof window.initMcModalMagicHover === 'function') {
+        window.initMcModalMagicHover();
+    }
 });

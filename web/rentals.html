@@ -13,7 +13,12 @@ Riesgo: romper carga del catálogo.
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Rentals — Miami DJ Beat</title>
-    <link rel="stylesheet" href="./styles.css?v=20260415-UI-BREATH-FIX" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css?v=20260415-PAYASOS-MODAL-V1" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
     <style id="rentals-visual-lock">
         /* RENTALS VISUAL LOCK — DO NOT EDIT */
@@ -91,9 +96,744 @@ Riesgo: romper carga del catálogo.
             height: 250px !important;
         }
     </style>
+    <!-- Rentals: barra social por encima del overlay de modales (no ocultarla). Checkout por encima del resto de modales. -->
+    <style id="rentals-social-and-checkout-stack">
+        body.page-mdj-rentals #mdj-social-sticky-bar.social-sticky-bar {
+            z-index: 11000 !important;
+        }
+
+        body.page-mdj-rentals #dj-checkout-modal.modal-overlay.modal-visible {
+            z-index: 5000 !important;
+        }
+
+        /* Aire extra a la derecha del carrusel: la barra social sigue visible encima del overlay */
+        body.page-mdj-rentals #talent-selector-modal.modal-visible .grid5.cinematic-hero-cards.talent-selector-carousel {
+            padding-inline-end: clamp(64px, 15vw, 160px) !important;
+            scroll-padding-inline-end: clamp(64px, 15vw, 160px) !important;
+        }
+    </style>
+    <style id="rentals-talent-selector-carousel">
+        /* Shell en columna: el marco dorado envuelve vídeo + nav + contenido (styles.css usa flex row por defecto). */
+        /* El shell global usa overflow:hidden y recorta la última tarjeta del carrusel; aquí lo relajamos solo en este modal */
+        #talent-selector-modal.modal-visible .modal-content.cinematic-hero-shell {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            justify-content: flex-start !important;
+            position: relative !important;
+            overflow-x: visible !important;
+            overflow-y: hidden !important;
+        }
+
+        /* Título + carrusel: bloque centrado en altura dentro del shell */
+        #talent-selector-modal.modal-visible .modal-content.cinematic-hero-shell .hero-shell-content {
+            position: relative !important;
+            z-index: 10 !important;
+            flex: 1 1 auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: stretch !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-height: 0 !important;
+            height: 100% !important;
+            box-sizing: border-box !important;
+            padding: max(76px, calc(env(safe-area-inset-top) + 54px)) clamp(12px, 2.5vw, 28px) clamp(36px, 8vh, 88px) !important;
+            margin: 0 auto 0 !important;
+            gap: clamp(16px, 2.8vh, 32px) !important;
+        }
+
+        #talent-selector-modal.modal-visible .hero-shell-content > div:first-of-type {
+            margin-bottom: 0 !important;
+            flex: 0 0 auto !important;
+        }
+
+        /* Solo el letreo (eyebrow + título): sube sin mover el layout del carrusel ni las tarjetas */
+        #talent-selector-modal.modal-visible .mdj-talent-hub-head {
+            position: relative !important;
+            z-index: 11 !important;
+            transform: translateY(clamp(-26px, -4.2vh, -56px)) !important;
+        }
+
+        /* Carrusel: margen superior solo baja las tarjetas; el letreo no se toca */
+        #talent-selector-modal.modal-visible .hero-shell-content .grid5.cinematic-hero-cards.talent-selector-carousel {
+            margin-top: clamp(64px, 14vh, 188px) !important;
+            margin-bottom: 0 !important;
+        }
+
+        #talent-selector-modal.modal-visible .grid5.cinematic-hero-cards.talent-selector-carousel {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            align-content: center !important;
+            justify-content: flex-start !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+            gap: clamp(14px, 2vw, 22px) !important;
+            padding: 14px clamp(18px, 3.5vw, 40px) 14px clamp(18px, 3.5vw, 40px) !important;
+            padding-inline-end: clamp(44px, 9vw, 112px) !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+            scroll-padding-inline: clamp(18px, 3.5vw, 40px);
+            scroll-padding-inline-end: clamp(44px, 9vw, 112px);
+            grid-template-columns: unset !important;
+            box-sizing: border-box !important;
+            touch-action: pan-x;
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel > .hero-glass-card,
+        #talent-selector-modal.modal-visible .talent-selector-carousel > a.hero-glass-card,
+        #talent-selector-modal.modal-visible .talent-selector-carousel > a.talent-cat-card.hero-glass-card {
+            flex: 0 0 auto !important;
+            flex-shrink: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            width: min(260px, 82vw) !important;
+            min-width: 200px !important;
+            max-width: 260px !important;
+            height: 318px !important;
+            min-height: 318px !important;
+            max-height: 318px !important;
+            scroll-snap-align: start !important;
+            text-decoration: none !important;
+            color: inherit !important;
+            align-self: center !important;
+            justify-content: flex-start !important;
+            padding-top: 24px !important;
+            padding-bottom: 24px !important;
+            box-sizing: border-box !important;
+            backdrop-filter: blur(24px) !important;
+            -webkit-backdrop-filter: blur(24px) !important;
+            border: 2px solid rgba(212, 175, 55, 0.45) !important;
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08), 0 8px 28px rgba(0, 0, 0, 0.55) !important;
+        }
+
+        /* Refuerzo: cualquier hijo directo del carrusel (misma línea, misma altura) */
+        #talent-selector-modal.modal-visible .talent-selector-carousel > * {
+            flex: 0 0 auto !important;
+            flex-shrink: 0 !important;
+            align-self: center !important;
+            height: 318px !important;
+            min-height: 318px !important;
+            max-height: 318px !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Viewports anchos: styles.css (≥1601px) — misma fila que el resto de breakpoints */
+        @media (min-width: 1601px) {
+            #talent-selector-modal.modal-visible .grid5.cinematic-hero-cards.talent-selector-carousel {
+                display: flex !important;
+                flex-wrap: nowrap !important;
+                align-items: center !important;
+                align-content: center !important;
+                justify-content: flex-start !important;
+            }
+
+            #talent-selector-modal.modal-visible .talent-selector-carousel > .hero-glass-card,
+            #talent-selector-modal.modal-visible .talent-selector-carousel > a.hero-glass-card,
+            #talent-selector-modal.modal-visible .talent-selector-carousel > a.talent-cat-card.hero-glass-card,
+            #talent-selector-modal.modal-visible .talent-selector-carousel > * {
+                align-self: center !important;
+                height: 318px !important;
+                min-height: 318px !important;
+                max-height: 318px !important;
+            }
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel::-webkit-scrollbar-thumb {
+            background: rgba(197, 160, 89, 0.45);
+            border-radius: 8px;
+        }
+
+        /* Carrusel infinito: el snap horizontal choca con el salto de scroll; evita tirón del body al llegar al borde */
+        #talent-selector-modal.modal-visible .talent-selector-carousel.mdj-talent-carousel-infinite {
+            scroll-snap-type: none !important;
+            overscroll-behavior-x: contain !important;
+        }
+
+        /* Cabecera DENTRO del marco dorado (absolute al shell, no fixed al viewport) */
+        #talent-selector-modal.modal-visible .modal-header-nav {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: max(10px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 10px max(14px, env(safe-area-inset-left)) !important;
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            justify-content: space-between !important;
+            align-items: flex-start !important;
+            pointer-events: none !important;
+            z-index: 120 !important;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%) !important;
+            box-sizing: border-box !important;
+        }
+
+        #talent-selector-modal.modal-visible .modal-header-nav .modal-nav-left,
+        #talent-selector-modal.modal-visible .modal-header-nav .modal-close-btn {
+            pointer-events: auto !important;
+        }
+
+        #talent-selector-modal.modal-visible .modal-header-nav .modal-nav-left {
+            position: static !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+
+        #talent-selector-modal.modal-visible .modal-header-nav .modal-close-btn {
+            position: static !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        /* Hero shell — borde dorado + brillo; overflow lateral suelto para que el carrusel no recorte la última tarjeta */
+        #talent-selector-modal.modal-visible .modal-content.cinematic-hero-shell {
+            border: 2px solid #D4AF37 !important;
+            box-shadow:
+                0 0 0 1px rgba(212, 175, 55, 0.18),
+                0 0 42px rgba(212, 175, 55, 0.24),
+                0 30px 100px rgba(0, 0, 0, 0.88) !important;
+            background: #000 !important;
+            background-clip: padding-box !important;
+            transition: box-shadow 0.35s ease, border-color 0.35s ease;
+            overflow-x: visible !important;
+            overflow-y: hidden !important;
+        }
+
+        #talent-selector-modal.modal-visible .modal-content.cinematic-hero-shell.talent-shell-hero-preview-on {
+            border-color: rgba(255, 215, 0, 0.95) !important;
+            box-shadow:
+                0 0 0 1px rgba(255, 215, 0, 0.45),
+                0 0 56px rgba(212, 175, 55, 0.55),
+                0 30px 100px rgba(0, 0, 0, 0.88) !important;
+        }
+
+        #talent-selector-modal .mdj-talent-hero-media {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            overflow: hidden;
+            border-radius: inherit;
+            pointer-events: none;
+        }
+
+        #talent-selector-modal .mdj-talent-hero-media .hero-shell-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #talent-selector-modal #talent-shell-focus {
+            opacity: 0;
+            transition: opacity 0.38s ease;
+            object-fit: cover;
+        }
+
+        #talent-selector-modal #talent-shell-focus.is-visible {
+            opacity: 1;
+        }
+
+        #talent-selector-modal #talent-shell-ambient.talent-shell-ambient-dim {
+            opacity: 0.3 !important;
+            transition: opacity 0.35s ease;
+        }
+
+        /* Tipografía hub de talento — editorial / lujo (solo #talent-selector-modal) */
+        #talent-selector-modal .mdj-talent-hub-eyebrow {
+            display: block;
+            max-width: 38em;
+            margin: 0 auto 14px auto !important;
+            text-align: center;
+            font-family: 'Cinzel', 'Palatino Linotype', 'Times New Roman', serif;
+            font-weight: 600;
+            font-size: clamp(10px, 1.2vw, 11px);
+            letter-spacing: 0.36em;
+            padding-left: 0.36em;
+            box-sizing: border-box;
+            text-transform: uppercase;
+            color: #ecd9a8;
+            text-shadow:
+                0 0 22px rgba(212, 175, 55, 0.5),
+                0 2px 10px rgba(0, 0, 0, 0.95);
+        }
+
+        #talent-selector-modal .mdj-talent-hub-title {
+            font-family: 'Playfair Display', 'Palatino Linotype', Georgia, serif;
+            font-weight: 600;
+            font-style: italic;
+            font-size: clamp(24px, 3.6vw, 40px);
+            line-height: 1.2;
+            letter-spacing: 0.03em;
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 0 20px;
+            text-align: center;
+            color: #faf6ee;
+            -webkit-text-fill-color: #faf6ee;
+            -webkit-text-stroke: 0.55px rgba(197, 160, 89, 0.65);
+            text-shadow:
+                0 4px 28px rgba(0, 0, 0, 0.92),
+                0 0 48px rgba(197, 160, 89, 0.2);
+        }
+
+        #talent-selector-modal .mdj-talent-hub-subtitle {
+            display: block;
+            max-width: 42em;
+            margin: 10px auto 0 auto;
+            padding: 0 24px;
+            text-align: center;
+            font-family: system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            font-weight: 500;
+            font-size: clamp(11px, 1.35vw, 13px);
+            line-height: 1.45;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: rgba(236, 217, 168, 0.88);
+            text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85);
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel .hero-card-title {
+            font-family: 'Cormorant Garamond', 'Palatino Linotype', Georgia, serif !important;
+            font-weight: 700 !important;
+            font-style: normal !important;
+            font-size: clamp(17px, 1.9vw, 21px) !important;
+            letter-spacing: 0.07em !important;
+            line-height: 1.22 !important;
+            color: #f4ead0 !important;
+            text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8) !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel .hero-card-text {
+            font-family: system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', sans-serif !important;
+            font-weight: 400 !important;
+            font-size: 12px !important;
+            letter-spacing: 0.04em !important;
+            line-height: 1.48 !important;
+            color: rgba(255, 255, 255, 0.82) !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel .hero-card-emoji {
+            font-size: 32px !important;
+            line-height: 1 !important;
+            filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.65));
+            margin-bottom: 10px !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel .mdj-talent-card-enter {
+            display: block !important;
+            margin-top: auto !important;
+            padding-top: 12px !important;
+            text-align: center !important;
+            font-family: system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', sans-serif !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.2em !important;
+            text-transform: uppercase !important;
+            color: #d4af37 !important;
+            text-shadow: 0 1px 8px rgba(0, 0, 0, 0.75) !important;
+            flex-shrink: 0 !important;
+        }
+
+        @media (max-width: 900px) {
+            #talent-selector-modal.modal-visible .modal-content.cinematic-hero-shell {
+                border: 2px solid #D4AF37 !important;
+            }
+        }
+
+        /* DJ Performance: hero borde dorado al hover-preview; vídeo full-bleed cover */
+        #dj-modal .modal-content.live-hero-shell.mdj-dj-hero-preview-on {
+            border: 2px solid rgba(255, 215, 0, 0.95) !important;
+            box-shadow:
+                0 0 0 1px rgba(255, 215, 0, 0.4),
+                0 0 52px rgba(212, 175, 55, 0.5),
+                0 24px 80px rgba(0, 0, 0, 0.75) !important;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        #dj-modal #dj-hero-video {
+            object-fit: cover !important;
+            object-position: center center !important;
+        }
+
+        /* Captura y Visuales / Músicos: hero full-bleed + borde dorado al hover-preview (mismo ADN que DJ) */
+        #roster-modal .modal-content.live-hero-shell.mdj-roster-hero-preview-on {
+            border: 2px solid rgba(255, 215, 0, 0.95) !important;
+            box-shadow:
+                0 0 0 1px rgba(255, 215, 0, 0.4),
+                0 0 52px rgba(212, 175, 55, 0.5),
+                0 24px 80px rgba(0, 0, 0, 0.75) !important;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        #roster-modal #live-hero-video {
+            object-fit: cover !important;
+            object-position: center center !important;
+        }
+
+        /* Staff modal — mismo ADN que roster / Músicos en Vivo */
+        #staff-modal .modal-content.live-hero-shell.mdj-staff-hero-preview-on {
+            border: 2px solid rgba(255, 215, 0, 0.95) !important;
+            box-shadow:
+                0 0 0 1px rgba(255, 215, 0, 0.4),
+                0 0 52px rgba(212, 175, 55, 0.5),
+                0 24px 80px rgba(0, 0, 0, 0.75) !important;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        #staff-modal #staff-hero-video {
+            object-fit: cover !important;
+            object-position: center center !important;
+        }
+
+        #staff-modal #staff-roster-grid {
+            align-items: flex-end !important;
+        }
+
+        /* Payasos modal — mismo ADN que Staff */
+        #payasos-modal .modal-content.live-hero-shell.mdj-payasos-hero-preview-on {
+            border: 2px solid rgba(255, 215, 0, 0.95) !important;
+            box-shadow:
+                0 0 0 1px rgba(255, 215, 0, 0.4),
+                0 0 52px rgba(212, 175, 55, 0.5),
+                0 24px 80px rgba(0, 0, 0, 0.75) !important;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        #payasos-modal #payasos-hero-video {
+            object-fit: cover !important;
+            object-position: center center !important;
+        }
+
+        #payasos-modal #payasos-roster-grid {
+            align-items: flex-end !important;
+        }
+
+        /* FX & Lighting — borde dorado intenso al hover-preview (mismo ADN que Captura y Visuales) */
+        #fx-modal .modal-content.cinematic-hero-shell.mdj-fx-hero-preview-on,
+        #lighting-modal .modal-content.cinematic-hero-shell.mdj-lighting-hero-preview-on {
+            border: 2px solid rgba(255, 215, 0, 0.95) !important;
+            box-shadow:
+                0 0 0 1px rgba(255, 215, 0, 0.4),
+                0 0 52px rgba(212, 175, 55, 0.5),
+                0 24px 80px rgba(0, 0, 0, 0.75) !important;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        #fx-modal #fx-hero-video,
+        #lighting-modal #lighting-hero-video {
+            object-fit: cover !important;
+            object-position: center center !important;
+        }
+
+        /* Iluminación & LED: mismo carrusel horizontal + infinito que hub de talento / Audio */
+        #lighting-modal.modal-visible #lighting-roster-grid.mdj-lighting-carousel {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            gap: clamp(14px, 2vw, 22px) !important;
+            padding: 14px clamp(18px, 3.5vw, 40px) 24px !important;
+            padding-inline-end: clamp(44px, 9vw, 112px) !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+            scroll-padding-inline: clamp(18px, 3.5vw, 40px);
+            scroll-padding-inline-end: clamp(44px, 9vw, 112px);
+            box-sizing: border-box !important;
+            touch-action: pan-x;
+        }
+
+        #lighting-modal.modal-visible #lighting-roster-grid.mdj-lighting-carousel.mdj-lighting-carousel-infinite {
+            scroll-snap-type: none !important;
+            overscroll-behavior-x: contain !important;
+        }
+
+        #lighting-modal.modal-visible #lighting-roster-grid.mdj-lighting-carousel .talent-cat-card {
+            flex: 0 0 auto !important;
+            scroll-snap-align: start !important;
+            align-self: center !important;
+            width: min(260px, 82vw) !important;
+            min-width: 200px !important;
+            max-width: 260px !important;
+        }
+
+        #lighting-modal.modal-visible #lighting-roster-grid.mdj-lighting-carousel::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        #lighting-modal.modal-visible #lighting-roster-grid.mdj-lighting-carousel::-webkit-scrollbar-thumb {
+            background: rgba(197, 160, 89, 0.45);
+            border-radius: 8px;
+        }
+
+        /* Efectos Especiales: carrusel horizontal + infinito (mismo ADN que Iluminación) */
+        #fx-modal.modal-visible #fx-roster-grid.mdj-fx-catalog-carousel {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+            gap: clamp(14px, 2vw, 22px) !important;
+            padding: 14px clamp(18px, 3.5vw, 40px) 24px !important;
+            padding-inline-end: clamp(44px, 9vw, 112px) !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+            scroll-padding-inline: clamp(18px, 3.5vw, 40px);
+            scroll-padding-inline-end: clamp(44px, 9vw, 112px);
+            box-sizing: border-box !important;
+            touch-action: pan-x;
+        }
+
+        #fx-modal.modal-visible #fx-roster-grid.mdj-fx-catalog-carousel.mdj-fx-carousel-infinite {
+            scroll-snap-type: none !important;
+            overscroll-behavior-x: contain !important;
+        }
+
+        #fx-modal.modal-visible #fx-roster-grid.mdj-fx-catalog-carousel .talent-cat-card {
+            flex: 0 0 auto !important;
+            scroll-snap-align: start !important;
+            align-self: center !important;
+            width: min(260px, 82vw) !important;
+            min-width: 200px !important;
+            max-width: 260px !important;
+        }
+
+        #fx-modal.modal-visible #fx-roster-grid.mdj-fx-catalog-carousel::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        #fx-modal.modal-visible #fx-roster-grid.mdj-fx-catalog-carousel::-webkit-scrollbar-thumb {
+            background: rgba(197, 160, 89, 0.45);
+            border-radius: 8px;
+        }
+
+        /* MC — preview en hero + borde intenso */
+        #mc-modal .modal-content.cinematic-hero-shell.mdj-mc-hero-preview-on {
+            border: 2px solid rgba(255, 215, 0, 0.95) !important;
+            box-shadow:
+                0 0 0 1px rgba(255, 215, 0, 0.4),
+                0 0 52px rgba(212, 175, 55, 0.5),
+                0 24px 80px rgba(0, 0, 0, 0.75) !important;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        #mc-modal .hero-shell-video {
+            object-fit: cover !important;
+            object-position: center center !important;
+        }
+
+        /* Magic hover unificado — escala + halo oro en tarjetas internas */
+        @media (hover: hover) and (pointer: fine) {
+
+            #roster-modal #roster-grid .mdj-magic-hover-card,
+            #staff-modal #staff-roster-grid .mdj-magic-hover-card,
+            #payasos-modal #payasos-roster-grid .mdj-magic-hover-card,
+            #dj-modal #dj-roster-grid .mdj-magic-hover-card,
+            #fx-modal #fx-roster-grid .mdj-magic-hover-card,
+            #lighting-modal #lighting-roster-grid .mdj-magic-hover-card,
+            #mc-modal #mc-card-maestro.mdj-magic-hover-card,
+            #mc-modal #mc-card-host.mdj-magic-hover-card {
+                transform-origin: bottom center;
+                transition: transform 0.28s ease, box-shadow 0.28s ease;
+            }
+
+            #roster-modal #roster-grid .mdj-magic-hover-card:hover,
+            #roster-modal #roster-grid .mdj-magic-hover-card.active,
+            #staff-modal #staff-roster-grid .mdj-magic-hover-card:hover,
+            #staff-modal #staff-roster-grid .mdj-magic-hover-card.active,
+            #payasos-modal #payasos-roster-grid .mdj-magic-hover-card:hover,
+            #payasos-modal #payasos-roster-grid .mdj-magic-hover-card.active,
+            #dj-modal #dj-roster-grid .mdj-magic-hover-card:hover,
+            #dj-modal #dj-roster-grid .mdj-magic-hover-card.active,
+            #fx-modal #fx-roster-grid .mdj-magic-hover-card:hover,
+            #fx-modal #fx-roster-grid .mdj-magic-hover-card.active,
+            #lighting-modal #lighting-roster-grid .mdj-magic-hover-card:hover,
+            #lighting-modal #lighting-roster-grid .mdj-magic-hover-card.active,
+            #mc-modal #mc-card-maestro.mdj-magic-hover-card:hover,
+            #mc-modal #mc-card-maestro.mdj-magic-hover-card.active,
+            #mc-modal #mc-card-host.mdj-magic-hover-card:hover,
+            #mc-modal #mc-card-host.mdj-magic-hover-card.active {
+                transform: scale(1.035);
+                box-shadow:
+                    0 0 0 1px rgba(255, 215, 0, 0.55),
+                    0 8px 32px rgba(0, 0, 0, 0.45),
+                    0 0 28px rgba(212, 175, 55, 0.38);
+            }
+        }
+
+        #roster-modal #roster-grid {
+            align-items: flex-end !important;
+        }
+
+        /* Event Services grid — tarjetas homólogas (meridiano / altura) */
+        #rentals-services-grid {
+            align-items: stretch !important;
+        }
+
+        #rentals-services-grid>.tile.glass-card {
+            display: flex;
+            flex-direction: column;
+            min-height: 300px;
+            box-sizing: border-box;
+            /* Contenedores: panel sólido; no “vidrio” que muestre el hero fijo detrás */
+            background: rgba(10, 12, 22, 0.94) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            box-shadow: 0 10px 36px rgba(0, 0, 0, 0.5);
+        }
+
+        #rentals-services-grid>.tile.glass-card:hover {
+            background: rgba(12, 14, 26, 0.97) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+
+        #rentals-services-grid>.tile.glass-card>.btn.primary.full {
+            margin-top: auto !important;
+        }
+
+        /* Hover ADN: escala desde la base (crece hacia arriba; la línea inferior no se mueve) */
+        #talent-selector-modal.modal-visible .talent-selector-carousel>.hero-glass-card,
+        #talent-selector-modal.modal-visible .talent-selector-carousel>a.hero-glass-card {
+            transform-origin: bottom center !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel>.hero-glass-card:hover,
+        #talent-selector-modal.modal-visible .talent-selector-carousel>a.hero-glass-card:hover {
+            transform: scale(1.035) !important;
+            transform-origin: bottom center !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel>.hero-glass-card:hover .hero-card-emoji,
+        #talent-selector-modal.modal-visible .talent-selector-carousel>a.hero-glass-card:hover .hero-card-emoji {
+            transform: scale(1.08) !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel>.hero-glass-card.active,
+        #talent-selector-modal.modal-visible .talent-selector-carousel>a.hero-glass-card.active {
+            transform: scale(1.035) !important;
+            transform-origin: bottom center !important;
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+
+            #talent-selector-modal.modal-visible .talent-selector-carousel>a.hero-glass-card.mdj-magic-hover-card:hover,
+            #talent-selector-modal.modal-visible .talent-selector-carousel>a.hero-glass-card.mdj-magic-hover-card.active {
+                box-shadow:
+                    0 0 0 1px rgba(255, 215, 0, 0.55),
+                    0 8px 32px rgba(0, 0, 0, 0.45),
+                    0 0 28px rgba(212, 175, 55, 0.38);
+            }
+        }
+    </style>
+    <style id="rental-dynamic-catalog-panel">
+        /* Catálogo por categoría: panel de contenido, sin segundo “hero” de vídeo como la portada EVENTOS */
+        #rental-dynamic-modal #rental-multi-video-container {
+            display: none !important;
+        }
+
+        #rental-dynamic-modal .hero-shell-overlay {
+            display: none !important;
+        }
+
+        #rental-dynamic-modal .cinematic-hero-shell {
+            background: linear-gradient(180deg, #0b0d14 0%, #05060a 100%) !important;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+        }
+
+        #rental-dynamic-modal #rental-dynamic-title {
+            font-size: clamp(22px, 3.2vw, 40px) !important;
+            text-transform: none !important;
+            letter-spacing: 0.03em !important;
+            line-height: 1.25 !important;
+        }
+
+        #rental-dynamic-modal #rental-dynamic-desc {
+            font-size: clamp(13px, 1.35vw, 16px) !important;
+        }
+
+        /* Audio / Mobiliario / Carpas / Stage / Inflatables: capa de vídeo de fondo visible (el panel catálogo la ocultaba por defecto). */
+        #rental-dynamic-modal.mdj-rental-hero-video-on #rental-multi-video-container {
+            display: block !important;
+        }
+
+        #rental-dynamic-modal.mdj-rental-hero-video-on .hero-shell-overlay {
+            display: block !important;
+        }
+
+        #rental-dynamic-modal.mdj-rental-hero-video-on .cinematic-hero-shell {
+            background: transparent !important;
+        }
+
+        /* Catálogo dinámico: carrusel horizontal + infinito (mobiliario, audio, etc.) */
+        #rental-dynamic-modal.modal-visible .mdj-rental-catalog-carousel {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+            gap: clamp(14px, 2vw, 22px) !important;
+            padding: 14px clamp(18px, 3.5vw, 40px) 24px !important;
+            padding-inline-end: clamp(44px, 9vw, 112px) !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+            scroll-padding-inline: clamp(18px, 3.5vw, 40px);
+            scroll-padding-inline-end: clamp(44px, 9vw, 112px);
+            box-sizing: border-box !important;
+            touch-action: pan-x;
+        }
+
+        #rental-dynamic-modal.modal-visible .mdj-rental-catalog-carousel.mdj-rental-carousel-infinite {
+            scroll-snap-type: none !important;
+            overscroll-behavior-x: contain !important;
+        }
+
+        #rental-dynamic-modal.modal-visible .mdj-rental-catalog-carousel .product-card {
+            flex: 0 0 auto !important;
+            scroll-snap-align: start !important;
+            align-self: center !important;
+        }
+
+        #rental-dynamic-modal.modal-visible .mdj-rental-catalog-carousel::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        #rental-dynamic-modal.modal-visible .mdj-rental-catalog-carousel::-webkit-scrollbar-thumb {
+            background: rgba(197, 160, 89, 0.45);
+            border-radius: 8px;
+        }
+    </style>
 </head>
 
-<body class="notranslate">
+<body class="notranslate page-mdj-rentals">
     <!-- MDJ canonical site header — keep in sync with index #mainHeader; use ./index.html# anchors for subpages -->
 <header class="header" id="mainHeader">
   <div class="header-top">
@@ -162,23 +902,23 @@ Riesgo: romper carga del catálogo.
   <div class="header-bottom">
     <div class="container">
       <nav class="nav top-nav" id="mainNav">
-        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
-        <a href="./index.html#services" data-i18n="nav-services" data-mdj-nav="services">Services</a>
-        <a href="./rentals.html" data-i18n="nav-rentals" data-mdj-nav="rentals">Event Services</a>
-        <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-mdj-nav="shop">Shop</a>
-        <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
-        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
-        <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
+        <a href="./index.html" class="category-tab" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+        <a href="./index.html#services" class="category-tab" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+        <a href="./rentals.html" class="category-tab" data-i18n="nav-rentals" data-mdj-nav="rentals">Event Services</a>
+        <a href="./shop.html" class="category-tab" style="color:var(--gold);font-weight:800;" data-mdj-nav="shop">Shop</a>
+        <a href="./dj-tools.html" class="category-tab" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+        <a href="./jobs.html" class="category-tab" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+        <a href="./index.html#contact" class="category-tab" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
       </nav>
     </div>
   </div>
 </header>
 
-    <!-- ══ CINEMATIC BACKGROUND ══ -->
-    <div class="hero-kb-bg"
-        style="background-image: url('./assets/home_hero_4k_wide.png'); opacity: 0.3; filter: blur(5px);"></div>
+    <!-- ══ CINEMATIC BACKGROUND (fijo; las tarjetas de servicios no disparan vídeo hero) ══ -->
+    <div id="rentals-hero-kb-bg" class="hero-kb-bg"
+        style="position: fixed; inset: 0; z-index: 1; pointer-events: none; background-image: url('./assets/home_hero_4k_wide.png'); background-size: cover; background-position: center; opacity: 0.3; filter: blur(5px); transition: opacity 0.35s ease;"></div>
     <div class="hero-video-overlay"
-        style="background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
+        style="position: fixed; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
 
     <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
         <div style="text-align: center; margin-bottom: 80px;">
@@ -190,11 +930,11 @@ Riesgo: romper carga del catálogo.
                 Exclusive Event Solutions & Gear</p>
         </div>
 
-        <div class="grid3" style="gap: 30px;">
+        <div id="rentals-services-grid" class="grid3" style="gap: 30px;">
 
-
+            <!-- Entretenimiento y Talento — entrada principal al hub de talento (modal) -->
             <div class="tile glass-card" id="talent-tile"
-                style="opacity: 0; animation: revealText 0.8s 0.6s ease-out forwards;">
+                style="opacity: 0; animation: revealText 0.8s 0.5s ease-out forwards;">
                 <h3 data-i18n="rentals-wireless-title"
                     style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
                     Entretenimiento y Talento</h3>
@@ -293,6 +1033,21 @@ Riesgo: romper carga del catálogo.
                     style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
                     Disponibilidad</a>
             </div>
+
+            <!-- Castillos Inflables — clon de tarjeta Stage (mismo markup); hero catálogo inflatables + carpeta ref -->
+            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 1.25s ease-out forwards;">
+                <h3 data-i18n="rentals-inflatables-title"
+                    style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
+                    Castillos Inflables</h3>
+                <p data-i18n="rentals-inflatables-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">
+                    Diversión inflable para eventos y fiestas infantiles. Presupuesto a medida</p>
+                <div class="value"
+                    style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
+                    data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
+                <a href="#" class="btn primary full" data-action="open-rental-category" data-category="inflatables"
+                    style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
+                    Disponibilidad</a>
+            </div>
         </div>
 
         <!-- DO NOT add images inside the service grid. Gallery is the only place for images. -->
@@ -326,8 +1081,8 @@ Riesgo: romper carga del catálogo.
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=20260226-1"></script>
-    <script src="./translations.js?v=20260415-UI-BREATH-FIX"></script>
-    <script src="./i18n.js?v=20260415-UI-BREATH-FIX"></script>
+    <script src="./translations.js?v=20260415-INFLATABLES-TITLE"></script>
+    <script src="./i18n.js?v=20260415-MAGIC-HOVER-UNIFIED"></script>
     <script>
         // ── 1) UTILIDADES DE SESIÓN & SEGURIDAD ──
         async function getSessionSafe() {
@@ -355,6 +1110,22 @@ Riesgo: romper carga del catálogo.
             }
         }
 
+        /** Título/eyebrow del hub de talento: mismo idioma que el sitio (i18n a veces no toca nodos ocultos al instante). */
+        window.mdjSyncTalentSelectorCopy = function () {
+            if (!window.i18n) return;
+            var root = document.getElementById('talent-selector-modal');
+            if (!root) return;
+            var eyebrow = root.querySelector('[data-i18n="talent_selector_eyebrow"]');
+            var title = root.querySelector('[data-i18n="talent_selector_title"]');
+            var subtitle = root.querySelector('[data-i18n="talent_selector_subtitle"]');
+            var te = window.i18n.t('talent_selector_eyebrow');
+            var tt = window.i18n.t('talent_selector_title');
+            var ts = window.i18n.t('talent_selector_subtitle');
+            if (eyebrow && te) eyebrow.textContent = te;
+            if (title && tt) title.textContent = tt;
+            if (subtitle && ts) subtitle.textContent = ts;
+        };
+
         function openModalSafe(modalId) {
             const modal = document.getElementById(modalId);
             if (!modal) return console.warn('Modal not found:', modalId);
@@ -364,8 +1135,22 @@ Riesgo: romper carga del catálogo.
 
             document.body.classList.add('body-modal-lock');
 
+            if (modalId === 'talent-selector-modal') {
+                requestAnimationFrame(function () {
+                    if (typeof window.mdjResetTalentSelectorCarousel === 'function') {
+                        window.mdjResetTalentSelectorCarousel();
+                    } else {
+                        var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+                        if (track) track.scrollLeft = 0;
+                    }
+                });
+            }
+
             if (window.i18n) {
                 window.i18n.updateUI();
+            }
+            if (modalId === 'talent-selector-modal') {
+                window.mdjSyncTalentSelectorCopy();
             }
         }
 
@@ -396,6 +1181,12 @@ Riesgo: romper carga del catálogo.
         // ── 3) ROUTER DE CLICKS CENTRALIZADO ──
         document.addEventListener('DOMContentLoaded', async () => {
             syncHeaderUI();
+            requestAnimationFrame(function () {
+                if (typeof window.mdjSyncTalentSelectorCopy === 'function') window.mdjSyncTalentSelectorCopy();
+            });
+            document.addEventListener('languageChanged', function () {
+                if (typeof window.mdjSyncTalentSelectorCopy === 'function') window.mdjSyncTalentSelectorCopy();
+            });
 
             // Único punto de entrada para acciones de usuario
             document.addEventListener('click', async (e) => {
@@ -455,16 +1246,16 @@ Riesgo: romper carga del catálogo.
         });
 
     </script>
-    <script src="./data/rentalsData.js?v=20260415-UI-BREATH-FIX"></script>
-    <script src="./js/rentals.js?v=20260415-UI-BREATH-FIX"></script>
+    <script src="./data/rentalsData.js?v=20260415-MAGIC-HOVER-UNIFIED"></script>
+    <script src="./js/rentals.js?v=20260416-HERO-VIDEO-PRIME-LOOP"></script>
     <!-- ── MC MODAL ── -->
     <div id="mc-modal" class="modal-overlay modal-hidden">
         <div class="modal-content cinematic-hero-shell">
 
             <div class="modal-header-nav">
                 <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
-                    <button class="modal-nav-btn cinematic-glass-btn" data-action="back-to-selector-mc"
-                        data-i18n="btn-back">Back</button>
+                    <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector-mc"
+                        data-i18n="btn-regresar">Regresar</button>
                     <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
                         data-i18n="btn-home">Home</button>
                 </div>
@@ -508,7 +1299,7 @@ Riesgo: romper carga del catálogo.
                     <div
                         style="display: flex; justify-content: center; gap: 15px; width: 100%; max-width: 1400px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px; margin-top: auto;">
 
-                        <div class="talent-cat-card hero-glass-card hl-type-card" id="mc-card-maestro"
+                        <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card" id="mc-card-maestro"
                             style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
                             <div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">🎙️</div>
                             <h3 class="hl-card-title" data-i18n="mc_maestro_title"
@@ -526,7 +1317,7 @@ Riesgo: romper carga del catálogo.
                                 PRECIO Y DISP</button>
                         </div>
 
-                        <div class="talent-cat-card hero-glass-card hl-type-card" id="mc-card-host"
+                        <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card" id="mc-card-host"
                             style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
                             <div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">🔥</div>
                             <h3 class="hl-card-title" data-i18n="mc_host_title"
@@ -549,100 +1340,113 @@ Riesgo: romper carga del catálogo.
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const videoHost = document.getElementById('mc-video-host');
-            const videoMaestro = document.getElementById('mc-video-maestro');
-            const cardMaestro = document.getElementById('mc-card-maestro');
-            const cardHost = document.getElementById('mc-card-host');
-
-            // Set initial state
-            if (videoHost) videoHost.style.opacity = '1';
-            if (videoMaestro) videoMaestro.style.opacity = '0';
-
-            if (cardMaestro) {
-                cardMaestro.addEventListener('mouseenter', () => {
-                    if (videoMaestro) videoMaestro.style.opacity = '1';
-                    if (videoHost) videoHost.style.opacity = '0';
-                });
-            }
-            if (cardHost) {
-                cardHost.addEventListener('mouseenter', () => {
-                    if (videoHost) videoHost.style.opacity = '1';
-                    if (videoMaestro) videoMaestro.style.opacity = '0';
-                });
-            }
-        });
-    </script>
-
     <div id="talent-selector-modal" class="modal-overlay modal-hidden">
         <div class="modal-content cinematic-hero-shell">
 
             <div class="modal-header-nav">
                 <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-from-talent-selector"
+                        data-i18n="btn-regresar">Regresar</button>
                     <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
                         data-i18n="btn-home">Home</button>
                 </div>
                 <button class="modal-close-btn cinematic-glass-btn" data-action="close-all">✕</button>
             </div>
 
-            <!-- Native Background Video Engine -->
-            <video class="hero-shell-video" autoplay muted loop playsinline preload="metadata">
-                <source src="./assets/home/Home for Miami DJ Beat.mp4" type="video/mp4">
-            </video>
+            <!-- Hero: capa ambient + capa focus (preview a pantalla completa; nunca en tarjeta) -->
+            <div class="mdj-talent-hero-media" aria-hidden="true">
+                <video id="talent-shell-ambient" class="hero-shell-video" autoplay muted loop playsinline
+                    preload="auto">
+                    <source src="./assets/home/Home for Miami DJ Beat.mp4" type="video/mp4">
+                </video>
+                <video id="talent-shell-focus" class="hero-shell-video" muted loop playsinline preload="none"></video>
+            </div>
             <div class="hero-shell-overlay"></div>
 
             <div class="hero-shell-content">
-                <div style="text-align: center; margin-bottom: 40px;">
-                    <p class="hero-eyebrow" data-i18n="talent_selector_eyebrow"
-                        style="margin: 0 auto 10px auto; text-align: center; color: var(--gold); letter-spacing: 3px; font-weight: 600;">
-                        ELEVATING CELEBRATIONS TO UNFORGETTABLE EXPERIENCES
+                <div class="mdj-talent-hub-head" style="text-align: center; margin-bottom: 0;">
+                    <p class="hero-eyebrow mdj-talent-hub-eyebrow" data-i18n="talent_selector_eyebrow">
+                        ELEVAMOS TUS CELEBRACIONES A EXPERIENCIAS INOLVIDABLES
                     </p>
-                    <h1 data-i18n="talent_selector_title"
-                        style="font-family: 'Playfair Display', serif; font-size: clamp(24px, 3.5vw, 40px); font-weight: 500; text-transform: uppercase; letter-spacing: 1px; line-height: 1.3; max-width: 900px; margin: 0 auto; color: #ffffff; text-shadow: 0 4px 15px rgba(0,0,0,0.6), 0 1px 3px rgba(0,0,0,0.4); padding: 0 20px;">
-                        Select the type of talent you wish to add to your package
+                    <h1 class="mdj-talent-hub-title" data-i18n="talent_selector_title">
+                        Si quieres llevar tu celebración a otro nivel, comienza a construirlo a tu medida
                     </h1>
+                    <p class="mdj-talent-hub-subtitle" data-i18n="talent_selector_subtitle">
+                        Selecciona y agrégalo a tu evento
+                    </p>
                 </div>
 
-                <div class="grid5 cinematic-hero-cards">
+                <div class="grid5 cinematic-hero-cards talent-selector-carousel">
                     <!-- DJ / Performance -->
-                    <div class="talent-cat-card hero-glass-card" id="cat-dj" data-action="open-dj">
-                        <div class="hero-card-emoji">🎧</div>
+                    <div class="talent-cat-card hero-glass-card" id="cat-dj" tabindex="0" data-action="open-dj"
+                        data-talent-hero-src="./assets/DJ_Performance/weddings_quinces.mp4">
+                        <div class="hero-card-emoji" aria-hidden="true">🎧</div>
                         <h3 class="hero-card-title" data-i18n="dj_cat_title">DJ / Performance</h3>
-                        <p class="hero-card-text" data-i18n="dj_cat_desc">The core DJ booking entry point for
-                            specialized events.</p>
+                        <p class="hero-card-text" data-i18n="dj_cat_desc">Dentro: catálogo por tipo de fiesta (bodas,
+                            club, familiar, fechas especiales) y extras.</p>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
                     </div>
 
                     <!-- Hora Loca -->
-                    <div class="talent-cat-card hero-glass-card" id="cat-hora-loca" data-action="open-horaloca">
-                        <div class="hero-card-emoji">🎭</div>
+                    <div class="talent-cat-card hero-glass-card" id="cat-hora-loca" tabindex="0" data-action="open-horaloca"
+                        data-talent-hero-src="./assets/hora-loca/hora-loca-robot.mp4">
+                        <div class="hero-card-emoji" aria-hidden="true">🎭</div>
                         <h3 class="hero-card-title" data-i18n="hl_cat_title_1">Hora Loca Experience</h3>
-                        <p class="hero-card-text" data-i18n="hl_cat_desc_1">Personajes temáticos, robots LED y
-                            bailarines.</p>
+                        <p class="hero-card-text" data-i18n="hl_cat_desc_1">Dentro: paquetes Hora Loca, personajes,
+                            robots LED y opciones para sumar.</p>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
                     </div>
 
                     <!-- Músicos -->
-                    <div class="talent-cat-card hero-glass-card" id="cat-musicians" data-action="open-musicians">
-                        <div class="hero-card-emoji">🎷</div>
+                    <div class="talent-cat-card hero-glass-card" id="cat-musicians" tabindex="0" data-action="open-musicians"
+                        data-talent-hero-src="./assets/live-music/live-sax.mp4">
+                        <div class="hero-card-emoji" aria-hidden="true">🎷</div>
                         <h3 class="hero-card-title" data-i18n="hl_cat_title_2">Músicos en Vivo</h3>
-                        <p class="hero-card-text" data-i18n="hl_cat_desc_2">Saxofonistas, Timbaleros y Cantantes pro.
-                        </p>
+                        <p class="hero-card-text" data-i18n="hl_cat_desc_2">Dentro: roster en vivo — saxo, percusión y
+                            voz; elige músico y añade al paquete.</p>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
                     </div>
 
                     <!-- Visuales -->
-                    <div class="talent-cat-card hero-glass-card" id="cat-visuals" data-action="open-visuals">
-                        <div class="hero-card-emoji">📸</div>
+                    <div class="talent-cat-card hero-glass-card" id="cat-visuals" tabindex="0" data-action="open-visuals"
+                        data-talent-hero-src="./assets/capture-visuals/photo.mp4">
+                        <div class="hero-card-emoji" aria-hidden="true">📸</div>
                         <h3 class="hero-card-title" data-i18n="hl_cat_title_3">Captura y Visuales</h3>
-                        <p class="hero-card-text" data-i18n="hl_cat_desc_3">Fotógrafos, Videógrafos y VJs.</p>
+                        <p class="hero-card-text" data-i18n="hl_cat_desc_3">Dentro: foto, video, VJ, drone, booth 360 y
+                            espejo mágico en el mismo flujo.</p>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
                     </div>
 
                     <!-- MC y Presentadores -->
-                    <div class="talent-cat-card hero-glass-card" id="cat-mc" data-action="open-mc">
-                        <div class="hero-card-emoji">🎙️</div>
+                    <div class="talent-cat-card hero-glass-card" id="cat-mc" tabindex="0" data-action="open-mc"
+                        data-talent-hero-src="./assets/mc-club-host/mc-club-host.mp4">
+                        <div class="hero-card-emoji" aria-hidden="true">🎙️</div>
                         <h3 class="hero-card-title" data-i18n="mc_cat_title">MC y Presentadores</h3>
-                        <p class="hero-card-text" data-i18n="mc_cat_desc">Bilingual Hosts and Professional Event
-                            Masters.</p>
+                        <p class="hero-card-text" data-i18n="mc_cat_desc">Dentro: dos estilos (maestro de ceremonias /
+                            host club), vídeos y disponibilidad.</p>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
                     </div>
+
+                    <!-- Staff (mismo patrón que Músicos en Vivo: abre modal con hero + tarjetas internas) -->
+                    <div class="talent-cat-card hero-glass-card mdj-magic-hover-card" id="cat-staff" tabindex="0" data-action="open-staff"
+                        data-talent-hero-src="./assets/mdj-staff-videos/Bartender.mp4">
+                        <div class="hero-card-emoji" aria-hidden="true">🪪</div>
+                        <h3 class="hero-card-title" data-i18n="talent_staff_title">Staff</h3>
+                        <p class="hero-card-text" data-i18n="talent_staff_desc">Dentro: elige bartender, meseros o chef
+                            — un vídeo por rol (barra, mesa, cocina).</p>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
+                    </div>
+
+                    <!-- Payasos (mismo patrón que Staff: modal con hero + tarjetas internas) -->
+                    <div class="talent-cat-card hero-glass-card mdj-magic-hover-card" id="cat-payasos" tabindex="0" data-action="open-payasos"
+                        data-talent-hero-src="./assets/mdj-payasos/pallasos-gif.mp4">
+                        <div class="hero-card-emoji" aria-hidden="true">🤡</div>
+                        <h3 class="hero-card-title" data-i18n="talent_payasos_title">Payasos</h3>
+                        <p class="hero-card-text" data-i18n="talent_payasos_desc">Dentro: GIF en vivo, show, circo y
+                            Santa — elige tipo de actuación infantil/familiar.</p>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -654,8 +1458,8 @@ Riesgo: romper carga del catálogo.
 
             <div class="modal-header-nav">
                 <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
-                    <button class="modal-nav-btn cinematic-glass-btn" data-action="back-to-selector"
-                        data-i18n="btn-back">Back</button>
+                    <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector"
+                        data-i18n="btn-regresar">Regresar</button>
                     <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
                         data-i18n="btn-home">Home</button>
                 </div>
@@ -664,11 +1468,12 @@ Riesgo: romper carga del catálogo.
                     Experience</h2>
             </div>
 
-            <div class="hl-hero-container"
-                style="position: relative; width: 100%; height: 100vh; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 12vh;">
+            <div class="hl-hero-container mdj-hero-modal-root">
+                <div class="mdj-hero-media-layer" aria-hidden="true">
                 <video id="hl-hero-video" autoplay muted loop playsinline class="hl-hero-video"
-                    preload="metadata"></video>
+                    preload="auto"></video>
                 <div class="hl-hero-overlay"></div>
+                </div>
 
                 <!-- Letras Originales Intactas -->
                 <div class="hl-hero-global-overlay">
@@ -713,19 +1518,20 @@ Riesgo: romper carga del catálogo.
 
             <div class="modal-header-nav">
                 <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
-                    <button class="modal-nav-btn cinematic-glass-btn" data-action="back-to-selector-roster"
-                        data-i18n="btn-back">Back</button>
+                    <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector-roster"
+                        data-i18n="btn-regresar">Regresar</button>
                     <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
                         data-i18n="btn-home">Home</button>
                 </div>
             </div>
 
-            <div class="live-hero-container"
-                style="position: relative; width: 100%; height: 100%; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 12vh;">
+            <div class="live-hero-container mdj-hero-modal-root">
+                <div class="mdj-hero-media-layer" aria-hidden="true">
                 <video id="live-hero-video" class="live-hero-video" autoplay muted loop playsinline
-                    preload="metadata"></video>
+                    preload="auto"></video>
 
                 <div class="live-hero-overlay"></div>
+                </div>
 
                 <!-- Letras Globales Centradas en Top -->
                 <div class="hl-hero-global-overlay" style="z-index: 10;">
@@ -745,8 +1551,144 @@ Riesgo: romper carga del catálogo.
 
                 <!-- Grilla Inyectada Aislada en el Bottom (Reemplaza Tabs) -->
                 <div id="roster-grid"
-                    style="display: flex; justify-content: center; gap: 15px; width: 100%; max-width: 1400px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px;">
+                    style="display: flex; justify-content: center; align-items: flex-end; gap: 15px; width: 100%; max-width: 1400px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px;">
                     <div class="loading-spinner" data-i18n="rental_loading_cat">Cargando catálogo...</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── STAFF MODAL (mismo ADN que Músicos / roster: vídeo en hero, tarjetas abajo) ── -->
+    <div id="staff-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content glass-card live-hero-shell">
+
+            <div class="modal-header-nav">
+                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector-staff"
+                        data-i18n="btn-regresar">Regresar</button>
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                        data-i18n="btn-home">Home</button>
+                </div>
+            </div>
+
+            <div class="live-hero-container mdj-hero-modal-root">
+                <div class="mdj-hero-media-layer" aria-hidden="true">
+                <video id="staff-hero-video" class="live-hero-video" autoplay muted loop playsinline
+                    preload="auto"></video>
+                <div class="live-hero-overlay"></div>
+                </div>
+
+                <div class="hl-hero-global-overlay" style="z-index: 10;">
+                    <p class="hero-eyebrow hl-hero-global-eyebrow" id="staff-hero-eyebrow" data-i18n="staff_modal_eyebrow">
+                        EVENT STAFF &amp; SERVICE
+                    </p>
+                    <h1 class="cinematic-hero-title hl-hero-global-title" id="staff-hero-title" data-i18n="staff_modal_title_default">
+                        Staff
+                    </h1>
+                    <p class="modal-nav-subtitle hl-hero-global-subtitle" id="staff-hero-subtitle" data-i18n="staff_modal_subtitle_default">
+                        Coordinators, technicians, and event support. Hover a card to preview the background video.
+                    </p>
+                </div>
+
+                <div id="staff-roster-grid"
+                    style="display: flex; justify-content: center; align-items: flex-end; gap: 15px; width: 100%; max-width: 1400px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px;">
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card active" data-staff-key="bartender"
+                        style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
+                        <div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">🍸</div>
+                        <h3 class="hl-card-title" data-i18n="staff_bartender_title" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">Bartender</h3>
+                        <p class="hl-card-desc" data-i18n="staff_bartender_desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">Bar service and premium cocktail experience.</p>
+                        <div class="hl-card-price" data-i18n="rentals-pa-pack-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">Custom Quote</div>
+                        <button type="button" class="hl-action-btn" data-action="open-contact" data-service="staff-bartender" data-i18n="rentals-check-availability" style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Check Availability</button>
+                    </div>
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card" data-staff-key="meseros"
+                        style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
+                        <div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">🍽️</div>
+                        <h3 class="hl-card-title" data-i18n="staff_meseros_title" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">Meseros</h3>
+                        <p class="hl-card-desc" data-i18n="staff_meseros_desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">Professional table service for your guests.</p>
+                        <div class="hl-card-price" data-i18n="rentals-pa-pack-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">Custom Quote</div>
+                        <button type="button" class="hl-action-btn" data-action="open-contact" data-service="staff-meseros" data-i18n="rentals-check-availability" style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Check Availability</button>
+                    </div>
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card" data-staff-key="chef"
+                        style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
+                        <div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">👨‍🍳</div>
+                        <h3 class="hl-card-title" data-i18n="staff_chef_title" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">Chef</h3>
+                        <p class="hl-card-desc" data-i18n="staff_chef_desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">Live kitchen and catering presentation.</p>
+                        <div class="hl-card-price" data-i18n="rentals-pa-pack-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">Custom Quote</div>
+                        <button type="button" class="hl-action-btn" data-action="open-contact" data-service="staff-chef" data-i18n="rentals-check-availability" style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Check Availability</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── PAYASOS MODAL (mismo ADN que Staff) ── -->
+    <div id="payasos-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content glass-card live-hero-shell">
+
+            <div class="modal-header-nav">
+                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector-payasos"
+                        data-i18n="btn-regresar">Regresar</button>
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                        data-i18n="btn-home">Home</button>
+                </div>
+            </div>
+
+            <div class="live-hero-container mdj-hero-modal-root">
+                <div class="mdj-hero-media-layer" aria-hidden="true">
+                <video id="payasos-hero-video" class="live-hero-video" autoplay muted loop playsinline
+                    preload="auto"></video>
+                <div class="live-hero-overlay"></div>
+                </div>
+
+                <div class="hl-hero-global-overlay" style="z-index: 10;">
+                    <p class="hero-eyebrow hl-hero-global-eyebrow" id="payasos-hero-eyebrow" data-i18n="payasos_modal_eyebrow">
+                        KIDS &amp; FAMILY ENTERTAINMENT
+                    </p>
+                    <h1 class="cinematic-hero-title hl-hero-global-title" id="payasos-hero-title" data-i18n="payasos_modal_title_default">
+                        Clowns
+                    </h1>
+                    <p class="modal-nav-subtitle hl-hero-global-subtitle" id="payasos-hero-subtitle" data-i18n="payasos_modal_subtitle_default">
+                        Kids' and family entertainment. Hover a card to preview the background video.
+                    </p>
+                </div>
+
+                <div id="payasos-roster-grid"
+                    style="display: flex; justify-content: center; align-items: flex-end; gap: 12px; width: 100%; max-width: 1400px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 32px;">
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card active" data-payasos-key="gif"
+                        style="flex: 1 1 0; min-width: 180px; max-width: 220px; padding: 16px 12px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 300px; gap: 8px;">
+                        <div class="hl-card-icon" style="font-size: 28px; margin-bottom: 4px;">🎪</div>
+                        <h3 class="hl-card-title" data-i18n="payasos_gif_title" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 14px; font-weight: 600; margin: 0; line-height: 1.2;">GIF / energy</h3>
+                        <p class="hl-card-desc" data-i18n="payasos_gif_desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 10px; margin: 0; flex-grow: 1; line-height: 1.35;">High-energy clips and comedic timing for kids and families.</p>
+                        <div class="hl-card-price" data-i18n="rentals-pa-pack-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 16px; font-weight: 700; margin-top: auto; margin-bottom: 8px;">Custom Quote</div>
+                        <button type="button" class="hl-action-btn" data-action="open-contact" data-service="payasos-gif" data-i18n="rentals-check-availability" style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 7px 0; border-radius: 50px; font-size: 9px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Check Availability</button>
+                    </div>
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card" data-payasos-key="show"
+                        style="flex: 1 1 0; min-width: 180px; max-width: 220px; padding: 16px 12px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 300px; gap: 8px;">
+                        <div class="hl-card-icon" style="font-size: 28px; margin-bottom: 4px;">🎭</div>
+                        <h3 class="hl-card-title" data-i18n="payasos_show_title" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 14px; font-weight: 600; margin: 0; line-height: 1.2;">Clown show</h3>
+                        <p class="hl-card-desc" data-i18n="payasos_show_desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 10px; margin: 0; flex-grow: 1; line-height: 1.35;">Full stage show with classic clown performance and audience interaction.</p>
+                        <div class="hl-card-price" data-i18n="rentals-pa-pack-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 16px; font-weight: 700; margin-top: auto; margin-bottom: 8px;">Custom Quote</div>
+                        <button type="button" class="hl-action-btn" data-action="open-contact" data-service="payasos-show" data-i18n="rentals-check-availability" style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 7px 0; border-radius: 50px; font-size: 9px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Check Availability</button>
+                    </div>
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card" data-payasos-key="circo"
+                        style="flex: 1 1 0; min-width: 180px; max-width: 220px; padding: 16px 12px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 300px; gap: 8px;">
+                        <div class="hl-card-icon" style="font-size: 28px; margin-bottom: 4px;">🎪</div>
+                        <h3 class="hl-card-title" data-i18n="payasos_circo_title" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 14px; font-weight: 600; margin: 0; line-height: 1.2;">Circus</h3>
+                        <p class="hl-card-desc" data-i18n="payasos_circo_desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 10px; margin: 0; flex-grow: 1; line-height: 1.35;">Circus-style acts, gags, and variety entertainment.</p>
+                        <div class="hl-card-price" data-i18n="rentals-pa-pack-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 16px; font-weight: 700; margin-top: auto; margin-bottom: 8px;">Custom Quote</div>
+                        <button type="button" class="hl-action-btn" data-action="open-contact" data-service="payasos-circo" data-i18n="rentals-check-availability" style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 7px 0; border-radius: 50px; font-size: 9px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Check Availability</button>
+                    </div>
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card" data-payasos-key="santa"
+                        style="flex: 1 1 0; min-width: 180px; max-width: 220px; padding: 16px 12px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 300px; gap: 8px;">
+                        <div class="hl-card-icon" style="font-size: 28px; margin-bottom: 4px;">🎅</div>
+                        <h3 class="hl-card-title" data-i18n="payasos_santa_title" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 14px; font-weight: 600; margin: 0; line-height: 1.2;">Santa &amp; seasonal</h3>
+                        <p class="hl-card-desc" data-i18n="payasos_santa_desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 10px; margin: 0; flex-grow: 1; line-height: 1.35;">Holiday appearances and themed seasonal entertainment.</p>
+                        <div class="hl-card-price" data-i18n="rentals-pa-pack-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 16px; font-weight: 700; margin-top: auto; margin-bottom: 8px;">Custom Quote</div>
+                        <button type="button" class="hl-action-btn" data-action="open-contact" data-service="payasos-santa" data-i18n="rentals-check-availability" style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 7px 0; border-radius: 50px; font-size: 9px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Check Availability</button>
+                    </div>
                 </div>
             </div>
 
@@ -759,20 +1701,21 @@ Riesgo: romper carga del catálogo.
 
             <div class="modal-header-nav">
                 <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
-                    <button class="modal-nav-btn cinematic-glass-btn" data-action="back-to-selector-dj"
-                        data-i18n="btn-back">Back</button>
+                    <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector-dj"
+                        data-i18n="btn-regresar">Regresar</button>
                     <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
                         data-i18n="btn-home">Home</button>
                 </div>
             </div>
 
-            <div class="live-hero-container"
-                style="position: relative; width: 100%; height: 100%; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 12vh;">
+            <div class="live-hero-container mdj-hero-modal-root">
+                <div class="mdj-hero-media-layer" aria-hidden="true">
                 <!-- Dynamic Background Media -->
                 <video id="dj-hero-video" class="live-hero-video" autoplay muted loop playsinline preload="auto"
                     style="filter: brightness(0.7);"></video>
 
                 <div class="live-hero-overlay"></div>
+                </div>
 
                 <div class="hl-hero-global-overlay" style="z-index: 10;">
                     <p class="hero-eyebrow hl-hero-global-eyebrow" id="dj-hero-eyebrow" data-i18n="dj_perf_eyebrow">
@@ -789,7 +1732,7 @@ Riesgo: romper carga del catálogo.
 
                 <!-- Empty Internal Category Grid -->
                 <div id="dj-roster-grid"
-                    style="display: flex; justify-content: center; gap: 15px; width: 100%; max-width: 1400px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px;">
+                    style="display: flex; justify-content: center; align-items: flex-end; gap: 15px; width: 100%; max-width: 1400px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px;">
                 </div>
             </div>
 
@@ -802,19 +1745,21 @@ Riesgo: romper carga del catálogo.
 
             <div class="modal-header-nav">
                 <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
-                    <button class="modal-nav-btn cinematic-glass-btn" data-action="back-to-selector-fx"
-                        data-i18n="btn-back">Back</button>
+                    <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector-fx"
+                        data-i18n="btn-regresar">Regresar</button>
                     <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
                         data-i18n="btn-home">Home</button>
                 </div>
             </div>
 
+            <div class="mdj-hero-media-layer mdj-hero-media-layer--shell" aria-hidden="true">
             <video class="hero-shell-video" id="fx-hero-video" autoplay muted loop playsinline preload="auto"
-                style="opacity: 0.9; filter: brightness(0.9); object-fit: cover; width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 0; pointer-events: none;">
+                style="opacity: 0.9; filter: brightness(0.9); pointer-events: none;">
                 <source src="./assets/Special_Effects/SPARKULAR.mp4" type="video/mp4">
             </video>
 
             <div class="hero-shell-overlay" style="pointer-events: none; z-index: 2;"></div>
+            </div>
 
             <div class="hero-shell-content" style="max-width: 100%; padding: 120px 0 40px 0;">
                 <div
@@ -838,8 +1783,8 @@ Riesgo: romper carga del catálogo.
                         </p>
                     </div>
 
-                    <div id="fx-roster-grid"
-                        style="display: flex; justify-content: center; gap: 15px; width: 100%; max-width: 100%; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 80px 20px 80px; align-items: stretch;">
+                    <div id="fx-roster-grid" class="mdj-fx-catalog-carousel grid5 cinematic-hero-cards"
+                        style="position: relative; z-index: 10; width: 100%; max-width: 100%; box-sizing: border-box;">
                     </div>
 
                 </div>
@@ -853,19 +1798,21 @@ Riesgo: romper carga del catálogo.
 
             <div class="modal-header-nav">
                 <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
-                    <button class="modal-nav-btn cinematic-glass-btn" data-action="back-to-selector-lighting"
-                        data-i18n="btn-back">Back</button>
+                    <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector-lighting"
+                        data-i18n="btn-regresar">Regresar</button>
                     <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
                         data-i18n="btn-home">Home</button>
                 </div>
             </div>
 
+            <div class="mdj-hero-media-layer mdj-hero-media-layer--shell" aria-hidden="true">
             <video class="hero-shell-video" id="lighting-hero-video" autoplay muted loop playsinline preload="auto"
-                style="opacity: 0.9; filter: brightness(0.9); object-fit: cover; width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 0; pointer-events: none;">
+                style="opacity: 0.9; filter: brightness(0.9); pointer-events: none;">
                 <source src="./assets/Special_Effects/Moving_Head_Lights.mp4" type="video/mp4">
             </video>
 
             <div class="hero-shell-overlay" style="pointer-events: none; z-index: 2;"></div>
+            </div>
 
             <div class="hero-shell-content" style="max-width: 100%; padding: 120px 0 40px 0;">
                 <div
@@ -889,8 +1836,8 @@ Riesgo: romper carga del catálogo.
                         </p>
                     </div>
 
-                    <div id="lighting-roster-grid"
-                        style="display: flex; justify-content: center; gap: 15px; width: 100%; max-width: 100%; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 80px 20px 80px; align-items: stretch;">
+                    <div id="lighting-roster-grid" class="mdj-lighting-carousel grid5 cinematic-hero-cards"
+                        style="position: relative; z-index: 10; width: 100%; max-width: 100%; box-sizing: border-box;">
                     </div>
 
                 </div>
@@ -900,7 +1847,7 @@ Riesgo: romper carga del catálogo.
     </div>
 
     <!-- ── DJ CHECKOUT MODAL (Phase 2) ── -->
-    <div id="dj-checkout-modal" class="modal-overlay modal-hidden" style="z-index: 9999;">
+    <div id="dj-checkout-modal" class="modal-overlay modal-hidden">
         <div class="modal-content glass-card checkout-glass-shell"
             style="max-width: 600px; padding: 40px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
 
@@ -1126,34 +2073,34 @@ Riesgo: romper carga del catálogo.
     </div>
 
     <!-- ── DYNAMIC RENTAL CATALOG MODAL (Phase 6 Universal Engine) ── -->
-    <div id="rental-dynamic-modal" class="modal-overlay modal-hidden">
+    <div id="rental-dynamic-modal" class="modal-overlay modal-hidden" data-mdj-catalog-no-bg="1">
         <div class="modal-content cinematic-hero-shell">
 
             <!-- Dynamic Background Multi-Video Engine -->
             <div id="rental-multi-video-container"
                 style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;">
                 <video class="hero-shell-video rental-bg-vid active-vid" data-category="furniture" autoplay muted loop
-                    playsinline preload="metadata">
+                    playsinline preload="auto">
                     <source src="./assets/furniture-decor/dining-tables.mp4" type="video/mp4">
                 </video>
                 <video class="hero-shell-video rental-bg-vid" data-category="tents" autoplay muted loop playsinline
-                    preload="metadata">
+                    preload="auto">
                     <source src="./assets/tents/carpas-main.mp4" type="video/mp4">
                 </video>
                 <video class="hero-shell-video rental-bg-vid" data-category="inflatables" autoplay muted loop
-                    playsinline preload="metadata">
+                    playsinline preload="auto">
                     <source src="./assets/inflatables/lite-castle.mp4" type="video/mp4">
                 </video>
                 <video class="hero-shell-video rental-bg-vid" data-category="stages" autoplay muted loop playsinline
-                    preload="metadata">
+                    preload="auto">
                     <source src="./assets/Tent & Event Structures/stage-small.mp4" type="video/mp4">
                 </video>
                 <video class="hero-shell-video rental-bg-vid" data-category="audio" autoplay muted loop playsinline
-                    preload="metadata">
+                    preload="auto">
                     <source src="./assets/audio/pa-small.mp4" type="video/mp4">
                 </video>
                 <video class="hero-shell-video rental-bg-vid" data-category="lighting" autoplay muted loop playsinline
-                    preload="metadata">
+                    preload="auto">
                     <source src="./assets/lighting/led-small.mp4" type="video/mp4">
                 </video>
             </div>
@@ -1165,8 +2112,8 @@ Riesgo: romper carga del catálogo.
                 <div class="rentals-header-inner"
                     style="max-width: 1400px; margin: 0 auto 2vh auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;">
                     <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
-                        <button class="modal-nav-btn cinematic-glass-btn" data-action="close-all"
-                            data-i18n="btn-back">Back</button>
+                        <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-from-rental-dynamic"
+                            data-i18n="btn-regresar">Regresar</button>
                         <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
                             data-i18n="btn-home">Home</button>
                     </div>
@@ -1214,7 +2161,7 @@ Riesgo: romper carga del catálogo.
 
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
     <link rel="stylesheet" href="./mdj-assistant.css" />
-    <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
+    <script src="./mdj-assistant.js?v=20260415-CLONE-FORCE-V1"></script>
     <div id="mdj-assistant-booth">
         <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
         <div class="booth-window">
@@ -1246,8 +2193,8 @@ Riesgo: romper carga del catálogo.
 
     <script src="./auth.js"></script>
 
-    <script src="./header-smart-search.js?v=20260415-UI-BREATH-FIX"></script>
-    <script src="./mdj-shared-header.js?v=20260415-UI-BREATH-FIX"></script>
+    <script src="./header-smart-search.js?v=20260415-CLONE-FORCE-V1"></script>
+    <script src="./mdj-shared-header.js?v=20260415-CLONE-FORCE-V1"></script>
   <script src="./mdj-social-bar.js?v=20260413-scrollhide"></script>
 </body>
 
