@@ -77,6 +77,87 @@ function mdjGetReferralDjId() {
     }
 }
 
+/**
+ * Signup puede terminar antes del INSERT (p. ej. confirmación de email sin sesión JWT).
+ * En el primer login con sesión, crea la fila que falta en dj_profiles o client_profiles. Idempotente.
+ */
+async function mdjEnsureAuthProfileRows(db, user) {
+    if (!db || !user || !user.id) return;
+    const meta = user.user_metadata || {};
+    const appMeta = user.app_metadata || {};
+    const rawRole = String(appMeta.role || meta.user_type || 'client').toLowerCase();
+    if (rawRole === 'admin' || rawRole === 'manager') return;
+
+    const isTalent = rawRole === 'talent' || rawRole === 'dj' || rawRole === 'artist';
+    const email = (user.email || '').trim();
+    const fullName = String(meta.full_name || '').trim() || (email ? email.split('@')[0] : '') || 'User';
+    const artistic = String(meta.artistic_name || '').trim();
+    const displayStage = artistic || fullName;
+    const planParam = String(meta.plan || 'LITE');
+    const phone = String(meta.phone || '').trim();
+    const city = String(meta.location || '').trim();
+    const refCode = mdjGetReferralDjId() || (meta.source_ref ? String(meta.source_ref).trim() : '') || null;
+
+    try {
+        if (isTalent) {
+            const { data: existingDj, error: selErr } = await db.from('dj_profiles').select('user_id').eq('user_id', user.id).maybeSingle();
+            if (selErr) {
+                console.warn('[AUTH] mdjEnsureAuthProfileRows dj select:', selErr);
+                return;
+            }
+            if (existingDj) return;
+
+            const profileUid = user.id;
+            const memberId = `DJ-${profileUid.substring(0, 6).toUpperCase()}`;
+            const referralCode = `REF${memberId.replace('DJ-', '').substring(0, 5)}`;
+            const profilePayload = {
+                user_id: profileUid,
+                email: email || null,
+                dj_name: displayStage,
+                stage_name: displayStage,
+                full_name: fullName,
+                plan: planParam,
+                status: 'ACTIVE',
+                member_id: memberId,
+                referral_code: referralCode,
+                photo_status: 'pending',
+                rating: 1.0,
+                review_count: 0
+            };
+            if (phone) profilePayload.phone = phone;
+            if (city) profilePayload.city = city;
+
+            const { error: insErr } = await db.from('dj_profiles').insert([profilePayload]);
+            if (insErr) console.warn('[AUTH] mdjEnsureAuthProfileRows dj_profiles insert:', insErr);
+        } else {
+            const { data: existingCl, error: selErr } = await db.from('client_profiles').select('user_id').eq('user_id', user.id).maybeSingle();
+            if (selErr) {
+                console.warn('[AUTH] mdjEnsureAuthProfileRows client select:', selErr);
+                return;
+            }
+            if (existingCl) return;
+
+            const uname = String(meta.username || (email ? email.split('@')[0] : 'user')).trim().slice(0, 80) || 'user';
+            const clientPayload = {
+                user_id: user.id,
+                username: uname,
+                full_name: fullName,
+                email: email || null,
+                phone: phone || null,
+                city: city || null,
+                source_ref: refCode || null,
+                discount_eligible: true
+            };
+            const { error: insErr } = await db.from('client_profiles').insert([clientPayload]);
+            if (insErr) console.warn('[AUTH] mdjEnsureAuthProfileRows client_profiles insert:', insErr);
+        }
+    } catch (e) {
+        console.warn('[AUTH] mdjEnsureAuthProfileRows:', e);
+    }
+}
+
+window.mdjEnsureAuthProfileRows = mdjEnsureAuthProfileRows;
+
 /** Wait for the Supabase client to be ready (max ~3 sec). */
 async function waitForSupabase(maxAttempts = 10) {
     for (let i = 0; i < maxAttempts; i++) {
@@ -213,6 +294,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     sessionStorage.setItem('mdj_vip_welcome_pending', '1');
                 } catch (e) { /* ignore */ }
+                try {
+                    await mdjEnsureAuthProfileRows(db, user);
+                } catch (ensureErr) {
+                    console.warn('[AUTH] ensure profile after login:', ensureErr);
+                }
                 await performPostAuthRedirect(db, user);
 
             } catch (err) {
@@ -517,11 +603,26 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (authError) {
                 console.warn('[AUTH] Cannot fetch liveUser, falling back to cached session', authError);
             }
+            const u = liveUser || session.user;
+            if (u) {
+                try {
+                    await mdjEnsureAuthProfileRows(db, u);
+                } catch (ensureErr) {
+                    console.warn('[AUTH] ensure profile on boot session:', ensureErr);
+                }
+            }
         }
         await handleSessionState(session, liveUser);
 
         // Keep watching for dynamic disconnections 
         db.auth.onAuthStateChange(async (event, sessionObj) => {
+            if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && sessionObj?.user) {
+                try {
+                    await mdjEnsureAuthProfileRows(db, sessionObj.user);
+                } catch (ensureErr) {
+                    console.warn('[AUTH] ensure profile on auth state:', ensureErr);
+                }
+            }
             let evtLiveUser = null;
             if (sessionObj) {
                 try {
