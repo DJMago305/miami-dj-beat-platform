@@ -127,10 +127,24 @@ body.mdj-logged-in-header #mainHeader .header-actions .header-avatar-cart-row {
   align-items: center;
 }
 
+/* Por encima de capas de contexto (p. ej. pestañas en perfil); el bloque cuenta no queda tapado */
+body.mdj-logged-in-header #header-auth-zone {
+  z-index: 12100;
+}
+
 .mdj-account-vip {
   position: relative;
   display: flex;
   align-items: center;
+}
+
+/* Artista: solo enlace al dashboard — sin fila extra ni menú */
+.mdj-account-vip--artist-link-only {
+  z-index: 1;
+}
+
+.mdj-account-vip--artist-link-only .mdj-account-vip-trigger {
+  max-width: min(280px, 44vw);
 }
 
 /* Fila: enlace directo (portal / dashboard) + botón menú secundario */

@@ -121,7 +121,7 @@
     var l = document.createElement('link');
     l.id = 'mdj-header-vip-css';
     l.rel = 'stylesheet';
-    l.href = './mdj-header-vip.css?v=20260419-VIP-DIRECT-LINK';
+    l.href = './mdj-header-vip.css?v=20260420-ARTIST-NO-DROPDOWN';
     document.head.appendChild(l);
   }
 
@@ -528,8 +528,7 @@
   }
 
   /**
-   * Avatar circular + nombre (misma línea); clic abre #accountMenu.
-   * Cliente: sin enlaces de artista; incluye facturación.
+   * Avatar circular + nombre. Cliente: menú desplegable aparte. Artista: solo enlace a dashboard (sin dropdown).
    */
   function mdjBuildAvatarSlotHtml(ctx) {
     var useInit = !!ctx.useAvatarInitials;
@@ -622,8 +621,6 @@
     var isClient = !!ctx.isClient;
     var profileUrl = ctx.profileUrl;
     if (!profileUrl) profileUrl = isClient ? './client-portal.html' : './dj-dashboard.html';
-    var showDjDash = !!ctx.showDjDashboard;
-    var artistPublicProfileUrl = ctx.artistPublicProfileUrl ? String(ctx.artistPublicProfileUrl).trim() : '';
     var profileLabel =
       ctx.profileLabel ||
       (isClient ? mdjGetVipPortalMenuLabel() : mdjGetDjDashboardMenuLabel());
@@ -631,30 +628,42 @@
     var avatarInitials = ctx.avatarInitials || '?';
     var avatarUrl = ctx.avatarUrl || '';
 
-    var menuHtml = '';
-    if (isClient) {
-      menuHtml += '<a class="mdj-menu-item" href="./client-billing.html">' + mdjEscapeHtml(mdjGetBillingMenuLabel()) + '</a>';
-      menuHtml +=
-        '<a class="mdj-menu-item" href="./account-settings.html">' + mdjEscapeHtml(mdjGetAccountSettingsLabel()) + '</a>';
-    }
-    if (showDjDash) {
-      menuHtml += '<a class="mdj-menu-item" href="./dj-dashboard.html">' + mdjEscapeHtml(mdjGetDjDashboardMenuLabel()) + '</a>';
-    }
-    if (artistPublicProfileUrl) {
-      menuHtml +=
-        '<a class="mdj-menu-item" href="' +
-        mdjEscapeAttr(artistPublicProfileUrl) +
-        '">' +
-        mdjEscapeHtml(mdjGetArtistPublicProfileMenuLabel()) +
-        '</a>';
-    }
-    menuHtml += '<button type="button" class="mdj-menu-item mdj-menu-logout">' + mdjEscapeHtml(mdjGetLogoutLabel()) + '</button>';
-
     var avatarSlotHtml = mdjBuildAvatarSlotHtml({
       useAvatarInitials: useAvatarInitials,
       avatarInitials: avatarInitials,
       avatarUrl: avatarUrl
     });
+
+    /* Artista: un solo enlace al panel — sin dropdown, sin botón ▾, sin submenús. */
+    if (!isClient) {
+      var artistInner =
+        '<a class="mdj-account-vip-trigger mdj-account-vip-direct mdj-account-vip-artist-dash" id="accountBtn" href="' +
+        mdjEscapeAttr(profileUrl) +
+        '" title="' +
+        mdjEscapeAttr(profileLabel) +
+        '">' +
+        avatarSlotHtml +
+        '<span class="mdj-account-display-name" id="mdjAccountDisplayName">' +
+        mdjEscapeHtml(displayName) +
+        '</span>' +
+        '</a>';
+      var rootA = document.getElementById('mdjAccountVipRoot');
+      if (rootA) {
+        rootA.className = 'mdj-account-vip mdj-account-vip--artist-link-only';
+        rootA.innerHTML = artistInner;
+      } else {
+        zone.innerHTML =
+          '<div class="mdj-account-vip mdj-account-vip--artist-link-only" id="mdjAccountVipRoot">' + artistInner + '</div>';
+      }
+      mdjBindHeaderAvatarImgFallbackOnce();
+      return;
+    }
+
+    var menuHtml = '';
+    menuHtml += '<a class="mdj-menu-item" href="./client-billing.html">' + mdjEscapeHtml(mdjGetBillingMenuLabel()) + '</a>';
+    menuHtml +=
+      '<a class="mdj-menu-item" href="./account-settings.html">' + mdjEscapeHtml(mdjGetAccountSettingsLabel()) + '</a>';
+    menuHtml += '<button type="button" class="mdj-menu-item mdj-menu-logout">' + mdjEscapeHtml(mdjGetLogoutLabel()) + '</button>';
 
     var vipShell =
       '<div class="mdj-account-vip-row">' +
@@ -678,12 +687,13 @@
 
     var root = document.getElementById('mdjAccountVipRoot');
     if (root) {
+      root.className = 'mdj-account-vip mdj-account-vip--client-menu';
       root.innerHTML = vipShell;
       mdjBindHeaderAvatarImgFallbackOnce();
       return;
     }
 
-    zone.innerHTML = '<div class="mdj-account-vip" id="mdjAccountVipRoot">' + vipShell + '</div>';
+    zone.innerHTML = '<div class="mdj-account-vip mdj-account-vip--client-menu" id="mdjAccountVipRoot">' + vipShell + '</div>';
     mdjBindHeaderAvatarImgFallbackOnce();
   }
 
@@ -965,12 +975,6 @@
             settingsLabel = mdjGetDjDashboardMenuLabel();
           }
 
-          var showDjDashboardRow =
-            !!(hasDjProfile && !isClient) && settingsUrl.indexOf('dj-dashboard.html') === -1;
-
-          var artistPublicMenuHref =
-            isArtistSession && uid && settingsUrl.indexOf('dj-dashboard.html') !== -1 ? publicProfileUrl : '';
-
           var miPortalHref = './client-portal.html';
           if (isClient) {
             miPortalHref = './client-portal.html';
@@ -987,10 +991,7 @@
             avatarInitials: avatarInitials,
             profileUrl: settingsUrl,
             profileLabel: settingsLabel,
-            isClient: isClient,
-            showDjDashboard: showDjDashboardRow,
-            hasDjProfile: hasDjProfile,
-            artistPublicProfileUrl: artistPublicMenuHref
+            isClient: isClient
           });
           if (hasRealPhoto && rawPhoto && typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
             window.mdjHeaderVipApplyPhotoUrl(String(rawPhoto).trim());
