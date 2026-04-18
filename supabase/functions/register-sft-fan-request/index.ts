@@ -156,6 +156,7 @@ serve(async (req) => {
       client_phone: phoneInsert,
       client_email: emailInsert,
       status: "pending",
+      /** Zelle/Venmo/PayPal manual rails: no inbound bank webhook here — reconciliation uses fan-entered handle + amount (ops / dashboard). */
       payment_channel: "manual",
     })
     .select("id")

@@ -3352,6 +3352,14 @@ document.addEventListener('click', async (e) => {
         return;
     }
 
+    // OPEN DJ / Performance (hub card — mismo contrato que el resto de categorías)
+    if (e.target.closest('[data-action="open-dj"]')) {
+        window.premiumTransition('talent-selector-modal', 'dj-modal', () => {
+            if (window.renderDjHero) window.renderDjHero('weddings', false);
+        });
+        return;
+    }
+
     // OPEN VISUALS
     if (e.target.closest('[data-action="open-visuals"]')) {
         window.activeCategory = 'visuals';
@@ -3976,9 +3984,14 @@ window.initTalentCarouselDragClickGuard = function () {
     carousel.addEventListener('pointerup', endPointer);
     carousel.addEventListener('pointercancel', endPointer);
 
-    /* Solo suprimir click tras arrastre real; no usar delta de scroll (rompe clics con carrusel infinito). */
+    /* Solo suprimir click tras arrastre real; no matar clics en tarjetas de categoría (.talent-cat-card). */
     carousel.addEventListener('click', (e) => {
         if (!moved) return;
+        const card = e.target && e.target.closest ? e.target.closest('.talent-cat-card[data-action]') : null;
+        if (card) {
+            moved = false;
+            return;
+        }
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();

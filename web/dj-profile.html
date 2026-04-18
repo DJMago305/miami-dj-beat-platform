@@ -6925,7 +6925,7 @@
                         <input type="tel" class="sft-input" id="sftClientPhone" placeholder="+1 …" autocomplete="tel">
                         <p style="font-size:10px; color:rgba(255,255,255,0.42); margin:8px 0 0 0; line-height:1.35;" data-i18n="sft-contact-privacy-hint">Solo Miami DJ Beat usa estos datos (comprobantes, SMS). El DJ no ve tu email ni tu número.</p>
                     </div>
-                    <button type="button" class="sft-submit" onclick="sftGoToStep2b()">Continuar: propina y pago →</button>
+                    <button type="button" class="sft-submit" id="sftContinueToPaymentStep" onclick="sftGoToStep2b()" style="display:none;" aria-hidden="true">Continuar: propina y pago →</button>
                     <div style="text-align:center; margin-top:15px;">
                         <button type="button" onclick="backToStep1()"
                             style="background:none; border:none; color:#888; font-size:12px; text-decoration:underline; cursor:pointer;">←
@@ -7214,6 +7214,17 @@
         function sftBackToStep2a() {
             var a = document.getElementById('sftStep2a');
             var b = document.getElementById('sftStep2b');
+            /* Vista unificada (2a+2b visibles): solo subir el foco al bloque de identificación */
+            if (soundForTipsAcceptingRequests() && a && b && a.style.display === 'block' && b.style.display === 'block') {
+                try {
+                    var cn = document.getElementById('sftClientName');
+                    if (cn) cn.focus();
+                } catch (eF) { void eF; }
+                try {
+                    a.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } catch (eS) { void eS; }
+                return;
+            }
             if (b) b.style.display = 'none';
             if (a) a.style.display = 'block';
             var sub = document.getElementById('sftSubtitle');
@@ -7468,7 +7479,21 @@
                     var s2a = document.getElementById('sftStep2a');
                     var s2b = document.getElementById('sftStep2b');
                     if (s2a) s2a.style.display = 'block';
-                    if (s2b) s2b.style.display = 'none';
+                    if (s2b) {
+                        if (soundForTipsAcceptingRequests()) {
+                            s2b.style.display = 'block';
+                            var banA = document.getElementById('sftEscrowBannerA');
+                            var banB = document.getElementById('sftEscrowBannerB');
+                            if (banA) {
+                                banA.style.display = 'block';
+                                banA.innerHTML = 'Completa <strong>tus datos</strong>, <strong>propina</strong> y <strong>método de pago</strong> en un solo paso; luego envía la petición.';
+                            }
+                            if (banB) banB.style.display = 'none';
+                            sftSyncPayInstructionPanel();
+                        } else {
+                            s2b.style.display = 'none';
+                        }
+                    }
                     var sub = document.getElementById('sftSubtitle');
                     if (sub) sub.innerText = sftT('sft-modal-subtitle-step2', 'SOUNDFORTIPS™ — request details.');
                 }
@@ -8830,8 +8855,26 @@
             document.getElementById('sftStep2').style.display = 'block';
             var s2a = document.getElementById('sftStep2a');
             var s2b = document.getElementById('sftStep2b');
-            if (s2a) s2a.style.display = 'block';
-            if (s2b) s2b.style.display = 'none';
+            var banA = document.getElementById('sftEscrowBannerA');
+            var banB = document.getElementById('sftEscrowBannerB');
+            if (soundForTipsAcceptingRequests()) {
+                if (s2a) s2a.style.display = 'block';
+                if (s2b) s2b.style.display = 'block';
+                if (banA) {
+                    banA.style.display = 'block';
+                    banA.innerHTML = 'Completa <strong>tus datos</strong>, <strong>propina</strong> y <strong>método de pago</strong> en un solo paso; luego envía la petición.';
+                }
+                if (banB) banB.style.display = 'none';
+                sftSyncPayInstructionPanel();
+            } else {
+                if (s2a) s2a.style.display = 'block';
+                if (s2b) s2b.style.display = 'none';
+                if (banA) {
+                    banA.style.display = 'block';
+                    banA.innerHTML = 'Paso 1 de 2: <strong>quién pide</strong>. Email y teléfono son opcionales; con uno basta para comprobantes o SMS.';
+                }
+                if (banB) banB.style.display = 'none';
+            }
             document.getElementById('sftSubtitle').innerText = sftT('sft-modal-subtitle-step2', 'SOUNDFORTIPS™ — request details.');
             sftSaveFanHoldDraft();
             sftUpdateOfflineHoldBanner();
@@ -8845,6 +8888,13 @@
             var s2b = document.getElementById('sftStep2b');
             if (s2a) s2a.style.display = 'block';
             if (s2b) s2b.style.display = 'none';
+            var banA = document.getElementById('sftEscrowBannerA');
+            var banB = document.getElementById('sftEscrowBannerB');
+            if (banA) {
+                banA.style.display = 'block';
+                banA.innerHTML = 'Paso 1 de 2: <strong>quién pide</strong>. Email y teléfono son opcionales; con uno basta para comprobantes o SMS.';
+            }
+            if (banB) banB.style.display = 'none';
             document.getElementById('sftSubtitle').innerText = sftT('sft-modal-subtitle-step1', 'Search your song and send your request.');
             sftSaveFanHoldDraft();
             sftUpdateOfflineHoldBanner();
@@ -8862,6 +8912,21 @@
             if (check) { check.innerText = '✔'; check.style.color = 'var(--gold)'; }
             sftSelectedPayment = method;
             sftSyncPayInstructionPanel();
+        }
+
+        /** Respuesta de functions.invoke (Edge): mensaje legible para el fan si falla el registro. */
+        function sftExtractRegisterError(inv) {
+            if (!inv) return sftT('sft-register-fail-generic', 'Could not save your request. Check your connection and try again.');
+            if (inv.error && inv.error.message) return inv.error.message;
+            var d = inv.data;
+            if (d && typeof d === 'object' && d.error) return String(d.error);
+            if (typeof d === 'string') {
+                try {
+                    var j = JSON.parse(d);
+                    if (j && j.error) return String(j.error);
+                } catch (eJ) { void eJ; }
+            }
+            return sftT('sft-register-fail-generic', 'Could not save your request. Check your connection and try again.');
         }
 
         function processSoundForTips() {
@@ -8966,10 +9031,11 @@
             setTimeout(async function sftSubmitAfterDelay() {
                 var djUid = window.currentProfileDJId;
                 var reqId = null;
+                var inv = null;
                 try {
                     var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
                     if (sb && djUid && activeRequestInfo.song) {
-                        var inv = await sb.functions.invoke('register-sft-fan-request', {
+                        inv = await sb.functions.invoke('register-sft-fan-request', {
                             body: {
                                 dj_user_id: djUid,
                                 sender_label: sender,
@@ -8986,6 +9052,25 @@
                     }
                 } catch (eReg) {
                     console.warn('[SFT register]', eReg);
+                }
+
+                if (!reqId && djUid && activeRequestInfo.song) {
+                    document.getElementById('sftSpinner').style.display = 'none';
+                    document.getElementById('sftSuccess').style.display = 'none';
+                    document.getElementById('sftStatusText').innerText = sftT('sft-register-fail-title', 'Request not saved');
+                    document.getElementById('sftStatusText').style.color = '#f87171';
+                    document.getElementById('sftSubText').innerHTML =
+                        sftExtractRegisterError(inv) +
+                        '<br><br><span style="color:#888;font-size:12px;line-height:1.4;">' +
+                        sftT(
+                            'sft-zelle-manual-note',
+                            'Zelle and other manual transfers are not confirmed by an automatic webhook: staff match your payment using the handle you entered. If this error persists, contact support with your tip amount and time.'
+                        ) +
+                        '</span>';
+                    document.getElementById('sftDoneBtn').style.display = 'inline-block';
+                    var upsErr = document.getElementById('sftUpsellBlock');
+                    if (upsErr) upsErr.style.display = 'none';
+                    return;
                 }
 
                 activeRequestInfo.serverRequestId = reqId;

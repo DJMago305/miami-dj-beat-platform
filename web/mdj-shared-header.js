@@ -121,7 +121,7 @@
     var l = document.createElement('link');
     l.id = 'mdj-header-vip-css';
     l.rel = 'stylesheet';
-    l.href = './mdj-header-vip.css?v=20260420-ARTIST-NO-DROPDOWN';
+    l.href = './mdj-header-vip.css?v=20260418-header-z2980';
     document.head.appendChild(l);
   }
 

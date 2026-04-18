@@ -360,3 +360,13 @@ a.mdj-account-vip-trigger.mdj-account-vip-direct {
     padding: 4px;
   }
 }
+
+/* Cabecera por encima de pestañas / capas de contenido (~1000–1200), por debajo de modales (.modal-overlay ~3000 en styles.css). */
+body.mdj-logged-in-header #mainHeader.header {
+  z-index: 2980 !important;
+}
+
+/* Evita stacking absurdo; el orden lo resuelve #mainHeader + .mdj-account-dropdown */
+body.mdj-logged-in-header #header-auth-zone {
+  z-index: auto;
+}
