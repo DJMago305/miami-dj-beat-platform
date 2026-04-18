@@ -1263,9 +1263,13 @@ Riesgo: romper carga del catálogo.
                 if (authZone) authZone.style.display = 'block';
 
                 const { data: dj } = await db.from('dj_profiles').select('photo_url').eq('user_id', session.user.id).single();
-                const avatar = document.querySelector('.avatar');
-                if (avatar && dj?.photo_url) {
-                    avatar.src = dj.photo_url;
+                if (dj?.photo_url) {
+                    if (typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
+                        window.mdjHeaderVipApplyPhotoUrl(dj.photo_url);
+                    } else {
+                        const avatar = document.querySelector('.avatar');
+                        if (avatar) avatar.src = dj.photo_url;
+                    }
                 }
             } catch (err) {
                 console.warn('syncHeaderUI failed:', err);
@@ -1342,7 +1346,9 @@ Riesgo: romper carga del catálogo.
     </script>
     <script src="./mdj-carousel-scroll-tick.js?v=20260417-ratchet-metal-v2"></script>
     <script src="./data/rentalsData.js?v=20260414-rental-mp4-under90mb"></script>
-    <script src="./js/rentals.js?v=20260417-simple-loop-v4"></script>
+    <script src="./subscription.js?v=20260422-find-dj-rank"></script>
+    <script src="./js/artists.js?v=20260418-hub-tier-v1"></script>
+    <script src="./js/rentals.js?v=20260418-artists-hub-v1"></script>
     <!-- ── MC MODAL ── -->
     <div id="mc-modal" class="modal-overlay modal-hidden">
         <div class="modal-content cinematic-hero-shell">

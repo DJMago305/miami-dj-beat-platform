@@ -14,6 +14,12 @@ if (typeof window.t !== 'function') {
   window.t = (key, fallback) => fallback;
 }
 
+try {
+  console.log('🚀 MDJ Debug: rentals.js bundle loaded');
+} catch (e) {
+  void e;
+}
+
 const t = (k, def) => (window.translations?.[window.i18n?.currentLang]?.[k]) || def;
 
 /** Hero/cinematic background videos: muted + loop + inline (autoplay policy). Call before load()/play() when swapping src. */
@@ -3983,20 +3989,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadRentalsData();
     mdjRentalsTryResumeCheckoutAfterAuth();
-    if (typeof window.initTalentSelectorInfiniteCarousel === 'function') {
-        window.initTalentSelectorInfiniteCarousel();
-    }
-    if (typeof window.mdjInjectTalentHubShortlistUi === 'function') {
-        window.mdjInjectTalentHubShortlistUi();
-    }
-    if (typeof window.mdjBindTalentHubWholeCardToggle === 'function') {
-        window.mdjBindTalentHubWholeCardToggle();
-    }
-    if (typeof window.initTalentSelectorShellHover === 'function') {
-        window.initTalentSelectorShellHover();
-    }
-    if (typeof window.initTalentCarouselDragClickGuard === 'function') {
-        window.initTalentCarouselDragClickGuard();
+
+    const runTalentHubChrome = () => {
+        if (typeof window.initTalentSelectorInfiniteCarousel === 'function') {
+            window.initTalentSelectorInfiniteCarousel();
+        }
+        if (typeof window.mdjInjectTalentHubShortlistUi === 'function') {
+            window.mdjInjectTalentHubShortlistUi();
+        }
+        if (typeof window.mdjBindTalentHubWholeCardToggle === 'function') {
+            window.mdjBindTalentHubWholeCardToggle();
+        }
+        if (typeof window.initTalentSelectorShellHover === 'function') {
+            window.initTalentSelectorShellHover();
+        }
+        if (typeof window.initTalentCarouselDragClickGuard === 'function') {
+            window.initTalentCarouselDragClickGuard();
+        }
+    };
+
+    if (window.MDJ_ARTISTS && typeof window.MDJ_ARTISTS.hydrateRentalsTalentHubCarousel === 'function') {
+        window.MDJ_ARTISTS.hydrateRentalsTalentHubCarousel().then(runTalentHubChrome).catch(() => runTalentHubChrome());
+    } else {
+        runTalentHubChrome();
     }
     if (window.mdjTalentCarouselLoadBound !== '1') {
         window.mdjTalentCarouselLoadBound = '1';

@@ -682,16 +682,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     authZone.style.pointerEvents = 'auto';
                 }
 
-                // Robust Avatar Sync (Live Fetch from user object)
+                // Robust Avatar Sync (Live Fetch from user object) — VIP slot + legacy .avatar
                 const targetUser = liveUser || session.user;
                 const sessionAvatar = targetUser?.user_metadata?.avatar_url;
+                const applyHeaderPhoto = (url) => {
+                    if (!url || !String(url).trim()) return;
+                    const u = String(url).trim();
+                    if (document.getElementById('mdjHeaderAvatarSlot') && typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
+                        window.mdjHeaderVipApplyPhotoUrl(u);
+                        return;
+                    }
+                    document.querySelectorAll('.avatar, #accountBtn .avatar, #mdjHeaderAvatarSlot img.mdj-header-vip-avatar').forEach(av => {
+                        if (av) av.src = u;
+                    });
+                };
                 if (sessionAvatar) {
-                    document.querySelectorAll('.avatar, #accountBtn .avatar').forEach(av => av.src = sessionAvatar);
+                    applyHeaderPhoto(sessionAvatar);
                 } else {
                     db.from('dj_profiles').select('photo_url').eq('user_id', session.user.id).maybeSingle().then(({ data }) => {
-                        if (data?.photo_url) {
-                            document.querySelectorAll('.avatar, #accountBtn .avatar').forEach(av => av.src = data.photo_url);
-                        }
+                        if (data?.photo_url) applyHeaderPhoto(data.photo_url);
                     }).catch(e => console.warn('[AUTH] Error loading avatar:', e.message));
                 }
                 }
@@ -742,6 +751,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (typeof window.updateAuthButtons === 'function') {
                 window.updateAuthButtons();
+            }
+            // mdj-shared-header owns VIP chrome (avatar ring, client loyalty pill): resync after auth.js hydration.
+            if (session && headerDelegated && typeof window.checkSessionForNav === 'function') {
+                void window.checkSessionForNav();
             }
         };
 
