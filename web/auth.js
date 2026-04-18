@@ -138,12 +138,27 @@ function mdjIsInvalidCredentialsError(err) {
  * Same contract as login.html buildPostAuthReturnUrl: ?redirect=party-planner&lead=… → ./party-planner.html?from_auth=1&…
  * Restricts redirect slug to safe filename stem (no path / open redirect).
  */
-function mdjBuildPostAuthReturnUrlFromQuery(search) {
+function mdjBuildPostAuthReturnUrlFromQuery(search, user) {
     try {
         const qp = new URLSearchParams(search || '');
         const raw = (qp.get('redirect') || '').trim();
         if (!raw) return null;
         if (!/^[a-z][a-z0-9_-]{0,80}$/i.test(raw)) return null;
+
+        /* Jobs: alta gratis (signup=free) sigue en jobs.html (#selection-screen); sesión talento existente → panel DJ. */
+        if (raw === 'jobs' && user) {
+            const signup = (qp.get('signup') || '').toLowerCase();
+            const isNewFreeJobsSignup = signup === 'free';
+            if (!isNewFreeJobsSignup) {
+                const ut = String(user.user_metadata?.user_type || '').toLowerCase();
+                const appR = String(user.app_metadata?.role || '').toLowerCase();
+                const isTalent = ut === 'talent' || ut === 'dj' || appR === 'artist';
+                if (isTalent) {
+                    return './dj-dashboard.html?from_auth=1&source=jobs';
+                }
+            }
+        }
+
         const lead = qp.get('lead');
         const eventType = qp.get('type');
         const ref = qp.get('ref');
@@ -167,6 +182,10 @@ function mdjBuildPostAuthReturnUrlFromQuery(search) {
     } catch (e) {
         return null;
     }
+}
+
+if (typeof window !== 'undefined') {
+    window.mdjBuildPostAuthReturnUrlFromQuery = mdjBuildPostAuthReturnUrlFromQuery;
 }
 
 function mdjAuthT(key, esFallback, enFallback) {
@@ -336,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
             targetUrl = './dj-profile.html?id=' + encodeURIComponent(user.id);
         }
 
-        const postAuthFromRedirect = mdjBuildPostAuthReturnUrlFromQuery(window.location.search);
+        const postAuthFromRedirect = mdjBuildPostAuthReturnUrlFromQuery(window.location.search, user);
         if (postAuthFromRedirect) {
             window.location.assign(postAuthFromRedirect);
             return;

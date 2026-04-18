@@ -330,7 +330,7 @@
     <script src="./translations.js?v=20260414-vip-identity"></script>
     <script src="./i18n.js?v=20260226-1"></script>
     <script src="./security-shield.js?v=20260305-1"></script>
-    <script src="./auth.js?v=20260414-MAC-DESKTOP-SYNC"></script>
+    <script src="./auth.js?v=20260418-jobs-talent-dashboard-redirect"></script>
 
     <script>
         (function syncReferralFromUrl() {
@@ -509,6 +509,8 @@
             }
 
             const qp = new URLSearchParams(window.location.search);
+            const signupForJobsFree = (qp.get('signup') || '').toLowerCase() === 'free' && redirect === 'jobs';
+
             function buildPostAuthReturnUrl() {
                 const lead = qp.get('lead');
                 const eventType = qp.get('type');
@@ -533,20 +535,28 @@
             }
 
             let navigated = false;
-            function goPostAuth() {
+            function goPostAuth(session) {
                 if (navigated) return;
+                if (!session || !session.user) return;
                 navigated = true;
+                if (redirect === 'jobs' && !signupForJobsFree && typeof window.mdjBuildPostAuthReturnUrlFromQuery === 'function') {
+                    var fromAuth = window.mdjBuildPostAuthReturnUrlFromQuery(window.location.search, session.user);
+                    if (fromAuth) {
+                        window.location.href = fromAuth;
+                        return;
+                    }
+                }
                 window.location.href = buildPostAuthReturnUrl();
             }
 
             db.auth.getSession().then(function (res) {
                 var sess = res && res.data && res.data.session;
-                if (sess) goPostAuth();
+                if (sess) goPostAuth(sess);
             });
 
             db.auth.onAuthStateChange(function (event, session) {
                 if (event === 'INITIAL_SESSION') return;
-                if (event === 'SIGNED_IN' && session) goPostAuth();
+                if (event === 'SIGNED_IN' && session) goPostAuth(session);
             });
         })(0);
     </script>
@@ -583,7 +593,7 @@
     </div>
 
     <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script src="./mdj-shared-header.js?v=20260414-MAC-DESKTOP-SYNC"></script>
+    <script src="./mdj-shared-header.js?v=20260418-avatar-client-row-fix"></script>
   <script src="./mdj-social-bar.js?v=20260414-MAC-DESKTOP-SYNC"></script>
 </body>
 

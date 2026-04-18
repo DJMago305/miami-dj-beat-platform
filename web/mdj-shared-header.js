@@ -343,14 +343,30 @@
     return e ? e.charAt(0).toUpperCase() : '?';
   }
 
+  /** Convierte rutas relativas de Storage (/storage/v1/…) en URL absoluta del proyecto. */
+  function mdjNormalizeAvatarStorageUrl(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return '';
+    if (/placeholder|dj-avatar-placeholder\.png/i.test(s)) return '';
+    if (/^https?:\/\//i.test(s) || s.indexOf('//') === 0 || s.indexOf('data:image/') === 0 || s.indexOf('blob:') === 0) {
+      return s;
+    }
+    if (s.indexOf('/') === 0 && s.indexOf('/storage/') === 0 && typeof window.MDB_SUPABASE_URL === 'string' && window.MDB_SUPABASE_URL) {
+      return String(window.MDB_SUPABASE_URL).replace(/\/$/, '') + s;
+    }
+    return s;
+  }
+
   function mdjIsRealPhotoUrl(url) {
     if (!url || !String(url).trim()) return false;
-    var u = String(url).trim();
+    var u = mdjNormalizeAvatarStorageUrl(url);
+    if (!u) return false;
     if (/placeholder|dj-avatar-placeholder\.png/i.test(u)) return false;
     return (
       /^https?:\/\//i.test(u) ||
       u.indexOf('//') === 0 ||
-      u.indexOf('data:image/') === 0
+      u.indexOf('data:image/') === 0 ||
+      u.indexOf('blob:') === 0
     );
   }
 
@@ -868,9 +884,10 @@
           var metaUtLower = metaUt ? String(metaUt).toLowerCase() : '';
           var appRoleLower = appRole ? String(appRole).toLowerCase() : '';
           var metadataSaysClient = metaUtLower === 'client' || appRoleLower === 'client';
+          /* jwtArtist: no forzar «cliente» solo por tener client_profiles (muchos artistas tienen ambas filas). */
           var isClient =
             (p && String(p.role || '').toLowerCase() === 'client') ||
-            (!p && hasClientRow) ||
+            (!p && hasClientRow && !jwtArtist) ||
             (!p && metadataSaysClient && !jwtArtist);
 
           var viewingOwnDjProfile = false;
@@ -906,7 +923,8 @@
           }
 
           var meta = session.user && session.user.user_metadata ? session.user.user_metadata : {};
-          var sessionAvatar = meta.avatar_url || meta.picture || meta.picture_url;
+          var sessionAvatar =
+            meta.avatar_url || meta.picture || meta.picture_url || meta.photo_url || meta.custom_avatar_url;
           var clientPic = '';
           if (clientRow) {
             clientPic = (clientRow.avatar_url || clientRow.photo_url || '').trim();
@@ -918,6 +936,7 @@
           } else {
             rawPhoto = mdjPickHeaderProfilePhotoUrl(isClient, p, sessionAvatar, clientPic);
           }
+          rawPhoto = mdjNormalizeAvatarStorageUrl(rawPhoto);
           var hasRealPhoto = mdjIsRealPhotoUrl(rawPhoto.split('?')[0]);
 
           var displayName = '';
