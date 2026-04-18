@@ -343,16 +343,28 @@
     return e ? e.charAt(0).toUpperCase() : '?';
   }
 
-  /** Convierte rutas relativas de Storage (/storage/v1/…) en URL absoluta del proyecto. */
+  /**
+   * URL pública para <img>: absoluta https o //; rutas Storage sin host → MDB_SUPABASE_URL.
+   * Acepta /storage/v1/… y storage/v1/… (sin slash inicial).
+   */
   function mdjNormalizeAvatarStorageUrl(raw) {
     var s = String(raw || '').trim();
     if (!s) return '';
     if (/placeholder|dj-avatar-placeholder\.png/i.test(s)) return '';
-    if (/^https?:\/\//i.test(s) || s.indexOf('//') === 0 || s.indexOf('data:image/') === 0 || s.indexOf('blob:') === 0) {
-      return s;
+    if (/^https?:\/\//i.test(s)) return s;
+    if (s.indexOf('//') === 0 && s.indexOf('http') !== 0) return s;
+    if (s.indexOf('data:image/') === 0 || s.indexOf('blob:') === 0) return s;
+    var baseUrl =
+      typeof window.MDB_SUPABASE_URL === 'string' && window.MDB_SUPABASE_URL
+        ? String(window.MDB_SUPABASE_URL).replace(/\/$/, '')
+        : '';
+    if (!baseUrl) return s;
+    if (s.indexOf('storage/v1') !== -1) {
+      var path = s.indexOf('/') === 0 ? s : '/' + s.replace(/^\/+/, '');
+      return baseUrl + path;
     }
-    if (s.indexOf('/') === 0 && s.indexOf('/storage/') === 0 && typeof window.MDB_SUPABASE_URL === 'string' && window.MDB_SUPABASE_URL) {
-      return String(window.MDB_SUPABASE_URL).replace(/\/$/, '') + s;
+    if (s.indexOf('/') === 0 && s.indexOf('/storage/') === 0) {
+      return baseUrl + s;
     }
     return s;
   }
@@ -379,6 +391,7 @@
     for (var i = 0; i < order.length; i++) {
       var c = order[i];
       if (!c) continue;
+      c = mdjNormalizeAvatarStorageUrl(c);
       var base = c.split('?')[0];
       if (mdjIsRealPhotoUrl(base)) return c;
     }
@@ -636,7 +649,7 @@
     var displayName = ctx.displayName || 'Member';
     var isClient = !!ctx.isClient;
     var profileUrl = ctx.profileUrl;
-    if (!profileUrl) profileUrl = isClient ? './client-portal.html' : './dj-dashboard.html';
+    if (!profileUrl) profileUrl = isClient ? './client-portal.html' : './dj-dashboard.html?tab=settings';
     var profileLabel =
       ctx.profileLabel ||
       (isClient ? mdjGetVipPortalMenuLabel() : mdjGetDjDashboardMenuLabel());
@@ -931,13 +944,21 @@
           }
           /* Artistas: si hay foto en dj_profiles, es la única fuente para el header (OAuth no pisa). Clientes: client_profiles + fallback. */
           var rawPhoto = '';
-          if (!isClient && p && p.photo_url && mdjIsRealPhotoUrl(String(p.photo_url).split('?')[0])) {
-            rawPhoto = String(p.photo_url).trim();
-          } else {
+          if (!isClient && p && p.photo_url) {
+            var candDj = mdjNormalizeAvatarStorageUrl(String(p.photo_url).trim());
+            if (mdjIsRealPhotoUrl(candDj.split('?')[0])) rawPhoto = candDj;
+          }
+          if (!rawPhoto) {
             rawPhoto = mdjPickHeaderProfilePhotoUrl(isClient, p, sessionAvatar, clientPic);
           }
           rawPhoto = mdjNormalizeAvatarStorageUrl(rawPhoto);
           var hasRealPhoto = mdjIsRealPhotoUrl(rawPhoto.split('?')[0]);
+          try {
+            console.log('📸 URL detectada para avatar:', rawPhoto || '(ninguna)', {
+              hasRealPhoto: hasRealPhoto,
+              isClient: isClient
+            });
+          } catch (eLog) { /* ignore */ }
 
           var displayName = '';
           if (isClient) {
@@ -990,7 +1011,8 @@
             settingsUrl = './client-portal.html';
             settingsLabel = mdjGetVipPortalMenuLabel();
           } else {
-            settingsUrl = './dj-dashboard.html';
+            /* ?tab=settings: el tab por defecto «dashboard» en la UI es «Agenda» (clima/eventos); CONFIG = panel de control. */
+            settingsUrl = './dj-dashboard.html?tab=settings';
             settingsLabel = mdjGetDjDashboardMenuLabel();
           }
 
@@ -998,7 +1020,7 @@
           if (isClient) {
             miPortalHref = './client-portal.html';
           } else if (hasDjProfile || isArtistSession) {
-            miPortalHref = './dj-dashboard.html';
+            miPortalHref = './dj-dashboard.html?tab=settings';
           } else {
             miPortalHref = settingsUrl;
           }
@@ -1015,6 +1037,12 @@
           if (hasRealPhoto && rawPhoto && typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
             window.mdjHeaderVipApplyPhotoUrl(String(rawPhoto).trim());
           }
+          try {
+            if (!isClient) {
+              var acbFix = document.getElementById('accountBtn');
+              if (acbFix) acbFix.setAttribute('href', settingsUrl);
+            }
+          } catch (eHref) { /* ignore */ }
 
           mdjApplyDjToolsNavForClientSession(isClient);
 
@@ -1238,4 +1266,5 @@
 
   /** `auth.js` delega ENTRAR/SALIR + zona VIP aquí para no pisar `data-auth-btn`. */
   window.__MDJ_HEADER_SESSION_OWNER = true;
+  window.mdjNormalizeAvatarStorageUrl = mdjNormalizeAvatarStorageUrl;
 })();

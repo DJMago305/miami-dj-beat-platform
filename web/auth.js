@@ -706,7 +706,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const sessionAvatar = targetUser?.user_metadata?.avatar_url;
                 const applyHeaderPhoto = (url) => {
                     if (!url || !String(url).trim()) return;
-                    const u = String(url).trim();
+                    let u = String(url).trim();
+                    if (typeof window.mdjNormalizeAvatarStorageUrl === 'function') {
+                        u = window.mdjNormalizeAvatarStorageUrl(u) || u;
+                    }
+                    try {
+                        console.log('📸 URL detectada para avatar:', u || '(ninguna)', { source: 'auth.js applyHeaderPhoto' });
+                    } catch (eL) { /* ignore */ }
                     if (document.getElementById('mdjHeaderAvatarSlot') && typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
                         window.mdjHeaderVipApplyPhotoUrl(u);
                         return;

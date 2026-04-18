@@ -2522,13 +2522,17 @@
 
                 (async function syncDjProfileHeaderLinks() {
                     const { data: pnav } = await db.from('dj_profiles').select('role').eq('user_id', session.user.id).maybeSingle();
-                    const dashUrl = pnav?.role === 'client' ? './client-portal.html' : './dj-dashboard.html';
+                    const dashUrl = pnav?.role === 'client' ? './client-portal.html' : './dj-dashboard.html?tab=settings';
                     const dash = document.getElementById('account-menu-dashboard');
                     if (dash) dash.href = dashUrl;
                     const navM = document.getElementById('nav-my-profile-mobile');
                     if (navM) {
                         navM.href = dashUrl;
                         navM.style.display = 'block';
+                    }
+                    const acctHdr = document.getElementById('accountBtn');
+                    if (acctHdr && pnav?.role !== 'client') {
+                        acctHdr.setAttribute('href', './dj-dashboard.html?tab=settings');
                     }
                     const hlbm = document.getElementById('header-login-btn-mobile');
                     if (hlbm) hlbm.style.display = 'none';
@@ -9447,7 +9451,7 @@
     <script src="./monetization.js?v=20260422-sft-math"></script>
 
     <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script src="./mdj-shared-header.js?v=20260418-avatar-client-row-fix"></script>
+    <script src="./mdj-shared-header.js?v=20260418-avatar-dash-settings-href"></script>
   <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
   <script src="./mdj-social-bar.js?v=20260414-MAC-DESKTOP-SYNC"></script>
 </body>
