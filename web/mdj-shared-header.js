@@ -350,6 +350,21 @@
     return /^https?:\/\//i.test(u) || u.indexOf('data:image/') === 0;
   }
 
+  /** Primera URL usable para el header; artistas: dj_profiles.photo_url antes que JWT (evita 404 OAuth → iniciales). */
+  function mdjPickHeaderProfilePhotoUrl(isClient, p, sessionAvatar, clientPic) {
+    var dj = p && p.photo_url ? String(p.photo_url).trim() : '';
+    var jwt = sessionAvatar ? String(sessionAvatar).trim() : '';
+    var cli = clientPic ? String(clientPic).trim() : '';
+    var order = isClient ? [cli, jwt, dj] : [dj, jwt, cli];
+    for (var i = 0; i < order.length; i++) {
+      var c = order[i];
+      if (!c) continue;
+      var base = c.split('?')[0];
+      if (mdjIsRealPhotoUrl(base)) return c;
+    }
+    return '';
+  }
+
   function mdjShowFamilyWelcomeToast() {
     if (document.getElementById('mdj-family-welcome-toast')) return;
     var msg = '¡Bienvenido a la familia de Miami DJ Beat! Es un honor tenerte aquí.';
@@ -840,21 +855,8 @@
           if (clientRow) {
             clientPic = (clientRow.avatar_url || clientRow.photo_url || '').trim();
           }
-          /* Cliente: client_profiles es fuente de verdad (JWT puede ir rezagado tras updateUser). */
-          var rawPhoto = '';
-          if (isClient) {
-            rawPhoto =
-              clientPic ||
-              (sessionAvatar && String(sessionAvatar).trim()) ||
-              (p && p.photo_url && String(p.photo_url).trim()) ||
-              '';
-          } else {
-            rawPhoto =
-              (sessionAvatar && String(sessionAvatar).trim()) ||
-              clientPic ||
-              (p && p.photo_url && String(p.photo_url).trim()) ||
-              '';
-          }
+          /* Misma jerarquía que el resumen de cuenta: clientes → client_profiles; artistas → dj_profiles.photo_url antes que OAuth JWT (si el JWT 404, el <img> cae a iniciales aunque Storage sea válido). */
+          var rawPhoto = mdjPickHeaderProfilePhotoUrl(isClient, p, sessionAvatar, clientPic);
           var hasRealPhoto = mdjIsRealPhotoUrl(rawPhoto.split('?')[0]);
 
           var displayName = '';

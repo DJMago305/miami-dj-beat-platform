@@ -3995,6 +3995,20 @@
                         img.src = av;
                     });
                 }
+                /* Header VIP: script inline corre antes que mdj-shared-header.js; reintentar hasta que exista el helper. */
+                (function mdjDashApplyHeaderVipPhoto(url) {
+                    if (!url) return;
+                    var tries = 0;
+                    function tick() {
+                        if (typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
+                            window.mdjHeaderVipApplyPhotoUrl(url);
+                            return;
+                        }
+                        tries += 1;
+                        if (tries < 80) setTimeout(tick, 40);
+                    }
+                    tick();
+                })(p && p.photo_url ? p.photo_url : av);
                 if (p && p.role !== 'client') {
                     document.querySelectorAll('#owner-tabs a[href*="dj-profile"]').forEach((a) => {
                         try {
@@ -4339,6 +4353,7 @@
             var headAv = document.getElementById('header-avatar-img');
             if (headAv) headAv.src = publicUrl + '?t=' + Date.now();
             document.querySelectorAll('#accountBtn .avatar').forEach(function (im) { im.src = publicUrl + '?t=' + Date.now(); });
+            if (typeof window.mdjHeaderVipApplyPhotoUrl === 'function') window.mdjHeaderVipApplyPhotoUrl(publicUrl);
             msg.style.display = 'block';
             msg.textContent = 'Foto guardada.';
             msg.style.color = '#22c55e';
@@ -4357,6 +4372,7 @@
             var headAv2 = document.getElementById('header-avatar-img');
             if (headAv2) headAv2.src = ph;
             document.querySelectorAll('#accountBtn .avatar').forEach(function (im) { im.src = ph; });
+            if (typeof window.checkSessionForNav === 'function') void window.checkSessionForNav();
             closeModal('m-photo');
         }
 
@@ -4779,14 +4795,30 @@
             setTextSummary('acct-email', session.user.email);
 
             // Inyección a la Vista Resumen (avatar + nombre artístico)
-            if (p.dj_name || p.stage_name || p.full_name) {
+            {
                 const headAv = document.getElementById('header-avatar-img');
                 const thumbAv = document.getElementById('acct-photo-thumb');
                 const mainAv = document.getElementById('acct-avatar');
-                if (headAv && p.photo_url) headAv.src = p.photo_url;
-                if (thumbAv && p.photo_url) thumbAv.src = p.photo_url;
-                if (mainAv && p.photo_url) mainAv.src = p.photo_url;
-
+                if (p.photo_url) {
+                    if (headAv) headAv.src = p.photo_url;
+                    if (thumbAv) thumbAv.src = p.photo_url;
+                    if (mainAv) mainAv.src = p.photo_url;
+                    (function mdjDashVipFromCfg(u) {
+                        if (!u) return;
+                        var n = 0;
+                        function t() {
+                            if (typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
+                                window.mdjHeaderVipApplyPhotoUrl(u);
+                                return;
+                            }
+                            n += 1;
+                            if (n < 80) setTimeout(t, 40);
+                        }
+                        t();
+                    })(p.photo_url);
+                }
+            }
+            if (p.dj_name || p.stage_name || p.full_name) {
                 const artistPublic = p.stage_name || p.dj_name;
                 setTextSummary('acct-show-djname', artistPublic || p.full_name);
                 setTextSummary('acct-name', artistPublic || p.full_name);
@@ -5673,7 +5705,7 @@
     </script>
 
     <script src="./header-smart-search.js?v=20260415-ADN-ULTIMATE-LAUNCH"></script>
-    <script src="./mdj-shared-header.js?v=20260414-MAC-DESKTOP-SYNC"></script>
+    <script src="./mdj-shared-header.js?v=20260418-photo-priority-vip"></script>
   <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
   <script src="./mdj-social-bar.js?v=20260414-MAC-DESKTOP-SYNC"></script>
 </body>
