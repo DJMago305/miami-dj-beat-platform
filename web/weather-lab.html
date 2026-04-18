@@ -3630,11 +3630,13 @@
             if (!file) { msg.style.display = 'block'; msg.textContent = 'Select a photo first.'; msg.style.color = '#ff5555'; return; }
             const { data: { user } } = await sb.auth.getUser();
             if (!user) return;
-            const ext = file.name.split('.').pop();
-            const path = `avatars/${user.id}.${ext}`;
-            const { error: upErr } = await sb.storage.from('dj-photos').upload(path, file, { upsert: true });
+            var ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+            if (!/^(jpe?g|png|webp)$/.test(ext)) ext = 'jpg';
+            const path = user.id + '/avatar.' + ext;
+            const { error: upErr } = await sb.storage.from('avatars').upload(path, file, { upsert: true, cacheControl: '3600' });
             if (upErr) { msg.style.display = 'block'; msg.textContent = 'Upload error: ' + upErr.message; msg.style.color = '#ff5555'; return; }
-            const { data: { publicUrl } } = sb.storage.from('dj-photos').getPublicUrl(path);
+            const pub = sb.storage.from('avatars').getPublicUrl(path);
+            const publicUrl = pub.data && pub.data.publicUrl ? pub.data.publicUrl : '';
             await sb.from('dj_profiles').update({ photo_url: publicUrl }).eq('user_id', user.id);
             // Update UI
             document.getElementById('acct-avatar').src = publicUrl + '?t=' + Date.now();

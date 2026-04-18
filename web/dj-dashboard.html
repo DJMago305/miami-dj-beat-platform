@@ -4269,8 +4269,9 @@
             }
             var ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
             if (ext === 'jpeg') ext = 'jpg';
-            var path = 'covers/' + user.id + '.' + ext;
-            var { error: upErr } = await sb.storage.from('dj-photos').upload(path, file, { upsert: true, contentType: file.type || undefined });
+            /* Bucket `avatars` + primer segmento = auth.uid() — alineado con account-settings / RLS (no dj-photos ni covers/uuid). */
+            var path = user.id + '/hero-cover.' + ext;
+            var { error: upErr } = await sb.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type || undefined, cacheControl: '3600' });
             if (upErr) {
                 if (msg) {
                     msg.textContent = 'Error al subir: ' + (upErr.message || 'storage');
@@ -4279,8 +4280,8 @@
                 input.value = '';
                 return;
             }
-            var pub = sb.storage.from('dj-photos').getPublicUrl(path);
-            var bgUrl = pub.data.publicUrl;
+            var pub = sb.storage.from('avatars').getPublicUrl(path);
+            var bgUrl = pub.data ? pub.data.publicUrl : '';
             var bgEl = document.getElementById('cfg-bg-url');
             if (bgEl) bgEl.value = bgUrl;
             var prev = document.getElementById('hero-cover-preview-img');
@@ -4335,18 +4336,28 @@
             }
             const { data: { user } } = await sb.auth.getUser();
             if (!user) return;
-            const ext = file.name.split('.').pop();
-            const path = `avatars/${user.id}.${ext}`;
-            const { error: upErr } = await sb.storage.from('dj-photos').upload(path, file, { upsert: true });
+            var ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+            if (!/^(jpe?g|png|webp)$/.test(ext)) ext = 'jpg';
+            /* Misma ruta que account-settings: {uid}/avatar.ext — políticas RLS de storage.objects exigen carpeta = auth.uid(). */
+            const path = user.id + '/avatar.' + ext;
+            const { error: upErr } = await sb.storage.from('avatars').upload(path, file, { upsert: true, cacheControl: '3600', contentType: file.type || undefined });
             if (upErr) {
                 msg.style.display = 'block';
                 msg.textContent = 'Error al subir: ' + upErr.message;
                 msg.style.color = '#ff5555';
                 return;
             }
-            const { data: { publicUrl } } = sb.storage.from('dj-photos').getPublicUrl(path);
+            const pub = sb.storage.from('avatars').getPublicUrl(path);
+            const publicUrl = pub.data && pub.data.publicUrl ? pub.data.publicUrl : '';
+            if (!publicUrl) {
+                msg.style.display = 'block';
+                msg.textContent = 'Subida OK pero no se obtuvo URL pública.';
+                msg.style.color = '#ff5555';
+                return;
+            }
             await sb.from('dj_profiles').update({ photo_url: publicUrl }).eq('user_id', user.id);
-            // Update UI
+            try { await sb.auth.refreshSession(); } catch (e) { void e; }
+            // Update UI (photo_url en dj_profiles = única fuente de verdad para header VIP)
             document.getElementById('acct-avatar').src = publicUrl + '?t=' + Date.now();
             document.getElementById('acct-photo-thumb').src = publicUrl + '?t=' + Date.now();
             document.getElementById('m-photo-preview').src = publicUrl + '?t=' + Date.now();
@@ -5705,7 +5716,7 @@
     </script>
 
     <script src="./header-smart-search.js?v=20260415-ADN-ULTIMATE-LAUNCH"></script>
-    <script src="./mdj-shared-header.js?v=20260418-photo-priority-vip"></script>
+    <script src="./mdj-shared-header.js?v=20260418-storage-avatars-rls"></script>
   <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
   <script src="./mdj-social-bar.js?v=20260414-MAC-DESKTOP-SYNC"></script>
 </body>

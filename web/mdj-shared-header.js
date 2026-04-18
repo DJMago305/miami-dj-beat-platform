@@ -855,8 +855,13 @@
           if (clientRow) {
             clientPic = (clientRow.avatar_url || clientRow.photo_url || '').trim();
           }
-          /* Misma jerarquía que el resumen de cuenta: clientes → client_profiles; artistas → dj_profiles.photo_url antes que OAuth JWT (si el JWT 404, el <img> cae a iniciales aunque Storage sea válido). */
-          var rawPhoto = mdjPickHeaderProfilePhotoUrl(isClient, p, sessionAvatar, clientPic);
+          /* Artistas: si hay foto en dj_profiles, es la única fuente para el header (OAuth no pisa). Clientes: client_profiles + fallback. */
+          var rawPhoto = '';
+          if (!isClient && p && p.photo_url && mdjIsRealPhotoUrl(String(p.photo_url).split('?')[0])) {
+            rawPhoto = String(p.photo_url).trim();
+          } else {
+            rawPhoto = mdjPickHeaderProfilePhotoUrl(isClient, p, sessionAvatar, clientPic);
+          }
           var hasRealPhoto = mdjIsRealPhotoUrl(rawPhoto.split('?')[0]);
 
           var displayName = '';
