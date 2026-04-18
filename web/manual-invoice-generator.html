@@ -73,18 +73,18 @@
 </head>
 <body class="mig-page notranslate">
   <p class="mig-banner no-print" style="border:2px solid rgba(197,160,89,0.6);">
-    <strong>Importante — editable y descargable:</strong> el archivo <code>invoice_template.jpg</code> en /assets es solo una <strong>imagen fija</strong> (no se puede rellenar ni bajar como PDF).
-    Para <strong>editar campos y descargar PDF</strong> usa <strong>esta misma página</strong> en el navegador:
+    <strong>Importante:</strong> el archivo <code>invoice_template.jpg</code> en /assets es solo una <strong>imagen fija</strong>.
+    Para <strong>factura rellena e imprimible</strong> usa el botón de abajo (se abre la plantilla oficial; PDF con <strong>Imprimir → Guardar como PDF</strong> del navegador):
     <a href="./manual-invoice-generator.html" style="color:var(--gold);font-weight:800;">manual-invoice-generator.html</a>
     (en producción: <code>/manual-invoice-generator.html</code>).
     Abre por <code>http://localhost</code> o tu dominio — no solo doble clic al JPG en el editor.
   </p>
   <p class="mig-banner no-print">
-    <strong>Sin tarjeta aquí.</strong> PDF o imprimir — teléfono, Zelle, etc. No conecta con Stripe.
+    <strong>Sin tarjeta aquí.</strong> Imprimir o guardar PDF desde el navegador — teléfono, Zelle, etc. No conecta con Stripe.
   </p>
   <div class="mig-toolbar no-print">
     <a href="./index.html" class="btn-pill">← Inicio</a>
-    <button type="button" class="btn primary" id="mig-btn-pdf" style="font-weight:900;">Descargar PDF (oficial)</button>
+    <button type="button" class="btn primary" id="mig-btn-pdf" style="font-weight:900;">Abrir factura imprimible</button>
     <button type="button" class="btn-pill" id="mig-btn-print">Imprimir / PDF del navegador</button>
   </div>
   <div class="mig-wrap">
@@ -100,7 +100,7 @@
       </div>
 
       <h2 class="mig-card-title">💰 Datos del cliente y servicio</h2>
-      <p class="mig-fine no-print">Completa los campos y pulsa <strong>Descargar PDF</strong> para obtener el mismo PDF que genera el portal (jsPDF). Opcional: imprimir desde el botón de impresión.</p>
+      <p class="mig-fine no-print">Completa los campos y pulsa <strong>Abrir factura imprimible</strong> — misma plantilla que el portal; PDF vía <strong>Imprimir / Guardar como PDF</strong> del navegador.</p>
 
       <div class="mig-form-block no-print">
         <h3>Cliente</h3>
@@ -237,8 +237,7 @@
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
-  <script src="./invoice-generator.js?v=20260417-manual-pdf-fix"></script>
+  <script src="./invoice-print-bridge.js?v=1"></script>
   <script>
     (function () {
       function parseMoney(v) {
@@ -288,26 +287,11 @@
       document.getElementById('mig-service-desc2').addEventListener('input', syncPreview);
       syncPreview();
 
-      function buildItems() {
-        var items = [];
-        var d1 = (document.getElementById('mig-service-desc').value || '').trim();
-        var p1 = parseMoney(document.getElementById('mig-service-price').value);
-        if (p1 > 0) {
-          items.push({ description: d1 || 'Servicios / rental — Miami DJ Beat', price: p1 });
-        }
-        var d2 = (document.getElementById('mig-service-desc2').value || '').trim();
-        var p2 = parseMoney(document.getElementById('mig-service-price2').value);
-        if (p2 > 0) {
-          items.push({ description: d2 || 'Línea adicional', price: p2 });
-        }
-        return items;
-      }
-
-      document.getElementById('mig-btn-pdf').addEventListener('click', async function () {
+      document.getElementById('mig-btn-pdf').addEventListener('click', function () {
         var st = document.getElementById('mig-pdf-status');
         st.textContent = '';
-        if (typeof window.generateInvoice !== 'function') {
-          st.textContent = 'Error: motor PDF no cargado. Recarga la página.';
+        if (typeof window.mdjOpenInvoicePrint !== 'function') {
+          st.textContent = 'Error: invoice-print-bridge no cargado. Recarga la página.';
           return;
         }
         var name = (document.getElementById('mig-client').value || '').trim();
@@ -318,35 +302,56 @@
         var billing = (document.getElementById('mig-client-billing').value || '').trim();
         var company = (document.getElementById('mig-renting-company').value || '').trim();
         var evName = (document.getElementById('mig-event-name').value || '').trim();
-        var sellerEin = (document.getElementById('mig-seller-ein').value || '').trim();
         var buyerTaxId = (document.getElementById('mig-buyer-tax-id').value || '').trim();
         var dep = parseMoney(document.getElementById('mig-deposit').value);
-        var taxRate = parseTaxRate();
-        var items = buildItems();
-        if (!items.length) {
+        var taxPctRaw = parseFloat(document.getElementById('mig-tax-pct').value);
+        var taxPct = isNaN(taxPctRaw) || taxPctRaw < 0 || taxPctRaw > 20 ? 7 : taxPctRaw;
+        var d1 = (document.getElementById('mig-service-desc').value || '').trim();
+        var p1 = parseMoney(document.getElementById('mig-service-price').value);
+        var d2 = (document.getElementById('mig-service-desc2').value || '').trim();
+        var p2 = parseMoney(document.getElementById('mig-service-price2').value);
+        var lines = [];
+        if (p1 > 0) {
+          lines.push({ desc: d1 || 'Servicios / rental — Miami DJ Beat', qty: 1, unit: p1 });
+        }
+        if (p2 > 0) {
+          lines.push({ desc: d2 || 'Línea adicional', qty: 1, unit: p2 });
+        }
+        if (!lines.length) {
           st.textContent = 'Pon un monto mayor que 0 en “Monto total (USD)” (la descripción puede ir vacía en urgencia).';
           return;
         }
-        st.textContent = 'Generando PDF…';
+        var billParts = [];
+        if (company) billParts.push(company);
+        if (name) billParts.push(name);
+        if (billing) billParts.push(billing);
+        if (email) billParts.push(email);
+        if (buyerTaxId) billParts.push('Tax ID: ' + buyerTaxId);
+        var eventParts = [];
+        if (evName) eventParts.push(evName);
+        if (venue) eventParts.push(venue);
+        var when = [date, evTime].filter(Boolean).join(' · ');
+        if (when) eventParts.push(when);
+        var notes =
+          'Thank you for your business. ' +
+          (dep > 0.009 ? 'Deposit recorded: $' + dep.toFixed(2) + '. ' : '') +
+          'For questions, reply by email.';
         try {
-          await window.generateInvoice(
-            {
-              name: name,
-              email: email || 'cliente@telefono.mdj.local',
-              client_company_name: company,
-              event_name: evName,
-              event_date: date || new Date().toISOString().slice(0, 10),
-              event_time: evTime,
-              event_location: venue,
-              client_billing_address: billing,
-              seller_ein: sellerEin,
-              tax_rate: taxRate
-            },
-            items,
-            dep,
-            buyerTaxId
-          );
-          st.textContent = 'PDF generado (descarga).';
+          window.mdjOpenInvoicePrint({
+            v: 1,
+            ref: '#MAN-' + Date.now().toString(36).toUpperCase().slice(-8),
+            dateStr: new Date().toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            }),
+            billTo: billParts.length ? billParts.join('\n') : 'Client',
+            eventLoc: eventParts.length ? eventParts.join('\n') : 'Event',
+            lines: lines,
+            taxPct: taxPct,
+            notes: notes,
+            sourceReturnUrl: './manual-invoice-generator.html'
+          });
         } catch (e) {
           st.textContent = String(e && e.message ? e.message : e);
         }

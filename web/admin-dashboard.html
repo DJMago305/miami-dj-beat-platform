@@ -614,10 +614,9 @@
         </footer>
 
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
         <script src="./supabase-config.js?v=20260226-1"></script>
         <script src="./subscription.js?v=20260422-find-dj-rank"></script>
-        <script src="./invoice-generator.js?v=20260417-template-classic"></script>
+        <script src="./invoice-print-bridge.js?v=1"></script>
         <script>
             async function loadAdminData() {
                 // Initialize Supabase client (lazy singleton — avoids CDN race condition)
@@ -1118,7 +1117,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             </div>
                             
                             <div style="margin-top:30px;">
-                                <button class="btn primary full" onclick="processInvoice('${id}')">Descargar PDF Oficial</button>
+                                <button class="btn primary full" onclick="processInvoice('${id}')">Abrir factura (imprimir / PDF)</button>
                             </div>
                         </div>
                     `;
@@ -1218,7 +1217,63 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         });
                     }
 
-                    await window.generateInvoice(lead, items, deposit);
+                    function adminBillTo(L) {
+                        var o = [];
+                        var company = (L.client_company_name || L.renting_company || L.company_name || '')
+                            .toString()
+                            .trim();
+                        var name = (L.full_name || L.name || L.client_name || L.contact_person || '')
+                            .toString()
+                            .trim();
+                        var bill = (L.client_billing_address || L.billing_address || '').toString().trim();
+                        if (company) o.push(company);
+                        if (name) o.push(name);
+                        if (bill) o.push(bill);
+                        var em = (L.email || L.client_contact || '').toString().trim();
+                        if (em) o.push(em);
+                        return o.length ? o.join('\n') : 'Client';
+                    }
+                    function adminEventLoc(L) {
+                        var evName = (L.event_name || L.event_title || L.event_type || '').toString().trim();
+                        var venue = (L.event_location || L.location || L.venue || '').toString().trim();
+                        var parts = [];
+                        if (evName) parts.push(evName);
+                        if (venue) parts.push(venue);
+                        var dt = (L.event_date != null ? String(L.event_date) : '').trim();
+                        if (dt) parts.push(dt);
+                        return parts.length ? parts.join('\n') : 'Event';
+                    }
+                    var saleLines = [];
+                    items.forEach(function (i) {
+                        var nm = (i.equip || 'Service').toString();
+                        var tot = parseFloat(i.total != null ? i.total : i.unit);
+                        if (isNaN(tot)) tot = 0;
+                        if (nm || tot !== 0) {
+                            saleLines.push({ desc: nm || 'Service', qty: 1, unit: tot });
+                        }
+                    });
+                    var notes =
+                        'Thank you for your business. ' +
+                        (deposit > 0.009 ? 'Deposit recorded: $' + deposit.toFixed(2) + '. ' : '') +
+                        'For questions, reply by email.';
+                    var invPayload = {
+                        v: 1,
+                        ref: '#INV-' + String(lead.id != null ? lead.id : 'admin').replace(/-/g, '').slice(0, 12),
+                        dateStr: new Date().toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        }),
+                        billTo: adminBillTo(lead),
+                        eventLoc: adminEventLoc(lead),
+                        lines: saleLines.length ? saleLines : [{ desc: 'Services', qty: 1, unit: grandTotal }],
+                        taxPct: 7,
+                        notes: notes,
+                        sourceReturnUrl: './admin-dashboard.html'
+                    };
+                    if (typeof window.mdjOpenInvoicePrint === 'function') {
+                        window.mdjOpenInvoicePrint(invPayload);
+                    }
                     document.getElementById('invoice-modal').remove();
                 };
 

@@ -124,9 +124,9 @@ var PORTAL_I18N_FB = {
         'portal-manager-stripe-link-copied': 'Payment link copied. Send it only to the client by a channel you already use with them. Never ask them to type card data in chat.',
         'portal-manager-stripe-link-prompt': 'Copy this link and send it to the client:',
         'portal-manager-stripe-link-fail': 'Could not create the payment link. Try again or use the automated flow from the client account.',
-        'portal-invoice-pdf-cta': 'Download invoice (PDF)',
-        'portal-invoice-pdf-error': 'Could not generate the PDF. Refresh the page and try again, or contact support.',
-        'portal-invoice-pdf-busy': 'Preparing PDF…'
+        'portal-invoice-pdf-cta': 'Open invoice (print / PDF)',
+        'portal-invoice-pdf-error': 'Could not open the invoice page. Refresh and try again, or contact support.',
+        'portal-invoice-pdf-busy': 'Opening…'
     },
     es: {
         'portal-welcome-recognized': '¡Hola, {name}!',
@@ -193,9 +193,9 @@ var PORTAL_I18N_FB = {
             'Enlace de pago copiado. Envíaselo solo al cliente por un canal que ya usen con él. Nunca pidas datos de tarjeta por chat.',
         'portal-manager-stripe-link-prompt': 'Copia este enlace y envíaselo al cliente:',
         'portal-manager-stripe-link-fail': 'No se pudo crear el enlace de pago. Reintenta o usa el flujo automático desde la cuenta del cliente.',
-        'portal-invoice-pdf-cta': 'Descargar factura (PDF)',
-        'portal-invoice-pdf-error': 'No se pudo generar el PDF. Actualiza la página e inténtalo de nuevo, o escribe a soporte.',
-        'portal-invoice-pdf-busy': 'Generando PDF…'
+        'portal-invoice-pdf-cta': 'Abrir factura (imprimir / PDF)',
+        'portal-invoice-pdf-error': 'No se pudo abrir la factura. Actualiza la página e inténtalo de nuevo, o escribe a soporte.',
+        'portal-invoice-pdf-busy': 'Abriendo…'
     }
 };
 
@@ -1384,7 +1384,7 @@ const PortalApp = {
 
         var oldInv = document.getElementById('btn-portal-invoice-pdf');
         if (oldInv) oldInv.remove();
-        if (total > 0.009 && typeof window.mdjGenerateManualInvoice === 'function') {
+        if (total > 0.009 && typeof window.mdjOpenInvoicePrint === 'function') {
             var invBtn = document.createElement('button');
             invBtn.type = 'button';
             invBtn.id = 'btn-portal-invoice-pdf';
@@ -1393,7 +1393,7 @@ const PortalApp = {
             invBtn.textContent = portalT('portal-invoice-pdf-cta');
             var self = this;
             invBtn.onclick = function () {
-                void self.downloadEventInvoicePdf();
+                void self.openNativeInvoicePrint();
             };
             var payHost = document.getElementById('portal-pay-cta-host');
             if (payHost && payHost.parentNode) {
@@ -1405,61 +1405,117 @@ const PortalApp = {
         this.updateReservationBonusBanner();
     },
 
-    /** Line items for `generateInvoice` / jsPDF — aligned with `computePortalCartTotals`. */
-    buildInvoiceLineItemsForPdf() {
+    /**
+     * Payload for native print invoice (invoice-template-print.html) — aligned with `computePortalCartTotals`.
+     * @param {{ includeReturnUrl?: boolean }} opts
+     */
+    buildInvoiceSalePayload(opts) {
+        opts = opts || {};
+        var L = this.currentLead || {};
+        var ft = this.computePortalCartTotals();
         var lines = [];
         (this.items || []).forEach(function (item) {
-            var lineTotal = (parseFloat(item.price) || 0) * (parseInt(item.qty, 10) || 1);
-            if (lineTotal <= 0) return;
-            var nm = (item.name || 'Service').toString();
-            if ((parseInt(item.qty, 10) || 1) > 1) nm += ' × ' + item.qty;
-            lines.push({ description: nm, price: lineTotal });
+            var q = parseInt(item.qty, 10) || 1;
+            var unit = parseFloat(item.price) || 0;
+            var lineTot = q * unit;
+            if (lineTot <= 0 && unit <= 0) return;
+            lines.push({ desc: (item.name || 'Service').toString(), qty: q, unit: unit });
         });
-        var ft = this.computePortalCartTotals();
         if (ft.discount > 0.009) {
-            lines.push({ description: 'Discounts & credits (MDJ)', price: -ft.discount });
+            lines.push({ desc: 'Discounts & credits (MDJ)', qty: 1, unit: -ft.discount });
         }
-        if (lines.length === 0 && this.currentLead) {
-            var tot = parseFloat(this.currentLead.total_amount) || 0;
-            if (tot > 0.009) {
-                lines.push({
-                    description: 'Event services (contract total per portal)',
-                    price: tot / 1.07
-                });
+        if (lines.length === 0) {
+            var subPre = Math.max(0, ft.sub - ft.discount);
+            if (subPre > 0.009) {
+                lines.push({ desc: 'Event services (per contract)', qty: 1, unit: subPre });
             }
         }
-        return lines;
+        var idStr = L.id != null ? String(L.id) : 'pending';
+        var ref = '#INV-' + idStr.replace(/-/g, '').slice(0, 12);
+        var dateStr = new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        function billBlock(lead) {
+            var o = [];
+            var company = (lead.client_company_name || lead.renting_company || lead.company_name || '')
+                .toString()
+                .trim();
+            var name = (lead.name || lead.full_name || lead.contact_person || lead.client_name || '')
+                .toString()
+                .trim();
+            var bill = (
+                lead.client_billing_address ||
+                lead.billing_address ||
+                lead.client_address ||
+                ''
+            )
+                .toString()
+                .trim();
+            if (company) o.push(company);
+            if (name) o.push(name);
+            if (bill) o.push(bill);
+            var em = (lead.email || lead.client_contact || '').toString().trim();
+            if (em) o.push(em);
+            return o.length ? o.join('\n') : 'Client';
+        }
+        function eventBlock(lead) {
+            var evName = (
+                lead.event_name ||
+                lead.event_title ||
+                lead.job_name ||
+                lead.event_type ||
+                ''
+            )
+                .toString()
+                .trim();
+            var venue = (
+                lead.event_location ||
+                lead.location ||
+                lead.venue ||
+                lead.venue_address ||
+                ''
+            )
+                .toString()
+                .trim();
+            var parts = [];
+            if (evName) parts.push(evName);
+            if (venue) parts.push(venue);
+            var dt = (lead.event_date != null ? String(lead.event_date) : '').trim();
+            var tm = (lead.event_time || lead.event_start_time || lead.start_time || '').toString().trim();
+            var when = [dt, tm].filter(Boolean).join(' · ');
+            if (when) parts.push(when);
+            return parts.length ? parts.join('\n') : 'Event';
+        }
+
+        var payload = {
+            v: 1,
+            ref: ref,
+            dateStr: dateStr,
+            billTo: billBlock(L),
+            eventLoc: eventBlock(L),
+            lines: lines,
+            taxPct: 7,
+            notes:
+                'Thank you for your business. This document is a record of the transaction. For questions, reply by email.'
+        };
+        if (opts.includeReturnUrl && L.id) {
+            payload.sourceReturnUrl = './client-portal.html?lead=' + encodeURIComponent(L.id);
+        }
+        return payload;
     },
 
-    async downloadEventInvoicePdf() {
+    openNativeInvoicePrint() {
         if (!this.currentLead) return;
-        if (typeof window.mdjGenerateManualInvoice !== 'function') {
+        if (typeof window.mdjOpenInvoicePrint !== 'function') {
             try {
-                alert(portalT('portal-invoice-pdf-error'));
+                window.location.href = './invoice-template-print.html';
             } catch (e) { /* ignore */ }
             return;
         }
-        var btn = document.getElementById('btn-portal-invoice-pdf');
-        var prev = btn ? btn.textContent : '';
-        if (btn) {
-            btn.disabled = true;
-            btn.textContent = portalT('portal-invoice-pdf-busy');
-        }
-        try {
-            var paid = parseFloat(this.currentLead.balance_paid) || 0;
-            var items = this.buildInvoiceLineItemsForPdf();
-            await window.mdjGenerateManualInvoice(this.currentLead, items, paid, '');
-        } catch (e) {
-            console.error('downloadEventInvoicePdf', e);
-            try {
-                alert(portalT('portal-invoice-pdf-error'));
-            } catch (e2) { /* ignore */ }
-        } finally {
-            if (btn) {
-                btn.disabled = false;
-                btn.textContent = prev || portalT('portal-invoice-pdf-cta');
-            }
-        }
+        window.mdjOpenInvoicePrint(this.buildInvoiceSalePayload({ includeReturnUrl: true }));
     },
 
     showStripePayButton(balance) {
@@ -1539,18 +1595,24 @@ const PortalApp = {
                 this.currentLead.balance_paid = newPaid;
             }
 
-            // Show success toast
+            this.updatePayments();
+
+            if (typeof window.mdjOpenInvoicePrint === 'function' && this.currentLead) {
+                try {
+                    window.mdjOpenInvoicePrint(
+                        this.buildInvoiceSalePayload({ includeReturnUrl: true })
+                    );
+                    return;
+                } catch (eR) {
+                    console.error('mdjOpenInvoicePrint', eR);
+                }
+            }
+
             const toast = document.createElement('div');
             toast.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#22c55e;color:#000;padding:16px 28px;border-radius:16px;font-weight:900;font-size:15px;z-index:99999;box-shadow:0 8px 32px rgba(34,197,94,0.4);text-align:center;';
             toast.innerHTML = '✅ ¡Pago recibido!<br><small style="font-weight:600;">Tu depósito ha sido procesado. ¡Tu evento está confirmado!</small>';
             document.body.appendChild(toast);
             setTimeout(() => { toast.style.transition = 'opacity 0.5s'; toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 6000);
-
-            this.updatePayments();
-            var self = this;
-            setTimeout(function () {
-                void self.downloadEventInvoicePdf();
-            }, 700);
         } else if (paymentStatus === 'cancelled') {
             const toast = document.createElement('div');
             toast.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#1a1a1a;border:1px solid rgba(197,160,89,0.4);color:#fff;padding:14px 28px;border-radius:16px;font-weight:700;font-size:14px;z-index:99999;';
@@ -2349,87 +2411,6 @@ const PortalApp = {
     showError(msg) {
         document.body.innerHTML = `<div style="padding: 100px; text-align:center;"><h2>${msg}</h2><a href="index.html">Volver al inicio</a></div>`;
     }
-};
-
-/**
- * PDF manual (manager): tolera leads sin metadatos completos; requiere jspdf + invoice-generator en la página.
- */
-window.mdjGenerateManualInvoice = async function (lead, items, depositAmount, taxId) {
-    var L = lead || {};
-    var nameStr = (L.name || L.full_name || L.contact_person || L.client_name || '').toString().trim();
-    var venueStr = (
-        L.event_location ||
-        L.venue ||
-        L.venue_address ||
-        L.event_address ||
-        L.location ||
-        ''
-    )
-        .toString()
-        .trim();
-    var timeStr = (L.event_time || L.event_start_time || L.start_time || '').toString().trim();
-    var billingStr = (
-        L.client_billing_address ||
-        L.billing_address ||
-        L.client_address ||
-        L.company_address ||
-        L.corporate_address ||
-        L.client_company_address ||
-        L.employer_address ||
-        ''
-    )
-        .toString()
-        .trim();
-    var taxR = parseFloat(L.tax_rate);
-    if (isNaN(taxR) || taxR < 0 || taxR > 0.5) taxR = 0.07;
-    var companyStr = (
-        L.client_company_name ||
-        L.renting_company ||
-        L.company_name ||
-        L.bill_to_company ||
-        ''
-    )
-        .toString()
-        .trim();
-    var eventNameStr = (L.event_name || L.event_title || L.job_name || '').toString().trim();
-    var sellerEinStr = (
-        L.seller_ein ||
-        L.mdj_ein ||
-        (typeof window !== 'undefined' && window.MDJ_INVOICE_SELLER_EIN) ||
-        ''
-    )
-        .toString()
-        .trim();
-    var safe = {
-        id: L.id != null ? L.id : 'pending',
-        name: nameStr,
-        client_company_name: companyStr,
-        email: (L.email && String(L.email).trim()) || 'pending@miamidjbeat.local',
-        event_type: (L.event_type && String(L.event_type)) || 'Event',
-        event_name: eventNameStr,
-        event_date: (L.event_date && String(L.event_date)) || new Date().toISOString().slice(0, 10),
-        event_time: timeStr,
-        event_location: venueStr,
-        location: venueStr || (L.location && String(L.location)) || 'Miami, FL',
-        client_billing_address: billingStr,
-        seller_ein: sellerEinStr,
-        tax_rate: taxR
-    };
-    if (typeof window.generateInvoice !== 'function') {
-        console.error('mdjGenerateManualInvoice: load invoice-generator.js + jspdf before client-portal.js');
-        try {
-            window.alert('Invoice PDF engine not loaded. Refresh the page.');
-        } catch (e) { /* ignore */ }
-        return;
-    }
-    var dep = Number(depositAmount);
-    if (isNaN(dep) || dep < 0) dep = 0;
-    await window.generateInvoice(
-        safe,
-        Array.isArray(items) ? items : [],
-        dep,
-        taxId != null && String(taxId).trim() !== '' ? String(taxId) : ''
-    );
 };
 
 document.addEventListener('DOMContentLoaded', () => PortalApp.init());

@@ -91,6 +91,12 @@
     .foot-classic .sum { width: 42%; min-width: 200px; margin-left: auto; font-family: system-ui, sans-serif; font-size: 13px; }
     .foot-classic .sum td { padding: 4px 0; border: none; }
     .foot-classic .sum .grand { font-size: 17px; font-weight: 700; border-top: 1px solid #1a1a1a; padding-top: 10px; }
+    .inv-toolbar { text-align: center; padding: 12px 16px 0; }
+    .inv-toolbar .inv-print-btn {
+      cursor: pointer; padding: 10px 24px; font-weight: 600; font-size: 12px;
+      background: #1a1a1a; color: #fff; border: 1px solid #000; font-family: system-ui, sans-serif;
+    }
+    .inv-toolbar .inv-back-link { margin-left: 16px; font-size: 13px; color: #1a1a1a; }
     @page { size: A4; margin: 10mm; }
     @media print {
       html, body { background: #fff; }
@@ -101,11 +107,15 @@
         page-break-after: auto;
       }
       .bill-ship-grid { break-inside: avoid; }
-      .no-print-tpl, .tpl-add { display: none; }
+      .inv-toolbar, .no-print-tpl, .tpl-add { display: none !important; }
     }
   </style>
 </head>
 <body>
+  <div class="inv-toolbar">
+    <button type="button" class="inv-print-btn" onclick="window.print()">Print / Save PDF</button>
+    <a class="inv-back-link" id="inv-back-link" href="./client-portal.html" style="display:none;">← Back</a>
+  </div>
   <div class="page-wrap">
     <div class="sheet">
 
@@ -127,9 +137,9 @@
         </div>
         <div class="meta-col">
           <div class="inv-label">Invoice</div>
-          <p>
-            <strong>Ref.</strong> #AX-0001<br>
-            <strong>Date</strong> April 17, 2026
+          <p id="inv-meta-block">
+            <strong>Ref.</strong> <span id="inv-meta-ref">#AX-0001</span><br>
+            <strong>Date</strong> <span id="inv-meta-date">April 17, 2026</span>
           </p>
         </div>
       </div>
@@ -137,14 +147,14 @@
       <div class="bill-ship-grid">
         <div>
           <h4>Bill to — client / billing address</h4>
-          <div class="addr">
+          <div class="addr" id="bill-to-addr">
             Client or company name<br>
             Street, city, state, ZIP
           </div>
         </div>
         <div>
           <h4>Event / service location</h4>
-          <div class="addr">
+          <div class="addr" id="event-addr">
             Event name<br>
             Venue address where the service is provided
           </div>
@@ -176,7 +186,7 @@
       <div class="foot-classic">
         <div>
           <h4>Terms &amp; notes</h4>
-          <p class="notes">Thank you for your business. This document is a record of the transaction. For questions, reply by email.</p>
+          <p class="notes" id="inv-notes">Thank you for your business. This document is a record of the transaction. For questions, reply by email.</p>
           <p class="no-print-tpl" style="margin-top:10px;">
             <label for="tpl-tax-pct">Tax %</label>
             <input type="number" id="tpl-tax-pct" value="7" min="0" max="30" step="0.1" style="width:52px;margin-left:6px;padding:4px;" />
@@ -190,8 +200,10 @@
       </div>
     </div>
   </div>
+  <script src="./invoice-print-bridge.js?v=1"></script>
   <script>
 (function () {
+  var KEY = window.MDJ_INVOICE_SALE_STORAGE_KEY || 'mdj_invoice_sale_v1';
   var tbody = document.getElementById('tpl-lines');
   var taxIn = document.getElementById('tpl-tax-pct');
   function money(n) {
@@ -200,7 +212,7 @@
     if (s.indexOf(',') >= 0 && s.indexOf('.') >= 0) s = s.replace(/\./g, '').replace(',', '.');
     else s = s.replace(/,/g, '.');
     var x = parseFloat(s);
-    return isNaN(x) || x < 0 ? 0 : x;
+    return isNaN(x) ? 0 : x;
   }
   function fmt(v) { return '$' + (Math.round(v * 100) / 100).toFixed(2); }
   function rate() {
@@ -246,7 +258,67 @@
     });
     return tr;
   }
-  tbody.appendChild(row('Professional service', 1, 0));
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+  function nlToBr(text) {
+    return escHtml(text).replace(/\n/g, '<br>');
+  }
+
+  var hydrated = false;
+  try {
+    var raw = sessionStorage.getItem(KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && p.v === 1) {
+        var refEl = document.getElementById('inv-meta-ref');
+        var dateEl = document.getElementById('inv-meta-date');
+        var billEl = document.getElementById('bill-to-addr');
+        var evEl = document.getElementById('event-addr');
+        var notesEl = document.getElementById('inv-notes');
+        var back = document.getElementById('inv-back-link');
+        if (refEl) refEl.textContent = p.ref != null ? String(p.ref) : '—';
+        if (dateEl) dateEl.textContent = p.dateStr != null ? String(p.dateStr) : '—';
+        if (billEl) billEl.innerHTML = p.billTo ? nlToBr(p.billTo) : '—';
+        if (evEl) evEl.innerHTML = p.eventLoc ? nlToBr(p.eventLoc) : '—';
+        if (notesEl && p.notes) notesEl.textContent = String(p.notes);
+        if (back && p.sourceReturnUrl) {
+          back.style.display = 'inline';
+          back.setAttribute('href', p.sourceReturnUrl);
+        }
+        if (taxIn && p.taxPct != null && !isNaN(parseFloat(p.taxPct))) {
+          taxIn.value = String(p.taxPct);
+        }
+        if (Array.isArray(p.lines) && p.lines.length) {
+          tbody.innerHTML = '';
+          p.lines.forEach(function (L) {
+            var dd = L.desc != null ? String(L.desc) : '';
+            var q = L.qty != null ? parseInt(L.qty, 10) : 1;
+            var u = L.unit != null ? parseFloat(L.unit) : 0;
+            if (isNaN(q) || q < 0) q = 1;
+            if (isNaN(u)) u = 0;
+            tbody.appendChild(row(dd, q, u));
+          });
+          hydrated = true;
+        }
+        if (hydrated) {
+          try {
+            sessionStorage.removeItem(KEY);
+          } catch (eRm) { /* ignore */ }
+        }
+      }
+    }
+  } catch (eH) {
+    console.warn('[invoice-template-print] hydrate', eH);
+  }
+
+  if (!hydrated) {
+    tbody.appendChild(row('Professional service', 1, 0));
+  }
   if (document.getElementById('tpl-add-row')) {
     document.getElementById('tpl-add-row').addEventListener('click', function () {
       tbody.appendChild(row('', 1, 0));
