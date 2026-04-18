@@ -347,7 +347,11 @@
     if (!url || !String(url).trim()) return false;
     var u = String(url).trim();
     if (/placeholder|dj-avatar-placeholder\.png/i.test(u)) return false;
-    return /^https?:\/\//i.test(u) || u.indexOf('data:image/') === 0;
+    return (
+      /^https?:\/\//i.test(u) ||
+      u.indexOf('//') === 0 ||
+      u.indexOf('data:image/') === 0
+    );
   }
 
   /** Primera URL usable para el header; artistas: dj_profiles.photo_url antes que JWT (evita 404 OAuth → iniciales). */

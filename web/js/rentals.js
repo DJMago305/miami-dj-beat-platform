@@ -3738,6 +3738,14 @@ window.mdjEnsureTalentHubInfiniteOnOpen = function () {
             if (typeof window.mdjTalentSelectorInfiniteApplyRetry === 'function') {
                 window.mdjTalentSelectorInfiniteApplyRetry(0);
             }
+            setTimeout(function () {
+                if (typeof window.mdjTalentSelectorInfiniteApply === 'function') {
+                    window.mdjTalentSelectorInfiniteApply();
+                }
+                if (typeof window.mdjTalentSelectorInfiniteApplyRetry === 'function') {
+                    window.mdjTalentSelectorInfiniteApplyRetry(0);
+                }
+            }, 180);
         });
     });
 };

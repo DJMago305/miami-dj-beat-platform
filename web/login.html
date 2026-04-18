@@ -504,6 +504,9 @@
                 return;
             }
             if (!redirect) return;
+            if (!/^[a-z][a-z0-9_-]{0,80}$/i.test(String(redirect).trim())) {
+                return;
+            }
 
             const qp = new URLSearchParams(window.location.search);
             function buildPostAuthReturnUrl() {
