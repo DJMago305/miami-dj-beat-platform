@@ -121,7 +121,7 @@
     var l = document.createElement('link');
     l.id = 'mdj-header-vip-css';
     l.rel = 'stylesheet';
-    l.href = './mdj-header-vip.css?v=20260414-MAC-DESKTOP-SYNC';
+    l.href = './mdj-header-vip.css?v=20260418-AVATAR-FREEZE';
     document.head.appendChild(l);
   }
 

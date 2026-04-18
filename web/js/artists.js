@@ -95,9 +95,9 @@
     async function fetchPublicProfilesForHub(sb) {
         if (!sb || !sb.from) return [];
         var selFull =
-            'user_id, dj_slug, stage_name, photo_url, bio_short, city, roles, plan, plan_type, plan_status, plan_expires_at, is_premium, subscription_status, hourly_rate_usd, starting_price_usd, base_rate_usd, min_booking_usd, rate_floor_usd, booking_base_usd';
+            'user_id, dj_slug, stage_name, photo_url, bio_short, city, roles, artist_specialty, plan, plan_type, plan_status, plan_expires_at, is_premium, subscription_status, hourly_rate_usd, starting_price_usd, base_rate_usd, min_booking_usd, rate_floor_usd, booking_base_usd';
         var selMid =
-            'user_id, dj_slug, stage_name, photo_url, bio_short, city, roles, plan, plan_type, plan_status, plan_expires_at, is_premium, subscription_status';
+            'user_id, dj_slug, stage_name, photo_url, bio_short, city, roles, artist_specialty, plan, plan_type, plan_status, plan_expires_at, is_premium, subscription_status, hourly_rate_usd';
         var selMin = 'dj_slug, stage_name, photo_url, bio_short, city, roles, plan, plan_type, plan_status, plan_expires_at, is_premium, subscription_status';
 
         var res = await sb.from('public_dj_profiles').select(selFull).eq('available', true).limit(160);
@@ -232,10 +232,86 @@
             });
     }
 
+    /**
+     * Registro de artista: URL canónica (signup talent + redirect al dashboard).
+     */
+    function getArtistRegistrationUrl() {
+        return './login.html?signup=free&redirect=dj-dashboard';
+    }
+
+    /**
+     * Pro/Elite: la verdad de cobro sigue en Stripe/checkout; esto enlaza al flujo de planes en Jobs.
+     */
+    function getSubscriptionPlansUrl() {
+        return './jobs.html#selection-screen';
+    }
+
+    /**
+     * Guarda bio, especialidad, precio/hora en `public.dj_profiles` (sesión artista).
+     * `subscription_tier` solo guarda intención en sessionStorage; no activa cobro.
+     * @param sb Supabase client from getSupabaseClient()
+     * @param opts bio, bio_short, specialty, hourly_rate_usd, subscription_tier (intent only)
+     */
+    async function saveArtistOnboardingProfile(sb, opts) {
+        opts = opts || {};
+        if (!sb || !sb.auth) return { ok: false, error: 'no_client' };
+        var sessionRes = await sb.auth.getSession();
+        var session = sessionRes.data && sessionRes.data.session;
+        if (!session || !session.user) return { ok: false, error: 'no_session' };
+        var uid = session.user.id;
+
+        var tier = trimStr(opts.subscription_tier).toLowerCase();
+        if (tier === 'pro' || tier === 'elite') {
+            try {
+                sessionStorage.setItem('mdj_plan_intent', tier);
+            } catch (e) {
+                void e;
+            }
+        }
+
+        var patch = {};
+        if (opts.bio != null) patch.bio = trimStr(opts.bio) || null;
+        if (opts.bio_short != null) patch.bio_short = trimStr(opts.bio_short) || null;
+        var spec = trimStr(opts.specialty);
+        if (spec) {
+            patch.artist_specialty = spec;
+            patch.roles = spec;
+        }
+        if (opts.hourly_rate_usd != null && opts.hourly_rate_usd !== '') {
+            var n = Number(opts.hourly_rate_usd);
+            if (!isNaN(n) && n >= 0) patch.hourly_rate_usd = n;
+        }
+
+        if (Object.keys(patch).length === 0) return { ok: true, skipped: true };
+
+        var res = await sb.from('dj_profiles').update(patch).eq('user_id', uid).select('user_id');
+        if (!res.error) return { ok: true, data: res.data };
+
+        var fallback = {};
+        if (patch.bio != null) fallback.bio = patch.bio;
+        if (patch.bio_short != null) fallback.bio_short = patch.bio_short;
+        if (patch.roles != null) fallback.roles = patch.roles;
+        if (patch.hourly_rate_usd != null) fallback.hourly_rate_usd = patch.hourly_rate_usd;
+
+        var res2 = await sb.from('dj_profiles').update(fallback).eq('user_id', uid).select('user_id');
+        if (!res2.error) {
+            try {
+                console.warn('[MDJ_ARTISTS] saved without optional columns (run migration 20260418140000)');
+            } catch (e) {
+                void e;
+            }
+            return { ok: true, data: res2.data, partial: true };
+        }
+        return { ok: false, error: res2.error || res.error };
+    }
+
     global.MDJ_ARTISTS = {
         getSubscriptionTier: getSubscriptionTier,
         isProfileCompleteForRentalsHub: isProfileCompleteForRentalsHub,
         fetchPublicProfilesForHub: fetchPublicProfilesForHub,
-        hydrateRentalsTalentHubCarousel: hydrateRentalsTalentHubCarousel
+        hydrateRentalsTalentHubCarousel: hydrateRentalsTalentHubCarousel,
+        getArtistRegistrationUrl: getArtistRegistrationUrl,
+        getSubscriptionPlansUrl: getSubscriptionPlansUrl,
+        saveArtistOnboardingProfile: saveArtistOnboardingProfile
     };
 })(typeof window !== 'undefined' ? window : globalThis);

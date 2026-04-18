@@ -157,7 +157,23 @@ body.mdj-logged-in-header #mainHeader .header-actions .header-avatar-cart-row {
   outline: none;
 }
 
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * FROZEN — VIP header avatar (ring + img). Do not override from other modules.
+ * Touch only here when Captain/Architect approve. Centrado, borde dorado definido.
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+#mdjHeaderAvatarSlot.mdj-avatar-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+  vertical-align: middle;
+}
+
 .mdj-avatar-ring {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -169,18 +185,24 @@ body.mdj-logged-in-header #mainHeader .header-actions .header-avatar-cart-row {
   border-radius: 50%;
   padding: 2px;
   background: linear-gradient(145deg, rgba(197, 160, 89, 0.85), rgba(197, 160, 89, 0.2));
-  box-shadow: 0 0 0 1px rgba(197, 160, 89, 0.25) inset;
+  box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.25) inset,
+    0 0 0 1px rgba(197, 160, 89, 0.55);
 }
 
 .mdj-header-vip-avatar.avatar {
+  box-sizing: border-box;
   width: 40px !important;
   height: 40px !important;
   min-width: 40px !important;
   min-height: 40px !important;
   border-radius: 50% !important;
   object-fit: cover;
+  object-position: center center;
   display: block;
+  margin: 0 auto;
   border: none;
+  vertical-align: middle;
 }
 
 .mdj-avatar-ring--init {
