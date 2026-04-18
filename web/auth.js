@@ -752,7 +752,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof window.updateAuthButtons === 'function') {
                 window.updateAuthButtons();
             }
-            // mdj-shared-header owns VIP chrome (avatar ring, client loyalty pill): resync after auth.js hydration.
+            // mdj-shared-header owns VIP chrome + segregación portal/dashboard (no duplicar rutas de menú aquí).
             if (session && headerDelegated && typeof window.checkSessionForNav === 'function') {
                 void window.checkSessionForNav();
             }

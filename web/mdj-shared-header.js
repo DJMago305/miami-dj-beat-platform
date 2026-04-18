@@ -482,6 +482,40 @@
     return langP.indexOf('en') === 0 ? 'My profile' : 'Mi perfil';
   }
 
+  /** Primer ítem menú VIP (cliente): portal (no confundir con panel de artista). */
+  function mdjGetVipPortalMenuLabel() {
+    try {
+      if (window.i18n && typeof window.i18n.t === 'function') {
+        var t = window.i18n.t('header-mi-portal');
+        if (t) return t;
+      }
+    } catch (e1) { /* ignore */ }
+    var lang = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+    return lang.indexOf('en') === 0 ? 'My portal' : 'Mi portal';
+  }
+
+  function mdjGetDjDashboardMenuLabel() {
+    try {
+      if (window.i18n && typeof window.i18n.t === 'function') {
+        var td = window.i18n.t('dashboard-title');
+        if (td) return td;
+      }
+    } catch (e2) { /* ignore */ }
+    var lang2 = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+    return lang2.indexOf('en') === 0 ? 'DJ Dashboard' : 'Panel DJ';
+  }
+
+  function mdjGetArtistPublicProfileMenuLabel() {
+    try {
+      if (window.i18n && typeof window.i18n.t === 'function') {
+        var ta = window.i18n.t('jobs-after-roles-cta-artist-public');
+        if (ta) return ta;
+      }
+    } catch (e3) { /* ignore */ }
+    var lang3 = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+    return lang3.indexOf('en') === 0 ? 'Public profile' : 'Perfil público';
+  }
+
   function mdjGetLogoutLabel() {
     try {
       if (window.i18n && typeof window.i18n.t === 'function') {
@@ -542,7 +576,7 @@
   }
 
   /**
-   * Actualización instantánea del avatar VIP tras subir/guardar foto (account-settings), sin recargar.
+   * Actualización instantánea del avatar VIP tras subir/guardar foto (dashboard / cuenta), sin recargar.
    * Sustituye iniciales por <img> si hacía falta.
    */
   window.mdjHeaderVipApplyPhotoUrl = function (url) {
@@ -587,11 +621,12 @@
     var displayName = ctx.displayName || 'Member';
     var isClient = !!ctx.isClient;
     var profileUrl = ctx.profileUrl;
-    if (!profileUrl) profileUrl = isClient ? './account-settings.html' : './client-portal.html';
+    if (!profileUrl) profileUrl = isClient ? './client-portal.html' : './dj-dashboard.html';
     var showDjDash = !!ctx.showDjDashboard;
+    var artistPublicProfileUrl = ctx.artistPublicProfileUrl ? String(ctx.artistPublicProfileUrl).trim() : '';
     var profileLabel =
       ctx.profileLabel ||
-      (isClient ? mdjGetVipProfileShortcutLabel() : !ctx.hasDjProfile ? 'Mi cuenta' : 'Mi perfil');
+      (isClient ? mdjGetVipPortalMenuLabel() : !ctx.hasDjProfile ? 'Mi cuenta' : mdjGetDjDashboardMenuLabel());
     var useAvatarInitials = !!ctx.useAvatarInitials;
     var avatarInitials = ctx.avatarInitials || '?';
     var avatarUrl = ctx.avatarUrl || '';
@@ -600,13 +635,19 @@
     menuHtml += '<a id="accountBtn" class="mdj-menu-item mdj-menu-profile" href="' + mdjEscapeAttr(profileUrl) + '">' + mdjEscapeHtml(profileLabel) + '</a>';
     if (isClient) {
       menuHtml += '<a class="mdj-menu-item" href="./client-billing.html">' + mdjEscapeHtml(mdjGetBillingMenuLabel()) + '</a>';
+      menuHtml +=
+        '<a class="mdj-menu-item" href="./account-settings.html">' + mdjEscapeHtml(mdjGetAccountSettingsLabel()) + '</a>';
     }
     if (showDjDash) {
-      menuHtml += '<a class="mdj-menu-item" href="./dj-dashboard.html">DJ Dashboard</a>';
+      menuHtml += '<a class="mdj-menu-item" href="./dj-dashboard.html">' + mdjEscapeHtml(mdjGetDjDashboardMenuLabel()) + '</a>';
     }
-    /* Cliente: el primer ítem ya va a account-settings; no duplicar. */
-    if (!isClient) {
-      menuHtml += '<a class="mdj-menu-item" href="./account-settings.html">' + mdjEscapeHtml(mdjGetAccountSettingsLabel()) + '</a>';
+    if (artistPublicProfileUrl) {
+      menuHtml +=
+        '<a class="mdj-menu-item" href="' +
+        mdjEscapeAttr(artistPublicProfileUrl) +
+        '">' +
+        mdjEscapeHtml(mdjGetArtistPublicProfileMenuLabel()) +
+        '</a>';
     }
     menuHtml += '<button type="button" class="mdj-menu-item mdj-menu-logout">' + mdjEscapeHtml(mdjGetLogoutLabel()) + '</button>';
 
@@ -813,6 +854,7 @@
         try {
           var pr = await sb.from('dj_profiles').select('role, photo_url, dj_name, stage_name, username, plan_type, plan, plan_status, plan_expires_at, is_premium, hardware_token').eq('user_id', session.user.id).maybeSingle();
           var p = pr.data;
+          var djProfileErr = pr && pr.error ? pr.error : null;
           var clientRow = null;
           try {
             var cpr = await sb
@@ -833,6 +875,19 @@
             (p && String(p.role || '').toLowerCase() === 'client') ||
             (!p && hasClientRow) ||
             (!p && metadataSaysClient && !jwtArtist);
+
+          var viewingOwnDjProfile = false;
+          try {
+            var pathSeg = (window.location.pathname || '').split('/').pop() || '';
+            if (/^dj-profile\.html$/i.test(pathSeg) && session.user) {
+              var qidOwn = (new URLSearchParams(window.location.search || '').get('id') || '').trim();
+              viewingOwnDjProfile = qidOwn === session.user.id;
+            }
+          } catch (eOwn) { /* ignore */ }
+          if (viewingOwnDjProfile && jwtArtist) {
+            var roleDj = p && String(p.role || '').toLowerCase();
+            if (roleDj !== 'client') isClient = false;
+          }
           var isProUser = p && (
             p.is_premium === true
             || ['PRO', 'ELITE'].includes(p.plan)
@@ -906,33 +961,44 @@
           var useAvatarInitials = !hasRealPhoto;
 
           var uid = session.user && session.user.id;
-          var profileUrl;
-          var profileText;
-          if (isClient) {
-            profileUrl = './account-settings.html';
-            profileText = mdjGetVipProfileShortcutLabel();
-          } else if (!p && !jwtArtist) {
-            profileUrl = './account-settings.html';
-            profileText = 'Mi cuenta';
-          } else {
-            profileUrl = uid
-              ? './dj-profile.html?id=' + encodeURIComponent(uid)
-              : './dj-profile.html';
-            profileText = 'Mi perfil';
-          }
+          var publicProfileUrl = uid
+            ? './dj-profile.html?id=' + encodeURIComponent(uid)
+            : './dj-profile.html';
 
           var hasDjProfile = !!(p && String(p.role || '').toLowerCase() !== 'client');
-          var showDjDashboard = !!(hasDjProfile && !isClient);
+          var isArtistSession =
+            !isClient && (!!hasDjProfile || !!jwtArtist || (!!djProfileErr && !!jwtArtist));
+          var settingsUrl;
+          var settingsLabel;
+          if (isClient) {
+            settingsUrl = './client-portal.html';
+            settingsLabel = mdjGetVipPortalMenuLabel();
+          } else if (isArtistSession) {
+            settingsUrl = './dj-dashboard.html';
+            settingsLabel = mdjGetDjDashboardMenuLabel();
+          } else if (!p && !jwtArtist) {
+            settingsUrl = './account-settings.html';
+            settingsLabel = 'Mi cuenta';
+          } else {
+            settingsUrl = './dj-dashboard.html';
+            settingsLabel = mdjGetDjDashboardMenuLabel();
+          }
+
+          var showDjDashboardRow =
+            !!(hasDjProfile && !isClient) && settingsUrl.indexOf('dj-dashboard.html') === -1;
+
+          var artistPublicMenuHref =
+            isArtistSession && uid && settingsUrl.indexOf('dj-dashboard.html') !== -1 ? publicProfileUrl : '';
 
           var miPortalHref = './client-portal.html';
           if (isClient) {
             miPortalHref = './client-portal.html';
-          } else if (hasDjProfile) {
+          } else if (hasDjProfile || isArtistSession) {
             miPortalHref = './dj-dashboard.html';
           } else if (!p && !jwtArtist) {
             miPortalHref = './account-settings.html';
           } else {
-            miPortalHref = profileUrl;
+            miPortalHref = settingsUrl;
           }
 
           mdjMountOrUpdateVipAccountZone({
@@ -940,11 +1006,12 @@
             avatarUrl: hasRealPhoto ? String(rawPhoto).trim() : '',
             useAvatarInitials: useAvatarInitials,
             avatarInitials: avatarInitials,
-            profileUrl: profileUrl,
-            profileLabel: profileText,
+            profileUrl: settingsUrl,
+            profileLabel: settingsLabel,
             isClient: isClient,
-            showDjDashboard: showDjDashboard,
-            hasDjProfile: hasDjProfile
+            showDjDashboard: showDjDashboardRow,
+            hasDjProfile: hasDjProfile,
+            artistPublicProfileUrl: artistPublicMenuHref
           });
           if (hasRealPhoto && rawPhoto && typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
             window.mdjHeaderVipApplyPhotoUrl(String(rawPhoto).trim());
@@ -968,12 +1035,12 @@
 
           var navMobile = document.getElementById('nav-my-profile-mobile');
           if (navMobile) {
-            if (miPortalHref === profileUrl) {
+            if (miPortalHref === settingsUrl) {
               navMobile.style.display = 'none';
             } else {
               navMobile.style.display = 'block';
-              navMobile.href = profileUrl;
-              navMobile.textContent = profileText;
+              navMobile.href = isClient ? settingsUrl : publicProfileUrl;
+              navMobile.textContent = isClient ? settingsLabel : mdjGetArtistPublicProfileMenuLabel();
             }
           }
 
@@ -984,6 +1051,8 @@
               if (link.getAttribute('data-i18n') === 'menu-account') {
                 link.textContent = 'Mi Portal';
               }
+            } else if (isArtistSession) {
+              link.href = publicProfileUrl;
             } else if (!p && !jwtArtist) {
               link.href = './account-settings.html';
             }
@@ -991,7 +1060,7 @@
 
           var myProfileBtn = document.getElementById('nav-my-profile');
           if (myProfileBtn) {
-            myProfileBtn.href = profileUrl;
+            myProfileBtn.href = isClient ? './client-portal.html' : publicProfileUrl;
             myProfileBtn.style.display = 'inline-block';
           }
         } catch (e) {
