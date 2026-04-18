@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Invoice — printable template</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: #d8d6d2; font-family: Georgia, 'Times New Roman', Times, serif; color: #1a1a1a; }
+    .page-wrap { padding: 16px; max-width: 210mm; margin: 0 auto; }
+    .sheet {
+      width: 210mm; min-height: 0; margin: auto; padding: 48px 44px;
+      background: #fdfcfa; border: 1px solid #c4c4c4;
+      font-size: 13px; line-height: 1.55;
+      display: flex; flex-direction: column; justify-content: flex-start;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .head-row {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 36px; padding-bottom: 20px; border-bottom: 3px double #1a1a1a; gap: 20px;
+    }
+    .brand-col { width: 58%; display: flex; gap: 18px; align-items: flex-start; }
+    .brand-col img { max-width: 40%; height: auto; flex-shrink: 0; }
+    .contact-classic { margin: 0; font-size: 12px; color: #444; }
+    .contact-classic dt {
+      float: left; clear: left; width: 4.8rem;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 8px; font-weight: 600; letter-spacing: 0.14em;
+      text-transform: uppercase; color: #6a6a6a; padding-top: 2px;
+    }
+    .contact-classic dd { margin: 0 0 0.55rem 4.8rem; }
+    .meta-col { text-align: right; width: 38%; }
+    .meta-col .inv-label {
+      display: inline-block; border: 1px solid #1a1a1a; padding: 8px 14px;
+      font-family: system-ui, sans-serif; font-size: 10px; letter-spacing: 0.2em;
+      text-transform: uppercase; font-weight: 600; margin-bottom: 12px;
+    }
+    .meta-col p { font-size: 13px; color: #444; margin: 0; line-height: 1.6; }
+    .bill-ship-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 24px;
+      margin-bottom: 24px;
+      padding: 16px 18px;
+      border: 1px solid #c4c4c4;
+      background: rgba(255, 255, 255, 0.5);
+    }
+    .bill-ship-grid h4 {
+      margin: 0 0 8px 0;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #6a6a6a;
+      font-family: system-ui, sans-serif;
+      font-weight: 600;
+    }
+    .bill-ship-grid .addr {
+      font-size: 12px;
+      line-height: 1.55;
+      color: #1a1a1a;
+      min-height: 0;
+    }
+    table.inv { width: 100%; border-collapse: collapse; margin-top: 8px; font-family: system-ui, sans-serif; font-size: 12px; }
+    table.inv col.numc { min-width: 104px; }
+    table.inv th {
+      border-top: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a;
+      padding: 10px 8px; text-align: left; font-size: 10px; letter-spacing: 0.08em;
+      text-transform: uppercase; font-weight: 600;
+    }
+    table.inv th.num { text-align: right; }
+    table.inv th.ct { text-align: center; }
+    table.inv td { padding: 4px 8px; border-bottom: 1px solid #ccc; vertical-align: middle; }
+    table.inv input.tbl-in {
+      width: 100%; min-width: 3.5rem; border: none; padding: 8px 4px; font: 12px "Segoe UI", Calibri, sans-serif;
+      background: transparent; box-sizing: border-box; position: relative; z-index: 2;
+      pointer-events: auto; touch-action: manipulation;
+    }
+    table.inv input.tbl-in:focus { outline: 1px solid #217346; }
+    table.inv .line-amt { text-align: right; font-weight: 600; padding: 10px 8px; }
+    .no-print-tpl { font-size: 11px; margin: 8px 0 0; color: #555; }
+    .tpl-add { margin-top: 8px; padding: 6px 12px; font-size: 11px; cursor: pointer; }
+    .foot-classic {
+      margin-top: 1.75rem; padding: 24px; border: 1px solid #1a1a1a; background: #f7f6f3;
+      display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+    }
+    .foot-classic h4 {
+      margin: 0 0 8px 0; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: #6a6a6a; font-family: system-ui, sans-serif; font-weight: 600;
+    }
+    .foot-classic .notes { font-size: 11px; color: #555; font-style: italic; max-width: 48%; margin: 0; line-height: 1.5; }
+    .foot-classic .sum { width: 42%; min-width: 200px; margin-left: auto; font-family: system-ui, sans-serif; font-size: 13px; }
+    .foot-classic .sum td { padding: 4px 0; border: none; }
+    .foot-classic .sum .grand { font-size: 17px; font-weight: 700; border-top: 1px solid #1a1a1a; padding-top: 10px; }
+    @page { size: A4; margin: 10mm; }
+    @media print {
+      html, body { background: #fff; }
+      .page-wrap { padding: 0; max-width: none; }
+      .sheet {
+        border: none; box-shadow: none;
+        min-height: 0; height: auto; padding: 0;
+        page-break-after: auto;
+      }
+      .bill-ship-grid { break-inside: avoid; }
+      .no-print-tpl, .tpl-add { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+    <div class="sheet">
+
+      <div class="head-row">
+        <div class="brand-col">
+          <img src="./Branding%20Invoice.png" alt="Miami DJ Beat" width="200" />
+          <div style="min-width:0;">
+            <dl class="contact-classic">
+              <dt>Address</dt>
+              <dd>1005 W 77 St Apt 105<br>Hialeah, FL 33014, USA</dd>
+              <dt>Telephone</dt>
+              <dd>(305) 607-1780</dd>
+              <dt>Email</dt>
+              <dd>miamidjbeat@gmail.com</dd>
+              <dt>Web</dt>
+              <dd>www.miamidjbeat.com</dd>
+            </dl>
+          </div>
+        </div>
+        <div class="meta-col">
+          <div class="inv-label">Invoice</div>
+          <p>
+            <strong>Ref.</strong> #AX-0001<br>
+            <strong>Date</strong> April 17, 2026
+          </p>
+        </div>
+      </div>
+
+      <div class="bill-ship-grid">
+        <div>
+          <h4>Bill to — client / billing address</h4>
+          <div class="addr">
+            Client or company name<br>
+            Street, city, state, ZIP
+          </div>
+        </div>
+        <div>
+          <h4>Event / service location</h4>
+          <div class="addr">
+            Event name<br>
+            Venue address where the service is provided
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="no-print-tpl"><strong>Auto-calculate:</strong> edit Qty and Unit only. Amount, subtotal, tax, and total are computed automatically.</p>
+        <table class="inv">
+          <colgroup>
+            <col />
+            <col style="width:72px; min-width:64px;" />
+            <col class="numc" style="width:120px; min-width:104px;" />
+            <col class="numc" style="width:120px; min-width:104px;" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th class="ct">Qty</th>
+              <th class="num">Unit ($)</th>
+              <th class="num">Amount <span style="font-size:9px;color:#2e7d32;font-weight:700;">AUTO</span></th>
+            </tr>
+          </thead>
+          <tbody id="tpl-lines"></tbody>
+        </table>
+        <button type="button" class="tpl-add no-print-tpl" id="tpl-add-row">+ Add row</button>
+      </div>
+
+      <div class="foot-classic">
+        <div>
+          <h4>Terms &amp; notes</h4>
+          <p class="notes">Thank you for your business. This document is a record of the transaction. For questions, reply by email.</p>
+          <p class="no-print-tpl" style="margin-top:10px;">
+            <label for="tpl-tax-pct">Tax %</label>
+            <input type="number" id="tpl-tax-pct" value="7" min="0" max="30" step="0.1" style="width:52px;margin-left:6px;padding:4px;" />
+          </p>
+        </div>
+        <table class="sum" id="tpl-totals-live" role="status" aria-live="polite" aria-atomic="true" aria-label="Auto-calculated totals">
+          <tr><td style="color:#555;">Subtotal</td><td style="text-align:right;font-weight:600;" id="tpl-sub">$0.00</td></tr>
+          <tr><td style="color:#555;">Tax (<span id="tpl-tax-lbl">7</span>%)</td><td style="text-align:right;font-weight:600;" id="tpl-tax">$0.00</td></tr>
+          <tr class="grand"><td><strong>Total due</strong></td><td style="text-align:right;" id="tpl-total">$0.00</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <script>
+(function () {
+  var tbody = document.getElementById('tpl-lines');
+  var taxIn = document.getElementById('tpl-tax-pct');
+  function money(n) {
+    if (n == null || n === '') return 0;
+    var s = String(n).trim().replace(/\$/g, '').replace(/\s/g, '');
+    if (s.indexOf(',') >= 0 && s.indexOf('.') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+    else s = s.replace(/,/g, '.');
+    var x = parseFloat(s);
+    return isNaN(x) || x < 0 ? 0 : x;
+  }
+  function fmt(v) { return '$' + (Math.round(v * 100) / 100).toFixed(2); }
+  function rate() {
+    var v = taxIn ? parseFloat(taxIn.value) : 7;
+    if (isNaN(v) || v < 0) v = 7;
+    return v / 100;
+  }
+  function syncLbl() {
+    var v = taxIn ? parseFloat(taxIn.value) : 7;
+    if (isNaN(v) || v < 0) v = 7;
+    var el = document.getElementById('tpl-tax-lbl');
+    if (el) el.textContent = String(Math.round(v * 100) / 100);
+  }
+  function recalc() {
+    var sub = 0;
+    tbody.querySelectorAll('tr').forEach(function (tr) {
+      var q = money(tr.querySelector('.tpl-qty').value);
+      var u = money(tr.querySelector('.tpl-unit').value);
+      var line = q * u;
+      sub += line;
+      tr.querySelector('.tpl-amt').textContent = fmt(line);
+    });
+    syncLbl();
+    var tax = sub * rate();
+    document.getElementById('tpl-sub').textContent = fmt(sub);
+    document.getElementById('tpl-tax').textContent = fmt(tax);
+    document.getElementById('tpl-total').textContent = fmt(sub + tax);
+  }
+  function row(d, q, u) {
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><input type="text" class="tbl-in tpl-desc" value="' + String(d || '').replace(/"/g, '&quot;') + '" /></td>' +
+      '<td class="ct"><input type="number" class="tbl-in tpl-qty" min="0" step="1" value="' + (q != null ? q : 1) + '" /></td>' +
+      '<td class="num"><input type="text" class="tbl-in tpl-unit" inputmode="decimal" autocomplete="off" placeholder="0.00" value="' +
+      (u != null && u !== 0 ? String(u) : '') + '" aria-label="Unit price" /></td>' +
+      '<td class="num line-amt tpl-amt" title="Auto: Qty × Unit">' + fmt(0) + '</td>';
+    tr.querySelectorAll('.tpl-desc, .tpl-qty, .tpl-unit').forEach(function (inp) {
+      var go = function () { recalc(); };
+      inp.addEventListener('input', go);
+      inp.addEventListener('change', go);
+      inp.addEventListener('keyup', go);
+      inp.addEventListener('blur', go);
+    });
+    return tr;
+  }
+  tbody.appendChild(row('Professional service', 1, 0));
+  if (document.getElementById('tpl-add-row')) {
+    document.getElementById('tpl-add-row').addEventListener('click', function () {
+      tbody.appendChild(row('', 1, 0));
+      recalc();
+    });
+  }
+  if (taxIn) {
+    ['input', 'change', 'keyup', 'blur'].forEach(function (ev) {
+      taxIn.addEventListener(ev, recalc);
+    });
+  }
+  tbody.addEventListener('paste', function () { setTimeout(recalc, 0); });
+  recalc();
+})();
+  </script>
+</body>
+</html>

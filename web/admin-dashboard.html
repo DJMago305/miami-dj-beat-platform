@@ -617,7 +617,7 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
         <script src="./supabase-config.js?v=20260226-1"></script>
         <script src="./subscription.js?v=20260422-find-dj-rank"></script>
-        <script src="./invoice-generator.js"></script>
+        <script src="./invoice-generator.js?v=20260417-template-classic"></script>
         <script>
             async function loadAdminData() {
                 // Initialize Supabase client (lazy singleton — avoids CDN race condition)
@@ -1172,7 +1172,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     else console.log(`✅ CRM Actualizado: ${clientEmail} es ahora ${tierLevel} con historial de $${totalSpent}`);
                 };
 
-                window.processInvoice = (id) => {
+                window.processInvoice = async (id) => {
                     const lead = leads.find(l => l.id == id);
                     const itemRows = document.querySelectorAll('.item-row');
                     const deposit = parseFloat(document.getElementById('invoice-deposit').value) || 0;
@@ -1218,7 +1218,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         });
                     }
 
-                    window.generateInvoice(lead, items, deposit);
+                    await window.generateInvoice(lead, items, deposit);
                     document.getElementById('invoice-modal').remove();
                 };
 

@@ -1,184 +1,467 @@
 /**
- * Miami DJ Beat LLC - Professional Invoice Generator
- * Handles PDF creation with corporate branding, watermarks, and tabular layouts.
+ * Miami DJ Beat LLC — Invoice PDF (jsPDF)
+ * Layout aligned with web/assets/invoice_template.jpg — Bill To / Ship To, classic tables, FL tax.
  */
 
-window.generateInvoice = (leadData, items = [], depositAmount = 0, taxId = "N/A") => {
-    const { jsPDF } = window.jspdf;
+const MDJ_INVOICE_TAX_RATE = 0.07;
+
+const MDJ_INVOICE_COMPANY = {
+    legalName: 'Miami DJ Beat LLC',
+    tagline: 'ENTERTAINMENT & EVENTS CORPORATION',
+    addressLine1: '1005 W 77 St Apt 105',
+    addressLine2: 'Hialeah, FL 33014',
+    phone: '(305) 607-1780',
+    email: 'miamidjbeat@gmail.com',
+    web: 'www.miamidjbeat.com',
+    einDefault: ''
+};
+
+const MDJ_INVOICE_LOGO_URL = './Branding%20Invoice.png';
+
+function mdjFetchInvoiceLogoDataUrl() {
+    var cache = (window.mdjInvoiceLogoByUrl = window.mdjInvoiceLogoByUrl || {});
+    if (cache[MDJ_INVOICE_LOGO_URL]) return Promise.resolve(cache[MDJ_INVOICE_LOGO_URL]);
+    return fetch(MDJ_INVOICE_LOGO_URL, { cache: 'force-cache' })
+        .then(function (r) {
+            if (!r.ok) throw new Error('logo fetch');
+            return r.blob();
+        })
+        .then(function (blob) {
+            return new Promise(function (resolve, reject) {
+                var fr = new FileReader();
+                fr.onload = function () {
+                    cache[MDJ_INVOICE_LOGO_URL] = fr.result;
+                    resolve(fr.result);
+                };
+                fr.onerror = reject;
+                fr.readAsDataURL(blob);
+            });
+        });
+}
+
+function mdjResolveSellerEin(L) {
+    var raw = (
+        (L && L.seller_ein) ||
+        (L && L.mdj_ein) ||
+        (L && L.company_ein) ||
+        (typeof window !== 'undefined' && window.MDJ_INVOICE_SELLER_EIN) ||
+        MDJ_INVOICE_COMPANY.einDefault ||
+        ''
+    )
+        .toString()
+        .trim();
+    return raw;
+}
+
+function mdjInvoiceTaxColPercent(leadData) {
+    var r =
+        leadData && typeof leadData.tax_rate === 'number' && !isNaN(leadData.tax_rate)
+            ? leadData.tax_rate
+            : MDJ_INVOICE_TAX_RATE;
+    if (r < 0 || r > 0.5) r = MDJ_INVOICE_TAX_RATE;
+    return (Math.round(r * 1000) / 10) + '%';
+}
+
+function mdjNormalizeInvoiceItems(items, leadData) {
+    if (!Array.isArray(items) || items.length === 0) return [];
+    const ed = (leadData && leadData.event_date) || 'TBD';
+    const taxCol = mdjInvoiceTaxColPercent(leadData);
+    return items
+        .map(function (it) {
+            if (!it || typeof it !== 'object') return null;
+            if (it.description != null && (it.price != null || it.total != null)) {
+                const p = parseFloat(it.price != null ? it.price : it.total);
+                const num = isNaN(p) ? 0 : p;
+                return {
+                    equip: String(it.description),
+                    model: it.model != null ? String(it.model) : '—',
+                    date: it.date != null ? String(it.date) : ed,
+                    tracking: it.tracking != null ? String(it.tracking) : '—',
+                    tax: taxCol,
+                    unit: num,
+                    total: num
+                };
+            }
+            if (it.equip != null) {
+                const t = parseFloat(it.total != null ? it.total : it.unit);
+                const tot = isNaN(t) ? 0 : t;
+                return {
+                    equip: String(it.equip),
+                    model: it.model != null ? String(it.model) : '—',
+                    date: it.date != null ? String(it.date) : ed,
+                    tracking: it.tracking != null ? String(it.tracking) : '—',
+                    tax: it.tax != null ? String(it.tax) : taxCol,
+                    unit: parseFloat(it.unit) >= 0 && !isNaN(parseFloat(it.unit)) ? parseFloat(it.unit) : tot,
+                    total: tot
+                };
+            }
+            return null;
+        })
+        .filter(Boolean);
+}
+
+window.generateInvoice = async (leadData, items = [], depositAmount = 0, taxId = '') => {
+    const L = leadData && typeof leadData === 'object' ? leadData : {};
+    const C = MDJ_INVOICE_COMPANY;
+
+    const nameRaw = (L.name || L.full_name || L.contact_person || L.client_name || '').toString().trim();
+    const companyRaw = (
+        L.client_company_name ||
+        L.renting_company ||
+        L.company_name ||
+        L.bill_to_company ||
+        ''
+    )
+        .toString()
+        .trim();
+    const eventNameRaw = (L.event_name || L.event_title || L.job_name || L.event_type || '').toString().trim();
+
+    const venueRaw = (
+        L.event_location ||
+        L.venue ||
+        L.venue_address ||
+        L.event_address ||
+        L.service_location ||
+        L.location ||
+        ''
+    )
+        .toString()
+        .trim();
+
+    const billingRaw = (
+        L.client_billing_address ||
+        L.billing_address ||
+        L.client_address ||
+        L.company_address ||
+        L.corporate_address ||
+        L.client_company_address ||
+        L.employer_address ||
+        ''
+    )
+        .toString()
+        .trim();
+
+    const timeRaw = (L.event_time || L.event_start_time || L.start_time || '').toString().trim();
+    var taxRate = parseFloat(L.tax_rate);
+    if (isNaN(taxRate) || taxRate < 0 || taxRate > 0.5) taxRate = MDJ_INVOICE_TAX_RATE;
+
+    const sellerEin = mdjResolveSellerEin(L);
+    const invoiceDateStr =
+        (L.invoice_date && String(L.invoice_date).trim()) ||
+        new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+
+    leadData = {
+        id: L.id != null ? L.id : '—',
+        name: nameRaw,
+        client_company_name: companyRaw,
+        email: (L.email && String(L.email).trim()) || '—',
+        event_name: eventNameRaw,
+        event_type: (L.event_type && String(L.event_type)) || 'Event',
+        event_date: (L.event_date && String(L.event_date)) || new Date().toISOString().slice(0, 10),
+        event_time: timeRaw,
+        event_location: venueRaw || '—',
+        location: venueRaw || (L.location && String(L.location)) || '—',
+        client_billing_address: billingRaw || '—',
+        tax_rate: taxRate,
+        seller_ein: sellerEin,
+        invoice_date: invoiceDateStr
+    };
+
+    var buyerTaxShow =
+        taxId != null &&
+        String(taxId).trim() !== '' &&
+        String(taxId).trim().toUpperCase() !== 'N/A'
+            ? String(taxId).trim()
+            : '';
+
+    var logoDataUrl = null;
+    try {
+        logoDataUrl = await mdjFetchInvoiceLogoDataUrl();
+    } catch (e) {
+        logoDataUrl = null;
+    }
+
+    var jspdfMod = typeof window !== 'undefined' ? window.jspdf : null;
+    if (!jspdfMod || typeof jspdfMod.jsPDF !== 'function') {
+        throw new Error(
+            'jsPDF no está cargado. Necesitas internet para el CDN o recarga la página. Si abres el HTML con file://, usa un servidor local (ej. npx serve web).'
+        );
+    }
+    const { jsPDF } = jspdfMod;
     const doc = new jsPDF();
 
-    // Configuration
-    const corporateColor = [26, 43, 86]; // Navy Blue
-    const accentColor = [183, 148, 62]; // Gold
+    const corporateColor = [26, 43, 86];
+    const goldRgb = [197, 160, 89];
 
-    // --- 1. WATERMARK (Fénix) ---
-    // We'll use a large, light-gray text or a base64 image if possible.
-    // Since we don't have the base64 of the logo here, we'll use a large, faint brand text for now.
-    doc.setTextColor(240, 240, 240);
-    doc.setFontSize(80);
-    doc.setFont("Helvetica", "bold");
     doc.saveGraphicsState();
-    doc.setGState(new doc.GState({ opacity: 0.1 }));
-    doc.text("MIAMI DJ BEAT", 105, 150, { align: 'center', angle: 45 });
+    doc.setTextColor(220, 220, 220);
+    doc.setFontSize(72);
+    doc.setFont('Helvetica', 'bold');
+    doc.setGState(new doc.GState({ opacity: 0.06 }));
+    doc.text('MIAMI DJ BEAT', 105, 165, { align: 'center', angle: 35 });
     doc.restoreGraphicsState();
 
-    // --- 2. HEADER BRANDING ---
-    // Left: Logo placeholder / Brand name
-    doc.setTextColor(corporateColor[0], corporateColor[1], corporateColor[2]);
-    doc.setFontSize(22);
-    doc.setFont("Helvetica", "bold");
-    doc.text("MIAMI DJ BEAT LLC", 20, 25);
-    doc.setFontSize(9);
-    doc.text("ENTERTAINMENT & EVENTS CORPORATION", 20, 31);
+    const logoW = 38;
+    const logoH = 38;
+    const logoTop = 12;
+    const logoLeft = 20;
+    var invoiceLogoOk = false;
+    if (logoDataUrl) {
+        try {
+            doc.addImage(logoDataUrl, 'PNG', logoLeft, logoTop, logoW, logoH);
+            invoiceLogoOk = true;
+        } catch (e) {
+            invoiceLogoOk = false;
+        }
+    }
+    if (!invoiceLogoOk) {
+        doc.setTextColor(goldRgb[0], goldRgb[1], goldRgb[2]);
+        doc.setFontSize(16);
+        doc.setFont('Helvetica', 'bold');
+        doc.text(C.legalName, 20, 26);
+        doc.setFontSize(7);
+        doc.setFont('Helvetica', 'normal');
+        doc.text(C.tagline, 20, 32);
+    }
 
-    // Right: "INVOICE" Title
-    doc.setFontSize(32);
     doc.setTextColor(0);
-    doc.text("INVOICE", 190, 25, { align: 'right' });
+    doc.setFontSize(34);
+    doc.setFont('Helvetica', 'bold');
+    doc.text('INVOICE', 190, 24, { align: 'right' });
+    doc.setFontSize(7);
+    doc.setFont('Helvetica', 'normal');
+    doc.setTextColor(90, 90, 90);
+    doc.text('Tax: FL est. · Retain for your records', 190, 31, { align: 'right' });
 
-    // Center/Right: Corporate Info
+    var ry = 38;
+    doc.setTextColor(0);
     doc.setFontSize(9);
-    doc.setFont("Helvetica", "bold");
-    doc.text("MIAMI DJ BEAT LLC", 190, 40, { align: 'right' });
-    doc.setFont("Helvetica", "normal");
-    doc.text("1005 W 77 St Apt 105", 190, 45, { align: 'right' });
-    doc.text("Hialeah FL 33014", 190, 50, { align: 'right' });
-    doc.text("Phone: (305)-543-4814", 190, 55, { align: 'right' });
-    doc.text("Mail: miamidjbeat@gmail.com", 190, 60, { align: 'right' });
-    doc.text("Web: Miamidjbeat.com", 190, 65, { align: 'right' });
+    doc.setFont('Helvetica', 'bold');
+    if (!invoiceLogoOk) {
+        doc.text(C.legalName, 190, ry, { align: 'right' });
+        ry += 4.5;
+    }
+    doc.setFont('Helvetica', 'normal');
+    doc.text(C.addressLine1 + ', ' + C.addressLine2, 190, ry, { align: 'right' });
+    ry += 4.5;
+    doc.text('Phone: ' + C.phone, 190, ry, { align: 'right' });
+    ry += 4.5;
+    doc.text('Mail: ' + C.email, 190, ry, { align: 'right' });
+    ry += 4.5;
+    doc.text('Web: ' + C.web, 190, ry, { align: 'right' });
+    ry += 4.5;
+    if (sellerEin) {
+        doc.setFont('Helvetica', 'bold');
+        doc.text('Tax ID (EIN): ' + sellerEin, 190, ry, { align: 'right' });
+        doc.setFont('Helvetica', 'normal');
+        ry += 4.5;
+    }
 
-    // --- 3. CUSTOMER INFO ---
+    const blockY = Math.max(ry + 5, 58);
+    doc.setDrawColor(goldRgb[0], goldRgb[1], goldRgb[2]);
+    doc.setLineWidth(0.35);
+    doc.line(20, blockY, 190, blockY);
+
+    const lh = 5.5;
+    var y = blockY + 8;
     doc.setFontSize(10);
-    doc.setFont("Helvetica", "bold");
-    doc.text("Invoice No.", 20, 80);
-    doc.text("Customer:", 20, 87);
-    doc.text("ID:", 20, 94);
+    doc.setFont('Helvetica', 'bold');
+    doc.text('Invoice No.', 20, y);
+    doc.text('Customer ID:', 20, y + lh);
+    doc.text('Customer:', 20, y + lh * 2);
+    doc.setFont('Helvetica', 'normal');
+    const invNum = 'INV-' + Date.now().toString().slice(-8);
+    doc.text(invNum, 52, y);
+    doc.text(String(leadData.id || 'N/A'), 52, y + lh);
+    const custLine =
+        leadData.name && leadData.name !== ''
+            ? leadData.name + (leadData.email && leadData.email !== '—' ? ' · ' + leadData.email : '')
+            : leadData.email;
+    doc.text(doc.splitTextToSize(custLine, 75), 52, y + lh * 2);
+    const custH = Math.max(lh, doc.splitTextToSize(custLine, 75).length * 4.2);
+    y += lh * 2 + custH + 4;
 
-    doc.setFont("Helvetica", "normal");
-    doc.text("INV-" + Date.now().toString().slice(-6), 50, 80);
-    doc.text(leadData.email || "Gerardo A Valle", 50, 87); // Pre-fill with lead email or placeholder
-    doc.text(leadData.id || "N/A", 50, 94);
+    const billX = 20;
+    const shipX = 108;
+    const colW = 82;
+    doc.setFont('Helvetica', 'bold');
+    doc.setTextColor(corporateColor[0], corporateColor[1], corporateColor[2]);
+    doc.text('Bill To:', billX, y);
+    doc.text('Ship To: (event / service location)', shipX, y);
+    doc.setTextColor(0);
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(8.5);
+    y += lh;
 
-    doc.setFont("Helvetica", "bold");
-    doc.text("Bill To:", 105, 80);
-    doc.text("Ship To:", 155, 80);
-    doc.setFont("Helvetica", "normal");
-    doc.text(leadData.location || "Miami, FL", 105, 87, { maxWidth: 45 });
+    var billBlock =
+        (leadData.client_company_name ? leadData.client_company_name + '\n' : '') +
+        (leadData.client_billing_address && leadData.client_billing_address !== '—'
+            ? leadData.client_billing_address
+            : '—');
+    var shipBlock =
+        (leadData.event_name && leadData.event_name !== '' ? leadData.event_name + '\n' : '') +
+        (leadData.event_date || '') +
+        (leadData.event_time ? ' · ' + leadData.event_time : '') +
+        '\n' +
+        (leadData.event_location && leadData.event_location !== '—' ? leadData.event_location : '—');
 
-    // --- 4. TOP TABLE (Meta Data) ---
-    doc.setFillColor(245, 245, 245);
-    doc.rect(20, 110, 170, 8, 'F');
-    doc.setDrawColor(200, 200, 200);
-    doc.line(20, 110, 190, 110);
-    doc.line(20, 118, 190, 118);
+    const billLines = doc.splitTextToSize(billBlock, colW);
+    const shipLines = doc.splitTextToSize(shipBlock, colW);
+    doc.text(billLines, billX, y);
+    doc.text(shipLines, shipX, y);
+    y += Math.max(billLines.length, shipLines.length) * 4.2 + 10;
 
-    doc.setFontSize(9);
-    doc.setFont("Helvetica", "bold");
-    const headers = ["Date", "Order No.", "Sales Rep.", "FOB", "Ship Via", "Terms", "Tax ID"];
-    let hX = 22;
-    headers.forEach(h => {
-        doc.text(h, hX, 115);
-        hX += 24.3;
+    const metaTop = y;
+    const metaH = 17;
+    doc.setFillColor(245, 245, 247);
+    doc.rect(20, metaTop, 170, metaH, 'F');
+    doc.setDrawColor(200, 200, 210);
+    doc.rect(20, metaTop, 170, metaH, 'S');
+    doc.setFontSize(7);
+    doc.setFont('Helvetica', 'bold');
+    const mh = ['Date', 'Order No.', 'Sales Rep.', 'FOB', 'Ship Via', 'Terms', 'Tax ID'];
+    var mx = 21;
+    const mw = [24, 24, 22, 18, 22, 22, 30];
+    mh.forEach(function (h, i) {
+        doc.text(h, mx, metaTop + 5);
+        mx += mw[i];
     });
+    doc.setFont('Helvetica', 'normal');
+    const metaRowY = metaTop + 12;
+    var vx = 21;
+    doc.text(new Date().toLocaleDateString(), vx, metaRowY);
+    vx += mw[0];
+    doc.text(leadData.id ? String(leadData.id).slice(0, 10) : 'N/A', vx, metaRowY);
+    vx += mw[1];
+    doc.text('MDJ', vx, metaRowY);
+    vx += mw[2];
+    doc.text('Miami', vx, metaRowY);
+    vx += mw[3];
+    doc.text('Local', vx, metaRowY);
+    vx += mw[4];
+    doc.text('Due on receipt', vx, metaRowY);
+    vx += mw[5];
+    doc.text(buyerTaxShow || sellerEin || '—', vx, metaRowY, { maxWidth: mw[6] - 2 });
 
-    // Dummy values for meta table
-    doc.setFont("Helvetica", "normal");
-    doc.text(new Date().toLocaleDateString(), 22, 125);
-    doc.text(leadData.id ? leadData.id.toString().slice(0, 8) : "N/A", 46.3, 125);
-    doc.text("MDJPRO-AUTO", 70.6, 125);
-    doc.text(taxId, 167.8, 125); // Populate Tax ID column
+    y = metaTop + metaH + 5;
 
-    // --- 5. MAIN EQUIPMENT TABLE ---
-    const startY = 140;
-    doc.setFillColor(235, 235, 235);
-    doc.rect(20, startY, 170, 10, 'F');
+    const startY = y;
+    doc.setFillColor(235, 237, 245);
+    doc.rect(20, startY, 170, 9, 'F');
     doc.line(20, startY, 190, startY);
-    doc.line(20, startY + 10, 190, startY + 10);
-
-    doc.setFont("Helvetica", "bold");
-    const mainHeaders = ["Equip", "Model", "Date", "Tracking Number", "Tax", "Unit", "Total"];
-    let mX = 22;
-    const colWidths = [35, 30, 20, 35, 15, 15, 20];
-    mainHeaders.forEach((h, i) => {
-        doc.text(h, mX, startY + 6.5);
+    doc.line(20, startY + 9, 190, startY + 9);
+    doc.setFontSize(8);
+    doc.setFont('Helvetica', 'bold');
+    const mainHeaders = ['Equip', 'Model', 'Date', 'Tracking', 'Tax', 'Unit', 'Total'];
+    const colWidths = [38, 26, 22, 30, 14, 14, 18];
+    var mX = 22;
+    mainHeaders.forEach(function (h, i) {
+        doc.text(h, mX, startY + 6);
         mX += colWidths[i];
     });
 
-    // Items
-    let currentY = startY + 10;
+    var currentY = startY + 9;
     let subtotal = 0;
 
-    // Default items if none provided (from lead/common FX)
-    const displayItems = items.length > 0 ? items : [
-        { equip: "Audio System", model: "RCF 712 x2", date: leadData.event_date || "TBD", tracking: "MDJ-RENTAL-01", tax: "7%", unit: 120, total: 120 },
-        { equip: "Cold Sparks", model: "Sparkular PRO x2", date: leadData.event_date || "TBD", tracking: "FX-SPARK-44", tax: "7%", unit: 250, total: 250 }
-    ];
+    const normalized = mdjNormalizeInvoiceItems(items, leadData);
+    const taxColDefault = mdjInvoiceTaxColPercent(leadData);
+    const displayItems =
+        normalized.length > 0
+            ? normalized
+            : [
+                  {
+                      equip: '(Add line items)',
+                      model: '—',
+                      date: leadData.event_date || 'TBD',
+                      tracking: '—',
+                      tax: taxColDefault,
+                      unit: 0,
+                      total: 0
+                  }
+              ];
 
-    doc.setFont("Helvetica", "normal");
-    displayItems.forEach(item => {
-        let iX = 22;
-        doc.line(20, currentY, 20, currentY + 8); // Side borders for visual structure
-        doc.line(190, currentY, 190, currentY + 8);
-
-        doc.text(item.equip.toString(), iX, currentY + 5.5); iX += colWidths[0];
-        doc.text(item.model.toString(), iX, currentY + 5.5); iX += colWidths[1];
-        doc.text(item.date.toString(), iX, currentY + 5.5); iX += colWidths[2];
-        doc.text(item.tracking.toString(), iX, currentY + 5.5); iX += colWidths[3];
-        doc.text(item.tax.toString(), iX, currentY + 5.5); iX += colWidths[4];
-        doc.text("$" + item.unit.toFixed(2), iX, currentY + 5.5); iX += colWidths[5];
-        doc.text("$" + item.total.toFixed(2), iX, currentY + 5.5);
-
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(7.5);
+    displayItems.forEach(function (item) {
+        doc.line(20, currentY, 190, currentY);
+        var iX = 22;
+        var eLines = doc.splitTextToSize(item.equip.toString(), colWidths[0] - 2);
+        doc.text(eLines, iX, currentY + 5);
+        iX += colWidths[0];
+        doc.text(item.model.toString().slice(0, 18), iX, currentY + 5);
+        iX += colWidths[1];
+        doc.text(item.date.toString().slice(0, 12), iX, currentY + 5);
+        iX += colWidths[2];
+        doc.text(item.tracking.toString().slice(0, 16), iX, currentY + 5);
+        iX += colWidths[3];
+        doc.text(item.tax.toString(), iX, currentY + 5);
+        iX += colWidths[4];
+        doc.text('$' + item.unit.toFixed(2), iX, currentY + 5);
+        iX += colWidths[5];
+        doc.text('$' + item.total.toFixed(2), iX, currentY + 5);
         subtotal += item.total;
-        currentY += 8;
-        doc.line(20, currentY, 190, currentY); // Bottom line of row
+        var rowH = Math.max(8, eLines.length * 3.8 + 4);
+        currentY += rowH;
+        doc.line(20, currentY, 190, currentY);
     });
 
-    // Fill remaining table lines for aesthetics
-    for (let i = 0; i < 8; i++) {
-        doc.line(20, currentY, 20, currentY + 8);
-        doc.line(190, currentY, 190, currentY + 8);
+    for (var pad = 0; pad < 4; pad++) {
+        doc.line(20, currentY, 190, currentY);
         currentY += 8;
         doc.line(20, currentY, 190, currentY);
     }
 
-    // --- 6. TOTALS BLOCK ---
-    const totalY = currentY + 10;
-    const rightAlignX = 190;
-    const labelX = 145;
+    const r = leadData.tax_rate;
+    const taxAmt = subtotal * r;
+    const shipping = 0;
+    const grandTotal = subtotal + taxAmt + shipping;
+    const dep = Number(depositAmount) || 0;
+    const balanceDue = grandTotal - dep;
+    const pctLabel = Math.round(r * 1000) / 10;
 
-    const tax = subtotal * 0.07;
-    const grandTotal = subtotal + tax;
-
-    const SummaryItems = [
-        { label: "Subtotal:", val: subtotal },
-        { label: "Tax (7%):", val: tax },
-        { label: "Shipping:", val: 0 },
-        { label: "Total Revenue:", val: grandTotal },
-        { label: "Reservation Deposit Paid:", val: -depositAmount, bold: true, color: [200, 0, 0] },
-        { label: "Balance Due:", val: grandTotal - depositAmount, bold: true, color: corporateColor }
+    const totalY = currentY + 8;
+    const labelX = 128;
+    const summary = [
+        { label: 'Subtotal:', val: subtotal },
+        { label: 'Tax (' + pctLabel + '% FL est.):', val: taxAmt },
+        { label: 'Shipping:', val: shipping },
+        { label: 'Total:', val: grandTotal, bold: true },
+        { label: 'Less deposit / paid:', val: -dep, color: [180, 0, 0] },
+        { label: 'Balance Due:', val: balanceDue, bold: true, color: corporateColor }
     ];
 
-    SummaryItems.forEach((s, i) => {
-        doc.setDrawColor(200, 200, 200);
-        doc.rect(labelX, totalY + (i * 8), 45, 8);
-        doc.setFont("Helvetica", s.bold ? "bold" : "normal");
+    summary.forEach(function (s, i) {
+        doc.setDrawColor(210, 210, 220);
+        doc.rect(labelX, totalY + i * 7.5, 62, 7.5, 'S');
+        doc.setFont('Helvetica', s.bold ? 'bold' : 'normal');
         if (s.color) doc.setTextColor(s.color[0], s.color[1], s.color[2]);
         else doc.setTextColor(0);
-
-        doc.text(s.label, labelX + 2, totalY + (i * 8) + 5.5);
-        doc.text("$" + s.val.toFixed(2), rightAlignX - 2, totalY + (i * 8) + 5.5, { align: 'right' });
+        doc.setFontSize(8);
+        doc.text(s.label, labelX + 1.5, totalY + i * 7.5 + 5);
+        doc.text('$' + s.val.toFixed(2), labelX + 59, totalY + i * 7.5 + 5, { align: 'right' });
     });
-    doc.setTextColor(0); // Reset
-
-    // --- 7. FOOTER ---
-    doc.setFontSize(10);
     doc.setTextColor(0);
-    doc.setFont("Helvetica", "italic");
-    doc.text("Thank You For Business It's a Pleasure to work with you on your project.", 20, totalY + 10);
 
-    doc.setFont("Helvetica", "normal");
-    doc.text("Sincerely,", 20, totalY + 25);
-    doc.text("Gerardo A Valle", 20, totalY + 32);
+    const footY = totalY + summary.length * 7.5 + 10;
+    doc.setFontSize(7.5);
+    doc.setTextColor(75, 75, 75);
+    doc.text(
+        'Sales tax shown is an estimate for Florida taxable services/rentals; confirm jurisdiction with your CPA.',
+        20,
+        footY,
+        { maxWidth: 170 }
+    );
+    doc.setFontSize(9);
+    doc.setTextColor(0);
+    doc.setFont('Helvetica', 'italic');
+    doc.text(
+        "Thank You For Business It's a Pleasure to work with you on your project.",
+        20,
+        footY + 10
+    );
+    doc.setFont('Helvetica', 'normal');
+    doc.text('Sincerely,', 20, footY + 18);
+    doc.text('Gerardo A Valle', 20, footY + 25);
 
-    doc.save(`Invoice_${leadData.id || "MDJ"}_${Date.now()}.pdf`);
+    doc.save('Invoice_' + (leadData.id !== '—' ? leadData.id : 'MDJ') + '_' + Date.now() + '.pdf');
 };

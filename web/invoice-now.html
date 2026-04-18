@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MDJ — Factura (emergencia · imprimir PDF)</title>
+  <title>MDJ — Invoice (emergency · print PDF)</title>
   <style>
     :root {
       --navy: #1a2b56;
@@ -231,12 +231,13 @@
         <div class="inv-title">
           <h1>INVOICE</h1>
           <div class="inv-company">
-            <textarea id="inv-company-block" spellcheck="false">Miami DJ Beat LLC
+            <textarea id="inv-company-block" spellcheck="false">Address
 1005 W 77 St Apt 105
 Hialeah, FL 33014
-Phone: (305) 607-1780
-Email: miamidjbeat@gmail.com
-Web: www.miamidjbeat.com</textarea>
+
+Telephone (305) 607-1780
+Email miamidjbeat@gmail.com
+Web www.miamidjbeat.com</textarea>
           </div>
         </div>
       </div>
@@ -262,22 +263,25 @@ Web: www.miamidjbeat.com</textarea>
 
       <div class="inv-grid2">
         <div class="inv-box">
-          <h3>Bill To</h3>
-          <textarea id="inv-bill" placeholder="Empresa y dirección de facturación"></textarea>
+          <h3>Bill to — client / billing address</h3>
+          <textarea id="inv-bill" placeholder="Client or company name, street, city, state, ZIP"></textarea>
         </div>
         <div class="inv-box">
-          <h3>Ship To — evento / servicio</h3>
-          <textarea id="inv-ship" placeholder="Nombre del evento y dirección donde se presta el servicio"></textarea>
+          <h3>Event / service location</h3>
+          <textarea id="inv-ship" placeholder="Event name and venue address where the service is provided"></textarea>
         </div>
       </div>
 
+      <p class="no-print" style="font-size:12px;color:#666;margin:0 0 10px 0;">
+        <strong>Auto-cálculo:</strong> edita cantidad y precio unitario; total de línea, subtotal, impuesto y total se calculan solos.
+      </p>
       <table class="inv-lines" id="inv-table">
         <thead>
           <tr>
             <th style="width:50%">Descripción / rental</th>
             <th style="width:12%">Cant.</th>
             <th style="width:18%">Precio unit.</th>
-            <th style="width:20%">Total línea</th>
+            <th style="width:20%">Total línea <span style="font-size:10px;color:#2e7d32;">(auto)</span></th>
           </tr>
         </thead>
         <tbody id="inv-tbody"></tbody>
@@ -293,7 +297,7 @@ Web: www.miamidjbeat.com</textarea>
         </label>
       </div>
 
-      <div class="inv-totals">
+      <div class="inv-totals" id="inv-totals-live" role="status" aria-live="polite" aria-atomic="true" aria-label="Totales automáticos">
         <table>
           <tr><td>Subtotal</td><td class="inv-num" id="out-sub">$0.00</td></tr>
           <tr><td>Tax</td><td class="inv-num" id="out-tax">$0.00</td></tr>
@@ -320,7 +324,11 @@ Web: www.miamidjbeat.com</textarea>
 (function () {
   var tbody = document.getElementById('inv-tbody');
   function money(n) {
-    var x = parseFloat(n);
+    if (n == null || n === '') return 0;
+    var s = String(n).trim().replace(/\$/g, '').replace(/\s/g, '');
+    if (s.indexOf(',') >= 0 && s.indexOf('.') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+    else s = s.replace(/,/g, '.');
+    var x = parseFloat(s);
     if (isNaN(x) || x < 0) return 0;
     return x;
   }
@@ -332,8 +340,8 @@ Web: www.miamidjbeat.com</textarea>
       '<tr>' +
       '<td><input type="text" class="inv-desc" placeholder="Servicio o equipo" /></td>' +
       '<td><input type="number" class="inv-qty" min="0" step="1" value="1" /></td>' +
-      '<td><input type="number" class="inv-unit" min="0" step="0.01" value="0" /></td>' +
-      '<td class="inv-num inv-line-total">$0.00</td>' +
+      '<td><input type="text" class="inv-unit" inputmode="decimal" autocomplete="off" placeholder="0.00" value="" title="Precio unitario — el total de línea se calcula solo" /></td>' +
+      '<td class="inv-num inv-line-total" title="Auto: Cant. × Precio unit.">$0.00</td>' +
       '</tr>'
     );
   }
@@ -344,7 +352,11 @@ Web: www.miamidjbeat.com</textarea>
   }
   function bindRow(tr) {
     tr.querySelectorAll('input').forEach(function (el) {
-      el.addEventListener('input', recalc);
+      var go = function () { recalc(); };
+      el.addEventListener('input', go);
+      el.addEventListener('change', go);
+      el.addEventListener('keyup', go);
+      el.addEventListener('blur', go);
     });
   }
   function recalc() {
@@ -373,7 +385,11 @@ Web: www.miamidjbeat.com</textarea>
   });
 
   document.getElementById('inv-add-row').addEventListener('click', addRow);
-  document.getElementById('inv-tax-pct').addEventListener('input', recalc);
+  (function () {
+    var tp = document.getElementById('inv-tax-pct');
+    if (tp) ['input', 'change', 'keyup', 'blur'].forEach(function (ev) { tp.addEventListener(ev, recalc); });
+  })();
+  tbody.addEventListener('paste', function () { setTimeout(recalc, 0); });
   for (var i = 0; i < 3; i++) addRow();
 
   document.getElementById('btn-print').addEventListener('click', function () {

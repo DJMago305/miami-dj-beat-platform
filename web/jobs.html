@@ -305,7 +305,9 @@
         }
 
         .jobs-portal-role-chip {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
             padding: 5px 12px;
             border-radius: 999px;
             background: rgba(197, 160, 89, 0.22);
@@ -314,6 +316,24 @@
             font-size: 11px;
             font-weight: 800;
             letter-spacing: 0.04em;
+        }
+
+        .jobs-portal-role-chip::before {
+            content: '✓';
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            font-size: 10px;
+            font-weight: 900;
+            line-height: 1;
+            color: #0a0a0a;
+            background: var(--gold);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: 0 0 8px rgba(197, 160, 89, 0.45);
         }
 
         .jobs-portal-roles-strip-hint {
@@ -581,10 +601,11 @@
             height: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
-            opacity: 0.02 !important;
+            opacity: 0 !important;
             cursor: pointer !important;
             pointer-events: auto !important;
-            z-index: 30 !important;
+            /* Por debajo del anillo/✓ (::before); pointer-events en el pseudo = none → el clic llega al input */
+            z-index: 4 !important;
             flex-shrink: 0;
             appearance: none !important;
             -webkit-appearance: none !important;
@@ -604,6 +625,25 @@
         .jobs-role-carousel label.role-photo-card .role-photo-bg,
         .jobs-role-carousel label.role-photo-card .role-photo-gradient,
         .jobs-role-carousel label.role-photo-card .role-photo-content {
+            pointer-events: none !important;
+        }
+
+        /*
+         * Sin esto, los hijos (p. ej. .role-name) tienen pointer-events: auto por defecto y capturan el clic
+         * aunque el padre tenga none (comportamiento del spec). El listener delegado en #jobs-role-carousel
+         * hace toggle manual + preventDefault; la acción nativa del <label> puede volver a toggle → estado neto 0.
+         * Forzar que solo el input invisible reciba el puntero; el anillo decorativo sigue con none arriba.
+         */
+        #jobs-role-carousel label.role-photo-card.role-photo-card--carousel *:not(input[name="roles"]) {
+            pointer-events: none !important;
+        }
+
+        /* Clones del bucle: sin input; el hit debe quedar en el div para delegar al checkbox canónico. */
+        #jobs-role-carousel div.mdj-jobs-role-carousel-clone.role-photo-card--carousel {
+            pointer-events: auto !important;
+        }
+
+        #jobs-role-carousel div.mdj-jobs-role-carousel-clone.role-photo-card--carousel * {
             pointer-events: none !important;
         }
 
@@ -638,6 +678,7 @@
         /* ── Photo Role Cards — foto + selector visible (anillo / ✓) ── */
         .role-photo-card {
             position: relative;
+            isolation: isolate;
             height: 220px;
             padding: 0 !important;
             overflow: hidden;
@@ -652,24 +693,30 @@
          * Hit-test fiable: styles.css define `label { display: grid }` y aquí mezclaba con flex + hijos absolute,
          * lo que en algunos navegadores dejaba la palomita/checkbox sin togglear al clicar la tarjeta.
          */
-        label.role-pro-card.role-photo-card.role-photo-card--carousel {
+        label.role-pro-card.role-photo-card.role-photo-card--carousel,
+        div.role-pro-card.role-photo-card.role-photo-card--carousel.mdj-jobs-role-carousel-clone {
             display: block !important;
             touch-action: manipulation;
         }
 
-        .role-photo-card:not(.active):hover {
-            border-color: rgba(228, 199, 122, 0.95);
-            box-shadow:
-                0 0 8px rgba(197, 160, 89, 0.45),
-                0 0 28px rgba(197, 160, 89, 0.55),
-                0 0 52px rgba(197, 160, 89, 0.25),
-                inset 0 0 32px rgba(197, 160, 89, 0.14);
-            transform: translateY(-3px);
-        }
+        /*
+         * Hover ≠ seleccionado: feedback suave solo con ratón/puntero fino (evita “parece marcado” en táctil).
+         * La selección real sigue en .active (borde/✓ más fuerte abajo).
+         */
+        @media (hover: hover) and (pointer: fine) {
+            #jobs-role-carousel .role-photo-card:not(.active):hover {
+                border-color: rgba(197, 160, 89, 0.72);
+                box-shadow:
+                    0 0 6px rgba(197, 160, 89, 0.22),
+                    0 0 14px rgba(197, 160, 89, 0.18),
+                    inset 0 0 18px rgba(197, 160, 89, 0.06);
+                transform: translateY(-1px);
+            }
 
-        .role-photo-card:not(.active):hover::before {
-            border-color: var(--gold);
-            box-shadow: 0 0 16px rgba(197, 160, 89, 0.85);
+            #jobs-role-carousel .role-photo-card:not(.active):hover::before {
+                border-color: rgba(255, 255, 255, 0.75);
+                box-shadow: 0 0 8px rgba(197, 160, 89, 0.35);
+            }
         }
 
         /* Indicador fijo arriba-derecha: sin seleccionar = círculo vacío; seleccionado = ✓ dorado */
@@ -683,10 +730,43 @@
             border-radius: 50%;
             border: 2px solid rgba(255, 255, 255, 0.9);
             background: rgba(0, 0, 0, 0.45);
-            z-index: 6;
+            z-index: 80;
             pointer-events: none;
             box-sizing: border-box;
             transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+        }
+
+        /* Nodo real, z-index máximo: no depender de ::before ni de :has() (sync pone .active en la tarjeta). */
+        #jobs-role-carousel .mdj-role-check-ring {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 99999;
+            pointer-events: none;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+        }
+        #jobs-role-carousel label.mdj-has-role-check-ring::before,
+        #jobs-role-carousel div.mdj-jobs-role-carousel-clone.mdj-has-role-check-ring::before {
+            display: none !important;
+            content: none !important;
+        }
+        #jobs-role-carousel .role-photo-card.active .mdj-role-check-ring {
+            border-color: var(--gold);
+            background: var(--gold);
+            box-shadow: 0 0 14px rgba(197, 160, 89, 0.65);
+            font-size: 15px;
+            font-weight: 900;
+            color: #000;
+            line-height: 1;
         }
 
         .role-photo-card.active::before {
@@ -706,18 +786,22 @@
         .role-photo-bg {
             position: absolute;
             inset: 0;
+            z-index: 0;
             background-size: cover;
             background-position: center;
             transition: transform 0.5s ease;
         }
 
-        .role-photo-card:hover .role-photo-bg {
-            transform: scale(1.06);
+        @media (hover: hover) and (pointer: fine) {
+            #jobs-role-carousel .role-photo-card:not(.active):hover .role-photo-bg {
+                transform: scale(1.04);
+            }
         }
 
         .role-photo-gradient {
             position: absolute;
             inset: 0;
+            z-index: 1;
             background: linear-gradient(to top,
                     rgba(0, 0, 0, 0.92) 0%,
                     rgba(0, 0, 0, 0.55) 40%,
@@ -728,6 +812,7 @@
         .role-photo-content {
             position: absolute;
             inset: 0;
+            z-index: 2;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -756,6 +841,16 @@
         }
 
         /* Active (selected) state */
+        #jobs-role-carousel .role-photo-card.active {
+            border-width: 2px;
+            border-color: var(--gold) !important;
+            box-shadow:
+                0 0 22px rgba(197, 160, 89, 0.65),
+                0 0 48px rgba(197, 160, 89, 0.35),
+                inset 0 0 22px rgba(197, 160, 89, 0.12);
+            transform: translateY(-3px);
+        }
+
         .role-photo-card.active {
             border-color: var(--gold) !important;
             box-shadow: 0 0 30px rgba(197, 160, 89, 0.55), 0 0 60px rgba(197, 160, 89, 0.2), inset 0 0 20px rgba(197, 160, 89, 0.08);
@@ -920,7 +1015,12 @@
             padding: 4px 2px 14px;
         }
 
-        /* Mismo modelo que hosting: bucle continuo por CSS (transform), pausa al hover; sin física JS. */
+        /* Saltos del bucle infinito deben ser instantáneos (scroll-behavior: smooth retrasaría o ignoraría el ajuste). */
+        #jobs-role-carousel[data-mdj-infinite-carousel='1'] {
+            scroll-behavior: auto;
+        }
+
+        /* Legacy: CSS marquee (transform) desactivado en JS — rompía clics/selección en WebKit. Mantener reglas por si hiciera falta rollback. */
         .jobs-role-carousel.jobs-role-carousel--marquee {
             overflow: hidden;
             padding-bottom: 10px;
@@ -968,10 +1068,23 @@
         .jobs-role-carousel-track {
             display: flex;
             flex-direction: row;
+            align-items: stretch;
             gap: 16px;
             width: max-content;
             padding: 2px 4px;
             flex: 0 0 auto;
+            touch-action: manipulation;
+        }
+
+        /* Fila solo de tarjetas de rol (el bucle infinito clona este bloque; la nota informativa va fuera). */
+        .jobs-role-carousel-loop {
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            gap: 16px;
+            width: max-content;
+            flex: 0 0 auto;
+            min-width: 0;
             touch-action: manipulation;
         }
 
@@ -981,12 +1094,12 @@
             max-width: 90vw;
         }
 
-        /* Nota final: no es rol seleccionable — solo informa que nuevas categorías las añade el equipo (LEEME.txt) */
+        /* Aviso bajo el carrusel (ya no va como tarjeta dentro del track — evita conflicto con scroll infinito). */
         .jobs-role-card-catalog-note {
-            flex: 0 0 288px;
-            width: 288px;
-            max-width: 90vw;
-            min-height: 140px;
+            width: 100%;
+            max-width: 100%;
+            margin-top: 12px;
+            min-height: 0;
             border-radius: 14px;
             border: 1px dotted rgba(197, 160, 89, 0.35);
             background: rgba(0, 0, 0, 0.25);
@@ -1817,11 +1930,12 @@
             <div class="jobs-role-roles-block" style="max-width:72rem;margin:0 auto 28px;">
                 <p class="jobs-role-carousel-sign" data-i18n="jobs-role-carousel-heading">Selecciona tus categorías</p>
                 <div class="jobs-role-carousel-shell" role="region"
-                    aria-label="Open roles — select one or more; hover the row to pause the strip.">
+                    aria-label="Open roles — select one or more; scroll horizontally or use the arrows.">
                     <button type="button" class="jobs-role-carousel-btn" id="jobs-role-carousel-prev"
                         aria-label="Anterior" onclick="jobsRoleCarouselScroll(-1)">◀</button>
-                    <div class="jobs-role-carousel" id="jobs-role-carousel">
+                    <div class="jobs-role-carousel" id="jobs-role-carousel" data-mdj-ui-tick-scroll>
                         <div class="jobs-role-carousel-track">
+                            <div class="jobs-role-carousel-loop" id="jobs-role-carousel-loop">
                             <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="DJ">
                                 <input type="checkbox" name="roles" value="DJ" form="employment-form">
                                 <div class="role-photo-bg"
@@ -1987,19 +2101,20 @@
                                     <span class="role-subtitle">Cabina · video 360 · experiencias</span>
                                 </div>
                             </label>
-                            <!-- Nota: no es seleccionable. Nuevas categorías solo vía equipo interno (LEEME.txt). -->
-                            <div class="jobs-role-card-catalog-note" role="note"
-                                aria-label="Aviso: las nuevas categorías de este listado las añade solo el equipo interno de Miami DJ Beat. No es un formulario para solicitar alta.">
-                                <div class="jobs-role-card-catalog-note-inner">
-                                    <span class="jobs-role-card-catalog-note-kicker" data-i18n="jobs-role-carousel-catalog-note-kicker">Equipo Miami DJ Beat</span>
-                                    <span class="jobs-role-card-catalog-note-title" data-i18n="jobs-role-carousel-catalog-note-title">Las nuevas plazas las definimos nosotros; no es un alta público desde aquí.</span>
-                                    <span class="jobs-role-card-catalog-note-sub" data-i18n="jobs-role-carousel-catalog-note-sub">Esta tarjeta es solo informativa — no hay casilla ni envío.</span>
-                                </div>
                             </div>
                         </div>
                     </div>
                     <button type="button" class="jobs-role-carousel-btn" id="jobs-role-carousel-next"
                         aria-label="Siguiente" onclick="jobsRoleCarouselScroll(1)">▶</button>
+                </div>
+                <!-- Nota fuera de la pista con scroll para no romper el bucle infinito (sin tarjeta al final del track). -->
+                <div class="jobs-role-card-catalog-note" role="note"
+                    aria-label="Aviso: las nuevas categorías de este listado las añade solo el equipo interno de Miami DJ Beat. No es un formulario para solicitar alta.">
+                    <div class="jobs-role-card-catalog-note-inner">
+                        <span class="jobs-role-card-catalog-note-kicker" data-i18n="jobs-role-carousel-catalog-note-kicker">Equipo Miami DJ Beat</span>
+                        <span class="jobs-role-card-catalog-note-title" data-i18n="jobs-role-carousel-catalog-note-title">Las nuevas plazas las definimos nosotros; no es un alta público desde aquí.</span>
+                        <span class="jobs-role-card-catalog-note-sub" data-i18n="jobs-role-carousel-catalog-note-sub">Esta tarjeta es solo informativa — no hay casilla ni envío.</span>
+                    </div>
                 </div>
                 <div class="jobs-after-roles-cta-wrap" id="jobs-after-roles-cta-wrap">
                     <!-- Enlace real (como header): invitado navega aunque falle JS; sesión → data-jobs-cta-mode=account + handler. -->
@@ -2590,6 +2705,7 @@
     <script src="./supabase-config.js?v=20260226-1"></script>
     <script src="./translations.js?v=20260423-i18n-header-auth"></script>
     <script src="./i18n.js?v=20260425-auth-ui-always-sync"></script>
+    <script src="./mdj-carousel-scroll-tick.js?v=20260418-tick-sound-restore"></script>
     <script>
         /* --- [x] Vision 2027 UI Transformation
            - [x] Hero Simplification (Clean Vision 2027)
@@ -2650,7 +2766,9 @@
             if (!code) return '';
             var track = document.querySelector('#jobs-role-carousel .jobs-role-carousel-track:not(.jobs-role-carousel-track--marquee-clone)');
             if (track) {
-                var card = track.querySelector('.role-photo-card[data-role="' + code + '"] .role-name');
+                var card = track.querySelector(
+                    '.role-photo-card:not(.mdj-jobs-role-carousel-clone)[data-role="' + code + '"] .role-name'
+                );
                 if (card && card.textContent) return card.textContent.trim();
             }
             return code.replace(/_/g, ' ');
@@ -2903,6 +3021,37 @@
             });
         });
 
+        function ensureJobsRoleCheckRings() {
+            var loop = document.getElementById("jobs-role-carousel-loop");
+            if (!loop) return;
+            loop.querySelectorAll("label.role-photo-card.role-photo-card--carousel:not(.mdj-jobs-role-carousel-clone)").forEach(function (lab) {
+                if (lab.querySelector(".mdj-role-check-ring")) return;
+                var ring = document.createElement("span");
+                ring.className = "mdj-role-check-ring";
+                ring.setAttribute("aria-hidden", "true");
+                lab.appendChild(ring);
+                lab.classList.add("mdj-has-role-check-ring");
+            });
+            loop.querySelectorAll("div.mdj-jobs-role-carousel-clone.role-photo-card").forEach(function (div) {
+                if (div.querySelector(".mdj-role-check-ring")) {
+                    div.classList.add("mdj-has-role-check-ring");
+                }
+            });
+        }
+
+        /** Palomita en el carrusel de Trabajos (#jobs-role-carousel): texto en el span (misma página, mismo bloque que la foto). */
+        function syncJobsRoleCheckRingMarks() {
+            var car = document.getElementById('jobs-role-carousel');
+            if (!car) return;
+            car.querySelectorAll('.mdj-role-check-ring').forEach(function (ring) {
+                var card = ring.closest('.role-photo-card');
+                if (!card) return;
+                var inp = card.querySelector('input[name="roles"]');
+                var on = inp ? inp.checked : card.classList.contains('active');
+                ring.textContent = on ? '\u2713' : '';
+            });
+        }
+
         /** Sincroniza .active en tarjetas + clon del carrusel (tras i18n o prefill). */
         function syncJobsRoleLabelsFromInputs() {
             document.querySelectorAll('.role-photo-card input[name="roles"]').forEach(function (cb) {
@@ -2911,12 +3060,14 @@
             });
             if (typeof syncJobsRoleMarqueeClones === 'function') syncJobsRoleMarqueeClones();
             updateJobsPortalRolesStrip();
+            syncJobsRoleCheckRingMarks();
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
             initJobsAfterRolesCtaClick();
             updateHeaderAuth();
-            initAuthGate();
+            await initAuthGate();
+            ensureJobsRoleCheckRings();
             initJobsRoleMarquee();
             addExperienceEntry();
             await prefillProfileForm();
@@ -2924,6 +3075,15 @@
             /* Después de i18n.updateUI (CTA, etc.): un solo listener delegado en #selection-screen no se pierde si el DOM del carrusel tocara a regenerarse. */
             initRolePhotoCardPickers();
             syncJobsRoleLabelsFromInputs();
+            (function mdjJobsRoleCarouselAfterAsync() {
+                var sel = document.getElementById('selection-screen');
+                if (!sel || sel.classList.contains('hidden')) return;
+                ensureJobsRoleCheckRings();
+                if (typeof window.mdjJobsRoleInfiniteApplyRetry === 'function') {
+                    window.mdjJobsRoleInfiniteApplyRetry(0);
+                }
+                syncJobsRoleLabelsFromInputs();
+            })();
             loadPlatformPricing(); // ← fetch prices from Supabase
 
             // Auto-read ?ref= URL param → pre-fill referral code
@@ -3366,6 +3526,7 @@
         window.jobsRoleCarouselScroll = function (dir) {
             var el = document.getElementById('jobs-role-carousel');
             if (!el) return;
+            if (typeof window.mdjUiTickPlay === 'function') window.mdjUiTickPlay();
             var step = Math.min(360, Math.max(220, Math.floor(el.clientWidth * 0.72) + 16));
             el.scrollBy({ left: dir * step, behavior: 'auto' });
         };
@@ -3389,7 +3550,20 @@
 
         function syncJobsRoleMarqueeClones() {
             const wrap = document.getElementById('jobs-role-carousel');
-            if (!wrap || wrap.dataset.marqueeReady !== '1') return;
+            if (!wrap) return;
+            const loop = document.getElementById('jobs-role-carousel-loop');
+            if (loop && wrap.dataset.mdjInfiniteCarousel === '1') {
+                loop.querySelectorAll('label.role-photo-card:not(.mdj-jobs-role-carousel-clone)').forEach((a) => {
+                    const role = a.getAttribute('data-role');
+                    if (!role) return;
+                    loop.querySelectorAll('.mdj-jobs-role-carousel-clone[data-role="' + role + '"]').forEach((b) => {
+                        b.classList.toggle('active', a.classList.contains('active'));
+                    });
+                });
+                syncJobsRoleCheckRingMarks();
+                return;
+            }
+            if (wrap.dataset.marqueeReady !== '1') return;
             const t0 = wrap.querySelector('.jobs-role-carousel-track:not(.jobs-role-carousel-track--marquee-clone)');
             const t1 = wrap.querySelector('.jobs-role-carousel-track--marquee-clone');
             if (!t0 || !t1) return;
@@ -3399,58 +3573,203 @@
                 const b = t1.querySelector('.role-photo-card[data-role="' + role + '"]');
                 if (b) b.classList.toggle('active', a.classList.contains('active'));
             });
+            syncJobsRoleCheckRingMarks();
         }
 
-        function initJobsRoleMarquee() {
-            const wrap = document.getElementById('jobs-role-carousel');
-            if (!wrap || wrap.dataset.marqueeReady === '1') return;
-            const track = wrap.querySelector('.jobs-role-carousel-track');
-            if (!track) return;
-
-            const anim = document.createElement('div');
-            anim.className = 'jobs-role-marquee-anim';
-            anim.setAttribute('role', 'presentation');
-
-            track.parentNode.insertBefore(anim, track);
-            anim.appendChild(track);
-
-            const clone = track.cloneNode(true);
-            clone.classList.add('jobs-role-carousel-track--marquee-clone');
-            clone.setAttribute('aria-hidden', 'true');
-            clone.querySelectorAll('label.role-photo-card').forEach((lab) => {
-                const role = lab.getAttribute('data-role');
-                const div = document.createElement('div');
-                div.className = lab.className;
-                div.setAttribute('data-role', role || '');
-                div.setAttribute('role', 'button');
-                div.tabIndex = 0;
-                div.innerHTML = lab.innerHTML;
-                const inp = div.querySelector('input');
-                if (inp) inp.remove();
-                div.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const o = track.querySelector('.role-photo-card[data-role="' + role + '"] input');
-                    if (o) {
-                        o.checked = !o.checked;
-                        o.dispatchEvent(new Event('input', { bubbles: true }));
-                        o.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                });
-                div.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        div.click();
-                    }
-                });
-                lab.replaceWith(div);
+        /** Labels canónicos en la pista (sin :scope — compat WebKit / iOS con hijos directos del loop). */
+        function mdjJobsRoleCarouselOriginalLabels(loop) {
+            if (!loop || !loop.children) return [];
+            return Array.prototype.filter.call(loop.children, function (el) {
+                if (el.nodeType !== 1 || el.tagName !== 'LABEL') return false;
+                if (!el.classList.contains('role-photo-card') || !el.classList.contains('role-photo-card--carousel')) return false;
+                return !el.classList.contains('mdj-jobs-role-carousel-clone');
             });
-            anim.appendChild(clone);
+        }
 
-            wrap.classList.add('jobs-role-carousel--marquee');
-            const shell = wrap.closest('.jobs-role-carousel-shell');
-            if (shell) shell.classList.add('jobs-role-carousel-shell--marquee');
-            wrap.dataset.marqueeReady = '1';
+        /**
+         * Centra el scroll en el bloque central [copias][originales][copias] y guarda el ancho del set en car._mdjInfiniteSetWidth.
+         */
+        window.mdjJobsRoleInfiniteApply = function () {
+            var car = document.getElementById('jobs-role-carousel');
+            var loop = document.getElementById('jobs-role-carousel-loop');
+            if (!car || !loop || car.dataset.mdjInfiniteCarousel !== '1') {
+                if (car) car.scrollLeft = 0;
+                return;
+            }
+            var originals = mdjJobsRoleCarouselOriginalLabels(loop);
+            var n = originals.length;
+            if (n < 2) return;
+            var firstO = originals[0];
+            var lastO = originals[n - 1];
+            var gap = parseFloat(getComputedStyle(loop).gap);
+            if (isNaN(gap)) gap = 16;
+            var sw = Math.round(lastO.offsetLeft + lastO.offsetWidth - firstO.offsetLeft);
+            if (!sw || sw < 10) {
+                var tri = Math.round((loop.scrollWidth || 0) / 3);
+                if (tri > 10) sw = tri;
+            }
+            if (!sw || sw < 10) {
+                var sum = 0;
+                var i;
+                for (i = 0; i < originals.length; i++) {
+                    sum += originals[i].offsetWidth || 0;
+                    if (i < originals.length - 1) sum += gap;
+                }
+                if (sum > 10) sw = Math.round(sum);
+            }
+            /* Último recurso: coincide con .role-photo-card--carousel (288px) + gap del loop */
+            if (!sw || sw < 10) {
+                var cardW = 288;
+                sw = Math.round(n * cardW + (n - 1) * gap);
+            }
+            if (!sw || sw < 10) return;
+            car._mdjInfiniteSetWidth = sw;
+            var prev = car.style.scrollBehavior;
+            car.style.scrollBehavior = 'auto';
+            car.scrollLeft = sw;
+            car.style.scrollBehavior = prev || '';
+        };
+
+        /** Reintenta medir el ancho del set si el primer paint devolvió 0 (fuentes/imágenes o sección aún sin layout). */
+        window.mdjJobsRoleInfiniteApplyRetry = function (attempt) {
+            attempt = attempt == null ? 0 : attempt;
+            if (typeof window.mdjJobsRoleInfiniteApply !== 'function') return;
+            window.mdjJobsRoleInfiniteApply();
+            var car = document.getElementById('jobs-role-carousel');
+            if (!car || car.dataset.mdjInfiniteCarousel !== '1') return;
+            if (car._mdjInfiniteSetWidth && car._mdjInfiniteSetWidth > 10) return;
+            if (attempt >= 18) return;
+            setTimeout(function () {
+                window.mdjJobsRoleInfiniteApplyRetry(attempt + 1);
+            }, 80);
+        };
+
+        function makeJobsRoleVisualClone(lab) {
+            var c = lab.cloneNode(true);
+            c.classList.add('mdj-jobs-role-carousel-clone');
+            c.removeAttribute('for');
+            var inp = c.querySelector('input[name="roles"]');
+            if (inp && inp.parentNode) inp.parentNode.removeChild(inp);
+            c.setAttribute('aria-hidden', 'true');
+            c.setAttribute('tabindex', '-1');
+            var div = document.createElement('div');
+            div.className = c.className;
+            div.setAttribute('aria-hidden', 'true');
+            div.setAttribute('tabindex', '-1');
+            var role = lab.getAttribute('data-role');
+            if (role) div.setAttribute('data-role', role);
+            div.innerHTML = c.innerHTML;
+            if (div.querySelector('.mdj-role-check-ring')) {
+                div.classList.add('mdj-has-role-check-ring');
+            }
+            return div;
+        }
+
+        /**
+         * Carrusel infinito: [copias visuales][originales con inputs][copias] dentro de #jobs-role-carousel-loop.
+         * Sin transform/marquee CSS (no rompe clics en WebKit). Los clones son div sin checkbox; el clic delega al input canónico.
+         */
+        window.initJobsRoleInfiniteCarousel = function () {
+            var car = document.getElementById('jobs-role-carousel');
+            var loop = document.getElementById('jobs-role-carousel-loop');
+            if (!car || !loop || car.dataset.mdjInfiniteCarousel === '1') return;
+
+            var originals = mdjJobsRoleCarouselOriginalLabels(loop);
+            if (originals.length < 2) return;
+
+            var fragBefore = document.createDocumentFragment();
+            originals.forEach(function (el) {
+                fragBefore.appendChild(makeJobsRoleVisualClone(el));
+            });
+            loop.insertBefore(fragBefore, loop.firstChild);
+            originals.forEach(function (el) {
+                loop.appendChild(makeJobsRoleVisualClone(el));
+            });
+
+            car.dataset.mdjInfiniteCarousel = '1';
+
+            var jumping = false;
+            car._mdjInfiniteScrollHandler = function () {
+                if (jumping) return;
+                var sw = car._mdjInfiniteSetWidth;
+                if (!sw) return;
+                var max = car.scrollWidth - car.clientWidth;
+                if (max <= 0) return;
+                var buf = 16;
+                if (car.scrollLeft <= buf) {
+                    jumping = true;
+                    car.scrollLeft += sw;
+                    requestAnimationFrame(function () {
+                        jumping = false;
+                    });
+                } else if (car.scrollLeft >= max - buf) {
+                    jumping = true;
+                    car.scrollLeft -= sw;
+                    requestAnimationFrame(function () {
+                        jumping = false;
+                    });
+                }
+            };
+            car.addEventListener('scroll', car._mdjInfiniteScrollHandler, { passive: true });
+
+            var resizeT = null;
+            car._mdjInfiniteResizeHandler = function () {
+                clearTimeout(resizeT);
+                resizeT = setTimeout(function () {
+                    if (typeof window.mdjJobsRoleInfiniteApply === 'function') {
+                        window.mdjJobsRoleInfiniteApply();
+                    }
+                    if (typeof syncJobsRoleMarqueeClones === 'function') syncJobsRoleMarqueeClones();
+                }, 120);
+            };
+            window.addEventListener('resize', car._mdjInfiniteResizeHandler, { passive: true });
+
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    if (typeof window.mdjJobsRoleInfiniteApplyRetry === 'function') {
+                        window.mdjJobsRoleInfiniteApplyRetry(0);
+                    } else if (typeof window.mdjJobsRoleInfiniteApply === 'function') {
+                        window.mdjJobsRoleInfiniteApply();
+                    }
+                    if (typeof syncJobsRoleMarqueeClones === 'function') syncJobsRoleMarqueeClones();
+                });
+            });
+        };
+
+        /** Si DOMContentLoaded fue demasiado pronto para medir el loop, reintenta al load (siempre se registra). */
+        (function mdjJobsRoleCarouselBindLoad() {
+            if (window.mdjJobsRoleCarouselLoadBound === '1') return;
+            window.mdjJobsRoleCarouselLoadBound = '1';
+            window.addEventListener(
+                'load',
+                function () {
+                    var c = document.getElementById('jobs-role-carousel');
+                    var lp = document.getElementById('jobs-role-carousel-loop');
+                    if (c && lp && c.dataset.mdjInfiniteCarousel !== '1' && typeof window.initJobsRoleInfiniteCarousel === 'function') {
+                        try {
+                            window.initJobsRoleInfiniteCarousel();
+                        } catch (e) {
+                            console.warn('[jobs] infinite carousel load fallback:', e);
+                        }
+                    }
+                    if (typeof window.mdjJobsRoleInfiniteApplyRetry === 'function') {
+                        window.mdjJobsRoleInfiniteApplyRetry(0);
+                    }
+                    if (typeof syncJobsRoleMarqueeClones === 'function') {
+                        syncJobsRoleMarqueeClones();
+                    }
+                },
+                { passive: true }
+            );
+        })();
+
+        /**
+         * Antes: marquee CSS translate rompía hit-test; ahora bucle infinito por scroll + clones (initJobsRoleInfiniteCarousel).
+         */
+        function initJobsRoleMarquee() {
+            if (typeof window.initJobsRoleInfiniteCarousel === 'function') {
+                window.initJobsRoleInfiniteCarousel();
+            }
         }
 
         /**
@@ -3481,9 +3800,23 @@
                     if (t.matches && t.matches('input[name="roles"]')) return;
                     if (t.closest && t.closest('.jobs-role-carousel-track--marquee-clone')) return;
                     if (t.closest && t.closest('.jobs-role-card-catalog-note')) return;
-                    var lab = t.closest && t.closest('label.role-pro-card.role-photo-card');
+                    var lab =
+                        t.closest &&
+                        t.closest('label.role-pro-card.role-photo-card, div.mdj-jobs-role-carousel-clone.role-photo-card');
                     if (!lab || !car.contains(lab)) return;
                     var cbx = lab.querySelector('input[name="roles"]');
+                    if (!cbx && lab.classList && lab.classList.contains('mdj-jobs-role-carousel-clone')) {
+                        var role = lab.getAttribute('data-role');
+                        if (role) {
+                            var loopEl = document.getElementById('jobs-role-carousel-loop');
+                            var orig =
+                                loopEl &&
+                                loopEl.querySelector(
+                                    'label.role-photo-card:not(.mdj-jobs-role-carousel-clone)[data-role="' + role + '"]'
+                                );
+                            if (orig) cbx = orig.querySelector('input[name="roles"]');
+                        }
+                    }
                     if (!cbx) return;
                     e.preventDefault();
                     e.stopPropagation();

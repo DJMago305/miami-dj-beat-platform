@@ -98,8 +98,9 @@ serve(async (req) => {
     let cancelUrl = (body.cancel_url || "").trim();
 
     if (!successUrl || !cancelUrl) {
-        successUrl = `${SITE_URL}/web/courses.html?course_payment=success`;
-        cancelUrl = `${SITE_URL}/web/courses.html?course_payment=cancelled`;
+        // Vercel serves this repo with Root Directory = web/, so public paths are /courses.html (no /web/ prefix).
+        successUrl = `${SITE_URL}/courses.html?course_payment=success`;
+        cancelUrl = `${SITE_URL}/courses.html?course_payment=cancelled`;
     }
 
     if (!isAllowedRedirectUrl(successUrl, origin) || !isAllowedRedirectUrl(cancelUrl, origin)) {

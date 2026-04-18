@@ -2071,30 +2071,48 @@ window.renderRentalCatalog = (categoryId) => {
     const catBgVideo = catalog.bgVideo || (catalog.items[0] && catalog.items[0].video ? catalog.items[0].video : '');
 
     // --- RESTAURACIÓN DEL HOVER (PEDIDO EXPRESO DEL USUARIO) ---
-    document.querySelectorAll('#rental-dynamic-modal .product-card').forEach(card => {
-        card.addEventListener('mouseenter', () => {
-            const itemId = card.getAttribute('data-rental-id');
-            const itemDef = catalog.items.find(i => i.id === itemId);
-            if (!itemDef || !itemDef.video) return;
+    const rentalHoverPreview = (card) => {
+        const itemId = card.getAttribute('data-rental-id');
+        const itemDef = catalog.items.find(i => i.id === itemId);
+        if (!itemDef || !itemDef.video) return;
 
-            const heroVid = document.querySelector('#rental-multi-video-container .active-vid');
-            if (heroVid) {
-                const source = heroVid.querySelector('source');
-                const cleanItemVid = itemDef.video.split('/').pop().replace(/%20/g, ' ');
-                if (source && !source.src.includes(encodeURI(cleanItemVid)) && !source.src.includes(cleanItemVid)) {
-                    source.src = itemDef.video;
-                    if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(heroVid);
-                    heroVid.load();
-                    heroVid.play().catch(() => {});
-                }
-            }
-        });
-    });
+        const heroVid = document.querySelector('#rental-multi-video-container .active-vid');
+        if (!heroVid) return;
+        const source = heroVid.querySelector('source');
+        if (!source) return;
+        const cleanItemVid = itemDef.video.split('/').pop().replace(/%20/g, ' ');
+        const already =
+            source.src &&
+            (source.src.includes(encodeURI(cleanItemVid)) || source.src.includes(cleanItemVid));
+        if (already) {
+            if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(heroVid);
+            heroVid.play().catch(() => {});
+            return;
+        }
+        source.src = itemDef.video;
+        if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(heroVid);
+        heroVid.load();
+        heroVid.play().catch(() => {});
+    };
 
-    // Revertir a Video Base cuando el mouse sale de la colección de cartas
     const track = document.querySelector('#rental-dynamic-modal .mdj-rental-catalog-carousel');
     if (track) {
-        track.addEventListener('mouseleave', () => {
+        let lastRentalCard = null;
+        /* Delegación: incluye clones del carrusel infinito y puntero fino (iMac / Safari). */
+        track.addEventListener(
+            'pointerover',
+            (e) => {
+                const card = e.target && e.target.closest && e.target.closest('.product-card');
+                if (!card || !track.contains(card)) return;
+                if (lastRentalCard === card) return;
+                lastRentalCard = card;
+                rentalHoverPreview(card);
+            },
+            true
+        );
+
+        const revertRentalHero = () => {
+            lastRentalCard = null;
             const heroVid = document.querySelector('#rental-multi-video-container .active-vid');
             if (heroVid && catBgVideo) {
                 const source = heroVid.querySelector('source');
@@ -2106,7 +2124,21 @@ window.renderRentalCatalog = (categoryId) => {
                     heroVid.play().catch(() => {});
                 }
             }
-        });
+        };
+
+        track.addEventListener('mouseleave', revertRentalHero);
+        track.addEventListener(
+            'pointerleave',
+            (e) => {
+                if (e.relatedTarget && track.contains(e.relatedTarget)) return;
+                revertRentalHero();
+            },
+            true
+        );
+
+        if (typeof window.mdjUiTickBindScroll === 'function') {
+            window.mdjUiTickBindScroll(track);
+        }
     }
 
     if (typeof window.initRentalCatalogInfiniteCarousel === 'function') {
@@ -2571,6 +2603,8 @@ window.initFxDragClickGuard = function () {
 };
 
 window.selectedPackage = [];
+/** Categorías del hub (DJ, MC, etc.) marcadas para intención de presupuesto — independiente de líneas con precio en selectedPackage */
+window.selectedTalent = [];
 
 window.togglePackageItem = (id, name, price) => {
     const el = document.getElementById('toggle-' + id);
@@ -2652,8 +2686,12 @@ window.premiumTransition = (outId, inId, callback) => {
                 inModal.classList.remove('modal-fade-in');
             }, 600);
 
-            if (inId === 'talent-selector-modal' && typeof window.mdjResetTalentSelectorCarousel === 'function') {
-                requestAnimationFrame(() => window.mdjResetTalentSelectorCarousel());
+            if (inId === 'talent-selector-modal') {
+                if (typeof window.mdjEnsureTalentHubInfiniteOnOpen === 'function') {
+                    window.mdjEnsureTalentHubInfiniteOnOpen();
+                } else if (typeof window.mdjResetTalentSelectorCarousel === 'function') {
+                    requestAnimationFrame(() => window.mdjResetTalentSelectorCarousel());
+                }
             }
         } else {
             document.body.classList.remove('body-modal-lock');
@@ -2899,6 +2937,10 @@ window.checkoutSubmit = async function() {
 };
 
 document.addEventListener('click', async (e) => {
+    /* Hub talent selector: checkbox/label must not bubble to [data-action] on the parent card. */
+    if (e.target.closest && e.target.closest('#talent-selector-modal .mdj-talent-hub-pick')) {
+        return;
+    }
     const packCard = e.target.closest('[data-action="select-hl-package"]');
     if (packCard) {
         window.updateHoraLocaHero(packCard.getAttribute('data-id'));
@@ -3419,6 +3461,12 @@ document.addEventListener('click', async (e) => {
 });
 
 document.addEventListener('change', (e) => {
+    if (e.target && e.target.classList && e.target.classList.contains('mdj-talent-hub-cb')) {
+        if (typeof window.mdjSyncSelectedTalentFromHub === 'function') {
+            window.mdjSyncSelectedTalentFromHub(e.target);
+        }
+        return;
+    }
     const toggle = e.target.closest('[data-action="toggle-pack"]');
     if (toggle) {
         const id = toggle.getAttribute('data-id');
@@ -3485,29 +3533,39 @@ function mdjRentalsTryResumeCheckoutAfterAuth() {
     } catch (e) { /* ignore */ }
 }
 
+/** Tarjetas canónicas del hub (sin :scope — compat WebKit/iOS). */
+function mdjTalentCarouselOriginalCards(track) {
+    if (!track || !track.children) return [];
+    return Array.prototype.filter.call(track.children, function (el) {
+        if (el.nodeType !== 1) return false;
+        if (!el.classList.contains('talent-cat-card')) return false;
+        return !el.classList.contains('mdj-talent-loop-clone');
+    });
+}
+
 /**
- * Carrusel infinito del hub de talento: [copia][originales][copia] para scroll sin “fin” a la derecha.
- * Los clones no llevan id; tabindex -1; aria-hidden. El ancho del bloque central se guarda en track._mdjInfiniteSetWidth.
+ * Hub talento: duplicado simple del carril + salto en scroll (mitad = un set completo).
  */
 window.mdjRebuildTalentSelectorInfiniteCarousel = function () {
-    const track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+    var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
     if (!track) return;
-    track.querySelectorAll('.mdj-talent-carousel-clone').forEach((n) => n.remove());
+    track.querySelectorAll('.mdj-talent-loop-clone').forEach(function (n) {
+        n.remove();
+    });
+    try {
+        delete track.dataset.mdjHubPickInjected;
+    } catch (eH) { /* ignore */ }
     track.classList.remove('mdj-talent-carousel-infinite');
     track.dataset.mdjInfiniteCarousel = '';
-    delete track._mdjInfiniteSetWidth;
-    if (track._mdjInfiniteScrollHandler) {
-        track.removeEventListener('scroll', track._mdjInfiniteScrollHandler);
-        delete track._mdjInfiniteScrollHandler;
-    }
-    if (track._mdjInfiniteResizeHandler) {
-        window.removeEventListener('resize', track._mdjInfiniteResizeHandler);
-        delete track._mdjInfiniteResizeHandler;
+    track.dataset.mdjSimpleLoop = '';
+    if (track._mdjLoopScroll) {
+        track.removeEventListener('scroll', track._mdjLoopScroll);
+        delete track._mdjLoopScroll;
     }
     if (typeof window.initTalentSelectorInfiniteCarousel === 'function') {
         window.initTalentSelectorInfiniteCarousel();
     }
-    const tm = document.getElementById('talent-selector-modal');
+    var tm = document.getElementById('talent-selector-modal');
     if (tm && tm.classList.contains('modal-visible') && typeof window.mdjTalentSelectorInfiniteApply === 'function') {
         requestAnimationFrame(function () {
             requestAnimationFrame(function () {
@@ -3517,88 +3575,165 @@ window.mdjRebuildTalentSelectorInfiniteCarousel = function () {
     }
 };
 
-/**
- * Mide y centra el carrusel en el bloque del medio. Debe llamarse con el modal YA visible (si no, anchos = 0).
- */
 window.mdjTalentSelectorInfiniteApply = function () {
-    const track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
-    if (!track || track.dataset.mdjInfiniteCarousel !== '1') {
+    var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+    if (!track || track.dataset.mdjSimpleLoop !== '1') {
         if (track) track.scrollLeft = 0;
         return;
     }
-    const originals = Array.from(track.querySelectorAll(':scope > .talent-cat-card:not(.mdj-talent-carousel-clone)'));
-    const n = originals.length;
-    if (n < 2) {
-        track.scrollLeft = 0;
-        return;
+    var sw = track.scrollWidth;
+    if (sw > 120) track.scrollLeft = Math.round(sw / 4);
+};
+
+window.mdjTalentSelectorInfiniteApplyRetry = function (attempt) {
+    attempt = attempt == null ? 0 : attempt;
+    if (typeof window.mdjTalentSelectorInfiniteApply === 'function') window.mdjTalentSelectorInfiniteApply();
+    var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+    if (!track || track.dataset.mdjSimpleLoop !== '1') return;
+    if (track.scrollWidth > 120 || attempt >= 24) return;
+    setTimeout(function () {
+        window.mdjTalentSelectorInfiniteApplyRetry(attempt + 1);
+    }, 48);
+};
+
+/** Checkboxes del hub (solo tarjetas canónicas; los clones del carrusel los quita cloneCard). */
+window.mdjInjectTalentHubShortlistUi = function () {
+    const track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+    if (!track || track.dataset.mdjHubPickInjected === '1') return;
+    const cards = mdjTalentCarouselOriginalCards(track).filter((c) => c.getAttribute('data-action'));
+    if (!cards.length) return;
+    track.dataset.mdjHubPickInjected = '1';
+    window.selectedTalent = Array.isArray(window.selectedTalent) ? window.selectedTalent : [];
+    cards.forEach((card) => {
+        if (card.querySelector('.mdj-talent-hub-pick')) return;
+        const act = card.getAttribute('data-action') || '';
+        const hubId = card.id || act;
+        const titleEl = card.querySelector('.hero-card-title');
+        const name = (titleEl && titleEl.textContent.trim()) || act;
+        const lab = document.createElement('label');
+        lab.className = 'mdj-talent-hub-pick';
+        lab.setAttribute('title', 'Marcar para tu lista / presupuesto');
+        const safe = String(name).replace(/"/g, '&quot;');
+        lab.innerHTML =
+            '<input type="checkbox" class="mdj-talent-hub-cb" data-talent-hub-id="' +
+            hubId +
+            '" data-talent-action="' +
+            act +
+            '" aria-label="' +
+            safe +
+            '"><span class="mdj-talent-hub-check-visual" aria-hidden="true"></span>';
+        const pos = window.getComputedStyle(card).position;
+        if (pos === 'static') card.style.position = 'relative';
+        card.classList.add('mdj-talent-hub-card');
+        card.insertBefore(lab, card.firstChild);
+        const cb = lab.querySelector('.mdj-talent-hub-cb');
+        if (cb && window.selectedTalent.some((t) => t && t.hubId === hubId)) {
+            cb.checked = true;
+            card.classList.add('mdj-talent-hub-selected');
+        }
+    });
+};
+
+window.mdjSyncSelectedTalentFromHub = function (checkboxEl) {
+    if (!checkboxEl) return;
+    const hubId = checkboxEl.getAttribute('data-talent-hub-id');
+    const action = checkboxEl.getAttribute('data-talent-action') || '';
+    const card = checkboxEl.closest('.talent-cat-card');
+    const titleEl = card ? card.querySelector('.hero-card-title') : null;
+    const name = titleEl ? titleEl.textContent.trim() : action;
+    window.selectedTalent = Array.isArray(window.selectedTalent) ? window.selectedTalent : [];
+    window.selectedTalent = window.selectedTalent.filter((t) => t && t.hubId !== hubId);
+    if (checkboxEl.checked) {
+        window.selectedTalent.push({ hubId, action, name, kind: 'hub', price: 0 });
     }
-    const firstO = originals[0];
-    const lastO = originals[n - 1];
-    let sw = Math.round(lastO.offsetLeft + lastO.offsetWidth - firstO.offsetLeft);
-    if (!sw || sw < 10) {
-        const tri = Math.round(track.scrollWidth / 3);
-        if (tri > 10) sw = tri;
+    if (card) {
+        card.classList.toggle('mdj-talent-hub-selected', !!checkboxEl.checked);
     }
-    if (!sw || sw < 10) return;
-    track._mdjInfiniteSetWidth = sw;
-    track.scrollLeft = sw;
+};
+
+/** Presupuesto: líneas con precio + categorías del hub marcadas */
+window.getSelectedTalentForBudget = function () {
+    return {
+        lineItems: Array.isArray(window.selectedPackage) ? window.selectedPackage.slice() : [],
+        hubShortlist: Array.isArray(window.selectedTalent) ? window.selectedTalent.slice() : []
+    };
 };
 
 window.initTalentSelectorInfiniteCarousel = function () {
-    const track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
-    if (!track || track.dataset.mdjInfiniteCarousel === '1') return;
-
-    const originals = Array.from(track.querySelectorAll(':scope > .talent-cat-card:not(.mdj-talent-carousel-clone)'));
-    const n = originals.length;
-    if (n < 2) return;
-
-    function cloneCard(el) {
-        const c = el.cloneNode(true);
-        c.classList.add('mdj-talent-carousel-clone');
-        c.removeAttribute('id');
-        c.setAttribute('tabindex', '-1');
-        c.setAttribute('aria-hidden', 'true');
-        return c;
-    }
-
-    const fragBefore = document.createDocumentFragment();
-    originals.forEach((el) => fragBefore.appendChild(cloneCard(el)));
-    track.insertBefore(fragBefore, track.firstChild);
-    originals.forEach((el) => track.appendChild(cloneCard(el)));
-
+    console.log('🚀 MDJ Debug: Iniciando Carrusel Infinito');
+    var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+    if (!track || track.dataset.mdjSimpleLoop === '1') return;
+    var originals = mdjTalentCarouselOriginalCards(track);
+    if (originals.length < 2) return;
+    originals.forEach(function (el) {
+        var k = el.cloneNode(true);
+        k.classList.add('mdj-talent-loop-clone');
+        k.removeAttribute('id');
+        k.setAttribute('tabindex', '-1');
+        k.setAttribute('aria-hidden', 'true');
+        k.querySelectorAll('.mdj-talent-hub-pick').forEach(function (node) {
+            node.remove();
+        });
+        track.appendChild(k);
+    });
     track.classList.add('mdj-talent-carousel-infinite');
     track.dataset.mdjInfiniteCarousel = '1';
-
-    let jumping = false;
-    track._mdjInfiniteScrollHandler = function () {
+    track.dataset.mdjSimpleLoop = '1';
+    var jumping = false;
+    track._mdjLoopScroll = function () {
         if (jumping) return;
-        const sw = track._mdjInfiniteSetWidth;
-        if (!sw) return;
-        const max = track.scrollWidth - track.clientWidth;
-        if (max <= 0) return;
-        const buf = 8;
-        if (track.scrollLeft <= buf) {
+        var sw = track.scrollWidth;
+        var cw = track.clientWidth || 0;
+        if (sw < 80) return;
+        var half = sw / 2;
+        var max = Math.max(0, sw - cw);
+        var sl = track.scrollLeft;
+        var th = 18;
+        if (sl >= max - th) {
             jumping = true;
-            track.scrollLeft += sw;
-            requestAnimationFrame(function () { jumping = false; });
-        } else if (track.scrollLeft >= max - buf) {
+            track.scrollLeft = sl - half;
+            requestAnimationFrame(function () {
+                jumping = false;
+            });
+        } else if (sl <= th) {
             jumping = true;
-            track.scrollLeft -= sw;
-            requestAnimationFrame(function () { jumping = false; });
+            track.scrollLeft = sl + half;
+            requestAnimationFrame(function () {
+                jumping = false;
+            });
         }
     };
-    track.addEventListener('scroll', track._mdjInfiniteScrollHandler, { passive: true });
+    track.addEventListener('scroll', track._mdjLoopScroll, { passive: true });
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+            if (typeof window.mdjTalentSelectorInfiniteApplyRetry === 'function') {
+                window.mdjTalentSelectorInfiniteApplyRetry(0);
+            }
+        });
+    });
+};
 
-    let resizeT = null;
-    track._mdjInfiniteResizeHandler = function () {
-        clearTimeout(resizeT);
-        resizeT = setTimeout(function () {
+window.mdjEnsureTalentHubInfiniteOnOpen = function () {
+    var tm = document.getElementById('talent-selector-modal');
+    if (!tm || !tm.classList.contains('modal-visible')) return;
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+            var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+            if (!track) return;
+            if (track.dataset.mdjSimpleLoop !== '1' && typeof window.initTalentSelectorInfiniteCarousel === 'function') {
+                window.initTalentSelectorInfiniteCarousel();
+            }
+            if (typeof window.mdjInjectTalentHubShortlistUi === 'function') {
+                window.mdjInjectTalentHubShortlistUi();
+            }
             if (typeof window.mdjTalentSelectorInfiniteApply === 'function') {
                 window.mdjTalentSelectorInfiniteApply();
             }
-        }, 120);
-    };
-    window.addEventListener('resize', track._mdjInfiniteResizeHandler, { passive: true });
+            if (typeof window.mdjTalentSelectorInfiniteApplyRetry === 'function') {
+                window.mdjTalentSelectorInfiniteApplyRetry(0);
+            }
+        });
+    });
 };
 
 /** Talent selector — hover en tarjetas con data-talent-hero-src: preview en #talent-shell-focus (object-fit cover). */
@@ -3606,8 +3741,11 @@ window.mdjResetTalentSelectorCarousel = function () {
     const track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
     if (!track) return;
     const apply = function () {
-        if (track.dataset.mdjInfiniteCarousel === '1' && typeof window.mdjTalentSelectorInfiniteApply === 'function') {
+        if (track.dataset.mdjSimpleLoop === '1' && typeof window.mdjTalentSelectorInfiniteApply === 'function') {
             window.mdjTalentSelectorInfiniteApply();
+            if (typeof window.mdjTalentSelectorInfiniteApplyRetry === 'function') {
+                window.mdjTalentSelectorInfiniteApplyRetry(0);
+            }
         } else {
             track.scrollLeft = 0;
         }
@@ -3615,6 +3753,61 @@ window.mdjResetTalentSelectorCarousel = function () {
     requestAnimationFrame(function () {
         requestAnimationFrame(apply);
     });
+};
+
+/**
+ * Escucha global en el modal: cualquier clic en tarjeta hub alterna checkbox + clase dorada (sin depender del track).
+ */
+window.mdjBindTalentModalHubGlobalClick = function () {
+    const modal = document.getElementById('talent-selector-modal');
+    if (!modal || modal.dataset.mdjHubGlobalClick === '1') return;
+    modal.dataset.mdjHubGlobalClick = '1';
+    modal.addEventListener(
+        'click',
+        function (e) {
+            const card = e.target && e.target.closest && e.target.closest('.mdj-talent-hub-card');
+            if (!card || !modal.contains(card) || card.classList.contains('mdj-talent-loop-clone')) return;
+            if (!card.closest('.talent-selector-carousel')) return;
+            if (e.target.closest && e.target.closest('.mdj-talent-card-enter')) return;
+
+            const input = card.querySelector('.mdj-talent-hub-cb');
+            if (!input) return;
+
+            if (e.target === input) {
+                card.classList.toggle('mdj-talent-hub-selected', input.checked);
+                if (typeof window.mdjSyncSelectedTalentFromHub === 'function') {
+                    window.mdjSyncSelectedTalentFromHub(input);
+                }
+                e.stopPropagation();
+                return;
+            }
+            if (e.target.closest && e.target.closest('.mdj-talent-hub-pick')) {
+                window.requestAnimationFrame(function () {
+                    card.classList.toggle('mdj-talent-hub-selected', input.checked);
+                    if (typeof window.mdjSyncSelectedTalentFromHub === 'function') {
+                        window.mdjSyncSelectedTalentFromHub(input);
+                    }
+                });
+                e.stopPropagation();
+                return;
+            }
+
+            input.checked = !input.checked;
+            card.classList.toggle('mdj-talent-hub-selected', input.checked);
+            if (typeof window.mdjSyncSelectedTalentFromHub === 'function') {
+                window.mdjSyncSelectedTalentFromHub(input);
+            }
+            e.preventDefault();
+            e.stopPropagation();
+        },
+        true
+    );
+};
+
+window.mdjBindTalentHubWholeCardToggle = function () {
+    if (typeof window.mdjBindTalentModalHubGlobalClick === 'function') {
+        window.mdjBindTalentModalHubGlobalClick();
+    }
 };
 
 window.initTalentSelectorShellHover = function () {
@@ -3630,20 +3823,29 @@ window.initTalentSelectorShellHover = function () {
     const applyFocus = (url, el) => {
         if (!url) return;
         foc.muted = true;
-        foc.setAttribute('src', url);
+        if (foc.dataset.mdjPreviewUrl === url) {
+            foc.classList.add('is-visible');
+            amb.classList.add('talent-shell-ambient-dim');
+            shell.classList.add('talent-shell-hero-preview-on');
+            heroEls().forEach((n) => n.classList.remove('active'));
+            if (el) el.classList.add('active');
+            foc.play().catch(() => {});
+            return;
+        }
+        foc.dataset.mdjPreviewUrl = url;
         foc.src = url;
-        foc.innerHTML = `<source src="${url}" type="video/mp4">`;
         if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(foc);
-        foc.load();
-        foc.play().catch(() => { });
         foc.classList.add('is-visible');
         amb.classList.add('talent-shell-ambient-dim');
         shell.classList.add('talent-shell-hero-preview-on');
         heroEls().forEach((n) => n.classList.remove('active'));
         if (el) el.classList.add('active');
+        foc.load();
+        foc.play().catch(() => {});
     };
 
     const clearFocus = () => {
+        delete foc.dataset.mdjPreviewUrl;
         foc.classList.remove('is-visible');
         amb.classList.remove('talent-shell-ambient-dim');
         shell.classList.remove('talent-shell-hero-preview-on');
@@ -3657,8 +3859,58 @@ window.initTalentSelectorShellHover = function () {
 
     foc.addEventListener('error', clearFocus);
 
+    /* Hub de categorías: delegación en el carrusel (incluye clones del carrusel infinito y Safari / pantalla ancha). */
+    const hubTrack = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+    if (hubTrack && hubTrack.dataset.mdjTalentShellHover !== '1') {
+        hubTrack.dataset.mdjTalentShellHover = '1';
+        let lastHubCard = null;
+        hubTrack.addEventListener(
+            'pointerover',
+            (e) => {
+                const card = e.target && e.target.closest && e.target.closest('[data-talent-hero-src]');
+                if (!card || !hubTrack.contains(card)) return;
+                if (lastHubCard === card) return;
+                lastHubCard = card;
+                const url = card.getAttribute('data-talent-hero-src');
+                if (!url) return;
+                applyFocus(url, card);
+            },
+            true
+        );
+        hubTrack.addEventListener(
+            'pointerleave',
+            (e) => {
+                const rt = e.relatedTarget;
+                if (rt && hubTrack.contains(rt)) return;
+                lastHubCard = null;
+                clearFocus();
+            },
+            true
+        );
+        hubTrack.addEventListener(
+            'focusin',
+            (e) => {
+                const card = e.target && e.target.closest && e.target.closest('[data-talent-hero-src]');
+                if (!card || !hubTrack.contains(card)) return;
+                applyFocus(card.getAttribute('data-talent-hero-src'), card);
+            },
+            true
+        );
+        hubTrack.addEventListener(
+            'focusout',
+            () => {
+                requestAnimationFrame(() => {
+                    const ae = document.activeElement;
+                    if (ae && hubTrack.contains(ae) && ae.closest && ae.closest('[data-talent-hero-src]')) return;
+                    lastHubCard = null;
+                    clearFocus();
+                });
+            },
+            true
+        );
+    }
+
     heroEls().forEach((node) => {
-        /* Hub categorías: sin swap del vídeo full-bleed; el ambiente sigue. Los hovers de preview van en cada modal interno. */
         if (node.closest && node.closest('.talent-selector-carousel')) return;
         const url = node.getAttribute('data-talent-hero-src');
         if (!url) return;
@@ -3687,7 +3939,6 @@ window.initTalentCarouselDragClickGuard = function () {
     let originY = 0;
     let pointerDown = false;
     let moved = false;
-    let scrollAtPointerDown = 0;
     const MOVE_PX = 5;
 
     carousel.addEventListener('pointerdown', (e) => {
@@ -3696,7 +3947,6 @@ window.initTalentCarouselDragClickGuard = function () {
         moved = false;
         originX = e.clientX;
         originY = e.clientY;
-        scrollAtPointerDown = carousel.scrollLeft;
     }, true);
 
     carousel.addEventListener('pointermove', (e) => {
@@ -3706,19 +3956,15 @@ window.initTalentCarouselDragClickGuard = function () {
         }
     }, { passive: true });
 
-    carousel.addEventListener('scroll', () => {
-        if (pointerDown) moved = true;
-    }, { passive: true });
-
     const endPointer = () => {
         pointerDown = false;
     };
     carousel.addEventListener('pointerup', endPointer);
     carousel.addEventListener('pointercancel', endPointer);
 
+    /* Solo suprimir click tras arrastre real; no usar delta de scroll (rompe clics con carrusel infinito). */
     carousel.addEventListener('click', (e) => {
-        const scrolled = carousel.scrollLeft !== scrollAtPointerDown;
-        if (!moved && !scrolled) return;
+        if (!moved) return;
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
@@ -3737,14 +3983,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadRentalsData();
     mdjRentalsTryResumeCheckoutAfterAuth();
+    if (typeof window.initTalentSelectorInfiniteCarousel === 'function') {
+        window.initTalentSelectorInfiniteCarousel();
+    }
+    if (typeof window.mdjInjectTalentHubShortlistUi === 'function') {
+        window.mdjInjectTalentHubShortlistUi();
+    }
+    if (typeof window.mdjBindTalentHubWholeCardToggle === 'function') {
+        window.mdjBindTalentHubWholeCardToggle();
+    }
     if (typeof window.initTalentSelectorShellHover === 'function') {
         window.initTalentSelectorShellHover();
     }
     if (typeof window.initTalentCarouselDragClickGuard === 'function') {
         window.initTalentCarouselDragClickGuard();
     }
-    if (typeof window.initTalentSelectorInfiniteCarousel === 'function') {
-        window.initTalentSelectorInfiniteCarousel();
+    if (window.mdjTalentCarouselLoadBound !== '1') {
+        window.mdjTalentCarouselLoadBound = '1';
+        window.addEventListener(
+            'load',
+            function () {
+                const tr = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+                if (tr && tr.dataset.mdjSimpleLoop !== '1' && typeof window.initTalentSelectorInfiniteCarousel === 'function') {
+                    try {
+                        window.initTalentSelectorInfiniteCarousel();
+                    } catch (eL) {
+                        console.warn('[rentals] talent infinite (load):', eL);
+                    }
+                }
+                if (typeof window.mdjInjectTalentHubShortlistUi === 'function') {
+                    window.mdjInjectTalentHubShortlistUi();
+                }
+                if (typeof window.mdjBindTalentHubWholeCardToggle === 'function') {
+                    window.mdjBindTalentHubWholeCardToggle();
+                }
+                if (typeof window.mdjTalentSelectorInfiniteApplyRetry === 'function') {
+                    window.mdjTalentSelectorInfiniteApplyRetry(0);
+                }
+            },
+            { passive: true }
+        );
     }
     document.addEventListener('languageChanged', function () {
         if (typeof window.mdjRebuildTalentSelectorInfiniteCarousel === 'function') {

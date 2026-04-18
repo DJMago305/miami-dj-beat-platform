@@ -20,6 +20,12 @@ Riesgo: romper carga del catálogo.
         rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css?v=20260415-PAYASOS-MODAL-V1" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+    <!-- DEBUG: visibilidad forzada selección hub (quitar cuando el flujo esté validado) -->
+    <style id="rentals-mdj-hub-selected-debug">
+        #talent-selector-modal .talent-cat-card.mdj-talent-hub-selected {
+            border: 5px solid #D4AF37 !important;
+        }
+    </style>
     <style id="rentals-visual-lock">
         /* RENTALS VISUAL LOCK — DO NOT EDIT */
 
@@ -175,7 +181,7 @@ Riesgo: romper carga del catálogo.
             gap: clamp(14px, 2vw, 22px) !important;
             padding: 14px clamp(18px, 3.5vw, 40px) 14px clamp(18px, 3.5vw, 40px) !important;
             padding-inline-end: clamp(44px, 9vw, 112px) !important;
-            overflow-x: auto !important;
+            overflow-x: scroll !important;
             overflow-y: hidden !important;
             -webkit-overflow-scrolling: touch;
             scroll-snap-type: x mandatory;
@@ -308,7 +314,7 @@ Riesgo: romper carga del catálogo.
                 0 30px 100px rgba(0, 0, 0, 0.88) !important;
             background: #000 !important;
             background-clip: padding-box !important;
-            transition: box-shadow 0.35s ease, border-color 0.35s ease;
+            transition: box-shadow 0.14s ease, border-color 0.14s ease;
             overflow-x: visible !important;
             overflow-y: hidden !important;
         }
@@ -340,8 +346,9 @@ Riesgo: romper carga del catálogo.
 
         #talent-selector-modal #talent-shell-focus {
             opacity: 0;
-            transition: opacity 0.38s ease;
+            transition: opacity 0.12s ease-out;
             object-fit: cover;
+            will-change: opacity;
         }
 
         #talent-selector-modal #talent-shell-focus.is-visible {
@@ -350,7 +357,7 @@ Riesgo: romper carga del catálogo.
 
         #talent-selector-modal #talent-shell-ambient.talent-shell-ambient-dim {
             opacity: 0.3 !important;
-            transition: opacity 0.35s ease;
+            transition: opacity 0.14s ease-out;
         }
 
         /* Tipografía hub de talento — editorial / lujo (solo #talent-selector-modal) */
@@ -748,6 +755,91 @@ Riesgo: romper carga del catálogo.
                     0 0 28px rgba(212, 175, 55, 0.38);
             }
         }
+
+        /* Glow borde #D4AF37 — tarjetas categoría (hub) */
+        #talent-selector-modal.modal-visible .talent-selector-carousel > .talent-cat-card.hero-glass-card {
+            position: relative;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+            border: 1px solid rgba(212, 175, 55, 0.32);
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            #talent-selector-modal.modal-visible .talent-selector-carousel > .talent-cat-card.hero-glass-card:hover {
+                border-color: rgba(212, 175, 55, 0.92);
+                box-shadow:
+                    0 0 0 1px rgba(212, 175, 55, 0.4),
+                    0 0 26px rgba(212, 175, 55, 0.48),
+                    0 12px 40px rgba(0, 0, 0, 0.55);
+            }
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel .mdj-talent-hub-pick {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 12;
+            width: 26px;
+            height: 26px;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        #talent-selector-modal.modal-visible .mdj-talent-hub-pick .mdj-talent-hub-cb {
+            position: absolute;
+            inset: 0;
+            width: 26px;
+            height: 26px;
+            margin: 0;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 2;
+            accent-color: #D4AF37;
+        }
+
+        #talent-selector-modal.modal-visible .mdj-talent-hub-check-visual {
+            position: absolute;
+            inset: 0;
+            border-radius: 6px;
+            border: 2px solid rgba(212, 175, 55, 0.55);
+            background: rgba(0, 0, 0, 0.35);
+            box-sizing: border-box;
+            pointer-events: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+        }
+
+        #talent-selector-modal.modal-visible .mdj-talent-hub-cb:checked + .mdj-talent-hub-check-visual {
+            border-color: #D4AF37;
+            background: linear-gradient(145deg, rgba(212, 175, 55, 0.95), rgba(180, 145, 45, 0.98));
+            box-shadow: 0 0 14px rgba(212, 175, 55, 0.65);
+        }
+
+        #talent-selector-modal.modal-visible .mdj-talent-hub-cb:checked + .mdj-talent-hub-check-visual::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 45%;
+            width: 6px;
+            height: 10px;
+            border: solid #0a0a0a;
+            border-width: 0 2.5px 2.5px 0;
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+
+        #talent-selector-modal.modal-visible .talent-cat-card.mdj-talent-hub-selected {
+            border-color: rgba(212, 175, 55, 0.75) !important;
+            box-shadow:
+                0 0 0 1px rgba(212, 175, 55, 0.35),
+                0 0 20px rgba(212, 175, 55, 0.35) !important;
+        }
+
+        /* Catálogo / extras: check dorado visible */
+        input[data-action="toggle-pack"][type="checkbox"] {
+            accent-color: #D4AF37;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
     </style>
     <style id="rental-dynamic-catalog-panel">
         /* Catálogo por categoría: panel de contenido, sin segundo “hero” de vídeo como la portada EVENTOS */
@@ -1137,7 +1229,9 @@ Riesgo: romper carga del catálogo.
 
             if (modalId === 'talent-selector-modal') {
                 requestAnimationFrame(function () {
-                    if (typeof window.mdjResetTalentSelectorCarousel === 'function') {
+                    if (typeof window.mdjEnsureTalentHubInfiniteOnOpen === 'function') {
+                        window.mdjEnsureTalentHubInfiniteOnOpen();
+                    } else if (typeof window.mdjResetTalentSelectorCarousel === 'function') {
                         window.mdjResetTalentSelectorCarousel();
                     } else {
                         var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
@@ -1246,8 +1340,9 @@ Riesgo: romper carga del catálogo.
         });
 
     </script>
+    <script src="./mdj-carousel-scroll-tick.js?v=20260417-ratchet-metal-v2"></script>
     <script src="./data/rentalsData.js?v=20260414-rental-mp4-under90mb"></script>
-    <script src="./js/rentals.js?v=20260414-rental-mp4-under90mb"></script>
+    <script src="./js/rentals.js?v=20260417-simple-loop-v4"></script>
     <!-- ── MC MODAL ── -->
     <div id="mc-modal" class="modal-overlay modal-hidden">
         <div class="modal-content cinematic-hero-shell">
@@ -1359,7 +1454,7 @@ Riesgo: romper carga del catálogo.
                     preload="auto">
                     <source src="./assets/home/Home for Miami DJ Beat.mp4" type="video/mp4">
                 </video>
-                <video id="talent-shell-focus" class="hero-shell-video" muted loop playsinline preload="none"></video>
+                <video id="talent-shell-focus" class="hero-shell-video" muted loop playsinline preload="metadata"></video>
             </div>
             <div class="hero-shell-overlay"></div>
 
@@ -1376,7 +1471,7 @@ Riesgo: romper carga del catálogo.
                     </p>
                 </div>
 
-                <div class="grid5 cinematic-hero-cards talent-selector-carousel">
+                <div class="grid5 cinematic-hero-cards talent-selector-carousel" data-mdj-ui-tick-scroll>
                     <!-- DJ / Performance -->
                     <div class="talent-cat-card hero-glass-card" id="cat-dj" tabindex="0" data-action="open-dj"
                         data-talent-hero-src="./assets/DJ_Performance/weddings_quinces.mp4">
@@ -1943,7 +2038,7 @@ Riesgo: romper carga del catálogo.
                         <div
                             style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px;">
                             <div style="width: 140px;">
-                                <img src="./assets/branding/logo-black.png" alt="MDJ Logo"
+                                <img src="./assets/branding/logo-transparent.png" alt="MDJ Logo"
                                     style="width: 100%; height: auto;">
                             </div>
                             <div style="text-align: right; margin-top: 10px;">
