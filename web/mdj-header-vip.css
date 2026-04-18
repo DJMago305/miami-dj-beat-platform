@@ -133,6 +133,15 @@ body.mdj-logged-in-header #mainHeader .header-actions .header-avatar-cart-row {
   align-items: center;
 }
 
+/* Fila: enlace directo (portal / dashboard) + botón menú secundario */
+.mdj-account-vip-row {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+  max-width: min(280px, 44vw);
+}
+
 .mdj-account-vip-trigger {
   display: inline-flex;
   flex-direction: row;
@@ -148,6 +157,39 @@ body.mdj-logged-in-header #mainHeader .header-actions .header-avatar-cart-row {
   font: inherit;
   max-width: min(260px, 42vw);
   transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+a.mdj-account-vip-trigger.mdj-account-vip-direct {
+  text-decoration: none;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+}
+
+.mdj-account-vip-menuhit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 12px;
+  line-height: 1;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mdj-account-vip-menuhit:hover,
+.mdj-account-vip-menuhit:focus-visible {
+  background: rgba(197, 160, 89, 0.15);
+  box-shadow: 0 0 0 1px rgba(197, 160, 89, 0.35);
+  outline: none;
 }
 
 .mdj-account-vip-trigger:hover,

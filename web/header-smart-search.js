@@ -92,7 +92,9 @@
   function accountDestination(kind) {
     var sb = getSb();
     if (!sb) {
-      if (kind === 'settings') return Promise.resolve('./login.html?next=' + encodeURIComponent('./account-settings.html') + '&reason=settings');
+      if (kind === 'settings') {
+        return Promise.resolve('./login.html?next=' + encodeURIComponent('./dj-dashboard.html') + '&reason=settings');
+      }
       return Promise.resolve('./client-portal.html');
     }
     return sb
@@ -101,7 +103,9 @@
         var session = res.data && res.data.session;
         if (!session) {
           if (kind === 'dash' || kind === 'profile') return './client-portal.html';
-          if (kind === 'settings') return './login.html?next=' + encodeURIComponent('./account-settings.html') + '&reason=settings';
+          if (kind === 'settings') {
+            return './login.html?next=' + encodeURIComponent('./dj-dashboard.html') + '&reason=settings';
+          }
           return './client-portal.html';
         }
         return sb
@@ -114,12 +118,14 @@
             var isClient = role === 'client';
             if (kind === 'dash') return isClient ? './client-portal.html' : './dj-dashboard.html';
             if (kind === 'profile') return isClient ? './client-portal.html' : './dj-profile.html';
-            if (kind === 'settings') return './account-settings.html';
+            if (kind === 'settings') return isClient ? './account-settings.html' : './dj-dashboard.html';
             return './client-portal.html';
           });
       })
       .catch(function () {
-        if (kind === 'settings') return './login.html?next=' + encodeURIComponent('./account-settings.html') + '&reason=settings';
+        if (kind === 'settings') {
+          return './login.html?next=' + encodeURIComponent('./dj-dashboard.html') + '&reason=settings';
+        }
         return './client-portal.html';
       });
   }

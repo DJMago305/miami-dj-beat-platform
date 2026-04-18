@@ -121,7 +121,7 @@
     var l = document.createElement('link');
     l.id = 'mdj-header-vip-css';
     l.rel = 'stylesheet';
-    l.href = './mdj-header-vip.css?v=20260418-AVATAR-FREEZE';
+    l.href = './mdj-header-vip.css?v=20260419-VIP-DIRECT-LINK';
     document.head.appendChild(l);
   }
 
@@ -416,9 +416,9 @@
 
   function mdjCloseAccountMenu() {
     var m = document.getElementById('accountMenu');
-    var tr = document.getElementById('mdjAccountVipTrigger');
+    var menubtn = document.getElementById('mdjAccountVipMenuBtn');
     if (m) m.classList.remove('open');
-    if (tr) tr.setAttribute('aria-expanded', 'false');
+    if (menubtn) menubtn.setAttribute('aria-expanded', 'false');
   }
 
   function mdjBindVipAccountInteractionsOnce() {
@@ -426,13 +426,13 @@
     window.__mdjVipAcctBound = true;
     document.addEventListener('click', function (e) {
       var menu = document.getElementById('accountMenu');
-      var tr = document.getElementById('mdjAccountVipTrigger');
-      if (tr && tr.contains(e.target)) {
+      var menubtn = document.getElementById('mdjAccountVipMenuBtn');
+      if (menubtn && menubtn.contains(e.target)) {
         e.preventDefault();
         e.stopPropagation();
         if (!menu) return;
         menu.classList.toggle('open');
-        tr.setAttribute('aria-expanded', menu.classList.contains('open') ? 'true' : 'false');
+        menubtn.setAttribute('aria-expanded', menu.classList.contains('open') ? 'true' : 'false');
         return;
       }
       if (menu && menu.contains(e.target) && e.target && e.target.classList && e.target.classList.contains('mdj-menu-logout')) {
@@ -626,13 +626,12 @@
     var artistPublicProfileUrl = ctx.artistPublicProfileUrl ? String(ctx.artistPublicProfileUrl).trim() : '';
     var profileLabel =
       ctx.profileLabel ||
-      (isClient ? mdjGetVipPortalMenuLabel() : !ctx.hasDjProfile ? 'Mi cuenta' : mdjGetDjDashboardMenuLabel());
+      (isClient ? mdjGetVipPortalMenuLabel() : mdjGetDjDashboardMenuLabel());
     var useAvatarInitials = !!ctx.useAvatarInitials;
     var avatarInitials = ctx.avatarInitials || '?';
     var avatarUrl = ctx.avatarUrl || '';
 
     var menuHtml = '';
-    menuHtml += '<a id="accountBtn" class="mdj-menu-item mdj-menu-profile" href="' + mdjEscapeAttr(profileUrl) + '">' + mdjEscapeHtml(profileLabel) + '</a>';
     if (isClient) {
       menuHtml += '<a class="mdj-menu-item" href="./client-billing.html">' + mdjEscapeHtml(mdjGetBillingMenuLabel()) + '</a>';
       menuHtml +=
@@ -657,46 +656,34 @@
       avatarUrl: avatarUrl
     });
 
-    var root = document.getElementById('mdjAccountVipRoot');
-    if (root) {
-      var slot = document.getElementById('mdjHeaderAvatarSlot');
-      if (slot) {
-        slot.outerHTML = avatarSlotHtml;
-      } else {
-        var trg = document.getElementById('mdjAccountVipTrigger');
-        var nmEl = document.getElementById('mdjAccountDisplayName');
-        if (trg && nmEl) {
-          var ph = document.createElement('div');
-          ph.innerHTML = avatarSlotHtml;
-          var newSlot = ph.firstElementChild;
-          if (newSlot) trg.insertBefore(newSlot, nmEl);
-        }
-      }
-      var nm = document.getElementById('mdjAccountDisplayName');
-      if (nm) nm.textContent = displayName;
-      var ab = document.getElementById('accountBtn');
-      if (ab) {
-        ab.href = profileUrl;
-        ab.textContent = profileLabel;
-      }
-      var menu = document.getElementById('accountMenu');
-      if (menu) menu.innerHTML = menuHtml;
-      mdjBindHeaderAvatarImgFallbackOnce();
-      return;
-    }
-
-    zone.innerHTML =
-      '<div class="mdj-account-vip" id="mdjAccountVipRoot">' +
-      '<button type="button" class="mdj-account-vip-trigger" id="mdjAccountVipTrigger" aria-expanded="false" aria-haspopup="true">' +
+    var vipShell =
+      '<div class="mdj-account-vip-row">' +
+      '<a class="mdj-account-vip-trigger mdj-account-vip-direct" id="accountBtn" href="' +
+      mdjEscapeAttr(profileUrl) +
+      '" title="' +
+      mdjEscapeAttr(profileLabel) +
+      '">' +
       avatarSlotHtml +
       '<span class="mdj-account-display-name" id="mdjAccountDisplayName">' +
       mdjEscapeHtml(displayName) +
       '</span>' +
+      '</a>' +
+      '<button type="button" class="mdj-account-vip-menuhit" id="mdjAccountVipMenuBtn" aria-expanded="false" aria-haspopup="true" aria-controls="accountMenu" aria-label="Account menu">' +
+      '<span aria-hidden="true">▾</span>' +
       '</button>' +
+      '</div>' +
       '<nav id="accountMenu" class="mdj-account-dropdown" role="menu">' +
       menuHtml +
-      '</nav>' +
-      '</div>';
+      '</nav>';
+
+    var root = document.getElementById('mdjAccountVipRoot');
+    if (root) {
+      root.innerHTML = vipShell;
+      mdjBindHeaderAvatarImgFallbackOnce();
+      return;
+    }
+
+    zone.innerHTML = '<div class="mdj-account-vip" id="mdjAccountVipRoot">' + vipShell + '</div>';
     mdjBindHeaderAvatarImgFallbackOnce();
   }
 
@@ -973,12 +960,6 @@
           if (isClient) {
             settingsUrl = './client-portal.html';
             settingsLabel = mdjGetVipPortalMenuLabel();
-          } else if (isArtistSession) {
-            settingsUrl = './dj-dashboard.html';
-            settingsLabel = mdjGetDjDashboardMenuLabel();
-          } else if (!p && !jwtArtist) {
-            settingsUrl = './account-settings.html';
-            settingsLabel = 'Mi cuenta';
           } else {
             settingsUrl = './dj-dashboard.html';
             settingsLabel = mdjGetDjDashboardMenuLabel();
@@ -995,8 +976,6 @@
             miPortalHref = './client-portal.html';
           } else if (hasDjProfile || isArtistSession) {
             miPortalHref = './dj-dashboard.html';
-          } else if (!p && !jwtArtist) {
-            miPortalHref = './account-settings.html';
           } else {
             miPortalHref = settingsUrl;
           }
@@ -1053,8 +1032,8 @@
               }
             } else if (isArtistSession) {
               link.href = publicProfileUrl;
-            } else if (!p && !jwtArtist) {
-              link.href = './account-settings.html';
+            } else {
+              link.href = './dj-dashboard.html';
             }
           });
 
