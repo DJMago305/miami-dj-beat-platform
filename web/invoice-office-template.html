@@ -1,130 +1,13 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Invoice - Miami DJ Beat LLC</title>
-    <style>
-        /* Tipografía Clásica y Limpieza */
-        body { background: #f4f4f4; margin: 0; padding: 20px; font-family: 'Helvetica', 'Arial', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-
-        .page-wrap {
-            background: white; width: 210mm; min-height: 297mm; padding: 40px; margin: 0 auto;
-            box-sizing: border-box; display: flex; flex-direction: column;
-        }
-
-        /* Cabecera Estilo Oficina */
-        .header { display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid #1a237e; padding-bottom: 15px; }
-        .brand h1 { margin: 0; color: #1a237e; font-size: 24px; font-weight: bold; }
-        .brand p { margin: 2px 0; font-size: 11px; color: #444; line-height: 1.3; }
-
-        .invoice-info { text-align: right; }
-        .invoice-info h2 { margin: 0; color: #333; font-size: 18px; text-transform: uppercase; }
-        .invoice-info p { margin: 2px 0; font-size: 11px; color: #555; }
-
-        /* Tabla Compacta */
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        th { text-align: left; padding: 8px; background: #f8f9fa; color: #1a237e; font-size: 12px; border-bottom: 1px solid #1a237e; }
-        td { padding: 10px 8px; border-bottom: 1px solid #eee; font-size: 12px; }
-
-        /* Footer Estilo Axel (Compacto) */
-        .footer-tax {
-            margin-top: auto; background: #f8f9fa; border-top: 3px solid #1a237e;
-            padding: 20px; display: flex; justify-content: space-between; border-radius: 0 0 5px 5px;
-        }
-        .notes { width: 55%; font-size: 10px; color: #666; line-height: 1.4; }
-        .tax-table { width: 35%; font-size: 12px; }
-        .tax-table td { border: none; padding: 3px 0; }
-        .total-row { font-size: 16px; font-weight: bold; color: #1a237e; }
-
-        /* Edición y Print */
-        [contenteditable="true"] { outline: none; transition: 0.2s; }
-        [contenteditable="true"]:hover { background: #fffde7; cursor: pointer; }
-        @media print {
-            body { background: white; padding: 0; }
-            .page-wrap { width: 100%; min-height: 0; height: auto; box-shadow: none; margin: 0; padding: 30px; }
-            .no-print { display: none; }
-        }
-        .btn-print { background: #1a237e; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-    </style>
+  <meta charset="utf-8" />
+  <title>Redirect — Invoice</title>
+  <!-- Office-style invoice now lives in invoice-template-print.html (single source). Snapshot of the pre-merge layout: git history e853ac0. -->
+  <meta http-equiv="refresh" content="0; url=./invoice-template-print.html" />
+  <script>window.location.replace('./invoice-template-print.html');</script>
 </head>
-<body>
-
-    <div class="no-print" style="text-align: center; margin-bottom: 10px;">
-        <button type="button" class="btn-print" onclick="window.print()">GUARDAR PDF / IMPRIMIR</button>
-    </div>
-
-    <div class="page-wrap">
-        <div class="header">
-            <div class="brand">
-                <h1 contenteditable="true">MIAMI DJ BEAT LLC</h1>
-                <p contenteditable="true">
-                    Hialeah, FL 33012<br>
-                    Ph: (786) 290-7119<br>
-                    Email: info@miamidjbeat.com
-                </p>
-            </div>
-            <div class="invoice-info">
-                <h2>INVOICE</h2>
-                <p contenteditable="true">
-                    <strong>No:</strong> #2026-0417<br>
-                    <strong>Fecha:</strong> 17 de Abril, 2026
-                </p>
-            </div>
-        </div>
-
-        <div style="margin-bottom: 15px;">
-            <p style="font-size: 12px; margin: 0;"><strong>CLIENTE / EVENTO:</strong></p>
-            <p contenteditable="true" style="font-size: 14px; color: #1a237e; margin: 5px 0; font-weight: bold;">Nombre del Cliente Aquí</p>
-        </div>
-
-        <div style="flex-grow: 1;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>DESCRIPCIÓN DEL SERVICIO</th>
-                        <th style="text-align: center; width: 50px;">CANT</th>
-                        <th style="text-align: right; width: 100px;">PRECIO</th>
-                        <th style="text-align: right; width: 100px;">TOTAL</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td contenteditable="true">Servicio Profesional de DJ / Entretenimiento</td>
-                        <td contenteditable="true" style="text-align: center;">1</td>
-                        <td contenteditable="true" style="text-align: right;">$0.00</td>
-                        <td contenteditable="true" style="text-align: right; font-weight: bold;">$0.00</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="footer-tax">
-            <div class="notes">
-                <strong style="color:#1a237e">TÉRMINOS Y NOTAS:</strong>
-                <p contenteditable="true" style="margin-top: 5px;">
-                    Depósito requerido para reserva. Gracias por confiar en Miami DJ Beat.
-                    Cualquier duda técnica, contáctenos de inmediato.
-                </p>
-            </div>
-            <div class="tax-table">
-                <table>
-                    <tr>
-                        <td style="padding: 2px 0;">Subtotal:</td>
-                        <td contenteditable="true" style="text-align: right;">$0.00</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 2px 0;">Tax (7%):</td>
-                        <td contenteditable="true" style="text-align: right;">$0.00</td>
-                    </tr>
-                    <tr class="total-row">
-                        <td style="padding-top: 10px; border-top: 1px solid #ccc;">TOTAL:</td>
-                        <td contenteditable="true" style="text-align: right; padding-top: 10px; border-top: 1px solid #ccc;">$0.00</td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-    </div>
-
+<body style="font-family:system-ui,sans-serif;padding:2rem;text-align:center;">
+  <p><a href="./invoice-template-print.html">Open invoice template →</a></p>
 </body>
 </html>
