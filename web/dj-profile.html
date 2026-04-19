@@ -2609,11 +2609,23 @@
 
             const djName = p.stage_name || p.dj_name || p.full_name || 'DJ';
 
+            function mdjProfileBustImgUrl(u) {
+                if (!u || typeof u !== 'string') return '';
+                var t = u.trim();
+                if (!t || t.indexOf('data:') === 0) return t;
+                var sep = t.indexOf('?') >= 0 ? '&' : '?';
+                return t + sep + 'v=' + Date.now();
+            }
+
             // ── Portada (cover) + avatar redondo — mismo patrón que Facebook: banner + foto de perfil ──
             var bgTrim = p.background_url && String(p.background_url).trim();
             var phTrim = p.photo_url && String(p.photo_url).trim();
             var coverUrl = bgTrim || phTrim || '';
             var avatarUrl = phTrim || bgTrim || coverUrl || '';
+            var coverSrc = coverUrl ? mdjProfileBustImgUrl(coverUrl) : '';
+            var avatarSrc = avatarUrl
+                ? (avatarUrl === coverUrl ? coverSrc : mdjProfileBustImgUrl(avatarUrl))
+                : '';
             var fxp = (p.photo_focal_x != null && p.photo_focal_x !== undefined) ? Number(p.photo_focal_x) : 50;
             var fyp = (p.photo_focal_y != null && p.photo_focal_y !== undefined) ? Number(p.photo_focal_y) : 50;
             var zm = (p.hero_bg_zoom != null && p.hero_bg_zoom !== undefined) ? Number(p.hero_bg_zoom) : 100;
@@ -2630,7 +2642,7 @@
                 bgPhoto.style.transformOrigin = fxp + '% ' + fyp + '%';
                 bgPhoto.alt = 'Cover — ' + djName;
                 bgPhoto.onload = function () { bgPhoto.classList.add('loaded'); };
-                bgPhoto.src = coverUrl;
+                bgPhoto.src = coverSrc;
             }
             if (avatarUrl && insetPhoto) {
                 if (coverUrl && avatarUrl === coverUrl) {
@@ -2640,12 +2652,12 @@
                 }
                 insetPhoto.alt = djName;
                 insetPhoto.onload = function () { insetPhoto.classList.add('loaded'); };
-                insetPhoto.src = avatarUrl;
+                insetPhoto.src = avatarSrc;
             }
 
             const headerAvatar = document.querySelector('.account-btn .avatar');
             if (headerAvatar && avatarUrl) {
-                headerAvatar.src = avatarUrl;
+                headerAvatar.src = avatarSrc;
                 headerAvatar.alt = djName;
             }
 
@@ -2999,7 +3011,7 @@
             const metaImg = document.getElementById('meta-og-image');
             if (metaTitle) metaTitle.setAttribute('content', `${djName} — Perfil DJ Miami DJ Beat`);
             if (metaDesc) metaDesc.setAttribute('content', `🎵 Conoce a ${djName}. ${window.currentDJData.bio.substring(0, 100)}... Reserva a este artista a través de Miami DJ Beat.`);
-            if (metaImg && p.photo_url) metaImg.setAttribute('content', p.photo_url);
+            if (metaImg && p.photo_url) metaImg.setAttribute('content', mdjProfileBustImgUrl(String(p.photo_url).trim()));
 
             // ── QR de referidos (PÚBLICO): incluye referral_code como rcode= si existe ──
             const profileUrl = typeof window.buildMiamiPublicQrUrl === 'function'

@@ -3956,6 +3956,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="./profile-loader.js"></script>
     <script>
+        /** Evita que el navegador muestre caché cuando la URL pública de Storage no cambia (mismo path tras upsert). */
+        function mdjBustImgUrl(url) {
+            if (!url || typeof url !== 'string') return url || '';
+            var t = url.trim();
+            if (!t || t.indexOf('data:') === 0) return t;
+            var sep = t.indexOf('?') >= 0 ? '&' : '?';
+            return t + sep + 'v=' + Date.now();
+        }
         // ── Navegación BOSS: Mi perfil → dj-profile.html?id= (sin 404 ni bucles) ───────────
         (async () => {
             const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
@@ -3989,7 +3997,11 @@
                     accTitle = 'Mi perfil';
                     navLabel = 'Mi perfil';
                 }
-                const av = session.user?.user_metadata?.avatar_url || p?.photo_url;
+                /* dj_profiles.photo_url gana sobre user_metadata.avatar_url (OAuth/JWT puede quedar obsoleto). */
+                var rawAv = (p && p.photo_url && String(p.photo_url).trim())
+                    ? String(p.photo_url).trim()
+                    : (String(session.user?.user_metadata?.avatar_url || p?.photo_url || '').trim());
+                var av = rawAv ? mdjBustImgUrl(rawAv) : '';
                 if (av) {
                     document.querySelectorAll('#accountBtn .avatar, #acct-avatar').forEach((img) => {
                         img.src = av;
@@ -4008,7 +4020,7 @@
                         if (tries < 80) setTimeout(tick, 40);
                     }
                     tick();
-                })(p && p.photo_url ? p.photo_url : av);
+                })(p && p.photo_url && String(p.photo_url).trim() ? String(p.photo_url).trim() : rawAv);
                 if (p && p.role !== 'client') {
                     document.querySelectorAll('#owner-tabs a[href*="dj-profile"]').forEach((a) => {
                         try {
@@ -4356,6 +4368,9 @@
                 return;
             }
             await sb.from('dj_profiles').update({ photo_url: publicUrl }).eq('user_id', user.id);
+            try {
+                await sb.auth.updateUser({ data: { avatar_url: publicUrl } });
+            } catch (e) { void e; }
             try { await sb.auth.refreshSession(); } catch (e) { void e; }
             // Update UI (photo_url en dj_profiles = única fuente de verdad para header VIP)
             document.getElementById('acct-avatar').src = publicUrl + '?t=' + Date.now();
@@ -4376,6 +4391,10 @@
             const { data: { user } } = await sb.auth.getUser();
             if (!user) return;
             await sb.from('dj_profiles').update({ photo_url: null }).eq('user_id', user.id);
+            try {
+                await sb.auth.updateUser({ data: { avatar_url: '' } });
+            } catch (e) { void e; }
+            try { await sb.auth.refreshSession(); } catch (e) { void e; }
             const ph = './assets/dj-avatar-placeholder.png';
             document.getElementById('acct-avatar').src = ph;
             document.getElementById('acct-photo-thumb').src = ph;
@@ -4760,7 +4779,7 @@
                 if (prevImg) {
                     var src = (p.background_url || p.cover_url || p.photo_url || '').trim();
                     if (src) {
-                        prevImg.src = src;
+                        prevImg.src = mdjBustImgUrl(src);
                         prevImg.onerror = function () { prevImg.src = './assets/dj-avatar-placeholder.png'; };
                     }
                     if (typeof window.mdjHeroUpdatePreview === 'function') window.mdjHeroUpdatePreview();
@@ -4811,9 +4830,10 @@
                 const thumbAv = document.getElementById('acct-photo-thumb');
                 const mainAv = document.getElementById('acct-avatar');
                 if (p.photo_url) {
-                    if (headAv) headAv.src = p.photo_url;
-                    if (thumbAv) thumbAv.src = p.photo_url;
-                    if (mainAv) mainAv.src = p.photo_url;
+                    var bustP = mdjBustImgUrl(String(p.photo_url).trim());
+                    if (headAv) headAv.src = bustP;
+                    if (thumbAv) thumbAv.src = bustP;
+                    if (mainAv) mainAv.src = bustP;
                     (function mdjDashVipFromCfg(u) {
                         if (!u) return;
                         var n = 0;
@@ -4826,7 +4846,7 @@
                             if (n < 80) setTimeout(t, 40);
                         }
                         t();
-                    })(p.photo_url);
+                    })(String(p.photo_url).trim());
                 }
             }
             if (p.dj_name || p.stage_name || p.full_name) {
