@@ -145,6 +145,14 @@ function mdjBuildPostAuthReturnUrlFromQuery(search, user) {
         if (!raw) return null;
         if (!/^[a-z][a-z0-9_-]{0,80}$/i.test(raw)) return null;
 
+        const ut = user ? String(user.user_metadata?.user_type || '').toLowerCase() : '';
+        const appR = user ? String(user.app_metadata?.role || '').toLowerCase() : '';
+        const isArtistJwt = ut === 'talent' || ut === 'dj' || appR === 'artist';
+        /* Destinos de cliente prohibidos para JWT de artista (mezcla account-settings vs dashboard). */
+        if (isArtistJwt && (raw === 'client-portal' || raw === 'account-settings' || raw === 'account-profile')) {
+            return './dj-dashboard.html?tab=settings&from_auth=1';
+        }
+
         /* Jobs: alta gratis (signup=free) sigue en jobs.html (#selection-screen); sesión talento existente → panel DJ. */
         if (raw === 'jobs' && user) {
             const signup = (qp.get('signup') || '').toLowerCase();
@@ -214,6 +222,50 @@ function mdjGetReferralDjId() {
 }
 
 /**
+ * Categorías elegidas en jobs.html (`sessionStorage.mdj_jobs_roster_categories`) → roles + artist_specialty en dj_profiles.
+ */
+async function mdjApplyJobsRosterToDjProfile(db, userId) {
+    if (!db || !userId) return;
+    try {
+        const raw = sessionStorage.getItem('mdj_jobs_roster_categories');
+        if (!raw) return;
+        const jobCat = JSON.parse(raw);
+        const codes = jobCat && jobCat.codes;
+        const labels = jobCat && jobCat.labels;
+        if (!Array.isArray(codes) || codes.length === 0) return;
+        const rolesStr = codes
+            .map(function (c) {
+                return String(c).trim();
+            })
+            .filter(Boolean)
+            .join(', ');
+        let specLine = null;
+        if (Array.isArray(labels) && labels.length) {
+            specLine = labels
+                .map(function (l) {
+                    return String(l).trim();
+                })
+                .filter(Boolean)
+                .join(' · ');
+        }
+        const { error } = await db
+            .from('dj_profiles')
+            .update({
+                roles: rolesStr,
+                artist_specialty: specLine || null
+            })
+            .eq('user_id', userId);
+        void error;
+    } catch (e) {
+        void e;
+    }
+}
+
+if (typeof window !== 'undefined') {
+    window.mdjApplyJobsRosterToDjProfile = mdjApplyJobsRosterToDjProfile;
+}
+
+/**
  * Signup puede terminar antes del INSERT (p. ej. confirmación de email sin sesión JWT).
  * En el primer login con sesión, crea la fila que falta en dj_profiles o client_profiles. Idempotente.
  */
@@ -265,6 +317,7 @@ async function mdjEnsureAuthProfileRows(db, user) {
 
             const { error: insErr } = await db.from('dj_profiles').insert([profilePayload]);
             if (insErr) console.warn('[AUTH] mdjEnsureAuthProfileRows dj_profiles insert:', insErr);
+            else await mdjApplyJobsRosterToDjProfile(db, profileUid);
         } else {
             const { data: existingCl, error: selErr } = await db.from('client_profiles').select('user_id').eq('user_id', user.id).maybeSingle();
             if (selErr) {
@@ -363,7 +416,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const nextRaw = (params.get('next') || '').trim();
         if (nextRaw) {
-            const nextUrl = (nextRaw.startsWith('./') || nextRaw.startsWith('/')) ? nextRaw : `./${nextRaw.replace(/^\//, '')}`;
+            let nextUrl = (nextRaw.startsWith('./') || nextRaw.startsWith('/')) ? nextRaw : `./${nextRaw.replace(/^\//, '')}`;
+            /* Artista / talento: nunca enviar a flujos de cliente (account-settings / client-portal). */
+            const isArtistSession =
+                role === 'artist' ||
+                rawRole === 'talent' ||
+                rawRole === 'dj' ||
+                rawRole === 'artist';
+            if (isArtistSession && /account-settings\.html|client-portal\.html/i.test(nextUrl)) {
+                window.location.assign('./dj-dashboard.html?tab=settings');
+                return;
+            }
             window.location.assign(nextUrl);
             return;
         }
@@ -512,8 +575,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (password.length < 6) throw new Error('La contraseña debe tener al menos 6 caracteres.');
                 if (password !== confirmPassword) throw new Error('Las contraseñas no coinciden. Verifícalas y vuelve a intentarlo.');
 
-                // 1. Create Auth user
-                const userType = document.getElementById('signup-usertype')?.value || 'client';
+                // 1. Create Auth user — talento si viene de Jobs, alta gratis, o eligió categorías en el carrusel (sessionStorage).
+                const qpSignup = new URLSearchParams(window.location.search);
+                const explicitUserType = (qpSignup.get('user_type') || '').toLowerCase();
+                const redirectSlug = qpSignup.get('redirect');
+                const signupParam = (qpSignup.get('signup') || '').toLowerCase();
+                let roster = null;
+                try {
+                    roster = JSON.parse(sessionStorage.getItem('mdj_jobs_roster_categories') || 'null');
+                } catch (eR) {
+                    void eR;
+                }
+                const hasJobsRoster = roster && Array.isArray(roster.codes) && roster.codes.length > 0;
+                const fromHidden = (document.getElementById('signup-usertype')?.value || 'client').toLowerCase();
+                let userType =
+                    explicitUserType ||
+                    (redirectSlug === 'jobs' || signupParam === 'free' || hasJobsRoster ? 'talent' : fromHidden);
+                if (explicitUserType === 'talent' || explicitUserType === 'artist' || explicitUserType === 'dj') {
+                    userType = 'talent';
+                }
+                if (explicitUserType === 'client' && (redirectSlug === 'jobs' || hasJobsRoster)) {
+                    userType = 'talent';
+                }
+                const suHidden = document.getElementById('signup-usertype');
+                if (suHidden) suHidden.value = userType;
                 const refCode = mdjGetReferralDjId();
 
                 const { data, error: authErr } = await db.auth.signUp({
@@ -593,6 +678,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const { error: djProfileErr } = await db.from('dj_profiles').insert([profilePayload]);
                     if (djProfileErr) throw new Error(`No se pudo crear tu perfil de artista: ${djProfileErr.message || 'error desconocido'}`);
+                    await mdjApplyJobsRosterToDjProfile(db, profileUid);
                 } else {
                     const clientPayload = {
                         user_id: profileUid,
