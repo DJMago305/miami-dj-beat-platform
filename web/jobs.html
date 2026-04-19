@@ -8,8 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260415-CORE-CONNECTIONS" />
-    <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+    <link rel="stylesheet" href="./styles.css?v=20260418-JOBS-V3" />
+    <link rel="stylesheet" href="./profile.css?v=20260418-JOBS-V3" />
     <style>
         :root {
             --mesh-glow: rgba(197, 160, 89, 0.15);
@@ -590,21 +590,18 @@
         }
 
         /*
-         * Checkbox a pantalla completa (invisible): toda la tarjeta activa la categoría (algoritmos / perfil).
-         * Capas de foto tienen pointer-events:none → el hit va al input.
+         * Checkbox invisible (sin cuadrado nativo): toda la tarjeta del carrusel activa la categoría.
          */
-        #selection-screen label.role-photo-card > input[type="checkbox"] {
-            display: block !important;
+        #mdj-jobs-v3-carousel input[name="roles"] {
+            opacity: 0 !important;
             position: absolute !important;
             inset: 0 !important;
             width: 100% !important;
             height: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
-            opacity: 0 !important;
             cursor: pointer !important;
             pointer-events: auto !important;
-            /* Por debajo del anillo/✓ (::before); pointer-events en el pseudo = none → el clic llega al input */
             z-index: 4 !important;
             flex-shrink: 0;
             appearance: none !important;
@@ -630,20 +627,20 @@
 
         /*
          * Sin esto, los hijos (p. ej. .role-name) tienen pointer-events: auto por defecto y capturan el clic
-         * aunque el padre tenga none (comportamiento del spec). El listener delegado en #jobs-role-carousel
+         * aunque el padre tenga none (comportamiento del spec). El listener delegado en #mdj-jobs-v3-carousel
          * hace toggle manual + preventDefault; la acción nativa del <label> puede volver a toggle → estado neto 0.
          * Forzar que solo el input invisible reciba el puntero; el anillo decorativo sigue con none arriba.
          */
-        #jobs-role-carousel label.role-photo-card.role-photo-card--carousel *:not(input[name="roles"]) {
+        #mdj-jobs-v3-carousel label.role-photo-card.role-photo-card--carousel *:not(input[name="roles"]) {
             pointer-events: none !important;
         }
 
         /* Clones del bucle: sin input; el hit debe quedar en el div para delegar al checkbox canónico. */
-        #jobs-role-carousel div.mdj-jobs-role-carousel-clone.role-photo-card--carousel {
+        #mdj-jobs-v3-carousel div.mdj-talent-loop-clone.role-photo-card--carousel {
             pointer-events: auto !important;
         }
 
-        #jobs-role-carousel div.mdj-jobs-role-carousel-clone.role-photo-card--carousel * {
+        #mdj-jobs-v3-carousel div.mdj-talent-loop-clone.role-photo-card--carousel * {
             pointer-events: none !important;
         }
 
@@ -689,12 +686,22 @@
             transition: border-color 0.35s, box-shadow 0.35s, transform 0.3s;
         }
 
+        /* Regresión: ningún ::before/::after en tarjetas foto — la única marca es .mdj-role-check-ring en el DOM. */
+        .role-photo-card::before,
+        .role-photo-card::after {
+            content: none !important;
+            display: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            background: none !important;
+        }
+
         /*
          * Hit-test fiable: styles.css define `label { display: grid }` y aquí mezclaba con flex + hijos absolute,
          * lo que en algunos navegadores dejaba la palomita/checkbox sin togglear al clicar la tarjeta.
          */
         label.role-pro-card.role-photo-card.role-photo-card--carousel,
-        div.role-pro-card.role-photo-card.role-photo-card--carousel.mdj-jobs-role-carousel-clone {
+        div.role-pro-card.role-photo-card.role-photo-card--carousel.mdj-talent-loop-clone {
             display: block !important;
             touch-action: manipulation;
         }
@@ -704,7 +711,7 @@
          * La selección real sigue en .active (borde/✓ más fuerte abajo).
          */
         @media (hover: hover) and (pointer: fine) {
-            #jobs-role-carousel .role-photo-card:not(.active):hover {
+            #mdj-jobs-v3-carousel .role-photo-card:not(.active):not(:has(input[name="roles"]:checked)):hover {
                 border-color: rgba(197, 160, 89, 0.72);
                 box-shadow:
                     0 0 6px rgba(197, 160, 89, 0.22),
@@ -713,74 +720,31 @@
                 transform: translateY(-1px);
             }
 
-            #jobs-role-carousel .role-photo-card:not(.active):hover::before {
-                border-color: rgba(255, 255, 255, 0.75);
-                box-shadow: 0 0 8px rgba(197, 160, 89, 0.35);
-            }
         }
 
-        /* Indicador fijo arriba-derecha: sin seleccionar = círculo vacío; seleccionado = ✓ dorado */
-        .role-photo-card::before {
-            content: '';
+        #mdj-jobs-v3-carousel .mdj-role-check-ring {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.9);
-            background: rgba(0, 0, 0, 0.45);
-            z-index: 80;
-            pointer-events: none;
-            box-sizing: border-box;
-            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
-        }
-
-        /* Nodo real, z-index máximo: no depender de ::before ni de :has() (sync pone .active en la tarjeta). */
-        #jobs-role-carousel .mdj-role-check-ring {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.9);
-            background: rgba(0, 0, 0, 0.45);
-            z-index: 99999;
-            pointer-events: none;
-            box-sizing: border-box;
+            top: 12px;
+            right: 12px;
+            border-radius: 50% !important;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid white;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
-        }
-        #jobs-role-carousel label.mdj-has-role-check-ring::before,
-        #jobs-role-carousel div.mdj-jobs-role-carousel-clone.mdj-has-role-check-ring::before {
-            display: none !important;
-            content: none !important;
-        }
-        #jobs-role-carousel .role-photo-card.active .mdj-role-check-ring {
-            border-color: var(--gold);
-            background: var(--gold);
-            box-shadow: 0 0 14px rgba(197, 160, 89, 0.65);
-            font-size: 15px;
-            font-weight: 900;
-            color: #000;
-            line-height: 1;
+            z-index: 100;
+            pointer-events: none;
+            box-sizing: border-box;
         }
 
-        .role-photo-card.active::before {
-            content: '✓';
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 15px;
-            font-weight: 900;
-            color: #000;
-            border-color: var(--gold);
-            background: var(--gold);
-            line-height: 1;
-            box-shadow: 0 0 14px rgba(197, 160, 89, 0.65);
+        #mdj-jobs-v3-carousel .role-photo-card:is(.active, :has(input[name="roles"]:checked)) .mdj-role-check-ring {
+            background: #d4af37 !important;
+        }
+
+        #mdj-jobs-v3-carousel .role-photo-card:is(.active, :has(input[name="roles"]:checked)) .mdj-role-check-mark {
+            display: block !important;
         }
 
         .role-photo-bg {
@@ -793,7 +757,7 @@
         }
 
         @media (hover: hover) and (pointer: fine) {
-            #jobs-role-carousel .role-photo-card:not(.active):hover .role-photo-bg {
+            #mdj-jobs-v3-carousel .role-photo-card:not(.active):not(:has(input[name="roles"]:checked)):hover .role-photo-bg {
                 transform: scale(1.04);
             }
         }
@@ -840,15 +804,17 @@
             border-radius: 20px;
         }
 
-        /* Active (selected) state */
-        #jobs-role-carousel .role-photo-card.active {
-            border-width: 2px;
-            border-color: var(--gold) !important;
+        /* Active (selected) state — halo fuerte solo en el carrusel (no toca otras pantallas). */
+        #mdj-jobs-v3-carousel .role-photo-card:is(.active, :has(input[name="roles"]:checked)) {
+            border-width: 3px;
+            border-color: #e8c76a !important;
             box-shadow:
-                0 0 22px rgba(197, 160, 89, 0.65),
-                0 0 48px rgba(197, 160, 89, 0.35),
-                inset 0 0 22px rgba(197, 160, 89, 0.12);
-            transform: translateY(-3px);
+                0 0 0 1px rgba(255, 236, 190, 0.95),
+                0 0 16px rgba(212, 175, 55, 0.95),
+                0 0 36px rgba(197, 160, 89, 0.65),
+                0 0 64px rgba(197, 160, 89, 0.4),
+                inset 0 0 26px rgba(197, 160, 89, 0.16);
+            transform: translateY(-5px);
         }
 
         .role-photo-card.active {
@@ -857,7 +823,23 @@
             transform: translateY(-4px);
         }
 
+        /* Clones del carrusel infinito: mismo brillo que la tarjeta origen. */
+        #mdj-jobs-v3-carousel .mdj-talent-loop-clone.role-photo-card.active {
+            border-width: 3px;
+            border-color: #e8c76a !important;
+            box-shadow:
+                0 0 0 1px rgba(255, 236, 190, 0.95),
+                0 0 16px rgba(212, 175, 55, 0.95),
+                0 0 36px rgba(197, 160, 89, 0.65),
+                0 0 64px rgba(197, 160, 89, 0.4),
+                inset 0 0 26px rgba(197, 160, 89, 0.16);
+        }
+
         .role-photo-card.active .role-photo-gradient {
+            background: linear-gradient(to top, rgba(30, 20, 0, 0.92) 0%, rgba(197, 160, 89, 0.06) 60%, transparent 100%);
+        }
+
+        #mdj-jobs-v3-carousel .role-photo-card:has(input[name="roles"]:checked) .role-photo-gradient {
             background: linear-gradient(to top, rgba(30, 20, 0, 0.92) 0%, rgba(197, 160, 89, 0.06) 60%, transparent 100%);
         }
 
@@ -865,7 +847,15 @@
             display: inline-block;
         }
 
+        #mdj-jobs-v3-carousel .role-photo-card:has(input[name="roles"]:checked) .role-selected-badge {
+            display: inline-block;
+        }
+
         .role-photo-card.active .role-name {
+            color: var(--gold);
+        }
+
+        #mdj-jobs-v3-carousel .role-photo-card:has(input[name="roles"]:checked) .role-name {
             color: var(--gold);
         }
 
@@ -880,6 +870,10 @@
         }
 
         .role-photo-card.active .role-subtitle {
+            color: rgba(197, 160, 89, 0.8);
+        }
+
+        #mdj-jobs-v3-carousel .role-photo-card:has(input[name="roles"]:checked) .role-subtitle {
             color: rgba(197, 160, 89, 0.8);
         }
 
@@ -965,6 +959,50 @@
             text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45), 0 0 28px rgba(197, 160, 89, 0.35);
         }
 
+        /* Artista: estado LITE vs PRO (no confundir con facturación de cliente / portal cliente). */
+        #jobs-artist-plan-banner {
+            display: none;
+            max-width: 72rem;
+            margin: 0 auto 18px;
+            padding: 12px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(197, 160, 89, 0.45);
+            background: rgba(10, 10, 14, 0.72);
+            color: rgba(255, 255, 255, 0.88);
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.45;
+            text-align: center;
+        }
+
+        #jobs-artist-plan-banner a {
+            color: var(--gold);
+            font-weight: 800;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        #jobs-artist-plan-banner .jobs-artist-plan-banner__badge--pro {
+            display: inline-block;
+            margin-right: 8px;
+            padding: 2px 10px;
+            border-radius: 8px;
+            background: rgba(197, 160, 89, 0.25);
+            color: var(--gold);
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        #jobs-artist-plan-banner .jobs-artist-plan-banner__tier {
+            color: var(--gold);
+            font-weight: 800;
+        }
+
+        #selection-screen .level-portal-container.hidden-by-prefill {
+            display: none !important;
+        }
+
         #selection-screen .jobs-role-roles-block {
             position: relative;
             z-index: 1;
@@ -1015,9 +1053,9 @@
             padding: 4px 2px 14px;
         }
 
-        /* Saltos del bucle infinito deben ser instantáneos (scroll-behavior: smooth retrasaría o ignoraría el ajuste). */
-        #jobs-role-carousel[data-mdj-infinite-carousel='1'] {
-            scroll-behavior: auto;
+        /* Carrusel de roles: saltos del bucle infinito (rentals) deben ser instantáneos — nunca smooth. */
+        #mdj-jobs-v3-carousel.jobs-role-carousel {
+            scroll-behavior: auto !important;
         }
 
         /* Legacy: CSS marquee (transform) desactivado en JS — rompía clics/selección en WebKit. Mantener reglas por si hiciera falta rollback. */
@@ -1927,17 +1965,25 @@
         </section>
 
         <section class="section" id="selection-screen">
+            <p id="jobs-client-to-artist-banner" class="jobs-client-to-artist-banner" style="display:none;max-width:48rem;margin:0 auto 20px;padding:12px 16px;border-radius:14px;border:1px solid rgba(197,160,89,0.45);background:rgba(197,160,89,0.12);color:rgba(255,255,255,0.92);font-size:13px;font-weight:600;line-height:1.45;text-align:center;"
+                data-i18n="jobs-client-wants-artist-msg" role="status"></p>
             <div class="jobs-role-roles-block" style="max-width:72rem;margin:0 auto 28px;">
                 <p class="jobs-role-carousel-sign" data-i18n="jobs-role-carousel-heading">Selecciona tus categorías</p>
+                <div id="jobs-artist-plan-banner" role="status" aria-live="polite"></div>
                 <div class="jobs-role-carousel-shell" role="region"
                     aria-label="Open roles — select one or more; scroll horizontally or use the arrows.">
                     <button type="button" class="jobs-role-carousel-btn" id="jobs-role-carousel-prev"
                         aria-label="Anterior" onclick="jobsRoleCarouselScroll(-1)">◀</button>
-                    <div class="jobs-role-carousel" id="jobs-role-carousel" data-mdj-ui-tick-scroll>
+                    <div class="jobs-role-carousel" id="mdj-jobs-v3-carousel" data-mdj-ui-tick-scroll>
                         <div class="jobs-role-carousel-track">
-                            <div class="jobs-role-carousel-loop" id="jobs-role-carousel-loop">
+                            <div class="jobs-role-carousel-loop" id="mdj-jobs-v3-loop">
                             <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="DJ">
                                 <input type="checkbox" name="roles" value="DJ" form="employment-form">
+                                <div class="mdj-role-check-ring" aria-hidden="true">
+                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                </div>
                                 <div class="role-photo-bg"
                                     style="background-image:url('./assets/Jobs/DJ.jpg?v=4');background-position:center;"></div>
                                 <div class="role-photo-gradient"></div>
@@ -1949,6 +1995,11 @@
                             </label>
                             <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="MC">
                                 <input type="checkbox" name="roles" value="MC" form="employment-form">
+                                <div class="mdj-role-check-ring" aria-hidden="true">
+                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                </div>
                                 <div class="role-photo-bg"
                                     style="background-image:url('./assets/Jobs/MC.jpg?v=4');background-position:center;"></div>
                                 <div class="role-photo-gradient"></div>
@@ -1960,6 +2011,11 @@
                             </label>
                             <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="CANTANTE">
                                 <input type="checkbox" name="roles" value="CANTANTE" form="employment-form">
+                                <div class="mdj-role-check-ring" aria-hidden="true">
+                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                </div>
                                 <div class="role-photo-bg"
                                     style="background-image:url('./assets/Jobs/CANTANTE.jpg?v=4');background-position:center;"></div>
                                 <div class="role-photo-gradient"></div>
@@ -1971,6 +2027,11 @@
                             </label>
                             <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="LIVE_BAND">
                                 <input type="checkbox" name="roles" value="LIVE_BAND" form="employment-form">
+                                <div class="mdj-role-check-ring" aria-hidden="true">
+                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                </div>
                                 <div class="role-photo-bg"
                                     style="background-image:url('./assets/Jobs/LIVE_BAND.jpg?v=4');background-position:center;"></div>
                                 <div class="role-photo-gradient"></div>
@@ -1982,6 +2043,11 @@
                             </label>
                             <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="PERCUSIONISTA">
                                 <input type="checkbox" name="roles" value="PERCUSIONISTA" form="employment-form">
+                                <div class="mdj-role-check-ring" aria-hidden="true">
+                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                </div>
                                 <div class="role-photo-bg"
                                     style="background-image:url('./assets/Jobs/PERCUSIONISTA.jpg?v=4');background-position:center;"></div>
                                 <div class="role-photo-gradient"></div>
@@ -1993,6 +2059,11 @@
                             </label>
                             <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="SAXOFONISTA">
                                 <input type="checkbox" name="roles" value="SAXOFONISTA" form="employment-form">
+                                <div class="mdj-role-check-ring" aria-hidden="true">
+                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                </div>
                                 <div class="role-photo-bg"
                                     style="background-image:url('./assets/Jobs/SAXOFONISTA.jpg?v=4');background-position:center;"></div>
                                 <div class="role-photo-gradient"></div>
@@ -2004,6 +2075,11 @@
                             </label>
                             <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="VIOLINISTA">
                                 <input type="checkbox" name="roles" value="VIOLINISTA" form="employment-form">
+                                <div class="mdj-role-check-ring" aria-hidden="true">
+                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                </div>
                                 <div class="role-photo-bg"
                                     style="background-image:url('./assets/Jobs/VIOLINISTA.jpg?v=4');background-position:center 30%;"></div>
                                 <div class="role-photo-gradient"></div>
@@ -2015,6 +2091,11 @@
                             </label>
                             <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="PAYASO">
                                 <input type="checkbox" name="roles" value="PAYASO" form="employment-form">
+                                <div class="mdj-role-check-ring" aria-hidden="true">
+                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                </div>
                                 <div class="role-photo-bg"
                                     style="background-image:url('./assets/Jobs/PAYASO.jpg?v=4');background-position:center 20%;"></div>
                                 <div class="role-photo-gradient"></div>
@@ -2026,6 +2107,11 @@
                             </label>
                             <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="HORA_LOCA">
                                 <input type="checkbox" name="roles" value="HORA_LOCA" form="employment-form">
+                                <div class="mdj-role-check-ring" aria-hidden="true">
+                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                </div>
                                 <div class="role-photo-bg"
                                     style="background-image:url('./assets/Jobs/HORA_LOCA.jpg?v=4');background-position:center 40%;"></div>
                                 <div class="role-photo-gradient"></div>
@@ -2037,6 +2123,11 @@
                             </label>
                             <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="BARTENDER">
                                 <input type="checkbox" name="roles" value="BARTENDER" form="employment-form">
+                                <div class="mdj-role-check-ring" aria-hidden="true">
+                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                </div>
                                 <div class="role-photo-bg"
                                     style="background-image:url('./assets/Jobs/BARTENDER.jpg?v=4');background-position:center;"></div>
                                 <div class="role-photo-gradient"></div>
@@ -2048,6 +2139,11 @@
                             </label>
                             <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="MESERO">
                                 <input type="checkbox" name="roles" value="MESERO" form="employment-form">
+                                <div class="mdj-role-check-ring" aria-hidden="true">
+                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                </div>
                                 <div class="role-photo-bg"
                                     style="background-image:url('./assets/Jobs/MESERO.jpg?v=4');background-position:center;"></div>
                                 <div class="role-photo-gradient"></div>
@@ -2059,6 +2155,11 @@
                             </label>
                             <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="MANAGER_ARTISTICO">
                                 <input type="checkbox" name="roles" value="MANAGER_ARTISTICO" form="employment-form">
+                                <div class="mdj-role-check-ring" aria-hidden="true">
+                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                </div>
                                 <div class="role-photo-bg"
                                     style="background-image:url('./assets/Jobs/MANAGER_ARTISTICO.jpg?v=4');background-position:center;"></div>
                                 <div class="role-photo-gradient"></div>
@@ -2070,6 +2171,11 @@
                             </label>
                             <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="PRODUCTOR_MUSICAL">
                                 <input type="checkbox" name="roles" value="PRODUCTOR_MUSICAL" form="employment-form">
+                                <div class="mdj-role-check-ring" aria-hidden="true">
+                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                </div>
                                 <div class="role-photo-bg"
                                     style="background-image:url('./assets/Jobs/PRODUCTOR_MUSICAL.jpg?v=4');background-position:center;"></div>
                                 <div class="role-photo-gradient"></div>
@@ -2081,6 +2187,11 @@
                             </label>
                             <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="INFLUENCER_PROMOTOR">
                                 <input type="checkbox" name="roles" value="INFLUENCER_PROMOTOR" form="employment-form">
+                                <div class="mdj-role-check-ring" aria-hidden="true">
+                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                </div>
                                 <div class="role-photo-bg"
                                     style="background-image:url('./assets/Jobs/INFLUENCER_PROMOTOR.jpg?v=4');background-position:center;"></div>
                                 <div class="role-photo-gradient"></div>
@@ -2092,6 +2203,11 @@
                             </label>
                             <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="FOTO_BOOTH_360">
                                 <input type="checkbox" name="roles" value="FOTO_BOOTH_360" form="employment-form">
+                                <div class="mdj-role-check-ring" aria-hidden="true">
+                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                </div>
                                 <div class="role-photo-bg"
                                     style="background-image:url('./assets/Jobs/FOTO_BOOTH_360.png?v=2');background-position:center;background-size:cover;"></div>
                                 <div class="role-photo-gradient"></div>
@@ -2250,7 +2366,7 @@
             </div>
 
             <div class="activate-container" id="activate-container" style="gap:15px;">
-                <button class="btn" onclick="location.href='index.html'" data-i18n="btn-back"
+                <button class="btn" onclick="location.href='./index.html'" data-i18n="btn-back"
                     style="background:#fff;color:#000;border-radius:15px;padding:15px 40px;font-weight:700;text-transform:uppercase;">ATRÁS</button>
                 <button class="btn primary" onclick="activatePlan()" data-i18n="btn-submit-job"
                     style="padding:15px 60px;font-size:16px;border-radius:15px;text-transform:uppercase;font-weight:800;border:none;flex:1;min-width:300px;">ENVIAR
@@ -2702,10 +2818,11 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./supabase-config.js?v=20260226-1"></script>
-    <script src="./translations.js?v=20260423-i18n-header-auth"></script>
-    <script src="./i18n.js?v=20260425-auth-ui-always-sync"></script>
-    <script src="./mdj-carousel-scroll-tick.js?v=20260418-tick-sound-restore"></script>
+    <script src="./subscription.js?v=20260418-JOBS-V3"></script>
+    <script src="./supabase-config.js?v=20260418-JOBS-V3"></script>
+    <script src="./translations.js?v=20260418-JOBS-V3"></script>
+    <script src="./i18n.js?v=20260418-JOBS-V3"></script>
+    <script src="./mdj-carousel-scroll-tick.js?v=20260418-JOBS-V3"></script>
     <script>
         /* --- [x] Vision 2027 UI Transformation
            - [x] Hero Simplification (Clean Vision 2027)
@@ -2730,10 +2847,53 @@
                     loginBtn.style.visibility = 'visible';
                 }
                 if (authZone) authZone.style.display = 'block';
-                const { data: profile } = await supabase.from('dj_profiles').select('photo_url').eq('user_id', session.user.id).maybeSingle();
+                const { data: profile } = await supabase
+                    .from('dj_profiles')
+                    .select('photo_url, plan, plan_type, plan_status, plan_expires_at, subscription_status, is_premium')
+                    .eq('user_id', session.user.id)
+                    .maybeSingle();
                 if (profile && profile.photo_url) document.querySelector('.avatar').src = profile.photo_url;
+                void updateJobsArtistPlanStatusBanner(session, profile);
+            } else {
+                void updateJobsArtistPlanStatusBanner(null, null);
             }
             void updateJobsAfterRolesCta();
+        }
+
+        /** Franja clara: cuenta de artista (LITE vs MDJ PRO) — distinta del portal/facturación de cliente. */
+        function updateJobsArtistPlanStatusBanner(session, profile) {
+            var el = document.getElementById('jobs-artist-plan-banner');
+            if (!el) return;
+            if (!session || getSessionAccountRole(session) !== 'artist') {
+                el.style.display = 'none';
+                el.innerHTML = '';
+                return;
+            }
+            var prem =
+                window.MDB_SUBSCRIPTION && typeof window.MDB_SUBSCRIPTION.isPremiumTier === 'function'
+                    ? window.MDB_SUBSCRIPTION.isPremiumTier(profile)
+                    : false;
+            var lang =
+                (typeof document !== 'undefined' &&
+                    document.documentElement &&
+                    document.documentElement.lang &&
+                    String(document.documentElement.lang).toLowerCase().indexOf('en') === 0) ||
+                (window.i18n && window.i18n.currentLang === 'en');
+            el.style.display = 'block';
+            if (prem) {
+                el.innerHTML = lang
+                    ? '<span class="jobs-artist-plan-banner__badge jobs-artist-plan-banner__badge--pro">MDJ PRO</span>Artist subscription active — this is not the client billing portal.'
+                    : '<span class="jobs-artist-plan-banner__badge jobs-artist-plan-banner__badge--pro">MDJ PRO</span>Suscripción de artista activa — no es el portal de facturación de clientes.';
+            } else {
+                var up = './jobs.html?plan=PRO';
+                el.innerHTML = lang
+                    ? '<span class="jobs-artist-plan-banner__tier">Free (LITE)</span> — Upgrade to <strong>MDJ PRO</strong> for premium roster tools. <a href="' +
+                      up +
+                      '">Artist plans</a> (not client VIP).'
+                    : '<span class="jobs-artist-plan-banner__tier">Gratis (LITE)</span> — Pasa a <strong>MDJ PRO</strong> para herramientas premium. <a href="' +
+                      up +
+                      '">Planes de artista</a> (no es VIP de cliente).';
+            }
         }
 
         /** Alineado con role-guard.js: cliente ≠ artista (perfil profesional solo artistas). */
@@ -2760,14 +2920,22 @@
                 .sort();
         }
 
-        /** Nombre visible de la tarjeta del carrusel (pista principal, no clon marquee). */
+        /** Línea legible para `dj_profiles.artist_specialty` (Open Format · DJ · …) — alineado con hub / staff. */
+        function mdjJobsBuildArtistSpecialtyLine() {
+            var codes = getJobsSelectedRolesSorted();
+            if (!codes.length) return '';
+            var labels = codes.map(function (c) { return getJobsRoleDisplayLabel(c); }).filter(Boolean);
+            return labels.join(' · ');
+        }
+
+        /** Nombre visible de la tarjeta del carrusel (#mdj-jobs-v3-loop, no clones infinitos). */
         function getJobsRoleDisplayLabel(roleCode) {
             var code = (roleCode || '').toUpperCase();
             if (!code) return '';
-            var track = document.querySelector('#jobs-role-carousel .jobs-role-carousel-track:not(.jobs-role-carousel-track--marquee-clone)');
-            if (track) {
-                var card = track.querySelector(
-                    '.role-photo-card:not(.mdj-jobs-role-carousel-clone)[data-role="' + code + '"] .role-name'
+            var loop = document.getElementById('mdj-jobs-v3-loop');
+            if (loop) {
+                var card = loop.querySelector(
+                    '.role-photo-card:not(.mdj-talent-loop-clone)[data-role="' + code + '"] .role-name'
                 );
                 if (card && card.textContent) return card.textContent.trim();
             }
@@ -3021,35 +3189,18 @@
             });
         });
 
-        function ensureJobsRoleCheckRings() {
-            var loop = document.getElementById("jobs-role-carousel-loop");
-            if (!loop) return;
-            loop.querySelectorAll("label.role-photo-card.role-photo-card--carousel:not(.mdj-jobs-role-carousel-clone)").forEach(function (lab) {
-                if (lab.querySelector(".mdj-role-check-ring")) return;
-                var ring = document.createElement("span");
-                ring.className = "mdj-role-check-ring";
-                ring.setAttribute("aria-hidden", "true");
-                lab.appendChild(ring);
-                lab.classList.add("mdj-has-role-check-ring");
-            });
-            loop.querySelectorAll("div.mdj-jobs-role-carousel-clone.role-photo-card").forEach(function (div) {
-                if (div.querySelector(".mdj-role-check-ring")) {
-                    div.classList.add("mdj-has-role-check-ring");
-                }
-            });
+        /** Solo marca tarjetas que ya tienen .mdj-role-check-ring en el HTML (sin inyectar SVG). */
+        function jobsEnsureCheckMarkOnCard(card) {
+            if (!card || !card.classList || !card.classList.contains('role-photo-card')) return;
+            if (card.querySelector('.mdj-role-check-ring')) {
+                card.classList.add('mdj-has-role-check-ring');
+            }
         }
 
-        /** Palomita en el carrusel de Trabajos (#jobs-role-carousel): texto en el span (misma página, mismo bloque que la foto). */
-        function syncJobsRoleCheckRingMarks() {
-            var car = document.getElementById('jobs-role-carousel');
-            if (!car) return;
-            car.querySelectorAll('.mdj-role-check-ring').forEach(function (ring) {
-                var card = ring.closest('.role-photo-card');
-                if (!card) return;
-                var inp = card.querySelector('input[name="roles"]');
-                var on = inp ? inp.checked : card.classList.contains('active');
-                ring.textContent = on ? '\u2713' : '';
-            });
+        function ensureJobsRoleCheckMarks() {
+            var loop = document.getElementById('mdj-jobs-v3-loop');
+            if (!loop) return;
+            loop.querySelectorAll('.role-photo-card').forEach(jobsEnsureCheckMarkOnCard);
         }
 
         /** Sincroniza .active en tarjetas + clon del carrusel (tras i18n o prefill). */
@@ -3060,17 +3211,38 @@
             });
             if (typeof syncJobsRoleMarqueeClones === 'function') syncJobsRoleMarqueeClones();
             updateJobsPortalRolesStrip();
-            syncJobsRoleCheckRingMarks();
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
+            if (typeof window.initJobsRoleInfiniteCarousel === 'function') {
+                try {
+                    window.initJobsRoleInfiniteCarousel();
+                } catch (e) {
+                    /* sealed */
+                }
+            }
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    if (typeof window.mdjJobsRoleInfiniteApplyRetry === 'function') {
+                        window.mdjJobsRoleInfiniteApplyRetry(0);
+                    }
+                    if (typeof syncJobsRoleMarqueeClones === 'function') syncJobsRoleMarqueeClones();
+                });
+            });
             initJobsAfterRolesCtaClick();
             updateHeaderAuth();
             await initAuthGate();
-            ensureJobsRoleCheckRings();
-            initJobsRoleMarquee();
+            try {
+                if (supabase) {
+                    const { data: { session: sGate } } = await supabase.auth.getSession();
+                    if (sGate) await jobsEvaluateClientToArtistBanner(sGate);
+                }
+            } catch (eG) { /* ignore */ }
+            ensureJobsRoleCheckMarks();
+            initJobsRoleCarouselDragClickGuard();
             addExperienceEntry();
             await prefillProfileForm();
+            jobsSyncProFormPasswordVisibility();
             await updateJobsAfterRolesCta();
             /* Después de i18n.updateUI (CTA, etc.): un solo listener delegado en #selection-screen no se pierde si el DOM del carrusel tocara a regenerarse. */
             initRolePhotoCardPickers();
@@ -3078,7 +3250,7 @@
             (function mdjJobsRoleCarouselAfterAsync() {
                 var sel = document.getElementById('selection-screen');
                 if (!sel || sel.classList.contains('hidden')) return;
-                ensureJobsRoleCheckRings();
+                ensureJobsRoleCheckMarks();
                 if (typeof window.mdjJobsRoleInfiniteApplyRetry === 'function') {
                     window.mdjJobsRoleInfiniteApplyRetry(0);
                 }
@@ -3164,6 +3336,8 @@
                     }, 400);
                 } catch (e) { void e; }
             })();
+
+            console.log('🚀 PRODUCTION READY: JOBS V3 INFALLIBLE CHECK SYSTEM ACTIVE');
         });
 
         // ── Billing period toggle ────────────────────────────────────
@@ -3260,7 +3434,92 @@
             }
         }
 
-        // ── Gate: CREATE ACCOUNT — mismo contrato que login.html + auth.js (talent + dj_profiles)
+        function jobsGateT(key, es, en) {
+            try {
+                if (window.i18n && typeof window.i18n.t === 'function') {
+                    var s = window.i18n.t(key);
+                    if (s) return s;
+                }
+            } catch (e) { /* ignore */ }
+            var lang = (document.documentElement && document.documentElement.lang || 'es').toLowerCase();
+            return lang.indexOf('en') === 0 ? en : es;
+        }
+
+        function jobsAuthIsDuplicateSignupError(err) {
+            if (!err) return false;
+            var c = String(err.code || err.status || '').toLowerCase();
+            var m = String(err.message || '').toLowerCase();
+            return (
+                c.indexOf('user_already_registered') !== -1 ||
+                c.indexOf('email_exists') !== -1 ||
+                m.indexOf('already registered') !== -1 ||
+                m.indexOf('already been registered') !== -1 ||
+                m.indexOf('user already registered') !== -1
+            );
+        }
+
+        /** Oculta fila de contraseña del formulario PRO si ya hay sesión (evita pedirla dos veces). */
+        function jobsSyncProFormPasswordVisibility() {
+            if (!supabase) return;
+            supabase.auth.getSession().then(function (res) {
+                var sess = res && res.data && res.data.session;
+                var pw = document.getElementById('job-password');
+                var row = pw && pw.closest('.grid2');
+                if (!row) return;
+                if (sess) {
+                    row.style.display = 'none';
+                    if (pw) {
+                        pw.removeAttribute('required');
+                        pw.value = '';
+                    }
+                    var pc = document.getElementById('job-password-confirm');
+                    if (pc) {
+                        pc.removeAttribute('required');
+                        pc.value = '';
+                    }
+                } else {
+                    row.style.display = '';
+                    if (pw) {
+                        pw.setAttribute('required', 'required');
+                        pw.setAttribute('minlength', '8');
+                    }
+                    var pc2 = document.getElementById('job-password-confirm');
+                    if (pc2) {
+                        pc2.setAttribute('required', 'required');
+                        pc2.setAttribute('minlength', '8');
+                    }
+                }
+            });
+        }
+
+        /** Cliente con fila en client_profiles y sin dj_profiles: ofrecer activación artista (sin mezclar con registro nuevo). */
+        async function jobsEvaluateClientToArtistBanner(session) {
+            if (!supabase || !session || !session.user) return;
+            var banner = document.getElementById('jobs-client-to-artist-banner');
+            if (!banner) return;
+            try {
+                var uid = session.user.id;
+                var pr = await Promise.all([
+                    supabase.from('dj_profiles').select('user_id').eq('user_id', uid).maybeSingle(),
+                    supabase.from('client_profiles').select('user_id').eq('user_id', uid).maybeSingle()
+                ]);
+                var dj = pr[0] && pr[0].data;
+                var cl = pr[1] && pr[1].data;
+                if (cl && cl.user_id && (!dj || !dj.user_id)) {
+                    banner.style.display = 'block';
+                    if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
+                    try {
+                        banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    } catch (eSc) { /* ignore */ }
+                } else {
+                    banner.style.display = 'none';
+                }
+            } catch (e) {
+                banner.style.display = 'none';
+            }
+        }
+
+        // ── Gate: CREATE ACCOUNT — talent/dj + auto-login + redirección al panel (no flujo cliente)
         async function gateSignup(e) {
             e.preventDefault();
             if (!supabase) return;
@@ -3270,7 +3529,8 @@
             const email = document.getElementById('gate-signup-email').value.trim();
             const pass = document.getElementById('gate-signup-pass').value;
 
-            btn.disabled = true; btn.textContent = 'Creando cuenta...';
+            btn.disabled = true;
+            btn.textContent = jobsGateT('gate-creating', 'Creando cuenta...', 'Creating account...');
             err.style.display = 'none';
 
             const { data: signData, error } = await supabase.auth.signUp({
@@ -3288,52 +3548,91 @@
             });
 
             if (error) {
-                err.textContent = error.message; err.style.display = 'block';
-                btn.disabled = false; btn.innerHTML = '🚀 CREAR MI CUENTA';
+                if (jobsAuthIsDuplicateSignupError(error)) {
+                    err.textContent = jobsGateT(
+                        'jobs-gate-email-exists-client-hint',
+                        'Ya eres cliente de Miami DJ Beat o ya existe una cuenta con este correo. Inicia sesión abajo. ¿Quieres activar tu perfil de Artista? Tras entrar te guiamos.',
+                        'You already have a Miami DJ Beat account with this email. Log in below. Want to activate your Artist profile? We will guide you after sign-in.'
+                    );
+                    err.style.display = 'block';
+                    var le = document.getElementById('gate-login-email');
+                    if (le) le.value = email;
+                    switchGateTab('login');
+                } else {
+                    err.textContent = error.message;
+                    err.style.display = 'block';
+                }
+                btn.disabled = false;
+                btn.innerHTML = jobsGateT('gate-btn-signup', '🚀 CREAR MI CUENTA', '🚀 CREATE MY ACCOUNT');
                 return;
             }
 
-            const user = signData && signData.user;
-            if (!user) {
-                err.textContent = 'No se pudo crear la sesión. Revisa el email de confirmación o intenta desde login.';
+            var session = signData && signData.session;
+            if (!session) {
+                var signInRes = await supabase.auth.signInWithPassword({ email: email, password: pass });
+                if (!signInRes.error && signInRes.data && signInRes.data.session) {
+                    session = signInRes.data.session;
+                }
+            }
+
+            if (!session) {
+                err.textContent = jobsGateT(
+                    'jobs-gate-confirm-email-hint',
+                    'Si tu correo requiere confirmación, ábrelo y vuelve; o inicia sesión abajo con la misma contraseña.',
+                    'If your project requires email confirmation, open the link we sent; or log in below with the same password.'
+                );
                 err.style.display = 'block';
-                btn.disabled = false; btn.innerHTML = '🚀 CREAR MI CUENTA';
+                btn.disabled = false;
+                btn.innerHTML = jobsGateT('gate-btn-signup', '🚀 CREAR MI CUENTA', '🚀 CREATE MY ACCOUNT');
                 return;
             }
+
+            const user = session.user;
 
             try {
-                const memberId = 'DJ-' + user.id.substring(0, 6).toUpperCase();
-                const referralCode = 'REF' + memberId.replace('DJ-', '').substring(0, 5);
-                const { error: djErr } = await supabase.from('dj_profiles').insert([{
-                    user_id: user.id,
-                    email: email,
-                    dj_name: name,
-                    stage_name: name,
-                    full_name: name,
-                    plan: 'LITE',
-                    status: 'ACTIVE',
-                    member_id: memberId,
-                    referral_code: referralCode,
-                    photo_status: 'pending',
-                    rating: 1.0,
-                    review_count: 0
-                }]);
-                if (djErr) {
-                    console.warn('[gateSignup] dj_profiles:', djErr);
-                    err.textContent = djErr.message || 'No se pudo crear el perfil de artista.';
-                    err.style.display = 'block';
-                    btn.disabled = false; btn.innerHTML = '🚀 CREAR MI CUENTA';
-                    return;
+                const { data: existingDj } = await supabase.from('dj_profiles').select('user_id').eq('user_id', user.id).maybeSingle();
+                if (!existingDj) {
+                    const memberId = 'DJ-' + user.id.substring(0, 6).toUpperCase();
+                    const referralCode = 'REF' + memberId.replace('DJ-', '').substring(0, 5);
+                    const { error: djErr } = await supabase.from('dj_profiles').insert([{
+                        user_id: user.id,
+                        email: email,
+                        dj_name: name,
+                        stage_name: name,
+                        full_name: name,
+                        plan: 'LITE',
+                        status: 'ACTIVE',
+                        member_id: memberId,
+                        referral_code: referralCode,
+                        photo_status: 'pending',
+                        rating: 1.0,
+                        review_count: 0
+                    }]);
+                    if (djErr) {
+                        console.warn('[gateSignup] dj_profiles:', djErr);
+                        err.textContent = djErr.message || 'No se pudo crear el perfil de artista.';
+                        err.style.display = 'block';
+                        btn.disabled = false;
+                        btn.innerHTML = jobsGateT('gate-btn-signup', '🚀 CREAR MI CUENTA', '🚀 CREATE MY ACCOUNT');
+                        return;
+                    }
                 }
             } catch (insErr) {
                 console.warn('[gateSignup] insert:', insErr);
                 err.textContent = (insErr && insErr.message) ? insErr.message : 'Error al crear perfil.';
                 err.style.display = 'block';
-                btn.disabled = false; btn.innerHTML = '🚀 CREAR MI CUENTA';
+                btn.disabled = false;
+                btn.innerHTML = jobsGateT('gate-btn-signup', '🚀 CREAR MI CUENTA', '🚀 CREATE MY ACCOUNT');
                 return;
             }
 
-            await onGateSuccess();
+            try {
+                if (typeof window.checkSessionForNav === 'function') {
+                    await window.checkSessionForNav();
+                }
+            } catch (navE) { /* ignore */ }
+
+            window.location.replace('./dj-dashboard.html?tab=settings&from=jobs_signup=1');
         }
 
         // ── Gate: LOGIN ──────────────────────────────────────────────
@@ -3356,7 +3655,8 @@
                 return;
             }
 
-            // Success
+            const { data: { session: sessAfter } } = await supabase.auth.getSession();
+            if (sessAfter) await jobsEvaluateClientToArtistBanner(sessAfter);
             await onGateSuccess();
         }
 
@@ -3367,8 +3667,16 @@
             if (gate) gate.style.display = 'none';
             if (selection) selection.style.display = '';
             await updateHeaderAuth();
+            jobsSyncProFormPasswordVisibility();
+            const { data: { session: s2 } } = await supabase.auth.getSession();
+            if (s2) await jobsEvaluateClientToArtistBanner(s2);
             await prefillProfileForm();
             await updateJobsAfterRolesCta();
+            try {
+                if (typeof window.checkSessionForNav === 'function') {
+                    await window.checkSessionForNav();
+                }
+            } catch (eNav) { /* ignore */ }
         }
 
 
@@ -3453,18 +3761,20 @@
                 setVal('social-spotify', p.social_spotify);
                 setVal('social-others', p.social_web);
 
-                // ── Auto-activate PRO form if already has profile ────
-                // Skip the plan selection screen and go straight to the form
+                // ── Perfil existente: mostrar formulario pero NO ocultar el carrusel de categorías (sigue editable + persistencia).
                 const selectionScreen = document.getElementById('selection-screen');
                 const proFormSection = document.getElementById('pro-form-section');
                 const planHidden = document.getElementById('selected-plan-hidden');
                 if (selectionScreen && proFormSection) {
-                    selectionScreen.classList.add('hidden');
                     proFormSection.classList.remove('hidden');
                     if (planHidden) planHidden.value = (p.plan || 'PRO').toUpperCase();
+                    var portalContainer = selectionScreen.querySelector('.level-portal-container');
+                    if (portalContainer) portalContainer.classList.add('hidden-by-prefill');
+                    var activateC = document.getElementById('activate-container');
+                    if (activateC) activateC.classList.remove('visible');
                 }
 
-                console.log('✅ Perfil pre-cargado exitosamente.');
+                syncJobsRoleLabelsFromInputs();
             } catch (err) {
                 console.warn('prefillProfileForm error:', err);
             }
@@ -3524,7 +3834,7 @@
         }
 
         window.jobsRoleCarouselScroll = function (dir) {
-            var el = document.getElementById('jobs-role-carousel');
+            var el = document.getElementById('mdj-jobs-v3-carousel');
             if (!el) return;
             if (typeof window.mdjUiTickPlay === 'function') window.mdjUiTickPlay();
             var step = Math.min(360, Math.max(220, Math.floor(el.clientWidth * 0.72) + 16));
@@ -3535,250 +3845,244 @@
         function persistJobRolesToProfile() {
             if (!supabase) return;
             const selectedRoles = Array.from(document.querySelectorAll('input[name="roles"]:checked')).map(c => c.value);
+            var specLine = mdjJobsBuildArtistSpecialtyLine();
             supabase.auth.getSession().then(({ data: { session } }) => {
                 if (!session) return;
                 supabase
                     .from('dj_profiles')
-                    .update({ roles: selectedRoles.join(', ') })
+                    .update({ roles: selectedRoles.join(', '), artist_specialty: specLine || null })
                     .eq('user_id', session.user.id)
                     .then(({ error }) => {
-                        if (error) console.warn('Role save error:', error.message);
+                        if (error) {
+                            console.warn('Role / artist_specialty save error:', error.message, error.code || '', error.details || '');
+                        }
                         void updateJobsAfterRolesCta();
                     });
             });
         }
 
         function syncJobsRoleMarqueeClones() {
-            const wrap = document.getElementById('jobs-role-carousel');
+            const wrap = document.getElementById('mdj-jobs-v3-carousel');
             if (!wrap) return;
-            const loop = document.getElementById('jobs-role-carousel-loop');
-            if (loop && wrap.dataset.mdjInfiniteCarousel === '1') {
-                loop.querySelectorAll('label.role-photo-card:not(.mdj-jobs-role-carousel-clone)').forEach((a) => {
-                    const role = a.getAttribute('data-role');
-                    if (!role) return;
-                    loop.querySelectorAll('.mdj-jobs-role-carousel-clone[data-role="' + role + '"]').forEach((b) => {
-                        b.classList.toggle('active', a.classList.contains('active'));
-                    });
-                });
-                syncJobsRoleCheckRingMarks();
-                return;
-            }
-            if (wrap.dataset.marqueeReady !== '1') return;
-            const t0 = wrap.querySelector('.jobs-role-carousel-track:not(.jobs-role-carousel-track--marquee-clone)');
-            const t1 = wrap.querySelector('.jobs-role-carousel-track--marquee-clone');
-            if (!t0 || !t1) return;
-            t0.querySelectorAll('.role-photo-card').forEach((a) => {
+            const loop = document.getElementById('mdj-jobs-v3-loop');
+            if (!loop || wrap.dataset.mdjInfiniteCarousel !== '1') return;
+            loop.querySelectorAll('label.role-photo-card:not(.mdj-talent-loop-clone)').forEach((a) => {
                 const role = a.getAttribute('data-role');
                 if (!role) return;
-                const b = t1.querySelector('.role-photo-card[data-role="' + role + '"]');
-                if (b) b.classList.toggle('active', a.classList.contains('active'));
+                var inp = a.querySelector('input[name="roles"]');
+                var on = inp ? !!inp.checked : a.classList.contains('active');
+                loop.querySelectorAll('.mdj-talent-loop-clone[data-role="' + role + '"]').forEach((b) => {
+                    b.classList.toggle('active', on);
+                });
             });
-            syncJobsRoleCheckRingMarks();
         }
 
-        /** Labels canónicos en la pista (sin :scope — compat WebKit / iOS con hijos directos del loop). */
-        function mdjJobsRoleCarouselOriginalLabels(loop) {
+        /** Mismo criterio que rentals `mdjTalentCarouselOriginalCards` (tarjetas canónicas en el loop, sin clones). */
+        function mdjJobsV3OriginalCards(loop) {
             if (!loop || !loop.children) return [];
             return Array.prototype.filter.call(loop.children, function (el) {
                 if (el.nodeType !== 1 || el.tagName !== 'LABEL') return false;
                 if (!el.classList.contains('role-photo-card') || !el.classList.contains('role-photo-card--carousel')) return false;
-                return !el.classList.contains('mdj-jobs-role-carousel-clone');
+                return !el.classList.contains('mdj-talent-loop-clone');
             });
         }
 
-        /**
-         * Centra el scroll en el bloque central [copias][originales][copias] y guarda el ancho del set en car._mdjInfiniteSetWidth.
-         */
+        /** Posición inicial (~1/4 del ancho total) — mismo criterio que rentals `mdjTalentSelectorInfiniteApply`. */
         window.mdjJobsRoleInfiniteApply = function () {
-            var car = document.getElementById('jobs-role-carousel');
-            var loop = document.getElementById('jobs-role-carousel-loop');
-            if (!car || !loop || car.dataset.mdjInfiniteCarousel !== '1') {
+            var car = document.getElementById('mdj-jobs-v3-carousel');
+            if (!car || car.dataset.mdjSimpleLoop !== '1') {
                 if (car) car.scrollLeft = 0;
                 return;
             }
-            var originals = mdjJobsRoleCarouselOriginalLabels(loop);
-            var n = originals.length;
-            if (n < 2) return;
-            var firstO = originals[0];
-            var lastO = originals[n - 1];
-            var gap = parseFloat(getComputedStyle(loop).gap);
-            if (isNaN(gap)) gap = 16;
-            var sw = Math.round(lastO.offsetLeft + lastO.offsetWidth - firstO.offsetLeft);
-            if (!sw || sw < 10) {
-                var tri = Math.round((loop.scrollWidth || 0) / 3);
-                if (tri > 10) sw = tri;
-            }
-            if (!sw || sw < 10) {
-                var sum = 0;
-                var i;
-                for (i = 0; i < originals.length; i++) {
-                    sum += originals[i].offsetWidth || 0;
-                    if (i < originals.length - 1) sum += gap;
-                }
-                if (sum > 10) sw = Math.round(sum);
-            }
-            /* Último recurso: coincide con .role-photo-card--carousel (288px) + gap del loop */
-            if (!sw || sw < 10) {
-                var cardW = 288;
-                sw = Math.round(n * cardW + (n - 1) * gap);
-            }
-            if (!sw || sw < 10) return;
-            car._mdjInfiniteSetWidth = sw;
-            var prev = car.style.scrollBehavior;
-            car.style.scrollBehavior = 'auto';
-            car.scrollLeft = sw;
-            car.style.scrollBehavior = prev || '';
+            var sw = car.scrollWidth;
+            if (sw > 120) car.scrollLeft = Math.round(sw / 4);
         };
 
-        /** Reintenta medir el ancho del set si el primer paint devolvió 0 (fuentes/imágenes o sección aún sin layout). */
         window.mdjJobsRoleInfiniteApplyRetry = function (attempt) {
             attempt = attempt == null ? 0 : attempt;
-            if (typeof window.mdjJobsRoleInfiniteApply !== 'function') return;
-            window.mdjJobsRoleInfiniteApply();
-            var car = document.getElementById('jobs-role-carousel');
-            if (!car || car.dataset.mdjInfiniteCarousel !== '1') return;
-            if (car._mdjInfiniteSetWidth && car._mdjInfiniteSetWidth > 10) return;
-            if (attempt >= 18) return;
+            if (typeof window.mdjJobsRoleInfiniteApply === 'function') window.mdjJobsRoleInfiniteApply();
+            var car = document.getElementById('mdj-jobs-v3-carousel');
+            if (!car || car.dataset.mdjSimpleLoop !== '1') return;
+            if (car.scrollWidth > 120 || attempt >= 24) return;
             setTimeout(function () {
                 window.mdjJobsRoleInfiniteApplyRetry(attempt + 1);
-            }, 80);
+            }, 48);
         };
 
-        function makeJobsRoleVisualClone(lab) {
-            var c = lab.cloneNode(true);
-            c.classList.add('mdj-jobs-role-carousel-clone');
-            c.removeAttribute('for');
-            var inp = c.querySelector('input[name="roles"]');
-            if (inp && inp.parentNode) inp.parentNode.removeChild(inp);
-            c.setAttribute('aria-hidden', 'true');
-            c.setAttribute('tabindex', '-1');
-            var div = document.createElement('div');
-            div.className = c.className;
-            div.setAttribute('aria-hidden', 'true');
-            div.setAttribute('tabindex', '-1');
-            var role = lab.getAttribute('data-role');
-            if (role) div.setAttribute('data-role', role);
-            div.innerHTML = c.innerHTML;
-            if (div.querySelector('.mdj-role-check-ring')) {
-                div.classList.add('mdj-has-role-check-ring');
-            }
-            return div;
-        }
-
         /**
-         * Carrusel infinito: [copias visuales][originales con inputs][copias] dentro de #jobs-role-carousel-loop.
-         * Sin transform/marquee CSS (no rompe clics en WebKit). Los clones son div sin checkbox; el clic delega al input canónico.
+         * Espejo de rentals.js `initTalentSelectorInfiniteCarousel` (mismas líneas: dataset, _mdjLoopScroll, rAF+ApplyRetry).
+         * Única diferencia: originales viven en #mdj-jobs-v3-loop (labels); clones como <div> sin checkbox.
          */
-        window.initJobsRoleInfiniteCarousel = function () {
-            var car = document.getElementById('jobs-role-carousel');
-            var loop = document.getElementById('jobs-role-carousel-loop');
-            if (!car || !loop || car.dataset.mdjInfiniteCarousel === '1') return;
-
-            var originals = mdjJobsRoleCarouselOriginalLabels(loop);
+        window.initMdjJobsV3InfiniteCarousel = function () {
+            var track = document.getElementById('mdj-jobs-v3-carousel');
+            var loop = document.getElementById('mdj-jobs-v3-loop');
+            if (!track || !loop || track.dataset.mdjSimpleLoop === '1') return;
+            var originals = mdjJobsV3OriginalCards(loop);
             if (originals.length < 2) return;
-
-            var fragBefore = document.createDocumentFragment();
+            if (track._mdjLoopScroll) {
+                track.removeEventListener('scroll', track._mdjLoopScroll);
+                delete track._mdjLoopScroll;
+            }
             originals.forEach(function (el) {
-                fragBefore.appendChild(makeJobsRoleVisualClone(el));
+                var k = el.cloneNode(true);
+                k.classList.add('mdj-talent-loop-clone');
+                k.removeAttribute('id');
+                k.setAttribute('tabindex', '-1');
+                k.setAttribute('aria-hidden', 'true');
+                k.querySelectorAll('.mdj-talent-hub-pick').forEach(function (node) {
+                    node.remove();
+                });
+                k.removeAttribute('for');
+                var inp = k.querySelector('input[name="roles"]');
+                if (inp && inp.parentNode) inp.parentNode.removeChild(inp);
+                var div = document.createElement('div');
+                div.className = k.className;
+                if (k.getAttribute('data-role')) div.setAttribute('data-role', k.getAttribute('data-role'));
+                div.setAttribute('tabindex', '-1');
+                div.setAttribute('aria-hidden', 'true');
+                div.innerHTML = k.innerHTML;
+                loop.appendChild(div);
             });
-            loop.insertBefore(fragBefore, loop.firstChild);
-            originals.forEach(function (el) {
-                loop.appendChild(makeJobsRoleVisualClone(el));
-            });
-
-            car.dataset.mdjInfiniteCarousel = '1';
-
+            track.classList.add('mdj-talent-carousel-infinite');
+            track.dataset.mdjInfiniteCarousel = '1';
+            track.dataset.mdjSimpleLoop = '1';
             var jumping = false;
-            car._mdjInfiniteScrollHandler = function () {
+            track._mdjLoopScroll = function () {
                 if (jumping) return;
-                var sw = car._mdjInfiniteSetWidth;
-                if (!sw) return;
-                var max = car.scrollWidth - car.clientWidth;
-                if (max <= 0) return;
-                var buf = 16;
-                if (car.scrollLeft <= buf) {
+                var sw = track.scrollWidth;
+                var cw = track.clientWidth || 0;
+                if (sw < 80) return;
+                var half = sw / 2;
+                var max = Math.max(0, sw - cw);
+                var sl = track.scrollLeft;
+                var th = Math.max(18, Math.min(48, Math.floor(cw * 0.04) || 18));
+                if (sl >= max - th) {
                     jumping = true;
-                    car.scrollLeft += sw;
+                    track.style.setProperty('scroll-behavior', 'auto', 'important');
+                    track.scrollLeft = sl - half;
                     requestAnimationFrame(function () {
+                        track.style.removeProperty('scroll-behavior');
                         jumping = false;
                     });
-                } else if (car.scrollLeft >= max - buf) {
+                } else if (sl <= th) {
                     jumping = true;
-                    car.scrollLeft -= sw;
+                    track.style.setProperty('scroll-behavior', 'auto', 'important');
+                    track.scrollLeft = sl + half;
                     requestAnimationFrame(function () {
+                        track.style.removeProperty('scroll-behavior');
                         jumping = false;
                     });
                 }
             };
-            car.addEventListener('scroll', car._mdjInfiniteScrollHandler, { passive: true });
-
-            var resizeT = null;
-            car._mdjInfiniteResizeHandler = function () {
-                clearTimeout(resizeT);
-                resizeT = setTimeout(function () {
-                    if (typeof window.mdjJobsRoleInfiniteApply === 'function') {
-                        window.mdjJobsRoleInfiniteApply();
+            track.addEventListener('scroll', track._mdjLoopScroll, { passive: true });
+            if (!track.dataset.mdjJobsResizeBound && typeof ResizeObserver !== 'undefined') {
+                track.dataset.mdjJobsResizeBound = '1';
+                var ro = new ResizeObserver(function () {
+                    if (typeof window.mdjJobsRoleInfiniteApplyRetry === 'function') {
+                        window.mdjJobsRoleInfiniteApplyRetry(0);
                     }
                     if (typeof syncJobsRoleMarqueeClones === 'function') syncJobsRoleMarqueeClones();
-                }, 120);
-            };
-            window.addEventListener('resize', car._mdjInfiniteResizeHandler, { passive: true });
-
+                });
+                ro.observe(track);
+            }
             requestAnimationFrame(function () {
                 requestAnimationFrame(function () {
                     if (typeof window.mdjJobsRoleInfiniteApplyRetry === 'function') {
                         window.mdjJobsRoleInfiniteApplyRetry(0);
-                    } else if (typeof window.mdjJobsRoleInfiniteApply === 'function') {
-                        window.mdjJobsRoleInfiniteApply();
                     }
                     if (typeof syncJobsRoleMarqueeClones === 'function') syncJobsRoleMarqueeClones();
                 });
             });
         };
+        window.initJobsRoleInfiniteCarousel = window.initMdjJobsV3InfiniteCarousel;
 
-        /** Si DOMContentLoaded fue demasiado pronto para medir el loop, reintenta al load (siempre se registra). */
         (function mdjJobsRoleCarouselBindLoad() {
             if (window.mdjJobsRoleCarouselLoadBound === '1') return;
             window.mdjJobsRoleCarouselLoadBound = '1';
             window.addEventListener(
                 'load',
                 function () {
-                    var c = document.getElementById('jobs-role-carousel');
-                    var lp = document.getElementById('jobs-role-carousel-loop');
-                    if (c && lp && c.dataset.mdjInfiniteCarousel !== '1' && typeof window.initJobsRoleInfiniteCarousel === 'function') {
+                    var c = document.getElementById('mdj-jobs-v3-carousel');
+                    var lp = document.getElementById('mdj-jobs-v3-loop');
+                    if (c && lp && c.dataset.mdjSimpleLoop !== '1' && typeof window.initJobsRoleInfiniteCarousel === 'function') {
                         try {
                             window.initJobsRoleInfiniteCarousel();
                         } catch (e) {
-                            console.warn('[jobs] infinite carousel load fallback:', e);
+                            /* sealed */
                         }
                     }
                     if (typeof window.mdjJobsRoleInfiniteApplyRetry === 'function') {
                         window.mdjJobsRoleInfiniteApplyRetry(0);
                     }
-                    if (typeof syncJobsRoleMarqueeClones === 'function') {
-                        syncJobsRoleMarqueeClones();
-                    }
+                    if (typeof syncJobsRoleMarqueeClones === 'function') syncJobsRoleMarqueeClones();
                 },
                 { passive: true }
             );
         })();
 
         /**
-         * Antes: marquee CSS translate rompía hit-test; ahora bucle infinito por scroll + clones (initJobsRoleInfiniteCarousel).
+         * Arrastre/scroll horizontal en el carrusel puede disparar un click fantasma; mismo patrón que rentals (hub).
+         * No suprimir clics en tarjetas de rol (.role-photo-card) ni flechas.
          */
-        function initJobsRoleMarquee() {
-            if (typeof window.initJobsRoleInfiniteCarousel === 'function') {
-                window.initJobsRoleInfiniteCarousel();
-            }
+        function initJobsRoleCarouselDragClickGuard() {
+            var carousel = document.getElementById('mdj-jobs-v3-carousel');
+            if (!carousel || carousel.dataset.mdjDragClickGuard === '1') return;
+            carousel.dataset.mdjDragClickGuard = '1';
+            var originX = 0;
+            var originY = 0;
+            var pointerDown = false;
+            var moved = false;
+            var MOVE_PX = 5;
+            carousel.addEventListener(
+                'pointerdown',
+                function (e) {
+                    if (e.button != null && e.button !== 0) return;
+                    pointerDown = true;
+                    moved = false;
+                    originX = e.clientX;
+                    originY = e.clientY;
+                },
+                true
+            );
+            carousel.addEventListener(
+                'pointermove',
+                function (e) {
+                    if (!pointerDown) return;
+                    if (Math.abs(e.clientX - originX) >= MOVE_PX || Math.abs(e.clientY - originY) >= MOVE_PX) {
+                        moved = true;
+                    }
+                },
+                { passive: true }
+            );
+            var endPointer = function () {
+                pointerDown = false;
+            };
+            carousel.addEventListener('pointerup', endPointer);
+            carousel.addEventListener('pointercancel', endPointer);
+            carousel.addEventListener(
+                'click',
+                function (e) {
+                    if (!moved) return;
+                    var t = e.target;
+                    var hitRole = t && t.closest && t.closest('.role-photo-card');
+                    var hitBtn = t && t.closest && t.closest('.jobs-role-carousel-btn');
+                    var hitCatalog = t && t.closest && t.closest('.jobs-role-card-catalog-note');
+                    if (hitRole || hitBtn || hitCatalog) {
+                        moved = false;
+                        return;
+                    }
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    moved = false;
+                },
+                true
+            );
         }
 
-        /**
-         * Mismo patrón que el build que ya funcionaba en hosting: un listener `change` por checkbox
-         * del track principal (el clon del marquee no tiene inputs).
-         */
         function initRolePhotoCardPickers() {
             const root = document.getElementById('selection-screen');
-            const car = document.getElementById('jobs-role-carousel');
+            const car = document.getElementById('mdj-jobs-v3-carousel');
             if (!root || !car || root.dataset.jobsRolesBound === '1') return;
             root.dataset.jobsRolesBound = '1';
             root.querySelectorAll('.role-photo-card input[name="roles"]').forEach(function (cb) {
@@ -3789,7 +4093,7 @@
                 });
             });
             /*
-             * Delegación solo en #jobs-role-carousel (no en todo #selection-screen).
+             * Delegación solo en #mdj-jobs-v3-carousel (no en todo #selection-screen).
              * Captura + toggle explícito cuando el target no es el input (p. ej. WebKit + transform).
              */
             car.addEventListener(
@@ -3797,27 +4101,26 @@
                 function (e) {
                     var t = e.target;
                     if (!t || t.nodeType !== 1) return;
-                    if (t.matches && t.matches('input[name="roles"]')) return;
-                    if (t.closest && t.closest('.jobs-role-carousel-track--marquee-clone')) return;
                     if (t.closest && t.closest('.jobs-role-card-catalog-note')) return;
                     var lab =
                         t.closest &&
-                        t.closest('label.role-pro-card.role-photo-card, div.mdj-jobs-role-carousel-clone.role-photo-card');
+                        t.closest('label.role-photo-card, div.mdj-talent-loop-clone.role-photo-card');
                     if (!lab || !car.contains(lab)) return;
                     var cbx = lab.querySelector('input[name="roles"]');
-                    if (!cbx && lab.classList && lab.classList.contains('mdj-jobs-role-carousel-clone')) {
+                    if (!cbx && lab.classList && lab.classList.contains('mdj-talent-loop-clone')) {
                         var role = lab.getAttribute('data-role');
                         if (role) {
-                            var loopEl = document.getElementById('jobs-role-carousel-loop');
+                            var loopEl = document.getElementById('mdj-jobs-v3-loop');
                             var orig =
                                 loopEl &&
                                 loopEl.querySelector(
-                                    'label.role-photo-card:not(.mdj-jobs-role-carousel-clone)[data-role="' + role + '"]'
+                                    'label.role-photo-card:not(.mdj-talent-loop-clone)[data-role="' + role + '"]'
                                 );
                             if (orig) cbx = orig.querySelector('input[name="roles"]');
                         }
                     }
                     if (!cbx) return;
+                    /* Un solo camino: evita doble-toggle (label + input) que dejaba el checkbox como estaba. */
                     e.preventDefault();
                     e.stopPropagation();
                     cbx.checked = !cbx.checked;
@@ -4288,16 +4591,46 @@
                     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
                         email: emailVal,
                         password: passwordVal,
+                        options: {
+                            data: {
+                                full_name: (firstName + ' ' + lastName).trim(),
+                                artistic_name: (document.getElementById('stage-name')?.value || '').trim() || firstName,
+                                user_type: 'talent',
+                                plan: 'LITE',
+                                username: emailVal.split('@')[0]
+                            }
+                        }
                     });
 
                     if (signUpError) {
-                        alert('Error al crear la cuenta: ' + signUpError.message);
+                        if (jobsAuthIsDuplicateSignupError(signUpError)) {
+                            errorList.innerHTML =
+                                '<li>' +
+                                jobsGateT(
+                                    'jobs-gate-email-exists-client-hint',
+                                    'Ya eres cliente de Miami DJ Beat o ya existe una cuenta con este correo. Inicia sesión en la parte superior o en el portal y vuelve a Jobs.',
+                                    'You already have a Miami DJ Beat account with this email. Log in from the header or portal and return to Jobs.'
+                                ) +
+                                '</li>';
+                            errorDiv.style.display = 'block';
+                            errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        } else {
+                            errorList.innerHTML = '<li>' + signUpError.message + '</li>';
+                            errorDiv.style.display = 'block';
+                            errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
                         submitBtn.disabled = false;
                         submitBtn.innerHTML = originalText;
                         return;
                     }
-                    // Use the newly created session
-                    currentSession = signUpData.session || (await supabase.auth.getSession()).data.session;
+                    currentSession = signUpData.session;
+                    if (!currentSession) {
+                        var si2 = await supabase.auth.signInWithPassword({ email: emailVal, password: passwordVal });
+                        if (!si2.error && si2.data && si2.data.session) currentSession = si2.data.session;
+                    }
+                    if (!currentSession) {
+                        currentSession = (await supabase.auth.getSession()).data.session;
+                    }
                 }
 
                 if (!currentSession) {
@@ -4376,6 +4709,7 @@
                             document.getElementById('bio-long')?.value?.trim()
                         ].filter(Boolean).join('\n\n') || `Roles: ${rolesString} | Idiomas: ${langsString}`,
                         roles: rolesString,
+                        artist_specialty: mdjJobsBuildArtistSpecialtyLine() || null,
                         languages: langsString,
                         lang_score: langScore
                     });
@@ -4394,52 +4728,58 @@
                     alert('Error guardando perfil: ' + error.message);
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalText;
-                } else if (planSelected === 'PRO') {
-                    // PRO plan → redirect to Stripe Checkout, then come back to profile
-                    submitBtn.innerHTML = 'Redirigiendo a pago...';
-                    try {
-                        const { data: { session: authSession } } = await supabase.auth.getSession();
-                        const billing = document.getElementById('billing-period')?.value || 'monthly';
-                        const refCode = (document.getElementById('referral-code-input')?.value || '').trim().toUpperCase();
-                        const res = await fetch(
-                            `${(window.MDB_SUPABASE_URL || 'https://hkuvuqupbxwkiykxvqdr.supabase.co').replace(/\/$/, '')}/functions/v1/create-checkout`,
-                            {
-                                method: 'POST',
-                                headers: {
-                                    'Authorization': `Bearer ${authSession.access_token}`,
-                                    'Content-Type': 'application/json'
-                                },
-                                /* success_url lo fija la Edge (SITE_URL + dj-dashboard); esto es solo metadato futuro — sin /web/ (en Vercel el sitio vive en la raíz). */
-                                body: JSON.stringify({
-                                    billing,
-                                    ref: refCode,
-                                    successUrl: new URL('dj-profile.html', window.location.origin + '/').href
-                                })
-                            }
-                        );
-                        var payload;
-                        try {
-                            payload = await res.json();
-                        } catch (parseErr) {
-                            throw new Error('Respuesta inválida del servidor de pago (HTTP ' + res.status + ').');
-                        }
-                        if (!res.ok) {
-                            var errMsg = typeof payload.error === 'string'
-                                ? payload.error
-                                : (payload.detail || (payload.error && payload.error.message) || JSON.stringify(payload.error || payload));
-                            throw new Error(errMsg || ('HTTP ' + res.status));
-                        }
-                        if (!payload.url) throw new Error('No se recibió URL de checkout.');
-                        window.location.href = payload.url; // Stripe → vuelta según create-checkout (p. ej. dj-dashboard?payment=success)
-                    } catch (stripeErr) {
-                        alert('Error conectando con el sistema de pago: ' + stripeErr.message);
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalText;
-                    }
                 } else {
-                    // LITE plan → go to profile
-                    alert('¡Cuenta creada! Tu perfil está en revisión. Te notificaremos por email.');
-                    window.location.href = './dj-profile.html';
+                    try {
+                        if (typeof window.checkSessionForNav === 'function') {
+                            await window.checkSessionForNav();
+                        }
+                    } catch (eHdr) { /* ignore */ }
+                    if (planSelected === 'PRO') {
+                        // PRO plan → redirect to Stripe Checkout (pago a Miami DJ Beat)
+                        submitBtn.innerHTML = 'Redirigiendo a pago...';
+                        try {
+                            const { data: { session: authSession } } = await supabase.auth.getSession();
+                            const billing = document.getElementById('billing-period')?.value || 'monthly';
+                            const refCode = (document.getElementById('referral-code-input')?.value || '').trim().toUpperCase();
+                            const res = await fetch(
+                                `${(window.MDB_SUPABASE_URL || 'https://hkuvuqupbxwkiykxvqdr.supabase.co').replace(/\/$/, '')}/functions/v1/create-checkout`,
+                                {
+                                    method: 'POST',
+                                    headers: {
+                                        'Authorization': `Bearer ${authSession.access_token}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    /* success_url lo fija la Edge (SITE_URL + dj-dashboard); esto es solo metadato futuro — sin /web/ (en Vercel el sitio vive en la raíz). */
+                                    body: JSON.stringify({
+                                        billing,
+                                        ref: refCode,
+                                        successUrl: new URL('dj-profile.html', window.location.origin + '/').href
+                                    })
+                                }
+                            );
+                            var payload;
+                            try {
+                                payload = await res.json();
+                            } catch (parseErr) {
+                                throw new Error('Respuesta inválida del servidor de pago (HTTP ' + res.status + ').');
+                            }
+                            if (!res.ok) {
+                                var errMsg = typeof payload.error === 'string'
+                                    ? payload.error
+                                    : (payload.detail || (payload.error && payload.error.message) || JSON.stringify(payload.error || payload));
+                                throw new Error(errMsg || ('HTTP ' + res.status));
+                            }
+                            if (!payload.url) throw new Error('No se recibió URL de checkout.');
+                            window.location.href = payload.url; // Stripe → vuelta según create-checkout (p. ej. dj-dashboard?payment=success)
+                        } catch (stripeErr) {
+                            alert('Error conectando con el sistema de pago: ' + stripeErr.message);
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalText;
+                        }
+                    } else {
+                        alert('¡Listo! Tu solicitud LITE está en revisión. Te llevamos a tu panel de artista.');
+                        window.location.href = './dj-dashboard.html?tab=settings&from=jobs_lite_apply';
+                    }
                 }
 
             }; // end submitProForm
@@ -4517,7 +4857,7 @@
     </script>
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
     <link rel="stylesheet" href="./mdj-assistant.css" />
-    <script src="./mdj-assistant.js?v=20260414-booth-roster-jobs"></script>
+    <script src="./mdj-assistant.js?v=20260418-JOBS-V3"></script>
     <div id="mdj-assistant-booth">
         <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
         <div class="booth-window">
@@ -4546,13 +4886,13 @@
             <div style="font-size: 30px; z-index: 10;">🤖</div>
         </div>
     </div>
-    <script src="./auth.js?v=20260418-avatar-photo-log"></script>
+    <script src="./auth.js?v=20260418-JOBS-V3"></script>
 
-    <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script src="./mdj-shared-header.js?v=20260418-avatar-dash-settings-href"></script>
-    <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
-    <script src="./mdj-profile-nav-context.js?v=20260418-owner-nav-parity"></script>
-  <script src="./mdj-social-bar.js?v=20260414-MAC-DESKTOP-SYNC"></script>
+    <script src="./header-smart-search.js?v=20260418-JOBS-V3"></script>
+    <script src="./mdj-shared-header.js?v=20260418-JOBS-V3"></script>
+    <script src="./mdj-owner-tabs-marquee.js?v=20260418-JOBS-V3"></script>
+    <script src="./mdj-profile-nav-context.js?v=20260418-JOBS-V3"></script>
+  <script src="./mdj-social-bar.js?v=20260418-JOBS-V3"></script>
 </body>
 
 </html>
