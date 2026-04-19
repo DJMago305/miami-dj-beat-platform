@@ -284,17 +284,18 @@
                 <label><span data-i18n="login-signup-first-name-label">Nombre *</span><input type="text"
                         id="signup-first-name" name="given-name" autocomplete="given-name" required maxlength="80"
                         placeholder="Ej: Gerardo"></label>
-                <label><span data-i18n="login-signup-middle-name-label">Segundo nombre o inicial <small
-                            style="color:var(--muted);font-weight:400;">(opcional)</small></span><input type="text"
+                <label><span data-i18n="login-signup-middle-name-label">Segundo nombre o inicial (opcional)</span><input
+                        type="text"
                         id="signup-middle-name" name="additional-name" autocomplete="additional-name" maxlength="40"
                         placeholder="Ej: A o segundo nombre"></label>
                 <label><span data-i18n="login-signup-last-name-label">Apellido(s) *</span><input type="text"
                         id="signup-last-name" name="family-name" autocomplete="family-name" required maxlength="120"
                         placeholder="Ej: Valle"></label>
                 <div id="talent-fields" style="display:none;">
-                    <label><span>Nombre Artístico <small style="color:var(--muted);font-weight:400;">(opcional — se usa
-                                como
-                                username)</small></span><input type="text" id="signup-name"
+                    <label><span data-i18n="login-signup-name-label">Nombre artístico (opcional)</span><small
+                            style="color:var(--muted);font-weight:400;display:block;margin:-6px 0 8px;font-size:11px;"
+                            data-i18n="login-signup-name-hint">Si lo dejas vacío, usamos tu nombre legal como referencia.</small><input
+                            type="text" id="signup-name" name="nickname" autocomplete="nickname" maxlength="80"
                             placeholder="ej. DJMago305"></label>
                 </div>
                 <label><span data-i18n="login-signup-email-label">Email *</span><input type="email" id="signup-email"
@@ -335,10 +336,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=20260226-1"></script>
-    <script src="./translations.js?v=20260419-signup-legal-name"></script>
+    <script src="./translations.js?v=20260419-signup-optional-fields"></script>
     <script src="./i18n.js?v=20260226-1"></script>
     <script src="./security-shield.js?v=20260305-1"></script>
-    <script src="./auth.js?v=20260419-signup-legal-name"></script>
+    <script src="./auth.js?v=20260419-signup-optional-fields"></script>
 
     <script>
         (function syncReferralFromUrl() {
