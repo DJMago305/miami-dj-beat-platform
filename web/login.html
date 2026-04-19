@@ -111,6 +111,39 @@
             color: var(--gold);
         }
 
+        .login-signup-address {
+            margin: 18px 0;
+            padding: 16px 14px;
+            border: 1px solid rgba(197, 160, 89, 0.28);
+            border-radius: 16px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        .login-signup-address legend {
+            padding: 0 6px;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0.04em;
+            color: rgba(255, 255, 255, 0.88);
+        }
+        .signup-addr-intro {
+            margin: 0 0 14px;
+            font-size: 11px;
+            line-height: 1.45;
+            color: var(--muted);
+        }
+        .signup-addr-grid {
+            display: grid;
+            gap: 12px;
+        }
+        .signup-addr-grid-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+        @media (max-width: 480px) {
+            .signup-addr-grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .login-form-footer-hint {
             margin: 18px 0 0;
             text-align: center;
@@ -317,8 +350,37 @@
                         id="signup-phone-label-client"><span data-i18n="login-signup-phone-label-optional">Teléfono
                             (opcional)</span></span><input type="tel" id="signup-phone" name="tel" autocomplete="tel"
                         placeholder="+1 (305) 000-0000"></label>
-                <label><span>Ciudad <small style="color:var(--muted);font-weight:400;">(opcional)</small></span>
-                    <input type="text" id="signup-city" placeholder="Miami, FL"></label>
+                <fieldset class="login-signup-address" id="signup-address-fieldset" aria-describedby="signup-address-intro">
+                    <legend data-i18n="login-signup-address-legend">Dirección (eventos / facturación)</legend>
+                    <p id="signup-address-intro" class="signup-addr-intro" data-i18n="login-signup-address-intro">Usa el autocompletado del navegador cuando aparezca. Para talento (portal Jobs) son obligatorios calle, ciudad, estado, código postal y país.</p>
+                    <div class="signup-addr-grid">
+                        <label><span data-i18n="login-signup-address-line1-label">Calle y número</span>
+                            <input type="text" id="signup-address-line1" name="street-address" autocomplete="address-line1" maxlength="200" placeholder="123 NE 1st St"></label>
+                        <label><span data-i18n="login-signup-address-line2-label">Piso, apt., suite (opcional)</span>
+                            <input type="text" id="signup-address-line2" name="address-line2" autocomplete="address-line2" maxlength="120" placeholder="Apt 4B"></label>
+                        <div class="signup-addr-grid signup-addr-grid-2">
+                            <label><span data-i18n="login-signup-address-city-label">Ciudad</span>
+                                <input type="text" id="signup-address-city" name="address-level2" autocomplete="address-level2" maxlength="120" placeholder="Miami"></label>
+                            <label><span data-i18n="login-signup-address-state-label">Estado / provincia</span>
+                                <input type="text" id="signup-address-state" name="address-level1" autocomplete="address-level1" maxlength="80" placeholder="FL"></label>
+                        </div>
+                        <div class="signup-addr-grid signup-addr-grid-2">
+                            <label><span data-i18n="login-signup-address-zip-label">Código postal</span>
+                                <input type="text" id="signup-address-zip" name="postal-code" autocomplete="postal-code" inputmode="text" maxlength="20" placeholder="33132"></label>
+                            <label><span data-i18n="login-signup-address-country-label">País</span>
+                                <select id="signup-address-country" name="country" autocomplete="country-name">
+                                    <option value="United States" selected>United States</option>
+                                    <option value="Mexico">Mexico</option>
+                                    <option value="Canada">Canada</option>
+                                    <option value="Spain">Spain</option>
+                                    <option value="Colombia">Colombia</option>
+                                    <option value="Puerto Rico">Puerto Rico</option>
+                                    <option value="Other">Other</option>
+                                </select></label>
+                        </div>
+                        <p class="signup-addr-zip-hint" data-i18n="login-signup-address-zip-hint" style="margin:0;font-size:11px;line-height:1.4;color:var(--muted);">US: 5 digits or ZIP+4. Other countries: use your local postal format.</p>
+                    </div>
+                </fieldset>
                 <div id="talent-fields-2" style="display:none;">
                     <label><span>Instagram <small style="color:var(--muted);font-weight:400;">(opcional)</small></span>
                         <input type="text" id="signup-instagram" placeholder="@tuinstagram"></label>
@@ -339,10 +401,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=20260226-1"></script>
-    <script src="./translations.js?v=20260419-signup-phone-talent"></script>
+    <script src="./translations.js?v=20260418-signup-address"></script>
     <script src="./i18n.js?v=20260226-1"></script>
     <script src="./security-shield.js?v=20260305-1"></script>
-    <script src="./auth.js?v=20260419-signup-phone-talent"></script>
+    <script src="./auth.js?v=20260418-signup-address"></script>
 
     <script>
         (function syncReferralFromUrl() {
@@ -398,14 +460,23 @@
                 var phIn = document.getElementById('signup-phone');
                 var labT = document.getElementById('signup-phone-label-talent');
                 var labC = document.getElementById('signup-phone-label-client');
+                var addrReqIds = ['signup-address-line1', 'signup-address-city', 'signup-address-state', 'signup-address-zip', 'signup-address-country'];
                 if (userType === 'talent') {
                     if (labT) labT.classList.remove('hidden');
                     if (labC) labC.classList.add('hidden');
                     if (phIn) phIn.setAttribute('required', 'required');
+                    addrReqIds.forEach(function (id) {
+                        var el = document.getElementById(id);
+                        if (el) el.setAttribute('required', 'required');
+                    });
                 } else {
                     if (labT) labT.classList.add('hidden');
                     if (labC) labC.classList.remove('hidden');
                     if (phIn) phIn.removeAttribute('required');
+                    addrReqIds.forEach(function (id) {
+                        var el = document.getElementById(id);
+                        if (el) el.removeAttribute('required');
+                    });
                 }
                 if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
             } catch (e) { void e; }
@@ -498,6 +569,13 @@
                     }
                 }
                 if (phEl && d.phone) phEl.value = d.phone;
+                var locBlob = d.location ? String(d.location).trim() : '';
+                if (locBlob) {
+                    var l1 = document.getElementById('signup-address-line1');
+                    var c1 = document.getElementById('signup-address-city');
+                    if (l1 && !l1.value) l1.value = locBlob;
+                    else if (c1 && !c1.value) c1.value = locBlob;
+                }
             } catch (e) { void e; }
         }
         /* Después de i18n y otros scripts que tocan el DOM */

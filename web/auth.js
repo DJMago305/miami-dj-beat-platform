@@ -134,6 +134,32 @@ function mdjNormalizeMiddleNameToken(raw) {
     return t;
 }
 
+/** Dirección de registro → una línea legible (metadata) */
+function mdjFormatSignupAddressOneLine(street, apt, city, state, zip, country) {
+    var s1 = [String(street || '').trim(), String(apt || '').trim()].filter(Boolean).join(' ');
+    var mid = [String(city || '').trim(), String(state || '').trim()].filter(Boolean).join(', ');
+    var z = String(zip || '').trim();
+    var tail = [mid, z, String(country || '').trim()].filter(Boolean).join(' · ');
+    var parts = [];
+    if (s1) parts.push(s1);
+    if (tail) parts.push(tail);
+    return parts.join(' — ').trim();
+}
+
+/** Bloque multilínea para `dj_profiles.address` */
+function mdjFormatSignupAddressBlock(street, apt, city, state, zip, country) {
+    var lines = [];
+    var l1 = [String(street || '').trim(), String(apt || '').trim()].filter(Boolean).join(', ');
+    if (l1) lines.push(l1);
+    var l2 = [String(city || '').trim(), String(state || '').trim(), String(zip || '').trim()]
+        .filter(Boolean)
+        .join(' ');
+    if (l2) lines.push(l2);
+    var c = String(country || '').trim();
+    if (c) lines.push(c);
+    return lines.join('\n').trim();
+}
+
 function mdjBuildLegalFullNameFromSignupParts(firstRaw, middleRaw, lastRaw) {
     var f = String(firstRaw || '').trim();
     var m = mdjNormalizeMiddleNameToken(middleRaw);
@@ -302,7 +328,14 @@ async function mdjEnsureAuthProfileRows(db, user) {
     const displayStage = artistic || fullName;
     const planParam = String(meta.plan || 'LITE');
     const phone = String(meta.phone || '').trim();
-    const city = String(meta.location || '').trim();
+    const addrCity = String(meta.addr_city || meta.city || '').trim();
+    const addrStreet = String(meta.address_street || '').trim();
+    const addrApt = String(meta.address_apt || '').trim();
+    const addrState = String(meta.address_state || '').trim();
+    const addrZip = String(meta.address_zip || '').trim();
+    const addrCountry = String(meta.address_country || '').trim();
+    const legacyLoc = String(meta.location || '').trim();
+    const cityForColumn = addrCity || (!addrStreet && legacyLoc ? legacyLoc : '');
     const refCode = mdjGetReferralDjId() || (meta.source_ref ? String(meta.source_ref).trim() : '') || null;
 
     try {
@@ -332,7 +365,17 @@ async function mdjEnsureAuthProfileRows(db, user) {
                 review_count: 0
             };
             if (phone) profilePayload.phone = phone;
-            if (city) profilePayload.city = city;
+            if (cityForColumn) profilePayload.city = cityForColumn;
+            const addrBlock = mdjFormatSignupAddressBlock(
+                addrStreet,
+                addrApt,
+                addrCity || cityForColumn,
+                addrState,
+                addrZip,
+                addrCountry
+            );
+            if (addrBlock) profilePayload.address = addrBlock;
+            else if (legacyLoc && !addrStreet) profilePayload.address = legacyLoc;
 
             const { error: insErr } = await db.from('dj_profiles').insert([profilePayload]);
             if (insErr) console.warn('[AUTH] mdjEnsureAuthProfileRows dj_profiles insert:', insErr);
@@ -352,7 +395,12 @@ async function mdjEnsureAuthProfileRows(db, user) {
                 full_name: fullName,
                 email: email || null,
                 phone: phone || null,
-                city: city || null,
+                city: cityForColumn || null,
+                address_street: addrStreet || null,
+                address_apt: addrApt || null,
+                address_state: addrState || null,
+                address_zip: addrZip || null,
+                address_country: addrCountry || null,
                 source_ref: refCode || null,
                 discount_eligible: true
             };
@@ -589,7 +637,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 const password = document.getElementById('signup-password')?.value || '';
                 const confirmPassword = document.getElementById('signup-password-confirm')?.value || '';
                 const phone = document.getElementById('signup-phone')?.value.trim() || '';
-                const city = document.getElementById('signup-city')?.value.trim() || '';
+                const addrStreet = document.getElementById('signup-address-line1')?.value.trim() || '';
+                const addrApt = document.getElementById('signup-address-line2')?.value.trim() || '';
+                const addrCity = document.getElementById('signup-address-city')?.value.trim() || '';
+                const addrState = document.getElementById('signup-address-state')?.value.trim() || '';
+                const addrZip = document.getElementById('signup-address-zip')?.value.trim() || '';
+                const addrCountryEl = document.getElementById('signup-address-country');
+                const addrCountry = addrCountryEl ? String(addrCountryEl.value || '').trim() : '';
+                const locationOneLine = mdjFormatSignupAddressOneLine(
+                    addrStreet,
+                    addrApt,
+                    addrCity,
+                    addrState,
+                    addrZip,
+                    addrCountry
+                );
                 const instagram = document.getElementById('signup-instagram')?.value.trim().replace(/^@/, '') || '';
                 const planParam = new URLSearchParams(window.location.search).get('plan') || 'LITE';
 
@@ -679,6 +741,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         )
                     );
                 }
+                if (resolvedUserType === 'talent' && (!addrStreet || !addrCity || !addrState || !addrZip || !addrCountry)) {
+                    throw new Error(
+                        mdjAuthT(
+                            'auth-signup-address-required-talent',
+                            'Completa calle, ciudad, estado, código postal y país para talento.',
+                            'Street, city, state, ZIP/postal code, and country are required for talent signups.'
+                        )
+                    );
+                }
 
                 // 1. Create Auth user — talento si viene de Jobs, alta gratis, o eligió categorías en el carrusel (sessionStorage).
                 const userType = resolvedUserType;
@@ -697,7 +768,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             user_type: userType,
                             source_ref: refCode,
                             phone: phone || '',
-                            location: city || '',
+                            location: locationOneLine || '',
+                            addr_city: addrCity || '',
+                            address_street: addrStreet || '',
+                            address_apt: addrApt || '',
+                            address_state: addrState || '',
+                            address_zip: addrZip || '',
+                            address_country: addrCountry || '',
                             username: email.split('@')[0]
                         }
                     }
@@ -758,7 +835,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
 
                     if (phone) profilePayload.phone = phone;
-                    if (city) profilePayload.city = city;
+                    if (addrCity) profilePayload.city = addrCity;
+                    const addrBlock = mdjFormatSignupAddressBlock(
+                        addrStreet,
+                        addrApt,
+                        addrCity,
+                        addrState,
+                        addrZip,
+                        addrCountry
+                    );
+                    if (addrBlock) profilePayload.address = addrBlock;
                     if (instagram) profilePayload.social_instagram = `https://instagram.com/${instagram.replace(/^@/, '')}`;
 
                     const { error: djProfileErr } = await db.from('dj_profiles').insert([profilePayload]);
@@ -771,7 +857,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         full_name: fullName,
                         email: email,
                         phone: phone || null,
-                        city: city || null,
+                        city: addrCity || null,
+                        address_street: addrStreet || null,
+                        address_apt: addrApt || null,
+                        address_state: addrState || null,
+                        address_zip: addrZip || null,
+                        address_country: addrCountry || null,
                         source_ref: refCode || null,
                         discount_eligible: true
                     };
