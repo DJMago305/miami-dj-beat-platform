@@ -107,3 +107,10 @@ Do not collapse these into a generic “user” when the task is about permissio
 
 - **Referencia de diseño canónica:** **`docs/design/talent-selector-hub-design.md`** (eyebrow Cinzel + título Playfair italic, tarjetas glass, CTA ENTRAR/ENTER, carrusel infinito en `rentals.js`).
 - Las líneas ancla **`talent_selector_eyebrow`** y **`talent_selector_title`** son piezas de marca: no cambiar estilo ni copy salvo petición explícita del Captain/Architect o ticket.
+
+## Talent selector hub — CONTRACT (anti-regresión; `web/js/rentals.js`)
+
+- **`window.MDJ_RENTALS_TALENT_HUB_CONTRACT`** (`Object.freeze` al cargar): banderas de producto para el modal **`#talent-selector-modal`**. **No** poner a `true` sin ticket + Captain/Architect y código asociado restaurado/revisado.
+- **`enableCarouselHeroVideoPreview: false`** — En el paso del hub, **no** se debe disparar vídeo en **`#talent-shell-focus`** al pasar el mouse/teclado sobre las tarjetas del **`.talent-selector-carousel`**. El fondo visible en ese paso es el flujo del hero en **`#talent-shell-ambient`**. Los modales **internos** (DJ, roster, Hora Loca, Staff, Payasos, etc.) siguen teniendo preview/hover **en su propio modal**, no replicar el patrón del shell del hub sobre el carrusel de categorías.
+- **`enableHubShortlistPickRings: false`** — **Sin** anillos / checkbox de “lista rápida” en las tarjetas del carrusel del hub; `mdjInjectTalentHubShortlistUi` solo **limpia** restos si los hubiera.
+- **Prohibido** “mejorar” reintroduciendo preview o anillos en el hub **sin** ampliar el ticket; si el producto cambia, actualizar **contrato + código + prueba manual** en el mismo cambio.

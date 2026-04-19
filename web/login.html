@@ -446,6 +446,49 @@
             border-left: 3px solid rgba(197, 160, 89, 0.72);
         }
 
+        /* URL ?plan=pro o redirect=jobs: explica que facturación PRO está en jobs.html (no en este formulario). */
+        .login-plan-flow-banners-wrap {
+            margin: 0 0 22px;
+        }
+
+        .login-plan-flow-banners-wrap.hidden {
+            display: none !important;
+        }
+
+        .login-plan-flow-banner {
+            margin: 0;
+            padding: 14px 16px;
+            font-size: 12px;
+            line-height: 1.55;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.88);
+            background: rgba(10, 18, 32, 0.92);
+            border: 1px solid rgba(197, 160, 89, 0.45);
+            border-radius: 14px;
+            box-shadow: 0 0 0 1px rgba(197, 160, 89, 0.12) inset;
+        }
+
+        .login-plan-flow-banner strong {
+            display: block;
+            margin: 0 0 8px;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--gold);
+        }
+
+        .login-plan-flow-banner--pro {
+            border-left: 4px solid rgba(197, 160, 89, 0.95);
+        }
+
+        .login-plan-flow-banner > span:last-child {
+            display: block;
+            margin-top: 6px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.78);
+        }
+
         @media (max-width: 400px) {
             .auth-tab {
                 font-size: 10px;
@@ -550,6 +593,16 @@
                 <h1 id="login-brand-heading" class="login-brand-title">Miami DJ Beat</h1>
                 <p class="login-brand-subtitle" data-i18n="login-brand-subtitle">Acceso seguro</p>
             </header>
+            <div id="login-plan-flow-banners-wrap" class="login-plan-flow-banners-wrap hidden" aria-live="polite">
+                <div id="login-banner-pro" class="login-plan-flow-banner login-plan-flow-banner--pro" hidden>
+                    <strong data-i18n="login-banner-pro-title">Next step: PRO plan on Jobs</strong>
+                    <span data-i18n="login-banner-pro-body">Create your account here first. After you sign in, open Jobs → choose PRO → billing period and Stripe payment → complete your artist application.</span>
+                </div>
+                <div id="login-banner-jobs" class="login-plan-flow-banner" hidden>
+                    <strong data-i18n="login-banner-jobs-title">Next step: Jobs portal</strong>
+                    <span data-i18n="login-banner-jobs-body">Register here first. Then on Jobs you will choose LITE or PRO and complete your roster application.</span>
+                </div>
+            </div>
             <div class="auth-toggle">
                 <div class="auth-tab active" id="tab-login" data-i18n="login-tab">Entrar</div>
                 <div class="auth-tab" id="tab-signup" data-i18n="signup-tab">Crear Cuenta</div>
@@ -665,10 +718,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=20260226-1"></script>
-    <script src="./translations.js?v=20260418-login-same-email-hint"></script>
+    <script src="./translations.js?v=20260418-login-plan-flow-banner"></script>
     <script src="./i18n.js?v=20260418-login-i18n"></script>
     <script src="./security-shield.js?v=20260305-1"></script>
-    <script src="./auth.js?v=20260418-login-pro-ui"></script>
+    <script src="./auth.js?v=20260418-role-talent-over-client"></script>
 
     <script>
         (function syncReferralFromUrl() {
@@ -698,11 +751,55 @@
             } catch (e) { void e; }
         }
 
+        /** Muestra franja si ?plan=pro o flujo Jobs (?redirect=jobs / signup=free): el periodo y Stripe van en jobs.html. */
+        function updateLoginPlanFlowBanner() {
+            try {
+                var wrap = document.getElementById('login-plan-flow-banners-wrap');
+                var bPro = document.getElementById('login-banner-pro');
+                var bJobs = document.getElementById('login-banner-jobs');
+                if (!wrap || !bPro || !bJobs) return;
+                var p = new URLSearchParams(window.location.search);
+                var planPro = (p.get('plan') || '').toLowerCase() === 'pro';
+                var redirectJobs = p.get('redirect') === 'jobs';
+                var roster = null;
+                try {
+                    roster = JSON.parse(sessionStorage.getItem('mdj_jobs_roster_categories') || 'null');
+                } catch (eR) { void eR; }
+                var hasJobsRoster = roster && Array.isArray(roster.codes) && roster.codes.length > 0;
+                var ut = (p.get('user_type') || '').toLowerCase();
+                var talentFromUrl = ut === 'talent' || ut === 'artist' || ut === 'dj';
+                var jobsFlowUrl = redirectJobs || hasJobsRoster || (talentFromUrl && (p.get('signup') || '').toLowerCase() === 'free');
+                if (planPro) {
+                    wrap.classList.remove('hidden');
+                    bPro.hidden = false;
+                    bJobs.hidden = true;
+                } else if (jobsFlowUrl) {
+                    wrap.classList.remove('hidden');
+                    bPro.hidden = true;
+                    bJobs.hidden = false;
+                } else {
+                    wrap.classList.add('hidden');
+                    bPro.hidden = true;
+                    bJobs.hidden = true;
+                }
+                if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
+            } catch (e) { void e; }
+        }
+
+        (function initLoginPlanFlowBannerOnLoad() {
+            function go() {
+                updateLoginPlanFlowBanner();
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
+            else go();
+        })();
+
         // ── Tab switchers ─────────────────────────────────────────
         tabLogin.onclick = () => {
             tabLogin.classList.add('active'); tabSignup.classList.remove('active');
             loginForm.classList.remove('hidden'); signupForm.classList.add('hidden');
             updateLoginJobsContextHint();
+            updateLoginPlanFlowBanner();
         };
         /** Misma regla que al cargar la página: tipo de cuenta + campos de artista según URL (user_type, redirect, signup). */
         function applySignupUserTypeFromUrl() {
@@ -756,6 +853,7 @@
                 }
                 if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
                 updateLoginJobsContextHint();
+                updateLoginPlanFlowBanner();
             } catch (e) { void e; }
         }
 
@@ -764,6 +862,7 @@
             signupForm.classList.remove('hidden'); loginForm.classList.add('hidden');
             applySignupUserTypeFromUrl();
             applyContactLeadPrefill();
+            updateLoginPlanFlowBanner();
         };
 
         /** Desde la pestaña Entrar: pasar a «Crear cuenta» sin recargar; reflejar signup=free en la URL y recalcular tipo (equivalente a enlace directo al alta). */

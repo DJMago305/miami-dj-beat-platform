@@ -77,7 +77,18 @@
     // ── Determine role (Strict Security Model) ─────────────────
     const jwt = session.access_token;
     const payload = JSON.parse(atob(jwt.split('.')[1]));
-    let rawRole = session.user?.app_metadata?.role || session.user?.user_metadata?.user_type || 'client';
+    let rawRole = 'client';
+    if (typeof window.mdjResolveEffectiveUserRole === 'function') {
+        rawRole = window.mdjResolveEffectiveUserRole(session.user);
+    } else {
+        const ut = String(session.user?.user_metadata?.user_type || '').toLowerCase();
+        const appR = String(session.user?.app_metadata?.role || '').toLowerCase();
+        if (ut === 'talent' || ut === 'dj' || ut === 'artist') {
+            rawRole = ut === 'artist' ? 'artist' : 'talent';
+        } else {
+            rawRole = appR || ut || 'client';
+        }
+    }
     if (rawRole === 'talent' || rawRole === 'dj') rawRole = 'artist'; // Normalizar terminología legacy a artist
     const role = rawRole;
 

@@ -69,6 +69,28 @@ function mdjGuessPlatformLabel() {
 }
 
 /**
+ * Rol efectivo para redirecciones y UI.
+ * Los hooks de Auth suelen fijar app_metadata.role = "client" para todos; el alta de talento va en user_metadata.user_type
+ * y debe prevalecer sobre ese "client" por defecto (si no, post-login manda al portal de cliente).
+ */
+function mdjResolveEffectiveUserRole(user) {
+    if (!user) return 'client';
+    const appR = String(user.app_metadata?.role || '').toLowerCase();
+    if (appR === 'admin' || appR === 'manager') return appR;
+    const ut = String(user.user_metadata?.user_type || '').toLowerCase();
+    if (ut === 'talent' || ut === 'dj' || ut === 'artist') {
+        return ut === 'artist' ? 'artist' : 'talent';
+    }
+    if (appR && appR !== 'client') return appR;
+    if (ut && ut !== 'client') return ut;
+    return appR || ut || 'client';
+}
+
+if (typeof window !== 'undefined') {
+    window.mdjResolveEffectiveUserRole = mdjResolveEffectiveUserRole;
+}
+
+/**
  * Tras login con contraseña: compara UA + huella (+ IP si disponible) con `public.user_login_devices` vía RPC;
  * si es nuevo, encola email (Edge) con protocolo anti-phishing. Staff admin/manager: sin alerta.
  * Alias público: `mdjCheckNewDevice` (no existe `public.profiles` de dispositivos en este proyecto).
@@ -77,7 +99,7 @@ async function mdjPostLoginDeviceRoutine(db, session) {
     try {
         var user = session && session.user;
         if (!user || !db) return;
-        var rawRole = String((user.app_metadata && user.app_metadata.role) || (user.user_metadata && user.user_metadata.user_type) || '').toLowerCase();
+        var rawRole = String(mdjResolveEffectiveUserRole(user) || '').toLowerCase();
         if (rawRole === 'admin' || rawRole === 'manager') return;
 
         var fp = await mdjBuildDeviceFingerprint();
@@ -318,7 +340,8 @@ async function mdjEnsureAuthProfileRows(db, user) {
     if (!db || !user || !user.id) return;
     const meta = user.user_metadata || {};
     const appMeta = user.app_metadata || {};
-    const rawRole = String(appMeta.role || meta.user_type || 'client').toLowerCase();
+    const resolved = mdjResolveEffectiveUserRole(user);
+    const rawRole = String(resolved || 'client').toLowerCase();
     if (rawRole === 'admin' || rawRole === 'manager') return;
 
     const isTalent = rawRole === 'talent' || rawRole === 'dj' || rawRole === 'artist';
@@ -463,7 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
     /** Misma lógica que el submit de login: interior del sistema o redirect=party-planner, etc. */
     async function performPostAuthRedirect(db, user) {
         const params = new URLSearchParams(window.location.search);
-        const rawRole = user?.app_metadata?.role || user?.user_metadata?.user_type || 'client';
+        const rawRole = mdjResolveEffectiveUserRole(user);
         const role = (rawRole === 'talent' || rawRole === 'dj') ? 'artist' : rawRole;
 
         let targetUrl = './dj-profile.html';
@@ -1014,7 +1037,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // ── Inyección Manager (Productividad Interna) ──
-                const role = session.user?.app_metadata?.role || session.user?.user_metadata?.user_type || 'client';
+                const role = mdjResolveEffectiveUserRole(session.user);
                 if (role === 'manager' || role === 'MANAGER') {
                     const topNav = document.getElementById('mainNav');
                     if (topNav && !document.getElementById('manager-link')) {

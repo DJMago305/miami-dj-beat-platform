@@ -427,6 +427,36 @@
             pointer-events: all;
         }
 
+        #jobs-pro-payment-step {
+            display: none;
+            margin-top: 28px;
+        }
+
+        #jobs-pro-payment-step.is-visible {
+            display: block;
+            position: relative;
+            z-index: 5;
+            isolation: isolate;
+            pointer-events: auto;
+        }
+
+        /* Evita que el carrusel de roles (z-index 2) o las tarjetas LITE/PRO tapen los botones de periodo. */
+        .jobs-billing-period-btn {
+            position: relative;
+            z-index: 1;
+            touch-action: manipulation;
+        }
+
+        .jobs-lite-continue-primary {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+        }
+
+        .jobs-lite-continue-primary.is-hidden {
+            display: none !important;
+        }
+
         /* Corner Tech Clips */
         .portal-clip {
             position: absolute;
@@ -981,6 +1011,19 @@
             color: var(--gold);
             font-size: 11px;
             letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        #jobs-artist-plan-banner .jobs-artist-plan-banner--pastdue {
+            display: inline-block;
+            margin-right: 8px;
+            padding: 2px 10px;
+            border-radius: 8px;
+            background: #f59e0b;
+            color: #0a0a0a;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.06em;
             text-transform: uppercase;
         }
 
@@ -2250,76 +2293,90 @@
                     <p class="jobs-portal-roles-mirror-label" data-i18n="jobs-portal-card-roles-label">Your roster categories</p>
                     <div class="jobs-portal-roles-mirror-values jobs-portal-roles-mirror-values--pro" aria-live="polite">—</div>
 
-                    <!-- Billing toggle: do NOT stopPropagation here — it blocked selectPlan on the parent .level-portal when the user clicked billing/price/referral first, leaving selectedPlan null and "ENVIAR SOLICITUD" inert. -->
-                    <div style="margin-top:16px;">
-                        <div
-                            style="display:flex;border:1px solid rgba(197,160,89,0.3);border-radius:10px;overflow:hidden;margin-bottom:12px;">
-                            <button id="billing-monthly-btn" onclick="setBilling('monthly')"
-                                style="flex:1;padding:9px;background:var(--gold);color:#000;font-weight:900;font-size:11px;letter-spacing:1px;border:none;cursor:pointer;transition:all 0.2s;">
-                                MENSUAL
-                            </button>
-                            <button id="billing-semestral-btn" onclick="setBilling('semestral')"
-                                style="flex:1;padding:9px;background:transparent;color:rgba(255,255,255,0.4);font-weight:800;font-size:11px;letter-spacing:1px;border:none;cursor:pointer;transition:all 0.2s;border-left:1px solid rgba(197,160,89,0.2);border-right:1px solid rgba(197,160,89,0.2);">
-                                6 MESES
-                            </button>
-                            <button id="billing-annual-btn" onclick="setBilling('annual')"
-                                style="flex:1;padding:9px;background:transparent;color:rgba(255,255,255,0.4);font-weight:800;font-size:11px;letter-spacing:1px;border:none;cursor:pointer;transition:all 0.2s;">
-                                ANUAL
-                            </button>
-                        </div>
+                    <p class="jobs-pro-card-next-step-hint" data-i18n="jobs-pro-card-next-step-hint"
+                        style="margin:16px 0 0;font-size:11px;line-height:1.5;color:rgba(255,255,255,0.5);font-weight:600;">
+                        Después de elegir PRO, el siguiente bloque te permite elegir periodo (mensual / 6 meses / año),
+                        opcionalmente un referido y pagar con Stripe; luego completas la misma solicitud que LITE.</p>
+                </div>
+            </div>
 
-                        <!-- Price display -->
-                        <div
-                            style="padding:12px;background:rgba(197,160,89,0.06);border-radius:10px;border:1px solid rgba(197,160,89,0.15);">
-                            <div id="price-monthly-display">
-                                <span style="font-size:26px;font-weight:900;color:#fff;">$80</span>
-                                <span style="font-size:13px;color:rgba(255,255,255,0.4);">/mes · Founder Price</span>
-                                <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:3px;">Precio sube con
-                                    demanda — Bloquea tu precio ahora</div>
-                            </div>
-                            <div id="price-semestral-display" style="display:none;">
-                                <span style="font-size:26px;font-weight:900;color:#fff;">$400</span>
-                                <span style="font-size:13px;color:rgba(255,255,255,0.4);" data-i18n="jobs-pro-price-semestral-line">/6 meses · Ahorra $80</span>
-                                <div
-                                    style="margin-top:6px;display:inline-block;background:rgba(197,160,89,0.12);border:1px solid rgba(197,160,89,0.3);color:var(--gold);font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;"
-                                    data-i18n="jobs-pro-promo-semestral-tag">🎁 Promo 6 meses + 1 mes gratis</div>
-                            </div>
-                            <div id="price-annual-display" style="display:none;">
-                                <span style="font-size:26px;font-weight:900;color:var(--gold);">$720</span>
-                                <span style="font-size:13px;color:rgba(255,255,255,0.4);" data-i18n="jobs-pro-price-annual-line">/año · Ahorra $240</span>
-                                <div
-                                    style="margin-top:6px;display:inline-block;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#22c55e;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;"
-                                    data-i18n="jobs-pro-promo-annual-tag">🎁 Promo anual + 3 meses gratis</div>
-                            </div>
-                        </div>
-
-                        <!-- Referral code field -->
-                        <div style="margin-top:10px;">
-                            <input type="text" id="referral-code-input" placeholder="🔗 Código de referido (opcional)"
-                                style="width:100%;padding:9px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#fff;font-size:12px;box-sizing:border-box;font-family:inherit;">
-                            <div id="referral-discount-note"
-                                style="display:none;font-size:11px;color:#22c55e;margin-top:5px;font-weight:700;">✅
-                                Código válido — $20 de descuento en tu primer mes</div>
-                        </div>
-                        <p class="jobs-pro-billing-note" data-i18n="jobs-pro-billing-note"
-                            style="margin:14px 0 0;font-size:11px;line-height:1.45;color:rgba(255,255,255,0.5);font-weight:600;">
-                            Al continuar, el pago es con Stripe en modo suscripción: cobros automáticos según el periodo
-                            elegido. La tarjeta queda asociada a tu cuenta; la gestionas en el dashboard → configuración
-                            de pagos.</p>
+            <!-- PRO only: billing + Stripe antes del formulario largo (LITE no muestra este bloque). -->
+            <div id="jobs-pro-payment-step" class="jobs-pro-payment-step" aria-hidden="true">
+                <div class="jobs-pro-payment-step-inner"
+                    style="max-width:720px;margin:0 auto;padding:28px 24px;background:rgba(197,160,89,0.06);border:1px solid rgba(197,160,89,0.25);border-radius:16px;">
+                    <div style="font-size:11px;font-weight:900;letter-spacing:2px;color:var(--gold);margin-bottom:12px;"
+                        data-i18n="jobs-pro-payment-step-title">MDJ PRO — PERIODO Y PAGO</div>
+                    <div
+                        style="display:flex;border:1px solid rgba(197,160,89,0.3);border-radius:10px;overflow:hidden;margin-bottom:12px;">
+                        <button type="button" class="jobs-billing-period-btn" id="billing-monthly-btn"
+                            data-billing-period="monthly"
+                            style="flex:1;padding:9px;background:var(--gold);color:#000;font-weight:900;font-size:11px;letter-spacing:1px;border:none;cursor:pointer;transition:all 0.2s;">
+                            MENSUAL
+                        </button>
+                        <button type="button" class="jobs-billing-period-btn" id="billing-semestral-btn"
+                            data-billing-period="semestral"
+                            style="flex:1;padding:9px;background:transparent;color:rgba(255,255,255,0.4);font-weight:800;font-size:11px;letter-spacing:1px;border:none;cursor:pointer;transition:all 0.2s;border-left:1px solid rgba(197,160,89,0.2);border-right:1px solid rgba(197,160,89,0.2);">
+                            6 MESES
+                        </button>
+                        <button type="button" class="jobs-billing-period-btn" id="billing-annual-btn"
+                            data-billing-period="annual"
+                            style="flex:1;padding:9px;background:transparent;color:rgba(255,255,255,0.4);font-weight:800;font-size:11px;letter-spacing:1px;border:none;cursor:pointer;transition:all 0.2s;">
+                            ANUAL
+                        </button>
                     </div>
+                    <div
+                        style="padding:12px;background:rgba(197,160,89,0.06);border-radius:10px;border:1px solid rgba(197,160,89,0.15);">
+                        <div id="price-monthly-display">
+                            <span style="font-size:26px;font-weight:900;color:#fff;">$80</span>
+                            <span style="font-size:13px;color:rgba(255,255,255,0.4);">/mes · Founder Price</span>
+                            <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:3px;">Precio sube con
+                                demanda — Bloquea tu precio ahora</div>
+                        </div>
+                        <div id="price-semestral-display" style="display:none;">
+                            <span style="font-size:26px;font-weight:900;color:#fff;">$400</span>
+                            <span style="font-size:13px;color:rgba(255,255,255,0.4);"
+                                data-i18n="jobs-pro-price-semestral-line">/6 meses · Ahorra $80</span>
+                            <div
+                                style="margin-top:6px;display:inline-block;background:rgba(197,160,89,0.12);border:1px solid rgba(197,160,89,0.3);color:var(--gold);font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;"
+                                data-i18n="jobs-pro-promo-semestral-tag">🎁 Promo 6 meses + 1 mes gratis</div>
+                        </div>
+                        <div id="price-annual-display" style="display:none;">
+                            <span style="font-size:26px;font-weight:900;color:var(--gold);">$720</span>
+                            <span style="font-size:13px;color:rgba(255,255,255,0.4);"
+                                data-i18n="jobs-pro-price-annual-line">/año · Ahorra $240</span>
+                            <div
+                                style="margin-top:6px;display:inline-block;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#22c55e;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;"
+                                data-i18n="jobs-pro-promo-annual-tag">🎁 Promo anual + 3 meses gratis</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <input type="text" id="referral-code-input" placeholder="🔗 Código de referido (opcional)"
+                            style="width:100%;padding:9px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#fff;font-size:12px;box-sizing:border-box;font-family:inherit;">
+                        <div id="referral-discount-note"
+                            style="display:none;font-size:11px;color:#22c55e;margin-top:5px;font-weight:700;">✅
+                            Código válido — $20 de descuento en tu primer mes</div>
+                    </div>
+                    <input type="hidden" id="billing-period" value="monthly">
+                    <p class="jobs-pro-billing-note" data-i18n="jobs-pro-billing-note"
+                        style="margin:14px 0 16px;font-size:11px;line-height:1.45;color:rgba(255,255,255,0.5);font-weight:600;">
+                        Pago seguro con tarjeta mediante Stripe (suscripción según el periodo). La tarjeta queda
+                        asociada a tu cuenta; la gestionas en el dashboard → configuración de pagos.</p>
+                    <button type="button" class="btn primary" id="jobs-pro-stripe-btn" onclick="jobsStartProStripeCheckout()"
+                        data-i18n="jobs-pro-stripe-btn"
+                        style="width:100%;padding:16px 24px;font-size:15px;border-radius:14px;text-transform:uppercase;font-weight:800;border:none;">
+                        Pagar con Stripe y continuar a la solicitud</button>
                 </div>
             </div>
 
             <div class="activate-container" id="activate-container" style="gap:15px;">
                 <button class="btn" onclick="location.href='./index.html'" data-i18n="btn-back"
                     style="background:#fff;color:#000;border-radius:15px;padding:15px 40px;font-weight:700;text-transform:uppercase;">ATRÁS</button>
-                <button class="btn primary" onclick="activatePlan()" data-i18n="btn-submit-job"
-                    style="padding:15px 60px;font-size:16px;border-radius:15px;text-transform:uppercase;font-weight:800;border:none;flex:1;min-width:300px;">ENVIAR
-                    SOLICITUD</button>
+                <div id="jobs-lite-continue-primary" class="jobs-lite-continue-primary">
+                    <button class="btn primary" onclick="activatePlan()" data-i18n="btn-submit-job"
+                        style="padding:15px 60px;font-size:16px;border-radius:15px;text-transform:uppercase;font-weight:800;border:none;flex:1;min-width:300px;width:100%;">ENVIAR
+                        SOLICITUD</button>
+                </div>
             </div>
-
-            <!-- Hidden fields for billing period + referral -->
-            <input type="hidden" id="billing-period" value="monthly">
         </section>
 
         <!-- Formulario Pro -->
@@ -2818,6 +2875,7 @@
                 window.MDB_SUBSCRIPTION && typeof window.MDB_SUBSCRIPTION.isPremiumTier === 'function'
                     ? window.MDB_SUBSCRIPTION.isPremiumTier(profile)
                     : false;
+            var subRaw = (profile && profile.subscription_status) ? String(profile.subscription_status).toLowerCase() : '';
             var lang =
                 (typeof document !== 'undefined' &&
                     document.documentElement &&
@@ -2825,6 +2883,15 @@
                     String(document.documentElement.lang).toLowerCase().indexOf('en') === 0) ||
                 (window.i18n && window.i18n.currentLang === 'en');
             el.style.display = 'block';
+            if (subRaw === 'past_due') {
+                el.innerHTML =
+                    '<span class="jobs-artist-plan-banner__badge jobs-artist-plan-banner--pastdue" data-i18n="jobs-artist-banner-past-due-kicker">Payment issue</span>' +
+                    '<span data-i18n="jobs-artist-banner-past-due-body">Your PRO renewal failed or the charge is past due. Update your payment method in the artist dashboard (Settings / billing) to restore full PRO access.</span>';
+                try {
+                    if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
+                } catch (eUp) { void eUp; }
+                return;
+            }
             if (prem) {
                 el.innerHTML = lang
                     ? '<span class="jobs-artist-plan-banner__badge jobs-artist-plan-banner__badge--pro">MDJ PRO</span>Artist subscription active — this is not the client billing portal.'
@@ -3203,6 +3270,11 @@
             })();
             loadPlatformPricing(); // ← fetch prices from Supabase
 
+            initJobsBillingPeriodControls();
+            setBilling('monthly');
+
+            void jobsApplyStripeReturnIfNeeded();
+
             // Auto-read ?ref= URL param → pre-fill referral code
             const urlRef = new URLSearchParams(window.location.search).get('ref');
             if (urlRef) {
@@ -3241,11 +3313,10 @@
                         updateBioCount('bio-long', 'bio-long-count', 10000);
                         localStorage.removeItem('mdjpro_autofill');
                     };
-                    // Wait for the pro form to become visible (user must select a plan first)
-                    // Auto-select PRO plan and click Enviar Solicitud
+                    // LITE + continuar: mismo formulario largo sin paso Stripe (PRO exige pago antes).
                     setTimeout(() => {
-                        const proCard = document.querySelector('.level-portal[onclick*="pro"]');
-                        if (proCard) proCard.click();
+                        const liteCard = document.querySelector('.level-portal[onclick*="lite"]');
+                        if (liteCard) liteCard.click();
                         setTimeout(() => {
                             const activateBtn = document.querySelector('#activate-container .btn.primary');
                             if (activateBtn) { activateBtn.click(); setTimeout(applyFill, 600); }
@@ -3287,7 +3358,10 @@
 
         // ── Billing period toggle ────────────────────────────────────
         function setBilling(period) {
-            document.getElementById('billing-period').value = period;
+            var allowed = { monthly: 1, semestral: 1, annual: 1 };
+            if (!period || !allowed[period]) return;
+            var hid = document.getElementById('billing-period');
+            if (hid) hid.value = period;
             const GOLD = 'var(--gold)', DIM = 'rgba(255,255,255,0.35)';
             const btns = {
                 monthly: document.getElementById('billing-monthly-btn'),
@@ -3299,12 +3373,38 @@
                 semestral: document.getElementById('price-semestral-display'),
                 annual: document.getElementById('price-annual-display'),
             };
-            // Reset all
-            Object.values(btns).forEach(b => { b.style.background = 'transparent'; b.style.color = DIM; });
-            Object.values(displays).forEach(d => { d.style.display = 'none'; });
-            // Activate selected
-            btns[period].style.background = GOLD; btns[period].style.color = '#000';
-            displays[period].style.display = 'block';
+            Object.keys(btns).forEach(function (k) {
+                var b = btns[k];
+                if (!b) return;
+                b.style.background = 'transparent';
+                b.style.color = DIM;
+            });
+            Object.keys(displays).forEach(function (k) {
+                var d = displays[k];
+                if (!d) return;
+                d.style.display = 'none';
+            });
+            if (btns[period]) {
+                btns[period].style.background = GOLD;
+                btns[period].style.color = '#000';
+            }
+            if (displays[period]) displays[period].style.display = 'block';
+        }
+
+        function initJobsBillingPeriodControls() {
+            var root = document.getElementById('jobs-pro-payment-step');
+            if (!root || root.dataset.mdjBillingBound === '1') return;
+            root.dataset.mdjBillingBound = '1';
+            root.addEventListener('click', function (e) {
+                var t = e.target;
+                if (!t || !t.closest) return;
+                var btn = t.closest('[data-billing-period]');
+                if (!btn || !root.contains(btn)) return;
+                e.preventDefault();
+                e.stopPropagation();
+                var p = btn.getAttribute('data-billing-period');
+                if (p) setBilling(p);
+            });
         }
 
         // ── Validate referral code ────────────────────────────────────
@@ -3717,6 +3817,11 @@
                     if (portalContainer) portalContainer.classList.add('hidden-by-prefill');
                     var activateC = document.getElementById('activate-container');
                     if (activateC) activateC.classList.remove('visible');
+                    var payStep = document.getElementById('jobs-pro-payment-step');
+                    if (payStep) {
+                        payStep.classList.remove('is-visible');
+                        payStep.setAttribute('aria-hidden', 'true');
+                    }
                 }
 
                 syncJobsRoleLabelsFromInputs();
@@ -3743,11 +3848,12 @@
                     document.querySelectorAll('.level-portal').forEach(p => p.classList.remove('selected'));
                     el.classList.add('selected');
                     selectedPlan = type;
+                    syncJobsPlanStepUI();
                     var ac = document.getElementById('activate-container');
-                    if (ac) {
-                        ac.classList.add('visible');
-                        ac.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
+                    if (ac) ac.classList.add('visible');
+                    var payEl = document.getElementById('jobs-pro-payment-step');
+                    if (payEl) payEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    else if (ac) ac.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 });
                 return;
             }
@@ -3758,6 +3864,7 @@
 
             // Subtle scroll to button to ensure visibility
             document.getElementById('activate-container').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            syncJobsPlanStepUI();
         }
 
         function activatePlan() {
@@ -3776,6 +3883,107 @@
             }
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function syncJobsPlanStepUI() {
+            var pay = document.getElementById('jobs-pro-payment-step');
+            var lite = document.getElementById('jobs-lite-continue-primary');
+            if (selectedPlan === 'pro') {
+                if (pay) {
+                    pay.classList.add('is-visible');
+                    pay.setAttribute('aria-hidden', 'false');
+                }
+                if (lite) lite.classList.add('is-hidden');
+            } else {
+                if (pay) {
+                    pay.classList.remove('is-visible');
+                    pay.setAttribute('aria-hidden', 'true');
+                }
+                if (lite) lite.classList.remove('is-hidden');
+            }
+        }
+
+        async function jobsStartProStripeCheckout() {
+            if (selectedPlan !== 'pro') return;
+            var btn = document.getElementById('jobs-pro-stripe-btn');
+            var orig = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = 'Conectando con Stripe...';
+            }
+            try {
+                if (!supabase) throw new Error('Sin conexión.');
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) {
+                    window.location.href = JOBS_GUEST_SIGNUP_URL;
+                    return;
+                }
+                const billing = document.getElementById('billing-period')?.value || 'monthly';
+                const refCode = (document.getElementById('referral-code-input')?.value || '').trim().toUpperCase();
+                const returnUrl = new URL('jobs.html', window.location.origin + '/');
+                returnUrl.searchParams.set('stripe_return', '1');
+                const res = await fetch(
+                    `${(window.MDB_SUPABASE_URL || 'https://hkuvuqupbxwkiykxvqdr.supabase.co').replace(/\/$/, '')}/functions/v1/create-checkout`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${session.access_token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            billing: billing,
+                            ref: refCode,
+                            successUrl: returnUrl.href
+                        })
+                    }
+                );
+                var payload;
+                try {
+                    payload = await res.json();
+                } catch (parseErr) {
+                    throw new Error('Respuesta inválida del servidor de pago (HTTP ' + res.status + ').');
+                }
+                if (!res.ok) {
+                    var errMsg = typeof payload.error === 'string'
+                        ? payload.error
+                        : (payload.detail || (payload.error && payload.error.message) || JSON.stringify(payload.error || payload));
+                    throw new Error(errMsg || ('HTTP ' + res.status));
+                }
+                if (!payload.url) throw new Error('No se recibió URL de checkout.');
+                window.location.href = payload.url;
+            } catch (stripeErr) {
+                alert('Error conectando con el sistema de pago: ' + (stripeErr && stripeErr.message ? stripeErr.message : stripeErr));
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = orig;
+                }
+            }
+        }
+
+        async function jobsApplyStripeReturnIfNeeded() {
+            try {
+                var p = new URLSearchParams(window.location.search);
+                if (p.get('stripe_return') !== '1' || String(p.get('payment') || '').toLowerCase() !== 'success') return;
+                if (!supabase) return;
+                var sessRes = await supabase.auth.getSession();
+                var session = sessRes && sessRes.data && sessRes.data.session;
+                if (!session) return;
+                try {
+                    sessionStorage.setItem('jobs_pro_checkout_ok', '1');
+                } catch (e) { void e; }
+                document.querySelectorAll('.level-portal').forEach(function (n) { n.classList.remove('selected'); });
+                var proCard = document.querySelector('.level-portal[onclick*="pro"]');
+                if (proCard) proCard.classList.add('selected');
+                selectedPlan = 'pro';
+                syncJobsPlanStepUI();
+                activatePlan();
+                p.delete('stripe_return');
+                p.delete('payment');
+                p.delete('ref');
+                p.delete('session_id');
+                var qs = p.toString();
+                window.history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+            } catch (e) { void e; }
         }
 
         window.jobsRoleCarouselScroll = function (dir) {
@@ -4680,12 +4888,36 @@
                         }
                     } catch (eHdr) { /* ignore */ }
                     if (planSelected === 'PRO') {
-                        // PRO plan → redirect to Stripe Checkout (pago a Miami DJ Beat)
+                        // Si ya pagó en el paso PRO (Stripe) o el perfil ya es premium, no repetir checkout.
+                        var skipCheckout = false;
+                        try {
+                            if (sessionStorage.getItem('jobs_pro_checkout_ok') === '1') skipCheckout = true;
+                        } catch (eSs) { void eSs; }
+                        if (!skipCheckout) {
+                            const { data: profCk } = await supabase
+                                .from('dj_profiles')
+                                .select('plan, plan_type, plan_status, plan_expires_at, subscription_status, is_premium')
+                                .eq('user_id', currentSession.user.id)
+                                .maybeSingle();
+                            if (window.MDB_SUBSCRIPTION && typeof window.MDB_SUBSCRIPTION.isPremiumTier === 'function' &&
+                                window.MDB_SUBSCRIPTION.isPremiumTier(profCk)) {
+                                skipCheckout = true;
+                            }
+                        }
+                        if (skipCheckout) {
+                            try { sessionStorage.removeItem('jobs_pro_checkout_ok'); } catch (eR) { void eR; }
+                            alert('¡Listo! Tu solicitud PRO está registrada. Te llevamos a tu panel de artista.');
+                            window.location.href = './dj-dashboard.html?tab=settings&from=jobs_pro_apply';
+                            return;
+                        }
+                        // Fallback: usuario PRO sin pago previo (enlace antiguo / flujo atípico) → Stripe al enviar
                         submitBtn.innerHTML = 'Redirigiendo a pago...';
                         try {
                             const { data: { session: authSession } } = await supabase.auth.getSession();
                             const billing = document.getElementById('billing-period')?.value || 'monthly';
                             const refCode = (document.getElementById('referral-code-input')?.value || '').trim().toUpperCase();
+                            const returnUrl = new URL('jobs.html', window.location.origin + '/');
+                            returnUrl.searchParams.set('stripe_return', '1');
                             const res = await fetch(
                                 `${(window.MDB_SUPABASE_URL || 'https://hkuvuqupbxwkiykxvqdr.supabase.co').replace(/\/$/, '')}/functions/v1/create-checkout`,
                                 {
@@ -4694,11 +4926,10 @@
                                         'Authorization': `Bearer ${authSession.access_token}`,
                                         'Content-Type': 'application/json'
                                     },
-                                    /* success_url lo fija la Edge (SITE_URL + dj-dashboard); esto es solo metadato futuro — sin /web/ (en Vercel el sitio vive en la raíz). */
                                     body: JSON.stringify({
                                         billing,
                                         ref: refCode,
-                                        successUrl: new URL('dj-profile.html', window.location.origin + '/').href
+                                        successUrl: returnUrl.href
                                     })
                                 }
                             );
@@ -4709,13 +4940,13 @@
                                 throw new Error('Respuesta inválida del servidor de pago (HTTP ' + res.status + ').');
                             }
                             if (!res.ok) {
-                                var errMsg = typeof payload.error === 'string'
+                                var errMsg2 = typeof payload.error === 'string'
                                     ? payload.error
                                     : (payload.detail || (payload.error && payload.error.message) || JSON.stringify(payload.error || payload));
-                                throw new Error(errMsg || ('HTTP ' + res.status));
+                                throw new Error(errMsg2 || ('HTTP ' + res.status));
                             }
                             if (!payload.url) throw new Error('No se recibió URL de checkout.');
-                            window.location.href = payload.url; // Stripe → vuelta según create-checkout (p. ej. dj-dashboard?payment=success)
+                            window.location.href = payload.url;
                         } catch (stripeErr) {
                             alert('Error conectando con el sistema de pago: ' + stripeErr.message);
                             submitBtn.disabled = false;
@@ -4831,7 +5062,7 @@
             <div style="font-size: 30px; z-index: 10;">🤖</div>
         </div>
     </div>
-    <script src="./auth.js?v=20260418-PURGE-SEAL"></script>
+    <script src="./auth.js?v=20260418-role-talent-over-client"></script>
 
     <script src="./header-smart-search.js?v=20260418-PURGE-SEAL"></script>
     <script src="./mdj-shared-header.js?v=20260418-PURGE-SEAL"></script>
