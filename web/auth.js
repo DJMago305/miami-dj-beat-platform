@@ -629,8 +629,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         )
                     );
                 }
-                if (password.length < 6) throw new Error('La contraseña debe tener al menos 6 caracteres.');
-                if (password !== confirmPassword) throw new Error('Las contraseñas no coinciden. Verifícalas y vuelve a intentarlo.');
+                if (password.length < 6) {
+                    throw new Error(
+                        mdjAuthT(
+                            'auth-signup-password-short',
+                            'La contraseña debe tener al menos 6 caracteres.',
+                            'Password must be at least 6 characters.'
+                        )
+                    );
+                }
+                if (password !== confirmPassword) {
+                    throw new Error(
+                        mdjAuthT(
+                            'auth-signup-password-mismatch',
+                            'Las contraseñas no coinciden. Verifícalas y vuelve a intentarlo.',
+                            'Passwords do not match. Check both fields and try again.'
+                        )
+                    );
+                }
 
                 // 1. Create Auth user — talento si viene de Jobs, alta gratis, o eligió categorías en el carrusel (sessionStorage).
                 const qpSignup = new URLSearchParams(window.location.search);

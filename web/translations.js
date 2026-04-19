@@ -590,6 +590,8 @@ const translations = {
         "auth-signup-email-required": "El correo electrónico es obligatorio.",
         "auth-signup-email-invalid": "Indica un correo electrónico válido (ej. nombre@dominio.com).",
         "auth-signup-password-required": "La contraseña es obligatoria.",
+        "auth-signup-password-short": "La contraseña debe tener al menos 6 caracteres.",
+        "auth-signup-password-mismatch": "Las contraseñas no coinciden. Verifícalas y vuelve a intentarlo.",
         "auth-signup-legal-name-required": "Completa nombre y apellido.",
         // ── Auth Gate (jobs.html) ────────────────────────────────────
         "gate-title": "ACCESO AL PORTAL DJ",
@@ -1835,6 +1837,8 @@ const translations = {
         "auth-signup-email-required": "Email is required.",
         "auth-signup-email-invalid": "Enter a valid email address (e.g. name@domain.com).",
         "auth-signup-password-required": "Password is required.",
+        "auth-signup-password-short": "Password must be at least 6 characters.",
+        "auth-signup-password-mismatch": "Passwords do not match. Check both fields and try again.",
         "auth-signup-legal-name-required": "Enter first and last name.",
         // ── Auth Gate (jobs.html) ────────────────────────────────────
         "gate-title": "DJ PORTAL ACCESS",
