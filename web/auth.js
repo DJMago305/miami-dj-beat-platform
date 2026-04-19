@@ -126,6 +126,25 @@ if (typeof window !== 'undefined') {
     window.mdjCheckNewDevice = mdjCheckNewDevice;
 }
 
+/** Legal full name from signup fields (middle optional: one letter → "J.") */
+function mdjNormalizeMiddleNameToken(raw) {
+    var t = String(raw || '').trim();
+    if (!t) return '';
+    if (t.length === 1 && /^[A-Za-zÀ-ÿ]$/.test(t)) return t.toUpperCase() + '.';
+    return t;
+}
+
+function mdjBuildLegalFullNameFromSignupParts(firstRaw, middleRaw, lastRaw) {
+    var f = String(firstRaw || '').trim();
+    var m = mdjNormalizeMiddleNameToken(middleRaw);
+    var l = String(lastRaw || '').trim();
+    var parts = [];
+    if (f) parts.push(f);
+    if (m) parts.push(m);
+    if (l) parts.push(l);
+    return parts.join(' ').replace(/\s+/g, ' ').trim();
+}
+
 /** Wrong password / bad credentials on signInWithPassword */
 function mdjIsInvalidCredentialsError(err) {
     const code = String(err?.code || err?.name || '').toLowerCase();
@@ -559,10 +578,13 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const db = await waitForSupabase();
 
-                // Collect all fields
-                const fullName = document.getElementById('signup-fullname')?.value.trim() || '';
+                // Collect all fields — nombre legal: nombre + (opcional) segundo nombre o inicial + apellido
+                const firstName = document.getElementById('signup-first-name')?.value.trim() || '';
+                const middleName = document.getElementById('signup-middle-name')?.value.trim() || '';
+                const lastName = document.getElementById('signup-last-name')?.value.trim() || '';
+                const fullName = mdjBuildLegalFullNameFromSignupParts(firstName, middleName, lastName);
                 const artisticName = document.getElementById('signup-name')?.value.trim() || '';
-                const name = artisticName || fullName; // artistic name used as username, fallback to full name
+                const name = artisticName || fullName; // artistic name used as stage, fallback to legal full name
                 const email = document.getElementById('signup-email')?.value.trim() || '';
                 const password = document.getElementById('signup-password')?.value || '';
                 const confirmPassword = document.getElementById('signup-password-confirm')?.value || '';
@@ -571,7 +593,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const instagram = document.getElementById('signup-instagram')?.value.trim().replace(/^@/, '') || '';
                 const planParam = new URLSearchParams(window.location.search).get('plan') || 'LITE';
 
-                if (!fullName || !email || !password) throw new Error('Por favor completa todos los campos requeridos (Nombre Real, Email, Contraseña).');
+                if (!firstName || !lastName || !email || !password) {
+                    throw new Error(
+                        mdjAuthT(
+                            'auth-signup-legal-name-required',
+                            'Completa nombre, apellido, email y contraseña.',
+                            'Enter first name, last name, email, and password.'
+                        )
+                    );
+                }
                 if (password.length < 6) throw new Error('La contraseña debe tener al menos 6 caracteres.');
                 if (password !== confirmPassword) throw new Error('Las contraseñas no coinciden. Verifícalas y vuelve a intentarlo.');
 

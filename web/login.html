@@ -281,8 +281,16 @@
             <!-- Signup Form -->
             <form id="signup-form" class="form hidden" novalidate>
                 <input type="hidden" id="signup-usertype" name="user_type" value="client">
-                <label><span>Nombre Real *</span><input type="text" id="signup-fullname" required
-                        placeholder="Tu nombre completo"></label>
+                <label><span data-i18n="login-signup-first-name-label">Nombre *</span><input type="text"
+                        id="signup-first-name" name="given-name" autocomplete="given-name" required maxlength="80"
+                        placeholder="Ej: Gerardo"></label>
+                <label><span data-i18n="login-signup-middle-name-label">Segundo nombre o inicial <small
+                            style="color:var(--muted);font-weight:400;">(opcional)</small></span><input type="text"
+                        id="signup-middle-name" name="additional-name" autocomplete="additional-name" maxlength="40"
+                        placeholder="Ej: A o segundo nombre"></label>
+                <label><span data-i18n="login-signup-last-name-label">Apellido(s) *</span><input type="text"
+                        id="signup-last-name" name="family-name" autocomplete="family-name" required maxlength="120"
+                        placeholder="Ej: Valle"></label>
                 <div id="talent-fields" style="display:none;">
                     <label><span>Nombre Artístico <small style="color:var(--muted);font-weight:400;">(opcional — se usa
                                 como
@@ -327,10 +335,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=20260226-1"></script>
-    <script src="./translations.js?v=20260414-vip-identity"></script>
+    <script src="./translations.js?v=20260419-signup-legal-name"></script>
     <script src="./i18n.js?v=20260226-1"></script>
     <script src="./security-shield.js?v=20260305-1"></script>
-    <script src="./auth.js?v=20260419-jobs-artist-roster"></script>
+    <script src="./auth.js?v=20260419-signup-legal-name"></script>
 
     <script>
         (function syncReferralFromUrl() {
@@ -461,13 +469,24 @@
                 var d = raw ? JSON.parse(raw) : {};
                 var pem = p.get('prefill_email');
                 var emEl = document.getElementById('signup-email');
-                var fnEl = document.getElementById('signup-fullname');
+                var f1 = document.getElementById('signup-first-name');
+                var f2 = document.getElementById('signup-middle-name');
+                var f3 = document.getElementById('signup-last-name');
                 var phEl = document.getElementById('signup-phone');
                 if (emEl) {
                     if (pem) emEl.value = decodeURIComponent(pem);
                     else if (d.email) emEl.value = d.email;
                 }
-                if (fnEl && d.name) fnEl.value = d.name;
+                if (d.name && f1 && f3) {
+                    var parts = String(d.name).trim().split(/\s+/).filter(Boolean);
+                    if (parts.length >= 2) {
+                        f1.value = parts[0];
+                        f3.value = parts[parts.length - 1];
+                        if (parts.length > 2 && f2) f2.value = parts.slice(1, -1).join(' ');
+                    } else if (parts.length === 1) {
+                        f1.value = parts[0];
+                    }
+                }
                 if (phEl && d.phone) phEl.value = d.phone;
             } catch (e) { void e; }
         }
