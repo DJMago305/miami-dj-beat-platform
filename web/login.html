@@ -27,6 +27,8 @@
             box-shadow: var(--shadow), 0 0 0 1px rgba(197, 160, 89, 0.12) inset,
                 0 0 80px rgba(197, 160, 89, 0.06);
             position: relative;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
         }
 
         .login-container::before {
@@ -199,10 +201,249 @@
         #auth-error .auth-inline-link:hover {
             color: #fff;
         }
+
+        /* ── Miami DJ Beat — professional account form (scoped) ───────── */
+        body.mdj-login-page {
+            min-height: 100vh;
+            background:
+                radial-gradient(ellipse 120% 80% at 50% -20%, rgba(197, 160, 89, 0.09), transparent 55%),
+                radial-gradient(ellipse 90% 60% at 100% 50%, rgba(102, 163, 255, 0.04), transparent 45%),
+                linear-gradient(180deg, #060a10 0%, #0a1018 45%, #06090e 100%);
+        }
+
+        body.mdj-login-page main.mdj-login-main {
+            padding-left: clamp(12px, 3vw, 24px);
+            padding-right: clamp(12px, 3vw, 24px);
+        }
+
+        .login-brand-block {
+            position: relative;
+            padding-bottom: 22px;
+            margin-bottom: 8px;
+        }
+
+        .login-brand-block::after {
+            content: '';
+            display: block;
+            width: min(200px, 52%);
+            height: 1px;
+            margin: 18px auto 0;
+            background: linear-gradient(90deg, transparent, rgba(197, 160, 89, 0.55), transparent);
+        }
+
+        /* Segmented tabs — portal switch */
+        .auth-toggle {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            margin-bottom: 28px;
+            padding: 5px;
+            background: rgba(0, 0, 0, 0.42);
+            border-radius: 14px;
+            border: 1px solid rgba(197, 160, 89, 0.22);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+
+        .auth-tab {
+            text-align: center;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border-bottom: none !important;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.42);
+            transition: background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .auth-tab:hover {
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        .auth-tab.active {
+            color: #f5ead3;
+            background: linear-gradient(165deg, rgba(197, 160, 89, 0.28) 0%, rgba(197, 160, 89, 0.07) 100%);
+            box-shadow: 0 0 0 1px rgba(197, 160, 89, 0.45), 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+
+        /* Form grid + field chrome */
+        .login-container .form {
+            gap: 18px;
+        }
+
+        .login-container .form label {
+            gap: 8px;
+        }
+
+        .login-container .form > label > span:first-of-type,
+        .login-container .form fieldset label > span:first-of-type {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            color: rgba(255, 255, 255, 0.88);
+        }
+
+        .login-field-hint {
+            color: var(--muted) !important;
+            font-weight: 400 !important;
+            letter-spacing: 0.02em !important;
+            text-transform: none !important;
+            font-size: 11px !important;
+            line-height: 1.45;
+            margin-top: 2px;
+        }
+
+        .login-container .form input:not([type="checkbox"]):not([type="radio"]),
+        .login-container .form select {
+            min-height: 48px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: linear-gradient(180deg, rgba(8, 12, 20, 0.92) 0%, rgba(4, 7, 12, 0.88) 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .login-container .form input::placeholder,
+        .login-container .form select::placeholder {
+            color: rgba(255, 255, 255, 0.28);
+        }
+
+        .login-container .form input:hover,
+        .login-container .form select:hover {
+            border-color: rgba(197, 160, 89, 0.22);
+        }
+
+        .login-container .form input:focus,
+        .login-container .form select:focus {
+            border-color: rgba(197, 160, 89, 0.55);
+            box-shadow:
+                0 0 0 3px rgba(197, 160, 89, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.07);
+            outline: none;
+        }
+
+        .login-forgot-row {
+            text-align: right;
+            margin-top: -6px;
+            margin-bottom: 4px;
+        }
+
+        .login-forgot-link {
+            color: rgba(255, 255, 255, 0.48) !important;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            letter-spacing: 0.03em;
+            transition: color 0.2s ease;
+        }
+
+        .login-forgot-link:hover {
+            color: var(--gold) !important;
+        }
+
+        .login-container .btn.primary.full {
+            margin-top: 6px;
+            min-height: 50px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            border-radius: 12px;
+            background: linear-gradient(165deg, #c9a24f 0%, #a67c2a 48%, #8a6522 100%);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 4px 20px rgba(197, 160, 89, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+            transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+        }
+
+        .login-container .btn.primary.full:hover:not(:disabled) {
+            filter: brightness(1.06);
+            box-shadow: 0 8px 28px rgba(197, 160, 89, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+        }
+
+        .login-container .btn.primary.full:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+
+        .login-container .btn.primary.full:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .login-signup-address {
+            margin: 22px 0;
+            padding: 22px clamp(14px, 3vw, 24px);
+            border-radius: 16px;
+            border: 1px solid rgba(197, 160, 89, 0.22);
+            border-left: 3px solid rgba(197, 160, 89, 0.65);
+            background:
+                linear-gradient(135deg, rgba(197, 160, 89, 0.06) 0%, transparent 42%),
+                rgba(0, 0, 0, 0.35);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+
+        .login-signup-address legend {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(245, 234, 211, 0.95);
+        }
+
+        .signup-addr-intro {
+            font-size: 12px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.48);
+        }
+
+        .signup-addr-zip-hint {
+            padding-top: 4px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            margin-top: 4px !important;
+        }
+
+        .login-auth-error {
+            margin-top: 18px !important;
+            padding: 12px 14px;
+            border-radius: 12px;
+            text-align: center;
+            line-height: 1.45;
+            font-size: 13px;
+            font-weight: 600;
+            color: #ffccbc;
+            background: rgba(211, 47, 47, 0.12);
+            border: 1px solid rgba(211, 47, 47, 0.35);
+        }
+
+        .login-auth-error[data-tone="info"] {
+            color: #e8d5a3 !important;
+            background: rgba(197, 160, 89, 0.12);
+            border-color: rgba(197, 160, 89, 0.4);
+        }
+
+        .pwd-toggle {
+            right: 14px;
+            opacity: 0.75;
+        }
+
+        .pwd-toggle:focus-visible {
+            outline: 2px solid rgba(197, 160, 89, 0.6);
+            outline-offset: 2px;
+            border-radius: 6px;
+        }
+
+        @media (max-width: 400px) {
+            .auth-tab {
+                font-size: 10px;
+                letter-spacing: 0.1em;
+                padding: 10px 8px;
+            }
+        }
     </style>
 </head>
 
-<body class="notranslate">
+<body class="notranslate mdj-login-page">
     <!-- MDJ canonical site header — keep in sync with index #mainHeader; use ./index.html# anchors for subpages -->
 <header class="header" id="mainHeader">
   <div class="header-top">
@@ -290,7 +531,7 @@
     Scope: login.html, role-guard.js, Auth Tabs.
     ================================================================================ 
     -->
-    <main class="container">
+    <main class="container mdj-login-main">
         <div class="login-container">
             <header class="login-brand-block" aria-labelledby="login-brand-heading">
                 <h1 id="login-brand-heading" class="login-brand-title">Miami DJ Beat</h1>
@@ -311,8 +552,8 @@
                         <button type="button" class="pwd-toggle" tabindex="-1" data-i18n-aria="login-pwd-toggle-aria" aria-label="Show password">👁️</button>
                     </div>
                 </label>
-                <div style="text-align: right; margin-top: -4px; margin-bottom: 16px;">
-                    <a href="./forgot-password.html" data-i18n="login-forgot-password-link" style="color: rgba(255,255,255,0.5); font-size: 13px; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Forgot password?</a>
+                <div class="login-forgot-row">
+                    <a href="./forgot-password.html" class="login-forgot-link" data-i18n="login-forgot-password-link">Forgot password?</a>
                 </div>
                 <button class="btn primary full" type="submit" data-i18n="login-btn-submit">Iniciar Sesión</button>
                 <p class="login-form-footer-hint" role="status">
@@ -325,7 +566,7 @@
             <form id="signup-form" class="form hidden">
                 <input type="hidden" id="signup-usertype" name="user_type" value="client">
                 <label><span data-i18n="login-signup-name-label">Nombre artístico o nombre de usuario (opcional)</span><small
-                        style="color:var(--muted);font-weight:400;display:block;margin:-6px 0 8px;font-size:11px;"
+                        class="login-field-hint"
                         data-i18n="login-signup-name-hint">Opcional. Puedes iniciar sesión con este nombre además del
                         email.</small><input type="text" id="signup-name" name="signup_stage_or_username"
                         autocomplete="nickname" maxlength="80" data-i18n-hold="login-signup-stage-placeholder" placeholder="e.g. DJMago305"></label>
@@ -355,7 +596,7 @@
                     </div>
                 </label>
                 <label><span id="signup-phone-label-talent" class="hidden"><span data-i18n="login-signup-phone-label-talent">Teléfono *</span><small
-                            style="color:var(--muted);font-weight:400;display:block;margin:4px 0 0;font-size:11px;"
+                            class="login-field-hint"
                             data-i18n="login-signup-phone-hint-talent">Obligatorio para talento: te contactamos por trabajo.</small></span><span
                         id="signup-phone-label-client"><span data-i18n="login-signup-phone-label-optional">Teléfono
                             (opcional)</span></span><input type="tel" id="signup-phone" name="tel" autocomplete="tel"
@@ -388,18 +629,17 @@
                                     <option value="Other" data-i18n="login-country-other">Other</option>
                                 </select></label>
                         </div>
-                        <p class="signup-addr-zip-hint" data-i18n="login-signup-address-zip-hint" style="margin:0;font-size:11px;line-height:1.4;color:var(--muted);">US: 5 digits or ZIP+4. Other countries: use your local postal format.</p>
+                        <p class="signup-addr-zip-hint login-field-hint" data-i18n="login-signup-address-zip-hint">US: 5 digits or ZIP+4. Other countries: use your local postal format.</p>
                     </div>
                 </fieldset>
                 <div id="talent-fields-2" style="display:none;">
-                    <label><span data-i18n="login-signup-instagram-label">Instagram</span> <small style="color:var(--muted);font-weight:400;" data-i18n="login-signup-optional-paren">(optional)</small>
+                    <label><span data-i18n="login-signup-instagram-label">Instagram</span> <small class="login-field-hint" data-i18n="login-signup-optional-paren">(optional)</small>
                         <input type="text" id="signup-instagram" data-i18n-hold="login-signup-instagram-placeholder" placeholder="@yourinstagram"></label>
                 </div>
                 <button class="btn primary full" type="submit" data-i18n="login-btn-register">Registrarme</button>
             </form>
 
-            <p id="auth-error" class="fineprint"
-                style="color: #D32F2F; margin-top: 15px; text-align: center; display: none;"></p>
+            <p id="auth-error" class="fineprint login-auth-error" role="alert" hidden></p>
         </div>
     </main>
 
@@ -414,7 +654,7 @@
     <script src="./translations.js?v=20260418-login-i18n"></script>
     <script src="./i18n.js?v=20260418-login-i18n"></script>
     <script src="./security-shield.js?v=20260305-1"></script>
-    <script src="./auth.js?v=20260418-login-i18n"></script>
+    <script src="./auth.js?v=20260418-login-pro-ui"></script>
 
     <script>
         (function syncReferralFromUrl() {

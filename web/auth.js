@@ -437,19 +437,18 @@ document.addEventListener('DOMContentLoaded', () => {
             errorMsg.innerHTML = '';
             errorMsg.textContent = msg;
         }
-        errorMsg.style.display = 'block';
+        errorMsg.hidden = false;
+        errorMsg.removeAttribute('data-tone');
         if (opts && opts.tone === 'info') {
-            errorMsg.style.color = 'var(--gold)';
-        } else {
-            errorMsg.style.color = '#D32F2F';
+            errorMsg.setAttribute('data-tone', 'info');
         }
     }
     function clearError() {
         if (!errorMsg) return;
-        errorMsg.style.display = 'none';
+        errorMsg.hidden = true;
+        errorMsg.removeAttribute('data-tone');
         errorMsg.innerHTML = '';
         errorMsg.textContent = '';
-        errorMsg.style.color = '#D32F2F';
     }
 
     /** Login/signup page: button labels follow `mdjpro_lang` + i18n. */
