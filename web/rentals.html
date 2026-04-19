@@ -20,12 +20,6 @@ Riesgo: romper carga del catálogo.
         rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css?v=20260415-PAYASOS-MODAL-V1" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
-    <!-- DEBUG: visibilidad forzada selección hub (quitar cuando el flujo esté validado) -->
-    <style id="rentals-mdj-hub-selected-debug">
-        #talent-selector-modal .talent-cat-card.mdj-talent-hub-selected {
-            border: 5px solid #D4AF37 !important;
-        }
-    </style>
     <style id="rentals-visual-lock">
         /* RENTALS VISUAL LOCK — DO NOT EDIT */
 
@@ -530,6 +524,37 @@ Riesgo: romper carga del catálogo.
             align-items: flex-end !important;
         }
 
+        /* Tiras horizontales con carrusel infinito: scroll; Staff/Payasos/roster/DJ conservan alineación inferior del strip */
+        #staff-modal.modal-visible #staff-roster-grid.mdj-rentals-horizontal-infinite,
+        #payasos-modal.modal-visible #payasos-roster-grid.mdj-rentals-horizontal-infinite,
+        #roster-modal.modal-visible #roster-grid.mdj-rentals-horizontal-infinite,
+        #dj-modal.modal-visible #dj-roster-grid.mdj-rentals-horizontal-infinite {
+            justify-content: flex-start !important;
+            align-items: flex-end !important;
+            scroll-snap-type: none !important;
+            overscroll-behavior-x: contain !important;
+        }
+
+        #mc-modal.modal-visible #mc-roster-scroll.mdj-rentals-horizontal-infinite,
+        #horaloca-modal.modal-visible #horaloca-grid.mdj-rentals-horizontal-infinite {
+            justify-content: flex-start !important;
+            align-items: center !important;
+            scroll-snap-type: none !important;
+            overscroll-behavior-x: contain !important;
+        }
+
+        #staff-modal.modal-visible #staff-roster-grid.mdj-rentals-horizontal-infinite .talent-cat-card,
+        #payasos-modal.modal-visible #payasos-roster-grid.mdj-rentals-horizontal-infinite .talent-cat-card,
+        #mc-modal.modal-visible #mc-roster-scroll.mdj-rentals-horizontal-infinite .talent-cat-card,
+        #horaloca-modal.modal-visible #horaloca-grid.mdj-rentals-horizontal-infinite .talent-cat-card,
+        #roster-modal.modal-visible #roster-grid.mdj-rentals-horizontal-infinite .talent-cat-card,
+        #dj-modal.modal-visible #dj-roster-grid.mdj-rentals-horizontal-infinite .talent-cat-card {
+            flex: 0 0 auto !important;
+            width: min(260px, 82vw) !important;
+            min-width: 200px !important;
+            max-width: 260px !important;
+        }
+
         /* FX & Lighting — borde dorado intenso al hover-preview (mismo ADN que Captura y Visuales) */
         #fx-modal .modal-content.cinematic-hero-shell.mdj-fx-hero-preview-on,
         #lighting-modal .modal-content.cinematic-hero-shell.mdj-lighting-hero-preview-on {
@@ -771,65 +796,6 @@ Riesgo: romper carga del catálogo.
                     0 0 26px rgba(212, 175, 55, 0.48),
                     0 12px 40px rgba(0, 0, 0, 0.55);
             }
-        }
-
-        #talent-selector-modal.modal-visible .talent-selector-carousel .mdj-talent-hub-pick {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 12;
-            width: 26px;
-            height: 26px;
-            margin: 0;
-            cursor: pointer;
-        }
-
-        #talent-selector-modal.modal-visible .mdj-talent-hub-pick .mdj-talent-hub-cb {
-            position: absolute;
-            inset: 0;
-            width: 26px;
-            height: 26px;
-            margin: 0;
-            opacity: 0;
-            cursor: pointer;
-            z-index: 2;
-            accent-color: #D4AF37;
-        }
-
-        #talent-selector-modal.modal-visible .mdj-talent-hub-check-visual {
-            position: absolute;
-            inset: 0;
-            border-radius: 6px;
-            border: 2px solid rgba(212, 175, 55, 0.55);
-            background: rgba(0, 0, 0, 0.35);
-            box-sizing: border-box;
-            pointer-events: none;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
-        }
-
-        #talent-selector-modal.modal-visible .mdj-talent-hub-cb:checked + .mdj-talent-hub-check-visual {
-            border-color: #D4AF37;
-            background: linear-gradient(145deg, rgba(212, 175, 55, 0.95), rgba(180, 145, 45, 0.98));
-            box-shadow: 0 0 14px rgba(212, 175, 55, 0.65);
-        }
-
-        #talent-selector-modal.modal-visible .mdj-talent-hub-cb:checked + .mdj-talent-hub-check-visual::after {
-            content: '';
-            position: absolute;
-            left: 50%;
-            top: 45%;
-            width: 6px;
-            height: 10px;
-            border: solid #0a0a0a;
-            border-width: 0 2.5px 2.5px 0;
-            transform: translate(-50%, -50%) rotate(45deg);
-        }
-
-        #talent-selector-modal.modal-visible .talent-cat-card.mdj-talent-hub-selected {
-            border-color: rgba(212, 175, 55, 0.75) !important;
-            box-shadow:
-                0 0 0 1px rgba(212, 175, 55, 0.35),
-                0 0 20px rgba(212, 175, 55, 0.35) !important;
         }
 
         /* Catálogo / extras: check dorado visible */
@@ -1345,7 +1311,7 @@ Riesgo: romper carga del catálogo.
     <script src="./data/rentalsData.js?v=20260414-rental-mp4-under90mb"></script>
     <script src="./subscription.js?v=20260422-find-dj-rank"></script>
     <script src="./js/artists.js?v=20260418-hub-tier-v1"></script>
-    <script src="./js/rentals.js?v=20260418-talent-hub-open-dj-dragfix"></script>
+    <script src="./js/rentals.js?v=20260418-PURGE-SEAL"></script>
     <!-- ── MC MODAL ── -->
     <div id="mc-modal" class="modal-overlay modal-hidden">
         <div class="modal-content cinematic-hero-shell">
@@ -1394,7 +1360,7 @@ Riesgo: romper carga del catálogo.
                         </p>
                     </div>
 
-                    <div
+                    <div id="mc-roster-scroll" data-mdj-ui-tick-scroll
                         style="display: flex; justify-content: center; gap: 15px; width: 100%; max-width: 1400px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px; margin-top: auto;">
 
                         <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card" id="mc-card-maestro"
@@ -1587,7 +1553,7 @@ Riesgo: romper carga del catálogo.
                 </div>
 
                 <!-- Grilla Inyectada Aislada en el Bottom -->
-                <div id="horaloca-grid"
+                <div id="horaloca-grid" data-mdj-ui-tick-scroll
                     style="display: flex; justify-content: center; gap: 15px; width: 100%; max-width: 1400px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px;">
                     <div class="loading-spinner" data-i18n="rental_loading_cat">Cargando catálogo...</div>
                 </div>
@@ -1648,7 +1614,7 @@ Riesgo: romper carga del catálogo.
                 </div>
 
                 <!-- Grilla Inyectada Aislada en el Bottom (Reemplaza Tabs) -->
-                <div id="roster-grid"
+                <div id="roster-grid" data-mdj-ui-tick-scroll
                     style="display: flex; justify-content: center; align-items: flex-end; gap: 15px; width: 100%; max-width: 1400px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px;">
                     <div class="loading-spinner" data-i18n="rental_loading_cat">Cargando catálogo...</div>
                 </div>
@@ -1689,7 +1655,7 @@ Riesgo: romper carga del catálogo.
                     </p>
                 </div>
 
-                <div id="staff-roster-grid"
+                <div id="staff-roster-grid" data-mdj-ui-tick-scroll
                     style="display: flex; justify-content: center; align-items: flex-end; gap: 15px; width: 100%; max-width: 1400px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px;">
                     <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card active" data-staff-key="bartender"
                         style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
@@ -1753,7 +1719,7 @@ Riesgo: romper carga del catálogo.
                     </p>
                 </div>
 
-                <div id="payasos-roster-grid"
+                <div id="payasos-roster-grid" data-mdj-ui-tick-scroll
                     style="display: flex; justify-content: center; align-items: flex-end; gap: 12px; width: 100%; max-width: 1400px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 32px;">
                     <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card active" data-payasos-key="gif"
                         style="flex: 1 1 0; min-width: 180px; max-width: 220px; padding: 16px 12px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 300px; gap: 8px;">
@@ -1829,7 +1795,7 @@ Riesgo: romper carga del catálogo.
                 </div>
 
                 <!-- Empty Internal Category Grid -->
-                <div id="dj-roster-grid"
+                <div id="dj-roster-grid" data-mdj-ui-tick-scroll
                     style="display: flex; justify-content: center; align-items: flex-end; gap: 15px; width: 100%; max-width: 1400px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px;">
                 </div>
             </div>
@@ -1881,7 +1847,7 @@ Riesgo: romper carga del catálogo.
                         </p>
                     </div>
 
-                    <div id="fx-roster-grid" class="mdj-fx-catalog-carousel grid5 cinematic-hero-cards"
+                    <div id="fx-roster-grid" class="mdj-fx-catalog-carousel grid5 cinematic-hero-cards" data-mdj-ui-tick-scroll
                         style="position: relative; z-index: 10; width: 100%; max-width: 100%; box-sizing: border-box;">
                     </div>
 
@@ -1934,7 +1900,7 @@ Riesgo: romper carga del catálogo.
                         </p>
                     </div>
 
-                    <div id="lighting-roster-grid" class="mdj-lighting-carousel grid5 cinematic-hero-cards"
+                    <div id="lighting-roster-grid" class="mdj-lighting-carousel grid5 cinematic-hero-cards" data-mdj-ui-tick-scroll
                         style="position: relative; z-index: 10; width: 100%; max-width: 100%; box-sizing: border-box;">
                     </div>
 

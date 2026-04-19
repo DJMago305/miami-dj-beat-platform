@@ -8,8 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260418-JOBS-V3" />
-    <link rel="stylesheet" href="./profile.css?v=20260418-JOBS-V3" />
+    <link rel="stylesheet" href="./styles.css?v=20260418-PURGE-SEAL" />
+    <link rel="stylesheet" href="./profile.css?v=20260418-PURGE-SEAL" />
     <style>
         :root {
             --mesh-glow: rgba(197, 160, 89, 0.15);
@@ -686,16 +686,6 @@
             transition: border-color 0.35s, box-shadow 0.35s, transform 0.3s;
         }
 
-        /* Regresión: ningún ::before/::after en tarjetas foto — la única marca es .mdj-role-check-ring en el DOM. */
-        .role-photo-card::before,
-        .role-photo-card::after {
-            content: none !important;
-            display: none !important;
-            border: none !important;
-            box-shadow: none !important;
-            background: none !important;
-        }
-
         /*
          * Hit-test fiable: styles.css define `label { display: grid }` y aquí mezclaba con flex + hijos absolute,
          * lo que en algunos navegadores dejaba la palomita/checkbox sin togglear al clicar la tarjeta.
@@ -1058,51 +1048,6 @@
             scroll-behavior: auto !important;
         }
 
-        /* Legacy: CSS marquee (transform) desactivado en JS — rompía clics/selección en WebKit. Mantener reglas por si hiciera falta rollback. */
-        .jobs-role-carousel.jobs-role-carousel--marquee {
-            overflow: hidden;
-            padding-bottom: 10px;
-        }
-
-        .jobs-role-marquee-anim {
-            display: flex;
-            flex-direction: row;
-            flex-wrap: nowrap;
-            width: max-content;
-            will-change: transform;
-            animation: jobsRoleMarqueeLoop 70s linear infinite;
-        }
-
-        .jobs-role-carousel--marquee:hover .jobs-role-marquee-anim {
-            animation-play-state: paused;
-        }
-
-        @keyframes jobsRoleMarqueeLoop {
-            0% {
-                transform: translateX(0);
-            }
-
-            100% {
-                transform: translateX(-50%);
-            }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .jobs-role-marquee-anim {
-                animation: none;
-            }
-        }
-
-        /* Modo loop (hosting): sin flechas; el strip va solo. No tocar lógica de checkboxes. */
-        .jobs-role-carousel-shell.jobs-role-carousel-shell--marquee {
-            gap: 0;
-        }
-
-        .jobs-role-carousel-shell--marquee .jobs-role-carousel-btn {
-            display: none !important;
-            pointer-events: none !important;
-        }
-
         .jobs-role-carousel-track {
             display: flex;
             flex-direction: row;
@@ -1188,7 +1133,7 @@
                 flex-wrap: wrap;
             }
 
-            .jobs-role-carousel-shell:not(.jobs-role-carousel-shell--marquee) .jobs-role-carousel-btn {
+            .jobs-role-carousel-shell .jobs-role-carousel-btn {
                 width: 100%;
                 min-height: 44px;
             }
@@ -2818,11 +2763,11 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./subscription.js?v=20260418-JOBS-V3"></script>
-    <script src="./supabase-config.js?v=20260418-JOBS-V3"></script>
-    <script src="./translations.js?v=20260418-JOBS-V3"></script>
-    <script src="./i18n.js?v=20260418-JOBS-V3"></script>
-    <script src="./mdj-carousel-scroll-tick.js?v=20260418-JOBS-V3"></script>
+    <script src="./subscription.js?v=20260418-PURGE-SEAL"></script>
+    <script src="./supabase-config.js?v=20260418-PURGE-SEAL"></script>
+    <script src="./translations.js?v=20260418-PURGE-SEAL"></script>
+    <script src="./i18n.js?v=20260418-PURGE-SEAL"></script>
+    <script src="./mdj-carousel-scroll-tick.js?v=20260418-PURGE-SEAL"></script>
     <script>
         /* --- [x] Vision 2027 UI Transformation
            - [x] Hero Simplification (Clean Vision 2027)
@@ -3069,7 +3014,7 @@
                     setGuestCtaLink();
                 }
             } catch (err) {
-                console.warn('[jobs] updateJobsAfterRolesCta session/profile:', err);
+                void err;
                 if (subline) subline.style.display = '';
                 setGuestCtaLink();
                 key = 'jobs-after-roles-cta-signup';
@@ -3104,7 +3049,7 @@
                 );
                 session = data && data.session;
             } catch (e) {
-                console.warn('[jobs] jobsAfterRolesCtaAccountNavigate getSession:', e);
+                void e;
                 window.location.href = JOBS_GUEST_SIGNUP_URL;
                 return;
             }
@@ -3117,7 +3062,7 @@
                     try {
                         await jobsPromiseWithTimeout(window.checkSessionForNav(), 6500, 'checkSessionForNav');
                     } catch (toErr) {
-                        console.warn('[jobs] checkSessionForNav slow or failed, using fallbacks:', toErr && toErr.message);
+                        void toErr;
                     }
                 }
                 const acc = document.getElementById('accountBtn');
@@ -3129,7 +3074,7 @@
                     }
                 }
             } catch (e) {
-                console.warn('[jobs] jobsAfterRolesCtaAccountNavigate:', e);
+                void e;
             }
             if (session.user && session.user.id) {
                 window.location.href = './dj-profile.html?id=' + encodeURIComponent(session.user.id);
@@ -3209,7 +3154,7 @@
                 const lab = cb.closest('.role-photo-card');
                 if (lab) lab.classList.toggle('active', cb.checked);
             });
-            if (typeof syncJobsRoleMarqueeClones === 'function') syncJobsRoleMarqueeClones();
+            if (typeof syncJobsRoleV3LoopClones === 'function') syncJobsRoleV3LoopClones();
             updateJobsPortalRolesStrip();
         }
 
@@ -3218,7 +3163,7 @@
                 try {
                     window.initJobsRoleInfiniteCarousel();
                 } catch (e) {
-                    /* sealed */
+                    void e;
                 }
             }
             requestAnimationFrame(function () {
@@ -3226,7 +3171,7 @@
                     if (typeof window.mdjJobsRoleInfiniteApplyRetry === 'function') {
                         window.mdjJobsRoleInfiniteApplyRetry(0);
                     }
-                    if (typeof syncJobsRoleMarqueeClones === 'function') syncJobsRoleMarqueeClones();
+                    if (typeof syncJobsRoleV3LoopClones === 'function') syncJobsRoleV3LoopClones();
                 });
             });
             initJobsAfterRolesCtaClick();
@@ -3337,7 +3282,7 @@
                 } catch (e) { void e; }
             })();
 
-            console.log('🚀 PRODUCTION READY: JOBS V3 INFALLIBLE CHECK SYSTEM ACTIVE');
+            console.log('🚀 MIAMI DJ BEAT: PRODUCTION SYSTEM SECURED');
         });
 
         // ── Billing period toggle ────────────────────────────────────
@@ -3412,7 +3357,7 @@
                     if (labelSpan && s.pro_label_annual) labelSpan.textContent = '/año · Ahorra $' + (s.pro_price_monthly * 12 - parseInt(s.pro_price_annual));
                 }
             } catch (e) {
-                console.warn('Could not load platform pricing settings:', e);
+                void e;
             }
         }
 
@@ -3609,7 +3554,7 @@
                         review_count: 0
                     }]);
                     if (djErr) {
-                        console.warn('[gateSignup] dj_profiles:', djErr);
+                        void djErr;
                         err.textContent = djErr.message || 'No se pudo crear el perfil de artista.';
                         err.style.display = 'block';
                         btn.disabled = false;
@@ -3618,7 +3563,7 @@
                     }
                 }
             } catch (insErr) {
-                console.warn('[gateSignup] insert:', insErr);
+                void insErr;
                 err.textContent = (insErr && insErr.message) ? insErr.message : 'Error al crear perfil.';
                 err.style.display = 'block';
                 btn.disabled = false;
@@ -3776,7 +3721,7 @@
 
                 syncJobsRoleLabelsFromInputs();
             } catch (err) {
-                console.warn('prefillProfileForm error:', err);
+                void err;
             }
         }
 
@@ -3854,14 +3799,14 @@
                     .eq('user_id', session.user.id)
                     .then(({ error }) => {
                         if (error) {
-                            console.warn('Role / artist_specialty save error:', error.message, error.code || '', error.details || '');
+                            void error;
                         }
                         void updateJobsAfterRolesCta();
                     });
             });
         }
 
-        function syncJobsRoleMarqueeClones() {
+        function syncJobsRoleV3LoopClones() {
             const wrap = document.getElementById('mdj-jobs-v3-carousel');
             if (!wrap) return;
             const loop = document.getElementById('mdj-jobs-v3-loop');
@@ -3981,7 +3926,7 @@
                     if (typeof window.mdjJobsRoleInfiniteApplyRetry === 'function') {
                         window.mdjJobsRoleInfiniteApplyRetry(0);
                     }
-                    if (typeof syncJobsRoleMarqueeClones === 'function') syncJobsRoleMarqueeClones();
+                    if (typeof syncJobsRoleV3LoopClones === 'function') syncJobsRoleV3LoopClones();
                 });
                 ro.observe(track);
             }
@@ -3990,7 +3935,7 @@
                     if (typeof window.mdjJobsRoleInfiniteApplyRetry === 'function') {
                         window.mdjJobsRoleInfiniteApplyRetry(0);
                     }
-                    if (typeof syncJobsRoleMarqueeClones === 'function') syncJobsRoleMarqueeClones();
+                    if (typeof syncJobsRoleV3LoopClones === 'function') syncJobsRoleV3LoopClones();
                 });
             });
         };
@@ -4008,13 +3953,13 @@
                         try {
                             window.initJobsRoleInfiniteCarousel();
                         } catch (e) {
-                            /* sealed */
+                            void e;
                         }
                     }
                     if (typeof window.mdjJobsRoleInfiniteApplyRetry === 'function') {
                         window.mdjJobsRoleInfiniteApplyRetry(0);
                     }
-                    if (typeof syncJobsRoleMarqueeClones === 'function') syncJobsRoleMarqueeClones();
+                    if (typeof syncJobsRoleV3LoopClones === 'function') syncJobsRoleV3LoopClones();
                 },
                 { passive: true }
             );
@@ -4847,7 +4792,7 @@
                     titleEl.innerHTML = settings[titleKey];
                 }
             } catch (e) {
-                console.warn('[Hero] No se pudo cargar configuración:', e);
+                void e;
             }
         }
 
@@ -4857,7 +4802,7 @@
     </script>
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
     <link rel="stylesheet" href="./mdj-assistant.css" />
-    <script src="./mdj-assistant.js?v=20260418-JOBS-V3"></script>
+    <script src="./mdj-assistant.js?v=20260418-PURGE-SEAL"></script>
     <div id="mdj-assistant-booth">
         <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
         <div class="booth-window">
@@ -4886,13 +4831,13 @@
             <div style="font-size: 30px; z-index: 10;">🤖</div>
         </div>
     </div>
-    <script src="./auth.js?v=20260418-JOBS-V3"></script>
+    <script src="./auth.js?v=20260418-PURGE-SEAL"></script>
 
-    <script src="./header-smart-search.js?v=20260418-JOBS-V3"></script>
-    <script src="./mdj-shared-header.js?v=20260418-JOBS-V3"></script>
-    <script src="./mdj-owner-tabs-marquee.js?v=20260418-JOBS-V3"></script>
-    <script src="./mdj-profile-nav-context.js?v=20260418-JOBS-V3"></script>
-  <script src="./mdj-social-bar.js?v=20260418-JOBS-V3"></script>
+    <script src="./header-smart-search.js?v=20260418-PURGE-SEAL"></script>
+    <script src="./mdj-shared-header.js?v=20260418-PURGE-SEAL"></script>
+    <script src="./mdj-owner-tabs-marquee.js?v=20260418-PURGE-SEAL"></script>
+    <script src="./mdj-profile-nav-context.js?v=20260418-PURGE-SEAL"></script>
+  <script src="./mdj-social-bar.js?v=20260418-PURGE-SEAL"></script>
 </body>
 
 </html>

@@ -14,10 +14,19 @@ if (typeof window.t !== 'function') {
   window.t = (key, fallback) => fallback;
 }
 
-try {
-  console.log('🚀 MDJ Debug: rentals.js bundle loaded');
-} catch (e) {
-  void e;
+/**
+ * Contrato producto — Hub «Entretenimiento y Talento» (`#talent-selector-modal`).
+ * Congelado a propósito: regresiones frecuentes = preview vídeo en hover del carrusel + anillos de lista en tarjetas.
+ * No cambiar flags sin ticket + Captain/Architect; si `true`, el código legacy correspondiente no está en el bundle.
+ * Ver `.cursorrules` → «Talent selector hub (CONTRACT)».
+ */
+if (!window.MDJ_RENTALS_TALENT_HUB_CONTRACT) {
+    window.MDJ_RENTALS_TALENT_HUB_CONTRACT = Object.freeze({
+        /** `true` = volver a cablear preview en `#talent-shell-focus` al hover en `.talent-selector-carousel` (no activo). */
+        enableCarouselHeroVideoPreview: false,
+        /** `true` = volver a inyectar anillos/checkbox shortlist en tarjetas del carrusel (inyección completa no incluida). */
+        enableHubShortlistPickRings: false
+    });
 }
 
 const t = (k, def) => (window.translations?.[window.i18n?.currentLang]?.[k]) || def;
@@ -380,11 +389,16 @@ window.renderStaffHero = function (tabKey = "bartender", animate = true) {
         videoEl.play().catch(() => {});
     }
 
+    const staffGrid = document.getElementById("staff-roster-grid");
     document.querySelectorAll("#staff-roster-grid .hl-type-card[data-staff-key]").forEach(function (el) {
-        const k = el.getAttribute("data-staff-key");
-        if (k === key) el.classList.add("active");
-        else el.classList.remove("active");
+        el.classList.remove("active");
     });
+    var pickStaff = null;
+    if (staffGrid) {
+        pickStaff = staffGrid.querySelector('.hl-type-card[data-staff-key="' + key + '"]:not(.mdj-staff-carousel-clone)');
+        if (!pickStaff) pickStaff = staffGrid.querySelector('.hl-type-card[data-staff-key="' + key + '"]');
+    }
+    if (pickStaff) pickStaff.classList.add("active");
 
     if (window.i18n) window.i18n.updateUI();
 };
@@ -451,11 +465,16 @@ window.renderPayasosHero = function (tabKey = "gif", animate = true) {
         videoEl.play().catch(() => {});
     }
 
+    const payGrid = document.getElementById("payasos-roster-grid");
     document.querySelectorAll("#payasos-roster-grid .hl-type-card[data-payasos-key]").forEach(function (el) {
-        const k = el.getAttribute("data-payasos-key");
-        if (k === key) el.classList.add("active");
-        else el.classList.remove("active");
+        el.classList.remove("active");
     });
+    var pickPay = null;
+    if (payGrid) {
+        pickPay = payGrid.querySelector('.hl-type-card[data-payasos-key="' + key + '"]:not(.mdj-payasos-carousel-clone)');
+        if (!pickPay) pickPay = payGrid.querySelector('.hl-type-card[data-payasos-key="' + key + '"]');
+    }
+    if (pickPay) pickPay.classList.add("active");
 
     if (window.i18n) window.i18n.updateUI();
 };
@@ -498,7 +517,7 @@ window._rosterCardClick = function (key) {
 };
 
 /** Hover en roster: solo hero + vídeo + .active (sin reinyectar el grid; evita flicker y cortes de hover). */
-window._rosterHeroPreviewOnly = function (key) {
+window._rosterHeroPreviewOnly = function (key, hoveredCard) {
     if (window.activeCategory !== "visuals" && window.activeCategory !== "live") return;
     const dataset = window.activeCategory === "visuals" ? window.visualTabs : window.liveMusicTabs;
     const item = dataset[key];
@@ -537,11 +556,18 @@ window._rosterHeroPreviewOnly = function (key) {
         videoEl.play().catch(() => {});
     }
 
+    const grid = document.getElementById("roster-grid");
     document.querySelectorAll("#roster-grid .hl-type-card").forEach(function (el) {
-        const k = el.getAttribute("data-roster-key");
-        if (k === key) el.classList.add("active");
-        else el.classList.remove("active");
+        el.classList.remove("active");
     });
+    var pick = null;
+    if (hoveredCard && grid && grid.contains(hoveredCard) && hoveredCard.getAttribute("data-roster-key") === key) {
+        pick = hoveredCard;
+    } else if (grid) {
+        pick = grid.querySelector('.hl-type-card[data-roster-key="' + key + '"]:not(.mdj-roster-hero-carousel-clone)');
+        if (!pick) pick = grid.querySelector('.hl-type-card[data-roster-key="' + key + '"]');
+    }
+    if (pick) pick.classList.add("active");
 
     if (window.i18n) window.i18n.updateUI();
 };
@@ -563,7 +589,7 @@ window._bindRosterGridHeroHover = function () {
         lastHoverKey = key;
         if (window.activeCategory === "visuals") window.activeVisualTabLocked = key;
         if (window.activeCategory === "live") window.activeLiveTabLocked = key;
-        if (window._rosterHeroPreviewOnly) window._rosterHeroPreviewOnly(key);
+        if (window._rosterHeroPreviewOnly) window._rosterHeroPreviewOnly(key, card);
         shell.classList.add("mdj-roster-hero-preview-on");
     });
 
@@ -581,7 +607,7 @@ window._bindRosterGridHeroHover = function () {
 };
 
 /** DJ Performance — mismo ADN que Captura y Visuales: hover → hero + vídeo + .active */
-window._djHeroPreviewOnly = function (key) {
+window._djHeroPreviewOnly = function (key, hoveredCard) {
     const item = window.djTabs && window.djTabs[key];
     if (!item) return;
     const titleEl = document.getElementById("dj-hero-title");
@@ -612,15 +638,22 @@ window._djHeroPreviewOnly = function (key) {
         if (changed) videoEl.load();
         videoEl.play().catch(() => {});
     }
+    const grid = document.getElementById("dj-roster-grid");
     document.querySelectorAll("#dj-roster-grid .hl-type-card").forEach(function (el) {
-        const k = el.getAttribute("data-dj-tab-key");
-        if (k === key) el.classList.add("active");
-        else el.classList.remove("active");
+        el.classList.remove("active");
     });
+    var pickDj = null;
+    if (hoveredCard && grid && grid.contains(hoveredCard) && hoveredCard.getAttribute("data-dj-tab-key") === key) {
+        pickDj = hoveredCard;
+    } else if (grid) {
+        pickDj = grid.querySelector('.hl-type-card[data-dj-tab-key="' + key + '"]:not(.mdj-dj-roster-carousel-clone)');
+        if (!pickDj) pickDj = grid.querySelector('.hl-type-card[data-dj-tab-key="' + key + '"]');
+    }
+    if (pickDj) pickDj.classList.add("active");
     if (window.i18n) window.i18n.updateUI();
 };
 
-window._lightingHeroPreviewOnly = function (key) {
+window._lightingHeroPreviewOnly = function (key, hoveredCard) {
     const item = window.lightingItems && window.lightingItems[key];
     if (!item) return;
     const videoEl = document.getElementById("lighting-hero-video");
@@ -653,15 +686,23 @@ window._lightingHeroPreviewOnly = function (key) {
         if (changed) videoEl.load();
         videoEl.play().catch(() => {});
     }
+    const grid = document.getElementById("lighting-roster-grid");
     document.querySelectorAll("#lighting-roster-grid .hl-type-card").forEach(function (el) {
-        const k = el.getAttribute("data-lighting-key");
-        if (k === key) el.classList.add("active");
-        else el.classList.remove("active");
+        el.classList.remove("active");
     });
+    var pick = null;
+    if (hoveredCard && grid && grid.contains(hoveredCard) && hoveredCard.getAttribute("data-lighting-key") === key) {
+        pick = hoveredCard;
+    } else if (grid) {
+        grid.querySelectorAll(".hl-type-card:not(.mdj-lighting-carousel-clone)").forEach(function (el) {
+            if (el.getAttribute("data-lighting-key") === key) pick = el;
+        });
+    }
+    if (pick) pick.classList.add("active");
     if (window.i18n) window.i18n.updateUI();
 };
 
-window._fxHeroPreviewOnly = function (key) {
+window._fxHeroPreviewOnly = function (key, hoveredCard) {
     const item = window.fxItems && window.fxItems[key];
     if (!item) return;
     const videoEl = document.getElementById("fx-hero-video");
@@ -687,11 +728,19 @@ window._fxHeroPreviewOnly = function (key) {
         if (changed) videoEl.load();
         videoEl.play().catch(() => {});
     }
+    const fxGrid = document.getElementById("fx-roster-grid");
     document.querySelectorAll("#fx-roster-grid [data-fx-key]").forEach(function (el) {
-        const k = el.getAttribute("data-fx-key");
-        if (k === key) el.classList.add("active");
-        else el.classList.remove("active");
+        el.classList.remove("active");
     });
+    var fxPick = null;
+    if (hoveredCard && fxGrid && fxGrid.contains(hoveredCard) && hoveredCard.getAttribute("data-fx-key") === key) {
+        fxPick = hoveredCard;
+    } else if (fxGrid) {
+        fxGrid.querySelectorAll(".talent-cat-card[data-fx-key]:not(.mdj-fx-carousel-clone)").forEach(function (el) {
+            if (el.getAttribute("data-fx-key") === key) fxPick = el;
+        });
+    }
+    if (fxPick) fxPick.classList.add("active");
     if (window.i18n) window.i18n.updateUI();
 };
 
@@ -711,7 +760,7 @@ window._bindLightingGridHeroHover = function () {
         if (!key || key === lastKey) return;
         lastKey = key;
         window.activeLightingTabLocked = key;
-        if (window._lightingHeroPreviewOnly) window._lightingHeroPreviewOnly(key);
+        if (window._lightingHeroPreviewOnly) window._lightingHeroPreviewOnly(key, card);
         shell.classList.add("mdj-lighting-hero-preview-on");
     });
 
@@ -741,7 +790,7 @@ window._bindFxGridHeroHover = function () {
         if (!key || key === lastKey) return;
         lastKey = key;
         window.activeFxTabLocked = key;
-        if (window._fxHeroPreviewOnly) window._fxHeroPreviewOnly(key);
+        if (window._fxHeroPreviewOnly) window._fxHeroPreviewOnly(key, card);
         shell.classList.add("mdj-fx-hero-preview-on");
     });
 
@@ -769,30 +818,45 @@ window.initMcModalMagicHover = function () {
     const rowWrap = cardMaestro.parentElement;
     if (!rowWrap || rowWrap !== cardHost.parentElement) return;
 
-    const showMaestro = function () {
+    const clearActiveCards = function () {
+        rowWrap.querySelectorAll(".talent-cat-card").forEach(function (c) {
+            c.classList.remove("active");
+        });
+    };
+
+    const showMaestro = function (hoveredCard) {
         vMaestro.style.opacity = "1";
         vHost.style.opacity = "0";
         shell.classList.add("mdj-mc-hero-preview-on");
-        cardMaestro.classList.add("active");
-        cardHost.classList.remove("active");
+        clearActiveCards();
+        (hoveredCard || cardMaestro).classList.add("active");
     };
-    const showHost = function () {
+    const showHost = function (hoveredCard) {
         vHost.style.opacity = "1";
         vMaestro.style.opacity = "0";
         shell.classList.add("mdj-mc-hero-preview-on");
-        cardHost.classList.add("active");
-        cardMaestro.classList.remove("active");
+        clearActiveCards();
+        (hoveredCard || cardHost).classList.add("active");
     };
     const reset = function () {
         shell.classList.remove("mdj-mc-hero-preview-on");
-        cardMaestro.classList.remove("active");
-        cardHost.classList.remove("active");
+        clearActiveCards();
         vHost.style.opacity = "1";
         vMaestro.style.opacity = "0";
     };
 
-    cardMaestro.addEventListener("pointerenter", showMaestro);
-    cardHost.addEventListener("pointerenter", showHost);
+    rowWrap.addEventListener(
+        "pointerover",
+        function (e) {
+            const card = e.target.closest && e.target.closest(".talent-cat-card");
+            if (!card || !rowWrap.contains(card)) return;
+            const btn = card.querySelector('.hl-action-btn[data-service]');
+            const svc = btn && btn.getAttribute("data-service");
+            if (svc === "mc-maestro") showMaestro(card);
+            else if (svc === "mc-host") showHost(card);
+        },
+        true
+    );
 
     rowWrap.addEventListener("pointerleave", function (e) {
         const rt = e.relatedTarget;
@@ -859,6 +923,9 @@ window.renderLiveHero = (tabKey = null, animate = true) => {
 
         // Render Vida Propia Glass Cards inside roster-grid
         if (gridEl && dataset) {
+            if (typeof window.mdjRentalsTeardownHorizontalInfiniteStrip === 'function') {
+                window.mdjRentalsTeardownHorizontalInfiniteStrip(gridEl, 'mdj-roster-hero-carousel-clone', 'mdj-rentals-horizontal-infinite');
+            }
             gridEl.innerHTML = Object.entries(dataset).map(([key, item]) => {
                 const isSelected = window.selectedPackage.some(p => p.id === item.id);
                 const isActive = key === currentTabKey;
@@ -909,6 +976,13 @@ window.renderLiveHero = (tabKey = null, animate = true) => {
 
         if (typeof window._bindRosterGridHeroHover === "function") window._bindRosterGridHeroHover();
 
+        if (gridEl && typeof window.mdjRentalsTryMountTalentStripInfinite === 'function') {
+            window.mdjRentalsTryMountTalentStripInfinite(gridEl, 'mdj-roster-hero-carousel-clone');
+        }
+        if (gridEl && typeof window.mdjRentalsInitStripDragClickGuard === 'function') {
+            window.mdjRentalsInitStripDragClickGuard(gridEl);
+        }
+
         if (animate) {
             requestAnimationFrame(() => {
                 if (videoEl) videoEl.classList.remove("live-fade-out");
@@ -946,7 +1020,7 @@ window._bindDjRosterHeroHover = function (activeTabKey) {
         if (!key || key === lastKey) return;
         lastKey = key;
         window.activeDjTabLocked = key;
-        if (window._djHeroPreviewOnly) window._djHeroPreviewOnly(key);
+        if (window._djHeroPreviewOnly) window._djHeroPreviewOnly(key, card);
         shell.classList.add("mdj-dj-hero-preview-on");
     });
 
@@ -995,6 +1069,9 @@ window.renderDjHero = (tabKey = 'weddings', animate = true) => {
         }
 
         if (gridEl && dataset) {
+            if (typeof window.mdjRentalsTeardownHorizontalInfiniteStrip === 'function') {
+                window.mdjRentalsTeardownHorizontalInfiniteStrip(gridEl, 'mdj-dj-roster-carousel-clone', 'mdj-rentals-horizontal-infinite');
+            }
             gridEl.innerHTML = Object.entries(dataset).map(([key, item]) => {
                 const isSelected = window.selectedPackage && window.selectedPackage.some(p => p.id === item.id);
                 const isActive = key === tabKey;
@@ -1059,6 +1136,13 @@ window.renderDjHero = (tabKey = 'weddings', animate = true) => {
         }
 
         if (window.i18n) window.i18n.updateUI();
+
+        if (gridEl && typeof window.mdjRentalsTryMountTalentStripInfinite === 'function') {
+            window.mdjRentalsTryMountTalentStripInfinite(gridEl, 'mdj-dj-roster-carousel-clone');
+        }
+        if (gridEl && typeof window.mdjRentalsInitStripDragClickGuard === 'function') {
+            window.mdjRentalsInitStripDragClickGuard(gridEl);
+        }
 
         if (animate) {
             requestAnimationFrame(() => {
@@ -1430,13 +1514,17 @@ async function loadRentalsData() {
         }
 
     } catch (error) {
-        console.error('Error loading rentals data:', error);
+        void error;
     }
 }
 
 window.renderHoraLocaCatalogue = () => {
     const grid = document.getElementById('horaloca-grid');
     if (!grid) return;
+
+    if (typeof window.mdjRentalsTeardownHorizontalInfiniteStrip === 'function') {
+        window.mdjRentalsTeardownHorizontalInfiniteStrip(grid, 'mdj-horaloca-carousel-clone', 'mdj-rentals-horizontal-infinite');
+    }
 
     grid.innerHTML = window.hlPackages.map(pack => {
         const pName = window.t('data_' + pack.id + '_name', pack.name) || t('data_' + pack.id + '_name', pack.name);
@@ -1471,6 +1559,13 @@ window.renderHoraLocaCatalogue = () => {
 
     if (window.i18n) window.i18n.updateUI();
 
+    if (typeof window.mdjRentalsTryMountTalentStripInfinite === 'function') {
+        window.mdjRentalsTryMountTalentStripInfinite(grid, 'mdj-horaloca-carousel-clone');
+    }
+    if (typeof window.mdjRentalsInitStripDragClickGuard === 'function') {
+        window.mdjRentalsInitStripDragClickGuard(grid);
+    }
+
     if (window.hlPackages.length > 0) {
         window.updateHoraLocaHero(window.hlPackages[0].id);
     }
@@ -1504,14 +1599,19 @@ window.updateHoraLocaHero = (id) => {
         if (changed) videoEl.src = v;
         if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(videoEl);
         if (changed) videoEl.load();
-        videoEl.play().catch(e => console.warn('Video auto-play prevented:', e));
+        videoEl.play().catch(() => {});
     }
 
     if (window.i18n) {
         window.i18n.updateUI();
     }
 
-    document.querySelectorAll('.hl-type-card').forEach(card => card.classList.remove('active'));
+    const hlGrid = document.getElementById('horaloca-grid');
+    if (hlGrid) {
+        hlGrid.querySelectorAll('.hl-type-card').forEach(function (card) {
+            card.classList.remove('active');
+        });
+    }
     const activeCard = document.getElementById(`hl-card-${id}`);
     if (activeCard) activeCard.classList.add('active');
 
@@ -2010,7 +2110,7 @@ window.renderRentalCatalog = (categoryId) => {
                 gap: 8px;
             }
         </style>
-        <div class="mdj-rental-catalog-carousel">
+        <div class="mdj-rental-catalog-carousel" data-mdj-ui-tick-scroll>
     `;
 
     let cardsHtml = '';
@@ -2071,6 +2171,10 @@ window.renderRentalCatalog = (categoryId) => {
     html += '</div>'; // Close track
 
     grid.innerHTML = html;
+
+    if (typeof window.mdjUiTickAutoInit === 'function') {
+        window.mdjUiTickAutoInit();
+    }
 
     // STRICT DATA CONTROL: Default to dedicated bgVideo. If missing, auto-fallback to the first item's video. 
     // This prevents black screen 404s when opening new tabs like Furniture or Stages.
@@ -2313,6 +2417,199 @@ window.initRentalCatalogDragClickGuard = function () {
 };
 
 /**
+ * Carrusel horizontal infinito genérico para tiras de tarjetas `.talent-cat-card` (Staff, Payasos, MC, Hora Loca, roster DJ/músicos, etc.).
+ * Mismo ADN que Iluminación / FX / catálogo rental: clones + salto en bordes; `n >= 2` tarjetas originales.
+ */
+window.mdjRentalsTeardownHorizontalInfiniteStrip = function (track, cloneClass, infiniteClass) {
+    if (!track) return;
+    infiniteClass = infiniteClass || 'mdj-rentals-horizontal-infinite';
+    track.querySelectorAll('.' + cloneClass).forEach(function (n) { n.remove(); });
+    track.classList.remove(infiniteClass);
+    track.dataset.mdjInfiniteCarousel = '';
+    delete track._mdjInfiniteSetWidth;
+    if (track._mdjInfiniteScrollHandler) {
+        track.removeEventListener('scroll', track._mdjInfiniteScrollHandler);
+        delete track._mdjInfiniteScrollHandler;
+    }
+    if (track._mdjInfiniteResizeHandler) {
+        window.removeEventListener('resize', track._mdjInfiniteResizeHandler);
+        delete track._mdjInfiniteResizeHandler;
+    }
+};
+
+window.mdjRentalsApplyHorizontalInfiniteStrip = function (track, cloneClass) {
+    if (!track || track.dataset.mdjInfiniteCarousel !== '1') {
+        if (track) track.scrollLeft = 0;
+        return;
+    }
+    const sel = ':scope > .talent-cat-card:not(.' + cloneClass + ')';
+    const originals = Array.from(track.querySelectorAll(sel));
+    const n = originals.length;
+    if (n < 2) {
+        track.scrollLeft = 0;
+        return;
+    }
+    const firstO = originals[0];
+    const lastO = originals[n - 1];
+    let sw = Math.round(lastO.offsetLeft + lastO.offsetWidth - firstO.offsetLeft);
+    if (!sw || sw < 10) {
+        const tri = Math.round(track.scrollWidth / 3);
+        if (tri > 10) sw = tri;
+    }
+    if (!sw || sw < 10) return;
+    track._mdjInfiniteSetWidth = sw;
+    track.scrollLeft = sw;
+};
+
+window.mdjRentalsInitHorizontalInfiniteStrip = function (track, cloneClass, infiniteClass) {
+    infiniteClass = infiniteClass || 'mdj-rentals-horizontal-infinite';
+    if (!track || track.dataset.mdjInfiniteCarousel === '1') return;
+
+    const sel = ':scope > .talent-cat-card:not(.' + cloneClass + ')';
+    const originals = Array.from(track.querySelectorAll(sel));
+    const n = originals.length;
+    if (n < 2) return;
+
+    function cloneCard(el) {
+        const c = el.cloneNode(true);
+        c.classList.add(cloneClass);
+        c.classList.remove('active');
+        c.removeAttribute('id');
+        c.setAttribute('tabindex', '-1');
+        c.setAttribute('aria-hidden', 'true');
+        return c;
+    }
+
+    const fragBefore = document.createDocumentFragment();
+    originals.forEach(function (el) { fragBefore.appendChild(cloneCard(el)); });
+    track.insertBefore(fragBefore, track.firstChild);
+    originals.forEach(function (el) { track.appendChild(cloneCard(el)); });
+
+    track.classList.add(infiniteClass);
+    track.dataset.mdjInfiniteCarousel = '1';
+
+    let jumping = false;
+    track._mdjInfiniteScrollHandler = function () {
+        if (jumping) return;
+        const sw = track._mdjInfiniteSetWidth;
+        if (!sw) return;
+        const max = track.scrollWidth - track.clientWidth;
+        if (max <= 0) return;
+        const buf = 8;
+        if (track.scrollLeft <= buf) {
+            jumping = true;
+            track.scrollLeft += sw;
+            requestAnimationFrame(function () { jumping = false; });
+        } else if (track.scrollLeft >= max - buf) {
+            jumping = true;
+            track.scrollLeft -= sw;
+            requestAnimationFrame(function () { jumping = false; });
+        }
+    };
+    track.addEventListener('scroll', track._mdjInfiniteScrollHandler, { passive: true });
+
+    let resizeT = null;
+    const cc = cloneClass;
+    track._mdjInfiniteResizeHandler = function () {
+        clearTimeout(resizeT);
+        resizeT = setTimeout(function () {
+            if (typeof window.mdjRentalsApplyHorizontalInfiniteStrip === 'function') {
+                window.mdjRentalsApplyHorizontalInfiniteStrip(track, cc);
+            }
+        }, 120);
+    };
+    window.addEventListener('resize', track._mdjInfiniteResizeHandler, { passive: true });
+};
+
+/** Monta carrusel infinito + doble rAF para medir anchos (tras pintar). */
+window.mdjRentalsTryMountTalentStripInfinite = function (trackOrId, cloneClass) {
+    const track = typeof trackOrId === 'string' ? document.getElementById(trackOrId) : trackOrId;
+    if (!track) return;
+    const infiniteClass = 'mdj-rentals-horizontal-infinite';
+    if (typeof window.mdjRentalsInitHorizontalInfiniteStrip === 'function') {
+        window.mdjRentalsInitHorizontalInfiniteStrip(track, cloneClass, infiniteClass);
+    }
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+            if (typeof window.mdjRentalsApplyHorizontalInfiniteStrip === 'function') {
+                window.mdjRentalsApplyHorizontalInfiniteStrip(track, cloneClass);
+            }
+        });
+    });
+};
+
+/**
+ * Tras abrir un modal, el layout ya tiene ancho real: vuelve a medir el salto del carrusel infinito
+ * (en carga inicial el modal suele estar oculto y el primer apply puede fallar).
+ */
+window.mdjRentalsRestripInfiniteAfterModalShow = function (modalId) {
+    const map = {
+        'staff-modal': ['staff-roster-grid', 'mdj-staff-carousel-clone'],
+        'payasos-modal': ['payasos-roster-grid', 'mdj-payasos-carousel-clone'],
+        'mc-modal': ['mc-roster-scroll', 'mdj-mc-carousel-clone'],
+        'horaloca-modal': ['horaloca-grid', 'mdj-horaloca-carousel-clone'],
+        'roster-modal': ['roster-grid', 'mdj-roster-hero-carousel-clone'],
+        'dj-modal': ['dj-roster-grid', 'mdj-dj-roster-carousel-clone']
+    };
+    const cfg = map[modalId];
+    if (!cfg || typeof window.mdjRentalsApplyHorizontalInfiniteStrip !== 'function') return;
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+            const el = document.getElementById(cfg[0]);
+            if (el) window.mdjRentalsApplyHorizontalInfiniteStrip(el, cfg[1]);
+        });
+    });
+};
+
+/** Misma lógica que candado drag→click de lighting/fx/rental (un listener por pista). */
+window.mdjRentalsInitStripDragClickGuard = function (track) {
+    if (!track || track.dataset.mdjDragClickGuard === '1') return;
+    track.dataset.mdjDragClickGuard = '1';
+
+    let originX = 0;
+    let originY = 0;
+    let pointerDown = false;
+    let moved = false;
+    let scrollAtPointerDown = 0;
+    const MOVE_PX = 5;
+
+    track.addEventListener('pointerdown', function (e) {
+        if (e.button != null && e.button !== 0) return;
+        pointerDown = true;
+        moved = false;
+        originX = e.clientX;
+        originY = e.clientY;
+        scrollAtPointerDown = track.scrollLeft;
+    }, true);
+
+    track.addEventListener('pointermove', function (e) {
+        if (!pointerDown) return;
+        if (Math.abs(e.clientX - originX) >= MOVE_PX || Math.abs(e.clientY - originY) >= MOVE_PX) {
+            moved = true;
+        }
+    }, { passive: true });
+
+    track.addEventListener('scroll', function () {
+        if (pointerDown) moved = true;
+    }, { passive: true });
+
+    const endPointer = function () {
+        pointerDown = false;
+    };
+    track.addEventListener('pointerup', endPointer);
+    track.addEventListener('pointercancel', endPointer);
+
+    track.addEventListener('click', function (e) {
+        const scrolled = track.scrollLeft !== scrollAtPointerDown;
+        if (!moved && !scrolled) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        moved = false;
+    }, true);
+};
+
+/**
  * Iluminación & Pantallas LED (#lighting-modal): mismo carrusel infinito que hub de talento.
  */
 window.mdjTeardownLightingCarousel = function () {
@@ -2367,6 +2664,7 @@ window.initLightingInfiniteCarousel = function () {
     function cloneCard(el) {
         const c = el.cloneNode(true);
         c.classList.add('mdj-lighting-carousel-clone');
+        c.classList.remove('active');
         c.removeAttribute('id');
         c.setAttribute('tabindex', '-1');
         c.setAttribute('aria-hidden', 'true');
@@ -2514,6 +2812,7 @@ window.initFxInfiniteCarousel = function () {
     function cloneCard(el) {
         const c = el.cloneNode(true);
         c.classList.add('mdj-fx-carousel-clone');
+        c.classList.remove('active');
         c.removeAttribute('id');
         c.setAttribute('tabindex', '-1');
         c.setAttribute('aria-hidden', 'true');
@@ -2688,6 +2987,10 @@ window.premiumTransition = (outId, inId, callback) => {
             inModal.classList.add('modal-visible', 'modal-fade-in');
             document.body.classList.add('body-modal-lock');
 
+            if (inId && typeof window.mdjRentalsRestripInfiniteAfterModalShow === 'function') {
+                window.mdjRentalsRestripInfiniteAfterModalShow(inId);
+            }
+
             setTimeout(() => {
                 inModal.classList.remove('modal-fade-in');
             }, 600);
@@ -2850,8 +3153,6 @@ window.checkoutSubmit = async function() {
         cart: window.selectedPackage || []
     };
     
-    console.log("Lead capturado:", leadData);
-    
     sessionStorage.setItem('mdjpro_checkout_cart', JSON.stringify(leadData));
 
     var subtotal = 0;
@@ -2909,7 +3210,6 @@ window.checkoutSubmit = async function() {
                 return;
             }
             if (ins.error) {
-                console.error('[rentals checkout] leads insert', ins.error);
                 var msg = (ins.error.message || 'Could not save reservation') + '';
                 if (btn) {
                     btn.innerText = btn.getAttribute('data-label-default') || 'Confirm';
@@ -2922,7 +3222,7 @@ window.checkoutSubmit = async function() {
                 return;
             }
         } catch (eIns) {
-            console.error('[rentals checkout] leads insert exception', eIns);
+            void eIns;
             if (btn) {
                 btn.innerText = btn.getAttribute('data-label-default') || 'Confirm';
                 btn.disabled = false;
@@ -3381,6 +3681,9 @@ document.addEventListener('click', async (e) => {
             m.classList.add('modal-visible');
             document.body.classList.add('body-modal-lock');
             if (window.renderLiveHero) window.renderLiveHero('booth360', false);
+            if (typeof window.mdjRentalsRestripInfiniteAfterModalShow === 'function') {
+                window.mdjRentalsRestripInfiniteAfterModalShow('roster-modal');
+            }
         }
         return;
     }
@@ -3576,6 +3879,9 @@ window.mdjRebuildTalentSelectorInfiniteCarousel = function () {
         track.removeEventListener('scroll', track._mdjLoopScroll);
         delete track._mdjLoopScroll;
     }
+    if (typeof window.mdjInjectTalentHubShortlistUi === 'function') {
+        window.mdjInjectTalentHubShortlistUi();
+    }
     if (typeof window.initTalentSelectorInfiniteCarousel === 'function') {
         window.initTalentSelectorInfiniteCarousel();
     }
@@ -3610,42 +3916,23 @@ window.mdjTalentSelectorInfiniteApplyRetry = function (attempt) {
     }, 48);
 };
 
-/** Checkboxes del hub (solo tarjetas canónicas; los clones del carrusel los quita cloneCard). */
+/**
+ * Hub Entretenimiento y Talento: mantiene tarjetas sin UI de shortlist (anillos).
+ * `MDJ_RENTALS_TALENT_HUB_CONTRACT.enableHubShortlistPickRings` debe permanecer `false` salvo reimplementación firmada.
+ */
 window.mdjInjectTalentHubShortlistUi = function () {
     const track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
-    if (!track || track.dataset.mdjHubPickInjected === '1') return;
-    const cards = mdjTalentCarouselOriginalCards(track).filter((c) => c.getAttribute('data-action'));
-    if (!cards.length) return;
-    track.dataset.mdjHubPickInjected = '1';
-    window.selectedTalent = Array.isArray(window.selectedTalent) ? window.selectedTalent : [];
-    cards.forEach((card) => {
-        if (card.querySelector('.mdj-talent-hub-pick')) return;
-        const act = card.getAttribute('data-action') || '';
-        const hubId = card.id || act;
-        const titleEl = card.querySelector('.hero-card-title');
-        const name = (titleEl && titleEl.textContent.trim()) || act;
-        const lab = document.createElement('label');
-        lab.className = 'mdj-talent-hub-pick';
-        lab.setAttribute('title', 'Marcar para tu lista / presupuesto');
-        const safe = String(name).replace(/"/g, '&quot;');
-        lab.innerHTML =
-            '<input type="checkbox" class="mdj-talent-hub-cb" data-talent-hub-id="' +
-            hubId +
-            '" data-talent-action="' +
-            act +
-            '" aria-label="' +
-            safe +
-            '"><span class="mdj-talent-hub-check-visual" aria-hidden="true"></span>';
-        const pos = window.getComputedStyle(card).position;
-        if (pos === 'static') card.style.position = 'relative';
-        card.classList.add('mdj-talent-hub-card');
-        card.insertBefore(lab, card.firstChild);
-        const cb = lab.querySelector('.mdj-talent-hub-cb');
-        if (cb && window.selectedTalent.some((t) => t && t.hubId === hubId)) {
-            cb.checked = true;
-            card.classList.add('mdj-talent-hub-selected');
-        }
+    if (!track) return;
+    track.querySelectorAll('.mdj-talent-hub-pick').forEach(function (n) {
+        n.remove();
     });
+    mdjTalentCarouselOriginalCards(track).forEach(function (card) {
+        card.classList.remove('mdj-talent-hub-card', 'mdj-talent-hub-selected');
+    });
+    track.querySelectorAll('.mdj-talent-loop-clone').forEach(function (clone) {
+        clone.classList.remove('mdj-talent-hub-selected');
+    });
+    track.dataset.mdjHubPickInjected = '1';
 };
 
 window.mdjSyncSelectedTalentFromHub = function (checkboxEl) {
@@ -3661,7 +3948,20 @@ window.mdjSyncSelectedTalentFromHub = function (checkboxEl) {
         window.selectedTalent.push({ hubId, action, name, kind: 'hub', price: 0 });
     }
     if (card) {
-        card.classList.toggle('mdj-talent-hub-selected', !!checkboxEl.checked);
+        const track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+        const on = !!checkboxEl.checked;
+        if (track && action) {
+            track.querySelectorAll('.talent-cat-card').forEach(function (c) {
+                if ((c.getAttribute('data-action') || '') !== action) return;
+                c.classList.toggle('mdj-talent-hub-selected', on);
+                const ocb = c.querySelector('.mdj-talent-hub-cb');
+                if (ocb && ocb !== checkboxEl) {
+                    ocb.checked = on;
+                }
+            });
+        } else {
+            card.classList.toggle('mdj-talent-hub-selected', on);
+        }
     }
 };
 
@@ -3674,7 +3974,6 @@ window.getSelectedTalentForBudget = function () {
 };
 
 window.initTalentSelectorInfiniteCarousel = function () {
-    console.log('🚀 MDJ Debug: Iniciando Carrusel Infinito');
     var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
     if (!track || track.dataset.mdjSimpleLoop === '1') return;
     var originals = mdjTalentCarouselOriginalCards(track);
@@ -3685,9 +3984,6 @@ window.initTalentSelectorInfiniteCarousel = function () {
         k.removeAttribute('id');
         k.setAttribute('tabindex', '-1');
         k.setAttribute('aria-hidden', 'true');
-        k.querySelectorAll('.mdj-talent-hub-pick').forEach(function (node) {
-            node.remove();
-        });
         track.appendChild(k);
     });
     track.classList.add('mdj-talent-carousel-infinite');
@@ -3734,11 +4030,11 @@ window.mdjEnsureTalentHubInfiniteOnOpen = function () {
         requestAnimationFrame(function () {
             var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
             if (!track) return;
-            if (track.dataset.mdjSimpleLoop !== '1' && typeof window.initTalentSelectorInfiniteCarousel === 'function') {
-                window.initTalentSelectorInfiniteCarousel();
-            }
             if (typeof window.mdjInjectTalentHubShortlistUi === 'function') {
                 window.mdjInjectTalentHubShortlistUi();
+            }
+            if (track.dataset.mdjSimpleLoop !== '1' && typeof window.initTalentSelectorInfiniteCarousel === 'function') {
+                window.initTalentSelectorInfiniteCarousel();
             }
             if (typeof window.mdjTalentSelectorInfiniteApply === 'function') {
                 window.mdjTalentSelectorInfiniteApply();
@@ -3832,6 +4128,7 @@ window.mdjBindTalentHubWholeCardToggle = function () {
     }
 };
 
+/** Vídeo hero del hub: solo `#talent-shell-ambient` en el carrusel de categorías — ver `MDJ_RENTALS_TALENT_HUB_CONTRACT.enableCarouselHeroVideoPreview` (debe quedar `false`). */
 window.initTalentSelectorShellHover = function () {
     const amb = document.getElementById('talent-shell-ambient');
     const foc = document.getElementById('talent-shell-focus');
@@ -3881,56 +4178,10 @@ window.initTalentSelectorShellHover = function () {
 
     foc.addEventListener('error', clearFocus);
 
-    /* Hub de categorías: delegación en el carrusel (incluye clones del carrusel infinito y Safari / pantalla ancha). */
-    const hubTrack = document.querySelector('#talent-selector-modal .talent-selector-carousel');
-    if (hubTrack && hubTrack.dataset.mdjTalentShellHover !== '1') {
-        hubTrack.dataset.mdjTalentShellHover = '1';
-        let lastHubCard = null;
-        hubTrack.addEventListener(
-            'pointerover',
-            (e) => {
-                const card = e.target && e.target.closest && e.target.closest('[data-talent-hero-src]');
-                if (!card || !hubTrack.contains(card)) return;
-                if (lastHubCard === card) return;
-                lastHubCard = card;
-                const url = card.getAttribute('data-talent-hero-src');
-                if (!url) return;
-                applyFocus(url, card);
-            },
-            true
-        );
-        hubTrack.addEventListener(
-            'pointerleave',
-            (e) => {
-                const rt = e.relatedTarget;
-                if (rt && hubTrack.contains(rt)) return;
-                lastHubCard = null;
-                clearFocus();
-            },
-            true
-        );
-        hubTrack.addEventListener(
-            'focusin',
-            (e) => {
-                const card = e.target && e.target.closest && e.target.closest('[data-talent-hero-src]');
-                if (!card || !hubTrack.contains(card)) return;
-                applyFocus(card.getAttribute('data-talent-hero-src'), card);
-            },
-            true
-        );
-        hubTrack.addEventListener(
-            'focusout',
-            () => {
-                requestAnimationFrame(() => {
-                    const ae = document.activeElement;
-                    if (ae && hubTrack.contains(ae) && ae.closest && ae.closest('[data-talent-hero-src]')) return;
-                    lastHubCard = null;
-                    clearFocus();
-                });
-            },
-            true
-        );
-    }
+    /*
+     * Hub: sin delegación pointer/focus en `.talent-selector-carousel` → #talent-shell-focus (contrato congelado).
+     * Modales internos: hover propio (render* / _bind*GridHeroHover), no reutilizar este shell para ese carrusel.
+     */
 
     heroEls().forEach((node) => {
         if (node.closest && node.closest('.talent-selector-carousel')) return;
@@ -4012,11 +4263,11 @@ document.addEventListener('DOMContentLoaded', () => {
     mdjRentalsTryResumeCheckoutAfterAuth();
 
     const runTalentHubChrome = () => {
-        if (typeof window.initTalentSelectorInfiniteCarousel === 'function') {
-            window.initTalentSelectorInfiniteCarousel();
-        }
         if (typeof window.mdjInjectTalentHubShortlistUi === 'function') {
             window.mdjInjectTalentHubShortlistUi();
+        }
+        if (typeof window.initTalentSelectorInfiniteCarousel === 'function') {
+            window.initTalentSelectorInfiniteCarousel();
         }
         if (typeof window.mdjBindTalentHubWholeCardToggle === 'function') {
             window.mdjBindTalentHubWholeCardToggle();
@@ -4026,6 +4277,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (typeof window.initTalentCarouselDragClickGuard === 'function') {
             window.initTalentCarouselDragClickGuard();
+        }
+        if (typeof window.mdjRentalsTryMountTalentStripInfinite === 'function') {
+            window.mdjRentalsTryMountTalentStripInfinite('staff-roster-grid', 'mdj-staff-carousel-clone');
+            window.mdjRentalsTryMountTalentStripInfinite('payasos-roster-grid', 'mdj-payasos-carousel-clone');
+            window.mdjRentalsTryMountTalentStripInfinite('mc-roster-scroll', 'mdj-mc-carousel-clone');
+        }
+        if (typeof window.mdjRentalsInitStripDragClickGuard === 'function') {
+            ['staff-roster-grid', 'payasos-roster-grid', 'mc-roster-scroll'].forEach(function (sid) {
+                const el = document.getElementById(sid);
+                if (el) window.mdjRentalsInitStripDragClickGuard(el);
+            });
         }
     };
 
@@ -4040,21 +4302,26 @@ document.addEventListener('DOMContentLoaded', () => {
             'load',
             function () {
                 const tr = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+                if (typeof window.mdjInjectTalentHubShortlistUi === 'function') {
+                    window.mdjInjectTalentHubShortlistUi();
+                }
                 if (tr && tr.dataset.mdjSimpleLoop !== '1' && typeof window.initTalentSelectorInfiniteCarousel === 'function') {
                     try {
                         window.initTalentSelectorInfiniteCarousel();
                     } catch (eL) {
-                        console.warn('[rentals] talent infinite (load):', eL);
+                        void eL;
                     }
-                }
-                if (typeof window.mdjInjectTalentHubShortlistUi === 'function') {
-                    window.mdjInjectTalentHubShortlistUi();
                 }
                 if (typeof window.mdjBindTalentHubWholeCardToggle === 'function') {
                     window.mdjBindTalentHubWholeCardToggle();
                 }
                 if (typeof window.mdjTalentSelectorInfiniteApplyRetry === 'function') {
                     window.mdjTalentSelectorInfiniteApplyRetry(0);
+                }
+                if (typeof window.mdjRentalsTryMountTalentStripInfinite === 'function') {
+                    window.mdjRentalsTryMountTalentStripInfinite('staff-roster-grid', 'mdj-staff-carousel-clone');
+                    window.mdjRentalsTryMountTalentStripInfinite('payasos-roster-grid', 'mdj-payasos-carousel-clone');
+                    window.mdjRentalsTryMountTalentStripInfinite('mc-roster-scroll', 'mdj-mc-carousel-clone');
                 }
             },
             { passive: true }
