@@ -281,6 +281,11 @@
             <!-- Signup Form -->
             <form id="signup-form" class="form hidden">
                 <input type="hidden" id="signup-usertype" name="user_type" value="client">
+                <label><span data-i18n="login-signup-name-label">Nombre artístico o nombre de usuario (opcional)</span><small
+                        style="color:var(--muted);font-weight:400;display:block;margin:-6px 0 8px;font-size:11px;"
+                        data-i18n="login-signup-name-hint">Opcional. Puedes iniciar sesión con este nombre además del
+                        email.</small><input type="text" id="signup-name" name="signup_stage_or_username"
+                        autocomplete="nickname" maxlength="80" placeholder="ej. DJMago305"></label>
                 <label><span data-i18n="login-signup-first-name-label">Nombre *</span><input type="text"
                         id="signup-first-name" name="given-name" autocomplete="given-name" required maxlength="80"
                         placeholder="Ej: Gerardo"></label>
@@ -291,13 +296,6 @@
                 <label><span data-i18n="login-signup-last-name-label">Apellido(s) *</span><input type="text"
                         id="signup-last-name" name="family-name" autocomplete="family-name" required maxlength="120"
                         placeholder="Ej: Valle"></label>
-                <div id="talent-fields" style="display:none;">
-                    <label><span data-i18n="login-signup-name-label">Nombre artístico (opcional)</span><small
-                            style="color:var(--muted);font-weight:400;display:block;margin:-6px 0 8px;font-size:11px;"
-                            data-i18n="login-signup-name-hint">Si lo dejas vacío, usamos tu nombre legal como referencia.</small><input
-                            type="text" id="signup-name" name="nickname" autocomplete="nickname" maxlength="80"
-                            placeholder="ej. DJMago305"></label>
-                </div>
                 <label><span data-i18n="login-signup-email-label">Email *</span><input type="email" id="signup-email"
                         name="email" autocomplete="email" inputmode="email" required
                         placeholder="tu@email.com"></label>
@@ -337,10 +335,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=20260226-1"></script>
-    <script src="./translations.js?v=20260419-signup-email-required"></script>
+    <script src="./translations.js?v=20260419-signup-stage-order"></script>
     <script src="./i18n.js?v=20260226-1"></script>
     <script src="./security-shield.js?v=20260305-1"></script>
-    <script src="./auth.js?v=20260419-signup-email-required"></script>
+    <script src="./auth.js?v=20260419-signup-stage-order"></script>
 
     <script>
         (function syncReferralFromUrl() {
@@ -389,16 +387,9 @@
                 }
                 var su = document.getElementById('signup-usertype');
                 if (su) su.value = userType;
-                var tf = document.getElementById('talent-fields');
                 var tf2 = document.getElementById('talent-fields-2');
-                if (tf && tf2) {
-                    if (userType === 'talent') {
-                        tf.style.display = 'block';
-                        tf2.style.display = 'block';
-                    } else {
-                        tf.style.display = 'none';
-                        tf2.style.display = 'none';
-                    }
+                if (tf2) {
+                    tf2.style.display = userType === 'talent' ? 'block' : 'none';
                 }
             } catch (e) { void e; }
         }
