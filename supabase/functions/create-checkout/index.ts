@@ -112,6 +112,29 @@ serve(async (req) => {
         const STRIPE_PRICE_ANNUAL = Deno.env.get("STRIPE_PRICE_ANNUAL")!;
         const STRIPE_PRICE_SEMESTRAL = (Deno.env.get("STRIPE_PRICE_SEMESTRAL") || "").trim();
         const SITE_URL = Deno.env.get("SITE_URL") || "http://localhost:3000";
+        const siteOrigin = new URL(SITE_URL.replace(/\/$/, "") || "http://localhost:3000").origin;
+
+        /** Same-origin only; basename must be jobs | dj-dashboard | dj-profile (Vercel root = public HTML). */
+        function resolveSuccessUrl(
+            bodyUrl: unknown,
+            defaultSuccess: string,
+            ref: string,
+        ): string {
+            if (typeof bodyUrl !== "string" || !bodyUrl.trim()) return defaultSuccess;
+            let u: URL;
+            try {
+                u = new URL(bodyUrl.trim());
+            } catch {
+                return defaultSuccess;
+            }
+            if (u.origin !== siteOrigin) return defaultSuccess;
+            const base = (u.pathname || "").split("/").pop() || "";
+            const allowed = ["jobs.html", "dj-dashboard.html", "dj-profile.html"];
+            if (!allowed.includes(base)) return defaultSuccess;
+            u.searchParams.set("payment", "success");
+            if (ref) u.searchParams.set("ref", ref);
+            return u.toString();
+        }
 
         let priceId: string;
         if (billing === "annual") {
@@ -197,14 +220,17 @@ serve(async (req) => {
             }
         }
 
+        const defaultSuccessUrl = `${SITE_URL.replace(/\/$/, "")}/dj-dashboard.html?payment=success&ref=${encodeURIComponent(referralCode)}`;
+        const successUrl = resolveSuccessUrl(body.successUrl, defaultSuccessUrl, referralCode);
+
         // ── Create Checkout Session ────────────────────────────
         const checkoutParams: Record<string, string> = {
             customer: customerId,
             mode: "subscription",
             "line_items[0][price]": priceId,
             "line_items[0][quantity]": "1",
-            success_url: `${SITE_URL}/dj-dashboard.html?payment=success&ref=${referralCode}`,
-            cancel_url: `${SITE_URL}/jobs.html?payment=cancelled`,
+            success_url: successUrl,
+            cancel_url: `${SITE_URL.replace(/\/$/, "")}/jobs.html?payment=cancelled`,
             "metadata[user_id]": user.id,
             "metadata[billing]": billing,
             "metadata[referral_code]": referralCode,
