@@ -8,9 +8,11 @@
     <link rel="stylesheet" href="./styles.css?v=20260415-CORE-CONNECTIONS" />
     <style>
         .login-container {
-            max-width: 420px;
+            width: 100%;
+            max-width: min(640px, calc(100vw - 28px));
             margin: 72px auto;
-            padding: 44px 40px 40px;
+            padding: 44px clamp(20px, 4.5vw, 52px) 40px;
+            box-sizing: border-box;
             background: linear-gradient(165deg, rgba(15, 22, 35, 0.98) 0%, rgba(8, 12, 20, 0.99) 100%);
             border-radius: 24px;
             border: 1px solid rgba(197, 160, 89, 0.35);
@@ -113,7 +115,7 @@
 
         .login-signup-address {
             margin: 18px 0;
-            padding: 16px 14px;
+            padding: 18px clamp(12px, 2.5vw, 22px);
             border: 1px solid rgba(197, 160, 89, 0.28);
             border-radius: 16px;
             background: rgba(0, 0, 0, 0.2);
