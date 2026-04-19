@@ -593,12 +593,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 const instagram = document.getElementById('signup-instagram')?.value.trim().replace(/^@/, '') || '';
                 const planParam = new URLSearchParams(window.location.search).get('plan') || 'LITE';
 
-                if (!firstName || !lastName || !email || !password) {
+                if (!firstName || !lastName) {
                     throw new Error(
                         mdjAuthT(
                             'auth-signup-legal-name-required',
-                            'Completa nombre, apellido, email y contraseña.',
-                            'Enter first name, last name, email, and password.'
+                            'Completa nombre y apellido.',
+                            'Enter first and last name.'
+                        )
+                    );
+                }
+                if (!email) {
+                    throw new Error(
+                        mdjAuthT(
+                            'auth-signup-email-required',
+                            'El correo electrónico es obligatorio.',
+                            'Email is required.'
+                        )
+                    );
+                }
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    throw new Error(
+                        mdjAuthT(
+                            'auth-signup-email-invalid',
+                            'Indica un correo electrónico válido (ej. nombre@dominio.com).',
+                            'Enter a valid email address (e.g. name@domain.com).'
+                        )
+                    );
+                }
+                if (!password) {
+                    throw new Error(
+                        mdjAuthT(
+                            'auth-signup-password-required',
+                            'La contraseña es obligatoria.',
+                            'Password is required.'
                         )
                     );
                 }

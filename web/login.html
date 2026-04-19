@@ -279,7 +279,7 @@
             </form>
 
             <!-- Signup Form -->
-            <form id="signup-form" class="form hidden" novalidate>
+            <form id="signup-form" class="form hidden">
                 <input type="hidden" id="signup-usertype" name="user_type" value="client">
                 <label><span data-i18n="login-signup-first-name-label">Nombre *</span><input type="text"
                         id="signup-first-name" name="given-name" autocomplete="given-name" required maxlength="80"
@@ -299,7 +299,8 @@
                             placeholder="ej. DJMago305"></label>
                 </div>
                 <label><span data-i18n="login-signup-email-label">Email *</span><input type="email" id="signup-email"
-                        name="email" autocomplete="email" required placeholder="tu@email.com"></label>
+                        name="email" autocomplete="email" inputmode="email" required
+                        placeholder="tu@email.com"></label>
                 <label><span data-i18n="login-signup-password-label">Contraseña *</span>
                     <div class="pwd-wrapper">
                         <input type="password" id="signup-password" name="password" autocomplete="new-password" required placeholder="Mínimo 6 caracteres">
@@ -336,10 +337,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=20260226-1"></script>
-    <script src="./translations.js?v=20260419-signup-optional-fields"></script>
+    <script src="./translations.js?v=20260419-signup-email-required"></script>
     <script src="./i18n.js?v=20260226-1"></script>
     <script src="./security-shield.js?v=20260305-1"></script>
-    <script src="./auth.js?v=20260419-signup-optional-fields"></script>
+    <script src="./auth.js?v=20260419-signup-email-required"></script>
 
     <script>
         (function syncReferralFromUrl() {
