@@ -593,6 +593,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 const instagram = document.getElementById('signup-instagram')?.value.trim().replace(/^@/, '') || '';
                 const planParam = new URLSearchParams(window.location.search).get('plan') || 'LITE';
 
+                const qpEarly = new URLSearchParams(window.location.search);
+                const explicitUtEarly = (qpEarly.get('user_type') || '').toLowerCase();
+                const redirectEarly = qpEarly.get('redirect');
+                const signupEarly = (qpEarly.get('signup') || '').toLowerCase();
+                let rosterEarly = null;
+                try {
+                    rosterEarly = JSON.parse(sessionStorage.getItem('mdj_jobs_roster_categories') || 'null');
+                } catch (eRo) {
+                    void eRo;
+                }
+                const hasJobsRosterEarly = rosterEarly && Array.isArray(rosterEarly.codes) && rosterEarly.codes.length > 0;
+                const fromHiddenEarly = (document.getElementById('signup-usertype')?.value || 'client').toLowerCase();
+                let resolvedUserType =
+                    explicitUtEarly ||
+                    (redirectEarly === 'jobs' || signupEarly === 'free' || hasJobsRosterEarly ? 'talent' : fromHiddenEarly);
+                if (explicitUtEarly === 'talent' || explicitUtEarly === 'artist' || explicitUtEarly === 'dj') {
+                    resolvedUserType = 'talent';
+                }
+                if (explicitUtEarly === 'client' && (redirectEarly === 'jobs' || hasJobsRosterEarly)) {
+                    resolvedUserType = 'talent';
+                }
+
                 if (!firstName || !lastName) {
                     throw new Error(
                         mdjAuthT(
@@ -648,28 +670,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     );
                 }
 
+                if (resolvedUserType === 'talent' && !phone) {
+                    throw new Error(
+                        mdjAuthT(
+                            'auth-signup-phone-required-talent',
+                            'El teléfono es obligatorio para talento: necesitamos poder contactarte.',
+                            'Phone is required for talent accounts so we can reach you.'
+                        )
+                    );
+                }
+
                 // 1. Create Auth user — talento si viene de Jobs, alta gratis, o eligió categorías en el carrusel (sessionStorage).
-                const qpSignup = new URLSearchParams(window.location.search);
-                const explicitUserType = (qpSignup.get('user_type') || '').toLowerCase();
-                const redirectSlug = qpSignup.get('redirect');
-                const signupParam = (qpSignup.get('signup') || '').toLowerCase();
-                let roster = null;
-                try {
-                    roster = JSON.parse(sessionStorage.getItem('mdj_jobs_roster_categories') || 'null');
-                } catch (eR) {
-                    void eR;
-                }
-                const hasJobsRoster = roster && Array.isArray(roster.codes) && roster.codes.length > 0;
-                const fromHidden = (document.getElementById('signup-usertype')?.value || 'client').toLowerCase();
-                let userType =
-                    explicitUserType ||
-                    (redirectSlug === 'jobs' || signupParam === 'free' || hasJobsRoster ? 'talent' : fromHidden);
-                if (explicitUserType === 'talent' || explicitUserType === 'artist' || explicitUserType === 'dj') {
-                    userType = 'talent';
-                }
-                if (explicitUserType === 'client' && (redirectSlug === 'jobs' || hasJobsRoster)) {
-                    userType = 'talent';
-                }
+                const userType = resolvedUserType;
                 const suHidden = document.getElementById('signup-usertype');
                 if (suHidden) suHidden.value = userType;
                 const refCode = mdjGetReferralDjId();
