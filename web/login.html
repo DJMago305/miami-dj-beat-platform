@@ -1,7 +1,15 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 
 <head>
+    <script>
+        (function () {
+            try {
+                var l = localStorage.getItem('mdjpro_lang') || 'en';
+                document.documentElement.lang = l === 'es' ? 'es' : 'en';
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Miami DJ Beat — Iniciar Sesión</title>
@@ -213,7 +221,7 @@
         <div class="lang-switcher">
           <span class="lang-btn" data-lang="es">ES</span>
           <span class="lang-pipe">|</span>
-          <span class="lang-btn active" data-lang="en">EN</span>
+          <span class="lang-btn" data-lang="en">EN</span>
         </div>
         <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-i18n="btn-login">Log in</a>
 
@@ -295,16 +303,16 @@
 
             <!-- Login Form -->
             <form id="login-form" class="form" novalidate>
-                <label><span>Email o Username</span><input type="text"
-                        id="login-email" name="email" autocomplete="username" required placeholder="tu@email.com o DJNombre"></label>
+                <label><span data-i18n="login-email-or-username-label">Email or username</span><input type="text"
+                        id="login-email" name="email" autocomplete="username" required data-i18n-hold="login-email-placeholder" placeholder="you@email.com or DJName"></label>
                 <label><span data-i18n="login-password-label">Contraseña</span>
                     <div class="pwd-wrapper">
-                        <input type="password" id="login-password" name="password" autocomplete="current-password" required placeholder="••••••••">
-                        <button type="button" class="pwd-toggle" tabindex="-1" aria-label="Mostrar contraseña">👁️</button>
+                        <input type="password" id="login-password" name="password" autocomplete="current-password" required data-i18n-hold="login-password-placeholder-dots" placeholder="••••••••">
+                        <button type="button" class="pwd-toggle" tabindex="-1" data-i18n-aria="login-pwd-toggle-aria" aria-label="Show password">👁️</button>
                     </div>
                 </label>
                 <div style="text-align: right; margin-top: -4px; margin-bottom: 16px;">
-                    <a href="./forgot-password.html" style="color: rgba(255,255,255,0.5); font-size: 13px; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">¿Olvidaste tu contraseña?</a>
+                    <a href="./forgot-password.html" data-i18n="login-forgot-password-link" style="color: rgba(255,255,255,0.5); font-size: 13px; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Forgot password?</a>
                 </div>
                 <button class="btn primary full" type="submit" data-i18n="login-btn-submit">Iniciar Sesión</button>
                 <p class="login-form-footer-hint" role="status">
@@ -320,30 +328,30 @@
                         style="color:var(--muted);font-weight:400;display:block;margin:-6px 0 8px;font-size:11px;"
                         data-i18n="login-signup-name-hint">Opcional. Puedes iniciar sesión con este nombre además del
                         email.</small><input type="text" id="signup-name" name="signup_stage_or_username"
-                        autocomplete="nickname" maxlength="80" placeholder="ej. DJMago305"></label>
+                        autocomplete="nickname" maxlength="80" data-i18n-hold="login-signup-stage-placeholder" placeholder="e.g. DJMago305"></label>
                 <label><span data-i18n="login-signup-first-name-label">Nombre *</span><input type="text"
                         id="signup-first-name" name="given-name" autocomplete="given-name" required maxlength="80"
-                        placeholder="Ej: Gerardo"></label>
+                        data-i18n-hold="login-signup-firstname-placeholder" placeholder="e.g. John"></label>
                 <label><span data-i18n="login-signup-middle-name-label">Segundo nombre o inicial (opcional)</span><input
                         type="text"
                         id="signup-middle-name" name="additional-name" autocomplete="additional-name" maxlength="40"
-                        placeholder="Ej: A o segundo nombre"></label>
+                        data-i18n-hold="login-signup-middlename-placeholder" placeholder="e.g. A or middle name"></label>
                 <label><span data-i18n="login-signup-last-name-label">Apellido(s) *</span><input type="text"
                         id="signup-last-name" name="family-name" autocomplete="family-name" required maxlength="120"
-                        placeholder="Ej: Valle"></label>
+                        data-i18n-hold="login-signup-lastname-placeholder" placeholder="e.g. Doe"></label>
                 <label><span data-i18n="login-signup-email-label">Email *</span><input type="email" id="signup-email"
                         name="email" autocomplete="email" inputmode="email" required
-                        placeholder="tu@email.com"></label>
+                        data-i18n-hold="login-signup-email-placeholder" placeholder="you@email.com"></label>
                 <label><span data-i18n="login-signup-password-label">Contraseña *</span>
                     <div class="pwd-wrapper">
-                        <input type="password" id="signup-password" name="password" autocomplete="new-password" required placeholder="Mínimo 6 caracteres">
-                        <button type="button" class="pwd-toggle" tabindex="-1" aria-label="Mostrar contraseña">👁️</button>
+                        <input type="password" id="signup-password" name="password" autocomplete="new-password" required data-i18n-hold="login-signup-password-hint-placeholder" placeholder="Minimum 6 characters">
+                        <button type="button" class="pwd-toggle" tabindex="-1" data-i18n-aria="login-pwd-toggle-aria" aria-label="Show password">👁️</button>
                     </div>
                 </label>
-                <label><span>Confirmar Contraseña *</span>
+                <label><span data-i18n="login-signup-password-confirm-label">Confirm password *</span>
                     <div class="pwd-wrapper">
-                        <input type="password" id="signup-password-confirm" name="password_confirm" autocomplete="new-password" required placeholder="Repite la contraseña">
-                        <button type="button" class="pwd-toggle" tabindex="-1" aria-label="Mostrar contraseña">👁️</button>
+                        <input type="password" id="signup-password-confirm" name="password_confirm" autocomplete="new-password" required data-i18n-hold="login-signup-password-confirm-placeholder" placeholder="Repeat password">
+                        <button type="button" class="pwd-toggle" tabindex="-1" data-i18n-aria="login-pwd-toggle-aria" aria-label="Show password">👁️</button>
                     </div>
                 </label>
                 <label><span id="signup-phone-label-talent" class="hidden"><span data-i18n="login-signup-phone-label-talent">Teléfono *</span><small
@@ -351,41 +359,41 @@
                             data-i18n="login-signup-phone-hint-talent">Obligatorio para talento: te contactamos por trabajo.</small></span><span
                         id="signup-phone-label-client"><span data-i18n="login-signup-phone-label-optional">Teléfono
                             (opcional)</span></span><input type="tel" id="signup-phone" name="tel" autocomplete="tel"
-                        placeholder="+1 (305) 000-0000"></label>
+                        data-i18n-hold="login-signup-phone-placeholder" placeholder="+1 (305) 000-0000"></label>
                 <fieldset class="login-signup-address" id="signup-address-fieldset" aria-describedby="signup-address-intro">
                     <legend data-i18n="login-signup-address-legend">Dirección (eventos / facturación)</legend>
                     <p id="signup-address-intro" class="signup-addr-intro" data-i18n="login-signup-address-intro">Usa el autocompletado del navegador cuando aparezca. Para talento (portal Jobs) son obligatorios calle, ciudad, estado, código postal y país.</p>
                     <div class="signup-addr-grid">
                         <label><span data-i18n="login-signup-address-line1-label">Calle y número</span>
-                            <input type="text" id="signup-address-line1" name="street-address" autocomplete="address-line1" maxlength="200" placeholder="123 NE 1st St"></label>
+                            <input type="text" id="signup-address-line1" name="street-address" autocomplete="address-line1" maxlength="200" data-i18n-hold="login-signup-address-placeholder-street" placeholder="123 NE 1st St"></label>
                         <label><span data-i18n="login-signup-address-line2-label">Piso, apt., suite (opcional)</span>
-                            <input type="text" id="signup-address-line2" name="address-line2" autocomplete="address-line2" maxlength="120" placeholder="Apt 4B"></label>
+                            <input type="text" id="signup-address-line2" name="address-line2" autocomplete="address-line2" maxlength="120" data-i18n-hold="login-signup-address-placeholder-apt" placeholder="Apt 4B"></label>
                         <div class="signup-addr-grid signup-addr-grid-2">
                             <label><span data-i18n="login-signup-address-city-label">Ciudad</span>
-                                <input type="text" id="signup-address-city" name="address-level2" autocomplete="address-level2" maxlength="120" placeholder="Miami"></label>
+                                <input type="text" id="signup-address-city" name="address-level2" autocomplete="address-level2" maxlength="120" data-i18n-hold="login-signup-address-placeholder-city" placeholder="Miami"></label>
                             <label><span data-i18n="login-signup-address-state-label">Estado / provincia</span>
-                                <input type="text" id="signup-address-state" name="address-level1" autocomplete="address-level1" maxlength="80" placeholder="FL"></label>
+                                <input type="text" id="signup-address-state" name="address-level1" autocomplete="address-level1" maxlength="80" data-i18n-hold="login-signup-address-placeholder-state" placeholder="FL"></label>
                         </div>
                         <div class="signup-addr-grid signup-addr-grid-2">
                             <label><span data-i18n="login-signup-address-zip-label">Código postal</span>
-                                <input type="text" id="signup-address-zip" name="postal-code" autocomplete="postal-code" inputmode="text" maxlength="20" placeholder="33132"></label>
+                                <input type="text" id="signup-address-zip" name="postal-code" autocomplete="postal-code" inputmode="text" maxlength="20" data-i18n-hold="login-signup-address-placeholder-zip" placeholder="33132"></label>
                             <label><span data-i18n="login-signup-address-country-label">País</span>
                                 <select id="signup-address-country" name="country" autocomplete="country-name">
-                                    <option value="United States" selected>United States</option>
-                                    <option value="Mexico">Mexico</option>
-                                    <option value="Canada">Canada</option>
-                                    <option value="Spain">Spain</option>
-                                    <option value="Colombia">Colombia</option>
-                                    <option value="Puerto Rico">Puerto Rico</option>
-                                    <option value="Other">Other</option>
+                                    <option value="United States" selected data-i18n="login-country-united-states">United States</option>
+                                    <option value="Mexico" data-i18n="login-country-mexico">Mexico</option>
+                                    <option value="Canada" data-i18n="login-country-canada">Canada</option>
+                                    <option value="Spain" data-i18n="login-country-spain">Spain</option>
+                                    <option value="Colombia" data-i18n="login-country-colombia">Colombia</option>
+                                    <option value="Puerto Rico" data-i18n="login-country-puerto-rico">Puerto Rico</option>
+                                    <option value="Other" data-i18n="login-country-other">Other</option>
                                 </select></label>
                         </div>
                         <p class="signup-addr-zip-hint" data-i18n="login-signup-address-zip-hint" style="margin:0;font-size:11px;line-height:1.4;color:var(--muted);">US: 5 digits or ZIP+4. Other countries: use your local postal format.</p>
                     </div>
                 </fieldset>
                 <div id="talent-fields-2" style="display:none;">
-                    <label><span>Instagram <small style="color:var(--muted);font-weight:400;">(opcional)</small></span>
-                        <input type="text" id="signup-instagram" placeholder="@tuinstagram"></label>
+                    <label><span data-i18n="login-signup-instagram-label">Instagram</span> <small style="color:var(--muted);font-weight:400;" data-i18n="login-signup-optional-paren">(optional)</small>
+                        <input type="text" id="signup-instagram" data-i18n-hold="login-signup-instagram-placeholder" placeholder="@yourinstagram"></label>
                 </div>
                 <button class="btn primary full" type="submit" data-i18n="login-btn-register">Registrarme</button>
             </form>
@@ -403,10 +411,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=20260226-1"></script>
-    <script src="./translations.js?v=20260418-signup-address"></script>
-    <script src="./i18n.js?v=20260226-1"></script>
+    <script src="./translations.js?v=20260418-login-i18n"></script>
+    <script src="./i18n.js?v=20260418-login-i18n"></script>
     <script src="./security-shield.js?v=20260305-1"></script>
-    <script src="./auth.js?v=20260418-signup-address"></script>
+    <script src="./auth.js?v=20260418-login-i18n"></script>
 
     <script>
         (function syncReferralFromUrl() {

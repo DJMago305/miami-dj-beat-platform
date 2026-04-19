@@ -452,6 +452,15 @@ document.addEventListener('DOMContentLoaded', () => {
         errorMsg.style.color = '#D32F2F';
     }
 
+    /** Login/signup page: button labels follow `mdjpro_lang` + i18n. */
+    function mdjAuthPageBtnT(key, fallback) {
+        if (window.i18n && typeof window.i18n.t === 'function') {
+            const s = window.i18n.t(key);
+            if (s) return s;
+        }
+        return fallback;
+    }
+
     /** Misma lógica que el submit de login: interior del sistema o redirect=party-planner, etc. */
     async function performPostAuthRedirect(db, user) {
         const params = new URLSearchParams(window.location.search);
@@ -527,7 +536,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             clearError();
             const btn = loginForm.querySelector('button[type="submit"]');
-            if (btn) { btn.disabled = true; btn.textContent = 'Verificando...'; }
+            if (btn) { btn.disabled = true; btn.textContent = mdjAuthPageBtnT('auth-login-btn-verifying', 'Verifying…'); }
 
             try {
                 const db = await waitForSupabase();
@@ -543,7 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ),
                         { tone: 'error' }
                     );
-                    if (btn) { btn.disabled = false; btn.textContent = 'Iniciar Sesión'; }
+                    if (btn) { btn.disabled = false; btn.textContent = mdjAuthPageBtnT('login-btn-submit', 'Login'); }
                     return;
                 }
                 if (!password) {
@@ -555,14 +564,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         ),
                         { tone: 'error' }
                     );
-                    if (btn) { btn.disabled = false; btn.textContent = 'Iniciar Sesión'; }
+                    if (btn) { btn.disabled = false; btn.textContent = mdjAuthPageBtnT('login-btn-submit', 'Login'); }
                     return;
                 }
 
                 // Resolve Identity
                 const email = await resolveIdentity(identityInput, db);
 
-                if (btn) btn.textContent = 'Entrando...';
+                if (btn) btn.textContent = mdjAuthPageBtnT('auth-login-btn-signing-in', 'Signing in…');
                 const { data: authData, error } = await db.auth.signInWithPassword({ email, password });
                 if (error) throw error;
 
@@ -610,7 +619,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     showError(err.message || 'Error al iniciar sesión.');
                 }
-                if (btn) { btn.disabled = false; btn.textContent = 'Iniciar Sesión'; }
+                if (btn) { btn.disabled = false; btn.textContent = mdjAuthPageBtnT('login-btn-submit', 'Login'); }
             }
         });
     }
@@ -621,7 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             clearError();
             const btn = signupForm.querySelector('button[type="submit"]');
-            if (btn) { btn.disabled = true; btn.textContent = 'Creando cuenta...'; }
+            if (btn) { btn.disabled = true; btn.textContent = mdjAuthPageBtnT('auth-signup-btn-creating', 'Creating account…'); }
 
             try {
                 const db = await waitForSupabase();
@@ -805,7 +814,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (tabLoginGo) tabLoginGo.click();
                             const loginEmailGo = document.getElementById('login-email');
                             if (loginEmailGo) loginEmailGo.value = email;
-                            if (btn) { btn.disabled = false; btn.textContent = 'Registrarme'; }
+                            if (btn) { btn.disabled = false; btn.textContent = mdjAuthPageBtnT('login-btn-register', 'Register'); }
                             return;
                         }
                         throw siErr || new Error('No se pudo abrir sesión automáticamente.');
@@ -878,7 +887,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ),
                     { tone: 'info' }
                 );
-                if (btn) { btn.disabled = false; btn.textContent = 'Registrarme'; }
+                if (btn) { btn.disabled = false; btn.textContent = mdjAuthPageBtnT('login-btn-register', 'Register'); }
 
                 try {
                     sessionStorage.setItem('mdj_vip_welcome_pending', '1');
@@ -913,10 +922,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 showError(err.message || 'Error al crear la cuenta.');
-                if (btn) { btn.disabled = false; btn.textContent = 'Registrarme'; }
+                if (btn) { btn.disabled = false; btn.textContent = mdjAuthPageBtnT('login-btn-register', 'Register'); }
             }
         });
     }
+
+    document.addEventListener('languageChanged', function () {
+        try {
+            const lf = document.getElementById('login-form');
+            const sf = document.getElementById('signup-form');
+            const lb = lf && lf.querySelector('button[type="submit"]');
+            const sb = sf && sf.querySelector('button[type="submit"]');
+            if (lb && !lb.disabled) lb.textContent = mdjAuthPageBtnT('login-btn-submit', 'Login');
+            if (sb && !sb.disabled) sb.textContent = mdjAuthPageBtnT('login-btn-register', 'Register');
+        } catch (e) {
+            void e;
+        }
+    });
 });
 
 // ── Inyección Global del Botón Logout ─────────────────────────────────

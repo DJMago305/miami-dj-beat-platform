@@ -37,13 +37,24 @@ const i18n = {
                 if (el.hasAttribute && el.hasAttribute('data-auth-btn')) return;
                 const key = el.getAttribute('data-i18n');
                 const text = this.t(key);
-                if (text) el.innerHTML = text;
+                if (!text) return;
+                if (el.tagName === 'OPTION') {
+                    el.textContent = text;
+                    return;
+                }
+                el.innerHTML = text;
             });
 
             document.querySelectorAll('[data-i18n-hold]').forEach(el => {
                 const key = el.getAttribute('data-i18n-hold');
                 const text = this.t(key);
                 if (text) el.placeholder = text;
+            });
+
+            document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+                const key = el.getAttribute('data-i18n-aria');
+                const text = this.t(key);
+                if (text) el.setAttribute('aria-label', text);
             });
         }
 
