@@ -1732,35 +1732,32 @@ select:focus {
   padding-left: 12px;
 }
 
-/* Home — intro EVENTOS / VENUES: alineado al grid (como #areas), subtítulo en una línea en viewport típico */
+/* Home — intro EVENTOS / VENUES: título oro centrado; subtítulo profesional bajo el titular */
 .mdj-experience-preamble {
-  text-align: left;
-  max-width: 100%;
-  margin: 0 0 1.75rem;
+  text-align: center;
+  max-width: min(46rem, 100%);
+  margin: 0 auto 1.75rem;
   padding: 0 0 1.25rem;
   border-bottom: 1px solid rgba(197, 160, 89, 0.2);
 }
 
 .mdj-experience-preamble h2 {
+  color: var(--gold);
+  font-weight: 800;
   font-size: clamp(1rem, 2.1vw, 1.45rem);
-  letter-spacing: 0.08em;
-  line-height: 1.25;
-  margin: 0 0 0.35rem;
+  letter-spacing: 0.1em;
+  line-height: 1.3;
+  margin: 0 0 0.65rem;
   text-wrap: balance;
 }
 
 .mdj-experience-preamble .sub {
-  max-width: none;
+  max-width: 38rem;
   width: 100%;
-  margin: 0;
+  margin: 0 auto;
   font-size: clamp(0.9375rem, 1.35vw, 1.0625rem);
-  line-height: 1.45;
-}
-
-@media (min-width: 768px) {
-  .mdj-experience-preamble .sub {
-    white-space: nowrap;
-  }
+  line-height: 1.55;
+  text-wrap: pretty;
 }
 
 .contact-box {
