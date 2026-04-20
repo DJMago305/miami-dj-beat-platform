@@ -1767,6 +1767,116 @@ select:focus {
   }
 }
 
+/* Venues: galería de vídeos con saltos aleatorios entre columnas (no carrusel lineal) */
+.mdj-venues-video-stage {
+  position: relative;
+  width: 100%;
+  height: clamp(300px, 42vw, 460px);
+  margin-top: 0.25rem;
+}
+
+.mdj-venues-video-card {
+  position: absolute;
+  top: 0;
+  width: 31.5%;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.45);
+  transition: left 0.78s cubic-bezier(0.45, 0, 0.18, 1), transform 0.78s cubic-bezier(0.45, 0, 0.18, 1),
+    opacity 0.45s ease, border-color 0.45s ease, box-shadow 0.45s ease;
+  will-change: left, transform;
+}
+
+.mdj-venues-video-card.is-center {
+  z-index: 4;
+  transform: scale(1.045);
+  border-color: rgba(197, 160, 89, 0.55);
+  box-shadow: 0 14px 48px var(--gold-glow);
+}
+
+.mdj-venues-video-card:not(.is-center) {
+  z-index: 2;
+  transform: scale(0.94);
+  opacity: 0.9;
+}
+
+.mdj-venues-video-frame {
+  position: relative;
+  width: 100%;
+  background: #0a0a0c;
+  border-bottom: 1px solid var(--line);
+}
+
+.mdj-venues-video-frame video {
+  display: block;
+  width: 100%;
+  height: clamp(150px, 22vw, 220px);
+  object-fit: cover;
+}
+
+.mdj-venues-video-meta {
+  padding: 14px 16px 16px;
+  text-align: left;
+}
+
+.mdj-venues-video-venue {
+  font-weight: 800;
+  font-size: 17px;
+  margin-bottom: 4px;
+  color: #fff;
+}
+
+.mdj-venues-video-type {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: var(--gold);
+  font-weight: 700;
+  margin-bottom: 8px;
+  opacity: 0.92;
+}
+
+.mdj-venues-video-quote {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+@media (max-width: 720px) {
+  .mdj-venues-video-stage {
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .mdj-venues-video-card,
+  .mdj-venues-video-card.is-center,
+  .mdj-venues-video-card:not(.is-center) {
+    position: relative !important;
+    left: auto !important;
+    width: 100% !important;
+    transform: none !important;
+    opacity: 1 !important;
+    z-index: 1 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .mdj-venues-video-card,
+  .mdj-venues-video-card.is-center,
+  .mdj-venues-video-card:not(.is-center) {
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
 .contact-box {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
