@@ -1732,10 +1732,10 @@ select:focus {
   padding-left: 12px;
 }
 
-/* Home — intro EVENTOS / VENUES: título oro centrado; subtítulo profesional bajo el titular */
+/* Home — intro EVENTOS / VENUES: título oro centrado; subtítulo puede ser más ancho que el título, una línea en desktop */
 .mdj-experience-preamble {
   text-align: center;
-  max-width: min(46rem, 100%);
+  max-width: 100%;
   margin: 0 auto 1.75rem;
   padding: 0 0 1.25rem;
   border-bottom: 1px solid rgba(197, 160, 89, 0.2);
@@ -1752,12 +1752,19 @@ select:focus {
 }
 
 .mdj-experience-preamble .sub {
-  max-width: 38rem;
+  max-width: none;
   width: 100%;
   margin: 0 auto;
   font-size: clamp(0.9375rem, 1.35vw, 1.0625rem);
-  line-height: 1.55;
-  text-wrap: pretty;
+  line-height: 1.5;
+  padding: 0 0.25rem;
+}
+
+@media (min-width: 900px) {
+  .mdj-experience-preamble .sub {
+    white-space: nowrap;
+    font-size: clamp(0.9rem, 1.15vw, 1.0625rem);
+  }
 }
 
 .contact-box {
