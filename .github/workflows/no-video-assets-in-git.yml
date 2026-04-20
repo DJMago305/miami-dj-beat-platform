@@ -1,0 +1,28 @@
+# GitHub cannot block file types by policy alone — this workflow fails the build if
+# large video files are tracked under web/assets (they belong in Supabase Storage).
+name: No tracked videos under web/assets
+
+on:
+  workflow_dispatch: # Permite "Run workflow" en Actions → así el check aparece en Rulesets
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fail if video extensions are tracked in web/assets
+        run: |
+          set -e
+          bad=$(git ls-files web/assets 2>/dev/null | grep -E '\.(mp4|mov|webm|m4v|mkv|MP4|MOV|WEBM)$' || true)
+          if [ -n "$bad" ]; then
+            echo "::error::Tracked video files under web/assets — remove from Git and host on Supabase Storage."
+            echo "$bad"
+            exit 1
+          fi
+          echo "OK: no tracked video files under web/assets."
