@@ -806,8 +806,8 @@
         <div class="mobile-overlay" id="mobileMenu">
           <nav class="mobile-nav">
             <a href="./index.html" class="active" data-i18n="nav-home" data-mdj-nav="home">Home</a>
-            <a href="./index.html#services" data-i18n="nav-services" data-mdj-nav="services">Services</a>
-            <a href="./rentals.html" data-i18n="nav-rentals" data-mdj-nav="rentals">Event Services</a>
+            <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+            <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Event Services</a>
             <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
             <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
             <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
@@ -827,8 +827,8 @@
       <div class="container">
         <nav class="nav top-nav" id="mainNav">
           <a href="./index.html" class="active category-tab" data-i18n="nav-home" data-mdj-nav="home">Home</a>
-          <a href="./index.html#services" class="category-tab" data-i18n="nav-services" data-mdj-nav="services">Services</a>
-          <a href="./rentals.html" class="category-tab" data-i18n="nav-rentals" data-mdj-nav="rentals">Event Services</a>
+          <a href="./rentals.html" class="category-tab" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+          <a href="./index.html#experience" class="category-tab" data-i18n="nav-rentals" data-mdj-nav="venues">Event Services</a>
           <a href="./shop.html" class="category-tab" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
           <a href="./dj-tools.html" class="category-tab" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
           <a href="./jobs.html" class="category-tab" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
@@ -1158,10 +1158,21 @@
       </div>
     </section>
     <section id="experience" class="section">
-      <!-- LOCKED SECTION: DO NOT MODIFY -->
       <div class="container">
-        <h2 style="text-align: center; margin-bottom: 34px;" data-i18n="venues-title">Featured Venues & Live Experience
-        </h2>
+        <div class="mdj-experience-preamble" style="text-align:center; max-width:820px; margin:0 auto 40px;">
+          <h2 data-i18n="section-venues-title">EVENTOS / VENUES / PATROCINADORES</h2>
+          <p class="sub" data-i18n="section-venues-sub"
+            style="color:var(--muted); margin-bottom:22px; line-height:1.55;">
+            Residencias, clubes y escenarios donde Miami DJ Beat suena: la energía del evento, en el lugar.
+          </p>
+          <p data-i18n="section-venues-body" style="line-height:1.75; color:rgba(255,255,255,0.88);">
+            Próximamente: destacados de venues, calendario de fechas y material promocional. Cuéntanos tu proyecto y
+            coordinamos la experiencia.
+          </p>
+          <p style="margin-top:28px;">
+            <a class="btn primary" href="./rentals.html" data-i18n="section-venues-cta">Ver catálogo de servicios</a>
+          </p>
+        </div>
         <div class="grid3">
           <div class="experience-card">
             <div class="exp-img" style="background-image: url('./assets/mojitos_featured.png');"></div>
@@ -1540,8 +1551,8 @@
   </footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./supabase-config.js?v=20260419-SUPABASE-ASSETS"></script>
-  <script src="./translations.js?v=20260415-NAV-RETINA-FIX"></script>
-  <script src="./i18n.js?v=20260415-NAV-RETINA-FIX"></script>
+  <script src="./translations.js?v=20260420-index-experience-rutas"></script>
+  <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
   <script src="./form-handler.js?v=20260414-lead-persist"></script>
   <script src="./header-smart-search.js?v=20260415-NAV-RETINA-FIX"></script>
   <script src="./mdj-shared-header.js?v=20260414-MAC-DESKTOP-SYNC"></script>
@@ -1656,10 +1667,19 @@
   </script>
   <script>
     // --- SCROLL SPY: activa la línea dorada en el nav según sección visible ---
-    // Href alineados con site-header: ./index.html#services (mismo contrato que el resto del sitio).
+    // Servicios en menú = catálogo (./rentals.html), igual que el CTA “Ver catálogo de servicios”; scroll spy marca la raya dorada al pasar #services.
     (function () {
-      const navLinks = document.querySelectorAll('#mainNav a');
-      const sections = ['services', 'dj-types', 'areas', 'experience', 'residencies', 'marketplace', 'proof', 'contact'];
+      var _h = (location.hash || '').toLowerCase();
+      if (_h === '#eventos' || _h === '#venues') {
+        history.replaceState(null, '', '#experience');
+        requestAnimationFrame(function () {
+          var v = document.getElementById('experience');
+          if (v) v.scrollIntoView({ block: 'start' });
+        });
+      }
+      const navLinks = document.querySelectorAll('#mainNav a, .mobile-nav a');
+      /* Sin #dj-types: “Tipos de DJ” no tiene ancla en el menú; es contenido al hacer scroll, no destino de ruta. */
+      const sections = ['services', 'areas', 'experience', 'residencies', 'marketplace', 'proof', 'contact'];
 
       function hashIdFromHref(href) {
         if (!href) return '';
@@ -1671,10 +1691,13 @@
         navLinks.forEach(link => {
           const href = link.getAttribute('href') || '';
           const hashId = hashIdFromHref(href);
+          const navKey = link.getAttribute('data-mdj-nav') || '';
           const isHome = href === './index.html' || href === '/' || href === '' || href === './';
           if (!sectionId && isHome) {
             link.classList.add('active');
           } else if (sectionId && hashId === sectionId) {
+            link.classList.add('active');
+          } else if (sectionId === 'services' && navKey === 'services') {
             link.classList.add('active');
           } else {
             link.classList.remove('active');
@@ -1683,21 +1706,50 @@
       }
 
       const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            setActive(entry.target.id);
-          }
+        const winners = entries.filter(function (e) { return e.isIntersecting; });
+        if (!winners.length) return;
+        winners.sort(function (a, b) {
+          return (b.intersectionRatio || 0) - (a.intersectionRatio || 0);
         });
-      }, { rootMargin: '-30% 0px -60% 0px', threshold: 0 });
+        setActive(winners[0].target.id);
+      }, { rootMargin: '-22% 0px -50% 0px', threshold: [0, 0.05, 0.15, 0.35, 0.6, 1] });
 
       sections.forEach(id => {
         const el = document.getElementById(id);
         if (el) observer.observe(el);
       });
 
-      // Si estamos al top (hero), activa INICIO
+      window.addEventListener('hashchange', function () {
+        var hid = (location.hash || '').replace(/^#/, '').toLowerCase();
+        if (sections.indexOf(hid) !== -1) setActive(hid);
+        if (typeof window.mdjNavHighlight === 'function') window.mdjNavHighlight();
+      }, { passive: true });
+
+      var _hidInit = (location.hash || '').replace(/^#/, '').toLowerCase();
+      if (sections.indexOf(_hidInit) !== -1) setActive(_hidInit);
+      if (typeof window.mdjNavHighlight === 'function') window.mdjNavHighlight();
+
+      var mainHeader = document.getElementById('mainHeader');
+      if (mainHeader) {
+        mainHeader.addEventListener('click', function (e) {
+          var a = e.target.closest && e.target.closest('a');
+          if (!a || !(a.closest('#mainNav') || a.closest('.mobile-nav'))) return;
+          var hid = hashIdFromHref(a.getAttribute('href') || '');
+          if (sections.indexOf(hid) !== -1) {
+            requestAnimationFrame(function () {
+              setActive(hid);
+              if (typeof window.mdjNavHighlight === 'function') window.mdjNavHighlight();
+            });
+          }
+        }, true);
+      }
+
+      // Si estamos arriba del hero, INICIO — salvo que la URL ya ancla a una sección (#services, #experience…)
       window.addEventListener('scroll', () => {
-        if (window.scrollY < 200) setActive(null);
+        if (window.scrollY >= 200) return;
+        var h = (location.hash || '').replace(/^#/, '').toLowerCase();
+        if (sections.indexOf(h) !== -1) return;
+        setActive(null);
       }, { passive: true });
     })();
 
