@@ -31,6 +31,9 @@ if (!window.MDJ_RENTALS_TALENT_HUB_CONTRACT) {
 
 const t = (k, def) => (window.translations?.[window.i18n?.currentLang]?.[k]) || def;
 
+/** Antepone window.MDB_ASSETS_URL (bucket Storage `assets`) a rutas ./assets/... cuando la constante está definida en supabase-config.js. */
+const mdjV = (u) => (typeof window.resolveMdAssetVideoUrl === "function" ? window.resolveMdAssetVideoUrl(u) : u);
+
 /** Hero/cinematic background videos: muted + loop + inline (autoplay policy). Call before load()/play() when swapping src. */
 window.mdjHeroVideoPrime = function (el) {
     if (!el) return;
@@ -382,8 +385,9 @@ window.renderStaffHero = function (tabKey = "bartender", animate = true) {
 
     if (videoEl && item.video) {
         const v = item.video;
-        const changed = videoEl.getAttribute("src") !== v;
-        if (changed) videoEl.src = v;
+        const rv = mdjV(v);
+        const changed = videoEl.getAttribute("src") !== rv;
+        if (changed) videoEl.src = rv;
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (changed) videoEl.load();
         videoEl.play().catch(() => {});
@@ -458,8 +462,9 @@ window.renderPayasosHero = function (tabKey = "gif", animate = true) {
 
     if (videoEl && item.video) {
         const v = item.video;
-        const changed = videoEl.getAttribute("src") !== v;
-        if (changed) videoEl.src = v;
+        const rv = mdjV(v);
+        const changed = videoEl.getAttribute("src") !== rv;
+        if (changed) videoEl.src = rv;
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (changed) videoEl.load();
         videoEl.play().catch(() => {});
@@ -549,8 +554,9 @@ window._rosterHeroPreviewOnly = function (key, hoveredCard) {
 
     if (videoEl && item.video) {
         const v = item.video;
-        const changed = videoEl.getAttribute("src") !== v;
-        if (changed) videoEl.src = v;
+        const rv = mdjV(v);
+        const changed = videoEl.getAttribute("src") !== rv;
+        if (changed) videoEl.src = rv;
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (changed) videoEl.load();
         videoEl.play().catch(() => {});
@@ -628,11 +634,12 @@ window._djHeroPreviewOnly = function (key, hoveredCard) {
     }
     if (videoEl && item.video) {
         const v = item.video;
-        const changed = videoEl.getAttribute("src") !== v;
+        const rv = mdjV(v);
+        const changed = videoEl.getAttribute("src") !== rv;
         if (changed) {
-            videoEl.setAttribute("src", v);
-            videoEl.src = v;
-            videoEl.innerHTML = `<source src="${v}" type="video/mp4">`;
+            videoEl.setAttribute("src", rv);
+            videoEl.src = rv;
+            videoEl.innerHTML = `<source src="${String(rv).replace(/"/g, "&quot;")}" type="video/mp4">`;
         }
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (changed) videoEl.load();
@@ -662,6 +669,7 @@ window._lightingHeroPreviewOnly = function (key, hoveredCard) {
     const eyebrowEl = document.getElementById("lighting-hero-eyebrow");
     const activeVideo =
         item.video || "./assets/Special_Effects/Iluminacio\u0301n.mp4";
+    const activeResolved = mdjV(activeVideo);
     if (eyebrowEl) {
         eyebrowEl.setAttribute("data-i18n", "lighting_eyebrow");
         eyebrowEl.textContent = t("lighting_eyebrow", "PREMIUM CLUB & ARCHITECTURAL");
@@ -679,9 +687,9 @@ window._lightingHeroPreviewOnly = function (key, hoveredCard) {
         }
     }
     if (videoEl && activeVideo) {
-        const v = activeVideo;
-        const changed = videoEl.getAttribute("src") !== v;
-        if (changed) videoEl.src = v;
+        const rv = activeResolved;
+        const changed = videoEl.getAttribute("src") !== rv;
+        if (changed) videoEl.src = rv;
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (changed) videoEl.load();
         videoEl.play().catch(() => {});
@@ -722,8 +730,9 @@ window._fxHeroPreviewOnly = function (key, hoveredCard) {
     }
     if (videoEl && item.video) {
         const v = item.video;
-        const changed = videoEl.getAttribute("src") !== v;
-        if (changed) videoEl.src = v;
+        const rv = mdjV(v);
+        const changed = videoEl.getAttribute("src") !== rv;
+        if (changed) videoEl.src = rv;
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (changed) videoEl.load();
         videoEl.play().catch(() => {});
@@ -965,8 +974,9 @@ window.renderLiveHero = (tabKey = null, animate = true) => {
 
         if (videoEl && activeVideo) {
             const v = activeVideo;
-            const changed = videoEl.getAttribute("src") !== v;
-            if (changed) videoEl.src = v;
+            const rv = mdjV(v);
+            const changed = videoEl.getAttribute("src") !== rv;
+            if (changed) videoEl.src = rv;
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
             if (changed) videoEl.load();
             videoEl.play().catch(() => { });
@@ -1120,11 +1130,12 @@ window.renderDjHero = (tabKey = 'weddings', animate = true) => {
 
         if (videoEl && activeItem.video) {
             const v = activeItem.video;
-            const changed = videoEl.getAttribute("src") !== v;
+            const rv = mdjV(v);
+            const changed = videoEl.getAttribute("src") !== rv;
             if (changed) {
-                videoEl.setAttribute("src", v);
-                videoEl.src = v;
-                videoEl.innerHTML = `<source src="${v}" type="video/mp4">`;
+                videoEl.setAttribute("src", rv);
+                videoEl.src = rv;
+                videoEl.innerHTML = `<source src="${String(rv).replace(/"/g, "&quot;")}" type="video/mp4">`;
             }
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
             if (changed) videoEl.load();
@@ -1347,8 +1358,9 @@ window.renderFxHero = (currentTabKey = 'sparks', animate = true) => {
 
         if (videoEl && activeVideo) {
             const v = activeVideo;
-            const changed = videoEl.getAttribute("src") !== v;
-            if (changed) videoEl.src = v;
+            const rv = mdjV(v);
+            const changed = videoEl.getAttribute("src") !== rv;
+            if (changed) videoEl.src = rv;
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
             if (changed) videoEl.load();
             videoEl.play().catch(() => { });
@@ -1452,8 +1464,9 @@ window.renderLightingHero = (currentTabKey = 'movingHeads', animate = true) => {
 
         if (videoEl && activeVideo) {
             const v = activeVideo;
-            const changed = videoEl.getAttribute("src") !== v;
-            if (changed) videoEl.src = v;
+            const rv = mdjV(v);
+            const changed = videoEl.getAttribute("src") !== rv;
+            if (changed) videoEl.src = rv;
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
             if (changed) videoEl.load();
             videoEl.play().catch(() => { });
@@ -1595,8 +1608,9 @@ window.updateHoraLocaHero = (id) => {
     const videoEl = document.getElementById('hl-hero-video');
     if (videoEl && pack.video) {
         const v = pack.video;
-        const changed = videoEl.getAttribute('src') !== v;
-        if (changed) videoEl.src = v;
+        const rv = mdjV(v);
+        const changed = videoEl.getAttribute('src') !== rv;
+        if (changed) videoEl.src = rv;
         if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(videoEl);
         if (changed) videoEl.load();
         videoEl.play().catch(() => {});
@@ -2199,7 +2213,7 @@ window.renderRentalCatalog = (categoryId) => {
             heroVid.play().catch(() => {});
             return;
         }
-        source.src = itemDef.video;
+        source.src = mdjV(itemDef.video);
         if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(heroVid);
         heroVid.load();
         heroVid.play().catch(() => {});
@@ -2228,7 +2242,7 @@ window.renderRentalCatalog = (categoryId) => {
                 const source = heroVid.querySelector('source');
                 const cleanCatBg = catBgVideo.split('/').pop().replace(/%20/g, ' ');
                 if (source && !source.src.includes(encodeURI(cleanCatBg)) && !source.src.includes(cleanCatBg)) {
-                    source.src = catBgVideo;
+                    source.src = mdjV(catBgVideo);
                     if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(heroVid);
                     heroVid.load();
                     heroVid.play().catch(() => {});
@@ -3485,7 +3499,7 @@ document.addEventListener('click', async (e) => {
                     const baseSrc = cat.bgVideo || (cat.items[0] && cat.items[0].video ? cat.items[0].video : '');
                     const source = heroVideo.querySelector('source');
                     if (source && baseSrc) {
-                        source.src = baseSrc;
+                        source.src = mdjV(baseSrc);
                         if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(heroVideo);
                         heroVideo.load();
                         heroVideo.play().catch(() => {});
@@ -3524,7 +3538,7 @@ document.addEventListener('click', async (e) => {
                 const source = heroVideo.querySelector('source');
 
                 if (source) {
-                    source.src = item.video;
+                    source.src = mdjV(item.video);
                     if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(heroVideo);
                     heroVideo.load();
                     heroVideo.play().catch(() => {});
@@ -4141,8 +4155,9 @@ window.initTalentSelectorShellHover = function () {
 
     const applyFocus = (url, el) => {
         if (!url) return;
+        const rurl = typeof window.resolveMdAssetVideoUrl === 'function' ? window.resolveMdAssetVideoUrl(url) : url;
         foc.muted = true;
-        if (foc.dataset.mdjPreviewUrl === url) {
+        if (foc.dataset.mdjPreviewUrl === rurl) {
             foc.classList.add('is-visible');
             amb.classList.add('talent-shell-ambient-dim');
             shell.classList.add('talent-shell-hero-preview-on');
@@ -4151,8 +4166,8 @@ window.initTalentSelectorShellHover = function () {
             foc.play().catch(() => {});
             return;
         }
-        foc.dataset.mdjPreviewUrl = url;
-        foc.src = url;
+        foc.dataset.mdjPreviewUrl = rurl;
+        foc.src = rurl;
         if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(foc);
         foc.classList.add('is-visible');
         amb.classList.add('talent-shell-ambient-dim');

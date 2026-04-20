@@ -1847,12 +1847,8 @@
     <!-- ══ HERO — FUERA DEL CONTAINER: ocupa 100vw × 100vh ══ -->
     <section class="hero-2027" id="hero-section">
 
-        <!-- VIDEO DE FONDO ══════════════════════════════════════
-             Reemplaza el src con tu archivo .mp4 o URL de video.
-             Ejemplo: src="./assets/hero-dj-video.mp4"
-             Para publicidad: llama setHeroVideo('nuevo-video.mp4')
-        ════════════════════════════════════════════════════════ -->
-        <video id="hero-video" class="hero-video-bg" autoplay muted loop playsinline src="./assets/Jobs/Jobs Miami DJ Beat.mp4"></video>
+        <!-- VIDEO DE FONDO: URL = MDB_ASSETS_URL + "Jobs/Jobs Miami DJ Beat.mp4" (Supabase bucket `assets`) o fallback local ./assets/... -->
+        <video id="hero-video" class="hero-video-bg" autoplay muted loop playsinline src=""></video>
 
         <!-- Overlay cinematográfico (vignette) -->
         <div class="hero-video-overlay"></div>
@@ -2821,7 +2817,19 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./subscription.js?v=20260418-PURGE-SEAL"></script>
-    <script src="./supabase-config.js?v=20260418-PURGE-SEAL"></script>
+    <script src="./supabase-config.js?v=20260419-SUPABASE-ASSETS"></script>
+    <script>
+        (function () {
+            var el = document.getElementById("hero-video");
+            if (!el) return;
+            var base = window.MDB_ASSETS_URL;
+            if (base && String(base).trim()) {
+                el.src = String(base).replace(/\/?$/, "/") + "Jobs/Jobs Miami DJ Beat.mp4";
+            } else {
+                el.src = "./assets/Jobs/Jobs Miami DJ Beat.mp4";
+            }
+        })();
+    </script>
     <script src="./translations.js?v=20260418-PURGE-SEAL"></script>
     <script src="./i18n.js?v=20260418-PURGE-SEAL"></script>
     <script src="./mdj-carousel-scroll-tick.js?v=20260418-PURGE-SEAL"></script>
@@ -5012,8 +5020,23 @@
                         window.addEventListener('pagehide', () => observer.disconnect(), { once: true });
                     }
                 } else {
-                    if (kbBg) kbBg.classList.remove('hidden');
-                    if (video) video.src = "";
+                    if (video) {
+                        var b = window.MDB_ASSETS_URL;
+                        var defSrc = b && String(b).trim()
+                            ? String(b).replace(/\/?$/, '/') + 'Jobs/Jobs Miami DJ Beat.mp4'
+                            : './assets/Jobs/Jobs Miami DJ Beat.mp4';
+                        video.src = defSrc;
+                        video.muted = true;
+                        video.volume = 0;
+                        video.load();
+                        video.play().catch(function () {
+                            video.muted = true;
+                            video.play().catch(function () { });
+                        });
+                        if (kbBg) kbBg.classList.add('hidden');
+                    } else if (kbBg) {
+                        kbBg.classList.remove('hidden');
+                    }
                 }
 
                 const lang = document.documentElement.lang || 'es';
