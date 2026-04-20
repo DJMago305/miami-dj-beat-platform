@@ -1818,7 +1818,14 @@
       const isHomeActive = settings.home_hero_active !== 'false'; // Quarantine Logic
 
       const defaultVideo = "./assets/home/Home for Miami DJ Beat.mp4";
-      const videoSrc = (settings.home_hero_video_url && isHomeActive) ? settings.home_hero_video_url : defaultVideo;
+      const defaultResolved =
+        typeof window.resolveMdAssetVideoUrl === "function"
+          ? window.resolveMdAssetVideoUrl(defaultVideo)
+          : defaultVideo;
+      const videoSrc =
+        settings.home_hero_video_url && isHomeActive
+          ? settings.home_hero_video_url
+          : defaultResolved;
 
       if (video) {
         if (isHomeActive) {
