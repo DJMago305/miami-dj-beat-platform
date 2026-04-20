@@ -954,12 +954,6 @@
           }
           rawPhoto = mdjNormalizeAvatarStorageUrl(rawPhoto);
           var hasRealPhoto = mdjIsRealPhotoUrl(rawPhoto.split('?')[0]);
-          try {
-            console.log('📸 URL detectada para avatar:', rawPhoto || '(ninguna)', {
-              hasRealPhoto: hasRealPhoto,
-              isClient: isClient
-            });
-          } catch (eLog) { /* ignore */ }
 
           var displayName = '';
           if (isClient) {

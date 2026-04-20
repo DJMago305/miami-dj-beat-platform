@@ -316,7 +316,6 @@
                 if (regData && regData.public_year && regData.public_seq) {
                     registry = `${regData.public_year}-${String(regData.public_seq).padStart(6, '0')}`;
                 }
-                console.log('Certificate stored. Registry:', registry);
             }
         } catch (err) {
             console.error('Insert failed:', err);
