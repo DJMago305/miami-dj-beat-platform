@@ -763,14 +763,15 @@
     var hash = (location.hash || '').replace(/^#/, '').toLowerCase();
     var key = '';
     if (path === 'index.html' || path === '') {
-      if (hash === 'services') key = 'services';
+      if (hash === 'venues' || hash === 'experience' || hash === 'eventos' || hash === 'patrocinadores' || hash === 'sponsors') key = 'venues';
+      else if (hash === 'services') key = 'services';
       else if (hash === 'contact') key = 'contact';
       else key = 'home';
     } else if (path === 'shop.html') key = 'shop';
     else if (path === 'courses.html') key = 'courses';
     else if (path === 'dj-tools.html') key = 'tools';
     else if (path === 'jobs.html') key = 'jobs';
-    else if (path === 'rentals.html') key = 'rentals';
+    else if (path === 'rentals.html' || path === 'services.html') key = 'services';
     else if (path === 'find-dj.html') key = 'home';
     else if (path === 'dj-profile.html') key = 'flow';
     else if (path === 'dj-dashboard.html') key = 'mi-portal';

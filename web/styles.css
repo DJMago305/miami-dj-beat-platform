@@ -5619,8 +5619,16 @@ body.mdj-artist-academy #mainHeader.header {
   flex-shrink: 0;
 }
 
-#header-auth-zone.session-pending {
-  display: none !important;
+/* Mientras Supabase resuelve sesión: reservar hueco (evita salto en .header-actions al quitar pending). */
+#mainHeader #header-auth-zone.session-pending {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  min-width: 52px;
+  min-height: 44px;
+  flex-shrink: 0;
 }
 
 /* Viewport estrecho: una sola fila de 140px (sin wrap de la píldora) */
