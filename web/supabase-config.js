@@ -12,6 +12,39 @@ window.MDB_SUPABASE_ANON_KEY = "sb_publishable_IMhi16lHj2dAk51AdUOK8w_U7s89-Ff";
 window.MDB_ASSETS_URL = "https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/";
 
 /**
+ * Bucket público **venues-reels**: vídeos verticales 9:16 (estilo reel) para la sección EVENTOS/VENUES del home.
+ * En Supabase: Storage → Create bucket → nombre `venues-reels` → Public. Subir p. ej. mojitos.mp4, el-valle.mp4, sundowners.mp4
+ * (mismos nombres que data-mdj-reel en index.html). Si aún no existe el bucket, deja "" y el sitio usa data-mdj-reel-fallback.
+ */
+/* Sustituye por "" si el bucket aún no existe: solo se usarán los data-mdj-reel-fallback (assets horizontales). */
+window.MDB_VENUES_REELS_URL =
+    "https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/venues-reels/";
+
+/**
+ * Resuelve ./venues-reels/archivo.mp4 → URL pública del bucket venues-reels (si MDB_VENUES_REELS_URL tiene valor).
+ */
+window.resolveVenueReelUrl = function (path) {
+    if (path == null || path === "") return path;
+    if (typeof path !== "string") return path;
+    var base = window.MDB_VENUES_REELS_URL;
+    if (!base || !String(base).trim()) return path;
+    if (/^https?:\/\//i.test(path)) return path;
+    var qIdx = path.indexOf("?");
+    var query = qIdx >= 0 ? path.slice(qIdx) : "";
+    var bare = qIdx >= 0 ? path.slice(0, qIdx) : path;
+    var m = bare.match(/^\.\/venues-reels\/(.+)$/);
+    if (!m) return path;
+    var segments = m[1].split("/").map(function (seg) {
+        try {
+            return encodeURIComponent(decodeURIComponent(seg));
+        } catch (e) {
+            return encodeURIComponent(seg);
+        }
+    });
+    return String(base).replace(/\/?$/, "/") + segments.join("/") + query;
+};
+
+/**
  * Convierte ./assets/... en URL absoluta del bucket si MDB_ASSETS_URL está definido (vídeo, imagen u otro objeto).
  */
 window.resolveMdAssetPublicUrl = function (path) {

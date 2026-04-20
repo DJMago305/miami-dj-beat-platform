@@ -1767,110 +1767,132 @@ select:focus {
   }
 }
 
-/* Venues: galería de vídeos con saltos aleatorios entre columnas (no carrusel lineal) */
+/* Venues: reels verticales 9:16 + títulos flotantes; saltos aleatorios entre columnas */
 .mdj-venues-video-stage {
   position: relative;
   width: 100%;
-  height: clamp(300px, 42vw, 460px);
+  height: auto;
+  min-height: clamp(360px, 58vw, 600px);
   margin-top: 0.25rem;
 }
 
-.mdj-venues-video-card {
+.mdj-venues-video-card.mdj-venues-reel {
   position: absolute;
   top: 0;
-  width: 31.5%;
-  border-radius: 20px;
+  width: 28%;
+  border-radius: 22px;
   overflow: hidden;
-  background: var(--panel);
+  background: #060608;
   border: 1px solid var(--line);
-  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
   transition: left 0.78s cubic-bezier(0.45, 0, 0.18, 1), transform 0.78s cubic-bezier(0.45, 0, 0.18, 1),
     opacity 0.45s ease, border-color 0.45s ease, box-shadow 0.45s ease;
   will-change: left, transform;
 }
 
-.mdj-venues-video-card.is-center {
+.mdj-venues-video-card.mdj-venues-reel.is-center {
   z-index: 4;
-  transform: scale(1.045);
+  transform: scale(1.06);
   border-color: rgba(197, 160, 89, 0.55);
-  box-shadow: 0 14px 48px var(--gold-glow);
+  box-shadow: 0 18px 52px var(--gold-glow);
 }
 
-.mdj-venues-video-card:not(.is-center) {
+.mdj-venues-video-card.mdj-venues-reel:not(.is-center) {
   z-index: 2;
-  transform: scale(0.94);
+  transform: scale(0.93);
   opacity: 0.9;
 }
 
 .mdj-venues-video-frame {
   position: relative;
   width: 100%;
+  aspect-ratio: 9 / 16;
+  max-height: min(520px, 62vh);
+  margin: 0 auto;
   background: #0a0a0c;
-  border-bottom: 1px solid var(--line);
+  border-radius: inherit;
+  overflow: hidden;
 }
 
 .mdj-venues-video-frame video {
   display: block;
   width: 100%;
-  height: clamp(150px, 22vw, 220px);
+  height: 100%;
   object-fit: cover;
+  object-position: center 28%;
 }
 
-.mdj-venues-video-meta {
-  padding: 14px 16px 16px;
-  text-align: left;
+.mdj-venues-video-float {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 28px 12px 14px;
+  text-align: center;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.4) 52%, transparent 100%);
 }
 
-.mdj-venues-video-venue {
+.mdj-venues-video-float .mdj-venues-video-venue {
   font-weight: 800;
-  font-size: 17px;
-  margin-bottom: 4px;
+  font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+  margin: 0 0 0.2rem;
   color: #fff;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95);
+  letter-spacing: 0.02em;
 }
 
-.mdj-venues-video-type {
-  font-size: 11px;
+.mdj-venues-video-float .mdj-venues-video-type {
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 1.4px;
+  letter-spacing: 0.16em;
   color: var(--gold);
-  font-weight: 700;
-  margin-bottom: 8px;
-  opacity: 0.92;
+  font-weight: 800;
+  margin: 0 0 0.35rem;
+  opacity: 0.95;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.9);
 }
 
-.mdj-venues-video-quote {
-  font-size: 13px;
+.mdj-venues-video-float .mdj-venues-video-quote {
+  font-size: clamp(0.7rem, 1.15vw, 0.8rem);
   font-style: italic;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.82);
   margin: 0;
-  line-height: 1.45;
+  line-height: 1.35;
+  max-height: 3.2em;
+  overflow: hidden;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.9);
 }
 
 @media (max-width: 720px) {
   .mdj-venues-video-stage {
-    height: auto;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
   }
 
-  .mdj-venues-video-card,
-  .mdj-venues-video-card.is-center,
-  .mdj-venues-video-card:not(.is-center) {
+  .mdj-venues-video-card.mdj-venues-reel,
+  .mdj-venues-video-card.mdj-venues-reel.is-center,
+  .mdj-venues-video-card.mdj-venues-reel:not(.is-center) {
     position: relative !important;
     left: auto !important;
-    width: 100% !important;
+    width: min(100%, 320px) !important;
+    margin: 0 auto;
     transform: none !important;
     opacity: 1 !important;
     z-index: 1 !important;
+  }
+
+  .mdj-venues-video-frame {
+    max-height: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
 
-  .mdj-venues-video-card,
-  .mdj-venues-video-card.is-center,
-  .mdj-venues-video-card:not(.is-center) {
+  .mdj-venues-video-card.mdj-venues-reel,
+  .mdj-venues-video-card.mdj-venues-reel.is-center,
+  .mdj-venues-video-card.mdj-venues-reel:not(.is-center) {
     transition: none !important;
     transform: none !important;
     opacity: 1 !important;

@@ -6,11 +6,40 @@
   var stage = document.getElementById('mdjVenuesVideoStage');
   if (!stage) return;
 
-  var SLOT_LEFT_PCT = [0, 33.25, 66.5];
+  var SLOT_LEFT_PCT = [0, 36, 72];
   /** slotToVenue[s] = id de venue (0..2) colocado en el hueco físico s (0=izq, 1=centro, 2=der) */
   var slotToVenue = [0, 1, 2];
   var cards = Array.prototype.slice.call(stage.querySelectorAll('.mdj-venues-video-card'));
   var timer = null;
+
+  function resolveFallback(url) {
+    if (typeof window.resolveMdAssetPublicUrl === 'function') return window.resolveMdAssetPublicUrl(url);
+    return url;
+  }
+
+  function applyReelSources() {
+    stage.querySelectorAll('video[data-mdj-reel-fallback]').forEach(function (vid) {
+      var reel = vid.getAttribute('data-mdj-reel');
+      var fb = vid.getAttribute('data-mdj-reel-fallback');
+      if (!fb) return;
+      var useBucket =
+        window.MDB_VENUES_REELS_URL && String(window.MDB_VENUES_REELS_URL).trim() && reel &&
+        typeof window.resolveVenueReelUrl === 'function';
+      var reelUrl = useBucket ? window.resolveVenueReelUrl('./venues-reels/' + reel) : '';
+      var target = reelUrl && /^https?:\/\//i.test(reelUrl) ? reelUrl : resolveFallback(fb);
+      vid.src = target;
+      if (reelUrl && /^https?:\/\//i.test(reelUrl)) {
+        vid.addEventListener(
+          'error',
+          function onErr() {
+            vid.removeEventListener('error', onErr);
+            if (vid.getAttribute('src') !== resolveFallback(fb)) vid.src = resolveFallback(fb);
+          },
+          { once: true }
+        );
+      }
+    });
+  }
 
   function prefersReduce() {
     return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -83,6 +112,7 @@
     });
   }
 
+  applyReelSources();
   bootMotion();
 
   if ('IntersectionObserver' in window) {
