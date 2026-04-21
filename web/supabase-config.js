@@ -1,47 +1,91 @@
 // web/supabase-config.js
 // IMPORTANT: anon key only (safe for browser). NEVER put service_role here.
+// Un solo origen de proyecto → Storage y Edge Functions se derivan de MDB_SUPABASE_URL.
 
-window.MDB_SUPABASE_URL = "https://hkuvuqupbxwkiykxvqdr.supabase.co";
-window.MDB_SUPABASE_ANON_KEY = "sb_publishable_IMhi16lHj2dAk51AdUOK8w_U7s89-Ff";
+(function mdjSupabaseEnv() {
+    var B = "https://hkuvuqupbxwkiykxvqdr.supabase.co".replace(/\/$/, "");
+    window.MDB_SUPABASE_URL = B;
+    window.MDB_SUPABASE_ANON_KEY = "sb_publishable_IMhi16lHj2dAk51AdUOK8w_U7s89-Ff";
+    /* Vídeos/imágenes: subidos al bucket público `assets` en Supabase (misma jerarquía que web/assets/). Fuente de verdad en producción. */
+    window.MDB_ASSETS_URL = B + "/storage/v1/object/public/assets/";
+    /**
+     * Vacío: los reels están en el bucket `assets` (ruta eventos-venues-patrocinadores/...).
+     * Otro bucket público sin esos archivos → 400 y el vídeo no carga.
+     * Con "" se usa resolveMdAssetPublicUrl(./assets/eventos-venues-patrocinadores/...).
+     */
+    window.MDB_EVENTOS_VENUES_URL = "";
+})();
+
+/** Origen del proyecto Supabase sin barra final (invoke Edge Functions, etc.). */
+window.mdbSupabaseOrigin = function () {
+    return window.MDB_SUPABASE_URL ? String(window.MDB_SUPABASE_URL).replace(/\/$/, "") : "";
+};
 
 /**
- * Bucket público en Supabase Storage (**assets**): vídeos e imágenes bajo la misma jerarquía que `web/assets/`.
- * Si asignas "" aquí, el sitio usa solo rutas locales ./assets/... (sin Storage).
- * (con barra final). Objetos: misma ruta relativa que en web/assets (p. ej. audio/pa-small.jpg, DJ_Performance/foo.mp4).
+ * URL de una Edge Function por nombre (sin slash inicial).
+ * Ej.: mdbSupabaseFunctionUrl('create-event-payment')
  */
-window.MDB_ASSETS_URL = "https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/";
+window.mdbSupabaseFunctionUrl = function (name) {
+    if (name == null || name === "") return "";
+    var o = window.mdbSupabaseOrigin();
+    if (!o) return "";
+    var n = String(name).replace(/^\//, "");
+    return o + "/functions/v1/" + n;
+};
+
+/** Instalador MDJPRO macOS (Storage público `installers/`). */
+window.MDB_INSTALLER_MAC_PKG_URL =
+    window.mdbSupabaseOrigin() + "/storage/v1/object/public/installers/mdjpro_V.2.00.pkg";
+
+(function mdjInstallerMacLinks() {
+    function apply() {
+        var u = window.MDB_INSTALLER_MAC_PKG_URL;
+        if (!u) return;
+        document.querySelectorAll('a[data-mdj-installer-mac="1"]').forEach(function (a) {
+            a.setAttribute("href", u);
+        });
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", apply);
+    else apply();
+})();
 
 /**
- * Bucket público **venues-reels**: vídeos verticales 9:16 (estilo reel) para la sección EVENTOS/VENUES del home.
- * En Supabase: Storage → Create bucket → nombre `venues-reels` → Public. Subir p. ej. mojitos.mp4, el-valle.mp4, sundowners.mp4
- * (mismos nombres que data-mdj-reel en index.html). Si aún no existe el bucket, deja "" y el sitio usa data-mdj-reel-fallback.
+ * Resuelve ./assets/eventos-venues-patrocinadores/... → URL pública.
+ * Con MDB_EVENTOS_VENUES_URL: bucket dedicado. Sin él: resolveMdAssetPublicUrl (prefijo eventos-venues-patrocinadores/ en bucket assets).
  */
-/* Sustituye por "" si el bucket aún no existe: solo se usarán los data-mdj-reel-fallback (assets horizontales). */
-window.MDB_VENUES_REELS_URL =
-    "https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/venues-reels/";
-
-/**
- * Resuelve ./venues-reels/archivo.mp4 → URL pública del bucket venues-reels (si MDB_VENUES_REELS_URL tiene valor).
- */
-window.resolveVenueReelUrl = function (path) {
+window.resolveEventosVenuesPublicUrl = function (path) {
     if (path == null || path === "") return path;
     if (typeof path !== "string") return path;
-    var base = window.MDB_VENUES_REELS_URL;
-    if (!base || !String(base).trim()) return path;
     if (/^https?:\/\//i.test(path)) return path;
+    /* Desarrollo local: los reels suelen estar solo en web/assets/…; sin esto el <video> pide Storage y falla hasta subir el .mp4 */
+    try {
+        if (typeof location !== "undefined" && location.hostname) {
+            var h = String(location.hostname).toLowerCase();
+            if (h === "localhost" || h === "127.0.0.1") return path;
+        }
+    } catch (e) { /* noop */ }
+    if (window.MDJ_VENUE_REELS_FORCE_LOCAL === true) return path;
     var qIdx = path.indexOf("?");
     var query = qIdx >= 0 ? path.slice(qIdx) : "";
     var bare = qIdx >= 0 ? path.slice(0, qIdx) : path;
-    var m = bare.match(/^\.\/venues-reels\/(.+)$/);
+    var m = bare.match(/^\.\/assets\/eventos-venues-patrocinadores\/(.+)$/);
     if (!m) return path;
-    var segments = m[1].split("/").map(function (seg) {
-        try {
-            return encodeURIComponent(decodeURIComponent(seg));
-        } catch (e) {
-            return encodeURIComponent(seg);
-        }
-    });
-    return String(base).replace(/\/?$/, "/") + segments.join("/") + query;
+    var key = m[1];
+    var dedicated = window.MDB_EVENTOS_VENUES_URL;
+    if (dedicated && String(dedicated).trim()) {
+        var segments = key.split("/").map(function (seg) {
+            try {
+                return encodeURIComponent(decodeURIComponent(seg));
+            } catch (e) {
+                return encodeURIComponent(seg);
+            }
+        });
+        return String(dedicated).replace(/\/?$/, "/") + segments.join("/") + query;
+    }
+    if (typeof window.resolveMdAssetPublicUrl === "function") {
+        return window.resolveMdAssetPublicUrl(path);
+    }
+    return path;
 };
 
 /**
@@ -82,6 +126,14 @@ window.resolveMdAssetImageUrl = window.resolveMdAssetPublicUrl;
         if (typeof window.resolveMdAssetPublicUrl !== "function") return;
         if (!window.MDB_ASSETS_URL || !String(window.MDB_ASSETS_URL).trim()) return;
         var fn = window.resolveMdAssetPublicUrl;
+        /* data-mdj-src: el navegador no pide el .mp4 en el origen hasta tener la URL de Storage (evita 404 en Vercel). */
+        document.querySelectorAll("source[data-mdj-src]").forEach(function (el) {
+            var s = el.getAttribute("data-mdj-src");
+            if (s && s.indexOf("./assets/") === 0) {
+                el.setAttribute("src", fn(s));
+                el.removeAttribute("data-mdj-src");
+            }
+        });
         document.querySelectorAll("video[src]").forEach(function (el) {
             var s = el.getAttribute("src");
             if (s && s.indexOf("./assets/") === 0) el.src = fn(s);
@@ -94,9 +146,17 @@ window.resolveMdAssetImageUrl = window.resolveMdAssetPublicUrl;
             var is = el.getAttribute("src");
             if (is && is.indexOf("./assets/") === 0) el.src = fn(is);
         });
+        var hero = document.getElementById("home-hero-video");
+        if (hero) {
+            try {
+                hero.load();
+            } catch (e) {
+                void e;
+            }
+        }
     }
+    run();
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run);
-    else run();
 })();
 
 /** Bandeja única de contacto: formularios, mailto y notificaciones deben apuntar aquí salvo excepción documentada. */

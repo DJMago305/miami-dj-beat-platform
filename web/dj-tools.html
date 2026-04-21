@@ -218,8 +218,8 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./supabase-config.js?v=20260411-7"></script>
-    <script src="./translations.js?v=20260420-section-h2-eventos-venues"></script>
+    <script src="./supabase-config.js?v=20260421-storage-reels-fix"></script>
+    <script src="./translations.js?v=20260421-nav-tier-matrix"></script>
     <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
     <script src="./auth.js?v=20260414-MAC-DESKTOP-SYNC"></script>
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
@@ -256,7 +256,7 @@
 
 
     <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script src="./mdj-shared-header.js?v=20260420-log-sweep"></script>
+    <script src="./mdj-shared-header.js?v=20260421-nav-tier-matrix"></script>
     <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
     <script src="./mdj-profile-nav-context.js?v=20260418-owner-nav-parity"></script>
   <script src="./mdj-social-bar.js?v=20260414-MAC-DESKTOP-SYNC"></script>
@@ -270,12 +270,41 @@
             await window.checkSessionForNav();
           }
         } catch (e0) { /* ignore */ }
-        if (window.__mdjLastNavIsClient === true) {
+        var tier = window.__mdjLastNavTier;
+        var unlocked = window.__mdjProToolsUnlocked === true;
+        if (unlocked) {
+          gate.style.display = 'none';
+          body.style.display = '';
+          return;
+        }
+        if (tier === 'client_only' || tier === 'artist_lite') {
           gate.style.display = 'flex';
           body.style.display = 'none';
+          var gateTitle = gate.querySelector('h2');
+          var gateBody = gate.querySelector('p');
+          var gateCta = gate.querySelector('a.btn.primary');
+          var gatePortal = gate.querySelector('a.btn:not(.primary)');
+          if (tier === 'artist_lite' && gateTitle && gateBody && gateCta && gatePortal) {
+            gateTitle.setAttribute('data-i18n', 'nav-tools-lite-gate-title');
+            gateBody.setAttribute('data-i18n', 'nav-tools-lite-gate-body');
+            gateCta.setAttribute('data-i18n', 'nav-tools-lite-gate-cta');
+            gatePortal.setAttribute('data-i18n', 'nav-tools-lite-gate-portal');
+            gateCta.setAttribute('href', './jobs.html#selection-screen');
+            gatePortal.setAttribute('href', './client-portal.html');
+          } else if (tier === 'client_only' && gateTitle && gateBody && gateCta && gatePortal) {
+            gateTitle.setAttribute('data-i18n', 'nav-tools-client-gate-title');
+            gateBody.setAttribute('data-i18n', 'nav-tools-client-gate-body');
+            gateCta.setAttribute('data-i18n', 'nav-tools-client-gate-cta');
+            gatePortal.setAttribute('data-i18n', 'nav-tools-client-gate-portal');
+            gateCta.setAttribute('href', './login.html?signup=free&redirect=jobs');
+            gatePortal.setAttribute('href', './client-portal.html');
+          }
           if (window.i18n && typeof window.i18n.updateUI === 'function') {
             window.i18n.updateUI();
           }
+        } else {
+          gate.style.display = 'none';
+          body.style.display = '';
         }
       });
     </script>

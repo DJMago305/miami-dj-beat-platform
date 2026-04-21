@@ -55,7 +55,7 @@
     </p>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./supabase-config.js?v=20260417-quick-inv"></script>
+  <script src="./supabase-config.js?v=20260421-storage-reels-fix"></script>
   <script>
     (function () {
       var PASS = 'MDJB_GUEST_2026';
@@ -126,7 +126,15 @@
           return;
         }
         var id = insRes.data.id;
-        var resp = await fetch('https://hkuvuqupbxwkiykxvqdr.supabase.co/functions/v1/create-event-payment', {
+        var payFn =
+          typeof window.mdbSupabaseFunctionUrl === 'function'
+            ? window.mdbSupabaseFunctionUrl('create-event-payment')
+            : '';
+        if (!payFn) {
+          st.textContent = 'Supabase function URL missing.';
+          return;
+        }
+        var resp = await fetch(payFn, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

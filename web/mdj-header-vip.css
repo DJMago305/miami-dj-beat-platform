@@ -293,11 +293,12 @@ a.mdj-account-vip-trigger.mdj-account-vip-direct {
   line-height: 1.2;
 }
 
-/* ── Menú desplegable ───────────────────────────────────────────────────── */
+/* ── Menú desplegable (viewport: mdj-shared-header.js fija top/right al abrir) ── */
 .mdj-account-dropdown {
-  position: absolute;
-  top: calc(100% + 10px);
+  position: fixed;
+  top: 0;
   right: 0;
+  left: auto;
   min-width: 220px;
   padding: 8px;
   margin: 0;
@@ -308,19 +309,16 @@ a.mdj-account-vip-trigger.mdj-account-vip-direct {
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  z-index: 10050;
+  z-index: 5000;
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-6px) scale(0.98);
-  transform-origin: top right;
-  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+  transition: opacity 0.18s ease, visibility 0.18s;
   pointer-events: none;
 }
 
 .mdj-account-dropdown.open {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0) scale(1);
   pointer-events: auto;
 }
 
@@ -366,7 +364,66 @@ body.mdj-logged-in-header #mainHeader.header {
   z-index: 2980 !important;
 }
 
-/* Evita stacking absurdo; el orden lo resuelve #mainHeader + .mdj-account-dropdown */
-body.mdj-logged-in-header #header-auth-zone {
-  z-index: auto;
+/*
+ * Franja superior por encima de .header-bottom (styles.css le da z-index:101): el dropdown del avatar
+ * cae en la zona de #mainNav y sin esto queda tapado por la segunda franja.
+ */
+#mainHeader .header-top {
+  position: relative;
+  z-index: 110;
+}
+
+/* Panel artista — #mainNav (después de Mi portal) */
+#mainHeader #mainNav.nav.top-nav a#mainNav-artist-dashboard-link.mdj-artist-dash-mainnav {
+  border: none !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+  min-width: max-content !important;
+  font-size: clamp(12px, 0.95vw, 14px);
+}
+#mainHeader #mainNav.nav.top-nav a#mainNav-artist-dashboard-link.mdj-artist-dash-mainnav:hover {
+  color: var(--gold) !important;
+  text-shadow: 0 0 14px rgba(197, 160, 89, 0.35);
+}
+
+#mainHeader #mobileMenu .mobile-nav a#header-artist-dashboard-mobile {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 13px;
+  padding: 6px 0;
+}
+
+/* Matriz de estatus: Comprador / Talento / Dueño */
+#mainHeader .header-tier-status-badge {
+  align-items: center;
+  max-width: min(200px, 28vw);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(197, 160, 89, 0.25);
+  line-height: 1.2;
+  flex-shrink: 1;
+}
+
+@media (max-width: 900px) {
+  #mainHeader .header-tier-status-badge {
+    display: none !important;
+  }
 }

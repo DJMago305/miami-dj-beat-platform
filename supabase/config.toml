@@ -385,6 +385,10 @@ verify_jwt = false
 [functions.settle-sft-manual-platform-fee]
 verify_jwt = true
 
+# Welcome email after signup (Resend; caller = end-user session)
+[functions.send-subscription-welcome]
+verify_jwt = true
+
 # Post-login security email (caller = end-user session)
 [functions.notify-new-device-login]
 verify_jwt = true

@@ -2922,6 +2922,7 @@
             var r = session.user.app_metadata && session.user.app_metadata.role;
             if (!r && session.user.user_metadata) r = session.user.user_metadata.user_type;
             if (!r) r = 'client';
+            r = String(r).toLowerCase();
             if (r === 'talent' || r === 'dj') r = 'artist';
             return r;
         }
@@ -3072,7 +3073,7 @@
                     var role = getSessionAccountRole(session);
                     if (role === 'client') {
                         key = 'jobs-after-roles-cta-client-account';
-                    } else if (role === 'admin' || role === 'manager') {
+                    } else if (role === 'admin' || role === 'manager' || role === 'seller') {
                         key = 'jobs-after-roles-cta-staff-panel';
                     } else {
                         const { data: p } = await supabase
@@ -5091,7 +5092,7 @@
     <script src="./auth.js?v=20260418-role-talent-over-client"></script>
 
     <script src="./header-smart-search.js?v=20260418-PURGE-SEAL"></script>
-    <script src="./mdj-shared-header.js?v=20260419-jobs-header-dj-row"></script>
+    <script src="./mdj-shared-header.js?v=20260421-nav-tier-matrix"></script>
     <script src="./mdj-owner-tabs-marquee.js?v=20260418-PURGE-SEAL"></script>
     <script src="./mdj-profile-nav-context.js?v=20260418-PURGE-SEAL"></script>
   <script src="./mdj-social-bar.js?v=20260418-PURGE-SEAL"></script>

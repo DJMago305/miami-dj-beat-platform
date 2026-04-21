@@ -3420,7 +3420,7 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./supabase-config.js?v=20260226-1"></script>
+    <script src="./supabase-config.js?v=20260421-storage-reels-fix"></script>
     <script src="./translations.js?v=20260420-section-h2-eventos-venues"></script>
     <script src="./i18n.js?v=20260226-1"></script>
     <script>
@@ -3482,12 +3482,16 @@
                 btn.style.pointerEvents = 'none';
                 btn.style.opacity = '0.88';
                 try {
-                    const base = (window.MDB_SUPABASE_URL || 'https://hkuvuqupbxwkiykxvqdr.supabase.co').replace(/\/$/, '');
+                    const fnCourse =
+                        typeof window.mdbSupabaseFunctionUrl === 'function'
+                            ? window.mdbSupabaseFunctionUrl('create-course-checkout')
+                            : '';
+                    if (!fnCourse) throw new Error('Checkout no disponible');
                     const successUrl = new URL('courses.html', window.location.href);
                     successUrl.searchParams.set('course_payment', 'success');
                     const cancelUrl = new URL('courses.html', window.location.href);
                     cancelUrl.searchParams.set('course_payment', 'cancelled');
-                    const res = await fetch(base + '/functions/v1/create-course-checkout', {
+                    const res = await fetch(fnCourse, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -3546,7 +3550,7 @@
 
 
     <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script src="./mdj-shared-header.js?v=20260420-log-sweep"></script>
+    <script src="./mdj-shared-header.js?v=20260421-nav-tier-matrix"></script>
   <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
   <script src="./mdj-social-bar.js?v=20260414-MAC-DESKTOP-SYNC"></script>
 </body>

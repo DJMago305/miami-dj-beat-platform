@@ -122,37 +122,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
 
-            // ── 3. Notify manager via Edge Function (DEPRECATED: handled by DB trigger) ─
-            /*
-            if (leadId) {
-                try {
-                    const projectUrl = window.MDB_SUPABASE_URL || '';
-                    if (projectUrl) {
-                        fetch(`${projectUrl}/functions/v1/notify-new-lead`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'apikey': window.MDB_SUPABASE_ANON_KEY || '',
-                                'Authorization': `Bearer ${window.MDB_SUPABASE_ANON_KEY || ''}`,
-                            },
-                            body: JSON.stringify({
-                                lead_id: leadId,
-                                event_type: formData.event_type || '—',
-                                event_date: formData.event_date || '—',
-                                location: formData.location || '—',
-                                email: formData.email || '—',
-                                phone: formData.phone || '—',
-                                budget: formData.budget || '—',
-                            }),
-                        }).catch(err => console.warn('Lead notification skipped:', err));
-                    }
-                } catch (notifyErr) {
-                    console.warn('Lead notification error:', notifyErr);
-                }
-            }
-            */
-
-            // ── 4. UX: show success / error ───────────────────────────
+            // ── 3. UX: show success / error ───────────────────────────
             if (!dbError || leadId || formspreeOk) {
                 // Success — NO reset: datos visibles + sessionStorage para signup
                 const eventType = formData.event_type || 'Other';

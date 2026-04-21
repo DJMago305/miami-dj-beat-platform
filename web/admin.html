@@ -145,10 +145,12 @@
 
     </main>
 
+    <script src="./supabase-config.js?v=20260421-storage-reels-fix"></script>
     <script>
         const OUT = document.getElementById("out");
         const GOV = document.getElementById("govOut");
-        const FN_URL = "https://hkuvuqupbxwkiykxvqdr.supabase.co/functions/v1/admin-update";
+        const FN_URL =
+            typeof window.mdbSupabaseFunctionUrl === "function" ? window.mdbSupabaseFunctionUrl("admin-update") : "";
 
         function escapeHtml(s) {
             return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
@@ -165,6 +167,10 @@
         }
         async function callFn(payload, outEl) {
             try {
+                if (!FN_URL) {
+                    showOut(outEl, { ok: false, error: "Supabase admin-update URL missing (load supabase-config.js)." });
+                    return;
+                }
                 const r = await fetch(FN_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },

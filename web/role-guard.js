@@ -17,6 +17,7 @@
         artist: './dj-profile.html',
         admin: './admin-dashboard.html',
         manager: './admin-dashboard.html',
+        seller: './admin-dashboard.html',
         client: './client-portal.html',
     };
 

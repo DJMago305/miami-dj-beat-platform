@@ -489,6 +489,122 @@
             color: rgba(255, 255, 255, 0.78);
         }
 
+        /* Selector Gratis / PRO — estilo apps tipo Meta (tarjetas claras, una elección) */
+        .mdj-signup-plan-section {
+            margin: 0 0 22px;
+        }
+        .mdj-signup-plan-section.is-hidden {
+            display: none !important;
+        }
+        .mdj-signup-plan-headline {
+            margin: 0 0 12px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.48);
+        }
+        .mdj-signup-plan-grid {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .mdj-signup-plan-card {
+            flex: 1;
+            min-width: min(100%, 168px);
+            margin: 0;
+            padding: 14px 14px 16px;
+            box-sizing: border-box;
+            cursor: pointer;
+            text-align: left;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(8, 12, 22, 0.65);
+            color: inherit;
+            font: inherit;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+        .mdj-signup-plan-card:hover {
+            border-color: rgba(197, 160, 89, 0.45);
+            background: rgba(12, 18, 30, 0.85);
+        }
+        .mdj-signup-plan-card.is-selected {
+            border-color: rgba(197, 160, 89, 0.85);
+            box-shadow: 0 0 0 1px rgba(197, 160, 89, 0.25) inset, 0 8px 28px rgba(0, 0, 0, 0.35);
+        }
+        .mdj-signup-plan-card:focus-visible {
+            outline: 2px solid rgba(197, 160, 89, 0.75);
+            outline-offset: 2px;
+        }
+        .mdj-signup-plan-eyebrow {
+            display: block;
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: rgba(197, 160, 89, 0.85);
+            margin-bottom: 6px;
+        }
+        .mdj-signup-plan-title {
+            display: block;
+            font-size: 1.05rem;
+            font-weight: 900;
+            color: #fff;
+            margin-bottom: 6px;
+            letter-spacing: 0.02em;
+        }
+        .mdj-signup-plan-desc {
+            display: block;
+            font-size: 11px;
+            line-height: 1.45;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.58);
+        }
+        .mdj-signup-plan-client {
+            margin: 12px 0 0;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.45);
+        }
+        .mdj-signup-plan-client button {
+            display: inline;
+            margin: 0;
+            padding: 0;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 800;
+            color: rgba(140, 190, 255, 0.95);
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+        .mdj-signup-plan-client button:hover {
+            color: #fff;
+        }
+        .mdj-signup-plan-back-artist {
+            display: none;
+            margin: 0 0 14px;
+            text-align: center;
+            font-size: 12px;
+        }
+        .mdj-signup-plan-back-artist.is-visible {
+            display: block;
+        }
+        .mdj-signup-plan-back-artist button {
+            border: none;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--gold);
+            font-weight: 800;
+            font-size: 12px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            cursor: pointer;
+            border: 1px solid rgba(197, 160, 89, 0.35);
+        }
+
         @media (max-width: 400px) {
             .auth-tab {
                 font-size: 10px;
@@ -630,8 +746,31 @@
 
             <!-- Signup Form -->
             <form id="signup-form" class="form hidden">
-                <input type="hidden" id="signup-usertype" name="user_type" value="client">
+                <input type="hidden" id="signup-usertype" name="user_type" value="talent">
+                <input type="hidden" id="signup-plan-intent" name="plan_intent" value="lite" />
                 <p id="login-signup-jobs-context" class="login-signup-context-hint" data-i18n="login-signup-jobs-same-email-context" role="note" style="display: none;">One email means one Miami DJ Beat login. Your client and artist profiles can share that same email.</p>
+                <div id="mdj-signup-plan-section" class="mdj-signup-plan-section">
+                    <p class="mdj-signup-plan-headline" data-i18n="signup-plan-headline">Create account</p>
+                    <div class="mdj-signup-plan-grid" role="group" aria-label="Plan">
+                        <button type="button" class="mdj-signup-plan-card is-selected" id="mdj-plan-lite" data-mdj-plan="lite"
+                            aria-pressed="true">
+                            <span class="mdj-signup-plan-eyebrow" data-i18n="signup-plan-eyebrow-artist">Artists</span>
+                            <span class="mdj-signup-plan-title" data-i18n="signup-plan-lite-title">Free · LITE</span>
+                            <span class="mdj-signup-plan-desc" data-i18n="signup-plan-lite-desc">Account here; continue on Jobs. No payment on this screen.</span>
+                        </button>
+                        <button type="button" class="mdj-signup-plan-card" id="mdj-plan-pro" data-mdj-plan="pro" aria-pressed="false">
+                            <span class="mdj-signup-plan-eyebrow" data-i18n="signup-plan-eyebrow-artist">Artists</span>
+                            <span class="mdj-signup-plan-title" data-i18n="signup-plan-pro-title">PRO</span>
+                            <span class="mdj-signup-plan-desc" data-i18n="signup-plan-pro-desc">Register here; pay and choose billing on Jobs (Stripe).</span>
+                        </button>
+                    </div>
+                    <p class="mdj-signup-plan-client">
+                        <button type="button" id="mdj-signup-client-only" data-i18n="signup-plan-client-link">I only need a client account (book services)</button>
+                    </p>
+                </div>
+                <p id="mdj-signup-plan-back-artist" class="mdj-signup-plan-back-artist" aria-live="polite">
+                    <button type="button" id="mdj-signup-back-artist" data-i18n="signup-plan-back-artist">← Artist signup (LITE / PRO)</button>
+                </p>
                 <label><span data-i18n="login-signup-name-label">Nombre artístico o nombre de usuario (opcional)</span><small
                         class="login-field-hint"
                         data-i18n="login-signup-name-hint">Opcional. Puedes iniciar sesión con este nombre además del
@@ -718,10 +857,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=20260421-storage-reels-fix"></script>
-    <script src="./translations.js?v=20260419-signup-consumer-pattern"></script>
+    <script src="./translations.js?v=20260421-signup-plan-i18n"></script>
     <script src="./i18n.js?v=20260418-login-i18n"></script>
     <script src="./security-shield.js?v=20260305-1"></script>
-    <script src="./auth.js?v=20260419-jobs-dj-role-fallback"></script>
+    <script src="./auth.js?v=20260422-login-session-redirect"></script>
 
     <script>
         (function syncReferralFromUrl() {
@@ -751,13 +890,37 @@
             } catch (e) { void e; }
         }
 
+        /** Carteles PRO/Jobs: solo si no hay sesión (fuera de cuenta). Con JWT activo no deben mostrarse. */
+        function mdjHideLoginPlanFlowBanners() {
+            try {
+                var wrap = document.getElementById('login-plan-flow-banners-wrap');
+                var bPro = document.getElementById('login-banner-pro');
+                var bJobs = document.getElementById('login-banner-jobs');
+                if (wrap) wrap.classList.add('hidden');
+                if (bPro) bPro.hidden = true;
+                if (bJobs) bJobs.hidden = true;
+            } catch (e) { void e; }
+        }
+
         /** Muestra franja si ?plan=pro o flujo Jobs (?redirect=jobs / signup=free): el periodo y Stripe van en jobs.html. */
-        function updateLoginPlanFlowBanner() {
+        async function updateLoginPlanFlowBanner() {
             try {
                 var wrap = document.getElementById('login-plan-flow-banners-wrap');
                 var bPro = document.getElementById('login-banner-pro');
                 var bJobs = document.getElementById('login-banner-jobs');
                 if (!wrap || !bPro || !bJobs) return;
+                try {
+                    var db = window.getSupabaseClient && window.getSupabaseClient();
+                    if (db) {
+                        var res = await db.auth.getSession();
+                        var sess = res && res.data && res.data.session;
+                        if (sess && sess.user) {
+                            mdjHideLoginPlanFlowBanners();
+                            return;
+                        }
+                    }
+                } catch (eSess) { void eSess; }
+
                 var p = new URLSearchParams(window.location.search);
                 var planPro = (p.get('plan') || '').toLowerCase() === 'pro';
                 var redirectJobs = p.get('redirect') === 'jobs';
@@ -788,18 +951,29 @@
 
         (function initLoginPlanFlowBannerOnLoad() {
             function go() {
-                updateLoginPlanFlowBanner();
+                void updateLoginPlanFlowBanner();
             }
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
             else go();
         })();
+
+        (function wireLoginPlanBannerToAuth(attempt) {
+            var db = window.getSupabaseClient && window.getSupabaseClient();
+            if (!db) {
+                if (attempt < 15) setTimeout(function () { wireLoginPlanBannerToAuth(attempt + 1); }, 200);
+                return;
+            }
+            db.auth.onAuthStateChange(function () {
+                void updateLoginPlanFlowBanner();
+            });
+        })(0);
 
         // ── Tab switchers ─────────────────────────────────────────
         tabLogin.onclick = () => {
             tabLogin.classList.add('active'); tabSignup.classList.remove('active');
             loginForm.classList.remove('hidden'); signupForm.classList.add('hidden');
             updateLoginJobsContextHint();
-            updateLoginPlanFlowBanner();
+            void updateLoginPlanFlowBanner();
         };
         /** Misma regla que al cargar la página: tipo de cuenta + campos de artista según URL (user_type, redirect, signup). */
         function applySignupUserTypeFromUrl() {
@@ -815,13 +989,23 @@
                     void e0;
                 }
                 var hasJobsRoster = roster && Array.isArray(roster.codes) && roster.codes.length > 0;
-                var userType =
-                    explicitUserType ||
-                    (redirect === 'jobs' || signupParam === 'free' || hasJobsRoster ? 'talent' : 'client');
-                if (explicitUserType === 'client' && (redirect === 'jobs' || hasJobsRoster)) {
-                    userType = 'talent';
+                var fromHiddenEarlyEl = document.getElementById('signup-usertype');
+                var fromHiddenEarly = fromHiddenEarlyEl
+                    ? String(fromHiddenEarlyEl.value || 'talent').toLowerCase()
+                    : 'talent';
+                var accountClientUrl = (p.get('account') || '').toLowerCase() === 'client';
+                var userType;
+                if (accountClientUrl) {
+                    userType = 'client';
+                } else {
+                    userType =
+                        explicitUserType ||
+                        (redirect === 'jobs' || signupParam === 'free' || hasJobsRoster ? 'talent' : fromHiddenEarly);
+                    if (explicitUserType === 'client' && (redirect === 'jobs' || hasJobsRoster)) {
+                        userType = 'talent';
+                    }
                 }
-                if (explicitUserType === 'talent' || explicitUserType === 'artist' || explicitUserType === 'dj') {
+                if (!accountClientUrl && (explicitUserType === 'talent' || explicitUserType === 'artist' || explicitUserType === 'dj')) {
                     userType = 'talent';
                 }
                 var su = document.getElementById('signup-usertype');
@@ -850,16 +1034,119 @@
                 });
                 if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
                 updateLoginJobsContextHint();
-                updateLoginPlanFlowBanner();
+                void updateLoginPlanFlowBanner();
+                syncSignupPlanUiFromState();
             } catch (e) { void e; }
         }
+
+        function mdjSetSignupPlanCards(liteOn, proOn) {
+            var a = document.getElementById('mdj-plan-lite');
+            var b = document.getElementById('mdj-plan-pro');
+            if (a) {
+                a.classList.toggle('is-selected', !!liteOn);
+                a.setAttribute('aria-pressed', liteOn ? 'true' : 'false');
+            }
+            if (b) {
+                b.classList.toggle('is-selected', !!proOn);
+                b.setAttribute('aria-pressed', proOn ? 'true' : 'false');
+            }
+        }
+
+        function syncSignupPlanUiFromState() {
+            try {
+                var su = document.getElementById('signup-usertype');
+                var pi = document.getElementById('signup-plan-intent');
+                var sec = document.getElementById('mdj-signup-plan-section');
+                var back = document.getElementById('mdj-signup-plan-back-artist');
+                var pq = new URLSearchParams(window.location.search);
+                if (!su || !pi || !sec) return;
+                if (String(su.value || '').toLowerCase() === 'client') {
+                    sec.classList.add('is-hidden');
+                    if (back) back.classList.add('is-visible');
+                    mdjSetSignupPlanCards(false, false);
+                    return;
+                }
+                sec.classList.remove('is-hidden');
+                if (back) back.classList.remove('is-visible');
+                var wantPro =
+                    (pq.get('plan') || '').toLowerCase() === 'pro' || String(pi.value || '').toLowerCase() === 'pro';
+                pi.value = wantPro ? 'pro' : 'lite';
+                mdjSetSignupPlanCards(!wantPro, wantPro);
+            } catch (e) { void e; }
+        }
+
+        function mdjSelectArtistPlan(mode, skipUrl) {
+            try {
+                var su = document.getElementById('signup-usertype');
+                var pi = document.getElementById('signup-plan-intent');
+                if (su) su.value = 'talent';
+                if (pi) pi.value = mode === 'pro' ? 'pro' : 'lite';
+                if (!skipUrl) {
+                    var u = new URL(window.location.href);
+                    u.searchParams.set('signup', 'free');
+                    u.searchParams.set('redirect', 'jobs');
+                    u.searchParams.delete('account');
+                    if (mode === 'pro') u.searchParams.set('plan', 'pro');
+                    else u.searchParams.delete('plan');
+                    history.replaceState(null, '', u.pathname + u.search + u.hash);
+                }
+                applySignupUserTypeFromUrl();
+            } catch (e) { void e; }
+        }
+
+        function mdjApplySignupClientOnly() {
+            try {
+                var su = document.getElementById('signup-usertype');
+                var pi = document.getElementById('signup-plan-intent');
+                if (su) su.value = 'client';
+                if (pi) pi.value = 'na';
+                var u = new URL(window.location.href);
+                u.searchParams.set('account', 'client');
+                u.searchParams.delete('plan');
+                u.searchParams.delete('redirect');
+                u.searchParams.delete('signup');
+                history.replaceState(null, '', u.pathname + u.search + u.hash);
+                applySignupUserTypeFromUrl();
+            } catch (e) { void e; }
+        }
+
+        (function bindSignupPlanPicker() {
+            function go() {
+                var lite = document.getElementById('mdj-plan-lite');
+                var pro = document.getElementById('mdj-plan-pro');
+                var clientBtn = document.getElementById('mdj-signup-client-only');
+                var back = document.getElementById('mdj-signup-back-artist');
+                if (lite) {
+                    lite.addEventListener('click', function () {
+                        mdjSelectArtistPlan('lite', false);
+                    });
+                }
+                if (pro) {
+                    pro.addEventListener('click', function () {
+                        mdjSelectArtistPlan('pro', false);
+                    });
+                }
+                if (clientBtn) {
+                    clientBtn.addEventListener('click', function () {
+                        mdjApplySignupClientOnly();
+                    });
+                }
+                if (back) {
+                    back.addEventListener('click', function () {
+                        mdjSelectArtistPlan('lite', false);
+                    });
+                }
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
+            else go();
+        })();
 
         tabSignup.onclick = () => {
             tabSignup.classList.add('active'); tabLogin.classList.remove('active');
             signupForm.classList.remove('hidden'); loginForm.classList.add('hidden');
             applySignupUserTypeFromUrl();
             applyContactLeadPrefill();
-            updateLoginPlanFlowBanner();
+            void updateLoginPlanFlowBanner();
         };
 
         /** Desde la pestaña Entrar: pasar a «Crear cuenta» sin recargar; reflejar signup=free en la URL y recalcular tipo (equivalente a enlace directo al alta). */
@@ -1056,6 +1343,30 @@
                 if (event === 'SIGNED_IN' && session) goPostAuth(session);
             });
         })(0);
+
+        /**
+         * Cabecera puede mostrar sesión mientras el cuerpo sigue en ENTRAR: login.html no usa role-guard.
+         * Solo INITIAL_SESSION (JWT ya en storage al cargar), no SIGNED_IN — si no, el alta dispararía
+         * redirect antes del INSERT en client_profiles/dj_profiles.
+         * ?stay=1 — quedarse (p. ej. otra cuenta: cerrar sesión antes o ventana privada).
+         */
+        (function loginPageLeaveWhenAuthed(attempt) {
+            try {
+                var q = new URLSearchParams(window.location.search);
+                if (q.get('stay') === '1') return;
+            } catch (eStay) { void eStay; }
+            var db = window.getSupabaseClient && window.getSupabaseClient();
+            if (!db) {
+                if (attempt < 15) setTimeout(function () { loginPageLeaveWhenAuthed(attempt + 1); }, 200);
+                return;
+            }
+            if (typeof window.mdjPerformPostAuthRedirect !== 'function') return;
+            db.auth.onAuthStateChange(function (event, session) {
+                if (event !== 'INITIAL_SESSION') return;
+                if (!session || !session.user) return;
+                void window.mdjPerformPostAuthRedirect(db, session.user);
+            });
+        })(0);
     </script>
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
@@ -1090,7 +1401,7 @@
     </div>
 
     <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script src="./mdj-shared-header.js?v=20260419-jobs-header-dj-row"></script>
+    <script src="./mdj-shared-header.js?v=20260421-nav-tier-matrix"></script>
   <script src="./mdj-social-bar.js?v=20260414-MAC-DESKTOP-SYNC"></script>
 </body>
 
