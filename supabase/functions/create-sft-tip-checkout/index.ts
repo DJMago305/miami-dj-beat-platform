@@ -181,6 +181,7 @@ serve(async (req) => {
 
   const checkoutParams: Record<string, string> = {
     mode: "payment",
+    billing_address_collection: "auto",
     "line_items[0][price_data][currency]": "usd",
     "line_items[0][price_data][unit_amount]": String(amountCents),
     "line_items[0][price_data][product_data][name]": "SoundForTips™ tip",

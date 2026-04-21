@@ -2817,7 +2817,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./subscription.js?v=20260418-PURGE-SEAL"></script>
-    <script src="./supabase-config.js?v=20260419-SUPABASE-ASSETS"></script>
+    <script src="./supabase-config.js?v=20260421-storage-reels-fix"></script>
     <script>
         (function () {
             var el = document.getElementById("hero-video");
@@ -3930,9 +3930,10 @@
                 const refCode = (document.getElementById('referral-code-input')?.value || '').trim().toUpperCase();
                 const returnUrl = new URL('jobs.html', window.location.origin + '/');
                 returnUrl.searchParams.set('stripe_return', '1');
-                const res = await fetch(
-                    `${(window.MDB_SUPABASE_URL || 'https://hkuvuqupbxwkiykxvqdr.supabase.co').replace(/\/$/, '')}/functions/v1/create-checkout`,
-                    {
+                const checkoutFn =
+                    typeof window.mdbSupabaseFunctionUrl === 'function' ? window.mdbSupabaseFunctionUrl('create-checkout') : '';
+                if (!checkoutFn) throw new Error('Supabase no configurado (create-checkout).');
+                const res = await fetch(checkoutFn, {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${session.access_token}`,
@@ -4926,21 +4927,23 @@
                             const refCode = (document.getElementById('referral-code-input')?.value || '').trim().toUpperCase();
                             const returnUrl = new URL('jobs.html', window.location.origin + '/');
                             returnUrl.searchParams.set('stripe_return', '1');
-                            const res = await fetch(
-                                `${(window.MDB_SUPABASE_URL || 'https://hkuvuqupbxwkiykxvqdr.supabase.co').replace(/\/$/, '')}/functions/v1/create-checkout`,
-                                {
-                                    method: 'POST',
-                                    headers: {
-                                        'Authorization': `Bearer ${authSession.access_token}`,
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        billing,
-                                        ref: refCode,
-                                        successUrl: returnUrl.href
-                                    })
-                                }
-                            );
+                            const checkoutFn2 =
+                                typeof window.mdbSupabaseFunctionUrl === 'function'
+                                    ? window.mdbSupabaseFunctionUrl('create-checkout')
+                                    : '';
+                            if (!checkoutFn2) throw new Error('Supabase no configurado (create-checkout).');
+                            const res = await fetch(checkoutFn2, {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `Bearer ${authSession.access_token}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    billing,
+                                    ref: refCode,
+                                    successUrl: returnUrl.href
+                                })
+                            });
                             var payload;
                             try {
                                 payload = await res.json();
@@ -5088,7 +5091,7 @@
     <script src="./auth.js?v=20260418-role-talent-over-client"></script>
 
     <script src="./header-smart-search.js?v=20260418-PURGE-SEAL"></script>
-    <script src="./mdj-shared-header.js?v=20260420-log-sweep"></script>
+    <script src="./mdj-shared-header.js?v=20260419-jobs-header-dj-row"></script>
     <script src="./mdj-owner-tabs-marquee.js?v=20260418-PURGE-SEAL"></script>
     <script src="./mdj-profile-nav-context.js?v=20260418-PURGE-SEAL"></script>
   <script src="./mdj-social-bar.js?v=20260418-PURGE-SEAL"></script>

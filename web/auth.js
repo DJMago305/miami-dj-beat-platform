@@ -125,7 +125,10 @@ async function mdjPostLoginDeviceRoutine(db, session) {
 
         var ipPublic = await mdjGetPublicIpHint();
 
-        var url = base + '/functions/v1/notify-new-device-login';
+        var url =
+            typeof window.mdbSupabaseFunctionUrl === 'function'
+                ? window.mdbSupabaseFunctionUrl('notify-new-device-login')
+                : base + '/functions/v1/notify-new-device-login';
         await fetch(url, {
             method: 'POST',
             headers: {
@@ -486,7 +489,19 @@ document.addEventListener('DOMContentLoaded', () => {
     /** Misma lógica que el submit de login: interior del sistema o redirect=party-planner, etc. */
     async function performPostAuthRedirect(db, user) {
         const params = new URLSearchParams(window.location.search);
-        const rawRole = mdjResolveEffectiveUserRole(user);
+        let rawRole = mdjResolveEffectiveUserRole(user);
+        /* Si el JWT aún dice «client» pero ya existe dj_profiles (alta talento/Jobs), el perfil en BD manda. */
+        if (rawRole === 'client' && db) {
+            try {
+                const { data: djRow } = await db.from('dj_profiles').select('role').eq('user_id', user.id).maybeSingle();
+                const r = djRow ? String(djRow.role || '').toLowerCase() : '';
+                if (djRow && r !== 'client') {
+                    rawRole = 'talent';
+                }
+            } catch (eDbRole) {
+                console.warn('[AUTH] dj_profiles role fallback:', eDbRole);
+            }
+        }
         const role = (rawRole === 'talent' || rawRole === 'dj') ? 'artist' : rawRole;
 
         let targetUrl = './dj-profile.html';
@@ -597,7 +612,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const { data: authData, error } = await db.auth.signInWithPassword({ email, password });
                 if (error) throw error;
 
-                const user = authData.user;
+                let user = authData.user;
+                try {
+                    await db.auth.refreshSession();
+                    const { data: sessFresh } = await db.auth.getSession();
+                    if (sessFresh && sessFresh.session && sessFresh.session.user) {
+                        user = sessFresh.session.user;
+                    }
+                } catch (eRf) {
+                    void eRf;
+                }
 
                 // ── SHIELD VERIFICATION NEUTRALIZED PER USER DIRECTIVE ──────────────────
                 /*
@@ -772,15 +796,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         )
                     );
                 }
-                if (resolvedUserType === 'talent' && (!addrStreet || !addrCity || !addrState || !addrZip || !addrCountry)) {
-                    throw new Error(
-                        mdjAuthT(
-                            'auth-signup-address-required-talent',
-                            'Completa calle, ciudad, estado, código postal y país para talento.',
-                            'Street, city, state, ZIP/postal code, and country are required for talent signups.'
-                        )
-                    );
-                }
+                /* Dirección postal: no bloquea el alta (mismo criterio que Apple/Meta/Instagram: cuenta primero; dirección en Ajustes). */
 
                 // 1. Create Auth user — talento si viene de Jobs, alta gratis, o eligió categorías en el carrusel (sessionStorage).
                 const userType = resolvedUserType;

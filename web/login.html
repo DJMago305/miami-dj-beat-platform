@@ -717,11 +717,11 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./supabase-config.js?v=20260226-1"></script>
-    <script src="./translations.js?v=20260420-section-h2-eventos-venues"></script>
+    <script src="./supabase-config.js?v=20260421-storage-reels-fix"></script>
+    <script src="./translations.js?v=20260419-signup-consumer-pattern"></script>
     <script src="./i18n.js?v=20260418-login-i18n"></script>
     <script src="./security-shield.js?v=20260305-1"></script>
-    <script src="./auth.js?v=20260418-role-talent-over-client"></script>
+    <script src="./auth.js?v=20260419-jobs-dj-role-fallback"></script>
 
     <script>
         (function syncReferralFromUrl() {
@@ -833,24 +833,21 @@
                 var phIn = document.getElementById('signup-phone');
                 var labT = document.getElementById('signup-phone-label-talent');
                 var labC = document.getElementById('signup-phone-label-client');
-                var addrReqIds = ['signup-address-line1', 'signup-address-city', 'signup-address-state', 'signup-address-zip', 'signup-address-country'];
+                var addrOptionalIds = ['signup-address-line1', 'signup-address-city', 'signup-address-state', 'signup-address-zip', 'signup-address-country'];
                 if (userType === 'talent') {
                     if (labT) labT.classList.remove('hidden');
                     if (labC) labC.classList.add('hidden');
                     if (phIn) phIn.setAttribute('required', 'required');
-                    addrReqIds.forEach(function (id) {
-                        var el = document.getElementById(id);
-                        if (el) el.setAttribute('required', 'required');
-                    });
                 } else {
                     if (labT) labT.classList.add('hidden');
                     if (labC) labC.classList.remove('hidden');
                     if (phIn) phIn.removeAttribute('required');
-                    addrReqIds.forEach(function (id) {
-                        var el = document.getElementById(id);
-                        if (el) el.removeAttribute('required');
-                    });
                 }
+                /* Dirección: nunca required en HTML5 — el alta no debe depender de calle/depto (patrón consumer estándar). */
+                addrOptionalIds.forEach(function (id) {
+                    var el = document.getElementById(id);
+                    if (el) el.removeAttribute('required');
+                });
                 if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
                 updateLoginJobsContextHint();
                 updateLoginPlanFlowBanner();
@@ -1093,7 +1090,7 @@
     </div>
 
     <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script src="./mdj-shared-header.js?v=20260420-log-sweep"></script>
+    <script src="./mdj-shared-header.js?v=20260419-jobs-header-dj-row"></script>
   <script src="./mdj-social-bar.js?v=20260414-MAC-DESKTOP-SYNC"></script>
 </body>
 
