@@ -763,14 +763,15 @@
     var hash = (location.hash || '').replace(/^#/, '').toLowerCase();
     var key = '';
     if (path === 'index.html' || path === '') {
-      if (hash === 'services') key = 'services';
+      if (hash === 'venues' || hash === 'experience' || hash === 'eventos' || hash === 'patrocinadores' || hash === 'sponsors') key = 'venues';
+      else if (hash === 'services') key = 'services';
       else if (hash === 'contact') key = 'contact';
       else key = 'home';
     } else if (path === 'shop.html') key = 'shop';
     else if (path === 'courses.html') key = 'courses';
     else if (path === 'dj-tools.html') key = 'tools';
     else if (path === 'jobs.html') key = 'jobs';
-    else if (path === 'rentals.html') key = 'rentals';
+    else if (path === 'rentals.html' || path === 'services.html') key = 'services';
     else if (path === 'find-dj.html') key = 'home';
     else if (path === 'dj-profile.html') key = 'flow';
     else if (path === 'dj-dashboard.html') key = 'mi-portal';
@@ -893,13 +894,19 @@
           var hasClientRow = !!(clientRow && clientRow.user_id);
           var metaUt = session.user && session.user.user_metadata && session.user.user_metadata.user_type;
           var appRole = session.user && session.user.app_metadata && session.user.app_metadata.role;
-          var jwtArtist = metaUt === 'talent' || metaUt === 'dj' || (appRole && String(appRole).toLowerCase() === 'artist');
+          var djRowRole = p ? String(p.role || '').toLowerCase() : '';
+          /* JWT puede ir sin user_type aún; si hay fila en dj_profiles y no es explícitamente «client», es artista (Jobs / panel DJ). */
+          var jwtArtist =
+            metaUt === 'talent' ||
+            metaUt === 'dj' ||
+            (appRole && String(appRole).toLowerCase() === 'artist') ||
+            (!!p && djRowRole !== 'client');
           var metaUtLower = metaUt ? String(metaUt).toLowerCase() : '';
           var appRoleLower = appRole ? String(appRole).toLowerCase() : '';
           var metadataSaysClient = metaUtLower === 'client' || appRoleLower === 'client';
           /* jwtArtist: no forzar «cliente» solo por tener client_profiles (muchos artistas tienen ambas filas). */
           var isClient =
-            (p && String(p.role || '').toLowerCase() === 'client') ||
+            (p && djRowRole === 'client') ||
             (!p && hasClientRow && !jwtArtist) ||
             (!p && metadataSaysClient && !jwtArtist);
 
@@ -911,9 +918,8 @@
               viewingOwnDjProfile = qidOwn === session.user.id;
             }
           } catch (eOwn) { /* ignore */ }
-          if (viewingOwnDjProfile && jwtArtist) {
-            var roleDj = p && String(p.role || '').toLowerCase();
-            if (roleDj !== 'client') isClient = false;
+          if (viewingOwnDjProfile && p && djRowRole !== 'client') {
+            isClient = false;
           }
           var isProUser = p && (
             p.is_premium === true
@@ -953,12 +959,6 @@
           }
           rawPhoto = mdjNormalizeAvatarStorageUrl(rawPhoto);
           var hasRealPhoto = mdjIsRealPhotoUrl(rawPhoto.split('?')[0]);
-          try {
-            console.log('📸 URL detectada para avatar:', rawPhoto || '(ninguna)', {
-              hasRealPhoto: hasRealPhoto,
-              isClient: isClient
-            });
-          } catch (eLog) { /* ignore */ }
 
           var displayName = '';
           if (isClient) {
@@ -1002,7 +1002,7 @@
             ? './dj-profile.html?id=' + encodeURIComponent(uid)
             : './dj-profile.html';
 
-          var hasDjProfile = !!(p && String(p.role || '').toLowerCase() !== 'client');
+          var hasDjProfile = !!(p && djRowRole !== 'client');
           var isArtistSession =
             !isClient && (!!hasDjProfile || !!jwtArtist || (!!djProfileErr && !!jwtArtist));
           var settingsUrl;

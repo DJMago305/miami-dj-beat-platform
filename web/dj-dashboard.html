@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="./css/weather-effects.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
-    <script src="./supabase-config.js?v=20260226-1"></script>
+    <script src="./supabase-config.js?v=20260421-storage-reels-fix"></script>
     <script src="./monetization.js?v=20260411-policy"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="./dashboard-youtube.js?v=20260216-1"></script>
@@ -373,8 +373,8 @@
       <div class="mobile-overlay" id="mobileMenu">
         <nav class="mobile-nav">
           <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
-          <a href="./index.html#services" data-i18n="nav-services" data-mdj-nav="services">Services</a>
-          <a href="./rentals.html" data-i18n="nav-rentals" data-mdj-nav="rentals">Event Services</a>
+          <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+          <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
           <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
           <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
           <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
@@ -393,8 +393,8 @@
     <div class="container">
       <nav class="nav top-nav" id="mainNav">
         <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
-        <a href="./index.html#services" data-i18n="nav-services" data-mdj-nav="services">Services</a>
-        <a href="./rentals.html" data-i18n="nav-rentals" data-mdj-nav="rentals">Event Services</a>
+        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+        <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
         <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-mdj-nav="shop">Shop</a>
         <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
         <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
@@ -2406,7 +2406,7 @@
                                     }
                                 </style>
                                 <div id="calendar-master" style="color:#fff; background:transparent;"></div>
-                                <script src="./js/agenda-engine.js?v=20260403-4"></script>
+                                <script src="./js/agenda-engine.js?v=20260420-log-sweep"></script>
 
                                 <!-- Leyenda Dinámica Unificada -->
                                 <div id="calendar-legend"
@@ -3951,7 +3951,7 @@
             <div data-i18n="footer-rights-llc">© 2026 Miami DJ Beat LLC. Pro Division Access.</div>
         </div>
     </footer>
-    <script src="./translations.js?v=20260415-ADN-ULTIMATE-LAUNCH"></script>
+    <script src="./translations.js?v=20260420-section-h2-eventos-venues"></script>
     <script src="./i18n.js?v=20260415-ADN-ULTIMATE-LAUNCH"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="./profile-loader.js"></script>
@@ -5095,7 +5095,15 @@
 
             // Call our edge function to create a portal session
             try {
-                const resp = await fetch(`https://hkuvuqupbxwkiykxvqdr.supabase.co/functions/v1/create-portal-session`, {
+                const portalUrl =
+                    typeof window.mdbSupabaseFunctionUrl === 'function'
+                        ? window.mdbSupabaseFunctionUrl('create-portal-session')
+                        : '';
+                if (!portalUrl) {
+                    alert('No se pudo abrir el portal: configuración Supabase incompleta.');
+                    return;
+                }
+                const resp = await fetch(portalUrl, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ return_url: window.location.href })
@@ -5736,7 +5744,7 @@
     </script>
 
     <script src="./header-smart-search.js?v=20260415-ADN-ULTIMATE-LAUNCH"></script>
-    <script src="./mdj-shared-header.js?v=20260418-avatar-dash-settings-href"></script>
+    <script src="./mdj-shared-header.js?v=20260419-jobs-header-dj-row"></script>
   <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
   <script src="./mdj-social-bar.js?v=20260414-MAC-DESKTOP-SYNC"></script>
 </body>

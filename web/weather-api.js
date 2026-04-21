@@ -92,7 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const data = await response.json();
-            console.log("DATOS API REALES:", data);
             bindDataToUI(data);
         } catch (error) {
             console.error("API FETCH ERROR CRÍTICO:", error);
@@ -100,8 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function bindDataToUI(data) {
-        console.log("🌦 Weather Data Received:", data);
-
         // 1. Data Mapping to DOM elements
         if (elements.location) {
             // Premium Branding Rule: Strip redundant ', US' for domestic locations
@@ -136,7 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // 3. Execution (Triggers the locked visual engine via the standard hook)
         if (window.forceQAScene) {
             window.forceQAScene(targetScene);
-            console.log(`🎯 Real Weather Triggered Scene: ${targetScene} (${isDay ? 'Day' : 'Night'})`);
         } else {
             console.error("Critical: QA Hook missing. Visual engine failed to trigger.");
         }

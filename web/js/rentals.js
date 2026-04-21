@@ -31,8 +31,8 @@ if (!window.MDJ_RENTALS_TALENT_HUB_CONTRACT) {
 
 const t = (k, def) => (window.translations?.[window.i18n?.currentLang]?.[k]) || def;
 
-/** Antepone window.MDB_ASSETS_URL (bucket Storage `assets`) a rutas ./assets/... cuando la constante está definida en supabase-config.js. */
-const mdjV = (u) => (typeof window.resolveMdAssetVideoUrl === "function" ? window.resolveMdAssetVideoUrl(u) : u);
+/** Antepone window.MDB_ASSETS_URL (bucket Storage `assets`) a rutas ./assets/... (vídeo o imagen). */
+const mdjV = (u) => (typeof window.resolveMdAssetPublicUrl === "function" ? window.resolveMdAssetPublicUrl(u) : (typeof window.resolveMdAssetVideoUrl === "function" ? window.resolveMdAssetVideoUrl(u) : u));
 
 /** Hero/cinematic background videos: muted + loop + inline (autoplay policy). Call before load()/play() when swapping src. */
 window.mdjHeroVideoPrime = function (el) {
@@ -1715,7 +1715,7 @@ window.renderRoster = (type) => {
         return `
         <div class="tile glass-card rental-grid-card">
             <div class="rental-media-box">
-                <img src="${item.img}" class="rental-img-zoom" alt="${item.id}">
+                <img src="${item.img ? mdjV(item.img) : ""}" class="rental-img-zoom" alt="${item.id}">
                 <div class="rental-badge-pro" data-i18n="badge_exclusive">${badgeEx}</div>
             </div>
             <div class="rental-card-content">
@@ -2152,7 +2152,8 @@ window.renderRentalCatalog = (categoryId) => {
                             </div>
         `;
 
-        const imgSrc = item.image || item.img || '';
+        const imgRaw = item.image || item.img || '';
+        const imgSrc = imgRaw ? mdjV(imgRaw) : '';
         const mediaHtml = `<img src="${imgSrc}" alt="${item.name}" style="width: 100%; height: auto; aspect-ratio: 4/5; object-fit: cover; display: block;">`;
 
         cardsHtml += `

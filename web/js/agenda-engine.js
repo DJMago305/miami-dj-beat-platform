@@ -1,16 +1,7 @@
 // web/js/agenda-engine.js
 // NÚCLEO FASE 3: Motor Avanzado JSONB
 
-console.log("🟢 AgendaEngine cargado");
-
 async function initAgendaEngine() {
-    console.log("🚀 Init agenda engine");
-    console.log("Contenedor:", document.getElementById('agenda-calendar-master'));
-    console.log("FullCalendar typeof:", typeof FullCalendar);
-    console.log("window.getSupabaseClient typeof:", typeof window.getSupabaseClient);
-    console.log("window.supabase typeof:", typeof window.supabase);
-    
-    console.log("🔍 Buscando contenedor de calendario (agenda o calendar-master)...");
     const calendarEl =
         document.getElementById('agenda-calendar-master') || document.getElementById('calendar-master');
     if (!calendarEl) {
@@ -26,10 +17,8 @@ async function initAgendaEngine() {
     }
 
     try {
-        console.log("👤 Buscando sesión en Supabase...");
         const { data: { session } } = await sb.auth.getSession();
         if (!session) {
-            console.log("ℹ️ AgendaEngine: No session. Skipping.");
             return;
         }
 
@@ -41,9 +30,6 @@ async function initAgendaEngine() {
             .single();
 
         if (error) throw error;
-        
-        console.log("Profile data:", profile);
-        console.log("weekly_schedule:", profile?.weekly_schedule);
 
         // Parse global vars
         const weekly = profile.weekly_schedule || {};
@@ -62,7 +48,6 @@ async function initAgendaEngine() {
         const customHolidaysStr = profile.special_days || profile.custom_holidays || "";
         const customHolidaysArr = customHolidaysStr.split(',').filter(x => x.trim() !== "");
 
-        console.log("📅 Inicializando FullCalendar...");
         // 2. Initialize FullCalendar
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
@@ -375,10 +360,8 @@ async function initAgendaEngine() {
         document.head.appendChild(style);
 
         // 4. Render
-        console.log("🎨 Ejecutando calendar.render()...");
         calendar.render();
         window.mdjCalendarInstance = calendar; // Permite controles custom
-        console.log("✅ [AgendaEngine] Nuevo calendario JSONB inicializado con éxito.");
 
         document.dispatchEvent(new CustomEvent('djCalendarRendered', { detail: { view: null } }));
         setTimeout(() => {

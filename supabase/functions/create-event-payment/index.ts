@@ -94,6 +94,7 @@ serve(async (req) => {
         // ── Create Stripe Checkout Session (one-time payment) ──
         const checkoutParams: Record<string, string> = {
             mode: "payment",
+            billing_address_collection: "auto",
             "line_items[0][price_data][currency]": "usd",
             "line_items[0][price_data][unit_amount]": String(amount_cents),
             "line_items[0][price_data][product_data][name]": description,

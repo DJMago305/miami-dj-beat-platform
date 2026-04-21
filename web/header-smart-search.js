@@ -28,7 +28,8 @@
     { re: /\b(login|log\s*in|entrar|sign\s*in|signin|register|registro)\b/i, href: './login.html' },
     { re: /\b(registry|registro\s*oficial)\b/i, href: './registry.html' },
     { re: /\b(contact|contacto|reserv)\b/i, href: './index.html#contact' },
-    { re: /\b(services|portfolio|portafolio)\b/i, href: './index.html#services' },
+    { re: /\b(services|portfolio|portafolio)\b/i, href: './rentals.html' },
+    { re: /\b(eventos|venues|sponsors?|collaborators?|patrocinadores?|our\s+events|past\s+events|live\s+experience)\b/i, href: './index.html#experience' },
     { re: /\b(verify|verificar)\b/i, href: './verify.html' },
     { re: /\b(forgot\s*password|olvid[eé]\s*(la\s*)?contraseña)\b/i, href: './forgot-password.html' }
   ];
