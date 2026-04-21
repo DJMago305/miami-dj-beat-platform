@@ -614,7 +614,7 @@
         </footer>
 
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <script src="./supabase-config.js?v=20260226-1"></script>
+        <script src="./supabase-config.js?v=20260421-storage-reels-fix"></script>
         <script src="./subscription.js?v=20260422-find-dj-rank"></script>
         <script src="./invoice-print-bridge.js?v=20260420"></script>
         <script>
@@ -640,31 +640,31 @@
                     .eq('user_id', session.user.id)
                     .single();
 
-                const roleRaw = String(profile && profile.role ? profile.role : '').toUpperCase();
+                const roleNorm = String(profile && profile.role ? profile.role : '').toLowerCase().trim();
                 const jwtRole = String(
                     (session.user.app_metadata && session.user.app_metadata.role) ||
                         (session.user.user_metadata && session.user.user_metadata.user_type) ||
                         ''
                 ).toLowerCase();
-                const isManager =
-                    roleRaw === 'MANAGER' ||
-                    roleRaw === 'ADMIN' ||
-                    jwtRole === 'manager' ||
-                    jwtRole === 'admin';
+                const isStaffPortal =
+                    ['admin', 'manager', 'seller'].includes(roleNorm) ||
+                    ['admin', 'manager', 'seller'].includes(jwtRole);
 
-                if (profileError || !isManager) {
+                if (profileError || !isStaffPortal) {
                     console.error("Unauthorized access attempt blocked.");
                     document.body.innerHTML = `
                     <div style="height: 100vh; display: flex; align-items: center; justify-content: center; background: #000; color: #ff3333; text-align: center; font-family: sans-serif;">
                         <div>
                             <h1>⛔ ACCESO DENEGADO</h1>
-                            <p>No tienes permisos de Manager para ver esta área.</p>
+                            <p>No tienes permisos de staff (admin, manager o vendedor) para ver esta área.</p>
                             <a href="./index.html" style="color: #fff;">Volver al Inicio</a>
                         </div>
                     </div>
                 `;
                     return;
                 }
+
+                applyStaffDashboardRole(profile, session);
 
                 // Load Leads (explicit columns — no stripe_customer_id / payment tokens in staff UI)
                 const MDJ_ADMIN_LEADS_COLUMNS =
@@ -963,9 +963,13 @@
                     document.getElementById('match-modal')?.remove();
 
                     // ── Fire notification email to DJ & Manager ──────────
-                    const NOTIFY_FN = 'https://hkuvuqupbxwkiykxvqdr.supabase.co/functions/v1/notify-dj-assignment';
+                    const NOTIFY_FN =
+                        typeof window.mdbSupabaseFunctionUrl === 'function'
+                            ? window.mdbSupabaseFunctionUrl('notify-dj-assignment')
+                            : '';
                     try {
                         const { data: { session } } = await db.auth.getSession();
+                        if (!NOTIFY_FN) throw new Error('Supabase function URL missing');
                         const resp = await fetch(NOTIFY_FN, {
                             method: 'POST',
                             headers: {
@@ -1357,7 +1361,10 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 }
 
                 // ── Photo Moderation ─────────────────────────────────────
-                const PHOTO_FN_URL = 'https://hkuvuqupbxwkiykxvqdr.supabase.co/functions/v1/notify-photo-rejection';
+                const PHOTO_FN_URL =
+                    typeof window.mdbSupabaseFunctionUrl === 'function'
+                        ? window.mdbSupabaseFunctionUrl('notify-photo-rejection')
+                        : '';
 
                 async function rejectPhoto(userId, djEmail, djName) {
                     const adminPass = prompt('⚠️ Ingresa la clave Admin para rechazar la foto:');
@@ -1373,6 +1380,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     if (row) row.style.opacity = '0.5';
 
                     try {
+                        if (!PHOTO_FN_URL) throw new Error('Supabase function URL missing');
                         const r = await fetch(PHOTO_FN_URL, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -1401,25 +1409,27 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     else { alert('✅ Foto aprobada.'); loadAdminData(); }
                 }
 
-                async function checkAccess() {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (!user) {
-                        // For demo/local if no auth, default to Super Admin
-                        window.userRole = 'SUPER_ADMIN';
+                /** Rol UI desde dj_profiles + JWT — sin hacks de email (seller oficial en BD). */
+                function applyStaffDashboardRole(profile, session) {
+                    const rn = String(profile && profile.role ? profile.role : '').toLowerCase().trim();
+                    const jwtR = String(
+                        (session.user.app_metadata && session.user.app_metadata.role) ||
+                            (session.user.user_metadata && session.user.user_metadata.user_type) ||
+                            ''
+                    ).toLowerCase();
+                    if (rn === 'seller' || jwtR === 'seller') {
+                        window.userRole = 'SALES_STAFF';
                     } else {
-                        // Logic: Check user meta or a custom table. 
-                        // For now, let's assume 'SALES' in metadata or certain email.
-                        const isSales = user.email.includes('sales') || user.user_metadata.role === 'SALES';
-                        window.userRole = isSales ? 'SALES_STAFF' : 'SUPER_ADMIN';
+                        window.userRole = 'SUPER_ADMIN';
                     }
-
                     applyRoleRestrictions();
                 }
 
                 function applyRoleRestrictions() {
                     const roleBadge = document.getElementById('role-badge');
+                    if (!roleBadge) return;
                     if (window.userRole === 'SALES_STAFF') {
-                        roleBadge.textContent = "Acceso: Equipo de Ventas";
+                        roleBadge.textContent = "Acceso: Equipo de Ventas (seller)";
                         // Hide sensitive sections (Manager only)
                         const itemsToHide = ['content', 'analytics', 'apps'];
                         itemsToHide.forEach(id => {
@@ -1832,7 +1842,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
         <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
 
     <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script src="./mdj-shared-header.js?v=20260420-log-sweep"></script>
+    <script src="./mdj-shared-header.js?v=20260421-nav-tier-matrix"></script>
   <script src="./mdj-social-bar.js?v=20260414-MAC-DESKTOP-SYNC"></script>
 </body>
 

@@ -54,7 +54,10 @@
       throw new Error('Supabase URL o anon key no configurados (supabase-config.js).');
     }
 
-    var url = base + '/functions/v1/booth-tts';
+    var url =
+      typeof window.mdbSupabaseFunctionUrl === 'function'
+        ? window.mdbSupabaseFunctionUrl('booth-tts')
+        : base + '/functions/v1/booth-tts';
     var res = await fetch(url, {
       method: 'POST',
       headers: {

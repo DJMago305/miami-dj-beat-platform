@@ -110,6 +110,15 @@
 
     function estimateCardStep(el) {
         if (!el) return null;
+        var rTrack = el.querySelector('.mdj-residencies-carousel__track');
+        if (rTrack) {
+            var rc = rTrack.querySelector('a.residency-card--map');
+            if (rc) {
+                var rg = parseFloat(getComputedStyle(rTrack).gap);
+                if (isNaN(rg)) rg = 14;
+                return rc.offsetWidth + rg;
+            }
+        }
         var card = el.querySelector(':scope > .product-card');
         if (card) {
             var gap = parseFloat(getComputedStyle(el).gap);
@@ -148,6 +157,10 @@
         el.addEventListener(
             'scroll',
             function () {
+                if (el.dataset && el.dataset.mdjTickMute === '1') {
+                    lastScroll = el.scrollLeft;
+                    return;
+                }
                 var c = getCtx();
                 if (!c) return;
                 if (c.state === 'suspended') c.resume().catch(function () {});

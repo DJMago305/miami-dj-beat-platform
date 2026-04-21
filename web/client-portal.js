@@ -126,7 +126,15 @@ var PORTAL_I18N_FB = {
         'portal-manager-stripe-link-fail': 'Could not create the payment link. Try again or use the automated flow from the client account.',
         'portal-invoice-pdf-cta': 'Open invoice (print / PDF)',
         'portal-invoice-pdf-error': 'Could not open the invoice page. Refresh and try again, or contact support.',
-        'portal-invoice-pdf-busy': 'Opening…'
+        'portal-invoice-pdf-busy': 'Opening…',
+        'portal-staff-hub-title': 'Bookings supervision',
+        'portal-staff-hub-sub': 'Staff mode: open any client event. Links open in supervision mode.',
+        'portal-staff-hub-empty': 'No leads found.',
+        'portal-staff-hub-col-event': 'Event',
+        'portal-staff-hub-col-client': 'Client',
+        'portal-staff-hub-col-date': 'Date',
+        'portal-staff-hub-col-status': 'Status',
+        'portal-staff-hub-open': 'Open portal'
     },
     es: {
         'portal-welcome-recognized': '¡Hola, {name}!',
@@ -195,7 +203,15 @@ var PORTAL_I18N_FB = {
         'portal-manager-stripe-link-fail': 'No se pudo crear el enlace de pago. Reintenta o usa el flujo automático desde la cuenta del cliente.',
         'portal-invoice-pdf-cta': 'Abrir factura (imprimir / PDF)',
         'portal-invoice-pdf-error': 'No se pudo abrir la factura. Actualiza la página e inténtalo de nuevo, o escribe a soporte.',
-        'portal-invoice-pdf-busy': 'Abriendo…'
+        'portal-invoice-pdf-busy': 'Abriendo…',
+        'portal-staff-hub-title': 'Supervisión de pedidos',
+        'portal-staff-hub-sub': 'Modo staff: abre cualquier evento de cliente. Los enlaces abren en modo supervisión.',
+        'portal-staff-hub-empty': 'No hay leads todavía.',
+        'portal-staff-hub-col-event': 'Evento',
+        'portal-staff-hub-col-client': 'Cliente',
+        'portal-staff-hub-col-date': 'Fecha',
+        'portal-staff-hub-col-status': 'Estado',
+        'portal-staff-hub-open': 'Abrir portal'
     }
 };
 
@@ -384,6 +400,28 @@ async function portalFetchLeadsForLoggedInUser(db, sessionUserId, emailNorm) {
     });
     if (rows.length > 50) rows = rows.slice(0, 50);
     return { data: rows, error: rows.length ? null : lastErr };
+}
+
+/** Admin / manager / seller: JWT + fila dj_profiles (roles en minúsculas). */
+async function mdjPortalResolveStaff(db, user) {
+    if (!db || !user) return false;
+    var appR = String((user.app_metadata && user.app_metadata.role) || '').toLowerCase();
+    if (appR === 'admin' || appR === 'manager' || appR === 'seller') return true;
+    var ut = String((user.user_metadata && user.user_metadata.user_type) || '').toLowerCase();
+    if (ut === 'admin' || ut === 'manager' || ut === 'seller') return true;
+    try {
+        var pr = await db.from('dj_profiles').select('role').eq('user_id', user.id).maybeSingle();
+        var dr = String((pr && pr.data && pr.data.role) || '').toLowerCase();
+        return dr === 'admin' || dr === 'manager' || dr === 'seller';
+    } catch (e) {
+        return false;
+    }
+}
+
+/** ?mode=manager | staff | supervision — hub de supervisión sin ?lead */
+function mdjPortalStaffModeRequested(params) {
+    var m = (params.get('mode') || '').toLowerCase();
+    return m === 'manager' || m === 'staff' || m === 'supervision';
 }
 
 /** Omit Stripe / token wiring from browser selects (Edge + webhooks use service_role). */
@@ -582,18 +620,7 @@ const PortalApp = {
                     '&mode=manager';
                 return;
             }
-            var jwtRole = String(
-                (sessM.user.app_metadata && sessM.user.app_metadata.role) ||
-                    (sessM.user.user_metadata && sessM.user.user_metadata.user_type) ||
-                    ''
-            ).toLowerCase();
-            var prM = await dbM.from('dj_profiles').select('role').eq('user_id', sessM.user.id).maybeSingle();
-            var djRole = String((prM && prM.data && prM.data.role) || '').toUpperCase();
-            var staffOk =
-                jwtRole === 'admin' ||
-                jwtRole === 'manager' ||
-                djRole === 'MANAGER' ||
-                djRole === 'ADMIN';
+            var staffOk = await mdjPortalResolveStaff(dbM, sessM.user);
             if (!staffOk) {
                 this.showLeadAccessDenied();
                 return;
@@ -616,18 +643,7 @@ const PortalApp = {
                     encodeURIComponent('client-portal.html?mode=manager&guest=1');
                 return;
             }
-            var jwtGuest = String(
-                (sessGuest.user.app_metadata && sessGuest.user.app_metadata.role) ||
-                    (sessGuest.user.user_metadata && sessGuest.user.user_metadata.user_type) ||
-                    ''
-            ).toLowerCase();
-            var prGuest = await dbGuest.from('dj_profiles').select('role').eq('user_id', sessGuest.user.id).maybeSingle();
-            var djRoleGuest = String((prGuest && prGuest.data && prGuest.data.role) || '').toUpperCase();
-            var staffGuestOk =
-                jwtGuest === 'admin' ||
-                jwtGuest === 'manager' ||
-                djRoleGuest === 'MANAGER' ||
-                djRoleGuest === 'ADMIN';
+            var staffGuestOk = await mdjPortalResolveStaff(dbGuest, sessGuest.user);
             if (!staffGuestOk) {
                 this.showLeadAccessDenied();
                 return;
@@ -636,6 +652,36 @@ const PortalApp = {
                 document.body.classList.remove('portal-resolving-session');
             } catch (eGuest) { /* ignore */ }
             this.renderGuestManagerEmergencyScreen();
+            return;
+        }
+
+        if (!leadId && mdjPortalStaffModeRequested(params)) {
+            await this.waitForSupabaseClient(8000);
+            var dbHub = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+            if (!dbHub) {
+                this.showLeadAccessDenied();
+                return;
+            }
+            var smHub = await dbHub.auth.getSession();
+            var sessHub = smHub && smHub.data && smHub.data.session;
+            if (!sessHub || !sessHub.user) {
+                window.location.href =
+                    './login.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+                return;
+            }
+            var staffHubOk = await mdjPortalResolveStaff(dbHub, sessHub.user);
+            if (!staffHubOk) {
+                this.showLeadAccessDenied();
+                return;
+            }
+            try {
+                document.body.classList.remove('portal-resolving-session');
+            } catch (eHub0) {
+                void eHub0;
+            }
+            this.isManager = true;
+            this.showManagerNotice();
+            await this.renderStaffSupervisionHub(dbHub);
             return;
         }
 
@@ -701,10 +747,109 @@ const PortalApp = {
     showManagerNotice() {
         const banner = document.createElement('div');
         banner.style = "background: var(--gold); color: #000; text-align: center; padding: 10px; font-weight: 800; position: fixed; top: 0; left: 0; right: 0; z-index: 10000; font-size: 14px;";
-        banner.innerHTML = `🛠 MODO MANAGER ACTIVO - Los cambios que realices se reflejarán al cliente en tiempo real.`;
+        banner.innerHTML = `🛠 MODO STAFF (supervisión) — Los cambios en un evento abierto se reflejan al cliente cuando aplica.`;
         document.body.prepend(banner);
         const header = document.querySelector('.header');
         if (header) header.style.marginTop = "40px";
+    },
+
+    async renderStaffSupervisionHub(db) {
+        try {
+            document.body.classList.remove('portal-resolving-session');
+        } catch (e0) {
+            void e0;
+        }
+        var head = document.querySelector('.portal-header');
+        var main = document.querySelector('main');
+        if (head) {
+            head.innerHTML =
+                '<div class="container" style="padding: 32px 20px 16px;">' +
+                '<h1 style="margin:0 0 8px;font-size:26px;">' +
+                portalEscapeHtml(portalT('portal-staff-hub-title')) +
+                '</h1>' +
+                '<p class="fineprint" style="opacity:0.85;max-width:720px;margin:0 auto;line-height:1.5;">' +
+                portalEscapeHtml(portalT('portal-staff-hub-sub')) +
+                '</p></div>';
+        }
+        var rows = [];
+        try {
+            var res = await db
+                .from('leads')
+                .select(MDJ_LEADS_SAFE_COLUMNS)
+                .order('created_at', { ascending: false })
+                .limit(300);
+            if (res.data) rows = res.data;
+            if (res.error) console.warn('staff hub leads', res.error);
+        } catch (eL) {
+            console.warn('renderStaffSupervisionHub', eL);
+        }
+        var base = (window.location.pathname || 'client-portal.html').split('?')[0];
+        function rowHtml(L) {
+            var id = L.id ? String(L.id) : '';
+            var href =
+                base +
+                '?lead=' +
+                encodeURIComponent(id) +
+                '&mode=manager';
+            var et = L.event_type ? portalEscapeHtml(String(L.event_type)) : '—';
+            var nm = L.full_name || L.name || L.client_name || '';
+            var em = L.email ? portalEscapeHtml(String(L.email)) : '—';
+            var dt = L.event_date ? portalEscapeHtml(String(L.event_date)) : '—';
+            var st = L.status ? portalEscapeHtml(String(L.status)) : '—';
+            var who = portalEscapeHtml(nm ? String(nm) : em);
+            return (
+                '<tr style="border-bottom:1px solid rgba(255,255,255,0.08);">' +
+                '<td style="padding:12px 10px;vertical-align:top;">' +
+                et +
+                '</td>' +
+                '<td style="padding:12px 10px;vertical-align:top;"><strong>' +
+                who +
+                '</strong><br><span class="fineprint" style="opacity:0.75;">' +
+                em +
+                '</span></td>' +
+                '<td style="padding:12px 10px;vertical-align:top;">' +
+                dt +
+                '</td>' +
+                '<td style="padding:12px 10px;vertical-align:top;">' +
+                st +
+                '</td>' +
+                '<td style="padding:12px 10px;vertical-align:top;"><a href="' +
+                href +
+                '" class="btn primary" style="display:inline-block;padding:8px 14px;font-size:13px;font-weight:800;">' +
+                portalEscapeHtml(portalT('portal-staff-hub-open')) +
+                '</a></td></tr>'
+            );
+        }
+        var tableBody = rows.length ? rows.map(rowHtml).join('') : '<tr><td colspan="5" class="fineprint" style="padding:24px;">' + portalEscapeHtml(portalT('portal-staff-hub-empty')) + '</td></tr>';
+        if (main) {
+            main.innerHTML =
+                '<div class="container" style="padding: 20px 16px 80px; max-width: 960px; margin: 0 auto;">' +
+                '<div style="overflow-x:auto;border-radius:14px;border:1px solid rgba(197,160,89,0.25);background:rgba(0,0,0,0.2);">' +
+                '<table style="width:100%;border-collapse:collapse;font-size:14px;">' +
+                '<thead><tr style="text-align:left;background:rgba(197,160,89,0.12);">' +
+                '<th style="padding:12px 10px;">' +
+                portalEscapeHtml(portalT('portal-staff-hub-col-event')) +
+                '</th>' +
+                '<th style="padding:12px 10px;">' +
+                portalEscapeHtml(portalT('portal-staff-hub-col-client')) +
+                '</th>' +
+                '<th style="padding:12px 10px;">' +
+                portalEscapeHtml(portalT('portal-staff-hub-col-date')) +
+                '</th>' +
+                '<th style="padding:12px 10px;">' +
+                portalEscapeHtml(portalT('portal-staff-hub-col-status')) +
+                '</th>' +
+                '<th style="padding:12px 10px;"></th>' +
+                '</tr></thead><tbody>' +
+                tableBody +
+                '</tbody></table></div></div>';
+        }
+        try {
+            var hdr = document.querySelector('.header');
+            if (hdr) hdr.style.marginTop = '40px';
+        } catch (eH) {
+            void eH;
+        }
     },
 
     showLeadLoginRequired(leadId) {
@@ -1191,7 +1336,11 @@ const PortalApp = {
             return;
         }
         try {
-            var r = await fetch(base + '/functions/v1/verify-client-billing-unlock', {
+            var fnVerify =
+                typeof window.mdbSupabaseFunctionUrl === 'function'
+                    ? window.mdbSupabaseFunctionUrl('verify-client-billing-unlock')
+                    : base + '/functions/v1/verify-client-billing-unlock';
+            var r = await fetch(fnVerify, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1543,7 +1692,11 @@ const PortalApp = {
         try {
             // Deposit = 30% of balance or minimum $150
             const depositAmount = Math.max(Math.round(balance * 0.30 * 100), 15000);
-            const CHECKOUT_FN = 'https://hkuvuqupbxwkiykxvqdr.supabase.co/functions/v1/create-event-payment';
+            const CHECKOUT_FN =
+                typeof window.mdbSupabaseFunctionUrl === 'function'
+                    ? window.mdbSupabaseFunctionUrl('create-event-payment')
+                    : '';
+            if (!CHECKOUT_FN) throw new Error('Supabase URL no configurada');
 
             const resp = await fetch(CHECKOUT_FN, {
                 method: 'POST',
@@ -1652,7 +1805,11 @@ const PortalApp = {
             if (!this.currentLead || !this.currentLead.id) {
                 throw new Error('Lead ID missing');
             }
-            var CHECKOUT_FN = 'https://hkuvuqupbxwkiykxvqdr.supabase.co/functions/v1/create-event-payment';
+            var CHECKOUT_FN =
+                typeof window.mdbSupabaseFunctionUrl === 'function'
+                    ? window.mdbSupabaseFunctionUrl('create-event-payment')
+                    : '';
+            if (!CHECKOUT_FN) throw new Error('Supabase URL no configurada');
             var balNum = parseFloat(balance);
             if (isNaN(balNum) || balNum <= 0) balNum = 0.01;
             var amountCents = Math.max(Math.round(balNum * 100), 100);
@@ -1776,8 +1933,6 @@ const PortalApp = {
             translated: processed.translated
         });
 
-        // Sync to Supabase in real app:
-        // await supabase.from('messages').insert([{ lead_id: id, sender, text: processed.corrected, translated: processed.translated }]);
     },
 
     async aiBridgeProcess(text, sender) {
@@ -2199,7 +2354,7 @@ const PortalApp = {
                 '<div class="info-card" style="max-width: 560px; margin: 0 auto; text-align: center;">' +
                 '<h3 style="margin-bottom: 12px;">' + portalEscapeHtml(portalT('portal-no-events-title')) + '</h3>' +
                 '<p class="fineprint" style="margin-bottom: 22px; line-height: 1.5;">' + portalEscapeHtml(portalT('portal-no-events-body')) + '</p>' +
-                '<a href="./jobs.html" class="btn primary" style="display: inline-block;">' + portalEscapeHtml(portalT('portal-no-events-cta')) + '</a>' +
+                '<a href="./rentals.html" class="btn primary" style="display: inline-block;">' + portalEscapeHtml(portalT('portal-no-events-cta')) + '</a>' +
                 '</div></div>';
         }
     },
@@ -2325,7 +2480,14 @@ const PortalApp = {
                 return;
             }
             var newId = rowIns.id;
-            var CHECKOUT_FN = 'https://hkuvuqupbxwkiykxvqdr.supabase.co/functions/v1/create-event-payment';
+            var CHECKOUT_FN =
+                typeof window.mdbSupabaseFunctionUrl === 'function'
+                    ? window.mdbSupabaseFunctionUrl('create-event-payment')
+                    : '';
+            if (!CHECKOUT_FN) {
+                if (statusEl) statusEl.textContent = 'Supabase URL not configured.';
+                return;
+            }
             var amountCents = Math.max(Math.round(amt * 100), 100);
             var resp = await fetch(CHECKOUT_FN, {
                 method: 'POST',

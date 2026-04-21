@@ -8,7 +8,7 @@
   <meta name="description" content="Manage your account settings and preferences." />
   <link rel="stylesheet" href="./styles.css?v=20260415-CORE-CONNECTIONS" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./supabase-config.js?v=20260226-1"></script>
+  <script src="./supabase-config.js?v=20260421-storage-reels-fix"></script>
   <style>
     .lang-switcher {
       display: inline-flex !important;
@@ -865,9 +865,9 @@
               title="US: 5 digits — Miami-area ZIPs can auto-fill city &amp; state." />
           </div>
           <div class="form-group">
-            <label>Country</label>
-            <input type="search" class="sys-input sys-select-gold" id="input-country-filter" placeholder="Filter countries…" autocomplete="off" />
-            <select id="select-country" class="sys-input sys-select-gold" aria-label="Country"></select>
+            <label for="select-country">Country</label>
+            <input type="text" class="sys-input sys-select-gold" id="input-country-filter" placeholder="Filter…" autocomplete="off" spellcheck="false" aria-label="Filter countries" />
+            <select id="select-country" class="sys-input sys-select-gold" style="margin-top:10px;" aria-label="Country"></select>
           </div>
         </div>
       </div>
@@ -1051,12 +1051,12 @@
   </main>
 
   <!-- AUTH LOGIC & COMPATIBILITY -->
-  <script src="./auth.js?v=20260414-MAC-DESKTOP-SYNC"></script>
+  <script src="./auth.js?v=20260422-login-session-redirect"></script>
   <script src="./translations.js?v=20260420-section-h2-eventos-venues"></script>
   <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
   <script src="./account-billing.js?v=20260415-CORE-CONNECTIONS"></script>
   <script src="./account-address-data.js?v=20260429"></script>
-  <script src="./account-address-selectors.js?v=20260429"></script>
+  <script src="./account-address-selectors.js?v=20260422-country-save"></script>
   <script>
     function mdjNormalizeUsernameForStorage(s) {
       if (s == null || typeof s !== 'string') return null;
@@ -1087,9 +1087,18 @@
         });
       }
 
-      // Strict session enforcement
+      // Strict session enforcement (wait for lazy singleton if CDN was slow)
       try {
-        const db = window.getSupabaseClient();
+        var db = null;
+        for (var _dbi = 0; _dbi < 40; _dbi++) {
+          db = window.getSupabaseClient && window.getSupabaseClient();
+          if (db) break;
+          await new Promise(function (r) { setTimeout(r, 100); });
+        }
+        if (!db) {
+          console.error('[MDJ-SYSTEM] account-settings: Supabase client not ready');
+          throw new Error('no-db');
+        }
         const { data: { session }, error } = await db.auth.getSession();
         if (session && session.user) {
           const meta = session.user.user_metadata || {};
@@ -1166,33 +1175,53 @@
           };
           // --------------------------------------------------------------
 
-          if (meta.full_name) document.getElementById('input-fname').value = meta.full_name;
-
-          document.getElementById('input-email').value = session.user.email;
-
-          if (meta.phone) document.getElementById('input-phone').value = meta.phone;
-          
-          var addrMerged = {
-            address_street: meta.address_street,
-            address_apt: meta.address_apt,
-            address_city: meta.address_city,
-            address_state: meta.address_state,
-            address_zip: meta.address_zip,
-            address_country: meta.address_country
-          };
           var cp = null;
           try {
             var cpRes = await db.from('client_profiles').select('*').eq('user_id', session.user.id).maybeSingle();
             cp = cpRes && cpRes.data ? cpRes.data : null;
-            if (cp) {
-              if (cp.address_street != null && cp.address_street !== '') addrMerged.address_street = cp.address_street;
-              if (cp.address_apt != null && cp.address_apt !== '') addrMerged.address_apt = cp.address_apt;
-              if (cp.city != null && cp.city !== '') addrMerged.address_city = cp.city;
-              if (cp.address_state != null && cp.address_state !== '') addrMerged.address_state = cp.address_state;
-              if (cp.address_zip != null && cp.address_zip !== '') addrMerged.address_zip = cp.address_zip;
-              if (cp.address_country != null && cp.address_country !== '') addrMerged.address_country = cp.address_country;
-            }
           } catch (cpErr) { /* non-fatal */ }
+
+          /* Registro: JWT usa addr_city; tabla usa city — DB gana si tiene valor */
+          var metaCity =
+            (meta.address_city && String(meta.address_city).trim()) ||
+            (meta.addr_city && String(meta.addr_city).trim()) ||
+            '';
+          var addrMerged = {
+            address_street: meta.address_street || '',
+            address_apt: meta.address_apt || '',
+            address_city: metaCity,
+            address_state: meta.address_state || '',
+            address_zip: meta.address_zip || '',
+            address_country: meta.address_country || ''
+          };
+          if (cp) {
+            if (cp.address_street != null && cp.address_street !== '') addrMerged.address_street = cp.address_street;
+            if (cp.address_apt != null && cp.address_apt !== '') addrMerged.address_apt = cp.address_apt;
+            if (cp.city != null && cp.city !== '') addrMerged.address_city = cp.city;
+            if (cp.address_state != null && cp.address_state !== '') addrMerged.address_state = cp.address_state;
+            if (cp.address_zip != null && cp.address_zip !== '') addrMerged.address_zip = cp.address_zip;
+            if (cp.address_country != null && cp.address_country !== '') addrMerged.address_country = cp.address_country;
+          }
+
+          var fnEl = document.getElementById('input-fname');
+          if (fnEl) {
+            var dispName =
+              (cp && cp.full_name && String(cp.full_name).trim()) ||
+              (meta.full_name && String(meta.full_name).trim()) ||
+              '';
+            if (dispName) fnEl.value = dispName;
+          }
+
+          document.getElementById('input-email').value = session.user.email;
+
+          var phEl = document.getElementById('input-phone');
+          if (phEl) {
+            var dispPhone =
+              (cp && cp.phone && String(cp.phone).trim()) ||
+              (meta.phone && String(meta.phone).trim()) ||
+              '';
+            if (dispPhone) phEl.value = dispPhone;
+          }
           try {
             var uEl = document.getElementById('input-username');
             if (uEl) {
@@ -1580,7 +1609,7 @@
                 }
                 var freshSession = sessRes && sessRes.data && sessRes.data.session ? sessRes.data.session : null;
                 var sessionUser = freshSession && freshSession.user ? freshSession.user : session.user;
-                const currentSessionMeta = sessionUser?.user_metadata || {};
+                var currentSessionMeta = (sessionUser && sessionUser.user_metadata) || {};
 
                 const newData = Object.assign({}, currentSessionMeta, {
                   full_name: newFname,
@@ -1589,6 +1618,7 @@
                   address_street: newStreet,
                   address_apt: newApt,
                   address_city: newCity,
+                  addr_city: newCity,
                   address_state: newState,
                   address_zip: newZip,
                   address_country: newCountry
@@ -1600,7 +1630,24 @@
                 } catch (cpAv) { /* ignore */ }
 
                 const userId = sessionUser.id;
-                const canonRole = sessionUser?.app_metadata?.role || currentSessionMeta.role || currentSessionMeta.user_type || 'client';
+                var effectiveRole = 'client';
+                try {
+                  if (typeof window.mdjResolveEffectiveUserRole === 'function') {
+                    effectiveRole = String(window.mdjResolveEffectiveUserRole(sessionUser) || 'client').toLowerCase();
+                  } else {
+                    var appR0 =
+                      sessionUser && sessionUser.app_metadata && sessionUser.app_metadata.role
+                        ? sessionUser.app_metadata.role
+                        : '';
+                    effectiveRole = String(appR0 || currentSessionMeta.user_type || 'client').toLowerCase();
+                  }
+                } catch (eRf) {
+                  effectiveRole = 'client';
+                }
+                var isArtistJwt =
+                  effectiveRole === 'talent' ||
+                  effectiveRole === 'dj' ||
+                  effectiveRole === 'artist';
                 var langPrefSave = 'en';
                 try {
                   var lsSave = document.getElementById('select-platform-language');
@@ -1608,26 +1655,17 @@
                 } catch (lpS) { /* ignore */ }
                 var profileSyncPayload = Object.assign({}, newData, { language_preference: langPrefSave });
 
-                /* 1) Perfil en tabla primero (menos presión concurrente sobre auth.updateUser) */
-                if (canonRole === 'artist' || canonRole === 'dj') {
+                /* 1) client_profiles siempre en esta pantalla (dirección / idioma); antes el JWT «artist» saltaba esto */
+                await mdjSaveWithTimeout(
+                  Promise.resolve(window.handleClientSettingsSubmit(userId, profileSyncPayload, db)),
+                  25000,
+                  'client_profiles upsert'
+                );
+                if (isArtistJwt) {
                   await mdjSaveWithTimeout(
                     Promise.resolve(window.handleArtistSettingsSubmit(userId, newData, db)),
                     25000,
                     'dj_profiles update'
-                  );
-                  var langRow = await mdjSaveWithTimeout(
-                    db.from('client_profiles').update({ language_preference: langPrefSave }).eq('user_id', userId),
-                    15000,
-                    'client_profiles language'
-                  );
-                  if (langRow && langRow.error) {
-                    console.warn('[MDJ-SYSTEM] client_profiles language row', langRow.error.message || langRow.error);
-                  }
-                } else {
-                  await mdjSaveWithTimeout(
-                    Promise.resolve(window.handleClientSettingsSubmit(userId, profileSyncPayload, db)),
-                    25000,
-                    'client_profiles upsert'
                   );
                 }
 
@@ -1868,7 +1906,7 @@
     </div>
     <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
     <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script src="./mdj-shared-header.js?v=20260420-log-sweep"></script>
+    <script src="./mdj-shared-header.js?v=20260421-nav-tier-matrix"></script>
   <script src="./mdj-social-bar.js?v=20260414-MAC-DESKTOP-SYNC"></script>
 </body>
 

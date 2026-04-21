@@ -45,15 +45,20 @@
   mdjEnsureAuthLangObserver();
 
   /**
-   * DJ Tools en `#mainHeader`: oculto para cuentas **cliente** (no artistas).
-   * `window.__mdjLastNavIsClient` lo reutiliza `dj-tools.html` para bloquear acceso directo por URL.
+   * Matriz MDJ: Herramientas PRO (DJ Tools) solo visibles con plan **artist_pro**.
+   * `client_only` y `artist_lite`: enlace oculto en el header.
+   * `window.__mdjLastNavTier` / `__mdjProToolsUnlocked` / `__mdjLastNavIsClient` (retro) para `dj-tools.html`.
    */
-  function mdjApplyDjToolsNavForClientSession(isClient) {
-    window.__mdjLastNavIsClient = !!isClient;
+  function mdjApplyDjToolsNavForTier(navTier) {
+    window.__mdjLastNavTier = navTier == null ? null : String(navTier);
+    var pro = navTier === 'artist_pro';
+    window.__mdjProToolsUnlocked = !!pro;
+    window.__mdjLastNavIsClient = navTier === 'client_only';
+    var hideLink = navTier === 'client_only' || navTier === 'artist_lite';
     var header = document.getElementById('mainHeader');
     if (!header) return;
     header.querySelectorAll('a[href*="dj-tools"]').forEach(function (a) {
-      if (!isClient) {
+      if (!hideLink) {
         a.style.removeProperty('display');
         a.removeAttribute('aria-hidden');
         a.removeAttribute('data-mdj-tools-suppressed');
@@ -63,6 +68,122 @@
       a.setAttribute('aria-hidden', 'true');
       a.setAttribute('data-mdj-tools-suppressed', '1');
     });
+  }
+
+  function mdjRemoveArtistDashboardNavLinks() {
+    ['mainNav-artist-dashboard-link', 'header-artist-dashboard-mobile'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.remove();
+    });
+  }
+
+  /** Panel artista (#mainNav + móvil): solo `artist_lite` / `artist_pro`. */
+  function mdjApplyArtistDashboardNavChrome(show) {
+    var nav = document.getElementById('mainNav');
+    var mobileNav = document.querySelector('#mobileMenu .mobile-nav');
+    var href = './dj-dashboard.html?tab=settings';
+    function applyLabel(el) {
+      if (!el) return;
+      el.setAttribute('data-i18n', 'nav-artist-dashboard');
+      try {
+        if (window.i18n && typeof window.i18n.t === 'function') {
+          var tx = window.i18n.t('nav-artist-dashboard');
+          if (tx) el.textContent = tx;
+        } else {
+          var raw = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+          el.textContent = raw.indexOf('es') === 0 ? 'Panel artista' : 'Artist dashboard';
+        }
+      } catch (e) { /* ignore */ }
+      try {
+        var es = document.documentElement && String(document.documentElement.lang || '').toLowerCase().indexOf('es') === 0;
+        el.setAttribute('aria-label', es ? 'Panel de artista' : 'Artist dashboard');
+      } catch (e2) { /* ignore */ }
+    }
+    if (!show) {
+      mdjRemoveArtistDashboardNavLinks();
+      return;
+    }
+    if (nav) {
+      var el = document.getElementById('mainNav-artist-dashboard-link');
+      if (!el) {
+        el = document.createElement('a');
+        el.id = 'mainNav-artist-dashboard-link';
+        el.setAttribute('data-mdj-nav', 'artist-dash');
+        el.className = 'mdj-artist-dash-mainnav';
+        var ref = document.getElementById('mainNav-mi-portal-link');
+        if (ref && ref.parentNode === nav) {
+          if (ref.nextSibling) nav.insertBefore(el, ref.nextSibling);
+          else nav.appendChild(el);
+        } else {
+          nav.appendChild(el);
+        }
+      }
+      el.href = href;
+      applyLabel(el);
+      el.style.display = '';
+    }
+    if (mobileNav) {
+      var mb = document.getElementById('header-artist-dashboard-mobile');
+      if (!mb) {
+        mb = document.createElement('a');
+        mb.id = 'header-artist-dashboard-mobile';
+        mb.className = 'mdj-artist-dashboard-mobile';
+        var refM = document.getElementById('header-mi-portal-mobile');
+        if (refM && refM.parentNode === mobileNav) {
+          if (refM.nextSibling) mobileNav.insertBefore(mb, refM.nextSibling);
+          else mobileNav.appendChild(mb);
+        } else {
+          mobileNav.appendChild(mb);
+        }
+      }
+      mb.href = href;
+      applyLabel(mb);
+      mb.style.display = '';
+    }
+  }
+
+  /** Badge editorial: Comprador / Talento en ascenso / Dueño de la ciudad */
+  function mdjApplyNavTierStatusBadge(navTier) {
+    var actions = document.querySelector('#mainHeader .header-actions');
+    if (!actions) return;
+    var id = 'header-tier-status-badge';
+    var el = document.getElementById(id);
+    if (!navTier || navTier === 'guest') {
+      if (el) el.remove();
+      return;
+    }
+    var key =
+      navTier === 'client_only'
+        ? 'nav-tier-status-buyer'
+        : navTier === 'artist_lite'
+          ? 'nav-tier-status-lite'
+          : navTier === 'artist_pro'
+            ? 'nav-tier-status-pro'
+            : '';
+    if (!key) {
+      if (el) el.remove();
+      return;
+    }
+    if (!el) {
+      el = document.createElement('span');
+      el.id = id;
+      el.className = 'header-tier-status-badge';
+      el.setAttribute('role', 'status');
+      var badge = document.getElementById('header-djpro-badge');
+      if (badge && badge.parentNode === actions) {
+        actions.insertBefore(el, badge);
+      } else {
+        actions.appendChild(el);
+      }
+    }
+    el.setAttribute('data-i18n', key);
+    try {
+      if (window.i18n && typeof window.i18n.t === 'function') {
+        var tx = window.i18n.t(key);
+        if (tx) el.textContent = tx;
+      }
+    } catch (e) { /* ignore */ }
+    el.style.display = 'inline-flex';
   }
 
   /** Oculta ENTRAR/LOGIN hasta conocer sesión (evita flash si ya hay cuenta). */
@@ -121,7 +242,7 @@
     var l = document.createElement('link');
     l.id = 'mdj-header-vip-css';
     l.rel = 'stylesheet';
-    l.href = './mdj-header-vip.css?v=20260418-header-z2980';
+    l.href = './mdj-header-vip.css?v=20260422-account-menu-fixed';
     document.head.appendChild(l);
   }
 
@@ -159,7 +280,7 @@
         actions.appendChild(el);
       }
     }
-    var label = 'Returning client';
+    var label = 'Client';
     try {
       if (window.i18n && typeof window.i18n.t === 'function') {
         var tx = window.i18n.t('header-client-loyalty');
@@ -168,7 +289,7 @@
     } catch (e) { /* ignore */ }
     if (!window.i18n) {
       var raw = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
-      if (raw.indexOf('es') === 0) label = 'Cliente recurrente';
+      if (raw.indexOf('es') === 0) label = 'Cliente';
     }
     el.textContent = label;
     el.style.display = 'inline-flex';
@@ -181,6 +302,9 @@
     if (mob) mob.style.display = 'none';
     var navL = document.getElementById('mainNav-mi-portal-link');
     if (navL) navL.style.display = 'none';
+    mdjRemoveArtistDashboardNavLinks();
+    var tb = document.getElementById('header-tier-status-badge');
+    if (tb) tb.remove();
   }
 
   /**
@@ -443,16 +567,51 @@
     } catch (e) { /* ignore */ }
   }
 
+  /** Menú cuenta: anclado al viewport (fixed) bajo el bloque VIP — evita stacking/scroll del header. */
+  function mdjPositionAccountDropdown() {
+    var menu = document.getElementById('accountMenu');
+    if (!menu || !menu.classList.contains('open')) return;
+    var root = document.getElementById('mdjAccountVipRoot');
+    var zone = document.getElementById('header-auth-zone');
+    var anchor = root || zone;
+    if (!anchor) return;
+    var r = anchor.getBoundingClientRect();
+    var gap = 8;
+    var topPx = r.bottom + gap;
+    var rightPx = Math.max(8, window.innerWidth - r.right);
+    menu.style.position = 'fixed';
+    menu.style.top = topPx + 'px';
+    menu.style.right = rightPx + 'px';
+    menu.style.left = 'auto';
+    menu.style.bottom = 'auto';
+    menu.style.zIndex = '5000';
+  }
+
   function mdjCloseAccountMenu() {
     var m = document.getElementById('accountMenu');
     var menubtn = document.getElementById('mdjAccountVipMenuBtn');
-    if (m) m.classList.remove('open');
+    if (m) {
+      m.classList.remove('open');
+      m.style.position = '';
+      m.style.top = '';
+      m.style.right = '';
+      m.style.left = '';
+      m.style.bottom = '';
+      m.style.zIndex = '';
+    }
     if (menubtn) menubtn.setAttribute('aria-expanded', 'false');
   }
 
   function mdjBindVipAccountInteractionsOnce() {
     if (window.__mdjVipAcctBound) return;
     window.__mdjVipAcctBound = true;
+    function mdjAccountMenuViewportSync() {
+      var menu = document.getElementById('accountMenu');
+      if (!menu || !menu.classList.contains('open')) return;
+      mdjPositionAccountDropdown();
+    }
+    window.addEventListener('scroll', mdjAccountMenuViewportSync, true);
+    window.addEventListener('resize', mdjAccountMenuViewportSync);
     document.addEventListener('click', function (e) {
       var menu = document.getElementById('accountMenu');
       var menubtn = document.getElementById('mdjAccountVipMenuBtn');
@@ -462,6 +621,19 @@
         if (!menu) return;
         menu.classList.toggle('open');
         menubtn.setAttribute('aria-expanded', menu.classList.contains('open') ? 'true' : 'false');
+        if (menu.classList.contains('open')) {
+          requestAnimationFrame(function () {
+            mdjPositionAccountDropdown();
+            requestAnimationFrame(mdjPositionAccountDropdown);
+          });
+        } else {
+          menu.style.position = '';
+          menu.style.top = '';
+          menu.style.right = '';
+          menu.style.left = '';
+          menu.style.bottom = '';
+          menu.style.zIndex = '';
+        }
         return;
       }
       if (menu && menu.contains(e.target) && e.target && e.target.classList && e.target.classList.contains('mdj-menu-logout')) {
@@ -774,7 +946,7 @@
     else if (path === 'rentals.html' || path === 'services.html') key = 'services';
     else if (path === 'find-dj.html') key = 'home';
     else if (path === 'dj-profile.html') key = 'flow';
-    else if (path === 'dj-dashboard.html') key = 'mi-portal';
+    else if (path === 'dj-dashboard.html') key = 'artist-dash';
     else if (path === 'client-portal.html' || path === 'client-billing.html') key = 'mi-portal';
 
     document.querySelectorAll('#mainNav a[data-mdj-nav], .mobile-nav a[data-mdj-nav]').forEach(function (el) {
@@ -845,11 +1017,17 @@
     try {
       var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
       if (!sb) {
+        window.__mdjLastNavTier = null;
+        window.__mdjProToolsUnlocked = false;
+        window.__mdjLastNavIsClient = false;
         mdjEnsureDesktopAuditCss();
         mdjHideMiPortalButton();
         mdjApplyGuestHeaderAvatar();
         mdjApplyHeaderAuthPillSession(false);
         mdjSyncClientLoyaltyIndicator(false);
+        mdjApplyDjToolsNavForTier(null);
+        mdjApplyArtistDashboardNavChrome(false);
+        mdjApplyNavTierStatusBadge(null);
         var gp0 = document.getElementById('header-get-pro-btn');
         var sfd0 = document.getElementById('header-subscribe-free-btn');
         var sfm0 = document.getElementById('header-subscribe-free-mobile');
@@ -895,20 +1073,23 @@
           var metaUt = session.user && session.user.user_metadata && session.user.user_metadata.user_type;
           var appRole = session.user && session.user.app_metadata && session.user.app_metadata.role;
           var djRowRole = p ? String(p.role || '').toLowerCase() : '';
-          /* JWT puede ir sin user_type aún; si hay fila en dj_profiles y no es explícitamente «client», es artista (Jobs / panel DJ). */
-          var jwtArtist =
-            metaUt === 'talent' ||
-            metaUt === 'dj' ||
-            (appRole && String(appRole).toLowerCase() === 'artist') ||
-            (!!p && djRowRole !== 'client');
           var metaUtLower = metaUt ? String(metaUt).toLowerCase() : '';
+          /* Dos caminos: cuenta de usuario (cliente) ≠ artista. Si el JWT dice explícitamente client, nunca UI de DJ aunque exista dj_profiles. */
+          var sessionIsExplicitClient = metaUtLower === 'client';
+          var jwtArtist = sessionIsExplicitClient
+            ? false
+            : metaUt === 'talent' ||
+              metaUt === 'dj' ||
+              (appRole && String(appRole).toLowerCase() === 'artist') ||
+              (!!p && djRowRole !== 'client');
           var appRoleLower = appRole ? String(appRole).toLowerCase() : '';
           var metadataSaysClient = metaUtLower === 'client' || appRoleLower === 'client';
           /* jwtArtist: no forzar «cliente» solo por tener client_profiles (muchos artistas tienen ambas filas). */
-          var isClient =
-            (p && djRowRole === 'client') ||
-            (!p && hasClientRow && !jwtArtist) ||
-            (!p && metadataSaysClient && !jwtArtist);
+          var isClient = sessionIsExplicitClient
+            ? true
+            : (p && djRowRole === 'client') ||
+              (!p && hasClientRow && !jwtArtist) ||
+              (!p && metadataSaysClient && !jwtArtist);
 
           var viewingOwnDjProfile = false;
           try {
@@ -1016,14 +1197,19 @@
             settingsLabel = mdjGetDjDashboardMenuLabel();
           }
 
-          var miPortalHref = './client-portal.html';
-          if (isClient) {
-            miPortalHref = './client-portal.html';
-          } else if (hasDjProfile || isArtistSession) {
-            miPortalHref = './dj-dashboard.html?tab=settings';
+          /** Matriz: cliente solo | artista LITE | artista PRO — Mi Portal siempre → reservas/compras (cliente). */
+          var navTier;
+          if (hasDjProfile) {
+            navTier = isProUser ? 'artist_pro' : 'artist_lite';
+          } else if (isClient) {
+            navTier = 'client_only';
+          } else if (jwtArtist || isArtistSession) {
+            navTier = 'artist_lite';
           } else {
-            miPortalHref = settingsUrl;
+            navTier = 'client_only';
           }
+
+          var miPortalHref = './client-portal.html';
 
           mdjMountOrUpdateVipAccountZone({
             displayName: displayName,
@@ -1044,7 +1230,8 @@
             }
           } catch (eHref) { /* ignore */ }
 
-          mdjApplyDjToolsNavForClientSession(isClient);
+          mdjApplyDjToolsNavForTier(navTier);
+          mdjApplyNavTierStatusBadge(navTier);
 
           mdjMaybeRunVipWelcomeProtocol(session);
 
@@ -1056,7 +1243,11 @@
             mdjEnsureMiPortalButton(miPortalHref);
           }
           mdjEnsureMiPortalMobile(miPortalHref);
+          mdjApplyArtistDashboardNavChrome(navTier === 'artist_lite' || navTier === 'artist_pro');
           mdjNavHighlight();
+          try {
+            if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
+          } catch (eUi) { /* ignore */ }
 
           mdjApplyHeaderAuthPillSession(true);
 
@@ -1095,10 +1286,15 @@
           try {
             mdjApplyHeaderAuthPillSession(true);
           } catch (e2) { /* ignore */ }
-          mdjApplyDjToolsNavForClientSession(false);
+          mdjApplyDjToolsNavForTier(null);
+          mdjApplyArtistDashboardNavChrome(false);
+          mdjApplyNavTierStatusBadge(null);
           mdjSyncClientLoyaltyIndicator(false);
         }
       } else {
+        window.__mdjLastNavTier = null;
+        window.__mdjProToolsUnlocked = false;
+        window.__mdjLastNavIsClient = false;
         mdjHideMiPortalButton();
         document.body.classList.remove('mdj-logged-in-header');
         mdjApplyGuestHeaderAvatar();
@@ -1115,14 +1311,22 @@
         mdjSyncClientLoyaltyIndicator(false);
         var npmGuest = document.getElementById('nav-my-profile-mobile');
         if (npmGuest) npmGuest.style.display = 'none';
-        mdjApplyDjToolsNavForClientSession(false);
+        mdjApplyDjToolsNavForTier(null);
+        mdjApplyArtistDashboardNavChrome(false);
+        mdjApplyNavTierStatusBadge(null);
       }
     } catch (err) {
       console.error('[MDJ-SYSTEM] checkSessionForNav:', err);
+      window.__mdjLastNavTier = null;
+      window.__mdjProToolsUnlocked = false;
+      window.__mdjLastNavIsClient = false;
       mdjHideMiPortalButton();
       if (authZone) authZone.style.display = 'none';
       mdjApplyHeaderAuthPillSession(false);
       mdjSyncClientLoyaltyIndicator(false);
+      mdjApplyDjToolsNavForTier(null);
+      mdjApplyArtistDashboardNavChrome(false);
+      mdjApplyNavTierStatusBadge(null);
     } finally {
       mdjSetHeaderAuthPillsPending(false);
       if (authZone) authZone.classList.remove('session-pending');

@@ -207,6 +207,11 @@
     if (ctry) {
       ctry.addEventListener('change', function () {
         _mdjStateTypeCycle = { letter: null, i: 0, t: 0 };
+        /* Evita dos «United States»: el filtro no debe quedar como segunda caja de valor */
+        var filtClear = el('input-country-filter');
+        if (filtClear) filtClear.value = '';
+        var curVal = el('select-country') ? el('select-country').value : '';
+        rebuildCountryOptions('', curVal);
         syncStateFields();
       });
     }
