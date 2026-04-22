@@ -30,10 +30,12 @@ serve(async (req) => {
         if (!lead_id) return json({ ok: false, error: "lead_id requerido" }, 400);
         if (!STRIPE_SECRET_KEY) return json({ ok: false, error: "STRIPE_SECRET_KEY no configurado" }, 500);
 
-        // ── Fetch lead details ─────────────────────────────────
+        // ── Fetch lead (incluye caja de cobro: lead + enlace a client_profiles) ─
         const { data: lead, error: leadErr } = await sb
             .from("leads")
-            .select("id, email, event_type, event_date, location, assigned_dj_name, contact_person")
+            .select(
+                "id, email, event_type, event_date, location, assigned_dj_name, contact_person, stripe_customer_id, client_user_id",
+            )
             .eq("id", lead_id)
             .single();
 
@@ -41,54 +43,75 @@ serve(async (req) => {
             return json({ ok: false, error: "Lead no encontrado" }, 404);
         }
 
-        const clientEmail = lead.email ?? "";
+        const clientEmail = (lead.email ?? "").trim();
         const eventLabel = `${lead.event_type ?? "Evento"} — ${lead.event_date ?? ""}`;
 
-        // ── Get or create Stripe Customer for this client ──────
-        let customerId: string | null = null;
+        /** Caja **comprador** (portales / eventos). NUNCA reutilizar el customer del artista (Pro en dj_profiles). */
+        let customerId: string | null =
+            lead.stripe_customer_id != null && String(lead.stripe_customer_id).trim() !== ""
+                ? String(lead.stripe_customer_id).trim()
+                : null;
 
-        // Check if we have a stripe_customer_id stored on the lead
-        const { data: leadFull } = await sb
-            .from("leads")
-            .select("stripe_customer_id")
-            .eq("id", lead_id)
-            .single();
+        const clientUid = lead.client_user_id != null ? String(lead.client_user_id) : "";
+        if (!customerId && clientUid) {
+            const { data: cp } = await sb
+                .from("client_profiles")
+                .select("buyer_stripe_customer_id")
+                .eq("user_id", clientUid)
+                .maybeSingle();
+            const b = cp?.buyer_stripe_customer_id;
+            if (b != null && String(b).trim() !== "") {
+                customerId = String(b).trim();
+            }
+        }
 
-        customerId = leadFull?.stripe_customer_id ?? null;
-
-        if (!customerId && clientEmail) {
-            // Search existing Stripe customer by email
+        if (!customerId) {
+            const q = encodeURIComponent(`metadata['mdj_lead_id']:'${lead_id}'`);
             const searchRes = await fetch(
-                `https://api.stripe.com/v1/customers/search?query=email:'${encodeURIComponent(clientEmail)}'&limit=1`,
-                { headers: { Authorization: `Bearer ${STRIPE_SECRET_KEY}` } }
+                `https://api.stripe.com/v1/customers/search?query=${q}&limit=1`,
+                { headers: { Authorization: `Bearer ${STRIPE_SECRET_KEY}` } },
             );
             const searchData = await searchRes.json();
-            if (searchData.data && searchData.data.length > 0) {
+            if (searchData.data?.length) {
                 customerId = searchData.data[0].id;
             }
         }
 
-        if (!customerId && clientEmail) {
-            // Create new Stripe customer
+        if (!customerId) {
+            if (!clientEmail) {
+                return json(
+                    { ok: false, error: "Falta email en el lead para cobrar o crear cliente Stripe (comprador)" },
+                    400,
+                );
+            }
+            const newCustBody = new URLSearchParams({
+                email: clientEmail,
+                name: (lead.contact_person as string) || clientEmail,
+                "metadata[mdj_lead_id]": lead_id,
+                "metadata[account_lane]": "buyer",
+                "metadata[product_line]": "event_deposit",
+            });
+            if (clientUid) newCustBody.set("metadata[client_user_id]", clientUid);
             const custRes = await fetch("https://api.stripe.com/v1/customers", {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
-                body: new URLSearchParams({
-                    email: clientEmail,
-                    name: lead.contact_person ?? clientEmail,
-                    "metadata[lead_id]": lead_id,
-                }).toString(),
+                body: newCustBody.toString(),
             });
             const cust = await custRes.json();
-            customerId = cust.id;
-
-            // Save stripe_customer_id to lead
-            if (customerId) {
-                await sb.from("leads").update({ stripe_customer_id: customerId }).eq("id", lead_id);
+            if (cust.error) {
+                return json({ ok: false, error: `Stripe: ${cust.error.message ?? "customer create"}` }, 500);
             }
+            customerId = cust.id as string;
+        }
+
+        if (customerId) {
+            await sb.from("leads").update({ stripe_customer_id: customerId }).eq("id", lead_id);
+        }
+        if (customerId && clientUid) {
+            await sb.from("client_profiles").update({ buyer_stripe_customer_id: customerId }).eq("user_id", clientUid);
         }
 
         // ── Create Stripe Checkout Session (one-time payment) ──
@@ -103,6 +126,8 @@ serve(async (req) => {
             success_url: `${SITE_URL}/client-portal.html?lead=${lead_id}&payment=success`,
             cancel_url: `${SITE_URL}/client-portal.html?lead=${lead_id}&payment=cancelled`,
             "metadata[lead_id]": lead_id,
+            "metadata[account_lane]": "buyer",
+            "metadata[product_line]": "event_deposit",
             "metadata[event_type]": lead.event_type ?? "",
             "metadata[event_date]": lead.event_date ?? "",
         };

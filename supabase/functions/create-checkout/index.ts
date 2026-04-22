@@ -176,6 +176,8 @@ serve(async (req) => {
                     email: user.email!,
                     name: profile?.full_name || user.email!,
                     "metadata[user_id]": user.id,
+                    "metadata[account_lane]": "artist",
+                    "metadata[mdj_product]": "mdj_artist_pro",
                 }),
             });
             const customer = await customerRes.json();
