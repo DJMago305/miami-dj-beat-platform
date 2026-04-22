@@ -5,8 +5,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>MDJPRO — Manager Panel</title>
-    <link rel="stylesheet" href="./styles.css?v=20260415-CORE-CONNECTIONS" />
+    <link rel="stylesheet" href="./styles.css?v=20260422-nav-unified72" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260421-nav-z120" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
+    <!-- Idioma: mismos scripts que el resto del sitio (sin esto, ES/EN no reciben listeners). -->
+    <script src="./translations.js?v=20260422-post-sql-staff-roles"></script>
+    <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
     <style>
         :root {
             --admin-accent: #00ff88;
@@ -17,6 +21,7 @@
             grid-template-columns: 250px 1fr;
             gap: 20px;
             margin-top: 30px;
+            align-items: start;
         }
 
         .sidebar {
@@ -25,6 +30,19 @@
             padding: 20px;
             border: 1px solid var(--line);
             height: fit-content;
+        }
+
+        /* Menú lateral siempre a mano al hacer scroll (cabecera del sitio es fixed). */
+        @media (min-width: 901px) {
+            .sidebar {
+                position: sticky;
+                top: calc(var(--header-height, 84px) + var(--header-nav-band, 72px) + 14px);
+                max-height: calc(100vh - var(--header-height, 84px) - var(--header-nav-band, 72px) - 28px);
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                z-index: 40;
+                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+            }
         }
 
         .side-link {
@@ -40,6 +58,18 @@
         .side-link:hover,
         .side-link.active {
             background: rgba(255, 255, 255, 0.05);
+            color: var(--admin-accent);
+        }
+
+        .sidebar .side-link--staff-settings {
+            margin-top: 10px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 700;
+            color: rgba(245, 236, 220, 0.92);
+        }
+
+        .sidebar .side-link--staff-settings:hover {
             color: var(--admin-accent);
         }
 
@@ -104,12 +134,309 @@
             padding: 40px;
             color: var(--muted);
         }
+
+        /* <button class="btn"> en tema oscuro: sin esto WebKit a veces pinta texto negro (ilegible). */
+        main.container .admin-grid button.btn {
+            -webkit-appearance: none;
+            appearance: none;
+            font-family: inherit;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        main.container .admin-grid button.btn.primary {
+            color: var(--gold);
+        }
+
+        main.container .admin-grid button.btn.secondary {
+            color: rgba(248, 250, 252, 0.96);
+            border-color: rgba(255, 255, 255, 0.22);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        main.container .admin-grid button.btn.secondary:hover {
+            color: var(--gold);
+            border-color: rgba(197, 160, 89, 0.5);
+        }
+
+        main.container .admin-grid button.btn.gold {
+            color: #12100a;
+            background: linear-gradient(135deg, #e4c77e, #b8944a);
+            border-color: var(--gold);
+            font-weight: 800;
+        }
+
+        main.container .admin-grid button.btn.gold:hover {
+            filter: brightness(1.06);
+        }
+
+        /* Producción — editor de timeline (bloques amplios, horarios legibles) */
+        #production-module-host .mdj-prod-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px 20px;
+        }
+
+        @media (max-width: 720px) {
+            #production-module-host .mdj-prod-meta-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        #production-module-host .mdj-prod-inner-card {
+            padding: 22px 22px 28px;
+        }
+
+        /* Producción — pestañas: la activa “alumbra” (oro + glow) */
+        #production-module-host .mdj-prod-tab-row .mdj-prod-tab {
+            border-radius: 12px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            transition: background 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease, color 0.22s ease,
+                opacity 0.22s ease, filter 0.2s ease;
+        }
+
+        #production-module-host .mdj-prod-tab-row .mdj-prod-tab:not(.mdj-prod-tab--active) {
+            opacity: 0.52;
+            border-color: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(248, 250, 252, 0.82);
+        }
+
+        #production-module-host .mdj-prod-tab-row .mdj-prod-tab:not(.mdj-prod-tab--active):hover {
+            opacity: 0.85;
+            border-color: rgba(197, 160, 89, 0.35);
+        }
+
+        #production-module-host .mdj-prod-tab-row .mdj-prod-tab.mdj-prod-tab--active {
+            opacity: 1;
+            color: #141008 !important;
+            border-color: rgba(197, 160, 89, 0.95) !important;
+            background: linear-gradient(
+                    165deg,
+                    rgba(240, 218, 165, 1) 0%,
+                    rgba(205, 168, 88, 0.98) 45%,
+                    rgba(175, 138, 58, 1) 100%
+                )
+                !important;
+            box-shadow:
+                0 0 0 1px rgba(255, 248, 220, 0.45) inset,
+                0 0 32px rgba(197, 160, 89, 0.5),
+                0 8px 22px rgba(0, 0, 0, 0.38);
+        }
+
+        #production-module-host .mdj-prod-tab-row .mdj-prod-tab.mdj-prod-tab--active:hover {
+            filter: brightness(1.05);
+        }
+
+        #production-module-host .mdj-prod-inv-moretools > summary {
+            list-style: none;
+            cursor: pointer;
+            color: rgba(197, 160, 89, 0.95);
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 0.04em;
+        }
+
+        #production-module-host .mdj-prod-inv-moretools > summary::-webkit-details-marker {
+            display: none;
+        }
+
+        #production-module-host .mdj-prod-inv-summary-card {
+            margin-top: 18px;
+            padding: 16px 18px 18px;
+            border-radius: 14px;
+            border: 1px solid rgba(197, 160, 89, 0.42);
+            background: linear-gradient(165deg, rgba(197, 160, 89, 0.12) 0%, rgba(0, 0, 0, 0.45) 55%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        #production-module-host .mdj-prod-inv-sum-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #production-module-host .mdj-prod-inv-sum-row,
+        #production-module-host .mdj-prod-inv-sum-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 16px;
+        }
+
+        #production-module-host .mdj-prod-inv-sum-row--tax .mdj-prod-inv-sum-lbl {
+            opacity: 0.82;
+        }
+
+        #production-module-host .mdj-prod-inv-sum-lbl {
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(248, 250, 252, 0.88);
+        }
+
+        #production-module-host .mdj-prod-inv-sum-val {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #production-module-host .mdj-prod-inv-sum-total {
+            margin-top: 6px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(197, 160, 89, 0.35);
+        }
+
+        #production-module-host .mdj-prod-inv-sum-total .mdj-prod-inv-sum-lbl {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(197, 160, 89, 0.98);
+        }
+
+        #production-module-host .mdj-prod-inv-sum-total .mdj-prod-inv-sum-val {
+            font-size: clamp(1.25rem, 3.5vw, 1.65rem);
+            font-weight: 800;
+            color: rgba(240, 224, 180, 1);
+            text-shadow: 0 0 24px rgba(197, 160, 89, 0.35);
+        }
+
+        #production-module-host .mdj-prod-inv-box {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            padding: 16px 16px 20px;
+            background: linear-gradient(165deg, rgba(0, 0, 0, 0.35) 0%, rgba(15, 22, 35, 0.55) 100%);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
+            margin-bottom: 20px;
+        }
+
+        #production-module-host .mdj-prod-inv-box--info {
+            margin-top: 4px;
+        }
+
+        #production-module-host .mdj-prod-inv-box--quote {
+            margin-bottom: 0;
+        }
+
+        #production-module-host .mdj-prod-inv-box-title {
+            font-weight: 800;
+            margin: 0 0 14px;
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(197, 160, 89, 0.92);
+        }
+
+        #production-module-host .mdj-prod-addr-section {
+            margin-top: 4px;
+        }
+
+        #production-module-host .mdj-prod-addr-section-title {
+            font-weight: 800;
+            margin: 12px 0 8px;
+            letter-spacing: 0.04em;
+            color: rgba(197, 160, 89, 0.95);
+        }
+
+        #production-module-host .mdj-prod-addr-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 12px;
+        }
+
+        @media (max-width: 560px) {
+            #production-module-host .mdj-prod-addr-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        #production-module-host .mdj-prod-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        #production-module-host .mdj-prod-block {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 18px;
+            padding: 18px 20px 20px;
+            background: rgba(0, 0, 0, 0.35);
+            min-width: 0;
+        }
+
+        #production-module-host .mdj-prod-block-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        #production-module-host .mdj-prod-block-num {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--gold);
+        }
+
+        #production-module-host .mdj-prod-block-times {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px 18px;
+            margin-bottom: 4px;
+        }
+
+        @media (max-width: 560px) {
+            #production-module-host .mdj-prod-block-times {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        #production-module-host .mdj-prod-mini-lbl {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(232, 238, 252, 0.78);
+        }
+
+        #production-module-host .mdj-prod-time {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        #production-module-host .mdj-prod-field {
+            margin-bottom: 16px;
+        }
+
+        #production-module-host .mdj-prod-field:last-child {
+            margin-bottom: 0;
+        }
+
+        #production-module-host textarea.mdj-prod-textarea {
+            width: 100%;
+            min-height: 110px;
+            resize: vertical;
+            line-height: 1.5;
+            padding: 12px 14px;
+            display: block;
+            font-size: 14px;
+        }
+
+        #production-module-host .mdj-prod-block .price-input {
+            font-size: 14px;
+        }
     </style>
 </head>
 
 <body class="notranslate">
     <!-- MDJ canonical site header — keep in sync with index #mainHeader; use ./index.html# anchors for subpages -->
-<header class="header" id="mainHeader">
+<header class="header mdj-header-unified" id="mainHeader">
   <div class="header-top">
     <div class="container">
       <div class="brand">
@@ -173,9 +500,9 @@
       </div>
     </div>
   </div>
-  <div class="header-bottom">
+  <div class="header-nav">
     <div class="container">
-      <nav class="nav top-nav" id="mainNav">
+      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav">
         <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
         <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
         <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
@@ -183,6 +510,9 @@
         <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
         <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
         <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
+        <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" aria-hidden="true" tabindex="-1">MY PORTAL</a>
+        <a href="./admin-dashboard.html" id="mainNav-staff-link" class="mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
+        <a id="mainNav-artist-dashboard-link" class="mdj-artist-dash-mainnav mdj-mainnav-reserved-slot" href="./dj-profile.html" data-mdj-nav="my-profile" data-i18n="nav-my-profile" aria-hidden="true" tabindex="-1">MY PROFILE</a>
       </nav>
     </div>
   </div>
@@ -191,6 +521,7 @@
     <main class="container">
         <div class="admin-grid">
             <aside class="sidebar">
+                <a href="./account-settings.html" class="side-link side-link--staff-settings" data-i18n="admin-sidebar-profile">👤 Perfil</a>
                 <a href="#leads" class="side-link active">🎯 Leads de Clientes</a>
                 <a href="#crm" class="side-link" onclick="loadCRM()">👑 Base Clientes (CRM)</a>
                 <a href="#djs" class="side-link">🎧 Gestión de DJs</a>
@@ -198,6 +529,7 @@
                 <a href="#analytics" class="side-link" onclick="loadAnalytics()">📊 Analytics</a>
                 <a href="#content" class="side-link">🖼️ Contenido y Precios</a>
                 <a href="#apps" class="side-link">📦 Hosting de Apps</a>
+                <a href="#production" class="side-link" data-i18n="prod-sidebar-production"></a>
             </aside>
 
             <section class="content">
@@ -605,6 +937,18 @@
                     </div>
 
                 </div>
+
+                <div class="admin-card" id="apps" style="display:none;">
+                    <h3>📦 Hosting de Apps</h3>
+                    <p class="fineprint">Panel de despliegues y enlaces: en preparación. Mientras tanto usa el repo y
+                        despliegues manuales.</p>
+                </div>
+
+                <div class="admin-card" id="production" style="display:none;">
+                    <h3 style="margin-top:0;" data-i18n="prod-admin-title"></h3>
+                    <p class="fineprint" style="margin-bottom:16px;" data-i18n="prod-admin-intro"></p>
+                    <div id="production-module-host"></div>
+                </div>
             </section>
         </div>
         <footer class="footer">
@@ -617,6 +961,10 @@
         <script src="./supabase-config.js?v=20260421-storage-reels-fix"></script>
         <script src="./subscription.js?v=20260422-find-dj-rank"></script>
         <script src="./invoice-print-bridge.js?v=20260420"></script>
+        <script src="./js/production-templates.js?v=20260422-lang-blocks"></script>
+        <script src="./account-address-data.js?v=20260429"></script>
+        <script src="./js/production-inv-address.js?v=20260421-prod-inv-addr-init"></script>
+        <script src="./js/production-module.js?v=20260422-post-sql-staff-roles"></script>
         <script>
             async function loadAdminData() {
                 // Initialize Supabase client (lazy singleton — avoids CDN race condition)
@@ -1429,8 +1777,8 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     const roleBadge = document.getElementById('role-badge');
                     if (!roleBadge) return;
                     if (window.userRole === 'SALES_STAFF') {
-                        roleBadge.textContent = "Acceso: Equipo de Ventas (seller)";
-                        // Hide sensitive sections (Manager only)
+                        roleBadge.textContent = "Acceso: Equipo de Ventas (seller) — Producción incluida (cotización / alta de cliente Mi Portal)";
+                        // Hide sensitive sections (manager/admin only); sellers keep Leads, CRM, DJs, registry, Producción
                         const itemsToHide = ['content', 'analytics', 'apps'];
                         itemsToHide.forEach(id => {
                             const el = document.getElementById(id);
@@ -1456,17 +1804,24 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             // ── Sidebar Navigation: show/hide sections ────────
             document.querySelectorAll('.side-link').forEach(link => {
                 link.addEventListener('click', function () {
+                    const hrefRaw = this.getAttribute('href') || '';
+                    /* Enlaces fuera del panel (p. ej. cuenta / perfil staff) — no forzar secciones #. */
+                    if (hrefRaw && !hrefRaw.startsWith('#')) return;
                     document.querySelectorAll('.side-link').forEach(l => l.classList.remove('active'));
                     this.classList.add('active');
-                    const target = this.getAttribute('href')?.replace('#', '');
+                    const target = hrefRaw.replace('#', '');
                     if (!target) return;
                     // Show target section, hide others
-                    const sections = ['leads', 'djs', 'registry-section', 'analytics', 'content', 'apps'];
+                    const sections = ['leads', 'crm', 'djs', 'registry-section', 'analytics', 'content', 'apps', 'production'];
                     sections.forEach(id => {
                         const el = document.getElementById(id);
                         if (!el) return;
                         el.style.display = (id === target) ? 'block' : 'none';
                     });
+
+                    if (target === 'production' && window.MDJProduction && typeof window.MDJProduction.init === 'function') {
+                        window.MDJProduction.init();
+                    }
 
                     // Special scroll behavior for analytics (if kept in view)
                     if (target === 'analytics') {
@@ -1754,6 +2109,12 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     return;
                 }
 
+                var certLang =
+                    (typeof window !== 'undefined' && window.i18n && window.i18n.currentLang) ||
+                    (document.documentElement && String(document.documentElement.getAttribute('lang') || '').split('-')[0]) ||
+                    'es';
+                if (!translations[certLang]) certLang = 'en';
+
                 container.innerHTML = `
                     <table style="font-size:12px;">
                         <thead>
@@ -1771,8 +2132,8 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         <tbody>
                             ${certs.map(c => {
                                 const statusColor = c.graduated ? '#00ff88' : c.pre_graduated ? 'var(--gold)' : '#ff5555';
-                                const statusLabel = c.graduated ? (translations[lang]['cert-status-graduated'] || 'PRO VERIFIED') : c.pre_graduated ? (translations[lang]['cert-status-theory'] || 'THEORY OK') : (translations[lang]['cert-status-failed'] || 'FAILED');
-                                const practicalLabel = c.graduated ? (translations[lang]['cert-practical-approved'] || '✅ YES') : (translations[lang]['cert-practical-pending'] || '⏳ PENDING');
+                                const statusLabel = c.graduated ? (translations[certLang]['cert-status-graduated'] || 'PRO VERIFIED') : c.pre_graduated ? (translations[certLang]['cert-status-theory'] || 'THEORY OK') : (translations[certLang]['cert-status-failed'] || 'FAILED');
+                                const practicalLabel = c.graduated ? (translations[certLang]['cert-practical-approved'] || '✅ YES') : (translations[certLang]['cert-practical-pending'] || '⏳ PENDING');
                                 
                                 return `
                                     <tr>
@@ -1785,9 +2146,9 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                         <td>${practicalLabel}</td>
                                         <td>
                                             <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                                                <a href="./dj-profile.html?id=${c.user_id || ''}" class="btn-pill" style="text-decoration:none;">${translations[lang]['nav-profile'] || 'Profile'}</a>
-                                                <a href="./verify.html?id=${c.cert_number}" class="btn-pill" style="text-decoration:none; border-color:rgba(255,255,255,0.2);" target="_blank">${translations[lang]['cert-btn-verify'] || 'Verify'}</a>
-                                                ${!c.graduated ? `<a href="./dj-profile.html?id=${c.user_id || ''}&evaluate=true" class="btn-pill gold" style="text-decoration:none;">${translations[lang]['cert-eval-btn-evaluate'] || 'Evaluate Practical'}</a>` : ''}
+                                                <a href="./dj-profile.html?id=${c.user_id || ''}" class="btn-pill" style="text-decoration:none;">${translations[certLang]['nav-profile'] || 'Profile'}</a>
+                                                <a href="./verify.html?id=${c.cert_number}" class="btn-pill" style="text-decoration:none; border-color:rgba(255,255,255,0.2);" target="_blank">${translations[certLang]['cert-btn-verify'] || 'Verify'}</a>
+                                                ${!c.graduated ? `<a href="./dj-profile.html?id=${c.user_id || ''}&evaluate=true" class="btn-pill gold" style="text-decoration:none;">${translations[certLang]['cert-eval-btn-evaluate'] || 'Evaluate Practical'}</a>` : ''}
                                             </div>
                                         </td>
                                     </tr>
@@ -1842,8 +2203,8 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
         <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
 
     <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script src="./mdj-shared-header.js?v=20260421-nav-tier-matrix"></script>
-  <script src="./mdj-social-bar.js?v=20260414-MAC-DESKTOP-SYNC"></script>
+    <script src="./mdj-shared-header.js?v=20260422-owner-not-client-pill"></script>
+  <script src="./mdj-social-bar.js?v=20260422-sidebar-off"></script>
 </body>
 
 </html>
