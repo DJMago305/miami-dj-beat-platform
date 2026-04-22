@@ -1355,6 +1355,10 @@
           /* Staff en navegación: SOLO public.dj_profiles (mismo criterio que admin-dashboard). El JWT no abre STAFF. */
           var isDjStaff = !!rowStaff;
           /*
+           * Solo vendedor: UI de staff sin chrome de artista. Dueño / admin / manager mantienen STAFF + DJ Tools + perfil / dashboard de artista.
+           */
+          var isNavStaffSolo = !!p && djRowRole === 'seller';
+          /*
            * client_profiles (compras / portal) no debe etiquetar como «cliente» a owner/staff/team en dj_profiles o JWT.
            * Sin esto, owner con fila cliente ve pastilla «Cliente» junto a SALIR.
            */
@@ -1371,15 +1375,15 @@
           );
           var djproBadge = document.getElementById('header-djpro-badge');
           if (getProBtn) {
-            if (isClient || isDjStaff) {
+            if (isClient || isNavStaffSolo) {
               getProBtn.style.display = 'none';
             } else {
               getProBtn.style.display = isProUser ? 'none' : 'inline-flex';
             }
           }
-          if (djproBadge) djproBadge.style.display = isProUser && !isClient && !isDjStaff ? 'inline-flex' : 'none';
+          if (djproBadge) djproBadge.style.display = isProUser && !isClient && !isNavStaffSolo ? 'inline-flex' : 'none';
           /* Pastilla portal: Cliente | Cliente VIP — solo sesión comprador (no staff / owner). */
-          mdjSyncClientLoyaltyIndicator(!!isClient && !isDjStaff, clientRow);
+          mdjSyncClientLoyaltyIndicator(!!isClient && !isNavStaffSolo, clientRow);
           /* Con cuenta y sin PRO: el CTA lleva a Jobs — mismas tarjetas de abajo (LITE free o PRO de pago), no a login. */
           if (getProBtn && !isProUser && !isClient) {
             getProBtn.href = './jobs.html#selection-screen';
@@ -1453,7 +1457,7 @@
           if (isClient) {
             settingsUrl = './client-portal.html';
             settingsLabel = mdjGetVipPortalMenuLabel();
-          } else if (isDjStaff) {
+          } else if (isNavStaffSolo) {
             settingsUrl = './account-settings.html';
             settingsLabel = mdjGetStaffAccountSettingsMenuLabel();
           } else {
@@ -1474,8 +1478,8 @@
             navTier = 'client_only';
           }
 
-          var miPortalHref = isDjStaff ? './account-settings.html' : './client-portal.html';
-          var miPortalNavOpts = isDjStaff ? { variant: 'staff-settings' } : null;
+          var miPortalHref = isNavStaffSolo ? './account-settings.html' : './client-portal.html';
+          var miPortalNavOpts = isNavStaffSolo ? { variant: 'staff-settings' } : null;
 
           mdjMountOrUpdateVipAccountZone({
             displayName: displayName,
@@ -1511,7 +1515,7 @@
           mdjEnsureMiPortalMobile(miPortalHref, miPortalNavOpts);
           var showMyArtisticProfileMainNav =
             !isClient &&
-            !isDjStaff &&
+            !isNavStaffSolo &&
             (navTier === 'artist_lite' || navTier === 'artist_pro');
           mdjApplyArtistDashboardNavChrome(showMyArtisticProfileMainNav, publicProfileUrl);
           mdjApplyStaffMainNavLink(!!isDjStaff);
