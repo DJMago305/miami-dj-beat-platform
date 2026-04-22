@@ -1339,11 +1339,19 @@
             var pathSeg = (window.location.pathname || '').split('/').pop() || '';
             if (/^dj-profile\.html$/i.test(pathSeg) && session.user) {
               var qidOwn = (new URLSearchParams(window.location.search || '').get('id') || '').trim();
-              viewingOwnDjProfile = qidOwn === session.user.id;
+              var _sid = String(session.user.id);
+              /* Página: sin ?id= carga el propio user_id; con ?id= debe ser el tuyo. UUID case-insensitive. */
+              viewingOwnDjProfile = !qidOwn || qidOwn.toLowerCase() === _sid.toLowerCase();
             }
           } catch (eOwn) { /* ignore */ }
-          if (viewingOwnDjProfile && p && djRowRole !== 'client') {
-            isClient = false;
+          /*
+           * En **tu** dj-profile, la pastilla «Cliente» solo si la fila DJ es rol client;
+           * nunca mezclar caja de comprador (client_profiles) con artista/staff/owner.
+           */
+          if (viewingOwnDjProfile) {
+            isClient = !!(
+              p && String(p.role || '').toLowerCase().trim() === 'client'
+            );
           }
           var hasDjProfile = !!(p && djRowRole !== 'client');
           var idn =
