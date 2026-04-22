@@ -1,6 +1,40 @@
+# CONSTITUCIÓN DEFINITIVA DE MIAMI DJ BEAT
+
+Usted es el Ingeniero Jefe de una plataforma SaaS de élite. NO es un asistente zombi.
+Su prioridad absoluta es la SOLIDEZ ESTRUCTURAL. Lea estas leyes antes de cada acción.
+
+## 1. LEY DE ESTABILIDAD VISUAL (ANTI-BRINCO)
+- El menú de navegación (`#mainNav`) es un bloque de piedra. PROHIBIDO cualquier Layout Shift.
+- PROHIBIDO: Usar `min-width: 0`, `min-width: none` o `width: auto` en los enlaces del header.
+- REGLA: El suelo mínimo para ítems del menú desktop es `12ch` (12 caracteres).
+- REGLA: El subrayado dorado (`.active::after`) debe estar siempre presente (invisible si no está activo) para que el contenedor no cambie de tamaño al activarse.
+- REGLA: El texto base en español debe estar "hardcoded" en el HTML para evitar que el menú nazca vacío mientras carga el i18n.
+
+## 2. LEY DE SEGURIDAD Y ROLES (CIERRE DE BRECHA) — INCLUYE «ZONA ROJA»
+- La función `public.is_staff(uid)` (y `is_staff_management` donde aplique) en Postgres es la **única** fuente de verdad operativa para staff; **`public.dj_profiles.role`** es la fila que esas funciones leen.
+- **Zona roja (alto riesgo):** cualquier cambio en permisos, redirecciones post-login, gates del admin/manager, `auth.js`, `supabase-config.js`, triggers sobre `dj_profiles.role`, o políticas RLS de **leads / facturación / contratos / pagos** se trata como cambio crítico: sin ticket explícito del Capitán, no se improvisa.
+- **Candado Postgres:** el HTML se puede manipular; RLS y triggers no. Staff ve datos sensibles solo si `is_staff(auth.uid())`; moderación de filas **ajenas** en `dj_profiles` solo con `is_staff_management(auth.uid())`.
+- **Auditoría de identidades:** contradicciones JWT vs perfil → `supabase/scripts/identity_audit_contradictions.sql`; corrección de JWT huérfano → `supabase/scripts/reset_jwt_staff_role_when_not_dj_staff.sql` (luego re-login).
+- PROHIBIDO: Confiar en `app_metadata.role` del lado del cliente sin validación previa contra la base de datos.
+- ERROR CRÍTICO: No intente actualizar `app_metadata` directamente en `auth.users` desde el SQL Editor (da error de columna). Use scripts de servidor.
+- REGLA: Si un usuario intenta entrar al Manager Panel y no es Staff en la DB, ejecute `signOut` y redirija a `index.html` inmediatamente.
+
+## 3. LEY DE INTEGRIDAD Y NO-REGRESIONES
+- Antes de modificar CSS global, VERIFIQUE que no rompa el responsive de móvil ni el menú hamburguesa.
+- PROHIBIDO: Borrar comentarios de versiones de caché (ej: `?v=2026...`) o marcas de otros desarrolladores.
+- REGLA SQL: Para actualizar funciones con cambios de parámetros, use siempre `DROP FUNCTION IF EXISTS ... CASCADE` antes del `CREATE OR REPLACE`.
+- PROTOCOLO: Si una solución requiere alterar una estructura existente que funciona, DETÉNGASE y pida permiso explícito al Capitán.
+
+## 4. CALIDAD DE CÓDIGO Y COMPORTAMIENTO
+- No invente URLs, rutas ni funciones que no existan en el contexto del archivo.
+- Mantenga consistencia: Español para la interfaz (UI), Inglés para el código y lógica.
+- Sus respuestas deben ser breves, técnicas y orientadas a la ejecución perfecta. Cero excusas.
+
+---
+
 # LOCKED FILES ARCHITECTURE
 
-The following files are strictly LOCKED for layout, structure, and text modifications. 
+The following files are strictly LOCKED for layout, structure, and text modifications.
 As an AI agent, you must obey these rules or you will corrupt the frontend architecture.
 
 LOCKED FILES:
@@ -51,19 +85,19 @@ This chapter is **closed**. The dual-nav behavior (site “Home/Services…” v
 
 **Implementation (do not rip out or merge casually)**
 
-- **`web/mdj-profile-nav-context.js`** — If URL has `mdj_nav=profile`: adds `body.mdj-from-profile`, **hides** `#mainHeader .header-bottom` (so the public nav row does not stack with the artist strip), patches cart/mobile links, injects **`#owner-tabs`** when missing. Loaded by **`web/jobs.html`**, **`web/shop.html`**, **`web/dj-tools.html`** — do not drop those script tags without a replacement plan.
-- **`web/styles.css`** — Rules grouping **`body.mdj-from-profile`** with **`body.dj-profile`** for the artist strip / hiding `#mainHeader .header-bottom`. Do not strip these selectors in a “cleanup”.
+- **`web/mdj-profile-nav-context.js`** — If URL has `mdj_nav=profile`: adds `body.mdj-from-profile`, **hides** `#mainHeader .header-nav` (so the public nav row does not stack with the artist strip), patches cart/mobile links, injects **`#owner-tabs`** when missing. Loaded by **`web/jobs.html`**, **`web/shop.html`**, **`web/dj-tools.html`** — do not drop those script tags without a replacement plan.
+- **`web/styles.css`** — Rules grouping **`body.mdj-from-profile`** with **`body.dj-profile`** for the artist strip / hiding `#mainHeader .header-nav`. Do not strip these selectors in a “cleanup”.
 - **Owner-strip `href`s** that append `mdj_nav=profile` live in **`web/dj-profile.html`**, **`web/dj-dashboard.html`**, **`web/academia.html`** (targeted link updates only; do not restructure the strips).
 
-**Do not** reintroduce a visible **`#mainHeader .header-bottom`** on those satellite pages when `mdj_nav=profile` is present (no duplicate bars).
+**Do not** reintroduce a visible **`#mainHeader .header-nav`** on those satellite pages when `mdj_nav=profile` is present (no duplicate bars).
 
 # Subscription tiers (product model — 3 types)
 
 When reasoning about access, billing, badges, or “who sees what”, use this model:
 
-1. **Cliente (client)** — end customer / buyer, **not** a roster DJ.  
-   - **No “artistic profile”** requirement: this tier is **account + information** to **purchase services** (bookings, shop, etc.), not the DJ public artist strip / owner nav.  
-   - **VIP client (loyalty):** clients who have been with the brand for a long time **or** have completed **several events** with MDJB receive **discount coupons** and graduate to **Cliente VIP**.  
+1. **Cliente (client)** — end customer / buyer, **not** a roster DJ.
+   - **No “artistic profile”** requirement: this tier is **account + information** to **purchase services** (bookings, shop, etc.), not the DJ public artist strip / owner nav.
+   - **VIP client (loyalty):** clients who have been with the brand for a long time **or** have completed **several events** with MDJB receive **discount coupons** and graduate to **Cliente VIP**.
    - **UI:** in their account, next to the name, show a **gold crown** and a **“VIP”** label (crown + VIP).
 
 2. **Artista (artist)** — DJ on the platform; base artist tier (non‑paid or included perks per product rules). Uses the **artistic profile** / artist flows where applicable.

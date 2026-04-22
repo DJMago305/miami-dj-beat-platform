@@ -1,4 +1,5 @@
 -- ── ONE-OFF (ejecutar manualmente en SQL Editor como postgres) ─────────────────
+-- Antes: auditar con supabase/scripts/identity_audit_contradictions.sql
 -- Corrige fugas históricas: app_metadata.role = admin|manager|seller en JWT pero
 -- public.dj_profiles.role NO es staff → fuerza role en raw_app_meta_data a 'client'.
 --
