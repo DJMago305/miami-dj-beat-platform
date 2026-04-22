@@ -6,6 +6,8 @@
  * - staff   → empleo operativo en dj_profiles (admin, owner, manager, seller)
  * - buyer   → explícitamente comprador (user_type client o fila client en dj)
  * - performer → talento/artista (cualquier otro dj_profiles no comprador, o sin fila y metadata talento)
+ *
+ * Verdad en API (gating, no mezclar cajas): public.mdj_access_snapshot() en Supabase; tiers comerciales: public.mdj_artist_commercial_tier(uid).
  */
 (function (g) {
   'use strict';
@@ -27,7 +29,8 @@
    *   managementInDb: boolean,
    *   navStaffSolo: boolean,
    *   isExplicitClient: boolean,
-   *   principal: 'buyer'|'performer'|'staff'
+   *   principal: 'buyer'|'performer'|'staff',
+   *   billing: { artist: string, buyer: string, isBuyerVip: boolean, isArtistPro: function }
    * }}
    */
   function mdjClassifyPlatformIdentity(o) {
@@ -51,6 +54,8 @@
     } else {
       principal = 'performer';
     }
+    var buyerTier = (cr && cr.buyer_billing_tier != null) ? String(cr.buyer_billing_tier).toLowerCase() : 'none';
+    var isBuyerVip = buyerTier === 'vip';
     return {
       dbRole: dr,
       staffInDb: staffInDb,
@@ -58,7 +63,21 @@
       navStaffSolo: navStaffSolo,
       isExplicitClient: isExplicitClient,
       hasClientRow: hasClientRow,
-      principal: principal
+      principal: principal,
+      billing: {
+        artist: 'dj_profiles',
+        buyer: 'client_profiles',
+        isBuyerVip: isBuyerVip,
+        isArtistPro: function () {
+          if (!dj) return false;
+          if (g.MDB_SUBSCRIPTION && typeof g.MDB_SUBSCRIPTION.isPremiumTier === 'function') {
+            return g.MDB_SUBSCRIPTION.isPremiumTier(dj);
+          }
+          if (dj.is_premium === true) return true;
+          var s = (dj.subscription_status || '').toLowerCase();
+          return s === 'active' || s === 'trialing';
+        }
+      }
     };
   }
 
