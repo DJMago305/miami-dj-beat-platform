@@ -393,8 +393,16 @@ verify_jwt = true
 [functions.notify-new-device-login]
 verify_jwt = true
 
+# Account settings saved — Resend transactional (caller = end-user session; respects notify_email_bookings)
+[functions.notify-account-profile-change]
+verify_jwt = true
+
 # Manager unlocks billing pane in client-portal (caller = staff session)
 [functions.verify-client-billing-unlock]
+verify_jwt = true
+
+# Staff creates client Auth + client_profiles when client authorizes (caller = staff session)
+[functions.staff-create-client-account]
 verify_jwt = true
 
 # [edge_runtime.secrets]
