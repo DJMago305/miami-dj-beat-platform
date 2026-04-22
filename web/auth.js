@@ -112,19 +112,19 @@ function mdjGuessPlatformLabel() {
 
 /**
  * Rol efectivo para redirecciones y UI.
- * Los hooks de Auth suelen fijar app_metadata.role = "client" para todos; el alta de talento va en user_metadata.user_type
- * y debe prevalecer sobre ese "client" por defecto (si no, post-login manda al portal de cliente).
- * Cuenta de usuario (user_type client) y cuenta artista son caminos distintos: si user_type === "client", no promover a talento.
+ * Los hooks de Auth pueden dejar app_metadata.role desalineado; el alta de talento vive en user_metadata.user_type
+ * y debe prevalecer ANTES que admin/manager/seller en JWT — si no, un DJ con JWT erróneo acaba en admin-dashboard.
+ * Cuenta cliente: user_type === "client" explícito.
  */
 function mdjResolveEffectiveUserRole(user) {
     if (!user) return 'client';
-    const appR = String(user.app_metadata?.role || '').toLowerCase();
-    if (appR === 'admin' || appR === 'manager' || appR === 'seller') return appR;
     const ut = String(user.user_metadata?.user_type || '').toLowerCase();
     if (ut === 'client') return 'client';
     if (ut === 'talent' || ut === 'dj' || ut === 'artist') {
         return ut === 'artist' ? 'artist' : 'talent';
     }
+    const appR = String(user.app_metadata?.role || '').toLowerCase();
+    if (appR === 'admin' || appR === 'manager' || appR === 'seller' || appR === 'owner') return appR;
     if (appR && appR !== 'client') return appR;
     if (ut && ut !== 'client') return ut;
     return appR || ut || 'client';
@@ -716,6 +716,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 } catch (devErr) {
                     console.warn('[AUTH] device routine after login:', devErr);
                 }
+                try {
+                    var lpw = document.getElementById('login-password');
+                    if (lpw) {
+                        lpw.value = '';
+                        lpw.setAttribute('type', 'password');
+                    }
+                } catch (eClr) {
+                    void eClr;
+                }
                 await performPostAuthRedirect(db, user);
 
             } catch (err) {
@@ -757,7 +766,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const email = document.getElementById('signup-email')?.value.trim() || '';
                 const password = document.getElementById('signup-password')?.value || '';
                 const confirmPassword = document.getElementById('signup-password-confirm')?.value || '';
-                const phone = document.getElementById('signup-phone')?.value.trim() || '';
+                const phoneRaw = document.getElementById('signup-phone')?.value.trim() || '';
+                const phoneDigits =
+                    typeof window.mdjNANPDigitsFromTel === 'function'
+                        ? window.mdjNANPDigitsFromTel(phoneRaw)
+                        : String(phoneRaw).replace(/\D/g, '').replace(/^1(\d{10})$/, '$1').slice(0, 10);
+                const phone = phoneRaw;
                 const addrStreet = document.getElementById('signup-address-line1')?.value.trim() || '';
                 const addrApt = document.getElementById('signup-address-line2')?.value.trim() || '';
                 const addrCity = document.getElementById('signup-address-city')?.value.trim() || '';
@@ -853,7 +867,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     );
                 }
 
-                if (resolvedUserType === 'talent' && !phone) {
+                if (resolvedUserType === 'talent' && phoneDigits.length < 10) {
                     throw new Error(
                         mdjAuthT(
                             'auth-signup-phone-required-talent',
@@ -1129,19 +1143,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 }
 
-                // ── Inyección Staff (admin / manager / seller) ──
-                const role = mdjResolveEffectiveUserRole(session.user);
-                if (role === 'admin' || role === 'manager' || role === 'seller' || role === 'MANAGER') {
-                    const topNav = document.getElementById('mainNav');
-                    if (topNav && !document.getElementById('manager-link')) {
-                        const mngr = document.createElement('a');
-                        mngr.id = 'manager-link';
-                        mngr.href = './admin-dashboard.html';
-                        mngr.textContent = role === 'seller' ? 'Sales' : 'Staff';
-                        mngr.style.cssText = 'color:var(--admin-accent,#00ff88);font-weight:900;border:1px solid var(--admin-accent,#00ff88);padding:4px 10px;border-radius:12px;margin-left:10px;';
-                        topNav.appendChild(mngr);
-                    }
-                }
+                /* STAFF / admin hub: solo #mainNav-staff-link en el HTML + mdj-shared-header.js (no duplicar con #manager-link). */
+                try {
+                    const legacyMngr = document.getElementById('manager-link');
+                    if (legacyMngr) legacyMngr.remove();
+                } catch (eMn) { /* ignore */ }
 
             } else {
                 if (!headerDelegated) {
