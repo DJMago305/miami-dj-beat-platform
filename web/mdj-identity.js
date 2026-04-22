@@ -7,7 +7,7 @@
  * - buyer   → explícitamente comprador (user_type client o fila client en dj)
  * - performer → talento/artista (cualquier otro dj_profiles no comprador, o sin fila y metadata talento)
  *
- * Verdad en API (gating, no mezclar cajas): public.mdj_access_snapshot() en Supabase; tiers comerciales: public.mdj_artist_commercial_tier(uid).
+ * Verdad en API: public.mdj_access_snapshot() (incl. mdjb_id: MDJB-...-C|A|S|M); tiers: public.mdj_artist_commercial_tier(uid). Refresco código: mdjb_ensure_mine().
  */
 (function (g) {
   'use strict';
