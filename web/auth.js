@@ -322,11 +322,26 @@ async function mdjPerformPostAuthRedirect(db, user) {
     if (typeof window !== 'undefined') window.__mdjPostAuthRedirectLock = true;
     try {
         const params = new URLSearchParams(window.location.search);
+        let djRow = null;
+        let clientRow = null;
+        try {
+            const r1 = await db.from('dj_profiles').select('role').eq('user_id', user.id).maybeSingle();
+            djRow = r1 && r1.data ? r1.data : null;
+        } catch (e1) {
+            console.warn('[AUTH] dj_profiles read:', e1);
+        }
+        try {
+            const r2 = await db.from('client_profiles').select('user_id').eq('user_id', user.id).maybeSingle();
+            clientRow = r2 && r2.data ? r2.data : null;
+        } catch (e2) { /* ignore */ }
+        const idn =
+            typeof window.mdjClassifyPlatformIdentity === 'function'
+                ? window.mdjClassifyPlatformIdentity({ user, djRow, clientRow })
+                : null;
         let rawRole = mdjResolveEffectiveUserRole(user);
         const utExplicit = String(user.user_metadata?.user_type || '').toLowerCase();
         if (rawRole === 'client' && db && utExplicit !== 'client') {
             try {
-                const { data: djRow } = await db.from('dj_profiles').select('role').eq('user_id', user.id).maybeSingle();
                 const r = djRow ? String(djRow.role || '').toLowerCase() : '';
                 if (djRow && r !== 'client') {
                     rawRole = 'talent';
@@ -336,15 +351,18 @@ async function mdjPerformPostAuthRedirect(db, user) {
             }
         }
         const role = rawRole === 'talent' || rawRole === 'dj' ? 'artist' : rawRole;
+        const dr0 = djRow && djRow.role != null ? String(djRow.role).toLowerCase().trim() : '';
+        const isStaffForRedirect = idn
+            ? !!idn.staffInDb
+            : dr0 && ['admin', 'owner', 'manager', 'seller'].includes(dr0);
 
         let targetUrl = './dj-profile.html';
-        if (role === 'admin' || role === 'manager' || role === 'seller') {
+        if (isStaffForRedirect) {
             targetUrl = './admin-dashboard.html';
         } else if (role === 'client') {
             targetUrl = './client-portal.html';
             try {
                 const utNav = String(user.user_metadata?.user_type || '').toLowerCase();
-                const { data: djRow } = await db.from('dj_profiles').select('role').eq('user_id', user.id).maybeSingle();
                 if (utNav !== 'client' && djRow && djRow.role !== 'client') {
                     targetUrl = './dj-profile.html?id=' + encodeURIComponent(user.id);
                 }

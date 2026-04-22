@@ -1346,18 +1346,31 @@
             isClient = false;
           }
           var hasDjProfile = !!(p && djRowRole !== 'client');
-          var rowStaff =
-            !!p &&
-            (djRowRole === 'admin' ||
-              djRowRole === 'manager' ||
-              djRowRole === 'seller' ||
-              djRowRole === 'owner');
-          /* Staff en navegación: SOLO public.dj_profiles (mismo criterio que admin-dashboard). El JWT no abre STAFF. */
-          var isDjStaff = !!rowStaff;
-          /*
-           * Solo vendedor: UI de staff sin chrome de artista. Dueño / admin / manager mantienen STAFF + DJ Tools + perfil / dashboard de artista.
-           */
-          var isNavStaffSolo = !!p && djRowRole === 'seller';
+          var idn =
+            typeof window.mdjClassifyPlatformIdentity === 'function'
+              ? window.mdjClassifyPlatformIdentity({
+                  user: session.user,
+                  djRow: p,
+                  clientRow: clientRow
+                })
+              : null;
+          /* Staff: solo dj_profiles (mismo criterio que admin y RLS). Fallback sin mdj-identity.js puesto arriba en el HTML. */
+          var isDjStaff = idn
+            ? !!idn.staffInDb
+            : !!p &&
+                (djRowRole === 'admin' ||
+                  djRowRole === 'manager' ||
+                  djRowRole === 'seller' ||
+                  djRowRole === 'owner');
+          var isNavStaffSolo = idn ? !!idn.navStaffSolo : !!p && djRowRole === 'seller';
+          try {
+            window.__mdjLastPlatformIdentity = idn || {
+              staffInDb: isDjStaff,
+              navStaffSolo: isNavStaffSolo,
+              principal: isDjStaff ? 'staff' : 'performer',
+              dbRole: djRowRole
+            };
+          } catch (eId) { /* ignore */ }
           /*
            * client_profiles (compras / portal) no debe etiquetar como «cliente» a owner/staff/team en dj_profiles o JWT.
            * Sin esto, owner con fila cliente ve pastilla «Cliente» junto a SALIR.
