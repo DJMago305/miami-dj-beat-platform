@@ -44,6 +44,7 @@ CREATE POLICY "leads_update_admin"
 
 -- ── 4) AI booth learning: alinear con is_staff (antes solo MANAGER mayúsculas) ──
 DROP POLICY IF EXISTS ai_booth_learning_examples_select_manager ON public.ai_booth_learning_examples;
+DROP POLICY IF EXISTS ai_booth_learning_examples_select_staff ON public.ai_booth_learning_examples;
 
 CREATE POLICY ai_booth_learning_examples_select_staff
   ON public.ai_booth_learning_examples FOR SELECT TO authenticated
@@ -52,6 +53,8 @@ CREATE POLICY ai_booth_learning_examples_select_staff
 -- ── 5) Storage installers: staff (no solo MANAGER mayúsculas) ───
 DROP POLICY IF EXISTS "Managers can upload installers" ON storage.objects;
 DROP POLICY IF EXISTS "Managers can update installers" ON storage.objects;
+DROP POLICY IF EXISTS "Staff can upload installers" ON storage.objects;
+DROP POLICY IF EXISTS "Staff can update installers" ON storage.objects;
 
 CREATE POLICY "Staff can upload installers"
   ON storage.objects FOR INSERT TO authenticated

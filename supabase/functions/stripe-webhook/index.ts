@@ -151,11 +151,18 @@ serve(async (req) => {
                     break;
                 }
 
-                // ── Branch B: DJ PRO Subscription ──────────────────
+                // ── Branch B: MDJ Pro (artista) — metadata product_line; default legacy = artist
                 const subId = session.subscription;
                 const referrerId = (session.metadata?.referrer_id || "") as string;
                 const referralCode = (session.metadata?.referral_code || "") as string;
                 if (!userId || !subId) break;
+                const productLine = (session.metadata?.product_line as string | undefined) || "mdj_artist_pro";
+                if (productLine !== "mdj_artist_pro") {
+                    console.log(
+                        `[Webhook] checkout session subscription: skip dj_profiles (product_line=${productLine}) — implement client_profiles path separately`,
+                    );
+                    break;
+                }
 
                 // Fetch subscription for period end
                 const STRIPE_KEY = Deno.env.get("STRIPE_SECRET_KEY")!;
