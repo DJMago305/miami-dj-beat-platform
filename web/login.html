@@ -13,7 +13,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Miami DJ Beat — Iniciar Sesión</title>
-    <link rel="stylesheet" href="./styles.css?v=20260415-CORE-CONNECTIONS" />
+    <link rel="stylesheet" href="./styles.css?v=20260430-float-nav-1" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260422-wordmark-scale" />
+    <link rel="stylesheet" href="./mdj-outlined-fields.css?v=20260421-account-forms" />
     <style>
         .login-container {
             width: 100%;
@@ -617,7 +619,7 @@
 
 <body class="notranslate mdj-login-page">
     <!-- MDJ canonical site header — keep in sync with index #mainHeader; use ./index.html# anchors for subpages -->
-<header class="header" id="mainHeader">
+<header class="header mdj-header-unified" id="mainHeader">
   <div class="header-top">
     <div class="container">
       <div class="brand">
@@ -681,16 +683,19 @@
       </div>
     </div>
   </div>
-  <div class="header-bottom">
+  <div class="header-nav">
     <div class="container">
-      <nav class="nav top-nav" id="mainNav">
+      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav">
         <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
         <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
         <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
         <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-mdj-nav="shop">Shop</a>
         <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+        <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
         <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
         <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
+        <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" aria-hidden="true" tabindex="-1">MY PORTAL</a>
+        <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
       </nav>
     </div>
   </div>
@@ -745,7 +750,7 @@
             </form>
 
             <!-- Signup Form -->
-            <form id="signup-form" class="form hidden">
+            <form id="signup-form" class="form hidden mdj-signup-form--outlined">
                 <input type="hidden" id="signup-usertype" name="user_type" value="talent">
                 <input type="hidden" id="signup-plan-intent" name="plan_intent" value="lite" />
                 <p id="login-signup-jobs-context" class="login-signup-context-hint" data-i18n="login-signup-jobs-same-email-context" role="note" style="display: none;">One email means one Miami DJ Beat login. Your client and artist profiles can share that same email.</p>
@@ -771,42 +776,82 @@
                 <p id="mdj-signup-plan-back-artist" class="mdj-signup-plan-back-artist" aria-live="polite">
                     <button type="button" id="mdj-signup-back-artist" data-i18n="signup-plan-back-artist">← Artist signup (LITE / PRO)</button>
                 </p>
-                <label><span data-i18n="login-signup-name-label">Nombre artístico o nombre de usuario (opcional)</span><small
-                        class="login-field-hint"
-                        data-i18n="login-signup-name-hint">Opcional. Puedes iniciar sesión con este nombre además del
-                        email.</small><input type="text" id="signup-name" name="signup_stage_or_username"
-                        autocomplete="nickname" maxlength="80" data-i18n-hold="login-signup-stage-placeholder" placeholder="e.g. DJMago305"></label>
-                <label><span data-i18n="login-signup-first-name-label">Nombre *</span><input type="text"
-                        id="signup-first-name" name="given-name" autocomplete="given-name" required maxlength="80"
-                        data-i18n-hold="login-signup-firstname-placeholder" placeholder="e.g. John"></label>
-                <label><span data-i18n="login-signup-middle-name-label">Segundo nombre o inicial (opcional)</span><input
-                        type="text"
-                        id="signup-middle-name" name="additional-name" autocomplete="additional-name" maxlength="40"
-                        data-i18n-hold="login-signup-middlename-placeholder" placeholder="e.g. A or middle name"></label>
-                <label><span data-i18n="login-signup-last-name-label">Apellido(s) *</span><input type="text"
-                        id="signup-last-name" name="family-name" autocomplete="family-name" required maxlength="120"
-                        data-i18n-hold="login-signup-lastname-placeholder" placeholder="e.g. Doe"></label>
-                <label><span data-i18n="login-signup-email-label">Email *</span><input type="email" id="signup-email"
-                        name="email" autocomplete="email" inputmode="email" required
-                        data-i18n-hold="login-signup-email-placeholder" placeholder="you@email.com"></label>
-                <label><span data-i18n="login-signup-password-label">Contraseña *</span>
-                    <div class="pwd-wrapper">
-                        <input type="password" id="signup-password" name="password" autocomplete="new-password" required data-i18n-hold="login-signup-password-hint-placeholder" placeholder="Minimum 6 characters">
-                        <button type="button" class="pwd-toggle" tabindex="-1" data-i18n-aria="login-pwd-toggle-aria" aria-label="Show password">👁️</button>
+                <div class="mdj-field-outlined">
+                    <input type="text" id="signup-name" name="signup_stage_or_username" autocomplete="nickname"
+                        maxlength="80" data-i18n-hold="login-signup-stage-placeholder" placeholder=" " />
+                    <label for="signup-name" class="mdj-field-outlined__label"><span
+                            data-i18n="login-signup-name-label">Nombre artístico o nombre de usuario (opcional)</span></label>
+                </div>
+                <p class="login-field-hint" style="margin:-4px 0 0 2px;" data-i18n="login-signup-name-hint">Opcional.
+                    Puedes iniciar sesión con este nombre además del email.</p>
+                <div class="mdj-signup-account-grid">
+                    <div class="mdj-signup-row mdj-signup-row--3">
+                        <div class="mdj-field-outlined">
+                            <input type="text" id="signup-first-name" name="given-name" autocomplete="given-name"
+                                required maxlength="80" data-i18n-hold="login-signup-firstname-placeholder"
+                                placeholder=" " />
+                            <label for="signup-first-name" class="mdj-field-outlined__label"><span
+                                    data-i18n="login-signup-first-name-label">Nombre *</span></label>
+                        </div>
+                        <div class="mdj-field-outlined">
+                            <input type="text" id="signup-middle-name" name="additional-name"
+                                autocomplete="additional-name" maxlength="40"
+                                data-i18n-hold="login-signup-middlename-placeholder" placeholder=" " />
+                            <label for="signup-middle-name" class="mdj-field-outlined__label"><span
+                                    data-i18n="login-signup-middle-name-label">Segundo nombre o inicial
+                                    (opcional)</span></label>
+                        </div>
+                        <div class="mdj-field-outlined">
+                            <input type="text" id="signup-last-name" name="family-name" autocomplete="family-name"
+                                required maxlength="120" data-i18n-hold="login-signup-lastname-placeholder"
+                                placeholder=" " />
+                            <label for="signup-last-name" class="mdj-field-outlined__label"><span
+                                    data-i18n="login-signup-last-name-label">Apellido(s) *</span></label>
+                        </div>
                     </div>
-                </label>
-                <label><span data-i18n="login-signup-password-confirm-label">Confirm password *</span>
-                    <div class="pwd-wrapper">
-                        <input type="password" id="signup-password-confirm" name="password_confirm" autocomplete="new-password" required data-i18n-hold="login-signup-password-confirm-placeholder" placeholder="Repeat password">
-                        <button type="button" class="pwd-toggle" tabindex="-1" data-i18n-aria="login-pwd-toggle-aria" aria-label="Show password">👁️</button>
+                    <div class="mdj-signup-row mdj-signup-row--2">
+                        <div class="mdj-field-outlined">
+                            <input type="email" id="signup-email" name="email" autocomplete="email" inputmode="email"
+                                required data-i18n-hold="login-signup-email-placeholder" placeholder=" " />
+                            <label for="signup-email" class="mdj-field-outlined__label"><span
+                                    data-i18n="login-signup-email-label">Email *</span></label>
+                        </div>
+                        <div class="mdj-field-outlined">
+                            <input type="tel" id="signup-phone" name="tel" autocomplete="tel" placeholder=" " />
+                            <label for="signup-phone" class="mdj-field-outlined__label">
+                                <span id="signup-phone-label-talent" class="hidden"><span
+                                        data-i18n="login-signup-phone-label-talent">Teléfono *</span></span>
+                                <span id="signup-phone-label-client"><span
+                                        data-i18n="login-signup-phone-label-optional">Teléfono (opcional)</span></span>
+                            </label>
+                        </div>
                     </div>
-                </label>
-                <label><span id="signup-phone-label-talent" class="hidden"><span data-i18n="login-signup-phone-label-talent">Teléfono *</span><small
-                            class="login-field-hint"
-                            data-i18n="login-signup-phone-hint-talent">Obligatorio para talento: te contactamos por trabajo.</small></span><span
-                        id="signup-phone-label-client"><span data-i18n="login-signup-phone-label-optional">Teléfono
-                            (opcional)</span></span><input type="tel" id="signup-phone" name="tel" autocomplete="tel"
-                        data-i18n-hold="login-signup-phone-placeholder" placeholder="+1 (305) 000-0000"></label>
+                    <p id="signup-phone-talent-hint" class="login-field-hint hidden" style="margin:-6px 0 0 2px;"
+                        data-i18n="login-signup-phone-hint-talent">Obligatorio para talento: te contactamos por trabajo.</p>
+                    <div class="mdj-signup-row mdj-signup-row--2">
+                        <div class="mdj-field-outlined">
+                            <div class="pwd-wrapper">
+                                <input type="password" id="signup-password" name="password" autocomplete="new-password"
+                                    required data-i18n-hold="login-signup-password-hint-placeholder" placeholder=" " />
+                                <button type="button" class="pwd-toggle" tabindex="-1"
+                                    data-i18n-aria="login-pwd-toggle-aria" aria-label="Show password">👁️</button>
+                            </div>
+                            <label for="signup-password" class="mdj-field-outlined__label"><span
+                                    data-i18n="login-signup-password-label">Contraseña *</span></label>
+                        </div>
+                        <div class="mdj-field-outlined">
+                            <div class="pwd-wrapper">
+                                <input type="password" id="signup-password-confirm" name="password_confirm"
+                                    autocomplete="new-password" required
+                                    data-i18n-hold="login-signup-password-confirm-placeholder" placeholder=" " />
+                                <button type="button" class="pwd-toggle" tabindex="-1"
+                                    data-i18n-aria="login-pwd-toggle-aria" aria-label="Show password">👁️</button>
+                            </div>
+                            <label for="signup-password-confirm" class="mdj-field-outlined__label"><span
+                                    data-i18n="login-signup-password-confirm-label">Confirm password *</span></label>
+                        </div>
+                    </div>
+                </div>
                 <fieldset class="login-signup-address" id="signup-address-fieldset" aria-describedby="signup-address-intro">
                     <legend data-i18n="login-signup-address-legend">Dirección (eventos / facturación)</legend>
                     <p id="signup-address-intro" class="signup-addr-intro" data-i18n="login-signup-address-intro">Usa el autocompletado del navegador cuando aparezca. Para talento (portal Jobs) son obligatorios calle, ciudad, estado, código postal y país.</p>
@@ -856,11 +901,13 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./supabase-config.js?v=20260421-storage-reels-fix"></script>
-    <script src="./translations.js?v=20260421-signup-plan-i18n"></script>
+    <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <script src="./translations.js?v=20260422-nav-labels-1"></script>
     <script src="./i18n.js?v=20260418-login-i18n"></script>
     <script src="./security-shield.js?v=20260305-1"></script>
-    <script src="./auth.js?v=20260422-login-session-redirect"></script>
+    <script src="./js/mdj-account-forms.js?v=20260421-account-forms"></script>
+    <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+    <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
 
     <script>
         (function syncReferralFromUrl() {
@@ -1017,14 +1064,17 @@
                 var phIn = document.getElementById('signup-phone');
                 var labT = document.getElementById('signup-phone-label-talent');
                 var labC = document.getElementById('signup-phone-label-client');
+                var phHint = document.getElementById('signup-phone-talent-hint');
                 var addrOptionalIds = ['signup-address-line1', 'signup-address-city', 'signup-address-state', 'signup-address-zip', 'signup-address-country'];
                 if (userType === 'talent') {
                     if (labT) labT.classList.remove('hidden');
                     if (labC) labC.classList.add('hidden');
+                    if (phHint) phHint.classList.remove('hidden');
                     if (phIn) phIn.setAttribute('required', 'required');
                 } else {
                     if (labT) labT.classList.add('hidden');
                     if (labC) labC.classList.remove('hidden');
+                    if (phHint) phHint.classList.add('hidden');
                     if (phIn) phIn.removeAttribute('required');
                 }
                 /* Dirección: nunca required en HTML5 — el alta no debe depender de calle/depto (patrón consumer estándar). */
@@ -1170,14 +1220,30 @@
             });
         })();
 
-        // ── Eye Toggle (Mostrar/Ocultar Password) ──────────────────
-        document.querySelectorAll('.pwd-toggle').forEach(btn => {
-            btn.addEventListener('click', function(e) {
+        // ── Eye Toggle: siempre el input dentro de .pwd-wrapper (previousElementSibling falla en otros layouts).
+        function mdjResetLoginPasswordFieldsHidden() {
+            document.querySelectorAll('.pwd-wrapper input').forEach(function (inp) {
+                inp.setAttribute('type', 'password');
+            });
+            document.querySelectorAll('.pwd-toggle').forEach(function (btn) {
+                btn.style.opacity = '0.55';
+                btn.setAttribute('aria-pressed', 'false');
+            });
+        }
+        mdjResetLoginPasswordFieldsHidden();
+        window.addEventListener('pageshow', function (ev) {
+            if (ev.persisted) mdjResetLoginPasswordFieldsHidden();
+        });
+        document.querySelectorAll('.pwd-toggle').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
                 e.preventDefault();
-                const input = this.previousElementSibling;
-                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                var wrap = this.closest('.pwd-wrapper');
+                var input = wrap && wrap.querySelector('input');
+                if (!input) return;
+                var type = input.getAttribute('type') === 'password' ? 'text' : 'password';
                 input.setAttribute('type', type);
-                this.style.opacity = type === 'text' ? '1' : '0.5';
+                this.style.opacity = type === 'text' ? '1' : '0.55';
+                this.setAttribute('aria-pressed', type === 'text' ? 'true' : 'false');
             });
         });
 
@@ -1228,7 +1294,12 @@
                         f1.value = parts[0];
                     }
                 }
-                if (phEl && d.phone) phEl.value = d.phone;
+                if (phEl && d.phone) {
+                    phEl.value = d.phone;
+                    if (typeof window.mdjFormatNANPDisplay === 'function' && typeof window.mdjNANPDigitsFromTel === 'function') {
+                        phEl.value = window.mdjFormatNANPDisplay(window.mdjNANPDigitsFromTel(d.phone));
+                    }
+                }
                 var locBlob = d.location ? String(d.location).trim() : '';
                 if (locBlob) {
                     var l1 = document.getElementById('signup-address-line1');
@@ -1239,19 +1310,34 @@
             } catch (e) { void e; }
         }
         /* Después de i18n y otros scripts que tocan el DOM */
+        function mdjInitSignupPhoneFormatter() {
+            var ph = document.getElementById('signup-phone');
+            if (ph && typeof window.mdjAttachPhoneUSFormatting === 'function') {
+                window.mdjAttachPhoneUSFormatting(ph);
+            }
+        }
+
         if (wantsSignup) {
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', function () {
                     applySignupUserTypeFromUrl();
                     mdbOpenSignupTabIfRequested();
                     applyContactLeadPrefill();
+                    mdjInitSignupPhoneFormatter();
                 });
             } else {
                 requestAnimationFrame(function () {
                     applySignupUserTypeFromUrl();
                     mdbOpenSignupTabIfRequested();
                     applyContactLeadPrefill();
+                    mdjInitSignupPhoneFormatter();
                 });
+            }
+        } else {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', mdjInitSignupPhoneFormatter);
+            } else {
+                mdjInitSignupPhoneFormatter();
             }
         }
 
@@ -1364,7 +1450,9 @@
             db.auth.onAuthStateChange(function (event, session) {
                 if (event !== 'INITIAL_SESSION') return;
                 if (!session || !session.user) return;
-                void window.mdjPerformPostAuthRedirect(db, session.user);
+                window.mdjPerformPostAuthRedirect(db, session.user).catch(function (e) {
+                    void e;
+                });
             });
         })(0);
     </script>
@@ -1400,9 +1488,11 @@
         </div>
     </div>
 
-    <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script src="./mdj-shared-header.js?v=20260421-nav-tier-matrix"></script>
-  <script src="./mdj-social-bar.js?v=20260414-MAC-DESKTOP-SYNC"></script>
+    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+      <script src="./mdj-shared-header.js?v=20260422-mainnav-infinite-1"></script>
+  <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+  <script src="./mdj-mainnav-infinite.js?v=20260422-mainnav-chev-bar-1"></script>
+  <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
 </body>
 
 </html>

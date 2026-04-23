@@ -52,6 +52,7 @@ CREATE INDEX IF NOT EXISTS idx_referrals_referred            ON referrals(referr
 -- RLS: DJs can read their own referrals, admins can see all
 ALTER TABLE referrals ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "DJ sees own referrals" ON referrals;
 CREATE POLICY "DJ sees own referrals" ON referrals
   FOR SELECT TO authenticated
   USING (referrer_id = auth.uid() OR referred_id = auth.uid());
@@ -76,10 +77,12 @@ CREATE TABLE IF NOT EXISTS platform_settings (
 -- Allow the public (unauthenticated) to read settings
 ALTER TABLE platform_settings ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Public can read settings" ON platform_settings;
 CREATE POLICY "Public can read settings" ON platform_settings
   FOR SELECT TO public USING (true);
 
 -- Only service_role (admin) can write
+DROP POLICY IF EXISTS "Only service role can write settings" ON platform_settings;
 CREATE POLICY "Only service role can write settings" ON platform_settings
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 

@@ -143,7 +143,7 @@
   window.mdjHydrateAccountAddress = function (addr) {
     if (!addr) return;
     var country = addr.address_country || '';
-    rebuildCountryOptions(el('input-country-filter') ? el('input-country-filter').value : '', country || 'United States');
+    rebuildCountryOptions('', country || 'United States');
     if (el('select-country')) {
       if (country && Array.from(el('select-country').options).some(function (o) { return o.value === country; })) {
         el('select-country').value = country;
@@ -207,20 +207,8 @@
     if (ctry) {
       ctry.addEventListener('change', function () {
         _mdjStateTypeCycle = { letter: null, i: 0, t: 0 };
-        /* Evita dos «United States»: el filtro no debe quedar como segunda caja de valor */
-        var filtClear = el('input-country-filter');
-        if (filtClear) filtClear.value = '';
         var curVal = el('select-country') ? el('select-country').value : '';
         rebuildCountryOptions('', curVal);
-        syncStateFields();
-      });
-    }
-
-    var filt = el('input-country-filter');
-    if (filt) {
-      filt.addEventListener('input', function () {
-        var cur = el('select-country') ? el('select-country').value : '';
-        rebuildCountryOptions(filt.value, cur);
         syncStateFields();
       });
     }

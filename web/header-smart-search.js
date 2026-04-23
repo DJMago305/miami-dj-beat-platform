@@ -10,6 +10,7 @@
  * - Logged in + not owner → wrong-account message.
  *
  * Security model for curated routes unchanged: no admin exposure; DJ discovery via find-dj.html.
+ * Consultas tipo «dj» / «todos los dj» abren el directorio (find-dj) con listado completo.
  */
 (function () {
   'use strict';
@@ -35,6 +36,52 @@
   ];
 
   var AVAILABILITY_INTENT = /\b(availability|disponibilidad|available|book(\s+a)?\s*dj|contratar(\s+un)?\s*dj|dj\s+para|wedding\s+dj|dj\s+boda)\b/i;
+
+  /** Listado completo de DJs en find-dj (no confundir con “dj tools”, tienda, etc.). */
+  function isDjDirectoryIntent(raw) {
+    var s = String(raw || '').trim().toLowerCase();
+    if (!s || s.length > 48) return false;
+    if (/\b(tool|tools|tienda|shop|curso|cursos|knowledge|legal|download|verify|login)\b/i.test(s)) return false;
+    if (/^(dj|djs)$/i.test(s)) return true;
+    if (/^(ver|mostrar|listar|lista|buscar|todos)\s+(los\s+)?(dj|djs)\s*$/i.test(s)) return true;
+    if (/^(dj|djs)\s+(disponibles?|disponible|en\s+miami|miami)\s*$/i.test(s)) return true;
+    if (/\b(todos\s+los\s+dj|lista\s+de\s+dj|directorio\s+dj|busco\s+dj|necesito\s+un\s+dj)\b/i.test(s)) return true;
+    return false;
+  }
+
+  function djDirectoryHref() {
+    return './find-dj.html?from=header';
+  }
+
+  function renderDjDirectoryQuickLink(input) {
+    removeDropdown();
+    var wrap = ensureDropdownWrap(input);
+    if (!wrap) return;
+    var dd = document.createElement('div');
+    dd.id = DROPDOWN_ID;
+    dd.setAttribute('role', 'listbox');
+    dd.className = 'mdj-header-event-teaser-dropdown';
+    var head = t('header-search-dj-directory-head', 'DJ directory', 'Directorio de DJs');
+    var btn = t('header-search-dj-directory-btn', 'Show all available DJs', 'Ver todos los DJs disponibles');
+    dd.innerHTML =
+      '<div class="mdj-teaser-head">' +
+      portalEscape(head) +
+      '</div><ul class="mdj-teaser-list">' +
+      '<li><button type="button" class="mdj-teaser-row mdjs-dj-directory-go">' +
+      portalEscape(btn) +
+      '</button></li></ul>';
+    var go = dd.querySelector('.mdjs-dj-directory-go');
+    if (go) {
+      go.addEventListener('click', function () {
+        removeDropdown();
+        navigate(djDirectoryHref());
+      });
+    }
+    dd.addEventListener('mousedown', function (e) {
+      e.preventDefault();
+    });
+    wrap.appendChild(dd);
+  }
 
   var ACCOUNT_DASH = /\b(dashboard|agenda|calendar|calendario|mi\s+portal|my\s+portal|panel|control)\b/i;
   var ACCOUNT_PROFILE = /\b(my\s+profile|mi\s+perfil|perfil\s+dj|profile)\b/i;
@@ -116,7 +163,8 @@
           .maybeSingle()
           .then(function (r) {
             var role = r.data && r.data.role;
-            var isClient = role === 'client';
+            var rl = String(role || '').toLowerCase();
+            var isClient = rl === 'client' || rl === 'cliente';
             if (kind === 'dash') return isClient ? './client-portal.html' : './dj-dashboard.html';
             if (kind === 'profile') return isClient ? './client-portal.html' : './dj-profile.html';
             if (kind === 'settings') return isClient ? './account-settings.html' : './dj-dashboard.html';
@@ -347,6 +395,10 @@
       return Promise.resolve('./login.html');
     }
 
+    if (isDjDirectoryIntent(raw)) {
+      return Promise.resolve(djDirectoryHref());
+    }
+
     var direct = matchPublicRoute(raw);
     if (direct) return Promise.resolve(direct);
 
@@ -457,6 +509,10 @@
           var v = normalize(input.value);
           if (v.length < TEASER_MIN) {
             removeDropdown();
+            return;
+          }
+          if (isDjDirectoryIntent(v)) {
+            renderDjDirectoryQuickLink(input);
             return;
           }
           if (matchPublicRoute(v) || ACCOUNT_SETTINGS.test(v) || ACCOUNT_DASH.test(v) || ACCOUNT_PROFILE.test(v)) {

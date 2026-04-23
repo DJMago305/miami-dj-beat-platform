@@ -1,7 +1,7 @@
 /**
  * Miami DJ Beat — Subscription & tier helpers (client-side).
- * DB source of truth: dj_profiles.is_premium, plan_type, plan_status, subscription_status.
- * Pair with web/sql/migrations/10_subscription_hwid_wallet.sql
+ * Artista / MDJ Pro: public.dj_profiles (is_premium, plan, subscription_*).
+ * Comprador / portal: public.client_profiles (buyer_billing_tier, buyer_stripe_customer_id) — no mezclar con Pro de artista.
  */
 (function (global) {
     'use strict';
@@ -95,6 +95,16 @@
         return String(t).trim();
     }
 
+    /**
+     * Nivel de facturación del **comprador** (fila client_profiles), no el plan Pro de artista.
+     * @param {object|null} clientRow
+     * @param {string} [tier] — normalmente 'none' o 'vip'
+     */
+    function isBuyerVip(clientRow) {
+        if (!clientRow) return false;
+        return String(clientRow.buyer_billing_tier || 'none').toLowerCase() === 'vip';
+    }
+
     global.MDB_SUBSCRIPTION = {
         isPremiumTier: isPremiumTier,
         isFreeTier: isFreeTier,
@@ -102,6 +112,7 @@
         proButtonLabel: proButtonLabel,
         generateActivationToken: generateActivationToken,
         getHardwareActivationTokenFromProfile: getHardwareActivationTokenFromProfile,
+        isBuyerVip: isBuyerVip,
         PRO_PLAN_TYPES: PRO_PLAN_TYPES
     };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -90,7 +90,8 @@
             rawRole = appR || ut || 'client';
         }
     }
-    if (rawRole === 'talent' || rawRole === 'dj') rawRole = 'artist'; // Normalizar terminología legacy a artist
+    /* Páginas con data-role="dj" esperan PAGE_ROLE === 'artist': talent/dj/artist son el mismo roster. */
+    if (rawRole === 'talent' || rawRole === 'dj') rawRole = 'artist';
     const role = rawRole;
 
     // Already logged in and on login page → redirect to role home
@@ -103,9 +104,18 @@
 
     // ── Role check ─────────────────────────────────────────────
     if (PAGE_ROLE !== 'any') {
-        const allowed = Array.isArray(PAGE_ROLE)
+        /*
+         * Panel DJ (data-role="dj" → PAGE_ROLE artist): el roster y staff híbrido usan el mismo HTML.
+         * Si el JWT trae owner|manager|seller pero dj_profiles es artista, antes se redirigía a admin-dashboard
+         * y el lock de admin devolvía a dj-dashboard → parpadeo y a veces ⛔ ACCESO DENEGADO al fallar el SELECT.
+         */
+        const DJ_PANEL_JWT_ROLES = ['artist', 'admin', 'owner', 'manager', 'seller'];
+        let allowed = Array.isArray(PAGE_ROLE)
             ? PAGE_ROLE.includes(role)
-            : PAGE_ROLE === role || role === 'admin'; // admin can access any page
+            : PAGE_ROLE === role || role === 'admin';
+        if (!allowed && PAGE_ROLE === 'artist') {
+            allowed = DJ_PANEL_JWT_ROLES.includes(role);
+        }
 
         if (!allowed) {
             console.warn(`[RoleGuard] Access denied. Required: ${PAGE_ROLE}, Got: ${role}`);

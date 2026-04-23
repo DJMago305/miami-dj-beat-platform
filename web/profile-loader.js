@@ -233,8 +233,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const contractSection = document.getElementById('contract-section');
     const flowTabBtn = document.querySelector('.dash-tab-btn[data-tab="flow"]');
 
-    // Triple Check Verification (Rigid Mode)
-    const isArtist = profile.role === 'artist' || profile.user_type === 'talent'; // Soporte retroactivo mientras migras tu schema
+    // Roster talent: en BD suele venir role 'artist' | 'dj' | 'talent' | null; staff/client van aparte.
+    const rNorm = String(profile.role || '').toLowerCase().trim();
+    const staffOrBuyer = ['admin', 'owner', 'manager', 'seller', 'client', 'cliente'].includes(rNorm);
+    const utNorm = String(profile.user_type || '').toLowerCase().trim();
+    const isArtist =
+        !staffOrBuyer &&
+        (rNorm === 'artist' ||
+            rNorm === 'dj' ||
+            rNorm === 'talent' ||
+            !rNorm ||
+            utNorm === 'talent' ||
+            utNorm === 'dj' ||
+            utNorm === 'artist');
     const isPro = isArtist && profile.plan === 'PRO' && profile.plan_status === 'active';
     const isNotExpired = profile.plan_expires_at ? (new Date() < new Date(profile.plan_expires_at)) : true;
 

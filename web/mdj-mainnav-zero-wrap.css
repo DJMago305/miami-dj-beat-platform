@@ -1,44 +1,5 @@
 /**
- * Miami DJ Beat — #mainNav una sola fila (sin apilar palabras dentro del enlace), desktop ≥1001px.
- * Cargar después del bloque <style> de index.html para refuerzos page-home.
- * (Móvil: sin cambios — #mainNav oculto en ≤1000px.)
+ * Miami DJ Beat — refuerzos page-home para #mainNav.
+ * Consolidado en styles.css (#mainNav.mdj-mainnav-flex). Archivo retenido por ?v= en index.html.
+ * Sin reglas duplicadas (anti-CLS).
  */
-@media (min-width: 1001px) {
-  body.page-home #mainHeader #mainNav.nav.top-nav {
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    column-gap: clamp(6px, 1.1vw, 14px);
-    max-width: min(1320px, 100%) !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(197, 160, 89, 0.35) transparent;
-  }
-
-  body.page-home #mainHeader #mainNav.nav.top-nav a {
-    display: inline-flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    justify-content: center !important;
-    white-space: nowrap !important;
-    padding: 11px clamp(6px, 0.95vw, 16px) !important;
-    font-size: clamp(13px, 1.02vw, 17px) !important;
-    letter-spacing: 0.1em !important;
-    line-height: 1.15 !important;
-    flex-shrink: 0 !important;
-    min-width: max-content !important;
-    word-break: keep-all;
-    overflow-wrap: normal;
-  }
-
-  body.page-home #mainHeader #mainNav.nav.top-nav a#mainNav-mi-portal-link.mdj-mi-portal-mainnav {
-    display: inline-flex !important;
-    flex-wrap: nowrap !important;
-    min-width: max-content !important;
-  }
-}

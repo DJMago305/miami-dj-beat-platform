@@ -62,11 +62,19 @@ function portalFormatShortName(fullName) {
 var PORTAL_I18N_FB = {
     en: {
         'portal-welcome-recognized': 'Hello, {name}!',
-        'portal-welcome-recognized-sub': 'Welcome to your events panel.',
-        'portal-default-tagline': 'Welcome to your events panel.',
+        'portal-welcome-recognized-sub':
+            'You are part of the Miami DJ Beat family. From here you can book, rent, or shop — and your dates, payments, and details will stay in one place, with us beside you every step of the way.',
+        'portal-welcome-sub-family':
+            'You are part of the Miami DJ Beat family. This is your home to plan events, rent gear, and browse the shop. Whatever you book with us, you will see it here — clear, calm, and in one place. We are with you.',
+        'portal-welcome-sub-returning':
+            'So good to see you here again. If you need a service, a product, or just a quick hello, we are here for you — same family, same care.',
+        'portal-welcome-sub-lead':
+            'Below is your event at a glance: payments, logistics, and the basics in one place. If anything comes up, your team is one message away — on chat or your event contact. We have your back.',
+        'portal-default-tagline': 'Welcome to your client portal.',
         'portal-pick-event-intro': 'Choose an event to open your dashboard.',
         'portal-no-events-title': 'No events linked to this account yet',
-        'portal-no-events-body': 'When you book with Miami DJ Beat, your timeline and payments will appear here.',
+        'portal-no-events-body':
+            'When you book with us, your timeline and payments will show up here, in one place, with the same care as always. Until then, take a look at services, rentals, or the shop — we are here for you.',
         'portal-no-events-cta': 'Explore services & booking',
         'portal-events-title': 'My events',
         'portal-events-upcoming': 'Upcoming',
@@ -138,11 +146,19 @@ var PORTAL_I18N_FB = {
     },
     es: {
         'portal-welcome-recognized': '¡Hola, {name}!',
-        'portal-welcome-recognized-sub': 'Bienvenido a tu panel de eventos.',
-        'portal-default-tagline': 'Bienvenido a tu panel de eventos.',
+        'portal-welcome-recognized-sub':
+            'Eres parte de la familia Miami DJ Beat. Desde aquí reservas, rentas o compras en el shop, y verás en un solo lugar fechas, pagos y el detalle de lo que tengas con nosotros — con el mismo cariño de siempre, paso a paso.',
+        'portal-welcome-sub-family':
+            'Eres parte de la familia Miami DJ Beat. Este es tu espacio, con el mismo trato de casa: aquí armas tu fiesta, rentas equipo o miras el shop, y en este panel vas viendo, con calma, el calendario, los pagos y lo que tengas en marcha. No estás solo: estamos contigo.',
+        'portal-welcome-sub-returning':
+            'Qué alegría verte otra vez por aquí, de corazón. Si hoy te interesa un servicio, un producto o solo charlar, aquí estamos: la misma familia MDJ, con el mismo cuidado de siempre.',
+        'portal-welcome-sub-lead':
+            'Más abajo tienes, en un solo vistazo, la logística, los pagos y el resumen de esta reserva. Lo que te surja, estamos a un mensaje: el chat o el contacto de tu evento. El mismo equipo, el mismo cuidado de familia.',
+        'portal-default-tagline': 'Portal del cliente',
         'portal-pick-event-intro': 'Elige un evento para abrir tu panel.',
         'portal-no-events-title': 'Aún no hay eventos vinculados a esta cuenta',
-        'portal-no-events-body': 'Cuando reserves con Miami DJ Beat, tu cronograma y pagos aparecerán aquí.',
+        'portal-no-events-body':
+            'Cuando reserves con nosotros, en familia, tu calendario y tus pagos quedarán claros en este panel. Mientras tanto, pasea por servicios, rentas o el shop: aquí te esperamos.',
         'portal-no-events-cta': 'Ver servicios y reservas',
         'portal-events-title': 'Mis eventos',
         'portal-events-upcoming': 'Próximos',
@@ -356,6 +372,26 @@ function portalResolveWelcomeName(session, clientProfile, lead) {
         if (e) return e;
     }
     return portalT('portal-welcome-name-fallback') || 'Friend';
+}
+
+/** Cliente con historial en DB (p. ej. al menos un evento contabilizado) → saludo de retorno. */
+function portalIsReturningHabitualClient(clientRow) {
+    if (!clientRow) return false;
+    var n = parseInt(String(clientRow.total_events_booked == null ? 0 : clientRow.total_events_booked), 10);
+    return n > 0;
+}
+
+/**
+ * Párrafo bajo «¡Hola, nombre!»: family (nuevo) | habitual (retorno) | detalle (lead).
+ * @param {"empty"|"hub"|"lead"} ctx
+ */
+function portalWelcomeSubI18nKey(ctx, clientRow) {
+    if (ctx === 'lead') return 'portal-welcome-sub-lead';
+    /* Hub = varias reservas: siempre tono de retorno. Empty: retorno si el perfil acumula eventos en DB. */
+    if (ctx === 'hub' || portalIsReturningHabitualClient(clientRow)) {
+        return 'portal-welcome-sub-returning';
+    }
+    return 'portal-welcome-sub-family';
 }
 
 /**
@@ -1179,7 +1215,13 @@ const PortalApp = {
         var nameWelcome = portalResolveWelcomeName(this._sessionSnapshot, this.clientProfile, l);
 
         if (welcomeEl) welcomeEl.textContent = portalT('portal-welcome-recognized', nameWelcome);
-        if (subEl) subEl.textContent = portalT('portal-welcome-recognized-sub');
+        if (subEl) {
+            subEl.textContent = portalT(portalWelcomeSubI18nKey('lead', this.clientProfile));
+            subEl.style.lineHeight = '1.55';
+            subEl.style.maxWidth = 'min(640px, 92vw)';
+            subEl.style.margin = '0 auto';
+            subEl.style.opacity = '0.9';
+        }
         this.renderPortalWelcomeAvatar();
         document.getElementById('log-location').textContent = l.location;
         document.getElementById('log-datetime').textContent = `${l.event_date} - 7:00 PM`;
@@ -2103,17 +2145,19 @@ const PortalApp = {
         this._sessionSnapshot = session || this._sessionSnapshot;
         this.clientProfile = clientRow || this.clientProfile;
         this.currentLead = null;
+        var subKeyHub = portalWelcomeSubI18nKey('hub', clientRow || null);
         head.innerHTML =
             '<div class="container" style="padding: 32px 20px 20px;">' +
             '<div id="loyalty-tier-container"></div>' +
-            '<div class="portal-header-identity portal-header-identity--solo" style="display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;margin-bottom:8px;">' +
+            '<div class="portal-header-identity portal-header-identity--solo" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;margin-bottom:8px;">' +
             '<div id="portal-welcome-avatar" class="portal-welcome-avatar" aria-hidden="true"></div>' +
-            '<div style="text-align:center;">' +
-            '<div style="font-size: 36px; margin-bottom: 10px;">🎧</div>' +
+            '<div style="text-align:center;max-width:min(640px,92vw);">' +
             '<h1 id="client-welcome" style="font-size: 26px; margin-bottom: 8px; line-height: 1.35;">' +
             portalEscapeHtml(portalT('portal-welcome-recognized', displayName)) +
             '</h1>' +
-            '<p id="client-welcome-sub" style="opacity: 0.85;">' + portalEscapeHtml(portalT('portal-welcome-recognized-sub')) + '</p>' +
+            '<p id="client-welcome-sub" style="opacity:0.9;line-height:1.55;margin:0 auto;">' +
+            portalEscapeHtml(portalT(subKeyHub)) +
+            '</p>' +
             '</div></div></div>';
         this.renderPortalWelcomeAvatar();
         try {
@@ -2330,6 +2374,7 @@ const PortalApp = {
             document.body.classList.remove('portal-resolving-session');
         } catch (eR) { /* ignore */ }
         var displayName = portalResolveWelcomeName(session || null, clientRow || null, null);
+        var subKeyEmpty = portalWelcomeSubI18nKey('empty', clientRow || null);
         var head = document.querySelector('.portal-header');
         if (!head) return;
         this._sessionSnapshot = session || this._sessionSnapshot;
@@ -2337,15 +2382,16 @@ const PortalApp = {
         this.currentLead = null;
         head.innerHTML =
             '<div class="container" style="padding: 40px 20px;">' +
-            '<div class="portal-header-identity portal-header-identity--solo" style="display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;margin-bottom:12px;">' +
+            '<div class="portal-header-identity portal-header-identity--solo" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;margin-bottom:12px;">' +
             '<div id="portal-welcome-avatar" class="portal-welcome-avatar" aria-hidden="true"></div>' +
-            '<div style="text-align:center;">' +
-            '<div style="font-size: 42px; margin-bottom: 16px;">🎧</div>' +
+            '<div style="text-align:center;max-width:min(640px,92vw);margin:0 auto;">' +
             '<h1 id="client-welcome" style="font-size: 26px; margin-bottom: 12px; line-height: 1.35;">' +
             portalEscapeHtml(portalT('portal-welcome-recognized', displayName)) +
             '</h1>' +
-            '<p id="client-welcome-sub" style="opacity: 0.85;">' + portalEscapeHtml(portalT('portal-welcome-recognized-sub')) + '</p>' +
-            '</div></div>';
+            '<p id="client-welcome-sub" style="opacity:0.9;line-height:1.55;margin:0;">' +
+            portalEscapeHtml(portalT(subKeyEmpty)) +
+            '</p>' +
+            '</div></div></div>';
         this.renderPortalWelcomeAvatar();
         var main = document.querySelector('main');
         if (main) {
@@ -2367,8 +2413,10 @@ const PortalApp = {
         var guestBody = portalT('portal-guest-body');
         var guestSearch = portalT('portal-guest-search');
         document.querySelector('.portal-header').innerHTML = `
-            <div class="container" style="padding: 40px 20px;">
-                <div style="font-size: 48px; margin-bottom: 20px;">🎧</div>
+            <div class="container" style="padding: 40px 20px; text-align: center;">
+                <div class="portal-portal-guest-mark" aria-hidden="true" style="width:88px;height:88px;margin:0 auto 20px;border-radius:50%;border:2px solid rgba(197,160,89,0.85);background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 2px rgba(0,0,0,0.35),0 6px 24px rgba(197,160,89,0.2);">
+                    <img src="./assets/branding/logo-transparent.png" alt="" width="64" height="64" style="object-fit:contain;display:block;"/>
+                </div>
                 <h1 style="font-size: 28px; margin-bottom: 10px;">${portalEscapeHtml(guestTitle)}</h1>
                 <p style="opacity: 0.7; margin-bottom: 30px;">${portalEscapeHtml(guestBody)}</p>
                 <div style="max-width: 400px; margin: 0 auto;">

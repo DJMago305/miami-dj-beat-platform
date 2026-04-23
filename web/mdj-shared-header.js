@@ -9,6 +9,13 @@
 (function () {
   'use strict';
 
+  try {
+    var _mdjH = document.getElementById('mainHeader');
+    if (_mdjH) _mdjH.classList.add('mdj-header-unified');
+  } catch (eMdjH) {
+    /* ignore */
+  }
+
   /**
    * Auth pills marcados con `data-auth-btn`: texto **fijo** según `document.documentElement.lang`
    * (sin translations JSON). `es` → ENTRAR/SALIR; cualquier otro (p. ej. `en`) → LOGIN/LOGOUT.
@@ -45,61 +52,291 @@
   mdjEnsureAuthLangObserver();
 
   /**
-   * Matriz MDJ: Herramientas PRO (DJ Tools) solo visibles con plan **artist_pro**.
-   * `client_only` y `artist_lite`: enlace oculto en el header.
-   * `window.__mdjLastNavTier` / `__mdjProToolsUnlocked` / `__mdjLastNavIsClient` (retro) para `dj-tools.html`.
+   * Matriz MDJ: PRO desbloqueado solo con **artist_pro** (`__mdjProToolsUnlocked` para `dj-tools.html`).
+   * La pestaña DJ Tools **siempre** en #mainNav (misma fila que Home, Jobs, etc.); cliente/LITE ven muros en la página.
+   * `window.__mdjLastNavTier` / `__mdjLastNavIsClient` (retro) para `dj-tools.html`.
    */
   function mdjApplyDjToolsNavForTier(navTier) {
     window.__mdjLastNavTier = navTier == null ? null : String(navTier);
     var pro = navTier === 'artist_pro';
     window.__mdjProToolsUnlocked = !!pro;
     window.__mdjLastNavIsClient = navTier === 'client_only';
-    var hideLink = navTier === 'client_only' || navTier === 'artist_lite';
+    var hideLink = false;
     var header = document.getElementById('mainHeader');
     if (!header) return;
     header.querySelectorAll('a[href*="dj-tools"]').forEach(function (a) {
+      var inMainNav = a.closest && a.closest('#mainNav');
       if (!hideLink) {
         a.style.removeProperty('display');
+        a.style.removeProperty('visibility');
+        a.style.removeProperty('pointer-events');
         a.removeAttribute('aria-hidden');
         a.removeAttribute('data-mdj-tools-suppressed');
+        a.removeAttribute('tabindex');
         return;
       }
-      a.style.display = 'none';
-      a.setAttribute('aria-hidden', 'true');
-      a.setAttribute('data-mdj-tools-suppressed', '1');
+      /* #mainNav: nunca display:none (colapsa la celda 120px) — solo visibility. */
+      if (inMainNav) {
+        a.style.removeProperty('display');
+        a.style.visibility = 'hidden';
+        a.style.pointerEvents = 'none';
+        a.setAttribute('aria-hidden', 'true');
+        a.setAttribute('data-mdj-tools-suppressed', '1');
+        a.setAttribute('tabindex', '-1');
+      } else {
+        a.style.display = 'none';
+        a.setAttribute('aria-hidden', 'true');
+        a.setAttribute('data-mdj-tools-suppressed', '1');
+      }
     });
   }
 
+  function mdjHideArtistDashboardMainNavSlot() {
+    var el = document.getElementById('mainNav-artist-dashboard-link');
+    if (!el) return;
+    el.classList.add('mdj-mainnav-reserved-slot');
+    el.style.removeProperty('display');
+  }
+
+  /** Móvil: quitar nodo duplicado. Escritorio: nunca quitar #mainNav-artist-dashboard-link (hueco fijo). */
   function mdjRemoveArtistDashboardNavLinks() {
-    ['mainNav-artist-dashboard-link', 'header-artist-dashboard-mobile'].forEach(function (id) {
-      var el = document.getElementById(id);
-      if (el) el.remove();
-    });
+    mdjHideArtistDashboardMainNavSlot();
+    var mb = document.getElementById('header-artist-dashboard-mobile');
+    if (mb) mb.remove();
   }
 
-  /** Panel artista (#mainNav + móvil): solo `artist_lite` / `artist_pro`. */
-  function mdjApplyArtistDashboardNavChrome(show) {
+  /** STAFF en #mainNav: el HTML usa `mainNav-staff-link` (admin) o `mainNav-staff-or-profile` (sitio unificado). */
+  function mdjGetMainNavStaffAnchor() {
+    return document.getElementById('mainNav-staff-link') || document.getElementById('mainNav-staff-or-profile');
+  }
+
+  /** STAFF (admin): solo staff de dj_profiles; hueco reservado con .mdj-mainnav-reserved-slot + visibility en CSS móvil. */
+  function mdjApplyStaffMainNavLink(isStaff) {
+    var a = mdjGetMainNavStaffAnchor();
+    if (!a) return;
+    if (isStaff) {
+      /* Plantilla unificada: placeholder `#`; sin esto el enlace STAFF no abre el back-office. */
+      try {
+        var cur = String(a.getAttribute('href') || '').trim();
+        if (!cur || cur === '#') a.setAttribute('href', './admin-dashboard.html');
+      } catch (eH) { /* ignore */ }
+      a.classList.remove('mdj-mainnav-reserved-slot');
+      a.style.removeProperty('visibility');
+      a.style.removeProperty('pointer-events');
+      a.removeAttribute('aria-hidden');
+      a.removeAttribute('tabindex');
+    } else {
+      try {
+        a.setAttribute('href', '#');
+      } catch (eH2) { /* ignore */ }
+      a.classList.add('mdj-mainnav-reserved-slot');
+      a.style.removeProperty('visibility');
+      a.style.removeProperty('pointer-events');
+      a.setAttribute('aria-hidden', 'true');
+      a.setAttribute('tabindex', '-1');
+    }
+  }
+
+  /**
+   * Crea #mainNav-config-link si el HTML (p. ej. plantilla antigua) no lo trae — misma colación que el sitio: tras DJ Tools, antes de Jobs.
+   * Sin esto, Agenda/Flujo no tienen ancla; `mdjApplyConfigMainNavLink` quedaría en no-op.
+   */
+  function mdjEnsureConfigMainNavNode() {
+    var existing = document.getElementById('mainNav-config-link');
+    if (existing) return existing;
+    var nav = document.getElementById('mainNav');
+    if (!nav) return null;
+    var a = document.createElement('a');
+    a.id = 'mainNav-config-link';
+    a.setAttribute('data-mdj-nav', 'config');
+    a.setAttribute('data-i18n', 'nav-config');
+    a.className = 'mdj-config-mainnav mdj-mainnav-reserved-slot';
+    a.href = './dj-dashboard.html?tab=settings';
+    a.setAttribute('aria-hidden', 'true');
+    a.setAttribute('tabindex', '-1');
+    a.textContent = '⚙️ CONFIG';
+    var jobs = nav.querySelector('a[data-mdj-nav="jobs"]');
+    var tools = nav.querySelector('a[data-mdj-nav="tools"]');
+    if (jobs && jobs.parentNode === nav) {
+      nav.insertBefore(a, jobs);
+    } else if (tools && tools.parentNode === nav) {
+      if (tools.nextSibling) {
+        nav.insertBefore(a, tools.nextSibling);
+      } else {
+        nav.appendChild(a);
+      }
+    } else {
+      nav.appendChild(a);
+    }
+    return a;
+  }
+
+  /**
+   * #mainNav ⚙ CONFIG — misma ruta que la píldora superior (`settingsUrl`): panel artista, cuenta staff o portal cliente.
+   * Sin sesión: hueco colapsado (`.mdj-mainnav-reserved-slot` + `header-unified.css`).
+   */
+  function mdjApplyConfigMainNavLink(show, href) {
+    var a = mdjEnsureConfigMainNavNode();
+    if (!a) return;
+    var h = href && String(href).trim() ? String(href).trim() : './dj-dashboard.html?tab=settings';
+    a.setAttribute('href', h);
+    if (show) {
+      a.classList.remove('mdj-mainnav-reserved-slot');
+      a.style.removeProperty('display');
+      a.style.removeProperty('visibility');
+      a.style.removeProperty('pointer-events');
+      a.removeAttribute('aria-hidden');
+      a.removeAttribute('tabindex');
+    } else {
+      a.classList.add('mdj-mainnav-reserved-slot');
+      a.setAttribute('aria-hidden', 'true');
+      a.setAttribute('tabindex', '-1');
+    }
+  }
+
+  /** Crea #mainNav-agenda-link antes de CONFIG: pestaña «Agenda» del panel (`?tab=dashboard`). */
+  function mdjEnsureAgendaMainNavNode() {
+    var existing = document.getElementById('mainNav-agenda-link');
+    if (existing) return existing;
+    mdjEnsureConfigMainNavNode();
+    var nav = document.getElementById('mainNav');
+    if (!nav) return null;
+    var before =
+      document.getElementById('mainNav-config-link') ||
+      nav.querySelector('a.mdj-config-mainnav[data-mdj-nav="config"]') ||
+      nav.querySelector('a[data-mdj-nav="config"]');
+    var a = document.createElement('a');
+    a.id = 'mainNav-agenda-link';
+    a.setAttribute('data-mdj-nav', 'agenda');
+    a.setAttribute('data-i18n', 'dash-your-profile');
+    a.className = 'mdj-agenda-mainnav mdj-mainnav-reserved-slot';
+    a.href = './dj-dashboard.html?tab=dashboard';
+    a.setAttribute('aria-hidden', 'true');
+    a.setAttribute('tabindex', '-1');
+    var raw = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+    a.textContent = raw.indexOf('es') === 0 ? 'Agenda' : 'SCHEDULE';
+    if (before && before.parentNode === nav) {
+      nav.insertBefore(a, before);
+    } else {
+      nav.appendChild(a);
+    }
+    return a;
+  }
+
+  /**
+   * Agenda (panel): `dj-dashboard?tab=dashboard` — solo artista LITE/PRO (misma regla que CONFIG social / flujo en barra).
+   */
+  function mdjApplyAgendaMainNavLink(show, href) {
+    var a = mdjEnsureAgendaMainNavNode();
+    if (!a) return;
+    var h = href && String(href).trim() ? String(href).trim() : './dj-dashboard.html?tab=dashboard';
+    a.setAttribute('href', h);
+    if (show) {
+      a.classList.remove('mdj-mainnav-reserved-slot');
+      a.style.removeProperty('display');
+      a.style.removeProperty('visibility');
+      a.style.removeProperty('pointer-events');
+      a.removeAttribute('aria-hidden');
+      a.removeAttribute('tabindex');
+    } else {
+      a.classList.add('mdj-mainnav-reserved-slot');
+      a.setAttribute('aria-hidden', 'true');
+      a.setAttribute('tabindex', '-1');
+    }
+  }
+
+  /** Crea #mainNav-flow-link tras CONFIG si no está en el HTML (muchas plantillas duplicadas). */
+  function mdjEnsureFlowMainNavNode() {
+    var existing = document.getElementById('mainNav-flow-link');
+    if (existing) return existing;
+    mdjEnsureConfigMainNavNode();
+    var nav = document.getElementById('mainNav');
+    if (!nav) return null;
+    var after =
+      document.getElementById('mainNav-config-link') ||
+      nav.querySelector('a.mdj-config-mainnav[data-mdj-nav="config"]') ||
+      nav.querySelector('a[data-mdj-nav="config"]');
+    var a = document.createElement('a');
+    a.id = 'mainNav-flow-link';
+    a.setAttribute('data-mdj-nav', 'flow');
+    a.setAttribute('data-i18n', 'flow-dash');
+    a.className = 'mdj-flow-mainnav mdj-mainnav-reserved-slot';
+    a.href = './dj-dashboard.html?tab=flow';
+    a.setAttribute('aria-hidden', 'true');
+    a.setAttribute('tabindex', '-1');
+    var raw = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+    a.textContent = raw.indexOf('es') === 0 ? 'Flujo de Caja' : 'Cash Flow';
+    if (after && after.parentNode === nav) {
+      if (after.nextSibling) {
+        nav.insertBefore(a, after.nextSibling);
+      } else {
+        nav.appendChild(a);
+      }
+    } else {
+      nav.appendChild(a);
+    }
+    return a;
+  }
+
+  /**
+   * Flujo de caja: `dj-dashboard?tab=flow` — solo cuentas con perfil de artista (LITE/PRO), no clientes puros.
+   */
+  function mdjApplyFlowMainNavLink(show, href) {
+    var a = mdjEnsureFlowMainNavNode();
+    if (!a) return;
+    var h = href && String(href).trim() ? String(href).trim() : './dj-dashboard.html?tab=flow';
+    a.setAttribute('href', h);
+    if (show) {
+      a.classList.remove('mdj-mainnav-reserved-slot');
+      a.style.removeProperty('display');
+      a.style.removeProperty('visibility');
+      a.style.removeProperty('pointer-events');
+      a.removeAttribute('aria-hidden');
+      a.removeAttribute('tabindex');
+    } else {
+      a.classList.add('mdj-mainnav-reserved-slot');
+      a.setAttribute('aria-hidden', 'true');
+      a.setAttribute('tabindex', '-1');
+    }
+  }
+
+  /**
+   * Perfil artístico público (#mainNav + móvil): solo talento LITE/PRO, sin clientes ni staff
+   * (admin/manager/seller/owner). `profileHref` típico: ./dj-profile.html?id=<user_id>.
+   */
+  function mdjApplyArtistDashboardNavChrome(show, profileHref) {
     var nav = document.getElementById('mainNav');
     var mobileNav = document.querySelector('#mobileMenu .mobile-nav');
-    var href = './dj-dashboard.html?tab=settings';
+    var href =
+      show && profileHref && String(profileHref).trim()
+        ? String(profileHref).trim()
+        : './dj-profile.html';
     function applyLabel(el) {
       if (!el) return;
-      el.setAttribute('data-i18n', 'nav-artist-dashboard');
+      el.setAttribute('data-i18n', 'nav-my-profile');
       try {
         if (window.i18n && typeof window.i18n.t === 'function') {
-          var tx = window.i18n.t('nav-artist-dashboard');
+          var tx = window.i18n.t('nav-my-profile');
           if (tx) el.textContent = tx;
+          else {
+            var rawF = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+            el.textContent = rawF.indexOf('es') === 0 ? 'MI PERFIL' : 'MY PROFILE';
+          }
         } else {
           var raw = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
-          el.textContent = raw.indexOf('es') === 0 ? 'Panel artista' : 'Artist dashboard';
+          el.textContent = raw.indexOf('es') === 0 ? 'MI PERFIL' : 'MY PROFILE';
         }
       } catch (e) { /* ignore */ }
       try {
         var es = document.documentElement && String(document.documentElement.lang || '').toLowerCase().indexOf('es') === 0;
-        el.setAttribute('aria-label', es ? 'Panel de artista' : 'Artist dashboard');
+        el.setAttribute('aria-label', es ? 'Perfil artístico público' : 'My public artist profile');
       } catch (e2) { /* ignore */ }
     }
     if (!show) {
+      mdjRemoveArtistDashboardNavLinks();
+      return;
+    }
+    if (!profileHref || !String(profileHref).trim()) {
       mdjRemoveArtistDashboardNavLinks();
       return;
     }
@@ -108,19 +345,30 @@
       if (!el) {
         el = document.createElement('a');
         el.id = 'mainNav-artist-dashboard-link';
-        el.setAttribute('data-mdj-nav', 'artist-dash');
+        el.setAttribute('data-mdj-nav', 'my-profile');
         el.className = 'mdj-artist-dash-mainnav';
-        var ref = document.getElementById('mainNav-mi-portal-link');
-        if (ref && ref.parentNode === nav) {
-          if (ref.nextSibling) nav.insertBefore(el, ref.nextSibling);
-          else nav.appendChild(el);
+        var insBefore = mdjGetMainNavStaffAnchor();
+        if (insBefore && insBefore.parentNode === nav) {
+          nav.insertBefore(el, insBefore);
         } else {
-          nav.appendChild(el);
+          var ref = document.getElementById('mainNav-mi-portal-link');
+          if (ref && ref.parentNode === nav) {
+            if (ref.nextSibling) nav.insertBefore(el, ref.nextSibling);
+            else nav.appendChild(el);
+          } else {
+            nav.appendChild(el);
+          }
         }
       }
       el.href = href;
+      el.setAttribute('data-mdj-nav', 'my-profile');
       applyLabel(el);
-      el.style.display = '';
+      el.classList.remove('mdj-mainnav-reserved-slot');
+      el.style.removeProperty('display');
+      el.style.removeProperty('visibility');
+      el.style.removeProperty('pointer-events');
+      el.removeAttribute('aria-hidden');
+      el.removeAttribute('tabindex');
     }
     if (mobileNav) {
       var mb = document.getElementById('header-artist-dashboard-mobile');
@@ -137,13 +385,16 @@
         }
       }
       mb.href = href;
+      mb.setAttribute('data-mdj-nav', 'my-profile');
       applyLabel(mb);
       mb.style.display = '';
     }
   }
 
-  /** Badge editorial: Comprador / Talento en ascenso / Dueño de la ciudad */
-  function mdjApplyNavTierStatusBadge(navTier) {
+  /** Badge editorial: comprador (solo cliente) | Artistic (artista LITE) | City owner (PRO) | Staff | Owners. */
+  function mdjApplyNavTierStatusBadge(navTier, ctx) {
+    ctx = ctx || {};
+    var djRole = String(ctx.djRole || '').toLowerCase();
     var actions = document.querySelector('#mainHeader .header-actions');
     if (!actions) return;
     var id = 'header-tier-status-badge';
@@ -152,14 +403,20 @@
       if (el) el.remove();
       return;
     }
-    var key =
-      navTier === 'client_only'
-        ? 'nav-tier-status-buyer'
-        : navTier === 'artist_lite'
-          ? 'nav-tier-status-lite'
-          : navTier === 'artist_pro'
-            ? 'nav-tier-status-pro'
-            : '';
+    var key = '';
+    if (navTier === 'client_only') {
+      key = 'nav-tier-status-buyer';
+    } else if (djRole === 'owner') {
+      key = 'nav-tier-status-owner';
+    } else if (djRole === 'seller') {
+      key = 'nav-tier-status-staff';
+    } else if (djRole === 'admin' || djRole === 'manager') {
+      key = 'nav-tier-status-team';
+    } else if (navTier === 'artist_lite') {
+      key = 'nav-tier-status-artistic';
+    } else if (navTier === 'artist_pro') {
+      key = 'nav-tier-status-pro';
+    }
     if (!key) {
       if (el) el.remove();
       return;
@@ -237,32 +494,56 @@
     if (typeof window.updateAuthButtons === 'function') window.updateAuthButtons();
   }
 
+  function mdjStylesheetPresent(substr) {
+    try {
+      var sheets = document.styleSheets;
+      for (var i = 0; i < sheets.length; i++) {
+        var h = sheets[i].href || '';
+        if (h.indexOf(substr) !== -1) return true;
+      }
+    } catch (e) { /* ignore */ }
+    return false;
+  }
+
   function mdjEnsureHeaderVipCss() {
     if (document.getElementById('mdj-header-vip-css')) return;
+    if (mdjStylesheetPresent('mdj-header-vip.css')) return;
     var l = document.createElement('link');
     l.id = 'mdj-header-vip-css';
     l.rel = 'stylesheet';
-    l.href = './mdj-header-vip.css?v=20260422-account-menu-fixed';
+    l.href = './mdj-header-vip.css?v=20260421-avatar-direct';
     document.head.appendChild(l);
   }
 
   /** Phase 1 desktop audit: guest ring, loyalty pill, ≥1200px spacing (no change <1200px layout intent). */
   function mdjEnsureDesktopAuditCss() {
     if (document.getElementById('mdj-header-desktop-audit-css')) return;
+    if (mdjStylesheetPresent('mdj-header-desktop-audit.css')) return;
     var l = document.createElement('link');
     l.id = 'mdj-header-desktop-audit-css';
     l.rel = 'stylesheet';
-    l.href = './mdj-header-desktop-audit.css?v=20260414-MAC-DESKTOP-SYNC';
+    l.href = './mdj-header-desktop-audit.css?v=20260421-menu-static';
     document.head.appendChild(l);
   }
 
-  function mdjSyncClientLoyaltyIndicator(isClientSession) {
+  function mdjClientHeaderIsVipClient(clientRow) {
+    if (!clientRow) return false;
+    var ev = Number(clientRow.total_events_booked);
+    var lp = Number(clientRow.loyalty_points);
+    var evOk = !isNaN(ev) && ev >= 2;
+    var lpOk = !isNaN(lp) && lp >= 200;
+    return evOk || lpOk;
+  }
+
+  /** Pastilla portal: Cliente o Cliente VIP (eventos / puntos alineados con lealtad en client-portal). */
+  function mdjSyncClientLoyaltyIndicator(isClientSession, clientRow) {
     var el = document.getElementById('header-client-loyalty-indicator');
     var actions = document.querySelector('#mainHeader .header-actions');
     if (!isClientSession) {
       if (el) {
         el.style.display = 'none';
         el.textContent = '';
+        el.removeAttribute('data-i18n');
       }
       return;
     }
@@ -280,19 +561,45 @@
         actions.appendChild(el);
       }
     }
-    var label = 'Client';
+    var vip = mdjClientHeaderIsVipClient(clientRow);
+    var i18nKey = vip ? 'header-client-loyalty-vip' : 'header-client-loyalty';
+    el.setAttribute('data-i18n', i18nKey);
+    var label = vip ? 'VIP Client' : 'Client';
     try {
       if (window.i18n && typeof window.i18n.t === 'function') {
-        var tx = window.i18n.t('header-client-loyalty');
+        var tx = window.i18n.t(i18nKey);
         if (tx) label = tx;
       }
     } catch (e) { /* ignore */ }
     if (!window.i18n) {
       var raw = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
-      if (raw.indexOf('es') === 0) label = 'Cliente';
+      var es = raw.indexOf('es') === 0;
+      if (vip) label = es ? 'Cliente VIP' : 'VIP Client';
+      else label = es ? 'Cliente' : 'Client';
     }
     el.textContent = label;
     el.style.display = 'inline-flex';
+  }
+
+  /** Invitado: mantiene la 8.ª celda (nav mdj-mainnav-flex en tabla) sin quitar el nodo. */
+  function mdjResetMainNavPortalGuestSlot() {
+    var link = document.getElementById('mainNav-mi-portal-link');
+    if (!link) return;
+    link.className = 'mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest';
+    link.href = '#';
+    link.setAttribute('data-mdj-nav', 'mi-portal');
+    link.setAttribute('aria-hidden', 'true');
+    link.setAttribute('tabindex', '-1');
+    link.style.removeProperty('display');
+    link.style.pointerEvents = 'none';
+    link.style.visibility = 'hidden';
+    link.removeAttribute('data-i18n');
+    try {
+      var rawLang = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+      link.textContent = rawLang.indexOf('es') === 0 ? 'MI PORTAL' : 'MY PORTAL';
+    } catch (e) {
+      link.textContent = 'MY PORTAL';
+    }
   }
 
   function mdjHideMiPortalButton() {
@@ -300,18 +607,51 @@
     if (el) el.style.display = 'none';
     var mob = document.getElementById('header-mi-portal-mobile');
     if (mob) mob.style.display = 'none';
-    var navL = document.getElementById('mainNav-mi-portal-link');
-    if (navL) navL.style.display = 'none';
+    mdjResetMainNavPortalGuestSlot();
     mdjRemoveArtistDashboardNavLinks();
+    mdjApplyStaffMainNavLink(false);
     var tb = document.getElementById('header-tier-status-badge');
     if (tb) tb.remove();
+  }
+
+  /** Mientras llega el perfil: oculto pero ocupa columna (tabla v2). */
+  function mdjEnsureMiPortalHydratingPlaceholder() {
+    var nav = document.getElementById('mainNav');
+    if (!nav) return;
+    var existing = document.getElementById('mainNav-mi-portal-link');
+    if (existing) {
+      if (!existing.classList.contains('mdj-mi-portal--guest')) return;
+      existing.classList.remove('mdj-mi-portal--guest');
+      existing.classList.add('mdj-mi-portal--hydrating');
+      existing.removeAttribute('data-i18n');
+      existing.href = '#';
+      existing.setAttribute('aria-hidden', 'true');
+      existing.setAttribute('tabindex', '-1');
+      existing.style.removeProperty('display');
+      existing.style.pointerEvents = 'none';
+      existing.style.visibility = 'hidden';
+      existing.textContent = 'MI PORTAL';
+      return;
+    }
+    var link = document.createElement('a');
+    link.id = 'mainNav-mi-portal-link';
+    link.className = 'mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--hydrating';
+    link.setAttribute('data-mdj-nav', 'mi-portal');
+    link.href = '#';
+    link.setAttribute('aria-hidden', 'true');
+    link.setAttribute('tabindex', '-1');
+    link.style.removeProperty('display');
+    link.style.pointerEvents = 'none';
+    link.style.visibility = 'hidden';
+    link.textContent = 'MI PORTAL';
+    nav.appendChild(link);
   }
 
   /**
    * MI PORTAL en la fila inferior (#mainNav), mismo ritmo que Home/Services/…; dorado vía CSS.
    * Si existe #mainNav, no duplicamos el CTA en .header-actions (se oculta #header-mi-portal-btn).
    */
-  function mdjEnsureMiPortalInMainNav(href) {
+  function mdjEnsureMiPortalInMainNav(href, opts) {
     var nav = document.getElementById('mainNav');
     if (!nav) return;
     mdjEnsureHeaderVipCss();
@@ -319,14 +659,35 @@
     if (!link) {
       link = document.createElement('a');
       link.id = 'mainNav-mi-portal-link';
-      link.setAttribute('data-i18n', 'header-mi-portal');
-      link.setAttribute('data-mdj-nav', 'mi-portal');
       nav.appendChild(link);
     }
     link.className = 'mdj-mi-portal-mainnav mdj-mi-portal-gold';
     link.href = href || './client-portal.html';
     link.style.display = '';
-    mdjApplyMiPortalLinkLabel(link);
+    link.style.pointerEvents = '';
+    link.style.visibility = '';
+    link.removeAttribute('aria-hidden');
+    link.removeAttribute('tabindex');
+    var staffNav = opts && opts.variant === 'staff-settings';
+    if (staffNav) {
+      /* Misma etiqueta que panel artista / dj-dashboard: translations `nav-settings` → «⚙️ CONFIG». */
+      link.setAttribute('data-mdj-nav', 'account-settings');
+      link.setAttribute('data-i18n', 'nav-settings');
+      try {
+        var ns =
+          window.i18n && typeof window.i18n.t === 'function' ? String(window.i18n.t('nav-settings') || '').trim() : '';
+        link.textContent = ns || '⚙️ CONFIG';
+      } catch (eNs) {
+        link.textContent = '⚙️ CONFIG';
+      }
+      try {
+        link.setAttribute('aria-label', mdjGetStaffAccountSettingsMenuLabel());
+      } catch (eAr) { /* ignore */ }
+    } else {
+      link.setAttribute('data-mdj-nav', 'mi-portal');
+      link.setAttribute('data-i18n', 'header-mi-portal');
+      mdjApplyMiPortalLinkLabel(link);
+    }
   }
 
   function mdjApplyMiPortalLinkLabel(el) {
@@ -376,7 +737,7 @@
   /**
    * Mismo destino que MI PORTAL desktop: primer ítem del menú hamburguesa (móvil).
    */
-  function mdjEnsureMiPortalMobile(href) {
+  function mdjEnsureMiPortalMobile(href, opts) {
     var nav = document.querySelector('#mobileMenu .mobile-nav');
     if (!nav) return;
     mdjEnsureHeaderVipCss();
@@ -384,15 +745,30 @@
     if (!btn) {
       btn = document.createElement('a');
       btn.id = 'header-mi-portal-mobile';
-      btn.setAttribute('data-i18n', 'header-mi-portal');
-      btn.setAttribute('aria-label', 'My portal');
       btn.href = href || './client-portal.html';
       nav.insertBefore(btn, nav.firstChild);
     }
     btn.className = 'mdj-mi-portal-mobile mdj-mi-portal-gold';
     btn.href = href || './client-portal.html';
     btn.style.display = '';
-    mdjApplyMiPortalLinkLabel(btn);
+    var staffNav = opts && opts.variant === 'staff-settings';
+    if (staffNav) {
+      btn.setAttribute('data-i18n', 'nav-settings');
+      try {
+        var nsM =
+          window.i18n && typeof window.i18n.t === 'function' ? String(window.i18n.t('nav-settings') || '').trim() : '';
+        btn.textContent = nsM || '⚙️ CONFIG';
+      } catch (eNsM) {
+        btn.textContent = '⚙️ CONFIG';
+      }
+      try {
+        btn.setAttribute('aria-label', mdjGetStaffAccountSettingsMenuLabel());
+      } catch (eMb) { /* ignore */ }
+    } else {
+      btn.setAttribute('data-i18n', 'header-mi-portal');
+      btn.setAttribute('aria-label', 'My portal');
+      mdjApplyMiPortalLinkLabel(btn);
+    }
     if (nav.firstChild !== btn) {
       nav.insertBefore(btn, nav.firstChild);
     }
@@ -590,6 +966,7 @@
   function mdjCloseAccountMenu() {
     var m = document.getElementById('accountMenu');
     var menubtn = document.getElementById('mdjAccountVipMenuBtn');
+    var accBtn = document.getElementById('accountBtn');
     if (m) {
       m.classList.remove('open');
       m.style.position = '';
@@ -600,6 +977,7 @@
       m.style.zIndex = '';
     }
     if (menubtn) menubtn.setAttribute('aria-expanded', 'false');
+    else if (accBtn) accBtn.setAttribute('aria-expanded', 'false');
   }
 
   function mdjBindVipAccountInteractionsOnce() {
@@ -615,13 +993,14 @@
     document.addEventListener('click', function (e) {
       var menu = document.getElementById('accountMenu');
       var menubtn = document.getElementById('mdjAccountVipMenuBtn');
-      if (menubtn && menubtn.contains(e.target)) {
-        e.preventDefault();
-        e.stopPropagation();
+      var accBtn = document.getElementById('accountBtn');
+      function mdjToggleAccountMenuFromTrigger() {
         if (!menu) return;
         menu.classList.toggle('open');
-        menubtn.setAttribute('aria-expanded', menu.classList.contains('open') ? 'true' : 'false');
-        if (menu.classList.contains('open')) {
+        var open = menu.classList.contains('open');
+        if (menubtn) menubtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        else if (accBtn) accBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open) {
           requestAnimationFrame(function () {
             mdjPositionAccountDropdown();
             requestAnimationFrame(mdjPositionAccountDropdown);
@@ -634,6 +1013,11 @@
           menu.style.bottom = '';
           menu.style.zIndex = '';
         }
+      }
+      if (menubtn && menubtn.contains(e.target)) {
+        e.preventDefault();
+        e.stopPropagation();
+        mdjToggleAccountMenuFromTrigger();
         return;
       }
       if (menu && menu.contains(e.target) && e.target && e.target.classList && e.target.classList.contains('mdj-menu-logout')) {
@@ -649,41 +1033,7 @@
     });
   }
 
-  function mdjGetBillingMenuLabel() {
-    try {
-      if (window.i18n && typeof window.i18n.t === 'function') {
-        var t = window.i18n.t('client-menu-billing');
-        if (t) return t;
-      }
-    } catch (err) { /* ignore */ }
-    var lang = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
-    return lang.indexOf('en') === 0 ? 'Payment methods & billing' : 'Métodos de Pago y Facturación';
-  }
-
-  function mdjGetAccountSettingsLabel() {
-    try {
-      if (window.i18n && typeof window.i18n.t === 'function') {
-        var t2 = window.i18n.t('client-menu-account-settings');
-        if (t2) return t2;
-      }
-    } catch (err2) { /* ignore */ }
-    var lang2 = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
-    return lang2.indexOf('en') === 0 ? 'Account settings' : 'Ajustes de cuenta';
-  }
-
-  /** Primer ítem del menú VIP (cliente): acceso rápido a foto/datos — mismo destino que Ajustes, etiqueta corta. */
-  function mdjGetVipProfileShortcutLabel() {
-    try {
-      if (window.i18n && typeof window.i18n.t === 'function') {
-        var tp = window.i18n.t('client-menu-profile-shortcut');
-        if (tp) return tp;
-      }
-    } catch (e0) { /* ignore */ }
-    var langP = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
-    return langP.indexOf('en') === 0 ? 'My profile' : 'Mi perfil';
-  }
-
-  /** Primer ítem menú VIP (cliente): portal (no confundir con panel de artista). */
+  /** Etiqueta título/portal cliente (enlace directo al portal, sin menú en el avatar). */
   function mdjGetVipPortalMenuLabel() {
     try {
       if (window.i18n && typeof window.i18n.t === 'function') {
@@ -706,6 +1056,18 @@
     return lang2.indexOf('en') === 0 ? 'DJ Dashboard' : 'Panel DJ';
   }
 
+  /** Staff (admin / manager / seller / owner): cuenta operativa, no portal cliente ni panel artista. */
+  function mdjGetStaffAccountSettingsMenuLabel() {
+    try {
+      if (window.i18n && typeof window.i18n.t === 'function') {
+        var tx = window.i18n.t('nav-account-settings');
+        if (tx) return tx;
+      }
+    } catch (eSt) { /* ignore */ }
+    var lang3 = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+    return lang3.indexOf('es') === 0 ? 'Configuración de cuenta' : 'Account settings';
+  }
+
   function mdjGetArtistPublicProfileMenuLabel() {
     try {
       if (window.i18n && typeof window.i18n.t === 'function') {
@@ -717,19 +1079,8 @@
     return lang3.indexOf('en') === 0 ? 'Public profile' : 'Perfil público';
   }
 
-  function mdjGetLogoutLabel() {
-    try {
-      if (window.i18n && typeof window.i18n.t === 'function') {
-        var t3 = window.i18n.t('client-menu-logout');
-        if (t3) return t3;
-      }
-    } catch (err3) { /* ignore */ }
-    var lang3 = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
-    return lang3.indexOf('en') === 0 ? 'Log out' : 'Cerrar sesión';
-  }
-
   /**
-   * Avatar circular + nombre. Cliente: menú desplegable aparte. Artista: solo enlace a dashboard (sin dropdown).
+   * Avatar circular + nombre. Cliente y artista: el bloque es un enlace directo (portal / dashboard), sin menú desplegable.
    */
   function mdjBuildAvatarSlotHtml(ctx) {
     var useInit = !!ctx.useAvatarInitials;
@@ -860,15 +1211,9 @@
       return;
     }
 
-    var menuHtml = '';
-    menuHtml += '<a class="mdj-menu-item" href="./client-billing.html">' + mdjEscapeHtml(mdjGetBillingMenuLabel()) + '</a>';
-    menuHtml +=
-      '<a class="mdj-menu-item" href="./account-settings.html">' + mdjEscapeHtml(mdjGetAccountSettingsLabel()) + '</a>';
-    menuHtml += '<button type="button" class="mdj-menu-item mdj-menu-logout">' + mdjEscapeHtml(mdjGetLogoutLabel()) + '</button>';
-
-    var vipShell =
-      '<div class="mdj-account-vip-row">' +
-      '<a class="mdj-account-vip-trigger mdj-account-vip-direct" id="accountBtn" href="' +
+    /* Cliente: mismo patrón que artista — enlace al portal, sin #accountMenu ni pestaña bajo la barra. */
+    var clientInner =
+      '<a class="mdj-account-vip-trigger mdj-account-vip-direct mdj-account-vip-client-portal" id="accountBtn" href="' +
       mdjEscapeAttr(profileUrl) +
       '" title="' +
       mdjEscapeAttr(profileLabel) +
@@ -877,24 +1222,15 @@
       '<span class="mdj-account-display-name" id="mdjAccountDisplayName">' +
       mdjEscapeHtml(displayName) +
       '</span>' +
-      '</a>' +
-      '<button type="button" class="mdj-account-vip-menuhit" id="mdjAccountVipMenuBtn" aria-expanded="false" aria-haspopup="true" aria-controls="accountMenu" aria-label="Account menu">' +
-      '<span aria-hidden="true">▾</span>' +
-      '</button>' +
-      '</div>' +
-      '<nav id="accountMenu" class="mdj-account-dropdown" role="menu">' +
-      menuHtml +
-      '</nav>';
-
-    var root = document.getElementById('mdjAccountVipRoot');
-    if (root) {
-      root.className = 'mdj-account-vip mdj-account-vip--client-menu';
-      root.innerHTML = vipShell;
-      mdjBindHeaderAvatarImgFallbackOnce();
-      return;
+      '</a>';
+    var rootClient = document.getElementById('mdjAccountVipRoot');
+    if (rootClient) {
+      rootClient.className = 'mdj-account-vip mdj-account-vip--direct-link-only';
+      rootClient.innerHTML = clientInner;
+    } else {
+      zone.innerHTML =
+        '<div class="mdj-account-vip mdj-account-vip--direct-link-only" id="mdjAccountVipRoot">' + clientInner + '</div>';
     }
-
-    zone.innerHTML = '<div class="mdj-account-vip mdj-account-vip--client-menu" id="mdjAccountVipRoot">' + vipShell + '</div>';
     mdjBindHeaderAvatarImgFallbackOnce();
   }
 
@@ -930,24 +1266,105 @@
     }
   };
 
+  /** Último segmento de ruta (index.html en /), sin slash final — compatible con /shop y /shop.html */
+  function mdjNavPathLeaf() {
+    var pathname = location.pathname || '/';
+    var trimmed = pathname.replace(/\/+$/, '');
+    if (!trimmed) return 'index.html';
+    var parts = trimmed.split('/');
+    var leaf = parts[parts.length - 1] || 'index.html';
+    return String(leaf).toLowerCase();
+  }
+
+  /**
+   * Mapea último segmento de URL (sin .html/.htm) → `data-mdj-nav` del #mainNav.
+   * Auditoría pestañas ↔ fichero/slug (mantener al añadir páginas):
+   * | data-mdj-nav | Rutas / slugs reconocidos |
+   * | home         | index (hash solo en rama index abajo) |
+   * | services     | rentals, services, servicios |
+   * | venues       | index + hash (abajo); slug suelto: eventos, events, experiencias |
+   * | shop         | shop |
+   * | tools        | dj-tools, djtools, djs-tools, dj_tools |
+   * | jobs         | jobs, trabajos, empleos |
+   * | contact      | index + hash contact; página suelta: contact, contacto |
+   * | mi-portal    | client-portal, client-billing, mi-portal, portal-cliente, … |
+   * | my-profile   | dj-profile cuando ?id= usuario con sesión (perfil artístico propio) |
+   * | config       | dj-dashboard?tab=settings, account-settings (misma ruta que ⚙ CONFIG) |
+   * | flow         | dj-dashboard?tab=flow (Flujo de caja) |
+   * | agenda       | dj-dashboard sin tab, o ?tab=dashboard (vista Agenda del panel) |
+   * | (ninguno)    | dj-dashboard (otras ?tab=), panel-artista |
+   * | courses      | courses, cursos |
+   * | booth        | booth, ai-booth |
+   * | staff        | admin-dashboard |
+   * | home (extra) | find-dj, directory, directorio |
+   */
+  function mdjResolveNavKeyFromBase(base) {
+    var b = String(base || '').toLowerCase().replace(/\.html?$/i, '');
+    if (b === 'admin-dashboard' || b === 'admin_dashboard') return 'staff';
+    if (b === 'account-settings' || b === 'account_settings') return 'config';
+    if (b === 'shop') return 'shop';
+    if (b === 'courses' || b === 'cursos') return 'courses';
+    if (b === 'booth' || b === 'ai-booth' || b === 'ai_booth' || b === 'cabina') return 'booth';
+    if (b === 'dj-tools' || b === 'djtools' || b === 'djs-tools' || b === 'dj_tools') return 'tools';
+    if (b === 'jobs' || b === 'trabajos' || b === 'empleos') return 'jobs';
+    if (b === 'rentals' || b === 'services' || b === 'servicios') return 'services';
+    if (b === 'eventos' || b === 'events' || b === 'experiencias') return 'venues';
+    if (b === 'contact' || b === 'contacto') return 'contact';
+    if (b === 'find-dj' || b === 'directory' || b === 'directorio') return 'home';
+    if (b === 'dj-profile' || b === 'perfil-dj' || b === 'perfil_dj') {
+      try {
+        var qid = (new URLSearchParams((typeof location !== 'undefined' && location.search) || '').get('id') || '').trim();
+        var own = window.__mdjNavOwnUserId ? String(window.__mdjNavOwnUserId).trim() : '';
+        if (qid && own && qid === own) return 'my-profile';
+      } catch (eProf) { /* ignore */ }
+      return '';
+    }
+    if (
+      b === 'dj-dashboard' ||
+      b === 'artist-dashboard' ||
+      b === 'panel-artista' ||
+      b === 'panel_artista' ||
+      b === 'artistdashboard'
+    ) {
+      try {
+        var qtab = (new URLSearchParams((typeof location !== 'undefined' && location.search) || '').get('tab') || '').trim().toLowerCase();
+        if (qtab === 'settings') return 'config';
+        if (qtab === 'flow') return 'flow';
+        if (!qtab || qtab === 'dashboard') return 'agenda';
+      } catch (eTab) { /* ignore */ }
+      return '';
+    }
+    if (
+      b === 'client-portal' ||
+      b === 'client-billing' ||
+      b === 'mi-portal' ||
+      b === 'mi_portal' ||
+      b === 'portal-cliente' ||
+      b === 'portal_cliente'
+    ) {
+      return 'mi-portal';
+    }
+    return '';
+  }
+
   function mdjNavHighlight() {
-    var path = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+    var path = mdjNavPathLeaf();
+    /** Sin .html/.htm; index.php / default → index para hash de inicio/contacto/eventos */
+    var base = String(path || '')
+      .toLowerCase()
+      .replace(/\.html$/i, '')
+      .replace(/\.htm$/i, '');
+    if (base === 'index.php' || base === 'index.aspx' || base === 'default' || base === 'home') base = 'index';
     var hash = (location.hash || '').replace(/^#/, '').toLowerCase();
     var key = '';
-    if (path === 'index.html' || path === '') {
+    if (base === 'index') {
       if (hash === 'venues' || hash === 'experience' || hash === 'eventos' || hash === 'patrocinadores' || hash === 'sponsors') key = 'venues';
       else if (hash === 'services') key = 'services';
-      else if (hash === 'contact') key = 'contact';
+      else if (hash === 'contact' || hash === 'contacto') key = 'contact';
       else key = 'home';
-    } else if (path === 'shop.html') key = 'shop';
-    else if (path === 'courses.html') key = 'courses';
-    else if (path === 'dj-tools.html') key = 'tools';
-    else if (path === 'jobs.html') key = 'jobs';
-    else if (path === 'rentals.html' || path === 'services.html') key = 'services';
-    else if (path === 'find-dj.html') key = 'home';
-    else if (path === 'dj-profile.html') key = 'flow';
-    else if (path === 'dj-dashboard.html') key = 'artist-dash';
-    else if (path === 'client-portal.html' || path === 'client-billing.html') key = 'mi-portal';
+    } else {
+      key = mdjResolveNavKeyFromBase(base);
+    }
 
     document.querySelectorAll('#mainNav a[data-mdj-nav], .mobile-nav a[data-mdj-nav]').forEach(function (el) {
       el.classList.toggle('active', key && el.getAttribute('data-mdj-nav') === key);
@@ -1013,10 +1430,17 @@
     if (authZone && !window.__mdjDefaultAuthZoneHtml && authZone.innerHTML && authZone.innerHTML.trim()) {
       window.__mdjDefaultAuthZoneHtml = authZone.innerHTML;
     }
-    mdjSetHeaderAuthPillsPending(true);
+    /* No volver a ocultar ENTRAR/SALIR si ya estamos en sesión (danger): evita parpadeo en TOKEN_REFRESHED, i18n, etc. */
+    var skipAuthPillPending = false;
+    ['header-login-btn', 'header-login-btn-mobile'].forEach(function (id) {
+      var pb = document.getElementById(id);
+      if (pb && pb.classList.contains('danger')) skipAuthPillPending = true;
+    });
+    if (!skipAuthPillPending) mdjSetHeaderAuthPillsPending(true);
     try {
       var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
       if (!sb) {
+        window.__mdjNavOwnUserId = '';
         window.__mdjLastNavTier = null;
         window.__mdjProToolsUnlocked = false;
         window.__mdjLastNavIsClient = false;
@@ -1027,6 +1451,10 @@
         mdjSyncClientLoyaltyIndicator(false);
         mdjApplyDjToolsNavForTier(null);
         mdjApplyArtistDashboardNavChrome(false);
+        mdjApplyStaffMainNavLink(false);
+        mdjApplyConfigMainNavLink(false);
+        mdjApplyAgendaMainNavLink(false);
+        mdjApplyFlowMainNavLink(false);
         mdjApplyNavTierStatusBadge(null);
         var gp0 = document.getElementById('header-get-pro-btn');
         var sfd0 = document.getElementById('header-subscribe-free-btn');
@@ -1048,13 +1476,16 @@
       }
 
       if (session) {
+        window.__mdjNavOwnUserId =
+          session.user && session.user.id ? String(session.user.id) : '';
+        mdjEnsureMiPortalHydratingPlaceholder();
         var subFreeDesk = document.getElementById('header-subscribe-free-btn');
         var subFreeMob = document.getElementById('header-subscribe-free-mobile');
         if (subFreeDesk) subFreeDesk.style.display = 'none';
         if (subFreeMob) subFreeMob.style.display = 'none';
 
         var getProBtn = document.getElementById('header-get-pro-btn');
-        if (authZone) authZone.style.display = 'block';
+        if (authZone) authZone.style.display = 'inline-flex';
 
         try {
           var pr = await sb.from('dj_profiles').select('role, photo_url, dj_name, stage_name, username, plan_type, plan, plan_status, plan_expires_at, is_premium, hardware_token').eq('user_id', session.user.id).maybeSingle();
@@ -1064,7 +1495,7 @@
           try {
             var cpr = await sb
               .from('client_profiles')
-              .select('user_id, full_name, email, photo_url, avatar_url, username')
+              .select('user_id, full_name, email, photo_url, avatar_url, username, total_events_booked, loyalty_points')
               .eq('user_id', session.user.id)
               .maybeSingle();
             clientRow = cpr && cpr.data ? cpr.data : null;
@@ -1096,10 +1527,54 @@
             var pathSeg = (window.location.pathname || '').split('/').pop() || '';
             if (/^dj-profile\.html$/i.test(pathSeg) && session.user) {
               var qidOwn = (new URLSearchParams(window.location.search || '').get('id') || '').trim();
-              viewingOwnDjProfile = qidOwn === session.user.id;
+              var _sid = String(session.user.id);
+              /* Página: sin ?id= carga el propio user_id; con ?id= debe ser el tuyo. UUID case-insensitive. */
+              viewingOwnDjProfile = !qidOwn || qidOwn.toLowerCase() === _sid.toLowerCase();
             }
           } catch (eOwn) { /* ignore */ }
-          if (viewingOwnDjProfile && p && djRowRole !== 'client') {
+          /*
+           * En **tu** dj-profile, la pastilla «Cliente» solo si la fila DJ es rol client;
+           * nunca mezclar caja de comprador (client_profiles) con artista/staff/owner.
+           */
+          if (viewingOwnDjProfile) {
+            isClient = !!(
+              p && String(p.role || '').toLowerCase().trim() === 'client'
+            );
+          }
+          var hasDjProfile = !!(p && djRowRole !== 'client');
+          var idn =
+            typeof window.mdjClassifyPlatformIdentity === 'function'
+              ? window.mdjClassifyPlatformIdentity({
+                  user: session.user,
+                  djRow: p,
+                  clientRow: clientRow
+                })
+              : null;
+          /* Staff: solo dj_profiles (mismo criterio que admin y RLS). Fallback sin mdj-identity.js puesto arriba en el HTML. */
+          var isDjStaff = idn
+            ? !!idn.staffInDb
+            : !!p &&
+                (djRowRole === 'admin' ||
+                  djRowRole === 'manager' ||
+                  djRowRole === 'seller' ||
+                  djRowRole === 'owner');
+          var isNavStaffSolo = idn ? !!idn.navStaffSolo : !!p && djRowRole === 'seller';
+          try {
+            window.__mdjLastPlatformIdentity = idn || {
+              staffInDb: isDjStaff,
+              navStaffSolo: isNavStaffSolo,
+              principal: isDjStaff ? 'staff' : 'performer',
+              dbRole: djRowRole
+            };
+          } catch (eId) { /* ignore */ }
+          /*
+           * client_profiles (compras / portal) no debe etiquetar como «cliente» a owner/staff/team en dj_profiles o JWT.
+           * Sin esto, owner con fila cliente ve pastilla «Cliente» junto a SALIR.
+           */
+          if (isDjStaff) {
+            isClient = false;
+          }
+          if (!sessionIsExplicitClient && appRoleLower === 'owner') {
             isClient = false;
           }
           var isProUser = p && (
@@ -1109,14 +1584,15 @@
           );
           var djproBadge = document.getElementById('header-djpro-badge');
           if (getProBtn) {
-            if (isClient) {
+            if (isClient || isNavStaffSolo) {
               getProBtn.style.display = 'none';
             } else {
-              getProBtn.style.display = isProUser ? 'none' : '';
+              getProBtn.style.display = isProUser ? 'none' : 'inline-flex';
             }
           }
-          if (djproBadge) djproBadge.style.display = isProUser && !isClient ? 'inline-flex' : 'none';
-          mdjSyncClientLoyaltyIndicator(!!isClient);
+          if (djproBadge) djproBadge.style.display = isProUser && !isClient && !isNavStaffSolo ? 'inline-flex' : 'none';
+          /* Pastilla portal: Cliente | Cliente VIP — solo sesión comprador (no staff / owner). */
+          mdjSyncClientLoyaltyIndicator(!!isClient && !isNavStaffSolo, clientRow);
           /* Con cuenta y sin PRO: el CTA lleva a Jobs — mismas tarjetas de abajo (LITE free o PRO de pago), no a login. */
           if (getProBtn && !isProUser && !isClient) {
             getProBtn.href = './jobs.html#selection-screen';
@@ -1183,7 +1659,6 @@
             ? './dj-profile.html?id=' + encodeURIComponent(uid)
             : './dj-profile.html';
 
-          var hasDjProfile = !!(p && djRowRole !== 'client');
           var isArtistSession =
             !isClient && (!!hasDjProfile || !!jwtArtist || (!!djProfileErr && !!jwtArtist));
           var settingsUrl;
@@ -1191,13 +1666,16 @@
           if (isClient) {
             settingsUrl = './client-portal.html';
             settingsLabel = mdjGetVipPortalMenuLabel();
+          } else if (isNavStaffSolo) {
+            settingsUrl = './account-settings.html';
+            settingsLabel = mdjGetStaffAccountSettingsMenuLabel();
           } else {
             /* ?tab=settings: el tab por defecto «dashboard» en la UI es «Agenda» (clima/eventos); CONFIG = panel de control. */
             settingsUrl = './dj-dashboard.html?tab=settings';
             settingsLabel = mdjGetDjDashboardMenuLabel();
           }
 
-          /** Matriz: cliente solo | artista LITE | artista PRO — Mi Portal siempre → reservas/compras (cliente). */
+          /** Matriz: cliente solo | artista LITE | artista PRO (incl. staff con dj_profiles: misma pastilla Talento/Dueño). */
           var navTier;
           if (hasDjProfile) {
             navTier = isProUser ? 'artist_pro' : 'artist_lite';
@@ -1209,7 +1687,8 @@
             navTier = 'client_only';
           }
 
-          var miPortalHref = './client-portal.html';
+          var miPortalHref = isNavStaffSolo ? './account-settings.html' : './client-portal.html';
+          var miPortalNavOpts = isNavStaffSolo ? { variant: 'staff-settings' } : null;
 
           mdjMountOrUpdateVipAccountZone({
             displayName: displayName,
@@ -1231,23 +1710,37 @@
           } catch (eHref) { /* ignore */ }
 
           mdjApplyDjToolsNavForTier(navTier);
-          mdjApplyNavTierStatusBadge(navTier);
+          mdjApplyNavTierStatusBadge(navTier, { djRole: djRowRole || '' });
 
           mdjMaybeRunVipWelcomeProtocol(session);
 
           if (document.getElementById('mainNav')) {
-            mdjEnsureMiPortalInMainNav(miPortalHref);
+            mdjEnsureMiPortalInMainNav(miPortalHref, miPortalNavOpts);
             var hdrDup = document.getElementById('header-mi-portal-btn');
             if (hdrDup) hdrDup.style.display = 'none';
           } else {
             mdjEnsureMiPortalButton(miPortalHref);
           }
-          mdjEnsureMiPortalMobile(miPortalHref);
-          mdjApplyArtistDashboardNavChrome(navTier === 'artist_lite' || navTier === 'artist_pro');
+          mdjEnsureMiPortalMobile(miPortalHref, miPortalNavOpts);
+          var showMyArtisticProfileMainNav =
+            !isClient &&
+            !isNavStaffSolo &&
+            (navTier === 'artist_lite' || navTier === 'artist_pro');
+          mdjApplyArtistDashboardNavChrome(showMyArtisticProfileMainNav, publicProfileUrl);
+          mdjApplyStaffMainNavLink(!!isDjStaff);
+          var showArtistDashMainNav = !isClient && (navTier === 'artist_lite' || navTier === 'artist_pro');
+          mdjApplyAgendaMainNavLink(!!showArtistDashMainNav, './dj-dashboard.html?tab=dashboard');
+          mdjApplyConfigMainNavLink(true, settingsUrl);
+          mdjApplyFlowMainNavLink(!!showArtistDashMainNav, './dj-dashboard.html?tab=flow');
           mdjNavHighlight();
           try {
             if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
           } catch (eUi) { /* ignore */ }
+          /* i18n solo toca [data-i18n]; por si el HTML inicial trae header-mi-portal en la 8.ª celda, reforzar staff. */
+          if (isDjStaff && document.getElementById('mainNav')) {
+            mdjEnsureMiPortalInMainNav(miPortalHref, miPortalNavOpts);
+            mdjEnsureMiPortalMobile(miPortalHref, miPortalNavOpts);
+          }
 
           mdjApplyHeaderAuthPillSession(true);
 
@@ -1288,10 +1781,15 @@
           } catch (e2) { /* ignore */ }
           mdjApplyDjToolsNavForTier(null);
           mdjApplyArtistDashboardNavChrome(false);
+          mdjApplyStaffMainNavLink(false);
+          mdjApplyConfigMainNavLink(false);
+          mdjApplyAgendaMainNavLink(false);
+          mdjApplyFlowMainNavLink(false);
           mdjApplyNavTierStatusBadge(null);
           mdjSyncClientLoyaltyIndicator(false);
         }
       } else {
+        window.__mdjNavOwnUserId = '';
         window.__mdjLastNavTier = null;
         window.__mdjProToolsUnlocked = false;
         window.__mdjLastNavIsClient = false;
@@ -1313,10 +1811,15 @@
         if (npmGuest) npmGuest.style.display = 'none';
         mdjApplyDjToolsNavForTier(null);
         mdjApplyArtistDashboardNavChrome(false);
+        mdjApplyStaffMainNavLink(false);
+        mdjApplyConfigMainNavLink(false);
+        mdjApplyAgendaMainNavLink(false);
+        mdjApplyFlowMainNavLink(false);
         mdjApplyNavTierStatusBadge(null);
       }
     } catch (err) {
       console.error('[MDJ-SYSTEM] checkSessionForNav:', err);
+      window.__mdjNavOwnUserId = '';
       window.__mdjLastNavTier = null;
       window.__mdjProToolsUnlocked = false;
       window.__mdjLastNavIsClient = false;
@@ -1326,6 +1829,10 @@
       mdjSyncClientLoyaltyIndicator(false);
       mdjApplyDjToolsNavForTier(null);
       mdjApplyArtistDashboardNavChrome(false);
+      mdjApplyStaffMainNavLink(false);
+      mdjApplyConfigMainNavLink(false);
+      mdjApplyAgendaMainNavLink(false);
+      mdjApplyFlowMainNavLink(false);
       mdjApplyNavTierStatusBadge(null);
     } finally {
       mdjSetHeaderAuthPillsPending(false);
@@ -1372,7 +1879,7 @@
       });
     }
 
-    /** #mainNav “More” — panel estilo Facebook (solo desktop ≥1001px donde .header-bottom es visible) */
+    /** #mainNav “More” — panel estilo Facebook (solo desktop ≥1001px donde .header-nav es visible) */
     (function bindNavMoreDropdown() {
       var btn = document.getElementById('mainNavMoreBtn');
       var menu = document.getElementById('mainNavMoreMenu');
@@ -1443,6 +1950,7 @@
     if (window.i18n && typeof window.i18n.updateUI === 'function') {
       window.i18n.updateUI();
     }
+    mdjNavHighlight();
     if (typeof window.updateAuthButtons === 'function') window.updateAuthButtons();
 
     document.addEventListener('languageChanged', function () {
@@ -1450,6 +1958,7 @@
       if (typeof window.checkSessionForNav === 'function') {
         void window.checkSessionForNav();
       }
+      mdjNavHighlight();
     });
   };
 

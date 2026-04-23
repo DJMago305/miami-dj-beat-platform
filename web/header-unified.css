@@ -1,0 +1,862 @@
+/**
+ * Miami DJ Beat — cabecera unificada (#mainHeader.mdj-header-unified)
+ * Cargar después de styles.css. ≥1001: menú principal = letras flotantes + “/” entre ítems (mismo cristal #mainHeader).
+ * Fila 1: marca/acciones; franja de #mainNav sin tira sólida. ≤1000: .header-nav oculta (styles.css).
+ */
+:root {
+  /* Fila 1 (marca/acciones) — franja fija; escala del PNG de letras vía --mdj-brand-letters-scale */
+  --mdj-header-unified-r1: 84px;
+  --mdj-brand-letters-scale: 2.65;
+  --mdj-header-unified-r2: 72px;
+  /* Franja izquierda: logo + wordmark (sin slot exagerado — libera espacio para .header-actions / #mainNav) */
+  --mdj-header-brand-slot: 660px;
+  --mdj-header-brand-gap: 10px;
+  /* Cercano a .dj-tab-btn; un poco más de aire entre letras / entre ítems (ver #mainNav > a). */
+  --mdj-mainnav-pad-x: clamp(10px, 1.3vw, 22px);
+  --mdj-mainnav-pad-x-sm: clamp(9px, 1.15vw, 17px);
+}
+
+/* Sin contain:layout en el header completo: en algunos navegadores afectaba capas de clic con marca + #mainNav. */
+
+@media (min-width: 1001px) {
+  /*
+   * Misma matriz que Home (`index.html` → html body.page-home):
+   * --header-height 84px = .header-top | --header-nav-band 72px = .header-nav
+   * (padding-top del body y scroll-padding en styles.css).
+   */
+  :root:has(#mainHeader.header.mdj-header-unified) {
+    --header-height: 84px;
+    --mdj-header-unified-r1: 84px;
+    --mdj-header-unified-r2: 72px;
+    --header-nav-band: 72px;
+  }
+
+  /* Fila de menú: continúa el cristal de #mainHeader; sin tira sólida ni cinta (Home “flotante”). */
+  #mainHeader.header.mdj-header-unified .header-nav {
+    position: relative !important;
+    align-items: stretch !important;
+    overflow-x: visible !important;
+    overflow-y: hidden !important;
+    isolation: isolate !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    z-index: 2000 !important;
+  }
+
+  /*
+   * Fila 1: sin border-bottom; solapa con border-top de .header-nav. Recorte del wordmark en header-top.
+   */
+  #mainHeader.header.mdj-header-unified .header-top {
+    border-bottom: none !important;
+    z-index: 0 !important;
+    /* Pisa styles.css (overflow:hidden): el wordmark con scale sale sin agregar altura a la franja */
+    overflow: visible !important;
+  }
+
+  body.page-home #mainHeader.header.mdj-header-unified .header-nav {
+    background: transparent !important;
+  }
+
+  /*
+   * Fila 1 — flex: marca ocupa slot fijo | la píldora flex:1 estira todo el resto (antes block+absolute
+   * dejaba la píldora al ancho intrínseco y margin-left:auto en el carrito no empujaba).
+   */
+  #mainHeader.header.mdj-header-unified .header-top .container {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: var(--mdj-header-brand-gap) !important;
+    height: 100% !important;
+    min-height: var(--mdj-header-unified-r1) !important;
+    max-height: var(--mdj-header-unified-r1) !important;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(16px, env(safe-area-inset-right, 0px)) !important;
+    box-sizing: border-box !important;
+  }
+
+  /*
+   * Marca (fénix + ::before + PNG letras): nueva posición pegada a la izquierda del todo.
+   * Solo .brand — no mueve .header-actions. margin-left negativo anula padding-left del .container.
+   */
+  #mainHeader.header.mdj-header-unified .header-top .container > .brand {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    margin: 0 !important;
+    margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px))) !important;
+    z-index: 2 !important;
+    flex: 0 0 auto !important;
+    width: fit-content !important;
+    max-width: min(var(--mdj-header-brand-slot), 100%) !important;
+    min-width: 0 !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    overflow: visible !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* flex-basis 0%: evita ancho intrínseco; con grow 1 la píldora ocupa todo el hueco (pisa space-between del sitio) */
+  #mainHeader.header.mdj-header-unified .header-top .container > .header-actions {
+    position: relative !important;
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    transform: none !important;
+    max-width: none !important;
+    margin: 0 !important;
+    z-index: 5 !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    align-self: stretch !important;
+    flex-wrap: nowrap !important;
+  }
+
+  #mainHeader.mdj-header-unified .brand {
+    max-width: min(var(--mdj-header-brand-slot), 100%) !important;
+    overflow: visible !important;
+    flex-shrink: 0 !important;
+  }
+
+  /*
+   * Marca unified: fénix + wordmark (`.brand-letters-img`) + cartel; translateX fijos en spec.
+   */
+  #mainHeader.header.mdj-header-unified .brand .logo-img-eagle {
+    height: 70px !important;
+    max-height: 70px !important;
+    max-width: 138px !important;
+    width: auto !important;
+    object-fit: contain !important;
+    transform: translateX(-188px) !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .brand .brand-letters-img {
+    /* PNG letras: caja lógica pequeña; el tamaño visual = scale en el wrapper (no sube --header-height). */
+    height: auto !important;
+    max-height: min(62px, calc(var(--mdj-header-unified-r1) - 18px)) !important;
+    max-width: min(400px, 48vw) !important;
+    width: auto !important;
+    object-fit: contain !important;
+    display: block !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .brand .brand-letters-wrapper {
+    width: auto !important;
+    min-width: 0 !important;
+    flex: 0 1 auto !important;
+    max-width: 580px !important;
+    transform: translateX(-188px) scale(var(--mdj-brand-letters-scale, 1)) !important;
+    transform-origin: left center !important;
+  }
+
+  /* Cartel mate detrás del emblema — mismo eje X que el fénix (translateX del grupo). */
+  #mainHeader.header.mdj-header-unified .brand::before {
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 10px !important;
+    transform: translate(calc(-188px + 0.5 * 70px - 0.5 * 64px), -50%) !important;
+  }
+
+  /*
+   * Fila 2 — #mainNav llena la franja (--mdj-header-unified-r2); escritorio: celdas flex iguales (ver > a abajo).
+   */
+  #mainHeader.header.mdj-header-unified .header-nav .container {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: center !important;
+    height: 100% !important;
+    min-height: var(--mdj-header-unified-r2) !important;
+    max-height: var(--mdj-header-unified-r2) !important;
+    width: 100% !important;
+    /* Mismo riel que `#mainHeader .header-top .container` en styles.css (1200px): evita menú “corrido” vs fila 1. */
+    max-width: min(1200px, 100%) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(16px, env(safe-area-inset-right, 0px)) !important;
+    box-sizing: border-box !important;
+    overflow-x: visible !important;
+    overflow-y: hidden !important;
+  }
+
+  /*
+   * #mainNav — menú flotante: una sola fila (no apilar “MI PORTAL / MI PERFIL / STAFF”);
+   * si el carril es estrecho, scroll horizontal. Sombras y “/” entre ítems.
+   */
+  #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 1 auto !important;
+    min-height: calc(var(--mdj-header-unified-r2) - 6px) !important;
+    height: 100% !important;
+    max-height: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+    -ms-overflow-style: auto !important;
+    z-index: 2 !important;
+    pointer-events: auto !important;
+
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    align-content: center !important;
+    /* Navegadores viejos: inicio. Modernos: centrado si cabe; si no, inicio (evita recortar “MI PERFIL” a “MI P”). */
+    justify-content: flex-start !important;
+    justify-content: safe center !important;
+    padding-left: 0 !important;
+    padding-right: clamp(10px, 1.2vw, 20px) !important;
+    scroll-padding-inline: 12px !important;
+    row-gap: 0 !important;
+    column-gap: 0 !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav::-webkit-scrollbar {
+    width: 0 !important;
+    height: 4px !important;
+  }
+
+  /* Carrusel infinito (mdj-mainnav-infinite.js): sin barra visible; el movimiento es el “efecto”. */
+  #mainHeader.header.mdj-header-unified
+    .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav.mdj-mainnav-infinite--on {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  #mainHeader.header.mdj-header-unified
+    .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav.mdj-mainnav-infinite--on::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  /* Chevrones fuera de .container: hijas de .header-nav (mdj-mainnav-infinite.js). */
+  #mainHeader.header.mdj-header-unified
+    .header-nav.mdj-mainnav-infinite--ui .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav.mdj-mainnav-infinite--on {
+    padding-left: clamp(28px, 3.2vw, 40px) !important;
+    padding-right: clamp(28px, 3.2vw, 40px) !important;
+    scroll-padding-inline: 16px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified
+    .header-nav.mdj-mainnav-infinite--ui
+    .mdj-mainnav-infinite-chevron {
+    position: absolute !important;
+    top: 50% !important;
+    z-index: 6 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    background: linear-gradient(135deg, rgba(12, 10, 8, 0.75), rgba(30, 24, 16, 0.55)) !important;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 2px 10px rgba(0, 0, 0, 0.35) !important;
+    color: var(--gold, #c5a059) !important;
+    cursor: pointer !important;
+    -webkit-tap-highlight-color: transparent !important;
+    transform: translateY(-50%) !important;
+  }
+
+  /* Hacia adentro; +5px respecto a la posición anterior hacia el carril */
+  #mainHeader.header.mdj-header-unified
+    .header-nav.mdj-mainnav-infinite--ui
+    .mdj-mainnav-infinite-chevron.mdj-mainnav-infinite-chevron--prev {
+    left: calc(max(4px, env(safe-area-inset-left, 0px) - 2px) + 5px) !important;
+    right: auto !important;
+  }
+
+  #mainHeader.header.mdj-header-unified
+    .header-nav.mdj-mainnav-infinite--ui
+    .mdj-mainnav-infinite-chevron.mdj-mainnav-infinite-chevron--next {
+    right: calc(max(4px, env(safe-area-inset-right, 0px) - 2px) + 5px) !important;
+    left: auto !important;
+  }
+
+  #mainHeader.header.mdj-header-unified
+    .header-nav.mdj-mainnav-infinite--ui
+    .mdj-mainnav-infinite-chevron.mdj-mainnav-infinite-chevron--prev
+    .mdj-mainnav-chevron-ico {
+    transform: scaleX(-1) !important;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    #mainHeader.header.mdj-header-unified
+      .header-nav.mdj-mainnav-infinite--ui
+      .mdj-mainnav-infinite-chevron:hover {
+      color: #e8c97a !important;
+      background: linear-gradient(135deg, rgba(20, 16, 12, 0.92), rgba(40, 32, 20, 0.68)) !important;
+    }
+  }
+
+  #mainHeader.header.mdj-header-unified
+    .header-nav.mdj-mainnav-infinite--ui
+    .mdj-mainnav-infinite-chevron:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--gold, #c5a059) 80%, #fff) !important;
+    outline-offset: 2px !important;
+  }
+
+  /* Mismo orden invitado / sesión que VIP (antes solo con body.mdj-logged-in-header → salto al hidratar) */
+  #mainHeader.mdj-header-unified .header-actions .lang-switcher {
+    order: -10;
+    margin-right: 0 !important;
+  }
+
+  /* Refuerzo: carrito + búsqueda hacia la derecha (audit carga después; ver mdj-header-desktop-audit.css).
+     Debe ganar a mdj-header-vip.css (inline-flex en sesión) para que #header-auth-zone + carrito + search
+     participen como hijos directos de .header-actions. */
+  #mainHeader.header.mdj-header-unified .header-actions .header-avatar-cart-row {
+    display: contents !important;
+  }
+
+  /* Cuenta/avatar en flujo normal; carrito + buscador se llevan el empuje a la derecha (solo esos dos). */
+  #mainHeader.header.mdj-header-unified .header-actions #header-auth-zone {
+    margin-left: 0 !important;
+  }
+
+  /*
+   * Carrito + búsqueda: translateX alinea con barra ancha (fila 1 = --header-height).
+   */
+  #mainHeader.header.mdj-header-unified .header-actions a#header-cart-link.header-cart-btn {
+    transform: translateX(215px) !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    align-self: center !important;
+    box-sizing: border-box !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    max-width: 38px !important;
+    max-height: 38px !important;
+    font-size: 24px !important;
+    line-height: 1 !important;
+    aspect-ratio: 1 / 1 !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-actions .header-search-wrap {
+    margin-right: 0 !important;
+    transform: translateX(215px) !important;
+    /* Pisa audit (>=1200px flex:2 1 420px): sin crecer de más; el hueco queda a la izquierda del cluster */
+    flex: 0 1 min(590px, 46vw) !important;
+    min-width: min(100%, 200px) !important;
+    max-width: min(650px, 52vw) !important;
+  }
+
+  /* Letras flotantes: / antes de cada <a> salvo el primero en DOM; slots display:none no pintan el pseudo. */
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a:not(:first-of-type)::before {
+    content: '\002F' !important; /* U+002F = / (no incluye espacio; aire = padding) */
+    color: rgba(197, 160, 89, 0.4) !important;
+    font-weight: 500 !important;
+    margin-right: 0.68em !important;
+    line-height: 1 !important;
+    text-shadow: none !important;
+    position: static !important;
+  }
+
+  #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: min-content !important;
+    max-width: none !important;
+    flex-shrink: 0 !important;
+    align-self: center !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 2px 0.46em 6px !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    line-height: 1.25 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: none !important;
+    box-shadow: none !important;
+    font-size: clamp(14px, 1.05vw, 18px) !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.34em !important;
+    text-transform: uppercase !important;
+    text-decoration: none !important;
+    color: rgba(255, 252, 245, 0.9) !important;
+    text-shadow: 0 0.5px 1.5px rgba(0, 0, 0, 0.9), 0 0 14px rgba(0, 0, 0, 0.45) !important;
+    /* Sin transición: evita “brinco” visual al cambiar .active / text-shadow. */
+    transition: none !important;
+    position: relative !important;
+  }
+
+  /* No recortar MI PORTAL / STAFF|MI PERFIL: ancho al texto completo (mismo truco que styles “NO-STACKING”). */
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a#mainNav-mi-portal-link,
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a#mainNav-staff-or-profile {
+    min-width: max-content !important;
+  }
+
+  /*
+   * Subrayado: ::after en todos los <a> (inactivo = transparente) — al cambiar .active no aparece/crece el pseudo
+   * de la nada; sin transición = sin “salto” (LEY ANTI-BRINCO).
+   */
+  #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a::after {
+    content: '' !important;
+    position: absolute !important;
+    left: 50% !important;
+    bottom: 0 !important;
+    transform: translateX(-50%) !important;
+    width: min(10ch, calc(100% - 8px)) !important;
+    max-width: 90% !important;
+    height: 2px !important;
+    background: transparent !important;
+    border-radius: 2px !important;
+    pointer-events: none !important;
+    box-shadow: none !important;
+    opacity: 0 !important;
+  }
+
+  #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a.active::after {
+    background: var(--gold) !important;
+    opacity: 1 !important;
+    box-shadow: 0 0 8px rgba(197, 160, 89, 0.45) !important;
+  }
+
+  body.page-home #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a {
+    color: rgba(255, 242, 220, 0.96) !important;
+    text-shadow: 0 0.5px 1.5px #000, 0 0 20px rgba(0, 0, 0, 0.45), 0 0 28px rgba(197, 160, 89, 0.12) !important;
+  }
+
+  /* Misma fila: MY PROFILE (perfil artístico) en blanco donde aplique; MY PORTAL dorado. */
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a#mainNav-staff-or-profile.mdj-artist-dash-mainnav {
+    color: rgba(255, 252, 245, 0.94) !important;
+  }
+
+  body.page-home #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a#mainNav-staff-or-profile.mdj-artist-dash-mainnav {
+    color: rgba(255, 252, 245, 0.94) !important;
+  }
+
+  #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a:hover {
+    color: rgba(255, 252, 245, 0.98) !important;
+  }
+
+  body.page-home #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a:hover {
+    color: #f5e6c8 !important;
+  }
+
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a#mainNav-staff-or-profile.mdj-artist-dash-mainnav:hover {
+    color: #ffffff !important;
+    text-shadow: 0 0 18px rgba(255, 255, 255, 0.18) !important;
+  }
+
+  body.page-home #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a#mainNav-staff-or-profile.mdj-artist-dash-mainnav:hover {
+    color: #ffffff !important;
+  }
+
+  #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a.active {
+    color: var(--gold) !important;
+    text-shadow: 0 0 1px rgba(0, 0, 0, 0.9), 0 0 22px rgba(197, 160, 89, 0.35) !important;
+  }
+
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a#mainNav-staff-or-profile.mdj-artist-dash-mainnav.active {
+    color: rgba(255, 252, 245, 0.98) !important;
+  }
+
+  /* Shop: mismo ancho base que el resto; solo data-mdj-nav (evita coincidencias por href). */
+  #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a[data-mdj-nav='shop']:not(.active) {
+    color: rgba(224, 195, 130, 0.96) !important;
+  }
+
+  #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a.active[data-mdj-nav='shop'] {
+    color: var(--gold) !important;
+  }
+
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a#mainNav-mi-portal-link.mdj-mi-portal-gold:not(.mdj-mi-portal--guest):not(.mdj-mi-portal--hydrating) {
+    color: rgba(224, 195, 130, 0.96) !important;
+  }
+
+  /* Slots fantasma: ver bloque final `body #mainHeader...` (gana a `> a { display:flex }` de esta misma hoja). */
+
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a.mdj-staff-mainnav:not(.mdj-mainnav-reserved-slot):not(.active) {
+    color: rgba(224, 195, 130, 0.96) !important;
+  }
+
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a.mdj-config-mainnav:not(.mdj-mainnav-reserved-slot):not(.active),
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a.mdj-agenda-mainnav:not(.mdj-mainnav-reserved-slot):not(.active),
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a.mdj-flow-mainnav:not(.mdj-mainnav-reserved-slot):not(.active) {
+    color: rgba(230, 235, 242, 0.9) !important;
+    /* Mismo 800 que el resto: 700 recalculaba ancho y “brincaba” al activar. */
+    font-weight: 800 !important;
+  }
+
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a.mdj-config-mainnav.active,
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a.mdj-agenda-mainnav.active,
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a.mdj-flow-mainnav.active {
+    color: var(--gold) !important;
+  }
+
+  /*
+   * Franja 1 — misma escala visual que Home: buscador, pills, cuenta VIP.
+   */
+  #mainHeader.header.mdj-header-unified .header-actions {
+    padding: 2px 10px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-smart-search {
+    font-size: 19px !important;
+    line-height: 1 !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    padding: 3px 12px 3px 46px !important;
+    box-sizing: border-box !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-smart-search::placeholder {
+    font-size: 19px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-search-wrap::before {
+    left: 9px !important;
+    width: 23px !important;
+    height: 23px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-actions .btn-pill {
+    padding: 3px 12px !important;
+    font-size: 15px !important;
+    min-height: 35px !important;
+    box-sizing: border-box !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .lang-switcher {
+    padding: 1px 8px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .lang-btn {
+    font-size: 16px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-djpro-badge {
+    padding: 5px 12px !important;
+    font-size: 16px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-tier-status-badge,
+  #mainHeader.header.mdj-header-unified .header-client-loyalty-indicator {
+    padding: 3px 10px !important;
+    font-size: 15px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .mdj-account-display-name {
+    font-size: 18px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .mdj-avatar-ring {
+    width: 49px !important;
+    height: 49px !important;
+    min-width: 49px !important;
+    min-height: 49px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .mdj-header-vip-avatar.avatar {
+    width: 45px !important;
+    height: 45px !important;
+    min-width: 45px !important;
+    min-height: 45px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .mdj-avatar-initials {
+    width: 45px !important;
+    height: 45px !important;
+    font-size: 19px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-cart-count {
+    min-width: 23px !important;
+    height: 23px !important;
+    font-size: 16px !important;
+    line-height: 23px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-actions a#header-mi-portal-btn.mdj-mi-portal-navlink.mdj-mi-portal-gold {
+    font-size: clamp(18px, calc(5px + 1vw), 20px) !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .account-btn .avatar {
+    width: 45px !important;
+    height: 45px !important;
+  }
+}
+
+/* ≤1000px: una sola fila; #mainNav hace el scroll (evita doble franja de scrollbar). */
+@media (max-width: 1000px) {
+  #mainHeader.header.mdj-header-unified .header-nav {
+    overflow-x: visible !important;
+    overflow-y: hidden !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-nav .container {
+    overflow-x: visible !important;
+    overflow-y: hidden !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    justify-content: flex-start !important;
+    flex-wrap: nowrap !important;
+    row-gap: 0 !important;
+    column-gap: 0 !important;
+    min-height: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: thin !important;
+  }
+
+  #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: max(10ch, max-content) !important;
+    max-width: none !important;
+    flex-shrink: 0 !important;
+    padding: 4px var(--mdj-mainnav-pad-x-sm) 5px !important;
+    font-size: clamp(13px, 1.05vw, 16px) !important;
+    letter-spacing: 0.2em !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .brand .brand-letters-wrapper {
+    transform: translateX(-188px) scale(1.18) !important;
+  }
+}
+
+/*
+ * Idioma ES/EN — “vida”: hover, activo con brillo suave, clic con pop (sin cambiar layout del header).
+ * Aplica en cualquier página que cargue este CSS (#mainHeader).
+ */
+#mainHeader .lang-switcher {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid transparent;
+  transition:
+    border-color 0.28s ease,
+    box-shadow 0.28s ease,
+    background 0.28s ease,
+    transform 0.28s ease;
+}
+
+/*
+ * .header-actions ya es una pastilla (styles.css); quitar la segunda cápsula en el switcher ES/EN.
+ * El brillo del idioma activo queda en .lang-btn.active; al pasar el ratón sigue el hover del contenedor.
+ */
+#mainHeader.header.mdj-header-unified .header-actions .lang-switcher {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+#mainHeader .lang-switcher:hover {
+  border-color: rgba(197, 160, 89, 0.38);
+  box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.22),
+    0 6px 22px rgba(0, 0, 0, 0.28);
+  background: rgba(255, 255, 255, 0.09) !important;
+}
+
+#mainHeader .lang-btn {
+  position: relative;
+  z-index: 1;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 5px 11px;
+  transition:
+    color 0.22s ease,
+    transform 0.22s ease,
+    text-shadow 0.22s ease,
+    background 0.24s ease,
+    box-shadow 0.24s ease,
+    opacity 0.22s ease;
+}
+
+#mainHeader .lang-btn:hover {
+  transform: translateY(-1px);
+  text-shadow: 0 0 14px rgba(197, 160, 89, 0.5);
+}
+
+#mainHeader .lang-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.65);
+}
+
+#mainHeader .lang-btn.active {
+  background: linear-gradient(160deg, rgba(232, 208, 160, 0.32), rgba(197, 160, 89, 0.2)) !important;
+  color: #f0e4c4 !important;
+  opacity: 1;
+  box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  animation: mdj-lang-active-glow 2.4s ease-in-out infinite;
+}
+
+#mainHeader .lang-switcher.mdj-lang-pop {
+  animation: mdj-lang-switcher-pop 0.42s ease;
+}
+
+@keyframes mdj-lang-active-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(197, 160, 89, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(197, 160, 89, 0.72),
+      0 0 20px rgba(197, 160, 89, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+}
+
+@keyframes mdj-lang-switcher-pop {
+  0% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.045);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #mainHeader .lang-btn.active {
+    animation: none;
+  }
+
+  #mainHeader .lang-switcher.mdj-lang-pop {
+    animation: none;
+  }
+
+  #mainHeader .lang-btn:hover {
+    transform: none;
+  }
+}
+
+/*
+ * Cabecera unificada estática: sin transiciones al cambiar de página ni “efectos” en menú / franja superior.
+ * Refuerza LEY ANTI-BRINCO (.cursorrules): mismo orden visual entre pestañas.
+ */
+#mainHeader.header.mdj-header-unified,
+#mainHeader.header.mdj-header-unified .header-top,
+#mainHeader.header.mdj-header-unified .header-nav,
+#mainHeader.header.mdj-header-unified .header-top .container,
+#mainHeader.header.mdj-header-unified .header-nav .container {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Pestañas: sin transición (color/text-shadow/underline ya estáticos — sin salto al cambiar opción). */
+#mainHeader.header.mdj-header-unified #mainNav a,
+#mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a {
+  transition: none !important;
+}
+
+#mainHeader.header.mdj-header-unified .lang-switcher,
+#mainHeader.header.mdj-header-unified .lang-btn {
+  transition: none !important;
+  animation: none !important;
+}
+
+#mainHeader.header.mdj-header-unified .lang-btn:hover {
+  transform: none !important;
+}
+
+#mainHeader.header.mdj-header-unified .lang-btn.active {
+  animation: none !important;
+}
+
+#mainHeader.header.mdj-header-unified .lang-switcher.mdj-lang-pop {
+  animation: none !important;
+}
+
+/*
+ * Pestañas “fantasma” (invitado / hidratando / reservado): el selector `> a { display:flex }` de arriba
+ * ganaba a reglas sin `body` y dejaba columnas. `body` + extra clase en <a> = prioridad + carga al final.
+ */
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a.mdj-mi-portal--guest,
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a.mdj-mi-portal--hydrating,
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a.mdj-mainnav-reserved-slot {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  width: 0 !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  flex: 0 0 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  position: static !important;
+}

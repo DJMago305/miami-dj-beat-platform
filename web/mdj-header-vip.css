@@ -1,34 +1,3 @@
-/**
- * Miami DJ Beat — VIP header (sesión activa): idioma a la izquierda del bloque de acciones,
- * avatar + nombre a la derecha, menú desplegable.
- * Cargado por mdj-shared-header.js (body.mdj-logged-in-header).
- */
-
-/*
- * NO-STACKING POLICY — #mainNav solo escritorio (≥1001px).
- * Cada etiqueta (“DJ TOOLS”, “MI PORTAL”, …) = una línea horizontal; sin flex-wrap en fila ni en el enlace.
- * No aplica al menú móvil (#mobileMenu).
- */
-@media (min-width: 1001px) {
-  #mainHeader #mainNav.nav.top-nav {
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-  }
-
-  #mainHeader #mainNav.nav.top-nav > a {
-    display: inline-flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    justify-content: center !important;
-    white-space: nowrap !important;
-    min-width: max-content !important;
-    flex-shrink: 0 !important;
-  }
-}
-
-/* ── Barra de acciones: flex para reordenar idioma ───────────────────────── */
 #mainHeader .header-actions {
   display: flex;
   flex-wrap: wrap;
@@ -37,11 +6,12 @@
   justify-content: flex-end;
 }
 
-/* Idioma hacia la zona izquierda del grupo de utilidades (libera el extremo derecho para VIP + carrito) */
-body.mdj-logged-in-header #mainHeader .header-actions .lang-switcher {
-  order: -10;
-  margin-right: auto;
+#mainHeader.header.mdj-header-unified .header-actions {
+  flex-wrap: nowrap !important;
+  justify-content: flex-end !important;
 }
+
+/* Idioma: order en header-unified.css (invitado + sesión) */
 
 /* Bloque usuario + carrito permanece al final */
 body.mdj-logged-in-header #mainHeader .header-actions .header-avatar-cart-row {
@@ -49,6 +19,11 @@ body.mdj-logged-in-header #mainHeader .header-actions .header-avatar-cart-row {
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
+}
+
+/* Cabecera unificada: la fila no debe ser flex propio (inline-flex rompe margin-left:auto del cluster) */
+body.mdj-logged-in-header #mainHeader.header.mdj-header-unified .header-actions .header-avatar-cart-row {
+  display: contents !important;
 }
 
 /* MI PORTAL — desktop: misma tipografía que #mainNav (editorial); solo color dorado, sin pastilla */
@@ -95,8 +70,8 @@ body.mdj-logged-in-header #mainHeader .header-actions .header-avatar-cart-row {
   text-shadow: 0 0 26px rgba(197, 160, 89, 0.45);
 }
 
-/* MI PORTAL — fila #mainNav (Home / Services / …): misma línea editorial, resalte dorado */
-#mainHeader #mainNav.nav.top-nav a#mainNav-mi-portal-link.mdj-mi-portal-mainnav.mdj-mi-portal-gold {
+/* MI PORTAL — fila #mainNav flex legacy (sin mdj-mainnav-flex). mdj-mainnav-flex: flex en styles.css. */
+#mainHeader #mainNav.nav.top-nav:not(.mdj-mainnav-flex) a#mainNav-mi-portal-link.mdj-mi-portal-mainnav.mdj-mi-portal-gold {
   border: none !important;
   border-radius: 0 !important;
   background: none !important;
@@ -115,7 +90,7 @@ body.mdj-logged-in-header #mainHeader .header-actions .header-avatar-cart-row {
   min-width: max-content !important;
   word-break: keep-all;
 }
-#mainHeader #mainNav.nav.top-nav a#mainNav-mi-portal-link.mdj-mi-portal-mainnav.mdj-mi-portal-gold:hover {
+#mainHeader #mainNav.nav.top-nav:not(.mdj-mainnav-flex) a#mainNav-mi-portal-link.mdj-mi-portal-mainnav.mdj-mi-portal-gold:hover {
   color: #f5e6c8 !important;
   text-shadow: 0 0 22px rgba(197, 160, 89, 0.45);
 }
@@ -138,12 +113,14 @@ body.mdj-logged-in-header #header-auth-zone {
   align-items: center;
 }
 
-/* Artista: solo enlace al dashboard — sin fila extra ni menú */
-.mdj-account-vip--artist-link-only {
+/* Cuenta: un solo enlace (dashboard artista / portal cliente) — sin dropdown bajo el avatar */
+.mdj-account-vip--artist-link-only,
+.mdj-account-vip--direct-link-only {
   z-index: 1;
 }
 
-.mdj-account-vip--artist-link-only .mdj-account-vip-trigger {
+.mdj-account-vip--artist-link-only .mdj-account-vip-trigger,
+.mdj-account-vip--direct-link-only .mdj-account-vip-trigger {
   max-width: min(280px, 44vw);
 }
 
@@ -365,7 +342,7 @@ body.mdj-logged-in-header #mainHeader.header {
 }
 
 /*
- * Franja superior por encima de .header-bottom (styles.css le da z-index:101): el dropdown del avatar
+ * Franja superior por encima de .header-nav (styles.css le da z-index:101): el dropdown del avatar
  * cae en la zona de #mainNav y sin esto queda tapado por la segunda franja.
  */
 #mainHeader .header-top {
@@ -373,8 +350,8 @@ body.mdj-logged-in-header #mainHeader.header {
   z-index: 110;
 }
 
-/* Panel artista — #mainNav (después de Mi portal) */
-#mainHeader #mainNav.nav.top-nav a#mainNav-artist-dashboard-link.mdj-artist-dash-mainnav {
+/* Panel artista — #mainNav flex legacy (después de Mi portal). */
+#mainHeader #mainNav.nav.top-nav:not(.mdj-mainnav-flex) a#mainNav-staff-or-profile.mdj-artist-dash-mainnav {
   border: none !important;
   border-radius: 0 !important;
   background: none !important;
@@ -391,7 +368,7 @@ body.mdj-logged-in-header #mainHeader.header {
   min-width: max-content !important;
   font-size: clamp(12px, 0.95vw, 14px);
 }
-#mainHeader #mainNav.nav.top-nav a#mainNav-artist-dashboard-link.mdj-artist-dash-mainnav:hover {
+#mainHeader #mainNav.nav.top-nav:not(.mdj-mainnav-flex) a#mainNav-staff-or-profile.mdj-artist-dash-mainnav:hover {
   color: var(--gold) !important;
   text-shadow: 0 0 14px rgba(197, 160, 89, 0.35);
 }
@@ -405,7 +382,7 @@ body.mdj-logged-in-header #mainHeader.header {
   padding: 6px 0;
 }
 
-/* Matriz de estatus: Comprador / Talento / Dueño */
+/* Matriz de estatus: Comprador / Arte o Pro (plan) / Dueño (rol) */
 #mainHeader .header-tier-status-badge {
   align-items: center;
   max-width: min(200px, 28vw);
@@ -426,4 +403,15 @@ body.mdj-logged-in-header #mainHeader.header {
   #mainHeader .header-tier-status-badge {
     display: none !important;
   }
+}
+
+/* Cabecera unificada: sin transiciones en cuenta / portal / menú desplegable (misma sensación entre páginas). */
+#mainHeader.header.mdj-header-unified a#header-mi-portal-btn.mdj-mi-portal-navlink.mdj-mi-portal-gold,
+#mainHeader.header.mdj-header-unified .mdj-account-vip-trigger,
+#mainHeader.header.mdj-header-unified .mdj-account-vip-menuhit {
+  transition: none !important;
+}
+
+#mainHeader.header.mdj-header-unified .mdj-account-dropdown {
+  transition: none !important;
 }

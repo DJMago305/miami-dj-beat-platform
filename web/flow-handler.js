@@ -2,13 +2,166 @@
  * FLOW HANDLER - Miami DJ Beat Professional Analytics (Influencer Style)
  * Carga datos financieros / eventos y gráficas para la pestaña Cash Flow (dueño del perfil; LITE o PRO).
  * SoundForTips™: propinas aceptadas vía RPC get_my_soundfortips_accepted_for_flow → KPI Propinas + libro mayor + timeline.
+ *
+ * Salud artística (estrellas): no depende solo de reseñas públicas — mezcla valoración de clientes con señales del
+ * ecosistema en este rango (eventos completados/pendientes, movimiento en ledger —incluye ingresos que registres
+ * aunque no pasen por Stripe—, tips, comisiones por referidos/QR, residencia/venues). Contratos en cheque u “off
+ * platform” cuentan si el DJ los refleja en leads o en líneas del ledger.
  */
 
 let flowCharts = { timeline: null, activity: null, distribution: null };
 let currentLedger = [];
 let currentRange = '30d';
 
+/** Tras mostrar la pestaña Cash Flow o redimensionar ventana: Chart.js necesita `resize` si el canvas estuvo oculto. */
+function scheduleFlowChartsResize() {
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+            try {
+                if (flowCharts.timeline && typeof flowCharts.timeline.resize === 'function') {
+                    flowCharts.timeline.resize();
+                }
+                if (flowCharts.activity && typeof flowCharts.activity.resize === 'function') {
+                    flowCharts.activity.resize();
+                }
+                if (flowCharts.distribution && typeof flowCharts.distribution.resize === 'function') {
+                    flowCharts.distribution.resize();
+                }
+            } catch (e) { /* noop */ }
+        });
+    });
+}
+window.mdjFlowChartsResize = scheduleFlowChartsResize;
+
+(function mdjFlowResizeListener() {
+    if (window._mdjFlowResizeListener) return;
+    window._mdjFlowResizeListener = true;
+    var t;
+    window.addEventListener('resize', function () {
+        clearTimeout(t);
+        t = setTimeout(function () {
+            if (typeof window.mdjFlowChartsResize === 'function') {
+                window.mdjFlowChartsResize();
+            }
+        }, 200);
+    });
+})();
+
 /** Convierte filas SFT apertura tipo dj_ledger (bruto en amount_cents; comisión 10% en metadata). */
+/**
+ * Residencia / comunidad desde perfil (weekly_schedule + is_resident + venues).
+ * byWeekday[d] = nº de turnos marcados residente activos ese día (0–6 dom–sáb).
+ */
+function computeResidencyMetrics(profile) {
+    const byWeekday = [0, 0, 0, 0, 0, 0, 0];
+    if (!profile) {
+        return {
+            byWeekday,
+            residentDays: 0,
+            residentSlots: 0,
+            venueCount: 0,
+            isResidentFlag: false,
+            communityIndex: 0,
+        };
+    }
+    let residentDays = 0;
+    let residentSlots = 0;
+    const ws = profile.weekly_schedule;
+    if (ws && typeof ws === 'object') {
+        for (let d = 0; d < 7; d++) {
+            const slots = ws[String(d)] ?? ws[d];
+            if (!Array.isArray(slots)) continue;
+            let n = 0;
+            slots.forEach(function (s) {
+                if (s && s.enabled && s.is_resident) {
+                    n += 1;
+                    residentSlots += 1;
+                }
+            });
+            byWeekday[d] = n;
+            if (n > 0) residentDays += 1;
+        }
+    }
+    const isResidentFlag = !!profile.is_resident;
+    if (isResidentFlag && residentDays === 0) {
+        [4, 5, 6].forEach(function (d) {
+            byWeekday[d] = Math.max(byWeekday[d], 1);
+        });
+        residentDays = 3;
+        residentSlots += 3;
+    }
+    let venueCount = 0;
+    if (Array.isArray(profile.venues)) {
+        venueCount = profile.venues.length;
+    } else if (profile.venues && typeof profile.venues === 'object') {
+        venueCount = Object.keys(profile.venues).length;
+    }
+    const communityIndex = residentDays * 2 + residentSlots + venueCount + (isResidentFlag ? 2 : 0);
+    return {
+        byWeekday,
+        residentDays,
+        residentSlots,
+        venueCount,
+        isResidentFlag,
+        communityIndex,
+    };
+}
+
+/**
+ * Estrellas compuestas: reseñas (rating/review_count) + ecosistema operativo en el periodo.
+ * @returns {{ score: number, ecosystem: number, reviews: number, clientR: number }}
+ */
+function computeCompositeHealthScore(statsCurr, resM, profileRow, ledger, startDate) {
+    const rm = resM || computeResidencyMetrics(null);
+    const isCurrent = (date) => new Date(date) >= startDate;
+    let incomeLines = 0;
+    let payoutLines = 0;
+    (ledger || []).forEach(function (tx) {
+        if (!tx || !isCurrent(tx.created_at)) return;
+        if (tx.type === 'income') incomeLines += 1;
+        if (tx.type === 'payout' || tx.status === 'paid') payoutLines += 1;
+    });
+
+    const done = statsCurr.done || 0;
+    const pend = statsCurr.pending || 0;
+    const gross = statsCurr.gross || 0;
+    const tips = statsCurr.tips || 0;
+    const comm = statsCurr.commissions || 0;
+
+    const s_work = Math.min(1, done * 0.095 + pend * 0.032);
+    const s_ledger = Math.min(1, (incomeLines + payoutLines) * 0.075);
+    const s_money = Math.min(1, Math.log1p(Math.max(0, gross)) / Math.log1p(12000));
+    const s_tips = tips <= 0 ? 0 : Math.min(1, 0.18 + Math.min(0.82, tips / 420));
+    const s_refs = comm <= 0 ? 0 : Math.min(1, 0.22 + Math.min(0.78, comm / 220));
+    const s_res = Math.min(1, (rm.communityIndex || 0) / 22);
+
+    const ecosystem = (
+        0.24 * s_work +
+        0.18 * s_ledger +
+        0.16 * s_money +
+        0.14 * s_tips +
+        0.12 * s_refs +
+        0.16 * s_res
+    );
+
+    const reviews = profileRow && profileRow.review_count != null ? Math.max(0, Number(profileRow.review_count)) : 0;
+    const rawR = profileRow && profileRow.rating != null ? Number(profileRow.rating) : NaN;
+    const clientR = (Number.isFinite(rawR) && rawR >= 1 && rawR <= 5) ? rawR : 4.0;
+
+    const reviewWeight = Math.min(1, reviews / 7);
+    const activityStars = 3.05 + 1.9 * ecosystem;
+    let blended = reviewWeight * clientR + (1 - reviewWeight) * (0.4 * clientR + 0.6 * activityStars);
+    blended = Math.min(5, Math.max(2.75, blended));
+
+    if (done > 14 && blended < 4.05) blended = Math.max(blended, 4.02);
+    if ((rm.isResidentFlag || rm.venueCount > 0) && blended < 4.28) blended = Math.max(blended, 4.18);
+    if (incomeLines + payoutLines >= 6 && gross < 50 && done >= 3) {
+        blended = Math.max(blended, 3.95);
+    }
+
+    return { score: blended, ecosystem, reviews, clientR };
+}
+
 function soundfortipsAcceptedToLedgerRows(userId, rows) {
     if (!rows || !rows.length) return [];
     return rows.map(function (row) {
@@ -49,16 +202,7 @@ async function loadFlowData(range = '30d', targetUserId = null) {
     }
     const userId = sessionUid;
 
-    // 1. GET DJ PROFILE ID
-    const { data: profile } = await supabase
-        .from('dj_profiles')
-        .select('id, commission_rate')
-        .eq('user_id', userId)
-        .single();
-
-    if (!profile) return;
-
-    // 2. DEFINE DATE RANGES (Current vs Previous for trends)
+    // 1. DATE RANGES (antes del perfil: hace falta para rama “sin fila dj_profiles”)
     const now = new Date();
     let startDate = new Date();
     let prevStartDate = new Date();
@@ -68,9 +212,27 @@ async function loadFlowData(range = '30d', targetUserId = null) {
     else if (range === '90d') startDate.setDate(now.getDate() - 90);
     else if (range === '1y') startDate.setFullYear(now.getFullYear() - 1);
 
-    // Calculate previous period for trends (e.g., if 30d, compare with previous 30d)
     const periodDays = Math.ceil((now - startDate) / (1000 * 60 * 60 * 24));
     prevStartDate.setDate(startDate.getDate() - periodDays);
+
+    // 2. DJ PROFILE (maybeSingle: 0 filas ya no rompe todo el flujo)
+    const { data: profile } = await supabase
+        .from('dj_profiles')
+        .select('id, commission_rate, rating, review_count, is_resident, venues, weekly_schedule')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (!profile) {
+        currentLedger = [];
+        await processKPIs([], [], startDate, prevStartDate, 10, null);
+        const emptyRes = computeResidencyMetrics(null);
+        renderTimelineChart([], [], range, startDate, emptyRes);
+        renderActivityChart([], range, startDate, emptyRes);
+        renderDistributionChart([], [], range, startDate, emptyRes);
+        renderLedgerTable([]);
+        scheduleFlowChartsResize();
+        return;
+    }
 
     // 3. FETCH DATA (Ledger + Leads)
     // We fetch from prevStartDate to now to have trend data
@@ -110,19 +272,23 @@ async function loadFlowData(range = '30d', targetUserId = null) {
 
     currentLedger = ledger.filter(tx => new Date(tx.created_at) >= startDate);
 
+    const residencyMetrics = computeResidencyMetrics(profile);
+
     // 4. PROCESS KPIs
-    await processKPIs(ledger, leads, startDate, prevStartDate, profile.commission_rate, userId);
+    await processKPIs(ledger, leads, startDate, prevStartDate, profile.commission_rate, profile);
 
     // 5. RENDER CHARTS
-    renderTimelineChart(ledger, leads, range, startDate);
-    renderActivityChart(leads, range, startDate);
-    renderDistributionChart(ledger, leads, range, startDate);
+    renderTimelineChart(ledger, leads, range, startDate, residencyMetrics);
+    renderActivityChart(leads, range, startDate, residencyMetrics);
+    renderDistributionChart(ledger, leads, range, startDate, residencyMetrics);
 
     // 6. RENDER LEDGER TABLE
     renderLedgerTable(currentLedger);
+
+    scheduleFlowChartsResize();
 }
 
-async function processKPIs(ledger, leads, startDate, prevStartDate, commRate, sessionUid) {
+async function processKPIs(ledger, leads, startDate, prevStartDate, commRate, profileRow) {
     const isCurrent = (date) => new Date(date) >= startDate;
     const isPrevious = (date) => {
         const d = new Date(date);
@@ -211,37 +377,54 @@ async function processKPIs(ledger, leads, startDate, prevStartDate, commRate, se
     setKPI('kpi-tips', format(stats.curr.tips), 'trend-tips', stats.curr.tips, stats.prev.tips);
     setKPI('kpi-commissions', format(stats.curr.commissions), 'trend-commissions', stats.curr.commissions, stats.prev.commissions);
 
-    // Artistic Health (Ratings) - "Reputation Shield" Algorithm (Company Secret)
+    const resM = computeResidencyMetrics(profileRow);
+    const health = computeCompositeHealthScore(stats.curr, resM, profileRow, ledger, startDate);
+    if (document.getElementById('kpi-residency-days')) {
+        document.getElementById('kpi-residency-days').textContent = String(resM.residentDays);
+    }
+    if (document.getElementById('kpi-residency-slots')) {
+        document.getElementById('kpi-residency-slots').textContent = String(resM.residentSlots);
+    }
+    if (document.getElementById('kpi-residency-venues')) {
+        document.getElementById('kpi-residency-venues').textContent = String(resM.venueCount);
+    }
+    const tr = document.getElementById('trend-residency');
+    if (tr) {
+        tr.className = 'flow-card-trend';
+        tr.style.color = 'rgba(255,255,255,0.38)';
+        tr.innerHTML = resM.isResidentFlag
+            ? '<span>Perfil + agenda</span> · residente activo'
+            : '<span>Según agenda</span> · turnos marcados residente';
+    }
+
+    // Índice salud artística = reseñas + ecosistema (eventos, ledger, tips, refs, residencia)
     try {
-        const db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
-        if (db && sessionUid) {
-            const { data: profileRating } = await db
-                .from('dj_profiles')
-                .select('rating, review_count, is_resident, venues')
-                .eq('user_id', sessionUid)
-                .single();
-
-            if (profileRating) {
-                const ratEl = document.getElementById('kpi-rating');
-                const revEl = document.getElementById('kpi-review-count');
-
-                let officialRating = profileRating.rating || 5.0;
-                const eventsCount = stats.curr.done || 0;
-
-                // Secret Logic: If DJ has many successful events, a single low rating is dampened
-                // "Fairness multiplier"
-                if (eventsCount > 10 && officialRating < 4.5) {
-                    officialRating = Math.max(officialRating, 4.2); // Safety floor for veterans
-                }
-
-                // Residency Bonus: If working at a venue, maintain high artistic health
-                if (profileRating.is_resident || (profileRating.venues && profileRating.venues.length > 0)) {
-                    officialRating = Math.max(officialRating, 4.5);
-                }
-
-                if (ratEl) ratEl.textContent = `${officialRating.toFixed(1)} ★`;
-                if (revEl) revEl.textContent = profileRating.review_count || 0;
+        const ratEl = document.getElementById('kpi-rating');
+        const trendRt = document.getElementById('trend-rating');
+        if (profileRow) {
+            if (ratEl) ratEl.textContent = `${health.score.toFixed(1)} ★`;
+            if (trendRt) {
+                trendRt.className = 'flow-card-trend';
+                trendRt.style.cssText = 'color:rgba(255,255,255,0.38);font-size:11px;line-height:1.45;';
+                trendRt.innerHTML =
+                    '<span id="kpi-review-count">' + String(health.reviews) +
+                    '</span> reseñas · + eventos, ledger, tips, referidos, residencia (cheque/local si lo registras)';
             }
+        } else {
+            if (ratEl) ratEl.textContent = health.score >= 2.75 ? `${health.score.toFixed(1)} ★` : '—';
+            if (trendRt) {
+                trendRt.className = 'flow-card-trend';
+                trendRt.style.cssText = 'color:rgba(255,255,255,0.35);font-size:11px;line-height:1.45;';
+                trendRt.innerHTML =
+                    '<span id="kpi-review-count">0</span> reseñas · índice solo por actividad en este rango';
+            }
+        }
+        // Mismo índice en el hero del perfil (solo tú lo ves: _flowTabAllowed = dueño de esta página).
+        if (typeof window.mdjPaintProfileHeroStarsFromHealth === 'function' && window._flowTabAllowed) {
+            window.mdjPaintProfileHeroStarsFromHealth(health.score, {
+                reviewAvg: health.clientR,
+                reviewCount: health.reviews,
+            });
         }
     } catch (e) {
         /* omitir detalle en consola (datos personales / cumplimiento) */
@@ -252,9 +435,12 @@ async function processKPIs(ledger, leads, startDate, prevStartDate, commRate, se
     setKPI('kpi-avg-ticket', format(avgTicket), 'trend-avg', avgTicket, prevAvg);
 }
 
-function renderTimelineChart(ledger, leads, range, startDate) {
+function renderTimelineChart(ledger, leads, range, startDate, residencyMetrics) {
+    if (typeof Chart === 'undefined') return;
     const ctx = document.getElementById('chart-timeline')?.getContext('2d');
     if (!ctx) return;
+
+    const rm = residencyMetrics || computeResidencyMetrics(null);
 
     // Grouping by day
     const daysMap = {};
@@ -271,8 +457,13 @@ function renderTimelineChart(ledger, leads, range, startDate) {
         if (daysMap[d]) daysMap[d].income += tx.amount_cents / 100;
     });
 
-    leads.filter(ev => new Date(ev.assigned_at) >= startDate).forEach(ev => {
-        const d = new Date(ev.assigned_at).toISOString().split('T')[0];
+    leads.filter(ev => {
+        const ref = ev.assigned_at || ev.event_date;
+        if (!ref) return false;
+        return new Date(ref) >= startDate;
+    }).forEach(ev => {
+        const ref = ev.assigned_at || ev.event_date;
+        const d = new Date(ref).toISOString().split('T')[0];
         if (daysMap[d]) daysMap[d].new++;
     });
 
@@ -285,6 +476,13 @@ function renderTimelineChart(ledger, leads, range, startDate) {
     const incomeData = labels.map(l => daysMap[l].income);
     const newData = labels.map(l => daysMap[l].new);
     const doneData = labels.map(l => daysMap[l].done);
+
+    const residencySeries = labels.map(function (dStr) {
+        const dt = new Date(dStr + 'T12:00:00');
+        const w = dt.getDay();
+        const base = (rm.byWeekday[w] || 0) * 9;
+        return base + (rm.isResidentFlag ? 6 : 0);
+    });
 
     if (flowCharts.timeline) flowCharts.timeline.destroy();
 
@@ -316,6 +514,20 @@ function renderTimelineChart(ledger, leads, range, startDate) {
                     backgroundColor: 'rgba(0, 255, 136, 0.4)',
                     type: 'bar',
                     yAxisID: 'y1'
+                },
+                {
+                    label: 'Residencia · comunidad (perfil)',
+                    data: residencySeries,
+                    type: 'line',
+                    borderColor: 'rgba(168, 85, 247, 0.95)',
+                    backgroundColor: 'rgba(168, 85, 247, 0.06)',
+                    borderWidth: 2,
+                    borderDash: [6, 4],
+                    tension: 0.35,
+                    fill: false,
+                    yAxisID: 'y1',
+                    pointRadius: 0,
+                    order: 10
                 }
             ]
         },
@@ -325,7 +537,14 @@ function renderTimelineChart(ledger, leads, range, startDate) {
             interaction: { mode: 'index', intersect: false },
             scales: {
                 y: { type: 'linear', display: true, position: 'left', grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: 'rgba(255,255,255,0.4)' } },
-                y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#3b82f6', stepSize: 1 } },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    ticks: { color: '#94a3b8' },
+                    suggestedMin: 0
+                },
                 x: { ticks: { color: 'rgba(255,255,255,0.4)', maxRotation: 0 } }
             },
             plugins: {
@@ -335,17 +554,21 @@ function renderTimelineChart(ledger, leads, range, startDate) {
     });
 }
 
-function renderActivityChart(leads, range, startDate) {
+function renderActivityChart(leads, range, startDate, residencyMetrics) {
+    if (typeof Chart === 'undefined') return;
     const ctx = document.getElementById('chart-activity')?.getContext('2d');
     if (!ctx) return;
 
+    const rm = residencyMetrics || computeResidencyMetrics(null);
     const weekdayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
     const activity = [0, 0, 0, 0, 0, 0, 0];
 
-    leads.filter(ev => new Date(ev.event_date) >= startDate).forEach(ev => {
+    leads.filter(ev => ev.event_date && new Date(ev.event_date) >= startDate).forEach(ev => {
         const day = new Date(ev.event_date).getDay();
         activity[day]++;
     });
+
+    const resBars = rm.byWeekday.slice();
 
     if (flowCharts.activity) flowCharts.activity.destroy();
 
@@ -353,34 +576,52 @@ function renderActivityChart(leads, range, startDate) {
         type: 'bar',
         data: {
             labels: weekdayNames,
-            datasets: [{
-                label: 'Eventos por día',
-                data: activity,
-                backgroundColor: activity.map((v, i) => (i === 5 || i === 6) ? '#c5a059' : 'rgba(255,255,255,0.1)'),
-                borderRadius: 8
-            }]
+            datasets: [
+                {
+                    label: 'Eventos (día de evento)',
+                    data: activity,
+                    backgroundColor: activity.map((v, i) => (i === 5 || i === 6) ? '#c5a059' : 'rgba(255,255,255,0.12)'),
+                    borderRadius: 8
+                },
+                {
+                    label: 'Turnos residencia declarados',
+                    data: resBars,
+                    backgroundColor: 'rgba(168, 85, 247, 0.72)',
+                    borderRadius: 6
+                }
+            ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { stepSize: 1, color: 'rgba(255,255,255,0.4)' } },
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: 'rgba(255,255,255,0.4)' } },
                 x: { ticks: { color: '#fff' } }
             },
-            plugins: { legend: { display: false } }
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: { color: 'rgba(255,255,255,0.75)', font: { size: 10 }, boxWidth: 8 }
+                }
+            }
         }
     });
 }
 
-function renderDistributionChart(ledger, leads, range, startDate) {
+function renderDistributionChart(ledger, leads, range, startDate, residencyMetrics) {
+    if (typeof Chart === 'undefined') return;
     const ctx = document.getElementById('chart-distribution')?.getContext('2d');
     if (!ctx) return;
+
+    const rm = residencyMetrics || computeResidencyMetrics(null);
 
     const distribution = {
         'Privado': 0,
         'Corporativo': 0,
         'Festivales': 0,
-        'Otros': 0
+        'Otros': 0,
+        'Comunidad / residencia': Math.max(0, rm.communityIndex)
     };
 
     leads.filter(ev => ev.status === 'COMPLETED' && new Date(ev.event_date) >= startDate).forEach(ev => {
@@ -391,18 +632,45 @@ function renderDistributionChart(ledger, leads, range, startDate) {
         else distribution['Otros']++;
     });
 
-    const labels = Object.keys(distribution);
-    const data = labels.map(l => distribution[l]);
+    const labelOrder = ['Privado', 'Corporativo', 'Festivales', 'Otros', 'Comunidad / residencia'];
+    const colorOrder = ['#c5a059', '#3b82f6', '#a855f7', '#64748b', 'rgba(192, 132, 252, 0.92)'];
+    const filtered = labelOrder
+        .map(function (key, i) { return { key: key, val: distribution[key] || 0, color: colorOrder[i] }; })
+        .filter(function (row) { return row.val > 0; });
 
     if (flowCharts.distribution) flowCharts.distribution.destroy();
+
+    if (!filtered.length) {
+        flowCharts.distribution = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Sin datos en este rango'],
+                datasets: [{
+                    data: [1],
+                    backgroundColor: ['rgba(255,255,255,0.08)'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false }
+                }
+            }
+        });
+        return;
+    }
 
     flowCharts.distribution = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels,
+            labels: filtered.map(function (r) { return r.key; }),
             datasets: [{
-                data,
-                backgroundColor: ['#c5a059', '#3b82f6', '#a855f7', '#64748b'],
+                data: filtered.map(function (r) { return r.val; }),
+                backgroundColor: filtered.map(function (r) { return r.color; }),
                 borderWidth: 0,
                 hoverOffset: 15
             }]
@@ -441,7 +709,7 @@ function renderLedgerTable(ledger) {
                 <td style="font-weight:700; color:#fff;">${date}</td>
                 <td>
                     <div style="font-weight:700;">${tx.metadata?.event_name || tx.event_id || 'Servicio'}</div>
-                    <div style="font-size:10px; opacity:0.4;">${tx.type.toUpperCase()}</div>
+                    <div style="font-size:10px; opacity:0.4;">${String(tx.type || '').toUpperCase()}</div>
                 </td>
                 <td style="font-weight:700;">$${gross.toFixed(2)}</td>
                 <td style="color:#ff5555;">-$${comm.toFixed(2)} (${commRate}%)</td>
@@ -453,9 +721,13 @@ function renderLedgerTable(ledger) {
     }).join('');
 }
 
-function filterLedger(type) {
+function filterLedger(type, clickedEl) {
     document.querySelectorAll('.ledger-filter-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
+    var el = clickedEl;
+    if (!el && typeof window !== 'undefined' && window.event && window.event.target) {
+        el = window.event.target;
+    }
+    if (el && el.classList) el.classList.add('active');
 
     const filtered = type === 'all' ? currentLedger : currentLedger.filter(tx => tx.type === type);
     renderLedgerTable(filtered);
@@ -465,6 +737,39 @@ function filterLedger(type) {
 window.mdjFlowReloadIfAllowed = function (targetUserId) {
     if (!targetUserId || !window._flowTabAllowed || typeof loadFlowData !== 'function') return;
     loadFlowData(currentRange, targetUserId);
+};
+
+/** Ruta SVG estrella (24×24). */
+function mdjStarPathD() {
+    return 'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z';
+}
+
+/**
+ * Hero #pub-hero-rating: alinea estrellas con el índice MDJ (mismo que kpi-rating en Flujo de caja).
+ * Visitantes siguen viendo solo reseñas vía renderDynamicReviewsAndKPI; esto solo corre si _flowTabAllowed.
+ */
+window.mdjPaintProfileHeroStarsFromHealth = function (score, meta) {
+    const el = document.getElementById('pub-hero-rating');
+    if (!el) return;
+    const path = mdjStarPathD();
+    const blank = '<svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(255,255,255,0.2)" style="vertical-align:middle" aria-hidden="true"><path d="' + path + '"/></svg>';
+    const full = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;color:var(--gold)" aria-hidden="true"><path d="' + path + '"/></svg>';
+    const half = '<span style="display:inline-block;width:14px;height:14px;position:relative;vertical-align:middle" aria-hidden="true">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(255,255,255,0.2)" style="position:absolute;left:0;top:0"><path d="' + path + '"/></svg>' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="position:absolute;left:0;top:0;color:var(--gold);clip-path:inset(0 50% 0 0)"><path d="' + path + '"/></svg></span>';
+    const s = Math.min(5, Math.max(0, Number(score) || 0));
+    var parts = [];
+    for (var i = 1; i <= 5; i++) {
+        if (s >= i) parts.push(full);
+        else if (s >= i - 0.5) parts.push(half);
+        else parts.push(blank);
+    }
+    el.innerHTML = parts.join('');
+    el.classList.add('mdj-hero-rating--mdj-health');
+    var ra = meta && meta.reviewAvg != null && Number.isFinite(Number(meta.reviewAvg)) ? Number(meta.reviewAvg).toFixed(1) : '';
+    var rc = meta && meta.reviewCount != null ? String(meta.reviewCount) : '';
+    el.title = 'Índice MDJ (Flujo de caja / salud profesional): ' + s.toFixed(1) + ' ★' +
+        (ra !== '' ? ' — Promedio en reseñas públicas: ' + ra + ' ★' + (rc !== '' ? ' (' + rc + ' opiniones)' : '') : '');
 };
 
 // Global expose

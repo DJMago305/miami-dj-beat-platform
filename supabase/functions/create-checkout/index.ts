@@ -2,7 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 /**
- * Checkout MDJPRO (modo subscription).
+ * Checkout MDJPRO (modo subscription) — solo línea **artista / MDJ Pro** (public.dj_profiles).
+ * Línea comprador/portal: otra tabla (client_profiles) y otro flujo; no mezclar customers.
  * Secretos: STRIPE_SECRET_KEY, STRIPE_PRICE_MONTHLY, STRIPE_PRICE_ANNUAL,
  * STRIPE_PRICE_SEMESTRAL (opcional — Price cada 6 meses),
  * STRIPE_COUPON_ANNUAL / STRIPE_COUPON_SEMESTRAL (opcional — IDs de cupón promocional en Stripe para quien paga anual o semestral; se combinan con cupón de referido si existe),
@@ -175,6 +176,8 @@ serve(async (req) => {
                     email: user.email!,
                     name: profile?.full_name || user.email!,
                     "metadata[user_id]": user.id,
+                    "metadata[account_lane]": "artist",
+                    "metadata[mdj_product]": "mdj_artist_pro",
                 }),
             });
             const customer = await customerRes.json();
@@ -234,10 +237,12 @@ serve(async (req) => {
             success_url: successUrl,
             cancel_url: `${SITE_URL.replace(/\/$/, "")}/jobs.html?payment=cancelled`,
             "metadata[user_id]": user.id,
+            "metadata[product_line]": "mdj_artist_pro",
             "metadata[billing]": billing,
             "metadata[referral_code]": referralCode,
             "metadata[referrer_id]": referrerId || "",
             "subscription_data[metadata][user_id]": user.id,
+            "subscription_data[metadata][product_line]": "mdj_artist_pro",
             allow_promotion_codes: "true",
         };
 

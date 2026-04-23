@@ -7,6 +7,9 @@ CREATE TABLE IF NOT EXISTS client_profiles (
     full_name TEXT,
     email TEXT,
     phone TEXT,
+    notify_email_bookings BOOLEAN DEFAULT true,
+    notify_email_marketing BOOLEAN DEFAULT true,
+    notify_sms BOOLEAN DEFAULT true,
     city TEXT,
     source_ref TEXT, -- Stores Referral Code or 'QR' origin
     loyalty_points INTEGER DEFAULT 0,

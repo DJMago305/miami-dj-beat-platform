@@ -112,19 +112,19 @@ function mdjGuessPlatformLabel() {
 
 /**
  * Rol efectivo para redirecciones y UI.
- * Los hooks de Auth suelen fijar app_metadata.role = "client" para todos; el alta de talento va en user_metadata.user_type
- * y debe prevalecer sobre ese "client" por defecto (si no, post-login manda al portal de cliente).
- * Cuenta de usuario (user_type client) y cuenta artista son caminos distintos: si user_type === "client", no promover a talento.
+ * Los hooks de Auth pueden dejar app_metadata.role desalineado; el alta de talento vive en user_metadata.user_type
+ * y debe prevalecer ANTES que admin/manager/seller en JWT — si no, un DJ con JWT erróneo acaba en admin-dashboard.
+ * Cuenta cliente: user_type === "client" explícito.
  */
 function mdjResolveEffectiveUserRole(user) {
     if (!user) return 'client';
-    const appR = String(user.app_metadata?.role || '').toLowerCase();
-    if (appR === 'admin' || appR === 'manager' || appR === 'seller') return appR;
     const ut = String(user.user_metadata?.user_type || '').toLowerCase();
     if (ut === 'client') return 'client';
     if (ut === 'talent' || ut === 'dj' || ut === 'artist') {
         return ut === 'artist' ? 'artist' : 'talent';
     }
+    const appR = String(user.app_metadata?.role || '').toLowerCase();
+    if (appR === 'admin' || appR === 'manager' || appR === 'seller' || appR === 'owner') return appR;
     if (appR && appR !== 'client') return appR;
     if (ut && ut !== 'client') return ut;
     return appR || ut || 'client';
@@ -264,8 +264,15 @@ function mdjBuildPostAuthReturnUrlFromQuery(search, user) {
         const ut = user ? String(user.user_metadata?.user_type || '').toLowerCase() : '';
         const appR = user ? String(user.app_metadata?.role || '').toLowerCase() : '';
         const isArtistJwt = ut === 'talent' || ut === 'dj' || appR === 'artist';
-        /* Destinos de cliente prohibidos para JWT de artista (mezcla account-settings vs dashboard). */
-        if (isArtistJwt && (raw === 'client-portal' || raw === 'account-settings' || raw === 'account-profile')) {
+        /* Destinos de cliente / perfil / manager prohibidos para JWT de artista (no abrir admin con sesión de DJ). */
+        if (
+            isArtistJwt &&
+            (raw === 'client-portal' ||
+                raw === 'account-settings' ||
+                raw === 'account-profile' ||
+                raw === 'admin-dashboard' ||
+                raw === 'admin')
+        ) {
             return './dj-dashboard.html?tab=settings&from_auth=1';
         }
 
@@ -313,20 +320,41 @@ if (typeof window !== 'undefined') {
 }
 
 /**
- * Tras login o registro (o sesión ya guardada en login.html): mismo destino que role-guard en login.
- * Un solo intento de navegación (evita doble disparo signup + onAuthStateChange).
+ * Tras login o registro: una sola promesa en vuelo; las concurrentes reutilizan la misma.
+ * Resuelve `true` si se llamó a `location.assign`. Si falla antes, relanza — el `catch` del
+ * formulario o un `finally` re-habilitan el botón (el antiguo lock silencioso dejaba "Verificando…" para siempre).
  */
-async function mdjPerformPostAuthRedirect(db, user) {
-    if (!db || !user) return;
-    if (typeof window !== 'undefined' && window.__mdjPostAuthRedirectLock) return;
-    if (typeof window !== 'undefined') window.__mdjPostAuthRedirectLock = true;
-    try {
+let _mdjPostAuthRedirectPromise = null;
+
+function mdjPerformPostAuthRedirect(db, user) {
+    if (!db || !user) {
+        return Promise.resolve(false);
+    }
+    if (typeof window !== 'undefined' && _mdjPostAuthRedirectPromise) {
+        return _mdjPostAuthRedirectPromise;
+    }
+    const work = (async function mdjPostAuthRedirectBody() {
         const params = new URLSearchParams(window.location.search);
+        let djRow = null;
+        let clientRow = null;
+        try {
+            const r1 = await db.from('dj_profiles').select('role').eq('user_id', user.id).maybeSingle();
+            djRow = r1 && r1.data ? r1.data : null;
+        } catch (e1) {
+            console.warn('[AUTH] dj_profiles read:', e1);
+        }
+        try {
+            const r2 = await db.from('client_profiles').select('user_id').eq('user_id', user.id).maybeSingle();
+            clientRow = r2 && r2.data ? r2.data : null;
+        } catch (e2) { /* ignore */ }
+        const idn =
+            typeof window.mdjClassifyPlatformIdentity === 'function'
+                ? window.mdjClassifyPlatformIdentity({ user, djRow, clientRow })
+                : null;
         let rawRole = mdjResolveEffectiveUserRole(user);
         const utExplicit = String(user.user_metadata?.user_type || '').toLowerCase();
         if (rawRole === 'client' && db && utExplicit !== 'client') {
             try {
-                const { data: djRow } = await db.from('dj_profiles').select('role').eq('user_id', user.id).maybeSingle();
                 const r = djRow ? String(djRow.role || '').toLowerCase() : '';
                 if (djRow && r !== 'client') {
                     rawRole = 'talent';
@@ -336,15 +364,24 @@ async function mdjPerformPostAuthRedirect(db, user) {
             }
         }
         const role = rawRole === 'talent' || rawRole === 'dj' ? 'artist' : rawRole;
+        const dr0 = djRow && djRow.role != null ? String(djRow.role).toLowerCase().trim() : '';
+        /*
+         * Post-login: solo admin / manager / seller → back-office por defecto.
+         * `owner` (dueño MDJ) sigue con is_staff en RLS y ve el enlace Staff, pero aterriza en perfil de
+         * artista — evita mezclar "cuenta de DJ" con apertura automática del panel de manager.
+         */
+        const LANDING_STAFF_ROLES = ['admin', 'manager', 'seller'];
+        const isStaffForRedirect = idn
+            ? LANDING_STAFF_ROLES.indexOf(String(idn.dbRole || '').toLowerCase().trim()) >= 0
+            : LANDING_STAFF_ROLES.indexOf(dr0) >= 0;
 
         let targetUrl = './dj-profile.html';
-        if (role === 'admin' || role === 'manager' || role === 'seller') {
+        if (isStaffForRedirect) {
             targetUrl = './admin-dashboard.html';
         } else if (role === 'client') {
             targetUrl = './client-portal.html';
             try {
                 const utNav = String(user.user_metadata?.user_type || '').toLowerCase();
-                const { data: djRow } = await db.from('dj_profiles').select('role').eq('user_id', user.id).maybeSingle();
                 if (utNav !== 'client' && djRow && djRow.role !== 'client') {
                     targetUrl = './dj-profile.html?id=' + encodeURIComponent(user.id);
                 }
@@ -358,7 +395,7 @@ async function mdjPerformPostAuthRedirect(db, user) {
         const postAuthFromRedirect = mdjBuildPostAuthReturnUrlFromQuery(window.location.search, user);
         if (postAuthFromRedirect) {
             window.location.assign(postAuthFromRedirect);
-            return;
+            return true;
         }
 
         const nextRaw = (params.get('next') || '').trim();
@@ -369,19 +406,34 @@ async function mdjPerformPostAuthRedirect(db, user) {
                 rawRole === 'talent' ||
                 rawRole === 'dj' ||
                 rawRole === 'artist';
-            if (isArtistSession && /account-settings\.html|client-portal\.html/i.test(nextUrl)) {
+            if (
+                isArtistSession &&
+                /account-settings\.html|client-portal\.html|admin-dashboard\.html|\/admin-dashboard/i.test(nextUrl)
+            ) {
                 window.location.assign('./dj-dashboard.html?tab=settings');
-                return;
+                return true;
             }
             window.location.assign(nextUrl);
-            return;
+            return true;
         }
 
         window.location.assign(targetUrl);
-    } catch (e) {
-        console.warn('[AUTH] mdjPerformPostAuthRedirect:', e);
-        if (typeof window !== 'undefined') window.__mdjPostAuthRedirectLock = false;
+        return true;
+    })();
+
+    if (typeof window === 'undefined') {
+        return work;
     }
+    const out = work
+        .catch(function (e) {
+            console.warn('[AUTH] mdjPerformPostAuthRedirect:', e);
+            throw e;
+        })
+        .finally(function () {
+            _mdjPostAuthRedirectPromise = null;
+        });
+    _mdjPostAuthRedirectPromise = out;
+    return out;
 }
 
 if (typeof window !== 'undefined') {
@@ -640,6 +692,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clearError();
             const btn = loginForm.querySelector('button[type="submit"]');
             if (btn) { btn.disabled = true; btn.textContent = mdjAuthPageBtnT('auth-login-btn-verifying', 'Verifying…'); }
+            var didStartNavigation = false;
 
             try {
                 const db = await waitForSupabase();
@@ -655,7 +708,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         ),
                         { tone: 'error' }
                     );
-                    if (btn) { btn.disabled = false; btn.textContent = mdjAuthPageBtnT('login-btn-submit', 'Login'); }
                     return;
                 }
                 if (!password) {
@@ -667,7 +719,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         ),
                         { tone: 'error' }
                     );
-                    if (btn) { btn.disabled = false; btn.textContent = mdjAuthPageBtnT('login-btn-submit', 'Login'); }
                     return;
                 }
 
@@ -716,7 +767,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 } catch (devErr) {
                     console.warn('[AUTH] device routine after login:', devErr);
                 }
-                await performPostAuthRedirect(db, user);
+                try {
+                    var lpw = document.getElementById('login-password');
+                    if (lpw) {
+                        lpw.value = '';
+                        lpw.setAttribute('type', 'password');
+                    }
+                } catch (eClr) {
+                    void eClr;
+                }
+                const navOk = await performPostAuthRedirect(db, user);
+                if (navOk) didStartNavigation = true;
 
             } catch (err) {
                 if (mdjIsInvalidCredentialsError(err)) {
@@ -731,7 +792,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     showError(err.message || 'Error al iniciar sesión.');
                 }
-                if (btn) { btn.disabled = false; btn.textContent = mdjAuthPageBtnT('login-btn-submit', 'Login'); }
+            } finally {
+                if (btn && !didStartNavigation) {
+                    btn.disabled = false;
+                    btn.textContent = mdjAuthPageBtnT('login-btn-submit', 'Login');
+                }
             }
         });
     }
@@ -757,7 +822,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const email = document.getElementById('signup-email')?.value.trim() || '';
                 const password = document.getElementById('signup-password')?.value || '';
                 const confirmPassword = document.getElementById('signup-password-confirm')?.value || '';
-                const phone = document.getElementById('signup-phone')?.value.trim() || '';
+                const phoneRaw = document.getElementById('signup-phone')?.value.trim() || '';
+                const phoneDigits =
+                    typeof window.mdjNANPDigitsFromTel === 'function'
+                        ? window.mdjNANPDigitsFromTel(phoneRaw)
+                        : String(phoneRaw).replace(/\D/g, '').replace(/^1(\d{10})$/, '$1').slice(0, 10);
+                const phone = phoneRaw;
                 const addrStreet = document.getElementById('signup-address-line1')?.value.trim() || '';
                 const addrApt = document.getElementById('signup-address-line2')?.value.trim() || '';
                 const addrCity = document.getElementById('signup-address-city')?.value.trim() || '';
@@ -853,7 +923,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     );
                 }
 
-                if (resolvedUserType === 'talent' && !phone) {
+                if (resolvedUserType === 'talent' && phoneDigits.length < 10) {
                     throw new Error(
                         mdjAuthT(
                             'auth-signup-phone-required-talent',
@@ -1008,7 +1078,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     sessionStorage.setItem('mdj_vip_welcome_pending', '1');
                 } catch (e) { /* ignore */ }
                 setTimeout(function () {
-                    void performPostAuthRedirect(db, userForRedirect);
+                    performPostAuthRedirect(db, userForRedirect).catch(function (e) {
+                        void e;
+                    });
                 }, 150);
 
             } catch (err) {
@@ -1129,19 +1201,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 }
 
-                // ── Inyección Staff (admin / manager / seller) ──
-                const role = mdjResolveEffectiveUserRole(session.user);
-                if (role === 'admin' || role === 'manager' || role === 'seller' || role === 'MANAGER') {
-                    const topNav = document.getElementById('mainNav');
-                    if (topNav && !document.getElementById('manager-link')) {
-                        const mngr = document.createElement('a');
-                        mngr.id = 'manager-link';
-                        mngr.href = './admin-dashboard.html';
-                        mngr.textContent = role === 'seller' ? 'Sales' : 'Staff';
-                        mngr.style.cssText = 'color:var(--admin-accent,#00ff88);font-weight:900;border:1px solid var(--admin-accent,#00ff88);padding:4px 10px;border-radius:12px;margin-left:10px;';
-                        topNav.appendChild(mngr);
-                    }
-                }
+                /* STAFF / admin hub: #mainNav-staff-or-profile (Staff | Mi perfil) + mdj-shared-header.js. */
+                try {
+                    const legacyMngr = document.getElementById('manager-link');
+                    if (legacyMngr) legacyMngr.remove();
+                } catch (eMn) { /* ignore */ }
 
             } else {
                 if (!headerDelegated) {

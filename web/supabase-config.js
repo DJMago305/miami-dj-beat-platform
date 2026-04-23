@@ -3,6 +3,7 @@
 // Un solo origen de proyecto → Storage y Edge Functions se derivan de MDB_SUPABASE_URL.
 
 (function mdjSupabaseEnv() {
+    /* Project ref: …kxvqdr — debe coincidir con Supabase Dashboard → Settings → API (no confundir con …kvxqdr). */
     var B = "https://hkuvuqupbxwkiykxvqdr.supabase.co".replace(/\/$/, "");
     window.MDB_SUPABASE_URL = B;
     window.MDB_SUPABASE_ANON_KEY = "sb_publishable_IMhi16lHj2dAk51AdUOK8w_U7s89-Ff";

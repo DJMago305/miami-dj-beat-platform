@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="./header-unified.css?v=20260421-nav-z120" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
     <!-- Idioma: mismos scripts que el resto del sitio (sin esto, ES/EN no reciben listeners). -->
-    <script src="./translations.js?v=20260422-post-sql-staff-roles"></script>
+    <script src="./translations.js?v=20260422-admin-staff-lock-db"></script>
     <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
     <style>
         :root {
@@ -958,7 +958,7 @@
         </footer>
 
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <script src="./supabase-config.js?v=20260421-storage-reels-fix"></script>
+        <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
         <script src="./subscription.js?v=20260422-find-dj-rank"></script>
         <script src="./invoice-print-bridge.js?v=20260420"></script>
         <script src="./js/production-templates.js?v=20260422-lang-blocks"></script>
@@ -986,26 +986,43 @@
                     .from('dj_profiles')
                     .select('role')
                     .eq('user_id', session.user.id)
-                    .single();
+                    .maybeSingle();
 
                 const roleNorm = String(profile && profile.role ? profile.role : '').toLowerCase().trim();
-                const jwtRole = String(
-                    (session.user.app_metadata && session.user.app_metadata.role) ||
-                        (session.user.user_metadata && session.user.user_metadata.user_type) ||
-                        ''
-                ).toLowerCase();
-                const isStaffPortal =
-                    ['admin', 'manager', 'seller'].includes(roleNorm) ||
-                    ['admin', 'manager', 'seller'].includes(jwtRole);
+                /** Solo fila dj_profiles — nunca JWT solo: evita que metadata Auth errónea abra el panel a un DJ. */
+                const STAFF_DJ_ROLES = ['admin', 'owner', 'manager', 'seller'];
+                const isStaffPortal = !!(profile && !profileError) && STAFF_DJ_ROLES.includes(roleNorm);
 
-                if (profileError || !isStaffPortal) {
+                if (!isStaffPortal) {
+                    const ut = String(session.user?.user_metadata?.user_type || '').toLowerCase();
+                    /* Artista / talento: esta URL es solo back-office staff — llevar al panel correcto (⚙ CONFIG). */
+                    if (profile && !profileError) {
+                        if (roleNorm === 'client' || roleNorm === 'cliente') {
+                            window.location.replace('./client-portal.html');
+                            return;
+                        }
+                        if (!STAFF_DJ_ROLES.includes(roleNorm)) {
+                            window.location.replace('./dj-dashboard.html?tab=settings');
+                            return;
+                        }
+                    }
+                    if (!profile && !profileError && (ut === 'talent' || ut === 'dj' || ut === 'artist')) {
+                        window.location.replace('./dj-dashboard.html?tab=settings');
+                        return;
+                    }
+                    if (!profile && !profileError && ut === 'client') {
+                        window.location.replace('./client-portal.html');
+                        return;
+                    }
                     console.error("Unauthorized access attempt blocked.");
                     document.body.innerHTML = `
                     <div style="height: 100vh; display: flex; align-items: center; justify-content: center; background: #000; color: #ff3333; text-align: center; font-family: sans-serif;">
                         <div>
                             <h1>⛔ ACCESO DENEGADO</h1>
                             <p>No tienes permisos de staff (admin, manager o vendedor) para ver esta área.</p>
-                            <a href="./index.html" style="color: #fff;">Volver al Inicio</a>
+                            <p style="color:rgba(255,255,255,0.55);font-size:14px;max-width:42ch;">Si buscas la configuración de tu cuenta de artista, está en el <strong style="color:#fff;">panel DJ</strong> (Agenda / CONFIG), no aquí.</p>
+                            <p style="margin-top:18px;"><a href="./dj-dashboard.html?tab=settings" style="color: var(--gold, #c5a059); font-weight: 800;">Ir a CONFIG del artista →</a></p>
+                            <p style="margin-top:10px;"><a href="./index.html" style="color: #fff;">Volver al Inicio</a></p>
                         </div>
                     </div>
                 `;
@@ -1757,15 +1774,10 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     else { alert('✅ Foto aprobada.'); loadAdminData(); }
                 }
 
-                /** Rol UI desde dj_profiles + JWT — sin hacks de email (seller oficial en BD). */
+                /** Rol UI solo desde dj_profiles.role (misma regla que el lock de seguridad). */
                 function applyStaffDashboardRole(profile, session) {
                     const rn = String(profile && profile.role ? profile.role : '').toLowerCase().trim();
-                    const jwtR = String(
-                        (session.user.app_metadata && session.user.app_metadata.role) ||
-                            (session.user.user_metadata && session.user.user_metadata.user_type) ||
-                            ''
-                    ).toLowerCase();
-                    if (rn === 'seller' || jwtR === 'seller') {
+                    if (rn === 'seller') {
                         window.userRole = 'SALES_STAFF';
                     } else {
                         window.userRole = 'SUPER_ADMIN';
@@ -2204,7 +2216,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
     <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
     <script src="./mdj-shared-header.js?v=20260422-owner-not-client-pill"></script>
-  <script src="./mdj-social-bar.js?v=20260422-sidebar-off"></script>
+  <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
 </body>
 
 </html>
