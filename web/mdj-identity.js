@@ -47,9 +47,17 @@
     var managementInDb = !!dr && MANAGEMENT[dr] === 1;
     var navStaffSolo = dr === 'seller';
     var principal;
+    /* Orden: staff en DB; luego comprador SOLO por columna role en dj_profiles; luego cualquier otro dr = artista.
+       No dejar que user_type client en JWT pise a un dj_profiles con rol de artista (p. ej. dj) — “sancocho” típico. */
     if (staffInDb) {
       principal = 'staff';
-    } else if (isExplicitClient || dr === 'client' || (appR === 'client' && !dr)) {
+    } else if (dr === 'client' || dr === 'cliente') {
+      principal = 'buyer';
+    } else if (dr) {
+      principal = 'performer';
+    } else if (isExplicitClient || (appR === 'client' && !dr)) {
+      principal = 'buyer';
+    } else if (hasClientRow) {
       principal = 'buyer';
     } else {
       principal = 'performer';

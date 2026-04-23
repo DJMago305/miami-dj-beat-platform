@@ -1,0 +1,50 @@
+# Auditoría RLS/negocio: informe o fast probe (psql a Postgres, no a la API REST).
+# 1) Añade el secret DIRECT_URL o SUPABASE_DB_URL (connection string pooler o directo, solo lectura).
+# 2) Descomenta "if: false" en el job o activa por workflow_dispatch.
+# 3) Ajusta el criterio de fallo: por defecto falla si n_fast_total > 0.
+name: RLS baseline audit (optional)
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 9 * * 1" # lunes 09:00 UTC
+  # push:  # descomentar si quieres en cada push a main
+  #   branches: [ main ]
+
+jobs:
+  audit:
+    if: false # poner a true o ${{ secrets.SUPABASE_DB_URL != '' }} cuando tengas el secret
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install psql
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Run fast probe (n_fast_total)
+        env:
+          # Preferir un secret: SUPABASE_DB_URL (pooler) o DIRECT_URL
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+        run: |
+          export DATABASE_URL="${SUPABASE_DB_URL:-$DIRECT_URL}"
+          if [ -z "$DATABASE_URL" ]; then
+            echo "Define el secret SUPABASE_DB_URL o DIRECT_URL (Postgres, no la URL REST)" >&2
+            exit 1
+          fi
+          LINE=$(psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -A -F'|' -t -f supabase/scripts/audit_security_baseline_fast_probe.sql)
+          echo "probe_row=$LINE"
+          IFS='|' read -r a b c d total <<EOF
+$LINE
+EOF
+          if [ -z "$total" ]; then
+            echo "No se pudo leer n_fast_total" >&2
+            exit 1
+          fi
+          if [ "$total" -gt 0 ]; then
+            echo "Fallo: n_fast_total=$total. Informe detallado: supabase/scripts/audit_security_baseline.sql" >&2
+            exit 1
+          fi
+          echo "OK: n_fast_total=0"

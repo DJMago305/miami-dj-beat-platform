@@ -72,9 +72,29 @@ const i18n = {
 
     setupSwitchers() {
         document.querySelectorAll('.lang-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.setLanguage(btn.getAttribute('data-lang'));
+            if (btn.getAttribute('data-mdj-lang-bound') === '1') return;
+            btn.setAttribute('data-mdj-lang-bound', '1');
+            btn.setAttribute('role', 'button');
+            btn.setAttribute('tabindex', '0');
+            const activate = (e) => {
+                if (e) e.preventDefault();
+                const lang = btn.getAttribute('data-lang');
+                if (!lang) return;
+                const pill = btn.closest('.lang-switcher');
+                if (pill) {
+                    pill.classList.remove('mdj-lang-pop');
+                    void pill.offsetWidth;
+                    pill.classList.add('mdj-lang-pop');
+                    window.setTimeout(() => pill.classList.remove('mdj-lang-pop'), 480);
+                }
+                this.setLanguage(lang);
+            };
+            btn.addEventListener('click', activate);
+            btn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    activate(e);
+                }
             });
         });
     }

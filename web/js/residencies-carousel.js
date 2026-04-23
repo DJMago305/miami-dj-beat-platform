@@ -138,14 +138,19 @@
 
   function updateNav() {
     var max = maxScroll();
-    prevBtn.disabled = false;
-    nextBtn.disabled = false;
+    prevBtn.removeAttribute('hidden');
+    nextBtn.removeAttribute('hidden');
     if (max <= EDGE) {
-      prevBtn.setAttribute('hidden', '');
-      nextBtn.setAttribute('hidden', '');
+      /* Flechas visibles como pista de carrusel (antes `hidden` las quitaba en pantallas anchas). */
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
+      prevBtn.style.opacity = '0.42';
+      nextBtn.style.opacity = '0.42';
     } else {
-      prevBtn.removeAttribute('hidden');
-      nextBtn.removeAttribute('hidden');
+      prevBtn.disabled = false;
+      nextBtn.disabled = false;
+      prevBtn.style.opacity = '';
+      nextBtn.style.opacity = '';
     }
   }
 

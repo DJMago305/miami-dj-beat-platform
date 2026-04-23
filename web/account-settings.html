@@ -6,8 +6,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Account Settings — Miami DJ Beat</title>
   <meta name="description" content="Manage your account settings and preferences." />
-  <link rel="stylesheet" href="./styles.css?v=20260422-nav-unified72" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260421-nav-z120" />
+  <link rel="stylesheet" href="./styles.css?v=20260430-float-nav-1" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260422-wordmark-scale" />
   <link rel="stylesheet" href="./mdj-outlined-fields.css?v=20260421-account-forms" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
@@ -277,8 +277,8 @@
 
 
     .system-avatar {
-      width: 64px;
-      height: 64px;
+      width: 126px;
+      height: 126px;
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.1);
       display: flex;
@@ -683,7 +683,7 @@
 <body class="notranslate mdj-account-settings">
   <!-- CABECERA ESTÁNDAR GLOBAL -->
   <!-- MDJ canonical site header — keep in sync with index #mainHeader; use ./index.html# anchors for subpages -->
-<header class="header" id="mainHeader">
+<header class="header mdj-header-unified" id="mainHeader">
   <div class="header-top">
     <div class="container">
       <div class="brand">
@@ -747,16 +747,19 @@
       </div>
     </div>
   </div>
-  <div class="header-bottom">
+  <div class="header-nav">
     <div class="container">
-      <nav class="nav top-nav" id="mainNav">
+      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav">
         <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
         <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
         <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
         <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-mdj-nav="shop">Shop</a>
         <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+        <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
         <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
         <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
+        <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" aria-hidden="true" tabindex="-1">MY PORTAL</a>
+        <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
       </nav>
     </div>
   </div>
@@ -804,30 +807,39 @@
           <p id="avatar-upload-feedback" class="fineprint" style="display:none;margin-top:10px;max-width:340px;line-height:1.45;color:rgba(255,200,200,0.95);" role="status" aria-live="polite"></p>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label>Full Name</label>
-            <input type="text" class="sys-input" id="input-fname" placeholder="Your full name" />
+        <div class="form-row mdj-signup-row--3">
+          <div class="mdj-field-outlined">
+            <input type="text" id="input-name-first" autocomplete="given-name" maxlength="80" placeholder=" " />
+            <label for="input-name-first" class="mdj-field-outlined__label">First name</label>
           </div>
-          <div class="form-group">
-            <label data-i18n="account-username-label">Nombre de usuario / Username</label>
-            <input type="text" class="sys-input" id="input-username" placeholder="@YourHandle" maxlength="32"
-              autocomplete="nickname" spellcheck="false" />
-            <p class="fineprint" style="margin-top:6px;font-size:11px;opacity:0.55;line-height:1.4;" data-i18n="account-username-hint">
-              Shown next to your avatar in the header. Your legal name stays off the bar until you leave this empty—then we show your short name.
-            </p>
+          <div class="mdj-field-outlined">
+            <input type="text" id="input-name-middle" autocomplete="additional-name" maxlength="40" placeholder=" " />
+            <label for="input-name-middle" class="mdj-field-outlined__label">Middle name <span
+                style="font-weight:500;opacity:0.72">(optional)</span></label>
+          </div>
+          <div class="mdj-field-outlined">
+            <input type="text" id="input-name-last" autocomplete="family-name" maxlength="120" placeholder=" " />
+            <label for="input-name-last" class="mdj-field-outlined__label">Last name</label>
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label>Email Address</label>
-            <input type="email" class="sys-input" id="input-email" disabled placeholder="Loading..."
-              title="Email cannot be changed here." />
+        <div class="form-group">
+          <label data-i18n="account-username-label">Nombre de usuario / Username</label>
+          <input type="text" class="sys-input" id="input-username" placeholder="@YourHandle" maxlength="32"
+            autocomplete="nickname" spellcheck="false" />
+          <p class="fineprint" style="margin-top:6px;font-size:11px;opacity:0.55;line-height:1.4;" data-i18n="account-username-hint">
+            Shown next to your avatar in the header. Your legal name stays off the bar until you leave this empty—then we show your short name.
+          </p>
+        </div>
+
+        <div class="form-row mdj-signup-row--2">
+          <div class="mdj-field-outlined">
+            <input type="email" id="input-email" disabled placeholder=" " title="Email cannot be changed here." />
+            <label for="input-email" class="mdj-field-outlined__label">Email Address</label>
           </div>
-          <div class="form-group">
-            <label>Phone Number</label>
-            <input type="tel" class="sys-input" id="input-phone" placeholder="+1 (555) 000-0000" />
+          <div class="mdj-field-outlined">
+            <input type="tel" id="input-phone" autocomplete="tel" placeholder=" " />
+            <label for="input-phone" class="mdj-field-outlined__label">Phone Number</label>
           </div>
         </div>
 
@@ -868,8 +880,7 @@
           </div>
           <div class="form-group">
             <label for="select-country">Country</label>
-            <input type="text" class="sys-input sys-select-gold" id="input-country-filter" placeholder="Filter…" autocomplete="off" spellcheck="false" aria-label="Filter countries" />
-            <select id="select-country" class="sys-input sys-select-gold" style="margin-top:10px;" aria-label="Country"></select>
+            <select id="select-country" class="sys-input sys-select-gold" aria-label="Country"></select>
           </div>
         </div>
       </div>
@@ -1010,7 +1021,7 @@
             d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
           </path>
         </svg>
-        <h3>Preferences</h3>
+        <h3 data-i18n="account-preferences-title">Preferences</h3>
       </div>
 
       <div class="system-card-body">
@@ -1027,22 +1038,33 @@
 
         <div class="toggle-row">
           <div class="toggle-label">
-            <span>Email Notifications</span>
-            <p>Receive alerts about your bookings and account activity.</p>
+            <span id="pref-notify-email-title" data-i18n="account-pref-email-title">Email notifications</span>
+            <p data-i18n="account-pref-email-desc">Receive alerts about your bookings and account activity.</p>
           </div>
           <label class="apple-switch">
-            <input type="checkbox" checked>
+            <input type="checkbox" id="pref-notify-email" checked aria-labelledby="pref-notify-email-title" />
             <span class="slider"></span>
           </label>
         </div>
 
         <div class="toggle-row">
           <div class="toggle-label">
-            <span>Marketing Updates</span>
-            <p>Occasional news on platform updates and premium event services.</p>
+            <span id="pref-notify-marketing-title" data-i18n="account-pref-marketing-title">Marketing updates</span>
+            <p data-i18n="account-pref-marketing-desc">Occasional news on platform updates and premium event services.</p>
           </div>
           <label class="apple-switch">
-            <input type="checkbox">
+            <input type="checkbox" id="pref-notify-marketing" checked aria-labelledby="pref-notify-marketing-title" />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <div class="toggle-label">
+            <span id="pref-notify-sms-title" data-i18n="account-pref-sms-title">Text messages (SMS)</span>
+            <p data-i18n="account-pref-sms-desc">When supported, important SMS alerts to your profile phone number.</p>
+          </div>
+          <label class="apple-switch">
+            <input type="checkbox" id="pref-notify-sms" checked aria-labelledby="pref-notify-sms-title" />
             <span class="slider"></span>
           </label>
         </div>
@@ -1053,12 +1075,14 @@
   </main>
 
   <!-- AUTH LOGIC & COMPATIBILITY -->
-  <script src="./auth.js?v=20260422-login-session-redirect"></script>
-  <script src="./translations.js?v=20260420-section-h2-eventos-venues"></script>
+  <script src="./js/mdj-account-forms.js?v=20260421-account-forms"></script>
+  <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+  <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
+  <script src="./translations.js?v=20260422-nav-labels-1"></script>
   <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
   <script src="./account-billing.js?v=20260415-CORE-CONNECTIONS"></script>
   <script src="./account-address-data.js?v=20260429"></script>
-  <script src="./account-address-selectors.js?v=20260422-country-save"></script>
+  <script src="./account-address-selectors.js?v=20260422-country-select-only"></script>
   <script>
     function mdjNormalizeUsernameForStorage(s) {
       if (s == null || typeof s !== 'string') return null;
@@ -1106,23 +1130,32 @@
           const meta = session.user.user_metadata || {};
 
           // --- Controladores Aislados de Roles (Fase 1: Preparación) ---
-          window.handleClientSettingsSubmit = async (uid, data, dbInstance) => {
-            var email = null;
-            var metaFromAuth = {};
-            try {
-              var gu = await dbInstance.auth.getUser();
-              if (gu && gu.data && gu.data.user) {
-                email = gu.data.user.email || null;
-                metaFromAuth = gu.data.user.user_metadata || {};
-              }
-            } catch (ge) { /* non-fatal */ }
+          /**
+           * @param {string} uid
+           * @param {object} data
+           * @param {object} dbInstance
+           * @param {{ email?: string|null, jwtMeta?: object }} [ctx] — si viene email+jwtMeta del Save, evita auth.getUser() (ahorra 1 RTT lento).
+           */
+          window.handleClientSettingsSubmit = async (uid, data, dbInstance, ctx) => {
+            ctx = ctx || {};
+            var email = ctx.email != null ? ctx.email : null;
+            var metaFromAuth = ctx.jwtMeta && typeof ctx.jwtMeta === 'object' ? ctx.jwtMeta : {};
+            if (email == null || String(email).trim() === '') {
+              try {
+                var gu = await dbInstance.auth.getUser();
+                if (gu && gu.data && gu.data.user) {
+                  email = gu.data.user.email || null;
+                  metaFromAuth = gu.data.user.user_metadata || {};
+                }
+              } catch (ge) { /* non-fatal */ }
+            }
             var existing = null;
             try {
               var er = await dbInstance.from('client_profiles').select('*').eq('user_id', uid).maybeSingle();
               existing = er && er.data ? er.data : null;
             } catch (re) { /* non-fatal */ }
             var avatarFromJwt =
-              (metaFromAuth.avatar_url || metaFromAuth.picture || (data && data.avatar_url) || '').trim();
+              ((data && data.avatar_url) || metaFromAuth.avatar_url || metaFromAuth.picture || '').trim();
             var stableAvatar = avatarFromJwt ? avatarFromJwt.split('?')[0] : '';
 
             var row = Object.assign({}, existing || {}, {
@@ -1139,7 +1172,10 @@
               address_apt: data.address_apt || null,
               address_state: data.address_state || null,
               address_zip: data.address_zip || null,
-              address_country: data.address_country || null
+              address_country: data.address_country || null,
+              notify_email_bookings: !(data.notify_email_bookings === false),
+              notify_email_marketing: !(data.notify_email_marketing === false),
+              notify_sms: !(data.notify_sms === false)
             });
             if (data.language_preference === 'es' || data.language_preference === 'en') {
               row.language_preference = data.language_preference;
@@ -1150,8 +1186,47 @@
               row.avatar_url = stableAvatar;
               row.photo_url = stableAvatar;
             }
-            const { error: clientErr } = await dbInstance.from('client_profiles')
-              .upsert(row, { onConflict: 'user_id' });
+
+            function mdjClientProfilesAddressError(err) {
+              var m = String((err && (err.message || err.error_description || err.hint)) || '');
+              return /address_|schema cache|column.*client_profiles|Could not find the/i.test(m);
+            }
+
+            var clientRes = await dbInstance.from('client_profiles').upsert(row, { onConflict: 'user_id' });
+            var clientErr = clientRes.error;
+            /* DB antigua sin address_apt: fusionar apt en calle y reintentar. */
+            if (clientErr && mdjClientProfilesAddressError(clientErr) && row.address_apt) {
+              var rowNoApt = Object.assign({}, row);
+              delete rowNoApt.address_apt;
+              var ap = String(data.address_apt || '').trim();
+              var st0 = String(rowNoApt.address_street || '').trim();
+              if (ap) rowNoApt.address_street = st0 ? st0 + ', ' + ap : ap;
+              var r2 = await dbInstance.from('client_profiles').upsert(rowNoApt, { onConflict: 'user_id' });
+              clientErr = r2.error;
+            }
+            /* Sin columnas de dirección en client_profiles: perfil mínimo; la dirección completa sigue en auth user_metadata. */
+            if (clientErr && mdjClientProfilesAddressError(clientErr)) {
+              var rowMin = {
+                user_id: uid,
+                full_name: row.full_name,
+                username: row.username,
+                phone: row.phone,
+                email: row.email,
+                city: row.city
+              };
+              if (row.language_preference === 'es' || row.language_preference === 'en') {
+                rowMin.language_preference = row.language_preference;
+              }
+              if (row.avatar_url) {
+                rowMin.avatar_url = row.avatar_url;
+                rowMin.photo_url = row.photo_url;
+              }
+              rowMin.notify_email_bookings = row.notify_email_bookings;
+              rowMin.notify_email_marketing = row.notify_email_marketing;
+              rowMin.notify_sms = row.notify_sms;
+              var r3 = await dbInstance.from('client_profiles').upsert(rowMin, { onConflict: 'user_id' });
+              clientErr = r3.error;
+            }
             if (clientErr) {
               console.error('[MDJ-SYSTEM] client_profiles upsert FAILED', clientErr.code || '', clientErr.message, clientErr);
               throw clientErr;
@@ -1183,52 +1258,69 @@
             cp = cpRes && cpRes.data ? cpRes.data : null;
           } catch (cpErr) { /* non-fatal */ }
 
-          /* Registro: JWT usa addr_city; tabla usa city — DB gana si tiene valor */
+          /* Dirección / perfil: con fila client_profiles, solo la DB (no mezclar OAuth/JWT encima). Sin fila, fallback a user_metadata (registro nuevo). */
           var metaCity =
             (meta.address_city && String(meta.address_city).trim()) ||
             (meta.addr_city && String(meta.addr_city).trim()) ||
             '';
-          var addrMerged = {
-            address_street: meta.address_street || '',
-            address_apt: meta.address_apt || '',
-            address_city: metaCity,
-            address_state: meta.address_state || '',
-            address_zip: meta.address_zip || '',
-            address_country: meta.address_country || ''
-          };
+          var addrMerged;
           if (cp) {
-            if (cp.address_street != null && cp.address_street !== '') addrMerged.address_street = cp.address_street;
-            if (cp.address_apt != null && cp.address_apt !== '') addrMerged.address_apt = cp.address_apt;
-            if (cp.city != null && cp.city !== '') addrMerged.address_city = cp.city;
-            if (cp.address_state != null && cp.address_state !== '') addrMerged.address_state = cp.address_state;
-            if (cp.address_zip != null && cp.address_zip !== '') addrMerged.address_zip = cp.address_zip;
-            if (cp.address_country != null && cp.address_country !== '') addrMerged.address_country = cp.address_country;
+            addrMerged = {
+              address_street: cp.address_street != null ? String(cp.address_street) : '',
+              address_apt: cp.address_apt != null ? String(cp.address_apt) : '',
+              address_city: cp.city != null ? String(cp.city) : '',
+              address_state: cp.address_state != null ? String(cp.address_state) : '',
+              address_zip: cp.address_zip != null ? String(cp.address_zip) : '',
+              address_country: cp.address_country != null ? String(cp.address_country) : ''
+            };
+          } else {
+            addrMerged = {
+              address_street: meta.address_street || '',
+              address_apt: meta.address_apt || '',
+              address_city: metaCity,
+              address_state: meta.address_state || '',
+              address_zip: meta.address_zip || '',
+              address_country: meta.address_country || ''
+            };
           }
 
-          var fnEl = document.getElementById('input-fname');
-          if (fnEl) {
-            var dispName =
-              (cp && cp.full_name && String(cp.full_name).trim()) ||
-              (meta.full_name && String(meta.full_name).trim()) ||
-              '';
-            if (dispName) fnEl.value = dispName;
+          var fullNameStr = '';
+          if (cp) {
+            fullNameStr = cp.full_name != null ? String(cp.full_name).trim() : '';
+          } else {
+            fullNameStr = (meta.full_name && String(meta.full_name).trim()) || '';
           }
+          var nameParts =
+            typeof window.mdjSplitFullNameToParts === 'function'
+              ? window.mdjSplitFullNameToParts(fullNameStr)
+              : { first: fullNameStr, middle: '', last: '' };
+          var fnFirst = document.getElementById('input-name-first');
+          var fnMid = document.getElementById('input-name-middle');
+          var fnLast = document.getElementById('input-name-last');
+          if (fnFirst) fnFirst.value = nameParts.first || '';
+          if (fnMid) fnMid.value = nameParts.middle || '';
+          if (fnLast) fnLast.value = nameParts.last || '';
 
           document.getElementById('input-email').value = session.user.email;
 
           var phEl = document.getElementById('input-phone');
           if (phEl) {
-            var dispPhone =
-              (cp && cp.phone && String(cp.phone).trim()) ||
-              (meta.phone && String(meta.phone).trim()) ||
-              '';
-            if (dispPhone) phEl.value = dispPhone;
+            if (cp) {
+              phEl.value = cp.phone != null ? String(cp.phone).trim() : '';
+            } else {
+              phEl.value = (meta.phone && String(meta.phone).trim()) || '';
+            }
+            if (typeof window.mdjAttachPhoneUSFormatting === 'function') {
+              window.mdjAttachPhoneUSFormatting(phEl);
+            } else if (typeof window.mdjFormatNANPDisplay === 'function' && typeof window.mdjNANPDigitsFromTel === 'function') {
+              phEl.value = window.mdjFormatNANPDisplay(window.mdjNANPDigitsFromTel(phEl.value));
+            }
           }
           try {
             var uEl = document.getElementById('input-username');
             if (uEl) {
-              if (cp && cp.username && String(cp.username).trim()) {
-                uEl.value = String(cp.username).trim().replace(/^@+/, '');
+              if (cp) {
+                uEl.value = cp.username != null ? String(cp.username).trim().replace(/^@+/, '') : '';
               } else {
                 var djU = await db.from('dj_profiles').select('username').eq('user_id', session.user.id).maybeSingle();
                 if (djU && djU.data && djU.data.username && String(djU.data.username).trim()) {
@@ -1245,6 +1337,20 @@
           if (typeof window.mdjHydrateAccountAddress === 'function') {
             window.mdjHydrateAccountAddress(addrMerged);
           }
+
+          (function mdjHydrateNotifyPrefs(cpRow) {
+            var e = document.getElementById('pref-notify-email');
+            var m = document.getElementById('pref-notify-marketing');
+            var s = document.getElementById('pref-notify-sms');
+            if (!e || !m || !s) return;
+            function tri(col) {
+              if (cpRow && typeof cpRow[col] === 'boolean') return cpRow[col];
+              return true;
+            }
+            e.checked = tri('notify_email_bookings');
+            m.checked = tri('notify_email_marketing');
+            s.checked = tri('notify_sms');
+          })(cp);
 
           var langSel = document.getElementById('select-platform-language');
           var langFromDb =
@@ -1263,7 +1369,8 @@
             window.i18n.setLanguage(langFromDb);
           }
 
-          async function mdjPersistPlatformLanguageOnly(norm) {
+          /** UI + localStorage only; DB `language_preference` updates on Save (btn-save-personal). */
+          function mdjApplyPlatformLanguageUi(norm) {
             var n = norm === 'es' ? 'es' : 'en';
             if (window.i18n && typeof window.i18n.setLanguage === 'function') {
               window.i18n.setLanguage(n);
@@ -1281,24 +1388,73 @@
             try {
               localStorage.setItem('mdj_lang_sync_tick', String(Date.now()));
             } catch (e1) { /* ignore */ }
-            try {
-              var rUp = await db.from('client_profiles').update({ language_preference: n }).eq('user_id', session.user.id);
-              if (rUp.error) {
-                console.warn('[MDJ-SYSTEM] language_preference update (no row yet is OK)', rUp.error.message || rUp.error);
-              }
-            } catch (e2) {
-              console.warn('[MDJ-SYSTEM] language_preference update failed', e2);
-            }
             if (typeof window.checkSessionForNav === 'function') {
               Promise.resolve(window.checkSessionForNav()).catch(function () { /* ignore */ });
             }
           }
 
+          /** Idioma UI (perfil / errores): selector plataforma, luego i18n.currentLang, luego lang del documento. */
+          function mdjAccountSaveLangEs() {
+            try {
+              var ls = document.getElementById('select-platform-language');
+              if (ls && ls.value === 'es') return true;
+              if (ls && ls.value === 'en') return false;
+            } catch (eLs) { /* ignore */ }
+            try {
+              if (window.i18n && window.i18n.currentLang === 'es') return true;
+              if (window.i18n && window.i18n.currentLang === 'en') return false;
+            } catch (eI) { /* ignore */ }
+            return (
+              document.documentElement.lang &&
+              String(document.documentElement.lang).toLowerCase().indexOf('es') === 0
+            );
+          }
+
+          function mdjSyncSavePersonalIdleLabel() {
+            var b = document.getElementById('btn-save-personal');
+            if (!b || b.classList.contains('saving-state') || b.classList.contains('success-pulse')) return;
+            b.textContent = mdjAccountSaveLangEs() ? 'Confirmar cambios' : 'Save';
+          }
+
           if (langSel) {
             langSel.addEventListener('change', function () {
               var v = langSel.value === 'es' ? 'es' : 'en';
-              void mdjPersistPlatformLanguageOnly(v);
+              mdjApplyPlatformLanguageUi(v);
+              mdjSyncSavePersonalIdleLabel();
             });
+          }
+          mdjSyncSavePersonalIdleLabel();
+
+          /** Resend vía Edge Function; respeta notify_email_bookings en servidor. No bloquea la UI. */
+          function mdjInvokeNotifyAccountProfileChange(dbInstance, reason) {
+            var r = reason || 'profile_save';
+            void (async function () {
+              try {
+                var base =
+                  typeof window.MDB_SUPABASE_URL === 'string' ? String(window.MDB_SUPABASE_URL).replace(/\/$/, '') : '';
+                var key = typeof window.MDB_SUPABASE_ANON_KEY === 'string' ? window.MDB_SUPABASE_ANON_KEY : '';
+                if (!base || !key || !dbInstance || !dbInstance.auth) return;
+                var tokRes = await dbInstance.auth.getSession();
+                var tok = tokRes && tokRes.data && tokRes.data.session && tokRes.data.session.access_token;
+                if (!tok) return;
+                var url =
+                  typeof window.mdbSupabaseFunctionUrl === 'function'
+                    ? window.mdbSupabaseFunctionUrl('notify-account-profile-change')
+                    : base + '/functions/v1/notify-account-profile-change';
+                var loc = typeof mdjAccountSaveLangEs === 'function' && mdjAccountSaveLangEs() ? 'es' : 'en';
+                await fetch(url, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: 'Bearer ' + tok,
+                    apikey: key
+                  },
+                  body: JSON.stringify({ locale: loc, reason: r })
+                });
+              } catch (eN) {
+                console.warn('[MDJ-SYSTEM] notify-account-profile-change', eN);
+              }
+            })();
           }
 
           // -- Avatar Bind Initial Render (JWT + client_profiles)
@@ -1547,7 +1703,7 @@
 
             btnSavePersonal.addEventListener('click', async (e) => {
               e.preventDefault();
-              var esClick = document.documentElement.lang && String(document.documentElement.lang).toLowerCase().indexOf('es') === 0;
+              var esClick = mdjAccountSaveLangEs();
               if (typeof mdjAvatarUploadBusy !== 'undefined' && mdjAvatarUploadBusy) {
                 setSavePersonalFeedback(
                   'err',
@@ -1563,10 +1719,12 @@
               btnSavePersonal.disabled = true;
 
               var watchdog = setTimeout(function () {
-                var busyTxt = btnSavePersonal.textContent === 'Saving...' || btnSavePersonal.textContent === 'Guardando...';
+                var busyTxt =
+                  btnSavePersonal.textContent === 'Saving...' ||
+                  btnSavePersonal.textContent === 'Guardando...';
                 if (busyTxt) {
-                  console.error('[MDJ-SYSTEM] save watchdog: still saving after 70s — forcing UI reset');
-                  var esW = document.documentElement.lang && String(document.documentElement.lang).toLowerCase().indexOf('es') === 0;
+                  console.error('[MDJ-SYSTEM] save watchdog: still saving after 28s — forcing UI reset');
+                  var esW = mdjAccountSaveLangEs();
                   btnSavePersonal.classList.remove('saving-state');
                   btnSavePersonal.disabled = false;
                   btnSavePersonal.textContent = esW ? 'Confirmar cambios' : 'Save';
@@ -1574,10 +1732,20 @@
                     ? 'La petición tardó demasiado. Comprueba la red e inténtalo de nuevo.'
                     : 'Request took too long. Check your connection and try again.');
                 }
-              }, 70000);
+              }, 28000);
 
               try {
-                const newFname = document.getElementById('input-fname').value.trim();
+                var elNF = document.getElementById('input-name-first');
+                var elNM = document.getElementById('input-name-middle');
+                var elNL = document.getElementById('input-name-last');
+                const newFname =
+                  typeof window.mdjJoinFullNameFromParts === 'function'
+                    ? window.mdjJoinFullNameFromParts(
+                        elNF ? elNF.value : '',
+                        elNM ? elNM.value : '',
+                        elNL ? elNL.value : ''
+                      )
+                    : (elNF && elNF.value.trim()) || '';
                 const newUsernameRaw = document.getElementById('input-username').value.trim();
                 const newPhone = document.getElementById('input-phone').value.trim();
                 var uVal = mdjValidateUsernameOptional(newUsernameRaw);
@@ -1585,7 +1753,7 @@
                   clearTimeout(watchdog);
                   btnSavePersonal.classList.remove('saving-state');
                   btnSavePersonal.disabled = false;
-                  var esU = document.documentElement.lang && String(document.documentElement.lang).toLowerCase().indexOf('es') === 0;
+                  var esU = mdjAccountSaveLangEs();
                   btnSavePersonal.textContent = esU ? 'Confirmar cambios' : 'Save';
                   setSavePersonalFeedback('err', esU
                     ? 'Usuario: 3–30 caracteres; solo letras, números o guion bajo (el @ al inicio es opcional).'
@@ -1604,13 +1772,15 @@
                   ? window.mdjGetAddressCountryForSave()
                   : '';
 
-                /* getSession también puede colgar — si no hay timeout, el botón nunca sale de “Saving…” */
-                var sessRes = await mdjSaveWithTimeout(db.auth.getSession(), 20000, 'auth.getSession');
-                if (sessRes && sessRes.error) {
-                  throw sessRes.error;
-                }
-                var freshSession = sessRes && sessRes.data && sessRes.data.session ? sessRes.data.session : null;
-                var sessionUser = freshSession && freshSession.user ? freshSession.user : session.user;
+                var elPrefEmail = document.getElementById('pref-notify-email');
+                var elPrefMkt = document.getElementById('pref-notify-marketing');
+                var elPrefSms = document.getElementById('pref-notify-sms');
+                var notifyEmailBookings = elPrefEmail ? !!elPrefEmail.checked : true;
+                var notifyEmailMarketing = elPrefMkt ? !!elPrefMkt.checked : true;
+                var notifySms = elPrefSms ? !!elPrefSms.checked : true;
+
+                /* Sin getSession aquí: otra ida a red sumaba latencia; la sesión del login/carga sigue válida para este guardado */
+                var sessionUser = session.user;
                 var currentSessionMeta = (sessionUser && sessionUser.user_metadata) || {};
 
                 const newData = Object.assign({}, currentSessionMeta, {
@@ -1623,7 +1793,10 @@
                   addr_city: newCity,
                   address_state: newState,
                   address_zip: newZip,
-                  address_country: newCountry
+                  address_country: newCountry,
+                  notify_email_bookings: notifyEmailBookings,
+                  notify_email_marketing: notifyEmailMarketing,
+                  notify_sms: notifySms
                 });
                 try {
                   if (cp && (cp.avatar_url || cp.photo_url) && !newData.avatar_url) {
@@ -1657,57 +1830,52 @@
                 } catch (lpS) { /* ignore */ }
                 var profileSyncPayload = Object.assign({}, newData, { language_preference: langPrefSave });
 
-                /* 1) client_profiles siempre en esta pantalla (dirección / idioma); antes el JWT «artist» saltaba esto */
+                /* 1) client_profiles primero (consistencia). 2) JWT + dj_profiles en paralelo (menos espera que en serie). */
                 await mdjSaveWithTimeout(
-                  Promise.resolve(window.handleClientSettingsSubmit(userId, profileSyncPayload, db)),
-                  25000,
+                  Promise.resolve(
+                    window.handleClientSettingsSubmit(userId, profileSyncPayload, db, {
+                      email: sessionUser.email || null,
+                      jwtMeta: currentSessionMeta
+                    })
+                  ),
+                  12000,
                   'client_profiles upsert'
                 );
+                var wave2 = [
+                  mdjSaveWithTimeout(db.auth.updateUser({ data: newData }), 14000, 'auth.updateUser')
+                ];
                 if (isArtistJwt) {
-                  await mdjSaveWithTimeout(
-                    Promise.resolve(window.handleArtistSettingsSubmit(userId, newData, db)),
-                    25000,
-                    'dj_profiles update'
+                  wave2.push(
+                    mdjSaveWithTimeout(
+                      Promise.resolve(window.handleArtistSettingsSubmit(userId, newData, db)),
+                      12000,
+                      'dj_profiles update'
+                    )
                   );
                 }
-
-                /* 2) Cuenta / metadata JWT */
-                const { error: authUpdateError } = await mdjSaveWithTimeout(
-                  db.auth.updateUser({ data: newData }),
-                  45000,
-                  'auth.updateUser'
-                );
+                var wave2Out = await Promise.all(wave2);
+                var authWrap = wave2Out[0];
+                var authUpdateError = authWrap && authWrap.error ? authWrap.error : null;
                 if (authUpdateError) {
                   console.error('[MDJ-SYSTEM] auth.updateUser FAILED', authUpdateError);
                   throw authUpdateError;
                 }
-                try {
-                  await db.auth.refreshSession();
-                } catch (rs2) {
-                  console.error('[MDJ-SYSTEM] auth.refreshSession after save', rs2);
-                }
 
                 clearTimeout(watchdog);
 
-                var langEs = document.documentElement.lang && String(document.documentElement.lang).toLowerCase().indexOf('es') === 0;
-                var labelSave = langEs ? 'Confirmar cambios' : 'Save';
-                var labelSaved = langEs ? '¡Cambios guardados!' : 'Changes saved!';
-
                 try {
-                  var guAv = await mdjSaveWithTimeout(db.auth.getUser(), 8000, 'auth.getUser avatar');
-                  var mAv =
-                    guAv &&
-                    guAv.data &&
-                    guAv.data.user &&
-                    guAv.data.user.user_metadata
-                      ? guAv.data.user.user_metadata
-                      : currentSessionMeta;
-                  var avRefresh = (mAv.avatar_url || mAv.picture || '').trim();
-                  if (avRefresh && typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
-                    window.mdjHeaderVipApplyPhotoUrl(avRefresh.split('?')[0]);
+                  if (cp) {
+                    cp.notify_email_bookings = notifyEmailBookings;
+                    cp.notify_email_marketing = notifyEmailMarketing;
+                    cp.notify_sms = notifySms;
                   }
-                } catch (avEx) { /* non-fatal */ }
+                } catch (eCpN) { /* ignore */ }
 
+                var langEs = mdjAccountSaveLangEs();
+                var labelSaved = langEs ? '¡Cambios guardados!' : 'Changes saved!';
+                var labelSaveIdle = langEs ? 'Confirmar cambios' : 'Save';
+
+                /* UI de éxito en cuanto DB + JWT están listos; refresh/avatar/nav van en segundo plano (menos fricción) */
                 btnSavePersonal.textContent = langEs ? '¡Listo!' : 'Saved!';
                 btnSavePersonal.classList.remove('saving-state');
                 btnSavePersonal.classList.add('success-pulse');
@@ -1715,26 +1883,48 @@
                 setSavePersonalFeedback('ok', labelSaved);
 
                 setTimeout(function () {
-                  btnSavePersonal.textContent = labelSave;
+                  btnSavePersonal.textContent = labelSaveIdle;
                   btnSavePersonal.classList.remove('success-pulse');
                   btnSavePersonal.disabled = false;
                   setSavePersonalFeedback('', '');
-                }, 2800);
+                }, 1600);
 
-                Promise.resolve()
-                  .then(function () {
-                    if (typeof window.checkSessionForNav === 'function') {
-                      return window.checkSessionForNav();
+                void (async function mdjPostSavePersonalBg() {
+                  mdjInvokeNotifyAccountProfileChange(db, 'profile_save');
+                  try {
+                    await mdjSaveWithTimeout(db.auth.refreshSession(), 10000, 'auth.refreshSession');
+                  } catch (rs2) {
+                    console.error('[MDJ-SYSTEM] auth.refreshSession after save', rs2);
+                  }
+                  try {
+                    var guAv = await mdjSaveWithTimeout(db.auth.getUser(), 8000, 'auth.getUser avatar');
+                    var mAv =
+                      guAv &&
+                      guAv.data &&
+                      guAv.data.user &&
+                      guAv.data.user.user_metadata
+                        ? guAv.data.user.user_metadata
+                        : currentSessionMeta;
+                    var avRefresh = (mAv.avatar_url || mAv.picture || '').trim();
+                    if (avRefresh && typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
+                      window.mdjHeaderVipApplyPhotoUrl(avRefresh.split('?')[0]);
                     }
-                  })
-                  .catch(function (bgErr) {
+                  } catch (avEx) {
+                    /* non-fatal */
+                  }
+                  try {
+                    if (typeof window.checkSessionForNav === 'function') {
+                      await Promise.resolve(window.checkSessionForNav());
+                    }
+                  } catch (bgErr) {
                     console.error('[MDJ-SYSTEM] checkSessionForNav after save', bgErr);
-                  });
+                  }
+                })();
 
               } catch (err) {
                 clearTimeout(watchdog);
                 console.error('[MDJ-SYSTEM] save FAILED', err && err.message ? err.message : err, err);
-                var langEs2 = document.documentElement.lang && String(document.documentElement.lang).toLowerCase().indexOf('es') === 0;
+                var langEs2 = mdjAccountSaveLangEs();
                 var labelSaveErr = langEs2 ? 'Confirmar cambios' : 'Save';
                 var errDetail = (err && (err.message || err.error_description || err.msg)) ? String(err.message || err.error_description || err.msg) : '';
                 var isTimeout = /timed out|timeout/i.test(errDetail);
@@ -1770,11 +1960,21 @@
                 btnSavePersonal.classList.remove('success-pulse');
                 btnSavePersonal.style.opacity = '1';
                 btnSavePersonal.disabled = false;
-                setSavePersonalFeedback('err', langEs2
-                  ? ('No se pudieron guardar los cambios.' + (errDetail ? ' ' + errDetail : ' Revisa la consola (F12).'))
-                  : ('Could not save changes.' + (errDetail ? ' ' + errDetail : ' Check the console (F12).')));
+                var errFeedbackMsg;
+                if (langEs2) {
+                  errFeedbackMsg =
+                    'No se pudieron guardar los cambios.' +
+                    (errDetail ? ' Información del servidor: ' + errDetail : '') +
+                    ' Revisa la conexión o la consola del navegador (F12).';
+                } else {
+                  errFeedbackMsg =
+                    'Could not save changes.' +
+                    (errDetail ? ' ' + errDetail : '') +
+                    (errDetail ? '' : ' Check the browser console (F12).');
+                }
+                setSavePersonalFeedback('err', errFeedbackMsg);
                 setTimeout(function () {
-                  btnSavePersonal.textContent = labelSaveErr;
+                  mdjSyncSavePersonalIdleLabel();
                   setSavePersonalFeedback('', '');
                 }, 6000);
               }
@@ -1861,6 +2061,7 @@
                 try {
                   await db.auth.refreshSession();
                 } catch (rsPw) { /* ignore */ }
+                mdjInvokeNotifyAccountProfileChange(db, 'password_change');
                 setPasswordFeedback('ok', mdjTAccountPw('account-password-success', 'Contraseña actualizada.', 'Password updated.'));
                 setTimeout(function () {
                   setPasswordFeedback('', '');
@@ -1907,9 +2108,11 @@
         </div>
     </div>
     <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
-    <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script src="./mdj-shared-header.js?v=20260421-nav-tier-matrix"></script>
-  <script src="./mdj-social-bar.js?v=20260414-MAC-DESKTOP-SYNC"></script>
+    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+      <script src="./mdj-shared-header.js?v=20260422-mainnav-infinite-1"></script>
+  <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+  <script src="./mdj-mainnav-infinite.js?v=20260422-mainnav-chev-bar-1"></script>
+  <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
 </body>
 
 </html>

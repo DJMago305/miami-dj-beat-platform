@@ -5,8 +5,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>DJ Tools — Miami DJ Beat</title>
-    <link rel="stylesheet" href="./styles.css?v=20260422-nav-unified72" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260421-nav-z120" />
+    <link rel="stylesheet" href="./styles.css?v=20260430-float-nav-1" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260422-wordmark-scale" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
 </head>
 
@@ -84,11 +84,11 @@
         <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
         <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-mdj-nav="shop">Shop</a>
         <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+        <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
         <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
         <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
         <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" aria-hidden="true" tabindex="-1">MY PORTAL</a>
-        <a href="./admin-dashboard.html" id="mainNav-staff-link" class="mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
-        <a id="mainNav-artist-dashboard-link" class="mdj-artist-dash-mainnav mdj-mainnav-reserved-slot" href="./dj-profile.html" data-mdj-nav="my-profile" data-i18n="nav-my-profile" aria-hidden="true" tabindex="-1">MY PROFILE</a>
+        <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
       </nav>
     </div>
   </div>
@@ -223,10 +223,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
-    <script src="./translations.js?v=20260421-my-profile-nav"></script>
+    <script src="./translations.js?v=20260422-nav-labels-1"></script>
     <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script src="./mdj-identity.js?v=20260422-platform-identity-1"></script>
-    <script src="./auth.js?v=20260422-postauth-db-identity-1"></script>
+    <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+    <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260411-7" />
     <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
@@ -260,11 +260,13 @@
     </div>
 
 
-    <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script src="./mdj-shared-header.js?v=20260422-hybrid-staff-artist"></script>
+    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+      <script src="./mdj-shared-header.js?v=20260422-mainnav-infinite-1"></script>
+  <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+  <script src="./mdj-mainnav-infinite.js?v=20260422-mainnav-chev-bar-1"></script>
     <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
     <script src="./mdj-profile-nav-context.js?v=20260418-owner-nav-parity"></script>
-  <script src="./mdj-social-bar.js?v=20260422-sidebar-off"></script>
+  <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
     <script>
       document.addEventListener('DOMContentLoaded', async function () {
         var gate = document.getElementById('dj-tools-client-gate');

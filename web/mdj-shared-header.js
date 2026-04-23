@@ -105,20 +105,196 @@
     if (mb) mb.remove();
   }
 
+  /** STAFF en #mainNav: el HTML usa `mainNav-staff-link` (admin) o `mainNav-staff-or-profile` (sitio unificado). */
+  function mdjGetMainNavStaffAnchor() {
+    return document.getElementById('mainNav-staff-link') || document.getElementById('mainNav-staff-or-profile');
+  }
+
   /** STAFF (admin): solo staff de dj_profiles; hueco reservado con .mdj-mainnav-reserved-slot + visibility en CSS móvil. */
   function mdjApplyStaffMainNavLink(isStaff) {
-    var a = document.getElementById('mainNav-staff-link');
+    var a = mdjGetMainNavStaffAnchor();
     if (!a) return;
     if (isStaff) {
+      /* Plantilla unificada: placeholder `#`; sin esto el enlace STAFF no abre el back-office. */
+      try {
+        var cur = String(a.getAttribute('href') || '').trim();
+        if (!cur || cur === '#') a.setAttribute('href', './admin-dashboard.html');
+      } catch (eH) { /* ignore */ }
       a.classList.remove('mdj-mainnav-reserved-slot');
       a.style.removeProperty('visibility');
       a.style.removeProperty('pointer-events');
       a.removeAttribute('aria-hidden');
       a.removeAttribute('tabindex');
     } else {
+      try {
+        a.setAttribute('href', '#');
+      } catch (eH2) { /* ignore */ }
       a.classList.add('mdj-mainnav-reserved-slot');
       a.style.removeProperty('visibility');
       a.style.removeProperty('pointer-events');
+      a.setAttribute('aria-hidden', 'true');
+      a.setAttribute('tabindex', '-1');
+    }
+  }
+
+  /**
+   * Crea #mainNav-config-link si el HTML (p. ej. plantilla antigua) no lo trae — misma colación que el sitio: tras DJ Tools, antes de Jobs.
+   * Sin esto, Agenda/Flujo no tienen ancla; `mdjApplyConfigMainNavLink` quedaría en no-op.
+   */
+  function mdjEnsureConfigMainNavNode() {
+    var existing = document.getElementById('mainNav-config-link');
+    if (existing) return existing;
+    var nav = document.getElementById('mainNav');
+    if (!nav) return null;
+    var a = document.createElement('a');
+    a.id = 'mainNav-config-link';
+    a.setAttribute('data-mdj-nav', 'config');
+    a.setAttribute('data-i18n', 'nav-config');
+    a.className = 'mdj-config-mainnav mdj-mainnav-reserved-slot';
+    a.href = './dj-dashboard.html?tab=settings';
+    a.setAttribute('aria-hidden', 'true');
+    a.setAttribute('tabindex', '-1');
+    a.textContent = '⚙️ CONFIG';
+    var jobs = nav.querySelector('a[data-mdj-nav="jobs"]');
+    var tools = nav.querySelector('a[data-mdj-nav="tools"]');
+    if (jobs && jobs.parentNode === nav) {
+      nav.insertBefore(a, jobs);
+    } else if (tools && tools.parentNode === nav) {
+      if (tools.nextSibling) {
+        nav.insertBefore(a, tools.nextSibling);
+      } else {
+        nav.appendChild(a);
+      }
+    } else {
+      nav.appendChild(a);
+    }
+    return a;
+  }
+
+  /**
+   * #mainNav ⚙ CONFIG — misma ruta que la píldora superior (`settingsUrl`): panel artista, cuenta staff o portal cliente.
+   * Sin sesión: hueco colapsado (`.mdj-mainnav-reserved-slot` + `header-unified.css`).
+   */
+  function mdjApplyConfigMainNavLink(show, href) {
+    var a = mdjEnsureConfigMainNavNode();
+    if (!a) return;
+    var h = href && String(href).trim() ? String(href).trim() : './dj-dashboard.html?tab=settings';
+    a.setAttribute('href', h);
+    if (show) {
+      a.classList.remove('mdj-mainnav-reserved-slot');
+      a.style.removeProperty('display');
+      a.style.removeProperty('visibility');
+      a.style.removeProperty('pointer-events');
+      a.removeAttribute('aria-hidden');
+      a.removeAttribute('tabindex');
+    } else {
+      a.classList.add('mdj-mainnav-reserved-slot');
+      a.setAttribute('aria-hidden', 'true');
+      a.setAttribute('tabindex', '-1');
+    }
+  }
+
+  /** Crea #mainNav-agenda-link antes de CONFIG: pestaña «Agenda» del panel (`?tab=dashboard`). */
+  function mdjEnsureAgendaMainNavNode() {
+    var existing = document.getElementById('mainNav-agenda-link');
+    if (existing) return existing;
+    mdjEnsureConfigMainNavNode();
+    var nav = document.getElementById('mainNav');
+    if (!nav) return null;
+    var before =
+      document.getElementById('mainNav-config-link') ||
+      nav.querySelector('a.mdj-config-mainnav[data-mdj-nav="config"]') ||
+      nav.querySelector('a[data-mdj-nav="config"]');
+    var a = document.createElement('a');
+    a.id = 'mainNav-agenda-link';
+    a.setAttribute('data-mdj-nav', 'agenda');
+    a.setAttribute('data-i18n', 'dash-your-profile');
+    a.className = 'mdj-agenda-mainnav mdj-mainnav-reserved-slot';
+    a.href = './dj-dashboard.html?tab=dashboard';
+    a.setAttribute('aria-hidden', 'true');
+    a.setAttribute('tabindex', '-1');
+    var raw = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+    a.textContent = raw.indexOf('es') === 0 ? 'Agenda' : 'SCHEDULE';
+    if (before && before.parentNode === nav) {
+      nav.insertBefore(a, before);
+    } else {
+      nav.appendChild(a);
+    }
+    return a;
+  }
+
+  /**
+   * Agenda (panel): `dj-dashboard?tab=dashboard` — solo artista LITE/PRO (misma regla que CONFIG social / flujo en barra).
+   */
+  function mdjApplyAgendaMainNavLink(show, href) {
+    var a = mdjEnsureAgendaMainNavNode();
+    if (!a) return;
+    var h = href && String(href).trim() ? String(href).trim() : './dj-dashboard.html?tab=dashboard';
+    a.setAttribute('href', h);
+    if (show) {
+      a.classList.remove('mdj-mainnav-reserved-slot');
+      a.style.removeProperty('display');
+      a.style.removeProperty('visibility');
+      a.style.removeProperty('pointer-events');
+      a.removeAttribute('aria-hidden');
+      a.removeAttribute('tabindex');
+    } else {
+      a.classList.add('mdj-mainnav-reserved-slot');
+      a.setAttribute('aria-hidden', 'true');
+      a.setAttribute('tabindex', '-1');
+    }
+  }
+
+  /** Crea #mainNav-flow-link tras CONFIG si no está en el HTML (muchas plantillas duplicadas). */
+  function mdjEnsureFlowMainNavNode() {
+    var existing = document.getElementById('mainNav-flow-link');
+    if (existing) return existing;
+    mdjEnsureConfigMainNavNode();
+    var nav = document.getElementById('mainNav');
+    if (!nav) return null;
+    var after =
+      document.getElementById('mainNav-config-link') ||
+      nav.querySelector('a.mdj-config-mainnav[data-mdj-nav="config"]') ||
+      nav.querySelector('a[data-mdj-nav="config"]');
+    var a = document.createElement('a');
+    a.id = 'mainNav-flow-link';
+    a.setAttribute('data-mdj-nav', 'flow');
+    a.setAttribute('data-i18n', 'flow-dash');
+    a.className = 'mdj-flow-mainnav mdj-mainnav-reserved-slot';
+    a.href = './dj-dashboard.html?tab=flow';
+    a.setAttribute('aria-hidden', 'true');
+    a.setAttribute('tabindex', '-1');
+    var raw = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+    a.textContent = raw.indexOf('es') === 0 ? 'Flujo de Caja' : 'Cash Flow';
+    if (after && after.parentNode === nav) {
+      if (after.nextSibling) {
+        nav.insertBefore(a, after.nextSibling);
+      } else {
+        nav.appendChild(a);
+      }
+    } else {
+      nav.appendChild(a);
+    }
+    return a;
+  }
+
+  /**
+   * Flujo de caja: `dj-dashboard?tab=flow` — solo cuentas con perfil de artista (LITE/PRO), no clientes puros.
+   */
+  function mdjApplyFlowMainNavLink(show, href) {
+    var a = mdjEnsureFlowMainNavNode();
+    if (!a) return;
+    var h = href && String(href).trim() ? String(href).trim() : './dj-dashboard.html?tab=flow';
+    a.setAttribute('href', h);
+    if (show) {
+      a.classList.remove('mdj-mainnav-reserved-slot');
+      a.style.removeProperty('display');
+      a.style.removeProperty('visibility');
+      a.style.removeProperty('pointer-events');
+      a.removeAttribute('aria-hidden');
+      a.removeAttribute('tabindex');
+    } else {
+      a.classList.add('mdj-mainnav-reserved-slot');
       a.setAttribute('aria-hidden', 'true');
       a.setAttribute('tabindex', '-1');
     }
@@ -171,7 +347,7 @@
         el.id = 'mainNav-artist-dashboard-link';
         el.setAttribute('data-mdj-nav', 'my-profile');
         el.className = 'mdj-artist-dash-mainnav';
-        var insBefore = document.getElementById('mainNav-staff-link');
+        var insBefore = mdjGetMainNavStaffAnchor();
         if (insBefore && insBefore.parentNode === nav) {
           nav.insertBefore(el, insBefore);
         } else {
@@ -1113,7 +1289,10 @@
    * | contact      | index + hash contact; página suelta: contact, contacto |
    * | mi-portal    | client-portal, client-billing, mi-portal, portal-cliente, … |
    * | my-profile   | dj-profile cuando ?id= usuario con sesión (perfil artístico propio) |
-   * | (ninguno)    | dj-dashboard, panel-artista (sin pestaña dedicada en #mainNav) |
+   * | config       | dj-dashboard?tab=settings, account-settings (misma ruta que ⚙ CONFIG) |
+   * | flow         | dj-dashboard?tab=flow (Flujo de caja) |
+   * | agenda       | dj-dashboard sin tab, o ?tab=dashboard (vista Agenda del panel) |
+   * | (ninguno)    | dj-dashboard (otras ?tab=), panel-artista |
    * | courses      | courses, cursos |
    * | booth        | booth, ai-booth |
    * | staff        | admin-dashboard |
@@ -1122,7 +1301,7 @@
   function mdjResolveNavKeyFromBase(base) {
     var b = String(base || '').toLowerCase().replace(/\.html?$/i, '');
     if (b === 'admin-dashboard' || b === 'admin_dashboard') return 'staff';
-    if (b === 'account-settings' || b === 'account_settings') return 'account-settings';
+    if (b === 'account-settings' || b === 'account_settings') return 'config';
     if (b === 'shop') return 'shop';
     if (b === 'courses' || b === 'cursos') return 'courses';
     if (b === 'booth' || b === 'ai-booth' || b === 'ai_booth' || b === 'cabina') return 'booth';
@@ -1147,6 +1326,12 @@
       b === 'panel_artista' ||
       b === 'artistdashboard'
     ) {
+      try {
+        var qtab = (new URLSearchParams((typeof location !== 'undefined' && location.search) || '').get('tab') || '').trim().toLowerCase();
+        if (qtab === 'settings') return 'config';
+        if (qtab === 'flow') return 'flow';
+        if (!qtab || qtab === 'dashboard') return 'agenda';
+      } catch (eTab) { /* ignore */ }
       return '';
     }
     if (
@@ -1267,6 +1452,9 @@
         mdjApplyDjToolsNavForTier(null);
         mdjApplyArtistDashboardNavChrome(false);
         mdjApplyStaffMainNavLink(false);
+        mdjApplyConfigMainNavLink(false);
+        mdjApplyAgendaMainNavLink(false);
+        mdjApplyFlowMainNavLink(false);
         mdjApplyNavTierStatusBadge(null);
         var gp0 = document.getElementById('header-get-pro-btn');
         var sfd0 = document.getElementById('header-subscribe-free-btn');
@@ -1540,6 +1728,10 @@
             (navTier === 'artist_lite' || navTier === 'artist_pro');
           mdjApplyArtistDashboardNavChrome(showMyArtisticProfileMainNav, publicProfileUrl);
           mdjApplyStaffMainNavLink(!!isDjStaff);
+          var showArtistDashMainNav = !isClient && (navTier === 'artist_lite' || navTier === 'artist_pro');
+          mdjApplyAgendaMainNavLink(!!showArtistDashMainNav, './dj-dashboard.html?tab=dashboard');
+          mdjApplyConfigMainNavLink(true, settingsUrl);
+          mdjApplyFlowMainNavLink(!!showArtistDashMainNav, './dj-dashboard.html?tab=flow');
           mdjNavHighlight();
           try {
             if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
@@ -1590,6 +1782,9 @@
           mdjApplyDjToolsNavForTier(null);
           mdjApplyArtistDashboardNavChrome(false);
           mdjApplyStaffMainNavLink(false);
+          mdjApplyConfigMainNavLink(false);
+          mdjApplyAgendaMainNavLink(false);
+          mdjApplyFlowMainNavLink(false);
           mdjApplyNavTierStatusBadge(null);
           mdjSyncClientLoyaltyIndicator(false);
         }
@@ -1617,6 +1812,9 @@
         mdjApplyDjToolsNavForTier(null);
         mdjApplyArtistDashboardNavChrome(false);
         mdjApplyStaffMainNavLink(false);
+        mdjApplyConfigMainNavLink(false);
+        mdjApplyAgendaMainNavLink(false);
+        mdjApplyFlowMainNavLink(false);
         mdjApplyNavTierStatusBadge(null);
       }
     } catch (err) {
@@ -1632,6 +1830,9 @@
       mdjApplyDjToolsNavForTier(null);
       mdjApplyArtistDashboardNavChrome(false);
       mdjApplyStaffMainNavLink(false);
+      mdjApplyConfigMainNavLink(false);
+      mdjApplyAgendaMainNavLink(false);
+      mdjApplyFlowMainNavLink(false);
       mdjApplyNavTierStatusBadge(null);
     } finally {
       mdjSetHeaderAuthPillsPending(false);

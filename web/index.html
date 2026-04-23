@@ -7,7 +7,10 @@
   <title>Miami DJ Beat — DJs & Event Production</title>
   <meta name="description"
     content="Miami DJ Beat provides professional DJs and event production for corporate, private, and venue events across Florida, with primary coverage in Miami-Dade and Broward." />
-  <link rel="stylesheet" href="./styles.css?v=20260421-residencies-scroll-smooth-off" />
+  <link rel="stylesheet" href="./styles.css?v=20260430-float-nav-1" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260422-wordmark-scale" />
+  <!-- Antes el JS inyectaba esto tras el primer paint → CLS (gap/búsqueda en ≥1200px); VIP ya va por @import en styles.css -->
+  <link rel="stylesheet" id="mdj-header-desktop-audit-css" href="./mdj-header-desktop-audit.css?v=20260421-menu-static" />
   <link rel="stylesheet" href="./profile.css?v=20260226-1" />
   <style>
     /* Neutralizar inyección de auth.js en index.html para usar botón dinámico único */
@@ -31,13 +34,12 @@
     }
 
     /*
-     * INDEX — Arquitectura referencia home: 2 franjas (90px marca|acciones + nav).
-     * #mainNav: misma familia tipográfica que .dj-owner-tabs .dj-tab-btn (perfil), con franja más alta.
+     * INDEX — Cabecera: fila1 + fila2 (--header-nav-band); wordmark vía scale (franja 84px).
      */
     html body.page-home {
-      --header-height: 90px;
-      --header-nav-band: 88px;
-      --mdj-index-header-total: 178px;
+      --header-height: 84px;
+      --header-nav-band: 72px;
+      --mdj-index-header-total: 156px;
       padding-top: calc(var(--mdj-index-header-total) + env(safe-area-inset-top, 0px));
       scroll-padding-top: calc(var(--mdj-index-header-total) + env(safe-area-inset-top, 0px));
     }
@@ -49,7 +51,6 @@
       min-height: calc(var(--mdj-index-header-total) + env(safe-area-inset-top, 0px));
       padding-top: env(safe-area-inset-top, 0px);
       overflow: visible;
-      /* Referencia “Header Maestro”: cristal oscuro + blur (una sola pieza visual) */
       background: linear-gradient(180deg, rgba(10, 8, 6, 0.55) 0%, rgba(6, 5, 4, 0.68) 100%) !important;
       backdrop-filter: blur(14px) saturate(115%);
       -webkit-backdrop-filter: blur(14px) saturate(115%);
@@ -57,208 +58,63 @@
       box-shadow: 0 2px 28px rgba(0, 0, 0, 0.42);
     }
 
+    /* overflow-y: hidden en header-unified: recortar fila1; el wordmark ya no a 196px. */
     body.page-home #mainHeader .header-top {
-      flex: 0 0 90px;
-      height: 90px;
-      min-height: 90px;
-      max-height: 90px;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      justify-content: center;
-      box-sizing: border-box;
-      /* Sin overflow-x:auto: recortaba el menú VIP y el trackpad deslizaba la franja como scroll horizontal */
-      overflow: visible;
+      flex: 0 0 var(--header-height) !important;
+      height: var(--header-height) !important;
+      min-height: var(--header-height) !important;
+      max-height: var(--header-height) !important;
+      overflow-x: visible;
       position: relative;
-      /* Por encima de .header-bottom (z-index 101 en styles.css) para que el menú VIP no quede bajo HOME/SERVICES */
-      z-index: 110;
-      touch-action: pan-y;
-      /* Un solo trazo respecto a .header-bottom (evita “doble costura” visual) */
       border-bottom: none;
     }
 
-    body.page-home #mainHeader .header-top .container {
-      flex: 1 1 auto;
-      height: 100%;
-      min-height: 90px;
-      max-height: 90px;
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-      align-items: center;
-      justify-content: space-between;
-      box-sizing: border-box;
-      overflow: visible;
-      touch-action: pan-y;
+    @media (max-width: 1000px) {
+      body.page-home #mainHeader .header-top {
+        overflow: hidden;
+      }
     }
 
-    /* Referencia: marca izquierda; utilidades + búsqueda agrupadas a la derecha */
-    body.page-home #mainHeader .header-top .container > .brand {
-      justify-content: flex-start;
-    }
+    /* Escritorio ≥1001px: fila 1 en header-unified.css (marca + píldora en flex) */
+    @media (max-width: 1000px) {
+      body.page-home #mainHeader .header-top .container {
+        min-height: var(--header-height) !important;
+        max-height: var(--header-height) !important;
+        height: 100%;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: space-between;
+        box-sizing: border-box;
+        overflow: hidden;
+        gap: 10px;
+      }
 
-    body.page-home #mainHeader .header-top .container > .header-actions {
-      flex: 1 1 auto;
-      justify-content: flex-end !important;
-      align-items: center !important;
-      gap: 12px;
-      min-width: 0;
-    }
+      body.page-home #mainHeader .header-top .container > .brand {
+        flex: 0 0 auto;
+        justify-content: flex-start;
+        min-width: 0;
+      }
 
-    body.page-home #mainHeader .brand {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-      align-items: center;
-      align-self: center;
-      box-sizing: border-box;
-      height: auto;
-      min-height: 0;
-      max-height: 90px;
-      margin: 0 !important;
-      padding: 0;
-      overflow: visible;
-      flex-shrink: 0;
-      /* Centro de etiqueta basado en el tamaño real del águila por breakpoint */
-      --mdj-eagle-w: 72px;
-      --mdj-gold-label: 68px;
-    }
+      body.page-home #mainHeader .header-top .container > .header-actions {
+        flex: 1 1 auto;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        gap: 8px !important;
+        min-width: 0;
+        max-height: var(--header-height) !important;
+        padding: 2px 8px !important;
+        flex-wrap: nowrap !important;
+      }
 
-    /* Etiqueta dorada: más pequeña y centrada en el emblema; el .logo-img-eagle conserva su tamaño */
-    body.page-home #mainHeader .brand::before {
-      content: '' !important;
-      display: block !important;
-      position: absolute;
-      left: 0;
-      top: 50%;
-      width: var(--mdj-gold-label) !important;
-      height: var(--mdj-gold-label) !important;
-      border-radius: 8px;
-      background: linear-gradient(145deg, rgba(224, 195, 130, 0.98), rgba(197, 160, 89, 0.94));
-      box-shadow: 0 2px 14px rgba(0, 0, 0, 0.38);
-      z-index: 0;
-      pointer-events: none;
-      transform: translate(
-        calc(0.5 * var(--mdj-eagle-w) - 0.5 * var(--mdj-gold-label)),
-        -50%
-      ) !important;
-    }
-
-    body.page-home #mainHeader .brand .logo-img-eagle {
-      position: relative;
-      z-index: 1;
-      height: 72px !important;
-      width: auto;
-      max-height: none !important;
-      min-height: 0;
-      object-fit: contain;
-      display: block;
-      flex-shrink: 0;
-      align-self: center;
-    }
-
-    body.page-home #mainHeader .brand .brand-letters-wrapper {
-      display: flex;
-      align-items: center;
-      align-self: center;
-      max-height: 90px;
-      flex-shrink: 0;
-      min-width: min(300px, 48vw);
-      width: min(700px, 64vw);
-      margin-left: 10px;
-      margin-right: 0;
-    }
-
-    /* Anula img{max-width:100%;height:auto} global: si no, el PNG se aplasta o desaparece en flex */
-    body.page-home #mainHeader .brand .brand-letters-img {
-      height: 104px !important;
-      width: auto !important;
-      max-width: none !important;
-      max-height: 108px !important;
-      min-width: 0;
-      object-fit: contain;
-      object-position: left center;
-      display: block;
-      flex-shrink: 0;
-    }
-
-    @media (min-width: 1024px) {
       body.page-home #mainHeader .brand {
-        --mdj-eagle-w: 78px;
-        --mdj-gold-label: 74px;
+        position: relative;
+        max-height: var(--header-height) !important;
       }
 
-      body.page-home #mainHeader .brand .logo-img-eagle {
-        height: 78px !important;
-      }
-
-      body.page-home #mainHeader .brand .brand-letters-img {
-        height: 178px !important;
-        max-height: 180px !important;
-      }
-
-      body.page-home #mainHeader .brand .brand-letters-wrapper {
-        width: min(860px, 58vw);
-      }
-    }
-
-    @media (max-width: 900px) {
-      body.page-home #mainHeader .brand {
-        margin: 0 !important;
-      }
-
-      body.page-home #mainHeader .brand .logo-img-eagle {
-        height: 72px !important;
-        max-height: none !important;
-      }
-    }
-
-    @media (max-width: 640px) {
-      body.page-home #mainHeader .brand .logo-img-eagle {
-        height: 72px !important;
-        max-height: none !important;
-      }
-    }
-
-    @media (max-width: 400px) {
-      body.page-home #mainHeader .brand {
-        --mdj-eagle-w: 64px;
-        --mdj-gold-label: 62px;
-      }
-
-      body.page-home #mainHeader .brand .logo-img-eagle {
-        height: 64px !important;
-        max-height: none !important;
-      }
-
-      body.page-home #mainHeader .brand .brand-letters-img {
-        height: 92px !important;
-        max-height: 92px !important;
-      }
-    }
-
-    body.page-home #mainHeader .header-actions {
-      display: flex !important;
-      justify-content: flex-end !important;
-      align-items: center !important;
-      align-self: center;
-      flex-wrap: nowrap !important;
-      /* Aire real en la píldora: sin max-height que apriete LOGOUT / avatar / carrito */
-      max-height: none;
-      min-height: 52px;
-      padding: 12px 22px !important;
-      gap: 20px !important;
-      column-gap: 20px !important;
-      row-gap: 14px !important;
-      box-sizing: border-box;
-      overflow: visible;
-    }
-
-    @media (min-width: 1600px) {
-      body.page-home #mainHeader .header-actions {
-        gap: 24px !important;
-        column-gap: 24px !important;
-        padding: 12px 28px !important;
+      body.page-home #mainHeader.header {
+        min-height: calc(var(--mdj-index-header-total) + env(safe-area-inset-top, 0px)) !important;
       }
     }
 
@@ -271,157 +127,34 @@
     body.page-home #mainHeader .header-avatar-cart-row {
       flex-shrink: 0;
       align-items: center;
-      gap: 18px;
+      gap: 8px;
     }
 
-    body.page-home #mainHeader .account-btn .avatar {
-      width: 40px;
-      height: 40px;
-      border-width: 2px;
+    @media (max-width: 1000px) {
+      body.page-home #mainHeader .account-btn .avatar {
+        width: 32px;
+        height: 32px;
+        border-width: 2px;
+      }
     }
 
-    body.page-home #mainHeader .header-bottom {
-      flex: 0 0 88px !important;
-      height: 88px !important;
-      min-height: 88px !important;
-      max-height: 88px !important;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-sizing: border-box;
-      overflow: hidden;
-      padding: 0 !important;
-      margin: 0;
-      background: linear-gradient(180deg, rgba(6, 5, 4, 0.45) 0%, rgba(2, 2, 2, 0.9) 100%);
-      border-top: 1px solid rgba(197, 160, 89, 0.22);
-    }
+    /* Fila 2 (#mainNav + .header-nav): ver header-unified.css y styles.css — no duplicar parches aquí. */
 
-    body.page-home #mainHeader .header-bottom .container {
-      height: 100%;
-      max-height: 88px !important;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-sizing: border-box;
-      overflow: hidden;
-    }
-
-    body.page-home #mainHeader #mainNav.nav.top-nav {
-      box-sizing: border-box;
-      height: 100%;
-      max-height: 88px !important;
-      min-height: 0;
-      width: 100%;
-      margin: 0 auto;
-      /* Paralelo a body… .dj-owner-tabs .container: un poco más de aire vertical que 10px */
-      padding: 8px clamp(14px, 2.5vw, 40px) !important;
-      align-items: center;
-      justify-content: center !important;
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      overflow-y: hidden;
-    }
-
-    /*
-     * Referencia menú perfil: body.dj-profile .dj-owner-tabs .dj-tab-btn
-     * (clamp + 800 + 0.12em + padding lateral). Aquí +1 paso en escala para la barra pública.
-     */
-    body.page-home #mainHeader #mainNav.nav.top-nav a {
-      font-size: clamp(15px, 1.12vw, 18px) !important;
-      line-height: 1.2 !important;
-      font-weight: 800 !important;
-      letter-spacing: 0.12em !important;
-      padding: 14px clamp(16px, 1.8vw, 26px) !important;
-      box-sizing: border-box;
-      text-transform: uppercase;
-      color: rgba(197, 160, 89, 0.96) !important;
-      -webkit-font-smoothing: antialiased;
-      white-space: nowrap !important;
-      flex-shrink: 0 !important;
-      width: auto !important;
-      max-width: none !important;
-      flex: 0 0 auto !important;
-    }
-
-    /*
-     * Búsqueda inteligente: no usar min-width:0 (recortaba solo la lupa). Misma base que .header-search-wrap global.
-     */
     body.page-home #mainHeader .header-search-wrap {
       order: 2;
-      flex: 2 1 300px;
-      min-width: min(100%, clamp(220px, 34vw, 320px)) !important;
-      max-width: min(540px, 100%);
+      flex: 1 1 200px;
+      min-width: min(100%, 160px) !important;
+      max-width: min(420px, 42vw);
       box-sizing: border-box;
     }
 
     body.page-home #mainHeader .header-search-wrap .header-smart-search {
       width: 100%;
       min-width: 0;
+      height: 32px;
+      min-height: 32px;
+      max-height: 32px;
       box-sizing: border-box;
-    }
-
-    body.page-home #mainHeader #mainNav.nav.top-nav a:hover {
-      color: #f5e6c8 !important;
-    }
-
-    body.page-home #mainHeader #mainNav.nav.top-nav a.active {
-      color: var(--gold) !important;
-    }
-
-    /*
-     * Refuerzo vs styles.css (#mainHeader @max-width 1000px fuerza 140px en .header-top .container).
-     * Home = 90px + 88px nav = 178px totales; sin esto la franja superior “crece” y la marca queda mal centrada.
-     */
-    @media (max-width: 1000px) {
-      body.page-home #mainHeader.header {
-        min-height: calc(var(--mdj-index-header-total) + env(safe-area-inset-top, 0px)) !important;
-      }
-
-      body.page-home #mainHeader .header-top {
-        flex: 0 0 90px !important;
-        height: 90px !important;
-        min-height: 90px !important;
-        max-height: 90px !important;
-      }
-
-      body.page-home #mainHeader .header-top .container {
-        min-height: 90px !important;
-        max-height: 90px !important;
-        height: 100% !important;
-      }
-
-      body.page-home #mainHeader .header-bottom {
-        flex: 0 0 88px !important;
-        height: 88px !important;
-        min-height: 88px !important;
-        max-height: 88px !important;
-      }
-    }
-
-    /* Escritorio ancho: refuerzo vs #mainHeader global (180px / 140+40) en styles.css */
-    @media (min-width: 1001px) {
-      body.page-home #mainHeader.header {
-        min-height: calc(var(--mdj-index-header-total) + env(safe-area-inset-top, 0px)) !important;
-      }
-
-      body.page-home #mainHeader .header-top {
-        flex: 0 0 90px !important;
-        height: 90px !important;
-        min-height: 90px !important;
-        max-height: 90px !important;
-      }
-
-      body.page-home #mainHeader .header-top .container {
-        min-height: 90px !important;
-        max-height: 90px !important;
-      }
-
-      body.page-home #mainHeader .header-bottom {
-        flex: 0 0 88px !important;
-        height: 88px !important;
-        min-height: 88px !important;
-        max-height: 88px !important;
-      }
     }
 
     #header-get-pro-btn {
@@ -754,12 +487,12 @@
     }
 
   </style>
-  <link rel="stylesheet" href="./mdj-mainnav-zero-wrap.css?v=20260430-horizontal-unify" />
+  <link rel="stylesheet" href="./mdj-mainnav-zero-wrap.css?v=20260421-menu-static" />
 </head>
 
 <body class="notranslate page-home">
   <!-- LOCKED SECTION: DO NOT MODIFY -->
-  <header class="header" id="mainHeader">
+  <header class="header mdj-header-unified" id="mainHeader">
     <div class="header-top">
       <!-- LOCKED SECTION: DO NOT MODIFY -->
       <div class="container">
@@ -772,7 +505,7 @@
         </div>
 
         <div class="header-actions">
-          <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
+          <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Obtener PRO</a>
           <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
           <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
           <div class="lang-switcher">
@@ -780,27 +513,27 @@
             <span class="lang-pipe">|</span>
             <span class="lang-btn active" data-lang="en">EN</span>
           </div>
-          <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-i18n="btn-login">Log in</a>
+          <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-i18n="btn-login">Entrar</a>
 
-          <div class="header-avatar-cart-row" aria-label="Account and cart">
-            <div class="account session-pending" id="header-auth-zone" style="display: none;">
+          <div class="header-avatar-cart-row" aria-label="Cuenta y carrito">
+            <div class="account session-pending" id="header-auth-zone">
               <a class="account-btn" id="accountBtn" href="./dj-profile.html" title="Mi perfil" aria-label="Mi perfil">
               <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
             </a>
 </div>
 
-            <a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart" aria-label="Shopping cart">
+            <a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Carrito" aria-label="Carrito de compras">
               <span aria-hidden="true">🛒</span>
               <span id="header-cart-count" class="header-cart-count" hidden></span>
             </a>
           </div>
           <div class="header-search-wrap">
             <input type="search" id="header-smart-search" class="header-smart-search"
-              placeholder="Search DJs, shop, courses, booking…" autocomplete="off" enterkeyhint="search" />
+              placeholder="Buscar DJs, tienda, cursos, reservas…" autocomplete="off" enterkeyhint="search" />
           </div>
         </div>
 
-        <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu" aria-controls="mobileMenu"
+        <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menú" aria-controls="mobileMenu"
           aria-expanded="false">
           <span></span>
           <span></span>
@@ -810,34 +543,37 @@
         <!-- Mobile Menu Overlay -->
         <div class="mobile-overlay" id="mobileMenu">
           <nav class="mobile-nav">
-            <a href="./index.html" class="active" data-i18n="nav-home" data-mdj-nav="home">Home</a>
-            <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
-            <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+            <a href="./index.html" class="active" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
+            <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
+            <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
             <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
             <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
-            <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+            <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
             <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
             <a href="./login.html?signup=free" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free"
               style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
             <a href="./login.html" id="header-login-btn-mobile" data-i18n="btn-login"
               style="color:var(--gold); font-weight:800;">Entrar</a>
             <a href="./dj-profile.html" id="nav-my-profile-mobile"
-              style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY PROFILE</a>
+              style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MI PERFIL</a>
           </nav>
         </div>
       </div>
     </div>
-    <div class="header-bottom">
+    <div class="header-nav">
       <!-- LOCKED SECTION: DO NOT MODIFY -->
       <div class="container">
-        <nav class="nav top-nav" id="mainNav">
-          <a href="./index.html" class="active category-tab" data-i18n="nav-home" data-mdj-nav="home">Home</a>
-          <a href="./rentals.html" class="category-tab" data-i18n="nav-services" data-mdj-nav="services">Services</a>
-          <a href="./index.html#experience" class="category-tab" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
-          <a href="./shop.html" class="category-tab" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
-          <a href="./dj-tools.html" class="category-tab" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
-          <a href="./jobs.html" class="category-tab" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
-          <a href="./index.html#contact" class="category-tab" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
+        <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" aria-label="Navegación principal">
+          <a href="./index.html" class="active" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
+          <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
+          <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
+          <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
+          <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+          <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+          <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
+          <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+          <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" aria-hidden="true" tabindex="-1">MI PORTAL</a>
+          <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
         </nav>
       </div>
     </div>
@@ -1167,6 +903,19 @@
         <div class="mdj-experience-preamble">
           <h2 data-i18n="section-venues-title">EVENTOS / VENUES / PATROCINADORES</h2>
           <p class="sub" data-i18n="section-venues-sub">Asociaciones con venues destacados y producción integral de eventos en el Sur de la Florida.</p>
+        </div>
+        <div class="mdj-wedding-plan-band"
+          style="margin-bottom:clamp(22px,3vw,36px);padding:clamp(18px,2.5vw,24px) clamp(18px,3vw,28px);border-radius:18px;border:1px solid rgba(197,160,89,0.28);background:rgba(15,22,35,0.55);box-shadow:0 12px 40px rgba(0,0,0,0.25);">
+          <p class="fineprint"
+            style="margin:0 0 6px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(197,160,89,0.95);font-weight:800;font-size:11px;"
+            data-i18n="wedding-plan-band-eyebrow"></p>
+          <h3
+            style="margin:0 0 10px;color:var(--gold);font-size:clamp(1.05rem,2.2vw,1.4rem);font-weight:800;line-height:1.25;"
+            data-i18n="wedding-plan-band-title"></h3>
+          <p class="sub"
+            style="margin:0 0 16px;max-width:62ch;line-height:1.55;font-size:clamp(0.9rem,1.6vw,1rem);opacity:0.92;"
+            data-i18n="wedding-plan-band-lead"></p>
+          <a href="./wedding-planning.html" class="btn gold" style="display:inline-flex;" data-i18n="wedding-plan-band-cta"></a>
         </div>
         <!-- Pila: (1) reels verticales (2) residencias semanales (3) hero fotos — ver LEEME en eventos-venues-patrocinadores/ -->
         <div class="mdj-experience-stack">
@@ -1630,16 +1379,18 @@
     </div>
   </footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./supabase-config.js?v=20260421-storage-reels-fix"></script>
-  <script src="./translations.js?v=20260421-reels-partner-copy"></script>
+  <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+  <script src="./translations.js?v=20260422-nav-labels-1"></script>
   <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
   <script src="./form-handler.js?v=20260420-deploy"></script>
-  <script src="./header-smart-search.js?v=20260415-NAV-RETINA-FIX"></script>
-  <script src="./mdj-shared-header.js?v=20260421-nav-tier-matrix"></script>
-  <script src="./mdj-carousel-scroll-tick.js?v=20260420-residencies-tick-mute"></script>
+  <script src="./header-smart-search.js?v=20260421-smartsearch-dj-directory"></script>
+  <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+  <script src="./mdj-shared-header.js?v=20260422-mainnav-infinite-1"></script>
+  <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+  <script src="./mdj-mainnav-infinite.js?v=20260425-home-nav-carousel"></script>
   <script src="./js/venues-showcase.js?v=20260421-baila-filename-storage" defer></script>
   <script src="./js/venue-photo-gallery.js?v=20260420-gallery-no-tick" defer></script>
-  <script src="./js/residencies-carousel.js?v=20260421-residencies-wrap-debounce" defer></script>
+  <script src="./js/residencies-carousel.js?v=20260425-residencies-arrows-always" defer></script>
   <script>
     // Auto-fill Referral Code, DJ name, and Event Date from URL
     document.addEventListener('DOMContentLoaded', () => {
@@ -1979,10 +1730,18 @@
         };
       }
 
-      // Video Volume & Interaction
+      // Video Volume & Interaction (autoplay sigue mute hasta gesto; si en BD no hay clave, volumen audible por defecto)
       if (video && isHomeActive) {
-        const vol = parseFloat(settings.home_hero_video_volume) || 0;
-        video.muted = true; // Always start muted for autoplay
+        var volRaw = settings.home_hero_video_volume;
+        var vol = 0;
+        if (volRaw === '' || volRaw === null || volRaw === undefined) {
+          vol = 0.42;
+        } else {
+          vol = parseFloat(volRaw);
+          if (!Number.isFinite(vol)) vol = 0.42;
+        }
+        if (vol > 1) vol = 1;
+        video.muted = true;
 
         const tryUnmute = () => {
           if (vol > 0) {
@@ -2062,7 +1821,7 @@
   </div>
   <script src="./subscription.js?v=20260226-1"></script>
   <script src="./monetization.js?v=20260411-policy"></script>
-  <script src="./mdj-social-bar.js?v=20260414-MAC-DESKTOP-SYNC"></script>
+  <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
 </body>
 
 </html>

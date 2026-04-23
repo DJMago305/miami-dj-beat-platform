@@ -1,7 +1,7 @@
 /**
  * Artist nav context for Jobs / Shop / DJ Tools (?mdj_nav=profile).
  * Architecture is SEALED — see repo `.cursorrules` → "Artist nav context — satellite pages".
- * Do not remove script includes from jobs / shop / dj-tools or duplicate #mainHeader .header-bottom.
+ * Do not remove script includes from jobs / shop / dj-tools or duplicate #mainHeader .header-nav.
  *
  * Cuando la URL lleva ?mdj_nav=profile (enlaces desde dj-profile / dashboard artista),
  * se muestra la barra tipo "perfil" (#owner-tabs) y se oculta la fila #mainNav.
@@ -117,7 +117,7 @@
 
     function hideSiteMainNavRow() {
         try {
-            var hb = document.querySelector('#mainHeader .header-bottom');
+            var hb = document.querySelector('#mainHeader .header-nav');
             if (hb) hb.style.setProperty('display', 'none', 'important');
         } catch (e) { /* noop */ }
     }
