@@ -1,0 +1,868 @@
+diff --git a/cursorrules.txt b/cursorrules.txt
+deleted file mode 100644
+index c5ce20d..0000000
+--- a/cursorrules.txt
++++ /dev/null
+@@ -1,28 +0,0 @@
+-# CONSTITUCIÓN DEFINITIVA DE MIAMI DJ BEAT
+-
+-Usted es el Ingeniero Jefe de una plataforma SaaS de élite. NO es un asistente zombi. 
+-Su prioridad absoluta es la SOLIDEZ ESTRUCTURAL. Lea estas leyes antes de cada acción.
+-
+-## 1. LEY DE ESTABILIDAD VISUAL (ANTI-BRINCO)
+-- El menú de navegación (#mainNav) es un bloque de piedra. PROHIBIDO cualquier Layout Shift.
+-- PROHIBIDO: Usar 'min-width: 0', 'min-width: none' o 'width: auto' en los enlaces del header.
+-- REGLA: El suelo mínimo para ítems del menú desktop es '12ch' (12 caracteres).
+-- REGLA: El subrayado dorado (.active::after) debe estar siempre presente (invisible si no está activo) para que el contenedor no cambie de tamaño al activarse.
+-- REGLA: El texto base en español debe estar "hardcoded" en el HTML para evitar que el menú nazca vacío mientras carga el i18n.
+-
+-## 2. LEY DE SEGURIDAD Y ROLES (CIERRE DE BRECHA)
+-- La función 'public.is_staff(uid)' en Postgres es la ÚNICA fuente de verdad.
+-- PROHIBIDO: Confiar en 'app_metadata.role' del lado del cliente sin validación previa contra la base de datos.
+-- ERROR CRÍTICO: No intente actualizar 'app_metadata' directamente en 'auth.users' desde el SQL Editor (da error de columna). Use scripts de servidor.
+-- REGLA: Si un usuario intenta entrar al Manager Panel y no es Staff en la DB, ejecute 'signOut' y redirija a 'index.html' inmediatamente.
+-
+-## 3. LEY DE INTEGRIDAD Y NO-REGRESIONES
+-- Antes de modificar CSS global, VERIFIQUE que no rompa el responsive de móvil ni el menú hamburguesa.
+-- PROHIBIDO: Borrar comentarios de versiones de caché (ej: ?v=2026...) o marcas de otros desarrolladores.
+-- REGLA SQL: Para actualizar funciones con cambios de parámetros, use siempre 'DROP FUNCTION IF EXISTS ... CASCADE' antes del 'CREATE OR REPLACE'.
+-- PROTOCOLO: Si una solución requiere alterar una estructura existente que funciona, DETÉNGASE y pida permiso explícito al Capitán.
+-
+-## 4. CALIDAD DE CÓDIGO Y COMPORTAMIENTO
+-- No invente URLs, rutas ni funciones que no existan en el contexto del archivo.
+-- Mantenga consistencia: Español para la interfaz (UI), Inglés para el código y lógica.
+-- Sus respuestas deben ser breves, técnicas y orientadas a la ejecución perfecta. Cero excusas.
+\ No newline at end of file
+diff --git a/web/assets/eventos-venues-patrocinadores/galeria/home_hero_4k_wide.png b/web/assets/eventos-venues-patrocinadores/galeria/home_hero_4k_wide.png
+deleted file mode 100644
+index 7db1b80..0000000
+Binary files a/web/assets/eventos-venues-patrocinadores/galeria/home_hero_4k_wide.png and /dev/null differ
+diff --git a/web/assets/eventos-venues-patrocinadores/gallery-manifest.json b/web/assets/eventos-venues-patrocinadores/gallery-manifest.json
+index 8a69b8a..17d7acc 100644
+--- a/web/assets/eventos-venues-patrocinadores/gallery-manifest.json
++++ b/web/assets/eventos-venues-patrocinadores/gallery-manifest.json
+@@ -4,6 +4,9 @@
+   "images": [
+     "el_valle_featured.png",
+     "mojitos_featured.png",
+-    "sundowners_featured.png"
++    "sundowners_featured.png",
++    "Club_resident.png",
++    "Luxury_vibe.png",
++    "wedding_blurred_ambient.png"
+   ]
+ }
+diff --git a/web/dj-dashboard.html b/web/dj-dashboard.html
+index ec5b946..415ab6f 100644
+--- a/web/dj-dashboard.html
++++ b/web/dj-dashboard.html
+@@ -5826,10 +5826,11 @@
+                 weatherContainer.classList.add(`scene-${sceneType}`);
+             }
+ 
+-            // Highlight Active QA Button
++            // Highlight Active QA Button (solo si existe panel QA; evita error si onclick es null)
+             document.querySelectorAll('.scene-filters button').forEach(btn => {
+                 btn.classList.remove('active-qa');
+-                if (btn.getAttribute('onclick').includes(`'${sceneType}'`)) {
++                var oc = btn.getAttribute('onclick');
++                if (oc && oc.includes(`'${sceneType}'`)) {
+                     btn.classList.add('active-qa');
+                 }
+             });
+@@ -5900,8 +5901,8 @@
+     </div>
+ 
+     <!-- Weather Orchestration & API -->
+-    <script src="./js/event-weather.js?v=20260312-4"></script>
+-    <script src="./js/weather-engine.js?v=20260404-VIP"></script>
++    <script src="./js/event-weather.js?v=20260423-weather-latlon-key"></script>
++    <script src="./js/weather-engine.js?v=20260423-weather-latlon-key"></script>
+ 
+     <!-- Weather Astral Engine -->
+     <script src="./weather-astral.js?v=20260312-3"></script>
+diff --git a/web/header-unified.css b/web/header-unified.css
+index 11d57f0..018984b 100644
+--- a/web/header-unified.css
++++ b/web/header-unified.css
+@@ -319,6 +319,45 @@
+     outline-offset: 2px !important;
+   }
+ 
++  @keyframes mdj-home-nav-chevron-nudge {
++    0%,
++    100% {
++      opacity: 1;
++    }
++    50% {
++      opacity: 0.82;
++    }
++  }
++
++  /* Inicio: flechas más visibles (barra densa); hint en title del botón (JS). */
++  body.page-home #mainHeader.header.mdj-header-unified
++    .header-nav.mdj-mainnav-infinite--ui
++    .mdj-mainnav-infinite-chevron {
++    z-index: 18 !important;
++    width: 40px !important;
++    height: 40px !important;
++    border-radius: 10px !important;
++    box-shadow:
++      0 1px 0 rgba(255, 255, 255, 0.1) inset,
++      0 3px 14px rgba(0, 0, 0, 0.42) !important;
++  }
++
++  body.page-home #mainHeader.header.mdj-header-unified
++    .header-nav.mdj-mainnav-infinite--ui
++    .mdj-mainnav-infinite-chevron
++    .mdj-mainnav-chevron-ico {
++    width: 22px !important;
++    height: 22px !important;
++  }
++
++  @media (prefers-reduced-motion: no-preference) {
++    body.page-home #mainHeader.header.mdj-header-unified
++      .header-nav.mdj-mainnav-infinite--ui
++      .mdj-mainnav-infinite-chevron {
++      animation: mdj-home-nav-chevron-nudge 2.8s ease-in-out infinite !important;
++    }
++  }
++
+   /* Mismo orden invitado / sesión que VIP (antes solo con body.mdj-logged-in-header → salto al hidratar) */
+   #mainHeader.mdj-header-unified .header-actions .lang-switcher {
+     order: -10;
+diff --git a/web/index.html b/web/index.html
+index 636d53a..be062f0 100644
+--- a/web/index.html
++++ b/web/index.html
+@@ -1031,7 +1031,7 @@
+           </div>
+           <div class="mdj-experience-gallery-zone">
+         <section class="mdj-experience-gallery-wrap" id="mdjExperienceGalleryWrap" hidden aria-labelledby="mdjGalleryHeading">
+-          <h3 id="mdjGalleryHeading" class="mdj-experience-gallery-heading" data-i18n="exp-gallery-heading">Photo show · gallery</h3>
++          <h3 id="mdjGalleryHeading" class="mdj-experience-gallery-heading" data-i18n="exp-gallery-heading">GALERÍA · FOTOS</h3>
+           <p class="mdj-experience-gallery-sub" data-i18n="exp-gallery-sub">One full-width hero; images rotate like a slideshow.</p>
+           <div class="mdj-venue-photo-hero" id="mdjVenuePhotoHero" role="region" tabindex="0" data-i18n-aria="exp-gallery-region-aria">
+             <div class="mdj-venue-photo-hero__frame">
+@@ -1379,17 +1379,47 @@
+     </div>
+   </footer>
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+-  <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+-  <script src="./translations.js?v=20260422-nav-labels-1"></script>
++  <script src="./supabase-config.js?v=20260423-gallery-dedupe-comment"></script>
++  <script src="./translations.js?v=20260423-gallery-heading"></script>
+   <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
+   <script src="./form-handler.js?v=20260420-deploy"></script>
+   <script src="./header-smart-search.js?v=20260421-smartsearch-dj-directory"></script>
+   <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+   <script src="./mdj-shared-header.js?v=20260422-mainnav-infinite-1"></script>
+-  <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+-  <script src="./mdj-mainnav-infinite.js?v=20260425-home-nav-carousel"></script>
+-  <script src="./js/venues-showcase.js?v=20260421-baila-filename-storage" defer></script>
+-  <script src="./js/venue-photo-gallery.js?v=20260420-gallery-no-tick" defer></script>
++  <script>
++    /* Inicio: trinquete en #mainNav (scroll + flechas); no reactiva tick en otros carruseles por scroll. */
++    window.MDJ_ENABLE_NAV_TICK_AUDIO = true;
++  </script>
++  <script src="./mdj-carousel-scroll-tick.js?v=20260421-wheel-resume-tick"></script>
++  <script src="./mdj-mainnav-infinite.js?v=20260421-home-nav-cap-hint"></script>
++  <script>
++    /* Tras i18n / hidratar slots del menú, el ancho del rail cambia: remontar overflow + flechas + tick. */
++    (function () {
++      function kickNavInf() {
++        if (typeof window.mdjReinitMainNavInfinite === 'function') {
++          window.mdjReinitMainNavInfinite();
++        }
++      }
++      function scheduleKicks() {
++        [0, 320, 900, 2200].forEach(function (ms) {
++          setTimeout(kickNavInf, ms);
++        });
++      }
++      if (document.readyState === 'loading') {
++        document.addEventListener('DOMContentLoaded', scheduleKicks);
++      } else {
++        scheduleKicks();
++      }
++      document.addEventListener('languageChanged', function () {
++        requestAnimationFrame(function () {
++          setTimeout(kickNavInf, 0);
++          setTimeout(kickNavInf, 160);
++        });
++      });
++    })();
++  </script>
++  <script src="./js/venues-showcase.js?v=20260423-baila-reel-aliases" defer></script>
++  <script src="./js/venue-photo-gallery.js?v=20260423-manifest-json-parse-guard" defer></script>
+   <script src="./js/residencies-carousel.js?v=20260425-residencies-arrows-always" defer></script>
+   <script>
+     // Auto-fill Referral Code, DJ name, and Event Date from URL
+@@ -1702,6 +1732,7 @@
+       const video = document.getElementById('home-hero-video');
+       const placeholder = document.getElementById('home-hero-kb');
+       const headline = document.getElementById('home-hero-headline');
++      const heroSection = document.getElementById('home-hero');
+       const isHomeActive = settings.home_hero_active !== 'false'; // Quarantine Logic
+ 
+       const defaultVideo = "./assets/home/Home for Miami DJ Beat.mp4";
+@@ -1730,29 +1761,40 @@
+         };
+       }
+ 
+-      // Video Volume & Interaction (autoplay sigue mute hasta gesto; si en BD no hay clave, volumen audible por defecto)
++      /* Hero vídeo: siempre mudo (no mezclar con música ambiental; pista del MP4 puede seguir en el archivo). */
+       if (video && isHomeActive) {
+-        var volRaw = settings.home_hero_video_volume;
+-        var vol = 0;
+-        if (volRaw === '' || volRaw === null || volRaw === undefined) {
+-          vol = 0.42;
+-        } else {
+-          vol = parseFloat(volRaw);
+-          if (!Number.isFinite(vol)) vol = 0.42;
+-        }
+-        if (vol > 1) vol = 1;
+-        video.muted = true;
+-
+-        const tryUnmute = () => {
+-          if (vol > 0) {
+-            video.muted = false;
+-            video.volume = vol;
++        var enforceHeroMute = function () {
++          try {
++            video.muted = true;
++            video.defaultMuted = true;
++            video.volume = 0;
++            video.setAttribute('muted', '');
++          } catch (eM) {
++            void eM;
+           }
+-          window.removeEventListener('click', tryUnmute);
+-          window.removeEventListener('scroll', tryUnmute);
+         };
+-        window.addEventListener('click', tryUnmute);
+-        window.addEventListener('scroll', tryUnmute);
++        enforceHeroMute();
++        video.addEventListener('loadeddata', enforceHeroMute);
++        video.addEventListener('volumechange', enforceHeroMute);
++
++        document.addEventListener('visibilitychange', function () {
++          if (!video) return;
++          if (document.hidden) {
++            video.pause();
++            enforceHeroMute();
++          } else {
++            enforceHeroMute();
++            requestAnimationFrame(function () {
++              if (!heroSection) {
++                video.play().catch(function () {});
++                return;
++              }
++              var r = heroSection.getBoundingClientRect();
++              var inView = r.bottom > 32 && r.top < window.innerHeight - 24;
++              if (inView) video.play().catch(function () {});
++            });
++          }
++        });
+       }
+ 
+       // Headlines (Dynamic Text) — Respect Quarantine
+@@ -1769,19 +1811,20 @@
+         }
+       }
+ 
+-      // Audio/Video Control based on Visibility
++      // Hero en viewport: play/pause (vídeo siempre mudo).
+       const observer = new IntersectionObserver((entries) => {
+         entries.forEach(entry => {
+           if (video) {
+             if (entry.isIntersecting) {
+-              video.play().catch(e => console.log("Autoplay blocked:", e));
++              if (!document.hidden) {
++                video.play().catch(e => console.log("Autoplay blocked:", e));
++              }
+             } else {
+               video.pause();
+             }
+           }
+         });
+       }, { threshold: 0.1 });
+-      const heroSection = document.getElementById('home-hero');
+       if (heroSection) observer.observe(heroSection);
+     }
+   </script>
+diff --git a/web/js/event-weather.js b/web/js/event-weather.js
+index 21a2e2e..6cae54e 100644
+--- a/web/js/event-weather.js
++++ b/web/js/event-weather.js
+@@ -4,15 +4,26 @@
+  * and logistical alerts for Miami DJ Beat System.
+  */
+ 
+-// LA LLAVE MAESTRA EXTRAÍDA DIRECTAMENTE
+-const API_KEY = 'dd8223bfcc6f68da9fc28ca245fe0201';
++/** En producción definir `window.OPENWEATHER_API_KEY` antes de cargar este script (Vercel env → inline o Edge). */
++function mdjOpenWeatherApiKey() {
++    if (typeof window !== 'undefined' && window.OPENWEATHER_API_KEY && String(window.OPENWEATHER_API_KEY).trim()) {
++        return String(window.OPENWEATHER_API_KEY).trim();
++    }
++    return 'dd8223bfcc6f68da9fc28ca245fe0201';
++}
+ 
+ async function getWeatherForecast(city, eventDateStr, lat = null, lon = null) {
+-    // Miami, FL — coordenadas centro (pronóstico coherente con la marca BOSS)
+-    const fixedLat = 25.7617;
+-    const fixedLon = -80.1918;
++    const miamiLat = 25.7617;
++    const miamiLon = -80.1918;
++    var useLat = miamiLat;
++    var useLon = miamiLon;
++    if (lat != null && lon != null && !isNaN(Number(lat)) && !isNaN(Number(lon))) {
++        useLat = Number(lat);
++        useLon = Number(lon);
++    }
++    const API_KEY = mdjOpenWeatherApiKey();
+     const params = `&appid=${API_KEY}&units=imperial&lang=es&t=${Date.now()}`;
+-    const urlCurrent = `https://api.openweathermap.org/data/2.5/weather?lat=${fixedLat}&lon=${fixedLon}${params}`;
++    const urlCurrent = `https://api.openweathermap.org/data/2.5/weather?lat=${useLat}&lon=${useLon}${params}`;
+ 
+     const resCurrent = await fetch(urlCurrent);
+ 
+@@ -25,7 +36,7 @@ async function getWeatherForecast(city, eventDateStr, lat = null, lon = null) {
+     // La Manguera API está abierta al 100%. No hay filtros ni overrides alterando el clima real.
+ 
+     // Forecast misma grilla (Miami)
+-    const urlForecast = `https://api.openweathermap.org/data/2.5/forecast?lat=${fixedLat}&lon=${fixedLon}${params}`;
++    const urlForecast = `https://api.openweathermap.org/data/2.5/forecast?lat=${useLat}&lon=${useLon}${params}`;
+ 
+     const resForecast = await fetch(urlForecast);
+     let forecastData = null;
+diff --git a/web/js/venue-photo-gallery.js b/web/js/venue-photo-gallery.js
+index 6786561..9601eb0 100644
+--- a/web/js/venue-photo-gallery.js
++++ b/web/js/venue-photo-gallery.js
+@@ -21,6 +21,8 @@
+ 
+   var entries = [];
+   var idx = 0;
++  /** true si las entradas vienen de Storage `eventos-venues-patrocinadores/galeria/` (misma base que .list()). */
++  var useDedicatedGalleryBucket = false;
+   /** La capa visible al terminar la última transición (true = A arriba). */
+   var topIsA = true;
+   var timer = null;
+@@ -36,7 +38,32 @@
+   }
+ 
+   function pathForFile(file) {
+-    return resolveUrl(BASE + file);
++    var relPath = BASE + file;
++    if (useDedicatedGalleryBucket && window.MDB_SUPABASE_URL) {
++      var origin = String(window.MDB_SUPABASE_URL).replace(/\/$/, '');
++      try {
++        var seg = String(file || '')
++          .split('/')
++          .map(function (s) {
++            try {
++              return encodeURIComponent(decodeURIComponent(s));
++            } catch (e) {
++              return encodeURIComponent(s);
++            }
++          })
++          .join('/');
++        if (seg) {
++          return (
++            origin +
++            '/storage/v1/object/public/eventos-venues-patrocinadores/galeria/' +
++            seg
++          );
++        }
++      } catch (e2) {
++        void e2;
++      }
++    }
++    return resolveUrl(relPath);
+   }
+ 
+   function normalize(e) {
+@@ -237,7 +264,19 @@
+     return fetch(MANIFEST_URL)
+       .then(function (r) {
+         if (!r.ok) return {};
+-        return r.json();
++        return r.text().then(function (txt) {
++          try {
++            return JSON.parse(txt);
++          } catch (e) {
++            if (typeof console !== 'undefined' && console.warn) {
++              console.warn(
++                '[venue-photo-gallery] gallery-manifest.json inválido (¿faltan comas entre ítems?).',
++                e
++              );
++            }
++            return {};
++          }
++        });
+       })
+       .catch(function () {
+         return {};
+@@ -253,6 +292,7 @@
+     }
+     root.style.setProperty('--mdj-gallery-fade-ms', transitionMs + 'ms');
+     entries = [];
++    useDedicatedGalleryBucket = !!(storageFileNames && storageFileNames.length);
+     if (storageFileNames && storageFileNames.length) {
+       for (var s = 0; s < storageFileNames.length; s++) {
+         entries.push({ file: storageFileNames[s], alt: '' });
+diff --git a/web/js/venues-showcase.js b/web/js/venues-showcase.js
+index 962122a..c1047c7 100644
+--- a/web/js/venues-showcase.js
++++ b/web/js/venues-showcase.js
+@@ -116,6 +116,11 @@
+ 
+   var timer = null;
+ 
++  /** Si el .mp4 en Storage tiene otro casing/nombre, probar aquí antes del fallback genérico. */
++  var REEL_FILENAME_ALIASES = {
++    'Baila_Con_Micho.mp4': ['bailaconmicho.mp4', 'Baila_con_Micho.mp4', 'baila_con_micho.mp4']
++  };
++
+   /**
+    * URL absoluta del bucket `assets` en producción (Vercel no incluye .mp4 locales si usas .vercelignore).
+    * En localhost devuelve la ruta relativa salvo MDJ_VENUE_REELS_FORCE_STORAGE.
+@@ -147,14 +152,23 @@
+     var reel = vid.getAttribute('data-mdj-reel');
+     var fb = vid.getAttribute('data-mdj-reel-fallback');
+     if (!fb || !reel) return;
+-    var localReelPath = './assets/eventos-venues-patrocinadores/reels/' + reel;
+-    var primary = absoluteReelUrl(localReelPath);
+-    vid.src = String(primary);
+-    vid.onerror = function () {
++    var names = [reel].concat(REEL_FILENAME_ALIASES[reel] || []);
++    var attempt = 0;
++    var fallbackAbs = absoluteReelUrl(fb);
++    function tryNext() {
++      if (attempt < names.length) {
++        var localReelPath = './assets/eventos-venues-patrocinadores/reels/' + names[attempt];
++        attempt += 1;
++        vid.onerror = function () {
++          tryNext();
++        };
++        vid.src = String(absoluteReelUrl(localReelPath));
++        return;
++      }
+       vid.onerror = null;
+-      var fallbackAbs = absoluteReelUrl(fb);
+       if (vid.getAttribute('src') !== String(fallbackAbs)) vid.src = String(fallbackAbs);
+-    };
++    }
++    tryNext();
+   }
+ 
+   function applyReelSources() {
+diff --git a/web/mdj-carousel-scroll-tick.js b/web/mdj-carousel-scroll-tick.js
+index 49b322e..605b586 100644
+--- a/web/mdj-carousel-scroll-tick.js
++++ b/web/mdj-carousel-scroll-tick.js
+@@ -1,10 +1,27 @@
+ /**
+  * Trinquete / cuerda de reloj — timbre más metálico: ruido de impacto + parciales inarmónicos + FM breve.
+  * Un chasquido por tarjeta al hacer scroll; scroll rápido = ráfaga (Web Audio sintético).
++ *
++ * OFF por defecto: no filtrar audio hasta que exista pista global MDJ. Activar con
++ *   window.MDJ_ENABLE_UI_TICK_AUDIO = true
++ * Tick solo carrusel menú inicio (sin ruido en otros scrolls): window.MDJ_ENABLE_NAV_TICK_AUDIO = true
++ * antes de cargar este script.
+  */
+ (function () {
+     'use strict';
+ 
++    function tickAudioAllowed() {
++        return typeof window !== 'undefined' && window.MDJ_ENABLE_UI_TICK_AUDIO === true;
++    }
++
++    /** Solo menú principal / llamadas explícitas a mdjUiTickPlay (p. ej. inicio); no reactiva tick en scroll de otros carruseles. */
++    function tickPlayAllowed() {
++        return (
++            tickAudioAllowed() ||
++            (typeof window !== 'undefined' && window.MDJ_ENABLE_NAV_TICK_AUDIO === true)
++        );
++    }
++
+     var ctx = null;
+ 
+     function getCtx() {
+@@ -101,11 +118,31 @@
+     }
+ 
+     function mdjUiTickPlay() {
++        if (!tickPlayAllowed()) return;
+         /* No usar prefers-reduced-motion aquí: es sonido breve, no animación; bloquearlo dejaba las flechas mudas. */
+         var c = getCtx();
+         if (!c) return;
+-        if (c.state === 'suspended') c.resume().catch(function () {});
+-        scheduleRatchetAt(c, c.currentTime, 1);
++        function play() {
++            try {
++                scheduleRatchetAt(c, c.currentTime, 1);
++            } catch (e) {
++                void e;
++            }
++        }
++        /*
++         * Si el AudioContext sigue suspended, programar el tick en el mismo tick que resume()
++         * no suena (Chrome). Hay que esperar a resume(); la rueda del menú suele ser el primer
++         * gesto sin pointerdown previo.
++         */
++        if (c.state === 'suspended') {
++            c.resume()
++                .then(play)
++                .catch(function () {
++                    play();
++                });
++            return;
++        }
++        play();
+     }
+ 
+     function estimateCardStep(el) {
+@@ -152,18 +189,19 @@
+ 
+     function mdjUiTickBindScroll(el) {
+         if (!el || el.nodeType !== 1) return;
++        if (!tickAudioAllowed()) return;
+         var lastScroll = el.scrollLeft;
+ 
+         el.addEventListener(
+             'scroll',
+             function () {
++                if (!tickAudioAllowed()) return;
+                 if (el.dataset && el.dataset.mdjTickMute === '1') {
+                     lastScroll = el.scrollLeft;
+                     return;
+                 }
+                 var c = getCtx();
+                 if (!c) return;
+-                if (c.state === 'suspended') c.resume().catch(function () {});
+ 
+                 var step = estimateCardStep(el);
+                 if (!step || step < 48) step = 300;
+@@ -176,16 +214,27 @@
+                 var crossed = Math.abs(newIdx - oldIdx);
+                 if (crossed === 0) return;
+ 
+-                crossed = Math.min(crossed, 32);
+-                var t0 = c.currentTime;
++                var nCross = Math.min(crossed, 32);
+                 var staggerSec =
+-                    crossed > 14 ? 0.0068 : crossed > 7 ? 0.0088 : crossed > 3 ? 0.0105 : 0.012;
+-                var baseVol = crossed > 16 ? 0.72 : crossed > 8 ? 0.85 : 1;
++                    nCross > 14 ? 0.0068 : nCross > 7 ? 0.0088 : nCross > 3 ? 0.0105 : 0.012;
++                var baseVol = nCross > 16 ? 0.72 : nCross > 8 ? 0.85 : 1;
+ 
+-                var i;
+-                for (i = 0; i < crossed; i++) {
+-                    var wobble = 0.94 + (i % 3) * 0.03;
+-                    scheduleRatchetAt(c, t0 + i * staggerSec, baseVol * wobble);
++                function fireRatchets() {
++                    var t0 = c.currentTime;
++                    var i;
++                    for (i = 0; i < nCross; i++) {
++                        var wobble = 0.94 + (i % 3) * 0.03;
++                        scheduleRatchetAt(c, t0 + i * staggerSec, baseVol * wobble);
++                    }
++                }
++                if (c.state === 'suspended') {
++                    c.resume()
++                        .then(fireRatchets)
++                        .catch(function () {
++                            fireRatchets();
++                        });
++                } else {
++                    fireRatchets();
+                 }
+             },
+             { passive: true }
+@@ -210,13 +259,26 @@
+         mdjUiTickAutoInit();
+     }
+ 
+-    document.addEventListener(
+-        'pointerdown',
++    (function armUserGestureAudioUnlock() {
++        var opts = { capture: true, passive: true };
++        function detach(fn) {
++            document.removeEventListener('pointerdown', fn, true);
++            document.removeEventListener('wheel', fn, true);
++            document.removeEventListener('touchstart', fn, true);
++        }
+         function once() {
++            if (!tickPlayAllowed()) {
++                detach(once);
++                return;
++            }
+             var c = getCtx();
+-            if (c && c.state === 'suspended') c.resume().catch(function () {});
+-            document.removeEventListener('pointerdown', once, true);
+-        },
+-        { capture: true, passive: true }
+-    );
++            if (c && c.state === 'suspended') {
++                c.resume().catch(function () {});
++            }
++            detach(once);
++        }
++        document.addEventListener('pointerdown', once, opts);
++        document.addEventListener('wheel', once, opts);
++        document.addEventListener('touchstart', once, opts);
++    })();
+ })();
+diff --git a/web/mdj-mainnav-infinite.js b/web/mdj-mainnav-infinite.js
+index bf68edf..78a5e46 100644
+--- a/web/mdj-mainnav-infinite.js
++++ b/web/mdj-mainnav-infinite.js
+@@ -144,26 +144,32 @@
+     bar.classList.add('mdj-mainnav-infinite--ui');
+     var raw = document.documentElement && String(document.documentElement.getAttribute('lang') || document.documentElement.lang || '').toLowerCase();
+     var isEs = raw === 'es' || raw.indexOf('es-') === 0;
++    var dragHint = isEs
++      ? 'Hay más secciones a los lados: desliza la barra del menú o pulsa las flechas.'
++      : 'More sections on the sides: drag the menu bar or tap the arrows.';
+     var p = document.createElement('button');
+     p.type = 'button';
+     p.className = 'mdj-mainnav-infinite-chevron mdj-mainnav-infinite-chevron--prev';
+     p.setAttribute('aria-label', isEs ? 'Desplazar el menú hacia la izquierda' : 'Scroll the menu left');
++    p.setAttribute('title', dragHint);
+     p.innerHTML = CHEV_SVG_R;
+     var nxt = document.createElement('button');
+     nxt.type = 'button';
+     nxt.className = 'mdj-mainnav-infinite-chevron mdj-mainnav-infinite-chevron--next';
+     nxt.setAttribute('aria-label', isEs ? 'Desplazar el menú hacia la derecha' : 'Scroll the menu right');
++    nxt.setAttribute('title', dragHint);
+     nxt.innerHTML = CHEV_SVG_R;
+     var step = Math.max(100, Math.min(260, Math.floor(nav.clientWidth * 0.4)));
+     p.addEventListener('click', function (ev) {
+       ev.preventDefault();
+       ev.stopPropagation();
+-      // Tick solo vía initScrollSoundAcc (scroll), no al clic, para no solapar sonidos.
++      playTickIfReady();
+       nav.scrollBy({ left: -step, behavior: 'smooth' });
+     });
+     nxt.addEventListener('click', function (ev) {
+       ev.preventDefault();
+       ev.stopPropagation();
++      playTickIfReady();
+       nav.scrollBy({ left: step, behavior: 'smooth' });
+     });
+     /* Fuera de .container: hermanas bajo .header-nav (cortina ancha), posicionadas con CSS. */
+@@ -362,32 +368,55 @@
+     window.addEventListener('resize', fn, { passive: true });
+   }
+ 
++  function isPageHome() {
++    return (
++      typeof document !== 'undefined' &&
++      document.body &&
++      document.body.classList &&
++      document.body.classList.contains('page-home')
++    );
++  }
++
++  /**
++   * Inicio: en pantallas muy anchas el rail del menú a veces “cabe” y desaparecen flechas + trinquete.
++   * Estrechamos #mainNav en pasos hasta que haya overflow real (solo si aún no lo hay).
++   */
++  function applyHomeNavWidthCap(nav) {
++    if (!nav || !isPageHome()) return;
++    try {
++      var vw = typeof window.innerWidth === 'number' ? window.innerWidth : 1100;
++      var natural = Math.ceil(nav.scrollWidth);
++      if (natural < 260) return;
++      nav.dataset.mdjMainnavForceW = '1';
++      var cap1 = Math.min(natural - 16, Math.floor(vw * 0.31), 500);
++      cap1 = Math.max(228, cap1);
++      nav.style.maxWidth = cap1 + 'px';
++      void nav.offsetWidth;
++      if (nav.scrollWidth > nav.clientWidth + 1) return;
++      var cap2 = Math.min(natural - 40, Math.floor(vw * 0.26), 380);
++      cap2 = Math.max(200, cap2);
++      nav.style.maxWidth = cap2 + 'px';
++      void nav.offsetWidth;
++      if (nav.scrollWidth > nav.clientWidth + 1) return;
++      if (natural > 300) {
++        nav.style.maxWidth = Math.max(196, Math.min(natural - 56, 300)) + 'px';
++        void nav.offsetWidth;
++      }
++    } catch (e) {
++      void e;
++    }
++  }
++
+   function mountIfOverflow(nav) {
+     teardownNav(nav);
+     if (!isDesktop()) return;
+     var originals = Array.prototype.slice.call(nav.querySelectorAll(':scope > a:not(.' + CLONE + ')'));
+     if (originals.length < 2) return;
+-    /*
+-     * Home: con viewport ancho el menú cabía en una línea → sin overflow → sin clones ni chevrones ni trinquete.
+-     * Forzamos un tope de ancho solo en page-home para recuperar el carrusel sin quitar columnas del menú.
+-     */
++    if (isPageHome() && nav.scrollWidth <= nav.clientWidth + 1) {
++      applyHomeNavWidthCap(nav);
++    }
+     if (nav.scrollWidth <= nav.clientWidth + 1) {
+-      var isHome =
+-        typeof document !== 'undefined' &&
+-        document.body &&
+-        document.body.classList &&
+-        document.body.classList.contains('page-home');
+-      if (isHome) {
+-        var cap = Math.max(400, Math.min(Math.floor(window.innerWidth * 0.38), 760));
+-        nav.dataset.mdjMainnavForceW = '1';
+-        nav.style.maxWidth = cap + 'px';
+-        try {
+-          void nav.offsetWidth;
+-        } catch (eOf) { /* ignore */ }
+-      }
+-      if (nav.scrollWidth <= nav.clientWidth + 1) {
+-        return;
+-      }
++      return;
+     }
+ 
+     var frBefore = document.createDocumentFragment();
+diff --git a/web/mdj-shared-header.js b/web/mdj-shared-header.js
+index af0cf52..df31b57 100644
+--- a/web/mdj-shared-header.js
++++ b/web/mdj-shared-header.js
+@@ -1,6 +1,8 @@
+ /**
+  * Miami DJ Beat — shared top header behavior (session, cart, search, mobile, nav highlight).
+  * Load after: supabase CDN, supabase-config.js, header-smart-search.js (optional), translations/i18n (optional).
++ * En DOMContentLoaded: `./js/mdj-ambient-music.js` (música) y `./js/mdj-videos-force-mute.js` (vídeos mudos).
++ * Omitir música: MDJ_SKIP_AMBIENT_MUSIC o data-mdj-no-ambient. Omitir mute vídeos: MDJ_SKIP_FORCE_MUTE_VIDEOS o data-mdj-no-force-mute-videos.
+  *
+  * OMNIPRESENCE: cuando existe `#mainHeader`, este script es el **único** dueño de ENTRAR/SALIR (y zona VIP)
+  * en `#header-login-btn` / `#header-login-btn-mobile`. `checkSessionForNav()` usa `supabase.auth.getSession()`
+@@ -16,6 +18,38 @@
+     /* ignore */
+   }
+ 
++  function mdjLoadAmbientMusicScript() {
++    if (typeof window !== 'undefined' && window.MDJ_SKIP_AMBIENT_MUSIC) return;
++    if (document.getElementById('mdj-ambient-music-script')) return;
++    try {
++      if (document.documentElement && document.documentElement.getAttribute('data-mdj-no-ambient') === '1') return;
++    } catch (eAmb) {
++      void eAmb;
++    }
++    var s = document.createElement('script');
++    s.id = 'mdj-ambient-music-script';
++    s.src = './js/mdj-ambient-music.js?v=20260421-ambient-home-only';
++    s.async = true;
++    (document.head || document.documentElement).appendChild(s);
++  }
++
++  function mdjLoadForceMuteVideosScript() {
++    if (typeof window !== 'undefined' && window.MDJ_SKIP_FORCE_MUTE_VIDEOS) return;
++    if (document.getElementById('mdj-videos-force-mute-script')) return;
++    try {
++      if (document.documentElement && document.documentElement.getAttribute('data-mdj-no-force-mute-videos') === '1') {
++        return;
++      }
++    } catch (eVm) {
++      void eVm;
++    }
++    var sv = document.createElement('script');
++    sv.id = 'mdj-videos-force-mute-script';
++    sv.src = './js/mdj-videos-force-mute.js?v=20260421-force-mute-1';
++    sv.async = true;
++    (document.head || document.documentElement).appendChild(sv);
++  }
++
+   /**
+    * Auth pills marcados con `data-auth-btn`: texto **fijo** según `document.documentElement.lang`
+    * (sin translations JSON). `es` → ENTRAR/SALIR; cualquier otro (p. ej. `en`) → LOGIN/LOGOUT.
+@@ -1963,6 +1997,8 @@
+   };
+ 
+   document.addEventListener('DOMContentLoaded', function () {
++    mdjLoadForceMuteVideosScript();
++    mdjLoadAmbientMusicScript();
+     if (!document.getElementById('mainHeader')) return;
+     if (window.MDJ_SKIP_SHARED_HEADER_INIT) return;
+     window.mdjInitSharedHeader();
+diff --git a/web/supabase-config.js b/web/supabase-config.js
+index 407b6bf..96cc3d0 100644
+--- a/web/supabase-config.js
++++ b/web/supabase-config.js
+@@ -10,9 +10,8 @@
+     /* Vídeos/imágenes: subidos al bucket público `assets` en Supabase (misma jerarquía que web/assets/). Fuente de verdad en producción. */
+     window.MDB_ASSETS_URL = B + "/storage/v1/object/public/assets/";
+     /**
+-     * Vacío: los reels están en el bucket `assets` (ruta eventos-venues-patrocinadores/...).
+-     * Otro bucket público sin esos archivos → 400 y el vídeo no carga.
+-     * Con "" se usa resolveMdAssetPublicUrl(./assets/eventos-venues-patrocinadores/...).
++     * Vacío: reels y galería (vía manifiesto) resuelven al bucket `assets` bajo eventos-venues-patrocinadores/…
++     * La galería cuando lista Storage en `venue-photo-gallery.js` usa el bucket dedicado explícitamente.
+      */
+     window.MDB_EVENTOS_VENUES_URL = "";
+ })();
+diff --git a/web/translations.js b/web/translations.js
+index c008b6b..04dd148 100644
+--- a/web/translations.js
++++ b/web/translations.js
+@@ -16,7 +16,7 @@ const translations = {
+         "section-venues-title": "EVENTOS / VENUES / PATROCINADORES",
+         "section-venues-sub": "Asociaciones con venues destacados y producción integral de eventos en el Sur de la Florida.",
+         "exp-section-venues-reels": "Tarjetas · reels de venues",
+-        "exp-gallery-heading": "Show de fotos · galería",
++        "exp-gallery-heading": "GALERÍA · FOTOS",
+         "exp-gallery-sub": "Un solo hero a todo ancho: las fotos pasan solas como un slideshow; puedes usar las flechas.",
+         "exp-gallery-region-aria": "Presentación de fotos de eventos y clientes",
+         "exp-gallery-nav-prev": "Foto anterior",
+@@ -1549,7 +1549,7 @@ const translations = {
+         "section-venues-title": "EVENTS / VENUES / SPONSORS",
+         "section-venues-sub": "Partnerships with premier venues and full-scale event production across South Florida.",
+         "exp-section-venues-reels": "Cards · venue reels",
+-        "exp-gallery-heading": "Photo show · gallery",
++        "exp-gallery-heading": "GALLERY · PHOTOS",
+         "exp-gallery-sub": "One full-width hero: images advance automatically like a slideshow; use the arrows to browse.",
+         "exp-gallery-region-aria": "Slideshow of client and event photos",
+         "exp-gallery-nav-prev": "Previous photo",
+diff --git a/web/weather-api.js b/web/weather-api.js
+index b4cb574..335abd8 100644
+--- a/web/weather-api.js
++++ b/web/weather-api.js
+@@ -20,7 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
+     // TODO: Replace with real production API key and endpoint.
+     // For this lab environment, we define a quick OpenWeatherMap config.
+     const CONFIG = {
+-        apiKey: 'dd8223bfcc6f68da9fc28ca245fe0201',
++        apiKey:
++            (typeof window !== 'undefined' && window.OPENWEATHER_API_KEY && String(window.OPENWEATHER_API_KEY).trim()) ||
++            'dd8223bfcc6f68da9fc28ca245fe0201',
+         lat: localStorage.getItem('mdj_weather_lat') || '25.8576', // Dynamic via UI or Hialeah Fallback
+         lon: localStorage.getItem('mdj_weather_lon') || '-80.2781', // Dynamic via UI or Hialeah Fallback
+         units: 'imperial', // Using Fahrenheit/Miles as per current UI
+diff --git a/web/weather-lab.html b/web/weather-lab.html
+index 14bb76f..703f89e 100644
+--- a/web/weather-lab.html
++++ b/web/weather-lab.html
+@@ -4319,7 +4319,7 @@
+ 
+     </script>
+     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+-    <script src="weather-api.js?v=20260420-log-sweep"></script>
++    <script src="weather-api.js?v=20260423-openweather-key-window"></script>
+     <script>
+         // QA WEATHER OVERRIDE HOOK
+         window.forceQAScene = function (sceneType) {
+@@ -4426,7 +4426,7 @@
+     </div>
+ 
+     <!-- Weather Orchestration & API -->
+-    <script src="./js/event-weather.js?v=20260312-4"></script>
++    <script src="./js/event-weather.js?v=20260423-weather-latlon-key"></script>
+ 
+     <!-- Weather Astral Engine -->
+     <script src="./weather-astral.js?v=20260312-3"></script>

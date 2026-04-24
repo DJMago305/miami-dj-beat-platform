@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Invoice — Miami DJ Beat LLC</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: #f4f4f4;
+      font-family: Helvetica, Arial, sans-serif;
+      color: #333;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .page-wrap { padding: 12px 16px 24px; max-width: 210mm; margin: 0 auto; }
+    .sheet {
+      width: 210mm;
+      min-height: 0;
+      margin: auto;
+      padding: 28px 32px 32px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    /* Office header — indigo rule */
+    .office-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 2px solid #1a237e;
+    }
+    .brand-col { display: flex; gap: 14px; align-items: flex-start; min-width: 0; flex: 1; }
+    .brand-col img { max-width: 160px; width: 38%; height: auto; flex-shrink: 0; }
+    .contact-compact {
+      margin: 0;
+      font-size: 11px;
+      line-height: 1.45;
+      color: #444;
+    }
+    .contact-compact strong { color: #1a237e; font-size: 12px; letter-spacing: 0.04em; }
+    .meta-col { text-align: right; width: 40%; flex-shrink: 0; }
+    .meta-col .inv-label {
+      margin: 0 0 6px 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: #333;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .meta-col #inv-meta-block { margin: 0; font-size: 11px; color: #555; line-height: 1.5; }
+    .meta-col #inv-meta-block strong { color: #1a237e; }
+
+    .bill-ship-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 20px;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      background: #f8f9fa;
+      border: 1px solid #e0e3e8;
+      border-left: 3px solid #1a237e;
+    }
+    .bill-ship-grid h4 {
+      margin: 0 0 6px 0;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #1a237e;
+    }
+    .bill-ship-grid .addr {
+      font-size: 12px;
+      line-height: 1.5;
+      color: #1a1a1a;
+      min-height: 0;
+    }
+
+    table.inv {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 8px;
+      font-size: 12px;
+    }
+    table.inv col.numc { min-width: 88px; }
+    table.inv th {
+      text-align: left;
+      padding: 8px;
+      background: #f8f9fa;
+      color: #1a237e;
+      font-size: 11px;
+      font-weight: 700;
+      border-bottom: 1px solid #1a237e;
+    }
+    table.inv th.num { text-align: right; }
+    table.inv th.ct { text-align: center; }
+    table.inv td { padding: 6px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    table.inv input.tbl-in {
+      width: 100%;
+      min-width: 3rem;
+      border: none;
+      padding: 6px 4px;
+      font: 12px Helvetica, Arial, sans-serif;
+      background: transparent;
+      box-sizing: border-box;
+      position: relative;
+      z-index: 2;
+    }
+    table.inv input.tbl-in:focus { outline: 2px solid rgba(26, 35, 126, 0.35); outline-offset: 0; }
+    table.inv .line-amt { text-align: right; font-weight: 600; color: #1a237e; }
+
+    .no-print-tpl { font-size: 11px; margin: 6px 0 0; color: #666; }
+    .tpl-add {
+      margin-top: 6px;
+      padding: 6px 12px;
+      font-size: 11px;
+      cursor: pointer;
+      background: #f8f9fa;
+      border: 1px solid #1a237e;
+      color: #1a237e;
+      font-weight: 600;
+      border-radius: 4px;
+    }
+
+    .footer-tax {
+      margin-top: 1rem;
+      padding: 16px 18px;
+      background: #f8f9fa;
+      border-top: 3px solid #1a237e;
+      border-radius: 0 0 4px 4px;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .footer-tax .notes-head {
+      margin: 0 0 6px 0;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #1a237e;
+    }
+    .footer-tax .notes {
+      font-size: 10px;
+      color: #666;
+      line-height: 1.45;
+      max-width: 52%;
+      margin: 0;
+    }
+    .footer-tax .sum {
+      width: 38%;
+      min-width: 200px;
+      margin-left: auto;
+      font-size: 12px;
+    }
+    .footer-tax .sum td { padding: 4px 0; border: none; }
+    .footer-tax .sum .grand {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a237e;
+      border-top: 1px solid #ccc;
+      padding-top: 8px;
+    }
+
+    .inv-toolbar { text-align: center; padding: 10px 16px 0; }
+    .inv-toolbar .inv-print-btn {
+      cursor: pointer;
+      padding: 10px 22px;
+      font-weight: 700;
+      font-size: 12px;
+      background: #1a237e;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-family: Helvetica, Arial, sans-serif;
+    }
+    .inv-toolbar .inv-back-link { margin-left: 14px; font-size: 13px; color: #1a237e; font-weight: 600; }
+
+    @page { size: A4; margin: 10mm; }
+    @media print {
+      html, body { background: #fff; padding: 0; }
+      .page-wrap { padding: 0; max-width: none; }
+      .sheet {
+        box-shadow: none;
+        padding: 0;
+        min-height: 0;
+        height: auto;
+        page-break-after: auto;
+      }
+      .bill-ship-grid { break-inside: avoid; }
+      .footer-tax { break-inside: avoid; }
+      .inv-toolbar, .no-print-tpl, .tpl-add { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="inv-toolbar">
+    <button type="button" class="inv-print-btn" onclick="window.print()">Print / Save PDF</button>
+    <a class="inv-back-link" id="inv-back-link" href="./client-portal.html" style="display:none;">← Back</a>
+  </div>
+  <div class="page-wrap">
+    <div class="sheet">
+
+      <div class="office-header">
+        <div class="brand-col">
+          <img src="./Branding%20Invoice.png" alt="Miami DJ Beat" width="180" />
+          <div style="min-width:0;">
+            <p class="contact-compact">
+              <strong>Miami DJ Beat LLC</strong><br />
+              1005 W 77 St Apt 105<br />
+              Hialeah, FL 33014, USA<br />
+              Ph: (305) 607-1780<br />
+              miamidjbeat@gmail.com<br />
+              www.miamidjbeat.com
+            </p>
+          </div>
+        </div>
+        <div class="meta-col">
+          <div class="inv-label">Invoice</div>
+          <p id="inv-meta-block">
+            <strong>Ref.</strong> <span id="inv-meta-ref">#AX-0001</span><br />
+            <strong>Date</strong> <span id="inv-meta-date">April 17, 2026</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="bill-ship-grid">
+        <div>
+          <h4>Bill to — client / billing</h4>
+          <div class="addr" id="bill-to-addr">
+            Client or company name<br />
+            Street, city, state, ZIP
+          </div>
+        </div>
+        <div>
+          <h4>Event / service location</h4>
+          <div class="addr" id="event-addr">
+            Event name<br />
+            Venue address where the service is provided
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="no-print-tpl"><strong>Auto:</strong> edit Qty and Unit ($); line amount, subtotal, tax, and total update automatically.</p>
+        <table class="inv">
+          <colgroup>
+            <col />
+            <col style="width:64px; min-width:56px;" />
+            <col class="numc" style="width:104px; min-width:88px;" />
+            <col class="numc" style="width:104px; min-width:88px;" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th class="ct">Qty</th>
+              <th class="num">Unit ($)</th>
+              <th class="num">Amount <span style="font-size:9px;color:#1a237e;font-weight:700;">AUTO</span></th>
+            </tr>
+          </thead>
+          <tbody id="tpl-lines"></tbody>
+        </table>
+        <button type="button" class="tpl-add no-print-tpl" id="tpl-add-row">+ Add row</button>
+      </div>
+
+      <div class="footer-tax">
+        <div>
+          <div class="notes-head">Terms &amp; notes</div>
+          <p class="notes" id="inv-notes">Thank you for your business. This document is a record of the transaction. For questions, reply by email.</p>
+          <p class="no-print-tpl" style="margin-top:8px;">
+            <label for="tpl-tax-pct">Sales tax %</label>
+            <input type="number" id="tpl-tax-pct" value="7" min="0" max="30" step="0.1" style="width:52px;margin-left:6px;padding:4px;border:1px solid #ccc;border-radius:4px;" />
+          </p>
+        </div>
+        <table class="sum" id="tpl-totals-live" role="status" aria-live="polite" aria-atomic="true" aria-label="Auto-calculated totals">
+          <tr><td style="color:#555;">Subtotal</td><td style="text-align:right;font-weight:600;" id="tpl-sub">$0.00</td></tr>
+          <tr><td style="color:#555;">Tax (<span id="tpl-tax-lbl">7</span>%)</td><td style="text-align:right;font-weight:600;" id="tpl-tax">$0.00</td></tr>
+          <tr class="grand"><td><strong>Total due</strong></td><td style="text-align:right;" id="tpl-total">$0.00</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <script src="./invoice-print-bridge.js?v=20260420"></script>
+  <script>
+(function () {
+  var KEY = window.MDJ_INVOICE_SALE_STORAGE_KEY || 'mdj_invoice_sale_v1';
+  var tbody = document.getElementById('tpl-lines');
+  var taxIn = document.getElementById('tpl-tax-pct');
+  function money(n) {
+    if (n == null || n === '') return 0;
+    var s = String(n).trim().replace(/\$/g, '').replace(/\s/g, '');
+    if (s.indexOf(',') >= 0 && s.indexOf('.') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+    else s = s.replace(/,/g, '.');
+    var x = parseFloat(s);
+    return isNaN(x) ? 0 : x;
+  }
+  function fmt(v) { return '$' + (Math.round(v * 100) / 100).toFixed(2); }
+  function rate() {
+    var v = taxIn ? parseFloat(taxIn.value) : 7;
+    if (isNaN(v) || v < 0) v = 7;
+    return v / 100;
+  }
+  function syncLbl() {
+    var v = taxIn ? parseFloat(taxIn.value) : 7;
+    if (isNaN(v) || v < 0) v = 7;
+    var el = document.getElementById('tpl-tax-lbl');
+    if (el) el.textContent = String(Math.round(v * 100) / 100);
+  }
+  function recalc() {
+    var sub = 0;
+    tbody.querySelectorAll('tr').forEach(function (tr) {
+      var q = money(tr.querySelector('.tpl-qty').value);
+      var u = money(tr.querySelector('.tpl-unit').value);
+      var line = q * u;
+      sub += line;
+      tr.querySelector('.tpl-amt').textContent = fmt(line);
+    });
+    syncLbl();
+    var tax = sub * rate();
+    document.getElementById('tpl-sub').textContent = fmt(sub);
+    document.getElementById('tpl-tax').textContent = fmt(tax);
+    document.getElementById('tpl-total').textContent = fmt(sub + tax);
+  }
+  function row(d, q, u) {
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><input type="text" class="tbl-in tpl-desc" value="' + String(d || '').replace(/"/g, '&quot;') + '" /></td>' +
+      '<td class="ct"><input type="number" class="tbl-in tpl-qty" min="0" step="1" value="' + (q != null ? q : 1) + '" /></td>' +
+      '<td class="num"><input type="text" class="tbl-in tpl-unit" inputmode="decimal" autocomplete="off" placeholder="0.00" value="' +
+      (u != null && u !== 0 ? String(u) : '') + '" aria-label="Unit price" /></td>' +
+      '<td class="num line-amt tpl-amt" title="Auto: Qty × Unit">' + fmt(0) + '</td>';
+    tr.querySelectorAll('.tpl-desc, .tpl-qty, .tpl-unit').forEach(function (inp) {
+      var go = function () { recalc(); };
+      inp.addEventListener('input', go);
+      inp.addEventListener('change', go);
+      inp.addEventListener('keyup', go);
+      inp.addEventListener('blur', go);
+    });
+    return tr;
+  }
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+  function nlToBr(text) {
+    return escHtml(text).replace(/\n/g, '<br>');
+  }
+
+  var hydrated = false;
+  try {
+    var raw = sessionStorage.getItem(KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && p.v === 1) {
+        var refEl = document.getElementById('inv-meta-ref');
+        var dateEl = document.getElementById('inv-meta-date');
+        var billEl = document.getElementById('bill-to-addr');
+        var evEl = document.getElementById('event-addr');
+        var notesEl = document.getElementById('inv-notes');
+        var back = document.getElementById('inv-back-link');
+        if (refEl) refEl.textContent = p.ref != null ? String(p.ref) : '—';
+        if (dateEl) dateEl.textContent = p.dateStr != null ? String(p.dateStr) : '—';
+        if (billEl) billEl.innerHTML = p.billTo ? nlToBr(p.billTo) : '—';
+        if (evEl) evEl.innerHTML = p.eventLoc ? nlToBr(p.eventLoc) : '—';
+        if (notesEl && p.notes) notesEl.textContent = String(p.notes);
+        if (back && p.sourceReturnUrl) {
+          back.style.display = 'inline';
+          back.setAttribute('href', p.sourceReturnUrl);
+        }
+        if (taxIn && p.taxPct != null && !isNaN(parseFloat(p.taxPct))) {
+          taxIn.value = String(p.taxPct);
+        }
+        if (Array.isArray(p.lines) && p.lines.length) {
+          tbody.innerHTML = '';
+          p.lines.forEach(function (L) {
+            var dd = L.desc != null ? String(L.desc) : '';
+            var q = L.qty != null ? parseInt(L.qty, 10) : 1;
+            var u = L.unit != null ? parseFloat(L.unit) : 0;
+            if (isNaN(q) || q < 0) q = 1;
+            if (isNaN(u)) u = 0;
+            tbody.appendChild(row(dd, q, u));
+          });
+          hydrated = true;
+        }
+        if (hydrated) {
+          try {
+            sessionStorage.removeItem(KEY);
+          } catch (eRm) { /* ignore */ }
+        }
+      }
+    }
+  } catch (eH) {
+    console.warn('[invoice-template-print] hydrate', eH);
+  }
+
+  if (!hydrated) {
+    tbody.appendChild(row('Professional service', 1, 0));
+  }
+  if (document.getElementById('tpl-add-row')) {
+    document.getElementById('tpl-add-row').addEventListener('click', function () {
+      tbody.appendChild(row('', 1, 0));
+      recalc();
+    });
+  }
+  if (taxIn) {
+    ['input', 'change', 'keyup', 'blur'].forEach(function (ev) {
+      taxIn.addEventListener(ev, recalc);
+    });
+  }
+  tbody.addEventListener('paste', function () { setTimeout(recalc, 0); });
+  recalc();
+})();
+  </script>
+</body>
+</html>

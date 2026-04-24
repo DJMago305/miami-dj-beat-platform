@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MIAMIDJBEAT — Miami DJ Beat</title>
+    <meta name="description"
+        content="MIAMIDJBEAT Academy — professional DJ certification and culture library. Choose your learning path." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500&family=Syne:wght@600;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css?v=20260430-float-nav-1" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260422-wordmark-scale" />
+    <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+    <style>
+        .mdj-academia-hub {
+            background: #050403;
+        }
+
+        /* Tipografía hub Academia: Syne + IBM Plex (hero / CTAs solo en esta página) */
+        .mdj-academia-hub main {
+            font-family: "IBM Plex Sans", system-ui, sans-serif;
+        }
+
+        /* Hero bajo header + barra artística (sin solapar la franja negra) */
+        .academia-hero {
+            position: relative;
+            min-height: calc(100dvh - var(--header-height, 85px) - 96px);
+            margin-top: 0;
+            padding-top: clamp(28px, 5vh, 56px);
+            padding-bottom: 120px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .academia-hero-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+        }
+
+        .academia-hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            background: linear-gradient(180deg,
+                    rgba(5, 4, 3, 0.35) 0%,
+                    rgba(5, 4, 3, 0.55) 45%,
+                    rgba(5, 4, 3, 0.88) 100%);
+        }
+
+        .academia-hero-inner {
+            position: relative;
+            z-index: 2;
+            max-width: 920px;
+            padding: 0 22px;
+        }
+
+        .academia-hero-eyebrow {
+            font-family: "IBM Plex Mono", ui-monospace, monospace;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5em;
+            text-transform: uppercase;
+            color: rgba(197, 160, 89, 0.95);
+            margin-bottom: 20px;
+            opacity: 0.95;
+        }
+
+        .academia-hero-inner h1 {
+            font-family: "Syne", system-ui, sans-serif;
+            font-size: clamp(2.25rem, 5.5vw, 3.75rem);
+            font-weight: 800;
+            line-height: 0.98;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin: 0 0 22px;
+            color: #f7f5f0;
+            text-wrap: balance;
+            filter: drop-shadow(0 4px 28px rgba(0, 0, 0, 0.45));
+        }
+
+        @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+            .academia-hero-inner h1 {
+                background: linear-gradient(
+                    118deg,
+                    #ffffff 12%,
+                    #ece6dc 42%,
+                    #c5a059 108%
+                );
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+            }
+        }
+
+        .academia-hero-inner .academia-hero-sub {
+            font-family: "IBM Plex Sans", system-ui, sans-serif;
+            font-size: clamp(13px, 1.65vw, 15px);
+            font-weight: 400;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.82);
+            line-height: 1.75;
+            margin: 0 auto;
+            max-width: 42em;
+        }
+
+        .academia-float-tabs {
+            position: fixed;
+            left: 50%;
+            bottom: max(68px, calc(36px + env(safe-area-inset-bottom, 0px)));
+            transform: translateX(-50%);
+            z-index: 1250;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 16px;
+            row-gap: 14px;
+            padding: 0 18px;
+            max-width: min(100%, 720px);
+            box-sizing: border-box;
+            pointer-events: auto;
+        }
+
+        .academia-float-tab {
+            font-family: "Syne", system-ui, sans-serif;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 26px;
+            border-radius: 999px;
+            background: rgba(8, 7, 5, 0.82);
+            backdrop-filter: blur(18px) saturate(1.2);
+            -webkit-backdrop-filter: blur(18px) saturate(1.2);
+            border: 1px solid rgba(197, 160, 89, 0.42);
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+                0 12px 40px rgba(0, 0, 0, 0.35);
+            color: #e8d9bc;
+            font-weight: 700;
+            font-size: clamp(10px, 1.35vw, 12px);
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: background 0.22s ease, transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+            text-align: center;
+        }
+
+        .academia-float-tab:hover {
+            background: rgba(197, 160, 89, 0.12);
+            border-color: rgba(197, 160, 89, 0.78);
+            color: #f5ecd8;
+            box-shadow:
+                0 0 0 1px rgba(197, 160, 89, 0.2) inset,
+                0 16px 48px rgba(0, 0, 0, 0.4);
+            transform: translateY(-3px);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .academia-float-tab {
+                transition: none;
+            }
+
+            .academia-float-tab:hover {
+                transform: none;
+            }
+        }
+    </style>
+</head>
+
+<body class="notranslate mdj-academia-hub mdj-artist-academy">
+    <!-- MDJ canonical site header — keep in sync with index #mainHeader -->
+    <header class="header mdj-header-unified" id="mainHeader">
+        <div class="header-top">
+            <div class="container">
+                <div class="brand">
+                    <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+                    <div class="brand-letters-wrapper">
+                        <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters"
+                            class="brand-letters-img">
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn"
+                        data-i18n="btn-get-pro">Get PRO</a>
+        <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
+                    <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;"
+                        aria-label="DJPRO">DJPRO</span>
+                    <div class="lang-switcher">
+                        <span class="lang-btn" data-lang="es">ES</span>
+                        <span class="lang-pipe">|</span>
+                        <span class="lang-btn active" data-lang="en">EN</span>
+                    </div>
+                    <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-i18n="btn-login">Log in</a>
+
+                    <div class="header-avatar-cart-row" aria-label="Account and cart">
+                        <div class="account session-pending" id="header-auth-zone" style="display: none;">
+                            <a class="account-btn" id="accountBtn" href="./dj-profile.html" title="Mi perfil" aria-label="Mi perfil">
+              <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
+            </a>
+</div>
+
+                        <a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart"
+                            aria-label="Shopping cart">
+                            <span aria-hidden="true">🛒</span>
+                            <span id="header-cart-count" class="header-cart-count" hidden></span>
+                        </a>
+                    </div>
+                    <div class="header-search-wrap">
+                        <input type="search" id="header-smart-search" class="header-smart-search"
+                            placeholder="Search DJs, gear, services…" autocomplete="off" enterkeyhint="search" />
+                    </div>
+                </div>
+
+                <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+
+                <div class="mobile-overlay" id="mobileMenu">
+                    <nav class="mobile-nav">
+                        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+                        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+                        <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+                        <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
+                        <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+                        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+                        <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+                        <a href="./login.html?signup=free" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free"
+                          style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
+                        <a href="./login.html" id="header-login-btn-mobile" data-i18n="btn-login"
+                            style="color:var(--gold); font-weight:800;">Entrar</a>
+                        <a href="./dj-profile.html" id="nav-my-profile-mobile"
+                            style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY
+                            PROFILE</a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        <div class="header-nav">
+            <div class="container">
+                <nav class="nav top-nav mdj-mainnav-flex" id="mainNav">
+                    <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+                    <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+                    <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+                    <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-mdj-nav="shop">Shop</a>
+                    <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+                    <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+                    <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+                    <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
+                    <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" aria-hidden="true" tabindex="-1">MY PORTAL</a>
+        <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <nav class="dj-owner-tabs" id="owner-tabs" aria-label="Artist navigation">
+        <div class="container">
+            <a href="./index.html" class="dj-tab-btn dj-tab-btn--home" data-i18n="nav-home">Home</a>
+            <a href="./jobs.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-jobs">Jobs</a>
+            <a href="./shop.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-shop">Shop</a>
+            <a href="./dj-profile.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="menu-account">Mi Perfil</a>
+            <a href="./dj-dashboard.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="dash-your-profile">Agenda</a>
+            <a href="./dj-dashboard.html?tab=settings&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-settings">⚙️ CONFIG</a>
+            <a href="./academia.html?mdj_nav=profile" class="dj-tab-btn active" data-i18n="nav-academia">Academia</a>
+            <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-tools">DJ Tools</a>
+            <a href="./dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="flow-dash">Cash Flow</a>
+            <a href="./dj-profile.html?tab=sft&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-soundfortips">SoundForTips™</a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="academia-hero" aria-labelledby="academia-hero-title">
+            <video class="academia-hero-video" autoplay muted loop playsinline>
+                <source src="./assets/knowledge/Vinyl%20Loop%20for%20DJ%20Academy%20MDJB.mp4" type="video/mp4" />
+            </video>
+            <div class="academia-hero-inner">
+                <p class="academia-hero-eyebrow" data-i18n="nav-academia">Academy</p>
+                <h1 id="academia-hero-title" data-i18n="academia-hero-title">MIAMIDJBEAT</h1>
+                <p class="academia-hero-sub" data-i18n="academia-hero-sub">PROFESSIONAL TRAINING AND DJ CULTURE. CHOOSE YOUR PATH WITH THE TABS BELOW.</p>
+            </div>
+        </section>
+    </main>
+
+    <nav class="academia-float-tabs" aria-label="Academia sections">
+        <a href="./courses.html" class="academia-float-tab" data-i18n="nav-academy-courses">Courses &amp;
+            Certification</a>
+        <a href="./dj-knowledge.html" class="academia-float-tab" data-i18n="nav-academy-library">DJ Culture &amp;
+            Library</a>
+    </nav>
+
+    <script src="./translations.js?v=20260422-nav-labels-1"></script>
+    <script src="./i18n.js?v=20260330"></script>
+    <link rel="stylesheet" href="./mdj-assistant.css?v=20260411-booth-policy" />
+    <div id="mdj-assistant-booth">
+        <div class="booth-window">
+            <div class="booth-header">
+                <div class="status-dot"></div>
+                <div style="flex: 1;">
+                    <h3>Booth Assistant</h3>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700;">Sales &amp; Negotiation Expert</div>
+                </div>
+            </div>
+            <div class="booth-messages"></div>
+            <div class="booth-input-area">
+                <input type="text" placeholder="Hablemos de negocios / Let's talk business..." />
+                <button type="button" class="booth-send-btn">➔</button>
+            </div>
+        </div>
+        <div class="booth-trigger" title="Hablar con Booth Assistant">
+            <div class="avatar-glow"></div>
+            <div style="font-size: 30px; z-index: 10;">🤖</div>
+        </div>
+    </div>
+    <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
+    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+  <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+      <script src="./mdj-shared-header.js?v=20260422-mainnav-infinite-1"></script>
+  <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+  <script src="./mdj-mainnav-infinite.js?v=20260422-mainnav-chev-bar-1"></script>
+  <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
+  <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+</body>
+
+</html>

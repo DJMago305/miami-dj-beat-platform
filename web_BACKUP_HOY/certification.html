@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Miami DJ Beat — DJ Workflow Certification</title>
+    <meta name="description"
+        content="Evaluación oficial DJ Workflow Professional — Miami DJ Beat. Teoría, Serato, Rekordbox y escenarios reales de cabina." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css?v=20260430-float-nav-1" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260422-wordmark-scale" />
+    <link rel="stylesheet" href="./certification.css" />
+    <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
+</head>
+
+<body class="notranslate">
+
+    <!-- MDJ canonical site header — sync with web/includes/site-header.html / index #mainHeader -->
+<header class="header mdj-header-unified" id="mainHeader">
+  <div class="header-top">
+    <div class="container">
+      <div class="brand">
+        <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+        <div class="brand-letters-wrapper">
+          <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters" class="brand-letters-img">
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
+        <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
+        <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
+        <div class="lang-switcher">
+          <span class="lang-btn" data-lang="es">ES</span>
+          <span class="lang-pipe">|</span>
+          <span class="lang-btn active" data-lang="en">EN</span>
+        </div>
+        <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-i18n="btn-login">Log in</a>
+
+        <div class="header-avatar-cart-row" aria-label="Account and cart">
+          <div class="account session-pending" id="header-auth-zone" style="display: none;">
+            <a class="account-btn" id="accountBtn" href="./dj-profile.html" title="Mi perfil" aria-label="Mi perfil">
+              <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
+            </a>
+</div>
+
+          <a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart" aria-label="Shopping cart">
+            <span aria-hidden="true">🛒</span>
+            <span id="header-cart-count" class="header-cart-count" hidden></span>
+          </a>
+        </div>
+        <div class="header-search-wrap">
+          <input type="search" id="header-smart-search" class="header-smart-search"
+            placeholder="Search DJs, gear, services…" autocomplete="off" enterkeyhint="search" />
+        </div>
+      </div>
+
+      <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <div class="mobile-overlay" id="mobileMenu">
+        <nav class="mobile-nav">
+          <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+          <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+          <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+          <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
+          <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+          <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+          <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+          <a href="./login.html?signup=free" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free"
+            style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
+          <a href="./login.html" id="header-login-btn-mobile" data-i18n="btn-login"
+            style="color:var(--gold); font-weight:800;">Entrar</a>
+          <a href="./dj-profile.html" id="nav-my-profile-mobile"
+            style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY PROFILE</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <div class="header-nav">
+    <div class="container">
+      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav">
+        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+        <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+        <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
+        <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+        <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+        <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
+        <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" aria-hidden="true" tabindex="-1">MY PORTAL</a>
+        <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
+      </nav>
+    </div>
+  </div>
+</header>
+<main class="container">
+
+        <!-- ── HERO / INTRO ──────────────────────────────────── -->
+        <section class="hero card">
+            <div class="certBadge">🏆 CERTIFICACIÓN OFICIAL — MIAMI DJ BEAT</div>
+            <h1>DJ Workflow Professional</h1>
+            <p class="muted heroSub">
+                Evaluación técnica de organización, Serato, Rekordbox y mentalidad de cabina.<br />
+                <strong>30 preguntas</strong> · Múltiple opción + desarrollo corto con rúbrica · Duración estimada:
+                <strong>30–45 min</strong>
+            </p>
+
+            <div class="levelGrid">
+                <div class="levelPill gold">80–100% → DJ Estructurado Profesional</div>
+                <div class="levelPill silver">65–79% → Nivel Intermedio Alto</div>
+                <div class="levelPill bronze">50–64% → Nivel Intermedio</div>
+                <div class="levelPill dim">0–49% → No Apto Profesional</div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="grid2">
+                <label class="field">
+                    <span>Nombre DJ <span class="req">*</span></span>
+                    <input id="djName" type="text" placeholder="Tu nombre artístico" maxlength="50"
+                        autocomplete="off" />
+                </label>
+                <label class="field">
+                    <span>Email (opcional)</span>
+                    <input id="djEmail" type="email" placeholder="name@email.com" maxlength="80" />
+                </label>
+            </div>
+
+            <div class="notice">
+                <strong>Código Profesional — Declaración Obligatoria</strong>
+                <p class="noticeSub">Debes firmar antes de recibir tu resultado final.</p>
+                <label class="checkRow">
+                    <input id="codeAgree" type="checkbox" />
+                    <span>
+                        Reconozco que el DJing es una disciplina cultural con historia, técnica y ética.
+                        Me comprometo a respetar la cabina, a otros DJs y al público.
+                        Entiendo que acceso no significa mérito y que la preparación es obligatoria.
+                    </span>
+                </label>
+            </div>
+        </section>
+
+        <!-- ── STEP-BY-STEP QUIZ ──────────────────────────────────────── -->
+        <section id="quizRoot" class="card">
+
+            <!-- Intro header — shown before exam starts -->
+            <div id="quizIntro" class="sectionHeader" style="text-align:center;padding-bottom:24px;">
+                <h2>Evaluación</h2>
+                <p class="muted">30 preguntas — múltiple opción con corrección automática + respuesta corta con rúbrica
+                    de auto-evaluación.</p>
+                <button id="btnStart" class="btn primary" style="margin-top:24px;min-width:220px;font-size:15px;">▶
+                    COMENZAR EXAMEN</button>
+            </div>
+
+            <!-- Step shell — hidden until exam starts -->
+            <div id="quizShell" class="hidden">
+                <!-- Progress bar -->
+                <div class="stepProgress">
+                    <div class="stepProgressInfo">
+                        <span id="stepLabel" class="stepLabel">Pregunta 1 de 32</span>
+                    </div>
+                    <div class="stepProgressBar">
+                        <div id="stepBar" class="stepBarFill" style="width:3%;"></div>
+                    </div>
+                </div>
+
+                <!-- Section badge -->
+                <div id="stepSection" class="stepSectionBadge"></div>
+
+                <!-- Question card -->
+                <div class="stepCard" id="quizCard">
+                    <div class="stepCardTop">
+                        <span id="stepNum" class="stepNum">PREGUNTA 1 DE 32</span>
+                        <span id="stepPoints" class="stepPts"></span>
+                    </div>
+                    <p id="stepText" class="stepText"></p>
+
+                    <!-- MC Options -->
+                    <div id="stepOpts" class="stepOpts"></div>
+
+                    <!-- MC Feedback banner -->
+                    <div id="stepFeedback" class="stepFeedback hidden"></div>
+
+                    <!-- Short answer zone (type:'short' only) -->
+                    <div id="stepShort" class="hidden">
+                        <textarea id="stepTxt" placeholder="Escribe tu respuesta aquí (mínimo 4 líneas)..."
+                            rows="5"></textarea>
+                        <div id="stepRubric" class="rubricBox"></div>
+                        <div class="sliderSection">
+                            <label class="sliderLabel">
+                                <span>Mi puntuación</span>
+                                <strong id="stepScoreLbl" class="sliderVal">0</strong>
+                            </label>
+                            <input id="stepSlider" type="range" min="0" max="10" value="0" step="1"
+                                aria-label="Puntuación auto-evaluada">
+                            <p class="rubricNote">Sé honesto. Esta puntuación determina tu elegibilidad Pre-Graduado.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="stepNav">
+                    <button id="btnNext" class="stepNextBtn" disabled>SIGUIENTE →</button>
+                    <button id="btnReset" class="btn stepResetBtn">🔄 Reiniciar</button>
+                </div>
+            </div>
+
+            <!-- Result inline — unchanged -->
+            <div id="result" class="result hidden">
+                <div class="divider"></div>
+                <div class="resultTop">
+                    <div>
+                        <div class="badgeLine">
+                            <span id="levelBadge" class="badge">—</span>
+                            <span id="scoreLine" class="scoreLine muted">—</span>
+                        </div>
+                        <div id="preGradLine" class="preGradLine"></div>
+                        <div id="sectionBars" style="margin-top:16px;"></div>
+                    </div>
+                    <div class="resultActions">
+                        <button id="btnPrint" class="btn">🖨 Imprimir / PDF</button>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div id="feedback" class="feedback"></div>
+            </div>
+
+        </section>
+
+        <footer class="footer muted">
+            © <span id="year"></span> Miami DJ Beat LLC — Certification Engine v1 · Historia + Técnica + Ética
+        </footer>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <script>
+        const supabaseClient = supabase.createClient(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY);
+    </script>
+    <script src="./certification.js"></script>
+    <!-- MDJ Assistant Booth (AI Sales Agent) -->
+    <div id="mdj-assistant-booth">
+        <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
+        <div class="booth-window">
+            <div class="booth-header">
+                <div class="status-dot"></div>
+                <div style="flex: 1;">
+                    <h3>Booth Assistant</h3>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700;">Sales & Negotiation
+                        Expert</div>
+                </div>
+            </div>
+            <div class="booth-messages"></div>
+            <div class="booth-input-area">
+                <input type="text" placeholder="Type your message here..." />
+                <button class="booth-send-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="booth-trigger" title="Talk to Booth Assistant">
+            <div class="avatar-glow"></div>
+            <div style="font-size: 30px; z-index: 10;">🤖</div>
+        </div>
+    </div>
+    <script src="./translations.js?v=20260422-nav-labels-1"></script>
+    <script src="./i18n.js?v=20260411-14"></script>
+    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+  <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+      <script src="./mdj-shared-header.js?v=20260422-mainnav-infinite-1"></script>
+  <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+  <script src="./mdj-mainnav-infinite.js?v=20260422-mainnav-chev-bar-1"></script>
+    <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
+  <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+</body>
+
+</html>

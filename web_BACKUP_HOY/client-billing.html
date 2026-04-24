@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Miami DJ Beat — Pagos y facturación</title>
+    <link rel="stylesheet" href="./styles.css?v=20260430-float-nav-1" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260422-wordmark-scale" />
+    <style>
+        .billing-wrap {
+            max-width: 640px;
+            margin: 32px auto 80px;
+            padding: 0 20px;
+        }
+
+        .billing-card {
+            background: var(--panel);
+            border: 1px solid rgba(197, 160, 89, 0.28);
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 22px;
+        }
+
+        .billing-card h2 {
+            margin: 0 0 12px;
+            font-size: 1.15rem;
+            color: var(--gold);
+        }
+
+        .billing-card p {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 0 0 16px;
+        }
+
+        .billing-avatar-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 12px;
+        }
+
+        .billing-avatar-row input[type="url"] {
+            flex: 1 1 220px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            background: rgba(0, 0, 0, 0.25);
+            color: #fff;
+        }
+
+        #billing-avatar-status {
+            font-size: 13px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body class="notranslate">
+    <header class="header mdj-header-unified" id="mainHeader">
+        <div class="header-top">
+            <div class="container">
+                <div class="brand">
+                    <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+                    <div class="brand-letters-wrapper">
+                        <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters"
+                            class="brand-letters-img">
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn"
+                        data-i18n="btn-get-pro">Get PRO</a>
+                    <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn"
+                        data-i18n="btn-subscribe-free">Suscripción gratis</a>
+                    <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;"
+                        aria-label="DJPRO">DJPRO</span>
+                    <div class="lang-switcher">
+                        <span class="lang-btn" data-lang="es">ES</span>
+                        <span class="lang-pipe">|</span>
+                        <span class="lang-btn active" data-lang="en">EN</span>
+                    </div>
+                    <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-i18n="btn-login">Log in</a>
+
+                    <div class="header-avatar-cart-row" aria-label="Account and cart">
+                        <div class="account session-pending" id="header-auth-zone" style="display: none;">
+                            <a class="account-btn" id="accountBtn" href="./client-portal.html" title="Mi Portal"
+                                aria-label="Mi Portal">
+                                <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
+                            </a>
+                        </div>
+
+                        <a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart"
+                            aria-label="Shopping cart">
+                            <span aria-hidden="true">🛒</span>
+                            <span id="header-cart-count" class="header-cart-count" hidden></span>
+                        </a>
+                    </div>
+                    <div class="header-search-wrap">
+                        <input type="search" id="header-smart-search" class="header-smart-search"
+                            placeholder="Search DJs, gear, services…" autocomplete="off" enterkeyhint="search" />
+                    </div>
+                </div>
+
+                <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+
+                <div class="mobile-overlay" id="mobileMenu">
+                    <nav class="mobile-nav">
+                        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+                        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+                        <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+                        <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
+                        <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+                        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+                        <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+                        <a href="./login.html?signup=free" id="header-subscribe-free-mobile"
+                            data-i18n="btn-subscribe-free"
+                            style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
+                        <a href="./login.html" id="header-login-btn-mobile" data-i18n="btn-login"
+                            style="color:var(--gold); font-weight:800;">Entrar</a>
+                        <a href="./client-portal.html" id="nav-my-profile-mobile"
+                            style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY
+                            PROFILE</a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        <div class="header-nav">
+            <div class="container">
+                <nav class="nav top-nav mdj-mainnav-flex" id="mainNav">
+                    <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+                    <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+                    <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+                    <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-mdj-nav="shop">Shop</a>
+                    <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+                    <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+                    <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+                    <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
+                    <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" aria-hidden="true" tabindex="-1">MY PORTAL</a>
+        <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="billing-wrap">
+        <h1 style="font-size:1.5rem;margin-bottom:8px;color:var(--gold);">Métodos de pago y facturación</h1>
+        <p class="fineprint" style="color:var(--muted);margin-bottom:24px;">Gestiona tarjetas y consulta recibos de tus
+            eventos (integración de cobro en despliegue).</p>
+
+        <div class="billing-card" id="saved-payments">
+            <h2 data-i18n="client-billing-payments-title">Pagos guardados</h2>
+            <p data-i18n="client-billing-payments-body">Aquí podrás añadir y administrar métodos de pago para reservas y
+                saldos de eventos. El equipo activará el cargador seguro en producción.</p>
+            <button type="button" class="btn primary" id="client-billing-launch-setup" data-i18n="client-billing-launch-setup">Open account payment methods</button>
+        </div>
+
+        <div class="billing-card">
+            <h2 data-i18n="client-billing-receipts-title">Recibos</h2>
+            <p data-i18n="client-billing-receipts-body">Los comprobantes de tus eventos aparecerán aquí cuando el
+                sistema de facturación esté conectado.</p>
+        </div>
+
+        <div class="billing-card">
+            <h2 data-i18n="client-billing-avatar-title">Foto de perfil (solo cuenta)</h2>
+            <p data-i18n="client-billing-avatar-body">URL pública de una imagen cuadrada o rectangular; se usa en tu
+                avatar del menú (no es perfil público de artista).</p>
+            <div class="billing-avatar-row">
+                <input type="url" id="client-avatar-url" placeholder="https://…" autocomplete="off" />
+                <button type="button" class="btn primary" id="client-avatar-save">Guardar</button>
+            </div>
+            <p id="billing-avatar-status" class="fineprint" role="status"></p>
+        </div>
+
+        <p style="text-align:center;margin-top:24px;">
+            <a href="./client-portal.html" style="color:var(--gold);font-weight:700;">← Volver al portal</a>
+        </p>
+    </main>
+
+    <footer class="footer">
+        <div class="container" style="text-align: center;">
+            <div data-i18n="footer-rights-llc">© 2026 Miami DJ Beat LLC.</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <script src="./role-guard.js" data-role="client"></script>
+    <script src="./translations.js?v=20260422-nav-labels-1"></script>
+    <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
+    <script src="./account-billing.js?v=20260415-CORE-CONNECTIONS"></script>
+    <script>
+        (function () {
+            var save = document.getElementById('client-avatar-save');
+            var input = document.getElementById('client-avatar-url');
+            var st = document.getElementById('billing-avatar-status');
+            function setStatus(msg, ok) {
+                if (!st) return;
+                st.textContent = msg || '';
+                st.style.color = ok ? 'var(--gold)' : '#f66';
+            }
+            async function load() {
+                var db = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+                if (!db || !input) return;
+                var r = await db.auth.getUser();
+                var u = r && r.data && r.data.user;
+                var url = u && u.user_metadata && u.user_metadata.avatar_url;
+                if (url) input.value = url;
+            }
+            if (save && input) {
+                save.addEventListener('click', async function () {
+                    var db = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+                    if (!db) {
+                        setStatus('Servicio no disponible.', false);
+                        return;
+                    }
+                    var v = (input.value || '').trim();
+                    if (v && !/^https?:\/\//i.test(v)) {
+                        setStatus('Usa una URL que empiece por http o https.', false);
+                        return;
+                    }
+                    save.disabled = true;
+                    try {
+                        var up = await db.auth.updateUser({ data: { avatar_url: v || null } });
+                        if (up.error) throw up.error;
+                        setStatus('Guardado. El menú usará esta imagen en la próxima carga.', true);
+                        if (typeof window.checkSessionForNav === 'function') await window.checkSessionForNav();
+                    } catch (e) {
+                        setStatus((e && e.message) ? e.message : 'No se pudo guardar.', false);
+                    } finally {
+                        save.disabled = false;
+                    }
+                });
+                load();
+            }
+        })();
+    </script>
+    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+  <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+      <script src="./mdj-shared-header.js?v=20260422-mainnav-infinite-1"></script>
+  <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+  <script src="./mdj-mainnav-infinite.js?v=20260422-mainnav-chev-bar-1"></script>
+    <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+</body>
+
+</html>
