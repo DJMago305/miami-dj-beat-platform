@@ -1,6 +1,15 @@
 // 🛰️ WEATHER GEO-ENGINE: Satélite Nominatim + API OpenWeatherMap
 // Conecta el Dashboard directamente a las coordenadas del operador y devuelve Clima Profesional VIP.
 
+function mdjIsNearHialeahFL(lat, lon) {
+    const la = Number(lat);
+    const lo = Number(lon);
+    if (Number.isNaN(la) || Number.isNaN(lo)) return false;
+    const hLat = 25.8576;
+    const hLon = -80.2781;
+    return Math.abs(la - hLat) < 0.15 && Math.abs(lo - hLon) < 0.15;
+}
+
 const WeatherGeoEngine = {
     init: function() {
         console.log("🛰️ Iniciando Sonda de Geolocalización...");
@@ -18,15 +27,21 @@ const WeatherGeoEngine = {
         try {
             const res = await fetch(url);
             const data = await res.json();
-            
-            // Si el satélite entregó el barrio ("Hialeah"), lo forzamos. 
-            // Si Nominatim falla, OpenWeather devolverá "Hialeah" de todas formas por las coordenadas lat/lon.
-            const cityName = realCityName || data.name;
+
+            let cityName = realCityName && String(realCityName).trim();
+            if (!cityName) {
+                if (mdjIsNearHialeahFL(lat, lon)) {
+                    cityName = "Hialeah";
+                } else {
+                    cityName = data.name || "Miami";
+                }
+            }
             
             // --> INYECCIÓN DIRECTA AL ID DEMANDADO <--
             const locNode = document.getElementById('weather-location');
             if (locNode) {
-                locNode.innerHTML = `<i class="la la-map-marker" style="margin-right: 5px;"></i> ${cityName.toUpperCase()}, FL — USA`;
+                const label = `${cityName}, FL`.toUpperCase();
+                locNode.innerHTML = `<i class="la la-map-marker" style="margin-right: 5px;"></i> ${label}`;
             }
 
             // Procesado del Clima usando el motor original de "Apple Dark" Si existe
@@ -40,6 +55,7 @@ const WeatherGeoEngine = {
                 window.locationInitialized = true;
                 
                 // Le pasamos el control a event-weather.js para que dibuje el sol, nubes o relámpagos.
+                window.__mdjWeatherLocked = false;
                 window.handleEventWeather(new Date().toISOString().split('T')[0]);
             }
             
@@ -89,8 +105,8 @@ const WeatherGeoEngine = {
         }
 
         // Temporizador paralelo de 2.0s para evitar bloqueo visual si el usuario ignora el prompt
-        const timeoutFallback = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("Timeout: Usuario ignoró o retrasó el popup de ubicación")), 2000)
+        const timeoutFallback = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Timeout: Usuario ignoró o retrasó el popup de ubicación")), 12000)
         );
 
         const geoPromise = new Promise((resolve, reject) => {
@@ -118,7 +134,7 @@ const WeatherGeoEngine = {
             })
             .catch(async (err) => {
                 console.warn("📍 Fallback Silencioso Activo a Miami:", err.message);
-                // Miami VIP Coordinates (Central)
+                // 25.7617, -80.1918 — Miami centro
                 const lat = 25.7617;
                 const lon = -80.1918;
                 // Disparo forzado e instantáneo a Miami para no bloquear el UI
