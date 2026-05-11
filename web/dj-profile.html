@@ -5794,6 +5794,15 @@
             gap: 8px;
         }
 
+        .sft-cab-pending-pay-note {
+            font-size: 11px;
+            font-weight: 600;
+            color: #fca5a5;
+            max-width: 120px;
+            line-height: 1.25;
+            text-align: right;
+        }
+
         .sft-cab-btn--cab-action {
             min-width: 72px;
             padding: 7px 12px;
@@ -8273,6 +8282,21 @@
             if (!djId || requestId == null) return;
             var rid = String(requestId);
             if (sftCabResolvedIdsHas(djId, rid)) return;
+            try {
+                var itemsChk = typeof sftQueueRead === 'function' ? sftQueueRead(djId) : [];
+                var rowChk = null;
+                for (var ic = 0; ic < itemsChk.length; ic++) {
+                    if (String(itemsChk[ic].id) === String(requestId)) { rowChk = itemsChk[ic]; break; }
+                }
+                if (rowChk && String(rowChk.sftStatus || '') === 'pending_payment') {
+                    try {
+                        alert(typeof sftT === 'function'
+                            ? sftT('sft-cab-accept-blocked-pending-pay', 'Esta fila sigue en “pago con tarjeta pendiente”. Cuando Stripe confirme el cobro, podrás aceptarla aquí.')
+                            : 'Esta fila sigue en “pago con tarjeta pendiente”. Cuando Stripe confirme el cobro, podrás aceptarla aquí.');
+                    } catch (eB) { void eB; }
+                    return;
+                }
+            } catch (eChk) { void eChk; }
             window.__sftCabAcceptLocks = window.__sftCabAcceptLocks || Object.create(null);
             if (window.__sftCabAcceptLocks[rid]) return;
             window.__sftCabAcceptLocks[rid] = true;
@@ -8505,9 +8529,23 @@
                         }
                         var merged = local.slice();
                         var added = false;
+                        var updated = false;
                         res.data.forEach(function (row) {
                             var id = row.id != null ? String(row.id) : '';
-                            if (!id || have[id]) return;
+                            if (!id) return;
+                            var st = row.status != null ? String(row.status) : '';
+                            if (have[id]) {
+                                if (sftCabResolvedIdsHas(djId, id)) return;
+                                for (var xi = 0; xi < merged.length; xi++) {
+                                    if (String(merged[xi].id) !== id) continue;
+                                    if (String(merged[xi].sftStatus || '') !== st) {
+                                        merged[xi].sftStatus = st;
+                                        updated = true;
+                                    }
+                                    return;
+                                }
+                                return;
+                            }
                             if (sftCabResolvedIdsHas(djId, id)) return;
                             have[id] = true;
                             added = true;
@@ -8520,10 +8558,11 @@
                                 sender: row.sender_label || '',
                                 tip: Number(row.tip_usd) || 0,
                                 poster: row.poster_url || '',
-                                fromServerPending: true
+                                fromServerPending: true,
+                                sftStatus: st
                             });
                         });
-                        if (added && typeof sftQueueWrite === 'function') {
+                        if ((added || updated) && typeof sftQueueWrite === 'function') {
                             merged.sort(function (a, b) { return (a.t || 0) - (b.t || 0); });
                             sftQueueWrite(djId, merged);
                             if (typeof sftBroadcastQueueBump === 'function') sftBroadcastQueueBump();
@@ -8683,10 +8722,13 @@
             html += sftCabPlTheadHtml() + '<tbody>';
 
             var copyTitle = sftCabT('sft-cab-copy-row-title', 'Copiar canción y artista');
+            var pendingPayHint = sftCabT('sft-cab-row-pending-payment', 'Esperando pago con tarjeta…');
             items.forEach(function (row, idx) {
                 var tipN = typeof row.tip === 'number' ? row.tip : parseFloat(row.tip);
                 if (isNaN(tipN)) tipN = 0;
                 var rid = row.id != null ? String(row.id) : 'idx-' + idx;
+                var sftSt = row.sftStatus != null ? String(row.sftStatus) : '';
+                var isStripeCheckoutUnpaid = sftSt === 'pending_payment';
                 var artSrc = row.poster != null && String(row.poster).trim() !== '' ? row.poster : '';
                 var song = row.song != null ? row.song : '—';
                 var artist = row.artist != null ? row.artist : '—';
@@ -8705,9 +8747,15 @@
                 html += '<td class="sft-cab-pl-genre">$' + sftEscStr(tipN.toFixed(2)) + '</td>';
                 html += '<td class="sft-cab-pl-act">';
                 html += '<div class="sft-cab-pl-act-row" role="group">';
-                html += '<button type="button" class="sft-cab-btn-yes sft-cab-btn--cab-action" data-sft-cab="ok" data-req-id="' + sftEscStr(rid) + '" title="Aceptar">✓</button>';
-                html += '<button type="button" class="sft-cab-btn-no sft-cab-btn--cab-action" data-sft-cab="no" data-req-id="' + sftEscStr(rid) + '" title="Denegar">✕</button>';
-                html += '<button type="button" class="sft-cab-btn-copy sft-cab-btn--cab-copy-icon" data-sft-cab="copy" data-req-id="' + sftEscStr(rid) + '" title="' + sftEscStr(copyTitle) + '" aria-label="' + sftEscStr(copyTitle) + '"><svg class="sft-cab-copy-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></button>';
+                if (isStripeCheckoutUnpaid) {
+                    html += '<button type="button" class="sft-cab-btn-no sft-cab-btn--cab-action" data-sft-cab="no" data-req-id="' + sftEscStr(rid) + '" title="' + sftEscStr('Cancelar solicitud sin pago') + '">✕</button>';
+                    html += '<button type="button" class="sft-cab-btn-copy sft-cab-btn--cab-copy-icon" data-sft-cab="copy" data-req-id="' + sftEscStr(rid) + '" title="' + sftEscStr(copyTitle) + '" aria-label="' + sftEscStr(copyTitle) + '"><svg class="sft-cab-copy-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></button>';
+                    html += '<span class="sft-cab-pending-pay-note" title="' + sftEscStr(pendingPayHint) + '">' + sftEscStr(pendingPayHint) + '</span>';
+                } else {
+                    html += '<button type="button" class="sft-cab-btn-yes sft-cab-btn--cab-action" data-sft-cab="ok" data-req-id="' + sftEscStr(rid) + '" title="Aceptar">✓</button>';
+                    html += '<button type="button" class="sft-cab-btn-no sft-cab-btn--cab-action" data-sft-cab="no" data-req-id="' + sftEscStr(rid) + '" title="Denegar">✕</button>';
+                    html += '<button type="button" class="sft-cab-btn-copy sft-cab-btn--cab-copy-icon" data-sft-cab="copy" data-req-id="' + sftEscStr(rid) + '" title="' + sftEscStr(copyTitle) + '" aria-label="' + sftEscStr(copyTitle) + '"><svg class="sft-cab-copy-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></button>';
+                }
                 html += '</div></td></tr>';
             });
 
