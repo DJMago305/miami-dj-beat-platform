@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260430-float-nav-1" />
+    <link rel="stylesheet" href="./styles.css?v=20260430-legacy-compat-1" />
   <link rel="stylesheet" href="./header-unified.css?v=20260422-wordmark-scale" />
     <link rel="stylesheet" href="./profile.css?v=20260418-PURGE-SEAL" />
     <style>
@@ -3942,6 +3942,7 @@
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${session.access_token}`,
+                            'apikey': typeof window.MDB_SUPABASE_ANON_KEY === 'string' ? window.MDB_SUPABASE_ANON_KEY : '',
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
@@ -4941,6 +4942,7 @@
                                 method: 'POST',
                                 headers: {
                                     'Authorization': `Bearer ${authSession.access_token}`,
+                                    'apikey': typeof window.MDB_SUPABASE_ANON_KEY === 'string' ? window.MDB_SUPABASE_ANON_KEY : '',
                                     'Content-Type': 'application/json'
                                 },
                                 body: JSON.stringify({
@@ -5099,7 +5101,7 @@
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
       <script src="./mdj-shared-header.js?v=20260422-mainnav-infinite-1"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260422-mainnav-chev-bar-1"></script>
-    <script src="./mdj-owner-tabs-marquee.js?v=20260418-PURGE-SEAL"></script>
+    <script src="./mdj-owner-tabs-marquee.js?v=20260429-static-strip"></script>
     <script src="./mdj-profile-nav-context.js?v=20260418-PURGE-SEAL"></script>
   <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
 </body>

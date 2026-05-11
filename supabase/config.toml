@@ -361,7 +361,11 @@ inspector_port = 8083
 # The Deno major version to use.
 deno_version = 2
 
-# Public checkout (browser fetch, no user JWT) — same pattern as create-event-payment
+# Public checkout (browser fetch + anon key) — event deposits / portal payment links
+[functions.create-event-payment]
+verify_jwt = false
+
+# Public checkout (browser fetch + anon key)
 [functions.create-course-checkout]
 verify_jwt = false
 
@@ -375,6 +379,10 @@ verify_jwt = false
 
 # Fan anónimo: Stripe Checkout para propina con tarjeta (SOUNDFORTIPS)
 [functions.create-sft-tip-checkout]
+verify_jwt = false
+
+# Stripe → Supabase (sin JWT; firma vía stripe-signature + STRIPE_WEBHOOK_SECRET)
+[functions.stripe-webhook]
 verify_jwt = false
 
 # The AI Booth — TTS vía ElevenLabs (clave solo en servidor; navegador usa anon key)
