@@ -971,6 +971,86 @@
             }
         }
 
+        @media (max-width: 640px) {
+            body.dj-profile-sft-client-view .dj-hero {
+                height: 372px;
+            }
+
+            body.dj-profile-sft-client-view .dj-hero-bg-photo {
+                object-position: center 22%;
+            }
+
+            body.dj-profile-sft-client-view .dj-hero-overlay {
+                background:
+                    linear-gradient(to right, rgba(0, 0, 0, 0.3) 0%, transparent 42%, transparent 100%),
+                    linear-gradient(to top, rgba(0, 0, 0, 0.94) 0%, rgba(0, 0, 0, 0.68) 36%, transparent 66%);
+            }
+
+            body.dj-profile-sft-client-view .dj-hero-inset {
+                display: none;
+            }
+
+            body.dj-profile-sft-client-view .dj-hero-content {
+                padding: 0 22px 14px;
+                align-items: flex-end;
+            }
+
+            body.dj-profile-sft-client-view .dj-hero-left {
+                max-width: min(100%, 24ch);
+                padding-top: 18px;
+            }
+
+            body.dj-profile-sft-client-view .dj-hero-role {
+                max-width: 20ch;
+                margin-bottom: 7px;
+                font-size: 10px;
+                line-height: 1.28;
+                letter-spacing: 0.16em;
+                color: rgba(255, 255, 255, 0.76);
+            }
+
+            body.dj-profile-sft-client-view .dj-hero-name {
+                margin-bottom: 10px;
+                font-size: clamp(36px, 10.8vw, 42px);
+                line-height: 1.03;
+            }
+
+            body.dj-profile-sft-client-view .dj-rating {
+                gap: 3px;
+                margin-bottom: 12px;
+                font-size: 12px;
+                opacity: 1;
+                filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.38));
+            }
+
+            body.dj-profile-sft-client-view .dj-social-row {
+                gap: 6px;
+                margin-top: 0;
+                justify-content: center;
+                flex-wrap: nowrap;
+            }
+
+            body.dj-profile-sft-client-view .dj-social-icon {
+                width: 34px;
+                height: 34px;
+                border-radius: 9px;
+                background: rgba(255, 255, 255, 0.08);
+            }
+
+            body.dj-profile-sft-client-view .dj-social-icon svg {
+                width: 16px;
+                height: 16px;
+            }
+
+            body.dj-profile-sft-client-view #tab-public > .dj-body {
+                padding-top: 18px;
+            }
+
+            body.dj-profile-sft-client-view .pub-qr-share-block {
+                opacity: 0.9;
+            }
+        }
+
         /* Cards */
         .dj-card {
             background: rgba(255, 255, 255, 0.03);
@@ -1091,6 +1171,64 @@
             margin-bottom: 0;
         }
 
+        .pub-mobile-section-details {
+            margin: 0;
+        }
+
+        .pub-mobile-section-details>summary {
+            display: none;
+            list-style: none;
+        }
+
+        .pub-mobile-section-details>summary::-webkit-details-marker,
+        .pub-mobile-section-details>summary::marker {
+            display: none;
+        }
+
+        .pub-mobile-section-summary {
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            margin: 0;
+            padding: 0;
+        }
+
+        .pub-mobile-section-summary-head {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .pub-mobile-section-title {
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 2.5px;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+
+        .pub-mobile-section-rule {
+            flex: 1;
+            min-width: 20px;
+            height: 1px;
+            background: linear-gradient(to right, rgba(197, 160, 89, 0.35), transparent);
+        }
+
+        .pub-mobile-section-chevron {
+            flex-shrink: 0;
+            font-size: 9px;
+            color: var(--gold);
+            opacity: 0.9;
+            line-height: 1;
+            transition: transform 0.2s ease;
+        }
+
+        .pub-mobile-section-details[open] .pub-mobile-section-chevron {
+            transform: rotate(-180deg);
+        }
+
         @media (max-width: 900px) {
             .pub-bio-card.bio-collapsed {
                 padding-top: 14px !important;
@@ -1105,6 +1243,194 @@
 
             #tab-public.bio-collapsed-global .dj-main-col .pub-bio-card + .dj-card {
                 margin-top: 0 !important;
+            }
+
+            body.dj-profile-sft-client-view #tab-public .dj-body {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                padding: 18px 16px 88px;
+            }
+
+            body.dj-profile-sft-client-view #tab-public .dj-main-col,
+            body.dj-profile-sft-client-view #tab-public .dj-side-col {
+                display: contents;
+            }
+
+            body.dj-profile-sft-client-view #roles-card {
+                display: none !important;
+            }
+
+            body.dj-profile-sft-client-view .pub-bio-card {
+                order: 10;
+                margin-bottom: 0;
+            }
+
+            body.dj-profile-sft-client-view #venues-card {
+                order: 20;
+                margin-bottom: 0;
+            }
+
+            body.dj-profile-sft-client-view #pub-reviews-wrap {
+                order: 30;
+                margin-bottom: 0;
+            }
+
+            body.dj-profile-sft-client-view #public-action-buttons {
+                order: 60;
+                margin-top: 0 !important;
+                margin-bottom: 0;
+            }
+
+            body.dj-profile-sft-client-view #avail-check-card {
+                order: 50;
+                margin-bottom: 0;
+            }
+
+            body.dj-profile-sft-client-view #tab-public .sidebar-stack {
+                order: 90;
+            }
+
+            body.dj-profile-sft-client-view .pub-bio-card,
+            body.dj-profile-sft-client-view #venues-card,
+            body.dj-profile-sft-client-view #reviews-card,
+            body.dj-profile-sft-client-view #public-action-buttons,
+            body.dj-profile-sft-client-view #avail-check-card {
+                padding: 18px 16px !important;
+            }
+
+            body.dj-profile-sft-client-view #pub-venues-details > summary,
+            body.dj-profile-sft-client-view #pub-reviews-details > summary,
+            body.dj-profile-sft-client-view #pub-avail-details > summary {
+                display: flex;
+            }
+
+            body.dj-profile-sft-client-view #pub-venues-details:not([open]) .pub-mobile-section-body,
+            body.dj-profile-sft-client-view #pub-reviews-details:not([open]) .pub-mobile-section-body,
+            body.dj-profile-sft-client-view #pub-avail-details:not([open]) .pub-mobile-section-body {
+                display: none !important;
+            }
+
+            body.dj-profile-sft-client-view #venues-card .dj-card-label,
+            body.dj-profile-sft-client-view #pub-reviews-header,
+            body.dj-profile-sft-client-view #avail-check-card .dj-card-label,
+            body.dj-profile-sft-client-view #avail-check-card .pub-avail-visit-hint {
+                display: none !important;
+            }
+
+            body.dj-profile-sft-client-view #pub-reviews-carousel:empty {
+                min-height: 0;
+                padding: 8px 0 2px;
+                text-align: center;
+            }
+
+            body.dj-profile-sft-client-view #pub-reviews-carousel:empty::before {
+                content: 'Aún sin reseñas';
+                display: block;
+                font-size: 14px;
+                font-weight: 700;
+                color: rgba(255, 255, 255, 0.72);
+                letter-spacing: 0.01em;
+            }
+
+            body.dj-profile-sft-client-view #pub-review-cta-wrap {
+                margin-top: 12px;
+                padding: 14px 0 0 !important;
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
+                text-align: center;
+            }
+
+            body.dj-profile-sft-client-view #pub-review-cta-card {
+                display: block !important;
+                order: 40;
+                margin-bottom: 0;
+                padding: 16px !important;
+            }
+
+            body.dj-profile-sft-client-view #pub-review-cta-card #pub-review-cta-wrap {
+                margin-top: 0;
+                padding: 0 !important;
+                border-top: none;
+            }
+
+            body.dj-profile-sft-client-view #pub-review-stars-wrap {
+                margin-bottom: 12px;
+            }
+
+            body.dj-profile-sft-client-view #pub-review-star-label {
+                color: rgba(255, 255, 255, 0.82);
+                margin-bottom: 10px;
+                letter-spacing: 0.08em;
+            }
+
+            body.dj-profile-sft-client-view .pub-review-stars {
+                gap: 8px;
+            }
+
+            body.dj-profile-sft-client-view .pub-review-star-btn {
+                padding: 2px 4px;
+                font-size: 32px;
+                color: rgba(255, 255, 255, 0.42);
+                text-shadow: 0 0 10px rgba(0, 0, 0, 0.35);
+            }
+
+            body.dj-profile-sft-client-view .pub-review-star-btn.pub-review-star-btn--on {
+                color: var(--gold);
+                text-shadow: 0 0 12px rgba(197, 160, 89, 0.35);
+            }
+
+            body.dj-profile-sft-client-view #public-action-buttons .pub-first-purchase-promo-wrap {
+                display: none !important;
+            }
+
+            body.dj-profile-sft-client-view #public-action-buttons > div:last-child {
+                gap: 8px !important;
+            }
+
+            body.dj-profile-sft-client-view #avail-check-card select {
+                min-width: 0 !important;
+            }
+
+            body.dj-profile-sft-client-view #public-action-buttons .dj-card-label,
+            body.dj-profile-sft-client-view #public-action-buttons #sft-public-interact-hint,
+            body.dj-profile-sft-client-view #public-action-buttons .pub-qr-share-block,
+            body.dj-profile-sft-client-view #public-action-buttons #soundfortips-smart-heading,
+            body.dj-profile-sft-client-view #public-action-buttons #soundfortips-launch-btn {
+                display: none !important;
+            }
+
+            body.dj-profile-sft-client-view #public-action-buttons {
+                padding-top: 12px !important;
+                padding-bottom: 12px !important;
+            }
+
+            body.dj-profile-sft-client-view #public-action-buttons .pub-web-title {
+                display: block !important;
+                margin: 0 !important;
+                text-align: center;
+            }
+
+            body.dj-profile-sft-client-view #public-action-buttons .pub-web-title > div {
+                font-size: 0 !important;
+                letter-spacing: 0 !important;
+                line-height: 1 !important;
+            }
+
+            body.dj-profile-sft-client-view #public-action-buttons .pub-web-title > div::after {
+                content: 'MIAMI DJ BEAT';
+                display: inline-block;
+                font-size: 10px;
+                letter-spacing: 0.22em;
+                text-transform: uppercase;
+                font-weight: 900;
+                color: var(--gold);
+                text-shadow: 0 0 14px rgba(197, 160, 89, 0.42), 0 0 2px rgba(255, 255, 255, 0.22);
+            }
+
+            body.dj-profile-sft-client-view #public-action-buttons button[onclick*="gotoAffiliateWeb"] {
+                margin-top: 0 !important;
+                padding-top: 12px !important;
+                padding-bottom: 12px !important;
             }
         }
 
@@ -1141,6 +1467,10 @@
         .pub-leave-review-btn:hover {
             background: rgba(197, 160, 89, 0.22);
             border-color: rgba(197, 160, 89, 0.75);
+        }
+
+        #pub-review-cta-card {
+            display: none;
         }
 
         .pub-review-stars-wrap {
@@ -1998,6 +2328,7 @@
         .mdj-sft-mobile-float-cta #soundfortips-launch-btn-float .sft-float-launch-wordmark {
             font-size: 19px;
             line-height: 1.1;
+            letter-spacing: 0.04em;
         }
 
         .mdj-sft-mobile-float-cta #soundfortips-launch-btn-float:not(.sft-float--offline) .sft-launch-wordmark-sound {
@@ -2006,11 +2337,15 @@
         }
 
         .mdj-sft-mobile-float-cta #soundfortips-launch-btn-float:not(.sft-float--offline) .sft-launch-wordmark-fortips {
-            background: linear-gradient(180deg, #fef3c7 0%, #d97706 55%, #92400e 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 6px rgba(217, 119, 6, 0.35));
+            color: #7c3f00;
+            background: none;
+            -webkit-background-clip: initial;
+            background-clip: initial;
+            -webkit-text-fill-color: currentColor;
+            text-shadow:
+                0 1px 0 rgba(255, 248, 220, 0.45),
+                0 0 6px rgba(217, 119, 6, 0.18);
+            filter: none;
         }
 
         .mdj-sft-mobile-float-cta #soundfortips-launch-btn-float.sft-float--offline .sft-launch-wordmark-sound {
@@ -2019,11 +2354,15 @@
         }
 
         .mdj-sft-mobile-float-cta #soundfortips-launch-btn-float.sft-float--offline .sft-launch-wordmark-fortips {
-            background: linear-gradient(180deg, #fff9e8 0%, #fde047 45%, #eab308 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.35));
+            color: #ffe08a;
+            background: none;
+            -webkit-background-clip: initial;
+            background-clip: initial;
+            -webkit-text-fill-color: currentColor;
+            text-shadow:
+                0 0 10px rgba(250, 204, 21, 0.28),
+                0 1px 8px rgba(0, 0, 0, 0.38);
+            filter: none;
         }
 
         .mdj-sft-mobile-float-cta #soundfortips-launch-btn-float.sft-float--offline {
@@ -2131,6 +2470,10 @@
                 border-width: 2px !important;
                 border-color: rgba(34, 197, 94, 0.75) !important;
                 box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.35);
+            }
+
+            #sftOverlay #sftCustomTipWrap {
+                display: none !important;
             }
         }
 
@@ -2586,27 +2929,41 @@
                 <!-- Opiniones de clientes (primero visible tras hero) -->
                 <div id="pub-reviews-wrap" class="pub-reviews-wrap pub-reviews-section">
                     <div class="dj-card" id="reviews-card" style="overflow: hidden; padding-right:0;">
-                        <div class="dj-card-label" id="pub-reviews-header"
-                            style="display:flex; justify-content:space-between; align-items:center; padding-right:20px;">
-                            <span id="pub-reviews-title"></span>
-                            <span id="pub-reviews-avg" style="color:var(--gold); font-size:11px; font-weight:900;"></span>
-                        </div>
-                        <div id="pub-reviews-carousel" class="reviews-carousel"></div>
-                        <div id="pub-review-cta-wrap" style="padding: 14px 24px 10px;">
-                            <div id="pub-review-stars-wrap" class="pub-review-stars-wrap" style="display:none;">
-                                <div id="pub-review-star-label" data-i18n="profile-review-star-label">Valoración (1 a 5 estrellas)</div>
-                                <div class="pub-review-stars" id="pub-review-stars" role="group" aria-labelledby="pub-review-star-label">
-                                    <button type="button" class="pub-review-star-btn" data-rating="1" aria-label="1 estrella">★</button>
-                                    <button type="button" class="pub-review-star-btn" data-rating="2" aria-label="2 estrellas">★</button>
-                                    <button type="button" class="pub-review-star-btn" data-rating="3" aria-label="3 estrellas">★</button>
-                                    <button type="button" class="pub-review-star-btn" data-rating="4" aria-label="4 estrellas">★</button>
-                                    <button type="button" class="pub-review-star-btn" data-rating="5" aria-label="5 estrellas">★</button>
+                        <details class="pub-mobile-section-details" id="pub-reviews-details" open>
+                            <summary class="pub-mobile-section-summary">
+                                <span class="pub-mobile-section-summary-head">
+                                    <span class="pub-mobile-section-title">OPINIONES</span>
+                                </span>
+                                <span class="pub-mobile-section-rule" aria-hidden="true"></span>
+                                <span class="pub-mobile-section-chevron" aria-hidden="true">▼</span>
+                            </summary>
+                            <div class="pub-mobile-section-body">
+                                <div class="dj-card-label" id="pub-reviews-header"
+                                    style="display:flex; justify-content:space-between; align-items:center; padding-right:20px;">
+                                    <span id="pub-reviews-title"></span>
+                                    <span id="pub-reviews-avg" style="color:var(--gold); font-size:11px; font-weight:900;"></span>
                                 </div>
+                                <div id="pub-reviews-carousel" class="reviews-carousel"></div>
                             </div>
-                            <button type="button" class="pub-leave-review-btn" id="pub-leave-review-btn" style="display:none;">—</button>
-                            <p id="pub-leave-review-hint" data-i18n="profile-review-cta-hint-guest"
-                                style="font-size:10px;color:rgba(255,255,255,0.42);margin:10px 0 0;line-height:1.4;"></p>
+                        </details>
+                    </div>
+                </div>
+
+                <div class="dj-card" id="pub-review-cta-card">
+                    <div id="pub-review-cta-wrap" style="padding: 14px 24px 10px;">
+                        <div id="pub-review-stars-wrap" class="pub-review-stars-wrap" style="display:none;">
+                            <div id="pub-review-star-label" data-i18n="profile-review-star-label">Valoración (1 a 5 estrellas)</div>
+                            <div class="pub-review-stars" id="pub-review-stars" role="group" aria-labelledby="pub-review-star-label">
+                                <button type="button" class="pub-review-star-btn" data-rating="1" aria-label="1 estrella">★</button>
+                                <button type="button" class="pub-review-star-btn" data-rating="2" aria-label="2 estrellas">★</button>
+                                <button type="button" class="pub-review-star-btn" data-rating="3" aria-label="3 estrellas">★</button>
+                                <button type="button" class="pub-review-star-btn" data-rating="4" aria-label="4 estrellas">★</button>
+                                <button type="button" class="pub-review-star-btn" data-rating="5" aria-label="5 estrellas">★</button>
+                            </div>
                         </div>
+                        <button type="button" class="pub-leave-review-btn" id="pub-leave-review-btn" style="display:none;">—</button>
+                        <p id="pub-leave-review-hint" data-i18n="profile-review-cta-hint-guest"
+                            style="font-size:10px;color:rgba(255,255,255,0.42);margin:10px 0 0;line-height:1.4;"></p>
                     </div>
                 </div>
 
@@ -2633,50 +2990,72 @@
 
                 <!-- Lugar de trabajo actual -->
                 <div class="dj-card" id="venues-card">
-                    <div class="dj-card-label">ACTUALMENTE TRABAJANDO EN</div>
-                    <div id="pub-venues-body">
-                        <!-- populated by JS -->
-                    </div>
+                    <details class="pub-mobile-section-details" id="pub-venues-details" open>
+                        <summary class="pub-mobile-section-summary">
+                            <span class="pub-mobile-section-summary-head">
+                                <span class="pub-mobile-section-title">ACTUALMENTE TRABAJA EN</span>
+                            </span>
+                            <span class="pub-mobile-section-rule" aria-hidden="true"></span>
+                            <span class="pub-mobile-section-chevron" aria-hidden="true">▼</span>
+                        </summary>
+                        <div class="pub-mobile-section-body">
+                            <div class="dj-card-label">ACTUALMENTE TRABAJANDO EN</div>
+                            <div id="pub-venues-body">
+                                <!-- populated by JS -->
+                            </div>
+                        </div>
+                    </details>
                 </div>
 
                 <!-- Consulta disponibilidad (flujo público de contratación) -->
                 <div class="dj-card" id="avail-check-card">
-                    <div class="dj-card-label" data-i18n="profile-avail-title">CONSULTA DISPONIBILIDAD · VISÍTANOS</div>
-                    <p class="pub-avail-visit-hint" data-i18n="profile-avail-visit-hint"
-                        style="font-size:11px;color:rgba(255,255,255,0.48);margin:-6px 0 12px;line-height:1.45;">
-                        Revisa fechas aquí; también puedes explorar el sitio oficial de Miami DJ Beat.</p>
-                    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px;">
-                        <select id="dj-avail-month"
-                            style="flex:1;min-width:80px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;font-family:inherit;">
-                            <option value="" disabled selected>Mes</option>
-                            <option value="1">Enero</option>
-                            <option value="2">Febrero</option>
-                            <option value="3">Marzo</option>
-                            <option value="4">Abril</option>
-                            <option value="5">Mayo</option>
-                            <option value="6">Junio</option>
-                            <option value="7">Julio</option>
-                            <option value="8">Agosto</option>
-                            <option value="9">Septiembre</option>
-                            <option value="10">Octubre</option>
-                            <option value="11">Noviembre</option>
-                            <option value="12">Diciembre</option>
-                        </select>
-                        <select id="dj-avail-day"
-                            style="flex:1;min-width:60px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;font-family:inherit;">
-                            <option value="" disabled selected>Día</option>
-                        </select>
-                        <select id="dj-avail-year"
-                            style="flex:1;min-width:70px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;font-family:inherit;">
-                            <option value="" disabled selected>Año</option>
-                        </select>
-                    </div>
-                    <button id="dj-avail-check-btn" onclick="checkDJAvailability()"
-                        style="width:100%;margin-top:10px;background:linear-gradient(135deg,#c5a059,#e8b96a);color:#000;border:none;padding:10px;border-radius:9px;font-size:13px;font-weight:900;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;"
-                        onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(197,160,89,0.45)'"
-                        onmouseout="this.style.transform='';this.style.boxShadow=''">CHECK ★</button>
-                    <div id="dj-avail-result"
-                        style="margin-top:10px;font-size:12px;font-weight:700;text-align:center;min-height:18px;"></div>
+                    <details class="pub-mobile-section-details" id="pub-avail-details" open>
+                        <summary class="pub-mobile-section-summary">
+                            <span class="pub-mobile-section-summary-head">
+                                <span class="pub-mobile-section-title">DISPONIBILIDAD</span>
+                            </span>
+                            <span class="pub-mobile-section-rule" aria-hidden="true"></span>
+                            <span class="pub-mobile-section-chevron" aria-hidden="true">▼</span>
+                        </summary>
+                        <div class="pub-mobile-section-body">
+                            <div class="dj-card-label" data-i18n="profile-avail-title">CONSULTA DISPONIBILIDAD · VISÍTANOS</div>
+                            <p class="pub-avail-visit-hint" data-i18n="profile-avail-visit-hint"
+                                style="font-size:11px;color:rgba(255,255,255,0.48);margin:-6px 0 12px;line-height:1.45;">
+                                Revisa fechas aquí; también puedes explorar el sitio oficial de Miami DJ Beat.</p>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px;">
+                                <select id="dj-avail-month"
+                                    style="flex:1;min-width:80px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;font-family:inherit;">
+                                    <option value="" disabled selected>Mes</option>
+                                    <option value="1">Enero</option>
+                                    <option value="2">Febrero</option>
+                                    <option value="3">Marzo</option>
+                                    <option value="4">Abril</option>
+                                    <option value="5">Mayo</option>
+                                    <option value="6">Junio</option>
+                                    <option value="7">Julio</option>
+                                    <option value="8">Agosto</option>
+                                    <option value="9">Septiembre</option>
+                                    <option value="10">Octubre</option>
+                                    <option value="11">Noviembre</option>
+                                    <option value="12">Diciembre</option>
+                                </select>
+                                <select id="dj-avail-day"
+                                    style="flex:1;min-width:60px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;font-family:inherit;">
+                                    <option value="" disabled selected>Día</option>
+                                </select>
+                                <select id="dj-avail-year"
+                                    style="flex:1;min-width:70px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;font-family:inherit;">
+                                    <option value="" disabled selected>Año</option>
+                                </select>
+                            </div>
+                            <button id="dj-avail-check-btn" onclick="checkDJAvailability()"
+                                style="width:100%;margin-top:10px;background:linear-gradient(135deg,#c5a059,#e8b96a);color:#000;border:none;padding:10px;border-radius:9px;font-size:13px;font-weight:900;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;"
+                                onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(197,160,89,0.45)'"
+                                onmouseout="this.style.transform='';this.style.boxShadow=''">CHECK ★</button>
+                            <div id="dj-avail-result"
+                                style="margin-top:10px;font-size:12px;font-weight:700;text-align:center;min-height:18px;"></div>
+                        </div>
+                    </details>
                 </div>
 
             </div>
@@ -2730,7 +3109,7 @@
                         </span>
                     </button>
 
-                    <div style="text-align:center; margin-top:2px; margin-bottom:6px;">
+                    <div class="pub-web-title" style="text-align:center; margin-top:2px; margin-bottom:6px;">
                         <div style="font-size:11px; letter-spacing:0.26em; text-transform:uppercase; font-weight:900; color:var(--gold); text-shadow:0 0 14px rgba(197,160,89,0.42), 0 0 2px rgba(255,255,255,0.22);">WEB MIAMI DJ BEAT</div>
                     </div>
                     <!-- Web Button (Full Width Stacked) -->
@@ -3660,6 +4039,18 @@
 
             // Cabina / cola / wallet SFT: solo PRO de pago (ver mdbProfileSoundForTipsEligible).
             window._mdjSftProAllowed = mdbProfileSoundForTipsEligible(p);
+            const isSftClientMobileProfile = !!(isPublicQrView && !isOwner && window._mdjSftProAllowed);
+            document.body.classList.toggle('dj-profile-sft-client-view', isSftClientMobileProfile);
+            if (isSftClientMobileProfile && window.matchMedia && window.matchMedia('(max-width: 900px)').matches) {
+                ['pub-venues-details', 'pub-reviews-details', 'pub-avail-details'].forEach(function (id) {
+                    var el = document.getElementById(id);
+                    if (el) el.open = false;
+                });
+                var bioDetails = document.getElementById('pub-bio-details');
+                if (bioDetails && !isAdmin) bioDetails.open = false;
+                var availBtn = document.getElementById('dj-avail-check-btn');
+                if (availBtn) availBtn.textContent = 'CHECK AVAILABILITY';
+            }
 
             const djName = p.stage_name || p.dj_name || p.full_name || 'DJ';
 
@@ -9127,7 +9518,24 @@
                         <p class="sft-pay-split-note" data-i18n="sft-pay-platform-split-note">Las propinas con tarjeta las procesa Miami DJ Beat; se aplica una comisión de plataforma del 10&nbsp;% y el resto va al DJ. SoundForTips está disponible para DJs con plan PRO. Con transferencias manuales, tú envías al DJ según las instrucciones y la petición puede quedar pendiente de verificación.</p>
                     </div>
 
-                    <div class="sft-group">
+                    <div class="sft-group" id="sftStep2TipGroup" style="margin-top:4px">
+                        <label style="font-size:12px;">💵 <span data-i18n="sft-tip-amount-label">Propina (USD)</span></label>
+                        <div class="sft-tip-chips" id="sftTipChips">
+                            <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(5, this)">$5</button>
+                            <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(10, this)">$10</button>
+                            <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(20, this)">$20</button>
+                            <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(50, this)">$50</button>
+                            <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(100, this)">$100</button>
+                        </div>
+                        <div id="sftCustomTipWrap" style="position:relative; margin-top:8px;">
+                            <span
+                                style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--gold); font-size:16px; font-weight:900;">$</span>
+                            <input type="number" class="sft-input" id="sftCustomTip" placeholder="Monto"
+                                style="padding-left:35px; font-size:16px; font-weight:800; padding-top:10px; padding-bottom:10px;" min="1" step="0.01">
+                        </div>
+                    </div>
+
+                    <div class="sft-group" id="sftStep2MethodGroup">
                         <p class="sft-pay-method-vis-hint" style="font-size:11px; color:rgba(255,255,255,0.45); margin:-4px 0 14px 0;" data-i18n="sft-pay-method-hint">Elige una opción. La tarjeta cobra aquí; las transferencias las completas tú en tu banco.</p>
                         <div id="sftManualVerificationBanner" class="sft-rail-notice" style="display:none;margin-bottom:10px;" role="note" aria-live="polite"></div>
                         <div id="sftPaymentRailNotice" class="sft-rail-notice sft-rail-notice--card" role="note" aria-live="polite"></div>
@@ -9158,23 +9566,6 @@
                     <div class="sft-group" id="sftPayRecipientWrap">
                         <label id="sftPayWhereLabel" data-i18n="sft-pay-where-label-zelle" style="font-size:12px;">Envía a (DJ)</label>
                         <div id="sftPayRecipientBlock" class="sft-pay-recipient-box" style="font-size:12px; line-height:1.4; color:rgba(255,255,255,0.78); padding:10px 12px; border-radius:10px; border:1px solid rgba(197,160,89,0.28); background:rgba(0,0,0,0.35); max-height:100px; overflow:auto;"></div>
-                    </div>
-
-                    <div class="sft-group" style="margin-top:4px">
-                        <label style="font-size:12px;">💵 <span data-i18n="sft-tip-amount-label">Propina (USD)</span></label>
-                        <div class="sft-tip-chips" id="sftTipChips">
-                            <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(5, this)">$5</button>
-                            <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(10, this)">$10</button>
-                            <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(15, this)">$15</button>
-                            <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(20, this)">$20</button>
-                            <button type="button" class="sft-tip-chip" onclick="applySftTipPreset(50, this)">$50</button>
-                        </div>
-                        <div style="position:relative; margin-top:8px;">
-                            <span
-                                style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--gold); font-size:16px; font-weight:900;">$</span>
-                            <input type="number" class="sft-input" id="sftCustomTip" placeholder="Monto"
-                                style="padding-left:35px; font-size:16px; font-weight:800; padding-top:10px; padding-bottom:10px;" min="1" step="0.01">
-                        </div>
                     </div>
 
                     <button type="button" class="sft-submit" id="sftSubmitBtn" onclick="processSoundForTips()">PAGAR Y ENVIAR</button>
