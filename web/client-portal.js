@@ -1742,7 +1742,10 @@ const PortalApp = {
 
             const resp = await fetch(CHECKOUT_FN, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers:
+                    typeof window.mdjSupabaseAnonInvokeHeaders === 'function'
+                        ? window.mdjSupabaseAnonInvokeHeaders()
+                        : { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     lead_id: this.currentLead.id,
                     amount_cents: depositAmount,
@@ -1857,7 +1860,10 @@ const PortalApp = {
             var amountCents = Math.max(Math.round(balNum * 100), 100);
             var resp = await fetch(CHECKOUT_FN, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers:
+                    typeof window.mdjSupabaseAnonInvokeHeaders === 'function'
+                        ? window.mdjSupabaseAnonInvokeHeaders()
+                        : { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     lead_id: this.currentLead.id,
                     amount_cents: amountCents,
@@ -2539,7 +2545,10 @@ const PortalApp = {
             var amountCents = Math.max(Math.round(amt * 100), 100);
             var resp = await fetch(CHECKOUT_FN, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers:
+                    typeof window.mdjSupabaseAnonInvokeHeaders === 'function'
+                        ? window.mdjSupabaseAnonInvokeHeaders()
+                        : { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     lead_id: newId,
                     amount_cents: amountCents,

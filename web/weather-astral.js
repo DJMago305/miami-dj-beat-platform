@@ -21,6 +21,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const moonriseHour = sunsetHour;
     const moonsetHour = sunriseHour + 24; // Spans past midnight
 
+    function getHourInMiami(date) {
+        const parts = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/New_York',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        }).formatToParts(date);
+
+        const hour = Number(parts.find(p => p.type === 'hour')?.value || 0);
+        const minute = Number(parts.find(p => p.type === 'minute')?.value || 0);
+
+        return hour + minute / 60;
+    }
+
     /* =========================================================
        1. MOON PHASE CALCULATION (Synodic Algorithm)
     ========================================================= */
@@ -86,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // X moves linearly from -10% to 110% (East to West)
         // Y moves in an inverted parabola (Math.sin). Elevando el arco para que no se arrastre en el fondo.
         const x = -10 + (clamped * 120);
-        const y = 20 - Math.sin(clamped * Math.PI) * 15; // Reaches 5% at noon, 20% at horizons (Arco alto imperial)
+        const y = 14 - Math.sin(clamped * Math.PI) * 12; // Reaches 2% at noon, 14% at horizons (Arco alto imperial)
 
         // Escala bloqueada a 1.0 para evitar brincos de tamaño (Zero-Jump Protocol)
         const scale = 1.0;
@@ -144,6 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const currentHour = astralDate.getHours() + (astralDate.getMinutes() / 60);
+        const moonHour = getHourInMiami(astralDate);
 
         // 3a. Evaluate Background Scene
         const isDay = currentHour >= sunriseHour && currentHour <= sunsetHour;
@@ -187,15 +202,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 3c. Apply Lunar Physics
-        const moon = getMoonPositionByTime(currentHour);
+        const moon = getMoonPositionByTime(moonHour);
         if (moon.opacity > 0) {
+            window.__lastMoonPos = window.__lastMoonPos || null;
+            let moonX = moon.x;
+            let moonY = moon.y;
+
+            if (window.__lastMoonPos) {
+                const dx = Math.abs(moonX - window.__lastMoonPos.x);
+                const dy = Math.abs(moonY - window.__lastMoonPos.y);
+
+                // Si el salto es extremo, ancla primero en la posicion previa.
+                if (dx > 40 || dy > 40) {
+                    moonX = window.__lastMoonPos.x;
+                    moonY = window.__lastMoonPos.y;
+                }
+
+                // Follow suave para evitar micro-brincos entre muestras.
+                moonX = window.__lastMoonPos.x + (moonX - window.__lastMoonPos.x) * 0.1;
+                moonY = window.__lastMoonPos.y + (moonY - window.__lastMoonPos.y) * 0.1;
+            }
+
+            window.__lastMoonPos = { x: moonX, y: moonY };
+            if (!window.__moonHasRendered) {
+                moonEl.style.opacity = '0';
+            }
+            moonEl.style.transition = 'left 20s linear, top 20s linear, transform 20s linear, opacity .8s ease';
             const currentTemp = weatherData?.main?.temp || null;
             applyMoonPhase(astralDate, currentTemp); // Llama al motor unificado de fases y temperatura
-            moonEl.style.opacity = '1';
-            moonEl.style.left = `${moon.x}%`;
-            moonEl.style.top = `${moon.y}%`;
+            moonEl.style.filter = `
+                drop-shadow(0 0 6px rgba(255,255,255,0.6))
+                drop-shadow(0 0 12px rgba(255,255,255,0.3))
+                blur(0.5px)
+            `;
+            moonEl.style.left = `${moonX}%`;
+            moonEl.style.top = `${moonY}%`;
             moonEl.style.transform = `translate(-50%, -50%) scale(${moon.scale})`;
             moonEl.style.display = 'block'; // Failsafe
+            requestAnimationFrame(() => {
+                moonEl.style.opacity = '1';
+                window.__moonHasRendered = true;
+            });
 
         } else {
             moonEl.style.opacity = '0';
@@ -203,11 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Initiation and Tick ---
-    if (!window.astralInterval) {
-        window.applyAstralState();
-        window.astralInterval = setInterval(() => window.applyAstralState(), 60000);
-    }
+    // Astral: sin tick inicial ni interval aquí — renderWeatherWidget → applyAstralState(ts, data).
 
     // --- DEMO MODE EXPOSE ---
     window.testTimeObject = (testDate, hours) => {

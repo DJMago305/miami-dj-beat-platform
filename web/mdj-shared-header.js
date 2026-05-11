@@ -1,6 +1,8 @@
 /**
  * Miami DJ Beat — shared top header behavior (session, cart, search, mobile, nav highlight).
  * Load after: supabase CDN, supabase-config.js, header-smart-search.js (optional), translations/i18n (optional).
+ * En DOMContentLoaded: `./js/mdj-ambient-music.js` (música) y `./js/mdj-videos-force-mute.js` (vídeos mudos).
+ * Omitir música: MDJ_SKIP_AMBIENT_MUSIC o data-mdj-no-ambient. Omitir mute vídeos: MDJ_SKIP_FORCE_MUTE_VIDEOS o data-mdj-no-force-mute-videos.
  *
  * OMNIPRESENCE: cuando existe `#mainHeader`, este script es el **único** dueño de ENTRAR/SALIR (y zona VIP)
  * en `#header-login-btn` / `#header-login-btn-mobile`. `checkSessionForNav()` usa `supabase.auth.getSession()`
@@ -14,6 +16,38 @@
     if (_mdjH) _mdjH.classList.add('mdj-header-unified');
   } catch (eMdjH) {
     /* ignore */
+  }
+
+  function mdjLoadAmbientMusicScript() {
+    if (typeof window !== 'undefined' && window.MDJ_SKIP_AMBIENT_MUSIC) return;
+    if (document.getElementById('mdj-ambient-music-script')) return;
+    try {
+      if (document.documentElement && document.documentElement.getAttribute('data-mdj-no-ambient') === '1') return;
+    } catch (eAmb) {
+      void eAmb;
+    }
+    var s = document.createElement('script');
+    s.id = 'mdj-ambient-music-script';
+    s.src = './js/mdj-ambient-music.js?v=20260421-ambient-home-only';
+    s.async = true;
+    (document.head || document.documentElement).appendChild(s);
+  }
+
+  function mdjLoadForceMuteVideosScript() {
+    if (typeof window !== 'undefined' && window.MDJ_SKIP_FORCE_MUTE_VIDEOS) return;
+    if (document.getElementById('mdj-videos-force-mute-script')) return;
+    try {
+      if (document.documentElement && document.documentElement.getAttribute('data-mdj-no-force-mute-videos') === '1') {
+        return;
+      }
+    } catch (eVm) {
+      void eVm;
+    }
+    var sv = document.createElement('script');
+    sv.id = 'mdj-videos-force-mute-script';
+    sv.src = './js/mdj-videos-force-mute.js?v=20260421-force-mute-1';
+    sv.async = true;
+    (document.head || document.documentElement).appendChild(sv);
   }
 
   /**
@@ -1963,6 +1997,8 @@
   };
 
   document.addEventListener('DOMContentLoaded', function () {
+    mdjLoadForceMuteVideosScript();
+    mdjLoadAmbientMusicScript();
     if (!document.getElementById('mainHeader')) return;
     if (window.MDJ_SKIP_SHARED_HEADER_INIT) return;
     window.mdjInitSharedHeader();

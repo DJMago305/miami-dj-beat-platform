@@ -20,7 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // TODO: Replace with real production API key and endpoint.
     // For this lab environment, we define a quick OpenWeatherMap config.
     const CONFIG = {
-        apiKey: 'dd8223bfcc6f68da9fc28ca245fe0201',
+        apiKey:
+            (typeof window !== 'undefined' && window.OPENWEATHER_API_KEY && String(window.OPENWEATHER_API_KEY).trim()) ||
+            'dd8223bfcc6f68da9fc28ca245fe0201',
         lat: localStorage.getItem('mdj_weather_lat') || '25.8576', // Dynamic via UI or Hialeah Fallback
         lon: localStorage.getItem('mdj_weather_lon') || '-80.2781', // Dynamic via UI or Hialeah Fallback
         units: 'imperial', // Using Fahrenheit/Miles as per current UI

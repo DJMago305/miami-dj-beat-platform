@@ -4,15 +4,128 @@
  * and logistical alerts for Miami DJ Beat System.
  */
 
-// LA LLAVE MAESTRA EXTRAÍDA DIRECTAMENTE
-const API_KEY = 'dd8223bfcc6f68da9fc28ca245fe0201';
+window.__mdjWeatherBootTime = Date.now();
+window.__mdjWeatherLocked = true;
+window.__mdjWeatherInitialDone = false;
+setTimeout(function () {
+    window.__mdjWeatherLocked = false;
+}, 8000);
+
+/** En producción definir `window.OPENWEATHER_API_KEY` antes de cargar este script (Vercel env → inline o Edge). */
+function mdjOpenWeatherApiKey() {
+    if (typeof window !== 'undefined' && window.OPENWEATHER_API_KEY && String(window.OPENWEATHER_API_KEY).trim()) {
+        return String(window.OPENWEATHER_API_KEY).trim();
+    }
+    return 'dd8223bfcc6f68da9fc28ca245fe0201';
+}
+
+let currentDuration = 220;
+let _carouselLerpRaf = null;
+
+function smoothDuration(target) {
+    const diff = target - currentDuration;
+    const step = diff * 0.08;
+    currentDuration += step;
+    return currentDuration;
+}
+
+/**
+ * Ronda framerate hasta converger a target (smoothDuration 8% por frame).
+ * No re-entra a applyWeatherScene: eso limpiaría capas/keyframes/sol a cada frame.
+ */
+function startCarouselDurationLerp(weatherContainer, targetSec) {
+    if (!weatherContainer) return;
+    if (_carouselLerpRaf) {
+        cancelAnimationFrame(_carouselLerpRaf);
+        _carouselLerpRaf = null;
+    }
+    const TOL = 0.5;
+    function tick() {
+        const el = weatherContainer.querySelector('.nubes-largas-fast-container');
+        if (!el || !el.isConnected) {
+            _carouselLerpRaf = null;
+            return;
+        }
+        const smooth = smoothDuration(targetSec);
+        el.style.setProperty('animation-duration', `${smooth.toFixed(1)}s`, 'important');
+        if (Math.abs(targetSec - currentDuration) <= TOL) {
+            currentDuration = targetSec;
+            el.style.setProperty('animation-duration', `${currentDuration.toFixed(1)}s`, 'important');
+            _carouselLerpRaf = null;
+            return;
+        }
+        _carouselLerpRaf = requestAnimationFrame(tick);
+    }
+    _carouselLerpRaf = requestAnimationFrame(tick);
+}
+
+const __mdjGeocodeCache = {};
+
+/** Resuelve ciudad (sin GPS) → lat/lon vía OpenWeather Geocoding API 1.0 */
+async function mdjGeocodeCityForWeather(cityLabel) {
+    const key = String(cityLabel).toLowerCase();
+    if (__mdjGeocodeCache[key]) return __mdjGeocodeCache[key];
+    const API_KEY = mdjOpenWeatherApiKey();
+    const q = encodeURIComponent(`${cityLabel},FL,US`);
+    const url = `https://api.openweathermap.org/geo/1.0/direct?q=${q}&limit=1&appid=${API_KEY}`;
+    try {
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const arr = await res.json();
+        if (!Array.isArray(arr) || !arr[0]) return null;
+        const out = { lat: arr[0].lat, lon: arr[0].lon };
+        __mdjGeocodeCache[key] = out;
+        return out;
+    } catch (e) {
+        console.warn('[MDJ] Geocoding falló para', cityLabel, e);
+        return null;
+    }
+}
+
+/** Primer cambio de `main` en /forecast respecto al actual (para UI/CSS progresivo) */
+function computeForecastTransitionHint(data) {
+    const list = data.fullForecast;
+    if (!Array.isArray(list) || list.length < 1) return null;
+    const curMain = (data.weather && data.weather[0] && data.weather[0].main) || '';
+    const nowDt = data.dt || Math.floor(Date.now() / 1000);
+    for (let i = 0; i < Math.min(12, list.length); i++) {
+        const blk = list[i];
+        const nextMain = blk.weather?.[0]?.main;
+        if (!nextMain || nextMain === curMain) continue;
+        const hours = Math.max(0, (blk.dt - nowDt) / 3600);
+        return { nextMain, hoursApprox: Math.round(hours * 10) / 10 };
+    }
+    return null;
+}
 
 async function getWeatherForecast(city, eventDateStr, lat = null, lon = null) {
-    // Miami, FL — coordenadas centro (pronóstico coherente con la marca BOSS)
-    const fixedLat = 25.7617;
-    const fixedLon = -80.1918;
+    // 25.7617, -80.1918 — Miami centro (sin GPS; ciudad "Miami" reutiliza esto, otras se geocodifican)
+    const miamiLat = 25.7617;
+    const miamiLon = -80.1918;
+    let useLat = miamiLat;
+    let useLon = miamiLon;
+    if (lat != null && lon != null && !isNaN(Number(lat)) && !isNaN(Number(lon))) {
+        useLat = Number(lat);
+        useLon = Number(lon);
+    } else if (city && typeof city === 'string' && city.trim()) {
+        const c = city.trim();
+        if (c.toLowerCase() !== 'miami') {
+            const g = await mdjGeocodeCityForWeather(c);
+            if (g) {
+                useLat = g.lat;
+                useLon = g.lon;
+            }
+        }
+    }
+    const API_KEY = mdjOpenWeatherApiKey();
     const params = `&appid=${API_KEY}&units=imperial&lang=es&t=${Date.now()}`;
-    const urlCurrent = `https://api.openweathermap.org/data/2.5/weather?lat=${fixedLat}&lon=${fixedLon}${params}`;
+    const urlCurrent = `https://api.openweathermap.org/data/2.5/weather?lat=${useLat}&lon=${useLon}${params}`;
+
+    // TEMP diagnóstico: confirmar Hialeah vs Miami vs geocoding (quitar al cerrar)
+    const _owmHasGpsOrEventCoords = lat != null && lon != null && !isNaN(Number(lat)) && !isNaN(Number(lon));
+    console.log('[OWM] city:', city);
+    console.log('[OWM] lat/lon final:', useLat, useLon);
+    console.log('[OWM] source:', _owmHasGpsOrEventCoords ? 'gps/event-coords' : 'city-geocode-or-fallback');
 
     const resCurrent = await fetch(urlCurrent);
 
@@ -21,23 +134,23 @@ async function getWeatherForecast(city, eventDateStr, lat = null, lon = null) {
         throw new Error(`API Error ${resCurrent.status}`);
     }
     const currentData = await resCurrent.json();
+    currentData.fullForecast = [];
 
     // La Manguera API está abierta al 100%. No hay filtros ni overrides alterando el clima real.
 
     // Forecast misma grilla (Miami)
-    const urlForecast = `https://api.openweathermap.org/data/2.5/forecast?lat=${fixedLat}&lon=${fixedLon}${params}`;
+    const urlForecast = `https://api.openweathermap.org/data/2.5/forecast?lat=${useLat}&lon=${useLon}${params}`;
 
     const resForecast = await fetch(urlForecast);
     let forecastData = null;
 
     if (resForecast.ok) {
         forecastData = await resForecast.json();
-        // CABLEADO VITAL: Guardar el forecast para el Hourly Scroller del dashboard actual
-        currentData.fullForecast = forecastData.list;
         currentData.sys = currentData.sys || {};
         if (forecastData.city && forecastData.city.sunset) {
             currentData.sys.sunset = forecastData.city.sunset;
         }
+        currentData.fullForecast = Array.isArray(forecastData.list) ? forecastData.list : [];
     }
 
     if (!eventDateStr) return currentData;
@@ -79,8 +192,7 @@ async function getWeatherForecast(city, eventDateStr, lat = null, lon = null) {
     closestBlock.name = forecastData.city.name || currentData.name;
     closestBlock.sys = closestBlock.sys || {};
     closestBlock.sys.sunset = forecastData.city.sunset || currentData.sys.sunset;
-    closestBlock.fullForecast = forecastData.list; // Salvamos el array completo para el render diario
-
+    closestBlock.fullForecast = Array.isArray(forecastData.list) ? forecastData.list : [];
 
     return closestBlock;
 }
@@ -107,26 +219,28 @@ async function getWeatherForecast(city, eventDateStr, lat = null, lon = null) {
  * ====================================================================== */
 function mapWeatherToScene(data) {
     const main = data.weather?.[0]?.main || "Clear";
-    // Check if it's night based on icon (e.g., '01n' ends with 'n')
-    const isNight = data.weather?.[0]?.icon?.endsWith("n") || false;
+    const blockTime = data.dt || Math.floor(Date.now() / 1000);
+    const sunrise = data.sys?.sunrise || 0;
+    const sunset = data.sys?.sunset || 0;
+
+    const isNight = (sunrise > 0 && sunset > 0)
+        ? (blockTime < sunrise || blockTime > sunset)
+        : (data.weather?.[0]?.icon?.endsWith("n") || false);
 
     // Detect sunset transition window
-    // Window: 45 minutes before sunset until 15 minutes after sunset
-    const blockTime = data.dt || Math.floor(Date.now() / 1000);
-    const sunset = data.sys?.sunset || 0;
     const isSunset = sunset > 0 && (blockTime >= sunset - 2700 && blockTime <= sunset + 900);
 
     // If it's sunset time and weather is generally visible (not severe storm/rain)
     if (isSunset && (main === "Clear" || main === "Clouds")) return "sunset";
 
-    if (main === "Thunderstorm") return "storm";
+    if (main === "Thunderstorm") return isNight ? "storm" : "storm-day";
     
     // EXTREME WEATHER PROTOCOL: Inundación o vientos fuertes (> 30mph) activan alerta roja
     const weatherId = data.weather?.[0]?.id || 500;
     const windSpeed = data.wind?.speed || 0;
     
     if (main === "Rain" && (weatherId >= 502 || windSpeed > 30)) {
-        return "storm";
+        return isNight ? "storm" : "storm-day";
     }
 
     // IGNORAR PRE-ALERTAS: Si es Drizzle (3xx) o Lluvia Ligera (500), no renderizar la animación física de lluvia.
@@ -138,14 +252,73 @@ function mapWeatherToScene(data) {
 
     if (main === "Clouds") {
         const cloudId = data.weather?.[0]?.id;
-        if (cloudId === 801 || cloudId === 802 || data.weather?.[0]?.description?.includes("few") || data.weather?.[0]?.description?.includes("scattered") || data.weather?.[0]?.description?.includes("dispersas") || data.weather?.[0]?.description?.includes("poco")) {
-            return isNight ? "partly-cloudy-night" : "partly-cloudy";
-        }
+        const desc = (data.weather?.[0]?.description || "").toLowerCase();
+        // OWM: 801 few, 802 scattered, 803 broken → más cielo; 804 overcast → muy nublado
+        const partly =
+            cloudId === 801 ||
+            cloudId === 802 ||
+            cloudId === 803 ||
+            desc.includes("few") ||
+            desc.includes("scattered") ||
+            desc.includes("broken") ||
+            desc.includes("dispersas") ||
+            desc.includes("pocas nubes") ||
+            desc.includes("poco");
+        if (partly) return isNight ? "partly-cloudy-night" : "partly-cloudy";
         return isNight ? "cloudy-night" : "cloudy-day";
     }
     if (main === "Mist" || main === "Fog" || main === "Haze" || main === "Smoke") return isNight ? "cloudy-night" : "cloudy-day";
 
     return isNight ? "clear-night" : "clear-day";
+}
+
+/**
+ * Etiqueta de condición solo para el hero/telemetría (no altera escena ni fetch).
+ * OWM: 801/802 → Parcialmente nublado; 803 → Mayormente nublado; 804 → Nublado.
+ * Sin id en 801–804: misma lógica que antes (descripción con mayúscula inicial).
+ */
+/** Día calendario local (YYYY-MM-DD) para alinear bloques 3h con "hoy" o el día de `data.dt`. */
+function mdjLocalDayKeyFromUnix(unixSec) {
+    const d = new Date((unixSec || 0) * 1000);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * Máx/mín diarios desde slots 3h de /forecast (fullForecast). Misma idea que OWM/Apple para el rango del día.
+ * Si no hay slots coincidentes: fallback a main.temp_min / temp_max del snapshot de /weather.
+ */
+function getDailyMinMaxFromForecast(data) {
+    const list = Array.isArray(data?.fullForecast) ? data.fullForecast : [];
+    const refSec = data?.dt != null ? data.dt : Math.floor(Date.now() / 1000);
+    const dayKey = mdjLocalDayKeyFromUnix(refSec);
+
+    const temps = list
+        .filter((item) => item && item.dt != null && mdjLocalDayKeyFromUnix(item.dt) === dayKey)
+        .map((item) => item?.main?.temp)
+        .filter((t) => typeof t === 'number' && !Number.isNaN(t));
+
+    if (!temps.length) {
+        return {
+            min: data?.main?.temp_min,
+            max: data?.main?.temp_max
+        };
+    }
+
+    return {
+        min: Math.min(...temps),
+        max: Math.max(...temps)
+    };
+}
+
+function getDisplayConditionLabel(data) {
+    const w0 = data.weather?.[0];
+    if (!w0) return "Despejado";
+    const id = w0.id;
+    if (id === 801 || id === 802) return "Parcialmente nublado";
+    if (id === 803) return "Mayormente nublado";
+    if (id === 804) return "Nublado";
+    const raw = w0.description || w0.main || "Despejado";
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
 }
 
 function renderWeatherWidget(data, eventOrDate) {
@@ -157,15 +330,16 @@ function renderWeatherWidget(data, eventOrDate) {
     const locationLbl = document.getElementById('weather-location');
 
     const temp = Math.round(data.main?.temp || 78);
-    const tempMax = Math.round(data.main?.temp_max || temp + 5);
-    const tempMin = Math.round(data.main?.temp_min || temp - 5);
-    const description = data.weather?.[0]?.description || data.weather?.[0]?.main || "Despejado";
+    const dailyRange = getDailyMinMaxFromForecast(data);
+    const tempMax = Math.round(dailyRange.max ?? (data.main?.temp_max) ?? (temp + 5));
+    const tempMin = Math.round(dailyRange.min ?? (data.main?.temp_min) ?? (temp - 5));
     const conditionMain = data.weather?.[0]?.main || "Clear";
 
     const iconImg = document.getElementById('weather-icon-img');
     const predictBox = document.getElementById('weather-predict');
 
-    const displayLoc = "Miami, FL";
+    const displayCity = window.userBaseLocation?.city || data.name || "Miami";
+    const displayLoc = `${displayCity}, FL`.toUpperCase();
     if (heroCity) heroCity.textContent = displayLoc;
     if (locationLbl) locationLbl.textContent = displayLoc;
     if (heroTemp) heroTemp.textContent = `${temp}°`;
@@ -177,8 +351,7 @@ function renderWeatherWidget(data, eventOrDate) {
         iconImg.style.display = 'block';
     }
 
-    // Capitalize first letter of description for UI
-    const capitalizedDesc = description.charAt(0).toUpperCase() + description.slice(1);
+    const capitalizedDesc = getDisplayConditionLabel(data);
     if (heroCond) heroCond.textContent = capitalizedDesc;
     if (predictBox) predictBox.innerHTML = `TELEMETRÍA: <strong>${capitalizedDesc}</strong> | Viento: <strong>${Math.round(data.wind?.speed || 0)} mph</strong> | Humedad: <strong>${data.main?.humidity || '--'}%</strong>`;
 
@@ -528,6 +701,51 @@ function applyWeatherScene(scene, weatherMain, data) {
                 cloud.style.opacity = '1';
                 cloud.style.filter = "drop-shadow(0 0 10px rgba(0,0,0,0.1))"; // Para que el borde sea limpio
             });
+
+            // Carrusel panorámico: viento mph → duración; wind.deg → animation-direction (horizontal, sin rotar el strip)
+            const wind = data.wind?.speed || 0;
+            let duration;
+            if (wind <= 5) {
+                duration = 360;
+            } else if (wind <= 12) {
+                duration = 300;
+            } else if (wind <= 20) {
+                duration = 230;
+            } else {
+                duration = 170;
+            }
+
+            const clouds = weatherContainer.querySelector('.nubes-largas-fast-container');
+            if (clouds) {
+                const windDeg = data.wind?.deg;
+                if (windDeg != null && !Number.isNaN(Number(windDeg))) {
+                    const deg = Number(windDeg);
+                    const blowToward = (deg + 180) % 360;
+                    const east = Math.sin((blowToward * Math.PI) / 180);
+                    const animDir = Math.abs(east) < 0.12 ? 'normal' : east > 0 ? 'reverse' : 'normal';
+                    clouds.style.setProperty('animation-direction', animDir, 'important');
+                } else {
+                    clouds.style.removeProperty('animation-direction');
+                }
+                startCarouselDurationLerp(weatherContainer, duration);
+            }
+        } else {
+            if (_carouselLerpRaf) {
+                cancelAnimationFrame(_carouselLerpRaf);
+                _carouselLerpRaf = null;
+            }
+            const cloudsClr = weatherContainer.querySelector('.nubes-largas-fast-container');
+            if (cloudsClr) cloudsClr.style.removeProperty('animation-direction');
+        }
+
+        if (data?.weather?.[0] && String(scene).includes("rain")) {
+            const wid = data.weather[0].id || 500;
+            let intensity = "light";
+            if (wid >= 502) intensity = "heavy";
+            else if (wid === 501) intensity = "moderate";
+            weatherContainer.setAttribute("data-rain-intensity", intensity);
+        } else {
+            weatherContainer.removeAttribute("data-rain-intensity");
         }
     }
 
@@ -743,7 +961,26 @@ window.initializeUserLocation = function () {
     });
 };
 
+function showWeatherLoadingState() {
+    const hourly = document.querySelector('#hourly-scroller-main');
+    const daily = document.querySelector('#daily-forecast-list');
+
+    if (hourly && !hourly.dataset.loading) {
+        hourly.dataset.loading = 'true';
+        hourly.innerHTML = '<div style="opacity:.65; font-weight:700;">Cargando pronóstico...</div>';
+    }
+
+    if (daily && !daily.dataset.loading) {
+        daily.dataset.loading = 'true';
+        daily.innerHTML = '<div style="opacity:.65; font-weight:700;">Preparando 10 días...</div>';
+    }
+}
+
 window.handleEventWeather = async function (eventOrDate) {
+    if (window.__mdjWeatherLocked) {
+        console.log('[MDJ] Weather blocked during boot phase');
+        return;
+    }
     if (!window.locationInitialized) await window.initializeUserLocation();
 
     eventOrDate = eventOrDate || new Date().toISOString().split('T')[0];
@@ -798,40 +1035,78 @@ window.handleEventWeather = async function (eventOrDate) {
         const locLbl = document.getElementById('weather-location');
         if (heroCond) heroCond.textContent = "Servicio meteorológico no disponible";
         if (heroTemp) heroTemp.textContent = "—";
-        if (locLbl) locLbl.textContent = "Miami, FL";
+        if (locLbl) {
+            const errCity = window.userBaseLocation?.city || "Miami";
+            locLbl.textContent = `${errCity}, FL`.toUpperCase();
+        }
         return;
     }
 
-    // Cache the pure location base name if this was our first GPS pull
+    if (!data.fullForecast || data.fullForecast.length === 0) {
+        window.__mdjWeatherForecastRetries = (window.__mdjWeatherForecastRetries || 0) + 1;
+        if (window.__mdjWeatherForecastRetries <= 8) {
+            showWeatherLoadingState();
+            var evRetry = eventOrDate;
+            setTimeout(function () {
+                window.handleEventWeather(evRetry);
+            }, 1500);
+            return;
+        }
+        window.__mdjWeatherForecastRetries = 0;
+    } else {
+        window.__mdjWeatherForecastRetries = 0;
+    }
+
+    // Cache nombre de ciudad: no pisan Nominatim/GPS si ya hay área real guardada
     if (!isEvent && targetLat != null && !window.userBaseLocation.cityCached) {
-        window.userBaseLocation.city = data.name || "Miami";
+        if (!window.userBaseLocation.isGPS || !window.userBaseLocation?.city) {
+            window.userBaseLocation.city = data.name || "Miami";
+        }
         window.userBaseLocation.cityCached = true;
     }
 
     // 2. Map
     const scene = mapWeatherToScene(data);
 
-    // 3. Render Dashboard Widgets (Hero + Details)
-    renderWeatherWidget(data, eventOrDate);
+    // 3–4) BUILD + COMMIT: un solo requestAnimationFrame (menos layout thrash; mismo DOM/IDs)
+    requestAnimationFrame(function () {
+        const hourlyEl = document.querySelector('#hourly-scroller-main');
+        const dailyEl = document.querySelector('#daily-forecast-list');
+        if (hourlyEl) delete hourlyEl.dataset.loading;
+        if (dailyEl) delete dailyEl.dataset.loading;
 
-    // 4. Update the 6-Layer Atmosphere
-    applyWeatherScene(scene, data.weather?.[0]?.main || "Clear", data);
+        renderWeatherWidget(data, eventOrDate);
+        applyWeatherScene(scene, data.weather?.[0]?.main || "Clear", data);
 
-    // Pulso Serato (misión crítica) al refrescar datos reales
-    const booth = document.getElementById('booth-hero-container');
-    if (booth) {
-        booth.classList.remove('mdj-weather-refresh-pulse');
-        void booth.offsetWidth;
-        booth.classList.add('mdj-weather-refresh-pulse');
-        booth.addEventListener(
-            'animationend',
-            function onPulseEnd() {
-                booth.classList.remove('mdj-weather-refresh-pulse');
-                booth.removeEventListener('animationend', onPulseEnd);
-            },
-            { once: true }
-        );
-    }
+        const ww = document.querySelector('.weather-widget');
+        if (ww) {
+            ww.classList.add('ready');
+            const hint = computeForecastTransitionHint(data);
+            if (hint) {
+                ww.setAttribute('data-forecast-next-main', hint.nextMain);
+                ww.setAttribute('data-forecast-next-hours', String(hint.hoursApprox));
+            } else {
+                ww.removeAttribute('data-forecast-next-main');
+                ww.removeAttribute('data-forecast-next-hours');
+            }
+        }
+
+        const booth = document.getElementById('booth-hero-container');
+        if (booth) {
+            booth.classList.remove('mdj-weather-refresh-pulse');
+            void booth.offsetWidth;
+            booth.classList.add('mdj-weather-refresh-pulse');
+            booth.addEventListener(
+                'animationend',
+                function onPulseEnd() {
+                    booth.classList.remove('mdj-weather-refresh-pulse');
+                    booth.removeEventListener('animationend', onPulseEnd);
+                },
+                { once: true }
+            );
+        }
+        window.__mdjWeatherInitialDone = true;
+    });
 };
 
 

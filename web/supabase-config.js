@@ -10,9 +10,8 @@
     /* Vídeos/imágenes: subidos al bucket público `assets` en Supabase (misma jerarquía que web/assets/). Fuente de verdad en producción. */
     window.MDB_ASSETS_URL = B + "/storage/v1/object/public/assets/";
     /**
-     * Vacío: los reels están en el bucket `assets` (ruta eventos-venues-patrocinadores/...).
-     * Otro bucket público sin esos archivos → 400 y el vídeo no carga.
-     * Con "" se usa resolveMdAssetPublicUrl(./assets/eventos-venues-patrocinadores/...).
+     * Vacío: reels y galería (vía manifiesto) resuelven al bucket `assets` bajo eventos-venues-patrocinadores/…
+     * La galería cuando lista Storage en `venue-photo-gallery.js` usa el bucket dedicado explícitamente.
      */
     window.MDB_EVENTOS_VENUES_URL = "";
 })();
@@ -32,6 +31,33 @@ window.mdbSupabaseFunctionUrl = function (name) {
     if (!o) return "";
     var n = String(name).replace(/^\//, "");
     return o + "/functions/v1/" + n;
+};
+
+/**
+ * Headers for browser fetch() → Edge Functions using the anon publishable key (public checkout paths).
+ */
+window.mdjSupabaseAnonInvokeHeaders = function () {
+    var k = typeof window.MDB_SUPABASE_ANON_KEY === "string" ? window.MDB_SUPABASE_ANON_KEY : "";
+    var h = { "Content-Type": "application/json" };
+    if (!k) return h;
+    h.Authorization = "Bearer " + k;
+    h.apikey = k;
+    return h;
+};
+
+window.mdjFanPublicProfileUrl = function (djUserId, opts) {
+    try {
+        if (!djUserId) return "";
+        var o = opts || {};
+        var u = new URL("dj-profile.html", window.location.href);
+        u.searchParams.set("id", String(djUserId));
+        u.searchParams.set("view", "public");
+        if (o.sftOpen) u.searchParams.set("sft_open", "1");
+        if (o.sftDebug) u.searchParams.set("sft_debug", "1");
+        return u.href;
+    } catch (_) {
+        return "";
+    }
 };
 
 /** Instalador MDJPRO macOS (Storage público `installers/`). */
@@ -104,7 +130,13 @@ window.resolveMdAssetPublicUrl = function (path) {
     var m = bare.match(/^\.\/assets\/(.+)$/);
     if (!m) return path;
     /* Identidad / placeholders: siguen en el deploy (Git), no forzar URL del bucket si aún no existen allí. */
+    // HARD BLOCK — cualquier cosa que contenga /weather/
+    if (path && path.includes('/weather/')) return path;
+
     var rel = m[1];
+
+    // fallback adicional por seguridad
+    if (rel && rel.toLowerCase().startsWith('weather/')) return path;
     if (/^branding\//i.test(rel) || /^dj-avatar-placeholder\./i.test(rel)) return path;
     var segments = m[1].split("/").map(function (seg) {
         try {
@@ -145,6 +177,7 @@ window.resolveMdAssetImageUrl = window.resolveMdAssetPublicUrl;
         });
         document.querySelectorAll("img[src]").forEach(function (el) {
             var is = el.getAttribute("src");
+            if (is && /weather\//i.test(is)) return;
             if (is && is.indexOf("./assets/") === 0) el.src = fn(is);
         });
         var hero = document.getElementById("home-hero-video");
@@ -166,18 +199,45 @@ window.MDB_OFFICIAL_CONTACT_EMAIL = "miamidjbeat@gmail.com";
 /** Formulario Formspree único (action= en HTML debe coincidir). Notificaciones en panel Formspree → correo oficial. */
 window.MDJ_FORMSPREE_ENDPOINT = "https://formspree.io/f/mqakvjge";
 
-// Lazy singleton — avoids race condition with CDN async load.
-// Any script can call window.getSupabaseClient() to get the initialized client.
+(function mdjValidateSupabaseEnv() {
+    var u = window.MDB_SUPABASE_URL;
+    var k = window.MDB_SUPABASE_ANON_KEY;
+    if (!u || !String(u).trim() || !k || !String(k).trim()) {
+        console.error('[supabase-config] MDB_SUPABASE_URL o MDB_SUPABASE_ANON_KEY vacíos o indefinidos.');
+    }
+})();
+
+/**
+ * Namespace del bundle UMD `@supabase/supabase-js` (tiene .createClient).
+ * En consola, window.supabase suele ser ESTO; la instancia devuelta por createClient es la que tiene .from / .auth / .rpc.
+ */
+window.__mdbSupabaseLib =
+    typeof window.supabase !== 'undefined' &&
+    window.supabase &&
+    typeof window.supabase.createClient === 'function'
+        ? window.supabase
+        : null;
+
+// Singleton — mismo cliente para todo el sitio. getSupabaseClient() debe poder llamarse tras cargar el CDN en <head>.
 let _supabaseClient = null;
 window.getSupabaseClient = function () {
     if (_supabaseClient) return _supabaseClient;
-    const factory = (window.supabase && typeof window.supabase.createClient === 'function')
-        ? window.supabase.createClient
-        : null;
-    if (!factory) {
-        console.error('[supabase-config] supabase.createClient not available yet.');
+    var lib = window.__mdbSupabaseLib || window.supabase;
+    if (!lib || typeof lib.createClient !== 'function') {
+        console.error('[supabase-config] supabase.createClient no disponible (¿CDN @supabase/supabase-js antes de este archivo?)');
         return null;
     }
-    _supabaseClient = factory(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY);
+    _supabaseClient = lib.createClient(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY);
     return _supabaseClient;
 };
+
+/** Crea el cliente en cuanto termina este archivo, antes de scripts del body (Flow, agenda-engine, etc.). */
+(function mdjEagerSupabaseClient() {
+    try {
+        if (typeof window.getSupabaseClient === 'function') {
+            window.getSupabaseClient();
+        }
+    } catch (e) {
+        console.error('[supabase-config] Inicialización eager falló:', e);
+    }
+})();

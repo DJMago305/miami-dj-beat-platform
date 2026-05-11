@@ -319,6 +319,45 @@
     outline-offset: 2px !important;
   }
 
+  @keyframes mdj-home-nav-chevron-nudge {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.82;
+    }
+  }
+
+  /* Inicio: flechas más visibles (barra densa); hint en title del botón (JS). */
+  body.page-home #mainHeader.header.mdj-header-unified
+    .header-nav.mdj-mainnav-infinite--ui
+    .mdj-mainnav-infinite-chevron {
+    z-index: 18 !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 10px !important;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.1) inset,
+      0 3px 14px rgba(0, 0, 0, 0.42) !important;
+  }
+
+  body.page-home #mainHeader.header.mdj-header-unified
+    .header-nav.mdj-mainnav-infinite--ui
+    .mdj-mainnav-infinite-chevron
+    .mdj-mainnav-chevron-ico {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    body.page-home #mainHeader.header.mdj-header-unified
+      .header-nav.mdj-mainnav-infinite--ui
+      .mdj-mainnav-infinite-chevron {
+      animation: mdj-home-nav-chevron-nudge 2.8s ease-in-out infinite !important;
+    }
+  }
+
   /* Mismo orden invitado / sesión que VIP (antes solo con body.mdj-logged-in-header → salto al hidratar) */
   #mainHeader.mdj-header-unified .header-actions .lang-switcher {
     order: -10;

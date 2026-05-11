@@ -1031,7 +1031,7 @@
           </div>
           <div class="mdj-experience-gallery-zone">
         <section class="mdj-experience-gallery-wrap" id="mdjExperienceGalleryWrap" hidden aria-labelledby="mdjGalleryHeading">
-          <h3 id="mdjGalleryHeading" class="mdj-experience-gallery-heading" data-i18n="exp-gallery-heading">Photo show · gallery</h3>
+          <h3 id="mdjGalleryHeading" class="mdj-experience-gallery-heading" data-i18n="exp-gallery-heading">GALERÍA · FOTOS</h3>
           <p class="mdj-experience-gallery-sub" data-i18n="exp-gallery-sub">One full-width hero; images rotate like a slideshow.</p>
           <div class="mdj-venue-photo-hero" id="mdjVenuePhotoHero" role="region" tabindex="0" data-i18n-aria="exp-gallery-region-aria">
             <div class="mdj-venue-photo-hero__frame">
@@ -1379,17 +1379,47 @@
     </div>
   </footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
-  <script src="./translations.js?v=20260422-nav-labels-1"></script>
+  <script src="./supabase-config.js?v=20260423-gallery-dedupe-comment"></script>
+  <script src="./translations.js?v=20260423-gallery-heading"></script>
   <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
   <script src="./form-handler.js?v=20260420-deploy"></script>
   <script src="./header-smart-search.js?v=20260421-smartsearch-dj-directory"></script>
   <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
   <script src="./mdj-shared-header.js?v=20260422-mainnav-infinite-1"></script>
-  <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
-  <script src="./mdj-mainnav-infinite.js?v=20260425-home-nav-carousel"></script>
-  <script src="./js/venues-showcase.js?v=20260421-baila-filename-storage" defer></script>
-  <script src="./js/venue-photo-gallery.js?v=20260420-gallery-no-tick" defer></script>
+  <script>
+    /* Inicio: trinquete en #mainNav (scroll + flechas); no reactiva tick en otros carruseles por scroll. */
+    window.MDJ_ENABLE_NAV_TICK_AUDIO = true;
+  </script>
+  <script src="./mdj-carousel-scroll-tick.js?v=20260421-wheel-resume-tick"></script>
+  <script src="./mdj-mainnav-infinite.js?v=20260421-home-nav-cap-hint"></script>
+  <script>
+    /* Tras i18n / hidratar slots del menú, el ancho del rail cambia: remontar overflow + flechas + tick. */
+    (function () {
+      function kickNavInf() {
+        if (typeof window.mdjReinitMainNavInfinite === 'function') {
+          window.mdjReinitMainNavInfinite();
+        }
+      }
+      function scheduleKicks() {
+        [0, 320, 900, 2200].forEach(function (ms) {
+          setTimeout(kickNavInf, ms);
+        });
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', scheduleKicks);
+      } else {
+        scheduleKicks();
+      }
+      document.addEventListener('languageChanged', function () {
+        requestAnimationFrame(function () {
+          setTimeout(kickNavInf, 0);
+          setTimeout(kickNavInf, 160);
+        });
+      });
+    })();
+  </script>
+  <script src="./js/venues-showcase.js?v=20260423-baila-reel-aliases" defer></script>
+  <script src="./js/venue-photo-gallery.js?v=20260423-manifest-json-parse-guard" defer></script>
   <script src="./js/residencies-carousel.js?v=20260425-residencies-arrows-always" defer></script>
   <script>
     // Auto-fill Referral Code, DJ name, and Event Date from URL
@@ -1702,6 +1732,7 @@
       const video = document.getElementById('home-hero-video');
       const placeholder = document.getElementById('home-hero-kb');
       const headline = document.getElementById('home-hero-headline');
+      const heroSection = document.getElementById('home-hero');
       const isHomeActive = settings.home_hero_active !== 'false'; // Quarantine Logic
 
       const defaultVideo = "./assets/home/Home for Miami DJ Beat.mp4";
@@ -1730,29 +1761,40 @@
         };
       }
 
-      // Video Volume & Interaction (autoplay sigue mute hasta gesto; si en BD no hay clave, volumen audible por defecto)
+      /* Hero vídeo: siempre mudo (no mezclar con música ambiental; pista del MP4 puede seguir en el archivo). */
       if (video && isHomeActive) {
-        var volRaw = settings.home_hero_video_volume;
-        var vol = 0;
-        if (volRaw === '' || volRaw === null || volRaw === undefined) {
-          vol = 0.42;
-        } else {
-          vol = parseFloat(volRaw);
-          if (!Number.isFinite(vol)) vol = 0.42;
-        }
-        if (vol > 1) vol = 1;
-        video.muted = true;
-
-        const tryUnmute = () => {
-          if (vol > 0) {
-            video.muted = false;
-            video.volume = vol;
+        var enforceHeroMute = function () {
+          try {
+            video.muted = true;
+            video.defaultMuted = true;
+            video.volume = 0;
+            video.setAttribute('muted', '');
+          } catch (eM) {
+            void eM;
           }
-          window.removeEventListener('click', tryUnmute);
-          window.removeEventListener('scroll', tryUnmute);
         };
-        window.addEventListener('click', tryUnmute);
-        window.addEventListener('scroll', tryUnmute);
+        enforceHeroMute();
+        video.addEventListener('loadeddata', enforceHeroMute);
+        video.addEventListener('volumechange', enforceHeroMute);
+
+        document.addEventListener('visibilitychange', function () {
+          if (!video) return;
+          if (document.hidden) {
+            video.pause();
+            enforceHeroMute();
+          } else {
+            enforceHeroMute();
+            requestAnimationFrame(function () {
+              if (!heroSection) {
+                video.play().catch(function () {});
+                return;
+              }
+              var r = heroSection.getBoundingClientRect();
+              var inView = r.bottom > 32 && r.top < window.innerHeight - 24;
+              if (inView) video.play().catch(function () {});
+            });
+          }
+        });
       }
 
       // Headlines (Dynamic Text) — Respect Quarantine
@@ -1769,19 +1811,20 @@
         }
       }
 
-      // Audio/Video Control based on Visibility
+      // Hero en viewport: play/pause (vídeo siempre mudo).
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (video) {
             if (entry.isIntersecting) {
-              video.play().catch(e => console.log("Autoplay blocked:", e));
+              if (!document.hidden) {
+                video.play().catch(e => console.log("Autoplay blocked:", e));
+              }
             } else {
               video.pause();
             }
           }
         });
       }, { threshold: 0.1 });
-      const heroSection = document.getElementById('home-hero');
       if (heroSection) observer.observe(heroSection);
     }
   </script>

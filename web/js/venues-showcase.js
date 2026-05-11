@@ -116,6 +116,11 @@
 
   var timer = null;
 
+  /** Si el .mp4 en Storage tiene otro casing/nombre, probar aquí antes del fallback genérico. */
+  var REEL_FILENAME_ALIASES = {
+    'Baila_Con_Micho.mp4': ['bailaconmicho.mp4', 'Baila_con_Micho.mp4', 'baila_con_micho.mp4']
+  };
+
   /**
    * URL absoluta del bucket `assets` en producción (Vercel no incluye .mp4 locales si usas .vercelignore).
    * En localhost devuelve la ruta relativa salvo MDJ_VENUE_REELS_FORCE_STORAGE.
@@ -147,14 +152,23 @@
     var reel = vid.getAttribute('data-mdj-reel');
     var fb = vid.getAttribute('data-mdj-reel-fallback');
     if (!fb || !reel) return;
-    var localReelPath = './assets/eventos-venues-patrocinadores/reels/' + reel;
-    var primary = absoluteReelUrl(localReelPath);
-    vid.src = String(primary);
-    vid.onerror = function () {
+    var names = [reel].concat(REEL_FILENAME_ALIASES[reel] || []);
+    var attempt = 0;
+    var fallbackAbs = absoluteReelUrl(fb);
+    function tryNext() {
+      if (attempt < names.length) {
+        var localReelPath = './assets/eventos-venues-patrocinadores/reels/' + names[attempt];
+        attempt += 1;
+        vid.onerror = function () {
+          tryNext();
+        };
+        vid.src = String(absoluteReelUrl(localReelPath));
+        return;
+      }
       vid.onerror = null;
-      var fallbackAbs = absoluteReelUrl(fb);
       if (vid.getAttribute('src') !== String(fallbackAbs)) vid.src = String(fallbackAbs);
-    };
+    }
+    tryNext();
   }
 
   function applyReelSources() {

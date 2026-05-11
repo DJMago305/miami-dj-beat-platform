@@ -1,9 +1,26 @@
 /**
  * Trinquete / cuerda de reloj — timbre más metálico: ruido de impacto + parciales inarmónicos + FM breve.
  * Un chasquido por tarjeta al hacer scroll; scroll rápido = ráfaga (Web Audio sintético).
+ *
+ * OFF por defecto: no filtrar audio hasta que exista pista global MDJ. Activar con
+ *   window.MDJ_ENABLE_UI_TICK_AUDIO = true
+ * Tick solo carrusel menú inicio (sin ruido en otros scrolls): window.MDJ_ENABLE_NAV_TICK_AUDIO = true
+ * antes de cargar este script.
  */
 (function () {
     'use strict';
+
+    function tickAudioAllowed() {
+        return typeof window !== 'undefined' && window.MDJ_ENABLE_UI_TICK_AUDIO === true;
+    }
+
+    /** Solo menú principal / llamadas explícitas a mdjUiTickPlay (p. ej. inicio); no reactiva tick en scroll de otros carruseles. */
+    function tickPlayAllowed() {
+        return (
+            tickAudioAllowed() ||
+            (typeof window !== 'undefined' && window.MDJ_ENABLE_NAV_TICK_AUDIO === true)
+        );
+    }
 
     var ctx = null;
 
@@ -101,11 +118,31 @@
     }
 
     function mdjUiTickPlay() {
+        if (!tickPlayAllowed()) return;
         /* No usar prefers-reduced-motion aquí: es sonido breve, no animación; bloquearlo dejaba las flechas mudas. */
         var c = getCtx();
         if (!c) return;
-        if (c.state === 'suspended') c.resume().catch(function () {});
-        scheduleRatchetAt(c, c.currentTime, 1);
+        function play() {
+            try {
+                scheduleRatchetAt(c, c.currentTime, 1);
+            } catch (e) {
+                void e;
+            }
+        }
+        /*
+         * Si el AudioContext sigue suspended, programar el tick en el mismo tick que resume()
+         * no suena (Chrome). Hay que esperar a resume(); la rueda del menú suele ser el primer
+         * gesto sin pointerdown previo.
+         */
+        if (c.state === 'suspended') {
+            c.resume()
+                .then(play)
+                .catch(function () {
+                    play();
+                });
+            return;
+        }
+        play();
     }
 
     function estimateCardStep(el) {
@@ -152,18 +189,19 @@
 
     function mdjUiTickBindScroll(el) {
         if (!el || el.nodeType !== 1) return;
+        if (!tickAudioAllowed()) return;
         var lastScroll = el.scrollLeft;
 
         el.addEventListener(
             'scroll',
             function () {
+                if (!tickAudioAllowed()) return;
                 if (el.dataset && el.dataset.mdjTickMute === '1') {
                     lastScroll = el.scrollLeft;
                     return;
                 }
                 var c = getCtx();
                 if (!c) return;
-                if (c.state === 'suspended') c.resume().catch(function () {});
 
                 var step = estimateCardStep(el);
                 if (!step || step < 48) step = 300;
@@ -176,16 +214,27 @@
                 var crossed = Math.abs(newIdx - oldIdx);
                 if (crossed === 0) return;
 
-                crossed = Math.min(crossed, 32);
-                var t0 = c.currentTime;
+                var nCross = Math.min(crossed, 32);
                 var staggerSec =
-                    crossed > 14 ? 0.0068 : crossed > 7 ? 0.0088 : crossed > 3 ? 0.0105 : 0.012;
-                var baseVol = crossed > 16 ? 0.72 : crossed > 8 ? 0.85 : 1;
+                    nCross > 14 ? 0.0068 : nCross > 7 ? 0.0088 : nCross > 3 ? 0.0105 : 0.012;
+                var baseVol = nCross > 16 ? 0.72 : nCross > 8 ? 0.85 : 1;
 
-                var i;
-                for (i = 0; i < crossed; i++) {
-                    var wobble = 0.94 + (i % 3) * 0.03;
-                    scheduleRatchetAt(c, t0 + i * staggerSec, baseVol * wobble);
+                function fireRatchets() {
+                    var t0 = c.currentTime;
+                    var i;
+                    for (i = 0; i < nCross; i++) {
+                        var wobble = 0.94 + (i % 3) * 0.03;
+                        scheduleRatchetAt(c, t0 + i * staggerSec, baseVol * wobble);
+                    }
+                }
+                if (c.state === 'suspended') {
+                    c.resume()
+                        .then(fireRatchets)
+                        .catch(function () {
+                            fireRatchets();
+                        });
+                } else {
+                    fireRatchets();
                 }
             },
             { passive: true }
@@ -210,13 +259,26 @@
         mdjUiTickAutoInit();
     }
 
-    document.addEventListener(
-        'pointerdown',
+    (function armUserGestureAudioUnlock() {
+        var opts = { capture: true, passive: true };
+        function detach(fn) {
+            document.removeEventListener('pointerdown', fn, true);
+            document.removeEventListener('wheel', fn, true);
+            document.removeEventListener('touchstart', fn, true);
+        }
         function once() {
+            if (!tickPlayAllowed()) {
+                detach(once);
+                return;
+            }
             var c = getCtx();
-            if (c && c.state === 'suspended') c.resume().catch(function () {});
-            document.removeEventListener('pointerdown', once, true);
-        },
-        { capture: true, passive: true }
-    );
+            if (c && c.state === 'suspended') {
+                c.resume().catch(function () {});
+            }
+            detach(once);
+        }
+        document.addEventListener('pointerdown', once, opts);
+        document.addEventListener('wheel', once, opts);
+        document.addEventListener('touchstart', once, opts);
+    })();
 })();

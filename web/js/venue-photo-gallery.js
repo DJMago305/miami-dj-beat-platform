@@ -21,6 +21,8 @@
 
   var entries = [];
   var idx = 0;
+  /** true si las entradas vienen de Storage `eventos-venues-patrocinadores/galeria/` (misma base que .list()). */
+  var useDedicatedGalleryBucket = false;
   /** La capa visible al terminar la última transición (true = A arriba). */
   var topIsA = true;
   var timer = null;
@@ -36,7 +38,32 @@
   }
 
   function pathForFile(file) {
-    return resolveUrl(BASE + file);
+    var relPath = BASE + file;
+    if (useDedicatedGalleryBucket && window.MDB_SUPABASE_URL) {
+      var origin = String(window.MDB_SUPABASE_URL).replace(/\/$/, '');
+      try {
+        var seg = String(file || '')
+          .split('/')
+          .map(function (s) {
+            try {
+              return encodeURIComponent(decodeURIComponent(s));
+            } catch (e) {
+              return encodeURIComponent(s);
+            }
+          })
+          .join('/');
+        if (seg) {
+          return (
+            origin +
+            '/storage/v1/object/public/eventos-venues-patrocinadores/galeria/' +
+            seg
+          );
+        }
+      } catch (e2) {
+        void e2;
+      }
+    }
+    return resolveUrl(relPath);
   }
 
   function normalize(e) {
@@ -237,7 +264,19 @@
     return fetch(MANIFEST_URL)
       .then(function (r) {
         if (!r.ok) return {};
-        return r.json();
+        return r.text().then(function (txt) {
+          try {
+            return JSON.parse(txt);
+          } catch (e) {
+            if (typeof console !== 'undefined' && console.warn) {
+              console.warn(
+                '[venue-photo-gallery] gallery-manifest.json inválido (¿faltan comas entre ítems?).',
+                e
+              );
+            }
+            return {};
+          }
+        });
       })
       .catch(function () {
         return {};
@@ -253,6 +292,7 @@
     }
     root.style.setProperty('--mdj-gallery-fade-ms', transitionMs + 'ms');
     entries = [];
+    useDedicatedGalleryBucket = !!(storageFileNames && storageFileNames.length);
     if (storageFileNames && storageFileNames.length) {
       for (var s = 0; s < storageFileNames.length; s++) {
         entries.push({ file: storageFileNames[s], alt: '' });

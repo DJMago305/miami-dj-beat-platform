@@ -144,26 +144,32 @@
     bar.classList.add('mdj-mainnav-infinite--ui');
     var raw = document.documentElement && String(document.documentElement.getAttribute('lang') || document.documentElement.lang || '').toLowerCase();
     var isEs = raw === 'es' || raw.indexOf('es-') === 0;
+    var dragHint = isEs
+      ? 'Hay más secciones a los lados: desliza la barra del menú o pulsa las flechas.'
+      : 'More sections on the sides: drag the menu bar or tap the arrows.';
     var p = document.createElement('button');
     p.type = 'button';
     p.className = 'mdj-mainnav-infinite-chevron mdj-mainnav-infinite-chevron--prev';
     p.setAttribute('aria-label', isEs ? 'Desplazar el menú hacia la izquierda' : 'Scroll the menu left');
+    p.setAttribute('title', dragHint);
     p.innerHTML = CHEV_SVG_R;
     var nxt = document.createElement('button');
     nxt.type = 'button';
     nxt.className = 'mdj-mainnav-infinite-chevron mdj-mainnav-infinite-chevron--next';
     nxt.setAttribute('aria-label', isEs ? 'Desplazar el menú hacia la derecha' : 'Scroll the menu right');
+    nxt.setAttribute('title', dragHint);
     nxt.innerHTML = CHEV_SVG_R;
     var step = Math.max(100, Math.min(260, Math.floor(nav.clientWidth * 0.4)));
     p.addEventListener('click', function (ev) {
       ev.preventDefault();
       ev.stopPropagation();
-      // Tick solo vía initScrollSoundAcc (scroll), no al clic, para no solapar sonidos.
+      playTickIfReady();
       nav.scrollBy({ left: -step, behavior: 'smooth' });
     });
     nxt.addEventListener('click', function (ev) {
       ev.preventDefault();
       ev.stopPropagation();
+      playTickIfReady();
       nav.scrollBy({ left: step, behavior: 'smooth' });
     });
     /* Fuera de .container: hermanas bajo .header-nav (cortina ancha), posicionadas con CSS. */
@@ -362,32 +368,55 @@
     window.addEventListener('resize', fn, { passive: true });
   }
 
+  function isPageHome() {
+    return (
+      typeof document !== 'undefined' &&
+      document.body &&
+      document.body.classList &&
+      document.body.classList.contains('page-home')
+    );
+  }
+
+  /**
+   * Inicio: en pantallas muy anchas el rail del menú a veces “cabe” y desaparecen flechas + trinquete.
+   * Estrechamos #mainNav en pasos hasta que haya overflow real (solo si aún no lo hay).
+   */
+  function applyHomeNavWidthCap(nav) {
+    if (!nav || !isPageHome()) return;
+    try {
+      var vw = typeof window.innerWidth === 'number' ? window.innerWidth : 1100;
+      var natural = Math.ceil(nav.scrollWidth);
+      if (natural < 260) return;
+      nav.dataset.mdjMainnavForceW = '1';
+      var cap1 = Math.min(natural - 16, Math.floor(vw * 0.31), 500);
+      cap1 = Math.max(228, cap1);
+      nav.style.maxWidth = cap1 + 'px';
+      void nav.offsetWidth;
+      if (nav.scrollWidth > nav.clientWidth + 1) return;
+      var cap2 = Math.min(natural - 40, Math.floor(vw * 0.26), 380);
+      cap2 = Math.max(200, cap2);
+      nav.style.maxWidth = cap2 + 'px';
+      void nav.offsetWidth;
+      if (nav.scrollWidth > nav.clientWidth + 1) return;
+      if (natural > 300) {
+        nav.style.maxWidth = Math.max(196, Math.min(natural - 56, 300)) + 'px';
+        void nav.offsetWidth;
+      }
+    } catch (e) {
+      void e;
+    }
+  }
+
   function mountIfOverflow(nav) {
     teardownNav(nav);
     if (!isDesktop()) return;
     var originals = Array.prototype.slice.call(nav.querySelectorAll(':scope > a:not(.' + CLONE + ')'));
     if (originals.length < 2) return;
-    /*
-     * Home: con viewport ancho el menú cabía en una línea → sin overflow → sin clones ni chevrones ni trinquete.
-     * Forzamos un tope de ancho solo en page-home para recuperar el carrusel sin quitar columnas del menú.
-     */
+    if (isPageHome() && nav.scrollWidth <= nav.clientWidth + 1) {
+      applyHomeNavWidthCap(nav);
+    }
     if (nav.scrollWidth <= nav.clientWidth + 1) {
-      var isHome =
-        typeof document !== 'undefined' &&
-        document.body &&
-        document.body.classList &&
-        document.body.classList.contains('page-home');
-      if (isHome) {
-        var cap = Math.max(400, Math.min(Math.floor(window.innerWidth * 0.38), 760));
-        nav.dataset.mdjMainnavForceW = '1';
-        nav.style.maxWidth = cap + 'px';
-        try {
-          void nav.offsetWidth;
-        } catch (eOf) { /* ignore */ }
-      }
-      if (nav.scrollWidth <= nav.clientWidth + 1) {
-        return;
-      }
+      return;
     }
 
     var frBefore = document.createDocumentFragment();

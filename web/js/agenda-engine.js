@@ -1,5 +1,357 @@
 // web/js/agenda-engine.js
 // NÚCLEO FASE 3: Motor Avanzado JSONB
+// FASE 2: Inteligencia de día (misma lógica que el motor de eventos) + panel inferior.
+
+(function () {
+    const HOLIDAYS_US_2026 = {
+        '2026-02-14': { es: 'San Valentín', en: "Valentine's Day" },
+        '2026-03-17': { es: 'San Patricio', en: "St. Patrick's Day" },
+        '2026-04-03': { es: 'Viernes Santo', en: 'Good Friday' },
+        '2026-04-05': { es: 'Pascua', en: 'Easter' },
+        '2026-05-25': { es: 'Memorial Day', en: 'Memorial Day' },
+        '2026-07-04': { es: 'Independencia', en: 'Independence Day' },
+        '2026-09-07': { es: 'Labor Day', en: 'Labor Day' },
+        '2026-10-31': { es: 'Halloween', en: 'Halloween' },
+        '2026-11-26': { es: 'Acción de Gracias', en: 'Thanksgiving' },
+        '2026-12-25': { es: 'Navidad', en: 'Christmas' },
+        '2026-12-31': { es: 'Fin de Año', en: "New Year's Eve" }
+    };
+
+    function mdjGetAgendaContext(profile) {
+        const p = profile && typeof profile === 'object' ? profile : {};
+        const weekly = p.weekly_schedule || {};
+        const isDbResident = p.is_resident === true;
+        const availSched = p.availability_schedule && typeof p.availability_schedule === 'object' ? p.availability_schedule : null;
+        const vacJsonStart = availSched && availSched.vacation_start;
+        const vacJsonEnd = availSched && availSched.vacation_end;
+        const availability = (availSched && availSched.schedule) || {};
+        const recurring = (availSched && Array.isArray(availSched.recurring_days)) ? availSched.recurring_days : [];
+        const mapR = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+        const recurringSet = new Set();
+        recurring.forEach(function (r) {
+            let n;
+            if (typeof r === 'string') n = mapR[r.toLowerCase()] ?? Number(r);
+            else n = Number(r);
+            if (Number.isInteger(n) && n >= 0 && n <= 6) recurringSet.add(n);
+        });
+        const availabilityDatesSet = new Set(
+            Array.isArray(p.availability) ? p.availability.filter(Boolean) : []
+        );
+        const activeDaysStr = p.active_days || '';
+        const activeDaysArr = activeDaysStr
+            .split(',')
+            .map(function (x) { return x.trim(); })
+            .filter(Boolean)
+            .map(Number);
+        const customH = p.special_days || p.custom_holidays || '';
+        const customHolidaysArr = customH.split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+
+        return {
+            p,
+            weekly,
+            isDbResident,
+            vacationColStart: p.vacation_start || null,
+            vacationColEnd: p.vacation_end || null,
+            vacJsonStart,
+            vacJsonEnd,
+            availability,
+            recurringSet,
+            availabilityDatesSet,
+            activeDaysArr,
+            customHolidaysArr
+        };
+    }
+
+    /**
+     * Misma prioridad relativa que el bucle de events() para un único YYYY-MM-DD.
+     * Expone capas y un tag principal para UI (badges / glow).
+     */
+    window.mdjIntelligenceForDate = function (dateStr, profile) {
+        const empty = {
+            dateStr: dateStr,
+            formatted: dateStr,
+            primaryTag: 'rest',
+            badgeLabel: 'Sin perfil / día libre',
+            dayType: 'descanso',
+            dayTypeLabel: 'Descanso o no configurado',
+            details: ['Carga el perfil (Supabase) o conecta sesión para ver agenda real.'],
+            glowRgb: '100, 116, 139',
+            layers: {}
+        };
+        if (!dateStr || typeof dateStr !== 'string') return empty;
+
+        const curLang = (typeof localStorage !== 'undefined' && localStorage.getItem('mdjpro_lang')) || 'en';
+        const c = mdjGetAgendaContext(profile);
+        const p = c.p;
+        const parts = dateStr.split('-').map(Number);
+        if (parts.length !== 3) return empty;
+        const dLocal = new Date(parts[0], parts[1] - 1, parts[2]);
+        const day = dLocal.getDay();
+        const dayStrKey = String(day);
+        const formatted = dLocal.toLocaleDateString(curLang === 'en' ? 'en-US' : 'es-ES', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        const vacJsonStart = c.vacJsonStart;
+        const vacJsonEnd = c.vacJsonEnd;
+        const inVacCol =
+            c.vacationColStart &&
+            c.vacationColEnd &&
+            dateStr >= c.vacationColStart &&
+            dateStr <= c.vacationColEnd;
+        const inVacJson = vacJsonStart && vacJsonEnd && dateStr >= vacJsonStart && dateStr <= vacJsonEnd;
+        const isVacation = inVacCol || inVacJson;
+
+        const daySlot = c.availability[dateStr] || null;
+        const isBlockedSlot = daySlot && daySlot.status === 'blocked';
+        const privateEvts =
+            daySlot && Array.isArray(daySlot.events)
+                ? daySlot.events.filter(function (e) { return (e.status || '').toUpperCase() !== 'CANCELLED'; })
+                : [];
+        const hasRecurring = c.recurringSet.has(day);
+        const onAvailList = c.availabilityDatesSet.has(dateStr);
+        const dailyShifts = (c.weekly[dayStrKey] || []).filter(function (s) { return s && s.enabled; });
+        const activeDayOpen = c.activeDaysArr.indexOf(day) >= 0 && p.available !== false;
+        const holiday = holidayLabelForDate(dateStr, c, curLang);
+
+        if (inVacation) {
+            return {
+                dateStr,
+                formatted,
+                primaryTag: 'vacaciones',
+                badgeLabel: 'Bloqueado (vacaciones)',
+                dayType: 'vacaciones',
+                dayTypeLabel: 'Vacaciones / blackout',
+                details: [
+                    'Rango en perfil: vacation_start / vacation_end o availability_schedule.vacation_*.'
+                ],
+                glowRgb: '255, 107, 107',
+                layers: { vacation: true }
+            };
+        }
+
+        const details = [];
+        if (holiday) {
+            details.push(holiday.label);
+        }
+        if (isBlockedSlot) {
+            return {
+                dateStr,
+                formatted,
+                primaryTag: 'blocked',
+                badgeLabel: 'Bloqueado',
+                dayType: 'trabajo',
+                dayTypeLabel: 'Bloqueado (agenda manual)',
+                details: details.concat(['Día bloqueado en availability_schedule.']),
+                glowRgb: '239, 68, 68',
+                layers: { holiday: holiday, blocked: true }
+            };
+        }
+        if (privateEvts.length) {
+            return {
+                dateStr,
+                formatted,
+                primaryTag: 'private_event',
+                badgeLabel: 'Evento privado',
+                dayType: 'evento',
+                dayTypeLabel: 'Evento / fiesta en agenda',
+                details: privateEvts.map(function (e) {
+                    return (e.title || e.venue || 'Evento') + (e.from ? ' · ' + e.from : '');
+                }),
+                glowRgb: '59, 130, 246',
+                layers: { privateEvents: privateEvts, holiday: holiday }
+            };
+        }
+        if (hasRecurring) {
+            return {
+                dateStr,
+                formatted,
+                primaryTag: 'residency',
+                badgeLabel: 'Residencia',
+                dayType: 'trabajo',
+                dayTypeLabel: 'Residencia (día recurrente)',
+                details: details.concat(['Día recurrente (availability_schedule.recurring_days).']),
+                glowRgb: '197, 160, 89',
+                layers: { residency: true, holiday: holiday }
+            };
+        }
+        if (onAvailList) {
+            return {
+                dateStr,
+                formatted,
+                primaryTag: 'residency',
+                badgeLabel: 'Marca de disponibilidad',
+                dayType: 'mixto',
+                dayTypeLabel: 'Bloqueo / residencia (lista availability)',
+                details: details.concat(['Fecha en array profile.availability.']),
+                glowRgb: '197, 160, 89',
+                layers: { availabilityList: true, holiday: holiday }
+            };
+        }
+        if (dailyShifts.length) {
+            const lines = dailyShifts.map(function (s) {
+                return (
+                    (s.slot_type === 'day' ? 'Día' : 'Noche') +
+                    (s.venue_name ? ' · ' + s.venue_name : '') +
+                    (s.start_time ? ' ' + s.start_time : '') +
+                    (s.end_time ? '–' + s.end_time : '') +
+                    (s.is_resident ? ' (residente)' : '')
+                );
+            });
+            return {
+                dateStr,
+                formatted,
+                primaryTag: c.isDbResident || dailyShifts.some(function (s) { return s.is_resident; })
+                    ? 'residency'
+                    : 'work',
+                badgeLabel: 'Turnos (weekly_schedule)',
+                dayType: 'trabajo',
+                dayTypeLabel: 'Trabajo programado',
+                details: details.concat(lines),
+                glowRgb: '34, 197, 94',
+                layers: { weeklyShifts: dailyShifts, holiday: holiday }
+            };
+        }
+        if (activeDayOpen) {
+            return {
+                dateStr,
+                formatted,
+                primaryTag: c.isDbResident ? 'residency' : 'available',
+                badgeLabel: c.isDbResident ? 'Disponible (perfil residente)' : 'Disponible (active_days)',
+                dayType: 'trabajo',
+                dayTypeLabel: c.isDbResident ? 'Disponible (marca residente genérica)' : 'Día de trabajo (plantilla activa)',
+                details: details.concat(
+                    c.isDbResident
+                        ? ['Perfil: is_resident; slot genérico.']
+                        : ['Día incluido en active_days; perfil available !== false.']
+                ),
+                glowRgb: c.isDbResident ? '197, 160, 89' : '34, 197, 94',
+                layers: { openDay: true, holiday: holiday }
+            };
+        }
+
+        return {
+            dateStr,
+            formatted,
+            primaryTag: holiday ? 'feriado' : 'rest',
+            badgeLabel: holiday ? 'Feriado' : 'Descanso',
+            dayType: holiday ? 'feriado' : 'descanso',
+            dayTypeLabel: holiday ? 'Feriado' : 'Sin actividad configurada',
+            details: holiday
+                ? [holiday.label]
+                : [
+                    'Sin turno en weekly_schedule, fuera de active_days o available en false (si aplica).',
+                    'weekly_schedule, availability_schedule, active_days, vacaciones: revisa panel Config agenda.'
+                ],
+            glowRgb: holiday ? '197, 160, 89' : '100, 116, 139',
+            layers: { rest: true, holiday: holiday }
+        };
+    };
+
+    function holidayLabelForDate(dateStr, c, curLang) {
+        const h = HOLIDAYS_US_2026[dateStr];
+        if (h) {
+            return { label: h[curLang === 'en' ? 'en' : 'es'] + ' (USA / calendario motor)' };
+        }
+        if (c.customHolidaysArr && c.customHolidaysArr.indexOf(dateStr) >= 0) {
+            return { label: 'Día personal / festivo (special_days o custom_holidays)' };
+        }
+        return null;
+    }
+
+    window.mdjRenderAgendaDetailPanel = function (intel, cellEventPayloads) {
+        const pl = (cellEventPayloads && cellEventPayloads.length) ? cellEventPayloads : [];
+        const tagToBadge = {
+            available: { bg: 'rgba(34,197,94,0.15)', b: 'rgba(34,197,94,0.45)', t: 'Disponible' },
+            work: { bg: 'rgba(34,197,94,0.12)', b: 'rgba(34,197,94,0.35)', t: 'Trabajo' },
+            private_event: { bg: 'rgba(59,130,246,0.15)', b: 'rgba(59,130,246,0.5)', t: 'Evento privado' },
+            blocked: { bg: 'rgba(239,68,68,0.12)', b: 'rgba(239,68,68,0.45)', t: 'Bloqueado' },
+            vacaciones: { bg: 'rgba(239,68,68,0.12)', b: 'rgba(239,68,68,0.4)', t: 'Vacaciones' },
+            evento: { bg: 'rgba(59,130,246,0.15)', b: 'rgba(59,130,246,0.5)', t: 'Evento' },
+            feriado: { bg: 'rgba(197,160,89,0.15)', b: 'rgba(197,160,89,0.4)', t: 'Feriado' },
+            residency: { bg: 'rgba(249,115,22,0.15)', b: 'rgba(249,115,22,0.45)', t: 'Residencia' },
+            mixto: { bg: 'rgba(249,115,22,0.12)', b: 'rgba(249,115,22,0.35)', t: 'Mixto' },
+            rest: { bg: 'rgba(100,116,139,0.12)', b: 'rgba(100,116,139,0.4)', t: 'Descanso' },
+            holiday: { bg: 'rgba(197,160,89,0.15)', b: 'rgba(197,160,89,0.4)', t: 'Feriado' }
+        };
+        const b = tagToBadge[intel.primaryTag] || tagToBadge.rest;
+        const wCond = (typeof document !== 'undefined' && document.getElementById('weather-condition-label'))
+            ? document.getElementById('weather-condition-label').textContent.trim()
+            : '—';
+        const wTemp = (typeof document !== 'undefined' && document.getElementById('weather-main-temp'))
+            ? document.getElementById('weather-main-temp').textContent.trim()
+            : '—';
+        const loc = (typeof document !== 'undefined' && document.getElementById('weather-location'))
+            ? document.getElementById('weather-location').textContent.trim()
+            : '';
+
+        let eventBlocks = pl
+            .map(function (e) {
+                const t = (e && e.type) ? e.type : '';
+                const v = (e && e.venue) ? e.venue : (e.fallbackTitle || '');
+                const tm = (e && e.time) ? e.time : '';
+                return (
+                    '<div style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:12px;">' +
+                    '<div style="font-size:9px; color:var(--gold); font-weight:800; text-transform:uppercase;">' + escapeHtml(t) + (tm ? ' · ' + escapeHtml(tm) : '') + '</div>' +
+                    '<div style="font-weight:800; color:#fff; margin-top:2px;">' + escapeHtml(String(v)) + '</div>' +
+                    '</div>'
+                );
+            })
+            .join('');
+
+        if (!eventBlocks) {
+            eventBlocks =
+                '<div style="font-size:12px; color:rgba(255,255,255,0.5);">Sin capas extra de evento en la celda (misma lógica que arriba).</div>';
+        }
+
+        return (
+            '<div style="margin-bottom:10px; border-radius:10px; padding:10px 12px; background:' + b.bg + '; border:1px solid ' + b.b + ';">' +
+            '<div style="font-size:10px; font-weight:900; letter-spacing:0.1em; color:rgba(255,255,255,0.5);">TIPO DE DÍA</div>' +
+            '<div style="font-size:15px; font-weight:900; color:#fff; margin-top:2px;">' + escapeHtml(intel.dayTypeLabel) + ' · ' + escapeHtml(b.t) + '</div>' +
+            '<div style="font-size:11px; color:rgba(255,255,255,0.55); margin-top:2px;">' + escapeHtml(intel.formatted) + '</div>' +
+            '</div>' +
+            '<div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;">' +
+            '<span style="font-size:10px; font-weight:800; padding:3px 8px; border-radius:6px; background:' + b.bg + '; border:1px solid ' + b.b + ';">' + escapeHtml(intel.badgeLabel) + '</span>' +
+            '</div>' +
+            '<div style="font-size:10px; font-weight:800; text-transform:uppercase; color:rgba(255,255,255,0.45); margin:10px 0 4px;">Capas (perfil + agenda)</div>' +
+            '<ul style="margin:0; padding-left:16px; font-size:12px; color:rgba(255,255,255,0.8); line-height:1.45;">' +
+            intel.details
+                .map(function (l) { return '<li style="margin-bottom:4px;">' + escapeHtml(l) + '</li>'; })
+                .join('') +
+            '</ul>' +
+            (eventBlocks ? '<div style="margin-top:12px;"><div style="font-size:10px; font-weight:800; color:var(--gold); margin-bottom:4px; text-transform:uppercase;">Detalle celda (FullCalendar)</div>' + eventBlocks + '</div>' : '') +
+            '<div style="margin-top:16px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.08);">' +
+            '<div style="font-size:10px; font-weight:800; color:var(--gold); text-transform:uppercase; margin-bottom:4px;">Clima (módulo hero · misma carga)</div>' +
+            '<div style="font-size:14px; font-weight:800;">' + escapeHtml(wTemp) + ' · ' + escapeHtml(wCond) + (loc ? ' <span style="color:rgba(255,255,255,0.45); font-size:11px; font-weight:600;">' + escapeHtml(loc) + '</span>' : '') + '</div>' +
+            '<div style="font-size:10px; color:rgba(255,255,255,0.35); margin-top:4px;">Pronóstico activo: hero + lista 10 días. Ingresos potenciales: próximamente.</div>' +
+            '</div>'
+        );
+    };
+
+    function escapeHtml(s) {
+        if (s == null) return '';
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    window.mdjRenderAgendaCalendarLegend = function () {
+        const el = document.getElementById('calendar-legend');
+        if (!el) return;
+        el.innerHTML =
+            '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px 18px;align-items:center;font-size:9px;font-weight:800;letter-spacing:0.3px;text-transform:uppercase;color:rgba(255,255,255,0.6);">' +
+            '<span><span style="color:#22c55e" aria-hidden="true">●</span> Disponible</span>' +
+            '<span><span style="color:#ef4444" aria-hidden="true">●</span> Bloqueado</span>' +
+            '<span><span style="color:#f97316" aria-hidden="true">●</span> Residencia</span>' +
+            '<span><span style="color:#3b82f6" aria-hidden="true">●</span> Evento privado</span>' +
+            '</div>';
+    };
+})();
 
 async function initAgendaEngine() {
     const calendarEl =
@@ -9,62 +361,125 @@ async function initAgendaEngine() {
         return;
     }
 
-    // 1. Supabase Connection
     const sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : window.supabase;
     if (!sb) {
-        console.error("❌ AgendaEngine: Supabase no encontrado.");
-        return;
+        console.warn('[AgendaEngine] Supabase no disponible; calendario en modo vacío.');
     }
 
-    try {
-        const { data: { session } } = await sb.auth.getSession();
-        if (!session) {
-            return;
+    if (window.mdjCalendarInstance) {
+        try {
+            window.mdjCalendarInstance.destroy();
+        } catch (_destroyErr) { /* noop */ }
+        window.mdjCalendarInstance = null;
+    }
+    calendarEl.innerHTML = '';
+
+    // Perfil remoto opcional: el grid se pinta siempre; los eventos leen este contexto en cada refetch.
+    window.mdjAgendaEngineContext = { profile: {} };
+
+        // 2) Estilos encapsulados (una sola hoja si se reinicia el motor)
+        if (!document.getElementById('agenda-engine-calendar-styles')) {
+            const style = document.createElement('style');
+            style.id = 'agenda-engine-calendar-styles';
+            style.innerHTML = `
+            #calendar-master {
+                font-family: 'Inter', system-ui, sans-serif;
+            }
+            
+            /* EXTINCIÓN DE MARGEN Y PADDING */
+            #calendar-master .fc-header-toolbar {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            #calendar-master .fc-daygrid-day-frame {
+                padding: 0 !important;
+            }
+            #calendar-master .fc-daygrid-body {
+                padding: 0 !important;
+            }
+            #calendar-master .fc-daygrid-day-events {
+                padding: 0 !important;
+                margin: 0 !important;
+                min-height: 0 !important;
+            }
+            
+            /* COMPRESIÓN VERTICAL EXTREMA */
+            #calendar-master .fc-theme-standard th,
+            #calendar-master .fc-theme-standard td,
+            #calendar-master .fc-theme-standard .fc-scrollgrid {
+                border-color: rgba(255,255,255,0.08) !important;
+            }
+            
+            /* El cuadro nativo de eventos está apagado */
+            #calendar-master .fc-event {
+                display: none !important;
+            }
+        `;
+            document.head.appendChild(style);
         }
 
-        // Fetch DJ Profile Data
-        const { data: profile, error } = await sb
-            .from('dj_profiles')
-            .select('weekly_schedule, is_resident, vacation_start, vacation_end, active_days, available')
-            .eq('user_id', session.user.id)
-            .single();
-
-        if (error) throw error;
-
-        // Parse global vars
-        const weekly = profile.weekly_schedule || {};
-        const isDbResident = profile.is_resident === true;
-        const vStart = profile.vacation_start ? new Date(profile.vacation_start + 'T00:00:00') : null;
-        let vEnd = profile.vacation_end ? new Date(profile.vacation_end + 'T00:00:00') : null;
-        // Extend vEnd to cover the whole day
-        if (vEnd) {
-            vEnd.setHours(23, 59, 59, 999);
-        }
-
-        const activeDaysStr = profile.active_days || "";
-        const activeDaysArr = activeDaysStr.split(',').filter(x => x.trim() !== "").map(Number); // [0,1,2...]
-
-        // DÍAS FESTIVOS EDITABLES (Perfil de Artista)
-        const customHolidaysStr = profile.special_days || profile.custom_holidays || "";
-        const customHolidaysArr = customHolidaysStr.split(',').filter(x => x.trim() !== "");
-
-        // 2. Initialize FullCalendar
+        // 3) FullCalendar: instancia y render antes del fetch remoto (Fase 1 — nunca bloquear el grid).
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
             locale: 'es',
             firstDay: 0,
             themeSystem: 'standard',
-            aspectRatio: 0.9, /* VERTICALIDAD MÁXIMA 0.9 (El chin final) */
+            height: 'auto',
             displayEventTime: false,
             events: function (info, successCallback) {
-                // Generar array de eventos para el rango visible
+                const safeProfile = window.mdjAgendaEngineContext?.profile || {};
+                const weekly = safeProfile.weekly_schedule || {};
+                const isDbResident = safeProfile.is_resident === true;
+                const vStart = safeProfile.vacation_start ? new Date(safeProfile.vacation_start + 'T00:00:00') : null;
+                let vEnd = safeProfile.vacation_end ? new Date(safeProfile.vacation_end + 'T00:00:00') : null;
+                if (vEnd) {
+                    vEnd.setHours(23, 59, 59, 999);
+                }
+                const availSched =
+                    safeProfile.availability_schedule && typeof safeProfile.availability_schedule === 'object'
+                        ? safeProfile.availability_schedule
+                        : null;
+                const vStartJson = availSched?.vacation_start
+                    ? new Date(availSched.vacation_start + 'T00:00:00')
+                    : null;
+                let vEndJson = availSched?.vacation_end
+                    ? new Date(availSched.vacation_end + 'T00:00:00')
+                    : null;
+                if (vEndJson) {
+                    vEndJson.setHours(23, 59, 59, 999);
+                }
+                const availabilityDatesSet = new Set(
+                    Array.isArray(safeProfile.availability) ? safeProfile.availability.filter(Boolean) : []
+                );
+                const activeDaysStr = safeProfile.active_days || "";
+                const activeDaysArr = activeDaysStr.split(',').filter(x => x.trim() !== "").map(Number);
+                const customHolidaysStr = safeProfile.special_days || safeProfile.custom_holidays || "";
+                const customHolidaysArr = customHolidaysStr.split(',').filter(x => x.trim() !== "");
+
                 const events = [];
                 let d = new Date(info.start.valueOf());
 
+                const availability = safeProfile.availability_schedule?.schedule || {};
+                const recurring = safeProfile.availability_schedule?.recurring_days || [];
+                const mapR = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+                const recurringSet = new Set();
+                if (Array.isArray(recurring)) {
+                    recurring.forEach(function (r) {
+                        let n;
+                        if (typeof r === 'string') {
+                            n = mapR[r.toLowerCase()] ?? Number(r);
+                        } else {
+                            n = Number(r);
+                        }
+                        if (Number.isInteger(n) && n >= 0 && n <= 6) recurringSet.add(n);
+                    });
+                }
+
                 while (d < info.end) {
                     const dateStr = d.toISOString().split('T')[0];
-                    const dayOfWeek = d.getDay(); // 0(Sun) - 6(Sat)
+                    const day = d.getDay();
+                    const dayOfWeek = day; // 0(Sun) - 6(Sat)
                     const dayStrKey = String(dayOfWeek);
 
                     // --- MOTOR NACIONAL DE FERIADOS USA (BILINGÜE) ---
@@ -114,8 +529,16 @@ async function initAgendaEngine() {
                         });
                     }
 
-                    // Check Vacation Fallback FIRST for the day
-                    const isVacation = (vStart && vEnd && d >= vStart && d <= vEnd);
+                    // Check Vacation: columnas perfil + availability_schedule JSON
+                    const isJsonVacation =
+                        vStartJson &&
+                        vEndJson &&
+                        !isNaN(vStartJson.getTime()) &&
+                        !isNaN(vEndJson.getTime()) &&
+                        d >= vStartJson &&
+                        d <= vEndJson;
+                    const isVacation =
+                        (vStart && vEnd && d >= vStart && d <= vEnd) || isJsonVacation;
 
                     if (isVacation) {
                         // BLOQUEO ABSOLUTO (Blackout)
@@ -127,6 +550,76 @@ async function initAgendaEngine() {
                         });
                         d.setDate(d.getDate() + 1);
                         continue;
+                    }
+
+                    // 1) availability_schedule: bloqueo, fiestas privadas por fecha, 2) residencia recurrente
+                    const daySlot = availability[dateStr];
+                    if (daySlot && daySlot.status === 'blocked') {
+                        events.push({
+                            title: 'Día bloqueado',
+                            start: dateStr,
+                            allDay: true,
+                            className: 'ag-evt-vacation',
+                            extendedProps: {
+                                isResident: false,
+                                venue: 'Día bloqueado',
+                                time: '',
+                                type: '🔒 BLOQUEADO'
+                            }
+                        });
+                    } else if (daySlot && Array.isArray(daySlot.events) && daySlot.events.length) {
+                        daySlot.events.forEach(function (ev) {
+                            const timeLabel =
+                                ev.from && ev.to ? `${ev.from} - ${ev.to}` : ev.from || ev.to || '';
+                            const venue = ev.venue || 'Fiesta privada';
+                            const cancelled = (ev.status || '').toUpperCase() === 'CANCELLED';
+                            events.push({
+                                title: cancelled ? `❌ ${venue}` : (ev.title || venue),
+                                start: dateStr,
+                                allDay: true,
+                                backgroundColor: '#00c853',
+                                borderColor: '#00c853',
+                                className: cancelled ? 'ag-evt-vacation' : 'ag-evt-night',
+                                extendedProps: {
+                                    isResident: false,
+                                    venue,
+                                    city: ev.city || 'Miami, FL',
+                                    time: timeLabel,
+                                    type: cancelled ? '❌ CANCELADO' : '🎧 EVENTO',
+                                    status: ev.status
+                                }
+                            });
+                        });
+                    } else if (recurringSet.has(day)) {
+                        events.push({
+                            title: 'Residencia',
+                            start: dateStr,
+                            allDay: true,
+                            backgroundColor: '#ff9800',
+                            borderColor: '#ff9800',
+                            className: 'ag-evt-night ag-evt-resident',
+                            extendedProps: {
+                                isResident: true,
+                                venue: 'Key Largo / Miami Venue',
+                                time: '22:00 - 03:00',
+                                type: '🏠 RESIDENCIA'
+                            }
+                        });
+                    }
+
+                    if (availabilityDatesSet.has(dateStr)) {
+                        events.push({
+                            title: 'Residencia/Bloqueado',
+                            start: dateStr,
+                            allDay: true,
+                            className: 'ag-evt-fallback ag-evt-resident',
+                            extendedProps: {
+                                isResident: true,
+                                venue: 'Residencia/Bloqueado',
+                                time: '',
+                                type: '🔒 DISPONIBILIDAD'
+                            }
+                        });
                     }
 
                     // Check Weekly Schedule for this specific day
@@ -162,7 +655,7 @@ async function initAgendaEngine() {
                     } else {
                         // FALLBACK GLOBAL
                         // Actuar según las reglas genéricas (Fase 1)
-                        if (activeDaysArr.includes(dayOfWeek) && profile.available !== false) {
+                        if (activeDaysArr.includes(dayOfWeek) && safeProfile.available !== false) {
                             // Está activo este día.
                             let fClass = 'ag-evt-fallback';
                             let lbl = "DISPONIBLE";
@@ -255,59 +748,70 @@ async function initAgendaEngine() {
                     cell.appendChild(holDiv);
                 }
             },
-            dateClick: function(arg) {
+            dateClick: function (arg) {
                 if (typeof window.handleEventWeather === 'function') {
                     window.handleEventWeather(arg.dateStr);
                 }
-                // RESET TOTAL DE RESPLANDORES PREVIOS
-                document.querySelectorAll('.fc-daygrid-day-frame.active-glow').forEach(el => {
+                try {
+                    window.mdjLastAgendaDateStr = arg.dateStr;
+                } catch (_e) { /* noop */ }
+
+                document.querySelectorAll('.fc-daygrid-day-frame.active-glow').forEach(function (el) {
                     el.classList.remove('active-glow');
-                    // Restaurar gradiente nativo (los props dataset se mantienen intactos o forzamos CSS resuelto)
                 });
-                
+
                 const frame = arg.dayEl.querySelector('.fc-daygrid-day-frame');
                 if (!frame) return;
 
-                const eventsJson = frame.getAttribute('data-events');
-                if (!eventsJson) return; // Día vacío
+                const profile = (window.mdjAgendaEngineContext && window.mdjAgendaEngineContext.profile) || {};
+                const intel =
+                    typeof window.mdjIntelligenceForDate === 'function'
+                        ? window.mdjIntelligenceForDate(arg.dateStr, profile)
+                        : null;
 
-                const eventsArr = JSON.parse(eventsJson);
-                
-                // Color primario para el Glow
-                const isNightActive = frame.getAttribute('data-botAlpha') === '0.2';
-                let glowColor = isNightActive ? frame.getAttribute('data-nightColor') : frame.getAttribute('data-dayColor');
-                
-                frame.style.setProperty('--glow-color', `rgba(${glowColor}, 0.8)`);
-                frame.style.setProperty('--glow-solid', `rgba(${glowColor}, 1.0)`);
-                
-                // ACTIVAR GLOW (Controlado por CSS class .active-glow en el html)
+                let cellPayloads = [];
+                const eventsJson = frame.getAttribute('data-events');
+                if (eventsJson) {
+                    try {
+                        cellPayloads = JSON.parse(eventsJson);
+                    } catch (_parseErr) {
+                        cellPayloads = [];
+                    }
+                }
+
+                let glowRgb = intel && intel.glowRgb ? intel.glowRgb : '100, 116, 139';
+                if (eventsJson) {
+                    const isNightActive = frame.getAttribute('data-botAlpha') === '0.2';
+                    const fallback = isNightActive
+                        ? frame.getAttribute('data-nightColor')
+                        : frame.getAttribute('data-dayColor');
+                    if (fallback && fallback.length > 0) {
+                        glowRgb = fallback;
+                    }
+                }
+                frame.style.setProperty('--glow-color', 'rgba(' + glowRgb + ', 0.8)');
+                frame.style.setProperty('--glow-solid', 'rgba(' + glowRgb + ', 1.0)');
                 frame.classList.add('active-glow');
 
-                // RENDERIZAR DETALLES INFOS
                 const emptyUI = document.getElementById('dash-event-detail-empty');
                 const dataUI = document.getElementById('dash-event-detail-data');
-                
                 if (emptyUI) emptyUI.style.display = 'none';
                 if (dataUI) {
                     dataUI.style.display = 'block';
-                    dataUI.innerHTML = eventsArr.map(e => `
-                        <div style="margin-bottom: 12px; padding-bottom:12px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                            <span style="font-size:11px; color:var(--gold); font-weight: 800; letter-spacing: 1px; text-transform:uppercase;">
-                                ${e.type || ''} ${e.time ? ` // ${e.time}` : ''}
-                            </span>
-                            <div style="font-weight:900; font-size:18px; color:${e.type && e.type.includes('FERIADO') ? 'var(--gold)' : '#fff'}; line-height: 1.2; margin-top:2px;">${e.venue || e.fallbackTitle || ''}</div>
-                            ${e.isResident ? '<span style="font-size: 8px; border: 1px solid var(--gold); border-radius: 4px; padding: 2px 6px; color: var(--gold); margin-top: 4px; display:inline-block; font-weight: 800;">RESIDENT</span>' : ''}
-                        </div>
-                    `).join('');
+                    if (typeof window.mdjRenderAgendaDetailPanel === 'function' && intel) {
+                        dataUI.innerHTML = window.mdjRenderAgendaDetailPanel(intel, cellPayloads);
+                    } else if (intel) {
+                        dataUI.innerHTML =
+                            '<div style="color:#fff;font-weight:800;">' + (intel.formatted || arg.dateStr) + '</div>';
+                    }
                 }
 
-                // TIMER LOGIC -> EXACTAMENTE 10 SEGUNDOS (Fade-Out suave)
                 if (window.activeGlowTimer) clearTimeout(window.activeGlowTimer);
-                window.activeGlowTimer = setTimeout(() => {
+                window.activeGlowTimer = setTimeout(function () {
                     frame.classList.remove('active-glow');
-                    if(emptyUI) emptyUI.style.display = 'block';
-                    if(dataUI) dataUI.style.display = 'none';
-                }, 10000);
+                    if (emptyUI) emptyUI.style.display = 'block';
+                    if (dataUI) dataUI.style.display = 'none';
+                }, 120000);
             },
             datesSet: function (info) {
                 const el = document.getElementById('manual-calendar-title');
@@ -321,49 +825,38 @@ async function initAgendaEngine() {
             }
         });
 
-        // 3. Inject CSS dynamically for encapsulation
-        const style = document.createElement('style');
-        style.innerHTML = `
-            #calendar-master {
-                font-family: 'Inter', system-ui, sans-serif;
-            }
-            
-            /* EXTINCIÓN DE MARGEN Y PADDING */
-            #calendar-master .fc-header-toolbar {
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            #calendar-master .fc-daygrid-day-frame {
-                padding: 0 !important;
-            }
-            #calendar-master .fc-daygrid-body {
-                padding: 0 !important;
-            }
-            #calendar-master .fc-daygrid-day-events {
-                padding: 0 !important;
-                margin: 0 !important;
-                min-height: 0 !important;
-            }
-            
-            /* COMPRESIÓN VERTICAL EXTREMA */
-            #calendar-master .fc-theme-standard th,
-            #calendar-master .fc-theme-standard td,
-            #calendar-master .fc-theme-standard .fc-scrollgrid {
-                border-color: rgba(255,255,255,0.08) !important;
-            }
-            
-            /* El cuadro nativo de eventos está apagado */
-            #calendar-master .fc-event {
-                display: none !important;
-            }
-        `;
-        document.head.appendChild(style);
-
-        // 4. Render
         calendar.render();
-        window.mdjCalendarInstance = calendar; // Permite controles custom
+        window.mdjCalendarInstance = calendar;
+
+        if (typeof window.mdjRenderAgendaCalendarLegend === 'function') {
+            window.mdjRenderAgendaCalendarLegend();
+        }
 
         document.dispatchEvent(new CustomEvent('djCalendarRendered', { detail: { view: null } }));
+
+        if (sb) {
+            try {
+                const { data: { session } } = await sb.auth.getSession();
+                if (!session) {
+                    console.warn('[AgendaEngine] Sin sesión; agenda sin datos remotos.');
+                } else {
+                    const { data: profile, error: profErr } = await sb
+                        .from('dj_profiles')
+                        .select('*')
+                        .eq('user_id', session.user.id)
+                        .maybeSingle();
+                    if (profErr) {
+                        console.warn('[AGENDA] profile error:', profErr);
+                    } else {
+                        window.mdjAgendaEngineContext.profile = profile || {};
+                    }
+                }
+            } catch (e) {
+                console.warn('[AGENDA] profile error:', e);
+            }
+            calendar.refetchEvents();
+        }
+
         setTimeout(() => {
             if (typeof window.handleEventWeather === 'function') {
                 const localToday = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
@@ -372,10 +865,6 @@ async function initAgendaEngine() {
                 window.handleEventWeather(localToday);
             }
         }, 400);
-
-    } catch (e) {
-        console.error("❌ AGENDA ENGINE CRASH:", e);
-    }
 }
 
 // Escuchar cambios de idioma globales para Forzar Refetch de los Feriados Traducidos
@@ -383,13 +872,18 @@ document.addEventListener('languageChanged', () => {
     if (window.mdjCalendarInstance) {
         window.mdjCalendarInstance.refetchEvents();
     }
+    if (typeof window.mdjRenderAgendaCalendarLegend === 'function') {
+        window.mdjRenderAgendaCalendarLegend();
+    }
 });
 
-// 🌐 ROBUST MODULE TRIGGER: Garantiza ejecución incluso si DOMContentLoaded ya disparó (Fix Chrome/Safari)
+// 🌐 ROBUST MODULE TRIGGER: DOMContentLoaded o ejecución inmediata si el DOM ya está listo.
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initAgendaEngine);
+    document.addEventListener('DOMContentLoaded', () => {
+        void initAgendaEngine();
+    });
 } else {
-    initAgendaEngine();
+    void initAgendaEngine();
 }
 
 // 🔥 MÓDULO: FARO DEL TÍTULO DINÁMICO (Día Actual a 1Hz)
