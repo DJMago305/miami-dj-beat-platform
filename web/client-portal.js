@@ -1780,17 +1780,29 @@ const PortalApp = {
         window.history.replaceState({}, '', window.location.pathname + '?lead=' + this.currentLead.id);
 
         if (paymentStatus === 'success') {
-            // Update lead payment_status to PARTIAL (full confirmation comes via webhook)
+            // Fuente de verdad: stripe-webhook suma balance_paid; no escribir aquí (evita doble conteo).
             const db = window.getSupabaseClient();
-            if (db) {
-                const newPaid = (parseFloat(this.currentLead.balance_paid) || 0) +
-                    Math.max(parseFloat(this.currentLead.total_amount) * 0.30, 150);
-                await db.from('leads').update({
-                    payment_status: 'PARTIAL',
-                    balance_paid: newPaid,
-                }).eq('id', this.currentLead.id);
-                this.currentLead.payment_status = 'PARTIAL';
-                this.currentLead.balance_paid = newPaid;
+            if (db && this.currentLead && this.currentLead.id) {
+                const leadId = this.currentLead.id;
+                const beforePaid = parseFloat(this.currentLead.balance_paid) || 0;
+                for (let attempt = 0; attempt < 5; attempt++) {
+                    const res = await db
+                        .from('leads')
+                        .select(MDJ_LEADS_SAFE_COLUMNS)
+                        .eq('id', leadId)
+                        .maybeSingle();
+                    if (res.data) {
+                        Object.assign(this.currentLead, res.data);
+                        const nowPaid = parseFloat(res.data.balance_paid) || 0;
+                        const st = String(res.data.payment_status || '').toUpperCase();
+                        if (nowPaid > beforePaid || st === 'PARTIAL' || st === 'PAID') break;
+                    }
+                    if (attempt < 4) {
+                        await new Promise(function (r) {
+                            setTimeout(r, 1500);
+                        });
+                    }
+                }
             }
 
             this.updatePayments();
