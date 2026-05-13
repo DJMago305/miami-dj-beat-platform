@@ -13,7 +13,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Miami DJ Beat — Iniciar Sesión</title>
-    <link rel="stylesheet" href="./styles.css?v=20260430-legacy-compat-1" />
+    <link rel="stylesheet" href="./styles.css?v=20260430-float-nav-1" />
   <link rel="stylesheet" href="./header-unified.css?v=20260422-wordmark-scale" />
     <link rel="stylesheet" href="./mdj-outlined-fields.css?v=20260421-account-forms" />
     <style>
@@ -907,7 +907,7 @@
     <script src="./security-shield.js?v=20260305-1"></script>
     <script src="./js/mdj-account-forms.js?v=20260421-account-forms"></script>
     <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
-    <script src="./auth.js?v=20260513-login-timeout-fix"></script>
+    <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
 
     <script>
         (function syncReferralFromUrl() {
@@ -1431,9 +1431,30 @@
         })(0);
 
         /**
-         * No redirigir en INITIAL_SESSION / refresh: solo tras submit en auth.js (botón Entrar).
-         * ?stay=1 sigue disponible por si hace falta quedarse en la página con sesión activa.
+         * Cabecera puede mostrar sesión mientras el cuerpo sigue en ENTRAR: login.html no usa role-guard.
+         * Solo INITIAL_SESSION (JWT ya en storage al cargar), no SIGNED_IN — si no, el alta dispararía
+         * redirect antes del INSERT en client_profiles/dj_profiles.
+         * ?stay=1 — quedarse (p. ej. otra cuenta: cerrar sesión antes o ventana privada).
          */
+        (function loginPageLeaveWhenAuthed(attempt) {
+            try {
+                var q = new URLSearchParams(window.location.search);
+                if (q.get('stay') === '1') return;
+            } catch (eStay) { void eStay; }
+            var db = window.getSupabaseClient && window.getSupabaseClient();
+            if (!db) {
+                if (attempt < 15) setTimeout(function () { loginPageLeaveWhenAuthed(attempt + 1); }, 200);
+                return;
+            }
+            if (typeof window.mdjPerformPostAuthRedirect !== 'function') return;
+            db.auth.onAuthStateChange(function (event, session) {
+                if (event !== 'INITIAL_SESSION') return;
+                if (!session || !session.user) return;
+                window.mdjPerformPostAuthRedirect(db, session.user).catch(function (e) {
+                    void e;
+                });
+            });
+        })(0);
     </script>
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />

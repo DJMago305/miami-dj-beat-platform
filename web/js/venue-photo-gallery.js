@@ -1,18 +1,12 @@
 /**
  * Hero horizontal: galería de fotos bajo #experience.
- * - En producción: lista Storage bucket `assets`, carpeta `eventos-venues-patrocinadores/galeria/` (Dashboard coincide con web/assets/.../galeria/).
+ * - En producción: lista el bucket Storage `eventos-venues-patrocinadores/galeria/` (cada .jpg/.png… entra solo).
  * - En localhost: usa gallery-manifest.json (regenerar con `npm run gallery:manifest` en web/ tras añadir fotos a assets/.../galeria/).
- * - Extensión futura: subidas desde admin/manager a la misma ruta de Storage — ver LEEME en eventos-venues-patrocinadores/.
  */
 (function () {
   var wrap = document.getElementById('mdjExperienceGalleryWrap');
   var root = document.getElementById('mdjVenuePhotoHero');
   if (!wrap || !root) return;
-
-  /** Debe coincidir con el nombre del bucket en Supabase → Storage (p. ej. público `assets`). */
-  var GALLERY_STORAGE_BUCKET = 'assets';
-  /** Prefijo dentro del bucket (sin slash inicial/final). */
-  var GALLERY_STORAGE_FOLDER = 'eventos-venues-patrocinadores/galeria';
 
   var MANIFEST_URL = './assets/eventos-venues-patrocinadores/gallery-manifest.json';
   var BASE = './assets/eventos-venues-patrocinadores/galeria/';
@@ -27,7 +21,7 @@
 
   var entries = [];
   var idx = 0;
-  /** true si las entradas vienen del listado Storage (bucket assets + carpeta galería). */
+  /** true si las entradas vienen de Storage `eventos-venues-patrocinadores/galeria/` (misma base que .list()). */
   var useDedicatedGalleryBucket = false;
   /** La capa visible al terminar la última transición (true = A arriba). */
   var topIsA = true;
@@ -59,20 +53,9 @@
           })
           .join('/');
         if (seg) {
-          var folderSeg = GALLERY_STORAGE_FOLDER.split('/').map(function (part) {
-            try {
-              return encodeURIComponent(decodeURIComponent(part));
-            } catch (e) {
-              return encodeURIComponent(part);
-            }
-          }).join('/');
           return (
             origin +
-            '/storage/v1/object/public/' +
-            GALLERY_STORAGE_BUCKET +
-            '/' +
-            folderSeg +
-            '/' +
+            '/storage/v1/object/public/eventos-venues-patrocinadores/galeria/' +
             seg
           );
         }
@@ -248,8 +231,8 @@
           return;
         }
         supa.storage
-          .from(GALLERY_STORAGE_BUCKET)
-          .list(GALLERY_STORAGE_FOLDER, { limit: 500 })
+          .from('eventos-venues-patrocinadores')
+          .list('galeria', { limit: 500 })
           .then(function (res) {
             var err = res.error;
             var data = res.data;

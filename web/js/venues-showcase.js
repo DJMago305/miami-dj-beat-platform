@@ -1,280 +1,93 @@
 /**
- * Galería de venues (#experience): 4 “heroes” fijos en pantalla = ventana de 4 cartas.
- * Todos los .mp4 de reels/ son el mazo: van pasando por esos huecos (rotación +1) mientras
- * slotToVenue + CSS hacen el efecto baraja de casino (intercambios y giros entre ticks).
- * - Producción: lista bucket Storage assets → eventos-venues-patrocinadores/reels/
- * - Localhost: reels-manifest.json (npm run reels:manifest o reels:watch) + mismo orden que archivos en disco
- * - Textos por vídeo: reels-catalog.json (byFile); si falta entrada → i18n referral por defecto.
+ * Galería de venues (#experience): reels 9:16 en fila.
+ * - Barajado: permuta qué tarjeta va en cada hueco (efecto tipo casino).
+ * - Barrido: pasa al siguiente lote de venues (BATCHES[b], BATCHES[b+1]…); mismo layout, nuevos reels/textos.
+ *
+ * Cap fijo: el DOM tiene exactamente 4 .mdj-venues-video-card (no añadir más columnas). No es “un hero por venue nuevo”:
+ * los nuevos venues entran por rotación automática dentro de estos huecos (más entradas en BATCHES, más .mp4 en reels/, i18n).
+ * Añadir lotes: empuja otro subarray con 4 objetos (mismo orden de slots que index.html inicial).
+ * Cada fila debe usar solo venueI18n/typeI18n/quoteI18n del partner cuyo .mp4 es `reel` (nunca placeholders genéricos).
  */
 (function () {
   var stage = document.getElementById('mdjVenuesVideoStage');
   if (!stage) return;
 
-  var REELS_BUCKET = 'assets';
-  var REELS_STORAGE_PREFIX = 'eventos-venues-patrocinadores/reels';
-  var CATALOG_URL = './assets/eventos-venues-patrocinadores/reels-catalog.json';
-  var MANIFEST_URL = './assets/eventos-venues-patrocinadores/reels-manifest.json';
-
   var cards = Array.prototype.slice.call(stage.querySelectorAll('.mdj-venues-video-card'));
   var NUM_SLOTS = cards.length;
+  /* Mismo valor que --mdj-venues-gap-pct en styles.css (carril tipo referencia: menos hueco entre columnas). */
   var GAP_PCT = 8;
 
-  var allEntries = [];
-  var rotationOffset = 0;
-  var catalogData = { byFile: {}, fallbackReel: 'Mojitos_calle_8.mp4' };
+  /**
+   * Lotes: siempre 4 entradas (= tarjetas DOM). Lote 0 refleja el estado inicial de index.html.
+   * Sin poster en <video>: se ve el vídeo directo (primer frame / negro breve mientras carga).
+   */
+  var BATCHES = [
+    [
+      {
+        reel: 'Mojitos_calle_8.mp4',
+        fallback: './assets/eventos-venues-patrocinadores/reels/El_Valle_Restaurante.mp4',
+        venueI18n: 'exp-venue-title-mojitos',
+        typeI18n: 'exp-type-latin',
+        quoteI18n: 'exp-quote-mojitos'
+      },
+      {
+        reel: 'El_Valle_Restaurante.mp4',
+        fallback: './assets/eventos-venues-patrocinadores/reels/Mojitos_calle_8.mp4',
+        venueI18n: 'exp-venue-title-valle',
+        typeI18n: 'exp-type-dining',
+        quoteI18n: 'exp-quote-valle'
+      },
+      {
+        reel: 'Sundowners_Key_Largo.mp4',
+        fallback: './assets/eventos-venues-patrocinadores/reels/El_Valle_Restaurante.mp4',
+        venueI18n: 'exp-venue-title-sundowners',
+        typeI18n: 'exp-type-waterfront',
+        quoteI18n: 'exp-quote-sundowners'
+      },
+      {
+        reel: 'Baila_Con_Micho.mp4',
+        fallback: './assets/eventos-venues-patrocinadores/reels/Mojitos_calle_8.mp4',
+        venueI18n: 'exp-venue-title-baila',
+        typeI18n: 'exp-type-baila',
+        quoteI18n: 'exp-quote-baila'
+      }
+    ],
+    [
+      /* Mismo criterio que el lote 0: cada reel solo con textos i18n del partner real (nada genérico / placeholder). */
+      {
+        reel: 'Sundowners_Key_Largo.mp4',
+        fallback: './assets/eventos-venues-patrocinadores/reels/Mojitos_calle_8.mp4',
+        venueI18n: 'exp-venue-title-sundowners',
+        typeI18n: 'exp-type-waterfront',
+        quoteI18n: 'exp-quote-sundowners'
+      },
+      {
+        reel: 'Mojitos_calle_8.mp4',
+        fallback: './assets/eventos-venues-patrocinadores/reels/El_Valle_Restaurante.mp4',
+        venueI18n: 'exp-venue-title-mojitos',
+        typeI18n: 'exp-type-latin',
+        quoteI18n: 'exp-quote-mojitos'
+      },
+      {
+        reel: 'El_Valle_Restaurante.mp4',
+        fallback: './assets/eventos-venues-patrocinadores/reels/Mojitos_calle_8.mp4',
+        venueI18n: 'exp-venue-title-valle',
+        typeI18n: 'exp-type-dining',
+        quoteI18n: 'exp-quote-valle'
+      },
+      {
+        reel: 'Ebenezer_Family_Farm.mp4',
+        fallback: './assets/eventos-venues-patrocinadores/reels/Sundowners_Key_Largo.mp4',
+        venueI18n: 'exp-venue-title-ebenezer',
+        typeI18n: 'exp-type-ebenezer',
+        quoteI18n: 'exp-quote-ebenezer'
+      }
+    ]
+  ];
+
+  var batchIndex = 0;
   var shuffleTick = 0;
   var SWEEP_EVERY = 7;
-  var timer = null;
-
-  var REEL_FILENAME_ALIASES = {
-    'bailaconmicho.mp4': [
-      'Baila_Con_Micho.mp4',
-      'Baila_con_Micho.mp4',
-      'baila_con_micho.mp4',
-      'BailaConMicho.mp4',
-      'baila con micho.mp4',
-      'Baila Con Micho.mp4',
-      'BAILA_CON_MICHO.MP4'
-    ],
-    'Baila_Con_Micho.mp4': [
-      'bailaconmicho.mp4',
-      'Baila_con_Micho.mp4',
-      'baila_con_micho.mp4',
-      'BailaConMicho.mp4',
-      'baila con micho.mp4',
-      'Baila Con Micho.mp4',
-      'BAILA_CON_MICHO.MP4'
-    ],
-    'Fashion_Show.mp4': ['fashion_show.mp4', 'FashionShow.mp4', 'FASHION_SHOW.MP4']
-  };
-
-  function isVideoFileName(name) {
-    return typeof name === 'string' && /\.mp4$/i.test(name);
-  }
-
-  /** Un solo nombre en cola aunque Storage/manifiesto usen Baila_Con_Micho vs bailaconmicho (histórico). */
-  function canonicalFileName(name) {
-    if (!name || !isVideoFileName(name)) return name;
-    var compact = String(name)
-      .toLowerCase()
-      .replace(/\.mp4$/i, '')
-      .replace(/[\s_]/g, '');
-    if (compact === 'bailaconmicho') return 'bailaconmicho.mp4';
-    return name;
-  }
-
-  /**
-   * Una entrada por archivo real; si Storage y el manifiesto difieren solo en mayúsculas,
-   * se usa el nombre de reels-catalog.json (byFile) para que la URL del bucket coincida.
-   */
-  function uniqueSorted(names, cat) {
-    var canonical = {};
-    var bf = cat && cat.byFile ? cat.byFile : {};
-    for (var ck in bf) {
-      if (Object.prototype.hasOwnProperty.call(bf, ck) && isVideoFileName(ck)) {
-        canonical[String(ck).toLowerCase()] = ck;
-      }
-    }
-    var seenLower = {};
-    var out = [];
-    for (var i = 0; i < names.length; i++) {
-      var n = names[i];
-      if (!n || !isVideoFileName(n)) continue;
-      var low = String(n).toLowerCase();
-      if (seenLower[low]) continue;
-      seenLower[low] = true;
-      out.push(canonical[low] || n);
-    }
-    out.sort(function (a, b) {
-      return a.localeCompare(b, undefined, { sensitivity: 'base' });
-    });
-    return out;
-  }
-
-  function orderEntries(rows, cat) {
-    var spotlight = cat && cat.spotlightReels ? cat.spotlightReels : [];
-    if (!spotlight.length) return rows;
-    var ord = {};
-    for (var s = 0; s < spotlight.length; s++) {
-      ord[String(spotlight[s]).toLowerCase()] = s;
-    }
-    var head = [];
-    var tail = [];
-    for (var r = 0; r < rows.length; r++) {
-      var row = rows[r];
-      var low = String(row.reel).toLowerCase();
-      if (Object.prototype.hasOwnProperty.call(ord, low)) {
-        head.push({ row: row, o: ord[low] });
-      } else {
-        tail.push(row);
-      }
-    }
-    head.sort(function (a, b) {
-      return a.o - b.o;
-    });
-    tail.sort(function (a, b) {
-      return a.reel.localeCompare(b.reel, undefined, { sensitivity: 'base' });
-    });
-    var merged = [];
-    for (var h = 0; h < head.length; h++) merged.push(head[h].row);
-    for (var t = 0; t < tail.length; t++) merged.push(tail[t]);
-    return merged;
-  }
-
-  /** Coloca el primer spotlight en la tarjeta central al cargar (mejor visibilidad que el borde). */
-  function initialRotationOffset(rows, cat) {
-    var n = rows.length;
-    if (!n || NUM_SLOTS < 1) return 0;
-    var spotlight = cat && cat.spotlightReels ? cat.spotlightReels : [];
-    if (!spotlight.length) return 0;
-    var want = String(spotlight[0]).toLowerCase();
-    var idx = -1;
-    for (var i = 0; i < rows.length; i++) {
-      if (String(rows[i].reel).toLowerCase() === want) {
-        idx = i;
-        break;
-      }
-    }
-    if (idx < 0) return 0;
-    var centerCardIdx = Math.min(Math.floor(NUM_SLOTS / 2), NUM_SLOTS - 1);
-    return (idx - centerCardIdx + n) % n;
-  }
-
-  function metaForFile(name, cat) {
-    var by = cat && cat.byFile ? cat.byFile : {};
-    if (by[name]) return by[name];
-    var lower = String(name).toLowerCase();
-    for (var k in by) {
-      if (Object.prototype.hasOwnProperty.call(by, k) && String(k).toLowerCase() === lower) return by[k];
-    }
-    return null;
-  }
-
-  function fallbackPath(cat) {
-    var fb = (cat && cat.fallbackReel) || 'Mojitos_calle_8.mp4';
-    return './assets/eventos-venues-patrocinadores/reels/' + fb;
-  }
-
-  function rowFromFile(filename, cat) {
-    var meta = metaForFile(filename, cat);
-    var fb = fallbackPath(cat);
-    if (meta && meta.venueI18n) {
-      return {
-        reel: filename,
-        fallback: fb,
-        venueI18n: meta.venueI18n,
-        typeI18n: meta.typeI18n,
-        quoteI18n: meta.quoteI18n
-      };
-    }
-    return {
-      reel: filename,
-      fallback: fb,
-      venueI18n: 'exp-venue-referral-default',
-      typeI18n: 'exp-type-referral-default',
-      quoteI18n: 'exp-quote-referral-default'
-    };
-  }
-
-  function filesFromCatalogKeys(cat) {
-    var out = [];
-    var bf = cat && cat.byFile ? cat.byFile : {};
-    for (var k in bf) {
-      if (Object.prototype.hasOwnProperty.call(bf, k) && isVideoFileName(k)) out.push(k);
-    }
-    return uniqueSorted(out, cat);
-  }
-
-  function tryListReelsFromSupabaseStorage() {
-    return new Promise(function (resolve) {
-      try {
-        var force = window.MDJ_VENUE_REELS_FORCE_STORAGE === true;
-        var h = '';
-        try {
-          h = String(location.hostname || '').toLowerCase();
-        } catch (e2) {
-          void e2;
-        }
-        if ((h === 'localhost' || h === '127.0.0.1') && !force) {
-          resolve(null);
-          return;
-        }
-        if (typeof window.getSupabaseClient !== 'function') {
-          resolve(null);
-          return;
-        }
-        var supa = window.getSupabaseClient();
-        if (!supa || !supa.storage) {
-          resolve(null);
-          return;
-        }
-        supa.storage
-          .from(REELS_BUCKET)
-          .list(REELS_STORAGE_PREFIX, { limit: 500 })
-          .then(function (res) {
-            var err = res.error;
-            var data = res.data;
-            if (err || !data || !data.length) {
-              resolve(null);
-              return;
-            }
-            var out = [];
-            for (var i = 0; i < data.length; i++) {
-              var name = data[i].name;
-              if (!name || name[0] === '.' || !isVideoFileName(name)) continue;
-              out.push(name);
-            }
-            resolve(out.length ? uniqueSorted(out, null) : null);
-          })
-          .catch(function () {
-            resolve(null);
-          });
-      } catch (e) {
-        resolve(null);
-      }
-    });
-  }
-
-  function fetchJson(url) {
-    return fetch(url)
-      .then(function (r) {
-        if (!r.ok) return null;
-        return r.json();
-      })
-      .catch(function () {
-        return null;
-      });
-  }
-
-  /** En localhost evita caché del manifiesto para que, tras añadir un .mp4 y recargar, entre en la cola. */
-  function fetchManifestJson() {
-    var url = MANIFEST_URL;
-    try {
-      var h = String(location.hostname || '').toLowerCase();
-      if (h === 'localhost' || h === '127.0.0.1') {
-        url = MANIFEST_URL + '?t=' + String(Date.now());
-      }
-    } catch (e1) {
-      void e1;
-    }
-    return fetchJson(url);
-  }
-
-  function buildAllEntries(storageFiles, manifestObj, cat) {
-    var fromMan = (manifestObj && manifestObj.files) || [];
-    var merged = [];
-    if (storageFiles && storageFiles.length) {
-      for (var i = 0; i < storageFiles.length; i++) merged.push(canonicalFileName(storageFiles[i]));
-    }
-    for (var j = 0; j < fromMan.length; j++) merged.push(canonicalFileName(fromMan[j]));
-    var names = uniqueSorted(merged, cat);
-    if (!names.length) names = filesFromCatalogKeys(cat);
-    var rows = [];
-    for (var k = 0; k < names.length; k++) {
-      rows.push(rowFromFile(names[k], cat));
-    }
-    return orderEntries(rows, cat);
-  }
 
   function buildSlotLeftPct(numSlots, gapPct) {
     var w = (100 - (numSlots - 1) * gapPct) / numSlots;
@@ -301,6 +114,17 @@
 
   stage.style.setProperty('--mdj-venues-slots', String(NUM_SLOTS));
 
+  var timer = null;
+
+  /** Si el .mp4 en Storage tiene otro casing/nombre, probar aquí antes del fallback genérico. */
+  var REEL_FILENAME_ALIASES = {
+    'Baila_Con_Micho.mp4': ['bailaconmicho.mp4', 'Baila_con_Micho.mp4', 'baila_con_micho.mp4']
+  };
+
+  /**
+   * URL absoluta del bucket `assets` en producción (Vercel no incluye .mp4 locales si usas .vercelignore).
+   * En localhost devuelve la ruta relativa salvo MDJ_VENUE_REELS_FORCE_STORAGE.
+   */
   function absoluteReelUrl(localPath) {
     if (!localPath || typeof localPath !== 'string') return localPath;
     try {
@@ -325,32 +149,13 @@
 
   function hydrateVideo(vid) {
     if (!vid) return;
-    try {
-      vid.setAttribute('playsinline', '');
-      vid.setAttribute('webkit-playsinline', '');
-      vid.playsInline = true;
-      if (!vid.getAttribute('preload')) vid.setAttribute('preload', 'auto');
-    } catch (ePl) {
-      void ePl;
-    }
     var reel = vid.getAttribute('data-mdj-reel');
     var fb = vid.getAttribute('data-mdj-reel-fallback');
     if (!fb || !reel) return;
     var names = [reel].concat(REEL_FILENAME_ALIASES[reel] || []);
     var attempt = 0;
     var fallbackAbs = absoluteReelUrl(fb);
-    var stallTimer = null;
-
-    function clearStallTimer() {
-      if (stallTimer) {
-        clearTimeout(stallTimer);
-        stallTimer = null;
-      }
-    }
-
     function tryNext() {
-      clearStallTimer();
-      vid.onerror = null;
       if (attempt < names.length) {
         var localReelPath = './assets/eventos-venues-patrocinadores/reels/' + names[attempt];
         attempt += 1;
@@ -358,50 +163,31 @@
           tryNext();
         };
         vid.src = String(absoluteReelUrl(localReelPath));
-        try {
-          vid.load();
-        } catch (eLoad) {
-          void eLoad;
-        }
-        stallTimer = window.setTimeout(function () {
-          stallTimer = null;
-          try {
-            if (vid.readyState < 2 && !vid.error) tryNext();
-          } catch (eT) {
-            void eT;
-          }
-        }, 14000);
-        function clearOnReady() {
-          clearStallTimer();
-          vid.removeEventListener('loadeddata', clearOnReady);
-          vid.removeEventListener('canplay', clearOnReady);
-        }
-        vid.addEventListener('loadeddata', clearOnReady, { once: true });
-        vid.addEventListener('canplay', clearOnReady, { once: true });
         return;
       }
       vid.onerror = null;
-      if (vid.getAttribute('src') !== String(fallbackAbs)) {
-        vid.src = String(fallbackAbs);
-        try {
-          vid.load();
-        } catch (eFb) {
-          void eFb;
-        }
-      }
+      if (vid.getAttribute('src') !== String(fallbackAbs)) vid.src = String(fallbackAbs);
     }
     tryNext();
   }
 
-  function applyRotation() {
-    var n = allEntries.length;
-    if (!n) return;
+  function applyReelSources() {
+    stage.querySelectorAll('video[data-mdj-reel-fallback]').forEach(hydrateVideo);
+  }
+
+  function applyBatch(index) {
+    var batch = BATCHES[index];
+    if (!batch || batch.length !== NUM_SLOTS) return;
     cards.forEach(function (card, i) {
-      var row = allEntries[(rotationOffset + i) % n];
+      var row = batch[i];
       if (!row) return;
       var vid = card.querySelector('video');
       if (vid) {
-        vid.removeAttribute('poster');
+        if (row.poster) {
+          vid.setAttribute('poster', row.poster);
+        } else {
+          vid.removeAttribute('poster');
+        }
         vid.setAttribute('data-mdj-reel', row.reel);
         vid.setAttribute('data-mdj-reel-fallback', row.fallback);
         hydrateVideo(vid);
@@ -433,6 +219,7 @@
     return Math.min(1, NUM_SLOTS - 1);
   }
 
+  /** Las tarjetas son position:absolute → el stage no crece solo; reservamos altura para no montar #residencies / marketplace encima. */
   var STAGE_TOP_PAD = 10;
   var STAGE_BOTTOM_PAD = 20;
 
@@ -500,21 +287,15 @@
     applyLayout();
   }
 
-  /** Avanza o retrocede el “mazo” de una carta: cada hero acaba mostrando todos los vídeos. */
-  function stepRotation(deltaSteps) {
-    var n = allEntries.length;
-    if (!n) return;
-    rotationOffset = ((rotationOffset + deltaSteps) % n + n) % n;
-  }
-
-  function goRotationStep(delta) {
-    if (allEntries.length < 2) return;
-    stepRotation(delta);
+  /** Cambia de lote (3+3): delta +1 siguiente, -1 anterior — flechas del carril estilo referencia. */
+  function goBatchStep(delta) {
+    if (BATCHES.length < 2) return;
+    batchIndex = (batchIndex + delta + BATCHES.length) % BATCHES.length;
     stage.classList.add('mdj-venues-sweeping');
     window.setTimeout(function () {
-      applyRotation();
-      for (var jj = 0; jj < NUM_SLOTS; jj++) {
-        slotToVenue[jj] = jj;
+      applyBatch(batchIndex);
+      for (var j = 0; j < NUM_SLOTS; j++) {
+        slotToVenue[j] = j;
       }
       applyLayout();
       playVideos();
@@ -526,8 +307,8 @@
     }, 160);
   }
 
-  function sweepNextReel() {
-    goRotationStep(1);
+  function sweepNextBatch() {
+    goBatchStep(1);
   }
 
   function scheduleNext() {
@@ -535,9 +316,9 @@
     if (isNarrow() || prefersReduce()) return;
     timer = window.setTimeout(function () {
       shuffleTick++;
-      if (allEntries.length > 1 && shuffleTick >= SWEEP_EVERY) {
+      if (BATCHES.length > 1 && shuffleTick >= SWEEP_EVERY) {
         shuffleTick = 0;
-        sweepNextReel();
+        sweepNextBatch();
       } else {
         randomMove();
       }
@@ -566,55 +347,30 @@
     });
   }
 
-  function wireVenueNav() {
+  applyReelSources();
+  bootMotion();
+
+  (function wireVenueNav() {
     var navPrev = document.getElementById('mdjVenuesNavPrev');
     var navNext = document.getElementById('mdjVenuesNavNext');
-    var multi = allEntries.length > 1;
+    if (BATCHES.length < 2) {
+      if (navPrev) navPrev.hidden = true;
+      if (navNext) navNext.hidden = true;
+      return;
+    }
     if (navPrev) {
-      navPrev.hidden = !multi;
-      navPrev.onclick = function (e) {
+      navPrev.addEventListener('click', function (e) {
         e.preventDefault();
-        goRotationStep(-1);
-      };
+        goBatchStep(-1);
+      });
     }
     if (navNext) {
-      navNext.hidden = !multi;
-      navNext.onclick = function (e) {
+      navNext.addEventListener('click', function (e) {
         e.preventDefault();
-        goRotationStep(1);
-      };
+        goBatchStep(1);
+      });
     }
-  }
-
-  Promise.all([
-    fetchJson(CATALOG_URL),
-    fetchManifestJson(),
-    tryListReelsFromSupabaseStorage()
-  ])
-    .then(function (triple) {
-      var catRaw = triple[0];
-      if (catRaw && typeof catRaw === 'object') {
-        catalogData = catRaw;
-      }
-      var manifestObj = triple[1];
-      var storageFiles = triple[2];
-      allEntries = buildAllEntries(storageFiles, manifestObj, catalogData);
-      rotationOffset = initialRotationOffset(allEntries, catalogData);
-      applyRotation();
-      wireVenueNav();
-      bootMotion();
-      playVideos();
-    })
-    .catch(function () {
-      allEntries = buildAllEntries(null, null, catalogData);
-      if (allEntries.length) {
-        rotationOffset = initialRotationOffset(allEntries, catalogData);
-        applyRotation();
-        wireVenueNav();
-        bootMotion();
-        playVideos();
-      }
-    });
+  })();
 
   window.addEventListener(
     'load',
@@ -625,7 +381,7 @@
   );
 
   document.addEventListener('languageChanged', function () {
-    applyRotation();
+    applyBatch(batchIndex);
     applyLayout();
     requestSyncStageHeight();
   });

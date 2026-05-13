@@ -3,15 +3,12 @@ EVENTOS / VENUES / PATROCINADORES (sección home #experience)
 En la página: arriba las 4 tarjetas de reels; debajo un solo hero horizontal (slideshow de fotos desde galeria/ + gallery-manifest.json).
 
 Estructura de archivos:
-- galeria/          Misma carpeta para todo: todo PNG/JPG… en la raíz de galeria/ es reutilizable en el hero “GALERÍA · FOTOS” (#experience) y en cualquier otra página que apunte a esas rutas (p. ej. wedding-planning.html elige 4 en un orden fijo; las mismas imágenes pueden salir también en el slideshow del home).
+- galeria/          Todas las imágenes: slideshow (#experience), mismas rutas usadas en rentals (venues destacados), etc. Añade aquí JPG/PNG/WebP.
 - gallery-manifest.json   En esta raíz: intervalos (intervalMs, transitionMs) y, en local, la lista images generada automáticamente.
-  Tras añadir o quitar fotos en galeria/ en tu máquina: desde la carpeta web/ ejecuta  npm run gallery:manifest  (regenera images con todo lo que haya en la raíz de galeria).
-  Tras añadir o quitar .mp4 en reels/: npm run reels:manifest (una vez), o npm run reels:watch dejándolo abierto — cada archivo nuevo se vuelca en reels-manifest.json y entra en la cola de reproducción al recargar la página (el navegador no puede leer la carpeta solo).
-  En producción con Supabase: cada .mp4 nuevo que subas a Storage entra solo en la cola en cuanto el usuario carga la página (lista en vivo del bucket); sin redeploy ni editar JSON.
+  Tras añadir o quitar fotos en galeria/ en tu máquina: desde la carpeta web/ ejecuta  npm run gallery:manifest  (regenera images con todo lo que haya en la carpeta).
+  En producción con Supabase: el sitio lista el bucket galeria/ solo; cada archivo nuevo que subas entra en el slideshow sin editar el JSON (localhost sigue usando el manifiesto + archivos en disco).
   Formato opcional manual: { "intervalMs": 6000, "transitionMs": 1000, "images": [ "boda-1.jpg", { "file": "corp.jpg", "alt": "..." } ] }
-- reels/            Vídeos verticales 9:16. La lista de reels es dinámica: todos los .mp4 de esta carpeta compiten por los 4 huecos (rotación con flechas y barrido).
-                  Metadatos opcionales por archivo: web/assets/eventos-venues-patrocinadores/reels-catalog.json (byFile: nombre de archivo → textos i18n). Los .mp4 sin entrada usan claves genéricas “referral” en translations.js (venues + referidos para visitantes).
-                  En producción los .mp4 no van en el deploy (ver web/.vercelignore): deben existir en Storage bajo eventos-venues-patrocinadores/reels/ con el mismo nombre. Si falta un archivo, el reproductor intenta alias y luego el fallback; si todo falla, el vídeo puede quedar en negro.
+- reels/            Vídeos verticales 9:16 — nombres alineados con data-mdj-reel / BATCHES (ej. Mojitos_calle_8.mp4).
                   Fallback si falla el reel: solo otros .mp4 de esta carpeta (nunca assets/DJ_Performance/).
 
 Los reels en #experience no usan atributo poster: el vídeo se muestra en cuanto hay datos.
@@ -25,19 +22,6 @@ Vista previa local: con http://localhost o 127.0.0.1 el sitio usa los archivos d
 
 Escalado (más venues sin más columnas)
 - La vista usa 4 huecos fijos: 4× .mdj-venues-video-card en #mdjVenuesVideoStage. No añadir una quinta tarjeta ni “un hero por venue nuevo”.
-- Nuevos venues/vídeos: sube el .mp4 a reels/ (local y/o Storage en producción). En tu máquina: reels:watch (recomendado) o reels:manifest después de cada cambio — la cola incluye todos los .mp4 del manifiesto. Opcional: reels-catalog.json → byFile para título/cita de marca; si no, textos genéricos de referral.
+- Nuevos venues/vídeos: sube el .mp4 a reels/, añade otro lote en web/js/venues-showcase.js (BATCHES: subarray de 4 filas, una por hueco) y las claves en translations.js. El barajado y el barrido automático muestran esos contenidos dentro de los mismos 4 heroes.
 - GAP: `GAP_PCT` en JS y `--mdj-venues-gap-pct` en CSS deben coincidir; `--mdj-venues-slots: 4` en CSS.
-- El orden inicial y la rotación los controla venues-showcase.js (no hace falta editar las 4 tarjetas en index.html para cada vídeo nuevo).
-
-Traslado de galeria/ (disco) → Supabase Storage (producción)
-1) En Supabase: bucket público **assets** (como en el dashboard actual). Dentro: carpeta **eventos-venues-patrocinadores/galeria/** — ahí van los .png/.jpg (el listado del hero usa bucket `assets` + ese prefijo; ver web/js/venue-photo-gallery.js).
-2) Políticas: lectura pública para objects bajo esa ruta (o bucket público). Subidas del manager: INSERT restringido a staff cuando exista el panel.
-3) Verificar URL pública de un archivo: …/storage/v1/object/public/assets/eventos-venues-patrocinadores/galeria/<archivo>
-4) Probar en producción (tras deploy): home → #experience — el carrusel lista con `.from('assets').list('eventos-venues-patrocinadores/galeria')`. En localhost sigue el manifiesto + archivos en disco.
-5) Opcional: vaciar o reducir web/assets/.../galeria/ en Git cuando todo esté en Storage y hayas comprobado el sitio.
-6) Reels/: misma idea — bucket assets, ruta eventos-venues-patrocinadores/reels/ al subir vídeos.
-
-Futuro — galería renovable y manager / plataforma central
-- La sección GALERÍA · FOTOS está pensada para crecer: cada vez que haya fotos nuevas de eventos/venues, el contenedor lógico sigue siendo galeria/ (local o Storage).
-- En producción el front lista lo que haya en bucket **assets** bajo **eventos-venues-patrocinadores/galeria/** (redeploy solo si cambias el JS; nuevas fotos en Storage no requieren deploy).
-- Manager futuro: .upload() al mismo prefijo dentro del bucket assets.
+- Si hace falta cambiar el “lote inicial” visible al cargar, edita las 4 tarjetas en web/index.html para que coincidan con BATCHES[0].

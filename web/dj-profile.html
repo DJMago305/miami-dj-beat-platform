@@ -13,7 +13,7 @@
                 var p = new URLSearchParams(window.location.search);
                 var id = p.get('id');
                 var key = id ? 'mdj_pub_qr_ack_' + id : '';
-                /* Perfil DJ (cabina / SFT / Cash Flow en perfil): sin ambiente. Academia = academia.html aparte. */
+                /* Toda la página de perfil (incl. SoundForTips / cabina): no cargar música ambiental del sitio. */
                 try {
                     document.documentElement.setAttribute('data-mdj-no-ambient', '1');
                     window.MDJ_SKIP_AMBIENT_MUSIC = true;
@@ -42,14 +42,6 @@
         })();
     </script>
     <link rel="stylesheet" href="./styles.css?v=20260430-legacy-compat-1" />
-    <style id="mdj-profile-social-op-tabs">
-        body.dj-profile #mdj-social-sticky-bar,
-        body.dj-profile .social-sticky-bar {
-            display: none !important;
-            visibility: hidden !important;
-            pointer-events: none !important;
-        }
-    </style>
     <link rel="stylesheet" href="./header-unified.css?v=20260424-dashboard-header-sync" />
     <link rel="stylesheet" href="./profile.css?v=20260428-pub-qr-session" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260412-profile" />
@@ -149,13 +141,6 @@
 
         body {
             background: #0a0a0a;
-        }
-
-        body.dj-profile {
-            /* Reafirma el hueco del header fijo en esta página para que la barra superior
-               no se esconda detrás del límite del viewport en Safari/iPhone. */
-            padding-top: calc(var(--header-height) + var(--header-nav-band) + env(safe-area-inset-top, 0px)) !important;
-            scroll-padding-top: calc(var(--header-height) + var(--header-nav-band) + env(safe-area-inset-top, 0px));
         }
 
         /* ── Header avatar ── */
@@ -1281,10 +1266,6 @@
                 margin-bottom: 0;
             }
 
-            body.dj-profile-sft-client-view .pub-bio-hint {
-                display: none !important;
-            }
-
             body.dj-profile-sft-client-view #venues-card {
                 order: 20;
                 margin-bottom: 0;
@@ -1319,21 +1300,15 @@
             }
 
             body.dj-profile-sft-client-view #pub-venues-details > summary,
-            body.dj-profile-sft-client-view #pub-reviews-details > summary {
+            body.dj-profile-sft-client-view #pub-reviews-details > summary,
+            body.dj-profile-sft-client-view #pub-avail-details > summary {
                 display: flex;
             }
 
-            body.dj-profile-sft-client-view #pub-avail-details > summary {
-                display: none !important;
-            }
-
             body.dj-profile-sft-client-view #pub-venues-details:not([open]) .pub-mobile-section-body,
-            body.dj-profile-sft-client-view #pub-reviews-details:not([open]) .pub-mobile-section-body {
+            body.dj-profile-sft-client-view #pub-reviews-details:not([open]) .pub-mobile-section-body,
+            body.dj-profile-sft-client-view #pub-avail-details:not([open]) .pub-mobile-section-body {
                 display: none !important;
-            }
-
-            body.dj-profile-sft-client-view #pub-avail-details .pub-mobile-section-body {
-                display: block !important;
             }
 
             body.dj-profile-sft-client-view #venues-card .dj-card-label,
@@ -3461,32 +3436,6 @@
             } catch (e) { void e; }
             return (window.QRCode && QRCode.CorrectLevel) ? QRCode.CorrectLevel.M : 0;
         }
-
-        function mdjRenderProfileQrWithRetry(profileUrl, attempt) {
-            var qrContainer = document.getElementById('profile-qrcode');
-            var tries = Number(attempt || 0);
-            var skipPubQr = document.documentElement.classList.contains('dj-profile-qr-view')
-                || document.documentElement.classList.contains('dj-profile-hide-pub-qr');
-            if (!qrContainer || !profileUrl || skipPubQr) return;
-            if (window.QRCode) {
-                qrContainer.innerHTML = '';
-                new QRCode(qrContainer, {
-                    text: profileUrl,
-                    width: 240,
-                    height: 240,
-                    colorDark: '#000000',
-                    colorLight: '#ffffff',
-                    correctLevel: mdjQrCorrectLevel()
-                });
-                return;
-            }
-            if (tries < 40) {
-                window.setTimeout(function () {
-                    mdjRenderProfileQrWithRetry(profileUrl, tries + 1);
-                }, 150);
-            }
-        }
-
         /**
          * Export PNG / descarga perfil: mismo disco (frac) que en pantalla; logo ~16% más grande dentro (como scale en CSS).
          */
@@ -4093,7 +4042,7 @@
             const isSftClientMobileProfile = !!(isPublicQrView && !isOwner && window._mdjSftProAllowed);
             document.body.classList.toggle('dj-profile-sft-client-view', isSftClientMobileProfile);
             if (isSftClientMobileProfile && window.matchMedia && window.matchMedia('(max-width: 900px)').matches) {
-                ['pub-venues-details', 'pub-reviews-details'].forEach(function (id) {
+                ['pub-venues-details', 'pub-reviews-details', 'pub-avail-details'].forEach(function (id) {
                     var el = document.getElementById(id);
                     if (el) el.open = false;
                 });
@@ -4799,7 +4748,18 @@
             var skipPubQr = document.documentElement.classList.contains('dj-profile-qr-view')
                 || document.documentElement.classList.contains('dj-profile-hide-pub-qr');
             if (qrContainer && !skipPubQr) {
-                mdjRenderProfileQrWithRetry(profileUrl);
+                qrContainer.innerHTML = '';
+                if (window.QRCode) {
+                    var ql = typeof mdjQrCorrectLevel === 'function' ? mdjQrCorrectLevel() : QRCode.CorrectLevel.M;
+                    new QRCode(qrContainer, {
+                        text: profileUrl,
+                        width: 240,
+                        height: 240,
+                        colorDark: '#000000',
+                        colorLight: '#ffffff',
+                        correctLevel: ql
+                    });
+                }
             }
 
             // ── QR DE TEMPORADA (Global) ──
@@ -6055,10 +6015,6 @@
                 } else if (typeof applySoundForTipsPublicVisibility === 'function' && window.currentDJData) {
                     applySoundForTipsPublicVisibility(window.currentDJData.soundfortips_active === true);
                 }
-            }
-            document.body.classList.toggle('mdj-profile-op-tab', tab === 'flow' || tab === 'sft');
-            if (typeof window.MDJ_SOCIAL_BAR_SYNC_PROFILE_TAB === 'function') {
-                window.MDJ_SOCIAL_BAR_SYNC_PROFILE_TAB(tab);
             }
         }
 
@@ -12874,7 +12830,7 @@
     <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
     <script src="./mdj-shared-header.js?v=20260430-legacy-compat-1"></script>
   <script src="./mdj-owner-tabs-marquee.js?v=20260427-no-marquee"></script>
-  <script src="./mdj-social-bar.js?v=20260513-profile-no-social"></script>
+  <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
 </body>
 
 </html>
