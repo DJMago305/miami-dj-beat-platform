@@ -18,6 +18,7 @@
         '2026-12-31': { es: 'Fin de Año', en: "New Year's Eve" }
     };
     const MDJ_AGENDA_HOLIDAYS_US_2026 = HOLIDAYS_US_2026;
+    window.MDJ_AGENDA_HOLIDAYS_US_2026 = HOLIDAYS_US_2026;
 
     function mdjGetAgendaContext(profile) {
         const p = profile && typeof profile === 'object' ? profile : {};
@@ -763,9 +764,10 @@ async function initAgendaEngine() {
                     const dayStrKey = String(dayOfWeek);
 
                     // --- MOTOR NACIONAL DE FERIADOS USA (BILINGÜE) ---
-                    if (MDJ_AGENDA_HOLIDAYS_US_2026[dateStr]) {
+                    const holidaysMap = window.MDJ_AGENDA_HOLIDAYS_US_2026 || {};
+                    if (holidaysMap[dateStr]) {
                         const currentLang = localStorage.getItem('mdjpro_lang') || 'en';
-                        const holidayName = MDJ_AGENDA_HOLIDAYS_US_2026[dateStr][currentLang];
+                        const holidayName = holidaysMap[dateStr][currentLang];
                         
                         events.push({
                             title: holidayName,
