@@ -1275,21 +1275,35 @@ window.getLunarAsset = function (dateObj, currentTemp) {
     }
 };
 
+function mdjFormatHourlyLabel(dateObj, isNow) {
+    if (isNow) return 'Ahora';
+    const h = dateObj.getHours();
+    const hour12 = h % 12 || 12;
+    const suffix = h < 12 ? 'am' : 'pm';
+    return hour12 + suffix;
+}
+
 function mdjResolveHourlyIconSrc(iconCode, dateObj, temp) {
     const icon = String(iconCode || '01d');
     if (icon.endsWith('n')) return window.getLunarAsset(dateObj, temp);
-    const localByIcon = {
-        '01d': './assets/weather/sunny-real.png',
-        '02d': './assets/weather/Cielo parcialmente Nublado.png',
-        '03d': './assets/weather/Nublado.png',
-        '04d': './assets/weather/Nublado.png',
-        '09d': './assets/weather/Rain Day.png',
-        '10d': './assets/weather/Rain Day.png',
-        '11d': './assets/weather/Rayo Storm Definido.png',
-        '13d': './assets/weather/Snow.png',
-        '50d': './assets/weather/Pequenas Nubes Negras.png'
-    };
-    return localByIcon[icon] || ('https://openweathermap.org/img/wn/' + icon + '@2x.png');
+    /* Iconos locales hero son panorámicos; en franja horaria usar OWM (cuadrado). */
+    return 'https://openweathermap.org/img/wn/' + icon + '@2x.png';
+}
+
+function mdjHourlyIconHtml(iconCode, dateObj, temp) {
+    const icon = String(iconCode || '01d');
+    const isNight = icon.endsWith('n');
+    const imgSrc = mdjResolveHourlyIconSrc(icon, dateObj, temp);
+    const glowColor = isNight ? 'rgba(200,220,255,0.6)' : 'rgba(255,200,100,0.85)';
+    const size = isNight ? '28px' : '36px';
+    const owmFallback = 'https://openweathermap.org/img/wn/' + icon + '@2x.png';
+    return (
+        '<div style="position:relative;width:' + size + ';height:' + size + ';display:flex;justify-content:center;align-items:center;">' +
+        '<div style="position:absolute;width:60%;height:60%;border-radius:50%;box-shadow:0 0 16px ' + glowColor + ';background-color:' + glowColor + ';filter:blur(4px);z-index:1;"></div>' +
+        '<img src="' + imgSrc + '" alt="" onerror="this.onerror=null;this.src=\'' + owmFallback + '\';" ' +
+        'style="position:relative;z-index:2;width:100%;height:100%;object-fit:contain;display:block;">' +
+        '</div>'
+    );
 }
 
 function generateHourlyTimelineOptions(data) {
@@ -1298,21 +1312,8 @@ function generateHourlyTimelineOptions(data) {
 
     if (!data.fullForecast || data.fullForecast.length === 0) {
         const temp = Math.round(data.main?.temp || 78);
-        const iconCode = data.weather?.[0]?.icon || "01d";
-        const isNightDef = iconCode.endsWith('n');
-        const defaultImg = isNightDef
-            ? window.getLunarAsset(new Date(), temp)
-            : mdjResolveHourlyIconSrc(iconCode, new Date(), temp);
-        const defaultFilter = isNightDef ? 'rgba(200,220,255,0.6)' : 'rgba(255,200,100,0.85)';
-        const defSize = isNightDef ? '24px' : '34px';
-        const defMargin = isNightDef ? 'margin: 5px 0;' : 'margin: 0;';
-
-        const defaultVisual = `
-            <div style="position: relative; width: ${defSize}; height: ${defSize}; ${defMargin} display: flex; justify-content: center; align-items: center;">
-                <div style="position: absolute; width: 60%; height: 60%; border-radius: 50%; box-shadow: 0 0 16px ${defaultFilter}; background-color: ${defaultFilter}; filter: blur(4px); z-index: 1;"></div>
-                <img src="${defaultImg}" style="position: relative; z-index: 2; padding-top: 1px; width: 100%; height: 100%; object-fit: contain;">
-            </div>
-        `;
+        const iconCode = data.weather?.[0]?.icon || '01d';
+        const defaultVisual = mdjHourlyIconHtml(iconCode, new Date(), temp);
 
         hourlyScroller.innerHTML = `
             <div style="text-align: center; min-width: 55px; animation: fadeIn 0.5s ease-out; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
@@ -1328,26 +1329,12 @@ function generateHourlyTimelineOptions(data) {
 
     const hoursData = nextBlocks.map((block, index) => {
         const dateObj = new Date(block.dt * 1000);
-        let hourStr = dateObj.toLocaleTimeString('es-ES', { hour: 'numeric', minute: '2-digit', hour12: true });
-        // Clean hour to match iPhone "10 a.m."
-        hourStr = hourStr.replace(' ', '').replace('AM', ' a.m.').replace('PM', ' p.m.').replace(':00', '');
-
-        const icon = block.weather[0].icon;
-        const isNight = icon.endsWith('n');
-        const imgSrc = mdjResolveHourlyIconSrc(icon, dateObj, block.main.temp);
-        const glowColor = isNight ? 'rgba(200,220,255,0.6)' : 'rgba(255,200,100,0.85)';
-        const size = isNight ? '24px' : '34px';
-        const margins = isNight ? 'margin: 5px 0;' : 'margin: 0;';
-
-        const visualHtml = `
-            <div style="position: relative; width: ${size}; height: ${size}; ${margins} display: flex; justify-content: center; align-items: center;">
-                <div style="position: absolute; width: 60%; height: 60%; border-radius: 50%; box-shadow: 0 0 16px ${glowColor}; background-color: ${glowColor}; filter: blur(4px); z-index: 1;"></div>
-                <img src="${imgSrc}" style="position: relative; z-index: 2; width: 100%; height: 100%; object-fit: contain;">
-            </div>
-        `;
+        const label = mdjFormatHourlyLabel(dateObj, index === 0);
+        const icon = (index === 0 && data.weather?.[0]?.icon) ? data.weather[0].icon : block.weather[0].icon;
+        const visualHtml = mdjHourlyIconHtml(icon, dateObj, block.main.temp);
 
         return {
-            h: index === 0 ? 'Now' : hourStr,
+            h: label,
             t: Math.round(block.main.temp) + '°',
             visual: visualHtml
         };
@@ -1355,7 +1342,7 @@ function generateHourlyTimelineOptions(data) {
 
     hourlyScroller.innerHTML = hoursData.map(h => `
         <div style="text-align: center; min-width: 60px; animation: fadeIn 0.5s ease-out; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s;">
-            <div style="font-size: 13px; font-weight: 700; opacity: 1; margin-bottom: 6px; width: 100%; text-align: center; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${h.h === 'Now' ? 'Ahora' : h.h}</div>
+            <div style="font-size: 13px; font-weight: 700; opacity: 1; margin-bottom: 6px; width: 100%; text-align: center; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${h.h}</div>
             <div style="line-height: 1; margin-bottom: 8px; width: 100%; display: flex; justify-content: center; align-items: center; min-height: 40px;">${h.visual}</div>
             <div style="font-size: 19px; font-weight: 700; letter-spacing: -0.5px; width: 100%; text-align: center; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${h.t}</div>
         </div>
