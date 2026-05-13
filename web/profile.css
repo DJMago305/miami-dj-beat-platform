@@ -232,21 +232,21 @@ html.dj-profile-auth-check body {
     display: block;
 }
 
-/* Vista QR (?view=public): sin header principal para landing limpia */
-html.dj-profile-qr-view .header {
+/* ?view=public: antes se ocultaba el header para “landing limpia”; se restaura la franja superior del sitio (marca y navegación) en el enlace público. */
+
+/*
+ * QR lateral redundante:
+ * - ?view=public (escaneo): clase dj-profile-qr-view (sync en <head>).
+ * - Misma sesión sin view=public (p. ej. escritorio con solo ?id=): dj-profile-hide-pub-qr
+ *   si antes entraron con view=public para ese id (sessionStorage).
+ */
+html.dj-profile-qr-view .pub-qr-share-block,
+html.dj-profile-hide-pub-qr .pub-qr-share-block {
     display: none !important;
 }
 
-html.dj-profile-qr-view body.dj-profile {
-    padding-top: 0 !important;
-}
-
-/* Enlace ?view=public: el usuario ya abrió el perfil; no mostrar QR redundante en su teléfono */
-html.dj-profile-qr-view .pub-qr-share-block {
-    display: none !important;
-}
-
-html.dj-profile-qr-view #seasonal-qr-card .qr-wrap {
+html.dj-profile-qr-view #seasonal-qr-card .qr-wrap,
+html.dj-profile-hide-pub-qr #seasonal-qr-card .qr-wrap {
     display: none !important;
 }
 
@@ -472,6 +472,6 @@ body.dj-profile-fusion #owner-actions-card {
     }
 
     body.dj-profile-fusion #tab-public #qr-export-area {
-        padding: 14px !important;
+        padding: 8px 10px 10px !important;
     }
 }

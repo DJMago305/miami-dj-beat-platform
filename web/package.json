@@ -1,9 +1,12 @@
 {
   "name": "miami-dj-beat-web",
   "private": true,
+  "description": "Static site; SoundForTips fan/client URL: dj-profile.html?id=<DJ_UUID>&view=public (optionally &sft_open=1, &sft_debug=1). Local: npm run serve → http://127.0.0.1:8000/",
   "scripts": {
     "build": "exit 0",
     "gallery:manifest": "node scripts/generate-gallery-manifest.mjs",
+    "reels:manifest": "node scripts/generate-reels-manifest.mjs",
+    "reels:watch": "node scripts/watch-reels-manifest.mjs",
     "serve": "npx --yes serve@14 . -l tcp://127.0.0.1:8000"
   }
 }

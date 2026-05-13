@@ -1,6 +1,21 @@
 // I18n Global Manager
+/**
+ * Default UI language is English. We do not auto-select from the device/browser locale:
+ * only `localStorage.mdjpro_lang` (`es` | `en`) or manual toggles apply.
+ */
+function mdjReadStoredLang() {
+    try {
+        var v = localStorage.getItem('mdjpro_lang');
+        if (v === 'es' || v === 'en') return v;
+        if (v) localStorage.removeItem('mdjpro_lang');
+    } catch (e) {
+        void e;
+    }
+    return 'en';
+}
+
 const i18n = {
-    currentLang: localStorage.getItem('mdjpro_lang') || 'en',
+    currentLang: mdjReadStoredLang(),
 
     init() {
         this.updateUI();
@@ -8,13 +23,18 @@ const i18n = {
     },
 
     setLanguage(lang) {
-        this.currentLang = lang;
-        localStorage.setItem('mdjpro_lang', lang);
+        var next = lang === 'es' ? 'es' : 'en';
+        this.currentLang = next;
+        try {
+            localStorage.setItem('mdjpro_lang', next);
+        } catch (e) {
+            void e;
+        }
         if (document.documentElement) {
-            document.documentElement.lang = lang === 'es' ? 'es' : 'en';
+            document.documentElement.lang = next === 'es' ? 'es' : 'en';
         }
         this.updateUI();
-        document.dispatchEvent(new CustomEvent('languageChanged', { detail: lang }));
+        document.dispatchEvent(new CustomEvent('languageChanged', { detail: next }));
     },
 
     /** Resolve string: active locale first, then the other (official fallback is English). */

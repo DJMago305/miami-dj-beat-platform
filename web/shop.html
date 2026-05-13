@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap"
         rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260430-float-nav-1" />
+    <link rel="stylesheet" href="./styles.css?v=20260430-legacy-compat-1" />
   <link rel="stylesheet" href="./header-unified.css?v=20260422-wordmark-scale" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
 
@@ -2106,7 +2106,7 @@
         // ── 2. RENDER ENGINE ──
         function renderShop() {
             const grid = document.getElementById('shop-catalog');
-            let lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : (localStorage.getItem('mdjpro_lang') || 'es');
+            let lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : (localStorage.getItem('mdjpro_lang') || 'en');
             grid.innerHTML = merchCatalog.map(item => {
                 let pName = getLocalizedField(item.title, lang);
                 let pDescRaw = getLocalizedField(item.description, lang);
@@ -2156,7 +2156,7 @@
             document.getElementById('modalGallery').innerHTML = galleryHtml;
 
             // Info Column
-            let lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : (localStorage.getItem('mdjpro_lang') || 'es');
+            let lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : (localStorage.getItem('mdjpro_lang') || 'en');
             let dict = window.MDJ_Translations ? (window.MDJ_Translations[lang] || window.MDJ_Translations['es']) : {};
             let pName = getLocalizedField(currentActiveItem.title, lang);
             let pDescText = getLocalizedField(currentActiveItem.description, lang);
@@ -2347,7 +2347,7 @@
         window.confirmModalAdd = function (isBuyNow = false) {
             if (!currentActiveItem) return;
 
-            let lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : (localStorage.getItem('mdjpro_lang') || 'es');
+            let lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : (localStorage.getItem('mdjpro_lang') || 'en');
             let dict = window.MDJ_Translations ? (window.MDJ_Translations[lang] || window.MDJ_Translations['es']) : {};
 
             let uniqueSizes = [...new Set(currentActiveItem.variants.map(v => v.size))].filter(Boolean);
@@ -2631,7 +2631,7 @@
         }
 
         function renderSideCart() {
-            let lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : (localStorage.getItem('mdjpro_lang') || 'es');
+            let lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : (localStorage.getItem('mdjpro_lang') || 'en');
             let dict = translations[lang] || translations['es'];
 
             const container = document.getElementById('cartItemsContainer');
@@ -2727,7 +2727,7 @@
         }
 
         function checkoutCartAndRedirect() {
-            let lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : (localStorage.getItem('mdjpro_lang') || 'es');
+            let lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : (localStorage.getItem('mdjpro_lang') || 'en');
             let dict = translations[lang] || translations['es'];
 
             let currentCart = [];
@@ -2805,7 +2805,7 @@
         }
 
         function generateOfficialInvoice() {
-            let lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : (localStorage.getItem('mdjpro_lang') || 'es');
+            let lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : (localStorage.getItem('mdjpro_lang') || 'en');
             let dict = translations[lang] || translations['es'];
 
             // Este es el Entry Point del Checkout. Antes se llamaba invoice directo.
@@ -2920,7 +2920,7 @@
 
         function armarEstructuraInvoice(email) {
             // Llena el DOM del Invoice (oculto en background) listo para Imprimir.
-            let lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : (localStorage.getItem('mdjpro_lang') || 'es');
+            let lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : (localStorage.getItem('mdjpro_lang') || 'en');
             let dict = translations[lang] || translations['es'];
 
             const name = document.getElementById('chkName').value.trim();
@@ -3021,7 +3021,7 @@
         }
 
         function closeTodoElSistema() {
-            let lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : (localStorage.getItem('mdjpro_lang') || 'es');
+            let lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : (localStorage.getItem('mdjpro_lang') || 'en');
             let dict = translations[lang] || translations['es'];
 
             document.getElementById('txResultOverlay').classList.remove('active');
@@ -3037,7 +3037,7 @@
 
         // --- DINÁMICA DE FECHAS ESTILO AMAZON ---
         function updateAmazonDelivery() {
-            let lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : (localStorage.getItem('mdjpro_lang') || 'es');
+            let lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : (localStorage.getItem('mdjpro_lang') || 'en');
             let dict = translations[lang] || translations['es'];
 
             const hoy = new Date();
@@ -3372,7 +3372,7 @@
       <script src="./mdj-shared-header.js?v=20260422-mainnav-infinite-1"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260422-mainnav-chev-bar-1"></script>
-    <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
+    <script src="./mdj-owner-tabs-marquee.js?v=20260429-static-strip"></script>
     <script src="./mdj-profile-nav-context.js?v=20260418-owner-nav-parity"></script>
   <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
 </body>

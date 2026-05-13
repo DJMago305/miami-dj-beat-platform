@@ -338,15 +338,25 @@ function mdjPerformPostAuthRedirect(db, user) {
         let djRow = null;
         let clientRow = null;
         try {
-            const r1 = await db.from('dj_profiles').select('role').eq('user_id', user.id).maybeSingle();
+            const r1 = await mdjAuthPromiseTimeout(
+                db.from('dj_profiles').select('role').eq('user_id', user.id).maybeSingle(),
+                8000,
+                'Perfil DJ: tiempo de espera agotado'
+            );
             djRow = r1 && r1.data ? r1.data : null;
         } catch (e1) {
             console.warn('[AUTH] dj_profiles read:', e1);
         }
         try {
-            const r2 = await db.from('client_profiles').select('user_id').eq('user_id', user.id).maybeSingle();
+            const r2 = await mdjAuthPromiseTimeout(
+                db.from('client_profiles').select('user_id').eq('user_id', user.id).maybeSingle(),
+                8000,
+                'Perfil cliente: tiempo de espera agotado'
+            );
             clientRow = r2 && r2.data ? r2.data : null;
-        } catch (e2) { /* ignore */ }
+        } catch (e2) {
+            console.warn('[AUTH] client_profiles read:', e2);
+        }
         const idn =
             typeof window.mdjClassifyPlatformIdentity === 'function'
                 ? window.mdjClassifyPlatformIdentity({ user, djRow, clientRow })
@@ -624,6 +634,18 @@ async function waitForSupabase(maxAttempts = 10) {
     throw new Error('Supabase no está disponible. Recarga la página.');
 }
 
+function mdjAuthPromiseTimeout(promise, ms, label) {
+    var t = ms > 0 ? ms : 12000;
+    return Promise.race([
+        promise,
+        new Promise(function (_, reject) {
+            setTimeout(function () {
+                reject(new Error(label || 'Tiempo de espera agotado. Revisa tu conexión e intenta de nuevo.'));
+            }, t);
+        })
+    ]);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     const signupForm = document.getElementById('signup-form');
@@ -672,9 +694,15 @@ document.addEventListener('DOMContentLoaded', () => {
             throw new Error('Introduce tu email o nombre de usuario.');
         }
 
-        const { data: rpcEmail, error: rpcErr } = await db.rpc('mdj_resolve_email_for_login', {
-            p_identity: cleanInput
-        });
+        if (cleanInput.indexOf('@') >= 0) {
+            return cleanInput;
+        }
+
+        const { data: rpcEmail, error: rpcErr } = await mdjAuthPromiseTimeout(
+            db.rpc('mdj_resolve_email_for_login', { p_identity: cleanInput }),
+            12000,
+            'No se pudo contactar el servidor de acceso. Revisa tu conexión e intenta de nuevo.'
+        );
 
         if (rpcErr) {
             console.error('[AUTH RESOLVER] mdj_resolve_email_for_login:', rpcErr);
@@ -726,18 +754,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 const email = await resolveIdentity(identityInput, db);
 
                 if (btn) btn.textContent = mdjAuthPageBtnT('auth-login-btn-signing-in', 'Signing in…');
-                const { data: authData, error } = await db.auth.signInWithPassword({ email, password });
+                const { data: authData, error } = await mdjAuthPromiseTimeout(
+                    db.auth.signInWithPassword({ email, password }),
+                    20000,
+                    'Inicio de sesión: tiempo de espera agotado. Revisa tu conexión e intenta de nuevo.'
+                );
                 if (error) throw error;
 
                 let user = authData.user;
-                try {
-                    await db.auth.refreshSession();
-                    const { data: sessFresh } = await db.auth.getSession();
-                    if (sessFresh && sessFresh.session && sessFresh.session.user) {
-                        user = sessFresh.session.user;
+                if (!user) {
+                    try {
+                        const { data: sessFresh } = await db.auth.getSession();
+                        if (sessFresh && sessFresh.session && sessFresh.session.user) {
+                            user = sessFresh.session.user;
+                        }
+                    } catch (eRf) {
+                        void eRf;
                     }
-                } catch (eRf) {
-                    void eRf;
                 }
 
                 // ── SHIELD VERIFICATION NEUTRALIZED PER USER DIRECTIVE ──────────────────
@@ -757,16 +790,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     sessionStorage.setItem('mdj_vip_welcome_pending', '1');
                 } catch (e) { /* ignore */ }
-                try {
-                    await mdjEnsureAuthProfileRows(db, user);
-                } catch (ensureErr) {
-                    console.warn('[AUTH] ensure profile after login:', ensureErr);
-                }
-                try {
-                    await mdjCheckNewDevice(db, authData.session);
-                } catch (devErr) {
-                    console.warn('[AUTH] device routine after login:', devErr);
-                }
+                /* No bloquear entrada: tareas post-login en background. */
+                setTimeout(function () {
+                    Promise.resolve()
+                        .then(function () { return mdjEnsureAuthProfileRows(db, user); })
+                        .catch(function (ensureErr) {
+                            console.warn('[AUTH] ensure profile after login:', ensureErr);
+                        });
+                    Promise.resolve()
+                        .then(function () { return mdjCheckNewDevice(db, authData.session); })
+                        .catch(function (devErr) {
+                            console.warn('[AUTH] device routine after login:', devErr);
+                        });
+                }, 0);
                 try {
                     var lpw = document.getElementById('login-password');
                     if (lpw) {

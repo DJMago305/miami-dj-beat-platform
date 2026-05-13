@@ -361,8 +361,7 @@ a:hover {
     pointer-events: none;
   }
 
-  /* Anula pastillas cristal de .nav (misma fila, mismo orden de ítems) */
-  /* Tipografía = barra artista (.dj-owner-tabs .dj-tab-btn): clamp + 0.12em; altura de franja sin cambiar */
+  /* Anula pastillas cristal de .nav (misma fila, mismo orden de ítems). Distinto a la franja artista (.dj-tab-btn: 15px/0.22em). */
   body:not(.dj-profile):not(.mdj-academia-hub):not(.mdj-artist-academy) #mainNav.nav.top-nav:not(.mdj-mainnav-flex) a {
     background: none !important;
     backdrop-filter: none !important;
@@ -3184,7 +3183,7 @@ a.residency-card--map:focus-visible {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background-image: url('./assets/weather/stars.png');
+  background-image: url('./assets/weather/stars-night.png');
   background-size: cover;
   background-position: center;
   opacity: 0;
@@ -5960,6 +5959,45 @@ body.mdj-artist-academy #mainHeader.header {
   display: none !important;
 }
 
+/* Menú hamburguesa: el selector de idioma es fácil de pasar por alto en la franja superior */
+#mainHeader #mobileMenu .mdj-mobile-lang {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0 16px;
+  margin: 0 0 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#mainHeader #mobileMenu .mdj-mobile-lang-label {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.3;
+}
+
+#mainHeader #mobileMenu .lang-switcher {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(197, 160, 89, 0.14) !important;
+  border: 1px solid rgba(197, 160, 89, 0.4);
+}
+
+#mainHeader #mobileMenu .lang-pipe {
+  display: inline !important;
+  opacity: 0.45;
+  font-weight: 300;
+}
+
 /* Píldora de utilidades: misma fila que la marca; el wrap interno (p. ej. búsqueda) no baja el bloque entero */
 #mainHeader .header-actions {
   display: flex !important;
@@ -6384,7 +6422,8 @@ body.mdj-artist-academy #mainHeader.header {
   box-sizing: border-box;
 }
 
-.dj-tab-btn {
+.dj-tab-btn,
+.dj-owner-tabs .dj-owner-academy-btn {
   background: none;
   border: none;
   color: rgba(255, 255, 255, 0.52);
@@ -6407,15 +6446,81 @@ body.mdj-artist-academy #mainHeader.header {
   box-sizing: border-box;
 }
 
-.dj-tab-btn:hover {
+/* =======================================================================
+   🔒 PROTECTED ZONE — ARTIST MENU BAR (OWNER TABS)
+   Este bloque es INMUTABLE.
+   No modificar bajo ninguna circunstancia.
+   Cambios permitidos: NINGUNO.
+   Razón:
+   - UI validada por producto
+   - Cualquier cambio rompe consistencia global
+   - Ha sido fuente de regresiones previas
+   Para modificar esto se requiere aprobación explícita del owner.
+   ======================================================================= */
+.dj-owner-tabs .dj-tab-btn {
+  all: unset;
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.22em !important;
+  /* Menos padding lateral → menos scrollWidth → marquee solo cuando falte ancho de verdad */
+  padding: 24px clamp(3px, 0.45vw, 8px) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+}
+
+/* Misma cápsula defensiva que .dj-tab-btn; Academia comparte look en la franja. */
+.dj-owner-tabs .dj-owner-academy-btn {
+  all: unset;
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.22em !important;
+  padding: 24px clamp(3px, 0.45vw, 8px) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+}
+
+/* Tras all: unset — reponer apariencia base (no sustituye los !important de métricas de arriba). */
+.dj-owner-tabs .dj-tab-btn,
+.dj-owner-tabs .dj-owner-academy-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.52);
+  cursor: pointer;
+  text-transform: uppercase;
+  position: relative;
+  transition: color 0.2s ease;
+  text-decoration: none;
+  justify-content: center;
+  min-width: 0;
+  flex-shrink: 0;
+  font-family: inherit;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+  vertical-align: baseline;
+}
+
+.dj-owner-tabs .dj-tab-btn.active::after,
+.dj-owner-tabs .dj-owner-academy-btn.active::after {
+  left: clamp(3px, 0.45vw, 8px);
+  right: clamp(3px, 0.45vw, 8px);
+}
+
+.dj-tab-btn:hover,
+.dj-owner-tabs .dj-owner-academy-btn:hover {
   color: rgba(255, 255, 255, 0.92);
 }
 
-.dj-tab-btn.active {
+.dj-tab-btn.active,
+.dj-owner-tabs .dj-owner-academy-btn.active {
   color: var(--gold);
 }
 
-.dj-tab-btn.active::after {
+.dj-tab-btn.active::after,
+.dj-owner-tabs .dj-owner-academy-btn.active::after {
   content: "";
   position: absolute;
   bottom: 0;
@@ -6425,13 +6530,15 @@ body.mdj-artist-academy #mainHeader.header {
   background: var(--gold);
 }
 
-.dj-tab-btn:focus-visible {
+.dj-tab-btn:focus-visible,
+.dj-owner-tabs .dj-owner-academy-btn:focus-visible {
   outline: 2px solid rgba(197, 160, 89, 0.65);
   outline-offset: -2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dj-tab-btn {
+  .dj-tab-btn,
+  .dj-owner-tabs .dj-owner-academy-btn {
     transition: none;
   }
 }
@@ -6488,8 +6595,8 @@ body.mdj-artist-academy .dj-owner-tabs .container {
   /* padding inferior extra: franja para la barra horizontal (overflow-x) — si no se reserva, al aparecer la scrollbar la franja crece y “salta” */
   padding-top: 10px;
   padding-bottom: 18px;
-  padding-left: max(clamp(14px, 2.5vw, 40px), env(safe-area-inset-left, 0px));
-  padding-right: max(clamp(14px, 2.5vw, 40px), env(safe-area-inset-right, 0px));
+  padding-left: max(clamp(8px, 1.5vw, 28px), env(safe-area-inset-left, 0px));
+  padding-right: max(clamp(8px, 1.5vw, 28px), env(safe-area-inset-right, 0px));
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
@@ -6508,41 +6615,13 @@ body.mdj-artist-academy .dj-owner-tabs .container {
   }
 }
 
-body.dj-profile .dj-owner-tabs .dj-tab-btn,
-body.dj-profile .dj-owner-tabs .dj-owner-academy-btn,
-body.mdj-from-profile .dj-owner-tabs .dj-tab-btn,
-body.mdj-from-profile .dj-owner-tabs .dj-owner-academy-btn,
-body.mdj-academia-hub .dj-owner-tabs .dj-tab-btn,
-body.mdj-academia-hub .dj-owner-tabs .dj-owner-academy-btn,
-body.mdj-artist-academy .dj-owner-tabs .dj-tab-btn,
-body.mdj-artist-academy .dj-owner-tabs .dj-owner-academy-btn {
-  font-size: clamp(14px, 1.05vw, 16px);
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  padding: 14px clamp(12px, 1.4vw, 20px);
-  flex-shrink: 0;
-  white-space: nowrap;
-  line-height: 1.2;
-  /* Una sola línea estable en pantallas grandes (p. ej. Mac Studio) — sin solapar glifos */
-  align-items: center;
-  justify-content: center;
-  -webkit-font-smoothing: antialiased;
-}
+/* Tipografía de la franja: solo .dj-tab-btn (arriba). Sin reducción body.* clamp(14–16) — eso no era el original. */
 
 body.dj-profile .dj-owner-tabs .nav-item-dropdown.dj-owner-academy-dd,
 body.mdj-from-profile .dj-owner-tabs .nav-item-dropdown.dj-owner-academy-dd,
 body.mdj-academia-hub .dj-owner-tabs .nav-item-dropdown.dj-owner-academy-dd,
 body.mdj-artist-academy .dj-owner-tabs .nav-item-dropdown.dj-owner-academy-dd {
   flex-shrink: 0;
-}
-
-body.dj-profile .dj-owner-tabs .dj-tab-btn.active::after,
-body.mdj-from-profile .dj-owner-tabs .dj-tab-btn.active::after,
-body.mdj-academia-hub .dj-owner-tabs .dj-tab-btn.active::after,
-body.mdj-artist-academy .dj-owner-tabs .dj-tab-btn.active::after {
-  left: clamp(10px, 1.2vw, 16px);
-  right: clamp(10px, 1.2vw, 16px);
-  bottom: 0;
 }
 
 /* Modelo perfil DJ: misma caja para <a> y <button>; enlaces sin color de visitado distinto */
@@ -6599,6 +6678,12 @@ body.mdj-academia-hub .dj-owner-tabs .container::-webkit-scrollbar-thumb,
 body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
   background: rgba(197, 160, 89, 0.35);
   border-radius: 3px;
+}
+
+/* Marquee desactivado en JS (2026): si queda DOM viejo en caché, sin animación */
+.dj-owner-tabs--marquee .mdj-owner-tabs-marquee-anim {
+  animation: none !important;
+  transform: none !important;
 }
 
 /* Marquee opcional (mdj-owner-tabs-marquee.js): bucle horizontal, pausa al hover */
@@ -7118,5 +7203,113 @@ body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
     visibility: hidden !important;
     pointer-events: none !important;
   }
+}
+
+/* Dashboard clima: reserva altura en scrollers para menos salto de layout al rellenar forecast */
+#hourly-scroller-main,
+#daily-forecast-list {
+  min-height: 120px;
+}
+
+/* Carrusel horario: suavizar bordes cuadrados de PNGs lunares (máscara radial) */
+#hourly-scroller-main img[src*="moon"],
+#hourly-scroller-main img[src*="Moon"] {
+  -webkit-mask-image: radial-gradient(
+    circle at 50% 50%,
+    #000 52%,
+    rgba(0, 0, 0, 0.85) 68%,
+    transparent 82%
+  );
+  mask-image: radial-gradient(
+    circle at 50% 50%,
+    #000 52%,
+    rgba(0, 0, 0, 0.85) 68%,
+    transparent 82%
+  );
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+/* FullCalendar daygrid: celdas más verticales y aireadas */
+#calendar-master .fc-daygrid-day-frame {
+  min-height: 132px !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: 6px;
+  box-sizing: border-box;
+}
+
+#calendar-master .fc-daygrid-day-top {
+  margin-bottom: 8px;
+}
+
+#calendar-master .fc {
+  height: auto !important;
+}
+
+#calendar-master .fc-daygrid-body {
+  height: auto !important;
+}
+
+#calendar-master .fc-scrollgrid {
+  height: auto !important;
+}
+
+/* =============================================================================
+   Compatibilidad: Safari/macOS antiguos y equipos con pocos núcleos (clases en
+   <html> las pone mdj-shared-header.js: mdj-compat-oldsafari, mdj-compat-lowcpu,
+   mdj-compat-no-aspect). Objetivo: menos elementos “pegados”, reels visibles,
+   menos blur costoso que puede romper capas en WebKit viejo.
+   ============================================================================= */
+
+html.mdj-compat-oldsafari body.dj-profile .dj-owner-tabs .dj-tab-btn,
+html.mdj-compat-oldsafari body.mdj-from-profile .dj-owner-tabs .dj-tab-btn,
+html.mdj-compat-oldsafari body.mdj-academia-hub .dj-owner-tabs .dj-tab-btn,
+html.mdj-compat-oldsafari body.mdj-artist-academy .dj-owner-tabs .dj-tab-btn,
+html.mdj-compat-lowcpu body.dj-profile .dj-owner-tabs .dj-tab-btn,
+html.mdj-compat-lowcpu body.mdj-from-profile .dj-owner-tabs .dj-tab-btn,
+html.mdj-compat-lowcpu body.mdj-academia-hub .dj-owner-tabs .dj-tab-btn,
+html.mdj-compat-lowcpu body.mdj-artist-academy .dj-owner-tabs .dj-tab-btn {
+  padding-left: clamp(8px, 1.1vw, 18px) !important;
+  padding-right: clamp(8px, 1.1vw, 18px) !important;
+  letter-spacing: 0.14em !important;
+}
+
+html.mdj-compat-oldsafari body.dj-profile .dj-owner-tabs .container,
+html.mdj-compat-lowcpu body.dj-profile .dj-owner-tabs .container,
+html.mdj-compat-oldsafari body.mdj-from-profile .dj-owner-tabs .container,
+html.mdj-compat-lowcpu body.mdj-from-profile .dj-owner-tabs .container {
+  padding-left: max(clamp(12px, 2vw, 32px), env(safe-area-inset-left, 0px));
+  padding-right: max(clamp(12px, 2vw, 32px), env(safe-area-inset-right, 0px));
+}
+
+html.mdj-compat-oldsafari .mdj-venues-video-frame,
+html.mdj-compat-no-aspect .mdj-venues-video-frame {
+  aspect-ratio: auto;
+  min-height: min(52vh, 520px);
+}
+
+html.mdj-compat-oldsafari .mdj-venues-video-frame video,
+html.mdj-compat-no-aspect .mdj-venues-video-frame video {
+  min-height: min(48vh, 480px);
+  object-fit: cover;
+}
+
+html.mdj-compat-oldsafari body.page-home #mainHeader.header,
+html.mdj-compat-lowcpu body.page-home #mainHeader.header {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: linear-gradient(180deg, rgba(10, 8, 6, 0.94) 0%, rgba(6, 5, 4, 0.97) 100%) !important;
+}
+
+html.mdj-compat-lowcpu .header .header-top,
+html.mdj-compat-oldsafari .header .header-top {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 

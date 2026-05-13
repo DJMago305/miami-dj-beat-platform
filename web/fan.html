@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <title>Enlace fan — SoundForTips</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #0f0f12; color: #eee; margin: 0; padding: 24px; max-width: 560px; line-height: 1.45; }
+        h1 { font-size: 1.25rem; margin: 0 0 8px; color: #e8c76b; }
+        p { color: #aaa; font-size: 0.95rem; margin: 0 0 16px; }
+        label { display: block; margin-bottom: 6px; font-size: 0.85rem; color: #bbb; }
+        input[type="text"] { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a1f; color: #fff; font-size: 0.95rem; margin-bottom: 14px; }
+        .row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+        .row label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        button { margin-right: 8px; margin-bottom: 8px; padding: 10px 16px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, #c9a227, #8b6914); color: #111; }
+        button.secondary { background: #2a2a32; color: #ddd; border: 1px solid #444; }
+        .out { word-break: break-all; font-size: 0.8rem; padding: 12px; background: #1a1a1f; border-radius: 8px; border: 1px solid #333; color: #8fd; margin-top: 12px; min-height: 2.5em; }
+        .warn { color: #f87171; font-size: 0.85rem; margin-top: 8px; }
+        .ok { color: #86efac; font-size: 0.85rem; margin-top: 8px; }
+    </style>
+    <script src="./supabase-config.js"></script>
+</head>
+<body>
+    <h1>Cliente / fan — SoundForTips</h1>
+    <p>Esto <strong>no es</strong> la página de iniciar sesión del DJ. Es solo para abrir el <strong>perfil público</strong> del artista y usar SoundForTips. Puedes pegar <strong>solo el UUID</strong> o la <strong>URL completa</strong> del perfil; se detecta el id solo.</p>
+    <p style="font-size:0.85rem;color:#888;">Para probar como fan sin ver la cabina del DJ, usa ventana privada o cierra sesión.</p>
+
+    <label for="djId">UUID del DJ o URL del perfil</label>
+    <input type="text" id="djId" placeholder="UUID o pega: http://127.0.0.1:8000/dj-profile.html?id=…&view=public" autocomplete="off" />
+
+    <div class="row">
+        <label><input type="checkbox" id="optOpen" checked /> Abrir modal SoundForTips al cargar (<code>sft_open=1</code>)</label>
+        <label><input type="checkbox" id="optDebug" /> Consola debug (<code>sft_debug=1</code>)</label>
+    </div>
+
+    <button type="button" id="btnGo">Abrir perfil fan</button>
+    <button type="button" class="secondary" id="btnCopy">Copiar enlace</button>
+
+    <div class="out" id="urlOut" aria-live="polite"></div>
+    <div id="msg"></div>
+
+    <script>
+        (function () {
+            var dj = document.getElementById('djId');
+            var optOpen = document.getElementById('optOpen');
+            var optDebug = document.getElementById('optDebug');
+            var out = document.getElementById('urlOut');
+            var msg = document.getElementById('msg');
+
+            var UUID_RE = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/;
+
+            /** Acepta UUID solo o URL completa; evita usar toda la URL como id (enlace anidado roto). */
+            function extractDjUuid(raw) {
+                if (!raw || typeof raw !== 'string') return '';
+                var s = raw.trim();
+                if (!s) return '';
+                var m = s.match(UUID_RE);
+                if (m) return m[0];
+                try {
+                    var dec = s;
+                    for (var i = 0; i < 3; i++) {
+                        dec = decodeURIComponent(dec);
+                        m = dec.match(UUID_RE);
+                        if (m) return m[0];
+                    }
+                } catch (e) { /* noop */ }
+                try {
+                    if (/^https?:\/\//i.test(s)) {
+                        var u = new URL(s);
+                        var q = u.searchParams.get('id');
+                        if (q) return extractDjUuid(q);
+                    }
+                } catch (e2) { /* noop */ }
+                return '';
+            }
+
+            function build() {
+                var raw = (dj && dj.value && dj.value.trim()) || '';
+                var id = extractDjUuid(raw);
+                if (!id) return '';
+                if (typeof window.mdjFanPublicProfileUrl !== 'function') return '';
+                return window.mdjFanPublicProfileUrl(id, {
+                    sftOpen: !!(optOpen && optOpen.checked),
+                    sftDebug: !!(optDebug && optDebug.checked)
+                });
+            }
+
+            function showMsg(text, ok) {
+                if (!msg) return;
+                msg.textContent = text || '';
+                msg.className = ok ? 'ok' : 'warn';
+            }
+
+            function refreshOut() {
+                var raw = (dj && dj.value && dj.value.trim()) || '';
+                var id = extractDjUuid(raw);
+                var u = build();
+                if (!out) return;
+                if (!raw) out.textContent = '(pega UUID o URL del perfil)';
+                else if (!id) out.textContent = 'No se ve un UUID válido (ej. a1b2c3d4-e5f6-7890-abcd-ef1234567890).';
+                else out.textContent = u || '(revisa supabase-config / mdjFanPublicProfileUrl)';
+            }
+
+            document.getElementById('btnGo').onclick = function () {
+                var raw = (dj && dj.value && dj.value.trim()) || '';
+                var id = extractDjUuid(raw);
+                if (id && dj && raw !== id && raw.indexOf('http') !== -1) {
+                    dj.value = id;
+                }
+                var u = build();
+                if (!u) {
+                    showMsg('Pega el UUID del DJ o una URL de dj-profile con ?id=… (no uses el texto TU_UUID de ejemplo).', false);
+                    return;
+                }
+                window.location.href = u;
+            };
+
+            document.getElementById('btnCopy').onclick = function () {
+                var u = build();
+                if (!u) {
+                    showMsg('Pega el UUID del DJ primero.', false);
+                    return;
+                }
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(u).then(function () {
+                        showMsg('Enlace copiado al portapapeles.', true);
+                    }).catch(function () {
+                        showMsg('No se pudo copiar; selecciona el texto abajo.', false);
+                    });
+                } else {
+                    showMsg('Copia manualmente el texto de abajo.', false);
+                }
+            };
+
+            dj.addEventListener('input', refreshOut);
+            dj.addEventListener('paste', function () {
+                setTimeout(function () {
+                    var raw = (dj && dj.value && dj.value.trim()) || '';
+                    var id = extractDjUuid(raw);
+                    if (id && raw !== id) {
+                        dj.value = id;
+                        showMsg('UUID extraído de la URL.', true);
+                    }
+                    refreshOut();
+                }, 0);
+            });
+            optOpen.addEventListener('change', refreshOut);
+            optDebug.addEventListener('change', refreshOut);
+            refreshOut();
+        })();
+    </script>
+</body>
+</html>

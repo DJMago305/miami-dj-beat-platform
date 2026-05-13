@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>MDJPRO — Manager Panel</title>
-    <link rel="stylesheet" href="./styles.css?v=20260422-nav-unified72" />
+    <link rel="stylesheet" href="./styles.css?v=20260430-legacy-compat-1" />
   <link rel="stylesheet" href="./header-unified.css?v=20260421-nav-z120" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
     <!-- Idioma: mismos scripts que el resto del sitio (sin esto, ES/EN no reciben listeners). -->
@@ -530,6 +530,7 @@
                 <a href="#content" class="side-link">🖼️ Contenido y Precios</a>
                 <a href="#apps" class="side-link">📦 Hosting de Apps</a>
                 <a href="#production" class="side-link" data-i18n="prod-sidebar-production"></a>
+                <a href="#ledger-split" class="side-link">💵 Ledger DJ · Split Casa</a>
             </aside>
 
             <section class="content">
@@ -630,6 +631,72 @@
                     <div class="tile" style="border:1px solid var(--line); margin-top:20px;">
                         <h4 style="margin-bottom:16px; color:var(--gold);">📅 Próximos Eventos (30 días)</h4>
                         <div id="analytics-upcoming"></div>
+                    </div>
+                </div>
+
+                <!-- Staff: reparto DJ vs Casa en dj_ledger.metadata.split (sin SQL manual) -->
+                <div class="admin-card" id="ledger-split" style="display:none;">
+                    <h3>💵 Ledger — Reparto DJ / Casa MDJ</h3>
+                    <p class="fineprint" style="margin-bottom:16px;">
+                        Registra o edita el split en <code>dj_ledger.metadata.split</code>. El bruto debe coincidir con
+                        <code>amount_cents</code>; si no cuadra, verás una advertencia (puedes guardar igual).
+                    </p>
+                    <input type="hidden" id="mdj-ledger-editing-id" value="" />
+                    <div class="tile" style="margin-bottom:16px;">
+                        <label class="fineprint">DJ (usuario)</label>
+                        <select id="mdj-ledger-dj-user-id" class="price-input" style="width:100%;margin-top:6px;background:#000;"
+                            onchange="window.mdjStaffLedgerSplitLoadRows && window.mdjStaffLedgerSplitLoadRows()">
+                            <option value="">— Elegir DJ —</option>
+                        </select>
+                    </div>
+                    <div class="tile" style="margin-bottom:16px;">
+                        <label class="fineprint">Movimiento existente (o nuevo)</label>
+                        <select id="mdj-ledger-row-select" class="price-input" style="width:100%;margin-top:6px;background:#000;"
+                            onchange="window.mdjStaffLedgerSplitFillFromRow && window.mdjStaffLedgerSplitFillFromRow()">
+                            <option value="">— Nuevo ingreso (bruto abajo) —</option>
+                        </select>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:14px;">
+                        <div class="tile">
+                            <label class="fineprint">Bruto total (USD) — nuevo ingreso</label>
+                            <input type="number" id="mdj-ledger-gross-usd" step="0.01" min="0" class="price-input" style="margin-top:6px;width:100%;" placeholder="0.00" />
+                        </div>
+                        <div class="tile">
+                            <label class="fineprint">Parte DJ ($)</label>
+                            <input type="number" id="mdj-ledger-dj-usd" step="0.01" min="0" class="price-input" style="margin-top:6px;width:100%;" placeholder="0.00" />
+                        </div>
+                        <div class="tile">
+                            <label class="fineprint">Parte Casa MDJ ($)</label>
+                            <input type="number" id="mdj-ledger-house-usd" step="0.01" min="0" class="price-input" style="margin-top:6px;width:100%;" placeholder="0.00" />
+                        </div>
+                        <div class="tile">
+                            <label class="fineprint">Canal de pago</label>
+                            <select id="mdj-ledger-channel" class="price-input" style="margin-top:6px;width:100%;background:#000;">
+                                <option value="cash">cash</option>
+                                <option value="zelle">zelle</option>
+                                <option value="check">check</option>
+                                <option value="bank">bank</option>
+                                <option value="other">other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="tile" style="margin-bottom:14px;">
+                        <label class="fineprint">Justificación</label>
+                        <textarea id="mdj-ledger-justification" rows="3" class="price-input" style="margin-top:6px;width:100%;resize:vertical;"
+                            placeholder="Ej. Club pagó cheque a MDJ; DJ cobra viernes/sáb según contrato…"></textarea>
+                    </div>
+                    <div class="tile" style="margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                            <label class="fineprint">Desglose por día (opcional)</label>
+                            <button type="button" class="btn secondary small" onclick="window.mdjStaffLedgerSplitAddDayRow && window.mdjStaffLedgerSplitAddDayRow()">+ Día</button>
+                        </div>
+                        <div id="mdj-ledger-day-rows"></div>
+                        <p class="fineprint" style="margin-top:8px;opacity:0.55;">Si omites días, solo se guarda el split total.</p>
+                    </div>
+                    <div id="mdj-ledger-split-warn" style="display:none;margin-bottom:12px;padding:12px;border-radius:12px;border:1px solid rgba(251,191,36,0.5);background:rgba(251,191,36,0.08);font-size:13px;"></div>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+                        <button type="button" class="btn gold" onclick="window.mdjStaffLedgerSplitSave && window.mdjStaffLedgerSplitSave()">Guardar split</button>
+                        <span id="mdj-ledger-split-status" class="fineprint" style="color:var(--admin-accent);"></span>
                     </div>
                 </div>
 
@@ -1791,7 +1858,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     if (window.userRole === 'SALES_STAFF') {
                         roleBadge.textContent = "Acceso: Equipo de Ventas (seller) — Producción incluida (cotización / alta de cliente Mi Portal)";
                         // Hide sensitive sections (manager/admin only); sellers keep Leads, CRM, DJs, registry, Producción
-                        const itemsToHide = ['content', 'analytics', 'apps'];
+                        const itemsToHide = ['content', 'analytics', 'apps', 'ledger-split'];
                         itemsToHide.forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.style.display = 'none';
@@ -1807,6 +1874,235 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 }
 
             } // end loadAdminData()
+
+            /** Ledger DJ/Casa split — staff panel (dj_ledger.metadata.split). No toca Flow. */
+            window.mdjStaffLedgerSplitCacheRows = [];
+
+            window.mdjStaffLedgerSplitPopulateDjs = async function () {
+                var db = window.getSupabaseClient();
+                var sel = document.getElementById('mdj-ledger-dj-user-id');
+                if (!db || !sel || sel.getAttribute('data-mdj-loaded') === '1') return;
+                var res = await db.from('dj_profiles').select('user_id,stage_name,dj_name').order('stage_name');
+                if (res.error || !res.data) return;
+                res.data.forEach(function (p) {
+                    var opt = document.createElement('option');
+                    opt.value = p.user_id;
+                    opt.textContent = (p.stage_name || p.dj_name || p.user_id || '').toString().slice(0, 80);
+                    sel.appendChild(opt);
+                });
+                sel.setAttribute('data-mdj-loaded', '1');
+            };
+
+            window.mdjStaffLedgerSplitLoadRows = async function () {
+                var db = window.getSupabaseClient();
+                var dj = document.getElementById('mdj-ledger-dj-user-id') && document.getElementById('mdj-ledger-dj-user-id').value;
+                var rowSel = document.getElementById('mdj-ledger-row-select');
+                if (!db || !rowSel || !dj) return;
+                rowSel.innerHTML = '<option value="">— Nuevo ingreso (bruto abajo) —</option>';
+                document.getElementById('mdj-ledger-editing-id').value = '';
+                var q = await db
+                    .from('dj_ledger')
+                    .select('id,amount_cents,metadata,created_at,type,status')
+                    .eq('dj_user_id', dj)
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+                if (q.error) {
+                    console.warn(q.error);
+                    return;
+                }
+                window.mdjStaffLedgerSplitCacheRows = q.data || [];
+                (q.data || []).forEach(function (r) {
+                    var opt = document.createElement('option');
+                    opt.value = r.id;
+                    var g = ((r.amount_cents || 0) / 100).toFixed(2);
+                    var t = (r.created_at || '').slice(0, 10);
+                    opt.textContent = t + ' · $' + g + ' · ' + (r.type || '') + ' · ' + (r.status || '');
+                    rowSel.appendChild(opt);
+                });
+            };
+
+            window.mdjStaffLedgerSplitFillFromRow = function () {
+                var idEl = document.getElementById('mdj-ledger-row-select');
+                var id = idEl && idEl.value;
+                document.getElementById('mdj-ledger-editing-id').value = id || '';
+                var grossEl = document.getElementById('mdj-ledger-gross-usd');
+                if (!id) {
+                    grossEl.value = '';
+                    document.getElementById('mdj-ledger-dj-usd').value = '';
+                    document.getElementById('mdj-ledger-house-usd').value = '';
+                    document.getElementById('mdj-ledger-justification').value = '';
+                    document.getElementById('mdj-ledger-day-rows').innerHTML = '';
+                    return;
+                }
+                var row = (window.mdjStaffLedgerSplitCacheRows || []).find(function (x) {
+                    return x.id === id;
+                });
+                if (!row) return;
+                grossEl.value = row.amount_cents ? ((row.amount_cents || 0) / 100).toFixed(2) : '';
+                var sp = row.metadata && row.metadata.split;
+                if (sp) {
+                    document.getElementById('mdj-ledger-dj-usd').value =
+                        sp.dj_cents != null ? (Number(sp.dj_cents) / 100).toFixed(2) : '';
+                    document.getElementById('mdj-ledger-house-usd').value =
+                        sp.house_cents != null ? (Number(sp.house_cents) / 100).toFixed(2) : '';
+                    document.getElementById('mdj-ledger-channel').value = sp.payment_channel || 'other';
+                    document.getElementById('mdj-ledger-justification').value = sp.justification || '';
+                } else {
+                    document.getElementById('mdj-ledger-dj-usd').value = '';
+                    document.getElementById('mdj-ledger-house-usd').value = '';
+                    document.getElementById('mdj-ledger-channel').value = 'other';
+                    document.getElementById('mdj-ledger-justification').value = '';
+                }
+                var host = document.getElementById('mdj-ledger-day-rows');
+                host.innerHTML = '';
+                var days = sp && Array.isArray(sp.day_breakdown) ? sp.day_breakdown : [];
+                days.forEach(function (d) {
+                    window.mdjStaffLedgerSplitAddDayRow(d);
+                });
+            };
+
+            window.mdjStaffLedgerSplitAddDayRow = function (pref) {
+                var host = document.getElementById('mdj-ledger-day-rows');
+                if (!host) return;
+                var row = document.createElement('div');
+                row.className = 'mdj-day-row';
+                row.style.cssText =
+                    'display:grid;grid-template-columns:1fr 100px 100px 1fr auto;gap:8px;margin-bottom:8px;align-items:center;';
+                var d = pref && pref.date ? pref.date : '';
+                var dj =
+                    pref && pref.dj_cents != null ? (Number(pref.dj_cents) / 100).toFixed(2) : '';
+                var hs =
+                    pref && pref.house_cents != null ? (Number(pref.house_cents) / 100).toFixed(2) : '';
+                var nt = pref && pref.note ? String(pref.note) : '';
+                row.innerHTML =
+                    '<input type="date" class="price-input mdj-day-date" value="' +
+                    mdjStaffEscapeHtml(d) +
+                    '" />' +
+                    '<input type="number" step="0.01" class="price-input mdj-day-dj" placeholder="DJ $" value="' +
+                    dj +
+                    '" />' +
+                    '<input type="number" step="0.01" class="price-input mdj-day-house" placeholder="Casa $" value="' +
+                    hs +
+                    '" />' +
+                    '<input type="text" class="price-input mdj-day-note" placeholder="Nota" value="' +
+                    mdjStaffEscapeHtml(nt) +
+                    '" />' +
+                    '<button type="button" class="btn secondary small" onclick="this.closest(\'.mdj-day-row\').remove()">✕</button>';
+                host.appendChild(row);
+            };
+
+            function mdjStaffEscapeHtml(s) {
+                return String(s || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/"/g, '&quot;');
+            }
+
+            window.mdjStaffLedgerSplitSave = async function () {
+                var st = document.getElementById('mdj-ledger-split-status');
+                var wr = document.getElementById('mdj-ledger-split-warn');
+                if (st) st.textContent = '';
+                if (wr) {
+                    wr.style.display = 'none';
+                    wr.textContent = '';
+                }
+                var db = window.getSupabaseClient();
+                if (!db) {
+                    alert('Sin cliente Supabase');
+                    return;
+                }
+                var djUid = document.getElementById('mdj-ledger-dj-user-id').value;
+                if (!djUid) {
+                    alert('Elige un DJ');
+                    return;
+                }
+                var ledgerId = document.getElementById('mdj-ledger-editing-id').value;
+                var grossUsd = parseFloat(document.getElementById('mdj-ledger-gross-usd').value);
+                var djUsd = parseFloat(document.getElementById('mdj-ledger-dj-usd').value);
+                var houseUsd = parseFloat(document.getElementById('mdj-ledger-house-usd').value);
+                if (!ledgerId && (isNaN(grossUsd) || grossUsd <= 0)) {
+                    alert('Para un ingreso nuevo indica bruto total > 0');
+                    return;
+                }
+                if (isNaN(djUsd) || isNaN(houseUsd)) {
+                    alert('Indica parte DJ y Casa en USD');
+                    return;
+                }
+                var djCents = Math.round(djUsd * 100);
+                var houseCents = Math.round(houseUsd * 100);
+                var finalAmountCents = Math.round(grossUsd * 100);
+                if (ledgerId) {
+                    var row = (window.mdjStaffLedgerSplitCacheRows || []).find(function (x) {
+                        return x.id === ledgerId;
+                    });
+                    if (row && row.amount_cents) finalAmountCents = row.amount_cents;
+                }
+                if (djCents + houseCents !== finalAmountCents) {
+                    var msg =
+                        'DJ ($' +
+                        (djCents / 100).toFixed(2) +
+                        ') + Casa ($' +
+                        (houseCents / 100).toFixed(2) +
+                        ') = $' +
+                        ((djCents + houseCents) / 100).toFixed(2) +
+                        ' ≠ bruto $' +
+                        (finalAmountCents / 100).toFixed(2);
+                    if (wr) {
+                        wr.style.display = 'block';
+                        wr.textContent = '⚠️ ' + msg + ' — puedes guardar igual si es intencional.';
+                    }
+                    if (!window.confirm(msg + '\n\n¿Guardar de todas formas?')) return;
+                }
+                var day_breakdown = [];
+                document.querySelectorAll('#mdj-ledger-day-rows .mdj-day-row').forEach(function (el) {
+                    var dateEl = el.querySelector('.mdj-day-date');
+                    var date = dateEl && dateEl.value;
+                    var djV = parseFloat(el.querySelector('.mdj-day-dj').value);
+                    var hsV = parseFloat(el.querySelector('.mdj-day-house').value);
+                    var note = el.querySelector('.mdj-day-note').value;
+                    if (!date) return;
+                    day_breakdown.push({
+                        date: date,
+                        dj_cents: Math.round((isNaN(djV) ? 0 : djV) * 100),
+                        house_cents: Math.round((isNaN(hsV) ? 0 : hsV) * 100),
+                        note: note || undefined,
+                    });
+                });
+                var split = {
+                    dj_cents: djCents,
+                    house_cents: houseCents,
+                    payment_channel: document.getElementById('mdj-ledger-channel').value || 'other',
+                    justification: document.getElementById('mdj-ledger-justification').value || '',
+                    day_breakdown: day_breakdown,
+                };
+                try {
+                    if (ledgerId) {
+                        var cur = await db.from('dj_ledger').select('metadata').eq('id', ledgerId).single();
+                        if (cur.error) throw cur.error;
+                        var meta = Object.assign({}, cur.data && cur.data.metadata ? cur.data.metadata : {}, {
+                            split: split,
+                        });
+                        var up = await db.from('dj_ledger').update({ metadata: meta }).eq('id', ledgerId);
+                        if (up.error) throw up.error;
+                        if (st) st.textContent = '✅ Split guardado.';
+                    } else {
+                        var ins = await db.from('dj_ledger').insert([
+                            {
+                                dj_user_id: djUid,
+                                type: 'income',
+                                amount_cents: finalAmountCents,
+                                status: 'available',
+                                metadata: { split: split },
+                            },
+                        ]);
+                        if (ins.error) throw ins.error;
+                        if (st) st.textContent = '✅ Ingreso creado con split.';
+                        await window.mdjStaffLedgerSplitLoadRows();
+                    }
+                } catch (e) {
+                    alert((e && e.message) ? e.message : String(e));
+                }
+            };
 
             document.addEventListener('DOMContentLoaded', async () => {
                 await loadAdminData();
@@ -1824,12 +2120,16 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     const target = hrefRaw.replace('#', '');
                     if (!target) return;
                     // Show target section, hide others
-                    const sections = ['leads', 'crm', 'djs', 'registry-section', 'analytics', 'content', 'apps', 'production'];
+                    const sections = ['leads', 'crm', 'djs', 'registry-section', 'analytics', 'ledger-split', 'content', 'apps', 'production'];
                     sections.forEach(id => {
                         const el = document.getElementById(id);
                         if (!el) return;
                         el.style.display = (id === target) ? 'block' : 'none';
                     });
+
+                    if (target === 'ledger-split' && typeof window.mdjStaffLedgerSplitPopulateDjs === 'function') {
+                        window.mdjStaffLedgerSplitPopulateDjs();
+                    }
 
                     if (target === 'production' && window.MDJProduction && typeof window.MDJProduction.init === 'function') {
                         window.MDJProduction.init();
