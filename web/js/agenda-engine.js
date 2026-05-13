@@ -8,6 +8,7 @@
         '2026-03-17': { es: 'San Patricio', en: "St. Patrick's Day" },
         '2026-04-03': { es: 'Viernes Santo', en: 'Good Friday' },
         '2026-04-05': { es: 'Pascua', en: 'Easter' },
+        '2026-05-05': { es: 'Cinco de Mayo', en: 'Cinco de Mayo' },
         '2026-05-25': { es: 'Memorial Day', en: 'Memorial Day' },
         '2026-07-04': { es: 'Independencia', en: 'Independence Day' },
         '2026-09-07': { es: 'Labor Day', en: 'Labor Day' },
@@ -252,7 +253,7 @@
     };
 
     function holidayLabelForDate(dateStr, c, curLang) {
-        const h = HOLIDAYS_US_2026[dateStr];
+        const h = MDJ_AGENDA_HOLIDAYS_US_2026[dateStr];
         if (h) {
             return { label: h[curLang === 'en' ? 'en' : 'es'] + ' (USA / calendario motor)' };
         }
@@ -375,7 +376,7 @@ async function initAgendaEngine() {
     calendarEl.innerHTML = '';
 
     // Perfil remoto opcional: el grid se pinta siempre; los eventos leen este contexto en cada refetch.
-    window.mdjAgendaEngineContext = { profile: {} };
+    window.mdjAgendaEngineContext = { profile: {}, assignedLeads: [], eventFlowsByLeadId: {} };
 
         // 2) Estilos encapsulados (una sola hoja si se reinicia el motor)
         if (!document.getElementById('agenda-engine-calendar-styles')) {
@@ -419,6 +420,266 @@ async function initAgendaEngine() {
         }
 
         // 3) FullCalendar: instancia y render antes del fetch remoto (Fase 1 — nunca bloquear el grid).
+        const calendarInDashboardAgenda = !!(
+            document.getElementById('tab-dashboard') &&
+            document.getElementById('calendar-master') &&
+            document.getElementById('tab-dashboard').contains(document.getElementById('calendar-master'))
+        );
+
+        function mdjAgendaEventsForDate(calendar, dateStr) {
+            if (!calendar || !dateStr) return [];
+            return calendar.getEvents().filter(function (ev) {
+                const eStart = ev.startStr || (ev.start ? ev.start.toISOString().split('T')[0] : '');
+                return eStart.startsWith(dateStr);
+            });
+        }
+
+        function mdjAgendaNormalizeTime(t) {
+            if (t == null) return '';
+            const s = String(t).trim();
+            if (!s || s === '--:--') return '';
+            return s;
+        }
+
+        function mdjAgendaIsRealNotesUuid(id) {
+            if (id == null || id === '') return false;
+            const s = String(id).trim();
+            if (/^res-/i.test(s)) return false;
+            return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s);
+        }
+
+        window.mdjAgendaIsRealNotesUuid = mdjAgendaIsRealNotesUuid;
+
+        function mdjAgendaPreferredTimes(profile) {
+            let prefStart = '';
+            let prefEnd = '';
+            if (profile && profile.preferred_schedule) {
+                const parts = String(profile.preferred_schedule).split('-');
+                prefStart = mdjAgendaNormalizeTime(parts[0]);
+                prefEnd = mdjAgendaNormalizeTime(parts[1]);
+            }
+            return { prefStart: prefStart, prefEnd: prefEnd };
+        }
+
+        function mdjAgendaShiftMeta(weekly, dayStrKey, profile) {
+            const shifts = (weekly && weekly[dayStrKey]) || [];
+            const active = shifts.filter(function (s) { return s && s.enabled; });
+            const res = active.find(function (s) { return s.is_resident; }) || active[0] || null;
+            const pref = mdjAgendaPreferredTimes(profile);
+            if (res) {
+                const start = mdjAgendaNormalizeTime(res.start_time) || pref.prefStart;
+                const end = mdjAgendaNormalizeTime(res.end_time) || pref.prefEnd;
+                const venue = (res.venue_name || '').trim();
+                if (!venue && !start && !end) return null;
+                const timeLabel = start && end ? start + ' - ' + end : (start || end || '');
+                return {
+                    title: venue || 'Turno',
+                    venue: venue,
+                    city: venue || (profile && profile.city) || '',
+                    time: timeLabel,
+                    start_time: start || null,
+                    end_time: end || null,
+                    source: 'weekly_schedule',
+                    panel_status: 'scheduled_shift',
+                    notes_event_id: null
+                };
+            }
+            if (pref.prefStart && pref.prefEnd) {
+                const timeLabel = pref.prefStart + ' - ' + pref.prefEnd;
+                return {
+                    title: 'Horario global (CONFIG)',
+                    venue: '',
+                    city: (profile && profile.city) || '',
+                    time: timeLabel,
+                    start_time: pref.prefStart,
+                    end_time: pref.prefEnd,
+                    source: 'preferred_schedule',
+                    panel_status: 'scheduled_shift',
+                    notes_event_id: null
+                };
+            }
+            return null;
+        }
+
+        function mdjAgendaPickPrimaryEvent(events) {
+            if (!events || !events.length) return null;
+            const nonHoliday = events.filter(function (ev) {
+                return !(ev.classNames && ev.classNames.includes('ag-evt-holiday'));
+            });
+            const pool = nonHoliday.length ? nonHoliday : events;
+            const assignedLead = pool.find(function (ev) {
+                return ev.extendedProps && ev.extendedProps.source === 'lead';
+            });
+            if (assignedLead) return assignedLead;
+            const privateEv = pool.find(function (ev) {
+                const ep = ev.extendedProps || {};
+                return ep.source === 'availability_schedule' || (ep.venue && ep.start_time);
+            });
+            if (privateEv) return privateEv;
+            const weeklyShift = pool.find(function (ev) {
+                return ev.extendedProps && ev.extendedProps.source === 'weekly_schedule';
+            });
+            if (weeklyShift) return weeklyShift;
+            const withVenue = pool.find(function (ev) {
+                const ep = ev.extendedProps || {};
+                if ((!startTime || !endTime) && window.mdjAgendaEngineContext && window.mdjAgendaEngineContext.profile) {
+                const pref = mdjAgendaPreferredTimes(window.mdjAgendaEngineContext.profile);
+                if (!startTime && pref.prefStart) startTime = pref.prefStart;
+                if (!endTime && pref.prefEnd) endTime = pref.prefEnd;
+            }
+            const venue = (ep.venue || '').trim();
+                return venue.length > 0;
+            });
+            if (withVenue) return withVenue;
+            const resident = pool.find(function (ev) {
+                return ev.classNames && ev.classNames.includes('ag-evt-resident');
+            });
+            if (resident) return resident;
+            const gig = pool.find(function (ev) {
+                return ev.classNames && (ev.classNames.includes('ag-evt-day') || ev.classNames.includes('ag-evt-night'));
+            });
+            if (gig) return gig;
+            return pool[0];
+        }
+
+        function mdjAgendaAllowPreferredTimeFallback(ep) {
+            if (!ep) return false;
+            const src = ep.source;
+            return (
+                src === 'weekly_schedule' ||
+                src === 'preferred_schedule' ||
+                src === 'active_days' ||
+                ep.isResident === true
+            );
+        }
+
+        function mdjAgendaParseLeadTimes(lead) {
+            if (!lead) return { start_time: null, end_time: null };
+            let start = lead.start_time || lead.event_start_time || null;
+            let end = lead.end_time || lead.event_end_time || null;
+            const single = lead.event_time;
+            if ((!start || !end) && single != null && String(single).trim() !== '') {
+                const parts = String(single).split(/[-–—]/).map(function (s) { return s.trim(); });
+                if (!start && parts[0]) start = parts[0];
+                if (!end && parts[1]) end = parts[1];
+            }
+            if ((!start || !end) && lead.notes != null && lead.notes !== '') {
+                try {
+                    const n = typeof lead.notes === 'string' ? JSON.parse(lead.notes) : lead.notes;
+                    if (n && typeof n === 'object') {
+                        if (!start) start = n.start_time || n.event_start_time || n.from || null;
+                        if (!end) end = n.end_time || n.event_end_time || n.to || null;
+                    }
+                } catch (_e) { /* notes no JSON */ }
+            }
+            return {
+                start_time: mdjAgendaNormalizeTime(start),
+                end_time: mdjAgendaNormalizeTime(end)
+            };
+        }
+
+        function mdjAgendaFlowBlockTimes(flow) {
+            if (!flow) return { start_time: null, end_time: null };
+            const meta = flow.meta && typeof flow.meta === 'object' ? flow.meta : {};
+            let start = meta.start_time || meta.event_start_time || null;
+            let end = meta.end_time || meta.event_end_time || null;
+            const blocks = Array.isArray(flow.blocks) ? flow.blocks : [];
+            blocks.forEach(function (b) {
+                if (!b || typeof b !== 'object') return;
+                const bs = mdjAgendaNormalizeTime(b.start);
+                const be = mdjAgendaNormalizeTime(b.end);
+                if (bs && !start) start = bs;
+                if (be && !end) end = be;
+            });
+            return {
+                start_time: mdjAgendaNormalizeTime(start),
+                end_time: mdjAgendaNormalizeTime(end)
+            };
+        }
+
+        function mdjAgendaWeatherPayload(event, dateStr) {
+            if (!event || !event.title) return dateStr;
+            const ep = event.extendedProps || {};
+            let startTime = mdjAgendaNormalizeTime(ep.start_time);
+            let endTime = mdjAgendaNormalizeTime(ep.end_time);
+            if ((!startTime || !endTime) && ep.time && typeof ep.time === 'string' && ep.time !== 'ALL DAY') {
+                const parts = ep.time.split('-').map(function (s) { return s.trim(); });
+                if (!startTime && parts[0]) startTime = mdjAgendaNormalizeTime(parts[0]);
+                if (!endTime && parts[1]) endTime = mdjAgendaNormalizeTime(parts[1]);
+            }
+            if (
+                (!startTime || !endTime) &&
+                mdjAgendaAllowPreferredTimeFallback(ep) &&
+                window.mdjAgendaEngineContext &&
+                window.mdjAgendaEngineContext.profile
+            ) {
+                const pref = mdjAgendaPreferredTimes(window.mdjAgendaEngineContext.profile);
+                if (!startTime && pref.prefStart) startTime = pref.prefStart;
+                if (!endTime && pref.prefEnd) endTime = pref.prefEnd;
+            }
+            const venue = (ep.venue || '').trim();
+            const eventName = (ep.event_name || event.title || '').trim();
+            const notesEventId = mdjAgendaIsRealNotesUuid(ep.notes_event_id)
+                ? ep.notes_event_id
+                : (mdjAgendaIsRealNotesUuid(ep.flowId)
+                    ? ep.flowId
+                    : (mdjAgendaIsRealNotesUuid(ep.eventId) ? ep.eventId : null));
+            return {
+                title: eventName || 'Evento',
+                startStr: event.startStr || dateStr,
+                extendedProps: Object.assign({}, ep, {
+                    eventId: notesEventId,
+                    notes_event_id: notesEventId,
+                    event_name: eventName || null,
+                    venue: venue,
+                    city: ep.city || (venue || undefined),
+                    start_time: startTime || null,
+                    end_time: endTime || null
+                })
+            };
+        }
+
+        async function mdjAgendaRefreshEventFlows(sb, leadRows) {
+            if (!window.mdjAgendaEngineContext) return;
+            window.mdjAgendaEngineContext.eventFlowsByLeadId = {};
+            if (!sb || !leadRows || !leadRows.length) return;
+            const leadIds = leadRows.map(function (l) { return l.id; }).filter(Boolean);
+            if (!leadIds.length) return;
+            try {
+                const { data, error } = await sb
+                    .from('mdj_event_flows')
+                    .select('id, lead_id, status, venue, event_date, blocks, meta, title')
+                    .in('lead_id', leadIds);
+                if (error || !Array.isArray(data)) return;
+                const map = {};
+                data.forEach(function (row) {
+                    if (!row || !row.lead_id) return;
+                    if (!map[row.lead_id]) map[row.lead_id] = row;
+                });
+                window.mdjAgendaEngineContext.eventFlowsByLeadId = map;
+            } catch (_flowErr) { /* RLS o tabla ausente */ }
+        }
+
+        async function mdjAgendaRefreshAssignedLeads(sb, profileRow) {
+            if (!window.mdjAgendaEngineContext) return;
+            window.mdjAgendaEngineContext.assignedLeads = [];
+            window.mdjAgendaEngineContext.eventFlowsByLeadId = {};
+            if (!sb || !profileRow || !profileRow.id) return;
+            try {
+                const { data, error } = await sb
+                    .from('leads')
+                    .select('id, event_type, event_date, location, status, budget, notes')
+                    .eq('assigned_dj_id', profileRow.id)
+                    .order('event_date', { ascending: true });
+                if (!error && Array.isArray(data)) {
+                    window.mdjAgendaEngineContext.assignedLeads = data;
+                    await mdjAgendaRefreshEventFlows(sb, data);
+                }
+            } catch (_leadErr) { /* noop */ }
+        }
+
+        window.mdjAgendaRefreshAssignedLeads = mdjAgendaRefreshAssignedLeads;
+
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
@@ -476,6 +737,12 @@ async function initAgendaEngine() {
                     });
                 }
 
+                if (isDbResident) {
+                    activeDaysArr.forEach(function (n) {
+                        if (Number.isInteger(n) && n >= 0 && n <= 6) recurringSet.add(n);
+                    });
+                }
+
                 while (d < info.end) {
                     const dateStr = d.toISOString().split('T')[0];
                     const day = d.getDay();
@@ -483,23 +750,9 @@ async function initAgendaEngine() {
                     const dayStrKey = String(dayOfWeek);
 
                     // --- MOTOR NACIONAL DE FERIADOS USA (BILINGÜE) ---
-                    const holidaysUS2026 = {
-                        "2026-02-14": { es: "San Valentín", en: "Valentine's Day" },
-                        "2026-03-17": { es: "San Patricio", en: "St. Patrick's Day" },
-                        "2026-04-03": { es: "Viernes Santo", en: "Good Friday" },
-                        "2026-04-05": { es: "Pascua", en: "Easter" },
-                        "2026-05-25": { es: "Memorial Day", en: "Memorial Day" },
-                        "2026-07-04": { es: "Independencia", en: "Independence Day" },
-                        "2026-09-07": { es: "Labor Day", en: "Labor Day" },
-                        "2026-10-31": { es: "Halloween", en: "Halloween" },
-                        "2026-11-26": { es: "Acción de Gracias", en: "Thanksgiving" },
-                        "2026-12-25": { es: "Navidad", en: "Christmas" },
-                        "2026-12-31": { es: "Fin de Año", en: "New Year's Eve" }
-                    };
-
-                    if (holidaysUS2026[dateStr]) {
+                    if (MDJ_AGENDA_HOLIDAYS_US_2026[dateStr]) {
                         const currentLang = localStorage.getItem('mdjpro_lang') || 'en';
-                        const holidayName = holidaysUS2026[dateStr][currentLang];
+                        const holidayName = MDJ_AGENDA_HOLIDAYS_US_2026[dateStr][currentLang];
                         
                         events.push({
                             title: holidayName,
@@ -507,8 +760,10 @@ async function initAgendaEngine() {
                             allDay: true,
                             className: 'ag-evt-holiday',
                             extendedProps: {
+                                source: 'holiday',
                                 isResident: false,
                                 venue: holidayName,
+                                event_name: holidayName,
                                 time: "ALL DAY",
                                 type: currentLang === 'es' ? "⭐ FERIADO USA" : "⭐ USA HOLIDAY"
                             }
@@ -546,11 +801,49 @@ async function initAgendaEngine() {
                             title: "VACACIONES / BLACKOUT",
                             start: dateStr,
                             allDay: true,
-                            className: 'ag-evt-vacation'
+                            className: 'ag-evt-vacation',
+                            extendedProps: {
+                                source: 'vacation',
+                                venue: '',
+                                event_name: 'Vacaciones / Blackout',
+                                panel_status: 'vacation'
+                            }
                         });
                         d.setDate(d.getDate() + 1);
                         continue;
                     }
+
+                    const assignedLeads = window.mdjAgendaEngineContext.assignedLeads || [];
+                    const flowsByLead = window.mdjAgendaEngineContext.eventFlowsByLeadId || {};
+                    assignedLeads.forEach(function (lead) {
+                        if (lead.event_date !== dateStr) return;
+                        const venue = (lead.location || '').trim();
+                        const title = (lead.event_type || 'Evento asignado').trim();
+                        const flow = flowsByLead[lead.id] || null;
+                        const flowTimes = mdjAgendaFlowBlockTimes(flow);
+                        const leadTimes = mdjAgendaParseLeadTimes(lead);
+                        const flowVenue = flow && flow.venue ? String(flow.venue).trim() : '';
+                        events.push({
+                            title: title,
+                            start: dateStr,
+                            allDay: true,
+                            className: 'ag-evt-night ag-evt-assigned',
+                            extendedProps: {
+                                source: 'lead',
+                                eventId: lead.id,
+                                flowId: flow ? flow.id : null,
+                                notes_event_id: flow ? flow.id : lead.id,
+                                event_name: title,
+                                venue: flowVenue || venue,
+                                city: flowVenue || venue || undefined,
+                                status: lead.status,
+                                flow_status: flow ? flow.status : null,
+                                start_time: flowTimes.start_time || leadTimes.start_time || null,
+                                end_time: flowTimes.end_time || leadTimes.end_time || null,
+                                type: '🎧 EVENTO ASIGNADO'
+                            }
+                        });
+                    });
 
                     // 1) availability_schedule: bloqueo, fiestas privadas por fecha, 2) residencia recurrente
                     const daySlot = availability[dateStr];
@@ -562,7 +855,8 @@ async function initAgendaEngine() {
                             className: 'ag-evt-vacation',
                             extendedProps: {
                                 isResident: false,
-                                venue: 'Día bloqueado',
+                                source: 'blocked',
+                                venue: '',
                                 time: '',
                                 type: '🔒 BLOQUEADO'
                             }
@@ -571,51 +865,73 @@ async function initAgendaEngine() {
                         daySlot.events.forEach(function (ev) {
                             const timeLabel =
                                 ev.from && ev.to ? `${ev.from} - ${ev.to}` : ev.from || ev.to || '';
-                            const venue = ev.venue || 'Fiesta privada';
+                            const venue = (ev.venue || '').trim();
                             const cancelled = (ev.status || '').toUpperCase() === 'CANCELLED';
                             events.push({
-                                title: cancelled ? `❌ ${venue}` : (ev.title || venue),
+                                title: cancelled ? ('❌ ' + (venue || ev.title || 'Evento')) : (ev.title || venue || 'Evento'),
                                 start: dateStr,
                                 allDay: true,
                                 backgroundColor: '#00c853',
                                 borderColor: '#00c853',
                                 className: cancelled ? 'ag-evt-vacation' : 'ag-evt-night',
                                 extendedProps: {
+                                    source: 'availability_schedule',
                                     isResident: false,
-                                    venue,
-                                    city: ev.city || 'Miami, FL',
+                                    eventId: mdjAgendaIsRealNotesUuid(ev.id) ? ev.id : null,
+                                    notes_event_id: mdjAgendaIsRealNotesUuid(ev.id) ? ev.id : null,
+                                    event_name: ev.title || null,
+                                    venue: venue,
+                                    city: ev.city || venue || undefined,
                                     time: timeLabel,
+                                    start_time: mdjAgendaNormalizeTime(ev.from),
+                                    end_time: mdjAgendaNormalizeTime(ev.to),
                                     type: cancelled ? '❌ CANCELADO' : '🎧 EVENTO',
                                     status: ev.status
                                 }
                             });
                         });
                     } else if (recurringSet.has(day)) {
-                        events.push({
-                            title: 'Residencia',
-                            start: dateStr,
-                            allDay: true,
-                            backgroundColor: '#ff9800',
-                            borderColor: '#ff9800',
-                            className: 'ag-evt-night ag-evt-resident',
-                            extendedProps: {
-                                isResident: true,
-                                venue: 'Key Largo / Miami Venue',
-                                time: '22:00 - 03:00',
-                                type: '🏠 RESIDENCIA'
+                        const dailyForRes = weekly[dayStrKey] || [];
+                        const hasWeeklyShift = dailyForRes.some(function (s) { return s && s.enabled; });
+                        if (!hasWeeklyShift) {
+                            const meta = mdjAgendaShiftMeta(weekly, dayStrKey, safeProfile);
+                            if (meta) {
+                                events.push({
+                                    title: meta.title,
+                                    start: dateStr,
+                                    allDay: true,
+                                    backgroundColor: '#ff9800',
+                                    borderColor: '#ff9800',
+                                    className: 'ag-evt-night ag-evt-resident',
+                                    extendedProps: {
+                                        source: meta.source || 'weekly_schedule',
+                                        isResident: true,
+                                        eventId: null,
+                                        notes_event_id: null,
+                                        event_name: meta.title,
+                                        venue: meta.venue,
+                                        city: meta.city,
+                                        time: meta.time,
+                                        start_time: meta.start_time,
+                                        end_time: meta.end_time,
+                                        panel_status: 'scheduled_shift',
+                                        type: '🏠 RESIDENCIA'
+                                    }
+                                });
                             }
-                        });
+                        }
                     }
 
                     if (availabilityDatesSet.has(dateStr)) {
                         events.push({
-                            title: 'Residencia/Bloqueado',
+                            title: 'Disponibilidad',
                             start: dateStr,
                             allDay: true,
                             className: 'ag-evt-fallback ag-evt-resident',
                             extendedProps: {
+                                source: 'legacy_availability',
                                 isResident: true,
-                                venue: 'Residencia/Bloqueado',
+                                venue: '',
                                 time: '',
                                 type: '🔒 DISPONIBILIDAD'
                             }
@@ -633,21 +949,32 @@ async function initAgendaEngine() {
 
                         activeShifts.forEach((shift) => {
                             let typeLabel = shift.slot_type === 'day' ? '☀️' : '🌙';
-                            let timeLabel = (shift.start_time || '') + (shift.end_time ? ' - ' + shift.end_time : '');
-                            let venue = shift.venue_name || 'MDJ Event';
-                            
+                            const pref = mdjAgendaPreferredTimes(safeProfile);
+                            let startT = mdjAgendaNormalizeTime(shift.start_time) || pref.prefStart;
+                            let endT = mdjAgendaNormalizeTime(shift.end_time) || pref.prefEnd;
+                            let timeLabel = startT && endT ? startT + ' - ' + endT : (startT || endT || '');
+                            let venue = (shift.venue_name || '').trim();
+
                             let cssClass = shift.slot_type === 'day' ? 'ag-evt-day' : 'ag-evt-night';
                             if (shift.is_resident) cssClass += ' ag-evt-resident';
 
                             events.push({
-                                title: `${typeLabel} | ${timeLabel} | ${venue}`,
+                                title: venue || (typeLabel + ' Turno'),
                                 start: dateStr,
-                                allDay: true, // rendered as blocks
+                                allDay: true,
                                 className: cssClass,
                                 extendedProps: {
+                                    source: 'weekly_schedule',
                                     isResident: shift.is_resident,
+                                    eventId: null,
+                                    notes_event_id: null,
+                                    event_name: venue || (typeLabel + ' Turno'),
                                     venue: venue,
+                                    city: venue || undefined,
                                     time: timeLabel,
+                                    start_time: startT || null,
+                                    end_time: endT || null,
+                                    panel_status: 'scheduled_shift',
                                     type: typeLabel
                                 }
                             });
@@ -662,15 +989,44 @@ async function initAgendaEngine() {
 
                             if (isDbResident) {
                                 fClass += ' ag-evt-resident';
-                                lbl = "RESIDENTE GENÉRICO";
+                                lbl = 'RESIDENTE GENÉRICO';
                             }
 
-                            events.push({
-                                title: lbl,
-                                start: dateStr,
-                                allDay: true,
-                                className: fClass
-                            });
+                            const meta = mdjAgendaShiftMeta(weekly, dayStrKey, safeProfile);
+                            if (isDbResident && meta) {
+                                events.push({
+                                    title: meta.title,
+                                    start: dateStr,
+                                    allDay: true,
+                                    className: fClass,
+                                    extendedProps: {
+                                        source: meta.source || 'weekly_schedule',
+                                        isResident: true,
+                                        eventId: null,
+                                        notes_event_id: null,
+                                        event_name: meta.title,
+                                        venue: meta.venue,
+                                        city: meta.city,
+                                        time: meta.time,
+                                        start_time: meta.start_time,
+                                        end_time: meta.end_time,
+                                        panel_status: 'scheduled_shift',
+                                        type: '🏠 RESIDENCIA'
+                                    }
+                                });
+                            } else if (!isDbResident) {
+                                events.push({
+                                    title: lbl,
+                                    start: dateStr,
+                                    allDay: true,
+                                    className: fClass,
+                                    extendedProps: {
+                                        source: 'active_days',
+                                        panel_status: 'available',
+                                        type: 'DISPONIBLE'
+                                    }
+                                });
+                            }
                         }
                     }
 
@@ -742,25 +1098,35 @@ async function initAgendaEngine() {
                 // --- LÓGICA DE FERIADOS FANTASMA (Superposición Absoluta) ---
                 if (isHoliday) {
                     const holDiv = document.createElement('div');
-                    holDiv.style.cssText = "position:absolute; top:0; bottom:0; left:0; right:0; display:flex; justify-content:center; align-items:center; text-align:center; padding: 0 5px; font-size:10px; font-weight:800; color:var(--gold); text-shadow: 0 0 8px var(--gold); text-transform:uppercase; z-index:30; pointer-events:none;";
+                    holDiv.className = 'mdj-agenda-holiday-overlay';
+                    if (!calendarInDashboardAgenda) {
+                        holDiv.style.color = 'var(--gold)';
+                        holDiv.style.textShadow = '0 0 8px var(--gold)';
+                    }
                     holDiv.innerText = arg.event.title;
-                    cell.style.position = 'relative';
                     cell.appendChild(holDiv);
                 }
             },
             dateClick: function (arg) {
-                if (typeof window.handleEventWeather === 'function') {
-                    window.handleEventWeather(arg.dateStr);
-                }
                 try {
                     window.mdjLastAgendaDateStr = arg.dateStr;
                 } catch (_e) { /* noop */ }
+
+                const frame = arg.dayEl.querySelector('.fc-daygrid-day-frame');
+                const emptyUI = document.getElementById('dash-event-detail-empty');
+                const dataUI = document.getElementById('dash-event-detail-data');
+                const dayEvents = mdjAgendaEventsForDate(arg.view.calendar, arg.dateStr);
+                const primaryEvent = mdjAgendaPickPrimaryEvent(dayEvents);
+                const weatherTarget = mdjAgendaWeatherPayload(primaryEvent, arg.dateStr);
+
+                if (typeof window.handleEventWeather === 'function') {
+                    window.handleEventWeather(weatherTarget);
+                }
 
                 document.querySelectorAll('.fc-daygrid-day-frame.active-glow').forEach(function (el) {
                     el.classList.remove('active-glow');
                 });
 
-                const frame = arg.dayEl.querySelector('.fc-daygrid-day-frame');
                 if (!frame) return;
 
                 const profile = (window.mdjAgendaEngineContext && window.mdjAgendaEngineContext.profile) || {};
@@ -769,49 +1135,38 @@ async function initAgendaEngine() {
                         ? window.mdjIntelligenceForDate(arg.dateStr, profile)
                         : null;
 
-                let cellPayloads = [];
-                const eventsJson = frame.getAttribute('data-events');
-                if (eventsJson) {
-                    try {
-                        cellPayloads = JSON.parse(eventsJson);
-                    } catch (_parseErr) {
-                        cellPayloads = [];
-                    }
-                }
-
                 let glowRgb = intel && intel.glowRgb ? intel.glowRgb : '100, 116, 139';
-                if (eventsJson) {
-                    const isNightActive = frame.getAttribute('data-botAlpha') === '0.2';
-                    const fallback = isNightActive
-                        ? frame.getAttribute('data-nightColor')
-                        : frame.getAttribute('data-dayColor');
-                    if (fallback && fallback.length > 0) {
-                        glowRgb = fallback;
-                    }
+                const isNightActive = frame.getAttribute('data-botAlpha') === '0.2';
+                const fallback = isNightActive
+                    ? frame.getAttribute('data-nightColor')
+                    : frame.getAttribute('data-dayColor');
+                if (fallback && fallback.length > 0) {
+                    glowRgb = fallback;
                 }
                 frame.style.setProperty('--glow-color', 'rgba(' + glowRgb + ', 0.8)');
                 frame.style.setProperty('--glow-solid', 'rgba(' + glowRgb + ', 1.0)');
                 frame.classList.add('active-glow');
 
-                const emptyUI = document.getElementById('dash-event-detail-empty');
-                const dataUI = document.getElementById('dash-event-detail-data');
                 if (emptyUI) emptyUI.style.display = 'none';
-                if (dataUI) {
-                    dataUI.style.display = 'block';
-                    if (typeof window.mdjRenderAgendaDetailPanel === 'function' && intel) {
-                        dataUI.innerHTML = window.mdjRenderAgendaDetailPanel(intel, cellPayloads);
-                    } else if (intel) {
-                        dataUI.innerHTML =
-                            '<div style="color:#fff;font-weight:800;">' + (intel.formatted || arg.dateStr) + '</div>';
-                    }
-                }
+                if (dataUI) dataUI.style.display = 'block';
 
                 if (window.activeGlowTimer) clearTimeout(window.activeGlowTimer);
                 window.activeGlowTimer = setTimeout(function () {
                     frame.classList.remove('active-glow');
                     if (emptyUI) emptyUI.style.display = 'block';
                     if (dataUI) dataUI.style.display = 'none';
-                }, 120000);
+                    if (typeof window.handleEventWeather === 'function') {
+                        const localToday = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+                            .toISOString()
+                            .split('T')[0];
+                        const todayEv = mdjAgendaPickPrimaryEvent(
+                            mdjAgendaEventsForDate(arg.view.calendar, localToday)
+                        );
+                        window.handleEventWeather(
+                            todayEv ? mdjAgendaWeatherPayload(todayEv, localToday) : localToday
+                        );
+                    }
+                }, 10000);
             },
             datesSet: function (info) {
                 const el = document.getElementById('manual-calendar-title');
@@ -849,6 +1204,7 @@ async function initAgendaEngine() {
                         console.warn('[AGENDA] profile error:', profErr);
                     } else {
                         window.mdjAgendaEngineContext.profile = profile || {};
+                        await mdjAgendaRefreshAssignedLeads(sb, profile || {});
                     }
                 }
             } catch (e) {
@@ -862,7 +1218,10 @@ async function initAgendaEngine() {
                 const localToday = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
                     .toISOString()
                     .split('T')[0];
-                window.handleEventWeather(localToday);
+                const todayEv = mdjAgendaPickPrimaryEvent(mdjAgendaEventsForDate(calendar, localToday));
+                window.handleEventWeather(
+                    todayEv ? mdjAgendaWeatherPayload(todayEv, localToday) : localToday
+                );
             }
         }, 400);
 }

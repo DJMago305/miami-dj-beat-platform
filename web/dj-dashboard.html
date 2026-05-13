@@ -14,18 +14,29 @@
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css' rel='stylesheet' />
     <link rel="stylesheet" href="./styles.css?v=20260427-owner-tabs-20" />
     <link rel="stylesheet" href="./header-unified.css?v=20260424-dashboard-header-sync" />
-    <link rel="stylesheet" href="./css/profile.css?v=20260226-1" />
+    <link rel="stylesheet" href="./profile.css?v=20260226-1" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260411-booth-policy" />
     <link rel="stylesheet" href="./weather-effects.css" />
+    <!-- Dashboard privado: sin barra social lateral (no depende de caché de mdj-social-bar.js). -->
+    <style id="mdj-dashboard-hide-social-bar">
+        #mdj-social-sticky-bar,
+        .social-sticky-bar {
+            display: none !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+    </style>
+    <script>
+        (function () {
+            /* Dashboard artista (Agenda / CONFIG / Cash Flow): sin música ambiental — conflicto con Serato, etc. */
+            window.MDJ_SKIP_AMBIENT_MUSIC = true;
+        })();
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <script src="./supabase-config.js?v=20260427-supabase-eager-head"></script>
     <script src="./monetization.js?v=20260411-policy"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
-    <script src="./dashboard-youtube.js?v=20260216-1"></script>
-
-    <!-- DJ Knowledge / Dashboard General Logic -->
-    <script src="./dj-knowledge.js?v=20260216-1"></script>
 
     <!-- mdjResolveEffectiveUserRole debe existir antes del guard (sesión talent/dj vs JWT app_metadata). -->
     <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
@@ -622,13 +633,17 @@
                 box-sizing: border-box;
             }
 
+            /*
+             * Agenda — solo TAMAÑO del bloque (contenedor + separación columnas).
+             * NO tocar contenido interno de clima ni calendario (sky engine, temp, FC, etc.).
+             */
             #tab-dashboard .container.hero-grid {
                 width: 100%;
-                max-width: 100%;
-                padding-left: 24px; /* aire a los lados (subir si aún pega al borde) */
-                /* Safe area: barra social fija a la derecha (~80–110px). */
-                padding-right: 82px; /* un chin más; subir a 90px si pisa la barra */
-                margin: 0;
+                max-width: min(1360px, 86vw);
+                margin-left: auto;
+                margin-right: auto;
+                padding-left: clamp(28px, 4vw, 52px);
+                padding-right: clamp(28px, 4vw, 52px);
                 box-sizing: border-box;
             }
 
@@ -645,6 +660,8 @@
             #tab-dashboard .hero-grid {
                 position: relative;
                 z-index: 0;
+                gap: 42px;
+                column-gap: 42px;
             }
 
             #tab-dashboard .agenda-main {
@@ -716,6 +733,17 @@
                 .hero-grid {
                     grid-template-columns: 1fr;
                 }
+
+                #tab-dashboard .container.hero-grid {
+                    max-width: 100%;
+                    padding-left: clamp(16px, 4vw, 28px);
+                    padding-right: clamp(16px, 4vw, 28px);
+                }
+
+                #tab-dashboard .hero-grid {
+                    gap: 28px;
+                    column-gap: 0;
+                }
             }
 
             /* Almanaque Read-only styles */
@@ -777,9 +805,10 @@
             #tab-dashboard #calendar-master .fc-scrollgrid-sync-table {
                 width: 100% !important;
                 min-width: 100% !important;
+                table-layout: fixed !important;
             }
             #tab-dashboard #calendar-master .fc-daygrid-day {
-                width: auto !important;
+                width: calc(100% / 7) !important;
             }
             #tab-dashboard #calendar-master .fc-daygrid-day-frame {
                 min-height: 108px !important;
@@ -830,7 +859,7 @@
                                 <!-- Layer 1: Sky Base Layer -->
                                 <div class="sky-base clear-day" id="weather-layer-base">
                                     <img class="sky-base-img" src="./assets/weather/Cielo Azul.png" alt="">
-                                </div>
+                                </motion>
 
                                 <!-- Layer 1b: Stars Layer (Behind clouds for night scenes) -->
                                 <div class="sky-stars" id="weather-stars">
@@ -1054,8 +1083,7 @@
                                         border: 1px solid rgba(255, 255, 255, 0.1) !important;
                                     }
 
-                                    /* Cabecera de Días (Transparencia Absoluta) */
-                                    #calendar-master th .fc-col-header-cell-cushion,
+                                    /* Cabecera FC oculta: letras D–S viven en .mdj-agenda-dow-row */
                                     #calendar-master thead {
                                         background: transparent !important;
                                     }
@@ -1067,21 +1095,74 @@
                                         padding: 8px !important;
                                     }
 
-                                    #calendar-master .fc-col-header-cell-cushion {
-                                        font-size: 10px;
+                                    #tab-dashboard .mdj-agenda-dow-row {
+                                        display: grid !important;
+                                        grid-template-columns: repeat(7, minmax(0, 1fr));
+                                        width: 100%;
+                                        box-sizing: border-box;
+                                        align-items: center;
+                                        text-align: center;
+                                        padding: 0 0 8px;
+                                        margin: 0;
+                                    }
+
+                                    #tab-dashboard .mdj-agenda-dow-row span {
+                                        display: block;
+                                        color: var(--gold);
+                                        font-size: 11px;
                                         font-weight: 800;
-                                        text-transform: uppercase;
-                                        color: rgba(255, 255, 230, 0.85);
-                                        /* Blanco Hueso / Dorado Suave */
-                                        text-decoration: none !important;
-                                        letter-spacing: 2px;
+                                        letter-spacing: 0.5px;
+                                        line-height: 1;
+                                        text-align: center;
+                                    }
+
+                                    #tab-dashboard #calendar-master .fc-col-header,
+                                    #tab-dashboard #calendar-master .fc-scrollgrid-section-header {
+                                        display: none !important;
+                                        height: 0 !important;
+                                        min-height: 0 !important;
+                                        visibility: hidden !important;
+                                        overflow: hidden !important;
+                                        margin: 0 !important;
                                         padding: 0 !important;
-                                        /* Optimizado para no ocupar CERO espacio vertical Extra */
+                                        border: none !important;
+                                    }
+
+                                    #tab-dashboard #calendar-master .fc-col-header-cell {
+                                        padding: 0 !important;
+                                        min-height: 0 !important;
+                                        border: none !important;
+                                    }
+
+                                    #tab-dashboard #calendar-master .mdj-agenda-holiday-overlay {
+                                        position: absolute !important;
+                                        left: 0 !important;
+                                        right: 0 !important;
+                                        bottom: 12px !important;
+                                        top: auto !important;
+                                        width: 100% !important;
+                                        height: auto !important;
+                                        display: block !important;
+                                        text-align: center !important;
+                                        padding: 0 8px !important;
+                                        font-size: 11px !important;
+                                        line-height: 1.25 !important;
+                                        letter-spacing: 0.4px !important;
+                                        text-transform: uppercase !important;
+                                        color: #ffffff !important;
+                                        text-shadow: none !important;
+                                        filter: none !important;
+                                        font-weight: 700 !important;
+                                        opacity: 1 !important;
+                                        z-index: 30 !important;
+                                        pointer-events: none !important;
+                                        box-sizing: border-box !important;
                                     }
 
                                     /* --- 2. EFECTO DÍA Y NOCHE EN CELDAS --- */
                                     #calendar-master .fc-daygrid-day-frame {
                                         /* La opacidad y gradiente bipartito son inyectados vía JS (agenda-engine) */
+                                        position: relative !important;
                                         display: flex !important;
                                         flex-direction: column !important;
                                         transition: box-shadow 0.2s ease, opacity 0.5s ease !important;
@@ -2677,14 +2758,19 @@
                                         text-align: center;
                                         font-size: 7.5px;
                                         font-weight: 700;
-                                        color: rgba(255, 255, 255, 0.4);
+                                        color: #ffffff;
+                                        text-shadow: none;
                                         text-transform: uppercase;
                                         letter-spacing: 0.5px;
                                         pointer-events: none;
+                                        opacity: 0.95;
                                     }
                                 </style>
+                                <div class="mdj-agenda-dow-row" aria-hidden="true">
+                                    <span>D</span><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span>
+                                </div>
                                 <div id="calendar-master" style="color:#fff; background:transparent;"></div>
-                                <script src="./js/agenda-engine.js?v=20260427-agenda-f2"></script>
+                                <script src="./js/agenda-engine.js?v=20260513-agenda-notes-uuid"></script>
 
                                 <!-- Leyenda Dinámica Unificada -->
                                 <div id="calendar-legend"
@@ -4346,7 +4432,7 @@
     <script src="./translations.js?v=20260420-section-h2-eventos-venues"></script>
     <script src="./i18n.js?v=20260415-ADN-ULTIMATE-LAUNCH"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="./profile-loader.js?v=20260424-artist-role-flow"></script>
+    <script src="./profile-loader.js?v=20260513-agenda-deploy"></script>
     <script>
         /** Evita que el navegador muestre caché cuando la URL pública de Storage no cambia (mismo path tras upsert). */
         function mdjBustImgUrl(url) {
@@ -4525,6 +4611,12 @@
             });
             const panel = document.getElementById('tab-' + tabId);
             if (panel) panel.classList.add('active');
+            window.MDJ_SKIP_AMBIENT_MUSIC = true;
+            if (typeof window.MDJ_AMBIENT_PAUSE_FOR_CASH_FLOW === 'function') {
+                window.MDJ_AMBIENT_PAUSE_FOR_CASH_FLOW();
+            } else if (typeof window.MDJ_AMBIENT_PAUSE === 'function') {
+                window.MDJ_AMBIENT_PAUSE();
+            }
             if (tabId === 'settings') loadSettingsForm();
             if (tabId === 'flow' && window.loadFlowData) {
                 var mr = document.getElementById('metrics-range');
@@ -5802,6 +5894,13 @@
 
                 if (error) throw error;
 
+                if (profile && typeof window.mdjAgendaRefreshAssignedLeads === 'function') {
+                    await window.mdjAgendaRefreshAssignedLeads(sb, profile);
+                    if (window.mdjCalendarInstance && typeof window.mdjCalendarInstance.refetchEvents === 'function') {
+                        window.mdjCalendarInstance.refetchEvents();
+                    }
+                }
+
                 // 3. Inicializar Calendario Maestro con Eventos Asignados
 
                 if (!events || events.length === 0) {
@@ -6034,7 +6133,7 @@
     </div>
 
     <!-- Weather Orchestration & API -->
-    <script src="./js/event-weather.js?v=20260423-weather-latlon-key"></script>
+    <script src="./js/event-weather.js?v=20260513-agenda-notes-uuid"></script>
     <script src="./js/weather-engine.js?v=20260423-weather-latlon-key"></script>
 
     <!-- Weather Astral Engine -->
@@ -6135,6 +6234,17 @@
                 const { error } = await sb.from('dj_profiles').update(updates).eq('user_id', session.user.id);
                 if (error) throw error;
 
+                if (window.mdjAgendaEngineContext) {
+                    window.mdjAgendaEngineContext.profile = Object.assign(
+                        {},
+                        window.mdjAgendaEngineContext.profile || {},
+                        updates
+                    );
+                }
+                if (window.mdjCalendarInstance && typeof window.mdjCalendarInstance.refetchEvents === 'function') {
+                    window.mdjCalendarInstance.refetchEvents();
+                }
+
                 btn.textContent = 'Guardado';
                 setTimeout(() => btn.textContent = 'Guardar Agenda', 2000);
             } catch (err) {
@@ -6168,10 +6278,10 @@
     </script>
 
     <script src="./header-smart-search.js?v=20260421-smartsearch-dj-directory"></script>
-    <script src="./mdj-shared-header.js?v=20260424-dashboard-header-sync"></script>
+    <script src="./mdj-shared-header.js?v=20260513-dashboard-ambient"></script>
   <script src="./mdj-owner-tabs-marquee.js?v=20260427-no-marquee"></script>
-  <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
-    <script src="./flow-handler.js?v=FLOW-FINAL-001"></script>
+  <script src="./mdj-social-bar.js?v=20260513-dashboard-private"></script>
+    <script src="./flow-handler.js?v=20260513-flow-deploy"></script>
 </body>
 
 </html>

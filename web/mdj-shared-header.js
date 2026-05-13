@@ -28,7 +28,7 @@
     }
     var s = document.createElement('script');
     s.id = 'mdj-ambient-music-script';
-    s.src = './js/mdj-ambient-music.js?v=20260421-ambient-home-only';
+    s.src = './js/mdj-ambient-music.js?v=20260513-cash-flow-no-ambient';
     s.async = true;
     (document.head || document.documentElement).appendChild(s);
   }

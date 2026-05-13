@@ -335,7 +335,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             events = [...specificEvents, ...recurringEvents];
         }
-        window.initEventWeatherCalendar(events);
+        /* FullCalendar #calendar-master: único dueño agenda-engine.js (evita doble init). */
+        // window.initEventWeatherCalendar(events);
         // Inicializar clima por defecto
         window.updateWeatherAnimation('Sunny');
     }
@@ -763,6 +764,8 @@ window.initEventWeatherCalendar = async function (assignedEvents = []) {
             if (!window.initialCalendarLoaded) {
                 window.initialCalendarLoaded = true;
                 setTimeout(() => {
+                    if (window.__mdjWeatherInitialDone) return;
+                    if (window.__mdjWeatherLocked) return;
                     const localToday = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
                     const todayEv = info.view.calendar.getEvents().find(e => {
                         const eS = e.startStr || (e.start ? e.start.toISOString().split('T')[0] : '');

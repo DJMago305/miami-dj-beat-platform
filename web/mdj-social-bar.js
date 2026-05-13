@@ -3,19 +3,118 @@
  * Mismo aspecto en todo el sitio. Requiere body; usa correo de supabase-config si existe.
  */
 (function () {
-    function injectMdjSocialBar() {
-        if (document.getElementById('mdj-social-sticky-bar')) {
+    /**
+     * Operar / configurar / ingresos / admin → sin barra social.
+     * Vender / promocionar / visitantes → barra visible (no listar aquí).
+     */
+    var MDJ_SOCIAL_BAR_PRIVATE_PAGES = [
+        'dj-dashboard.html',
+        'account-settings.html',
+        'account-profile.html',
+        'admin-dashboard.html',
+        'admin.html',
+        'client-portal.html',
+        'client-billing.html',
+        'admin-quick-invoice.html',
+        'manual-invoice-generator.html',
+        'invoice-now.html',
+        'weather-lab.html',
+        'autofill.html',
+        'practical-evaluation.html'
+    ];
+
+    function isDjProfileOperationalTab() {
+        try {
+            var qs = new URLSearchParams(window.location.search || '');
+            var tab = (qs.get('tab') || '').toLowerCase();
+            if (tab === 'flow' || tab === 'sft') return true;
+            var body = document.body;
+            if (body && body.classList.contains('mdj-profile-op-tab')) return true;
+            var flow = document.getElementById('tab-flow');
+            var sft = document.getElementById('tab-sft');
+            if (flow && flow.classList.contains('active')) return true;
+            if (sft && sft.classList.contains('active')) return true;
+            return false;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function mdjSocialBarShouldHide() {
+        try {
+            var body = document.body;
+            if (!body) return false;
+            if (body.classList.contains('mdj-account-settings')) return true;
+            if (body.classList.contains('mdj-private-dashboard')) return true;
+            if (body.classList.contains('mdj-from-profile')) return true;
+            /* Perfil DJ completo: contacto en bloque RESERVAR; sin barra lateral en ninguna pestaña. */
+            if (body.classList.contains('dj-profile')) {
+                return true;
+            }
+            var qs = new URLSearchParams(window.location.search || '');
+            var tab = (qs.get('tab') || '').toLowerCase();
+            if (tab === 'flow' || tab === 'sft') return true;
+            var file = ((window.location.pathname || '').split('/').pop() || '').toLowerCase();
+            if ((qs.get('mdj_nav') || '').toLowerCase() === 'profile') {
+                if (
+                    file === 'jobs.html' || file === 'shop.html' || file === 'dj-tools.html' ||
+                    file === 'academia.html' || file === 'courses.html' || file === 'dj-knowledge.html'
+                ) return true;
+            }
+            return MDJ_SOCIAL_BAR_PRIVATE_PAGES.indexOf(file) !== -1;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function mdjSocialBarIsPrivateDashboardContext() {
+        return mdjSocialBarShouldHide();
+    }
+
+    function mdjSocialBarApplyVisibility() {
+        var hide = mdjSocialBarShouldHide();
+        var bar = document.getElementById('mdj-social-sticky-bar');
+        if (hide) {
+            if (bar) {
+                bar.style.setProperty('display', 'none', 'important');
+                bar.style.setProperty('visibility', 'hidden', 'important');
+                bar.style.setProperty('pointer-events', 'none', 'important');
+            }
             return;
         }
-        /* Perfil DJ: contacto vive en el bloque "RESERVAR ESTE DJ" (sin duplicar WhatsApp/mail/SMS a la derecha). */
+        if (!bar) {
+            injectMdjSocialBarHtml();
+            return;
+        }
+        bar.style.removeProperty('display');
+        bar.style.removeProperty('visibility');
+        bar.style.removeProperty('pointer-events');
+    }
+
+    window.MDJ_SOCIAL_BAR_SYNC_PROFILE_TAB = function (tab) {
         try {
-            if (document.body && document.body.classList.contains('dj-profile')) {
-                return;
+            if (document.body) {
+                document.body.classList.toggle('mdj-profile-op-tab', tab === 'flow' || tab === 'sft');
             }
-        } catch (e) { /* noop */ }
+        } catch (eSync) { /* noop */ }
+        mdjSocialBarApplyVisibility();
+    };
+
+    function injectMdjSocialBarHtml() {
+        if (document.getElementById('mdj-social-sticky-bar')) {
+            mdjSocialBarApplyVisibility();
+            return;
+        }
         const MDJ_OFFICIAL_EMAIL = window.MDB_OFFICIAL_CONTACT_EMAIL || 'miamidjbeat@gmail.com';
         const socialHTML = `
     <style>
+        body.mdj-private-dashboard #mdj-social-sticky-bar,
+        body.mdj-account-settings #mdj-social-sticky-bar,
+        body.mdj-from-profile #mdj-social-sticky-bar,
+        body.dj-profile #mdj-social-sticky-bar,
+        body.dj-profile.mdj-profile-op-tab #mdj-social-sticky-bar {
+            display: none !important;
+        }
         .social-sticky-bar {
             position: fixed;
             right: 14px;
@@ -208,6 +307,32 @@
     `;
         document.body.insertAdjacentHTML('beforeend', socialHTML);
         initSocialBarScrollHide();
+        mdjSocialBarApplyVisibility();
+    }
+
+    function injectMdjSocialBar() {
+        if (mdjSocialBarShouldHide()) {
+            try {
+                document.body.classList.add('mdj-private-dashboard');
+            } catch (e2) { /* noop */ }
+            mdjSocialBarApplyVisibility();
+            return;
+        }
+        injectMdjSocialBarHtml();
+    }
+
+    function mdjWatchDjProfileTabPanels() {
+        try {
+            if (!document.body || !document.body.classList.contains('dj-profile')) return;
+            ['tab-flow', 'tab-sft', 'tab-public'].forEach(function (id) {
+                var panel = document.getElementById(id);
+                if (panel && typeof MutationObserver === 'function') {
+                    new MutationObserver(function () {
+                        mdjSocialBarApplyVisibility();
+                    }).observe(panel, { attributes: true, attributeFilter: ['class'] });
+                }
+            });
+        } catch (eWatch) { /* noop */ }
     }
 
     /** Móvil y tablet (≤1024px): esconde la barra a la derecha mientras hay scroll; vuelve al parar. */
@@ -254,8 +379,12 @@
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', injectMdjSocialBar);
+        document.addEventListener('DOMContentLoaded', function () {
+            injectMdjSocialBar();
+            mdjWatchDjProfileTabPanels();
+        });
     } else {
         injectMdjSocialBar();
+        mdjWatchDjProfileTabPanels();
     }
 })();
