@@ -17,7 +17,7 @@ ALTER TABLE public.dj_profile_visits ENABLE ROW LEVEL SECURITY;
 
 -- Sin políticas directas: solo RPC SECURITY DEFINER.
 
-DROP FUNCTION IF EXISTS public.record_dj_profile_visit(uuid) CASCADE;
+DROP FUNCTION IF EXISTS public.record_dj_profile_visit CASCADE;
 
 CREATE OR REPLACE FUNCTION public.record_dj_profile_visit(p_dj_user_id uuid)
 RETURNS void
@@ -43,7 +43,7 @@ $$;
 REVOKE ALL ON FUNCTION public.record_dj_profile_visit(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.record_dj_profile_visit(uuid) TO anon, authenticated;
 
-COMMENT ON FUNCTION public.record_dj_profile_visit IS
+COMMENT ON FUNCTION public.record_dj_profile_visit(uuid) IS
   'Increment profile visit counter (anon or logged-in visitors; skips profile owner).';
 
 DROP FUNCTION IF EXISTS public.get_my_profile_visibility_stats() CASCADE;
@@ -83,7 +83,7 @@ $$;
 REVOKE ALL ON FUNCTION public.get_my_profile_visibility_stats() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_my_profile_visibility_stats() TO authenticated;
 
-COMMENT ON FUNCTION public.get_my_profile_visibility_stats IS
+COMMENT ON FUNCTION public.get_my_profile_visibility_stats() IS
   'Owner dashboard VISIBILIDAD: hoy / semana calendario (lun) / total (America/New_York).';
 
 NOTIFY pgrst, 'reload schema';

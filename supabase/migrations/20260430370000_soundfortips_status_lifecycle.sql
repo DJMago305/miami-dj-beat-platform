@@ -90,7 +90,9 @@ $$;
 COMMENT ON FUNCTION public.deny_my_soundfortips_request(uuid) IS
   'DJ: manual_pending_verification → rejected (Stripe refund vía send-sft-client-sms).';
 
-CREATE OR REPLACE FUNCTION public.get_my_soundfortips_pending_requests()
+DROP FUNCTION IF EXISTS public.get_my_soundfortips_pending_requests();
+
+CREATE FUNCTION public.get_my_soundfortips_pending_requests()
 RETURNS TABLE (
   id uuid,
   sender_label text,
@@ -116,7 +118,9 @@ $$;
 COMMENT ON FUNCTION public.get_my_soundfortips_pending_requests() IS
   'Cabina: filas donde el DJ debe decidir (pagado Stripe o manual pendiente verificación).';
 
-CREATE OR REPLACE FUNCTION public.get_my_soundfortips_night_log(p_since timestamptz DEFAULT NULL)
+DROP FUNCTION IF EXISTS public.get_my_soundfortips_night_log(timestamptz);
+
+CREATE FUNCTION public.get_my_soundfortips_night_log(p_since timestamptz DEFAULT NULL)
 RETURNS TABLE (
   id uuid,
   sender_label text,
