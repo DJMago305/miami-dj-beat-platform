@@ -4,7 +4,7 @@
 (function () {
     'use strict';
 
-    var VERSION = '20260513-fase1-agenda';
+    var VERSION = '20260513-agenda-grid-fix';
 
     function onDashboard() {
         return !!document.getElementById('tab-dashboard');
@@ -22,6 +22,25 @@
         } catch (_e) { /* noop */ }
     }
 
+    function calendarNeedsBoot() {
+        var el = document.getElementById('calendar-master');
+        if (!el) return false;
+        if (!window.mdjCalendarInstance) return true;
+        if (!el.querySelector('.fc')) return true;
+        return !calendarHasGrid();
+    }
+
+    function destroyAgendaIfBroken() {
+        if (!window.mdjCalendarInstance) return;
+        if (calendarHasGrid()) return;
+        try {
+            window.mdjCalendarInstance.destroy();
+        } catch (_e) { /* noop */ }
+        window.mdjCalendarInstance = null;
+        var el = document.getElementById('calendar-master');
+        if (el) el.innerHTML = '';
+    }
+
     function startAgenda() {
         if (!document.getElementById('calendar-master') && !document.getElementById('agenda-calendar-master')) {
             return Promise.resolve();
@@ -30,6 +49,7 @@
             console.warn('[MDJ Hub] FullCalendar no cargado');
             return Promise.resolve();
         }
+        destroyAgendaIfBroken();
         if (window.mdjCalendarInstance && calendarHasGrid()) {
             reflowAgenda();
             return Promise.resolve();
@@ -108,9 +128,12 @@
         });
 
         setTimeout(function () {
-            if (!calendarHasGrid()) void startAgenda();
+            if (calendarNeedsBoot()) void startAgenda();
             reflowAgenda();
-            startWeather();
+        }, 400);
+        setTimeout(function () {
+            if (calendarNeedsBoot()) void startAgenda();
+            reflowAgenda();
         }, 1800);
     }
 

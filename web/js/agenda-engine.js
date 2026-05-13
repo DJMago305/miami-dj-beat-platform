@@ -400,6 +400,11 @@ async function initAgendaEngine() {
             }
             #calendar-master .fc-daygrid-body {
                 padding: 0 !important;
+                min-height: 420px !important;
+            }
+            #calendar-master .fc-view-harness,
+            #calendar-master .fc-view-harness-active {
+                min-height: 420px !important;
             }
             #calendar-master .fc-daygrid-day-events {
                 padding: 0 !important;
@@ -685,12 +690,17 @@ async function initAgendaEngine() {
 
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
+            initialDate: new Date(),
             headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
             locale: 'es',
             firstDay: 0,
             themeSystem: 'standard',
             height: 'auto',
+            contentHeight: 'auto',
+            expandRows: true,
+            fixedWeekCount: false,
             displayEventTime: false,
+            showNonCurrentDates: true,
             events: function (info, successCallback) {
                 const safeProfile = window.mdjAgendaEngineContext?.profile || {};
                 const weekly = safeProfile.weekly_schedule || {};
