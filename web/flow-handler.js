@@ -12,6 +12,17 @@
 let flowCharts = { timeline: null, activity: null, distribution: null };
 let currentLedger = [];
 let currentRange = '1y';
+let _flowLoadSeq = 0;
+console.info('[Flow] build 202605131450-venues-fix');
+
+function mdjFlowWithTimeout(promise, ms) {
+    return Promise.race([
+        promise,
+        new Promise(function (_resolve, reject) {
+            setTimeout(function () { reject(new Error('timeout')); }, ms);
+        }),
+    ]);
+}
 
 function mdjFlowSetStatus(msg, tone) {
     var el = document.getElementById('flow-data-status');
@@ -204,6 +215,7 @@ function soundfortipsAcceptedToLedgerRows(userId, rows) {
 }
 
 async function loadFlowData(range = '1y', targetUserId = null) {
+    const loadSeq = ++_flowLoadSeq;
     currentRange = range;
     const supabase = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
     if (!supabase) {
@@ -213,7 +225,9 @@ async function loadFlowData(range = '1y', targetUserId = null) {
 
     mdjFlowSetStatus('Cargando métricas…');
 
+    try {
     const { data: { session } } = await supabase.auth.getSession();
+    if (loadSeq !== _flowLoadSeq) return;
     if (!session) {
         mdjFlowSetStatus('Inicia sesión para ver Flujo de caja.', 'error');
         return;
@@ -221,6 +235,7 @@ async function loadFlowData(range = '1y', targetUserId = null) {
 
     const sessionUid = session.user.id;
     if (targetUserId && targetUserId !== sessionUid) {
+        mdjFlowSetStatus(null);
         return;
     }
     const userId = sessionUid;
@@ -239,34 +254,75 @@ async function loadFlowData(range = '1y', targetUserId = null) {
     prevStartDate.setDate(startDate.getDate() - periodDays);
 
     // 2. DJ PROFILE (maybeSingle: 0 filas ya no rompe todo el flujo)
-    const { data: profile } = await supabase
+    let { data: profile, error: profileErr } = await supabase
         .from('dj_profiles')
-        .select('id, commission_rate, rating, review_count, is_resident, venues, weekly_schedule')
+        .select('id, commission_rate, rating, review_count, is_resident, weekly_schedule')
         .eq('user_id', userId)
         .maybeSingle();
+    if (loadSeq !== _flowLoadSeq) return;
+
+    if (profileErr) {
+        console.warn('[Flow] dj_profiles:', profileErr.message || profileErr);
+    }
 
     if (!profile) {
-        currentLedger = [];
-        await processKPIs([], [], startDate, prevStartDate, 10, null);
+        const fb = await supabase
+            .from('dj_profiles')
+            .select('id, rating, review_count')
+            .eq('user_id', userId)
+            .maybeSingle();
+        if (loadSeq !== _flowLoadSeq) return;
+        if (fb.data) {
+            profile = fb.data;
+        }
+    }
+
+    const ledgerRes = await supabase
+        .from('dj_ledger')
+        .select('*')
+        .eq('dj_user_id', userId)
+        .order('created_at', { ascending: false });
+    if (loadSeq !== _flowLoadSeq) return;
+
+    if (!profile) {
+        currentLedger = ledgerRes.data || [];
+        await processKPIs(currentLedger, [], startDate, prevStartDate, 10, null);
         const emptyRes = computeResidencyMetrics(null);
-        renderTimelineChart([], [], range, startDate, emptyRes);
+        renderTimelineChart(currentLedger, [], range, startDate, emptyRes);
         renderActivityChart([], range, startDate, emptyRes);
-        renderDistributionChart([], [], range, startDate, emptyRes);
-        renderLedgerTable([]);
+        renderDistributionChart(currentLedger, [], range, startDate, emptyRes);
+        renderLedgerTable(currentLedger);
+        if (ledgerRes.error) {
+            mdjFlowSetStatus('No se pudo leer el libro mayor. Revisa sesión o permisos.', 'error');
+        } else if (currentLedger.length) {
+            mdjFlowSetStatus(null);
+        } else {
+            mdjFlowSetStatus('Perfil DJ incompleto y libro mayor vacío desde la app.', 'error');
+        }
         scheduleFlowChartsResize();
         return;
     }
 
-    // 3. FETCH DATA (Ledger + Leads) — full history per DJ; charts filter by startDate client-side.
-    // (Narrow gte on created_at hid legacy rows e.g. 2024-03 ledger outside 30d/1y prev window.)
-    const [ledgerRes, leadsRes, sftRes] = await Promise.all([
-        supabase.from('dj_ledger').select('*').eq('dj_user_id', userId).order('created_at', { ascending: false }),
-        supabase.from('leads').select('*').eq('assigned_dj_id', profile.id).order('event_date', { ascending: false }),
-        supabase.rpc('get_my_soundfortips_accepted_for_flow', { p_since: prevStartDate.toISOString() }),
-    ]);
+    const leadsRes = await supabase
+        .from('leads')
+        .select('*')
+        .eq('assigned_dj_id', profile.id)
+        .order('event_date', { ascending: false });
+    if (loadSeq !== _flowLoadSeq) return;
 
-    if (sftRes.error) {
-        console.warn('[Flow] SoundForTips RPC:', sftRes.error.message || sftRes.error);
+    var sftRows = [];
+    try {
+        const sftRes = await mdjFlowWithTimeout(
+            supabase.rpc('get_my_soundfortips_accepted_for_flow', { p_since: prevStartDate.toISOString() }),
+            6000
+        );
+        if (sftRes && !sftRes.error && Array.isArray(sftRes.data)) {
+            sftRows = sftRes.data;
+        } else if (sftRes && sftRes.error) {
+            console.warn('[Flow] SoundForTips RPC:', sftRes.error.message || sftRes.error);
+        }
+    } catch (sftErr) {
+        console.warn('[Flow] SoundForTips RPC omitido:', sftErr && sftErr.message ? sftErr.message : sftErr);
     }
 
     if (ledgerRes.error) {
@@ -288,7 +344,7 @@ async function loadFlowData(range = '1y', targetUserId = null) {
         leads = [];
     }
 
-    var sftLedger = soundfortipsAcceptedToLedgerRows(userId, sftRes.data || []);
+    var sftLedger = soundfortipsAcceptedToLedgerRows(userId, sftRows);
     ledger = ledger.concat(sftLedger);
     ledger.sort(function (a, b) {
         return new Date(b.created_at) - new Date(a.created_at);
@@ -329,11 +385,18 @@ async function loadFlowData(range = '1y', targetUserId = null) {
     } else if (ledger.length) {
         mdjFlowSetStatus('Sin movimientos en el rango seleccionado. Prueba Vista anual.', null);
     } else {
-        mdjFlowSetStatus('Aún no hay ingresos en tu libro mayor.', null);
+        console.info('[Flow] ledger vacío desde API | userId:', userId);
+        mdjFlowSetStatus('No hay filas en tu libro mayor desde la app (0). Si en Supabase SQL sí ves $500, el RLS o la sesión no coinciden — recarga o vuelve a entrar.', 'error');
     }
 
     scheduleFlowChartsResize();
     setTimeout(scheduleFlowChartsResize, 250);
+    } catch (flowErr) {
+        console.error('[Flow] loadFlowData:', flowErr);
+        if (loadSeq === _flowLoadSeq) {
+            mdjFlowSetStatus('Error al cargar Flujo de caja. Recarga la página.', 'error');
+        }
+    }
 }
 
 /** Pestaña Flujo: carga datos y redibuja gráficas (canvas pudo estar oculto). */
@@ -887,6 +950,5 @@ window.filterLedger = filterLedger;
             }
         });
     }
-    setTimeout(tryFlowFromDom, 500);
-    setTimeout(tryFlowFromDom, 2000);
+    setTimeout(tryFlowFromDom, 800);
 })();

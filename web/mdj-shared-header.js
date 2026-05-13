@@ -10,6 +10,7 @@
  */
 (function () {
   'use strict';
+  console.info('[Header] build 202605131450-client-cols-fix');
 
   try {
     var _mdjH = document.getElementById('mainHeader');
@@ -1529,7 +1530,7 @@
           try {
             var cpr = await sb
               .from('client_profiles')
-              .select('user_id, full_name, email, photo_url, avatar_url, username, total_events_booked, loyalty_points')
+              .select('user_id, full_name, email, photo_url, avatar_url, username')
               .eq('user_id', session.user.id)
               .maybeSingle();
             clientRow = cpr && cpr.data ? cpr.data : null;
