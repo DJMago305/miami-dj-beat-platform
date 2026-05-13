@@ -22,6 +22,13 @@
     return x.toFixed(2);
   }
 
+  /** Misma regla que client-portal.js payDepositStripe */
+  function calcEventDepositUsd(totalUsd) {
+    var bal = Number(totalUsd);
+    if (!isFinite(bal) || bal < 0) bal = 0;
+    return Math.max(bal * 0.3, 150);
+  }
+
   function prodT(key) {
     if (global.i18n && typeof global.i18n.t === 'function') {
       return global.i18n.t(key);
@@ -239,6 +246,33 @@
         '<button type="button" class="btn gold" id="prod-inv-open-print" data-i18n="prod-inv-print"></button>' +
         '</div>' +
         '<div id="prod-inv-lines"></div>' +
+        '<div class="mdj-prod-inv-box mdj-prod-inv-box--quote" style="margin-top:14px;">' +
+        '<p class="fineprint mdj-prod-inv-box-title" data-i18n="prod-cobro-title"></p>' +
+        '<p class="fineprint" style="margin:0 0 12px;line-height:1.45;opacity:0.9;" data-i18n="prod-cobro-intro"></p>' +
+        '<input type="hidden" id="prod-cobro-lead-id" value="" />' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">' +
+        '<div><label class="fineprint" data-i18n="prod-cobro-event-date-lbl"></label>' +
+        '<input type="date" id="prod-cobro-event-date" class="price-input" style="width:100%;margin-top:4px;" /></div>' +
+        '<div><label class="fineprint" data-i18n="prod-cobro-event-type-lbl"></label>' +
+        '<select id="prod-cobro-event-type" class="price-input" style="width:100%;margin-top:4px;">' +
+        '<option value="Wedding" data-i18n="prod-opt-wedding"></option>' +
+        '<option value="Quinceañera" data-i18n="prod-opt-quinceanera"></option>' +
+        '<option value="Corporate" data-i18n="prod-cobro-opt-corporate"></option>' +
+        '<option value="Private Party" data-i18n="prod-cobro-opt-private"></option>' +
+        '<option value="Event Services" data-i18n="prod-cobro-opt-services"></option>' +
+        '</select></div>' +
+        '<div style="grid-column:1/-1;"><label class="fineprint" data-i18n="prod-cobro-dj-lbl"></label>' +
+        '<select id="prod-cobro-dj" class="price-input" style="width:100%;margin-top:4px;"><option value="">—</option></select></div>' +
+        '<div><label class="fineprint" data-i18n="prod-cobro-dj-payout-lbl"></label>' +
+        '<input type="number" id="prod-cobro-dj-payout" class="price-input" style="width:100%;margin-top:4px;" min="0" step="0.01" placeholder="0.00" /></div>' +
+        '<div><label class="fineprint" data-i18n="prod-cobro-deposit-lbl"></label>' +
+        '<input type="text" id="prod-cobro-deposit-display" class="price-input" style="width:100%;margin-top:4px;" readonly tabindex="-1" aria-readonly="true" /></div>' +
+        '</div>' +
+        '<div id="prod-cobro-status" class="fineprint" style="margin:0 0 10px;min-height:1.2em;opacity:0.88;"></div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+        '<button type="button" class="btn secondary" id="prod-cobro-stripe-deposit" data-i18n="prod-cobro-stripe-deposit"></button>' +
+        '<button type="button" class="btn gold" id="prod-cobro-release-dj" data-i18n="prod-cobro-release-dj"></button>' +
+        '</div></div>' +
         '<div id="prod-inv-summary-card" class="mdj-prod-inv-summary-card" aria-live="polite"></div>' +
         '<div id="prod-inv-msg" class="fineprint" style="margin-top:8px;color:var(--admin-accent);"></div>' +
         '<h4 style="margin:22px 0 8px;color:var(--gold);" data-i18n="prod-inv-list-h"></h4><div id="prod-inv-list" class="fineprint"></div>' +
@@ -306,6 +340,23 @@
           void self._createClientAccountFromPanel();
         };
       }
+      var stripeDepBtn = document.getElementById('prod-cobro-stripe-deposit');
+      if (stripeDepBtn) {
+        stripeDepBtn.onclick = function () {
+          void self._sendDepositStripeLink();
+        };
+      }
+      var releaseBtn = document.getElementById('prod-cobro-release-dj');
+      if (releaseBtn) {
+        releaseBtn.onclick = function () {
+          void self._releaseDjPayout();
+        };
+      }
+      var evDateEl = document.getElementById('prod-cobro-event-date');
+      if (evDateEl && !evDateEl.value) {
+        evDateEl.value = new Date().toISOString().slice(0, 10);
+      }
+      void self._loadCobroDjRoster();
       this._flowRows = global.mdjCloneDefaultBlocksForType('wedding');
       this._invLines = [{ desc: prodT('prod-inv-default-line'), qty: 1, unit: 0 }];
       this._renderFlowTable();
@@ -573,6 +624,10 @@
           '</span></div></div>';
       }
       this._lastInvTotals = { sub: sub, taxAmt: taxAmt, total: tot, taxPct: taxPct };
+      var depEl = document.getElementById('prod-cobro-deposit-display');
+      if (depEl) {
+        depEl.value = '$' + money(calcEventDepositUsd(tot));
+      }
     },
 
     _lastInvTotals: { sub: 0, taxAmt: 0, total: 0, taxPct: 0 },
@@ -595,6 +650,14 @@
       }
       this._updateInvTotal();
       var t = this._lastInvTotals;
+      var leadId = null;
+      try {
+        leadId = await this._upsertEventLead(t.total, db);
+      } catch (leadErr) {
+        msg.style.color = '#ff5555';
+        msg.textContent = (leadErr && leadErr.message) || String(leadErr);
+        return;
+      }
       var lines = this._invLines.map(function (L) {
         return {
           desc: (L.desc || '').trim(),
@@ -606,7 +669,7 @@
       var payload = {
         created_by: uid,
         client_user_id: cuid,
-        lead_id: null,
+        lead_id: leadId,
         doc_kind: document.getElementById('prod-inv-kind').value,
         client_label: document.getElementById('prod-inv-buyer-name').value.trim() || null,
         client_company_name: document.getElementById('prod-inv-company-name').value.trim() || null,
@@ -633,6 +696,12 @@
         msg.style.color = '#ff5555';
         msg.textContent = ins.error.message || String(ins.error);
         return;
+      }
+      if (leadId && ins.data && ins.data.id) {
+        await db.from('leads').update({ staff_invoice_id: ins.data.id }).eq('id', leadId);
+        var leadHidden = document.getElementById('prod-cobro-lead-id');
+        if (leadHidden) leadHidden.value = leadId;
+        void this._refreshCobroStatus(leadId);
       }
       msg.style.color = 'var(--admin-accent)';
       msg.textContent = prodT('prod-msg-saved-inv');
@@ -783,6 +852,222 @@
       } catch (e) {
         setMsg((e && e.message) || prodT('prod-inv-create-err-network'), true);
       }
+    },
+
+    _loadCobroDjRoster: async function () {
+      var sel = document.getElementById('prod-cobro-dj');
+      if (!sel) return;
+      var db = global.getSupabaseClient && global.getSupabaseClient();
+      if (!db) return;
+      var prev = sel.value;
+      var r = await db
+        .from('dj_profiles')
+        .select('id, stage_name, full_name, role')
+        .order('stage_name', { ascending: true });
+      if (r.error || !r.data) return;
+      var staffRoles = { admin: 1, owner: 1, manager: 1, seller: 1, client: 1, cliente: 1 };
+      var opts = '<option value="">—</option>';
+      r.data.forEach(function (row) {
+        var role = row.role ? String(row.role).toLowerCase().trim() : '';
+        if (staffRoles[role]) return;
+        var label = (row.stage_name || row.full_name || row.id || '').trim();
+        if (!label) return;
+        opts += '<option value="' + esc(row.id) + '">' + esc(label) + '</option>';
+      });
+      sel.innerHTML = opts;
+      if (prev) sel.value = prev;
+    },
+
+    _upsertEventLead: async function (totalUsd, db) {
+      var leadEl = document.getElementById('prod-cobro-lead-id');
+      var existingId = leadEl ? leadEl.value.trim() : '';
+      var cuid = document.getElementById('prod-inv-client').value.trim();
+      var emailEl = document.getElementById('prod-inv-client-email');
+      var email = emailEl ? emailEl.value.trim().toLowerCase() : '';
+      var buyerEl = document.getElementById('prod-inv-buyer-name');
+      var contact = buyerEl ? buyerEl.value.trim() : '';
+      var evDateEl = document.getElementById('prod-cobro-event-date');
+      var eventDate =
+        evDateEl && evDateEl.value ? evDateEl.value : new Date().toISOString().slice(0, 10);
+      var evTypeEl = document.getElementById('prod-cobro-event-type');
+      var eventType = evTypeEl ? evTypeEl.value : 'Event Services';
+      var djSel = document.getElementById('prod-cobro-dj');
+      var djId = djSel && djSel.value ? djSel.value : null;
+      var djName = '';
+      if (djSel && djSel.selectedIndex > 0) {
+        djName = djSel.options[djSel.selectedIndex].textContent || '';
+      }
+      var payoutEl = document.getElementById('prod-cobro-dj-payout');
+      var payoutUsd = payoutEl ? parseFloat(payoutEl.value) : NaN;
+      var depositUsd = calcEventDepositUsd(totalUsd);
+      var base = {
+        client_user_id: cuid,
+        email: email || null,
+        contact_person: contact || null,
+        event_type: eventType,
+        event_date: eventDate,
+        total_amount: totalUsd,
+        deposit_required_usd: depositUsd,
+        assigned_dj_id: djId,
+        assigned_dj_name: djName || null,
+        dj_agreed_payout_usd: isFinite(payoutUsd) && payoutUsd > 0 ? payoutUsd : null
+      };
+      if (existingId && /^[0-9a-f-]{36}$/i.test(existingId)) {
+        var up = await db.from('leads').update(base).eq('id', existingId).select('id').single();
+        if (up.error) throw up.error;
+        return existingId;
+      }
+      var insPayload = Object.assign(
+        {
+          balance_paid: 0,
+          payment_status: 'UNPAID',
+          status: 'NEW',
+          source: 'staff_production'
+        },
+        base
+      );
+      var ins = await db.from('leads').insert([insPayload]).select('id').single();
+      if (ins.error) throw ins.error;
+      if (leadEl && ins.data && ins.data.id) leadEl.value = ins.data.id;
+      return ins.data.id;
+    },
+
+    _refreshCobroStatus: async function (leadId) {
+      var stEl = document.getElementById('prod-cobro-status');
+      if (!stEl || !leadId) return;
+      var db = global.getSupabaseClient && global.getSupabaseClient();
+      if (!db) return;
+      var r = await db
+        .from('leads')
+        .select(
+          'payment_status, balance_paid, total_amount, deposit_required_usd, dj_payout_released_at, dj_agreed_payout_usd'
+        )
+        .eq('id', leadId)
+        .maybeSingle();
+      if (r.error || !r.data) {
+        stEl.textContent = '';
+        return;
+      }
+      var L = r.data;
+      var dep = L.deposit_required_usd != null ? Number(L.deposit_required_usd) : calcEventDepositUsd(L.total_amount);
+      var paid = Number(L.balance_paid) || 0;
+      var lines = [
+        prodTVar('prod-cobro-status-lead', { id: String(leadId).slice(0, 8) }),
+        prodTVar('prod-cobro-status-pay', {
+          status: L.payment_status || 'UNPAID',
+          paid: money(paid),
+          deposit: money(dep)
+        })
+      ];
+      if (L.dj_agreed_payout_usd != null) {
+        lines.push(prodTVar('prod-cobro-status-dj', { amount: money(L.dj_agreed_payout_usd) }));
+      }
+      if (L.dj_payout_released_at) {
+        lines.push(prodT('prod-cobro-status-released'));
+      }
+      stEl.textContent = lines.join(' · ');
+    },
+
+    _sendDepositStripeLink: async function () {
+      var stEl = document.getElementById('prod-cobro-status');
+      var leadEl = document.getElementById('prod-cobro-lead-id');
+      var leadId = leadEl ? leadEl.value.trim() : '';
+      if (!/^[0-9a-f-]{36}$/i.test(leadId)) {
+        if (stEl) stEl.textContent = prodT('prod-cobro-err-save-first');
+        return;
+      }
+      this._updateInvTotal();
+      var t = this._lastInvTotals;
+      var depositUsd = calcEventDepositUsd(t.total);
+      var amountCents = Math.max(Math.round(depositUsd * 100), 15000);
+      var db = global.getSupabaseClient && global.getSupabaseClient();
+      if (db) {
+        await db.from('leads').update({ deposit_required_usd: depositUsd, total_amount: t.total }).eq('id', leadId);
+      }
+      var CHECKOUT_FN =
+        typeof global.mdbSupabaseFunctionUrl === 'function'
+          ? global.mdbSupabaseFunctionUrl('create-event-payment')
+          : '';
+      if (!CHECKOUT_FN) {
+        if (stEl) stEl.textContent = prodT('prod-inv-create-err-config');
+        return;
+      }
+      var evTypeEl = document.getElementById('prod-cobro-event-type');
+      var evDateEl = document.getElementById('prod-cobro-event-date');
+      var eventType = evTypeEl ? evTypeEl.value : 'Event';
+      var eventDate = evDateEl && evDateEl.value ? evDateEl.value : 'TBD';
+      var btn = document.getElementById('prod-cobro-stripe-deposit');
+      if (btn) {
+        btn.disabled = true;
+      }
+      try {
+        var resp = await fetch(CHECKOUT_FN, {
+          method: 'POST',
+          headers:
+            typeof global.mdjSupabaseAnonInvokeHeaders === 'function'
+              ? global.mdjSupabaseAnonInvokeHeaders()
+              : { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            lead_id: leadId,
+            amount_cents: amountCents,
+            deposit_required_usd: depositUsd,
+            description: 'Depósito de reserva — ' + eventType + ' · ' + eventDate
+          })
+        });
+        var result = await resp.json().catch(function () {
+          return {};
+        });
+        if (!resp.ok || !result.url) {
+          throw new Error((result && result.error) || 'checkout');
+        }
+        var url = String(result.url);
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(url);
+            if (stEl) stEl.textContent = prodT('prod-cobro-stripe-copied');
+          } else {
+            window.prompt(prodT('prod-cobro-stripe-prompt'), url);
+          }
+        } catch (clipErr) {
+          window.prompt(prodT('prod-cobro-stripe-prompt'), url);
+        }
+        void this._refreshCobroStatus(leadId);
+      } catch (e) {
+        if (stEl) stEl.textContent = prodT('prod-cobro-stripe-fail') + ' ' + ((e && e.message) || '');
+      }
+      if (btn) btn.disabled = false;
+    },
+
+    _releaseDjPayout: async function () {
+      var stEl = document.getElementById('prod-cobro-status');
+      var leadEl = document.getElementById('prod-cobro-lead-id');
+      var leadId = leadEl ? leadEl.value.trim() : '';
+      if (!/^[0-9a-f-]{36}$/i.test(leadId)) {
+        if (stEl) stEl.textContent = prodT('prod-cobro-err-save-first');
+        return;
+      }
+      var db = global.getSupabaseClient && global.getSupabaseClient();
+      if (!db) return;
+      var btn = document.getElementById('prod-cobro-release-dj');
+      if (btn) btn.disabled = true;
+      try {
+        var r = await db.rpc('staff_release_event_dj_payout', { p_lead_id: leadId });
+        var data = r.data;
+        if (r.error) throw r.error;
+        if (data && data.ok === false) {
+          throw new Error(String(data.error || 'release_failed'));
+        }
+        if (stEl) {
+          stEl.textContent =
+            data && data.already
+              ? prodT('prod-cobro-release-already')
+              : prodT('prod-cobro-release-ok');
+        }
+        void this._refreshCobroStatus(leadId);
+      } catch (e) {
+        if (stEl) stEl.textContent = prodT('prod-cobro-release-fail') + ' ' + ((e && e.message) || '');
+      }
+      if (btn) btn.disabled = false;
     },
 
     _refreshLists: async function () {

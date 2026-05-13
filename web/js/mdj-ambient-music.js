@@ -48,6 +48,112 @@
   var armBusy = false;
   var fallbackAttached = false;
   var autoplayScheduled = false;
+  var cashFlowAmbientBlocked = false;
+
+  function isDjDashboardPage() {
+    try {
+      var file = (window.location.pathname || '').split('/').pop().toLowerCase();
+      return file === 'dj-dashboard.html';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /** Cash Flow: dj-dashboard con ?tab=flow o panel #tab-flow activo. */
+  function isDjDashboardCashFlowActive() {
+    if (!isDjDashboardPage()) return false;
+    try {
+      var tab = (new URLSearchParams(window.location.search || '').get('tab') || '').toLowerCase();
+      if (tab === 'flow') return true;
+      var panel = document.getElementById('tab-flow');
+      return !!(panel && panel.classList.contains('active'));
+    } catch (e2) {
+      return false;
+    }
+  }
+
+  function isAcademiaAmbientAllowed() {
+    try {
+      var file = (window.location.pathname || '').split('/').pop().toLowerCase();
+      return file === 'academia.html' || file === 'courses.html' || file === 'dj-knowledge.html';
+    } catch (eA) {
+      return false;
+    }
+  }
+
+  function isDjProfilePage() {
+    try {
+      return !!(document.body && document.body.classList.contains('dj-profile'));
+    } catch (eP) {
+      return false;
+    }
+  }
+
+  /** Agenda / CONFIG / Cash Flow / perfil DJ en cabina: sin ambiente (Serato, etc.). Academia sí. */
+  function mdjAmbientBlockedByArtistWork() {
+    if (isAcademiaAmbientAllowed()) return false;
+    if (cashFlowAmbientBlocked) return true;
+    if (isDjDashboardPage()) return true;
+    if (isDjProfilePage()) return true;
+    return isDjDashboardCashFlowActive();
+  }
+
+  function mdjAmbientBlockedByCashFlow() {
+    return mdjAmbientBlockedByArtistWork();
+  }
+
+  function mdjAmbientStopForCashFlow() {
+    cashFlowAmbientBlocked = true;
+    running = false;
+    armBusy = false;
+    detachFallback();
+    try {
+      audio.pause();
+    } catch (eP) {
+      void eP;
+    }
+  }
+
+  function mdjAmbientClearCashFlowBlock() {
+    cashFlowAmbientBlocked = false;
+  }
+
+  function mdjWatchDashboardCashFlowTab() {
+    if (!isDjDashboardPage()) return;
+    function syncCashFlowAmbient() {
+      if (isDjDashboardCashFlowActive()) {
+        mdjAmbientStopForCashFlow();
+      } else {
+        mdjAmbientClearCashFlowBlock();
+      }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', syncCashFlowAmbient);
+    } else {
+      syncCashFlowAmbient();
+    }
+    try {
+      var panel = document.getElementById('tab-flow');
+      if (panel && typeof MutationObserver === 'function') {
+        new MutationObserver(syncCashFlowAmbient).observe(panel, {
+          attributes: true,
+          attributeFilter: ['class']
+        });
+      }
+    } catch (eObs) {
+      void eObs;
+    }
+  }
+
+  if (isDjDashboardPage()) {
+    try {
+      var _initTab = (new URLSearchParams(window.location.search || '').get('tab') || '').toLowerCase();
+      if (_initTab === 'flow') cashFlowAmbientBlocked = true;
+    } catch (eInit) {
+      void eInit;
+    }
+    mdjWatchDashboardCashFlowTab();
+  }
 
   function isHome() {
     try {
@@ -69,6 +175,10 @@
   }
 
   function onFallbackGesture() {
+    if (mdjAmbientBlockedByCashFlow()) {
+      detachFallback();
+      return;
+    }
     if (running) {
       detachFallback();
       return;
@@ -146,6 +256,7 @@
   }
 
   function startAmbientAttempt() {
+    if (mdjAmbientBlockedByCashFlow()) return;
     if (running) return;
     if (armBusy) return;
     armBusy = true;
@@ -182,6 +293,14 @@
 
   document.addEventListener('visibilitychange', function () {
     if (!running) return;
+    if (mdjAmbientBlockedByCashFlow()) {
+      try {
+        audio.pause();
+      } catch (eH) {
+        void eH;
+      }
+      return;
+    }
     try {
       if (document.hidden) {
         audio.pause();
@@ -217,6 +336,7 @@
   );
 
   function scheduleAutoplay() {
+    if (mdjAmbientBlockedByCashFlow()) return;
     if (autoplayScheduled) return;
     autoplayScheduled = true;
     var delays =
@@ -225,12 +345,14 @@
         : [0, 80, 250, 700, 1800, 4200];
     delays.forEach(function (ms) {
       setTimeout(function () {
+        if (mdjAmbientBlockedByCashFlow()) return;
         if (running) return;
         if (armBusy) return;
         startAmbientAttempt();
       }, ms);
     });
     setTimeout(function () {
+      if (mdjAmbientBlockedByCashFlow()) return;
       if (!running) attachFallbackOnce();
     }, 2200);
   }
@@ -239,5 +361,9 @@
     document.addEventListener('DOMContentLoaded', scheduleAutoplay);
   } else {
     scheduleAutoplay();
+  }
+
+  if (typeof window !== 'undefined') {
+    window.MDJ_AMBIENT_PAUSE_FOR_CASH_FLOW = mdjAmbientStopForCashFlow;
   }
 })();

@@ -9,7 +9,10 @@ window.__mdjWeatherLocked = true;
 window.__mdjWeatherInitialDone = false;
 setTimeout(function () {
     window.__mdjWeatherLocked = false;
-}, 8000);
+    if (typeof window.handleEventWeather === 'function' && !window.__mdjWeatherInitialDone) {
+        window.handleEventWeather();
+    }
+}, 1200);
 
 /** En producción definir `window.OPENWEATHER_API_KEY` antes de cargar este script (Vercel env → inline o Edge). */
 function mdjOpenWeatherApiKey() {
@@ -381,31 +384,55 @@ function renderWeatherWidget(data, eventOrDate) {
 
     const isEvent = !!eventOrDate.title;
     const dateStr = isEvent ? (eventOrDate.startStr || (eventOrDate.start ? eventOrDate.start.toISOString().split('T')[0] : '')) : eventOrDate;
-    const eventTitle = isEvent ? eventOrDate.title : 'Día sin eventos';
+    const eventTitle = isEvent
+        ? ((eventOrDate.extendedProps?.event_name || eventOrDate.title || '').trim() || 'Sin título')
+        : 'Día sin evento en agenda';
 
-    let themeColor = 'rgba(255,255,255,0.2)';
-    let statusLabel = 'Agenda Disponible';
     let cardIcon = '☀️';
+    if (conditionMain === 'Thunderstorm') cardIcon = '⚡';
+    else if (conditionMain === 'Rain' || conditionMain === 'Drizzle') cardIcon = '🌧';
+    else if (conditionMain === 'Clouds') cardIcon = '🌤';
 
-    // Extract Extended Props
-    const startTime = (isEvent && eventOrDate.extendedProps?.start_time) ? eventOrDate.extendedProps.start_time : '--:--';
-    const endTime = (isEvent && eventOrDate.extendedProps?.end_time) ? eventOrDate.extendedProps.end_time : '--:--';
-    const bufferTime = (isEvent && eventOrDate.extendedProps?.buffer_time) ? `+${eventOrDate.extendedProps.buffer_time}m` : '--';
-    const evCity = (isEvent && eventOrDate.extendedProps?.city) ? eventOrDate.extendedProps.city : data.name;
-
-    if (isEvent) {
-        if (conditionMain === 'Thunderstorm' || conditionMain === 'Rain') {
-            themeColor = '#ff5555'; // Red alert for bad weather
-            cardIcon = conditionMain === 'Thunderstorm' ? '⚡' : '🌧';
-        } else if (eventOrDate.extendedProps?.status === 'CANCELLED') {
-            themeColor = '#ff5555';
-            statusLabel = 'Evento Cancelado';
-        } else {
-            themeColor = '#00ff88'; // Green for good weather
-            cardIcon = conditionMain === 'Clouds' ? '🌤' : '☀️';
-            statusLabel = 'Evento Confirmado';
+    // Horario operativo (solo datos reales del evento / CONFIG)
+    function mdjFormatOpTime(val, emptyLabel) {
+        if (val == null || val === '' || val === '--:--') return emptyLabel || 'Sin horario';
+        return String(val).trim();
+    }
+    let startTime = mdjFormatOpTime(null);
+    let endTime = mdjFormatOpTime(null);
+    const epPanel = isEvent ? (eventOrDate.extendedProps || {}) : null;
+    if (isEvent && epPanel) {
+        startTime = mdjFormatOpTime(epPanel.start_time);
+        endTime = mdjFormatOpTime(epPanel.end_time);
+        if ((startTime === 'Sin horario' || endTime === 'Sin horario') && epPanel.time && typeof epPanel.time === 'string' && epPanel.time !== 'ALL DAY') {
+            const parts = epPanel.time.split('-').map(function (s) { return s.trim(); });
+            if (startTime === 'Sin horario' && parts[0]) startTime = mdjFormatOpTime(parts[0]);
+            if (endTime === 'Sin horario' && parts[1]) endTime = mdjFormatOpTime(parts[1]);
+        }
+        if (
+            (startTime === 'Sin horario' || endTime === 'Sin horario') &&
+            mdjAgendaAllowPreferredTimeFallback(epPanel) &&
+            window.mdjAgendaEngineContext &&
+            window.mdjAgendaEngineContext.profile
+        ) {
+            const sched = window.mdjAgendaEngineContext.profile.preferred_schedule;
+            if (sched) {
+                const prefParts = String(sched).split('-').map(function (s) { return s.trim(); });
+                if (startTime === 'Sin horario' && prefParts[0]) startTime = mdjFormatOpTime(prefParts[0]);
+                if (endTime === 'Sin horario' && prefParts[1]) endTime = mdjFormatOpTime(prefParts[1]);
+            }
         }
     }
+    const bufferTime = (isEvent && eventOrDate.extendedProps?.buffer_time) ? `+${eventOrDate.extendedProps.buffer_time}m` : '—';
+    const evCity = isEvent
+        ? ((eventOrDate.extendedProps?.venue || '').trim() || 'Sin venue')
+        : (data.name || '—');
+    const dashPage = ((window.location.pathname || '').split('/').pop() || '').toLowerCase();
+    const showStaffDjAlertBtn = isEvent && dashPage !== 'dj-dashboard.html';
+
+    const panelStatus = mdjAgendaResolvePanelStatus(epPanel, isEvent);
+    const themeColor = panelStatus.color;
+    const statusLabel = panelStatus.label;
 
     const eventDayName = new Date(dateStr + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long' });
     const capitalizedDay = eventDayName.charAt(0).toUpperCase() + eventDayName.slice(1);
@@ -471,8 +498,8 @@ function renderWeatherWidget(data, eventOrDate) {
                     </div>
                 </div>
 
-                <!-- ALERTA MOVIL SMS -->
-                ${isEvent ? `
+                <!-- ALERTA MOVIL SMS (solo staff / manager — no en dashboard del artista) -->
+                ${showStaffDjAlertBtn ? `
                 <div style="grid-column: 1 / -1; margin-top: 15px;">
                     <button onclick="window.triggerDJMobileAlert('${eventOrDate.extendedProps?.eventId || ''}')" class="btn primary full" style="padding: 14px; font-size: 13px; font-weight: 800; background: rgba(197, 160, 89, 0.15); border: 1px solid var(--gold); color: var(--gold); border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s ease;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
@@ -561,6 +588,92 @@ function renderWeatherWidget(data, eventOrDate) {
         const blockTimestamp = new Date(data.dt * 1000);
         window.applyAstralState(blockTimestamp, data);
     }
+}
+
+function mdjAgendaAllowPreferredTimeFallback(ep) {
+    if (!ep) return false;
+    const src = ep.source;
+    return (
+        src === 'weekly_schedule' ||
+        src === 'preferred_schedule' ||
+        src === 'active_days' ||
+        ep.isResident === true
+    );
+}
+
+/**
+ * Estado operativo del panel Agenda — nunca derivado del clima.
+ * @returns {{ label: string, color: string }}
+ */
+function mdjAgendaResolvePanelStatus(ep, isEvent) {
+    if (!isEvent || !ep) {
+        return { label: 'Agenda disponible', color: 'rgba(255,255,255,0.45)' };
+    }
+
+    const flowSt = ep.flow_status != null ? String(ep.flow_status).toLowerCase() : '';
+    if (flowSt) {
+        const flowMap = {
+            draft: { label: 'Producción · borrador', color: '#94a3b8' },
+            ready: { label: 'Producción · listo', color: '#c5a059' },
+            sent: { label: 'Producción · enviado', color: '#22c55e' },
+            archived: { label: 'Producción · archivado', color: '#64748b' }
+        };
+        if (flowMap[flowSt]) return flowMap[flowSt];
+    }
+
+    if (ep.source === 'lead' && ep.status != null && String(ep.status).trim() !== '') {
+        const st = String(ep.status).trim().toUpperCase();
+        const leadMap = {
+            CONFIRMED: { label: 'Confirmado (lead)', color: '#22c55e' },
+            MATCHED: { label: 'Asignado (lead)', color: '#c5a059' },
+            COMPLETED: { label: 'Completado (lead)', color: '#64748b' },
+            CANCELLED: { label: 'Cancelado (lead)', color: '#ff5555' },
+            DENIED: { label: 'Denegado (lead)', color: '#ff5555' },
+            CLOSED: { label: 'Cerrado (lead)', color: '#64748b' },
+            PENDING: { label: 'Pendiente (lead)', color: '#f59e0b' }
+        };
+        if (leadMap[st]) return leadMap[st];
+        return { label: 'Lead · ' + st, color: '#c5a059' };
+    }
+
+    if (ep.source === 'availability_schedule') {
+        const evSt = (ep.status || '').toUpperCase();
+        if (evSt === 'CANCELLED') {
+            return { label: 'Evento cancelado', color: '#ff5555' };
+        }
+        return { label: 'Evento privado (agenda)', color: '#4ade80' };
+    }
+
+    if (ep.source === 'blocked') {
+        return { label: 'Día bloqueado', color: '#ff5555' };
+    }
+
+    if (ep.source === 'legacy_availability') {
+        return { label: 'Disponible', color: 'rgba(255,255,255,0.45)' };
+    }
+
+    if (
+        ep.panel_status === 'scheduled_shift' ||
+        ep.source === 'weekly_schedule' ||
+        ep.source === 'preferred_schedule' ||
+        ep.isResident === true
+    ) {
+        return { label: 'Turno programado', color: '#c5a059' };
+    }
+
+    if (ep.source === 'active_days' || ep.panel_status === 'available') {
+        return { label: 'Disponible', color: 'rgba(255,255,255,0.45)' };
+    }
+
+    if (ep.source === 'vacation' || ep.panel_status === 'vacation') {
+        return { label: 'Vacaciones / blackout', color: '#64748b' };
+    }
+
+    if (ep.source === 'holiday' || (ep.type && String(ep.type).indexOf('FERIADO') !== -1)) {
+        return { label: 'Feriado', color: 'rgba(255,255,255,0.55)' };
+    }
+
+    return { label: 'Agenda', color: 'rgba(255,255,255,0.45)' };
 }
 
 function formatTimestamp(unixTimestamp) {
@@ -988,10 +1101,13 @@ window.handleEventWeather = async function (eventOrDate) {
     const isEvent = !!eventOrDate.title;
     const dateStr = isEvent ? (eventOrDate.startStr || (eventOrDate.start ? eventOrDate.start.toISOString().split('T')[0] : '')) : eventOrDate;
 
-    // INYECCIÓN: Lógica Inbox Fase 1 Lite
-    window.currentActiveEventId = isEvent ? eventOrDate.extendedProps?.eventId : null;
+    // Notas manager: solo UUID real (lead / flow); turnos CONFIG sin consulta a event_notes
+    const epNotes = isEvent ? (eventOrDate.extendedProps || null) : null;
+    window.currentActiveNotesEventId = mdjAgendaResolveNotesEventId(epNotes);
+    window.currentActiveNotesContext = epNotes;
+    window.currentActiveEventId = window.currentActiveNotesEventId;
     if (typeof window.fetchAndRenderEventNotes === 'function') {
-        window.fetchAndRenderEventNotes(window.currentActiveEventId);
+        window.fetchAndRenderEventNotes(window.currentActiveNotesEventId, epNotes);
     }
 
     let targetCity = 'Miami';
@@ -1159,25 +1275,45 @@ window.getLunarAsset = function (dateObj, currentTemp) {
     }
 };
 
+function mdjFormatHourlyLabel(dateObj, isNow) {
+    if (isNow) return 'Ahora';
+    const h = dateObj.getHours();
+    const hour12 = h % 12 || 12;
+    const suffix = h < 12 ? 'am' : 'pm';
+    return hour12 + suffix;
+}
+
+function mdjResolveHourlyIconSrc(iconCode, dateObj, temp) {
+    const icon = String(iconCode || '01d');
+    if (icon.endsWith('n')) return window.getLunarAsset(dateObj, temp);
+    /* Iconos locales hero son panorámicos; en franja horaria usar OWM (cuadrado). */
+    return 'https://openweathermap.org/img/wn/' + icon + '@2x.png';
+}
+
+function mdjHourlyIconHtml(iconCode, dateObj, temp) {
+    const icon = String(iconCode || '01d');
+    const isNight = icon.endsWith('n');
+    const imgSrc = mdjResolveHourlyIconSrc(icon, dateObj, temp);
+    const glowColor = isNight ? 'rgba(200,220,255,0.6)' : 'rgba(255,200,100,0.85)';
+    const size = isNight ? '28px' : '36px';
+    const owmFallback = 'https://openweathermap.org/img/wn/' + icon + '@2x.png';
+    return (
+        '<div style="position:relative;width:' + size + ';height:' + size + ';display:flex;justify-content:center;align-items:center;">' +
+        '<div style="position:absolute;width:60%;height:60%;border-radius:50%;box-shadow:0 0 16px ' + glowColor + ';background-color:' + glowColor + ';filter:blur(4px);z-index:1;"></div>' +
+        '<img src="' + imgSrc + '" alt="" onerror="this.onerror=null;this.src=\'' + owmFallback + '\';" ' +
+        'style="position:relative;z-index:2;width:100%;height:100%;object-fit:contain;display:block;">' +
+        '</div>'
+    );
+}
+
 function generateHourlyTimelineOptions(data) {
     const hourlyScroller = document.getElementById('hourly-scroller-main');
     if (!hourlyScroller) return;
 
     if (!data.fullForecast || data.fullForecast.length === 0) {
         const temp = Math.round(data.main?.temp || 78);
-        const iconCode = data.weather?.[0]?.icon || "01d";
-        const isNightDef = iconCode.endsWith('n');
-        const defaultImg = isNightDef ? window.getLunarAsset(new Date(), temp) : './assets/weather/Sunny%20Real.png';
-        const defaultFilter = isNightDef ? 'rgba(200,220,255,0.6)' : 'rgba(255,200,100,0.85)';
-        const defSize = isNightDef ? '24px' : '34px';
-        const defMargin = isNightDef ? 'margin: 5px 0;' : 'margin: 0;';
-
-        const defaultVisual = `
-            <div style="position: relative; width: ${defSize}; height: ${defSize}; ${defMargin} display: flex; justify-content: center; align-items: center;">
-                <div style="position: absolute; width: 60%; height: 60%; border-radius: 50%; box-shadow: 0 0 16px ${defaultFilter}; background-color: ${defaultFilter}; filter: blur(4px); z-index: 1;"></div>
-                <img src="${defaultImg}" style="position: relative; z-index: 2; padding-top: 1px; width: 100%; height: 100%; object-fit: contain;">
-            </div>
-        `;
+        const iconCode = data.weather?.[0]?.icon || '01d';
+        const defaultVisual = mdjHourlyIconHtml(iconCode, new Date(), temp);
 
         hourlyScroller.innerHTML = `
             <div style="text-align: center; min-width: 55px; animation: fadeIn 0.5s ease-out; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
@@ -1193,26 +1329,12 @@ function generateHourlyTimelineOptions(data) {
 
     const hoursData = nextBlocks.map((block, index) => {
         const dateObj = new Date(block.dt * 1000);
-        let hourStr = dateObj.toLocaleTimeString('es-ES', { hour: 'numeric', minute: '2-digit', hour12: true });
-        // Clean hour to match iPhone "10 a.m."
-        hourStr = hourStr.replace(' ', '').replace('AM', ' a.m.').replace('PM', ' p.m.').replace(':00', '');
-
-        const icon = block.weather[0].icon;
-        const isNight = icon.endsWith('n');
-        const imgSrc = isNight ? window.getLunarAsset(dateObj, block.main.temp) : './assets/weather/Sunny%20Real.png';
-        const glowColor = isNight ? 'rgba(200,220,255,0.6)' : 'rgba(255,200,100,0.85)';
-        const size = isNight ? '24px' : '34px';
-        const margins = isNight ? 'margin: 5px 0;' : 'margin: 0;';
-
-        const visualHtml = `
-            <div style="position: relative; width: ${size}; height: ${size}; ${margins} display: flex; justify-content: center; align-items: center;">
-                <div style="position: absolute; width: 60%; height: 60%; border-radius: 50%; box-shadow: 0 0 16px ${glowColor}; background-color: ${glowColor}; filter: blur(4px); z-index: 1;"></div>
-                <img src="${imgSrc}" style="position: relative; z-index: 2; width: 100%; height: 100%; object-fit: contain;">
-            </div>
-        `;
+        const label = mdjFormatHourlyLabel(dateObj, index === 0);
+        const icon = (index === 0 && data.weather?.[0]?.icon) ? data.weather[0].icon : block.weather[0].icon;
+        const visualHtml = mdjHourlyIconHtml(icon, dateObj, block.main.temp);
 
         return {
-            h: index === 0 ? 'Now' : hourStr,
+            h: label,
             t: Math.round(block.main.temp) + '°',
             visual: visualHtml
         };
@@ -1220,33 +1342,89 @@ function generateHourlyTimelineOptions(data) {
 
     hourlyScroller.innerHTML = hoursData.map(h => `
         <div style="text-align: center; min-width: 60px; animation: fadeIn 0.5s ease-out; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s;">
-            <div style="font-size: 13px; font-weight: 700; opacity: 1; margin-bottom: 6px; width: 100%; text-align: center; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${h.h === 'Now' ? 'Ahora' : h.h}</div>
+            <div style="font-size: 13px; font-weight: 700; opacity: 1; margin-bottom: 6px; width: 100%; text-align: center; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${h.h}</div>
             <div style="line-height: 1; margin-bottom: 8px; width: 100%; display: flex; justify-content: center; align-items: center; min-height: 40px;">${h.visual}</div>
             <div style="font-size: 19px; font-weight: 700; letter-spacing: -0.5px; width: 100%; text-align: center; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${h.t}</div>
         </div>
     `).join('');
 }
 
-// ── INBOX OPERATIVO (FASE 1 LITE) ──
-window.fetchAndRenderEventNotes = async function (eventId) {
+// ── INBOX OPERATIVO (notas manager — solo UUID reales) ──
+var MDJ_NOTES_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function mdjIsRealNotesEventUuid(id) {
+    if (id == null || id === '') return false;
+    var s = String(id).trim();
+    if (/^res-/i.test(s)) return false;
+    return MDJ_NOTES_UUID_RE.test(s);
+}
+
+function mdjAgendaResolveNotesEventId(ep) {
+    if (!ep) return null;
+    if (ep.notes_event_id && mdjIsRealNotesEventUuid(ep.notes_event_id)) {
+        return String(ep.notes_event_id).trim();
+    }
+    if (ep.flowId && mdjIsRealNotesEventUuid(ep.flowId)) {
+        return String(ep.flowId).trim();
+    }
+    if (ep.source === 'lead' && mdjIsRealNotesEventUuid(ep.eventId)) {
+        return String(ep.eventId).trim();
+    }
+    if (mdjIsRealNotesEventUuid(ep.eventId)) {
+        return String(ep.eventId).trim();
+    }
+    return null;
+}
+
+function mdjAgendaNotesNoUuidMessage(ep) {
+    if (!ep) {
+        return '<p class="fineprint" style="opacity:0.4; text-align:center; padding: 20px 0;">Sin evento operativo seleccionado.</p>';
+    }
+    var src = ep.source;
+    if (
+        src === 'weekly_schedule' ||
+        src === 'preferred_schedule' ||
+        src === 'active_days' ||
+        ep.panel_status === 'scheduled_shift' ||
+        ep.panel_status === 'available'
+    ) {
+        return '<p class="fineprint" style="opacity:0.45; text-align:center; padding: 20px 0;">Sin notas operativas para este turno.</p>';
+    }
+    if (src === 'holiday' || src === 'vacation' || src === 'blocked' || src === 'legacy_availability') {
+        return '<p class="fineprint" style="opacity:0.45; text-align:center; padding: 20px 0;">Sin notas operativas para este día.</p>';
+    }
+    return '<p class="fineprint" style="opacity:0.4; text-align:center; padding: 20px 0;">Sin notas operativas para este evento.</p>';
+}
+
+window.fetchAndRenderEventNotes = async function (eventId, contextEp) {
     const container = document.getElementById('manager-notes-container');
     if (!container) return;
 
-    if (!eventId) {
-        container.innerHTML = `<p class="fineprint" style="opacity:0.4; text-align:center; padding: 20px 0;">No active event selected.</p>`;
+    const ep = contextEp || null;
+    const resolvedId = eventId && mdjIsRealNotesEventUuid(eventId)
+        ? String(eventId).trim()
+        : mdjAgendaResolveNotesEventId(ep);
+
+    if (!resolvedId) {
+        container.innerHTML = mdjAgendaNotesNoUuidMessage(ep);
         return;
     }
 
-    container.innerHTML = `<p class="fineprint" style="opacity:0.5; text-align:center;">Retrieving operational notes...</p>`;
+    container.innerHTML = '<p class="fineprint" style="opacity:0.5; text-align:center;">Cargando notas operativas…</p>';
 
     const { data, error } = await window.getSupabaseClient()
         .from('event_notes')
         .select('id, type, title, body, priority, created_at, is_read')
-        .eq('event_id', eventId)
+        .eq('event_id', resolvedId)
         .order('created_at', { ascending: false });
 
-    if (error || !data || data.length === 0) {
-        container.innerHTML = `<p class="fineprint" style="opacity:0.4; text-align:center; padding: 20px 0;">No pending manager notes.</p>`;
+    if (error) {
+        container.innerHTML = '<p class="fineprint" style="opacity:0.45; text-align:center; padding: 20px 0;">No se pudieron cargar las notas operativas.</p>';
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        container.innerHTML = '<p class="fineprint" style="opacity:0.4; text-align:center; padding: 20px 0;">Sin notas del manager para este evento.</p>';
         return;
     }
 
@@ -1288,9 +1466,9 @@ window.setupEventNotesRealtime = function (djUuid) {
         }, payload => {
             const newNote = payload.new;
 
-            if (window.currentActiveEventId === newNote.event_id) {
+            if (window.currentActiveNotesEventId === newNote.event_id) {
                 if (typeof window.fetchAndRenderEventNotes === 'function') {
-                    window.fetchAndRenderEventNotes(window.currentActiveEventId);
+                    window.fetchAndRenderEventNotes(window.currentActiveNotesEventId, window.currentActiveNotesContext || null);
                 }
             } else {
                 if (!window.pendingEventNotes[newNote.event_id]) {

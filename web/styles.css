@@ -3184,7 +3184,7 @@ a.residency-card--map:focus-visible {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background-image: url('./assets/weather/stars.png');
+  background-image: url('./assets/weather/stars-night.png');
   background-size: cover;
   background-position: center;
   opacity: 0;
@@ -7118,5 +7118,40 @@ body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
     visibility: hidden !important;
     pointer-events: none !important;
   }
+}
+
+/* FullCalendar daygrid — agenda dashboard (#tab-dashboard) */
+#tab-dashboard #calendar-master .fc-daygrid-body,
+#tab-dashboard #calendar-master .fc-view-harness {
+  min-height: 420px !important;
+}
+
+#tab-dashboard #calendar-master .fc-daygrid-day-frame {
+  min-height: 120px !important;
+}
+
+#calendar-master .fc-daygrid-day-frame {
+  min-height: 132px !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: 6px;
+  box-sizing: border-box;
+}
+
+#calendar-master .fc-daygrid-day-top {
+  margin-bottom: 8px;
+}
+
+#calendar-master .fc {
+  height: auto !important;
+}
+
+#calendar-master .fc-daygrid-body {
+  height: auto !important;
+}
+
+#calendar-master .fc-scrollgrid {
+  height: auto !important;
 }
 
