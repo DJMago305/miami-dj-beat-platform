@@ -119,7 +119,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="./flow-handler.js?v=FLOW-FINAL-001"></script>
+    <script src="./flow-handler.js?v=202605131800-fase-b-statement"></script>
 
     <!-- Open Graph / Meta sharing -->
     <meta property="og:type" content="website">
@@ -4341,13 +4341,7 @@
                 }
 
                 const snfl = document.getElementById('sft-night-log-flow-shell');
-                if (snfl) {
-                    if (isOwner && window._mdjSftProAllowed) {
-                        snfl.style.display = 'block';
-                    } else {
-                        snfl.style.display = 'none';
-                    }
-                }
+                if (snfl) snfl.style.display = 'none';
 
                 var opb = document.getElementById('sft-owner-pro-block');
                 var olb = document.getElementById('sft-owner-lite-block');
@@ -5581,25 +5575,7 @@
                 </div>
             </div>
 
-            <!-- Registro nocturno SFT (solo dueño PRO; pestaña Cash Flow — no en sidebar público) -->
-            <div id="sft-night-log-flow-shell" class="flow-table-card" style="display:none;margin-bottom:32px;">
-                <div style="padding:24px;border-bottom:1px solid rgba(255,255,255,0.03);">
-                    <h3 class="chart-title" style="margin:0;">REGISTRO DE LA NOCHE · SOUNDFORTIPS</h3>
-                    <p style="font-size:12px;color:rgba(255,255,255,0.42);margin:10px 0 0;line-height:1.45;">Peticiones con estado (aceptada, rechazada, pendiente). Nombre/mesa y tema; sin email ni teléfono del fan.</p>
-                </div>
-                <div style="padding:20px 24px 24px;">
-                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center;">
-                        <span style="font-size:10px;color:rgba(255,255,255,0.45);">Rango:</span>
-                        <button type="button" id="sft-night-filter-24h" style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid rgba(197,160,89,0.35);background:rgba(197,160,89,0.15);color:#f5e6c8;cursor:pointer;">Últimas 24 h</button>
-                        <button type="button" id="sft-night-filter-7d" style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:rgba(0,0,0,0.2);color:rgba(255,255,255,0.75);cursor:pointer;">7 días</button>
-                        <button type="button" id="sft-night-filter-all" style="font-size:11px;padding:6px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:rgba(0,0,0,0.2);color:rgba(255,255,255,0.75);cursor:pointer;">Todo</button>
-                        <button type="button" id="sft-night-refresh" style="margin-left:auto;font-size:11px;padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#fff;cursor:pointer;">Actualizar</button>
-                    </div>
-                    <div id="sft-night-log-mount" style="max-height:320px;overflow:auto;font-size:12px;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px;background:rgba(0,0,0,0.22);"></div>
-                    <button type="button" id="sft-night-delete-range" style="width:100%;margin-top:12px;padding:10px;border-radius:8px;border:1px solid rgba(239,68,68,0.45);background:rgba(239,68,68,0.12);color:#fca5a5;font-weight:800;cursor:pointer;">Borrar registro (rango actual)</button>
-                    <p style="margin:10px 0 0;font-size:10px;color:rgba(255,255,255,0.35);line-height:1.4;">Con «Todo», se elimina todo el historial de tu registro. Con 24 h / 7 días, solo ese periodo.</p>
-                </div>
-            </div>
+            <!-- Registro nocturno SFT: vive en cabina SoundForTips™ (pestaña Live), no en Flujo de caja. -->
 
             <!-- 🔹 BLOQUE 5 — LEDGER PROFESIONAL -->
             <div class="flow-table-card" style="margin-bottom:80px;">
@@ -9280,6 +9256,113 @@
             flex-direction: column;
         }
 
+        .sft-cab-pane-history {
+            flex: 1;
+            min-height: 0;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #sftDjAmOverlay .sft-cab-night-history--pane {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            margin-top: 0;
+            padding: 12px 10px 10px;
+            border-top: none;
+            background: transparent;
+        }
+
+        #sftDjAmOverlay .sft-cab-night-history--pane .sft-cab-night-log-mount {
+            flex: 1;
+            min-height: 120px;
+            max-height: none;
+        }
+
+        #sftDjAmOverlay.sft-cab--pane-history .sft-cab-desk-meta,
+        #sftAmShell.sft-cab--pane-history .sft-cab-desk-meta {
+            display: none;
+        }
+
+        #sftDjAmOverlay .sft-cab-night-history-title {
+            margin: 0;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(197, 160, 89, 0.95);
+        }
+
+        #sftDjAmOverlay .sft-cab-night-history-sub {
+            margin: 6px 0 0;
+            font-size: 10px;
+            line-height: 1.45;
+            color: rgba(255, 255, 255, 0.42);
+        }
+
+        #sftDjAmOverlay .sft-cab-night-history-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        #sftDjAmOverlay .sft-cab-night-history-range-lbl {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: rgba(255, 255, 255, 0.38);
+            margin-right: 2px;
+        }
+
+        #sftDjAmOverlay .sft-cab-night-filter-btn,
+        #sftDjAmOverlay .sft-cab-night-refresh-btn {
+            font-size: 10px;
+            padding: 5px 9px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(0, 0, 0, 0.22);
+            color: rgba(255, 255, 255, 0.78);
+            cursor: pointer;
+        }
+
+        #sftDjAmOverlay .sft-cab-night-filter-btn--on {
+            border-color: rgba(197, 160, 89, 0.45);
+            background: rgba(197, 160, 89, 0.18);
+            color: #f5e6c8;
+        }
+
+        #sftDjAmOverlay .sft-cab-night-refresh-btn {
+            margin-left: auto;
+        }
+
+        #sftDjAmOverlay .sft-cab-night-log-mount {
+            max-height: 220px;
+            overflow: auto;
+            margin-top: 10px;
+            font-size: 11px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.22);
+        }
+
+        #sftDjAmOverlay .sft-cab-night-delete-btn {
+            width: 100%;
+            margin-top: 10px;
+            padding: 9px;
+            border-radius: 8px;
+            border: 1px solid rgba(239, 68, 68, 0.45);
+            background: rgba(239, 68, 68, 0.12);
+            color: #fca5a5;
+            font-weight: 800;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
         .sft-cab-pane-qr {
             flex: 1;
             min-height: 0;
@@ -9633,7 +9716,9 @@
                         <!-- Roadmap: librería / preparación de set — oculto hasta especificación (evita UI “a medias”). -->
                         <span class="sft-cab-desk-sep" aria-hidden="true"></span>
                         <button type="button" class="sft-cab-desk-pill sft-cab-desk-pill--tab sft-cab-desk-pill--on" id="sftCabSegList" role="tab" aria-selected="true"
-                            onclick="sftCabSetPane('list')">Historia</button>
+                            onclick="sftCabSetPane('list')" data-i18n="sft-cab-tab-live">Live</button>
+                        <button type="button" class="sft-cab-desk-pill sft-cab-desk-pill--tab" id="sftCabSegHist" role="tab" aria-selected="false"
+                            onclick="sftCabSetPane('history')" data-i18n="sft-cab-tab-history">Historia</button>
                         <button type="button" class="sft-cab-desk-pill sft-cab-desk-pill--tab" id="sftCabSegQr" role="tab" aria-selected="false"
                             onclick="sftCabSetPane('qr')">QR</button>
                     </div>
@@ -9670,6 +9755,23 @@
             <div id="sft-cab-pane-list" class="sft-cab-pane-list">
                 <div class="sft-cab-strip" id="sftDjAmTotalStrip" role="status"></div>
                 <div class="sft-am-body sft-cab-scroll" id="sftDjAmListMount"></div>
+            </div>
+            <div id="sft-cab-pane-history" class="sft-cab-pane-history" style="display:none;">
+                <div id="sft-cab-night-history" class="sft-cab-night-history sft-cab-night-history--pane">
+                    <div class="sft-cab-night-history-head">
+                        <h2 class="sft-cab-night-history-title" data-i18n="sft-cab-night-log-title">Historial de propinas</h2>
+                        <p class="sft-cab-night-history-sub" data-i18n="sft-cab-night-log-sub">Detalle por canción y estado. El libro de Flujo de caja solo muestra el total por noche.</p>
+                    </div>
+                    <div class="sft-cab-night-history-toolbar">
+                        <span class="sft-cab-night-history-range-lbl" data-i18n="sft-cab-night-log-range">Rango</span>
+                        <button type="button" id="sft-night-filter-24h" class="sft-cab-night-filter-btn sft-cab-night-filter-btn--on">24 h</button>
+                        <button type="button" id="sft-night-filter-7d" class="sft-cab-night-filter-btn">7 días</button>
+                        <button type="button" id="sft-night-filter-all" class="sft-cab-night-filter-btn" data-i18n="sft-cab-night-log-all">Todo</button>
+                        <button type="button" id="sft-night-refresh" class="sft-cab-night-refresh-btn" data-i18n="sft-cab-night-log-refresh">Actualizar</button>
+                    </div>
+                    <div id="sft-night-log-mount" class="sft-cab-night-log-mount"></div>
+                    <button type="button" id="sft-night-delete-range" class="sft-cab-night-delete-btn" data-i18n="sft-cab-night-log-delete">Borrar registro (rango actual)</button>
+                </div>
             </div>
             <div id="sft-cab-pane-qr" class="sft-cab-pane-qr" style="display:none;">
                 <p class="sft-cab-qr-multi-hint" data-i18n="sft-cab-qr-phone-hint">On a second device, add &amp;sft_cab=qr to show only the QR.</p>
@@ -10844,20 +10946,30 @@
 
         window.sftCabSetPane = function sftCabSetPane(pane) {
             var listPane = document.getElementById('sft-cab-pane-list');
+            var histPane = document.getElementById('sft-cab-pane-history');
             var qrPane = document.getElementById('sft-cab-pane-qr');
             var shell = document.getElementById('sftAmShell');
             var foot = document.getElementById('sftCabFooterBar');
+            var totalBar = document.getElementById('sftCabTotalBar');
+            var deskRight = document.querySelector('#sftCabDeskbar .sft-cab-desk-right');
             var segL = document.getElementById('sftCabSegList');
+            var segH = document.getElementById('sftCabSegHist');
             var segQ = document.getElementById('sftCabSegQr');
             var sub = document.getElementById('sftDjAmSubtitle');
             if (!listPane || !qrPane) return;
 
             function cabClearSeg() {
-                [segL, segQ].forEach(function (el) {
+                [segL, segH, segQ].forEach(function (el) {
                     if (!el) return;
                     el.classList.remove('sft-cab-desk-pill--on');
                     el.setAttribute('aria-selected', 'false');
                 });
+            }
+
+            function cabHideAllPanes() {
+                listPane.style.display = 'none';
+                if (histPane) histPane.style.display = 'none';
+                qrPane.style.display = 'none';
             }
 
             function cabSubBoth() {
@@ -10871,10 +10983,13 @@
 
             if (pane === 'both') {
                 listPane.style.display = 'flex';
+                if (histPane) histPane.style.display = 'none';
                 qrPane.style.display = 'flex';
                 if (foot) foot.style.display = '';
+                if (totalBar) totalBar.style.display = '';
+                if (deskRight) deskRight.style.display = '';
                 if (shell) {
-                    shell.classList.remove('sft-cab--pane-qr');
+                    shell.classList.remove('sft-cab--pane-qr', 'sft-cab--pane-history');
                     shell.classList.add('sft-cab--pane-both');
                 }
                 cabClearSeg();
@@ -10891,11 +11006,36 @@
 
             if (shell) shell.classList.remove('sft-cab--pane-both');
 
+            if (pane === 'history' && histPane) {
+                cabHideAllPanes();
+                histPane.style.display = 'flex';
+                if (foot) foot.style.display = 'none';
+                if (totalBar) totalBar.style.display = 'none';
+                if (deskRight) deskRight.style.display = 'none';
+                if (shell) {
+                    shell.classList.remove('sft-cab--pane-qr');
+                    shell.classList.add('sft-cab--pane-history');
+                }
+                cabClearSeg();
+                if (segH) {
+                    segH.classList.add('sft-cab-desk-pill--on');
+                    segH.setAttribute('aria-selected', 'true');
+                }
+                if (sub) sub.textContent = 'Historial de propinas';
+                if (typeof window.refreshSftNightLogList === 'function') window.refreshSftNightLogList();
+                return;
+            }
+
             if (pane === 'qr') {
-                listPane.style.display = 'none';
+                cabHideAllPanes();
                 qrPane.style.display = 'flex';
                 if (foot) foot.style.display = 'none';
-                if (shell) shell.classList.add('sft-cab--pane-qr');
+                if (totalBar) totalBar.style.display = 'none';
+                if (deskRight) deskRight.style.display = '';
+                if (shell) {
+                    shell.classList.remove('sft-cab--pane-history');
+                    shell.classList.add('sft-cab--pane-qr');
+                }
                 cabClearSeg();
                 if (segQ) {
                     segQ.classList.add('sft-cab-desk-pill--on');
@@ -10907,10 +11047,12 @@
                 return;
             }
 
+            cabHideAllPanes();
             listPane.style.display = 'flex';
-            qrPane.style.display = 'none';
             if (foot) foot.style.display = '';
-            if (shell) shell.classList.remove('sft-cab--pane-qr');
+            if (totalBar) totalBar.style.display = '';
+            if (deskRight) deskRight.style.display = '';
+            if (shell) shell.classList.remove('sft-cab--pane-qr', 'sft-cab--pane-history');
             cabClearSeg();
             if (segL) {
                 segL.classList.add('sft-cab-desk-pill--on');
@@ -10930,11 +11072,11 @@
             var el = document.getElementById('sftDjAmOverlay');
             if (!el) return;
             var cabPane = forcedPane;
-            if (cabPane !== 'list' && cabPane !== 'qr' && cabPane !== 'both') {
+            if (cabPane !== 'list' && cabPane !== 'history' && cabPane !== 'qr' && cabPane !== 'both') {
                 try {
                     var sp = new URLSearchParams(window.location.search);
                     var c = sp.get('sft_cab');
-                    if (c === 'list' || c === 'qr' || c === 'both') cabPane = c;
+                    if (c === 'list' || c === 'history' || c === 'qr' || c === 'both') cabPane = c;
                 } catch (eP) { void eP; }
             }
             if (typeof window.sftCabSetPane === 'function') window.sftCabSetPane(cabPane || 'list');

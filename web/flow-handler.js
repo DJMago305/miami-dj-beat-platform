@@ -11,9 +11,10 @@
 
 let flowCharts = { timeline: null, activity: null, distribution: null };
 let currentLedger = [];
+let currentStatementLedger = [];
 let currentRange = '1y';
 let _flowLoadSeq = 0;
-console.info('[Flow] build 202605131450-venues-fix');
+console.info('[Flow] build 202605131800-fase-b-statement');
 
 function mdjFlowWithTimeout(promise, ms) {
     return Promise.race([
@@ -214,6 +215,80 @@ function soundfortipsAcceptedToLedgerRows(userId, rows) {
     });
 }
 
+/** Fase B: extracto tipo banco desde Postgres (refresh + get_my_flow_statement). */
+async function mdjFlowFetchStatementLedger(supabase) {
+    try {
+        var refreshRes = await mdjFlowWithTimeout(supabase.rpc('refresh_my_dj_flow_rollups'), 15000);
+        if (refreshRes && refreshRes.error) {
+            console.warn('[Flow] refresh_my_dj_flow_rollups:', refreshRes.error.message || refreshRes.error);
+        }
+    } catch (refreshErr) {
+        console.warn('[Flow] refresh rollups omitido:', refreshErr && refreshErr.message ? refreshErr.message : refreshErr);
+    }
+    var stmtRes = await supabase.rpc('get_my_flow_statement');
+    if (stmtRes.error) {
+        console.warn('[Flow] get_my_flow_statement:', stmtRes.error.message || stmtRes.error);
+        return [];
+    }
+    return stmtRes.data || [];
+}
+
+function mdjStatementGrainSubline(grain) {
+    var g = String(grain || '').toLowerCase();
+    if (g === 'day') return 'Extracto · día con actividad';
+    if (g === 'week') return 'Extracto · semana';
+    if (g === 'month') return 'Extracto · mes';
+    if (g === 'year') return 'Extracto · año fiscal';
+    return 'EXTRACTO';
+}
+
+function mdjStatementRowsToLedgerDisplay(rows) {
+    if (!rows || !rows.length) return [];
+    return rows.map(function (row) {
+        var sortAt = row.sort_at || row.period_end || row.period_start;
+        var grossCents = Number(row.gross_cents) || 0;
+        var commCents = Number(row.commission_cents) || 0;
+        var netCents = Number(row.net_cents) != null ? Number(row.net_cents) : (grossCents - commCents);
+        return {
+            id: 'stmt-' + String(row.grain || 'row') + '-' + String(row.period_start),
+            type: 'income',
+            amount_cents: grossCents,
+            status: 'available',
+            unlock_at: null,
+            created_at: sortAt,
+            metadata: {
+                event_name: row.label || 'Ingresos',
+                flow_statement: true,
+                flow_grain: row.grain,
+            },
+            _statement: {
+                commission_cents: commCents,
+                net_cents: netCents,
+                tx_count: row.tx_count,
+            },
+        };
+    });
+}
+
+async function mdjFlowRenderStatementTable(supabase) {
+    var rows = await mdjFlowFetchStatementLedger(supabase);
+    currentStatementLedger = mdjStatementRowsToLedgerDisplay(rows);
+    if (currentStatementLedger.length) {
+        renderLedgerTable(currentStatementLedger);
+        return true;
+    }
+    currentStatementLedger = [];
+    return false;
+}
+
+async function mdjFlowTryRenderLedgerTable(supabase, fallbackLedger) {
+    var ok = await mdjFlowRenderStatementTable(supabase);
+    if (!ok) {
+        renderLedgerTable(fallbackLedger != null ? fallbackLedger : currentLedger);
+    }
+    return ok;
+}
+
 async function loadFlowData(range = '1y', targetUserId = null) {
     const loadSeq = ++_flowLoadSeq;
     currentRange = range;
@@ -291,7 +366,8 @@ async function loadFlowData(range = '1y', targetUserId = null) {
         renderTimelineChart(currentLedger, [], range, startDate, emptyRes);
         renderActivityChart([], range, startDate, emptyRes);
         renderDistributionChart(currentLedger, [], range, startDate, emptyRes);
-        renderLedgerTable(currentLedger);
+        await mdjFlowTryRenderLedgerTable(supabase, currentLedger);
+        if (loadSeq !== _flowLoadSeq) return;
         if (ledgerRes.error) {
             mdjFlowSetStatus('No se pudo leer el libro mayor. Revisa sesión o permisos.', 'error');
         } else if (currentLedger.length) {
@@ -326,6 +402,13 @@ async function loadFlowData(range = '1y', targetUserId = null) {
     }
 
     if (ledgerRes.error) {
+        var stmtOnErr = await mdjFlowRenderStatementTable(supabase);
+        if (loadSeq !== _flowLoadSeq) return;
+        if (stmtOnErr) {
+            mdjFlowSetStatus(null);
+            scheduleFlowChartsResize();
+            return;
+        }
         mdjFlowSetStatus('No se pudo leer el libro mayor. Revisa sesión o permisos.', 'error');
         var lb = document.getElementById('ledger-body');
         if (lb) {
@@ -377,10 +460,11 @@ async function loadFlowData(range = '1y', targetUserId = null) {
     renderActivityChart(leads, range, startDate, residencyMetrics);
     renderDistributionChart(ledger, leads, range, startDate, residencyMetrics);
 
-    // 6. RENDER LEDGER TABLE
-    renderLedgerTable(currentLedger);
+    // 6. RENDER LEDGER TABLE (extracto banco vía RPC; fallback libro crudo)
+    await mdjFlowTryRenderLedgerTable(supabase, currentLedger);
+    if (loadSeq !== _flowLoadSeq) return;
 
-    if (currentLedger.length) {
+    if (currentStatementLedger.length || currentLedger.length) {
         mdjFlowSetStatus(null);
     } else if (ledger.length) {
         mdjFlowSetStatus('Sin movimientos en el rango seleccionado. Prueba Vista anual.', null);
@@ -835,6 +919,62 @@ function renderDistributionChart(ledger, leads, range, startDate, residencyMetri
     });
 }
 
+/** Vista libro: agrupa propinas SFT del mismo día (evita 100+ filas en una noche). KPIs usan ledger crudo. */
+function mdjGroupSftForLedgerDisplay(ledger) {
+    if (!ledger || !ledger.length) return [];
+    var rest = [];
+    var sftByDay = Object.create(null);
+    ledger.forEach(function (tx) {
+        if (tx && tx.metadata && tx.metadata.soundfortips === true && !tx.metadata.soundfortips_group) {
+            var d = new Date(tx.created_at);
+            var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            if (!sftByDay[key]) {
+                sftByDay[key] = { txs: [], latestMs: 0 };
+            }
+            sftByDay[key].txs.push(tx);
+            var tms = d.getTime();
+            if (tms > sftByDay[key].latestMs) sftByDay[key].latestMs = tms;
+        } else if (tx) {
+            rest.push(tx);
+        }
+    });
+    var grouped = Object.keys(sftByDay).map(function (key) {
+        var bucket = sftByDay[key];
+        var txs = bucket.txs;
+        var grossCents = txs.reduce(function (sum, t) { return sum + (Number(t.amount_cents) || 0); }, 0);
+        var n = txs.length;
+        var grossUsd = (grossCents / 100).toFixed(2);
+        return {
+            id: 'sft-day-' + key,
+            dj_user_id: txs[0].dj_user_id,
+            type: 'income',
+            amount_cents: grossCents,
+            status: 'available',
+            unlock_at: null,
+            event_id: null,
+            metadata: {
+                source: 'tip',
+                soundfortips: true,
+                soundfortips_group: true,
+                sft_count: n,
+                commission_rate: txs[0].metadata && txs[0].metadata.commission_rate != null
+                    ? txs[0].metadata.commission_rate
+                    : 10,
+                event_name: 'SoundForTips™ · Total noche ($' + grossUsd + ' · ' + n + ' propina' + (n === 1 ? '' : 's') + ')',
+                sft_day: key,
+            },
+            created_at: new Date(bucket.latestMs).toISOString(),
+        };
+    });
+    return rest.concat(grouped).sort(function (a, b) {
+        return new Date(b.created_at) - new Date(a.created_at);
+    });
+}
+
+function mdjLedgerIsStatementRow(tx) {
+    return !!(tx && tx.metadata && tx.metadata.flow_statement);
+}
+
 function renderLedgerTable(ledger) {
     const body = document.getElementById('ledger-body');
     if (!body) return;
@@ -844,21 +984,44 @@ function renderLedgerTable(ledger) {
         return;
     }
 
-    body.innerHTML = ledger.map(tx => {
-        const date = new Date(tx.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
-        const gross = (tx.amount_cents / 100);
-        const commRate = tx.metadata?.commission_rate || 10;
-        const comm = (gross * commRate / 100);
-        const net = gross - comm;
+    const useStatement = ledger.every(mdjLedgerIsStatementRow);
+    const displayLedger = useStatement ? ledger : mdjGroupSftForLedgerDisplay(ledger);
 
-        const unlock = tx.unlock_at ? new Date(tx.unlock_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : '—';
+    body.innerHTML = displayLedger.map(tx => {
+        const isStmt = mdjLedgerIsStatementRow(tx);
+        const date = new Date(tx.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+        let gross;
+        let comm;
+        let net;
+        let commRate;
+        if (isStmt && tx._statement) {
+            gross = (tx.amount_cents / 100);
+            comm = (tx._statement.commission_cents / 100);
+            net = (tx._statement.net_cents / 100);
+            commRate = gross > 0 ? Math.round((comm / gross) * 100) : 10;
+        } else {
+            gross = (tx.amount_cents / 100);
+            commRate = tx.metadata?.commission_rate || 10;
+            comm = (gross * commRate / 100);
+            net = gross - comm;
+        }
+
+        const unlock = isStmt && tx._statement && tx._statement.tx_count != null
+            ? String(tx._statement.tx_count) + ' mov.'
+            : (tx.unlock_at ? new Date(tx.unlock_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : '—');
+        const isSftGroup = !!(tx.metadata && tx.metadata.soundfortips_group);
+        const subLine = isStmt
+            ? mdjStatementGrainSubline(tx.metadata.flow_grain)
+            : (isSftGroup
+                ? 'Total nocturno · detalle en SoundForTips™ Historia'
+                : String(tx.type || '').toUpperCase());
 
         return `
             <tr>
                 <td style="font-weight:700; color:#fff;">${date}</td>
                 <td>
                     <div style="font-weight:700;">${tx.metadata?.event_name || tx.event_id || 'Servicio'}</div>
-                    <div style="font-size:10px; opacity:0.4;">${String(tx.type || '').toUpperCase()}</div>
+                    <div style="font-size:10px; opacity:0.4;">${subLine}</div>
                 </td>
                 <td style="font-weight:700;">$${gross.toFixed(2)}</td>
                 <td style="color:#ff5555;">-$${comm.toFixed(2)} (${commRate}%)</td>
@@ -878,7 +1041,8 @@ function filterLedger(type, clickedEl) {
     }
     if (el && el.classList) el.classList.add('active');
 
-    const filtered = type === 'all' ? currentLedger : currentLedger.filter(tx => tx.type === type);
+    const src = currentStatementLedger.length ? currentStatementLedger : currentLedger;
+    const filtered = type === 'all' ? src : src.filter(tx => tx.type === type);
     renderLedgerTable(filtered);
 }
 
