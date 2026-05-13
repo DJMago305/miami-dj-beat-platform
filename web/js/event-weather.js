@@ -1280,7 +1280,7 @@ function generateHourlyTimelineOptions(data) {
         const temp = Math.round(data.main?.temp || 78);
         const iconCode = data.weather?.[0]?.icon || "01d";
         const isNightDef = iconCode.endsWith('n');
-        const defaultImg = isNightDef ? window.getLunarAsset(new Date(), temp) : './assets/weather/Sunny%20Real.png';
+        const defaultImg = isNightDef ? window.getLunarAsset(new Date(), temp) : './assets/weather/sunny-real.png';
         const defaultFilter = isNightDef ? 'rgba(200,220,255,0.6)' : 'rgba(255,200,100,0.85)';
         const defSize = isNightDef ? '24px' : '34px';
         const defMargin = isNightDef ? 'margin: 5px 0;' : 'margin: 0;';
@@ -1312,7 +1312,7 @@ function generateHourlyTimelineOptions(data) {
 
         const icon = block.weather[0].icon;
         const isNight = icon.endsWith('n');
-        const imgSrc = isNight ? window.getLunarAsset(dateObj, block.main.temp) : './assets/weather/Sunny%20Real.png';
+        const imgSrc = isNight ? window.getLunarAsset(dateObj, block.main.temp) : './assets/weather/sunny-real.png';
         const glowColor = isNight ? 'rgba(200,220,255,0.6)' : 'rgba(255,200,100,0.85)';
         const size = isNight ? '24px' : '34px';
         const margins = isNight ? 'margin: 5px 0;' : 'margin: 0;';
