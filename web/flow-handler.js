@@ -12,9 +12,12 @@
 let flowCharts = { timeline: null, activity: null, distribution: null };
 let currentLedger = [];
 let currentStatementLedger = [];
+let currentStatementGrain = 'day';
+let currentLedgerAll = [];
+let currentLedgerFilterType = 'all';
 let currentRange = '1y';
 let _flowLoadSeq = 0;
-console.info('[Flow] build 202605131800-fase-b-statement');
+console.info('[Flow] build 202605132300-ledger-filters');
 
 function mdjFlowWithTimeout(promise, ms) {
     return Promise.race([
@@ -195,7 +198,10 @@ function soundfortipsAcceptedToLedgerRows(userId, rows) {
         var gross = Number(row.tip_usd) || 0;
         var grossCents = Math.round(gross * 100);
         var song = row.song != null ? String(row.song).trim() : '';
-        var label = song ? 'SoundForTips™ · ' + song.slice(0, 100) : 'SoundForTips™';
+        var artist = row.artist != null ? String(row.artist).trim() : '';
+        var label = 'SoundForTips™';
+        if (song) label += ' · ' + song.slice(0, 80);
+        if (artist) label += ' — ' + artist.slice(0, 60);
         return {
             id: 'sft-flow-' + String(row.id),
             dj_user_id: userId,
@@ -215,8 +221,8 @@ function soundfortipsAcceptedToLedgerRows(userId, rows) {
     });
 }
 
-/** Fase B: extracto tipo banco desde Postgres (refresh + get_my_flow_statement). */
-async function mdjFlowFetchStatementLedger(supabase) {
+/** Extracto banco: rollups por pestaña Día / Semana / Mes / Año (tablas dj_flow_*; RLS propio DJ). */
+async function mdjFlowRefreshRollups(supabase) {
     try {
         var refreshRes = await mdjFlowWithTimeout(supabase.rpc('refresh_my_dj_flow_rollups'), 15000);
         if (refreshRes && refreshRes.error) {
@@ -225,16 +231,390 @@ async function mdjFlowFetchStatementLedger(supabase) {
     } catch (refreshErr) {
         console.warn('[Flow] refresh rollups omitido:', refreshErr && refreshErr.message ? refreshErr.message : refreshErr);
     }
+}
+
+function mdjFlowParseYmd(ymd) {
+    var p = String(ymd || '').split('-');
+    if (p.length < 3) return new Date(ymd);
+    return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]), 12, 0, 0);
+}
+
+function mdjFlowRollupLabel(grain, row) {
+    var g = String(grain || '').toLowerCase();
+    if (g === 'day' && row.bucket_date) {
+        return mdjFlowParseYmd(row.bucket_date).toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) + ' · ingresos';
+    }
+    if (g === 'week' && row.week_start) {
+        var ws = mdjFlowParseYmd(row.week_start);
+        var we = new Date(ws.getTime());
+        we.setDate(we.getDate() + 6);
+        return 'Sem ' + ws.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) + ' – ' + we.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+    if (g === 'month' && row.month_start) {
+        return mdjFlowParseYmd(row.month_start).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    }
+    if (g === 'year' && row.year_start) {
+        return String(mdjFlowParseYmd(row.year_start).getFullYear());
+    }
+    return 'Ingresos';
+}
+
+async function mdjFlowFetchRollupGrain(supabase, grain) {
+    var g = String(grain || 'week').toLowerCase();
+    var cfg = {
+        day: { table: 'dj_flow_daily', col: 'bucket_date', limit: 90 },
+        week: { table: 'dj_flow_weekly', col: 'week_start', limit: 52 },
+        month: { table: 'dj_flow_monthly', col: 'month_start', limit: 36 },
+        year: { table: 'dj_flow_yearly', col: 'year_start', limit: 7 },
+    }[g];
+    if (!cfg) return [];
+    var res = await supabase
+        .from(cfg.table)
+        .select(cfg.col + ', gross_cents, commission_cents, net_cents, tx_count')
+        .order(cfg.col, { ascending: false })
+        .limit(cfg.limit);
+    if (res.error) {
+        console.warn('[Flow] rollup ' + g + ':', res.error.message || res.error);
+        return [];
+    }
+    return res.data || [];
+}
+
+function mdjFlowRollupRowsToDisplay(grain, rows) {
+    if (!rows || !rows.length) return [];
+    var g = String(grain || 'week').toLowerCase();
+    var dateCol = g === 'day' ? 'bucket_date' : (g === 'week' ? 'week_start' : (g === 'month' ? 'month_start' : 'year_start'));
+    return rows.map(function (row) {
+        var dateKey = row[dateCol];
+        var grossCents = Number(row.gross_cents) || 0;
+        var commCents = Number(row.commission_cents) || 0;
+        var netCents = Number(row.net_cents) != null ? Number(row.net_cents) : (grossCents - commCents);
+        return {
+            id: 'stmt-' + g + '-' + String(dateKey),
+            type: 'income',
+            amount_cents: grossCents,
+            status: 'available',
+            unlock_at: null,
+            created_at: mdjFlowParseYmd(dateKey).toISOString(),
+            metadata: {
+                event_name: mdjFlowRollupLabel(g, row),
+                flow_statement: true,
+                flow_grain: g,
+            },
+            _statement: {
+                commission_cents: commCents,
+                net_cents: netCents,
+                tx_count: row.tx_count,
+            },
+        };
+    });
+}
+
+function mdjFlowEtYmd(iso) {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
+}
+
+function mdjFlowWeekStartKey(ymd) {
+    var d = mdjFlowParseYmd(ymd);
+    var dow = d.getDay();
+    var mondayOffset = dow === 0 ? -6 : 1 - dow;
+    d.setDate(d.getDate() + mondayOffset);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function mdjFlowIsPayoutTx(tx) {
+    if (!tx) return false;
+    var t = String(tx.type || '').toLowerCase();
+    if (t === 'payout' || t === 'withdrawal') return true;
+    if (tx.status === 'paid' && t !== 'income') return true;
+    return !!(tx.metadata && tx.metadata.flow_payout_total);
+}
+
+function mdjFlowIsIncomeTx(tx) {
+    if (!tx) return false;
+    if (mdjFlowIsPayoutTx(tx)) return false;
+    if (tx.metadata && tx.metadata.flow_week_total && !tx.metadata.flow_payout_total) return true;
+    return String(tx.type || '').toLowerCase() === 'income' || !!(tx.metadata && tx.metadata.soundfortips);
+}
+
+function mdjFlowPayoutLabel(tx) {
+    if (tx.metadata && tx.metadata.event_name) return tx.metadata.event_name;
+    if (tx.metadata && tx.metadata.payout_method) return 'Retiro · ' + tx.metadata.payout_method;
+    return 'Pago / retiro';
+}
+
+function mdjFlowGroupPayoutsWeekly(payouts) {
+    if (!payouts.length) return [];
+    var byWeek = Object.create(null);
+    payouts.forEach(function (tx) {
+        var wk = mdjFlowWeekStartKey(mdjFlowEtYmd(tx.created_at));
+        if (!byWeek[wk]) byWeek[wk] = [];
+        byWeek[wk].push(tx);
+    });
+    var out = [];
+    Object.keys(byWeek).sort().reverse().forEach(function (wk) {
+        var txs = byWeek[wk].slice().sort(function (a, b) { return new Date(b.created_at) - new Date(a.created_at); });
+        txs.forEach(function (tx) {
+            out.push({
+                id: tx.id || ('payout-' + wk + '-' + tx.created_at),
+                type: tx.type || 'payout',
+                amount_cents: Number(tx.amount_cents) || 0,
+                status: tx.status || 'paid',
+                unlock_at: tx.unlock_at || null,
+                created_at: tx.created_at,
+                metadata: {
+                    event_name: mdjFlowPayoutLabel(tx),
+                    flow_statement: true,
+                    flow_grain: 'week-payout',
+                },
+            });
+        });
+        var totalCents = txs.reduce(function (s, t) { return s + (Number(t.amount_cents) || 0); }, 0);
+        var ws = mdjFlowParseYmd(wk);
+        var we = new Date(ws.getTime());
+        we.setDate(we.getDate() + 6);
+        out.push({
+            id: 'week-payout-total-' + wk,
+            type: 'payout',
+            amount_cents: totalCents,
+            status: 'paid',
+            unlock_at: null,
+            created_at: we.toISOString(),
+            metadata: {
+                event_name: 'Total pagos semana · ' + ws.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) + ' – ' + we.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
+                flow_statement: true,
+                flow_grain: 'week',
+                flow_week_total: true,
+                flow_payout_total: true,
+            },
+            _statement: { commission_cents: 0, net_cents: -totalCents, tx_count: txs.length },
+        });
+    });
+    return out;
+}
+
+function mdjFlowGroupPayoutsByPeriod(payouts, grain) {
+    if (!payouts.length) return [];
+    var bucketKey = grain === 'year'
+        ? function (iso) { return mdjFlowEtYmd(iso).slice(0, 4); }
+        : function (iso) { return mdjFlowEtYmd(iso).slice(0, 7); };
+    var by = Object.create(null);
+    payouts.forEach(function (tx) {
+        var k = bucketKey(tx.created_at);
+        if (!by[k]) by[k] = [];
+        by[k].push(tx);
+    });
+    return Object.keys(by).sort().reverse().map(function (k) {
+        var txs = by[k];
+        var totalCents = txs.reduce(function (s, t) { return s + (Number(t.amount_cents) || 0); }, 0);
+        var label;
+        if (grain === 'year') {
+            label = 'Total pagos ' + k;
+        } else {
+            var parts = k.split('-');
+            var d = mdjFlowParseYmd(parts[0] + '-' + parts[1] + '-01');
+            label = 'Total pagos · ' + d.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+        }
+        var sortDate = grain === 'year' ? (k + '-12-31') : (k + '-28');
+        return {
+            id: 'payout-' + grain + '-' + k,
+            type: 'payout',
+            amount_cents: totalCents,
+            status: 'paid',
+            unlock_at: null,
+            created_at: mdjFlowParseYmd(sortDate).toISOString(),
+            metadata: {
+                event_name: label,
+                flow_statement: true,
+                flow_grain: grain,
+                flow_payout_total: true,
+            },
+            _statement: { commission_cents: 0, net_cents: -totalCents, tx_count: txs.length },
+        };
+    });
+}
+
+function mdjFlowBuildPayoutGrainLedger(grain) {
+    var payouts = currentLedgerAll.filter(mdjFlowIsPayoutTx);
+    var g = String(grain || 'day').toLowerCase();
+    if (!payouts.length) return [];
+    if (g === 'day') {
+        return payouts.slice().sort(function (a, b) { return new Date(b.created_at) - new Date(a.created_at); });
+    }
+    if (g === 'week') return mdjFlowGroupPayoutsWeekly(payouts);
+    if (g === 'month') return mdjFlowGroupPayoutsByPeriod(payouts, 'month');
+    if (g === 'year') return mdjFlowGroupPayoutsByPeriod(payouts, 'year');
+    return [];
+}
+
+function mdjFlowDetailSubline(tx) {
+    if (mdjFlowIsPayoutTx(tx) && !(tx.metadata && tx.metadata.flow_payout_total)) return 'Pago / retiro';
+    if (tx.metadata && tx.metadata.soundfortips) return 'SoundForTips™ · propina individual';
+    if (tx.metadata && tx.metadata.source) return String(tx.metadata.source);
+    if (tx.type === 'payout' || tx.type === 'withdrawal') return 'PAGO';
+    return 'INGRESO · libro mayor';
+}
+
+function mdjFlowDayDetailFromCache() {
+    var since = new Date();
+    since.setDate(since.getDate() - 90);
+    return currentLedgerAll
+        .filter(function (tx) { return new Date(tx.created_at) >= since; })
+        .sort(function (a, b) { return new Date(b.created_at) - new Date(a.created_at); });
+}
+
+async function mdjFlowFetchDayDetailLedger(supabase, userId) {
+    if (currentLedgerAll.length) return mdjFlowDayDetailFromCache();
+    var since = new Date();
+    since.setDate(since.getDate() - 90);
+    var sinceIso = since.toISOString();
+    var ledgerRes = await supabase
+        .from('dj_ledger')
+        .select('*')
+        .eq('dj_user_id', userId)
+        .gte('created_at', sinceIso)
+        .order('created_at', { ascending: false });
+    if (ledgerRes.error) {
+        console.warn('[Flow] day detail ledger:', ledgerRes.error.message || ledgerRes.error);
+        return [];
+    }
+    var sftRows = [];
+    try {
+        var sftRes = await mdjFlowWithTimeout(
+            supabase.rpc('get_my_soundfortips_accepted_for_flow', { p_since: sinceIso }),
+            8000
+        );
+        if (sftRes && !sftRes.error && Array.isArray(sftRes.data)) sftRows = sftRes.data;
+    } catch (_e) { /* optional */ }
+    var ledger = (ledgerRes.data || []).filter(function (tx) {
+        return !(tx.metadata && tx.metadata.soundfortips);
+    });
+    var merged = ledger.concat(soundfortipsAcceptedToLedgerRows(userId, sftRows));
+    return merged.sort(function (a, b) { return new Date(b.created_at) - new Date(a.created_at); });
+}
+
+async function mdjFlowBuildWeekLedger(supabase) {
+    var days = await mdjFlowFetchRollupGrain(supabase, 'day');
+    if (!days.length) return [];
+    var byWeek = Object.create(null);
+    days.forEach(function (row) {
+        var wk = mdjFlowWeekStartKey(row.bucket_date);
+        if (!byWeek[wk]) byWeek[wk] = [];
+        byWeek[wk].push(row);
+    });
+    var out = [];
+    Object.keys(byWeek).sort().reverse().forEach(function (wk) {
+        var dayRows = byWeek[wk].slice().sort(function (a, b) {
+            return String(b.bucket_date).localeCompare(String(a.bucket_date));
+        });
+        dayRows.forEach(function (d) {
+            var disp = mdjFlowRollupRowsToDisplay('day', [d])[0];
+            disp.metadata.flow_grain = 'week-day';
+            disp.metadata.event_name = mdjFlowRollupLabel('day', d);
+            out.push(disp);
+        });
+        var tg = 0;
+        var tc = 0;
+        var tn = 0;
+        var txc = 0;
+        dayRows.forEach(function (d) {
+            tg += Number(d.gross_cents) || 0;
+            tc += Number(d.commission_cents) || 0;
+            tn += Number(d.net_cents) || 0;
+            txc += Number(d.tx_count) || 0;
+        });
+        var ws = mdjFlowParseYmd(wk);
+        var we = new Date(ws.getTime());
+        we.setDate(we.getDate() + 6);
+        out.push({
+            id: 'week-total-' + wk,
+            type: 'income',
+            amount_cents: tg,
+            status: 'available',
+            unlock_at: null,
+            created_at: we.toISOString(),
+            metadata: {
+                event_name: 'Total semana · ' + ws.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) + ' – ' + we.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
+                flow_statement: true,
+                flow_grain: 'week',
+                flow_week_total: true,
+            },
+            _statement: { commission_cents: tc, net_cents: tn, tx_count: txc },
+        });
+    });
+    return out;
+}
+
+async function mdjFlowBuildStatementForGrain(supabase, grain, userId, filterType) {
+    var ft = filterType || currentLedgerFilterType || 'all';
+    var g = String(grain || 'day').toLowerCase();
+
+    if (g === 'day') {
+        var lines = await mdjFlowFetchDayDetailLedger(supabase, userId);
+        if (ft === 'income') lines = lines.filter(mdjFlowIsIncomeTx);
+        else if (ft === 'payout') lines = lines.filter(mdjFlowIsPayoutTx);
+        return { mode: 'detail', rows: lines };
+    }
+
+    if (ft === 'payout') {
+        return { mode: 'statement', rows: mdjFlowBuildPayoutGrainLedger(g) };
+    }
+
+    if (g === 'week') {
+        return { mode: 'statement', rows: await mdjFlowBuildWeekLedger(supabase) };
+    }
+    if (g === 'month') {
+        var months = await mdjFlowFetchRollupGrain(supabase, 'month');
+        return { mode: 'statement', rows: mdjFlowRollupRowsToDisplay('month', months) };
+    }
+    if (g === 'year') {
+        var years = await mdjFlowFetchRollupGrain(supabase, 'year');
+        return { mode: 'statement', rows: mdjFlowRollupRowsToDisplay('year', years) };
+    }
+    return { mode: 'statement', rows: [] };
+}
+
+function mdjFlowUpdateGrainHint(grain) {
+    var el = document.getElementById('flow-statement-grain-hint');
+    if (!el) return;
+    var key = 'flow-statement-hint-' + String(grain || 'day').toLowerCase();
+    var fallback = {
+        day: 'Cada fila es un ingreso real (evento, libro o propina SFT). Hoy y últimos 90 días.',
+        week: 'Días con actividad agrupados por semana + fila de total semanal.',
+        month: 'Total ganado por mes (ingresos netos agregados).',
+        year: 'Total ganado por año fiscal (hasta 7 años).',
+    };
+    el.textContent = (typeof window.t === 'function' && window.t(key)) || fallback[grain] || fallback.day;
+}
+
+/** Fallback: filas mezcladas del RPC legacy (misma pestaña activa). */
+async function mdjFlowFetchStatementLedgerRpc(supabase, grain) {
     var stmtRes = await supabase.rpc('get_my_flow_statement');
     if (stmtRes.error) {
         console.warn('[Flow] get_my_flow_statement:', stmtRes.error.message || stmtRes.error);
         return [];
     }
-    return stmtRes.data || [];
+    var g = String(grain || 'week').toLowerCase();
+    return (stmtRes.data || []).filter(function (row) { return String(row.grain || '').toLowerCase() === g; });
 }
 
-function mdjStatementGrainSubline(grain) {
+async function mdjFlowFetchStatementLedger(supabase, grain, skipRefresh) {
+    if (!skipRefresh) {
+        await mdjFlowRefreshRollups(supabase);
+    }
+    var g = grain || currentStatementGrain || 'week';
+    var rollupRows = await mdjFlowFetchRollupGrain(supabase, g);
+    if (rollupRows.length) return { source: 'rollup', grain: g, rows: rollupRows };
+    var rpcRows = await mdjFlowFetchStatementLedgerRpc(supabase, g);
+    return { source: 'rpc', grain: g, rows: rpcRows };
+}
+
+function mdjStatementGrainSubline(grain, tx) {
     var g = String(grain || '').toLowerCase();
+    if (tx && tx.metadata && tx.metadata.flow_payout_total) return 'Total de pagos';
+    if (tx && tx.metadata && tx.metadata.flow_week_total) return 'Total semanal';
+    if (g === 'week-payout') return 'Pago en la semana';
+    if (g === 'week-day') return 'Día con actividad en la semana';
     if (g === 'day') return 'Extracto · día con actividad';
     if (g === 'week') return 'Extracto · semana';
     if (g === 'month') return 'Extracto · mes';
@@ -270,19 +650,58 @@ function mdjStatementRowsToLedgerDisplay(rows) {
     });
 }
 
-async function mdjFlowRenderStatementTable(supabase) {
-    var rows = await mdjFlowFetchStatementLedger(supabase);
-    currentStatementLedger = mdjStatementRowsToLedgerDisplay(rows);
+async function mdjFlowRenderStatementTable(supabase, grain, skipRefresh, filterType) {
+    var g = grain || currentStatementGrain || 'day';
+    var ft = filterType || currentLedgerFilterType || 'all';
+    currentStatementGrain = g;
+    currentLedgerFilterType = ft;
+    if (!skipRefresh) {
+        await mdjFlowRefreshRollups(supabase);
+    }
+    var sessionRes = await supabase.auth.getSession();
+    var userId = sessionRes.data && sessionRes.data.session ? sessionRes.data.session.user.id : null;
+    var pack = await mdjFlowBuildStatementForGrain(supabase, g, userId, ft);
+    currentStatementLedger = pack.rows || [];
+    mdjFlowSyncGrainTabUi(g);
+    mdjFlowUpdateGrainHint(g);
     if (currentStatementLedger.length) {
         renderLedgerTable(currentStatementLedger);
         return true;
     }
-    currentStatementLedger = [];
+    renderLedgerTable([]);
     return false;
 }
 
+function mdjFlowSyncGrainTabUi(grain) {
+    var g = String(grain || 'day').toLowerCase();
+    document.querySelectorAll('.flow-statement-grain-btn').forEach(function (btn) {
+        var bg = btn.getAttribute('data-grain');
+        btn.classList.toggle('active', bg === g);
+    });
+}
+
+async function mdjFlowSwitchStatementGrain(grain, clickedEl) {
+    var g = String(grain || 'day').toLowerCase();
+    var supabase = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+    if (!supabase) return;
+    var body = document.getElementById('ledger-body');
+    if (body) {
+        body.innerHTML = '<tr><td colspan="7" style="padding:40px;text-align:center;color:rgba(255,255,255,0.25);">Cargando extracto…</td></tr>';
+    }
+    mdjFlowSyncGrainTabUi(g);
+    mdjFlowSyncTypeFilterUi(currentLedgerFilterType);
+    await mdjFlowRenderStatementTable(supabase, g, true, currentLedgerFilterType);
+}
+
+function mdjFlowSyncTypeFilterUi(filterType) {
+    var ft = filterType || 'all';
+    document.querySelectorAll('.ledger-type-filter-btn').forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-ledger-filter') === ft);
+    });
+}
+
 async function mdjFlowTryRenderLedgerTable(supabase, fallbackLedger) {
-    var ok = await mdjFlowRenderStatementTable(supabase);
+    var ok = await mdjFlowRenderStatementTable(supabase, currentStatementGrain, false);
     if (!ok) {
         renderLedgerTable(fallbackLedger != null ? fallbackLedger : currentLedger);
     }
@@ -361,6 +780,7 @@ async function loadFlowData(range = '1y', targetUserId = null) {
 
     if (!profile) {
         currentLedger = ledgerRes.data || [];
+        currentLedgerAll = currentLedger.slice();
         await processKPIs(currentLedger, [], startDate, prevStartDate, 10, null);
         const emptyRes = computeResidencyMetrics(null);
         renderTimelineChart(currentLedger, [], range, startDate, emptyRes);
@@ -376,6 +796,7 @@ async function loadFlowData(range = '1y', targetUserId = null) {
             mdjFlowSetStatus('Perfil DJ incompleto y libro mayor vacío desde la app.', 'error');
         }
         scheduleFlowChartsResize();
+        await mdjFlowRefreshExportYears(supabase);
         return;
     }
 
@@ -429,6 +850,7 @@ async function loadFlowData(range = '1y', targetUserId = null) {
 
     var sftLedger = soundfortipsAcceptedToLedgerRows(userId, sftRows);
     ledger = ledger.concat(sftLedger);
+    currentLedgerAll = ledger.slice();
     ledger.sort(function (a, b) {
         return new Date(b.created_at) - new Date(a.created_at);
     });
@@ -475,6 +897,7 @@ async function loadFlowData(range = '1y', targetUserId = null) {
 
     scheduleFlowChartsResize();
     setTimeout(scheduleFlowChartsResize, 250);
+    await mdjFlowRefreshExportYears(supabase);
     } catch (flowErr) {
         console.error('[Flow] loadFlowData:', flowErr);
         if (loadSeq === _flowLoadSeq) {
@@ -984,12 +1407,21 @@ function renderLedgerTable(ledger) {
         return;
     }
 
-    const useStatement = ledger.every(mdjLedgerIsStatementRow);
-    const displayLedger = useStatement ? ledger : mdjGroupSftForLedgerDisplay(ledger);
+    const isDayGrain = currentStatementGrain === 'day';
+    const useStatement = !isDayGrain && ledger.every(mdjLedgerIsStatementRow);
+    const displayLedger = isDayGrain
+        ? ledger
+        : (useStatement ? ledger : mdjGroupSftForLedgerDisplay(ledger));
+
+    var todayEt = mdjFlowEtYmd(new Date().toISOString());
 
     body.innerHTML = displayLedger.map(tx => {
         const isStmt = mdjLedgerIsStatementRow(tx);
+        const isWeekTotal = !!(tx.metadata && tx.metadata.flow_week_total);
         const date = new Date(tx.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+        const timeEt = isDayGrain
+            ? new Intl.DateTimeFormat('es-ES', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(tx.created_at))
+            : '';
         let gross;
         let comm;
         let net;
@@ -998,7 +1430,18 @@ function renderLedgerTable(ledger) {
             gross = (tx.amount_cents / 100);
             comm = (tx._statement.commission_cents / 100);
             net = (tx._statement.net_cents / 100);
-            commRate = gross > 0 ? Math.round((comm / gross) * 100) : 10;
+            if (tx.metadata && tx.metadata.flow_payout_total) {
+                comm = 0;
+                commRate = 0;
+                net = -(gross);
+            } else {
+                commRate = gross > 0 ? Math.round((comm / gross) * 100) : 10;
+            }
+        } else if (mdjFlowIsPayoutTx(tx)) {
+            gross = (tx.amount_cents / 100);
+            comm = 0;
+            commRate = 0;
+            net = -gross;
         } else {
             gross = (tx.amount_cents / 100);
             commRate = tx.metadata?.commission_rate || 10;
@@ -1010,22 +1453,27 @@ function renderLedgerTable(ledger) {
             ? String(tx._statement.tx_count) + ' mov.'
             : (tx.unlock_at ? new Date(tx.unlock_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : '—');
         const isSftGroup = !!(tx.metadata && tx.metadata.soundfortips_group);
-        const subLine = isStmt
-            ? mdjStatementGrainSubline(tx.metadata.flow_grain)
-            : (isSftGroup
-                ? 'Total nocturno · detalle en SoundForTips™ Historia'
-                : String(tx.type || '').toUpperCase());
+        const isToday = isDayGrain && mdjFlowEtYmd(tx.created_at) === todayEt;
+        const subLine = isDayGrain
+            ? ((isToday ? 'Hoy · ' : '') + mdjFlowDetailSubline(tx))
+            : (isStmt
+                ? mdjStatementGrainSubline(tx.metadata.flow_grain, tx)
+                : (isSftGroup
+                    ? 'Total nocturno · detalle en SoundForTips™ Historia'
+                    : String(tx.type || '').toUpperCase()));
+        const rowStyle = isWeekTotal ? ' style="background:rgba(197,160,89,0.08);"' : '';
+        const dateCell = isDayGrain ? (date + ' ' + timeEt) : date;
 
         return `
-            <tr>
-                <td style="font-weight:700; color:#fff;">${date}</td>
+            <tr${rowStyle}>
+                <td style="font-weight:700; color:#fff;">${dateCell}</td>
                 <td>
                     <div style="font-weight:700;">${tx.metadata?.event_name || tx.event_id || 'Servicio'}</div>
                     <div style="font-size:10px; opacity:0.4;">${subLine}</div>
                 </td>
                 <td style="font-weight:700;">$${gross.toFixed(2)}</td>
                 <td style="color:#ff5555;">-$${comm.toFixed(2)} (${commRate}%)</td>
-                <td style="font-weight:900; color:#00ff88;">$${net.toFixed(2)}</td>
+                <td style="font-weight:900; color:${net < 0 ? '#ff6b6b' : '#00ff88'};">${net < 0 ? '-' : ''}$${Math.abs(net).toFixed(2)}</td>
                 <td><span class="status-pill ${tx.status}">${tx.status}</span></td>
                 <td>${unlock}</td>
             </tr>
@@ -1034,16 +1482,226 @@ function renderLedgerTable(ledger) {
 }
 
 function filterLedger(type, clickedEl) {
-    document.querySelectorAll('.ledger-filter-btn').forEach(b => b.classList.remove('active'));
+    currentLedgerFilterType = type || 'all';
+    mdjFlowSyncTypeFilterUi(currentLedgerFilterType);
+    var supabase = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+    if (supabase && document.getElementById('flow-statement-grain-hint')) {
+        mdjFlowRenderStatementTable(supabase, currentStatementGrain, true, currentLedgerFilterType);
+        return;
+    }
     var el = clickedEl;
     if (!el && typeof window !== 'undefined' && window.event && window.event.target) {
         el = window.event.target;
     }
     if (el && el.classList) el.classList.add('active');
-
     const src = currentStatementLedger.length ? currentStatementLedger : currentLedger;
-    const filtered = type === 'all' ? src : src.filter(tx => tx.type === type);
+    const filtered = currentLedgerFilterType === 'all'
+        ? src
+        : (currentLedgerFilterType === 'income'
+            ? src.filter(mdjFlowIsIncomeTx)
+            : src.filter(mdjFlowIsPayoutTx));
     renderLedgerTable(filtered);
+    mdjFlowSyncGrainTabUi(currentStatementGrain);
+}
+
+/** Fase C — exportación fiscal CSV (detalle crudo; años vía get_my_flow_export_years). */
+var _flowExportWired = false;
+
+function mdjFlowTxInTaxYearEt(iso, taxYear) {
+    if (!iso) return false;
+    var y = Number(new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric' }).format(new Date(iso)));
+    return y === Number(taxYear);
+}
+
+function mdjFlowFormatEtDateTime(iso) {
+    var d = new Date(iso);
+    return {
+        date: new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d),
+        time: new Intl.DateTimeFormat('en-GB', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(d),
+    };
+}
+
+function mdjFlowCsvEscape(v) {
+    var s = String(v == null ? '' : v);
+    if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+}
+
+function mdjFlowLedgerRowToExport(tx) {
+    var gross = (Number(tx.amount_cents) || 0) / 100;
+    var rate = tx.metadata && tx.metadata.commission_rate != null ? Number(tx.metadata.commission_rate) : 10;
+    var isPayout = String(tx.type || '').toLowerCase() === 'payout';
+    var comm = isPayout ? 0 : (gross * rate / 100);
+    var net = isPayout ? -gross : (gross - comm);
+    var dt = mdjFlowFormatEtDateTime(tx.created_at);
+    return {
+        date_et: dt.date,
+        time_et: dt.time,
+        source: tx.metadata && tx.metadata.soundfortips ? 'soundfortips' : 'ledger',
+        type: tx.type || 'income',
+        concept: (tx.metadata && tx.metadata.event_name) || tx.event_id || 'Income',
+        gross_usd: gross.toFixed(2),
+        commission_usd: comm.toFixed(2),
+        net_usd: net.toFixed(2),
+        commission_pct: isPayout ? 0 : rate,
+        status: tx.status || '',
+        reference_id: tx.id || '',
+    };
+}
+
+function mdjFlowDownloadCsv(filename, content) {
+    var blob = new Blob(['\ufeff' + content], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+}
+
+function mdjFlowSetExportStatus(msg, tone) {
+    var el = document.getElementById('flow-export-status');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.style.color = tone === 'error' ? '#ff6b6b' : (tone === 'ok' ? '#00ff88' : 'rgba(255,255,255,0.45)');
+}
+
+async function mdjFlowRefreshExportYears(supabase) {
+    var sel = document.getElementById('flow-export-year');
+    var btn = document.getElementById('flow-export-csv-btn');
+    if (!sel) return;
+    mdjFlowInitExportPanel();
+    mdjFlowSetExportStatus('');
+    var client = supabase || (window.getSupabaseClient ? window.getSupabaseClient() : window.supabase);
+    if (!client) return;
+    sel.disabled = true;
+    if (btn) btn.disabled = true;
+    var res = await client.rpc('get_my_flow_export_years');
+    sel.innerHTML = '';
+    if (res.error || !res.data || !res.data.length) {
+        var ph = document.createElement('option');
+        ph.value = '';
+        ph.textContent = (typeof window.t === 'function' && window.t('flow-export-empty')) || 'Sin años con datos (7 años)';
+        sel.appendChild(ph);
+        return;
+    }
+    res.data.forEach(function (row) {
+        var opt = document.createElement('option');
+        var net = (Number(row.net_cents) || 0) / 100;
+        var cnt = Number(row.line_count) || 0;
+        opt.value = String(row.tax_year);
+        opt.textContent = row.tax_year + ' — $' + net.toFixed(2) + ' net (' + cnt + ' mov.)';
+        sel.appendChild(opt);
+    });
+    sel.disabled = false;
+    if (btn) btn.disabled = false;
+}
+
+async function mdjFlowExportCsvForYear(taxYear) {
+    var y = Number(taxYear);
+    if (!y) return;
+    var supabase = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+    if (!supabase) {
+        mdjFlowSetExportStatus('Supabase no disponible.', 'error');
+        return;
+    }
+    var btn = document.getElementById('flow-export-csv-btn');
+    var loadingMsg = (typeof window.t === 'function' && window.t('flow-export-loading')) || 'Generando CSV…';
+    mdjFlowSetExportStatus(loadingMsg);
+    if (btn) btn.disabled = true;
+    try {
+        var sessionRes = await supabase.auth.getSession();
+        if (!sessionRes.data || !sessionRes.data.session) {
+            mdjFlowSetExportStatus('Inicia sesión para exportar.', 'error');
+            return;
+        }
+        var userId = sessionRes.data.session.user.id;
+        try {
+            await mdjFlowWithTimeout(supabase.rpc('refresh_my_dj_flow_rollups'), 12000);
+        } catch (_refreshSkip) { /* non-blocking */ }
+
+        var since = new Date(Date.UTC(y - 1, 11, 15, 0, 0, 0)).toISOString();
+        var until = new Date(Date.UTC(y + 1, 0, 15, 23, 59, 59)).toISOString();
+
+        var ledgerRes = await supabase
+            .from('dj_ledger')
+            .select('*')
+            .eq('dj_user_id', userId)
+            .gte('created_at', since)
+            .lte('created_at', until)
+            .order('created_at', { ascending: true });
+
+        if (ledgerRes.error) throw new Error(ledgerRes.error.message || 'ledger');
+
+        var sftRows = [];
+        try {
+            var sftRes = await mdjFlowWithTimeout(
+                supabase.rpc('get_my_soundfortips_accepted_for_flow', { p_since: since }),
+                8000
+            );
+            if (sftRes && !sftRes.error && Array.isArray(sftRes.data)) {
+                sftRows = sftRes.data.filter(function (row) { return mdjFlowTxInTaxYearEt(row.created_at, y); });
+            }
+        } catch (_sftSkip) { /* optional */ }
+
+        var ledgerInYear = (ledgerRes.data || []).filter(function (tx) {
+            if (tx.metadata && tx.metadata.soundfortips) return false;
+            return mdjFlowTxInTaxYearEt(tx.created_at, y);
+        });
+        var sftLedger = soundfortipsAcceptedToLedgerRows(userId, sftRows);
+        var merged = ledgerInYear.concat(sftLedger).sort(function (a, b) {
+            return new Date(a.created_at) - new Date(b.created_at);
+        });
+
+        if (!merged.length) {
+            mdjFlowSetExportStatus((typeof window.t === 'function' && window.t('flow-export-empty-year')) || 'Sin líneas en ese año fiscal.', 'error');
+            return;
+        }
+
+        var exportRows = merged.map(mdjFlowLedgerRowToExport);
+        var cols = ['date_et', 'time_et', 'source', 'type', 'concept', 'gross_usd', 'commission_usd', 'net_usd', 'commission_pct', 'status', 'reference_id'];
+        var lines = [
+            '# Miami DJ Beat LLC — Cash Flow export (tax year ' + y + ', America/New_York)',
+            '# Confidential. For your records / tax preparer. Not legal or tax advice.',
+            cols.join(','),
+        ];
+        var sumGross = 0;
+        var sumComm = 0;
+        var sumNet = 0;
+        exportRows.forEach(function (row) {
+            sumGross += Number(row.gross_usd);
+            sumComm += Number(row.commission_usd);
+            sumNet += Number(row.net_usd);
+            lines.push(cols.map(function (c) { return mdjFlowCsvEscape(row[c]); }).join(','));
+        });
+        lines.push('');
+        lines.push(['TOTAL', '', '', '', '', sumGross.toFixed(2), sumComm.toFixed(2), sumNet.toFixed(2), '', '', ''].map(mdjFlowCsvEscape).join(','));
+
+        var fname = 'MDJB-Flow-' + y + '.csv';
+        mdjFlowDownloadCsv(fname, lines.join('\r\n'));
+        var doneMsg = (typeof window.t === 'function' && window.t('flow-export-done')) || 'CSV descargado.';
+        mdjFlowSetExportStatus(doneMsg + ' (' + exportRows.length + ' líneas)', 'ok');
+    } catch (exportErr) {
+        console.warn('[Flow] export CSV:', exportErr);
+        mdjFlowSetExportStatus((typeof window.t === 'function' && window.t('flow-export-err')) || 'No se pudo exportar. Reintenta.', 'error');
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+function mdjFlowInitExportPanel() {
+    if (_flowExportWired) return;
+    var btn = document.getElementById('flow-export-csv-btn');
+    if (!btn) return;
+    _flowExportWired = true;
+    btn.addEventListener('click', function () {
+        var sel = document.getElementById('flow-export-year');
+        if (!sel || !sel.value) return;
+        mdjFlowExportCsvForYear(Number(sel.value));
+    });
 }
 
 // Refrescar Cash Flow tras aceptar SOUNDFORTIPS en cabina (mantiene el rango del selector).
@@ -1064,6 +1722,8 @@ function mdjStarPathD() {
 window.mdjPaintProfileHeroStarsFromHealth = function (score, meta) {
     const el = document.getElementById('pub-hero-rating');
     if (!el) return;
+    /* Hero público: mismo promedio de reseñas que ve el fan (renderDynamicReviewsAndKPI). */
+    if (window.__MDJ_PUBLIC_RATING_LOCK) return;
     const path = mdjStarPathD();
     const blank = '<svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(255,255,255,0.2)" style="vertical-align:middle" aria-hidden="true"><path d="' + path + '"/></svg>';
     const full = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;color:var(--gold)" aria-hidden="true"><path d="' + path + '"/></svg>';
@@ -1089,10 +1749,16 @@ window.mdjPaintProfileHeroStarsFromHealth = function (score, meta) {
 window.loadFlowData = loadFlowData;
 window.mdjLoadFlowTab = mdjLoadFlowTab;
 window.filterLedger = filterLedger;
+window.mdjFlowSwitchStatementGrain = mdjFlowSwitchStatementGrain;
+window.mdjFlowExportCsvForYear = mdjFlowExportCsvForYear;
+window.mdjFlowRefreshExportYears = mdjFlowRefreshExportYears;
 
 /** Reintento cuando la sesión llega después de switchDashTab(?tab=flow) o hub.connect. */
 (function mdjFlowWireSession() {
     function tryFlowFromDom() {
+        if (typeof window.mdjIsProfileFanPublicVisit === 'function' && window.mdjIsProfileFanPublicVisit()) {
+            return;
+        }
         var qs = new URLSearchParams(window.location.search);
         var panel = document.getElementById('tab-flow');
         var wantFlow = qs.get('tab') === 'flow' || (panel && panel.classList.contains('active'));
@@ -1115,4 +1781,5 @@ window.filterLedger = filterLedger;
         });
     }
     setTimeout(tryFlowFromDom, 800);
+    mdjFlowInitExportPanel();
 })();

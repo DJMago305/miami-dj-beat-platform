@@ -2832,6 +2832,8 @@
                         <span id="vis-plan-badge" class="vis-plan-badge-float" role="status" aria-live="polite"></span>
                         <div style="margin-bottom:18px;padding-right:min(120px, 34%);">
                             <h2 style="color:var(--gold, #c5a059);margin:0;">VISIBILIDAD</h2>
+                            <p style="margin:8px 0 0;font-size:11px;line-height:1.45;color:rgba(255,255,255,0.42);">
+                                Visitas a tu perfil público y escaneos del QR SoundForTips™ (pedir canción).</p>
                         </div>
                         <div id="vis-stats"
                             style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
@@ -3005,16 +3007,36 @@
                     </div>
 
                     <div class="flow-table-card" style="margin-bottom:80px;">
-                        <div
-                            style="padding:24px; border-bottom:1px solid rgba(255,255,255,0.03); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-                            <h3 class="chart-title">Libro de Transacciones (Ledger)</h3>
-                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                                <button type="button" class="ledger-filter-btn active"
-                                    onclick="filterLedger('all', this)">Todo</button>
-                                <button type="button" class="ledger-filter-btn"
-                                    onclick="filterLedger('income', this)">Ingresos</button>
-                                <button type="button" class="ledger-filter-btn"
-                                    onclick="filterLedger('payout', this)">Pagos</button>
+                        <div style="padding:24px; border-bottom:1px solid rgba(255,255,255,0.03);">
+                            <div
+                                style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+                                <div>
+                                    <h3 class="chart-title" data-i18n="flow-statement-title">Extracto de ingresos</h3>
+                                    <p id="flow-statement-grain-hint"
+                                        style="margin:6px 0 0;font-size:11px;line-height:1.45;color:rgba(255,255,255,0.4);max-width:520px;"
+                                        data-i18n="flow-statement-hint-day">Cada fila es un ingreso real (evento, libro o propina SFT). Hoy y últimos 90 días.</p>
+                                </div>
+                                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                    <button type="button" class="ledger-filter-btn ledger-type-filter-btn active"
+                                        data-ledger-filter="all"
+                                        onclick="filterLedger('all', this)">Todo</button>
+                                    <button type="button" class="ledger-filter-btn ledger-type-filter-btn"
+                                        data-ledger-filter="income"
+                                        onclick="filterLedger('income', this)">Ingresos</button>
+                                    <button type="button" class="ledger-filter-btn ledger-type-filter-btn"
+                                        data-ledger-filter="payout"
+                                        onclick="filterLedger('payout', this)">Pagos</button>
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:14px;">
+                                <button type="button" class="ledger-filter-btn flow-statement-grain-btn active" data-grain="day"
+                                    onclick="mdjFlowSwitchStatementGrain('day', this)" data-i18n="flow-statement-tab-day">Día</button>
+                                <button type="button" class="ledger-filter-btn flow-statement-grain-btn" data-grain="week"
+                                    onclick="mdjFlowSwitchStatementGrain('week', this)" data-i18n="flow-statement-tab-week">Semana</button>
+                                <button type="button" class="ledger-filter-btn flow-statement-grain-btn" data-grain="month"
+                                    onclick="mdjFlowSwitchStatementGrain('month', this)" data-i18n="flow-statement-tab-month">Mes</button>
+                                <button type="button" class="ledger-filter-btn flow-statement-grain-btn" data-grain="year"
+                                    onclick="mdjFlowSwitchStatementGrain('year', this)" data-i18n="flow-statement-tab-year">Año</button>
                             </div>
                         </div>
                         <div style="overflow-x:auto;">
@@ -3038,6 +3060,26 @@
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                    <div id="flow-export-panel" class="flow-export-panel"
+                        style="margin:0 auto 24px;max-width:960px;padding:20px 24px;border-radius:14px;border:1px solid rgba(197,160,89,0.22);background:rgba(0,0,0,0.35);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;">
+                        <div style="min-width:200px;flex:1;">
+                            <h4 style="margin:0 0 6px;font-size:13px;letter-spacing:0.06em;text-transform:uppercase;color:#c5a059;"
+                                data-i18n="flow-export-title">Exportación fiscal (IRS)</h4>
+                            <p style="margin:0;font-size:11px;line-height:1.5;color:rgba(255,255,255,0.45);"
+                                data-i18n="flow-export-sub">Detalle línea a línea del año fiscal (America/New_York). Conservación hasta 7 años.</p>
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;">
+                            <label style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.05em;"
+                                data-i18n="flow-export-year-label">Año fiscal</label>
+                            <select id="flow-export-year" disabled
+                                style="min-width:200px;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:#111;color:#fff;font-size:12px;">
+                                <option value="" data-i18n="flow-export-loading">Cargando años…</option>
+                            </select>
+                            <button type="button" id="flow-export-csv-btn" class="ledger-filter-btn" disabled
+                                style="min-width:100px;" data-i18n="flow-export-csv">Descargar CSV</button>
+                            <span id="flow-export-status" style="font-size:11px;min-width:120px;"></span>
                         </div>
                     </div>
                     <p class="flow-privacy-notice"
@@ -4547,38 +4589,36 @@
 
         // ── Tab Switching ──────────────────────────────────────
 
-        // ── Visibilidad widget ────────────────────────────────────────────────
+        // ── Visibilidad widget (visitas perfil público vía RPC) ─────────────
         async function loadVisibilityStats() {
             const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
-            if (!sb) return;
+            const visLoading = document.getElementById('vis-loading');
+            const visToday = document.getElementById('vis-today');
+            const visWeek = document.getElementById('vis-week');
+            const visTotal = document.getElementById('vis-total');
+            if (!sb || !visToday) return;
 
             const { data: { user } } = await sb.auth.getUser();
-            if (!user) return;
-
-            // Compute DJ slug (SHA256 of user_id — matches the view)
-            const msgBuffer = new TextEncoder().encode(user.id);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const djSlug = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-
-            const { data, error } = await sb
-                .from('dj_weekly_impressions')
-                .select('impressions_today,impressions_week,impressions_total')
-                .eq('dj_slug', djSlug)
-                .single();
-
-            document.getElementById('vis-loading').style.display = 'none';
-
-            if (error || !data) {
-                document.getElementById('vis-today').textContent = '0';
-                document.getElementById('vis-week').textContent = '0';
-                document.getElementById('vis-total').textContent = '0';
-            } else {
-                document.getElementById('vis-today').textContent = data.impressions_today || 0;
-                document.getElementById('vis-week').textContent = data.impressions_week || 0;
-                document.getElementById('vis-total').textContent = data.impressions_total || 0;
+            if (!user) {
+                if (visLoading) visLoading.style.display = 'none';
+                return;
             }
 
-            // Show plan badge + upgrade teaser for LITE
+            var stats = { visits_today: 0, visits_week: 0, visits_total: 0 };
+            var res = await sb.rpc('get_my_profile_visibility_stats');
+            if (!res.error && res.data && res.data.length) {
+                stats = res.data[0];
+            } else if (!res.error && res.data && !Array.isArray(res.data)) {
+                stats = res.data;
+            } else if (res.error) {
+                console.warn('[Vis] get_my_profile_visibility_stats:', res.error.message || res.error);
+            }
+
+            if (visLoading) visLoading.style.display = 'none';
+            visToday.textContent = String(stats.visits_today != null ? stats.visits_today : 0);
+            visWeek.textContent = String(stats.visits_week != null ? stats.visits_week : 0);
+            visTotal.textContent = String(stats.visits_total != null ? stats.visits_total : 0);
+
             const { data: profile } = await sb
                 .from('dj_profiles').select('plan').eq('user_id', user.id).single();
             const plan = (profile?.plan || 'LITE').toUpperCase();
@@ -4586,8 +4626,8 @@
             const visTeaser = document.getElementById('vis-upgrade-teaser');
             if (badge) {
                 badge.classList.remove('vis-plan-badge--pro', 'vis-plan-badge--lite');
-                if (plan === 'PRO') {
-                    badge.textContent = '⭐ PRO';
+                if (plan === 'PRO' || plan === 'ELITE') {
+                    badge.textContent = plan === 'ELITE' ? '⭐ ELITE' : '⭐ PRO';
                     badge.classList.add('vis-plan-badge--pro');
                     if (visTeaser) visTeaser.style.display = 'none';
                 } else {
@@ -4597,6 +4637,7 @@
                 }
             }
         }
+        window.loadVisibilityStats = loadVisibilityStats;
         loadVisibilityStats();
 
         var MDJ_DASH_TABS = { dashboard: 1, settings: 1, flow: 1 };
@@ -4620,6 +4661,9 @@
             }
             if (tabId === 'settings') loadSettingsForm();
             if (tabId === 'flow') {
+                if (typeof window.loadVisibilityStats === 'function') {
+                    window.loadVisibilityStats();
+                }
                 if (typeof window.mdjLoadFlowTab === 'function') {
                     window.mdjLoadFlowTab();
                 } else if (window.loadFlowData) {
@@ -6158,7 +6202,7 @@
     <script>window.MDJ_DASHBOARD_DEFER_AGENDA = true;</script>
     <script src="./js/agenda-engine.js?v=20260513-holidays-fix"></script>
     <script src="./js/mdj-dashboard-hub.js?v=20260513-fase2-flow"></script>
-    <script src="./flow-handler.js?v=202605131800-fase-b-statement"></script>
+    <script src="./flow-handler.js?v=202605132300-ledger-filters"></script>
 
     <!-- Support for External Tab Routing (?tab=settings) -->
     <script>

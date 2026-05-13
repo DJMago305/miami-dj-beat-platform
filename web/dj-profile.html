@@ -43,7 +43,7 @@
     </script>
     <link rel="stylesheet" href="./styles.css?v=20260430-legacy-compat-1" />
     <link rel="stylesheet" href="./header-unified.css?v=20260424-dashboard-header-sync" />
-    <link rel="stylesheet" href="./profile.css?v=20260428-pub-qr-session" />
+    <link rel="stylesheet" href="./profile.css?v=20260513-qr-profile-fix" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260412-profile" />
     <link
         href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700;1,800&family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&display=swap"
@@ -380,7 +380,38 @@
         }
 
         #qr-export-area.pub-qr-paper {
-            padding: 8px 10px 10px !important;
+            padding: 10px 12px 12px !important;
+            overflow: hidden;
+        }
+
+        #qr-export-area .mdj-qr-wrap {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        #qr-export-area #profile-qrcode.mdj-qr-host {
+            width: 100% !important;
+            height: auto !important;
+            max-width: 100%;
+            aspect-ratio: 1 / 1;
+            margin: 0 auto;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        #qr-export-area .mdj-qr-wrap .mdj-qr-host canvas,
+        #qr-export-area .mdj-qr-wrap .mdj-qr-host img {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100%;
+            object-fit: contain;
+        }
+
+        #qr-export-area .mdj-qr-brand {
+            width: 13%;
+            max-width: 13%;
         }
 
         .qr-ref-card .qr-wrap {
@@ -601,7 +632,45 @@
             opacity: 1;
         }
 
-        /* Availability Float */
+        /* Hero plan pill (PRO / básico) — todas las vistas de dj-profile */
+        .dj-hero-top-stack {
+            position: absolute;
+            top: 24px;
+            left: 56px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .dj-hero-plan-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 13px;
+            border-radius: 50px;
+            background: rgba(0, 0, 0, 0.58);
+            backdrop-filter: blur(8px);
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .dj-hero-plan-pill--pro {
+            border: 1px solid rgba(197, 160, 89, 0.38);
+            color: var(--gold);
+        }
+
+        .dj-hero-plan-pill--lite {
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            color: rgba(255, 255, 255, 0.82);
+        }
+
+        .dj-hero-plan-pill[hidden] {
+            display: none !important;
+        }
+
         .dj-avail-float {
             position: absolute;
             top: 24px;
@@ -855,9 +924,10 @@
         }
 
         @media (min-width: 901px) {
-            #tab-public .dj-side-col #profile-qrcode {
-                width: 240px !important;
-                height: 240px !important;
+            #tab-public .dj-side-col #qr-export-area #profile-qrcode {
+                width: 100% !important;
+                height: auto !important;
+                max-width: 100%;
             }
 
             #tab-public .dj-side-col #soundfortips-launch-btn {
@@ -916,7 +986,7 @@
                 left: auto;
             }
 
-            .dj-avail-float {
+            .dj-hero-top-stack {
                 left: 24px;
             }
 
@@ -988,6 +1058,24 @@
 
             body.dj-profile-sft-client-view .dj-hero-inset {
                 display: none;
+            }
+
+            body.dj-profile-sft-client-view .dj-hero-top-stack {
+                top: 14px;
+                left: 16px;
+                z-index: 12;
+            }
+
+            body.dj-profile-sft-client-view .dj-hero-plan-pill {
+                font-size: 8px;
+                letter-spacing: 1.2px;
+                padding: 5px 11px;
+            }
+
+            body.dj-profile-show-owner-tabs .dj-hero-top-stack,
+            html.dj-profile-qr-view .dj-hero-top-stack {
+                top: 16px;
+                left: 20px;
             }
 
             body.dj-profile-sft-client-view .dj-hero-content {
@@ -1180,6 +1268,22 @@
             list-style: none;
         }
 
+        body.dj-profile-show-owner-tabs .pub-mobile-section-details > summary,
+        html.dj-profile-qr-view .pub-mobile-section-details > summary {
+            display: flex;
+        }
+
+        body.dj-profile-show-owner-tabs #venues-card .dj-card-label,
+        body.dj-profile-show-owner-tabs #pub-reviews-header,
+        body.dj-profile-show-owner-tabs #avail-check-card .dj-card-label,
+        body.dj-profile-show-owner-tabs #avail-check-card .pub-avail-visit-hint,
+        html.dj-profile-qr-view #venues-card .dj-card-label,
+        html.dj-profile-qr-view #pub-reviews-header,
+        html.dj-profile-qr-view #avail-check-card .dj-card-label,
+        html.dj-profile-qr-view #avail-check-card .pub-avail-visit-hint {
+            display: none !important;
+        }
+
         .pub-mobile-section-details>summary::-webkit-details-marker,
         .pub-mobile-section-details>summary::marker {
             display: none;
@@ -1257,8 +1361,9 @@
                 display: contents;
             }
 
-            body.dj-profile-sft-client-view #roles-card {
-                display: none !important;
+            body.dj-profile-sft-client-view #pub-rate-card {
+                order: 5;
+                margin-bottom: 0;
             }
 
             body.dj-profile-sft-client-view .pub-bio-card {
@@ -1294,6 +1399,7 @@
             body.dj-profile-sft-client-view .pub-bio-card,
             body.dj-profile-sft-client-view #venues-card,
             body.dj-profile-sft-client-view #reviews-card,
+            body.dj-profile-sft-client-view #pub-rate-card,
             body.dj-profile-sft-client-view #public-action-buttons,
             body.dj-profile-sft-client-view #avail-check-card {
                 padding: 18px 16px !important;
@@ -1340,14 +1446,7 @@
                 text-align: center;
             }
 
-            body.dj-profile-sft-client-view #pub-review-cta-card {
-                display: block !important;
-                order: 40;
-                margin-bottom: 0;
-                padding: 16px !important;
-            }
-
-            body.dj-profile-sft-client-view #pub-review-cta-card #pub-review-cta-wrap {
+            body.dj-profile-sft-client-view #pub-rate-card #pub-review-cta-wrap {
                 margin-top: 0;
                 padding: 0 !important;
                 border-top: none;
@@ -1370,8 +1469,8 @@
             body.dj-profile-sft-client-view .pub-review-star-btn {
                 padding: 2px 4px;
                 font-size: 32px;
-                color: rgba(255, 255, 255, 0.42);
-                text-shadow: 0 0 10px rgba(0, 0, 0, 0.35);
+                color: #ffffff;
+                text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
             }
 
             body.dj-profile-sft-client-view .pub-review-star-btn.pub-review-star-btn--on {
@@ -1469,8 +1568,73 @@
             border-color: rgba(197, 160, 89, 0.75);
         }
 
-        #pub-review-cta-card {
+        #pub-rate-card .pub-rate-cta-wrap {
+            padding: 4px 20px 12px;
+        }
+
+        #pub-rate-card .pub-review-stars-wrap {
+            margin-bottom: 0;
+        }
+
+        #pub-rate-card .pub-review-star-btn {
+            font-size: 22px;
+            padding: 2px 5px;
+        }
+
+        #pub-rate-card .pub-leave-review-btn {
+            margin-top: 8px;
+            padding: 10px 12px;
+        }
+
+        #pub-rate-comment-panel {
             display: none;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(197, 160, 89, 0.2);
+        }
+
+        #pub-rate-comment-panel.pub-rate-comment-panel--open {
+            display: block;
+        }
+
+        #pub-review-comment {
+            width: 100%;
+            box-sizing: border-box;
+            margin: 6px 0 8px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(0, 0, 0, 0.35);
+            color: #fff;
+            font-family: inherit;
+            font-size: 13px;
+            line-height: 1.45;
+            resize: vertical;
+            min-height: 64px;
+        }
+
+        #pub-review-comment:focus {
+            outline: 2px solid rgba(197, 160, 89, 0.45);
+            border-color: rgba(197, 160, 89, 0.35);
+        }
+
+        .pub-rate-summary {
+            display: none !important;
+        }
+
+        #pub-rate-card.pub-rate-card--visible {
+            display: block !important;
+        }
+
+        #pub-rate-card.pub-rate-card--owner-preview .pub-review-star-btn {
+            pointer-events: none;
+            color: rgba(255, 255, 255, 0.55);
+            opacity: 1;
+        }
+
+        #pub-rate-card.pub-rate-card--owner-preview .pub-leave-review-btn,
+        #pub-rate-card.pub-rate-card--owner-preview #pub-rate-comment-panel {
+            display: none !important;
         }
 
         .pub-review-stars-wrap {
@@ -1502,7 +1666,8 @@
             cursor: pointer;
             font-size: 28px;
             line-height: 1;
-            color: rgba(255, 255, 255, 0.22);
+            color: rgba(255, 255, 255, 0.92);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
             transition: color 0.15s ease, transform 0.12s ease;
         }
 
@@ -2839,10 +3004,9 @@
 
             <div class="dj-hero-overlay"></div>
 
-            <!-- Disponibilidad flotante en top-left -->
-            <div id="pub-avail-float" class="dj-avail-float avail-yes" style="display:none;">
-                <span class="dj-avail-dot"></span>
-                <span id="pub-avail-text">Disponible</span>
+            <!-- Plan del artista (hero top-left) -->
+            <div id="pub-hero-top-stack" class="dj-hero-top-stack" style="display:none;">
+                <div id="pub-hero-plan-pill" class="dj-hero-plan-pill" hidden></div>
             </div>
 
             <!-- Foto inset top-right -->
@@ -2922,7 +3086,7 @@
     ══════════════════════════════════════════════════ -->
         <div class="dj-body">
 
-            <!-- Columna principal (Especialidades → Bio → venues; opiniones al final de #tab-public) -->
+            <!-- Columna principal (valoración → Bio → venues; opiniones hero arriba) -->
             <div class="dj-main-col">
                 <a href="./dj-dashboard.html" class="back-btn" id="back-dashboard-btn" style="display:none;">← Volver al panel</a>
 
@@ -2949,11 +3113,12 @@
                     </div>
                 </div>
 
-                <div class="dj-card" id="pub-review-cta-card">
-                    <div id="pub-review-cta-wrap" style="padding: 14px 24px 10px;">
-                        <div id="pub-review-stars-wrap" class="pub-review-stars-wrap" style="display:none;">
-                            <div id="pub-review-star-label" data-i18n="profile-review-star-label">Valoración (1 a 5 estrellas)</div>
-                            <div class="pub-review-stars" id="pub-review-stars" role="group" aria-labelledby="pub-review-star-label">
+                <div class="dj-card" id="pub-rate-card" style="display:none;">
+                    <div class="dj-card-label" data-i18n="profile-rate-card-title">TU OPINIÓN</div>
+                    <div id="pub-review-cta-wrap" class="pub-rate-cta-wrap">
+                        <p id="pub-rate-summary" class="pub-rate-summary" aria-hidden="true"></p>
+                        <div id="pub-review-stars-wrap" class="pub-review-stars-wrap">
+                            <div class="pub-review-stars" id="pub-review-stars" role="group" aria-label="Valoración de 1 a 5 estrellas">
                                 <button type="button" class="pub-review-star-btn" data-rating="1" aria-label="1 estrella">★</button>
                                 <button type="button" class="pub-review-star-btn" data-rating="2" aria-label="2 estrellas">★</button>
                                 <button type="button" class="pub-review-star-btn" data-rating="3" aria-label="3 estrellas">★</button>
@@ -2961,19 +3126,21 @@
                                 <button type="button" class="pub-review-star-btn" data-rating="5" aria-label="5 estrellas">★</button>
                             </div>
                         </div>
-                        <button type="button" class="pub-leave-review-btn" id="pub-leave-review-btn" style="display:none;">—</button>
-                        <p id="pub-leave-review-hint" data-i18n="profile-review-cta-hint-guest"
-                            style="font-size:10px;color:rgba(255,255,255,0.42);margin:10px 0 0;line-height:1.4;"></p>
+                        <div id="pub-rate-comment-panel" class="pub-rate-comment-panel">
+                            <label for="pub-review-comment" id="pub-review-comment-label" data-i18n="profile-review-comment-label"
+                                style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);letter-spacing:0.06em;margin-bottom:6px;">
+                                Tu comentario (opcional)
+                            </label>
+                            <textarea id="pub-review-comment" maxlength="500" rows="2"
+                                placeholder="Cuéntanos tu experiencia con este DJ…"></textarea>
+                            <button type="button" class="pub-leave-review-btn" id="pub-leave-review-btn" style="display:none;">—</button>
+                            <p id="pub-leave-review-hint" data-i18n="profile-review-cta-hint-guest"
+                                style="font-size:10px;color:rgba(255,255,255,0.42);margin:10px 0 0;line-height:1.4;"></p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Roles chips — antes de la Bio en la columna principal -->
-                <div class="dj-card" id="roles-card" style="display:none;">
-                    <div class="dj-card-label">ESPECIALIDADES</div>
-                    <div class="dj-chips" id="pub-roles"></div>
-                </div>
-
-                <!-- Bio — opcional: el cliente despliega si quiere leer -->
+                                <!-- Bio — opcional: el cliente despliega si quiere leer -->
                 <div class="dj-card pub-bio-card">
                     <details class="pub-bio-details" id="pub-bio-details">
                         <summary class="pub-bio-summary">
@@ -2990,7 +3157,7 @@
 
                 <!-- Lugar de trabajo actual -->
                 <div class="dj-card" id="venues-card">
-                    <details class="pub-mobile-section-details" id="pub-venues-details" open>
+                    <details class="pub-mobile-section-details" id="pub-venues-details">
                         <summary class="pub-mobile-section-summary">
                             <span class="pub-mobile-section-summary-head">
                                 <span class="pub-mobile-section-title">ACTUALMENTE TRABAJA EN</span>
@@ -3374,6 +3541,21 @@
             return 'https://miamidjbeat.com';
         }
 
+        /** Conteo visibilidad: 1 por sesión y origen (profile | sft_qr). */
+        window.mdjRecordProfileVisibilityVisit = function (djUserId, visitSource) {
+            var sb = window.getSupabaseClient ? window.getSupabaseClient() : null;
+            if (!sb || !djUserId) return;
+            var src = String(visitSource || 'profile').toLowerCase() === 'sft_qr' ? 'sft_qr' : 'profile';
+            var sessKey = 'mdj_vis_' + src + '_' + djUserId;
+            try {
+                if (sessionStorage.getItem(sessKey)) return;
+                sessionStorage.setItem(sessKey, '1');
+            } catch (_ss) { void _ss; }
+            sb.rpc('record_dj_profile_visit', { p_dj_user_id: djUserId, p_visit_source: src }).then(function (res) {
+                if (res.error) try { console.warn('[Vis] record visit:', res.error.message || res.error); } catch (e0) { void e0; }
+            });
+        };
+
         /**
          * Enlace canónico para fans: siempre view=public + id (+ ref, rcode). No duplica view si se re-parsea.
          * @param {string} userId - user_id del DJ
@@ -3436,6 +3618,54 @@
             } catch (e) { void e; }
             return (window.QRCode && QRCode.CorrectLevel) ? QRCode.CorrectLevel.M : 0;
         }
+
+        /** Renderiza QR del perfil fan; reintenta si la librería CDN tarda. Si falla, oculta el bloque (sin caja vacía). */
+        window.mdjRenderProfilePublicQr = function mdjRenderProfilePublicQr(container, url, opts) {
+            if (!container || !url) return;
+            opts = opts || {};
+            var block = container.closest('.pub-qr-share-block');
+            var attempts = 0;
+            var maxAttempts = opts.maxAttempts || 50;
+            function resolveQrPxSize() {
+                var paper = container.closest('#qr-export-area');
+                var basis = paper && paper.clientWidth > 48 ? paper.clientWidth : container.clientWidth;
+                if (!basis || basis < 48) return opts.size || 200;
+                return Math.max(160, Math.min(280, Math.floor(basis - 24)));
+            }
+            function hideBlock() {
+                if (block) block.style.display = 'none';
+                container.innerHTML = '';
+            }
+            function tryRender() {
+                attempts += 1;
+                if (typeof window.QRCode === 'undefined') {
+                    if (attempts < maxAttempts) {
+                        setTimeout(tryRender, 100);
+                        return;
+                    }
+                    hideBlock();
+                    return;
+                }
+                try {
+                    container.innerHTML = '';
+                    var size = resolveQrPxSize();
+                    var ql = typeof mdjQrCorrectLevel === 'function' ? mdjQrCorrectLevel() : QRCode.CorrectLevel.M;
+                    new QRCode(container, {
+                        text: url,
+                        width: size,
+                        height: size,
+                        colorDark: '#000000',
+                        colorLight: '#ffffff',
+                        correctLevel: ql
+                    });
+                    if (block) block.style.display = '';
+                } catch (e) {
+                    try { console.warn('[mdjRenderProfilePublicQr]', e); } catch (e2) { void e2; }
+                    hideBlock();
+                }
+            }
+            tryRender();
+        };
         /**
          * Export PNG / descarga perfil: mismo disco (frac) que en pantalla; logo ~16% más grande dentro (como scale en CSS).
          */
@@ -3521,6 +3751,32 @@
             var sub = (p.subscription_status || '').toLowerCase();
             if (sub === 'active' || sub === 'trialing') return true;
             return false;
+        }
+
+        /** Quita restos de PLAN PRO / certificación de la línea de roles (móvil + caché antigua). */
+        function mdjSanitizeHeroRoleLine(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/\s*·\s*⭐?\s*PLAN\s+PRO\s*/gi, ' · ')
+                .replace(/\s*⭐?\s*PLAN\s+PRO\s*/gi, '')
+                .replace(/\s*·\s*⭐?\s*FULLY\s+CERTIFIED\s*/gi, ' · ')
+                .replace(/\s*⭐?\s*FULLY\s+CERTIFIED\s*/gi, '')
+                .replace(/(?:\s*·\s*)+$/g, '')
+                .replace(/^\s*·\s*/g, '')
+                .trim();
+        }
+
+        /** Pastilla de plan en hero (PRO / básico). Sin badge Disponible/Ocupado. */
+        function mdjPaintHeroPlanPill(profile) {
+            const planPillEl = document.getElementById('pub-hero-plan-pill');
+            const stackEl = document.getElementById('pub-hero-top-stack');
+            if (!planPillEl || !profile) return;
+            const isPro = mdbProfileIsVipPro(profile);
+            planPillEl.textContent = isPro ? '⭐ PLAN PRO' : 'PLAN BÁSICO';
+            planPillEl.classList.toggle('dj-hero-plan-pill--pro', isPro);
+            planPillEl.classList.toggle('dj-hero-plan-pill--lite', !isPro);
+            planPillEl.hidden = false;
+            if (stackEl) stackEl.style.display = 'flex';
         }
 
         /** SoundForTips™: solo MDJPRO de pago — alineado con DB `dj_soundfortips_plan_ok` (no usar solo subscription_status). Cash Flow es distinto. */
@@ -3933,7 +4189,7 @@
                 return;
             }
 
-            if (session) {
+            if (session && !isPublicQrView) {
                 const z = document.getElementById('header-auth-zone');
                 if (z) z.style.display = 'block';
 
@@ -3983,35 +4239,38 @@
             }
 
             const isOwner = session && session.user.id === targetId;
-            window._mdjSftViewerIsOwner = !!isOwner;
+            window._mdjSftViewerIsOwner = !!(isOwner && !isPublicQrView);
             try {
                 var __sftBooth = new URLSearchParams(window.location.search).get('sft_booth') === '1';
-                window._mdjSftShowPendingBadge = !!isOwner || __sftBooth;
+                window._mdjSftShowPendingBadge = (!!isOwner && !isPublicQrView) || __sftBooth;
                 window._mdjSftDeferredDeposit = __sftBooth;
             } catch (eB) {
-                window._mdjSftShowPendingBadge = !!isOwner;
+                window._mdjSftShowPendingBadge = !!isOwner && !isPublicQrView;
                 window._mdjSftDeferredDeposit = false;
             }
             let isAdmin = false;
+            let isStaff = false;
             if (session) {
-                const { data: vp } = await db.from('dj_profiles').select('role').eq('user_id', session.user.id).single();
-                isAdmin = vp?.role === 'admin';
+                const { data: vp } = await db.from('dj_profiles').select('role').eq('user_id', session.user.id).maybeSingle();
+                const r = String(vp && vp.role != null ? vp.role : '').toLowerCase().trim();
+                isAdmin = r === 'admin';
+                isStaff = r === 'admin' || r === 'owner' || r === 'manager' || r === 'seller';
             }
 
             let p = null;
-            try {
-                // Attempt full select
-                const { data, error: err } = await db.from('dj_profiles').select('*').eq('user_id', targetId).single();
-
-                if (err) throw err;
-                p = data;
-            } catch (err) {
-                // Fallback select with guaranteed columns + new fallback URLs
-                /* Incluir columnas PRO/SFT — si faltan, mdbProfileSoundForTipsEligible() da false y el fan no puede abrir SoundForTips */
-                const { data: pBasic, error: errBasic } = await db.from('dj_profiles').select('id, user_id, dj_name, photo_url, role, bio_en, bio, bio_short, bio_long, stage_name, full_name, verified, plan, plan_status, plan_expires_at, plan_type, is_premium, subscription_status, available, rating, review_count, soundfortips_active, social_instagram, social_tiktok, social_youtube, social_facebook, social_soundcloud, social_mixcloud, social_spotify, social_apple, social_web, background_url, photo_focal_x, photo_focal_y, hero_bg_zoom, instagram_url, facebook_url, tiktok_url, youtube_url, website_url, soundcloud_url, spotify_url, apple_music_url, sft_pay_zelle_instructions, sft_pay_venmo_instructions, sft_pay_paypal_instructions').eq('user_id', targetId).single();
-                if (!errBasic && pBasic) {
-                    p = pBasic;
+            const usePrivateProfileTable = (isOwner || isStaff) && !isPublicQrView;
+            if (usePrivateProfileTable) {
+                try {
+                    const { data, error: err } = await db.from('dj_profiles').select('*').eq('user_id', targetId).single();
+                    if (err) throw err;
+                    p = data;
+                } catch (err) {
+                    const { data: pBasic, error: errBasic } = await db.from('dj_profiles').select('id, user_id, dj_name, photo_url, role, bio_en, bio, bio_short, bio_long, stage_name, full_name, verified, plan, plan_status, plan_expires_at, plan_type, is_premium, subscription_status, available, rating, review_count, soundfortips_active, social_instagram, social_tiktok, social_youtube, social_facebook, social_soundcloud, social_mixcloud, social_spotify, social_apple, social_web, background_url, photo_focal_x, photo_focal_y, hero_bg_zoom, instagram_url, facebook_url, tiktok_url, youtube_url, website_url, soundcloud_url, spotify_url, apple_music_url, sft_pay_zelle_instructions, sft_pay_venmo_instructions, sft_pay_paypal_instructions').eq('user_id', targetId).single();
+                    if (!errBasic && pBasic) p = pBasic;
                 }
+            } else {
+                const pubRes = await db.from('public_dj_profiles').select('*').eq('user_id', targetId).maybeSingle();
+                if (!pubRes.error && pubRes.data) p = pubRes.data;
             }
 
             // Sin fila en dj_profiles para targetId: solo redirigir a portal/cuenta si el visitante es el dueño de ese id (evita confundir con otro DJ borrado o id inválido).
@@ -4039,9 +4298,20 @@
 
             // Cabina / cola / wallet SFT: solo PRO de pago (ver mdbProfileSoundForTipsEligible).
             window._mdjSftProAllowed = mdbProfileSoundForTipsEligible(p);
-            const isSftClientMobileProfile = !!(isPublicQrView && !isOwner && window._mdjSftProAllowed);
+            window._mdjSftFanPublicEligible = !!(isPublicQrView && !isOwner && window._mdjSftProAllowed);
+            const isSftClientMobileProfile = !!(window._mdjSftFanPublicEligible
+                && window.matchMedia
+                && window.matchMedia('(max-width: 900px)').matches);
             document.body.classList.toggle('dj-profile-sft-client-view', isSftClientMobileProfile);
-            if (isSftClientMobileProfile && window.matchMedia && window.matchMedia('(max-width: 900px)').matches) {
+            if (!window._mdjSftClientMobileResizeBound) {
+                window._mdjSftClientMobileResizeBound = true;
+                window.addEventListener('resize', function mdjSftClientMobileResizeSync() {
+                    if (!window._mdjSftFanPublicEligible) return;
+                    var mobile = window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
+                    document.body.classList.toggle('dj-profile-sft-client-view', !!mobile);
+                });
+            }
+            if (isSftClientMobileProfile) {
                 ['pub-venues-details', 'pub-reviews-details', 'pub-avail-details'].forEach(function (id) {
                     var el = document.getElementById(id);
                     if (el) el.open = false;
@@ -4050,6 +4320,9 @@
                 if (bioDetails && !isAdmin) bioDetails.open = false;
                 var availBtn = document.getElementById('dj-avail-check-btn');
                 if (availBtn) availBtn.textContent = 'CHECK AVAILABILITY';
+            } else if (isPublicQrView && !isOwner) {
+                var venuesDetails = document.getElementById('pub-venues-details');
+                if (venuesDetails) venuesDetails.open = false;
             }
 
             const djName = p.stage_name || p.dj_name || p.full_name || 'DJ';
@@ -4060,6 +4333,14 @@
                 if (!t || t.indexOf('data:') === 0) return t;
                 var sep = t.indexOf('?') >= 0 ? '&' : '?';
                 return t + sep + 'v=' + Date.now();
+            }
+
+            function mdjRevealProfileHeroImg(img) {
+                if (!img) return;
+                function reveal() { img.classList.add('loaded'); }
+                img.addEventListener('load', reveal, { once: true });
+                img.addEventListener('error', reveal, { once: true });
+                if (img.complete && img.naturalWidth > 0) reveal();
             }
 
             // ── Portada (cover) + avatar redondo — mismo patrón que Facebook: banner + foto de perfil ──
@@ -4086,8 +4367,9 @@
                 bgPhoto.style.transform = 'scale(' + (zm / 100) + ')';
                 bgPhoto.style.transformOrigin = fxp + '% ' + fyp + '%';
                 bgPhoto.alt = 'Cover — ' + djName;
-                bgPhoto.onload = function () { bgPhoto.classList.add('loaded'); };
+                mdjRevealProfileHeroImg(bgPhoto);
                 bgPhoto.src = coverSrc;
+                if (bgPhoto.complete) mdjRevealProfileHeroImg(bgPhoto);
             }
             if (avatarUrl && insetPhoto) {
                 if (coverUrl && avatarUrl === coverUrl) {
@@ -4096,8 +4378,9 @@
                     insetPhoto.style.objectPosition = 'center 28%';
                 }
                 insetPhoto.alt = djName;
-                insetPhoto.onload = function () { insetPhoto.classList.add('loaded'); };
+                mdjRevealProfileHeroImg(insetPhoto);
                 insetPhoto.src = avatarSrc;
+                if (insetPhoto.complete) mdjRevealProfileHeroImg(insetPhoto);
             }
 
             const headerAvatar = document.querySelector('.account-btn .avatar');
@@ -4112,10 +4395,10 @@
             // ── Badge after name: diamond=verified, star=PRO-unverified, dot=lite ──
             const badge = document.getElementById('pub-name-badge');
             if (badge) {
-                if (p.verified) {
+                if (p.verified === true) {
                     badge.textContent = '💎';
                     badge.title = 'DJ Verificado por MDJPRO';
-                } else if (mdbProfileIsVipPro(p) && !p.verified) {
+                } else if (mdbProfileIsVipPro(p) && p.verified !== true) {
                     badge.textContent = '⭐';
                     badge.title = 'Miembro PRO — Verificación pendiente';
                 } else {
@@ -4123,24 +4406,19 @@
                 }
             }
 
-            // ── Roles label hero ──
-            if (p.roles) {
-                const roleArr = p.roles.split(',').map(r => (ROLE_LABELS[r.trim().toUpperCase()] || r.trim()));
-                document.getElementById('pub-role-label').textContent = roleArr.join(' · ');
-
-                const rolesCard = document.getElementById('roles-card');
-                if (rolesCard) {
-                    rolesCard.style.display = 'block';
-                    document.getElementById('pub-roles').innerHTML = roleArr.map(r =>
-                        `<span class="dj-chip">${r}</span>`).join('');
+            // ── Roles label hero (sin PLAN PRO; va en #pub-hero-plan-pill) ──
+            const roleEl = document.getElementById('pub-role-label');
+            if (roleEl) {
+                let roleLine = '';
+                if (p.roles) {
+                    const roleArr = p.roles.split(',').map(r => (ROLE_LABELS[r.trim().toUpperCase()] || r.trim()));
+                    roleLine = roleArr.join(' · ');
                 }
-            }
-
-            // ── Ubicación (en el label de roles) ──
-            if (p.city || p.region) {
-                const loc = [p.city, p.region].filter(Boolean).join(' · ');
-                const roleEl = document.getElementById('pub-role-label');
-                if (roleEl) roleEl.textContent += ' · ' + loc;
+                if (p.city || p.region) {
+                    const loc = [p.city, p.region].filter(Boolean).join(' · ');
+                    roleLine = roleLine ? (roleLine + ' · ' + loc) : loc;
+                }
+                roleEl.textContent = mdjSanitizeHeroRoleLine(roleLine);
             }
 
             // ── Suscripción & Visibilidad Dinámica ──
@@ -4164,12 +4442,13 @@
                 return;
             }
 
-            const floatEl = document.getElementById('pub-avail-float');
-            const textEl = document.getElementById('pub-avail-text');
-            if (floatEl) {
-                floatEl.style.display = 'inline-flex';
-                floatEl.className = `dj-avail-float ${avail ? 'avail-yes' : 'avail-no'}`;
-                textEl.textContent = avail ? 'Disponible' : 'No disponible';
+            mdjPaintHeroPlanPill(p);
+
+            if (!isOwner && targetId) {
+                var visitSrc = isPublicQrView ? 'sft_qr' : 'profile';
+                if (typeof window.mdjRecordProfileVisibilityVisit === 'function') {
+                    window.mdjRecordProfileVisibilityVisit(targetId, visitSrc);
+                }
             }
 
             // ── Bio (Localización Dinámica de DB) ──
@@ -4266,26 +4545,6 @@
             } catch (e) { console.error('Reserve contact links:', e); }
 
 
-            // ── PRO tag en hero si aplica ──
-            const isFullyCertified = p.certification_score >= 70 && p.graduated;
-            if (isFullyCertified) {
-                const roleEl = document.getElementById('pub-role-label');
-                if (roleEl) {
-                    const span = document.createElement('span');
-                    span.style.cssText = 'color:var(--gold);margin-left:10px;font-size:9px;letter-spacing:1.5px;font-weight:900;';
-                    span.textContent = '⭐ FULLY CERTIFIED';
-                    roleEl.appendChild(span);
-                }
-            } else if (mdbProfileIsVipPro(p)) {
-                const roleEl = document.getElementById('pub-role-label');
-                if (roleEl) {
-                    const span = document.createElement('span');
-                    span.style.cssText = 'color:var(--gold);margin-left:10px;font-size:9px;letter-spacing:1.5px;';
-                    span.textContent = '⭐ PLAN PRO';
-                    roleEl.appendChild(span);
-                }
-            }
-
             // ── Certification badge ──
             if (p.certification_score && p.certification_score >= 70) {
                 const certBadge = document.getElementById('pub-cert-badge');
@@ -4324,7 +4583,7 @@
                 const owc = document.getElementById('owner-wallet-card');
                 const owb = document.getElementById('owner-wallet-balance');
                 if (owc && owb) {
-                    if (isOwner && window._mdjSftProAllowed) {
+                    if (isOwner && window._mdjSftProAllowed && !isPublicQrView) {
                         owc.style.display = 'block';
                         var baseW = Number(p.wallet_balance != null ? p.wallet_balance : (p.rewards_balance != null ? p.rewards_balance : 0)) || 0;
                         window._mdjOwnerWalletBaseUsd = baseW;
@@ -4726,10 +4985,11 @@
             if (metaDesc) metaDesc.setAttribute('content', `🎵 Conoce a ${djName}. ${window.currentDJData.bio.substring(0, 100)}... Reserva a este artista a través de Miami DJ Beat.`);
             if (metaImg && p.photo_url) metaImg.setAttribute('content', mdjProfileBustImgUrl(String(p.photo_url).trim()));
 
-            // ── QR de referidos (PÚBLICO): incluye referral_code como rcode= si existe ──
+            // ── QR único de ESTE artista (misma URL: sidebar, cabina SFT, descarga PNG) ──
+            window._mdjPublicProfileQrDjId = targetId;
             const profileUrl = typeof window.buildMiamiPublicQrUrl === 'function'
                 ? window.buildMiamiPublicQrUrl(targetId, p.referral_code || null)
-                : (`${mdbPublicProfileQrBase()}/dj-profile.html?id=${targetId}&view=public&ref=${targetId}`);
+                : (`${mdbPublicProfileQrBase()}/dj-profile.html?id=${encodeURIComponent(targetId)}&view=public&ref=${encodeURIComponent(targetId)}`);
             window._mdjPublicProfileQrUrl = profileUrl;
             try {
                 var cabQrReset = document.getElementById('sft-cab-qr-mount');
@@ -4739,21 +4999,43 @@
                 }
             } catch (eQrR) { void eQrR; }
             const qrContainer = document.getElementById('profile-qrcode');
-            var skipPubQr = document.documentElement.classList.contains('dj-profile-qr-view')
-                || document.documentElement.classList.contains('dj-profile-hide-pub-qr');
-            if (qrContainer && !skipPubQr) {
+            const qrBlock = qrContainer ? qrContainer.closest('.pub-qr-share-block') : null;
+            if (qrContainer) {
                 qrContainer.innerHTML = '';
-                if (window.QRCode) {
+                delete qrContainer.dataset.djUserId;
+            }
+            if (isOwner) {
+                try { document.documentElement.classList.remove('dj-profile-hide-pub-qr'); } catch (eHr) { void eHr; }
+            }
+            var skipPubQr = document.documentElement.classList.contains('dj-profile-qr-view')
+                || (!isOwner && document.documentElement.classList.contains('dj-profile-hide-pub-qr'));
+            var qrUrlOk = !!(profileUrl && targetId && profileUrl.indexOf(String(targetId)) !== -1);
+            if (skipPubQr) {
+                if (qrBlock) qrBlock.style.display = 'none';
+            } else if (qrContainer && qrUrlOk) {
+                qrContainer.dataset.djUserId = targetId;
+                if (typeof window.mdjRenderProfilePublicQr === 'function') {
+                    requestAnimationFrame(function () {
+                        requestAnimationFrame(function () {
+                            window.mdjRenderProfilePublicQr(qrContainer, profileUrl);
+                        });
+                    });
+                } else if (window.QRCode) {
+                    qrContainer.innerHTML = '';
                     var ql = typeof mdjQrCorrectLevel === 'function' ? mdjQrCorrectLevel() : QRCode.CorrectLevel.M;
                     new QRCode(qrContainer, {
                         text: profileUrl,
-                        width: 240,
-                        height: 240,
+                        width: 200,
+                        height: 200,
                         colorDark: '#000000',
                         colorLight: '#ffffff',
                         correctLevel: ql
                     });
+                } else if (qrBlock) {
+                    qrBlock.style.display = 'none';
                 }
+            } else if (qrBlock) {
+                qrBlock.style.display = 'none';
             }
 
             // ── QR DE TEMPORADA (Global) ──
@@ -4847,14 +5129,14 @@
                 const t = rp.get('tab');
                 if (t !== 'flow' && t !== 'sft') return;
                 // Solo quitar ?tab=flow|sft a visitantes; el dueño puede enlazar la pestaña.
-                if (isOwner) return;
+                if (isOwner && !isPublicQrView) return;
                 rp.delete('tab');
                 const qs = rp.toString();
                 window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
             })();
 
-            // ── DJ OWNER TABS (BARRA DE GESTIÓN) ──
-            if (isOwner || isAdmin) {
+            // ── DJ OWNER TABS (BARRA DE GESTIÓN) — nunca en ?view=public (fan / QR) ──
+            if ((isOwner || isAdmin) && !isPublicQrView) {
                 document.body.classList.add('dj-profile-show-owner-tabs');
                 const tabs = document.getElementById('owner-tabs');
                 if (tabs) tabs.style.display = 'flex';
@@ -4963,14 +5245,14 @@
                 try { console.warn('[RATING DIAG]', eRateLog); } catch (e2) { void e2; }
             }
 
-            await renderDynamicReviewsAndKPI(p, isOwner);
+            await renderDynamicReviewsAndKPI(p, !!(isOwner && !isPublicQrView), db, targetId);
             window._mdjPubReviewSession = session;
-            window._mdjPubReviewOwner = isOwner;
+            window._mdjPubReviewOwner = !!(isOwner && !isPublicQrView);
             if (typeof mdjInitPubLeaveReviewCta === 'function') {
-                mdjInitPubLeaveReviewCta(session, isOwner);
+                mdjInitPubLeaveReviewCta(session, !!(isOwner && !isPublicQrView));
             }
             /* Dueño: el hero pasa a reflejar el mismo índice MDJ que Flujo de caja (tras loadFlowData). Precarga para no depender de abrir la pestaña. */
-            if (isOwner && typeof window.loadFlowData === 'function' && window.currentProfileDJId) {
+            if (isOwner && !isPublicQrView && typeof window.loadFlowData === 'function' && window.currentProfileDJId) {
                 setTimeout(function () {
                     try {
                         window.loadFlowData('30d', window.currentProfileDJId);
@@ -4983,7 +5265,7 @@
             initSftQueueListeners();
             applySoundForTipsPublicVisibility(!!p.soundfortips_active);
             wireSftTabOnlineButtonOnce();
-            if (isOwner) {
+            if (isOwner && !isPublicQrView) {
                 initSoundForTipsOwnerToggle(p, db, session, targetId);
             }
             syncSftTabOnlineButton();
@@ -5265,27 +5547,68 @@
             });
         }
 
-        /** CTA “Dejar opinión”: 1–5 estrellas; requiere cuenta para enviar; con sesión, mail al equipo MDJB. Oculto para el dueño del perfil. */
+        function mdjPubReviewOpenCommentPanel() {
+            var panel = document.getElementById('pub-rate-comment-panel');
+            if (panel) panel.classList.add('pub-rate-comment-panel--open');
+        }
+
+        function mdjPubReviewPaintRateSummary(avgText, count) {
+            var el = document.getElementById('pub-rate-summary');
+            if (!el) return;
+            if (count > 0 && avgText) {
+                el.textContent = '★ ' + avgText + ' promedio · ' + count + (count === 1 ? ' opinión' : ' opiniones');
+                el.style.display = 'block';
+            } else {
+                el.textContent = '';
+                el.style.display = 'none';
+            }
+        }
+
+        /** CTA valoración: estrellas → panel comentario → RPC submit_dj_public_review. Dueño: vista previa sin enviar. */
         function mdjInitPubLeaveReviewCta(session, viewerIsProfileOwner) {
+            const card = document.getElementById('pub-rate-card');
             const wrap = document.getElementById('pub-review-cta-wrap');
             const starsWrap = document.getElementById('pub-review-stars-wrap');
             const btn = document.getElementById('pub-leave-review-btn');
             const hint = document.getElementById('pub-leave-review-hint');
-            if (!wrap || !btn) return;
+            const commentEl = document.getElementById('pub-review-comment');
+            const cardLabel = card ? card.querySelector('.dj-card-label') : null;
+            if (!card || !wrap || !btn) return;
+
+            card.classList.add('pub-rate-card--visible');
+            card.style.display = 'block';
+            wrap.style.display = 'block';
+
             if (viewerIsProfileOwner) {
-                wrap.style.display = 'none';
-                if (starsWrap) starsWrap.style.display = 'none';
+                card.classList.add('pub-rate-card--owner-preview');
+                if (cardLabel) cardLabel.textContent = 'OPINIONES DE CLIENTES';
+                if (starsWrap) starsWrap.style.display = 'block';
+                if (hint) {
+                    hint.textContent = 'Vista previa: solo los clientes registrados pueden publicar una valoración aquí.';
+                    hint.style.display = 'block';
+                }
+                btn.style.display = 'none';
+                var ownerPanel = document.getElementById('pub-rate-comment-panel');
+                if (ownerPanel) ownerPanel.classList.remove('pub-rate-comment-panel--open');
                 return;
             }
-            wrap.style.display = 'block';
+
+            card.classList.remove('pub-rate-card--owner-preview');
+            if (cardLabel) cardLabel.textContent = (window.i18n && typeof window.i18n.t === 'function')
+                ? (window.i18n.t('profile-rate-card-title') || 'TU OPINIÓN')
+                : 'TU OPINIÓN';
             if (starsWrap) starsWrap.style.display = 'block';
             btn.style.display = 'block';
 
             var djKey = window.currentProfileDJId ? String(window.currentProfileDJId) : '';
             try {
                 var saved = djKey ? sessionStorage.getItem('mdj_review_stars_' + djKey) : null;
-                if (saved) mdjPubReviewSetStars(parseInt(saved, 10));
-                else mdjPubReviewSetStars(0);
+                if (saved) {
+                    mdjPubReviewSetStars(parseInt(saved, 10));
+                    mdjPubReviewOpenCommentPanel();
+                } else {
+                    mdjPubReviewSetStars(0);
+                }
             } catch (eS) {
                 mdjPubReviewSetStars(0);
             }
@@ -5297,55 +5620,80 @@
                     var b = ev.target.closest('.pub-review-star-btn');
                     if (!b) return;
                     var r = parseInt(b.getAttribute('data-rating'), 10);
-                    if (r >= 1 && r <= 5) mdjPubReviewSetStars(r);
+                    if (r >= 1 && r <= 5) {
+                        mdjPubReviewSetStars(r);
+                        mdjPubReviewOpenCommentPanel();
+                        try {
+                            if (djKey) sessionStorage.setItem('mdj_review_stars_' + djKey, String(r));
+                        } catch (eSt) { void eSt; }
+                    }
                 });
             }
 
             const t = (k) => (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t(k) : '';
             const redir = encodeURIComponent(location.pathname + location.search);
+
             if (!session) {
-                btn.textContent = t('profile-review-cta-btn-guest') || 'Entrar o registrarse para dejar tu opinión';
+                btn.textContent = t('profile-review-cta-btn-guest') || 'Entrar para enviar tu opinión';
                 if (hint) {
                     hint.setAttribute('data-i18n', 'profile-review-cta-hint-guest');
-                    hint.textContent = t('profile-review-cta-hint-guest') || 'Necesitas una cuenta Miami DJ Beat para enviar una reseña verificada.';
+                    hint.textContent = t('profile-review-cta-hint-guest') || 'Necesitas una cuenta Miami DJ Beat para publicar tu reseña.';
                 }
                 btn.onclick = function () {
                     var st = window._mdjPubReviewStarRating || 0;
                     if (st < 1 || st > 5) {
-                        try {
-                            alert(t('profile-review-star-required') || 'Elige una valoración de 1 a 5 estrellas.');
-                        } catch (ea) { void ea; }
+                        try { alert(t('profile-review-star-required') || 'Elige una valoración de 1 a 5 estrellas.'); } catch (ea) { void ea; }
                         return;
                     }
-                    try {
-                        if (djKey) sessionStorage.setItem('mdj_review_stars_' + djKey, String(st));
-                    } catch (eb) { void eb; }
+                    try { if (djKey) sessionStorage.setItem('mdj_review_stars_' + djKey, String(st)); } catch (eb) { void eb; }
                     window.location.href = './login.html?redirect=' + redir;
                 };
-            } else {
-                btn.textContent = t('profile-review-cta-btn-user') || 'Dejar una opinión sobre este DJ';
-                if (hint) {
-                    hint.setAttribute('data-i18n', 'profile-review-cta-hint-user');
-                    hint.textContent = t('profile-review-cta-hint-user') || 'Tu mensaje se envía al equipo de Miami DJ Beat para constancia.';
+                return;
+            }
+
+            btn.textContent = t('profile-review-cta-btn-user') || 'Publicar opinión';
+            if (hint) {
+                hint.setAttribute('data-i18n', 'profile-review-cta-hint-user');
+                hint.textContent = t('profile-review-cta-hint-user') || 'Tu valoración y comentario se publican en el perfil del DJ.';
+            }
+            btn.onclick = async function () {
+                var st = window._mdjPubReviewStarRating || 0;
+                if (st < 1 || st > 5) {
+                    try { alert(t('profile-review-star-required') || 'Elige una valoración de 1 a 5 estrellas.'); } catch (ec) { void ec; }
+                    return;
                 }
-                var mail = window.MDB_OFFICIAL_CONTACT_EMAIL || 'miamidjbeat@gmail.com';
-                var subj = (t('profile-review-mail-subject') || 'Opinión / reseña de cliente') + ' — ' + (document.getElementById('pub-name') ? document.getElementById('pub-name').textContent.replace(/\s+/g, ' ').trim() : 'DJ');
-                btn.onclick = function () {
-                    var st = window._mdjPubReviewStarRating || 0;
-                    if (st < 1 || st > 5) {
-                        try {
-                            alert(t('profile-review-star-required') || 'Elige una valoración de 1 a 5 estrellas.');
-                        } catch (ec) { void ec; }
+                if (!djKey) return;
+                var db = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+                if (!db) return;
+                btn.disabled = true;
+                var prevLabel = btn.textContent;
+                btn.textContent = t('profile-review-submitting') || 'Enviando…';
+                try {
+                    var comment = commentEl && commentEl.value ? String(commentEl.value).trim() : '';
+                    var res = await db.rpc('submit_dj_public_review', {
+                        p_dj_user_id: djKey,
+                        p_rating: st,
+                        p_comment: comment || null
+                    });
+                    if (res.error) {
+                        try { alert(res.error.message || 'No se pudo guardar la reseña.'); } catch (eA) { void eA; }
                         return;
                     }
-                    try {
-                        if (djKey) sessionStorage.setItem('mdj_review_stars_' + djKey, String(st));
-                    } catch (ed) { void ed; }
-                    var intro = t('profile-review-mail-body-intro') || 'Valoración';
-                    var bodyText = intro + ': ' + st + '/5 estrellas\n\n';
-                    window.location.href = 'mailto:' + mail + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(bodyText);
-                };
-            }
+                    try { sessionStorage.removeItem('mdj_review_stars_' + djKey); } catch (eR) { void eR; }
+                    if (typeof renderDynamicReviewsAndKPI === 'function' && window.currentDJData) {
+                        await renderDynamicReviewsAndKPI(window.currentDJData, false, db, djKey);
+                    }
+                    if (hint) {
+                        hint.textContent = t('profile-review-thanks') || 'Gracias — tu opinión ya está publicada.';
+                    }
+                } catch (eSub) {
+                    console.warn('[pub review submit]', eSub);
+                    try { alert('Error al enviar la reseña.'); } catch (eB) { void eB; }
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = prevLabel;
+                }
+            };
         }
 
         if (typeof document !== 'undefined' && !window._mdjPubReviewLangBound) {
@@ -5358,7 +5706,19 @@
             window.addEventListener('mdj_language_changed', __mdjPubReviewLangRefresh);
         }
 
-        function getCanonicalPublicRating(profile) {
+        function getCanonicalPublicRating(profile, reviewBundle) {
+            if (reviewBundle && Number(reviewBundle.review_count) > 0) {
+                const br = Number(reviewBundle.avg_rating);
+                const bc = Number(reviewBundle.review_count);
+                if (Number.isFinite(br) && Number.isFinite(bc)) {
+                    return {
+                        rating: Math.max(0, Math.min(5, br)),
+                        count: Math.max(0, bc),
+                        hasReviews: true,
+                        reviews: Array.isArray(reviewBundle.reviews) ? reviewBundle.reviews : []
+                    };
+                }
+            }
             const count = Number(profile && profile.review_count != null ? profile.review_count : 0);
             const rating = Number(profile && profile.rating != null ? profile.rating : 0);
             if (!Number.isFinite(count) || count <= 0) {
@@ -5382,9 +5742,69 @@
             };
         }
 
-        // --- REVIEWS & KPI (fuente única: getCanonicalPublicRating(profile)). ---
-        async function renderDynamicReviewsAndKPI(p, viewerIsProfileOwner) {
-            const canonical = getCanonicalPublicRating(p);
+        function mdjPubReviewHeroHtml(rv) {
+            var r = Math.min(5, Math.max(0, Number(rv && rv.rating != null ? rv.rating : 0)));
+            var stars = '\u2605'.repeat(Math.round(r)) + '\u2606'.repeat(Math.max(0, 5 - Math.round(r)));
+            var comment = rv && rv.comment ? String(rv.comment).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+            var name = (rv && rv.reviewer_display_name) ? String(rv.reviewer_display_name).replace(/&/g, '&amp;') : 'Verified client';
+            return '<article class="pub-review-card pub-review-hero"><div class="pub-review-card-stars" aria-hidden="true">' + stars + '</div>' +
+                (comment ? '<p class="pub-review-card-comment">\u201c' + comment + '\u201d</p>' : '') +
+                '<div class="pub-review-card-meta">' + name + '</div></article>';
+        }
+
+        function mdjPaintPubReviewHero(carousel, revList) {
+            if (!carousel) return;
+            if (window.reviewFadeInterval) {
+                clearInterval(window.reviewFadeInterval);
+                window.reviewFadeInterval = null;
+            }
+            if (!revList || !revList.length) {
+                carousel.innerHTML = '';
+                carousel.classList.remove('reviews-carousel--hero');
+                return;
+            }
+            carousel.classList.add('reviews-carousel--hero');
+            carousel.style.transition = 'opacity 0.6s ease-in-out';
+            carousel.style.opacity = '1';
+
+            function paintAt(idx) {
+                carousel.innerHTML = mdjPubReviewHeroHtml(revList[idx]);
+            }
+
+            paintAt(0);
+
+            if (revList.length > 1) {
+                var heroIdx = 0;
+                window.reviewFadeInterval = setInterval(function () {
+                    carousel.style.opacity = '0';
+                    setTimeout(function () {
+                        heroIdx = (heroIdx + 1) % revList.length;
+                        paintAt(heroIdx);
+                        carousel.style.opacity = '1';
+                    }, 620);
+                }, 7000);
+            }
+        }
+
+        // --- REVIEWS & KPI (perfil público: bundle RPC + rating en fila). ---
+        async function renderDynamicReviewsAndKPI(p, viewerIsProfileOwner, db, djUserId) {
+            var bundle = null;
+            if (db && djUserId && typeof db.rpc === 'function') {
+                try {
+                    var rpcRes = await db.rpc('get_dj_public_review_bundle', { p_dj_user_id: djUserId });
+                    if (!rpcRes.error && rpcRes.data) {
+                        bundle = rpcRes.data;
+                        if (typeof bundle === 'string') {
+                            try { bundle = JSON.parse(bundle); } catch (eJ) { bundle = null; }
+                        }
+                        if (bundle && p && Number(bundle.review_count) > 0) {
+                            p.rating = bundle.avg_rating;
+                            p.review_count = bundle.review_count;
+                        }
+                    }
+                } catch (eRpc) { void eRpc; }
+            }
+            const canonical = getCanonicalPublicRating(p, bundle);
             const officialRating = canonical.rating;
             const officialCount = canonical.count;
             const hasReviews = canonical.hasReviews;
@@ -5395,10 +5815,8 @@
 
             const carousel = document.getElementById('pub-reviews-carousel');
             if (carousel) {
-                if (window.reviewFadeInterval) clearInterval(window.reviewFadeInterval);
-                carousel.style.transition = 'opacity 0.6s ease-in-out';
-                carousel.style.opacity = '1';
-                carousel.innerHTML = '';
+                var revList = bundle && Array.isArray(bundle.reviews) ? bundle.reviews : [];
+                mdjPaintPubReviewHero(carousel, revList);
             }
 
             const reviewsWrap = document.getElementById('pub-reviews-wrap');
@@ -5409,6 +5827,10 @@
                 avgLabel.innerText = hasReviews
                     ? ('★ ' + avg + ' PROMEDIO')
                     : 'Sin reseñas aún';
+            }
+
+            if (typeof mdjPubReviewPaintRateSummary === 'function') {
+                mdjPubReviewPaintRateSummary(hasReviews ? avg : '', officialCount);
             }
 
             const heroRating = document.getElementById('pub-hero-rating');
@@ -11131,6 +11553,12 @@
                 __sftDjLibOnKey = null;
             }
             if (typeof sftRefreshLaunchBadge === 'function') sftRefreshLaunchBadge();
+            try {
+                var sftTabPanel = document.getElementById('tab-sft');
+                if (sftTabPanel && sftTabPanel.classList.contains('active') && typeof switchProfileTab === 'function') {
+                    switchProfileTab('public');
+                }
+            } catch (eTabBack) { void eTabBack; }
         };
 
         window.addEventListener('visibilitychange', function () {
@@ -11464,17 +11892,43 @@
         };
 
         (function sftNightLogWire() {
+            function sftNightLogSyncFilterUi(mode) {
+                var m = mode || window._sftNightLogSinceMode || '24h';
+                ['sft-night-filter-24h', 'sft-night-filter-7d', 'sft-night-filter-all'].forEach(function (id) {
+                    var el = document.getElementById(id);
+                    if (!el) return;
+                    var on = (id === 'sft-night-filter-24h' && m === '24h')
+                        || (id === 'sft-night-filter-7d' && m === '7d')
+                        || (id === 'sft-night-filter-all' && m === 'all');
+                    el.classList.toggle('sft-cab-night-filter-btn--on', on);
+                });
+            }
+            window.sftNightLogSyncFilterUi = sftNightLogSyncFilterUi;
+
             function wire() {
                 var b24 = document.getElementById('sft-night-filter-24h');
                 var b7 = document.getElementById('sft-night-filter-7d');
                 var ba = document.getElementById('sft-night-filter-all');
                 var br = document.getElementById('sft-night-refresh');
                 var bd = document.getElementById('sft-night-delete-range');
-                if (b24) b24.onclick = function () { window._sftNightLogSinceMode = '24h'; if (typeof window.refreshSftNightLogList === 'function') window.refreshSftNightLogList(); };
-                if (b7) b7.onclick = function () { window._sftNightLogSinceMode = '7d'; if (typeof window.refreshSftNightLogList === 'function') window.refreshSftNightLogList(); };
-                if (ba) ba.onclick = function () { window._sftNightLogSinceMode = 'all'; if (typeof window.refreshSftNightLogList === 'function') window.refreshSftNightLogList(); };
+                if (b24) b24.onclick = function () {
+                    window._sftNightLogSinceMode = '24h';
+                    sftNightLogSyncFilterUi('24h');
+                    if (typeof window.refreshSftNightLogList === 'function') window.refreshSftNightLogList();
+                };
+                if (b7) b7.onclick = function () {
+                    window._sftNightLogSinceMode = '7d';
+                    sftNightLogSyncFilterUi('7d');
+                    if (typeof window.refreshSftNightLogList === 'function') window.refreshSftNightLogList();
+                };
+                if (ba) ba.onclick = function () {
+                    window._sftNightLogSinceMode = 'all';
+                    sftNightLogSyncFilterUi('all');
+                    if (typeof window.refreshSftNightLogList === 'function') window.refreshSftNightLogList();
+                };
                 if (br) br.onclick = function () { if (typeof window.refreshSftNightLogList === 'function') window.refreshSftNightLogList(); };
                 if (bd) bd.onclick = function () { if (typeof window.deleteSftNightLogByRange === 'function') window.deleteSftNightLogByRange(); };
+                sftNightLogSyncFilterUi();
             }
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
             else wire();

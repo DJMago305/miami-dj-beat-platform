@@ -232,8 +232,78 @@ html.dj-profile-auth-check body {
     display: block;
 }
 
-/* Vista QR (?view=public): sin header principal para landing limpia */
-html.dj-profile-qr-view .header {
+#reviews-card .reviews-carousel {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4px 24px 22px;
+    overflow: visible;
+    scroll-snap-type: none;
+}
+
+#reviews-card .reviews-carousel.reviews-carousel--hero {
+    min-height: 132px;
+}
+
+#reviews-card .pub-review-card,
+#reviews-card .pub-review-hero {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 26px 28px 22px;
+    border-radius: 14px;
+    border: 1px solid rgba(197, 160, 89, 0.28);
+    background:
+        radial-gradient(ellipse 80% 120% at 50% 0%, rgba(197, 160, 89, 0.14) 0%, transparent 62%),
+        rgba(0, 0, 0, 0.42);
+    text-align: center;
+}
+
+#reviews-card .pub-review-card-stars {
+    color: var(--gold, #c5a059);
+    letter-spacing: 0.22em;
+    font-size: 18px;
+    line-height: 1;
+    margin-bottom: 14px;
+}
+
+#reviews-card .pub-review-card-comment {
+    margin: 0 auto 14px;
+    max-width: 46ch;
+    font-size: clamp(15px, 2.1vw, 19px);
+    line-height: 1.55;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+#reviews-card .pub-review-card-meta {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(197, 160, 89, 0.72);
+}
+
+@media (max-width: 640px) {
+    #reviews-card .reviews-carousel {
+        padding: 4px 16px 18px;
+    }
+
+    #reviews-card .pub-review-card,
+    #reviews-card .pub-review-hero {
+        padding: 22px 18px 18px;
+    }
+
+    #reviews-card .pub-review-card-comment {
+        max-width: none;
+        font-size: 15px;
+    }
+}
+
+/* Vista QR (?view=public): fan ve ficha pública, sin chrome artista */
+html.dj-profile-qr-view .header,
+html.dj-profile-qr-view #mainHeader,
+html.dj-profile-qr-view #owner-tabs {
     display: none !important;
 }
 
@@ -246,11 +316,21 @@ html.dj-profile-qr-view .pub-qr-share-block {
     display: none !important;
 }
 
+/* Fan que ya escaneó antes: sin caja QR vacía en vista normal */
+html.dj-profile-hide-pub-qr .pub-qr-share-block {
+    display: none !important;
+}
+
 html.dj-profile-qr-view #seasonal-qr-card .qr-wrap {
     display: none !important;
 }
 
 /* Owner wallet strip (dj-profile sidebar) */
+html.dj-profile-qr-view #owner-wallet-card,
+body.dj-profile-sft-client-view #owner-wallet-card {
+    display: none !important;
+}
+
 #owner-wallet-card .owner-wallet-luxury {
     font-size: 26px;
     font-weight: 900;
@@ -273,20 +353,6 @@ html.dj-profile-qr-view #seasonal-qr-card .qr-wrap {
     line-height: 1.4;
 }
 
-#reviews-card .reviews-carousel {
-    display: flex;
-    gap: 16px;
-    overflow-x: auto;
-    padding-bottom: 15px;
-    padding-right: 20px;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-}
-
-#reviews-card .reviews-carousel::-webkit-scrollbar {
-    display: none;
-}
 
 /* Ensure profile page baseline background */
 body.dj-profile {

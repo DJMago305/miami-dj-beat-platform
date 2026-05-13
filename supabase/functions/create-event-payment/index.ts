@@ -114,6 +114,13 @@ serve(async (req) => {
             await sb.from("client_profiles").update({ buyer_stripe_customer_id: customerId }).eq("user_id", clientUid);
         }
 
+        const depositRequiredUsd = body.deposit_required_usd != null
+            ? parseFloat(String(body.deposit_required_usd))
+            : null;
+        if (depositRequiredUsd != null && isFinite(depositRequiredUsd) && depositRequiredUsd > 0) {
+            await sb.from("leads").update({ deposit_required_usd: depositRequiredUsd }).eq("id", lead_id);
+        }
+
         // ── Create Stripe Checkout Session (one-time payment) ──
         const checkoutParams: Record<string, string> = {
             mode: "payment",

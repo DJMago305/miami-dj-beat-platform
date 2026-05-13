@@ -90,7 +90,7 @@ serve(async (req) => {
                     // Fetch current lead to add paid amount
                     const { data: lead } = await supabase
                         .from("leads")
-                        .select("balance_paid, total_amount")
+                        .select("balance_paid, total_amount, staff_invoice_id")
                         .eq("id", leadId)
                         .single();
 
@@ -105,6 +105,13 @@ serve(async (req) => {
                         stripe_session_id: session.id,
                         status: newStatus === "PAID" ? "CONFIRMED" : "MATCHED",
                     }).eq("id", leadId);
+
+                    if (lead?.staff_invoice_id && newStatus === "PAID") {
+                        await supabase
+                            .from("mdj_staff_manual_invoices")
+                            .update({ status: "paid" })
+                            .eq("id", lead.staff_invoice_id);
+                    }
 
                     console.log(`✅ Event deposit paid: lead ${leadId} | $${amountPaid} | status → ${newStatus}`);
                     break;
