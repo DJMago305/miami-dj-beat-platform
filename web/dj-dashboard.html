@@ -2884,7 +2884,7 @@
                                 posicionamiento, ingresos y engagement en MDJPRO.</p>
                         </div>
                         <div style="display:flex; gap:10px;">
-                            <select id="metrics-range" onchange="loadFlowData(this.value)"
+                            <select id="metrics-range" onchange="mdjLoadFlowTab(this.value)"
                                 style="background:#111114; border:1px solid rgba(255,255,255,0.1); color:#fff; padding:12px 24px; border-radius:12px; font-size:13px; font-weight:700; outline:none; cursor:pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
                                 <option value="7d">ÚLTIMOS 7 DÍAS</option>
                                 <option value="30d">ÚLTIMOS 30 DÍAS</option>
@@ -2893,6 +2893,9 @@
                             </select>
                         </div>
                     </div>
+
+                    <div id="flow-data-status" role="status" aria-live="polite"
+                        style="display:none; margin-bottom:20px; font-size:13px; font-weight:700; letter-spacing:0.3px;"></div>
 
                     <div class="flow-grid">
                         <div class="flow-card">
@@ -4616,9 +4619,13 @@
                 window.MDJ_AMBIENT_PAUSE();
             }
             if (tabId === 'settings') loadSettingsForm();
-            if (tabId === 'flow' && window.loadFlowData) {
-                var mr = document.getElementById('metrics-range');
-                window.loadFlowData(mr && mr.value ? mr.value : '1y');
+            if (tabId === 'flow') {
+                if (typeof window.mdjLoadFlowTab === 'function') {
+                    window.mdjLoadFlowTab();
+                } else if (window.loadFlowData) {
+                    var mr = document.getElementById('metrics-range');
+                    window.loadFlowData(mr && mr.value ? mr.value : '1y');
+                }
             }
             if (tabId === 'dashboard') {
                 setTimeout(function () {
@@ -6150,8 +6157,8 @@
     <script type="module" src="./js/event-intelligence.js?v=20260317-200"></script>
     <script>window.MDJ_DASHBOARD_DEFER_AGENDA = true;</script>
     <script src="./js/agenda-engine.js?v=20260513-holidays-fix"></script>
-    <script src="./js/mdj-dashboard-hub.js?v=20260513-holidays-fix"></script>
-    <script src="./flow-handler.js?v=20260513-flow-session-wire"></script>
+    <script src="./js/mdj-dashboard-hub.js?v=20260513-fase2-flow"></script>
+    <script src="./flow-handler.js?v=20260513-fase2-flow"></script>
 
     <!-- Support for External Tab Routing (?tab=settings) -->
     <script>

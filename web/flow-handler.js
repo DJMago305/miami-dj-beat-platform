@@ -11,7 +11,22 @@
 
 let flowCharts = { timeline: null, activity: null, distribution: null };
 let currentLedger = [];
-let currentRange = '30d';
+let currentRange = '1y';
+
+function mdjFlowSetStatus(msg, tone) {
+    var el = document.getElementById('flow-data-status');
+    if (!el) return;
+    if (!msg) {
+        el.style.display = 'none';
+        el.textContent = '';
+        return;
+    }
+    el.style.display = 'block';
+    el.textContent = msg;
+    if (tone === 'error') el.style.color = 'rgba(255,120,120,0.9)';
+    else if (tone === 'ok') el.style.color = 'rgba(0,255,136,0.85)';
+    else el.style.color = 'rgba(255,255,255,0.45)';
+}
 
 /** Tras mostrar la pestaña Cash Flow o redimensionar ventana: Chart.js necesita `resize` si el canvas estuvo oculto. */
 function scheduleFlowChartsResize() {
@@ -188,13 +203,21 @@ function soundfortipsAcceptedToLedgerRows(userId, rows) {
     });
 }
 
-async function loadFlowData(range = '30d', targetUserId = null) {
+async function loadFlowData(range = '1y', targetUserId = null) {
     currentRange = range;
     const supabase = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
-    if (!supabase) return;
+    if (!supabase) {
+        mdjFlowSetStatus('Supabase no disponible en esta página.', 'error');
+        return;
+    }
+
+    mdjFlowSetStatus('Cargando métricas…');
 
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+    if (!session) {
+        mdjFlowSetStatus('Inicia sesión para ver Flujo de caja.', 'error');
+        return;
+    }
 
     const sessionUid = session.user.id;
     if (targetUserId && targetUserId !== sessionUid) {
@@ -247,6 +270,7 @@ async function loadFlowData(range = '30d', targetUserId = null) {
     }
 
     if (ledgerRes.error) {
+        mdjFlowSetStatus('No se pudo leer el libro mayor. Revisa sesión o permisos.', 'error');
         var lb = document.getElementById('ledger-body');
         if (lb) {
             var lang = (typeof localStorage !== 'undefined' && localStorage.getItem('mdj_current_lang')) || 'es';
@@ -300,7 +324,25 @@ async function loadFlowData(range = '30d', targetUserId = null) {
     // 6. RENDER LEDGER TABLE
     renderLedgerTable(currentLedger);
 
+    if (currentLedger.length) {
+        mdjFlowSetStatus(null);
+    } else if (ledger.length) {
+        mdjFlowSetStatus('Sin movimientos en el rango seleccionado. Prueba Vista anual.', null);
+    } else {
+        mdjFlowSetStatus('Aún no hay ingresos en tu libro mayor.', null);
+    }
+
     scheduleFlowChartsResize();
+    setTimeout(scheduleFlowChartsResize, 250);
+}
+
+/** Pestaña Flujo: carga datos y redibuja gráficas (canvas pudo estar oculto). */
+async function mdjLoadFlowTab(range) {
+    var mr = document.getElementById('metrics-range');
+    var r = range || (mr && mr.value) || '1y';
+    await loadFlowData(r);
+    scheduleFlowChartsResize();
+    setTimeout(scheduleFlowChartsResize, 350);
 }
 
 async function processKPIs(ledger, leads, startDate, prevStartDate, commRate, profileRow) {
@@ -818,6 +860,7 @@ window.mdjPaintProfileHeroStarsFromHealth = function (score, meta) {
 
 // Global expose
 window.loadFlowData = loadFlowData;
+window.mdjLoadFlowTab = mdjLoadFlowTab;
 window.filterLedger = filterLedger;
 
 /** Reintento cuando la sesión llega después de switchDashTab(?tab=flow) o hub.connect. */
@@ -826,7 +869,12 @@ window.filterLedger = filterLedger;
         var qs = new URLSearchParams(window.location.search);
         var panel = document.getElementById('tab-flow');
         var wantFlow = qs.get('tab') === 'flow' || (panel && panel.classList.contains('active'));
-        if (!wantFlow || typeof loadFlowData !== 'function') return;
+        if (!wantFlow) return;
+        if (typeof window.mdjLoadFlowTab === 'function') {
+            window.mdjLoadFlowTab();
+            return;
+        }
+        if (typeof loadFlowData !== 'function') return;
         var mr = document.getElementById('metrics-range');
         loadFlowData(mr && mr.value ? mr.value : '1y');
     }

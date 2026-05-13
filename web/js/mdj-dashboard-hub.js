@@ -4,7 +4,7 @@
 (function () {
     'use strict';
 
-    var VERSION = '20260513-agenda-grid-fix';
+    var VERSION = '20260513-fase2-flow';
 
     function onDashboard() {
         return !!document.getElementById('tab-dashboard');
@@ -84,7 +84,12 @@
         var panel = document.getElementById('tab-flow');
         var qs = new URLSearchParams(window.location.search);
         var wantFlow = qs.get('tab') === 'flow' || (panel && panel.classList.contains('active'));
-        if (!wantFlow || typeof window.loadFlowData !== 'function') return;
+        if (!wantFlow) return;
+        if (typeof window.mdjLoadFlowTab === 'function') {
+            window.mdjLoadFlowTab();
+            return;
+        }
+        if (typeof window.loadFlowData !== 'function') return;
         var mr = document.getElementById('metrics-range');
         window.loadFlowData(mr && mr.value ? mr.value : '1y');
     }
