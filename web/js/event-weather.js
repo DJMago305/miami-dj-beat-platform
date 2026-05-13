@@ -9,7 +9,10 @@ window.__mdjWeatherLocked = true;
 window.__mdjWeatherInitialDone = false;
 setTimeout(function () {
     window.__mdjWeatherLocked = false;
-}, 8000);
+    if (typeof window.handleEventWeather === 'function' && !window.__mdjWeatherInitialDone) {
+        window.handleEventWeather();
+    }
+}, 1200);
 
 /** En producción definir `window.OPENWEATHER_API_KEY` antes de cargar este script (Vercel env → inline o Edge). */
 function mdjOpenWeatherApiKey() {
@@ -1272,6 +1275,23 @@ window.getLunarAsset = function (dateObj, currentTemp) {
     }
 };
 
+function mdjResolveHourlyIconSrc(iconCode, dateObj, temp) {
+    const icon = String(iconCode || '01d');
+    if (icon.endsWith('n')) return window.getLunarAsset(dateObj, temp);
+    const localByIcon = {
+        '01d': './assets/weather/sunny-real.png',
+        '02d': './assets/weather/Cielo parcialmente Nublado.png',
+        '03d': './assets/weather/Nublado.png',
+        '04d': './assets/weather/Nublado.png',
+        '09d': './assets/weather/Rain Day.png',
+        '10d': './assets/weather/Rain Day.png',
+        '11d': './assets/weather/Rayo Storm Definido.png',
+        '13d': './assets/weather/Snow.png',
+        '50d': './assets/weather/Pequenas Nubes Negras.png'
+    };
+    return localByIcon[icon] || ('https://openweathermap.org/img/wn/' + icon + '@2x.png');
+}
+
 function generateHourlyTimelineOptions(data) {
     const hourlyScroller = document.getElementById('hourly-scroller-main');
     if (!hourlyScroller) return;
@@ -1280,7 +1300,9 @@ function generateHourlyTimelineOptions(data) {
         const temp = Math.round(data.main?.temp || 78);
         const iconCode = data.weather?.[0]?.icon || "01d";
         const isNightDef = iconCode.endsWith('n');
-        const defaultImg = isNightDef ? window.getLunarAsset(new Date(), temp) : './assets/weather/sunny-real.png';
+        const defaultImg = isNightDef
+            ? window.getLunarAsset(new Date(), temp)
+            : mdjResolveHourlyIconSrc(iconCode, new Date(), temp);
         const defaultFilter = isNightDef ? 'rgba(200,220,255,0.6)' : 'rgba(255,200,100,0.85)';
         const defSize = isNightDef ? '24px' : '34px';
         const defMargin = isNightDef ? 'margin: 5px 0;' : 'margin: 0;';
@@ -1312,7 +1334,7 @@ function generateHourlyTimelineOptions(data) {
 
         const icon = block.weather[0].icon;
         const isNight = icon.endsWith('n');
-        const imgSrc = isNight ? window.getLunarAsset(dateObj, block.main.temp) : './assets/weather/sunny-real.png';
+        const imgSrc = mdjResolveHourlyIconSrc(icon, dateObj, block.main.temp);
         const glowColor = isNight ? 'rgba(200,220,255,0.6)' : 'rgba(255,200,100,0.85)';
         const size = isNight ? '24px' : '34px';
         const margins = isNight ? 'margin: 5px 0;' : 'margin: 0;';

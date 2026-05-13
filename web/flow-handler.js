@@ -234,11 +234,11 @@ async function loadFlowData(range = '30d', targetUserId = null) {
         return;
     }
 
-    // 3. FETCH DATA (Ledger + Leads)
-    // We fetch from prevStartDate to now to have trend data
+    // 3. FETCH DATA (Ledger + Leads) — full history per DJ; charts filter by startDate client-side.
+    // (Narrow gte on created_at hid legacy rows e.g. 2024-03 ledger outside 30d/1y prev window.)
     const [ledgerRes, leadsRes, sftRes] = await Promise.all([
-        supabase.from('dj_ledger').select('*').eq('dj_user_id', userId).gte('created_at', prevStartDate.toISOString()).order('created_at', { ascending: false }),
-        supabase.from('leads').select('*').eq('assigned_dj_id', profile.id).gte('event_date', prevStartDate.toISOString().split('T')[0]),
+        supabase.from('dj_ledger').select('*').eq('dj_user_id', userId).order('created_at', { ascending: false }),
+        supabase.from('leads').select('*').eq('assigned_dj_id', profile.id).order('event_date', { ascending: false }),
         supabase.rpc('get_my_soundfortips_accepted_for_flow', { p_since: prevStartDate.toISOString() }),
     ]);
 
@@ -269,6 +269,21 @@ async function loadFlowData(range = '30d', targetUserId = null) {
     ledger.sort(function (a, b) {
         return new Date(b.created_at) - new Date(a.created_at);
     });
+
+    if (ledger.length) {
+        var oldestLedgerMs = ledger.reduce(function (min, tx) {
+            var t = new Date(tx.created_at).getTime();
+            return t < min ? t : min;
+        }, new Date(ledger[0].created_at).getTime());
+        var oldestLedger = new Date(oldestLedgerMs);
+        if (oldestLedger < startDate) {
+            var spanDays = Math.max(1, Math.ceil((now - oldestLedger) / (1000 * 60 * 60 * 24)));
+            startDate = new Date(oldestLedger);
+            startDate.setHours(0, 0, 0, 0);
+            prevStartDate = new Date(startDate);
+            prevStartDate.setDate(startDate.getDate() - spanDays);
+        }
+    }
 
     currentLedger = ledger.filter(tx => new Date(tx.created_at) >= startDate);
 
@@ -441,20 +456,33 @@ function renderTimelineChart(ledger, leads, range, startDate, residencyMetrics) 
     if (!ctx) return;
 
     const rm = residencyMetrics || computeResidencyMetrics(null);
-
-    // Grouping by day
-    const daysMap = {};
     const now = new Date();
-    let iter = new Date(startDate);
-    while (iter <= now) {
-        const dStr = iter.toISOString().split('T')[0];
-        daysMap[dStr] = { income: 0, new: 0, done: 0 };
-        iter.setDate(iter.getDate() + 1);
+    const periodDays = Math.max(1, Math.ceil((now - startDate) / (1000 * 60 * 60 * 24)));
+    const bucketByMonth = periodDays > 120;
+
+    const buckets = {};
+    if (bucketByMonth) {
+        let iter = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+        while (iter <= now) {
+            const key = iter.getFullYear() + '-' + String(iter.getMonth() + 1).padStart(2, '0');
+            buckets[key] = { income: 0, new: 0, done: 0 };
+            iter.setMonth(iter.getMonth() + 1);
+        }
+    } else {
+        let iter = new Date(startDate);
+        while (iter <= now) {
+            const dStr = iter.toISOString().split('T')[0];
+            buckets[dStr] = { income: 0, new: 0, done: 0 };
+            iter.setDate(iter.getDate() + 1);
+        }
     }
 
     ledger.filter(tx => tx.type === 'income' && new Date(tx.created_at) >= startDate).forEach(tx => {
-        const d = new Date(tx.created_at).toISOString().split('T')[0];
-        if (daysMap[d]) daysMap[d].income += tx.amount_cents / 100;
+        const d = new Date(tx.created_at);
+        const key = bucketByMonth
+            ? (d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'))
+            : d.toISOString().split('T')[0];
+        if (buckets[key]) buckets[key].income += tx.amount_cents / 100;
     });
 
     leads.filter(ev => {
@@ -463,22 +491,31 @@ function renderTimelineChart(ledger, leads, range, startDate, residencyMetrics) 
         return new Date(ref) >= startDate;
     }).forEach(ev => {
         const ref = ev.assigned_at || ev.event_date;
-        const d = new Date(ref).toISOString().split('T')[0];
-        if (daysMap[d]) daysMap[d].new++;
+        const d = new Date(ref);
+        const key = bucketByMonth
+            ? (d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'))
+            : d.toISOString().split('T')[0];
+        if (buckets[key]) buckets[key].new++;
     });
 
     leads.filter(ev => ev.status === 'COMPLETED' && new Date(ev.event_date) >= startDate).forEach(ev => {
-        const d = new Date(ev.event_date).toISOString().split('T')[0];
-        if (daysMap[d]) daysMap[d].done++;
+        const d = new Date(ev.event_date);
+        const key = bucketByMonth
+            ? (d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'))
+            : d.toISOString().split('T')[0];
+        if (buckets[key]) buckets[key].done++;
     });
 
-    const labels = Object.keys(daysMap);
-    const incomeData = labels.map(l => daysMap[l].income);
-    const newData = labels.map(l => daysMap[l].new);
-    const doneData = labels.map(l => daysMap[l].done);
+    const labels = Object.keys(buckets);
+    const incomeData = labels.map(l => buckets[l].income);
+    const newData = labels.map(l => buckets[l].new);
+    const doneData = labels.map(l => buckets[l].done);
 
-    const residencySeries = labels.map(function (dStr) {
-        const dt = new Date(dStr + 'T12:00:00');
+    const residencySeries = labels.map(function (key) {
+        if (bucketByMonth) {
+            return (rm.isResidentFlag ? 6 : 0);
+        }
+        const dt = new Date(key + 'T12:00:00');
         const w = dt.getDay();
         const base = (rm.byWeekday[w] || 0) * 9;
         return base + (rm.isResidentFlag ? 6 : 0);
@@ -489,7 +526,14 @@ function renderTimelineChart(ledger, leads, range, startDate, residencyMetrics) 
     flowCharts.timeline = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: labels.map(l => new Date(l).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })),
+            labels: labels.map(function (l) {
+                if (bucketByMonth) {
+                    var parts = l.split('-');
+                    var dt = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+                    return dt.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
+                }
+                return new Date(l).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+            }),
             datasets: [
                 {
                     label: 'Salud Económica ($)',
@@ -775,3 +819,26 @@ window.mdjPaintProfileHeroStarsFromHealth = function (score, meta) {
 // Global expose
 window.loadFlowData = loadFlowData;
 window.filterLedger = filterLedger;
+
+/** Reintento cuando la sesión llega después de switchDashTab(?tab=flow) o hub.connect. */
+(function mdjFlowWireSession() {
+    function tryFlowFromDom() {
+        var qs = new URLSearchParams(window.location.search);
+        var panel = document.getElementById('tab-flow');
+        var wantFlow = qs.get('tab') === 'flow' || (panel && panel.classList.contains('active'));
+        if (!wantFlow || typeof loadFlowData !== 'function') return;
+        var mr = document.getElementById('metrics-range');
+        loadFlowData(mr && mr.value ? mr.value : '1y');
+    }
+
+    var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+    if (sb && sb.auth && sb.auth.onAuthStateChange) {
+        sb.auth.onAuthStateChange(function (event, session) {
+            if (session && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+                tryFlowFromDom();
+            }
+        });
+    }
+    setTimeout(tryFlowFromDom, 500);
+    setTimeout(tryFlowFromDom, 2000);
+})();

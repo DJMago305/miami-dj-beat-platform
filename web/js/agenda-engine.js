@@ -1184,6 +1184,18 @@ async function initAgendaEngine() {
         calendar.render();
         window.mdjCalendarInstance = calendar;
 
+        function mdjAgendaCalendarReflow() {
+            try {
+                calendar.updateSize();
+            } catch (_reflowErr) { /* noop */ }
+        }
+        requestAnimationFrame(mdjAgendaCalendarReflow);
+        setTimeout(mdjAgendaCalendarReflow, 200);
+        if (!window.__mdjAgendaCalendarReflowBound) {
+            window.__mdjAgendaCalendarReflowBound = true;
+            window.addEventListener('resize', mdjAgendaCalendarReflow);
+        }
+
         if (typeof window.mdjRenderAgendaCalendarLegend === 'function') {
             window.mdjRenderAgendaCalendarLegend();
         }
@@ -1237,12 +1249,19 @@ document.addEventListener('languageChanged', () => {
     }
 });
 
-// 🌐 ROBUST MODULE TRIGGER: DOMContentLoaded o ejecución inmediata si el DOM ya está listo.
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        void initAgendaEngine();
+window.mdjStartAgendaEngine = function () {
+    return initAgendaEngine();
+};
+
+if (window.MDJ_DASHBOARD_DEFER_AGENDA) {
+    /* dj-dashboard: el hub llama mdjStartAgendaEngine tras cargar clima + flujo. */
+} else if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+        if (document.getElementById('calendar-master') || document.getElementById('agenda-calendar-master')) {
+            void initAgendaEngine();
+        }
     });
-} else {
+} else if (document.getElementById('calendar-master') || document.getElementById('agenda-calendar-master')) {
     void initAgendaEngine();
 }
 
