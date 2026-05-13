@@ -395,6 +395,8 @@ async function initAgendaEngine() {
             }
             #calendar-master .fc-daygrid-day-frame {
                 padding: 0 !important;
+                min-height: 118px !important;
+                box-sizing: border-box !important;
             }
             #calendar-master .fc-daygrid-body {
                 padding: 0 !important;

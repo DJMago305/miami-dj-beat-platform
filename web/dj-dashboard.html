@@ -12,7 +12,7 @@
         rel="stylesheet">
     <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css' rel='stylesheet' />
-    <link rel="stylesheet" href="./styles.css?v=20260513-today-fix" />
+    <link rel="stylesheet" href="./styles.css?v=20260513-fase1-agenda" />
     <link rel="stylesheet" href="./header-unified.css?v=20260424-dashboard-header-sync" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260411-booth-policy" />
@@ -859,7 +859,7 @@
                                 <!-- Layer 1: Sky Base Layer -->
                                 <div class="sky-base clear-day" id="weather-layer-base">
                                     <img class="sky-base-img" src="./assets/weather/Cielo Azul.png" alt="">
-                                </motion>
+                                </div>
 
                                 <!-- Layer 1b: Stars Layer (Behind clouds for night scenes) -->
                                 <div class="sky-stars" id="weather-stars">
@@ -4620,10 +4620,18 @@
                 var mr = document.getElementById('metrics-range');
                 window.loadFlowData(mr && mr.value ? mr.value : '1y');
             }
-            if (tabId === 'dashboard' && window.mdjCalendarInstance) {
+            if (tabId === 'dashboard') {
                 setTimeout(function () {
-                    try { window.mdjCalendarInstance.updateSize(); } catch (_e) { /* noop */ }
-                }, 60);
+                    if (window.mdjCalendarInstance) {
+                        try {
+                            window.mdjCalendarInstance.updateSize();
+                            window.mdjCalendarInstance.refetchEvents();
+                        } catch (_e) { /* noop */ }
+                    }
+                    if (window.MDJ_DASHBOARD_HUB && typeof window.MDJ_DASHBOARD_HUB.weather === 'function') {
+                        window.MDJ_DASHBOARD_HUB.weather();
+                    }
+                }, 80);
             }
         }
 
@@ -6136,12 +6144,12 @@
     </div>
 
     <!-- ══ MDJ Dashboard: módulos agenda + clima + flujo (orden fijo; hub conecta al final) ══ -->
-    <script src="./js/event-weather.js?v=20260513-hourly-icons"></script>
-    <script src="./js/weather-engine.js?v=20260423-weather-latlon-key"></script>
+    <script src="./js/event-weather.js?v=20260513-fase1-agenda"></script>
+    <script src="./js/weather-engine.js?v=20260513-fase1-agenda"></script>
     <script src="./weather-astral.js?v=20260312-3"></script>
     <script type="module" src="./js/event-intelligence.js?v=20260317-200"></script>
     <script>window.MDJ_DASHBOARD_DEFER_AGENDA = true;</script>
-    <script src="./js/agenda-engine.js?v=20260513-hub-order"></script>
+    <script src="./js/agenda-engine.js?v=20260513-fase1-agenda"></script>
     <script src="./flow-handler.js?v=20260513-flow-session-wire"></script>
 
     <!-- Support for External Tab Routing (?tab=settings) -->
@@ -6283,7 +6291,7 @@
     <script src="./mdj-shared-header.js?v=20260513-dashboard-ambient"></script>
   <script src="./mdj-owner-tabs-marquee.js?v=20260427-no-marquee"></script>
   <script src="./mdj-social-bar.js?v=20260513-dashboard-private"></script>
-    <script src="./js/mdj-dashboard-hub.js?v=20260513-flow-wire"></script>
+    <script src="./js/mdj-dashboard-hub.js?v=20260513-fase1-agenda"></script>
 </body>
 
 </html>

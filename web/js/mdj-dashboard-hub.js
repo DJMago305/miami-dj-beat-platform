@@ -1,30 +1,37 @@
 /**
- * MDJ Dashboard Hub — CONECTOR (no reimplementa lógica).
- *
- * Cableado ya en dj-dashboard.html:
- *   Agenda  → #calendar-master, botones prev/next/today → mdjCalendarInstance
- *   Clima   → #booth-hero-container, weather-engine.js + event-weather.js
- *   Flujo   → switchDashTab('flow'), #metrics-range onchange → loadFlowData()
- *
- * Este archivo solo enlaza los módulos en el orden correcto al cargar.
+ * MDJ Dashboard Hub — CONECTOR Fase 1 (Agenda + clima en #tab-dashboard).
  */
 (function () {
     'use strict';
 
-    var VERSION = '20260513-connect';
+    var VERSION = '20260513-fase1-agenda';
 
     function onDashboard() {
         return !!document.getElementById('tab-dashboard');
+    }
+
+    function calendarHasGrid() {
+        var el = document.getElementById('calendar-master');
+        return !!(el && el.querySelector('.fc-daygrid-body tr'));
+    }
+
+    function reflowAgenda() {
+        if (!window.mdjCalendarInstance) return;
+        try {
+            window.mdjCalendarInstance.updateSize();
+        } catch (_e) { /* noop */ }
     }
 
     function startAgenda() {
         if (!document.getElementById('calendar-master') && !document.getElementById('agenda-calendar-master')) {
             return Promise.resolve();
         }
-        if (window.mdjCalendarInstance) {
-            try {
-                window.mdjCalendarInstance.updateSize();
-            } catch (_e) { /* noop */ }
+        if (typeof window.FullCalendar === 'undefined') {
+            console.warn('[MDJ Hub] FullCalendar no cargado');
+            return Promise.resolve();
+        }
+        if (window.mdjCalendarInstance && calendarHasGrid()) {
+            reflowAgenda();
             return Promise.resolve();
         }
         if (typeof window.mdjStartAgendaEngine === 'function') {
@@ -34,6 +41,16 @@
             return initAgendaEngine();
         }
         return Promise.resolve();
+    }
+
+    function refreshAgendaData() {
+        if (!window.mdjCalendarInstance) return;
+        try {
+            if (typeof window.mdjCalendarInstance.refetchEvents === 'function') {
+                window.mdjCalendarInstance.refetchEvents();
+            }
+            reflowAgenda();
+        } catch (_e) { /* noop */ }
     }
 
     function startWeather() {
@@ -46,9 +63,8 @@
     function startFlowIfVisible() {
         var panel = document.getElementById('tab-flow');
         var qs = new URLSearchParams(window.location.search);
-        var wantFlow = (qs.get('tab') === 'flow') || (panel && panel.classList.contains('active'));
-        if (!wantFlow) return;
-        if (typeof window.loadFlowData !== 'function') return;
+        var wantFlow = qs.get('tab') === 'flow' || (panel && panel.classList.contains('active'));
+        if (!wantFlow || typeof window.loadFlowData !== 'function') return;
         var mr = document.getElementById('metrics-range');
         window.loadFlowData(mr && mr.value ? mr.value : '1y');
     }
@@ -72,43 +88,46 @@
                     }
                 });
             }
-            setTimeout(fn, 1200);
+            setTimeout(fn, 1500);
         }).catch(function () {
             setTimeout(fn, 800);
         });
     }
 
-    function connect() {
+    function connectAgendaTab() {
         if (!onDashboard()) return;
 
         void startAgenda().then(function () {
-            if (window.mdjCalendarInstance) {
-                try {
-                    window.mdjCalendarInstance.updateSize();
-                } catch (_e) { /* noop */ }
-            }
+            reflowAgenda();
             startWeather();
-            whenSessionReady(startFlowIfVisible);
+            whenSessionReady(function () {
+                refreshAgendaData();
+                startWeather();
+                startFlowIfVisible();
+            });
         });
+
+        setTimeout(function () {
+            if (!calendarHasGrid()) void startAgenda();
+            reflowAgenda();
+            startWeather();
+        }, 1800);
     }
 
     document.addEventListener('djCalendarRendered', function () {
         setTimeout(function () {
-            if (window.mdjCalendarInstance) {
-                try {
-                    window.mdjCalendarInstance.updateSize();
-                } catch (_e) { /* noop */ }
-            }
+            reflowAgenda();
             startWeather();
         }, 120);
     });
 
-    connect();
+    connectAgendaTab();
 
     window.MDJ_DASHBOARD_HUB = {
         version: VERSION,
-        connect: connect,
+        connect: connectAgendaTab,
         agenda: startAgenda,
+        refreshAgenda: refreshAgendaData,
         weather: startWeather,
         flow: startFlowIfVisible
     };
