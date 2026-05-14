@@ -524,7 +524,7 @@ function mdjPortalStaffModeRequested(params) {
 
 /** Omit Stripe / token wiring from browser selects (Edge + webhooks use service_role). */
 var MDJ_LEADS_SAFE_COLUMNS =
-    'id,email,full_name,phone,event_date,location,gate_code,contact_person,budget,status,notes,lead_outcome,lead_outcome_reason,event_type,assigned_dj_id,assigned_dj_name,client_contact,name,client_name,service_type,created_at,payment_status,balance_paid,total_amount,client_user_id';
+    'id,email,full_name,phone,event_date,location,gate_code,contact_person,budget,status,notes,event_type,assigned_dj_id,assigned_dj_name,created_at,payment_status,balance_paid,total_amount,deposit_required_usd,client_user_id';
 
 const PortalApp = {
     /** Lead abierto 48h+ sin pago → crédito de enganche (portal + IA pueden referenciarlo). */
@@ -1114,18 +1114,26 @@ const PortalApp = {
         }
 
         this.currentLead = leadData;
-        await this.loadLeadItems(leadId);
-        await this.fetchClientProfile(leadData.email);
-        this.renderLeadInfo();
-        this.updatePayments();
-        this.startCountdown();
-        if (this.isManager) {
-            this.setupManagerBillingBarrier();
-        }
         try {
-            document.body.classList.remove('portal-resolving-session');
-        } catch (eDone) { /* ignore */ }
-        portalClearLeadPendingShell();
+            await this.loadLeadItems(leadId);
+            await this.fetchClientProfile(leadData.email);
+            this.renderLeadInfo();
+            this.updatePayments();
+            this.startCountdown();
+            if (this.isManager) {
+                this.setupManagerBillingBarrier();
+            }
+        } catch (renderErr) {
+            console.error('[portal] loadLeadData render failed', renderErr);
+            if (!this.isManager) {
+                this.showLeadAccessDenied();
+            }
+        } finally {
+            try {
+                document.body.classList.remove('portal-resolving-session');
+            } catch (eDone) { /* ignore */ }
+            portalClearLeadPendingShell();
+        }
     },
 
     async fetchClientProfile(email) {
@@ -1306,21 +1314,30 @@ const PortalApp = {
             subEl.style.opacity = '0.9';
         }
         this.renderPortalWelcomeAvatar();
-        document.getElementById('log-location').textContent = l.location;
-        document.getElementById('log-datetime').textContent = `${l.event_date} - 7:00 PM`;
-        document.getElementById('log-gate').textContent = l.gate_code || "A confirmar";
+        var logLoc = document.getElementById('log-location');
+        var logDt = document.getElementById('log-datetime');
+        var logGate = document.getElementById('log-gate');
+        var logContact = document.getElementById('log-contact');
+        var payDeadline = document.getElementById('pay-deadline');
+        if (logLoc) logLoc.textContent = l.location || portalT('portal-log-contact-placeholder');
+        if (logDt) logDt.textContent = (l.event_date ? String(l.event_date) : '—') + ' - 7:00 PM';
+        if (logGate) logGate.textContent = l.gate_code || 'A confirmar';
         var contactLine = l.contact_person && String(l.contact_person).trim()
             ? portalFirstNameOnly(String(l.contact_person).trim())
             : portalT('portal-log-contact-placeholder');
-        document.getElementById('log-contact').textContent = contactLine;
+        if (logContact) logContact.textContent = contactLine;
 
-        const eventDate = new Date(l.event_date);
-        const deadline = new Date(eventDate);
-        deadline.setDate(deadline.getDate() - 3);
-        document.getElementById('pay-deadline').textContent = deadline.toLocaleDateString();
-
-        if (new Date() > eventDate) {
-            document.getElementById('feedback-card').style.display = 'block';
+        if (payDeadline && l.event_date) {
+            const eventDate = new Date(l.event_date);
+            if (!isNaN(eventDate.getTime())) {
+                const deadline = new Date(eventDate);
+                deadline.setDate(deadline.getDate() - 3);
+                payDeadline.textContent = deadline.toLocaleDateString();
+                var feedbackCard = document.getElementById('feedback-card');
+                if (feedbackCard && new Date() > eventDate) {
+                    feedbackCard.style.display = 'block';
+                }
+            }
         }
 
         if (this.isManager) {
@@ -2099,13 +2116,16 @@ const PortalApp = {
     },
 
     startCountdown() {
+        var countdownEl = document.getElementById('countdown');
+        if (!countdownEl || !this.currentLead || !this.currentLead.event_date) return;
         const target = new Date(this.currentLead.event_date).getTime();
+        if (!isFinite(target)) return;
         const update = () => {
             const now = new Date().getTime();
             const diff = target - now;
             if (diff < 0) {
                 var doneTxt = portalEscapeHtml(portalT('portal-event-finished'));
-                document.getElementById('countdown').innerHTML = "<span class='btn-pill'>" + doneTxt + '</span>';
+                countdownEl.innerHTML = "<span class='btn-pill'>" + doneTxt + '</span>';
                 return;
             }
 
@@ -2113,9 +2133,12 @@ const PortalApp = {
             const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-            document.getElementById('days').textContent = d.toString().padStart(2, '0');
-            document.getElementById('hours').textContent = h.toString().padStart(2, '0');
-            document.getElementById('mins').textContent = m.toString().padStart(2, '0');
+            var daysEl = document.getElementById('days');
+            var hoursEl = document.getElementById('hours');
+            var minsEl = document.getElementById('mins');
+            if (daysEl) daysEl.textContent = d.toString().padStart(2, '0');
+            if (hoursEl) hoursEl.textContent = h.toString().padStart(2, '0');
+            if (minsEl) minsEl.textContent = m.toString().padStart(2, '0');
         };
         update();
         setInterval(update, 60000);
