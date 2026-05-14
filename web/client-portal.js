@@ -107,17 +107,35 @@ var PORTAL_HUB_STORAGE_KEY = 'mdj_portal_hub_v1';
 function portalRememberHubLeads(sessionUserId, leads) {
     if (!sessionUserId) return;
     try {
-        var ids = (leads || [])
-            .map(function (L) {
-                return L && L.id ? String(L.id) : '';
-            })
-            .filter(Boolean);
+        var ids = [];
+        var rows = {};
+        (leads || []).forEach(function (L) {
+            if (L && L.id) {
+                var sid = String(L.id);
+                ids.push(sid);
+                rows[sid] = L;
+            }
+        });
         sessionStorage.setItem(
             PORTAL_HUB_STORAGE_KEY,
-            JSON.stringify({ uid: String(sessionUserId), ids: ids, ts: Date.now() })
+            JSON.stringify({ uid: String(sessionUserId), ids: ids, rows: rows, ts: Date.now() })
         );
     } catch (eHub) {
         void eHub;
+    }
+}
+
+function portalHubLeadSnapshot(sessionUserId, leadId) {
+    if (!sessionUserId || !leadId) return null;
+    try {
+        var raw = sessionStorage.getItem(PORTAL_HUB_STORAGE_KEY);
+        if (!raw) return null;
+        var o = JSON.parse(raw);
+        if (!o || String(o.uid) !== String(sessionUserId)) return null;
+        if (Date.now() - Number(o.ts || 0) > 86400000) return null;
+        return (o.rows && o.rows[String(leadId)]) || null;
+    } catch (eS) {
+        return null;
     }
 }
 
@@ -549,7 +567,8 @@ function portalWelcomeSubI18nKey(ctx, clientRow) {
  * fusiona con filas legacy solo vinculadas por email. Orden por created_at.
  */
 async function portalFetchLeadsForLoggedInUser(db, sessionUserId, emailNorm) {
-    var cols = 'id, event_type, event_date, status, created_at';
+    var cols =
+        'id,email,client_user_id,event_type,event_date,status,created_at,payment_status,balance_paid,total_amount';
     var seen = {};
     var rows = [];
     function absorb(data) {
@@ -636,39 +655,49 @@ function mdjPortalStaffModeRequested(params) {
     return m === 'manager' || m === 'staff' || m === 'supervision';
 }
 
-/** Omit Stripe / token wiring from browser selects (Edge + webhooks use service_role). */
-var MDJ_LEADS_CORE_COLUMNS =
-    'id,email,full_name,phone,event_date,location,gate_code,contact_person,budget,status,notes,event_type,assigned_dj_id,assigned_dj_name,created_at,payment_status,balance_paid,total_amount,client_user_id';
+/** Solo columnas que el hub ya lee vía RLS; sin gate_code / assigned_dj / deposit_required_usd. */
+var MDJ_LEADS_HUB_COLUMNS =
+    'id,email,client_user_id,event_type,event_date,status,created_at,payment_status,balance_paid,total_amount';
 
-/** Columnas que el hub ya demostró legibles vía RLS (sin campos opcionales de migraciones tardías). */
-var MDJ_LEADS_MINIMAL_COLUMNS =
+var MDJ_LEADS_BROWSER_COLUMNS =
     'id,email,client_user_id,full_name,phone,event_type,event_date,status,created_at,location,notes,payment_status,balance_paid,total_amount';
 
-var MDJ_LEADS_SAFE_COLUMNS = MDJ_LEADS_CORE_COLUMNS;
+var MDJ_LEADS_SAFE_COLUMNS = MDJ_LEADS_BROWSER_COLUMNS;
 
 async function portalFetchLeadRowById(db, leadId) {
     if (!db || !leadId) return { data: null, error: null };
-    var tiers = [MDJ_LEADS_MINIMAL_COLUMNS, MDJ_LEADS_CORE_COLUMNS];
+    var tiers = [MDJ_LEADS_HUB_COLUMNS, MDJ_LEADS_BROWSER_COLUMNS];
     var lastErr = null;
+    var merged = null;
     for (var t = 0; t < tiers.length; t++) {
         var cols = tiers[t];
         for (var attempt = 0; attempt < 2; attempt++) {
             var res = await db.from('leads').select(cols).eq('id', leadId).maybeSingle();
-            if (res.data) return { data: res.data, error: null };
+            if (res.data) {
+                merged = merged ? Object.assign(merged, res.data) : res.data;
+                if (t === 0 && merged.payment_status != null) {
+                    return { data: merged, error: null };
+                }
+                if (t === tiers.length - 1) {
+                    return { data: merged, error: null };
+                }
+                break;
+            }
             lastErr = res.error || null;
             if (lastErr) {
                 var msg = String(lastErr.message || lastErr.details || lastErr.hint || '');
-                if (/does not exist|42703|deposit_required_usd|gate_code|assigned_dj/i.test(msg)) {
+                if (/does not exist|42703|deposit_required_usd|gate_code|assigned_dj|contact_person|budget/i.test(msg)) {
                     break;
                 }
             }
             if (attempt < 1) {
                 await new Promise(function (r) {
-                    setTimeout(r, 320);
+                    setTimeout(r, 280);
                 });
             }
         }
     }
+    if (merged) return { data: merged, error: null };
     return { data: null, error: lastErr };
 }
 
@@ -848,6 +877,18 @@ const PortalApp = {
         const leadId = params.get('lead');
         this.isManager = params.get('mode') === 'manager';
 
+        if (leadId && params.get('access_denied') === '1') {
+            try {
+                window.history.replaceState(
+                    {},
+                    '',
+                    window.location.pathname + '?lead=' + encodeURIComponent(leadId)
+                );
+            } catch (eAd) {
+                void eAd;
+            }
+        }
+
         if (leadId) {
             try {
                 document.body.classList.add('portal-resolving-session');
@@ -973,6 +1014,13 @@ const PortalApp = {
             if (!sessGate || !sessGate.user) {
                 this.showLeadLoginRequired(leadId);
                 return;
+            }
+            if (
+                leadId &&
+                sessGate.user.id &&
+                portalHubLeadGranted(sessGate.user.id, leadId)
+            ) {
+                portalClearLeadPendingShell();
             }
         }
 
@@ -1216,38 +1264,80 @@ const PortalApp = {
                         });
                     }
                 }
-                if (!leadData && !this.isManager && fetchErr) {
-                    var ec = String(fetchErr.code || '');
-                    if (ec === 'PGRST116' || ec === '42501') {
-                        this.showLeadAccessDenied();
-                        return;
-                    }
-                }
+        if (!leadData && !this.isManager && fetchErr) {
+            var ec = String(fetchErr.code || '');
+            var hubOk =
+                sessionUserId && portalHubLeadGranted(sessionUserId, leadId);
+            if ((ec === 'PGRST116' || ec === '42501') && !hubOk) {
+                this.showLeadAccessDenied();
+                return;
+            }
+        }
             }
         } catch (e) {
             console.warn("Supabase fetch failed, using local fallback");
         }
 
         if (!leadData) {
-            if (!this.isManager) {
-                this.showLeadAccessDenied();
-                return;
+            var hubSnap =
+                sessionUserId && portalHubLeadGranted(sessionUserId, leadId)
+                    ? portalHubLeadSnapshot(sessionUserId, leadId)
+                    : null;
+            if (hubSnap) {
+                leadData = Object.assign({ id: leadId }, hubSnap);
             }
-            const saved = localStorage.getItem(`lead_${leadId}`);
-            leadData = saved ? JSON.parse(saved) : {
-                id: leadId,
-                email: "client@example.com",
-                event_type: "Evento Corporativo",
-                event_date: "2026-12-31",
-                location: "Miami Beach Convention Center",
-                contact_person: "Gerardo V.",
-                gate_code: "1234#",
-                total_amount: 0,
-                balance_paid: 0,
-                payment_status: "UNPAID",
-                status: "CONFIRMED",
-                created_at: new Date(Date.now() - 72 * 3600000).toISOString()
-            };
+        }
+        if (!leadData && db && sessionUserId && sessionEmail) {
+            try {
+                var hubList = await portalFetchLeadsForLoggedInUser(db, sessionUserId, sessionEmail);
+                var fromList = (hubList.data || []).find(function (L) {
+                    return L && String(L.id) === String(leadId);
+                });
+                if (fromList) {
+                    leadData = Object.assign({ id: leadId }, fromList);
+                }
+            } catch (eList) {
+                void eList;
+            }
+        }
+
+        if (!leadData) {
+            if (!this.isManager) {
+                var hubStillOk =
+                    sessionUserId && portalHubLeadGranted(sessionUserId, leadId);
+                if (!hubStillOk) {
+                    this.showLeadAccessDenied();
+                    return;
+                }
+                var snap2 = portalHubLeadSnapshot(sessionUserId, leadId);
+                leadData = snap2
+                    ? Object.assign({ id: leadId }, snap2)
+                    : {
+                          id: leadId,
+                          event_type: 'Event',
+                          event_date: '',
+                          status: 'CONFIRMED',
+                          payment_status: 'UNPAID',
+                          balance_paid: 0,
+                          total_amount: 0
+                      };
+            } else {
+                const saved = localStorage.getItem(`lead_${leadId}`);
+                leadData = saved ? JSON.parse(saved) : {
+                    id: leadId,
+                    email: "client@example.com",
+                    event_type: "Evento Corporativo",
+                    event_date: "2026-12-31",
+                    location: "Miami Beach Convention Center",
+                    contact_person: "Gerardo V.",
+                    gate_code: "1234#",
+                    total_amount: 0,
+                    balance_paid: 0,
+                    payment_status: "UNPAID",
+                    status: "CONFIRMED",
+                    created_at: new Date(Date.now() - 72 * 3600000).toISOString()
+                };
+            }
         }
 
         this.currentLead = leadData;
@@ -1262,7 +1352,10 @@ const PortalApp = {
             }
         } catch (renderErr) {
             console.error('[portal] loadLeadData render failed', renderErr);
-            if (!this.isManager) {
+            if (
+                !this.isManager &&
+                !(sessionUserId && portalHubLeadGranted(sessionUserId, leadId))
+            ) {
                 this.showLeadAccessDenied();
             }
         } finally {
@@ -2546,7 +2639,7 @@ const PortalApp = {
             var dt = l.event_date ? portalEscapeHtml(String(l.event_date)) : '—';
             var ty = l.event_type ? portalEscapeHtml(String(l.event_type)) : 'Event';
             var st = l.status ? portalEscapeHtml(String(l.status)) : '';
-            var href = '?lead=' + encodeURIComponent(l.id);
+            var href = './client-portal.html?lead=' + encodeURIComponent(l.id);
             return (
                 '<a href="' +
                 href +
