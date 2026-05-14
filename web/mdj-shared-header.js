@@ -438,10 +438,13 @@
       if (el) el.remove();
       return;
     }
-    var key = '';
+    /* client_only: pastilla «Cliente» / VIP ya en mdjSyncClientLoyaltyIndicator — no duplicar «El Comprador». */
     if (navTier === 'client_only') {
-      key = 'nav-tier-status-buyer';
-    } else if (djRole === 'owner') {
+      if (el) el.remove();
+      return;
+    }
+    var key = '';
+    if (djRole === 'owner') {
       key = 'nav-tier-status-owner';
     } else if (djRole === 'seller') {
       key = 'nav-tier-status-staff';
