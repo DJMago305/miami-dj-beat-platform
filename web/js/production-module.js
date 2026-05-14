@@ -29,6 +29,25 @@
     return Math.max(bal * 0.3, 150);
   }
 
+  function mdjCorpZelleEmail() {
+    return (typeof global.MDB_OFFICIAL_CONTACT_EMAIL === 'string' && global.MDB_OFFICIAL_CONTACT_EMAIL) || 'miamidjbeat@gmail.com';
+  }
+
+  function zelleMemoForLead(leadId) {
+    return 'MDJB-' + String(leadId).slice(0, 8).toUpperCase();
+  }
+
+  function buildZelleDepositInstructions(email, amountUsd, memo, portalUrl) {
+    return (
+      'Miami DJ Beat — Depósito por Zelle\n' +
+      'Recipient / Destinatario: ' + email + '\n' +
+      'Amount / Monto: $' + money(amountUsd) + ' USD\n' +
+      'Memo / Nota (required): ' + memo + '\n' +
+      (portalUrl ? 'Portal: ' + portalUrl + '\n' : '') +
+      'After sending, confirm in your client portal or send screenshot to your event manager.'
+    );
+  }
+
   function prodT(key) {
     if (global.i18n && typeof global.i18n.t === 'function') {
       return global.i18n.t(key);
@@ -271,6 +290,8 @@
         '<div id="prod-cobro-status" class="fineprint" style="margin:0 0 10px;min-height:1.2em;opacity:0.88;"></div>' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
         '<button type="button" class="btn secondary" id="prod-cobro-stripe-deposit" data-i18n="prod-cobro-stripe-deposit"></button>' +
+        '<button type="button" class="btn secondary" id="prod-cobro-zelle-deposit" data-i18n="prod-cobro-zelle-deposit"></button>' +
+        '<button type="button" class="btn secondary" id="prod-cobro-zelle-confirm" data-i18n="prod-cobro-zelle-confirm" style="display:none;"></button>' +
         '<button type="button" class="btn gold" id="prod-cobro-release-dj" data-i18n="prod-cobro-release-dj"></button>' +
         '</div></div>' +
         '<div id="prod-inv-summary-card" class="mdj-prod-inv-summary-card" aria-live="polite"></div>' +
@@ -344,6 +365,18 @@
       if (stripeDepBtn) {
         stripeDepBtn.onclick = function () {
           void self._sendDepositStripeLink();
+        };
+      }
+      var zelleDepBtn = document.getElementById('prod-cobro-zelle-deposit');
+      if (zelleDepBtn) {
+        zelleDepBtn.onclick = function () {
+          void self._sendDepositZelleInstructions();
+        };
+      }
+      var zelleConfirmBtn = document.getElementById('prod-cobro-zelle-confirm');
+      if (zelleConfirmBtn) {
+        zelleConfirmBtn.onclick = function () {
+          void self._confirmZelleDeposit();
         };
       }
       var releaseBtn = document.getElementById('prod-cobro-release-dj');
@@ -966,6 +999,10 @@
         lines.push(prodT('prod-cobro-status-released'));
       }
       stEl.textContent = lines.join(' · ');
+      var zc = document.getElementById('prod-cobro-zelle-confirm');
+      if (zc) {
+        zc.style.display = (L.payment_status || '') === 'PENDING_ZELLE' ? '' : 'none';
+      }
     },
 
     _sendDepositStripeLink: async function () {
@@ -1034,6 +1071,73 @@
         void this._refreshCobroStatus(leadId);
       } catch (e) {
         if (stEl) stEl.textContent = prodT('prod-cobro-stripe-fail') + ' ' + ((e && e.message) || '');
+      }
+      if (btn) btn.disabled = false;
+    },
+
+    _sendDepositZelleInstructions: async function () {
+      var stEl = document.getElementById('prod-cobro-status');
+      var leadEl = document.getElementById('prod-cobro-lead-id');
+      var leadId = leadEl ? leadEl.value.trim() : '';
+      if (!/^[0-9a-f-]{36}$/i.test(leadId)) {
+        if (stEl) stEl.textContent = prodT('prod-cobro-err-save-first');
+        return;
+      }
+      this._updateInvTotal();
+      var t = this._lastInvTotals;
+      var depositUsd = calcEventDepositUsd(t.total);
+      var db = global.getSupabaseClient && global.getSupabaseClient();
+      if (db) {
+        await db.from('leads').update({ deposit_required_usd: depositUsd, total_amount: t.total }).eq('id', leadId);
+      }
+      var portalUrl =
+        typeof global.location !== 'undefined' && global.location.origin
+          ? global.location.origin + '/client-portal.html?lead=' + encodeURIComponent(leadId)
+          : '';
+      var text = buildZelleDepositInstructions(mdjCorpZelleEmail(), depositUsd, zelleMemoForLead(leadId), portalUrl);
+      var btn = document.getElementById('prod-cobro-zelle-deposit');
+      if (btn) btn.disabled = true;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+          if (stEl) stEl.textContent = prodT('prod-cobro-zelle-copied');
+        } else {
+          window.prompt(prodT('prod-cobro-zelle-prompt'), text);
+        }
+        void this._refreshCobroStatus(leadId);
+      } catch (e) {
+        window.prompt(prodT('prod-cobro-zelle-prompt'), text);
+      }
+      if (btn) btn.disabled = false;
+    },
+
+    _confirmZelleDeposit: async function () {
+      var stEl = document.getElementById('prod-cobro-status');
+      var leadEl = document.getElementById('prod-cobro-lead-id');
+      var leadId = leadEl ? leadEl.value.trim() : '';
+      if (!/^[0-9a-f-]{36}$/i.test(leadId)) {
+        if (stEl) stEl.textContent = prodT('prod-cobro-err-save-first');
+        return;
+      }
+      var db = global.getSupabaseClient && global.getSupabaseClient();
+      if (!db) return;
+      var btn = document.getElementById('prod-cobro-zelle-confirm');
+      if (btn) btn.disabled = true;
+      try {
+        var r = await db.rpc('staff_confirm_event_zelle_deposit', { p_lead_id: leadId });
+        var data = r.data;
+        if (r.error) throw r.error;
+        if (data && data.ok === false) {
+          throw new Error(String(data.error || 'zelle_confirm_failed'));
+        }
+        if (stEl) {
+          stEl.textContent = prodTVar('prod-cobro-zelle-confirmed', {
+            amount: money(data && data.credited_usd != null ? data.credited_usd : 0)
+          });
+        }
+        void this._refreshCobroStatus(leadId);
+      } catch (e) {
+        if (stEl) stEl.textContent = prodT('prod-cobro-zelle-confirm-fail') + ' ' + ((e && e.message) || '');
       }
       if (btn) btn.disabled = false;
     },

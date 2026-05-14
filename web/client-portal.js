@@ -11,7 +11,6 @@ function portalEscapeHtml(s) {
         .replace(/'/g, '&#39;');
 }
 
-/** Stripe Edge: parse JSON y propagar mensaje de error del cuerpo (resp.ok obligatorio). */
 async function mdjPortalFetchCheckoutJson(resp) {
     var text = await resp.text();
     var data;
@@ -28,6 +27,29 @@ async function mdjPortalFetchCheckoutJson(resp) {
         throw new Error(String(data.error || data.detail));
     }
     return data;
+}
+
+function portalCalcEventDepositUsd(totalUsd) {
+    var bal = parseFloat(totalUsd);
+    if (!isFinite(bal) || bal < 0) bal = 0;
+    return Math.max(bal * 0.3, 150);
+}
+
+function portalCorpZelleEmail() {
+    return (typeof window.MDB_OFFICIAL_CONTACT_EMAIL === 'string' && window.MDB_OFFICIAL_CONTACT_EMAIL) || 'miamidjbeat@gmail.com';
+}
+
+function portalZelleMemoForLead(leadId) {
+    return 'MDJB-' + String(leadId).slice(0, 8).toUpperCase();
+}
+
+function portalClearLeadPendingShell() {
+    try {
+        document.documentElement.removeAttribute('data-portal-lead-pending');
+    } catch (e) { /* ignore */ }
+    try {
+        document.body.classList.remove('portal-resolving-session');
+    } catch (e2) { /* ignore */ }
 }
 
 /** Primer nombre para saludo humano: quita @, minúsculas salvo la inicial (ej. @WENDY → Wendy). */
@@ -96,6 +118,15 @@ var PORTAL_I18N_FB = {
         'portal-financial-deadline-label': 'Final payment due date',
         'portal-payment-stripe-note': 'Card payments are processed securely by Stripe (PCI DSS). We never store your full card number in this portal.',
         'portal-payment-paypal-soon': 'PayPal: integration in progress — use the card payment button for now.',
+        'portal-zelle-title': 'Pay deposit with Zelle',
+        'portal-zelle-recipient': 'Recipient',
+        'portal-zelle-amount': 'Deposit amount',
+        'portal-zelle-memo': 'Memo (required)',
+        'portal-zelle-copy': 'Copy instructions',
+        'portal-zelle-sent': 'I sent the Zelle payment',
+        'portal-zelle-pending': 'Zelle pending verification — we will confirm once received.',
+        'portal-zelle-sent-ok': 'Thanks! Your team will verify the deposit shortly.',
+        'portal-zelle-sent-fail': 'Could not register your Zelle payment. Try again or contact your manager.',
         'portal-payment-security-title': 'Saved payment methods',
         'portal-payment-security-body': 'To save or update cards securely for future events, use the billing section on your account (Stripe Customer).',
         'portal-payment-security-link': 'Billing & payment methods →',
@@ -180,6 +211,15 @@ var PORTAL_I18N_FB = {
         'portal-financial-deadline-label': 'Fecha límite pago final',
         'portal-payment-stripe-note': 'Pagos con tarjeta procesados de forma segura por Stripe (PCI DSS). No almacenamos el número completo de tu tarjeta en este portal.',
         'portal-payment-paypal-soon': 'PayPal: en integración; mientras tanto usa el botón de pago con tarjeta.',
+        'portal-zelle-title': 'Pagar depósito con Zelle',
+        'portal-zelle-recipient': 'Destinatario',
+        'portal-zelle-amount': 'Monto del depósito',
+        'portal-zelle-memo': 'Nota / memo (obligatorio)',
+        'portal-zelle-copy': 'Copiar instrucciones',
+        'portal-zelle-sent': 'Ya envié el pago por Zelle',
+        'portal-zelle-pending': 'Zelle pendiente de verificación — confirmaremos al recibirlo.',
+        'portal-zelle-sent-ok': '¡Gracias! Tu equipo verificará el depósito en breve.',
+        'portal-zelle-sent-fail': 'No se pudo registrar el pago Zelle. Intenta de nuevo o contacta a tu manager.',
         'portal-payment-security-title': 'Métodos de pago guardados',
         'portal-payment-security-body': 'Para guardar o actualizar tarjetas de forma segura para futuros eventos, usa la sección de facturación de tu cuenta (Stripe Customer).',
         'portal-payment-security-link': 'Facturación y métodos de pago →',
@@ -438,6 +478,28 @@ async function portalFetchLeadsForLoggedInUser(db, sessionUserId, emailNorm) {
     return { data: rows, error: rows.length ? null : lastErr };
 }
 
+/** ¿Este lead pertenece a la sesión? Peek por id + lista hub (misma regla que «Mis eventos»). */
+async function portalSessionOwnsLead(db, leadId, sessionUserId, sessionEmail) {
+    if (!db || !leadId) return false;
+    try {
+        var peek = await db.from('leads').select('email, client_user_id').eq('id', leadId).maybeSingle();
+        if (peek.data) {
+            var rowEmail = peek.data.email ? String(peek.data.email).trim().toLowerCase() : '';
+            var emailOk = rowEmail && sessionEmail && rowEmail === sessionEmail;
+            var uidOk =
+                sessionUserId &&
+                peek.data.client_user_id &&
+                String(peek.data.client_user_id) === String(sessionUserId);
+            if (emailOk || uidOk) return true;
+        }
+    } catch (eP) { /* ignore */ }
+    var q = await portalFetchLeadsForLoggedInUser(db, sessionUserId, sessionEmail);
+    var leads = q.data || [];
+    return leads.some(function (L) {
+        return L && String(L.id) === String(leadId);
+    });
+}
+
 /** Admin / manager / seller: JWT + fila dj_profiles (roles en minúsculas). */
 async function mdjPortalResolveStaff(db, user) {
     if (!db || !user) return false;
@@ -639,6 +701,12 @@ const PortalApp = {
         const params = new URLSearchParams(window.location.search);
         const leadId = params.get('lead');
         this.isManager = params.get('mode') === 'manager';
+
+        if (leadId) {
+            try {
+                document.body.classList.add('portal-resolving-session');
+            } catch (eRs) { /* ignore */ }
+        }
 
         if (this.isManager && leadId) {
             await this.waitForSupabaseClient(8000);
@@ -889,9 +957,7 @@ const PortalApp = {
     },
 
     showLeadLoginRequired(leadId) {
-        try {
-            document.body.classList.remove('portal-resolving-session');
-        } catch (e0) { /* ignore */ }
+        portalClearLeadPendingShell();
         var loginUrl = './login.html?redirect=client-portal&lead=' + encodeURIComponent(leadId || '');
         var head = document.querySelector('.portal-header');
         var main = document.querySelector('main');
@@ -918,9 +984,7 @@ const PortalApp = {
     },
 
     showLeadAccessDenied() {
-        try {
-            document.body.classList.remove('portal-resolving-session');
-        } catch (e1) { /* ignore */ }
+        portalClearLeadPendingShell();
         var head = document.querySelector('.portal-header');
         var main = document.querySelector('main');
         var title = portalT('portal-lead-access-denied-title');
@@ -942,7 +1006,12 @@ const PortalApp = {
         }
         if (main) main.innerHTML = '';
         try {
-            window.history.replaceState({}, '', window.location.pathname + '?access_denied=1');
+            var denyParams = new URLSearchParams(window.location.search);
+            var denyLead = denyParams.get('lead');
+            var denyQs = denyLead
+                ? '?lead=' + encodeURIComponent(denyLead) + '&access_denied=1'
+                : '?access_denied=1';
+            window.history.replaceState({}, '', window.location.pathname + denyQs);
         } catch (eH) { /* ignore */ }
     },
 
@@ -967,27 +1036,23 @@ const PortalApp = {
                 this.showLeadLoginRequired(leadId);
                 return;
             }
-            try {
-                const { data: rowPeek, error: eEm } = await db
-                    .from('leads')
-                    .select('email, client_user_id')
-                    .eq('id', leadId)
-                    .maybeSingle();
-                if (eEm || !rowPeek) {
-                    this.showLeadAccessDenied();
-                    return;
+            var accessOk = false;
+            for (var att = 0; att < 3; att++) {
+                accessOk = await portalSessionOwnsLead(db, leadId, sessionUserId, sessionEmail);
+                if (accessOk) break;
+                if (att < 2) {
+                    await new Promise(function (r) {
+                        setTimeout(r, 350);
+                    });
+                    try {
+                        var gu2 = await db.auth.getUser();
+                        var u2 = gu2 && gu2.data && gu2.data.user;
+                        if (u2 && u2.email) sessionEmail = String(u2.email).trim().toLowerCase();
+                        if (u2 && u2.id) sessionUserId = String(u2.id);
+                    } catch (eR) { /* ignore */ }
                 }
-                var rowEmail = rowPeek.email ? String(rowPeek.email).trim().toLowerCase() : '';
-                var emailOk = rowEmail && rowEmail === sessionEmail;
-                var uidOk =
-                    sessionUserId &&
-                    rowPeek.client_user_id &&
-                    String(rowPeek.client_user_id) === sessionUserId;
-                if (!emailOk && !uidOk) {
-                    this.showLeadAccessDenied();
-                    return;
-                }
-            } catch (e1) {
+            }
+            if (!accessOk) {
                 this.showLeadAccessDenied();
                 return;
             }
@@ -995,14 +1060,27 @@ const PortalApp = {
 
         try {
             if (db) {
-                const { data, error } = await db
-                    .from('leads')
-                    .select(MDJ_LEADS_SAFE_COLUMNS)
-                    .eq('id', leadId)
-                    .single();
-                if (data) leadData = data;
-                else if (!this.isManager && error) {
-                    var ec = String(error.code || '');
+                var fetchErr = null;
+                for (var fAtt = 0; fAtt < 3; fAtt++) {
+                    const { data, error } = await db
+                        .from('leads')
+                        .select(MDJ_LEADS_SAFE_COLUMNS)
+                        .eq('id', leadId)
+                        .single();
+                    if (data) {
+                        leadData = data;
+                        fetchErr = null;
+                        break;
+                    }
+                    fetchErr = error;
+                    if (fAtt < 2) {
+                        await new Promise(function (r) {
+                            setTimeout(r, 400);
+                        });
+                    }
+                }
+                if (!leadData && !this.isManager && fetchErr) {
+                    var ec = String(fetchErr.code || '');
                     if (ec === 'PGRST116' || ec === '42501') {
                         this.showLeadAccessDenied();
                         return;
@@ -1039,10 +1117,15 @@ const PortalApp = {
         await this.loadLeadItems(leadId);
         await this.fetchClientProfile(leadData.email);
         this.renderLeadInfo();
+        this.updatePayments();
         this.startCountdown();
         if (this.isManager) {
             this.setupManagerBillingBarrier();
         }
+        try {
+            document.body.classList.remove('portal-resolving-session');
+        } catch (eDone) { /* ignore */ }
+        portalClearLeadPendingShell();
     },
 
     async fetchClientProfile(email) {
@@ -1548,7 +1631,7 @@ const PortalApp = {
 
         // Payment status badge
         const pStatus = l.payment_status || 'UNPAID';
-        const statusColors = { PAID: '#22c55e', PARTIAL: '#f59e0b', PENDING: '#c5a059', UNPAID: '#ef4444' };
+        const statusColors = { PAID: '#22c55e', PARTIAL: '#f59e0b', PENDING: '#c5a059', PENDING_ZELLE: '#c5a059', UNPAID: '#ef4444' };
         const payStatusEl = document.getElementById('pay-status-badge');
         if (payStatusEl) {
             payStatusEl.textContent = pStatus;
@@ -1557,6 +1640,8 @@ const PortalApp = {
 
         var oldPay = document.getElementById('btn-stripe-pay');
         if (oldPay) oldPay.remove();
+        var oldZelle = document.getElementById('portal-zelle-block');
+        if (oldZelle) oldZelle.remove();
         var mgrPay = document.getElementById('btn-manager-stripe-link');
         if (mgrPay) mgrPay.remove();
         if (!this.isManager) {
@@ -1564,9 +1649,13 @@ const PortalApp = {
             if (abx) abx.remove();
         }
 
-        // Show Stripe pay button to CLIENT if balance > 0 and not PAID
+        var payHost = document.getElementById('portal-pay-cta-host');
+        if (payHost) payHost.innerHTML = '';
+
+        // Show Stripe + Zelle to CLIENT if balance > 0 and not PAID
         if (!this.isManager && balance > 0 && pStatus !== 'PAID') {
             this.showStripePayButton(balance);
+            this.showZellePayBlock(balance);
         }
 
         if (this.isManager && balance > 0 && this.getManagerBillingUnlocked()) {
@@ -1725,6 +1814,105 @@ const PortalApp = {
             : `<span style="font-size:16px;">💳</span> Pagar saldo ($${balance.toFixed(2)}) — Stripe`;
         btn.onclick = () => this.payDepositStripe(balance);
         host.appendChild(btn);
+    },
+
+    showZellePayBlock(balance) {
+        var host = document.getElementById('portal-pay-cta-host');
+        if (!host || !this.currentLead) return;
+        var l = this.currentLead;
+        var pStatus = l.payment_status || 'UNPAID';
+        var depositUsd =
+            l.deposit_required_usd != null && isFinite(parseFloat(l.deposit_required_usd))
+                ? parseFloat(l.deposit_required_usd)
+                : portalCalcEventDepositUsd(balance);
+        var email = portalCorpZelleEmail();
+        var memo = portalZelleMemoForLead(l.id);
+        var wrap = document.createElement('div');
+        wrap.id = 'portal-zelle-block';
+        wrap.className = 'portal-zelle-block';
+        wrap.style.cssText =
+            'margin-top:14px;padding:14px;border:1px solid rgba(197,160,89,0.35);border-radius:12px;background:rgba(0,0,0,0.2);text-align:left;';
+        wrap.innerHTML =
+            '<p style="margin:0 0 10px;font-weight:800;color:var(--gold);font-size:14px;">' +
+            portalEscapeHtml(portalT('portal-zelle-title')) +
+            '</p>' +
+            '<ul class="logistics-list" style="margin:0 0 12px;">' +
+            '<li><span class="label">' +
+            portalEscapeHtml(portalT('portal-zelle-recipient')) +
+            '</span><span class="val" style="font-size:13px;">' +
+            portalEscapeHtml(email) +
+            '</span></li>' +
+            '<li><span class="label">' +
+            portalEscapeHtml(portalT('portal-zelle-amount')) +
+            '</span><span class="val">$' +
+            depositUsd.toFixed(2) +
+            '</span></li>' +
+            '<li><span class="label">' +
+            portalEscapeHtml(portalT('portal-zelle-memo')) +
+            '</span><span class="val" style="font-family:monospace;">' +
+            portalEscapeHtml(memo) +
+            '</span></li>' +
+            '</ul>' +
+            (pStatus === 'PENDING_ZELLE'
+                ? '<p class="fineprint" style="margin:0 0 10px;opacity:0.9;">' +
+                  portalEscapeHtml(portalT('portal-zelle-pending')) +
+                  '</p>'
+                : '') +
+            '<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;"></div>';
+        var actions = wrap.lastElementChild;
+        if (actions) {
+            var copyBtn = document.createElement('button');
+            copyBtn.type = 'button';
+            copyBtn.className = 'portal-pay-secondary';
+            copyBtn.textContent = portalT('portal-zelle-copy');
+            var self = this;
+            copyBtn.onclick = function () {
+                var text =
+                    'Miami DJ Beat — Zelle deposit\nRecipient: ' +
+                    email +
+                    '\nAmount: $' +
+                    depositUsd.toFixed(2) +
+                    ' USD\nMemo: ' +
+                    memo;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).catch(function () {});
+                } else {
+                    window.prompt('Zelle', text);
+                }
+            };
+            actions.appendChild(copyBtn);
+            if (pStatus !== 'PENDING_ZELLE') {
+                var sentBtn = document.createElement('button');
+                sentBtn.type = 'button';
+                sentBtn.className = 'portal-pay-now-gold';
+                sentBtn.textContent = portalT('portal-zelle-sent');
+                sentBtn.onclick = function () {
+                    void self.markZelleDepositSent();
+                };
+                actions.appendChild(sentBtn);
+            }
+        }
+        host.appendChild(wrap);
+    },
+
+    async markZelleDepositSent() {
+        if (!this.currentLead || !this.currentLead.id) return;
+        var db = window.getSupabaseClient();
+        if (!db) {
+            alert(portalT('portal-zelle-sent-fail'));
+            return;
+        }
+        try {
+            var r = await db.rpc('client_mark_event_zelle_sent', { p_lead_id: this.currentLead.id });
+            var data = r.data;
+            if (r.error) throw r.error;
+            if (data && data.ok === false) throw new Error(String(data.error || 'rpc_failed'));
+            this.currentLead.payment_status = 'PENDING_ZELLE';
+            alert(portalT('portal-zelle-sent-ok'));
+            this.updatePayments();
+        } catch (e) {
+            alert(portalT('portal-zelle-sent-fail'));
+        }
     },
 
     async payDepositStripe(balance) {
