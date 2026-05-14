@@ -1,0 +1,1526 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MDJPRO — Client account</title>
+  <meta name="description" content="Manage your client profile, photo, and saved payment methods." />
+  <link rel="stylesheet" href="./styles.css?v=20260430-float-nav-1" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260422-wordmark-scale" />
+  <link rel="stylesheet" href="./mdj-outlined-fields.css?v=20260421-account-forms" />
+  <style>
+    body.mdj-client-account-page {
+      background: #0a0e1a;
+      --ca-relief-border: #dbe3ef;
+      --ca-relief-radius: 14px;
+      --ca-relief-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.05),
+        0 10px 28px rgba(15, 23, 42, 0.09);
+    }
+
+    body.mdj-client-account-page .ca-shell {
+      display: grid;
+      grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+      gap: 0;
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      min-height: calc(100vh - var(--header-height) - var(--header-nav-band));
+      padding: 0;
+    }
+
+    body.mdj-client-account-page .ca-sidebar {
+      background: linear-gradient(180deg, #12182a 0%, #0d1220 100%);
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 32px clamp(16px, 2vw, 28px);
+      min-height: calc(100vh - var(--header-height) - var(--header-nav-band));
+    }
+
+    body.mdj-client-account-page .ca-sidebar-user {
+      text-align: center;
+      padding-bottom: 22px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    body.mdj-client-account-page #ca-sidebar-avatar {
+      width: 92px;
+      height: 92px;
+      margin: 0 auto 14px;
+      border-radius: 50%;
+      border: 2px solid rgba(197, 160, 89, 0.5);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    body.mdj-client-account-page #ca-sidebar-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    body.mdj-client-account-page #ca-sidebar-name {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #fff;
+      margin: 0 0 4px;
+    }
+
+    body.mdj-client-account-page #ca-sidebar-email {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.55);
+      word-break: break-word;
+    }
+
+    body.mdj-client-account-page .ca-nav {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    body.mdj-client-account-page .ca-nav button {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 12px;
+      margin-bottom: 6px;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 14px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+    }
+
+    body.mdj-client-account-page .ca-nav button:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    body.mdj-client-account-page .ca-nav button.is-active {
+      background: rgba(197, 160, 89, 0.16);
+      border-color: rgba(197, 160, 89, 0.34);
+      color: #fff;
+      box-shadow:
+        0 3px 12px rgba(0, 0, 0, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    body.mdj-client-account-page .ca-main {
+      background: #f4f6fa;
+      color: #1a2238;
+      padding-top: clamp(28px, 3.5vw, 52px);
+      padding-bottom: clamp(28px, 3.5vw, 52px);
+      padding-left: clamp(20px, 3vw, 44px);
+      /* Clearance for global .social-sticky-bar (fixed right) — keeps cards off the icon rail */
+      padding-right: clamp(78px, 5.5vw, 104px);
+      min-height: calc(100vh - var(--header-height) - var(--header-nav-band));
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    body.mdj-client-account-page .ca-panel {
+      display: none;
+    }
+
+    body.mdj-client-account-page .ca-panel.is-active {
+      display: block;
+    }
+
+    body.mdj-client-account-page .ca-main h1 {
+      font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+      margin: 0 0 22px;
+      color: #1a2238;
+      font-weight: 800;
+    }
+
+    body.mdj-client-account-page .ca-overview-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(18px, 2vw, 28px);
+      width: 100%;
+    }
+
+    @media (min-width: 1200px) {
+      body.mdj-client-account-page .ca-overview-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+
+    body.mdj-client-account-page .ca-overview-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 0;
+      min-height: clamp(160px, 18vh, 220px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    body.mdj-client-account-page #ca-panel-profile .ca-overview-card,
+    body.mdj-client-account-page #ca-panel-profile .ca-profile-section,
+    body.mdj-client-account-page #ca-panel-profile .ca-profile-contact-tile,
+    body.mdj-client-account-page .ca-events-block,
+    body.mdj-client-account-page .ca-rewards-tier,
+    body.mdj-client-account-page .ca-panel .system-card,
+    body.mdj-client-account-page .ca-edit-toggle {
+      border: 1px solid var(--ca-relief-border) !important;
+      border-radius: var(--ca-relief-radius);
+      background: #fff;
+      box-shadow: var(--ca-relief-shadow) !important;
+    }
+
+    body.mdj-client-account-page .ca-panel .system-card,
+    body.mdj-client-account-page .ca-events-block,
+    body.mdj-client-account-page #ca-panel-profile .ca-overview-card,
+    body.mdj-client-account-page #ca-panel-profile .ca-profile-section,
+    body.mdj-client-account-page #ca-panel-profile .ca-profile-contact-tile {
+      overflow: hidden;
+    }
+
+    body.mdj-client-account-page .ca-overview-card__head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 0;
+      padding: 10px 12px;
+      background: #f1f5f9;
+      border-bottom: 1px solid #dbe3ef;
+    }
+
+    body.mdj-client-account-page .ca-overview-card__head h2 {
+      margin: 0;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #475569;
+    }
+
+    body.mdj-client-account-page .ca-overview-card__action {
+      border: none;
+      background: none;
+      color: #2563eb;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    body.mdj-client-account-page .ca-overview-card__body {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #334155;
+      font-size: 14px;
+      line-height: 1.45;
+      padding: clamp(18px, 2vw, 26px);
+      background: #fff;
+    }
+
+    body.mdj-client-account-page #ca-overview-avatar {
+      width: 112px;
+      height: 112px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 1px solid #dbe3ef;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+    }
+
+    body.mdj-client-account-page #ca-overview-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    body.mdj-client-account-page #ca-profile-avatar {
+      width: 112px;
+      height: 112px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 1px solid #dbe3ef;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+    }
+
+    body.mdj-client-account-page #ca-profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    body.mdj-client-account-page .ca-profile-photo-card {
+      margin-bottom: clamp(18px, 2.5vw, 24px);
+    }
+
+    body.mdj-client-account-page #ca-profile-photo-card .system-card-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    body.mdj-client-account-page #ca-profile-photo-card .sys-btn {
+      flex: 0 0 auto;
+      width: auto;
+      margin-top: 14px;
+      padding: 6px 13px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: 0.03em;
+      border-radius: 7px;
+      white-space: nowrap;
+      color: #1e293b;
+      background: #ffffff;
+      border: 1px solid #94a3b8;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    }
+
+    body.mdj-client-account-page #ca-profile-photo-card .sys-btn:hover {
+      color: #0f172a;
+      background: #f8fafc;
+      border-color: #64748b;
+    }
+
+    body.mdj-client-account-page .ca-panel .system-card {
+      background: #fff;
+      border: 1px solid var(--ca-relief-border) !important;
+      border-radius: var(--ca-relief-radius);
+      box-shadow: var(--ca-relief-shadow) !important;
+      color: #1a2238;
+      width: 100%;
+      max-width: none;
+      margin-bottom: 0;
+    }
+
+    body.mdj-client-account-page .ca-panel .system-card-footer {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      padding: clamp(16px, 2vw, 22px) clamp(20px, 2.5vw, 32px);
+      border-top: 1px solid #e2e8f0;
+      background: #fafbfc;
+    }
+
+    body.mdj-client-account-page .ca-edit-toggle {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      border-radius: 12px !important;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1a2238;
+      cursor: pointer;
+    }
+
+    body.mdj-client-account-page .ca-edit-toggle:last-child {
+      margin-bottom: 0;
+    }
+
+    body.mdj-client-account-page #ca-panel-notifications .system-card-footer {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+    }
+
+    body.mdj-client-account-page #ca-panel-notifications #ca-notify-status {
+      flex: 1 1 100%;
+      width: auto;
+      text-align: right;
+      margin: 0;
+    }
+
+    body.mdj-client-account-page #ca-panel-payments .ca-panel-footer-actions,
+    body.mdj-client-account-page #ca-panel-notifications .ca-panel-footer-actions,
+    body.mdj-client-account-page #ca-panel-email .ca-panel-footer-actions,
+    body.mdj-client-account-page #ca-panel-password .ca-panel-footer-actions {
+      display: inline-flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: center;
+      width: auto;
+      justify-content: flex-start;
+      gap: 10px;
+    }
+
+    body.mdj-client-account-page .ca-profile-panel-footer .ca-panel-footer-actions {
+      display: inline-flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: center;
+      width: auto;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    body.mdj-client-account-page #ca-panel-payments .sys-btn,
+    body.mdj-client-account-page #ca-panel-notifications .sys-btn,
+    body.mdj-client-account-page #ca-panel-email .sys-btn,
+    body.mdj-client-account-page #ca-panel-password .sys-btn,
+    body.mdj-client-account-page .ca-profile-panel-footer .sys-btn {
+      padding: 6px 13px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: 0.03em;
+      min-height: 0;
+      width: auto;
+      flex: 0 0 auto;
+      border-radius: 7px;
+      white-space: nowrap;
+    }
+
+    body.mdj-client-account-page #ca-panel-payments .sys-btn.secondary,
+    body.mdj-client-account-page #ca-panel-notifications .sys-btn.secondary,
+    body.mdj-client-account-page #ca-panel-email .sys-btn.secondary,
+    body.mdj-client-account-page #ca-panel-password .sys-btn.secondary,
+    body.mdj-client-account-page .ca-profile-panel-footer .sys-btn.secondary.ca-cancel-overview {
+      color: #1e293b;
+      background: #ffffff;
+      border: 1px solid #94a3b8;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    }
+
+    body.mdj-client-account-page #ca-panel-payments .sys-btn.secondary:hover,
+    body.mdj-client-account-page #ca-panel-notifications .sys-btn.secondary:hover,
+    body.mdj-client-account-page #ca-panel-email .sys-btn.secondary:hover,
+    body.mdj-client-account-page #ca-panel-password .sys-btn.secondary:hover,
+    body.mdj-client-account-page .ca-profile-panel-footer .sys-btn.secondary.ca-cancel-overview:hover {
+      color: #0f172a;
+      background: #f8fafc;
+      border-color: #64748b;
+    }
+
+    body.mdj-client-account-page #ca-panel-payments .sys-btn.primary,
+    body.mdj-client-account-page #ca-panel-notifications .sys-btn.primary,
+    body.mdj-client-account-page #ca-panel-email .sys-btn.primary,
+    body.mdj-client-account-page #ca-panel-password .sys-btn.primary,
+    body.mdj-client-account-page .ca-profile-panel-footer .sys-btn.primary {
+      padding: 6px 14px;
+      color: #f8fafc;
+      background: linear-gradient(180deg, #2f3a52 0%, #1a2238 100%);
+      border: 1px solid #1a2238;
+      box-shadow: 0 1px 3px rgba(26, 34, 56, 0.16);
+    }
+
+    body.mdj-client-account-page #ca-panel-payments .sys-btn.primary:hover,
+    body.mdj-client-account-page #ca-panel-notifications .sys-btn.primary:hover,
+    body.mdj-client-account-page #ca-panel-email .sys-btn.primary:hover,
+    body.mdj-client-account-page #ca-panel-password .sys-btn.primary:hover,
+    body.mdj-client-account-page .ca-profile-panel-footer .sys-btn.primary:hover {
+      background: linear-gradient(180deg, #3d4a66 0%, #243049 100%);
+      border-color: #243049;
+    }
+
+    body.mdj-client-account-page .ca-panel .system-card-body {
+      padding: clamp(20px, 2.5vw, 32px);
+    }
+
+    body.mdj-client-account-page .ca-panel .system-card h3,
+    body.mdj-client-account-page .ca-panel label,
+    body.mdj-client-account-page .ca-panel .mdj-field-outlined__label {
+      color: #1a2238;
+    }
+
+    body.mdj-client-account-page .ca-panel .sys-input,
+    body.mdj-client-account-page .ca-panel .mdj-field-outlined input {
+      background: #fff;
+      color: #1a2238;
+      border-color: #cbd5e1;
+    }
+
+    body.mdj-client-account-page .footer {
+      margin-top: 0;
+    }
+
+    body.mdj-client-account-page .ca-events-block {
+      margin-top: clamp(28px, 3vw, 40px);
+      background: #fff;
+      border: 1px solid var(--ca-relief-border);
+      border-radius: var(--ca-relief-radius);
+      box-shadow: var(--ca-relief-shadow);
+      overflow: hidden;
+    }
+
+    body.mdj-client-account-page #ca-panel-overview .ca-overview-events-split {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(18px, 2.5vw, 28px);
+      min-height: calc(100vh - var(--header-height) - var(--header-nav-band) - 140px);
+    }
+
+    body.mdj-client-account-page #ca-panel-overview .ca-events-block--planned,
+    body.mdj-client-account-page #ca-panel-overview .ca-events-block--past {
+      margin-top: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    body.mdj-client-account-page #ca-panel-overview .ca-events-block + .ca-events-block {
+      margin-top: 0;
+    }
+
+    body.mdj-client-account-page #ca-panel-overview .ca-events-block--planned .ca-events-table-wrap,
+    body.mdj-client-account-page #ca-panel-overview .ca-events-block--past .ca-events-table-wrap {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    body.mdj-client-account-page .ca-events-block__head {
+      padding: 18px clamp(16px, 2vw, 24px);
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    body.mdj-client-account-page .ca-events-block__head h2 {
+      margin: 0 0 6px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    body.mdj-client-account-page .ca-events-block__head p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #334155;
+    }
+
+    body.mdj-client-account-page .ca-events-table-wrap {
+      overflow-x: auto;
+      width: 100%;
+    }
+
+    body.mdj-client-account-page .ca-events-table {
+      width: 100%;
+      min-width: 880px;
+      border-collapse: collapse;
+      font-size: 13px;
+      color: #1a2238;
+    }
+
+    body.mdj-client-account-page .ca-events-table th,
+    body.mdj-client-account-page .ca-events-table td {
+      border: 1px solid #dbe3ef;
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    body.mdj-client-account-page .ca-events-table th {
+      background: #f1f5f9;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #475569;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    body.mdj-client-account-page .ca-events-table tbody tr:nth-child(even) td {
+      background: #fafbfc;
+    }
+
+    body.mdj-client-account-page .ca-events-table td.ca-events-num {
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    body.mdj-client-account-page .ca-events-table a {
+      color: #2563eb;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    body.mdj-client-account-page .ca-events-empty td {
+      text-align: center;
+      color: #64748b;
+      padding: 28px 16px;
+      white-space: normal;
+    }
+
+    body.mdj-client-account-page .ca-events-block + .ca-events-block {
+      margin-top: clamp(20px, 2.5vw, 28px);
+    }
+
+    body.mdj-client-account-page .ca-events-block--past .ca-events-block__head h2 {
+      color: #94a3b8;
+    }
+
+    body.mdj-client-account-page .ca-rewards-tier {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      margin-bottom: clamp(20px, 2.5vw, 28px);
+      background: #fff;
+      border: 1px solid var(--ca-relief-border);
+      border-radius: var(--ca-relief-radius);
+      box-shadow: var(--ca-relief-shadow);
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a2238;
+    }
+
+    body.mdj-client-account-page .ca-rewards-tier__meta {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    body.mdj-client-account-page .ca-profile-panel--name-only #ca-profile-address-card,
+    body.mdj-client-account-page .ca-profile-panel--name-only .ca-profile-contact-group {
+      display: none;
+    }
+
+    body.mdj-client-account-page #ca-profile-right-col > .ca-profile-contact-group {
+      margin-top: clamp(18px, 2.5vw, 24px);
+    }
+
+    body.mdj-client-account-page .ca-profile-col {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(18px, 2.5vw, 24px);
+      min-width: 0;
+    }
+
+    body.mdj-client-account-page .ca-profile-section,
+    body.mdj-client-account-page .ca-profile-photo-card {
+      margin-bottom: 0;
+    }
+
+    body.mdj-client-account-page .ca-profile-contact-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: clamp(8px, 1.5vw, 16px);
+    }
+
+    body.mdj-client-account-page .ca-profile-contact-tile {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+      padding: 16px 18px;
+      border-radius: var(--ca-relief-radius);
+      border: 1px solid var(--ca-relief-border);
+      background: #fff;
+      box-shadow: var(--ca-relief-shadow);
+    }
+
+    body.mdj-client-account-page .ca-profile-contact-tile__icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      line-height: 1;
+      background: rgba(197, 160, 89, 0.14);
+      border: 1px solid rgba(197, 160, 89, 0.35);
+      color: #9a7b3f;
+    }
+
+    body.mdj-client-account-page .ca-profile-contact-tile__body {
+      min-width: 0;
+    }
+
+    body.mdj-client-account-page .ca-profile-contact-tile__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    body.mdj-client-account-page .ca-profile-contact-tile__head h2 {
+      margin: 0;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    body.mdj-client-account-page .ca-profile-contact-tile__action {
+      border: none;
+      background: transparent;
+      color: #2563eb;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+      white-space: nowrap;
+    }
+
+    body.mdj-client-account-page .ca-profile-contact-tile__action:hover {
+      text-decoration: underline;
+    }
+
+    body.mdj-client-account-page .ca-profile-contact-tile__value {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a2238;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    body.mdj-client-account-page .ca-profile-contact-tile--phone .sys-input {
+      margin-top: 2px;
+      border-radius: 10px;
+      border-color: #cbd5e1;
+      background: #fff;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    body.mdj-client-account-page .ca-profile-contact-tile--phone label {
+      display: none;
+    }
+
+    body.mdj-client-account-page .ca-profile-contact-tile--mail {
+      border-color: var(--ca-relief-border);
+      background: #fff;
+    }
+
+    body.mdj-client-account-page .ca-profile-contact-tile--mail .ca-profile-contact-tile__icon {
+      background: rgba(37, 99, 235, 0.1);
+      border-color: rgba(37, 99, 235, 0.22);
+      color: #2563eb;
+    }
+
+    body.mdj-client-account-page .ca-profile-section__head {
+      padding: 10px 12px;
+      background: #f1f5f9;
+      border-bottom: 1px solid #dbe3ef;
+    }
+
+    body.mdj-client-account-page .ca-profile-section__head h2 {
+      margin: 0;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #475569;
+    }
+
+    body.mdj-client-account-page .ca-profile-panel-footer {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      margin-top: clamp(22px, 3vw, 34px);
+      padding: 4px 0 clamp(10px, 1.8vw, 18px);
+      align-self: stretch;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    body.mdj-client-account-page .ca-profile-panel-footer #ca-save-status {
+      text-align: right !important;
+      width: 100% !important;
+    }
+
+    body.mdj-client-account-page .ca-payments-stack {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(18px, 2.5vw, 28px);
+      margin-top: clamp(8px, 1.5vw, 16px);
+    }
+
+    body.mdj-client-account-page .ca-payments-block__body {
+      padding: clamp(22px, 2.8vw, 34px);
+    }
+
+    body.mdj-client-account-page .ca-payments-block__title {
+      margin: 0 0 18px;
+      font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+      font-weight: 700;
+      color: #1a2238;
+      letter-spacing: -0.02em;
+    }
+
+    body.mdj-client-account-page .ca-payments-eyebrow {
+      margin: 0 0 8px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+
+    body.mdj-client-account-page .ca-payments-accept {
+      margin: 0 0 16px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #64748b;
+    }
+
+    body.mdj-client-account-page .ca-payments-empty {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.55;
+      color: #64748b;
+    }
+
+    body.mdj-client-account-page .ca-payments-empty[hidden],
+    body.mdj-client-account-page #ca-saved-cards-list[hidden] {
+      display: none !important;
+    }
+
+    body.mdj-client-account-page .ca-saved-cards-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+
+    body.mdj-client-account-page .ca-saved-card-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 16px;
+      border: 1px solid #dbe3ef;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    body.mdj-client-account-page .ca-saved-card-row__brand {
+      width: 52px;
+      height: 34px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+      flex-shrink: 0;
+    }
+
+    body.mdj-client-account-page .ca-saved-card-row__brand svg {
+      display: block;
+      max-width: 42px;
+      max-height: 22px;
+    }
+
+    body.mdj-client-account-page .ca-saved-card-row__brand-text {
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #334155;
+    }
+
+    body.mdj-client-account-page .ca-saved-card-row__lines {
+      min-width: 0;
+    }
+
+    body.mdj-client-account-page .ca-saved-card-row__ending {
+      margin: 0 0 2px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a2238;
+    }
+
+    body.mdj-client-account-page .ca-saved-card-row__exp {
+      margin: 0;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    body.mdj-client-account-page .ca-saved-card-row__actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+
+    body.mdj-client-account-page .ca-saved-card-row__actions button {
+      border: none;
+      background: none;
+      padding: 0;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #2563eb;
+    }
+
+    body.mdj-client-account-page .ca-saved-card-row__actions button:disabled {
+      color: #94a3b8;
+      cursor: default;
+    }
+
+    body.mdj-client-account-page .ca-saved-card-row__actions button[data-ca-card-delete] {
+      color: #2563eb;
+    }
+
+    body.mdj-client-account-page .ca-payments-add-link {
+      margin-top: 14px;
+      border: none;
+      background: none;
+      padding: 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: #2563eb;
+      cursor: pointer;
+    }
+
+    body.mdj-client-account-page .ca-payments-status {
+      margin-top: 12px !important;
+    }
+
+    body.mdj-client-account-page .ca-billing-info-hint {
+      margin: 0 0 16px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #64748b;
+    }
+
+    body.mdj-client-account-page .ca-billing-differs-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      padding: 12px 14px;
+      border: 1px solid #dbe3ef;
+      border-radius: 10px;
+      background: #f8fafc;
+      color: #1a2238;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    body.mdj-client-account-page .ca-billing-differs-toggle input {
+      width: 16px;
+      height: 16px;
+      flex: 0 0 auto;
+      accent-color: #c5a059;
+    }
+
+    body.mdj-client-account-page .ca-billing-address-block {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    body.mdj-client-account-page .ca-billing-address-block__title {
+      margin: 0 0 12px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    body.mdj-client-account-page #ca-panel-payments .ca-payments-billing-footer {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+    }
+
+    body.mdj-client-account-page #ca-panel-payments #ca-billing-status {
+      flex: 1 1 100%;
+      text-align: right;
+      margin: 0;
+    }
+
+    @media (min-width: 901px) {
+      body.mdj-client-account-page #ca-panel-profile .ca-profile-grid {
+        display: grid;
+        grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
+        gap: clamp(20px, 2.5vw, 32px);
+        align-items: start;
+      }
+    }
+
+    @media (max-width: 900px) {
+      body.mdj-client-account-page .ca-shell {
+        grid-template-columns: 1fr;
+        min-height: 0;
+      }
+
+      body.mdj-client-account-page .ca-sidebar {
+        min-height: 0;
+        padding: 22px 18px;
+      }
+
+      body.mdj-client-account-page .ca-main {
+        min-height: 0;
+        padding: 24px 18px 34px;
+      }
+
+      body.mdj-client-account-page .ca-overview-grid {
+        grid-template-columns: 1fr;
+      }
+
+      body.mdj-client-account-page #ca-panel-profile .ca-profile-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      body.mdj-client-account-page .ca-events-table,
+      body.mdj-client-account-page .ca-rewards-table {
+        min-width: 760px;
+      }
+
+      body.mdj-client-account-page .ca-saved-card-row {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+
+      body.mdj-client-account-page .ca-saved-card-row__actions {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+
+<body class="notranslate mdj-client-account-page">
+  <header class="header mdj-header-unified" id="mainHeader">
+    <div class="header-top">
+      <div class="container">
+        <div class="brand">
+          <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+          <div class="brand-letters-wrapper">
+            <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters" class="brand-letters-img">
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
+          <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
+          <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
+          <div class="lang-switcher">
+            <span class="lang-btn" data-lang="es">ES</span>
+            <span class="lang-pipe">|</span>
+            <span class="lang-btn active" data-lang="en">EN</span>
+          </div>
+          <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-i18n="btn-login">Log in</a>
+
+          <div class="header-avatar-cart-row" aria-label="Account and cart">
+            <div class="account session-pending" id="header-auth-zone" style="display: none;">
+              <a class="account-btn" id="accountBtn" href="./client-portal.html" title="Mi Portal" aria-label="Mi Portal">
+                <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
+              </a>
+            </div>
+
+            <a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart" aria-label="Shopping cart">
+              <span aria-hidden="true">🛒</span>
+              <span id="header-cart-count" class="header-cart-count" hidden></span>
+            </a>
+          </div>
+          <div class="header-search-wrap">
+            <input type="search" id="header-smart-search" class="header-smart-search" placeholder="Search DJs, gear, services…" autocomplete="off" enterkeyhint="search" />
+          </div>
+        </div>
+
+        <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <div class="mobile-overlay" id="mobileMenu">
+          <nav class="mobile-nav">
+            <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+            <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+            <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+            <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
+            <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+            <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+            <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+            <a href="./login.html?signup=free" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free" style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
+            <a href="./login.html" id="header-login-btn-mobile" data-i18n="btn-login" style="color:var(--gold); font-weight:800;">Entrar</a>
+            <a href="./client-portal.html" id="nav-my-profile-mobile" style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY PROFILE</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+    <div class="header-nav">
+      <div class="container">
+        <nav class="nav top-nav mdj-mainnav-flex" id="mainNav">
+          <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+          <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+          <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+          <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-mdj-nav="shop">Shop</a>
+          <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+          <a href="./client-account.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+          <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+          <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
+          <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" aria-hidden="true" tabindex="-1">MY PORTAL</a>
+          <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="ca-shell">
+    <aside class="ca-sidebar" aria-label="Client account navigation">
+      <div class="ca-sidebar-user">
+        <div id="ca-sidebar-avatar" aria-hidden="true">
+          <img src="./assets/dj-avatar-placeholder.png" alt="" />
+        </div>
+        <p id="ca-sidebar-name">—</p>
+        <p id="ca-sidebar-email">—</p>
+      </div>
+      <ul class="ca-nav" role="tablist">
+        <li><button type="button" class="is-active" data-ca-panel="overview" aria-selected="true" data-i18n="client-account-nav-account">Account</button></li>
+        <li><button type="button" data-ca-panel="rewards" aria-selected="false" data-i18n="client-account-nav-rewards">Rewards</button></li>
+        <li><button type="button" data-ca-panel="profile" aria-selected="false" data-i18n="client-account-nav-profile">Profile & address</button></li>
+        <li><button type="button" data-ca-panel="payments" aria-selected="false" data-i18n="client-account-nav-payments">Payments</button></li>
+        <li><button type="button" data-ca-panel="notifications" aria-selected="false" data-i18n="client-account-nav-notifications">Notifications</button></li>
+      </ul>
+    </aside>
+
+    <div class="ca-main">
+      <section class="ca-panel is-active" id="ca-panel-overview" data-ca-panel="overview" role="tabpanel">
+        <h1 data-i18n="client-account-overview-title">Account overview</h1>
+        <div class="ca-overview-events-split">
+          <section class="ca-events-block ca-events-block--planned" aria-labelledby="ca-events-planned-title">
+            <div class="ca-events-block__head">
+              <h2 id="ca-events-planned-title" data-i18n="client-account-events-title">Planned events</h2>
+              <p data-i18n="client-account-events-sub">Your upcoming bookings linked to this account. Open a row to manage the event in your portal.</p>
+            </div>
+            <div class="ca-events-table-wrap">
+              <table class="ca-events-table">
+                <thead>
+                  <tr>
+                    <th data-i18n="client-account-events-col-type">Event type</th>
+                    <th data-i18n="client-account-events-col-date">Date</th>
+                    <th data-i18n="client-account-events-col-location">Location</th>
+                    <th data-i18n="client-account-events-col-status">Status</th>
+                    <th data-i18n="client-account-events-col-payment">Payment</th>
+                    <th data-i18n="client-account-events-col-total">Total</th>
+                    <th data-i18n="client-account-events-col-paid">Paid</th>
+                    <th data-i18n="client-account-events-col-balance">Balance</th>
+                    <th data-i18n="client-account-events-col-open">Open</th>
+                  </tr>
+                </thead>
+                <tbody id="ca-events-tbody">
+                  <tr class="ca-events-empty"><td colspan="9" data-i18n="client-account-events-loading">Loading events…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="ca-events-block ca-events-block--past" aria-labelledby="ca-events-past-title">
+            <div class="ca-events-block__head">
+              <h2 id="ca-events-past-title" data-i18n="client-account-past-events-title">Past events</h2>
+              <p data-i18n="client-account-past-events-sub">Previous events linked to this account. Open a row to view history in your portal.</p>
+            </div>
+            <div class="ca-events-table-wrap">
+              <table class="ca-events-table">
+                <thead>
+                  <tr>
+                    <th data-i18n="client-account-events-col-type">Event type</th>
+                    <th data-i18n="client-account-events-col-date">Date</th>
+                    <th data-i18n="client-account-events-col-location">Location</th>
+                    <th data-i18n="client-account-events-col-status">Status</th>
+                    <th data-i18n="client-account-events-col-payment">Payment</th>
+                    <th data-i18n="client-account-events-col-total">Total</th>
+                    <th data-i18n="client-account-events-col-paid">Paid</th>
+                    <th data-i18n="client-account-events-col-balance">Balance</th>
+                    <th data-i18n="client-account-events-col-open">Open</th>
+                  </tr>
+                </thead>
+                <tbody id="ca-past-events-tbody">
+                  <tr class="ca-events-empty"><td colspan="9" data-i18n="client-account-events-loading">Loading events…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="ca-panel" id="ca-panel-rewards" data-ca-panel="rewards" role="tabpanel" hidden>
+        <h1 data-i18n="client-account-nav-rewards">Rewards</h1>
+        <div class="ca-rewards-tier" id="ca-rewards-tier" hidden>
+          <span id="ca-rewards-tier-icon" aria-hidden="true">🌱</span>
+          <span id="ca-rewards-tier-name">New Client</span>
+          <span class="ca-rewards-tier__meta" id="ca-rewards-tier-meta"></span>
+        </div>
+        <section class="ca-events-block" aria-labelledby="ca-rewards-offers-title">
+          <div class="ca-events-block__head">
+            <h2 id="ca-rewards-offers-title" data-i18n="client-account-rewards-offers-title">Coupons & offers</h2>
+            <p data-i18n="client-account-rewards-offers-sub">Discounts and promotions available on your Miami DJ Beat account.</p>
+          </div>
+          <div class="ca-events-table-wrap">
+            <table class="ca-events-table ca-rewards-table">
+              <thead>
+                <tr>
+                  <th data-i18n="client-account-rewards-col-offer">Offer</th>
+                  <th data-i18n="client-account-rewards-col-benefit">Benefit</th>
+                  <th data-i18n="client-account-rewards-col-code">Code / link</th>
+                  <th data-i18n="client-account-rewards-col-status">Status</th>
+                </tr>
+              </thead>
+              <tbody id="ca-rewards-tbody">
+                <tr class="ca-events-empty"><td colspan="4" data-i18n="client-account-rewards-loading">Loading offers…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="ca-panel" id="ca-panel-profile" data-ca-panel="profile" role="tabpanel" hidden>
+        <h1 data-i18n="client-account-nav-profile">Profile & address</h1>
+        <div class="ca-profile-grid">
+          <div class="ca-profile-col" id="ca-profile-left-col">
+            <div class="system-card ca-profile-section ca-profile-photo-card" id="ca-profile-photo-card">
+              <div class="ca-profile-section__head">
+                <h2 data-i18n="client-account-overview-photo">Profile picture</h2>
+              </div>
+              <div class="system-card-body">
+                <div id="ca-profile-avatar">
+                  <img src="./assets/dj-avatar-placeholder.png" alt="" />
+                </div>
+                <input type="file" id="ca-avatar-file" accept="image/jpeg,image/png,image/webp" hidden />
+                <button type="button" class="sys-btn secondary" data-ca-photo-pick data-i18n="client-account-change-photo">Change photo</button>
+                <p id="ca-avatar-feedback" class="fineprint" style="display:none;margin-top:10px;" role="status"></p>
+              </div>
+            </div>
+
+            <div class="system-card ca-profile-section" id="ca-profile-address-card">
+              <div class="ca-profile-section__head">
+                <h2 data-i18n="client-account-profile-home-title">Home address</h2>
+              </div>
+              <div class="system-card-body">
+                <div class="form-group">
+                  <label data-i18n="client-account-street">Street</label>
+                  <input type="text" class="sys-input" id="input-street" autocomplete="street-address" />
+                </div>
+                <div class="form-group" style="margin-top:12px;">
+                  <label data-i18n="client-account-apt">Apt / suite (optional)</label>
+                  <input type="text" class="sys-input" id="input-apt" autocomplete="address-line2" />
+                </div>
+                <div class="form-row" style="margin-top:12px;">
+                  <div class="form-group">
+                    <label data-i18n="client-account-city">City</label>
+                    <input type="text" class="sys-input" id="input-city" autocomplete="address-level2" />
+                  </div>
+                  <div class="form-group" id="wrap-state-us">
+                    <label data-i18n="client-account-state">State</label>
+                    <select id="select-state-us" class="sys-input sys-select-gold"></select>
+                  </div>
+                  <div class="form-group" id="wrap-state-intl" style="display:none;">
+                    <label data-i18n="client-account-state-intl">State / province</label>
+                    <input type="text" class="sys-input" id="input-state-intl" autocomplete="address-level1" />
+                  </div>
+                </div>
+                <div class="form-row" style="margin-top:12px;">
+                  <div class="form-group">
+                    <label data-i18n="client-account-zip">ZIP</label>
+                    <input type="text" class="sys-input" id="input-zip" maxlength="12" autocomplete="postal-code" />
+                  </div>
+                  <div class="form-group">
+                    <label for="select-country" data-i18n="client-account-country">Country</label>
+                    <select id="select-country" class="sys-input sys-select-gold" autocomplete="country-name"></select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        <div class="ca-profile-col" id="ca-profile-right-col">
+        <div class="system-card ca-profile-section" id="ca-profile-identity-block">
+          <div class="ca-profile-section__head">
+            <h2 data-i18n="client-account-profile-identity-title">Personal information</h2>
+          </div>
+          <div class="system-card-body">
+            <div class="form-row mdj-signup-row--3">
+              <div class="mdj-field-outlined">
+                <input type="text" id="ca-name-first" autocomplete="given-name" maxlength="80" placeholder=" " />
+                <label for="ca-name-first" class="mdj-field-outlined__label" data-i18n="client-account-first-name">First name</label>
+              </div>
+              <div class="mdj-field-outlined">
+                <input type="text" id="ca-name-middle" autocomplete="additional-name" maxlength="40" placeholder=" " />
+                <label for="ca-name-middle" class="mdj-field-outlined__label" data-i18n="client-account-middle-name">Middle name</label>
+              </div>
+              <div class="mdj-field-outlined">
+                <input type="text" id="ca-name-last" autocomplete="family-name" maxlength="120" placeholder=" " />
+                <label for="ca-name-last" class="mdj-field-outlined__label" data-i18n="client-account-last-name">Last name</label>
+              </div>
+            </div>
+            <div class="form-group" style="margin-top:16px;">
+              <label data-i18n="account-username-label">Username</label>
+              <input type="text" class="sys-input" id="ca-username" maxlength="32" autocomplete="nickname" />
+            </div>
+          </div>
+        </div>
+        <div class="ca-profile-contact-group">
+        <div class="ca-profile-contact-tile ca-profile-contact-tile--phone" id="ca-profile-phone-card">
+          <div class="ca-profile-contact-tile__icon" aria-hidden="true">☎</div>
+          <div class="ca-profile-contact-tile__body">
+            <div class="ca-profile-contact-tile__head">
+              <h2 data-i18n="client-account-profile-phone-title">Phone</h2>
+            </div>
+            <div id="ca-profile-phone-block" class="form-group" style="margin:0;">
+              <label data-i18n="client-account-phone">Phone</label>
+              <input type="tel" class="sys-input" id="ca-phone" autocomplete="tel" />
+            </div>
+          </div>
+        </div>
+
+        <div class="ca-profile-contact-tile ca-profile-contact-tile--mail" id="ca-profile-mail-card">
+          <div class="ca-profile-contact-tile__icon" aria-hidden="true">✉</div>
+          <div class="ca-profile-contact-tile__body">
+            <div class="ca-profile-contact-tile__head">
+              <h2 data-i18n="client-account-profile-mail-title">Mail</h2>
+              <button type="button" class="ca-profile-contact-tile__action" data-ca-goto="email" data-i18n="client-account-overview-change-email">Change email</button>
+            </div>
+            <p class="ca-profile-contact-tile__value" id="ca-profile-email-display">—</p>
+          </div>
+        </div>
+        </div>
+
+        <div class="ca-profile-panel-footer">
+          <p id="ca-save-status" class="fineprint" style="display:none;" aria-live="polite"></p>
+          <div class="ca-panel-footer-actions">
+            <button type="button" class="sys-btn secondary ca-cancel-overview" data-i18n="client-account-back-overview">Back to overview</button>
+            <button type="button" class="sys-btn primary" id="ca-save-btn" data-i18n="client-account-save">Save profile</button>
+          </div>
+        </div>
+        </div>
+        </div>
+      </section>
+      <section class="ca-panel" id="ca-panel-payments" data-ca-panel="payments" role="tabpanel" hidden>
+        <h1 data-i18n="client-account-payment-title">Saved payment methods</h1>
+
+        <div class="ca-payments-stack">
+        <div class="system-card ca-profile-section" id="ca-payments-billing-card">
+          <div class="ca-profile-section__head">
+            <h2 data-i18n="client-account-profile-billing-info-title">Billing information</h2>
+          </div>
+          <div class="system-card-body">
+            <p class="ca-billing-info-hint" data-i18n="client-account-billing-info-hint">Use the name and address exactly as they appear on your card or billing statements.</p>
+            <div class="form-group">
+              <label for="ca-billing-name-on-card" data-i18n="client-account-billing-name-on-card">Name as it appears on card</label>
+              <input type="text" class="sys-input" id="ca-billing-name-on-card" maxlength="120" autocomplete="cc-name" />
+            </div>
+            <label class="ca-billing-differs-toggle">
+              <input type="checkbox" id="ca-billing-differs" />
+              <span data-i18n="client-account-billing-differs">Billing address is different from home address</span>
+            </label>
+            <div id="ca-billing-address-block" class="ca-billing-address-block" hidden>
+              <p class="ca-billing-address-block__title" data-i18n="client-account-profile-billing-title">Billing address</p>
+              <div class="form-group">
+                <label data-i18n="client-account-street">Street</label>
+                <input type="text" class="sys-input" id="billing-input-street" />
+              </div>
+              <div class="form-group" style="margin-top:12px;">
+                <label data-i18n="client-account-apt">Apt / suite (optional)</label>
+                <input type="text" class="sys-input" id="billing-input-apt" />
+              </div>
+              <div class="form-row" style="margin-top:12px;">
+                <div class="form-group">
+                  <label data-i18n="client-account-city">City</label>
+                  <input type="text" class="sys-input" id="billing-input-city" />
+                </div>
+                <div class="form-group" id="billing-wrap-state-us">
+                  <label data-i18n="client-account-state">State</label>
+                  <select id="billing-select-state-us" class="sys-input sys-select-gold"></select>
+                </div>
+                <div class="form-group" id="billing-wrap-state-intl" style="display:none;">
+                  <label data-i18n="client-account-state-intl">State / province</label>
+                  <input type="text" class="sys-input" id="billing-input-state-intl" />
+                </div>
+              </div>
+              <div class="form-row" style="margin-top:12px;">
+                <div class="form-group">
+                  <label data-i18n="client-account-zip">ZIP</label>
+                  <input type="text" class="sys-input" id="billing-input-zip" maxlength="12" />
+                </div>
+                <div class="form-group">
+                  <label for="billing-select-country" data-i18n="client-account-country">Country</label>
+                  <select id="billing-select-country" class="sys-input sys-select-gold"></select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="system-card-footer ca-payments-billing-footer">
+            <p id="ca-billing-status" class="fineprint" style="display:none;" aria-live="polite"></p>
+            <button type="button" class="sys-btn primary" id="ca-save-billing-btn" data-i18n="client-account-save-billing">Save billing information</button>
+          </div>
+        </div>
+
+
+          <section class="ca-payments-block system-card" id="ca-payment-card" aria-labelledby="ca-saved-methods-title">
+            <div class="ca-payments-block__body">
+              <h2 id="ca-saved-methods-title" class="ca-payments-block__title" data-i18n="client-account-payments-section">Payments</h2>
+              <p class="ca-payments-eyebrow" data-i18n="client-account-saved-methods-eyebrow">Saved payment methods</p>
+              <p class="ca-payments-accept" data-i18n="client-account-payments-accept">We accept Visa, Mastercard, and American Express.</p>
+              <div id="ca-saved-cards-list" class="ca-saved-cards-list" hidden></div>
+              <p id="ca-saved-cards-empty" class="ca-payments-empty" data-i18n="client-account-card-none">Add a card to pay event deposits faster. Your card is stored securely by Stripe.</p>
+              <p id="ca-saved-cards-loading" class="ca-payments-empty" data-i18n="client-account-cards-loading">Loading saved cards…</p>
+              <button type="button" class="ca-payments-add-link" id="ca-add-card" data-i18n="client-account-card-add">Add a card</button>
+              <p id="ca-card-status" class="fineprint ca-payments-status" style="display:none;" role="status" aria-live="polite"></p>
+            </div>
+          </section>
+
+          <section class="ca-payments-block system-card" aria-labelledby="ca-payment-history-title">
+            <div class="ca-payments-block__body">
+              <p id="ca-payment-history-title" class="ca-payments-eyebrow" data-i18n="client-account-payment-history-eyebrow">Payment history</p>
+              <p id="ca-payment-history-empty" class="ca-payments-empty" data-i18n="client-account-payment-history-empty">No payment history on this account yet.</p>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="ca-panel" id="ca-panel-notifications" data-ca-panel="notifications" role="tabpanel" hidden>
+        <h1 data-i18n="client-account-notify-title">Notifications</h1>
+        <div class="system-card">
+          <div class="ca-profile-section__head">
+            <h2 data-i18n="client-account-notify-title">Notifications</h2>
+          </div>
+          <div class="system-card-body">
+            <label class="ca-edit-toggle toggle-row">
+              <span data-i18n="account-pref-email-title">Email notifications</span>
+              <input type="checkbox" id="ca-notify-bookings" checked />
+            </label>
+            <label class="ca-edit-toggle toggle-row">
+              <span data-i18n="account-pref-marketing-title">Marketing updates</span>
+              <input type="checkbox" id="ca-notify-marketing" checked />
+            </label>
+            <label class="ca-edit-toggle toggle-row">
+              <span data-i18n="account-pref-sms-title">SMS alerts</span>
+              <input type="checkbox" id="ca-notify-sms" checked />
+            </label>
+          </div>
+          <div class="system-card-footer">
+            <p id="ca-notify-status" class="fineprint" style="display:none;" aria-live="polite"></p>
+            <button type="button" class="sys-btn primary" id="ca-save-notify-btn" data-i18n="client-account-save-notify">Save notification preferences</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="ca-panel" id="ca-panel-email" data-ca-panel="email" role="tabpanel" hidden>
+        <h1 data-i18n="client-account-email-title">Email</h1>
+        <div class="system-card">
+          <div class="ca-profile-section__head">
+            <h2 data-i18n="client-account-email-title">Email</h2>
+          </div>
+          <div class="system-card-body">
+            <p class="fineprint" style="line-height:1.5;margin:0 0 18px;" data-i18n="client-account-email-hint">We will send a confirmation link to your new address. Your current email stays active until you confirm.</p>
+            <div class="form-group">
+              <label data-i18n="client-account-email-current">Current email</label>
+              <input type="email" class="sys-input" id="ca-email-current" disabled />
+            </div>
+            <div class="form-group" style="margin-top:16px;">
+              <label data-i18n="client-account-email-new">New email</label>
+              <input type="email" class="sys-input" id="ca-email-new" autocomplete="email" />
+            </div>
+            <div class="form-group" style="margin-top:12px;">
+              <label data-i18n="client-account-email-confirm">Confirm new email</label>
+              <input type="email" class="sys-input" id="ca-email-confirm" autocomplete="email" />
+            </div>
+            <p id="ca-email-status" class="fineprint" style="display:none;margin-top:10px;" role="status"></p>
+          </div>
+          <div class="system-card-footer">
+            <div class="ca-panel-footer-actions">
+              <button type="button" class="sys-btn secondary ca-cancel-overview" data-i18n="client-account-back-overview">Back to overview</button>
+              <button type="button" class="sys-btn primary" id="ca-email-btn" data-i18n="client-account-save">Save</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="ca-panel" id="ca-panel-password" data-ca-panel="password" role="tabpanel" hidden>
+        <h1 data-i18n="client-account-password-title">Password</h1>
+        <div class="system-card">
+          <div class="ca-profile-section__head">
+            <h2 data-i18n="client-account-password-title">Password</h2>
+          </div>
+          <div class="system-card-body">
+            <div class="form-group">
+              <label data-i18n="client-account-password-new">New password</label>
+              <input type="password" class="sys-input" id="ca-password-new" autocomplete="new-password" />
+            </div>
+            <div class="form-group" style="margin-top:12px;">
+              <label data-i18n="client-account-password-confirm">Confirm password</label>
+              <input type="password" class="sys-input" id="ca-password-confirm" autocomplete="new-password" />
+            </div>
+            <p id="ca-password-status" class="fineprint" style="display:none;margin-top:10px;" role="status"></p>
+          </div>
+          <div class="system-card-footer">
+            <div class="ca-panel-footer-actions">
+              <button type="button" class="sys-btn secondary ca-cancel-overview" data-i18n="client-account-back-overview">Back to overview</button>
+              <button type="button" class="sys-btn primary" id="ca-password-btn" data-i18n="client-account-save">Save</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container" style="text-align:center;">
+      <p>© 2026 Miami DJ Beat LLC.</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+  <script src="./role-guard.js" data-role="client"></script>
+  <script src="./translations.js?v=20260514-client-account-billing-payments"></script>
+  <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
+  <script src="./js/mdj-account-forms.js?v=20260421-account-forms"></script>
+  <script src="./account-address-data.js?v=20260429"></script>
+  <script src="./account-address-selectors.js?v=20260422-country-select-only"></script>
+  <script src="./js/client-account.js?v=20260514-client-account-payments-edge"></script>
+  <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+  <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+  <script src="./mdj-shared-header.js?v=20260514-client-account-config"></script>
+  <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+  <script src="./mdj-mainnav-infinite.js?v=20260422-mainnav-chev-bar-1"></script>
+  <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+</body>
+
+</html>

@@ -1337,6 +1337,7 @@
     var b = String(base || '').toLowerCase().replace(/\.html?$/i, '');
     if (b === 'admin-dashboard' || b === 'admin_dashboard') return 'staff';
     if (b === 'account-settings' || b === 'account_settings') return 'config';
+    if (b === 'client-account' || b === 'client_account') return 'config';
     if (b === 'shop') return 'shop';
     if (b === 'courses' || b === 'cursos') return 'courses';
     if (b === 'booth' || b === 'ai-booth' || b === 'ai_booth' || b === 'cabina') return 'booth';
@@ -1699,7 +1700,7 @@
           var settingsUrl;
           var settingsLabel;
           if (isClient) {
-            settingsUrl = './client-portal.html';
+            settingsUrl = './client-account.html';
             settingsLabel = mdjGetVipPortalMenuLabel();
           } else if (isNavStaffSolo) {
             settingsUrl = './account-settings.html';
