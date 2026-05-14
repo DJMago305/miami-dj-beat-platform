@@ -3875,6 +3875,24 @@ function mdjTalentCarouselOriginalCards(track) {
     });
 }
 
+/** Hub = categorías ENTRAR solamente; nunca perfiles DJ sueltos en el carrusel. */
+window.mdjRentalsStripPublicDjTalentCards = function () {
+    var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+    if (!track) return;
+    var hadLoop = track.dataset.mdjSimpleLoop === '1';
+    track.querySelectorAll('[data-mdj-public-dj], .mdj-rentals-public-dj').forEach(function (el) {
+        el.remove();
+    });
+    if (hadLoop && typeof window.mdjRebuildTalentSelectorInfiniteCarousel === 'function') {
+        window.mdjRebuildTalentSelectorInfiniteCarousel();
+    }
+    try {
+        delete track.dataset.mdjArtistsHydrated;
+    } catch (eDel) {
+        void eDel;
+    }
+};
+
 /**
  * Hub talento: duplicado simple del carril + salto en scroll (mitad = un set completo).
  */
@@ -4041,6 +4059,9 @@ window.initTalentSelectorInfiniteCarousel = function () {
 window.mdjEnsureTalentHubInfiniteOnOpen = function () {
     var tm = document.getElementById('talent-selector-modal');
     if (!tm || !tm.classList.contains('modal-visible')) return;
+    if (typeof window.mdjRentalsStripPublicDjTalentCards === 'function') {
+        window.mdjRentalsStripPublicDjTalentCards();
+    }
     requestAnimationFrame(function () {
         requestAnimationFrame(function () {
             var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
@@ -4279,6 +4300,9 @@ document.addEventListener('DOMContentLoaded', () => {
     mdjRentalsTryResumeCheckoutAfterAuth();
 
     const runTalentHubChrome = () => {
+        if (typeof window.mdjRentalsStripPublicDjTalentCards === 'function') {
+            window.mdjRentalsStripPublicDjTalentCards();
+        }
         if (typeof window.mdjInjectTalentHubShortlistUi === 'function') {
             window.mdjInjectTalentHubShortlistUi();
         }
@@ -4308,6 +4332,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     if (window.MDJ_ARTISTS && typeof window.MDJ_ARTISTS.hydrateRentalsTalentHubCarousel === 'function') {
+        window.MDJ_ARTISTS.hydrateRentalsTalentHubCarousel = function () {
+            if (typeof window.mdjRentalsStripPublicDjTalentCards === 'function') {
+                window.mdjRentalsStripPublicDjTalentCards();
+            }
+            var tr = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+            if (tr) tr.dataset.mdjArtistsHydrated = '1';
+            return Promise.resolve();
+        };
         window.MDJ_ARTISTS.hydrateRentalsTalentHubCarousel().then(runTalentHubChrome).catch(() => runTalentHubChrome());
     } else {
         runTalentHubChrome();
