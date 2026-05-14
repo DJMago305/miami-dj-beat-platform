@@ -147,31 +147,21 @@
     }
 
     /**
-     * Append vetted DJ cards into the talent hub track (call before infinite carousel init).
+     * Hub talent selector: category cards only (ENTRAR → dj-modal, etc.).
+     * Public DJ roster injection disabled — client rent flow is separate from artist listing here.
      * @returns {Promise<void>}
      */
     function hydrateRentalsTalentHubCarousel() {
         var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
         if (!track || track.dataset.mdjArtistsHydrated === '1') return Promise.resolve();
-
-        return new Promise(function (resolve) {
-            whenSupabaseReady(function (sb) {
-                if (!sb) {
-                    try {
-                        console.warn('[MDJ_ARTISTS] Supabase client not ready; skip hub artists');
-                    } catch (e) {
-                        void e;
-                    }
-                    track.dataset.mdjArtistsHydrated = '1';
-                    resolve();
-                    return;
-                }
-                void doHydrate(track, sb, resolve);
-            });
+        track.querySelectorAll('[data-mdj-public-dj], .mdj-rentals-public-dj').forEach(function (el) {
+            el.remove();
         });
+        track.dataset.mdjArtistsHydrated = '1';
+        return Promise.resolve();
     }
 
-    function doHydrate(track, sb, resolve) {
+    function doHydrate_unused(track, sb, resolve) {
 
         fetchPublicProfilesForHub(sb)
             .then(function (rows) {
