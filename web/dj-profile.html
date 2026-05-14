@@ -43,7 +43,7 @@
     </script>
     <link rel="stylesheet" href="./styles.css?v=20260430-legacy-compat-1" />
     <link rel="stylesheet" href="./header-unified.css?v=20260424-dashboard-header-sync" />
-    <link rel="stylesheet" href="./profile.css?v=20260513-qr-profile-fix" />
+    <link rel="stylesheet" href="./profile.css?v=20260513-reviews-carousel" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260412-profile" />
     <link
         href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700;1,800&family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&display=swap"
@@ -1581,6 +1581,12 @@
             padding: 2px 5px;
         }
 
+        #pub-rate-card:not(.pub-rate-card--owner-preview) .pub-review-star-btn.pub-review-star-btn--on,
+        #pub-rate-card:not(.pub-rate-card--owner-preview) .pub-review-star-btn.pub-review-star-btn--on:hover {
+            color: var(--gold, #c5a059);
+            text-shadow: 0 0 12px rgba(197, 160, 89, 0.42);
+        }
+
         #pub-rate-card .pub-leave-review-btn {
             margin-top: 8px;
             padding: 10px 12px;
@@ -1672,7 +1678,8 @@
         }
 
         .pub-review-star-btn.pub-review-star-btn--on {
-            color: var(--gold);
+            color: var(--gold, #c5a059);
+            text-shadow: 0 0 10px rgba(197, 160, 89, 0.38);
         }
 
         .pub-review-star-btn:hover {
@@ -5248,8 +5255,10 @@
             await renderDynamicReviewsAndKPI(p, !!(isOwner && !isPublicQrView), db, targetId);
             window._mdjPubReviewSession = session;
             window._mdjPubReviewOwner = !!(isOwner && !isPublicQrView);
+            window._mdjPubReviewSelfBlock = !!isOwner;
+            window._mdjPubReviewPublicFanView = !!isPublicQrView;
             if (typeof mdjInitPubLeaveReviewCta === 'function') {
-                mdjInitPubLeaveReviewCta(session, !!(isOwner && !isPublicQrView));
+                mdjInitPubLeaveReviewCta(session, !!isOwner, !!isPublicQrView);
             }
             /* Dueño: el hero pasa a reflejar el mismo índice MDJ que Flujo de caja (tras loadFlowData). Precarga para no depender de abrir la pestaña. */
             if (isOwner && !isPublicQrView && typeof window.loadFlowData === 'function' && window.currentProfileDJId) {
@@ -5537,19 +5546,90 @@
         };
 
         window._mdjPubReviewStarRating = 0;
+        window._mdjPubReviewMine = null;
+
+        function mdjPubReviewHydrateEditForm() {
+            var mine = window._mdjPubReviewMine;
+            var commentEl = document.getElementById('pub-review-comment');
+            var btn = document.getElementById('pub-leave-review-btn');
+            if (!mine || mine.rating == null) return;
+            if (commentEl) commentEl.value = mine.comment ? String(mine.comment) : '';
+            if (btn) btn.textContent = 'Actualizar opinión';
+        }
 
         function mdjPubReviewSetStars(n) {
             var v = Math.min(5, Math.max(0, parseInt(n, 10) || 0));
             window._mdjPubReviewStarRating = v;
-            document.querySelectorAll('.pub-review-star-btn').forEach(function (el) {
+            var root = document.getElementById('pub-review-stars');
+            if (!root) return;
+            root.querySelectorAll('.pub-review-star-btn').forEach(function (el) {
                 var r = parseInt(el.getAttribute('data-rating'), 10);
-                el.classList.toggle('pub-review-star-btn--on', r <= v && v > 0);
+                var on = r <= v && v > 0;
+                el.classList.toggle('pub-review-star-btn--on', on);
+                el.setAttribute('aria-pressed', on ? 'true' : 'false');
             });
         }
+
+        (function mdjPubReviewBindStarClicksOnce() {
+            if (window._mdjPubReviewStarsBound) return;
+            window._mdjPubReviewStarsBound = true;
+            function onStarPick(ev) {
+                var card = document.getElementById('pub-rate-card');
+                if (!card || !card.classList.contains('pub-rate-card--visible')) return;
+                if (card.classList.contains('pub-rate-card--owner-preview')) return;
+                var b = ev.target.closest('.pub-review-star-btn');
+                if (!b || !document.getElementById('pub-review-stars').contains(b)) return;
+                var r = parseInt(b.getAttribute('data-rating'), 10);
+                if (r < 1 || r > 5) return;
+                mdjPubReviewSetStars(r);
+                mdjPubReviewOpenCommentPanel();
+                mdjPubReviewHydrateEditForm();
+                var djKey = window.currentProfileDJId ? String(window.currentProfileDJId) : '';
+                try {
+                    if (djKey) sessionStorage.setItem('mdj_review_stars_' + djKey, String(r));
+                } catch (eSt) { void eSt; }
+            }
+            document.addEventListener('click', onStarPick);
+        })();
 
         function mdjPubReviewOpenCommentPanel() {
             var panel = document.getElementById('pub-rate-comment-panel');
             if (panel) panel.classList.add('pub-rate-comment-panel--open');
+        }
+
+        function mdjPubReviewCloseCommentPanel() {
+            var panel = document.getElementById('pub-rate-comment-panel');
+            if (panel) panel.classList.remove('pub-rate-comment-panel--open');
+        }
+
+        async function mdjPubReviewLoadMine(session, djKey, btn, hint, commentEl) {
+            if (!session || !djKey || !session.user || !session.user.id) return false;
+            var db = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+            if (!db || typeof db.rpc !== 'function') return false;
+            try {
+                var res = await db.rpc('get_my_dj_public_review_for_dj', { p_dj_user_id: djKey });
+                if (res.error || !res.data) return false;
+                var row = res.data;
+                if (typeof row === 'string') {
+                    try { row = JSON.parse(row); } catch (eJ) { return false; }
+                }
+                if (!row || row.rating == null) return false;
+                window._mdjPubReviewMine = {
+                    rating: row.rating,
+                    comment: row.comment ? String(row.comment) : ''
+                };
+                mdjPubReviewSetStars(0);
+                mdjPubReviewCloseCommentPanel();
+                if (commentEl) commentEl.value = '';
+                if (btn) btn.textContent = 'Actualizar opinión';
+                if (hint) {
+                    hint.textContent = 'Tu opinión ya está publicada. Toca las estrellas para editarla.';
+                }
+                return true;
+            } catch (eLoad) {
+                void eLoad;
+                return false;
+            }
         }
 
         function mdjPubReviewPaintRateSummary(avgText, count) {
@@ -5564,8 +5644,8 @@
             }
         }
 
-        /** CTA valoración: estrellas → panel comentario → RPC submit_dj_public_review. Dueño: vista previa sin enviar. */
-        function mdjInitPubLeaveReviewCta(session, viewerIsProfileOwner) {
+        /** CTA valoración: fans/clientes en ?view=public; dueño en pestaña privada solo ve carrusel OPINIONES. */
+        function mdjInitPubLeaveReviewCta(session, viewerIsDjOwner, isPublicFanView) {
             const card = document.getElementById('pub-rate-card');
             const wrap = document.getElementById('pub-review-cta-wrap');
             const starsWrap = document.getElementById('pub-review-stars-wrap');
@@ -5575,21 +5655,27 @@
             const cardLabel = card ? card.querySelector('.dj-card-label') : null;
             if (!card || !wrap || !btn) return;
 
+            var fanView = !!isPublicFanView;
+            if (viewerIsDjOwner && !fanView) {
+                card.style.display = 'none';
+                card.classList.remove('pub-rate-card--visible', 'pub-rate-card--owner-preview');
+                wrap.style.display = 'none';
+                return;
+            }
+
             card.classList.add('pub-rate-card--visible');
             card.style.display = 'block';
             wrap.style.display = 'block';
 
-            if (viewerIsProfileOwner) {
+            if (viewerIsDjOwner && fanView) {
                 card.classList.add('pub-rate-card--owner-preview');
-                if (cardLabel) cardLabel.textContent = 'OPINIONES DE CLIENTES';
+                if (cardLabel) cardLabel.textContent = 'TU OPINIÓN';
                 if (starsWrap) starsWrap.style.display = 'block';
                 if (hint) {
-                    hint.textContent = 'Vista previa: solo los clientes registrados pueden publicar una valoración aquí.';
-                    hint.style.display = 'block';
+                    hint.removeAttribute('data-i18n');
+                    hint.textContent = 'Vista fan: los clientes pueden valorar aquí. No puedes publicar en tu propio perfil.';
                 }
                 btn.style.display = 'none';
-                var ownerPanel = document.getElementById('pub-rate-comment-panel');
-                if (ownerPanel) ownerPanel.classList.remove('pub-rate-comment-panel--open');
                 return;
             }
 
@@ -5603,9 +5689,11 @@
             var djKey = window.currentProfileDJId ? String(window.currentProfileDJId) : '';
             try {
                 var saved = djKey ? sessionStorage.getItem('mdj_review_stars_' + djKey) : null;
+                var draft = djKey ? sessionStorage.getItem('mdj_review_draft_' + djKey) : null;
                 if (saved) {
                     mdjPubReviewSetStars(parseInt(saved, 10));
                     mdjPubReviewOpenCommentPanel();
+                    if (commentEl && draft) commentEl.value = draft;
                 } else {
                     mdjPubReviewSetStars(0);
                 }
@@ -5613,31 +5701,13 @@
                 mdjPubReviewSetStars(0);
             }
 
-            var starsEl = document.getElementById('pub-review-stars');
-            if (starsEl && starsEl.dataset.mdjDelegated !== '1') {
-                starsEl.dataset.mdjDelegated = '1';
-                starsEl.addEventListener('click', function (ev) {
-                    var b = ev.target.closest('.pub-review-star-btn');
-                    if (!b) return;
-                    var r = parseInt(b.getAttribute('data-rating'), 10);
-                    if (r >= 1 && r <= 5) {
-                        mdjPubReviewSetStars(r);
-                        mdjPubReviewOpenCommentPanel();
-                        try {
-                            if (djKey) sessionStorage.setItem('mdj_review_stars_' + djKey, String(r));
-                        } catch (eSt) { void eSt; }
-                    }
-                });
-            }
-
             const t = (k) => (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t(k) : '';
-            const redir = encodeURIComponent(location.pathname + location.search);
 
             if (!session) {
                 btn.textContent = t('profile-review-cta-btn-guest') || 'Entrar para enviar tu opinión';
                 if (hint) {
                     hint.setAttribute('data-i18n', 'profile-review-cta-hint-guest');
-                    hint.textContent = t('profile-review-cta-hint-guest') || 'Necesitas una cuenta Miami DJ Beat para publicar tu reseña.';
+                    hint.textContent = t('profile-review-cta-hint-guest') || 'Crea o entra con una cuenta de cliente Miami DJ Beat para publicar tu reseña.';
                 }
                 btn.onclick = function () {
                     var st = window._mdjPubReviewStarRating || 0;
@@ -5646,7 +5716,17 @@
                         return;
                     }
                     try { if (djKey) sessionStorage.setItem('mdj_review_stars_' + djKey, String(st)); } catch (eb) { void eb; }
-                    window.location.href = './login.html?redirect=' + redir;
+                    var comment = commentEl && commentEl.value ? String(commentEl.value).trim() : '';
+                    try {
+                        if (comment) sessionStorage.setItem('mdj_review_draft_' + djKey, comment);
+                    } catch (eC) { void eC; }
+                    var loginQs = new URLSearchParams();
+                    loginQs.set('redirect', 'dj-profile');
+                    loginQs.set('account', 'client');
+                    loginQs.set('mode', 'signup');
+                    if (djKey) loginQs.set('id', djKey);
+                    loginQs.set('view', 'public');
+                    window.location.href = './login.html?' + loginQs.toString();
                 };
                 return;
             }
@@ -5656,17 +5736,25 @@
                 hint.setAttribute('data-i18n', 'profile-review-cta-hint-user');
                 hint.textContent = t('profile-review-cta-hint-user') || 'Tu valoración y comentario se publican en el perfil del DJ.';
             }
+            void mdjPubReviewLoadMine(session, djKey, btn, hint, commentEl);
             btn.onclick = async function () {
                 var st = window._mdjPubReviewStarRating || 0;
                 if (st < 1 || st > 5) {
                     try { alert(t('profile-review-star-required') || 'Elige una valoración de 1 a 5 estrellas.'); } catch (ec) { void ec; }
                     return;
                 }
-                if (!djKey) return;
+                if (!djKey) {
+                    try { alert('Perfil DJ no cargado. Recarga la página e inténtalo de nuevo.'); } catch (eK) { void eK; }
+                    return;
+                }
                 var db = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
-                if (!db) return;
+                if (!db) {
+                    try { alert('Conexión no disponible. Recarga la página e inténtalo de nuevo.'); } catch (eD) { void eD; }
+                    return;
+                }
                 btn.disabled = true;
                 var prevLabel = btn.textContent;
+                var submittedOk = false;
                 btn.textContent = t('profile-review-submitting') || 'Enviando…';
                 try {
                     var comment = commentEl && commentEl.value ? String(commentEl.value).trim() : '';
@@ -5676,22 +5764,37 @@
                         p_comment: comment || null
                     });
                     if (res.error) {
-                        try { alert(res.error.message || 'No se pudo guardar la reseña.'); } catch (eA) { void eA; }
+                        var errMsg = res.error.message || 'No se pudo guardar la reseña.';
+                        if (/own profile|propio/i.test(errMsg)) {
+                            errMsg = 'No puedes valorar tu propio perfil. Usa otra cuenta (cliente u otro artista).';
+                        } else if (/Authentication required|JWT|session/i.test(errMsg)) {
+                            errMsg = 'Tu sesión expiró. Vuelve a entrar e inténtalo de nuevo.';
+                        }
+                        try { alert(errMsg); } catch (eA) { void eA; }
                         return;
                     }
-                    try { sessionStorage.removeItem('mdj_review_stars_' + djKey); } catch (eR) { void eR; }
+                    submittedOk = true;
+                    try {
+                        sessionStorage.removeItem('mdj_review_stars_' + djKey);
+                        sessionStorage.removeItem('mdj_review_draft_' + djKey);
+                    } catch (eR) { void eR; }
+                    window._mdjPubReviewMine = { rating: st, comment: comment };
                     if (typeof renderDynamicReviewsAndKPI === 'function' && window.currentDJData) {
                         await renderDynamicReviewsAndKPI(window.currentDJData, false, db, djKey);
                     }
+                    mdjPubReviewCloseCommentPanel();
+                    mdjPubReviewSetStars(0);
+                    if (commentEl) commentEl.value = '';
+                    btn.textContent = 'Actualizar opinión';
                     if (hint) {
-                        hint.textContent = t('profile-review-thanks') || 'Gracias — tu opinión ya está publicada.';
+                        hint.textContent = t('profile-review-thanks') || 'Gracias — tu opinión ya está publicada. Toca las estrellas para editarla.';
                     }
                 } catch (eSub) {
                     console.warn('[pub review submit]', eSub);
                     try { alert('Error al enviar la reseña.'); } catch (eB) { void eB; }
                 } finally {
                     btn.disabled = false;
-                    btn.textContent = prevLabel;
+                    if (!submittedOk) btn.textContent = prevLabel;
                 }
             };
         }
@@ -5700,7 +5803,11 @@
             window._mdjPubReviewLangBound = true;
             var __mdjPubReviewLangRefresh = function () {
                 if (typeof mdjInitPubLeaveReviewCta !== 'function') return;
-                mdjInitPubLeaveReviewCta(window._mdjPubReviewSession, window._mdjPubReviewOwner);
+                mdjInitPubLeaveReviewCta(
+                    window._mdjPubReviewSession,
+                    window._mdjPubReviewSelfBlock,
+                    window._mdjPubReviewPublicFanView
+                );
             };
             document.addEventListener('languageChanged', __mdjPubReviewLangRefresh);
             window.addEventListener('mdj_language_changed', __mdjPubReviewLangRefresh);
@@ -5752,38 +5859,84 @@
                 '<div class="pub-review-card-meta">' + name + '</div></article>';
         }
 
-        function mdjPaintPubReviewHero(carousel, revList) {
-            if (!carousel) return;
+        function mdjPubReviewReadDelayMs(rv) {
+            var base = 12000;
+            var comment = rv && rv.comment ? String(rv.comment) : '';
+            var extra = Math.min(18000, Math.max(0, comment.length) * 48);
+            return base + extra;
+        }
+
+        function mdjPubReviewClearCarouselTimers() {
             if (window.reviewFadeInterval) {
                 clearInterval(window.reviewFadeInterval);
                 window.reviewFadeInterval = null;
             }
+            if (window.reviewReadTimeout) {
+                clearTimeout(window.reviewReadTimeout);
+                window.reviewReadTimeout = null;
+            }
+        }
+
+        function mdjPaintPubReviewHero(carousel, revList) {
+            if (!carousel) return;
+            mdjPubReviewClearCarouselTimers();
             if (!revList || !revList.length) {
                 carousel.innerHTML = '';
                 carousel.classList.remove('reviews-carousel--hero');
                 return;
             }
             carousel.classList.add('reviews-carousel--hero');
-            carousel.style.transition = 'opacity 0.6s ease-in-out';
-            carousel.style.opacity = '1';
+            var list = revList.slice();
+            carousel.innerHTML =
+                '<div class="reviews-carousel-viewport" aria-live="polite">' +
+                '<div class="reviews-carousel-slide reviews-carousel-slide--active"></div></div>';
+            var slide = carousel.querySelector('.reviews-carousel-slide');
+            if (!slide) return;
+
+            var heroIdx = 0;
+            var reducedMotion = false;
+            try {
+                reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            } catch (eMotion) {
+                void eMotion;
+            }
 
             function paintAt(idx) {
-                carousel.innerHTML = mdjPubReviewHeroHtml(revList[idx]);
+                slide.classList.remove('reviews-carousel-slide--exit-left', 'reviews-carousel-slide--from-right');
+                slide.innerHTML = mdjPubReviewHeroHtml(list[idx]);
+            }
+
+            function scheduleNext() {
+                if (list.length <= 1) return;
+                mdjPubReviewClearCarouselTimers();
+                window.reviewReadTimeout = setTimeout(function () {
+                    advance();
+                }, mdjPubReviewReadDelayMs(list[heroIdx]));
+            }
+
+            function advance() {
+                if (list.length <= 1) return;
+                var nextIdx = (heroIdx + 1) % list.length;
+                if (reducedMotion) {
+                    heroIdx = nextIdx;
+                    paintAt(heroIdx);
+                    scheduleNext();
+                    return;
+                }
+                slide.classList.add('reviews-carousel-slide--exit-left');
+                window.reviewReadTimeout = setTimeout(function () {
+                    heroIdx = nextIdx;
+                    slide.classList.remove('reviews-carousel-slide--exit-left');
+                    slide.classList.add('reviews-carousel-slide--from-right');
+                    slide.innerHTML = mdjPubReviewHeroHtml(list[heroIdx]);
+                    void slide.offsetWidth;
+                    slide.classList.remove('reviews-carousel-slide--from-right');
+                    scheduleNext();
+                }, 460);
             }
 
             paintAt(0);
-
-            if (revList.length > 1) {
-                var heroIdx = 0;
-                window.reviewFadeInterval = setInterval(function () {
-                    carousel.style.opacity = '0';
-                    setTimeout(function () {
-                        heroIdx = (heroIdx + 1) % revList.length;
-                        paintAt(heroIdx);
-                        carousel.style.opacity = '1';
-                    }, 620);
-                }, 7000);
-            }
+            scheduleNext();
         }
 
         // --- REVIEWS & KPI (perfil público: bundle RPC + rating en fila). ---

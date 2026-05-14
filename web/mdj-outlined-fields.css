@@ -121,6 +121,7 @@
 }
 
 .mdj-field-outlined:focus-within > .mdj-field-outlined__label,
+.mdj-field-outlined.mdj-field-outlined--active > .mdj-field-outlined__label,
 .mdj-field-outlined:has(> input:not(:placeholder-shown)) > .mdj-field-outlined__label,
 .mdj-field-outlined:has(.pwd-wrapper > input:not(:placeholder-shown)) > .mdj-field-outlined__label {
   top: 11px;
@@ -129,6 +130,7 @@
 }
 
 .mdj-field-outlined:focus-within > .mdj-field-outlined__label .mdj-field-outlined__hint,
+.mdj-field-outlined.mdj-field-outlined--active > .mdj-field-outlined__label .mdj-field-outlined__hint,
 .mdj-field-outlined:has(> input:not(:placeholder-shown)) > .mdj-field-outlined__label .mdj-field-outlined__hint,
 .mdj-field-outlined:has(.pwd-wrapper > input:not(:placeholder-shown)) > .mdj-field-outlined__label .mdj-field-outlined__hint {
   opacity: 0;
@@ -194,4 +196,28 @@
   .account-layout .form-row.mdj-signup-row--2 {
     grid-template-columns: 1fr;
   }
+}
+
+/* ── Login page overrides (styles.css + login inline beat outlined chrome) ── */
+.login-container .form .mdj-field-outlined > input:not([type='checkbox']):not([type='radio']),
+.login-container .form .mdj-field-outlined > .pwd-wrapper > input {
+  min-height: 52px !important;
+  padding: 18px 14px 10px !important;
+}
+
+.login-container .form .mdj-field-outlined > input::placeholder,
+.login-container .form .mdj-field-outlined > .pwd-wrapper > input::placeholder {
+  color: transparent !important;
+}
+
+.login-container .form .mdj-field-outlined__label {
+  display: block !important;
+  position: absolute !important;
+  z-index: 2;
+}
+
+.login-container .form .mdj-field-outlined > input,
+.login-container .form .mdj-field-outlined > .pwd-wrapper > input {
+  position: relative;
+  z-index: 1;
 }

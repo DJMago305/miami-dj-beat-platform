@@ -46,6 +46,7 @@ const i18n = {
             });
 
             document.querySelectorAll('[data-i18n-hold]').forEach(el => {
+                if (el.closest && el.closest('.mdj-field-outlined')) return;
                 const key = el.getAttribute('data-i18n-hold');
                 const text = this.t(key);
                 if (text) el.placeholder = text;

@@ -631,6 +631,17 @@
                         <h4 style="margin-bottom:16px; color:var(--gold);">📅 Próximos Eventos (30 días)</h4>
                         <div id="analytics-upcoming"></div>
                     </div>
+
+                    <div class="tile" id="mdj-reviews-moderation-tile" style="display:none; margin-top:20px; border:1px solid var(--line);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
+                            <h4 style="margin:0;color:var(--gold);">⭐ Moderación de opiniones (gestión)</h4>
+                            <button type="button" class="btn secondary small" onclick="loadMdReviewsModeration()">↺ Actualizar</button>
+                        </div>
+                        <p class="fineprint" style="margin:0 0 14px;line-height:1.5;opacity:0.88;">
+                            Una opinión por cuenta de cliente. Solo gestión puede ocultar reseñas fraudulentas (contacta al autor primero). No se borran; quedan ocultas.
+                        </p>
+                        <div id="mdj-reviews-moderation-list" class="fineprint"></div>
+                    </div>
                 </div>
 
                 <!-- Content Manager (Prices) -->
@@ -2005,9 +2016,74 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         }
                     }
 
+                    if (typeof window.loadMdReviewsModeration === 'function') {
+                        void window.loadMdReviewsModeration();
+                    }
+
                 } catch (e) {
                     console.error('Analytics error:', e);
                     if (kpis) kpis.innerHTML = '<div class="fineprint" style="color:#ff5555;grid-column:1/-1;text-align:center;padding:20px;">Error cargando analytics.</div>';
+                }
+            };
+
+            window.loadMdReviewsModeration = async function () {
+                if (window.userRole === 'SALES_STAFF') return;
+                var tile = document.getElementById('mdj-reviews-moderation-tile');
+                var list = document.getElementById('mdj-reviews-moderation-list');
+                if (!tile || !list) return;
+                tile.style.display = 'block';
+                list.innerHTML = '<span style="opacity:0.6;">Cargando opiniones…</span>';
+                var supabase = window.getSupabaseClient && window.getSupabaseClient();
+                if (!supabase) {
+                    list.textContent = 'Sin conexión a Supabase.';
+                    return;
+                }
+                try {
+                    var res = await supabase.rpc('staff_list_dj_public_reviews_recent', { p_limit: 30 });
+                    if (res.error) {
+                        list.textContent = res.error.message || 'No se pudo cargar.';
+                        return;
+                    }
+                    var rows = res.data;
+                    if (typeof rows === 'string') {
+                        try { rows = JSON.parse(rows); } catch (eJ) { rows = []; }
+                    }
+                    if (!Array.isArray(rows) || !rows.length) {
+                        list.innerHTML = '<span style="opacity:0.55;">Sin opiniones publicadas recientes.</span>';
+                        return;
+                    }
+                    list.innerHTML = rows.map(function (r) {
+                        var stars = '★'.repeat(Math.min(5, Math.max(0, Number(r.rating) || 0)));
+                        var who = (r.reviewer_display_name || 'Cliente').replace(/</g, '&lt;');
+                        var dj = (r.dj_label || r.dj_user_id || '').toString().replace(/</g, '&lt;');
+                        var comment = (r.comment || '').replace(/</g, '&lt;');
+                        var id = r.id;
+                        return '<div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.08);">' +
+                            '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">' +
+                            '<strong style="color:var(--gold);">' + stars + '</strong>' +
+                            '<button type="button" class="btn-pill red" style="font-size:11px;" data-mdj-hide-review="' + id + '">Ocultar (fraude)</button>' +
+                            '</div>' +
+                            '<div style="margin:6px 0;opacity:0.9;">' + (comment || '<em>Sin comentario</em>') + '</div>' +
+                            '<div style="font-size:11px;opacity:0.65;">' + who + ' · DJ: ' + dj + '</div>' +
+                            '</div>';
+                    }).join('');
+                    list.querySelectorAll('[data-mdj-hide-review]').forEach(function (btn) {
+                        btn.onclick = async function () {
+                            var rid = btn.getAttribute('data-mdj-hide-review');
+                            if (!rid) return;
+                            if (!confirm('¿Ocultar esta opinión? (Contacta al autor antes si es posible.)')) return;
+                            btn.disabled = true;
+                            var hideRes = await supabase.rpc('staff_hide_dj_public_review', { p_review_id: rid });
+                            if (hideRes.error || (hideRes.data && hideRes.data.ok === false)) {
+                                alert((hideRes.error && hideRes.error.message) || (hideRes.data && hideRes.data.error) || 'No se pudo ocultar.');
+                                btn.disabled = false;
+                                return;
+                            }
+                            void window.loadMdReviewsModeration();
+                        };
+                    });
+                } catch (eMod) {
+                    list.textContent = 'Error al cargar moderación.';
                 }
             };
 
