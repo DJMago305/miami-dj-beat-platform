@@ -8,9 +8,29 @@
     <script>
         (function () {
             try {
-                if (/[?&]lead=/i.test(String(window.location.search || ''))) {
+                var qs = String(window.location.search || '');
+                if (!/[?&]lead=/i.test(qs)) return;
+                var m = qs.match(/[?&]lead=([^&]+)/i);
+                var leadId = m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : '';
+                if (!leadId) {
                     document.documentElement.setAttribute('data-portal-lead-pending', '1');
+                    return;
                 }
+                var raw = sessionStorage.getItem('mdj_portal_hub_v1');
+                if (raw) {
+                    var o = JSON.parse(raw);
+                    if (
+                        o &&
+                        o.ids &&
+                        o.ids.some(function (id) {
+                            return String(id) === String(leadId);
+                        }) &&
+                        Date.now() - Number(o.ts || 0) <= 86400000
+                    ) {
+                        return;
+                    }
+                }
+                document.documentElement.setAttribute('data-portal-lead-pending', '1');
             } catch (e) { /* ignore */ }
         })();
     </script>
@@ -644,7 +664,7 @@
     <script src="./translations.js?v=20260422-nav-labels-1"></script>
     <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
     <script src="./invoice-print-bridge.js?v=20260420"></script>
-    <script src="./client-portal.js?v=20260513-portal-hub-grant"></script>
+    <script src="./client-portal.js?v=20260514-portal-hub-snapshot"></script>
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
     <div id="mdj-assistant-booth">
         <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
