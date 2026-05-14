@@ -44,12 +44,120 @@ function portalZelleMemoForLead(leadId) {
 }
 
 function portalClearLeadPendingShell() {
+    portalDisarmLeadPendingFailsafe();
     try {
         document.documentElement.removeAttribute('data-portal-lead-pending');
     } catch (e) { /* ignore */ }
     try {
         document.body.classList.remove('portal-resolving-session');
     } catch (e2) { /* ignore */ }
+}
+
+var _portalFailsafeTimer = null;
+
+/** Si ?lead= sigue oculto tras timeout, revelar UI y mostrar acceso denegado (evita pantalla negra). */
+function portalArmLeadPendingFailsafe(ms) {
+    if (_portalFailsafeTimer) clearTimeout(_portalFailsafeTimer);
+    _portalFailsafeTimer = setTimeout(function () {
+        var stillHidden =
+            document.documentElement.hasAttribute('data-portal-lead-pending') ||
+            document.body.classList.contains('portal-resolving-session');
+        if (!stillHidden) return;
+        console.warn('[portal] lead pending failsafe — revealing shell');
+        portalClearLeadPendingShell();
+        try {
+            var head = document.querySelector('.portal-header');
+            var main = document.querySelector('main');
+            var title = portalT('portal-lead-access-denied-title');
+            var body =
+                portalT('portal-pick-event-intro') +
+                ' ' +
+                portalT('portal-lead-access-denied-body');
+            var hub = portalT('portal-lead-access-denied-back-hub');
+            if (head) {
+                head.innerHTML =
+                    '<div class="container" style="padding: 40px 20px;">' +
+                    '<div style="font-size: 48px; margin-bottom: 20px;">⏳</div>' +
+                    '<h1 style="font-size: 22px; margin-bottom: 12px;">' +
+                    portalEscapeHtml(title) +
+                    '</h1>' +
+                    '<p style="opacity:0.85;max-width:520px;margin:0 auto 24px;line-height:1.5;">' +
+                    portalEscapeHtml(body) +
+                    '</p>' +
+                    '<a href="./client-portal.html" class="btn primary" style="display:inline-block;padding:14px 28px;border-radius:50px;font-weight:900;">' +
+                    portalEscapeHtml(hub) +
+                    '</a></div>';
+            }
+            if (main) main.innerHTML = '';
+        } catch (eDeny) {
+            void eDeny;
+        }
+    }, typeof ms === 'number' ? ms : 12000);
+}
+
+function portalDisarmLeadPendingFailsafe() {
+    if (_portalFailsafeTimer) {
+        clearTimeout(_portalFailsafeTimer);
+        _portalFailsafeTimer = null;
+    }
+}
+
+var PORTAL_HUB_STORAGE_KEY = 'mdj_portal_hub_v1';
+
+function portalRememberHubLeads(sessionUserId, leads) {
+    if (!sessionUserId) return;
+    try {
+        var ids = (leads || [])
+            .map(function (L) {
+                return L && L.id ? String(L.id) : '';
+            })
+            .filter(Boolean);
+        sessionStorage.setItem(
+            PORTAL_HUB_STORAGE_KEY,
+            JSON.stringify({ uid: String(sessionUserId), ids: ids, ts: Date.now() })
+        );
+    } catch (eHub) {
+        void eHub;
+    }
+}
+
+function portalHubLeadGranted(sessionUserId, leadId) {
+    if (!sessionUserId || !leadId) return false;
+    try {
+        var raw = sessionStorage.getItem(PORTAL_HUB_STORAGE_KEY);
+        if (!raw) return false;
+        var o = JSON.parse(raw);
+        if (!o || String(o.uid) !== String(sessionUserId)) return false;
+        if (Date.now() - Number(o.ts || 0) > 86400000) return false;
+        return (o.ids || []).some(function (id) {
+            return String(id) === String(leadId);
+        });
+    } catch (eG) {
+        return false;
+    }
+}
+
+/** Espera hidratación JWT (misma idea que hub «Mis eventos»). */
+async function portalWaitForAuthSession(db, maxAttempts) {
+    if (!db) return null;
+    var attempts = typeof maxAttempts === 'number' ? maxAttempts : 10;
+    for (var i = 0; i < attempts; i++) {
+        try {
+            var res = await db.auth.getSession();
+            var session = res && res.data && res.data.session;
+            if (session && session.user) return session;
+            var gu = await db.auth.getUser();
+            if (gu && gu.data && gu.data.user) {
+                return { user: gu.data.user };
+            }
+        } catch (eS) {
+            void eS;
+        }
+        await new Promise(function (r) {
+            setTimeout(r, 140 * (i + 1));
+        });
+    }
+    return null;
 }
 
 /** Primer nombre para saludo humano: quita @, minúsculas salvo la inicial (ej. @WENDY → Wendy). */
@@ -139,6 +247,7 @@ var PORTAL_I18N_FB = {
         'portal-lead-access-denied-title': 'Not available on this account',
         'portal-lead-access-denied-body': 'This event is not linked to your email. Sign in with the account you used to book, or contact support.',
         'portal-lead-access-denied-back': 'Back to home',
+        'portal-lead-access-denied-back-hub': 'Back to my events',
         'portal-welcome-name-fallback': 'Friend',
         'portal-log-contact-placeholder': 'On file with your booking',
         'portal-dup-wedding-banner':
@@ -232,6 +341,7 @@ var PORTAL_I18N_FB = {
         'portal-lead-access-denied-title': 'No disponible con esta cuenta',
         'portal-lead-access-denied-body': 'Este evento no está vinculado a tu correo. Usa la cuenta con la que reservaste o contacta a soporte.',
         'portal-lead-access-denied-back': 'Volver al inicio',
+        'portal-lead-access-denied-back-hub': 'Volver a mis eventos',
         'portal-welcome-name-fallback': 'Amigo',
         'portal-log-contact-placeholder': 'En tu reserva (no mostramos el correo aquí)',
         'portal-dup-wedding-banner':
@@ -465,7 +575,7 @@ async function portalFetchLeadsForLoggedInUser(db, sessionUserId, emailNorm) {
         var r2 = await db
             .from('leads')
             .select(cols)
-            .eq('email', emailNorm)
+            .ilike('email', emailNorm)
             .order('created_at', { ascending: false })
             .limit(50);
         if (r2.error && !lastErr) lastErr = r2.error;
@@ -481,6 +591,7 @@ async function portalFetchLeadsForLoggedInUser(db, sessionUserId, emailNorm) {
 /** ¿Este lead pertenece a la sesión? Peek por id + lista hub (misma regla que «Mis eventos»). */
 async function portalSessionOwnsLead(db, leadId, sessionUserId, sessionEmail) {
     if (!db || !leadId) return false;
+    if (sessionUserId && portalHubLeadGranted(sessionUserId, leadId)) return true;
     try {
         var peek = await db.from('leads').select('email, client_user_id').eq('id', leadId).maybeSingle();
         if (peek.data) {
@@ -495,6 +606,9 @@ async function portalSessionOwnsLead(db, leadId, sessionUserId, sessionEmail) {
     } catch (eP) { /* ignore */ }
     var q = await portalFetchLeadsForLoggedInUser(db, sessionUserId, sessionEmail);
     var leads = q.data || [];
+    if (leads.length && sessionUserId) {
+        portalRememberHubLeads(sessionUserId, leads);
+    }
     return leads.some(function (L) {
         return L && String(L.id) === String(leadId);
     });
@@ -523,8 +637,40 @@ function mdjPortalStaffModeRequested(params) {
 }
 
 /** Omit Stripe / token wiring from browser selects (Edge + webhooks use service_role). */
-var MDJ_LEADS_SAFE_COLUMNS =
-    'id,email,full_name,phone,event_date,location,gate_code,contact_person,budget,status,notes,event_type,assigned_dj_id,assigned_dj_name,created_at,payment_status,balance_paid,total_amount,deposit_required_usd,client_user_id';
+var MDJ_LEADS_CORE_COLUMNS =
+    'id,email,full_name,phone,event_date,location,gate_code,contact_person,budget,status,notes,event_type,assigned_dj_id,assigned_dj_name,created_at,payment_status,balance_paid,total_amount,client_user_id';
+
+/** Columnas que el hub ya demostró legibles vía RLS (sin campos opcionales de migraciones tardías). */
+var MDJ_LEADS_MINIMAL_COLUMNS =
+    'id,email,client_user_id,full_name,phone,event_type,event_date,status,created_at,location,notes,payment_status,balance_paid,total_amount';
+
+var MDJ_LEADS_SAFE_COLUMNS = MDJ_LEADS_CORE_COLUMNS;
+
+async function portalFetchLeadRowById(db, leadId) {
+    if (!db || !leadId) return { data: null, error: null };
+    var tiers = [MDJ_LEADS_MINIMAL_COLUMNS, MDJ_LEADS_CORE_COLUMNS];
+    var lastErr = null;
+    for (var t = 0; t < tiers.length; t++) {
+        var cols = tiers[t];
+        for (var attempt = 0; attempt < 2; attempt++) {
+            var res = await db.from('leads').select(cols).eq('id', leadId).maybeSingle();
+            if (res.data) return { data: res.data, error: null };
+            lastErr = res.error || null;
+            if (lastErr) {
+                var msg = String(lastErr.message || lastErr.details || lastErr.hint || '');
+                if (/does not exist|42703|deposit_required_usd|gate_code|assigned_dj/i.test(msg)) {
+                    break;
+                }
+            }
+            if (attempt < 1) {
+                await new Promise(function (r) {
+                    setTimeout(r, 320);
+                });
+            }
+        }
+    }
+    return { data: null, error: lastErr };
+}
 
 const PortalApp = {
     /** Lead abierto 48h+ sin pago → crédito de enganche (portal + IA pueden referenciarlo). */
@@ -706,6 +852,7 @@ const PortalApp = {
             try {
                 document.body.classList.add('portal-resolving-session');
             } catch (eRs) { /* ignore */ }
+            portalArmLeadPendingFailsafe(14000);
         }
 
         if (this.isManager && leadId) {
@@ -820,21 +967,9 @@ const PortalApp = {
         }
 
         if (!this.isManager) {
-            await this.waitForSupabaseClient(6000);
+            await this.waitForSupabaseClient(10000);
             var dbGate = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
-            var sessGate = null;
-            if (dbGate) {
-                var rg = await dbGate.auth.getSession();
-                sessGate = rg && rg.data && rg.data.session;
-                if (!sessGate || !sessGate.user) {
-                    try {
-                        var ug = await dbGate.auth.getUser();
-                        if (ug && ug.data && ug.data.user) {
-                            sessGate = { user: ug.data.user };
-                        }
-                    } catch (eG) { /* ignore */ }
-                }
-            }
+            var sessGate = await portalWaitForAuthSession(dbGate, 12);
             if (!sessGate || !sessGate.user) {
                 this.showLeadLoginRequired(leadId);
                 return;
@@ -990,6 +1125,7 @@ const PortalApp = {
         var title = portalT('portal-lead-access-denied-title');
         var body = portalT('portal-lead-access-denied-body');
         var back = portalT('portal-lead-access-denied-back');
+        var backHub = portalT('portal-lead-access-denied-back-hub');
         if (head) {
             head.innerHTML =
                 '<div class="container" style="padding: 40px 20px;">' +
@@ -1000,7 +1136,11 @@ const PortalApp = {
                 '<p style="opacity: 0.85; max-width: 520px; margin: 0 auto 24px; line-height: 1.5;">' +
                 portalEscapeHtml(body) +
                 '</p>' +
-                '<a href="./index.html" class="btn primary" style="display:inline-block;padding:14px 28px;border-radius:50px;font-weight:900;">' +
+                '<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">' +
+                '<a href="./client-portal.html" class="btn primary" style="display:inline-block;padding:14px 28px;border-radius:50px;font-weight:900;">' +
+                portalEscapeHtml(backHub) +
+                '</a>' +
+                '<a href="./index.html" class="btn secondary" style="display:inline-block;padding:14px 28px;border-radius:50px;font-weight:800;">' +
                 portalEscapeHtml(back) +
                 '</a></div>';
         }
@@ -1036,8 +1176,9 @@ const PortalApp = {
                 this.showLeadLoginRequired(leadId);
                 return;
             }
-            var accessOk = false;
-            for (var att = 0; att < 3; att++) {
+            var accessOk =
+                (sessionUserId && portalHubLeadGranted(sessionUserId, leadId)) || false;
+            for (var att = 0; att < 3 && !accessOk; att++) {
                 accessOk = await portalSessionOwnsLead(db, leadId, sessionUserId, sessionEmail);
                 if (accessOk) break;
                 if (att < 2) {
@@ -1062,17 +1203,13 @@ const PortalApp = {
             if (db) {
                 var fetchErr = null;
                 for (var fAtt = 0; fAtt < 3; fAtt++) {
-                    const { data, error } = await db
-                        .from('leads')
-                        .select(MDJ_LEADS_SAFE_COLUMNS)
-                        .eq('id', leadId)
-                        .single();
-                    if (data) {
-                        leadData = data;
+                    var fetched = await portalFetchLeadRowById(db, leadId);
+                    if (fetched.data) {
+                        leadData = fetched.data;
                         fetchErr = null;
                         break;
                     }
-                    fetchErr = error;
+                    fetchErr = fetched.error;
                     if (fAtt < 2) {
                         await new Promise(function (r) {
                             setTimeout(r, 400);
@@ -2337,11 +2474,13 @@ const PortalApp = {
             }
             var leads = q.data || [];
             if (leads.length === 1) {
+                portalRememberHubLeads(session.user.id, leads);
                 var path1 = (window.location.pathname || '/client-portal.html').split('?')[0];
                 window.location.replace(path1 + '?lead=' + encodeURIComponent(leads[0].id));
                 return true;
             }
             if (leads.length > 1) {
+                portalRememberHubLeads(session.user.id, leads);
                 try {
                     document.body.classList.remove('portal-resolving-session');
                 } catch (eHub) { /* ignore */ }
@@ -2368,6 +2507,9 @@ const PortalApp = {
         try {
             document.body.classList.remove('portal-resolving-session');
         } catch (e0) { /* ignore */ }
+        if (session && session.user && session.user.id) {
+            portalRememberHubLeads(session.user.id, leads);
+        }
         var displayName = portalResolveWelcomeName(session || null, clientRow || null, null);
         var head = document.querySelector('.portal-header');
         if (!head) return;
@@ -2855,4 +2997,14 @@ const PortalApp = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => PortalApp.init());
+document.addEventListener('DOMContentLoaded', function () {
+    PortalApp.init().catch(function (err) {
+        console.error('[portal] init failed', err);
+        portalClearLeadPendingShell();
+        try {
+            PortalApp.showLeadAccessDenied();
+        } catch (e2) {
+            void e2;
+        }
+    });
+});
