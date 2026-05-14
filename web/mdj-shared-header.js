@@ -1700,7 +1700,7 @@
           var settingsUrl;
           var settingsLabel;
           if (isClient) {
-            settingsUrl = './client-account.html';
+            settingsUrl = './client-portal.html';
             settingsLabel = mdjGetVipPortalMenuLabel();
           } else if (isNavStaffSolo) {
             settingsUrl = './account-settings.html';
