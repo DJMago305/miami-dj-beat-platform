@@ -245,6 +245,40 @@ html.dj-profile-auth-check body {
     min-height: 132px;
 }
 
+#reviews-card .reviews-carousel-viewport {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    min-height: 132px;
+}
+
+#reviews-card .reviews-carousel-slide {
+    width: 100%;
+    transition: transform 0.48s cubic-bezier(0.33, 1, 0.68, 1), opacity 0.4s ease;
+    will-change: transform, opacity;
+}
+
+#reviews-card .reviews-carousel-slide--exit-left {
+    transform: translateX(-26%);
+    opacity: 0;
+}
+
+#reviews-card .reviews-carousel-slide--from-right {
+    transform: translateX(26%);
+    opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #reviews-card .reviews-carousel-slide {
+        transition: opacity 0.25s ease;
+    }
+
+    #reviews-card .reviews-carousel-slide--exit-left,
+    #reviews-card .reviews-carousel-slide--from-right {
+        transform: none;
+    }
+}
+
 #reviews-card .pub-review-card,
 #reviews-card .pub-review-hero {
     width: 100%;
