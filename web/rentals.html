@@ -90,11 +90,881 @@ Riesgo: romper carga del catálogo.
             overflow: visible !important;
         }
 
-        /* Preserve Gallery display (bottom only) */
-        #rentals-gallery img {
+        /* Gallery carousel styles: see #rentals-gallery-carousel */
+    </style>
+    <style id="rentals-gallery-carousel">
+        #rentals-gallery .rentals-gallery-shell {
+            position: relative;
+            width: 100%;
+            container-type: inline-size;
+            container-name: mdj-rentals-gallery;
+        }
+
+        #rentals-gallery .rentals-gallery-viewport {
+            width: 100%;
+        }
+
+        #rentals-gallery .rentals-gallery-nav {
+            position: absolute;
+            top: 50%;
+            z-index: 3;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid rgba(212, 175, 55, 0.88);
+            background: rgba(10, 12, 22, 0.82);
+            color: rgba(212, 175, 55, 0.95);
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1;
+            padding: 0;
+            cursor: pointer;
+            transform: translateY(-50%);
+            box-shadow: 0 0 18px rgba(212, 175, 55, 0.22);
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        #rentals-gallery .rentals-gallery-nav--prev {
+            left: clamp(6px, 1.2vw, 14px);
+        }
+
+        #rentals-gallery .rentals-gallery-nav--next {
+            right: clamp(6px, 1.2vw, 14px);
+        }
+
+        #rentals-gallery .rentals-gallery-nav:hover {
+            border-color: rgba(212, 175, 55, 1);
+            box-shadow: 0 0 24px rgba(212, 175, 55, 0.38);
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        #rentals-gallery .rentals-gallery-nav:focus-visible {
+            outline: 2px solid rgba(212, 175, 55, 0.65);
+            outline-offset: 2px;
+        }
+
+        #rentals-gallery .rentals-gallery-track {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            align-items: stretch;
+            gap: 20px;
+            width: 100%;
+            padding: 4px 2px 12px;
+            box-sizing: border-box;
+            overflow-x: auto;
+            overflow-y: hidden;
+            overscroll-behavior-x: contain;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: auto;
+        }
+
+        #rentals-gallery .rentals-gallery-track::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        #rentals-gallery .rentals-gallery-track::-webkit-scrollbar-thumb {
+            background: rgba(212, 175, 55, 0.35);
+            border-radius: 8px;
+        }
+
+        #rentals-gallery .rentals-gallery-track.mdj-rentals-gallery-infinite {
+            scroll-snap-type: none !important;
+        }
+
+        #rentals-gallery .rentals-gallery-slide {
+            flex: 0 0 calc((100cqi - 44px) / 3);
+            width: calc((100cqi - 44px) / 3);
+            padding: 0;
+            overflow: hidden;
+            border-radius: 15px;
+            border: 1px solid rgba(212, 175, 55, 0.32);
+            box-sizing: border-box;
+        }
+
+        @container mdj-rentals-gallery (max-width: 960px) {
+            #rentals-gallery .rentals-gallery-slide {
+                flex: 0 0 calc((100cqi - 24px) / 2);
+                width: calc((100cqi - 24px) / 2);
+            }
+        }
+
+        @container mdj-rentals-gallery (max-width: 560px) {
+            #rentals-gallery .rentals-gallery-slide {
+                flex: 0 0 calc(100cqi - 4px);
+                width: calc(100cqi - 4px);
+            }
+        }
+
+        #rentals-gallery .rentals-gallery-slide img {
             display: block !important;
             width: 100% !important;
-            height: 250px !important;
+            height: clamp(250px, 20cqi, 320px) !important;
+            object-fit: cover;
+        }
+    </style>
+    <!-- EVENT BUILDER — fullscreen Event Cart (scoped); gated by MDJ_EVENT_BUILDER_V1 -->
+    <style id="rentals-event-builder">
+        body.mdj-eb-cart-open {
+            overflow: hidden;
+        }
+
+        /* Carrito a pantalla completa: el header real queda bajo overlay/drawer (no subir z-index del #mainHeader aquí). */
+
+        body.mdj-event-builder-on #mdj-event-builder-root {
+            display: block;
+        }
+
+        #mdj-event-builder-root {
+            display: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-fab {
+            position: fixed;
+            left: clamp(12px, 2vw, 20px);
+            bottom: clamp(88px, 12vh, 120px);
+            z-index: 9400;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            border: 2px solid rgba(212, 175, 55, 0.88);
+            background: rgba(10, 12, 22, 0.9);
+            color: rgba(212, 175, 55, 0.95);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 0 18px rgba(212, 175, 55, 0.22);
+        }
+
+        #mdj-event-builder-root .mdj-eb-fab__count {
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            border-radius: 999px;
+            background: rgba(212, 175, 55, 0.22);
+            font-size: 11px;
+            line-height: 20px;
+            text-align: center;
+        }
+
+        /* Rentals: Event Cart header twin (same glass/circle as shop cart; color + badge differ) */
+        body.page-mdj-rentals #mdj-event-builder-root .mdj-eb-fab {
+            display: none !important;
+        }
+
+        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn {
+            margin-left: 10px;
+            border-color: rgba(72, 160, 210, 0.72);
+            color: rgba(170, 228, 255, 0.98);
+            box-shadow: inset 0 0 0 1px rgba(72, 160, 210, 0.22), 0 2px 12px rgba(0, 24, 48, 0.42);
+        }
+
+        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn:hover {
+            background: rgba(72, 160, 210, 0.2);
+            border-color: rgba(130, 210, 255, 0.95);
+            box-shadow: 0 0 22px rgba(80, 180, 240, 0.5), 0 0 36px rgba(40, 140, 200, 0.28),
+                inset 0 0 18px rgba(72, 160, 210, 0.18);
+        }
+
+        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn:focus-visible {
+            border-color: rgba(130, 220, 255, 0.95);
+            box-shadow: 0 0 20px rgba(90, 190, 255, 0.55);
+        }
+
+        @keyframes mdj-eb-event-cart-pulse {
+            0%,
+            100% {
+                box-shadow: 0 0 12px rgba(72, 160, 210, 0.35), inset 0 0 10px rgba(72, 160, 210, 0.12);
+                border-color: rgba(90, 170, 220, 0.75);
+            }
+
+            50% {
+                box-shadow: 0 0 24px rgba(100, 190, 255, 0.55), 0 0 36px rgba(60, 150, 210, 0.3),
+                    inset 0 0 14px rgba(72, 160, 210, 0.22);
+                border-color: rgba(160, 220, 255, 0.95);
+            }
+        }
+
+        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn.has-items {
+            background: rgba(72, 160, 210, 0.14);
+            border-color: rgba(100, 185, 235, 0.8);
+            box-shadow: 0 0 14px rgba(72, 160, 210, 0.38), inset 0 0 12px rgba(72, 160, 210, 0.14);
+            animation: mdj-eb-event-cart-pulse 2.1s ease-in-out infinite;
+        }
+
+        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn.has-items:hover {
+            animation: none;
+            box-shadow: 0 0 26px rgba(100, 200, 255, 0.55), 0 0 44px rgba(60, 160, 220, 0.32),
+                inset 0 0 18px rgba(72, 160, 210, 0.22);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn.has-items {
+                animation: none;
+            }
+        }
+
+        body.page-mdj-rentals #mdj-eb-header-count.header-cart-count {
+            background: linear-gradient(180deg, #2a8cbc, #1a5a8a);
+            color: #fff;
+        }
+
+        #mdj-event-builder-root .mdj-eb-overlay[hidden],
+        #mdj-event-builder-root .mdj-eb-drawer[hidden] {
+            display: none !important;
+        }
+
+        #mdj-event-builder-root .mdj-eb-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 11490;
+            background: rgba(4, 6, 14, 0.72);
+            backdrop-filter: blur(4px);
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer {
+            position: fixed;
+            inset: 0;
+            z-index: 11500;
+            width: 100%;
+            height: 100%;
+            min-height: 100dvh;
+            max-width: none;
+            box-sizing: border-box;
+            padding-top: env(safe-area-inset-top, 0px);
+            background: linear-gradient(165deg, rgba(14, 16, 28, 0.99), rgba(8, 10, 18, 0.995));
+            border-top: none;
+            box-shadow: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer:not([hidden]) {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Event Cart topbar — escala fullscreen: más altura, aire lateral y separación (sin tocar #mainNav del sitio). */
+        #mdj-event-builder-root .mdj-eb-cart-topbar {
+            flex-shrink: 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            min-height: clamp(58px, 9vw, 68px);
+            padding: clamp(18px, 2.2vw, 22px) clamp(20px, 4vw, 48px);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.22);
+            background: #000;
+            background-image: none;
+            box-shadow: none;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a {
+            display: inline;
+            padding: 6px 0.2em 8px;
+            margin: 0;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: clamp(13px, 1vw, 16px);
+            line-height: 1.22;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: rgba(245, 236, 220, 0.85);
+            border: none;
+            border-radius: 0;
+            border-bottom: 3px solid transparent;
+            background: transparent;
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a:not(:last-child)::after {
+            content: '/';
+            display: inline;
+            margin: 0 clamp(0.55em, 1.1vw, 0.9em);
+            font-weight: 400;
+            font-size: clamp(13px, 1vw, 16px);
+            letter-spacing: 0;
+            text-transform: none;
+            color: rgba(200, 200, 200, 0.45);
+            pointer-events: none;
+        }
+
+        /* Alineado con #mainNav.mdj-mainnav-flex: Shop dorado; Services activo en rentals */
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='shop'],
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[href*='shop.html'] {
+            color: rgba(224, 195, 130, 0.96);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='services'] {
+            color: var(--gold, #c5a059);
+            border-bottom-color: var(--gold, #c5a059);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a:hover {
+            color: rgba(255, 252, 245, 0.98);
+            border-bottom-color: transparent;
+            background: transparent;
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='services']:hover,
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='shop']:hover {
+            color: rgba(255, 252, 245, 0.98);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='services']:hover {
+            border-bottom-color: var(--gold, #c5a059);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='shop']:hover {
+            color: rgba(240, 215, 150, 1);
+        }
+
+        @media (max-width: 640px) {
+            #mdj-event-builder-root .mdj-eb-cart-topbar {
+                justify-content: flex-start;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #mdj-event-builder-root .mdj-eb-cart-topbar a {
+                flex: 0 0 auto;
+                display: inline-flex;
+                align-items: baseline;
+            }
+
+            #mdj-event-builder-root .mdj-eb-cart-topbar a:not(:last-child)::after {
+                display: inline-flex;
+                align-items: center;
+            }
+        }
+
+        #mdj-event-builder-root .mdj-eb-panel__body {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: auto;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(260px, 380px);
+            gap: 20px;
+            padding: 16px clamp(14px, 3vw, 28px) 28px;
+            max-width: 1280px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #mdj-event-builder-root .mdj-eb-panel__main {
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (max-width: 768px) {
+            #mdj-event-builder-root .mdj-eb-panel__body {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer__head {
+            flex-shrink: 0;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 20px clamp(14px, 3vw, 28px) 14px;
+            max-width: 1280px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer__head h2 {
+            margin: 0;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: rgba(212, 175, 55, 0.95);
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer__head-main {
+            flex: 1 1 auto;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 8px 12px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__field {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 0;
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__field--assign {
+            flex: 1 1 200px;
+            min-width: min(100%, 220px);
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__hint {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.52);
+            line-height: 1.2;
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__select {
+            min-width: 0;
+            max-width: 100%;
+            min-height: 34px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(212, 175, 55, 0.38);
+            background: rgba(0, 0, 0, 0.42);
+            color: rgba(255, 255, 255, 0.94);
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__select--day {
+            width: clamp(64px, 14vw, 80px);
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__select--month {
+            width: clamp(108px, 24vw, 132px);
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__select--year {
+            width: clamp(72px, 16vw, 90px);
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__select--assign {
+            width: 100%;
+        }
+
+        @media (min-width: 900px) {
+            #mdj-event-builder-root .mdj-eb-drawer__head-main {
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: center;
+                column-gap: 18px;
+                row-gap: 8px;
+            }
+
+            #mdj-event-builder-root .mdj-eb-context-bar {
+                flex: 1 1 auto;
+                justify-content: flex-end;
+                min-width: min(100%, 560px);
+            }
+
+            #mdj-event-builder-root .mdj-eb-context-bar__select--assign {
+                width: auto;
+                min-width: 220px;
+                max-width: min(100%, 340px);
+            }
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer__head > .mdj-eb-close {
+            margin-top: 4px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-close {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid rgba(212, 175, 55, 0.45);
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.88);
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        #mdj-event-builder-root .mdj-eb-lines {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 4px 0 8px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-empty {
+            margin: 0;
+            opacity: 0.75;
+            font-size: 13px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        #mdj-event-builder-root .mdj-eb-empty code {
+            font-size: 12px;
+            display: block;
+            margin-top: 8px;
+            color: rgba(212, 175, 55, 0.85);
+        }
+
+        #mdj-event-builder-root .mdj-eb-line {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        #mdj-event-builder-root .mdj-eb-line:last-child {
+            border-bottom: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__row {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 12px;
+            width: 100%;
+            min-width: 0;
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__thumb {
+            width: 48px;
+            height: 48px;
+            flex: 0 0 48px;
+            display: block;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1px solid rgba(212, 175, 55, 0.35);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__thumb--ph {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.18), rgba(255, 255, 255, 0.05));
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__meta {
+            flex: 1 1 auto;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__cat {
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(212, 175, 55, 0.78);
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__qty {
+            opacity: 0.65;
+            font-weight: 500;
+            font-size: 0.92em;
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__price {
+            font-size: 14px;
+            font-weight: 700;
+            color: rgba(212, 175, 55, 0.95);
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__actions {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__replace,
+        #mdj-event-builder-root .mdj-eb-line__remove {
+            border: none;
+            background: transparent;
+            color: rgba(212, 175, 55, 0.9);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 0;
+            text-align: right;
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__remove {
+            color: rgba(255, 130, 130, 0.92);
+        }
+
+        #mdj-event-builder-root .mdj-eb-line--dj-family .mdj-eb-line__dj-extra {
+            width: 100%;
+            min-width: 0;
+            margin-top: 10px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick {
+            width: 100%;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick__summary {
+            cursor: pointer;
+            list-style: none;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(212, 175, 55, 0.95);
+            user-select: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick__summary::-webkit-details-marker {
+            display: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick__summary::after {
+            content: '';
+            display: inline-block;
+            width: 0;
+            height: 0;
+            margin-left: 8px;
+            vertical-align: middle;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 6px solid rgba(212, 175, 55, 0.75);
+            transition: transform 0.15s ease;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick[open] .mdj-eb-dj-pick__summary::after {
+            transform: rotate(180deg);
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick__panel {
+            margin-top: 10px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border: 1px solid rgba(212, 175, 55, 0.28);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.38);
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table {
+            width: 100%;
+            min-width: 640px;
+            border-collapse: collapse;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__th,
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td {
+            padding: 8px 10px;
+            border-right: 1px solid rgba(255, 255, 255, 0.07);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__th:last-child,
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td:last-child {
+            border-right: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table thead .mdj-eb-dj-pick-table__th {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(212, 175, 55, 0.88);
+            background: rgba(0, 0, 0, 0.5);
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table tbody tr:last-child .mdj-eb-dj-pick-table__td {
+            border-bottom: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__th--photo,
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--photo {
+            width: 52px;
+            text-align: center;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            object-fit: cover;
+            display: block;
+            margin: 0 auto;
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--stage {
+            font-weight: 700;
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--legal {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.62);
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__stars {
+            color: rgba(212, 175, 55, 0.95);
+            letter-spacing: 1px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__score {
+            color: rgba(255, 255, 255, 0.65);
+            font-size: 11px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--rating {
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--status {
+            font-size: 11px;
+            color: rgba(130, 220, 160, 0.95);
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__link {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(212, 175, 55, 0.55);
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__link:hover {
+            border-color: rgba(212, 175, 55, 0.95);
+            color: rgba(212, 175, 55, 0.98);
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__select {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(212, 175, 55, 0.55);
+            background: linear-gradient(180deg, rgba(212, 175, 55, 0.35), rgba(160, 130, 40, 0.55));
+            color: #0a0a0c;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: not-allowed;
+            opacity: 0.55;
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-panel__aside {
+            min-height: 0;
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer__foot {
+            padding: 16px 18px 22px;
+            border: 1px solid rgba(212, 175, 55, 0.22);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.28);
+        }
+
+        @media (min-width: 769px) {
+            #mdj-event-builder-root .mdj-eb-panel__aside .mdj-eb-drawer__foot {
+                position: sticky;
+                top: 12px;
+            }
+        }
+
+        #mdj-event-builder-root .mdj-eb-totals {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-totals__row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        #mdj-event-builder-root .mdj-eb-totals__row--total {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            padding-top: 6px;
+            margin-top: 4px;
+            border-top: 1px solid rgba(212, 175, 55, 0.25);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cta {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 999px;
+            border: 2px solid rgba(212, 175, 55, 0.88);
+            background: rgba(212, 175, 55, 0.14);
+            color: rgba(212, 175, 55, 0.98);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        #mdj-event-builder-root .mdj-eb-toast {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translateX(-50%);
+            z-index: 11560;
+            max-width: min(92vw, 420px);
+            padding: 12px 18px;
+            border-radius: 12px;
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            background: rgba(12, 14, 24, 0.96);
+            color: #fff;
+            font-size: 13px;
+            line-height: 1.45;
+            text-align: center;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+        }
+
+        body.mdj-event-builder-on .package-summary-bar {
+            display: none !important;
         }
     </style>
     <!-- Rentals: barra social por encima del overlay de modales (no ocultarla). Checkout por encima del resto de modales. -->
@@ -730,22 +1600,45 @@ Riesgo: romper carga del catálogo.
             flex-direction: column;
             min-height: 300px;
             box-sizing: border-box;
+            padding-top: 20px !important;
+            cursor: pointer;
             /* Contenedores: panel sólido; no “vidrio” que muestre el hero fijo detrás */
             background: rgba(10, 12, 22, 0.94) !important;
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
-            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            border: 1px solid rgba(212, 175, 55, 0.42) !important;
             box-shadow: 0 10px 36px rgba(0, 0, 0, 0.5);
+            transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease, background 220ms ease;
         }
 
-        #rentals-services-grid>.tile.glass-card:hover {
-            background: rgba(12, 14, 26, 0.97) !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
+        @media (hover: hover) and (pointer: fine) {
+            #rentals-services-grid>.tile.glass-card:hover {
+                transform: translateY(-5px) !important;
+                background: rgba(14, 16, 28, 0.98) !important;
+                border-color: rgba(212, 175, 55, 0.92) !important;
+                box-shadow:
+                    0 0 0 1px rgba(212, 175, 55, 0.32),
+                    0 14px 42px rgba(0, 0, 0, 0.55),
+                    0 0 26px rgba(212, 175, 55, 0.2) !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
         }
 
         #rentals-services-grid>.tile.glass-card>.btn.primary.full {
             margin-top: auto !important;
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            color: var(--gold) !important;
+            outline: none !important;
+        }
+
+        #rentals-services-grid>.tile.glass-card:hover>.btn.primary.full {
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
         }
 
         /* Hover ADN: escala desde la base (crece hacia arriba; la línea inferior no se mueve) */
@@ -926,6 +1819,10 @@ Riesgo: romper carga del catálogo.
             <span aria-hidden="true">🛒</span>
             <span id="header-cart-count" class="header-cart-count" hidden></span>
           </a>
+          <button type="button" id="mdj-eb-header-cart-open" class="header-cart-btn mdj-eb-header-cart-open" title="Event cart" aria-label="Open event cart">
+            <span aria-hidden="true">🛒</span>
+            <span id="mdj-eb-header-count" class="header-cart-count" hidden></span>
+          </button>
         </div>
         <div class="header-search-wrap">
           <input type="search" id="header-smart-search" class="header-smart-search"
@@ -1118,19 +2015,20 @@ Riesgo: romper carga del catálogo.
             <h2 class="section-title"
                 style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 32px; margin-bottom: 40px;"
                 data-i18n="rentals-gallery-title">Galería de Eventos</h2>
-            <div class="grid3" style="gap: 20px;">
-                <div class="glass-card" style="padding: 0; overflow: hidden; border-radius: 15px;">
-                    <img src="./assets/luxury_wedding_blurred_bg.png" alt="Gallery 1"
-                        style="width: 100%; height: 250px; object-fit: cover;">
+            <div class="rentals-gallery-shell">
+                <button type="button" class="rentals-gallery-nav rentals-gallery-nav--prev" id="rentals-gallery-prev"
+                    aria-label="Previous gallery photo">‹</button>
+                <div class="rentals-gallery-viewport">
+                    <div id="rentals-gallery-track"
+                        class="rentals-gallery-track"
+                        data-mdj-ui-tick-scroll
+                        role="region"
+                        tabindex="0"
+                        aria-label="Event gallery">
+                    </div>
                 </div>
-                <div class="glass-card" style="padding: 0; overflow: hidden; border-radius: 15px;">
-                    <img src="./assets/luxury_miami_wedding_hero_v2.png" alt="Gallery 2"
-                        style="width: 100%; height: 250px; object-fit: cover;">
-                </div>
-                <div class="glass-card" style="padding: 0; overflow: hidden; border-radius: 15px;">
-                    <img src="./assets/home_hero_luxury_vibe.png" alt="Gallery 3"
-                        style="width: 100%; height: 250px; object-fit: cover;">
-                </div>
+                <button type="button" class="rentals-gallery-nav rentals-gallery-nav--next" id="rentals-gallery-next"
+                    aria-label="Next gallery photo">›</button>
             </div>
         </section>
     </main>
@@ -1258,6 +2156,15 @@ Riesgo: romper carga del catálogo.
 
             // Único punto de entrada para acciones de usuario
             document.addEventListener('click', async (e) => {
+                const serviceCard = e.target.closest('#rentals-services-grid > .tile.glass-card');
+                if (serviceCard && !e.target.closest('a, button, [data-action]')) {
+                    const cta = serviceCard.querySelector('.btn[data-action]');
+                    if (cta) {
+                        e.preventDefault();
+                        cta.click();
+                        return;
+                    }
+                }
                 const btn = e.target.closest('[data-action]');
                 if (!btn) return;
 
@@ -1311,10 +2218,257 @@ Riesgo: romper carga del catálogo.
         });
 
     </script>
+    <script>
+        /* Galería + carruseles rentals con data-mdj-ui-tick-scroll (trinquete TikTok). */
+        window.MDJ_ENABLE_UI_TICK_AUDIO = true;
+    </script>
     <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            var MANIFEST_URL = './assets/eventos-venues-patrocinadores/gallery-manifest.json';
+            var GAL_BASE = './assets/eventos-venues-patrocinadores/galeria/';
+            var CLONE_CLASS = 'mdj-rentals-gallery-clone';
+
+            function withProgrammaticScroll(el, fn) {
+                el.dataset.mdjTickMute = '1';
+                el.dataset.mdjSnapLock = '1';
+                fn();
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                        delete el.dataset.mdjTickMute;
+                        delete el.dataset.mdjSnapLock;
+                    });
+                });
+            }
+
+            function mdjRentalsCarouselCardSelector(track) {
+                if (track.id === 'rentals-gallery-track') return '.rentals-gallery-slide';
+                return '.talent-cat-card, a.talent-cat-card';
+            }
+
+            function mdjRentalsSnapToNearestCard(track, cardSelector) {
+                if (!track || track.dataset.mdjSnapLock === '1' || track.dataset.mdjTickMute === '1') return;
+                var cards = track.querySelectorAll(cardSelector);
+                if (!cards.length) return;
+                var sl = track.scrollLeft;
+                var best = null;
+                var bestDist = Infinity;
+                var i;
+                for (i = 0; i < cards.length; i++) {
+                    var d = Math.abs(cards[i].offsetLeft - sl);
+                    if (d < bestDist) {
+                        bestDist = d;
+                        best = cards[i];
+                    }
+                }
+                if (!best || bestDist < 5) return;
+                track.dataset.mdjSnapLock = '1';
+                track.dataset.mdjTickMute = '1';
+                track.scrollTo({ left: best.offsetLeft, behavior: 'auto' });
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                        delete track.dataset.mdjSnapLock;
+                        delete track.dataset.mdjTickMute;
+                    });
+                });
+            }
+
+            function mdjRentalsBindMagneticSnap(track, cardSelector) {
+                if (!track || track.dataset.mdjMagneticSnap === '1') return;
+                track.dataset.mdjMagneticSnap = '1';
+                var debounceT = null;
+                function onEnd() {
+                    if (debounceT) {
+                        clearTimeout(debounceT);
+                        debounceT = null;
+                    }
+                    mdjRentalsSnapToNearestCard(track, cardSelector);
+                }
+                track.addEventListener('scrollend', onEnd, { passive: true });
+                track.addEventListener('scroll', function () {
+                    if (track.dataset.mdjSnapLock === '1' || track.dataset.mdjTickMute === '1') return;
+                    if (debounceT) clearTimeout(debounceT);
+                    debounceT = setTimeout(onEnd, 140);
+                }, { passive: true });
+            }
+
+            function bindAllMagneticSnaps() {
+                document.querySelectorAll('[data-mdj-ui-tick-scroll]').forEach(function (track) {
+                    if (track.closest('#rental-dynamic-modal')) return;
+                    mdjRentalsBindMagneticSnap(track, mdjRentalsCarouselCardSelector(track));
+                });
+            }
+
+            function buildSlide(file, alt) {
+                var slide = document.createElement('div');
+                slide.className = 'rentals-gallery-slide hero-glass-card glass-card';
+                var img = document.createElement('img');
+                img.src = GAL_BASE + file;
+                img.alt = alt || '';
+                img.loading = 'lazy';
+                img.decoding = 'async';
+                slide.appendChild(img);
+                return slide;
+            }
+
+            function cloneSlide(el) {
+                var c = el.cloneNode(true);
+                c.classList.add(CLONE_CLASS);
+                c.setAttribute('aria-hidden', 'true');
+                c.setAttribute('tabindex', '-1');
+                return c;
+            }
+
+            function applyInfiniteCenter(track) {
+                var originals = Array.prototype.filter.call(track.children, function (el) {
+                    return el.classList && el.classList.contains('rentals-gallery-slide') &&
+                        !el.classList.contains(CLONE_CLASS);
+                });
+                var n = originals.length;
+                if (n < 2) {
+                    track.scrollLeft = 0;
+                    return;
+                }
+                var firstO = originals[0];
+                var lastO = originals[n - 1];
+                var sw = Math.round(lastO.offsetLeft + lastO.offsetWidth - firstO.offsetLeft);
+                if (!sw || sw < 10) {
+                    var tri = Math.round(track.scrollWidth / 3);
+                    if (tri > 10) sw = tri;
+                }
+                if (!sw || sw < 10) return;
+                track._mdjGalleryInfiniteWidth = sw;
+                withProgrammaticScroll(track, function () {
+                    track.scrollLeft = sw;
+                });
+            }
+
+            function mountInfinite(track) {
+                if (!track || track.dataset.mdjGalleryInfinite === '1') return;
+
+                var originals = Array.prototype.filter.call(track.children, function (el) {
+                    return el.classList && el.classList.contains('rentals-gallery-slide') &&
+                        !el.classList.contains(CLONE_CLASS);
+                });
+                if (originals.length < 2) return;
+
+                var fragBefore = document.createDocumentFragment();
+                originals.forEach(function (el) { fragBefore.appendChild(cloneSlide(el)); });
+                track.insertBefore(fragBefore, track.firstChild);
+                originals.forEach(function (el) { track.appendChild(cloneSlide(el)); });
+
+                track.classList.add('mdj-rentals-gallery-infinite');
+                track.dataset.mdjGalleryInfinite = '1';
+
+                var jumping = false;
+                track._mdjGalleryInfiniteScroll = function () {
+                    if (jumping) return;
+                    var sw = track._mdjGalleryInfiniteWidth;
+                    if (!sw) return;
+                    var max = track.scrollWidth - track.clientWidth;
+                    if (max <= 0) return;
+                    var buf = 8;
+                    if (track.scrollLeft <= buf) {
+                        jumping = true;
+                        withProgrammaticScroll(track, function () { track.scrollLeft += sw; });
+                        requestAnimationFrame(function () { jumping = false; });
+                    } else if (track.scrollLeft >= max - buf) {
+                        jumping = true;
+                        withProgrammaticScroll(track, function () { track.scrollLeft -= sw; });
+                        requestAnimationFrame(function () { jumping = false; });
+                    }
+                };
+                track.addEventListener('scroll', track._mdjGalleryInfiniteScroll, { passive: true });
+
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                        applyInfiniteCenter(track);
+                    });
+                });
+            }
+
+            function bindGalleryNav() {
+                var track = document.getElementById('rentals-gallery-track');
+                var prev = document.getElementById('rentals-gallery-prev');
+                var next = document.getElementById('rentals-gallery-next');
+                if (!track || !prev || !next) return;
+
+                function scrollByDir(dir) {
+                    var slide = track.querySelector('.rentals-gallery-slide:not(.' + CLONE_CLASS + ')');
+                    var gap = parseFloat(getComputedStyle(track).gap);
+                    if (isNaN(gap)) gap = 20;
+                    var step = slide ? slide.offsetWidth + gap : 300;
+                    if (typeof window.mdjUiTickPlay === 'function') window.mdjUiTickPlay();
+                    track.scrollBy({ left: dir * step, behavior: 'auto' });
+                }
+
+                prev.addEventListener('click', function () { scrollByDir(-1); });
+                next.addEventListener('click', function () { scrollByDir(1); });
+            }
+
+            function bindTick(track) {
+                if (!track || track.dataset.mdjUiTickBound === '1') return;
+                if (typeof window.mdjUiTickBindScroll === 'function') {
+                    window.mdjUiTickBindScroll(track);
+                    track.dataset.mdjUiTickBound = '1';
+                }
+            }
+
+            function initRentalsGalleryFromManifest() {
+                var track = document.getElementById('rentals-gallery-track');
+                if (!track) return;
+
+                fetch(MANIFEST_URL, { cache: 'no-store' })
+                    .then(function (res) { return res.ok ? res.json() : null; })
+                    .catch(function () { return null; })
+                    .then(function (data) {
+                        var files = (data && Array.isArray(data.images)) ? data.images : [];
+                        files = files.filter(function (f) { return typeof f === 'string' && f.trim(); });
+                        if (!files.length) return;
+
+                        track.textContent = '';
+                        files.forEach(function (file, i) {
+                            track.appendChild(buildSlide(file.trim(), 'Gallery ' + (i + 1)));
+                        });
+
+                        mountInfinite(track);
+                        bindTick(track);
+
+                        window.addEventListener('resize', function () {
+                            clearTimeout(track._mdjGalleryResizeT);
+                            track._mdjGalleryResizeT = setTimeout(function () {
+                                applyInfiniteCenter(track);
+                            }, 120);
+                        }, { passive: true });
+                    });
+            }
+
+            bindGalleryNav();
+
+            function bootRentalsGalleryAndSnap() {
+                bindAllMagneticSnaps();
+                initRentalsGalleryFromManifest();
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', bootRentalsGalleryAndSnap);
+            } else {
+                bootRentalsGalleryAndSnap();
+            }
+        })();
+    </script>
     <script src="./data/rentalsData.js?v=20260414-rental-mp4-under90mb"></script>
     <script src="./subscription.js?v=20260422-find-dj-rank"></script>
     <script src="./js/artists.js?v=20260514-artists-hub-cleanup"></script>
+    <!-- EVENT BUILDER — flag + scripts (rentals hub + drawer) -->
+    <script>
+        window.MDJ_EVENT_BUILDER_V1 = true;
+    </script>
+    <script src="./js/mdj-event-builder-adapter.js?v=20260514-eb-1a"></script>
+    <script src="./js/mdj-event-builder.js?v=20260514-eb-drawer-1a"></script>
+    <script src="./js/mdj-event-builder-rentals-bridge.js?v=20260514-eb-1b1"></script>
     <script src="./js/rentals.js?v=20260514-strip-public-dj-hub"></script>
     <!-- ── MC MODAL ── -->
     <div id="mc-modal" class="modal-overlay modal-hidden">
@@ -2207,6 +3361,124 @@ Riesgo: romper carga del catálogo.
                 <!-- dynamically injected by rentals.js renderRentalCatalog(categoryId) -->
             </div>
         </div>
+    </div>
+
+    <!-- EVENT BUILDER — lateral drawer 1A (local); does not replace package-summary-bar -->
+    <div id="mdj-event-builder-root" hidden aria-hidden="true">
+        <button type="button" id="mdj-eb-fab" class="mdj-eb-fab" aria-label="Open event cart">
+            <span class="mdj-eb-fab__label">My Cart</span>
+            <span id="mdj-eb-fab-count" class="mdj-eb-fab__count" hidden>0</span>
+        </button>
+        <div class="mdj-eb-overlay" id="mdj-eb-overlay" hidden></div>
+        <aside id="mdj-eb-drawer" class="mdj-eb-drawer mdj-eb-panel" role="dialog" aria-labelledby="mdj-eb-title" hidden>
+            <nav class="mdj-eb-cart-topbar" aria-label="Navegación del sitio (vista carrito)">
+                <a href="./index.html" data-mdj-nav="home" data-i18n="nav-home">Home</a>
+                <a href="./rentals.html" data-mdj-nav="services" data-i18n="nav-services">Services</a>
+                <a href="./index.html#experience" data-mdj-nav="venues" data-i18n="nav-rentals">Events</a>
+                <a href="./shop.html" data-mdj-nav="shop" data-i18n="nav-shop">Shop</a>
+                <a href="./client-portal.html" data-mdj-nav="mi-portal" data-i18n="header-mi-portal">MY PORTAL</a>
+                <a href="./jobs.html" data-mdj-nav="jobs" data-i18n="nav-jobs">Jobs</a>
+                <a href="./index.html#contact" data-mdj-nav="contact" data-i18n="nav-contact">Contact</a>
+                <a href="./account-profile.html" data-mdj-nav="config" data-i18n="nav-config">⚙️ CONFIG</a>
+            </nav>
+            <header class="mdj-eb-drawer__head">
+                <div class="mdj-eb-drawer__head-main">
+                    <h2 id="mdj-eb-title">Event Cart</h2>
+                    <div class="mdj-eb-context-bar" role="group" aria-label="Fecha y evento">
+                        <label class="mdj-eb-context-bar__field">
+                            <span class="mdj-eb-context-bar__hint">Día</span>
+                            <select class="mdj-eb-context-bar__select mdj-eb-context-bar__select--day" aria-label="Día" autocomplete="off">
+                                <option value="" selected disabled>Día</option>
+                                <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                            <option value="13">13</option>
+                            <option value="14">14</option>
+                            <option value="15">15</option>
+                            <option value="16">16</option>
+                            <option value="17">17</option>
+                            <option value="18">18</option>
+                            <option value="19">19</option>
+                            <option value="20">20</option>
+                            <option value="21">21</option>
+                            <option value="22">22</option>
+                            <option value="23">23</option>
+                            <option value="24">24</option>
+                            <option value="25">25</option>
+                            <option value="26">26</option>
+                            <option value="27">27</option>
+                            <option value="28">28</option>
+                            <option value="29">29</option>
+                            <option value="30">30</option>
+                            <option value="31">31</option>
+                            </select>
+                        </label>
+                        <label class="mdj-eb-context-bar__field">
+                            <span class="mdj-eb-context-bar__hint">Mes</span>
+                            <select class="mdj-eb-context-bar__select mdj-eb-context-bar__select--month" aria-label="Mes" autocomplete="off">
+                                <option value="" selected disabled>Mes</option>
+                                <option value="1">1 — Ene</option>
+                            <option value="2">2 — Feb</option>
+                            <option value="3">3 — Mar</option>
+                            <option value="4">4 — Abr</option>
+                            <option value="5">5 — May</option>
+                            <option value="6">6 — Jun</option>
+                            <option value="7">7 — Jul</option>
+                            <option value="8">8 — Ago</option>
+                            <option value="9">9 — Sep</option>
+                            <option value="10">10 — Oct</option>
+                            <option value="11">11 — Nov</option>
+                            <option value="12">12 — Dic</option>
+                            </select>
+                        </label>
+                        <label class="mdj-eb-context-bar__field">
+                            <span class="mdj-eb-context-bar__hint">Año</span>
+                            <select class="mdj-eb-context-bar__select mdj-eb-context-bar__select--year" aria-label="Año" autocomplete="off">
+                                <option value="" selected disabled>Año</option>
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                                <option value="2028">2028</option>
+                            </select>
+                        </label>
+                        <label class="mdj-eb-context-bar__field mdj-eb-context-bar__field--assign">
+                            <span class="mdj-eb-context-bar__hint">Asignar a evento</span>
+                            <select class="mdj-eb-context-bar__select mdj-eb-context-bar__select--assign" aria-label="Asignar a evento" autocomplete="off">
+                                <option value="" selected disabled>Asignar</option>
+                                <option value="mock-wedding">Wedding — 2026-09-22</option>
+                                <option value="mock-afterparty">After-Party — 2026-09-25</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                <button type="button" id="mdj-eb-close" class="mdj-eb-close" aria-label="Close">&times;</button>
+            </header>
+            <div class="mdj-eb-panel__body">
+                <div class="mdj-eb-panel__main">
+                    <div id="mdj-eb-lines" class="mdj-eb-lines"></div>
+                </div>
+                <aside class="mdj-eb-panel__aside" aria-label="Order summary">
+                    <div class="mdj-eb-drawer__foot">
+                        <div class="mdj-eb-totals">
+                            <div class="mdj-eb-totals__row"><span>Subtotal</span><span id="mdj-eb-subtotal">$0.00</span></div>
+                            <div class="mdj-eb-totals__row"><span>Sales tax (7%)</span><span id="mdj-eb-tax">$0.00</span></div>
+                            <div class="mdj-eb-totals__row mdj-eb-totals__row--total"><span>Total</span><span id="mdj-eb-total">$0.00</span></div>
+                        </div>
+                        <button type="button" id="mdj-eb-cta" class="mdj-eb-cta">Add to My Event</button>
+                    </div>
+                </aside>
+            </div>
+        </aside>
+        <div id="mdj-eb-toast" class="mdj-eb-toast" hidden role="status"></div>
     </div>
 
     <!-- ── DYNAMIC PACKAGE SUMMARY BAR (Phase 1 UI Concept) ── -->

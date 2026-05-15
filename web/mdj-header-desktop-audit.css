@@ -63,55 +63,32 @@
   flex-shrink: 0;
 }
 
-/* ── Desktop ≥1200px: air for 27" without touching <1200px flex math ── */
+/* ── Desktop ≥1200px: air for 27" — solo cabeceras sin mdj-header-unified (unificado: eje fijo 1001+ en header-unified.css). */
 @media (min-width: 1200px) {
-  #mainHeader .header-actions {
+  #mainHeader:not(.mdj-header-unified) .header-actions {
     gap: 22px !important;
   }
 
-  /* Breathing between language and status pills / badges */
-  #mainHeader .lang-switcher {
+  #mainHeader:not(.mdj-header-unified) .lang-switcher {
     margin-right: 10px;
   }
 
-  #mainHeader .header-djpro-badge,
-  #mainHeader #header-client-loyalty-indicator {
+  #mainHeader:not(.mdj-header-unified) .header-djpro-badge,
+  #mainHeader:not(.mdj-header-unified) #header-client-loyalty-indicator {
     margin-left: 4px;
   }
 
-  /* Search: wider “Google bar” (≥1200px). Margen derecho solo en cabeceras sin mdj-header-unified */
-  #mainHeader .header-search-wrap {
+  #mainHeader:not(.mdj-header-unified) .header-search-wrap {
     flex: 2 1 420px !important;
     min-width: min(100%, 320px) !important;
     max-width: min(720px, 52vw) !important;
-  }
-
-  #mainHeader:not(.mdj-header-unified) .header-search-wrap {
     margin-right: 28px !important;
   }
 
-  #mainHeader .header-avatar-cart-row {
+  #mainHeader:not(.mdj-header-unified) .header-avatar-cart-row {
     margin-left: 8px;
     gap: 16px !important;
   }
-
-  /* Cabecera unificada: sin margen extra a la derecha del buscador (píldora al borde) */
-  #mainHeader.mdj-header-unified .header-avatar-cart-row {
-    margin-left: 0 !important;
-  }
-
-  #mainHeader.mdj-header-unified #header-auth-zone {
-    margin-left: auto !important;
-  }
-
-  #mainHeader.mdj-header-unified .header-search-wrap {
-    margin-right: 0 !important;
-    flex: 0 1 min(590px, 46vw) !important;
-    min-width: min(100%, 200px) !important;
-    max-width: min(650px, 52vw) !important;
-  }
-
-  /* Altura de fila fija en styles.css (#mainNav mdj-mainnav-flex); min-height extra aquí duplicaba salto al cargar */
 }
 
 /* Invitado: sin transición ni lift en el anillo (cabecera unificada = misma sensación entre páginas). */

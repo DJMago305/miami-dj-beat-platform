@@ -7155,3 +7155,133 @@ body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
   height: auto !important;
 }
 
+/* ══ HOME — Hero account card (scoped; overrides index.html inline via #id) ══ */
+/*
+ * styles.css .hero global usa margin-top negativo (–header–nav) para “full bleed”
+ * bajo cabeceras legacy; en index el <body> ya reserva --mdj-index-header-total.
+ * Sin anular margin-top aquí, el hero sube y la tarjeta / títulos quedan bajo #mainNav.
+ */
+body.page-home #home-hero.hero {
+  margin-top: 0 !important;
+  align-items: flex-start;
+  box-sizing: border-box;
+  padding-top: clamp(28px, 5vmin, 72px);
+}
+
+body.page-home #home-hero .hero-grid {
+  margin-top: clamp(8px, 2vmin, 28px);
+}
+
+@media (max-height: 900px) and (min-width: 969px) {
+  body.page-home #home-hero.hero {
+    padding-top: clamp(40px, 8vmin, 96px);
+  }
+}
+
+#home-hero .hero-card {
+  padding: 38px 36px 40px !important;
+  box-sizing: border-box !important;
+}
+
+#home-hero .hero-card .card-title {
+  font-size: clamp(26px, 2.4vw, 34px) !important;
+  line-height: 1.2 !important;
+  margin-bottom: 14px !important;
+}
+
+#home-hero .hero-card [data-i18n='hero-reg-sub'] {
+  font-size: clamp(14px, 1.35vw, 17px) !important;
+  line-height: 1.5 !important;
+  opacity: 0.92 !important;
+  margin-bottom: 22px !important;
+}
+
+#hero-registration-form {
+  display: grid !important;
+  gap: 18px !important;
+  box-sizing: border-box !important;
+}
+
+#hero-registration-form > div:not(#hero-reg-status) {
+  margin-bottom: 0 !important;
+}
+
+#hero-registration-form span[data-i18n^='label-'] {
+  font-size: 13px !important;
+  letter-spacing: 0.06em !important;
+  margin-bottom: 8px !important;
+  line-height: 1.35 !important;
+}
+
+#hero-registration-form input[type='text'],
+#hero-registration-form input[type='email'],
+#hero-registration-form input[type='password'] {
+  font-size: 16px !important;
+  line-height: 1.35 !important;
+  min-height: 48px !important;
+  padding: 14px 16px !important;
+  box-sizing: border-box !important;
+}
+
+#hero-registration-form input[type='password'] {
+  padding-right: 44px !important;
+}
+
+#hero-reg-btn {
+  margin-top: 4px !important;
+  min-height: 52px !important;
+  font-size: 17px !important;
+  padding: 16px 22px !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(197, 160, 89, 0.35) !important;
+  box-sizing: border-box !important;
+}
+
+#hero-reg-btn:hover {
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.42), 0 0 28px rgba(197, 160, 89, 0.45) !important;
+}
+
+#hero-reg-btn:disabled {
+  opacity: 0.75 !important;
+  cursor: wait !important;
+}
+
+#hero-registration-form .fineprint {
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+  opacity: 0.82 !important;
+  margin-top: 18px !important;
+}
+
+#hero-reg-status {
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+}
+
+#home-hero .hero-pwd-toggle {
+  filter: brightness(1.2) !important;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.55) !important;
+  border-radius: 8px !important;
+  transition: filter 0.15s ease, background 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+#home-hero .hero-pwd-toggle:hover {
+  filter: brightness(1.45) !important;
+  background: rgba(197, 160, 89, 0.14) !important;
+}
+
+#home-hero .hero-pwd-toggle:focus-visible {
+  filter: brightness(1.45) !important;
+  outline: 2px solid rgba(197, 160, 89, 0.85) !important;
+  outline-offset: 2px !important;
+}
+
+@media (max-width: 640px) {
+  #home-hero .hero-card {
+    padding: 28px 20px 32px !important;
+  }
+
+  #hero-registration-form {
+    gap: 16px !important;
+  }
+}
+

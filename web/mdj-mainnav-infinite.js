@@ -391,16 +391,13 @@
       var cap1 = Math.min(natural - 16, Math.floor(vw * 0.31), 500);
       cap1 = Math.max(228, cap1);
       nav.style.maxWidth = cap1 + 'px';
-      void nav.offsetWidth;
       if (nav.scrollWidth > nav.clientWidth + 1) return;
       var cap2 = Math.min(natural - 40, Math.floor(vw * 0.26), 380);
       cap2 = Math.max(200, cap2);
       nav.style.maxWidth = cap2 + 'px';
-      void nav.offsetWidth;
       if (nav.scrollWidth > nav.clientWidth + 1) return;
       if (natural > 300) {
         nav.style.maxWidth = Math.max(196, Math.min(natural - 56, 300)) + 'px';
-        void nav.offsetWidth;
       }
     } catch (e) {
       void e;
@@ -452,13 +449,12 @@
     teardownNav(nav);
     if (!isDesktop()) return;
     if (getComputedStyle(nav).display === 'none') return;
+    /* Doble rAF: leer geometría tras el layout del frame actual sin setTimeout(0) extra. */
     requestAnimationFrame(function () {
-      var n2 = getNav();
-      if (n2) {
-        setTimeout(function () {
-          if (n2) mountIfOverflow(n2);
-        }, 0);
-      }
+      requestAnimationFrame(function () {
+        var n2 = getNav();
+        if (n2) mountIfOverflow(n2);
+      });
     });
   };
 
