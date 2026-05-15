@@ -1493,7 +1493,7 @@
       var lk = document.createElement('link');
       lk.id = 'mdj-event-cart-css';
       lk.rel = 'stylesheet';
-      lk.href = './mdj-event-cart.css?v=20260515-eb-global-5';
+      lk.href = './mdj-event-cart.css?v=20260515-eb-hide-fab-1';
       (document.head || document.documentElement).appendChild(lk);
     }
 
