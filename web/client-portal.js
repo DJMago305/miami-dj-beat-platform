@@ -224,6 +224,8 @@ var PORTAL_I18N_FB = {
         'portal-no-events-body':
             'When you book with us, your timeline and payments will show up here, in one place, with the same care as always. Until then, take a look at services, rentals, or the shop — we are here for you.',
         'portal-no-events-cta': 'Explore services & booking',
+        'portal-cart-empty-services': 'No services added to this event yet.',
+        'portal-event-datetime-pending': 'Date / time pending',
         'portal-events-title': 'My events',
         'portal-events-upcoming': 'Upcoming',
         'portal-events-past': 'Past & history',
@@ -318,6 +320,8 @@ var PORTAL_I18N_FB = {
         'portal-no-events-body':
             'Cuando reserves con nosotros, en familia, tu calendario y tus pagos quedarán claros en este panel. Mientras tanto, pasea por servicios, rentas o el shop: aquí te esperamos.',
         'portal-no-events-cta': 'Ver servicios y reservas',
+        'portal-cart-empty-services': 'Aún no hay servicios en el paquete de este evento.',
+        'portal-event-datetime-pending': 'Fecha y hora pendientes',
         'portal-events-title': 'Mis eventos',
         'portal-events-upcoming': 'Próximos',
         'portal-events-past': 'Pasados e historial',
@@ -655,6 +659,15 @@ function mdjPortalStaffModeRequested(params) {
     return m === 'manager' || m === 'staff' || m === 'supervision';
 }
 
+/** Demo con datos ficticios (solo manager): requiere ?demo=1 */
+function mdjPortalDemoManagerRequested() {
+    try {
+        return new URLSearchParams(window.location.search).get('demo') === '1';
+    } catch (eD) {
+        return false;
+    }
+}
+
 /** Solo columnas que el hub ya lee vía RLS; sin gate_code / assigned_dj / deposit_required_usd. */
 var MDJ_LEADS_HUB_COLUMNS =
     'id,email,client_user_id,event_type,event_date,status,created_at,payment_status,balance_paid,total_amount';
@@ -675,9 +688,6 @@ async function portalFetchLeadRowById(db, leadId) {
             var res = await db.from('leads').select(cols).eq('id', leadId).maybeSingle();
             if (res.data) {
                 merged = merged ? Object.assign(merged, res.data) : res.data;
-                if (t === 0 && merged.payment_status != null) {
-                    return { data: merged, error: null };
-                }
                 if (t === tiers.length - 1) {
                     return { data: merged, error: null };
                 }
@@ -1322,21 +1332,58 @@ const PortalApp = {
                           total_amount: 0
                       };
             } else {
+                var demoMgr = mdjPortalDemoManagerRequested();
                 const saved = localStorage.getItem(`lead_${leadId}`);
-                leadData = saved ? JSON.parse(saved) : {
-                    id: leadId,
-                    email: "client@example.com",
-                    event_type: "Evento Corporativo",
-                    event_date: "2026-12-31",
-                    location: "Miami Beach Convention Center",
-                    contact_person: "Gerardo V.",
-                    gate_code: "1234#",
-                    total_amount: 0,
-                    balance_paid: 0,
-                    payment_status: "UNPAID",
-                    status: "CONFIRMED",
-                    created_at: new Date(Date.now() - 72 * 3600000).toISOString()
-                };
+                if (saved) {
+                    try {
+                        leadData = JSON.parse(saved);
+                    } catch (eParse) {
+                        leadData = null;
+                    }
+                }
+                if (!leadData && demoMgr) {
+                    leadData = {
+                        id: leadId,
+                        email: 'client@example.com',
+                        event_type: 'Evento Corporativo',
+                        event_date: '2026-12-31',
+                        location: 'Miami Beach Convention Center',
+                        contact_person: 'Gerardo V.',
+                        gate_code: '1234#',
+                        total_amount: 0,
+                        balance_paid: 0,
+                        payment_status: 'UNPAID',
+                        status: 'CONFIRMED',
+                        created_at: new Date(Date.now() - 72 * 3600000).toISOString()
+                    };
+                }
+                if (!leadData) {
+                    leadData = {
+                        id: leadId,
+                        email: '',
+                        event_type: '',
+                        event_date: '',
+                        location: '',
+                        contact_person: '',
+                        gate_code: '',
+                        total_amount: 0,
+                        balance_paid: 0,
+                        payment_status: 'UNPAID',
+                        status: 'NEW',
+                        notes: null
+                    };
+                }
+            }
+        }
+
+        if (db && leadData && leadId && (leadData.notes === undefined || leadData.notes === null)) {
+            try {
+                var noteOnly = await db.from('leads').select('notes').eq('id', leadId).maybeSingle();
+                if (noteOnly && !noteOnly.error && noteOnly.data && Object.prototype.hasOwnProperty.call(noteOnly.data, 'notes')) {
+                    leadData.notes = noteOnly.data.notes;
+                }
+            } catch (eNotes) {
+                void eNotes;
             }
         }
 
@@ -1458,17 +1505,18 @@ const PortalApp = {
         if (this.currentLead.notes) {
             try {
                 const parsed = JSON.parse(this.currentLead.notes);
-                items = parsed.selected_services || [
-                    { name: "DJ Performance (6 Hours)", price: 800, qty: 1 },
-                    { name: "Sistema de Audio RCF Pro", price: 400, qty: 1 }
-                ];
-                meetings = parsed.meetings || [
-                    { title: "Sita Telefónica", date: "Finalizada", status: "past" },
-                    { title: "Visita Técnica Venue", date: "Mañana - 2:00 PM", status: "upcoming", location: "Doral, FL" }
-                ];
+                if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                    items = Array.isArray(parsed.selected_services) ? parsed.selected_services : [];
+                    meetings = Array.isArray(parsed.meetings) ? parsed.meetings : [];
+                }
             } catch (e) {
-                items = [{ name: "DJ Performance (6 Hours)", price: 800, qty: 1 }];
-                meetings = [{ title: "Cita Inicial", date: "Pendiente", status: "upcoming" }];
+                try {
+                    console.warn('[portal] loadLeadItems: notes JSON invalid for lead', leadId, e);
+                } catch (eLog) {
+                    void eLog;
+                }
+                items = [];
+                meetings = [];
             }
         }
         this.items = items;
@@ -1550,7 +1598,32 @@ const PortalApp = {
         var logContact = document.getElementById('log-contact');
         var payDeadline = document.getElementById('pay-deadline');
         if (logLoc) logLoc.textContent = l.location || portalT('portal-log-contact-placeholder');
-        if (logDt) logDt.textContent = (l.event_date ? String(l.event_date) : '—') + ' - 7:00 PM';
+        if (logDt) {
+            var rawDt = l.event_date != null ? String(l.event_date).trim() : '';
+            if (!rawDt) {
+                logDt.textContent = portalT('portal-event-datetime-pending');
+            } else if (/^\d{4}-\d{2}-\d{2}$/.test(rawDt)) {
+                logDt.textContent = rawDt;
+            } else {
+                var evParse = new Date(rawDt);
+                if (!isNaN(evParse.getTime())) {
+                    var ymd = rawDt.length >= 10 ? rawDt.slice(0, 10) : rawDt;
+                    var hasClock =
+                        /T\d{2}:\d{2}/.test(rawDt) &&
+                        !/T00:00:00(\.0+)?(Z)?$/i.test(rawDt.replace(/\.\d+/, ''));
+                    var hh = evParse.getHours();
+                    var mm = evParse.getMinutes();
+                    var hasRealTime = hasClock || hh !== 0 || mm !== 0;
+                    if (hasRealTime) {
+                        logDt.textContent = evParse.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+                    } else {
+                        logDt.textContent = ymd;
+                    }
+                } else {
+                    logDt.textContent = rawDt;
+                }
+            }
+        }
         if (logGate) logGate.textContent = l.gate_code || 'A confirmar';
         var contactLine = l.contact_person && String(l.contact_person).trim()
             ? portalFirstNameOnly(String(l.contact_person).trim())
@@ -1765,9 +1838,18 @@ const PortalApp = {
 
     renderCart() {
         const container = document.getElementById('cart-container');
-        container.innerHTML = this.items.map((item, index) => {
-            const itemTotal = item.price * item.qty;
-            return `
+        if (!container) {
+            return;
+        }
+        if (!this.items.length) {
+            container.innerHTML =
+                '<p class="fineprint" style="margin:0;padding:12px 0;text-align:center;opacity:0.9;">' +
+                portalEscapeHtml(portalT('portal-cart-empty-services')) +
+                '</p>';
+        } else {
+            container.innerHTML = this.items.map((item, index) => {
+                const itemTotal = item.price * item.qty;
+                return `
                 <div class="cart-item">
                     <div>
                         <strong>${item.name}</strong><br>
@@ -1779,7 +1861,8 @@ const PortalApp = {
                     </div>
                 </div>
             `;
-        }).join('');
+            }).join('');
+        }
 
         if (this.isManager) {
             const addBtn = document.createElement('button');
