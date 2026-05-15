@@ -96,6 +96,11 @@
     max-width: min(var(--mdj-header-brand-slot), 100%) !important;
     /* Carril mínimo estable para fénix + wordmark (transform + scale); evita compactación visual. */
     min-width: clamp(300px, 34vw, 560px) !important;
+    /*
+     * scale() en .brand-letters-wrapper agranda el dibujo sin ampliar la caja en el flex:
+     * sin margen derecho, .header-actions arranca “debajo” del trazo y FREE/LOGIN rozan el wordmark.
+     */
+    margin-right: clamp(72px, 18vw, 280px) !important;
     justify-content: flex-start !important;
     align-items: center !important;
     overflow: visible !important;
