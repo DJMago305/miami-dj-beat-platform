@@ -1,0 +1,845 @@
+/* Event Cart — shared (non-rentals). Rentals keeps inline #rentals-event-builder. */
+body.mdj-eb-cart-open {
+    overflow: hidden;
+}
+
+/* Carrito a pantalla completa: el header real queda bajo overlay/drawer (no subir z-index del #mainHeader aquí). */
+
+body.mdj-event-builder-on #mdj-event-builder-root {
+    display: block;
+}
+
+#mdj-event-builder-root {
+    display: none;
+}
+
+#mdj-event-builder-root .mdj-eb-fab {
+    position: fixed;
+    left: clamp(12px, 2vw, 20px);
+    bottom: clamp(88px, 12vh, 120px);
+    z-index: 9400;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 2px solid rgba(212, 175, 55, 0.88);
+    background: rgba(10, 12, 22, 0.9);
+    color: rgba(212, 175, 55, 0.95);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 18px rgba(212, 175, 55, 0.22);
+}
+
+#mdj-event-builder-root .mdj-eb-fab__count {
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(212, 175, 55, 0.22);
+    font-size: 11px;
+    line-height: 20px;
+    text-align: center;
+}
+
+button#mdj-eb-header-cart-open.header-cart-btn {
+    margin-left: 10px;
+    border-color: rgba(72, 160, 210, 0.72);
+    color: rgba(170, 228, 255, 0.98);
+    box-shadow: inset 0 0 0 1px rgba(72, 160, 210, 0.22), 0 2px 12px rgba(0, 24, 48, 0.42);
+}
+
+button#mdj-eb-header-cart-open.header-cart-btn:hover {
+    background: rgba(72, 160, 210, 0.2);
+    border-color: rgba(130, 210, 255, 0.95);
+    box-shadow: 0 0 22px rgba(80, 180, 240, 0.5), 0 0 36px rgba(40, 140, 200, 0.28),
+        inset 0 0 18px rgba(72, 160, 210, 0.18);
+}
+
+button#mdj-eb-header-cart-open.header-cart-btn:focus-visible {
+    border-color: rgba(130, 220, 255, 0.95);
+    box-shadow: 0 0 20px rgba(90, 190, 255, 0.55);
+}
+
+@keyframes mdj-eb-event-cart-pulse {
+    0%,
+    100% {
+        box-shadow: 0 0 12px rgba(72, 160, 210, 0.35), inset 0 0 10px rgba(72, 160, 210, 0.12);
+        border-color: rgba(90, 170, 220, 0.75);
+    }
+
+    50% {
+        box-shadow: 0 0 24px rgba(100, 190, 255, 0.55), 0 0 36px rgba(60, 150, 210, 0.3),
+            inset 0 0 14px rgba(72, 160, 210, 0.22);
+        border-color: rgba(160, 220, 255, 0.95);
+    }
+}
+
+button#mdj-eb-header-cart-open.header-cart-btn.has-items {
+    background: rgba(72, 160, 210, 0.14);
+    border-color: rgba(100, 185, 235, 0.8);
+    box-shadow: 0 0 14px rgba(72, 160, 210, 0.38), inset 0 0 12px rgba(72, 160, 210, 0.14);
+    animation: mdj-eb-event-cart-pulse 2.1s ease-in-out infinite;
+}
+
+button#mdj-eb-header-cart-open.header-cart-btn.has-items:hover {
+    animation: none;
+    box-shadow: 0 0 26px rgba(100, 200, 255, 0.55), 0 0 44px rgba(60, 160, 220, 0.32),
+        inset 0 0 18px rgba(72, 160, 210, 0.22);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    button#mdj-eb-header-cart-open.header-cart-btn.has-items {
+        animation: none;
+    }
+}
+
+#mdj-eb-header-count.header-cart-count {
+    background: linear-gradient(180deg, #2a8cbc, #1a5a8a);
+    color: #fff;
+}
+
+/* Shop Cart oculto fuera de shop: reserva estricta 38px para que el flex no colapse antes del Event Cart. */
+#mainHeader.header.mdj-header-unified .header-actions a#header-cart-link.header-cart-btn[data-mdj-shop-cart-hidden='1'] {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    max-width: 38px !important;
+    max-height: 38px !important;
+    flex: 0 0 38px !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    box-sizing: border-box !important;
+}
+
+/*
+ * Misma ranura visual que Shop Cart (header-unified.css → a#header-cart-link):
+ * translateX(215px) + misma huella flex/tamaño. Fuera de shop el link está oculto
+ * (mdj-shared-header); el botón Event Cart ocupa el mismo carril sin offset extra.
+ */
+#mainHeader.header.mdj-header-unified .header-actions button#mdj-eb-header-cart-open.header-cart-btn {
+    transform: translateX(215px) !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    align-self: center !important;
+    box-sizing: border-box !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    max-width: 38px !important;
+    max-height: 38px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    position: relative !important;
+    font-size: 24px !important;
+    line-height: 1 !important;
+    aspect-ratio: 1 / 1 !important;
+}
+
+#mainHeader.header.mdj-header-unified .header-actions button#mdj-eb-header-cart-open.header-cart-btn.has-items {
+    transform: translateX(215px) !important;
+}
+
+#mdj-event-builder-root .mdj-eb-overlay[hidden],
+#mdj-event-builder-root .mdj-eb-drawer[hidden] {
+    display: none !important;
+}
+
+#mdj-event-builder-root .mdj-eb-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 11490;
+    background: rgba(4, 6, 14, 0.72);
+    backdrop-filter: blur(4px);
+}
+
+#mdj-event-builder-root .mdj-eb-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 11500;
+    width: 100%;
+    height: 100%;
+    min-height: 100dvh;
+    max-width: none;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    background: linear-gradient(165deg, rgba(14, 16, 28, 0.99), rgba(8, 10, 18, 0.995));
+    border-top: none;
+    box-shadow: none;
+}
+
+#mdj-event-builder-root .mdj-eb-drawer:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Event Cart topbar — escala fullscreen: más altura, aire lateral y separación (sin tocar #mainNav del sitio). */
+#mdj-event-builder-root .mdj-eb-cart-topbar {
+    flex-shrink: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    min-height: clamp(58px, 9vw, 68px);
+    padding: clamp(18px, 2.2vw, 22px) clamp(20px, 4vw, 48px);
+    border-bottom: 1px solid rgba(212, 175, 55, 0.22);
+    background: #000;
+    background-image: none;
+    box-shadow: none;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+#mdj-event-builder-root .mdj-eb-cart-topbar a {
+    display: inline;
+    padding: 6px 0.2em 8px;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: clamp(13px, 1vw, 16px);
+    line-height: 1.22;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: rgba(245, 236, 220, 0.85);
+    border: none;
+    border-radius: 0;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    white-space: nowrap;
+}
+
+#mdj-event-builder-root .mdj-eb-cart-topbar a:not(:last-child)::after {
+    content: '/';
+    display: inline;
+    margin: 0 clamp(0.55em, 1.1vw, 0.9em);
+    font-weight: 400;
+    font-size: clamp(13px, 1vw, 16px);
+    letter-spacing: 0;
+    text-transform: none;
+    color: rgba(200, 200, 200, 0.45);
+    pointer-events: none;
+}
+
+/* Alineado con #mainNav.mdj-mainnav-flex: Shop dorado; Services activo en rentals */
+#mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='shop'],
+#mdj-event-builder-root .mdj-eb-cart-topbar a[href*='shop.html'] {
+    color: rgba(224, 195, 130, 0.96);
+}
+
+#mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='services'] {
+    color: var(--gold, #c5a059);
+    border-bottom-color: var(--gold, #c5a059);
+}
+
+#mdj-event-builder-root .mdj-eb-cart-topbar a:hover {
+    color: rgba(255, 252, 245, 0.98);
+    border-bottom-color: transparent;
+    background: transparent;
+}
+
+#mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='services']:hover,
+#mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='shop']:hover {
+    color: rgba(255, 252, 245, 0.98);
+}
+
+#mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='services']:hover {
+    border-bottom-color: var(--gold, #c5a059);
+}
+
+#mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='shop']:hover {
+    color: rgba(240, 215, 150, 1);
+}
+
+@media (max-width: 640px) {
+    #mdj-event-builder-root .mdj-eb-cart-topbar {
+        justify-content: flex-start;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #mdj-event-builder-root .mdj-eb-cart-topbar a {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: baseline;
+    }
+
+    #mdj-event-builder-root .mdj-eb-cart-topbar a:not(:last-child)::after {
+        display: inline-flex;
+        align-items: center;
+    }
+}
+
+#mdj-event-builder-root .mdj-eb-panel__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 380px);
+    gap: 20px;
+    padding: 16px clamp(14px, 3vw, 28px) 28px;
+    max-width: 1280px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#mdj-event-builder-root .mdj-eb-panel__main {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 768px) {
+    #mdj-event-builder-root .mdj-eb-panel__body {
+        grid-template-columns: 1fr;
+    }
+}
+
+#mdj-event-builder-root .mdj-eb-drawer__head {
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px clamp(14px, 3vw, 28px) 14px;
+    max-width: 1280px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+#mdj-event-builder-root .mdj-eb-drawer__head h2 {
+    margin: 0;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: rgba(212, 175, 55, 0.95);
+}
+
+#mdj-event-builder-root .mdj-eb-drawer__head-main {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#mdj-event-builder-root .mdj-eb-context-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 8px 12px;
+}
+
+#mdj-event-builder-root .mdj-eb-context-bar__field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+#mdj-event-builder-root .mdj-eb-context-bar__field--assign {
+    flex: 1 1 200px;
+    min-width: min(100%, 220px);
+}
+
+#mdj-event-builder-root .mdj-eb-context-bar__hint {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.52);
+    line-height: 1.2;
+}
+
+#mdj-event-builder-root .mdj-eb-context-bar__select {
+    min-width: 0;
+    max-width: 100%;
+    min-height: 34px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(212, 175, 55, 0.38);
+    background: rgba(0, 0, 0, 0.42);
+    color: rgba(255, 255, 255, 0.94);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+#mdj-event-builder-root .mdj-eb-context-bar__select--day {
+    width: clamp(64px, 14vw, 80px);
+}
+
+#mdj-event-builder-root .mdj-eb-context-bar__select--month {
+    width: clamp(108px, 24vw, 132px);
+}
+
+#mdj-event-builder-root .mdj-eb-context-bar__select--year {
+    width: clamp(72px, 16vw, 90px);
+}
+
+#mdj-event-builder-root .mdj-eb-context-bar__select--assign {
+    width: 100%;
+}
+
+@media (min-width: 900px) {
+    #mdj-event-builder-root .mdj-eb-drawer__head-main {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        column-gap: 18px;
+        row-gap: 8px;
+    }
+
+    #mdj-event-builder-root .mdj-eb-context-bar {
+        flex: 1 1 auto;
+        justify-content: flex-end;
+        min-width: min(100%, 560px);
+    }
+
+    #mdj-event-builder-root .mdj-eb-context-bar__select--assign {
+        width: auto;
+        min-width: 220px;
+        max-width: min(100%, 340px);
+    }
+}
+
+#mdj-event-builder-root .mdj-eb-drawer__head > .mdj-eb-close {
+    margin-top: 4px;
+}
+
+#mdj-event-builder-root .mdj-eb-close {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+#mdj-event-builder-root .mdj-eb-lines {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 4px 0 8px;
+}
+
+#mdj-event-builder-root .mdj-eb-empty {
+    margin: 0;
+    opacity: 0.75;
+    font-size: 13px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+#mdj-event-builder-root .mdj-eb-empty code {
+    font-size: 12px;
+    display: block;
+    margin-top: 8px;
+    color: rgba(212, 175, 55, 0.85);
+}
+
+#mdj-event-builder-root .mdj-eb-line {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+#mdj-event-builder-root .mdj-eb-line:last-child {
+    border-bottom: none;
+}
+
+#mdj-event-builder-root .mdj-eb-line__row {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+}
+
+#mdj-event-builder-root .mdj-eb-line__thumb {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    display: block;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+#mdj-event-builder-root .mdj-eb-line__thumb--ph {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.18), rgba(255, 255, 255, 0.05));
+}
+
+#mdj-event-builder-root .mdj-eb-line__meta {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+#mdj-event-builder-root .mdj-eb-line__cat {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(212, 175, 55, 0.78);
+}
+
+#mdj-event-builder-root .mdj-eb-line__name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+}
+
+#mdj-event-builder-root .mdj-eb-line__qty {
+    opacity: 0.65;
+    font-weight: 500;
+    font-size: 0.92em;
+}
+
+#mdj-event-builder-root .mdj-eb-line__price {
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(212, 175, 55, 0.95);
+}
+
+#mdj-event-builder-root .mdj-eb-line__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+#mdj-event-builder-root .mdj-eb-line__replace,
+#mdj-event-builder-root .mdj-eb-line__remove {
+    border: none;
+    background: transparent;
+    color: rgba(212, 175, 55, 0.9);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0;
+    text-align: right;
+}
+
+#mdj-event-builder-root .mdj-eb-line__remove {
+    color: rgba(255, 130, 130, 0.92);
+}
+
+#mdj-event-builder-root .mdj-eb-line--dj-family .mdj-eb-line__dj-extra {
+    width: 100%;
+    min-width: 0;
+    margin-top: 10px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick {
+    width: 100%;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick__summary {
+    cursor: pointer;
+    list-style: none;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(212, 175, 55, 0.95);
+    user-select: none;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick__summary::-webkit-details-marker {
+    display: none;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick__summary::after {
+    content: '';
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: 8px;
+    vertical-align: middle;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid rgba(212, 175, 55, 0.75);
+    transition: transform 0.15s ease;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick[open] .mdj-eb-dj-pick__summary::after {
+    transform: rotate(180deg);
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick__panel {
+    margin-top: 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.38);
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table {
+    width: 100%;
+    min-width: 640px;
+    border-collapse: collapse;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__th,
+#mdj-event-builder-root .mdj-eb-dj-pick-table__td {
+    padding: 8px 10px;
+    border-right: 1px solid rgba(255, 255, 255, 0.07);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: left;
+    vertical-align: middle;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__th:last-child,
+#mdj-event-builder-root .mdj-eb-dj-pick-table__td:last-child {
+    border-right: none;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table thead .mdj-eb-dj-pick-table__th {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(212, 175, 55, 0.88);
+    background: rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table tbody tr:last-child .mdj-eb-dj-pick-table__td {
+    border-bottom: none;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__th--photo,
+#mdj-event-builder-root .mdj-eb-dj-pick-table__td--photo {
+    width: 52px;
+    text-align: center;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    object-fit: cover;
+    display: block;
+    margin: 0 auto;
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__td--stage {
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #fff;
+    white-space: nowrap;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__td--legal {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.62);
+    white-space: nowrap;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__stars {
+    color: rgba(212, 175, 55, 0.95);
+    letter-spacing: 1px;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__score {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 11px;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__td--rating {
+    white-space: nowrap;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__td--status {
+    font-size: 11px;
+    color: rgba(130, 220, 160, 0.95);
+    white-space: nowrap;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__link {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(212, 175, 55, 0.55);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__link:hover {
+    border-color: rgba(212, 175, 55, 0.95);
+    color: rgba(212, 175, 55, 0.98);
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__tr--selected .mdj-eb-dj-pick-table__td {
+    background: rgba(197, 160, 89, 0.08);
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__tr--selected .mdj-eb-dj-pick-table__td:first-child {
+    box-shadow: inset 3px 0 0 0 rgba(197, 160, 89, 0.85);
+}
+
+#mdj-event-builder-root .mdj-eb-line__dj-pick-chip {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(212, 175, 55, 0.95);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__select {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(212, 175, 55, 0.55);
+    background: linear-gradient(180deg, rgba(212, 175, 55, 0.35), rgba(160, 130, 40, 0.55));
+    color: #0a0a0c;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__select:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__select:not(:disabled) {
+    cursor: pointer;
+    opacity: 1;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__select:not(:disabled):hover {
+    border-color: rgba(232, 210, 150, 0.95);
+    box-shadow: 0 0 14px rgba(197, 160, 89, 0.35);
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__select:not(:disabled):focus-visible {
+    outline: 2px solid rgba(197, 160, 89, 0.85);
+    outline-offset: 2px;
+}
+
+#mdj-event-builder-root .mdj-eb-dj-pick-table__select--selected {
+    background: linear-gradient(180deg, rgba(232, 210, 150, 0.55), rgba(197, 160, 89, 0.75));
+    border-color: rgba(232, 210, 150, 0.95);
+}
+
+#mdj-event-builder-root .mdj-eb-panel__aside {
+    min-height: 0;
+}
+
+#mdj-event-builder-root .mdj-eb-drawer__foot {
+    padding: 16px 18px 22px;
+    border: 1px solid rgba(212, 175, 55, 0.22);
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.28);
+}
+
+@media (min-width: 769px) {
+    #mdj-event-builder-root .mdj-eb-panel__aside .mdj-eb-drawer__foot {
+        position: sticky;
+        top: 12px;
+    }
+}
+
+#mdj-event-builder-root .mdj-eb-totals {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+#mdj-event-builder-root .mdj-eb-totals__row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+#mdj-event-builder-root .mdj-eb-totals__row--total {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    padding-top: 6px;
+    margin-top: 4px;
+    border-top: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+#mdj-event-builder-root .mdj-eb-cta {
+    width: 100%;
+    padding: 14px 18px;
+    border-radius: 999px;
+    border: 2px solid rgba(212, 175, 55, 0.88);
+    background: rgba(212, 175, 55, 0.14);
+    color: rgba(212, 175, 55, 0.98);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+#mdj-event-builder-root .mdj-eb-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    z-index: 11560;
+    max-width: min(92vw, 420px);
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    background: rgba(12, 14, 24, 0.96);
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: center;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+
+body.mdj-event-builder-on .package-summary-bar {
+    display: none !important;
+}

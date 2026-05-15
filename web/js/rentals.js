@@ -1119,7 +1119,7 @@ window.renderDjHero = (tabKey = 'weddings', animate = true) => {
                             <div class="hero-card-price hl-type-price" style="font-size: 18px; font-weight: 700; color: var(--gold); margin-top: 15px;">${priceDisplay}</div>
                             ${footerNote}
                         </div>
-                        <button class="${btnClass}" data-action="hl-activate-direct" data-id="${item.id}" style="font-size: 10px; padding: 10px 5px; margin-top: auto; border-radius: 50px; letter-spacing: 0.5px;" onclick="event.stopPropagation();">
+                        <button class="${btnClass}" data-action="hl-activate-direct" data-id="${item.id}" style="font-size: 10px; padding: 10px 5px; margin-top: auto; border-radius: 50px; letter-spacing: 0.5px;">
                             <span class="hl-btn-icon">${icon}</span>
                             <span class="hl-btn-text" data-i18n="${isSelected ? 'btn_remove_extra' : item.ctaKey}">${btnText}</span>
                         </button>
@@ -2937,6 +2937,9 @@ window.togglePackageItem = (id, name, price) => {
     } else {
         window.selectedPackage = window.selectedPackage.filter(item => item.id !== id);
     }
+    if (window.MDJ_EVENT_BUILDER_V1 && typeof window.mdjRentalsSyncTogglePack === 'function') {
+        window.mdjRentalsSyncTogglePack({ id: id, name: name, price: price, added: !!isChecked });
+    }
     window.updatePackageSummary();
 };
 
@@ -3362,6 +3365,9 @@ document.addEventListener('click', async (e) => {
         if (!pack && window.liveMusicTabs) pack = Object.values(window.liveMusicTabs).find(p => p.id === id);
         if (!pack && window.visualTabs) pack = Object.values(window.visualTabs).find(p => p.id === id);
         if (!pack && window.mcTabs) pack = Object.values(window.mcTabs).find(p => p.id === id);
+        if (!pack && id === 'dj_family' && window.djTabs && window.djTabs.family) {
+            pack = window.djTabs.family;
+        }
 
         if (pack) {
             window.selectedPackage = Array.isArray(window.selectedPackage) ? window.selectedPackage : [];
@@ -3376,6 +3382,14 @@ document.addEventListener('click', async (e) => {
             }
 
             window.updatePackageSummary();
+
+            if (id === 'dj_family' && window.MDJ_EVENT_BUILDER_V1 && typeof window.mdjRentalsSyncDjFamily === 'function') {
+                window.mdjRentalsSyncDjFamily({ pack: pack, added: !isSelected });
+            }
+
+            if (id === 'dj_family' && typeof window.renderDjHero === 'function') {
+                window.renderDjHero(window.activeDjTabLocked || 'weddings', false);
+            }
 
             if (window.renderHoraLocaCatalogue) window.renderHoraLocaCatalogue();
             if (window.renderLiveHero && window.activeCategory !== 'mc') window.renderLiveHero(null, false);
