@@ -7156,6 +7156,22 @@ body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
 }
 
 /* ══ HOME — Hero account card (scoped; overrides index.html inline via #id) ══ */
+/*
+ * Anti-solape con cabecera fija: el hero centra el grid en 100vh; en pantallas bajas
+ * o con form alto, la tarjeta de registro sube bajo #mainHeader. Empujar el grid y,
+ * si hace falta, alinear arriba (solo home; selectores > .hero del index).
+ */
+body.page-home #home-hero .hero-grid {
+  margin-top: clamp(20px, 4vmin, 56px);
+}
+
+@media (max-height: 900px) and (min-width: 969px) {
+  body.page-home #home-hero.hero {
+    align-items: flex-start;
+    padding-top: clamp(56px, 12vmin, 140px);
+  }
+}
+
 #home-hero .hero-card {
   padding: 38px 36px 40px !important;
   box-sizing: border-box !important;
