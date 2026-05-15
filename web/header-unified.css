@@ -371,9 +371,86 @@
     display: contents !important;
   }
 
-  /* Cuenta/avatar en flujo normal; carrito + buscador se llevan el empuje a la derecha (solo esos dos). */
+  /* Cuenta: caja reservada en desktop (anti-acordeón al hidratar VIP / nombre largo). */
   #mainHeader.header.mdj-header-unified .header-actions #header-auth-zone {
     margin-left: 0 !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+    min-width: clamp(220px, 28vw, 300px) !important;
+    max-width: min(320px, 36vw) !important;
+    min-height: 48px !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+  }
+
+  /* P1 — parallel rail: guest ring matches VIP .mdj-avatar-ring (49px); same vertical axis as session. */
+  #mainHeader.header.mdj-header-unified .header-actions .mdj-guest-access-trigger {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    min-height: 44px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-actions .mdj-guest-access-trigger .mdj-guest-access-ring {
+    width: 49px !important;
+    height: 49px !important;
+    min-width: 49px !important;
+    min-height: 49px !important;
+    box-sizing: border-box !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-actions .mdj-account-vip-row {
+    align-items: center !important;
+    box-sizing: border-box !important;
+    min-height: 44px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-actions #header-auth-zone .mdj-account-vip-trigger,
+  #mainHeader.header.mdj-header-unified .header-actions #header-auth-zone a.mdj-account-vip-trigger.mdj-account-vip-direct {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+    padding: 0 8px 0 4px !important;
+    box-sizing: border-box !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-actions .mdj-account-vip-menuhit {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 30px !important;
+    min-width: 30px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    box-sizing: border-box !important;
+    line-height: 1 !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-actions #header-auth-zone .mdj-account-display-name {
+    min-width: 0 !important;
+    max-width: min(11rem, 32vw) !important;
+    font-size: 18px !important;
+    line-height: 1.2 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-actions #header-login-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    min-width: 5.5rem !important;
+    min-height: 44px !important;
+    line-height: 1.15 !important;
+    box-sizing: border-box !important;
   }
 
   /*
@@ -399,10 +476,14 @@
   #mainHeader.header.mdj-header-unified .header-actions .header-search-wrap {
     margin-right: 0 !important;
     transform: translateX(215px) !important;
-    /* Pisa audit (>=1200px flex:2 1 420px): sin crecer de más; el hueco queda a la izquierda del cluster */
-    flex: 0 1 min(590px, 46vw) !important;
-    min-width: min(100%, 200px) !important;
-    max-width: min(650px, 52vw) !important;
+    /* P1 anti-acordeón: no encoger cuando auth/pills/VIP cambian ancho intrínseco (antes flex: 0 1 …). */
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
+    flex-basis: clamp(280px, 42vw, 520px) !important;
+    width: clamp(280px, 42vw, 520px) !important;
+    min-width: clamp(280px, 42vw, 520px) !important;
+    max-width: min(590px, 46vw) !important;
+    box-sizing: border-box !important;
   }
 
   /* Letras flotantes: / antes de cada <a> salvo el primero en DOM; slots display:none no pintan el pseudo. */
@@ -481,12 +562,12 @@
     border-radius: 2px !important;
     pointer-events: none !important;
     box-shadow: none !important;
-    opacity: 0 !important;
+    /* Opacidad fija: el “hueco” del subrayado no cambia de capa al activar (menos parpadeo). */
+    opacity: 1 !important;
   }
 
   #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a.active::after {
     background: var(--gold) !important;
-    opacity: 1 !important;
     box-shadow: 0 0 8px rgba(197, 160, 89, 0.45) !important;
   }
 
@@ -532,6 +613,10 @@
   #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a.active {
     color: var(--gold) !important;
     text-shadow: 0 0 1px rgba(0, 0, 0, 0.9), 0 0 22px rgba(197, 160, 89, 0.35) !important;
+    /* Misma caja que inactivos: sin cambiar peso/tamaño (evita recomputo de anchura al togglear .active). */
+    font-weight: 800 !important;
+    font-size: clamp(14px, 1.05vw, 18px) !important;
+    line-height: 1.25 !important;
   }
 
   #mainHeader.header.mdj-header-unified
@@ -617,9 +702,13 @@
   }
 
   #mainHeader.header.mdj-header-unified .header-actions .btn-pill {
-    padding: 3px 12px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 12px !important;
     font-size: 15px !important;
-    min-height: 35px !important;
+    min-height: 44px !important;
+    line-height: 1.15 !important;
     box-sizing: border-box !important;
   }
 
@@ -631,19 +720,24 @@
     font-size: 16px !important;
   }
 
-  #mainHeader.header.mdj-header-unified .header-djpro-badge {
-    padding: 5px 12px !important;
-    font-size: 16px !important;
+  #mainHeader.header.mdj-header-unified .header-actions .header-djpro-badge {
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 12px !important;
+    font-size: 15px !important;
+    min-height: 44px !important;
+    line-height: 1.15 !important;
+    box-sizing: border-box !important;
   }
 
   #mainHeader.header.mdj-header-unified .header-tier-status-badge,
   #mainHeader.header.mdj-header-unified .header-client-loyalty-indicator {
     padding: 3px 10px !important;
     font-size: 15px !important;
-  }
-
-  #mainHeader.header.mdj-header-unified .mdj-account-display-name {
-    font-size: 18px !important;
+    min-height: 44px !important;
+    line-height: 1.15 !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
   }
 
   #mainHeader.header.mdj-header-unified .mdj-avatar-ring {

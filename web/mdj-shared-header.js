@@ -426,7 +426,7 @@
     }
   }
 
-  /** Badge editorial: comprador (solo cliente) | Artistic (artista LITE) | City owner (PRO) | Staff | Owners. */
+  /** Editorial tier badge: Artistic (LITE) | Pro | Staff | Team | Owner. Buyer/client mode uses #header-client-loyalty-indicator only. */
   function mdjApplyNavTierStatusBadge(navTier, ctx) {
     ctx = ctx || {};
     var djRole = String(ctx.djRole || '').toLowerCase();
@@ -438,10 +438,13 @@
       if (el) el.remove();
       return;
     }
-    var key = '';
+    /* Buyer mode: loyalty pill (#header-client-loyalty-indicator) already shows Client/VIP — no duplicate editorial badge. */
     if (navTier === 'client_only') {
-      key = 'nav-tier-status-buyer';
-    } else if (djRole === 'owner') {
+      if (el) el.remove();
+      return;
+    }
+    var key = '';
+    if (djRole === 'owner') {
       key = 'nav-tier-status-owner';
     } else if (djRole === 'seller') {
       key = 'nav-tier-status-staff';
@@ -1311,6 +1314,218 @@
     return String(leaf).toLowerCase();
   }
 
+  /** True when URL leaf is shop (e.g. /shop.html, /shop). Shop header cart link is shown only then. */
+  function mdjIsShopCartPage() {
+    var leaf = mdjNavPathLeaf();
+    var base = String(leaf || '').toLowerCase().replace(/\.html?$/i, '');
+    return base === 'shop';
+  }
+
+  /** #header-cart-link: visible only on shop; off shop stays in layout (visibility) so the cart slot does not collapse. */
+  function mdjApplyShopHeaderCartVisibility() {
+    var link = document.getElementById('header-cart-link');
+    if (!link) return;
+    if (mdjIsShopCartPage()) {
+      link.style.removeProperty('display');
+      link.style.removeProperty('visibility');
+      link.style.removeProperty('pointer-events');
+      link.removeAttribute('aria-hidden');
+      link.removeAttribute('data-mdj-shop-cart-hidden');
+    } else {
+      link.style.removeProperty('display');
+      link.style.setProperty('visibility', 'hidden', 'important');
+      link.style.setProperty('pointer-events', 'none', 'important');
+      link.setAttribute('aria-hidden', 'true');
+      link.setAttribute('data-mdj-shop-cart-hidden', '1');
+    }
+  }
+
+  /** Rentals ships Event Cart inline; shop keeps shop cart only (blueprint). */
+  function mdjIsRentalsEventCartPage() {
+    try {
+      if (document.body && document.body.classList && document.body.classList.contains('page-mdj-rentals')) {
+        return true;
+      }
+    } catch (e0) {
+      void e0;
+    }
+    var leaf = mdjNavPathLeaf();
+    var b = String(leaf || '')
+      .toLowerCase()
+      .replace(/\.html?$/i, '');
+    return b === 'rentals';
+  }
+
+  /** Last path segment of a script URL (works with absolute `src` vs relative `src` passed in). */
+  function mdjScriptSrcBasename(url) {
+    if (!url) return '';
+    try {
+      var u = String(url).split(/[#?]/)[0];
+      var parts = u.split('/');
+      return String(parts[parts.length - 1] || '').toLowerCase();
+    } catch (eBs) {
+      return '';
+    }
+  }
+
+  function mdjAppendScriptOnce(src) {
+    if (!src) return Promise.resolve();
+    var want = mdjScriptSrcBasename(src);
+    if (!want) return Promise.resolve();
+    var nodes = document.getElementsByTagName('script');
+    var i;
+    for (i = 0; i < nodes.length; i++) {
+      if (mdjScriptSrcBasename(nodes[i].src) === want) {
+        return Promise.resolve();
+      }
+    }
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = src;
+      s.async = false;
+      s.onload = function () {
+        resolve();
+      };
+      s.onerror = function () {
+        reject(new Error('script ' + src));
+      };
+      (document.head || document.documentElement).appendChild(s);
+    });
+  }
+
+  function mdjEnsureSubscriptionScriptForEventCart() {
+    if (typeof window.MDB_SUBSCRIPTION === 'object' && window.MDB_SUBSCRIPTION) {
+      return Promise.resolve();
+    }
+    return mdjAppendScriptOnce('./subscription.js?v=20260422-find-dj-rank');
+  }
+
+  /** Adapter → builder → bridge (idempotent via mdjAppendScriptOnce). */
+  function mdjChainGlobalEventBuilderScripts() {
+    window.MDJ_EVENT_BUILDER_V1 = true;
+    return mdjEnsureSubscriptionScriptForEventCart()
+      .then(function () {
+        return mdjAppendScriptOnce('./js/mdj-event-builder-adapter.js?v=20260514-eb-1a');
+      })
+      .then(function () {
+        return mdjAppendScriptOnce('./js/mdj-event-builder.js?v=20260514-eb-drawer-1a');
+      })
+      .then(function () {
+        return mdjAppendScriptOnce('./js/mdj-event-builder-rentals-bridge.js?v=20260514-eb-1b1');
+      });
+  }
+
+  /**
+   * Event Cart (local draft) on all public pages except shop + rentals.
+   * Reads HTML fragment + CSS; loads adapter/builder/bridge after `MDJ_EVENT_BUILDER_V1`.
+   */
+  function mdjMountGlobalEventCartIfNeeded() {
+    if (typeof document === 'undefined' || !document.body) return;
+    if (window.MDJ_SKIP_GLOBAL_EVENT_CART) return;
+    if (mdjIsShopCartPage()) return;
+    if (mdjIsRentalsEventCartPage()) return;
+    if (document.getElementById('mdj-event-builder-root')) return;
+    if (!document.getElementById('mainHeader')) return;
+    if (window.__mdjEventCartGlobalMounting) return;
+    window.__mdjEventCartGlobalMounting = true;
+
+    var mainHeader = document.getElementById('mainHeader');
+    var row = mainHeader ? mainHeader.querySelector('.header-avatar-cart-row') : null;
+    var mountParent = null;
+    var useSlotFallback = false;
+    if (row) {
+      mountParent = row;
+    } else {
+      var fbSel = ['.header-actions', '.topbar-actions', '.header-top'];
+      var fbNode = null;
+      var fi;
+      for (fi = 0; fi < fbSel.length; fi++) {
+        fbNode = mainHeader.querySelector(fbSel[fi]);
+        if (fbNode) break;
+      }
+      mountParent = fbNode || mainHeader;
+      useSlotFallback = true;
+    }
+    if (!mountParent) {
+      window.__mdjEventCartGlobalMounting = false;
+      return;
+    }
+
+    if (!document.getElementById('mdj-eb-header-cart-open')) {
+      var shopLink = document.getElementById('header-cart-link');
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.id = 'mdj-eb-header-cart-open';
+      btn.className = 'header-cart-btn mdj-eb-header-cart-open';
+      btn.setAttribute('title', 'Event cart');
+      btn.setAttribute('aria-label', 'Open event cart');
+      btn.innerHTML =
+        '<span aria-hidden="true">🛒</span>' +
+        '<span id="mdj-eb-header-count" class="header-cart-count" hidden></span>';
+      if (!useSlotFallback) {
+        if (shopLink && shopLink.parentNode === row) {
+          if (shopLink.nextSibling) {
+            row.insertBefore(btn, shopLink.nextSibling);
+          } else {
+            row.appendChild(btn);
+          }
+        } else {
+          row.appendChild(btn);
+        }
+      } else {
+        var ebSlot = mainHeader.querySelector('[data-mdj-eb-header-cart-slot="1"]');
+        if (!ebSlot) {
+          ebSlot = document.createElement('span');
+          ebSlot.className = 'mdj-eb-header-cart-slot';
+          ebSlot.setAttribute('data-mdj-eb-header-cart-slot', '1');
+          ebSlot.setAttribute('style', 'display:inline-flex;align-items:center;vertical-align:middle;');
+          mountParent.appendChild(ebSlot);
+        } else if (!mountParent.contains(ebSlot)) {
+          mountParent.appendChild(ebSlot);
+        }
+        ebSlot.appendChild(btn);
+      }
+    }
+
+    if (!document.getElementById('mdj-event-cart-css')) {
+      var lk = document.createElement('link');
+      lk.id = 'mdj-event-cart-css';
+      lk.rel = 'stylesheet';
+      lk.href = './mdj-event-cart.css?v=20260515-eb-global-5';
+      (document.head || document.documentElement).appendChild(lk);
+    }
+
+    var fragUrl = './mdj-event-cart-root-fragment.html?v=20260515-eb-global-1';
+    fetch(fragUrl, { cache: 'no-store' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('event cart fragment ' + res.status);
+        return res.text();
+      })
+      .then(function (html) {
+        if (document.getElementById('mdj-event-builder-root')) {
+          return mdjChainGlobalEventBuilderScripts();
+        }
+        var wrap = document.createElement('div');
+        wrap.innerHTML = String(html || '').trim();
+        var root = wrap.firstElementChild;
+        if (!root || root.id !== 'mdj-event-builder-root') {
+          throw new Error('bad event cart fragment');
+        }
+        document.body.appendChild(root);
+        return mdjChainGlobalEventBuilderScripts();
+      })
+      .catch(function (err) {
+        try {
+          console.warn('[MDJ] Global Event Cart mount:', err && err.message ? err.message : err);
+        } catch (e1) {
+          void e1;
+        }
+      })
+      .finally(function () {
+        window.__mdjEventCartGlobalMounting = false;
+      });
+  }
+
   /**
    * Mapea último segmento de URL (sin .html/.htm) → `data-mdj-nav` del #mainNav.
    * Auditoría pestañas ↔ fichero/slug (mantener al añadir páginas):
@@ -1700,7 +1915,7 @@
           var settingsUrl;
           var settingsLabel;
           if (isClient) {
-            settingsUrl = './client-portal.html';
+            settingsUrl = './client-account.html';
             settingsLabel = mdjGetVipPortalMenuLabel();
           } else if (isNavStaffSolo) {
             settingsUrl = './account-settings.html';
@@ -1959,6 +2174,12 @@
   }
 
   window.mdjInitSharedHeader = function () {
+    mdjApplyShopHeaderCartVisibility();
+    try {
+      mdjMountGlobalEventCartIfNeeded();
+    } catch (eCartEarly) {
+      void eCartEarly;
+    }
     mdjEnsureDesktopAuditCss();
     mdjSetHeaderAuthPillsPending(true);
     mdjEnsureAuthLangObserver();
