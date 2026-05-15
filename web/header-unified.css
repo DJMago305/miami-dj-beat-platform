@@ -31,6 +31,18 @@
     --header-nav-band: 72px;
   }
 
+  /*
+   * Anti-regresión (Safari / variables): el bloque fijo debe ser siempre columna (fila1 → fila2).
+   * Si --header-nav-band llegara a 0 o inválido, .header-nav colapsa y #mainNav desborda encima del branding.
+   */
+  #mainHeader.header.mdj-header-unified {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    align-content: flex-start !important;
+  }
+
   /* Fila de menú: continúa el cristal de #mainHeader; sin tira sólida ni cinta (Home “flotante”). */
   #mainHeader.header.mdj-header-unified .header-nav {
     position: relative !important;
@@ -41,6 +53,16 @@
     background: transparent !important;
     box-shadow: none !important;
     border: none !important;
+    /* Fallback 72px: si var(--header-nav-band) falla, no colapsar la franja (overflow sobre fila 1). */
+    flex: 0 0 var(--header-nav-band, 72px) !important;
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
+    align-self: stretch !important;
+    height: var(--header-nav-band, 72px) !important;
+    min-height: var(--header-nav-band, 72px) !important;
+    max-height: var(--header-nav-band, 72px) !important;
+    margin-top: 0 !important;
+    top: auto !important;
     /* Debajo de .header-top: evita que #mainNav “tape” águila / wordmark si las franjas se solapan un px. */
     z-index: 2 !important;
   }
@@ -51,7 +73,7 @@
   #mainHeader.header.mdj-header-unified .header-top {
     border-bottom: none !important;
     /* Por encima de .header-nav para que el branding no quede bajo las pestañas. */
-    z-index: 5 !important;
+    z-index: 24 !important;
     /* Pisa styles.css (overflow:hidden): el wordmark con scale sale sin agregar altura a la franja */
     overflow: visible !important;
   }
