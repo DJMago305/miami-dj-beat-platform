@@ -7164,17 +7164,23 @@ body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
 body.page-home #home-hero.hero {
   align-items: flex-start;
   box-sizing: border-box;
-  padding-top: clamp(48px, 8vmin, 96px);
+  /* Aire bajo #mainNav (72px) + franja superior: evita que la tarjeta roce o quede bajo el menú */
+  padding-top: clamp(72px, 14vmin, 140px);
 }
 
 body.page-home #home-hero .hero-grid {
-  margin-top: clamp(12px, 2.5vmin, 36px);
+  margin-top: clamp(20px, 4vmin, 48px);
 }
 
 @media (max-height: 900px) and (min-width: 969px) {
   body.page-home #home-hero.hero {
-    padding-top: clamp(72px, 14vmin, 160px);
+    padding-top: clamp(96px, 18vmin, 200px);
   }
+}
+
+/* Home: sin FAB Event Cart (montaje desactivado en mdj-shared-header; respaldo si caché viejo). */
+body.page-home #mdj-eb-fab.mdj-eb-fab {
+  display: none !important;
 }
 
 #home-hero .hero-card {
