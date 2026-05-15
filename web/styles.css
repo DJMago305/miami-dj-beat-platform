@@ -7157,24 +7157,24 @@ body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
 
 /* ══ HOME — Hero account card (scoped; overrides index.html inline via #id) ══ */
 /*
- * Anti-solape con cabecera fija (~156px, 2 filas): index .hero usa align-items:center
- * + min-height:100vh; si el grid es más alto que el viewport, el centro sube y la
- * tarjeta queda bajo #mainNav. Home: siempre flex-start + padding-top (no solo viewports bajos).
+ * styles.css .hero global usa margin-top negativo (–header–nav) para “full bleed”
+ * bajo cabeceras legacy; en index el <body> ya reserva --mdj-index-header-total.
+ * Sin anular margin-top aquí, el hero sube y la tarjeta / títulos quedan bajo #mainNav.
  */
 body.page-home #home-hero.hero {
+  margin-top: 0 !important;
   align-items: flex-start;
   box-sizing: border-box;
-  /* Aire bajo #mainNav (72px) + franja superior: evita que la tarjeta roce o quede bajo el menú */
-  padding-top: clamp(72px, 14vmin, 140px);
+  padding-top: clamp(28px, 5vmin, 72px);
 }
 
 body.page-home #home-hero .hero-grid {
-  margin-top: clamp(20px, 4vmin, 48px);
+  margin-top: clamp(8px, 2vmin, 28px);
 }
 
 @media (max-height: 900px) and (min-width: 969px) {
   body.page-home #home-hero.hero {
-    padding-top: clamp(96px, 18vmin, 200px);
+    padding-top: clamp(40px, 8vmin, 96px);
   }
 }
 
