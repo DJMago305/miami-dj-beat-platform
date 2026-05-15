@@ -1416,8 +1416,9 @@
   }
 
   /**
-   * Event Cart (local draft) on public pages except shop, rentals, and home.
-   * Home uses the cinematic hero + shop header slot only; skip FAB / drawer mount here.
+   * Event Cart (local draft) on public pages except shop + rentals (shop = checkout cart;
+   * rentals = Event Cart inline). Elsewhere users can add lines without subscribing;
+   * subscribe/gate on continue per product.
    * Reads HTML fragment + CSS; loads adapter/builder/bridge after `MDJ_EVENT_BUILDER_V1`.
    */
   function mdjMountGlobalEventCartIfNeeded() {
@@ -1425,11 +1426,6 @@
     if (window.MDJ_SKIP_GLOBAL_EVENT_CART) return;
     if (mdjIsShopCartPage()) return;
     if (mdjIsRentalsEventCartPage()) return;
-    try {
-      if (document.body.classList && document.body.classList.contains('page-home')) return;
-    } catch (eHome) {
-      void eHome;
-    }
     if (document.getElementById('mdj-event-builder-root')) return;
     if (!document.getElementById('mainHeader')) return;
     if (window.__mdjEventCartGlobalMounting) return;
