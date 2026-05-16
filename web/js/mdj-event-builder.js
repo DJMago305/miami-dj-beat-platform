@@ -1077,13 +1077,32 @@
         var drawer = global.document.getElementById('mdj-eb-drawer');
         var overlay = global.document.getElementById('mdj-eb-overlay');
         var bod = global.document.body;
+        var docEl = global.document.documentElement;
         if (open) {
             if (bod) {
+                var sw = 0;
+                try {
+                    sw = Math.max(
+                        0,
+                        (global.window.innerWidth || 0) - (docEl && docEl.clientWidth ? docEl.clientWidth : 0)
+                    );
+                } catch (eSw) {
+                    void eSw;
+                }
+                /* Compensa la barra vertical que desaparece con overflow:hidden → evita brinco del header/carrito. */
+                if (sw > 0 && sw < 96) {
+                    bod.style.paddingRight = sw + 'px';
+                }
                 bod.classList.add('mdj-eb-cart-open');
             }
         } else {
             if (bod) {
                 bod.classList.remove('mdj-eb-cart-open');
+                try {
+                    bod.style.paddingRight = '';
+                } catch (ePad) {
+                    void ePad;
+                }
             }
         }
         if (drawer) {
