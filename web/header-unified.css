@@ -137,11 +137,7 @@
     left: auto !important;
     right: auto !important;
     top: auto !important;
-    /*
-     * margin-left no mueve la píldora a la vista: con flex-grow + justify-content:flex-end el cluster
-     * sigue pegado al borde derecho del hueco. translateX desplaza todo el bloque (post-marca) a la derecha.
-     */
-    transform: translateX(40px) !important;
+    transform: none !important;
     max-width: none !important;
     margin: 0 !important;
     /* Debajo de .brand: no “invadir” el carril de marca por stacking. */
@@ -1054,4 +1050,14 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
   overflow: hidden !important;
   pointer-events: none !important;
   position: static !important;
+}
+
+/*
+ * Solo desarrollo local: `html.mdj-header-dev-local` la pone mdj-shared-header.js en localhost / 127.0.0.1 / file:.
+ * Desplaza la píldora (.header-actions) 40px a la derecha; en Vercel/producción la clase no existe → sin cambio.
+ */
+@media (min-width: 1001px) {
+  html.mdj-header-dev-local #mainHeader.header.mdj-header-unified .header-top .container > .header-actions {
+    transform: translateX(40px) !important;
+  }
 }

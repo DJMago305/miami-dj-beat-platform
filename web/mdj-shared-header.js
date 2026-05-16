@@ -19,6 +19,24 @@
     /* ignore */
   }
 
+  /* Local-only header layout hook: never set on production hostnames (CSS in header-unified.css). */
+  try {
+    var loc = typeof location !== 'undefined' ? location : null;
+    var hn = loc && loc.hostname != null ? String(loc.hostname) : '';
+    var proto = loc && loc.protocol ? String(loc.protocol) : '';
+    var isDevLocal =
+      hn === 'localhost' ||
+      hn === '127.0.0.1' ||
+      hn === '[::1]' ||
+      hn === '::1' ||
+      (proto === 'file:' && hn === '');
+    if (isDevLocal && document.documentElement) {
+      document.documentElement.classList.add('mdj-header-dev-local');
+    }
+  } catch (eDevLocal) {
+    void eDevLocal;
+  }
+
   function mdjLoadAmbientMusicScript() {
     if (typeof window !== 'undefined' && window.MDJ_SKIP_AMBIENT_MUSIC) return;
     if (document.getElementById('mdj-ambient-music-script')) return;
