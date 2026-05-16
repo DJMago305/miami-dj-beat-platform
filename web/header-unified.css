@@ -10,7 +10,8 @@
   --mdj-header-unified-r2: 72px;
   /* Franja izquierda: logo + wordmark (sin slot exagerado — libera espacio para .header-actions / #mainNav) */
   --mdj-header-brand-slot: 660px;
-  --mdj-header-brand-gap: 10px;
+  /* Aire horizontal marca ↔ .header-actions (+40px vs 10px; mismo layout local / preview / prod). */
+  --mdj-header-brand-gap: 50px;
   /* Cercano a .dj-tab-btn; un poco más de aire entre letras / entre ítems (ver #mainNav > a). */
   --mdj-mainnav-pad-x: clamp(10px, 1.3vw, 22px);
   --mdj-mainnav-pad-x-sm: clamp(9px, 1.15vw, 17px);
@@ -121,8 +122,9 @@
     /*
      * scale() en .brand-letters-wrapper agranda el dibujo sin ampliar la caja en el flex:
      * sin margen derecho, .header-actions arranca “debajo” del trazo y FREE/LOGIN rozan el wordmark.
+     * +40px al piso del clamp (112px) alinea con --mdj-header-brand-gap para no montar la píldora sobre la marca.
      */
-    margin-right: clamp(72px, 18vw, 280px) !important;
+    margin-right: clamp(112px, 18vw, 280px) !important;
     justify-content: flex-start !important;
     align-items: center !important;
     overflow: visible !important;
