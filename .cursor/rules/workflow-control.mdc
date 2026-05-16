@@ -13,7 +13,7 @@ alwaysApply: true
 
 ## Antes de dar por cerrada una tarea
 
-1. **`git status`**: si hay cambios locales relevantes para el fix, deben ir en **commit** y **push** explícito; no asumir que “ya está en el Mac” = producción.
+1. **`git status`**: cambios listos para commit solo con OK del Capitán; **push/merge/deploy** según [no-auto-deploy.mdc](./no-auto-deploy.mdc) (`APROBADO PUSH` / `APROBADO DEPLOY PRODUCCIÓN`). No asumir que “ya está en el Mac” = producción.
 2. **Locked / scope**: `.cursorrules` — no tocar layout/nav/copy de archivos LOCKED salvo bloque acotado que el usuario pidió; cero refactors colaterales.
 3. **Auth y sesión** (cualquier cambio en `login.html`, `auth.js`, `mdj-shared-header.js`, header en `jobs.html` u otras páginas con `#header-login-btn` / `doLogout`):
    - No ocultar (`display:none` / `visibility`) controles que **otro script** convierte en **Logout** o **Login**.
