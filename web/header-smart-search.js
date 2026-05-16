@@ -15,26 +15,6 @@
 (function () {
   'use strict';
 
-  /* Early: <html.mdj-header-dev-local> for localhost-only header CSS (header-unified.css / styles.css). */
-  try {
-    var loc = typeof location !== 'undefined' ? location : null;
-    var hn = loc && loc.hostname != null ? String(loc.hostname) : '';
-    var proto = loc && loc.protocol ? String(loc.protocol) : '';
-    if (
-      hn === 'localhost' ||
-      hn === '127.0.0.1' ||
-      hn === '[::1]' ||
-      hn === '::1' ||
-      (proto === 'file:' && hn === '')
-    ) {
-      if (document.documentElement) {
-        document.documentElement.classList.add('mdj-header-dev-local');
-      }
-    }
-  } catch (eMdjLocalHdr) {
-    void eMdjLocalHdr;
-  }
-
   var ROUTES = [
     { re: /\b(shop|store|tienda|gear|equipment|equipamiento|buy|comprar)\b/i, href: './shop.html' },
     { re: /\b(course|courses|curso|cursos|academia|certification|certificación|learn|aprender)\b/i, href: './courses.html' },

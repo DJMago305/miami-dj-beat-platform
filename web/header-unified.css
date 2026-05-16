@@ -1051,13 +1051,3 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
   pointer-events: none !important;
   position: static !important;
 }
-
-/*
- * Solo desarrollo local: `html.mdj-header-dev-local` la pone mdj-shared-header.js en localhost / 127.0.0.1 / file:.
- * Desplaza la píldora (.header-actions) 40px a la derecha; en Vercel/producción la clase no existe → sin cambio.
- */
-@media (min-width: 1001px) {
-  html.mdj-header-dev-local #mainHeader.header.mdj-header-unified .header-top .container > .header-actions {
-    transform: translateX(40px) !important;
-  }
-}
