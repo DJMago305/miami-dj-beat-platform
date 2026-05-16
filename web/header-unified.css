@@ -137,10 +137,13 @@
     left: auto !important;
     right: auto !important;
     top: auto !important;
-    transform: none !important;
+    /*
+     * margin-left no mueve la píldora a la vista: con flex-grow + justify-content:flex-end el cluster
+     * sigue pegado al borde derecho del hueco. translateX desplaza todo el bloque (post-marca) a la derecha.
+     */
+    transform: translateX(40px) !important;
     max-width: none !important;
-    /* Local / preview: separar la píldora (post-marca → búsqueda) del carril del wordmark. */
-    margin: 0 0 0 40px !important;
+    margin: 0 !important;
     /* Debajo de .brand: no “invadir” el carril de marca por stacking. */
     z-index: 1 !important;
     display: flex !important;
