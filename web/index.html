@@ -7,8 +7,8 @@
   <title>Miami DJ Beat — DJs & Event Production</title>
   <meta name="description"
     content="Miami DJ Beat provides professional DJs and event production for corporate, private, and venue events across Florida, with primary coverage in Miami-Dade and Broward." />
-  <link rel="stylesheet" href="./styles.css?v=20260515-unified-header-geometry-1" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260515-unified-header-geometry-1" />
+  <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260516-wordmark-clear-r-1" />
   <!-- Antes el JS inyectaba esto tras el primer paint → CLS (gap/búsqueda en ≥1200px); VIP ya va por @import en styles.css -->
   <link rel="stylesheet" id="mdj-header-desktop-audit-css" href="./mdj-header-desktop-audit.css?v=20260421-menu-static" />
   <link rel="stylesheet" href="./profile.css?v=20260226-1" />
@@ -508,21 +508,26 @@
           <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Obtener PRO</a>
           <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
           <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
-          <div class="lang-switcher">
+          <div class="mdj-header-r1-auth-cluster">
+
+            <div class="lang-switcher">
             <span class="lang-btn" data-lang="es">ES</span>
             <span class="lang-pipe">|</span>
             <span class="lang-btn active" data-lang="en">EN</span>
           </div>
-          <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-i18n="btn-login">Entrar</a>
 
-          <div class="header-avatar-cart-row" aria-label="Cuenta y carrito">
+            <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-i18n="btn-login">Entrar</a>
+
             <div class="account session-pending" id="header-auth-zone">
               <a class="account-btn" id="accountBtn" href="./dj-profile.html" title="Mi perfil" aria-label="Mi perfil">
               <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
             </a>
 </div>
 
-            <a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Carrito" aria-label="Carrito de compras">
+          </div>
+
+          <div class="header-avatar-cart-row" aria-label="Cuenta y carrito">
+<a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Carrito" aria-label="Carrito de compras">
               <span aria-hidden="true">🛒</span>
               <span id="header-cart-count" class="header-cart-count" hidden></span>
             </a>
@@ -1385,13 +1390,13 @@
   <script src="./form-handler.js?v=20260420-deploy"></script>
   <script src="./header-smart-search.js?v=20260515-unified-header-geometry-1"></script>
   <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
-  <script src="./mdj-shared-header.js?v=20260515-unified-header-geometry-1"></script>
+  <script src="./mdj-shared-header.js?v=20260516-tier-badge-unified-1"></script>
   <script>
     /* Inicio: trinquete en #mainNav (scroll + flechas); no reactiva tick en otros carruseles por scroll. */
     window.MDJ_ENABLE_NAV_TICK_AUDIO = true;
   </script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260421-wheel-resume-tick"></script>
-  <script src="./mdj-mainnav-infinite.js?v=20260421-home-nav-cap-hint"></script>
+  <script src="./mdj-mainnav-infinite.js?v=20260516-home-nav-stable-1"></script>
   <script>
     /* Tras i18n / hidratar slots del menú, el ancho del rail cambia: remontar overflow + flechas + tick. */
     (function () {
