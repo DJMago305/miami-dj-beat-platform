@@ -433,6 +433,16 @@
     var actions = document.querySelector('#mainHeader .header-actions');
     if (!actions) return;
     var id = 'header-tier-status-badge';
+    /*
+     * Cabecera unificada: la pastilla (p. ej. «Pro») vive en fila 1 con z-index sobre la marca → solapa el wordmark.
+     * Misma política que dj-profile (badge solo fuera de esta franja / en panel).
+     */
+    var mainHdrTier = document.getElementById('mainHeader');
+    if (mainHdrTier && mainHdrTier.classList && mainHdrTier.classList.contains('mdj-header-unified')) {
+      var rm = document.getElementById(id);
+      if (rm) rm.remove();
+      return;
+    }
     var el = document.getElementById(id);
     if (!navTier || navTier === 'guest') {
       if (el) el.remove();
@@ -573,8 +583,14 @@
     return evOk || lpOk;
   }
 
-  /** Pastilla portal: Cliente o Cliente VIP (eventos / puntos alineados con lealtad en client-portal). */
+  /** Pastilla portal: Cliente o Cliente VIP — no en cabecera unificada (fila 1: ES/EN → LOGOUT → avatar). */
   function mdjSyncClientLoyaltyIndicator(isClientSession, clientRow) {
+    var mainHdr = document.getElementById('mainHeader');
+    if (mainHdr && mainHdr.classList && mainHdr.classList.contains('mdj-header-unified')) {
+      var rm = document.getElementById('header-client-loyalty-indicator');
+      if (rm) rm.remove();
+      return;
+    }
     var el = document.getElementById('header-client-loyalty-indicator');
     var actions = document.querySelector('#mainHeader .header-actions');
     if (!isClientSession) {
@@ -592,9 +608,10 @@
       el.className = 'header-client-loyalty-indicator';
       el.setAttribute('role', 'status');
       var lang = actions.querySelector('.lang-switcher');
-      if (lang && lang.parentNode === actions) {
-        if (lang.nextSibling) actions.insertBefore(el, lang.nextSibling);
-        else actions.appendChild(el);
+      if (lang && lang.parentNode) {
+        var afterLang = lang.nextSibling;
+        if (afterLang) lang.parentNode.insertBefore(el, afterLang);
+        else lang.parentNode.appendChild(el);
       } else {
         actions.appendChild(el);
       }
@@ -1408,7 +1425,7 @@
         return mdjAppendScriptOnce('./js/mdj-event-builder-adapter.js?v=20260514-eb-1a');
       })
       .then(function () {
-        return mdjAppendScriptOnce('./js/mdj-event-builder.js?v=20260514-eb-drawer-1a');
+        return mdjAppendScriptOnce('./js/mdj-event-builder.js?v=20260516-eb-drawer-scroll-lock-1');
       })
       .then(function () {
         return mdjAppendScriptOnce('./js/mdj-event-builder-rentals-bridge.js?v=20260514-eb-1b1');
@@ -1660,6 +1677,65 @@
     window.location.href = './index.html';
   };
 
+  function mdjHeaderIsUnifiedMainHeader() {
+    var h = document.getElementById('mainHeader');
+    return !!(h && h.classList && h.classList.contains('mdj-header-unified'));
+  }
+
+  function mdjHeaderMonetizationCtaMarkHidden(el) {
+    if (!el) return;
+    try {
+      el.removeAttribute('data-mdj-monetization-visible');
+    } catch (e) {
+      void e;
+    }
+    /*
+     * Fila 1 unificada: con sesión `.header-actions` sube por encima de la marca (z-index).
+     * `display: none` sin !important pierde frente a .btn-pill / inline-flex del JS → PRO/GRATIS/DJPRO encima del wordmark.
+     * Solo CTAs de escritorio + badge; `#header-subscribe-free-mobile` sigue con `display: none` normal (drawer).
+     */
+    var id = el.id || '';
+    if (id === 'header-get-pro-btn' || id === 'header-subscribe-free-btn' || id === 'header-djpro-badge') {
+      try {
+        el.style.setProperty('display', 'none', 'important');
+      } catch (e1) {
+        el.style.display = 'none';
+      }
+    } else {
+      el.style.display = 'none';
+    }
+  }
+
+  /** Marca visible tras sesión resuelta; el atributo desactiva la regla CSS de ocultación inicial. */
+  function mdjHeaderMonetizationCtaMarkVisible(el, displayVal) {
+    if (!el) return;
+    if (mdjHeaderIsUnifiedMainHeader()) {
+      mdjHeaderMonetizationCtaMarkHidden(el);
+      return;
+    }
+    try {
+      el.setAttribute('data-mdj-monetization-visible', '1');
+    } catch (e2) {
+      void e2;
+    }
+    try {
+      el.style.removeProperty('display');
+    } catch (e3) {
+      void e3;
+    }
+    el.style.display = displayVal || 'inline-flex';
+  }
+
+  /**
+   * Invitado real: el HTML trae PRO + GRATIS visibles; hasta resolver `getSession()` eso aprieta la marca.
+   * Ocultar en el primer tick (y al re-entrar en checkSession) y dejar que cada rama vuelva a mostrar si aplica.
+   */
+  function mdjHeaderHideMonetizationCtasPending() {
+    mdjHeaderMonetizationCtaMarkHidden(document.getElementById('header-get-pro-btn'));
+    mdjHeaderMonetizationCtaMarkHidden(document.getElementById('header-subscribe-free-btn'));
+    mdjHeaderMonetizationCtaMarkHidden(document.getElementById('header-djpro-badge'));
+  }
+
   function mdjApplyGuestHeaderAvatar() {
     var z = document.getElementById('header-auth-zone');
     if (!z) return;
@@ -1690,6 +1766,7 @@
       if (pb && pb.classList.contains('danger')) skipAuthPillPending = true;
     });
     if (!skipAuthPillPending) mdjSetHeaderAuthPillsPending(true);
+    mdjHeaderHideMonetizationCtasPending();
     try {
       var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
       if (!sb) {
@@ -1709,12 +1786,7 @@
         mdjApplyAgendaMainNavLink(false);
         mdjApplyFlowMainNavLink(false);
         mdjApplyNavTierStatusBadge(null);
-        var gp0 = document.getElementById('header-get-pro-btn');
-        var sfd0 = document.getElementById('header-subscribe-free-btn');
-        var sfm0 = document.getElementById('header-subscribe-free-mobile');
-        if (gp0) gp0.style.display = 'none';
-        if (sfd0) sfd0.style.display = 'none';
-        if (sfm0) sfm0.style.display = 'none';
+        /* PRO/FREE: ya ocultos vía mdjHeaderHideMonetizationCtasPending() + CSS hasta sesión. */
         return;
       }
       var res = await sb.auth.getSession();
@@ -1734,8 +1806,8 @@
         mdjEnsureMiPortalHydratingPlaceholder();
         var subFreeDesk = document.getElementById('header-subscribe-free-btn');
         var subFreeMob = document.getElementById('header-subscribe-free-mobile');
-        if (subFreeDesk) subFreeDesk.style.display = 'none';
-        if (subFreeMob) subFreeMob.style.display = 'none';
+        mdjHeaderMonetizationCtaMarkHidden(subFreeDesk);
+        mdjHeaderMonetizationCtaMarkHidden(subFreeMob);
 
         var getProBtn = document.getElementById('header-get-pro-btn');
         if (authZone) authZone.style.display = 'inline-flex';
@@ -1835,15 +1907,34 @@
             || ['PRO', 'ELITE'].includes(p.plan)
             || (['pro_monthly', 'pro_annual', 'PRO'].includes(p.plan_type) && (p.plan_status || 'active') === 'active' && (!p.plan_expires_at || new Date(p.plan_expires_at) > new Date()))
           );
+          var mainHdr = document.getElementById('mainHeader');
+          var unifiedHeader = !!(mainHdr && mainHdr.classList && mainHdr.classList.contains('mdj-header-unified'));
           var djproBadge = document.getElementById('header-djpro-badge');
           if (getProBtn) {
-            if (isClient || isNavStaffSolo) {
-              getProBtn.style.display = 'none';
+            if (unifiedHeader || isClient || isNavStaffSolo || isProUser) {
+              mdjHeaderMonetizationCtaMarkHidden(getProBtn);
             } else {
-              getProBtn.style.display = isProUser ? 'none' : 'inline-flex';
+              mdjHeaderMonetizationCtaMarkVisible(getProBtn, 'inline-flex');
             }
           }
-          if (djproBadge) djproBadge.style.display = isProUser && !isClient && !isNavStaffSolo ? 'inline-flex' : 'none';
+          var hideHeaderProChrome =
+            !!(document.body && document.body.classList && document.body.classList.contains('dj-profile'));
+          if (djproBadge) {
+            if (unifiedHeader || hideHeaderProChrome || !(isProUser && !isClient && !isNavStaffSolo)) {
+              try {
+                djproBadge.style.setProperty('display', 'none', 'important');
+              } catch (eDb) {
+                djproBadge.style.display = 'none';
+              }
+            } else {
+              try {
+                djproBadge.style.removeProperty('display');
+              } catch (eDb2) {
+                void eDb2;
+              }
+              djproBadge.style.display = 'inline-flex';
+            }
+          }
           /* Pastilla portal: Cliente | Cliente VIP — solo sesión comprador (no staff / owner). */
           mdjSyncClientLoyaltyIndicator(!!isClient && !isNavStaffSolo, clientRow);
           /* Con cuenta y sin PRO: el CTA lleva a Jobs — mismas tarjetas de abajo (LITE free o PRO de pago), no a login. */
@@ -1963,7 +2054,11 @@
           } catch (eHref) { /* ignore */ }
 
           mdjApplyDjToolsNavForTier(navTier);
-          mdjApplyNavTierStatusBadge(navTier, { djRole: djRowRole || '' });
+          if (document.body && document.body.classList && document.body.classList.contains('dj-profile')) {
+            mdjApplyNavTierStatusBadge(null);
+          } else {
+            mdjApplyNavTierStatusBadge(navTier, { djRole: djRowRole || '' });
+          }
 
           mdjMaybeRunVipWelcomeProtocol(session);
 
@@ -2053,12 +2148,10 @@
         var djproBadge = document.getElementById('header-djpro-badge');
         var getProBtn = document.getElementById('header-get-pro-btn');
         var subFreeDesk2 = document.getElementById('header-subscribe-free-btn');
-        var subFreeMob2 = document.getElementById('header-subscribe-free-mobile');
-        if (djproBadge) djproBadge.style.display = 'none';
-        /* Sin sesión: no mostrar CTA de monetización ni “gratis” hasta login (Fase 1 auditoría). */
-        if (getProBtn) getProBtn.style.display = 'none';
-        if (subFreeDesk2) subFreeDesk2.style.display = 'none';
-        if (subFreeMob2) subFreeMob2.style.display = 'none';
+        if (djproBadge) mdjHeaderMonetizationCtaMarkHidden(djproBadge);
+        /* Sin sesión: desktop sin PRO/GRATIS en fila superior; drawer móvil (#header-subscribe-free-mobile) intacto. */
+        mdjHeaderMonetizationCtaMarkHidden(getProBtn);
+        mdjHeaderMonetizationCtaMarkHidden(subFreeDesk2);
         mdjSyncClientLoyaltyIndicator(false);
         var npmGuest = document.getElementById('nav-my-profile-mobile');
         if (npmGuest) npmGuest.style.display = 'none';
@@ -2176,6 +2269,7 @@
   }
 
   window.mdjInitSharedHeader = function () {
+    mdjHeaderHideMonetizationCtasPending();
     mdjApplyShopHeaderCartVisibility();
     try {
       mdjMountGlobalEventCartIfNeeded();

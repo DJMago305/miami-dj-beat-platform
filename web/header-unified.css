@@ -2,19 +2,61 @@
  * Miami DJ Beat — cabecera unificada (#mainHeader.mdj-header-unified)
  * Cargar después de styles.css. ≥1001: menú principal = letras flotantes + “/” entre ítems (mismo cristal #mainHeader).
  * Fila 1: marca/acciones; franja de #mainNav sin tira sólida. ≤1000: .header-nav oculta (styles.css).
+ *
+ * Contrato fila 1 (sesión): en el HTML, `.lang-switcher` + `#header-login-btn` + `#header-auth-zone` viven dentro de
+ * `.mdj-header-r1-auth-cluster` (misma pinta desde el primer frame — sin mutar DOM en load). Tokens globales
+ * `--mdj-header-brand-gap` / `--mdj-header-auth-cluster-nudge-x` en `styles.css` :root.
  */
 :root {
   /* Fila 1 (marca/acciones) — franja fija; escala del PNG de letras vía --mdj-brand-letters-scale */
   --mdj-header-unified-r1: 84px;
   --mdj-brand-letters-scale: 2.65;
   --mdj-header-unified-r2: 72px;
-  /* Franja izquierda: logo + wordmark (sin slot exagerado — libera espacio para .header-actions / #mainNav) */
-  --mdj-header-brand-slot: 660px;
-  /* Aire horizontal marca ↔ .header-actions (+40px vs 10px; mismo layout local / preview / prod). */
-  --mdj-header-brand-gap: 50px;
+  /* --mdj-header-brand-slot, --mdj-header-brand-gap, --mdj-header-auth-cluster-nudge-x: ver :root en styles.css (global). */
   /* Cercano a .dj-tab-btn; un poco más de aire entre letras / entre ítems (ver #mainNav > a). */
   --mdj-mainnav-pad-x: clamp(10px, 1.3vw, 22px);
   --mdj-mainnav-pad-x-sm: clamp(9px, 1.15vw, 17px);
+  /*
+   * ZERO-ACCORDION fila 1 (≥1001): slots fijos desde primer paint — sesión solo cambia contenido, no geometría.
+   * Auth: avatar 49px + nombre hasta 120px + padding ≈ 172px @ 1440 (12vw). Carrito: shop 38 + event 38 + gap.
+   */
+  --mdj-header-auth-slot-w: clamp(172px, 12vw, 200px);
+  --mdj-header-cart-rail-w: 76px;
+  --mdj-header-search-slot-w: clamp(140px, 12vw, 220px);
+}
+
+/*
+ * Monetización — cabecera unificada: PRO / GRATIS / badge DJPRO **no** en fila 1 en ninguna ruta (#mainNav / “pestañas”).
+ * Drawer móvil (`#header-subscribe-free-mobile`, etc.) sin cambios. `!important` gana a `inline-flex` del JS.
+ */
+#mainHeader.header.mdj-header-unified .header-actions #header-get-pro-btn,
+#mainHeader.header.mdj-header-unified .header-actions #header-subscribe-free-btn,
+#mainHeader.header.mdj-header-unified .header-actions #header-djpro-badge {
+  display: none !important;
+}
+
+/* Pastilla editorial de plan/rol (mdjApplyNavTierStatusBadge): no en fila 1 unificada — solapa la marca. */
+#mainHeader.header.mdj-header-unified .header-actions #header-tier-status-badge {
+  display: none !important;
+}
+
+/* Pastilla Cliente / Cliente VIP: fuera de fila 1 — evita salto horizontal entre estados. */
+#mainHeader.header.mdj-header-unified .header-actions #header-client-loyalty-indicator {
+  display: none !important;
+}
+
+/*
+ * Fila 1 — grupo sesión/idioma (marcado estático en HTML: `.mdj-header-r1-auth-cluster`).
+ * `display` base en todas las anchuras; margen lateral desktop solo en @media (min-width: 1001px) más abajo.
+ */
+#mainHeader.header.mdj-header-unified .header-actions .mdj-header-r1-auth-cluster {
+  display: inline-flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  flex-shrink: 0 !important;
+  align-self: center !important;
+  column-gap: clamp(8px, 1.2vw, 16px) !important;
+  box-sizing: border-box !important;
 }
 
 /* Sin contain:layout en el header completo: en algunos navegadores afectaba capas de clic con marca + #mainNav. */
@@ -30,6 +72,11 @@
     --mdj-header-unified-r1: 84px;
     --mdj-header-unified-r2: 72px;
     --header-nav-band: 72px;
+    --mdj-header-wordmark-clear-r: clamp(108px, 12vw, 188px);
+  }
+
+  body.page-home:has(#mainHeader.header.mdj-header-unified) {
+    --mdj-header-wordmark-clear-r: clamp(92px, 10.5vw, 168px);
   }
 
   /*
@@ -84,6 +131,56 @@
   }
 
   /*
+   * Home — fila 1: fondo más opaco, sin backdrop-filter (el PNG de letras es transparente;
+   * el cristal en #mainHeader entero “lavaba” la línea inferior / subtítulo del wordmark).
+   * Fila 2 (#mainNav): mantiene el efecto cristal.
+   */
+  body.page-home #mainHeader.header.mdj-header-unified .header-top {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: linear-gradient(
+      180deg,
+      rgba(10, 8, 6, 0.88) 0%,
+      rgba(8, 6, 5, 0.84) 100%
+    ) !important;
+  }
+
+  body.page-home #mainHeader.header.mdj-header-unified .header-nav {
+    backdrop-filter: blur(14px) saturate(115%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(115%) !important;
+  }
+
+  body.page-home #mainHeader.header.mdj-header-unified .brand .brand-letters-img {
+    max-height: min(76px, calc(var(--mdj-header-unified-r1) - 8px)) !important;
+    filter: none !important;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: high-quality;
+  }
+
+  body.page-home #mainHeader.header.mdj-header-unified .brand .brand-letters-wrapper {
+    --mdj-brand-letters-scale: 2.45;
+    transform: translate3d(-188px, 0, 0) scale(var(--mdj-brand-letters-scale, 1)) !important;
+  }
+
+  body.page-home #mainHeader.header.mdj-header-unified .brand .logo-img-eagle {
+    filter: none !important;
+  }
+
+  /* Fila 2 (#mainNav) solo Inicio: menos aire muerto bajo el subtítulo del PNG. */
+  body.page-home #mainHeader.header.mdj-header-unified .header-nav {
+    margin-top: -6px !important;
+  }
+
+  body.page-home
+    #mainHeader.header.mdj-header-unified
+    .header-nav
+    .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav {
+    padding-top: 0 !important;
+    min-height: calc(var(--mdj-header-unified-r2) - 8px) !important;
+  }
+
+  /*
    * Fila 1 — flex: marca ocupa slot fijo | la píldora flex:1 estira todo el resto (antes block+absolute
    * dejaba la píldora al ancho intrínseco y margin-left:auto en el carrito no empujaba).
    */
@@ -93,12 +190,13 @@
     flex-direction: row !important;
     align-items: center !important;
     justify-content: flex-start !important;
-    gap: var(--mdj-header-brand-gap) !important;
+    gap: clamp(16px, 2.8vw, 32px) !important;
     height: 100% !important;
     min-height: var(--mdj-header-unified-r1) !important;
     max-height: var(--mdj-header-unified-r1) !important;
-    padding-left: max(16px, env(safe-area-inset-left, 0px)) !important;
-    padding-right: max(16px, env(safe-area-inset-right, 0px)) !important;
+    /* +4px vs 16px: más aire al borde del viewport, mismo riel óptico que el hero (container 1200). */
+    padding-left: max(20px, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(20px, env(safe-area-inset-right, 0px)) !important;
     box-sizing: border-box !important;
   }
 
@@ -111,24 +209,34 @@
     left: auto !important;
     top: auto !important;
     margin: 0 !important;
-    margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px))) !important;
+    /* Alineado con padding-left del .container (20 / safe-area): sin cambiar translate del wordmark. */
+    margin-left: calc(-1 * max(20px, env(safe-area-inset-left, 0px))) !important;
     /* Por encima de .header-actions: si el flex estrecha, la columna derecha no debe tapar águila / letras. */
     z-index: 8 !important;
     flex: 0 0 auto !important;
     width: fit-content !important;
-    max-width: min(var(--mdj-header-brand-slot), 100%) !important;
+    max-width: min(var(--mdj-header-brand-slot, 660px), 100%) !important;
     /* Carril mínimo estable para fénix + wordmark (transform + scale); evita compactación visual. */
     min-width: clamp(300px, 34vw, 560px) !important;
     /*
-     * scale() en .brand-letters-wrapper agranda el dibujo sin ampliar la caja en el flex:
-     * sin margen derecho, .header-actions arranca “debajo” del trazo y FREE/LOGIN rozan el wordmark.
-     * +40px al piso del clamp (112px) alinea con --mdj-header-brand-gap para no montar la píldora sobre la marca.
+     * scale()/translate no ensanchan la caja flex: el trazo visual del wordmark invade la píldora.
+     * padding-right ensancha la caja de layout; margin-right suma aire antes de .header-actions.
      */
-    margin-right: clamp(112px, 18vw, 280px) !important;
+    /*
+     * Caja de marca: reservar desde T0 el mismo aire que antes solo con body.mdj-logged-in-header
+     * (evita que hidratar sesión mueva .header-actions). PNG/translate sin cambio.
+     */
+    padding-right: clamp(44px, 6.5vw, 88px) !important;
+    margin-right: clamp(36px, 5.5vw, 72px) !important;
     justify-content: flex-start !important;
     align-items: center !important;
     overflow: visible !important;
     flex-shrink: 0 !important;
+    /*
+     * El trazo del wordmark (transform) se pinta sobre .header-actions (z-index menor).
+     * Sin esto, LOGIN / LOGOUT / píldoras quedan bloqueados por la capa de marca.
+     */
+    pointer-events: none !important;
   }
 
   /* flex-basis 0%: evita ancho intrínseco; con grow 1 la píldora ocupa todo el hueco (pisa space-between del sitio) */
@@ -141,18 +249,39 @@
     top: auto !important;
     transform: none !important;
     max-width: none !important;
-    margin: 0 !important;
-    /* Debajo de .brand: no “invadir” el carril de marca por stacking. */
+    margin-top: 0 !important;
+    margin-left: 0 !important;
+    margin-bottom: 0 !important;
+    margin-right: clamp(250px, calc(18vw + 30px), 390px) !important;
+    /* Base invitado: z-index 1. Con sesión, regla siguiente sube .header-actions encima del trazo del wordmark. */
     z-index: 1 !important;
+    /*
+     * flex-start: cluster → carril carrito (order 20) → search (order 30); margin-right aleja del borde viewport.
+     */
     display: flex !important;
-    justify-content: flex-end !important;
+    justify-content: flex-start !important;
     align-items: center !important;
     align-self: stretch !important;
     flex-wrap: nowrap !important;
+    padding-left: 0 !important;
+    column-gap: clamp(6px, 0.6vw, 12px) !important;
+    row-gap: 0 !important;
+  }
+
+  /*
+   * Sesión: .header-actions por encima de .brand (z 8) en pintura — si no, el wordmark tapa
+   * LOGOUT, carrito y búsqueda en dj-profile / index / rentals (mismo header unificado).
+   */
+  body.mdj-logged-in-header
+    #mainHeader.header.mdj-header-unified
+    .header-top
+    .container
+    > .header-actions {
+    z-index: 12 !important;
   }
 
   #mainHeader.mdj-header-unified .brand {
-    max-width: min(var(--mdj-header-brand-slot), 100%) !important;
+    max-width: min(var(--mdj-header-brand-slot, 660px), 100%) !important;
     overflow: visible !important;
     flex-shrink: 0 !important;
   }
@@ -213,8 +342,9 @@
     max-width: min(1200px, 100%) !important;
     margin-left: auto !important;
     margin-right: auto !important;
-    padding-left: max(16px, env(safe-area-inset-left, 0px)) !important;
-    padding-right: max(16px, env(safe-area-inset-right, 0px)) !important;
+    /* Misma caja horizontal que .header-top .container (paralelo con hero). */
+    padding-left: max(20px, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(20px, env(safe-area-inset-right, 0px)) !important;
     box-sizing: border-box !important;
     overflow-x: visible !important;
     overflow-y: hidden !important;
@@ -256,7 +386,8 @@
     /* Navegadores viejos: inicio. Modernos: centrado si cabe; si no, inicio (evita recortar “MI PERFIL” a “MI P”). */
     justify-content: flex-start !important;
     justify-content: safe center !important;
-    padding-left: 0 !important;
+    /* Simétrico con padding-right: centrado óptico alineado al riel del contenedor. */
+    padding-left: clamp(10px, 1.2vw, 20px) !important;
     padding-right: clamp(10px, 1.2vw, 20px) !important;
     scroll-padding-inline: 12px !important;
     row-gap: 0 !important;
@@ -400,39 +531,135 @@
     order: 0 !important;
     flex-shrink: 0 !important;
     margin-right: 0 !important;
+    margin-left: 0 !important;
   }
 
-  /* Refuerzo: carrito + búsqueda hacia la derecha (audit carga después; ver mdj-header-desktop-audit.css).
-     Debe ganar a mdj-header-vip.css (inline-flex en sesión) para que #header-auth-zone + carrito + search
-     participen como hijos directos de .header-actions. */
+  /* Primer hijo del cluster: margen 0 + mismo riel vertical (44px) que Entrar/Salir y avatar. */
+  #mainHeader.header.mdj-header-unified .header-actions .mdj-header-r1-auth-cluster > .lang-switcher {
+    margin-left: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 44px !important;
+    box-sizing: border-box !important;
+  }
+
+  /*
+   * Cluster fila 1: pegado al inicio del carril; margin-right fijo separa carrito/search (sin margin-right:auto).
+   */
+  #mainHeader.header.mdj-header-unified .header-actions .mdj-header-r1-auth-cluster {
+    align-items: center !important;
+    column-gap: clamp(6px, 0.85vw, 12px) !important;
+    margin-left: 0 !important;
+    margin-right: clamp(8px, 1vw, 20px) !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-actions .mdj-header-r1-auth-cluster > #header-login-btn {
+    align-self: center !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-actions .mdj-header-r1-auth-cluster > #header-auth-zone {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    min-height: 44px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Invitado + logueado: mismo riel horizontal (avatar fijo + reserva de nombre). */
+  #mainHeader.header.mdj-header-unified .header-actions #header-auth-zone > * {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    align-self: stretch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+    box-sizing: border-box !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-actions .mdj-header-r1-auth-cluster #header-auth-zone .account-btn.mdj-guest-access-trigger {
+    padding: 0 8px 0 4px !important;
+    gap: 10px !important;
+  }
+
+  /* Reserva de nombre (vacía en invitado) — mismo ancho que .mdj-account-display-name logueado. */
+  #mainHeader.header.mdj-header-unified .header-actions .mdj-guest-access-trigger::after {
+    content: '\00a0' !important;
+    display: inline-block !important;
+    flex: 0 1 clamp(64px, 8vw, 120px) !important;
+    min-width: clamp(64px, 8vw, 120px) !important;
+    max-width: clamp(64px, 8vw, 120px) !important;
+    height: 1em !important;
+    visibility: hidden !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    box-sizing: border-box !important;
+  }
+
+  /*
+   * Carril carrito: 38px shop (oculto off-shop) + 38px Event Cart — reservado desde T0 (no display:contents).
+   * Gana a mdj-header-vip.css display:contents en sesión.
+   */
   #mainHeader.header.mdj-header-unified .header-actions .header-avatar-cart-row {
-    display: contents !important;
+    order: 20 !important;
+    display: inline-flex !important;
+    flex: 0 0 var(--mdj-header-cart-rail-w, 76px) !important;
+    width: var(--mdj-header-cart-rail-w, 76px) !important;
+    min-width: var(--mdj-header-cart-rail-w, 76px) !important;
+    max-width: var(--mdj-header-cart-rail-w, 76px) !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    column-gap: clamp(6px, 0.6vw, 12px) !important;
+    flex-shrink: 0 !important;
+    flex-wrap: nowrap !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
   }
 
-  /* Cuenta: caja reservada en desktop (anti-acordeón al hidratar VIP / nombre largo). */
-  /* Invitado: solo anillo / CTA estrecho — no reservar 220px+ que roba carril al branding. */
+  /*
+   * ZERO-ACCORDION: misma caja invitado / session-pending / logueado (pisa styles.css session-pending 52px).
+   */
   #mainHeader.header.mdj-header-unified .header-actions #header-auth-zone {
     margin-left: 0 !important;
     box-sizing: border-box !important;
     flex-shrink: 0 !important;
     flex-grow: 0 !important;
-    min-width: clamp(52px, 8vw, 120px) !important;
-    max-width: min(280px, 32vw) !important;
-    min-height: 48px !important;
+    width: var(--mdj-header-auth-slot-w, clamp(172px, 12vw, 200px)) !important;
+    min-width: var(--mdj-header-auth-slot-w, clamp(172px, 12vw, 200px)) !important;
+    max-width: var(--mdj-header-auth-slot-w, clamp(172px, 12vw, 200px)) !important;
+    flex: 0 0 var(--mdj-header-auth-slot-w, clamp(172px, 12vw, 200px)) !important;
+    min-height: 44px !important;
+    display: inline-flex !important;
     align-items: center !important;
-    justify-content: flex-end !important;
+    justify-content: flex-start !important;
+    overflow: hidden !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-actions #header-auth-zone.session-pending {
+    display: inline-flex !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    width: var(--mdj-header-auth-slot-w, clamp(172px, 12vw, 200px)) !important;
+    min-width: var(--mdj-header-auth-slot-w, clamp(172px, 12vw, 200px)) !important;
+    max-width: var(--mdj-header-auth-slot-w, clamp(172px, 12vw, 200px)) !important;
+    flex: 0 0 var(--mdj-header-auth-slot-w, clamp(172px, 12vw, 200px)) !important;
+    flex-basis: var(--mdj-header-auth-slot-w, clamp(172px, 12vw, 200px)) !important;
   }
 
   body.mdj-logged-in-header #mainHeader.header.mdj-header-unified .header-actions #header-auth-zone {
-    min-width: clamp(160px, 22vw, 280px) !important;
-    max-width: min(340px, 38vw) !important;
+    width: var(--mdj-header-auth-slot-w, clamp(172px, 12vw, 200px)) !important;
+    min-width: var(--mdj-header-auth-slot-w, clamp(172px, 12vw, 200px)) !important;
+    max-width: var(--mdj-header-auth-slot-w, clamp(172px, 12vw, 200px)) !important;
+    flex: 0 0 var(--mdj-header-auth-slot-w, clamp(172px, 12vw, 200px)) !important;
   }
 
   /* P1 — parallel rail: guest ring matches VIP .mdj-avatar-ring (49px); same vertical axis as session. */
   #mainHeader.header.mdj-header-unified .header-actions .mdj-guest-access-trigger {
     display: inline-flex !important;
     align-items: center !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
     box-sizing: border-box !important;
     min-height: 44px !important;
   }
@@ -445,7 +672,11 @@
     box-sizing: border-box !important;
   }
 
-  #mainHeader.header.mdj-header-unified .header-actions .mdj-account-vip-row {
+  #mainHeader.header.mdj-header-unified .header-actions #header-auth-zone .mdj-account-vip,
+  #mainHeader.header.mdj-header-unified .header-actions #header-auth-zone .mdj-account-vip-row {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
     align-items: center !important;
     box-sizing: border-box !important;
     min-height: 44px !important;
@@ -456,6 +687,7 @@
     display: inline-flex !important;
     align-items: center !important;
     justify-content: flex-start !important;
+    width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
     min-height: 44px !important;
@@ -477,7 +709,7 @@
 
   #mainHeader.header.mdj-header-unified .header-actions #header-auth-zone .mdj-account-display-name {
     min-width: 0 !important;
-    max-width: min(11rem, 32vw) !important;
+    max-width: clamp(64px, 8vw, 120px) !important;
     font-size: 18px !important;
     line-height: 1.2 !important;
     overflow: hidden !important;
@@ -498,35 +730,60 @@
   }
 
   /*
-   * Carrito + búsqueda: translateX alinea con barra ancha (fila 1 = --header-height).
+   * Carrito (shop link + Event Cart): ranura fija 38px antes del search; z-index por encima del input.
    */
-  #mainHeader.header.mdj-header-unified .header-actions a#header-cart-link.header-cart-btn {
-    transform: translateX(215px) !important;
-    flex: 0 0 auto !important;
-    flex-shrink: 0 !important;
-    align-self: center !important;
-    box-sizing: border-box !important;
+  #mainHeader.header.mdj-header-unified .header-actions #header-cart-link.header-cart-btn {
+    flex: 0 0 38px !important;
     width: 38px !important;
     height: 38px !important;
     min-width: 38px !important;
-    min-height: 38px !important;
     max-width: 38px !important;
+    min-height: 38px !important;
     max-height: 38px !important;
+    transform: none !important;
+    position: relative !important;
+    z-index: 5 !important;
+    flex-shrink: 0 !important;
+    align-self: center !important;
+    box-sizing: border-box !important;
+    font-size: 24px !important;
+    line-height: 1 !important;
+    aspect-ratio: 1 / 1 !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-actions #mdj-eb-header-cart-open.header-cart-btn {
+    order: 21 !important;
+    margin-right: clamp(10px, 1vw, 18px) !important;
+    flex: 0 0 38px !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+    transform: none !important;
+    position: relative !important;
+    z-index: 5 !important;
+    flex-shrink: 0 !important;
+    align-self: center !important;
+    box-sizing: border-box !important;
     font-size: 24px !important;
     line-height: 1 !important;
     aspect-ratio: 1 / 1 !important;
   }
 
   #mainHeader.header.mdj-header-unified .header-actions .header-search-wrap {
+    order: 30 !important;
     margin-right: 0 !important;
-    transform: translateX(215px) !important;
-    /* P1 anti-acordeón: no encoger cuando auth/pills/VIP cambian ancho intrínseco (antes flex: 0 1 …). */
+    margin-left: clamp(20px, 1.6vw, 32px) !important;
+    flex: 0 0 clamp(140px, 12vw, 220px) !important;
+    width: clamp(140px, 12vw, 220px) !important;
+    max-width: clamp(140px, 12vw, 220px) !important;
+    min-width: 140px !important;
+    transform: translateX(-5px) !important;
+    z-index: 1 !important;
     flex-grow: 0 !important;
     flex-shrink: 0 !important;
-    flex-basis: clamp(280px, 42vw, 520px) !important;
-    width: clamp(280px, 42vw, 520px) !important;
-    min-width: clamp(280px, 42vw, 520px) !important;
-    max-width: min(590px, 46vw) !important;
     box-sizing: border-box !important;
   }
 
@@ -539,10 +796,10 @@
     }
 
     #mainHeader.header.mdj-header-unified .header-actions .header-search-wrap {
-      flex-basis: clamp(220px, 32vw, 420px) !important;
-      width: clamp(220px, 32vw, 420px) !important;
-      min-width: clamp(220px, 32vw, 420px) !important;
-      max-width: min(520px, 42vw) !important;
+      flex: 0 0 clamp(140px, 12vw, 220px) !important;
+      width: clamp(140px, 12vw, 220px) !important;
+      min-width: 140px !important;
+      max-width: clamp(140px, 12vw, 220px) !important;
     }
   }
 
@@ -631,7 +888,16 @@
     box-shadow: 0 0 8px rgba(197, 160, 89, 0.45) !important;
   }
 
+  /*
+   * Inicio — menú estable: sin “safe center” (micro-salto al cambiar ancho) + slots 12ch (LEY ANTI-BRINCO).
+   */
+  body.page-home #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav {
+    justify-content: flex-start !important;
+  }
+
   body.page-home #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a {
+    min-width: 12ch !important;
+    box-sizing: border-box !important;
     color: rgba(255, 242, 220, 0.96) !important;
     text-shadow: 0 0.5px 1.5px #000, 0 0 20px rgba(0, 0, 0, 0.45), 0 0 28px rgba(197, 160, 89, 0.12) !important;
   }
@@ -1052,4 +1318,17 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
   overflow: hidden !important;
   pointer-events: none !important;
   position: static !important;
+}
+
+/*
+ * dj-profile: fila 1 cargada — misma geometría R1 que Inicio; solo sube z-index de acciones sobre el wordmark.
+ */
+@media (min-width: 1001px) {
+  body.dj-profile.mdj-logged-in-header
+    #mainHeader.header.mdj-header-unified
+    .header-top
+    .container
+    > .header-actions {
+    z-index: 16 !important;
+  }
 }
