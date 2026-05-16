@@ -7285,3 +7285,13 @@ body.page-home #home-hero .hero-grid {
   }
 }
 
+/*
+ * Localhost-only header nudge (html.mdj-header-dev-local): set by header-smart-search.js / mdj-shared-header.js.
+ * Duplicated here so a cached old header-unified.css (without this rule) still loses to this higher-specificity block.
+ */
+@media (min-width: 1001px) {
+  html.mdj-header-dev-local #mainHeader.header.mdj-header-unified .header-top .container > .header-actions {
+    transform: translateX(40px) !important;
+  }
+}
+
