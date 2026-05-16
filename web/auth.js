@@ -67,10 +67,28 @@ if (typeof window !== 'undefined') {
 /** Public IP hint (best-effort); included in device fingerprint. No auth. */
 async function mdjGetPublicIpHint() {
     try {
-        const r = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
-        if (!r.ok) return '';
-        const j = await r.json();
-        return String(j && j.ip ? j.ip : '').trim().slice(0, 45);
+        var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        var tid = null;
+        try {
+            if (ctrl) {
+                tid = setTimeout(function () {
+                    try {
+                        ctrl.abort();
+                    } catch (eAb) {
+                        void eAb;
+                    }
+                }, 3500);
+            }
+            const r = await fetch('https://api.ipify.org?format=json', {
+                cache: 'no-store',
+                signal: ctrl ? ctrl.signal : undefined
+            });
+            if (!r.ok) return '';
+            const j = await r.json();
+            return String(j && j.ip ? j.ip : '').trim().slice(0, 45);
+        } finally {
+            if (tid) clearTimeout(tid);
+        }
     } catch (e) {
         return '';
     }
@@ -173,15 +191,31 @@ async function mdjPostLoginDeviceRoutine(db, session) {
             typeof window.mdbSupabaseFunctionUrl === 'function'
                 ? window.mdbSupabaseFunctionUrl('notify-new-device-login')
                 : base + '/functions/v1/notify-new-device-login';
-        await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: 'Bearer ' + session.access_token,
-                apikey: key
-            },
-            body: JSON.stringify({ device_label: platform, approx_tz: tz, public_ip: ipPublic })
-        });
+        var ctrlN = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        var tidN = null;
+        try {
+            if (ctrlN) {
+                tidN = setTimeout(function () {
+                    try {
+                        ctrlN.abort();
+                    } catch (eN) {
+                        void eN;
+                    }
+                }, 12000);
+            }
+            await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: 'Bearer ' + session.access_token,
+                    apikey: key
+                },
+                body: JSON.stringify({ device_label: platform, approx_tz: tz, public_ip: ipPublic }),
+                signal: ctrlN ? ctrlN.signal : undefined
+            });
+        } finally {
+            if (tidN) clearTimeout(tidN);
+        }
     } catch (e) {
         console.warn('[AUTH] mdjPostLoginDeviceRoutine', e);
     }
@@ -624,6 +658,44 @@ async function waitForSupabase(maxAttempts = 10) {
     throw new Error('Supabase no está disponible. Recarga la página.');
 }
 
+function withTimeout(promise, ms, label) {
+    const tag = label || 'operation';
+    return Promise.race([
+        promise,
+        new Promise(function (_, reject) {
+            setTimeout(function () {
+                reject(new Error('timeout:' + tag));
+            }, ms);
+        })
+    ]);
+}
+
+/** Fast exit from login.html when profile queries or shared redirect promise stall. */
+function mdjLoginSafeFallbackUrl(user) {
+    if (!user) return './index.html';
+    const raw = String(mdjResolveEffectiveUserRole(user) || '').toLowerCase();
+    const ut = String(user.user_metadata?.user_type || '').toLowerCase();
+    if (raw === 'client' || ut === 'client') return './client-portal.html';
+    if (raw === 'admin' || raw === 'manager' || raw === 'seller') return './admin-dashboard.html';
+    if (raw === 'talent' || raw === 'dj' || raw === 'artist' || ut === 'talent' || ut === 'artist' || ut === 'dj') {
+        return './account-settings.html';
+    }
+    return './account-settings.html';
+}
+
+function mdjForceAuthNavigation(url) {
+    try {
+        window.location.assign(url);
+    } catch (eNav) {
+        try {
+            window.location.href = url;
+        } catch (eHref) {
+            void eHref;
+        }
+    }
+    return true;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     const signupForm = document.getElementById('signup-form');
@@ -693,6 +765,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const btn = loginForm.querySelector('button[type="submit"]');
             if (btn) { btn.disabled = true; btn.textContent = mdjAuthPageBtnT('auth-login-btn-verifying', 'Verifying…'); }
             var didStartNavigation = false;
+            var redirectWatchTid = null;
+
+            function clearRedirectWatch() {
+                if (redirectWatchTid) {
+                    clearTimeout(redirectWatchTid);
+                    redirectWatchTid = null;
+                }
+            }
+
+            function armRedirectWatch() {
+                clearRedirectWatch();
+                redirectWatchTid = setTimeout(function () {
+                    redirectWatchTid = null;
+                    try {
+                        var pathLeaf = (location.pathname || '').split('/').pop() || '';
+                        if (!/login\.html$/i.test(pathLeaf) && !location.pathname.endsWith('/login.html')) {
+                            return;
+                        }
+                    } catch (ePath) {
+                        void ePath;
+                    }
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = mdjAuthPageBtnT('login-btn-submit', 'Login');
+                    }
+                    showError(
+                        mdjAuthT(
+                            'auth-login-redirect-timeout',
+                            'La sesión inició, pero la redirección no respondió. Intenta entrar desde el menú o recarga la página.',
+                            'Signed in, but redirect did not complete. Use the menu to continue or reload the page.'
+                        ),
+                        { tone: 'error' }
+                    );
+                }, 12000);
+            }
 
             try {
                 const db = await waitForSupabase();
@@ -726,19 +833,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 const email = await resolveIdentity(identityInput, db);
 
                 if (btn) btn.textContent = mdjAuthPageBtnT('auth-login-btn-signing-in', 'Signing in…');
+                console.log('[AUTH] login: before signInWithPassword');
                 const { data: authData, error } = await db.auth.signInWithPassword({ email, password });
                 if (error) throw error;
+                console.log('[AUTH] login: after signInWithPassword', !!(authData && authData.session));
 
-                let user = authData.user;
-                try {
-                    await db.auth.refreshSession();
-                    const { data: sessFresh } = await db.auth.getSession();
-                    if (sessFresh && sessFresh.session && sessFresh.session.user) {
-                        user = sessFresh.session.user;
+                var session = authData && authData.session;
+                var user = (session && session.user) || authData.user || null;
+                if (!user) {
+                    try {
+                        const sessRes = await withTimeout(db.auth.getSession(), 3000, 'getSession');
+                        if (sessRes && sessRes.data && sessRes.data.session && sessRes.data.session.user) {
+                            session = sessRes.data.session;
+                            user = sessRes.data.session.user;
+                        }
+                    } catch (eSess) {
+                        console.warn('[AUTH] login: getSession fallback failed:', eSess);
                     }
-                } catch (eRf) {
-                    void eRf;
                 }
+                if (!user) {
+                    throw new Error(
+                        mdjAuthT(
+                            'auth-login-session-missing',
+                            'Inicio de sesión incompleto. Recarga e intenta de nuevo.',
+                            'Sign-in incomplete. Reload and try again.'
+                        )
+                    );
+                }
+                void db.auth.refreshSession().catch(function (eRfBg) {
+                    console.warn('[AUTH] refreshSession background after login:', eRfBg);
+                });
 
                 // ── SHIELD VERIFICATION NEUTRALIZED PER USER DIRECTIVE ──────────────────
                 /*
@@ -757,16 +881,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     sessionStorage.setItem('mdj_vip_welcome_pending', '1');
                 } catch (e) { /* ignore */ }
-                try {
-                    await mdjEnsureAuthProfileRows(db, user);
-                } catch (ensureErr) {
-                    console.warn('[AUTH] ensure profile after login:', ensureErr);
-                }
-                try {
-                    await mdjCheckNewDevice(db, authData.session);
-                } catch (devErr) {
-                    console.warn('[AUTH] device routine after login:', devErr);
-                }
+                void mdjEnsureAuthProfileRows(db, user).catch(function (ensureErr) {
+                    console.warn('[AUTH] ensure profile after login failed/background:', ensureErr);
+                });
+                void mdjCheckNewDevice(db, session || authData.session).catch(function (devErr) {
+                    console.warn('[AUTH] device routine after login failed/background:', devErr);
+                });
                 try {
                     var lpw = document.getElementById('login-password');
                     if (lpw) {
@@ -776,7 +896,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 } catch (eClr) {
                     void eClr;
                 }
-                const navOk = await performPostAuthRedirect(db, user);
+                armRedirectWatch();
+                _mdjPostAuthRedirectPromise = null;
+                console.log('[AUTH] login: before redirect');
+                var navOk = false;
+                try {
+                    navOk = await withTimeout(performPostAuthRedirect(db, user), 5000, 'performPostAuthRedirect');
+                } catch (redirErr) {
+                    console.warn('[AUTH] login: redirect timeout or error:', redirErr);
+                    navOk = mdjForceAuthNavigation(mdjLoginSafeFallbackUrl(user));
+                }
+                if (!navOk) {
+                    navOk = mdjForceAuthNavigation(mdjLoginSafeFallbackUrl(user));
+                }
+                console.log('[AUTH] login: after redirect', navOk);
                 if (navOk) didStartNavigation = true;
 
             } catch (err) {
@@ -793,9 +926,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     showError(err.message || 'Error al iniciar sesión.');
                 }
             } finally {
-                if (btn && !didStartNavigation) {
-                    btn.disabled = false;
-                    btn.textContent = mdjAuthPageBtnT('login-btn-submit', 'Login');
+                if (!didStartNavigation) {
+                    clearRedirectWatch();
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = mdjAuthPageBtnT('login-btn-submit', 'Login');
+                    }
                 }
             }
         });

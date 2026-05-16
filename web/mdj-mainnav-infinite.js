@@ -258,6 +258,8 @@
 
   function startDriftIfAllowed(nav) {
     if (!nav || prefersReducedMotion() || !nav.getAttribute || nav.getAttribute(MOUNTED) !== '1') return;
+    /* Inicio: sin deriva lenta — el scroll continuo se percibe como “temblor” en las pestañas. */
+    if (isPageHome()) return;
     stopDrift(nav);
     var speed = 0.32;
     var navRef = nav;
@@ -441,7 +443,7 @@
     });
   }
 
-  window.mdjReinitMainNavInfinite = function () {
+  function reinitMainNavInfiniteNow() {
     var nav = getNav();
     if (!nav) {
       return;
@@ -456,6 +458,19 @@
         if (n2) mountIfOverflow(n2);
       });
     });
+  }
+
+  var _mdjNavInfReinitTimer = null;
+  window.mdjReinitMainNavInfinite = function () {
+    if (isPageHome()) {
+      if (_mdjNavInfReinitTimer) clearTimeout(_mdjNavInfReinitTimer);
+      _mdjNavInfReinitTimer = setTimeout(function () {
+        _mdjNavInfReinitTimer = null;
+        reinitMainNavInfiniteNow();
+      }, 120);
+      return;
+    }
+    reinitMainNavInfiniteNow();
   };
 
   function boot() {

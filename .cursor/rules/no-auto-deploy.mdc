@@ -1,0 +1,41 @@
+---
+description: Sin push, merge ni deploy a producción sin frases de aprobación literales del Capitán
+alwaysApply: true
+---
+
+# Sin deploy automático (obligatorio)
+
+**Regla máxima:** construir ≠ desplegar.
+
+## Prohibido sin autorización explícita del usuario (Capitán)
+
+- `git push` (cualquier remoto/rama)
+- merge a `main` / `master`
+- deploy, producción, secretos de prod, migraciones/Edge en remoto
+- cambios fuera del alcance pactado en el ticket
+- abrir o editar archivos no autorizados en la lista acordada
+
+## Frases de aprobación (literales)
+
+| Acción | Orden requerida |
+|--------|-----------------|
+| Push | **`APROBADO PUSH`** |
+| Merge / deploy producción | **`APROBADO DEPLOY PRODUCCIÓN`** |
+
+Sin esas frases exactas: **no** ejecutar push, merge ni deploy aunque el usuario pida «subir» o «publicar» de forma vaga.
+
+## Flujo por tarea
+
+1. Diagnóstico.
+2. Lista exacta de archivos a tocar → esperar **OK**.
+3. Cambio mínimo en zona autorizada.
+4. Reportar: archivos, `git diff --stat`, BEFORE/AFTER, rollback.
+5. QA local cuando aplique.
+6. Commit → solo si el Capitán lo autoriza en el ticket.
+7. Push → solo con **`APROBADO PUSH`** (autorización separada).
+8. Merge/deploy prod → solo con **`APROBADO DEPLOY PRODUCCIÓN`**, tras preview validado.
+
+## Alcance
+
+- Misma gobernanza que `.cursor/rules/workflow-control.mdc` (zona pactada, no refactors colaterales).
+- Documentación humana: `docs/workflow-control.md` §7.

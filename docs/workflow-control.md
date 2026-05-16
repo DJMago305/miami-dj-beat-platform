@@ -19,8 +19,8 @@ La regla automática para asistentes IA está en [`.cursor/rules/workflow-contro
 | Paso | Acción |
 |------|--------|
 | Código | Cambios acotados al alcance acordado; respetar `.cursorrules` (locked files). |
-| Git | `git status` limpio o commit + `git push origin main` del fix. |
-| Deploy | En Vercel: deployment **Ready** del commit correcto. |
+| Git | `git status` limpio o commit local; push solo con **`APROBADO PUSH`**; prod solo con **`APROBADO DEPLOY PRODUCCIÓN`** tras preview OK. |
+| Deploy | En Vercel: deployment **Ready** del commit correcto (solo tras aprobación explícita; ver §7). |
 | Caché | Probar producción con recarga forzada o ventana privada si el fix “no se ve”. |
 
 ---
@@ -66,3 +66,43 @@ La regla automática para asistentes IA está en [`.cursor/rules/workflow-contro
 | **Deploy** | Confirmar Vercel + secretos Supabase si el cambio toca backend. |
 
 No sustituye CI/CD completo; reduce regresiones obvias en un sitio estático con muchas páginas compartidas.
+
+---
+
+## 7. Gate de deploy (sin automatización)
+
+**Regla máxima:** construir no es desplegar.
+
+Ningún agente ni implementador debe subir cambios a remoto ni producción sin autorización explícita del **Capitán** (producto) en el ticket o en el chat de la tarea.
+
+### Prohibido sin orden literal
+
+| Acción | Requiere |
+|--------|----------|
+| `git push` (cualquier rama) | Texto exacto: **`APROBADO PUSH`** |
+| Merge a `main` / producción / deploy Vercel / secretos Supabase en prod | Texto exacto: **`APROBADO DEPLOY PRODUCCIÓN`** |
+| Cambios fuera del alcance pactado | Ampliación escrita del ticket (Capitán + Arquitecto) |
+| Tocar archivos no listados en el ticket | **OK** explícito con lista de archivos |
+
+Variantes ambiguas («sube cuando puedas», «deploya», «publícalo») **no** sustituyen las frases anteriores.
+
+### Flujo obligatorio por tarea
+
+1. **Diagnóstico** — causa raíz, sin parches a ciegas.
+2. **Lista exacta de archivos** autorizados — esperar **OK** del Capitán.
+3. **Cambio mínimo** — solo zona pactada; respetar `.cursorrules` y archivos LOCKED.
+4. **Reporte** — archivos tocados, `git diff --stat`, BEFORE/AFTER, instrucciones de **rollback**.
+5. **QA local** — hard refresh; flujo crítico según ticket (header/auth/checkout si aplica).
+6. **Commit** — solo con autorización explícita del Capitán.
+7. **Push** — solo tras **`APROBADO PUSH`** (autorización separada del commit).
+8. **Merge / deploy producción** — solo tras **`APROBADO DEPLOY PRODUCCIÓN`**, y **después** de validar preview (Vercel Preview o entorno acordado).
+
+### Producción
+
+- Producción = `origin/main` desplegado en Vercel **Ready** + backend remoto si el ticket lo incluye.
+- **No** asumir que «está en el Mac» = producción.
+- Tras deploy: recarga forzada o ventana privada antes de dar por cerrado.
+
+### Referencia para agentes IA
+
+Regla automática: [`.cursor/rules/no-auto-deploy.mdc`](../.cursor/rules/no-auto-deploy.mdc).

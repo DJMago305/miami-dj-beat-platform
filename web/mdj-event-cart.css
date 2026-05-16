@@ -90,15 +90,17 @@ button#mdj-eb-header-cart-open.header-cart-btn.has-items:hover {
     color: #fff;
 }
 
-/* Shop Cart oculto fuera de shop: reserva estricta 38px para que el flex no colapse antes del Event Cart. */
+/* Shop Cart oculto fuera de shop: caja 0 — Event Cart ocupa el mismo eje que #header-cart-link en shop. */
 #mainHeader.header.mdj-header-unified .header-actions a#header-cart-link.header-cart-btn[data-mdj-shop-cart-hidden='1'] {
-    width: 38px !important;
+    flex: 0 0 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
     height: 38px !important;
-    min-width: 38px !important;
-    min-height: 38px !important;
-    max-width: 38px !important;
-    max-height: 38px !important;
-    flex: 0 0 38px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-width: 0 !important;
+    overflow: hidden !important;
     visibility: hidden !important;
     pointer-events: none !important;
     box-sizing: border-box !important;
@@ -106,12 +108,13 @@ button#mdj-eb-header-cart-open.header-cart-btn.has-items:hover {
 
 /*
  * Misma ranura visual que Shop Cart (header-unified.css → a#header-cart-link):
- * translateX(215px) + misma huella flex/tamaño. Fuera de shop el link está oculto
- * (mdj-shared-header); el botón Event Cart ocupa el mismo carril sin offset extra.
+ * misma huella flex/tamaño. Fuera de shop el link está oculto (mdj-shared-header);
+ * el botón Event Cart ocupa el carril sin translateX (evita solape con .header-search-wrap).
  */
 #mainHeader.header.mdj-header-unified .header-actions button#mdj-eb-header-cart-open.header-cart-btn {
-    transform: translateX(215px) !important;
-    flex: 0 0 auto !important;
+    transform: none !important;
+    flex: 0 0 38px !important;
+    z-index: 5 !important;
     flex-shrink: 0 !important;
     align-self: center !important;
     box-sizing: border-box !important;
@@ -122,7 +125,7 @@ button#mdj-eb-header-cart-open.header-cart-btn.has-items:hover {
     max-width: 38px !important;
     max-height: 38px !important;
     margin-left: 0 !important;
-    margin-right: 0 !important;
+    margin-right: clamp(10px, 1vw, 18px) !important;
     position: relative !important;
     font-size: 24px !important;
     line-height: 1 !important;
@@ -130,7 +133,7 @@ button#mdj-eb-header-cart-open.header-cart-btn.has-items:hover {
 }
 
 #mainHeader.header.mdj-header-unified .header-actions button#mdj-eb-header-cart-open.header-cart-btn.has-items {
-    transform: translateX(215px) !important;
+    transform: none !important;
 }
 
 #mdj-event-builder-root .mdj-eb-overlay[hidden],
