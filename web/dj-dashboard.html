@@ -3854,6 +3854,7 @@
                                     <div class="acct-row">
                                         <img id="acct-photo-thumb" src="./assets/dj-avatar-placeholder.png"
                                             class="acct-photo-thumb" alt="Photo">
+                                        <input type="hidden" id="cfg-photo-url" value="">
                                     </div>
                                 </div>
                                 <div id="hero-cover-card" style="flex:1;min-width:min(100%,280px);max-width:100%;">
@@ -4701,6 +4702,12 @@
             if (id === 'billing' && typeof refreshBillingPanel === 'function') {
                 refreshBillingPanel();
             }
+            if ((id === 'agenda' || id === 'account') && typeof loadSettingsForm === 'function') {
+                var weekly = document.getElementById('cfg-agenda-weekly-container');
+                if (weekly && !weekly.querySelector('.wk-t-row')) {
+                    loadSettingsForm().catch(function () { /* noop */ });
+                }
+            }
         }
 
         // ── Modal helpers ──────────────────────────────────────
@@ -4720,7 +4727,16 @@
             if (id === 'm-photo') {
                 const thumb = document.getElementById('acct-photo-thumb');
                 const prev = document.getElementById('m-photo-preview');
-                if (thumb && prev) prev.src = thumb.src;
+                var cfgPhEl = document.getElementById('cfg-photo-url');
+                var cachedPhoto = (window.__mdjDashPhotoUrl && String(window.__mdjDashPhotoUrl).trim())
+                    || (cfgPhEl && cfgPhEl.value ? String(cfgPhEl.value).trim() : '');
+                if (prev) {
+                    if (cachedPhoto && typeof mdjBustImgUrl === 'function') {
+                        prev.src = mdjBustImgUrl(cachedPhoto);
+                    } else if (thumb) {
+                        prev.src = thumb.src;
+                    }
+                }
                 const pmsg = document.getElementById('m-photo-msg');
                 if (pmsg) { pmsg.style.display = 'none'; pmsg.textContent = ''; }
                 const pfile = document.getElementById('m-photo-file');
@@ -4930,24 +4946,29 @@
         }
 
         function mdjPhotoModalApplyAvatarSrc(urlOrPlaceholder) {
-            var bust = urlOrPlaceholder;
-            if (urlOrPlaceholder && urlOrPlaceholder.indexOf('placeholder') === -1 && typeof mdjBustImgUrl === 'function') {
-                bust = mdjBustImgUrl(String(urlOrPlaceholder).trim());
-            }
-            var ts = urlOrPlaceholder && urlOrPlaceholder.indexOf('placeholder') === -1
-                ? bust + (bust.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now()
-                : bust;
+            var raw = urlOrPlaceholder ? String(urlOrPlaceholder).trim() : '';
+            var isPlaceholder = !raw || raw.indexOf('placeholder') !== -1;
+            var displaySrc = isPlaceholder
+                ? './assets/dj-avatar-placeholder.png'
+                : (typeof mdjBustImgUrl === 'function' ? mdjBustImgUrl(raw) : raw);
             var prev = document.getElementById('m-photo-preview');
             var thumb = document.getElementById('acct-photo-thumb');
             var main = document.getElementById('acct-avatar');
-            if (prev) prev.src = ts;
-            if (thumb) thumb.src = ts;
-            if (main) main.src = ts;
+            if (prev) prev.src = displaySrc;
+            if (thumb) thumb.src = displaySrc;
+            if (main) main.src = displaySrc;
             var headAv = document.getElementById('header-avatar-img');
-            if (headAv) headAv.src = ts;
-            document.querySelectorAll('#accountBtn .avatar').forEach(function (im) { im.src = ts; });
-            if (urlOrPlaceholder && urlOrPlaceholder.indexOf('placeholder') === -1 && typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
-                window.mdjHeaderVipApplyPhotoUrl(String(urlOrPlaceholder).trim());
+            if (headAv) headAv.src = displaySrc;
+            document.querySelectorAll('#accountBtn .avatar').forEach(function (im) { im.src = displaySrc; });
+            var cfgPh = document.getElementById('cfg-photo-url');
+            if (cfgPh) cfgPh.value = isPlaceholder ? '' : raw;
+            window.__mdjDashPhotoUrl = isPlaceholder ? '' : raw;
+            if (!isPlaceholder) {
+                var rejBanner = document.getElementById('photo-rejection-banner');
+                if (rejBanner) rejBanner.style.display = 'none';
+                if (typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
+                    window.mdjHeaderVipApplyPhotoUrl(raw);
+                }
             }
         }
 
@@ -5370,8 +5391,27 @@
         async function loadSettingsForm() {
             const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
             if (!sb) return;
-            const { data: { session } } = await sb.auth.getSession();
-            if (!session) return;
+            const user = await mdjDashResolveSettingsUser(sb, 8000);
+            if (!user || !user.id) return;
+            var userEmail = user.email ? String(user.email) : '';
+            if (!userEmail && sb.auth) {
+                try {
+                    var emailOut = await Promise.race([
+                        sb.auth.getUser(),
+                        new Promise(function (_, reject) {
+                            setTimeout(function () { reject(new Error('EMAIL_TIMEOUT')); }, 5000);
+                        })
+                    ]);
+                    if (emailOut && emailOut.data && emailOut.data.user && emailOut.data.user.email) {
+                        userEmail = String(emailOut.data.user.email);
+                    }
+                } catch (eEmail) {
+                    if (eEmail && eEmail.message !== 'EMAIL_TIMEOUT') {
+                        console.warn('[dashboard] loadSettingsForm getUser email:', eEmail);
+                    }
+                }
+            }
+            const session = { user: { id: user.id, email: userEmail } };
 
             var loadErr = document.getElementById('cfg-settings-load-error');
             if (loadErr) {
@@ -5457,6 +5497,7 @@
                 }
             })();
             set('cfg-photo-url', p.photo_url);
+            window.__mdjDashPhotoUrl = p.photo_url ? String(p.photo_url).trim() : '';
             set('cfg-bg-url', p.background_url || p.cover_url);
             (function initHeroCoverFromProfile() {
                 var fx = p.photo_focal_x != null ? Number(p.photo_focal_x) : 50;
@@ -6363,23 +6404,38 @@
         }
 
         function mdjDashPatchWithTimeout(patchPromise, timeoutMs) {
-            var ms = timeoutMs || 18000;
+            var ms = timeoutMs || 12000;
             return Promise.race([
                 patchPromise,
                 new Promise(function (_, reject) {
                     setTimeout(function () {
-                        reject(new Error('Timeout guardando agenda'));
+                        reject(new Error('Timeout guardando agenda (12s)'));
                     }, ms);
                 })
             ]);
         }
 
+        function mdjDashRefetchCalendarEvents() {
+            if (!window.mdjCalendarInstance || typeof window.mdjCalendarInstance.refetchEvents !== 'function') {
+                return;
+            }
+            try {
+                window.mdjCalendarInstance.refetchEvents();
+            } catch (eRef) {
+                console.warn('[dashboard] refetchEvents:', eRef);
+            }
+        }
+
         // Función Aislada Guardado Agenda
         async function saveAgendaSettings(e) {
-            e.preventDefault();
-            const btn = e && (e.currentTarget || e.target);
+            if (e && e.preventDefault) e.preventDefault();
+            var btn = (e && e.currentTarget) || null;
+            if (!btn && e && e.target && e.target.closest) {
+                btn = e.target.closest('button');
+            }
             if (!btn) return;
             var saved = false;
+            var prevLabel = btn.textContent;
 
             try {
                 btn.disabled = true;
@@ -6425,8 +6481,8 @@
                 };
 
                 const patchRes = await mdjDashPatchWithTimeout(
-                    sb.from('dj_profiles').update(updates).eq('user_id', user.id),
-                    18000
+                    sb.from('dj_profiles').update(updates).eq('user_id', user.id).select('user_id').maybeSingle(),
+                    12000
                 );
                 if (patchRes && patchRes.error) {
                     throw new Error(patchRes.error.message || 'No se pudo guardar la agenda');
@@ -6439,9 +6495,7 @@
                         updates
                     );
                 }
-                if (window.mdjCalendarInstance && typeof window.mdjCalendarInstance.refetchEvents === 'function') {
-                    window.mdjCalendarInstance.refetchEvents();
-                }
+                setTimeout(mdjDashRefetchCalendarEvents, 0);
 
                 saved = true;
                 btn.textContent = 'Guardado';
@@ -6452,7 +6506,7 @@
             } finally {
                 btn.disabled = false;
                 setTimeout(function () {
-                    if (btn) btn.textContent = 'Guardar Agenda';
+                    if (btn) btn.textContent = prevLabel || 'Guardar Agenda';
                 }, saved ? 2000 : 3500);
             }
         }
