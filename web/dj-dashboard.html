@@ -4904,75 +4904,185 @@
             };
             reader.readAsDataURL(file);
         }
-        async function uploadProfilePhoto() {
-            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
-            if (!sb) return;
-            const file = document.getElementById('m-photo-file').files[0];
-            const msg = document.getElementById('m-photo-msg');
-            if (!file) {
-                msg.style.display = 'block';
-                msg.textContent = 'Primero pulsa «Seleccionar foto…» y elige un archivo.';
-                msg.style.color = '#ff5555';
-                return;
-            }
-            const { data: { user } } = await sb.auth.getUser();
-            if (!user) return;
-            var ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-            if (!/^(jpe?g|png|webp)$/.test(ext)) ext = 'jpg';
-            /* Misma ruta que account-settings: {uid}/avatar.ext — políticas RLS de storage.objects exigen carpeta = auth.uid(). */
-            const path = user.id + '/avatar.' + ext;
-            const { error: upErr } = await sb.storage.from('avatars').upload(path, file, { upsert: true, cacheControl: '3600', contentType: file.type || undefined });
-            if (upErr) {
-                msg.style.display = 'block';
-                msg.textContent = 'Error al subir: ' + upErr.message;
-                msg.style.color = '#ff5555';
-                return;
-            }
-            const pub = sb.storage.from('avatars').getPublicUrl(path);
-            const publicUrl = pub.data && pub.data.publicUrl ? pub.data.publicUrl : '';
-            if (!publicUrl) {
-                msg.style.display = 'block';
-                msg.textContent = 'Subida OK pero no se obtuvo URL pública.';
-                msg.style.color = '#ff5555';
-                return;
-            }
-            await sb.from('dj_profiles').update({ photo_url: publicUrl }).eq('user_id', user.id);
-            try {
-                await sb.auth.updateUser({ data: { avatar_url: publicUrl } });
-            } catch (e) { void e; }
-            try { await sb.auth.refreshSession(); } catch (e) { void e; }
-            // Update UI (photo_url en dj_profiles = única fuente de verdad para header VIP)
-            document.getElementById('acct-avatar').src = publicUrl + '?t=' + Date.now();
-            document.getElementById('acct-photo-thumb').src = publicUrl + '?t=' + Date.now();
-            document.getElementById('m-photo-preview').src = publicUrl + '?t=' + Date.now();
-            var headAv = document.getElementById('header-avatar-img');
-            if (headAv) headAv.src = publicUrl + '?t=' + Date.now();
-            document.querySelectorAll('#accountBtn .avatar').forEach(function (im) { im.src = publicUrl + '?t=' + Date.now(); });
-            if (typeof window.mdjHeaderVipApplyPhotoUrl === 'function') window.mdjHeaderVipApplyPhotoUrl(publicUrl);
+
+        function mdjPhotoModalShowMsg(text, color) {
+            var msg = document.getElementById('m-photo-msg');
+            if (!msg) return;
             msg.style.display = 'block';
-            msg.textContent = 'Foto guardada.';
-            msg.style.color = '#22c55e';
-            setTimeout(() => closeModal('m-photo'), 1200);
+            msg.textContent = text || '';
+            msg.style.color = color || 'rgba(255,255,255,0.65)';
         }
-        async function deleteProfilePhoto() {
-            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
-            if (!sb) return;
-            const { data: { user } } = await sb.auth.getUser();
-            if (!user) return;
-            await sb.from('dj_profiles').update({ photo_url: null }).eq('user_id', user.id);
+
+        function mdjPhotoModalSetBusy(busy) {
+            var root = document.getElementById('m-photo');
+            if (!root) return;
+            root.querySelectorAll('button').forEach(function (btn) { btn.disabled = !!busy; });
+            var cancel = root.querySelector('.m-cancel');
+            if (cancel) {
+                cancel.style.pointerEvents = busy ? 'none' : '';
+                cancel.style.opacity = busy ? '0.45' : '';
+            }
+            var closeX = root.querySelector('.acct-modal-x');
+            if (closeX) {
+                closeX.style.pointerEvents = busy ? 'none' : '';
+                closeX.style.opacity = busy ? '0.45' : '';
+            }
+        }
+
+        function mdjPhotoModalApplyAvatarSrc(urlOrPlaceholder) {
+            var bust = urlOrPlaceholder;
+            if (urlOrPlaceholder && urlOrPlaceholder.indexOf('placeholder') === -1 && typeof mdjBustImgUrl === 'function') {
+                bust = mdjBustImgUrl(String(urlOrPlaceholder).trim());
+            }
+            var ts = urlOrPlaceholder && urlOrPlaceholder.indexOf('placeholder') === -1
+                ? bust + (bust.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now()
+                : bust;
+            var prev = document.getElementById('m-photo-preview');
+            var thumb = document.getElementById('acct-photo-thumb');
+            var main = document.getElementById('acct-avatar');
+            if (prev) prev.src = ts;
+            if (thumb) thumb.src = ts;
+            if (main) main.src = ts;
+            var headAv = document.getElementById('header-avatar-img');
+            if (headAv) headAv.src = ts;
+            document.querySelectorAll('#accountBtn .avatar').forEach(function (im) { im.src = ts; });
+            if (urlOrPlaceholder && urlOrPlaceholder.indexOf('placeholder') === -1 && typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
+                window.mdjHeaderVipApplyPhotoUrl(String(urlOrPlaceholder).trim());
+            }
+        }
+
+        /** CONFIG actions: prefer header-hydrated uid; fallback auth with timeout (avoids hung getSession). */
+        async function mdjDashResolveSettingsUser(sb, timeoutMs) {
+            var navUid = window.__mdjNavOwnUserId ? String(window.__mdjNavOwnUserId).trim() : '';
+            if (navUid) {
+                return { id: navUid };
+            }
+            if (!sb || !sb.auth) return null;
+            var ms = timeoutMs || 8000;
+            function race(promise) {
+                return Promise.race([
+                    promise,
+                    new Promise(function (_, reject) {
+                        setTimeout(function () { reject(new Error('SESSION_TIMEOUT')); }, ms);
+                    })
+                ]);
+            }
             try {
-                await sb.auth.updateUser({ data: { avatar_url: '' } });
-            } catch (e) { void e; }
-            try { await sb.auth.refreshSession(); } catch (e) { void e; }
-            const ph = './assets/dj-avatar-placeholder.png';
-            document.getElementById('acct-avatar').src = ph;
-            document.getElementById('acct-photo-thumb').src = ph;
-            document.getElementById('m-photo-preview').src = ph;
-            var headAv2 = document.getElementById('header-avatar-img');
-            if (headAv2) headAv2.src = ph;
-            document.querySelectorAll('#accountBtn .avatar').forEach(function (im) { im.src = ph; });
-            if (typeof window.checkSessionForNav === 'function') void window.checkSessionForNav();
-            closeModal('m-photo');
+                var sessOut = await race(sb.auth.getSession());
+                if (sessOut && sessOut.data && sessOut.data.session && sessOut.data.session.user) {
+                    return sessOut.data.session.user;
+                }
+            } catch (eSess) {
+                if (eSess && eSess.message !== 'SESSION_TIMEOUT') {
+                    console.warn('[dashboard] settings getSession:', eSess);
+                }
+            }
+            try {
+                var userOut = await race(sb.auth.getUser());
+                if (userOut && userOut.data && userOut.data.user) return userOut.data.user;
+            } catch (eUser) {
+                console.warn('[dashboard] settings getUser:', eUser);
+            }
+            return null;
+        }
+
+        async function uploadProfilePhoto() {
+            var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            var fileInput = document.getElementById('m-photo-file');
+            var file = fileInput && fileInput.files && fileInput.files[0];
+            mdjPhotoModalSetBusy(true);
+            try {
+                if (!sb) {
+                    mdjPhotoModalShowMsg('No hay conexión con el servidor. Recarga la página.', '#ff5555');
+                    return;
+                }
+                if (!file) {
+                    mdjPhotoModalShowMsg('Primero pulsa «Seleccionar foto…» y elige un archivo.', '#ff5555');
+                    return;
+                }
+                mdjPhotoModalShowMsg('Uploading…', 'rgba(255,255,255,0.7)');
+                var user = await mdjDashResolveSettingsUser(sb, 8000);
+                if (!user || !user.id) {
+                    mdjPhotoModalShowMsg('Sesión no disponible. Cierra sesión, vuelve a entrar e inténtalo de nuevo.', '#ff5555');
+                    return;
+                }
+                var ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+                if (!/^(jpe?g|png|webp)$/.test(ext)) ext = 'jpg';
+                /* Misma ruta que account-settings: {uid}/avatar.ext — políticas RLS de storage.objects exigen carpeta = auth.uid(). */
+                var path = user.id + '/avatar.' + ext;
+                var upRes = await sb.storage.from('avatars').upload(path, file, {
+                    upsert: true,
+                    cacheControl: '3600',
+                    contentType: file.type || undefined
+                });
+                if (upRes.error) {
+                    mdjPhotoModalShowMsg('Error al subir: ' + (upRes.error.message || 'storage'), '#ff5555');
+                    return;
+                }
+                var pub = sb.storage.from('avatars').getPublicUrl(path);
+                var publicUrl = pub.data && pub.data.publicUrl ? pub.data.publicUrl : '';
+                if (!publicUrl) {
+                    mdjPhotoModalShowMsg('Subida OK pero no se obtuvo URL pública.', '#ff5555');
+                    return;
+                }
+                var dbRes = await sb.from('dj_profiles').update({ photo_url: publicUrl }).eq('user_id', user.id);
+                if (dbRes.error) {
+                    mdjPhotoModalShowMsg('Subida OK pero no se guardó en perfil: ' + (dbRes.error.message || 'database'), '#ff5555');
+                    return;
+                }
+                void sb.auth.updateUser({ data: { avatar_url: publicUrl } }).catch(function (e) {
+                    console.warn('[dashboard] m-photo updateUser (background):', e);
+                });
+                void sb.auth.refreshSession().catch(function (e) {
+                    console.warn('[dashboard] m-photo refreshSession (background):', e);
+                });
+                mdjPhotoModalApplyAvatarSrc(publicUrl);
+                mdjPhotoModalShowMsg('Foto guardada.', '#22c55e');
+                setTimeout(function () { closeModal('m-photo'); }, 1200);
+            } catch (err) {
+                console.warn('[dashboard] uploadProfilePhoto:', err);
+                mdjPhotoModalShowMsg('Error inesperado: ' + (err && err.message ? err.message : 'inténtalo de nuevo'), '#ff5555');
+            } finally {
+                mdjPhotoModalSetBusy(false);
+            }
+        }
+
+        async function deleteProfilePhoto() {
+            var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            mdjPhotoModalSetBusy(true);
+            try {
+                if (!sb) {
+                    mdjPhotoModalShowMsg('No hay conexión con el servidor. Recarga la página.', '#ff5555');
+                    return;
+                }
+                mdjPhotoModalShowMsg('Removing…', 'rgba(255,255,255,0.7)');
+                var user = await mdjDashResolveSettingsUser(sb, 8000);
+                if (!user || !user.id) {
+                    mdjPhotoModalShowMsg('Sesión no disponible. Cierra sesión, vuelve a entrar e inténtalo de nuevo.', '#ff5555');
+                    return;
+                }
+                var dbRes = await sb.from('dj_profiles').update({ photo_url: null }).eq('user_id', user.id);
+                if (dbRes.error) {
+                    mdjPhotoModalShowMsg('No se pudo quitar la foto: ' + (dbRes.error.message || 'database'), '#ff5555');
+                    return;
+                }
+                void sb.auth.updateUser({ data: { avatar_url: '' } }).catch(function (e) {
+                    console.warn('[dashboard] m-photo updateUser (background):', e);
+                });
+                void sb.auth.refreshSession().catch(function (e) {
+                    console.warn('[dashboard] m-photo refreshSession (background):', e);
+                });
+                var ph = './assets/dj-avatar-placeholder.png';
+                mdjPhotoModalApplyAvatarSrc(ph);
+                if (typeof window.checkSessionForNav === 'function') void window.checkSessionForNav();
+                mdjPhotoModalShowMsg('Foto eliminada.', '#22c55e');
+                setTimeout(function () { closeModal('m-photo'); }, 900);
+            } catch (err) {
+                console.warn('[dashboard] deleteProfilePhoto:', err);
+                mdjPhotoModalShowMsg('Error inesperado: ' + (err && err.message ? err.message : 'inténtalo de nuevo'), '#ff5555');
+            } finally {
+                mdjPhotoModalSetBusy(false);
+            }
         }
 
         // ── Email change ───────────────────────────────────────
@@ -6252,17 +6362,33 @@
             cont.innerHTML = html;
         }
 
+        function mdjDashPatchWithTimeout(patchPromise, timeoutMs) {
+            var ms = timeoutMs || 18000;
+            return Promise.race([
+                patchPromise,
+                new Promise(function (_, reject) {
+                    setTimeout(function () {
+                        reject(new Error('Timeout guardando agenda'));
+                    }, ms);
+                })
+            ]);
+        }
+
         // Función Aislada Guardado Agenda
         async function saveAgendaSettings(e) {
             e.preventDefault();
-            const btn = e.target;
-            btn.textContent = 'Guardando...';
+            const btn = e && (e.currentTarget || e.target);
+            if (!btn) return;
+            var saved = false;
 
             try {
+                btn.disabled = true;
+                btn.textContent = 'Guardando...';
+
                 const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
                 if (!sb) throw new Error('Supabase no conectado');
-                const { data: { session } } = await sb.auth.getSession();
-                if (!session) throw new Error('No hay sesión activa');
+                const user = await mdjDashResolveSettingsUser(sb, 8000);
+                if (!user || !user.id) throw new Error('No hay sesión activa');
 
                 const activeDays = Array.from(document.querySelectorAll('.cfg-day-chk:checked')).map(el => el.value).join(',');
                 const sched = (document.getElementById('cfg-agenda-tstart').value + '-' + document.getElementById('cfg-agenda-tend').value).replace(/^-|-$/g, '');
@@ -6298,8 +6424,13 @@
                     weekly_schedule: weekly_sched
                 };
 
-                const { error } = await sb.from('dj_profiles').update(updates).eq('user_id', session.user.id);
-                if (error) throw error;
+                const patchRes = await mdjDashPatchWithTimeout(
+                    sb.from('dj_profiles').update(updates).eq('user_id', user.id),
+                    18000
+                );
+                if (patchRes && patchRes.error) {
+                    throw new Error(patchRes.error.message || 'No se pudo guardar la agenda');
+                }
 
                 if (window.mdjAgendaEngineContext) {
                     window.mdjAgendaEngineContext.profile = Object.assign(
@@ -6312,12 +6443,17 @@
                     window.mdjCalendarInstance.refetchEvents();
                 }
 
+                saved = true;
                 btn.textContent = 'Guardado';
-                setTimeout(() => btn.textContent = 'Guardar Agenda', 2000);
             } catch (err) {
-                console.error(err);
-                btn.textContent = 'Error: Revisa consola';
-                setTimeout(() => btn.textContent = 'Guardar Agenda', 3000);
+                console.error('[dashboard] saveAgendaSettings:', err);
+                var em = (err && err.message) ? String(err.message) : 'Error al guardar';
+                btn.textContent = em.length > 48 ? ('Error: ' + em.slice(0, 45) + '…') : ('Error: ' + em);
+            } finally {
+                btn.disabled = false;
+                setTimeout(function () {
+                    if (btn) btn.textContent = 'Guardar Agenda';
+                }, saved ? 2000 : 3500);
             }
         }
         document.addEventListener('DOMContentLoaded', () => {
@@ -6346,6 +6482,7 @@
 
     <script src="./header-smart-search.js?v=20260421-smartsearch-dj-directory"></script>
     <script src="./mdj-shared-header.js?v=20260516-tier-badge-unified-1"></script>
+    <script src="./js/mdj-profile-owner-link.js?v=20260516-perf-ab-1"></script>
   <script src="./mdj-owner-tabs-marquee.js?v=20260427-no-marquee"></script>
   <script src="./mdj-social-bar.js?v=20260513-dashboard-private"></script>
 </body>
