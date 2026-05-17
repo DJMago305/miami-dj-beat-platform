@@ -1107,6 +1107,214 @@
       return { ok: true, value: n };
     }
 
+    function mdjAccountSaveLangEs() {
+      try {
+        var ls = document.getElementById('select-platform-language');
+        if (ls && ls.value === 'es') return true;
+        if (ls && ls.value === 'en') return false;
+      } catch (eLs) { /* ignore */ }
+      try {
+        if (window.i18n && window.i18n.currentLang === 'es') return true;
+        if (window.i18n && window.i18n.currentLang === 'en') return false;
+      } catch (eI) { /* ignore */ }
+      return (
+        document.documentElement.lang &&
+        String(document.documentElement.lang).toLowerCase().indexOf('es') === 0
+      );
+    }
+
+    function mdjProfileUiBustUrl(baseUrl) {
+      if (!baseUrl || !String(baseUrl).trim()) return '';
+      var raw = String(baseUrl).trim().split('?')[0];
+      return raw + '?v=' + Date.now();
+    }
+
+    function mdjApplyAvatarEverywhere(basePublicUrl) {
+      if (!basePublicUrl || !String(basePublicUrl).trim()) return;
+      var bust = mdjProfileUiBustUrl(basePublicUrl);
+      var safe = String(bust).replace(/"/g, '&quot;');
+      var avContainer = document.getElementById('avatar-preview-container');
+      if (avContainer) {
+        avContainer.innerHTML =
+          '<img src="' + safe + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="" />';
+        avContainer.style.border = 'none';
+      }
+      if (typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
+        window.mdjHeaderVipApplyPhotoUrl(String(basePublicUrl).trim().split('?')[0]);
+      }
+      try {
+        document.querySelectorAll('img.avatar, img.mdj-header-vip-avatar, #navAvatarImg, #accountBtn .avatar').forEach(function (av) {
+          if (av) av.src = bust;
+        });
+      } catch (eAv) { /* ignore */ }
+    }
+
+    function mdjBgAuthNavRefresh(dbInstance, timeoutMs) {
+      if (!dbInstance || !dbInstance.auth) return;
+      var ms = typeof timeoutMs === 'number' ? timeoutMs : 5000;
+      void Promise.race([
+        (async function () {
+          try {
+            await dbInstance.auth.refreshSession();
+          } catch (rsErr) {
+            console.warn('[MDJ-SYSTEM] mdjBgAuthNavRefresh refreshSession', rsErr);
+          }
+          try {
+            if (typeof window.checkSessionForNav === 'function') {
+              await Promise.resolve(window.checkSessionForNav());
+            }
+          } catch (navErr) {
+            console.warn('[MDJ-SYSTEM] mdjBgAuthNavRefresh checkSessionForNav', navErr);
+          }
+        })(),
+        new Promise(function (_, reject) {
+          setTimeout(function () {
+            reject(new Error('mdjBgAuthNavRefresh timeout'));
+          }, ms);
+        })
+      ]).catch(function () { /* non-fatal */ });
+    }
+
+    var mdjAcct = {
+      ready: false,
+      db: null,
+      session: null,
+      cp: null,
+      mdjAvatarUploadBusy: false,
+      actionsWired: false,
+      runAvatarUpload: null,
+      onSavePersonalClick: null
+    };
+
+    function mdjSetAvatarFeedback(msg) {
+      var el = document.getElementById('avatar-upload-feedback');
+      if (!el) return;
+      if (!msg) {
+        el.style.display = 'none';
+        el.textContent = '';
+        return;
+      }
+      el.style.display = 'block';
+      el.textContent = msg;
+    }
+
+    function mdjSetSavePersonalFeedback(kind, msg) {
+      var el = document.getElementById('save-personal-feedback');
+      if (!el) return;
+      if (!msg) {
+        el.style.display = 'none';
+        el.textContent = '';
+        el.className = 'fineprint';
+        return;
+      }
+      el.style.display = 'block';
+      el.className = 'fineprint ' + (kind === 'ok' ? 'success' : kind === 'err' ? 'err' : '');
+      el.textContent = msg;
+    }
+
+    function mdjAccountSettingsPendingFeedback(which) {
+      var es = mdjAccountSaveLangEs();
+      if (which === 'photo') {
+        mdjSetAvatarFeedback(
+          es
+            ? 'Cargando tu sesión… Vuelve a pulsar Cambiar foto en un momento.'
+            : 'Loading your session… Tap Change Photo again in a moment.'
+        );
+      } else if (which === 'save') {
+        mdjSetSavePersonalFeedback(
+          'err',
+          es
+            ? 'Cargando configuración… Vuelve a pulsar Guardar en un momento.'
+            : 'Loading settings… Tap Save again in a moment.'
+        );
+      }
+    }
+
+    function mdjWireAccountSettingsActionsEarly() {
+      if (mdjAcct.actionsWired) return;
+      mdjAcct.actionsWired = true;
+      var btnPhoto = document.getElementById('btn-change-photo');
+      var fileInput = document.getElementById('avatar-upload');
+      var previewTarget = document.getElementById('avatar-preview-container');
+      var btnSavePersonal = document.getElementById('btn-save-personal');
+
+      if (btnPhoto && fileInput) {
+        btnPhoto.addEventListener('click', function (e) {
+          e.preventDefault();
+          if (!mdjAcct.ready || typeof mdjAcct.runAvatarUpload !== 'function') {
+            mdjAccountSettingsPendingFeedback('photo');
+            return;
+          }
+          fileInput.click();
+        });
+        if (previewTarget) {
+          previewTarget.addEventListener('click', function () {
+            if (!mdjAcct.ready || typeof mdjAcct.runAvatarUpload !== 'function') {
+              mdjAccountSettingsPendingFeedback('photo');
+              return;
+            }
+            fileInput.click();
+          });
+          previewTarget.addEventListener('keydown', function (ev) {
+            if (ev.key === 'Enter' || ev.key === ' ') {
+              ev.preventDefault();
+              if (!mdjAcct.ready || typeof mdjAcct.runAvatarUpload !== 'function') {
+                mdjAccountSettingsPendingFeedback('photo');
+                return;
+              }
+              fileInput.click();
+            }
+          });
+          ['dragenter', 'dragover'].forEach(function (nm) {
+            previewTarget.addEventListener(nm, function (e) {
+              e.preventDefault();
+              e.stopPropagation();
+              previewTarget.classList.add('mdj-avatar-drop-target');
+            });
+          });
+          previewTarget.addEventListener('dragleave', function (e) {
+            e.preventDefault();
+            previewTarget.classList.remove('mdj-avatar-drop-target');
+          });
+          previewTarget.addEventListener('drop', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            previewTarget.classList.remove('mdj-avatar-drop-target');
+            var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+            if (!f) return;
+            if (!mdjAcct.ready || typeof mdjAcct.runAvatarUpload !== 'function') {
+              mdjAccountSettingsPendingFeedback('photo');
+              return;
+            }
+            void mdjAcct.runAvatarUpload(f);
+          });
+        }
+        fileInput.addEventListener('change', async function (e) {
+          var f = e.target.files && e.target.files[0];
+          try {
+            e.target.value = '';
+          } catch (v0) { /* ignore */ }
+          if (!f) return;
+          if (!mdjAcct.ready || typeof mdjAcct.runAvatarUpload !== 'function') {
+            mdjAccountSettingsPendingFeedback('photo');
+            return;
+          }
+          await mdjAcct.runAvatarUpload(f);
+        });
+      }
+
+      if (btnSavePersonal) {
+        btnSavePersonal.addEventListener('click', async function (e) {
+          e.preventDefault();
+          if (!mdjAcct.ready || typeof mdjAcct.onSavePersonalClick !== 'function') {
+            mdjAccountSettingsPendingFeedback('save');
+            return;
+          }
+          await mdjAcct.onSavePersonalClick(e);
+        });
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
       // Mobile Menu Toggle
       const mobileBtn = document.getElementById('mobileMenuBtn');
@@ -1117,6 +1325,8 @@
           mobileMenu.classList.toggle('active');
         });
       }
+
+      mdjWireAccountSettingsActionsEarly();
 
       // Strict session enforcement (wait for lazy singleton if CDN was slow)
       try {
@@ -1132,6 +1342,8 @@
         }
         const { data: { session }, error } = await db.auth.getSession();
         if (session && session.user) {
+          mdjAcct.db = db;
+          mdjAcct.session = session;
           const meta = session.user.user_metadata || {};
 
           // --- Controladores Aislados de Roles (Fase 1: Preparación) ---
@@ -1262,6 +1474,7 @@
             var cpRes = await db.from('client_profiles').select('*').eq('user_id', session.user.id).maybeSingle();
             cp = cpRes && cpRes.data ? cpRes.data : null;
           } catch (cpErr) { /* non-fatal */ }
+          mdjAcct.cp = cp;
 
           /* Dirección / perfil: con fila client_profiles, solo la DB (no mezclar OAuth/JWT encima). Sin fila, fallback a user_metadata (registro nuevo). */
           var metaCity =
@@ -1393,26 +1606,7 @@
             try {
               localStorage.setItem('mdj_lang_sync_tick', String(Date.now()));
             } catch (e1) { /* ignore */ }
-            if (typeof window.checkSessionForNav === 'function') {
-              Promise.resolve(window.checkSessionForNav()).catch(function () { /* ignore */ });
-            }
-          }
-
-          /** Idioma UI (perfil / errores): selector plataforma, luego i18n.currentLang, luego lang del documento. */
-          function mdjAccountSaveLangEs() {
-            try {
-              var ls = document.getElementById('select-platform-language');
-              if (ls && ls.value === 'es') return true;
-              if (ls && ls.value === 'en') return false;
-            } catch (eLs) { /* ignore */ }
-            try {
-              if (window.i18n && window.i18n.currentLang === 'es') return true;
-              if (window.i18n && window.i18n.currentLang === 'en') return false;
-            } catch (eI) { /* ignore */ }
-            return (
-              document.documentElement.lang &&
-              String(document.documentElement.lang).toLowerCase().indexOf('es') === 0
-            );
+            mdjBgAuthNavRefresh(mdjAcct.db, 5000);
           }
 
           function mdjSyncSavePersonalIdleLabel() {
@@ -1476,47 +1670,37 @@
             }
           }
 
-          // -- Avatar Upload Engine (botón + clic en círculo + arrastrar/soltar)
-          const btnPhoto = document.getElementById('btn-change-photo');
-          const fileInput = document.getElementById('avatar-upload');
-          const previewTarget = document.getElementById('avatar-preview-container');
-          /** Evita choque red/UI: no guardar perfil mientras sube el avatar (y viceversa). */
-          var mdjAvatarUploadBusy = false;
+          // -- Avatar Upload Engine (listeners wired early via mdjWireAccountSettingsActionsEarly)
+          mdjAcct.runAvatarUpload = async function (file) {
+            var btnPhoto = document.getElementById('btn-change-photo');
+            var previewTarget = document.getElementById('avatar-preview-container');
+            var db = mdjAcct.db;
+            var session = mdjAcct.session;
+            if (!btnPhoto || !db || !session || !session.user) return;
 
-          function setAvatarFeedback(msg) {
-            var el = document.getElementById('avatar-upload-feedback');
-            if (!el) return;
-            if (!msg) {
-              el.style.display = 'none';
-              el.textContent = '';
-              return;
-            }
-            el.style.display = 'block';
-            el.textContent = msg;
-          }
-
-          async function mdjRunAvatarUpload(file) {
-            setAvatarFeedback('');
+            mdjSetAvatarFeedback('');
             if (!file || !file.type || !/^image\/(jpeg|jpg|png|webp)$/i.test(file.type)) {
               btnPhoto.textContent = 'Use JPG/PNG/WebP';
-              setAvatarFeedback('Please use a JPG, PNG, or WebP image (max size depends on your Supabase upload limits).');
+              mdjSetAvatarFeedback(
+                'Please use a JPG, PNG, or WebP image (max size depends on your Supabase upload limits).'
+              );
               setTimeout(function () {
                 btnPhoto.textContent = 'Change Photo';
-                setAvatarFeedback('');
+                mdjSetAvatarFeedback('');
               }, 5000);
               return;
             }
             var bsBusyChk = document.getElementById('btn-save-personal');
-            var esAvWait = document.documentElement.lang && String(document.documentElement.lang).toLowerCase().indexOf('es') === 0;
+            var esAvWait = mdjAccountSaveLangEs();
             if (bsBusyChk && bsBusyChk.classList.contains('saving-state')) {
-              setAvatarFeedback(
+              mdjSetAvatarFeedback(
                 esAvWait
                   ? 'Espera a que termine de guardar el perfil antes de cambiar la foto.'
                   : 'Wait until profile save finishes before changing your photo.'
               );
               return;
             }
-            mdjAvatarUploadBusy = true;
+            mdjAcct.mdjAvatarUploadBusy = true;
             var btnSavLock = document.getElementById('btn-save-personal');
             if (btnSavLock && !btnSavLock.classList.contains('saving-state')) {
               btnSavLock.disabled = true;
@@ -1527,6 +1711,7 @@
                 console.error('[MDJ-SYSTEM] avatar upload watchdog: 90s timeout');
                 btnPhoto.textContent = 'Upload Failed';
                 btnPhoto.disabled = false;
+                mdjAcct.mdjAvatarUploadBusy = false;
                 setTimeout(function () { btnPhoto.textContent = 'Change Photo'; }, 4000);
               }
             }, 90000);
@@ -1534,7 +1719,8 @@
             btnPhoto.textContent = 'Uploading...';
             btnPhoto.disabled = true;
             if (previewTarget) {
-              previewTarget.innerHTML = '<img src="' + String(previewUrl).replace(/"/g, '&quot;') + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="" />';
+              previewTarget.innerHTML =
+                '<img src="' + String(previewUrl).replace(/"/g, '&quot;') + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="" />';
               previewTarget.style.border = 'none';
             }
             try {
@@ -1556,9 +1742,9 @@
               var pub = db.storage.from('avatars').getPublicUrl(filePath);
               if (!pub || !pub.data) throw new Error('Could not get public URL for avatar.');
               var basePublicUrl = pub.data.publicUrl;
-              var finalPublicUrl = basePublicUrl + '?v=' + Date.now();
-              var sessWrap = await db.auth.getSession();
-              var sessionUser = (sessWrap && sessWrap.data && sessWrap.data.session && sessWrap.data.session.user) || session.user;
+              var finalPublicUrl = mdjProfileUiBustUrl(basePublicUrl);
+              mdjApplyAvatarEverywhere(basePublicUrl);
+              var sessionUser = session.user;
               var fallbackMeta = (sessionUser && sessionUser.user_metadata) || {};
               var upAuth = await db.auth.updateUser({
                 data: Object.assign({}, fallbackMeta, { avatar_url: finalPublicUrl })
@@ -1566,18 +1752,6 @@
               if (upAuth.error) {
                 console.error('[MDJ-SYSTEM] auth.updateUser avatar FAILED', upAuth.error);
                 throw upAuth.error;
-              }
-              try {
-                await db.auth.refreshSession();
-              } catch (rsErr) {
-                console.error('[MDJ-SYSTEM] auth.refreshSession after avatar', rsErr);
-              }
-              if (typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
-                window.mdjHeaderVipApplyPhotoUrl(basePublicUrl);
-              } else {
-                document.querySelectorAll('img.avatar, img.mdj-header-vip-avatar, #navAvatarImg').forEach(function (av) {
-                  if (av) av.src = finalPublicUrl;
-                });
               }
               var persistAsArtist = false;
               try {
@@ -1602,26 +1776,32 @@
                 });
                 var clRes = await db.from('client_profiles').upsert(mergedAv, { onConflict: 'user_id' });
                 if (clRes.error) console.error('[MDJ-SYSTEM] client_profiles avatar upsert FAILED', clRes.error);
+                if (mdjAcct.cp) {
+                  mdjAcct.cp.avatar_url = basePublicUrl;
+                  mdjAcct.cp.photo_url = basePublicUrl;
+                }
               }
               btnPhoto.textContent = 'Change Photo';
               btnPhoto.disabled = false;
-              if (typeof window.checkSessionForNav === 'function') {
-                Promise.resolve(window.checkSessionForNav()).catch(function (navErr) {
-                  console.error('[MDJ-SYSTEM] checkSessionForNav after avatar', navErr);
-                });
-              }
-              setAvatarFeedback('');
+              mdjSetAvatarFeedback(
+                mdjAccountSaveLangEs() ? 'Foto actualizada.' : 'Photo updated.'
+              );
+              setTimeout(function () { mdjSetAvatarFeedback(''); }, 4000);
+              mdjBgAuthNavRefresh(db, 5000);
             } catch (err) {
-              var detail = (err && (err.message || err.error_description || err.msg)) ? String(err.message || err.error_description || err.msg) : String(err);
+              var detail =
+                err && (err.message || err.error_description || err.msg)
+                  ? String(err.message || err.error_description || err.msg)
+                  : String(err);
               console.error('[MDJ-SYSTEM] avatar upload FAILED', detail, err);
               btnPhoto.textContent = 'Upload Failed';
-              setAvatarFeedback(detail || 'Upload failed. Check the browser console for details.');
+              mdjSetAvatarFeedback(detail || 'Upload failed. Check the browser console for details.');
               setTimeout(function () {
                 btnPhoto.textContent = 'Change Photo';
                 btnPhoto.disabled = false;
               }, 3200);
             } finally {
-              mdjAvatarUploadBusy = false;
+              mdjAcct.mdjAvatarUploadBusy = false;
               var bsUnlock = document.getElementById('btn-save-personal');
               if (bsUnlock && bsUnlock.getAttribute('data-mdj-paused-for-avatar') === '1') {
                 bsUnlock.removeAttribute('data-mdj-paused-for-avatar');
@@ -1632,85 +1812,36 @@
               try {
                 clearTimeout(uploadWatchdog);
               } catch (fw) { /* ignore */ }
-            }
-          }
-
-          if (btnPhoto && fileInput) {
-            btnPhoto.addEventListener('click', function (e) {
-              e.preventDefault();
-              fileInput.click();
-            });
-            if (previewTarget) {
-              previewTarget.addEventListener('click', function () {
-                fileInput.click();
-              });
-              previewTarget.addEventListener('keydown', function (ev) {
-                if (ev.key === 'Enter' || ev.key === ' ') {
-                  ev.preventDefault();
-                  fileInput.click();
-                }
-              });
-              ['dragenter', 'dragover'].forEach(function (nm) {
-                previewTarget.addEventListener(nm, function (e) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  previewTarget.classList.add('mdj-avatar-drop-target');
-                });
-              });
-              previewTarget.addEventListener('dragleave', function (e) {
-                e.preventDefault();
-                previewTarget.classList.remove('mdj-avatar-drop-target');
-              });
-              previewTarget.addEventListener('drop', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                previewTarget.classList.remove('mdj-avatar-drop-target');
-                var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-                if (f) void mdjRunAvatarUpload(f);
-              });
-            }
-            fileInput.addEventListener('change', async function (e) {
-              var f = e.target.files && e.target.files[0];
               try {
-                e.target.value = '';
-              } catch (v0) { /* ignore */ }
-              if (f) await mdjRunAvatarUpload(f);
-            });
-          }
+                URL.revokeObjectURL(previewUrl);
+              } catch (rv) { /* ignore */ }
+            }
+          };
 
           // -- Save Personal Info Engine
           const btnSavePersonal = document.getElementById('btn-save-personal');
-          const savePersonalFeedback = document.getElementById('save-personal-feedback');
-          function setSavePersonalFeedback(kind, msg) {
-            if (!savePersonalFeedback) return;
-            if (!msg) {
-              savePersonalFeedback.style.display = 'none';
-              savePersonalFeedback.textContent = '';
-              savePersonalFeedback.className = 'fineprint';
-              return;
-            }
-            savePersonalFeedback.style.display = 'block';
-            savePersonalFeedback.className = 'fineprint ' + (kind === 'ok' ? 'success' : kind === 'err' ? 'err' : '');
-            savePersonalFeedback.textContent = msg;
+
+          function mdjSaveWithTimeout(promise, ms, label) {
+            return Promise.race([
+              Promise.resolve(promise),
+              new Promise(function (_, reject) {
+                setTimeout(function () {
+                  reject(new Error((label || 'Save') + ' timed out after ' + ms + 'ms — check network or Supabase.'));
+                }, ms);
+              })
+            ]);
           }
 
-          if (btnSavePersonal) {
-            function mdjSaveWithTimeout(promise, ms, label) {
-              return Promise.race([
-                Promise.resolve(promise),
-                new Promise(function (_, reject) {
-                  setTimeout(function () {
-                    reject(new Error((label || 'Save') + ' timed out after ' + ms + 'ms — check network or Supabase.'));
-                  }, ms);
-                })
-              ]);
-            }
+          mdjAcct.onSavePersonalClick = async function (e) {
+              var btnSavePersonal = document.getElementById('btn-save-personal');
+              var db = mdjAcct.db;
+              var session = mdjAcct.session;
+              var cp = mdjAcct.cp;
+              if (!btnSavePersonal || !db || !session) return;
 
-            btnSavePersonal.addEventListener('click', async (e) => {
-              e.preventDefault();
               var esClick = mdjAccountSaveLangEs();
-              if (typeof mdjAvatarUploadBusy !== 'undefined' && mdjAvatarUploadBusy) {
-                setSavePersonalFeedback(
+              if (mdjAcct.mdjAvatarUploadBusy) {
+                mdjSetSavePersonalFeedback(
                   'err',
                   esClick
                     ? 'Espera a que termine la subida de la foto; luego podrás guardar el perfil.'
@@ -1718,7 +1849,7 @@
                 );
                 return;
               }
-              setSavePersonalFeedback('', '');
+              mdjSetSavePersonalFeedback('', '');
               btnSavePersonal.textContent = esClick ? 'Guardando...' : 'Saving...';
               btnSavePersonal.classList.add('saving-state');
               btnSavePersonal.disabled = true;
@@ -1733,7 +1864,7 @@
                   btnSavePersonal.classList.remove('saving-state');
                   btnSavePersonal.disabled = false;
                   btnSavePersonal.textContent = esW ? 'Confirmar cambios' : 'Save';
-                  setSavePersonalFeedback('err', esW
+                  mdjSetSavePersonalFeedback('err', esW
                     ? 'La petición tardó demasiado. Comprueba la red e inténtalo de nuevo.'
                     : 'Request took too long. Check your connection and try again.');
                 }
@@ -1760,7 +1891,7 @@
                   btnSavePersonal.disabled = false;
                   var esU = mdjAccountSaveLangEs();
                   btnSavePersonal.textContent = esU ? 'Confirmar cambios' : 'Save';
-                  setSavePersonalFeedback('err', esU
+                  mdjSetSavePersonalFeedback('err', esU
                     ? 'Usuario: 3–30 caracteres; solo letras, números o guion bajo (el @ al inicio es opcional).'
                     : (uVal.msg || 'Invalid username.'));
                   return;
@@ -1885,46 +2016,17 @@
                 btnSavePersonal.classList.remove('saving-state');
                 btnSavePersonal.classList.add('success-pulse');
                 btnSavePersonal.style.opacity = '1';
-                setSavePersonalFeedback('ok', labelSaved);
+                mdjSetSavePersonalFeedback('ok', labelSaved);
 
                 setTimeout(function () {
                   btnSavePersonal.textContent = labelSaveIdle;
                   btnSavePersonal.classList.remove('success-pulse');
                   btnSavePersonal.disabled = false;
-                  setSavePersonalFeedback('', '');
+                  mdjSetSavePersonalFeedback('', '');
                 }, 1600);
 
-                void (async function mdjPostSavePersonalBg() {
-                  mdjInvokeNotifyAccountProfileChange(db, 'profile_save');
-                  try {
-                    await mdjSaveWithTimeout(db.auth.refreshSession(), 10000, 'auth.refreshSession');
-                  } catch (rs2) {
-                    console.error('[MDJ-SYSTEM] auth.refreshSession after save', rs2);
-                  }
-                  try {
-                    var guAv = await mdjSaveWithTimeout(db.auth.getUser(), 8000, 'auth.getUser avatar');
-                    var mAv =
-                      guAv &&
-                      guAv.data &&
-                      guAv.data.user &&
-                      guAv.data.user.user_metadata
-                        ? guAv.data.user.user_metadata
-                        : currentSessionMeta;
-                    var avRefresh = (mAv.avatar_url || mAv.picture || '').trim();
-                    if (avRefresh && typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
-                      window.mdjHeaderVipApplyPhotoUrl(avRefresh.split('?')[0]);
-                    }
-                  } catch (avEx) {
-                    /* non-fatal */
-                  }
-                  try {
-                    if (typeof window.checkSessionForNav === 'function') {
-                      await Promise.resolve(window.checkSessionForNav());
-                    }
-                  } catch (bgErr) {
-                    console.error('[MDJ-SYSTEM] checkSessionForNav after save', bgErr);
-                  }
-                })();
+                mdjInvokeNotifyAccountProfileChange(db, 'profile_save');
+                mdjBgAuthNavRefresh(db, 8000);
 
               } catch (err) {
                 clearTimeout(watchdog);
@@ -1934,30 +2036,18 @@
                 var errDetail = (err && (err.message || err.error_description || err.msg)) ? String(err.message || err.error_description || err.msg) : '';
                 var isTimeout = /timed out|timeout/i.test(errDetail);
                 if (isTimeout) {
-                  try {
-                    await mdjSaveWithTimeout(db.auth.refreshSession(), 20000, 'auth.refreshSession');
-                  } catch (r1) { /* ignore */ }
-                  try {
-                    if (typeof window.checkSessionForNav === 'function') {
-                      await mdjSaveWithTimeout(Promise.resolve(window.checkSessionForNav()), 15000, 'checkSessionForNav');
-                    }
-                  } catch (n1) { /* ignore */ }
+                  mdjBgAuthNavRefresh(db, 8000);
                   btnSavePersonal.classList.remove('saving-state');
                   btnSavePersonal.classList.remove('success-pulse');
                   btnSavePersonal.style.opacity = '1';
                   btnSavePersonal.disabled = false;
                   btnSavePersonal.textContent = labelSaveErr;
-                  setSavePersonalFeedback(
-                    'ok',
+                  mdjSetSavePersonalFeedback(
+                    'err',
                     langEs2
-                      ? 'La red tardó; actualizamos tu sesión. Recargando para mostrar los últimos datos (incl. foto si ya subió).'
-                      : 'Network was slow; we refreshed your session. Reloading to show the latest data (including your photo if it uploaded).'
+                      ? 'La red tardó demasiado. Si guardaste la foto, debería verse arriba; vuelve a pulsar Guardar o recarga solo si hace falta.'
+                      : 'Network was slow. If your photo uploaded, it should appear above; tap Save again or refresh only if needed.'
                   );
-                  setTimeout(function () {
-                    try {
-                      window.location.reload();
-                    } catch (rl) { /* ignore */ }
-                  }, 1400);
                   return;
                 }
                 btnSavePersonal.textContent = langEs2 ? 'Error al guardar' : 'Save failed';
@@ -1977,14 +2067,25 @@
                     (errDetail ? ' ' + errDetail : '') +
                     (errDetail ? '' : ' Check the browser console (F12).');
                 }
-                setSavePersonalFeedback('err', errFeedbackMsg);
+                mdjSetSavePersonalFeedback('err', errFeedbackMsg);
                 setTimeout(function () {
                   mdjSyncSavePersonalIdleLabel();
-                  setSavePersonalFeedback('', '');
+                  mdjSetSavePersonalFeedback('', '');
                 }, 6000);
+              } finally {
+                try {
+                  clearTimeout(watchdog);
+                } catch (fwWd) { /* ignore */ }
+                if (btnSavePersonal && btnSavePersonal.classList.contains('saving-state')) {
+                  btnSavePersonal.classList.remove('saving-state');
+                  btnSavePersonal.disabled = false;
+                  btnSavePersonal.style.opacity = '1';
+                  mdjSyncSavePersonalIdleLabel();
+                }
               }
-            });
-          }
+          };
+
+          mdjAcct.ready = true;
 
           // -- Change password: verify current via signInWithPassword, then auth.updateUser({ password })
           const btnUpdatePassword = document.getElementById('btn-update-password');
