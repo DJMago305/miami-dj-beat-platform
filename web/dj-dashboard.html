@@ -4951,7 +4951,13 @@
             }
         }
 
-        async function mdjPhotoModalResolveUser(sb, timeoutMs) {
+        /** CONFIG actions: prefer header-hydrated uid; fallback auth with timeout (avoids hung getSession). */
+        async function mdjDashResolveSettingsUser(sb, timeoutMs) {
+            var navUid = window.__mdjNavOwnUserId ? String(window.__mdjNavOwnUserId).trim() : '';
+            if (navUid) {
+                return { id: navUid };
+            }
+            if (!sb || !sb.auth) return null;
             var ms = timeoutMs || 8000;
             function race(promise) {
                 return Promise.race([
@@ -4968,14 +4974,14 @@
                 }
             } catch (eSess) {
                 if (eSess && eSess.message !== 'SESSION_TIMEOUT') {
-                    console.warn('[dashboard] m-photo getSession:', eSess);
+                    console.warn('[dashboard] settings getSession:', eSess);
                 }
             }
             try {
                 var userOut = await race(sb.auth.getUser());
                 if (userOut && userOut.data && userOut.data.user) return userOut.data.user;
             } catch (eUser) {
-                console.warn('[dashboard] m-photo getUser fallback:', eUser);
+                console.warn('[dashboard] settings getUser:', eUser);
             }
             return null;
         }
@@ -4995,8 +5001,8 @@
                     return;
                 }
                 mdjPhotoModalShowMsg('Uploading…', 'rgba(255,255,255,0.7)');
-                var user = await mdjPhotoModalResolveUser(sb, 8000);
-                if (!user) {
+                var user = await mdjDashResolveSettingsUser(sb, 8000);
+                if (!user || !user.id) {
                     mdjPhotoModalShowMsg('Sesión no disponible. Cierra sesión, vuelve a entrar e inténtalo de nuevo.', '#ff5555');
                     return;
                 }
@@ -5050,8 +5056,8 @@
                     return;
                 }
                 mdjPhotoModalShowMsg('Removing…', 'rgba(255,255,255,0.7)');
-                var user = await mdjPhotoModalResolveUser(sb, 8000);
-                if (!user) {
+                var user = await mdjDashResolveSettingsUser(sb, 8000);
+                if (!user || !user.id) {
                     mdjPhotoModalShowMsg('Sesión no disponible. Cierra sesión, vuelve a entrar e inténtalo de nuevo.', '#ff5555');
                     return;
                 }
@@ -6356,17 +6362,33 @@
             cont.innerHTML = html;
         }
 
+        function mdjDashPatchWithTimeout(patchPromise, timeoutMs) {
+            var ms = timeoutMs || 18000;
+            return Promise.race([
+                patchPromise,
+                new Promise(function (_, reject) {
+                    setTimeout(function () {
+                        reject(new Error('Timeout guardando agenda'));
+                    }, ms);
+                })
+            ]);
+        }
+
         // Función Aislada Guardado Agenda
         async function saveAgendaSettings(e) {
             e.preventDefault();
-            const btn = e.target;
-            btn.textContent = 'Guardando...';
+            const btn = e && (e.currentTarget || e.target);
+            if (!btn) return;
+            var saved = false;
 
             try {
+                btn.disabled = true;
+                btn.textContent = 'Guardando...';
+
                 const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
                 if (!sb) throw new Error('Supabase no conectado');
-                const { data: { session } } = await sb.auth.getSession();
-                if (!session) throw new Error('No hay sesión activa');
+                const user = await mdjDashResolveSettingsUser(sb, 8000);
+                if (!user || !user.id) throw new Error('No hay sesión activa');
 
                 const activeDays = Array.from(document.querySelectorAll('.cfg-day-chk:checked')).map(el => el.value).join(',');
                 const sched = (document.getElementById('cfg-agenda-tstart').value + '-' + document.getElementById('cfg-agenda-tend').value).replace(/^-|-$/g, '');
@@ -6402,8 +6424,13 @@
                     weekly_schedule: weekly_sched
                 };
 
-                const { error } = await sb.from('dj_profiles').update(updates).eq('user_id', session.user.id);
-                if (error) throw error;
+                const patchRes = await mdjDashPatchWithTimeout(
+                    sb.from('dj_profiles').update(updates).eq('user_id', user.id),
+                    18000
+                );
+                if (patchRes && patchRes.error) {
+                    throw new Error(patchRes.error.message || 'No se pudo guardar la agenda');
+                }
 
                 if (window.mdjAgendaEngineContext) {
                     window.mdjAgendaEngineContext.profile = Object.assign(
@@ -6416,12 +6443,17 @@
                     window.mdjCalendarInstance.refetchEvents();
                 }
 
+                saved = true;
                 btn.textContent = 'Guardado';
-                setTimeout(() => btn.textContent = 'Guardar Agenda', 2000);
             } catch (err) {
-                console.error(err);
-                btn.textContent = 'Error: Revisa consola';
-                setTimeout(() => btn.textContent = 'Guardar Agenda', 3000);
+                console.error('[dashboard] saveAgendaSettings:', err);
+                var em = (err && err.message) ? String(err.message) : 'Error al guardar';
+                btn.textContent = em.length > 48 ? ('Error: ' + em.slice(0, 45) + '…') : ('Error: ' + em);
+            } finally {
+                btn.disabled = false;
+                setTimeout(function () {
+                    if (btn) btn.textContent = 'Guardar Agenda';
+                }, saved ? 2000 : 3500);
             }
         }
         document.addEventListener('DOMContentLoaded', () => {
