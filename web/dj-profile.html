@@ -4113,6 +4113,48 @@
             { key: 'social_web', icon: '🌐', label: 'Website' },
         ];
 
+        var MDJ_PROFILE_P1_COLS =
+            'id,user_id,dj_name,stage_name,full_name,photo_url,background_url,photo_focal_x,photo_focal_y,hero_bg_zoom,' +
+            'verified,plan,plan_status,plan_expires_at,plan_type,is_premium,subscription_status,available,role,' +
+            'rating,review_count,soundfortips_active,city,region,roles';
+
+        async function mdjProfileResolveDb() {
+            for (var i = 0; i < 20; i++) {
+                var db0 = window.getSupabaseClient ? window.getSupabaseClient() : null;
+                if (db0) return db0;
+                await new Promise(function (r) { setTimeout(r, 40); });
+            }
+            return window.getSupabaseClient ? window.getSupabaseClient() : null;
+        }
+
+        function mdjProfileRunSecondary(fn) {
+            var run = function () {
+                try {
+                    var out = fn();
+                    if (out && typeof out.then === 'function') {
+                        out.catch(function (e) {
+                            try { console.warn('[dj-profile] phase2', e); } catch (e2) { void e2; }
+                        });
+                    }
+                } catch (e) {
+                    try { console.warn('[dj-profile] phase2', e); } catch (e2) { void e2; }
+                }
+            };
+            if (typeof requestAnimationFrame === 'function') {
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                        if (typeof requestIdleCallback === 'function') {
+                            requestIdleCallback(run, { timeout: 2500 });
+                        } else {
+                            setTimeout(run, 0);
+                        }
+                    });
+                });
+            } else {
+                setTimeout(run, 0);
+            }
+        }
+
         async function loadProfile() {
             /** Vuelta desde Stripe Checkout (create-sft-tip-checkout): limpiar URL y mostrar tostada al final del load. */
             let mdjSftStripeReturn = null;
@@ -4170,11 +4212,8 @@
                 }, 480);
             }
 
-            let db = null;
-            for (let i = 0; i < 20 && !db; i++) {
-                db = window.getSupabaseClient ? window.getSupabaseClient() : null;
-                if (!db) await new Promise(r => setTimeout(r, 200));
-            }
+            var mdjProfT0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+            let db = await mdjProfileResolveDb();
             if (!db) {
                 if (!allowPublicProfileBrowse) {
                     const rid = params.get('id');
@@ -4199,39 +4238,6 @@
             if (session && !isPublicQrView) {
                 const z = document.getElementById('header-auth-zone');
                 if (z) z.style.display = 'block';
-
-                (async function syncDjProfileHeaderLinks() {
-                    const { data: pnav } = await db.from('dj_profiles').select('role').eq('user_id', session.user.id).maybeSingle();
-                    const r = String(pnav && pnav.role != null ? pnav.role : '').toLowerCase().trim();
-                    /* Alinear con mdj-shared-header.js: solo vendedor (seller) usa cuenta staff; owner/admin/manager siguen en CONFIG del panel DJ. */
-                    const isSellerOnly = r === 'seller';
-                    const isBuyer = r === 'client' || r === 'cliente';
-                    var hubUrl = './dj-dashboard.html?tab=settings';
-                    if (isBuyer) hubUrl = './client-portal.html';
-                    else if (isSellerOnly) hubUrl = './account-settings.html';
-                    const publicProfileUrl = './dj-profile.html?id=' + encodeURIComponent(session.user.id);
-                    const dash = document.getElementById('account-menu-dashboard');
-                    if (dash) dash.href = hubUrl;
-                    const navM = document.getElementById('nav-my-profile-mobile');
-                    if (navM) {
-                        navM.href = isBuyer || isSellerOnly ? hubUrl : publicProfileUrl;
-                        navM.style.display = 'block';
-                    }
-                    const acctHdr = document.getElementById('accountBtn');
-                    if (acctHdr) {
-                        if (isBuyer) acctHdr.setAttribute('href', './client-portal.html');
-                        else if (isSellerOnly) acctHdr.setAttribute('href', './account-settings.html');
-                        else acctHdr.setAttribute('href', './dj-dashboard.html?tab=settings');
-                    }
-                    const cfg = document.getElementById('mainNav-config-link');
-                    if (cfg) {
-                        if (isBuyer) cfg.setAttribute('href', './client-portal.html');
-                        else if (isSellerOnly) cfg.setAttribute('href', './account-settings.html');
-                        else cfg.setAttribute('href', './dj-dashboard.html?tab=settings');
-                    }
-                    const hlbm = document.getElementById('header-login-btn-mobile');
-                    if (hlbm) hlbm.style.display = 'none';
-                })();
             }
 
             const targetId = params.get('id') || (session ? session.user.id : null);
@@ -4257,27 +4263,33 @@
             }
             let isAdmin = false;
             let isStaff = false;
-            if (session) {
-                const { data: vp } = await db.from('dj_profiles').select('role').eq('user_id', session.user.id).maybeSingle();
-                const r = String(vp && vp.role != null ? vp.role : '').toLowerCase().trim();
+            let p = null;
+
+            if (!session) {
+                const pubRes = await db.from('public_dj_profiles').select(MDJ_PROFILE_P1_COLS).eq('user_id', targetId).maybeSingle();
+                if (!pubRes.error && pubRes.data) p = pubRes.data;
+            } else if (session.user.id === targetId) {
+                const ownRes = await db.from('dj_profiles').select(MDJ_PROFILE_P1_COLS).eq('user_id', targetId).single();
+                p = ownRes.data || null;
+            } else {
+                const pair = await Promise.all([
+                    db.from('dj_profiles').select('role').eq('user_id', session.user.id).maybeSingle(),
+                    db.from('public_dj_profiles').select(MDJ_PROFILE_P1_COLS).eq('user_id', targetId).maybeSingle()
+                ]);
+                const r = String(pair[0].data && pair[0].data.role != null ? pair[0].data.role : '').toLowerCase().trim();
                 isAdmin = r === 'admin';
                 isStaff = r === 'admin' || r === 'owner' || r === 'manager' || r === 'seller';
-            }
-
-            let p = null;
-            const usePrivateProfileTable = (isOwner || isStaff) && !isPublicQrView;
-            if (usePrivateProfileTable) {
-                try {
-                    const { data, error: err } = await db.from('dj_profiles').select('*').eq('user_id', targetId).single();
-                    if (err) throw err;
-                    p = data;
-                } catch (err) {
-                    const { data: pBasic, error: errBasic } = await db.from('dj_profiles').select('id, user_id, dj_name, photo_url, role, bio_en, bio, bio_short, bio_long, stage_name, full_name, verified, plan, plan_status, plan_expires_at, plan_type, is_premium, subscription_status, available, rating, review_count, soundfortips_active, social_instagram, social_tiktok, social_youtube, social_facebook, social_soundcloud, social_mixcloud, social_spotify, social_apple, social_web, background_url, photo_focal_x, photo_focal_y, hero_bg_zoom, instagram_url, facebook_url, tiktok_url, youtube_url, website_url, soundcloud_url, spotify_url, apple_music_url, sft_pay_zelle_instructions, sft_pay_venmo_instructions, sft_pay_paypal_instructions').eq('user_id', targetId).single();
-                    if (!errBasic && pBasic) p = pBasic;
+                if (isStaff && !isPublicQrView) {
+                    const privRes = await db.from('dj_profiles').select(MDJ_PROFILE_P1_COLS).eq('user_id', targetId).single();
+                    p = privRes.data || null;
+                } else if (!pair[1].error && pair[1].data) {
+                    p = pair[1].data;
                 }
-            } else {
-                const pubRes = await db.from('public_dj_profiles').select('*').eq('user_id', targetId).maybeSingle();
-                if (!pubRes.error && pubRes.data) p = pubRes.data;
+            }
+            if (session && session.user.id === targetId && p) {
+                const r0 = String(p.role != null ? p.role : '').toLowerCase().trim();
+                isAdmin = r0 === 'admin';
+                isStaff = r0 === 'admin' || r0 === 'owner' || r0 === 'manager' || r0 === 'seller';
             }
 
             // Sin fila en dj_profiles para targetId: solo redirigir a portal/cuenta si el visitante es el dueño de ese id (evita confundir con otro DJ borrado o id inválido).
@@ -4450,6 +4462,59 @@
             }
 
             mdjPaintHeroPlanPill(p);
+
+            try {
+                if (typeof console !== 'undefined' && console.info) {
+                    var mdjT1 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+                    console.info('[dj-profile] phase1 first paint ~' + Math.round(mdjT1 - mdjProfT0) + 'ms');
+                }
+            } catch (eT1) { void eT1; }
+
+            mdjProfileRunSecondary(async function mdjProfilePhase2() {
+            if (session && !isPublicQrView) {
+                (async function syncDjProfileHeaderLinks() {
+                    const { data: pnav } = await db.from('dj_profiles').select('role').eq('user_id', session.user.id).maybeSingle();
+                    const r = String(pnav && pnav.role != null ? pnav.role : '').toLowerCase().trim();
+                    const isSellerOnly = r === 'seller';
+                    const isBuyer = r === 'client' || r === 'cliente';
+                    var hubUrl = './dj-dashboard.html?tab=settings';
+                    if (isBuyer) hubUrl = './client-portal.html';
+                    else if (isSellerOnly) hubUrl = './account-settings.html';
+                    const publicProfileUrl = './dj-profile.html?id=' + encodeURIComponent(session.user.id);
+                    const dash = document.getElementById('account-menu-dashboard');
+                    if (dash) dash.href = hubUrl;
+                    const navM = document.getElementById('nav-my-profile-mobile');
+                    if (navM) {
+                        navM.href = isBuyer || isSellerOnly ? hubUrl : publicProfileUrl;
+                        navM.style.display = 'block';
+                    }
+                    const acctHdr = document.getElementById('accountBtn');
+                    if (acctHdr) {
+                        if (isBuyer) acctHdr.setAttribute('href', './client-portal.html');
+                        else if (isSellerOnly) acctHdr.setAttribute('href', './account-settings.html');
+                        else acctHdr.setAttribute('href', './dj-dashboard.html?tab=settings');
+                    }
+                    const cfg = document.getElementById('mainNav-config-link');
+                    if (cfg) {
+                        if (isBuyer) cfg.setAttribute('href', './client-portal.html');
+                        else if (isSellerOnly) cfg.setAttribute('href', './account-settings.html');
+                        else cfg.setAttribute('href', './dj-dashboard.html?tab=settings');
+                    }
+                    const hlbm = document.getElementById('header-login-btn-mobile');
+                    if (hlbm) hlbm.style.display = 'none';
+                })();
+            }
+            const usePrivateProfileTable = (isOwner || isStaff) && !isPublicQrView;
+            try {
+                const fullRes = await db
+                    .from(usePrivateProfileTable ? 'dj_profiles' : 'public_dj_profiles')
+                    .select('*')
+                    .eq('user_id', targetId)
+                    .maybeSingle();
+                if (fullRes.data) p = Object.assign({}, p, fullRes.data);
+            } catch (eFull) {
+                void eFull;
+            }
 
             if (!isOwner && targetId) {
                 var visitSrc = isPublicQrView ? 'sft_qr' : 'profile';
@@ -5306,6 +5371,13 @@
             try {
                 if (typeof sftConsumeOpenSoundForTipsQuery === 'function') sftConsumeOpenSoundForTipsQuery();
             } catch (eOp) { void eOp; }
+            try {
+                if (typeof console !== 'undefined' && console.info) {
+                    var mdjT2 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+                    console.info('[dj-profile] phase2 background complete ~' + Math.round(mdjT2 - mdjProfT0) + 'ms');
+                }
+            } catch (eT2) { void eT2; }
+            }); /* mdjProfilePhase2 */
         }
 
         /** Enlace corto para fans (?soundfortips=open o ?sft_open=1): abre el modal sin buscar pestañas. No toca Cash Flow. */

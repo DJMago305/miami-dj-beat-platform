@@ -218,9 +218,23 @@ body.dj-profile.dj-profile-contact-locked #tab-public #pub-social-icons::after {
     border-radius: 999px;
 }
 
-/* Avoid flash of “DJ no encontrado” before auth guard redirect */
-html.dj-profile-auth-check body {
+/*
+ * Auth pending: keep header / artist strip visible; hide profile panels until guard clears.
+ * Avoids full-page white flash (html.dj-profile-auth-check on <html> from dj-profile.html head).
+ */
+html.dj-profile-auth-check body.dj-profile #tab-public,
+html.dj-profile-auth-check body.dj-profile #tab-flow,
+html.dj-profile-auth-check body.dj-profile #tab-sft,
+html.dj-profile-auth-check body.dj-profile #tab-software {
     visibility: hidden;
+    pointer-events: none;
+}
+
+html.dj-profile-auth-check body.dj-profile #mainHeader,
+html.dj-profile-auth-check body.dj-profile #owner-tabs,
+html.dj-profile-auth-check body.dj-profile #mdj-sft-mobile-float-cta,
+html.dj-profile-auth-check body.dj-profile #mdjSftBoothBanner {
+    visibility: visible;
 }
 
 /* Reseñas: ocultas hasta que el perfil esté cargado (no testimonios fantasma) */
