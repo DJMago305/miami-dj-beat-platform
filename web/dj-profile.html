@@ -1984,18 +1984,6 @@
             color: var(--gold);
         }
 
-        .reserve-cta--book {
-            width: 100%;
-            margin-bottom: 12px;
-            background: linear-gradient(135deg, rgba(197, 160, 89, 0.96) 0%, rgba(150, 115, 48, 0.96) 100%);
-            color: #0a0a0a;
-            box-shadow: 0 8px 22px rgba(197, 160, 89, 0.28);
-        }
-
-        .reserve-cta--book:hover {
-            filter: brightness(1.06);
-        }
-
         .cta-btn {
             display: flex;
             align-items: center;
@@ -3257,18 +3245,6 @@
                 <!-- Beneficio primera compra / comisión DJ — visible al escanear QR (view=public) -->
                 <div class="pub-first-purchase-promo-wrap" data-i18n="profile-first-purchase-promo"></div>
                 <div style="display:flex; flex-direction:column; gap:16px;">
-
-                    <!-- Reservar con Miami DJ Beat (funnel central; contacto empresa) -->
-                    <div class="reserve-card" id="mdjb-reserve-card">
-                        <div class="reserve-title">MIAMI DJ BEAT</div>
-                        <div class="reserve-title" style="font-size:14px; letter-spacing:1px; margin-bottom:8px;">Reservar con Miami DJ Beat</div>
-                        <p class="reserve-sub">Coordinación oficial del evento. Tu solicitud queda registrada con nuestro equipo — no es contacto directo al artista.</p>
-                        <a id="pub-book-mdjb-btn" class="reserve-cta reserve-cta--book" href="./index.html#contact">📋 Reservar con Miami DJ Beat</a>
-                        <div class="reserve-contact-actions">
-                            <a id="pub-whatsapp-btn" class="reserve-cta reserve-cta--wa" href="#" target="_blank" rel="noopener noreferrer">WhatsApp MDJB</a>
-                            <a id="pub-email-btn" class="reserve-cta reserve-cta--mail" href="#">Email MDJB</a>
-                        </div>
-                    </div>
 
                     <!-- QR Element Full Width (De Primero); oculto en ?view=public vía profile.css -->
                     <div class="pub-qr-share-block" style="width:100%; margin-bottom:10px;">
@@ -4564,7 +4540,7 @@
                 document.body.classList.remove('dj-profile-contact-locked');
             }
 
-            // ── RESERVAR: funnel Miami DJ Beat (empresa) + atribución lead ──
+            // ── RESERVAR: atribución lead + enlaces empresa si existen en DOM ──
             try {
                 const MDJB_PHONE = '13056071780';
                 const MDJB_EMAIL = window.MDB_OFFICIAL_CONTACT_EMAIL || 'miamidjbeat@gmail.com';
@@ -4587,11 +4563,6 @@
                             'Hola equipo Miami DJ Beat,\n\nVi el perfil de ' + (talentLabel || 'un artista') +
                             ' y me gustaría reservar / cotizar mi evento.\n\nGracias.'
                         );
-                }
-                const bookBtn = document.getElementById('pub-book-mdjb-btn');
-                if (bookBtn && profileUid) {
-                    bookBtn.href = './index.html?ref=' + encodeURIComponent(profileUid) +
-                        (talentLabel ? '&dj=' + encodeURIComponent(talentLabel) : '') + '#contact';
                 }
             } catch (e) { console.error('Reserve contact links:', e); }
 
