@@ -36,11 +36,56 @@
                         void e3;
                     }
                 }
+                if (p.get('tab') === 'sft') {
+                    document.documentElement.setAttribute('data-mdj-boot-tab', 'sft');
+                }
             } catch (e) {
                 void e;
             }
         })();
     </script>
+    <style id="mdj-sft-tab-boot-style">
+        html[data-mdj-boot-tab="sft"] #tab-public.dj-panel {
+            display: none !important;
+        }
+        html[data-mdj-boot-tab="sft"] body.dj-profile {
+            overflow: hidden;
+        }
+        html[data-mdj-boot-tab="sft"] #tab-sft.dj-panel.sft-tab-root {
+            display: flex !important;
+            position: fixed;
+            inset: 0;
+            z-index: 11000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        html[data-mdj-boot-tab="sft"] #tab-sft .sft-tab-icon-stage {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+            width: 100%;
+            padding: clamp(16px, 4vw, 32px);
+            box-sizing: border-box;
+        }
+        html[data-mdj-boot-tab="sft"] body.dj-profile > header#mainHeader {
+            display: none !important;
+        }
+        html[data-mdj-boot-tab="sft"] body.dj-profile > footer.footer {
+            display: none !important;
+        }
+        html[data-mdj-boot-tab="sft"] #tab-sft .sft-tab-legacy-shell {
+            display: none !important;
+        }
+    </style>
     <link rel="stylesheet" href="./styles.css?v=20260430-legacy-compat-1" />
     <link rel="stylesheet" href="./header-unified.css?v=20260424-dashboard-header-sync" />
     <link rel="stylesheet" href="./profile.css?v=20260513-reviews-carousel" />
@@ -2978,8 +3023,28 @@
             <button type="button" class="dj-tab-btn" data-tab="sft" data-i18n="nav-soundfortips" id="dj-tab-sft-btn" onclick="mdjSftTabClick(event)">SoundForTips™ <span class="dj-tab-lock-icon" aria-hidden="true" style="display:none;">🔒</span></button>
         </div>
     </nav>
+    <script>
+        (function mdjSftTabNavBoot() {
+            try {
+                if (new URLSearchParams(window.location.search).get('tab') !== 'sft') return;
+                var pubBtn = document.querySelector('#owner-tabs [data-tab="public"]');
+                var sftBtn = document.querySelector('#owner-tabs [data-tab="sft"]');
+                if (pubBtn) pubBtn.classList.remove('active');
+                if (sftBtn) sftBtn.classList.add('active');
+            } catch (eNav) { void eNav; }
+        })();
+    </script>
 
     <div id="tab-public" class="dj-panel active">
+        <script>
+            (function mdjSftTabPublicPanelBoot() {
+                try {
+                    if (new URLSearchParams(window.location.search).get('tab') !== 'sft') return;
+                    var pubPanel = document.getElementById('tab-public');
+                    if (pubPanel) pubPanel.classList.remove('active');
+                } catch (ePub) { void ePub; }
+            })();
+        </script>
         <div id="artist-session-lock" style="display:none;">
             <div style="max-width:900px; margin: 140px auto 60px; padding: 0 22px;">
                 <div
@@ -5219,14 +5284,22 @@
                         /* Cash Flow en perfil (misma UX que copia de referencia ?tab=flow); dashboard sigue en dj-dashboard?tab=flow vía header. */
                         setTimeout(function () { switchProfileTab('flow'); }, 300);
                     } else if (tabFromUrl === 'sft') {
-                        setTimeout(function () {
-                            switchProfileTab('sft');
-                            if (window._mdjSftProAllowed && typeof window.openSoundForTipsDjLibrary === 'function') {
-                                setTimeout(function () {
-                                    try { window.openSoundForTipsDjLibrary(); } catch (eS) { void eS; }
-                                }, 140);
-                            }
-                        }, 300);
+                        switchProfileTab('sft');
+                        if (
+                            window._mdjSftProAllowed &&
+                            window.currentDJData &&
+                            window.currentDJData.soundfortips_eligible &&
+                            typeof window.openSoundForTipsDjLibrary === 'function'
+                        ) {
+                            requestAnimationFrame(function () {
+                                try { window.openSoundForTipsDjLibrary(); } catch (eS) { void eS; }
+                                if (typeof window.mdjSftClearTabBootChrome === 'function') {
+                                    window.mdjSftClearTabBootChrome();
+                                }
+                            });
+                        } else if (typeof window.mdjSftClearTabBootChrome === 'function') {
+                            window.mdjSftClearTabBootChrome();
+                        }
                     }
                 }
 
@@ -6263,6 +6336,28 @@
             </div>
         </div>
     </div>
+    <script>
+        window.mdjSftClearTabBootChrome = function mdjSftClearTabBootChrome() {
+            try {
+                document.documentElement.removeAttribute('data-mdj-boot-tab');
+                var bootStyle = document.getElementById('mdj-sft-tab-boot-style');
+                if (bootStyle) bootStyle.remove();
+            } catch (eClr) { void eClr; }
+        };
+        (function mdjSftTabPanelBoot() {
+            try {
+                if (new URLSearchParams(window.location.search).get('tab') !== 'sft') return;
+                var pubPanel = document.getElementById('tab-public');
+                var sftPanel = document.getElementById('tab-sft');
+                var pubBtn = document.querySelector('#owner-tabs [data-tab="public"]');
+                var sftBtn = document.querySelector('#owner-tabs [data-tab="sft"]');
+                if (pubPanel) pubPanel.classList.remove('active');
+                if (sftPanel) sftPanel.classList.add('active');
+                if (pubBtn) pubBtn.classList.remove('active');
+                if (sftBtn) sftBtn.classList.add('active');
+            } catch (eSft) { void eSft; }
+        })();
+    </script>
 
     <!-- ── TAB: SOFTWARE ── -->
     <div id="tab-software" class="dj-panel serato-pane">
@@ -6536,10 +6631,19 @@
                 ev.stopPropagation();
             }
             switchProfileTab('sft');
-            if (window._mdjSftViewerIsOwner && window._mdjSftProAllowed && typeof window.openSoundForTipsDjLibrary === 'function') {
-                setTimeout(function () {
+            if (
+                window._mdjSftViewerIsOwner &&
+                window._mdjSftProAllowed &&
+                window.currentDJData &&
+                window.currentDJData.soundfortips_eligible &&
+                typeof window.openSoundForTipsDjLibrary === 'function'
+            ) {
+                requestAnimationFrame(function () {
                     try { window.openSoundForTipsDjLibrary(); } catch (eC) { void eC; }
-                }, 120);
+                    if (typeof window.mdjSftClearTabBootChrome === 'function') {
+                        window.mdjSftClearTabBootChrome();
+                    }
+                });
             }
         };
 
