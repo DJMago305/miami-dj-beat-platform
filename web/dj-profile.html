@@ -4393,7 +4393,8 @@
             }
 
             // Sin fila en dj_profiles para targetId: solo redirigir a portal/cuenta si el visitante es el dueño de ese id (evita confundir con otro DJ borrado o id inválido).
-            if (!p) {
+            var __mdjSkipProfileRedirectForSft = String(window.location.search || '').indexOf('tab=sft') !== -1;
+            if (!p && !__mdjSkipProfileRedirectForSft) {
                 if (session && session.user.id === targetId) {
                     var __cp = null;
                     try {
