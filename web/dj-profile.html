@@ -37,6 +37,7 @@
                     }
                 }
                 if (p.get('tab') === 'sft') {
+                    window._mdjSftBootEntry = true;
                     document.documentElement.setAttribute('data-mdj-boot-tab', 'sft');
                 }
             } catch (e) {
@@ -86,6 +87,38 @@
             display: none !important;
         }
     </style>
+    <script>
+        (function mdjSftBootReleaseHotfix() {
+            window.mdjSftClearTabBootChrome = function mdjSftClearTabBootChrome() {
+                try {
+                    if (window._mdjSftBootFallbackTimer) {
+                        clearTimeout(window._mdjSftBootFallbackTimer);
+                        window._mdjSftBootFallbackTimer = null;
+                    }
+                    document.documentElement.removeAttribute('data-mdj-boot-tab');
+                    var bootStyle = document.getElementById('mdj-sft-tab-boot-style');
+                    if (bootStyle) bootStyle.remove();
+                    if (!window._mdjSftBootEntry) return;
+                    var pubPanel = document.getElementById('tab-public');
+                    var sftPanel = document.getElementById('tab-sft');
+                    var ownerStrip = document.body && document.body.classList.contains('dj-profile-show-owner-tabs');
+                    if (!ownerStrip) {
+                        if (pubPanel) pubPanel.classList.add('active');
+                        if (sftPanel) sftPanel.classList.remove('active');
+                        var pubBtn = document.querySelector('#owner-tabs [data-tab="public"]');
+                        var sftBtn = document.querySelector('#owner-tabs [data-tab="sft"]');
+                        if (pubBtn) pubBtn.classList.add('active');
+                        if (sftBtn) sftBtn.classList.remove('active');
+                    }
+                } catch (eClr) { void eClr; }
+            };
+            if (!window._mdjSftBootEntry) return;
+            window._mdjSftBootFallbackTimer = setTimeout(function mdjSftBootFallbackRelease() {
+                if (document.documentElement.getAttribute('data-mdj-boot-tab') !== 'sft') return;
+                window.mdjSftClearTabBootChrome();
+            }, 2800);
+        })();
+    </script>
     <link rel="stylesheet" href="./styles.css?v=20260430-legacy-compat-1" />
     <link rel="stylesheet" href="./header-unified.css?v=20260424-dashboard-header-sync" />
     <link rel="stylesheet" href="./profile.css?v=20260513-reviews-carousel" />
@@ -4287,12 +4320,14 @@
                     window.location.replace(lu);
                 } else {
                     try { console.warn('[dj-profile] Supabase client unavailable; public profile cannot load.'); } catch (e) { void e; }
+                    if (typeof window.mdjSftClearTabBootChrome === 'function') window.mdjSftClearTabBootChrome();
                 }
                 return;
             }
 
             const { data: { session } } = await db.auth.getSession();
             if (!session && !allowPublicProfileBrowse) {
+                if (typeof window.mdjSftClearTabBootChrome === 'function') window.mdjSftClearTabBootChrome();
                 const rid = params.get('id');
                 let lu = './login.html?redirect=dj-profile';
                 if (rid) lu += '&id=' + encodeURIComponent(rid);
@@ -5285,6 +5320,9 @@
                 rp.delete('tab');
                 const qs = rp.toString();
                 window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+                if (t === 'sft' && typeof window.mdjSftClearTabBootChrome === 'function') {
+                    window.mdjSftClearTabBootChrome();
+                }
             })();
 
             // ── DJ OWNER TABS (BARRA DE GESTIÓN) — nunca en ?view=public (fan / QR) ──
@@ -5375,6 +5413,15 @@
                         if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }, 800);
                 }
+            }
+
+            if (
+                window._mdjSftBootEntry &&
+                !isOwner &&
+                document.documentElement.getAttribute('data-mdj-boot-tab') === 'sft' &&
+                typeof window.mdjSftClearTabBootChrome === 'function'
+            ) {
+                window.mdjSftClearTabBootChrome();
             }
 
             /* Flujo de caja: solo el artista dueño del perfil; staff/manager/cliente no deben tener panel en DOM activo. */
@@ -6409,13 +6456,15 @@
         </div>
     </div>
     <script>
-        window.mdjSftClearTabBootChrome = function mdjSftClearTabBootChrome() {
-            try {
-                document.documentElement.removeAttribute('data-mdj-boot-tab');
-                var bootStyle = document.getElementById('mdj-sft-tab-boot-style');
-                if (bootStyle) bootStyle.remove();
-            } catch (eClr) { void eClr; }
-        };
+        if (typeof window.mdjSftClearTabBootChrome !== 'function') {
+            window.mdjSftClearTabBootChrome = function mdjSftClearTabBootChrome() {
+                try {
+                    document.documentElement.removeAttribute('data-mdj-boot-tab');
+                    var bootStyle = document.getElementById('mdj-sft-tab-boot-style');
+                    if (bootStyle) bootStyle.remove();
+                } catch (eClr) { void eClr; }
+            };
+        }
         (function mdjSftTabPanelBoot() {
             try {
                 if (new URLSearchParams(window.location.search).get('tab') !== 'sft') return;
@@ -6716,6 +6765,8 @@
                         window.mdjSftClearTabBootChrome();
                     }
                 });
+            } else if (typeof window.mdjSftClearTabBootChrome === 'function') {
+                window.mdjSftClearTabBootChrome();
             }
         };
 
