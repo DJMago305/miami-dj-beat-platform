@@ -1,6 +1,73 @@
 // ─── MDJPRO Form Handler — Supabase Primary, Formspree Fallback ───────────────
 document.addEventListener('DOMContentLoaded', function () {
 
+  function mdjUuidOk(id) {
+    return typeof id === 'string' && /^[0-9a-f-]{36}$/i.test(id.trim());
+  }
+
+  /**
+   * Build public.leads insert payload (full fields + dj_profile attribution in notes).
+   * @param {object} formData
+   * @param {string} source
+   */
+  function mdjBuildLeadPayload(formData, source) {
+    let combinedDate = formData.event_date || null;
+    if (!combinedDate && formData.event_year && formData.event_month && formData.event_day) {
+      combinedDate = formData.event_year + '-' + formData.event_month + '-' + formData.event_day;
+    }
+
+    let effectiveSource = source || 'hero_form';
+    let profileDjId = null;
+    let profileDjName = null;
+    try {
+      if (sessionStorage.getItem('mdj_lead_source_hint') === 'dj_profile') {
+        effectiveSource = 'dj_profile';
+      }
+      profileDjId = sessionStorage.getItem('mdj_profile_dj_user_id');
+      profileDjName = sessionStorage.getItem('mdj_profile_dj_name');
+    } catch (e0) { void e0; }
+
+    const nameVal = String(formData.name || formData.full_name || '').trim();
+    const msgVal = String(formData.message || '').trim();
+    let referredBy = String(formData.referred_by || '').trim();
+    let requestedTalent = String(formData.requested_talent || '').trim();
+
+    if (!referredBy && profileDjId && mdjUuidOk(profileDjId)) {
+      referredBy = profileDjId.trim();
+    }
+    if (!requestedTalent && profileDjName) {
+      requestedTalent = profileDjName.trim();
+    }
+
+    const notesObj = {
+      attribution: {
+        source: effectiveSource,
+        from_dj_profile: effectiveSource === 'dj_profile',
+        dj_user_id: profileDjId && mdjUuidOk(profileDjId) ? profileDjId.trim() : null,
+        dj_display_name: profileDjName || null,
+        captured_at: new Date().toISOString()
+      }
+    };
+    if (msgVal) notesObj.client_message = msgVal;
+
+    const payload = {
+      event_type: formData.event_type || null,
+      event_date: combinedDate,
+      location: formData.location || null,
+      email: formData.email || null,
+      phone: formData.phone || null,
+      budget: formData.budget || null,
+      referred_by: referredBy || null,
+      requested_talent: requestedTalent || null,
+      status: 'NEW',
+      source: effectiveSource,
+      notes: JSON.stringify(notesObj)
+    };
+    if (nameVal) payload.full_name = nameVal;
+
+    return payload;
+  }
+
     /**
      * Intercept a contact form and save the lead to Supabase.
      * @param {string} formId - HTML id of the <form>
@@ -58,38 +125,16 @@ document.addEventListener('DOMContentLoaded', function () {
             // ── 1. Save to Supabase (primary) ────────────────────────
             let leadId = null;
             let dbError = null;
+            let leadPayload = null;
             const db = window.getSupabaseClient();
 
             try {
                 if (!db) throw new Error('Supabase client not ready');
-                // Consolidate date from dropdowns if present
-                let combinedDate = formData.event_date || null;
-                if (!combinedDate && formData.event_year && formData.event_month && formData.event_day) {
-                    combinedDate = `${formData.event_year}-${formData.event_month}-${formData.event_day}`;
-                }
-
-                const payload = {
-                    event_type: formData.event_type || null,
-                    event_date: combinedDate,
-                    location: formData.location || null,
-                    email: formData.email || null,
-                    phone: formData.phone || null,
-                    budget: formData.budget || null,
-                    referred_by: formData.referred_by || null,
-                    requested_talent: formData.requested_talent || null,
-                    status: 'NEW',
-                    source,
-                };
-
-                // Attach preferred DJ if coming from directory / dj-profile
-                const djId = sessionStorage.getItem('preferred_dj_id');
-                const djName = sessionStorage.getItem('preferred_dj_name');
-                if (djId) payload.preferred_dj_id = djId;
-                if (djName) payload.preferred_dj_name = djName;
+                leadPayload = mdjBuildLeadPayload(formData, source);
 
                 const { data: saved, error } = await db
                     .from('leads')
-                    .insert([payload])
+                    .insert([leadPayload])
                     .select('id')
                     .single();
 
@@ -126,8 +171,10 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!dbError || leadId || formspreeOk) {
                 // Success — NO reset: datos visibles + sessionStorage para signup
                 const eventType = formData.event_type || 'Other';
-                const refParam = formData.referred_by ? `&ref=${encodeURIComponent(formData.referred_by)}` : '';
-                const djParam = formData.requested_talent ? `&dj=${encodeURIComponent(formData.requested_talent)}` : '';
+                const refVal = (leadPayload && leadPayload.referred_by) || formData.referred_by || '';
+                const djVal = (leadPayload && leadPayload.requested_talent) || formData.requested_talent || '';
+                const refParam = refVal ? `&ref=${encodeURIComponent(refVal)}` : '';
+                const djParam = djVal ? `&dj=${encodeURIComponent(djVal)}` : '';
                 const emailQ = formData.email ? `&prefill_email=${encodeURIComponent(formData.email)}` : '';
 
                 let combinedDate = formData.event_date || null;
@@ -137,16 +184,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 try {
                     sessionStorage.setItem('mdj_lead_prefill_v1', JSON.stringify({
-                        name: (formData.name || '').trim(),
+                        name: (formData.name || formData.full_name || '').trim(),
                         email: (formData.email || '').trim(),
                         phone: (formData.phone || '').trim(),
                         event_type: formData.event_type || '',
                         event_date: combinedDate || '',
                         location: (formData.location || '').trim(),
                         budget: (formData.budget || '').trim(),
-                        referred_by: (formData.referred_by || '').trim(),
+                        referred_by: (leadPayload && leadPayload.referred_by) || (formData.referred_by || '').trim(),
+                        requested_talent: (leadPayload && leadPayload.requested_talent) || (formData.requested_talent || '').trim(),
                         lead_id: leadId,
-                        source: source,
+                        source: (leadPayload && leadPayload.source) || source,
                         ts: Date.now()
                     }));
                 } catch (e) { /* ignore quota */ }

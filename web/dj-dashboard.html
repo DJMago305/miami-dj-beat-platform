@@ -4363,7 +4363,7 @@
                     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:8px;">
                         <button type="button" class="m-btn m-btn-sec"
                             onclick="document.getElementById('m-photo-file').click()">Seleccionar foto…</button>
-                        <button type="button" class="m-btn m-btn-gold" onclick="uploadProfilePhoto()">Guardar</button>
+                        <button type="button" id="m-photo-save-btn" class="m-btn m-btn-gold" onclick="uploadProfilePhoto()">Guardar</button>
                     </div>
                     <p style="text-align:center;margin:0;font-size:12px;">
                         <button type="button"
@@ -4930,9 +4930,25 @@
         }
 
         function mdjPhotoModalSetBusy(busy) {
+            var saveBtn = document.getElementById('m-photo-save-btn');
+            if (saveBtn) {
+                if (busy) {
+                    if (!saveBtn.dataset.mdjLabel) {
+                        saveBtn.dataset.mdjLabel = saveBtn.textContent || 'Guardar';
+                    }
+                    saveBtn.disabled = true;
+                    saveBtn.textContent = 'Guardando…';
+                } else {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = saveBtn.dataset.mdjLabel || 'Guardar';
+                }
+            }
             var root = document.getElementById('m-photo');
             if (!root) return;
-            root.querySelectorAll('button').forEach(function (btn) { btn.disabled = !!busy; });
+            root.querySelectorAll('button').forEach(function (btn) {
+                if (saveBtn && btn === saveBtn) return;
+                btn.disabled = !!busy;
+            });
             var cancel = root.querySelector('.m-cancel');
             if (cancel) {
                 cancel.style.pointerEvents = busy ? 'none' : '';
@@ -4945,31 +4961,48 @@
             }
         }
 
-        function mdjPhotoModalApplyAvatarSrc(urlOrPlaceholder) {
-            var raw = urlOrPlaceholder ? String(urlOrPlaceholder).trim() : '';
-            var isPlaceholder = !raw || raw.indexOf('placeholder') !== -1;
-            var displaySrc = isPlaceholder
-                ? './assets/dj-avatar-placeholder.png'
-                : (typeof mdjBustImgUrl === 'function' ? mdjBustImgUrl(raw) : raw);
+        function mdjDashPhotoPatchWithTimeout(patchPromise, timeoutMs) {
+            var ms = timeoutMs || 10000;
+            return Promise.race([
+                patchPromise,
+                new Promise(function (_, reject) {
+                    setTimeout(function () {
+                        reject(new Error('PROFILE_PHOTO_DB_TIMEOUT'));
+                    }, ms);
+                })
+            ]);
+        }
+
+        function mdjPhotoModalApplyAvatarSrc(publicUrl) {
+            if (typeof publicUrl !== 'string') return;
+            var raw = publicUrl.trim();
+            if (!raw || !/^https?:\/\//i.test(raw)) return;
+            var sep = raw.indexOf('?') >= 0 ? '&' : '?';
+            var displaySrc = raw + sep + 'v=' + Date.now();
             var prev = document.getElementById('m-photo-preview');
             var thumb = document.getElementById('acct-photo-thumb');
             var main = document.getElementById('acct-avatar');
+            var cfgPh = document.getElementById('cfg-photo-url');
             if (prev) prev.src = displaySrc;
             if (thumb) thumb.src = displaySrc;
             if (main) main.src = displaySrc;
-            var headAv = document.getElementById('header-avatar-img');
-            if (headAv) headAv.src = displaySrc;
-            document.querySelectorAll('#accountBtn .avatar').forEach(function (im) { im.src = displaySrc; });
+            if (cfgPh) cfgPh.value = raw;
+            window.__mdjDashPhotoUrl = raw;
+            var rejBanner = document.getElementById('photo-rejection-banner');
+            if (rejBanner) rejBanner.style.display = 'none';
+        }
+
+        function mdjPhotoModalClearAvatar() {
+            var ph = './assets/dj-avatar-placeholder.png';
+            var prev = document.getElementById('m-photo-preview');
+            var thumb = document.getElementById('acct-photo-thumb');
+            var main = document.getElementById('acct-avatar');
             var cfgPh = document.getElementById('cfg-photo-url');
-            if (cfgPh) cfgPh.value = isPlaceholder ? '' : raw;
-            window.__mdjDashPhotoUrl = isPlaceholder ? '' : raw;
-            if (!isPlaceholder) {
-                var rejBanner = document.getElementById('photo-rejection-banner');
-                if (rejBanner) rejBanner.style.display = 'none';
-                if (typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
-                    window.mdjHeaderVipApplyPhotoUrl(raw);
-                }
-            }
+            if (prev) prev.src = ph;
+            if (thumb) thumb.src = ph;
+            if (main) main.src = ph;
+            if (cfgPh) cfgPh.value = '';
+            window.__mdjDashPhotoUrl = '';
         }
 
         /** CONFIG actions: prefer header-hydrated uid; fallback auth with timeout (avoids hung getSession). */
@@ -5021,7 +5054,7 @@
                     mdjPhotoModalShowMsg('Primero pulsa «Seleccionar foto…» y elige un archivo.', '#ff5555');
                     return;
                 }
-                mdjPhotoModalShowMsg('Uploading…', 'rgba(255,255,255,0.7)');
+                mdjPhotoModalShowMsg('Subiendo…', 'rgba(255,255,255,0.7)');
                 var user = await mdjDashResolveSettingsUser(sb, 8000);
                 if (!user || !user.id) {
                     mdjPhotoModalShowMsg('Sesión no disponible. Cierra sesión, vuelve a entrar e inténtalo de nuevo.', '#ff5555');
@@ -5041,25 +5074,36 @@
                     return;
                 }
                 var pub = sb.storage.from('avatars').getPublicUrl(path);
-                var publicUrl = pub.data && pub.data.publicUrl ? pub.data.publicUrl : '';
-                if (!publicUrl) {
-                    mdjPhotoModalShowMsg('Subida OK pero no se obtuvo URL pública.', '#ff5555');
+                var publicUrl = (pub && pub.data && pub.data.publicUrl) ? String(pub.data.publicUrl).trim() : '';
+                if (!publicUrl || !/^https?:\/\//i.test(publicUrl)) {
+                    mdjPhotoModalShowMsg('Subida OK pero la URL pública no es válida.', '#ff5555');
                     return;
                 }
-                var dbRes = await sb.from('dj_profiles').update({ photo_url: publicUrl }).eq('user_id', user.id);
-                if (dbRes.error) {
-                    mdjPhotoModalShowMsg('Subida OK pero no se guardó en perfil: ' + (dbRes.error.message || 'database'), '#ff5555');
-                    return;
-                }
-                void sb.auth.updateUser({ data: { avatar_url: publicUrl } }).catch(function (e) {
-                    console.warn('[dashboard] m-photo updateUser (background):', e);
-                });
-                void sb.auth.refreshSession().catch(function (e) {
-                    console.warn('[dashboard] m-photo refreshSession (background):', e);
-                });
                 mdjPhotoModalApplyAvatarSrc(publicUrl);
-                mdjPhotoModalShowMsg('Foto guardada.', '#22c55e');
-                setTimeout(function () { closeModal('m-photo'); }, 1200);
+                mdjPhotoModalShowMsg('Foto subida. Refrescando vista…', 'rgba(255,255,255,0.75)');
+                var dbSaved = false;
+                try {
+                    var dbRes = await mdjDashPhotoPatchWithTimeout(
+                        sb.from('dj_profiles').update({ photo_url: publicUrl }).eq('user_id', user.id).select('photo_url').maybeSingle(),
+                        10000
+                    );
+                    if (dbRes && dbRes.error) {
+                        mdjPhotoModalShowMsg('Foto visible aquí. Perfil: ' + (dbRes.error.message || 'no guardado'), '#f59e0b');
+                        return;
+                    }
+                    dbSaved = true;
+                } catch (dbErr) {
+                    if (dbErr && dbErr.message === 'PROFILE_PHOTO_DB_TIMEOUT') {
+                        mdjPhotoModalShowMsg('Foto subida. Refrescando vista…', '#f59e0b');
+                        return;
+                    }
+                    throw dbErr;
+                }
+                if (dbSaved) {
+                    mdjPhotoModalApplyAvatarSrc(publicUrl);
+                    mdjPhotoModalShowMsg('Foto guardada.', '#22c55e');
+                    setTimeout(function () { closeModal('m-photo'); }, 1200);
+                }
             } catch (err) {
                 console.warn('[dashboard] uploadProfilePhoto:', err);
                 mdjPhotoModalShowMsg('Error inesperado: ' + (err && err.message ? err.message : 'inténtalo de nuevo'), '#ff5555');
@@ -5076,26 +5120,29 @@
                     mdjPhotoModalShowMsg('No hay conexión con el servidor. Recarga la página.', '#ff5555');
                     return;
                 }
-                mdjPhotoModalShowMsg('Removing…', 'rgba(255,255,255,0.7)');
+                mdjPhotoModalShowMsg('Quitando…', 'rgba(255,255,255,0.7)');
                 var user = await mdjDashResolveSettingsUser(sb, 8000);
                 if (!user || !user.id) {
                     mdjPhotoModalShowMsg('Sesión no disponible. Cierra sesión, vuelve a entrar e inténtalo de nuevo.', '#ff5555');
                     return;
                 }
-                var dbRes = await sb.from('dj_profiles').update({ photo_url: null }).eq('user_id', user.id);
-                if (dbRes.error) {
-                    mdjPhotoModalShowMsg('No se pudo quitar la foto: ' + (dbRes.error.message || 'database'), '#ff5555');
-                    return;
+                try {
+                    var dbRes = await mdjDashPhotoPatchWithTimeout(
+                        sb.from('dj_profiles').update({ photo_url: null }).eq('user_id', user.id).select('user_id').maybeSingle(),
+                        10000
+                    );
+                    if (dbRes && dbRes.error) {
+                        mdjPhotoModalShowMsg('No se pudo quitar la foto: ' + (dbRes.error.message || 'database'), '#ff5555');
+                        return;
+                    }
+                } catch (dbErr) {
+                    if (dbErr && dbErr.message === 'PROFILE_PHOTO_DB_TIMEOUT') {
+                        mdjPhotoModalShowMsg('Tiempo agotado. Inténtalo de nuevo.', '#ff5555');
+                        return;
+                    }
+                    throw dbErr;
                 }
-                void sb.auth.updateUser({ data: { avatar_url: '' } }).catch(function (e) {
-                    console.warn('[dashboard] m-photo updateUser (background):', e);
-                });
-                void sb.auth.refreshSession().catch(function (e) {
-                    console.warn('[dashboard] m-photo refreshSession (background):', e);
-                });
-                var ph = './assets/dj-avatar-placeholder.png';
-                mdjPhotoModalApplyAvatarSrc(ph);
-                if (typeof window.checkSessionForNav === 'function') void window.checkSessionForNav();
+                mdjPhotoModalClearAvatar();
                 mdjPhotoModalShowMsg('Foto eliminada.', '#22c55e');
                 setTimeout(function () { closeModal('m-photo'); }, 900);
             } catch (err) {
