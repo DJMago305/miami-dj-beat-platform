@@ -10502,13 +10502,13 @@
                             </div>
                             <div class="sft-pay-tier" style="margin-top:6px">
                                 <div class="sft-pay-grid sft-pay-grid--manual" style="gap:6px;">
-                                    <button type="button" class="sft-pay-btn" style="padding:8px 6px;font-size:12px;" onclick="selectSftPayment('Zelle', this)">
+                                    <button type="button" class="sft-pay-btn" id="sft-method-btn-zelle" style="padding:8px 6px;font-size:12px;" onclick="selectSftPayment('Zelle', this)">
                                         <span class="pm-check" style="font-size:10px;"></span> Zelle
                                     </button>
-                                    <button type="button" class="sft-pay-btn" style="padding:8px 6px;font-size:12px;" onclick="selectSftPayment('Venmo', this)">
+                                    <button type="button" class="sft-pay-btn" id="sft-method-btn-venmo" style="padding:8px 6px;font-size:12px;display:none;" onclick="selectSftPayment('Venmo', this)">
                                         <span class="pm-check" style="font-size:10px;"></span> Venmo
                                     </button>
-                                    <button type="button" class="sft-pay-btn" style="padding:8px 6px;font-size:12px;" onclick="selectSftPayment('PayPal', this)">
+                                    <button type="button" class="sft-pay-btn" id="sft-method-btn-paypal" style="padding:8px 6px;font-size:12px;display:none;" onclick="selectSftPayment('PayPal', this)">
                                         <span class="pm-check" style="font-size:10px;"></span> PayPal
                                     </button>
                                 </div>
@@ -10792,6 +10792,13 @@
             var v = prof.sft_pay_venmo_instructions != null ? String(prof.sft_pay_venmo_instructions).trim() : '';
             var pp = prof.sft_pay_paypal_instructions != null ? String(prof.sft_pay_paypal_instructions).trim() : '';
             window.__sftProfilePayInstructions = { Zelle: z, Venmo: v, PayPal: pp, Tarjeta: '' };
+            /* Mostrar botones de método solo si el DJ los tiene configurados */
+            var zBtn = document.getElementById('sft-method-btn-zelle');
+            var vBtn = document.getElementById('sft-method-btn-venmo');
+            var ppBtn = document.getElementById('sft-method-btn-paypal');
+            if (zBtn) zBtn.style.display = z ? '' : 'none';
+            if (vBtn) vBtn.style.display = v ? '' : 'none';
+            if (ppBtn) ppBtn.style.display = pp ? '' : 'none';
             if (typeof sftSyncPayInstructionPanel === 'function') sftSyncPayInstructionPanel();
         };
 
@@ -13512,6 +13519,134 @@
                 document.getElementById('sftSuccess').style.display = 'block';
                 document.getElementById('sftStatusText').innerText = `¡PETICIÓN ENVIADA VÍA ${sftSelectedPayment.toUpperCase()}!`;
                 document.getElementById('sftStatusText').style.color = "#22c55e";
+
+                /* ── Overlay grande de instrucciones para pagos manuales (Zelle/Venmo/PayPal) ── */
+                if (sftSelectedPayment !== 'Tarjeta') {
+                    (function showManualPayOverlay() {
+                        var method = sftSelectedPayment;
+                        var amtNum = tipVal;
+                        var amt = '$' + amtNum.toFixed(2);
+                        var songName = activeRequestInfo && activeRequestInfo.song ? String(activeRequestInfo.song) : '';
+                        var fanName = activeRequestInfo && activeRequestInfo.sender ? String(activeRequestInfo.sender) : '';
+                        var memoRaw = (fanName || 'Fan') + (songName ? ' - ' + songName : '');
+                        var memoEnc = encodeURIComponent(memoRaw);
+                        var instr = (window.__sftProfilePayInstructions && window.__sftProfilePayInstructions[method])
+                            ? String(window.__sftProfilePayInstructions[method]).trim() : '';
+                        var djId = window.currentProfileDJId || '';
+                        var profileUrl = './dj-profile.html?id=' + encodeURIComponent(djId) + '&view=public';
+                        var existing = document.getElementById('sft-manual-pay-overlay');
+                        if (existing) existing.remove();
+
+                        /* ── Helpers ── */
+                        function firstNonEmptyLine(str) {
+                            var lines = str.split(/\r?\n/);
+                            for (var i = 0; i < lines.length; i++) {
+                                var l = lines[i].trim();
+                                if (l) return l;
+                            }
+                            return str.trim();
+                        }
+
+                        /* ── Construir botón de acción y bloque de display por método ── */
+                        var actionBtn = '';
+                        var instrDisplay = '';
+                        var copyTarget = '';
+                        var methodIcon = '<svg width="52" height="52" viewBox="0 0 52 52" fill="none"><rect width="52" height="52" rx="12" fill="#6d1ed4"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="34" fill="#fff">Z</text></svg>';
+
+                        if (method === 'Venmo') {
+                            methodIcon = '<svg width="52" height="52" viewBox="0 0 52 52" fill="none"><rect width="52" height="52" rx="12" fill="#008CFF"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="28" fill="#fff">V</text></svg>';
+                            /* Primera línea no vacía, quitar URL prefix y @ */
+                            var venmoRaw = firstNonEmptyLine(instr);
+                            var venmoHandle = venmoRaw
+                                .replace(/^https?:\/\/[^/]*venmo\.com\/u\//i, '')
+                                .replace(/^@/, '')
+                                .split(/[/?#\s]/)[0].trim();
+                            instrDisplay = venmoHandle ? '@' + venmoHandle : (instr || 'Configura tu @handle de Venmo en el dashboard');
+                            if (venmoHandle) {
+                                var venmoDeep = 'venmo://paycharge?txn=pay&recipients=' + encodeURIComponent(venmoHandle) + '&amount=' + amtNum.toFixed(2) + '&note=' + memoEnc;
+                                var venmoWeb  = 'https://account.venmo.com/pay?recipients=' + encodeURIComponent(venmoHandle) + '&amount=' + amtNum.toFixed(2) + '&note=' + memoEnc;
+                                actionBtn = '<a href="' + venmoDeep + '" style="display:block;width:100%;padding:18px;font-size:18px;font-weight:900;background:#5f27e5;color:#fff;border:none;border-radius:14px;cursor:pointer;text-decoration:none;text-align:center;box-sizing:border-box;margin-bottom:8px;">Abrir Venmo y Pagar</a>'
+                                    + '<a href="' + venmoWeb + '" target="_blank" rel="noopener" style="display:block;text-align:center;font-size:12px;color:rgba(255,255,255,0.35);text-decoration:underline;margin-bottom:12px;">¿No abrió la app? Pagar desde el navegador</a>';
+                            }
+
+                        } else if (method === 'PayPal') {
+                            methodIcon = '<svg width="52" height="52" viewBox="0 0 52 52" fill="none"><rect width="52" height="52" rx="12" fill="#003087"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="20" fill="#009cde">PP</text></svg>';
+                            var ppRaw = firstNonEmptyLine(instr);
+                            /* Normalizar: quita https://www.paypal.me/ o paypal.me/ y toma el handle */
+                            var ppHandle = ppRaw
+                                .replace(/^https?:\/\/(www\.)?paypal\.me\//i, '')
+                                .replace(/^paypal\.me\//i, '')
+                                .split(/[/?#\s]/)[0].trim();
+                            var ppIsEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ppRaw);
+                            var ppLink = '';
+                            if (ppIsEmail) {
+                                /* PayPal send money by email */
+                                ppLink = 'https://www.paypal.com/send?recipient=' + encodeURIComponent(ppRaw) + '&amount=' + amtNum.toFixed(2) + '&currencyCode=USD';
+                                instrDisplay = ppRaw;
+                            } else if (ppHandle) {
+                                /* paypal.me deep link — abre la app si está instalada */
+                                ppLink = 'https://paypal.me/' + encodeURIComponent(ppHandle) + '/' + amtNum.toFixed(2) + 'USD';
+                                instrDisplay = 'paypal.me/' + ppHandle;
+                            }
+                            if (ppLink) {
+                                actionBtn = '<a href="' + ppLink + '" target="_blank" rel="noopener" style="display:block;width:100%;padding:18px;font-size:18px;font-weight:900;background:#003087;color:#fff;border:none;border-radius:14px;cursor:pointer;text-decoration:none;text-align:center;box-sizing:border-box;margin-bottom:12px;">🔵 ABRIR PAYPAL Y PAGAR</a>';
+                            } else {
+                                instrDisplay = instr || 'Configura tu PayPal.me o email en el dashboard';
+                            }
+
+                        } else {
+                            /* Zelle — mostrar bloque completo; copiar SOLO email/teléfono al portapapeles */
+                            methodIcon = '💛';
+                            /* Aplicar filtro de líneas corporativas */
+                            var zelleClean = (typeof window.sftStripCorpLinesFromPayInstructions === 'function')
+                                ? window.sftStripCorpLinesFromPayInstructions(instr) : instr;
+                            /* Extraer email/teléfono de la línea "Zelle (email/phone): X" */
+                            var zelleContactMatch = zelleClean.match(/Zelle\s*\(email\/phone\)\s*:\s*(.+)/i);
+                            copyTarget = zelleContactMatch ? zelleContactMatch[1].trim() : zelleClean;
+                            /* Construir display legible: separar líneas del bloque compuesto */
+                            instrDisplay = zelleClean
+                                .replace(/^Zelle\s*\(email\/phone\)\s*:/im, '<span style="color:rgba(255,255,255,0.5);font-size:12px;">Zelle:</span>')
+                                .replace(/^Name on account\s*:/im, '<br><span style="color:rgba(255,255,255,0.5);font-size:12px;">Nombre:</span>')
+                                .replace(/\n\n/g, '<br>')
+                                .replace(/\n/g, '<br>');
+                            if (copyTarget) {
+                                actionBtn = '<button id="sft-ov-copy-btn" style="width:100%;padding:18px;font-size:18px;font-weight:900;background:#fcd34d;color:#07090e;border:none;border-radius:14px;cursor:pointer;letter-spacing:0.5px;margin-bottom:12px;" onclick="(function(){var v=' + JSON.stringify(copyTarget) + ';if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(v).then(function(){var b=document.getElementById(\'sft-ov-copy-btn\');if(b){b.textContent=\'✓ Copiado! Abre tu banco y pega en Zelle\';b.style.background=\'#22c55e\';b.style.color=\'#fff\';}document.getElementById(\'sft-ov-close-btn\').style.display=\'block\';}).catch(function(){window.prompt(\'Copia:\',v);})}else{window.prompt(\'Copia:\',v);}})()">📋 COPIAR PARA ZELLE</button>';
+                            }
+                        }
+
+                        var ov = document.createElement('div');
+                        ov.id = 'sft-manual-pay-overlay';
+                        ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(7,9,14,0.97);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;box-sizing:border-box;overflow-y:auto;';
+                        var closeVisible = (method !== 'Zelle') ? 'display:block;' : 'display:none;';
+                        ov.innerHTML = [
+                            '<div style="width:100%;max-width:420px;text-align:center;">',
+                            '<div style="margin-bottom:12px;line-height:0;">' + methodIcon + '</div>',
+                            '<h2 style="color:#fcd34d;font-size:26px;font-weight:900;letter-spacing:1px;margin:0 0 6px;">Paga con ' + method + '</h2>',
+                            '<p style="color:rgba(255,255,255,0.55);font-size:14px;margin:0 0 24px;">Tu canción está en espera 🎵 Completa el pago ahora.</p>',
+                            '<div style="background:rgba(252,211,77,0.07);border:2px solid rgba(252,211,77,0.4);border-radius:16px;padding:24px 20px;margin-bottom:24px;text-align:left;">',
+                            instrDisplay
+                                ? '<div style="color:rgba(255,255,255,0.5);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">Enviar a</div><div style="color:#fff;font-size:20px;font-weight:800;line-height:1.5;word-break:break-all;margin-bottom:20px;">' + instrDisplay + '</div>'
+                                : '',
+                            '<div style="border-top:1px solid rgba(252,211,77,0.2);padding-top:16px;margin-bottom:16px;">',
+                            '<div style="color:rgba(255,255,255,0.5);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">Monto</div>',
+                            '<div style="color:#fcd34d;font-size:44px;font-weight:900;line-height:1;">' + amt + '</div>',
+                            '</div>',
+                            method === 'Zelle' ? [
+                                '<div style="border-top:1px solid rgba(252,211,77,0.2);padding-top:16px;">',
+                                '<div style="color:rgba(255,255,255,0.5);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">Memo / Nota obligatoria</div>',
+                                '<div style="color:#fff;font-size:16px;font-weight:700;line-height:1.4;">' + memoRaw + '</div>',
+                                '<div style="color:rgba(255,255,255,0.35);font-size:11px;margin-top:6px;">Escribe este memo en Zelle para que el DJ identifique tu pago</div>',
+                                '</div>'
+                            ].join('') : '',
+                            '</div>',
+                            actionBtn,
+                            '<button id="sft-ov-close-btn" style="' + closeVisible + 'width:100%;padding:16px;font-size:16px;font-weight:800;background:transparent;color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.2);border-radius:14px;cursor:pointer;margin-bottom:16px;" onclick="document.getElementById(\'sft-manual-pay-overlay\').remove();window.location.href=\'' + profileUrl + '\';">Hecho — Volver al perfil del DJ</button>',
+                            '<p style="color:rgba(255,255,255,0.3);font-size:11px;line-height:1.5;margin:0;">El DJ verá tu petición en amarillo hasta que confirme el pago.</p>',
+                            '</div>'
+                        ].join('');
+                        document.body.appendChild(ov);
+                    })();
+                }
                 (function () {
                     var amt = '$' + tipVal.toFixed(2);
                     var songEsc = activeRequestInfo.song || '';

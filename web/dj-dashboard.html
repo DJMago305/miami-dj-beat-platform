@@ -3340,6 +3340,40 @@
                     color: #ff5555;
                 }
 
+                .acct-btn-primary {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 12px 28px;
+                    background: var(--gold, #c5a059);
+                    color: #07090e;
+                    font-family: inherit;
+                    font-size: 14px;
+                    font-weight: 800;
+                    letter-spacing: 1px;
+                    text-transform: uppercase;
+                    border: none;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    transition: opacity .15s, transform .1s;
+                }
+
+                .acct-btn-primary:hover {
+                    opacity: .85;
+                    transform: translateY(-1px);
+                }
+
+                .acct-btn-primary:active {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+
+                .acct-btn-primary:disabled {
+                    opacity: .45;
+                    cursor: not-allowed;
+                    transform: none;
+                }
+
                 .acct-photo-thumb {
                     width: 110px;
                     height: 130px;
@@ -4264,47 +4298,92 @@
 
                     <!-- SOUNDFORTIPS: instrucciones Zelle / Venmo / PayPal para fans (perfil público) -->
                     <div id="panel-soundfortips" class="acct-panel">
-                        <h1 class="acct-h1">SoundForTips™ — dónde te pagan los fans</h1>
+                        <h1 class="acct-h1">SoundForTips™</h1>
                         <div id="cfg-sft-fee-alert" style="display:none;margin:0 0 18px;padding:14px 18px;border-radius:12px;border:1px solid rgba(239,68,68,0.45);background:rgba(239,68,68,0.12);color:#fecaca;font-size:13px;line-height:1.5;">
                             <strong>Comisión pendiente</strong> — no se pudo cobrar el 10% sobre tips manuales a tu tarjeta. Actualiza el método en <strong>Suscripción y pagos</strong> y pulsa «Liquidar ahora» abajo. Mientras tanto las nuevas peticiones públicas pueden estar bloqueadas.
                             <div id="cfg-sft-fee-alert-detail" style="margin-top:8px;font-size:11px;opacity:0.9;"></div>
                         </div>
-                        <p style="font-size:12px;color:rgba(255,255,255,0.45);margin:-8px 0 16px;">Sobre tips <strong>manuales</strong> (Zelle/Venmo/PayPal), Miami DJ Beat cobra un <strong>10%</strong> a tu tarjeta de facturación PRO al cerrar sesión de cabina (o al acumular el mínimo). Sin tarjeta válida, el importe se acumula hasta poder cobrarse.</p>
-                        <p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 22px;max-width:640px;line-height:1.55;">
-                            Esto es lo que verán en tu perfil cuando elijan <strong>Zelle</strong>, <strong>Venmo</strong> o <strong>PayPal</strong> (transferencias manuales; la web no cobra sola). Usa URLs completas, p. ej. <code style="color:#c5a059;">https://venmo.com/u/tuusuario</code>. Evita abrir solo <code style="color:rgba(255,255,255,0.4);">account.venmo.com</code> sin perfil — suele dar 404.
+                        <p style="font-size:15px;color:rgba(255,255,255,0.55);margin:-4px 0 20px;line-height:1.5;">Sobre tips <strong>manuales</strong> (Zelle/Venmo/PayPal), Miami DJ Beat cobra un <strong>10%</strong> a tu tarjeta PRO al cerrar cabina. Sin tarjeta, se acumula hasta poder cobrarse.</p>
+                        <p style="font-size:15px;color:rgba(255,255,255,0.55);margin:0 0 24px;max-width:640px;line-height:1.6;">
+                            Lo que verán los fans al elegir <strong>Zelle</strong>, <strong>Venmo</strong> o <strong>PayPal</strong>. Para Venmo usa la URL completa: <code style="color:#c5a059;font-size:14px;">https://venmo.com/u/tuusuario</code>
                         </p>
                         <div class="acct-card">
-                            <div style="padding:18px 24px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">
-                                <div class="acct-lbl">Zelle</div>
-                                <p style="font-size:11px;color:rgba(255,255,255,0.38);margin:4px 0 10px;">Datos estructurados en <code style="color:#c5a059;">billing_settings</code> (RLS por cuenta). El texto combinado es el que ven los fans en tu perfil.</p>
-                                <div class="acct-lbl" style="margin-top:12px;">Zelle — email o teléfono</div>
-                                <input id="cfg-billing-zelle-email" type="text" inputmode="email" autocomplete="email"
-                                    placeholder="ej. cobros@mibusiness.com"
-                                    style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.35);color:#fff;font-size:13px;font-family:inherit;margin:6px 0 14px;" />
-                                <div class="acct-lbl">Nombre en cuenta (como figura en Zelle)</div>
+                            <div style="padding:24px 28px 16px;border-bottom:1px solid rgba(255,255,255,0.07);">
+                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+                                    <svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="8" fill="#6d1ed4"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="26" fill="#fff">Z</text></svg>
+                                    <span style="font-size:18px;font-weight:800;color:#fff;letter-spacing:0.5px;">Zelle</span>
+                                </div>
+                                <div class="acct-lbl" style="font-size:14px;margin-top:18px;">Email o teléfono de Zelle</div>
+                                <input id="cfg-billing-zelle-email" type="text" inputmode="tel" autocomplete="off"
+                                    placeholder="ej. 3056071780  o  cobros@mibusiness.com"
+                                    style="width:100%;box-sizing:border-box;padding:14px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.35);color:#fff;font-size:18px;font-family:inherit;margin:8px 0 4px;letter-spacing:0.5px;"
+                                    oninput="(function(el){
+                                        var raw = el.value;
+                                        var isEmail = /[a-zA-Z@]/.test(raw);
+                                        if(isEmail){ el.dataset.zelleClean = raw.trim(); el.style.letterSpacing='0.5px'; return; }
+                                        var digits = raw.replace(/\D/g,'');
+                                        if(digits.length > 10) digits = digits.slice(-10);
+                                        el.dataset.zelleClean = digits;
+                                        var fmt = digits;
+                                        if(digits.length > 6) fmt = '('+digits.slice(0,3)+') '+digits.slice(3,6)+'-'+digits.slice(6);
+                                        else if(digits.length > 3) fmt = '('+digits.slice(0,3)+') '+digits.slice(3);
+                                        else if(digits.length) fmt = '('+digits;
+                                        el.value = fmt;
+                                        el.style.letterSpacing = digits.length >= 10 ? '1.5px' : '0.5px';
+                                        el.style.color = digits.length === 10 ? '#4ade80' : '#fff';
+                                    })(this)" />
+                                <div id="zelle-phone-hint" style="font-size:12px;color:rgba(255,255,255,0.35);margin:0 0 18px;padding-left:4px;">Escribe solo dígitos — se formatea automático para Zelle. Verde = listo para copiar.</div>
+                                <div class="acct-lbl" style="font-size:14px;">Nombre en cuenta (como figura en Zelle)</div>
                                 <input id="cfg-billing-zelle-name" type="text" autocomplete="name"
                                     placeholder="Nombre legal o de negocio en Zelle"
-                                    style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.35);color:#fff;font-size:13px;font-family:inherit;margin:6px 0 10px;" />
-                                <div class="acct-lbl">Notas / memo extra para el fan (opcional)</div>
-                                <p style="font-size:11px;color:rgba(255,255,255,0.38);margin:4px 0 10px;">Se añade al bloque que ve el público (memo, horario de cobro, etc.).</p>
-                                <textarea id="cfg-sft-pay-zelle" rows="4"
-                                    style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.35);color:#fff;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
+                                    style="width:100%;box-sizing:border-box;padding:14px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.35);color:#fff;font-size:16px;font-family:inherit;margin:8px 0 18px;" />
                             </div>
-                            <div style="padding:18px 24px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">
-                                <div class="acct-lbl">Venmo</div>
-                                <p style="font-size:11px;color:rgba(255,255,255,0.38);margin:4px 0 10px;">Enlace al perfil o @handle (una línea o varias).</p>
-                                <textarea id="cfg-sft-pay-venmo" rows="3"
-                                    style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.35);color:#fff;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
+                            <div style="padding:24px 28px 20px;border-bottom:1px solid rgba(255,255,255,0.07);">
+                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                                    <svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="8" fill="#008CFF"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="22" fill="#fff">V</text></svg>
+                                    <span style="font-size:18px;font-weight:800;color:#fff;letter-spacing:0.5px;">Venmo</span>
+                                </div>
+                                <p style="font-size:13px;color:rgba(255,255,255,0.4);margin:0 0 4px;line-height:1.5;">Tu <strong style="color:rgba(255,255,255,0.7);">@username</strong> de Venmo — el mismo que aparece en tu perfil de la app. Solo letras, números, guiones y guiones bajos (5–30 caracteres). No pongas espacios ni símbolos extras.</p>
+                                <p style="font-size:12px;color:rgba(255,193,7,0.7);margin:0 0 10px;">Al pagar, el fan abre directamente la app de Venmo con tu usuario y el monto pre-llenado.</p>
+                                <input id="cfg-sft-pay-venmo" type="text" inputmode="text" autocomplete="off" spellcheck="false"
+                                    placeholder="@TuUsuarioVenmo"
+                                    style="width:100%;box-sizing:border-box;padding:14px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.35);color:#fff;font-size:16px;font-family:inherit;letter-spacing:0.3px;"
+                                    oninput="(function(el){
+                                        var v = el.value.trim();
+                                        var clean = v.replace(/^@+/,'').replace(/[^a-zA-Z0-9_\-]/g,'');
+                                        el.dataset.venmoHandle = clean;
+                                        el.style.color = (clean.length >= 5 && clean.length <= 30) ? '#4ade80' : '#fff';
+                                    })(this)" />
+                                <div style="font-size:12px;color:rgba(255,255,255,0.3);margin:4px 0 0;padding-left:4px;">Verde = formato válido de Venmo.</div>
                             </div>
-                            <div style="padding:18px 24px 8px;">
-                                <div class="acct-lbl">PayPal / PayPal.me</div>
-                                <p style="font-size:11px;color:rgba(255,255,255,0.38);margin:4px 0 10px;">Email de PayPal o enlace PayPal.me.</p>
-                                <textarea id="cfg-sft-pay-paypal" rows="3"
-                                    style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.35);color:#fff;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
+                            <div style="padding:24px 28px 20px;">
+                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                                    <svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="8" fill="#003087"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="16" fill="#009cde">PP</text></svg>
+                                    <span style="font-size:18px;font-weight:800;color:#fff;letter-spacing:0.5px;">PayPal</span>
+                                </div>
+                                <p style="font-size:13px;color:rgba(255,255,255,0.4);margin:0 0 4px;line-height:1.5;">Tu enlace <strong style="color:rgba(255,255,255,0.7);">PayPal.me</strong> (ej. <code style="color:#c5a059;font-size:12px;">paypal.me/tunombre</code>) o el <strong style="color:rgba(255,255,255,0.7);">email</strong> de tu cuenta PayPal. El link PayPal.me es la opción recomendada — abre la app directamente con el monto listo.</p>
+                                <p style="font-size:12px;color:rgba(255,193,7,0.7);margin:0 0 10px;">Crea tu PayPal.me gratis en paypal.com/paypalme si aún no lo tienes.</p>
+                                <input id="cfg-sft-pay-paypal" type="text" inputmode="url" autocomplete="off" spellcheck="false"
+                                    placeholder="paypal.me/TuNombre  o  tucuenta@email.com"
+                                    style="width:100%;box-sizing:border-box;padding:14px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.35);color:#fff;font-size:16px;font-family:inherit;letter-spacing:0.3px;"
+                                    oninput="(function(el){
+                                        var v = el.value.trim();
+                                        var isPaypalMe = /paypal\.me\//i.test(v);
+                                        var isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+                                        el.style.color = (isPaypalMe || isEmail) ? '#4ade80' : '#fff';
+                                    })(this)" />
+                                <div style="font-size:12px;color:rgba(255,255,255,0.3);margin:4px 0 0;padding-left:4px;">Verde = PayPal.me válido o email reconocido.</div>
                             </div>
-                            <div style="padding:16px 24px 22px;border-top:1px solid rgba(255,255,255,0.05);display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
-                                <button type="button" class="acct-btn-primary" id="btn-save-sft-pay" onclick="saveSftFanPaymentInstructions(event)">Guardar instrucciones de cobro</button>
-                                <button type="button" class="acct-edit" id="btn-sft-settle-fee" onclick="retrySftManualFeeSettlement(event)">Liquidar comisión ahora (tarjeta)</button>
+                            <div style="padding:24px 28px 16px;border-top:1px solid rgba(255,255,255,0.07);">
+                                <div class="acct-lbl" style="font-size:14px;">Mensaje extra para el fan (opcional)</div>
+                                <p style="font-size:13px;color:rgba(255,255,255,0.4);margin:6px 0 12px;">Texto libre que verá el fan al pagar por Zelle, Venmo o PayPal — horario, instrucciones especiales, etc. El email y nombre se añaden automáticamente.</p>
+                                <textarea id="cfg-sft-pay-zelle" rows="3"
+                                    placeholder="ej. Pagos procesados de Lun–Vie. ¡Gracias por el apoyo!"
+                                    style="width:100%;box-sizing:border-box;padding:14px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.35);color:#fff;font-size:16px;font-family:inherit;resize:vertical;line-height:1.5;margin-bottom:16px;"></textarea>
+                                <button type="button" class="acct-btn-primary" id="btn-save-sft-pay" onclick="saveSftFanPaymentInstructions(event)">Guardar</button>
+                            </div>
+                            <div style="padding:12px 28px 22px;border-top:1px solid rgba(255,255,255,0.05);">
+                                <button type="button" class="acct-edit" id="btn-sft-settle-fee" onclick="retrySftManualFeeSettlement(event)">Liquidar comisión pendiente (tarjeta)</button>
                             </div>
                         </div>
                     </div>
@@ -5493,7 +5572,22 @@
             try {
                 const { data: bs } = await sb.from('billing_settings').select('zelle_email,zelle_name').eq('user_id', session.user.id).maybeSingle();
                 if (bs) {
-                    set('cfg-billing-zelle-email', bs.zelle_email != null ? String(bs.zelle_email) : '');
+                    (function(){
+                        var zelleEl = document.getElementById('cfg-billing-zelle-email');
+                        if (!zelleEl) return;
+                        var raw = bs.zelle_email != null ? String(bs.zelle_email).trim() : '';
+                        zelleEl.dataset.zelleClean = raw;
+                        var isEmail = /[a-zA-Z@]/.test(raw);
+                        if (isEmail) { zelleEl.value = raw; return; }
+                        var d = raw.replace(/\D/g,'');
+                        if (d.length === 10) {
+                            zelleEl.value = '('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6);
+                            zelleEl.style.color = '#4ade80';
+                            zelleEl.style.letterSpacing = '1.5px';
+                        } else {
+                            zelleEl.value = raw;
+                        }
+                    })();
                     set('cfg-billing-zelle-name', bs.zelle_name != null ? String(bs.zelle_name) : '');
                 } else {
                     set('cfg-billing-zelle-email', '');
@@ -5523,9 +5617,35 @@
             set('cfg-twitter', p.twitter_url);
             set('cfg-facebook', p.facebook_url);
             set('cfg-website', p.website_url);
-            set('cfg-sft-pay-zelle', p.sft_pay_zelle_instructions != null ? String(p.sft_pay_zelle_instructions) : '');
-            set('cfg-sft-pay-venmo', p.sft_pay_venmo_instructions != null ? String(p.sft_pay_venmo_instructions) : '');
-            set('cfg-sft-pay-paypal', p.sft_pay_paypal_instructions != null ? String(p.sft_pay_paypal_instructions) : '');
+            (function hydrateZelleMemo(){
+                /* sft_pay_zelle_instructions is the full composed block.
+                   We only put back the free-text notes — strip the auto-generated lines. */
+                var full = p.sft_pay_zelle_instructions != null ? String(p.sft_pay_zelle_instructions) : '';
+                var lines = full.split(/\r?\n/);
+                var notes = lines.filter(function(l){
+                    return !/^Zelle\s*\(email\/phone\)\s*:/i.test(l.trim()) &&
+                           !/^Name on account\s*:/i.test(l.trim());
+                }).join('\n').trim();
+                set('cfg-sft-pay-zelle', notes);
+            })();
+            (function hydrateVenmoPaypal(){
+                var vEl = document.getElementById('cfg-sft-pay-venmo');
+                var ppEl = document.getElementById('cfg-sft-pay-paypal');
+                var v = p.sft_pay_venmo_instructions != null ? String(p.sft_pay_venmo_instructions).trim() : '';
+                var pp = p.sft_pay_paypal_instructions != null ? String(p.sft_pay_paypal_instructions).trim() : '';
+                if (vEl) {
+                    var vClean = v.replace(/^https?:\/\/[^/]*venmo\.com\/u\//i,'').replace(/^@/,'').split(/[/?#\s]/)[0].trim();
+                    vEl.value = vClean ? '@' + vClean : v;
+                    vEl.dataset.venmoHandle = vClean;
+                    if (vClean.length >= 5 && vClean.length <= 30) vEl.style.color = '#4ade80';
+                }
+                if (ppEl) {
+                    ppEl.value = pp;
+                    var isPaypalMe = /paypal\.me\//i.test(pp);
+                    var isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(pp);
+                    if (isPaypalMe || isEmail) ppEl.style.color = '#4ade80';
+                }
+            })();
             (function hydrateSftFeeAlert() {
                 var box = document.getElementById('cfg-sft-fee-alert');
                 var det = document.getElementById('cfg-sft-fee-alert-detail');
@@ -5708,11 +5828,16 @@
                 if (!sb) throw new Error('No client');
                 const { data: { session } } = await sb.auth.getSession();
                 if (!session) throw new Error('No session');
-                const zEm = (document.getElementById('cfg-billing-zelle-email') && document.getElementById('cfg-billing-zelle-email').value || '').trim();
+                const _zelleEl = document.getElementById('cfg-billing-zelle-email');
+                const zEm = (_zelleEl && (_zelleEl.dataset.zelleClean || _zelleEl.value) || '').trim();
                 const zNa = (document.getElementById('cfg-billing-zelle-name') && document.getElementById('cfg-billing-zelle-name').value || '').trim();
                 const zMemo = (document.getElementById('cfg-sft-pay-zelle') && document.getElementById('cfg-sft-pay-zelle').value || '').trim();
-                const ve = (document.getElementById('cfg-sft-pay-venmo') && document.getElementById('cfg-sft-pay-venmo').value || '').trim();
-                const pa = (document.getElementById('cfg-sft-pay-paypal') && document.getElementById('cfg-sft-pay-paypal').value || '').trim();
+                /* Venmo: guardar handle limpio (sin @ y sin URL prefix) */
+                const _venmoEl = document.getElementById('cfg-sft-pay-venmo');
+                const _venmoRaw = (_venmoEl && (_venmoEl.dataset.venmoHandle || _venmoEl.value) || '').trim();
+                const ve = _venmoRaw.replace(/^https?:\/\/[^/]*venmo\.com\/u\//i,'').replace(/^@/,'').split(/[/?#\s]/)[0].trim() || null;
+                /* PayPal: guardar tal cual (email o paypal.me/handle) */
+                const pa = (document.getElementById('cfg-sft-pay-paypal') && document.getElementById('cfg-sft-pay-paypal').value || '').trim() || null;
                 const zParts = [];
                 if (zEm) zParts.push('Zelle (email/phone): ' + zEm);
                 if (zNa) zParts.push('Name on account: ' + zNa);
