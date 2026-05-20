@@ -275,8 +275,8 @@ serve(async (req) => {
   } else {
     msgBody =
       paymentChannel === "stripe"
-        ? `Miami DJ Beat: el DJ no pudo reproducir tu petición. Si pagaste con tarjeta, el reembolso se envió a la misma tarjeta (Stripe); puede tardar unos días en verse en tu banco. ¿Prueba con otra canción? ${profileLink}`
-        : `Miami DJ Beat: Disculpa, esta canción no está en la playlist del DJ o no es adecuada para este evento. No se realizó ningún cargo. ¿Prueba con otra canción? ${profileLink}`;
+        ? `Miami DJ Beat: el DJ no pudo reproducir tu petición. Tu tarjeta no fue cobrada. ¿Prueba con otra canción? ${profileLink}`
+        : `Miami DJ Beat: El DJ no puede tocar esta canción. Opciones: 1) Pide otra canción → ${profileLink}  2) Cancelar → muestra este mensaje al DJ para que devuelva tu ${paymentChannel === "manual" ? "Zelle/Venmo/PayPal" : "pago"}.`;
   }
 
   if (msgBody.length > 1500) {
