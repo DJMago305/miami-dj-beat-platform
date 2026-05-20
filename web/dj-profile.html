@@ -120,7 +120,7 @@
         })();
     </script>
     <link rel="stylesheet" href="./styles.css?v=20260430-legacy-compat-1" />
-    <link rel="stylesheet" href="./header-unified.css?v=20260424-dashboard-header-sync" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260519-owner-strip-sync-1" />
     <link rel="stylesheet" href="./profile.css?v=20260513-reviews-carousel" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260412-profile" />
     <link
@@ -4225,6 +4225,17 @@
             return window.getSupabaseClient ? window.getSupabaseClient() : null;
         }
 
+        /** Freno Agenda: en dj-profile / ?mdj_nav=profile no forzar salto a dj-dashboard. */
+        function mdjProfileUserIntentStayOnPage() {
+            try {
+                var seg = (window.location.pathname || '').split('/').pop() || '';
+                if (/^dj-profile\.html$/i.test(seg)) return true;
+                return new URLSearchParams(window.location.search || '').get('mdj_nav') === 'profile';
+            } catch (e) {
+                return false;
+            }
+        }
+
         function mdjProfileRunSecondary(fn) {
             var run = function () {
                 try {
@@ -4369,8 +4380,8 @@
                 const pubRes = await db.from('public_dj_profiles').select(MDJ_PROFILE_P1_COLS).eq('user_id', targetId).maybeSingle();
                 if (!pubRes.error && pubRes.data) p = pubRes.data;
             } else if (session.user.id === targetId) {
-                const ownRes = await db.from('dj_profiles').select(MDJ_PROFILE_P1_COLS).eq('user_id', targetId).single();
-                p = ownRes.data || null;
+                const ownRes = await db.from('dj_profiles').select(MDJ_PROFILE_P1_COLS).eq('user_id', targetId).maybeSingle();
+                p = ownRes && ownRes.data ? ownRes.data : null;
             } else {
                 const pair = await Promise.all([
                     db.from('dj_profiles').select('role').eq('user_id', session.user.id).maybeSingle(),
@@ -4392,9 +4403,21 @@
                 isStaff = r0 === 'admin' || r0 === 'owner' || r0 === 'manager' || r0 === 'seller';
             }
 
-            // Sin fila en dj_profiles para targetId: solo redirigir a portal/cuenta si el visitante es el dueño de ese id (evita confundir con otro DJ borrado o id inválido).
+            // Sin fila P1: reintento completo; si el usuario está en dj-profile / mdj_nav=profile, no forzar Agenda.
+            if (!p && session && session.user.id === targetId && mdjProfileUserIntentStayOnPage()) {
+                try {
+                    const rescue = await db.from('dj_profiles').select('*').eq('user_id', targetId).maybeSingle();
+                    if (rescue && rescue.data) p = rescue.data;
+                } catch (eRes) { void eRes; }
+            }
             if (!p) {
                 if (session && session.user.id === targetId) {
+                    if (mdjProfileUserIntentStayOnPage()) {
+                        try {
+                            console.warn('[dj-profile] Sin fila dj_profiles en P1; permaneciendo en perfil (sin redirigir a Agenda).');
+                        } catch (eStay) { void eStay; }
+                        return;
+                    }
                     var __cp = null;
                     try {
                         var __cr = await db.from('client_profiles').select('user_id').eq('user_id', session.user.id).maybeSingle();

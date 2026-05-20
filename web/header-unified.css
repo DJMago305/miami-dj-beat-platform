@@ -13,8 +13,16 @@
   --mdj-brand-letters-scale: 2.65;
   --mdj-header-unified-r2: 72px;
   /* --mdj-header-brand-slot, --mdj-header-brand-gap, --mdj-header-auth-cluster-nudge-x: ver :root en styles.css (global). */
-  /* Cercano a .dj-tab-btn; un poco más de aire entre letras / entre ítems (ver #mainNav > a). */
-  --mdj-mainnav-pad-x: clamp(10px, 1.3vw, 22px);
+  /* ── NAV TOKENS (fuente de verdad única para #mainNav y #mainNav-artist) ── */
+  --mdj-nav-link-px:        clamp(12px, 1vw, 22px);   /* padding lateral por link */
+  --mdj-nav-link-py-t:      4px;                       /* padding top */
+  --mdj-nav-link-py-b:      8px;                       /* padding bottom */
+  --mdj-nav-gap:            clamp(10px, 1.2vw, 22px);  /* gap entre links */
+  --mdj-nav-font-size:      clamp(16px, 1.4vw, 20px);
+  --mdj-nav-font-weight:    800;
+  --mdj-nav-letter-spacing: 0.14em;
+  /* legacy aliases */
+  --mdj-mainnav-pad-x: var(--mdj-nav-link-px);
   --mdj-mainnav-pad-x-sm: clamp(9px, 1.15vw, 17px);
   /*
    * ZERO-ACCORDION fila 1 (≥1001): slots fijos desde primer paint — sesión solo cambia contenido, no geometría.
@@ -169,6 +177,14 @@
   /* Fila 2 (#mainNav) solo Inicio: menos aire muerto bajo el subtítulo del PNG. */
   body.page-home #mainHeader.header.mdj-header-unified .header-nav {
     margin-top: -6px !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+  }
+
+  body.page-home #mainHeader.header.mdj-header-unified .header-nav .container {
+    overflow-x: visible !important;
+    overflow-y: visible !important;
   }
 
   body.page-home
@@ -342,17 +358,16 @@
     max-width: min(1200px, 100%) !important;
     margin-left: auto !important;
     margin-right: auto !important;
-    /* Misma caja horizontal que .header-top .container (paralelo con hero). */
-    padding-left: max(20px, env(safe-area-inset-left, 0px)) !important;
-    padding-right: max(20px, env(safe-area-inset-right, 0px)) !important;
+    /* Fila de nav: sin padding lateral (no hay logo ni botones en los costados aquí). */
+    padding-left: 0 !important;
+    padding-right: 0 !important;
     box-sizing: border-box !important;
     overflow-x: visible !important;
     overflow-y: hidden !important;
   }
 
   /*
-   * #mainNav — menú flotante: una sola fila (no apilar “MI PORTAL / MI PERFIL / STAFF”);
-   * si el carril es estrecho, scroll horizontal. Sombras y “/” entre ítems.
+   * #mainNav — riel estático (sin carrusel ni scroll horizontal): una fila, alineado al borde izquierdo.
    */
   #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav {
     position: relative !important;
@@ -363,18 +378,19 @@
     transform: none !important;
     width: 100% !important;
     max-width: 100% !important;
-    flex: 1 1 auto !important;
-    min-height: calc(var(--mdj-header-unified-r2) - 6px) !important;
-    height: 100% !important;
-    max-height: none !important;
+    flex: 0 0 var(--mdj-header-unified-r2) !important;
+    height: var(--mdj-header-unified-r2) !important;
+    min-height: var(--mdj-header-unified-r2) !important;
+    max-height: var(--mdj-header-unified-r2) !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
     box-sizing: border-box !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
-    scrollbar-width: thin !important;
-    -ms-overflow-style: auto !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: auto !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
     z-index: 2 !important;
     pointer-events: auto !important;
 
@@ -383,15 +399,12 @@
     flex-wrap: nowrap !important;
     align-items: center !important;
     align-content: center !important;
-    /* Navegadores viejos: inicio. Modernos: centrado si cabe; si no, inicio (evita recortar “MI PERFIL” a “MI P”). */
-    justify-content: flex-start !important;
-    justify-content: safe center !important;
-    /* Simétrico con padding-right: centrado óptico alineado al riel del contenedor. */
-    padding-left: clamp(10px, 1.2vw, 20px) !important;
-    padding-right: clamp(10px, 1.2vw, 20px) !important;
-    scroll-padding-inline: 12px !important;
+    justify-content: center !important;
+    padding-left: clamp(4px, 0.4vw, 8px) !important;
+    padding-right: clamp(4px, 0.4vw, 8px) !important;
+    scroll-padding-inline: 8px !important;
     row-gap: 0 !important;
-    column-gap: 0 !important;
+    column-gap: var(--mdj-nav-gap) !important;
   }
 
   #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav::-webkit-scrollbar {
@@ -414,22 +427,45 @@
     height: 0 !important;
   }
 
-  /* Chevrones fuera de .container: hijas de .header-nav (mdj-mainnav-infinite.js). */
+  /* Carrusel infinito desactivado: sin chevrones ni padding de carril. */
+  #mainHeader.header.mdj-header-unified
+    .header-nav.mdj-mainnav-infinite--ui
+    .mdj-mainnav-infinite-chevron,
+  #mainHeader.header.mdj-header-unified
+    .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a.mdj-mainnav-infinite-clone {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
   #mainHeader.header.mdj-header-unified
     .header-nav.mdj-mainnav-infinite--ui .container
     > #mainNav.mdj-mainnav-flex.nav.top-nav.mdj-mainnav-infinite--on {
-    padding-left: clamp(28px, 3.2vw, 40px) !important;
-    padding-right: clamp(28px, 3.2vw, 40px) !important;
-    scroll-padding-inline: 16px !important;
+    padding-left: clamp(10px, 1.2vw, 20px) !important;
+    padding-right: clamp(10px, 1.2vw, 20px) !important;
+    overflow-x: hidden !important;
   }
 
   #mainHeader.header.mdj-header-unified
     .header-nav.mdj-mainnav-infinite--ui
     .mdj-mainnav-infinite-chevron {
     position: absolute !important;
+    display: none !important;
     top: 50% !important;
-    z-index: 6 !important;
-    display: flex !important;
+    z-index: -1 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    /* legacy flex block neutralized — nav estática */
+    align-items: center !important;
+    justify-content: center !important;
     align-items: center !important;
     justify-content: center !important;
     width: 32px !important;
@@ -822,14 +858,14 @@
     justify-content: center !important;
     flex: 0 0 auto !important;
     width: auto !important;
-    min-width: min-content !important;
+    min-width: max-content !important;
     max-width: none !important;
     flex-shrink: 0 !important;
     align-self: center !important;
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
-    padding: 2px 0.46em 6px !important;
+    padding: var(--mdj-nav-link-py-t) var(--mdj-nav-link-px) var(--mdj-nav-link-py-b) !important;
     box-sizing: border-box !important;
     text-align: center !important;
     white-space: nowrap !important;
@@ -840,9 +876,9 @@
     border-radius: 0 !important;
     background: none !important;
     box-shadow: none !important;
-    font-size: clamp(14px, 1.05vw, 18px) !important;
-    font-weight: 800 !important;
-    letter-spacing: 0.34em !important;
+    font-size: var(--mdj-nav-font-size) !important;
+    font-weight: var(--mdj-nav-font-weight) !important;
+    letter-spacing: var(--mdj-nav-letter-spacing) !important;
     text-transform: uppercase !important;
     text-decoration: none !important;
     color: rgba(255, 252, 245, 0.9) !important;
@@ -888,24 +924,37 @@
     box-shadow: 0 0 8px rgba(197, 160, 89, 0.45) !important;
   }
 
-  /*
-   * Inicio — menú estable: sin “safe center” (micro-salto al cambiar ancho) + slots 12ch (LEY ANTI-BRINCO).
-   */
+  /* Home: ajuste de altura (padding-top 0 preservado del bloque anterior a esta línea). */
   body.page-home #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav {
-    justify-content: flex-start !important;
+    padding-top: 0 !important;
   }
 
-  body.page-home #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a {
+  /* Home: color cálido diferenciado; tipografía y espaciado heredados del global. */
+  body.page-home #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav > a:not(.mdj-mainnav-reserved-slot):not([aria-hidden='true']) {
+    color: rgba(255, 242, 220, 0.96) !important;
+    text-shadow: 0 0.5px 1.5px #000, 0 0 20px rgba(0, 0, 0, 0.45) !important;
+  }
+
+  body.page-home #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a#mainNav-guest-mi-perfil-link:not(.mdj-mainnav-reserved-slot) {
+    min-width: max-content !important;
+    flex-shrink: 0 !important;
+  }
+
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a#mainNav-guest-mi-perfil-link.mdj-guest-mi-perfil-mainnav {
     min-width: 12ch !important;
     box-sizing: border-box !important;
-    color: rgba(255, 242, 220, 0.96) !important;
-    text-shadow: 0 0.5px 1.5px #000, 0 0 20px rgba(0, 0, 0, 0.45), 0 0 28px rgba(197, 160, 89, 0.12) !important;
+    color: rgba(255, 252, 245, 0.94) !important;
   }
 
   /* Misma fila: MY PROFILE (perfil artístico) en blanco donde aplique; MY PORTAL dorado. */
   #mainHeader.header.mdj-header-unified
     #mainNav.mdj-mainnav-flex.nav.top-nav
-    > a#mainNav-staff-or-profile.mdj-artist-dash-mainnav {
+    > a#mainNav-staff-or-profile.mdj-artist-dash-mainnav,
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a#mainNav-guest-mi-perfil-link:not(.mdj-mainnav-reserved-slot) {
     color: rgba(255, 252, 245, 0.94) !important;
   }
 
@@ -1321,6 +1370,357 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
 }
 
 /*
+ * Nav compacto anti-brinco: CONFIG y MI PERFIL ocupan su espacio desde el primer frame
+ * (visibility: hidden preserva ancho; pointer-events: none evita clics accidentales).
+ * Cuando el JS los activa, solo cambia opacidad → sin layout shift.
+ */
+#mainNav[data-mdj-compact-nav="1"] > a.mdj-mainnav-reserved-slot,
+#mainNav[data-mdj-compact-nav="1"] > a[aria-hidden="true"] {
+  display: inline-flex !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  flex: 0 0 auto !important;
+  min-width: max-content !important;
+  width: auto !important;
+  max-width: none !important;
+  padding: var(--mdj-nav-link-py-t) var(--mdj-nav-link-px) var(--mdj-nav-link-py-b) !important;
+  overflow: visible !important;
+  position: static !important;
+  margin: 0 !important;
+}
+
+/*
+ * Modo cabecera artista (mdj-shared-header.js → body.mdj-artist-header-mode).
+ * Fila 1: ENTRAR oculto hasta .danger (SALIR); cluster auth anclado a la derecha.
+ * Fila 2: #mainNav-artist flex-start; #mainNav invitado sin interacción ni CLS.
+ */
+body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-actions #header-login-btn:not(.danger) {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-actions #header-login-btn.danger {
+  display: inline-flex !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+@media (min-width: 1001px) {
+  body.mdj-artist-header-mode
+    #mainHeader.header.mdj-header-unified
+    .header-top
+    .container
+    > .header-actions
+    .mdj-header-r1-auth-cluster {
+    margin-left: auto !important;
+    flex: 0 0 auto !important;
+    justify-content: flex-end !important;
+    min-width: var(--mdj-header-auth-slot-w, clamp(172px, 12vw, 200px)) !important;
+  }
+
+  body.mdj-artist-header-mode
+    #mainHeader.header.mdj-header-unified
+    .header-actions
+    #header-auth-zone {
+    width: var(--mdj-header-auth-slot-w, clamp(172px, 12vw, 200px)) !important;
+    min-width: var(--mdj-header-auth-slot-w, clamp(172px, 12vw, 200px)) !important;
+    max-width: var(--mdj-header-auth-slot-w, clamp(172px, 12vw, 200px)) !important;
+    flex: 0 0 var(--mdj-header-auth-slot-w, clamp(172px, 12vw, 200px)) !important;
+  }
+
+  body.mdj-artist-header-mode
+    #mainHeader.header.mdj-header-unified
+    .header-nav
+    .container {
+    justify-content: center !important;
+  }
+
+  body.mdj-artist-header-mode
+    #mainHeader.header.mdj-header-unified
+    .header-nav
+    .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-guest-nav-suppressed],
+  body.mdj-artist-header-mode
+    #mainHeader.header.mdj-header-unified
+    .header-nav
+    .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav[aria-hidden='true'] {
+    visibility: hidden !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+    z-index: -1 !important;
+  }
+
+  /* Riel artista — flex centrado en contenedor seguro (1200px); sin grid ni spacers. */
+  #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav-artist.mdj-artist-mainnav.nav.top-nav {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    transform: none !important;
+    display: none !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 1.5rem !important;
+    width: 100% !important;
+    max-width: var(--mdj-container-max-width, 1200px) !important;
+    min-width: 0 !important;
+    height: var(--mdj-header-unified-r2) !important;
+    min-height: var(--mdj-header-unified-r2) !important;
+    max-height: var(--mdj-header-unified-r2) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 0 20px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    z-index: 2 !important;
+    pointer-events: auto !important;
+  }
+
+  body.mdj-artist-header-mode
+    #mainHeader.header.mdj-header-unified
+    .header-nav
+    .container {
+    overflow: visible !important;
+    justify-content: center !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    min-width: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  body.mdj-artist-header-mode #mainNav-artist.mdj-artist-mainnav.nav.top-nav:not([hidden]),
+  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+    #mainHeader.header.mdj-header-unified
+    #mainNav-artist.mdj-artist-mainnav.nav.top-nav:not([hidden]) {
+    display: flex !important;
+  }
+
+  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+    #mainHeader.header.mdj-header-unified
+    #mainNav-artist.mdj-artist-mainnav.nav.top-nav
+    > a.mdj-artist-nav-cell,
+  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+    #mainHeader.header.mdj-header-unified
+    #mainNav-artist.mdj-artist-mainnav.nav.top-nav
+    > a[data-mdj-artist-nav] {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: var(--mdj-nav-link-py-t) var(--mdj-nav-link-px) var(--mdj-nav-link-py-b) !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+    font-size: var(--mdj-nav-font-size) !important;
+    font-weight: var(--mdj-nav-font-weight) !important;
+    letter-spacing: var(--mdj-nav-letter-spacing) !important;
+    text-transform: uppercase !important;
+    text-decoration: none !important;
+    color: rgba(255, 252, 245, 0.9) !important;
+    position: relative !important;
+    transition: none !important;
+  }
+
+  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+    #mainHeader.header.mdj-header-unified
+    #mainNav-artist.mdj-artist-mainnav.nav.top-nav
+    > a.mdj-artist-nav-cell:not(:first-of-type)::before,
+  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+    #mainHeader.header.mdj-header-unified
+    #mainNav-artist.mdj-artist-mainnav.nav.top-nav
+    > a[data-mdj-artist-nav]:not(:first-of-type)::before {
+    content: '\002F' !important;
+    color: rgba(197, 160, 89, 0.4) !important;
+    font-weight: 500 !important;
+    margin-right: 0.68em !important;
+    line-height: 1 !important;
+    text-shadow: none !important;
+    position: static !important;
+  }
+
+  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+    #mainHeader.header.mdj-header-unified
+    #mainNav-artist.mdj-artist-mainnav.nav.top-nav
+    > a.mdj-artist-nav-cell::after,
+  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+    #mainHeader.header.mdj-header-unified
+    #mainNav-artist.mdj-artist-mainnav.nav.top-nav
+    > a[data-mdj-artist-nav]::after {
+    content: '' !important;
+    position: absolute !important;
+    left: 50% !important;
+    bottom: 0 !important;
+    transform: translateX(-50%) !important;
+    width: min(10ch, calc(100% - 8px)) !important;
+    height: 2px !important;
+    background: transparent !important;
+    border-radius: 2px !important;
+    pointer-events: none !important;
+    opacity: 1 !important;
+  }
+
+  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+    #mainHeader.header.mdj-header-unified
+    #mainNav-artist.mdj-artist-mainnav.nav.top-nav
+    > a.mdj-artist-nav-cell.active::after,
+  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+    #mainHeader.header.mdj-header-unified
+    #mainNav-artist.mdj-artist-mainnav.nav.top-nav
+    > a[data-mdj-artist-nav].active::after {
+    background: var(--gold) !important;
+    box-shadow: 0 0 8px rgba(197, 160, 89, 0.45) !important;
+  }
+
+  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+    #mainHeader.header.mdj-header-unified
+    #mainNav-artist.mdj-artist-mainnav.nav.top-nav
+    > a.mdj-artist-nav-cell.active,
+  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+    #mainHeader.header.mdj-header-unified
+    #mainNav-artist.mdj-artist-mainnav.nav.top-nav
+    > a[data-mdj-artist-nav].active {
+    color: var(--gold) !important;
+  }
+
+  /*
+   * events.html — menú home + carruseles sin columnas fantasma del grid artista.
+   */
+  body.page-mdj-events #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav-artist {
+    display: none !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    grid-auto-flow: unset !important;
+  }
+
+  body.page-mdj-events #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    visibility: visible !important;
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    clip: auto !important;
+  }
+
+  /* Sin columnas fantasma (slots reservados / carrusel infinito del menú home). */
+  body.page-mdj-events #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.mdj-mainnav-reserved-slot,
+  body.page-mdj-events #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.mdj-mi-portal--guest,
+  body.page-mdj-events #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.mdj-mi-portal--hydrating,
+  body.page-mdj-events #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a[aria-hidden='true'] {
+    display: none !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    flex: 0 0 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    clip: rect(0, 0, 0, 0) !important;
+  }
+
+  body.page-mdj-events.mdj-artist-header-mode #mainHeader .header-nav .container > #mainNav-artist,
+  body.page-mdj-events #mainHeader .header-nav .container > #mainNav-artist {
+    display: none !important;
+  }
+
+  body.page-mdj-events.mdj-artist-header-mode #mainHeader .header-nav .container > #mainNav.mdj-mainnav-flex {
+    display: flex !important;
+    visibility: visible !important;
+  }
+
+  body.page-mdj-events #app .mdj-artist-nav-spacer,
+  body.page-mdj-events #experience .mdj-artist-nav-spacer {
+    display: none !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+
+  body.page-mdj-events #app .mdj-residencies-carousel {
+    display: block !important;
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    grid-auto-flow: unset !important;
+  }
+
+  body.page-mdj-events #app .mdj-residencies-carousel__viewport {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    grid-auto-flow: unset !important;
+  }
+
+  body.page-mdj-events #app .mdj-residencies-carousel__track {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    width: max-content !important;
+    max-width: none !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    grid-auto-flow: unset !important;
+    column-gap: 10px !important;
+  }
+
+  body.page-mdj-events #app .mdj-venues-video-stage,
+  body.page-mdj-events #app .mdj-experience-stack,
+  body.page-mdj-events #app .mdj-experience-cards-zone,
+  body.page-mdj-events #app .mdj-experience-residencies-zone,
+  body.page-mdj-events #app .container.container--experience-venues,
+  body.page-mdj-events #experience.section {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    grid-auto-flow: unset !important;
+    box-sizing: border-box !important;
+  }
+
+  body.page-mdj-events #app .mdj-venues-video-card.mdj-venues-reel {
+    display: flex !important;
+    grid-column: auto !important;
+    grid-row: auto !important;
+  }
+
+  body.page-mdj-events #residencies .mdj-residencies-nav {
+    z-index: 40 !important;
+  }
+}
+
+/*
  * dj-profile: fila 1 cargada — misma geometría R1 que Inicio; solo sube z-index de acciones sobre el wordmark.
  */
 @media (min-width: 1001px) {
@@ -1330,5 +1730,27 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
     .container
     > .header-actions {
     z-index: 16 !important;
+  }
+}
+
+/* ── OWNER STRIP SYNC ─────────────────────────────────────────────────────────
+ * Iguala tipografía y padding del strip de artista (.dj-owner-tabs) al menú
+ * público (var(--mdj-nav-*)), eliminando el salto visual entre barras.
+ * Override de styles.css (locked): clamp(14→16px), letter-spacing 0.12→0.14em.
+ * ──────────────────────────────────────────────────────────────────────────── */
+@media (min-width: 1001px) {
+  body.dj-profile .dj-owner-tabs .dj-tab-btn,
+  body.dj-profile .dj-owner-tabs .dj-owner-academy-btn,
+  body.mdj-from-profile .dj-owner-tabs .dj-tab-btn,
+  body.mdj-from-profile .dj-owner-tabs .dj-owner-academy-btn,
+  body.mdj-academia-hub .dj-owner-tabs .dj-tab-btn,
+  body.mdj-academia-hub .dj-owner-tabs .dj-owner-academy-btn,
+  body.mdj-artist-academy .dj-owner-tabs .dj-tab-btn,
+  body.mdj-artist-academy .dj-owner-tabs .dj-owner-academy-btn {
+    font-size: var(--mdj-nav-font-size) !important;
+    font-weight: var(--mdj-nav-font-weight) !important;
+    letter-spacing: var(--mdj-nav-letter-spacing) !important;
+    padding-left: var(--mdj-nav-link-px) !important;
+    padding-right: var(--mdj-nav-link-px) !important;
   }
 }

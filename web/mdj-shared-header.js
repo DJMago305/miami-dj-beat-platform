@@ -10,7 +10,12 @@
  */
 (function () {
   'use strict';
-  console.info('[Header] build 202605131450-client-cols-fix');
+  console.info('[Header] build 202605192100-home-mainnav-fluid');
+
+  var MDJ_ARTIST_RAIL_VARIANT_CORE = 'mdj-artist-rail-core-v1';
+  var MDJ_ARTIST_RAIL_VARIANT_FULL = 'mdj-artist-rail-full-v1';
+
+  window.MDJ_DISABLE_MAINNAV_INFINITE = true;
 
   try {
     var _mdjH = document.getElementById('mainHeader');
@@ -126,16 +131,575 @@
     });
   }
 
-  function mdjHideArtistDashboardMainNavSlot() {
-    var el = document.getElementById('mainNav-artist-dashboard-link');
+  /** Satélites artista (Jobs / Shop / DJ Tools): preserva ?mdj_nav=profile sin tocar otras queries. */
+  /**
+   * Producto: Events vive en events.html (acceso vía menú artista / enlaces directos).
+   * Quitar pestaña Events del #mainNav público en todas las páginas con cabecera unificada.
+   */
+  function mdjStripPublicEventsFromMainNav() {
+    try {
+      /* En events.html, index.html, y páginas con nav compacto: Events permanece visible. */
+      if (mdjIsGuestHomeNavPage() || mdjIsPublicHomePage()) { return; }
+      var _nav = document.getElementById('mainNav');
+      if (_nav && _nav.getAttribute('data-mdj-compact-nav') === '1') { return; }
+      var sel =
+        '#mainNav a[data-mdj-nav="venues"], ' +
+        '.mobile-nav a[data-mdj-nav="venues"], ' +
+        '#mobileMenu a[data-mdj-nav="venues"]';
+      document.querySelectorAll(sel).forEach(function (el) {
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+      });
+      mdjInstallMainNavStaticMode();
+    } catch (e) {
+      /* noop */
+    }
+  }
+
+  /** Desactiva carrusel infinito / scroll horizontal en #mainNav (producto: riel estático). */
+  function mdjDestroyMainNavInfinite() {
+    try {
+      var nav = document.getElementById('mainNav');
+      if (nav) {
+        nav.classList.remove('mdj-mainnav-infinite--on');
+        nav.querySelectorAll('a.mdj-mainnav-infinite-clone').forEach(function (a) {
+          a.remove();
+        });
+        try {
+          nav.style.maxWidth = '';
+        } catch (eMw) {
+          void eMw;
+        }
+      }
+      var bar = document.querySelector('#mainHeader .header-nav');
+      if (bar) {
+        bar.classList.remove('mdj-mainnav-infinite--ui');
+        bar.querySelectorAll('.mdj-mainnav-infinite-chevron').forEach(function (b) {
+          b.remove();
+        });
+      }
+    } catch (e) {
+      /* noop */
+    }
+  }
+
+  function mdjInstallMainNavStaticMode() {
+    window.MDJ_DISABLE_MAINNAV_INFINITE = true;
+    mdjDestroyMainNavInfinite();
+    window.mdjReinitMainNavInfinite = function () {
+      mdjDestroyMainNavInfinite();
+    };
+  }
+
+  /**
+   * index.html (body.page-home): fila pública #mainNav sin recortes.
+   * 7 visibles con sesión artista: Inicio · Servicios · Shop · DJ Tools · Jobs · Contacto · MI PERFIL.
+   * CONFIG/Agenda/Flow/Events no van en esta fila (Events → events.html; CONFIG → perfil / fila artista).
+   */
+  function mdjNormalizePublicHomeMainNav() {
+    if (!mdjIsPublicHomePage()) return;
+    var nav = document.getElementById('mainNav');
+    if (!nav) return;
+    try {
+      /* venues tab en Home: apuntar a la página independiente events.html (no el anchor viejo #experience). */
+      nav.querySelectorAll('a[data-mdj-nav="venues"]').forEach(function (el) {
+        el.setAttribute('href', './events.html');
+      });
+      ['agenda', 'flow'].forEach(function (key) {
+        nav.querySelectorAll('a[data-mdj-nav="' + key + '"]').forEach(function (a) {
+          a.classList.add('mdj-mainnav-reserved-slot');
+          a.setAttribute('aria-hidden', 'true');
+          a.setAttribute('tabindex', '-1');
+        });
+      });
+      /* MI PORTAL oculto en Home: CONFIG lo reemplaza con destino dinámico por rol. */
+      nav.querySelectorAll('a[data-mdj-nav="mi-portal"]').forEach(function (a) {
+        a.classList.add('mdj-mainnav-reserved-slot');
+        a.setAttribute('aria-hidden', 'true');
+        a.setAttribute('tabindex', '-1');
+      });
+      if (window.showMyArtisticProfileMainNav) {
+        var mi = mdjEnsureGuestMiPerfilMainNavLink();
+        if (mi) {
+          mi.classList.remove('mdj-mainnav-reserved-slot');
+          mi.removeAttribute('aria-hidden');
+          mi.removeAttribute('tabindex');
+          mi.style.removeProperty('display');
+          mi.style.removeProperty('visibility');
+          mi.style.removeProperty('pointer-events');
+          var contact = nav.querySelector('a[data-mdj-nav="contact"]');
+          if (contact && contact.parentNode === nav) {
+            if (contact.nextSibling !== mi) {
+              if (contact.nextSibling) nav.insertBefore(mi, contact.nextSibling);
+              else nav.appendChild(mi);
+            }
+          } else if (nav.lastElementChild !== mi) {
+            nav.appendChild(mi);
+          }
+        }
+      }
+      mdjInstallMainNavStaticMode();
+    } catch (eHomeNav) {
+      /* noop */
+    }
+  }
+
+  /** Tras hidratar sesión: marcar Events activo en events.html (data-mdj-nav=venues). */
+  function mdjHighlightEventsPageNav() {
+    if (!mdjIsGuestHomeNavPage()) return;
+    try {
+      document.querySelectorAll('#mainNav a[data-mdj-nav="venues"], .mobile-nav a[data-mdj-nav="venues"]').forEach(function (el) {
+        el.classList.add('active');
+      });
+      document.querySelectorAll('#mainNav a[data-mdj-nav]:not([data-mdj-nav="venues"])').forEach(function (el) {
+        el.classList.remove('active');
+      });
+    } catch (e) {
+      /* noop */
+    }
+  }
+
+  /** Home público (index): #mainNav guest con MI PERFIL; no sustituir por #mainNav-artist. */
+  function mdjIsPublicHomePage() {
+    try {
+      if (document.body && document.body.classList.contains('page-home')) return true;
+      var path = (window.location.pathname || '').split('/').pop() || '';
+      path = String(path).toLowerCase();
+      return path === '' || path === 'index.html' || path === 'index';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /** Events = superficie pública con #mainNav (home); nunca fila artista ni ?mdj_nav=profile. */
+  function mdjIsGuestHomeNavPage() {
+    try {
+      var path = (window.location.pathname || '').split('/').pop() || '';
+      return String(path).toLowerCase() === 'events.html';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function mdjArtistNavWithProfileContext(relPath) {
+    try {
+      var u = new URL(relPath, window.location.href);
+      u.searchParams.set('mdj_nav', 'profile');
+      var file = u.pathname.replace(/^.*\//, '') || '';
+      return './' + file + u.search + (u.hash || '');
+    } catch (e) {
+      var sep = relPath.indexOf('?') >= 0 ? '&' : '?';
+      return relPath + sep + 'mdj_nav=profile';
+    }
+  }
+
+  /** Perfil artístico propio — nunca mezclar con dj-dashboard?tab=dashboard (Agenda). */
+  function mdjBuildArtistPublicProfileHref() {
+    var uid = window.__mdjNavOwnUserId ? String(window.__mdjNavOwnUserId) : '';
+    if (uid) {
+      return './dj-profile.html?id=' + encodeURIComponent(uid) + '&mdj_nav=profile';
+    }
+    return './dj-profile.html?mdj_nav=profile';
+  }
+
+  /**
+   * Puente runtime: expone window.showMyArtisticProfileMainNav (consola / Home).
+   * Si la variable local no existe aún, infiere artista por __mdjNavOwnUserId + __mdjLastNavTier.
+   */
+  function mdjResolveShowMyArtisticProfileMainNav(ctx) {
+    ctx = ctx || {};
+    var isClient = ctx.isClient === true || window.__mdjLastNavIsClient === true;
+    var isNavStaffSolo =
+      ctx.isNavStaffSolo === true ||
+      !!(window.__mdjLastPlatformIdentity && window.__mdjLastPlatformIdentity.navStaffSolo);
+    var navTier =
+      ctx.navTier != null && ctx.navTier !== ''
+        ? String(ctx.navTier)
+        : window.__mdjLastNavTier != null
+          ? String(window.__mdjLastNavTier)
+          : '';
+    var uid = window.__mdjNavOwnUserId ? String(window.__mdjNavOwnUserId).trim() : '';
+    var byTier =
+      !isClient && !isNavStaffSolo && (navTier === 'artist_lite' || navTier === 'artist_pro');
+    var byUid = !!uid && !isClient && !isNavStaffSolo;
+    var show = byTier || (byUid && ctx.allowUidFallback !== false);
+    window.showMyArtisticProfileMainNav = !!show;
+    return window.showMyArtisticProfileMainNav;
+  }
+
+  function mdjHasActiveArtistSessionId() {
+    return !!(window.__mdjNavOwnUserId && String(window.__mdjNavOwnUserId).trim());
+  }
+
+  function mdjApplyMiPerfilNavLabel(el) {
+    if (!el) return;
+    el.setAttribute('data-i18n', 'nav-my-profile');
+    try {
+      if (window.i18n && typeof window.i18n.t === 'function') {
+        var tx = window.i18n.t('nav-my-profile');
+        if (tx) el.textContent = tx;
+        else {
+          var rawF = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+          el.textContent = rawF.indexOf('es') === 0 ? 'MI PERFIL' : 'MY PROFILE';
+        }
+      } else {
+        var raw = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+        el.textContent = raw.indexOf('es') === 0 ? 'MI PERFIL' : 'MY PROFILE';
+      }
+    } catch (e) {
+      el.textContent = 'MY PROFILE';
+    }
+  }
+
+  /** Agenda / Schedule: dashboard explícito; tab=dashboard separado del perfil. */
+  function mdjBuildArtistScheduleHref() {
+    return mdjArtistNavWithProfileContext('./dj-dashboard.html?tab=dashboard');
+  }
+
+  /**
+   * Markup del riel artista: solo <a>. Con sesión → 8 core + MI PERFIL fijo antes de ⚙️ CONFIG.
+   * Prohibido: <span> spacer o inyección DOM posterior de pestañas.
+   */
+  function mdjArtistMainNavLinksHtml(includeMiPerfil) {
+    var miPerfilCell = '';
+    if (includeMiPerfil) {
+      miPerfilCell =
+        '<a href="' +
+        mdjBuildArtistPublicProfileHref() +
+        '" id="mainNav-artist-mi-perfil-link" class="mdj-artist-nav-cell" data-mdj-artist-nav="my-profile" data-i18n="nav-my-profile">MI PERFIL</a>';
+    }
+    return (
+      '<a href="./index.html" class="mdj-artist-nav-cell" data-mdj-artist-nav="home">HOME</a>' +
+      '<a href="' +
+      mdjArtistNavWithProfileContext('./rentals.html') +
+      '" class="mdj-artist-nav-cell" data-mdj-artist-nav="services">SERVICES</a>' +
+      '<a href="./events.html" class="mdj-artist-nav-cell" data-mdj-artist-nav="events">EVENTS</a>' +
+      '<a href="' +
+      mdjArtistNavWithProfileContext('./jobs.html') +
+      '" class="mdj-artist-nav-cell" data-mdj-artist-nav="jobs">JOBS</a>' +
+      '<a href="' +
+      mdjArtistNavWithProfileContext('./shop.html') +
+      '" class="mdj-artist-nav-cell" data-mdj-artist-nav="shop">SHOP</a>' +
+      '<a href="' +
+      mdjArtistNavWithProfileContext('./dj-tools.html') +
+      '" class="mdj-artist-nav-cell" data-mdj-artist-nav="tools">DJ TOOLS</a>' +
+      '<a href="' +
+      mdjBuildArtistScheduleHref() +
+      '" class="mdj-artist-nav-cell" data-mdj-artist-nav="schedule">SCHEDULE</a>' +
+      miPerfilCell +
+      '<a href="' +
+      mdjBuildArtistPublicProfileHref() +
+      '" class="mdj-artist-nav-cell" data-mdj-artist-nav="config">⚙️ CONFIG</a>'
+    );
+  }
+
+  function mdjRefreshArtistNavHrefs(nav) {
+    if (!nav) return;
+    var byKey = {
+      home: './index.html',
+      services: mdjArtistNavWithProfileContext('./rentals.html'),
+      events: './events.html',
+      jobs: mdjArtistNavWithProfileContext('./jobs.html'),
+      shop: mdjArtistNavWithProfileContext('./shop.html'),
+      tools: mdjArtistNavWithProfileContext('./dj-tools.html'),
+      schedule: mdjBuildArtistScheduleHref(),
+      config: mdjBuildArtistPublicProfileHref(),
+      'my-profile': mdjBuildArtistPublicProfileHref()
+    };
+    nav.querySelectorAll('a[data-mdj-artist-nav]').forEach(function (a) {
+      var k = a.getAttribute('data-mdj-artist-nav');
+      if (byKey[k]) a.setAttribute('href', byKey[k]);
+    });
+  }
+
+  /** Render único del riel artista (variante core vs full con MI PERFIL). */
+  function mdjRenderArtistNav(nav, includeMiPerfil) {
+    if (!nav) return;
+    var variant = includeMiPerfil ? MDJ_ARTIST_RAIL_VARIANT_FULL : MDJ_ARTIST_RAIL_VARIANT_CORE;
+    if (nav.getAttribute('data-mdj-artist-rail-variant') !== variant) {
+      nav.innerHTML = mdjArtistMainNavLinksHtml(!!includeMiPerfil);
+      nav.setAttribute('data-mdj-artist-rail-variant', variant);
+    }
+    if (includeMiPerfil) {
+      mdjApplyMiPerfilNavLabel(nav.querySelector('[data-mdj-artist-nav="my-profile"]'));
+    }
+    mdjRefreshArtistNavHrefs(nav);
+  }
+
+  /**
+   * Flujo único de sesión artista: #mainNav guest + riel artista (services, rentals, etc.).
+   */
+  function mdjApplyArtistSessionNav(show, profileHref) {
+    window.showMyArtisticProfileMainNav = !!show;
+    if (!show) {
+      mdjApplyArtistDashboardNavChrome(false);
+      var artistNavOff = document.getElementById('mainNav-artist');
+      if (artistNavOff) mdjRenderArtistNav(artistNavOff, false);
+      return;
+    }
+    var href =
+      profileHref && String(profileHref).trim()
+        ? mdjNormalizeArtistProfileNavHref(profileHref)
+        : mdjBuildArtistPublicProfileHref();
+    mdjEnsureGuestMiPerfilMainNavLink();
+    mdjApplyArtistDashboardNavChrome(true, href);
+    var artistNavOn = document.getElementById('mainNav-artist');
+    if (artistNavOn && !artistNavOn.hidden) {
+      mdjRenderArtistNav(artistNavOn, true);
+    }
+    if (mdjIsPublicHomePage()) {
+      mdjNormalizePublicHomeMainNav();
+    }
+  }
+
+  function mdjHydrateArtistSessionIdFromSupabase() {
+    if (mdjHasActiveArtistSessionId()) {
+      return Promise.resolve(String(window.__mdjNavOwnUserId).trim());
+    }
+    var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+    if (!sb || !sb.auth || typeof sb.auth.getSession !== 'function') {
+      return Promise.resolve('');
+    }
+    return sb.auth
+      .getSession()
+      .then(function (res) {
+        var sess = res && res.data && res.data.session;
+        var id = sess && sess.user && sess.user.id ? String(sess.user.id).trim() : '';
+        if (!id) return '';
+        var metaUt =
+          sess.user && sess.user.user_metadata && sess.user.user_metadata.user_type
+            ? String(sess.user.user_metadata.user_type).toLowerCase()
+            : '';
+        var appRole =
+          sess.user && sess.user.app_metadata && sess.user.app_metadata.role
+            ? String(sess.user.app_metadata.role).toLowerCase()
+            : '';
+        if (metaUt === 'client' || appRole === 'client') return '';
+        window.__mdjNavOwnUserId = id;
+        return id;
+      })
+      .catch(function () {
+        return '';
+      });
+  }
+
+  /** Autodetección global: __mdjNavOwnUserId o Supabase → MI PERFIL en todas las vistas públicas. */
+  function mdjAutodetectArtistMiPerfilNav() {
+    return mdjHydrateArtistSessionIdFromSupabase().then(function (id) {
+      var show = mdjResolveShowMyArtisticProfileMainNav({ allowUidFallback: true });
+      var href = id
+        ? './dj-profile.html?id=' + encodeURIComponent(id) + '&mdj_nav=profile'
+        : mdjBuildArtistPublicProfileHref();
+      mdjApplyArtistSessionNav(show, href);
+      return show;
+    });
+  }
+
+  function mdjBridgeArtistMiPerfilPublicNav(profileHref) {
+    var show =
+      !!mdjHasActiveArtistSessionId() ||
+      mdjResolveShowMyArtisticProfileMainNav({ allowUidFallback: true });
+    mdjApplyArtistSessionNav(show, profileHref);
+  }
+
+  function mdjBridgeHomeMiPerfilNav(profileHref) {
+    return mdjBridgeArtistMiPerfilPublicNav(profileHref);
+  }
+
+  function mdjAutodetectHomeArtistSession() {
+    return mdjAutodetectArtistMiPerfilNav();
+  }
+
+  function mdjBodyHasProfileNavContext() {
+    try {
+      if (document.body && document.body.classList.contains('mdj-from-profile')) return true;
+      return new URLSearchParams(window.location.search || '').get('mdj_nav') === 'profile';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /** Fila 2 artista (#mainNav-artist): 8 enlaces core; invitado #mainNav oculto sin CLS. */
+  function mdjEnsureArtistMainNav() {
+    var headerNav = document.querySelector('#mainHeader .header-nav .container');
+    if (!headerNav) return null;
+    var existing = document.getElementById('mainNav-artist');
+    if (existing) return existing;
+    var nav = document.createElement('nav');
+    nav.id = 'mainNav-artist';
+    nav.className = 'nav top-nav mdj-artist-mainnav';
+    nav.setAttribute('aria-label', 'Navegación de artista');
+    nav.hidden = true;
+    nav.setAttribute('aria-hidden', 'true');
+    mdjRenderArtistNav(nav, false);
+    var guestNav = document.getElementById('mainNav');
+    if (guestNav && guestNav.parentNode === headerNav) {
+      headerNav.insertBefore(nav, guestNav.nextSibling);
+    } else {
+      headerNav.appendChild(nav);
+    }
+    return nav;
+  }
+
+  function mdjNavHighlightArtist() {
+    var nav = document.getElementById('mainNav-artist');
+    if (!nav || nav.hidden) return;
+    var path = '';
+    try {
+      path = (window.location.pathname || '').split('/').pop() || '';
+    } catch (e) {
+      path = '';
+    }
+    path = String(path).toLowerCase();
+    var key = '';
+    if (path === 'index.html' || path === '' || path === 'index') key = 'home';
+    else if (path === 'rentals.html' || path === 'services.html') key = 'services';
+    else if (path === 'events.html') key = 'events';
+    else if (path === 'jobs.html') key = 'jobs';
+    else if (path === 'shop.html') key = 'shop';
+    else if (path === 'dj-tools.html') key = 'tools';
+    else if (path === 'dj-profile.html') {
+      nav.querySelectorAll('a[data-mdj-artist-nav]').forEach(function (el) {
+        var k = el.getAttribute('data-mdj-artist-nav');
+        el.classList.toggle('active', k === 'config' || k === 'my-profile');
+      });
+      return;
+    }
+    else if (path === 'dj-dashboard.html') {
+      var tab = '';
+      try {
+        tab = String(new URLSearchParams(window.location.search || '').get('tab') || '').toLowerCase();
+      } catch (e2) {
+        tab = '';
+      }
+      /* CONFIG en fila 2 → dj-profile; solo SCHEDULE marca Agenda (?tab=dashboard). */
+      if (!tab || tab === 'dashboard') key = 'schedule';
+    }
+    nav.querySelectorAll('a[data-mdj-artist-nav]').forEach(function (el) {
+      el.classList.toggle('active', !!key && el.getAttribute('data-mdj-artist-nav') === key);
+    });
+  }
+
+  /**
+   * Modo cabecera artista: body.mdj-artist-header-mode + #mainNav-artist (fila 2).
+   * Con ?mdj_nav=profile la franja #owner-tabs manda; no duplicar fila 2 en .header-nav.
+   */
+  function mdjApplyArtistHeaderRow2(enabled) {
+    if (mdjIsGuestHomeNavPage()) {
+      enabled = false;
+    }
+    var guestNav = document.getElementById('mainNav');
+    var artistNav = mdjEnsureArtistMainNav();
+    var fromProfile = mdjBodyHasProfileNavContext();
+
+    if (enabled) {
+      document.body.classList.add('mdj-artist-header-mode');
+      if (!fromProfile) {
+        if (guestNav) {
+          guestNav.setAttribute('aria-hidden', 'true');
+          guestNav.setAttribute('data-mdj-guest-nav-suppressed', '1');
+        }
+        if (artistNav) {
+          artistNav.hidden = false;
+          artistNav.removeAttribute('aria-hidden');
+          mdjRenderArtistNav(artistNav, !!window.showMyArtisticProfileMainNav);
+        }
+        mdjNavHighlightArtist();
+      } else {
+        if (guestNav) {
+          guestNav.setAttribute('aria-hidden', 'true');
+          guestNav.setAttribute('data-mdj-guest-nav-suppressed', '1');
+        }
+        if (artistNav) {
+          artistNav.hidden = true;
+          artistNav.setAttribute('aria-hidden', 'true');
+        }
+      }
+      return;
+    }
+
+    document.body.classList.remove('mdj-artist-header-mode');
+    if (guestNav) {
+      guestNav.removeAttribute('aria-hidden');
+      guestNav.removeAttribute('data-mdj-guest-nav-suppressed');
+    }
+    if (artistNav) {
+      artistNav.hidden = true;
+      artistNav.setAttribute('aria-hidden', 'true');
+      artistNav.querySelectorAll('a[data-mdj-artist-nav]').forEach(function (el) {
+        el.classList.remove('active');
+      });
+    }
+  }
+
+  /** MI PERFIL en #mainNav público: hueco fijo → ./dj-profile.html?mdj_nav=profile */
+  function mdjEnsureGuestMiPerfilMainNavLink() {
+    var nav = document.getElementById('mainNav');
+    if (!nav) return null;
+    var el = document.getElementById('mainNav-guest-mi-perfil-link');
+    var legacy = document.getElementById('mainNav-artist-dashboard-link');
+    if (legacy && !el) {
+      legacy.id = 'mainNav-guest-mi-perfil-link';
+      el = legacy;
+    }
+    if (!el) {
+      el = document.createElement('a');
+      el.id = 'mainNav-guest-mi-perfil-link';
+      el.setAttribute('data-mdj-nav', 'my-profile');
+      el.setAttribute('data-i18n', 'nav-my-profile');
+      el.className = 'mdj-guest-mi-perfil-mainnav mdj-mainnav-reserved-slot';
+      var insBefore = mdjGetMainNavStaffAnchor();
+      if (insBefore && insBefore.parentNode === nav) {
+        nav.insertBefore(el, insBefore);
+      } else {
+        var ref = document.getElementById('mainNav-mi-portal-link');
+        if (ref && ref.parentNode === nav) {
+          if (ref.nextSibling) nav.insertBefore(el, ref.nextSibling);
+          else nav.appendChild(el);
+        } else {
+          nav.appendChild(el);
+        }
+      }
+    }
+    el.href = mdjBuildArtistPublicProfileHref();
+    try {
+      if (window.i18n && typeof window.i18n.t === 'function') {
+        var tx = window.i18n.t('nav-my-profile');
+        if (tx) el.textContent = tx;
+      } else {
+        var raw = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+        el.textContent = raw.indexOf('es') === 0 ? 'MI PERFIL' : 'MY PROFILE';
+      }
+    } catch (eLbl) {
+      el.textContent = 'MY PROFILE';
+    }
+    return el;
+  }
+
+  function mdjNormalizeArtistProfileNavHref(href) {
+    try {
+      var u = new URL(String(href).trim(), window.location.href);
+      if (!u.searchParams.get('mdj_nav')) u.searchParams.set('mdj_nav', 'profile');
+      var file = u.pathname.replace(/^.*\//, '') || 'dj-profile.html';
+      return './' + file + u.search + (u.hash || '');
+    } catch (e) {
+      return mdjBuildArtistPublicProfileHref();
+    }
+  }
+
+  function mdjHideGuestMiPerfilMainNavSlot() {
+    var el = document.getElementById('mainNav-guest-mi-perfil-link');
     if (!el) return;
     el.classList.add('mdj-mainnav-reserved-slot');
+    el.setAttribute('aria-hidden', 'true');
+    el.setAttribute('tabindex', '-1');
     el.style.removeProperty('display');
   }
 
-  /** Móvil: quitar nodo duplicado. Escritorio: nunca quitar #mainNav-artist-dashboard-link (hueco fijo). */
+  /** Móvil: quitar nodo duplicado. Escritorio: nunca quitar #mainNav-guest-mi-perfil-link (hueco fijo). */
   function mdjRemoveArtistDashboardNavLinks() {
-    mdjHideArtistDashboardMainNavSlot();
+    mdjHideGuestMiPerfilMainNavSlot();
+    var artistNav = document.getElementById('mainNav-artist');
+    if (artistNav) mdjRenderArtistNav(artistNav, false);
     var mb = document.getElementById('header-artist-dashboard-mobile');
     if (mb) mb.remove();
   }
@@ -344,8 +908,8 @@
     var mobileNav = document.querySelector('#mobileMenu .mobile-nav');
     var href =
       show && profileHref && String(profileHref).trim()
-        ? String(profileHref).trim()
-        : './dj-profile.html';
+        ? mdjNormalizeArtistProfileNavHref(profileHref)
+        : mdjBuildArtistPublicProfileHref();
     function applyLabel(el) {
       if (!el) return;
       el.setAttribute('data-i18n', 'nav-my-profile');
@@ -371,30 +935,9 @@
       mdjRemoveArtistDashboardNavLinks();
       return;
     }
-    if (!profileHref || !String(profileHref).trim()) {
-      mdjRemoveArtistDashboardNavLinks();
-      return;
-    }
     if (nav) {
-      var el = document.getElementById('mainNav-artist-dashboard-link');
-      if (!el) {
-        el = document.createElement('a');
-        el.id = 'mainNav-artist-dashboard-link';
-        el.setAttribute('data-mdj-nav', 'my-profile');
-        el.className = 'mdj-artist-dash-mainnav';
-        var insBefore = mdjGetMainNavStaffAnchor();
-        if (insBefore && insBefore.parentNode === nav) {
-          nav.insertBefore(el, insBefore);
-        } else {
-          var ref = document.getElementById('mainNav-mi-portal-link');
-          if (ref && ref.parentNode === nav) {
-            if (ref.nextSibling) nav.insertBefore(el, ref.nextSibling);
-            else nav.appendChild(el);
-          } else {
-            nav.appendChild(el);
-          }
-        }
-      }
+      var el = mdjEnsureGuestMiPerfilMainNavLink();
+      if (!el) return;
       el.href = href;
       el.setAttribute('data-mdj-nav', 'my-profile');
       applyLabel(el);
@@ -1639,6 +2182,10 @@
     document.querySelectorAll('#mainNav a[data-mdj-nav], .mobile-nav a[data-mdj-nav]').forEach(function (el) {
       el.classList.toggle('active', key && el.getAttribute('data-mdj-nav') === key);
     });
+    if (document.body && document.body.classList.contains('mdj-artist-header-mode')) {
+      mdjNavHighlightArtist();
+    }
+    mdjHighlightEventsPageNav();
   }
 
   window.mdjNavHighlight = mdjNavHighlight;
@@ -1744,7 +2291,7 @@
       '<a class="account-btn mdj-guest-access-trigger" id="accountBtn" href="./login.html" title="Log in" aria-label="Log in">' +
       '<span class="mdj-guest-access-ring" aria-hidden="true">' +
       '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">' +
-      '<path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z" stroke="currentColor" stroke-width="1.75"/>' +
+      '<circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.75"/>' +
       '<path d="M5 20v-1a7 7 0 0 1 14 0v1" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>' +
       '</svg></span></a>';
     z.innerHTML = guestHtml;
@@ -1774,6 +2321,7 @@
         window.__mdjLastNavTier = null;
         window.__mdjProToolsUnlocked = false;
         window.__mdjLastNavIsClient = false;
+        window.showMyArtisticProfileMainNav = false;
         mdjEnsureDesktopAuditCss();
         mdjHideMiPortalButton();
         mdjApplyGuestHeaderAvatar();
@@ -1786,6 +2334,7 @@
         mdjApplyAgendaMainNavLink(false);
         mdjApplyFlowMainNavLink(false);
         mdjApplyNavTierStatusBadge(null);
+        mdjApplyArtistHeaderRow2(false);
         /* PRO/FREE: ya ocultos vía mdjHeaderHideMonetizationCtasPending() + CSS hasta sesión. */
         return;
       }
@@ -2063,24 +2612,46 @@
           mdjMaybeRunVipWelcomeProtocol(session);
 
           if (document.getElementById('mainNav')) {
-            mdjEnsureMiPortalInMainNav(miPortalHref, miPortalNavOpts);
+            /* En nav compacto (services/events): MI PORTAL no se activa; solo CONFIG + MI PERFIL. */
+            var _compactNavCheck = (function () { var _n = document.getElementById('mainNav'); return !!(_n && _n.getAttribute('data-mdj-compact-nav') === '1'); }());
+            if (!_compactNavCheck) { mdjEnsureMiPortalInMainNav(miPortalHref, miPortalNavOpts); }
             var hdrDup = document.getElementById('header-mi-portal-btn');
             if (hdrDup) hdrDup.style.display = 'none';
           } else {
             mdjEnsureMiPortalButton(miPortalHref);
           }
           mdjEnsureMiPortalMobile(miPortalHref, miPortalNavOpts);
-          var showMyArtisticProfileMainNav =
+          var showMyArtisticProfileMainNav = mdjResolveShowMyArtisticProfileMainNav({
+            isClient: isClient,
+            isNavStaffSolo: isNavStaffSolo,
+            navTier: navTier,
+            allowUidFallback: true
+          });
+          mdjApplyStaffMainNavLink(!!isDjStaff);
+          var showArtistDashMainNav = !isClient && (navTier === 'artist_lite' || navTier === 'artist_pro');
+          var onPublicHome = mdjIsPublicHomePage();
+          /* Centinela nav compacto: services/events usan data-mdj-compact-nav="1" → bloquea inyección de Agenda/Flow/rail artista. */
+          var isCompactNav = (function () {
+            var _n = document.getElementById('mainNav');
+            return !!(_n && _n.getAttribute('data-mdj-compact-nav') === '1');
+          }());
+          /* En Inicio o nav compacto: CONFIG visible si hay sesión activa; Agenda/Flow solo en páginas artista no-compactas. */
+          var showConfigOnHome = onPublicHome && !!window.__mdjNavOwnUserId;
+          mdjApplyAgendaMainNavLink(!!showArtistDashMainNav && !onPublicHome && !isCompactNav, './dj-dashboard.html?tab=dashboard');
+          mdjApplyConfigMainNavLink((!!showArtistDashMainNav && !onPublicHome) || showConfigOnHome || (isCompactNav && !!window.__mdjNavOwnUserId), settingsUrl);
+          mdjApplyFlowMainNavLink(!!showArtistDashMainNav && !onPublicHome && !isCompactNav, './dj-dashboard.html?tab=flow');
+          var showArtistHeaderNav =
+            !mdjIsGuestHomeNavPage() &&
+            !mdjIsPublicHomePage() &&
+            !isCompactNav &&
             !isClient &&
             !isNavStaffSolo &&
             (navTier === 'artist_lite' || navTier === 'artist_pro');
-          mdjApplyArtistDashboardNavChrome(showMyArtisticProfileMainNav, publicProfileUrl);
-          mdjApplyStaffMainNavLink(!!isDjStaff);
-          var showArtistDashMainNav = !isClient && (navTier === 'artist_lite' || navTier === 'artist_pro');
-          mdjApplyAgendaMainNavLink(!!showArtistDashMainNav, './dj-dashboard.html?tab=dashboard');
-          mdjApplyConfigMainNavLink(true, settingsUrl);
-          mdjApplyFlowMainNavLink(!!showArtistDashMainNav, './dj-dashboard.html?tab=flow');
+          mdjApplyArtistHeaderRow2(!!showArtistHeaderNav);
+          mdjApplyArtistSessionNav(showMyArtisticProfileMainNav, publicProfileUrl);
+          mdjNormalizePublicHomeMainNav();
           mdjNavHighlight();
+          mdjHighlightEventsPageNav();
           try {
             if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
           } catch (eUi) { /* ignore */ }
@@ -2128,6 +2699,7 @@
             mdjApplyHeaderAuthPillSession(true);
           } catch (e2) { /* ignore */ }
           mdjApplyDjToolsNavForTier(null);
+          window.showMyArtisticProfileMainNav = false;
           mdjApplyArtistDashboardNavChrome(false);
           mdjApplyStaffMainNavLink(false);
           mdjApplyConfigMainNavLink(false);
@@ -2135,14 +2707,17 @@
           mdjApplyFlowMainNavLink(false);
           mdjApplyNavTierStatusBadge(null);
           mdjSyncClientLoyaltyIndicator(false);
+          mdjApplyArtistHeaderRow2(false);
         }
       } else {
         window.__mdjNavOwnUserId = '';
         window.__mdjLastNavTier = null;
         window.__mdjProToolsUnlocked = false;
         window.__mdjLastNavIsClient = false;
+        window.showMyArtisticProfileMainNav = false;
         mdjHideMiPortalButton();
         document.body.classList.remove('mdj-logged-in-header');
+        mdjApplyArtistHeaderRow2(false);
         mdjApplyGuestHeaderAvatar();
         mdjApplyHeaderAuthPillSession(false);
         var djproBadge = document.getElementById('header-djpro-badge');
@@ -2169,6 +2744,7 @@
       window.__mdjLastNavTier = null;
       window.__mdjProToolsUnlocked = false;
       window.__mdjLastNavIsClient = false;
+      window.showMyArtisticProfileMainNav = false;
       mdjHideMiPortalButton();
       if (authZone) authZone.style.display = 'none';
       mdjApplyHeaderAuthPillSession(false);
@@ -2180,6 +2756,7 @@
       mdjApplyAgendaMainNavLink(false);
       mdjApplyFlowMainNavLink(false);
       mdjApplyNavTierStatusBadge(null);
+      mdjApplyArtistHeaderRow2(false);
     } finally {
       mdjSetHeaderAuthPillsPending(false);
       if (authZone) authZone.classList.remove('session-pending');
@@ -2269,6 +2846,13 @@
   }
 
   window.mdjInitSharedHeader = function () {
+    window.showMyArtisticProfileMainNav = false;
+    mdjInstallMainNavStaticMode();
+    mdjEnsureGuestMiPerfilMainNavLink();
+    mdjHideGuestMiPerfilMainNavSlot();
+    mdjStripPublicEventsFromMainNav();
+    mdjNormalizePublicHomeMainNav();
+    void mdjAutodetectArtistMiPerfilNav();
     mdjHeaderHideMonetizationCtasPending();
     mdjApplyShopHeaderCartVisibility();
     try {
@@ -2294,8 +2878,11 @@
         });
       }
       if (typeof window.checkSessionForNav === 'function') {
-        return window.checkSessionForNav();
+        return window.checkSessionForNav().then(function () {
+          return mdjAutodetectArtistMiPerfilNav();
+        });
       }
+      return mdjAutodetectArtistMiPerfilNav();
     });
     if (window.MdjHeaderSmartSearch && typeof window.MdjHeaderSmartSearch.init === 'function') {
       window.MdjHeaderSmartSearch.init();
@@ -2321,6 +2908,9 @@
     if (!document.getElementById('mainHeader')) return;
     if (window.MDJ_SKIP_SHARED_HEADER_INIT) return;
     window.mdjInitSharedHeader();
+    setTimeout(mdjInstallMainNavStaticMode, 0);
+    setTimeout(mdjInstallMainNavStaticMode, 150);
+    setTimeout(mdjInstallMainNavStaticMode, 600);
   });
 
   window.addEventListener('focus', function () {
@@ -2335,4 +2925,12 @@
   /** `auth.js` delega ENTRAR/SALIR + zona VIP aquí para no pisar `data-auth-btn`. */
   window.__MDJ_HEADER_SESSION_OWNER = true;
   window.mdjNormalizeAvatarStorageUrl = mdjNormalizeAvatarStorageUrl;
+  window.mdjResolveShowMyArtisticProfileMainNav = mdjResolveShowMyArtisticProfileMainNav;
+  window.mdjApplyArtistSessionNav = mdjApplyArtistSessionNav;
+  window.mdjNormalizePublicHomeMainNav = mdjNormalizePublicHomeMainNav;
+  window.mdjRenderArtistNav = mdjRenderArtistNav;
+  window.mdjBridgeArtistMiPerfilPublicNav = mdjBridgeArtistMiPerfilPublicNav;
+  window.mdjAutodetectArtistMiPerfilNav = mdjAutodetectArtistMiPerfilNav;
+  window.mdjBridgeHomeMiPerfilNav = mdjBridgeHomeMiPerfilNav;
+  window.mdjAutodetectHomeArtistSession = mdjAutodetectHomeArtistSession;
 })();
