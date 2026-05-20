@@ -122,7 +122,14 @@
         } catch (e) { /* noop */ }
     }
 
+    function isEventsPublicHomePage() {
+        var path = (window.location.pathname.split('/').pop() || '').toLowerCase();
+        return path === 'events.html';
+    }
+
     function run() {
+        /* Events vive en menú home (#mainNav); no inyectar #owner-tabs aunque venga ?mdj_nav=profile. */
+        if (isEventsPublicHomePage()) return;
         if (!hasProfileNavContext()) return;
 
         document.body.classList.add('mdj-from-profile');

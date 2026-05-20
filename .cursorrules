@@ -151,3 +151,9 @@ Do not collapse these into a generic “user” when the task is about permissio
 - **`enableCarouselHeroVideoPreview: false`** — En el paso del hub, **no** se debe disparar vídeo en **`#talent-shell-focus`** al pasar el mouse/teclado sobre las tarjetas del **`.talent-selector-carousel`**. El fondo visible en ese paso es el flujo del hero en **`#talent-shell-ambient`**. Los modales **internos** (DJ, roster, Hora Loca, Staff, Payasos, etc.) siguen teniendo preview/hover **en su propio modal**, no replicar el patrón del shell del hub sobre el carrusel de categorías.
 - **`enableHubShortlistPickRings: false`** — **Sin** anillos / checkbox de “lista rápida” en las tarjetas del carrusel del hub; `mdjInjectTalentHubShortlistUi` solo **limpia** restos si los hubiera.
 - **Prohibido** “mejorar” reintroduciendo preview o anillos en el hub **sin** ampliar el ticket; si el producto cambia, actualizar **contrato + código + prueba manual** en el mismo cambio.
+
+## 📍 LEY DE EXCLUSIVIDAD DE ENTORNO LOCAL (PARCHES DE OJOS)
+- Tu único universo de edición está dentro de la carpeta local: `./web/`
+- Los archivos vivos que lee el servidor son únicamente: 'services.html', 'events.html', 'rentals.html' dentro de './web/'.
+- Tienes estrictamente prohibido crear copias de seguridad (.bak, .old, .copy) o archivos espejo en la raíz.
+- Ignora cualquier otra terminal o puerto que no sea el archivo físico real conectado en el puerto 8080.

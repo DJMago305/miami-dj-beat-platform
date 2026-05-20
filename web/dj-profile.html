@@ -120,8 +120,19 @@
         })();
     </script>
     <link rel="stylesheet" href="./styles.css?v=20260430-legacy-compat-1" />
-    <link rel="stylesheet" href="./header-unified.css?v=20260424-dashboard-header-sync" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260519-owner-strip-sync-1" />
     <link rel="stylesheet" href="./profile.css?v=20260513-reviews-carousel" />
+    <style id="mdj-qr-view-header-shield">
+        /* Blindaje definitivo: especificidad mayor que #mainHeader.header.mdj-header-unified { display:flex !important } en header-unified.css */
+        html.dj-profile-qr-view #mainHeader.header.mdj-header-unified,
+        html.dj-profile-qr-view #mainHeader {
+            display: none !important;
+        }
+        /* Oculta el botón flotante inferior de SFT en vista DJ (redundante con el menú superior) */
+        html:not(.dj-profile-qr-view) #mdj-sft-mobile-float-cta {
+            display: none !important;
+        }
+    </style>
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260412-profile" />
     <link
         href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700;1,800&family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&display=swap"
@@ -4225,6 +4236,17 @@
             return window.getSupabaseClient ? window.getSupabaseClient() : null;
         }
 
+        /** Freno Agenda: en dj-profile / ?mdj_nav=profile no forzar salto a dj-dashboard. */
+        function mdjProfileUserIntentStayOnPage() {
+            try {
+                var seg = (window.location.pathname || '').split('/').pop() || '';
+                if (/^dj-profile\.html$/i.test(seg)) return true;
+                return new URLSearchParams(window.location.search || '').get('mdj_nav') === 'profile';
+            } catch (e) {
+                return false;
+            }
+        }
+
         function mdjProfileRunSecondary(fn) {
             var run = function () {
                 try {
@@ -4343,9 +4365,7 @@
             const targetId = params.get('id') || (session ? session.user.id : null);
             window.currentProfileDJId = targetId;
             if (!targetId) {
-                if (isPublicQrView) {
-                    window.location.replace('./index.html');
-                } else {
+                if (!isPublicQrView) {
                     window.location.replace('./login.html?redirect=dj-profile');
                 }
                 return;
@@ -4366,21 +4386,32 @@
             let p = null;
 
             if (!session) {
-                const pubRes = await db.from('public_dj_profiles').select(MDJ_PROFILE_P1_COLS).eq('user_id', targetId).maybeSingle();
-                if (!pubRes.error && pubRes.data) p = pubRes.data;
+                // Use '*' for public_dj_profiles: the view does NOT expose id/role/region
+                // (columns present in MDJ_PROFILE_P1_COLS). Passing those columns causes a
+                // PostgREST column-not-found error → pubRes.error truthy → p stays null → redirect.
+                const pubRes = await db.from('public_dj_profiles').select('*').eq('user_id', targetId).maybeSingle();
+                if (!pubRes.error && pubRes.data) {
+                    p = pubRes.data;
+                } else if (allowPublicProfileBrowse) {
+                    // Fallback for anonymous QR visitors if the view itself fails for any reason.
+                    try {
+                        const fbRes = await db.from('dj_profiles').select('*').eq('user_id', targetId).maybeSingle();
+                        if (!fbRes.error && fbRes.data) p = fbRes.data;
+                    } catch (ePubFb) { void ePubFb; }
+                }
             } else if (session.user.id === targetId) {
-                const ownRes = await db.from('dj_profiles').select(MDJ_PROFILE_P1_COLS).eq('user_id', targetId).single();
-                p = ownRes.data || null;
+                const ownRes = await db.from('dj_profiles').select('*').eq('user_id', targetId).maybeSingle();
+                p = ownRes && ownRes.data ? ownRes.data : null;
             } else {
                 const pair = await Promise.all([
                     db.from('dj_profiles').select('role').eq('user_id', session.user.id).maybeSingle(),
-                    db.from('public_dj_profiles').select(MDJ_PROFILE_P1_COLS).eq('user_id', targetId).maybeSingle()
+                    db.from('public_dj_profiles').select('*').eq('user_id', targetId).maybeSingle()
                 ]);
                 const r = String(pair[0].data && pair[0].data.role != null ? pair[0].data.role : '').toLowerCase().trim();
                 isAdmin = r === 'admin';
                 isStaff = r === 'admin' || r === 'owner' || r === 'manager' || r === 'seller';
                 if (isStaff && !isPublicQrView) {
-                    const privRes = await db.from('dj_profiles').select(MDJ_PROFILE_P1_COLS).eq('user_id', targetId).single();
+                    const privRes = await db.from('dj_profiles').select('*').eq('user_id', targetId).single();
                     p = privRes.data || null;
                 } else if (!pair[1].error && pair[1].data) {
                     p = pair[1].data;
@@ -4392,9 +4423,21 @@
                 isStaff = r0 === 'admin' || r0 === 'owner' || r0 === 'manager' || r0 === 'seller';
             }
 
-            // Sin fila en dj_profiles para targetId: solo redirigir a portal/cuenta si el visitante es el dueño de ese id (evita confundir con otro DJ borrado o id inválido).
+            // Sin fila P1: reintento completo; si el usuario está en dj-profile / mdj_nav=profile, no forzar Agenda.
+            if (!p && session && session.user.id === targetId && mdjProfileUserIntentStayOnPage()) {
+                try {
+                    const rescue = await db.from('dj_profiles').select('*').eq('user_id', targetId).maybeSingle();
+                    if (rescue && rescue.data) p = rescue.data;
+                } catch (eRes) { void eRes; }
+            }
             if (!p) {
                 if (session && session.user.id === targetId) {
+                    if (mdjProfileUserIntentStayOnPage()) {
+                        try {
+                            console.warn('[dj-profile] Sin fila dj_profiles en P1; permaneciendo en perfil (sin redirigir a Agenda).');
+                        } catch (eStay) { void eStay; }
+                        return;
+                    }
                     var __cp = null;
                     try {
                         var __cr = await db.from('client_profiles').select('user_id').eq('user_id', session.user.id).maybeSingle();
@@ -4405,6 +4448,11 @@
                     } else {
                         window.location.replace('./dj-dashboard.html');
                     }
+                } else if (allowPublicProfileBrowse) {
+                    // Anonymous QR visitor with no profile data: don't bounce to home.
+                    // Clear the SFT boot chrome so the page doesn't freeze on the logo.
+                    if (typeof window.mdjSftClearTabBootChrome === 'function') window.mdjSftClearTabBootChrome();
+                    return;
                 } else {
                     window.location.replace('./index.html');
                 }
@@ -5178,6 +5226,9 @@
                 ? window.buildMiamiPublicQrUrl(targetId, p.referral_code || null)
                 : (`${mdbPublicProfileQrBase()}/dj-profile.html?id=${encodeURIComponent(targetId)}&view=public&ref=${encodeURIComponent(targetId)}`);
             window._mdjPublicProfileQrUrl = profileUrl;
+            // SFT cabin QR: land on the public profile hero so the fan sees the DJ
+            // and the SoundForTips "Pedir Canción" button — not the internal cabin panel.
+            window._mdjSftCabQrUrl = profileUrl || '';
             try {
                 var cabQrReset = document.getElementById('sft-cab-qr-mount');
                 if (cabQrReset) {
@@ -11647,7 +11698,7 @@
             var mount = document.getElementById('sft-cab-qr-mount');
             if (!mount) return;
             if (mount.dataset.qrReady === '1') return;
-            var url = window._mdjPublicProfileQrUrl;
+            var url = window._mdjSftCabQrUrl || window._mdjPublicProfileQrUrl;
             if (!url) {
                 mount.innerHTML = '<p style="color:#555;font-size:13px;padding:12px;">Carga el perfil para generar el enlace del QR.</p>';
                 return;
@@ -11680,7 +11731,7 @@
                 ev.stopPropagation();
                 ev.preventDefault();
             }
-            var profileUrl = window._mdjPublicProfileQrUrl;
+            var profileUrl = window._mdjSftCabQrUrl || window._mdjPublicProfileQrUrl;
             if (!profileUrl) {
                 try { alert('Carga el perfil para generar el enlace del QR.'); } catch (e0) { void e0; }
                 return;
@@ -12127,20 +12178,27 @@
             if (!djId || requestId == null) return;
             var rid = String(requestId);
             if (sftCabResolvedIdsHas(djId, rid)) return;
-            var items = typeof sftQueueRead === 'function' ? sftQueueRead(djId) : [];
-            var row = null;
-            for (var j = 0; j < items.length; j++) {
-                if (String(items[j].id) === String(requestId)) { row = items[j]; break; }
+            window.__sftCabDenyLocks = window.__sftCabDenyLocks || Object.create(null);
+            if (window.__sftCabDenyLocks[rid]) return;
+            window.__sftCabDenyLocks[rid] = true;
+            try {
+                var items = typeof sftQueueRead === 'function' ? sftQueueRead(djId) : [];
+                var row = null;
+                for (var j = 0; j < items.length; j++) {
+                    if (String(items[j].id) === String(requestId)) { row = items[j]; break; }
+                }
+                if (row) {
+                    sftCabResolvedIdsMark(djId, rid, 'deny');
+                    sftRpcDenySoundForTipsManualFirst(rid);
+                    sftMaybeNotifyClientSms('deny', row);
+                }
+                if (typeof sftQueueRemoveById === 'function') sftQueueRemoveById(djId, requestId);
+                if (typeof sftRefreshLaunchBadge === 'function') sftRefreshLaunchBadge();
+                window.sftRenderDjLibraryList();
+                if (typeof window.refreshSftNightLogList === 'function') window.refreshSftNightLogList();
+            } finally {
+                delete window.__sftCabDenyLocks[rid];
             }
-            if (row) {
-                sftCabResolvedIdsMark(djId, rid, 'deny');
-                sftRpcDenySoundForTipsManualFirst(rid);
-                sftMaybeNotifyClientSms('deny', row);
-            }
-            if (typeof sftQueueRemoveById === 'function') sftQueueRemoveById(djId, requestId);
-            if (typeof sftRefreshLaunchBadge === 'function') sftRefreshLaunchBadge();
-            window.sftRenderDjLibraryList();
-            if (typeof window.refreshSftNightLogList === 'function') window.refreshSftNightLogList();
         };
 
         function sftCabDismissPendingRowsOnClose(djId) {

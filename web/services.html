@@ -1,3 +1,11 @@
+<!--
+🔒 LOCKED VIEW LAYER
+
+Este archivo conecta la data con el render.
+
+No modificar estructura ni scripts sin validación.
+Riesgo: romper carga del catálogo.
+-->
 <!doctype html>
 <html lang="en">
 
@@ -5,35 +13,1779 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Services — Miami DJ Beat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap"
+        rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260516-wordmark-clear-r-1" />
-    <link rel="stylesheet" href="./profile.css?v=20260320-1" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260519-compact-no-cls-2" />
+    <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+    <style id="rentals-visual-lock">
+        /* RENTALS VISUAL LOCK — DO NOT EDIT */
 
-</head>
-
-<body class="notranslate">
-    <!-- ESTILO INYECTADO CONTRA EL BRINCO Y PARA PESTAÑAS MAESTRAS -->
-    <style>
-        /* Bloqueo del Modelo de Caja para evitar el "Brinco" de Idioma */
-        .lang-btn {
-            width: 34px !important;
-            text-align: center !important;
-            display: inline-block;
-            box-sizing: border-box;
-            padding: 4px 0 !important;
-            border-radius: 999px !important;
-            opacity: 0.4 !important;
-            transition: all 0.22s ease !important;
+        /* 1. CLEAN CARDS — No images in service grid */
+        .tile img,
+        .service-card img,
+        .card img {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
         }
 
-        .lang-btn.active {
-            background: var(--gold) !important;
-            box-shadow: 0 0 12px rgba(197, 160, 89, 0.5) !important;
-            opacity: 1 !important;
-            color: #fff !important;
+        .tile,
+        .service-card,
+        .card {
+            background-image: none !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+        }
+
+        /* 2. CTA BUTTONS — Stable Layout */
+        .tile .btn.primary.full,
+        .service-card .btn.primary.full,
+        .card .btn.primary.full {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            margin: 18px auto 0 !important;
+            padding-left: 18px !important;
+            padding-right: 18px !important;
+            outline: 0 !important;
+        }
+
+        /* 3. HOVER EFFECT — Consistent Across All Cards */
+        @media (hover: hover) and (pointer: fine) {
+
+            .tile,
+            .service-card,
+            .card {
+                transition: transform 220ms ease, box-shadow 220ms ease;
+                will-change: transform;
+                transform: translateZ(0);
+            }
+
+            .tile:hover,
+            .service-card:hover,
+            .card:hover {
+                transform: scale(1.03);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            }
+        }
+
+        /* 4. BACKGROUND FIX — Full viewport coverage */
+        body {
+            min-height: 100vh !important;
+            background-attachment: fixed !important;
+            background-size: cover !important;
+        }
+
+        /* 5. OVERFLOW FIX — Prevent Clipping */
+        .grid3,
+        .services-grid,
+        .rentals-grid,
+        .cards-grid,
+        .services-section {
+            overflow: visible !important;
+        }
+
+        /* Gallery carousel styles: see #rentals-gallery-carousel */
+    </style>
+    <style id="rentals-gallery-carousel">
+        #rentals-gallery .rentals-gallery-shell {
+            position: relative;
+            width: 100%;
+            container-type: inline-size;
+            container-name: mdj-rentals-gallery;
+        }
+
+        #rentals-gallery .rentals-gallery-viewport {
+            width: 100%;
+        }
+
+        #rentals-gallery .rentals-gallery-nav {
+            position: absolute;
+            top: 50%;
+            z-index: 3;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid rgba(212, 175, 55, 0.88);
+            background: rgba(10, 12, 22, 0.82);
+            color: rgba(212, 175, 55, 0.95);
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1;
+            padding: 0;
+            cursor: pointer;
+            transform: translateY(-50%);
+            box-shadow: 0 0 18px rgba(212, 175, 55, 0.22);
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        #rentals-gallery .rentals-gallery-nav--prev {
+            left: clamp(6px, 1.2vw, 14px);
+        }
+
+        #rentals-gallery .rentals-gallery-nav--next {
+            right: clamp(6px, 1.2vw, 14px);
+        }
+
+        #rentals-gallery .rentals-gallery-nav:hover {
+            border-color: rgba(212, 175, 55, 1);
+            box-shadow: 0 0 24px rgba(212, 175, 55, 0.38);
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        #rentals-gallery .rentals-gallery-nav:focus-visible {
+            outline: 2px solid rgba(212, 175, 55, 0.65);
+            outline-offset: 2px;
+        }
+
+        #rentals-gallery .rentals-gallery-track {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            align-items: stretch;
+            gap: 20px;
+            width: 100%;
+            padding: 4px 2px 12px;
+            box-sizing: border-box;
+            overflow-x: auto;
+            overflow-y: hidden;
+            overscroll-behavior-x: contain;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: auto;
+        }
+
+        #rentals-gallery .rentals-gallery-track::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        #rentals-gallery .rentals-gallery-track::-webkit-scrollbar-thumb {
+            background: rgba(212, 175, 55, 0.35);
+            border-radius: 8px;
+        }
+
+        #rentals-gallery .rentals-gallery-track.mdj-rentals-gallery-infinite {
+            scroll-snap-type: none !important;
+        }
+
+        #rentals-gallery .rentals-gallery-slide {
+            flex: 0 0 calc((100cqi - 44px) / 3);
+            width: calc((100cqi - 44px) / 3);
+            padding: 0;
+            overflow: hidden;
+            border-radius: 15px;
+            border: 1px solid rgba(212, 175, 55, 0.32);
+            box-sizing: border-box;
+        }
+
+        @container mdj-rentals-gallery (max-width: 960px) {
+            #rentals-gallery .rentals-gallery-slide {
+                flex: 0 0 calc((100cqi - 24px) / 2);
+                width: calc((100cqi - 24px) / 2);
+            }
+        }
+
+        @container mdj-rentals-gallery (max-width: 560px) {
+            #rentals-gallery .rentals-gallery-slide {
+                flex: 0 0 calc(100cqi - 4px);
+                width: calc(100cqi - 4px);
+            }
+        }
+
+        #rentals-gallery .rentals-gallery-slide img {
+            display: block !important;
+            width: 100% !important;
+            height: clamp(250px, 20cqi, 320px) !important;
+            object-fit: cover;
         }
     </style>
+    <!-- EVENT BUILDER — fullscreen Event Cart (scoped); gated by MDJ_EVENT_BUILDER_V1 -->
+    <style id="rentals-event-builder">
+        body.mdj-eb-cart-open {
+            overflow: hidden;
+        }
 
+        /* Carrito a pantalla completa: el header real queda bajo overlay/drawer (no subir z-index del #mainHeader aquí). */
+
+        body.mdj-event-builder-on #mdj-event-builder-root {
+            display: block;
+        }
+
+        #mdj-event-builder-root {
+            display: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-fab {
+            position: fixed;
+            left: clamp(12px, 2vw, 20px);
+            bottom: clamp(88px, 12vh, 120px);
+            z-index: 9400;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            border: 2px solid rgba(212, 175, 55, 0.88);
+            background: rgba(10, 12, 22, 0.9);
+            color: rgba(212, 175, 55, 0.95);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 0 18px rgba(212, 175, 55, 0.22);
+        }
+
+        #mdj-event-builder-root .mdj-eb-fab__count {
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            border-radius: 999px;
+            background: rgba(212, 175, 55, 0.22);
+            font-size: 11px;
+            line-height: 20px;
+            text-align: center;
+        }
+
+        /* Rentals: Event Cart header twin (same glass/circle as shop cart; color + badge differ) */
+        body.page-mdj-rentals #mdj-event-builder-root .mdj-eb-fab {
+            display: none !important;
+        }
+
+        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn {
+            margin-left: 10px;
+            border-color: rgba(72, 160, 210, 0.72);
+            color: rgba(170, 228, 255, 0.98);
+            box-shadow: inset 0 0 0 1px rgba(72, 160, 210, 0.22), 0 2px 12px rgba(0, 24, 48, 0.42);
+        }
+
+        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn:hover {
+            background: rgba(72, 160, 210, 0.2);
+            border-color: rgba(130, 210, 255, 0.95);
+            box-shadow: 0 0 22px rgba(80, 180, 240, 0.5), 0 0 36px rgba(40, 140, 200, 0.28),
+                inset 0 0 18px rgba(72, 160, 210, 0.18);
+        }
+
+        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn:focus-visible {
+            border-color: rgba(130, 220, 255, 0.95);
+            box-shadow: 0 0 20px rgba(90, 190, 255, 0.55);
+        }
+
+        @keyframes mdj-eb-event-cart-pulse {
+            0%,
+            100% {
+                box-shadow: 0 0 12px rgba(72, 160, 210, 0.35), inset 0 0 10px rgba(72, 160, 210, 0.12);
+                border-color: rgba(90, 170, 220, 0.75);
+            }
+
+            50% {
+                box-shadow: 0 0 24px rgba(100, 190, 255, 0.55), 0 0 36px rgba(60, 150, 210, 0.3),
+                    inset 0 0 14px rgba(72, 160, 210, 0.22);
+                border-color: rgba(160, 220, 255, 0.95);
+            }
+        }
+
+        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn.has-items {
+            background: rgba(72, 160, 210, 0.14);
+            border-color: rgba(100, 185, 235, 0.8);
+            box-shadow: 0 0 14px rgba(72, 160, 210, 0.38), inset 0 0 12px rgba(72, 160, 210, 0.14);
+            animation: mdj-eb-event-cart-pulse 2.1s ease-in-out infinite;
+        }
+
+        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn.has-items:hover {
+            animation: none;
+            box-shadow: 0 0 26px rgba(100, 200, 255, 0.55), 0 0 44px rgba(60, 160, 220, 0.32),
+                inset 0 0 18px rgba(72, 160, 210, 0.22);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn.has-items {
+                animation: none;
+            }
+        }
+
+        body.page-mdj-rentals #mdj-eb-header-count.header-cart-count {
+            background: linear-gradient(180deg, #2a8cbc, #1a5a8a);
+            color: #fff;
+        }
+
+        #mdj-event-builder-root .mdj-eb-overlay[hidden],
+        #mdj-event-builder-root .mdj-eb-drawer[hidden] {
+            display: none !important;
+        }
+
+        #mdj-event-builder-root .mdj-eb-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 11490;
+            background: rgba(4, 6, 14, 0.72);
+            backdrop-filter: blur(4px);
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer {
+            position: fixed;
+            inset: 0;
+            z-index: 11500;
+            width: 100%;
+            height: 100%;
+            min-height: 100dvh;
+            max-width: none;
+            box-sizing: border-box;
+            padding-top: env(safe-area-inset-top, 0px);
+            background: linear-gradient(165deg, rgba(14, 16, 28, 0.99), rgba(8, 10, 18, 0.995));
+            border-top: none;
+            box-shadow: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer:not([hidden]) {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Event Cart topbar — escala fullscreen: más altura, aire lateral y separación (sin tocar #mainNav del sitio). */
+        #mdj-event-builder-root .mdj-eb-cart-topbar {
+            flex-shrink: 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            min-height: clamp(58px, 9vw, 68px);
+            padding: clamp(18px, 2.2vw, 22px) clamp(20px, 4vw, 48px);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.22);
+            background: #000;
+            background-image: none;
+            box-shadow: none;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a {
+            display: inline;
+            padding: 6px 0.2em 8px;
+            margin: 0;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: clamp(13px, 1vw, 16px);
+            line-height: 1.22;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: rgba(245, 236, 220, 0.85);
+            border: none;
+            border-radius: 0;
+            border-bottom: 3px solid transparent;
+            background: transparent;
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a:not(:last-child)::after {
+            content: '/';
+            display: inline;
+            margin: 0 clamp(0.55em, 1.1vw, 0.9em);
+            font-weight: 400;
+            font-size: clamp(13px, 1vw, 16px);
+            letter-spacing: 0;
+            text-transform: none;
+            color: rgba(200, 200, 200, 0.45);
+            pointer-events: none;
+        }
+
+        /* Alineado con #mainNav.mdj-mainnav-flex: Shop dorado; Services activo en rentals */
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='shop'],
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[href*='shop.html'] {
+            color: rgba(224, 195, 130, 0.96);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='services'] {
+            color: var(--gold, #c5a059);
+            border-bottom-color: var(--gold, #c5a059);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a:hover {
+            color: rgba(255, 252, 245, 0.98);
+            border-bottom-color: transparent;
+            background: transparent;
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='services']:hover,
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='shop']:hover {
+            color: rgba(255, 252, 245, 0.98);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='services']:hover {
+            border-bottom-color: var(--gold, #c5a059);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='shop']:hover {
+            color: rgba(240, 215, 150, 1);
+        }
+
+        @media (max-width: 640px) {
+            #mdj-event-builder-root .mdj-eb-cart-topbar {
+                justify-content: flex-start;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #mdj-event-builder-root .mdj-eb-cart-topbar a {
+                flex: 0 0 auto;
+                display: inline-flex;
+                align-items: baseline;
+            }
+
+            #mdj-event-builder-root .mdj-eb-cart-topbar a:not(:last-child)::after {
+                display: inline-flex;
+                align-items: center;
+            }
+        }
+
+        #mdj-event-builder-root .mdj-eb-panel__body {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: auto;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(260px, 380px);
+            gap: 20px;
+            padding: 16px clamp(14px, 3vw, 28px) 28px;
+            max-width: 1280px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #mdj-event-builder-root .mdj-eb-panel__main {
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (max-width: 768px) {
+            #mdj-event-builder-root .mdj-eb-panel__body {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer__head {
+            flex-shrink: 0;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 20px clamp(14px, 3vw, 28px) 14px;
+            max-width: 1280px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer__head h2 {
+            margin: 0;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: rgba(212, 175, 55, 0.95);
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer__head-main {
+            flex: 1 1 auto;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 8px 12px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__field {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 0;
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__field--assign {
+            flex: 1 1 200px;
+            min-width: min(100%, 220px);
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__hint {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.52);
+            line-height: 1.2;
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__select {
+            min-width: 0;
+            max-width: 100%;
+            min-height: 34px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(212, 175, 55, 0.38);
+            background: rgba(0, 0, 0, 0.42);
+            color: rgba(255, 255, 255, 0.94);
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__select--day {
+            width: clamp(64px, 14vw, 80px);
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__select--month {
+            width: clamp(108px, 24vw, 132px);
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__select--year {
+            width: clamp(72px, 16vw, 90px);
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__select--assign {
+            width: 100%;
+        }
+
+        @media (min-width: 900px) {
+            #mdj-event-builder-root .mdj-eb-drawer__head-main {
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: center;
+                column-gap: 18px;
+                row-gap: 8px;
+            }
+
+            #mdj-event-builder-root .mdj-eb-context-bar {
+                flex: 1 1 auto;
+                justify-content: flex-end;
+                min-width: min(100%, 560px);
+            }
+
+            #mdj-event-builder-root .mdj-eb-context-bar__select--assign {
+                width: auto;
+                min-width: 220px;
+                max-width: min(100%, 340px);
+            }
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer__head > .mdj-eb-close {
+            margin-top: 4px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-close {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid rgba(212, 175, 55, 0.45);
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.88);
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        #mdj-event-builder-root .mdj-eb-lines {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 4px 0 8px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-empty {
+            margin: 0;
+            opacity: 0.75;
+            font-size: 13px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        #mdj-event-builder-root .mdj-eb-empty code {
+            font-size: 12px;
+            display: block;
+            margin-top: 8px;
+            color: rgba(212, 175, 55, 0.85);
+        }
+
+        #mdj-event-builder-root .mdj-eb-line {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        #mdj-event-builder-root .mdj-eb-line:last-child {
+            border-bottom: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__row {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 12px;
+            width: 100%;
+            min-width: 0;
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__thumb {
+            width: 48px;
+            height: 48px;
+            flex: 0 0 48px;
+            display: block;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1px solid rgba(212, 175, 55, 0.35);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__thumb--ph {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.18), rgba(255, 255, 255, 0.05));
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__meta {
+            flex: 1 1 auto;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__cat {
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(212, 175, 55, 0.78);
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__qty {
+            opacity: 0.65;
+            font-weight: 500;
+            font-size: 0.92em;
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__price {
+            font-size: 14px;
+            font-weight: 700;
+            color: rgba(212, 175, 55, 0.95);
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__actions {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__replace,
+        #mdj-event-builder-root .mdj-eb-line__remove {
+            border: none;
+            background: transparent;
+            color: rgba(212, 175, 55, 0.9);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 0;
+            text-align: right;
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__remove {
+            color: rgba(255, 130, 130, 0.92);
+        }
+
+        #mdj-event-builder-root .mdj-eb-line--dj-family .mdj-eb-line__dj-extra {
+            width: 100%;
+            min-width: 0;
+            margin-top: 10px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick {
+            width: 100%;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick__summary {
+            cursor: pointer;
+            list-style: none;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(212, 175, 55, 0.95);
+            user-select: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick__summary::-webkit-details-marker {
+            display: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick__summary::after {
+            content: '';
+            display: inline-block;
+            width: 0;
+            height: 0;
+            margin-left: 8px;
+            vertical-align: middle;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 6px solid rgba(212, 175, 55, 0.75);
+            transition: transform 0.15s ease;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick[open] .mdj-eb-dj-pick__summary::after {
+            transform: rotate(180deg);
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick__panel {
+            margin-top: 10px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border: 1px solid rgba(212, 175, 55, 0.28);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.38);
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table {
+            width: 100%;
+            min-width: 640px;
+            border-collapse: collapse;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__th,
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td {
+            padding: 8px 10px;
+            border-right: 1px solid rgba(255, 255, 255, 0.07);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__th:last-child,
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td:last-child {
+            border-right: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table thead .mdj-eb-dj-pick-table__th {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(212, 175, 55, 0.88);
+            background: rgba(0, 0, 0, 0.5);
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table tbody tr:last-child .mdj-eb-dj-pick-table__td {
+            border-bottom: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__th--photo,
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--photo {
+            width: 52px;
+            text-align: center;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            object-fit: cover;
+            display: block;
+            margin: 0 auto;
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--stage {
+            font-weight: 700;
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--legal {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.62);
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__stars {
+            color: rgba(212, 175, 55, 0.95);
+            letter-spacing: 1px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__score {
+            color: rgba(255, 255, 255, 0.65);
+            font-size: 11px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--rating {
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--status {
+            font-size: 11px;
+            color: rgba(130, 220, 160, 0.95);
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__link {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(212, 175, 55, 0.55);
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__link:hover {
+            border-color: rgba(212, 175, 55, 0.95);
+            color: rgba(212, 175, 55, 0.98);
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__select {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(212, 175, 55, 0.55);
+            background: linear-gradient(180deg, rgba(212, 175, 55, 0.35), rgba(160, 130, 40, 0.55));
+            color: #0a0a0c;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: not-allowed;
+            opacity: 0.55;
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-panel__aside {
+            min-height: 0;
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer__foot {
+            padding: 16px 18px 22px;
+            border: 1px solid rgba(212, 175, 55, 0.22);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.28);
+        }
+
+        @media (min-width: 769px) {
+            #mdj-event-builder-root .mdj-eb-panel__aside .mdj-eb-drawer__foot {
+                position: sticky;
+                top: 12px;
+            }
+        }
+
+        #mdj-event-builder-root .mdj-eb-totals {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-totals__row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        #mdj-event-builder-root .mdj-eb-totals__row--total {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            padding-top: 6px;
+            margin-top: 4px;
+            border-top: 1px solid rgba(212, 175, 55, 0.25);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cta {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 999px;
+            border: 2px solid rgba(212, 175, 55, 0.88);
+            background: rgba(212, 175, 55, 0.14);
+            color: rgba(212, 175, 55, 0.98);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        #mdj-event-builder-root .mdj-eb-toast {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translateX(-50%);
+            z-index: 11560;
+            max-width: min(92vw, 420px);
+            padding: 12px 18px;
+            border-radius: 12px;
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            background: rgba(12, 14, 24, 0.96);
+            color: #fff;
+            font-size: 13px;
+            line-height: 1.45;
+            text-align: center;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+        }
+
+        body.mdj-event-builder-on .package-summary-bar {
+            display: none !important;
+        }
+    </style>
+    <!-- Rentals: barra social por encima del overlay de modales (no ocultarla). Checkout por encima del resto de modales. -->
+    <style id="rentals-social-and-checkout-stack">
+        body.page-mdj-rentals #mdj-social-sticky-bar.social-sticky-bar {
+            z-index: 11000 !important;
+        }
+
+        body.page-mdj-rentals #dj-checkout-modal.modal-overlay.modal-visible {
+            z-index: 5000 !important;
+        }
+
+        /* Aire extra a la derecha del carrusel: la barra social sigue visible encima del overlay */
+        body.page-mdj-rentals #talent-selector-modal.modal-visible .grid5.cinematic-hero-cards.talent-selector-carousel {
+            padding-inline-end: clamp(64px, 15vw, 160px) !important;
+            scroll-padding-inline-end: clamp(64px, 15vw, 160px) !important;
+        }
+    </style>
+    <style id="rentals-talent-selector-carousel">
+        /* Shell en columna: el marco dorado envuelve vídeo + nav + contenido (styles.css usa flex row por defecto). */
+        /* El shell global usa overflow:hidden y recorta la última tarjeta del carrusel; aquí lo relajamos solo en este modal */
+        #talent-selector-modal.modal-visible .modal-content.cinematic-hero-shell {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            justify-content: flex-start !important;
+            position: relative !important;
+            overflow-x: visible !important;
+            overflow-y: hidden !important;
+        }
+
+        /* Título + carrusel: bloque centrado en altura dentro del shell */
+        #talent-selector-modal.modal-visible .modal-content.cinematic-hero-shell .hero-shell-content {
+            position: relative !important;
+            z-index: 10 !important;
+            flex: 1 1 auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: stretch !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-height: 0 !important;
+            height: 100% !important;
+            box-sizing: border-box !important;
+            padding: max(76px, calc(env(safe-area-inset-top) + 54px)) clamp(12px, 2.5vw, 28px) clamp(36px, 8vh, 88px) !important;
+            margin: 0 auto 0 !important;
+            gap: clamp(16px, 2.8vh, 32px) !important;
+        }
+
+        #talent-selector-modal.modal-visible .hero-shell-content > div:first-of-type {
+            margin-bottom: 0 !important;
+            flex: 0 0 auto !important;
+        }
+
+        /* Solo el letreo (eyebrow + título): sube sin mover el layout del carrusel ni las tarjetas */
+        #talent-selector-modal.modal-visible .mdj-talent-hub-head {
+            position: relative !important;
+            z-index: 11 !important;
+            transform: translateY(clamp(-26px, -4.2vh, -56px)) !important;
+        }
+
+        /* Carrusel: margen superior solo baja las tarjetas; el letreo no se toca */
+        #talent-selector-modal.modal-visible .hero-shell-content .grid5.cinematic-hero-cards.talent-selector-carousel {
+            margin-top: clamp(64px, 14vh, 188px) !important;
+            margin-bottom: 0 !important;
+        }
+
+        #talent-selector-modal.modal-visible .grid5.cinematic-hero-cards.talent-selector-carousel {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            align-content: center !important;
+            justify-content: flex-start !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+            gap: clamp(14px, 2vw, 22px) !important;
+            padding: 14px clamp(18px, 3.5vw, 40px) 14px clamp(18px, 3.5vw, 40px) !important;
+            padding-inline-end: clamp(44px, 9vw, 112px) !important;
+            overflow-x: scroll !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+            scroll-padding-inline: clamp(18px, 3.5vw, 40px);
+            scroll-padding-inline-end: clamp(44px, 9vw, 112px);
+            grid-template-columns: unset !important;
+            box-sizing: border-box !important;
+            touch-action: pan-x;
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel > .hero-glass-card,
+        #talent-selector-modal.modal-visible .talent-selector-carousel > a.hero-glass-card,
+        #talent-selector-modal.modal-visible .talent-selector-carousel > a.talent-cat-card.hero-glass-card {
+            flex: 0 0 auto !important;
+            flex-shrink: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            width: min(260px, 82vw) !important;
+            min-width: 200px !important;
+            max-width: 260px !important;
+            height: 318px !important;
+            min-height: 318px !important;
+            max-height: 318px !important;
+            scroll-snap-align: start !important;
+            text-decoration: none !important;
+            color: inherit !important;
+            align-self: center !important;
+            justify-content: flex-start !important;
+            padding-top: 24px !important;
+            padding-bottom: 24px !important;
+            box-sizing: border-box !important;
+            backdrop-filter: blur(24px) !important;
+            -webkit-backdrop-filter: blur(24px) !important;
+            border: 2px solid rgba(212, 175, 55, 0.45) !important;
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08), 0 8px 28px rgba(0, 0, 0, 0.55) !important;
+        }
+
+        /* Refuerzo: cualquier hijo directo del carrusel (misma línea, misma altura) */
+        #talent-selector-modal.modal-visible .talent-selector-carousel > * {
+            flex: 0 0 auto !important;
+            flex-shrink: 0 !important;
+            align-self: center !important;
+            height: 318px !important;
+            min-height: 318px !important;
+            max-height: 318px !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Viewports anchos: styles.css (≥1601px) — misma fila que el resto de breakpoints */
+        @media (min-width: 1601px) {
+            #talent-selector-modal.modal-visible .grid5.cinematic-hero-cards.talent-selector-carousel {
+                display: flex !important;
+                flex-wrap: nowrap !important;
+                align-items: center !important;
+                align-content: center !important;
+                justify-content: flex-start !important;
+            }
+
+            #talent-selector-modal.modal-visible .talent-selector-carousel > .hero-glass-card,
+            #talent-selector-modal.modal-visible .talent-selector-carousel > a.hero-glass-card,
+            #talent-selector-modal.modal-visible .talent-selector-carousel > a.talent-cat-card.hero-glass-card,
+            #talent-selector-modal.modal-visible .talent-selector-carousel > * {
+                align-self: center !important;
+                height: 318px !important;
+                min-height: 318px !important;
+                max-height: 318px !important;
+            }
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel::-webkit-scrollbar-thumb {
+            background: rgba(197, 160, 89, 0.45);
+            border-radius: 8px;
+        }
+
+        /* Carrusel infinito: el snap horizontal choca con el salto de scroll; evita tirón del body al llegar al borde */
+        #talent-selector-modal.modal-visible .talent-selector-carousel.mdj-talent-carousel-infinite {
+            scroll-snap-type: none !important;
+            overscroll-behavior-x: contain !important;
+        }
+
+        /* Cabecera DENTRO del marco dorado (absolute al shell, no fixed al viewport) */
+        #talent-selector-modal.modal-visible .modal-header-nav {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: max(10px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 10px max(14px, env(safe-area-inset-left)) !important;
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            justify-content: space-between !important;
+            align-items: flex-start !important;
+            pointer-events: none !important;
+            z-index: 120 !important;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%) !important;
+            box-sizing: border-box !important;
+        }
+
+        #talent-selector-modal.modal-visible .modal-header-nav .modal-nav-left,
+        #talent-selector-modal.modal-visible .modal-header-nav .modal-close-btn {
+            pointer-events: auto !important;
+        }
+
+        #talent-selector-modal.modal-visible .modal-header-nav .modal-nav-left {
+            position: static !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+
+        #talent-selector-modal.modal-visible .modal-header-nav .modal-close-btn {
+            position: static !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        /* Hero shell — borde dorado + brillo; overflow lateral suelto para que el carrusel no recorte la última tarjeta */
+        #talent-selector-modal.modal-visible .modal-content.cinematic-hero-shell {
+            border: 2px solid #D4AF37 !important;
+            box-shadow:
+                0 0 0 1px rgba(212, 175, 55, 0.18),
+                0 0 42px rgba(212, 175, 55, 0.24),
+                0 30px 100px rgba(0, 0, 0, 0.88) !important;
+            background: #000 !important;
+            background-clip: padding-box !important;
+            transition: box-shadow 0.14s ease, border-color 0.14s ease;
+            overflow-x: visible !important;
+            overflow-y: hidden !important;
+        }
+
+        #talent-selector-modal.modal-visible .modal-content.cinematic-hero-shell.talent-shell-hero-preview-on {
+            border-color: rgba(255, 215, 0, 0.95) !important;
+            box-shadow:
+                0 0 0 1px rgba(255, 215, 0, 0.45),
+                0 0 56px rgba(212, 175, 55, 0.55),
+                0 30px 100px rgba(0, 0, 0, 0.88) !important;
+        }
+
+        #talent-selector-modal .mdj-talent-hero-media {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            overflow: hidden;
+            border-radius: inherit;
+            pointer-events: none;
+        }
+
+        #talent-selector-modal .mdj-talent-hero-media .hero-shell-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #talent-selector-modal #talent-shell-focus {
+            opacity: 0;
+            transition: opacity 0.12s ease-out;
+            object-fit: cover;
+            will-change: opacity;
+        }
+
+        #talent-selector-modal #talent-shell-focus.is-visible {
+            opacity: 1;
+        }
+
+        #talent-selector-modal #talent-shell-ambient.talent-shell-ambient-dim {
+            opacity: 0.3 !important;
+            transition: opacity 0.14s ease-out;
+        }
+
+        /* Tipografía hub de talento — editorial / lujo (solo #talent-selector-modal) */
+        #talent-selector-modal .mdj-talent-hub-eyebrow {
+            display: block;
+            max-width: 38em;
+            margin: 0 auto 14px auto !important;
+            text-align: center;
+            font-family: 'Cinzel', 'Palatino Linotype', 'Times New Roman', serif;
+            font-weight: 600;
+            font-size: clamp(10px, 1.2vw, 11px);
+            letter-spacing: 0.36em;
+            padding-left: 0.36em;
+            box-sizing: border-box;
+            text-transform: uppercase;
+            color: #ecd9a8;
+            text-shadow:
+                0 0 22px rgba(212, 175, 55, 0.5),
+                0 2px 10px rgba(0, 0, 0, 0.95);
+        }
+
+        #talent-selector-modal .mdj-talent-hub-title {
+            font-family: 'Playfair Display', 'Palatino Linotype', Georgia, serif;
+            font-weight: 600;
+            font-style: italic;
+            font-size: clamp(24px, 3.6vw, 40px);
+            line-height: 1.2;
+            letter-spacing: 0.03em;
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 0 20px;
+            text-align: center;
+            color: #faf6ee;
+            -webkit-text-fill-color: #faf6ee;
+            -webkit-text-stroke: 0.55px rgba(197, 160, 89, 0.65);
+            text-shadow:
+                0 4px 28px rgba(0, 0, 0, 0.92),
+                0 0 48px rgba(197, 160, 89, 0.2);
+        }
+
+        #talent-selector-modal .mdj-talent-hub-subtitle {
+            display: block;
+            max-width: 42em;
+            margin: 10px auto 0 auto;
+            padding: 0 24px;
+            text-align: center;
+            font-family: system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            font-weight: 500;
+            font-size: clamp(11px, 1.35vw, 13px);
+            line-height: 1.45;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: rgba(236, 217, 168, 0.88);
+            text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85);
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel .hero-card-title {
+            font-family: 'Cormorant Garamond', 'Palatino Linotype', Georgia, serif !important;
+            font-weight: 700 !important;
+            font-style: normal !important;
+            font-size: clamp(17px, 1.9vw, 21px) !important;
+            letter-spacing: 0.07em !important;
+            line-height: 1.22 !important;
+            color: #f4ead0 !important;
+            text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8) !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel .hero-card-text {
+            font-family: system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', sans-serif !important;
+            font-weight: 400 !important;
+            font-size: 12px !important;
+            letter-spacing: 0.04em !important;
+            line-height: 1.48 !important;
+            color: rgba(255, 255, 255, 0.82) !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel .hero-card-emoji {
+            font-size: 32px !important;
+            line-height: 1 !important;
+            filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.65));
+            margin-bottom: 10px !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel .mdj-talent-card-enter {
+            display: block !important;
+            margin-top: auto !important;
+            padding-top: 12px !important;
+            text-align: center !important;
+            font-family: system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', sans-serif !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.2em !important;
+            text-transform: uppercase !important;
+            color: #d4af37 !important;
+            text-shadow: 0 1px 8px rgba(0, 0, 0, 0.75) !important;
+            flex-shrink: 0 !important;
+        }
+
+        @media (max-width: 900px) {
+            #talent-selector-modal.modal-visible .modal-content.cinematic-hero-shell {
+                border: 2px solid #D4AF37 !important;
+            }
+        }
+
+        /* DJ Performance: hero borde dorado al hover-preview; vídeo full-bleed cover */
+        #dj-modal .modal-content.live-hero-shell.mdj-dj-hero-preview-on {
+            border: 2px solid rgba(255, 215, 0, 0.95) !important;
+            box-shadow:
+                0 0 0 1px rgba(255, 215, 0, 0.4),
+                0 0 52px rgba(212, 175, 55, 0.5),
+                0 24px 80px rgba(0, 0, 0, 0.75) !important;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        #dj-modal #dj-hero-video {
+            object-fit: cover !important;
+            object-position: center center !important;
+        }
+
+        /* Captura y Visuales / Músicos: hero full-bleed + borde dorado al hover-preview (mismo ADN que DJ) */
+        #roster-modal .modal-content.live-hero-shell.mdj-roster-hero-preview-on {
+            border: 2px solid rgba(255, 215, 0, 0.95) !important;
+            box-shadow:
+                0 0 0 1px rgba(255, 215, 0, 0.4),
+                0 0 52px rgba(212, 175, 55, 0.5),
+                0 24px 80px rgba(0, 0, 0, 0.75) !important;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        #roster-modal #live-hero-video {
+            object-fit: cover !important;
+            object-position: center center !important;
+        }
+
+        /* Staff modal — mismo ADN que roster / Músicos en Vivo */
+        #staff-modal .modal-content.live-hero-shell.mdj-staff-hero-preview-on {
+            border: 2px solid rgba(255, 215, 0, 0.95) !important;
+            box-shadow:
+                0 0 0 1px rgba(255, 215, 0, 0.4),
+                0 0 52px rgba(212, 175, 55, 0.5),
+                0 24px 80px rgba(0, 0, 0, 0.75) !important;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        #staff-modal #staff-hero-video {
+            object-fit: cover !important;
+            object-position: center center !important;
+        }
+
+        #staff-modal #staff-roster-grid {
+            align-items: flex-end !important;
+        }
+
+        /* Payasos modal — mismo ADN que Staff */
+        #payasos-modal .modal-content.live-hero-shell.mdj-payasos-hero-preview-on {
+            border: 2px solid rgba(255, 215, 0, 0.95) !important;
+            box-shadow:
+                0 0 0 1px rgba(255, 215, 0, 0.4),
+                0 0 52px rgba(212, 175, 55, 0.5),
+                0 24px 80px rgba(0, 0, 0, 0.75) !important;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        #payasos-modal #payasos-hero-video {
+            object-fit: cover !important;
+            object-position: center center !important;
+        }
+
+        #payasos-modal #payasos-roster-grid {
+            align-items: flex-end !important;
+        }
+
+        /* Tiras horizontales con carrusel infinito: scroll; Staff/Payasos/roster/DJ conservan alineación inferior del strip */
+        #staff-modal.modal-visible #staff-roster-grid.mdj-rentals-horizontal-infinite,
+        #payasos-modal.modal-visible #payasos-roster-grid.mdj-rentals-horizontal-infinite,
+        #roster-modal.modal-visible #roster-grid.mdj-rentals-horizontal-infinite,
+        #dj-modal.modal-visible #dj-roster-grid.mdj-rentals-horizontal-infinite {
+            justify-content: flex-start !important;
+            align-items: flex-end !important;
+            scroll-snap-type: none !important;
+            overscroll-behavior-x: contain !important;
+        }
+
+        #mc-modal.modal-visible #mc-roster-scroll.mdj-rentals-horizontal-infinite,
+        #horaloca-modal.modal-visible #horaloca-grid.mdj-rentals-horizontal-infinite {
+            justify-content: flex-start !important;
+            align-items: center !important;
+            scroll-snap-type: none !important;
+            overscroll-behavior-x: contain !important;
+        }
+
+        #staff-modal.modal-visible #staff-roster-grid.mdj-rentals-horizontal-infinite .talent-cat-card,
+        #payasos-modal.modal-visible #payasos-roster-grid.mdj-rentals-horizontal-infinite .talent-cat-card,
+        #mc-modal.modal-visible #mc-roster-scroll.mdj-rentals-horizontal-infinite .talent-cat-card,
+        #horaloca-modal.modal-visible #horaloca-grid.mdj-rentals-horizontal-infinite .talent-cat-card,
+        #roster-modal.modal-visible #roster-grid.mdj-rentals-horizontal-infinite .talent-cat-card,
+        #dj-modal.modal-visible #dj-roster-grid.mdj-rentals-horizontal-infinite .talent-cat-card {
+            flex: 0 0 auto !important;
+            width: min(260px, 82vw) !important;
+            min-width: 200px !important;
+            max-width: 260px !important;
+        }
+
+        /* FX & Lighting — borde dorado intenso al hover-preview (mismo ADN que Captura y Visuales) */
+        #fx-modal .modal-content.cinematic-hero-shell.mdj-fx-hero-preview-on,
+        #lighting-modal .modal-content.cinematic-hero-shell.mdj-lighting-hero-preview-on {
+            border: 2px solid rgba(255, 215, 0, 0.95) !important;
+            box-shadow:
+                0 0 0 1px rgba(255, 215, 0, 0.4),
+                0 0 52px rgba(212, 175, 55, 0.5),
+                0 24px 80px rgba(0, 0, 0, 0.75) !important;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        #fx-modal #fx-hero-video,
+        #lighting-modal #lighting-hero-video {
+            object-fit: cover !important;
+            object-position: center center !important;
+        }
+
+        /* Iluminación & LED: mismo carrusel horizontal + infinito que hub de talento / Audio */
+        #lighting-modal.modal-visible #lighting-roster-grid.mdj-lighting-carousel {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            gap: clamp(14px, 2vw, 22px) !important;
+            padding: 14px clamp(18px, 3.5vw, 40px) 24px !important;
+            padding-inline-end: clamp(44px, 9vw, 112px) !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+            scroll-padding-inline: clamp(18px, 3.5vw, 40px);
+            scroll-padding-inline-end: clamp(44px, 9vw, 112px);
+            box-sizing: border-box !important;
+            touch-action: pan-x;
+        }
+
+        #lighting-modal.modal-visible #lighting-roster-grid.mdj-lighting-carousel.mdj-lighting-carousel-infinite {
+            scroll-snap-type: none !important;
+            overscroll-behavior-x: contain !important;
+        }
+
+        #lighting-modal.modal-visible #lighting-roster-grid.mdj-lighting-carousel .talent-cat-card {
+            flex: 0 0 auto !important;
+            scroll-snap-align: start !important;
+            align-self: center !important;
+            width: min(260px, 82vw) !important;
+            min-width: 200px !important;
+            max-width: 260px !important;
+        }
+
+        #lighting-modal.modal-visible #lighting-roster-grid.mdj-lighting-carousel::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        #lighting-modal.modal-visible #lighting-roster-grid.mdj-lighting-carousel::-webkit-scrollbar-thumb {
+            background: rgba(197, 160, 89, 0.45);
+            border-radius: 8px;
+        }
+
+        /* Efectos Especiales: carrusel horizontal + infinito (mismo ADN que Iluminación) */
+        #fx-modal.modal-visible #fx-roster-grid.mdj-fx-catalog-carousel {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+            gap: clamp(14px, 2vw, 22px) !important;
+            padding: 14px clamp(18px, 3.5vw, 40px) 24px !important;
+            padding-inline-end: clamp(44px, 9vw, 112px) !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+            scroll-padding-inline: clamp(18px, 3.5vw, 40px);
+            scroll-padding-inline-end: clamp(44px, 9vw, 112px);
+            box-sizing: border-box !important;
+            touch-action: pan-x;
+        }
+
+        #fx-modal.modal-visible #fx-roster-grid.mdj-fx-catalog-carousel.mdj-fx-carousel-infinite {
+            scroll-snap-type: none !important;
+            overscroll-behavior-x: contain !important;
+        }
+
+        #fx-modal.modal-visible #fx-roster-grid.mdj-fx-catalog-carousel .talent-cat-card {
+            flex: 0 0 auto !important;
+            scroll-snap-align: start !important;
+            align-self: center !important;
+            width: min(260px, 82vw) !important;
+            min-width: 200px !important;
+            max-width: 260px !important;
+        }
+
+        #fx-modal.modal-visible #fx-roster-grid.mdj-fx-catalog-carousel::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        #fx-modal.modal-visible #fx-roster-grid.mdj-fx-catalog-carousel::-webkit-scrollbar-thumb {
+            background: rgba(197, 160, 89, 0.45);
+            border-radius: 8px;
+        }
+
+        /* MC — preview en hero + borde intenso */
+        #mc-modal .modal-content.cinematic-hero-shell.mdj-mc-hero-preview-on {
+            border: 2px solid rgba(255, 215, 0, 0.95) !important;
+            box-shadow:
+                0 0 0 1px rgba(255, 215, 0, 0.4),
+                0 0 52px rgba(212, 175, 55, 0.5),
+                0 24px 80px rgba(0, 0, 0, 0.75) !important;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        #mc-modal .hero-shell-video {
+            object-fit: cover !important;
+            object-position: center center !important;
+        }
+
+        /* Magic hover unificado — escala + halo oro en tarjetas internas */
+        @media (hover: hover) and (pointer: fine) {
+
+            #roster-modal #roster-grid .mdj-magic-hover-card,
+            #staff-modal #staff-roster-grid .mdj-magic-hover-card,
+            #payasos-modal #payasos-roster-grid .mdj-magic-hover-card,
+            #dj-modal #dj-roster-grid .mdj-magic-hover-card,
+            #fx-modal #fx-roster-grid .mdj-magic-hover-card,
+            #lighting-modal #lighting-roster-grid .mdj-magic-hover-card,
+            #mc-modal #mc-card-maestro.mdj-magic-hover-card,
+            #mc-modal #mc-card-host.mdj-magic-hover-card {
+                transform-origin: bottom center;
+                transition: transform 0.28s ease, box-shadow 0.28s ease;
+            }
+
+            #roster-modal #roster-grid .mdj-magic-hover-card:hover,
+            #roster-modal #roster-grid .mdj-magic-hover-card.active,
+            #staff-modal #staff-roster-grid .mdj-magic-hover-card:hover,
+            #staff-modal #staff-roster-grid .mdj-magic-hover-card.active,
+            #payasos-modal #payasos-roster-grid .mdj-magic-hover-card:hover,
+            #payasos-modal #payasos-roster-grid .mdj-magic-hover-card.active,
+            #dj-modal #dj-roster-grid .mdj-magic-hover-card:hover,
+            #dj-modal #dj-roster-grid .mdj-magic-hover-card.active,
+            #fx-modal #fx-roster-grid .mdj-magic-hover-card:hover,
+            #fx-modal #fx-roster-grid .mdj-magic-hover-card.active,
+            #lighting-modal #lighting-roster-grid .mdj-magic-hover-card:hover,
+            #lighting-modal #lighting-roster-grid .mdj-magic-hover-card.active,
+            #mc-modal #mc-card-maestro.mdj-magic-hover-card:hover,
+            #mc-modal #mc-card-maestro.mdj-magic-hover-card.active,
+            #mc-modal #mc-card-host.mdj-magic-hover-card:hover,
+            #mc-modal #mc-card-host.mdj-magic-hover-card.active {
+                transform: scale(1.035);
+                box-shadow:
+                    0 0 0 1px rgba(255, 215, 0, 0.55),
+                    0 8px 32px rgba(0, 0, 0, 0.45),
+                    0 0 28px rgba(212, 175, 55, 0.38);
+            }
+        }
+
+        #roster-modal #roster-grid {
+            align-items: flex-end !important;
+        }
+
+        /* Event Services grid — tarjetas homólogas (meridiano / altura) */
+        #rentals-services-grid {
+            align-items: stretch !important;
+        }
+
+        #rentals-services-grid>.tile.glass-card {
+            display: flex;
+            flex-direction: column;
+            min-height: 300px;
+            box-sizing: border-box;
+            padding-top: 20px !important;
+            cursor: pointer;
+            /* Contenedores: panel sólido; no “vidrio” que muestre el hero fijo detrás */
+            background: rgba(10, 12, 22, 0.94) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            border: 1px solid rgba(212, 175, 55, 0.42) !important;
+            box-shadow: 0 10px 36px rgba(0, 0, 0, 0.5);
+            transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease, background 220ms ease;
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            #rentals-services-grid>.tile.glass-card:hover {
+                transform: translateY(-5px) !important;
+                background: rgba(14, 16, 28, 0.98) !important;
+                border-color: rgba(212, 175, 55, 0.92) !important;
+                box-shadow:
+                    0 0 0 1px rgba(212, 175, 55, 0.32),
+                    0 14px 42px rgba(0, 0, 0, 0.55),
+                    0 0 26px rgba(212, 175, 55, 0.2) !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
+        }
+
+        #rentals-services-grid>.tile.glass-card>.btn.primary.full {
+            margin-top: auto !important;
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            color: var(--gold) !important;
+            outline: none !important;
+        }
+
+        #rentals-services-grid>.tile.glass-card:hover>.btn.primary.full {
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+
+        /* Hover ADN: escala desde la base (crece hacia arriba; la línea inferior no se mueve) */
+        #talent-selector-modal.modal-visible .talent-selector-carousel>.hero-glass-card,
+        #talent-selector-modal.modal-visible .talent-selector-carousel>a.hero-glass-card {
+            transform-origin: bottom center !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel>.hero-glass-card:hover,
+        #talent-selector-modal.modal-visible .talent-selector-carousel>a.hero-glass-card:hover {
+            transform: scale(1.035) !important;
+            transform-origin: bottom center !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel>.hero-glass-card:hover .hero-card-emoji,
+        #talent-selector-modal.modal-visible .talent-selector-carousel>a.hero-glass-card:hover .hero-card-emoji {
+            transform: scale(1.08) !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-selector-carousel>.hero-glass-card.active,
+        #talent-selector-modal.modal-visible .talent-selector-carousel>a.hero-glass-card.active {
+            transform: scale(1.035) !important;
+            transform-origin: bottom center !important;
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+
+            #talent-selector-modal.modal-visible .talent-selector-carousel>a.hero-glass-card.mdj-magic-hover-card:hover,
+            #talent-selector-modal.modal-visible .talent-selector-carousel>a.hero-glass-card.mdj-magic-hover-card.active {
+                box-shadow:
+                    0 0 0 1px rgba(255, 215, 0, 0.55),
+                    0 8px 32px rgba(0, 0, 0, 0.45),
+                    0 0 28px rgba(212, 175, 55, 0.38);
+            }
+        }
+
+        /* Glow borde #D4AF37 — tarjetas categoría (hub) */
+        #talent-selector-modal.modal-visible .talent-selector-carousel > .talent-cat-card.hero-glass-card {
+            position: relative;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+            border: 1px solid rgba(212, 175, 55, 0.32);
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            #talent-selector-modal.modal-visible .talent-selector-carousel > .talent-cat-card.hero-glass-card:hover {
+                border-color: rgba(212, 175, 55, 0.92);
+                box-shadow:
+                    0 0 0 1px rgba(212, 175, 55, 0.4),
+                    0 0 26px rgba(212, 175, 55, 0.48),
+                    0 12px 40px rgba(0, 0, 0, 0.55);
+            }
+        }
+
+        /* Catálogo / extras: check dorado visible */
+        input[data-action="toggle-pack"][type="checkbox"] {
+            accent-color: #D4AF37;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+    </style>
+    <style id="rental-dynamic-catalog-panel">
+        /* Catálogo por categoría: panel de contenido, sin segundo “hero” de vídeo como la portada EVENTOS */
+        #rental-dynamic-modal #rental-multi-video-container {
+            display: none !important;
+        }
+
+        #rental-dynamic-modal .hero-shell-overlay {
+            display: none !important;
+        }
+
+        #rental-dynamic-modal .cinematic-hero-shell {
+            background: linear-gradient(180deg, #0b0d14 0%, #05060a 100%) !important;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+        }
+
+        #rental-dynamic-modal #rental-dynamic-title {
+            font-size: clamp(22px, 3.2vw, 40px) !important;
+            text-transform: none !important;
+            letter-spacing: 0.03em !important;
+            line-height: 1.25 !important;
+        }
+
+        #rental-dynamic-modal #rental-dynamic-desc {
+            font-size: clamp(13px, 1.35vw, 16px) !important;
+        }
+
+        /* Audio / Mobiliario / Carpas / Stage / Inflatables: capa de vídeo de fondo visible (el panel catálogo la ocultaba por defecto). */
+        #rental-dynamic-modal.mdj-rental-hero-video-on #rental-multi-video-container {
+            display: block !important;
+        }
+
+        #rental-dynamic-modal.mdj-rental-hero-video-on .hero-shell-overlay {
+            display: block !important;
+        }
+
+        #rental-dynamic-modal.mdj-rental-hero-video-on .cinematic-hero-shell {
+            background: transparent !important;
+        }
+
+        /* Catálogo dinámico: carrusel horizontal + infinito (mobiliario, audio, etc.) */
+        #rental-dynamic-modal.modal-visible .mdj-rental-catalog-carousel {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+            gap: clamp(14px, 2vw, 22px) !important;
+            padding: 14px clamp(18px, 3.5vw, 40px) 24px !important;
+            padding-inline-end: clamp(44px, 9vw, 112px) !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+            scroll-padding-inline: clamp(18px, 3.5vw, 40px);
+            scroll-padding-inline-end: clamp(44px, 9vw, 112px);
+            box-sizing: border-box !important;
+            touch-action: pan-x;
+        }
+
+        #rental-dynamic-modal.modal-visible .mdj-rental-catalog-carousel.mdj-rental-carousel-infinite {
+            scroll-snap-type: none !important;
+            overscroll-behavior-x: contain !important;
+        }
+
+        #rental-dynamic-modal.modal-visible .mdj-rental-catalog-carousel .product-card {
+            flex: 0 0 auto !important;
+            scroll-snap-align: start !important;
+            align-self: center !important;
+        }
+
+        #rental-dynamic-modal.modal-visible .mdj-rental-catalog-carousel::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        #rental-dynamic-modal.modal-visible .mdj-rental-catalog-carousel::-webkit-scrollbar-thumb {
+            background: rgba(197, 160, 89, 0.45);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+
+<body class="notranslate page-mdj-rentals">
     <!-- MDJ canonical site header — keep in sync with index #mainHeader; use ./index.html# anchors for subpages -->
 <header class="header mdj-header-unified" id="mainHeader">
   <div class="header-top">
@@ -54,10 +1806,10 @@
           <div class="lang-switcher">
           <span class="lang-btn" data-lang="es">ES</span>
           <span class="lang-pipe">|</span>
-          <span class="lang-btn active" data-lang="en">EN</span>
+          <span class="lang-btn" data-lang="en">EN</span>
         </div>
 
-          <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-i18n="btn-login">Log in</a>
+          <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-auth-btn>Log in</a>
 
           <div class="account session-pending" id="header-auth-zone" style="display: none;">
             <a class="account-btn" id="accountBtn" href="./dj-profile.html" title="Mi perfil" aria-label="Mi perfil">
@@ -72,6 +1824,10 @@
             <span aria-hidden="true">🛒</span>
             <span id="header-cart-count" class="header-cart-count" hidden></span>
           </a>
+          <button type="button" id="mdj-eb-header-cart-open" class="header-cart-btn mdj-eb-header-cart-open" title="Event cart" aria-label="Open event cart">
+            <span aria-hidden="true">🛒</span>
+            <span id="mdj-eb-header-count" class="header-cart-count" hidden></span>
+          </button>
         </div>
         <div class="header-search-wrap">
           <input type="search" id="header-smart-search" class="header-smart-search"
@@ -88,15 +1844,15 @@
       <div class="mobile-overlay" id="mobileMenu">
         <nav class="mobile-nav">
           <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
-          <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
-          <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
-          <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
+          <a href="./services.html" class="active" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+          <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+          <a href="./shop.html" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
           <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
           <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
           <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
           <a href="./login.html?signup=free" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free"
             style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
-          <a href="./login.html" id="header-login-btn-mobile" data-i18n="btn-login"
+          <a href="./login.html" id="header-login-btn-mobile" data-auth-btn
             style="color:var(--gold); font-weight:800;">Entrar</a>
           <a href="./dj-profile.html" id="nav-my-profile-mobile"
             style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY PROFILE</a>
@@ -106,167 +1862,177 @@
   </div>
   <div class="header-nav">
     <div class="container">
-      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav">
+      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" data-mdj-compact-nav="1">
         <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
-        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
-        <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
-        <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-mdj-nav="shop">Shop</a>
-        <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+        <a href="./services.html" class="active" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+        <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
         <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
-        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
         <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
         <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" aria-hidden="true" tabindex="-1">MY PORTAL</a>
-        <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
+        <a href="#" id="mainNav-guest-mi-perfil-link" class="mdj-guest-mi-perfil-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="my-profile" data-i18n="nav-my-profile" aria-hidden="true" tabindex="-1">MI PERFIL</a>
       </nav>
     </div>
   </div>
 </header>
 
-    <!-- ══ CINEMATIC BACKGROUND ══ -->
-    <div class="hero-kb-bg"
-        style="background-image: url('./assets/home_hero_4k_wide.png'); opacity: 0.3; filter: blur(5px);"></div>
+    <!-- ══ CINEMATIC BACKGROUND (fijo; las tarjetas de servicios no disparan vídeo hero) ══ -->
+    <div id="rentals-hero-kb-bg" class="hero-kb-bg"
+        style="position: fixed; inset: 0; z-index: 1; pointer-events: none; background-image: url('./assets/home_hero_4k_wide.png'); background-size: cover; background-position: center; opacity: 0.3; filter: blur(5px); transition: opacity 0.35s ease;"></div>
     <div class="hero-video-overlay"
-        style="background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
+        style="position: fixed; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
 
-    <main class="container services-page-container">
-        <!-- SECTION 1: HERO / HOOK -->
-        <div class="services-header-region" style="margin-top: 80px; text-align: center; margin-bottom: 60px;">
-            <h1 class="services-headline"
-                style="font-size: 3rem; font-weight: 800; background: linear-gradient(90deg, #c5a059, #f9df9f); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
-                Miami DJ Beat Services</h1>
-            <p class="services-subheadline"
-                style="font-size: 1.2rem; color: #a0a0a0; max-width: 600px; margin: 20px auto 30px;">
-                Luxury DJ, MC, sound, and event experiences designed to move the crowd.
-            </p>
-            <a href="#contact" class="btn primary gold" style="padding: 15px 40px; font-size: 1.1rem;">Request a
-                Quote</a>
+    <main id="app" data-mdj-page="services" class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
+        <div style="text-align: center; margin-bottom: 80px;">
+            <h1 id="rentals-headline"
+                style="font-family: 'Playfair Display', serif; font-size: clamp(40px, 5vw, 70px); -webkit-text-fill-color: rgba(197, 160, 89, 0.15); -webkit-text-stroke: 1px var(--gold); filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.2)); opacity: 0; transform: translateY(30px); animation: revealText 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;"
+                data-i18n="rentals-title">Producción de EVENTOS</h1>
+            <p style="color: var(--gold); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 3px; margin-top: 15px; opacity: 0; animation: revealText 1s 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;"
+                data-i18n="rentals-hero-subtitle">
+                Exclusive Event Solutions & Gear</p>
         </div>
 
-        <!-- SECTION 2: PACKAGES -->
-        <h2
-            style="text-align: center; font-size: 2rem; border-bottom: 2px solid #c5a059; display: inline-block; padding-bottom: 10px; margin: 40px auto; width: 100%;">
-            Elite Service Packages</h2>
+        <div id="rentals-services-grid" class="grid3" style="gap: 30px;">
 
-        <div class="grid3" style="gap: 30px; margin-bottom: 80px;">
-
-            <!-- Nightclub & Festival -->
-            <div class="glass-card"
-                style="padding: 30px; text-align: left; border-top: 4px solid #c5a059; display: flex; flex-direction: column;">
-                <h3 style="font-size: 1.5rem; color: #fff; margin-bottom: 10px;">Nightclub & Festival Experience</h3>
-                <p style="color: #c5a059; font-weight: 700; font-size: 1.1rem; margin-bottom: 25px;">Custom quote based
-                    on event scope</p>
-                <ul style="list-style: none; padding: 0; margin-bottom: 30px; flex-grow: 1; color: #ccc;">
-                    <li style="margin-bottom: 10px;">✓ <b>DJ performance</b> (High-energy sets)</li>
-                    <li style="margin-bottom: 10px;">✓ <b>MC</b> (Optional / Add-on)</li>
-                    <li style="margin-bottom: 10px;">✓ <b>Sound System:</b> Rider-compliant Club Setup</li>
-                    <li style="margin-bottom: 10px;">✓ <b>Hours of Service:</b> Extended blocks</li>
-                    <li style="margin-bottom: 10px;">✓ <b>Planning / Coordination:</b> Setlist curating & Rider check
-                    </li>
-                    <li style="margin-bottom: 10px;">✓ <b>Add-ons:</b> FX, CO2 Jets, Visuals Sync</li>
-                </ul>
-                <a href="#contact" class="btn outline full" style="border-color: #c5a059; color: #c5a059;">Select
-                    Package</a>
+            <!-- Entretenimiento y Talento — entrada principal al hub de talento (modal) -->
+            <div class="tile glass-card" id="talent-tile"
+                style="opacity: 0; animation: revealText 0.8s 0.5s ease-out forwards;">
+                <h3 data-i18n="rentals-wireless-title"
+                    style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
+                    Entretenimiento y Talento</h3>
+                <p data-i18n="rentals-wireless-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">Hora Loca,
+                    Timbaleros, Bailarines, Cantantes y Presentadores (MC) profesionales.</p>
+                <div class="value"
+                    style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
+                    data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
+                <a href="#" class="btn primary full" data-action="open-talent" id="open-talent-selector"
+                    style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
+                    Disponibilidad</a>
             </div>
 
-            <!-- Elite Corporate -->
-            <div class="glass-card"
-                style="padding: 30px; text-align: left; border-top: 4px solid #fff; display: flex; flex-direction: column; transform: scale(1.05); z-index: 2; box-shadow: 0 10px 40px rgba(197, 160, 89, 0.2);">
-                <div
-                    style="background: #c5a059; color: #000; text-align: center; font-weight: 800; font-size: 0.8rem; padding: 5px; border-radius: 4px; margin-bottom: 15px;">
-                    MOST POPULAR</div>
-                <h3 style="font-size: 1.5rem; color: #fff; margin-bottom: 10px;">Elite Corporate Experience</h3>
-                <p style="color: #c5a059; font-weight: 700; font-size: 1.1rem; margin-bottom: 25px;">Pricing available
-                    upon inquiry</p>
-                <ul style="list-style: none; padding: 0; margin-bottom: 30px; flex-grow: 1; color: #ccc;">
-                    <li style="margin-bottom: 10px;">✓ <b>DJ performance</b> (Brand-aligned aesthetic)</li>
-                    <li style="margin-bottom: 10px;">✓ <b>MC</b> (Professional Hosting included)</li>
-                    <li style="margin-bottom: 10px;">✓ <b>Sound System:</b> Discreet Corporate Audio Setup</li>
-                    <li style="margin-bottom: 10px;">✓ <b>Hours of Service:</b> Cocktail to Dancefloor</li>
-                    <li style="margin-bottom: 10px;">✓ <b>Planning / Coordination:</b> Timeline & Run of Show</li>
-                    <li style="margin-bottom: 10px;">✓ <b>Add-ons:</b> Wireless Mics, Uplighting</li>
-                </ul>
-                <a href="#contact" class="btn primary full gold" style="color: #000;">Select Package</a>
+            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 0.7s ease-out forwards;">
+                <h3 data-i18n="rentals-pa-pack-title"
+                    style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
+                    Audio y Sonido Profesional</h3>
+                <p data-i18n="rentals-pa-pack-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">Sistemas de
+                    escala completa para cualquier capacidad. Desde equipos íntimos hasta sonido de concierto.</p>
+                <div class="value"
+                    style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
+                    data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
+                <a href="#" class="btn primary full" data-action="open-rental-category" data-category="audio"
+                    style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
+                    Disponibilidad</a>
             </div>
 
-            <!-- Premium Wedding -->
-            <div class="glass-card"
-                style="padding: 30px; text-align: left; border-top: 4px solid #c5a059; display: flex; flex-direction: column;">
-                <h3 style="font-size: 1.5rem; color: #fff; margin-bottom: 10px;">Premium Wedding Experience</h3>
-                <p style="color: #c5a059; font-weight: 700; font-size: 1.1rem; margin-bottom: 25px;">Pricing available
-                    upon inquiry</p>
-                <ul style="list-style: none; padding: 0; margin-bottom: 30px; flex-grow: 1; color: #ccc;">
-                    <li style="margin-bottom: 10px;">✓ <b>DJ performance</b> (Open format & tailored)</li>
-                    <li style="margin-bottom: 10px;">✓ <b>MC</b> (Bilingual Master of Ceremonies)</li>
-                    <li style="margin-bottom: 10px;">✓ <b>Sound System:</b> Multi-zone Setup (Ceremony to Reception)
-                    </li>
-                    <li style="margin-bottom: 10px;">✓ <b>Hours of Service:</b> Full-day coverage options</li>
-                    <li style="margin-bottom: 10px;">✓ <b>Planning / Coordination:</b> Music Curation Meetings</li>
-                    <li style="margin-bottom: 10px;">✓ <b>Add-ons:</b> Hora Loca, Cinematic Lighting</li>
-                </ul>
-                <a href="#contact" class="btn outline full" style="border-color: #c5a059; color: #c5a059;">Select
-                    Package</a>
+            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 0.8s ease-out forwards;">
+                <h3 data-i18n="rentals-lighting-title"
+                    style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
+                    Iluminación y Pantallas LED</h3>
+                <p data-i18n="rentals-lighting-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">Cabezas
+                    móviles, pantallas LED gigantes, efectos visuales y tarimas para artistas.</p>
+                <div class="value"
+                    style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
+                    data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
+                <a href="#" class="btn primary full" data-action="open-lighting-modal" style="border-radius: 50px;"
+                    data-i18n="rentals-check-availability">Consultar
+                    Disponibilidad</a>
             </div>
 
+            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 0.9s ease-out forwards;">
+                <h3 data-i18n="rentals-decor-title"
+                    style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
+                    Mobiliario y Decoración</h3>
+                <p data-i18n="rentals-decor-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">Mesas, sillas,
+                    ramos de flores y decoración personalizada para tu temática.</p>
+                <div class="value"
+                    style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
+                    data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
+                <a href="#" class="btn primary full" data-action="open-rental-category" data-category="furniture"
+                    style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
+                    Disponibilidad</a>
+            </div>
+
+            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 1.0s ease-out forwards;">
+                <h3 data-i18n="rentals-fx-title"
+                    style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
+                    Efectos Especiales</h3>
+                <p data-i18n="rentals-fx-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">Máquinas de
+                    chispas frías, humo estilo niebla, CO2 y más.</p>
+                <div class="value"
+                    style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
+                    data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
+                <a href="#" class="btn primary full" data-action="open-fx-modal" style="border-radius: 50px;"
+                    data-i18n="rentals-check-availability">Consultar
+                    Disponibilidad</a>
+            </div>
+
+            <!-- TENTS CARD INJECTION (Phase 5) -->
+            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 1.1s ease-out forwards;">
+                <h3 data-i18n="rentals-tents-title"
+                    style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
+                    Carpas y Estructuras</h3>
+                <p data-i18n="rentals-tents-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">Carpas
+                    transparentes, blancas, pisos y climatización A/C outdoor.</p>
+                <div class="value"
+                    style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
+                    data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
+                <a href="#" class="btn primary full" data-action="open-rental-category" data-category="tents"
+                    style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
+                    Disponibilidad</a>
+            </div>
+
+            <!-- STAGES CARD INJECTION (Operación Quirúrgica) -->
+            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 1.2s ease-out forwards;">
+                <h3 data-i18n="rentals-stages-main-title"
+                    style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
+                    Stage & Event Structures</h3>
+                <p data-i18n="rentals-stages-main-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">
+                    Professional staging solutions for concerts, DJs, and live productions.</p>
+                <div class="value"
+                    style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
+                    data-i18n="rentals-stages-price">Presupuesto a medida</div>
+                <a href="#" class="btn primary full" data-action="open-rental-category" data-category="stages"
+                    style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
+                    Disponibilidad</a>
+            </div>
+
+            <!-- Castillos Inflables — clon de tarjeta Stage (mismo markup); hero catálogo inflatables + carpeta ref -->
+            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 1.25s ease-out forwards;">
+                <h3 data-i18n="rentals-inflatables-title"
+                    style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
+                    Castillos Inflables</h3>
+                <p data-i18n="rentals-inflatables-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">
+                    Diversión inflable para eventos y fiestas infantiles. Presupuesto a medida</p>
+                <div class="value"
+                    style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
+                    data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
+                <a href="#" class="btn primary full" data-action="open-rental-category" data-category="inflatables"
+                    style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
+                    Disponibilidad</a>
+            </div>
         </div>
 
-        <!-- SECTION 3: SOCIAL PROOF -->
-        <div class="glass-card"
-            style="padding: 40px; text-align: center; margin-bottom: 80px; border: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.5);">
-            <h3 style="color: #c5a059; margin-bottom: 15px; font-weight: 700; letter-spacing: 2px;">TRUSTED BY TOP
-                VENUES & BRANDS IN MIAMI</h3>
-            <p style="color: #a0a0a0; max-width: 600px; margin: 0 auto; font-style: italic; font-size: 1.1rem;">"Not
-                just a playlist. An orchestrated experience driven by energy, timing, and crowd reading."</p>
-        </div>
-
-        <!-- SECTION 4: BOOKING / CONTACT FORM -->
-        <div id="contact" class="glass-card"
-            style="padding: 50px; text-align: center; max-width: 800px; margin: 0 auto 100px; border-top: 4px solid #c5a059;">
-            <h2 style="font-size: 2.2rem; color: #fff; margin-bottom: 15px;">Ready to elevate your event?</h2>
-            <p style="color: #ccc; margin-bottom: 30px;">Fill out the form below to receive a custom quote. Dates lock
-                in fast.</p>
-
-            <form action="https://formspree.io/f/mqakvjge" method="POST"
-                style="display: flex; flex-direction: column; gap: 20px; text-align: left;">
-                <input type="hidden" name="_subject" value="[MDJB] Services — Solicitud de cotización">
-                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                    <div style="flex: 1; min-width: 250px;">
-                        <label style="display: block; margin-bottom: 5px; color: #fff; font-size: 0.9rem;">Full
-                            Name</label>
-                        <input type="text" name="Nombre" placeholder="John Doe"
-                            style="width: 100%; padding: 12px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4); color: #fff; box-sizing: border-box;"
-                            required>
+        <!-- DO NOT add images inside the service grid. Gallery is the only place for images. -->
+        <!-- ══ GALLERY SECTION ══ -->
+        <section id="rentals-gallery" style="margin-top: 80px; text-align: center;">
+            <h2 class="section-title"
+                style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 32px; margin-bottom: 40px;"
+                data-i18n="rentals-gallery-title">Galería de Eventos</h2>
+            <div class="rentals-gallery-shell">
+                <button type="button" class="rentals-gallery-nav rentals-gallery-nav--prev" id="rentals-gallery-prev"
+                    aria-label="Previous gallery photo">‹</button>
+                <div class="rentals-gallery-viewport">
+                    <div id="rentals-gallery-track"
+                        class="rentals-gallery-track"
+                        data-mdj-ui-tick-scroll
+                        role="region"
+                        tabindex="0"
+                        aria-label="Event gallery">
                     </div>
-                    <div style="flex: 1; min-width: 250px;">
-                        <label style="display: block; margin-bottom: 5px; color: #fff; font-size: 0.9rem;">Phone /
-                            Email</label>
-                        <input type="text" name="Contacto_Telefono_Email" placeholder="Contact info"
-                            style="width: 100%; padding: 12px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4); color: #fff; box-sizing: border-box;"
-                            required>
-                    </div>
                 </div>
-                <div>
-                    <label style="display: block; margin-bottom: 5px; color: #fff; font-size: 0.9rem;">Event Type &
-                        Scope (Package)</label>
-                    <select name="Tipo_de_Evento_Paquete"
-                        style="width: 100%; padding: 12px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4); color: #fff; box-sizing: border-box;">
-                        <option value="Nightclub & Festival">Nightclub & Festival</option>
-                        <option value="Elite Corporate">Elite Corporate</option>
-                        <option value="Premium Wedding">Premium Wedding</option>
-                        <option value="Other / Custom">Other / Custom</option>
-                    </select>
-                </div>
-                <div>
-                    <label style="display: block; margin-bottom: 5px; color: #fff; font-size: 0.9rem;">Event Details
-                        (Date, Venue, Estimated Guests)</label>
-                    <textarea name="Detalles_Evento" rows="4" placeholder="Tell us about your event..."
-                        style="width: 100%; padding: 12px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4); color: #fff; resize: vertical; box-sizing: border-box;"
-                        required></textarea>
-                </div>
-                <button type="submit" class="btn primary gold"
-                    style="padding: 15px; font-size: 1.1rem; border: none; cursor: pointer; color: #000; font-weight: 800; margin-top: 10px;">Request
-                    a Quote</button>
-            </form>
-        </div>
+                <button type="button" class="rentals-gallery-nav rentals-gallery-nav--next" id="rentals-gallery-next"
+                    aria-label="Next gallery photo">›</button>
+            </div>
+        </section>
     </main>
 
     <footer class="footer">
@@ -278,7 +2044,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
     <script src="./translations.js?v=20260422-nav-labels-1"></script>
-    <script src="./i18n.js?v=20260411-14"></script>
+    <script src="./i18n.js?v=20260415-MAGIC-HOVER-UNIFIED"></script>
     <script>
         // ── 1) UTILIDADES DE SESIÓN & SEGURIDAD ──
         async function getSessionSafe() {
@@ -297,7 +2063,7 @@
             try {
                 const base = new URL('./', window.location.href);
                 const url = new URL('login.html', base);
-                url.searchParams.set('redirect', 'rentals');
+                url.searchParams.set('redirect', 'services');
                 if (action) url.searchParams.set('action', action);
                 window.location.href = url.toString();
             } catch (e) {
@@ -306,11 +2072,50 @@
             }
         }
 
+        /** Título/eyebrow del hub de talento: mismo idioma que el sitio (i18n a veces no toca nodos ocultos al instante). */
+        window.mdjSyncTalentSelectorCopy = function () {
+            if (!window.i18n) return;
+            var root = document.getElementById('talent-selector-modal');
+            if (!root) return;
+            var eyebrow = root.querySelector('[data-i18n="talent_selector_eyebrow"]');
+            var title = root.querySelector('[data-i18n="talent_selector_title"]');
+            var subtitle = root.querySelector('[data-i18n="talent_selector_subtitle"]');
+            var te = window.i18n.t('talent_selector_eyebrow');
+            var tt = window.i18n.t('talent_selector_title');
+            var ts = window.i18n.t('talent_selector_subtitle');
+            if (eyebrow && te) eyebrow.textContent = te;
+            if (title && tt) title.textContent = tt;
+            if (subtitle && ts) subtitle.textContent = ts;
+        };
+
         function openModalSafe(modalId) {
             const modal = document.getElementById(modalId);
             if (!modal) return console.warn('Modal not found:', modalId);
-            modal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
+
+            modal.classList.remove('modal-hidden');
+            modal.classList.add('modal-visible');
+
+            document.body.classList.add('body-modal-lock');
+
+            if (modalId === 'talent-selector-modal') {
+                requestAnimationFrame(function () {
+                    if (typeof window.mdjEnsureTalentHubInfiniteOnOpen === 'function') {
+                        window.mdjEnsureTalentHubInfiniteOnOpen();
+                    } else if (typeof window.mdjResetTalentSelectorCarousel === 'function') {
+                        window.mdjResetTalentSelectorCarousel();
+                    } else {
+                        var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
+                        if (track) track.scrollLeft = 0;
+                    }
+                });
+            }
+
+            if (window.i18n) {
+                window.i18n.updateUI();
+            }
+            if (modalId === 'talent-selector-modal') {
+                window.mdjSyncTalentSelectorCopy();
+            }
         }
 
         // ── 2) UI DEL HEADER (Blindado) ──
@@ -328,9 +2133,13 @@
                 if (authZone) authZone.style.display = 'block';
 
                 const { data: dj } = await db.from('dj_profiles').select('photo_url').eq('user_id', session.user.id).single();
-                const avatar = document.querySelector('.avatar');
-                if (avatar && dj?.photo_url) {
-                    avatar.src = dj.photo_url;
+                if (dj?.photo_url) {
+                    if (typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
+                        window.mdjHeaderVipApplyPhotoUrl(dj.photo_url);
+                    } else {
+                        const avatar = document.querySelector('.avatar');
+                        if (avatar) avatar.src = dj.photo_url;
+                    }
                 }
             } catch (err) {
                 console.warn('syncHeaderUI failed:', err);
@@ -340,9 +2149,24 @@
         // ── 3) ROUTER DE CLICKS CENTRALIZADO ──
         document.addEventListener('DOMContentLoaded', async () => {
             syncHeaderUI();
+            requestAnimationFrame(function () {
+                if (typeof window.mdjSyncTalentSelectorCopy === 'function') window.mdjSyncTalentSelectorCopy();
+            });
+            document.addEventListener('languageChanged', function () {
+                if (typeof window.mdjSyncTalentSelectorCopy === 'function') window.mdjSyncTalentSelectorCopy();
+            });
 
             // Único punto de entrada para acciones de usuario
             document.addEventListener('click', async (e) => {
+                const serviceCard = e.target.closest('#rentals-services-grid > .tile.glass-card');
+                if (serviceCard && !e.target.closest('a, button, [data-action]')) {
+                    const cta = serviceCard.querySelector('.btn[data-action]');
+                    if (cta) {
+                        e.preventDefault();
+                        cta.click();
+                        return;
+                    }
+                }
                 const btn = e.target.closest('[data-action]');
                 if (!btn) return;
 
@@ -350,27 +2174,15 @@
                 const action = btn.getAttribute('data-action');
                 const session = await getSessionSafe();
 
-                // Protocolo Público: Si no hay sesión -> Login
-                if (!session) {
-                    redirectToLogin(action);
-                    return;
-                }
+                /* Hunger flow: catálogo y modales públicos; login solo en checkout (ver rentals.js). */
 
-                // sesión activa -> Proceso por pasos
+                // sesión activa -> Proceso por pasos (acciones que aún viven en este router mínimo)
                 switch (action) {
-                    case 'open-mc':
-                        openModalSafe('mc-modal');
-                        const v1 = document.getElementById('mc-check-view');
-                        const v2 = document.getElementById('mc-result-view');
-                        const v3 = document.getElementById('mc-loading');
-                        if (v1) v1.style.display = 'block';
-                        if (v2) v2.style.display = 'none';
-                        if (v3) v3.style.display = 'none';
-                        break;
-
                     case 'open-talent':
                         openModalSafe('talent-selector-modal');
                         break;
+
+                    /* open-dj: manejado en js/rentals.js (premiumTransition + renderDjHero) */
 
                     case 'open-audio':
                         window.location.href = 'index.html#contact';
@@ -381,41 +2193,18 @@
             // Lógica interna de cierre
             window.closeModal = (id) => {
                 const m = document.getElementById(id);
-                if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+                if (m) {
+                    m.classList.add('modal-hidden');
+                    m.classList.remove('modal-visible');
+                }
+
+                document.body.classList.remove('body-modal-lock');
             };
 
             // Botones de cierre manual
             document.getElementById('close-mc-modal')?.addEventListener('click', () => closeModal('mc-modal'));
-            document.getElementById('close-talent-modal')?.addEventListener('click', () => closeModal('talent-selector-modal'));
-            document.getElementById('close-horaloca-modal')?.addEventListener('click', () => closeModal('horaloca-modal'));
-            document.getElementById('close-roster-modal')?.addEventListener('click', () => closeModal('roster-modal'));
 
-            // Navegación entre modales
-            document.getElementById('back-to-selector')?.addEventListener('click', () => {
-                document.getElementById('horaloca-modal').style.display = 'none';
-                document.getElementById('talent-selector-modal').style.display = 'flex';
-            });
-            document.getElementById('back-to-selector-roster')?.addEventListener('click', () => {
-                document.getElementById('roster-modal').style.display = 'none';
-                document.getElementById('talent-selector-modal').style.display = 'flex';
-            });
-
-            // Categorías de talento
-            document.getElementById('cat-hora-loca')?.addEventListener('click', () => {
-                document.getElementById('talent-selector-modal').style.display = 'none';
-                document.getElementById('horaloca-modal').style.display = 'flex';
-                if (typeof renderHoraLocaCharacters === 'function') renderHoraLocaCharacters();
-            });
-            document.getElementById('cat-musicians')?.addEventListener('click', () => {
-                document.getElementById('talent-selector-modal').style.display = 'none';
-                document.getElementById('roster-modal').style.display = 'flex';
-                if (typeof renderRoster === 'function') renderRoster('musicians');
-            });
-            document.getElementById('cat-visuals')?.addEventListener('click', () => {
-                document.getElementById('talent-selector-modal').style.display = 'none';
-                document.getElementById('roster-modal').style.display = 'flex';
-                if (typeof renderRoster === 'function') renderRoster('visuals');
-            });
+            // Categorías de talento (movidas al router delegador)
 
             // Lógica interna del MC Modal
             document.getElementById('check-mc-availability-btn')?.addEventListener('click', async () => {
@@ -431,10 +2220,1290 @@
         });
 
     </script>
-    <!-- Removed services-catalog.js as per funnel refactor -->
+    <script>
+        /* Galería + carruseles rentals con data-mdj-ui-tick-scroll (trinquete TikTok). */
+        window.MDJ_ENABLE_UI_TICK_AUDIO = true;
+    </script>
+    <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            var MANIFEST_URL = './assets/eventos-venues-patrocinadores/gallery-manifest.json';
+            var GAL_BASE = './assets/eventos-venues-patrocinadores/galeria/';
+            var CLONE_CLASS = 'mdj-rentals-gallery-clone';
+
+            function withProgrammaticScroll(el, fn) {
+                el.dataset.mdjTickMute = '1';
+                el.dataset.mdjSnapLock = '1';
+                fn();
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                        delete el.dataset.mdjTickMute;
+                        delete el.dataset.mdjSnapLock;
+                    });
+                });
+            }
+
+            function mdjRentalsCarouselCardSelector(track) {
+                if (track.id === 'rentals-gallery-track') return '.rentals-gallery-slide';
+                return '.talent-cat-card, a.talent-cat-card';
+            }
+
+            function mdjRentalsSnapToNearestCard(track, cardSelector) {
+                if (!track || track.dataset.mdjSnapLock === '1' || track.dataset.mdjTickMute === '1') return;
+                var cards = track.querySelectorAll(cardSelector);
+                if (!cards.length) return;
+                var sl = track.scrollLeft;
+                var best = null;
+                var bestDist = Infinity;
+                var i;
+                for (i = 0; i < cards.length; i++) {
+                    var d = Math.abs(cards[i].offsetLeft - sl);
+                    if (d < bestDist) {
+                        bestDist = d;
+                        best = cards[i];
+                    }
+                }
+                if (!best || bestDist < 5) return;
+                track.dataset.mdjSnapLock = '1';
+                track.dataset.mdjTickMute = '1';
+                track.scrollTo({ left: best.offsetLeft, behavior: 'auto' });
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                        delete track.dataset.mdjSnapLock;
+                        delete track.dataset.mdjTickMute;
+                    });
+                });
+            }
+
+            function mdjRentalsBindMagneticSnap(track, cardSelector) {
+                if (!track || track.dataset.mdjMagneticSnap === '1') return;
+                track.dataset.mdjMagneticSnap = '1';
+                var debounceT = null;
+                function onEnd() {
+                    if (debounceT) {
+                        clearTimeout(debounceT);
+                        debounceT = null;
+                    }
+                    mdjRentalsSnapToNearestCard(track, cardSelector);
+                }
+                track.addEventListener('scrollend', onEnd, { passive: true });
+                track.addEventListener('scroll', function () {
+                    if (track.dataset.mdjSnapLock === '1' || track.dataset.mdjTickMute === '1') return;
+                    if (debounceT) clearTimeout(debounceT);
+                    debounceT = setTimeout(onEnd, 140);
+                }, { passive: true });
+            }
+
+            function bindAllMagneticSnaps() {
+                document.querySelectorAll('[data-mdj-ui-tick-scroll]').forEach(function (track) {
+                    if (track.closest('#rental-dynamic-modal')) return;
+                    mdjRentalsBindMagneticSnap(track, mdjRentalsCarouselCardSelector(track));
+                });
+            }
+
+            function buildSlide(file, alt) {
+                var slide = document.createElement('div');
+                slide.className = 'rentals-gallery-slide hero-glass-card glass-card';
+                var img = document.createElement('img');
+                img.src = GAL_BASE + file;
+                img.alt = alt || '';
+                img.loading = 'lazy';
+                img.decoding = 'async';
+                slide.appendChild(img);
+                return slide;
+            }
+
+            function cloneSlide(el) {
+                var c = el.cloneNode(true);
+                c.classList.add(CLONE_CLASS);
+                c.setAttribute('aria-hidden', 'true');
+                c.setAttribute('tabindex', '-1');
+                return c;
+            }
+
+            function applyInfiniteCenter(track) {
+                var originals = Array.prototype.filter.call(track.children, function (el) {
+                    return el.classList && el.classList.contains('rentals-gallery-slide') &&
+                        !el.classList.contains(CLONE_CLASS);
+                });
+                var n = originals.length;
+                if (n < 2) {
+                    track.scrollLeft = 0;
+                    return;
+                }
+                var firstO = originals[0];
+                var lastO = originals[n - 1];
+                var sw = Math.round(lastO.offsetLeft + lastO.offsetWidth - firstO.offsetLeft);
+                if (!sw || sw < 10) {
+                    var tri = Math.round(track.scrollWidth / 3);
+                    if (tri > 10) sw = tri;
+                }
+                if (!sw || sw < 10) return;
+                track._mdjGalleryInfiniteWidth = sw;
+                withProgrammaticScroll(track, function () {
+                    track.scrollLeft = sw;
+                });
+            }
+
+            function mountInfinite(track) {
+                if (!track || track.dataset.mdjGalleryInfinite === '1') return;
+
+                var originals = Array.prototype.filter.call(track.children, function (el) {
+                    return el.classList && el.classList.contains('rentals-gallery-slide') &&
+                        !el.classList.contains(CLONE_CLASS);
+                });
+                if (originals.length < 2) return;
+
+                var fragBefore = document.createDocumentFragment();
+                originals.forEach(function (el) { fragBefore.appendChild(cloneSlide(el)); });
+                track.insertBefore(fragBefore, track.firstChild);
+                originals.forEach(function (el) { track.appendChild(cloneSlide(el)); });
+
+                track.classList.add('mdj-rentals-gallery-infinite');
+                track.dataset.mdjGalleryInfinite = '1';
+
+                var jumping = false;
+                track._mdjGalleryInfiniteScroll = function () {
+                    if (jumping) return;
+                    var sw = track._mdjGalleryInfiniteWidth;
+                    if (!sw) return;
+                    var max = track.scrollWidth - track.clientWidth;
+                    if (max <= 0) return;
+                    var buf = 8;
+                    if (track.scrollLeft <= buf) {
+                        jumping = true;
+                        withProgrammaticScroll(track, function () { track.scrollLeft += sw; });
+                        requestAnimationFrame(function () { jumping = false; });
+                    } else if (track.scrollLeft >= max - buf) {
+                        jumping = true;
+                        withProgrammaticScroll(track, function () { track.scrollLeft -= sw; });
+                        requestAnimationFrame(function () { jumping = false; });
+                    }
+                };
+                track.addEventListener('scroll', track._mdjGalleryInfiniteScroll, { passive: true });
+
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                        applyInfiniteCenter(track);
+                    });
+                });
+            }
+
+            function bindGalleryNav() {
+                var track = document.getElementById('rentals-gallery-track');
+                var prev = document.getElementById('rentals-gallery-prev');
+                var next = document.getElementById('rentals-gallery-next');
+                if (!track || !prev || !next) return;
+
+                function scrollByDir(dir) {
+                    var slide = track.querySelector('.rentals-gallery-slide:not(.' + CLONE_CLASS + ')');
+                    var gap = parseFloat(getComputedStyle(track).gap);
+                    if (isNaN(gap)) gap = 20;
+                    var step = slide ? slide.offsetWidth + gap : 300;
+                    if (typeof window.mdjUiTickPlay === 'function') window.mdjUiTickPlay();
+                    track.scrollBy({ left: dir * step, behavior: 'auto' });
+                }
+
+                prev.addEventListener('click', function () { scrollByDir(-1); });
+                next.addEventListener('click', function () { scrollByDir(1); });
+            }
+
+            function bindTick(track) {
+                if (!track || track.dataset.mdjUiTickBound === '1') return;
+                if (typeof window.mdjUiTickBindScroll === 'function') {
+                    window.mdjUiTickBindScroll(track);
+                    track.dataset.mdjUiTickBound = '1';
+                }
+            }
+
+            function initRentalsGalleryFromManifest() {
+                var track = document.getElementById('rentals-gallery-track');
+                if (!track) return;
+
+                fetch(MANIFEST_URL, { cache: 'no-store' })
+                    .then(function (res) { return res.ok ? res.json() : null; })
+                    .catch(function () { return null; })
+                    .then(function (data) {
+                        var files = (data && Array.isArray(data.images)) ? data.images : [];
+                        files = files.filter(function (f) { return typeof f === 'string' && f.trim(); });
+                        if (!files.length) return;
+
+                        track.textContent = '';
+                        files.forEach(function (file, i) {
+                            track.appendChild(buildSlide(file.trim(), 'Gallery ' + (i + 1)));
+                        });
+
+                        mountInfinite(track);
+                        bindTick(track);
+
+                        window.addEventListener('resize', function () {
+                            clearTimeout(track._mdjGalleryResizeT);
+                            track._mdjGalleryResizeT = setTimeout(function () {
+                                applyInfiniteCenter(track);
+                            }, 120);
+                        }, { passive: true });
+                    });
+            }
+
+            bindGalleryNav();
+
+            function bootRentalsGalleryAndSnap() {
+                bindAllMagneticSnaps();
+                initRentalsGalleryFromManifest();
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', bootRentalsGalleryAndSnap);
+            } else {
+                bootRentalsGalleryAndSnap();
+            }
+        })();
+    </script>
+    <script src="./data/rentalsData.js?v=20260414-rental-mp4-under90mb"></script>
+    <script src="./subscription.js?v=20260422-find-dj-rank"></script>
+    <script src="./js/artists.js?v=20260514-artists-hub-cleanup"></script>
+    <!-- EVENT BUILDER — flag + scripts (rentals hub + drawer) -->
+    <script>
+        window.MDJ_EVENT_BUILDER_V1 = true;
+    </script>
+    <script src="./js/mdj-event-builder-adapter.js?v=20260514-eb-1a"></script>
+    <script src="./js/mdj-event-builder.js?v=20260516-eb-drawer-scroll-lock-1"></script>
+    <script src="./js/mdj-event-builder-rentals-bridge.js?v=20260514-eb-1b1"></script>
+    <script src="./js/rentals.js?v=20260514-strip-public-dj-hub"></script>
+    <!-- ── MC MODAL ── -->
+    <div id="mc-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content cinematic-hero-shell">
+
+            <div class="modal-header-nav">
+                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector-mc"
+                        data-i18n="btn-regresar">Regresar</button>
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                        data-i18n="btn-home">Home</button>
+                </div>
+            </div>
+
+            <!-- Dual Video Background for Seamless Transitions -->
+            <video class="hero-shell-video" id="mc-video-host" autoplay muted loop playsinline preload="auto"
+                style="transition: opacity 0.6s ease; opacity: 1;">
+                <source src="./assets/mc-club-host/mc-club-host.mp4" type="video/mp4">
+            </video>
+            <video class="hero-shell-video" id="mc-video-maestro" autoplay muted loop playsinline preload="auto"
+                style="transition: opacity 0.6s ease; opacity: 0;">
+                <source src="./assets/mc-club-host/MC.mp4" type="video/mp4">
+            </video>
+
+            <div class="hero-shell-overlay"></div>
+
+            <div class="hero-shell-content">
+
+                <div
+                    style="display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%; width: 100%; z-index: 10; position: relative; padding: 1vh 40px 8vh 40px; box-sizing: border-box;">
+
+                    <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+                        <p class="hero-eyebrow" data-i18n="mc_presentadores_eyebrow"
+                            style="color: var(--gold); font-size: 12px; letter-spacing: 4px; font-weight: 700; margin-bottom: 25px; text-transform: uppercase; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">
+                            Miami DJ Beat Exclusive Talent
+                        </p>
+
+                        <h1 class="cinematic-hero-title" data-i18n="mc_presentadores_title"
+                            style="font-family: 'Playfair Display', serif; font-size: clamp(40px, 6vw, 75px); text-transform: uppercase; margin: 0 auto 30px auto; text-shadow: 0 6px 20px rgba(0,0,0,0.7); line-height: 1.25; text-align: center;">
+                            MC & Presentadores
+                        </h1>
+
+                        <p class="modal-nav-subtitle" data-i18n="mc_presentadores_desc"
+                            style="font-size: clamp(12px, 1.5vw, 17px); color: rgba(255,255,255,0.85); width: 100%; max-width: 1200px; white-space: nowrap; text-align: center; margin: 0 auto; text-shadow: 0 2px 5px rgba(0,0,0,0.8); line-height: 1.5;">
+                            Selecciona el estilo de conducción ideal para llevar la energía y elegancia de tu evento al
+                            siguiente nivel.
+                        </p>
+                    </div>
+
+                    <div id="mc-roster-scroll" data-mdj-ui-tick-scroll
+                        style="display: flex; justify-content: center; gap: 15px; width: 100%; max-width: 1200px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px; margin-top: auto;">
+
+                        <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card" id="mc-card-maestro"
+                            style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
+                            <div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">🎙️</div>
+                            <h3 class="hl-card-title" data-i18n="mc_maestro_title"
+                                style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">
+                                Maestro de Ceremonias</h3>
+                            <p class="hl-card-desc" data-i18n="mc_maestro_desc"
+                                style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">
+                                Dirección formal, protocolo impecable y animación bilingüe elegante.</p>
+                            <div class="hl-card-price" data-i18n="mc_maestro_price"
+                                style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">
+                                Desde $450</div>
+                            <button class="hl-action-btn" data-i18n="mc_cta" data-action="open-contact"
+                                data-service="mc-maestro"
+                                style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;">VER
+                                PRECIO Y DISP</button>
+                        </div>
+
+                        <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card" id="mc-card-host"
+                            style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
+                            <div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">🔥</div>
+                            <h3 class="hl-card-title" data-i18n="mc_host_title"
+                                style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">
+                                Club Host</h3>
+                            <p class="hl-card-desc" data-i18n="mc_host_desc"
+                                style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">
+                                Energía en vivo, hype al máximo y conexión total con el público de la pista.</p>
+                            <div class="hl-card-price" data-i18n="mc_host_price"
+                                style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">
+                                Desde $250</div>
+                            <button class="hl-action-btn" data-i18n="mc_cta" data-action="open-contact"
+                                data-service="mc-host"
+                                style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;">VER
+                                PRECIO Y DISP</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="talent-selector-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content cinematic-hero-shell">
+
+            <div class="modal-header-nav">
+                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-from-talent-selector"
+                        data-i18n="btn-regresar">Regresar</button>
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                        data-i18n="btn-home">Home</button>
+                </div>
+                <button class="modal-close-btn cinematic-glass-btn" data-action="close-all">✕</button>
+            </div>
+
+            <!-- Hero: capa ambient + capa focus (preview a pantalla completa; nunca en tarjeta) -->
+            <div class="mdj-talent-hero-media" aria-hidden="true">
+                <video id="talent-shell-ambient" class="hero-shell-video" autoplay muted loop playsinline
+                    preload="auto">
+                    <source src="./assets/home/Home for Miami DJ Beat.mp4" type="video/mp4">
+                </video>
+                <video id="talent-shell-focus" class="hero-shell-video" muted loop playsinline preload="metadata"></video>
+            </div>
+            <div class="hero-shell-overlay"></div>
+
+            <div class="hero-shell-content">
+                <div class="mdj-talent-hub-head" style="text-align: center; margin-bottom: 0;">
+                    <p class="hero-eyebrow mdj-talent-hub-eyebrow" data-i18n="talent_selector_eyebrow">
+                        ELEVAMOS TUS CELEBRACIONES A EXPERIENCIAS INOLVIDABLES
+                    </p>
+                    <h1 class="mdj-talent-hub-title" data-i18n="talent_selector_title">
+                        Si quieres llevar tu celebración a otro nivel, comienza a construirlo a tu medida
+                    </h1>
+                    <p class="mdj-talent-hub-subtitle" data-i18n="talent_selector_subtitle">
+                        Selecciona y agrégalo a tu evento
+                    </p>
+                </div>
+
+                <div class="grid5 cinematic-hero-cards talent-selector-carousel" data-mdj-ui-tick-scroll>
+                    <!-- DJ / Performance -->
+                    <div class="talent-cat-card hero-glass-card" id="cat-dj" tabindex="0" data-action="open-dj"
+                        data-talent-hero-src="./assets/DJ_Performance/weddings_quinces.mp4">
+                        <div class="hero-card-emoji" aria-hidden="true">🎧</div>
+                        <h3 class="hero-card-title" data-i18n="dj_cat_title">DJ / Performance</h3>
+                        <p class="hero-card-text" data-i18n="dj_cat_desc">Dentro: catálogo por tipo de fiesta (bodas,
+                            club, familiar, fechas especiales) y extras.</p>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
+                    </div>
+
+                    <!-- Hora Loca -->
+                    <div class="talent-cat-card hero-glass-card" id="cat-hora-loca" tabindex="0" data-action="open-horaloca"
+                        data-talent-hero-src="./assets/hora-loca/hora-loca-robot.mp4">
+                        <div class="hero-card-emoji" aria-hidden="true">🎭</div>
+                        <h3 class="hero-card-title" data-i18n="hl_cat_title_1">Hora Loca Experience</h3>
+                        <p class="hero-card-text" data-i18n="hl_cat_desc_1">Dentro: paquetes Hora Loca, personajes,
+                            robots LED y opciones para sumar.</p>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
+                    </div>
+
+                    <!-- Músicos -->
+                    <div class="talent-cat-card hero-glass-card" id="cat-musicians" tabindex="0" data-action="open-musicians"
+                        data-talent-hero-src="./assets/live-music/live-sax.mp4">
+                        <div class="hero-card-emoji" aria-hidden="true">🎷</div>
+                        <h3 class="hero-card-title" data-i18n="hl_cat_title_2">Músicos en Vivo</h3>
+                        <p class="hero-card-text" data-i18n="hl_cat_desc_2">Dentro: roster en vivo — saxo, percusión y
+                            voz; elige músico y añade al paquete.</p>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
+                    </div>
+
+                    <!-- Visuales -->
+                    <div class="talent-cat-card hero-glass-card" id="cat-visuals" tabindex="0" data-action="open-visuals"
+                        data-talent-hero-src="./assets/capture-visuals/photo.mp4">
+                        <div class="hero-card-emoji" aria-hidden="true">📸</div>
+                        <h3 class="hero-card-title" data-i18n="hl_cat_title_3">Captura y Visuales</h3>
+                        <p class="hero-card-text" data-i18n="hl_cat_desc_3">Dentro: foto, video, VJ, drone, booth 360 y
+                            espejo mágico en el mismo flujo.</p>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
+                    </div>
+
+                    <!-- MC y Presentadores -->
+                    <div class="talent-cat-card hero-glass-card" id="cat-mc" tabindex="0" data-action="open-mc"
+                        data-talent-hero-src="./assets/mc-club-host/mc-club-host.mp4">
+                        <div class="hero-card-emoji" aria-hidden="true">🎙️</div>
+                        <h3 class="hero-card-title" data-i18n="mc_cat_title">MC y Presentadores</h3>
+                        <p class="hero-card-text" data-i18n="mc_cat_desc">Dentro: dos estilos (maestro de ceremonias /
+                            host club), vídeos y disponibilidad.</p>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
+                    </div>
+
+                    <!-- Staff (mismo patrón que Músicos en Vivo: abre modal con hero + tarjetas internas) -->
+                    <div class="talent-cat-card hero-glass-card mdj-magic-hover-card" id="cat-staff" tabindex="0" data-action="open-staff"
+                        data-talent-hero-src="./assets/mdj-staff-videos/Bartender.mp4">
+                        <div class="hero-card-emoji" aria-hidden="true">🪪</div>
+                        <h3 class="hero-card-title" data-i18n="talent_staff_title">Staff</h3>
+                        <p class="hero-card-text" data-i18n="talent_staff_desc">Dentro: elige bartender, meseros o chef
+                            — un vídeo por rol (barra, mesa, cocina).</p>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
+                    </div>
+
+                    <!-- Payasos (mismo patrón que Staff: modal con hero + tarjetas internas) -->
+                    <div class="talent-cat-card hero-glass-card mdj-magic-hover-card" id="cat-payasos" tabindex="0" data-action="open-payasos"
+                        data-talent-hero-src="./assets/mdj-payasos/pallasos-gif.mp4">
+                        <div class="hero-card-emoji" aria-hidden="true">🤡</div>
+                        <h3 class="hero-card-title" data-i18n="talent_payasos_title">Payasos</h3>
+                        <p class="hero-card-text" data-i18n="talent_payasos_desc">Dentro: GIF en vivo, show, circo y
+                            Santa — elige tipo de actuación infantil/familiar.</p>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── HORA LOCA CUSTOMIZER MODAL (Step 2) ── -->
+    <div id="horaloca-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content glass-card hl-catalogue-card">
+
+            <div class="modal-header-nav">
+                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector"
+                        data-i18n="btn-regresar">Regresar</button>
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                        data-i18n="btn-home">Home</button>
+                </div>
+                <h2 class="modal-nav-title" data-i18n="hl_cat_title_1"
+                    style="opacity: 0; pointer-events: none; margin: 0; padding: 0; position: absolute;">Hora Loca
+                    Experience</h2>
+            </div>
+
+            <div class="hl-hero-container mdj-hero-modal-root">
+                <div class="mdj-hero-media-layer" aria-hidden="true">
+                <video id="hl-hero-video" autoplay muted loop playsinline class="hl-hero-video"
+                    preload="auto"></video>
+                <div class="hl-hero-overlay"></div>
+                </div>
+
+                <!-- Letras Originales Intactas -->
+                <div class="hl-hero-global-overlay">
+                    <p class="hero-eyebrow hl-hero-global-eyebrow" data-i18n="horaloca_hero_eyebrow">
+                        ELEVATING CELEBRATIONS TO UNFORGETTABLE EXPERIENCES
+                    </p>
+                    <h1 class="cinematic-hero-title hl-hero-global-title" data-i18n="horaloca_hero_title">
+                        HORA LOCA SHOW IN MIAMI
+                    </h1>
+                    <p class="modal-nav-subtitle hl-hero-global-subtitle" data-i18n="horaloca_hero_subtitle">
+                        Select the type of talent you wish to add to your package.
+                    </p>
+                </div>
+
+                <!-- Grilla Inyectada Aislada en el Bottom -->
+                <div id="horaloca-grid" data-mdj-ui-tick-scroll
+                    style="display: flex; justify-content: center; gap: 15px; width: 100%; max-width: 1200px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px;">
+                    <div class="loading-spinner" data-i18n="rental_loading_cat">Cargando catálogo...</div>
+                </div>
+            </div>
+            <!-- Nivel 2: Extras por Paquete -->
+            <div class="hl-extras-section">
+                <div class="hl-extras-header">
+                    <h3 class="hl-extras-title" data-i18n="hl_custom_exp">Personaliza tu experiencia</h3>
+                    <p class="hl-extras-subtitle" data-i18n="hl_add_extras">Agrega personajes adicionales y efectos
+                        especiales a tu paquete base
+                    </p>
+                </div>
+
+                <!-- Grilla preparada para la inyección del Paso 2B -->
+                <div id="hl-extras-grid" class="hl-extras-grid">
+                    <!-- Render dinámico según paquete activo -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── TALENT ROSTER MODAL (Musicians / Visuals) ── -->
+    <div id="roster-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content glass-card live-hero-shell">
+
+            <div class="modal-header-nav">
+                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector-roster"
+                        data-i18n="btn-regresar">Regresar</button>
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                        data-i18n="btn-home">Home</button>
+                </div>
+            </div>
+
+            <div class="live-hero-container mdj-hero-modal-root">
+                <div class="mdj-hero-media-layer" aria-hidden="true">
+                <video id="live-hero-video" class="live-hero-video" autoplay muted loop playsinline
+                    preload="auto"></video>
+
+                <div class="live-hero-overlay"></div>
+                </div>
+
+                <!-- Letras Globales Centradas en Top -->
+                <div class="hl-hero-global-overlay" style="z-index: 10;">
+                    <p class="hero-eyebrow hl-hero-global-eyebrow" id="live-hero-eyebrow"
+                        data-i18n="live_music_eyebrow">
+                        PREMIUM LIVE ENTERTAINMENT FOR LUXURY EVENTS
+                    </p>
+                    <h1 class="cinematic-hero-title hl-hero-global-title" id="live-hero-title"
+                        data-i18n="data_mus_sax_name">
+                        Live Saxophone
+                    </h1>
+                    <p class="modal-nav-subtitle hl-hero-global-subtitle" id="live-hero-subtitle"
+                        data-i18n="live_music_subtitle">
+                        Select the top-tier talent you wish to add to your package.
+                    </p>
+                </div>
+
+                <!-- Grilla Inyectada Aislada en el Bottom (Reemplaza Tabs) -->
+                <div id="roster-grid" data-mdj-ui-tick-scroll
+                    style="display: flex; justify-content: center; align-items: flex-end; gap: 15px; width: 100%; max-width: 1200px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px;">
+                    <div class="loading-spinner" data-i18n="rental_loading_cat">Cargando catálogo...</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── STAFF MODAL (mismo ADN que Músicos / roster: vídeo en hero, tarjetas abajo) ── -->
+    <div id="staff-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content glass-card live-hero-shell">
+
+            <div class="modal-header-nav">
+                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector-staff"
+                        data-i18n="btn-regresar">Regresar</button>
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                        data-i18n="btn-home">Home</button>
+                </div>
+            </div>
+
+            <div class="live-hero-container mdj-hero-modal-root">
+                <div class="mdj-hero-media-layer" aria-hidden="true">
+                <video id="staff-hero-video" class="live-hero-video" autoplay muted loop playsinline
+                    preload="auto"></video>
+                <div class="live-hero-overlay"></div>
+                </div>
+
+                <div class="hl-hero-global-overlay" style="z-index: 10;">
+                    <p class="hero-eyebrow hl-hero-global-eyebrow" id="staff-hero-eyebrow" data-i18n="staff_modal_eyebrow">
+                        EVENT STAFF &amp; SERVICE
+                    </p>
+                    <h1 class="cinematic-hero-title hl-hero-global-title" id="staff-hero-title" data-i18n="staff_modal_title_default">
+                        Staff
+                    </h1>
+                    <p class="modal-nav-subtitle hl-hero-global-subtitle" id="staff-hero-subtitle" data-i18n="staff_modal_subtitle_default">
+                        Coordinators, technicians, and event support. Hover a card to preview the background video.
+                    </p>
+                </div>
+
+                <div id="staff-roster-grid" data-mdj-ui-tick-scroll
+                    style="display: flex; justify-content: center; align-items: flex-end; gap: 15px; width: 100%; max-width: 1200px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px;">
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card active" data-staff-key="bartender"
+                        style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
+                        <div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">🍸</div>
+                        <h3 class="hl-card-title" data-i18n="staff_bartender_title" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">Bartender</h3>
+                        <p class="hl-card-desc" data-i18n="staff_bartender_desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">Bar service and premium cocktail experience.</p>
+                        <div class="hl-card-price" data-i18n="rentals-pa-pack-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">Custom Quote</div>
+                        <button type="button" class="hl-action-btn" data-action="open-contact" data-service="staff-bartender" data-i18n="rentals-check-availability" style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Check Availability</button>
+                    </div>
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card" data-staff-key="meseros"
+                        style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
+                        <div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">🍽️</div>
+                        <h3 class="hl-card-title" data-i18n="staff_meseros_title" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">Meseros</h3>
+                        <p class="hl-card-desc" data-i18n="staff_meseros_desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">Professional table service for your guests.</p>
+                        <div class="hl-card-price" data-i18n="rentals-pa-pack-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">Custom Quote</div>
+                        <button type="button" class="hl-action-btn" data-action="open-contact" data-service="staff-meseros" data-i18n="rentals-check-availability" style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Check Availability</button>
+                    </div>
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card" data-staff-key="chef"
+                        style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
+                        <div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">👨‍🍳</div>
+                        <h3 class="hl-card-title" data-i18n="staff_chef_title" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">Chef</h3>
+                        <p class="hl-card-desc" data-i18n="staff_chef_desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">Live kitchen and catering presentation.</p>
+                        <div class="hl-card-price" data-i18n="rentals-pa-pack-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">Custom Quote</div>
+                        <button type="button" class="hl-action-btn" data-action="open-contact" data-service="staff-chef" data-i18n="rentals-check-availability" style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Check Availability</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── PAYASOS MODAL (mismo ADN que Staff) ── -->
+    <div id="payasos-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content glass-card live-hero-shell">
+
+            <div class="modal-header-nav">
+                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector-payasos"
+                        data-i18n="btn-regresar">Regresar</button>
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                        data-i18n="btn-home">Home</button>
+                </div>
+            </div>
+
+            <div class="live-hero-container mdj-hero-modal-root">
+                <div class="mdj-hero-media-layer" aria-hidden="true">
+                <video id="payasos-hero-video" class="live-hero-video" autoplay muted loop playsinline
+                    preload="auto"></video>
+                <div class="live-hero-overlay"></div>
+                </div>
+
+                <div class="hl-hero-global-overlay" style="z-index: 10;">
+                    <p class="hero-eyebrow hl-hero-global-eyebrow" id="payasos-hero-eyebrow" data-i18n="payasos_modal_eyebrow">
+                        KIDS &amp; FAMILY ENTERTAINMENT
+                    </p>
+                    <h1 class="cinematic-hero-title hl-hero-global-title" id="payasos-hero-title" data-i18n="payasos_modal_title_default">
+                        Clowns
+                    </h1>
+                    <p class="modal-nav-subtitle hl-hero-global-subtitle" id="payasos-hero-subtitle" data-i18n="payasos_modal_subtitle_default">
+                        Kids' and family entertainment. Hover a card to preview the background video.
+                    </p>
+                </div>
+
+                <div id="payasos-roster-grid" data-mdj-ui-tick-scroll
+                    style="display: flex; justify-content: center; align-items: flex-end; gap: 12px; width: 100%; max-width: 1200px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 32px;">
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card active" data-payasos-key="gif"
+                        style="flex: 1 1 0; min-width: 180px; max-width: 220px; padding: 16px 12px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 300px; gap: 8px;">
+                        <div class="hl-card-icon" style="font-size: 28px; margin-bottom: 4px;">🎪</div>
+                        <h3 class="hl-card-title" data-i18n="payasos_gif_title" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 14px; font-weight: 600; margin: 0; line-height: 1.2;">GIF / energy</h3>
+                        <p class="hl-card-desc" data-i18n="payasos_gif_desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 10px; margin: 0; flex-grow: 1; line-height: 1.35;">High-energy clips and comedic timing for kids and families.</p>
+                        <div class="hl-card-price" data-i18n="rentals-pa-pack-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 16px; font-weight: 700; margin-top: auto; margin-bottom: 8px;">Custom Quote</div>
+                        <button type="button" class="hl-action-btn" data-action="open-contact" data-service="payasos-gif" data-i18n="rentals-check-availability" style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 7px 0; border-radius: 50px; font-size: 9px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Check Availability</button>
+                    </div>
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card" data-payasos-key="show"
+                        style="flex: 1 1 0; min-width: 180px; max-width: 220px; padding: 16px 12px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 300px; gap: 8px;">
+                        <div class="hl-card-icon" style="font-size: 28px; margin-bottom: 4px;">🎭</div>
+                        <h3 class="hl-card-title" data-i18n="payasos_show_title" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 14px; font-weight: 600; margin: 0; line-height: 1.2;">Clown show</h3>
+                        <p class="hl-card-desc" data-i18n="payasos_show_desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 10px; margin: 0; flex-grow: 1; line-height: 1.35;">Full stage show with classic clown performance and audience interaction.</p>
+                        <div class="hl-card-price" data-i18n="rentals-pa-pack-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 16px; font-weight: 700; margin-top: auto; margin-bottom: 8px;">Custom Quote</div>
+                        <button type="button" class="hl-action-btn" data-action="open-contact" data-service="payasos-show" data-i18n="rentals-check-availability" style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 7px 0; border-radius: 50px; font-size: 9px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Check Availability</button>
+                    </div>
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card" data-payasos-key="circo"
+                        style="flex: 1 1 0; min-width: 180px; max-width: 220px; padding: 16px 12px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 300px; gap: 8px;">
+                        <div class="hl-card-icon" style="font-size: 28px; margin-bottom: 4px;">🎪</div>
+                        <h3 class="hl-card-title" data-i18n="payasos_circo_title" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 14px; font-weight: 600; margin: 0; line-height: 1.2;">Circus</h3>
+                        <p class="hl-card-desc" data-i18n="payasos_circo_desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 10px; margin: 0; flex-grow: 1; line-height: 1.35;">Circus-style acts, gags, and variety entertainment.</p>
+                        <div class="hl-card-price" data-i18n="rentals-pa-pack-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 16px; font-weight: 700; margin-top: auto; margin-bottom: 8px;">Custom Quote</div>
+                        <button type="button" class="hl-action-btn" data-action="open-contact" data-service="payasos-circo" data-i18n="rentals-check-availability" style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 7px 0; border-radius: 50px; font-size: 9px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Check Availability</button>
+                    </div>
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card" data-payasos-key="santa"
+                        style="flex: 1 1 0; min-width: 180px; max-width: 220px; padding: 16px 12px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 300px; gap: 8px;">
+                        <div class="hl-card-icon" style="font-size: 28px; margin-bottom: 4px;">🎅</div>
+                        <h3 class="hl-card-title" data-i18n="payasos_santa_title" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 14px; font-weight: 600; margin: 0; line-height: 1.2;">Santa &amp; seasonal</h3>
+                        <p class="hl-card-desc" data-i18n="payasos_santa_desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 10px; margin: 0; flex-grow: 1; line-height: 1.35;">Holiday appearances and themed seasonal entertainment.</p>
+                        <div class="hl-card-price" data-i18n="rentals-pa-pack-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 16px; font-weight: 700; margin-top: auto; margin-bottom: 8px;">Custom Quote</div>
+                        <button type="button" class="hl-action-btn" data-action="open-contact" data-service="payasos-santa" data-i18n="rentals-check-availability" style="width: 100%; border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 7px 0; border-radius: 50px; font-size: 9px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Check Availability</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── DJ PERFORMANCE MODAL (Phase 12 Expansion) ── -->
+    <div id="dj-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content glass-card live-hero-shell">
+
+            <div class="modal-header-nav">
+                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector-dj"
+                        data-i18n="btn-regresar">Regresar</button>
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                        data-i18n="btn-home">Home</button>
+                </div>
+            </div>
+
+            <div class="live-hero-container mdj-hero-modal-root">
+                <div class="mdj-hero-media-layer" aria-hidden="true">
+                <!-- Dynamic Background Media -->
+                <video id="dj-hero-video" class="live-hero-video" autoplay muted loop playsinline preload="auto"
+                    style="filter: brightness(0.7);"></video>
+
+                <div class="live-hero-overlay"></div>
+                </div>
+
+                <div class="hl-hero-global-overlay" style="z-index: 10;">
+                    <p class="hero-eyebrow hl-hero-global-eyebrow" id="dj-hero-eyebrow" data-i18n="dj_perf_eyebrow">
+                        PREMIUM DJ CURATION
+                    </p>
+                    <h1 class="cinematic-hero-title hl-hero-global-title" id="dj-hero-title" data-i18n="dj_perf_title">
+                        DJ / Performance
+                    </h1>
+                    <p class="modal-nav-subtitle hl-hero-global-subtitle" id="dj-hero-subtitle"
+                        data-i18n="dj_perf_subtitle">
+                        Select the specialized DJ talent for your specific event type.
+                    </p>
+                </div>
+
+                <!-- Empty Internal Category Grid -->
+                <div id="dj-roster-grid" data-mdj-ui-tick-scroll
+                    style="display: flex; justify-content: center; align-items: flex-end; gap: 15px; width: 100%; max-width: 1200px; flex-wrap: nowrap; overflow-x: auto; position: relative; z-index: 10; padding: 0 40px;">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── FX CINEMATIC HERO MODAL (Phase 14) ── -->
+    <div id="fx-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content cinematic-hero-shell">
+
+            <div class="modal-header-nav">
+                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector-fx"
+                        data-i18n="btn-regresar">Regresar</button>
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                        data-i18n="btn-home">Home</button>
+                </div>
+            </div>
+
+            <div class="mdj-hero-media-layer mdj-hero-media-layer--shell" aria-hidden="true">
+            <video class="hero-shell-video" id="fx-hero-video" autoplay muted loop playsinline preload="auto"
+                style="opacity: 0.9; filter: brightness(0.9); pointer-events: none;">
+                <source src="./assets/Special_Effects/SPARKULAR.mp4" type="video/mp4">
+            </video>
+
+            <div class="hero-shell-overlay" style="pointer-events: none; z-index: 2;"></div>
+            </div>
+
+            <div class="hero-shell-content" style="max-width: 100%; padding: 120px 0 40px 0;">
+                <div
+                    style="display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%; width: 100%; z-index: 10; position: relative; padding: 4vh 0 8vh 0; box-sizing: border-box;">
+
+                    <div
+                        style="display: flex; flex-direction: column; align-items: center; width: 100%; padding: 0 40px;">
+                        <p class="hero-eyebrow" id="fx-hero-eyebrow" data-i18n="fx_eyebrow"
+                            style="color: var(--gold); font-size: 12px; letter-spacing: 4px; font-weight: 700; margin-bottom: 20px; text-transform: uppercase; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">
+                            PREMIUM VISUAL FX
+                        </p>
+
+                        <h1 class="cinematic-hero-title" id="fx-hero-title" data-i18n="fx_title"
+                            style="font-family: 'Playfair Display', serif; font-size: clamp(40px, 6vw, 75px); text-transform: uppercase; margin: 0 auto 20px auto; text-shadow: 0 6px 20px rgba(0,0,0,0.7); line-height: 1.25; text-align: center;">
+                            Efectos Especiales
+                        </h1>
+
+                        <p class="modal-nav-subtitle" id="fx-hero-subtitle" data-i18n="fx_subtitle"
+                            style="font-size: clamp(12px, 1.5vw, 17px); color: rgba(255,255,255,0.85); width: 100%; max-width: 1200px; white-space: nowrap; text-align: center; margin: 0 auto; text-shadow: 0 2px 5px rgba(0,0,0,0.8); line-height: 1.5;">
+                            Elevate the energy of your event with stunning visual effects.
+                        </p>
+                    </div>
+
+                    <div id="fx-roster-grid" class="mdj-fx-catalog-carousel grid5 cinematic-hero-cards" data-mdj-ui-tick-scroll
+                        style="position: relative; z-index: 10; width: 100%; max-width: 100%; box-sizing: border-box;">
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── LIGHTING CINEMATIC HERO MODAL (Phase 15) ── -->
+    <div id="lighting-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content cinematic-hero-shell">
+
+            <div class="modal-header-nav">
+                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector-lighting"
+                        data-i18n="btn-regresar">Regresar</button>
+                    <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                        data-i18n="btn-home">Home</button>
+                </div>
+            </div>
+
+            <div class="mdj-hero-media-layer mdj-hero-media-layer--shell" aria-hidden="true">
+            <video class="hero-shell-video" id="lighting-hero-video" autoplay muted loop playsinline preload="auto"
+                style="opacity: 0.9; filter: brightness(0.9); pointer-events: none;">
+                <source src="./assets/Special_Effects/Moving_Head_Lights.mp4" type="video/mp4">
+            </video>
+
+            <div class="hero-shell-overlay" style="pointer-events: none; z-index: 2;"></div>
+            </div>
+
+            <div class="hero-shell-content" style="max-width: 100%; padding: 120px 0 40px 0;">
+                <div
+                    style="display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%; width: 100%; z-index: 10; position: relative; padding: 4vh 0 8vh 0; box-sizing: border-box;">
+
+                    <div
+                        style="display: flex; flex-direction: column; align-items: center; width: 100%; padding: 0 40px;">
+                        <p class="hero-eyebrow" id="lighting-hero-eyebrow" data-i18n="lighting_eyebrow"
+                            style="color: var(--gold); font-size: 12px; letter-spacing: 4px; font-weight: 700; margin-bottom: 20px; text-transform: uppercase; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">
+                            PREMIUM CLUB & ARCHITECTURAL
+                        </p>
+
+                        <h1 class="cinematic-hero-title" id="lighting-hero-title" data-i18n="lighting_title"
+                            style="font-family: 'Playfair Display', serif; font-size: clamp(40px, 6vw, 75px); text-transform: uppercase; margin: 0 auto 20px auto; text-shadow: 0 6px 20px rgba(0,0,0,0.7); line-height: 1.25; text-align: center;">
+                            Iluminación & Pantallas LED
+                        </h1>
+
+                        <p class="modal-nav-subtitle" id="lighting-hero-subtitle" data-i18n="lighting_subtitle"
+                            style="font-size: clamp(12px, 1.5vw, 17px); color: rgba(255,255,255,0.85); width: 100%; max-width: 1200px; white-space: nowrap; text-align: center; margin: 0 auto; text-shadow: 0 2px 5px rgba(0,0,0,0.8); line-height: 1.5;">
+                            Transform any venue into an elite nightlife experience.
+                        </p>
+                    </div>
+
+                    <div id="lighting-roster-grid" class="mdj-lighting-carousel grid5 cinematic-hero-cards" data-mdj-ui-tick-scroll
+                        style="position: relative; z-index: 10; width: 100%; max-width: 100%; box-sizing: border-box;">
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── DJ CHECKOUT MODAL (Phase 2) ── -->
+    <div id="dj-checkout-modal" class="modal-overlay modal-hidden">
+        <div class="modal-content glass-card checkout-glass-shell"
+            style="max-width: 600px; padding: 40px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+
+            <div class="checkout-header"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h2 class="cinematic-hero-title"
+                    style="font-size: 2rem; margin: 0; background: linear-gradient(90deg, #fff, #a0a0a0); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                    Secure Booking</h2>
+                <button class="modal-nav-btn cinematic-glass-btn" onclick="closeCheckoutModal()"
+                    style="padding: 8px 15px; font-size: 0.9rem;">Close</button>
+            </div>
+
+            <!-- STEP 1: EVENT DETAILS FORM -->
+            <div id="checkout-step-1" class="checkout-step active">
+                <p style="color: rgba(255,255,255,0.7); margin-bottom: 25px;">Please provide the mandatory event details
+                    to generate your official quote.</p>
+                <form id="checkout-discovery-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label
+                            style="color: #fff; font-size: 0.85rem; font-weight: 500; margin-bottom: 5px; display: block;">Full
+                            Name</label>
+                        <input type="text" id="chk-name" required
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group">
+                        <label
+                            style="color: #fff; font-size: 0.85rem; font-weight: 500; margin-bottom: 5px; display: block;">Email</label>
+                        <input type="email" id="chk-email" required
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group">
+                        <label
+                            style="color: #fff; font-size: 0.85rem; font-weight: 500; margin-bottom: 5px; display: block;">Phone
+                            Number</label>
+                        <input type="tel" id="chk-phone" required
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group">
+                        <label
+                            style="color: #fff; font-size: 0.85rem; font-weight: 500; margin-bottom: 5px; display: block;">Event
+                            Date</label>
+                        <input type="date" id="chk-date" required
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; color-scheme: dark; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group">
+                        <label
+                            style="color: #fff; font-size: 0.85rem; font-weight: 500; margin-bottom: 5px; display: block;">City
+                            / Location</label>
+                        <input type="text" id="chk-city" required
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group">
+                        <label
+                            style="color: #fff; font-size: 0.85rem; font-weight: 500; margin-bottom: 5px; display: block;">Specific
+                            Event Type</label>
+                        <input type="text" id="chk-type" placeholder="e.g. 30th Birthday" required
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group">
+                        <label
+                            style="color: #fff; font-size: 0.85rem; font-weight: 500; margin-bottom: 5px; display: block;">Estimated
+                            Hours</label>
+                        <input type="number" id="chk-hours" value="4" min="1" required
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2; margin-top: 15px;">
+                        <button type="button" onclick="checkoutNextStep()" class="cinematic-play-btn"
+                            style="width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(255, 62, 236, 0.4);">
+                            <span style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                                Generate Invoice Preview <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path d="M5 12h14M12 5l7 7-7 7" />
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- STEP 2: OFFICAL A4 INVOICE PREVIEW -->
+            <div id="checkout-step-2" class="checkout-step"
+                style="display: none; width: 100%; max-width: 800px; margin: 0 auto; background: #eee; padding: 20px 0; border-radius: 8px;">
+
+                <!-- START A4 PRINTABLE ZONE -->
+                <div id="rentals-print-zone"
+                    style="background: #fff; width: 210mm; min-height: 297mm; margin: 0 auto; color: #000; display:block; padding-bottom: 50px;">
+
+                    <!-- ========================================== -->
+                    <!-- PÁGINA 1: RESUMEN EJECUTIVO (AGRUPADO)     -->
+                    <!-- ========================================== -->
+                    <div class="a4-page page-1" style="padding: 15mm; box-sizing: border-box; position: relative;">
+                        <!-- HEADER SIMILAR AL SHOP -->
+                        <div
+                            style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px;">
+                            <div style="width: 140px;">
+                                <img src="./assets/branding/logo-transparent.png" alt="MDJ Logo"
+                                    style="width: 100%; height: auto;">
+                            </div>
+                            <div style="text-align: right; margin-top: 10px;">
+                                <h1
+                                    style="font-size: 26px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin: 0; color: #111;">
+                                    OFFICIAL QUOTE</h1>
+                                <p style="font-size: 13px; color: #555; margin: 5px 0 0 0; font-weight: 500;">MIAMI DJ
+                                    ENTERTAINMENT & EVENTS LLC</p>
+                                <p style="font-size: 12px; color: #888; margin: 2px 0 0 0;">(305) 555-0199 |
+                                    miamidjbeat@gmail.com</p>
+                            </div>
+                        </div>
+
+                        <!-- META INFO -->
+                        <div
+                            style="display: flex; justify-content: space-between; margin-bottom: 30px; font-size: 13px;">
+                            <div style="max-width: 60%;">
+                                <h3 style="margin: 0 0 5px 0; font-size: 14px; text-transform: uppercase;">Billed To /
+                                    Event Details</h3>
+                                <div style="font-weight: 700; font-size: 18px; margin-bottom: 5px;"
+                                    id="inv-client-name">Loading...</div>
+                                <div id="inv-client-email" style="color:#555;">...</div>
+                                <div id="inv-client-phone" style="color:#555;">...</div>
+                            </div>
+                            <div
+                                style="display: grid; grid-template-columns: max-content max-content; gap: 8px 15px; text-align: right; background: #fafafa; padding: 15px; border-radius: 6px;">
+                                <span style="color:#888;">Date:</span> <strong id="inv-date-display">TBD</strong>
+                                <span style="color:#888;">Location:</span> <strong id="inv-city-display">TBD</strong>
+                                <span style="color:#888;">Hours:</span> <strong id="inv-hours-display">TBD</strong>
+                            </div>
+                        </div>
+
+                        <!-- TABLA RESUMEN -->
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                            <thead>
+                                <tr>
+                                    <th
+                                        style="background: #f4f4f4; padding: 12px 15px; text-align: left; font-size: 11px; text-transform: uppercase; color: #666; border: 1px solid #ddd; border-bottom: 2px solid #ddd;">
+                                        Official Service Packages</th>
+                                    <th
+                                        style="background: #f4f4f4; padding: 12px 15px; text-align: right; font-size: 11px; text-transform: uppercase; color: #666; border: 1px solid #ddd; border-bottom: 2px solid #ddd; width: 120px;">
+                                        Line Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inv-summary-body">
+                                <!-- JS INJECTS CATEGORY GROUPS HERE -->
+                            </tbody>
+                        </table>
+
+                        <!-- TOTALS EXCEL GRID -->
+                        <div style="width: 380px; margin-left: auto; display: grid; gap: 10px; padding-top: 10px;">
+                            <div
+                                style="display: grid; grid-template-columns: 1fr 100px; gap: 20px; text-align: right; font-size: 14px; font-weight: 600; color: #555;">
+                                <span>Subtotal</span><span id="inv-subtotal" style="color:#000;">$0.00</span>
+                            </div>
+                            <div
+                                style="display: grid; grid-template-columns: 1fr 100px; gap: 20px; text-align: right; font-size: 14px; font-weight: 600; color: #cc0c39; border-top: 1px solid #eee; padding-top: 10px;">
+                                <span>Deposit Required (30%)</span><span id="inv-deposit"
+                                    style="color:#cc0c39;">$0.00</span>
+                            </div>
+                            <div
+                                style="display: grid; grid-template-columns: 1fr 100px; gap: 20px; text-align: right; font-size: 20px; font-weight: 900; color: #000; border-top: 2px solid #000; padding-top: 10px; margin-top: 5px;">
+                                <span>Total / Balance</span><span id="inv-balance" style="color:#000;">$0.00</span>
+                            </div>
+                        </div>
+
+                    </div> <!-- FIN PÁGINA 1 -->
+
+                    <div style="page-break-before: always; height: 1px; background: #eee; margin: 40px 0; width: 100%;">
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- PÁGINA 2: ITEMIZATION TÉCNICA (DETALLADA)  -->
+                    <!-- ========================================== -->
+                    <div class="a4-page page-2"
+                        style="padding: 15mm; box-sizing: border-box; page-break-inside: avoid;">
+
+                        <div style="margin-bottom: 20px;">
+                            <h2
+                                style="font-size: 18px; font-weight: 800; text-transform: uppercase; margin: 0; color: #111;">
+                                Technical Addendum & Inventory</h2>
+                            <p style="font-size: 12px; color: #777; margin: 2px 0 0 0;">Itemized breakdown for inventory
+                                allocation and technical review.</p>
+                        </div>
+
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                            <thead>
+                                <tr>
+                                    <th
+                                        style="background: #f4f4f4; padding: 10px 15px; text-align: left; font-size: 10px; text-transform: uppercase; color: #666; border: 1px solid #ddd; border-bottom: 2px solid #ddd;">
+                                        QTY</th>
+                                    <th
+                                        style="background: #f4f4f4; padding: 10px 15px; text-align: left; font-size: 10px; text-transform: uppercase; color: #666; border: 1px solid #ddd; border-bottom: 2px solid #ddd; width: 60%;">
+                                        Detailed Item Description</th>
+                                    <th
+                                        style="background: #f4f4f4; padding: 10px 15px; text-align: right; font-size: 10px; text-transform: uppercase; color: #666; border: 1px solid #ddd; border-bottom: 2px solid #ddd;">
+                                        Unit Price</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inv-detailed-body">
+                                <!-- JS INJECTS EVERY SINGLE ITEM HERE -->
+                            </tbody>
+                        </table>
+
+                    </div> <!-- FIN PÁGINA 2 -->
+
+                </div> <!-- END A4 PRINTABLE ZONE -->
+
+
+                <div style="display: flex; gap: 15px;">
+                    <button type="button" onclick="checkoutPrevStep()" class="cinematic-glass-btn"
+                        style="flex: 1; padding: 15px; border-radius: 8px;">Edit Details</button>
+                    <button id="chk-reserve-btn" type="button" onclick="checkoutSubmit()" class="cinematic-play-btn"
+                        style="flex: 2; border-radius: 8px; box-shadow: 0 0 20px rgba(255, 62, 236, 0.4);">
+                        <span style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                            </svg>
+                            Reserve Your Date
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── DYNAMIC RENTAL CATALOG MODAL (Phase 6 Universal Engine) ── -->
+    <div id="rental-dynamic-modal" class="modal-overlay modal-hidden" data-mdj-catalog-no-bg="1">
+        <div class="modal-content cinematic-hero-shell">
+
+            <!-- Dynamic Background Multi-Video Engine -->
+            <div id="rental-multi-video-container"
+                style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;">
+                <video class="hero-shell-video rental-bg-vid active-vid" data-category="furniture" autoplay muted loop
+                    playsinline preload="auto">
+                    <source src="./assets/furniture-decor/dining-tables.mp4" type="video/mp4">
+                </video>
+                <video class="hero-shell-video rental-bg-vid" data-category="tents" autoplay muted loop playsinline
+                    preload="auto">
+                    <source src="./assets/tents/carpas-main.mp4" type="video/mp4">
+                </video>
+                <video class="hero-shell-video rental-bg-vid" data-category="inflatables" autoplay muted loop
+                    playsinline preload="auto">
+                    <source src="./assets/inflatables/lite-castle.mp4" type="video/mp4">
+                </video>
+                <video class="hero-shell-video rental-bg-vid" data-category="stages" autoplay muted loop playsinline
+                    preload="auto">
+                    <source src="./assets/Tent & Event Structures/stage-small.mp4?v=20260414-under90mb" type="video/mp4">
+                </video>
+                <video class="hero-shell-video rental-bg-vid" data-category="audio" autoplay muted loop playsinline
+                    preload="auto">
+                    <source src="./assets/audio/pa-small.mp4" type="video/mp4">
+                </video>
+                <video class="hero-shell-video rental-bg-vid" data-category="lighting" autoplay muted loop playsinline
+                    preload="auto">
+                    <source src="./assets/lighting/led-small.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="hero-shell-overlay" style="z-index: 1;"></div>
+
+            <!-- TOP BLOCK: Header and Text -->
+            <div class="rentals-header"
+                style="background: transparent; border: none; padding-top: 0; width: 100%; position: relative; z-index: 10;">
+                <div class="rentals-header-inner"
+                    style="max-width: 1200px; margin: 0 auto 2vh auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;">
+                    <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                        <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-from-rental-dynamic"
+                            data-i18n="btn-regresar">Regresar</button>
+                        <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
+                            data-i18n="btn-home">Home</button>
+                    </div>
+
+                    <!-- Botonera de pestañas internas eliminada. El modal ahora es exclusivo de la tarjeta que lo invoca. -->
+
+                    <button class="modal-close-btn cinematic-glass-btn" data-action="close-all"
+                        style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;">✕</button>
+                </div>
+
+                <div style="text-align: center; padding-bottom: 0;">
+                    <h2 id="rental-dynamic-title"
+                        style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: clamp(40px, 6vw, 75px); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2; margin: 0 auto 12px auto; text-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                        Catalog</h2>
+                    <p id="rental-dynamic-desc"
+                        style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.85); font-size: clamp(12px, 1.5vw, 17px); font-weight: 300; line-height: 1.6; letter-spacing: 0.3px; max-width: 650px; margin: 0 auto;">
+                        Select quantities from our premium rental catalog.</p>
+                </div>
+            </div>
+
+            <!-- BOTTOM BLOCK: Product Grid Marquee -->
+            <div id="rental-dynamic-grid" style="width: 100%; box-sizing: border-box;">
+                <!-- dynamically injected by rentals.js renderRentalCatalog(categoryId) -->
+            </div>
+        </div>
+    </div>
+
+    <!-- EVENT BUILDER — lateral drawer 1A (local); does not replace package-summary-bar -->
+    <div id="mdj-event-builder-root" hidden aria-hidden="true">
+        <button type="button" id="mdj-eb-fab" class="mdj-eb-fab" aria-label="Open event cart">
+            <span class="mdj-eb-fab__label">My Cart</span>
+            <span id="mdj-eb-fab-count" class="mdj-eb-fab__count" hidden>0</span>
+        </button>
+        <div class="mdj-eb-overlay" id="mdj-eb-overlay" hidden></div>
+        <aside id="mdj-eb-drawer" class="mdj-eb-drawer mdj-eb-panel" role="dialog" aria-labelledby="mdj-eb-title" hidden>
+            <nav class="mdj-eb-cart-topbar" aria-label="Navegación del sitio (vista carrito)">
+                <a href="./index.html" data-mdj-nav="home" data-i18n="nav-home">Home</a>
+                <a href="./rentals.html" data-mdj-nav="services" data-i18n="nav-services">Services</a>
+                <a href="./index.html#experience" data-mdj-nav="venues" data-i18n="nav-rentals">Events</a>
+                <a href="./shop.html" data-mdj-nav="shop" data-i18n="nav-shop">Shop</a>
+                <a href="./client-portal.html" data-mdj-nav="mi-portal" data-i18n="header-mi-portal">MY PORTAL</a>
+                <a href="./jobs.html" data-mdj-nav="jobs" data-i18n="nav-jobs">Jobs</a>
+                <a href="./index.html#contact" data-mdj-nav="contact" data-i18n="nav-contact">Contact</a>
+                <a href="./account-profile.html" data-mdj-nav="config" data-i18n="nav-config">⚙️ CONFIG</a>
+            </nav>
+            <header class="mdj-eb-drawer__head">
+                <div class="mdj-eb-drawer__head-main">
+                    <h2 id="mdj-eb-title">Event Cart</h2>
+                    <div class="mdj-eb-context-bar" role="group" aria-label="Fecha y evento">
+                        <label class="mdj-eb-context-bar__field">
+                            <span class="mdj-eb-context-bar__hint">Día</span>
+                            <select class="mdj-eb-context-bar__select mdj-eb-context-bar__select--day" aria-label="Día" autocomplete="off">
+                                <option value="" selected disabled>Día</option>
+                                <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                            <option value="13">13</option>
+                            <option value="14">14</option>
+                            <option value="15">15</option>
+                            <option value="16">16</option>
+                            <option value="17">17</option>
+                            <option value="18">18</option>
+                            <option value="19">19</option>
+                            <option value="20">20</option>
+                            <option value="21">21</option>
+                            <option value="22">22</option>
+                            <option value="23">23</option>
+                            <option value="24">24</option>
+                            <option value="25">25</option>
+                            <option value="26">26</option>
+                            <option value="27">27</option>
+                            <option value="28">28</option>
+                            <option value="29">29</option>
+                            <option value="30">30</option>
+                            <option value="31">31</option>
+                            </select>
+                        </label>
+                        <label class="mdj-eb-context-bar__field">
+                            <span class="mdj-eb-context-bar__hint">Mes</span>
+                            <select class="mdj-eb-context-bar__select mdj-eb-context-bar__select--month" aria-label="Mes" autocomplete="off">
+                                <option value="" selected disabled>Mes</option>
+                                <option value="1">1 — Ene</option>
+                            <option value="2">2 — Feb</option>
+                            <option value="3">3 — Mar</option>
+                            <option value="4">4 — Abr</option>
+                            <option value="5">5 — May</option>
+                            <option value="6">6 — Jun</option>
+                            <option value="7">7 — Jul</option>
+                            <option value="8">8 — Ago</option>
+                            <option value="9">9 — Sep</option>
+                            <option value="10">10 — Oct</option>
+                            <option value="11">11 — Nov</option>
+                            <option value="12">12 — Dic</option>
+                            </select>
+                        </label>
+                        <label class="mdj-eb-context-bar__field">
+                            <span class="mdj-eb-context-bar__hint">Año</span>
+                            <select class="mdj-eb-context-bar__select mdj-eb-context-bar__select--year" aria-label="Año" autocomplete="off">
+                                <option value="" selected disabled>Año</option>
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                                <option value="2028">2028</option>
+                            </select>
+                        </label>
+                        <label class="mdj-eb-context-bar__field mdj-eb-context-bar__field--assign">
+                            <span class="mdj-eb-context-bar__hint">Asignar a evento</span>
+                            <select class="mdj-eb-context-bar__select mdj-eb-context-bar__select--assign" aria-label="Asignar a evento" autocomplete="off">
+                                <option value="" selected disabled>Asignar</option>
+                                <option value="mock-wedding">Wedding — 2026-09-22</option>
+                                <option value="mock-afterparty">After-Party — 2026-09-25</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                <button type="button" id="mdj-eb-close" class="mdj-eb-close" aria-label="Close">&times;</button>
+            </header>
+            <div class="mdj-eb-panel__body">
+                <div class="mdj-eb-panel__main">
+                    <div id="mdj-eb-lines" class="mdj-eb-lines"></div>
+                </div>
+                <aside class="mdj-eb-panel__aside" aria-label="Order summary">
+                    <div class="mdj-eb-drawer__foot">
+                        <div class="mdj-eb-totals">
+                            <div class="mdj-eb-totals__row"><span>Subtotal</span><span id="mdj-eb-subtotal">$0.00</span></div>
+                            <div class="mdj-eb-totals__row"><span>Sales tax (7%)</span><span id="mdj-eb-tax">$0.00</span></div>
+                            <div class="mdj-eb-totals__row mdj-eb-totals__row--total"><span>Total</span><span id="mdj-eb-total">$0.00</span></div>
+                        </div>
+                        <button type="button" id="mdj-eb-cta" class="mdj-eb-cta">Add to My Event</button>
+                    </div>
+                </aside>
+            </div>
+        </aside>
+        <div id="mdj-eb-toast" class="mdj-eb-toast" hidden role="status"></div>
+    </div>
+
+    <!-- ── DYNAMIC PACKAGE SUMMARY BAR (Phase 1 UI Concept) ── -->
+    <!-- Mantenemos display:flex explícito para visualizar el diseño estático,
+         aunque el JS legacy pueda interactuar con él, no se ha añadido nueva lógica -->
+    <div class="package-summary-bar package-entrance-anim" style="display: none;">
+        <div class="package-summary-content">
+            <div class="package-summary-info">
+                <span class="package-label">Selected</span>
+                <span class="package-item-name">Live Saxophone</span>
+            </div>
+            <div class="package-summary-action">
+                <span class="package-total">$450.00</span>
+                <button class="btn primary package-checkout-btn">Finalizar Selección</button>
+            </div>
+        </div>
+    </div>
+
+
+
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
     <link rel="stylesheet" href="./mdj-assistant.css" />
-    <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
+    <script src="./mdj-assistant.js?v=20260415-CLONE-FORCE-V1"></script>
     <div id="mdj-assistant-booth">
         <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
         <div class="booth-window">
@@ -464,12 +3533,13 @@
         </div>
     </div>
 
+    <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+    <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
 
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-  <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
-      <script src="./mdj-shared-header.js?v=20260516-tier-badge-unified-1"></script>
-  <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+      <script src="./mdj-shared-header.js?v=20260519-compact-nav-guard-3"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260516-home-nav-stable-1"></script>
+    <script src="./mdj-profile-nav-context.js?v=20260418-owner-nav-parity"></script>
   <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
 </body>
 

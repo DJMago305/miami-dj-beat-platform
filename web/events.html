@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Events — Miami DJ Beat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260519-compact-no-cls-2" />
+    <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+    <style>
+        body.page-mdj-events {
+            min-height: 100vh;
+            --header-height: 84px;
+            --header-nav-band: 72px;
+            --mdj-events-header-total: 156px;
+            padding-top: calc(var(--mdj-events-header-total) + env(safe-area-inset-top, 0px));
+            scroll-padding-top: calc(var(--mdj-events-header-total) + env(safe-area-inset-top, 0px));
+        }
+        body.page-mdj-events #mainHeader.header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        body.page-mdj-events #app {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 100%;
+        }
+        body.page-mdj-events #mainHeader .header-nav {
+            display: block !important;
+        }
+        body.page-mdj-events #mainNav {
+            visibility: visible !important;
+            display: flex !important;
+        }
+        body.page-mdj-events #mainNav-artist {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body class="notranslate page-mdj-events">
+<header class="header mdj-header-unified" id="mainHeader">
+  <div class="header-top">
+    <div class="container">
+      <div class="brand">
+        <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+        <div class="brand-letters-wrapper">
+          <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters" class="brand-letters-img">
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
+        <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
+        <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
+        <div class="mdj-header-r1-auth-cluster">
+
+          <div class="lang-switcher">
+          <span class="lang-btn" data-lang="es">ES</span>
+          <span class="lang-pipe">|</span>
+          <span class="lang-btn" data-lang="en">EN</span>
+        </div>
+
+          <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-auth-btn>Log in</a>
+
+          <div class="account session-pending" id="header-auth-zone" style="display: none;">
+            <a class="account-btn" id="accountBtn" href="./dj-profile.html" title="Mi perfil" aria-label="Mi perfil">
+              <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
+            </a>
+</div>
+
+        </div>
+
+        <div class="header-avatar-cart-row" aria-label="Account and cart">
+<a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart" aria-label="Shopping cart">
+            <span aria-hidden="true">🛒</span>
+            <span id="header-cart-count" class="header-cart-count" hidden></span>
+          </a>
+          <button type="button" id="mdj-eb-header-cart-open" class="header-cart-btn mdj-eb-header-cart-open" title="Event cart" aria-label="Open event cart">
+            <span aria-hidden="true">🛒</span>
+            <span id="mdj-eb-header-count" class="header-cart-count" hidden></span>
+          </button>
+        </div>
+        <div class="header-search-wrap">
+          <input type="search" id="header-smart-search" class="header-smart-search"
+            placeholder="Search DJs, gear, services…" autocomplete="off" enterkeyhint="search" />
+        </div>
+      </div>
+
+      <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <div class="mobile-overlay" id="mobileMenu">
+        <nav class="mobile-nav">
+          <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+          <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+          <a href="./events.html" class="active" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+          <a href="./shop.html" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
+          <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+          <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+          <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+          <a href="./login.html?signup=free" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free"
+            style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
+          <a href="./login.html" id="header-login-btn-mobile" data-auth-btn
+            style="color:var(--gold); font-weight:800;">Entrar</a>
+          <a href="./dj-profile.html" id="nav-my-profile-mobile"
+            style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY PROFILE</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <div class="header-nav">
+    <div class="container">
+      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" data-mdj-compact-nav="1">
+        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+        <a href="./services.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+        <a href="./events.html" class="active" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+        <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+        <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
+        <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" aria-hidden="true" tabindex="-1">MY PORTAL</a>
+        <a href="#" id="mainNav-guest-mi-perfil-link" class="mdj-guest-mi-perfil-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="my-profile" data-i18n="nav-my-profile" aria-hidden="true" tabindex="-1">MI PERFIL</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+    <main id="app" data-mdj-page="events" class="mdj-events-page-mount" aria-label="Events">
+<section id="experience" class="section">
+      <div class="container container--experience-venues">
+        <div class="mdj-experience-preamble">
+          <h2 data-i18n="section-venues-title">EVENTOS / VENUES / PATROCINADORES</h2>
+          <p class="sub" data-i18n="section-venues-sub">Asociaciones con venues destacados y producción integral de eventos en el Sur de la Florida.</p>
+        </div>
+        <div class="mdj-wedding-plan-band"
+          style="margin-bottom:clamp(22px,3vw,36px);padding:clamp(18px,2.5vw,24px) clamp(18px,3vw,28px);border-radius:18px;border:1px solid rgba(197,160,89,0.28);background:rgba(15,22,35,0.55);box-shadow:0 12px 40px rgba(0,0,0,0.25);">
+          <p class="fineprint"
+            style="margin:0 0 6px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(197,160,89,0.95);font-weight:800;font-size:11px;"
+            data-i18n="wedding-plan-band-eyebrow"></p>
+          <h3
+            style="margin:0 0 10px;color:var(--gold);font-size:clamp(1.05rem,2.2vw,1.4rem);font-weight:800;line-height:1.25;"
+            data-i18n="wedding-plan-band-title"></h3>
+          <p class="sub"
+            style="margin:0 0 16px;max-width:62ch;line-height:1.55;font-size:clamp(0.9rem,1.6vw,1rem);opacity:0.92;"
+            data-i18n="wedding-plan-band-lead"></p>
+          <a href="./wedding-planning.html" class="btn gold" style="display:inline-flex;" data-i18n="wedding-plan-band-cta"></a>
+        </div>
+        <!-- Pila: (1) reels verticales (2) residencias semanales (3) hero fotos — ver LEEME en eventos-venues-patrocinadores/ -->
+        <div class="mdj-experience-stack">
+          <div class="mdj-experience-cards-zone">
+            <h3 class="mdj-experience-zone-title" data-i18n="exp-section-venues-reels">Venues on video</h3>
+            <div class="mdj-venues-video-stage" id="mdjVenuesVideoStage" aria-label="Venues showcase">
+              <button type="button" class="mdj-venues-nav mdj-venues-nav--prev" id="mdjVenuesNavPrev"
+            data-i18n-aria="venues-nav-prev" aria-label="Previous venue batch">‹</button>
+          <button type="button" class="mdj-venues-nav mdj-venues-nav--next" id="mdjVenuesNavNext"
+            data-i18n-aria="venues-nav-next" aria-label="Next venue batch">›</button>
+          <div class="mdj-venues-video-card mdj-venues-reel" data-venue="0" data-slot="0" style="left:0%">
+            <div class="mdj-venues-video-frame">
+              <video data-mdj-reel="Mojitos_calle_8.mp4"
+                data-mdj-reel-fallback="./assets/eventos-venues-patrocinadores/reels/El_Valle_Restaurante.mp4" muted playsinline loop
+                preload="auto"></video>
+              <div class="mdj-venues-video-meta">
+                <div class="mdj-venues-video-venue" data-i18n="exp-venue-title-mojitos">Mojitos Calle 8</div>
+                <div class="mdj-venues-video-type" data-i18n="exp-type-latin">Latin Luxury Nightlife</div>
+                <p class="mdj-venues-video-quote" data-i18n="exp-quote-mojitos">"El corazón de la Calle 8…"</p>
+              </div>
+            </div>
+          </div>
+          <div class="mdj-venues-video-card mdj-venues-reel" data-venue="1" data-slot="1" style="left:27%">
+            <div class="mdj-venues-video-frame">
+              <video data-mdj-reel="El_Valle_Restaurante.mp4"
+                data-mdj-reel-fallback="./assets/eventos-venues-patrocinadores/reels/Mojitos_calle_8.mp4" muted playsinline loop
+                preload="auto"></video>
+              <div class="mdj-venues-video-meta">
+                <div class="mdj-venues-video-venue" data-i18n="exp-venue-title-valle">El Valle Restaurant</div>
+                <div class="mdj-venues-video-type" data-i18n="exp-type-dining">Sophisticated Dining</div>
+                <p class="mdj-venues-video-quote" data-i18n="exp-quote-valle">"Alta gastronomía…"</p>
+              </div>
+            </div>
+          </div>
+          <div class="mdj-venues-video-card mdj-venues-reel is-center" data-venue="2" data-slot="2" style="left:54%">
+            <div class="mdj-venues-video-frame">
+              <video data-mdj-reel="Sundowners_Key_Largo.mp4"
+                data-mdj-reel-fallback="./assets/eventos-venues-patrocinadores/reels/El_Valle_Restaurante.mp4" muted playsinline loop
+                preload="auto"></video>
+              <div class="mdj-venues-video-meta">
+                <div class="mdj-venues-video-venue" data-i18n="exp-venue-title-sundowners">Sundowners, Key Largo</div>
+                <div class="mdj-venues-video-type" data-i18n="exp-type-waterfront">Brunch Fri–Sun · Dinner Thursdays</div>
+                <p class="mdj-venues-video-quote" data-i18n="exp-quote-sundowners">"Oceanfront brunch on weekends and dinner every Thursday."</p>
+              </div>
+            </div>
+          </div>
+          <div class="mdj-venues-video-card mdj-venues-reel" data-venue="3" data-slot="3" style="left:81%">
+            <div class="mdj-venues-video-frame">
+              <video data-mdj-reel="Baila_Con_Micho.mp4"
+                data-mdj-reel-fallback="./assets/eventos-venues-patrocinadores/reels/Mojitos_calle_8.mp4" muted playsinline loop
+                preload="auto"></video>
+              <div class="mdj-venues-video-meta">
+                <div class="mdj-venues-video-venue" data-i18n="exp-venue-title-baila">Baila Con Micho</div>
+                <div class="mdj-venues-video-type" data-i18n="exp-type-baila">Escuela de baile</div>
+                <p class="mdj-venues-video-quote" data-i18n="exp-quote-baila">"Classes, rhythm, and community on the dance floor."</p>
+              </div>
+            </div>
+          </div>
+            </div>
+          </div>
+          <div class="mdj-experience-residencies-zone">
+            <section id="residencies">
+              <h2 id="mdjResidenciesHeading" class="mdj-residencies-heading" data-i18n="residencies-title">Weekly Residencies</h2>
+              <p class="mdj-residencies-sub" data-i18n="residencies-sub">Catch the Network in Action</p>
+              <div class="mdj-residencies-carousel" id="mdjResidenciesCarousel">
+                <button type="button" class="mdj-venues-nav mdj-venues-nav--prev mdj-residencies-nav mdj-residencies-nav--prev" id="mdjResidenciesPrev"
+                  data-i18n-aria="residencies-carousel-prev" aria-label="Previous venues">‹</button>
+                <button type="button" class="mdj-venues-nav mdj-venues-nav--next mdj-residencies-nav mdj-residencies-nav--next" id="mdjResidenciesNext"
+                  data-i18n-aria="residencies-carousel-next" aria-label="Next venues">›</button>
+                <div class="mdj-residencies-carousel__viewport" id="mdjResidenciesViewport" role="region" tabindex="0"
+                  aria-labelledby="mdjResidenciesHeading" data-mdj-ui-tick-scroll>
+                  <div class="mdj-residencies-carousel__track">
+                <a class="tile residency-card residency-card--map" href="https://www.google.com/maps/search/?api=1&amp;query=8000%20SW%208th%20St%2C%20Miami%2C%20FL%2033144"
+                  target="_blank" rel="noopener noreferrer" data-i18n-aria="residencies-map-aria-mojitos"
+                  aria-label="Open Mojitos Calle 8 in Google Maps">
+                  <div class="residency-day" data-i18n="residencies-friday">Every Friday</div>
+                  <div class="residency-venue">Mojitos Calle 8</div>
+                  <p data-i18n="residencies-desc-mojitos">Miami Latin Vibes & Open Format Mastery.</p>
+                </a>
+                <a class="tile residency-card residency-card--map" href="https://www.google.com/maps/search/?api=1&amp;query=4260%20W%2012th%20Ave%2C%20Hialeah%2C%20FL%2033012"
+                  target="_blank" rel="noopener noreferrer" data-i18n-aria="residencies-map-aria-valle"
+                  aria-label="Open El Valle Restaurant in Google Maps">
+                  <div class="residency-day" data-i18n="residencies-saturday">Every Saturday</div>
+                  <div class="residency-venue">El Valle Restaurant</div>
+                  <p data-i18n="residencies-desc-valle">Premium Gastronomy & Sophisticated Beats.</p>
+                </a>
+                <a class="tile residency-card residency-card--map" href="https://www.google.com/maps/search/?api=1&amp;query=103900%20Overseas%20Hwy%2C%20Key%20Largo%2C%20FL%2033037"
+                  target="_blank" rel="noopener noreferrer" data-i18n-aria="residencies-map-aria-sundowners"
+                  aria-label="Open Sundowners Key Largo in Google Maps">
+                  <div class="residency-day" data-i18n="residencies-sundowners-when">Brunch Fri–Sun · Dinner Thu</div>
+                  <div class="residency-venue">Sundowners Key Largo</div>
+                  <div class="residency-time" data-i18n="residencies-sundowners-brunch-hours">Brunch: 12:00 PM – 5:00 PM</div>
+                  <p data-i18n="residencies-desc-sundowners">The Ultimate Waterfront Weekend Brunch Experience.</p>
+                </a>
+                <a class="tile residency-card residency-card--map" href="https://www.google.com/maps/search/?api=1&amp;query=7911%20NW%2072nd%20Ave%20%23224%2C%20Medley%2C%20FL%2033166"
+                  target="_blank" rel="noopener noreferrer" data-i18n-aria="residencies-map-aria-baila"
+                  aria-label="Open Baila Con Micho in Google Maps">
+                  <div class="residency-day" data-i18n="residencies-baila-when">Dance school · DJ for events</div>
+                  <div class="residency-venue">Baila Con Micho</div>
+                  <p data-i18n="residencies-desc-baila">Dance school that books our DJs for parties and showcases.</p>
+                </a>
+                <a class="tile residency-card residency-card--map" href="https://www.google.com/maps/search/?api=1&amp;query=6200%20SW%20122nd%20Ave%2C%20Miami%2C%20FL%2033183"
+                  target="_blank" rel="noopener noreferrer" data-i18n-aria="residencies-map-aria-ebenezer"
+                  aria-label="Open Ebenezer Family Farm in Google Maps">
+                  <div class="residency-day" data-i18n="residencies-ebenezer-when">Farm · petting zoo · parties</div>
+                  <div class="residency-venue" data-i18n="exp-venue-title-ebenezer">Ebenezer Family Farm</div>
+                  <p data-i18n="residencies-desc-ebenezer">Family-friendly farm with animals and space for celebrations.</p>
+                </a>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+          <div class="mdj-experience-gallery-zone">
+        <section class="mdj-experience-gallery-wrap" id="mdjExperienceGalleryWrap" hidden aria-labelledby="mdjGalleryHeading">
+          <h3 id="mdjGalleryHeading" class="mdj-experience-gallery-heading" data-i18n="exp-gallery-heading">GALERÍA · FOTOS</h3>
+          <p class="mdj-experience-gallery-sub" data-i18n="exp-gallery-sub">One full-width hero; images rotate like a slideshow.</p>
+          <div class="mdj-venue-photo-hero" id="mdjVenuePhotoHero" role="region" tabindex="0" data-i18n-aria="exp-gallery-region-aria">
+            <div class="mdj-venue-photo-hero__frame">
+              <div class="mdj-venue-photo-hero__slide mdj-venue-photo-hero__slide--a is-visible">
+                <img class="mdj-venue-photo-hero__img" alt="" decoding="async" />
+              </div>
+              <div class="mdj-venue-photo-hero__slide mdj-venue-photo-hero__slide--b">
+                <img class="mdj-venue-photo-hero__img" alt="" decoding="async" />
+              </div>
+            </div>
+            <div class="mdj-venue-photo-hero__chrome">
+              <button type="button" class="mdj-venue-photo-hero__nav mdj-venue-photo-hero__nav--prev" id="mdjGalleryPhotoPrev"
+                data-i18n-aria="exp-gallery-nav-prev">‹</button>
+              <button type="button" class="mdj-venue-photo-hero__nav mdj-venue-photo-hero__nav--next" id="mdjGalleryPhotoNext"
+                data-i18n-aria="exp-gallery-nav-next">›</button>
+            </div>
+            <span class="mdj-venue-photo-hero__counter" aria-live="polite"></span>
+            <div class="mdj-venue-photo-hero__brand">
+              <img class="mdj-venue-photo-hero__brand-img" src="./assets/branding/invoice-brand-logo.png"
+                alt="Miami DJ Beat LLC" width="220" height="80" loading="lazy" decoding="async" />
+            </div>
+          </div>
+        </section>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="marketplace" class="section">
+      <!-- LOCKED SECTION: DO NOT MODIFY -->
+      <div class="container">
+        <h2 style="text-align: center; margin-bottom: 34px;" data-i18n="mkt-title">Additional Solutions</h2>
+        <div class="grid2">
+          <a href="rentals.html" class="tile marketplace-card">
+            <div class="mkt-icon">🎭</div>
+            <h3 data-i18n="mkt-rent-title">Event Services</h3>
+            <p data-i18n="mkt-rent-desc">Full event production: MCs, Sound, LED screens, Furniture, and Entertainment.
+            </p>
+            <div class="mkt-cta" data-i18n="mkt-view-catalog">View Catalog →</div>
+          </a>
+          <a href="dj-tools.html" class="tile marketplace-card">
+            <div class="mkt-icon">📥</div>
+            <h3 data-i18n="mkt-tools-title">DJ Tools Downloads</h3>
+            <p data-i18n="mkt-tools-desc">Free lead magnets and premium professional downloads for modern DJs and
+              producers.</p>
+            <div class="mkt-cta" data-i18n="mkt-browse-tools">Browse Tools →</div>
+          </a>
+        </div>
+      </div>
+    </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container" style="text-align: center;">
+            <div data-i18n="footer-rights-llc">© 2026 Miami DJ Beat LLC. Pro Division Access.</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <script src="./translations.js?v=20260422-nav-labels-1"></script>
+    <script src="./i18n.js?v=20260415-MAGIC-HOVER-UNIFIED"></script>
+    <script>
+        window.MDJ_ENABLE_NAV_TICK_AUDIO = true;
+        if (typeof window.mdjHeroVideoPrime !== 'function') {
+            window.mdjHeroVideoPrime = function (el) {
+                if (!el) return;
+                el.muted = true;
+                el.defaultMuted = true;
+                el.loop = true;
+                el.playsInline = true;
+                el.setAttribute('playsinline', '');
+                el.setAttribute('muted', '');
+                el.setAttribute('loop', '');
+            };
+        }
+    </script>
+    <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+    <script src="./js/venues-showcase.js?v=20260423-baila-reel-aliases" defer></script>
+    <script src="./js/venue-photo-gallery.js?v=20260423-manifest-json-parse-guard" defer></script>
+    <script src="./js/residencies-carousel.js?v=20260425-residencies-arrows-always" defer></script>
+    <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+    <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
+    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+    <script src="./mdj-shared-header.js?v=20260519-compact-nav-guard-3"></script>
+    <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('#app video[data-mdj-reel]').forEach(function (video) {
+                window.mdjHeroVideoPrime(video);
+            });
+            if (window.i18n && typeof window.i18n.init === 'function') window.i18n.init();
+            else if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
+        });
+    </script>
+</body>
+
+</html>
