@@ -126,15 +126,15 @@ serve(async (req) => {
                         .from("soundfortips_fan_requests")
                         .update({
                             stripe_payment_intent_id: piId,
-                            status: "pending",
+                            status: "paid_pending_acceptance",
                         })
                         .eq("id", sftRid)
-                        .eq("status", "awaiting_payment");
+                        .eq("status", "pending_payment");
 
                     if (sftUpdErr) {
                         console.error("[Webhook] soundfortips_fan_requests:", sftUpdErr.message);
                     } else {
-                        console.log(`✅ SoundForTips card paid → pending DJ queue: ${sftRid}`);
+                        console.log(`✅ SoundForTips card paid → paid_pending_acceptance DJ queue: ${sftRid}`);
                     }
                     break;
                 }

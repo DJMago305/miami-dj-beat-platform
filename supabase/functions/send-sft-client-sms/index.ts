@@ -20,6 +20,47 @@ function toE164(input: string): string | null {
   return null;
 }
 
+/** Captura un PaymentIntent autorizado (capture_method=manual) → cobra la tarjeta al aceptar. */
+async function stripeCapturePaymentIntent(pi: string): Promise<{ ok: boolean; err?: string }> {
+  const key = Deno.env.get("STRIPE_SECRET_KEY");
+  if (!key) return { ok: false, err: "STRIPE_SECRET_KEY missing" };
+  const res = await fetch(`https://api.stripe.com/v1/payment_intents/${encodeURIComponent(pi)}/capture`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+  });
+  const j = await res.json();
+  if (!res.ok) {
+    const msg = String(j.error?.message ?? JSON.stringify(j));
+    if (msg.includes("already been captured") || msg.includes("already captured")) return { ok: true };
+    return { ok: false, err: msg };
+  }
+  return { ok: true };
+}
+
+/** Cancela un PaymentIntent no capturado (libera la reserva sin cargo ni reembolso) → al rechazar. */
+async function stripeCancelPaymentIntent(pi: string): Promise<{ ok: boolean; err?: string }> {
+  const key = Deno.env.get("STRIPE_SECRET_KEY");
+  if (!key) return { ok: false, err: "STRIPE_SECRET_KEY missing" };
+  const res = await fetch(`https://api.stripe.com/v1/payment_intents/${encodeURIComponent(pi)}/cancel`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+  });
+  const j = await res.json();
+  if (!res.ok) {
+    const msg = String(j.error?.message ?? JSON.stringify(j));
+    if (msg.includes("already canceled") || msg.includes("already cancelled")) return { ok: true };
+    return { ok: false, err: msg };
+  }
+  return { ok: true };
+}
+
+/** Fallback: reembolso si el PI ya fue capturado antes de llegar aquí (migración de filas antiguas). */
 async function stripeRefundPaymentIntent(pi: string): Promise<{ ok: boolean; err?: string }> {
   const key = Deno.env.get("STRIPE_SECRET_KEY");
   if (!key) return { ok: false, err: "STRIPE_SECRET_KEY missing" };
@@ -192,18 +233,39 @@ serve(async (req) => {
     artist = (body.artist || "").trim();
   }
 
-  if (kind === "deny" && !skipStatusUpdate && paymentChannel === "stripe" && stripePaymentIntentId) {
-    const ref = await stripeRefundPaymentIntent(stripePaymentIntentId);
-    if (!ref.ok) {
-      console.error("[send-sft-client-sms] Stripe refund:", ref.err);
-      return new Response(JSON.stringify({ error: ref.err ?? "Refund failed" }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+  if (!skipStatusUpdate && paymentChannel === "stripe" && stripePaymentIntentId) {
+    if (kind === "accept") {
+      /** Captura la autorización → cobra la tarjeta del fan ahora que el DJ aceptó. */
+      const cap = await stripeCapturePaymentIntent(stripePaymentIntentId);
+      if (!cap.ok) {
+        console.error("[send-sft-client-sms] Stripe capture:", cap.err);
+        return new Response(JSON.stringify({ error: cap.err ?? "Capture failed" }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else if (kind === "deny") {
+      /** Cancela la autorización → libera la reserva sin cargo ni reembolso.
+       *  Fallback a refund si el PI ya estaba capturado (filas anteriores al cambio de modelo). */
+      const cancel = await stripeCancelPaymentIntent(stripePaymentIntentId);
+      if (!cancel.ok) {
+        console.warn("[send-sft-client-sms] Cancel failed, attempting refund fallback:", cancel.err);
+        const ref = await stripeRefundPaymentIntent(stripePaymentIntentId);
+        if (!ref.ok) {
+          console.error("[send-sft-client-sms] Stripe refund fallback:", ref.err);
+          return new Response(JSON.stringify({ error: ref.err ?? "Cancel/refund failed" }), {
+            status: 502,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
     }
   }
 
   const newStatus = kind === "accept" ? "accepted" : "denied";
+
+  const SITE_URL = (Deno.env.get("SITE_URL") || "https://miamidjbeat.com").replace(/\/$/, "");
+  const profileLink = `${SITE_URL}/dj-profile.html?id=${encodeURIComponent(user.id)}&view=public`;
 
   let msgBody = "";
   if (kind === "accept") {
@@ -213,8 +275,8 @@ serve(async (req) => {
   } else {
     msgBody =
       paymentChannel === "stripe"
-        ? "Miami DJ Beat: el DJ no pudo reproducir tu petición. Si pagaste con tarjeta, el reembolso se envió a la misma tarjeta (Stripe); puede tardar unos días en verse en tu banco."
-        : "Miami DJ Beat: Disculpa, esta canción no está en la playlist del DJ o no es adecuada para este evento. No se realizó ningún cargo.";
+        ? `Miami DJ Beat: el DJ no pudo reproducir tu petición. Si pagaste con tarjeta, el reembolso se envió a la misma tarjeta (Stripe); puede tardar unos días en verse en tu banco. ¿Prueba con otra canción? ${profileLink}`
+        : `Miami DJ Beat: Disculpa, esta canción no está en la playlist del DJ o no es adecuada para este evento. No se realizó ningún cargo. ¿Prueba con otra canción? ${profileLink}`;
   }
 
   if (msgBody.length > 1500) {

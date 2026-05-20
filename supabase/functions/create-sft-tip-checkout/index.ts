@@ -192,8 +192,10 @@ serve(async (req) => {
     "metadata[sft_request_id]": requestId,
     "metadata[dj_user_id]": djId,
     "metadata[product]": "soundfortips_tip",
-    /** Contabilidad: el cargo completo entra en la cuenta Stripe de la plataforma; fee al DJ/liquidar vía Connect si se activa. */
     "metadata[platform_fee_bps_note]": "1000",
+    /** Autorización diferida: la tarjeta se reserva pero NO se cobra hasta que el DJ acepte la canción.
+     *  Si el DJ rechaza, se cancela el PaymentIntent (sin cargo, sin reembolso). */
+    "payment_intent_data[capture_method]": "manual",
   };
 
   if (emailInsert) {
