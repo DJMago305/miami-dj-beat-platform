@@ -4299,6 +4299,67 @@
                     <!-- SOUNDFORTIPS: instrucciones Zelle / Venmo / PayPal para fans (perfil público) -->
                     <div id="panel-soundfortips" class="acct-panel">
                         <h1 class="acct-h1">SoundForTips™</h1>
+
+                        <!-- ── GUÍA DE CONFIGURACIÓN ── -->
+                        <div style="background:rgba(197,160,89,0.07);border:1px solid rgba(197,160,89,0.25);border-radius:14px;padding:20px 24px;margin-bottom:28px;">
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;cursor:pointer;" onclick="(function(){var b=document.getElementById('sft-setup-guide');var a=document.getElementById('sft-guide-arrow');b.style.display=b.style.display==='none'?'block':'none';a.textContent=b.style.display==='none'?'▶':'▼';})()">
+                                <span style="font-size:18px;">📋</span>
+                                <span style="font-size:15px;font-weight:800;color:#fcd34d;letter-spacing:0.5px;">Cómo configurar tus métodos de cobro</span>
+                                <span id="sft-guide-arrow" style="color:#fcd34d;margin-left:auto;font-size:13px;">▼</span>
+                            </div>
+                            <div id="sft-setup-guide">
+                                <!-- Stripe -->
+                                <div style="display:flex;gap:14px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.07);">
+                                    <div style="flex-shrink:0;width:36px;height:36px;background:#635bff;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.594-7.305h.003z"/></svg>
+                                    </div>
+                                    <div>
+                                        <div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:4px;">Tarjeta (Stripe) — automático</div>
+                                        <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5;">No requiere configuración extra. El fan paga con tarjeta y la petición llega a tu cabina en verde. Si rechazas, el cargo se cancela automáticamente. La comisión del 10% se liquida al cerrar sesión.</div>
+                                    </div>
+                                </div>
+                                <!-- Zelle -->
+                                <div style="display:flex;gap:14px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.07);">
+                                    <div style="flex-shrink:0;width:36px;height:36px;background:#6d1ed4;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;color:#fff;">Z</div>
+                                    <div>
+                                        <div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:4px;">Zelle — manual</div>
+                                        <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5;">
+                                            <strong style="color:rgba(255,255,255,0.75);">Paso 1:</strong> Abre tu app bancaria (Chase, BofA, Wells Fargo, etc.) y activa Zelle con el teléfono o email de tu negocio.<br>
+                                            <strong style="color:rgba(255,255,255,0.75);">Paso 2:</strong> Escribe ese teléfono o email en el campo <em>Zelle — email o teléfono</em> de abajo.<br>
+                                            <strong style="color:rgba(255,255,255,0.75);">Flujo del fan:</strong> El fan copia tu dato, abre su banco, busca Zelle y te envía. Tú recibes el pago en tu banco directamente.<br>
+                                            <strong style="color:rgba(255,255,255,0.75);">Importante:</strong> Zelle no envía confirmación automática — tú decides aceptar o rechazar la canción después de verificar que llegó el pago.
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Venmo -->
+                                <div style="display:flex;gap:14px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.07);">
+                                    <div style="flex-shrink:0;width:36px;height:36px;background:#008CFF;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;color:#fff;">V</div>
+                                    <div>
+                                        <div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:4px;">Venmo — manual</div>
+                                        <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5;">
+                                            <strong style="color:rgba(255,255,255,0.75);">Requisito:</strong> Tener cuenta Venmo Business activa (app Venmo → Configuración → Crear perfil de negocio).<br>
+                                            <strong style="color:rgba(255,255,255,0.75);">Paso 1:</strong> Tu handle de Venmo Business es <code style="color:#c5a059;">@miamidjbeat</code> — escríbelo en el campo de abajo.<br>
+                                            <strong style="color:rgba(255,255,255,0.75);">Flujo del fan:</strong> El botón abre la app Venmo directamente con tu usuario y el monto pre-llenado. El fan solo confirma el pago.<br>
+                                            <strong style="color:rgba(255,255,255,0.75);">Importante:</strong> Venmo tampoco envía señal automática a la cabina — verifica en la app y acepta la canción manualmente.
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- PayPal -->
+                                <div style="display:flex;gap:14px;">
+                                    <div style="flex-shrink:0;width:36px;height:36px;background:#003087;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#009cde;">PP</div>
+                                    <div>
+                                        <div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:4px;">PayPal — manual</div>
+                                        <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5;">
+                                            <strong style="color:rgba(255,255,255,0.75);">Requisito:</strong> Crear tu PayPal.me en <a href="https://www.paypal.com/paypalme/my/landing" target="_blank" style="color:#c5a059;">paypal.com/paypalme</a> — es gratis.<br>
+                                            <strong style="color:rgba(255,255,255,0.75);">Tu link:</strong> <code style="color:#c5a059;">paypal.me/miamidjbeat</code> — escríbelo en el campo de abajo.<br>
+                                            <strong style="color:rgba(255,255,255,0.75);">Flujo del fan:</strong> El botón abre PayPal con el monto exacto pre-llenado. El fan aprueba y el dinero llega a tu cuenta PayPal.<br>
+                                            <strong style="color:rgba(255,255,255,0.75);">Importante:</strong> PayPal tampoco envía señal a la cabina — revisa la app y acepta la canción manualmente.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- ── FIN GUÍA ── -->
                         <div id="cfg-sft-fee-alert" style="display:none;margin:0 0 18px;padding:14px 18px;border-radius:12px;border:1px solid rgba(239,68,68,0.45);background:rgba(239,68,68,0.12);color:#fecaca;font-size:13px;line-height:1.5;">
                             <strong>Comisión pendiente</strong> — no se pudo cobrar el 10% sobre tips manuales a tu tarjeta. Actualiza el método en <strong>Suscripción y pagos</strong> y pulsa «Liquidar ahora» abajo. Mientras tanto las nuevas peticiones públicas pueden estar bloqueadas.
                             <div id="cfg-sft-fee-alert-detail" style="margin-top:8px;font-size:11px;opacity:0.9;"></div>
