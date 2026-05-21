@@ -2543,6 +2543,7 @@
             displayName = mdjVipFirstNameOnly(String(meta.display_name).trim());
           }
           if (!displayName) displayName = 'Member';
+          window.__mdjBoothDisplayName = displayName;
 
           var avatarInitials = mdjComputeInitials(displayName, session.user && session.user.email);
           var useAvatarInitials = !hasRealPhoto;

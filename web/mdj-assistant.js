@@ -42,6 +42,8 @@ window.MDJ_Assistant = {
     boothLifeEventCtx: {
         step: "idle"
     },
+    /** Historial de conversación enviado a booth-chat LLM (últimos 20 mensajes). */
+    _chatHistory: [],
     /** Declines confidential / sensitive requests; returns reply string or null */
     confidentialityAndSafetyReply: function (rawInput, isSpanish) {
         var t = (rawInput || '').toLowerCase();
@@ -1078,7 +1080,11 @@ window.MDJ_Assistant = {
         if (this.isOpen) {
             booth.classList.add('active');
             if (document.querySelectorAll('.message').length === 0) {
-                this.addMessage("assistant", "Hello! I’m Booth — I help with bookings, plans, and DJ business in a clear, human way. I don’t share confidential or internal company data. / ¡Hola! Soy Booth: te ayudo con reservas, planes y negocio DJ con criterio claro. No comparto información confidencial ni secretos internos. ¿En qué te apoyo?");
+                var _boothName = window.__mdjBoothDisplayName && window.__mdjBoothDisplayName !== 'Member' ? window.__mdjBoothDisplayName : '';
+                var _boothGreet = _boothName
+                    ? 'Hola, ' + _boothName + '. Soy Booth, el agente de Miami DJ Beat — dime qué necesitas y lo cerramos ahora mismo.'
+                    : 'Soy Booth, el agente de Miami DJ Beat. Reservas, artistas, equipos, cursos — dime qué necesitas y lo resolvemos ahora.';
+                this.addMessage('assistant', _boothGreet);
             }
         } else {
             booth.classList.remove('active');
@@ -1115,13 +1121,98 @@ window.MDJ_Assistant = {
         }, 800);
     },
 
+    _renderMarkdown: function (text) {
+        // Escapa HTML base para seguridad
+        var s = text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+        // Links markdown [texto](url) → <a>
+        s = s.replace(/\[([^\]]+)\]\((\/[^\)]*|https?:\/\/[^\)]*)\)/g, function (_, label, url) {
+            var isInternal = url.startsWith('/');
+            var target = isInternal ? '_self' : '_blank';
+            var rel = isInternal ? '' : ' rel="noopener noreferrer"';
+            return '<a href="' + url + '" target="' + target + '"' + rel + ' style="color:#c9a84c;text-decoration:underline;">' + label + '</a>';
+        });
+        // **negrita**
+        s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        // *itálica*
+        s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+        // saltos de línea
+        s = s.replace(/\n/g, '<br>');
+        return s;
+    },
+
     addMessage: function (role, text) {
         const msgContainer = document.querySelector('.booth-messages');
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${role}`;
-        msgDiv.textContent = text;
+        if (role === 'assistant') {
+            msgDiv.innerHTML = this._renderMarkdown(text);
+        } else {
+            msgDiv.textContent = text;
+        }
         msgContainer.appendChild(msgDiv);
         msgContainer.scrollTop = msgContainer.scrollHeight;
+    },
+
+    /**
+     * Llama a la Edge Function booth-chat (GPT-4o-mini).
+     * Retorna el texto de la respuesta o null si falla (fallback a scripted).
+     */
+    _callBoothLLM: async function (userInput, isSpanish) {
+        try {
+            var base = (window.MDB_SUPABASE_URL || "").replace(/\/$/, "");
+            var key = window.MDB_SUPABASE_ANON_KEY || "";
+            if (!base || !key) return null;
+
+            var endpoint = base + "/functions/v1/booth-chat";
+
+            // Contexto de sesión: identidad del usuario + MDJBoothCapture
+            var context = "";
+            try {
+                // Identidad del usuario logueado
+                var _boothCtxParts = [];
+                var _name = window.__mdjBoothDisplayName;
+                if (_name && _name !== 'Member') {
+                    _boothCtxParts.push('Nombre del usuario: ' + _name);
+                }
+                var _idn = window.__mdjLastPlatformIdentity;
+                if (_idn) {
+                    var _principal = _idn.principal || '';
+                    if (_principal === 'performer') _boothCtxParts.push('Rol: Artista DJ de la plataforma');
+                    else if (_principal === 'buyer') _boothCtxParts.push('Rol: Cliente/Fan');
+                    else if (_principal === 'staff') _boothCtxParts.push('Rol: Staff de Miami DJ Beat');
+                }
+                if (_boothCtxParts.length > 0) context = _boothCtxParts.join(' | ');
+
+                // Contexto adicional de MDJBoothCapture (URL params, intención)
+                if (window.MDJBoothCapture && typeof window.MDJBoothCapture.getAgentSystemHint === "function") {
+                    var _capture = window.MDJBoothCapture.getAgentSystemHint() || "";
+                    if (_capture) context = context ? context + '\n' + _capture : _capture;
+                }
+            } catch (_e) { /* sin contexto */ }
+
+            var res = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    "Authorization": "Bearer " + key,
+                    "apikey": key,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    message: userInput,
+                    history: this._chatHistory.slice(-20),
+                    context: context,
+                }),
+            });
+
+            if (!res.ok) return null;
+            var data = await res.json();
+            return (typeof data.reply === "string" && data.reply.trim()) ? data.reply.trim() : null;
+        } catch (_err) {
+            return null;
+        }
     },
 
     processAIResponse: async function (userInput) {
@@ -1142,6 +1233,19 @@ window.MDJ_Assistant = {
             this.addMessage("assistant", safety);
             return;
         }
+
+        // ── LLM (GPT-4o-mini vía booth-chat) ─────────────────────────────────
+        // Intentamos LLM primero; si falla o retorna null, caemos al scripted.
+        var llmReply = await this._callBoothLLM(userInput, isSpanish);
+        if (llmReply) {
+            this._chatHistory.push({ role: "user", content: userInput });
+            this._chatHistory.push({ role: "assistant", content: llmReply });
+            // Limitar historial a 20 mensajes (10 intercambios)
+            if (this._chatHistory.length > 20) this._chatHistory.splice(0, 2);
+            this.addMessage("assistant", llmReply);
+            return;
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         var ensembleWork = this.ensembleSubscriptionWorkReply(userInput, isSpanish);
         if (ensembleWork) {
