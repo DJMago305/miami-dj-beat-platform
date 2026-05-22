@@ -400,18 +400,26 @@ function mdjPerformPostAuthRedirect(db, user) {
         const role = rawRole === 'talent' || rawRole === 'dj' ? 'artist' : rawRole;
         const dr0 = djRow && djRow.role != null ? String(djRow.role).toLowerCase().trim() : '';
         /*
-         * Post-login: solo admin / manager / seller → back-office por defecto.
-         * `owner` (dueño MDJ) sigue con is_staff en RLS y ve el enlace Staff, pero aterriza en perfil de
-         * artista — evita mezclar "cuenta de DJ" con apertura automática del panel de manager.
+         * Post-login landing:
+         *   admin / manager / seller → account-profile.html (staff back-office).
+         *   owner → dj-profile.html (artist profile; owner is also the platform DJ).
+         *   client → client-portal.html.
+         * Owner is excluded from LANDING_STAFF_ROLES intentionally so they land on their
+         * artist profile. They can reach account-profile.html via the STAFF / CONFIG nav links.
+         * Separate ALL_STAFF_ROLES guards owner against client-portal ?redirect= injection.
          */
         const LANDING_STAFF_ROLES = ['admin', 'manager', 'seller'];
+        const ALL_STAFF_ROLES     = ['owner', 'admin', 'manager', 'seller'];
         const isStaffForRedirect = idn
             ? LANDING_STAFF_ROLES.indexOf(String(idn.dbRole || '').toLowerCase().trim()) >= 0
             : LANDING_STAFF_ROLES.indexOf(dr0) >= 0;
+        const isAnyStaff = idn
+            ? ALL_STAFF_ROLES.indexOf(String(idn.dbRole || '').toLowerCase().trim()) >= 0
+            : ALL_STAFF_ROLES.indexOf(dr0) >= 0;
 
         let targetUrl = './dj-profile.html';
         if (isStaffForRedirect) {
-            targetUrl = './admin-dashboard.html';
+            targetUrl = './account-profile.html';
         } else if (role === 'client') {
             targetUrl = './client-portal.html';
             try {
@@ -428,8 +436,14 @@ function mdjPerformPostAuthRedirect(db, user) {
 
         const postAuthFromRedirect = mdjBuildPostAuthReturnUrlFromQuery(window.location.search, user);
         if (postAuthFromRedirect) {
-            window.location.assign(postAuthFromRedirect);
-            return true;
+            /* Any staff (owner included) must not be sent to client-portal via ?redirect= override.
+             * client-portal.js injects ?redirect=client-portal when it detects no session;
+             * that param must never win over a confirmed staff member. */
+            const isClientPortalTarget = /client-portal/i.test(postAuthFromRedirect);
+            if (!(isAnyStaff && isClientPortalTarget)) {
+                window.location.assign(postAuthFromRedirect);
+                return true;
+            }
         }
 
         const nextRaw = (params.get('next') || '').trim();
@@ -676,7 +690,8 @@ function mdjLoginSafeFallbackUrl(user) {
     const raw = String(mdjResolveEffectiveUserRole(user) || '').toLowerCase();
     const ut = String(user.user_metadata?.user_type || '').toLowerCase();
     if (raw === 'client' || ut === 'client') return './client-portal.html';
-    if (raw === 'admin' || raw === 'manager' || raw === 'seller') return './admin-dashboard.html';
+    if (raw === 'owner') return './dj-profile.html';
+    if (raw === 'admin' || raw === 'manager' || raw === 'seller') return './account-profile.html';
     if (raw === 'talent' || raw === 'dj' || raw === 'artist' || ut === 'talent' || ut === 'artist' || ut === 'dj') {
         return './account-settings.html';
     }

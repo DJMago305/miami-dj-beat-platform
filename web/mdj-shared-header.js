@@ -490,6 +490,18 @@
         ? './dj-profile.html?id=' + encodeURIComponent(id) + '&mdj_nav=profile'
         : mdjBuildArtistPublicProfileHref();
       mdjApplyArtistSessionNav(show, href);
+      /* No artist session → show MI PERFIL as guest login access (final state, runs last). */
+      if (!show) {
+        var gmp = document.getElementById('mainNav-guest-mi-perfil-link');
+        if (gmp) {
+          gmp.href = './login.html';
+          gmp.classList.remove('mdj-mainnav-reserved-slot');
+          gmp.removeAttribute('aria-hidden');
+          gmp.removeAttribute('tabindex');
+          gmp.style.removeProperty('display');
+          gmp.style.removeProperty('visibility');
+        }
+      }
       return show;
     });
   }

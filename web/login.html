@@ -913,7 +913,7 @@
     <script src="./security-shield.js?v=20260305-1"></script>
     <script src="./js/mdj-account-forms.js?v=20260513-outlined-float"></script>
     <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
-    <script src="./auth.js?v=20260516-login-ipify-timeout-1"></script>
+    <script src="./auth.js?v=20260522-staff-redirect-fix-1"></script>
 
     <script>
         (function syncReferralFromUrl() {
@@ -1415,12 +1415,29 @@
                 if (navigated) return;
                 if (!session || !session.user) return;
                 navigated = true;
+
+                /* Direct staff override: fetch dj_profiles.role from DB immediately.
+                 * If confirmed owner/admin/manager/seller → navigate straight to account-profile.html.
+                 * No ?redirect= param, no JWT guesswork, no race with form submit handler.
+                 * _mdjPostAuthRedirectPromise singleton in auth.js prevents duplicate DB calls. */
+                var dbClient = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+                if (dbClient && typeof window.mdjPerformPostAuthRedirect === 'function') {
+                    window.mdjPerformPostAuthRedirect(dbClient, session.user).catch(function (eRedir) {
+                        console.warn('[AUTH] goPostAuth fallback after mdjPerformPostAuthRedirect error:', eRedir);
+                        /* Fallback: use redirect param only for non-staff destinations */
+                        if (redirect === 'jobs' && !signupForJobsFree && typeof window.mdjBuildPostAuthReturnUrlFromQuery === 'function') {
+                            var fromAuth = window.mdjBuildPostAuthReturnUrlFromQuery(window.location.search, session.user);
+                            if (fromAuth) { window.location.href = fromAuth; return; }
+                        }
+                        window.location.href = buildPostAuthReturnUrl();
+                    });
+                    return;
+                }
+
+                /* Legacy path: auth.js not loaded on this page (should not happen on login.html) */
                 if (redirect === 'jobs' && !signupForJobsFree && typeof window.mdjBuildPostAuthReturnUrlFromQuery === 'function') {
                     var fromAuth = window.mdjBuildPostAuthReturnUrlFromQuery(window.location.search, session.user);
-                    if (fromAuth) {
-                        window.location.href = fromAuth;
-                        return;
-                    }
+                    if (fromAuth) { window.location.href = fromAuth; return; }
                 }
                 window.location.href = buildPostAuthReturnUrl();
             }
