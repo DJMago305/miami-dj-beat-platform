@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wedding Blueprint Editor — Miami DJ Beat</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap');
+
+  /* ── VARIABLES ── */
+  :root {
+    --gold: #b8912a;
+    --gold-light: #d4a843;
+    --black: #0a0a0a;
+    --gray: #444;
+    --border-doc: #cec0a0;
+    --editor-bg: #1a1a2e;
+    --editor-card: #16213e;
+    --editor-border: #2a2a4a;
+    --editor-input: #0f3460;
+    --editor-accent: #b8912a;
+    --editor-text: #e8e8f0;
+    --editor-muted: #8888aa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--editor-bg);
+    color: var(--editor-text);
+    min-height: 100vh;
+  }
+
+  /* ══════════════════════════════════════════
+     EDITOR PANEL (hidden during print)
+  ══════════════════════════════════════════ */
+  #editor-panel {
+    background: var(--editor-card);
+    border-bottom: 2px solid var(--editor-accent);
+    padding: 28px 40px 24px;
+  }
+
+  .editor-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .editor-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .editor-brand img {
+    width: 52px;
+    height: auto;
+  }
+
+  .editor-brand-text h2 {
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--editor-accent);
+    letter-spacing: 1px;
+  }
+
+  .editor-brand-text p {
+    font-size: 11px;
+    color: var(--editor-muted);
+    margin-top: 2px;
+  }
+
+  .editor-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .lang-toggle {
+    display: flex;
+    border: 1px solid var(--editor-border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .lang-toggle button {
+    background: transparent;
+    border: none;
+    color: var(--editor-muted);
+    padding: 8px 14px;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .lang-toggle button.active {
+    background: var(--editor-accent);
+    color: #fff;
+  }
+
+  .lang-toggle button:hover:not(.active) {
+    background: var(--editor-border);
+    color: var(--editor-text);
+  }
+
+  .btn-print {
+    background: var(--editor-accent);
+    color: #fff;
+    border: none;
+    padding: 11px 28px;
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.2s;
+  }
+
+  .btn-print:hover { background: var(--gold-light); }
+
+  .btn-reset {
+    background: transparent;
+    color: var(--editor-muted);
+    border: 1px solid var(--editor-border);
+    padding: 11px 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .btn-reset:hover { color: var(--editor-text); border-color: var(--editor-muted); }
+
+  .btn-save {
+    background: transparent;
+    color: var(--editor-accent);
+    border: 1px solid var(--editor-accent);
+    padding: 11px 24px;
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .btn-save:hover { background: var(--editor-accent); color: #fff; }
+  .btn-save.saved { background: #1a6b2a; border-color: #1a6b2a; color: #fff; }
+
+  /* ── ASSIGN BUTTON ── */
+  .btn-assign {
+    background: transparent;
+    color: #7eb8f7;
+    border: 1px solid #7eb8f7;
+    padding: 11px 22px;
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .btn-assign:hover { background: #7eb8f7; color: #0a0a14; }
+
+  /* ── ASSIGN MODAL ── */
+  #assign-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #assign-modal.open { display: flex; }
+
+  .assign-card {
+    background: #16213e;
+    border: 1px solid #b8912a;
+    border-radius: 4px;
+    width: 480px;
+    max-width: 95vw;
+    padding: 36px 40px 32px;
+    position: relative;
+  }
+
+  .assign-card h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #b8912a;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .assign-card p {
+    font-size: 12px;
+    color: #8888aa;
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+
+  .assign-card label {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: #b8912a;
+    margin-bottom: 6px;
+  }
+
+  .assign-card input {
+    width: 100%;
+    background: #0f3460;
+    border: 1px solid #2a2a4a;
+    color: #e8e8f0;
+    padding: 11px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    border-radius: 2px;
+    outline: none;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+  }
+
+  .assign-card input:focus { border-color: #b8912a; }
+
+  #assign-client-status {
+    min-height: 28px;
+    font-size: 12px;
+    margin-bottom: 20px;
+    padding: 7px 12px;
+    border-radius: 2px;
+    display: none;
+  }
+
+  #assign-client-status.found {
+    display: block;
+    background: rgba(26,107,42,0.25);
+    border: 1px solid #1a6b2a;
+    color: #6de88a;
+  }
+
+  #assign-client-status.notfound {
+    display: block;
+    background: rgba(180,60,60,0.2);
+    border: 1px solid #b43c3c;
+    color: #f08080;
+  }
+
+  #assign-client-status.searching {
+    display: block;
+    background: rgba(184,145,42,0.12);
+    border: 1px solid #b8912a;
+    color: #d4a843;
+  }
+
+  .assign-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .btn-assign-confirm {
+    flex: 1;
+    background: #b8912a;
+    color: #fff;
+    border: none;
+    padding: 11px 20px;
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.2s;
+  }
+
+  .btn-assign-confirm:hover { background: #d4a843; }
+  .btn-assign-confirm:disabled { background: #444; color: #888; cursor: not-allowed; }
+
+  .btn-assign-skip {
+    background: transparent;
+    color: #8888aa;
+    border: 1px solid #2a2a4a;
+    padding: 11px 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: color 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-assign-skip:hover { color: #e8e8f0; }
+
+  .assign-close {
+    position: absolute;
+    top: 14px; right: 16px;
+    background: none; border: none;
+    color: #555; font-size: 18px;
+    cursor: pointer; line-height: 1;
+  }
+
+  .assign-close:hover { color: #e8e8f0; }
+
+  .assign-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(126,184,247,0.12);
+    border: 1px solid #7eb8f7;
+    color: #7eb8f7;
+    font-size: 10px;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.8px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-left: 10px;
+    vertical-align: middle;
+  }
+
+  /* ── FORM GRID ── */
+  .editor-form {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px 24px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group.half { grid-column: span 1; }
+
+  .form-group label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--editor-accent);
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    background: var(--editor-input);
+    border: 1px solid var(--editor-border);
+    color: var(--editor-text);
+    padding: 10px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    border-radius: 2px;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: none;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus {
+    border-color: var(--editor-accent);
+  }
+
+  .form-group textarea { min-height: 64px; }
+
+  .editor-divider {
+    grid-column: 1 / -1;
+    border: none;
+    border-top: 1px solid var(--editor-border);
+    margin: 4px 0;
+  }
+
+  .editor-section-label {
+    grid-column: 1 / -1;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--editor-muted);
+    padding-top: 4px;
+  }
+
+  /* ══════════════════════════════════════════
+     DOCUMENT PREVIEW WRAPPER
+  ══════════════════════════════════════════ */
+  #doc-preview {
+    background: #d0d0d0;
+    padding: 40px 20px;
+  }
+
+  /* ── DOC STYLES (same as blueprint) ── */
+  .page {
+    width: 8.5in;
+    min-height: 11in;          /* crece si el contenido es largo */
+    background: #fff;
+    margin: 0 auto 32px;
+    padding: 0.55in 0.85in 0.9in;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+    position: relative;
+    /* sin overflow:hidden — el contenido dinámico puede crecer */
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 11.5pt;
+    color: var(--black);
+    line-height: 1.55;
+  }
+
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding-bottom: 14px;
+    border-bottom: 2.5px solid var(--gold);
+    margin-bottom: 16px;
+  }
+
+  .header-logo img { width: 128px; height: auto; }
+
+  .header-contact { text-align: right; }
+
+  .hc-name {
+    font-family: 'Cinzel', serif;
+    font-size: 12pt;
+    font-weight: 700;
+    color: var(--black);
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+  }
+
+  .hc-tagline {
+    display: block;
+    font-style: italic;
+    color: var(--gold);
+    font-size: 9.5pt;
+    margin-bottom: 9px;
+  }
+
+  .hc-info {
+    font-size: 9pt;
+    color: #555;
+    display: inline-block;   /* bloque alineado a la derecha, filas internas a la izquierda */
+    text-align: left;
+  }
+
+  .hc-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 5px;
+    line-height: 1;
+  }
+
+  .hc-icon {
+    width: 11px;
+    height: 11px;
+    fill: var(--gold);
+    flex-shrink: 0;
+  }
+
+  .hc-row span {
+    line-height: 1;
+  }
+
+  .doc-title { text-align: center; margin-bottom: 3px; }
+
+  .doc-title h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 28pt;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .doc-subtitle {
+    text-align: center;
+    font-family: 'EB Garamond', serif;
+    font-size: 17pt;
+    font-style: italic;
+    color: var(--black);
+    margin-bottom: 16px;
+  }
+
+  .info-table { width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 13pt; }
+  .info-table td { padding: 11px 16px; border: 1px solid var(--border-doc); vertical-align: middle; }
+  .info-table td:first-child {
+    background: var(--black); color: #fff;
+    font-family: 'Cinzel', serif; font-size: 10.5pt; font-weight: 600;
+    letter-spacing: 0.5px; width: 36%; text-transform: uppercase;
+  }
+  .info-table td:last-child { background: #fafafa; color: var(--black); }
+
+  .section-heading {
+    font-family: 'Cinzel', serif;
+    font-size: 13.5pt;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+    margin: 18px 0 7px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--border-doc);
+    text-transform: uppercase;
+  }
+
+  .timeline-table { width: 100%; border-collapse: collapse; font-size: 11pt; margin-top: 5px; }
+  .timeline-table thead tr { background: var(--black); color: #fff; }
+  .timeline-table thead td {
+    padding: 10px 16px;
+    font-family: 'Cinzel', serif; font-size: 10pt;
+    font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .timeline-table tbody tr:nth-child(even) { background: #f8f5ec; }
+  .timeline-table tbody tr:nth-child(odd)  { background: #fff; }
+  .timeline-table tbody td {
+    padding: 11px 16px; border: 1px solid var(--border-doc);
+    vertical-align: middle; color: var(--black);
+  }
+  .timeline-table tbody td:first-child { white-space: nowrap; font-weight: 600; color: var(--gold); width: 22%; }
+  .timeline-table tbody td:nth-child(2) { white-space: nowrap; font-weight: 600; width: 28%; }
+
+  .section-body { color: #333; font-size: 13pt; line-height: 1.78; margin-bottom: 2px; }
+  .section-body p { margin-bottom: 6px; }
+
+  /* ── DEMO / GUIDE TEXT ── */
+  /* Content pre-filled as reference only — lighter so staff can distinguish from real data */
+  .demo-guide {
+    color: #b0a898 !important;
+    font-style: italic;
+  }
+  .demo-guide p { color: #b0a898; }
+  @media print {
+    .demo-guide, .demo-guide p { color: #c8bfb3 !important; }
+    .demo-badge { display: none; }
+  }
+
+  .doc-footer-note {
+    text-align: center; font-size: 8.5pt; color: #888; font-style: italic;
+    margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--border-doc); line-height: 1.7;
+  }
+
+  /* ── TIMELINE BLOCK (no table) ── */
+  .timeline-block {
+    margin-top: 8px;
+  }
+
+  .tl-entry {
+    padding: 12px 0 12px 18px;
+    border-left: 3px solid var(--gold);
+    margin-bottom: 10px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .tl-heading {
+    font-family: 'Cinzel', serif;
+    font-size: 11pt;
+    font-weight: 700;
+    color: var(--black);
+    letter-spacing: 0.3px;
+    margin-bottom: 4px;
+  }
+
+  .tl-body {
+    font-size: 11pt;
+    color: #555;
+    line-height: 1.65;
+  }
+
+  /* ── CONTENTEDITABLE — direct editing in document ── */
+  [contenteditable="true"] {
+    outline: none;
+    border-radius: 2px;
+    transition: background 0.15s, box-shadow 0.15s;
+    cursor: text;
+  }
+
+  [contenteditable="true"]:hover {
+    background: rgba(184, 145, 42, 0.06);
+    box-shadow: 0 0 0 2px rgba(184, 145, 42, 0.25);
+  }
+
+  [contenteditable="true"]:focus {
+    background: rgba(184, 145, 42, 0.1);
+    box-shadow: 0 0 0 2px rgba(184, 145, 42, 0.5);
+  }
+
+  @media print {
+    [contenteditable="true"]:hover,
+    [contenteditable="true"]:focus {
+      background: transparent;
+      box-shadow: none;
+    }
+  }
+
+  /* ── SECTION BLOCK WRAPPER — never split across pages ── */
+  .section-block {
+    margin-bottom: 22px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* ── NEW PAGE BEFORE THIS SECTION (screen view) ── */
+  .section-block.new-page {
+    margin-top: 72px;
+    padding-top: 28px;
+    border-top: 2px dashed #c8c0b0;
+    position: relative;
+  }
+
+  .section-block.new-page::before {
+    content: '— Nueva Página —';
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #d8d8d8;
+    padding: 0 14px;
+    font-size: 9px;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 1px;
+    color: #999;
+    white-space: nowrap;
+  }
+
+  /* Print: real page break, hide the label */
+  @media print {
+    .section-block.new-page {
+      break-before: page;
+      page-break-before: always;
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
+    .section-block.new-page::before { display: none; }
+  }
+
+  /* ── SECTION NOTE BLOCK ── */
+  .section-note {
+    display: block;
+    margin-top: 14px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .section-note-label {
+    font-family: 'Cinzel', serif;
+    font-size: 13.5pt;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin: 14px 0 7px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--border-doc);
+  }
+
+  .section-note-text {
+    font-size: 11pt;
+    color: #333;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    min-height: 1.8em;
+  }
+
+  .page-footer {
+    position: absolute;
+    bottom: 0.38in; left: 0.85in; right: 0.85in;
+    border-top: 1px solid var(--border-doc);
+    padding-top: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 7.5pt; color: #aaa;
+    font-family: 'Cinzel', serif; letter-spacing: 0.3px;
+    background: #fff;
+  }
+
+  .page-footer .footer-brand { font-weight: 600; color: var(--gold); }
+
+  /* ══════════════════════════════════════════
+     PRINT — hide editor, clean pages
+  ══════════════════════════════════════════ */
+  @page { size: letter portrait; margin: 0; }
+
+  @media print {
+    body { background: #fff; }
+    #editor-panel { display: none !important; }
+    #doc-preview { background: #fff; padding: 0; }
+
+    .page {
+      position: relative;
+      margin: 0;
+      box-shadow: none;
+      min-height: 0;
+      padding-bottom: 0.75in;   /* espacio reservado para el footer */
+      page-break-before: always;
+      break-before: page;
+    }
+
+    .page:first-child {
+      page-break-before: avoid;
+      break-before: avoid;
+    }
+
+    /* Footer anclado al fondo del bloque — nunca sale de la hoja */
+    .page-footer {
+      position: absolute;
+      bottom: 0.18in;
+      left: 0.85in;
+      right: 0.85in;
+      margin-top: 0;
+      background: #fff;
+    }
+
+    /* Texto de nota compacto en print — listas largas caben en la hoja */
+    .section-note-text {
+      font-size: 8pt;
+      line-height: 1.35;
+      white-space: pre-wrap;
+    }
+
+    /* Nunca partir tabla ni encabezado entre hojas */
+    .timeline-table tbody tr { page-break-inside: avoid; break-inside: avoid; }
+    .section-heading { page-break-after: avoid; break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     EDITOR PANEL
+══════════════════════════════════════════ -->
+<div id="editor-panel">
+  <div class="editor-top">
+    <div class="editor-brand">
+      <img src="./logo-mdj-gold.png" alt="Miami DJ Beat">
+      <div class="editor-brand-text">
+        <h2>Wedding Blueprint Editor</h2>
+        <p id="brand-subtitle">Miami DJ Beat LLC — Herramienta de Gestión</p>
+      </div>
+    </div>
+    <div class="editor-actions">
+      <div class="lang-toggle">
+        <button id="btn-es" class="active" onclick="setLang('es')">ES</button>
+        <button id="btn-en" onclick="setLang('en')">EN</button>
+      </div>
+      <button class="btn-reset" onclick="resetForm()" data-i18n="reset">Limpiar</button>
+      <button class="btn-save" id="btn-save" onclick="saveDoc()" data-i18n="save">Guardar</button>
+      <button class="btn-assign" id="btn-assign-open" onclick="openAssignModal()" data-i18n="assign">👤 Asignar a Cliente</button>
+      <button class="btn-print" onclick="window.print()" data-i18n="print">⬇ Imprimir / Exportar PDF</button>
+    </div>
+  </div>
+
+  <div class="editor-form">
+
+    <div class="editor-section-label" data-i18n="sec-couple">Pareja y Evento</div>
+
+    <div class="form-group half">
+      <label data-i18n="lbl-bride">Novia / Pareja 1</label>
+      <input type="text" id="f-bride" data-ph="ph-bride" placeholder="ej. Iris Casal" oninput="update()">
+    </div>
+    <div class="form-group half">
+      <label data-i18n="lbl-groom">Novio / Pareja 2</label>
+      <input type="text" id="f-groom" data-ph="ph-groom" placeholder="ej. Angel Campis" oninput="update()">
+    </div>
+    <div class="form-group half">
+      <label data-i18n="lbl-date">Fecha del Evento</label>
+      <input type="text" id="f-date" data-ph="ph-date" placeholder="ej. Sábado, 23 de mayo de 2026" oninput="update()">
+    </div>
+
+    <hr class="editor-divider">
+    <div class="editor-section-label" data-i18n="sec-prod">Detalles de Producción</div>
+
+    <div class="form-group half">
+      <label data-i18n="lbl-time">Horario de Recepción</label>
+      <input type="text" id="f-time" data-ph="ph-time" placeholder="ej. 5:00 PM – 12:00 AM" oninput="update()">
+    </div>
+    <div class="form-group half">
+      <label data-i18n="lbl-dj">DJ Asignado</label>
+      <input type="text" id="f-dj" data-ph="ph-dj" placeholder="ej. DJ Ariel Napole" oninput="update()">
+    </div>
+    <div class="form-group half">
+      <label data-i18n="lbl-format">Formato Musical</label>
+      <input type="text" id="f-format" data-ph="ph-format" placeholder="ej. Open Format Cubano-Americano de Lujo" oninput="update()">
+    </div>
+    <div class="form-group half">
+      <label data-i18n="lbl-venue">Dirección del Venue</label>
+      <input type="text" id="f-venue" data-ph="ph-venue" placeholder="Dirección completa" oninput="update()">
+    </div>
+    <div class="form-group half">
+      <label data-i18n="lbl-sponsors">Patrocinadores / Notas Especiales</label>
+      <input type="text" id="f-sponsors" data-ph="ph-sponsors" placeholder="Opcional" oninput="update()">
+    </div>
+
+    <hr class="editor-divider">
+    <div class="editor-section-label" data-i18n="sec-notes">Notas Operacionales del Timeline (opcional)</div>
+
+    <div class="form-group half">
+      <label data-i18n="lbl-n1">Nota Recepción</label>
+      <input type="text" id="f-n1" placeholder="Deep House · Afro House · Tech House..." oninput="update()">
+    </div>
+    <div class="form-group half">
+      <label data-i18n="lbl-n2">Nota Corte Nupcial</label>
+      <input type="text" id="f-n2" placeholder="Wedding Mix con HOT CUE..." oninput="update()">
+    </div>
+    <div class="form-group half">
+      <label data-i18n="lbl-n3">Nota Cena</label>
+      <input type="text" id="f-n3" placeholder="Romántico cubano y crossover..." oninput="update()">
+    </div>
+    <div class="form-group half">
+      <label data-i18n="lbl-n4">Nota Pista de Baile</label>
+      <input type="text" id="f-n4" placeholder="Open format adaptativo..." oninput="update()">
+    </div>
+    <div class="form-group half">
+      <label data-i18n="lbl-n5">Nota Cierre</label>
+      <input type="text" id="f-n5" placeholder="Palabras de cierre del MC..." oninput="update()">
+    </div>
+
+    <hr class="editor-divider">
+    <div class="editor-section-label" data-i18n="sec-snotes">Notas de Sección — aparecen bajo cada segmento en el documento</div>
+
+    <div class="form-group full">
+      <label data-i18n="lbl-sn1">📌 Nota — Recepción &amp; Cocktail Hour</label>
+      <textarea id="f-note1" placeholder="Ej. instrucciones especiales, lista de canciones..." oninput="update()"></textarea>
+    </div>
+    <div class="form-group full">
+      <label data-i18n="lbl-sn2">📌 Nota — Corte Nupcial &amp; Entrada de Novios</label>
+      <textarea id="f-note2" placeholder="Ej. orden de presentación, canción de primera entrada..." oninput="update()"></textarea>
+    </div>
+    <div class="form-group full">
+      <label data-i18n="lbl-sn3">📌 Nota — Cena</label>
+      <textarea id="f-note3" placeholder="Ej. lista de canciones para la cena..." oninput="update()"></textarea>
+    </div>
+    <div class="form-group full">
+      <label data-i18n="lbl-sn4">📌 Nota — Pista de Baile &amp; Hora Loca</label>
+      <textarea id="f-note4" placeholder="Ej. géneros prioritarios, peticiones especiales..." oninput="update()"></textarea>
+    </div>
+    <div class="form-group full">
+      <label data-i18n="lbl-sn5">📌 Nota — Cierre &amp; Load Out</label>
+      <textarea id="f-note5" placeholder="Ej. última canción, protocolo de equipo..." oninput="update()"></textarea>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     DOCUMENT PREVIEW
+══════════════════════════════════════════ -->
+<!-- SVG icon definitions — reused in every page header -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none;" aria-hidden="true">
+  <symbol id="ico-phone" viewBox="0 0 16 16">
+    <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 0 0 4.168 6.608 17.569 17.569 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.678.678 0 0 0-.58-.122l-2.19.547a1.745 1.745 0 0 1-1.657-.459L5.482 8.062a1.745 1.745 0 0 1-.46-1.657l.548-2.19a.678.678 0 0 0-.122-.58L3.654 1.328z"/>
+  </symbol>
+  <symbol id="ico-email" viewBox="0 0 16 16">
+    <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.546z"/>
+  </symbol>
+  <symbol id="ico-globe" viewBox="0 0 16 16">
+    <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm7.5-6.923c-.67.204-1.335.82-1.887 1.855A7.97 7.97 0 0 0 5.145 4H7.5V1.077zM4.09 4a9.267 9.267 0 0 1 .64-1.539 6.7 6.7 0 0 1 .597-.933A7.025 7.025 0 0 0 2.255 4H4.09zm-.582 3.5c.03-.877.138-1.718.312-2.5H1.674a6.958 6.958 0 0 0-.656 2.5h2.49zM4.847 5a12.5 12.5 0 0 0-.338 2.5H7.5V5H4.847zM8.5 5v2.5h2.99a12.495 12.495 0 0 0-.337-2.5H8.5zM4.51 8.5a12.5 12.5 0 0 0 .337 2.5H7.5V8.5H4.51zm3.99 0V11h2.653c.187-.765.306-1.608.338-2.5H8.5zM5.145 12c.138.386.295.744.468 1.068.552 1.035 1.218 1.65 1.887 1.855V12H5.145zm.182 2.472a6.696 6.696 0 0 1-.597-.933A9.268 9.268 0 0 1 4.09 12H2.255a7.024 7.024 0 0 0 3.072 2.472zM3.82 11a13.652 13.652 0 0 1-.312-2.5h-2.49c.062.89.291 1.733.656 2.5H3.82zm6.853 3.472A7.024 7.024 0 0 0 13.745 12H11.91a9.27 9.27 0 0 1-.64 1.539 6.688 6.688 0 0 1-.597.933zM8.5 1.077V4h2.853a7.97 7.97 0 0 0-.468-1.068C10.335 1.897 9.67 1.282 8.5 1.077zM11.91 4h1.835a7.024 7.024 0 0 0-3.072-2.472c.218.284.418.598.597.933.187.359.338.745.64 1.539zm.012 1a13.651 13.651 0 0 1 .312 2.5h2.49a6.957 6.957 0 0 0-.656-2.5H11.922z"/>
+  </symbol>
+</svg>
+
+<div id="doc-preview">
+
+  <!-- Demo guide badge — hidden on print -->
+  <div class="demo-badge" style="
+    text-align:center; padding: 10px 0 6px;
+    font-family:'Cinzel',serif; font-size:9pt;
+    color:#b0a898; letter-spacing:2px; font-style:italic;
+  ">✦ PLANTILLA DE GUÍA — Reemplaza el contenido con los datos reales del cliente ✦</div>
+
+  <!-- PAGE 1 — Event Info -->
+  <div class="page">
+    <header class="header">
+      <div class="header-logo"><img src="./logo-mdj-gold.png" alt="Miami DJ Beat LLC"></div>
+      <div class="header-contact">
+      <div class="hc-name">Miami DJ Beat LLC</div>
+      <div class="hc-tagline">Premium Event Entertainment Agency</div>
+      <div class="hc-info">
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-globe"/></svg><span>www.miamidjbeat.com</span></div>
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-email"/></svg><span>miamidjbeat@gmail.com</span></div>
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-phone"/></svg><span>(305) 607-1780</span></div>
+      </div>
+    </div>
+    </header>
+    <div class="doc-title"><h1>Wedding Event Blueprint</h1></div>
+    <div class="doc-subtitle">Celebrating the Marriage of <span id="d-couple">Bride &amp; Groom</span></div>
+    <table class="info-table">
+      <tr><td>Event Date</td>      <td id="d-date">—</td></tr>
+      <tr><td>Reception Time</td>  <td id="d-time">—</td></tr>
+      <tr><td>Assigned DJ</td>     <td id="d-dj">—</td></tr>
+      <tr><td>Music Format</td>    <td id="d-format">—</td></tr>
+      <tr><td>Venue Address</td>   <td id="d-venue">&nbsp;</td></tr>
+      <tr><td>Sponsors / Special Notes</td><td id="d-sponsors">&nbsp;</td></tr>
+    </table>
+    <div class="page-footer">
+      <span class="footer-brand">Miami DJ Beat LLC</span>
+      <span>Confidential — For Internal Use Only</span>
+      <span>Page 1</span>
+    </div>
+  </div>
+
+  <!-- PAGE 2 — Master Timeline -->
+  <div class="page">
+    <header class="header">
+      <div class="header-logo"><img src="./logo-mdj-gold.png" alt="Miami DJ Beat LLC"></div>
+      <div class="header-contact">
+      <div class="hc-name">Miami DJ Beat LLC</div>
+      <div class="hc-tagline">Premium Event Entertainment Agency</div>
+      <div class="hc-info">
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-globe"/></svg><span>www.miamidjbeat.com</span></div>
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-email"/></svg><span>miamidjbeat@gmail.com</span></div>
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-phone"/></svg><span>(305) 607-1780</span></div>
+      </div>
+    </div>
+    </header>
+    <div class="doc-title"><h1>Wedding Event Blueprint</h1></div>
+    <div class="doc-subtitle">Celebrating the Marriage of <span class="d-couple-ref">Bride &amp; Groom</span></div>
+    <div class="section-heading">Master Wedding Timeline</div>
+
+    <div class="timeline-block">
+      <div class="tl-entry">
+        <div class="tl-heading demo-guide" contenteditable="true">5:00 PM – 6:00 PM &nbsp;·&nbsp; Reception / Cocktail Hour</div>
+        <div class="tl-body demo-guide" id="d-n1" contenteditable="true">Deep House · Afro House · Tech House — luxury atmosphere</div>
+      </div>
+      <div class="tl-entry">
+        <div class="tl-heading demo-guide" contenteditable="true">6:00 PM – 6:30 PM &nbsp;·&nbsp; Wedding Court Presentation</div>
+        <div class="tl-body demo-guide" id="d-n2" contenteditable="true">Wedding Mix with HOT CUE transition for newlywed entrance</div>
+      </div>
+      <div class="tl-entry">
+        <div class="tl-heading demo-guide" contenteditable="true">6:30 PM – 8:00 PM &nbsp;·&nbsp; Dinner Service</div>
+        <div class="tl-body demo-guide" id="d-n3" contenteditable="true">Elegant romantic Cuban &amp; crossover dinner selections</div>
+      </div>
+      <div class="tl-entry">
+        <div class="tl-heading demo-guide" contenteditable="true">8:00 PM – 12:00 AM &nbsp;·&nbsp; Open Dance Floor / Hora Loca</div>
+        <div class="tl-body demo-guide" id="d-n4" contenteditable="true">Adaptive open format performance based on crowd energy</div>
+      </div>
+      <div class="tl-entry">
+        <div class="tl-heading demo-guide" contenteditable="true">12:00 AM &nbsp;·&nbsp; Event Closing</div>
+        <div class="tl-body demo-guide" id="d-n5" contenteditable="true">MC closing remarks and organized load out sequence</div>
+      </div>
+    </div>
+    <div class="page-footer">
+      <span class="footer-brand">Miami DJ Beat LLC</span>
+      <span>Confidential — For Internal Use Only</span>
+      <span>Page 2</span>
+    </div>
+  </div>
+
+  <!-- PAGE 3 — Section 1: Reception & Cocktail Hour -->
+  <div class="page">
+    <header class="header">
+      <div class="header-logo"><img src="./logo-mdj-gold.png" alt="Miami DJ Beat LLC"></div>
+      <div class="header-contact">
+      <div class="hc-name">Miami DJ Beat LLC</div>
+      <div class="hc-tagline">Premium Event Entertainment Agency</div>
+      <div class="hc-info">
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-globe"/></svg><span>www.miamidjbeat.com</span></div>
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-email"/></svg><span>miamidjbeat@gmail.com</span></div>
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-phone"/></svg><span>(305) 607-1780</span></div>
+      </div>
+    </div>
+    </header>
+    <div class="doc-title"><h1>Wedding Event Blueprint</h1></div>
+    <div class="doc-subtitle">Segment Details &amp; Operational Direction</div>
+
+    <div class="section-block" id="sb-1">
+      <div class="section-heading">1 — Reception &amp; Cocktail Hour</div>
+      <div class="section-body demo-guide" contenteditable="true">
+        <p>From 5:00 PM to 6:00 PM the atmosphere remains elegant, modern, and upscale. Music direction includes Deep House, Afro House, Organic House, and melodic Tech House selections designed to create a premium Miami-style wedding environment from the first moment guests arrive.</p>
+        <p>The DJ must establish tone immediately — no abrupt transitions, no heavy drops. The cocktail hour is about ambiance, sophistication, and setting the emotional foundation for the celebration ahead. Volume levels remain conversational throughout this segment.</p>
+      </div>
+      <div class="section-note" id="note-block-1">
+        <div class="section-note-label">Nota</div>
+        <div class="section-note-text" id="d-note1" contenteditable="true"></div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span class="footer-brand">Miami DJ Beat LLC</span>
+      <span>Confidential — For Internal Use Only</span>
+      <span>Page 3</span>
+    </div>
+  </div>
+
+  <!-- PAGE 4 — Section 2: Wedding Court & Newlywed Entrance -->
+  <div class="page">
+    <header class="header">
+      <div class="header-logo"><img src="./logo-mdj-gold.png" alt="Miami DJ Beat LLC"></div>
+      <div class="header-contact">
+      <div class="hc-name">Miami DJ Beat LLC</div>
+      <div class="hc-tagline">Premium Event Entertainment Agency</div>
+      <div class="hc-info">
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-globe"/></svg><span>www.miamidjbeat.com</span></div>
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-email"/></svg><span>miamidjbeat@gmail.com</span></div>
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-phone"/></svg><span>(305) 607-1780</span></div>
+      </div>
+    </div>
+    </header>
+    <div class="doc-title"><h1>Wedding Event Blueprint</h1></div>
+    <div class="doc-subtitle">Segment Details &amp; Operational Direction</div>
+
+    <div class="section-block" id="sb-2">
+      <div class="section-heading">2 — Wedding Court &amp; Newlywed Entrance</div>
+      <div class="section-body demo-guide" contenteditable="true">
+        <p>The wedding court presentation begins at 6:00 PM using the custom "Wedding Mix." The DJ must preload the mix and prepare a HOT CUE at the energetic transition point where <span class="d-couple-ref">the newlyweds</span> make their grand entrance to the center of the dance floor.</p>
+        <p>The MC coordinates all introductions in sequence, maintaining elegant crowd engagement and synchronized timing with the DJ. Each wedding party member is announced individually before the couple is presented. The HOT CUE activation must be precise — this is the emotional peak of the formal program.</p>
+        <p>First dance follows immediately after the entrance. Song selection and choreography cues must be confirmed with the couple prior to the event.</p>
+      </div>
+      <div class="section-note" id="note-block-2">
+        <div class="section-note-label">Nota</div>
+        <div class="section-note-text" id="d-note2" contenteditable="true"></div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span class="footer-brand">Miami DJ Beat LLC</span>
+      <span>Confidential — For Internal Use Only</span>
+      <span>Page 4</span>
+    </div>
+  </div>
+
+  <!-- PAGE 5 — Section 3: Dinner Service -->
+  <div class="page">
+    <header class="header">
+      <div class="header-logo"><img src="./logo-mdj-gold.png" alt="Miami DJ Beat LLC"></div>
+      <div class="header-contact">
+      <div class="hc-name">Miami DJ Beat LLC</div>
+      <div class="hc-tagline">Premium Event Entertainment Agency</div>
+      <div class="hc-info">
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-globe"/></svg><span>www.miamidjbeat.com</span></div>
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-email"/></svg><span>miamidjbeat@gmail.com</span></div>
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-phone"/></svg><span>(305) 607-1780</span></div>
+      </div>
+    </div>
+    </header>
+    <div class="doc-title"><h1>Wedding Event Blueprint</h1></div>
+    <div class="doc-subtitle">Segment Details &amp; Operational Direction</div>
+
+    <div class="section-block" id="sb-3">
+      <div class="section-heading">3 — Dinner Service</div>
+      <div class="section-body demo-guide" contenteditable="true">
+        <p>From 6:30 PM to 8:00 PM guests are guided to their tables for dinner service. Music remains romantic, clean, elegant, and family-friendly — a blend of Cuban classics, crossover pop, nostalgic favorites, and soft modern selections that complement conversation without competing with it.</p>
+      </div>
+      <div class="section-note" id="note-block-3">
+        <div class="section-note-label">Nota</div>
+        <div class="section-note-text" id="d-note3" contenteditable="true"></div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span class="footer-brand">Miami DJ Beat LLC</span>
+      <span>Confidential — For Internal Use Only</span>
+      <span>Page 5</span>
+    </div>
+  </div>
+
+  <!-- PAGE 6 — Section 4: Open Dance Floor & Hora Loca -->
+  <div class="page">
+    <header class="header">
+      <div class="header-logo"><img src="./logo-mdj-gold.png" alt="Miami DJ Beat LLC"></div>
+      <div class="header-contact">
+      <div class="hc-name">Miami DJ Beat LLC</div>
+      <div class="hc-tagline">Premium Event Entertainment Agency</div>
+      <div class="hc-info">
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-globe"/></svg><span>www.miamidjbeat.com</span></div>
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-email"/></svg><span>miamidjbeat@gmail.com</span></div>
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-phone"/></svg><span>(305) 607-1780</span></div>
+      </div>
+    </div>
+    </header>
+    <div class="doc-title"><h1>Wedding Event Blueprint</h1></div>
+    <div class="doc-subtitle">Segment Details &amp; Operational Direction</div>
+
+    <div class="section-block" id="sb-4">
+      <div class="section-heading">4 — Open Dance Floor &amp; Hora Loca</div>
+      <div class="section-body demo-guide" contenteditable="true">
+        <p>At 8:00 PM the MC officially opens the dance floor. If Hora Loca is included, it will be integrated dynamically during this segment. The DJ actively reads the crowd and adapts musical direction throughout the evening — adaptive open-format mixing is essential for 2026 wedding audiences.</p>
+        <p>The DJ must test multiple musical directions early in this segment and commit to what generates the strongest floor response. Energy management across the full four-hour window is critical — peaks and valleys must be intentional.</p>
+      </div>
+      <div class="section-note" id="note-block-4">
+        <div class="section-note-label">Nota</div>
+        <div class="section-note-text" id="d-note4" contenteditable="true"></div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span class="footer-brand">Miami DJ Beat LLC</span>
+      <span>Confidential — For Internal Use Only</span>
+      <span>Page 6</span>
+    </div>
+  </div>
+
+  <!-- PAGE 7 — Section 5: Closing Protocol & Load Out -->
+  <div class="page">
+    <header class="header">
+      <div class="header-logo"><img src="./logo-mdj-gold.png" alt="Miami DJ Beat LLC"></div>
+      <div class="header-contact">
+      <div class="hc-name">Miami DJ Beat LLC</div>
+      <div class="hc-tagline">Premium Event Entertainment Agency</div>
+      <div class="hc-info">
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-globe"/></svg><span>www.miamidjbeat.com</span></div>
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-email"/></svg><span>miamidjbeat@gmail.com</span></div>
+        <div class="hc-row"><svg class="hc-icon"><use href="#ico-phone"/></svg><span>(305) 607-1780</span></div>
+      </div>
+    </div>
+    </header>
+    <div class="doc-title"><h1>Wedding Event Blueprint</h1></div>
+    <div class="doc-subtitle">Segment Details &amp; Operational Direction</div>
+
+    <div class="section-block" id="sb-5">
+      <div class="section-heading">5 — Closing Protocol &amp; Load Out</div>
+      <div class="section-body demo-guide" contenteditable="true">
+        <p>At 12:00 AM the MC formally thanks all guests for celebrating with <span class="d-couple-ref">the newlyweds</span>. Music energy gradually lowers to support a smooth and elegant guest departure. Following guest exit, the production team begins organized equipment breakdown and load out procedures.</p>
+      </div>
+      <div class="section-note" id="note-block-5">
+        <div class="section-note-label">Nota</div>
+        <div class="section-note-text" id="d-note5" contenteditable="true"></div>
+      </div>
+    </div>
+
+    <div class="doc-footer-note">
+      Miami DJ Beat LLC &nbsp;·&nbsp; Premium Event Entertainment Agency<br>
+      Professional DJs &nbsp;·&nbsp; Weddings &nbsp;·&nbsp; Luxury Events &nbsp;·&nbsp; Corporate Entertainment &nbsp;·&nbsp; www.miamidjbeat.com &nbsp;·&nbsp; (305) 607-1780
+    </div>
+
+    <div class="page-footer">
+      <span class="footer-brand">Miami DJ Beat LLC</span>
+      <span>Confidential — For Internal Use Only</span>
+      <span>Page 7</span>
+    </div>
+  </div>
+
+</div><!-- /doc-preview -->
+
+<!-- ══════════════════════════════════════════
+     ASSIGN TO CLIENT MODAL
+══════════════════════════════════════════ -->
+<div id="assign-modal" role="dialog" aria-modal="true">
+  <div class="assign-card">
+    <button class="assign-close" onclick="closeAssignModal()" aria-label="Cerrar">✕</button>
+
+    <h3 data-i18n="assign-title">Asignar a Cuenta de Cliente</h3>
+    <p data-i18n="assign-desc">Ingresa el correo del cliente para vincular este Wedding Blueprint a su cuenta. El cliente podrá descargar el documento desde su portal en cualquier momento.</p>
+
+    <label data-i18n="assign-email-lbl">Correo del Cliente</label>
+    <input type="email" id="assign-email" data-ph="assign-email-ph"
+           placeholder="nombre@correo.com"
+           oninput="onAssignEmailInput()"
+           onkeydown="if(event.key==='Enter') lookupClient()">
+
+    <div id="assign-client-status"></div>
+
+    <div id="assign-event-info" style="font-size:11px;color:#8888aa;margin-bottom:18px;line-height:1.7;display:none;">
+      <strong style="color:#e8e8f0;" id="assign-event-date-label">Evento:</strong>
+      <span id="assign-event-summary"></span>
+    </div>
+
+    <div class="assign-actions">
+      <button class="btn-assign-confirm" id="btn-assign-confirm"
+              onclick="confirmAssign()" disabled data-i18n="assign-confirm">
+        Vincular Blueprint
+      </button>
+      <button class="btn-assign-skip" onclick="skipAssignAndPrint()" data-i18n="assign-skip">
+        Imprimir sin asignar
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const DEFAULTS = {
+    n1: 'Deep House · Afro House · Tech House — luxury atmosphere',
+    n2: 'Wedding Mix with HOT CUE transition for newlywed entrance',
+    n3: 'Elegant romantic Cuban & crossover dinner selections',
+    n4: 'Adaptive open format performance based on crowd energy',
+    n5: 'MC closing remarks and organized load out sequence'
+  };
+
+  function val(id) { return document.getElementById(id).value.trim(); }
+
+  function update() {
+    const bride   = val('f-bride')    || 'Bride';
+    const groom   = val('f-groom')   || 'Groom';
+    const couple  = `${bride} &amp; ${groom}`;
+    const coupleText = `${bride} & ${groom}`;
+
+    // Couple name in all spots
+    document.getElementById('d-couple').innerHTML = couple;
+    document.querySelectorAll('.d-couple-ref').forEach(el => {
+      el.textContent = coupleText;
+    });
+
+    // Info table
+    document.getElementById('d-date').textContent    = val('f-date')     || '—';
+    document.getElementById('d-time').textContent    = val('f-time')     || '—';
+    document.getElementById('d-dj').textContent      = val('f-dj')       || '—';
+    document.getElementById('d-format').textContent  = val('f-format')   || '—';
+    document.getElementById('d-venue').textContent   = val('f-venue')    || '\u00a0';
+    document.getElementById('d-sponsors').textContent = val('f-sponsors') || '\u00a0';
+
+    // Timeline notes (fall back to defaults)
+    document.getElementById('d-n1').textContent = val('f-n1') || DEFAULTS.n1;
+    document.getElementById('d-n2').textContent = val('f-n2') || DEFAULTS.n2;
+    document.getElementById('d-n3').textContent = val('f-n3') || DEFAULTS.n3;
+    document.getElementById('d-n4').textContent = val('f-n4') || DEFAULTS.n4;
+    document.getElementById('d-n5').textContent = val('f-n5') || DEFAULTS.n5;
+
+    // Section note blocks — always visible; populate text from form if present
+    [1,2,3,4,5].forEach(i => {
+      const text    = val(`f-note${i}`);
+      const content = document.getElementById(`d-note${i}`);
+      if (text) content.textContent = text;
+    });
+
+  }
+
+  // Each section lives in its own .page div — no dynamic page-break logic needed.
+
+  function resetForm() {
+    // Clear all form fields
+    ['f-bride','f-groom','f-date','f-time','f-dj','f-format','f-venue','f-sponsors',
+     'f-n1','f-n2','f-n3','f-n4','f-n5',
+     'f-note1','f-note2','f-note3','f-note4','f-note5'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    // Clear contenteditable sections back to demo defaults
+    document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+      el.innerHTML = el.dataset.orig || el.innerHTML;
+    });
+    // Clear localStorage so reload starts clean
+    localStorage.removeItem(STORAGE_KEY);
+    update();
+  }
+
+  const STORAGE_KEY = 'mdjb-wedding-blueprint-v1';
+  const FORM_IDS = ['f-bride','f-groom','f-date','f-time','f-dj','f-format',
+                    'f-venue','f-sponsors','f-n1','f-n2','f-n3','f-n4','f-n5',
+                    'f-note1','f-note2','f-note3','f-note4','f-note5'];
+
+  function saveDoc() {
+    const state = { form: {}, ce: {} };
+
+    FORM_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) state.form[id] = el.value;
+    });
+
+    document.querySelectorAll('[contenteditable="true"]').forEach((el, i) => {
+      state.ce[`ce-${i}`] = el.innerHTML;
+    });
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+    const btn = document.getElementById('btn-save');
+    btn.classList.add('saved');
+    btn.textContent = currentLang === 'es' ? '✓ Guardado' : '✓ Saved';
+    setTimeout(() => {
+      btn.classList.remove('saved');
+      btn.textContent = currentLang === 'es' ? 'Guardar' : 'Save';
+    }, 2500);
+  }
+
+  function loadDoc() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    try {
+      const state = JSON.parse(raw);
+      if (state.form) {
+        FORM_IDS.forEach(id => {
+          const el = document.getElementById(id);
+          if (el && state.form[id] !== undefined) el.value = state.form[id];
+        });
+      }
+      if (state.ce) {
+        document.querySelectorAll('[contenteditable="true"]').forEach((el, i) => {
+          const saved = state.ce[`ce-${i}`];
+          if (saved !== undefined) el.innerHTML = saved;
+        });
+      }
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // ── TRANSLATIONS ──
+  const T = {
+    es: {
+      'reset':        'Limpiar',
+      'print':        '⬇ Imprimir / Exportar PDF',
+      'sec-couple':   'Pareja y Evento',
+      'sec-prod':     'Detalles de Producción',
+      'sec-notes':    'Notas Operacionales del Timeline (opcional)',
+      'lbl-bride':    'Novia / Pareja 1',
+      'lbl-groom':    'Novio / Pareja 2',
+      'lbl-date':     'Fecha del Evento',
+      'lbl-time':     'Horario de Recepción',
+      'lbl-dj':       'DJ Asignado',
+      'lbl-format':   'Formato Musical',
+      'lbl-venue':    'Dirección del Venue',
+      'lbl-sponsors': 'Patrocinadores / Notas Especiales',
+      'lbl-n1':       'Nota Recepción',
+      'lbl-n2':       'Nota Corte Nupcial',
+      'lbl-n3':       'Nota Cena',
+      'lbl-n4':       'Nota Pista de Baile',
+      'lbl-n5':       'Nota Cierre',
+      'ph-bride':     'ej. Iris Casal',
+      'ph-groom':     'ej. Angel Campis',
+      'ph-date':      'ej. Sábado, 23 de mayo de 2026',
+      'ph-time':      'ej. 5:00 PM – 12:00 AM',
+      'ph-dj':        'ej. DJ Ariel Napole',
+      'ph-format':    'ej. Open Format Cubano-Americano de Lujo',
+      'ph-venue':     'Dirección completa',
+      'ph-sponsors':  'Opcional',
+      'save':         'Guardar',
+      'assign':          '👤 Asignar a Cliente',
+      'assign-title':    'Asignar a Cuenta de Cliente',
+      'assign-desc':     'Ingresa el correo del cliente para vincular este Wedding Blueprint a su cuenta. El cliente podrá descargar el documento desde su portal en cualquier momento.',
+      'assign-email-lbl':'Correo del Cliente',
+      'assign-email-ph': 'nombre@correo.com',
+      'assign-confirm':  'Vincular Blueprint',
+      'assign-skip':     'Imprimir sin asignar',
+      'sec-snotes':   'Notas de Sección — aparecen bajo cada segmento',
+      'lbl-sn1':      '📌 Nota — Recepción & Cocktail Hour',
+      'lbl-sn2':      '📌 Nota — Corte Nupcial & Entrada de Novios',
+      'lbl-sn3':      '📌 Nota — Cena',
+      'lbl-sn4':      '📌 Nota — Pista de Baile & Hora Loca',
+      'lbl-sn5':      '📌 Nota — Cierre & Load Out',
+      'brand-sub':    'Miami DJ Beat LLC — Herramienta de Gestión',
+    },
+    en: {
+      'reset':        'Reset Fields',
+      'print':        '⬇ Print / Export PDF',
+      'sec-couple':   'Couple & Event',
+      'sec-prod':     'Production Details',
+      'sec-notes':    'Timeline Operational Notes (optional overrides)',
+      'lbl-bride':    'Bride / Partner 1',
+      'lbl-groom':    'Groom / Partner 2',
+      'lbl-date':     'Event Date',
+      'lbl-time':     'Reception Time',
+      'lbl-dj':       'Assigned DJ',
+      'lbl-format':   'Music Format',
+      'lbl-venue':    'Venue Address',
+      'lbl-sponsors': 'Sponsors / Special Notes',
+      'lbl-n1':       'Reception Note',
+      'lbl-n2':       'Wedding Court Note',
+      'lbl-n3':       'Dinner Note',
+      'lbl-n4':       'Dance Floor Note',
+      'lbl-n5':       'Closing Note',
+      'ph-bride':     'e.g. Iris Casal',
+      'ph-groom':     'e.g. Angel Campis',
+      'ph-date':      'e.g. Saturday, May 23, 2026',
+      'ph-time':      'e.g. 5:00 PM – 12:00 AM',
+      'ph-dj':        'e.g. DJ Ariel Napole',
+      'ph-format':    'e.g. Luxury Open Format Cuban-American Wedding',
+      'ph-venue':     'Full address',
+      'ph-sponsors':  'Optional',
+      'save':         'Save',
+      'assign':          '👤 Assign to Client',
+      'assign-title':    'Assign to Client Account',
+      'assign-desc':     'Enter the client email to link this Wedding Blueprint to their account. The client will be able to download the document from their portal at any time.',
+      'assign-email-lbl':'Client Email',
+      'assign-email-ph': 'name@email.com',
+      'assign-confirm':  'Link Blueprint',
+      'assign-skip':     'Print without assigning',
+      'sec-snotes':   'Section Notes — appear below each segment in the document',
+      'lbl-sn1':      '📌 Note — Reception & Cocktail Hour',
+      'lbl-sn2':      '📌 Note — Wedding Court & Newlywed Entrance',
+      'lbl-sn3':      '📌 Note — Dinner Service',
+      'lbl-sn4':      '📌 Note — Dance Floor & Hora Loca',
+      'lbl-sn5':      '📌 Note — Closing & Load Out',
+      'brand-sub':    'Miami DJ Beat LLC — Manager Tool',
+    }
+  };
+
+  let currentLang = 'es';
+
+  function setLang(lang) {
+    currentLang = lang;
+    document.getElementById('btn-es').classList.toggle('active', lang === 'es');
+    document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+    document.documentElement.lang = lang;
+
+    const dict = T[lang];
+
+    // Translate text nodes
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (dict[key]) el.textContent = dict[key];
+    });
+
+    // Translate placeholders
+    document.querySelectorAll('[data-ph]').forEach(el => {
+      const key = el.getAttribute('data-ph');
+      if (dict[key]) el.placeholder = dict[key];
+    });
+
+    // Brand subtitle
+    const brandSub = document.getElementById('brand-subtitle');
+    if (brandSub && dict['brand-sub']) brandSub.textContent = dict['brand-sub'];
+  }
+
+  // ── ASSIGN MODAL ──
+  let assignedClient = null;
+
+  function openAssignModal() {
+    document.getElementById('assign-modal').classList.add('open');
+    document.getElementById('assign-email').focus();
+    // Pre-fill event summary
+    const bride  = val('f-bride')  || 'Bride';
+    const groom  = val('f-groom') || 'Groom';
+    const date   = val('f-date')  || '—';
+    const dj     = val('f-dj')    || '—';
+    document.getElementById('assign-event-summary').textContent =
+      `${bride} & ${groom} · ${date} · ${dj}`;
+    document.getElementById('assign-event-info').style.display = 'block';
+  }
+
+  function closeAssignModal() {
+    document.getElementById('assign-modal').classList.remove('open');
+    resetAssignState();
+  }
+
+  function resetAssignState() {
+    document.getElementById('assign-email').value = '';
+    document.getElementById('assign-client-status').className = '';
+    document.getElementById('assign-client-status').textContent = '';
+    document.getElementById('assign-client-status').style.display = 'none';
+    document.getElementById('btn-assign-confirm').disabled = true;
+    assignedClient = null;
+  }
+
+  function onAssignEmailInput() {
+    const email = document.getElementById('assign-email').value.trim();
+    document.getElementById('btn-assign-confirm').disabled = true;
+    const status = document.getElementById('assign-client-status');
+    status.className = '';
+    status.textContent = '';
+    status.style.display = 'none';
+    if (email.includes('@') && email.includes('.')) {
+      lookupClient();
+    }
+  }
+
+  async function lookupClient() {
+    const email = document.getElementById('assign-email').value.trim();
+    if (!email) return;
+    const status = document.getElementById('assign-client-status');
+    status.className = 'searching';
+    status.textContent = currentLang === 'es' ? '🔍 Buscando cuenta...' : '🔍 Searching account...';
+
+    // ── SUPABASE LOOKUP (wire up in next sprint) ──
+    // const { data } = await supabase.from('client_profiles').select('id,full_name').eq('email', email).maybeSingle();
+    // For now: simulate pending connection
+    await new Promise(r => setTimeout(r, 600));
+
+    // Placeholder: always shows "ready to assign" so UI is testable
+    status.className = 'found';
+    status.textContent = currentLang === 'es'
+      ? `✓ Cuenta localizada — ${email}`
+      : `✓ Account found — ${email}`;
+    assignedClient = { email };
+    document.getElementById('btn-assign-confirm').disabled = false;
+  }
+
+  function confirmAssign() {
+    if (!assignedClient) return;
+    const btn = document.getElementById('btn-assign-open');
+
+    // ── SUPABASE SAVE (wire up in next sprint) ──
+    // await supabase.from('event_blueprints').insert({ client_email, event_date, blueprint_html, ... })
+
+    // Visual confirmation on the editor
+    btn.textContent = `✓ ${assignedClient.email}`;
+    btn.style.background = 'rgba(26,107,42,0.3)';
+    btn.style.borderColor = '#1a6b2a';
+    btn.style.color = '#6de88a';
+
+    closeAssignModal();
+    saveDoc(); // persist assignment alongside form state
+  }
+
+  function skipAssignAndPrint() {
+    closeAssignModal();
+    window.print();
+  }
+
+  // Close modal on backdrop click
+  document.getElementById('assign-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeAssignModal();
+  });
+
+  // ──────────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    setLang('es');
+    const restored = loadDoc();
+    if (!restored) {
+      // Default event data if nothing saved
+      document.getElementById('f-bride').value  = 'Iris Casal';
+      document.getElementById('f-groom').value  = 'Angel Campis';
+      document.getElementById('f-date').value   = 'Sábado, 23 de mayo de 2026';
+      document.getElementById('f-time').value   = '5:00 PM – 12:00 AM';
+      document.getElementById('f-dj').value     = 'DJ Ariel Napole  ★ 5-Star Recommended';
+      document.getElementById('f-format').value = 'Open Format Cubano-Americano de Lujo';
+    }
+    update();
+  });
+</script>
+</body>
+</html>
