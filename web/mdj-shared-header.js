@@ -2560,7 +2560,8 @@
           if (isClient) {
             settingsUrl = './client-account.html';
             settingsLabel = mdjGetVipPortalMenuLabel();
-          } else if (isNavStaffSolo) {
+          } else if (isNavStaffSolo || isDjStaff) {
+            /* owner / admin / manager / seller → account settings, not artist dashboard */
             settingsUrl = './account-settings.html';
             settingsLabel = mdjGetStaffAccountSettingsMenuLabel();
           } else {
@@ -2629,6 +2630,11 @@
             allowUidFallback: true
           });
           mdjApplyStaffMainNavLink(!!isDjStaff);
+          if (isDjStaff) {
+            document.body.classList.add('mdj-staff-nav');
+          } else {
+            document.body.classList.remove('mdj-staff-nav');
+          }
           var showArtistDashMainNav = !isClient && (navTier === 'artist_lite' || navTier === 'artist_pro');
           var onPublicHome = mdjIsPublicHomePage();
           /* Centinela nav compacto: services/events usan data-mdj-compact-nav="1" → bloquea inyección de Agenda/Flow/rail artista. */
@@ -2647,6 +2653,7 @@
             !isCompactNav &&
             !isClient &&
             !isNavStaffSolo &&
+            !isDjStaff &&
             (navTier === 'artist_lite' || navTier === 'artist_pro');
           mdjApplyArtistHeaderRow2(!!showArtistHeaderNav);
           mdjApplyArtistSessionNav(showMyArtisticProfileMainNav, publicProfileUrl);
@@ -2656,8 +2663,9 @@
           try {
             if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
           } catch (eUi) { /* ignore */ }
-          /* i18n solo toca [data-i18n]; por si el HTML inicial trae header-mi-portal en la 8.ª celda, reforzar staff. */
-          if (isDjStaff && document.getElementById('mainNav')) {
+          /* i18n solo toca [data-i18n]; por si el HTML inicial trae header-mi-portal en la 8.ª celda, reforzar staff.
+             Guard: no re-mostrar MI PORTAL en Home — mdjNormalizePublicHomeMainNav() ya lo ocultó (TICKET-002). */
+          if (isDjStaff && document.getElementById('mainNav') && !mdjIsPublicHomePage()) {
             mdjEnsureMiPortalInMainNav(miPortalHref, miPortalNavOpts);
             mdjEnsureMiPortalMobile(miPortalHref, miPortalNavOpts);
           }
@@ -2911,7 +2919,7 @@
     window.mdjInitSharedHeader();
     setTimeout(mdjInstallMainNavStaticMode, 0);
     setTimeout(mdjInstallMainNavStaticMode, 150);
-    setTimeout(mdjInstallMainNavStaticMode, 600);
+    /* 600ms call removed — caused visible CLS on Owner home nav (TICKET-002). */
   });
 
   window.addEventListener('focus', function () {
