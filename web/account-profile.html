@@ -7,7 +7,7 @@
   <title>My Profile — Miami DJ Beat</title>
   <meta name="description" content="Manage your personal account information." />
   <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260522-index-staff-nav-1" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260521-full-access-staff-nav-1" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
   <style>
@@ -423,47 +423,6 @@
 
           const createdDate = new Date(session.user.created_at);
           document.getElementById('ui-date').textContent = createdDate.toLocaleDateString();
-
-          /* ── Staff badge: query dj_profiles.role; update badge if staff ── */
-          const _STAFF_ROLES = ['owner', 'admin', 'manager', 'seller'];
-          const _ROLE_LABELS  = { owner: 'Owner', admin: 'Admin', manager: 'Manager', seller: 'Seller' };
-
-          function _applyStaffBadge(r) {
-            var _b = document.querySelector('.data-badge');
-            if (_b) {
-              _b.textContent = _ROLE_LABELS[r] || (r.charAt(0).toUpperCase() + r.slice(1));
-              _b.style.cssText = 'background:rgba(212,175,55,0.15)!important;color:rgba(212,175,55,0.95)!important;border:1px solid rgba(212,175,55,0.28)!important;';
-            }
-          }
-
-          /* Layer 1 — body class observer (fires when mdj-shared-header.js adds mdj-staff-nav) */
-          function _checkStaffClass() {
-            if (document.body.classList.contains('mdj-staff-nav')) {
-              var _b = document.querySelector('.data-badge');
-              if (_b && _b.textContent.toLowerCase() === 'customer') {
-                _b.textContent = 'Staff';
-                _b.style.cssText = 'background:rgba(212,175,55,0.15)!important;color:rgba(212,175,55,0.95)!important;border:1px solid rgba(212,175,55,0.28)!important;';
-              }
-            }
-          }
-          _checkStaffClass();
-          var _obs = new MutationObserver(_checkStaffClass);
-          _obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-          setTimeout(function(){ _obs.disconnect(); }, 12000);
-
-          /* Layer 2 — DB query for exact role label; JWT fallback */
-          try {
-            var _dbRole = '';
-            try {
-              var _q = await db.from('dj_profiles').select('role').eq('user_id', session.user.id).maybeSingle();
-              _dbRole = _q.data && _q.data.role ? String(_q.data.role).toLowerCase().trim() : '';
-            } catch(_e) { console.warn('[PROFILE] role query:', _e); }
-            if (!_STAFF_ROLES.includes(_dbRole)) {
-              var _jwt = String(liveUser && liveUser.app_metadata && liveUser.app_metadata.role || session.user.app_metadata && session.user.app_metadata.role || '').toLowerCase();
-              if (_STAFF_ROLES.includes(_jwt)) _dbRole = _jwt;
-            }
-            if (_STAFF_ROLES.includes(_dbRole)) { _applyStaffBadge(_dbRole); _obs.disconnect(); }
-          } catch(_eS) { console.warn('[PROFILE] staff check:', _eS); }
 
         } else {
           // No hay sesión: redirigir
