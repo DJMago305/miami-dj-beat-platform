@@ -164,7 +164,7 @@ const translations = {
             "Los totales se calculan solos en vivo: cantidad × precio por línea y el % de impuesto abajo (ej. <strong>7</strong> para un estimado típico en FL).",
         "prod-inv-more-tools-sum": "Otras herramientas (solo si hace falta)",
         "prod-inv-more-tools-body":
-            "<strong>Plantilla PDF larga</strong> (más campos, teléfono, misma lógica que antes): <a href=\"./manual-invoice-generator.html\" style=\"color:var(--gold);font-weight:800;\">manual-invoice-generator.html</a>.<br><strong>Cobro con tarjeta (Stripe):</strong> <a href=\"./admin-quick-invoice.html\" style=\"color:var(--gold);font-weight:800;\">Factura rápida</a>.",
+            "<strong>Plantilla PDF larga</strong> (más campos, teléfono, misma lógica que antes): <a href=\"./manual-invoice-generator.html\" style=\"color:var(--gold);font-weight:800;\">manual-invoice-generator.html</a>.<br><strong>Cobro con tarjeta (Stripe):</strong> <a href=\"./admin-quick-invoice.html\" style=\"color:var(--gold);font-weight:800;\">Factura rápida</a>.<br><strong>📋 Wedding Blueprint:</strong> <a href=\"./documents/wedding-blueprint-editor.html\" target=\"_blank\" style=\"color:var(--gold);font-weight:800;\">Generar Blueprint de Boda</a> — planificación operacional editable + exportar PDF.",
         "prod-inv-box-info-title": "Datos del cliente y direcciones",
         "prod-inv-box-quote-title": "Cotización",
         "prod-inv-client-lbl": "ID de cuenta del cliente (UUID — obligatorio para guardar)",
@@ -1894,7 +1894,7 @@ const translations = {
             "Totals update automatically while you are in that live moment together: quantity × unit price per line, plus the tax % below (e.g. <strong>7</strong> for a typical FL estimate).",
         "prod-inv-more-tools-sum": "Other tools (only if needed)",
         "prod-inv-more-tools-body":
-            "<strong>Long PDF template</strong> (more fields, phone): <a href=\"./manual-invoice-generator.html\" style=\"color:var(--gold);font-weight:800;\">manual-invoice-generator.html</a>.<br><strong>Card payment (Stripe):</strong> <a href=\"./admin-quick-invoice.html\" style=\"color:var(--gold);font-weight:800;\">Quick invoice</a>.",
+            "<strong>Long PDF template</strong> (more fields, phone): <a href=\"./manual-invoice-generator.html\" style=\"color:var(--gold);font-weight:800;\">manual-invoice-generator.html</a>.<br><strong>Card payment (Stripe):</strong> <a href=\"./admin-quick-invoice.html\" style=\"color:var(--gold);font-weight:800;\">Quick invoice</a>.<br><strong>📋 Wedding Blueprint:</strong> <a href=\"./documents/wedding-blueprint-editor.html\" target=\"_blank\" style=\"color:var(--gold);font-weight:800;\">Generate Wedding Blueprint</a> — editable operational plan + export PDF.",
         "prod-inv-box-info-title": "Client details & addresses",
         "prod-inv-box-quote-title": "Quotation",
         "prod-inv-client-lbl": "Client account ID (UUID — required to save)",

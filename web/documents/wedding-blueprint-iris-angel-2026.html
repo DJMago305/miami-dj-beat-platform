@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wedding Event Blueprint — Iris Casal & Angel Campis</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+  :root {
+    --gold: #b8912a;
+    --black: #0a0a0a;
+    --gray: #444;
+    --border: #cec0a0;
+  }
+
+  @page {
+    size: letter portrait;
+    margin: 0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 11.5pt;
+    color: var(--black);
+    background: #d8d8d8;
+    line-height: 1.55;
+  }
+
+  /* Each .page = exactly one Letter sheet */
+  .page {
+    width: 8.5in;
+    height: 11in;
+    background: #fff;
+    margin: 0 auto 32px;
+    padding: 0.55in 0.85in 0.9in;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding-bottom: 14px;
+    border-bottom: 2.5px solid var(--gold);
+    margin-bottom: 16px;
+  }
+
+  .header-logo img {
+    width: 128px;
+    height: auto;
+  }
+
+  .header-contact {
+    text-align: right;
+    font-size: 9.5pt;
+    color: var(--gray);
+    line-height: 1.75;
+  }
+
+  .header-contact strong {
+    display: block;
+    font-family: 'Cinzel', serif;
+    font-size: 11pt;
+    color: var(--black);
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+
+  .header-contact em {
+    display: block;
+    font-style: italic;
+    color: var(--gold);
+    font-size: 9pt;
+    margin-bottom: 4px;
+  }
+
+  /* ── DOCUMENT TITLE ── */
+  .doc-title {
+    text-align: center;
+    margin-bottom: 3px;
+  }
+
+  .doc-title h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 28pt;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .doc-subtitle {
+    text-align: center;
+    font-family: 'EB Garamond', serif;
+    font-size: 17pt;
+    font-style: italic;
+    color: var(--black);
+    margin-bottom: 16px;
+  }
+
+  /* ── INFO TABLE ── */
+  .info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 18px;
+    font-size: 13pt;
+  }
+
+  .info-table td {
+    padding: 11px 16px;
+    border: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .info-table td:first-child {
+    background: var(--black);
+    color: #fff;
+    font-family: 'Cinzel', serif;
+    font-size: 10.5pt;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    width: 36%;
+    text-transform: uppercase;
+  }
+
+  .info-table td:last-child {
+    background: #fafafa;
+    color: var(--black);
+  }
+
+  /* ── SECTION HEADING ── */
+  .section-heading {
+    font-family: 'Cinzel', serif;
+    font-size: 13.5pt;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+    margin: 16px 0 7px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+  }
+
+  /* ── TIMELINE TABLE ── */
+  .timeline-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11pt;
+    margin-top: 5px;
+  }
+
+  .timeline-table thead tr {
+    background: var(--black);
+    color: #fff;
+  }
+
+  .timeline-table thead td {
+    padding: 10px 16px;
+    font-family: 'Cinzel', serif;
+    font-size: 10pt;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .timeline-table tbody tr:nth-child(even) { background: #f8f5ec; }
+  .timeline-table tbody tr:nth-child(odd)  { background: #fff; }
+
+  .timeline-table tbody td {
+    padding: 11px 16px;
+    border: 1px solid var(--border);
+    vertical-align: middle;
+    color: var(--black);
+  }
+
+  .timeline-table tbody td:first-child {
+    white-space: nowrap;
+    font-weight: 600;
+    color: var(--gold);
+    width: 22%;
+  }
+
+  .timeline-table tbody td:nth-child(2) {
+    white-space: nowrap;
+    font-weight: 600;
+    width: 28%;
+  }
+
+  /* ── TIMELINE BLOCK (no table) ── */
+  .timeline-block { margin-top: 8px; }
+
+  .tl-entry {
+    padding: 12px 0 12px 18px;
+    border-left: 3px solid var(--gold);
+    margin-bottom: 10px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .tl-heading {
+    font-family: 'Cinzel', serif;
+    font-size: 11pt;
+    font-weight: 700;
+    color: var(--black);
+    letter-spacing: 0.3px;
+    margin-bottom: 4px;
+  }
+
+  .tl-body {
+    font-size: 11pt;
+    color: #555;
+    line-height: 1.65;
+  }
+
+  /* ── SECTION BLOCK WRAPPER — never split across pages ── */
+  .section-block {
+    margin-bottom: 22px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* ── PAGE 2 SECTIONS ── */
+  .section-body {
+    color: #333;
+    font-size: 13pt;
+    line-height: 1.78;
+    margin-bottom: 2px;
+  }
+
+  .section-body p { margin-bottom: 6px; }
+
+  /* ── FOOTER BRAND NOTE (bottom of page 2 content) ── */
+  .doc-footer-note {
+    text-align: center;
+    font-size: 8.5pt;
+    color: #888;
+    font-style: italic;
+    margin-top: 24px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    line-height: 1.7;
+  }
+
+  /* ── PAGE FOOTER (absolute, bottom of every page) ── */
+  .page-footer {
+    position: absolute;
+    bottom: 0.38in;
+    left: 0.85in;
+    right: 0.85in;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 7.5pt;
+    color: #aaa;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.3px;
+    background: #fff;
+  }
+
+  .page-footer .footer-brand { font-weight: 600; color: var(--gold); }
+
+  /* ── PRINT ── */
+  @media print {
+    body { background: #fff; }
+    .page {
+      margin: 0;
+      box-shadow: none;
+      page-break-after: always;
+      break-after: page;
+    }
+    .page:last-child {
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1 ─────────────────────────────────── -->
+<div class="page">
+
+  <header class="header">
+    <div class="header-logo">
+      <img src="./logo-mdj-gold.png" alt="Miami DJ Beat LLC">
+    </div>
+    <div class="header-contact">
+      <strong>Miami DJ Beat LLC</strong>
+      <em>Premium Event Entertainment Agency</em>
+      (305) 607-1780 &nbsp;·&nbsp; miamidjbeat@gmail.com<br>
+      www.miamidjbeat.com<br>
+      1005 W 77 St Apt 105, Hialeah, FL 33014
+    </div>
+  </header>
+
+  <div class="doc-title">
+    <h1>Wedding Event Blueprint</h1>
+  </div>
+  <div class="doc-subtitle">Celebrating the Marriage of Iris Casal &amp; Angel Campis</div>
+
+  <table class="info-table">
+    <tr>
+      <td>Event Date</td>
+      <td>Saturday, May 23, 2026</td>
+    </tr>
+    <tr>
+      <td>Reception Time</td>
+      <td>5:00 PM – 12:00 AM</td>
+    </tr>
+    <tr>
+      <td>Assigned DJ</td>
+      <td>DJ Ariel Napole &nbsp;★ 5-Star Recommended</td>
+    </tr>
+    <tr>
+      <td>Music Format</td>
+      <td>Luxury Open Format Cuban-American Wedding</td>
+    </tr>
+    <tr>
+      <td>Venue Address</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td>Sponsors / Special Notes</td>
+      <td>&nbsp;</td>
+    </tr>
+  </table>
+
+  <div class="page-footer">
+    <span class="footer-brand">Miami DJ Beat LLC</span>
+    <span>Confidential — For Internal Use Only</span>
+    <span>Page 1 of 4</span>
+  </div>
+
+</div>
+
+
+<!-- PAGE 2 — Master Timeline ────────────────── -->
+<div class="page">
+
+  <header class="header">
+    <div class="header-logo">
+      <img src="./logo-mdj-gold.png" alt="Miami DJ Beat LLC">
+    </div>
+    <div class="header-contact">
+      <strong>Miami DJ Beat LLC</strong>
+      <em>Premium Event Entertainment Agency</em>
+      (305) 607-1780 &nbsp;·&nbsp; miamidjbeat@gmail.com<br>
+      www.miamidjbeat.com
+    </div>
+  </header>
+
+  <div class="doc-title">
+    <h1>Wedding Event Blueprint</h1>
+  </div>
+  <div class="doc-subtitle">Celebrating the Marriage of Iris Casal &amp; Angel Campis</div>
+
+  <div class="section-heading">Master Wedding Timeline</div>
+
+  <div class="timeline-block">
+    <div class="tl-entry">
+      <div class="tl-heading">5:00 PM – 6:00 PM &nbsp;·&nbsp; Reception / Cocktail Hour</div>
+      <div class="tl-body">Deep House · Afro House · Tech House — luxury atmosphere</div>
+    </div>
+    <div class="tl-entry">
+      <div class="tl-heading">6:00 PM – 6:30 PM &nbsp;·&nbsp; Wedding Court Presentation</div>
+      <div class="tl-body">Wedding Mix with HOT CUE transition for newlywed entrance</div>
+    </div>
+    <div class="tl-entry">
+      <div class="tl-heading">6:30 PM – 8:00 PM &nbsp;·&nbsp; Dinner Service</div>
+      <div class="tl-body">Elegant romantic Cuban &amp; crossover dinner selections</div>
+    </div>
+    <div class="tl-entry">
+      <div class="tl-heading">8:00 PM – 12:00 AM &nbsp;·&nbsp; Open Dance Floor / Hora Loca</div>
+      <div class="tl-body">Adaptive open format performance based on crowd energy</div>
+    </div>
+    <div class="tl-entry">
+      <div class="tl-heading">12:00 AM &nbsp;·&nbsp; Event Closing</div>
+      <div class="tl-body">MC closing remarks and organized load out sequence</div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Miami DJ Beat LLC</span>
+    <span>Confidential — For Internal Use Only</span>
+    <span>Page 2 of 4</span>
+  </div>
+
+</div>
+
+
+<!-- PAGE 2 ─────────────────────────────────── -->
+<div class="page">
+
+  <header class="header">
+    <div class="header-logo">
+      <img src="./logo-mdj-gold.png" alt="Miami DJ Beat LLC">
+    </div>
+    <div class="header-contact">
+      <strong>Miami DJ Beat LLC</strong>
+      <em>Premium Event Entertainment Agency</em>
+      (305) 607-1780 &nbsp;·&nbsp; miamidjbeat@gmail.com<br>
+      www.miamidjbeat.com
+    </div>
+  </header>
+
+  <div class="doc-title">
+    <h1>Wedding Event Blueprint</h1>
+  </div>
+  <div class="doc-subtitle">Segment Details &amp; Operational Direction</div>
+
+  <div class="section-block">
+    <div class="section-heading">1 — Reception &amp; Cocktail Hour</div>
+    <div class="section-body">
+      <p>From 5:00 PM to 6:00 PM the atmosphere remains elegant, modern, and upscale. Music direction includes Deep House, Afro House, Organic House, and melodic Tech House selections designed to create a premium Miami-style wedding environment from the first moment guests arrive.</p>
+      <p>The DJ must establish tone immediately — no abrupt transitions, no heavy drops. The cocktail hour is about ambiance, sophistication, and setting the emotional foundation for the celebration ahead. Volume levels remain conversational throughout this segment.</p>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-heading">2 — Wedding Court &amp; Newlywed Entrance</div>
+    <div class="section-body">
+      <p>The wedding court presentation begins at 6:00 PM using the custom "Wedding Mix." The DJ must preload the mix and prepare a HOT CUE at the energetic transition point where Iris Casal &amp; Angel Campis make their grand entrance to the center of the dance floor.</p>
+      <p>The MC coordinates all introductions in sequence, maintaining elegant crowd engagement and synchronized timing with the DJ. Each wedding party member is announced individually before the newlyweds are presented. The HOT CUE activation must be precise — this is the emotional peak of the formal program.</p>
+      <p>First dance follows immediately after the entrance. Song selection and choreography cues must be confirmed with the couple prior to the event.</p>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Miami DJ Beat LLC</span>
+    <span>Confidential — For Internal Use Only</span>
+    <span>Page 3 of 4</span>
+  </div>
+
+</div>
+
+
+<!-- PAGE 4 ─────────────────────────────────── -->
+<div class="page">
+
+  <header class="header">
+    <div class="header-logo">
+      <img src="./logo-mdj-gold.png" alt="Miami DJ Beat LLC">
+    </div>
+    <div class="header-contact">
+      <strong>Miami DJ Beat LLC</strong>
+      <em>Premium Event Entertainment Agency</em>
+      (305) 607-1780 &nbsp;·&nbsp; miamidjbeat@gmail.com<br>
+      www.miamidjbeat.com
+    </div>
+  </header>
+
+  <div class="doc-title">
+    <h1>Wedding Event Blueprint</h1>
+  </div>
+  <div class="doc-subtitle">Segment Details &amp; Operational Direction</div>
+
+  <div class="section-block">
+    <div class="section-heading">3 — Dinner Service</div>
+    <div class="section-body">
+      <p>From 6:30 PM to 8:00 PM guests are guided to their tables for dinner service. Music remains romantic, clean, elegant, and family-friendly — a blend of Cuban classics, crossover pop, nostalgic favorites, and soft modern selections that complement conversation without competing with it.</p>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-heading">4 — Open Dance Floor &amp; Hora Loca</div>
+    <div class="section-body">
+      <p>At 8:00 PM the MC officially opens the dance floor. If Hora Loca is included, it will be integrated dynamically during this segment. The DJ actively reads the crowd and adapts musical direction throughout the evening — adaptive open-format mixing is essential for 2026 wedding audiences.</p>
+      <p>The DJ must test multiple musical directions early in this segment and commit to what generates the strongest floor response. Energy management across the full four-hour window is critical — peaks and valleys must be intentional.</p>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-heading">5 — Closing Protocol &amp; Load Out</div>
+    <div class="section-body">
+      <p>At 12:00 AM the MC formally thanks all guests for celebrating with Iris Casal &amp; Angel Campis. Music energy gradually lowers to support a smooth and elegant guest departure. Following guest exit, the production team begins organized equipment breakdown and load out procedures.</p>
+    </div>
+  </div>
+
+  <div class="doc-footer-note">
+    Miami DJ Beat LLC &nbsp;·&nbsp; Premium Event Entertainment Agency<br>
+    Professional DJs &nbsp;·&nbsp; Weddings &nbsp;·&nbsp; Luxury Events &nbsp;·&nbsp; Corporate Entertainment &nbsp;·&nbsp; www.miamidjbeat.com &nbsp;·&nbsp; (305) 607-1780
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Miami DJ Beat LLC</span>
+    <span>Confidential — For Internal Use Only</span>
+    <span>Page 4 of 4</span>
+  </div>
+
+</div>
+
+</body>
+</html>

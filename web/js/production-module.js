@@ -116,7 +116,6 @@
           if (global.i18n && typeof global.i18n.updateUI === 'function') {
             global.i18n.updateUI();
           }
-          global.MDJProduction._renderFlowTable();
           global.MDJProduction._renderInvLines();
           global.MDJProduction._updateInvTotal();
           void global.MDJProduction._refreshLists();
@@ -128,40 +127,6 @@
     _shellHtml: function () {
       return (
         '<div class="admin-card mdj-prod-inner-card" style="margin-top:0;border:1px solid var(--line);">' +
-        '<div class="mdj-prod-tab-row" style="display:flex;gap:10px;margin-bottom:18px;align-items:stretch;">' +
-        '<button type="button" class="btn secondary small mdj-prod-tab" style="flex:1 1 0;min-width:0;text-align:center;justify-content:center;" data-prod-tab="flow" data-i18n="prod-tab-flow" aria-pressed="false"></button>' +
-        '<button type="button" class="btn secondary small mdj-prod-tab mdj-prod-tab--active" style="flex:1 1 0;min-width:0;text-align:center;justify-content:center;" data-prod-tab="inv" data-i18n="prod-tab-invoice" aria-pressed="true"></button>' +
-        '</div>' +
-        '<div id="prod-panel-flow" style="display:none;">' +
-        '<p class="fineprint" style="margin-top:0;" data-i18n="prod-flow-intro"></p>' +
-        '<div class="mdj-prod-meta-grid" style="margin-bottom:4px;">' +
-        '<div><label class="fineprint" data-i18n="prod-flow-type-lbl"></label><select id="prod-flow-type" class="price-input" style="width:100%;margin-top:4px;">' +
-        '<option value="wedding" data-i18n="prod-opt-wedding"></option>' +
-        '<option value="quinceanera" data-i18n="prod-opt-quinceanera"></option>' +
-        '<option value="runway" data-i18n="prod-opt-runway"></option>' +
-        '<option value="live_show" data-i18n="prod-opt-live_show"></option>' +
-        '<option value="custom" data-i18n="prod-opt-custom"></option></select></div>' +
-        '<div><label class="fineprint" data-i18n="prod-flow-title-lbl"></label>' +
-        '<input type="text" id="prod-flow-title" class="price-input" style="width:100%;margin-top:4px;" data-i18n-hold="prod-flow-title-ph" /></div>' +
-        '<div><label class="fineprint" data-i18n="prod-flow-venue-lbl"></label><input type="text" id="prod-flow-venue" class="price-input" style="width:100%;margin-top:4px;" /></div>' +
-        '<div><label class="fineprint" data-i18n="prod-flow-date-lbl"></label><input type="date" id="prod-flow-date" class="price-input" style="width:100%;margin-top:4px;" /></div>' +
-        '<div style="grid-column:1/-1;"><label class="fineprint" data-i18n="prod-flow-client-lbl"></label>' +
-        '<input type="text" id="prod-flow-client" class="price-input" style="width:100%;margin-top:4px;" data-i18n-hold="prod-flow-client-ph" /></div>' +
-        '<div style="grid-column:1/-1;"><label class="fineprint" data-i18n="prod-flow-access-lbl"></label>' +
-        '<input type="text" id="prod-flow-access" class="price-input" style="width:100%;margin-top:4px;" maxlength="500" autocomplete="off" data-i18n-hold="prod-flow-access-ph" /></div>' +
-        '</div>' +
-        '<div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;">' +
-        '<button type="button" class="btn-pill" id="prod-flow-apply-template" data-i18n="prod-flow-apply-tpl"></button>' +
-        '<button type="button" class="btn-pill" id="prod-flow-add-row" data-i18n="prod-flow-add-block"></button>' +
-        '<button type="button" class="btn primary" id="prod-flow-save" data-i18n="prod-flow-save"></button>' +
-        '<button type="button" class="btn gold" id="prod-flow-pdf" data-i18n="prod-flow-pdf"></button>' +
-        '<button type="button" class="btn gold" id="prod-flow-png" data-i18n="prod-flow-png"></button>' +
-        '</div>' +
-        '<p class="fineprint mdj-prod-time-hint" style="margin:14px 0 12px;line-height:1.45;" data-i18n="prod-flow-time-hint"></p>' +
-        '<div id="prod-flow-table-wrap" class="mdj-prod-timeline-host"></div>' +
-        '<div id="prod-flow-msg" class="fineprint" style="margin-top:10px;color:var(--admin-accent);min-height:1.2em;"></div>' +
-        '<h4 style="margin:22px 0 8px;color:var(--gold);" data-i18n="prod-flow-list-h"></h4><div id="prod-flow-list" class="fineprint"></div>' +
-        '</div>' +
         '<div id="prod-panel-inv" style="display:block;">' +
         '<p class="fineprint" style="margin-top:0;line-height:1.55;" data-i18n="prod-inv-intro"></p>' +
         '<p class="fineprint mdj-prod-inv-calc-hint" style="margin:10px 0 12px;line-height:1.5;opacity:0.92;" data-i18n="prod-inv-calc-hint"></p>' +
@@ -305,36 +270,7 @@
 
     _bind: function () {
       var self = this;
-      document.querySelectorAll('[data-prod-tab]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          var t = b.getAttribute('data-prod-tab');
-          document.querySelectorAll('[data-prod-tab]').forEach(function (x) {
-            var on = x === b;
-            x.classList.toggle('mdj-prod-tab--active', on);
-            x.setAttribute('aria-pressed', on ? 'true' : 'false');
-          });
-          document.getElementById('prod-panel-flow').style.display = t === 'flow' ? 'block' : 'none';
-          document.getElementById('prod-panel-inv').style.display = t === 'inv' ? 'block' : 'none';
-        });
-      });
-      document.getElementById('prod-flow-apply-template').onclick = function () {
-        self._renderFlowTable();
-      };
-      document.getElementById('prod-flow-add-row').onclick = function () {
-        self._flowRows.push({ id: 'b_' + Date.now(), start: '', end: '', title: '', actions: '', notes: '' });
-        self._renderFlowTable();
-      };
-      document.getElementById('prod-flow-save').onclick = function () {
-        void self._saveFlow();
-      };
-      document.getElementById('prod-flow-pdf').onclick = function () {
-        self._pushFlowPrint();
-        window.open('./event-flow-print.html', '_blank', 'noopener');
-      };
-      document.getElementById('prod-flow-png').onclick = function () {
-        self._pushFlowPrint();
-        window.open('./event-flow-print.html', '_blank', 'noopener');
-      };
+      // Planificación tab removed — Factura panel is now the only view.
       var taxEl = document.getElementById('prod-inv-tax');
       if (taxEl) {
         taxEl.addEventListener('input', function () {
@@ -390,17 +326,17 @@
         evDateEl.value = new Date().toISOString().slice(0, 10);
       }
       void self._loadCobroDjRoster();
-      this._flowRows = global.mdjCloneDefaultBlocksForType('wedding');
       this._invLines = [{ desc: prodT('prod-inv-default-line'), qty: 1, unit: 0 }];
-      this._renderFlowTable();
       this._renderInvLines();
     },
 
     _flowRows: [],
     _invLines: [],
 
-    _renderFlowTable: function () {
-      var type = document.getElementById('prod-flow-type').value;
+    _renderFlowTable: function () { /* removed — Planificación tab eliminated */ },
+
+    _renderFlowTableLegacy: function () {
+      var type = document.getElementById('prod-flow-type') && document.getElementById('prod-flow-type').value;
       if (document.getElementById('prod-flow-apply-template') === document.activeElement ||
         (arguments[0] && arguments[0].forceTemplate)) {
         this._flowRows = global.mdjCloneDefaultBlocksForType(type);

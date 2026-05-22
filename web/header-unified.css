@@ -1754,3 +1754,513 @@ body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-action
     padding-right: var(--mdj-nav-link-px) !important;
   }
 }
+
+/* ============================================================
+   STAFF — SERVICES & EVENTS: compact nav + no carousel
+   Applies when body.mdj-staff-nav is present (Owner/Manager/Seller)
+   AND page-mdj-rentals (services.html) or page-mdj-events (events.html).
+
+   SPECIFICITY NOTE (v20260521-staff-compact-nav-3):
+   General nav rule at line 855 has specificity (2,5,1):
+     #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a
+   Staff rules below mirror the full selector path → specificity (2,8,2) to (3,8,2).
+   Both sides use !important; higher specificity wins.
+   ============================================================ */
+
+/* ── CONTACT — hidden for staff on services + events ──
+   Specificity: body(0,0,1) + 2 classes(0,2,0) + #mainHeader(1,0,0) + .header.mdj-header-unified(0,2,0)
+              + #mainNav(1,0,0) + .mdj-mainnav-flex.nav.top-nav(0,3,0) + a[attr](0,1,1) = (2,8,2) */
+body.mdj-staff-nav.page-mdj-rentals
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="contact"],
+body.mdj-staff-nav.page-mdj-events
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="contact"] {
+  display: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  flex: 0 0 0 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Mobile nav contact */
+body.mdj-staff-nav.page-mdj-rentals .mobile-nav [data-mdj-nav="contact"],
+body.mdj-staff-nav.page-mdj-events  .mobile-nav [data-mdj-nav="contact"] {
+  display: none !important;
+}
+
+/* ── MI PORTAL — hidden and zero-width; beats mdjEnsureMiPortalInMainNav reveal ──
+   Specificity: adds #mainNav-mi-portal-link ID → (3,7,2) */
+body.mdj-staff-nav.page-mdj-rentals
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-mi-portal-link,
+body.mdj-staff-nav.page-mdj-events
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-mi-portal-link {
+  display: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  flex: 0 0 0 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  pointer-events: none !important;
+}
+
+/* ── SHOP / DJ TOOLS / TRABAJOS — defensive; guard JS injection ── */
+body.mdj-staff-nav.page-mdj-rentals
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="shop"],
+body.mdj-staff-nav.page-mdj-events
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="shop"],
+body.mdj-staff-nav.page-mdj-rentals
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="tools"],
+body.mdj-staff-nav.page-mdj-events
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="tools"],
+body.mdj-staff-nav.page-mdj-rentals
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="jobs"],
+body.mdj-staff-nav.page-mdj-events
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="jobs"] {
+  display: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  flex: 0 0 0 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  pointer-events: none !important;
+}
+
+/* ── CAROUSEL ZONES — services.html ── */
+body.mdj-staff-nav.page-mdj-rentals #rentals-gallery,
+body.mdj-staff-nav.page-mdj-rentals .mdj-rentals-gallery-zone,
+body.mdj-staff-nav.page-mdj-rentals .talent-hub-carousel-zone,
+body.mdj-staff-nav.page-mdj-rentals .mdj-services-carousel {
+  display: none !important;
+}
+
+/* ── CAROUSEL ZONES — events.html ── */
+body.mdj-staff-nav.page-mdj-events .mdj-experience-cards-zone,
+body.mdj-staff-nav.page-mdj-events .mdj-experience-residencies-zone,
+body.mdj-staff-nav.page-mdj-events .events-carousel-zone,
+body.mdj-staff-nav.page-mdj-events .mdj-events-carousel {
+  display: none !important;
+}
+
+/* ============================================================
+   SHOP — staff nav compact (Owner / Manager / Seller / Admin)
+   Visible: INICIO · SERVICIOS · EVENTOS · SHOP · CONFIG · MI PERFIL · STAFF
+   Hidden:  DJ TOOLS · TRABAJOS · CONTACTO · MI PORTAL
+
+   Specificity:
+     data-mdj-nav rules: (2,8,2) beats base (2,5,1) inline-flex !important
+     #mainNav-mi-portal-link:  (3,7,2) beats mi-portal reveal (2,5,1)
+   v20260521-shop-staff-nav-1
+   ============================================================ */
+
+/* ── DJ TOOLS / TRABAJOS / CONTACTO / AGENDA / FLUJO DE CAJA / CONFIG — zero-space, no layout shift ── */
+body.mdj-staff-nav.page-shop
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="tools"],
+body.mdj-staff-nav.page-shop
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="jobs"],
+body.mdj-staff-nav.page-shop
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="contact"],
+body.mdj-staff-nav.page-shop
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="agenda"],
+body.mdj-staff-nav.page-shop
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="flow"],
+body.mdj-staff-nav.page-shop
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="config"] {
+  display:        none    !important;
+  width:          0       !important;
+  min-width:      0       !important;
+  max-width:      0       !important;
+  flex:           0 0 0   !important;
+  overflow:       hidden  !important;
+  padding:        0       !important;
+  margin:         0       !important;
+  pointer-events: none    !important;
+}
+
+/* ── MY PORTAL — zero-space; beats mdjEnsureMiPortalInMainNav reveal ── */
+body.mdj-staff-nav.page-shop
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-mi-portal-link {
+  display:        none    !important;
+  width:          0       !important;
+  min-width:      0       !important;
+  max-width:      0       !important;
+  flex:           0 0 0   !important;
+  overflow:       hidden  !important;
+  padding:        0       !important;
+  margin:         0       !important;
+  pointer-events: none    !important;
+}
+
+/* ============================================================
+   DJ TOOLS — staff nav compact (Owner / Manager / Seller / Admin)
+   Visible: INICIO · SERVICIOS · EVENTOS · DJ TOOLS · MI PERFIL · STAFF
+   Hidden:  SHOP · CONFIG · TRABAJOS · CONTACTO · MI PORTAL · AGENDA · FLUJO
+
+   data-mdj-compact-nav="1" on #mainNav preserves EVENTOS and blocks
+   Agenda/Flow injection (same pattern as shop.html).
+
+   Specificity:
+     data-mdj-nav rules: (2,8,2) beats base (2,5,1) inline-flex !important
+     #mainNav-mi-portal-link:  (3,7,2) beats mi-portal reveal
+   v20260521-dj-tools-staff-nav-1
+   ============================================================ */
+
+/* ── SHOP / CONFIG / TRABAJOS / CONTACTO / AGENDA / FLUJO — zero-space ── */
+body.mdj-staff-nav.page-dj-tools
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="shop"],
+body.mdj-staff-nav.page-dj-tools
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="config"],
+body.mdj-staff-nav.page-dj-tools
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="jobs"],
+body.mdj-staff-nav.page-dj-tools
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="contact"],
+body.mdj-staff-nav.page-dj-tools
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="agenda"],
+body.mdj-staff-nav.page-dj-tools
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="flow"] {
+  display:        none    !important;
+  width:          0       !important;
+  min-width:      0       !important;
+  max-width:      0       !important;
+  flex:           0 0 0   !important;
+  overflow:       hidden  !important;
+  padding:        0       !important;
+  margin:         0       !important;
+  pointer-events: none    !important;
+}
+
+/* ── MY PORTAL — zero-space; beats mdjEnsureMiPortalInMainNav reveal ── */
+body.mdj-staff-nav.page-dj-tools
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-mi-portal-link {
+  display:        none    !important;
+  width:          0       !important;
+  min-width:      0       !important;
+  max-width:      0       !important;
+  flex:           0 0 0   !important;
+  overflow:       hidden  !important;
+  padding:        0       !important;
+  margin:         0       !important;
+  pointer-events: none    !important;
+}
+
+/* ============================================================
+   ACCOUNT-SETTINGS — staff full-access nav (Owner/Manager/Admin)
+   Visible: INICIO · SERVICIOS · EVENTOS · SHOP · DJ TOOLS · TRABAJOS · CONTACTO · MI PERFIL · STAFF
+   Hidden:  ⚙️CONFIG (already here) · MI PORTAL · AGENDA · FLUJO DE CAJA
+
+   data-mdj-compact-nav="1" on #mainNav blocks AGENDA/FLOW injection
+   and preserves EVENTOS from being stripped by mdjStripPublicEventsFromMainNav().
+
+   Specificity:
+     data-mdj-nav rules: (2,8,2) — beats base (2,5,1) inline-flex !important
+     #mainNav-mi-portal-link: (3,7,2) — beats mi-portal reveal
+   v20260521-full-access-staff-nav-1
+   ============================================================ */
+
+/* ── Gap: slightly tighter to fit 8 items without font reduction ── */
+body.mdj-staff-nav.mdj-account-settings
+  #mainHeader.header.mdj-header-unified
+  .header-nav .container
+  > #mainNav.mdj-mainnav-flex.nav.top-nav {
+  column-gap: clamp(6px, 0.8vw, 14px) !important;
+}
+
+/* ── CONFIG / DJ TOOLS / TRABAJOS / CONTACTO / AGENDA / FLUJO — zero-space ── */
+body.mdj-staff-nav.mdj-account-settings
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="config"],
+body.mdj-staff-nav.mdj-account-settings
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="tools"],
+body.mdj-staff-nav.mdj-account-settings
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="jobs"],
+body.mdj-staff-nav.mdj-account-settings
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="contact"],
+body.mdj-staff-nav.mdj-account-settings
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="agenda"],
+body.mdj-staff-nav.mdj-account-settings
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="flow"] {
+  display:        none    !important;
+  width:          0       !important;
+  min-width:      0       !important;
+  max-width:      0       !important;
+  flex:           0 0 0   !important;
+  overflow:       hidden  !important;
+  padding:        0       !important;
+  margin:         0       !important;
+  pointer-events: none    !important;
+}
+
+/* ── MI PORTAL — zero-space ── */
+body.mdj-staff-nav.mdj-account-settings
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-mi-portal-link {
+  display:        none    !important;
+  width:          0       !important;
+  min-width:      0       !important;
+  max-width:      0       !important;
+  flex:           0 0 0   !important;
+  overflow:       hidden  !important;
+  padding:        0       !important;
+  margin:         0       !important;
+  pointer-events: none    !important;
+}
+
+/* ============================================================
+   ACCOUNT-PROFILE (MI PERFIL) — staff full-access nav
+   Visible: INICIO · SERVICIOS · EVENTOS · SHOP · DJ TOOLS · TRABAJOS · CONTACTO · ⚙️CONFIG · MI PERFIL · STAFF
+   Hidden:  MI PORTAL · AGENDA · FLUJO DE CAJA
+
+   CONFIG kept visible here (routes to account-settings.html).
+   data-mdj-compact-nav="1" on #mainNav blocks AGENDA/FLOW injection
+   and preserves EVENTOS.
+
+   Specificity:
+     data-mdj-nav rules: (2,8,2)
+     #mainNav-mi-portal-link: (3,7,2)
+   v20260521-full-access-staff-nav-1
+   ============================================================ */
+
+/* ── Gap: slightly tighter to fit 9 items without font reduction ── */
+body.mdj-staff-nav.mdj-account-profile
+  #mainHeader.header.mdj-header-unified
+  .header-nav .container
+  > #mainNav.mdj-mainnav-flex.nav.top-nav {
+  column-gap: clamp(6px, 0.8vw, 14px) !important;
+}
+
+/* ── AGENDA / FLUJO — zero-space (fallback if compact-nav guard fails) ── */
+body.mdj-staff-nav.mdj-account-profile
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="agenda"],
+body.mdj-staff-nav.mdj-account-profile
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="flow"] {
+  display:        none    !important;
+  width:          0       !important;
+  min-width:      0       !important;
+  max-width:      0       !important;
+  flex:           0 0 0   !important;
+  overflow:       hidden  !important;
+  padding:        0       !important;
+  margin:         0       !important;
+  pointer-events: none    !important;
+}
+
+/* ── MI PORTAL — zero-space ── */
+body.mdj-staff-nav.mdj-account-profile
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-mi-portal-link {
+  display:        none    !important;
+  width:          0       !important;
+  min-width:      0       !important;
+  max-width:      0       !important;
+  flex:           0 0 0   !important;
+  overflow:       hidden  !important;
+  padding:        0       !important;
+  margin:         0       !important;
+  pointer-events: none    !important;
+}
+
+/* ============================================================
+   JOBS (TRABAJOS) — staff nav first pass (Owner/Manager/Seller/Admin)
+   First pass: remove MI PORTAL + CONTACTO to resolve carousel/overflow.
+   AGENDA/FLOW blocked at JS source via data-mdj-compact-nav="1".
+   EVENTOS preserved via data-mdj-compact-nav="1".
+
+   Visible (first pass): INICIO · SERVICIOS · EVENTOS · SHOP · DJ TOOLS ·
+                         TRABAJOS (active) · MI PERFIL · STAFF
+   Hidden: MI PORTAL · CONTACTO · AGENDA · FLOW
+
+   Specificity:
+     CONTACTO / AGENDA / FLOW: (2,8,2)
+     #mainNav-mi-portal-link:  (3,7,2)
+   v20260521-jobs-staff-nav-1
+   ============================================================ */
+
+/* ── SHOP / DJ TOOLS / CONFIG / CONTACTO / AGENDA / FLUJO — zero-space ── */
+body.mdj-staff-nav.page-jobs
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="shop"],
+body.mdj-staff-nav.page-jobs
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="tools"],
+body.mdj-staff-nav.page-jobs
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="config"],
+body.mdj-staff-nav.page-jobs
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="contact"],
+body.mdj-staff-nav.page-jobs
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="agenda"],
+body.mdj-staff-nav.page-jobs
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="flow"] {
+  display:        none    !important;
+  width:          0       !important;
+  min-width:      0       !important;
+  max-width:      0       !important;
+  flex:           0 0 0   !important;
+  overflow:       hidden  !important;
+  padding:        0       !important;
+  margin:         0       !important;
+  pointer-events: none    !important;
+}
+
+/* ── MI PORTAL — zero-space ── */
+body.mdj-staff-nav.page-jobs
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-mi-portal-link {
+  display:        none    !important;
+  width:          0       !important;
+  min-width:      0       !important;
+  max-width:      0       !important;
+  flex:           0 0 0   !important;
+  overflow:       hidden  !important;
+  padding:        0       !important;
+  margin:         0       !important;
+  pointer-events: none    !important;
+}
+
+/* ============================================================
+   ADMIN-DASHBOARD (STAFF panel) — staff nav (Owner/Manager/Admin)
+   Visible: INICIO · SERVICIOS · EVENTOS · SHOP · MI PERFIL · STAFF
+   Hidden:  DJ TOOLS · TRABAJOS · CONTACTO · CONFIG · MI PORTAL · AGENDA · FLUJO
+
+   Note: admin-dashboard.html uses id="mainNav-staff-link" (not staff-or-profile)
+   and id="mainNav-artist-dashboard-link" for MI PERFIL. CSS targets data-mdj-nav
+   attributes, not IDs, so selector works regardless.
+
+   data-mdj-compact-nav="1" on #mainNav blocks AGENDA/FLOW injection
+   and preserves EVENTOS.
+
+   Specificity:
+     data-mdj-nav rules: (2,8,2)
+     #mainNav-mi-portal-link: (3,7,2)
+   v20260521-admin-dashboard-staff-nav-1
+   ============================================================ */
+
+/* ── DJ TOOLS / TRABAJOS / CONTACTO / CONFIG / AGENDA / FLUJO — zero-space ── */
+body.mdj-staff-nav.page-admin-dashboard
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="tools"],
+body.mdj-staff-nav.page-admin-dashboard
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="jobs"],
+body.mdj-staff-nav.page-admin-dashboard
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="contact"],
+body.mdj-staff-nav.page-admin-dashboard
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="config"],
+body.mdj-staff-nav.page-admin-dashboard
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="agenda"],
+body.mdj-staff-nav.page-admin-dashboard
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="flow"] {
+  display:        none    !important;
+  width:          0       !important;
+  min-width:      0       !important;
+  max-width:      0       !important;
+  flex:           0 0 0   !important;
+  overflow:       hidden  !important;
+  padding:        0       !important;
+  margin:         0       !important;
+  pointer-events: none    !important;
+}
+
+/* ── MI PORTAL — zero-space ── */
+body.mdj-staff-nav.page-admin-dashboard
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-mi-portal-link {
+  display:        none    !important;
+  width:          0       !important;
+  min-width:      0       !important;
+  max-width:      0       !important;
+  flex:           0 0 0   !important;
+  overflow:       hidden  !important;
+  padding:        0       !important;
+  margin:         0       !important;
+  pointer-events: none    !important;
+}
