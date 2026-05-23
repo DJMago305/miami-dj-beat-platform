@@ -490,6 +490,9 @@
         ? './dj-profile.html?id=' + encodeURIComponent(id) + '&mdj_nav=profile'
         : mdjBuildArtistPublicProfileHref();
       mdjApplyArtistSessionNav(show, href);
+      if (!show) {
+        mdjRevealGuestMiPerfilNavSlot();
+      }
       return show;
     });
   }
@@ -693,6 +696,19 @@
     el.setAttribute('aria-hidden', 'true');
     el.setAttribute('tabindex', '-1');
     el.style.removeProperty('display');
+  }
+
+  /** Guest state: MI PERFIL is the sole desktop nav login entry. Call after every guest-state finalization. */
+  function mdjRevealGuestMiPerfilNavSlot() {
+    var el = document.getElementById('mainNav-guest-mi-perfil-link') || mdjEnsureGuestMiPerfilMainNavLink();
+    if (!el) return;
+    el.href = './login.html';
+    el.classList.remove('mdj-mainnav-reserved-slot');
+    el.removeAttribute('aria-hidden');
+    el.removeAttribute('tabindex');
+    el.style.removeProperty('display');
+    el.style.removeProperty('visibility');
+    el.style.removeProperty('pointer-events');
   }
 
   /** Móvil: quitar nodo duplicado. Escritorio: nunca quitar #mainNav-guest-mi-perfil-link (hueco fijo). */
@@ -1787,9 +1803,7 @@
     /* Artista: un solo enlace al panel — sin dropdown, sin botón ▾, sin submenús. */
     if (!isClient) {
       var artistInner =
-        '<a class="mdj-account-vip-trigger mdj-account-vip-direct mdj-account-vip-artist-dash" id="accountBtn" href="' +
-        mdjEscapeAttr(profileUrl) +
-        '" title="' +
+        '<a class="mdj-account-vip-trigger mdj-account-vip-direct mdj-account-vip-artist-dash" id="accountBtn" href="#" onclick="return false;" title="' +
         mdjEscapeAttr(profileLabel) +
         '">' +
         avatarSlotHtml +
@@ -1811,9 +1825,7 @@
 
     /* Cliente: mismo patrón que artista — enlace al portal, sin #accountMenu ni pestaña bajo la barra. */
     var clientInner =
-      '<a class="mdj-account-vip-trigger mdj-account-vip-direct mdj-account-vip-client-portal" id="accountBtn" href="' +
-      mdjEscapeAttr(profileUrl) +
-      '" title="' +
+      '<a class="mdj-account-vip-trigger mdj-account-vip-direct mdj-account-vip-client-portal" id="accountBtn" href="#" onclick="return false;" title="' +
       mdjEscapeAttr(profileLabel) +
       '">' +
       avatarSlotHtml +
@@ -2288,7 +2300,7 @@
     if (!z) return;
     mdjEnsureDesktopAuditCss();
     var guestHtml =
-      '<a class="account-btn mdj-guest-access-trigger" id="accountBtn" href="./login.html" title="Log in" aria-label="Log in">' +
+      '<a class="account-btn mdj-guest-access-trigger" id="accountBtn" href="#" onclick="return false;" title="Sesión inactiva" aria-label="Sesión inactiva">' +
       '<span class="mdj-guest-access-ring" aria-hidden="true">' +
       '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">' +
       '<circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.75"/>' +
@@ -2335,6 +2347,7 @@
         mdjApplyFlowMainNavLink(false);
         mdjApplyNavTierStatusBadge(null);
         mdjApplyArtistHeaderRow2(false);
+        mdjRevealGuestMiPerfilNavSlot();
         /* PRO/FREE: ya ocultos vía mdjHeaderHideMonetizationCtasPending() + CSS hasta sesión. */
         return;
       }
@@ -2600,7 +2613,10 @@
           try {
             if (!isClient) {
               var acbFix = document.getElementById('accountBtn');
-              if (acbFix) acbFix.setAttribute('href', settingsUrl);
+              if (acbFix) {
+                acbFix.setAttribute('href', '#');
+                acbFix.onclick = function () { return false; };
+              }
             }
           } catch (eHref) { /* ignore */ }
 
@@ -2746,6 +2762,7 @@
         mdjApplyAgendaMainNavLink(false);
         mdjApplyFlowMainNavLink(false);
         mdjApplyNavTierStatusBadge(null);
+        mdjRevealGuestMiPerfilNavSlot();
       }
     } catch (err) {
       console.error('[MDJ-SYSTEM] checkSessionForNav:', err);
@@ -2766,6 +2783,7 @@
       mdjApplyFlowMainNavLink(false);
       mdjApplyNavTierStatusBadge(null);
       mdjApplyArtistHeaderRow2(false);
+      mdjRevealGuestMiPerfilNavSlot();
     } finally {
       mdjSetHeaderAuthPillsPending(false);
       if (authZone) authZone.classList.remove('session-pending');
