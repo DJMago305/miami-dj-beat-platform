@@ -39,6 +39,7 @@
         if (path === 'jobs.html') return 'jobs';
         if (path === 'shop.html') return 'shop';
         if (path === 'dj-tools.html') return 'tools';
+        if (path === 'account-settings.html') return 'config';
         return '';
     }
 
@@ -86,12 +87,13 @@
             '<a href="./index.html" class="dj-tab-btn dj-tab-btn--home" data-i18n="nav-home">Home</a>' +
             '<a href="' + withProfileNav('./jobs.html') + '" class="dj-tab-btn' + active('jobs') + '" data-i18n="nav-jobs">Jobs</a>' +
             '<a href="' + withProfileNav('./shop.html') + '" class="dj-tab-btn' + active('shop') + '" data-i18n="nav-shop">Shop</a>' +
-            '<a href="' + hrefProfile + '" class="dj-tab-btn" data-i18n="menu-account">Mi Perfil</a>' +
             '<a href="' + withProfileNav('./dj-dashboard.html') + '" class="dj-tab-btn" data-i18n="dash-your-profile">Agenda</a>' +
-            '<a href="' + withProfileNav('./dj-dashboard.html?tab=settings') + '" class="dj-tab-btn" data-i18n="nav-settings">⚙️ CONFIG</a>' +
+            '<a href="' + withProfileNav('./account-settings.html') + '" class="dj-tab-btn' + active('config') + '" data-i18n="nav-settings">⚙️ CONFIG</a>' +
             '<a href="' + withProfileNav('./academia.html') + '" class="dj-tab-btn" data-i18n="nav-academia">Academia</a>' +
             '<a href="' + withProfileNav('./dj-tools.html') + '" class="dj-tab-btn' + active('tools') + '" data-i18n="nav-tools">DJ Tools</a>' +
-            '<a href="' + hrefFlow + '" class="dj-tab-btn" data-i18n="flow-dash">Cash Flow</a>' +
+            '<a href="' + hrefFlow + '" class="dj-tab-btn" data-i18n="flow-dash">CASH FLOW</a>' +
+            '<a href="' + hrefProfile + '" class="dj-tab-btn" data-i18n="menu-account">Mi Perfil</a>' +
+            '<a href="./admin-dashboard.html" class="dj-tab-btn" data-mdj-nav="staff">STAFF</a>' +
             '<a href="' + hrefSft + '" class="dj-tab-btn" data-i18n="nav-soundfortips">SoundForTips™</a>' +
             '</div>';
 

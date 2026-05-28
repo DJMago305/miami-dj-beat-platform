@@ -582,7 +582,7 @@
         /* Nombre grande con punto dorado */
         .dj-hero-name {
             font-family: 'Playfair Display', serif;
-            font-size: clamp(40px, 5.5vw, 76px);
+            font-size: clamp(26px, 3.6vw, 52px);
             font-weight: 700;
             font-style: italic;
             color: #fff;
@@ -1107,8 +1107,8 @@
             }
 
             .dj-hero-name {
-                font-size: 42px;
-                letter-spacing: -2px;
+                font-size: 32px;
+                letter-spacing: -1px;
             }
 
             /* Encima del corte: menos padding inferior que antes = overlay más abajo; sigue habiendo aire bajo la fila social. */
@@ -3019,7 +3019,7 @@
         <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
         <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
         <a href="./dj-dashboard.html?tab=dashboard" id="mainNav-agenda-link" class="mdj-agenda-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="agenda" data-i18n="dash-your-profile" aria-hidden="true" tabindex="-1">SCHEDULE</a>
-        <a href="./dj-dashboard.html?tab=settings" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+        <a href="./account-settings.html?mdj_nav=profile" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
         <a href="./dj-dashboard.html?tab=flow" id="mainNav-flow-link" class="mdj-flow-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="flow" data-i18n="flow-dash" aria-hidden="true" tabindex="-1">Cash Flow</a>
         <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
         <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
@@ -3056,14 +3056,15 @@
             <a href="./index.html" class="dj-tab-btn dj-tab-btn--home" data-i18n="nav-home">Home</a>
             <a href="./jobs.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-jobs">Jobs</a>
             <a href="./shop.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-shop">Shop</a>
-            <button type="button" class="dj-tab-btn active" data-tab="public" data-i18n="menu-account"
-                onclick="switchProfileTab('public')">Mi Perfil</button>
             <a href="./dj-dashboard.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="dash-your-profile">Agenda</a>
-            <a href="./dj-dashboard.html?tab=settings&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-settings">⚙️ CONFIG</a>
+            <a href="./account-settings.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-settings">⚙️ CONFIG</a>
             <a href="./academia.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-academia">Academia</a>
             <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-tools">DJ Tools</a>
             <button type="button" class="dj-tab-btn" data-tab="flow" data-i18n="flow-dash" id="dj-tab-flow-btn"
-                onclick="mdjFlowTabClick(event)">Cash Flow <span class="dj-tab-lock-icon" aria-hidden="true" style="display:none;">🔒</span></button>
+                onclick="mdjFlowTabClick(event)">CASH FLOW <span class="dj-tab-lock-icon" aria-hidden="true" style="display:none;">🔒</span></button>
+            <button type="button" class="dj-tab-btn active" data-tab="public" data-i18n="menu-account"
+                onclick="switchProfileTab('public')">Mi Perfil</button>
+            <a href="./admin-dashboard.html" class="dj-tab-btn" data-mdj-nav="staff">STAFF</a>
             <button type="button" class="dj-tab-btn" data-tab="sft" data-i18n="nav-soundfortips" id="dj-tab-sft-btn" onclick="mdjSftTabClick(event)">SoundForTips™ <span class="dj-tab-lock-icon" aria-hidden="true" style="display:none;">🔒</span></button>
         </div>
     </nav>
@@ -3859,6 +3860,9 @@
         /** PRO / Premium para badges (incluye is_premium y plan_type tras migración SQL). */
         function mdbProfileIsVipPro(p) {
             if (!p) return false;
+            /* Owner = PRO completo por derecho exclusivo de plataforma (excepción solo owner) */
+            var _dbRole = String(p.role != null ? p.role : '').toLowerCase().trim();
+            if (_dbRole === 'owner') return true;
             if (p.is_premium === true) return true;
             var ps = (p.plan_status || 'active').toLowerCase();
             if (ps !== 'active') return false;
@@ -3888,16 +3892,26 @@
             const stackEl = document.getElementById('pub-hero-top-stack');
             if (!planPillEl || !profile) return;
             const isPro = mdbProfileIsVipPro(profile);
-            planPillEl.textContent = isPro ? '⭐ PLAN PRO' : 'PLAN BÁSICO';
+            /* Texto diferenciado: solo owner recibe badge de plataforma exclusivo */
+            var _role = String(profile.role != null ? profile.role : '').toLowerCase().trim();
+            var _label = (_role === 'owner') ? '✦ OWNER · VERIFICADO' : (isPro ? '⭐ PLAN PRO' : 'PLAN BÁSICO');
+            planPillEl.textContent = _label;
             planPillEl.classList.toggle('dj-hero-plan-pill--pro', isPro);
             planPillEl.classList.toggle('dj-hero-plan-pill--lite', !isPro);
             planPillEl.hidden = false;
             if (stackEl) stackEl.style.display = 'flex';
         }
 
-        /** SoundForTips™: solo MDJPRO de pago — alineado con DB `dj_soundfortips_plan_ok` (no usar solo subscription_status). Cash Flow es distinto. */
-        function mdbProfileSoundForTipsEligible(p) {
+        /** SoundForTips™: MDJPRO de pago — alineado con DB `dj_soundfortips_plan_ok`.
+         * Excepción: rol `owner` en dj_profiles o app_metadata (dueño plataforma) = acceso cabina. */
+        function mdbProfileSoundForTipsEligible(p, sessionUser) {
             if (!p) return false;
+            var dbRole = String(p.role != null ? p.role : '').toLowerCase().trim();
+            if (dbRole === 'owner') return true;
+            if (sessionUser && sessionUser.app_metadata) {
+                var appRole = String(sessionUser.app_metadata.role || '').toLowerCase().trim();
+                if (appRole === 'owner') return true;
+            }
             if (p.plan_expires_at && new Date() >= new Date(p.plan_expires_at)) return false;
             var ps = (p.plan_status || 'active').toLowerCase();
             if (ps !== 'active') return false;
@@ -4464,7 +4478,7 @@
             }
 
             // Cabina / cola / wallet SFT: solo PRO de pago (ver mdbProfileSoundForTipsEligible).
-            window._mdjSftProAllowed = mdbProfileSoundForTipsEligible(p);
+            window._mdjSftProAllowed = mdbProfileSoundForTipsEligible(p, session && session.user);
             window._mdjSftFanPublicEligible = !!(isPublicQrView && !isOwner && window._mdjSftProAllowed);
             const isSftClientMobileProfile = !!(window._mdjSftFanPublicEligible
                 && window.matchMedia
@@ -4625,7 +4639,7 @@
                     const r = String(pnav && pnav.role != null ? pnav.role : '').toLowerCase().trim();
                     const isSellerOnly = r === 'seller';
                     const isBuyer = r === 'client' || r === 'cliente';
-                    var hubUrl = './dj-dashboard.html?tab=settings';
+                    var hubUrl = './account-settings.html?mdj_nav=profile';
                     if (isBuyer) hubUrl = './client-portal.html';
                     else if (isSellerOnly) hubUrl = './account-settings.html';
                     const publicProfileUrl = './dj-profile.html?id=' + encodeURIComponent(session.user.id);
@@ -4640,13 +4654,13 @@
                     if (acctHdr) {
                         if (isBuyer) acctHdr.setAttribute('href', './client-portal.html');
                         else if (isSellerOnly) acctHdr.setAttribute('href', './account-settings.html');
-                        else acctHdr.setAttribute('href', './dj-dashboard.html?tab=settings');
+                        else acctHdr.setAttribute('href', './account-settings.html?mdj_nav=profile');
                     }
                     const cfg = document.getElementById('mainNav-config-link');
                     if (cfg) {
                         if (isBuyer) cfg.setAttribute('href', './client-portal.html');
                         else if (isSellerOnly) cfg.setAttribute('href', './account-settings.html');
-                        else cfg.setAttribute('href', './dj-dashboard.html?tab=settings');
+                        else cfg.setAttribute('href', './account-settings.html?mdj_nav=profile');
                     }
                     const hlbm = document.getElementById('header-login-btn-mobile');
                     if (hlbm) hlbm.style.display = 'none';
