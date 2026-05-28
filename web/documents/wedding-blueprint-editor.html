@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wedding Blueprint Editor — Miami DJ Beat</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../supabase-config.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap');
 
@@ -1465,18 +1467,52 @@
     status.className = 'searching';
     status.textContent = currentLang === 'es' ? '🔍 Buscando cuenta...' : '🔍 Searching account...';
 
-    // ── SUPABASE LOOKUP (wire up in next sprint) ──
-    // const { data } = await supabase.from('client_profiles').select('id,full_name').eq('email', email).maybeSingle();
-    // For now: simulate pending connection
-    await new Promise(r => setTimeout(r, 600));
+    try {
+      const sb = window.getSupabaseClient ? window.getSupabaseClient() : window._supabase || window._supabaseClient;
+      if (!sb) throw new Error('Supabase client not available');
 
-    // Placeholder: always shows "ready to assign" so UI is testable
-    status.className = 'found';
-    status.textContent = currentLang === 'es'
-      ? `✓ Cuenta localizada — ${email}`
-      : `✓ Account found — ${email}`;
-    assignedClient = { email };
-    document.getElementById('btn-assign-confirm').disabled = false;
+      const { data, error } = await sb
+        .from('client_profiles')
+        .select('id, full_name, phone')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        // ── Cliente registrado — asociar y rellenar campos ──
+        assignedClient = { email, id: data.id, full_name: data.full_name || '', phone: data.phone || '' };
+        status.className = 'found';
+        status.textContent = currentLang === 'es'
+          ? `✓ Cliente registrado — ${data.full_name || email}`
+          : `✓ Registered client — ${data.full_name || email}`;
+
+        // Auto-fill client name fields if present in the blueprint form
+        const fClient = document.getElementById('f-client-name');
+        if (fClient && data.full_name) { fClient.value = data.full_name; update(); }
+        const fPhone = document.getElementById('f-client-phone');
+        if (fPhone && data.phone) { fPhone.value = data.phone; update(); }
+
+        document.getElementById('btn-assign-confirm').disabled = false;
+        console.log('[WEDDING-DB]: Cliente encontrado →', data);
+      } else {
+        // ── Email no registrado en client_profiles ──
+        assignedClient = null;
+        status.className = 'not-found';
+        status.textContent = currentLang === 'es'
+          ? `⚠ Correo no registrado como cliente — verifica o crea la cuenta primero`
+          : `⚠ Email not registered as a client — verify or create the account first`;
+        document.getElementById('btn-assign-confirm').disabled = true;
+        console.warn('[WEDDING-DB]: No client_profiles row for', email);
+      }
+    } catch (err) {
+      console.error('[WEDDING-DB]: lookupClient error', err);
+      status.className = 'not-found';
+      status.textContent = currentLang === 'es'
+        ? `✗ Error de conexión — intenta de nuevo`
+        : `✗ Connection error — please try again`;
+      document.getElementById('btn-assign-confirm').disabled = true;
+    }
   }
 
   function confirmAssign() {
@@ -1508,6 +1544,7 @@
 
   // ──────────────────────────────────────────
   window.addEventListener('DOMContentLoaded', () => {
+    console.log('[WEDDING-DB]: Inicializando módulo con rol:', window.__mdjLastPlatformIdentity?.dbRole || 'No auth');
     setLang('es');
     const restored = loadDoc();
     if (!restored) {

@@ -136,13 +136,13 @@ function mdjGuessPlatformLabel() {
  */
 function mdjResolveEffectiveUserRole(user) {
     if (!user) return 'client';
+    const appR = String(user.app_metadata?.role || '').toLowerCase();
+    if (appR === 'admin' || appR === 'manager' || appR === 'seller' || appR === 'owner') return appR;
     const ut = String(user.user_metadata?.user_type || '').toLowerCase();
     if (ut === 'client') return 'client';
     if (ut === 'talent' || ut === 'dj' || ut === 'artist') {
         return ut === 'artist' ? 'artist' : 'talent';
     }
-    const appR = String(user.app_metadata?.role || '').toLowerCase();
-    if (appR === 'admin' || appR === 'manager' || appR === 'seller' || appR === 'owner') return appR;
     if (appR && appR !== 'client') return appR;
     if (ut && ut !== 'client') return ut;
     return appR || ut || 'client';
@@ -675,6 +675,7 @@ function mdjLoginSafeFallbackUrl(user) {
     if (!user) return './index.html';
     const raw = String(mdjResolveEffectiveUserRole(user) || '').toLowerCase();
     const ut = String(user.user_metadata?.user_type || '').toLowerCase();
+    if (raw === 'owner') return './dj-dashboard.html';
     if (raw === 'client' || ut === 'client') return './client-portal.html';
     if (raw === 'admin' || raw === 'manager' || raw === 'seller') return './admin-dashboard.html';
     if (raw === 'talent' || raw === 'dj' || raw === 'artist' || ut === 'talent' || ut === 'artist' || ut === 'dj') {
