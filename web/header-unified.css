@@ -14,10 +14,10 @@
   --mdj-header-unified-r2: 72px;
   /* --mdj-header-brand-slot, --mdj-header-brand-gap, --mdj-header-auth-cluster-nudge-x: ver :root en styles.css (global). */
   /* ── NAV TOKENS (fuente de verdad única para #mainNav y #mainNav-artist) ── */
-  --mdj-nav-link-px:        clamp(6px, 0.6vw, 11px);  /* padding lateral por link */
+  --mdj-nav-link-px:        clamp(4px, 0.45vw, 7px);   /* padding lateral por link — compactado globalmente */
   --mdj-nav-link-py-t:      4px;                       /* padding top */
   --mdj-nav-link-py-b:      8px;                       /* padding bottom */
-  --mdj-nav-gap:            clamp(4px, 0.55vw, 10px);  /* gap entre links */
+  --mdj-nav-gap:            clamp(3px, 0.35vw, 6px);   /* gap entre links — compactado globalmente */
   --mdj-nav-font-size:      clamp(16px, 1.4vw, 20px);
   --mdj-nav-font-weight:    800;
   --mdj-nav-letter-spacing: 0.14em;
@@ -671,6 +671,14 @@
     align-items: center !important;
     justify-content: flex-start !important;
     overflow: hidden !important;
+  }
+
+  /* BOOT MASK: hides tab row while session resolves; removed by JS finally + autodetect cleanup */
+  body.mdj-nav-booting #mainHeader.header.mdj-header-unified .header-nav,
+  body.mdj-nav-booting #mainHeader.header.mdj-header-unified .header-actions,
+  body.mdj-nav-booting #mainHeader.header.mdj-header-unified #header-auth-zone {
+    visibility: hidden !important;
+    pointer-events: none !important;
   }
 
   #mainHeader.header.mdj-header-unified .header-actions #header-auth-zone.session-pending {
@@ -1370,6 +1378,27 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
 }
 
 /*
+ * STAFF reserved slot — Opción A: preserves tab width for non-staff to prevent jump on session resolve.
+ * Overrides the nuclear display:none above using #id specificity. Tab stays invisible but holds its space.
+ * mdjApplyStaffMainNavLink() removes .mdj-mainnav-reserved-slot for staff → tab becomes visible with zero CLS.
+ */
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-staff-or-profile.mdj-mainnav-reserved-slot {
+  display: inline-flex !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  flex: 0 0 auto !important;
+  min-width: max-content !important;
+  width: auto !important;
+  max-width: none !important;
+  overflow: visible !important;
+  position: static !important;
+  margin: 0 !important;
+  padding: var(--mdj-nav-link-py-t) var(--mdj-nav-link-px) var(--mdj-nav-link-py-b) !important;
+}
+
+/*
  * Nav compacto anti-brinco: CONFIG y MI PERFIL ocupan su espacio desde el primer frame
  * (visibility: hidden preserva ancho; pointer-events: none evita clics accidentales).
  * Cuando el JS los activa, solo cambia opacidad → sin layout shift.
@@ -1755,6 +1784,26 @@ body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-action
   }
 }
 
+/* ── OWNER STRIP — anti ghost-bar tap block (STAFF + 11 pillars)
+ * Perfil / academia / satélites: #mainNav oculto; #owner-tabs encima del header fijo (z-index 1200).
+ * Refuerzo: la fila pública (#mainNav) nunca intercepta clics en el strip artista.
+ * v20260525-owner-strip-staff-tap-guard */
+body.dj-profile #mainHeader .header-nav,
+body.mdj-from-profile #mainHeader .header-nav,
+body.mdj-academia-hub #mainHeader .header-nav,
+body.mdj-artist-academy #mainHeader .header-nav {
+  pointer-events: none !important;
+}
+
+body.dj-profile #owner-tabs .container .dj-tab-btn,
+body.mdj-from-profile #owner-tabs .container .dj-tab-btn,
+body.mdj-academia-hub #owner-tabs .container .dj-tab-btn,
+body.mdj-artist-academy #owner-tabs .container .dj-tab-btn {
+  pointer-events: auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
 /* ============================================================
    STAFF — SERVICES & EVENTS: compact nav + no carousel
    Applies when body.mdj-staff-nav is present (Owner/Manager/Seller)
@@ -1767,75 +1816,30 @@ body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-action
    Both sides use !important; higher specificity wins.
    ============================================================ */
 
-/* ── CONTACT — hidden for staff on services + events ──
-   Specificity: body(0,0,1) + 2 classes(0,2,0) + #mainHeader(1,0,0) + .header.mdj-header-unified(0,2,0)
-              + #mainNav(1,0,0) + .mdj-mainnav-flex.nav.top-nav(0,3,0) + a[attr](0,1,1) = (2,8,2) */
-body.mdj-staff-nav.page-mdj-rentals
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav="contact"],
-body.mdj-staff-nav.page-mdj-events
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav="contact"] {
-  display: none !important;
-  width: 0 !important;
-  min-width: 0 !important;
-  flex: 0 0 0 !important;
-  overflow: hidden !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  pointer-events: none !important;
-}
-
-/* Mobile nav contact */
-body.mdj-staff-nav.page-mdj-rentals .mobile-nav [data-mdj-nav="contact"],
-body.mdj-staff-nav.page-mdj-events  .mobile-nav [data-mdj-nav="contact"] {
-  display: none !important;
-}
-
-/* ── MI PORTAL — hidden and zero-width; beats mdjEnsureMiPortalInMainNav reveal ──
-   Specificity: adds #mainNav-mi-portal-link ID → (3,7,2) */
-body.mdj-staff-nav.page-mdj-rentals
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a#mainNav-mi-portal-link,
-body.mdj-staff-nav.page-mdj-events
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a#mainNav-mi-portal-link {
-  display: none !important;
-  width: 0 !important;
-  min-width: 0 !important;
-  flex: 0 0 0 !important;
-  overflow: hidden !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  pointer-events: none !important;
-}
-
-/* ── SHOP / DJ TOOLS / TRABAJOS — defensive; guard JS injection ── */
-body.mdj-staff-nav.page-mdj-rentals
+/* ── SHOP / DJ TOOLS / TRABAJOS — block JS injection on rentals & events pages ──
+   These links are injected by mdj-shared-header.js; this CSS forces them to zero-width.
+   Contact, MI PERFIL, MI PORTAL and STAFF remain visible. */
+body.page-mdj-rentals
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
   > a[data-mdj-nav="shop"],
-body.mdj-staff-nav.page-mdj-events
+body.page-mdj-events
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
   > a[data-mdj-nav="shop"],
-body.mdj-staff-nav.page-mdj-rentals
+body.page-mdj-rentals
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
   > a[data-mdj-nav="tools"],
-body.mdj-staff-nav.page-mdj-events
+body.page-mdj-events
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
   > a[data-mdj-nav="tools"],
-body.mdj-staff-nav.page-mdj-rentals
+body.page-mdj-rentals
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
   > a[data-mdj-nav="jobs"],
-body.mdj-staff-nav.page-mdj-events
+body.page-mdj-events
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
   > a[data-mdj-nav="jobs"] {
@@ -1995,77 +1999,50 @@ body.mdj-staff-nav.page-dj-tools
 }
 
 /* ============================================================
-   ACCOUNT-SETTINGS — staff full-access nav (Owner/Manager/Admin)
-   Visible: INICIO · SERVICIOS · EVENTOS · SHOP · DJ TOOLS · TRABAJOS · CONTACTO · MI PERFIL · STAFF
-   Hidden:  ⚙️CONFIG (already here) · MI PORTAL · AGENDA · FLUJO DE CAJA
-
-   data-mdj-compact-nav="1" on #mainNav blocks AGENDA/FLOW injection
-   and preserves EVENTOS from being stripped by mdjStripPublicEventsFromMainNav().
-
-   Specificity:
-     data-mdj-nav rules: (2,8,2) — beats base (2,5,1) inline-flex !important
-     #mainNav-mi-portal-link: (3,7,2) — beats mi-portal reveal
-   v20260521-full-access-staff-nav-1
+   ACCOUNT-SETTINGS — Owner 8-pillar nav  v20260524-restored
+   Nuclear hide (2,6,2) supera al global (2,5,1).
+   Show rules (2,7,2) por data-mdj-nav exacto — sin falsos positivos.
    ============================================================ */
 
-/* ── Gap: slightly tighter to fit 8 items without font reduction ── */
-body.mdj-staff-nav.mdj-account-settings
+/* 1. Nuclear hide (2,6,2) */
+body.mdj-account-settings
   #mainHeader.header.mdj-header-unified
-  .header-nav .container
-  > #mainNav.mdj-mainnav-flex.nav.top-nav {
-  column-gap: clamp(6px, 0.8vw, 14px) !important;
+  #mainNav.mdj-mainnav-flex.nav.top-nav > a {
+  display:    none    !important;
+  visibility: hidden  !important;
+  width:      0       !important;
+  min-width:  0       !important;
+  max-width:  0       !important;
+  margin:     0       !important;
+  padding:    0       !important;
+  overflow:   hidden  !important;
+  flex:       0 0 0   !important;
 }
 
-/* ── CONFIG / DJ TOOLS / TRABAJOS / CONTACTO / AGENDA / FLUJO — zero-space ── */
-body.mdj-staff-nav.mdj-account-settings
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav="config"],
-body.mdj-staff-nav.mdj-account-settings
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav="tools"],
-body.mdj-staff-nav.mdj-account-settings
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav="jobs"],
-body.mdj-staff-nav.mdj-account-settings
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav="contact"],
-body.mdj-staff-nav.mdj-account-settings
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav="agenda"],
-body.mdj-staff-nav.mdj-account-settings
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav="flow"] {
-  display:        none    !important;
-  width:          0       !important;
-  min-width:      0       !important;
-  max-width:      0       !important;
-  flex:           0 0 0   !important;
-  overflow:       hidden  !important;
-  padding:        0       !important;
-  margin:         0       !important;
-  pointer-events: none    !important;
-}
-
-/* ── MI PORTAL — zero-space ── */
-body.mdj-staff-nav.mdj-account-settings
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a#mainNav-mi-portal-link {
-  display:        none    !important;
-  width:          0       !important;
-  min-width:      0       !important;
-  max-width:      0       !important;
-  flex:           0 0 0   !important;
-  overflow:       hidden  !important;
-  padding:        0       !important;
-  margin:         0       !important;
-  pointer-events: none    !important;
+/* 2. Show only 8 tabs (2,7,2) */
+body.mdj-account-settings #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav > a[data-mdj-nav="home"],
+body.mdj-account-settings #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav > a[data-mdj-nav="services"],
+body.mdj-account-settings #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav > a[data-mdj-nav="venues"],
+body.mdj-account-settings #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav > a[data-mdj-nav="shop"],
+body.mdj-account-settings #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav > a[data-mdj-nav="flow"],
+body.mdj-account-settings #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav > a[data-mdj-nav="config"],
+body.mdj-account-settings #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav > a[data-mdj-nav="profile"],
+body.mdj-account-settings #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav > a[data-mdj-nav="staff"] {
+  display:        inline-flex !important;
+  visibility:     visible     !important;
+  opacity:        1           !important;
+  width:          auto        !important;
+  min-width:      max-content !important;
+  margin:         0 10px      !important;
+  pointer-events: auto        !important;
 }
 
 /* ============================================================
