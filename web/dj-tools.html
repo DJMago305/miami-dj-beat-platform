@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
 </head>
 
-<body class="notranslate page-dj-tools">
+<body class="notranslate page-dj-tools mdj-nav-booting">
     <!-- MDJ canonical site header — keep in sync with index #mainHeader; use ./index.html# anchors for subpages -->
 <header class="header mdj-header-unified" id="mainHeader">
   <div class="header-top">
@@ -266,11 +266,11 @@
 
 
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-      <script src="./mdj-shared-header.js?v=20260521-config-route-staff-fix-1"></script>
+      <script src="./mdj-shared-header.js?v=20260525-owner-strip-11-pillars-1"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260516-home-nav-stable-1"></script>
     <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
-    <script src="./mdj-profile-nav-context.js?v=20260418-owner-nav-parity"></script>
+    <script src="./mdj-profile-nav-context.js?v=20260525-config-strip-fix-1"></script>
   <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
     <script>
       document.addEventListener('DOMContentLoaded', async function () {
@@ -284,7 +284,9 @@
         } catch (e0) { /* ignore */ }
         var tier = window.__mdjLastNavTier;
         var unlocked = window.__mdjProToolsUnlocked === true;
-        if (unlocked) {
+        var _idn = window.__mdjLastPlatformIdentity;
+        var isOwnerOrStaff = _idn && (_idn.dbRole === 'owner' || _idn.staffInDb === true);
+        if (unlocked || isOwnerOrStaff) {
           gate.style.display = 'none';
           body.style.display = '';
           return;
