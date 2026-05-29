@@ -15,6 +15,7 @@
     // ── Route map: which role lands where after login ───────────
     const ROLE_HOME = {
         artist: './dj-profile.html',
+        owner: './dj-dashboard.html',
         admin: './admin-dashboard.html',
         manager: './admin-dashboard.html',
         seller: './admin-dashboard.html',
