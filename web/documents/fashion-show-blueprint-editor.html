@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fashion Show Blueprint — Miami DJ Beat</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../supabase-config.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --gold:#b8912a; --gold-light:#d4a843; --gold-dim:rgba(184,145,42,0.2);
+  --border-doc:#cec0a0;
+  --bg:#0f0f1a; --card:#16213e; --card2:#1a1a30;
+  --border:#2a2a4a; --accent:#b8912a;
+  --text:#e8e8f0; --muted:#8888aa; --danger:#ef4444; --success:#22c55e;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+/* ══ TOP BAR ══ */
+#top-bar {
+  background:var(--card); border-bottom:2px solid var(--accent);
+  padding:16px 28px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+}
+.brand { display:flex; align-items:center; gap:12px; }
+.brand img { width:40px; height:auto; }
+.brand-text h2 { font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:var(--accent); letter-spacing:1px; }
+.brand-text p  { font-size:10px; color:var(--muted); margin-top:1px; }
+.top-actions { display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
+.lang-toggle { display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+.lang-toggle button { padding:5px 12px; background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:12px; font-weight:700; }
+.lang-toggle button.active { background:var(--accent); color:#000; }
+.btn { padding:8px 16px; border:none; border-radius:7px; cursor:pointer; font-size:12px; font-weight:700; letter-spacing:.04em; }
+.btn-gold { background:var(--accent); color:#000; }
+.btn-ghost { background:rgba(255,255,255,.07); color:var(--muted); }
+.btn-print { background:#1a4a2a; color:#7fff7f; }
+
+/* ══ TABS ══ */
+#phase-tabs {
+  display:flex; background:var(--card2); border-bottom:1px solid var(--border);
+  padding:0 28px; gap:0;
+}
+.phase-tab {
+  padding:13px 22px; cursor:pointer; font-size:12px; font-weight:700;
+  color:var(--muted); border-bottom:3px solid transparent; transition:all .2s;
+  letter-spacing:.06em; text-transform:uppercase; white-space:nowrap;
+}
+.phase-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+.phase-tab:hover:not(.active) { color:var(--text); }
+
+/* ══ MAIN LAYOUT ══ */
+#main { display:flex; height:calc(100vh - 111px); }
+#editor-col { width:380px; min-width:320px; background:var(--card); border-right:1px solid var(--border); overflow-y:auto; padding:20px; flex-shrink:0; }
+#preview-col { flex:1; overflow-y:auto; background:#e8e4dc; padding:24px 20px; }
+
+/* ══ EDITOR PANEL ══ */
+.ed-section { font-size:10px; font-weight:800; color:var(--accent); text-transform:uppercase; letter-spacing:.1em; margin:16px 0 10px; }
+.ed-section:first-child { margin-top:0; }
+.form-row { display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+.field { display:flex; flex-direction:column; gap:4px; flex:1 1 160px; }
+.field.full { flex:1 1 100%; }
+.field label { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; }
+.field input, .field textarea, .field select {
+  background:rgba(255,255,255,.06); border:1px solid var(--border); border-radius:6px;
+  padding:8px 10px; color:var(--text); font-family:'Inter',sans-serif; font-size:12px; width:100%;
+}
+.field input:focus, .field textarea:focus { outline:none; border-color:var(--accent); }
+.field textarea { resize:vertical; min-height:60px; }
+hr.div { border:none; border-top:1px solid var(--border); margin:14px 0; }
+
+/* ── Cue table editor ── */
+.cue-toolbar { display:flex; justify-content:flex-end; margin-bottom:10px; }
+.btn-sm { padding:5px 12px; border:none; border-radius:5px; cursor:pointer; font-size:11px; font-weight:700; }
+.btn-add-cue { background:var(--gold-dim); color:var(--gold-light); border:1px solid var(--accent); }
+
+#cue-rows-editor { display:flex; flex-direction:column; gap:8px; }
+.cue-row-card {
+  background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:8px;
+  padding:10px; position:relative;
+}
+.cue-row-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.cue-row-num { font-family:'Cinzel',serif; font-size:10px; font-weight:700; color:var(--accent); min-width:20px; }
+.cue-row-time-fields { display:flex; gap:6px; flex:1; }
+.cue-row-time-fields input { flex:1; min-width:60px; }
+.btn-rm { background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3); color:var(--danger); border-radius:4px; padding:3px 8px; font-size:10px; font-weight:700; cursor:pointer; margin-left:auto; }
+.cue-sub-fields { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.cue-sub-fields .field { flex:unset; }
+
+/* ── Runway lineup editor ── */
+#lineup-rows-editor { display:flex; flex-direction:column; gap:8px; }
+.lineup-row-card {
+  background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:8px;
+  padding:10px; position:relative;
+}
+.lineup-row-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.lineup-num { font-family:'Cinzel',serif; font-size:10px; font-weight:700; color:var(--gold-light); min-width:20px; }
+
+/* ══ DOCUMENT PREVIEW ══ */
+.page {
+  background:#fff; width:8.5in; min-height:11in; margin:0 auto 20px;
+  padding:.75in .8in .8in; box-shadow:0 4px 24px rgba(0,0,0,.2);
+  position:relative; overflow:hidden;
+}
+.doc-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:.3in; padding-bottom:.15in; border-bottom:2.5px solid var(--gold); }
+.doc-brand img { width:44px; height:auto; }
+.doc-brand h1 { font-family:'Cinzel',serif; font-size:13pt; font-weight:700; color:var(--gold); letter-spacing:.5px; }
+.doc-brand p  { font-size:8.5pt; color:#888; margin-top:2px; font-family:'Cinzel',serif; }
+.doc-event-info { text-align:right; }
+.phase-eyebrow { font-family:'Cinzel',serif; font-size:8pt; color:#aaa; letter-spacing:.12em; text-transform:uppercase; }
+.event-main-title { font-family:'EB Garamond',serif; font-style:italic; font-size:19pt; color:#111; margin-top:3px; }
+.event-meta-line  { font-family:'Cinzel',serif; font-size:8.5pt; color:var(--gold); margin-top:3px; }
+
+.meta-strip { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px 20px; margin-bottom:.25in; padding:.12in .15in; background:#faf8f4; border:1px solid var(--border-doc); border-radius:5px; }
+.meta-cell label { font-family:'Cinzel',serif; font-size:7pt; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:1px; }
+.meta-cell span  { font-family:'EB Garamond',serif; font-size:10.5pt; color:#222; }
+
+.sec-heading { font-family:'Cinzel',serif; font-size:10pt; font-weight:700; color:var(--gold); text-transform:uppercase; letter-spacing:.06em; margin:16px 0 8px; padding-bottom:4px; border-bottom:1.5px solid var(--border-doc); }
+
+/* Escaleteado table */
+.esc-table, .cue-table, .lineup-table { width:100%; border-collapse:collapse; font-size:9.5pt; }
+.esc-table th, .cue-table th, .lineup-table th {
+  font-family:'Cinzel',serif; font-size:7.5pt; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
+  padding:6px 9px; text-align:left; background:var(--gold); color:#fff;
+}
+.esc-table td, .cue-table td, .lineup-table td {
+  padding:7px 9px; border-bottom:1px solid #f0ebe0; font-family:'EB Garamond',serif;
+  font-size:10pt; color:#222; vertical-align:top;
+}
+.esc-table tbody tr:nth-child(even), .cue-table tbody tr:nth-child(even), .lineup-table tbody tr:nth-child(even) { background:#faf8f4; }
+.time-cell { font-family:'Cinzel',serif; font-size:8.5pt; font-weight:700; color:var(--gold); white-space:nowrap; }
+.cue-cell  { font-size:9pt; color:#555; font-style:italic; }
+.block-cell strong { font-size:10pt; color:#111; font-style:normal; }
+
+/* Phase badge on page */
+.phase-badge {
+  display:inline-block; font-family:'Cinzel',serif; font-size:8pt; font-weight:700;
+  color:var(--gold); border:1px solid var(--gold); border-radius:99px;
+  padding:3px 12px; letter-spacing:.1em; text-transform:uppercase; margin-bottom:10px;
+}
+
+.doc-footer {
+  position:absolute; bottom:.32in; left:.8in; right:.8in;
+  border-top:1px solid var(--border-doc); padding-top:6px;
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:7pt; color:#aaa; font-family:'Cinzel',serif; letter-spacing:.3px; background:#fff;
+}
+.doc-footer .footer-brand { font-weight:600; color:var(--gold); }
+
+@page { size:letter portrait; margin:0; }
+@media print {
+  body { background:#fff; }
+  #top-bar, #phase-tabs, #editor-col { display:none !important; }
+  #main { height:auto; display:block; }
+  #preview-col { background:#fff; padding:0; overflow:visible; }
+  .page { margin:0; box-shadow:none; min-height:0; padding-bottom:.75in; page-break-before:always; break-before:page; }
+  .page:first-child { page-break-before:avoid; break-before:avoid; }
+  .doc-footer { position:absolute; bottom:.18in; left:.8in; right:.8in; background:#fff; }
+  .esc-table tbody tr, .cue-table tbody tr, .lineup-table tbody tr { page-break-inside:avoid; break-inside:avoid; }
+  .sec-heading { page-break-after:avoid; break-after:avoid; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="top-bar">
+  <div class="brand">
+    <img src="./logo-mdj-gold.png" alt="Miami DJ Beat" onerror="this.style.display='none'">
+    <div class="brand-text">
+      <h2 id="top-title">Fashion Show Blueprint</h2>
+      <p>Miami DJ Beat LLC — Production Script · Uso Interno</p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <div class="lang-toggle">
+      <button id="btn-es" class="active" onclick="setLang('es')">ES</button>
+      <button id="btn-en" onclick="setLang('en')">EN</button>
+    </div>
+    <button class="btn btn-ghost" onclick="resetAll()" id="btn-reset">Limpiar</button>
+    <button class="btn btn-gold" onclick="saveToSupabase()" id="btn-save">💾 Guardar</button>
+    <button class="btn btn-print" onclick="window.print()">⬇ Imprimir / PDF</button>
+  </div>
+</div>
+
+<!-- PHASE TABS -->
+<div id="phase-tabs">
+  <div class="phase-tab active" onclick="setPhase(0)" id="tab-0">📋 <span id="tab0-label">Escaleteado General</span></div>
+  <div class="phase-tab"        onclick="setPhase(1)" id="tab-1">⏱️ <span id="tab1-label">Minuto a Minuto · Cue Sheet</span></div>
+  <div class="phase-tab"        onclick="setPhase(2)" id="tab-2">👗 <span id="tab2-label">Hoja de Salidas · Lineup</span></div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- EDITOR COLUMN -->
+  <div id="editor-col">
+
+    <!-- ── PHASE 0: ESCALETEADO ── -->
+    <div id="ed-phase-0">
+      <div class="ed-section" id="lbl-header-data">Datos del Evento</div>
+      <div class="form-row">
+        <div class="field full">
+          <label id="lbl-brand">Diseñador(a) / Marca</label>
+          <input type="text" id="f-brand" placeholder="ej. Valentina Díaz Couture" oninput="updatePreview()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field full">
+          <label id="lbl-producer">Productor(a) / Director(a)</label>
+          <input type="text" id="f-producer" placeholder="ej. Miami DJ Beat Productions" oninput="updatePreview()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label id="lbl-date">Fecha</label>
+          <input type="text" id="f-date" placeholder="ej. Sábado 14 jun 2026" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label id="lbl-schedule">Horario</label>
+          <input type="text" id="f-schedule" placeholder="ej. 6:00 PM – 11:00 PM" oninput="updatePreview()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field full">
+          <label id="lbl-venue">Venue / Dirección</label>
+          <input type="text" id="f-venue" placeholder="Dirección completa del venue" oninput="updatePreview()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label id="lbl-dj">DJ / Music Director</label>
+          <input type="text" id="f-dj" placeholder="ej. DJ Mago305" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label id="lbl-mc">MC / Host</label>
+          <input type="text" id="f-mc" placeholder="Nombre del MC" oninput="updatePreview()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field full">
+          <label id="lbl-format">Formato Musical / Estilo</label>
+          <input type="text" id="f-format" placeholder="ej. Electrónica editorial · Deep House · Pop Couture" oninput="updatePreview()">
+        </div>
+      </div>
+
+      <hr class="div">
+      <div class="ed-section" id="lbl-escaleteado">Escaleteado General — Tiempos Clave</div>
+      <div class="form-row">
+        <div class="field"><label id="lbl-gate">Backstage Gate (llegada equipo)</label><input type="text" id="f-gate" placeholder="ej. 12:00 PM" oninput="updatePreview()"></div>
+        <div class="field"><label id="lbl-muaopen">MUA & Estilistas — Inicio</label><input type="text" id="f-muaopen" placeholder="ej. 1:00 PM" oninput="updatePreview()"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label id="lbl-soundcheck">Sound Check / Luces</label><input type="text" id="f-soundcheck" placeholder="ej. 2:00 PM" oninput="updatePreview()"></div>
+        <div class="field"><label id="lbl-firstlook">First Look / Line-up</label><input type="text" id="f-firstlook" placeholder="ej. 4:30 PM" oninput="updatePreview()"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label id="lbl-doors">Apertura de Puertas</label><input type="text" id="f-doors" placeholder="ej. 6:00 PM" oninput="updatePreview()"></div>
+        <div class="field"><label id="lbl-showstart">Show — Inicio</label><input type="text" id="f-showstart" placeholder="ej. 7:00 PM" oninput="updatePreview()"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label id="lbl-showend">Show — Fin estimado</label><input type="text" id="f-showend" placeholder="ej. 9:00 PM" oninput="updatePreview()"></div>
+        <div class="field"><label id="lbl-afterparty">Afterparty / Cocktail</label><input type="text" id="f-afterparty" placeholder="ej. 9:00 PM" oninput="updatePreview()"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label id="lbl-loadout">Load Out / Desmontaje</label><input type="text" id="f-loadout" placeholder="ej. 11:00 PM" oninput="updatePreview()"></div>
+        <div class="field"><label id="lbl-generalNotes">Notas generales</label><input type="text" id="f-generalNotes" placeholder="Patrocinadores, dress code…" oninput="updatePreview()"></div>
+      </div>
+    </div>
+
+    <!-- ── PHASE 1: CUE-TO-CUE ── -->
+    <div id="ed-phase-1" style="display:none;">
+      <div class="ed-section" id="lbl-cue-section">Cues Técnicos — Minuto a Minuto</div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:12px;" id="cue-help-text">
+        Añade cada bloque del show con su tiempo, acción, cue de audio, luces y posición de backstage.
+      </p>
+      <div class="cue-toolbar">
+        <button class="btn-sm btn-add-cue" onclick="addCueRow()" id="btn-add-cue">+ Añadir Cue</button>
+      </div>
+      <div id="cue-rows-editor"></div>
+    </div>
+
+    <!-- ── PHASE 2: RUNWAY LINEUP ── -->
+    <div id="ed-phase-2" style="display:none;">
+      <div class="ed-section" id="lbl-lineup-section">Hoja de Salidas — Runway Lineup</div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:12px;" id="lineup-help-text">
+        Define el orden de diseñadores, número de looks, track y presets técnicos por colección.
+      </p>
+      <div class="cue-toolbar">
+        <button class="btn-sm btn-add-cue" onclick="addLineupRow()" id="btn-add-lineup">+ Añadir Diseñador</button>
+      </div>
+      <div id="lineup-rows-editor"></div>
+    </div>
+
+  </div><!-- /editor-col -->
+
+  <!-- PREVIEW COLUMN -->
+  <div id="preview-col" id="doc-preview">
+    <!-- Rendered by JS -->
+  </div>
+
+</div><!-- /main -->
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════════
+   FASHION SHOW BLUEPRINT EDITOR — Miami DJ Beat
+   Fases: Escaleteado | Cue-to-Cue | Runway Lineup
+══════════════════════════════════════════════════════════════════════════════ */
+
+var _lang = 'es';
+var _phase = 0;
+
+/* ── CUE rows state ── */
+var _cueRows = [
+  { id:1, timeStart:'00:00', timeEnd:'03:00',  block:'Pre-Show (Intro Ambiental)', audio:'Ambience Track — Deep House al 30%', lighting:'Luces tenues de ambiente. Logotipo estático en pantallas.', backstage:'Modelos en line-up detrás del backdrop.' },
+  { id:2, timeStart:'03:00', timeEnd:'03:30',  block:'Blackout & Opening',         audio:'CUE 1: Corte seco → Voz en off → Track principal sube', lighting:'CUE 1: Apagón 3 seg → Strobo blanco hacia boca de pasarela.', backstage:'Diseñador 1 / Modelo 1 en punto de salida.' },
+  { id:3, timeStart:'03:30', timeEnd:'08:00',  block:'Colección 1 — Desfile',      audio:'Track 2 — Up-beat, BPM constante para ritmo de caminata', lighting:'Luces blancas directas al eje central. Pantalla: nombre diseñador.', backstage:'Carrusel continuo: nueva modelo cada 20-25 seg.' },
+  { id:4, timeStart:'08:00', timeEnd:'09:00',  block:'Grand Finale — Colección 1', audio:'Track 3 — Clímax musical arriba al 100%', lighting:'Luces rítmicas en movimiento. Pantallas: video de colección.', backstage:'Carrusel completo: todas las modelos juntas. Diseñador sale a saludar.' },
+  { id:5, timeStart:'09:00', timeEnd:'10:30',  block:'Intermedio / Cambio',        audio:'Track de transición — Baja la intensidad', lighting:'Color de pantallas → Patrocinadores. Iluminación general de sala.', backstage:'Quick Change Area: modelos cambian vestuario para Colección 2.' },
+  { id:6, timeStart:'10:30', timeEnd:'15:00',  block:'Colección 2 — Desfile',      audio:'Track 4 — Mood diferente, paleta nueva', lighting:'Cambio de color de luces según paleta de colección.', backstage:'Carrusel continuo desde nueva posición de backstage.' },
+  { id:7, timeStart:'15:00', timeEnd:'17:00',  block:'Grand Finale General',       audio:'Track Clímax Final — Toda la energía', lighting:'Full light show. Pantallas: highlight reel del evento.', backstage:'Todas las modelos de todas las colecciones. Diseñadores al frente.' },
+  { id:8, timeStart:'17:00', timeEnd:'18:30',  block:"Desfile del Diseñador / Designer's Walk", audio:'Música especial — calmada y elegante', lighting:'Luz spot sobre el diseñador. Pantalla: logo de la marca.', backstage:'Fotógrafo de prensa en pit. Aplausos del público.' },
+  { id:9, timeStart:'18:30', timeEnd:'20:00',  block:'Cierre Oficial & Prensa',    audio:'Música ambiente suave', lighting:'Iluminación fotográfica general.', backstage:'Sesión de fotos grupal. Prensa accede al backstage.' },
+];
+var _cueNextId = 10;
+
+/* ── Lineup rows state ── */
+var _lineupRows = [
+  { id:1, designer:'Diseñador 1', collection:'Nombre de la colección', looks:6, track:'Track 1 — Up-beat editorial', lighting:'Pasarela limpia — luces blancas', video:'Nombre de marca / teaser video', notes:'' },
+  { id:2, designer:'Diseñador 2', collection:'Nombre de la colección', looks:6, track:'Track 2 — Deep electrónico', lighting:'Tonos fríos — azul / plata',    video:'Animación gráfica de la colección', notes:'' },
+];
+var _lineupNextId = 3;
+
+/* ── Translations ── */
+var I18N = {
+  es: {
+    'tab0':'Escaleteado General', 'tab1':'Minuto a Minuto · Cue Sheet', 'tab2':'Hoja de Salidas · Lineup',
+    'lbl-header-data':'Datos del Evento', 'lbl-escaleteado':'Escaleteado General — Tiempos Clave',
+    'lbl-brand':'Diseñador(a) / Marca', 'lbl-producer':'Productor(a) / Director(a)',
+    'lbl-date':'Fecha', 'lbl-schedule':'Horario', 'lbl-venue':'Venue / Dirección',
+    'lbl-dj':'DJ / Music Director', 'lbl-mc':'MC / Host', 'lbl-format':'Formato Musical / Estilo',
+    'lbl-gate':'Backstage Gate (llegada equipo)', 'lbl-muaopen':'MUA & Estilistas — Inicio',
+    'lbl-soundcheck':'Sound Check / Luces', 'lbl-firstlook':'First Look / Line-up',
+    'lbl-doors':'Apertura de Puertas', 'lbl-showstart':'Show — Inicio',
+    'lbl-showend':'Show — Fin estimado', 'lbl-afterparty':'Afterparty / Cocktail',
+    'lbl-loadout':'Load Out / Desmontaje', 'lbl-generalNotes':'Notas generales',
+    'lbl-cue-section':'Cues Técnicos — Minuto a Minuto',
+    'lbl-lineup-section':'Hoja de Salidas — Runway Lineup',
+    'cue-help-text':'Añade cada bloque del show con tiempo, acción, cue de audio, luces y backstage.',
+    'lineup-help-text':'Define el orden de diseñadores, número de looks, track y presets técnicos.',
+    'btn-add-cue':'+ Añadir Cue', 'btn-add-lineup':'+ Añadir Diseñador',
+    'btn-reset':'Limpiar', 'btn-save':'💾 Guardar',
+    /* Doc labels */
+    'doc-phase0':'Escaleteado General', 'doc-phase1':'Minuto a Minuto · Cue Sheet', 'doc-phase2':'Hoja de Salidas · Lineup',
+    'doc-subtitle':'Pasarela · Fashion Show · Desfile de Moda',
+    'doc-confidential':'Confidencial · Uso Interno', 'doc-producedby':'Producido por',
+    'doc-brand':'Miami DJ Beat LLC',
+    'esc-label-stage':'Etapa', 'esc-label-time':'Hora', 'esc-label-responsible':'Responsable',
+    'cue-col-time':'Tiempo', 'cue-col-block':'Bloque / Acción', 'cue-col-audio':'Audio / Música',
+    'cue-col-lighting':'Iluminación / Visuales', 'cue-col-backstage':'Backstage / Modelos',
+    'lineup-col-num':'#', 'lineup-col-designer':'Diseñador / Marca', 'lineup-col-collection':'Colección',
+    'lineup-col-looks':'Looks', 'lineup-col-track':'Track Musical', 'lineup-col-lighting':'Preset Luces',
+    'lineup-col-video':'Pantalla / Video Wall', 'lineup-col-notes':'Notas',
+    'cue-lbl-timestart':'Inicio', 'cue-lbl-timeend':'Fin',
+    'cue-lbl-block':'Bloque / Acción', 'cue-lbl-audio':'Audio / Música',
+    'cue-lbl-lighting':'Iluminación / Visuales', 'cue-lbl-backstage':'Backstage / Modelos',
+    'lineup-lbl-designer':'Diseñador', 'lineup-lbl-collection':'Colección',
+    'lineup-lbl-looks':'# Looks', 'lineup-lbl-track':'Track Musical',
+    'lineup-lbl-lighting':'Preset Luces', 'lineup-lbl-video':'Video Wall',
+    'lineup-lbl-notes':'Notas',
+    'esc-stages': [
+      ['Backstage Gate','Llegada de equipo completo: modelos, MUA, estilistas, diseñadores, producción.','DJ / Producción'],
+      ['MUA & Estilistas','Inicio de maquillaje y peinados. Modelos asignadas por sección.','MUA Lead'],
+      ['Sound Check','Prueba de sistema de audio y luces. DJ verifica cues técnicos.','DJ · Técnico de Luces'],
+      ['First Look / Line-up','Ensayo general en pasarela. Medir tiempos de caminata. Ajustar pit de fotógrafos.','Director de Pasarela'],
+      ['Apertura de Puertas','Público ingresa al venue. DJ toca set ambiental.','Producción · Seguridad'],
+      ['Inicio del Show','Inicio del Minuto a Minuto técnico. Ver Cue Sheet.','DJ · MC · Director'],
+      ['Fin del Show','Cierre oficial. Designer\'s Walk. Fotos de prensa.','MC · Fotografía'],
+      ['Afterparty / Cocktail','Cocktail posterior al show. DJ open set.','DJ · Bartenders'],
+      ['Load Out','Desmontaje de equipos y decoración.','Producción · Técnicos'],
+    ],
+  },
+  en: {
+    'tab0':'General Timeline', 'tab1':'Minute-by-Minute · Cue Sheet', 'tab2':'Runway Lineup Sheet',
+    'lbl-header-data':'Event Data', 'lbl-escaleteado':'General Timeline — Key Times',
+    'lbl-brand':'Designer / Brand', 'lbl-producer':'Producer / Director',
+    'lbl-date':'Date', 'lbl-schedule':'Schedule', 'lbl-venue':'Venue / Address',
+    'lbl-dj':'DJ / Music Director', 'lbl-mc':'MC / Host', 'lbl-format':'Music Format / Style',
+    'lbl-gate':'Backstage Gate (crew arrival)', 'lbl-muaopen':'MUA & Stylists — Start',
+    'lbl-soundcheck':'Sound Check / Lights', 'lbl-firstlook':'First Look / Line-up',
+    'lbl-doors':'Doors Open', 'lbl-showstart':'Show — Start',
+    'lbl-showend':'Show — Est. End', 'lbl-afterparty':'Afterparty / Cocktail',
+    'lbl-loadout':'Load Out / Teardown', 'lbl-generalNotes':'General Notes',
+    'lbl-cue-section':'Technical Cues — Minute-by-Minute',
+    'lbl-lineup-section':'Runway Lineup Sheet',
+    'cue-help-text':'Add each show block with time, action, audio cue, lighting and backstage position.',
+    'lineup-help-text':'Define designer order, number of looks, track and technical presets per collection.',
+    'btn-add-cue':'+ Add Cue', 'btn-add-lineup':'+ Add Designer',
+    'btn-reset':'Reset', 'btn-save':'💾 Save',
+    'doc-phase0':'General Timeline', 'doc-phase1':'Minute-by-Minute · Cue Sheet', 'doc-phase2':'Runway Lineup Sheet',
+    'doc-subtitle':'Runway · Fashion Show · Fashion Parade',
+    'doc-confidential':'Confidential · Internal Use', 'doc-producedby':'Produced by',
+    'doc-brand':'Miami DJ Beat LLC',
+    'esc-label-stage':'Stage', 'esc-label-time':'Time', 'esc-label-responsible':'Responsible',
+    'cue-col-time':'Time', 'cue-col-block':'Block / Action', 'cue-col-audio':'Audio / Music',
+    'cue-col-lighting':'Lighting / Visuals', 'cue-col-backstage':'Backstage / Models',
+    'lineup-col-num':'#', 'lineup-col-designer':'Designer / Brand', 'lineup-col-collection':'Collection',
+    'lineup-col-looks':'Looks', 'lineup-col-track':'Music Track', 'lineup-col-lighting':'Lighting Preset',
+    'lineup-col-video':'Screen / Video Wall', 'lineup-col-notes':'Notes',
+    'cue-lbl-timestart':'Start', 'cue-lbl-timeend':'End',
+    'cue-lbl-block':'Block / Action', 'cue-lbl-audio':'Audio / Music',
+    'cue-lbl-lighting':'Lighting / Visuals', 'cue-lbl-backstage':'Backstage / Models',
+    'lineup-lbl-designer':'Designer', 'lineup-lbl-collection':'Collection',
+    'lineup-lbl-looks':'# Looks', 'lineup-lbl-track':'Music Track',
+    'lineup-lbl-lighting':'Lighting Preset', 'lineup-lbl-video':'Video Wall',
+    'lineup-lbl-notes':'Notes',
+    'esc-stages': [
+      ['Backstage Gate','Full crew arrival: models, MUA, stylists, designers, production.','DJ / Production'],
+      ['MUA & Stylists','Makeup and hair start. Models assigned by section.','MUA Lead'],
+      ['Sound Check','Audio system and lighting test. DJ verifies technical cues.','DJ · Lighting Tech'],
+      ['First Look / Line-up','Full runway rehearsal. Measure walk times. Adjust photographer pit.','Runway Director'],
+      ['Doors Open','Audience enters the venue. DJ plays ambient set.','Production · Security'],
+      ['Show Start','Minute-by-minute technical script begins. See Cue Sheet.','DJ · MC · Director'],
+      ['Show End','Official closing. Designer\'s Walk. Press photos.','MC · Photography'],
+      ['Afterparty / Cocktail','Post-show cocktail. DJ open set.','DJ · Bartenders'],
+      ['Load Out','Equipment and decor teardown.','Production · Techs'],
+    ],
+  },
+};
+function T(key) { return (I18N[_lang] && I18N[_lang][key]) || (I18N['es'][key]) || key; }
+function v(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ── Lang ── */
+function setLang(lang) {
+  _lang = lang;
+  document.getElementById('btn-es').classList.toggle('active', lang==='es');
+  document.getElementById('btn-en').classList.toggle('active', lang==='en');
+  applyI18nLabels();
+  renderCueEditor();
+  renderLineupEditor();
+  updatePreview();
+}
+
+function applyI18nLabels() {
+  var keys = ['tab0','tab1','tab2','lbl-header-data','lbl-escaleteado','lbl-brand','lbl-producer',
+    'lbl-date','lbl-schedule','lbl-venue','lbl-dj','lbl-mc','lbl-format',
+    'lbl-gate','lbl-muaopen','lbl-soundcheck','lbl-firstlook','lbl-doors',
+    'lbl-showstart','lbl-showend','lbl-afterparty','lbl-loadout','lbl-generalNotes',
+    'lbl-cue-section','lbl-lineup-section','cue-help-text','lineup-help-text'];
+  keys.forEach(function(k) {
+    var el = document.getElementById(k === 'tab0' ? 'tab0-label' : k === 'tab1' ? 'tab1-label' : k === 'tab2' ? 'tab2-label' : k);
+    if (el) el.textContent = T(k);
+  });
+  var addCue = document.getElementById('btn-add-cue'); if (addCue) addCue.textContent = T('btn-add-cue');
+  var addLu  = document.getElementById('btn-add-lineup'); if (addLu) addLu.textContent = T('btn-add-lineup');
+  var btnRst = document.getElementById('btn-reset'); if (btnRst) btnRst.textContent = T('btn-reset');
+}
+
+/* ── Phases ── */
+function setPhase(p) {
+  _phase = p;
+  [0,1,2].forEach(function(i) {
+    document.getElementById('ed-phase-'+i).style.display = i===p ? '' : 'none';
+    document.getElementById('tab-'+i).classList.toggle('active', i===p);
+  });
+  updatePreview();
+}
+
+/* ══ CUE EDITOR ══ */
+function renderCueEditor() {
+  var html = _cueRows.map(function(r, idx) {
+    return '<div class="cue-row-card" id="cue-card-'+r.id+'">'
+      + '<div class="cue-row-header">'
+        + '<span class="cue-row-num">CUE '+(idx+1)+'</span>'
+        + '<div class="cue-row-time-fields">'
+          + '<input type="text" value="'+esc(r.timeStart)+'" placeholder="00:00" title="'+T('cue-lbl-timestart')+'" oninput="updateCueField('+r.id+',\'timeStart\',this.value)">'
+          + '<input type="text" value="'+esc(r.timeEnd)+'"   placeholder="05:00" title="'+T('cue-lbl-timeend')+'"   oninput="updateCueField('+r.id+',\'timeEnd\',this.value)">'
+        + '</div>'
+        + '<button class="btn-rm" onclick="removeCueRow('+r.id+')">✕</button>'
+      + '</div>'
+      + '<div class="cue-sub-fields">'
+        + '<div class="field full"><label>'+T('cue-lbl-block')+'</label><input type="text" value="'+esc(r.block)+'" oninput="updateCueField('+r.id+',\'block\',this.value)"></div>'
+        + '<div class="field full"><label>'+T('cue-lbl-audio')+'</label><input type="text" value="'+esc(r.audio)+'" oninput="updateCueField('+r.id+',\'audio\',this.value)"></div>'
+        + '<div class="field full"><label>'+T('cue-lbl-lighting')+'</label><input type="text" value="'+esc(r.lighting)+'" oninput="updateCueField('+r.id+',\'lighting\',this.value)"></div>'
+        + '<div class="field full"><label>'+T('cue-lbl-backstage')+'</label><input type="text" value="'+esc(r.backstage)+'" oninput="updateCueField('+r.id+',\'backstage\',this.value)"></div>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+  document.getElementById('cue-rows-editor').innerHTML = html;
+}
+
+function addCueRow() {
+  _cueRows.push({ id:_cueNextId++, timeStart:'', timeEnd:'', block:'', audio:'', lighting:'', backstage:'' });
+  renderCueEditor();
+  updatePreview();
+}
+function removeCueRow(id) {
+  _cueRows = _cueRows.filter(function(r){ return r.id !== id; });
+  renderCueEditor();
+  updatePreview();
+}
+function updateCueField(id, field, val) {
+  var r = _cueRows.find(function(r){ return r.id===id; });
+  if (r) { r[field]=val; updatePreview(); }
+}
+
+/* ══ LINEUP EDITOR ══ */
+function renderLineupEditor() {
+  var html = _lineupRows.map(function(r, idx) {
+    return '<div class="lineup-row-card" id="lineup-card-'+r.id+'">'
+      + '<div class="lineup-row-header">'
+        + '<span class="lineup-num">#'+(idx+1)+'</span>'
+        + '<input type="text" value="'+esc(r.designer)+'" placeholder="'+T('lineup-lbl-designer')+'" style="flex:1;" oninput="updateLineupField('+r.id+',\'designer\',this.value)">'
+        + '<button class="btn-rm" onclick="removeLineupRow('+r.id+')">✕</button>'
+      + '</div>'
+      + '<div class="cue-sub-fields">'
+        + '<div class="field"><label>'+T('lineup-lbl-collection')+'</label><input type="text" value="'+esc(r.collection)+'" oninput="updateLineupField('+r.id+',\'collection\',this.value)"></div>'
+        + '<div class="field"><label>'+T('lineup-lbl-looks')+'</label><input type="number" min="1" value="'+r.looks+'" oninput="updateLineupField('+r.id+',\'looks\',this.value)"></div>'
+        + '<div class="field"><label>'+T('lineup-lbl-track')+'</label><input type="text" value="'+esc(r.track)+'" oninput="updateLineupField('+r.id+',\'track\',this.value)"></div>'
+        + '<div class="field"><label>'+T('lineup-lbl-lighting')+'</label><input type="text" value="'+esc(r.lighting)+'" oninput="updateLineupField('+r.id+',\'lighting\',this.value)"></div>'
+        + '<div class="field"><label>'+T('lineup-lbl-video')+'</label><input type="text" value="'+esc(r.video)+'" oninput="updateLineupField('+r.id+',\'video\',this.value)"></div>'
+        + '<div class="field full"><label>'+T('lineup-lbl-notes')+'</label><input type="text" value="'+esc(r.notes||'')+'" oninput="updateLineupField('+r.id+',\'notes\',this.value)"></div>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+  document.getElementById('lineup-rows-editor').innerHTML = html;
+}
+
+function addLineupRow() {
+  _lineupRows.push({ id:_lineupNextId++, designer:'', collection:'', looks:6, track:'', lighting:'', video:'', notes:'' });
+  renderLineupEditor();
+  updatePreview();
+}
+function removeLineupRow(id) {
+  _lineupRows = _lineupRows.filter(function(r){ return r.id!==id; });
+  renderLineupEditor();
+  updatePreview();
+}
+function updateLineupField(id, field, val) {
+  var r = _lineupRows.find(function(r){ return r.id===id; });
+  if (r) { r[field]= field==='looks' ? (parseInt(val,10)||1) : val; updatePreview(); }
+}
+
+/* ══ DOCUMENT PREVIEW ══ */
+function buildDocHeader(phaseKey) {
+  var brand    = v('f-brand')    || T('lbl-brand');
+  var producer = v('f-producer') || '';
+  var date     = v('f-date')     || (_lang==='es' ? 'Fecha por confirmar' : 'Date TBD');
+  var schedule = v('f-schedule') || '–';
+  return '<div class="page-header doc-header">'
+    + '<div class="doc-brand" style="display:flex;align-items:center;gap:12px;">'
+      + '<img src="./logo-mdj-gold.png" alt="Miami DJ Beat" onerror="this.style.display=\'none\'" style="width:40px;">'
+      + '<div><h1 class="doc-brand" style="font-family:\'Cinzel\',serif;font-size:13pt;color:var(--gold);">Miami DJ Beat</h1><p style="font-family:\'Cinzel\',serif;font-size:8pt;color:#888;">Production Script · '+T('doc-confidential')+'</p></div>'
+    + '</div>'
+    + '<div class="doc-event-info">'
+      + '<div class="phase-eyebrow">'+T('doc-subtitle')+'</div>'
+      + '<div class="event-main-title">'+esc(brand)+'</div>'
+      + '<div class="event-meta-line">'+esc(date)+' · '+esc(schedule)+'</div>'
+    + '</div>'
+  + '</div>';
+}
+
+function buildMetaStrip() {
+  var dj    = v('f-dj')     || 'Miami DJ Beat';
+  var mc    = v('f-mc')     || '–';
+  var venue = v('f-venue')  || '–';
+  var fmt   = v('f-format') || '–';
+  var prod  = v('f-producer') || '–';
+  return '<div class="meta-strip">'
+    + '<div class="meta-cell"><label>'+T('lbl-dj')+'</label><span>'+esc(dj)+'</span></div>'
+    + '<div class="meta-cell"><label>'+T('lbl-mc')+'</label><span>'+esc(mc)+'</span></div>'
+    + '<div class="meta-cell"><label>'+T('lbl-venue')+'</label><span>'+esc(venue)+'</span></div>'
+    + '<div class="meta-cell"><label>'+T('lbl-format')+'</label><span>'+esc(fmt)+'</span></div>'
+    + '<div class="meta-cell"><label>'+T('lbl-producer')+'</label><span>'+esc(prod)+'</span></div>'
+  + '</div>';
+}
+
+function buildDocFooter() {
+  var dj = v('f-dj') || 'Miami DJ Beat';
+  return '<div class="doc-footer">'
+    + '<span>'+T('doc-producedby')+' · '+esc(dj)+'</span>'
+    + '<span class="footer-brand">'+T('doc-brand')+'</span>'
+    + '<span>'+T('doc-confidential')+'</span>'
+  + '</div>';
+}
+
+function renderPhase0Doc() {
+  var stages = T('esc-stages');
+  var timeFields = ['f-gate','f-muaopen','f-soundcheck','f-firstlook','f-doors','f-showstart','f-showend','f-afterparty','f-loadout'];
+  var html = '<div class="page">'
+    + buildDocHeader('doc-phase0')
+    + buildMetaStrip()
+    + '<div class="phase-badge">'+T('doc-phase0')+'</div>'
+    + '<div class="sec-heading">'+T('doc-phase0')+'</div>'
+    + '<table class="esc-table"><thead><tr>'
+      + '<th>'+T('esc-label-stage')+'</th>'
+      + '<th>'+T('esc-label-time')+'</th>'
+      + '<th style="min-width:3in;">'+(_lang==='es' ? 'Descripción' : 'Description')+'</th>'
+      + '<th>'+T('esc-label-responsible')+'</th>'
+    + '</tr></thead><tbody>';
+
+  stages.forEach(function(s, i) {
+    var tVal = v(timeFields[i]) || '–';
+    html += '<tr>'
+      + '<td><strong>'+esc(s[0])+'</strong></td>'
+      + '<td class="time-cell">'+esc(tVal)+'</td>'
+      + '<td>'+esc(s[1])+'</td>'
+      + '<td class="cue-cell">'+esc(s[2])+'</td>'
+    + '</tr>';
+  });
+
+  var notesGen = v('f-generalNotes');
+  if (notesGen) {
+    html += '</tbody></table>'
+      + '<div class="sec-heading" style="margin-top:16px;">'+(_lang==='es' ? 'Notas Adicionales' : 'Additional Notes')+'</div>'
+      + '<p style="font-family:\'EB Garamond\',serif;font-size:11pt;color:#333;line-height:1.6;">'+esc(notesGen)+'</p>';
+  } else {
+    html += '</tbody></table>';
+  }
+
+  html += buildDocFooter() + '</div>';
+  return html;
+}
+
+function renderPhase1Doc() {
+  var html = '<div class="page">'
+    + buildDocHeader('doc-phase1')
+    + buildMetaStrip()
+    + '<div class="phase-badge">'+T('doc-phase1')+'</div>'
+    + '<div class="sec-heading">'+T('doc-phase1')+'</div>'
+    + '<table class="cue-table"><thead><tr>'
+      + '<th style="width:1.0in;">'+T('cue-col-time')+'</th>'
+      + '<th style="min-width:1.4in;">'+T('cue-col-block')+'</th>'
+      + '<th>'+T('cue-col-audio')+'</th>'
+      + '<th>'+T('cue-col-lighting')+'</th>'
+      + '<th>'+T('cue-col-backstage')+'</th>'
+    + '</tr></thead><tbody>';
+
+  _cueRows.forEach(function(r) {
+    var timeStr = r.timeStart && r.timeEnd ? r.timeStart+'–'+r.timeEnd : (r.timeStart || r.timeEnd || '–');
+    html += '<tr>'
+      + '<td class="time-cell">'+esc(timeStr)+'</td>'
+      + '<td><strong>'+esc(r.block||'–')+'</strong></td>'
+      + '<td class="cue-cell">'+esc(r.audio||'–')+'</td>'
+      + '<td class="cue-cell">'+esc(r.lighting||'–')+'</td>'
+      + '<td class="cue-cell">'+esc(r.backstage||'–')+'</td>'
+    + '</tr>';
+  });
+
+  html += '</tbody></table>' + buildDocFooter() + '</div>';
+  return html;
+}
+
+function renderPhase2Doc() {
+  var html = '<div class="page">'
+    + buildDocHeader('doc-phase2')
+    + buildMetaStrip()
+    + '<div class="phase-badge">'+T('doc-phase2')+'</div>'
+    + '<div class="sec-heading">'+T('doc-phase2')+'</div>'
+    + '<table class="lineup-table"><thead><tr>'
+      + '<th style="width:.3in;">'+T('lineup-col-num')+'</th>'
+      + '<th>'+T('lineup-col-designer')+'</th>'
+      + '<th>'+T('lineup-col-collection')+'</th>'
+      + '<th style="width:.5in;">'+T('lineup-col-looks')+'</th>'
+      + '<th>'+T('lineup-col-track')+'</th>'
+      + '<th>'+T('lineup-col-lighting')+'</th>'
+      + '<th>'+T('lineup-col-video')+'</th>'
+    + '</tr></thead><tbody>';
+
+  _lineupRows.forEach(function(r, i) {
+    html += '<tr>'
+      + '<td class="time-cell">'+(i+1)+'</td>'
+      + '<td><strong>'+esc(r.designer||'–')+'</strong></td>'
+      + '<td>'+esc(r.collection||'–')+'</td>'
+      + '<td style="text-align:center;">'+r.looks+'</td>'
+      + '<td class="cue-cell">'+esc(r.track||'–')+'</td>'
+      + '<td class="cue-cell">'+esc(r.lighting||'–')+'</td>'
+      + '<td class="cue-cell">'+esc(r.video||'–')+'</td>'
+    + '</tr>';
+  });
+
+  html += '</tbody></table>' + buildDocFooter() + '</div>';
+  return html;
+}
+
+function updatePreview() {
+  var html = '';
+  /* Print all 3 phases; screen shows active phase only */
+  if (_phase === 0) html = renderPhase0Doc();
+  else if (_phase === 1) html = renderPhase1Doc();
+  else html = renderPhase2Doc();
+  document.getElementById('preview-col').innerHTML = html;
+}
+
+/* ══ SAVE to Supabase ══ */
+async function saveToSupabase() {
+  var btn = document.getElementById('btn-save');
+  btn.textContent = '⏳...';
+  try {
+    var sbInstance = (window.supabase || (typeof createClient !== 'undefined' && window._sb));
+    if (!sbInstance) { alert('Supabase no disponible'); btn.textContent = T('btn-save'); return; }
+    var { data: { session } } = await sbInstance.auth.getSession();
+    if (!session) { alert(_lang==='es' ? 'Debes iniciar sesión para guardar.' : 'You must be logged in to save.'); btn.textContent = T('btn-save'); return; }
+
+    var payload = {
+      user_id: session.user.id,
+      event_type: 'fashion_show',
+      event_name: v('f-brand'),
+      designer_brand: v('f-brand'),
+      producer_director: v('f-producer'),
+      event_date_text: v('f-date'),
+      schedule: v('f-schedule'),
+      venue: v('f-venue'),
+      dj_name: v('f-dj'),
+      mc_name: v('f-mc'),
+      music_format: v('f-format'),
+      backstage_gate: v('f-gate'),
+      mua_start: v('f-muaopen'),
+      sound_check: v('f-soundcheck'),
+      first_look: v('f-firstlook'),
+      doors_open: v('f-doors'),
+      show_start: v('f-showstart'),
+      show_end: v('f-showend'),
+      afterparty: v('f-afterparty'),
+      load_out: v('f-loadout'),
+      general_notes: v('f-generalNotes'),
+      cue_blocks: JSON.stringify(_cueRows),
+      runway_lineup: JSON.stringify(_lineupRows),
+      updated_at: new Date().toISOString(),
+    };
+
+    var { error } = await sbInstance.from('event_show_plans').upsert(payload, { onConflict: 'user_id,event_name' });
+    if (error) throw error;
+    btn.textContent = '✅ Guardado';
+    setTimeout(function(){ btn.textContent = T('btn-save'); }, 2000);
+  } catch(e) {
+    console.error('[FashionShowBlueprint] save error:', e);
+    btn.textContent = '❌ Error';
+    setTimeout(function(){ btn.textContent = T('btn-save'); }, 2500);
+  }
+}
+
+/* ── Reset ── */
+function resetAll() {
+  if (!confirm(_lang==='es' ? '¿Limpiar todos los campos?' : 'Clear all fields?')) return;
+  document.querySelectorAll('#editor-col input, #editor-col textarea').forEach(function(el){ el.value=''; });
+  updatePreview();
+}
+
+/* ── Init ── */
+(function init() {
+  renderCueEditor();
+  renderLineupEditor();
+  applyI18nLabels();
+  updatePreview();
+})();
+</script>
+</body>
+</html>
