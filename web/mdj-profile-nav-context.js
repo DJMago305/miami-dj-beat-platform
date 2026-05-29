@@ -16,6 +16,10 @@
 
     function hasProfileNavContext() {
         try {
+            /* account-settings.html siempre activa el strip artístico —
+               es el hub del owner/artista independiente del param ?mdj_nav */
+            var _page = (window.location.pathname.split('/').pop() || '').toLowerCase();
+            if (_page === 'account-settings.html') return true;
             return new URLSearchParams(window.location.search || '').get(PARAM) === VALUE;
         } catch (e) {
             return false;
