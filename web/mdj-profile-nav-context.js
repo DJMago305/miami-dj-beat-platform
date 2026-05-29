@@ -93,7 +93,6 @@
             '<a href="' + withProfileNav('./dj-tools.html') + '" class="dj-tab-btn' + active('tools') + '" data-i18n="nav-tools">DJ Tools</a>' +
             '<a href="' + hrefFlow + '" class="dj-tab-btn" data-i18n="flow-dash">CASH FLOW</a>' +
             '<a href="' + hrefProfile + '" class="dj-tab-btn" data-i18n="menu-account">Mi Perfil</a>' +
-            '<a href="./admin-dashboard.html" class="dj-tab-btn" data-mdj-nav="staff">STAFF</a>' +
             '<a href="' + hrefSft + '" class="dj-tab-btn" data-i18n="nav-soundfortips">SoundForTips™</a>' +
             '</div>';
 
