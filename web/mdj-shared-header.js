@@ -2685,7 +2685,10 @@
           /* En Inicio o nav compacto: CONFIG visible si hay sesión activa; Agenda/Flow solo en páginas artista no-compactas. */
           var showConfigOnHome = onPublicHome && !!window.__mdjNavOwnUserId;
           mdjApplyAgendaMainNavLink(!!showArtistDashMainNav && !onPublicHome && !isCompactNav, './dj-dashboard.html?tab=dashboard');
-          mdjApplyConfigMainNavLink((!!showArtistDashMainNav && !onPublicHome) || showConfigOnHome || (isCompactNav && !!window.__mdjNavOwnUserId), settingsUrl);
+          /* CONFIG en nav compacto (services/events/shop/tools/jobs): solo para staff/owner (no artista).
+           * Artista en compact-nav revela CONFIG + MI PERFIL → 9 ítems que desbordan 1200px → carrusel.
+           * Artista accede a CONFIG desde su perfil artístico (dj-profile / dj-dashboard). */
+          mdjApplyConfigMainNavLink((!!showArtistDashMainNav && !onPublicHome && !isCompactNav) || showConfigOnHome || (isCompactNav && !!window.__mdjNavOwnUserId && !showArtistDashMainNav), settingsUrl);
           mdjApplyFlowMainNavLink(!!showArtistDashMainNav && !onPublicHome && !isCompactNav, './dj-dashboard.html?tab=flow');
           var showArtistHeaderNav =
             !mdjIsGuestHomeNavPage() &&
