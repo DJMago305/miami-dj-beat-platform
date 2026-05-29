@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event Blueprint Editor — Miami DJ Beat</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../supabase-config.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --gold: #b8912a; --gold-light: #d4a843;
+    --border-doc: #cec0a0;
+    --editor-bg: #1a1a2e; --editor-card: #16213e;
+    --editor-border: #2a2a4a; --editor-accent: #b8912a;
+    --editor-text: #e8e8f0; --editor-muted: #8888aa;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--editor-bg); color:var(--editor-text); min-height:100vh; }
+
+  /* ── EDITOR PANEL ── */
+  #editor-panel { background:var(--editor-card); border-bottom:2px solid var(--editor-accent); padding:24px 36px 20px; }
+  .editor-top { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:18px; }
+  .editor-brand { display:flex; align-items:center; gap:12px; }
+  .editor-brand img { width:46px; height:auto; }
+  .editor-brand-text h2 { font-family:'Cinzel',serif; font-size:14px; font-weight:700; color:var(--editor-accent); letter-spacing:1px; }
+  .editor-brand-text p { font-size:11px; color:var(--editor-muted); margin-top:2px; }
+  .editor-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .lang-toggle { display:flex; border:1px solid var(--editor-border); border-radius:6px; overflow:hidden; }
+  .lang-toggle button { padding:5px 12px; background:transparent; border:none; color:var(--editor-muted); cursor:pointer; font-size:12px; font-weight:700; transition:all .2s; }
+  .lang-toggle button.active { background:var(--editor-accent); color:#000; }
+  .btn-reset,.btn-save,.btn-print { padding:8px 16px; border:none; border-radius:7px; cursor:pointer; font-size:12px; font-weight:700; letter-spacing:.05em; }
+  .btn-reset { background:rgba(255,255,255,.08); color:var(--editor-muted); }
+  .btn-save  { background:var(--editor-accent); color:#000; }
+  .btn-print { background:#2a6a4a; color:#fff; }
+
+  /* Type selector pills */
+  .type-selector { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+  .type-pill { padding:7px 16px; border-radius:99px; border:1px solid var(--editor-border); background:rgba(255,255,255,.04); color:var(--editor-muted); cursor:pointer; font-size:12px; font-weight:700; letter-spacing:.04em; transition:all .2s; }
+  .type-pill.active { background:var(--editor-accent); color:#000; border-color:var(--editor-accent); }
+  .type-pill:hover:not(.active) { border-color:var(--editor-accent); color:var(--gold-light); }
+
+  /* Form grid */
+  .editor-form { display:flex; flex-wrap:wrap; gap:14px; }
+  .form-group { display:flex; flex-direction:column; gap:5px; }
+  .form-group.half { flex:1 1 260px; }
+  .form-group.full { flex:1 1 100%; }
+  .form-group label { font-size:11px; font-weight:700; color:var(--editor-muted); text-transform:uppercase; letter-spacing:.07em; }
+  .form-group input, .form-group textarea, .form-group select {
+    background:rgba(255,255,255,.06); border:1px solid var(--editor-border);
+    border-radius:7px; padding:9px 12px; color:var(--editor-text);
+    font-family:'Inter',sans-serif; font-size:13px; width:100%;
+    transition:border .2s;
+  }
+  .form-group input:focus, .form-group textarea:focus { outline:none; border-color:var(--editor-accent); }
+  .form-group textarea { resize:vertical; min-height:70px; }
+  .editor-divider { border:none; border-top:1px solid var(--editor-border); width:100%; margin:6px 0; }
+  .editor-section-label { width:100%; font-size:11px; font-weight:800; color:var(--editor-accent); text-transform:uppercase; letter-spacing:.1em; padding-top:4px; }
+
+  /* ── DOCUMENT PREVIEW ── */
+  #doc-preview { background:#e8e4dc; padding:30px 20px; min-height:60vh; }
+  .page {
+    background:#fff; width:8.5in; min-height:11in; margin:0 auto 24px;
+    padding:.75in .85in .85in;
+    box-shadow:0 4px 24px rgba(0,0,0,0.18);
+    position:relative; overflow:hidden;
+  }
+  .page-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:.35in; padding-bottom:.18in; border-bottom:2px solid var(--gold); }
+  .doc-brand-block { display:flex; align-items:center; gap:14px; }
+  .doc-brand-block img { width:48px; height:auto; }
+  .doc-brand-text h1 { font-family:'Cinzel',serif; font-size:14.5pt; font-weight:700; color:var(--gold); letter-spacing:.5px; }
+  .doc-brand-text p { font-size:9pt; color:#888; margin-top:2px; font-family:'Cinzel',serif; }
+  .doc-event-title { text-align:right; }
+  .doc-event-title .event-type-label { font-family:'Cinzel',serif; font-size:10pt; color:#999; letter-spacing:.1em; text-transform:uppercase; }
+  .doc-event-title .event-name { font-family:'EB Garamond',serif; font-style:italic; font-size:20pt; color:#222; margin-top:4px; }
+  .doc-event-title .event-date { font-family:'Cinzel',serif; font-size:9pt; color:var(--gold); margin-top:3px; }
+
+  .meta-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px 24px; margin-bottom:.3in; padding:.15in; background:#faf8f4; border:1px solid var(--border-doc); border-radius:6px; }
+  .meta-item label { font-family:'Cinzel',serif; font-size:7.5pt; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:2px; }
+  .meta-item span { font-family:'EB Garamond',serif; font-size:11pt; color:#222; }
+
+  .section-heading { font-family:'Cinzel',serif; font-size:11pt; font-weight:700; color:var(--gold); letter-spacing:.05em; text-transform:uppercase; margin:18px 0 8px; padding-bottom:5px; border-bottom:1.5px solid var(--border-doc); }
+  .section-block { margin-bottom:14px; break-inside:avoid; page-break-inside:avoid; }
+  .section-note-label { font-family:'Cinzel',serif; font-size:10pt; font-weight:700; color:var(--gold); margin:12px 0 5px; padding-bottom:4px; border-bottom:1px solid var(--border-doc); }
+  .section-note-text { font-size:10.5pt; color:#333; line-height:1.65; white-space:pre-wrap; min-height:1.6em; }
+
+  .timeline-table { width:100%; border-collapse:collapse; font-size:10pt; }
+  .timeline-table thead tr { background:var(--gold); color:#fff; }
+  .timeline-table th { font-family:'Cinzel',serif; font-size:8pt; font-weight:700; letter-spacing:.07em; text-transform:uppercase; padding:7px 10px; text-align:left; }
+  .timeline-table td { padding:7px 10px; border-bottom:1px solid #f0ebe0; color:#222; font-family:'EB Garamond',serif; font-size:10.5pt; vertical-align:top; }
+  .timeline-table tbody tr:nth-child(even) { background:#faf8f4; }
+  .timeline-table .time-col { font-family:'Cinzel',serif; font-size:9pt; font-weight:700; color:var(--gold); white-space:nowrap; }
+  .timeline-table .cue-col { font-size:9.5pt; color:#555; font-style:italic; }
+
+  .page-footer { position:absolute; bottom:.35in; left:.85in; right:.85in; border-top:1px solid var(--border-doc); padding-top:7px; display:flex; justify-content:space-between; align-items:center; font-size:7.5pt; color:#aaa; font-family:'Cinzel',serif; letter-spacing:.3px; background:#fff; }
+  .page-footer .footer-brand { font-weight:600; color:var(--gold); }
+
+  @page { size:letter portrait; margin:0; }
+  @media print {
+    body { background:#fff; }
+    #editor-panel { display:none !important; }
+    #doc-preview { background:#fff; padding:0; }
+    .page { margin:0; box-shadow:none; min-height:0; padding-bottom:.75in; page-break-before:always; break-before:page; }
+    .page:first-child { page-break-before:avoid; break-before:avoid; }
+    .page-footer { position:absolute; bottom:.18in; left:.85in; right:.85in; background:#fff; }
+    .timeline-table tbody tr { page-break-inside:avoid; break-inside:avoid; }
+    .section-heading { page-break-after:avoid; break-after:avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── EDITOR PANEL ── -->
+<div id="editor-panel">
+  <div class="editor-top">
+    <div class="editor-brand">
+      <img src="./logo-mdj-gold.png" alt="Miami DJ Beat" onerror="this.style.display='none'">
+      <div class="editor-brand-text">
+        <h2 id="editor-title">Event Blueprint Editor</h2>
+        <p>Miami DJ Beat LLC — Herramienta de Planificación</p>
+      </div>
+    </div>
+    <div class="editor-actions">
+      <div class="lang-toggle">
+        <button id="btn-es" class="active" onclick="setLang('es')">ES</button>
+        <button id="btn-en" onclick="setLang('en')">EN</button>
+      </div>
+      <button class="btn-reset" onclick="resetForm()">Limpiar / Reset</button>
+      <button class="btn-assign" id="btn-assign-open" onclick="openAssignModal()" style="padding:8px 14px;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;background:rgba(99,102,241,.2);border:1px solid rgba(99,102,241,.4);color:#a5b4fc;">👤 Asignar a Cliente</button>
+      <button class="btn-print" onclick="window.print()">⬇ Imprimir / PDF</button>
+    </div>
+  </div>
+
+  <!-- Selector de tipo de evento -->
+  <div class="type-selector" id="type-selector">
+    <button class="type-pill" onclick="setEventType('quinceanera')" data-type="quinceanera">Quinceañera</button>
+    <button class="type-pill" onclick="setEventType('show')"        data-type="show">Show / Concierto</button>
+    <button class="type-pill" onclick="setEventType('privada')"     data-type="privada">Fiesta Privada</button>
+    <button class="type-pill" onclick="setEventType('corporativa')" data-type="corporativa">Fiesta Corporativa</button>
+    <button class="type-pill" onclick="setEventType('pasarela')"    data-type="pasarela">Pasarela / Fashion Show</button>
+  </div>
+
+  <!-- Campos del formulario -->
+  <div class="editor-form">
+    <div class="editor-section-label" id="lbl-sec-general">Datos del Evento</div>
+
+    <div class="form-group half">
+      <label id="lbl-protagonist">Protagonista / Homenajeado(a)</label>
+      <input type="text" id="f-protagonist" placeholder="Nombre completo" oninput="update()">
+    </div>
+    <div class="form-group half" id="grp-secondary">
+      <label id="lbl-secondary">Acompañante / Marca / Empresa</label>
+      <input type="text" id="f-secondary" placeholder="Opcional" oninput="update()">
+    </div>
+    <div class="form-group half">
+      <label id="lbl-date">Fecha del Evento</label>
+      <input type="text" id="f-date" placeholder="ej. Sábado, 14 de junio de 2026" oninput="update()">
+    </div>
+    <div class="form-group half">
+      <label id="lbl-time">Horario</label>
+      <input type="text" id="f-time" placeholder="ej. 6:00 PM – 12:00 AM" oninput="update()">
+    </div>
+    <div class="form-group half">
+      <label id="lbl-venue">Venue / Dirección</label>
+      <input type="text" id="f-venue" placeholder="Dirección completa" oninput="update()">
+    </div>
+    <div class="form-group half">
+      <label id="lbl-dj">DJ / Coordinador Asignado</label>
+      <input type="text" id="f-dj" placeholder="ej. DJ Mago305" oninput="update()">
+    </div>
+    <div class="form-group half">
+      <label id="lbl-format">Formato Musical</label>
+      <input type="text" id="f-format" placeholder="ej. Open Format Latino · EDM · Top 40" oninput="update()">
+    </div>
+    <div class="form-group half">
+      <label id="lbl-notes-gen">Notas Generales / Patrocinadores</label>
+      <input type="text" id="f-notes-gen" placeholder="Opcional" oninput="update()">
+    </div>
+
+    <div class="editor-divider"></div>
+    <div class="editor-section-label">Notas Operacionales por Segmento</div>
+
+    <div id="segment-notes-container">
+      <!-- Se genera dinámicamente según el tipo de evento -->
+    </div>
+  </div>
+</div>
+
+<!-- ── DOCUMENT PREVIEW ── -->
+<div id="doc-preview">
+  <!-- Se genera dinámicamente -->
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════════
+   EVENT BLUEPRINT EDITOR — Miami DJ Beat
+   Tipos: quinceanera | show | privada | corporativa | pasarela
+   Idiomas: ES | EN
+══════════════════════════════════════════════════════════════════════════════ */
+
+var _lang = 'es';
+var _type = 'quinceanera';
+
+/* ── Definiciones de tipos de evento ── */
+var EVENT_TYPES = {
+
+  quinceanera: {
+    icon: '🌸',
+    label: { es: 'Quinceañera', en: 'Quinceañera' },
+    docTitle: { es: 'Blueprint de Quinceañera', en: 'Quinceañera Blueprint' },
+    typeLabel: { es: 'Quinceañera · Celebración de 15 Años', en: 'Quinceañera · 15th Birthday Celebration' },
+    protagonistLabel: { es: 'Quinceañera', en: 'Birthday Girl' },
+    secondaryLabel: { es: 'Padres / Padrinos', en: 'Parents / Sponsors' },
+    secondaryShow: true,
+    segments: [
+      { id:'s1', label:{ es:'Recepción de Invitados', en:'Guest Arrival' },        cue:{ es:'Música elegante · Jazz / Bossa Nova / Lounge', en:'Elegant ambient · Jazz / Bossa Nova / Lounge' } },
+      { id:'s2', label:{ es:'Entrada de la Corte de Honor', en:'Court of Honor Entrance' }, cue:{ es:'Canción coordinada · Energía ascendente', en:'Coordinated song · Rising energy' } },
+      { id:'s3', label:{ es:'Entrada de la Quinceañera', en:'Quinceañera Grand Entrance' }, cue:{ es:'Canción principal de la quinceañera', en:"Birthday girl's main song" } },
+      { id:'s4', label:{ es:'Vals de Quinceañera', en:'Quinceañera Waltz' },        cue:{ es:'Vals clásico o moderno · Coreografía', en:'Classic or modern waltz · Choreography' } },
+      { id:'s5', label:{ es:'Brindis del Padre / Familia', en:"Father's Toast" },   cue:{ es:'Música de fondo suave · Sin voz del MC', en:'Soft background music · MC silent' } },
+      { id:'s6', label:{ es:'Cambio de Zapatillas', en:'Changing of Shoes Ceremony' }, cue:{ es:'Canción emotiva elegida por la familia', en:'Emotional song chosen by family' } },
+      { id:'s7', label:{ es:'Entrega del Último Juguete', en:'Last Doll Ceremony' }, cue:{ es:'Canción de infancia / emotiva', en:'Childhood / emotional song' } },
+      { id:'s8', label:{ es:'Cena', en:'Dinner Service' },                         cue:{ es:'Música ambiente romántica · Latino suave', en:'Romantic ambient · Soft Latin' } },
+      { id:'s9', label:{ es:'Baile Sorpresa', en:'Surprise Dance' },               cue:{ es:'Coreografía preparada · Entrada dramática', en:'Prepared choreography · Dramatic entrance' } },
+      { id:'s10',label:{ es:'Pista de Baile Libre', en:'Open Dance Floor' },        cue:{ es:'Open Format · DJ mezcla según el crowd', en:'Open Format · DJ reads the crowd' } },
+      { id:'s11',label:{ es:'Hora Loca™', en:'Hora Loca™' },                       cue:{ es:'Accesorios, show de luces, percusión en vivo', en:'Props, light show, live percussion' } },
+      { id:'s12',label:{ es:'Corte del Pastel', en:'Cake Cutting' },               cue:{ es:'Canción de cumpleaños · Todos cantan', en:'Birthday song · Everyone sings' } },
+      { id:'s13',label:{ es:'Cierre y Despedida', en:'Closing & Farewell' },        cue:{ es:'Última canción especial · Load out', en:'Special last song · Load out' } },
+    ],
+    segmentNoteLabels: [
+      { id:'n1', label:{ es:'📌 Recepción · Notas', en:'📌 Arrival · Notes' } },
+      { id:'n2', label:{ es:'📌 Corte & Entrada · Notas', en:'📌 Court & Entrance · Notes' } },
+      { id:'n3', label:{ es:'📌 Ceremonias (vals, zapatillas, juguete) · Notas', en:'📌 Ceremonies (waltz, shoes, doll) · Notes' } },
+      { id:'n4', label:{ es:'📌 Cena · Notas', en:'📌 Dinner · Notes' } },
+      { id:'n5', label:{ es:'📌 Pista de Baile & Hora Loca™ · Notas', en:'📌 Dance Floor & Hora Loca™ · Notes' } },
+    ],
+  },
+
+  show: {
+    icon: '🎤',
+    label: { es: 'Show / Concierto', en: 'Show / Concert' },
+    docTitle: { es: 'Blueprint de Show', en: 'Show Blueprint' },
+    typeLabel: { es: 'Show · Concierto · Presentación en Vivo', en: 'Show · Concert · Live Performance' },
+    protagonistLabel: { es: 'Artista / Acto Principal', en: 'Headliner / Main Act' },
+    secondaryLabel: { es: 'Promotor / Productor', en: 'Promoter / Producer' },
+    secondaryShow: true,
+    segments: [
+      { id:'s1', label:{ es:'Preparación Técnica (Setup)', en:'Technical Setup' },  cue:{ es:'Prueba de sonido · Luces · Backline check', en:'Sound check · Lights · Backline check' } },
+      { id:'s2', label:{ es:'Apertura de Puertas', en:'Doors Open' },              cue:{ es:'DJ de apertura · Playlist ambiente', en:'Opening DJ · Ambient playlist' } },
+      { id:'s3', label:{ es:'Acto de Apertura / Opening Act', en:'Opening Act' },   cue:{ es:'Presentación del MC · Intro del acto', en:'MC presentation · Act intro' } },
+      { id:'s4', label:{ es:'Presentación del MC', en:'MC Introduction' },          cue:{ es:'MC presenta al artista principal', en:'MC introduces the headliner' } },
+      { id:'s5', label:{ es:'Entrada del Artista Principal', en:'Headliner Entrance' }, cue:{ es:'Intro dramática · Efectos especiales', en:'Dramatic intro · Special effects' } },
+      { id:'s6', label:{ es:'Set Completo del Artista', en:'Full Artist Set' },     cue:{ es:'Tracklist según rider técnico', en:'Tracklist per technical rider' } },
+      { id:'s7', label:{ es:'Encore / Bis', en:'Encore' },                          cue:{ es:'El artista regresa al escenario', en:'Artist returns to stage' } },
+      { id:'s8', label:{ es:'Cierre del Show', en:'Show Closing' },                cue:{ es:'Agradecimientos · Despedida del MC', en:'Thank you · MC farewell' } },
+      { id:'s9', label:{ es:'Salida del Público', en:'Audience Exit' },             cue:{ es:'Música de salida · Load out del equipo', en:'Exit music · Team load out' } },
+    ],
+    segmentNoteLabels: [
+      { id:'n1', label:{ es:'📌 Setup Técnico · Notas', en:'📌 Technical Setup · Notes' } },
+      { id:'n2', label:{ es:'📌 Opening Act · Notas', en:'📌 Opening Act · Notes' } },
+      { id:'n3', label:{ es:'📌 Set Principal · Rider / Tracklist', en:'📌 Main Set · Rider / Tracklist' } },
+      { id:'n4', label:{ es:'📌 Logística & Load Out · Notas', en:'📌 Logistics & Load Out · Notes' } },
+    ],
+  },
+
+  privada: {
+    icon: '🎉',
+    label: { es: 'Fiesta Privada', en: 'Private Party' },
+    docTitle: { es: 'Blueprint de Fiesta Privada', en: 'Private Party Blueprint' },
+    typeLabel: { es: 'Fiesta Privada · Celebración Especial', en: 'Private Party · Special Celebration' },
+    protagonistLabel: { es: 'Anfitrión / Cumpleañero(a)', en: 'Host / Birthday Person' },
+    secondaryLabel: { es: 'Co-anfitrión / Empresa organizadora', en: 'Co-host / Organizer' },
+    secondaryShow: true,
+    segments: [
+      { id:'s1', label:{ es:'Llegada de Invitados', en:'Guest Arrival' },           cue:{ es:'Música de bienvenida · Ambiente festivo', en:'Welcome music · Festive ambient' } },
+      { id:'s2', label:{ es:'Cóctel de Bienvenida', en:'Welcome Cocktail' },        cue:{ es:'Música lounge · Socialización', en:'Lounge music · Socializing' } },
+      { id:'s3', label:{ es:'Palabras del Anfitrión / Brindis', en:'Host Welcome Toast' }, cue:{ es:'MC da el piso al anfitrión · Música suave', en:'MC gives floor to host · Soft music' } },
+      { id:'s4', label:{ es:'Cena', en:'Dinner Service' },                          cue:{ es:'Música de cena · Conversación', en:'Dinner music · Conversation mode' } },
+      { id:'s5', label:{ es:'Corte del Pastel / Celebración', en:'Cake Cutting' },  cue:{ es:'Canción de cumpleaños · Happy Birthday', en:'Birthday song · Happy Birthday' } },
+      { id:'s6', label:{ es:'Pista de Baile', en:'Open Dance Floor' },              cue:{ es:'Open Format · DJ lee el crowd', en:'Open Format · DJ reads the crowd' } },
+      { id:'s7', label:{ es:'Hora Loca™', en:'Hora Loca™' },                        cue:{ es:'Accesorios · Show de luces · Alta energía', en:'Props · Light show · High energy' } },
+      { id:'s8', label:{ es:'Cierre y Despedida', en:'Farewell & Closing' },        cue:{ es:'Última canción · Agradecimientos', en:'Last song · Thank you' } },
+    ],
+    segmentNoteLabels: [
+      { id:'n1', label:{ es:'📌 Llegada & Cóctel · Notas', en:'📌 Arrival & Cocktail · Notes' } },
+      { id:'n2', label:{ es:'📌 Cena & Celebración · Notas', en:'📌 Dinner & Celebration · Notes' } },
+      { id:'n3', label:{ es:'📌 Pista & Hora Loca™ · Notas', en:'📌 Dance Floor & Hora Loca™ · Notes' } },
+      { id:'n4', label:{ es:'📌 Cierre · Notas', en:'📌 Closing · Notes' } },
+    ],
+  },
+
+  corporativa: {
+    icon: '🏢',
+    label: { es: 'Fiesta Corporativa', en: 'Corporate Event' },
+    docTitle: { es: 'Blueprint de Evento Corporativo', en: 'Corporate Event Blueprint' },
+    typeLabel: { es: 'Evento Corporativo · Gala · Convención', en: 'Corporate Event · Gala · Convention' },
+    protagonistLabel: { es: 'Empresa / Organización', en: 'Company / Organization' },
+    secondaryLabel: { es: 'Ejecutivo anfitrión / Contact', en: 'Host Executive / Contact' },
+    secondaryShow: true,
+    segments: [
+      { id:'s1', label:{ es:'Registro & Check-in', en:'Registration & Check-in' }, cue:{ es:'Música corporativa · Branding en pantallas', en:'Corporate music · Branding on screens' } },
+      { id:'s2', label:{ es:'Cóctel de Networking', en:'Networking Cocktail' },    cue:{ es:'Música lounge · Ambiente profesional', en:'Lounge music · Professional ambient' } },
+      { id:'s3', label:{ es:'Bienvenida Ejecutiva', en:'Executive Welcome' },       cue:{ es:'MC presenta a la directiva · Silencio en sala', en:'MC introduces executives · Room silence' } },
+      { id:'s4', label:{ es:'Keynote / Presentación Principal', en:'Keynote Address' }, cue:{ es:'Presentación en pantalla · Sin música', en:'Screen presentation · No music' } },
+      { id:'s5', label:{ es:'Entrega de Premios / Awards', en:'Awards Ceremony' }, cue:{ es:'Fanfare de entrada · Música por categoría', en:'Entry fanfare · Music per category' } },
+      { id:'s6', label:{ es:'Cena de Gala', en:'Gala Dinner' },                    cue:{ es:'Música elegante · Jazz / Bossa Nova', en:'Elegant music · Jazz / Bossa Nova' } },
+      { id:'s7', label:{ es:'Entretenimiento / Show', en:'Entertainment / Show' }, cue:{ es:'Artista invitado · DJ set · Activación', en:'Guest artist · DJ set · Activation' } },
+      { id:'s8', label:{ es:'Pista de Baile / Mixer', en:'Dance Floor / Mixer' },  cue:{ es:'Open Format corporativo · Todos participan', en:'Corporate open format · Everyone participates' } },
+      { id:'s9', label:{ es:'Cierre Corporativo', en:'Corporate Closing' },         cue:{ es:'Palabras finales · Música de salida · Load out', en:'Closing remarks · Exit music · Load out' } },
+    ],
+    segmentNoteLabels: [
+      { id:'n1', label:{ es:'📌 Registro & Networking · Notas', en:'📌 Registration & Networking · Notes' } },
+      { id:'n2', label:{ es:'📌 Programa Oficial (keynote / premios) · Notas', en:'📌 Official Program (keynote / awards) · Notes' } },
+      { id:'n3', label:{ es:'📌 Cena & Entretenimiento · Notas', en:'📌 Dinner & Entertainment · Notes' } },
+      { id:'n4', label:{ es:'📌 Cierre & Logística · Notas', en:'📌 Closing & Logistics · Notes' } },
+    ],
+  },
+
+  pasarela: {
+    icon: '👗',
+    label: { es: 'Pasarela / Fashion Show', en: 'Runway / Fashion Show' },
+    docTitle: { es: 'Blueprint de Pasarela', en: 'Runway Show Blueprint' },
+    typeLabel: { es: 'Pasarela · Fashion Show · Desfile de Moda', en: 'Runway · Fashion Show · Fashion Parade' },
+    protagonistLabel: { es: 'Diseñador(a) / Marca', en: 'Designer / Brand' },
+    secondaryLabel: { es: 'Productor(a) / Director(a)', en: 'Producer / Director' },
+    secondaryShow: true,
+    segments: [
+      { id:'s1', label:{ es:'Preparación & Backstage', en:'Preparation & Backstage' }, cue:{ es:'Coordinación con modelos · Tech check · Luces', en:'Model coordination · Tech check · Lights' } },
+      { id:'s2', label:{ es:'Apertura de Puertas', en:'Doors Open' },               cue:{ es:'Música ambient de moda · Lounge', en:'Fashion ambient music · Lounge' } },
+      { id:'s3', label:{ es:'Introducción Musical (Pre-show)', en:'Musical Intro (Pre-show)' }, cue:{ es:'Set musical para calentar el ambiente', en:'Music set to warm up the room' } },
+      { id:'s4', label:{ es:'Presentación del Conductor / MC', en:'Host / MC Introduction' }, cue:{ es:'El MC da la bienvenida oficial', en:'MC gives official welcome' } },
+      { id:'s5', label:{ es:'Colección 1 — Desfile', en:'Collection 1 — Runway' },  cue:{ es:'Track 1 de la colección · Ritmo marcado', en:'Collection track 1 · Marked tempo' } },
+      { id:'s6', label:{ es:'Intermedio / DJ Set', en:'Intermission / DJ Set' },     cue:{ es:'DJ puente entre colecciones', en:'DJ bridge between collections' } },
+      { id:'s7', label:{ es:'Colección 2 — Desfile', en:'Collection 2 — Runway' },  cue:{ es:'Track 2 · Cambio de mood / paleta', en:'Track 2 · Mood / palette shift' } },
+      { id:'s8', label:{ es:'Colección Final — Grand Finale', en:'Final Collection — Grand Finale' }, cue:{ es:'Track climático · Todos los modelos', en:'Climactic track · All models walk' } },
+      { id:'s9', label:{ es:'Salida del Diseñador / Marca', en:"Designer's Walk" }, cue:{ es:'Música especial · Aplausos · Fotografía', en:'Special music · Applause · Photography' } },
+      { id:'s10',label:{ es:'Prensa & Fotografía', en:'Press & Photography' },       cue:{ es:'Música ambiente suave · Posados', en:'Soft ambient · Photo posing' } },
+      { id:'s11',label:{ es:'Afterparty / Cocktail', en:'Afterparty / Cocktail' },   cue:{ es:'DJ set · Open Format elegante', en:'DJ set · Elegant open format' } },
+    ],
+    segmentNoteLabels: [
+      { id:'n1', label:{ es:'📌 Pre-show & Backstage · Notas', en:'📌 Pre-show & Backstage · Notes' } },
+      { id:'n2', label:{ es:'📌 Colecciones & Pasarela · Tracklist / Ritmo', en:'📌 Collections & Runway · Tracklist / Tempo' } },
+      { id:'n3', label:{ es:'📌 Finale & Fotógrafo · Notas', en:'📌 Finale & Photographer · Notes' } },
+      { id:'n4', label:{ es:'📌 Afterparty · Notas', en:'📌 Afterparty · Notes' } },
+    ],
+  },
+};
+
+/* ── Helpers ── */
+function t(obj) { return obj ? (obj[_lang] || obj['es'] || '') : ''; }
+function v(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function se(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
+function sv(id, txt) { var el = document.getElementById(id); if (el) el.textContent = txt; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ── Cambio de idioma ── */
+function setLang(lang) {
+  _lang = lang;
+  document.getElementById('btn-es').classList.toggle('active', lang === 'es');
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  renderEditorLabels();
+  buildSegmentNotes();
+  update();
+}
+
+/* ── Cambio de tipo de evento ── */
+function setEventType(type) {
+  _type = type;
+  document.querySelectorAll('.type-pill').forEach(function(p) {
+    p.classList.toggle('active', p.dataset.type === type);
+  });
+  renderEditorLabels();
+  buildSegmentNotes();
+  update();
+}
+
+/* ── Actualizar labels del editor según tipo/idioma ── */
+function renderEditorLabels() {
+  var cfg = EVENT_TYPES[_type];
+  if (!cfg) return;
+  sv('editor-title', t(cfg.docTitle));
+  sv('lbl-protagonist', t(cfg.protagonistLabel));
+  var secGrp = document.getElementById('grp-secondary');
+  if (secGrp) secGrp.style.display = cfg.secondaryShow ? '' : 'none';
+  sv('lbl-secondary', t(cfg.secondaryLabel));
+  sv('lbl-date',    _lang === 'es' ? 'Fecha del Evento' : 'Event Date');
+  sv('lbl-time',    _lang === 'es' ? 'Horario' : 'Schedule / Hours');
+  sv('lbl-venue',   _lang === 'es' ? 'Venue / Dirección' : 'Venue / Address');
+  sv('lbl-dj',      _lang === 'es' ? 'DJ / Coordinador Asignado' : 'Assigned DJ / Coordinator');
+  sv('lbl-format',  _lang === 'es' ? 'Formato Musical' : 'Music Format');
+  sv('lbl-notes-gen', _lang === 'es' ? 'Notas Generales / Patrocinadores' : 'General Notes / Sponsors');
+}
+
+/* ── Construir campos de notas por segmento ── */
+function buildSegmentNotes() {
+  var cfg = EVENT_TYPES[_type];
+  if (!cfg) return;
+  var html = cfg.segmentNoteLabels.map(function(n) {
+    return '<div class="form-group full">'
+      + '<label>' + esc(t(n.label)) + '</label>'
+      + '<textarea id="f-' + n.id + '" placeholder="' + (_lang==='es' ? 'Instrucciones especiales, lista de canciones...' : 'Special instructions, song list...') + '" oninput="update()"></textarea>'
+      + '</div>';
+  }).join('');
+  document.getElementById('segment-notes-container').innerHTML = html;
+}
+
+/* ── Generar el documento preview ── */
+function update() {
+  var cfg = EVENT_TYPES[_type];
+  if (!cfg) return;
+
+  var protagonist = v('f-protagonist') || (t(cfg.protagonistLabel));
+  var secondary   = v('f-secondary');
+  var date        = v('f-date')     || (_lang==='es' ? 'Fecha por confirmar' : 'Date TBD');
+  var time        = v('f-time')     || '–';
+  var venue       = v('f-venue')    || '–';
+  var dj          = v('f-dj')       || 'Miami DJ Beat';
+  var format      = v('f-format')   || '–';
+  var notesGen    = v('f-notes-gen');
+
+  /* Meta row label helpers */
+  var metaLabels = {
+    date:      _lang==='es' ? 'Fecha' : 'Date',
+    time:      _lang==='es' ? 'Horario' : 'Schedule',
+    venue:     _lang==='es' ? 'Venue' : 'Venue',
+    dj:        _lang==='es' ? 'DJ / Coordinador' : 'DJ / Coordinator',
+    format:    _lang==='es' ? 'Formato Musical' : 'Music Format',
+    notes:     _lang==='es' ? 'Notas' : 'Notes',
+    secondary: t(cfg.secondaryLabel),
+    timecol:   _lang==='es' ? 'Hora' : 'Time',
+    momentcol: _lang==='es' ? 'Momento / Segmento' : 'Moment / Segment',
+    cuelcol:   _lang==='es' ? 'Cue Musical / Nota DJ' : 'Musical Cue / DJ Note',
+    notescol:  _lang==='es' ? 'Notas Operacionales' : 'Operational Notes',
+    producedby: _lang==='es' ? 'Producido por' : 'Produced by',
+    contact:   _lang==='es' ? 'Confidencial · Uso interno' : 'Confidential · Internal use',
+    tlheader:  _lang==='es' ? 'Timeline del Evento' : 'Event Timeline',
+    snheader:  _lang==='es' ? 'Notas por Segmento' : 'Segment Notes',
+  };
+
+  /* Segmento de notas → leer textareas */
+  var segNotes = cfg.segmentNoteLabels.map(function(n) {
+    var val = v('f-' + n.id);
+    return { label: t(n.label), value: val };
+  });
+
+  /* ── Documento ── */
+  var html = '<div class="page">'
+    + '<div class="page-header">'
+      + '<div class="doc-brand-block">'
+        + '<img src="./logo-mdj-gold.png" alt="Miami DJ Beat" onerror="this.style.display=\'none\'" style="width:44px;">'
+        + '<div class="doc-brand-text">'
+          + '<h1>Miami DJ Beat</h1>'
+          + '<p>' + (_lang==='es' ? 'Blueprint Operacional — Uso Interno' : 'Operational Blueprint — Internal Use') + '</p>'
+        + '</div>'
+      + '</div>'
+      + '<div class="doc-event-title">'
+        + '<div class="event-type-label">' + esc(t(cfg.typeLabel)) + '</div>'
+        + '<div class="event-name">' + esc(protagonist) + (secondary ? ' &amp; ' + esc(secondary) : '') + '</div>'
+        + '<div class="event-date">' + esc(date) + '</div>'
+      + '</div>'
+    + '</div>'
+
+    + '<div class="meta-grid">'
+      + '<div class="meta-item"><label>' + metaLabels.date + '</label><span>' + esc(date) + '</span></div>'
+      + '<div class="meta-item"><label>' + metaLabels.time + '</label><span>' + esc(time) + '</span></div>'
+      + '<div class="meta-item"><label>' + metaLabels.venue + '</label><span>' + esc(venue) + '</span></div>'
+      + '<div class="meta-item"><label>' + metaLabels.dj + '</label><span>' + esc(dj) + '</span></div>'
+      + '<div class="meta-item"><label>' + metaLabels.format + '</label><span>' + esc(format) + '</span></div>'
+      + (notesGen ? '<div class="meta-item"><label>' + metaLabels.notes + '</label><span>' + esc(notesGen) + '</span></div>' : '')
+    + '</div>'
+
+    /* Timeline table */
+    + '<div class="section-heading">' + metaLabels.tlheader + '</div>'
+    + '<table class="timeline-table">'
+      + '<thead><tr>'
+        + '<th>' + metaLabels.timecol + '</th>'
+        + '<th>' + metaLabels.momentcol + '</th>'
+        + '<th>' + metaLabels.cuelcol + '</th>'
+      + '</tr></thead><tbody>';
+
+  /* Horario base: calcula desde la primera hora del campo horario */
+  var baseHour = 18; // 6 PM default
+  try {
+    var tStr = time.split('–')[0].trim().replace(/\s*(AM|PM)/i,'');
+    var parts = tStr.split(':');
+    baseHour = parseInt(parts[0],10) || 18;
+    if (/PM/i.test(time.split('–')[0]) && baseHour < 12) baseHour += 12;
+  } catch(e) {}
+
+  cfg.segments.forEach(function(seg, i) {
+    var h = baseHour + Math.floor(i * 60 / cfg.segments.length * cfg.segments.length / 60);
+    var minStep = Math.round((i * (cfg.segments.length <= 9 ? 30 : 20)) % 60);
+    var dispH = baseHour + Math.floor(i * (cfg.segments.length <= 9 ? 30 : 20) / 60);
+    var dispM = (i * (cfg.segments.length <= 9 ? 30 : 20)) % 60;
+    var suffix = dispH >= 12 && dispH < 24 ? ' PM' : ' AM';
+    var h12 = dispH > 12 ? dispH - 12 : (dispH === 0 ? 12 : dispH);
+    var timeStr = h12 + ':' + (dispM < 10 ? '0' : '') + dispM + suffix;
+    html += '<tr>'
+      + '<td class="time-col">' + timeStr + '</td>'
+      + '<td><strong>' + esc(t(seg.label)) + '</strong></td>'
+      + '<td class="cue-col">' + esc(t(seg.cue)) + '</td>'
+    + '</tr>';
+  });
+  html += '</tbody></table>';
+
+  /* Notas por segmento */
+  var hasNotes = segNotes.some(function(n) { return n.value; });
+  html += '<div class="section-heading" style="margin-top:22px;">' + metaLabels.snheader + '</div>';
+  segNotes.forEach(function(n) {
+    html += '<div class="section-block">'
+      + '<div class="section-note-label">' + esc(n.label) + '</div>'
+      + '<div class="section-note-text">' + esc(n.value || (_lang==='es' ? '(Sin notas adicionales)' : '(No additional notes)')) + '</div>'
+    + '</div>';
+  });
+
+  html += '<div class="page-footer">'
+    + '<span>' + (_lang==='es' ? 'Producido por · ' : 'Produced by · ') + esc(dj) + '</span>'
+    + '<span class="footer-brand">Miami DJ Beat LLC</span>'
+    + '<span>' + metaLabels.contact + '</span>'
+  + '</div>'
+  + '</div>'; /* end .page */
+
+  document.getElementById('doc-preview').innerHTML = html;
+}
+
+/* ── Reset ── */
+function resetForm() {
+  if (!confirm(_lang==='es' ? '¿Limpiar todos los campos?' : 'Clear all fields?')) return;
+  document.querySelectorAll('#editor-panel input, #editor-panel textarea').forEach(function(el) { el.value = ''; });
+  update();
+}
+
+/* ── Init ── */
+(function init() {
+  /* Leer tipo desde URL param */
+  var params = new URLSearchParams(window.location.search);
+  var typeParam = params.get('type');
+  if (typeParam && EVENT_TYPES[typeParam]) _type = typeParam;
+
+  var langParam = params.get('lang');
+  if (langParam === 'en') { _lang = 'en'; document.getElementById('btn-es').classList.remove('active'); document.getElementById('btn-en').classList.add('active'); }
+
+  /* Activar pill */
+  document.querySelectorAll('.type-pill').forEach(function(p) {
+    p.classList.toggle('active', p.dataset.type === _type);
+  });
+
+  renderEditorLabels();
+  buildSegmentNotes();
+  update();
+})();
+</script>
+
+<!-- ════════════════════════════════════════════════════════════
+     MODAL: ASIGNAR GUION A CLIENTE
+════════════════════════════════════════════════════════════ -->
+<div id="assign-modal" role="dialog" aria-modal="true"
+  style="display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:#16213e;border:1px solid rgba(184,145,42,.35);border-radius:16px;padding:32px 36px;width:min(460px,92vw);position:relative;box-shadow:0 24px 64px rgba(0,0,0,.5);">
+
+    <button onclick="closeAssignModal()" aria-label="Cerrar"
+      style="position:absolute;top:14px;right:18px;background:none;border:none;color:rgba(255,255,255,.35);font-size:22px;cursor:pointer;line-height:1;">✕</button>
+
+    <div style="font-size:10px;font-weight:800;color:#b8912a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Asignación</div>
+    <h3 style="font-size:17px;font-weight:800;color:#e8e8f0;margin:0 0 8px;">👤 Asignar a Cuenta de Cliente</h3>
+    <p style="font-size:12px;color:#8888aa;margin:0 0 18px;line-height:1.55;" id="assign-desc-text">
+      Ingresa el correo del cliente para vincular este guion a su cuenta.
+    </p>
+
+    <!-- Resumen del evento -->
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:7px;padding:9px 13px;margin-bottom:16px;font-size:11px;color:#8888aa;line-height:1.5;">
+      <strong style="color:#e8e8f0;">Evento:</strong> <span id="assign-event-summary">—</span>
+    </div>
+
+    <label style="display:block;font-size:10px;font-weight:800;letter-spacing:.07em;color:#8888aa;text-transform:uppercase;margin-bottom:6px;">Correo del Cliente</label>
+    <input type="email" id="assign-email" placeholder="nombre@correo.com" autocomplete="off"
+      oninput="onAssignEmailInput()"
+      onkeydown="if(event.key==='Enter') lookupClient()"
+      style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:7px;padding:10px 13px;color:#e8e8f0;font-size:13px;box-sizing:border-box;outline:none;">
+
+    <div id="assign-client-status" style="display:none;margin-top:10px;padding:9px 13px;border-radius:7px;font-size:12px;font-weight:700;"></div>
+
+    <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;">
+      <button id="btn-assign-confirm" onclick="confirmAssign()" disabled
+        style="flex:1;background:#b8912a;color:#000;border:none;border-radius:7px;padding:10px 20px;font-size:13px;font-weight:800;cursor:pointer;opacity:.4;transition:opacity .2s;">
+        ✓ Vincular Guion
+      </button>
+      <button onclick="closeAssignModal()"
+        style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.45);border-radius:7px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── Assign system ── */
+var _assignedClient = null;
+
+function openAssignModal() {
+  var cfg = EVENT_TYPES[_type];
+  var protagonist = (document.getElementById('f-protagonist') || {}).value || (cfg ? (cfg.protagonistLabel ? cfg.protagonistLabel[_lang] : '') : '');
+  var date        = (document.getElementById('f-date')        || {}).value || '–';
+  var dj          = (document.getElementById('f-dj')          || {}).value || '–';
+  var summary     = document.getElementById('assign-event-summary');
+  if (summary) summary.textContent = protagonist + ' · ' + date + ' · ' + dj;
+
+  /* Restaurar estado si ya hay cliente asignado */
+  if (_assignedClient) {
+    var emailEl = document.getElementById('assign-email');
+    if (emailEl) emailEl.value = _assignedClient.email;
+    _setAssignStatus('found', '✓ ' + (_assignedClient.full_name || _assignedClient.email));
+    var cb = document.getElementById('btn-assign-confirm'); if(cb){cb.disabled=false;cb.style.opacity='1';}
+  } else {
+    _resetAssign();
+  }
+
+  var modal = document.getElementById('assign-modal');
+  if (modal) { modal.style.display='flex'; setTimeout(function(){ var el=document.getElementById('assign-email'); if(el)el.focus(); },80); }
+}
+
+function closeAssignModal() {
+  var modal = document.getElementById('assign-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function _resetAssign() {
+  var e = document.getElementById('assign-email'); if(e) e.value='';
+  _setAssignStatus('','');
+  var cb = document.getElementById('btn-assign-confirm'); if(cb){cb.disabled=true;cb.style.opacity='.4';}
+}
+
+function _setAssignStatus(type, msg) {
+  var el = document.getElementById('assign-client-status');
+  if (!el) return;
+  if (!msg) { el.style.display='none'; return; }
+  var styles = {
+    found:     'background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:#6de88a;',
+    notfound:  'background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#fca5a5;',
+    searching: 'background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#8888aa;',
+  };
+  el.style.cssText = 'display:block;margin-top:10px;padding:9px 13px;border-radius:7px;font-size:12px;font-weight:700;' + (styles[type]||'');
+  el.textContent = msg;
+}
+
+function onAssignEmailInput() {
+  var email = ((document.getElementById('assign-email')||{}).value||'').trim();
+  _assignedClient = null;
+  var cb = document.getElementById('btn-assign-confirm'); if(cb){cb.disabled=true;cb.style.opacity='.4';}
+  _setAssignStatus('','');
+  if (email.includes('@') && email.includes('.') && email.length>5) {
+    clearTimeout(window._assignTimer);
+    window._assignTimer = setTimeout(lookupClient, 500);
+  }
+}
+
+async function lookupClient() {
+  var email = ((document.getElementById('assign-email')||{}).value||'').trim();
+  if (!email) return;
+  _setAssignStatus('searching', '🔍 Buscando cuenta...');
+  try {
+    var sb = window.getSupabaseClient ? window.getSupabaseClient() : (window._supabase || window._supabaseClient);
+    if (!sb) throw new Error('Supabase no disponible');
+    var { data, error } = await sb
+      .from('client_profiles')
+      .select('id, full_name, phone, is_commercial, company_name')
+      .eq('email', email)
+      .maybeSingle();
+    if (error) throw error;
+    if (data) {
+      _assignedClient = { id: data.id, email: email, full_name: data.full_name || email };
+      var label = (data.is_commercial && data.company_name) ? (data.company_name + ' · ' + (data.full_name||email)) : (data.full_name||email);
+      _setAssignStatus('found', '✓ Cliente registrado — ' + label);
+      var cb = document.getElementById('btn-assign-confirm'); if(cb){cb.disabled=false;cb.style.opacity='1';}
+    } else {
+      _assignedClient = null;
+      _setAssignStatus('notfound', '⚠ Correo no registrado. Crea la cuenta primero en el panel de Staff.');
+      var cb = document.getElementById('btn-assign-confirm'); if(cb){cb.disabled=true;cb.style.opacity='.4';}
+    }
+  } catch(err) {
+    console.error('[EventBlueprint] lookup error:', err);
+    _setAssignStatus('notfound', '✗ Error de conexión — intenta de nuevo.');
+  }
+}
+
+async function confirmAssign() {
+  if (!_assignedClient) return;
+  var cb = document.getElementById('btn-assign-confirm');
+  if (cb) { cb.disabled=true; cb.textContent='⏳ Vinculando...'; }
+
+  try {
+    var sb = window.getSupabaseClient ? window.getSupabaseClient() : (window._supabase || window._supabaseClient);
+    if (sb) {
+      var { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        var brand = ((document.getElementById('f-protagonist')||{}).value||'').trim() || _type;
+        await sb.from('event_show_plans').upsert({
+          user_id:               session.user.id,
+          event_type:            _type,
+          event_name:            brand,
+          client_profile_id:     _assignedClient.id,
+          assigned_client_email: _assignedClient.email,
+          updated_at:            new Date().toISOString(),
+        }, { onConflict: 'user_id,event_name' });
+      }
+    }
+  } catch(err) {
+    console.warn('[EventBlueprint] assign save error:', err);
+  }
+
+  /* Visual en el botón del editor */
+  var btnOpen = document.getElementById('btn-assign-open');
+  if (btnOpen) {
+    btnOpen.textContent = '✓ ' + _assignedClient.email;
+    btnOpen.style.background  = 'rgba(34,197,94,.15)';
+    btnOpen.style.borderColor = 'rgba(34,197,94,.4)';
+    btnOpen.style.color       = '#6de88a';
+  }
+
+  closeAssignModal();
+  if (cb) { cb.disabled=false; cb.style.opacity='1'; cb.textContent='✓ Vincular Guion'; }
+}
+
+/* Backdrop click cierra modal */
+(function(){
+  var m = document.getElementById('assign-modal');
+  if (m) m.addEventListener('click', function(e){ if(e.target===m) closeAssignModal(); });
+})();
+</script>
+</body>
+</html>

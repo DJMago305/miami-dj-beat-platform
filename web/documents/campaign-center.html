@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campaign Center — Miami DJ Beat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- No auth.js / mdj-identity.js — role check is done directly via Supabase below -->
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold:      #c5a059;
+      --gold-dark: #8b6914;
+      --bg:        #0a0a0a;
+      --surface:   #111111;
+      --card:      #161616;
+      --line:      rgba(255,255,255,0.07);
+      --text:      #f0f0f0;
+      --muted:     rgba(255,255,255,0.4);
+      --danger:    #ff5555;
+      --success:   #50c87a;
+      --radius:    14px;
+      --sidebar-w: 300px;
+    }
+
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; }
+
+    /* ── HEADER ── */
+    .cc-header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px; height: 64px;
+      background: rgba(10,10,10,0.96);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+    .cc-header-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .cc-header-logo {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .cc-header-title { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--gold); }
+    .cc-header-sub   { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .cc-header-back  {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--muted); text-decoration: none;
+      padding: 8px 14px; border-radius: 50px; border: 1px solid var(--line);
+      transition: color .2s, border-color .2s;
+    }
+    .cc-header-back:hover { color: var(--gold); border-color: var(--gold); }
+
+    /* ── LAYOUT ── */
+    .cc-layout { display: flex; height: calc(100vh - 64px); overflow: hidden; }
+
+    /* ── SIDEBAR ── */
+    .cc-sidebar {
+      width: var(--sidebar-w); min-width: var(--sidebar-w);
+      background: var(--surface); border-right: 1px solid var(--line);
+      overflow-y: auto; padding: 24px 16px;
+      display: flex; flex-direction: column; gap: 24px;
+    }
+    .cc-section-label {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 2px;
+      color: var(--muted); margin-bottom: 10px; padding-left: 4px;
+    }
+
+    /* Channel selector */
+    .cc-channel-row { display: flex; gap: 8px; }
+    .cc-channel-btn {
+      flex: 1; padding: 10px 8px; border-radius: 10px; cursor: pointer;
+      border: 1.5px solid var(--line); background: transparent;
+      color: var(--muted); font-size: 13px; font-family: inherit;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      transition: all .2s;
+    }
+    .cc-channel-btn.active {
+      border-color: var(--gold); background: rgba(197,160,89,0.08); color: var(--gold);
+    }
+    .cc-channel-btn .ch-icon { font-size: 20px; }
+
+    /* Templates */
+    .tpl-btn {
+      width: 100%; padding: 12px 14px; border-radius: 10px; cursor: pointer;
+      border: 1px solid var(--line); background: var(--card);
+      color: var(--text); font-size: 13px; font-family: inherit;
+      text-align: left; display: flex; align-items: flex-start; gap: 10px;
+      transition: border-color .2s, background .2s; margin-bottom: 8px;
+    }
+    .tpl-btn:hover { border-color: var(--gold); background: rgba(197,160,89,0.05); }
+    .tpl-btn .tpl-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+    .tpl-btn .tpl-name { font-weight: 600; font-size: 13px; }
+    .tpl-btn .tpl-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* Stats */
+    .cc-stat-row { display: flex; gap: 8px; }
+    .cc-stat {
+      flex: 1; padding: 12px 10px; border-radius: 10px;
+      background: var(--card); border: 1px solid var(--line);
+      text-align: center;
+    }
+    .cc-stat-val { font-size: 22px; font-weight: 700; color: var(--gold); }
+    .cc-stat-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+    /* ── MAIN COMPOSE AREA ── */
+    .cc-main {
+      flex: 1; overflow-y: auto; padding: 28px 32px;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+
+    .cc-card {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 22px 24px;
+    }
+    .cc-card-title {
+      font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--muted); margin-bottom: 14px;
+    }
+
+    /* Input styles */
+    .cc-input {
+      width: 100%; padding: 13px 16px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--line);
+      border-radius: 10px; color: var(--text); font-size: 14px; font-family: inherit;
+      outline: none; transition: border-color .2s;
+    }
+    .cc-input:focus { border-color: var(--gold); }
+    .cc-label {
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--muted); margin-bottom: 8px;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+
+    .cc-textarea {
+      width: 100%; padding: 14px 16px; min-height: 160px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--line);
+      border-radius: 10px; color: var(--text); font-size: 14px;
+      font-family: inherit; line-height: 1.7; resize: vertical; outline: none;
+      transition: border-color .2s;
+    }
+    .cc-textarea:focus { border-color: var(--gold); }
+    .cc-char-counter {
+      font-size: 11px; color: var(--muted); text-align: right; margin-top: 6px;
+    }
+    .cc-char-counter.warn { color: #ffaa55; }
+    .cc-char-counter.over { color: var(--danger); }
+
+    /* Flyer upload */
+    .flyer-dropzone {
+      border: 2px dashed var(--line); border-radius: var(--radius);
+      padding: 24px; text-align: center; cursor: pointer;
+      transition: border-color .2s, background .2s;
+      position: relative;
+    }
+    .flyer-dropzone:hover, .flyer-dropzone.drag-over {
+      border-color: var(--gold); background: rgba(197,160,89,0.04);
+    }
+    .flyer-dropzone input[type="file"] { display: none; }
+    .flyer-preview {
+      margin-top: 16px; border-radius: 10px; overflow: hidden;
+      border: 1px solid var(--line); position: relative;
+      display: none;
+    }
+    .flyer-preview img { width: 100%; max-height: 280px; object-fit: contain; background: #1a1a1a; }
+    .flyer-preview-remove {
+      position: absolute; top: 8px; right: 8px;
+      background: rgba(0,0,0,0.7); border: 1px solid var(--line);
+      border-radius: 50%; width: 28px; height: 28px;
+      cursor: pointer; color: #fff; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Dry-run toggle */
+    .cc-toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; background: rgba(197,160,89,0.05);
+      border: 1px solid rgba(197,160,89,0.15); border-radius: 10px;
+    }
+    .cc-toggle-info .cc-toggle-title { font-size: 14px; font-weight: 600; }
+    .cc-toggle-info .cc-toggle-desc  { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    /* Apple-style toggle */
+    .apple-sw { position: relative; display: inline-block; width: 46px; height: 26px; }
+    .apple-sw input { opacity: 0; width: 0; height: 0; }
+    .apple-sw .sw-track {
+      position: absolute; inset: 0; border-radius: 26px;
+      background: rgba(255,255,255,0.12); cursor: pointer; transition: background .3s;
+    }
+    .apple-sw input:checked + .sw-track { background: var(--gold); }
+    .apple-sw .sw-track::before {
+      content: ''; position: absolute; width: 20px; height: 20px;
+      left: 3px; top: 3px; border-radius: 50%; background: #fff;
+      transition: transform .3s;
+    }
+    .apple-sw input:checked + .sw-track::before { transform: translateX(20px); }
+
+    /* Send button */
+    .btn-broadcast {
+      width: 100%; padding: 16px 24px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      color: #000; font-weight: 800; font-size: 15px; letter-spacing: 0.3px;
+      border: none; border-radius: 50px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn-broadcast:hover { opacity: 0.92; transform: translateY(-1px); }
+    .btn-broadcast:active { transform: translateY(0); }
+    .btn-broadcast:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* Result box */
+    .cc-result {
+      padding: 16px 20px; border-radius: var(--radius);
+      font-size: 14px; line-height: 1.6; display: none;
+    }
+    .cc-result.ok  { background: rgba(80,200,122,0.08); border: 1px solid rgba(80,200,122,0.25); color: #80e8a0; }
+    .cc-result.err { background: rgba(255,80,80,0.08);  border: 1px solid rgba(255,80,80,0.25);  color: #ff9999; }
+
+    /* Spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 18px; height: 18px; border: 2px solid rgba(0,0,0,0.2);
+      border-top-color: #000; border-radius: 50%; animation: spin .8s linear infinite;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(197,160,89,0.25); border-radius: 3px; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .cc-layout { flex-direction: column; height: auto; overflow: visible; }
+      .cc-sidebar { width: 100%; min-width: 0; height: auto; }
+      .cc-main { padding: 20px 16px; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Loading state shown while Supabase role check completes -->
+  <div id="cc-loading" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0d0d0d;color:#c5a059;font-family:Inter,sans-serif;font-size:14px;gap:12px;">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c5a059" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:cc-spin 1s linear infinite"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+    Verificando acceso…
+  </div>
+  <style>@keyframes cc-spin{to{transform:rotate(360deg)}}</style>
+
+  <!-- Shell — born empty; renderCampaignCenter() populates after role check -->
+  <div id="campaign-app-shell" style="display:none;"></div>
+
+  <!-- Supabase SDK + config only — no auth.js/mdj-identity.js to avoid redirect loops -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-config.js"></script>
+
+  <script>
+  (function () {
+    'use strict';
+
+    /* ═══════════════════════════════════════════════════════════════════
+       TEMPLATES — add / edit freely
+    ══════════════════════════════════════════════════════════════════════ */
+    var TEMPLATES = [
+      {
+        id: 'christmas',
+        icon: '🎄',
+        name: 'Campaña Navideña',
+        desc: 'Fin de año y temporada festiva',
+        subject: '🎄 ¡Reserva tu fecha de fin de año con Miami DJ Beat!',
+        body: 'Estimado/a cliente,\n\nLa temporada más especial del año está llegando y en Miami DJ Beat tenemos todo preparado para hacer de tu celebración un evento inolvidable.\n\n✨ Paquetes especiales de fin de año disponibles\n🎵 DJs con experiencia en eventos de gala, fiestas corporativas y celebraciones privadas\n📅 Fechas limitadas — reserva antes del 15 de diciembre y obtén beneficios exclusivos\n\nEscríbenos o agenda directamente desde nuestra plataforma.\n\n¡Que esta Navidad suene diferente!\n\nMiami DJ Beat LLC\nEntertainment & Events'
+      },
+      {
+        id: 'wedding',
+        icon: '💍',
+        name: 'Boda Premium',
+        desc: 'Paquetes y disponibilidad nupcial',
+        subject: '💍 Tu boda merece la mejor música — Miami DJ Beat',
+        body: 'Querido/a cliente,\n\nEn Miami DJ Beat entendemos que el sonido es el alma de tu boda. Cada canción, cada transición, cada momento musical es parte de un recuerdo que durará toda la vida.\n\n🎶 DJ profesional con experiencia en bodas de lujo\n🎤 Opción de maestro de ceremonias bilingüe (español / inglés)\n💡 Iluminación de ambiente incluida en paquetes Premium\n📋 Sesión de planificación musical personalizada sin costo adicional\n\nAgenda tu consulta gratuita hoy y comencemos a diseñar la banda sonora de tu día especial.\n\nCon afecto,\nMiami DJ Beat LLC'
+      },
+      {
+        id: 'quince',
+        icon: '👑',
+        name: 'Quinceañera',
+        desc: 'Paquete especial XV años',
+        subject: '👑 ¡Haz de sus XV años un evento épico! — Miami DJ Beat',
+        body: 'Estimada familia,\n\nEl momento más especial en la vida de una joven merece una celebración a la altura. En Miami DJ Beat creamos experiencias únicas para quinceañeras que se recuerdan toda la vida.\n\n🌟 DJ con repertorio personalizado — reggaetón, pop, merengue y más\n🎊 Show de luces y efectos especiales\n🎂 Música especial para el vals y la sorpresa\n📸 Coordinación con fotógrafo y videógrafo\n💫 Paquete todo incluido disponible\n\nContáctanos hoy y hagamos de sus quince años una noche mágica.\n\nMiami DJ Beat LLC\nEntertainment & Events'
+      },
+      {
+        id: 'corporate',
+        icon: '🏢',
+        name: 'Evento Corporativo',
+        desc: 'Fiestas de empresa y networking',
+        subject: '🏢 Eventos corporativos que impactan — Miami DJ Beat',
+        body: 'Estimado equipo,\n\nTransforma tu próximo evento corporativo en una experiencia que fortalezca la cultura de tu empresa y sorprenda a tus colaboradores.\n\n✅ DJ profesional con amplia trayectoria en eventos empresariales\n✅ Música ambiente, cocktail y afterparty\n✅ Equipamiento de primera calidad (sonido, iluminación, pantallas)\n✅ Coordinación profesional de principio a fin\n✅ Disponibilidad para Miami y área metropolitana\n\nSolicita tu cotización personalizada sin compromiso.\n\nMiami DJ Beat LLC'
+      },
+      {
+        id: 'promo',
+        icon: '🔥',
+        name: 'Promoción Especial',
+        desc: 'Oferta por tiempo limitado',
+        subject: '🔥 Oferta especial por tiempo limitado — Miami DJ Beat',
+        body: 'Hola,\n\nTe escribimos con una oportunidad exclusiva para nuestra comunidad de clientes preferidos.\n\n⚡ Por tiempo limitado, te ofrecemos:\n→ 15% de descuento en reservas para el próximo trimestre\n→ Hora extra incluida sin costo adicional\n→ Consulta de planificación musical gratuita\n\nEsta oferta es válida únicamente para reservas confirmadas antes del fin de mes.\n\nNo dejes pasar esta oportunidad — las fechas se agotan rápido.\n\nMiami DJ Beat LLC\nEntertainment & Events'
+      }
+    ];
+
+    /* ═══════════════════════════════════════════════════════════════════
+       STATE
+    ══════════════════════════════════════════════════════════════════════ */
+    var state = {
+      channel: 'email',  /* 'email' | 'sms' */
+      flyerBase64: null,
+      flyerDataUrl: null,
+      sending: false
+    };
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SECURITY GATE — direct Supabase check (no auth.js dependency)
+       1. Get active session from Supabase client
+       2. Query dj_profiles.role for the logged-in user_id
+       3. If role is owner or manager → render; else → redirect
+    ══════════════════════════════════════════════════════════════════════ */
+    async function _checkRole() {
+      try {
+        var url = typeof window.MDB_SUPABASE_URL === 'string' ? window.MDB_SUPABASE_URL : '';
+        var key = typeof window.MDB_SUPABASE_ANON_KEY === 'string' ? window.MDB_SUPABASE_ANON_KEY : '';
+        if (!url || !key || typeof window.supabase === 'undefined') {
+          setTimeout(_checkRole, 400); return;
+        }
+
+        var sb  = window.supabase.createClient(url, key);
+        var { data: sessData } = await sb.auth.getSession();
+        var session = sessData && sessData.session;
+
+        /* No session → send to login */
+        if (!session) {
+          window.location.replace('../login.html');
+          return;
+        }
+
+        var uid = session.user.id;
+
+        /* Query role directly from dj_profiles */
+        var { data: djRow } = await sb
+          .from('dj_profiles')
+          .select('role')
+          .eq('user_id', uid)
+          .maybeSingle();
+
+        var role = String((djRow && djRow.role) || '').toLowerCase();
+
+        /* Also check app_metadata as fallback */
+        var appRole = String(
+          (session.user.app_metadata && session.user.app_metadata.role) || ''
+        ).toLowerCase();
+
+        var allowed = role === 'owner' || role === 'manager' ||
+                      appRole === 'owner' || appRole === 'manager';
+
+        if (!allowed) {
+          window.location.replace('../account-settings.html');
+          return;
+        }
+
+        /* Authorized — expose client for later use and render */
+        window._ccSupabase = sb;
+        window._ccSession  = session;
+        renderCampaignCenter();
+
+      } catch (e) {
+        console.error('[CC-GATE]', e);
+        window.location.replace('../account-settings.html');
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       RENDER
+    ══════════════════════════════════════════════════════════════════════ */
+    function renderCampaignCenter() {
+      var loading = document.getElementById('cc-loading');
+      if (loading) loading.style.display = 'none';
+
+      var shell = document.getElementById('campaign-app-shell');
+      if (!shell || shell.dataset.rendered) return;
+      shell.dataset.rendered = '1';
+      shell.style.display = '';
+
+      /* Build template buttons HTML */
+      var tplHtml = TEMPLATES.map(function (t) {
+        return [
+          '<button class="tpl-btn" data-tpl="' + t.id + '">',
+            '<span class="tpl-icon">' + t.icon + '</span>',
+            '<span><div class="tpl-name">' + t.name + '</div>',
+            '<div class="tpl-desc">' + t.desc + '</div></span>',
+          '</button>'
+        ].join('');
+      }).join('');
+
+      shell.innerHTML = [
+        /* HEADER */
+        '<header class="cc-header">',
+          '<a class="cc-header-brand" href="../account-settings.html">',
+            '<div class="cc-header-logo">📡</div>',
+            '<div><div class="cc-header-title">Campaign Center</div>',
+            '<div class="cc-header-sub">Miami DJ Beat LLC — Emisor Maestro</div></div>',
+          '</a>',
+          '<a href="../account-settings.html" class="cc-header-back">',
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>',
+            'Volver a Config',
+          '</a>',
+        '</header>',
+
+        /* LAYOUT */
+        '<div class="cc-layout">',
+
+          /* ── SIDEBAR ── */
+          '<aside class="cc-sidebar">',
+
+            /* Channel selector */
+            '<div>',
+              '<div class="cc-section-label">Canal de Envío</div>',
+              '<div class="cc-channel-row">',
+                '<button class="cc-channel-btn active" id="ch-email" data-ch="email">',
+                  '<span class="ch-icon">📧</span><span>Email</span>',
+                '</button>',
+                '<button class="cc-channel-btn" id="ch-sms" data-ch="sms">',
+                  '<span class="ch-icon">💬</span><span>SMS</span>',
+                '</button>',
+              '</div>',
+            '</div>',
+
+            /* Live stats */
+            '<div>',
+              '<div class="cc-section-label">Alcance Estimado</div>',
+              '<div class="cc-stat-row">',
+                '<div class="cc-stat"><div class="cc-stat-val" id="stat-email">—</div><div class="cc-stat-lbl">Emails</div></div>',
+                '<div class="cc-stat"><div class="cc-stat-val" id="stat-sms">—</div><div class="cc-stat-lbl">SMS</div></div>',
+              '</div>',
+              '<p style="font-size:11px;color:rgba(255,255,255,0.28);margin-top:8px;padding:0 2px;">',
+                'Usuarios con preferencias activas en la plataforma.',
+              '</p>',
+            '</div>',
+
+            /* Templates */
+            '<div>',
+              '<div class="cc-section-label">Plantillas Ejecutivas</div>',
+              tplHtml,
+            '</div>',
+
+          '</aside>',
+
+          /* ── MAIN ── */
+          '<main class="cc-main">',
+
+            /* Subject (email only) */
+            '<div class="cc-card" id="wrap-subject">',
+              '<div class="cc-card-title">Asunto del Correo</div>',
+              '<input type="text" id="campaign-subject" class="cc-input"',
+                'placeholder="ej: 🎄 ¡Reserva tu fecha de fin de año con Miami DJ Beat!"',
+                'maxlength="120" autocomplete="off" />',
+            '</div>',
+
+            /* Message body */
+            '<div class="cc-card">',
+              '<div class="cc-card-title">',
+                'Mensaje <span id="cc-char-counter" class="cc-char-counter"></span>',
+              '</div>',
+              '<textarea id="campaign-body" class="cc-textarea"',
+                'placeholder="Escribe aquí tu mensaje. Será editable antes de enviar.&#10;&#10;Para SMS: máximo 320 caracteres (2 segmentos)."></textarea>',
+            '</div>',
+
+            /* Flyer upload (email only) */
+            '<div class="cc-card" id="wrap-flyer">',
+              '<div class="cc-card-title">Flyer / Imagen Promocional (Opcional)</div>',
+              '<div class="flyer-dropzone" id="flyer-dropzone">',
+                '<input type="file" id="campaign-flyer" accept="image/png,image/jpeg,image/webp" />',
+                '<div style="font-size:32px;margin-bottom:10px;">🖼️</div>',
+                '<div style="font-size:14px;font-weight:600;margin-bottom:4px;">Arrastra tu flyer aquí</div>',
+                '<div style="font-size:12px;color:var(--muted);">o haz clic para seleccionar — PNG, JPG, WEBP</div>',
+              '</div>',
+              '<div class="flyer-preview" id="flyer-preview">',
+                '<img id="flyer-img" src="" alt="Vista previa del flyer" />',
+                '<button class="flyer-preview-remove" id="btn-remove-flyer" title="Quitar flyer">✕</button>',
+              '</div>',
+            '</div>',
+
+            /* Dry-run */
+            '<div class="cc-card">',
+              '<div class="cc-toggle-row">',
+                '<div class="cc-toggle-info">',
+                  '<div class="cc-toggle-title">🔍 Prueba en seco (Dry Run)</div>',
+                  '<div class="cc-toggle-desc">Cuenta destinatarios sin enviar nada — verifica antes de disparar.</div>',
+                '</div>',
+                '<label class="apple-sw">',
+                  '<input type="checkbox" id="campaign-dry-run" />',
+                  '<span class="sw-track"></span>',
+                '</label>',
+              '</div>',
+            '</div>',
+
+            /* Send + result */
+            '<div class="cc-card">',
+              '<button class="btn-broadcast" id="btn-trigger-broadcast">',
+                '<span id="bc-icon">📡</span>',
+                '<span id="bc-label">Enviar Campaña Masiva</span>',
+              '</button>',
+              '<div class="cc-result" id="cc-result"></div>',
+            '</div>',
+
+          '</main>',
+        '</div>'  /* /cc-layout */
+
+      ].join('');
+
+      _wireCampaignPanel();
+      _loadStats();
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       WIRE ALL LISTENERS
+    ══════════════════════════════════════════════════════════════════════ */
+    function _wireCampaignPanel() {
+
+      /* ── Channel toggle ── */
+      document.querySelectorAll('.cc-channel-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          state.channel = btn.dataset.ch;
+          document.querySelectorAll('.cc-channel-btn').forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          var wSub   = document.getElementById('wrap-subject');
+          var wFlyer = document.getElementById('wrap-flyer');
+          var isEmail = state.channel === 'email';
+          if (wSub)   wSub.style.display   = isEmail ? '' : 'none';
+          if (wFlyer) wFlyer.style.display  = isEmail ? '' : 'none';
+          _updateCounter();
+        });
+      });
+
+      /* ── Char counter ── */
+      var bodyEl   = document.getElementById('campaign-body');
+      var counterEl = document.getElementById('cc-char-counter');
+      function _updateCounter() {
+        if (!bodyEl || !counterEl) return;
+        var len = bodyEl.value.length;
+        var isSms = state.channel === 'sms';
+        counterEl.textContent = isSms ? len + ' / 320' : len + ' chars';
+        counterEl.className = 'cc-char-counter' +
+          (isSms && len > 280 ? (len > 320 ? ' over' : ' warn') : '');
+      }
+      if (bodyEl) bodyEl.addEventListener('input', _updateCounter);
+
+      /* ── Templates ── */
+      document.querySelectorAll('.tpl-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.dataset.tpl;
+          var tpl = TEMPLATES.find(function (t) { return t.id === id; });
+          if (!tpl) return;
+          var subj = document.getElementById('campaign-subject');
+          var body = document.getElementById('campaign-body');
+          if (subj) subj.value = tpl.subject;
+          if (body) { body.value = tpl.body; _updateCounter(); }
+          /* Visual feedback */
+          btn.style.borderColor = 'var(--gold)';
+          setTimeout(function () { btn.style.borderColor = ''; }, 1200);
+        });
+      });
+
+      /* ── Flyer upload ── */
+      var dropzone  = document.getElementById('flyer-dropzone');
+      var fileInput = document.getElementById('campaign-flyer');
+      var preview   = document.getElementById('flyer-preview');
+      var img       = document.getElementById('flyer-img');
+      var removeBtn = document.getElementById('btn-remove-flyer');
+
+      if (dropzone && fileInput) {
+        dropzone.addEventListener('click', function () { fileInput.click(); });
+        dropzone.addEventListener('dragover', function (e) { e.preventDefault(); dropzone.classList.add('drag-over'); });
+        dropzone.addEventListener('dragleave', function ()  { dropzone.classList.remove('drag-over'); });
+        dropzone.addEventListener('drop', function (e) {
+          e.preventDefault(); dropzone.classList.remove('drag-over');
+          var f = e.dataTransfer.files[0];
+          if (f) _loadFlyer(f);
+        });
+        fileInput.addEventListener('change', function () {
+          if (fileInput.files[0]) _loadFlyer(fileInput.files[0]);
+        });
+      }
+
+      if (removeBtn) {
+        removeBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          state.flyerBase64 = null;
+          state.flyerDataUrl = null;
+          if (img) img.src = '';
+          if (preview) preview.style.display = 'none';
+          if (fileInput) fileInput.value = '';
+        });
+      }
+
+      function _loadFlyer(file) {
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          state.flyerDataUrl = ev.target.result;
+          /* Strip data:image/...;base64, prefix for the API payload */
+          state.flyerBase64 = ev.target.result.split(',')[1] || null;
+          if (img) { img.src = ev.target.result; }
+          if (preview) preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+
+      /* ── Broadcast send ── */
+      var btnSend = document.getElementById('btn-trigger-broadcast');
+      if (btnSend) {
+        btnSend.addEventListener('click', async function () {
+          if (state.sending) return;
+
+          var subject = (document.getElementById('campaign-subject') || {}).value || '';
+          var message = (document.getElementById('campaign-body') || {}).value || '';
+          var dryRun  = !!(document.getElementById('campaign-dry-run') || {}).checked;
+          var resultEl = document.getElementById('cc-result');
+
+          /* Validation */
+          if (!message.trim()) return _showResult('err', '⚠️ El mensaje no puede estar vacío.');
+          if (state.channel === 'email' && !subject.trim()) return _showResult('err', '⚠️ El asunto es requerido para campañas de email.');
+          if (state.channel === 'sms' && message.length > 320) return _showResult('err', '⚠️ El mensaje SMS supera los 320 caracteres.');
+
+          /* Confirm before real send */
+          if (!dryRun) {
+            var ok = window.confirm(
+              '¿Confirmas el envío masivo?\n\n' +
+              'Canal: ' + state.channel.toUpperCase() + '\n' +
+              (state.channel === 'email' ? 'Asunto: ' + subject + '\n' : '') +
+              (state.flyerBase64 ? 'Flyer: incluido\n' : '') +
+              '\nEsta acción enviará mensajes reales a todos los suscriptores activos.'
+            );
+            if (!ok) return;
+          }
+
+          /* UI: loading */
+          state.sending = true;
+          btnSend.disabled = true;
+          var lbl = document.getElementById('bc-label');
+          var ico = document.getElementById('bc-icon');
+          if (lbl) lbl.textContent = dryRun ? 'Contando destinatarios…' : 'Enviando…';
+          if (ico) ico.innerHTML = '<div class="spinner"></div>';
+          if (resultEl) resultEl.style.display = 'none';
+
+          try {
+            var db   = window._ccSupabase;
+            var base = typeof window.MDB_SUPABASE_URL === 'string' ? String(window.MDB_SUPABASE_URL).replace(/\/$/, '') : '';
+            var key  = typeof window.MDB_SUPABASE_ANON_KEY === 'string' ? window.MDB_SUPABASE_ANON_KEY : '';
+            var tokRes = db && db.auth ? await db.auth.getSession() : null;
+            var tok  = tokRes && tokRes.data && tokRes.data.session ? tokRes.data.session.access_token : null;
+            if (!base || !tok) throw new Error('Sesión no disponible. Recarga la página e intenta de nuevo.');
+
+            var fnUrl = typeof window.mdbSupabaseFunctionUrl === 'function'
+              ? window.mdbSupabaseFunctionUrl('send-marketing-campaign')
+              : base + '/functions/v1/send-marketing-campaign';
+
+            var payload = {
+              type:      state.channel,
+              subject:   subject,
+              message:   message,
+              dry_run:   dryRun
+            };
+            if (state.flyerBase64) {
+              payload.flyer_base64 = state.flyerBase64;
+            }
+
+            var res  = await fetch(fnUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok, 'apikey': key },
+              body: JSON.stringify(payload)
+            });
+            var data = await res.json();
+
+            if (res.ok && data.ok) {
+              _showResult('ok',
+                (dryRun ? '🔍 <strong>Dry run completado</strong>' : '✅ <strong>Campaña despachada</strong>') +
+                '<br>Enviados: <strong>' + (data.sent || 0) + '</strong>' +
+                ' · Omitidos: ' + (data.skipped || 0) +
+                ' · Errores: ' + (data.errors || 0)
+              );
+            } else {
+              _showResult('err', '❌ ' + (data.error || 'Error inesperado del servidor.'));
+            }
+          } catch (e) {
+            _showResult('err', '❌ ' + (e && e.message ? e.message : 'Error de red.'));
+          } finally {
+            state.sending = false;
+            btnSend.disabled = false;
+            if (lbl) lbl.textContent = 'Enviar Campaña Masiva';
+            if (ico) ico.textContent = '📡';
+          }
+        });
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       HELPERS
+    ══════════════════════════════════════════════════════════════════════ */
+    function _showResult(type, html) {
+      var el = document.getElementById('cc-result');
+      if (!el) return;
+      el.className = 'cc-result ' + type;
+      el.innerHTML = html;
+      el.style.display = 'block';
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function _loadStats() {
+      /* Fetch opt-in counts from client_profiles for live display */
+      var db = window._ccSupabase;
+      if (!db) { setTimeout(_loadStats, 800); return; }
+      Promise.all([
+        db.from('client_profiles').select('user_id', { count: 'exact', head: true }).eq('notify_email_marketing', true),
+        db.from('client_profiles').select('user_id', { count: 'exact', head: true }).eq('notify_sms', true)
+      ]).then(function (results) {
+        var emailEl = document.getElementById('stat-email');
+        var smsEl   = document.getElementById('stat-sms');
+        if (emailEl) emailEl.textContent = (results[0] && results[0].count != null) ? results[0].count : '—';
+        if (smsEl)   smsEl.textContent   = (results[1] && results[1].count != null) ? results[1].count : '—';
+      }).catch(function () { /* non-fatal */ });
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       BOOT — async, no polling needed (Supabase returns in < 1s)
+    ══════════════════════════════════════════════════════════════════════ */
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () { _checkRole(); }, { once: true });
+    } else {
+      _checkRole();
+    }
+
+  })();
+  </script>
+</body>
+</html>
