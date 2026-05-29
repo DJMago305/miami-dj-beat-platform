@@ -2619,6 +2619,16 @@ const PortalApp = {
                 attempt++;
             }
             if (!session || !session.user) return false;
+            /* 3-BUILDING GUARD: eject staff/owner from client building immediately (JWT-only, no DB). */
+            var _cpRole = String((session.user.app_metadata && session.user.app_metadata.role) || '').toLowerCase();
+            if (_cpRole === 'owner') {
+                window.location.href = './account-profile.html?from_client_portal=1';
+                return true;
+            }
+            if (_cpRole === 'admin' || _cpRole === 'manager' || _cpRole === 'seller') {
+                window.location.href = './admin-dashboard.html?from_client_portal=1';
+                return true;
+            }
             var email = String(session.user.email || '').trim().toLowerCase();
             if (!email) return false;
 

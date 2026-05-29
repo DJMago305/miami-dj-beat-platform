@@ -117,7 +117,12 @@
         const hasRecurring = c.recurringSet.has(day);
         const onAvailList = c.availabilityDatesSet.has(dateStr);
         const dailyShifts = (c.weekly[dayStrKey] || []).filter(function (s) { return s && s.enabled; });
-        const activeDayOpen = c.activeDaysArr.indexOf(day) >= 0 && p.available !== false;
+        /* Días disponibles: se muestran si están en active_days, sin requerir available !== false */
+        const activeDayOpen = c.activeDaysArr.indexOf(day) >= 0;
+        /* Días cerrados/ocupados: guardados en weekly_schedule.__busy_days */
+        const _ws2 = (p.weekly_schedule && typeof p.weekly_schedule === 'object') ? p.weekly_schedule : {};
+        const _busyRaw2 = typeof _ws2.__busy_days === 'string' ? _ws2.__busy_days : '';
+        const busyDayOpen = _busyRaw2.split(',').map(function(x){return Number(x.trim());}).includes(day);
         const holiday = holidayLabelForDate(dateStr, c, curLang);
 
         if (inVacation) {
@@ -218,6 +223,19 @@
                 layers: { weeklyShifts: dailyShifts, holiday: holiday }
             };
         }
+        if (busyDayOpen) {
+            return {
+                dateStr,
+                formatted,
+                primaryTag: 'blocked',
+                badgeLabel: 'Cerrado (día ocupado)',
+                dayType: 'trabajo',
+                dayTypeLabel: 'Día marcado como cerrado/ocupado',
+                details: details.concat(['Día marcado como Ocupado en Config → Agenda.']),
+                glowRgb: '239, 68, 68',
+                layers: { holiday: holiday, blocked: true }
+            };
+        }
         if (activeDayOpen) {
             return {
                 dateStr,
@@ -229,7 +247,7 @@
                 details: details.concat(
                     c.isDbResident
                         ? ['Perfil: is_resident; slot genérico.']
-                        : ['Día incluido en active_days; perfil available !== false.']
+                        : ['Día incluido en active_days.']
                 ),
                 glowRgb: c.isDbResident ? '197, 160, 89' : '34, 197, 94',
                 layers: { openDay: true, holiday: holiday }
@@ -727,10 +745,25 @@ async function initAgendaEngine() {
                 const availabilityDatesSet = new Set(
                     Array.isArray(safeProfile.availability) ? safeProfile.availability.filter(Boolean) : []
                 );
-                const activeDaysStr = safeProfile.active_days || "";
-                const activeDaysArr = activeDaysStr.split(',').filter(x => x.trim() !== "").map(Number);
+                /* MAPA DE TRADUCCIÓN — abreviación DB → número nativo FullCalendar */
+                const _dayMap = { "Dom": 0, "Lun": 1, "Mar": 2, "Mié": 3, "Jue": 4, "Vie": 5, "Sáb": 6 };
+                function _parseDayToken(d) {
+                    var s = String(d).trim();
+                    return (s in _dayMap) ? _dayMap[s] : Number(s);
+                }
+
+                const activeDaysStr = Array.isArray(safeProfile.active_days)
+                    ? safeProfile.active_days.join(',')
+                    : (safeProfile.active_days || "");
+                const activeDaysArr = activeDaysStr.split(',').filter(x => x.trim() !== "").map(_parseDayToken);
                 const customHolidaysStr = safeProfile.special_days || safeProfile.custom_holidays || "";
                 const customHolidaysArr = customHolidaysStr.split(',').filter(x => x.trim() !== "");
+
+                /* Días marcados como OCUPADOS/CERRADOS desde account-settings
+                   Guardados en weekly_schedule.__busy_days como CSV "1,2,3" */
+                const _weeklyRaw = safeProfile.weekly_schedule || {};
+                const _busyDaysStr = (typeof _weeklyRaw.__busy_days === 'string') ? _weeklyRaw.__busy_days : '';
+                const busyDaysArr  = _busyDaysStr.split(',').filter(x => x.trim() !== "").map(_parseDayToken);
 
                 const events = [];
                 let d = new Date(info.start.valueOf());
@@ -759,7 +792,9 @@ async function initAgendaEngine() {
 
                 while (d < info.end) {
                     const dateStr = d.toISOString().split('T')[0];
-                    const day = d.getDay();
+                    /* Forzar mediodía local para evitar que UTC-offset reste un día al evaluar getDay() */
+                    const _localNoon = new Date(dateStr + 'T12:00:00');
+                    const day = _localNoon.getDay();
                     const dayOfWeek = day; // 0(Sun) - 6(Sat)
                     const dayStrKey = String(dayOfWeek);
 
@@ -995,12 +1030,28 @@ async function initAgendaEngine() {
                             });
                         });
                     } else {
-                        // FALLBACK GLOBAL
-                        // Actuar según las reglas genéricas (Fase 1)
-                        if (activeDaysArr.includes(dayOfWeek) && safeProfile.available !== false) {
-                            // Está activo este día.
+                        // FALLBACK GLOBAL — días sin turno en weekly_schedule
+
+                        /* ── Días OCUPADOS/CERRADOS (active_days rojo desde Config) ── */
+                        if (busyDaysArr.includes(dayOfWeek)) {
+                            events.push({
+                                title: 'Cerrado',
+                                start: dateStr,
+                                allDay: true,
+                                className: 'ag-evt-vacation',
+                                extendedProps: {
+                                    source: 'busy_days',
+                                    panel_status: 'busy',
+                                    type: '🔒 CERRADO'
+                                }
+                            });
+                        }
+                        /* ── Días DISPONIBLES (active_days verde desde Config) ──
+                           Se muestran independientemente del flag global `available`:
+                           si el artista marcó esos días como activos, deben verse en el calendario. */
+                        else if (activeDaysArr.includes(dayOfWeek)) {
                             let fClass = 'ag-evt-fallback';
-                            let lbl = "DISPONIBLE";
+                            let lbl = 'DISPONIBLE';
 
                             if (isDbResident) {
                                 fClass += ' ag-evt-resident';
@@ -1067,6 +1118,7 @@ async function initAgendaEngine() {
                 const isResident = arg.event.classNames.includes('ag-evt-resident');
                 const isVacation = arg.event.classNames.includes('ag-evt-vacation');
                 const isHoliday = arg.event.classNames.includes('ag-evt-holiday'); // Feriados USA
+                const isFallback = arg.event.classNames.includes('ag-evt-fallback') && !isDay && !isNight;
 
                 // ASIGNACIÓN DE COLORES GLOBALES
                 let colorRgb = '0, 255, 136'; // Default Verde (Gig)
@@ -1086,6 +1138,12 @@ async function initAgendaEngine() {
                 } else {
                     if (isDay) { dayColor = colorRgb; topAlpha = '0.2'; }
                     if (isNight) { nightColor = colorRgb; botAlpha = '0.2'; }
+                    if (isFallback) {
+                        dayColor   = '0, 255, 136'; // Verde premium Miami DJ Beat
+                        nightColor = '0, 255, 136';
+                        topAlpha   = '0.40';
+                        botAlpha   = '0.40';
+                    }
                 }
 
                 // INYECCIÓN DEL ESTADO PARA PANEL DE EVENTOS (Regla de 10s)
@@ -1102,10 +1160,14 @@ async function initAgendaEngine() {
                 cell.setAttribute('data-events', JSON.stringify(eventsArr));
 
                 // INYECCIÓN DE LA CELDA BIPARTITA O HOLOGRAMA PURO
-                if (isDay || isNight || isVacation || isResident) {
-                    cell.style.background = `linear-gradient(180deg, rgba(${dayColor}, ${topAlpha}) 50%, rgba(${nightColor}, ${botAlpha}) 50%)`;
+                if (isDay || isNight || isVacation || isResident || isFallback) {
+                    cell.style.setProperty(
+                        'background',
+                        `linear-gradient(180deg, rgba(${dayColor}, ${topAlpha}) 50%, rgba(${nightColor}, ${botAlpha}) 50%)`,
+                        'important'
+                    );
                 } else {
-                    cell.style.background = 'transparent'; // Holograma puro sin fondo para días sin Gig
+                    cell.style.setProperty('background', 'transparent', 'important');
                 }
                 cell.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
                 cell.style.cursor = 'pointer';
@@ -1230,8 +1292,40 @@ async function initAgendaEngine() {
                     if (profErr) {
                         console.warn('[AGENDA] profile error:', profErr);
                     } else {
-                        window.mdjAgendaEngineContext.profile = profile || {};
-                        await mdjAgendaRefreshAssignedLeads(sb, profile || {});
+                        let resolvedProfile = profile || {};
+
+                        /* ── Override de localStorage: aplica el último save de account-settings ──
+                           Si el usuario guardó la agenda hace menos de 10 minutos, los datos del
+                           localStorage son la fuente más fresca (garantiza coherencia cross-page). */
+                        try {
+                            const _lsRaw = localStorage.getItem('mdj_agenda_last_save');
+                            if (_lsRaw) {
+                                const _ls = JSON.parse(_lsRaw);
+                                const _ageSec = (Date.now() - (_ls.ts || 0)) / 1000;
+                                if (_ageSec < 600 && _ls.uid === session.user.id) {
+                                    resolvedProfile = Object.assign({}, resolvedProfile);
+                                    /* active_days: puede ser "6,0" o null */
+                                    resolvedProfile.active_days = (_ls.active_days != null) ? _ls.active_days : null;
+                                    resolvedProfile.available   = !!_ls.available;
+                                    /* __busy_days dentro de weekly_schedule */
+                                    const _ws = Object.assign(
+                                        {},
+                                        (typeof resolvedProfile.weekly_schedule === 'object' && resolvedProfile.weekly_schedule)
+                                            ? resolvedProfile.weekly_schedule : {}
+                                    );
+                                    if (_ls.busy_days) {
+                                        _ws.__busy_days = _ls.busy_days;
+                                    } else {
+                                        delete _ws.__busy_days;
+                                    }
+                                    resolvedProfile.weekly_schedule = _ws;
+                                    console.log('[AGENDA] localStorage override aplicado | active_days:', resolvedProfile.active_days, '| busy_days:', _ls.busy_days || '—');
+                                }
+                            }
+                        } catch (_lsErr) { /* noop */ }
+
+                        window.mdjAgendaEngineContext.profile = resolvedProfile;
+                        await mdjAgendaRefreshAssignedLeads(sb, resolvedProfile);
                     }
                 }
             } catch (e) {
