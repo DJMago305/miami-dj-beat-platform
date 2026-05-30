@@ -10758,8 +10758,7 @@
         /** Quita líneas con el teléfono corporativo de soporte para que no parezca “destino” de la propina Zelle del fan. */
         window.sftStripCorpLinesFromPayInstructions = function (raw) {
             if (raw == null || !String(raw).trim()) return '';
-            var CORP_RE =
-                /(13056071780|\(305\)\s*607[\s.-]*1780|305\s*607[\s.-]*1780|\+?1\s*305\s*607[\s.-]*1780)/i;
+            var CORP_RE = /^$/; /* filtro corp desactivado — número configurado como destino Zelle */
             var lines = String(raw).split(/\r?\n/);
             var kept = lines.filter(function (line) {
                 return !CORP_RE.test(line);
@@ -13166,7 +13165,13 @@
             if (check) { check.innerText = '✔'; check.style.color = 'var(--gold)'; }
             sftSelectedPayment = method;
             var tipGroup = document.getElementById('sftStep2TipGroup');
-            if (tipGroup) tipGroup.style.display = method === 'Tarjeta' ? '' : 'none';
+            var tipLabel = tipGroup ? tipGroup.querySelector('label') : null;
+            if (tipGroup) tipGroup.style.display = '';
+            if (tipLabel) {
+                tipLabel.innerHTML = method === 'Tarjeta'
+                    ? '💵 <span data-i18n="sft-tip-amount-label">Propina (USD)</span>'
+                    : '💵 <span>¿Cuánto planeas enviar por ' + method + '? (referencia)</span>';
+            }
             sftSyncPayInstructionPanel();
             if (typeof window.sftUpdatePaymentRailNotice === 'function') window.sftUpdatePaymentRailNotice();
         }
@@ -13327,7 +13332,7 @@
             if (phone && phoneDigits.length > 0 && phoneDigits.length < 7) {
                 return alert("Si completas el teléfono, usa al menos 7 dígitos (o déjalo vacío).");
             }
-            if (tipVal <= 0) return alert("Elige un monto de propina (rápido o personalizado).");
+            if (tipVal <= 0) return alert("Elige un monto" + (sftSelectedPayment !== 'Tarjeta' ? " que planeas enviar por " + sftSelectedPayment : " de propina") + " (rápido o personalizado).");
 
             var emailForApi = (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ? email : null;
             var phoneForApi = (phoneDigits.length >= 7) ? phone : null;
@@ -13628,26 +13633,29 @@
                             if (zelleContactMatch) {
                                 copyTarget = zelleContactMatch[1].trim();
                             } else {
-                                var phoneMatch = zelleClean.match(/(\+?1?\s*\(?\d{3}\)?[\s.\-]\d{3}[\s.\-]\d{4})/);
+                                var phoneMatch = zelleClean.match(/(\+?1?[\s.\-]?\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4})/);
                                 var emailMatch = zelleClean.match(/[\w.+-]+@[\w-]+\.[\w.]+/);
                                 copyTarget = (phoneMatch ? phoneMatch[1].trim() : '') || (emailMatch ? emailMatch[0] : '') || zelleClean;
                             }
-                            /* Extraer nombre de cuenta */
+                            /* Extraer nombre de cuenta — sin prefijo "Name on account:" */
                             var nameLineMatch = zelleClean.match(/Name on account\s*:\s*(.+)/i);
                             var zelleAcctName = nameLineMatch ? nameLineMatch[1].trim() : '';
-                            /* Construir display limpio: teléfono/email grande + nombre debajo */
+                            /* Si copyTarget cayó al texto completo (sin phone/email real), usar solo el nombre */
+                            var hasRealContact = zelleContactMatch || phoneMatch || emailMatch;
+                            if (!hasRealContact) copyTarget = '';
+                            /* Construir display limpio: teléfono/email grande + nombre abajo sin prefijo */
                             instrDisplay = (copyTarget
                                 ? '<div style="font-size:22px;font-weight:900;letter-spacing:1px;word-break:break-all;">' + copyTarget + '</div>'
                                 : '')
                                 + (zelleAcctName
-                                ? '<div style="color:rgba(255,255,255,0.5);font-size:13px;margin-top:6px;">' + zelleAcctName + '</div>'
+                                ? '<div style="color:rgba(255,255,255,0.65);font-size:15px;font-weight:700;margin-top:' + (copyTarget ? '6px' : '0') + ';">' + zelleAcctName + '</div>'
                                 : '');
                             if (copyTarget) {
                                 actionBtn = '<button id="sft-ov-copy-btn" style="width:100%;padding:18px;font-size:18px;font-weight:900;background:#fcd34d;color:#07090e;border:none;border-radius:14px;cursor:pointer;letter-spacing:0.5px;margin-bottom:12px;" onclick="(function(){var v=' + JSON.stringify(copyTarget) + ';if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(v).then(function(){var b=document.getElementById(\'sft-ov-copy-btn\');if(b){b.textContent=\'✓ Número copiado\';b.style.background=\'#22c55e\';b.style.color=\'#fff\';}var instr=document.getElementById(\'sft-ov-instr\');if(instr)instr.style.display=\'block\';var cl=document.getElementById(\'sft-ov-close-btn\');if(cl)cl.style.display=\'block\';}).catch(function(){window.prompt(\'Copia:\',v);})}else{window.prompt(\'Copia:\',v);}})()">📋 COPIAR PARA ZELLE</button>'
                                 + '<div id="sft-ov-instr" style="display:none;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.4);border-radius:14px;padding:18px 16px;margin-bottom:12px;text-align:center;">'
-                                + '<div style="font-size:22px;margin-bottom:8px;">📱</div>'
-                                + '<div style="color:#fff;font-size:16px;font-weight:800;margin-bottom:6px;">Abre tu app de Zelle</div>'
-                                + '<div style="color:rgba(255,255,255,0.65);font-size:13px;line-height:1.5;">Pega el número y envía tu propina.<br>El DJ recibirá tu petición al confirmar el pago.</div>'
+                                + '<div style="color:#fff;font-size:15px;font-weight:800;margin-bottom:6px;">✓ Número copiado — ahora abre Zelle</div>'
+                                + '<div style="color:rgba(255,255,255,0.65);font-size:13px;line-height:1.5;margin-bottom:14px;">Pega el número, escribe el monto y envía tu propina.</div>'
+                                + '<a href="zelle://" onclick="setTimeout(function(){window.location.href=\'https://apps.apple.com/us/app/zelle/id1260755201\';},2000);" style="display:block;width:100%;padding:14px;font-size:15px;font-weight:900;background:#6d1ed4;color:#fff;border:none;border-radius:12px;cursor:pointer;text-decoration:none;box-sizing:border-box;margin-bottom:0;">💜 ABRIR ZELLE</a>'
                                 + '</div>';
                             }
                         }
