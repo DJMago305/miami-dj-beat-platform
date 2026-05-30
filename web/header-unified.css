@@ -1399,6 +1399,17 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
 }
 
 /*
+ * Nav compacto — alineación izquierda (v20260529-compact-nav-flex-start):
+ * justify-content: flex-start evita que el centrado oculte INICIO cuando hay overflow.
+ * Solo aplica a páginas con data-mdj-compact-nav="1" (servicios, eventos, shop, etc.).
+ * La home page (sin ese atributo) conserva justify-content: center + carrusel infinito.
+ */
+#mainHeader.header.mdj-header-unified .header-nav .container
+  > #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-compact-nav="1"] {
+  justify-content: flex-start !important;
+}
+
+/*
  * Nav compacto anti-brinco: CONFIG y MI PERFIL ocupan su espacio desde el primer frame
  * (visibility: hidden preserva ancho; pointer-events: none evita clics accidentales).
  * Cuando el JS los activa, solo cambia opacidad → sin layout shift.
@@ -1417,6 +1428,28 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
   overflow: visible !important;
   position: static !important;
   margin: 0 !important;
+}
+
+/*
+ * SERVICIOS / EVENTOS — override anti-brinco: zero-space en slots ocultos (v20260529-services-events-zero-space-slots)
+ * En estas páginas el nav visible ya llena la fila (Inicio+Servicios+Eventos+Shop+DJTools+Trabajos+Contacto).
+ * Los reserved-slot invisibles deben ocupar CERO espacio para no desplazar las pestañas visibles fuera del viewport.
+ * Cuentas artista / guest / client: slots inician ocultos hasta que JS quita mdj-mainnav-reserved-slot / aria-hidden.
+ * Especificidad (1,3,2) supera al anti-brinco general (1,2,1); ambos lados usan !important.
+ */
+body.page-mdj-rentals #mainNav[data-mdj-compact-nav="1"] > a.mdj-mainnav-reserved-slot,
+body.page-mdj-rentals #mainNav[data-mdj-compact-nav="1"] > a[aria-hidden="true"],
+body.page-mdj-events  #mainNav[data-mdj-compact-nav="1"] > a.mdj-mainnav-reserved-slot,
+body.page-mdj-events  #mainNav[data-mdj-compact-nav="1"] > a[aria-hidden="true"] {
+  display:        none    !important;
+  width:          0       !important;
+  min-width:      0       !important;
+  max-width:      0       !important;
+  flex:           0 0 0   !important;
+  overflow:       hidden  !important;
+  padding:        0       !important;
+  margin:         0       !important;
+  pointer-events: none    !important;
 }
 
 /*
@@ -1816,42 +1849,9 @@ body.mdj-artist-academy #owner-tabs .container .dj-tab-btn {
    Both sides use !important; higher specificity wins.
    ============================================================ */
 
-/* ── SHOP / DJ TOOLS / TRABAJOS — block JS injection on rentals & events pages ──
-   These links are injected by mdj-shared-header.js; this CSS forces them to zero-width.
-   Contact, MI PERFIL, MI PORTAL and STAFF remain visible. */
-body.page-mdj-rentals
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav="shop"],
-body.page-mdj-events
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav="shop"],
-body.page-mdj-rentals
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav="tools"],
-body.page-mdj-events
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav="tools"],
-body.page-mdj-rentals
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav="jobs"],
-body.page-mdj-events
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav="jobs"] {
-  display: none !important;
-  width: 0 !important;
-  min-width: 0 !important;
-  flex: 0 0 0 !important;
-  overflow: hidden !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  pointer-events: none !important;
-}
+/* ── SHOP / DJ TOOLS / TRABAJOS — restaurados en services.html y events.html (v20260529-nav-restore) ──
+   Bloque eliminado: ocultaba links hardcodeados en el HTML además de inyecciones JS.
+   Los items vuelven a ser visibles para todos los usuarios en estas páginas. */
 
 /* ── CAROUSEL ZONES — services.html ── */
 body.mdj-staff-nav.page-mdj-rentals #rentals-gallery,
