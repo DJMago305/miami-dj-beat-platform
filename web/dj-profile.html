@@ -13701,7 +13701,7 @@
                                 + '<div id="sft-ov-instr" style="display:none;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.4);border-radius:14px;padding:18px 16px;margin-bottom:12px;text-align:center;">'
                                 + '<div style="color:#fff;font-size:15px;font-weight:800;margin-bottom:6px;">✓ Copiado — abre Zelle y pega</div>'
                                 + '<div style="color:rgba(255,255,255,0.65);font-size:13px;line-height:1.5;margin-bottom:14px;">Pega el número, escribe el monto y envía tu propina.</div>'
-                                + '<a href="zelle://" onclick="setTimeout(function(){window.location.href=\'https://apps.apple.com/us/app/zelle/id1260755201\';},2000);" style="display:block;width:100%;padding:14px;font-size:15px;font-weight:900;background:#6d1ed4;color:#fff;border:none;border-radius:12px;cursor:pointer;text-decoration:none;box-sizing:border-box;margin-bottom:0;">💜 ABRIR ZELLE</a>'
+                                + '<button onclick="var o=document.getElementById(\'sft-manual-pay-overlay\');if(o)o.remove();closeSoundForTipsModal();" style="display:block;width:100%;padding:14px;font-size:15px;font-weight:900;background:#6d1ed4;color:#fff;border:none;border-radius:12px;cursor:pointer;box-sizing:border-box;margin-bottom:0;">💜 ABRIR ZELLE</button>'
                                 + '</div>';
                             }
                         }
@@ -13732,7 +13732,7 @@
                             ].join('') : '',
                             '</div>',
                             actionBtn,
-                            '<button id="sft-ov-close-btn" style="' + closeVisible + 'width:100%;padding:16px;font-size:16px;font-weight:800;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.25);border-radius:14px;cursor:pointer;margin-bottom:16px;" onclick="document.getElementById(\'sft-manual-pay-overlay\').remove();window.location.href=\'' + profileUrl + '\';">✕ Cerrar</button>',
+                            '',
                             '<p style="color:rgba(255,255,255,0.3);font-size:11px;line-height:1.5;margin:0;">El DJ verá tu petición en amarillo hasta que confirme el pago.</p>',
                             '</div>'
                         ].join('');
