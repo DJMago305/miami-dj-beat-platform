@@ -13165,7 +13165,13 @@
             if (check) { check.innerText = '✔'; check.style.color = 'var(--gold)'; }
             sftSelectedPayment = method;
             var tipGroup = document.getElementById('sftStep2TipGroup');
-            if (tipGroup) tipGroup.style.display = method === 'Tarjeta' ? '' : 'none';
+            var tipLabel = tipGroup ? tipGroup.querySelector('label') : null;
+            if (tipGroup) tipGroup.style.display = '';
+            if (tipLabel) {
+                tipLabel.innerHTML = method === 'Tarjeta'
+                    ? '💵 <span data-i18n="sft-tip-amount-label">Propina (USD)</span>'
+                    : '💵 <span>¿Cuánto planeas enviar por ' + method + '? (referencia)</span>';
+            }
             sftSyncPayInstructionPanel();
             if (typeof window.sftUpdatePaymentRailNotice === 'function') window.sftUpdatePaymentRailNotice();
         }
@@ -13326,7 +13332,7 @@
             if (phone && phoneDigits.length > 0 && phoneDigits.length < 7) {
                 return alert("Si completas el teléfono, usa al menos 7 dígitos (o déjalo vacío).");
             }
-            if (tipVal <= 0 && sftSelectedPayment === 'Tarjeta') return alert("Elige un monto de propina (rápido o personalizado).");
+            if (tipVal <= 0) return alert("Elige un monto" + (sftSelectedPayment !== 'Tarjeta' ? " que planeas enviar por " + sftSelectedPayment : " de propina") + " (rápido o personalizado).");
 
             var emailForApi = (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ? email : null;
             var phoneForApi = (phoneDigits.length >= 7) ? phone : null;
