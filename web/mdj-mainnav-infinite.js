@@ -409,6 +409,7 @@
   function mountIfOverflow(nav) {
     teardownNav(nav);
     if (!isDesktop()) return;
+    if (nav.getAttribute('data-mdj-compact-nav') === '1') return;
     var originals = Array.prototype.slice.call(nav.querySelectorAll(':scope > a:not(.' + CLONE + ')'));
     if (originals.length < 2) return;
     if (isPageHome() && nav.scrollWidth <= nav.clientWidth + 1) {
