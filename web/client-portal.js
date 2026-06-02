@@ -429,21 +429,42 @@ function portalTAmount(key, amountUsd) {
     return s.replace(/\$\{amount\}/g, '$' + amt.toFixed(2));
 }
 
+/** Normaliza rutas Storage (misma idea que mdj-shared-header). */
+function portalNormalizeAvatarUrl(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return '';
+    if (/placeholder|dj-avatar-placeholder\.png/i.test(s)) return '';
+    if (/^https?:\/\//i.test(s)) return s;
+    if (s.indexOf('data:image/') === 0 || s.indexOf('blob:') === 0) return s;
+    var base =
+        typeof window.MDB_SUPABASE_URL === 'string' && window.MDB_SUPABASE_URL
+            ? String(window.MDB_SUPABASE_URL).replace(/\/$/, '')
+            : '';
+    if (base && s.indexOf('storage/v1') !== -1) {
+        var path = s.indexOf('/') === 0 ? s : '/' + s.replace(/^\/+/, '');
+        return base + path;
+    }
+    if (base && s.indexOf('/') === 0 && s.indexOf('/storage/') === 0) {
+        return base + s;
+    }
+    return s;
+}
+
 /** Misma heurística que el header VIP (URL pública real). */
 function portalIsRealPhotoUrl(url) {
-    if (!url || !String(url).trim()) return false;
-    var u = String(url).trim();
+    var u = portalNormalizeAvatarUrl(url);
+    if (!u) return false;
     if (/placeholder|dj-avatar-placeholder\.png/i.test(u)) return false;
-    return /^https?:\/\//i.test(u) || u.indexOf('data:image/') === 0;
+    return /^https?:\/\//i.test(u) || u.indexOf('data:image/') === 0 || u.indexOf('blob:') === 0;
 }
 
 function portalGetAvatarUrl(session, clientProfile) {
     var meta = session && session.user && session.user.user_metadata ? session.user.user_metadata : {};
-    var u = meta.avatar_url || meta.picture || meta.picture_url;
-    if (portalIsRealPhotoUrl(u)) return String(u).split('?')[0];
+    var u = portalNormalizeAvatarUrl(meta.avatar_url || meta.picture || meta.picture_url);
+    if (portalIsRealPhotoUrl(u)) return u;
     if (clientProfile) {
-        var c = (clientProfile.avatar_url || clientProfile.photo_url || '').trim();
-        if (portalIsRealPhotoUrl(c)) return c.split('?')[0];
+        var c = portalNormalizeAvatarUrl(clientProfile.avatar_url || clientProfile.photo_url || '');
+        if (portalIsRealPhotoUrl(c)) return c;
     }
     return '';
 }
@@ -673,7 +694,7 @@ var MDJ_LEADS_HUB_COLUMNS =
     'id,email,client_user_id,event_type,event_date,status,created_at,payment_status,balance_paid,total_amount';
 
 var MDJ_LEADS_BROWSER_COLUMNS =
-    'id,email,client_user_id,full_name,phone,event_type,event_date,status,created_at,location,notes,payment_status,balance_paid,total_amount';
+    'id,email,client_user_id,full_name,phone,event_type,event_date,status,created_at,location,notes,payment_status,balance_paid,total_amount,assigned_staff_id,assigned_staff_name';
 
 var MDJ_LEADS_SAFE_COLUMNS = MDJ_LEADS_BROWSER_COLUMNS;
 
@@ -1429,6 +1450,7 @@ const PortalApp = {
             } catch (guErr) { /* ignore */ }
             var uid = this._sessionSnapshot && this._sessionSnapshot.user && this._sessionSnapshot.user.id;
             if (uid) {
+                this._myUserId = uid; // store for chat RLS
                 var pr = await db.from('client_profiles').select('*').eq('user_id', uid).maybeSingle();
                 if (pr.data) this.clientProfile = pr.data;
             }
@@ -1447,6 +1469,9 @@ const PortalApp = {
         } catch (eLang) { /* ignore */ }
         this.renderLoyaltyBadge(this.clientProfile?.total_events_booked || 1);
         this.renderCart();
+        if (typeof this.renderPortalWelcomeAvatar === 'function') {
+            this.renderPortalWelcomeAvatar();
+        }
     },
 
     async loadLoyaltyTier(email) {
@@ -1529,35 +1554,76 @@ const PortalApp = {
         const container = document.getElementById('calendar-widget');
         if (!container) return;
 
-        container.innerHTML = this.meetings.map((m, index) => `
-            <div class="cart-item" style="flex-direction: column; align-items: flex-start; ${m.status === 'past' ? 'opacity: 0.5' : ''}">
-                <div style="display:flex; justify-content:space-between; width:100%;">
-                    <span class="val">${m.title}</span>
-                    ${this.isManager ? `<button onclick="PortalApp.removeMeeting(${index})" style="background:none; border:none; color:red; cursor:pointer;">×</button>` : ''}
-                </div>
-                <span class="fineprint">${m.date}</span>
-                ${m.location ? `<span class="fineprint">📍 ${m.location}</span>` : ''}
-            </div>
-        `).join('');
+        // ── Excel-style header — 5 columnas + acción ──
+        var colsManager = this.isManager ? ' cal-grid--with-action' : '';
+        var headerHtml =
+            '<div class="cal-grid cal-grid--header' + colsManager + '">' +
+            '<div class="cal-cell">Lugar</div>' +
+            '<div class="cal-cell">Hora</div>' +
+            '<div class="cal-cell">Fecha</div>' +
+            '<div class="cal-cell">Persona de Contacto</div>' +
+            '<div class="cal-cell">Código de Entrada</div>' +
+            (this.isManager ? '<div class="cal-cell cal-cell--action"></div>' : '') +
+            '</div>';
+
+        if (!this.meetings || this.meetings.length === 0) {
+            container.innerHTML =
+                headerHtml +
+                '<div class="cal-empty-row">' +
+                '<div class="cal-empty-msg">No hay citas programadas aún.<br>' +
+                '<span style="font-size:11px;opacity:0.5;">Your manager will schedule a consultation with you shortly.</span>' +
+                '</div>' +
+                '</div>';
+        } else {
+            var self = this;
+            var rowsHtml = this.meetings.map(function (m, index) {
+                var isPast = m.status === 'past';
+                var removeBtn = '';
+                if (self.isManager) {
+                    removeBtn = '<div class="cal-cell cal-cell--action">' +
+                        '<button class="cal-remove-btn" onclick="PortalApp.removeMeeting(' + index + ')">&#10005;</button>' +
+                        '</div>';
+                }
+                return '<div class="cal-grid cal-grid--row' + colsManager + (isPast ? ' cal-row--past' : '') + '">' +
+                    '<div class="cal-cell">' + portalEscapeHtml(m.location || '—') + '</div>' +
+                    '<div class="cal-cell cal-cell--mono">' + portalEscapeHtml(m.time || m.date || '—') + '</div>' +
+                    '<div class="cal-cell cal-cell--mono">' + portalEscapeHtml(m.fecha || '') + '</div>' +
+                    '<div class="cal-cell">' + portalEscapeHtml(m.contact || '—') + '</div>' +
+                    '<div class="cal-cell cal-cell--code">' + portalEscapeHtml(m.gate_code || '—') + '</div>' +
+                    removeBtn +
+                    '</div>';
+            }).join('');
+            container.innerHTML = headerHtml + rowsHtml;
+        }
 
         if (this.isManager) {
-            const addBtn = document.createElement('button');
-            addBtn.className = "btn-pill";
-            addBtn.style.width = "100%";
-            addBtn.style.marginTop = "10px";
-            addBtn.textContent = "+ Programar Cita/Sita";
-            addBtn.onclick = () => this.addMeetingPrompt();
+            var addBtn = document.createElement('button');
+            addBtn.className = 'pf-pay-btn pf-pay-btn--ghost';
+            addBtn.style.marginTop = '12px';
+            addBtn.textContent = '+ Schedule Appointment';
+            addBtn.onclick = function () { window.PortalApp.addMeetingPrompt(); };
             container.appendChild(addBtn);
         }
     },
 
     addMeetingPrompt() {
-        const title = prompt("Título de la cita (Ej: Visita técnica):");
-        if (!title) return;
-        const date = prompt("Día y hora (Ej: Lunes 4:00 PM):");
-        const location = prompt("Ubicación (opcional):");
+        const location = prompt('Lugar (Ej: Wynwood Arts District, Miami):');
+        if (!location) return;
+        const time = prompt('Hora (Ej: 4:00 PM):');
+        if (!time) return;
+        const fecha = prompt('Fecha (Ej: Sábado 14 Jun 2026):');
+        if (!fecha) return;
+        const contact = prompt('Persona de contacto (nombre y teléfono):');
+        const gate_code = prompt('Código de entrada (dejar vacío si no aplica):');
 
-        this.meetings.push({ title, date, location, status: "upcoming" });
+        this.meetings.push({
+            location: location.trim(),
+            time: time.trim(),
+            fecha: fecha.trim(),
+            contact: (contact || '').trim() || '—',
+            gate_code: (gate_code || '').trim() || '—',
+            status: 'upcoming'
+        });
         this.renderCalendar();
         this.syncCalendar();
     },
@@ -1658,7 +1724,7 @@ const PortalApp = {
         var nm = portalResolveWelcomeName(s, cp, this.currentLead);
         var initials = portalComputeInitials(nm, s && s.user && s.user.email ? s.user.email : '');
         if (portalIsRealPhotoUrl(url)) {
-            var bust = url.indexOf('?') >= 0 ? url : url + '?v=' + Date.now();
+            var bust = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'v=' + Date.now();
             el.style.display = '';
             el.classList.remove('portal-welcome-avatar--initials');
             el.innerHTML =
@@ -1841,6 +1907,21 @@ const PortalApp = {
         if (!container) {
             return;
         }
+
+        // Wire Edit Package button with the current lead ID
+        var editBtn = document.getElementById('btn-edit-package');
+        if (editBtn && this.currentLead && this.currentLead.id) {
+            var editHref = './services.html?edit_event=' + encodeURIComponent(this.currentLead.id);
+            editBtn.href = editHref;
+            // If payment is already started, show a warning tooltip
+            var paid = parseFloat((this.currentLead || {}).balance_paid) || 0;
+            if (paid > 0.01) {
+                editBtn.title = 'A deposit has been paid — contact us to modify a confirmed booking';
+                editBtn.style.opacity = '0.45';
+                editBtn.style.pointerEvents = 'none';
+                editBtn.textContent = '\u2700 Locked (deposit paid)';
+            }
+        }
         if (!this.items.length) {
             container.innerHTML =
                 '<p class="fineprint" style="margin:0;padding:12px 0;text-align:center;opacity:0.9;">' +
@@ -1949,18 +2030,45 @@ const PortalApp = {
         const total = parseFloat(l.total_amount) || 0;
         const balance = total - paid;
         const progress = total > 0 ? (paid / total) * 100 : 0;
-
-        var pt = document.getElementById('pay-total');
-        var pp = document.getElementById('pay-paid');
-        var pb = document.getElementById('pay-balance');
-        var pf = document.getElementById('pay-progress');
-        if (pt) pt.textContent = `$${total.toFixed(2)}`;
-        if (pp) pp.textContent = `$${paid.toFixed(2)}`;
-        if (pb) pb.textContent = `$${balance.toFixed(2)}`;
-        if (pf) pf.style.width = `${progress}%`;
-
-        // Payment status badge
         const pStatus = l.payment_status || 'UNPAID';
+
+        // Zone 1: summary row elements (in static HTML)
+        var depositForSummary = l.deposit_required_usd != null && isFinite(parseFloat(l.deposit_required_usd))
+            ? parseFloat(l.deposit_required_usd)
+            : portalCalcEventDepositUsd(total);
+
+        var pt  = document.getElementById('pay-total');
+        var pp  = document.getElementById('pay-paid');
+        var pb  = document.getElementById('pay-balance');
+        var pf  = document.getElementById('pay-progress');
+        var pds = document.getElementById('pay-deposit-summary');
+        var prs = document.getElementById('pay-remaining-summary');
+        if (pt)  pt.textContent  = `$${total.toFixed(2)}`;
+        if (pp)  pp.textContent  = `$${paid.toFixed(2)}`;
+        if (pb)  pb.textContent  = `$${balance.toFixed(2)}`;
+        if (pf)  pf.style.width  = `${progress}%`;
+        if (pds) {
+            if (pStatus === 'PAID') {
+                pds.textContent = 'Paid in full';
+                pds.style.color = '#4ade80';
+            } else if (paid >= depositForSummary - 0.01) {
+                pds.textContent = `$${depositForSummary.toFixed(2)} ✓`;
+                pds.style.color = '#4ade80';
+            } else {
+                pds.textContent = `$${depositForSummary.toFixed(2)}`;
+            }
+        }
+        if (prs) {
+            if (pStatus === 'PAID') {
+                prs.textContent = '$0.00';
+                prs.style.color = '#4ade80';
+            } else {
+                var remaining = Math.max(0, total - depositForSummary);
+                prs.textContent = `$${remaining.toFixed(2)}`;
+            }
+        }
+
+        // Status badge
         const statusColors = { PAID: '#22c55e', PARTIAL: '#f59e0b', PENDING: '#c5a059', PENDING_ZELLE: '#c5a059', UNPAID: '#ef4444' };
         const payStatusEl = document.getElementById('pay-status-badge');
         if (payStatusEl) {
@@ -1968,51 +2076,330 @@ const PortalApp = {
             payStatusEl.style.color = statusColors[pStatus] || '#fff';
         }
 
-        var oldPay = document.getElementById('btn-stripe-pay');
-        if (oldPay) oldPay.remove();
-        var oldZelle = document.getElementById('portal-zelle-block');
-        if (oldZelle) oldZelle.remove();
-        var mgrPay = document.getElementById('btn-manager-stripe-link');
-        if (mgrPay) mgrPay.remove();
-        if (!this.isManager) {
-            var abx = document.getElementById('btn-add-abono');
-            if (abx) abx.remove();
-        }
+        // Zone 2 + 3: dynamic deposit/action section
+        this.renderPaymentZones({ total, paid, balance, pStatus });
 
-        var payHost = document.getElementById('portal-pay-cta-host');
-        if (payHost) payHost.innerHTML = '';
-
-        // Show Stripe + Zelle to CLIENT if balance > 0 and not PAID
-        if (!this.isManager && balance > 0 && pStatus !== 'PAID') {
-            this.showStripePayButton(balance);
-            this.showZellePayBlock(balance);
-        }
-
+        // Manager billing link (legacy host, still used for manager-only overlay)
         if (this.isManager && balance > 0 && this.getManagerBillingUnlocked()) {
             this.showManagerStripeLinkButton(balance);
         }
 
+        // Invoice PDF button
         var oldInv = document.getElementById('btn-portal-invoice-pdf');
         if (oldInv) oldInv.remove();
         if (total > 0.009 && typeof window.mdjOpenInvoicePrint === 'function') {
             var invBtn = document.createElement('button');
             invBtn.type = 'button';
             invBtn.id = 'btn-portal-invoice-pdf';
-            invBtn.className = 'btn secondary full';
-            invBtn.style.marginTop = '10px';
+            invBtn.className = 'pf-invoice-btn';
             invBtn.textContent = portalT('portal-invoice-pdf-cta');
+            var pz = document.getElementById('portal-payment-zones');
+            if (pz) pz.appendChild(invBtn);
             var self = this;
-            invBtn.onclick = function () {
-                void self.openNativeInvoicePrint();
-            };
-            var payHost = document.getElementById('portal-pay-cta-host');
-            if (payHost && payHost.parentNode) {
-                payHost.parentNode.insertBefore(invBtn, payHost.nextSibling);
-            }
+            invBtn.onclick = function () { void self.openNativeInvoicePrint(); };
         }
 
         this.exportFinanceMeta();
         this.updateReservationBonusBanner();
+    },
+
+    /**
+     * Renders the dynamic deposit / payment action zones (2 + 3) into #portal-payment-zones.
+     * States: UNPAID → deposit action; PENDING_ZELLE → awaiting confirmation; PARTIAL → final balance; PAID → complete.
+     */
+    renderPaymentZones({ total, paid, balance, pStatus }) {
+        var host = document.getElementById('portal-payment-zones');
+        if (!host) return;
+        host.innerHTML = '';
+
+        // Skip for managers — they use the legacy manager billing button
+        if (this.isManager) return;
+
+        var l = this.currentLead || {};
+        var depositUsd = l.deposit_required_usd != null && isFinite(parseFloat(l.deposit_required_usd))
+            ? parseFloat(l.deposit_required_usd)
+            : portalCalcEventDepositUsd(total);
+
+        // Apply active discount (coupon or referral) to deposit
+        var activeDiscount = this._activeDiscount || null;
+        var referralDiscount = this._getReferralDiscount(total);
+        // Coupon takes precedence over referral if both present
+        var appliedDiscount = activeDiscount || referralDiscount;
+        var discountCents = appliedDiscount ? (appliedDiscount.discount_cents || 0) : 0;
+        var depositAfterDiscount = Math.max(0, depositUsd - discountCents / 100);
+
+        // Due date = event_date - 7 days (or TBD)
+        var dueDateStr = 'TBD';
+        if (l.event_date) {
+            try {
+                var ed = new Date(l.event_date + 'T12:00:00');
+                ed.setDate(ed.getDate() - 7);
+                dueDateStr = ed.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            } catch (e) { /* ignore */ }
+        }
+
+        var zelleEmail = portalCorpZelleEmail();
+        var zelleMemo = portalZelleMemoForLead(l.id);
+
+        if (pStatus === 'PAID') {
+            host.innerHTML =
+                '<div class="pf-zone pf-zone--paid">' +
+                '<div class="pf-paid-mark">&#10003;</div>' +
+                '<div class="pf-paid-title">Paid in full</div>' +
+                '<div class="pf-paid-amount">$' + total.toFixed(2) + '</div>' +
+                '<div class="pf-paid-note">Thank you. We look forward to your event!</div>' +
+                '</div>';
+            return;
+        }
+
+        if (pStatus === 'PENDING_ZELLE') {
+            host.innerHTML =
+                '<div class="pf-zone pf-zone--pending">' +
+                '<div class="pf-pending-icon">&#9203;</div>' +
+                '<div class="pf-pending-title">Zelle transfer pending confirmation</div>' +
+                '<div class="pf-pending-note">Deposit $' + depositUsd.toFixed(2) + ' — a team member will verify and confirm your booking within 24 hours.</div>' +
+                '<div class="pf-pending-note" style="margin-top:8px;opacity:0.5;">Keep your Zelle screenshot as proof of payment. Reference: <span style="font-family:monospace;">' + portalEscapeHtml(zelleMemo) + '</span></div>' +
+                '</div>' +
+                '<div class="pf-zone pf-zone--remaining">' +
+                '<div class="pf-row"><span class="pf-label">Remaining balance</span><span class="pf-val">$' + (total - depositUsd).toFixed(2) + '</span></div>' +
+                '<div class="pf-row"><span class="pf-label">Final payment due</span><span class="pf-val">' + portalEscapeHtml(dueDateStr) + '</span></div>' +
+                '</div>';
+            return;
+        }
+
+        if (pStatus === 'PARTIAL' || (paid > 0.01 && balance > 0.01)) {
+            // Deposit confirmed, balance remaining
+            var remainHtml =
+                '<div class="pf-zone pf-zone--confirmed">' +
+                '<div class="pf-confirmed-mark">&#10003; Deposit received</div>' +
+                '<div class="pf-confirmed-amount">$' + paid.toFixed(2) + ' confirmed</div>' +
+                '</div>' +
+                '<div class="pf-zone pf-zone--remaining">' +
+                '<div class="pf-remaining-title">Final payment</div>' +
+                '<div class="pf-row"><span class="pf-label">Remaining balance</span><span class="pf-val pf-val--due">$' + balance.toFixed(2) + '</span></div>' +
+                '<div class="pf-row"><span class="pf-label">Due by</span><span class="pf-val">' + portalEscapeHtml(dueDateStr) + '</span></div>' +
+                '</div>';
+            host.insertAdjacentHTML('beforeend', remainHtml);
+
+            // Final balance stripe button
+            var self = this;
+            var finalBtn = document.createElement('button');
+            finalBtn.type = 'button';
+            finalBtn.id = 'btn-stripe-pay';
+            finalBtn.className = 'pf-pay-btn pf-pay-btn--ghost';
+            finalBtn.textContent = 'Pay Final Balance · $' + balance.toFixed(2);
+            finalBtn.onclick = function () { void self.payDepositStripe(balance); };
+            var remZone = host.querySelector('.pf-zone--remaining');
+            if (remZone) remZone.appendChild(finalBtn);
+            return;
+        }
+
+        // Default: UNPAID — show deposit action zone
+        var discountBadge = '';
+        if (appliedDiscount) {
+            var discLabel = appliedDiscount.source === 'referral'
+                ? 'Referral discount applied'
+                : ('Code <span class="pf-mono">' + portalEscapeHtml(appliedDiscount.code) + '</span> applied');
+            discountBadge =
+                '<div class="pf-discount-applied">' +
+                '<span class="pf-discount-mark">&#10003;</span> ' + discLabel +
+                ' &minus;$' + (discountCents / 100).toFixed(2) +
+                '</div>';
+        }
+
+        var depositHtml =
+            '<div class="pf-zone pf-zone--deposit">' +
+            '<div class="pf-deposit-label">Reserve Your Date</div>' +
+            '<div class="pf-deposit-note">A deposit is required to confirm your booking</div>' +
+            '<div class="pf-deposit-amount">$' + depositAfterDiscount.toFixed(2) + '</div>' +
+            (discountCents > 0
+                ? '<div class="pf-deposit-original">was $' + depositUsd.toFixed(2) + '</div>'
+                : '') +
+            '<div class="pf-deposit-pct">30% of contract · minimum $150</div>' +
+            discountBadge +
+            '</div>';
+        host.insertAdjacentHTML('beforeend', depositHtml);
+
+        // Coupon code input (only when no active discount yet)
+        if (!appliedDiscount) {
+            var couponHtml =
+                '<div class="pf-coupon-row" id="pf-coupon-row">' +
+                '<input type="text" id="pf-coupon-input" class="pf-coupon-input" placeholder="Promo / discount code" maxlength="40" autocomplete="off" spellcheck="false">' +
+                '<button type="button" class="pf-coupon-apply" id="pf-coupon-apply">Apply</button>' +
+                '</div>' +
+                '<div class="pf-coupon-msg" id="pf-coupon-msg"></div>';
+            host.insertAdjacentHTML('beforeend', couponHtml);
+            var self0 = this;
+            var applyBtn = document.getElementById('pf-coupon-apply');
+            var couponInput = document.getElementById('pf-coupon-input');
+            if (applyBtn && couponInput) {
+                applyBtn.onclick = function () {
+                    var code = (couponInput.value || '').trim();
+                    if (code) void self0.applyCouponCode(code, Math.round(total * 100));
+                };
+                couponInput.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') applyBtn.click();
+                });
+            }
+        } else {
+            // Show remove discount link
+            var removeHtml = '<div class="pf-coupon-remove"><button type="button" id="pf-coupon-remove">Remove discount</button></div>';
+            host.insertAdjacentHTML('beforeend', removeHtml);
+            var self0b = this;
+            var removeBtn = document.getElementById('pf-coupon-remove');
+            if (removeBtn) {
+                removeBtn.onclick = function () {
+                    self0b._activeDiscount = null;
+                    self0b.renderPaymentZones({ total: total, paid: paid, balance: balance, pStatus: pStatus });
+                };
+            }
+        }
+
+        // Stripe pay button
+        var self = this;
+        var stripeBtn = document.createElement('button');
+        stripeBtn.type = 'button';
+        stripeBtn.id = 'btn-stripe-pay';
+        stripeBtn.className = 'pf-pay-btn';
+        stripeBtn.textContent = 'Pay Deposit via Card · $' + depositAfterDiscount.toFixed(2);
+        stripeBtn.onclick = function () { void self.payDepositStripe(depositAfterDiscount); };
+        var depZone = host.querySelector('.pf-zone--deposit');
+        if (depZone) depZone.appendChild(stripeBtn);
+
+        // Zelle secondary
+        var zelleHtml =
+            '<div class="pf-divider">or pay by bank transfer (Zelle)</div>' +
+            '<div class="pf-zone pf-zone--zelle" id="portal-zelle-block">' +
+            '<div class="pf-zelle-row"><span class="pf-label">Recipient</span><span class="pf-val">' + portalEscapeHtml(zelleEmail) + '</span></div>' +
+            '<div class="pf-zelle-row"><span class="pf-label">Amount</span><span class="pf-val">$' + depositAfterDiscount.toFixed(2) + '</span></div>' +
+            '<div class="pf-zelle-row"><span class="pf-label">Memo</span><span class="pf-val pf-mono">' + portalEscapeHtml(zelleMemo) + '</span></div>' +
+            '<div class="pf-zelle-note">Keep your Zelle confirmation screenshot. A team member will verify your payment and confirm your event booking.</div>' +
+            '<div class="pf-zelle-actions"></div>' +
+            '</div>';
+        host.insertAdjacentHTML('beforeend', zelleHtml);
+
+        var zelleActions = host.querySelector('.pf-zelle-actions');
+        if (zelleActions) {
+            var copyBtn = document.createElement('button');
+            copyBtn.type = 'button';
+            copyBtn.className = 'pf-zelle-btn';
+            copyBtn.textContent = 'Copy Zelle Info';
+            copyBtn.onclick = function () {
+                var text = 'Miami DJ Beat — Zelle deposit\nRecipient: ' + zelleEmail +
+                    '\nAmount: $' + depositUsd.toFixed(2) + ' USD\nMemo: ' + zelleMemo;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).catch(function () {});
+                } else {
+                    window.prompt('Copy Zelle info:', text);
+                }
+                copyBtn.textContent = 'Copied!';
+                setTimeout(function () { copyBtn.textContent = 'Copy Zelle Info'; }, 2000);
+            };
+            zelleActions.appendChild(copyBtn);
+
+            var sentBtn = document.createElement('button');
+            sentBtn.type = 'button';
+            sentBtn.className = 'pf-zelle-btn pf-zelle-btn--sent';
+            sentBtn.textContent = 'I sent it \u2192';
+            var self2 = this;
+            sentBtn.onclick = function () { void self2.markZelleDepositSent(); };
+            zelleActions.appendChild(sentBtn);
+        }
+
+        // Zone 3: remaining balance
+        var remainingHtml =
+            '<div class="pf-zone pf-zone--remaining">' +
+            '<div class="pf-row"><span class="pf-label">Remaining balance</span><span class="pf-val">$' + (total - depositUsd).toFixed(2) + '</span></div>' +
+            '<div class="pf-row"><span class="pf-label">Final payment due</span><span class="pf-val">' + portalEscapeHtml(dueDateStr) + ' &nbsp;<span class="pf-due-note">(1 week before event)</span></span></div>' +
+            '</div>';
+        host.insertAdjacentHTML('beforeend', remainingHtml);
+
+        // Security footer
+        host.insertAdjacentHTML('beforeend',
+            '<div class="pf-security">' +
+            '&#128274; Card payments via Stripe (PCI DSS). No card numbers stored on this portal.' +
+            '</div>'
+        );
+    },
+
+    /**
+     * Returns referral discount object from localStorage (monetization.js system).
+     * Only for the first purchase; returns null if already used or no referral stored.
+     */
+    _getReferralDiscount(totalUsd) {
+        try {
+            var refId = window.localStorage.getItem('mdb_referral_dj_id');
+            if (!refId) return null;
+            var used = window.localStorage.getItem('mdb_client_referral_discount_used');
+            if (used === '1') return null;
+            var paidBefore = parseFloat((this.currentLead || {}).balance_paid) || 0;
+            if (paidBefore > 0.01) return null; // already paid something, discount used
+            // $30 max referral discount (mirrors monetization.js CLIENT_FIRST_REFERRAL_DISCOUNT_CENTS)
+            var discCents = Math.min(3000, Math.round(totalUsd * 100));
+            return {
+                source: 'referral',
+                code: 'QR/REF',
+                label: 'Referral discount (first booking)',
+                discount_cents: discCents,
+                referral_dj_id: refId
+            };
+        } catch (e) {
+            return null;
+        }
+    },
+
+    /**
+     * Validates a promo/discount code via Supabase RPC (server-side — not fakeable).
+     * On success: stores in this._activeDiscount and re-renders payment zones.
+     */
+    async applyCouponCode(code, orderCents) {
+        var msgEl = document.getElementById('pf-coupon-msg');
+        var applyBtn = document.getElementById('pf-coupon-apply');
+        if (msgEl) { msgEl.textContent = 'Validating…'; msgEl.className = 'pf-coupon-msg pf-coupon-msg--loading'; }
+        if (applyBtn) applyBtn.disabled = true;
+
+        try {
+            var db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+            if (!db) throw new Error('Database not available');
+
+            var { data, error } = await db.rpc('mdj_validate_discount_code', {
+                p_code: code.trim().toUpperCase(),
+                p_order_cents: orderCents || 0
+            });
+
+            if (error) throw new Error(error.message);
+
+            if (!data || !data.valid) {
+                if (msgEl) {
+                    msgEl.textContent = (data && data.error) ? data.error : 'Invalid code';
+                    msgEl.className = 'pf-coupon-msg pf-coupon-msg--error';
+                }
+                if (applyBtn) applyBtn.disabled = false;
+                return;
+            }
+
+            // Valid — store and re-render
+            this._activeDiscount = {
+                source: 'coupon',
+                code: data.code,
+                label: data.label || data.code,
+                discount_cents: data.discount_cents || 0
+            };
+
+            // Re-render so discount appears in the UI
+            var l = this.currentLead || {};
+            var paid = parseFloat(l.balance_paid) || 0;
+            var total = parseFloat(l.total_amount) || 0;
+            var pStatus = l.payment_status || 'UNPAID';
+            this.renderPaymentZones({ total, paid, balance: total - paid, pStatus });
+
+        } catch (err) {
+            if (msgEl) {
+                msgEl.textContent = 'Could not validate code. Try again.';
+                msgEl.className = 'pf-coupon-msg pf-coupon-msg--error';
+            }
+            if (applyBtn) applyBtn.disabled = false;
+        }
     },
 
     /**
@@ -2140,8 +2527,8 @@ const PortalApp = {
         btn.id = 'btn-stripe-pay';
         btn.className = needsGold ? 'portal-pay-now-gold' : 'portal-pay-secondary';
         btn.innerHTML = needsGold
-            ? `<span style="font-size:18px;">💳</span> ${portalT('portal-pay-now')} &nbsp;·&nbsp; $${balance.toFixed(2)}`
-            : `<span style="font-size:16px;">💳</span> Pagar saldo ($${balance.toFixed(2)}) — Stripe`;
+            ? `Pay Now &nbsp;·&nbsp; $${balance.toFixed(2)}`
+            : `Pay balance — $${balance.toFixed(2)}`;
         btn.onclick = () => this.payDepositStripe(balance);
         host.appendChild(btn);
     },
@@ -2160,10 +2547,9 @@ const PortalApp = {
         var wrap = document.createElement('div');
         wrap.id = 'portal-zelle-block';
         wrap.className = 'portal-zelle-block';
-        wrap.style.cssText =
-            'margin-top:14px;padding:14px;border:1px solid rgba(197,160,89,0.35);border-radius:12px;background:rgba(0,0,0,0.2);text-align:left;';
+        wrap.style.cssText = '';
         wrap.innerHTML =
-            '<p style="margin:0 0 10px;font-weight:800;color:var(--gold);font-size:14px;">' +
+            '<p style="margin:0 0 10px;font-weight:600;color:rgba(255,255,255,0.7);font-size:11px;text-transform:uppercase;letter-spacing:0.07em;">' +
             portalEscapeHtml(portalT('portal-zelle-title')) +
             '</p>' +
             '<ul class="logistics-list" style="margin:0 0 12px;">' +
@@ -2278,13 +2664,17 @@ const PortalApp = {
             const result = await mdjPortalFetchCheckoutJson(resp);
             if (!result || !result.url) throw new Error((result && result.error) || 'No se pudo crear la sesión de pago');
 
-            // Redirect to Stripe Checkout
-            window.location.href = result.url;
+            // Open Stripe Checkout in a new tab — keeps the portal open
+            window.open(result.url, '_blank', 'noopener,noreferrer');
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = `Pay Now · $${balance.toFixed(2)}`;
+            }
         } catch (err) {
             alert('Error al conectar con Stripe: ' + err.message);
             if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = `<span style="font-size:18px;">💳</span> ${portalT('portal-pay-now')} · Reintentar`;
+                btn.textContent = `Pay Now · $${balance.toFixed(2)} — Retry`;
             }
         }
     },
@@ -2488,105 +2878,175 @@ const PortalApp = {
         this.initChat();
     },
 
-    initChat() {
-        // Listen for new messages in real-time via Supabase
-        // In this demo, we use a simple interval/mock
-        this.addChatMessage({
-            sender: 'manager',
-            text: '¡Hola! Estoy listo para ayudarte con tu evento.',
-            lang: 'es',
-            translated: 'Hi! I am ready to help you with your event.'
-        });
+    async initChat() {
+        var leadId = this.currentLead && this.currentLead.id;
+        if (!leadId) return;
+        var db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+        if (!db) return;
+
+        // 0. Update chat header with the assigned staff member
+        var assignedName = (this.currentLead && this.currentLead.assigned_staff_name) || null;
+        var titleEl   = document.getElementById('chat-section-title');
+        var handlerEl = document.getElementById('chat-handler-name');
+        if (titleEl) {
+            titleEl.textContent = '💬 ' + (this.isManager ? 'Client Chat' : 'Chat with Your Event Handler');
+        }
+        if (handlerEl) {
+            if (assignedName) {
+                handlerEl.textContent = 'Handling your event: ' + assignedName;
+                handlerEl.style.color = 'rgba(212,175,55,0.75)';
+            } else {
+                handlerEl.textContent = 'Assigned handler: Miami DJ Beat Team';
+            }
+        }
+
+        // 1. Load existing messages
+        try {
+            var { data: msgs, error } = await db
+                .from('portal_messages')
+                .select('id, sender_role, body, created_at')
+                .eq('lead_id', leadId)
+                .order('created_at', { ascending: true })
+                .limit(100);
+
+            var container = document.getElementById('chat-messages');
+            if (container) container.innerHTML = ''; // clear "Iniciando canal…"
+
+            if (!error && msgs && msgs.length > 0) {
+                msgs.forEach((row) => this.addChatMessage({ sender: row.sender_role, body: row.body, ts: row.created_at }));
+            } else {
+                // Welcome message — only shown locally, not saved
+                this.addChatMessage({ sender: 'manager', body: 'Hi! I\'m ready to help you with your event. Send me any question.', ts: null, local: true });
+            }
+        } catch (e) {
+            console.warn('[portal-chat] load failed', e);
+        }
+
+        if (!this._myUserId) {
+            this.addChatMessage({
+                sender: 'system',
+                body: 'Inicia sesión para usar el chat.',
+                ts: null,
+                local: true
+            });
+        }
+
+        // 2. Subscribe to real-time new messages for this lead
+        if (this._chatChannel) {
+            try { db.removeChannel(this._chatChannel); } catch (e) { void e; }
+        }
+        var self = this;
+        this._chatChannel = db
+            .channel('portal-chat-' + leadId)
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'portal_messages',
+                filter: 'lead_id=eq.' + leadId
+            }, function (payload) {
+                var row = payload.new;
+                // Skip echoing our own inserts (already shown optimistically)
+                if (row && row.sender_id === self._myUserId) return;
+                self.addChatMessage({ sender: row.sender_role, body: row.body, ts: row.created_at });
+            })
+            .subscribe();
     },
 
     async handleChatMessage() {
-        const input = document.getElementById('chat-input');
-        const text = input.value.trim();
+        var input = document.getElementById('chat-input');
+        var sendBtn = document.getElementById('chat-send');
+        var text = (input.value || '').trim();
         if (!text) return;
 
+        var leadId = this.currentLead && this.currentLead.id;
+        if (!leadId) return;
+
         input.value = '';
-        const sender = this.isManager ? 'manager' : 'client';
+        if (sendBtn) sendBtn.disabled = true;
 
-        // AI Bridge: Translation + Auto-Correct
-        const processed = await this.aiBridgeProcess(text, sender);
+        var senderRole = this.isManager ? 'manager' : 'client';
 
-        this.addChatMessage({
-            sender: sender,
-            text: processed.corrected,
-            lang: this.currentLead.lang || 'es',
-            translated: processed.translated
-        });
+        // Optimistic render
+        this.addChatMessage({ sender: senderRole, body: text, ts: new Date().toISOString(), local: true });
 
-    },
-
-    async aiBridgeProcess(text, sender) {
-        // Simple AI Simulation for Auto-correct and Translation
-        let corrected = text;
-
-        if (sender === 'manager') {
-            // Manager speaks ES -> Auto-correct ES + Translate to EN
-            corrected = text
-                .replace(/\bola\b/gi, "Hola")
-                .replace(/\bkliente\b/gi, "cliente")
-                .replace(/\bestas\b/gi, "estás")
-                .replace(/\bestamos\b/gi, "estamos");
-
-            const translation = await this.mockTranslate(corrected, 'en');
-            return { corrected, translated: translation };
-        } else {
-            // Client speaks EN -> Translate to ES
-            const translation = await this.mockTranslate(text, 'es');
-            return { corrected: text, translated: translation };
-        }
-    },
-
-    mockTranslate(text, targetLang) {
-        const dictionary = {
-            'hola': 'Hello',
-            'estás': 'are you',
-            'estamos': 'we are',
-            'como': 'how',
-            'cliente': 'client',
-            'hi': 'hola',
-            'how are you': '¿cómo estás?',
-            'payment': 'pago',
-            'total': 'total',
-            'confirmed': 'confirmado',
-            'event': 'evento'
-        };
-
-        let translated = text;
-        const lower = text.toLowerCase();
-
-        Object.keys(dictionary).forEach(key => {
-            if (lower.includes(key)) {
-                translated = translated.replace(new RegExp(key, 'gi'), dictionary[key]);
+        // Persist to Supabase (email: trigger pg_net + optional Edge invoke; no bloquea el chat)
+        try {
+            var db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+            if (db) {
+                var ins = await db
+                    .from('portal_messages')
+                    .insert({
+                        lead_id: leadId,
+                        sender_id: this._myUserId,
+                        sender_role: senderRole,
+                        body: text
+                    })
+                    .select('id, lead_id, sender_id, sender_role, body, created_at')
+                    .single();
+                if (ins.error) {
+                    console.error('[portal-chat] insert failed', ins.error);
+                    this.addChatMessage({
+                        sender: 'system',
+                        body: 'No se pudo enviar el mensaje. Recarga la página o contacta a Miami DJ Beat.',
+                        ts: null,
+                        local: true
+                    });
+                } else if (ins.data && db.functions && typeof db.functions.invoke === 'function') {
+                    db.functions
+                        .invoke('notify-portal-message', { body: { record: ins.data } })
+                        .then(function (r) {
+                            if (r && r.error) {
+                                console.warn('[portal-chat] email notify invoke', r.error);
+                            }
+                        })
+                        .catch(function (eInv) {
+                            console.warn('[portal-chat] email notify invoke failed', eInv);
+                        });
+                }
             }
-        });
-
-        if (translated === text) {
-            translated = targetLang === 'en' ? `[AI Trans: ${text}]` : `[Traducción: ${text}]`;
+        } catch (e) {
+            void e;
         }
 
-        return translated;
+        if (sendBtn) sendBtn.disabled = false;
+        input.focus();
     },
 
     addChatMessage(msg) {
-        const container = document.getElementById('chat-messages');
+        var container = document.getElementById('chat-messages');
         if (!container) return;
 
-        const isMe = (this.isManager && msg.sender === 'manager') || (!this.isManager && msg.sender === 'client');
-        const displayedText = (this.isManager && msg.sender === 'client') || (!this.isManager && msg.sender === 'manager')
-            ? msg.translated : msg.text;
+        var isMe = (this.isManager && msg.sender === 'manager') || (!this.isManager && msg.sender === 'client');
+        var isSystem = msg.sender === 'system';
 
-        const div = document.createElement('div');
-        div.style = `max-width: 80%; padding: 10px; border-radius: 12px; font-size: 14px; ${isMe ? 'align-self: flex-end; background: var(--gold); color: #000;' : 'align-self: flex-start; background: rgba(255,255,255,0.1); color: #fff;'}`;
+        var div = document.createElement('div');
 
-        div.innerHTML = `
-            <strong>${msg.sender === 'manager' ? 'Admin' : 'Cliente'}:</strong><br>
-            ${displayedText}
-            ${!isMe ? `<br><small style="opacity:0.5; font-size: 10px;">Org: ${msg.text}</small>` : ''}
-        `;
+        if (isSystem) {
+            div.style.cssText = 'text-align:center;font-size:11px;color:rgba(255,80,80,0.7);padding:6px 0;';
+            div.textContent = msg.body;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            return;
+        }
+
+        div.style.cssText = 'max-width:80%;padding:10px 13px;border-radius:12px;font-size:13px;line-height:1.5;' +
+            (isMe
+                ? 'align-self:flex-end;background:#d4af37;color:#0a0a0a;border-bottom-right-radius:3px;'
+                : 'align-self:flex-start;background:rgba(255,255,255,0.09);color:#fff;border-bottom-left-radius:3px;');
+
+        var label = msg.sender === 'manager' ? 'Manager' : 'You';
+        var tsStr = '';
+        if (msg.ts) {
+            try {
+                tsStr = new Date(msg.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch (e) { void e; }
+        }
+
+        div.innerHTML =
+            '<div style="font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;opacity:0.55;margin-bottom:4px;">' +
+            portalEscapeHtml(label) + (tsStr ? ' · ' + tsStr : '') +
+            '</div>' +
+            portalEscapeHtml(msg.body);
 
         container.appendChild(div);
         container.scrollTop = container.scrollHeight;

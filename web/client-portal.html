@@ -4,6 +4,31 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style id="portal-client-nav-gap">
+    /* MI PERFIL nunca aplica en cuenta cliente — suprimir desde CSS para eliminar flash. */
+    #mainHeader #mainNav > a#mainNav-guest-mi-perfil-link {
+      display: none !important;
+      min-width: 0 !important;
+      max-width: 0 !important;
+      width: 0 !important;
+      flex: 0 0 0 !important;
+      pointer-events: none !important;
+    }
+    @media (min-width: 1001px) {
+      body.mdj-is-client #mainHeader.header.mdj-header-unified .header-nav .container {
+        --mdj-nav-gap: 1px;
+      }
+      /* Ghost STAFF: para clientes colapsarlo elimina el ancho invisible que causaba overflow. */
+      body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+        > a#mainNav-staff-or-profile.mdj-mainnav-reserved-slot {
+        display: none !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        width: 0 !important;
+        flex: 0 0 0 !important;
+      }
+    }
+  </style>
     <title>MDJPRO — Portal del Cliente</title>
     <script>
         (function () {
@@ -34,7 +59,9 @@
             } catch (e) { /* ignore */ }
         })();
     </script>
-    <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
+    <link rel="prefetch" href="./mdj-event-cart-root-fragment.html?v=20260531-month-clean-1" as="fetch" crossorigin />
+    <link rel="prefetch" href="./mdj-event-cart.css?v=20260531-no-fab-1" as="style" />
+<link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
   <link rel="stylesheet" href="./header-unified.css?v=20260516-wordmark-clear-r-1" />
     <link rel="stylesheet" href="./mdj-assistant.css" />
     <style>
@@ -45,10 +72,17 @@
             /* Navy transparent */
         }
 
+        /* Portal: main ocupa todo el ancho disponible — es información, no branding */
+        main.container {
+            max-width: 100% !important;
+            padding-left: clamp(16px, 3vw, 48px) !important;
+            padding-right: clamp(16px, 3vw, 48px) !important;
+        }
+
         .client-grid {
             display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 30px;
+            grid-template-columns: 1fr 420px;
+            gap: 32px;
             margin-top: 40px;
         }
 
@@ -293,73 +327,462 @@
             box-shadow: 0 0 20px rgba(0, 210, 255, 0.4);
         }
 
-        /* Finanzas — CTA dorado (depósito pendiente) */
-        @keyframes portalGoldPulse {
-            0%, 100% { box-shadow: 0 0 0 1px rgba(212, 175, 95, 0.45), 0 6px 22px rgba(197, 160, 89, 0.35); }
-            50% { box-shadow: 0 0 0 2px rgba(255, 220, 160, 0.55), 0 8px 28px rgba(197, 160, 89, 0.5); }
-        }
+        /* ── Payment 3-zone system — professional bank-style ── */
 
-        #portal-financial-card .portal-pay-now-gold {
-            width: 100%;
-            margin-top: 12px;
-            padding: 16px 20px;
-            border-radius: 14px;
-            font-size: 16px;
-            font-weight: 900;
+        /* Zone 1: Contract summary rows */
+        .pf-zone {
+            margin-top: 16px;
+            padding: 14px 16px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+        }
+        .pf-zone--summary {
+            margin-top: 0;
+            border: none;
+            background: none;
+            padding: 0;
+        }
+        .pf-summary-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.08);
+            margin: 8px 0;
+        }
+        .pf-val--deposit { color: #f5c542; }
+        .pf-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            padding: 5px 0;
+        }
+        .pf-label {
+            font-size: 12px;
             letter-spacing: 0.06em;
             text-transform: uppercase;
-            border: 1px solid rgba(212, 175, 95, 0.9);
-            color: #1a1208 !important;
-            background: linear-gradient(180deg, #e8c86a 0%, #c5a059 45%, #9a7a3a 100%);
+            color: rgba(255,255,255,0.45);
+            flex-shrink: 0;
+        }
+        .pf-val {
+            font-size: 15px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.88);
+            font-variant-numeric: tabular-nums;
+        }
+        .pf-val--paid { color: #4ade80; }
+        .pf-val--due  { color: #f5c542; }
+        .pf-mono { font-family: monospace; font-size: 13px; letter-spacing: 0.05em; }
+        .pf-due-note { font-size: 10px; font-weight: 400; color: rgba(255,255,255,0.35); }
+
+        /* Zone 2a: Deposit required */
+        .pf-zone--deposit {
+            border-color: rgba(212,175,55,0.3);
+            background: rgba(212,175,55,0.06);
+            text-align: center;
+            padding: 20px 16px;
+        }
+        .pf-deposit-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(212,175,55,0.8);
+            margin-bottom: 4px;
+        }
+        .pf-deposit-note {
+            font-size: 12px;
+            color: rgba(255,255,255,0.45);
+            margin-bottom: 12px;
+        }
+        .pf-deposit-amount {
+            font-size: 32px;
+            font-weight: 800;
+            color: #fff;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.01em;
+            line-height: 1;
+        }
+        .pf-deposit-pct {
+            font-size: 11px;
+            color: rgba(255,255,255,0.35);
+            margin-top: 4px;
+            margin-bottom: 16px;
+        }
+
+        /* Pay buttons */
+        .pf-pay-btn {
+            display: block;
+            width: 100%;
+            margin-top: 12px;
+            padding: 13px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            border: none;
+            color: #0a0a0a;
+            background: #d4af37;
             cursor: pointer;
-            animation: portalGoldPulse 2.4s ease-in-out infinite;
+            transition: background 0.18s, box-shadow 0.18s;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
+        .pf-pay-btn:hover { background: #c9a430; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+        .pf-pay-btn:active { background: #b8931f; }
+        .pf-pay-btn--ghost {
+            background: transparent;
+            border: 1px solid rgba(212,175,55,0.5);
+            color: rgba(212,175,55,0.9);
+            margin-top: 14px;
+        }
+        .pf-pay-btn--ghost:hover {
+            background: rgba(212,175,55,0.08);
+            box-shadow: none;
         }
 
-        #portal-financial-card .portal-pay-now-gold:hover {
-            filter: brightness(1.08);
+        /* Divider between Stripe and Zelle */
+        .pf-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 11px;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.3);
+            margin: 18px 0 0;
+        }
+        .pf-divider::before, .pf-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.1);
         }
 
-        #portal-financial-card .portal-pay-secondary {
+        /* Zelle zone */
+        .pf-zone--zelle {
+            border-left: 3px solid rgba(212,175,55,0.5);
+            background: rgba(255,255,255,0.02);
+        }
+        .pf-zelle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            padding: 4px 0;
+        }
+        .pf-zelle-note {
+            font-size: 11px;
+            color: rgba(255,255,255,0.35);
+            line-height: 1.5;
+            margin: 10px 0 12px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .pf-zelle-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .pf-zelle-btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 9px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: transparent;
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .pf-zelle-btn:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.3); }
+        .pf-zelle-btn--sent {
+            border-color: rgba(212,175,55,0.4);
+            color: rgba(212,175,55,0.9);
+        }
+        .pf-zelle-btn--sent:hover {
+            background: rgba(212,175,55,0.08);
+            border-color: rgba(212,175,55,0.7);
+        }
+
+        /* Zone 2b: Pending Zelle */
+        .pf-zone--pending {
+            border-color: rgba(212,175,55,0.25);
+            background: rgba(212,175,55,0.04);
+        }
+        .pf-pending-icon { font-size: 22px; margin-bottom: 8px; }
+        .pf-pending-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: rgba(212,175,55,0.9);
+            margin-bottom: 6px;
+        }
+        .pf-pending-note { font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.5; }
+
+        /* Zone 2c: Deposit confirmed */
+        .pf-zone--confirmed {
+            border-color: rgba(74,222,128,0.3);
+            background: rgba(74,222,128,0.04);
+        }
+        .pf-confirmed-mark {
+            font-size: 13px;
+            font-weight: 700;
+            color: #4ade80;
+            margin-bottom: 4px;
+        }
+        .pf-confirmed-amount {
+            font-size: 12px;
+            color: rgba(255,255,255,0.45);
+        }
+
+        /* Zone 3: Remaining balance */
+        .pf-zone--remaining {
+            border-color: rgba(255,255,255,0.08);
+        }
+        .pf-remaining-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.09em;
+            color: rgba(255,255,255,0.3);
+            margin-bottom: 8px;
+        }
+
+        /* Paid in full */
+        .pf-zone--paid {
+            text-align: center;
+            border-color: rgba(74,222,128,0.35);
+            background: rgba(74,222,128,0.05);
+            padding: 24px 16px;
+        }
+        .pf-paid-mark { font-size: 28px; color: #4ade80; margin-bottom: 6px; }
+        .pf-paid-title { font-size: 15px; font-weight: 700; color: #4ade80; }
+        .pf-paid-amount { font-size: 26px; font-weight: 800; color: #fff; margin: 6px 0; }
+        .pf-paid-note { font-size: 12px; color: rgba(255,255,255,0.45); }
+
+        /* Security footer */
+        .pf-security {
+            margin-top: 16px;
+            font-size: 10px;
+            color: rgba(255,255,255,0.3);
+            line-height: 1.5;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        /* Invoice PDF button */
+        .pf-invoice-btn {
+            display: block;
             width: 100%;
             margin-top: 10px;
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 13px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background: rgba(255, 255, 255, 0.06);
-            color: rgba(255, 255, 255, 0.85);
+            padding: 10px 16px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: transparent;
+            color: rgba(255,255,255,0.65);
             cursor: pointer;
+            transition: background 0.15s;
+        }
+        .pf-invoice-btn:hover { background: rgba(255,255,255,0.05); }
+
+        /* ── Agenda de Citas — Excel-style 5 columnas ── */
+        .cal-grid {
+            display: grid;
+            grid-template-columns: 1.3fr 0.7fr 0.9fr 1.2fr 1fr;
+            border-left: 1px solid rgba(212,175,55,0.25);
+            border-right: 1px solid rgba(212,175,55,0.25);
+        }
+        .cal-grid--with-action {
+            grid-template-columns: 1.3fr 0.7fr 0.9fr 1.2fr 1fr 34px;
+        }
+        .cal-grid--header {
+            background: rgba(212,175,55,0.08);
+            border-top: 2px solid rgba(212,175,55,0.5);
+            border-bottom: 2px solid rgba(212,175,55,0.35);
+            border-radius: 6px 6px 0 0;
+        }
+        .cal-grid--row {
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            transition: background 0.12s;
+        }
+        .cal-grid--row:last-child {
+            border-bottom: 1px solid rgba(212,175,55,0.25);
+            border-radius: 0 0 6px 6px;
+        }
+        .cal-grid--row:hover { background: rgba(255,255,255,0.03); }
+        .cal-row--past { opacity: 0.4; }
+        .cal-empty-row {
+            border: 1px solid rgba(212,175,55,0.2);
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+        }
+        .cal-cell {
+            padding: 9px 11px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.82);
+            border-right: 1px solid rgba(255,255,255,0.07);
+            display: flex;
+            align-items: center;
+            word-break: break-word;
+            line-height: 1.4;
+        }
+        .cal-cell:last-child { border-right: none; }
+        .cal-grid--header .cal-cell {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(212,175,55,0.8);
+            padding: 8px 11px;
+        }
+        .cal-cell--mono  { font-family: monospace; font-size: 11px; letter-spacing: 0.03em; }
+        .cal-cell--code  { font-family: monospace; font-size: 12px; color: #f5c542; font-weight: 700; }
+        .cal-cell--action { justify-content: center; padding: 4px 2px; }
+        .cal-remove-btn {
+            background: none;
+            border: none;
+            color: rgba(255,80,80,0.45);
+            cursor: pointer;
+            font-size: 13px;
+            padding: 4px 6px;
+            border-radius: 4px;
+            transition: color 0.15s, background 0.15s;
+        }
+        .cal-remove-btn:hover { color: #f87171; background: rgba(248,113,113,0.1); }
+        .cal-empty-msg {
+            padding: 28px;
+            text-align: center;
+            font-size: 12px;
+            color: rgba(255,255,255,0.38);
+            line-height: 1.7;
+            width: 100%;
         }
 
+        /* Edit Package button */
+        .pf-edit-pkg-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+            padding: 7px 14px;
+            border-radius: 6px;
+            border: 1px solid rgba(212,175,55,0.4);
+            background: transparent;
+            color: rgba(212,175,55,0.85);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+        .pf-edit-pkg-btn:hover {
+            background: rgba(212,175,55,0.1);
+            border-color: rgba(212,175,55,0.7);
+            color: #d4af37;
+            text-decoration: none;
+        }
+
+        /* Deposit struck-through original price */
+        .pf-deposit-original {
+            font-size: 12px;
+            color: rgba(255,255,255,0.3);
+            text-decoration: line-through;
+            margin-top: -4px;
+            margin-bottom: 4px;
+        }
+
+        /* Discount applied badge */
+        .pf-discount-applied {
+            margin-top: 10px;
+            padding: 7px 12px;
+            border-radius: 5px;
+            background: rgba(74,222,128,0.1);
+            border: 1px solid rgba(74,222,128,0.3);
+            font-size: 12px;
+            color: #4ade80;
+            font-weight: 600;
+        }
+        .pf-discount-mark { font-size: 13px; }
+
+        /* Coupon code row */
+        .pf-coupon-row {
+            display: flex;
+            gap: 8px;
+            margin: 14px 0 4px;
+        }
+        .pf-coupon-input {
+            flex: 1;
+            padding: 9px 12px;
+            border-radius: 5px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            font-size: 13px;
+            font-family: monospace;
+            letter-spacing: 0.05em;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .pf-coupon-input:focus { border-color: rgba(212,175,55,0.5); }
+        .pf-coupon-input::placeholder { color: rgba(255,255,255,0.25); font-family: inherit; letter-spacing: 0; }
+        .pf-coupon-apply {
+            padding: 9px 16px;
+            border-radius: 5px;
+            border: 1px solid rgba(212,175,55,0.4);
+            background: transparent;
+            color: rgba(212,175,55,0.9);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+        .pf-coupon-apply:hover { background: rgba(212,175,55,0.1); }
+        .pf-coupon-apply:disabled { opacity: 0.4; cursor: not-allowed; }
+        .pf-coupon-msg {
+            font-size: 11px;
+            min-height: 14px;
+            margin-bottom: 4px;
+            padding: 0 2px;
+        }
+        .pf-coupon-msg--error   { color: #f87171; }
+        .pf-coupon-msg--loading { color: rgba(255,255,255,0.4); }
+
+        /* Remove discount link */
+        .pf-coupon-remove {
+            margin: 6px 0 10px;
+            text-align: right;
+        }
+        .pf-coupon-remove button {
+            font-size: 11px;
+            color: rgba(255,255,255,0.3);
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 0;
+        }
+        .pf-coupon-remove button:hover { color: rgba(255,255,255,0.6); }
+
+        /* Reservation bonus: subtle info bar */
         #portal-reservation-bonus-banner {
             display: none;
             margin-bottom: 16px;
-            padding: 14px 16px;
-            border-radius: 16px;
-            border: 1px solid rgba(197, 160, 89, 0.45);
-            background: linear-gradient(135deg, rgba(197, 160, 89, 0.12), rgba(26, 43, 86, 0.2));
-            font-size: 13px;
-            line-height: 1.45;
-        }
-
-        #portal-reservation-bonus-banner.is-visible {
-            display: block;
-        }
-
-        #portal-financial-card .portal-payment-security {
-            margin-top: 18px;
-            padding-top: 14px;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 12px 14px;
+            border-radius: 6px;
+            border-left: 3px solid rgba(197,160,89,0.7);
+            background: rgba(197,160,89,0.07);
             font-size: 12px;
-            color: var(--muted);
             line-height: 1.5;
         }
-
-        #portal-financial-card .portal-payment-security a {
-            color: var(--gold);
-            font-weight: 700;
-        }
+        #portal-reservation-bonus-banner.is-visible { display: block; }
     </style>
 </head>
 
@@ -436,7 +859,7 @@
   </div>
   <div class="header-nav">
     <div class="container">
-      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav">
+      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" data-mdj-compact-nav="1" data-mdj-portal-in-nav="1" data-mdj-client-hide-dj-tools="1">
         <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
         <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
         <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
@@ -527,7 +950,10 @@
 
                 <!-- Shopping Cart / Services -->
                 <div class="info-card">
-                    <h3>🛒 Mi Pack de Servicios</h3>
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px;">
+                        <h3 style="margin:0;">🛒 Mi Pack de Servicios</h3>
+                        <a id="btn-edit-package" href="./services.html" class="pf-edit-pkg-btn">&#9998; Edit Package</a>
+                    </div>
                     <div id="cart-container">
                         <!-- Items populated by JS -->
                     </div>
@@ -576,47 +1002,47 @@
             </div>
 
             <!-- Resumen financiero + pasarela -->
-            <div id="portal-financial-card" class="info-card" style="background: var(--glass-bg); border-color: var(--gold);">
-                <h3 style="color: var(--gold); flex-wrap: wrap;">
-                    💰 <span data-i18n="portal-financial-title">Resumen Financiero</span>
+            <div id="portal-financial-card" class="info-card" style="background: rgba(10,12,18,0.92); border: 1px solid rgba(255,255,255,0.1); border-top: 3px solid #d4af37;">
+                <h3 style="color: #fff; font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; flex-wrap: wrap;">
+                    <span data-i18n="portal-financial-title">Financial Summary</span>
                     &nbsp;<span id="pay-status-badge"
-                        style="font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px; background:rgba(197,160,89,0.12); border:1px solid rgba(197,160,89,0.3);">UNPAID</span>
+                        style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.7); letter-spacing:0.08em;">PENDING</span>
                 </h3>
-                <p class="fineprint" style="margin: -8px 0 14px; opacity: 0.85;" data-i18n="portal-financial-subtitle">Contrato, pagos y saldo en un solo lugar.</p>
+                <p class="fineprint" style="margin: 0 0 16px; opacity: 0.5; font-size: 11px; letter-spacing: 0.04em;" data-i18n="portal-financial-subtitle">Contract, payments and balance in one place.</p>
 
                 <div id="portal-reservation-bonus-banner" role="status" aria-live="polite"></div>
 
-                <ul class="logistics-list">
-                    <li>
-                        <span class="label" data-i18n="portal-financial-contract-total">Total del contrato</span>
-                        <span class="val" id="pay-total">$0.00</span>
-                    </li>
-                    <li>
-                        <span class="label" data-i18n="portal-financial-deposit-paid">Pagos realizados (depósito / abonos)</span>
-                        <span class="val" style="color: #00ff88;" id="pay-paid">$0.00</span>
-                    </li>
-                </ul>
-                <div class="payment-bar">
-                    <div class="payment-fill" id="pay-progress"></div>
+                <!-- Zone 1: Contract summary — all key financial numbers -->
+                <div class="pf-zone pf-zone--summary">
+                    <div class="pf-row">
+                        <span class="pf-label">Total contract</span>
+                        <span class="pf-val" id="pay-total">$0.00</span>
+                    </div>
+                    <div class="pf-row">
+                        <span class="pf-label">Paid to date</span>
+                        <span class="pf-val pf-val--paid" id="pay-paid">$0.00</span>
+                    </div>
+                    <div class="pf-summary-divider"></div>
+                    <div class="pf-row">
+                        <span class="pf-label">Deposit required</span>
+                        <span class="pf-val pf-val--deposit" id="pay-deposit-summary">$0.00</span>
+                    </div>
+                    <div class="pf-row">
+                        <span class="pf-label">Remaining balance</span>
+                        <span class="pf-val pf-val--due" id="pay-remaining-summary">$0.00</span>
+                    </div>
+                    <div class="payment-bar" style="margin-top:12px;">
+                        <div class="payment-fill" id="pay-progress"></div>
+                    </div>
                 </div>
-                <div style="text-align: center; margin-bottom: 12px;">
-                    <span class="label" data-i18n="portal-financial-balance-label">Saldo pendiente</span>
-                    <div style="font-size: 32px; font-weight: 800; color: #fff;" id="pay-balance">$0.00</div>
-                </div>
 
-                <div id="portal-pay-cta-host"></div>
+                <!-- Zone 2 + 3: Deposit action / status — fully driven by JS -->
+                <div id="portal-payment-zones"></div>
 
-                <p class="fineprint" style="text-align: center; margin-top: 12px;">
-                    <span data-i18n="portal-financial-deadline-label">Fecha límite pago final</span><br>
-                    <strong id="pay-deadline">A confirmar</strong>
-                </p>
-
-                <p class="fineprint" style="text-align: center; margin-top: 8px; opacity: 0.75;" data-i18n="portal-payment-stripe-note">
-                    Pagos con tarjeta procesados de forma segura por Stripe (PCI DSS). No almacenamos el número completo de tu tarjeta en este portal.
-                </p>
-                <p class="fineprint" style="text-align: center; margin-top: 4px; opacity: 0.65;" data-i18n="portal-payment-paypal-soon">
-                    PayPal: en integración; mientras tanto usa el botón de pago con tarjeta.
-                </p>
+                <!-- Hidden legacy IDs (kept for JS compat) -->
+                <span id="pay-balance" style="display:none;">$0.00</span>
+                <span id="pay-deadline" style="display:none;">TBD</span>
+                <div id="portal-pay-cta-host" style="display:none;"></div>
 
                 <div class="portal-payment-security">
                     <strong data-i18n="portal-payment-security-title">Métodos de pago guardados</strong>
@@ -630,7 +1056,6 @@
                 </p>
             </div>
 
-
             <!-- Calendar Widget -->
             <div class="info-card">
                 <h3>📅 Agenda de Citas</h3>
@@ -641,7 +1066,13 @@
 
             <!-- AI Translation Chat -->
             <div class="info-card" id="chat-section">
-                <h3>💬 Chat con Manager (AI Sync)</h3>
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+                    <div>
+                        <h3 style="margin:0;" id="chat-section-title">💬 Chat</h3>
+                        <div id="chat-handler-name" style="font-size:11px; color:rgba(255,255,255,0.4); margin-top:2px; letter-spacing:0.04em;"></div>
+                    </div>
+                    <div id="chat-online-dot" style="display:none; width:8px; height:8px; border-radius:50%; background:#4ade80; box-shadow:0 0 6px #4ade80; flex-shrink:0;"></div>
+                </div>
                 <div id="chat-messages"
                     style="height: 200px; overflow-y: auto; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px;">
                     <div class="fineprint" style="text-align: center; opacity: 0.5;">Iniciando canal seguro...
@@ -669,7 +1100,7 @@
     <script src="./translations.js?v=20260422-nav-labels-1"></script>
     <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
     <script src="./invoice-print-bridge.js?v=20260420"></script>
-    <script src="./client-portal.js?v=20260514-portal-hub-snapshot"></script>
+    <script src="./client-portal.js?v=20260602-portal-avatar-email"></script>
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
     <div id="mdj-assistant-booth">
         <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
@@ -703,9 +1134,9 @@
 
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
   <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
-      <script src="./mdj-shared-header.js?v=20260516-tier-badge-unified-1"></script>
+      <script src="./mdj-shared-header.js?v=20260531-dry-global-1"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
-  <script src="./mdj-mainnav-infinite.js?v=20260516-home-nav-stable-1"></script>
+  <script src="./mdj-mainnav-infinite.js?v=20260531-compact-nav-no-carousel-1"></script>
   <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
 </body>
 
