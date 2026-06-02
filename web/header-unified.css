@@ -676,7 +676,26 @@
   /* BOOT MASK: hides tab row while session resolves; removed by JS finally + autodetect cleanup */
   body.mdj-nav-booting #mainHeader.header.mdj-header-unified .header-nav,
   body.mdj-nav-booting #mainHeader.header.mdj-header-unified .header-actions,
-  body.mdj-nav-booting #mainHeader.header.mdj-header-unified #header-auth-zone {
+  body.mdj-nav-booting #mainHeader.header.mdj-header-unified #header-auth-zone,
+  html.mdj-auth-resolving #mainHeader.header.mdj-header-unified .header-nav,
+  html.mdj-auth-resolving #mainHeader.header.mdj-header-unified .header-actions,
+  html.mdj-auth-resolving #mainHeader.header.mdj-header-unified #header-auth-zone {
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /* Artist strip + staff-sensitive panels: no flash while role resolves (all accounts / pages). */
+  html.mdj-auth-resolving #owner-tabs,
+  html.mdj-auth-resolving .dj-owner-tabs,
+  body.mdj-nav-booting #owner-tabs,
+  body.mdj-nav-booting .dj-owner-tabs {
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  html.mdj-auth-resolving body.dj-profile #tab-flow,
+  html.mdj-auth-resolving body.dj-profile #manager-assessment-card,
+  html.mdj-auth-resolving body.dj-profile #flow-pro-required {
     visibility: hidden !important;
     pointer-events: none !important;
   }
@@ -998,7 +1017,7 @@
     text-shadow: 0 0 1px rgba(0, 0, 0, 0.9), 0 0 22px rgba(197, 160, 89, 0.35) !important;
     /* Misma caja que inactivos: sin cambiar peso/tamaño (evita recomputo de anchura al togglear .active). */
     font-weight: 800 !important;
-    font-size: clamp(14px, 1.05vw, 18px) !important;
+    font-size: var(--mdj-nav-font-size) !important;
     line-height: 1.25 !important;
   }
 
