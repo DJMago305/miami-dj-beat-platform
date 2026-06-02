@@ -5,8 +5,22 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>MDJPRO — Manager Panel</title>
+    <!-- Auth gate: hide panel until dj_profiles staff check completes (anti flash for non-staff). -->
+    <style id="mdj-admin-auth-gate-css">
+        html.mdj-admin-gate-pending #mainHeader,
+        html.mdj-admin-gate-pending #owner-tabs,
+        html.mdj-admin-gate-pending main.container {
+            visibility: hidden !important;
+        }
+        html.mdj-admin-gate-pending body {
+            background: #050810;
+        }
+    </style>
+    <script>
+        document.documentElement.classList.add('mdj-admin-gate-pending');
+    </script>
     <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260525-admin-owner-strip-11" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260602-auth-gate-1" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
     <!-- Idioma: mismos scripts que el resto del sitio (sin esto, ES/EN no reciben listeners). -->
     <script src="./translations.js?v=20260422-admin-staff-lock-db"></script>
@@ -1597,7 +1611,7 @@
         </footer>
 
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+        <script src="./supabase-config.js?v=20260602-auth-gate-1"></script>
         <script src="./subscription.js?v=20260422-find-dj-rank"></script>
         <script src="./invoice-print-bridge.js?v=20260420"></script>
         <script src="./js/production-templates.js?v=20260422-lang-blocks"></script>
@@ -1617,6 +1631,7 @@
                 // SECURITY LOCKDOWN: Check for Manager Role
                 const { data: { session } } = await supabase.auth.getSession();
                 if (!session) {
+                    document.documentElement.classList.remove('mdj-admin-gate-pending');
                     window.location.href = './login.html';
                     return;
                 }
@@ -1633,6 +1648,7 @@
                 const isStaffPortal = !!(profile && !profileError) && STAFF_DJ_ROLES.includes(roleNorm);
 
                 if (!isStaffPortal) {
+                    document.documentElement.classList.remove('mdj-admin-gate-pending');
                     const ut = String(session.user?.user_metadata?.user_type || '').toLowerCase();
                     /* Artista / talento: esta URL es solo back-office staff — llevar al panel correcto (⚙ CONFIG). */
                     if (profile && !profileError) {
@@ -1669,6 +1685,7 @@
                 }
 
                 applyStaffDashboardRole(profile, session);
+                document.documentElement.classList.remove('mdj-admin-gate-pending');
 
                 // Load Leads (explicit columns — no stripe_customer_id / payment tokens in staff UI)
                 const MDJ_ADMIN_LEADS_COLUMNS =
@@ -3562,7 +3579,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
     <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
     <script src="./mdj-owner-tabs-marquee.js?v=20260427-no-marquee"></script>
-    <script src="./mdj-shared-header.js?v=20260525-owner-strip-11-pillars-1"></script>
+    <script src="./mdj-shared-header.js?v=20260602-auth-gate-1"></script>
   <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
 
 <!-- ══════════════════════════════════════════════════════════════════════

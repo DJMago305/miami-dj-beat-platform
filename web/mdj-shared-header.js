@@ -24,6 +24,29 @@
     /* ignore */
   }
 
+  function mdjClearAuthBootMask() {
+    try {
+      document.body.classList.remove('mdj-nav-booting');
+      document.documentElement.classList.remove('mdj-auth-resolving');
+      if (window.__mdjNavBootTimeout) {
+        clearTimeout(window.__mdjNavBootTimeout);
+        window.__mdjNavBootTimeout = null;
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  function mdjApplyAuthBootMask() {
+    try {
+      var hasMaybeSession = Object.keys(localStorage).some(function (k) {
+        return k.indexOf('sb-') === 0 || k.indexOf('supabase') !== -1;
+      });
+      if (!hasMaybeSession) return;
+      document.documentElement.classList.add('mdj-auth-resolving');
+      document.body.classList.add('mdj-nav-booting');
+      window.__mdjNavBootTimeout = setTimeout(mdjClearAuthBootMask, 2500);
+    } catch (e) { /* ignore */ }
+  }
+
   function mdjLoadAmbientMusicScript() {
     if (typeof window !== 'undefined' && window.MDJ_SKIP_AMBIENT_MUSIC) return;
     if (document.getElementById('mdj-ambient-music-script')) return;
@@ -757,6 +780,24 @@
     return document.getElementById('mainNav-staff-link') || document.getElementById('mainNav-staff-or-profile');
   }
 
+  /** Owner strip / main nav STAFF: block navigation for non-staff before admin-dashboard paints. */
+  function mdjBindStaffNavClickGuard(el) {
+    if (!el || el.dataset.mdjStaffNavBound === '1') return;
+    el.dataset.mdjStaffNavBound = '1';
+    el.addEventListener(
+      'click',
+      function (e) {
+        var idn = window.__mdjLastPlatformIdentity;
+        var staffOk = !!(idn && idn.staffInDb);
+        if (staffOk) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        window.location.replace('./account-settings.html?mdj_nav=profile');
+      },
+      true
+    );
+  }
+
   /** STAFF (admin): solo staff de dj_profiles; hueco reservado con .mdj-mainnav-reserved-slot + visibility en CSS móvil. */
   function mdjApplyStaffMainNavLink(isStaff) {
     var a = mdjGetMainNavStaffAnchor();
@@ -772,6 +813,7 @@
       a.style.removeProperty('pointer-events');
       a.removeAttribute('aria-hidden');
       a.removeAttribute('tabindex');
+      mdjBindStaffNavClickGuard(a);
     } else {
       try {
         a.setAttribute('href', '#');
@@ -781,6 +823,7 @@
       a.style.removeProperty('pointer-events');
       a.setAttribute('aria-hidden', 'true');
       a.setAttribute('tabindex', '-1');
+      mdjBindStaffNavClickGuard(a);
     }
   }
 
@@ -2890,8 +2933,7 @@
       if (authZone) authZone.classList.remove('session-pending');
       if (typeof window.updateAuthButtons === 'function') window.updateAuthButtons();
       /* BOOT MASK cleanup — Punto A: auth zone resolved */
-      document.body.classList.remove('mdj-nav-booting');
-      clearTimeout(window.__mdjNavBootTimeout);
+      mdjClearAuthBootMask();
     }
   };
 
@@ -2978,20 +3020,7 @@
 
   window.mdjInitSharedHeader = function () {
     /* BOOT MASK — apply before any nav mutations if prior session exists in localStorage */
-    (function () {
-      var _hasMaybeSession = false;
-      try {
-        _hasMaybeSession = Object.keys(localStorage).some(function (k) {
-          return k.indexOf('sb-') === 0 || k.indexOf('supabase') !== -1;
-        });
-      } catch (e) { void e; }
-      if (_hasMaybeSession) {
-        document.body.classList.add('mdj-nav-booting');
-        window.__mdjNavBootTimeout = setTimeout(function () {
-          document.body.classList.remove('mdj-nav-booting');
-        }, 2500);
-      }
-    }());
+    mdjApplyAuthBootMask();
     window.showMyArtisticProfileMainNav = false;
     mdjInstallMainNavStaticMode();
     mdjEnsureGuestMiPerfilMainNavLink();
@@ -3029,8 +3058,7 @@
             return mdjAutodetectArtistMiPerfilNav();
           }).then(function () {
             /* BOOT MASK cleanup — Punto B: nav fully resolved after autodetect */
-            document.body.classList.remove('mdj-nav-booting');
-            clearTimeout(window.__mdjNavBootTimeout);
+            mdjClearAuthBootMask();
             /* Owner final guard: mdjAutodetectArtistMiPerfilNav runs with show=false and
                briefly re-hides MI PERFIL via mdjRemoveArtistDashboardNavLinks. This runs
                after the full chain to guarantee the slot is always visible for the owner. */
@@ -3052,14 +3080,12 @@
             void eChain;
           }).finally(function () {
             /* BOOT MASK safety net — chain failed but mask must not persist */
-            document.body.classList.remove('mdj-nav-booting');
-            clearTimeout(window.__mdjNavBootTimeout);
+            mdjClearAuthBootMask();
           });
         }
         return mdjAutodetectArtistMiPerfilNav().then(function () {
           /* BOOT MASK cleanup — Punto B (no-checkSession path) */
-          document.body.classList.remove('mdj-nav-booting');
-          clearTimeout(window.__mdjNavBootTimeout);
+          mdjClearAuthBootMask();
           /* Owner final guard — same as checkSession path */
           if (window.__mdjNavOwnUserId && window.__mdjLastPlatformIdentity &&
               window.__mdjLastPlatformIdentity.dbRole === 'owner') {
@@ -3077,14 +3103,12 @@
         }).catch(function (eAuto) {
           void eAuto;
         }).finally(function () {
-          document.body.classList.remove('mdj-nav-booting');
-          clearTimeout(window.__mdjNavBootTimeout);
+          mdjClearAuthBootMask();
         });
       } catch (eReady) {
         void eReady;
         /* BOOT MASK safety net — whenSupabaseReady callback threw synchronously */
-        document.body.classList.remove('mdj-nav-booting');
-        clearTimeout(window.__mdjNavBootTimeout);
+        mdjClearAuthBootMask();
       }
     });
     if (window.MdjHeaderSmartSearch && typeof window.MdjHeaderSmartSearch.init === 'function') {
@@ -3386,6 +3410,7 @@
       staffEl.style.removeProperty('visibility');
       staffEl.style.removeProperty('opacity');
     }
+    mdjBindStaffNavClickGuard(staffEl);
 
     /* ── REORDER: CASH FLOW · MI PERFIL · STAFF · SOUNDFORTIPS™ ── */
     if (flowEl.parentNode === container && miPerfilEl !== flowEl.nextSibling) {
@@ -3437,6 +3462,7 @@
           if (sf && sf.parentNode === c) { c.insertBefore(st, sf); }
           else { c.appendChild(st); }
         }
+        mdjBindStaffNavClickGuard(st);
       }, 1000);
     }
   }
@@ -3557,6 +3583,7 @@
       staffEl.style.removeProperty('visibility');
       staffEl.style.removeProperty('opacity');
     }
+    mdjBindStaffNavClickGuard(staffEl);
 
     /* ── Reorden por appendChild secuencial (data-i18n como ancla estable) ──
        Orden exacto: INICIO · TRABAJOS · SHOP · AGENDA · CONFIG · ACADEMIA ·

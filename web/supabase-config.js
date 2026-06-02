@@ -2,6 +2,19 @@
 // IMPORTANT: anon key only (safe for browser). NEVER put service_role here.
 // Un solo origen de proyecto → Storage y Edge Functions se derivan de MDB_SUPABASE_URL.
 
+/** Earliest auth boot mask — before paint of nav / owner-tabs on logged-in navigation. */
+(function mdjAuthBootEarly() {
+    try {
+        if (typeof localStorage === 'undefined') return;
+        var maybeSession = Object.keys(localStorage).some(function (k) {
+            return k.indexOf('sb-') === 0 || k.indexOf('supabase') !== -1;
+        });
+        if (maybeSession && document.documentElement) {
+            document.documentElement.classList.add('mdj-auth-resolving');
+        }
+    } catch (e) { /* ignore */ }
+})();
+
 (function mdjSupabaseEnv() {
     /* Project ref: …kxvqdr — debe coincidir con Supabase Dashboard → Settings → API (no confundir con …kvxqdr). */
     var B = "https://hkuvuqupbxwkiykxvqdr.supabase.co".replace(/\/$/, "");
