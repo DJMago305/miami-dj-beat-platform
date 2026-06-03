@@ -136,6 +136,19 @@
    * Comprador (TODAS las cuentas cliente / client_profiles) — no solo un usuario.
    * Fuentes: isClient, mdjClassifyPlatformIdentity principal=buyer, JWT client, fila client_profiles sin staff.
    */
+  /** Recorrido comprador (Home, Services, Events, …) — no cabecera artista `mdj_nav=profile`. */
+  function mdjIsBuyerJourneyPage() {
+    try {
+      if (document.body && document.body.classList.contains('mdj-from-profile')) return false;
+      var path = (window.location.pathname || '').split('/').pop() || '';
+      path = String(path).toLowerCase();
+      if (path === '' || path === 'index.html' || path === 'index') return true;
+      return /^(rentals|services|events|shop|jobs|client-account|client-portal|client-billing)\.html$/i.test(path);
+    } catch (e) {
+      return false;
+    }
+  }
+
   function mdjResolveBuyerSession(opts) {
     opts = opts || {};
     if (opts.isDjStaff || opts.isNavStaffSolo) return false;
@@ -146,6 +159,8 @@
     if (idn && idn.hasClientRow && !opts.hasDjProfile) return true;
     if (idn && idn.hasClientRow && (idn.dbRole === 'client' || idn.dbRole === 'cliente')) return true;
     if (opts.clientRow && !opts.hasDjProfile) return true;
+    /* client_profiles en recorrido público comprador (p. ej. Wendy con dj_profiles paralelo). */
+    if (opts.hasClientRow && mdjIsBuyerJourneyPage()) return true;
     try {
       var su = String(opts.settingsUrl || '');
       if (su.indexOf('client-account') !== -1 || su.indexOf('client-portal') !== -1) return true;
@@ -2852,6 +2867,7 @@
             isClient: isClient,
             settingsUrl: settingsUrl,
             idn: idn,
+            hasClientRow: hasClientRow,
             hasDjProfile: hasDjProfile,
             clientRow: clientRow,
             isDjStaff: isDjStaff,
@@ -2928,7 +2944,8 @@
             return !!(_n && _n.getAttribute('data-mdj-compact-nav') === '1');
           }());
           /* Inicio: ⚙️ CONFIG artista/staff; comprador → Configuraciones (client-account). */
-          var showConfigOnHome = onPublicHome && !!window.__mdjNavOwnUserId && !isBuyerSession;
+          var showConfigOnHome =
+            onPublicHome && !!window.__mdjNavOwnUserId && !isBuyerSession && !hasClientRow;
           mdjApplyAgendaMainNavLink(!!showArtistDashMainNav && !onPublicHome && !isCompactNav, './dj-dashboard.html?tab=dashboard');
           if (isBuyerSession) {
             mdjApplyConfigMainNavLink(false);
@@ -3022,6 +3039,10 @@
           try {
             if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
           } catch (eUi) { /* ignore */ }
+          if (isBuyerSession) {
+            mdjApplyBuyerConfigMainNavLink(true);
+            mdjApplyBuyerSessionMainNav(miPortalHref);
+          }
           /* i18n solo toca [data-i18n]; por si el HTML inicial trae header-mi-portal en la 8.ª celda, reforzar staff.
              Guard: no re-mostrar MI PORTAL en Home — mdjNormalizePublicHomeMainNav() ya lo ocultó (TICKET-002). */
           if (isDjStaff && document.getElementById('mainNav') && !mdjIsPublicHomePage()) {
