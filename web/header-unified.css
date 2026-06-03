@@ -1514,14 +1514,14 @@ body.mdj-is-client #mainHeader #mainNav a[data-mdj-nav="tools"].mdj-mainnav-rese
 body.mdj-is-client #mainHeader #mainNav a[data-mdj-nav="tools"][aria-hidden="true"],
 body.mdj-buyer-session #mainHeader #mainNav a[data-mdj-nav="tools"].mdj-mainnav-reserved-slot,
 body.mdj-buyer-session #mainHeader #mainNav a[data-mdj-nav="tools"][aria-hidden="true"],
-body.page-home.mdj-is-client #mainNav > a.mdj-mainnav-reserved-slot,
-body.page-home.mdj-is-client #mainNav > a[aria-hidden="true"],
-body.page-home.mdj-buyer-session #mainNav > a.mdj-mainnav-reserved-slot,
-body.page-home.mdj-buyer-session #mainNav > a[aria-hidden="true"],
-body.mdj-is-client #mainNav[data-mdj-compact-nav="1"] > a.mdj-mainnav-reserved-slot,
-body.mdj-is-client #mainNav[data-mdj-compact-nav="1"] > a[aria-hidden="true"],
-body.mdj-buyer-session #mainNav[data-mdj-compact-nav="1"] > a.mdj-mainnav-reserved-slot,
-body.mdj-buyer-session #mainNav[data-mdj-compact-nav="1"] > a[aria-hidden="true"] {
+body.page-home.mdj-is-client #mainNav > a.mdj-mainnav-reserved-slot:not([data-mdj-nav="client-config"]),
+body.page-home.mdj-is-client #mainNav > a[aria-hidden="true"]:not(#mainNav-config-link),
+body.page-home.mdj-buyer-session #mainNav > a.mdj-mainnav-reserved-slot:not([data-mdj-nav="client-config"]),
+body.page-home.mdj-buyer-session #mainNav > a[aria-hidden="true"]:not(#mainNav-config-link),
+body.mdj-is-client #mainNav[data-mdj-compact-nav="1"] > a.mdj-mainnav-reserved-slot:not([data-mdj-nav="client-config"]),
+body.mdj-is-client #mainNav[data-mdj-compact-nav="1"] > a[aria-hidden="true"]:not(#mainNav-config-link),
+body.mdj-buyer-session #mainNav[data-mdj-compact-nav="1"] > a.mdj-mainnav-reserved-slot:not([data-mdj-nav="client-config"]),
+body.mdj-buyer-session #mainNav[data-mdj-compact-nav="1"] > a[aria-hidden="true"]:not(#mainNav-config-link) {
   display:        none    !important;
   width:          0       !important;
   min-width:      0 !important;
@@ -1531,6 +1531,21 @@ body.mdj-buyer-session #mainNav[data-mdj-compact-nav="1"] > a[aria-hidden="true"
   padding:        0       !important;
   margin:         0       !important;
   pointer-events: none    !important;
+}
+
+body.mdj-buyer-session #mainHeader #mainNav > a#mainNav-config-link[data-mdj-nav="client-config"],
+body.mdj-is-client #mainHeader #mainNav > a#mainNav-config-link[data-mdj-nav="client-config"] {
+  display:        inline-flex !important;
+  visibility:     visible     !important;
+  opacity:        1           !important;
+  width:          auto        !important;
+  min-width:      12ch        !important;
+  max-width:      none        !important;
+  flex:           0 0 auto    !important;
+  overflow:       visible     !important;
+  padding:        var(--mdj-nav-link-py-t) var(--mdj-nav-link-px) var(--mdj-nav-link-py-b) !important;
+  margin:         0           !important;
+  pointer-events: auto        !important;
 }
 
 /*
