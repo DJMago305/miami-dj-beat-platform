@@ -10,7 +10,7 @@
  */
 (function () {
   'use strict';
-  console.info('[Header] build 202605192100-home-mainnav-fluid');
+  console.info('[Header] build 20260603-buyer-nav-html-only');
 
   var MDJ_ARTIST_RAIL_VARIANT_CORE = 'mdj-artist-rail-core-v1';
   var MDJ_ARTIST_RAIL_VARIANT_FULL = 'mdj-artist-rail-full-v1';
@@ -124,9 +124,9 @@
       'services',
       'venues',
       'shop',
+      'client-config',
       'jobs',
       'contact',
-      'client-config',
       'mi-portal'
     ]),
     hidden: Object.freeze(['tools', 'staff', 'my-profile', 'agenda', 'flow', 'config'])
@@ -170,7 +170,12 @@
 
   function mdjHideMainNavSlot(el) {
     if (!el) return;
-    el.classList.add('mdj-mainnav-reserved-slot');
+    if (el.id !== 'mainNav-config-link' && el.id !== 'mainNav-mi-portal-link') {
+      el.classList.add('mdj-mainnav-reserved-slot');
+    }
+    if (el.id === 'mainNav-mi-portal-link') {
+      el.classList.add('mdj-mi-portal--guest');
+    }
     el.setAttribute('aria-hidden', 'true');
     el.setAttribute('tabindex', '-1');
     el.style.removeProperty('visibility');
@@ -179,25 +184,33 @@
 
   function mdjRevealMainNavSlot(el) {
     if (!el) return;
-    el.classList.remove('mdj-mainnav-reserved-slot');
+    var buyerPhantom =
+      el.id === 'mainNav-config-link' || el.id === 'mainNav-mi-portal-link';
+    if (!buyerPhantom) {
+      el.classList.remove('mdj-mainnav-reserved-slot');
+    }
     el.removeAttribute('aria-hidden');
     el.removeAttribute('tabindex');
     el.style.removeProperty('display');
     el.style.removeProperty('visibility');
     el.style.removeProperty('pointer-events');
+    if (buyerPhantom) {
+      el.classList.remove('mdj-mi-portal--guest', 'mdj-mi-portal--hydrating');
+    }
   }
 
-  /** Matriz fija comprador: Home · Services · Events · Shop · Jobs · Contact · Configuraciones · MY PORTAL */
+  /** Matriz fija comprador: Home · Services · Events · Shop · CONFIG · Jobs · Contact · MI PORTAL */
   function mdjApplyBuyerSessionMainNav(portalHref) {
     var nav = document.getElementById('mainNav');
     if (!nav) return;
+    var compactNav = nav.getAttribute('data-mdj-compact-nav') === '1';
 
-    ['home', 'services', 'shop', 'jobs', 'contact'].forEach(function (key) {
+    ['home', 'services', 'venues', 'shop', 'jobs', 'contact'].forEach(function (key) {
       nav.querySelectorAll('a[data-mdj-nav="' + key + '"]').forEach(mdjRevealMainNavSlot);
     });
 
     var venues = nav.querySelector('a[data-mdj-nav="venues"]');
-    if (!venues) {
+    if (!venues && !compactNav) {
       venues = document.createElement('a');
       venues.setAttribute('data-mdj-nav', 'venues');
       venues.setAttribute('data-i18n', 'nav-rentals');
@@ -217,8 +230,10 @@
         venues.textContent = 'Events';
       }
     }
-    venues.setAttribute('href', './events.html');
-    mdjRevealMainNavSlot(venues);
+    if (venues) {
+      venues.setAttribute('href', './events.html');
+      mdjRevealMainNavSlot(venues);
+    }
 
     ['tools', 'staff', 'my-profile', 'agenda', 'flow'].forEach(function (key) {
       nav.querySelectorAll('a[data-mdj-nav="' + key + '"]').forEach(mdjHideMainNavSlot);
@@ -230,6 +245,7 @@
 
     mdjApplyBuyerConfigMainNavLink(true);
     mdjEnsureMiPortalInMainNav(portalHref || './client-portal.html', null);
+    mdjRevealMainNavSlot(document.getElementById('mainNav-config-link'));
     mdjRevealMainNavSlot(document.getElementById('mainNav-mi-portal-link'));
 
     var hdr = document.getElementById('mainHeader');
@@ -237,21 +253,8 @@
       hdr.querySelectorAll('#mainNav a[href*="dj-tools"], #mainNav a[data-mdj-nav="tools"]').forEach(mdjHideMainNavSlot);
     }
 
-    /* Orden estable en DOM (mismo ritmo visual en Home, Events, Services, …). */
-    var order = (window.MDJ_BUYER_MAINNAV_CONTRACT && window.MDJ_BUYER_MAINNAV_CONTRACT.visible) || [];
-    order.forEach(function (key) {
-      var el = null;
-      if (key === 'client-config') {
-        el = document.getElementById('mainNav-config-link');
-      } else if (key === 'mi-portal') {
-        el = document.getElementById('mainNav-mi-portal-link');
-      } else {
-        el = nav.querySelector('a[data-mdj-nav="' + key + '"]');
-      }
-      if (el && el.parentNode === nav) {
-        nav.appendChild(el);
-      }
-    });
+    /* Orden comprador viene del HTML de cada página — sin appendChild/insertBefore (anti-brinco). */
+    mdjInstallMainNavStaticMode();
   }
 
   /**
@@ -975,12 +978,20 @@
   }
 
   /**
-   * Crea #mainNav-config-link si el HTML (p. ej. plantilla antigua) no lo trae — misma colación que el sitio: tras DJ Tools, antes de Jobs.
+   * Crea #mainNav-config-link si falta — comprador: debe existir en HTML tras Shop; resto: antes de Jobs.
    * Sin esto, Agenda/Flujo no tienen ancla; `mdjApplyConfigMainNavLink` quedaría en no-op.
    */
   function mdjEnsureConfigMainNavNode() {
     var existing = document.getElementById('mainNav-config-link');
     if (existing) return existing;
+    if (mdjIsBuyerJourneyPage()) {
+      try {
+        console.warn(
+          '[Header] #mainNav-config-link missing on buyer journey — expected after Shop in HTML; no insertBefore.'
+        );
+      } catch (eWarnCfg) { /* ignore */ }
+      return null;
+    }
     var nav = document.getElementById('mainNav');
     if (!nav) return null;
     var a = document.createElement('a');
@@ -1040,7 +1051,7 @@
     }
   }
 
-  /** Comprador: pestaña «Configuraciones» → client-account (todas las páginas con #mainNav, incl. Home y Events). */
+  /** Comprador: pestaña «⚙️ CONFIG» → client-account (todas las páginas con #mainNav, incl. Home y Events). */
   function mdjApplyBuyerConfigMainNavLink(show) {
     var a = mdjEnsureConfigMainNavNode();
     if (!a) return;
@@ -1050,22 +1061,20 @@
     }
     a.setAttribute('href', './client-account.html');
     a.setAttribute('data-mdj-nav', 'client-config');
-    a.setAttribute('data-i18n', 'nav-client-settings');
-    a.classList.remove('mdj-mainnav-reserved-slot');
+    a.setAttribute('data-i18n', 'nav-config');
     a.style.removeProperty('display');
     a.style.removeProperty('visibility');
     a.style.removeProperty('pointer-events');
     a.removeAttribute('aria-hidden');
     a.removeAttribute('tabindex');
     try {
-      var rawLang = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
-      var es = rawLang.indexOf('es') === 0;
-      var tx = window.i18n && typeof window.i18n.t === 'function'
-        ? String(window.i18n.t('nav-client-settings') || '').trim()
-        : '';
-      a.textContent = tx || (es ? 'Configuraciones' : 'Settings');
+      var txCfg =
+        window.i18n && typeof window.i18n.t === 'function'
+          ? String(window.i18n.t('nav-config') || '').trim()
+          : '';
+      a.textContent = txCfg || '⚙️ CONFIG';
     } catch (eLbl) {
-      a.textContent = 'Settings';
+      a.textContent = '⚙️ CONFIG';
     }
   }
 
@@ -1509,6 +1518,14 @@
       existing.textContent = 'MI PORTAL';
       return;
     }
+    if (mdjIsBuyerJourneyPage()) {
+      try {
+        console.warn(
+          '[Header] #mainNav-mi-portal-link missing on buyer journey — expected last in #mainNav HTML; no appendChild.'
+        );
+      } catch (eWarnMp) { /* ignore */ }
+      return;
+    }
     var link = document.createElement('a');
     link.id = 'mainNav-mi-portal-link';
     link.className = 'mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--hydrating';
@@ -1533,16 +1550,30 @@
     mdjEnsureHeaderVipCss();
     var link = document.getElementById('mainNav-mi-portal-link');
     if (!link) {
+      if (mdjIsBuyerJourneyPage() || window.__mdjLastBuyerSession === true) {
+        try {
+          console.warn(
+            '[Header] #mainNav-mi-portal-link missing — reveal/href skipped; fix HTML order (last visible tab).'
+          );
+        } catch (eWarnMp2) { /* ignore */ }
+        return;
+      }
       link = document.createElement('a');
       link.id = 'mainNav-mi-portal-link';
       nav.appendChild(link);
     }
-    link.className = 'mdj-mi-portal-mainnav mdj-mi-portal-gold';
-    link.classList.remove('mdj-mi-portal--guest', 'mdj-mi-portal--hydrating', 'mdj-mainnav-reserved-slot');
+    var buyerRow = window.__mdjLastBuyerSession === true;
+    if (buyerRow) {
+      link.classList.add('mdj-mi-portal-mainnav', 'mdj-mi-portal-gold');
+      link.classList.remove('mdj-mi-portal--guest', 'mdj-mi-portal--hydrating');
+    } else {
+      link.className = 'mdj-mi-portal-mainnav mdj-mi-portal-gold';
+      link.classList.remove('mdj-mainnav-reserved-slot', 'mdj-mi-portal--guest', 'mdj-mi-portal--hydrating');
+    }
     link.href = href || './client-portal.html';
-    link.style.display = '';
-    link.style.pointerEvents = '';
-    link.style.visibility = '';
+    link.style.removeProperty('display');
+    link.style.removeProperty('pointer-events');
+    link.style.removeProperty('visibility');
     link.removeAttribute('aria-hidden');
     link.removeAttribute('tabindex');
     var staffNav = opts && opts.variant === 'staff-settings';
@@ -2326,11 +2357,11 @@
       var lk = document.createElement('link');
       lk.id = 'mdj-event-cart-css';
       lk.rel = 'stylesheet';
-      lk.href = './mdj-event-cart.css?v=20260601-grid-5col-2';
+      lk.href = './mdj-event-cart.css?v=20260603-cart-topbar-read-1';
       (document.head || document.documentElement).appendChild(lk);
     }
 
-    var fragUrl = './mdj-event-cart-root-fragment.html?v=20260531-month-clean-1';
+    var fragUrl = './mdj-event-cart-root-fragment.html?v=20260603-cart-topbar-read-1';
     fetch(fragUrl, { cache: 'no-store' })
       .then(function (res) {
         if (!res.ok) throw new Error('event cart fragment ' + res.status);
@@ -3040,8 +3071,7 @@
             if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
           } catch (eUi) { /* ignore */ }
           if (isBuyerSession) {
-            mdjApplyBuyerConfigMainNavLink(true);
-            mdjApplyBuyerSessionMainNav(miPortalHref);
+            mdjInstallMainNavStaticMode();
           }
           /* i18n solo toca [data-i18n]; por si el HTML inicial trae header-mi-portal en la 8.ª celda, reforzar staff.
              Guard: no re-mostrar MI PORTAL en Home — mdjNormalizePublicHomeMainNav() ya lo ocultó (TICKET-002). */
