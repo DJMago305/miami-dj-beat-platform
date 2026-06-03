@@ -1525,6 +1525,94 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
 }
 
 /*
+ * Guest / público (sin mdj-buyer-session ni mdj-is-client): menú completo visible.
+ * JS deja aria-hidden / .mdj-mi-portal--guest en CONFIG y MI PORTAL; CSS revela sin mover DOM.
+ * Comprador (mdj-buyer-session / mdj-is-client): phantom anti-brinco de arriba sin cambios.
+ */
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-config-link,
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-mi-portal-link,
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-staff-or-profile,
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-staff-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  flex: 0 0 auto !important;
+  min-width: max-content !important;
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  overflow: visible !important;
+}
+
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-config-link {
+  letter-spacing: 0.05em !important;
+  word-spacing: -0.12em !important;
+}
+
+/* Guest: «/» en CONFIG / MI PORTAL / STAFF aunque aria-hidden o .mdj-mi-portal--guest en DOM */
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav='shop'] ~ a#mainNav-config-link::before,
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-config-link ~ a[data-mdj-nav='jobs']::before,
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav='contact'] ~ a#mainNav-mi-portal-link::before,
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-mi-portal-link ~ a[data-mdj-nav='tools']::before,
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav='tools'] ~ a#mainNav-guest-mi-perfil-link::before,
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-guest-mi-perfil-link ~ a#mainNav-staff-or-profile::before,
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-guest-mi-perfil-link ~ a#mainNav-staff-link::before,
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav='tools'] ~ a#mainNav-staff-or-profile::before,
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav='tools'] ~ a#mainNav-staff-link::before {
+  content: '\002F' !important;
+  color: rgba(197, 160, 89, 0.4) !important;
+  font-weight: 500 !important;
+  margin-right: 0.68em !important;
+  line-height: 1 !important;
+  text-shadow: none !important;
+  position: static !important;
+}
+
+/*
  * Nav compacto — alineación izquierda (v20260529-compact-nav-flex-start):
  * justify-content: flex-start evita que el centrado oculte INICIO cuando hay overflow.
  * Solo aplica a páginas con data-mdj-compact-nav="1" (servicios, eventos, shop, etc.).
