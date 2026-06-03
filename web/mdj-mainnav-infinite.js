@@ -260,6 +260,13 @@
     if (!nav || prefersReducedMotion() || !nav.getAttribute || nav.getAttribute(MOUNTED) !== '1') return;
     /* Inicio: sin deriva lenta — el scroll continuo se percibe como “temblor” en las pestañas. */
     if (isPageHome()) return;
+    if (nav.getAttribute('data-mdj-compact-nav') === '1') return;
+    if (window.__mdjLastBuyerSession === true) return;
+    try {
+      if (document.body && document.body.classList.contains('mdj-buyer-session')) return;
+    } catch (eBuyerDrift) {
+      void eBuyerDrift;
+    }
     stopDrift(nav);
     var speed = 0.32;
     var navRef = nav;
@@ -409,6 +416,13 @@
   function mountIfOverflow(nav) {
     teardownNav(nav);
     if (!isDesktop()) return;
+    if (window.MDJ_DISABLE_MAINNAV_INFINITE === true) return;
+    try {
+      if (window.__mdjLastBuyerSession === true) return;
+      if (document.body && document.body.classList.contains('mdj-buyer-session')) return;
+    } catch (eBuyer) {
+      void eBuyer;
+    }
     if (nav.getAttribute('data-mdj-compact-nav') === '1') return;
     var originals = Array.prototype.slice.call(nav.querySelectorAll(':scope > a:not(.' + CLONE + ')'));
     if (originals.length < 2) return;
@@ -444,7 +458,25 @@
     });
   }
 
+  function shouldSkipMainNavInfinite() {
+    if (window.MDJ_DISABLE_MAINNAV_INFINITE === true) return true;
+    try {
+      if (window.__mdjLastBuyerSession === true) return true;
+      if (document.body && document.body.classList.contains('mdj-buyer-session')) return true;
+    } catch (eSkip) {
+      void eSkip;
+    }
+    var n = getNav();
+    if (n && n.getAttribute('data-mdj-compact-nav') === '1') return true;
+    return false;
+  }
+
   function reinitMainNavInfiniteNow() {
+    if (shouldSkipMainNavInfinite()) {
+      var navSkip = getNav();
+      if (navSkip) teardownNav(navSkip);
+      return;
+    }
     var nav = getNav();
     if (!nav) {
       return;
@@ -487,10 +519,14 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
       boot();
-      if (window.mdjReinitMainNavInfinite) window.mdjReinitMainNavInfinite();
+      if (!shouldSkipMainNavInfinite() && window.mdjReinitMainNavInfinite) {
+        window.mdjReinitMainNavInfinite();
+      }
     });
   } else {
     boot();
-    if (window.mdjReinitMainNavInfinite) window.mdjReinitMainNavInfinite();
+    if (!shouldSkipMainNavInfinite() && window.mdjReinitMainNavInfinite) {
+      window.mdjReinitMainNavInfinite();
+    }
   }
 })();

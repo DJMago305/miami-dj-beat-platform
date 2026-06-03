@@ -409,6 +409,19 @@ function portalLang() {
     return h.indexOf('es') === 0 ? 'es' : 'en';
 }
 
+/** Never override ES|EN from the header / mdjpro_lang when switching tabs. Profile lang only if unset. */
+function portalApplyLanguagePreferenceIfUnset(pref) {
+    if (pref !== 'es' && pref !== 'en') return;
+    if (!window.i18n || typeof window.i18n.setLanguage !== 'function') return;
+    try {
+        var stored = localStorage.getItem('mdjpro_lang');
+        if (stored === 'es' || stored === 'en') return;
+    } catch (eStore) {
+        void eStore;
+    }
+    window.i18n.setLanguage(pref);
+}
+
 function portalT(key, name) {
     var loc = portalLang();
     var tpl = '';
@@ -1462,10 +1475,9 @@ const PortalApp = {
             console.warn('Client profile fetch skipped', e);
         }
         try {
-            var lp = this.clientProfile && this.clientProfile.language_preference;
-            if ((lp === 'es' || lp === 'en') && window.i18n && typeof window.i18n.setLanguage === 'function') {
-                window.i18n.setLanguage(lp);
-            }
+            portalApplyLanguagePreferenceIfUnset(
+                this.clientProfile && this.clientProfile.language_preference
+            );
         } catch (eLang) { /* ignore */ }
         this.renderLoyaltyBadge(this.clientProfile?.total_events_booked || 1);
         this.renderCart();
@@ -3103,10 +3115,7 @@ const PortalApp = {
             } catch (e) { /* ignore */ }
 
             try {
-                var lp0 = clientRow && clientRow.language_preference;
-                if ((lp0 === 'es' || lp0 === 'en') && window.i18n && typeof window.i18n.setLanguage === 'function') {
-                    window.i18n.setLanguage(lp0);
-                }
+                portalApplyLanguagePreferenceIfUnset(clientRow && clientRow.language_preference);
             } catch (eLang0) { /* ignore */ }
 
             var q = await portalFetchLeadsForLoggedInUser(db, session.user.id, email);

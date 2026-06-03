@@ -19,18 +19,37 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260603-buyer-config-fix-1" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260603-buyer-nav-config-portal-6" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
     <style id="shop-client-nav-gap">
+      #mainHeader #mainNav > a#mainNav-guest-mi-perfil-link {
+        display: none !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        width: 0 !important;
+        flex: 0 0 0 !important;
+        pointer-events: none !important;
+      }
       @media (min-width: 1001px) {
-        body.mdj-is-client #mainHeader.header.mdj-header-unified .header-nav .container {
-          --mdj-nav-gap: 1px;
+        body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+          > a#mainNav-staff-or-profile.mdj-mainnav-reserved-slot,
+        body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+          > a#mainNav-staff-link.mdj-mainnav-reserved-slot,
+        body.mdj-buyer-session #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+          > a#mainNav-staff-or-profile.mdj-mainnav-reserved-slot,
+        body.mdj-buyer-session #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+          > a#mainNav-staff-link.mdj-mainnav-reserved-slot {
+          display: none !important;
+          min-width: 0 !important;
+          max-width: 0 !important;
+          width: 0 !important;
+          flex: 0 0 0 !important;
         }
       }
     </style>
 </head>
 
-<body class="notranslate page-shop mdj-nav-booting">
+<body class="notranslate page-shop">
     <!-- MDJ canonical site header — keep in sync with index #mainHeader; use ./index.html# anchors for subpages -->
 <header class="header mdj-header-unified" id="mainHeader">
   <div class="header-top">
@@ -103,16 +122,16 @@
   </div>
   <div class="header-nav">
     <div class="container">
-      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" data-mdj-compact-nav="1" data-mdj-portal-in-nav="1" data-mdj-client-hide-dj-tools="1">
-        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
-        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
-        <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
-        <a href="./shop.html" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
-        <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
-        <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
-        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
-        <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
-        <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" aria-hidden="true" tabindex="-1">MY PORTAL</a>
+      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" aria-label="Navegación principal">
+        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
+        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
+        <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
+        <a href="./shop.html" class="active" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
+        <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️CONFIG</a>
+        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
+        <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+        <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" aria-hidden="true" tabindex="-1">MI PORTAL</a>
+        <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools" aria-hidden="true" tabindex="-1" class="mdj-mainnav-reserved-slot">DJ Tools</a>
         <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
       </nav>
     </div>
@@ -3326,9 +3345,9 @@
 
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
   <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
-      <script src="./mdj-shared-header.js?v=20260603-client-nav-5"></script>
+      <script src="./mdj-shared-header.js?v=20260603-buyer-nav-config-portal-6"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
-  <script src="./mdj-mainnav-infinite.js?v=20260531-compact-nav-no-carousel-1"></script>
+  <script src="./mdj-mainnav-infinite.js?v=20260603-buyer-nav-phantom-slots-3"></script>
     <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
     <script src="./mdj-profile-nav-context.js?v=20260525-config-strip-fix-1"></script>
   <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>

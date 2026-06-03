@@ -129,6 +129,8 @@
     };
 
     var ebAssignRefreshInFlight = false;
+    var MDJ_EB_ASSIGN_CREATE_EVENT = '__mdj_eb_create_event__';
+    var MDJ_EB_MONTH_SHORT = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
     var ebCtaBusy = false;
 
     var ui = {
@@ -617,15 +619,87 @@
     }
 
     function mdjEbFormatLeadAssignLabel(row) {
-        var et = row && row.event_type ? String(row.event_type).trim() : 'Event';
+        var et = row && row.event_type ? String(row.event_type).trim() : '';
+        return et || 'Event';
+    }
+
+    function mdjEbEventDateIsoFromRow(row) {
         var d = row && row.event_date != null ? String(row.event_date).trim() : '';
         if (d.length >= 10) {
-            d = d.slice(0, 10);
+            return d.slice(0, 10);
         }
-        if (!d) {
-            d = '—';
+        return '';
+    }
+
+    function mdjEbGetContextDateSelects() {
+        return {
+            day: global.document.querySelector('select.mdj-eb-context-bar__select--day'),
+            month: global.document.querySelector('select.mdj-eb-context-bar__select--month'),
+            year: global.document.querySelector('select.mdj-eb-context-bar__select--year')
+        };
+    }
+
+    /** Mes corto en select (Sep, no «9 — Sep»); hints Día/Mes/Año quedan en HTML. */
+    function mdjEbNormalizeContextBarDateSelects() {
+        var sels = mdjEbGetContextDateSelects();
+        if (sels.month) {
+            var opts = sels.month.options;
+            var i;
+            for (i = 0; i < opts.length; i++) {
+                var mo = parseInt(opts[i].value, 10);
+                if (mo >= 1 && mo <= 12) {
+                    opts[i].textContent = MDJ_EB_MONTH_SHORT[mo];
+                } else if (!opts[i].value) {
+                    opts[i].textContent = 'Mes';
+                }
+            }
         }
-        return et + ' — ' + d;
+        if (sels.day) {
+            var dopts = sels.day.options;
+            var j;
+            for (j = 0; j < dopts.length; j++) {
+                if (!dopts[j].value && dopts[j].disabled) {
+                    dopts[j].textContent = 'Día';
+                }
+            }
+        }
+        if (sels.year) {
+            var yopts = sels.year.options;
+            var k;
+            for (k = 0; k < yopts.length; k++) {
+                if (!yopts[k].value && yopts[k].disabled) {
+                    yopts[k].textContent = 'Año';
+                }
+            }
+        }
+    }
+
+    function mdjEbApplyContextDateIso(iso) {
+        var sels = mdjEbGetContextDateSelects();
+        if (!sels.day || !sels.month || !sels.year) {
+            return;
+        }
+        var d = String(iso || '').trim().slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+            return;
+        }
+        var parts = d.split('-');
+        sels.year.value = parts[0];
+        sels.month.value = String(parseInt(parts[1], 10));
+        sels.day.value = String(parseInt(parts[2], 10));
+    }
+
+    function mdjEbSyncContextDateForLeadId(leadId, rows) {
+        if (!leadId || !rows || !rows.length) {
+            return;
+        }
+        var i;
+        for (i = 0; i < rows.length; i++) {
+            if (rows[i] && String(rows[i].id) === String(leadId)) {
+                mdjEbApplyContextDateIso(mdjEbEventDateIsoFromRow(rows[i]));
+                return;
+            }
+        }
     }
 
     function mdjEbGetAssignSelectEl() {
@@ -663,7 +737,15 @@
                 seen[String(row.id)] = true;
                 var id = String(row.id);
                 var lab = escapeHtml(mdjEbFormatLeadAssignLabel(row));
-                html += '<option value="' + escapeHtml(id) + '">' + lab + '</option>';
+                var iso = escapeHtml(mdjEbEventDateIsoFromRow(row));
+                html +=
+                    '<option value="' +
+                    escapeHtml(id) +
+                    '"' +
+                    (iso ? ' data-event-date="' + iso + '"' : '') +
+                    '>' +
+                    lab +
+                    '</option>';
             });
             if (urlLead && !seen[urlLead]) {
                 var peek = await db
@@ -674,14 +756,22 @@
                 var prow = peek && peek.data;
                 var ok = await mdjEbSessionOwnsLead(db, urlLead, uid, emailNorm);
                 if (ok && prow) {
+                    var pIso = escapeHtml(mdjEbEventDateIsoFromRow(prow));
                     html +=
                         '<option value="' +
                         escapeHtml(String(prow.id)) +
-                        '">' +
+                        '"' +
+                        (pIso ? ' data-event-date="' + pIso + '"' : '') +
+                        '>' +
                         escapeHtml(mdjEbFormatLeadAssignLabel(prow)) +
                         '</option>';
+                    rows.push(prow);
                 }
             }
+            html +=
+                '<option value="' +
+                escapeHtml(MDJ_EB_ASSIGN_CREATE_EVENT) +
+                '">+ Crear evento nuevo</option>';
             sel.innerHTML = html;
             var pick =
                 state.assigned_lead_id && mdjEbUuidLike(state.assigned_lead_id) ? state.assigned_lead_id : '';
@@ -697,6 +787,12 @@
                 sel.value = pick;
                 if (sel.value !== pick) {
                     sel.selectedIndex = 0;
+                } else {
+                    mdjEbSyncContextDateForLeadId(pick, rows);
+                    var optPick = sel.selectedOptions && sel.selectedOptions[0];
+                    if (optPick && optPick.getAttribute('data-event-date')) {
+                        mdjEbApplyContextDateIso(optPick.getAttribute('data-event-date'));
+                    }
                 }
             }
         } catch (eR) {
@@ -718,8 +814,22 @@
         sel.setAttribute('data-mdj-eb-assign-bound', '1');
         sel.addEventListener('change', function () {
             var v = sel.value ? String(sel.value).trim() : '';
+            if (v === MDJ_EB_ASSIGN_CREATE_EVENT) {
+                state.assigned_lead_id = null;
+                persistDraft();
+                try {
+                    global.location.href = './client-portal.html';
+                } catch (eNav) {
+                    void eNav;
+                }
+                return;
+            }
             state.assigned_lead_id = mdjEbUuidLike(v) ? v : null;
             persistDraft();
+            var opt = sel.selectedOptions && sel.selectedOptions[0];
+            if (opt && opt.getAttribute('data-event-date')) {
+                mdjEbApplyContextDateIso(opt.getAttribute('data-event-date'));
+            }
         });
     }
 
@@ -1366,6 +1476,7 @@
             }
             if (!ebUiBound) {
                 bindUi();
+                mdjEbNormalizeContextBarDateSelects();
                 mdjEbBindAssignSelectOnce();
                 ebUiBound = true;
             }

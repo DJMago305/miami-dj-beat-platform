@@ -8,7 +8,7 @@
   <meta name="description"
     content="Miami DJ Beat provides professional DJs and event production for corporate, private, and venue events across Florida, with primary coverage in Miami-Dade and Broward." />
   <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260603-buyer-config-fix-1" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260603-buyer-nav-config-portal-6" />
   <!-- Antes el JS inyectaba esto tras el primer paint → CLS (gap/búsqueda en ≥1200px); VIP ya va por @import en styles.css -->
   <link rel="stylesheet" id="mdj-header-desktop-audit-css" href="./mdj-header-desktop-audit.css?v=20260421-menu-static" />
   <link rel="stylesheet" href="./profile.css?v=20260226-1" />
@@ -573,11 +573,11 @@
           <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
           <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
           <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
-          <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
-          <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+          <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️CONFIG</a>
           <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
           <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
           <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" aria-hidden="true" tabindex="-1">MI PORTAL</a>
+          <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
           <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
         </nav>
       </div>
@@ -970,11 +970,188 @@
     </section>
 
     <section id="contact" class="section alt">
-      <!-- LOCKED SECTION: DO NOT MODIFY -->
-      <div class="container">
-        <h2 data-i18n="contact-title">Reserva tu Evento</h2>
-        <p class="sub" data-i18n="contact-sub">Cuéntanos sobre tu evento y un manager te contactará en menos de 24
-          horas.</p>
+      <style>
+        #contact .mdj-contact-form-row {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: flex-start;
+          justify-content: center;
+          gap: 32px 36px;
+          margin-top: 4px;
+        }
+
+        #contact .mdj-contact-form-row #bottom-contact-form {
+          margin: 40px 0;
+        }
+
+        #contact .mdj-contact-corp-info {
+          flex: 0 0 auto;
+          width: min(312px, 100%);
+          max-width: 312px;
+          margin: 40px 0 0;
+          padding: 22px 24px;
+          border-radius: 12px;
+          border: 1px solid rgba(197, 160, 89, 0.32);
+          background: linear-gradient(165deg, rgba(14, 16, 26, 0.92) 0%, rgba(8, 10, 18, 0.88) 100%);
+          box-shadow: 0 10px 32px rgba(0, 0, 0, 0.28);
+          font-size: 15px;
+          line-height: 1.5;
+          color: rgba(255, 255, 255, 0.78);
+          text-align: left;
+        }
+
+        #contact .mdj-contact-corp-info__name {
+          margin: 0 0 16px;
+          padding-bottom: 14px;
+          border-bottom: 1px solid rgba(197, 160, 89, 0.28);
+          font-size: 14px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: rgba(197, 160, 89, 0.95);
+        }
+
+        #contact .mdj-contact-corp-info__rows {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
+
+        #contact .mdj-contact-corp-info__row {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        #contact .mdj-contact-corp-info__label {
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: rgba(197, 160, 89, 0.72);
+        }
+
+        #contact .mdj-contact-corp-info__value,
+        #contact .mdj-contact-corp-info__value a {
+          font-size: 15px;
+          line-height: 1.45;
+          color: rgba(255, 255, 255, 0.9);
+          text-decoration: none;
+        }
+
+        #contact .mdj-contact-corp-info__value a:hover {
+          color: var(--gold, #c5a059);
+          text-decoration: underline;
+        }
+
+        #contact .mdj-contact-hero {
+          text-align: center;
+          max-width: 720px;
+          margin: 0 auto 36px;
+          padding: 8px 20px 28px;
+          border-bottom: 1px solid rgba(197, 160, 89, 0.22);
+        }
+
+        #contact .mdj-contact-hero__eyebrow {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          margin: 0 0 14px;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: rgba(197, 160, 89, 0.9);
+        }
+
+        #contact .mdj-contact-hero__eyebrow::before,
+        #contact .mdj-contact-hero__eyebrow::after {
+          content: "";
+          width: 32px;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(197, 160, 89, 0.55));
+        }
+
+        #contact .mdj-contact-hero__eyebrow::after {
+          background: linear-gradient(90deg, rgba(197, 160, 89, 0.55), transparent);
+        }
+
+        #contact .mdj-contact-hero h2 {
+          margin: 0 0 12px;
+          font-family: "Outfit", sans-serif;
+          font-size: clamp(1.75rem, 3.2vw, 2.35rem);
+          font-weight: 800;
+          letter-spacing: 0.05em;
+          line-height: 1.15;
+          color: var(--gold, #c5a059);
+          text-wrap: balance;
+          text-shadow: 0 2px 18px rgba(0, 0, 0, 0.35);
+        }
+
+        #contact .mdj-contact-hero .sub {
+          margin: 0 auto;
+          max-width: 52ch;
+          font-size: clamp(0.95rem, 1.35vw, 1.0625rem);
+          line-height: 1.55;
+          color: rgba(255, 255, 255, 0.72);
+        }
+
+        @media (min-width: 1024px) {
+          #contact .mdj-contact-hero .sub {
+            max-width: none;
+            white-space: nowrap;
+          }
+        }
+
+        #contact #bottom-contact-form {
+          padding: 28px 24px 20px;
+          box-sizing: border-box;
+        }
+
+        #contact #bottom-contact-form label {
+          gap: 10px;
+        }
+
+        #contact #bottom-contact-form .tile > label,
+        #contact #bottom-contact-form > div > label[data-i18n] {
+          display: block;
+          margin-bottom: 10px;
+        }
+
+        #contact #bottom-contact-form > div:has(input[name="name"]) {
+          margin-top: 0;
+        }
+
+        @media (max-width: 900px) {
+          #contact .mdj-contact-form-row {
+            flex-direction: column;
+            align-items: center;
+          }
+
+          #contact .mdj-contact-hero .sub {
+            white-space: normal;
+          }
+
+          #contact .mdj-contact-corp-info {
+            order: -1;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto 8px;
+          }
+
+          #contact .mdj-contact-form-row #bottom-contact-form {
+            margin: 24px auto 40px;
+          }
+        }
+      </style>
+      <div class="container container--contact-wrap">
+        <header class="mdj-contact-hero">
+          <p class="mdj-contact-hero__eyebrow">Miami DJ Beat Booking</p>
+          <h2 data-i18n="contact-title">Reserva tu Evento</h2>
+          <p class="sub" data-i18n="contact-sub">Cuéntanos sobre tu evento y un manager te contactará en menos de 24 horas.</p>
+        </header>
+        <div class="mdj-contact-form-row">
         <form id="bottom-contact-form" class="admin-card" action="https://formspree.io/f/mqakvjge" method="post"
           style="max-width: 600px; margin: 40px auto; background: var(--panel);">
           <input type="hidden" name="_subject" value="[MDJB] Home — Reserva (bloque inferior)">
@@ -995,7 +1172,7 @@
               style="width: 100%; min-height: 80px; background: transparent; border: none; color: #fff; resize: none; font-size: 15px; line-height: 1.6; font-family: inherit; outline: none;"></textarea>
           </div>
 
-          <div style="margin-bottom: 20px;">
+          <div style="margin-top: 20px; margin-bottom: 20px;">
             <label><span data-i18n="label-name">Nombre Completo</span><input type="text" name="name"
                 placeholder="Nombre Completo" data-i18n-hold="hold-name" required /></label>
           </div>
@@ -1068,6 +1245,24 @@
           <button type="submit" id="bottom-submit-btn" class="btn primary full" style="margin-top: 25px;"
             data-i18n="btn-request">Solicitar Disponibilidad</button>
         </form>
+        <aside class="mdj-contact-corp-info" aria-label="Miami DJ Beat corporate contact">
+          <p class="mdj-contact-corp-info__name">Miami DJ Beat LLC</p>
+          <div class="mdj-contact-corp-info__rows">
+            <div class="mdj-contact-corp-info__row">
+              <span class="mdj-contact-corp-info__label">Email</span>
+              <span class="mdj-contact-corp-info__value"><a href="mailto:miamidjbeat@gmail.com">miamidjbeat@gmail.com</a></span>
+            </div>
+            <div class="mdj-contact-corp-info__row">
+              <span class="mdj-contact-corp-info__label">Phone</span>
+              <span class="mdj-contact-corp-info__value"><a href="tel:+13056071780">(305) 607-1780</a></span>
+            </div>
+            <div class="mdj-contact-corp-info__row">
+              <span class="mdj-contact-corp-info__label">Location</span>
+              <span class="mdj-contact-corp-info__value">Miami, Florida</span>
+            </div>
+          </div>
+        </aside>
+        </div>
       </div>
   </main>
 
@@ -1229,7 +1424,7 @@
   <script src="./form-handler.js?v=20260420-deploy"></script>
   <script src="./header-smart-search.js?v=20260515-unified-header-geometry-1"></script>
   <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
-  <script src="./mdj-shared-header.js?v=20260603-client-nav-5"></script>
+  <script src="./mdj-shared-header.js?v=20260603-buyer-nav-order-8"></script>
   <script>
     /* Inicio: trinquete en #mainNav (scroll + flechas); no reactiva tick en otros carruseles por scroll. */
     window.MDJ_ENABLE_NAV_TICK_AUDIO = true;
@@ -1389,6 +1584,10 @@
       }
 
       function setActive(sectionId) {
+        var urlHash = (location.hash || '').replace(/^#/, '').toLowerCase();
+        if (!sectionId && sections.indexOf(urlHash) !== -1) {
+          sectionId = urlHash;
+        }
         navLinks.forEach(link => {
           const href = link.getAttribute('href') || '';
           const hashId = hashIdFromHref(href);

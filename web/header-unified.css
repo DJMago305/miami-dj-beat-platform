@@ -866,10 +866,24 @@
     }
   }
 
-  /* Letras flotantes: / antes de cada <a> salvo el primero en DOM; slots display:none no pintan el pseudo. */
+  /* Letras flotantes: «/» solo entre pestañas visibles (no antes de Inicio si hay slots fantasma antes en DOM). */
   #mainHeader.header.mdj-header-unified
     #mainNav.mdj-mainnav-flex.nav.top-nav
-    > a:not(:first-of-type)::before {
+    > a.mdj-mainnav-reserved-slot:not(#mainNav-config-link):not(#mainNav-mi-portal-link)::before,
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a[aria-hidden='true']::before,
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a#mainNav-mi-portal-link.mdj-mi-portal--guest::before {
+    content: none !important;
+    margin: 0 !important;
+  }
+
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a:not([aria-hidden='true']):not(.mdj-mi-portal--guest)
+    ~ a:not([aria-hidden='true']):not(.mdj-mi-portal--guest)::before {
     content: '\002F' !important; /* U+002F = / (no incluye espacio; aire = padding) */
     color: rgba(197, 160, 89, 0.4) !important;
     font-weight: 500 !important;
@@ -877,6 +891,45 @@
     line-height: 1 !important;
     text-shadow: none !important;
     position: static !important;
+  }
+
+  /* CONFIG / MI PORTAL: visibles con .mdj-mainnav-reserved-slot — «/» explícito (pisa content:none de slots). */
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a:not([aria-hidden='true']):not(.mdj-mi-portal--guest)
+    ~ a#mainNav-config-link:not([aria-hidden='true'])::before,
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a:not([aria-hidden='true']):not(.mdj-mi-portal--guest)
+    ~ a#mainNav-mi-portal-link:not([aria-hidden='true']):not(.mdj-mi-portal--guest)::before,
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a[data-mdj-nav='shop'] ~ a#mainNav-config-link:not([aria-hidden='true'])::before {
+    content: '\002F' !important;
+    color: rgba(197, 160, 89, 0.4) !important;
+    font-weight: 500 !important;
+    margin-right: 0.68em !important;
+    line-height: 1 !important;
+    text-shadow: none !important;
+    position: static !important;
+  }
+
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a#mainNav-config-link:not([aria-hidden='true']) {
+    letter-spacing: 0.05em !important;
+    word-spacing: -0.12em !important;
+  }
+
+  /* Inicio = primer separador nunca (anti «/ INICIO» + brinco al activar home en index). */
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a[data-mdj-nav='home']::before {
+    content: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 0 !important;
+    display: none !important;
   }
 
   #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a {
@@ -915,14 +968,21 @@
     position: relative !important;
   }
 
-  /* No recortar MI PORTAL / STAFF|MI PERFIL: ancho al texto completo (mismo truco que styles “NO-STACKING”). */
+  /* No recortar MI PORTAL / CONFIG / STAFF|MI PERFIL: ancho al texto completo (sin perder la «L» de PORTAL). */
   #mainHeader.header.mdj-header-unified
     #mainNav.mdj-mainnav-flex.nav.top-nav
     > a#mainNav-mi-portal-link,
   #mainHeader.header.mdj-header-unified
     #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a#mainNav-config-link,
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
     > a#mainNav-staff-or-profile {
     min-width: max-content !important;
+    max-width: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    flex-shrink: 0 !important;
   }
 
   /*
@@ -1418,6 +1478,53 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
 }
 
 /*
+ * CONFIG + MI PORTAL — phantom width (mismo truco que STAFF slot; gana al nuclear display:none).
+ * Comprador: pestañas visibles no se mueven al hidratar sesión; solo opacidad cambia.
+ */
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-config-link,
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-mi-portal-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  flex: 0 0 auto !important;
+  flex-shrink: 0 !important;
+  min-width: max-content !important;
+  width: auto !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  position: static !important;
+  margin: 0 !important;
+  padding: var(--mdj-nav-link-py-t) var(--mdj-nav-link-px) var(--mdj-nav-link-py-b) !important;
+  font-size: var(--mdj-nav-font-size) !important;
+  font-weight: var(--mdj-nav-font-weight) !important;
+  letter-spacing: var(--mdj-nav-letter-spacing) !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+}
+
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-config-link[aria-hidden="true"],
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-mi-portal-link.mdj-mi-portal--guest,
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-mi-portal-link[aria-hidden="true"] {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-config-link:not([aria-hidden="true"]),
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-mi-portal-link:not(.mdj-mi-portal--guest):not([aria-hidden="true"]) {
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/*
  * Nav compacto — alineación izquierda (v20260529-compact-nav-flex-start):
  * justify-content: flex-start evita que el centrado oculte INICIO cuando hay overflow.
  * Solo aplica a páginas con data-mdj-compact-nav="1" (servicios, eventos, shop, etc.).
@@ -1456,10 +1563,14 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
  * Cuentas artista / guest / client: slots inician ocultos hasta que JS quita mdj-mainnav-reserved-slot / aria-hidden.
  * Especificidad (1,3,2) supera al anti-brinco general (1,2,1); ambos lados usan !important.
  */
-body.page-mdj-rentals #mainNav[data-mdj-compact-nav="1"] > a.mdj-mainnav-reserved-slot,
-body.page-mdj-rentals #mainNav[data-mdj-compact-nav="1"] > a[aria-hidden="true"],
-body.page-mdj-events  #mainNav[data-mdj-compact-nav="1"] > a.mdj-mainnav-reserved-slot,
-body.page-mdj-events  #mainNav[data-mdj-compact-nav="1"] > a[aria-hidden="true"] {
+body.page-mdj-rentals #mainNav[data-mdj-compact-nav="1"] > a.mdj-mainnav-reserved-slot:not(#mainNav-config-link):not(#mainNav-mi-portal-link),
+body.page-mdj-rentals #mainNav[data-mdj-compact-nav="1"] > a[aria-hidden="true"]:not(#mainNav-config-link):not(#mainNav-mi-portal-link),
+body.page-mdj-events  #mainNav[data-mdj-compact-nav="1"] > a.mdj-mainnav-reserved-slot:not(#mainNav-config-link):not(#mainNav-mi-portal-link),
+body.page-mdj-events  #mainNav[data-mdj-compact-nav="1"] > a[aria-hidden="true"]:not(#mainNav-config-link):not(#mainNav-mi-portal-link),
+body.page-shop        #mainNav[data-mdj-compact-nav="1"] > a.mdj-mainnav-reserved-slot:not(#mainNav-config-link):not(#mainNav-mi-portal-link),
+body.page-shop        #mainNav[data-mdj-compact-nav="1"] > a[aria-hidden="true"]:not(#mainNav-config-link):not(#mainNav-mi-portal-link),
+body.page-jobs        #mainNav[data-mdj-compact-nav="1"] > a.mdj-mainnav-reserved-slot:not(#mainNav-config-link):not(#mainNav-mi-portal-link),
+body.page-jobs        #mainNav[data-mdj-compact-nav="1"] > a[aria-hidden="true"]:not(#mainNav-config-link):not(#mainNav-mi-portal-link) {
   display:        none    !important;
   width:          0       !important;
   min-width:      0       !important;
@@ -1488,11 +1599,6 @@ body.mdj-buyer-session #mainHeader #mainNav > a#mainNav-guest-mi-perfil-link {
 }
 
 @media (min-width: 1001px) {
-  body.mdj-is-client #mainHeader.header.mdj-header-unified .header-nav .container,
-  body.mdj-buyer-session #mainHeader.header.mdj-header-unified .header-nav .container {
-    --mdj-nav-gap: 1px;
-  }
-
   body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
     > a#mainNav-staff-or-profile.mdj-mainnav-reserved-slot,
   body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
@@ -1517,7 +1623,13 @@ body.mdj-buyer-session #mainHeader #mainNav a[data-mdj-nav="tools"][aria-hidden=
 body.page-home.mdj-is-client #mainNav > a.mdj-mainnav-reserved-slot:not([data-mdj-nav="client-config"]),
 body.page-home.mdj-is-client #mainNav > a[aria-hidden="true"]:not(#mainNav-config-link),
 body.page-home.mdj-buyer-session #mainNav > a.mdj-mainnav-reserved-slot:not([data-mdj-nav="client-config"]),
-body.page-home.mdj-buyer-session #mainNav > a[aria-hidden="true"]:not(#mainNav-config-link),
+body.page-home.mdj-buyer-session #mainNav > a[aria-hidden="true"]:not(#mainNav-config-link):not(#mainNav-mi-portal-link),
+body.page-jobs #mainNav > a[aria-hidden="true"]:not(#mainNav-config-link):not(#mainNav-mi-portal-link),
+body.page-shop #mainNav > a[aria-hidden="true"]:not(#mainNav-config-link):not(#mainNav-mi-portal-link),
+body.page-mdj-rentals #mainNav > a[aria-hidden="true"]:not(#mainNav-config-link):not(#mainNav-mi-portal-link),
+body.page-mdj-events #mainNav > a[aria-hidden="true"]:not(#mainNav-config-link):not(#mainNav-mi-portal-link),
+body.mdj-client-account-page #mainNav > a[aria-hidden="true"]:not(#mainNav-config-link):not(#mainNav-mi-portal-link),
+body.mdj-buyer-journey-page #mainNav > a[aria-hidden="true"]:not(#mainNav-config-link):not(#mainNav-mi-portal-link),
 body.mdj-is-client #mainNav[data-mdj-compact-nav="1"] > a.mdj-mainnav-reserved-slot:not([data-mdj-nav="client-config"]),
 body.mdj-is-client #mainNav[data-mdj-compact-nav="1"] > a[aria-hidden="true"]:not(#mainNav-config-link),
 body.mdj-buyer-session #mainNav[data-mdj-compact-nav="1"] > a.mdj-mainnav-reserved-slot:not([data-mdj-nav="client-config"]),
@@ -1539,13 +1651,234 @@ body.mdj-is-client #mainHeader #mainNav > a#mainNav-config-link[data-mdj-nav="cl
   visibility:     visible     !important;
   opacity:        1           !important;
   width:          auto        !important;
-  min-width:      12ch        !important;
+  min-width:      max-content !important;
   max-width:      none        !important;
   flex:           0 0 auto    !important;
   overflow:       visible     !important;
   padding:        var(--mdj-nav-link-py-t) var(--mdj-nav-link-px) var(--mdj-nav-link-py-b) !important;
   margin:         0           !important;
   pointer-events: auto        !important;
+}
+
+/*
+ * Recorrido comprador — primer frame = mismo mapa que Inicio (no esperar mdj-buyer-session tras getSession).
+ */
+@media (min-width: 1001px) {
+  body.page-jobs #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.page-shop #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.page-mdj-rentals #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.page-mdj-events #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.mdj-client-account-page #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.mdj-buyer-journey-page #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav {
+    justify-content: center !important;
+    align-items: center !important;
+    align-content: center !important;
+    column-gap: var(--mdj-nav-gap) !important;
+    padding-left: clamp(4px, 0.4vw, 8px) !important;
+    padding-right: clamp(4px, 0.4vw, 8px) !important;
+    row-gap: 0 !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+  }
+
+  body.page-jobs #mainHeader #mainNav > a#mainNav-config-link[aria-hidden="true"],
+  body.page-jobs #mainHeader #mainNav > a#mainNav-mi-portal-link.mdj-mi-portal--guest,
+  body.page-shop #mainHeader #mainNav > a#mainNav-config-link[aria-hidden="true"],
+  body.page-shop #mainHeader #mainNav > a#mainNav-mi-portal-link.mdj-mi-portal--guest,
+  body.page-mdj-rentals #mainHeader #mainNav > a#mainNav-config-link[aria-hidden="true"],
+  body.page-mdj-rentals #mainHeader #mainNav > a#mainNav-mi-portal-link.mdj-mi-portal--guest,
+  body.page-mdj-events #mainHeader #mainNav > a#mainNav-config-link[aria-hidden="true"],
+  body.page-mdj-events #mainHeader #mainNav > a#mainNav-mi-portal-link.mdj-mi-portal--guest,
+  body.mdj-client-account-page #mainHeader #mainNav > a#mainNav-config-link[aria-hidden="true"],
+  body.mdj-client-account-page #mainHeader #mainNav > a#mainNav-mi-portal-link.mdj-mi-portal--guest,
+  body.mdj-buyer-journey-page #mainHeader #mainNav > a#mainNav-config-link[aria-hidden="true"],
+  body.mdj-buyer-journey-page #mainHeader #mainNav > a#mainNav-mi-portal-link.mdj-mi-portal--guest {
+    display: inline-flex !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    flex: 0 0 auto !important;
+    min-width: max-content !important;
+    width: auto !important;
+    max-width: none !important;
+    padding: var(--mdj-nav-link-py-t) var(--mdj-nav-link-px) var(--mdj-nav-link-py-b) !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    font-size: var(--mdj-nav-font-size) !important;
+    font-weight: var(--mdj-nav-font-weight) !important;
+    letter-spacing: var(--mdj-nav-letter-spacing) !important;
+  }
+
+  body.page-jobs #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a:not(.mdj-mainnav-reserved-slot):not([aria-hidden="true"]),
+  body.page-shop #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a:not(.mdj-mainnav-reserved-slot):not([aria-hidden="true"]),
+  body.page-mdj-rentals #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a:not(.mdj-mainnav-reserved-slot):not([aria-hidden="true"]),
+  body.page-mdj-events #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a:not(.mdj-mainnav-reserved-slot):not([aria-hidden="true"]),
+  body.mdj-client-account-page #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a:not(.mdj-mainnav-reserved-slot):not([aria-hidden="true"]),
+  body.mdj-buyer-journey-page #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a:not(.mdj-mainnav-reserved-slot):not([aria-hidden="true"]) {
+    display: inline-flex !important;
+    align-items: center !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    width: auto !important;
+    min-width: max-content !important;
+    max-width: none !important;
+    font-size: var(--mdj-nav-font-size) !important;
+    font-weight: var(--mdj-nav-font-weight) !important;
+    letter-spacing: var(--mdj-nav-letter-spacing) !important;
+    padding: var(--mdj-nav-link-py-t) var(--mdj-nav-link-px) var(--mdj-nav-link-py-b) !important;
+    white-space: nowrap !important;
+  }
+
+  body.page-jobs #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.active,
+  body.page-shop #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.active,
+  body.page-mdj-rentals #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.active,
+  body.page-mdj-events #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.active,
+  body.mdj-client-account-page #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.active,
+  body.mdj-buyer-journey-page #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.active {
+    font-weight: var(--mdj-nav-font-weight) !important;
+    font-size: var(--mdj-nav-font-size) !important;
+    line-height: 1.25 !important;
+    color: var(--gold) !important;
+  }
+}
+
+/*
+ * MAPA INICIO (index.page-home) — clon exacto para comprador en Jobs/Shop/Events/Services y en Inicio con sesión.
+ * Misma cuadrícula: center, var(--mdj-nav-gap), min-width max-content, «/» ::before global, ::after .active como Home.
+ */
+@media (min-width: 1001px) {
+  body.mdj-is-client #mainHeader.header.mdj-header-unified .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.mdj-buyer-session #mainHeader.header.mdj-header-unified .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.mdj-is-client #mainHeader.header.mdj-header-unified .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-compact-nav="1"],
+  body.mdj-buyer-session #mainHeader.header.mdj-header-unified .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-compact-nav="1"] {
+    justify-content: center !important;
+    align-items: center !important;
+    align-content: center !important;
+    column-gap: var(--mdj-nav-gap) !important;
+    padding-left: clamp(4px, 0.4vw, 8px) !important;
+    padding-right: clamp(4px, 0.4vw, 8px) !important;
+    row-gap: 0 !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+  }
+
+  body.mdj-is-client #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-compact-nav="1"]
+    > a.mdj-mainnav-reserved-slot,
+  body.mdj-is-client #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-compact-nav="1"]
+    > a[aria-hidden="true"]:not(#mainNav-config-link):not(#mainNav-mi-portal-link),
+  body.mdj-buyer-session #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-compact-nav="1"]
+    > a.mdj-mainnav-reserved-slot,
+  body.mdj-buyer-session #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-compact-nav="1"]
+    > a[aria-hidden="true"]:not(#mainNav-config-link):not(#mainNav-mi-portal-link) {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    flex: 0 0 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+  }
+
+  body.mdj-is-client #mainHeader.header.mdj-header-unified .header-nav,
+  body.mdj-is-client #mainHeader.header.mdj-header-unified .header-nav .container,
+  body.mdj-buyer-session #mainHeader.header.mdj-header-unified .header-nav,
+  body.mdj-buyer-session #mainHeader.header.mdj-header-unified .header-nav .container {
+    overflow-x: visible !important;
+  }
+
+  /* CONFIG + MY PORTAL: ancho reservado invisible (como Inicio) — al loguear solo cambia opacidad, no la fila. */
+  body.mdj-buyer-session #mainHeader #mainNav > a#mainNav-config-link[aria-hidden="true"],
+  body.mdj-buyer-session #mainHeader #mainNav > a#mainNav-mi-portal-link.mdj-mi-portal--guest {
+    display: inline-flex !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    flex: 0 0 auto !important;
+    min-width: max-content !important;
+    width: auto !important;
+    max-width: none !important;
+    padding: var(--mdj-nav-link-py-t) var(--mdj-nav-link-px) var(--mdj-nav-link-py-b) !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    font-size: var(--mdj-nav-font-size) !important;
+    font-weight: var(--mdj-nav-font-weight) !important;
+    letter-spacing: var(--mdj-nav-letter-spacing) !important;
+  }
+
+  body.mdj-is-client #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a:not(.mdj-mainnav-reserved-slot):not([aria-hidden="true"]),
+  body.mdj-buyer-session #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a:not(.mdj-mainnav-reserved-slot):not([aria-hidden="true"]) {
+    display: inline-flex !important;
+    align-items: center !important;
+    align-self: center !important;
+    justify-content: center !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    width: auto !important;
+    min-width: max-content !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    line-height: 1.25 !important;
+    font-size: var(--mdj-nav-font-size) !important;
+    font-weight: var(--mdj-nav-font-weight) !important;
+    letter-spacing: var(--mdj-nav-letter-spacing) !important;
+    padding: var(--mdj-nav-link-py-t) var(--mdj-nav-link-px) var(--mdj-nav-link-py-b) !important;
+    box-sizing: border-box !important;
+    color: rgba(255, 242, 220, 0.96) !important;
+    text-shadow: 0 0.5px 1.5px #000, 0 0 20px rgba(0, 0, 0, 0.45) !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    vertical-align: middle !important;
+    transform: none !important;
+  }
+
+  body.mdj-is-client #mainHeader #mainNav > a#mainNav-mi-portal-link:not(.mdj-mi-portal--guest):not([aria-hidden="true"]),
+  body.mdj-buyer-session #mainHeader #mainNav > a#mainNav-mi-portal-link:not(.mdj-mi-portal--guest):not([aria-hidden="true"]) {
+    min-width: max-content !important;
+    max-width: none !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Recorrido comprador: DJ Tools fuera de fila desde el primer frame (evita salto al hidratar sesión). */
+  #mainNav[data-mdj-client-hide-dj-tools="1"] > a[data-mdj-nav="tools"] {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    flex: 0 0 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+  }
+
+  /* .active en Shop/Services/etc.: solo color + subrayado ::after; sin cambiar peso/sombra (anti-brinco). */
+  body.mdj-is-client #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.active,
+  body.mdj-buyer-session #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.active {
+    font-weight: var(--mdj-nav-font-weight) !important;
+    font-size: var(--mdj-nav-font-size) !important;
+    line-height: 1.25 !important;
+    text-shadow: 0 0.5px 1.5px rgba(0, 0, 0, 0.9), 0 0 14px rgba(0, 0, 0, 0.45) !important;
+    color: var(--gold) !important;
+  }
+
+  body.mdj-is-client #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.active[data-mdj-nav="shop"],
+  body.mdj-buyer-session #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.active[data-mdj-nav="shop"] {
+    color: var(--gold) !important;
+  }
 }
 
 /*
