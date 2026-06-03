@@ -1487,6 +1487,38 @@
     }
   }
 
+  /**
+   * Guest-only: tras la lógica legacy de ocultar slots, reabre entry points públicos en #mainNav.
+   * No mueve nodos; no toca buyer/client/artist (sale si body tiene sesión comprador/cliente).
+   */
+  function mdjRevealGuestRoleEntryNav() {
+    try {
+      if (document.body.classList.contains('mdj-buyer-session') || document.body.classList.contains('mdj-is-client')) return;
+    } catch (eGuard) { /* ignore */ }
+
+    var cfg = document.getElementById('mainNav-config-link');
+    if (cfg) {
+      var cfgHref = String(cfg.getAttribute('href') || '').trim();
+      if (!cfgHref || cfgHref === '#') cfgHref = './account-profile.html';
+      mdjApplyConfigMainNavLink(true, cfgHref);
+    }
+
+    mdjEnsureMiPortalInMainNav('./client-portal.html', null);
+
+    var staff = mdjGetMainNavStaffAnchor();
+    if (staff) {
+      var staffHref = String(staff.getAttribute('href') || '').trim();
+      if (!staffHref || staffHref === '#') staff.setAttribute('href', './login.html');
+      staff.classList.remove('mdj-mainnav-reserved-slot');
+      staff.style.removeProperty('display');
+      staff.style.removeProperty('visibility');
+      staff.style.removeProperty('pointer-events');
+      staff.removeAttribute('aria-hidden');
+      staff.removeAttribute('tabindex');
+      mdjBindStaffNavClickGuard(staff);
+    }
+  }
+
   function mdjHideMiPortalButton() {
     var el = document.getElementById('header-mi-portal-btn');
     if (el) el.style.display = 'none';
@@ -2640,6 +2672,7 @@
         mdjApplyNavTierStatusBadge(null);
         mdjApplyArtistHeaderRow2(false);
         mdjRevealGuestMiPerfilNavSlot();
+        mdjRevealGuestRoleEntryNav();
         /* PRO/FREE: ya ocultos vía mdjHeaderHideMonetizationCtasPending() + CSS hasta sesión. */
         return;
       }
@@ -3161,6 +3194,7 @@
         mdjApplyFlowMainNavLink(false);
         mdjApplyNavTierStatusBadge(null);
         mdjRevealGuestMiPerfilNavSlot();
+        mdjRevealGuestRoleEntryNav();
       }
     } catch (err) {
       console.error('[MDJ-SYSTEM] checkSessionForNav:', err);
@@ -3186,6 +3220,7 @@
       mdjApplyNavTierStatusBadge(null);
       mdjApplyArtistHeaderRow2(false);
       mdjRevealGuestMiPerfilNavSlot();
+      mdjRevealGuestRoleEntryNav();
     } finally {
       mdjSetHeaderAuthPillsPending(false);
       if (authZone) authZone.classList.remove('session-pending');
