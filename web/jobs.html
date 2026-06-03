@@ -5,12 +5,39 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>MDJPRO — Trabaja con nosotros</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="prefetch" href="./mdj-event-cart-root-fragment.html?v=20260531-month-clean-1" as="fetch" crossorigin />
+    <link rel="prefetch" href="./mdj-event-cart.css?v=20260531-no-fab-1" as="style" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260521-jobs-staff-nav-1" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260602-buyer-nav-stable-1" />
     <link rel="stylesheet" href="./profile.css?v=20260418-PURGE-SEAL" />
+    <style id="jobs-client-nav-gap">
+      /* MI PERFIL nunca aplica en cuenta cliente — suprimir desde CSS para eliminar flash. */
+      #mainHeader #mainNav > a#mainNav-guest-mi-perfil-link {
+        display: none !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        width: 0 !important;
+        flex: 0 0 0 !important;
+        pointer-events: none !important;
+      }
+      @media (min-width: 1001px) {
+        body.mdj-is-client #mainHeader.header.mdj-header-unified .header-nav .container {
+          --mdj-nav-gap: 1px;
+        }
+        /* Ghost STAFF: para clientes colapsarlo elimina el ancho invisible que causaba overflow. */
+        body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+          > a#mainNav-staff-or-profile.mdj-mainnav-reserved-slot {
+          display: none !important;
+          min-width: 0 !important;
+          max-width: 0 !important;
+          width: 0 !important;
+          flex: 0 0 0 !important;
+        }
+      }
+    </style>
     <style>
         :root {
             --mesh-glow: rgba(197, 160, 89, 0.15);
@@ -150,7 +177,6 @@
             background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.5) 100%);
             z-index: 1;
         }
-
 
         /* ── Play overlay (shown when no video src) ── */
         .hero-video-placeholder {
@@ -1820,7 +1846,7 @@
         <nav class="mobile-nav">
           <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
           <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
-          <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+          <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
           <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
           <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
           <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
@@ -1837,10 +1863,10 @@
   </div>
   <div class="header-nav">
     <div class="container">
-      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" data-mdj-compact-nav="1">
+      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" data-mdj-compact-nav="1" data-mdj-portal-in-nav="1" data-mdj-client-hide-dj-tools="1">
         <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
         <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
-        <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+        <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
         <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-mdj-nav="shop">Shop</a>
         <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
         <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
@@ -2285,7 +2311,6 @@
                     </div>
                     <div class="portal-scan-line"></div>
 
-
                     <div class="portal-icon-wrap" style="background:rgba(197,160,89,0.1);border-color:var(--gold);">
                         <span style="font-size:32px;">💼</span>
                     </div>
@@ -2476,7 +2501,6 @@
                         </label>
                     </div>
 
-
                     <!-- PROTOCOLOS DE LENGUAJE -->
                     <div
                         style="margin-top: 30px; background: rgba(255,255,255,0.02); padding: 24px 28px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);">
@@ -2638,7 +2662,6 @@
                         }
                     </style>
 
-
                     <div class="experience-helper"
                         style="background: rgba(255,255,255,0.02); border-radius: 30px; padding: 40px; border: 1px solid rgba(255,255,255,0.05);">
                         <p
@@ -2658,8 +2681,6 @@
                             title="Añadir Experiencia">+</button>
                     </div>
             </div>
-
-
 
             <div
                 style="margin-top:50px; padding: 50px; background: rgba(197,160,89,0.03); border-radius: 40px; border: 1px solid rgba(197,160,89,0.2);">
@@ -3343,7 +3364,6 @@
                 }
             }
 
-
             // Validate referral code on blur
             const refInput = document.getElementById('referral-code-input');
             if (refInput) {
@@ -3742,7 +3762,6 @@
             } catch (eNav) { /* ignore */ }
         }
 
-
         // ── Pre-fill form with saved profile data ────────────────────
         async function prefillProfileForm() {
             try {
@@ -3847,7 +3866,6 @@
                 void err;
             }
         }
-
 
         let selectedPlan = null;
         function selectPlan(el, type) {
@@ -5104,8 +5122,8 @@
     <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
 
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-      <script src="./mdj-shared-header.js?v=20260525-owner-strip-11-pillars-1"></script>
-  <script src="./mdj-mainnav-infinite.js?v=20260516-home-nav-stable-1"></script>
+      <script src="./mdj-shared-header.js?v=20260602-client-nav-4"></script>
+  <script src="./mdj-mainnav-infinite.js?v=20260531-compact-nav-no-carousel-1"></script>
     <script src="./mdj-owner-tabs-marquee.js?v=20260429-static-strip"></script>
     <script src="./mdj-profile-nav-context.js?v=20260525-config-strip-fix-1"></script>
   <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>

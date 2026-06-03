@@ -115,6 +115,131 @@
   mdjEnsureAuthLangObserver();
 
   /**
+   * Contrato menú comprador (anti-regresión) — todas las cuentas client_profiles.
+   * Visible: home · services · events(venues) · shop · jobs · contact · client-config · mi-portal
+   */
+  window.MDJ_BUYER_MAINNAV_CONTRACT = Object.freeze({
+    visible: Object.freeze([
+      'home',
+      'services',
+      'venues',
+      'shop',
+      'jobs',
+      'contact',
+      'client-config',
+      'mi-portal'
+    ]),
+    hidden: Object.freeze(['tools', 'staff', 'my-profile', 'agenda', 'flow', 'config'])
+  });
+
+  /**
+   * Comprador (TODAS las cuentas cliente / client_profiles) — no solo un usuario.
+   * Fuentes: isClient, mdjClassifyPlatformIdentity principal=buyer, JWT client, fila client_profiles sin staff.
+   */
+  function mdjResolveBuyerSession(opts) {
+    opts = opts || {};
+    if (opts.isDjStaff || opts.isNavStaffSolo) return false;
+    if (opts.isClient === true) return true;
+    var idn = opts.idn;
+    if (idn && idn.principal === 'buyer') return true;
+    if (opts.sessionIsExplicitClient || opts.metadataSaysClient) return true;
+    if (idn && idn.hasClientRow && !opts.hasDjProfile) return true;
+    if (idn && idn.hasClientRow && (idn.dbRole === 'client' || idn.dbRole === 'cliente')) return true;
+    if (opts.clientRow && !opts.hasDjProfile) return true;
+    try {
+      var su = String(opts.settingsUrl || '');
+      if (su.indexOf('client-account') !== -1 || su.indexOf('client-portal') !== -1) return true;
+    } catch (e) { /* ignore */ }
+    return false;
+  }
+
+  function mdjHideMainNavSlot(el) {
+    if (!el) return;
+    el.classList.add('mdj-mainnav-reserved-slot');
+    el.setAttribute('aria-hidden', 'true');
+    el.setAttribute('tabindex', '-1');
+    el.style.removeProperty('visibility');
+    el.style.removeProperty('pointer-events');
+  }
+
+  function mdjRevealMainNavSlot(el) {
+    if (!el) return;
+    el.classList.remove('mdj-mainnav-reserved-slot');
+    el.removeAttribute('aria-hidden');
+    el.removeAttribute('tabindex');
+    el.style.removeProperty('display');
+    el.style.removeProperty('visibility');
+    el.style.removeProperty('pointer-events');
+  }
+
+  /** Matriz fija comprador: Home · Services · Events · Shop · Jobs · Contact · Configuraciones · MY PORTAL */
+  function mdjApplyBuyerSessionMainNav(portalHref) {
+    var nav = document.getElementById('mainNav');
+    if (!nav) return;
+
+    ['home', 'services', 'shop', 'jobs', 'contact'].forEach(function (key) {
+      nav.querySelectorAll('a[data-mdj-nav="' + key + '"]').forEach(mdjRevealMainNavSlot);
+    });
+
+    var venues = nav.querySelector('a[data-mdj-nav="venues"]');
+    if (!venues) {
+      venues = document.createElement('a');
+      venues.setAttribute('data-mdj-nav', 'venues');
+      venues.setAttribute('data-i18n', 'nav-rentals');
+      var afterSvc = nav.querySelector('a[data-mdj-nav="services"]');
+      var beforeShop = nav.querySelector('a[data-mdj-nav="shop"]');
+      if (afterSvc && afterSvc.parentNode === nav) {
+        nav.insertBefore(venues, afterSvc.nextSibling);
+      } else if (beforeShop && beforeShop.parentNode === nav) {
+        nav.insertBefore(venues, beforeShop);
+      } else {
+        nav.appendChild(venues);
+      }
+      try {
+        var es = document.documentElement && String(document.documentElement.lang || '').toLowerCase().indexOf('es') === 0;
+        venues.textContent = es ? 'Eventos' : 'Events';
+      } catch (eLbl) {
+        venues.textContent = 'Events';
+      }
+    }
+    venues.setAttribute('href', './events.html');
+    mdjRevealMainNavSlot(venues);
+
+    ['tools', 'staff', 'my-profile', 'agenda', 'flow'].forEach(function (key) {
+      nav.querySelectorAll('a[data-mdj-nav="' + key + '"]').forEach(mdjHideMainNavSlot);
+    });
+    mdjHideMainNavSlot(document.getElementById('mainNav-guest-mi-perfil-link'));
+    mdjHideMainNavSlot(document.getElementById('mainNav-staff-or-profile'));
+    mdjHideMainNavSlot(document.getElementById('mainNav-staff-link'));
+    mdjApplyStaffMainNavLink(false);
+
+    mdjApplyBuyerConfigMainNavLink(true);
+    mdjEnsureMiPortalInMainNav(portalHref || './client-portal.html', null);
+    mdjRevealMainNavSlot(document.getElementById('mainNav-mi-portal-link'));
+
+    var hdr = document.getElementById('mainHeader');
+    if (hdr) {
+      hdr.querySelectorAll('#mainNav a[href*="dj-tools"], #mainNav a[data-mdj-nav="tools"]').forEach(mdjHideMainNavSlot);
+    }
+
+    /* Orden estable en DOM (mismo ritmo visual en Home, Events, Services, …). */
+    var order = (window.MDJ_BUYER_MAINNAV_CONTRACT && window.MDJ_BUYER_MAINNAV_CONTRACT.visible) || [];
+    order.forEach(function (key) {
+      var el = null;
+      if (key === 'client-config') {
+        el = document.getElementById('mainNav-config-link');
+      } else if (key === 'mi-portal') {
+        el = document.getElementById('mainNav-mi-portal-link');
+      } else {
+        el = nav.querySelector('a[data-mdj-nav="' + key + '"]');
+      }
+      if (el && el.parentNode === nav) {
+        nav.appendChild(el);
+      }
+    });
+  }
+
+  /**
    * Matriz MDJ: PRO desbloqueado solo con **artist_pro** (`__mdjProToolsUnlocked` para `dj-tools.html`).
    * La pestaña DJ Tools **siempre** en #mainNav (misma fila que Home, Jobs, etc.); cliente/LITE ven muros en la página.
    * `window.__mdjLastNavTier` / `__mdjLastNavIsClient` (retro) para `dj-tools.html`.
@@ -123,11 +248,16 @@
     window.__mdjLastNavTier = navTier == null ? null : String(navTier);
     var pro = navTier === 'artist_pro';
     window.__mdjProToolsUnlocked = !!pro;
-    window.__mdjLastNavIsClient = navTier === 'client_only';
-    document.body.classList.toggle('mdj-is-client', navTier === 'client_only');
-    var _isClient = navTier === 'client_only';
+    var buyerNav = window.__mdjLastBuyerSession === true;
+    window.__mdjLastNavIsClient = navTier === 'client_only' || buyerNav;
+    document.body.classList.toggle('mdj-is-client', navTier === 'client_only' || buyerNav);
+    try {
+      document.body.classList.toggle('mdj-buyer-session', buyerNav);
+    } catch (eBs) { void eBs; }
+    var _isClient = navTier === 'client_only' || buyerNav;
     var _nav = document.getElementById('mainNav');
-    var _clientHideDjTools = _isClient && _nav && _nav.getAttribute('data-mdj-client-hide-dj-tools') === '1';
+    /* Comprador: DJ Tools fuera del #mainNav en cualquier página (Home, Events, Services, …). */
+    var _clientHideDjTools = buyerNav && !!_nav;
     var hideLink = false;
     var header = document.getElementById('mainHeader');
     if (!header) return;
@@ -173,8 +303,11 @@
     try {
       /* En events.html, index.html, y páginas con nav compacto: Events permanece visible. */
       if (mdjIsGuestHomeNavPage() || mdjIsPublicHomePage()) { return; }
+      if (window.__mdjLastBuyerSession === true) { return; }
       var _nav = document.getElementById('mainNav');
-      if (_nav && _nav.getAttribute('data-mdj-compact-nav') === '1') { return; }
+      if (_nav && (_nav.getAttribute('data-mdj-compact-nav') === '1' || _nav.getAttribute('data-mdj-portal-in-nav') === '1')) {
+        return;
+      }
       var sel =
         '#mainNav a[data-mdj-nav="venues"], ' +
         '.mobile-nav a[data-mdj-nav="venues"], ' +
@@ -244,9 +377,8 @@
           a.setAttribute('tabindex', '-1');
         });
       });
-      /* MI PORTAL oculto en Home para artistas/staff: CONFIG lo reemplaza con destino dinámico.
-         Excepción: clientes y clientes comerciales ven MY PORTAL directamente. */
-      var _isClientHome = !!window.__mdjLastNavIsClient;
+      /* MI PORTAL en Home para comprador; artistas/staff usan CONFIG / MI PERFIL. */
+      var _isClientHome = !!window.__mdjLastNavIsClient || window.__mdjLastBuyerSession === true;
       if (!_isClientHome) {
         nav.querySelectorAll('a[data-mdj-nav="mi-portal"]').forEach(function (a) {
           a.classList.add('mdj-mainnav-reserved-slot');
@@ -871,6 +1003,15 @@
     var h = href && String(href).trim() ? String(href).trim() : './account-settings.html?mdj_nav=profile';
     a.setAttribute('href', h);
     if (show) {
+      a.setAttribute('data-mdj-nav', 'config');
+      a.setAttribute('data-i18n', 'nav-config');
+      try {
+        var txCfg = window.i18n && typeof window.i18n.t === 'function' ? String(window.i18n.t('nav-config') || '').trim() : '';
+        if (txCfg) a.textContent = txCfg;
+        else a.textContent = '⚙️ CONFIG';
+      } catch (eCfg) {
+        a.textContent = '⚙️ CONFIG';
+      }
       a.classList.remove('mdj-mainnav-reserved-slot');
       a.style.removeProperty('display');
       a.style.removeProperty('visibility');
@@ -881,6 +1022,35 @@
       a.classList.add('mdj-mainnav-reserved-slot');
       a.setAttribute('aria-hidden', 'true');
       a.setAttribute('tabindex', '-1');
+    }
+  }
+
+  /** Comprador: pestaña «Configuraciones» → client-account (todas las páginas con #mainNav, incl. Home y Events). */
+  function mdjApplyBuyerConfigMainNavLink(show) {
+    var a = mdjEnsureConfigMainNavNode();
+    if (!a) return;
+    if (!show) {
+      mdjApplyConfigMainNavLink(false);
+      return;
+    }
+    a.setAttribute('href', './client-account.html');
+    a.setAttribute('data-mdj-nav', 'client-config');
+    a.setAttribute('data-i18n', 'nav-client-settings');
+    a.classList.remove('mdj-mainnav-reserved-slot');
+    a.style.removeProperty('display');
+    a.style.removeProperty('visibility');
+    a.style.removeProperty('pointer-events');
+    a.removeAttribute('aria-hidden');
+    a.removeAttribute('tabindex');
+    try {
+      var rawLang = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
+      var es = rawLang.indexOf('es') === 0;
+      var tx = window.i18n && typeof window.i18n.t === 'function'
+        ? String(window.i18n.t('nav-client-settings') || '').trim()
+        : '';
+      a.textContent = tx || (es ? 'Configuraciones' : 'Settings');
+    } catch (eLbl) {
+      a.textContent = 'Settings';
     }
   }
 
@@ -1353,6 +1523,7 @@
       nav.appendChild(link);
     }
     link.className = 'mdj-mi-portal-mainnav mdj-mi-portal-gold';
+    link.classList.remove('mdj-mi-portal--guest', 'mdj-mi-portal--hydrating', 'mdj-mainnav-reserved-slot');
     link.href = href || './client-portal.html';
     link.style.display = '';
     link.style.pointerEvents = '';
@@ -2201,7 +2372,7 @@
     var b = String(base || '').toLowerCase().replace(/\.html?$/i, '');
     if (b === 'admin-dashboard' || b === 'admin_dashboard') return 'staff';
     if (b === 'account-settings' || b === 'account_settings') return 'config';
-    if (b === 'client-account' || b === 'client_account') return 'config';
+    if (b === 'client-account' || b === 'client_account') return 'client-config';
     if (b === 'shop') return 'shop';
     if (b === 'courses' || b === 'cursos') return 'courses';
     if (b === 'booth' || b === 'ai-booth' || b === 'ai_booth' || b === 'cabina') return 'booth';
@@ -2677,6 +2848,23 @@
             : (isNavStaffSolo ? './account-settings.html' : './client-portal.html');
           var miPortalNavOpts = isNavStaffSolo ? { variant: 'staff-settings' } : null;
 
+          var isBuyerSession = mdjResolveBuyerSession({
+            isClient: isClient,
+            settingsUrl: settingsUrl,
+            idn: idn,
+            hasDjProfile: hasDjProfile,
+            clientRow: clientRow,
+            isDjStaff: isDjStaff,
+            isNavStaffSolo: isNavStaffSolo,
+            metadataSaysClient: metadataSaysClient,
+            sessionIsExplicitClient: sessionIsExplicitClient
+          });
+          window.__mdjLastBuyerSession = isBuyerSession;
+          if (isBuyerSession) {
+            isClient = true;
+            mdjSyncClientLoyaltyIndicator(true, clientRow);
+          }
+
           mdjMountOrUpdateVipAccountZone({
             displayName: displayName,
             avatarUrl: hasRealPhoto ? String(rawPhoto).trim() : '',
@@ -2709,10 +2897,11 @@
           mdjMaybeRunVipWelcomeProtocol(session);
 
           if (document.getElementById('mainNav')) {
-            /* En nav compacto (services/events): MI PORTAL no se activa salvo que data-mdj-portal-in-nav="1". */
+            /* Nav compacto: MY PORTAL para cliente siempre; artista/staff no usan esta fila para portal. */
             var _compactNavCheck = (function () { var _n = document.getElementById('mainNav'); return !!(_n && _n.getAttribute('data-mdj-compact-nav') === '1'); }());
-            var _forcePortal    = (function () { var _n = document.getElementById('mainNav'); return !!(_n && _n.getAttribute('data-mdj-portal-in-nav') === '1'); }());
-            if (!_compactNavCheck || (_forcePortal && isClient)) { mdjEnsureMiPortalInMainNav(miPortalHref, miPortalNavOpts); }
+            if (!_compactNavCheck || isBuyerSession) {
+              mdjEnsureMiPortalInMainNav(miPortalHref, miPortalNavOpts);
+            }
             var hdrDup = document.getElementById('header-mi-portal-btn');
             if (hdrDup) hdrDup.style.display = 'none';
           } else {
@@ -2738,13 +2927,20 @@
             var _n = document.getElementById('mainNav');
             return !!(_n && _n.getAttribute('data-mdj-compact-nav') === '1');
           }());
-          /* En Inicio o nav compacto: CONFIG visible si hay sesión activa; Agenda/Flow solo en páginas artista no-compactas. */
-          var showConfigOnHome = onPublicHome && !!window.__mdjNavOwnUserId;
+          /* Inicio: ⚙️ CONFIG artista/staff; comprador → Configuraciones (client-account). */
+          var showConfigOnHome = onPublicHome && !!window.__mdjNavOwnUserId && !isBuyerSession;
           mdjApplyAgendaMainNavLink(!!showArtistDashMainNav && !onPublicHome && !isCompactNav, './dj-dashboard.html?tab=dashboard');
-          /* CONFIG en nav compacto (services/events/shop/tools/jobs): solo para staff/owner (no artista).
-           * Artista en compact-nav revela CONFIG + MI PERFIL → 9 ítems que desbordan 1200px → carrusel.
-           * Artista accede a CONFIG desde su perfil artístico (dj-profile / dj-dashboard). */
-          mdjApplyConfigMainNavLink((!!showArtistDashMainNav && !onPublicHome && !isCompactNav) || showConfigOnHome || (isCompactNav && !!window.__mdjNavOwnUserId && !showArtistDashMainNav), settingsUrl);
+          if (isBuyerSession) {
+            mdjApplyConfigMainNavLink(false);
+            mdjApplyBuyerConfigMainNavLink(true);
+          } else {
+            mdjApplyConfigMainNavLink(
+              (!!showArtistDashMainNav && !onPublicHome && !isCompactNav) ||
+                showConfigOnHome ||
+                (isCompactNav && !!window.__mdjNavOwnUserId && !showArtistDashMainNav),
+              settingsUrl
+            );
+          }
           mdjApplyFlowMainNavLink(!!showArtistDashMainNav && !onPublicHome && !isCompactNav, './dj-dashboard.html?tab=flow');
           var showArtistHeaderNav =
             !mdjIsGuestHomeNavPage() &&
@@ -2757,7 +2953,7 @@
           mdjApplyArtistHeaderRow2(!!showArtistHeaderNav);
           mdjApplyArtistSessionNav(showMyArtisticProfileMainNav, publicProfileUrl);
           /* Clientes y clientes comerciales: MI PERFIL no aplica — su destino es MY PORTAL. */
-          if (isClient) {
+          if (isBuyerSession) {
             var _clientPerfilEl = document.getElementById('mainNav-guest-mi-perfil-link');
             if (_clientPerfilEl) {
               _clientPerfilEl.classList.add('mdj-mainnav-reserved-slot');
@@ -2818,6 +3014,9 @@
             }
           }
           mdjNormalizePublicHomeMainNav();
+          if (isBuyerSession) {
+            mdjApplyBuyerSessionMainNav(miPortalHref);
+          }
           mdjNavHighlight();
           mdjHighlightEventsPageNav();
           try {
@@ -2883,6 +3082,10 @@
         window.__mdjLastNavTier = null;
         window.__mdjProToolsUnlocked = false;
         window.__mdjLastNavIsClient = false;
+        window.__mdjLastBuyerSession = false;
+        try {
+          document.body.classList.remove('mdj-buyer-session');
+        } catch (eBsOff) { void eBsOff; }
         window.showMyArtisticProfileMainNav = false;
         mdjHideMiPortalButton();
         document.body.classList.remove('mdj-logged-in-header');
@@ -2914,6 +3117,10 @@
       window.__mdjLastNavTier = null;
       window.__mdjProToolsUnlocked = false;
       window.__mdjLastNavIsClient = false;
+      window.__mdjLastBuyerSession = false;
+      try {
+        document.body.classList.remove('mdj-buyer-session');
+      } catch (eBsOff2) { void eBsOff2; }
       window.showMyArtisticProfileMainNav = false;
       mdjHideMiPortalButton();
       if (authZone) authZone.style.display = 'none';
