@@ -140,14 +140,16 @@
       { key: 'contact',  labelKey: 'nav-contact',      href: './index.html#contact',              optional: false }
     ]),
 
-    /* CLIENT: buyer-facing portal only */
+    /* CLIENT: todas las cuentas comprador — misma fila #mainNav en Home, Events, Services, … */
     client: Object.freeze([
-      { key: 'home',     labelKey: 'nav-home',     href: './index.html',         optional: false },
-      { key: 'portal',   labelKey: 'header-mi-portal', href: './client-portal.html', optional: false },
-      { key: 'services', labelKey: 'nav-services', href: './rentals.html',       optional: false },
-      { key: 'events',   labelKey: 'nav-rentals',  href: './events.html',        optional: false },
-      { key: 'shop',     labelKey: 'nav-shop',     href: './shop.html',          optional: false },
-      { key: 'contact',  labelKey: 'nav-contact',  href: './index.html#contact', optional: false }
+      { key: 'home',     labelKey: 'nav-home',            href: './index.html',           optional: false },
+      { key: 'services', labelKey: 'nav-services',        href: './rentals.html',         optional: false },
+      { key: 'events',   labelKey: 'nav-rentals',         href: './events.html',          optional: false },
+      { key: 'shop',     labelKey: 'nav-shop',            href: './shop.html',            optional: false },
+      { key: 'jobs',     labelKey: 'nav-jobs',            href: './jobs.html',            optional: false },
+      { key: 'contact',  labelKey: 'nav-contact',         href: './index.html#contact',   optional: false },
+      { key: 'settings', labelKey: 'nav-client-settings', href: './client-account.html',  optional: false },
+      { key: 'portal',   labelKey: 'header-mi-portal',    href: './client-portal.html',   optional: false }
     ]),
 
     /* GUEST: public site, no account tabs */

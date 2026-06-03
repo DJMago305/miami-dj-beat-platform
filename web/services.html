@@ -19,8 +19,34 @@ Riesgo: romper carga del catálogo.
         href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260521-staff-compact-nav-2" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260602-buyer-nav-stable-1" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+    <style id="services-client-nav-gap">
+      /* MI PERFIL nunca aplica en cuenta cliente — suprimir desde CSS para eliminar flash. */
+      #mainHeader #mainNav > a#mainNav-guest-mi-perfil-link {
+        display: none !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        width: 0 !important;
+        flex: 0 0 0 !important;
+        pointer-events: none !important;
+      }
+      @media (min-width: 1001px) {
+        body.mdj-is-client #mainHeader.header.mdj-header-unified .header-nav .container {
+          --mdj-nav-gap: 1px;
+        }
+        body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+          > a#mainNav-staff-or-profile.mdj-mainnav-reserved-slot,
+        body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+          > a#mainNav-staff-link.mdj-mainnav-reserved-slot {
+          display: none !important;
+          min-width: 0 !important;
+          max-width: 0 !important;
+          width: 0 !important;
+          flex: 0 0 0 !important;
+        }
+      }
+    </style>
     <style id="rentals-visual-lock">
         /* RENTALS VISUAL LOCK — DO NOT EDIT */
 
@@ -1862,7 +1888,7 @@ Riesgo: romper carga del catálogo.
   </div>
   <div class="header-nav">
     <div class="container">
-      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" data-mdj-compact-nav="1">
+      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" data-mdj-compact-nav="1" data-mdj-portal-in-nav="1" data-mdj-client-hide-dj-tools="1">
         <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
         <a href="./services.html" class="active" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
         <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
@@ -3541,7 +3567,7 @@ Riesgo: romper carga del catálogo.
     <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
 
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-      <script src="./mdj-shared-header.js?v=20260521-staff-nav-class-1"></script>
+      <script src="./mdj-shared-header.js?v=20260602-client-nav-4"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260516-home-nav-stable-1"></script>
     <script src="./mdj-profile-nav-context.js?v=20260418-owner-nav-parity"></script>
   <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>

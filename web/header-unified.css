@@ -1472,6 +1472,68 @@ body.page-mdj-events  #mainNav[data-mdj-compact-nav="1"] > a[aria-hidden="true"]
 }
 
 /*
+ * COMPRADOR (TODAS las cuentas client_profiles) — menú estable #mainNav
+ * Consolidado desde *-client-nav-gap por página + Home (index.page-home).
+ * 8 visibles: Home · Services · Events · Shop · Jobs · Contact · Configuraciones · MY PORTAL
+ * Ocultos sin ancho fantasma: DJ Tools, STAFF, MI PERFIL artista, slots reservados.
+ */
+body.mdj-is-client #mainHeader #mainNav > a#mainNav-guest-mi-perfil-link,
+body.mdj-buyer-session #mainHeader #mainNav > a#mainNav-guest-mi-perfil-link {
+  display: none !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  width: 0 !important;
+  flex: 0 0 0 !important;
+  pointer-events: none !important;
+}
+
+@media (min-width: 1001px) {
+  body.mdj-is-client #mainHeader.header.mdj-header-unified .header-nav .container,
+  body.mdj-buyer-session #mainHeader.header.mdj-header-unified .header-nav .container {
+    --mdj-nav-gap: 1px;
+  }
+
+  body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a#mainNav-staff-or-profile.mdj-mainnav-reserved-slot,
+  body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a#mainNav-staff-link.mdj-mainnav-reserved-slot,
+  body.mdj-buyer-session #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a#mainNav-staff-or-profile.mdj-mainnav-reserved-slot,
+  body.mdj-buyer-session #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a#mainNav-staff-link.mdj-mainnav-reserved-slot {
+    display: none !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    width: 0 !important;
+    flex: 0 0 0 !important;
+    pointer-events: none !important;
+  }
+}
+
+body.mdj-is-client #mainHeader #mainNav a[data-mdj-nav="tools"].mdj-mainnav-reserved-slot,
+body.mdj-is-client #mainHeader #mainNav a[data-mdj-nav="tools"][aria-hidden="true"],
+body.mdj-buyer-session #mainHeader #mainNav a[data-mdj-nav="tools"].mdj-mainnav-reserved-slot,
+body.mdj-buyer-session #mainHeader #mainNav a[data-mdj-nav="tools"][aria-hidden="true"],
+body.page-home.mdj-is-client #mainNav > a.mdj-mainnav-reserved-slot,
+body.page-home.mdj-is-client #mainNav > a[aria-hidden="true"],
+body.page-home.mdj-buyer-session #mainNav > a.mdj-mainnav-reserved-slot,
+body.page-home.mdj-buyer-session #mainNav > a[aria-hidden="true"],
+body.mdj-is-client #mainNav[data-mdj-compact-nav="1"] > a.mdj-mainnav-reserved-slot,
+body.mdj-is-client #mainNav[data-mdj-compact-nav="1"] > a[aria-hidden="true"],
+body.mdj-buyer-session #mainNav[data-mdj-compact-nav="1"] > a.mdj-mainnav-reserved-slot,
+body.mdj-buyer-session #mainNav[data-mdj-compact-nav="1"] > a[aria-hidden="true"] {
+  display:        none    !important;
+  width:          0       !important;
+  min-width:      0 !important;
+  max-width:      0 !important;
+  flex:           0 0 0   !important;
+  overflow:       hidden  !important;
+  padding:        0       !important;
+  margin:         0       !important;
+  pointer-events: none    !important;
+}
+
+/*
  * Modo cabecera artista (mdj-shared-header.js → body.mdj-artist-header-mode).
  * Fila 1: ENTRAR oculto hasta .danger (SALIR); cluster auth anclado a la derecha.
  * Fila 2: #mainNav-artist flex-start; #mainNav invitado sin interacción ni CLS.
