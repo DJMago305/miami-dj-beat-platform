@@ -1,0 +1,917 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Contact — Miami DJ Beat</title>
+  <meta name="description"
+    content="Contact Miami DJ Beat LLC for weddings, corporate events, private parties, venues, rentals, and talent booking across Miami, South Florida, and the Florida Keys." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260603-buyer-nav-config-portal-6" />
+  <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+  <style>
+    body.page-mdj-contact {
+      min-height: 100vh;
+      --header-height: 84px;
+      --header-nav-band: 72px;
+      --mdj-contact-header-total: 156px;
+      padding-top: calc(var(--mdj-contact-header-total) + env(safe-area-inset-top, 0px));
+      scroll-padding-top: calc(var(--mdj-contact-header-total) + env(safe-area-inset-top, 0px));
+    }
+
+    body.page-mdj-contact #mainHeader.header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+    }
+
+    body.page-mdj-contact.mdj-nav-booting #mainNav,
+    body.page-mdj-contact.mdj-nav-booting .header-nav {
+      visibility: hidden !important;
+      opacity: 0 !important;
+      transition: opacity 0.2s ease-in-out;
+    }
+
+    body.page-mdj-contact:not(.mdj-nav-booting) #mainHeader .header-nav {
+      display: block !important;
+      opacity: 1 !important;
+    }
+
+    body.page-mdj-contact:not(.mdj-nav-booting) #mainNav {
+      visibility: visible !important;
+      display: flex !important;
+      opacity: 1 !important;
+    }
+
+    body.page-mdj-contact #mainNav-artist {
+      display: none !important;
+    }
+
+    body.page-mdj-contact .mdj-contact-page-hero {
+      position: relative;
+      z-index: 0;
+      text-align: center;
+      max-width: 920px;
+      margin: 0 auto clamp(28px, 4vw, 48px);
+      padding: clamp(18px, 3vw, 32px) 20px clamp(28px, 4vw, 42px);
+      border-bottom: 1px solid rgba(197, 160, 89, 0.22);
+    }
+
+    body.page-mdj-contact .mdj-contact-page-hero::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(420px, 72%);
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(197, 160, 89, 0.55), transparent);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    body.page-mdj-contact .mdj-contact-page-hero::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      z-index: -1;
+      transform: translate(-50%, -50%);
+      width: min(680px, 96%);
+      height: 130%;
+      background: radial-gradient(ellipse at center, rgba(197, 160, 89, 0.1) 0%, transparent 68%);
+      pointer-events: none;
+    }
+
+    body.page-mdj-contact .mdj-contact-page-hero__title {
+      margin: 0 0 14px;
+      font-family: 'Playfair Display', 'Palatino Linotype', Georgia, serif;
+      font-size: clamp(2.35rem, 6vw, 4.1rem);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      line-height: 1.08;
+      color: var(--gold, #c5a059);
+      -webkit-text-fill-color: rgba(197, 160, 89, 0.16);
+      -webkit-text-stroke: 1px rgba(197, 160, 89, 0.82);
+      text-shadow:
+        0 4px 28px rgba(0, 0, 0, 0.88),
+        0 0 44px rgba(197, 160, 89, 0.26);
+      filter: drop-shadow(0 0 16px rgba(197, 160, 89, 0.2));
+    }
+
+    body.page-mdj-contact .mdj-contact-page-hero__subtitle {
+      margin: 0 0 22px;
+      font-family: 'Playfair Display', 'Palatino Linotype', Georgia, serif;
+      font-weight: 600;
+      font-style: italic;
+      font-size: clamp(1.2rem, 2.5vw, 1.75rem);
+      letter-spacing: 0.04em;
+      line-height: 1.25;
+      color: #ecd9a8;
+      -webkit-text-fill-color: #ecd9a8;
+      -webkit-text-stroke: 0.45px rgba(197, 160, 89, 0.45);
+      text-shadow:
+        0 2px 18px rgba(0, 0, 0, 0.82),
+        0 0 36px rgba(197, 160, 89, 0.2);
+    }
+
+    body.page-mdj-contact .mdj-contact-page-hero__desc {
+      margin: 0 auto;
+      max-width: 64ch;
+      font-family: 'Cormorant Garamond', 'Palatino Linotype', Georgia, serif;
+      font-size: clamp(1.08rem, 1.9vw, 1.28rem);
+      font-weight: 500;
+      line-height: 1.55;
+      letter-spacing: 0.02em;
+      color: rgba(255, 255, 255, 0.84);
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+    }
+
+    body.page-mdj-contact .mdj-contact-page-hero__desc-line {
+      display: block;
+    }
+
+    body.page-mdj-contact .mdj-contact-page-hero__desc-line + .mdj-contact-page-hero__desc-line {
+      margin-top: 6px;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    body.page-mdj-contact .mdj-contact-cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin: clamp(20px, 3vw, 32px) auto clamp(32px, 4vw, 48px);
+      max-width: 920px;
+    }
+
+    body.page-mdj-contact .mdj-contact-cta-row a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 13px 22px;
+      border-radius: 50px;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+      white-space: nowrap;
+    }
+
+    body.page-mdj-contact .mdj-contact-cta-row a.mdj-cta-gold {
+      background: linear-gradient(135deg, rgba(197, 160, 89, 0.95), rgba(160, 120, 55, 0.9));
+      color: #0a0a0c;
+      box-shadow: 0 4px 20px rgba(197, 160, 89, 0.32);
+    }
+
+    body.page-mdj-contact .mdj-contact-cta-row a.mdj-cta-outline {
+      border: 1px solid rgba(197, 160, 89, 0.45);
+      color: var(--gold, #c5a059);
+      background: rgba(15, 18, 28, 0.55);
+    }
+
+    body.page-mdj-contact .mdj-contact-cta-row a:hover {
+      transform: translateY(-1px);
+    }
+
+    body.page-mdj-contact .mdj-contact-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+      gap: clamp(24px, 4vw, 40px);
+      align-items: start;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 900px) {
+      body.page-mdj-contact .mdj-contact-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    body.page-mdj-contact .mdj-contact-corp-panel {
+      padding: 24px 26px;
+      border-radius: 14px;
+      border: 1px solid rgba(197, 160, 89, 0.32);
+      background: linear-gradient(165deg, rgba(14, 16, 26, 0.92) 0%, rgba(8, 10, 18, 0.88) 100%);
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.28);
+    }
+
+    body.page-mdj-contact .mdj-contact-corp-panel__name {
+      margin: 0 0 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(197, 160, 89, 0.28);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(197, 160, 89, 0.95);
+    }
+
+    body.page-mdj-contact .mdj-contact-corp-panel__row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 14px;
+    }
+
+    body.page-mdj-contact .mdj-contact-corp-panel__label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(197, 160, 89, 0.72);
+    }
+
+    body.page-mdj-contact .mdj-contact-corp-panel__value,
+    body.page-mdj-contact .mdj-contact-corp-panel__value a {
+      font-size: 15px;
+      line-height: 1.45;
+      color: rgba(255, 255, 255, 0.9);
+      text-decoration: none;
+    }
+
+    body.page-mdj-contact .mdj-contact-corp-panel__value a:hover {
+      color: var(--gold, #c5a059);
+      text-decoration: underline;
+    }
+
+    body.page-mdj-contact .mdj-contact-entry-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      max-width: 1100px;
+      margin: 0 auto clamp(36px, 5vw, 56px);
+    }
+
+    body.page-mdj-contact .mdj-contact-entry-card {
+      display: block;
+      padding: 20px 22px;
+      border-radius: 14px;
+      border: 1px solid rgba(197, 160, 89, 0.22);
+      background: rgba(12, 14, 22, 0.72);
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.2s ease, transform 0.15s ease;
+    }
+
+    body.page-mdj-contact .mdj-contact-entry-card:hover {
+      border-color: rgba(197, 160, 89, 0.5);
+      transform: translateY(-2px);
+    }
+
+    body.page-mdj-contact .mdj-contact-entry-card h3 {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+      color: var(--gold, #c5a059);
+    }
+
+    body.page-mdj-contact .mdj-contact-entry-card p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    body.page-mdj-contact .mdj-contact-social-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    body.page-mdj-contact .mdj-contact-social-row a {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.82);
+      text-decoration: none;
+    }
+
+    body.page-mdj-contact .mdj-contact-social-row a:hover {
+      border-color: rgba(197, 160, 89, 0.45);
+      color: var(--gold, #c5a059);
+    }
+
+    body.page-mdj-contact #lead-form.admin-card {
+      background: var(--panel);
+      border-radius: 14px;
+      padding: 28px 26px;
+    }
+
+    body.page-mdj-contact #lead-form label {
+      display: block;
+      margin-bottom: 16px;
+    }
+
+    body.page-mdj-contact #lead-form input,
+    body.page-mdj-contact #lead-form select,
+    body.page-mdj-contact #lead-form textarea {
+      width: 100%;
+      margin-top: 8px;
+      box-sizing: border-box;
+    }
+
+    body.page-mdj-contact .mdj-contact-section-title {
+      text-align: center;
+      margin: 0 0 24px;
+      font-size: clamp(1.25rem, 2.5vw, 1.6rem);
+      color: var(--gold, #c5a059);
+      font-weight: 800;
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-band {
+      max-width: 920px;
+      margin: 0 auto clamp(36px, 5vw, 52px);
+      padding: clamp(22px, 3.5vw, 32px) clamp(24px, 4vw, 40px);
+      border-radius: 18px;
+      border: 1px solid rgba(197, 160, 89, 0.28);
+      background: linear-gradient(165deg, rgba(14, 16, 26, 0.92) 0%, rgba(8, 10, 18, 0.88) 100%);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+      text-align: center;
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-band h2 {
+      margin: 0 0 12px;
+      font-size: clamp(1.35rem, 2.8vw, 1.75rem);
+      font-weight: 900;
+      color: var(--gold, #c5a059);
+      letter-spacing: 0.02em;
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-band p {
+      margin: 0 auto 22px;
+      max-width: 62ch;
+      font-size: clamp(0.95rem, 1.6vw, 1.08rem);
+      line-height: 1.55;
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-channel-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      margin: 0 auto 26px;
+      padding: 12px 28px;
+      border-radius: 999px;
+      border: 1px solid rgba(197, 160, 89, 0.42);
+      background: linear-gradient(135deg, rgba(197, 160, 89, 0.18), rgba(12, 14, 22, 0.82));
+      color: rgba(255, 255, 255, 0.92);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: border-color 0.2s ease, transform 0.15s ease, color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-channel-btn:hover {
+      border-color: rgba(197, 160, 89, 0.65);
+      color: var(--gold, #c5a059);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: clamp(14px, 2.5vw, 20px);
+      max-width: 1100px;
+      margin: 0 auto;
+      text-align: left;
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-video-card {
+      margin: 0;
+      border-radius: 16px;
+      border: 1px solid rgba(197, 160, 89, 0.22);
+      background: linear-gradient(180deg, rgba(16, 18, 28, 0.96) 0%, rgba(8, 10, 18, 0.94) 100%);
+      overflow: hidden;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+      transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-video-card:hover {
+      border-color: rgba(197, 160, 89, 0.5);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.38);
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-video-card__link {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-video-card__thumb {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      background: #0a0c14;
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-video-card__thumb img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.35s ease, filter 0.35s ease;
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-video-card:hover .mdj-contact-youtube-video-card__thumb img {
+      transform: scale(1.04);
+      filter: brightness(0.82);
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-video-card__thumb::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 45%, rgba(0, 0, 0, 0.55) 100%);
+      pointer-events: none;
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-video-card__play {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.88);
+      background: rgba(0, 0, 0, 0.55);
+      color: #fff;
+      font-size: 18px;
+      line-height: 1;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-video-card:hover .mdj-contact-youtube-video-card__play {
+      background: rgba(197, 160, 89, 0.82);
+      border-color: rgba(255, 255, 255, 0.95);
+      transform: translate(-50%, -50%) scale(1.06);
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-video-card__body {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      gap: 8px;
+      padding: 16px 16px 18px;
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-video-card__body h3 {
+      margin: 0;
+      font-size: 0.98rem;
+      font-weight: 800;
+      line-height: 1.3;
+      color: rgba(255, 255, 255, 0.95);
+      letter-spacing: 0.01em;
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-video-card__body p {
+      margin: 0;
+      max-width: none;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      color: rgba(255, 255, 255, 0.62);
+      text-align: left;
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-video-card__cta {
+      display: inline-flex;
+      align-items: center;
+      align-self: flex-start;
+      margin-top: auto;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(197, 160, 89, 0.35);
+      background: rgba(197, 160, 89, 0.1);
+      color: var(--gold, #c5a059);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    body.page-mdj-contact .mdj-contact-youtube-video-card:hover .mdj-contact-youtube-video-card__cta {
+      background: rgba(197, 160, 89, 0.22);
+      border-color: rgba(197, 160, 89, 0.55);
+      color: #fff;
+    }
+  </style>
+</head>
+
+<body class="notranslate page-mdj-contact mdj-nav-booting">
+  <header class="header mdj-header-unified" id="mainHeader">
+    <div class="header-top">
+      <div class="container">
+        <div class="brand">
+          <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+          <div class="brand-letters-wrapper">
+            <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters"
+              class="brand-letters-img">
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
+          <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn"
+            data-i18n="btn-subscribe-free">Suscripción gratis</a>
+          <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
+          <div class="mdj-header-r1-auth-cluster">
+            <div class="lang-switcher">
+              <span class="lang-btn" data-lang="es">ES</span>
+              <span class="lang-pipe">|</span>
+              <span class="lang-btn" data-lang="en">EN</span>
+            </div>
+            <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-auth-btn>Log in</a>
+            <div class="account session-pending" id="header-auth-zone" style="display: none;">
+              <a class="account-btn" id="accountBtn" href="./dj-profile.html" title="Mi perfil" aria-label="Mi perfil">
+                <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
+              </a>
+            </div>
+          </div>
+          <div class="header-avatar-cart-row" aria-label="Account and cart">
+            <a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart"
+              aria-label="Shopping cart">
+              <span aria-hidden="true">🛒</span>
+              <span id="header-cart-count" class="header-cart-count" hidden></span>
+            </a>
+          </div>
+          <div class="header-search-wrap">
+            <input type="search" id="header-smart-search" class="header-smart-search"
+              placeholder="Search DJs, gear, services…" autocomplete="off" enterkeyhint="search" />
+          </div>
+        </div>
+
+        <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <div class="mobile-overlay" id="mobileMenu">
+          <nav class="mobile-nav">
+            <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
+            <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
+            <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
+            <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
+            <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
+            <a href="./contact.html" class="active" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+            <a href="./login.html?signup=free" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free"
+              style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
+            <a href="./login.html" id="header-login-btn-mobile" data-auth-btn
+              style="color:var(--gold); font-weight:800;">Entrar</a>
+            <a href="./dj-profile.html" id="nav-my-profile-mobile"
+              style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MI PERFIL</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+    <div class="header-nav">
+      <div class="container">
+        <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" data-mdj-compact-nav="1"
+          aria-label="Navegación principal">
+          <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
+          <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
+          <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
+          <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
+          <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot"
+            data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️CONFIG</a>
+          <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
+          <a href="./contact.html" class="active" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+          <a href="./login.html" id="mainNav-guest-mi-perfil-link" class="mdj-guest-mi-perfil-mainnav"
+            data-mdj-nav="my-profile" data-i18n="nav-my-profile">MI PERFIL</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main id="app" aria-label="Contact Miami DJ Beat">
+    <section class="section" style="padding-top: clamp(32px, 5vw, 56px);">
+      <div class="container">
+        <header class="mdj-contact-page-hero">
+          <h1 class="mdj-contact-page-hero__title">MIAMI DJ BEAT</h1>
+          <p class="mdj-contact-page-hero__subtitle">Premium Event Production</p>
+          <p class="mdj-contact-page-hero__desc">
+            <span class="mdj-contact-page-hero__desc-line">Professional DJs • Event Production • Rentals • Talent
+              Booking</span>
+            <span class="mdj-contact-page-hero__desc-line">Serving Miami-Dade, Broward and the Florida Keys.</span>
+          </p>
+        </header>
+
+        <div class="mdj-contact-cta-row" aria-label="Quick contact actions">
+          <a class="mdj-cta-gold" href="https://wa.me/13056071780?text=Hello%2C%20I%27d%20like%20to%20check%20availability%20for%20an%20event."
+            target="_blank" rel="noopener noreferrer">WhatsApp</a>
+          <a class="mdj-cta-outline" href="tel:+13056071780">Call Now</a>
+          <a class="mdj-cta-outline" href="mailto:miamidjbeat@gmail.com">Email</a>
+          <a class="mdj-cta-gold" href="#lead-form">Request Availability</a>
+        </div>
+
+        <h2 class="mdj-contact-section-title">How can we help?</h2>
+        <div class="mdj-contact-entry-grid">
+          <a class="mdj-contact-entry-card" href="./wedding-planning.html">
+            <h3>Weddings</h3>
+            <p>Ceremony, reception, and premium wedding production.</p>
+          </a>
+          <a class="mdj-contact-entry-card" href="#lead-form">
+            <h3>Corporate Events</h3>
+            <p>Brand activations, galas, and executive entertainment.</p>
+          </a>
+          <a class="mdj-contact-entry-card" href="#lead-form">
+            <h3>Private Parties</h3>
+            <p>Birthdays, quinces, anniversaries, and home celebrations.</p>
+          </a>
+          <a class="mdj-contact-entry-card" href="./events.html">
+            <h3>Clubs &amp; Venues</h3>
+            <p>Residencies, venue partnerships, and nightlife programming.</p>
+          </a>
+          <a class="mdj-contact-entry-card" href="./rentals.html">
+            <h3>Rentals</h3>
+            <p>Sound, lighting, staging, and event gear packages.</p>
+          </a>
+          <a class="mdj-contact-entry-card" href="./jobs.html">
+            <h3>Talent / Artists</h3>
+            <p>Join the roster or book featured Miami DJ Beat talent.</p>
+          </a>
+        </div>
+
+        <section class="mdj-contact-youtube-band" aria-label="YouTube Tutorials and Miami DJ Beat Videos">
+          <h2>YouTube Tutorials &amp; Miami DJ Beat Videos</h2>
+          <p>DJ tutorials, event tips, music production, gear walkthroughs, and behind-the-scenes content from Miami DJ
+            Beat.</p>
+          <a class="mdj-contact-youtube-channel-btn" href="https://www.youtube.com/@Miamidjbeat" target="_blank"
+            rel="noopener noreferrer">Visit YouTube Channel</a>
+          <div class="mdj-contact-youtube-grid">
+            <article class="mdj-contact-youtube-video-card">
+              <a class="mdj-contact-youtube-video-card__link"
+                href="https://www.youtube.com/watch?v=b16qcUvtD8s&amp;list=PL-xmJ1ncweD9XW2_iVuV7VUu0jmiAxqd4"
+                target="_blank" rel="noopener noreferrer">
+                <div class="mdj-contact-youtube-video-card__thumb">
+                  <img src="https://img.youtube.com/vi/b16qcUvtD8s/hqdefault.jpg" alt="DJ Academy Playlist thumbnail"
+                    width="480" height="360" loading="lazy" decoding="async" />
+                  <span class="mdj-contact-youtube-video-card__play" aria-hidden="true">▶</span>
+                </div>
+                <div class="mdj-contact-youtube-video-card__body">
+                  <h3>DJ Academy Playlist / Tutorial</h3>
+                  <p>Curated DJ lessons and production tutorials from Miami DJ Beat Academy.</p>
+                  <span class="mdj-contact-youtube-video-card__cta">Watch Playlist</span>
+                </div>
+              </a>
+            </article>
+            <article class="mdj-contact-youtube-video-card">
+              <a class="mdj-contact-youtube-video-card__link" href="https://www.youtube.com/watch?v=HnmxfyTHTBM"
+                target="_blank" rel="noopener noreferrer">
+                <div class="mdj-contact-youtube-video-card__thumb">
+                  <img src="https://img.youtube.com/vi/HnmxfyTHTBM/hqdefault.jpg"
+                    alt="What Is Miami DJ Beat? thumbnail" width="480" height="360" loading="lazy"
+                    decoding="async" />
+                  <span class="mdj-contact-youtube-video-card__play" aria-hidden="true">▶</span>
+                </div>
+                <div class="mdj-contact-youtube-video-card__body">
+                  <h3>What Is Miami DJ Beat?</h3>
+                  <p>Learn what Miami DJ Beat offers for events, talent, and the DJ community.</p>
+                  <span class="mdj-contact-youtube-video-card__cta">Watch Video</span>
+                </div>
+              </a>
+            </article>
+            <article class="mdj-contact-youtube-video-card">
+              <a class="mdj-contact-youtube-video-card__link" href="https://www.youtube.com/watch?v=_KMEavXq5D8"
+                target="_blank" rel="noopener noreferrer">
+                <div class="mdj-contact-youtube-video-card__thumb">
+                  <img src="https://img.youtube.com/vi/_KMEavXq5D8/hqdefault.jpg" alt="Opening / Channel Intro thumbnail"
+                    width="480" height="360" loading="lazy" decoding="async" />
+                  <span class="mdj-contact-youtube-video-card__play" aria-hidden="true">▶</span>
+                </div>
+                <div class="mdj-contact-youtube-video-card__body">
+                  <h3>Opening / Channel Intro</h3>
+                  <p>Official channel intro and welcome from the Miami DJ Beat team.</p>
+                  <span class="mdj-contact-youtube-video-card__cta">Watch Video</span>
+                </div>
+              </a>
+            </article>
+            <article class="mdj-contact-youtube-video-card">
+              <a class="mdj-contact-youtube-video-card__link" href="https://www.youtube.com/watch?v=b16qcUvtD8s"
+                target="_blank" rel="noopener noreferrer">
+                <div class="mdj-contact-youtube-video-card__thumb">
+                  <img src="https://img.youtube.com/vi/b16qcUvtD8s/hqdefault.jpg" alt="Tutorial Video thumbnail"
+                    width="480" height="360" loading="lazy" decoding="async" />
+                  <span class="mdj-contact-youtube-video-card__play" aria-hidden="true">▶</span>
+                </div>
+                <div class="mdj-contact-youtube-video-card__body">
+                  <h3>Tutorial Video</h3>
+                  <p>Step-by-step DJ tutorial walkthrough from Miami DJ Beat.</p>
+                  <span class="mdj-contact-youtube-video-card__cta">Watch Video</span>
+                </div>
+              </a>
+            </article>
+          </div>
+        </section>
+
+        <div class="mdj-contact-layout">
+          <form id="lead-form" class="admin-card" action="https://formspree.io/f/mqakvjge" method="post">
+            <input type="hidden" name="_subject" value="[MDJB] Contact Page — Lead">
+            <h2 style="margin:0 0 20px; font-size:1.35rem; color:var(--gold,#c5a059);">Request availability</h2>
+            <label>
+              <span>Full name</span>
+              <input type="text" name="name" required autocomplete="name" />
+            </label>
+            <label>
+              <span>Email</span>
+              <input type="email" name="email" required autocomplete="email" />
+            </label>
+            <label>
+              <span>Phone / WhatsApp</span>
+              <input type="tel" name="phone" required autocomplete="tel" />
+            </label>
+            <label>
+              <span>Event type</span>
+              <select name="event_type" required>
+                <option value="" disabled selected>Select type</option>
+                <option value="Wedding">Wedding</option>
+                <option value="Corporate">Corporate Event</option>
+                <option value="Private">Private Party</option>
+                <option value="Venue">Club / Venue</option>
+                <option value="Rental">Rentals</option>
+                <option value="Talent">Talent / Artist</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+            <label>
+              <span>Event date</span>
+              <input type="date" name="event_date" />
+            </label>
+            <label>
+              <span>Location</span>
+              <input type="text" name="location" placeholder="Miami Beach, Brickell, Keys…" />
+            </label>
+            <label>
+              <span>Message</span>
+              <textarea name="message" rows="4" placeholder="Tell us about your event, guest count, and timeline."></textarea>
+            </label>
+            <button type="submit" class="btn primary full" style="margin-top:8px;">Send inquiry</button>
+          </form>
+
+          <aside class="mdj-contact-corp-panel" aria-label="Miami DJ Beat corporate contact">
+            <p class="mdj-contact-corp-panel__name">Miami DJ Beat LLC</p>
+            <div class="mdj-contact-corp-panel__row">
+              <span class="mdj-contact-corp-panel__label">Email</span>
+              <span class="mdj-contact-corp-panel__value"><a
+                  href="mailto:miamidjbeat@gmail.com">miamidjbeat@gmail.com</a></span>
+            </div>
+            <div class="mdj-contact-corp-panel__row">
+              <span class="mdj-contact-corp-panel__label">Phone</span>
+              <span class="mdj-contact-corp-panel__value"><a href="tel:+13056071780">(305) 607-1780</a></span>
+            </div>
+            <div class="mdj-contact-corp-panel__row">
+              <span class="mdj-contact-corp-panel__label">Coverage</span>
+              <span class="mdj-contact-corp-panel__value">Miami, South Florida &amp; Florida Keys</span>
+            </div>
+            <div class="mdj-contact-corp-panel__row">
+              <span class="mdj-contact-corp-panel__label">Channels</span>
+              <div class="mdj-contact-social-row">
+                <a href="https://instagram.com/miamidjbeat" target="_blank" rel="noopener noreferrer">Instagram</a>
+                <a href="https://tiktok.com/@miamidjbeat" target="_blank" rel="noopener noreferrer">TikTok</a>
+                <a href="https://facebook.com/miamidjbeat" target="_blank" rel="noopener noreferrer">Facebook</a>
+                <a href="https://www.youtube.com/@Miamidjbeat" target="_blank" rel="noopener noreferrer">YouTube</a>
+                <a href="#">Spotify</a>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container" style="text-align: center;">
+      <div>© 2026 Miami DJ Beat LLC. Event Production &amp; Talent Division.</div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+  <script src="./translations.js?v=20260422-nav-labels-1"></script>
+  <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
+  <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+  <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
+  <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+  <script src="./mdj-shared-header.js?v=20260603-buyer-nav-order-8"></script>
+  <script id="mdj-vista-cero-guest-nav-restore">
+(function () {
+  function mdjVistaCeroGuest() {
+    if (document.body.classList.contains('mdj-buyer-session') || document.body.classList.contains('mdj-is-client')) return false;
+    if (window.__mdjLastBuyerSession === true) return false;
+    return true;
+  }
+  function mdjStripRemovedPublicTabs(nav) {
+    if (!nav) return;
+    var sel = 'a[data-mdj-nav="mi-portal"], #mainNav-mi-portal-link, a[data-mdj-nav="tools"], a[data-mdj-nav="staff"], #mainNav-staff-or-profile, #mainNav-staff-link';
+    nav.querySelectorAll(sel).forEach(function (el) {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    });
+  }
+  function mdjEnsureVenuesInNav(nav) {
+    if (!nav || nav.querySelector('a[data-mdj-nav="venues"]')) return;
+    var a = document.createElement('a');
+    a.href = './events.html';
+    a.setAttribute('data-i18n', 'nav-rentals');
+    a.setAttribute('data-mdj-nav', 'venues');
+    a.textContent = 'Eventos';
+    var shop = nav.querySelector('a[data-mdj-nav="shop"]');
+    if (shop && shop.parentNode === nav) nav.insertBefore(a, shop);
+    else {
+      var svc = nav.querySelector('a[data-mdj-nav="services"]');
+      if (svc && svc.parentNode === nav && svc.nextSibling) nav.insertBefore(a, svc.nextSibling);
+      else nav.appendChild(a);
+    }
+  }
+  function mdjRevealGuestMiPerfil() {
+    var nav = document.getElementById('mainNav');
+    if (!nav) return;
+    var el = document.getElementById('mainNav-guest-mi-perfil-link');
+    if (!el) {
+      el = document.createElement('a');
+      el.id = 'mainNav-guest-mi-perfil-link';
+      el.className = 'mdj-guest-mi-perfil-mainnav';
+      el.setAttribute('data-mdj-nav', 'my-profile');
+      el.setAttribute('data-i18n', 'nav-my-profile');
+      el.textContent = 'MI PERFIL';
+      var contact = nav.querySelector('a[data-mdj-nav="contact"]');
+      if (contact && contact.parentNode === nav) {
+        if (contact.nextSibling) nav.insertBefore(el, contact.nextSibling);
+        else nav.appendChild(el);
+      } else nav.appendChild(el);
+    }
+    el.href = './login.html';
+    el.classList.remove('mdj-mainnav-reserved-slot');
+    el.removeAttribute('aria-hidden');
+    el.removeAttribute('tabindex');
+    el.style.removeProperty('display');
+    el.style.removeProperty('visibility');
+    el.style.removeProperty('pointer-events');
+  }
+  function mdjRunVistaCeroGuestNavRestore() {
+    if (!mdjVistaCeroGuest()) return;
+    var nav = document.getElementById('mainNav');
+    mdjStripRemovedPublicTabs(nav);
+    mdjEnsureVenuesInNav(nav);
+    var mobile = document.querySelector('#mobileMenu .mobile-nav') || document.querySelector('.mobile-nav');
+    mdjStripRemovedPublicTabs(mobile);
+    mdjEnsureVenuesInNav(mobile);
+    mdjRevealGuestMiPerfil();
+  }
+  mdjRunVistaCeroGuestNavRestore();
+  [0, 50, 200, 500, 1200, 2500, 4000].forEach(function (ms) {
+    setTimeout(mdjRunVistaCeroGuestNavRestore, ms);
+  });
+  var navEl = document.getElementById('mainNav');
+  if (navEl && typeof MutationObserver !== 'undefined') {
+    new MutationObserver(mdjRunVistaCeroGuestNavRestore).observe(navEl, { childList: true });
+  }
+  if (document.body && typeof MutationObserver !== 'undefined') {
+    new MutationObserver(mdjRunVistaCeroGuestNavRestore).observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+  }
+})();
+  </script>
+  <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (window.i18n && typeof window.i18n.init === 'function') window.i18n.init();
+      else if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
+    });
+  </script>
+</body>
+
+</html>
