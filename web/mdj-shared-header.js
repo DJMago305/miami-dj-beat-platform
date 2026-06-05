@@ -1624,9 +1624,19 @@
         link.setAttribute('aria-label', mdjGetStaffAccountSettingsMenuLabel());
       } catch (eAr) { /* ignore */ }
     } else {
+      var profileDest = /dj-profile\.html/i.test(String(href || '').trim());
       link.setAttribute('data-mdj-nav', 'mi-portal');
-      link.setAttribute('data-i18n', 'header-mi-portal');
-      mdjApplyMiPortalLinkLabel(link);
+      if (profileDest) {
+        mdjApplyMiPerfilNavLabel(link);
+        try {
+          var esProf =
+            document.documentElement && String(document.documentElement.lang || '').toLowerCase().indexOf('es') === 0;
+          link.setAttribute('aria-label', esProf ? 'Mi perfil' : 'My profile');
+        } catch (eMpLbl) { /* ignore */ }
+      } else {
+        link.setAttribute('data-i18n', 'header-mi-portal');
+        mdjApplyMiPortalLinkLabel(link);
+      }
     }
   }
 
@@ -1705,9 +1715,19 @@
         btn.setAttribute('aria-label', mdjGetStaffAccountSettingsMenuLabel());
       } catch (eMb) { /* ignore */ }
     } else {
-      btn.setAttribute('data-i18n', 'header-mi-portal');
-      btn.setAttribute('aria-label', 'My portal');
-      mdjApplyMiPortalLinkLabel(btn);
+      var profileDestM = /dj-profile\.html/i.test(String(href || '').trim());
+      if (profileDestM) {
+        mdjApplyMiPerfilNavLabel(btn);
+        try {
+          var esProfM =
+            document.documentElement && String(document.documentElement.lang || '').toLowerCase().indexOf('es') === 0;
+          btn.setAttribute('aria-label', esProfM ? 'Mi perfil' : 'My profile');
+        } catch (eMpLblM) { /* ignore */ }
+      } else {
+        btn.setAttribute('data-i18n', 'header-mi-portal');
+        btn.setAttribute('aria-label', 'My portal');
+        mdjApplyMiPortalLinkLabel(btn);
+      }
     }
     if (nav.firstChild !== btn) {
       nav.insertBefore(btn, nav.firstChild);
@@ -3046,23 +3066,61 @@
              mdjApplyArtistSessionNav covers artists; for owner (staff, navTier='client_only')
              the generic path may skip revelation — this guard makes it unconditional. */
           if ((appRoleLower === 'owner' || appRoleLower === 'admin' || appRoleLower === 'manager' || isDjStaff) && window.__mdjNavOwnUserId) {
+            mdjApplyConfigMainNavLink(true, settingsUrl);
             var _ownerMp = mdjEnsureGuestMiPerfilMainNavLink();
             if (_ownerMp) {
-              _ownerMp.href = './dj-profile.html?id=' + encodeURIComponent(window.__mdjNavOwnUserId || ''); /* owner → perfil público */
-              _ownerMp.classList.remove('mdj-mainnav-reserved-slot');
-              _ownerMp.removeAttribute('aria-hidden');
-              _ownerMp.removeAttribute('tabindex');
-              _ownerMp.style.removeProperty('display');
-              _ownerMp.style.removeProperty('visibility');
-              _ownerMp.style.removeProperty('pointer-events');
-              /* Position: right after ⚙️ CONFIG (jobs slot hidden, MI PERFIL replaces it). */
-              var _oNav = document.getElementById('mainNav');
-              var _oCfg = document.getElementById('mainNav-config-link');
-              var _oStf = document.getElementById('mainNav-staff-or-profile');
-              if (_oNav && _oCfg && _oCfg.parentNode === _oNav && _oCfg.nextSibling !== _ownerMp) {
-                _oNav.insertBefore(_ownerMp, _oCfg.nextSibling || null);
-              } else if (_oNav && _oStf && _oStf.parentNode === _oNav && _oStf !== _ownerMp) {
-                _oNav.insertBefore(_ownerMp, _oStf);
+              var _staffUid = String(window.__mdjNavOwnUserId || '').trim();
+              _ownerMp.href = './dj-profile.html?id=' + encodeURIComponent(_staffUid); /* owner → perfil público */
+              var _staffBuyerJourneyMiPerfil =
+                isDjStaff && !isBuyerSession && mdjIsBuyerJourneyPage() && !mdjIsPublicHomePage();
+              if (_staffBuyerJourneyMiPerfil) {
+                var _oNavBj = document.getElementById('mainNav');
+                if (_oNavBj) {
+                  ['shop', 'contact'].forEach(function (key) {
+                    _oNavBj.querySelectorAll('a[data-mdj-nav="' + key + '"]').forEach(function (el) {
+                      el.classList.remove('mdj-mainnav-reserved-slot');
+                      el.removeAttribute('aria-hidden');
+                      el.removeAttribute('tabindex');
+                      el.style.setProperty('display', 'inline-flex', 'important');
+                      el.style.setProperty('width', 'auto', 'important');
+                      el.style.setProperty('min-width', 'max-content', 'important');
+                      el.style.setProperty('flex', '0 0 auto', 'important');
+                      el.style.setProperty('pointer-events', 'auto', 'important');
+                      el.style.removeProperty('visibility');
+                    });
+                  });
+                }
+                mdjApplyMiPerfilNavLabel(_ownerMp);
+                _ownerMp.classList.remove('mdj-mainnav-reserved-slot');
+                _ownerMp.removeAttribute('aria-hidden');
+                _ownerMp.removeAttribute('tabindex');
+                _ownerMp.style.setProperty('display', 'inline-flex', 'important');
+                _ownerMp.style.setProperty('width', 'auto', 'important');
+                _ownerMp.style.setProperty('min-width', 'max-content', 'important');
+                _ownerMp.style.setProperty('flex', '0 0 auto', 'important');
+                _ownerMp.style.setProperty('pointer-events', 'auto', 'important');
+                _ownerMp.style.removeProperty('visibility');
+                var _oContact = _oNavBj && _oNavBj.querySelector('a[data-mdj-nav="contact"]');
+                if (_oNavBj && _oContact && _oContact.parentNode === _oNavBj && _oContact.nextSibling !== _ownerMp) {
+                  if (_oContact.nextSibling) _oNavBj.insertBefore(_ownerMp, _oContact.nextSibling);
+                  else _oNavBj.appendChild(_ownerMp);
+                }
+              } else {
+                _ownerMp.classList.remove('mdj-mainnav-reserved-slot');
+                _ownerMp.removeAttribute('aria-hidden');
+                _ownerMp.removeAttribute('tabindex');
+                _ownerMp.style.removeProperty('display');
+                _ownerMp.style.removeProperty('visibility');
+                _ownerMp.style.removeProperty('pointer-events');
+                /* Position: right after ⚙️ CONFIG (jobs slot hidden, MI PERFIL replaces it). */
+                var _oNav = document.getElementById('mainNav');
+                var _oCfg = document.getElementById('mainNav-config-link');
+                var _oStf = document.getElementById('mainNav-staff-or-profile');
+                if (_oNav && _oCfg && _oCfg.parentNode === _oNav && _oCfg.nextSibling !== _ownerMp) {
+                  _oNav.insertBefore(_ownerMp, _oCfg.nextSibling || null);
+                } else if (_oNav && _oStf && _oStf.parentNode === _oNav && _oStf !== _ownerMp) {
+                  _oNav.insertBefore(_ownerMp, _oStf);
+                }
               }
             }
             /* Flujo de caja: reveal at slot 5 (after SHOP, before CONFIG).
@@ -3646,6 +3704,17 @@
 (function () {
   if (window.location.pathname.indexOf('dj-dashboard.html') === -1) return;
 
+  /* Early hide TRABAJOS — sync en primer tick del script (anti-flash antes de poll). */
+  var _dtEarlyC = document.querySelector('#owner-tabs .container');
+  if (_dtEarlyC) {
+    var _dtEarlyJobs = _dtEarlyC.querySelector('[data-i18n="nav-jobs"]');
+    if (_dtEarlyJobs) {
+      _dtEarlyJobs.style.setProperty('display', 'none', 'important');
+      _dtEarlyJobs.setAttribute('aria-hidden', 'true');
+      _dtEarlyJobs.setAttribute('tabindex', '-1');
+    }
+  }
+
   var _dtObs    = null;
   var _dtLocked = false;
 
@@ -3664,9 +3733,60 @@
     _dtObs.observe(node, { childList: true, characterData: true, subtree: true });
   }
 
+  /** Owner strip active underline — no depende de data-i18n="flow-dash" (stripped por anti-i18n). */
+  function _syncDashOwnerStripActive(tabId) {
+    var container = document.querySelector('#owner-tabs .container');
+    if (!container) return;
+    var tab = tabId;
+    if (!tab) {
+      try {
+        tab = new URLSearchParams(window.location.search).get('tab') || 'dashboard';
+      } catch (eTab) {
+        tab = 'dashboard';
+      }
+    }
+    if (tab !== 'flow' && tab !== 'dashboard') return;
+
+    var flowEl = container.querySelector('a[href*="tab=flow"]') ||
+                 container.querySelector('[data-i18n="flow-dash"]') ||
+                 container.querySelector('button[data-tab="flow"]');
+    var agendaEl = container.querySelector('button[data-tab="dashboard"]');
+
+    container.querySelectorAll('button[data-tab]').forEach(function (el) {
+      el.classList.remove('active');
+    });
+    if (flowEl) flowEl.classList.remove('active');
+
+    if (tab === 'flow' && flowEl) {
+      flowEl.classList.add('active');
+    } else if (tab === 'dashboard' && agendaEl) {
+      agendaEl.classList.add('active');
+    }
+  }
+  window.__mdjSyncDashOwnerStripActive = _syncDashOwnerStripActive;
+
+  function _patchSwitchDashTabForStripActive() {
+    var orig = window.switchDashTab;
+    if (typeof orig !== 'function' || orig.__mdjStripActivePatched) return;
+    function patched(tabId) {
+      var out = orig.apply(this, arguments);
+      _syncDashOwnerStripActive(tabId);
+      return out;
+    }
+    patched.__mdjStripActivePatched = true;
+    window.switchDashTab = patched;
+  }
+
   function _applyDashOwnerTabs() {
     var container = document.querySelector('#owner-tabs .container');
     if (!container) return false;
+
+    var trabajosEl = container.querySelector('[data-i18n="nav-jobs"]');
+    if (trabajosEl) {
+      trabajosEl.style.setProperty('display', 'none', 'important');
+      trabajosEl.setAttribute('aria-hidden', 'true');
+      trabajosEl.setAttribute('tabindex', '-1');
+    }
 
     /* flowEl puede aún tener data-i18n="flow-dash" — buscar por ambos estados */
     var flowEl    = container.querySelector('[data-i18n="flow-dash"]') ||
@@ -3703,7 +3823,9 @@
       staffEl.style.removeProperty('visibility');
       staffEl.style.removeProperty('opacity');
     }
-    mdjBindStaffNavClickGuard(staffEl);
+    if (typeof mdjBindStaffNavClickGuard === 'function') {
+      mdjBindStaffNavClickGuard(staffEl);
+    }
 
     /* ── REORDER: CASH FLOW · MI PERFIL · STAFF · SOUNDFORTIPS™ ── */
     if (flowEl.parentNode === container && miPerfilEl !== flowEl.nextSibling) {
@@ -3715,6 +3837,7 @@
       container.appendChild(staffEl);
     }
 
+    _syncDashOwnerStripActive();
     return true; /* strip listo — stop polling */
   }
 
@@ -3725,10 +3848,17 @@
     _dtDone = _applyDashOwnerTabs();
     if (!_dtDone && _dtPoll < 17) { setTimeout(pollDashTabs, 300); }
     if (_dtDone) {
+      _patchSwitchDashTabForStripActive();
       /* Safety re-patch a 1 s: uid definitivo + re-lock texto tras i18n.updateUI() */
       setTimeout(function () {
         var c = document.querySelector('#owner-tabs .container');
         if (!c) return;
+        var trabajosRep = c.querySelector('[data-i18n="nav-jobs"]');
+        if (trabajosRep) {
+          trabajosRep.style.setProperty('display', 'none', 'important');
+          trabajosRep.setAttribute('aria-hidden', 'true');
+          trabajosRep.setAttribute('tabindex', '-1');
+        }
         /* Re-fijar CASH FLOW si i18n lo revirtió */
         var fl = c.querySelector('a[href*="tab=flow"]') || c.querySelector('[data-i18n="flow-dash"]');
         if (fl) {
@@ -3755,19 +3885,23 @@
           if (sf && sf.parentNode === c) { c.insertBefore(st, sf); }
           else { c.appendChild(st); }
         }
-        mdjBindStaffNavClickGuard(st);
+        if (typeof mdjBindStaffNavClickGuard === 'function') {
+          mdjBindStaffNavClickGuard(st);
+        }
+        _syncDashOwnerStripActive();
       }, 1000);
     }
   }
+  _patchSwitchDashTabForStripActive();
   pollDashTabs();
 })();
 
-/* ── OWNER STRIP — 11 PILARES — artist pages with #owner-tabs
+/* ── OWNER STRIP — 10 PILARES — artist pages with #owner-tabs
    dj-profile.html : #owner-tabs en HTML; CASH FLOW / MI PERFIL / SFT pueden ser <button>.
    shop.html       : #owner-tabs inyectado por mdj-profile-nav-context.js.
-   Orden: INICIO · TRABAJOS · SHOP · AGENDA · CONFIG · ACADEMIA · DJ TOOLS ·
+   Orden: INICIO · ACADEMIA · SHOP · AGENDA · CONFIG · DJ TOOLS ·
           CASH FLOW · MI PERFIL · STAFF · SOUNDFORTIPS™
-   v20260525-owner-strip-11-pillars */
+   v20260605-owner-strip-10-pillars */
 (function () {
   var _page = (window.location.pathname.split('/').pop() || '').toLowerCase();
   var _OWNER_STRIP_PAGES = {
@@ -3830,6 +3964,7 @@
 
     /* Nodos críticos — data-i18n funciona en ambas páginas antes y después de i18n.updateUI() */
     var flowEl = c.querySelector('[data-i18n="flow-dash"]') ||
+                 c.querySelector('a[href*="tab=flow"]') ||
                  c.querySelector('button[data-tab="flow"]') ||
                  document.getElementById('dj-tab-flow-btn');
     var sftEl  = c.querySelector('[data-i18n="nav-soundfortips"]') ||
@@ -3876,11 +4011,13 @@
       staffEl.style.removeProperty('visibility');
       staffEl.style.removeProperty('opacity');
     }
-    mdjBindStaffNavClickGuard(staffEl);
+    if (typeof mdjBindStaffNavClickGuard === 'function') {
+      mdjBindStaffNavClickGuard(staffEl);
+    }
 
     /* ── Reorden por appendChild secuencial (data-i18n como ancla estable) ──
-       Orden exacto: INICIO · TRABAJOS · SHOP · AGENDA · CONFIG · ACADEMIA ·
-                     DJ TOOLS · CASH FLOW · MI PERFIL · STAFF · SOUNDFORTIPS™ */
+       Orden exacto: INICIO · ACADEMIA · SHOP · AGENDA · CONFIG · DJ TOOLS ·
+                     CASH FLOW · MI PERFIL · STAFF · SOUNDFORTIPS™ */
     var initioEl   = c.querySelector('[data-i18n="nav-home"]')        || c.querySelector('a[href^="./index.html"]');
     var trabajosEl = c.querySelector('[data-i18n="nav-jobs"]');
     var shopEl     = c.querySelector('[data-i18n="nav-shop"]');
@@ -3920,10 +4057,19 @@
       agendaEl.removeAttribute('data-i18n'); /* previene que i18n sobreescriba el href */
     }
 
-    [initioEl, trabajosEl, shopEl, agendaEl, configEl, academiaEl, toolsEl,
+    if (trabajosEl) {
+      trabajosEl.style.setProperty('display', 'none', 'important');
+      trabajosEl.setAttribute('aria-hidden', 'true');
+      trabajosEl.setAttribute('tabindex', '-1');
+    }
+    [initioEl, academiaEl, shopEl, agendaEl, configEl, toolsEl,
      flowEl, perfilEl, staffEl, sftEl].forEach(function (el) {
       if (el) c.appendChild(el);
     });
+
+    if (_page === 'dj-dashboard.html' && typeof window.__mdjSyncDashOwnerStripActive === 'function') {
+      window.__mdjSyncDashOwnerStripActive();
+    }
 
     return true; /* nodos presentes; poll detiene */
   }

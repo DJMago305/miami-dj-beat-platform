@@ -6367,6 +6367,12 @@ body.mdj-artist-academy #mainHeader.header {
    DJ OWNER STRIP — barra “parte artística” (perfil / dashboard / cursos)
    Negro sólido, inactivos gris, activo oro + línea inferior.
    ============================================================ */
+/* Pre-hide TRABAJOS en franja artista — primer paint (anti-flash antes de mdj-shared-header.js). */
+.dj-owner-tabs a[data-i18n="nav-jobs"],
+.dj-owner-tabs a[data-mdj-nav="jobs"] {
+  display: none !important;
+}
+
 .dj-owner-tabs {
   background: #000;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -6381,12 +6387,13 @@ body.mdj-artist-academy #mainHeader.header {
 
 .dj-owner-tabs .container {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap !important;
   align-items: stretch;
   gap: 0;
   padding: 0 clamp(16px, 4vw, 56px);
-  /* visible: el submenú Academia no queda recortado por overflow-x: auto */
-  overflow: visible;
+  /* Una sola fila — anti-acordeón antes de reorderOwnerStrip; scroll horizontal si no cabe */
+  overflow-x: auto;
+  overflow-y: hidden;
   width: 100%;
   max-width: none;
   /* Evita bandas negras laterales del cap global .container (1200px) en la franja artista */
