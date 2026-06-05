@@ -3046,6 +3046,7 @@
              mdjApplyArtistSessionNav covers artists; for owner (staff, navTier='client_only')
              the generic path may skip revelation — this guard makes it unconditional. */
           if ((appRoleLower === 'owner' || appRoleLower === 'admin' || appRoleLower === 'manager' || isDjStaff) && window.__mdjNavOwnUserId) {
+            mdjApplyConfigMainNavLink(true, settingsUrl);
             var _ownerMp = mdjEnsureGuestMiPerfilMainNavLink();
             if (_ownerMp) {
               _ownerMp.href = './dj-profile.html?id=' + encodeURIComponent(window.__mdjNavOwnUserId || ''); /* owner → perfil público */
