@@ -4,28 +4,6 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style id="portal-client-nav-gap">
-    /* MI PERFIL nunca aplica en cuenta cliente — suprimir desde CSS para eliminar flash. */
-    #mainHeader #mainNav > a#mainNav-guest-mi-perfil-link {
-      display: none !important;
-      min-width: 0 !important;
-      max-width: 0 !important;
-      width: 0 !important;
-      flex: 0 0 0 !important;
-      pointer-events: none !important;
-    }
-    @media (min-width: 1001px) {
-      /* Ghost STAFF: para clientes colapsarlo elimina el ancho invisible que causaba overflow. */
-      body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
-        > a#mainNav-staff-or-profile.mdj-mainnav-reserved-slot {
-        display: none !important;
-        min-width: 0 !important;
-        max-width: 0 !important;
-        width: 0 !important;
-        flex: 0 0 0 !important;
-      }
-    }
-  </style>
     <title>MDJPRO — Portal del Cliente</title>
     <script>
         (function () {
@@ -860,13 +838,11 @@
         <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
         <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
         <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
-        <a href="./shop.html" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
-        <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+        <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
+        <a href="./client-account.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
         <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
-        <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+        <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
         <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest active" href="./client-portal.html" data-mdj-nav="mi-portal" aria-hidden="true" tabindex="-1">MI PORTAL</a>
-        <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools" aria-hidden="true" tabindex="-1" class="mdj-mainnav-reserved-slot">DJ Tools</a>
-        <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
       </nav>
     </div>
   </div>

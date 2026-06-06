@@ -21,21 +21,6 @@ Riesgo: romper carga del catálogo.
     <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
   <link rel="stylesheet" href="./header-unified.css?v=20260603-buyer-nav-config-portal-6" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
-    <style id="rentals-client-nav-gap">
-      @media (min-width: 1001px) {
-        /* Ghost STAFF: para clientes colapsarlo elimina el ancho invisible que causaba overflow. */
-        body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
-          > a#mainNav-staff-or-profile.mdj-mainnav-reserved-slot,
-        body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
-          > a#mainNav-staff-link.mdj-mainnav-reserved-slot {
-          display: none !important;
-          min-width: 0 !important;
-          max-width: 0 !important;
-          width: 0 !important;
-          flex: 0 0 0 !important;
-        }
-      }
-    </style>
     <style id="rentals-visual-lock">
         /* RENTALS VISUAL LOCK — DO NOT EDIT */
 
@@ -1881,10 +1866,10 @@ Riesgo: romper carga del catálogo.
         <a href="./rentals.html" class="active" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
         <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
         <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
-        <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️CONFIG</a>
+        <a href="./client-account.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
         <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
         <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
-        <a href="./login.html" id="mainNav-guest-mi-perfil-link" class="mdj-guest-mi-perfil-mainnav" data-mdj-nav="my-profile" data-i18n="nav-my-profile">MI PERFIL</a>
+        <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" aria-hidden="true" tabindex="-1">MI PORTAL</a>
       </nav>
     </div>
   </div>
@@ -3552,88 +3537,8 @@ Riesgo: romper carga del catálogo.
     <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
 
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-      <script src="./mdj-shared-header.js?v=20260603-art-007c-staff-same-entry-1"></script>
-  <script id="mdj-vista-cero-guest-nav-restore">
-(function () {
-  function mdjVistaCeroGuest() {
-    if (document.body.classList.contains('mdj-buyer-session') || document.body.classList.contains('mdj-is-client')) return false;
-    if (window.__mdjLastBuyerSession === true) return false;
-    return true;
-  }
-  function mdjEnsureVenuesInNav(nav) {
-    if (!nav || nav.querySelector('a[data-mdj-nav="venues"]')) return;
-    var a = document.createElement('a');
-    a.href = './events.html';
-    a.setAttribute('data-i18n', 'nav-rentals');
-    a.setAttribute('data-mdj-nav', 'venues');
-    a.textContent = 'Eventos';
-    var shop = nav.querySelector('a[data-mdj-nav="shop"]');
-    if (shop && shop.parentNode === nav) nav.insertBefore(a, shop);
-    else {
-      var svc = nav.querySelector('a[data-mdj-nav="services"]');
-      if (svc && svc.parentNode === nav && svc.nextSibling) nav.insertBefore(a, svc.nextSibling);
-      else nav.appendChild(a);
-    }
-  }
-  function mdjRevealGuestMiPerfil() {
-    var nav = document.getElementById('mainNav');
-    if (!nav) return;
-    var el = document.getElementById('mainNav-guest-mi-perfil-link');
-    if (!el) {
-      el = document.createElement('a');
-      el.id = 'mainNav-guest-mi-perfil-link';
-      el.className = 'mdj-guest-mi-perfil-mainnav';
-      el.setAttribute('data-mdj-nav', 'my-profile');
-      el.setAttribute('data-i18n', 'nav-my-profile');
-      el.textContent = 'MI PERFIL';
-      var contact = nav.querySelector('a[data-mdj-nav="contact"]');
-      if (contact && contact.parentNode === nav) {
-        if (contact.nextSibling) nav.insertBefore(el, contact.nextSibling);
-        else nav.appendChild(el);
-      } else nav.appendChild(el);
-    }
-    el.href = './login.html';
-    el.classList.remove('mdj-mainnav-reserved-slot');
-    el.removeAttribute('aria-hidden');
-    el.removeAttribute('tabindex');
-    el.style.removeProperty('display');
-    el.style.removeProperty('visibility');
-    el.style.removeProperty('pointer-events');
-  }
-  function mdjStripRemovedPublicTabs(nav) {
-    if (!nav) return;
-    var sel = 'a[data-mdj-nav="mi-portal"], #mainNav-mi-portal-link, a[data-mdj-nav="tools"], a[data-mdj-nav="staff"], #mainNav-staff-or-profile, #mainNav-staff-link';
-    nav.querySelectorAll(sel).forEach(function (el) {
-      if (el.parentNode) el.parentNode.removeChild(el);
-    });
-  }
-  function mdjRunVistaCeroGuestNavRestore() {
-    if (!mdjVistaCeroGuest()) return;
-    var nav = document.getElementById('mainNav');
-    mdjStripRemovedPublicTabs(nav);
-    mdjEnsureVenuesInNav(nav);
-    var mobile = document.querySelector('#mobileMenu .mobile-nav') || document.querySelector('.mobile-nav');
-    mdjStripRemovedPublicTabs(mobile);
-    mdjEnsureVenuesInNav(mobile);
-    mdjRevealGuestMiPerfil();
-  }
-  mdjRunVistaCeroGuestNavRestore();
-  [0, 50, 200, 500, 1200, 2500, 4000].forEach(function (ms) {
-    setTimeout(mdjRunVistaCeroGuestNavRestore, ms);
-  });
-  var navEl = document.getElementById('mainNav');
-  if (navEl && typeof MutationObserver !== 'undefined') {
-    new MutationObserver(mdjRunVistaCeroGuestNavRestore).observe(navEl, { childList: true });
-  }
-  if (document.body && typeof MutationObserver !== 'undefined') {
-    new MutationObserver(mdjRunVistaCeroGuestNavRestore).observe(document.body, {
-      attributes: true,
-      attributeFilter: ['class']
-    });
-  }
-})();
-  </script>
-  <script src="./mdj-mainnav-infinite.js?v=20260516-home-nav-stable-1"></script>
+      <script src="./mdj-shared-header.js?v=20260603-buyer-nav-order-8"></script>
+  <script src="./mdj-mainnav-infinite.js?v=20260531-compact-nav-no-carousel-1"></script>
   <script src="./mdj-profile-nav-context.js?v=20260516-profile-nav-context-1"></script>
   <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
 </body>
