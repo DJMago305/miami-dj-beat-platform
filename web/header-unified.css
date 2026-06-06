@@ -1525,14 +1525,9 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
 }
 
 /*
- * Guest / público (sin mdj-buyer-session ni mdj-is-client): menú completo visible.
- * JS deja aria-hidden / .mdj-mi-portal--guest en CONFIG y MI PORTAL; CSS revela sin mover DOM.
- * Comprador (mdj-buyer-session / mdj-is-client): phantom anti-brinco de arriba sin cambios.
+ * Zero-login guest (sin mdj-buyer-session ni mdj-is-client): MI PORTAL / STAFF / DJ TOOLS ocultos.
+ * Contrato PROD-BLOCKER-001-FIX-2 — 8 visibles: Home · Services · Events · Shop · CONFIG · Jobs · Contact · MI PERFIL
  */
-body:not(.mdj-buyer-session):not(.mdj-is-client)
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a#mainNav-config-link,
 body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
@@ -1544,29 +1539,65 @@ body:not(.mdj-buyer-session):not(.mdj-is-client)
 body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a#mainNav-staff-link {
-  display: inline-flex !important;
-  align-items: center !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  flex: 0 0 auto !important;
-  min-width: max-content !important;
-  width: auto !important;
-  max-width: none !important;
-  margin: 0 !important;
-  overflow: visible !important;
+  > a#mainNav-staff-link,
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="tools"] {
+  display:        none    !important;
+  visibility:     hidden  !important;
+  opacity:        0       !important;
+  pointer-events: none    !important;
+  width:          0       !important;
+  min-width:      0       !important;
+  max-width:      0       !important;
+  flex:           0 0 0   !important;
+  overflow:       hidden  !important;
+  padding:        0       !important;
+  margin:         0       !important;
 }
 
 body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a#mainNav-config-link {
+  > a#mainNav-config-link:not([aria-hidden="true"]),
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav="venues"]:not([aria-hidden="true"]),
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-guest-mi-perfil-link:not(.mdj-mainnav-reserved-slot):not([aria-hidden="true"]) {
+  display:        inline-flex !important;
+  visibility:     visible     !important;
+  opacity:        1           !important;
+  pointer-events: auto        !important;
+  flex:           0 0 auto    !important;
+  min-width:      max-content !important;
+  width:          auto        !important;
+  max-width:      none        !important;
+  margin:         0           !important;
+  overflow:       visible     !important;
+}
+
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-config-link:not([aria-hidden="true"]) {
   letter-spacing: 0.05em !important;
   word-spacing: -0.12em !important;
 }
 
-/* Guest: «/» en CONFIG / MI PORTAL / STAFF aunque aria-hidden o .mdj-mi-portal--guest en DOM */
+/* Guest zero-login: «/» entre Services · Events · Shop · CONFIG · Jobs · Contact · MI PERFIL */
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav='services'] ~ a[data-mdj-nav='venues']::before,
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav='venues'] ~ a[data-mdj-nav='shop']::before,
 body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
@@ -1578,31 +1609,11 @@ body:not(.mdj-buyer-session):not(.mdj-is-client)
 body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav='contact'] ~ a#mainNav-mi-portal-link::before,
+  > a[data-mdj-nav='jobs'] ~ a[data-mdj-nav='contact']::before,
 body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a#mainNav-mi-portal-link ~ a[data-mdj-nav='tools']::before,
-body:not(.mdj-buyer-session):not(.mdj-is-client)
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav='tools'] ~ a#mainNav-guest-mi-perfil-link::before,
-body:not(.mdj-buyer-session):not(.mdj-is-client)
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a#mainNav-guest-mi-perfil-link ~ a#mainNav-staff-or-profile::before,
-body:not(.mdj-buyer-session):not(.mdj-is-client)
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a#mainNav-guest-mi-perfil-link ~ a#mainNav-staff-link::before,
-body:not(.mdj-buyer-session):not(.mdj-is-client)
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav='tools'] ~ a#mainNav-staff-or-profile::before,
-body:not(.mdj-buyer-session):not(.mdj-is-client)
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav='tools'] ~ a#mainNav-staff-link::before {
+  > a[data-mdj-nav='contact'] ~ a#mainNav-guest-mi-perfil-link::before {
   content: '\002F' !important;
   color: rgba(197, 160, 89, 0.4) !important;
   font-weight: 500 !important;

@@ -321,7 +321,7 @@
   function mdjStripPublicEventsFromMainNav() {
     try {
       /* En events.html, index.html, y páginas con nav compacto: Events permanece visible. */
-      if (mdjIsGuestHomeNavPage() || mdjIsPublicHomePage()) { return; }
+      if (mdjIsGuestHomeNavPage() || mdjIsPublicHomePage() || mdjIsZeroLoginGuestNavPage()) { return; }
       if (window.__mdjLastBuyerSession === true) { return; }
       var _nav = document.getElementById('mainNav');
       if (_nav && (_nav.getAttribute('data-mdj-compact-nav') === '1' || _nav.getAttribute('data-mdj-portal-in-nav') === '1')) {
@@ -464,6 +464,18 @@
     try {
       var path = (window.location.pathname || '').split('/').pop() || '';
       return String(path).toLowerCase() === 'events.html';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /** 6 páginas públicas guest: Inicio · Servicios · Eventos · Shop · Trabajos · Contacto (+ CONFIG/MI PERFIL vía JS). */
+  function mdjIsZeroLoginGuestNavPage() {
+    try {
+      if (mdjIsPublicHomePage() || mdjIsGuestHomeNavPage()) return true;
+      var path = (window.location.pathname || '').split('/').pop() || '';
+      path = String(path).toLowerCase();
+      return /^(rentals|services|shop|jobs|contact)\.html$/i.test(path);
     } catch (e) {
       return false;
     }
@@ -1639,32 +1651,66 @@
   }
 
   /**
-   * Guest-only: tras la lógica legacy de ocultar slots, reabre entry points públicos en #mainNav.
-   * No mueve nodos; no toca buyer/client/artist (sale si body tiene sesión comprador/cliente).
+   * Guest-only (zero-login): contrato PROD-BLOCKER-001-FIX-2 — 8 pestañas públicas.
+   * Visible: Home · Services · Events · Shop · CONFIG · Jobs · Contact · MI PERFIL
+   * CONFIG → ./login.html; MI PERFIL → ./login.html; ocultos: MI PORTAL · DJ TOOLS · STAFF
+   * Sale si hay sesión comprador/cliente o uid activo (no toca artista/staff/owner logueados).
    */
   function mdjRevealGuestRoleEntryNav() {
     try {
       if (document.body.classList.contains('mdj-buyer-session') || document.body.classList.contains('mdj-is-client')) return;
+      if (window.__mdjLastBuyerSession === true) return;
+      if (window.__mdjNavOwnUserId) return;
     } catch (eGuard) { /* ignore */ }
 
-    var cfg = document.getElementById('mainNav-config-link');
-    if (cfg) {
-      var cfgHref = String(cfg.getAttribute('href') || '').trim();
-      if (!cfgHref || cfgHref === '#') cfgHref = './account-profile.html';
-      mdjApplyConfigMainNavLink(true, cfgHref);
+    var nav = document.getElementById('mainNav');
+    if (!nav) return;
+
+    var venues = nav.querySelector('a[data-mdj-nav="venues"]');
+    if (!venues) {
+      venues = document.createElement('a');
+      venues.setAttribute('data-mdj-nav', 'venues');
+      venues.setAttribute('data-i18n', 'nav-rentals');
+      var afterSvc = nav.querySelector('a[data-mdj-nav="services"]');
+      var beforeShop = nav.querySelector('a[data-mdj-nav="shop"]');
+      if (afterSvc && afterSvc.parentNode === nav) {
+        nav.insertBefore(venues, afterSvc.nextSibling);
+      } else if (beforeShop && beforeShop.parentNode === nav) {
+        nav.insertBefore(venues, beforeShop);
+      } else {
+        nav.appendChild(venues);
+      }
+      try {
+        var esVen = document.documentElement && String(document.documentElement.lang || '').toLowerCase().indexOf('es') === 0;
+        venues.textContent = esVen ? 'Eventos' : 'Events';
+      } catch (eVenLbl) {
+        venues.textContent = 'Events';
+      }
     }
+    venues.setAttribute('href', './events.html');
+    mdjRevealMainNavSlot(venues);
 
-    mdjEnsureMiPortalInMainNav('./client-portal.html', null);
+    ['home', 'services', 'shop', 'jobs', 'contact'].forEach(function (key) {
+      nav.querySelectorAll('a[data-mdj-nav="' + key + '"]').forEach(mdjRevealMainNavSlot);
+    });
 
-    var staff = mdjGetMainNavStaffAnchor();
-    if (staff) {
-      mdjApplyStaffNavHref(staff);
-      staff.classList.remove('mdj-mainnav-reserved-slot');
-      staff.style.removeProperty('display');
-      staff.style.removeProperty('visibility');
-      staff.style.removeProperty('pointer-events');
-      staff.removeAttribute('aria-hidden');
-      staff.removeAttribute('tabindex');
+    mdjApplyConfigMainNavLink(true, './login.html');
+    mdjResetMainNavPortalGuestSlot();
+    mdjApplyStaffMainNavLink(false);
+
+    nav.querySelectorAll('a[data-mdj-nav="tools"]').forEach(function (el) {
+      mdjHideMainNavSlot(el);
+      el.style.setProperty('display', 'none', 'important');
+    });
+
+    var miPerfil = document.getElementById('mainNav-guest-mi-perfil-link') || mdjEnsureGuestMiPerfilMainNavLink();
+    if (miPerfil) {
+      var contact = nav.querySelector('a[data-mdj-nav="contact"]');
+      if (contact && contact.parentNode === nav && contact.nextSibling !== miPerfil) {
+        if (contact.nextSibling) nav.insertBefore(miPerfil, contact.nextSibling);
+        else nav.appendChild(miPerfil);
+      }
+      miPerfil.href = './login.html';
     }
   }
 
