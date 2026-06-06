@@ -687,7 +687,7 @@
             <a href="./academia.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-academia">Academia</a>
             <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-tools">DJ Tools</a>
             <a href="./dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="flow-dash">CASH FLOW</a>
-            <a href="./dj-profile.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="menu-account">Mi Perfil</a>
+            <a href="./account-profile.html" class="dj-tab-btn" data-i18n="menu-account">Mi Perfil</a>
             <a href="./admin-dashboard.html" class="dj-tab-btn active" data-mdj-nav="staff">STAFF</a>
             <a href="./dj-profile.html?tab=sft&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-soundfortips">SoundForTips™</a>
         </div>
@@ -1650,19 +1650,20 @@
                 if (!isStaffPortal) {
                     document.documentElement.classList.remove('mdj-admin-gate-pending');
                     const ut = String(session.user?.user_metadata?.user_type || '').toLowerCase();
-                    /* Artista / talento: esta URL es solo back-office staff — llevar al panel correcto (⚙ CONFIG). */
+                    const staffEntryLogin = './login.html?next=./admin-dashboard.html&mdj_staff_entry=1';
+                    /* Sin rol staff: puerta login staff — nunca CONFIG artista (ART-007B). */
                     if (profile && !profileError) {
                         if (roleNorm === 'client' || roleNorm === 'cliente') {
                             window.location.replace('./client-portal.html');
                             return;
                         }
                         if (!STAFF_DJ_ROLES.includes(roleNorm)) {
-                            window.location.replace('./account-settings.html');
+                            window.location.replace(staffEntryLogin);
                             return;
                         }
                     }
                     if (!profile && !profileError && (ut === 'talent' || ut === 'dj' || ut === 'artist')) {
-                        window.location.replace('./account-settings.html');
+                        window.location.replace(staffEntryLogin);
                         return;
                     }
                     if (!profile && !profileError && ut === 'client') {
@@ -1675,8 +1676,8 @@
                         <div>
                             <h1>⛔ ACCESO DENEGADO</h1>
                             <p>No tienes permisos de staff (admin, manager o vendedor) para ver esta área.</p>
-                            <p style="color:rgba(255,255,255,0.55);font-size:14px;max-width:42ch;">Si buscas la configuración de tu cuenta de artista, está en el <strong style="color:#fff;">panel DJ</strong> (Agenda / CONFIG), no aquí.</p>
-                            <p style="margin-top:18px;"><a href="./account-settings.html" style="color: var(--gold, #c5a059); font-weight: 800;">Ir a CONFIG del artista →</a></p>
+                            <p style="color:rgba(255,255,255,0.55);font-size:14px;max-width:42ch;">Usa una cuenta con rol staff o inicia sesión desde la pestaña <strong style="color:#fff;">STAFF</strong> del menú.</p>
+                            <p style="margin-top:18px;"><a href="${staffEntryLogin}" style="color: var(--gold, #c5a059); font-weight: 800;">Entrar con cuenta staff →</a></p>
                             <p style="margin-top:10px;"><a href="./index.html" style="color: #fff;">Volver al Inicio</a></p>
                         </div>
                     </div>
@@ -3579,7 +3580,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
     <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
     <script src="./mdj-owner-tabs-marquee.js?v=20260427-no-marquee"></script>
-    <script src="./mdj-shared-header.js?v=20260602-auth-gate-1"></script>
+    <script src="./mdj-shared-header.js?v=20260603-art-007c-staff-same-entry-1"></script>
   <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
 
 <!-- ══════════════════════════════════════════════════════════════════════

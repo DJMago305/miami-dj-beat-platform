@@ -81,6 +81,10 @@
         var hrefSft = uid
             ? './dj-profile.html?id=' + encodeURIComponent(uid) + '&tab=sft&' + PARAM + '=' + VALUE
             : './dj-profile.html?tab=sft&' + PARAM + '=' + VALUE;
+        var hrefStaff =
+            typeof window.mdjBuildArtistStaffMainNavHref === 'function'
+                ? window.mdjBuildArtistStaffMainNavHref()
+                : './login.html?next=./admin-dashboard.html&mdj_staff_entry=1';
 
         var nav = document.createElement('nav');
         nav.className = 'dj-owner-tabs';
@@ -97,10 +101,18 @@
             '<a href="' + withProfileNav('./dj-tools.html') + '" class="dj-tab-btn' + active('tools') + '" data-i18n="nav-tools">DJ Tools</a>' +
             '<a href="' + hrefFlow + '" class="dj-tab-btn" data-i18n="flow-dash">CASH FLOW</a>' +
             '<a href="' + hrefProfile + '" class="dj-tab-btn" data-i18n="menu-account">Mi Perfil</a>' +
+            '<a href="' + hrefStaff + '" class="dj-tab-btn" data-mdj-nav="staff" data-i18n="nav-staff">STAFF</a>' +
             '<a href="' + hrefSft + '" class="dj-tab-btn" data-i18n="nav-soundfortips">SoundForTips™</a>' +
             '</div>';
 
         header.insertAdjacentElement('afterend', nav);
+
+        try {
+            var staffTab = nav.querySelector('a[data-mdj-nav="staff"]');
+            if (staffTab && typeof window.mdjApplyStaffNavHref === 'function') {
+                window.mdjApplyStaffNavHref(staffTab);
+            }
+        } catch (eStaff) { /* noop */ }
 
         try {
             if (typeof window.mdjOwnerTabsMarqueeRefresh === 'function') {

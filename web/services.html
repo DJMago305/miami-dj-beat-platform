@@ -22,18 +22,19 @@ Riesgo: romper carga del catálogo.
   <link rel="stylesheet" href="./header-unified.css?v=20260603-buyer-nav-config-portal-6" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
     <style id="services-client-nav-gap">
-      /* CORTINA DE BOOT: nav invisible mientras auth resuelve (mismo patrón que events.html). */
+      /* CORTINA DE BOOT: nav invisible mientras auth resuelve (refuerza header-unified.css) */
       body.page-mdj-rentals.mdj-nav-booting #mainNav,
       body.page-mdj-rentals.mdj-nav-booting .header-nav {
         visibility: hidden !important;
         opacity: 0 !important;
         transition: opacity 0.2s ease-in-out;
       }
+      /* Fade-in fluido al remover .mdj-nav-booting (JS lo quita tras checkSessionForNav) */
       body.page-mdj-rentals:not(.mdj-nav-booting) #mainHeader .header-nav {
         display: block !important;
         opacity: 1 !important;
       }
-      body.page-mdj-rentals:not(.mdj-nav-booting) #mainNav {
+      body.page-mdj-rentals:not(.mdj-nav-booting):not(.mdj-artist-header-mode) #mainNav {
         visibility: visible !important;
         display: flex !important;
         opacity: 1 !important;
@@ -3567,7 +3568,7 @@ Riesgo: romper carga del catálogo.
     <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
 
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-      <script src="./mdj-shared-header.js?v=20260603-buyer-nav-order-8"></script>
+      <script src="./mdj-shared-header.js?v=20260603-art-007c-staff-same-entry-1"></script>
   <script id="mdj-vista-cero-guest-nav-restore">
 (function () {
   function mdjVistaCeroGuest() {

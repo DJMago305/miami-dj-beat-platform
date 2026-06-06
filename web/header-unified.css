@@ -1972,7 +1972,7 @@ body.mdj-is-client #mainHeader #mainNav > a#mainNav-config-link[data-mdj-nav="cl
 /*
  * Modo cabecera artista (mdj-shared-header.js → body.mdj-artist-header-mode).
  * Fila 1: ENTRAR oculto hasta .danger (SALIR); cluster auth anclado a la derecha.
- * Fila 2: #mainNav-artist flex-start; #mainNav invitado sin interacción ni CLS.
+ * Fila 2: #mainNav-artist (paridad #mainNav); #mainNav invitado sin interacción ni CLS.
  */
 body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-actions #header-login-btn:not(.danger) {
   display: none !important;
@@ -2040,7 +2040,10 @@ body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-action
     z-index: -1 !important;
   }
 
-  /* Riel artista — flex centrado en contenedor seguro (1200px); sin grid ni spacers. */
+  /*
+   * Riel artista (#mainNav-artist) — paridad geométrica con #mainNav.mdj-mainnav-flex (ART-003).
+   * Mismo column-gap, padding lateral y flex de links; «/» vía ::before + margin-right 0.68em.
+   */
   #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav-artist.mdj-artist-mainnav.nav.top-nav {
     position: relative !important;
     left: auto !important;
@@ -2050,20 +2053,26 @@ body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-action
     display: none !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
-    justify-content: flex-start !important;
     align-items: center !important;
-    gap: 1.5rem !important;
+    align-content: center !important;
+    justify-content: center !important;
     width: 100% !important;
-    max-width: var(--mdj-container-max-width, 1200px) !important;
+    max-width: 100% !important;
     min-width: 0 !important;
     height: var(--mdj-header-unified-r2) !important;
     min-height: var(--mdj-header-unified-r2) !important;
     max-height: var(--mdj-header-unified-r2) !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    padding: 0 20px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: clamp(4px, 0.4vw, 8px) !important;
+    padding-right: clamp(4px, 0.4vw, 8px) !important;
+    scroll-padding-inline: 8px !important;
+    row-gap: 0 !important;
+    column-gap: var(--mdj-nav-gap) !important;
     box-sizing: border-box !important;
     overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
     z-index: 2 !important;
     pointer-events: auto !important;
   }
@@ -2086,47 +2095,73 @@ body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-action
   }
 
   body.mdj-artist-header-mode #mainNav-artist.mdj-artist-mainnav.nav.top-nav:not([hidden]),
-  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+  body.mdj-artist-header-mode:not(.mdj-from-profile)
     #mainHeader.header.mdj-header-unified
     #mainNav-artist.mdj-artist-mainnav.nav.top-nav:not([hidden]) {
     display: flex !important;
   }
 
-  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+  body.mdj-artist-header-mode:not(.mdj-from-profile)
     #mainHeader.header.mdj-header-unified
     #mainNav-artist.mdj-artist-mainnav.nav.top-nav
     > a.mdj-artist-nav-cell,
-  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+  body.mdj-artist-header-mode:not(.mdj-from-profile)
     #mainHeader.header.mdj-header-unified
     #mainNav-artist.mdj-artist-mainnav.nav.top-nav
     > a[data-mdj-artist-nav] {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    flex: 0 1 auto !important;
-    min-width: 0 !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: max-content !important;
     max-width: none !important;
+    flex-shrink: 0 !important;
+    align-self: center !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     padding: var(--mdj-nav-link-py-t) var(--mdj-nav-link-px) var(--mdj-nav-link-py-b) !important;
     box-sizing: border-box !important;
+    text-align: center !important;
     white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    line-height: 1.25 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: none !important;
+    box-shadow: none !important;
     font-size: var(--mdj-nav-font-size) !important;
     font-weight: var(--mdj-nav-font-weight) !important;
     letter-spacing: var(--mdj-nav-letter-spacing) !important;
     text-transform: uppercase !important;
     text-decoration: none !important;
     color: rgba(255, 252, 245, 0.9) !important;
-    position: relative !important;
+    text-shadow: 0 0.5px 1.5px rgba(0, 0, 0, 0.9), 0 0 14px rgba(0, 0, 0, 0.45) !important;
     transition: none !important;
+    position: relative !important;
   }
 
-  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+  body.mdj-artist-header-mode:not(.mdj-from-profile)
     #mainHeader.header.mdj-header-unified
     #mainNav-artist.mdj-artist-mainnav.nav.top-nav
-    > a.mdj-artist-nav-cell:not(:first-of-type)::before,
-  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+    > a[data-mdj-artist-nav='config'] {
+    letter-spacing: 0.05em !important;
+    word-spacing: -0.12em !important;
+  }
+
+  /* ART-003: «/» entre pestañas visibles — mismo patrón que #mainNav.mdj-mainnav-flex. */
+  body.mdj-artist-header-mode:not(.mdj-from-profile)
     #mainHeader.header.mdj-header-unified
     #mainNav-artist.mdj-artist-mainnav.nav.top-nav
-    > a[data-mdj-artist-nav]:not(:first-of-type)::before {
+    > a.mdj-artist-nav-cell
+    ~ a.mdj-artist-nav-cell::before,
+  body.mdj-artist-header-mode:not(.mdj-from-profile)
+    #mainHeader.header.mdj-header-unified
+    #mainNav-artist.mdj-artist-mainnav.nav.top-nav
+    > a[data-mdj-artist-nav]
+    ~ a[data-mdj-artist-nav]::before {
     content: '\002F' !important;
     color: rgba(197, 160, 89, 0.4) !important;
     font-weight: 500 !important;
@@ -2136,11 +2171,22 @@ body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-action
     position: static !important;
   }
 
-  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+  body.mdj-artist-header-mode:not(.mdj-from-profile)
+    #mainHeader.header.mdj-header-unified
+    #mainNav-artist.mdj-artist-mainnav.nav.top-nav
+    > a[data-mdj-artist-nav='home']::before {
+    content: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 0 !important;
+    display: none !important;
+  }
+
+  body.mdj-artist-header-mode:not(.mdj-from-profile)
     #mainHeader.header.mdj-header-unified
     #mainNav-artist.mdj-artist-mainnav.nav.top-nav
     > a.mdj-artist-nav-cell::after,
-  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+  body.mdj-artist-header-mode:not(.mdj-from-profile)
     #mainHeader.header.mdj-header-unified
     #mainNav-artist.mdj-artist-mainnav.nav.top-nav
     > a[data-mdj-artist-nav]::after {
@@ -2157,11 +2203,11 @@ body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-action
     opacity: 1 !important;
   }
 
-  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+  body.mdj-artist-header-mode:not(.mdj-from-profile)
     #mainHeader.header.mdj-header-unified
     #mainNav-artist.mdj-artist-mainnav.nav.top-nav
     > a.mdj-artist-nav-cell.active::after,
-  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+  body.mdj-artist-header-mode:not(.mdj-from-profile)
     #mainHeader.header.mdj-header-unified
     #mainNav-artist.mdj-artist-mainnav.nav.top-nav
     > a[data-mdj-artist-nav].active::after {
@@ -2169,11 +2215,11 @@ body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-action
     box-shadow: 0 0 8px rgba(197, 160, 89, 0.45) !important;
   }
 
-  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+  body.mdj-artist-header-mode:not(.mdj-from-profile)
     #mainHeader.header.mdj-header-unified
     #mainNav-artist.mdj-artist-mainnav.nav.top-nav
     > a.mdj-artist-nav-cell.active,
-  body.mdj-artist-header-mode:not(.mdj-from-profile):not(.page-mdj-events)
+  body.mdj-artist-header-mode:not(.mdj-from-profile)
     #mainHeader.header.mdj-header-unified
     #mainNav-artist.mdj-artist-mainnav.nav.top-nav
     > a[data-mdj-artist-nav].active {
@@ -2181,26 +2227,9 @@ body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-action
   }
 
   /*
-   * events.html — menú home + carruseles sin columnas fantasma del grid artista.
+   * events.html — invitado/comprador: #mainNav guest; carruseles sin columnas fantasma del grid artista.
+   * Sesión artista: #mainNav-artist (ART-004, paridad SERVICIOS) — sin forzar #mainNav aquí.
    */
-  body.page-mdj-events #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav-artist {
-    display: none !important;
-    grid-template-columns: none !important;
-    grid-template-rows: none !important;
-    grid-auto-flow: unset !important;
-  }
-
-  body.page-mdj-events #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    visibility: visible !important;
-    position: relative !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    clip: auto !important;
-  }
-
   /* Sin columnas fantasma (slots reservados / carrusel infinito del menú home). */
   body.page-mdj-events #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.mdj-mainnav-reserved-slot,
   body.page-mdj-events #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.mdj-mi-portal--guest,
@@ -2217,16 +2246,6 @@ body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-action
     pointer-events: none !important;
     position: absolute !important;
     clip: rect(0, 0, 0, 0) !important;
-  }
-
-  body.page-mdj-events.mdj-artist-header-mode #mainHeader .header-nav .container > #mainNav-artist,
-  body.page-mdj-events #mainHeader .header-nav .container > #mainNav-artist {
-    display: none !important;
-  }
-
-  body.page-mdj-events.mdj-artist-header-mode #mainHeader .header-nav .container > #mainNav.mdj-mainnav-flex {
-    display: flex !important;
-    visibility: visible !important;
   }
 
   body.page-mdj-events #app .mdj-artist-nav-spacer,

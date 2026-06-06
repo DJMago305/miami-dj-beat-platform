@@ -440,6 +440,25 @@ function mdjPerformPostAuthRedirect(db, user) {
                 rawRole === 'talent' ||
                 rawRole === 'dj' ||
                 rawRole === 'artist';
+            const staffEntry = params.get('mdj_staff_entry') === '1';
+            const isAdminDashboardNext = /admin-dashboard\.html|\/admin-dashboard/i.test(nextUrl);
+            if (staffEntry && isAdminDashboardNext) {
+                const staffInDb = idn
+                    ? !!idn.staffInDb
+                    : !!(dr0 && ['admin', 'owner', 'manager', 'seller'].indexOf(dr0) >= 0);
+                if (staffInDb) {
+                    const dbRole = idn
+                        ? String(idn.dbRole || '').toLowerCase().trim()
+                        : dr0;
+                    if (dbRole === 'owner') {
+                        window.location.assign('./account-profile.html');
+                        return true;
+                    }
+                    window.location.assign(nextUrl);
+                    return true;
+                }
+                return false;
+            }
             if (
                 isArtistSession &&
                 /account-settings\.html|client-portal\.html|admin-dashboard\.html|\/admin-dashboard/i.test(nextUrl)
