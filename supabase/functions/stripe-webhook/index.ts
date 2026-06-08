@@ -1,7 +1,134 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = { "Access-Control-Allow-Origin": "*" };
+
+type MdjproAutoIssueOutcome =
+    | { outcome: "issued"; licenseId: string; maskedKey?: string; last4?: string }
+    | { outcome: "already_exists"; licenseId: string; last4?: string }
+    | { outcome: "skipped"; reason: string; licenseId?: string; planSource?: string; status?: string }
+    | { outcome: "error"; reason: string };
+
+/**
+ * Auto-issue MDJPRO license after Artist PRO checkout.
+ * Pre-check is mandatory: mdjpro_issue_license rotates keys when a row already exists.
+ */
+async function mdjproAutoIssueArtistProLicense(
+    supabase: SupabaseClient,
+    userId: string,
+    subId: string,
+): Promise<MdjproAutoIssueOutcome> {
+    const uidShort = userId.slice(0, 8);
+
+    const { data: existing, error: fetchErr } = await supabase
+        .from("mdjpro_license_keys")
+        .select("id, status, plan_source, key_last4, mdb_stripe_subscription_id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+    if (fetchErr) {
+        console.error(`[MDJPRO] license pre-check failed | user=${uidShort} | reason=${fetchErr.message}`);
+        return { outcome: "error", reason: fetchErr.message };
+    }
+
+    if (existing) {
+        const planSource = String(existing.plan_source || "");
+        const status = String(existing.status || "");
+
+        if (planSource === "miamidjbeat_pro" && status === "active") {
+            if (subId && !existing.mdb_stripe_subscription_id) {
+                await supabase
+                    .from("mdjpro_license_keys")
+                    .update({ mdb_stripe_subscription_id: subId })
+                    .eq("id", existing.id);
+            }
+
+            await supabase.from("mdjpro_license_events").insert({
+                license_id: existing.id,
+                event_type: "auto_issue_skipped",
+                source: "stripe-webhook",
+                payload: {
+                    user_id: userId,
+                    reason: "already_exists",
+                    plan_source: planSource,
+                    stripe_subscription_id: subId,
+                },
+            }).then(() => { }).catch((e: Error) => {
+                console.warn(`[MDJPRO] auto_issue_skipped event insert: ${e.message}`);
+            });
+
+            console.log(
+                `[MDJPRO] license already exists | user=${uidShort} | license_id=${existing.id}` +
+                (existing.key_last4 ? ` | last4=${existing.key_last4}` : ""),
+            );
+            return {
+                outcome: "already_exists",
+                licenseId: existing.id,
+                last4: existing.key_last4 || undefined,
+            };
+        }
+
+        await supabase.from("mdjpro_license_events").insert({
+            license_id: existing.id,
+            event_type: "auto_issue_skipped",
+            source: "stripe-webhook",
+            payload: {
+                user_id: userId,
+                reason: "existing_row_other_source",
+                plan_source: planSource,
+                status,
+                stripe_subscription_id: subId,
+            },
+        }).then(() => { }).catch((e: Error) => {
+            console.warn(`[MDJPRO] auto_issue_skipped event insert: ${e.message}`);
+        });
+
+        console.log(
+            `[MDJPRO] skip auto-issue | user=${uidShort} | existing plan_source=${planSource} status=${status}`,
+        );
+        return {
+            outcome: "skipped",
+            reason: "existing_row_other_source",
+            licenseId: existing.id,
+            planSource,
+            status,
+        };
+    }
+
+    const { data, error } = await supabase.rpc("mdjpro_issue_license", {
+        p_uid: userId,
+        p_plan_source: "miamidjbeat_pro",
+    });
+
+    if (error) {
+        console.error(`[MDJPRO] issue failed | user=${uidShort} | reason=${error.message}`);
+        return { outcome: "error", reason: error.message };
+    }
+
+    const result = data as Record<string, unknown> | null;
+    if (!result || result.ok !== true) {
+        const reason = result && typeof result.reason === "string" ? result.reason : "unknown";
+        console.error(`[MDJPRO] issue rejected | user=${uidShort} | reason=${reason}`);
+        return { outcome: "error", reason };
+    }
+
+    const licenseId = String(result.license_id || "");
+    const maskedKey = typeof result.masked_key === "string" ? result.masked_key : undefined;
+    const last4FromMask = maskedKey && maskedKey.length >= 4 ? maskedKey.slice(-4) : undefined;
+
+    console.log(
+        `[MDJPRO] license issued | user=${uidShort} | license_id=${licenseId}` +
+        (maskedKey ? ` | masked_key=${maskedKey}` : "") +
+        (last4FromMask && !maskedKey ? ` | last4=${last4FromMask}` : ""),
+    );
+
+    return {
+        outcome: "issued",
+        licenseId,
+        maskedKey,
+        last4: last4FromMask,
+    };
+}
 
 serve(async (req) => {
     if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -185,6 +312,13 @@ serve(async (req) => {
                     subscription_status: "active",
                     next_renewal: renewalDate,
                 }).eq("user_id", userId);
+
+                const mdjproOutcome = await mdjproAutoIssueArtistProLicense(
+                    supabase,
+                    userId as string,
+                    subId as string,
+                );
+                console.log(`[Webhook] mdjpro auto-issue: ${mdjproOutcome.outcome}`);
 
                 // ── Write to payments table for audit/history ──────────────
                 await supabase.from("payments").insert({
