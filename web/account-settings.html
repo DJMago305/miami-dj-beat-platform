@@ -1117,7 +1117,27 @@
     .prod-name { font-weight: 800; font-size: 14px; color: #fff; }
     .prod-badge { font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; }
     .prod-badge.active { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+    .prod-badge.premium { background: linear-gradient(135deg, #c5a059, #f0cc80); color: #000; border: 1px solid rgba(197, 160, 89, 0.45); }
     .prod-badge.lite { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.1); }
+    .mdj-identity-block {
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      background: rgba(197,160,89,0.06);
+      border: 1px solid rgba(197,160,89,0.2);
+      border-radius: 10px;
+    }
+    .mdj-identity-eyebrow {
+      font-size: 10px; font-weight: 800; letter-spacing: 0.18em;
+      color: rgba(197,160,89,0.75); text-transform: uppercase; margin-bottom: 6px;
+    }
+    .mdj-identity-id {
+      font-size: 15px; font-weight: 800; color: #f0cc80;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.06em;
+    }
+    .mdj-identity-meta {
+      margin-top: 8px; font-size: 11px; color: rgba(255,255,255,0.55);
+      display: flex; flex-direction: column; gap: 4px; letter-spacing: 0.04em;
+    }
     .cfg-input {
       width: 100%; background: rgba(255,255,255,0.05);
       border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
@@ -1313,6 +1333,16 @@
     <!-- SPLIT ROW: formulario izquierda | hero panel derecha -->
     <div class="mdj-settings-split-row">
     <div class="mdj-settings-col-form">
+
+    <!-- MiamiDJBeat Permanent ID -->
+    <div class="mdj-identity-block" id="mdj-identity-account-block">
+      <div class="mdj-identity-eyebrow">MiamiDJBeat ID</div>
+      <div class="mdj-identity-id" id="mdj-identity-id-acct">MiamiDJBeat ID pending</div>
+      <div class="mdj-identity-meta">
+        <span id="mdj-identity-role-acct">Role: —</span>
+        <span id="mdj-identity-status-acct">Status: —</span>
+      </div>
+    </div>
 
     <!-- 1. PERSONAL INFORMATION -->
     <div class="system-card">
@@ -1864,15 +1894,24 @@
     <div id="panel-products" class="acct-panel">
       <h1 class="acct-h1">Manage Products</h1>
       <p class="acct-sec-lbl">Product Licenses</p>
+      <div class="mdj-identity-block" id="mdj-identity-products-block">
+        <div class="mdj-identity-eyebrow">MiamiDJBeat ID</div>
+        <div class="mdj-identity-id" id="mdj-identity-id-prod">MiamiDJBeat ID pending</div>
+        <div class="mdj-identity-meta">
+          <span id="mdj-identity-role-prod">Role: —</span>
+          <span id="mdj-identity-status-prod">Status: —</span>
+        </div>
+      </div>
       <div id="products-list">
         <div class="prod-card">
           <div class="prod-name">MDJPRO App</div>
           <span id="mdjpro-plan-badge" class="prod-badge lite">LITE</span>
         </div>
         <div id="mdjpro-license-row" style="display:none;margin-top:10px;padding:10px 14px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.22);border-radius:8px;">
-          <div style="font-size:10px;font-weight:800;letter-spacing:0.18em;color:rgba(197,160,89,0.7);margin-bottom:4px;">NÚMERO DE LICENCIA ACTIVA</div>
+          <div style="font-size:10px;font-weight:800;letter-spacing:0.18em;color:rgba(197,160,89,0.7);margin-bottom:4px;">ACTIVE LICENSE</div>
           <div id="mdjpro-license-number" style="font-size:13px;font-weight:700;color:#f0cc80;letter-spacing:0.06em;font-family:monospace;">—</div>
-          <div id="mdjpro-license-status" style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:4px;letter-spacing:0.1em;"></div>
+          <div id="mdjpro-license-status" style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:6px;letter-spacing:0.06em;"></div>
+          <div id="mdjpro-license-seats" style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:4px;letter-spacing:0.06em;"></div>
         </div>
       </div>
       <div id="products-add-section">
@@ -4259,6 +4298,9 @@
           loadSettingsForm().catch(function (e) { console.warn('[agenda] load error:', e); });
         }
         if (id === 'rewards') loadRewardsPanel();
+        if (id === 'account' || id === 'products') {
+          if (typeof loadMdjIdentityPanels === 'function') loadMdjIdentityPanels();
+        }
         if (id === 'products') loadProductsPanel();
         if (id === 'notifications') loadInboxPanel();
         if (id === 'soundfortips') loadSftPanel();
@@ -4471,38 +4513,125 @@
       }
       window.loadRewardsPanel = loadRewardsPanel;
 
-      /* ── Products panel — activa licencia para owner / PRO ── */
+      /* ── MiamiDJBeat Permanent ID — mdj_identity_snapshot() ── */
+      var _mdjIdentityCache = null;
+
+      function _applyMdjIdentityPending() {
+        ['acct', 'prod'].forEach(function (suffix) {
+          var idEl = document.getElementById('mdj-identity-id-' + suffix);
+          var roleEl = document.getElementById('mdj-identity-role-' + suffix);
+          var statEl = document.getElementById('mdj-identity-status-' + suffix);
+          if (idEl) idEl.textContent = 'MiamiDJBeat ID pending';
+          if (roleEl) roleEl.textContent = 'Role: —';
+          if (statEl) statEl.textContent = 'Status: —';
+        });
+      }
+
+      function _applyMdjIdentityData(data) {
+        var mdjId = (data && data.mdj_user_id) ? String(data.mdj_user_id) : 'MiamiDJBeat ID pending';
+        var roleLabel = (data && data.role_label) ? String(data.role_label) : '—';
+        var acctStatus = (data && data.account_status) ? String(data.account_status) : '—';
+        ['acct', 'prod'].forEach(function (suffix) {
+          var idEl = document.getElementById('mdj-identity-id-' + suffix);
+          var roleEl = document.getElementById('mdj-identity-role-' + suffix);
+          var statEl = document.getElementById('mdj-identity-status-' + suffix);
+          if (idEl) idEl.textContent = mdjId;
+          if (roleEl) roleEl.textContent = 'Role: ' + roleLabel;
+          if (statEl) statEl.textContent = 'Status: ' + acctStatus;
+        });
+      }
+
+      async function loadMdjIdentityPanels(forceRefresh) {
+        try {
+          if (_mdjIdentityCache && !forceRefresh) {
+            _applyMdjIdentityData(_mdjIdentityCache);
+            return;
+          }
+          var sb = window.getSupabaseClient ? window.getSupabaseClient() : (window._supabase || window._supabaseClient);
+          if (!sb) {
+            _applyMdjIdentityPending();
+            return;
+          }
+          var sessRes = await sb.auth.getSession();
+          var session = sessRes && sessRes.data && sessRes.data.session;
+          if (!session) {
+            _applyMdjIdentityPending();
+            return;
+          }
+          var snapRes = await sb.rpc('mdj_identity_snapshot');
+          var snap = snapRes && snapRes.data;
+          var snapErr = snapRes && snapRes.error;
+          if (snapErr || !snap || snap.ok !== true) {
+            console.warn('[identity] mdj_identity_snapshot:', snapErr || snap);
+            _applyMdjIdentityPending();
+            return;
+          }
+          _mdjIdentityCache = snap;
+          _applyMdjIdentityData(snap);
+        } catch (err) {
+          console.warn('[identity] Error loading MiamiDJBeat ID:', err);
+          _applyMdjIdentityPending();
+        }
+      }
+      window.loadMdjIdentityPanels = loadMdjIdentityPanels;
+
+      setTimeout(function () {
+        var acctPanel = document.getElementById('panel-account');
+        if (acctPanel && acctPanel.classList.contains('active')) {
+          loadMdjIdentityPanels();
+        }
+      }, 600);
+
+      /* ── Products panel — MDJPRO license via mdjpro_license_snapshot() ── */
       async function loadProductsPanel() {
         try {
+          if (typeof loadMdjIdentityPanels === 'function') {
+            await loadMdjIdentityPanels();
+          }
           var sb = window.getSupabaseClient ? window.getSupabaseClient() : (window._supabase || window._supabaseClient);
           if (!sb) return;
           var sessRes = await sb.auth.getSession();
           var session = sessRes && sessRes.data && sessRes.data.session;
           if (!session) return;
-          var uid = session.user.id;
 
-          var { data: djRow } = await sb
-            .from('dj_profiles')
-            .select('role, mdj_artist_commercial_tier, is_premium, plan')
-            .eq('user_id', uid)
-            .maybeSingle();
-
-          var _role = (djRow && djRow.role) ? String(djRow.role).toLowerCase() : '';
-          var _tier = djRow ? Number(djRow.mdj_artist_commercial_tier || 0) : 0;
-          var _isPremium = !!(djRow && (djRow.is_premium || djRow.plan === 'pro' || djRow.plan === 'ELITE'));
-          var _isOwner = (_role === 'owner');
-          var _isPro = _isOwner || _tier >= 1 || _isPremium;
-
-          /* Badge MDJPRO App */
           var badge = document.getElementById('mdjpro-plan-badge');
+          var licRow = document.getElementById('mdjpro-license-row');
+          var licNum = document.getElementById('mdjpro-license-number');
+          var licStat = document.getElementById('mdjpro-license-status');
+          var licSeats = document.getElementById('mdjpro-license-seats');
+          var addSect = document.getElementById('products-add-section');
+
+          var snapRes = await sb.rpc('mdjpro_license_snapshot');
+          var snap = snapRes && snapRes.data;
+          var snapErr = snapRes && snapRes.error;
+
+          if (snapErr || !snap || snap.ok !== true) {
+            console.warn('[products] mdjpro_license_snapshot:', snapErr || snap);
+            if (badge) {
+              badge.textContent = 'LITE';
+              badge.className = 'prod-badge lite';
+              badge.style.cssText = '';
+            }
+            if (licRow) licRow.style.display = 'none';
+            if (addSect) addSect.style.display = '';
+            return;
+          }
+
+          var eff = snap.effective || {};
+          var lic = snap.license || null;
+          var isPremium = eff.effective_premium === true;
+          var seatsAllowed = lic && lic.seats_allowed != null
+            ? Number(lic.seats_allowed)
+            : (eff.seats_allowed != null ? Number(eff.seats_allowed) : 2);
+          var statusRaw = String((lic && lic.status) || eff.license_status || 'suspended').toLowerCase();
+          var statusLabel = statusRaw === 'active'
+            ? 'Active'
+            : statusRaw.charAt(0).toUpperCase() + statusRaw.slice(1);
+
           if (badge) {
-            if (_isOwner) {
-              badge.textContent = '✦ OWNER · PRO';
-              badge.className = 'prod-badge';
-              badge.style.cssText = 'background:linear-gradient(135deg,#c5a059,#f0cc80);color:#000;font-weight:900;';
-            } else if (_isPro) {
-              badge.textContent = '⭐ PRO';
-              badge.className = 'prod-badge active';
+            if (isPremium) {
+              badge.textContent = 'MDJPRO PREMIUM';
+              badge.className = 'prod-badge premium';
               badge.style.cssText = '';
             } else {
               badge.textContent = 'LITE';
@@ -4511,25 +4640,20 @@
             }
           }
 
-          /* Fila de licencia activa — solo para owner */
-          var licRow = document.getElementById('mdjpro-license-row');
-          var licNum  = document.getElementById('mdjpro-license-number');
-          var licStat = document.getElementById('mdjpro-license-status');
-          var addSect = document.getElementById('products-add-section');
-
-          if (_isOwner && licRow && licNum) {
-            /* Obtener MDJB code */
-            var { data: mdjbRow } = await sb
-              .from('mdjb_account_ids')
-              .select('mdjb_id')
-              .eq('user_id', uid)
-              .maybeSingle();
-            var _code = (mdjbRow && mdjbRow.mdjb_id) ? mdjbRow.mdjb_id : '—';
-            licNum.textContent  = _code;
-            if (licStat) licStat.textContent = '✔ ACTIVADA · ACCESO COMPLETO';
+          if (isPremium && licRow) {
             licRow.style.display = 'block';
-            /* Ocultar sección "Add license" — owner no necesita ingresar código */
-            if (addSect) addSect.style.display = 'none';
+            if (licNum) {
+              if (lic && lic.license_display) {
+                licNum.textContent = lic.license_display;
+              } else if (lic && lic.key_prefix && lic.key_last4) {
+                licNum.textContent = lic.key_prefix + '-****-****-****-' + lic.key_last4;
+              } else {
+                licNum.textContent = 'License pending issuance';
+              }
+            }
+            if (licStat) licStat.textContent = 'Status: ' + statusLabel;
+            if (licSeats) licSeats.textContent = 'Seats: ' + seatsAllowed;
+            if (addSect) addSect.style.display = lic ? 'none' : '';
           } else {
             if (licRow) licRow.style.display = 'none';
             if (addSect) addSect.style.display = '';
