@@ -46,7 +46,95 @@ sequenceDiagram
   end
 ```
 
-**Not in Fase 1:** email delivery, one-time key reveal UI, `mdj-activate`, `mdj-heartbeat`, auto-suspend on cancel.
+**Not in Fase 1:** email delivery, one-time key reveal UI, auto-suspend on cancel.
+
+---
+
+## 2A. SQL activate / heartbeat / revoke
+
+**File:** `supabase/migrations/20260608170000_mdjpro_activate_heartbeat.sql`  
+**Status:** Applied in prod (manual SQL). Repo tracks migration for git history.
+
+| RPC | Caller | Purpose |
+|-----|--------|---------|
+| `mdjpro_activate_device(...)` | service_role | License key hash lookup → lease create/refresh; 7-day `valid_until` |
+| `mdjpro_heartbeat(...)` | service_role | Extend lease TTL; gate via `mdjpro_effective_status` |
+| `mdjpro_revoke_device(...)` | service_role | Revoke lease; frees seat |
+
+**Events:** `device_activated`, `device_reactivated`, `heartbeat_ok`, `device_revoked`, `activation_rejected`.
+
+**Error codes (JSON `reason`):** `invalid_key`, `invalid_fingerprint`, `rate_limited`, `license_revoked`, `license_suspended`, `license_expired`, `seats_exhausted`, `lease_not_found`, `lease_revoked`, `lease_fingerprint_mismatch`, `lease_expired`, `forbidden`.
+
+**v1 accepted risk:** every successful heartbeat inserts `heartbeat_ok` (no throttle yet).
+
+**Security:** SECURITY DEFINER; REVOKE PUBLIC; GRANT service_role only; license key never stored or returned in plaintext.
+
+---
+
+## 2B. Edge Functions activate / heartbeat (local)
+
+**Files:**
+
+- `supabase/functions/mdj-activate/index.ts` → `rpc('mdjpro_activate_device', …)`
+- `supabase/functions/mdj-heartbeat/index.ts` → `rpc('mdjpro_heartbeat', …)`
+
+**Auth:** Mac app calls with **anon key** in `apikey` header; Edge uses `SUPABASE_SERVICE_ROLE_KEY` for RPC. Deploy with **`--no-verify-jwt`** (license key is the credential, not user JWT).
+
+**Env (Edge secrets):** `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (auto-injected on Supabase).
+
+### mdj-activate
+
+`POST` JSON:
+
+```json
+{
+  "license_key": "MDJP-…",
+  "device_fingerprint": "…",
+  "hwid_hash": "optional",
+  "device_label": "optional",
+  "app_version": "2.0.0",
+  "os_version": "macOS …"
+}
+```
+
+Success: **200** + RPC JSON (`ok: true`, `lease_id`, `valid_until`, …).  
+Never logs `license_key`.
+
+### mdj-heartbeat
+
+`POST` JSON:
+
+```json
+{
+  "lease_id": "MDJL-…",
+  "device_fingerprint": "…",
+  "app_version": "2.0.0",
+  "os_version": "macOS …"
+}
+```
+
+Success: **200** + RPC JSON. Extends 7-day `valid_until`.
+
+### HTTP mapping (RPC `reason` → status)
+
+| Reason | HTTP |
+|--------|------|
+| `ok: true` | 200 |
+| `invalid_key`, `invalid_fingerprint`, invalid body | 400 |
+| `forbidden`, license/lease gate failures | 403 |
+| `lease_not_found` | 404 |
+| `seats_exhausted` | 409 |
+| `rate_limited` | 429 |
+| RPC/Postgres failure | 500 |
+
+**Safe logs:** `event`, `reason`, `lease_id`, fingerprint **first 8 chars** only.
+
+**Deploy (Captain OK only):**
+
+```bash
+supabase functions deploy mdj-activate --no-verify-jwt
+supabase functions deploy mdj-heartbeat --no-verify-jwt
+```
 
 ---
 
@@ -155,7 +243,8 @@ Dashboard may still show `hardware_token`; webhook does not populate it.
 
 | Phase | Scope |
 |-------|--------|
-| **2** | SQL + Edge: `mdj-activate`, `mdj-heartbeat`, lease TTL |
+| **2A** | SQL RPCs (done) |
+| **2B** | Edge `mdj-activate`, `mdj-heartbeat` (local code; deploy pending) |
 | **3** | One-time key reveal (account-settings ticket) + optional Resend email |
 | **4** | Standalone checkout + `mdjpro_standalone` issuance |
 | **5** | Webhook suspend/reactivate on cancel / `past_due` |
