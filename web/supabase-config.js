@@ -75,7 +75,7 @@ window.mdjFanPublicProfileUrl = function (djUserId, opts) {
 
 /** Instalador MDJPRO macOS (Storage público `installers/`). */
 window.MDB_INSTALLER_MAC_PKG_URL =
-    window.mdbSupabaseOrigin() + "/storage/v1/object/public/installers/mdjpro_V.2.00.pkg";
+    window.mdbSupabaseOrigin() + "/storage/v1/object/public/installers/MDJPRO_Installer.pkg";
 
 (function mdjInstallerMacLinks() {
     function apply() {
