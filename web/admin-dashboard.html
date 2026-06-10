@@ -741,6 +741,11 @@
                   <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
                   Contenido y Precios
                 </a>
+                <a href="#mdjpro-downloads-panel" id="sidebar-mdjpro-downloads" class="side-link"
+                   style="display:none;align-items:center;gap:9px;color:#c5a059;border-left:2px solid rgba(197,160,89,0.35);">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  MDJPRO Descargas
+                </a>
                 <a href="#apps" class="side-link" style="display:flex;align-items:center;gap:9px;">
                   <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/></svg>
                   Hosting de Apps
@@ -1214,6 +1219,52 @@
                             <button class="btn primary" onclick="savePlatformSettings()">🎁 Guardar QR Promo</button>
                             <small id="qr-save-status" style="color:var(--admin-accent);display:none;">✅
                                 Actualizado</small>
+                        </div>
+                    </div>
+
+                    <!-- MDJPRO downloads catalog — Owner editable (downloads.html) -->
+                    <div id="mdjpro-downloads-panel" style="display:none;margin-top:28px;border-top:1px solid var(--line);padding-top:22px;">
+                        <h4 style="color:var(--gold);margin-bottom:4px;">📦 MDJPRO — Página de Descargas</h4>
+                        <p class="fineprint" style="margin-bottom:16px;">
+                            Edita versión y novedades en vivo. El peso del .pkg se calcula automático desde Supabase/local.
+                            Plataforma Mac hasta release Windows.
+                        </p>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:14px;">
+                            <div class="tile">
+                                <label class="fineprint">Versión pública</label>
+                                <input type="text" id="mdjpro-dl-version" class="price-input" placeholder="V.2.1.0" style="margin-top:6px;width:100%;">
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Fecha publicación</label>
+                                <input type="date" id="mdjpro-dl-released" class="price-input" style="margin-top:6px;width:100%;">
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Plataforma</label>
+                                <input type="text" id="mdjpro-dl-platform" class="price-input" value="mac" readonly style="margin-top:6px;width:100%;opacity:0.7;">
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                            <div class="tile">
+                                <label class="fineprint">Título novedades (ES) — MAYÚSCULAS</label>
+                                <input type="text" id="mdjpro-dl-title-es" class="price-input" placeholder="NOVEDADES EN MDJPRO V.2.1.0" style="margin-top:6px;width:100%;text-transform:uppercase;">
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Release title (EN)</label>
+                                <input type="text" id="mdjpro-dl-title-en" class="price-input" placeholder="WHAT'S NEW IN MDJPRO V.2.1.0" style="margin-top:6px;width:100%;">
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Novedades (ES) — una por línea</label>
+                                <textarea id="mdjpro-dl-items-es" rows="8" class="price-input" style="margin-top:6px;width:100%;resize:vertical;font-size:13px;line-height:1.45;"></textarea>
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Release notes (EN) — one per line</label>
+                                <textarea id="mdjpro-dl-items-en" rows="8" class="price-input" style="margin-top:6px;width:100%;resize:vertical;font-size:13px;line-height:1.45;"></textarea>
+                            </div>
+                        </div>
+                        <div style="margin-top:14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+                            <button class="btn primary" type="button" onclick="saveMdjproDownloadsCatalog()">💾 Guardar MDJPRO Descargas</button>
+                            <small id="mdjpro-dl-save-status" style="color:var(--admin-accent);display:none;">✅ Publicado en Supabase</small>
+                            <a href="./downloads.html" target="_blank" rel="noopener" class="btn secondary small">Ver downloads.html ↗</a>
                         </div>
                     </div>
 
@@ -2033,6 +2084,91 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 };
 
 
+                // ── MDJPRO downloads catalog (Owner → platform_settings) ─────
+                function mdjproLinesFromTextarea(id) {
+                    const el = document.getElementById(id);
+                    if (!el) return [];
+                    return String(el.value || '')
+                        .split(/\r?\n/)
+                        .map(function (s) { return s.trim(); })
+                        .filter(Boolean);
+                }
+
+                function mdjproFillDownloadsForm(catalog) {
+                    if (!catalog) return;
+                    const set = (id, val) => {
+                        const el = document.getElementById(id);
+                        if (el && val != null) el.value = val;
+                    };
+                    set('mdjpro-dl-version', catalog.version || 'V.2.1.0');
+                    set('mdjpro-dl-released', catalog.released || '');
+                    set('mdjpro-dl-platform', catalog.platform || 'mac');
+                    const notes = catalog.releaseNotes || {};
+                    const titles = notes.title || {};
+                    const items = notes.items || {};
+                    set('mdjpro-dl-title-es', titles.es || '');
+                    set('mdjpro-dl-title-en', titles.en || '');
+                    set('mdjpro-dl-items-es', (items.es || []).join('\n'));
+                    set('mdjpro-dl-items-en', (items.en || []).join('\n'));
+                }
+
+                window.loadMdjproDownloadsCatalog = async () => {
+                    const panel = document.getElementById('mdjpro-downloads-panel');
+                    if (!panel || panel.style.display === 'none') return;
+                    const { data, error } = await supabase
+                        .from('platform_settings')
+                        .select('value')
+                        .eq('key', 'mdjpro_downloads_catalog')
+                        .maybeSingle();
+                    if (error) {
+                        console.warn('[admin] mdjpro_downloads_catalog:', error.message);
+                        return;
+                    }
+                    if (!data || !data.value) return;
+                    try {
+                        mdjproFillDownloadsForm(JSON.parse(data.value));
+                    } catch (e) {
+                        console.warn('[admin] mdjpro_downloads_catalog parse:', e);
+                    }
+                };
+
+                window.saveMdjproDownloadsCatalog = async () => {
+                    if (String(window._mdjAdminRole || '').toLowerCase() !== 'owner') {
+                        alert('Solo Owner puede editar MDJPRO Descargas.');
+                        return;
+                    }
+                    const version = (document.getElementById('mdjpro-dl-version') || {}).value || 'V.2.1.0';
+                    const released = (document.getElementById('mdjpro-dl-released') || {}).value || '';
+                    const titleEs = String((document.getElementById('mdjpro-dl-title-es') || {}).value || '').toUpperCase();
+                    const titleEn = (document.getElementById('mdjpro-dl-title-en') || {}).value || '';
+                    const catalog = {
+                        version: version.trim(),
+                        released: released.trim(),
+                        platform: 'mac',
+                        releaseNotes: {
+                            title: { es: titleEs, en: titleEn.trim() },
+                            items: {
+                                es: mdjproLinesFromTextarea('mdjpro-dl-items-es'),
+                                en: mdjproLinesFromTextarea('mdjpro-dl-items-en')
+                            }
+                        }
+                    };
+                    const { error } = await supabase.from('platform_settings').upsert({
+                        key: 'mdjpro_downloads_catalog',
+                        value: JSON.stringify(catalog),
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'key' });
+                    const status = document.getElementById('mdjpro-dl-save-status');
+                    if (error) {
+                        alert('Error guardando MDJPRO Descargas: ' + error.message);
+                        return;
+                    }
+                    if (status) {
+                        status.style.display = 'inline';
+                        setTimeout(function () { status.style.display = 'none'; }, 3500);
+                    }
+                };
+
                 // ── Platform Settings (Supabase) ──────────────────────────────
                 window.savePlatformSettings = async () => {
                     const inputs = document.querySelectorAll('.settings-input');
@@ -2442,8 +2578,14 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     /* Gate: "Crear Perfiles" y "Promociones" solo para owner */
                     const cpLink  = document.getElementById('sidebar-create-profiles');
                     const promLink = document.getElementById('sidebar-promociones');
+                    const mdjDlLink = document.getElementById('sidebar-mdjpro-downloads');
+                    const mdjDlPanel = document.getElementById('mdjpro-downloads-panel');
+                    window._mdjAdminRole = rn;
                     if (cpLink)   cpLink.style.display   = (rn === 'owner') ? 'flex' : 'none';
                     if (promLink) promLink.style.display  = (rn === 'owner') ? 'flex' : 'none';
+                    if (mdjDlLink) mdjDlLink.style.display = (rn === 'owner') ? 'flex' : 'none';
+                    if (mdjDlPanel) mdjDlPanel.style.display = (rn === 'owner') ? 'block' : 'none';
+                    if (rn === 'owner') loadMdjproDownloadsCatalog();
                     applyRoleRestrictions();
                 }
 
@@ -2474,6 +2616,9 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 await loadAdminData();
                 loadSavedPrices();
                 loadPlatformSettings();
+                if (String(window._mdjAdminRole || '').toLowerCase() === 'owner') {
+                    loadMdjproDownloadsCatalog();
+                }
 
                 /* ── Badge campanita inbox: tickets no leídos ── */
                 setTimeout(async function () {

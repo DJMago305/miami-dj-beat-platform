@@ -368,25 +368,61 @@ serve(async (req) => {
                 const subId = invoice.subscription;
                 const periodEnd = new Date(invoice.period_end * 1000).toISOString().split("T")[0];
 
+                const { data: paidProfile } = await supabase
+                    .from("dj_profiles")
+                    .select("user_id")
+                    .eq("subscription_id", subId)
+                    .maybeSingle();
+
                 await supabase.from("dj_profiles").update({
                     subscription_status: "active",
                     next_renewal: periodEnd,
                 }).eq("subscription_id", subId);
+
+                if (paidProfile?.user_id) {
+                    const restore = await supabase.rpc("mdjpro_apply_subscription_restored", {
+                        p_uid: paidProfile.user_id,
+                    });
+                    console.log(`[MDJPRO] subscription restored | user=${String(paidProfile.user_id).slice(0, 8)} | ok=${restore.error ? "error" : "ok"}`);
+                }
                 break;
             }
 
-            // ── Payment failed ──────────────────────────────────
+            // ── Payment failed → pause MDJPRO (heartbeat blocks; leases kept until cancel) ──
             case "invoice.payment_failed": {
                 const invoice = event.data.object;
+                const subId = invoice.subscription;
+
+                const { data: pastProfile } = await supabase
+                    .from("dj_profiles")
+                    .select("user_id")
+                    .eq("subscription_id", subId)
+                    .maybeSingle();
+
                 await supabase.from("dj_profiles").update({
                     subscription_status: "past_due",
-                }).eq("subscription_id", invoice.subscription);
+                }).eq("subscription_id", subId);
+
+                if (pastProfile?.user_id) {
+                    const lapse = await supabase.rpc("mdjpro_apply_subscription_lapse", {
+                        p_uid: pastProfile.user_id,
+                        p_mode: "pause",
+                    });
+                    console.log(`[MDJPRO] subscription paused | user=${String(pastProfile.user_id).slice(0, 8)} | ok=${lapse.error ? "error" : "ok"}`);
+                }
                 break;
             }
 
-            // ── Subscription cancelled → downgrade to LITE ──────
+            // ── Subscription cancelled → downgrade to LITE + revoke MDJPRO device leases ──
             case "customer.subscription.deleted": {
                 const sub = event.data.object;
+
+                const { data: cancelledProfile } = await supabase
+                    .from("dj_profiles")
+                    .select("user_id")
+                    .eq("subscription_id", sub.id)
+                    .maybeSingle();
+
                 await supabase.from("dj_profiles").update({
                     plan: "LITE",
                     subscription_status: "cancelled",
@@ -394,16 +430,50 @@ serve(async (req) => {
                     next_renewal: null,
                 }).eq("subscription_id", sub.id);
 
+                if (cancelledProfile?.user_id) {
+                    const lapse = await supabase.rpc("mdjpro_apply_subscription_lapse", {
+                        p_uid: cancelledProfile.user_id,
+                        p_mode: "revoke",
+                    });
+                    console.log(`[MDJPRO] subscription revoked | user=${String(cancelledProfile.user_id).slice(0, 8)} | ok=${lapse.error ? "error" : "ok"}`);
+                }
+
                 console.log(`⬇️ Downgraded to LITE: sub ${sub.id}`);
                 break;
             }
 
-            // ── Subscription updated (e.g., trial end) ──────────
+            // ── Subscription updated (e.g., trial end, past_due recovery) ──────────
             case "customer.subscription.updated": {
                 const sub = event.data.object;
+
+                const { data: updatedProfile } = await supabase
+                    .from("dj_profiles")
+                    .select("user_id")
+                    .eq("subscription_id", sub.id)
+                    .maybeSingle();
+
                 await supabase.from("dj_profiles").update({
                     subscription_status: sub.status,
                 }).eq("subscription_id", sub.id);
+
+                if (updatedProfile?.user_id) {
+                    const st = String(sub.status || "").toLowerCase();
+                    if (st === "active" || st === "trialing") {
+                        await supabase.rpc("mdjpro_apply_subscription_restored", {
+                            p_uid: updatedProfile.user_id,
+                        });
+                    } else if (st === "past_due" || st === "unpaid") {
+                        await supabase.rpc("mdjpro_apply_subscription_lapse", {
+                            p_uid: updatedProfile.user_id,
+                            p_mode: "pause",
+                        });
+                    } else if (st === "canceled" || st === "cancelled" || st === "incomplete_expired") {
+                        await supabase.rpc("mdjpro_apply_subscription_lapse", {
+                            p_uid: updatedProfile.user_id,
+                            p_mode: "revoke",
+                        });
+                    }
+                }
                 break;
             }
         }
