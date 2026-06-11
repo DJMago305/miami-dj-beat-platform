@@ -204,6 +204,67 @@
             margin-top: 8px;
             break-inside: avoid;
         }
+        body.downloads-page .dl-install-help {
+            max-width: min(1720px, 96vw);
+            margin: 20px auto 0;
+            padding: 18px 22px 20px;
+            text-align: left;
+            background: rgba(255, 153, 0, 0.08);
+            border: 1px solid rgba(255, 153, 0, 0.35);
+            border-radius: 12px;
+            box-sizing: border-box;
+        }
+        body.downloads-page .dl-install-help h3 {
+            margin: 0 0 8px;
+            font-size: 15px;
+            font-weight: 800;
+            color: #ff9900;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        body.downloads-page .dl-install-help p {
+            margin: 0 0 12px;
+            font-size: 14px;
+            line-height: 1.55;
+            opacity: 0.9;
+        }
+        body.downloads-page .dl-install-help ol {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 14px;
+            line-height: 1.65;
+            opacity: 0.92;
+        }
+        body.downloads-page .dl-install-help li + li {
+            margin-top: 8px;
+        }
+        body.downloads-page .dl-install-help strong {
+            color: #fff;
+        }
+        body.downloads-page .dl-install-cmd {
+            margin: 12px 0 10px;
+            padding: 14px 16px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #e8f4ff;
+            background: rgba(0, 0, 0, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            user-select: all;
+        }
+        body.downloads-page .dl-install-cmd-note {
+            margin: 0;
+            font-size: 12px;
+            opacity: 0.75;
+            line-height: 1.5;
+        }
+        body.downloads-page .dl-install-cmd-note code {
+            font-size: 11px;
+            color: #ffcc66;
+        }
     </style>
 </head>
 
@@ -322,9 +383,7 @@
                                         d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
                                 </svg>
                             </span>
-                            <span data-i18n="dl-warning-macos" style="color: #e0e0e0; font-size: 14px;">Using macOS 26
-                                Tahoe? Please read our <a href="#"
-                                    style="color:#fff; text-decoration:underline;">support article</a>.</span>
+                            <span data-i18n="dl-warning-macos" style="color: #e0e0e0; font-size: 14px;">macOS may show a security alert on first open. This is official Miami DJ Beat software — <a href="#dl-mac-install-help" style="color:#fff; text-decoration:underline;">see install steps below</a>.</span>
                         </div>
 
                         <ul class="specs-list">
@@ -341,6 +400,19 @@
                             <span data-i18n="dash-download-btn">Download MDJPRO (.pkg)</span>
                         </a>
                     </div>
+                </div>
+
+                <div id="dl-mac-install-help" class="dl-install-help">
+                    <h3 data-i18n="dl-install-title">How to install on Mac (security alert)</h3>
+                    <p data-i18n="dl-install-intro">If macOS says it cannot verify the installer, do not trash it — follow these steps. MDJPRO is published by Miami DJ Beat from miamidjbeat.com.</p>
+                    <ol>
+                        <li data-i18n="dl-install-step1"><strong>Quit MDJ PRO</strong> if it is open (Cmd+Q).</li>
+                        <li data-i18n="dl-install-step2"><strong>Try first:</strong> right-click <strong>MDJPRO V.x.pkg</strong> in Downloads → <strong>Open</strong> → <strong>Open</strong> again.</li>
+                        <li data-i18n="dl-install-step3"><strong>If macOS blocks you</strong> (no “Open Anyway”): open <strong>Terminal</strong> and run the command in the box below (official Miami DJ Beat installer).</li>
+                        <li data-i18n="dl-install-step4">Enter your Mac password when asked, wait for “Success”, then open <strong>MDJ PRO</strong> from Applications.</li>
+                    </ol>
+                    <pre id="dl-install-cmd" class="dl-install-cmd" aria-label="Terminal install command">xattr -d com.apple.quarantine ~/Downloads/MDJPRO\ V.2.6.0.pkg 2>/dev/null; sudo installer -pkg ~/Downloads/MDJPRO\ V.2.6.0.pkg -target /</pre>
+                    <p class="dl-install-cmd-note" data-i18n="dl-install-cmd-note">If your file has a different name, change the path after <code>-pkg</code>. Drag the .pkg into Terminal to paste the correct path.</p>
                 </div>
 
                 <div id="dl-release-notes" class="dl-release-notes-strip" hidden aria-live="polite">
@@ -729,7 +801,7 @@
         </div>
     </div>
     <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
-    <script src="./js/downloads.js?v=20260609-dl-catalog"></script>
+    <script src="./js/downloads.js?v=20260610-dl-catalog-v250"></script>
     <script>
         (function mdjDownloadsMockupInit() {
             var img = document.getElementById('mdjpro-laptop-mockup');
