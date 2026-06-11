@@ -69,7 +69,7 @@ async function pkgContentLength(pkgUrl) {
 
 async function triggerPkgDownload(pkgUrl, filename) {
     if (!pkgUrl || pkgUrl === '#') return false;
-    var name = filename || 'MDJPRO V.2.1.0.pkg';
+    var name = filename || 'MDJPRO V.2.6.0.pkg';
     try {
         var res = await fetch(pkgUrl, { cache: 'no-store' });
         if (!res.ok) throw new Error('pkg fetch ' + res.status);
@@ -104,7 +104,7 @@ async function resolveMacInstallerPkgUrl(fallbackFromJson, catalog) {
         ? window.MDB_INSTALLER_MAC_PKG_URL
         : fallbackFromJson;
     var app = (catalog && catalog.app) || 'MDJPRO';
-    var version = (catalog && catalog.version) || 'V.2.1.0';
+    var version = (catalog && catalog.version) || 'V.2.6.0';
     var filename = buildPkgDownloadFilename(app, version);
     var localVersioned = pageUrl('./installers/' + encodeURIComponent(filename));
     var localLegacy = pageUrl('./installers/MDJPRO_Installer.pkg');
@@ -283,7 +283,7 @@ var _downloadsCatalogCache = null;
 
 async function loadDownloadData() {
     try {
-        var response = await fetch(pageUrl('./data/downloads.json?v=20260609-dl-catalog'));
+        var response = await fetch(pageUrl('./data/downloads.json?v=20260610-dl-catalog-v260'));
         var base = await response.json();
         var override = await fetchMdjproDownloadsOverride();
         var data = mergeDownloadsCatalog(base, override);
@@ -298,6 +298,14 @@ async function loadDownloadData() {
         var platformEl = document.getElementById('app-platform');
         if (platformEl) {
             platformEl.textContent = formatPlatformLabel(data.platform);
+        }
+
+        var installCmd = document.getElementById('dl-install-cmd');
+        if (installCmd) {
+            var pkgFile = buildPkgDownloadFilename(data.app, data.version);
+            var pkgPath = '$HOME/Downloads/' + pkgFile.replace(/ /g, '\\ ');
+            installCmd.textContent =
+                'xattr -d com.apple.quarantine ' + pkgPath + ' 2>/dev/null; sudo installer -pkg ' + pkgPath + ' -target /';
         }
 
         renderReleaseNotes(data);

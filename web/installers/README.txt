@@ -8,11 +8,11 @@ Cadena obligatoria (no saltar pasos):
   3. localhost:8080/downloads.html — probar descarga.
   4. Supabase Storage bucket «installers» — subir MDJPRO_Installer.pkg (prod).
 
-Versión actual: V.2.1.0
+Versión actual: V.2.6.0
 
 Archivos que debe dejar mdj-release.sh en esta carpeta:
 
-  MDJPRO V.2.1.0.pkg          (nombre con versión)
+  MDJPRO V.2.6.0.pkg          (nombre con versión)
   MDJPRO_Installer.pkg        (alias canónico para Supabase + fallback web)
 
 Catálogo web: web/data/downloads.json (sincronizado por mdj-release.sh)
