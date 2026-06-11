@@ -1,8 +1,17 @@
 # MDJPRO-PKG-RECOVERY-002 — Install incident closure
 
-**Status:** OPEN — awaiting Captain Terminal run  
-**Date:** 2026-06-09  
-**Root cause:** Multiple app copies (Xcode DerivedData vs `/Applications`) + agent could not complete `sudo installer` from chat.
+**Status:** **CLOSED — SUPERSEDED** by ship line **V.2.6.0** (2026-06-10/11)  
+**Date opened:** 2026-06-09  
+**Date closed:** 2026-06-11  
+**Root cause (historical):** Multiple app copies (Xcode DerivedData vs `/Applications`) + agent could not complete `sudo installer` from chat.
+
+## Closure note
+
+Incident **2026-06-10** workshop reset → **V.2.6.0** post-incident ship closed the deployment chain:
+
+- Real pkg 2.6.0 built, notarized, Supabase + **INSTALL-OPEN-008** PASS prod  
+- Install QA PASS · `/Applications` shows **2.6.0**  
+- Recovery script below is **archived reference only** — do not re-run for 2.0.0 closure.
 
 ---
 
@@ -44,14 +53,12 @@ SKIP_BUILD=1 ./scripts/mdj-recovery-install.sh
 
 ---
 
-## Closure criteria (PASS)
+## Closure criteria (PASS) — superseded by V.2.6.0 ship
 
-- [ ] `MATCH: YES` in recovery script output
-- [ ] Welcome shows `V.2.0.0` (AppConfig)
-- [ ] Settings / About show `V.2.0.0`
-- [ ] Hub logo: clean PNG (no `V.2.00` raster)
-- [ ] Only **one** MDJ PRO process when testing
-- [ ] No `1.9.0` in installed binary strings
+- [x] Installed `/Applications/MDJ PRO.app` = **2.6.0** (2026-06-10 install OK)
+- [x] Pkg content matches catalog (no name/content mismatch)
+- [x] Notarized prod pkg + backup on Desktop
+- [ ] ~~V.2.0.0 criteria below~~ — historical only
 
 ---
 

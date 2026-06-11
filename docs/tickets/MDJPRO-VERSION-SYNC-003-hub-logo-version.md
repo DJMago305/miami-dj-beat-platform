@@ -1,7 +1,8 @@
 # MDJPRO-VERSION-SYNC-003 — Hub logo version `V.2.0.0` (three-digit official)
 
-**Status:** IMPLEMENTED — Pending Captain QA (2026-06-09)  
-**Priority:** High (cosmetic integrity / version contract)  
+**Status:** **CLOSED** — superseded by **V.2.6.0** ship line; hub/splash use `AppConfig.version` (**V.2.6.0** in prod)  
+**Priority:** High (cosmetic integrity / version contract) — **archived**  
+**Closed:** 2026-06-11  
 **Type:** Cosmetic alignment — hub branding  
 **Parent:** MDJPRO-VERSION-SYNC-002 (closed audit with known gap)  
 **Opened:** 2026-06-09  
