@@ -26,6 +26,21 @@
 
 All UI (Welcome, Settings, About, hub) uses `AppConfig.version` — one bump updates everything after rebuild.
 
+### Auto-sync on `mdj-release.sh` / `mdj-pkg-only.sh` (2026-06-11)
+
+After editing **`releaseNotes.items`** in `web/data/downloads.json` (artist-facing — see PUBLIC-ARTIST-COPY-NOTE), run release. `mdj_sync_downloads_json` updates:
+
+| Target | Field |
+|--------|--------|
+| `web/data/downloads.json` | `version`, `released`, titles, **`size`** (from local `.pkg` after build) |
+| `MDJ/AppConfig.swift` | `ReleaseNotes` enum (About Mac) |
+| `web/js/downloads.js` | Fallback version + JSON cache bust `dl-catalog-vXYZ` |
+| `web/installers/README.txt` | Versión actual |
+
+**Taller localhost:** `downloads.js` reads `downloads.json` first; Supabase override is **ignored** on localhost so workshop version shows before prod migration.
+
+**Prod:** apply `supabase/migrations/*_mdjpro_downloads_catalog_v*.sql` after Storage upload.
+
 ---
 
 ## Scripts (`~/Desktop/MDJ/scripts/`)

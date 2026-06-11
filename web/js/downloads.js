@@ -69,7 +69,7 @@ async function pkgContentLength(pkgUrl) {
 
 async function triggerPkgDownload(pkgUrl, filename) {
     if (!pkgUrl || pkgUrl === '#') return false;
-    var name = filename || 'MDJPRO V.2.6.0.pkg';
+    var name = filename || buildPkgDownloadFilename('MDJPRO', 'V.1.0.0');
     try {
         var res = await fetch(pkgUrl, { cache: 'no-store' });
         if (!res.ok) throw new Error('pkg fetch ' + res.status);
@@ -104,7 +104,7 @@ async function resolveMacInstallerPkgUrl(fallbackFromJson, catalog) {
         ? window.MDB_INSTALLER_MAC_PKG_URL
         : fallbackFromJson;
     var app = (catalog && catalog.app) || 'MDJPRO';
-    var version = (catalog && catalog.version) || 'V.2.6.0';
+    var version = (catalog && catalog.version) || 'V.2.6.5';
     var filename = buildPkgDownloadFilename(app, version);
     var localVersioned = pageUrl('./installers/' + encodeURIComponent(filename));
     var localLegacy = pageUrl('./installers/MDJPRO_Installer.pkg');
@@ -226,6 +226,19 @@ function mergeDownloadsCatalog(base, override) {
     return merged;
 }
 
+/** Taller localhost: downloads.json is source of truth (workshop ahead of prod Supabase). */
+function mdjIsWorkshopHost() {
+    var h = String(window.location.hostname || '').toLowerCase();
+    return h === 'localhost' || h === '127.0.0.1';
+}
+
+function resolveDownloadsCatalog(base, override) {
+    if (mdjIsWorkshopHost() && base && base.version) {
+        return base;
+    }
+    return mergeDownloadsCatalog(base, override);
+}
+
 async function fetchMdjproDownloadsOverride() {
     var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
     if (!sb) return null;
@@ -283,10 +296,10 @@ var _downloadsCatalogCache = null;
 
 async function loadDownloadData() {
     try {
-        var response = await fetch(pageUrl('./data/downloads.json?v=20260610-dl-catalog-v260'));
+        var response = await fetch(pageUrl('./data/downloads.json?v=dl-catalog-v265'));
         var base = await response.json();
         var override = await fetchMdjproDownloadsOverride();
-        var data = mergeDownloadsCatalog(base, override);
+        var data = resolveDownloadsCatalog(base, override);
         _downloadsCatalogCache = data;
 
         var displayVersion = normalizeDisplayVersion(data.version);
@@ -298,14 +311,6 @@ async function loadDownloadData() {
         var platformEl = document.getElementById('app-platform');
         if (platformEl) {
             platformEl.textContent = formatPlatformLabel(data.platform);
-        }
-
-        var installCmd = document.getElementById('dl-install-cmd');
-        if (installCmd) {
-            var pkgFile = buildPkgDownloadFilename(data.app, data.version);
-            var pkgPath = '$HOME/Downloads/' + pkgFile.replace(/ /g, '\\ ');
-            installCmd.textContent =
-                'xattr -d com.apple.quarantine ' + pkgPath + ' 2>/dev/null; sudo installer -pkg ' + pkgPath + ' -target /';
         }
 
         renderReleaseNotes(data);
