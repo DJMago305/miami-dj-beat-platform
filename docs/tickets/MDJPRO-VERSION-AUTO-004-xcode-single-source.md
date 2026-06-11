@@ -1,9 +1,10 @@
 # MDJPRO-VERSION-AUTO-004 — Xcode single source + release scripts
 
-**Status:** CONFIRMED IN PROD LOCAL (2026-06-09) — V.2.1.0 pkg + active links  
+**Status:** **ACTIVE RUNBOOK** — prod **V.2.6.0** (2026-06-11) + notarize pipeline NOTARIZE-005 DONE  
 **Priority:** Critical  
 **Approved by:** Captain (`APROBADO`)  
-**Agent runbook:** `.cursor/skills/mdjpro-release/SKILL.md`
+**Agent runbook:** `.cursor/skills/mdjpro-release/SKILL.md`  
+**Current prod pkg:** `MDJPRO_Installer.pkg` · notarized · postinstall **INSTALL-OPEN-008**
 
 ---
 
@@ -53,17 +54,18 @@ Output: `web/installers/MDJPRO V.x.y.z.pkg` + `MDJPRO_Installer.pkg` + `~/Deskto
 Install (app quit first): double-click Desktop `.pkg` or:
 
 ```bash
-sudo installer -pkg "$HOME/Desktop/MDJPRO V.2.1.0.pkg" -target /
+sudo installer -pkg "$HOME/Desktop/MDJPRO V.2.6.0.pkg" -target /
 ```
 
-## Confirmed release chain (Captain 2026-06-09)
+## Confirmed release chain (Captain 2026-06-11 — V.2.6.0)
 
 1. Edit in **Xcode** `~/Desktop/MDJ` (not web-only).
 2. **⌘B** → Build Succeeded.
 3. **`MDJ-SOLO-EMPACOTAR.command`** or `mdj-pkg-only.sh` / `mdj-release.sh`.
 4. Verify About links + version in installed app.
 5. `localhost:8080/downloads.html` reads `web/installers/`.
-6. Supabase `installers/MDJPRO_Installer.pkg` when deploy approved.
+6. `./scripts/mdj-notarize-release.sh` → notarized pkg  
+7. Supabase `installers/MDJPRO_Installer.pkg` when `APROBADO DEPLOY PRODUCCIÓN` ✓ (2026-06-11)
 
 ---
 
