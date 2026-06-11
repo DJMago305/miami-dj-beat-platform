@@ -112,3 +112,4 @@ Open `http://localhost:8080/downloads.html` — version label + downloadable .pk
 - No `git push` / prod Supabase upload without literal **`APROBADO PUSH`** / **`APROBADO DEPLOY PRODUCCIÓN`**
 - Do not edit locked web HTML/nav unless ticket scopes it
 - Agent owns running this pipeline after every MDJPRO ticket
+- **Public artist copy:** never paste workshop steps (Terminal, xattr, unsigned Gatekeeper workarounds, scripts, SQL, ticket IDs) into miamidjbeat.com user-facing pages — see `docs/tickets/MDJPRO-PUBLIC-ARTIST-COPY-NOTE.md`

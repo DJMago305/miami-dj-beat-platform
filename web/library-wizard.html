@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Library Wizard — MDJPRO PRO DNA</title>
+    <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260521-dj-tools-staff-nav-1" />
+    <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+    <style>
+        /* Library Wizard DNA — wide informative layout (page-scoped only) */
+        body.page-library-wizard main .container {
+            max-width: min(1720px, 97vw);
+            width: 100%;
+            padding-left: clamp(14px, 2vw, 28px);
+            padding-right: clamp(14px, 2vw, 28px);
+            box-sizing: border-box;
+        }
+
+        body.page-library-wizard .section {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        body.page-library-wizard .lw-hero {
+            text-align: center;
+            width: 100%;
+            margin: 0 0 44px;
+            padding-top: 48px;
+        }
+
+        body.page-library-wizard .lw-eyebrow {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--gold);
+            opacity: 0.9;
+            margin-bottom: 18px;
+        }
+
+        body.page-library-wizard .lw-title {
+            font-size: clamp(38px, 4.5vw, 58px);
+            font-weight: 900;
+            line-height: 1.08;
+            margin: 0 0 22px;
+            letter-spacing: -0.5px;
+        }
+
+        body.page-library-wizard .lw-back {
+            display: inline-block;
+            margin-bottom: 28px;
+            font-size: 13px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.55);
+            text-decoration: none;
+        }
+
+        body.page-library-wizard .lw-back:hover {
+            color: var(--gold);
+        }
+
+        body.page-library-wizard .lw-lead {
+            font-size: clamp(18px, 1.8vw, 24px);
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.82);
+            margin: 0 auto 16px;
+            max-width: min(1280px, 100%);
+        }
+
+        body.page-library-wizard .lw-value {
+            font-size: clamp(15px, 1.2vw, 17px);
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.62);
+            margin: 0 auto 32px;
+            max-width: min(1200px, 100%);
+        }
+
+        body.page-library-wizard .lw-glass {
+            width: 100%;
+            margin: 0;
+            padding: clamp(28px, 3vw, 44px) clamp(24px, 3vw, 40px);
+            border-radius: 16px;
+            border: 1px solid rgba(197, 160, 89, 0.35);
+            background: linear-gradient(165deg, rgba(197, 160, 89, 0.07) 0%, rgba(0, 0, 0, 0.4) 55%);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+            box-sizing: border-box;
+        }
+
+        body.page-library-wizard .lw-glass-note {
+            font-size: clamp(14px, 1.1vw, 16px);
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.58);
+            margin: 0 0 28px;
+            padding: 14px 18px;
+            border-left: 2px solid rgba(197, 160, 89, 0.55);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        body.page-library-wizard .lw-body {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 32px;
+            align-items: start;
+        }
+
+        @media (min-width: 900px) {
+            body.page-library-wizard .lw-body {
+                grid-template-columns: minmax(360px, 46%) 1fr;
+                gap: clamp(32px, 4vw, 56px);
+            }
+        }
+
+        body.page-library-wizard .lw-visual {
+            width: 100%;
+        }
+
+        body.page-library-wizard .lw-visual img {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        body.page-library-wizard .lw-modes {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0 28px;
+            width: 100%;
+        }
+
+        @media (min-width: 1100px) {
+            body.page-library-wizard .lw-modes {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        body.page-library-wizard .lw-modes-title {
+            grid-column: 1 / -1;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.72);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 12px;
+            margin: 0 0 18px;
+        }
+
+        body.page-library-wizard .lw-mode {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            margin-bottom: 18px;
+        }
+
+        body.page-library-wizard .lw-mode-num {
+            flex: 0 0 32px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 900;
+            color: #fff;
+            background: rgba(197, 160, 89, 0.35);
+            border: 1px solid rgba(197, 160, 89, 0.55);
+        }
+
+        body.page-library-wizard .lw-mode strong {
+            display: block;
+            font-size: clamp(13px, 1vw, 15px);
+            letter-spacing: 0.4px;
+            margin-bottom: 4px;
+            color: rgba(255, 255, 255, 0.92);
+        }
+
+        body.page-library-wizard .lw-mode span {
+            font-size: clamp(13px, 1vw, 14px);
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.62);
+        }
+
+        body.page-library-wizard .lw-flow {
+            margin-top: 36px;
+            padding-top: 28px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        body.page-library-wizard .lw-flow-title {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.55);
+            margin: 0 0 16px;
+        }
+
+        body.page-library-wizard .lw-flow-steps {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        body.page-library-wizard .lw-flow-step {
+            font-size: 13px;
+            font-weight: 700;
+            padding: 9px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        body.page-library-wizard .lw-flow-arrow {
+            color: var(--gold);
+            font-size: 14px;
+            opacity: 0.75;
+        }
+
+        body.page-library-wizard .lw-grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: clamp(20px, 2.5vw, 32px);
+            width: 100%;
+            margin: 44px 0 0;
+        }
+
+        @media (max-width: 768px) {
+            body.page-library-wizard .lw-grid2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        body.page-library-wizard .lw-panel {
+            padding: clamp(24px, 2.5vw, 32px);
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        body.page-library-wizard .lw-panel h3 {
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin: 0 0 16px;
+        }
+
+        body.page-library-wizard .lw-panel ul {
+            margin: 0;
+            padding: 0 0 0 18px;
+            color: rgba(255, 255, 255, 0.68);
+            font-size: clamp(14px, 1.1vw, 15px);
+            line-height: 1.65;
+        }
+
+        body.page-library-wizard .lw-panel li {
+            margin-bottom: 10px;
+        }
+
+        body.page-library-wizard .lw-table {
+            width: 100%;
+            margin: 32px 0 0;
+        }
+
+        body.page-library-wizard .lw-table .table-row > div:first-child {
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.88);
+        }
+
+        body.page-library-wizard .lw-future-note {
+            text-align: center;
+            width: 100%;
+            max-width: none;
+            margin: 36px 0 0;
+            font-size: clamp(14px, 1.1vw, 16px);
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        body.page-library-wizard .lw-cta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+            margin: 48px 0 64px;
+        }
+    </style>
+</head>
+
+<body class="notranslate page-library-wizard mdj-nav-booting">
+    <header class="header mdj-header-unified" id="mainHeader">
+        <div class="header-top">
+            <div class="container">
+                <div class="brand">
+                    <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+                    <div class="brand-letters-wrapper">
+                        <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters" class="brand-letters-img">
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
+                    <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
+                    <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
+                    <div class="mdj-header-r1-auth-cluster">
+                        <div class="lang-switcher">
+                            <span class="lang-btn" data-lang="es">ES</span>
+                            <span class="lang-pipe">|</span>
+                            <span class="lang-btn" data-lang="en">EN</span>
+                        </div>
+                        <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-auth-btn>Log in</a>
+                        <div class="account session-pending" id="header-auth-zone" style="display: none;">
+                            <a class="account-btn" id="accountBtn" href="./dj-profile.html" title="Mi perfil" aria-label="Mi perfil">
+                                <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
+                            </a>
+                        </div>
+                    </div>
+                    <div class="header-avatar-cart-row" aria-label="Account and cart">
+                        <a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart" aria-label="Shopping cart">
+                            <span aria-hidden="true">🛒</span>
+                            <span id="header-cart-count" class="header-cart-count" hidden></span>
+                        </a>
+                    </div>
+                    <div class="header-search-wrap">
+                        <input type="search" id="header-smart-search" class="header-smart-search"
+                            placeholder="Search DJs, gear, services…" autocomplete="off" enterkeyhint="search" />
+                    </div>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">
+                    <span></span><span></span><span></span>
+                </button>
+                <div class="mobile-overlay" id="mobileMenu">
+                    <nav class="mobile-nav">
+                        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+                        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+                        <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+                        <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
+                        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+                        <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+                        <a href="./login.html?signup=free" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free"
+                            style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
+                        <a href="./login.html" id="header-login-btn-mobile" data-auth-btn
+                            style="color:var(--gold); font-weight:800;">Entrar</a>
+                        <a href="./dj-profile.html" id="nav-my-profile-mobile"
+                            style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY PROFILE</a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        <div class="header-nav">
+            <div class="container">
+                <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" data-mdj-compact-nav="1" aria-label="Navegación principal">
+                    <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
+                    <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
+                    <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
+                    <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
+                    <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️CONFIG</a>
+                    <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
+                    <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+                    <a href="./login.html" id="mainNav-guest-mi-perfil-link" class="mdj-guest-mi-perfil-mainnav" data-mdj-nav="my-profile" data-i18n="nav-my-profile">MI PERFIL</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="section">
+            <div class="container">
+                <div class="lw-hero">
+                    <a href="./dj-tools.html" class="lw-back" data-i18n="tools-wizard-page-back">← Back to DJ Tools</a>
+                    <div class="lw-eyebrow" data-i18n="tools-wizard-dna-eyebrow">Library Wizard · PRO DNA</div>
+                    <h1 class="lw-title" data-i18n="tools-wizard-page-title">Library Wizard</h1>
+                    <p class="lw-lead" data-i18n="tools-wizard-dna-lead">The phonoteca shelf a pro DJ would spend years building by hand — named drawers inside drawers, deployed on your drive in seconds.</p>
+                    <p class="lw-value" data-i18n="tools-wizard-page-value">Radio-digital shelving for the modern DJ: clarity in the set, event templates in seconds, and a folder architecture any professional would pay to own — built into MDJPRO, only from Miami DJ Beat.</p>
+                </div>
+
+                <div class="lw-glass">
+                    <p class="lw-glass-note" data-i18n="tools-wizard-dna-note">Library Wizard creates the folder architecture (the DNA). It does not move or tag files — you curate inside those drawers. That is by design: structure first, then mastery.</p>
+                    <div class="lw-body">
+                        <div class="lw-visual">
+                            <img src="./manuals/MDJPRO_Manual/en/assets/MDJPRO_WIZARD_DNA.png" alt="Library Wizard PRO DNA — six organization modes" width="380" height="auto" loading="lazy" decoding="async" />
+                        </div>
+                        <div class="lw-modes">
+                            <p class="lw-modes-title" data-i18n="tools-wizard-dna-modes-title">Six DNA modes — one BUILD at a time</p>
+                            <div class="lw-mode">
+                                <div class="lw-mode-num" aria-hidden="true">1</div>
+                                <div><strong data-i18n="tools-wizard-dna-mode1-title">Decades</strong><span data-i18n="tools-wizard-dna-mode1-desc">Eras (70s, 80s…) with Latin/Anglo sub-drawers for open-format clarity.</span></div>
+                            </div>
+                            <div class="lw-mode">
+                                <div class="lw-mode-num" aria-hidden="true">2</div>
+                                <div><strong data-i18n="tools-wizard-dna-mode2-title">International</strong><span data-i18n="tools-wizard-dna-mode2-desc">Continent → country → ORIGINALS/REMIX — cultural shelves on disk.</span></div>
+                            </div>
+                            <div class="lw-mode">
+                                <div class="lw-mode-num" aria-hidden="true">3</div>
+                                <div><strong data-i18n="tools-wizard-dna-mode3-title">Genres</strong><span data-i18n="tools-wizard-dna-mode3-desc">House, Salsa, Techno… sonic identity without chronology.</span></div>
+                            </div>
+                            <div class="lw-mode">
+                                <div class="lw-mode-num" aria-hidden="true">4</div>
+                                <div><strong data-i18n="tools-wizard-dna-mode4-title">Special Events</strong><span data-i18n="tools-wizard-dna-mode4-desc">Wedding, Quince, Hora Loca — mobile-DJ templates in seconds.</span></div>
+                            </div>
+                            <div class="lw-mode">
+                                <div class="lw-mode-num" aria-hidden="true">5</div>
+                                <div><strong data-i18n="tools-wizard-dna-mode5-title">My Legado</strong><span data-i18n="tools-wizard-dna-mode5-desc">Your personal heritage DNA — vinyl rips, masters, custom paths saved.</span></div>
+                            </div>
+                            <div class="lw-mode">
+                                <div class="lw-mode-num" aria-hidden="true">6</div>
+                                <div><strong data-i18n="tools-wizard-dna-mode6-title">Performance Sets</strong><span data-i18n="tools-wizard-dna-mode6-desc">Opening, Headliner, Resident — PRO role folders for stage-ready flow.</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lw-flow">
+                        <p class="lw-flow-title" data-i18n="tools-wizard-dna-flow-title">MDJPRO workflow</p>
+                        <div class="lw-flow-steps" aria-label="MDJPRO workflow">
+                            <span class="lw-flow-step" data-i18n="tools-wizard-dna-flow1">Hub</span>
+                            <span class="lw-flow-arrow" aria-hidden="true">→</span>
+                            <span class="lw-flow-step" data-i18n="tools-wizard-dna-flow2">Load Root</span>
+                            <span class="lw-flow-arrow" aria-hidden="true">→</span>
+                            <span class="lw-flow-step" data-i18n="tools-wizard-dna-flow3">Library Wizard</span>
+                            <span class="lw-flow-arrow" aria-hidden="true">→</span>
+                            <span class="lw-flow-step" data-i18n="tools-wizard-dna-flow4">Start Scan</span>
+                            <span class="lw-flow-arrow" aria-hidden="true">→</span>
+                            <span class="lw-flow-step" data-i18n="tools-wizard-dna-flow5">Tag Master</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lw-grid2">
+                    <div class="lw-panel">
+                        <h3 data-i18n="tools-wizard-page-not-title">What Library Wizard does not do</h3>
+                        <ul>
+                            <li data-i18n="tools-wizard-page-not-1">It does not import or move audio/video files automatically.</li>
+                            <li data-i18n="tools-wizard-page-not-2">It does not write ID3 tags — that is Tag Master.</li>
+                            <li data-i18n="tools-wizard-page-not-3">BUILD deploys only the active DNA tab — not every tab at once.</li>
+                            <li data-i18n="tools-wizard-page-not-4">It is not free — MDJPRO Premium (libraryWizard) required.</li>
+                        </ul>
+                    </div>
+                    <div class="lw-panel">
+                        <h3 data-i18n="tools-wizard-page-roadmap-title">Today vs what comes next</h3>
+                        <ul>
+                            <li data-i18n="tools-wizard-page-roadmap-1"><strong>Today:</strong> PRO folder DNA on disk — the empty phonoteca perfected.</li>
+                            <li data-i18n="tools-wizard-page-roadmap-2"><strong>You:</strong> manual curation inside each drawer — Serato, Rekordbox, VirtualDJ.</li>
+                            <li data-i18n="tools-wizard-page-roadmap-3"><strong>Next:</strong> command + AI layer feeding this DNA — in development.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="lw-table">
+                    <div class="table-row table-head">
+                        <div data-i18n="tools-wizard-page-table-layer">Layer</div>
+                        <div data-i18n="tools-wizard-page-table-status">Status</div>
+                        <div data-i18n="tools-wizard-page-table-role">Role</div>
+                    </div>
+                    <div class="table-row">
+                        <div data-i18n="tools-wizard-page-table-row1-layer">DNA / Shelf (Wizard)</div>
+                        <div data-i18n="tools-wizard-page-table-row1-status">In production</div>
+                        <div data-i18n="tools-wizard-page-table-row1-role">PRO folders on your drive</div>
+                    </div>
+                    <div class="table-row">
+                        <div data-i18n="tools-wizard-page-table-row2-layer">Manual curation</div>
+                        <div data-i18n="tools-wizard-page-table-row2-status">Current flow</div>
+                        <div data-i18n="tools-wizard-page-table-row2-role">You fill the drawers</div>
+                    </div>
+                    <div class="table-row">
+                        <div data-i18n="tools-wizard-page-table-row3-layer">Command + AI</div>
+                        <div data-i18n="tools-wizard-page-table-row3-status">In development</div>
+                        <div data-i18n="tools-wizard-page-table-row3-role">Feeds the DNA — not a replacement</div>
+                    </div>
+                </div>
+
+                <p class="lw-future-note" data-i18n="tools-wizard-dna-future">Next chapter: command + AI curation feeding this DNA. Today the shelf is yours in minutes — only in MDJPRO Premium.</p>
+
+                <div class="lw-cta-row">
+                    <a href="./downloads.html" class="btn primary" style="padding: 14px 28px; font-size: 16px;" data-i18n="tools-wizard-dna-cta">Get Library Wizard PRO</a>
+                    <a href="./dj-tools.html" class="btn" style="padding: 14px 28px; font-size: 16px;" data-i18n="tools-wizard-page-back">← Back to DJ Tools</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container" style="text-align: center;">
+            <div data-i18n="footer-rights-digital">© 2026 Miami DJ Beat LLC. Digital Asset Division.</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <script src="./translations.js?v=20260611-tag-master-web-1"></script>
+    <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
+    <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+    <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
+    <link rel="stylesheet" href="./mdj-assistant.css?v=20260411-7" />
+    <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
+    <div id="mdj-assistant-booth">
+        <div class="booth-window">
+            <div class="booth-header">
+                <div class="status-dot"></div>
+                <div style="flex: 1;">
+                    <h3>Booth Assistant</h3>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700;">Sales & Negotiation Expert</div>
+                </div>
+            </div>
+            <div class="booth-messages"></div>
+            <div class="booth-input-area">
+                <input type="text" placeholder="Type your message here..." />
+                <button class="booth-send-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="booth-trigger" title="Talk to Booth Assistant">
+            <div class="avatar-glow"></div>
+            <div style="font-size: 30px; z-index: 10;">🤖</div>
+        </div>
+    </div>
+
+    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+    <script src="./mdj-shared-header.js?v=20260603-art-007c-staff-same-entry-1"></script>
+    <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+    <script src="./mdj-mainnav-infinite.js?v=20260516-home-nav-stable-1"></script>
+    <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
+    <script src="./mdj-profile-nav-context.js?v=20260603-art-007c-staff-same-entry-1"></script>
+    <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+</body>
+
+</html>

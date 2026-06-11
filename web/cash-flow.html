@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Cash Flow — Artist Health &amp; Economics · MDJB</title>
+    <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260521-dj-tools-staff-nav-1" />
+    <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+    <style>
+        body.page-cash-flow main .container {
+            max-width: min(1720px, 97vw);
+            width: 100%;
+            padding-left: clamp(14px, 2vw, 28px);
+            padding-right: clamp(14px, 2vw, 28px);
+            box-sizing: border-box;
+        }
+
+        body.page-cash-flow .section { padding-left: 0; padding-right: 0; }
+
+        body.page-cash-flow .cf-hero {
+            text-align: center;
+            width: 100%;
+            margin: 0 0 44px;
+            padding-top: 48px;
+        }
+
+        body.page-cash-flow .cf-eyebrow {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--gold);
+            opacity: 0.92;
+            margin-bottom: 18px;
+        }
+
+        body.page-cash-flow .cf-title {
+            font-size: clamp(38px, 4.5vw, 58px);
+            font-weight: 900;
+            line-height: 1.08;
+            margin: 0 0 22px;
+        }
+
+        body.page-cash-flow .cf-back {
+            display: inline-block;
+            margin-bottom: 28px;
+            font-size: 13px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.55);
+            text-decoration: none;
+        }
+
+        body.page-cash-flow .cf-back:hover { color: var(--gold); }
+
+        body.page-cash-flow .cf-lead {
+            font-size: clamp(18px, 1.8vw, 24px);
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.82);
+            margin: 0 auto 16px;
+            max-width: min(1280px, 100%);
+        }
+
+        body.page-cash-flow .cf-value {
+            font-size: clamp(15px, 1.2vw, 17px);
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.62);
+            margin: 0 auto 32px;
+            max-width: min(1200px, 100%);
+        }
+
+        body.page-cash-flow .cf-glass {
+            width: 100%;
+            padding: clamp(28px, 3vw, 44px) clamp(24px, 3vw, 40px);
+            border-radius: 16px;
+            border: 1px solid rgba(197, 160, 89, 0.4);
+            background: linear-gradient(165deg, rgba(197, 160, 89, 0.09) 0%, rgba(0, 0, 0, 0.42) 55%);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+            box-sizing: border-box;
+        }
+
+        body.page-cash-flow .cf-glass-note {
+            font-size: clamp(14px, 1.1vw, 16px);
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.58);
+            margin: 0 0 28px;
+            padding: 14px 18px;
+            border-left: 2px solid rgba(197, 160, 89, 0.65);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        body.page-cash-flow .cf-body {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 32px;
+            align-items: start;
+        }
+
+        @media (min-width: 900px) {
+            body.page-cash-flow .cf-body {
+                grid-template-columns: minmax(360px, 46%) 1fr;
+                gap: clamp(32px, 4vw, 56px);
+            }
+        }
+
+        body.page-cash-flow .cf-visual {
+            padding: clamp(20px, 2.5vw, 28px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.35);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+        }
+
+        body.page-cash-flow .cf-mock-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 18px;
+            gap: 12px;
+        }
+
+        body.page-cash-flow .cf-mock-head strong {
+            display: block;
+            font-size: 15px;
+            color: #fff;
+            letter-spacing: -0.3px;
+        }
+
+        body.page-cash-flow .cf-mock-head span {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.38);
+        }
+
+        body.page-cash-flow .cf-mock-range {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.7);
+            white-space: nowrap;
+        }
+
+        body.page-cash-flow .cf-mock-kpis {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        body.page-cash-flow .cf-mock-kpi {
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        body.page-cash-flow .cf-mock-kpi label {
+            display: block;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.38);
+            margin-bottom: 6px;
+        }
+
+        body.page-cash-flow .cf-mock-kpi var {
+            font-style: normal;
+            font-size: 18px;
+            font-weight: 900;
+            color: #fff;
+        }
+
+        body.page-cash-flow .cf-mock-kpi.gold var { color: var(--gold); }
+        body.page-cash-flow .cf-mock-kpi.green var { color: #00ff88; }
+        body.page-cash-flow .cf-mock-kpi.purple var { color: #d8b4fe; }
+
+        body.page-cash-flow .cf-mock-chart {
+            height: 88px;
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            padding: 12px 8px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        body.page-cash-flow .cf-mock-bar {
+            flex: 1;
+            border-radius: 4px 4px 0 0;
+            background: linear-gradient(180deg, rgba(197, 160, 89, 0.85) 0%, rgba(197, 160, 89, 0.25) 100%);
+            min-height: 12px;
+        }
+
+        body.page-cash-flow .cf-mock-caption {
+            margin-top: 12px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.35);
+            text-align: center;
+        }
+
+        body.page-cash-flow .cf-modes {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0 28px;
+        }
+
+        @media (min-width: 1100px) {
+            body.page-cash-flow .cf-modes { grid-template-columns: 1fr 1fr; }
+        }
+
+        body.page-cash-flow .cf-modes-title {
+            grid-column: 1 / -1;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.72);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 12px;
+            margin: 0 0 18px;
+        }
+
+        body.page-cash-flow .cf-mode {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        body.page-cash-flow .cf-mode-num {
+            flex: 0 0 32px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 900;
+            color: #fff;
+            background: rgba(197, 160, 89, 0.28);
+            border: 1px solid rgba(197, 160, 89, 0.55);
+        }
+
+        body.page-cash-flow .cf-mode strong {
+            display: block;
+            font-size: clamp(13px, 1vw, 15px);
+            margin-bottom: 4px;
+            color: rgba(255, 255, 255, 0.92);
+        }
+
+        body.page-cash-flow .cf-mode span {
+            font-size: clamp(13px, 1vw, 14px);
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.62);
+        }
+
+        body.page-cash-flow .cf-flow {
+            margin-top: 36px;
+            padding-top: 28px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        body.page-cash-flow .cf-flow-title {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.55);
+            margin: 0 0 16px;
+        }
+
+        body.page-cash-flow .cf-flow-steps {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        body.page-cash-flow .cf-flow-step {
+            font-size: 13px;
+            font-weight: 700;
+            padding: 9px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        body.page-cash-flow .cf-flow-arrow { color: var(--gold); font-size: 14px; }
+
+        body.page-cash-flow .cf-grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: clamp(20px, 2.5vw, 32px);
+            width: 100%;
+            margin: 44px 0 0;
+        }
+
+        @media (max-width: 768px) {
+            body.page-cash-flow .cf-grid2 { grid-template-columns: 1fr; }
+        }
+
+        body.page-cash-flow .cf-panel {
+            padding: clamp(24px, 2.5vw, 32px);
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        body.page-cash-flow .cf-panel h3 {
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin: 0 0 16px;
+        }
+
+        body.page-cash-flow .cf-panel ul {
+            margin: 0;
+            padding: 0 0 0 18px;
+            color: rgba(255, 255, 255, 0.68);
+            font-size: clamp(14px, 1.1vw, 15px);
+            line-height: 1.65;
+        }
+
+        body.page-cash-flow .cf-panel li { margin-bottom: 10px; }
+
+        body.page-cash-flow .cf-table { width: 100%; margin: 32px 0 0; }
+
+        body.page-cash-flow .cf-table .table-row > div:first-child {
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.88);
+        }
+
+        body.page-cash-flow .cf-future-note {
+            text-align: center;
+            width: 100%;
+            margin: 36px 0 0;
+            font-size: clamp(14px, 1.1vw, 16px);
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        body.page-cash-flow .cf-cta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+            margin: 48px 0 64px;
+        }
+    </style>
+</head>
+
+<body class="notranslate page-cash-flow mdj-nav-booting">
+    <header class="header mdj-header-unified" id="mainHeader">
+        <div class="header-top">
+            <div class="container">
+                <div class="brand">
+                    <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+                    <div class="brand-letters-wrapper">
+                        <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters" class="brand-letters-img">
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
+                    <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
+                    <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
+                    <div class="mdj-header-r1-auth-cluster">
+                        <div class="lang-switcher">
+                            <span class="lang-btn" data-lang="es">ES</span>
+                            <span class="lang-pipe">|</span>
+                            <span class="lang-btn" data-lang="en">EN</span>
+                        </div>
+                        <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-auth-btn>Log in</a>
+                        <div class="account session-pending" id="header-auth-zone" style="display: none;">
+                            <a class="account-btn" id="accountBtn" href="./dj-profile.html" title="Mi perfil" aria-label="Mi perfil">
+                                <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
+                            </a>
+                        </div>
+                    </div>
+                    <div class="header-avatar-cart-row" aria-label="Account and cart">
+                        <a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart" aria-label="Shopping cart">
+                            <span aria-hidden="true">🛒</span>
+                            <span id="header-cart-count" class="header-cart-count" hidden></span>
+                        </a>
+                    </div>
+                    <div class="header-search-wrap">
+                        <input type="search" id="header-smart-search" class="header-smart-search"
+                            placeholder="Search DJs, gear, services…" autocomplete="off" enterkeyhint="search" />
+                    </div>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">
+                    <span></span><span></span><span></span>
+                </button>
+                <div class="mobile-overlay" id="mobileMenu">
+                    <nav class="mobile-nav">
+                        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+                        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+                        <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+                        <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
+                        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+                        <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+                        <a href="./login.html?signup=free" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free"
+                            style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
+                        <a href="./login.html" id="header-login-btn-mobile" data-auth-btn
+                            style="color:var(--gold); font-weight:800;">Entrar</a>
+                        <a href="./dj-profile.html" id="nav-my-profile-mobile"
+                            style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY PROFILE</a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        <div class="header-nav">
+            <div class="container">
+                <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" data-mdj-compact-nav="1" aria-label="Navegación principal">
+                    <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
+                    <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
+                    <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
+                    <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
+                    <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️CONFIG</a>
+                    <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
+                    <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+                    <a href="./login.html" id="mainNav-guest-mi-perfil-link" class="mdj-guest-mi-perfil-mainnav" data-mdj-nav="my-profile" data-i18n="nav-my-profile">MI PERFIL</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="section">
+            <div class="container">
+                <div class="cf-hero">
+                    <a href="./dj-tools.html" class="cf-back" data-i18n="tools-wizard-page-back">← Back to DJ Tools</a>
+                    <div class="cf-eyebrow" data-i18n="tools-cf-eyebrow">Cash Flow · Professional Health</div>
+                    <h1 class="cf-title" data-i18n="tools-cf-page-title">Artist health &amp; economics</h1>
+                    <p class="cf-lead" data-i18n="tools-cf-lead">The private finance and performance panel on Miami DJ Beat — revenue, events, residency, and a professional health index that goes beyond public reviews.</p>
+                    <p class="cf-value" data-i18n="tools-cf-page-value">Every roster artist (LITE or PRO) gets Cash Flow on profile or dashboard. No one else sees your numbers: fans see reviews; you see ledger, KPIs, charts, and bank-style statements. Checks and local pay count when you reflect them in leads or the ledger.</p>
+                </div>
+
+                <div class="cf-glass">
+                    <p class="cf-glass-note" data-i18n="tools-cf-note">Cash Flow lives on the web (not in the MDJPRO Mac app). Real movements enter via dj_ledger in Supabase — Stripe, staff releases, and accepted SoundForTips™ tips. This page is informative; the live panel is on your profile.</p>
+                    <div class="cf-body">
+                        <div class="cf-visual" aria-hidden="true">
+                            <div class="cf-mock-head">
+                                <div>
+                                    <strong>Salud Profesional</strong>
+                                    <span>Private panel preview</span>
+                                </div>
+                                <div class="cf-mock-range">30 DÍAS</div>
+                            </div>
+                            <div class="cf-mock-kpis">
+                                <div class="cf-mock-kpi gold">
+                                    <label>Ingresos</label>
+                                    <var>$4,280</var>
+                                </div>
+                                <div class="cf-mock-kpi green">
+                                    <label>Disponible</label>
+                                    <var>$1,920</var>
+                                </div>
+                                <div class="cf-mock-kpi">
+                                    <label>Eventos</label>
+                                    <var>12</var>
+                                </div>
+                                <div class="cf-mock-kpi purple">
+                                    <label>Salud</label>
+                                    <var>4.6 ★</var>
+                                </div>
+                            </div>
+                            <div class="cf-mock-chart">
+                                <div class="cf-mock-bar" style="height:42%"></div>
+                                <div class="cf-mock-bar" style="height:58%"></div>
+                                <div class="cf-mock-bar" style="height:35%"></div>
+                                <div class="cf-mock-bar" style="height:72%"></div>
+                                <div class="cf-mock-bar" style="height:48%"></div>
+                                <div class="cf-mock-bar" style="height:88%"></div>
+                                <div class="cf-mock-bar" style="height:55%"></div>
+                            </div>
+                            <p class="cf-mock-caption">Illustrative mock — live data on your Flow tab</p>
+                        </div>
+                        <div class="cf-modes">
+                            <p class="cf-modes-title" data-i18n="tools-cf-modes-title">Six panel pillars</p>
+                            <div class="cf-mode">
+                                <div class="cf-mode-num" aria-hidden="true">1</div>
+                                <div><strong data-i18n="tools-cf-mode1-title">Revenue KPIs</strong><span data-i18n="tools-cf-mode1-desc">Gross income, available balance, payouts, platform commission, and average ticket — with trend vs the previous period (7d, 30d, 90d, annual view).</span></div>
+                            </div>
+                            <div class="cf-mode">
+                                <div class="cf-mode-num" aria-hidden="true">2</div>
+                                <div><strong data-i18n="tools-cf-mode2-title">Event pipeline</strong><span data-i18n="tools-cf-mode2-desc">Completed and pending events from your assigned leads — real MDJB activity, not third-party estimates.</span></div>
+                            </div>
+                            <div class="cf-mode">
+                                <div class="cf-mode-num" aria-hidden="true">3</div>
+                                <div><strong data-i18n="tools-cf-mode3-title">Residency &amp; community</strong><span data-i18n="tools-cf-mode3-desc">Residency days, resident slots in agenda, and venues on profile — local positioning signals in Miami and beyond.</span></div>
+                            </div>
+                            <div class="cf-mode">
+                                <div class="cf-mode-num" aria-hidden="true">4</div>
+                                <div><strong data-i18n="tools-cf-mode4-title">Professional Health Index</strong><span data-i18n="tools-cf-mode4-desc">Composite stars: client reviews + ecosystem (events, ledger, tips, referrals, residency). Only the profile owner sees this index on the private hero.</span></div>
+                            </div>
+                            <div class="cf-mode">
+                                <div class="cf-mode-num" aria-hidden="true">5</div>
+                                <div><strong data-i18n="tools-cf-mode5-title">Bank-style statement</strong><span data-i18n="tools-cf-mode5-desc">Day, week, month, and year rollups (America/New_York timezone) — gross, commission, and net per bucket, with movement-type filters.</span></div>
+                            </div>
+                            <div class="cf-mode">
+                                <div class="cf-mode-num" aria-hidden="true">6</div>
+                                <div><strong data-i18n="tools-cf-mode6-title">Tax CSV export</strong><span data-i18n="tools-cf-mode6-desc">Raw detail up to 7 years for accounting archive — ledger + accepted SoundForTips™ tips, downloadable by fiscal year.</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cf-flow">
+                        <p class="cf-flow-title" data-i18n="tools-cf-flow-title">Where Cash Flow sits in MDJB</p>
+                        <div class="cf-flow-steps" aria-label="Cash Flow workflow">
+                            <span class="cf-flow-step" data-i18n="tools-cf-flow1">Sign in</span>
+                            <span class="cf-flow-arrow" aria-hidden="true">→</span>
+                            <span class="cf-flow-step" data-i18n="tools-cf-flow2">Profile / Dashboard</span>
+                            <span class="cf-flow-arrow" aria-hidden="true">→</span>
+                            <span class="cf-flow-step" data-i18n="tools-cf-flow3">Flow tab</span>
+                            <span class="cf-flow-arrow" aria-hidden="true">→</span>
+                            <span class="cf-flow-step" data-i18n="tools-cf-flow4">Range + KPIs</span>
+                            <span class="cf-flow-arrow" aria-hidden="true">→</span>
+                            <span class="cf-flow-step" data-i18n="tools-cf-flow5">Statement + CSV</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cf-grid2">
+                    <div class="cf-panel">
+                        <h3 data-i18n="tools-cf-page-not-title">What Cash Flow is not</h3>
+                        <ul>
+                            <li data-i18n="tools-cf-page-not-1">It is not public — visitors and other DJs do not see your Flow tab or KPIs.</li>
+                            <li data-i18n="tools-cf-page-not-2">It is not in MDJPRO Mac — it is a Miami DJ Beat web SaaS module.</li>
+                            <li data-i18n="tools-cf-page-not-3">It does not replace SoundForTips™ — live booth and its PRO tab are separate products.</li>
+                            <li data-i18n="tools-cf-page-not-4">It does not auto-import off-platform cash — you must reflect it in leads or ledger lines.</li>
+                        </ul>
+                    </div>
+                    <div class="cf-panel">
+                        <h3 data-i18n="tools-cf-page-roadmap-title">Today vs what comes next</h3>
+                        <ul>
+                            <li data-i18n="tools-cf-page-roadmap-1"><strong>Today:</strong> KPIs, Chart.js graphs, bank statement, and CSV export from dj_ledger + accepted SFT.</li>
+                            <li data-i18n="tools-cf-page-roadmap-2"><strong>You:</strong> LITE or PRO artist — full private panel access; PRO unlocks SoundForTips™, not Cash Flow.</li>
+                            <li data-i18n="tools-cf-page-roadmap-3"><strong>Next:</strong> TICKET-004 architecture — five financial layers per order with unified append-only ledger.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="cf-table">
+                    <div class="table-row table-head">
+                        <div data-i18n="tools-wizard-page-table-layer">Layer</div>
+                        <div data-i18n="tools-wizard-page-table-status">Status</div>
+                        <div data-i18n="tools-wizard-page-table-role">Role</div>
+                    </div>
+                    <div class="table-row">
+                        <div data-i18n="tools-cf-page-table-row1-layer">Cash Flow (web)</div>
+                        <div data-i18n="tools-cf-page-table-row1-status">In production</div>
+                        <div data-i18n="tools-cf-page-table-row1-role">Private artist economics</div>
+                    </div>
+                    <div class="table-row">
+                        <div data-i18n="tools-cf-page-table-row2-layer">SoundForTips™</div>
+                        <div data-i18n="tools-cf-page-table-row2-status">Paid PRO</div>
+                        <div data-i18n="tools-cf-page-table-row2-role">Live booth tips — separate tab</div>
+                    </div>
+                    <div class="table-row">
+                        <div data-i18n="tools-cf-page-table-row3-layer">Ledger TICKET-004</div>
+                        <div data-i18n="tools-cf-page-table-row3-status">Foundation</div>
+                        <div data-i18n="tools-cf-page-table-row3-role">Append-only audit — source of truth</div>
+                    </div>
+                </div>
+
+                <p class="cf-future-note" data-i18n="tools-cf-future">Cash Flow is your financial control room on the web — operational clarity, composite professional health, and bank-grade traceability. Only Miami DJ Beat connects events, ledger, and tips in one private panel.</p>
+
+                <div class="cf-cta-row">
+                    <a href="./dj-profile.html?tab=flow" class="btn primary" style="padding: 14px 28px; font-size: 16px;" data-i18n="tools-cf-cta">Open my Flow panel</a>
+                    <a href="./dj-dashboard.html?tab=flow" class="btn" style="padding: 14px 28px; font-size: 16px;" data-i18n="tools-cf-dashboard-link">Dashboard Cash Flow →</a>
+                    <a href="./shop.html" class="btn" style="padding: 14px 28px; font-size: 16px;" data-i18n="tools-cf-sft-link">SoundForTips™ (PRO) →</a>
+                    <a href="./dj-tools.html" class="btn" style="padding: 14px 28px; font-size: 16px;" data-i18n="tools-wizard-page-back">← Back to DJ Tools</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container" style="text-align: center;">
+            <div data-i18n="footer-rights-digital">© 2026 Miami DJ Beat LLC. Digital Asset Division.</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <script src="./translations.js?v=20260611-cash-flow-web-1"></script>
+    <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
+    <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+    <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
+    <link rel="stylesheet" href="./mdj-assistant.css?v=20260411-7" />
+    <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
+    <div id="mdj-assistant-booth">
+        <div class="booth-window">
+            <div class="booth-header">
+                <div class="status-dot"></div>
+                <div style="flex: 1;">
+                    <h3>Booth Assistant</h3>
+                    <div style="font-size: 10px; color: rgba(255, 255, 255, 0.4); font-weight: 700;">Sales & Negotiation Expert</div>
+                </div>
+            </div>
+            <div class="booth-messages"></div>
+            <div class="booth-input-area">
+                <input type="text" placeholder="Type your message here..." />
+                <button class="booth-send-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="booth-trigger" title="Talk to Booth Assistant">
+            <div class="avatar-glow"></div>
+            <div style="font-size: 30px; z-index: 10;">🤖</div>
+        </div>
+    </div>
+
+    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+    <script src="./mdj-shared-header.js?v=20260603-art-007c-staff-same-entry-1"></script>
+    <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+    <script src="./mdj-mainnav-infinite.js?v=20260516-home-nav-stable-1"></script>
+    <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
+    <script src="./mdj-profile-nav-context.js?v=20260603-art-007c-staff-same-entry-1"></script>
+    <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+</body>
+
+</html>

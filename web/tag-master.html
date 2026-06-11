@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Tag Master — Library Cleaning · MDJPRO</title>
+    <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260521-dj-tools-staff-nav-1" />
+    <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+    <style>
+        body.page-tag-master main .container {
+            max-width: min(1720px, 97vw);
+            width: 100%;
+            padding-left: clamp(14px, 2vw, 28px);
+            padding-right: clamp(14px, 2vw, 28px);
+            box-sizing: border-box;
+        }
+
+        body.page-tag-master .section { padding-left: 0; padding-right: 0; }
+
+        body.page-tag-master .tm-hero {
+            text-align: center;
+            width: 100%;
+            margin: 0 0 44px;
+            padding-top: 48px;
+        }
+
+        body.page-tag-master .tm-eyebrow {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #d99aff;
+            margin-bottom: 18px;
+        }
+
+        body.page-tag-master .tm-title {
+            font-size: clamp(38px, 4.5vw, 58px);
+            font-weight: 900;
+            line-height: 1.08;
+            margin: 0 0 22px;
+        }
+
+        body.page-tag-master .tm-back {
+            display: inline-block;
+            margin-bottom: 28px;
+            font-size: 13px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.55);
+            text-decoration: none;
+        }
+
+        body.page-tag-master .tm-back:hover { color: #d99aff; }
+
+        body.page-tag-master .tm-lead {
+            font-size: clamp(18px, 1.8vw, 24px);
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.82);
+            margin: 0 auto 16px;
+            max-width: min(1280px, 100%);
+        }
+
+        body.page-tag-master .tm-value {
+            font-size: clamp(15px, 1.2vw, 17px);
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.62);
+            margin: 0 auto 32px;
+            max-width: min(1200px, 100%);
+        }
+
+        body.page-tag-master .tm-glass {
+            width: 100%;
+            padding: clamp(28px, 3vw, 44px) clamp(24px, 3vw, 40px);
+            border-radius: 16px;
+            border: 1px solid rgba(175, 82, 222, 0.4);
+            background: linear-gradient(165deg, rgba(175, 82, 222, 0.1) 0%, rgba(0, 0, 0, 0.4) 55%);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+            box-sizing: border-box;
+        }
+
+        body.page-tag-master .tm-glass-note {
+            font-size: clamp(14px, 1.1vw, 16px);
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.58);
+            margin: 0 0 28px;
+            padding: 14px 18px;
+            border-left: 2px solid rgba(175, 82, 222, 0.65);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        body.page-tag-master .tm-body {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 32px;
+            align-items: start;
+        }
+
+        @media (min-width: 900px) {
+            body.page-tag-master .tm-body {
+                grid-template-columns: minmax(360px, 46%) 1fr;
+                gap: clamp(32px, 4vw, 56px);
+            }
+        }
+
+        body.page-tag-master .tm-visual img {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        body.page-tag-master .tm-modes {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0 28px;
+        }
+
+        @media (min-width: 1100px) {
+            body.page-tag-master .tm-modes { grid-template-columns: 1fr 1fr; }
+        }
+
+        body.page-tag-master .tm-modes-title {
+            grid-column: 1 / -1;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.72);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 12px;
+            margin: 0 0 18px;
+        }
+
+        body.page-tag-master .tm-mode {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        body.page-tag-master .tm-mode-num {
+            flex: 0 0 32px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 900;
+            color: #fff;
+            background: rgba(175, 82, 222, 0.35);
+            border: 1px solid rgba(175, 82, 222, 0.6);
+        }
+
+        body.page-tag-master .tm-mode strong {
+            display: block;
+            font-size: clamp(13px, 1vw, 15px);
+            margin-bottom: 4px;
+            color: rgba(255, 255, 255, 0.92);
+        }
+
+        body.page-tag-master .tm-mode span {
+            font-size: clamp(13px, 1vw, 14px);
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.62);
+        }
+
+        body.page-tag-master .tm-flow {
+            margin-top: 36px;
+            padding-top: 28px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        body.page-tag-master .tm-flow-title {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.55);
+            margin: 0 0 16px;
+        }
+
+        body.page-tag-master .tm-flow-steps {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        body.page-tag-master .tm-flow-step {
+            font-size: 13px;
+            font-weight: 700;
+            padding: 9px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        body.page-tag-master .tm-flow-arrow { color: #d99aff; font-size: 14px; }
+
+        body.page-tag-master .tm-grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: clamp(20px, 2.5vw, 32px);
+            width: 100%;
+            margin: 44px 0 0;
+        }
+
+        @media (max-width: 768px) {
+            body.page-tag-master .tm-grid2 { grid-template-columns: 1fr; }
+        }
+
+        body.page-tag-master .tm-panel {
+            padding: clamp(24px, 2.5vw, 32px);
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        body.page-tag-master .tm-panel h3 {
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #d99aff;
+            margin: 0 0 16px;
+        }
+
+        body.page-tag-master .tm-panel ul {
+            margin: 0;
+            padding: 0 0 0 18px;
+            color: rgba(255, 255, 255, 0.68);
+            font-size: clamp(14px, 1.1vw, 15px);
+            line-height: 1.65;
+        }
+
+        body.page-tag-master .tm-panel li { margin-bottom: 10px; }
+
+        body.page-tag-master .tm-table { width: 100%; margin: 32px 0 0; }
+
+        body.page-tag-master .tm-table .table-row > div:first-child {
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.88);
+        }
+
+        body.page-tag-master .tm-future-note {
+            text-align: center;
+            width: 100%;
+            margin: 36px 0 0;
+            font-size: clamp(14px, 1.1vw, 16px);
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        body.page-tag-master .tm-cta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+            margin: 48px 0 64px;
+        }
+    </style>
+</head>
+
+<body class="notranslate page-tag-master mdj-nav-booting">
+    <header class="header mdj-header-unified" id="mainHeader">
+        <div class="header-top">
+            <div class="container">
+                <div class="brand">
+                    <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+                    <div class="brand-letters-wrapper">
+                        <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters" class="brand-letters-img">
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
+                    <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
+                    <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
+                    <div class="mdj-header-r1-auth-cluster">
+                        <div class="lang-switcher">
+                            <span class="lang-btn" data-lang="es">ES</span>
+                            <span class="lang-pipe">|</span>
+                            <span class="lang-btn" data-lang="en">EN</span>
+                        </div>
+                        <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-auth-btn>Log in</a>
+                        <div class="account session-pending" id="header-auth-zone" style="display: none;">
+                            <a class="account-btn" id="accountBtn" href="./dj-profile.html" title="Mi perfil" aria-label="Mi perfil">
+                                <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
+                            </a>
+                        </div>
+                    </div>
+                    <div class="header-avatar-cart-row" aria-label="Account and cart">
+                        <a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart" aria-label="Shopping cart">
+                            <span aria-hidden="true">🛒</span>
+                            <span id="header-cart-count" class="header-cart-count" hidden></span>
+                        </a>
+                    </div>
+                    <div class="header-search-wrap">
+                        <input type="search" id="header-smart-search" class="header-smart-search"
+                            placeholder="Search DJs, gear, services…" autocomplete="off" enterkeyhint="search" />
+                    </div>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">
+                    <span></span><span></span><span></span>
+                </button>
+                <div class="mobile-overlay" id="mobileMenu">
+                    <nav class="mobile-nav">
+                        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+                        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+                        <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+                        <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
+                        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+                        <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+                        <a href="./login.html?signup=free" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free"
+                            style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
+                        <a href="./login.html" id="header-login-btn-mobile" data-auth-btn
+                            style="color:var(--gold); font-weight:800;">Entrar</a>
+                        <a href="./dj-profile.html" id="nav-my-profile-mobile"
+                            style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY PROFILE</a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        <div class="header-nav">
+            <div class="container">
+                <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" data-mdj-compact-nav="1" aria-label="Navegación principal">
+                    <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
+                    <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
+                    <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
+                    <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
+                    <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️CONFIG</a>
+                    <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
+                    <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+                    <a href="./login.html" id="mainNav-guest-mi-perfil-link" class="mdj-guest-mi-perfil-mainnav" data-mdj-nav="my-profile" data-i18n="nav-my-profile">MI PERFIL</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="section">
+            <div class="container">
+                <div class="tm-hero">
+                    <a href="./dj-tools.html" class="tm-back" data-i18n="tools-wizard-page-back">← Back to DJ Tools</a>
+                    <div class="tm-eyebrow" data-i18n="tools-tag-eyebrow">Tag Master · Metadata Engine</div>
+                    <h1 class="tm-title" data-i18n="tools-tag-page-title">Library Cleaning</h1>
+                    <p class="tm-lead" data-i18n="tools-tag-lead">The metadata brain behind Library Cleaning — batch ID3 editing, atomic validation, and professional tag hygiene on tracks you already indexed in MDJPRO.</p>
+                    <p class="tm-value" data-i18n="tools-tag-page-value">Where Library Wizard builds the shelves, Tag Master labels every record: title, artist, album, comments, cover art — cleaned, verified, and written back to disk locally. No cloud upload. You confirm every Save.</p>
+                </div>
+
+                <div class="tm-glass">
+                    <p class="tm-glass-note" data-i18n="tools-tag-note">Tag Master edits metadata inside your files. It does not deploy folder DNA — that is Library Wizard. Typical flow: Load Root → Start Scan → clean tags here → Save writes physical ID3.</p>
+                    <div class="tm-body">
+                        <div class="tm-visual">
+                            <img src="./manuals/MDJPRO_Manual/en/assets/MDJPRO_EDITOR_PREVIEW.png" alt="Tag Master metadata editor" width="380" height="auto" loading="lazy" decoding="async" />
+                        </div>
+                        <div class="tm-modes">
+                            <p class="tm-modes-title" data-i18n="tools-tag-modes-title">Six workflow pillars</p>
+                            <div class="tm-mode">
+                                <div class="tm-mode-num" aria-hidden="true">1</div>
+                                <div><strong data-i18n="tools-tag-mode1-title">Batch ID3 Editor</strong><span data-i18n="tools-tag-mode1-desc">Seven core fields with real-time validation — Title, Artist, Album, Comments, and more. Tri-state draft for multi-select.</span></div>
+                            </div>
+                            <div class="tm-mode">
+                                <div class="tm-mode-num" aria-hidden="true">2</div>
+                                <div><strong data-i18n="tools-tag-mode2-title">Visual Monitor</strong><span data-i18n="tools-tag-mode2-desc">Cover art, path, bitrate, duration, and key — adjustable columns. Audio preview and MP4 scrub before you commit.</span></div>
+                            </div>
+                            <div class="tm-mode">
+                                <div class="tm-mode-num" aria-hidden="true">3</div>
+                                <div><strong data-i18n="tools-tag-mode3-title">Cleaning Arsenal</strong><span data-i18n="tools-tag-mode3-desc">Magic Eraser, Auto-Tag heuristics, and emoji cleanup — strip junk characters and normalize strings in batch.</span></div>
+                            </div>
+                            <div class="tm-mode">
+                                <div class="tm-mode-num" aria-hidden="true">4</div>
+                                <div><strong data-i18n="tools-tag-mode4-title">Filename ↔ Tag</strong><span data-i18n="tools-tag-mode4-desc">Map filename patterns into ID3 when tags are empty or inconsistent — DJCity, pools, feat. parsing included.</span></div>
+                            </div>
+                            <div class="tm-mode">
+                                <div class="tm-mode-num" aria-hidden="true">5</div>
+                                <div><strong data-i18n="tools-tag-mode5-title">Import Sandbox</strong><span data-i18n="tools-tag-mode5-desc">Bulk-load audio and video from Finder into the editor — independent of the last scan when you need a focused session.</span></div>
+                            </div>
+                            <div class="tm-mode">
+                                <div class="tm-mode-num" aria-hidden="true">6</div>
+                                <div><strong data-i18n="tools-tag-mode6-title">Save &amp; Distribution</strong><span data-i18n="tools-tag-mode6-desc">Physical ID3 write with round-trip validation. MDJ Distribution previews moves into your Wizard DNA — you confirm before anything moves.</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tm-flow">
+                        <p class="tm-flow-title" data-i18n="tools-tag-flow-title">Where Tag Master sits in MDJPRO</p>
+                        <div class="tm-flow-steps" aria-label="Tag Master workflow">
+                            <span class="tm-flow-step" data-i18n="tools-tag-flow1">Hub</span>
+                            <span class="tm-flow-arrow" aria-hidden="true">→</span>
+                            <span class="tm-flow-step" data-i18n="tools-tag-flow2">Load Root</span>
+                            <span class="tm-flow-arrow" aria-hidden="true">→</span>
+                            <span class="tm-flow-step" data-i18n="tools-tag-flow3">Start Scan</span>
+                            <span class="tm-flow-arrow" aria-hidden="true">→</span>
+                            <span class="tm-flow-step" data-i18n="tools-tag-flow4">Tag Master</span>
+                            <span class="tm-flow-arrow" aria-hidden="true">→</span>
+                            <span class="tm-flow-step" data-i18n="tools-tag-flow5">Results</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tm-grid2">
+                    <div class="tm-panel">
+                        <h3 data-i18n="tools-tag-page-not-title">What Tag Master does not do</h3>
+                        <ul>
+                            <li data-i18n="tools-tag-page-not-1">It does not deploy folder DNA — Library Wizard owns structure.</li>
+                            <li data-i18n="tools-tag-page-not-2">It does not silently rewrite your library — you confirm before Save.</li>
+                            <li data-i18n="tools-tag-page-not-3">It does not auto-commit when you change rows — draft changes need an explicit Save.</li>
+                            <li data-i18n="tools-tag-page-not-4">It requires MDJPRO Premium (tagMaster) — processing stays 100% local on your Mac.</li>
+                        </ul>
+                    </div>
+                    <div class="tm-panel">
+                        <h3 data-i18n="tools-tag-page-roadmap-title">Today vs what comes next</h3>
+                        <ul>
+                            <li data-i18n="tools-tag-page-roadmap-1"><strong>Today:</strong> batch ID3, cleaning tools, cover/video preview, verified local write.</li>
+                            <li data-i18n="tools-tag-page-roadmap-2"><strong>You:</strong> unidirectional workflow — avoid editing the same files outside MDJPRO mid-session.</li>
+                            <li data-i18n="tools-tag-page-roadmap-3"><strong>Next:</strong> deeper AI-assisted tagging — in development; today Auto-Tag uses expert heuristics, not autopilot.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="tm-table">
+                    <div class="table-row table-head">
+                        <div data-i18n="tools-wizard-page-table-layer">Layer</div>
+                        <div data-i18n="tools-wizard-page-table-status">Status</div>
+                        <div data-i18n="tools-wizard-page-table-role">Role</div>
+                    </div>
+                    <div class="table-row">
+                        <div data-i18n="tools-tag-page-table-row1-layer">Tag Master (ID3)</div>
+                        <div data-i18n="tools-tag-page-table-row1-status">In production</div>
+                        <div data-i18n="tools-tag-page-table-row1-role">Batch metadata on your files</div>
+                    </div>
+                    <div class="table-row">
+                        <div data-i18n="tools-tag-page-table-row2-layer">Library Wizard (DNA)</div>
+                        <div data-i18n="tools-tag-page-table-row2-status">Complement</div>
+                        <div data-i18n="tools-tag-page-table-row2-role">Shelves first — tags second</div>
+                    </div>
+                    <div class="table-row">
+                        <div data-i18n="tools-tag-page-table-row3-layer">AI assist</div>
+                        <div data-i18n="tools-tag-page-table-row3-status">In development</div>
+                        <div data-i18n="tools-tag-page-table-row3-role">Smarter suggestions — not a replacement</div>
+                    </div>
+                </div>
+
+                <p class="tm-future-note" data-i18n="tools-tag-future">All metadata is processed locally on your Mac. Tag Master is the cleaning room your library deserves — the labels Serato, Rekordbox, and VirtualDJ read with certainty.</p>
+
+                <div class="tm-cta-row">
+                    <a href="./downloads.html" class="btn primary" style="padding: 14px 28px; font-size: 16px;" data-i18n="tools-tag-cta">Get Tag Master PRO</a>
+                    <a href="./library-wizard.html" class="btn" style="padding: 14px 28px; font-size: 16px;" data-i18n="tools-tag-wizard-link">Library Wizard DNA →</a>
+                    <a href="./dj-tools.html" class="btn" style="padding: 14px 28px; font-size: 16px;" data-i18n="tools-wizard-page-back">← Back to DJ Tools</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container" style="text-align: center;">
+            <div data-i18n="footer-rights-digital">© 2026 Miami DJ Beat LLC. Digital Asset Division.</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <script src="./translations.js?v=20260611-tag-master-web-1"></script>
+    <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
+    <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+    <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
+    <link rel="stylesheet" href="./mdj-assistant.css?v=20260411-7" />
+    <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
+    <div id="mdj-assistant-booth">
+        <div class="booth-window">
+            <div class="booth-header">
+                <div class="status-dot"></div>
+                <div style="flex: 1;">
+                    <h3>Booth Assistant</h3>
+                    <div style="font-size: 10px; color: rgba(255, 255, 255, 0.4); font-weight: 700;">Sales & Negotiation Expert</div>
+                </div>
+            </div>
+            <div class="booth-messages"></div>
+            <div class="booth-input-area">
+                <input type="text" placeholder="Type your message here..." />
+                <button class="booth-send-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="booth-trigger" title="Talk to Booth Assistant">
+            <div class="avatar-glow"></div>
+            <div style="font-size: 30px; z-index: 10;">🤖</div>
+        </div>
+    </div>
+
+    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+    <script src="./mdj-shared-header.js?v=20260603-art-007c-staff-same-entry-1"></script>
+    <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+    <script src="./mdj-mainnav-infinite.js?v=20260516-home-nav-stable-1"></script>
+    <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
+    <script src="./mdj-profile-nav-context.js?v=20260603-art-007c-staff-same-entry-1"></script>
+    <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+</body>
+
+</html>

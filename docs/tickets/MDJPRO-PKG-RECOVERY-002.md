@@ -1,70 +1,53 @@
-# MDJPRO-PKG-RECOVERY-002 — Install incident closure
+# MDJPRO-PKG-RECOVERY-002 — Install incident (ARCHIVED)
 
-**Status:** **CLOSED — SUPERSEDED** by ship line **V.2.6.0** (2026-06-10/11)  
-**Date opened:** 2026-06-09  
-**Date closed:** 2026-06-11  
-**Root cause (historical):** Multiple app copies (Xcode DerivedData vs `/Applications`) + agent could not complete `sudo installer` from chat.
-
-## Closure note
-
-Incident **2026-06-10** workshop reset → **V.2.6.0** post-incident ship closed the deployment chain:
-
-- Real pkg 2.6.0 built, notarized, Supabase + **INSTALL-OPEN-008** PASS prod  
-- Install QA PASS · `/Applications` shows **2.6.0**  
-- Recovery script below is **archived reference only** — do not re-run for 2.0.0 closure.
+**Status:** **ARCHIVED — NO ACTION**  
+**Closed:** 2026-06-11  
+**Superseded by:** ship line **V.2.6.0** (pkg notarized, Storage, **INSTALL-OPEN-008** PASS prod)
 
 ---
 
-## Incident summary
+## Why this ticket exists
+
+Forensic note for the **2026-06-09/10** install confusion (DerivedData vs `/Applications`, stale binaries).  
+**Do not run recovery scripts below** for current work.
+
+---
+
+## Closure (current prod)
+
+| Check | Result |
+|-------|--------|
+| `/Applications/MDJ PRO.app` | **2.6.0** ✓ |
+| Pkg name = pkg content | ✓ |
+| Notarized prod + Desktop backup | ✓ |
+| Install from miamidjbeat.com | ✓ PASS |
+
+---
+
+<details>
+<summary>Historical record — 2026-06-09 incident — do not execute</summary>
+
+### Symptoms (historical)
 
 | Symptom | Cause |
 |---------|--------|
-| Xcode Run shows `V.2.0.0` | Fresh build from corrected source |
-| Dock/Launchpad shows `V.2.00` | Stale binary in `/Applications` or wrong `.app` opened |
-| Two Dock icons | Xcode instance + installed instance open simultaneously |
-| `/Applications` empty after audits | Install never completed or app removed between attempts |
+| Xcode Run vs Dock version mismatch | DerivedData vs `/Applications` |
+| Two Dock icons | Xcode + installed instance |
+| Empty `/Applications` | Install never completed |
 
-**Source code:** OK (`MARKETING_VERSION = 2.0.0`, `AppConfig` reads bundle, PNG clean).  
-**Failure:** deployment chain, not Swift logic.
-
----
-
-## Single recovery command (Captain Terminal)
+### Recovery script (obsolete)
 
 ```bash
+# DO NOT RUN — reference only
 cd ~/Desktop/MDJ
-chmod +x scripts/mdj-recovery-install.sh
 ./scripts/mdj-recovery-install.sh
 ```
 
-Script flow:
-1. Quit all MDJ PRO processes
-2. `mdj-release.sh` — Release build + `.pkg` (no version bump)
-3. Print Release binary SHA256
-4. `sudo installer` → `/Applications`
-5. Compare Release SHA vs Installed SHA — **MATCH YES** required
-6. Open only `/Applications/MDJ PRO.app`
+### Rules (still useful)
 
-Re-install existing pkg only (skip rebuild):
-
-```bash
-SKIP_BUILD=1 ./scripts/mdj-recovery-install.sh
-```
-
----
-
-## Closure criteria (PASS) — superseded by V.2.6.0 ship
-
-- [x] Installed `/Applications/MDJ PRO.app` = **2.6.0** (2026-06-10 install OK)
-- [x] Pkg content matches catalog (no name/content mismatch)
-- [x] Notarized prod pkg + backup on Desktop
-- [ ] ~~V.2.0.0 criteria below~~ — historical only
-
----
-
-## Rules going forward
-
-1. **Develop:** Xcode Run only  
-2. **Test installer:** `/Applications` only — no Xcode Run at same time  
+1. **Develop:** Xcode Run  
+2. **Test installer:** `/Applications` only — Cmd+Q before `.pkg`  
 3. **Never** rename `.pkg` without `mdj-release.sh`  
-4. **Version bump:** Captain defines `official` / `functional` / `cosmetic` first (AUTO-004)
+4. Version bumps: see AUTO-004
+
+</details>
