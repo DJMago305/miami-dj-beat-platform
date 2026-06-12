@@ -1,6 +1,6 @@
 # MDJPRO-MANUAL-ICONS-014 — Enterprise SVG icons (MDJPRO interactive + print manuals)
 
-**Status:** **Phase 1 DONE all langs** — ES approved · EN FR DE IT PT replicated `#menu` · localhost · **await `APROBADO PUSH`**
+**Status:** **DONE prod** — 6 langs interactive · NOTE callout · web exit links · Booth paths · Captain QA **PASS** · PR **#79** + hotfix EN **#80**
 
 **Related:** [DL-FEAT-ICONS-010](./MDJPRO-DL-FEAT-ICONS-010-enterprise-downloads-grid.md) §3.4 explicitly deferred “Manuals print HTML (separate emoji policy if ever needed)”.
 
@@ -155,5 +155,21 @@ cosmetic(manuals): enterprise SVG icons in MDJPRO manual HTML (014)
 - [MDJPRO-DL-FEAT-ICONS-010](./MDJPRO-DL-FEAT-ICONS-010-enterprise-downloads-grid.md)
 - [MDJPRO-PUBLIC-ARTIST-COPY-NOTE](./MDJPRO-PUBLIC-ARTIST-COPY-NOTE.md)
 - [workflow-control.md](../workflow-control.md) §7 deploy gates
+
+---
+
+## 9. Ship record (prod · 2026-06-12)
+
+| Step | Detail |
+|------|--------|
+| Commit | `f96c1d9` — MANUAL-ICONS-014 + BOOTH-016 batch |
+| PR web | [#79](https://github.com/DJMago305/miami-dj-beat-platform/pull/79) → merge `dddbf00` |
+| Hotfix EN | [#80](https://github.com/DJMago305/miami-dj-beat-platform/pull/80) — premature `</style>` · merge `7c40685` |
+| Captain | **`APROBADO PUSH`** · **`APROBADO DEPLOY PRODUCCIÓN`** |
+| Vercel | Auto-deploy from `main` |
+| Shared CSS | `web/manuals/mdj-manual-icons.css?v=20260612-manual-exit-1` |
+| Entry prod | `https://miamidjbeat.com/manuals/MDJPRO_Manual/{lang}/index.html` via **Downloads → Manual Interactivo** |
+
+**Print manuals (`MDJPRO_Manual_Print`):** not in this ship — separate ticket if emoji/icons needed.
 
 ---

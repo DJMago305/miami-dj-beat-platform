@@ -1,6 +1,6 @@
 # MDJPRO-BOOTH-MANUAL-016 — Booth: conocimiento Manual MDJPRO + gates por rol
 
-**Status:** **DONE localhost** — manual 17 cap. + role gates + bridge + **web classes jun-2026** · **Edge deploy pending** (`booth-chat`) · **await `APROBADO PUSH`**
+**Status:** **DONE prod** — manual 17 cap. + role gates + bridge + web classes jun-2026 · **`booth-chat` Edge deployed** · Captain QA **PASS** · PR **#79**
 
 **Related:** [MANUAL-ICONS-014](./MDJPRO-MANUAL-ICONS-014-enterprise-manual-svg-icons.md) · manual interactivo 6 langs
 
@@ -46,7 +46,27 @@ Booth = especialista digital MDJB + **Manual MDJPRO**:
 
 ## 4. Deploy
 
-| Paso | Autorización |
-|------|----------------|
-| Git push web | **`APROBADO PUSH`** |
-| `supabase functions deploy booth-chat` | **`APROBADO DEPLOY PRODUCCIÓN`** |
+| Paso | Autorización | Estado |
+|------|----------------|--------|
+| Git push web | **`APROBADO PUSH`** | **DONE** — PR [#79](https://github.com/DJMago305/miami-dj-beat-platform/pull/79) |
+| `supabase functions deploy booth-chat` | **`APROBADO DEPLOY PRODUCCIÓN`** | **DONE** — project `hkuvuqupbxwkiykxvqdr` · 2026-06-12 |
+
+---
+
+## 5. Ship record (memoria sesión · 2026-06-12)
+
+**Capitán confirmó:** QA manual localhost **PASS** · **`APROBADO PUSH`** · **`APROBADO DEPLOY PRODUCCIÓN`**.
+
+| Entrega | Detalle |
+|---------|---------|
+| Web merge | PR **#79** (`dddbf00`) — iconos, NOTE, salida web, Booth bridge, `mdj-assistant.js` |
+| Hotfix EN | PR **#80** (`7c40685`) — CSS visible como texto ( `</style>` prematuro ) |
+| Edge | `booth-chat` — prompt §2C–2E, tono humano + nombre usuario |
+| Cache manual | `mdj-assistant.js?v=20260612-booth-human-1` · `mdj-manual-icons.css?v=20260612-manual-exit-1` |
+| Prod URLs | Manual: `/manuals/MDJPRO_Manual/{es\|en\|fr\|de\|it\|pt}/index.html` · Descargas: `/downloads.html` |
+
+**No requiere merge manual del Capitán** — GitHub branch protection: agente abrió PR, CI `check` PASS, merge automático a `main`, Vercel despliega solo.
+
+**Fuera de alcance (futuro):** bump `mdj-assistant.js` en resto del sitio · **MANUAL-I18N-015** (un HTML + toggle idioma).
+
+---

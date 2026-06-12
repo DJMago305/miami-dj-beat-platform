@@ -1,8 +1,8 @@
 # MDJPRO tickets — status index
 
-**Last aligned:** 2026-06-12 — **Academia media + icons batch SHIPPED prod** (PR **#78**) · localhost **PASS**  
+**Last aligned:** 2026-06-12 — **Manual + Booth batch SHIPPED prod** (PR **#79** + hotfix EN **#80**) · Captain QA **PASS**  
 **Prod line:** **V.2.6.5** · notarized · Storage · catálogo **v265** · PR **#77** · **008** postinstall  
-**Web latest:** PR **#78** merge `adc2982` → `main` · `academy-media.json` **`20260612-acad-storage`**
+**Web latest:** PR **#80** merge `7c40685` → `main` · manual 6 langs + Booth + `booth-chat` Edge
 
 ---
 
@@ -17,9 +17,22 @@
 | [SUITE-ENTERPRISE-WEB-009](./MDJPRO-SUITE-ENTERPRISE-WEB-009.md) | **DONE prod** | 4 enterprise pages + DJ Tools `grid4` |
 | [PERMISOS-007](./MDJPRO-PERMISOS-007-runtime-permissions-ux.md) | **DONE Phase 1 prod** | LOAD ROOT i18n in **2.6.5 DMG** |
 | [PUBLIC-ARTIST-COPY-NOTE](./MDJPRO-PUBLIC-ARTIST-COPY-NOTE.md) | **ACTIVE policy** | No developer copy on public web |
+| [MANUAL-ICONS-014](./MDJPRO-MANUAL-ICONS-014-enterprise-manual-svg-icons.md) | **DONE prod** | 6 langs · SVG sidebar · NOTE · web exit · PR **#79** · hotfix EN **#80** |
+| [BOOTH-MANUAL-016](./MDJPRO-BOOTH-MANUAL-016-manual-knowledge-gates.md) | **DONE prod** | Manual bridge · role gates · human Booth · `booth-chat` deployed |
 
 **Prod pkg SHA256:** `40926cda1c1c469bfa920a3dc9fa77fb28232538fb324e866562fabb0ef39883` · 9,680,243 bytes  
 **Rollback 2.6.0:** `MDJPRO_V260_NOTARIZED_BACKUP.pkg` + migración v260
+
+### Manual + Booth ship (PR #79 · #80 · 2026-06-12)
+
+| PR | Merge | Scope |
+|----|-------|-------|
+| [#79](https://github.com/DJMago305/miami-dj-beat-platform/pull/79) | `dddbf00` | `mdj-manual-icons.css` · 6× manual HTML · Booth bridge · `mdj-assistant.js` · `booth-chat` prompt |
+| [#80](https://github.com/DJMago305/miami-dj-beat-platform/pull/80) | `7c40685` | Hotfix EN manual — premature `</style>` |
+
+**Commits:** `f96c1d9` (batch) · `dfe8a5a` (EN fix)  
+**Edge:** `supabase functions deploy booth-chat` · project `hkuvuqupbxwkiykxvqdr`  
+**Captain auth:** **`APROBADO PUSH`** · **`APROBADO DEPLOY PRODUCCIÓN`** — merge vía PR (branch protection; no push directo a `main`)
 
 ---
 
@@ -38,8 +51,6 @@
 **Commits:** `34042f1` (Academia) · `ab7e291` (icons) · merge `adc2982`  
 **PR:** https://github.com/DJMago305/miami-dj-beat-platform/pull/78 — **MERGED**
 
-**QA confirmed:** prod + localhost `:8080` · working tree clean · 26 Storage URLs · 27 local fallbacks on disk
-
 ---
 
 ## Archived — NO ACTION (historical docs only)
@@ -51,22 +62,14 @@
 
 ---
 
-## Open — cosmetic (next batch)
-
-| Ticket | Branch (proposed) | Status | Notes |
-|--------|-------------------|--------|-------|
-| [MANUAL-ICONS-014](./MDJPRO-MANUAL-ICONS-014-enterprise-manual-svg-icons.md) | `cosmetic/mdjpro-manual-icons-014` | **DONE localhost all langs** | `#menu` SVG + NOTE + Booth paths · **await `APROBADO PUSH`** |
-| [BOOTH-MANUAL-016](./MDJPRO-BOOTH-MANUAL-016-manual-knowledge-gates.md) | — | **DONE localhost** | Manual + role gates + **web classes jun-2026** · Edge deploy pending |
-
-**Policy:** Phase 1 EN+ES interactive → Captain QA → remaining langs + print → **`APROBADO PUSH`**.
-
----
-
 ## Open / deferred (real future work)
 
 | Item | Notes |
 |------|-------|
 | **DL-FEAT-ICONS-010 Phase D+** | ~58 emoji restantes en `courses.html` (exam/hero) — diferido |
+| **MANUAL-I18N-015** | Un HTML manual + toggle idioma — discutido, no iniciado |
+| **MANUAL-ICONS-014 print** | `MDJPRO_Manual_Print` — fuera del ship #79 |
+| Bump `mdj-assistant.js` sitio | Resto de páginas en cache viejo; manual ya `booth-human-1` |
 | **PERMISOS-007 Phase 2+** | USB volume panel copy, optional Hub hint — **new ticket** if reopened |
 | Stripe Dashboard QA | Deferred — Edge deployed |
 | Mac git remote | Optional backup (`~/Desktop/MDJ` sin `origin`) |
