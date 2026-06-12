@@ -1,8 +1,8 @@
 # MDJPRO tickets — status index
 
-**Last aligned:** 2026-06-12 — **Academia media ship batch DONE localhost** (011+012+013); await **`APROBADO PUSH`**  
+**Last aligned:** 2026-06-12 — **Academia media + icons batch SHIPPED prod** (PR **#78**) · localhost **PASS**  
 **Prod line:** **V.2.6.5** · notarized · Storage · catálogo **v265** · PR **#77** · **008** postinstall  
-**Active branch (cosmetic batch):** `cosmetic/mdjpro-dl-feat-icons-010` — **no push until ticket close** (`APROBADO PUSH`)
+**Web latest:** PR **#78** merge `adc2982` → `main` · `academy-media.json` **`20260612-acad-storage`**
 
 ---
 
@@ -23,6 +23,25 @@
 
 ---
 
+## Ship closed — Academia media + icons (PR #78 · 2026-06-12)
+
+| Ticket | Status | Scope |
+|--------|--------|-------|
+| [ACAD-CABLE-011](./MDJPRO-ACAD-CABLE-011-courses-modulo6-connector-photos.md) | **DONE prod** | Módulo 6 cables — PNG re-encode + CSS |
+| [ACAD-LIB-012](./MDJPRO-ACAD-LIB-012-culture-library-shipwreck-images.md) | **DONE prod** | Vault + lecciones + editorial imgs + `academy-media.json` |
+| [ACAD-HERO-013](./MDJPRO-ACAD-HERO-013-academy-hero-video-prod.md) | **DONE prod** | Hero mp4 → Supabase Storage (3 páginas) |
+| [DL-FEAT-ICONS-010](./MDJPRO-DL-FEAT-ICONS-010-enterprise-downloads-grid.md) | **Phase A–C DONE prod** | `downloads`, `dj-tools`, `load-root`, billing SVG — **courses emoji restante = open** |
+
+**Also shipped:** Módulo 7 `equipo-*.png` (4 re-encoded + **`equipo-mixer.png`** created).
+
+**Canonical caja:** `web/data/academy-media.json` · `web/js/academy-media-loader.js`  
+**Commits:** `34042f1` (Academia) · `ab7e291` (icons) · merge `adc2982`  
+**PR:** https://github.com/DJMago305/miami-dj-beat-platform/pull/78 — **MERGED**
+
+**QA confirmed:** prod + localhost `:8080` · working tree clean · 26 Storage URLs · 27 local fallbacks on disk
+
+---
+
 ## Archived — NO ACTION (historical docs only)
 
 | Ticket | Notes |
@@ -32,29 +51,14 @@
 
 ---
 
-## Open — cosmetic batch (localhost → single push at close)
+## Open — cosmetic (next batch)
 
-| Ticket | Branch | Status | Notes |
-|--------|--------|--------|-------|
-| [DL-FEAT-ICONS-010](./MDJPRO-DL-FEAT-ICONS-010-enterprise-downloads-grid.md) | `cosmetic/mdjpro-dl-feat-icons-010` | **Phase A APPROVED** · **B–C localhost** | `downloads.html`, `dj-tools.html`, `load-root.html`, `account-settings.html` billing icons; batch commit pending |
+| Ticket | Branch (proposed) | Status | Notes |
+|--------|-------------------|--------|-------|
+| [MANUAL-ICONS-014](./MDJPRO-MANUAL-ICONS-014-enterprise-manual-svg-icons.md) | `cosmetic/mdjpro-manual-icons-014` | **DONE localhost all langs** | `#menu` SVG + NOTE + Booth paths · **await `APROBADO PUSH`** |
+| [BOOTH-MANUAL-016](./MDJPRO-BOOTH-MANUAL-016-manual-knowledge-gates.md) | — | **DONE localhost** | Manual + role gates + **web classes jun-2026** · Edge deploy pending |
 
-**Policy:** Accumulate work on branch → one commit batch → **`APROBADO PUSH`** → later **`APROBADO DEPLOY PRODUCCIÓN`**.
-
----
-
-## Ready to push — Academia media batch (2026-06-12)
-
-| Ticket | Status | Scope |
-|--------|--------|-------|
-| [ACAD-CABLE-011](./MDJPRO-ACAD-CABLE-011-courses-modulo6-connector-photos.md) | **DONE localhost** | Módulo 6 cables — PNG re-encode + CSS |
-| [ACAD-LIB-012](./MDJPRO-ACAD-LIB-012-culture-library-shipwreck-images.md) | **DONE localhost** | Vault + lecciones + editorial imgs + `academy-media.json` |
-| [ACAD-HERO-013](./MDJPRO-ACAD-HERO-013-academy-hero-video-prod.md) | **DONE localhost** | Hero mp4 → Supabase Storage (3 páginas) |
-
-**Also in batch:** Módulo 7 `equipo-*.png` (4 re-encoded + **`equipo-mixer.png` created** — was missing on disk).
-
-**Canonical caja:** `web/data/academy-media.json` · `web/js/academy-media-loader.js`
-
-**QA before push:** `academia.html` · `dj-knowledge.html` · `courses.html` (Cmd+Shift+R)
+**Policy:** Phase 1 EN+ES interactive → Captain QA → remaining langs + print → **`APROBADO PUSH`**.
 
 ---
 
@@ -62,9 +66,11 @@
 
 | Item | Notes |
 |------|-------|
+| **DL-FEAT-ICONS-010 Phase D+** | ~58 emoji restantes en `courses.html` (exam/hero) — diferido |
 | **PERMISOS-007 Phase 2+** | USB volume panel copy, optional Hub hint — **new ticket** if reopened |
 | Stripe Dashboard QA | Deferred — Edge deployed |
 | Mac git remote | Optional backup (`~/Desktop/MDJ` sin `origin`) |
+| Módulo 4 Lección 06 | Gradient + emoji placeholder — sin asset de imagen |
 
 ---
 
