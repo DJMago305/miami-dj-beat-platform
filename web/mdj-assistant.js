@@ -1,7 +1,8 @@
 /**
  * MDJPRO — Booth Assistant AI Logic
- * Sales / negotiation helper with a human tone. Uses scripted states + keyword routing (not a hosted LLM).
+ * Sales / negotiation helper with a human tone. Uses scripted states + keyword routing + booth-chat LLM.
  * Policy: never disclose internal credentials, unreleased roadmap, private user data, or “company secrets”.
+ * BOOTH-MANUAL-016: MDJPRO manual chapter map, role-based nav guards, PRO cap.6 gate.
  * For anything outside public MDJ knowledge, deflect to support or give general business criteria only.
  */
 
@@ -78,6 +79,360 @@ window.MDJ_Assistant = {
         return false;
     },
 
+    /** Display name from session (header / manual bridge). Empty if guest. */
+    boothKnownName: function () {
+        var n = window.__mdjBoothDisplayName;
+        if (!n || n === 'Member') return '';
+        return String(n).trim();
+    },
+
+    /** Natural opener — same warmth as Booth greeting; uses name when we know it. */
+    boothHumanLead: function (isSpanish, tone) {
+        var name = this.boothKnownName();
+        tone = tone || 'warm';
+        if (name) {
+            if (tone === 'ack') {
+                return isSpanish ? 'Perfecto, ' + name + '. ' : 'Got it, ' + name + '. ';
+            }
+            return isSpanish ? 'Claro, ' + name + ' — ' : 'Sure, ' + name + ' — ';
+        }
+        if (tone === 'ack') {
+            return isSpanish ? 'Perfecto. ' : 'Got it. ';
+        }
+        return isSpanish ? 'Claro — ' : 'Sure — ';
+    },
+
+    /** BOOTH-MANUAL-016 — catálogo capítulos MDJPRO (6 idiomas, misma estructura de anclas). */
+    _manualChapterCatalog: Object.freeze([
+        { id: '00-intro.md', es: 'Introducción General', en: 'General Introduction', kw: /introducci|general introduction|qu[eé] es mdjpro|what is mdjpro/i },
+        { id: '01-requirements.md', es: 'Requisitos del Sistema', en: 'System Requirements', kw: /requisito|system requirement|macos|apple silicon|ram|memoria|sonoma|hardware/i },
+        { id: '02-install.md', es: 'Instalación', en: 'Installation', kw: /instal|install|pkg|descarg|download mdjpro|gatekeeper|notariz/i },
+        { id: '03-welcome.md', es: 'Primeros Pasos', en: 'First Steps', kw: /primeros pasos|first steps|bienvenid|welcome|empezar|getting started/i },
+        { id: '04-interface.md', es: 'Interfaz de Usuario', en: 'User Interface', kw: /interfaz|interface|ui\b|pantalla|ventana|layout/i },
+        { id: '05-control-panel.md', es: 'Zona de Control', en: 'Control Panel', kw: /zona de control|control panel|serato|rekordbox|virtual dj|vdj|integraci/i },
+        { id: '06-library-wizard.md', es: 'Librería y Organización', en: 'Library and Organization', pro: true, kw: /librer[ií]a|library|organiz|wizard|crate|master folder|carpeta master/i },
+        { id: '07-editor-tag.md', es: 'Editor Tag', en: 'Editor Tag', kw: /editor tag|tag master|etiquet|metadata|id3|tags\b/i },
+        { id: '08-workflow-basic.md', es: 'Modo Operativo', en: 'Operative Mode', kw: /modo operativo|workflow|flujo|operativ|scan|escane/i },
+        { id: '09-shortcuts.md', es: 'Atajos de Teclado', en: 'Keyboard Shortcuts', kw: /atajo|shortcut|teclado|keyboard|hotkey|cmd\+/i },
+        { id: '10-scan-results.md', es: 'Acciones y Reportes', en: 'Actions and Reports', kw: /reporte|report|acciones|scan result|resultado|auditor/i },
+        { id: '11-visual-guide.md', es: 'Guía Visual de Funciones', en: 'Visual Function Guide', kw: /gu[ií]a visual|visual guide|funciones|screenshot|captura/i },
+        { id: '12-files-media.md', es: 'Motor de Archivos y Multimedia', en: 'File & Media Engine', kw: /archivo|multimedia|media engine|video|mp4|h\.264|codec/i },
+        { id: '13-security.md', es: 'Seguridad y Buenas Prácticas', en: 'Security & Best Practices', kw: /seguridad|security|backup|copia|permiso|sandbox|ssb/i },
+        { id: '14-troubleshooting.md', es: 'Solución de Problemas', en: 'Troubleshooting', kw: /problema|troubleshoot|error|falla|fix|no funciona|bingo|relocate/i },
+        { id: '15-legal.md', es: 'Privacidad y Términos Legales', en: 'Privacy & Legal Terms', kw: /legal|privacidad|privacy|t[eé]rminos|terms|licencia/i },
+        { id: '16-support.md', es: 'Soporte Técnico', en: 'Technical Support', kw: /soporte|support|contacto|help desk|ticket/i },
+    ]),
+
+    boothManualContext: function () {
+        if (window.__mdjBoothManualContext) return window.__mdjBoothManualContext;
+        var m = /\/manuals\/MDJPRO_Manual\/([a-z]{2})\//i.exec(location.pathname || '');
+        if (!m) return null;
+        return {
+            surface: 'mdjpro-manual',
+            lang: m[1].toLowerCase(),
+            chapterId: (location.hash || '').replace(/^#/, '') || '00-intro.md',
+            manualBase: '../../../manuals/MDJPRO_Manual/' + m[1].toLowerCase() + '/index.html',
+            webRoot: '../../../',
+            downloadsUrl: '../../../downloads.html',
+        };
+    },
+
+    boothManualWebRoot: function () {
+        var ctx = this.boothManualContext();
+        return ctx && ctx.webRoot ? ctx.webRoot : './';
+    },
+
+    boothManualChapterLink: function (chapterId, lang) {
+        var ctx = this.boothManualContext();
+        var lg = lang || (ctx && ctx.lang) || 'es';
+        var base = (ctx && ctx.manualBase) || ('./manuals/MDJPRO_Manual/' + lg + '/index.html');
+        return base + '#' + chapterId;
+    },
+
+    boothIsArtistPro: function () {
+        var idn = window.__mdjLastPlatformIdentity;
+        if (idn && idn.billing && typeof idn.billing.isArtistPro === 'function') {
+            return !!idn.billing.isArtistPro();
+        }
+        return false;
+    },
+
+    boothBuildManualAgentContext: function () {
+        var ctx = this.boothManualContext();
+        if (!ctx) return '';
+        var parts = [
+            'Superficie: Manual interactivo MDJPRO (' + ctx.lang + ')',
+            'Capítulo actual: #' + ctx.chapterId,
+            'Manual URL: ' + ctx.manualBase,
+        ];
+        var idn = window.__mdjLastPlatformIdentity;
+        if (idn) {
+            parts.push('Principal sesión: ' + (idn.principal || 'guest'));
+            if (idn.dbRole) parts.push('Rol DB: ' + idn.dbRole);
+            parts.push('Artista PRO activo: ' + (this.boothIsArtistPro() ? 'sí' : 'no'));
+        } else {
+            parts.push('Principal sesión: invitado (sin login)');
+        }
+        parts.push(
+            'Reglas manual: explicar capítulos MDJPRO; enlazar #' + ctx.chapterId + ' en el manual; cap.6 PRO solo uso real con suscripción; nunca datos de otros usuarios; nunca talento fuera MDJB.'
+        );
+        return parts.join(' | ');
+    },
+
+    boothRoleNavGuardReply: function (userInput, isSpanish) {
+        var q = (userInput || '').toLowerCase();
+        var idn = window.__mdjLastPlatformIdentity;
+        var principal = idn && idn.principal ? idn.principal : 'guest';
+        var root = this.boothManualWebRoot();
+
+        var wantsAdmin = /admin-dashboard|admin\.html|manager panel|panel manager|panel de manager|vendedor interno|staff panel|facturaci[oó]n interna|leads internos|contratos internos/i.test(q);
+        var wantsArtistPanel = /dj-dashboard|panel (del )?dj|mi dashboard artista|cash flow|soundfortips.*config/i.test(q);
+        var wantsClientPortal = /client-portal|portal cliente|mi cuenta cliente/i.test(q);
+
+        var lead = this.boothHumanLead(isSpanish, 'warm');
+
+        if (principal === 'buyer' && (wantsAdmin || wantsArtistPanel)) {
+            return lead + (isSpanish
+                ? 'con tu cuenta de **cliente** no entras a paneles de artista ni de staff — es por seguridad. Para reservar ve a **' + root + 'services.html**; tu portal está en **' + root + 'client-portal.html**. ¿Qué evento quieres cotizar?'
+                : 'with a **client** account you can’t open artist or staff panels — that’s by design. To book, use **' + root + 'services.html**; your portal is **' + root + 'client-portal.html**. What event should we quote?');
+        }
+
+        if (principal === 'performer' && wantsAdmin) {
+            return lead + (isSpanish
+                ? 'manager, admin y vendedor son **solo staff** en la base de datos — yo no puedo abrir eso desde aquí. Tu hub de artista es **' + root + 'dj-dashboard.html**. ¿Te guío en el manual MDJPRO o en tu perfil público?'
+                : 'manager, admin, and seller areas are **staff-only** in our database — I can’t open them from here. Your artist hub is **' + root + 'dj-dashboard.html**. Manual MDJPRO or your public profile?');
+        }
+
+        if (principal === 'guest' && wantsAdmin) {
+            return lead + (isSpanish
+                ? 'esa zona es **interna (staff)**. Si vienes a contratar, empieza en **' + root + 'services.html**; si eres artista, **' + root + 'login.html?signup=free**. ¿Qué tema del manual MDJPRO necesitas?'
+                : 'that area is **internal (staff)**. To hire talent, start at **' + root + 'services.html**; artists at **' + root + 'login.html?signup=free**. Which MDJPRO manual topic do you need?');
+        }
+
+        if (principal === 'performer' && !this.boothIsArtistPro() && /librer[ií]a wizard|library wizard|abrir.*(librer|library)|usar.*(librer|library wizard)|cap[ií]tulo 6|chapter 6|06-library/i.test(q)) {
+            return lead + (isSpanish
+                ? '**Librería y Organización (cap. 6)** es **MDJPRO PRO** — te explico el flujo en el manual (**' + this.boothManualChapterLink('06-library-wizard.md') + '**), pero la herramienta en la app requiere suscripción. Alta PRO: **' + root + 'login.html?plan=pro** · descarga: **' + root + 'downloads.html**.'
+                : '**Library & Organization (ch. 6)** is **MDJPRO PRO** — I’ll walk you through it in the manual (**' + this.boothManualChapterLink('06-library-wizard.md') + '**), but the in-app tool needs a subscription. PRO: **' + root + 'login.html?plan=pro** · download: **' + root + 'downloads.html**.');
+        }
+
+        if (wantsClientPortal && principal === 'performer') {
+            return lead + (isSpanish
+                ? 'el **portal cliente** es para compradores; tú como artista usas **' + root + 'dj-dashboard.html** y **' + root + 'dj-profile.html**. ¿Algún capítulo del manual?'
+                : 'the **client portal** is for buyers; as an artist use **' + root + 'dj-dashboard.html** and **' + root + 'dj-profile.html**. Need a manual chapter?');
+        }
+
+        return null;
+    },
+
+    manualKnowledgeReply: function (userInput, isSpanish) {
+        var q = (userInput || '').toLowerCase();
+        var ctx = this.boothManualContext();
+        var onManual = !!(ctx && ctx.surface === 'mdjpro-manual');
+        var root = this.boothManualWebRoot();
+        var lang = (ctx && ctx.lang) || (isSpanish ? 'es' : 'en');
+
+        var wantsManual =
+            onManual ||
+            /manual (mdjpro|interactivo)|mdjpro manual|visor (en tiempo real|manual)|documentaci[oó]n oficial mdjpro|cap[ií]tulo \d|chapter \d|#0\d-/i.test(q) ||
+            (/mdjpro/i.test(q) && /c[oó]mo (funciona|instalo|uso)|how (does|do i)|where (in|is) the manual|d[oó]nde est[aá]/i.test(q));
+
+        if (!wantsManual) return null;
+
+        if (/cap[ií]tulos|chapters|índice|indice|tabla de contenido|table of contents|listado del manual|todos los cap/i.test(q)) {
+            var sample = this._manualChapterCatalog.slice(0, 4).map(function (ch) {
+                return isSpanish ? ch.es : ch.en;
+            }).join(', ');
+            return this.boothHumanLead(isSpanish, 'warm') + (isSpanish
+                ? 'el **Manual MDJPRO** tiene **17 capítulos** (del 00 al 16). Empiezan con ' + sample + '… Dime un tema concreto — **Serato**, **instalación**, **PRO** — y te mando el enlace exacto. Lo abres desde **' + root + 'downloads.html** → *Manual Interactivo*.'
+                : 'the **MDJPRO Manual** has **17 chapters** (00–16). They start with ' + sample + '… Name a topic — **Serato**, **install**, **PRO** — and I’ll send the exact link. Open it from **' + root + 'downloads.html** → *Interactive Manual*.');
+        }
+
+        var matched = null;
+        var bestScore = 0;
+        this._manualChapterCatalog.forEach(function (ch) {
+            if (ch.kw && ch.kw.test(q)) {
+                var score = 2;
+                if (ch.id === (ctx && ctx.chapterId)) score += 1;
+                if (score > bestScore) {
+                    bestScore = score;
+                    matched = ch;
+                }
+            }
+        });
+
+        if (!matched && onManual && ctx.chapterId) {
+            matched = this._manualChapterCatalog.find(function (ch) { return ch.id === ctx.chapterId; }) || null;
+        }
+
+        if (!matched && /instal|install/i.test(q)) matched = this._manualChapterCatalog[2];
+        if (!matched && /requisito|requirement/i.test(q)) matched = this._manualChapterCatalog[1];
+
+        if (!matched) {
+            return this.boothHumanLead(isSpanish, 'warm') + (isSpanish
+                ? 'soy tu guía del **Manual MDJPRO**. Cuéntame el tema — instalación, Serato, librería PRO, seguridad, problemas… — y te llevo al capítulo. Si quieres el índice completo, pregunta **“capítulos del manual”**. Descarga e instalador: **' + root + 'downloads.html**.'
+                : 'I\'m your **MDJPRO Manual** guide. Tell me the topic — install, Serato, PRO library, security, troubleshooting… — and I\'ll jump to the right chapter. Full index: ask **“manual chapters”**. Download: **' + root + 'downloads.html**.');
+        }
+
+        var title = isSpanish ? matched.es : matched.en;
+        var link = this.boothManualChapterLink(matched.id, lang);
+        var summaries = {
+            '00-intro.md': isSpanish
+                ? 'Visión general: MDJPRO gestiona, audita y protege librerías DJ profesionales.'
+                : 'Overview: MDJPRO manages, audits, and protects professional DJ libraries.',
+            '01-requirements.md': isSpanish
+                ? 'macOS 14+ recomendado, Apple Silicon, 8 GB RAM mínimo (16 GB recomendado).'
+                : 'macOS 14+ recommended, Apple Silicon, 8 GB RAM min (16 GB recommended).',
+            '02-install.md': isSpanish
+                ? 'Descarga el .pkg desde **' + root + 'downloads.html**, instala y abre desde Aplicaciones.'
+                : 'Download the .pkg from **' + root + 'downloads.html**, install, open from Applications.',
+            '05-control-panel.md': isSpanish
+                ? 'Integración Serato, Rekordbox y Virtual DJ; zona de control centralizada.'
+                : 'Serato, Rekordbox, and Virtual DJ integration; centralized control zone.',
+            '06-library-wizard.md': isSpanish
+                ? 'Organización avanzada de biblioteca — **solo suscripción MDJPRO PRO/ELITE**.'
+                : 'Advanced library organization — **MDJPRO PRO/ELITE subscription only**.',
+            '14-troubleshooting.md': isSpanish
+                ? 'Errores comunes, permisos, rutas rotas, codecs — protocolos paso a paso.'
+                : 'Common errors, permissions, broken paths, codecs — step-by-step protocols.',
+        };
+        var body = summaries[matched.id] || (isSpanish
+            ? 'Abre este capítulo en el visor para el detalle completo con capturas y protocolos.'
+            : 'Open this chapter in the viewer for full detail with screenshots and protocols.');
+
+        if (matched.pro && !this.boothIsArtistPro()) {
+            body += isSpanish
+                ? '\n\n⚠️ **Capítulo PRO:** puedo explicarte el flujo, pero la herramienta en la app requiere **MDJPRO PRO** (**' + root + 'login.html?plan=pro**).'
+                : '\n\n⚠️ **PRO chapter:** I can explain the workflow, but the in-app tool requires **MDJPRO PRO** (**' + root + 'login.html?plan=pro**).';
+        }
+
+        var eventBridge = '';
+        if (/evento|boda|wedding|fiesta|party|contrat|book|hire|cotiz/i.test(q)) {
+            eventBridge = isSpanish
+                ? '\n\nPara **reservar talento MDJB** (PRO primero): **' + root + 'services.html** — te conecto con vendedores/manager del equipo.'
+                : '\n\nTo **book MDJB talent** (PRO first): **' + root + 'services.html** — I\'ll connect you with our sales/manager team.';
+        }
+
+        return this.boothHumanLead(isSpanish, 'ack') + '**' + title + '** — ' + body + '\n\nAbre el capítulo aquí: **' + link + '**' + eventBridge;
+    },
+
+    /** Snapshot compacto para LLM — recorrido web + MDJPRO V.2.6.5 (siempre en contexto). */
+    boothBuildPlatformAgentContext: function () {
+        return [
+            'Recorrido MDJB jun-2026',
+            'Web público: index→rentals(servicios/talento)→services(cotizar)→shop→jobs→find-dj→client-portal',
+            'Artista: dj-profile→dj-dashboard→dj-tools→load-root|tag-master|library-wizard(PRO)|cash-flow',
+            'Formación: courses/academia/dj-knowledge | Descarga: downloads.html V.2.6.5 + manual 6 langs',
+            'App MDJPRO V.2.6.5 macOS: Splash/Hub→LOAD ROOT→Control(Serato/Rekordbox/VDJ)→Library(PRO)→Tag→Scan→Reportes',
+            'Booth guía por rol; PRO first roster; solo MDJB; sin secretos',
+        ].join(' | ');
+    },
+
+    /** Recorrido explícito Miami DJ Beat (web) + app MDJPRO V.2.6.5 — respuestas cortas. */
+    boothPlatformTourReply: function (userInput, isSpanish) {
+        var q = (userInput || '').toLowerCase();
+        var ctx = this.boothManualContext();
+        var root = ctx && ctx.webRoot ? ctx.webRoot : './';
+        var lang = (ctx && ctx.lang) || (isSpanish ? 'es' : 'en');
+        var manualIntro = this.boothManualChapterLink('00-intro.md', lang);
+        var idn = window.__mdjLastPlatformIdentity;
+        var principal = idn && idn.principal ? idn.principal : 'guest';
+
+        var wantsFullTour =
+            /recorrido|tour completo|gu[ií]ame por|gu[ií]ame (por |a )?(miami|mdjb|la plataforma|el sitio)|walkthrough|mapa completo|expl[ií]came (todo|la plataforma|miamidjbeat|el ecosistema)|c[oó]mo funciona (miami dj beat|la plataforma|todo)|how does (the platform|miami dj beat|everything) work|conoce miamidjbeat/i.test(q);
+        var wantsWebOnly =
+            !wantsFullTour &&
+            /recorrido (del )?(web|sitio)|solo (el )?web|p[aá]ginas (del )?sitio|miamidjbeat\.com/i.test(q);
+        var wantsAppOnly =
+            !wantsFullTour &&
+            /recorrido (de la )?app|solo mdjpro|app mdjpro|dentro de mdjpro|qu[eé] hace la app|flujo de la app/i.test(q);
+
+        if (!wantsFullTour && !wantsWebOnly && !wantsAppOnly) return null;
+
+        var roleEs =
+            principal === 'buyer' ? 'Cliente' : principal === 'performer' ? 'Artista' : principal === 'staff' ? 'Staff' : 'Invitado';
+        var roleEn =
+            principal === 'buyer' ? 'Client' : principal === 'performer' ? 'Artist' : principal === 'staff' ? 'Staff' : 'Guest';
+
+        var lead = this.boothHumanLead(isSpanish, 'warm');
+
+        if (wantsWebOnly) {
+            return lead + (isSpanish
+                ? 'en la **web MDJB** lo esencial es: **' + root + 'rentals.html** (servicios y talento) → **' + root + 'services.html** (cotizar) → **' + root + 'find-dj.html** (roster) → **' + root + 'downloads.html** (MDJPRO). También tienes shop, jobs, academia y tu portal cliente. ¿Profundizamos en **services** o **rentals**?'
+                : 'on **MDJB web**, the essentials are **' + root + 'rentals.html** (services & talent) → **' + root + 'services.html** (quote) → **' + root + 'find-dj.html** (roster) → **' + root + 'downloads.html** (MDJPRO). You also have shop, jobs, academy, and your client portal. Go deeper on **services** or **rentals**?');
+        }
+
+        if (wantsAppOnly) {
+            return lead + (isSpanish
+                ? '**MDJPRO V.2.6.5**: baja el .pkg en **' + root + 'downloads.html**, instala, abre el Hub, define **LOAD ROOT**, conecta Serato/Rekordbox/VDJ en Control, y si eres PRO usas Librería y Tag antes del scan. Manual completo: **' + manualIntro + '**. ¿Instalación, Serato o cap. 6 PRO?'
+                : '**MDJPRO V.2.6.5**: grab the .pkg at **' + root + 'downloads.html**, install, open the Hub, set **LOAD ROOT**, hook Serato/Rekordbox/VDJ in Control, and if you\'re PRO use Library and Tag before scanning. Full manual: **' + manualIntro + '**. Install, Serato, or PRO ch.6?');
+        }
+
+        var artistEs =
+            principal === 'buyer'
+                ? ''
+                : ' Como **' + roleEs.toLowerCase() + '**, tu flujo va de **' + root + 'dj-profile.html** al **dashboard** y **dj-tools**.';
+        var artistEn =
+            principal === 'buyer'
+                ? ''
+                : ' As an **' + roleEn.toLowerCase() + '**, your flow runs **' + root + 'dj-profile.html** → dashboard → **dj-tools**.';
+
+        return lead + (isSpanish
+            ? 'te lo resumo como **' + roleEs + '**. En la web: **rentals** y **services** para eventos, **find-dj** para talento MDJB, **downloads** para la app. En **MDJPRO V.2.6.5**: pkg → Hub → LOAD ROOT → control DJ → scan; manual en **' + manualIntro + '**.' + artistEs + ' ¿Quieres que bajemos a **web**, **app** o un **capítulo** concreto?'
+            : 'quick map as **' + roleEn + '**. Web: **rentals** and **services** for events, **find-dj** for MDJB talent, **downloads** for the app. **MDJPRO V.2.6.5**: pkg → Hub → LOAD ROOT → DJ control → scan; manual at **' + manualIntro + '**.' + artistEn + ' Want to go deeper on **web**, the **app**, or a specific **chapter**?');
+    },
+
+    /** Clases Booth — cambios recientes del web (jun 2026). */
+    boothWebPlatformClassesReply: function (userInput, isSpanish) {
+        var q = (userInput || '').toLowerCase();
+        var ctx = this.boothManualContext();
+        var root = ctx && ctx.webRoot ? ctx.webRoot : './';
+
+        var wantsUpdates =
+            /novedad|qu[eé] hay de nuevo|what'?s new|cambios recientes|actualizaci[oó]n|updates?|última versi[oó]n|ultima version|latest version|2\.6\.5|v\.?\s*2\.6|clases booth|entrenamiento booth|qu[eé] sabes del (web|sitio)/i.test(q);
+        var wantsDownloads =
+            /descarg(ar|a)|downloads\.html|instalador|\.pkg|mdjpro v|versi[oó]n mdjpro|d[oó]nde bajo|where (to )?download/i.test(q);
+        var wantsDjTools =
+            /dj-tools|load root|tag master|library wizard|cash flow|suite (enterprise|artista)|herramientas pro/i.test(q);
+        var wantsAcademiaUpdate =
+            (/academia|cursos|courses|m[oó]dulo 6|cables|certificaci[oó]n|dj-knowledge/i.test(q) &&
+                /nuevo|nueva|update|cambio|reciente|storage/i.test(q)) ||
+            /academia.*(storage|imagen|foto|v[ií]deo)/i.test(q);
+        var wantsManualWeb =
+            /manual interactivo|visor (en tiempo real|manual)|men[uú] del manual|iconos manual|booth.*manual/i.test(q);
+
+        if (!wantsUpdates && !wantsDownloads && !wantsDjTools && !wantsAcademiaUpdate && !wantsManualWeb) {
+            return null;
+        }
+
+        var lead = this.boothHumanLead(isSpanish, 'warm');
+
+        if (wantsDownloads || (wantsUpdates && !wantsDjTools && !wantsAcademiaUpdate && !wantsManualWeb)) {
+            return lead + (isSpanish
+                ? 'la build actual es **MDJPRO V.2.6.5** en **' + root + 'downloads.html** — LOAD ROOT en tu idioma y la app se abre sola tras instalar. El manual en 6 idiomas está en el mismo acordeón. ¿Te guío en instalación, PRO o reservar un evento?'
+                : 'the current build is **MDJPRO V.2.6.5** at **' + root + 'downloads.html** — LOAD ROOT in your language and the app auto-opens after install. The 6-language manual sits in the same accordion. Install walkthrough, PRO, or booking an event?');
+        }
+
+        if (wantsManualWeb) {
+            return lead + (isSpanish
+                ? 'el **Manual Interactivo** vive en **' + root + 'downloads.html** (6 idiomas) y yo te llevo capítulo a capítulo desde aquí. Prueba **“capítulos del manual”** o dime un tema.'
+                : 'the **Interactive Manual** lives at **' + root + 'downloads.html** (6 languages) and I can guide you chapter by chapter from here. Try **“manual chapters”** or name a topic.');
+        }
+
+        if (wantsDjTools) {
+            return lead + (isSpanish
+                ? 'la suite enterprise está en **' + root + 'dj-tools.html**: LOAD ROOT, Tag Master, Library Wizard (**PRO**) y Cash Flow. ¿Cuál quieres ver primero?'
+                : 'the enterprise suite is at **' + root + 'dj-tools.html**: LOAD ROOT, Tag Master, Library Wizard (**PRO**), and Cash Flow. Which one first?');
+        }
+
+        if (wantsAcademiaUpdate) {
+            return lead + (isSpanish
+                ? 'Academia actualizada en **courses**, **academia** y **dj-knowledge** — medios en Storage y 12 módulos con certificación. ¿Programa del curso o cómo inscribirte?'
+                : 'Academy updates live on **courses**, **academia**, and **dj-knowledge** — Storage media and 12 modules with certification. Course outline or enrollment?');
+        }
+
+        return null;
+    },
+
     /**
      * Catálogo / mapa del sitio. Fuentes: jobs.html, shop.html, rentals.html (+ rentalCatalogs en web/js/rentals.js),
      * modal de talento en rentals.html, services.html, course-data.js (módulos).
@@ -92,8 +447,10 @@ window.MDJ_Assistant = {
         const wantsEventTalentList = wantsBoth || /categor[ií]as.*(talento|paquete|dj.{0,3}performance|hora loca|m[uú]sicos|visual|mc)|selector de talento|agregar talento|modal de talento|fot[oó]grafo|vide[oó]grafo|vj\b/i.test(q);
         const wantsServicesList = wantsBoth || /services\.html|p[aá]gina de services|cotizaci[oó]n.*(services|servicios)|formulario de servicios/i.test(q);
         const wantsAcademiaList = wantsBoth || /academia\.html|courses\.html|categor[ií]as.*(curso|academia|certificaci)|m[oó]dulos (del )?(programa|curso)|listado (de )?m[oó]dulos|certificaci[oó]n (oficial )?(mdj|dj)|programa de certificaci/i.test(q);
+        const wantsDownloadsList = wantsBoth || /downloads\.html|descargar mdjpro|manual interactivo|mdjpro v\.?\s*2\.6|instalador mdjpro|dj-tools\.html|suite (enterprise|artista)/i.test(q);
+        const wantsTourList = wantsBoth || /recorrido|tour|gu[ií]ame por|walkthrough|mapa completo|expl[ií]came (todo|la plataforma)/i.test(q);
 
-        if (!wantsJobsList && !wantsRentList && !wantsShopList && !wantsEventTalentList && !wantsServicesList && !wantsAcademiaList) return null;
+        if (!wantsJobsList && !wantsRentList && !wantsShopList && !wantsEventTalentList && !wantsServicesList && !wantsAcademiaList && !wantsDownloadsList && !wantsTourList) return null;
 
         var jobsEs =
             "Jobs (./jobs.html) — roles al postularte: DJ, MC, cantante, live band, percussionista, saxofonista, violinista, payaso, hora loca, bartender, mesero, manager artístico, productor musical, influencer/promotor, foto booth 360. **Booth** puede orientar una búsqueda por categoría + fecha (roster público; confirmación final en **./find-dj.html** / **./services.html**).";
@@ -115,6 +472,11 @@ window.MDJ_Assistant = {
         var academiaEs = "Academia / certificación (courses.html · course-data.js) — 12 módulos: Fundamentos del Sonido, Equipamiento Profesional, Software Profesional, Técnica de Mezcla, MC y Control de Pista, Producción e Iluminación, Organización de Librería, Contratos y Cotizaciones, Marketing Personal DJ, Precios y Finanzas DJ, Mentalidad del DJ Élite, Examen Final + Certificación.";
         var academiaEn = "Academy (courses.html · course-data.js) — 12 modules: sound fundamentals, gear, software, mixing, MC, lighting/production, library, contracts, marketing, pricing/finance, elite mindset, final exam + certification.";
 
+        var downloadsEs =
+            "Downloads (./downloads.html) — **MDJPRO V.2.6.5** (pkg Storage): LOAD ROOT i18n, auto-open post-install. Accordion **Manual Interactivo** → visor **./manuals/MDJPRO_Manual/{lang}/index.html** (6 idiomas). Suite artista: **./dj-tools.html** (LOAD ROOT, Tag Master, Library Wizard PRO, Cash Flow).";
+        var downloadsEn =
+            "Downloads (./downloads.html) — **MDJPRO V.2.6.5** (Storage pkg): LOAD ROOT i18n, auto-open post-install. **Interactive Manual** accordion → **./manuals/MDJPRO_Manual/{lang}/index.html** (6 langs). Artist suite: **./dj-tools.html** (LOAD ROOT, Tag Master, Library Wizard PRO, Cash Flow).";
+
         var partsEs = [];
         var partsEn = [];
         if (wantsJobsList) { partsEs.push(jobsEs); partsEn.push(jobsEn); }
@@ -123,10 +485,22 @@ window.MDJ_Assistant = {
         if (wantsEventTalentList) { partsEs.push(talentEs); partsEn.push(talentEn); }
         if (wantsServicesList) { partsEs.push(servicesEs); partsEn.push(servicesEn); }
         if (wantsAcademiaList) { partsEs.push(academiaEs); partsEn.push(academiaEn); }
+        if (wantsDownloadsList) { partsEs.push(downloadsEs); partsEn.push(downloadsEn); }
+
+        if (wantsTourList) {
+            var tourSnippet = this.boothPlatformTourReply(
+                isSpanish ? 'recorrido completo miamidjbeat mdjpro' : 'full tour miami dj beat mdjpro',
+                isSpanish
+            );
+            if (tourSnippet) {
+                if (isSpanish) partsEs.push(tourSnippet);
+                else partsEn.push(tourSnippet);
+            }
+        }
 
         var out = isSpanish ? partsEs.join("\n\n") : partsEn.join("\n\n");
         var commerce =
-            wantsJobsList || wantsShopList || wantsRentList || wantsEventTalentList || wantsServicesList;
+            wantsJobsList || wantsShopList || wantsRentList || wantsEventTalentList || wantsServicesList || wantsDownloadsList;
         if (commerce) return this.boothTailWithOptionalCloser(out, isSpanish);
         return out;
     },
@@ -1186,6 +1560,12 @@ window.MDJ_Assistant = {
                 }
                 if (_boothCtxParts.length > 0) context = _boothCtxParts.join(' | ');
 
+                var _manualCtx = this.boothBuildManualAgentContext();
+                if (_manualCtx) context = context ? context + ' | ' + _manualCtx : _manualCtx;
+
+                var _platformCtx = this.boothBuildPlatformAgentContext();
+                if (_platformCtx) context = context ? context + ' | ' + _platformCtx : _platformCtx;
+
                 // Contexto adicional de MDJBoothCapture (URL params, intención)
                 if (window.MDJBoothCapture && typeof window.MDJBoothCapture.getAgentSystemHint === "function") {
                     var _capture = window.MDJBoothCapture.getAgentSystemHint() || "";
@@ -1234,6 +1614,12 @@ window.MDJ_Assistant = {
             return;
         }
 
+        var navGuard = this.boothRoleNavGuardReply(userInput, isSpanish);
+        if (navGuard) {
+            this.addMessage("assistant", navGuard);
+            return;
+        }
+
         // ── LLM (GPT-4o-mini vía booth-chat) ─────────────────────────────────
         // Intentamos LLM primero; si falla o retorna null, caemos al scripted.
         var llmReply = await this._callBoothLLM(userInput, isSpanish);
@@ -1246,6 +1632,24 @@ window.MDJ_Assistant = {
             return;
         }
         // ─────────────────────────────────────────────────────────────────────
+
+        var manualKb = this.manualKnowledgeReply(userInput, isSpanish);
+        if (manualKb) {
+            this.addMessage("assistant", manualKb);
+            return;
+        }
+
+        var platformTour = this.boothPlatformTourReply(userInput, isSpanish);
+        if (platformTour) {
+            this.addMessage("assistant", platformTour);
+            return;
+        }
+
+        var webClasses = this.boothWebPlatformClassesReply(userInput, isSpanish);
+        if (webClasses) {
+            this.addMessage("assistant", webClasses);
+            return;
+        }
 
         var ensembleWork = this.ensembleSubscriptionWorkReply(userInput, isSpanish);
         if (ensembleWork) {
