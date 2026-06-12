@@ -128,10 +128,23 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
             border: 2px solid rgba(255, 255, 255, 0.12);
             background: rgba(255, 255, 255, 0.04);
             opacity: 0.45;
+        }
+
+        body.page-load-root .lr-mock-btn svg {
+            width: 28px;
+            height: 28px;
+            stroke: rgba(255, 255, 255, 0.75);
+            fill: none;
+            stroke-width: 1.75;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        body.page-load-root .lr-mock-btn.active svg {
+            stroke: #ff9f43;
         }
 
         body.page-load-root .lr-mock-btn.active {
@@ -447,11 +460,28 @@
                         <div class="lr-visual" aria-hidden="true">
                             <div class="lr-mock-hub">
                                 <div class="lr-mock-badge">
-                                    <div class="lr-mock-btn active" title="Load Root">📁</div>
+                                    <div class="lr-mock-btn active" title="Load Root">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M4 7h5l2 2h9v10H4V7z" />
+                                            <path d="M4 7V5a2 2 0 012-2h4" />
+                                        </svg>
+                                    </div>
                                     <span>1</span>
                                 </div>
-                                <div class="lr-mock-btn" title="Wizard">🪄</div>
-                                <div class="lr-mock-btn" title="Tag Master">🏷️</div>
+                                <div class="lr-mock-btn" title="Wizard">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                                        <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                                        <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                                        <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                                    </svg>
+                                </div>
+                                <div class="lr-mock-btn" title="Tag Master">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M3 7l9-4 9 4v10l-9 4-9-4V7z" />
+                                        <circle cx="12" cy="11" r="1.5" />
+                                    </svg>
+                                </div>
                             </div>
                             <div class="lr-mock-panel">
                                 <strong>MDJPRO Library Access</strong>

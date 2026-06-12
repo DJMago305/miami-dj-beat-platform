@@ -292,8 +292,10 @@
 
     <main>
         <section class="academia-hero" aria-labelledby="academia-hero-title">
-            <video class="academia-hero-video" autoplay muted loop playsinline>
-                <source src="./assets/knowledge/Vinyl%20Loop%20for%20DJ%20Academy%20MDJB.mp4" type="video/mp4" />
+            <video class="academia-hero-video" autoplay muted loop playsinline poster="./assets/knowledge/hero-bg.png">
+                <source data-academy-hero-video="hero_video"
+                    src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/knowledge/Vinyl%20Loop%20for%20DJ%20Academy%20MDJB.mp4"
+                    type="video/mp4" />
             </video>
             <div class="academia-hero-inner">
                 <p class="academia-hero-eyebrow" data-i18n="nav-academia">Academy</p>
@@ -310,6 +312,7 @@
             Library</a>
     </nav>
 
+    <script src="./js/academy-media-loader.js?v=20260612-acad-storage"></script>
     <script src="./translations.js?v=20260422-nav-labels-1"></script>
     <script src="./i18n.js?v=20260330"></script>
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260411-booth-policy" />

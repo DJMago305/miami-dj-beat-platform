@@ -38,6 +38,75 @@
             margin-bottom: 2px;
             align-self: flex-start;
         }
+
+        body.page-dj-tools .mdjpro-feat-icon {
+            width: 44px;
+            height: 44px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: rgba(197, 160, 89, 0.08);
+            border: 1px solid rgba(197, 160, 89, 0.22);
+        }
+
+        body.page-dj-tools .mdjpro-feat-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: var(--gold, #c5a059);
+            fill: none;
+            stroke-width: 1.75;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        body.page-dj-tools .mdjpro-feat-icon--orange svg {
+            stroke: #ff9f43;
+        }
+
+        body.page-dj-tools .mdjpro-feat-icon--purple svg {
+            stroke: #d99aff;
+        }
+
+        body.page-dj-tools .mdjpro-gate-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: rgba(197, 160, 89, 0.08);
+            border: 1px solid rgba(197, 160, 89, 0.22);
+        }
+
+        body.page-dj-tools .mdjpro-gate-icon svg {
+            width: 26px;
+            height: 26px;
+            stroke: var(--gold, #c5a059);
+            fill: none;
+            stroke-width: 1.75;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        body.page-dj-tools .mdjpro-inline-check {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            vertical-align: middle;
+        }
+
+        body.page-dj-tools .mdjpro-inline-check svg {
+            width: 18px;
+            height: 18px;
+            stroke: #6edc8b;
+            fill: none;
+            stroke-width: 2.25;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
     </style>
 </head>
 
@@ -130,7 +199,12 @@
     <main>
         <div id="dj-tools-client-gate"
             style="display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:48px 24px 80px; min-height:52vh; box-sizing:border-box;">
-            <div style="font-size:42px; margin-bottom:12px;" aria-hidden="true">🔒</div>
+            <div class="mdjpro-gate-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="5" y="11" width="14" height="10" rx="2" />
+                    <path d="M8 11V8a4 4 0 018 0v3" />
+                </svg>
+            </div>
             <h2 style="margin:0 0 12px; font-size:1.35rem; color:var(--gold);" data-i18n="nav-tools-client-gate-title">Artist workspace</h2>
             <p style="max-width:520px; line-height:1.55; color:rgba(255,255,255,0.78); font-size:15px; margin:0 0 24px;" data-i18n="nav-tools-client-gate-body">This area is for performing artists. Client accounts use the portal for events and billing. Want to join the roster? Create a free artist account to access DJ Tools.</p>
             <a href="./login.html?signup=free&amp;redirect=jobs" class="btn primary" style="padding:14px 28px; font-weight:800;" data-i18n="nav-tools-client-gate-cta">Create artist account</a>
@@ -166,28 +240,50 @@
                 <h2 style="text-align: center; margin-bottom: 40px;" data-i18n="tools-features-title">Pro Features</h2>
                 <div class="grid4">
                     <div class="tile" style="border: 1px solid rgba(255,159,67,0.45); background: rgba(255,120,40,0.06);">
-                        <div style="font-size: 32px; margin-bottom: 16px;">📁</div>
+                        <div class="mdjpro-feat-icon mdjpro-feat-icon--orange" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 7h5l2 2h9v10H4V7z" />
+                                <path d="M4 7V5a2 2 0 012-2h4" />
+                            </svg>
+                        </div>
                         <h3 style="color: #ff9f43;" data-i18n="tools-feature-lr-title">Load Root</h3>
                         <p data-i18n="tools-feature-lr-teaser">Load Root — point MDJPRO at your master music folder on Mac. macOS security bookmark, one pick, local-only. Required before Scan, Wizard, and Tag Master.</p>
                         <a href="./load-root.html" class="btn primary dj-tools-feature-cta"
                             style="padding: 8px 16px; font-size: 13px;" data-i18n="tools-feature-lr-cta">Explore Load Root</a>
                     </div>
                     <div class="tile" style="border: 1px solid rgba(175,82,222,0.35); background: rgba(175,82,222,0.05);">
-                        <div style="font-size: 32px; margin-bottom: 16px;">⚡️</div>
+                        <div class="mdjpro-feat-icon mdjpro-feat-icon--purple" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M3 7l9-4 9 4v10l-9 4-9-4V7z" />
+                                <circle cx="12" cy="11" r="1.5" />
+                            </svg>
+                        </div>
                         <h3 style="color: #d99aff;" data-i18n="tools-feature-clean-title">Library Cleaning</h3>
                         <p data-i18n="tools-feature-clean-teaser">Tag Master — batch ID3, metadata hygiene, and local Save before the gig. The cleaning room your library deserves.</p>
                         <a href="./tag-master.html" class="btn primary dj-tools-feature-cta"
                             style="padding: 8px 16px; font-size: 13px;" data-i18n="tools-feature-clean-cta">Explore Tag Master</a>
                     </div>
                     <div class="tile" style="border: 1px solid rgba(197,160,89,0.4); background: rgba(197,160,89,0.04);">
-                        <div style="font-size: 32px; margin-bottom: 16px;">📂</div>
+                        <div class="mdjpro-feat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                                <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                                <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                                <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                            </svg>
+                        </div>
                         <h3 style="color: var(--gold);" data-i18n="tools-feature-smart-title">Smart Crates</h3>
                         <p data-i18n="tools-feature-smart-teaser">The phonoteca shelf a pro DJ builds over years — deployed on your drive in seconds. MDJPRO Premium DNA.</p>
                         <a href="./library-wizard.html" class="btn primary dj-tools-feature-cta"
                             style="padding: 8px 16px; font-size: 13px;" data-i18n="tools-feature-smart-cta">Explore Library Wizard DNA</a>
                     </div>
                     <div class="tile" style="border: 1px solid var(--gold); background: rgba(197,160,89,0.05);">
-                        <div style="font-size: 32px; margin-bottom: 16px;">📈</div>
+                        <div class="mdjpro-feat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 19h16" />
+                                <path d="M7 16l3-6 3 4 4-8 3 6" />
+                            </svg>
+                        </div>
                         <h3 style="color: var(--gold);" data-i18n="tools-feature-health-title">Salud y economía del artista</h3>
                         <p data-i18n="tools-feature-health-teaser">Cash Flow — private artist economics on the web: revenue KPIs, professional health index, bank-style statements, and tax export. Visible only to you. SoundForTips™ live booth is separate (paid PRO).</p>
                         <a href="./cash-flow.html" class="btn primary dj-tools-feature-cta"
@@ -220,12 +316,12 @@
                     <div class="table-row">
                         <div data-i18n="tools-feature-sync">Multi-DJ Sync</div>
                         <div style="text-align: center;">—</div>
-                        <div style="text-align: center;">✅</div>
+                        <div style="text-align: center;"><span class="mdjpro-inline-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7" /></svg></span></div>
                     </div>
                     <div class="table-row">
                         <div data-i18n="tools-feature-backup">Cloud Backup</div>
                         <div style="text-align: center;">—</div>
-                        <div style="text-align: center;">✅</div>
+                        <div style="text-align: center;"><span class="mdjpro-inline-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7" /></svg></span></div>
                     </div>
                 </div>
             </div>
