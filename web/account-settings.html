@@ -1062,6 +1062,30 @@
       margin: 28px 0 12px; padding-bottom: 8px;
       border-bottom: 1px solid rgba(255,255,255,0.06);
     }
+    .acct-sub-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: rgba(197, 160, 89, 0.08);
+      border: 1px solid rgba(197, 160, 89, 0.22);
+    }
+    .acct-sub-icon svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--gold, #c5a059);
+      fill: none;
+      stroke-width: 1.75;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .acct-sub-icon--star svg {
+      fill: var(--gold, #c5a059);
+      stroke: var(--gold, #c5a059);
+    }
     .reward-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
     .reward-card {
       background: linear-gradient(135deg,#1a1a1a,#0d0d0d);
@@ -2010,7 +2034,11 @@
       <div class="acct-card" style="margin-bottom:14px;">
         <div style="padding:14px 20px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.05);">
           <div style="display:flex;align-items:center;gap:10px;">
-            <div style="width:36px;height:36px;background:linear-gradient(135deg,#c5a059,#f0cc80);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;">⭐</div>
+            <div class="acct-sub-icon acct-sub-icon--star" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+            </div>
             <div>
               <div style="font-size:11px;font-weight:800;letter-spacing:0.14em;color:rgba(255,255,255,0.35);text-transform:uppercase;">Plan Artista</div>
               <div style="font-size:15px;font-weight:800;color:#fff;" id="billing-plan">—</div>
@@ -2033,7 +2061,19 @@
       <div class="acct-card" style="margin-bottom:14px;opacity:0.7;">
         <div style="padding:14px 20px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.05);">
           <div style="display:flex;align-items:center;gap:10px;">
-            <div style="width:36px;height:36px;background:linear-gradient(135deg,#1d6fde,#60a5fa);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;">🎛</div>
+            <div class="acct-sub-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <line x1="4" y1="21" x2="4" y2="14" />
+                <line x1="4" y1="10" x2="4" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12" y2="3" />
+                <line x1="20" y1="21" x2="20" y2="16" />
+                <line x1="20" y1="12" x2="20" y2="3" />
+                <line x1="1" y1="14" x2="7" y2="14" />
+                <line x1="9" y1="8" x2="15" y2="8" />
+                <line x1="17" y1="16" x2="23" y2="16" />
+              </svg>
+            </div>
             <div>
               <div style="font-size:11px;font-weight:800;letter-spacing:0.14em;color:rgba(255,255,255,0.35);text-transform:uppercase;">MDJPRO App</div>
               <div id="mdjpro-app-plan" style="font-size:15px;font-weight:800;color:#fff;">—</div>
@@ -2050,7 +2090,12 @@
       <div class="acct-card" style="margin-bottom:14px;" id="billing-academia-card">
         <div style="padding:14px 20px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.05);">
           <div style="display:flex;align-items:center;gap:10px;">
-            <div style="width:36px;height:36px;background:linear-gradient(135deg,#0d9488,#34d399);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;">🎓</div>
+            <div class="acct-sub-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5-10-5z" />
+                <path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5" />
+              </svg>
+            </div>
             <div>
               <div style="font-size:11px;font-weight:800;letter-spacing:0.14em;color:rgba(255,255,255,0.35);text-transform:uppercase;">Academia · Certificación</div>
               <div id="billing-cert-status" style="font-size:15px;font-weight:800;color:#fff;">Cargando…</div>
