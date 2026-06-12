@@ -1,7 +1,8 @@
 # MDJPRO tickets — status index
 
-**Last aligned:** 2026-06-11 (ship **V.2.6.5** closed in prod — Capitán PASS)  
-**Prod line:** **V.2.6.5** · notarized · Storage · catálogo **v265** · PR **#77** · **008** postinstall
+**Last aligned:** 2026-06-12 — **Academia media ship batch DONE localhost** (011+012+013); await **`APROBADO PUSH`**  
+**Prod line:** **V.2.6.5** · notarized · Storage · catálogo **v265** · PR **#77** · **008** postinstall  
+**Active branch (cosmetic batch):** `cosmetic/mdjpro-dl-feat-icons-010` — **no push until ticket close** (`APROBADO PUSH`)
 
 ---
 
@@ -28,6 +29,32 @@
 |--------|-------|
 | [VERSION-SYNC-003](./MDJPRO-VERSION-SYNC-003-hub-logo-version.md) | PNG `V.2.00` hub issue **not visible** — **do not reopen** |
 | [PKG-RECOVERY-002](./MDJPRO-PKG-RECOVERY-002.md) | 2026-06-09 install incident — superseded |
+
+---
+
+## Open — cosmetic batch (localhost → single push at close)
+
+| Ticket | Branch | Status | Notes |
+|--------|--------|--------|-------|
+| [DL-FEAT-ICONS-010](./MDJPRO-DL-FEAT-ICONS-010-enterprise-downloads-grid.md) | `cosmetic/mdjpro-dl-feat-icons-010` | **Phase A APPROVED** · **B–C localhost** | `downloads.html`, `dj-tools.html`, `load-root.html`, `account-settings.html` billing icons; batch commit pending |
+
+**Policy:** Accumulate work on branch → one commit batch → **`APROBADO PUSH`** → later **`APROBADO DEPLOY PRODUCCIÓN`**.
+
+---
+
+## Ready to push — Academia media batch (2026-06-12)
+
+| Ticket | Status | Scope |
+|--------|--------|-------|
+| [ACAD-CABLE-011](./MDJPRO-ACAD-CABLE-011-courses-modulo6-connector-photos.md) | **DONE localhost** | Módulo 6 cables — PNG re-encode + CSS |
+| [ACAD-LIB-012](./MDJPRO-ACAD-LIB-012-culture-library-shipwreck-images.md) | **DONE localhost** | Vault + lecciones + editorial imgs + `academy-media.json` |
+| [ACAD-HERO-013](./MDJPRO-ACAD-HERO-013-academy-hero-video-prod.md) | **DONE localhost** | Hero mp4 → Supabase Storage (3 páginas) |
+
+**Also in batch:** Módulo 7 `equipo-*.png` (4 re-encoded + **`equipo-mixer.png` created** — was missing on disk).
+
+**Canonical caja:** `web/data/academy-media.json` · `web/js/academy-media-loader.js`
+
+**QA before push:** `academia.html` · `dj-knowledge.html` · `courses.html` (Cmd+Shift+R)
 
 ---
 

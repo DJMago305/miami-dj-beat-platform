@@ -139,6 +139,28 @@
             margin-bottom: 16px;
         }
 
+        #preview .module-icon.mdj-module-icon {
+            width: 44px;
+            height: 44px;
+            font-size: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: rgba(197, 160, 89, 0.08);
+            border: 1px solid rgba(197, 160, 89, 0.22);
+        }
+
+        #preview .module-icon.mdj-module-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: var(--gold, #c5a059);
+            fill: none;
+            stroke-width: 1.75;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
         .module-title {
             font-size: 18px;
             font-weight: 800;
@@ -284,12 +306,31 @@
             width: 100%;
             aspect-ratio: 1;
             border-radius: 28px;
-            background: linear-gradient(135deg, rgba(197, 160, 89, 0.1), rgba(0, 180, 255, 0.05));
+            background: linear-gradient(135deg, rgba(197, 160, 89, 0.1), rgba(0, 0, 0, 0.35));
             border: 2px solid rgba(197, 160, 89, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .instructor-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 20%;
+            display: block;
+        }
+
+        .instructor-photo.instructor-photo--pending::after {
+            content: 'GV';
+            position: absolute;
+            inset: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 80px;
+            font-size: 42px;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            color: rgba(197, 160, 89, 0.45);
         }
 
         /* CTA Section */
@@ -346,6 +387,32 @@
             margin-top: 6px;
         }
 
+        #enroll .mdj-cta-btn-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #enroll .mdj-cta-btn-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        #enroll .mdj-cta-btn-icon--dark svg {
+            stroke: #000;
+        }
+
+        #enroll .mdj-cta-btn-icon--gold svg {
+            stroke: var(--gold, #c5a059);
+        }
+
         /* Preview section */
         .preview-grid {
             display: grid;
@@ -367,6 +434,29 @@
         .preview-icon {
             font-size: 28px;
             flex-shrink: 0;
+        }
+
+        #includes .preview-icon.mdj-preview-icon {
+            width: 44px;
+            height: 44px;
+            font-size: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: rgba(197, 160, 89, 0.08);
+            border: 1px solid rgba(197, 160, 89, 0.22);
+            flex-shrink: 0;
+        }
+
+        #includes .preview-icon.mdj-preview-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: var(--gold, #c5a059);
+            fill: none;
+            stroke-width: 1.75;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         @media (max-width: 768px) {
@@ -500,7 +590,9 @@
         <section class="courses-hero">
             <!-- BACKGROUND VIDEO -->
             <video class="hero-bg-video" autoplay muted loop playsinline style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); min-width: 100%; min-height: 100%; width: auto; height: auto; object-fit: cover; z-index: 1;">
-                <source src="./assets/knowledge/Vinyl Loop for DJ Academy MDJB.mp4" type="video/mp4">
+                <source data-academy-hero-video="hero_video"
+                    src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/knowledge/Vinyl%20Loop%20for%20DJ%20Academy%20MDJB.mp4"
+                    type="video/mp4">
             </video>
             <!-- DARK OVERLAY -->
             <div class="hero-video-overlay" style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%); z-index: 1;"></div>
@@ -551,17 +643,56 @@
             <!-- LOCKED SECTION: DO NOT MODIFY -->
 
             <!-- ── 3 PILLARS ───────────────────────────────────────── -->
+            <style id="intro-curso-pillar-icons">
+                #intro-curso .mdj-acad-pillar-icon {
+                    width: 44px;
+                    height: 44px;
+                    margin: 0 auto 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 10px;
+                    background: rgba(197, 160, 89, 0.08);
+                    border: 1px solid rgba(197, 160, 89, 0.22);
+                }
+
+                #intro-curso .mdj-acad-pillar-icon svg {
+                    width: 22px;
+                    height: 22px;
+                    stroke: var(--gold, #c5a059);
+                    fill: none;
+                    stroke-width: 1.75;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                }
+            </style>
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:80px;">
                 <div
                     style="text-align:center;padding:30px 20px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:20px;">
-                    <div style="font-size:36px;margin-bottom:12px;">⚖️</div>
+                    <div class="mdj-acad-pillar-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <line x1="12" y1="3" x2="12" y2="21" />
+                            <line x1="5" y1="7" x2="19" y2="7" />
+                            <path d="M5 7L2 11h6z" />
+                            <path d="M19 7l-3 4h6z" />
+                        </svg>
+                    </div>
                     <div style="font-weight:800;font-size:14px;margin-bottom:8px;color:#fff;" data-i18n="course-pillar-1-title">Disciplina</div>
                     <div style="font-size:13px;color:var(--muted);line-height:1.6;" data-i18n="course-pillar-1-desc">El DJ que no se entrena, no
                         crece. La disciplina diaria separa al aficionado del profesional.</div>
                 </div>
                 <div
                     style="text-align:center;padding:30px 20px;background:rgba(197,160,89,0.04);border:1px solid rgba(197,160,89,0.2);border-radius:20px;">
-                    <div style="font-size:36px;margin-bottom:12px;">🎯</div>
+                    <div class="mdj-acad-pillar-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="7" />
+                            <circle cx="12" cy="12" r="3" />
+                            <path d="M12 2v2" />
+                            <path d="M12 20v2" />
+                            <path d="M2 12h2" />
+                            <path d="M20 12h2" />
+                        </svg>
+                    </div>
                     <div style="font-weight:800;font-size:14px;margin-bottom:8px;color:var(--gold);" data-i18n="course-pillar-2-title">Conocimiento
                     </div>
                     <div style="font-size:13px;color:var(--muted);line-height:1.6;" data-i18n="course-pillar-2-desc">Dominar la técnica, el equipo,
@@ -569,7 +700,12 @@
                 </div>
                 <div
                     style="text-align:center;padding:30px 20px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:20px;">
-                    <div style="font-size:36px;margin-bottom:12px;">🔥</div>
+                    <div class="mdj-acad-pillar-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 22c3.5-1.5 5.5-4 5.5-7.5C17.5 10 14 8 14 4c0 1.5-1.5 2.5-2.5 4S9 11 9 14c0 3.5 2 6 3 8z" />
+                            <path d="M12 22V12" />
+                        </svg>
+                    </div>
                     <div style="font-weight:800;font-size:14px;margin-bottom:8px;color:#fff;" data-i18n="course-pillar-3-title">Propósito</div>
                     <div style="font-size:13px;color:var(--muted);line-height:1.6;" data-i18n="course-pillar-3-desc">El DJ de élite no trabaja por
                         dinero. Trabaja porque llevar la música a la gente es su razón de ser.</div>
@@ -1949,7 +2085,13 @@
             </script>
 
             <!-- ── MÓDULO 4 · HISTORIA CON PROPÓSITO ─────────────────── -->
-            <div style="margin-bottom:80px;">
+            <style id="modulo-4-historia-images">
+                #modulo-4-historia img[src*="lesson_"] {
+                    opacity: 0.88;
+                    filter: saturate(0.85);
+                }
+            </style>
+            <div id="modulo-4-historia" style="margin-bottom:80px;">
 
                 <!-- Header -->
                 <div style="text-align:center;margin-bottom:48px;">
@@ -1974,8 +2116,8 @@
                         onmouseout="this.style.borderColor='rgba(197,160,89,0.25)';this.style.transform='translateY(0)'">
                         <!-- background image -->
                         <div style="height:160px;overflow:hidden;position:relative;">
-                            <img src="images/lesson_kool_herc.png" alt="Bronx Block Party 1974"
-                                style="width:100%;height:100%;object-fit:cover;object-position:center top;opacity:0.55;filter:saturate(0.7);" />
+                            <img src="images/lesson_kool_herc.png" data-academy-media="culture_lessons.kool_herc" alt="Bronx Block Party 1974"
+                                style="width:100%;height:100%;object-fit:cover;object-position:center top;opacity:0.88;filter:saturate(0.85);" />
                             <div
                                 style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,10,0.1) 0%,rgba(10,10,10,0.85) 100%);">
                             </div>
@@ -2004,8 +2146,8 @@
                         onmouseover="this.style.borderColor='rgba(197,160,89,0.6)';this.style.transform='translateY(-3px)'"
                         onmouseout="this.style.borderColor='rgba(197,160,89,0.25)';this.style.transform='translateY(0)'">
                         <div style="height:160px;overflow:hidden;position:relative;">
-                            <img src="images/lesson_grandmaster_flash.png" alt="Grandmaster Flash Turntable"
-                                style="width:100%;height:100%;object-fit:cover;object-position:center;opacity:0.55;filter:saturate(0.7);" />
+                            <img src="images/lesson_grandmaster_flash.png" data-academy-media="culture_lessons.grandmaster_flash" alt="Grandmaster Flash Turntable"
+                                style="width:100%;height:100%;object-fit:cover;object-position:center;opacity:0.88;filter:saturate(0.85);" />
                             <div
                                 style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,10,0.1) 0%,rgba(10,10,10,0.85) 100%);">
                             </div>
@@ -2033,8 +2175,8 @@
                         onmouseover="this.style.borderColor='rgba(197,160,89,0.6)';this.style.transform='translateY(-3px)'"
                         onmouseout="this.style.borderColor='rgba(197,160,89,0.25)';this.style.transform='translateY(0)'">
                         <div style="height:160px;overflow:hidden;position:relative;">
-                            <img src="images/lesson_larry_levan.png" alt="Underground Club 1980s"
-                                style="width:100%;height:100%;object-fit:cover;object-position:center;opacity:0.55;filter:saturate(0.7);" />
+                            <img src="images/lesson_larry_levan.png" data-academy-media="culture_lessons.larry_levan" alt="Underground Club 1980s"
+                                style="width:100%;height:100%;object-fit:cover;object-position:center;opacity:0.88;filter:saturate(0.85);" />
                             <div
                                 style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,10,0.1) 0%,rgba(10,10,10,0.85) 100%);">
                             </div>
@@ -2062,8 +2204,8 @@
                         onmouseover="this.style.borderColor='rgba(197,160,89,0.6)';this.style.transform='translateY(-3px)'"
                         onmouseout="this.style.borderColor='rgba(197,160,89,0.25)';this.style.transform='translateY(0)'">
                         <div style="height:160px;overflow:hidden;position:relative;">
-                            <img src="images/lesson_chicago_detroit.png" alt="Chicago House TR-808 Studio"
-                                style="width:100%;height:100%;object-fit:cover;object-position:center;opacity:0.55;filter:saturate(0.7);" />
+                            <img src="images/lesson_chicago_detroit.png" data-academy-media="culture_lessons.chicago_detroit" alt="Chicago House TR-808 Studio"
+                                style="width:100%;height:100%;object-fit:cover;object-position:center;opacity:0.88;filter:saturate(0.85);" />
                             <div
                                 style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,10,0.1) 0%,rgba(10,10,10,0.85) 100%);">
                             </div>
@@ -2091,8 +2233,8 @@
                         onmouseover="this.style.borderColor='rgba(197,160,89,0.6)';this.style.transform='translateY(-3px)'"
                         onmouseout="this.style.borderColor='rgba(197,160,89,0.25)';this.style.transform='translateY(0)'">
                         <div style="height:160px;overflow:hidden;position:relative;">
-                            <img src="images/lesson_raves_europeas.png" alt="European Techno Rave"
-                                style="width:100%;height:100%;object-fit:cover;object-position:center top;opacity:0.55;filter:saturate(0.7);" />
+                            <img src="images/lesson_raves_europeas.png" data-academy-media="culture_lessons.raves_europeas" alt="European Techno Rave"
+                                style="width:100%;height:100%;object-fit:cover;object-position:center top;opacity:0.88;filter:saturate(0.85);" />
                             <div
                                 style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,10,0.1) 0%,rgba(10,10,10,0.85) 100%);">
                             </div>
@@ -2177,7 +2319,30 @@
 
 
             <!-- ── MÓDULO 5 · CONEXIONES EN CABINA PROFESIONAL ─────── -->
-            <div style="margin-bottom:80px;">
+            <style id="modulo-5-acad-icons">
+                #modulo-5-conexiones .mdj-acad-feat-icon {
+                    width: 44px;
+                    height: 44px;
+                    margin-bottom: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 10px;
+                    background: rgba(197, 160, 89, 0.08);
+                    border: 1px solid rgba(197, 160, 89, 0.22);
+                }
+
+                #modulo-5-conexiones .mdj-acad-feat-icon svg {
+                    width: 22px;
+                    height: 22px;
+                    stroke: var(--gold, #c5a059);
+                    fill: none;
+                    stroke-width: 1.75;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                }
+            </style>
+            <div id="modulo-5-conexiones" style="margin-bottom:80px;">
                 <div style="text-align:center;margin-bottom:48px;">
                     <div
                         style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;">
@@ -2197,7 +2362,11 @@
                     <!-- 5.1 Flujo de señal -->
                     <div
                         style="padding:28px;border-radius:20px;background:rgba(255,255,255,0.02);border:1px solid rgba(197,160,89,0.2);">
-                        <div style="font-size:32px;margin-bottom:12px;">⚡</div>
+                        <div class="mdj-acad-feat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                            </svg>
+                        </div>
                         <div
                             style="font-size:10px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:8px;">
                             5.1 — FLUJO BÁSICO DE SEÑAL</div>
@@ -2228,7 +2397,19 @@
                     <!-- 5.2 Salidas del Mixer -->
                     <div
                         style="padding:28px;border-radius:20px;background:rgba(255,255,255,0.02);border:1px solid rgba(197,160,89,0.2);">
-                        <div style="font-size:32px;margin-bottom:12px;">🎛️</div>
+                        <div class="mdj-acad-feat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <line x1="4" y1="21" x2="4" y2="14" />
+                                <line x1="4" y1="10" x2="4" y2="3" />
+                                <line x1="12" y1="21" x2="12" y2="12" />
+                                <line x1="12" y1="8" x2="12" y2="3" />
+                                <line x1="20" y1="21" x2="20" y2="16" />
+                                <line x1="20" y1="12" x2="20" y2="3" />
+                                <line x1="1" y1="14" x2="7" y2="14" />
+                                <line x1="9" y1="8" x2="15" y2="8" />
+                                <line x1="17" y1="16" x2="23" y2="16" />
+                            </svg>
+                        </div>
                         <div
                             style="font-size:10px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:8px;">
                             5.2 — TIPOS DE SALIDAS EN MIXERS</div>
@@ -2268,7 +2449,14 @@
                     <!-- 5.3 Balanceado vs No Balanceado -->
                     <div
                         style="padding:28px;border-radius:20px;background:rgba(255,255,255,0.02);border:1px solid rgba(197,160,89,0.2);">
-                        <div style="font-size:32px;margin-bottom:12px;">⚖️</div>
+                        <div class="mdj-acad-feat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <line x1="12" y1="3" x2="12" y2="21" />
+                                <line x1="5" y1="7" x2="19" y2="7" />
+                                <path d="M5 7L2 11h6z" />
+                                <path d="M19 7l-3 4h6z" />
+                            </svg>
+                        </div>
                         <div
                             style="font-size:10px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:8px;">
                             5.3 — BALANCEADO VS NO BALANCEADO</div>
@@ -2303,7 +2491,19 @@
             </div>
 
             <!-- ── MÓDULO 6 · TIPOS DE CABLES ──────────────────────── -->
-            <div style="margin-bottom:80px;">
+            <style id="modulo-6-cable-images">
+                #modulo-6-cables img[src*="cable_"] {
+                    opacity: 1;
+                    mix-blend-mode: normal;
+                    object-fit: contain;
+                    filter: brightness(1.12) contrast(1.08);
+                }
+
+                #modulo-6-cables .mdj-cable-circle {
+                    background: rgba(255, 255, 255, 0.08);
+                }
+            </style>
+            <div id="modulo-6-cables" style="margin-bottom:80px;">
                 <div style="text-align:center;margin-bottom:48px;">
                     <div
                         style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;">
@@ -2324,9 +2524,9 @@
                     <div
                         style="position:relative;overflow:hidden;padding:24px;border-radius:18px;background:rgba(255,255,255,0.02);border:1px solid rgba(0,200,100,0.25);">
                         <div
-                            style="position:absolute;right:-28px;bottom:-28px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.05);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.12);overflow:hidden;pointer-events:none;">
-                            <img src="./assets/course/cable_xlr.png"
-                                style="width:100%;height:100%;object-fit:cover;opacity:0.5;mix-blend-mode:screen;"
+                            style="position:absolute;right:-28px;bottom:-28px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.05);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.12);overflow:hidden;pointer-events:none;" class="mdj-cable-circle">
+                            <img src="./assets/course/cable_xlr.png" data-academy-media="cable_connectors.xlr"
+                                style="width:100%;height:100%;object-fit:contain;"
                                 alt="">
                         </div>
                         <div style="position:relative;z-index:1;">
@@ -2353,9 +2553,9 @@
                     <div
                         style="position:relative;overflow:hidden;padding:24px;border-radius:18px;background:rgba(255,255,255,0.02);border:1px solid rgba(197,160,89,0.2);">
                         <div
-                            style="position:absolute;right:-28px;bottom:-28px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.05);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.12);overflow:hidden;pointer-events:none;">
-                            <img src="./assets/course/cable_trs.png"
-                                style="width:100%;height:100%;object-fit:cover;opacity:0.5;mix-blend-mode:luminosity;"
+                            style="position:absolute;right:-28px;bottom:-28px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.05);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.12);overflow:hidden;pointer-events:none;" class="mdj-cable-circle">
+                            <img src="./assets/course/cable_trs.png" data-academy-media="cable_connectors.trs"
+                                style="width:100%;height:100%;object-fit:contain;"
                                 alt="">
                         </div>
                         <div style="position:relative;z-index:1;">
@@ -2384,9 +2584,9 @@
                     <div
                         style="position:relative;overflow:hidden;padding:24px;border-radius:18px;background:rgba(255,255,255,0.02);border:1px solid rgba(229,62,62,0.2);">
                         <div
-                            style="position:absolute;right:-28px;bottom:-28px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.05);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.12);overflow:hidden;pointer-events:none;">
-                            <img src="./assets/course/cable_rca.png"
-                                style="width:100%;height:100%;object-fit:cover;opacity:0.5;mix-blend-mode:screen;"
+                            style="position:absolute;right:-28px;bottom:-28px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.05);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.12);overflow:hidden;pointer-events:none;" class="mdj-cable-circle">
+                            <img src="./assets/course/cable_rca.png" data-academy-media="cable_connectors.rca"
+                                style="width:100%;height:100%;object-fit:contain;"
                                 alt="">
                         </div>
                         <div style="position:relative;z-index:1;">
@@ -2414,9 +2614,9 @@
                     <div
                         style="position:relative;overflow:hidden;padding:24px;border-radius:18px;background:rgba(255,255,255,0.02);border:1px solid rgba(100,149,237,0.2);">
                         <div
-                            style="position:absolute;right:-28px;bottom:-28px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.05);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.12);overflow:hidden;pointer-events:none;">
-                            <img src="./assets/course/cable_usb.png"
-                                style="width:100%;height:100%;object-fit:cover;opacity:0.5;mix-blend-mode:luminosity;"
+                            style="position:absolute;right:-28px;bottom:-28px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.05);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.12);overflow:hidden;pointer-events:none;" class="mdj-cable-circle">
+                            <img src="./assets/course/cable_usb.png" data-academy-media="cable_connectors.usb"
+                                style="width:100%;height:100%;object-fit:contain;"
                                 alt="">
                         </div>
                         <div style="position:relative;z-index:1;">
@@ -2444,9 +2644,9 @@
                     <div
                         style="position:relative;overflow:hidden;padding:24px;border-radius:18px;background:rgba(255,255,255,0.02);border:1px solid rgba(197,160,89,0.2);">
                         <div
-                            style="position:absolute;right:-28px;bottom:-28px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.05);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.12);overflow:hidden;pointer-events:none;">
-                            <img src="./assets/course/cable_speakon.png"
-                                style="width:100%;height:100%;object-fit:cover;opacity:0.5;mix-blend-mode:luminosity;"
+                            style="position:absolute;right:-28px;bottom:-28px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.05);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.12);overflow:hidden;pointer-events:none;" class="mdj-cable-circle">
+                            <img src="./assets/course/cable_speakon.png" data-academy-media="cable_connectors.speakon"
+                                style="width:100%;height:100%;object-fit:contain;"
                                 alt="">
                         </div>
                         <div style="position:relative;z-index:1;">
@@ -2475,9 +2675,9 @@
                     <div
                         style="position:relative;overflow:hidden;padding:24px;border-radius:18px;background:rgba(255,255,255,0.02);border:1px solid rgba(100,149,237,0.2);">
                         <div
-                            style="position:absolute;right:-28px;bottom:-28px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.05);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.12);overflow:hidden;pointer-events:none;">
-                            <img src="./assets/course/cable_powercon.png"
-                                style="width:100%;height:100%;object-fit:cover;opacity:0.5;mix-blend-mode:luminosity;"
+                            style="position:absolute;right:-28px;bottom:-28px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.05);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.12);overflow:hidden;pointer-events:none;" class="mdj-cable-circle">
+                            <img src="./assets/course/cable_powercon.png" data-academy-media="cable_connectors.powercon"
+                                style="width:100%;height:100%;object-fit:contain;"
                                 alt="">
                         </div>
                         <div style="position:relative;z-index:1;">
@@ -2507,7 +2707,7 @@
 
 
             <!-- ── MÓDULO 7 · TIPOS DE EQUIPOS DE DJ ──────────────── -->
-            <div style="margin-bottom:80px;">
+            <div id="modulo-7-equipos" style="margin-bottom:80px;">
                 <div style="text-align:center;margin-bottom:48px;">
                     <div
                         style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;">
@@ -2524,7 +2724,7 @@
                 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;">
 
                     <!-- 7.1 Controlador -->
-                    <div
+                    <div data-academy-media-bg="dj_equipment.controller"
                         style="padding:28px;border-radius:20px;background:linear-gradient(rgba(0,0,0,0.72),rgba(0,0,0,0.82)),url('./assets/course/equipo-controller.png');background-size:cover;background-position:center;border:1px solid rgba(197,160,89,0.2);">
                         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
 
@@ -2559,7 +2759,7 @@
                     </div>
 
                     <!-- 7.2 CDJs + Mixer -->
-                    <div
+                    <div data-academy-media-bg="dj_equipment.cdj_mixer"
                         style="padding:28px;border-radius:20px;background:linear-gradient(rgba(0,0,0,0.72),rgba(0,0,0,0.82)),url('./assets/course/equipo-cdj-mixer.png');background-size:cover;background-position:center;border:1px solid rgba(197,160,89,0.3);box-shadow:0 0 0 1px rgba(197,160,89,0.1);">
                         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
 
@@ -2595,7 +2795,7 @@
                     </div>
 
                     <!-- 7.3 Turntables -->
-                    <div
+                    <div data-academy-media-bg="dj_equipment.turntable"
                         style="padding:28px;border-radius:20px;background:linear-gradient(rgba(0,0,0,0.72),rgba(0,0,0,0.82)),url('./assets/course/equipo-turntable.png');background-size:cover;background-position:center;border:1px solid rgba(197,160,89,0.2);">
                         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
 
@@ -2628,7 +2828,7 @@
                     </div>
 
                     <!-- 7.4 Standalone -->
-                    <div
+                    <div data-academy-media-bg="dj_equipment.standalone"
                         style="padding:28px;border-radius:20px;background:linear-gradient(rgba(0,0,0,0.72),rgba(0,0,0,0.82)),url('./assets/course/equipo-standalone.png');background-size:cover;background-position:center;border:1px solid rgba(197,160,89,0.2);">
                         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
 
@@ -2660,7 +2860,7 @@
                     </div>
 
                     <!-- 7.5 Setup Híbrido -->
-                    <div
+                    <div data-academy-media-bg="dj_equipment.hybrid_mixer"
                         style="padding:28px;border-radius:20px;background:linear-gradient(rgba(0,0,0,0.72),rgba(0,0,0,0.82)),url('./assets/course/equipo-mixer.png');background-size:cover;background-position:center;border:1px solid rgba(197,160,89,0.2);">
                         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
 
@@ -2709,7 +2909,13 @@
                         <!-- M1 -->
                         <div class="module-card">
                             <div class="module-num">MÓDULO 01</div>
-                            <div class="module-icon">🎵</div>
+                            <div class="module-icon mdj-module-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M9 18V5l12-2v13" />
+                                    <circle cx="6" cy="18" r="3" />
+                                    <circle cx="18" cy="16" r="3" />
+                                </svg>
+                            </div>
                             <div class="module-title" data-i18n="course-mod-1-title">Fundamentos del Sonido</div>
                             <div class="module-desc" data-i18n="course-mod-1-desc">BPM, compás musical, frecuencias, cómo el oído percibe la música y qué hace que una canción "funcione" en pista.</div>
                             <span class="module-tag tag-beginner" data-i18n="course-tag-beginner">PRINCIPIANTE</span>
@@ -2717,7 +2923,13 @@
                         <!-- M2 -->
                         <div class="module-card">
                             <div class="module-num">MÓDULO 02</div>
-                            <div class="module-icon">🎧</div>
+                            <div class="module-icon mdj-module-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M4 14a8 8 0 0116 0" />
+                                    <path d="M4 14v4a2 2 0 002 2h1" />
+                                    <path d="M20 14v4a2 2 0 01-2 2h-1" />
+                                </svg>
+                            </div>
                             <div class="module-title" data-i18n="course-mod-2-title">Equipamiento Profesional</div>
                             <div class="module-desc" data-i18n="course-mod-2-desc">Consolas Pioneer, Denon, controladores, mixers, cartuchos. Qué comprar según tu presupuesto y estilo.</div>
                             <span class="module-tag tag-beginner" data-i18n="course-tag-beginner">PRINCIPIANTE</span>
@@ -2725,7 +2937,12 @@
                         <!-- M3 -->
                         <div class="module-card">
                             <div class="module-num">MÓDULO 03</div>
-                            <div class="module-icon">💻</div>
+                            <div class="module-icon mdj-module-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <rect x="3" y="5" width="18" height="12" rx="2" />
+                                    <path d="M2 19h20" />
+                                </svg>
+                            </div>
                             <div class="module-title" data-i18n="course-mod-3-title">Software Profesional</div>
                             <div class="module-desc" data-i18n="course-mod-3-desc">Serato DJ Pro, Rekordbox, Virtual DJ y MDJPRO — configuración avanzada, flujos de trabajo y shortcuts élite.</div>
                             <span class="module-tag tag-beginner" data-i18n="course-tag-beginner">PRINCIPIANTE</span>
@@ -2733,7 +2950,19 @@
                         <!-- M4 -->
                         <div class="module-card">
                             <div class="module-num">MÓDULO 04</div>
-                            <div class="module-icon">🎚️</div>
+                            <div class="module-icon mdj-module-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <line x1="4" y1="21" x2="4" y2="14" />
+                                    <line x1="4" y1="10" x2="4" y2="3" />
+                                    <line x1="12" y1="21" x2="12" y2="12" />
+                                    <line x1="12" y1="8" x2="12" y2="3" />
+                                    <line x1="20" y1="21" x2="20" y2="16" />
+                                    <line x1="20" y1="12" x2="20" y2="3" />
+                                    <line x1="1" y1="14" x2="7" y2="14" />
+                                    <line x1="9" y1="8" x2="15" y2="8" />
+                                    <line x1="17" y1="16" x2="23" y2="16" />
+                                </svg>
+                            </div>
                             <div class="module-title" data-i18n="course-mod-4-title">Técnica de Mezcla</div>
                             <div class="module-desc" data-i18n="course-mod-4-desc">Beatmatching, EQ mixing, transiciones suaves, phrasing y cómo construir energía en una pista sin perder la audiencia.</div>
                             <span class="module-tag tag-intermediate" data-i18n="course-tag-intermediate">INTERMEDIO</span>
@@ -2741,7 +2970,13 @@
                         <!-- M5 -->
                         <div class="module-card">
                             <div class="module-num">MÓDULO 05</div>
-                            <div class="module-icon">🎤</div>
+                            <div class="module-icon mdj-module-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M12 14a3 3 0 003-3V6a3 3 0 00-6 0v5a3 3 0 003 3z" />
+                                    <path d="M19 11a7 7 0 01-14 0" />
+                                    <path d="M12 18v3" />
+                                </svg>
+                            </div>
                             <div class="module-title" data-i18n="course-mod-5-title">MC y Control de Pista</div>
                             <div class="module-desc" data-i18n="course-mod-5-desc">Cómo hablar al micrófono, leer al público, dirigir momentos especiales (primer baile, marcha nupcial, cápsulas de hora loca).</div>
                             <span class="module-tag tag-intermediate" data-i18n="course-tag-intermediate">INTERMEDIO</span>
@@ -2749,7 +2984,13 @@
                         <!-- M6 -->
                         <div class="module-card">
                             <div class="module-num">MÓDULO 06</div>
-                            <div class="module-icon">💡</div>
+                            <div class="module-icon mdj-module-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M9 18h6" />
+                                    <path d="M10 22h4" />
+                                    <path d="M12 2a6 6 0 014 10c-.6.6-1 1.4-1 2.2V16H9v-1.8c0-.8-.4-1.6-1-2.2A6 6 0 0112 2z" />
+                                </svg>
+                            </div>
                             <div class="module-title" data-i18n="course-mod-6-title">Producción e Iluminación</div>
                             <div class="module-desc" data-i18n="course-mod-6-desc">Control de luces DMX, sparks, efectos visuales y cómo crear ambientes que multiplican la experiencia del cliente.</div>
                             <span class="module-tag tag-intermediate" data-i18n="course-tag-intermediate">INTERMEDIO</span>
@@ -2757,7 +2998,14 @@
                         <!-- M7 -->
                         <div class="module-card">
                             <div class="module-num">MÓDULO 07</div>
-                            <div class="module-icon">📋</div>
+                            <div class="module-icon mdj-module-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M9 5h6a2 2 0 012 2v14H7V7a2 2 0 012-2z" />
+                                    <path d="M9 3h6v4H9z" />
+                                    <line x1="9" y1="12" x2="15" y2="12" />
+                                    <line x1="9" y1="16" x2="15" y2="16" />
+                                </svg>
+                            </div>
                             <div class="module-title" data-i18n="course-mod-7-title">Organización de Librería</div>
                             <div class="module-desc" data-i18n="course-mod-7-desc">Sistema de tags, géneros, décadas, listas para eventos. Cómo organizar 50,000 canciones para encontrar cualquier track en 5 segundos.</div>
                             <span class="module-tag tag-intermediate" data-i18n="course-tag-intermediate">INTERMEDIO</span>
@@ -2765,7 +3013,13 @@
                         <!-- M8 -->
                         <div class="module-card">
                             <div class="module-num">MÓDULO 08</div>
-                            <div class="module-icon">💼</div>
+                            <div class="module-icon mdj-module-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <rect x="3" y="8" width="18" height="12" rx="2" />
+                                    <path d="M8 8V6a2 2 0 012-2h4a2 2 0 012 2v2" />
+                                    <line x1="3" y1="13" x2="21" y2="13" />
+                                </svg>
+                            </div>
                             <div class="module-title" data-i18n="course-mod-8-title">Contratos y Cotizaciones</div>
                             <div class="module-desc" data-i18n="course-mod-8-desc">Cómo redactar contratos, manejar depósitos, cláusulas de cancelación y protegerte legalmente en cada evento.</div>
                             <span class="module-tag tag-advanced" data-i18n="course-tag-advanced">AVANZADO</span>
@@ -2773,7 +3027,12 @@
                         <!-- M9 -->
                         <div class="module-card">
                             <div class="module-num">MÓDULO 09</div>
-                            <div class="module-icon">📱</div>
+                            <div class="module-icon mdj-module-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <rect x="7" y="2" width="10" height="20" rx="2" />
+                                    <line x1="11" y1="18" x2="13" y2="18" />
+                                </svg>
+                            </div>
                             <div class="module-title" data-i18n="course-mod-9-title">Marketing Personal DJ</div>
                             <div class="module-desc" data-i18n="course-mod-9-desc">Cómo construir tu marca en Instagram, TikTok y Mixcloud. Contenido que atrae clientes de alto valor sin gastar en publicidad.</div>
                             <span class="module-tag tag-advanced" data-i18n="course-tag-advanced">AVANZADO</span>
@@ -2781,7 +3040,12 @@
                         <!-- M10 -->
                         <div class="module-card">
                             <div class="module-num">MÓDULO 10</div>
-                            <div class="module-icon">💰</div>
+                            <div class="module-icon mdj-module-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <line x1="12" y1="2" x2="12" y2="22" />
+                                    <path d="M17 6H9.5a3.5 3.5 0 000 7H14a3.5 3.5 0 010 7H6" />
+                                </svg>
+                            </div>
                             <div class="module-title" data-i18n="course-mod-10-title">Precios y Finanzas DJ</div>
                             <div class="module-desc" data-i18n="course-mod-10-desc">Cómo fijar tarifas, cuándo subir precios, manejar pagos, impuestos de freelancer y construir ingresos recurrentes.</div>
                             <span class="module-tag tag-advanced" data-i18n="course-tag-advanced">AVANZADO</span>
@@ -2789,7 +3053,13 @@
                         <!-- M11 -->
                         <div class="module-card">
                             <div class="module-num">MÓDULO 11</div>
-                            <div class="module-icon">🧠</div>
+                            <div class="module-icon mdj-module-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M12 5a3 3 0 00-3 3c0 2 1.5 2.8 1.5 4.5a1.5 1.5 0 003 0C13.5 10.8 15 10 15 8a3 3 0 00-3-3z" />
+                                    <path d="M8 16c0 1.5 1.2 2.5 4 2.5s4-1 4-2.5" />
+                                    <path d="M9 5.5h6" />
+                                </svg>
+                            </div>
                             <div class="module-title" data-i18n="course-mod-11-title">Mentalidad del DJ Élite</div>
                             <div class="module-desc" data-i18n="course-mod-11-desc">Gestión de nervios, manejo de imprevistos técnicos en vivo, protocolo ante fallos y cómo mantener el control bajo presión.</div>
                             <span class="module-tag tag-advanced" data-i18n="course-tag-advanced">AVANZADO</span>
@@ -2798,7 +3068,15 @@
                         <div class="module-card"
                             style="border-color: rgba(197,160,89,0.4); background: rgba(197,160,89,0.03);">
                             <div class="module-num">MÓDULO 12</div>
-                            <div class="module-icon">🏆</div>
+                            <div class="module-icon mdj-module-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M8 21h8" />
+                                    <path d="M12 17v4" />
+                                    <path d="M7 4h10v5a5 5 0 01-10 0V4z" />
+                                    <path d="M7 4H5a2 2 0 002 2" />
+                                    <path d="M17 4h2a2 2 0 01-2 2" />
+                                </svg>
+                            </div>
                             <div class="module-title" data-i18n="course-mod-12-title">Examen Final + Certificación</div>
                             <div class="module-desc" data-i18n="course-mod-12-desc">Evaluación práctica y teórica. Al aprobar recibes tu <strong
                                     style="color:var(--gold);">Certificado Oficial de DJ Profesional Miami DJ
@@ -2819,7 +3097,14 @@
                     </h2>
                     <div class="preview-grid">
                         <div class="preview-card">
-                            <div class="preview-icon">🎬</div>
+                            <div class="preview-icon mdj-preview-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <rect x="4" y="7" width="16" height="13" rx="1" />
+                                    <path d="M4 7l4-4" />
+                                    <path d="M12 7l4-4" />
+                                    <path d="M20 7l-4-4" />
+                                </svg>
+                            </div>
                             <div>
                                 <strong data-i18n="course-inc-vids">40+ Horas de Video HD</strong>
                                 <p style="color:var(--muted); font-size:13px; margin-top:6px; line-height:1.6;" data-i18n="course-inc-vids-desc">Clases
@@ -2827,7 +3112,14 @@
                             </div>
                         </div>
                         <div class="preview-card">
-                            <div class="preview-icon">📄</div>
+                            <div class="preview-icon mdj-preview-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                                    <path d="M14 2v6h6" />
+                                    <line x1="8" y1="13" x2="16" y2="13" />
+                                    <line x1="8" y1="17" x2="16" y2="17" />
+                                </svg>
+                            </div>
                             <div>
                                 <strong data-i18n="course-inc-docs">Contratos y Plantillas</strong>
                                 <p style="color:var(--muted); font-size:13px; margin-top:6px; line-height:1.6;" data-i18n="course-inc-docs-desc">Paquete
@@ -2835,7 +3127,13 @@
                             </div>
                         </div>
                         <div class="preview-card">
-                            <div class="preview-icon">🎵</div>
+                            <div class="preview-icon mdj-preview-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M9 18V5l12-2v13" />
+                                    <circle cx="6" cy="18" r="3" />
+                                    <circle cx="18" cy="16" r="3" />
+                                </svg>
+                            </div>
                             <div>
                                 <strong data-i18n="course-inc-packs">Pack de Sets y Samples</strong>
                                 <p style="color:var(--muted); font-size:13px; margin-top:6px; line-height:1.6;" data-i18n="course-inc-packs-desc">
@@ -2844,7 +3142,14 @@
                             </div>
                         </div>
                         <div class="preview-card">
-                            <div class="preview-icon">👥</div>
+                            <div class="preview-icon mdj-preview-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                                    <circle cx="9" cy="7" r="4" />
+                                    <path d="M23 21v-2a4 4 0 00-3-3.87" />
+                                    <path d="M16 3.13a4 4 0 010 7.75" />
+                                </svg>
+                            </div>
                             <div>
                                 <strong data-i18n="course-inc-comm">Comunidad Privada</strong>
                                 <p style="color:var(--muted); font-size:13px; margin-top:6px; line-height:1.6;" data-i18n="course-inc-comm-desc">Acceso
@@ -2853,7 +3158,15 @@
                             </div>
                         </div>
                         <div class="preview-card">
-                            <div class="preview-icon">🏆</div>
+                            <div class="preview-icon mdj-preview-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M8 21h8" />
+                                    <path d="M12 17v4" />
+                                    <path d="M7 4h10v5a5 5 0 01-10 0V4z" />
+                                    <path d="M7 4H5a2 2 0 002 2" />
+                                    <path d="M17 4h2a2 2 0 01-2 2" />
+                                </svg>
+                            </div>
                             <div>
                                 <strong data-i18n="course-inc-cert">Certificado Oficial</strong>
                                 <p style="color:var(--muted); font-size:13px; margin-top:6px; line-height:1.6;" data-i18n="course-inc-cert-desc">
@@ -2863,7 +3176,13 @@
                             </div>
                         </div>
                         <div class="preview-card">
-                            <div class="preview-icon">💼</div>
+                            <div class="preview-icon mdj-preview-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <rect x="3" y="8" width="18" height="12" rx="2" />
+                                    <path d="M8 8V6a2 2 0 012-2h4a2 2 0 012 2v2" />
+                                    <line x1="3" y1="13" x2="21" y2="13" />
+                                </svg>
+                            </div>
                             <div>
                                 <strong data-i18n="course-inc-eco">Acceso al Ecosistema PRO</strong>
                                 <p style="color:var(--muted); font-size:13px; margin-top:6px; line-height:1.6;" data-i18n="course-inc-eco-desc">Al
@@ -2880,7 +3199,11 @@
                 <!-- LOCKED SECTION: DO NOT MODIFY -->
         <div class="container">
                     <div class="instructor-section">
-                        <div class="instructor-photo">🎧</div>
+                        <div class="instructor-photo instructor-photo--pending" id="course-instructor-photo">
+                            <img id="course-instructor-photo-img" src=""
+                                alt="Gerardo A Valle — Fundador e instructor, Miami DJ Beat Academia"
+                                width="800" height="800" loading="lazy" decoding="async" />
+                        </div>
                         <div>
                             <div
                                 style="color:var(--gold); font-size:12px; font-weight:800; letter-spacing:2px; margin-bottom:12px;" data-i18n="course-ins-label">
@@ -2921,7 +3244,7 @@
                     <div class="cta-section">
                         <div
                             style="color:var(--gold); font-size:12px; font-weight:800; letter-spacing:2px; margin-bottom:16px;" data-i18n="course-cta-status">
-                            🚀 INSCRIPCIÓN ABIERTA</div>
+                            INSCRIPCIÓN ABIERTA</div>
                         <h2
                             style="font-size:clamp(26px,3vw,44px); font-weight:900; margin-bottom:16px; position:relative; z-index:1;" data-i18n="course-cta-title">
                             Comienza Tu Carrera<br>como DJ Profesional Hoy
@@ -2951,7 +3274,16 @@
                             gap: 10px;
                             box-shadow: 0 0 40px rgba(197,160,89,0.5);
                         ">
-                                🎓 <span data-i18n="course-btn-enroll">Quiero Mi Certificado DJ</span>
+                                <span class="mdj-cta-btn-icon mdj-cta-btn-icon--dark" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M8 21h8" />
+                                        <path d="M12 17v4" />
+                                        <path d="M7 4h10v5a5 5 0 01-10 0V4z" />
+                                        <path d="M7 4H5a2 2 0 002 2" />
+                                        <path d="M17 4h2a2 2 0 01-2 2" />
+                                    </svg>
+                                </span>
+                                <span data-i18n="course-btn-enroll">Quiero Mi Certificado DJ</span>
                             </a>
                             <a href="./jobs.html" style="
                             border: 1px solid rgba(255,255,255,0.2);
@@ -2965,7 +3297,14 @@
                             align-items: center;
                             gap: 10px;
                         ">
-                                💼 <span data-i18n="nav-jobs">Ver Oportunidades de Empleo</span>
+                                <span class="mdj-cta-btn-icon mdj-cta-btn-icon--gold" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <rect x="3" y="8" width="18" height="12" rx="2" />
+                                        <path d="M8 8V6a2 2 0 012-2h4a2 2 0 012 2v2" />
+                                        <line x1="3" y1="13" x2="21" y2="13" />
+                                    </svg>
+                                </span>
+                                <span data-i18n="nav-jobs">Ver Oportunidades de Empleo</span>
                             </a>
                         </div>
 
@@ -3430,6 +3769,172 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            var ISSUER_ROLES = ['owner', 'manager'];
+
+            function normalizeInstructorPhotoUrl(raw) {
+                if (!raw || !String(raw).trim()) return '';
+                var u = String(raw).trim();
+                if (/placeholder|dj-avatar-placeholder\.png/i.test(u)) return '';
+                if (typeof window.mdjNormalizeAvatarStorageUrl === 'function') {
+                    u = window.mdjNormalizeAvatarStorageUrl(u) || u;
+                } else if (u.indexOf('storage/v1') !== -1 && typeof window.MDB_SUPABASE_URL === 'string' && window.MDB_SUPABASE_URL) {
+                    var base = String(window.MDB_SUPABASE_URL).replace(/\/$/, '');
+                    u = base + (u.charAt(0) === '/' ? u : '/' + u.replace(/^\/+/, ''));
+                }
+                if (
+                    /^https?:\/\//i.test(u) ||
+                    u.indexOf('data:image/') === 0 ||
+                    u.indexOf('blob:') === 0 ||
+                    (u.indexOf('//') === 0 && u.indexOf('http') !== 0)
+                ) {
+                    return u;
+                }
+                return '';
+            }
+
+            function pickSessionAvatarUrl(session) {
+                if (!session || !session.user) return '';
+                var meta = session.user.user_metadata || {};
+                var appMeta = session.user.app_metadata || {};
+                var candidates = [
+                    meta.avatar_url,
+                    meta.picture,
+                    appMeta.avatar_url,
+                    appMeta.picture
+                ];
+                for (var ci = 0; ci < candidates.length; ci++) {
+                    var c = normalizeInstructorPhotoUrl(candidates[ci]);
+                    if (c) return c;
+                }
+                return '';
+            }
+
+            function isCertificateIssuerRole(role, session) {
+                var dbRole = String(role || '').toLowerCase();
+                if (ISSUER_ROLES.indexOf(dbRole) !== -1) return true;
+                var jwtRole = String(
+                    (session && session.user && session.user.app_metadata && session.user.app_metadata.role) || ''
+                ).toLowerCase();
+                return jwtRole === 'owner';
+            }
+
+            function applyInstructorPhoto(wrap, img, photoUrl, legalName) {
+                if (!photoUrl) {
+                    img.removeAttribute('src');
+                    img.style.display = 'none';
+                    wrap.classList.add('instructor-photo--pending');
+                    return;
+                }
+
+                if (legalName) {
+                    img.alt = legalName + ' — Fundador e instructor, Miami DJ Beat Academia';
+                }
+
+                img.onload = function () {
+                    img.style.display = 'block';
+                    wrap.classList.remove('instructor-photo--pending');
+                };
+                img.onerror = function () {
+                    img.removeAttribute('src');
+                    img.style.display = 'none';
+                    wrap.classList.add('instructor-photo--pending');
+                };
+                img.src = photoUrl;
+            }
+
+            async function loadCourseInstructorPhoto() {
+                var wrap = document.getElementById('course-instructor-photo');
+                var img = document.getElementById('course-instructor-photo-img');
+                if (!wrap || !img) return;
+
+                var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+                if (!sb) return;
+
+                var photoUrl = '';
+                var legalName = '';
+
+                try {
+                    var sessionRes = await sb.auth.getSession();
+                    var session = sessionRes && sessionRes.data && sessionRes.data.session;
+
+                    if (session) {
+                        var mineRes = await sb.from('dj_profiles')
+                            .select('photo_url, full_name, stage_name, role')
+                            .eq('user_id', session.user.id)
+                            .maybeSingle();
+                        var mine = mineRes && mineRes.data;
+                        if (mine && isCertificateIssuerRole(mine.role, session)) {
+                            photoUrl = normalizeInstructorPhotoUrl(mine.photo_url) || pickSessionAvatarUrl(session);
+                            legalName = (mine.full_name && String(mine.full_name).trim()) || legalName;
+                        }
+                    }
+
+                    for (var i = 0; i < ISSUER_ROLES.length && !photoUrl; i++) {
+                        var staffRes = await sb.from('dj_profiles')
+                            .select('photo_url, full_name, stage_name')
+                            .eq('role', ISSUER_ROLES[i])
+                            .not('photo_url', 'is', null)
+                            .limit(1)
+                            .maybeSingle();
+                        var staff = staffRes && staffRes.data;
+                        if (staff) {
+                            photoUrl = normalizeInstructorPhotoUrl(staff.photo_url);
+                            legalName = (staff.full_name && String(staff.full_name).trim()) || legalName;
+                        }
+                    }
+
+                    if (!photoUrl) {
+                        var pubRes = await sb.from('public_dj_profiles')
+                            .select('photo_url, full_name, stage_name')
+                            .filter('stage_name', 'ilike', '%djmago%')
+                            .limit(1);
+                        var pubRows = pubRes && pubRes.data;
+                        if (pubRows && pubRows.length) {
+                            photoUrl = normalizeInstructorPhotoUrl(pubRows[0].photo_url);
+                            legalName = (pubRows[0].full_name && String(pubRows[0].full_name).trim()) || legalName;
+                        }
+                    }
+                } catch (e) {
+                    void e;
+                }
+
+                applyInstructorPhoto(wrap, img, photoUrl, legalName);
+
+                if (wrap.classList.contains('instructor-photo--pending')) {
+                    setTimeout(function () {
+                        if (!wrap.classList.contains('instructor-photo--pending')) return;
+                        var headerAv = document.querySelector(
+                            '#mdjHeaderAvatarSlot img.mdj-header-vip-avatar, #accountBtn .avatar, .account-btn .avatar'
+                        );
+                        if (!headerAv || !headerAv.src) return;
+                        var headerSrc = normalizeInstructorPhotoUrl(headerAv.src);
+                        if (headerSrc) applyInstructorPhoto(wrap, img, headerSrc, legalName);
+                    }, 1200);
+                }
+            }
+
+            function bootCourseInstructorPhoto() {
+                loadCourseInstructorPhoto();
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', bootCourseInstructorPhoto);
+            } else {
+                bootCourseInstructorPhoto();
+            }
+            window.addEventListener('load', function () {
+                var wrap = document.getElementById('course-instructor-photo');
+                if (wrap && wrap.classList.contains('instructor-photo--pending')) {
+                    loadCourseInstructorPhoto();
+                }
+            });
+        })();
+    </script>
+    <script src="./js/academy-media-loader.js?v=20260612-acad-storage"></script>
     <script src="./translations.js?v=20260422-nav-labels-1"></script>
     <script src="./i18n.js?v=20260226-1"></script>
     <script>
