@@ -55,11 +55,44 @@
     } catch (eAmb) {
       void eAmb;
     }
-    var s = document.createElement('script');
-    s.id = 'mdj-ambient-music-script';
-    s.src = './js/mdj-ambient-music.js?v=20260513-cash-flow-no-ambient';
-    s.async = true;
-    (document.head || document.documentElement).appendChild(s);
+
+    function _injectAmbientScript() {
+      if (document.getElementById('mdj-ambient-music-script')) return;
+      var s = document.createElement('script');
+      s.id = 'mdj-ambient-music-script';
+      s.src = './js/mdj-ambient-music.js?v=20260513-cash-flow-no-ambient';
+      s.async = true;
+      (document.head || document.documentElement).appendChild(s);
+    }
+
+    if (typeof whenSupabaseReady === 'function') {
+      whenSupabaseReady(function() {
+        var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : (window.supabase || null);
+        if (sb) {
+          sb.from('platform_settings')
+            .select('key, value')
+            .in('key', ['ambient_opening_file', 'ambient_vol_opening', 'ambient_jungle_file', 'ambient_vol_jungle'])
+            .then(function(res) {
+              if (res.data) {
+                res.data.forEach(function(row) {
+                  if (row.key === 'ambient_opening_file' && row.value) window.MDJ_AMBIENT_OPENING_FILE = row.value;
+                  if (row.key === 'ambient_jungle_file' && row.value) window.MDJ_AMBIENT_JUNGLE_FILE = row.value;
+                  if (row.key === 'ambient_vol_opening' && row.value !== '') window.MDJ_AMBIENT_VOL_OPENING = parseFloat(row.value);
+                  if (row.key === 'ambient_vol_jungle' && row.value !== '') window.MDJ_AMBIENT_VOL_JUNGLE = parseFloat(row.value);
+                });
+              }
+              _injectAmbientScript();
+            })
+            .catch(function() {
+              _injectAmbientScript();
+            });
+        } else {
+          _injectAmbientScript();
+        }
+      });
+    } else {
+      _injectAmbientScript();
+    }
   }
 
   function mdjLoadForceMuteVideosScript() {
@@ -539,7 +572,7 @@
   function mdjBuildArtistStaffMainNavHref() {
     var idn = window.__mdjLastPlatformIdentity;
     if (idn && idn.staffInDb) {
-      return './admin-dashboard.html#staff';
+      return './admin-dashboard.html';
     }
     return mdjBuildStaffEntryLoginHref();
   }
