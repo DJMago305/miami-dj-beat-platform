@@ -336,6 +336,15 @@
 
         main.container .admin-grid button.btn.primary {
             color: var(--gold);
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        main.container .admin-grid button.btn.primary:hover,
+        main.container .admin-grid button.btn.primary:active {
+            opacity: 1;
+            filter: brightness(1.2);
+            box-shadow: 0 0 15px rgba(197, 160, 89, 0.3);
         }
 
         main.container .admin-grid button.btn.secondary {
@@ -1215,7 +1224,7 @@
                         </div>
 
                         <div style="margin-top:20px; display:flex; align-items:center; gap:14px;">
-                            <button class="btn gold" onclick="saveTalentInventory()">SAVE</button>
+                            <button class="btn primary" onclick="saveTalentInventory()">SAVE</button>
                             <small id="talent-save-status" style="color:var(--admin-accent); display:none;">✅ Catálogo
                                 sincronizado</small>
                         </div>
