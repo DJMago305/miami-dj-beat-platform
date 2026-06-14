@@ -21,6 +21,8 @@ Su prioridad absoluta es la SOLIDEZ ESTRUCTURAL. Lea estas leyes antes de cada a
 - PROHIBIDO: Confiar en `app_metadata.role` del lado del cliente sin validación previa contra la base de datos.
 - ERROR CRÍTICO: No intente actualizar `app_metadata` directamente en `auth.users` desde el SQL Editor (da error de columna). Use scripts de servidor.
 - REGLA: Si un usuario intenta entrar al Manager Panel y no es Staff en la DB, ejecute `signOut` y redirija a `index.html` inmediatamente.
+- **PROHIBIDO MEZCLAR PERFILES (INCIDENT-001):** El rol `owner` es Staff. El botón "STAFF" en la navegación principal DEBE redirigir a `./admin-dashboard.html#staff` para el owner, NUNCA a `account-profile.html`.
+- **PROHIBIDO BLOQUEAR EL AUTH GATE:** En `admin-dashboard.html`, nunca inyectar llamadas a funciones pesadas (ej. `loadMdjproDownloadsCatalog`) antes de ejecutar `document.documentElement.classList.remove('mdj-admin-gate-pending')`. Esto causa una pantalla negra irreversible.
 
 ## 3. LEY DE INTEGRIDAD Y NO-REGRESIONES
 - Antes de modificar CSS global, VERIFIQUE que no rompa el responsive de móvil ni el menú hamburguesa.

@@ -127,6 +127,7 @@
         <button id="btn-en" onclick="setLang('en')">EN</button>
       </div>
       <button class="btn-reset" onclick="resetForm()">Limpiar / Reset</button>
+      <button class="btn-save" id="btn-save" onclick="saveDoc()">Guardar</button>
       <button class="btn-assign" id="btn-assign-open" onclick="openAssignModal()" style="padding:8px 14px;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;background:rgba(99,102,241,.2);border:1px solid rgba(99,102,241,.4);color:#a5b4fc;">👤 Asignar a Cliente</button>
       <button class="btn-print" onclick="window.print()">⬇ Imprimir / PDF</button>
     </div>
@@ -531,8 +532,99 @@ function resetForm() {
   update();
 }
 
+/* ── Save & Load ── */
+async function saveDoc() {
+  const state = { form: {} };
+  document.querySelectorAll('#editor-panel input, #editor-panel textarea').forEach(el => {
+    if (el.id) state.form[el.id] = el.value;
+  });
+
+  try {
+    const sb = window.getSupabaseClient ? window.getSupabaseClient() : window._supabase || window._supabaseClient;
+    if (sb) {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        const brand = (document.getElementById('f-protagonist')?.value || '').trim() || _type;
+        await sb.from('event_show_plans').upsert({
+          user_id: session.user.id,
+          event_type: _type,
+          event_name: brand,
+          client_profile_id: _assignedClient ? _assignedClient.id : null,
+          assigned_client_email: _assignedClient ? _assignedClient.email : null,
+          event_date_text: document.getElementById('f-date')?.value || null,
+          schedule: document.getElementById('f-time')?.value || null,
+          venue: document.getElementById('f-venue')?.value || null,
+          dj_name: document.getElementById('f-dj')?.value || null,
+          music_format: document.getElementById('f-format')?.value || null,
+          cue_blocks: state, // Save the entire form state here
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id,event_name' });
+      }
+    }
+  } catch (err) {
+    console.warn('[EventBlueprint] Error saving to Supabase', err);
+  }
+
+  const btn = document.getElementById('btn-save');
+  if (btn) {
+    btn.textContent = _lang === 'es' ? '✓ Guardado' : '✓ Saved';
+    setTimeout(() => {
+      btn.textContent = _lang === 'es' ? 'Guardar' : 'Save';
+    }, 2500);
+  }
+}
+
+async function loadDoc() {
+  let state = null;
+  try {
+    const sb = window.getSupabaseClient ? window.getSupabaseClient() : window._supabase || window._supabaseClient;
+    if (sb) {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        const { data, error } = await sb
+          .from('event_show_plans')
+          .select('cue_blocks, assigned_client_email, client_profile_id')
+          .eq('user_id', session.user.id)
+          .eq('event_type', _type)
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+          
+        if (data && data.cue_blocks) {
+          state = data.cue_blocks;
+          if (data.assigned_client_email) {
+            _assignedClient = { 
+              email: data.assigned_client_email, 
+              id: data.client_profile_id 
+            };
+            const btnOpen = document.getElementById('btn-assign-open');
+            if (btnOpen) {
+              btnOpen.textContent = '✓ ' + _assignedClient.email;
+              btnOpen.style.background = 'rgba(34,197,94,.15)';
+              btnOpen.style.borderColor = 'rgba(34,197,94,.4)';
+              btnOpen.style.color = '#6de88a';
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[EventBlueprint] Error loading from Supabase', err);
+  }
+
+  if (state && state.form) {
+    Object.keys(state.form).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = state.form[id];
+    });
+    update();
+    return true;
+  }
+  return false;
+}
+
 /* ── Init ── */
-(function init() {
+(async function init() {
   /* Leer tipo desde URL param */
   var params = new URLSearchParams(window.location.search);
   var typeParam = params.get('type');
@@ -548,7 +640,8 @@ function resetForm() {
 
   renderEditorLabels();
   buildSegmentNotes();
-  update();
+  const loaded = await loadDoc();
+  if (!loaded) update();
 })();
 </script>
 

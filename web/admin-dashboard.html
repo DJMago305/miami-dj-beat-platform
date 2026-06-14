@@ -283,6 +283,42 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
+        /* Activity Feed Styles */
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        .activity-icon {
+            font-size: 18px;
+            background: rgba(255,255,255,0.05);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .activity-content {
+            flex: 1;
+        }
+        .activity-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 2px;
+        }
+        .activity-meta {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
         .loading-spinner {
             text-align: center;
             padding: 40px;
@@ -670,7 +706,7 @@
         <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
         <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
         <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" aria-hidden="true" tabindex="-1">MY PORTAL</a>
-        <a href="./admin-dashboard.html" id="mainNav-staff-link" class="mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
+        <a href="./admin-dashboard.html#staff" id="mainNav-staff-link" class="mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
         <a id="mainNav-artist-dashboard-link" class="mdj-artist-dash-mainnav mdj-mainnav-reserved-slot" href="./dj-profile.html" data-mdj-nav="my-profile" data-i18n="nav-my-profile" aria-hidden="true" tabindex="-1">MY PROFILE</a>
       </nav>
     </div>
@@ -688,7 +724,7 @@
             <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-tools">DJ Tools</a>
             <a href="./dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="flow-dash">CASH FLOW</a>
             <a href="./account-profile.html" class="dj-tab-btn" data-i18n="menu-account">Mi Perfil</a>
-            <a href="./admin-dashboard.html" class="dj-tab-btn active" data-mdj-nav="staff">STAFF</a>
+            <a href="./admin-dashboard.html#staff" class="dj-tab-btn active" data-mdj-nav="staff">STAFF</a>
             <a href="./dj-profile.html?tab=sft&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-soundfortips">SoundForTips™</a>
         </div>
     </nav>
@@ -829,24 +865,36 @@
                     <div id="staff-container">
                         <div class="loading-spinner">Cargando equipo...</div>
                     </div>
+
+                    <!-- Activity Feed UI -->
+                    <div style="margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <div>
+                                <h4 style="margin:0; color: var(--gold);">📡 Actividad Reciente de la Plataforma</h4>
+                                <p class="fineprint">Nuevos usuarios, suscripciones y eventos del sistema</p>
+                            </div>
+                            <button class="btn secondary small" onclick="loadStaffActivity()">↺ Actualizar</button>
+                        </div>
+                        <div id="staff-activity-feed">
+                            <div class="loading-spinner">Esperando datos de actividad...</div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- CRM / VIP Section -->
                 <div class="admin-card" id="crm" style="display:none;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                         <div>
-                            <h3 style="margin:0;">👑 Base de Clientes VIP</h3>
-                            <p class="fineprint">Customer Lifetime Value y Segmentación</p>
+                            <h3 style="margin:0; color:var(--gold);">📖 Directorio Global (CRM)</h3>
+                            <p class="fineprint">Base de datos centralizada para comunicación futura</p>
                         </div>
                         <div style="display:flex; gap:10px;">
-                            <input type="text" id="crm-search" placeholder="Buscar email o nombre..." 
-                                style="padding:8px 15px; border-radius:50px; border:1px solid var(--line); background:rgba(255,255,255,0.05); color:#fff; font-size:12px;"
-                                oninput="filterCRM()">
                             <button class="btn secondary small" onclick="loadCRM()">↺ Actualizar</button>
                         </div>
                     </div>
+
                     <div id="crm-container">
-                        <div class="loading-spinner">Cargando inteligencia de clientes...</div>
+                        <div class="loading-spinner">Cargando directorio global...</div>
                     </div>
                 </div>
 
@@ -919,14 +967,33 @@
                     </div>
                 </div>
 
-                <!-- Content Manager (Prices) -->
-                <div class="admin-card" id="content">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3>Gestión de Tarifas de Mercado</h3>
+                <!-- Content Manager -->
+                <div class="admin-card" id="content" style="display:none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin:0;">📚 MDJ Knowledge & Contenido</h3>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                        <div class="tile" style="text-align:center; padding:30px 20px;">
+                            <div style="font-size: 36px; margin-bottom: 15px;">🧠</div>
+                            <h4 style="color: var(--gold); margin-bottom: 10px;">Base de Conocimiento</h4>
+                            <p class="fineprint" style="margin-bottom: 20px;">Accede a la documentación técnica, manuales operativos y guías de la plataforma.</p>
+                            <a href="./dj-knowledge.html" target="_blank" class="btn secondary">Abrir MDJ Knowledge ↗</a>
+                        </div>
+                        
+                        <div class="tile" style="text-align:center; padding:30px 20px;">
+                            <div style="font-size: 36px; margin-bottom: 15px;">💼</div>
+                            <h4 style="color: var(--gold); margin-bottom: 10px;">Bolsa de Trabajo (Jobs)</h4>
+                            <p class="fineprint" style="margin-bottom: 20px;">Revisa las ofertas de trabajo activas y el portal de reclutamiento de la agencia.</p>
+                            <a href="./jobs.html" target="_blank" class="btn secondary">Ver Portal de Empleos ↗</a>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); padding-top: 24px; margin-top: 10px;">
+                        <h3 style="margin:0;">Gestión de Tarifas de Mercado</h3>
                         <button class="btn primary" onclick="saveAllPrices()">Guardar Todo</button>
                     </div>
-                    <p class="fineprint" style="margin-bottom: 20px;">Actualiza los precios base que se usarán para
-                        generar facturas.</p>
+                    <p class="fineprint" style="margin-bottom: 20px;">Actualiza los precios base que se usarán para generar facturas.</p>
 
                     <div
                         style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
@@ -1270,10 +1337,16 @@
 
                 </div>
 
-                <div class="admin-card" id="apps" style="display:none;">
-                    <h3>📦 Hosting de Apps</h3>
-                    <p class="fineprint">Panel de despliegues y enlaces: en preparación. Mientras tanto usa el repo y
-                        despliegues manuales.</p>
+                <div class="admin-card" id="apps" style="display:none; text-align:center; padding: 60px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;">📦</div>
+                    <h3 style="margin-top:0; color: var(--gold);">Integraciones y Apps</h3>
+                    <p class="fineprint" style="max-width: 400px; margin: 0 auto 20px auto; line-height: 1.6;">
+                        El panel de despliegues y enlaces a aplicaciones de terceros está en preparación. 
+                        Mientras tanto, utiliza el repositorio y los despliegues manuales.
+                    </p>
+                    <div style="display:inline-block; padding: 6px 16px; border-radius: 50px; background: rgba(197,160,89,0.1); border: 1px solid rgba(197,160,89,0.3); color: var(--gold); font-size: 12px; font-weight: 800; letter-spacing: 0.05em;">
+                        PRÓXIMAMENTE
+                    </div>
                 </div>
 
                 <div class="admin-card" id="production" style="display:none;">
@@ -1931,7 +2004,7 @@
                     if (!db) return;
                     const { data: djList } = await db
                         .from('dj_profiles')
-                        .select('id, dj_name, stage_name, photo_url, specialties, status, plan, plan_type, plan_status, plan_expires_at, is_premium, subscription_status, email')
+                        .select('id, dj_name, stage_name, photo_url, artist_specialty, status, plan, plan_type, plan_status, plan_expires_at, is_premium, subscription_status, email')
                         .in('status', ['ACTIVE', 'APPROVED', 'VERIFIED']);
 
                     var ranked = djList || [];
@@ -2585,7 +2658,6 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     if (promLink) promLink.style.display  = (rn === 'owner') ? 'flex' : 'none';
                     if (mdjDlLink) mdjDlLink.style.display = (rn === 'owner') ? 'flex' : 'none';
                     if (mdjDlPanel) mdjDlPanel.style.display = (rn === 'owner') ? 'block' : 'none';
-                    if (rn === 'owner') loadMdjproDownloadsCatalog();
                     applyRoleRestrictions();
                 }
 
@@ -2595,7 +2667,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     if (window.userRole === 'SALES_STAFF') {
                         roleBadge.textContent = "Acceso: Equipo de Ventas (seller) — Producción incluida (cotización / alta de cliente Mi Portal)";
                         // Hide sensitive sections (manager/admin only); sellers keep Leads, CRM, DJs, registry, Producción
-                        const itemsToHide = ['content', 'analytics', 'apps'];
+                        const itemsToHide = ['content', 'analytics', 'apps', 'staff', 'registry-section', 'mdjpro-downloads-panel'];
                         itemsToHide.forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.style.display = 'none';
@@ -2605,6 +2677,10 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
                         // Restrict Leads to only basic view (e.g. no delete)
                         document.querySelectorAll('.btn-pill.red').forEach(b => b.style.display = 'none');
+                        
+                        // Restrict Pricing Save
+                        const savePricesBtn = document.querySelector('button[onclick="saveAllPrices()"]');
+                        if (savePricesBtn) savePricesBtn.style.display = 'none';
                     } else {
                         roleBadge.textContent = "Acceso: Super Admin (Full Control)";
                     }
@@ -2648,6 +2724,15 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 }, 1200);
             });
             // ── Sidebar Navigation: show/hide sections ────────
+            function handleHashNavigation() {
+                const h = window.location.hash.replace('#', '') || 'leads';
+                const link = document.querySelector('.side-link[href="#' + h + '"]');
+                if (link) {
+                    link.click();
+                }
+            }
+            window.addEventListener('hashchange', handleHashNavigation);
+
             document.querySelectorAll('.side-link').forEach(link => {
                 link.addEventListener('click', function () {
                     const hrefRaw = this.getAttribute('href') || '';
@@ -2692,6 +2777,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     }
                 });
             });
+            handleHashNavigation();
 
             // ── Wedding Plan — close button ────────────────────
             /* ══════════════════════════════════════════════════════════════════
@@ -3285,6 +3371,101 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         </thead>
                         <tbody>${rows}</tbody>
                     </table>`;
+                
+                // Cargar actividad al mismo tiempo que el staff
+                if (window.loadStaffActivity) window.loadStaffActivity();
+            };
+
+            // ── Staff Activity Feed ───────────────────────────
+            window.loadStaffActivity = async function () {
+                const supabase = window.getSupabaseClient();
+                const container = document.getElementById('staff-activity-feed');
+                if (!supabase || !container) return;
+                container.innerHTML = '<div class="loading-spinner">Obteniendo actividad...</div>';
+
+                try {
+                    // Fetch recent clients
+                    const { data: clients } = await supabase
+                        .from('client_profiles')
+                        .select('id, full_name, email, created_at')
+                        .order('created_at', { ascending: false })
+                        .limit(5);
+
+                    // Fetch recent DJs
+                    const { data: djs } = await supabase
+                        .from('dj_profiles')
+                        .select('id, full_name, stage_name, email, created_at')
+                        .order('created_at', { ascending: false })
+                        .limit(5);
+
+                    // Fetch recent Leads
+                    const { data: leads } = await supabase
+                        .from('leads')
+                        .select('id, full_name, email, event_type, created_at')
+                        .order('created_at', { ascending: false })
+                        .limit(5);
+
+                    let activities = [];
+
+                    if (clients) {
+                        clients.forEach(c => activities.push({
+                            type: 'client',
+                            icon: '👤',
+                            title: 'Nuevo Cliente Registrado',
+                            desc: `${c.full_name || 'Sin nombre'} (${c.email})`,
+                            date: new Date(c.created_at)
+                        }));
+                    }
+
+                    if (djs) {
+                        djs.forEach(d => activities.push({
+                            type: 'dj',
+                            icon: '🎧',
+                            title: 'Nuevo DJ/Artista Registrado',
+                            desc: `${d.stage_name || d.full_name || 'Sin nombre'} (${d.email})`,
+                            date: new Date(d.created_at)
+                        }));
+                    }
+
+                    if (leads) {
+                        leads.forEach(l => activities.push({
+                            type: 'lead',
+                            icon: '📅',
+                            title: 'Nuevo Lead / Solicitud de Evento',
+                            desc: `${l.full_name || 'Alguien'} solicitó un evento tipo: ${l.event_type || 'General'}`,
+                            date: new Date(l.created_at)
+                        }));
+                    }
+
+                    activities.sort((a, b) => b.date - a.date);
+                    activities = activities.slice(0, 10); // Top 10 recent
+
+                    if (activities.length === 0) {
+                        container.innerHTML = '<p style="color:var(--muted); font-size:13px;">No hay actividad reciente.</p>';
+                        return;
+                    }
+
+                    let html = '';
+                    activities.forEach(act => {
+                        const timeStr = act.date.toLocaleString('es-ES', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                        html += `
+                            <div class="activity-item">
+                                <div class="activity-icon">${act.icon}</div>
+                                <div class="activity-content">
+                                    <div class="activity-title">${act.title}</div>
+                                    <div class="activity-meta">${act.desc}</div>
+                                    <div class="activity-meta" style="margin-top:4px; opacity:0.7; font-size:11px;">🕒 ${timeStr}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    container.innerHTML = html;
+
+                } catch (err) {
+                    console.error('Activity feed error:', err);
+                    container.innerHTML = '<p style="color:red; font-size:13px;">Error al cargar la actividad.</p>';
+                }
             };
 
             // ── Analytics Dashboard ────────────────────────────
@@ -3521,85 +3702,285 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             };
 
             // ── Certification Registry ────────────────────────
-            // ── Módulo 7: Lógica CRM VIP Dashboard ──
             window.allCRMProfiles = [];
             window.loadCRM = async function() {
                 try {
                     const db = window.getSupabaseClient();
                     if(!db) return;
                     
-                    document.getElementById('crm-container').innerHTML = '<div class="loading-spinner">Generando auditoría de clientes...</div>';
+                    document.getElementById('crm-container').innerHTML = '<div class="loading-spinner">Generando auditoría global de contactos...</div>';
                     
-                    const { data, error } = await db.from('client_profiles').select('*').order('total_spent', { ascending: false });
-                    if(error) throw error;
+                    // Fetch both profiles concurrently to speed up loading
+                    const [clientsRes, djsRes] = await Promise.all([
+                        db.from('client_profiles').select('id, full_name, email, phone, is_commercial, company_name, tier_level, total_spent, total_events, created_at').order('total_spent', { ascending: false }),
+                        db.from('dj_profiles').select('id, full_name, stage_name, dj_name, email, phone, role, artist_specialty, bio, status, plan, is_premium, created_at').order('created_at', { ascending: false })
+                    ]);
                     
-                    window.allCRMProfiles = data || [];
+                    if(clientsRes.error) throw clientsRes.error;
+                    if(djsRes.error) throw djsRes.error;
+                    
+                    const clients = clientsRes.data;
+                    const djs = djsRes.data;
+                    
+                    let allContacts = [];
+                    
+                    // Create a Set of emails that exist in the DJ/Talent/Staff database
+                    const talentEmails = new Set();
+                    (djs || []).forEach(d => {
+                        // Only add them to the "Talent" exclusion list if they actually have a profile
+                        // (Skip Aron Rosso type profiles that are empty and pending)
+                        if (!d.artist_specialty && !d.bio && d.status === 'PENDING_REVIEW') {
+                            return;
+                        }
+                        if (d.email) {
+                            talentEmails.add(d.email.toLowerCase().trim());
+                        }
+                        // Also add by full_name/stage_name as fallback in case email is missing or different
+                        if (d.full_name) talentEmails.add(d.full_name.toLowerCase().trim());
+                        if (d.stage_name) talentEmails.add(d.stage_name.toLowerCase().trim());
+                        if (d.dj_name) talentEmails.add(d.dj_name.toLowerCase().trim());
+                    });
+                    
+                    // Map Clients (Deduplicating those who are already Talent/Staff)
+                    (clients || []).forEach(c => {
+                        // If they are in the talent list (by email or name), we skip them in the client list
+                        // so they don't appear duplicated.
+                        const cEmail = (c.email || '').toLowerCase().trim();
+                        const cName = (c.full_name || '').toLowerCase().trim();
+                        
+                        if ((cEmail && talentEmails.has(cEmail)) || (cName && talentEmails.has(cName))) {
+                            return; 
+                        }
+                        
+                        allContacts.push({
+                            ...c,
+                            _source: 'client',
+                            _category: c.is_commercial ? 'Comercial' : 'Personal',
+                            _displayName: c.company_name ? `${c.company_name} (${c.full_name || 'Sin Nombre'})` : (c.full_name || 'Sin Nombre'),
+                            _displayEmail: c.email || '—',
+                            _displayPhone: c.phone || '—',
+                            _proStatus: c.tier_level || 'NEW',
+                            _createdAt: c.created_at ? new Date(c.created_at).toLocaleDateString() : '—'
+                        });
+                    });
+                    
+                    // Map Talent
+                    (djs || []).forEach(d => {
+                        // Combinamos la especialidad y la biografía para tener más contexto al clasificar
+                        const spec = ((d.artist_specialty || '') + ' ' + (d.bio || '')).toLowerCase();
+                        const roleStr = (d.role || '').toLowerCase().trim();
+                        
+                        // If this person is actually just a client who accidentally got a dj_profile row (e.g. Aron Rosso),
+                        // and they have no specialty, no stage name, and are not active, we might want to skip them in the talent list.
+                        if (!d.stage_name && !d.artist_specialty && !d.bio && d.status === 'PENDING_REVIEW') {
+                            return;
+                        }
+
+                        let proStatus = 'LITE';
+                        if (d.is_premium || (d.plan && d.plan.toLowerCase() === 'pro')) {
+                            proStatus = 'PRO';
+                        }
+
+                        const baseContact = {
+                            ...d,
+                            _source: 'artist',
+                            _displayName: d.stage_name || d.dj_name || d.full_name || 'Sin Nombre',
+                            _displayEmail: d.email || '—',
+                            _displayPhone: d.phone || '—',
+                            _proStatus: proStatus,
+                            _createdAt: d.created_at ? new Date(d.created_at).toLocaleDateString() : '—'
+                        };
+
+                        let assignedCategories = [];
+
+                        // Evaluate all possible categories they might belong to based on their specialty string
+                        // Usamos regex con límites de palabra (\b) para evitar falsos positivos (ej. "bandejas" conteniendo "band")
+                        if (roleStr === 'admin' || roleStr === 'owner' || roleStr === 'manager' || roleStr === 'seller') {
+                            assignedCategories.push('MDJBStaff');
+                        }
+                        if (/\b(bartender|mesero|chef|staff)\b/.test(spec)) {
+                            assignedCategories.push('Staff');
+                        }
+                        if (/\b(hora loca|robot|personaje|zanquero)\b/.test(spec)) {
+                            assignedCategories.push('HoraLoca');
+                        }
+                        if (/\b(band|banda|bandas|músico|musico|músicos|musicos|cantante|saxo|percusión)\b/.test(spec)) {
+                            assignedCategories.push('Band');
+                        }
+                        if (/\b(foto|video|vj|drone|booth|espejo|visuales)\b/.test(spec)) {
+                            assignedCategories.push('Visuales');
+                        }
+                        if (/\b(mc|host|presentador|maestro de ceremonia)\b/.test(spec)) {
+                            assignedCategories.push('MC');
+                        }
+                        if (/\b(payaso|payasos|circo|santa|infantil)\b/.test(spec)) {
+                            assignedCategories.push('Payaso');
+                        }
+                        if (/\b(dj)\b/.test(spec) || assignedCategories.length === 0) {
+                            // Default to DJ if they explicitly say DJ, or if we couldn't match any other category
+                            assignedCategories.push('DJ');
+                        }
+
+                        // Remove duplicates just in case
+                        assignedCategories = [...new Set(assignedCategories)];
+
+                        // Push a copy of the contact for EACH category they belong to
+                        assignedCategories.forEach(cat => {
+                            allContacts.push({
+                                ...baseContact,
+                                _category: cat
+                            });
+                        });
+                    });
+                    
+                    window.allCRMProfiles = allContacts;
                     renderCRM(window.allCRMProfiles);
                 } catch(e) {
                     document.getElementById('crm-container').innerHTML = `<p style="color:red;">Error cargando CRM: ${e.message}</p>`;
                 }
             };
             
-            window.filterCRM = function() {
-                const term = document.getElementById('crm-search').value.toLowerCase();
-                const filtered = window.allCRMProfiles.filter(p => 
-                    (p.full_name || '').toLowerCase().includes(term) || 
-                    (p.email || '').toLowerCase().includes(term) ||
-                    (p.tier_level || '').toLowerCase().includes(term)
-                );
-                renderCRM(filtered);
-            };
-            
             window.renderCRM = function(profiles) {
                 const container = document.getElementById('crm-container');
                 if(profiles.length === 0) {
-                    container.innerHTML = '<p class="fineprint">No se encontraron perfiles CRM.</p>';
+                    container.innerHTML = '<p class="fineprint">No se encontraron contactos.</p>';
                     return;
                 }
                 
-                let totalPool = 0;
-                profiles.forEach(p => totalPool += Number(p.total_spent || 0));
+                // Group profiles by category
+                const groups = {
+                    'Personal': [],
+                    'Comercial': [],
+                    'HoraLoca': [],
+                    'Band': [],
+                    'Visuales': [],
+                    'MC': [],
+                    'Staff': [],
+                    'Payaso': [],
+                    'DJ': [],
+                    'MDJBStaff': []
+                };
                 
+                profiles.forEach(p => {
+                    if (groups[p._category]) {
+                        groups[p._category].push(p);
+                    }
+                });
+
                 const getTierColor = (t) => {
                     if(t==='DIAMOND') return '#b9f2ff';
                     if(t==='GOLD') return '#e8b96a';
                     if(t==='SILVER') return '#c0c0c0';
                     return '#a1a1aa'; // NEW
                 };
-                
-                let html = `
-                    <div style="background:rgba(255,255,255,0.02); padding:15px; border-radius:12px; margin-bottom:20px; text-align:right;">
-                        <span class="fineprint">Valor Vitalicio Capturado (LTV View):</span>
-                        <strong style="color:var(--gold); font-size:20px; display:block;">$${totalPool.toFixed(2)}</strong>
-                    </div>
-                    <table>
-                    <thead>
-                        <tr>
-                            <th>Cliente</th>
-                            <th>Contacto</th>
-                            <th>Tier Level</th>
-                            <th>Eventos</th>
-                            <th>Gasto Histórico</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                `;
-                
-                profiles.forEach(p => {
-                    const color = getTierColor(p.tier_level);
-                    html += `
-                        <tr>
-                            <td style="font-weight:700;">${p.full_name || 'Sin Nombre'}</td>
-                            <td>${p.email || '—'}</td>
-                            <td><span style="background:rgba(255,255,255,0.1); padding:4px 8px; border-radius:4px; font-size:11px; font-weight:800; color:${color}; border:1px solid ${color};">${p.tier_level || 'NEW'}</span></td>
-                            <td style="text-align:center;">${p.total_events || 0}</td>
-                            <td class="val" style="color:var(--gold);">$${Number(p.total_spent || 0).toFixed(2)}</td>
-                        </tr>
+
+                let html = '';
+
+                // Helper function to render a table for a specific group
+                const renderTable = (title, icon, groupData, isClient, index) => {
+                    const tableId = `crm-table-${index}`;
+                    const iconId = `crm-icon-${index}`;
+                    
+                    // Si no hay datos, mostramos la tabla vacía para que la categoría siempre exista visualmente
+                    let tableHtml = `
+                        <div style="margin-bottom: 20px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div onclick="toggleCRMTable('${tableId}', '${iconId}')" style="cursor: pointer; padding: 15px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; border-radius: 8px;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+                                <h4 style="color: var(--gold); margin: 0; font-size: 16px;">
+                                    ${icon} ${title} (${groupData.length})
+                                </h4>
+                                <span id="${iconId}" style="color: var(--gold); font-size: 12px; transition: transform 0.3s;">▼</span>
+                            </div>
+                            <div id="${tableId}" style="display: none; padding: 0 15px 15px 15px; overflow-x: auto;">
+                                <table style="width: 100%; min-width: 600px; border-collapse: collapse; border: 1px solid rgba(255,255,255,0.1);">
+                                    <thead>
+                                        <tr style="background: rgba(255,255,255,0.02);">
+                                            <th style="text-align:left; padding:10px; border: 1px solid rgba(255,255,255,0.1);">Nombre / Entidad</th>
+                                            <th style="text-align:left; padding:10px; border: 1px solid rgba(255,255,255,0.1);">Email</th>
+                                            <th style="text-align:left; padding:10px; border: 1px solid rgba(255,255,255,0.1);">Teléfono</th>
+                                            <th style="text-align:center; padding:10px; border: 1px solid rgba(255,255,255,0.1);">PRO / Nivel</th>
+                                            <th style="text-align:center; padding:10px; border: 1px solid rgba(255,255,255,0.1);">Fecha Suscripción</th>
+                                            ${isClient ? '<th style="text-align:center; padding:10px; border: 1px solid rgba(255,255,255,0.1);">Eventos</th><th style="text-align:right; padding:10px; border: 1px solid rgba(255,255,255,0.1);">Gasto</th>' : ''}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
                     `;
-                });
-                
-                html += '</tbody></table>';
+
+                    if (groupData.length === 0) {
+                        tableHtml += `
+                            <tr>
+                                <td colspan="${isClient ? 7 : 5}" style="padding:15px; text-align:center; font-size:12px; color:var(--muted); border: 1px solid rgba(255,255,255,0.1);">
+                                    No hay registros en esta categoría aún.
+                                </td>
+                            </tr>
+                        `;
+                    } else {
+                        groupData.forEach(p => {
+                            let proHtml = '';
+                            if (isClient) {
+                                const color = getTierColor(p._proStatus);
+                                proHtml = `<span style="background:rgba(255,255,255,0.1); padding:4px 8px; border-radius:4px; font-size:11px; font-weight:800; color:${color}; border:1px solid ${color};">${p._proStatus}</span>`;
+                            } else {
+                                const pColor = p._proStatus === 'PRO' ? '#e8b96a' : '#a1a1aa';
+                                proHtml = `<span style="color:${pColor}; font-size:11px; font-weight:800;">${p._proStatus}</span>`;
+                            }
+
+                            tableHtml += `
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                                    <td style="padding:10px; font-weight:700; border: 1px solid rgba(255,255,255,0.1);">${p._displayName}</td>
+                                    <td style="padding:10px; font-size:12px; border: 1px solid rgba(255,255,255,0.1);">${p._displayEmail}</td>
+                                    <td style="padding:10px; font-size:12px; color:var(--muted); border: 1px solid rgba(255,255,255,0.1);">${p._displayPhone}</td>
+                                    <td style="padding:10px; text-align:center; border: 1px solid rgba(255,255,255,0.1);">${proHtml}</td>
+                                    <td style="padding:10px; text-align:center; font-size:12px; color:var(--muted); border: 1px solid rgba(255,255,255,0.1);">${p._createdAt}</td>
+                                    ${isClient ? `
+                                        <td style="padding:10px; text-align:center; border: 1px solid rgba(255,255,255,0.1);">${p.total_events || 0}</td>
+                                        <td style="padding:10px; text-align:right; color:var(--gold); border: 1px solid rgba(255,255,255,0.1);">$${Number(p.total_spent || 0).toFixed(2)}</td>
+                                    ` : ''}
+                                </tr>
+                            `;
+                        });
+                    }
+
+                    tableHtml += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                    return tableHtml;
+                };
+
+                // Render all tables
+                html += renderTable('Clientes Personales', '👤', groups['Personal'], true, 1);
+                html += renderTable('Clientes Comerciales / Venues', '👨‍💼', groups['Comercial'], true, 2);
+                html += renderTable('DJs', '🎧', groups['DJ'], false, 3);
+                html += renderTable('Hora Loca Experience', '🎭', groups['HoraLoca'], false, 4);
+                html += renderTable('Músicos en Vivo', '🎷', groups['Band'], false, 5);
+                html += renderTable('Captura y Visuales', '📸', groups['Visuales'], false, 6);
+                html += renderTable('MC y Presentadores', '🎙️', groups['MC'], false, 7);
+                html += renderTable('Staff (Eventos)', '🪪', groups['Staff'], false, 8);
+                html += renderTable('Payasos', '🤡', groups['Payaso'], false, 9);
+                html += renderTable('MDJB Staff (Equipo Interno)', '🏢', groups['MDJBStaff'], false, 10);
+
                 container.innerHTML = html;
+                
+                // Open the first table by default
+                setTimeout(() => {
+                    if (window.toggleCRMTable) window.toggleCRMTable('crm-table-1', 'crm-icon-1');
+                }, 100);
+            };
+            
+            window.toggleCRMTable = function(tableId, iconId) {
+                const table = document.getElementById(tableId);
+                const icon = document.getElementById(iconId);
+                if (!table || !icon) return;
+                
+                if (table.style.display === 'none') {
+                    table.style.display = 'block';
+                    icon.style.transform = 'rotate(180deg)';
+                } else {
+                    table.style.display = 'none';
+                    icon.style.transform = 'rotate(0deg)';
+                }
             };
 
             window.loadCertificationRegistry = async function() {

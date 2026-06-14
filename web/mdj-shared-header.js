@@ -539,9 +539,7 @@
   function mdjBuildArtistStaffMainNavHref() {
     var idn = window.__mdjLastPlatformIdentity;
     if (idn && idn.staffInDb) {
-      var role = String(idn.dbRole || '').toLowerCase().trim();
-      if (role === 'owner') return './account-profile.html';
-      return './admin-dashboard.html';
+      return './admin-dashboard.html#staff';
     }
     return mdjBuildStaffEntryLoginHref();
   }

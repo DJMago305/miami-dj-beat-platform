@@ -1197,11 +1197,11 @@
 
         @media (max-width: 640px) {
             .jobs-role-carousel-shell {
-                flex-wrap: wrap;
+                flex-wrap: nowrap;
             }
 
             .jobs-role-carousel-shell .jobs-role-carousel-btn {
-                width: 100%;
+                width: 44px;
                 min-height: 44px;
             }
         }
@@ -1980,7 +1980,7 @@
         <section class="section" id="selection-screen">
             <p id="jobs-client-to-artist-banner" class="jobs-client-to-artist-banner" style="display:none;max-width:48rem;margin:0 auto 20px;padding:12px 16px;border-radius:14px;border:1px solid rgba(197,160,89,0.45);background:rgba(197,160,89,0.12);color:rgba(255,255,255,0.92);font-size:13px;font-weight:600;line-height:1.45;text-align:center;"
                 data-i18n="jobs-client-wants-artist-msg" role="status"></p>
-            <div class="jobs-role-roles-block" style="max-width:72rem;margin:0 auto 28px;">
+            <div class="jobs-role-roles-block" style="max-width:96rem;margin:0 auto 28px;">
                 <p class="jobs-role-carousel-sign" data-i18n="jobs-role-carousel-heading">Selecciona tus categorías</p>
                 <div id="jobs-artist-plan-banner" role="status" aria-live="polite"></div>
                 <div class="jobs-role-carousel-shell" role="region"
@@ -1990,6 +1990,7 @@
                     <div class="jobs-role-carousel" id="mdj-jobs-v3-carousel" data-mdj-ui-tick-scroll>
                         <div class="jobs-role-carousel-track">
                             <div class="jobs-role-carousel-loop" id="mdj-jobs-v3-loop">
+                            <!-- 1. DJ -->
                             <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="DJ">
                                 <input type="checkbox" name="roles" value="DJ" form="employment-form">
                                 <div class="mdj-role-check-ring" aria-hidden="true">
@@ -2006,40 +2007,28 @@
                                     <span class="role-subtitle">Mezcla · club · evento</span>
                                 </div>
                             </label>
-                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="MC">
-                                <input type="checkbox" name="roles" value="MC" form="employment-form">
+
+                            <!-- 2. Hora Loca Experience -->
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="HORA LOCA EXPERIENCE">
+                                <input type="checkbox" name="roles" value="Hora Loca Experience" form="employment-form">
                                 <div class="mdj-role-check-ring" aria-hidden="true">
                                     <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
                                     <polyline points="20 6 9 17 4 12"></polyline>
                                 </svg>
                                 </div>
                                 <div class="role-photo-bg"
-                                    style="background-image:url('./assets/Jobs/MC.jpg?v=4');background-position:center;"></div>
+                                    style="background-image:url('./assets/Jobs/HORA_LOCA.jpg?v=4');background-position:center 40%;"></div>
                                 <div class="role-photo-gradient"></div>
                                 <div class="role-photo-content">
                                     <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">MC</span>
-                                    <span class="role-subtitle">Maestro de ceremonias · animación</span>
+                                    <span class="role-name">HORA LOCA EXPERIENCE</span>
+                                    <span class="role-subtitle">Paquetes, personajes, robots LED</span>
                                 </div>
                             </label>
-                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="CANTANTE">
-                                <input type="checkbox" name="roles" value="CANTANTE" form="employment-form">
-                                <div class="mdj-role-check-ring" aria-hidden="true">
-                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                </div>
-                                <div class="role-photo-bg"
-                                    style="background-image:url('./assets/Jobs/CANTANTE.jpg?v=4');background-position:center;"></div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">CANTANTES</span>
-                                    <span class="role-subtitle">Vocal · banda · playback</span>
-                                </div>
-                            </label>
-                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="LIVE_BAND">
-                                <input type="checkbox" name="roles" value="LIVE_BAND" form="employment-form">
+
+                            <!-- 3. Músicos en Vivo -->
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="MÚSICOS EN VIVO">
+                                <input type="checkbox" name="roles" value="Músicos en Vivo" form="employment-form">
                                 <div class="mdj-role-check-ring" aria-hidden="true">
                                     <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
                                     <polyline points="20 6 9 17 4 12"></polyline>
@@ -2050,60 +2039,68 @@
                                 <div class="role-photo-gradient"></div>
                                 <div class="role-photo-content">
                                     <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">LIVE BAND</span>
-                                    <span class="role-subtitle">Grupo en vivo · ensamble</span>
+                                    <span class="role-name">MÚSICOS EN VIVO</span>
+                                    <span class="role-subtitle">Saxo, percusión, voz, bandas</span>
                                 </div>
                             </label>
-                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="PERCUSIONISTA">
-                                <input type="checkbox" name="roles" value="PERCUSIONISTA" form="employment-form">
+
+                            <!-- 4. Captura y Visuales -->
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="CAPTURA Y VISUALES">
+                                <input type="checkbox" name="roles" value="Captura y Visuales" form="employment-form">
                                 <div class="mdj-role-check-ring" aria-hidden="true">
                                     <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
                                     <polyline points="20 6 9 17 4 12"></polyline>
                                 </svg>
                                 </div>
                                 <div class="role-photo-bg"
-                                    style="background-image:url('./assets/Jobs/PERCUSIONISTA.jpg?v=4');background-position:center;"></div>
+                                    style="background-image:url('./assets/Jobs/FOTO_BOOTH_360.png?v=2');background-position:center;background-size:cover;"></div>
                                 <div class="role-photo-gradient"></div>
                                 <div class="role-photo-content">
                                     <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">PERCUSIONISTAS</span>
-                                    <span class="role-subtitle">Timbal · bongó · percusión live</span>
+                                    <span class="role-name">CAPTURA Y VISUALES</span>
+                                    <span class="role-subtitle">Foto, video, VJ, drone, booth 360</span>
                                 </div>
                             </label>
-                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="SAXOFONISTA">
-                                <input type="checkbox" name="roles" value="SAXOFONISTA" form="employment-form">
+
+                            <!-- 5. MC y Presentadores -->
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="MC Y PRESENTADORES">
+                                <input type="checkbox" name="roles" value="MC y Presentadores" form="employment-form">
                                 <div class="mdj-role-check-ring" aria-hidden="true">
                                     <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
                                     <polyline points="20 6 9 17 4 12"></polyline>
                                 </svg>
                                 </div>
                                 <div class="role-photo-bg"
-                                    style="background-image:url('./assets/Jobs/SAXOFONISTA.jpg?v=4');background-position:center;"></div>
+                                    style="background-image:url('./assets/Jobs/MC.jpg?v=4');background-position:center;"></div>
                                 <div class="role-photo-gradient"></div>
                                 <div class="role-photo-content">
                                     <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">SAXOFONISTAS</span>
-                                    <span class="role-subtitle">Sax live · house · jazz</span>
+                                    <span class="role-name">MC Y PRESENTADORES</span>
+                                    <span class="role-subtitle">Maestro de ceremonias, animadores</span>
                                 </div>
                             </label>
-                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="VIOLINISTA">
-                                <input type="checkbox" name="roles" value="VIOLINISTA" form="employment-form">
+
+                            <!-- 6. Staff -->
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="STAFF">
+                                <input type="checkbox" name="roles" value="Staff" form="employment-form">
                                 <div class="mdj-role-check-ring" aria-hidden="true">
                                     <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
                                     <polyline points="20 6 9 17 4 12"></polyline>
                                 </svg>
                                 </div>
                                 <div class="role-photo-bg"
-                                    style="background-image:url('./assets/Jobs/VIOLINISTA.jpg?v=4');background-position:center 30%;"></div>
+                                    style="background-image:url('./assets/Jobs/BARTENDER.jpg?v=4');background-position:center;"></div>
                                 <div class="role-photo-gradient"></div>
                                 <div class="role-photo-content">
                                     <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">VIOLINISTAS</span>
-                                    <span class="role-subtitle">Violín eléctrico / clásico · show</span>
+                                    <span class="role-name">STAFF (EVENTOS)</span>
+                                    <span class="role-subtitle">Bartender, meseros, chef</span>
                                 </div>
                             </label>
-                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="PAYASO">
-                                <input type="checkbox" name="roles" value="PAYASO" form="employment-form">
+
+                            <!-- 7. Payasos -->
+                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="PAYASOS">
+                                <input type="checkbox" name="roles" value="Payasos" form="employment-form">
                                 <div class="mdj-role-check-ring" aria-hidden="true">
                                     <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
                                     <polyline points="20 6 9 17 4 12"></polyline>
@@ -2115,119 +2112,7 @@
                                 <div class="role-photo-content">
                                     <span class="role-selected-badge">✓ SELECCIONADO</span>
                                     <span class="role-name">PAYASOS</span>
-                                    <span class="role-subtitle">Animación · infantil / evento</span>
-                                </div>
-                            </label>
-                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="HORA_LOCA">
-                                <input type="checkbox" name="roles" value="HORA_LOCA" form="employment-form">
-                                <div class="mdj-role-check-ring" aria-hidden="true">
-                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                </div>
-                                <div class="role-photo-bg"
-                                    style="background-image:url('./assets/Jobs/HORA_LOCA.jpg?v=4');background-position:center 40%;"></div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">HORA LOCA</span>
-                                    <span class="role-subtitle">Show · conga · props · fiesta</span>
-                                </div>
-                            </label>
-                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="BARTENDER">
-                                <input type="checkbox" name="roles" value="BARTENDER" form="employment-form">
-                                <div class="mdj-role-check-ring" aria-hidden="true">
-                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                </div>
-                                <div class="role-photo-bg"
-                                    style="background-image:url('./assets/Jobs/BARTENDER.jpg?v=4');background-position:center;"></div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">BARTENDERS</span>
-                                    <span class="role-subtitle">Barra · coctelería · evento</span>
-                                </div>
-                            </label>
-                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="MESERO">
-                                <input type="checkbox" name="roles" value="MESERO" form="employment-form">
-                                <div class="mdj-role-check-ring" aria-hidden="true">
-                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                </div>
-                                <div class="role-photo-bg"
-                                    style="background-image:url('./assets/Jobs/MESERO.jpg?v=4');background-position:center;"></div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">MESEROS</span>
-                                    <span class="role-subtitle">Servicio · banquetes · VIP</span>
-                                </div>
-                            </label>
-                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="MANAGER_ARTISTICO">
-                                <input type="checkbox" name="roles" value="MANAGER_ARTISTICO" form="employment-form">
-                                <div class="mdj-role-check-ring" aria-hidden="true">
-                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                </div>
-                                <div class="role-photo-bg"
-                                    style="background-image:url('./assets/Jobs/MANAGER_ARTISTICO.jpg?v=4');background-position:center;"></div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">MANAGER ARTÍSTICO</span>
-                                    <span class="role-subtitle">Booking · carrera · representación</span>
-                                </div>
-                            </label>
-                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="PRODUCTOR_MUSICAL">
-                                <input type="checkbox" name="roles" value="PRODUCTOR_MUSICAL" form="employment-form">
-                                <div class="mdj-role-check-ring" aria-hidden="true">
-                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                </div>
-                                <div class="role-photo-bg"
-                                    style="background-image:url('./assets/Jobs/PRODUCTOR_MUSICAL.jpg?v=4');background-position:center;"></div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">PRODUCTOR MUSICAL</span>
-                                    <span class="role-subtitle">Estudio · beats · arreglos</span>
-                                </div>
-                            </label>
-                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="INFLUENCER_PROMOTOR">
-                                <input type="checkbox" name="roles" value="INFLUENCER_PROMOTOR" form="employment-form">
-                                <div class="mdj-role-check-ring" aria-hidden="true">
-                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                </div>
-                                <div class="role-photo-bg"
-                                    style="background-image:url('./assets/Jobs/INFLUENCER_PROMOTOR.jpg?v=4');background-position:center;"></div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">INFLUENCERS / PROMOTORES</span>
-                                    <span class="role-subtitle">Redes · promoción · alcance</span>
-                                </div>
-                            </label>
-                            <label class="role-pro-card role-photo-card role-photo-card--carousel" data-role="FOTO_BOOTH_360">
-                                <input type="checkbox" name="roles" value="FOTO_BOOTH_360" form="employment-form">
-                                <div class="mdj-role-check-ring" aria-hidden="true">
-                                    <svg class="mdj-role-check-mark" viewBox="0 0 24 24" style="width:20px; height:20px; fill:none; stroke:black; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; display:none;">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                </div>
-                                <div class="role-photo-bg"
-                                    style="background-image:url('./assets/Jobs/FOTO_BOOTH_360.png?v=2');background-position:center;background-size:cover;"></div>
-                                <div class="role-photo-gradient"></div>
-                                <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">FOTO BOOTH 360</span>
-                                    <span class="role-subtitle">Cabina · video 360 · experiencias</span>
+                                    <span class="role-subtitle">Show infantil, circo, Santa</span>
                                 </div>
                             </label>
                             </div>
@@ -4830,7 +4715,7 @@
 
                 const rolesString = selectedRoles.join(', ');
                 const langsString = selectedLangs.join(', ');
-                const isMC = selectedRoles.includes('MC') || selectedRoles.includes('BRUNCH');
+                const isMC = selectedRoles.includes('MC y Presentadores') || selectedRoles.includes('BRUNCH');
                 const langScore = isMC ? Math.min(selectedLangs.length, 3) : 1;
 
                 const middleInitial = document.getElementById('middle-initial').value.trim();
