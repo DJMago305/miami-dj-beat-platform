@@ -3078,7 +3078,11 @@ window.checkoutNextStep = function() {
         let groups = {
             'DJ / Performance Talent': 0,
             'Hora Loca Experience': 0,
-            'Live Musicians & Visuals': 0,
+            'Músicos en Vivo': 0,
+            'Captura y Visuales': 0,
+            'MC y Presentadores': 0,
+            'Staff (Eventos)': 0,
+            'Payasos': 0,
             'Special Effects (FX)': 0,
             'Lighting & LED Screens': 0,
             'Staging & Trusses': 0,
@@ -3093,14 +3097,18 @@ window.checkoutNextStep = function() {
 
             // Map Category to Group
             let cat = item.category || 'general';
-            if (cat === 'dj' || cat.includes('mc')) groups['DJ / Performance Talent'] += lineTotal;
-            else if (cat === 'horaloca' || cat.includes('hl_')) groups['Hora Loca Experience'] += lineTotal;
-            else if (cat === 'live' || cat === 'visuals') groups['Live Musicians & Visuals'] += lineTotal;
-            else if (cat === 'fx' || cat === 'special-effects') groups['Special Effects (FX)'] += lineTotal;
-            else if (cat === 'lighting') groups['Lighting & LED Screens'] += lineTotal;
-            else if (cat === 'stages' || cat === 'truss') groups['Staging & Trusses'] += lineTotal;
-            else if (cat === 'furniture' || cat === 'tents') groups['Furniture & Tents'] += lineTotal;
-            else if (cat === 'audio') groups['Audio & Sound Systems'] += lineTotal;
+            if (cat === 'dj' || item.id.startsWith('dj_')) groups['DJ / Performance Talent'] += lineTotal;
+            else if (cat === 'horaloca' || cat.includes('hl_') || item.id.startsWith('hl_') || item.id.startsWith('hora_loca')) groups['Hora Loca Experience'] += lineTotal;
+            else if (cat === 'live' || cat === 'musicians' || item.id.startsWith('live_')) groups['Músicos en Vivo'] += lineTotal;
+            else if (cat === 'visuals' || cat === 'photo-booth' || item.id.startsWith('visuals_') || item.id.startsWith('vis_')) groups['Captura y Visuales'] += lineTotal;
+            else if (cat.includes('mc') || item.id.startsWith('mc_')) groups['MC y Presentadores'] += lineTotal;
+            else if (cat === 'staff' || cat === 'bartender' || cat === 'mesero' || item.id.startsWith('staff_')) groups['Staff (Eventos)'] += lineTotal;
+            else if (cat === 'payaso' || cat === 'clown' || item.id.startsWith('payaso_')) groups['Payasos'] += lineTotal;
+            else if (cat === 'fx' || cat === 'special-effects' || item.id.startsWith('fx_')) groups['Special Effects (FX)'] += lineTotal;
+            else if (cat === 'lighting' || item.id.startsWith('light_') || item.id.startsWith('led_')) groups['Lighting & LED Screens'] += lineTotal;
+            else if (cat === 'stages' || cat === 'truss' || item.id.startsWith('stage_') || item.id.startsWith('truss_')) groups['Staging & Trusses'] += lineTotal;
+            else if (cat === 'furniture' || cat === 'tents' || item.id.startsWith('f_') || item.id.startsWith('tent_') || item.id.startsWith('castle_')) groups['Furniture & Tents'] += lineTotal;
+            else if (cat === 'audio' || item.id.startsWith('pa_') || item.id === 'wireless_mic' || item.id === 'audio_mixer') groups['Audio & Sound Systems'] += lineTotal;
             else groups['General Rentals'] += lineTotal;
 
             // --- 2. Build Detailed Page 2 (Line by Line) ---
@@ -4301,7 +4309,76 @@ window.initTalentCarouselDragClickGuard = function () {
     }, true);
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Fetch dynamic prices from Supabase and override local data
+    try {
+        if (window.getSupabaseClient) {
+            const supabase = window.getSupabaseClient();
+            if (supabase) {
+                const { data } = await supabase.from('platform_settings').select('value').eq('key', 'rentals_catalog_prices').maybeSingle();
+                if (data && data.value) {
+                    const dynamicPrices = JSON.parse(data.value);
+                    
+                    // Helper function to update an item's price
+                    const updateItemPrice = (item) => {
+                        if (item && item.id && dynamicPrices[item.id] !== undefined) {
+                            item.price = dynamicPrices[item.id];
+                            if (item.fallbackPrice) {
+                                if (item.fallbackPrice.includes('From')) {
+                                    item.fallbackPrice = 'From $' + item.price.toFixed(2);
+                                } else if (!item.fallbackPrice.includes('–')) {
+                                    item.fallbackPrice = '$' + item.price.toFixed(2);
+                                }
+                            }
+                        }
+                    };
+
+                    // 1. Override MDJ_RENTALS_DATA (Hora Loca & Legacy Talent)
+                    if (window.MDJ_RENTALS_DATA) {
+                        for (const category in window.MDJ_RENTALS_DATA) {
+                            if (Array.isArray(window.MDJ_RENTALS_DATA[category])) {
+                                window.MDJ_RENTALS_DATA[category].forEach(updateItemPrice);
+                            } else {
+                                for (const subcat in window.MDJ_RENTALS_DATA[category]) {
+                                    if (Array.isArray(window.MDJ_RENTALS_DATA[category][subcat])) {
+                                        window.MDJ_RENTALS_DATA[category][subcat].forEach(updateItemPrice);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 2. Override Tabs (DJ, Live, Visuals, MC, FX, Staff, Payasos)
+                    const tabGroups = [
+                        window.djTabs, 
+                        window.liveMusicTabs, 
+                        window.visualTabs, 
+                        window.mcTabs, 
+                        window.fxTabs,
+                        window.staffRoles,
+                        window.payasosRoles
+                    ];
+                    tabGroups.forEach(group => {
+                        if (group) {
+                            Object.values(group).forEach(updateItemPrice);
+                        }
+                    });
+
+                    // 3. Override Rental Catalogs (Stages, Audio, Lighting, etc.)
+                    if (window.rentalCatalogs) {
+                        Object.values(window.rentalCatalogs).forEach(catalog => {
+                            if (catalog && Array.isArray(catalog.items)) {
+                                catalog.items.forEach(updateItemPrice);
+                            }
+                        });
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Error fetching dynamic prices:', e);
+    }
+
     // 2. Direct Back Button Binding (No global interception)
     document.querySelectorAll('[data-action="go-back"], .back-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {

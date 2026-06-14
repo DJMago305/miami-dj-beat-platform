@@ -24,10 +24,12 @@ Transformación del Manager Panel en un **Directorio Global (CRM)** robusto y si
 - Se conectaron `wedding-blueprint-editor.html` y `event-blueprint-editor.html` para que guarden su estado en la columna JSONB `cue_blocks` de la tabla `event_show_plans` en Supabase.
 
 ### 5. Seguridad y Ruteo (Incidentes Resueltos)
-- **INCIDENT-001:** Se corrigió `mdj-shared-header.js` para que el rol `owner` sea dirigido a `./admin-dashboard.html#staff` al hacer clic en "STAFF", y no a su perfil de cliente.
+- **INCIDENT-001:** Se corrigió `mdj-shared-header.js` para que el rol `owner` sea dirigido a `./admin-dashboard.html` (sin hash) al hacer clic en "STAFF", evitando que el navegador confunda la ruta y lo mande a su perfil público.
 - **Regla Anti-Pantalla Negra:** Se documentó en `.cursorrules` la prohibición de bloquear el Auth Gate con funciones pesadas antes de remover la clase `mdj-admin-gate-pending`.
+- **Regla de Minimalismo:** Se añadió la LEY DE MINIMALISMO Y CÓDIGO ESTRICTO a `.cursorrules`, prohibiendo iniciativas no solicitadas (ej. emojis, secciones extra) y exigiendo adherencia estricta a las órdenes explícitas del Capitán.
 
 ## 🚀 Próximos Pasos (Para futuras sesiones)
 1. **Portal de Ventas (`rentals.html`):** Verificar flujo de cotización/reserva con las 7 nuevas categorías.
-2. **Panel del Artista (`dj-dashboard.html`):** Confirmar que la UI del talento refleje correctamente su nueva categoría maestra.
+2. **Gestor Dinámico de Precios:** Se implementó (TICKET-008) el panel en `admin-dashboard.html` para controlar los precios de `rentals.html` vía Supabase `platform_settings`.
+3. **Panel del Artista (`dj-dashboard.html`):** Confirmar que la UI del talento refleje correctamente su nueva categoría maestra.
 3. **Flujo de Pagos (Stripe):** Auditoría de suscripciones PRO y pagos de clientes.

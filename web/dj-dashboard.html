@@ -6294,17 +6294,12 @@
                         if (roleEl) {
                             const roleLabels = {
                                 'DJ': 'Certified DJ',
-                                'MC': 'CEREMONIALIST',
-                                'ANIMADOR': 'GLOBAL HOST',
-                                'PRODUCTOR': 'EVENT PRODUCER',
-                                'PROMOTOR': 'PROMOTER',
-                                'INFLUENCER': 'INFLUENCER',
-                                'LIVE_BAND': 'LIVE BAND',
-                                'MANAGER': 'ARTISTIC MANAGER',
-                                'CANTANTE': 'SINGER',
-                                'FOTOGRAFO': 'VISUAL ARTIST',
-                                'SAXOFONISTA': 'SAXOPHONIST',
-                                'PERCUSIONISTA': 'PERCUSSIONIST (DRUMS / TIMBALERO)'
+                                'HORA LOCA EXPERIENCE': 'Hora Loca Experience',
+                                'MÚSICOS EN VIVO': 'Live Musicians',
+                                'CAPTURA Y VISUALES': 'Visuals & Capture',
+                                'MC Y PRESENTADORES': 'MC & Host',
+                                'STAFF': 'Event Staff',
+                                'PAYASOS': 'Entertainment'
                             };
                             const rolesArray = profile.roles.split(',').map(r => r.trim());
                             const displayed = rolesArray.map(r => roleLabels[r.toUpperCase()] || r).join(' · ');
