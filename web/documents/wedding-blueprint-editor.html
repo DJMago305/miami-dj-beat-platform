@@ -1257,8 +1257,8 @@
                     'f-venue','f-sponsors','f-n1','f-n2','f-n3','f-n4','f-n5',
                     'f-note1','f-note2','f-note3','f-note4','f-note5'];
 
-  function saveDoc() {
-    const state = { form: {}, ce: {} };
+  async function saveDoc() {
+    const state = { form: {}, ce: {}, assignedClient };
 
     FORM_IDS.forEach(id => {
       const el = document.getElementById(id);
@@ -1271,6 +1271,38 @@
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 
+    try {
+      const sb = window.getSupabaseClient ? window.getSupabaseClient() : window._supabase || window._supabaseClient;
+      if (sb) {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) {
+          const bride = (state.form['f-bride'] || '').trim();
+          const groom = (state.form['f-groom'] || '').trim();
+          let eventName = 'Wedding Plan';
+          if (bride || groom) {
+            eventName = `Boda de ${bride}${bride && groom ? ' y ' : ''}${groom}`;
+          }
+          
+          await sb.from('event_show_plans').upsert({
+            user_id: session.user.id,
+            event_type: 'wedding',
+            event_name: eventName,
+            client_profile_id: assignedClient ? assignedClient.id : null,
+            assigned_client_email: assignedClient ? assignedClient.email : null,
+            event_date_text: state.form['f-date'] || null,
+            schedule: state.form['f-time'] || null,
+            venue: state.form['f-venue'] || null,
+            dj_name: state.form['f-dj'] || null,
+            music_format: state.form['f-format'] || null,
+            cue_blocks: state, // Save the entire JSON state here
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'user_id,event_name' });
+        }
+      }
+    } catch (err) {
+      console.warn('[WEDDING-DB]: Error saving to Supabase', err);
+    }
+
     const btn = document.getElementById('btn-save');
     btn.classList.add('saved');
     btn.textContent = currentLang === 'es' ? '✓ Guardado' : '✓ Saved';
@@ -1280,11 +1312,54 @@
     }, 2500);
   }
 
-  function loadDoc() {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
+  async function loadDoc() {
+    let state = null;
+
     try {
-      const state = JSON.parse(raw);
+      const sb = window.getSupabaseClient ? window.getSupabaseClient() : window._supabase || window._supabaseClient;
+      if (sb) {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) {
+          const { data, error } = await sb
+            .from('event_show_plans')
+            .select('cue_blocks, assigned_client_email, client_profile_id')
+            .eq('user_id', session.user.id)
+            .eq('event_type', 'wedding')
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+            
+          if (data && data.cue_blocks) {
+            state = data.cue_blocks;
+            if (data.assigned_client_email) {
+              assignedClient = { 
+                email: data.assigned_client_email, 
+                id: data.client_profile_id 
+              };
+              const btn = document.getElementById('btn-assign-open');
+              if (btn) {
+                btn.textContent = `✓ ${assignedClient.email}`;
+                btn.style.background = 'rgba(26,107,42,0.3)';
+                btn.style.borderColor = '#1a6b2a';
+                btn.style.color = '#6de88a';
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[WEDDING-DB]: Error loading from Supabase, falling back to local', err);
+    }
+
+    if (!state) {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      try {
+        state = JSON.parse(raw);
+      } catch (e) { return false; }
+    }
+
+    try {
       if (state.form) {
         FORM_IDS.forEach(id => {
           const el = document.getElementById(id);
@@ -1297,6 +1372,7 @@
           if (saved !== undefined) el.innerHTML = saved;
         });
       }
+      update();
       return true;
     } catch (e) { return false; }
   }
@@ -1543,10 +1619,10 @@
   });
 
   // ──────────────────────────────────────────
-  window.addEventListener('DOMContentLoaded', () => {
+  window.addEventListener('DOMContentLoaded', async () => {
     console.log('[WEDDING-DB]: Inicializando módulo con rol:', window.__mdjLastPlatformIdentity?.dbRole || 'No auth');
     setLang('es');
-    const restored = loadDoc();
+    const restored = await loadDoc();
     if (!restored) {
       // Default event data if nothing saved
       document.getElementById('f-bride').value  = 'Iris Casal';
