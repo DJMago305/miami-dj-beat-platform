@@ -970,91 +970,118 @@
                 <!-- Content Manager -->
                 <div class="admin-card" id="content" style="display:none;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="margin:0;">📚 MDJ Knowledge & Contenido</h3>
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
-                        <div class="tile" style="text-align:center; padding:30px 20px;">
-                            <div style="font-size: 36px; margin-bottom: 15px;">🧠</div>
-                            <h4 style="color: var(--gold); margin-bottom: 10px;">Base de Conocimiento</h4>
-                            <p class="fineprint" style="margin-bottom: 20px;">Accede a la documentación técnica, manuales operativos y guías de la plataforma.</p>
-                            <a href="./dj-knowledge.html" target="_blank" class="btn secondary">Abrir MDJ Knowledge ↗</a>
-                        </div>
-                        
-                        <div class="tile" style="text-align:center; padding:30px 20px;">
-                            <div style="font-size: 36px; margin-bottom: 15px;">💼</div>
-                            <h4 style="color: var(--gold); margin-bottom: 10px;">Bolsa de Trabajo (Jobs)</h4>
-                            <p class="fineprint" style="margin-bottom: 20px;">Revisa las ofertas de trabajo activas y el portal de reclutamiento de la agencia.</p>
-                            <a href="./jobs.html" target="_blank" class="btn secondary">Ver Portal de Empleos ↗</a>
-                        </div>
-                    </div>
-
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); padding-top: 24px; margin-top: 10px;">
-                        <h3 style="margin:0;">Gestión de Tarifas de Mercado</h3>
+                        <h3 style="margin:0;">Gestor Dinámico de Precios (Catálogo Web)</h3>
                         <button class="btn primary" onclick="saveAllPrices()">Guardar Todo</button>
                     </div>
-                    <p class="fineprint" style="margin-bottom: 20px;">Actualiza los precios base que se usarán para generar facturas.</p>
+                    <p class="fineprint" style="margin-bottom: 20px;">Modifica los precios de los servicios. Al guardar, se actualizarán en tiempo real en el portal de ventas (rentals.html).</p>
 
-                    <div
-                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
-                        <!-- Category: A/V -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;" id="rentals-catalog-grid">
+                        <!-- Category: DJ Performance -->
                         <div class="tile">
-                            <h4 style="color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 5px;">
-                                A/V & Stage</h4>
-                            <div style="margin-top: 10px;">
-                                <label class="fineprint">Audio Base (RCF 712 x2)</label>
-                                <input type="number" id="price-audio-base" value="120" class="price-input">
-                            </div>
-                            <div style="margin-top: 10px;">
-                                <label class="fineprint">Pantalla LED (Per Panel/Sqm)</label>
-                                <input type="number" id="price-led-screen" value="600" class="price-input">
-                            </div>
-                            <div style="margin-top: 10px;">
-                                <label class="fineprint">Tarima / Stage (Standard)</label>
-                                <input type="number" id="price-staging" value="350" class="price-input">
-                            </div>
+                            <h4 style="color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 14px;">DJ / PERFORMANCE</h4>
+                            <div style="margin-top: 10px;"><label class="fineprint">Weddings & Corporate</label><input type="number" id="catalog-dj_weddings" value="1500" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Private Parties</label><input type="number" id="catalog-dj_private" value="500" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Clubs & Nightlife</label><input type="number" id="catalog-dj_clubs" value="500" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Family Events</label><input type="number" id="catalog-dj_family" value="350" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Seasonal Parties</label><input type="number" id="catalog-dj_seasonal_parties" value="900" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Holiday & Special Events</label><input type="number" id="catalog-dj_holiday" value="1500" class="price-input catalog-input"></div>
                         </div>
 
-                        <!-- Category: Talent -->
+                        <!-- Category: Live Musicians -->
                         <div class="tile">
-                            <h4 style="color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 5px;">
-                                Talent & MC</h4>
-                            <div style="margin-top: 10px;">
-                                <label class="fineprint">MC / Presentador Pro</label>
-                                <input type="number" id="price-mc-pro" value="450" class="price-input">
-                            </div>
-                            <div style="margin-top: 10px;">
-                                <label class="fineprint">Timbalero / Percussion</label>
-                                <input type="number" id="price-talent-percussion" value="300" class="price-input">
-                            </div>
-                            <div style="margin-top: 10px;">
-                                <label class="fineprint">Hora Loca (Standard Troupe)</label>
-                                <input type="number" id="price-hora-loca" value="650" class="price-input">
-                            </div>
+                            <h4 style="color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 14px;">MÚSICOS EN VIVO</h4>
+                            <div style="margin-top: 10px;"><label class="fineprint">Live Saxophone</label><input type="number" id="catalog-live_sax" value="400" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Live Percussion</label><input type="number" id="catalog-live_percussion" value="300" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Live Singer</label><input type="number" id="catalog-live_singer" value="500" class="price-input catalog-input"></div>
                         </div>
 
-                        <!-- Category: Decor & FX -->
+                        <!-- Category: Visuals & Capture -->
                         <div class="tile">
-                            <h4 style="color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 5px;">
-                                FX & Decor</h4>
-                            <div style="margin-top: 10px;">
-                                <label class="fineprint">Cold Sparks (x2 Machines)</label>
-                                <input type="number" id="price-fx-sparks" value="250" class="price-input">
-                            </div>
-                            <div style="margin-top: 10px;">
-                                <label class="fineprint">Humo Bajo (Dry Ice effect)</label>
-                                <input type="number" id="price-fx-clouds" value="350" class="price-input">
-                            </div>
-                            <div style="margin-top: 10px;">
-                                <label class="fineprint">Decoración Floral (Pack)</label>
-                                <input type="number" id="price-decor-flowers" value="250" class="price-input">
-                            </div>
+                            <h4 style="color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 14px;">CAPTURA Y VISUALES</h4>
+                            <div style="margin-top: 10px;"><label class="fineprint">Photography</label><input type="number" id="catalog-visuals_photo" value="350" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Videography</label><input type="number" id="catalog-visuals_video" value="500" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Drone Coverage</label><input type="number" id="catalog-visuals_drone" value="250" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">360 Photo Booth</label><input type="number" id="catalog-visuals_booth360" value="450" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Magic Mirror</label><input type="number" id="catalog-visuals_magic_mirror" value="350" class="price-input catalog-input"></div>
+                        </div>
+
+                        <!-- Category: MC & Hosts -->
+                        <div class="tile">
+                            <h4 style="color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 14px;">MC Y PRESENTADORES</h4>
+                            <div style="margin-top: 10px;"><label class="fineprint">Maestro de Ceremonias</label><input type="number" id="catalog-mc_maestro" value="450" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Club Host</label><input type="number" id="catalog-mc_host" value="350" class="price-input catalog-input"></div>
+                        </div>
+
+                        <!-- Category: Hora Loca -->
+                        <div class="tile">
+                            <h4 style="color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 14px;">HORA LOCA EXPERIENCE</h4>
+                            <div style="margin-top: 10px;"><label class="fineprint">Hora Loca Robot</label><input type="number" id="catalog-hl_robot" value="650" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Hora Loca Brasil</label><input type="number" id="catalog-hl_brasil" value="850" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Hora Loca Cubana</label><input type="number" id="catalog-hl_cubana" value="800" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Hora Loca Character</label><input type="number" id="catalog-hl_character" value="550" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Hora Loca Hadas</label><input type="number" id="catalog-hl_hadas" value="750" class="price-input catalog-input"></div>
+                        </div>
+
+                        <!-- Category: Event Staff -->
+                        <div class="tile">
+                            <h4 style="color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 14px;">STAFF (EVENTOS)</h4>
+                            <div style="margin-top: 10px;"><label class="fineprint">Bartender Pro</label><input type="number" id="catalog-staff_bartender" value="250" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Mesero / Waiter</label><input type="number" id="catalog-staff_meseros" value="200" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Chef / Catering</label><input type="number" id="catalog-staff_chef" value="400" class="price-input catalog-input"></div>
+                        </div>
+
+                        <!-- Category: Clowns -->
+                        <div class="tile">
+                            <h4 style="color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 14px;">PAYASOS</h4>
+                            <div style="margin-top: 10px;"><label class="fineprint">GIF / Energy</label><input type="number" id="catalog-payaso_gif" value="250" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Clown Show</label><input type="number" id="catalog-payaso_show" value="350" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Circus Acts</label><input type="number" id="catalog-payaso_circo" value="450" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Santa & Seasonal</label><input type="number" id="catalog-payaso_santa" value="300" class="price-input catalog-input"></div>
+                        </div>
+
+                        <!-- Category: Special FX -->
+                        <div class="tile">
+                            <h4 style="color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 14px;">SPECIAL FX</h4>
+                            <div style="margin-top: 10px;"><label class="fineprint">Cold Sparks (x2)</label><input type="number" id="catalog-fx_sparks" value="250" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Fog Machine</label><input type="number" id="catalog-fx_fog" value="60" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">CO2 Jets (x2)</label><input type="number" id="catalog-fx_co2" value="300" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Confetti Cannon</label><input type="number" id="catalog-fx_confetti" value="120" class="price-input catalog-input"></div>
+                        </div>
+
+                        <!-- Category: Lighting -->
+                        <div class="tile">
+                            <h4 style="color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 14px;">LIGHTING & LED SCREENS</h4>
+                            <div style="margin-top: 10px;"><label class="fineprint">Moving Heads</label><input type="number" id="catalog-moving_heads" value="150" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">LED Wall (Small)</label><input type="number" id="catalog-led_video_small" value="500" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Uplighting Pack</label><input type="number" id="catalog-uplighting_pack" value="200" class="price-input catalog-input"></div>
+                        </div>
+
+                        <!-- Category: Staging & Trusses -->
+                        <div class="tile">
+                            <h4 style="color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 14px;">STAGING & TRUSSES</h4>
+                            <div style="margin-top: 10px;"><label class="fineprint">Small DJ Stage</label><input type="number" id="catalog-stage_small" value="300" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Medium Event Stage</label><input type="number" id="catalog-stage_medium" value="600" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Large Concert Stage</label><input type="number" id="catalog-stage_large" value="1200" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Goal Post Truss</label><input type="number" id="catalog-truss_arch" value="350" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Full Box Truss</label><input type="number" id="catalog-truss_box_full" value="1800" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Ultra Truss System</label><input type="number" id="catalog-truss_ultra" value="3500" class="price-input catalog-input"></div>
+                        </div>
+
+                        <!-- Category: Audio -->
+                        <div class="tile">
+                            <h4 style="color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 14px;">AUDIO & SOUND SYSTEMS</h4>
+                            <div style="margin-top: 10px;"><label class="fineprint">Small PA System</label><input type="number" id="catalog-pa_small" value="150" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Medium PA System</label><input type="number" id="catalog-pa_medium" value="350" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Large PA System</label><input type="number" id="catalog-pa_large" value="750" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Wireless Mic</label><input type="number" id="catalog-wireless_mic" value="65" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">DJ Monitor</label><input type="number" id="catalog-dj_monitor" value="95" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Audio Mixer</label><input type="number" id="catalog-audio_mixer" value="120" class="price-input catalog-input"></div>
                         </div>
                     </div>
 
                     <!-- PRO Plan Pricing & Labels (Supabase-backed) -->
                     <div style="margin-top:24px;border-top:1px solid var(--line);padding-top:20px;">
-                        <h4 style="color:var(--gold);margin-bottom:4px;">💰 Plan PRO — Precios Públicos (jobs.html)</h4>
+                        <h4 style="color:var(--gold);margin-bottom:4px;font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">PLAN PRO</h4>
                         <p class="fineprint" style="margin-bottom:14px;">Estos valores se muestran en tiempo real en la
                             página de reclutamiento.</p>
                         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">
@@ -1102,7 +1129,7 @@
 
                     <!-- ── HERO BRANDING MANAGER ─────────────────────────────── -->
                     <div style="margin-top:28px;border-top:1px solid var(--line);padding-top:22px;">
-                        <h4 style="color:var(--gold);margin-bottom:4px;">🎬 Hero Video & Branding (jobs.html)</h4>
+                        <h4 style="color:var(--gold);margin-bottom:4px;font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">HERO VIDEO & BRANDING</h4>
                         <p class="fineprint" style="margin-bottom:16px;">
                             El video corre en loop automático. Sin controles visibles para el usuario. Volumen 0 =
                             silencio total.
@@ -1198,7 +1225,7 @@
 
                     <!-- ── HOME HERO BRANDING MANAGER ────────────────────────── -->
                     <div style="margin-top:28px;border-top:1px solid var(--line);padding-top:22px;">
-                        <h4 style="color:var(--gold);margin-bottom:4px;">🏠 Home Hero Branding (index.html)</h4>
+                        <h4 style="color:var(--gold);margin-bottom:4px;font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">HOME HERO BRANDING</h4>
                         <p class="fineprint" style="margin-bottom:16px;">
                             Configura el video y los textos publicitarios de la página principal.
                         </p>
@@ -1291,7 +1318,7 @@
 
                     <!-- MDJPRO downloads catalog — Owner editable (downloads.html) -->
                     <div id="mdjpro-downloads-panel" style="display:none;margin-top:28px;border-top:1px solid var(--line);padding-top:22px;">
-                        <h4 style="color:var(--gold);margin-bottom:4px;">📦 MDJPRO — Página de Descargas</h4>
+                        <h4 style="color:var(--gold);margin-bottom:4px;font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">MDJPRO</h4>
                         <p class="fineprint" style="margin-bottom:16px;">
                             Edita versión y novedades en vivo. El peso del .pkg se calcula automático desde Supabase/local.
                             Plataforma Mac hasta release Windows.
@@ -2271,23 +2298,68 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 };
 
                 // Pricing Persistence Logic (invoice prices — localStorage)
-                window.saveAllPrices = () => {
-                    const inputs = document.querySelectorAll('.price-input:not(.settings-input)');
-                    const prices = {};
-                    inputs.forEach(input => {
-                        prices[input.id] = input.value;
+                window.saveAllPrices = async () => {
+                    // 1. Guardar en localStorage (compatibilidad con facturas manuales)
+                    const invoiceInputs = document.querySelectorAll('.price-input:not(.settings-input):not(.catalog-input)');
+                    const invoicePrices = {};
+                    invoiceInputs.forEach(input => {
+                        invoicePrices[input.id] = input.value;
                     });
-                    localStorage.setItem('mdj_market_prices', JSON.stringify(prices));
-                    alert('Precios de factura guardados localmente.');
+                    if (Object.keys(invoicePrices).length > 0) {
+                        localStorage.setItem('mdj_market_prices', JSON.stringify(invoicePrices));
+                    }
+
+                    // 2. Guardar en Supabase (Catálogo Web rentals.html)
+                    const catalogInputs = document.querySelectorAll('.catalog-input');
+                    const catalogPrices = {};
+                    catalogInputs.forEach(input => {
+                        const key = input.id.replace('catalog-', '');
+                        catalogPrices[key] = parseFloat(input.value) || 0;
+                    });
+                    
+                    const btn = document.querySelector('button[onclick="saveAllPrices()"]');
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = 'Guardando...';
+                    btn.disabled = true;
+
+                    const { error } = await supabase.from('platform_settings').upsert({
+                        key: 'rentals_catalog_prices',
+                        value: JSON.stringify(catalogPrices),
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'key' });
+
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+
+                    if (error) {
+                        alert('Error guardando catálogo en Supabase: ' + error.message);
+                    } else {
+                        alert('¡Catálogo Web actualizado! Los precios ya están en vivo en rentals.html.');
+                    }
                 };
 
-                window.loadSavedPrices = () => {
+                window.loadSavedPrices = async () => {
+                    // 1. Cargar local (facturas)
                     const saved = localStorage.getItem('mdj_market_prices');
                     if (saved) {
                         const prices = JSON.parse(saved);
                         for (const [id, val] of Object.entries(prices)) {
                             const input = document.getElementById(id);
-                            if (input) input.value = val;
+                            if (input && !input.classList.contains('catalog-input')) input.value = val;
+                        }
+                    }
+                    
+                    // 2. Cargar de Supabase (Catálogo Web)
+                    const { data } = await supabase.from('platform_settings').select('value').eq('key', 'rentals_catalog_prices').maybeSingle();
+                    if (data && data.value) {
+                        try {
+                            const catalogPrices = JSON.parse(data.value);
+                            for (const [key, val] of Object.entries(catalogPrices)) {
+                                const input = document.getElementById('catalog-' + key);
+                                if (input) input.value = val;
+                            }
+                        } catch (e) {
+                            console.error('Error parseando rentals_catalog_prices:', e);
                         }
                     }
                 };
@@ -2681,6 +2753,15 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         // Restrict Pricing Save
                         const savePricesBtn = document.querySelector('button[onclick="saveAllPrices()"]');
                         if (savePricesBtn) savePricesBtn.style.display = 'none';
+                    } else if (window.userRole === 'ADMIN' || window.userRole === 'MANAGER') {
+                        roleBadge.textContent = "Acceso: Manager / Admin";
+                        // Hide pricing manager from managers and admins (Owner only)
+                        const pricingManager = document.getElementById('rentals-catalog-grid');
+                        if (pricingManager) {
+                            pricingManager.style.display = 'none';
+                            pricingManager.previousElementSibling.style.display = 'none'; // Hide description
+                            pricingManager.previousElementSibling.previousElementSibling.style.display = 'none'; // Hide title and button
+                        }
                     } else {
                         roleBadge.textContent = "Acceso: Super Admin (Full Control)";
                     }
