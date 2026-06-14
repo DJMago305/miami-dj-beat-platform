@@ -1132,9 +1132,8 @@
 
                         </div>
                         <div style="margin-top:16px;display:flex;align-items:center;gap:14px;">
-                            <button class="btn primary" onclick="savePlatformSettings()">SAVE</button>
-                            <small id="settings-save-status" style="color:var(--admin-accent);display:none;">✅ Guardado
-                                en Supabase</small>
+                            <button class="btn primary" onclick="savePlatformSettings(this)">SAVE</button>
+                            <small class="save-status-msg" style="color:var(--admin-accent);display:none;">✅ Guardado en Supabase</small>
                         </div>
                     </div>
 
@@ -1187,7 +1186,8 @@
                             </div>
                         </div>
                         <div style="margin-top:14px;display:flex;align-items:center;gap:14px;">
-                            <button class="btn primary" onclick="savePlatformSettings()">SAVE</button>
+                            <button class="btn primary" onclick="savePlatformSettings(this)">SAVE</button>
+                            <small class="save-status-msg" style="color:var(--admin-accent);display:none;">✅ Guardado en Supabase</small>
                             <small style="color:rgba(255,255,255,0.4);font-size:11px;">Cambios activos en
                                 jobs.html</small>
                         </div>
@@ -1275,7 +1275,8 @@
                             </div>
                         </div>
                         <div style="margin-top:14px;display:flex;align-items:center;gap:14px;">
-                            <button class="btn primary" onclick="savePlatformSettings()">SAVE</button>
+                            <button class="btn primary" onclick="savePlatformSettings(this)">SAVE</button>
+                            <small class="save-status-msg" style="color:var(--admin-accent);display:none;">✅ Guardado en Supabase</small>
                             <small style="color:rgba(255,255,255,0.4);font-size:11px;">Cambios activos en
                                 index.html</small>
                         </div>
@@ -1318,9 +1319,8 @@
                             </div>
                         </div>
                         <div style="margin-top:14px;display:flex;align-items:center;gap:14px;">
-                            <button class="btn primary" onclick="savePlatformSettings()">SAVE</button>
-                            <small id="qr-save-status" style="color:var(--admin-accent);display:none;">✅
-                                Actualizado</small>
+                            <button class="btn primary" onclick="savePlatformSettings(this)">SAVE</button>
+                            <small class="save-status-msg" style="color:var(--admin-accent);display:none;">✅ Actualizado</small>
                         </div>
                     </div>
 
@@ -2278,7 +2278,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 };
 
                 // ── Platform Settings (Supabase) ──────────────────────────────
-                window.savePlatformSettings = async () => {
+                window.savePlatformSettings = async (btnElement) => {
                     const inputs = document.querySelectorAll('.settings-input');
                     const upserts = [];
                     inputs.forEach(inp => {
@@ -2287,12 +2287,24 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         }
                     });
                     const { error } = await supabase.from('platform_settings').upsert(upserts, { onConflict: 'key' });
-                    const status = document.getElementById('settings-save-status');
+                    
+                    let status = null;
+                    if (btnElement && btnElement.nextElementSibling && btnElement.nextElementSibling.classList.contains('save-status-msg')) {
+                        status = btnElement.nextElementSibling;
+                    } else if (btnElement && btnElement.parentElement) {
+                        status = btnElement.parentElement.querySelector('.save-status-msg');
+                    }
+
                     if (error) {
                         alert('Error guardando: ' + error.message);
                     } else {
-                        status.style.display = 'block';
-                        setTimeout(() => { status.style.display = 'none'; }, 3000);
+                        if (status) {
+                            status.style.display = 'block';
+                            setTimeout(() => { status.style.display = 'none'; }, 3000);
+                        } else {
+                            // Fallback alert if status element not found
+                            alert('✅ Guardado en Supabase');
+                        }
                     }
                 };
 
