@@ -4891,7 +4891,7 @@
                 const { data } = await sup
                     .from('platform_settings')
                     .select('key, value')
-                    .in('key', ['hero_video_url', 'hero_video_volume', 'hero_title_es', 'hero_title_en']);
+                    .in('key', ['hero_video_url', 'hero_video_volume', 'hero_title_es', 'hero_title_en', 'hero_active']);
                 if (!data || data.length === 0) return;
 
                 const settings = {};
