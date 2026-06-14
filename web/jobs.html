@@ -4907,8 +4907,20 @@
                 if (video && videoUrl && isHeroActive) {
                     if (kbBg) kbBg.classList.add('hidden');
                     video.src = videoUrl;
-                    video.volume = configVol;
-                    video.muted = configVol === 0;
+                    
+                    if (configVol > 0) {
+                        video.setAttribute('data-mdj-allow-audio', '1');
+                        video.volume = configVol;
+                        video.muted = false;
+                        video.removeAttribute('muted');
+                    } else {
+                        video.removeAttribute('data-mdj-allow-audio');
+                        video.volume = 0;
+                        video.muted = true;
+                        video.defaultMuted = true;
+                        video.setAttribute('muted', '');
+                    }
+                    
                     video.load();
                     video.play().catch(() => {
                         video.muted = true;

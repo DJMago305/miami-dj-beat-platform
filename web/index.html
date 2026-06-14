@@ -1794,21 +1794,22 @@
         };
       }
 
-      /* Hero vídeo: siempre mudo (no mezclar con música ambiental; pista del MP4 puede seguir en el archivo). */
+      /* Configuración de volumen del Hero Video */
       if (video && isHomeActive) {
-        var enforceHeroMute = function () {
-          try {
-            video.muted = true;
-            video.defaultMuted = true;
-            video.volume = 0;
-            video.setAttribute('muted', '');
-          } catch (eM) {
-            void eM;
-          }
-        };
-        enforceHeroMute();
-        video.addEventListener('loadeddata', enforceHeroMute);
-        video.addEventListener('volumechange', enforceHeroMute);
+        const configVol = parseFloat(settings.home_hero_video_volume || '0') || 0;
+        if (configVol > 0) {
+          video.setAttribute('data-mdj-allow-audio', '1');
+          video.volume = configVol;
+          video.muted = false;
+          video.removeAttribute('muted');
+        } else {
+          video.removeAttribute('data-mdj-allow-audio');
+          video.volume = 0;
+          video.muted = true;
+          video.defaultMuted = true;
+          video.setAttribute('muted', '');
+        }
+      }
 
         document.addEventListener('visibilitychange', function () {
           if (!video) return;
