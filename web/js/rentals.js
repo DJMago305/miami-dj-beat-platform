@@ -2932,7 +2932,25 @@ window.togglePackageItem = (id, name, price) => {
 
     if (isChecked) {
         if (!window.selectedPackage.find(item => item.id === id)) {
-            window.selectedPackage.push({ id, name, price });
+            // Determinar la categoría basándonos en el ID para el agrupamiento en el carrito
+            let cat = 'general';
+            if (id.startsWith('dj_')) cat = 'dj';
+            else if (id.startsWith('hl_') || id.startsWith('hora_loca')) cat = 'horaloca';
+            else if (id.startsWith('live_')) cat = 'live';
+            else if (id.startsWith('visuals_') || id.startsWith('vis_')) cat = 'visuals';
+            else if (id.startsWith('mc_')) cat = 'mc';
+            else if (id.startsWith('staff_')) cat = 'staff';
+            else if (id.startsWith('payaso_')) cat = 'payaso';
+            else if (id.startsWith('fx_')) cat = 'fx';
+            else if (id.startsWith('lighting_')) cat = 'lighting';
+            
+            window.selectedPackage.push({ 
+                id, 
+                name, 
+                price,
+                category: cat,
+                type: 'rental'
+            });
         }
     } else {
         window.selectedPackage = window.selectedPackage.filter(item => item.id !== id);
@@ -3353,7 +3371,13 @@ document.addEventListener('click', async (e) => {
         if (isSelected) {
             window.selectedPackage = window.selectedPackage.filter(item => item.id !== id);
         } else {
-            window.selectedPackage.push({ id, name, price });
+            window.selectedPackage.push({ 
+                id, 
+                name, 
+                price,
+                category: 'live',
+                type: 'rental'
+            });
         }
         window.updatePackageSummary();
         // CTA update doesn't need animation
@@ -3373,6 +3397,9 @@ document.addEventListener('click', async (e) => {
         if (!pack && window.liveMusicTabs) pack = Object.values(window.liveMusicTabs).find(p => p.id === id);
         if (!pack && window.visualTabs) pack = Object.values(window.visualTabs).find(p => p.id === id);
         if (!pack && window.mcTabs) pack = Object.values(window.mcTabs).find(p => p.id === id);
+        if (!pack && window.djTabs) pack = Object.values(window.djTabs).find(p => p.id === id);
+        if (!pack && window.fxItems) pack = Object.values(window.fxItems).find(p => p.id === id);
+        if (!pack && window.lightingItems) pack = Object.values(window.lightingItems).find(p => p.id === id);
         if (!pack && id === 'dj_family' && window.djTabs && window.djTabs.family) {
             pack = window.djTabs.family;
         }
@@ -3386,7 +3413,26 @@ document.addEventListener('click', async (e) => {
             } else {
                 const nameKey = pack.nameKey || ('data_' + pack.id + '_name');
                 const fallback = pack.fallbackName || pack.name || 'Premium Package';
-                window.selectedPackage.push({ id: pack.id, name: t(nameKey, fallback), price: pack.price || 0 });
+                
+                // Determinar la categoría basándonos en el ID para el agrupamiento en el carrito
+                let cat = 'general';
+                if (id.startsWith('dj_')) cat = 'dj';
+                else if (id.startsWith('hl_') || id.startsWith('hora_loca')) cat = 'horaloca';
+                else if (id.startsWith('live_')) cat = 'live';
+                else if (id.startsWith('visuals_') || id.startsWith('vis_')) cat = 'visuals';
+                else if (id.startsWith('mc_')) cat = 'mc';
+                else if (id.startsWith('staff_')) cat = 'staff';
+                else if (id.startsWith('payaso_')) cat = 'payaso';
+                else if (id.startsWith('fx_')) cat = 'fx';
+                else if (id.startsWith('lighting_')) cat = 'lighting';
+                
+                window.selectedPackage.push({ 
+                    id: pack.id, 
+                    name: t(nameKey, fallback), 
+                    price: pack.price || 0,
+                    category: cat,
+                    type: 'rental'
+                });
             }
 
             window.updatePackageSummary();
@@ -3395,12 +3441,12 @@ document.addEventListener('click', async (e) => {
                 window.mdjRentalsSyncDjFamily({ pack: pack, added: !isSelected });
             }
 
-            if (id === 'dj_family' && typeof window.renderDjHero === 'function') {
-                window.renderDjHero(window.activeDjTabLocked || 'weddings', false);
-            }
-
+            // Re-render UI to update buttons
             if (window.renderHoraLocaCatalogue) window.renderHoraLocaCatalogue();
-            if (window.renderLiveHero && window.activeCategory !== 'mc') window.renderLiveHero(null, false);
+            if (window.renderLiveHero && window.activeCategory !== 'mc') window.renderLiveHero(window.activeLiveTabLocked || 'sax', false);
+            if (window.renderDjHero) window.renderDjHero(window.activeDjTabLocked || 'weddings', false);
+            if (window.renderFxHero) window.renderFxHero(window.activeFxTabLocked || 'sparks', false);
+            if (window.renderLightingHero) window.renderLightingHero(window.activeLightingTabLocked || 'movingHeads', false);
 
             if (window.i18n) window.i18n.updateUI();
         }
@@ -3542,6 +3588,7 @@ document.addEventListener('click', async (e) => {
                 price: unitPrice,
                 quantity: qty,
                 total: unitPrice * qty,
+                category: category,
                 type: 'rental'
             });
             btn.className = 'cta cta-remove';
