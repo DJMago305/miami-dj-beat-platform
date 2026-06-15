@@ -4387,7 +4387,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    loadRentalsData();
+    await loadRentalsData();
     mdjRentalsTryResumeCheckoutAfterAuth();
 
     const runTalentHubChrome = () => {
