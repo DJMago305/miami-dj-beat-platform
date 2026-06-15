@@ -3426,6 +3426,19 @@ document.addEventListener('click', async (e) => {
                 else if (id.startsWith('fx_')) cat = 'fx';
                 else if (id.startsWith('lighting_')) cat = 'lighting';
                 
+                // MUTUAL EXCLUSIVITY FIX:
+                // Remove existing items of the SAME category if it's a mutually exclusive category
+                const exclusiveCategories = ['dj', 'live', 'mc', 'horaloca', 'visuals'];
+                if (exclusiveCategories.includes(cat)) {
+                    const oldItems = window.selectedPackage.filter(p => p.category === cat);
+                    oldItems.forEach(oldItem => {
+                        if (window.MDJ_EVENT_BUILDER_V1 && typeof window.mdjRentalsSyncDirectActivate === 'function') {
+                            window.mdjRentalsSyncDirectActivate({ pack: { id: oldItem.id }, category: cat, added: false });
+                        }
+                    });
+                    window.selectedPackage = window.selectedPackage.filter(p => p.category !== cat);
+                }
+                
                 window.selectedPackage.push({ 
                     id: pack.id, 
                     name: t(nameKey, fallback), 
@@ -3437,8 +3450,8 @@ document.addEventListener('click', async (e) => {
 
             window.updatePackageSummary();
 
-            if (id === 'dj_family' && window.MDJ_EVENT_BUILDER_V1 && typeof window.mdjRentalsSyncDjFamily === 'function') {
-                window.mdjRentalsSyncDjFamily({ pack: pack, added: !isSelected });
+            if (window.MDJ_EVENT_BUILDER_V1 && typeof window.mdjRentalsSyncDirectActivate === 'function') {
+                window.mdjRentalsSyncDirectActivate({ pack: pack, category: cat, added: !isSelected });
             }
 
             // Re-render UI to update buttons
