@@ -119,67 +119,6 @@
         }
     };
 
-    global.mdjRentalsSyncDirectActivate = function (opts) {
-        if (!global.MDJ_EVENT_BUILDER_V1) {
-            return;
-        }
-        var EB = global.MDJEventBuilder;
-        var Ad = global.MDJEventBuilderAdapter;
-        var pack = opts && opts.pack;
-        if (!EB || !Ad || !pack) {
-            return;
-        }
-        if (!opts.added) {
-            EB.removeByCatalogSku(pack.id);
-            return;
-        }
-        var nameKey = pack.nameKey || ('data_' + pack.id + '_name');
-        var fallback = pack.fallbackName || pack.name || 'Premium Package';
-        var label = typeof global.t === 'function' ? global.t(nameKey, fallback) : fallback;
-        var img = pack.image || pack.img || null;
-        if (!img && pack.video) {
-            img = pack.video.replace('.mp4', '.jpg');
-        }
-        
-        var catKey = opts.category || 'addon';
-        var catLabel = 'Package Add-on';
-        var slot = null;
-        
-        if (catKey === 'dj') {
-            catLabel = 'DJ / Performance';
-            slot = 'dj_primary';
-        } else if (catKey === 'live') {
-            catLabel = 'Live Music';
-            slot = 'live_primary';
-        } else if (catKey === 'mc') {
-            catLabel = 'MC / Host';
-            slot = 'mc_primary';
-        } else if (catKey === 'visuals') {
-            catLabel = 'Visuals & Photo';
-            slot = 'visuals_primary';
-        } else if (catKey === 'horaloca') {
-            catLabel = 'Hora Loca';
-            slot = 'horaloca_primary';
-        } else if (catKey === 'fx') {
-            catLabel = 'Special FX';
-        } else if (catKey === 'lighting') {
-            catLabel = 'Lighting & LED';
-        }
-        
-        var dto = Ad.buildLineFromRentalsItem({
-            id: pack.id,
-            name: label,
-            price: pack.price,
-            image_url: img ? mdjV(img) : null,
-            category_key: catKey,
-            category_label: catLabel,
-            slot: slot
-        });
-        if (dto) {
-            EB.addLine(dto);
-        }
-    };
-
     var MDJ_DJ_FAMILY_IMAGE = './assets/DJ_Performance/family-events.jpg';
 
     global.mdjRentalsSyncDjFamily = function (opts) {
