@@ -823,6 +823,10 @@
                   <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                   Leads
                 </a>
+                <a href="#eb-orders" class="side-link" onclick="loadEbOrders()" style="display:flex;align-items:center;gap:9px;">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                  Órdenes Event Builder
+                </a>
                 <a href="#crm" class="side-link" onclick="loadCRM()" style="display:flex;align-items:center;gap:9px;">
                   <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                   Base CRM
@@ -923,6 +927,29 @@
                     <h3>Nuevas Solicitudes de Clientes</h3>
                     <div id="leads-container">
                         <div class="loading-spinner">Cargando leads...</div>
+                    </div>
+                </div>
+
+                <!-- Event Builder Orders Section -->
+                <div class="admin-card" id="eb-orders" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+                        <div>
+                            <h3 style="margin:0; color:var(--gold);">📋 Órdenes — Event Builder</h3>
+                            <p class="fineprint">Carritos guardados por clientes · Fuente: event_builder_orders</p>
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <select id="ebo-status-filter" style="background:#1a1a2e;color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:6px 10px;font-size:13px;" onchange="loadEbOrders()">
+                                <option value="">Todos los estados</option>
+                                <option value="pending">Pendiente</option>
+                                <option value="in_review">En revisión</option>
+                                <option value="confirmed">Confirmado</option>
+                                <option value="cancelled">Cancelado</option>
+                            </select>
+                            <button class="btn secondary small" onclick="loadEbOrders()">↺ Actualizar</button>
+                        </div>
+                    </div>
+                    <div id="eb-orders-container">
+                        <div class="loading-spinner">Cargando órdenes…</div>
                     </div>
                 </div>
 
@@ -2023,8 +2050,9 @@
                                         <td><span class="status-badge ${statusClass}">${lead.status}</span></td>
                                         <td style="white-space:nowrap;">${outcomeSel}</td>
                                         <td>${djLabel}</td>
-                                        <td>
+                                        <td style="white-space:nowrap;">
                                             ${lead.notes ? `<button class="btn-pill" style="border-color:var(--gold); color:var(--gold);" onclick='showBlueprint("${lead.id}")'>👁️ Ver</button>` : '<small style="opacity:0.5;">Pendiente</small>'}
+                                            ${(()=>{ try { const n=JSON.parse(lead.notes||'{}'); return Array.isArray(n.selected_services)&&n.selected_services.length>0 ? `<button class="btn-pill" style="margin-top:4px;border-color:#7eb8f7;color:#7eb8f7;" onclick='showCartLines("${lead.id}")'>📋 Líneas</button>` : ''; } catch(e){ return ''; } })()}
                                         </td>
                                         <td style="white-space:nowrap;">
                                             <button class="btn-pill" onclick='window.open("./client-portal.html?lead=${lead.id}&mode=manager", "_blank")' title="Abrir Portal">Portal</button>
@@ -2122,6 +2150,344 @@
                     } catch (e) {
                         console.error("Error parsing blueprint data:", e);
                         alert("Error al cargar los datos del guion.");
+                    }
+                };
+
+                // ─────────────────────────────────────────────────────────────
+                // CART LINES MANAGER — Staff edits line_status per service
+                // ─────────────────────────────────────────────────────────────
+                const EB_LINE_STATUS_OPTIONS = [
+                    { value: 'cotizado',      label: 'Cotizado' },
+                    { value: 'en_proceso',    label: 'En proceso' },
+                    { value: 'confirmado',    label: 'Confirmado' },
+                    { value: 'no_disponible', label: 'No disponible' }
+                ];
+                const EB_LINE_STATUS_COLORS = {
+                    cotizado:      '#aaa',
+                    en_proceso:    '#f5c842',
+                    confirmado:    '#4caf82',
+                    no_disponible: '#e07070'
+                };
+
+                window.showCartLines = (id) => {
+                    document.getElementById('cart-lines-modal')?.remove();
+                    const lead = leads.find(l => l.id == id);
+                    if (!lead || !lead.notes) return;
+                    let notes;
+                    try { notes = JSON.parse(lead.notes); } catch(e) { alert('Error al leer líneas.'); return; }
+                    const services = Array.isArray(notes.selected_services) ? notes.selected_services : [];
+                    if (!services.length) { alert('Este evento no tiene líneas de carrito.'); return; }
+
+                    const rows = services.map((svc, idx) => {
+                        const status = svc.line_status || 'cotizado';
+                        const color = EB_LINE_STATUS_COLORS[status] || '#aaa';
+                        const opts = EB_LINE_STATUS_OPTIONS.map(o =>
+                            `<option value="${o.value}" ${o.value === status ? 'selected' : ''}>${o.label}</option>`
+                        ).join('');
+                        const qty   = svc.quantity || 1;
+                        const price = svc.unit_price_usd != null ? Number(svc.unit_price_usd).toFixed(2) : (svc.line_total_usd != null ? (Number(svc.line_total_usd)/qty).toFixed(2) : '—');
+                        const subtotal = svc.line_total_usd != null ? `$${Number(svc.line_total_usd).toFixed(2)}` : '—';
+                        const artist = svc.selected_artist_stage || svc.selected_artist_id || '—';
+                        return `
+                            <tr data-line-idx="${idx}">
+                                <td style="padding:8px 10px; font-size:12px; color:#fff;">${svc.service_label || svc.category_label || '—'}</td>
+                                <td style="padding:8px 10px; font-size:11px; color:rgba(255,255,255,0.6);">${svc.category_label || '—'}</td>
+                                <td style="padding:8px 10px; font-size:12px; text-align:center;">${qty}</td>
+                                <td style="padding:8px 10px; font-size:12px; text-align:right; color:var(--gold);">$${price}</td>
+                                <td style="padding:8px 10px; font-size:12px; text-align:right; color:var(--gold);">${subtotal}</td>
+                                <td style="padding:8px 10px; font-size:11px; color:rgba(255,255,255,0.6);">${artist}</td>
+                                <td style="padding:8px 10px;">
+                                    <select
+                                        style="font-size:11px; padding:4px 8px; border-radius:4px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.06); color:${color}; cursor:pointer;"
+                                        onchange="updateLineStatus('${id}', ${idx}, this.value, this)">
+                                        ${opts}
+                                    </select>
+                                </td>
+                            </tr>`;
+                    }).join('');
+
+                    const modal = document.createElement('div');
+                    modal.id = 'cart-lines-modal';
+                    modal.style = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;z-index:2100;backdrop-filter:blur(8px);';
+                    modal.innerHTML = `
+                        <div class="admin-card" style="max-width:820px;width:96%;max-height:88vh;overflow-y:auto;position:relative;">
+                            <button onclick="document.getElementById('cart-lines-modal').remove()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">&times;</button>
+                            <div style="margin-bottom:18px; border-bottom:1px solid var(--line); padding-bottom:14px;">
+                                <div style="font-size:10px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:4px;">CART LINES MANAGER</div>
+                                <h3 style="margin:0;">📋 Gestión de Líneas — ${lead.full_name || lead.email}</h3>
+                                <p class="fineprint" style="margin-top:4px;">Evento: ${lead.event_type || '—'} | Fecha: ${lead.event_date || '—'} | Orden: ${notes.order_number || id.slice(0,8).toUpperCase()}</p>
+                            </div>
+                            <div style="overflow-x:auto;">
+                                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                                    <thead>
+                                        <tr style="border-bottom:1px solid rgba(255,255,255,0.12);">
+                                            <th style="padding:8px 10px;text-align:left;font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,0.5);">SERVICIO</th>
+                                            <th style="padding:8px 10px;text-align:left;font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,0.5);">CAJÓN</th>
+                                            <th style="padding:8px 10px;text-align:center;font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,0.5);">QTY</th>
+                                            <th style="padding:8px 10px;text-align:right;font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,0.5);">PRECIO</th>
+                                            <th style="padding:8px 10px;text-align:right;font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,0.5);">SUBTOTAL</th>
+                                            <th style="padding:8px 10px;text-align:left;font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,0.5);">ARTISTA</th>
+                                            <th style="padding:8px 10px;text-align:left;font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,0.5);">ESTADO</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${rows}</tbody>
+                                </table>
+                            </div>
+                            <div id="cart-lines-save-msg" style="margin-top:14px;font-size:12px;color:var(--gold);min-height:20px;text-align:right;"></div>
+                        </div>`;
+                    document.body.appendChild(modal);
+                };
+
+                window.updateLineStatus = async (leadId, lineIdx, newStatus, selectEl) => {
+                    const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+                    if (!db) return;
+                    const lead = leads.find(l => l.id == leadId);
+                    if (!lead) return;
+                    const msgEl = document.getElementById('cart-lines-save-msg');
+                    if (msgEl) msgEl.textContent = 'Guardando…';
+                    try {
+                        // Re-fetch fresh notes to avoid overwrite race
+                        const { data: fresh, error: fetchErr } = await db.from('leads').select('notes').eq('id', leadId).maybeSingle();
+                        if (fetchErr || !fresh) throw new Error(fetchErr?.message || 'No data');
+                        let notes = fresh.notes;
+                        if (typeof notes === 'string') notes = JSON.parse(notes);
+                        if (!notes || !Array.isArray(notes.selected_services)) throw new Error('No services');
+                        if (!notes.selected_services[lineIdx]) throw new Error('Line not found');
+                        notes.selected_services[lineIdx].line_status = newStatus;
+                        const { error: updErr } = await db.from('leads').update({ notes: JSON.stringify(notes) }).eq('id', leadId);
+                        if (updErr) throw new Error(updErr.message);
+                        // Update local cache
+                        lead.notes = JSON.stringify(notes);
+                        // Update select color
+                        if (selectEl) selectEl.style.color = EB_LINE_STATUS_COLORS[newStatus] || '#aaa';
+                        if (msgEl) { msgEl.textContent = '✓ Estado guardado'; setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 2500); }
+                    } catch(e) {
+                        if (msgEl) msgEl.textContent = '⚠ Error: ' + e.message;
+                        if (selectEl) selectEl.style.borderColor = '#e07070';
+                    }
+                };
+
+                // ─────────────────────────────────────────────────────────────
+                // EVENT BUILDER ORDERS — loadEbOrders, updateEboStatus
+                // ─────────────────────────────────────────────────────────────
+                const EBO_STATUS_LABELS = {
+                    pending:    { label: 'Pendiente',    color: '#aaa' },
+                    in_review:  { label: 'En revisión',  color: '#f7c948' },
+                    confirmed:  { label: 'Confirmado',   color: '#4caf89' },
+                    cancelled:  { label: 'Cancelado',    color: '#e07070' }
+                };
+                const EBO_PAYMENT_LABELS = {
+                    unpaid:        { label: 'Sin pago',        color: '#e07070' },
+                    deposit_paid:  { label: 'Depósito pagado', color: '#f7c948' },
+                    paid_full:     { label: 'Pagado',          color: '#4caf89' }
+                };
+
+                window.loadEbOrders = async () => {
+                    const container = document.getElementById('eb-orders-container');
+                    if (!container) return;
+                    container.innerHTML = '<div class="loading-spinner">Cargando órdenes…</div>';
+                    const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+                    if (!db) { container.innerHTML = '<p class="fineprint">Supabase no disponible.</p>'; return; }
+
+                    const statusFilter = document.getElementById('ebo-status-filter')?.value || '';
+                    let query = db
+                        .from('event_builder_orders')
+                        .select('id, draft_id, order_status, payment_status, total_usd, deposit_usd, amount_paid_usd, event_date, created_at, updated_at, staff_notes, lines, user_id, lead_id')
+                        .order('updated_at', { ascending: false })
+                        .limit(100);
+                    if (statusFilter) query = query.eq('order_status', statusFilter);
+
+                    const { data: orders, error } = await query;
+                    if (error) {
+                        container.innerHTML = `<p class="fineprint" style="color:#e07070;">Error: ${error.message}</p>`;
+                        return;
+                    }
+                    if (!orders || orders.length === 0) {
+                        container.innerHTML = '<p class="fineprint" style="text-align:center;padding:40px;">No hay órdenes todavía.</p>';
+                        return;
+                    }
+
+                    // Collect user_ids to enrich with client_profiles email
+                    const uids = [...new Set(orders.map(o => o.user_id).filter(Boolean))];
+                    let profileMap = {};
+                    if (uids.length) {
+                        const { data: profs } = await db.from('client_profiles').select('user_id, full_name, phone').in('user_id', uids);
+                        (profs || []).forEach(p => { profileMap[p.user_id] = p; });
+                    }
+
+                    const fmt = (v) => v != null ? '$' + Number(v).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '—';
+                    const fmtDate = (d) => d ? new Date(d).toLocaleDateString('es-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+
+                    let html = `<div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                      <thead>
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.15);">
+                          <th style="text-align:left;padding:8px 10px;color:var(--gold);white-space:nowrap;">ORDEN #</th>
+                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">Cliente</th>
+                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">Evento</th>
+                          <th style="text-align:right;padding:8px 10px;color:var(--gold);">Total</th>
+                          <th style="text-align:right;padding:8px 10px;color:var(--gold);">Depósito</th>
+                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">Estado</th>
+                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">Pago</th>
+                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">Líneas</th>
+                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">Actualizado</th>
+                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">Acción</th>
+                        </tr>
+                      </thead>
+                      <tbody>`;
+
+                    orders.forEach(ord => {
+                        const prof = profileMap[ord.user_id] || {};
+                        const clientName = prof.full_name || '—';
+                        const lineCount = Array.isArray(ord.lines) ? ord.lines.length : (typeof ord.lines === 'string' ? (() => { try { return JSON.parse(ord.lines).length; } catch(e) { return '?'; } })() : '?');
+                        const statusInfo  = EBO_STATUS_LABELS[ord.order_status]  || { label: ord.order_status, color: '#aaa' };
+                        const payInfo     = EBO_PAYMENT_LABELS[ord.payment_status] || { label: ord.payment_status || '—', color: '#aaa' };
+                        const balance     = ord.total_usd != null && ord.amount_paid_usd != null ? (Number(ord.total_usd) - Number(ord.amount_paid_usd)) : null;
+                        const ordNum      = ord.draft_id ? ord.draft_id.substring(0, 13).toUpperCase() : ord.id.substring(0, 8).toUpperCase();
+
+                        html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.07);" onmouseenter="this.style.background='rgba(183,148,62,0.06)'" onmouseleave="this.style.background=''">
+                          <td style="padding:8px 10px;font-family:monospace;color:var(--gold);white-space:nowrap;">#${ordNum}</td>
+                          <td style="padding:8px 10px;white-space:nowrap;">${clientName}</td>
+                          <td style="padding:8px 10px;white-space:nowrap;">${fmtDate(ord.event_date)}</td>
+                          <td style="padding:8px 10px;text-align:right;white-space:nowrap;">${fmt(ord.total_usd)}</td>
+                          <td style="padding:8px 10px;text-align:right;white-space:nowrap;">${fmt(ord.deposit_usd)}</td>
+                          <td style="padding:8px 10px;">
+                            <select style="background:#1a1a2e;color:${statusInfo.color};border:1px solid ${statusInfo.color}40;border-radius:5px;padding:3px 7px;font-size:12px;cursor:pointer;"
+                              onchange="updateEboStatus('${ord.id}', 'order_status', this.value, this)">
+                              ${Object.entries(EBO_STATUS_LABELS).map(([k,v]) => `<option value="${k}" ${k===ord.order_status?'selected':''}>${v.label}</option>`).join('')}
+                            </select>
+                          </td>
+                          <td style="padding:8px 10px;">
+                            <select style="background:#1a1a2e;color:${payInfo.color};border:1px solid ${payInfo.color}40;border-radius:5px;padding:3px 7px;font-size:12px;cursor:pointer;"
+                              onchange="updateEboStatus('${ord.id}', 'payment_status', this.value, this)">
+                              ${Object.entries(EBO_PAYMENT_LABELS).map(([k,v]) => `<option value="${k}" ${k===ord.payment_status?'selected':''}>${v.label}</option>`).join('')}
+                            </select>
+                          </td>
+                          <td style="padding:8px 10px;text-align:center;">${lineCount}</td>
+                          <td style="padding:8px 10px;white-space:nowrap;color:rgba(255,255,255,0.45);font-size:12px;">${fmtDate(ord.updated_at)}</td>
+                          <td style="padding:8px 10px;white-space:nowrap;">
+                            <button class="btn-pill" style="font-size:11px;border-color:var(--gold);color:var(--gold);"
+                              onclick="showEboDetail('${ord.id}')">Ver detalle</button>
+                            ${ord.lead_id ? `<a class="btn-pill" style="font-size:11px;margin-left:4px;border-color:#7eb8f7;color:#7eb8f7;text-decoration:none;" href="./client-portal.html?lead=${ord.lead_id}" target="_blank">Lead</a>` : ''}
+                          </td>
+                        </tr>`;
+                    });
+
+                    html += `</tbody></table></div>
+                    <p class="fineprint" style="margin-top:14px;">${orders.length} orden${orders.length !== 1 ? 'es' : ''} · Balance pendiente global: ${fmt(orders.reduce((s,o) => s + (o.total_usd != null && o.amount_paid_usd != null ? Number(o.total_usd) - Number(o.amount_paid_usd) : 0), 0))}</p>`;
+
+                    container.innerHTML = html;
+                    // Store orders locally for detail modal
+                    window._eboOrders = orders;
+                };
+
+                window.updateEboStatus = async (orderId, field, newVal, selectEl) => {
+                    const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+                    if (!db) return;
+                    const validFields = ['order_status', 'payment_status'];
+                    if (!validFields.includes(field)) return;
+                    const orig = selectEl ? selectEl.dataset.orig || selectEl.value : newVal;
+                    if (selectEl) selectEl.disabled = true;
+                    const patch = { [field]: newVal, updated_at: new Date().toISOString() };
+                    const { error } = await db.from('event_builder_orders').update(patch).eq('id', orderId);
+                    if (error) {
+                        if (selectEl) { selectEl.disabled = false; selectEl.style.borderColor = '#e07070'; }
+                        return;
+                    }
+                    // Reflect color change immediately
+                    if (selectEl) {
+                        selectEl.disabled = false;
+                        const colorMap = field === 'order_status' ? EBO_STATUS_LABELS : EBO_PAYMENT_LABELS;
+                        const info = colorMap[newVal] || { color: '#aaa' };
+                        selectEl.style.color = info.color;
+                        selectEl.style.borderColor = info.color + '40';
+                    }
+                    // Update local cache
+                    if (window._eboOrders) {
+                        const ord = window._eboOrders.find(o => o.id === orderId);
+                        if (ord) ord[field] = newVal;
+                    }
+                };
+
+                window.showEboDetail = (orderId) => {
+                    const orders = window._eboOrders || [];
+                    const ord = orders.find(o => o.id === orderId);
+                    if (!ord) return;
+                    let lines = [];
+                    try { lines = typeof ord.lines === 'string' ? JSON.parse(ord.lines) : (ord.lines || []); } catch(e) { lines = []; }
+                    const fmt = (v) => v != null ? '$' + Number(v).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '—';
+                    const ordNum = ord.draft_id ? ord.draft_id.substring(0, 13).toUpperCase() : ord.id.substring(0, 8).toUpperCase();
+
+                    document.getElementById('ebo-detail-modal')?.remove();
+                    const modal = document.createElement('div');
+                    modal.id = 'ebo-detail-modal';
+                    modal.style = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;z-index:3000;backdrop-filter:blur(6px);';
+                    const linesHtml = lines.length === 0 ? '<p class="fineprint" style="text-align:center;padding:20px;">Sin líneas guardadas.</p>' :
+                        `<table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:12px;">
+                          <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.15);">
+                            <th style="text-align:left;padding:6px 8px;color:var(--gold);">#</th>
+                            <th style="text-align:left;padding:6px 8px;color:var(--gold);">Servicio</th>
+                            <th style="text-align:left;padding:6px 8px;color:var(--gold);">Categoría</th>
+                            <th style="text-align:right;padding:6px 8px;color:var(--gold);">Precio</th>
+                            <th style="text-align:left;padding:6px 8px;color:var(--gold);">Estado</th>
+                          </tr></thead>
+                          <tbody>${lines.map((l, i) => `
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                              <td style="padding:6px 8px;color:rgba(255,255,255,0.4);">${i+1}</td>
+                              <td style="padding:6px 8px;">${l.service_label || l.label || '—'}</td>
+                              <td style="padding:6px 8px;color:rgba(255,255,255,0.55);">${l.category_label || l.category_key || '—'}</td>
+                              <td style="padding:6px 8px;text-align:right;">${l.price_usd != null ? fmt(l.price_usd) : (l.price != null ? fmt(l.price) : '—')}</td>
+                              <td style="padding:6px 8px;color:${(EBO_LINE_STATUS_COLORS||{})[l.line_status]||'#aaa'}">${l.line_status || 'pending'}</td>
+                            </tr>`).join('')}
+                          </tbody>
+                        </table>`;
+
+                    modal.innerHTML = `<div class="admin-card" style="max-width:740px;width:95%;max-height:88vh;overflow-y:auto;position:relative;">
+                      <button onclick="document.getElementById('ebo-detail-modal').remove()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">&times;</button>
+                      <div style="margin-bottom:16px;">
+                        <div style="font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:4px;">ORDEN / INVOICE</div>
+                        <h3 style="margin:0;">#${ordNum}</h3>
+                      </div>
+                      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:18px;">
+                        <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:12px;">
+                          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px;">Total</div>
+                          <div style="font-size:18px;font-weight:700;color:var(--gold);">${fmt(ord.total_usd)}</div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:12px;">
+                          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px;">Depósito 30%</div>
+                          <div style="font-size:18px;font-weight:700;">${fmt(ord.deposit_usd)}</div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:12px;">
+                          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px;">Pagado</div>
+                          <div style="font-size:18px;font-weight:700;color:#4caf89;">${fmt(ord.amount_paid_usd)}</div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:12px;">
+                          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px;">Balance</div>
+                          <div style="font-size:18px;font-weight:700;color:#f7c948;">${fmt((ord.total_usd||0)-(ord.amount_paid_usd||0))}</div>
+                        </div>
+                      </div>
+                      <div style="margin-bottom:14px;">
+                        <label style="font-size:12px;color:rgba(255,255,255,0.5);">Notas de staff</label>
+                        <textarea id="ebo-staff-notes-${ord.id}" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;padding:8px 12px;font-size:13px;resize:vertical;margin-top:6px;box-sizing:border-box;" rows="3" placeholder="Agregar nota interna…">${ord.staff_notes || ''}</textarea>
+                        <button class="btn secondary small" style="margin-top:6px;" onclick="saveEboNotes('${ord.id}')">Guardar nota</button>
+                        <span id="ebo-notes-msg-${ord.id}" style="font-size:12px;color:#4caf89;margin-left:10px;"></span>
+                      </div>
+                      ${linesHtml}
+                    </div>`;
+                    document.body.appendChild(modal);
+                };
+
+                window.saveEboNotes = async (orderId) => {
+                    const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+                    if (!db) return;
+                    const ta = document.getElementById('ebo-staff-notes-' + orderId);
+                    const msg = document.getElementById('ebo-notes-msg-' + orderId);
+                    if (!ta) return;
+                    const { error } = await db.from('event_builder_orders').update({ staff_notes: ta.value.trim(), updated_at: new Date().toISOString() }).eq('id', orderId);
+                    if (msg) { msg.textContent = error ? '⚠ Error' : '✓ Guardado'; setTimeout(() => { if (msg) msg.textContent = ''; }, 2500); }
+                    if (!error && window._eboOrders) {
+                        const ord = window._eboOrders.find(o => o.id === orderId);
+                        if (ord) ord.staff_notes = ta.value.trim();
                     }
                 };
 
@@ -2746,6 +3112,8 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                 <th>DJ / Artista</th>
                                 <th>Email</th>
                                 <th>Plan</th>
+                                <th>Especialidad</th>
+                                <th>Visible</th>
                                 <th>Foto Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -2766,6 +3134,29 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                     <td><strong>${dj.full_name || 'Sin Nombre'}</strong>${dj.stage_name ? '<br><small style="color:var(--gold);">' + dj.stage_name + '</small>' : ''}</td>
                                     <td><small>${safeEmail || dj.user_id}</small></td>
                                     <td>${dj.plan}</td>
+                                    <td style="min-width:140px;">
+                                        <select style="font-size:11px;padding:4px 6px;border-radius:4px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#fff;cursor:pointer;width:100%;"
+                                            onchange="updateDJSpecialty('${dj.user_id}', this.value)">
+                                            <option value="" ${!dj.artist_specialty ? 'selected' : ''}>— Sin asignar —</option>
+                                            <option value="dj" ${dj.artist_specialty==='dj'?'selected':''}>DJ</option>
+                                            <option value="bartender" ${dj.artist_specialty==='bartender'?'selected':''}>Bartender</option>
+                                            <option value="mesero" ${dj.artist_specialty==='mesero'?'selected':''}>Mesero / Camarero</option>
+                                            <option value="cocinero" ${dj.artist_specialty==='cocinero'?'selected':''}>Cocinero / Chef</option>
+                                            <option value="drone" ${dj.artist_specialty==='drone'?'selected':''}>Operador de Drone</option>
+                                            <option value="mc" ${dj.artist_specialty==='mc'?'selected':''}>MC / Presentador</option>
+                                            <option value="fotografo" ${dj.artist_specialty==='fotografo'?'selected':''}>Fotógrafo / Videógrafo</option>
+                                            <option value="musicos en vivo" ${dj.artist_specialty==='musicos en vivo'?'selected':''}>Músico / Orquesta / Banda</option>
+                                            <option value="hora loca" ${dj.artist_specialty==='hora loca'?'selected':''}>Hora Loca</option>
+                                            <option value="payaso" ${dj.artist_specialty==='payaso'?'selected':''}>Payaso / Infantil</option>
+                                            <option value="staff" ${dj.artist_specialty==='staff'?'selected':''}>Staff General</option>
+                                        </select>
+                                    </td>
+                                    <td style="text-align:center;">
+                                        <button class="btn-pill" style="font-size:10px;padding:4px 10px;${dj.available?'border-color:#4caf82;color:#4caf82;':'border-color:#e07070;color:#e07070;'}"
+                                            onclick="toggleDJAvailable('${dj.user_id}', ${!!dj.available})">
+                                            ${dj.available ? '✓ Activo' : '✗ Oculto'}
+                                        </button>
+                                    </td>
                                     <td>${statusBadge}</td>
                                     <td>
                                         <div style="display:flex;flex-direction:column;gap:8px;min-width:220px;">
@@ -2806,6 +3197,32 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         loadAdminData();
                     }
                 }
+
+                // ── Specialty & Availability ─────────────────────────────
+                window.updateDJSpecialty = async (userId, specialty) => {
+                    const { error } = await supabase
+                        .from('dj_profiles')
+                        .update({ artist_specialty: specialty || null })
+                        .eq('user_id', userId);
+                    if (error) { alert('Error: ' + error.message); return; }
+                    // Visual feedback on the select
+                    const row = document.getElementById('dj-row-' + userId);
+                    if (row) {
+                        const sel = row.querySelector('select');
+                        if (sel) sel.style.borderColor = specialty ? '#4caf82' : 'rgba(255,255,255,0.15)';
+                        setTimeout(() => { if (sel) sel.style.borderColor = 'rgba(255,255,255,0.15)'; }, 1500);
+                    }
+                };
+
+                window.toggleDJAvailable = async (userId, currentlyAvailable) => {
+                    const newVal = !currentlyAvailable;
+                    const { error } = await supabase
+                        .from('dj_profiles')
+                        .update({ available: newVal })
+                        .eq('user_id', userId);
+                    if (error) { alert('Error: ' + error.message); return; }
+                    loadAdminData();
+                };
 
                 // ── Photo Moderation ─────────────────────────────────────
                 const PHOTO_FN_URL =
@@ -2968,7 +3385,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     const target = hrefRaw.replace('#', '');
                     if (!target) return;
                     // Show target section, hide others — with anti-CLS fade
-                    const sections = ['leads', 'crm', 'djs', 'staff', 'registry-section', 'analytics', 'content', 'apps', 'production', 'wedding-plan', 'create-profiles', 'event-blueprint', 'fashion-show-panel'];
+                    const sections = ['leads', 'eb-orders', 'crm', 'djs', 'staff', 'registry-section', 'analytics', 'content', 'apps', 'production', 'wedding-plan', 'create-profiles', 'event-blueprint', 'fashion-show-panel'];
                     const eventPanels = ['event-blueprint', 'fashion-show-panel'];
                     sections.forEach(id => {
                         const el = document.getElementById(id);

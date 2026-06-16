@@ -177,6 +177,20 @@ window.activeLiveTab = "sax"; window.liveMusicTabs = {
         fallbackDesc: "A premium vocalist for elegant ceremonies, curated moments, and unforgettable live show experiences.",
         fallbackPrice: "From $600.00",
         price: 600
+    },
+    band: {
+        id: "live_band",
+        nameKey: "data_mus_band_name",
+        subtitleKey: "live_music_subtitle",
+        descKey: "data_mus_band_desc",
+        priceLabelKey: "live_band_price",
+        ctaKey: "btn_add_to_pack",
+        video: "https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/live-music/Live_Bandas_%26_Orquestas.mp4",
+        fallbackName: "Bandas & Orquestas",
+        fallbackSubtitle: "Select the live music talent you wish to add to your package.",
+        fallbackDesc: "Ensambles de gran formato, desde jazz hasta orquestas latinas para eventos de lujo.",
+        fallbackPrice: "From $2,500.00",
+        price: 2500
     }
 };
 
@@ -306,6 +320,7 @@ window.activePayasosTabLocked = "gif";
 /** Payasos modal: hero + 4 reels (mismo ADN que Staff). */
 window.payasosRoles = {
     gif: {
+        id: "payaso_gif",
         nameKey: "payasos_gif_title",
         fallbackName: "GIF / energy",
         descKey: "payasos_gif_desc",
@@ -313,6 +328,7 @@ window.payasosRoles = {
         video: "./assets/mdj-payasos/pallasos-gif.mp4"
     },
     show: {
+        id: "payaso_show",
         nameKey: "payasos_show_title",
         fallbackName: "Clown show",
         descKey: "payasos_show_desc",
@@ -320,6 +336,7 @@ window.payasosRoles = {
         video: "./assets/mdj-payasos/show-de-pallasos.mp4"
     },
     circo: {
+        id: "payaso_circo",
         nameKey: "payasos_circo_title",
         fallbackName: "Circus",
         descKey: "payasos_circo_desc",
@@ -327,6 +344,7 @@ window.payasosRoles = {
         video: "./assets/mdj-payasos/circo.mp4"
     },
     santa: {
+        id: "payaso_santa",
         nameKey: "payasos_santa_title",
         fallbackName: "Santa & seasonal",
         descKey: "payasos_santa_desc",
@@ -338,6 +356,7 @@ window.payasosRoles = {
 /** Staff modal (Bartender / Meseros / Chef): mismo ADN que roster — hero + vídeo por tarjeta. */
 window.staffRoles = {
     bartender: {
+        id: "staff_bartender",
         nameKey: "staff_bartender_title",
         fallbackName: "Bartender",
         descKey: "staff_bartender_desc",
@@ -345,6 +364,7 @@ window.staffRoles = {
         video: "./assets/mdj-staff-videos/Bartender.mp4"
     },
     meseros: {
+        id: "staff_meseros",
         nameKey: "staff_meseros_title",
         fallbackName: "Meseros",
         descKey: "staff_meseros_desc",
@@ -352,6 +372,7 @@ window.staffRoles = {
         video: "./assets/mdj-staff-videos/Meseros.mp4"
     },
     chef: {
+        id: "staff_chef",
         nameKey: "staff_chef_title",
         fallbackName: "Chef",
         descKey: "staff_chef_desc",
@@ -859,10 +880,9 @@ window.initMcModalMagicHover = function () {
         function (e) {
             const card = e.target.closest && e.target.closest(".talent-cat-card");
             if (!card || !rowWrap.contains(card)) return;
-            const btn = card.querySelector('.hl-action-btn[data-service]');
-            const svc = btn && btn.getAttribute("data-service");
-            if (svc === "mc-maestro") showMaestro(card);
-            else if (svc === "mc-host") showHost(card);
+            const cardId = card.id;
+            if (cardId === "mc-card-maestro") showMaestro(card);
+            else if (cardId === "mc-card-host") showHost(card);
         },
         true
     );
@@ -946,24 +966,34 @@ window.renderLiveHero = (tabKey = null, animate = true) => {
                 if (item.id === 'visuals_booth360' || key === 'booth360') emoji = '🎥🔄';
                 else if (item.id === 'visuals_magic_mirror' || key === 'magicMirror') emoji = '🪞';
                 else if (item.id.includes('sax')) emoji = '🎷';
+                else if (item.id.includes('band')) emoji = '🎷';
                 else if (item.id.includes('percussion') || item.id.includes('timbal')) emoji = '🥁';
                 else if (item.id.includes('photo')) emoji = '📸';
                 else if (item.id.includes('video') && !item.id.includes('drone')) emoji = '🎥';
                 else if (item.id.includes('drone')) emoji = '🚁';
 
+                let mediaContent = `<div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">${emoji}</div>`;
+                if (item.id === 'live_band') {
+                    mediaContent = `
+                        <div class="hero-card-video-container" style="width: 100%; margin-bottom: 10px;">
+                            <video src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/live-music/Live_Bandas_%26_Orquestas.mp4" autoplay loop muted playsinline></video>
+                        </div>
+                    `;
+                }
+
                 return `
-                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card${activeStateClass}" data-roster-key="${key}" style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
-                        <div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">${emoji}</div>
-                        <h3 class="hl-card-title" data-i18n="${item.nameKey}" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card${activeStateClass}" data-roster-key="${key}">
+                        ${mediaContent}
+                        <h3 class="hero-card-title hl-card-title" data-i18n="${item.nameKey}" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">
                             ${t(item.nameKey, item.fallbackName)}
                         </h3>
-                        <p class="hl-card-desc" data-i18n="${item.descKey}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">
+                        <p class="hero-card-text hl-card-desc" data-i18n="${item.descKey}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">
                             ${t(item.descKey, item.fallbackDesc)}
                         </p>
-                        <div class="hl-card-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">
+                        <div class="hero-card-price hl-card-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">
                             $${item.price}.00
                         </div>
-                        <button class="${btnClass}" data-action="hl-activate-direct" data-id="${item.id}" style="width: 100%; border: 1px solid var(--gold); background: ${isSelected ? 'rgba(197,160,89,0.2)' : 'transparent'}; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="event.stopPropagation();">
+                        <button class="${btnClass}" data-action="hl-activate-direct" data-id="${item.id}" style="width: 100%; border: 1px solid var(--gold); background: ${isSelected ? 'rgba(197,160,89,0.2)' : 'transparent'}; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;">
                             <span class="hl-btn-icon">${icon}</span>
                             <span class="hl-btn-text" data-i18n="${isSelected ? 'btn_remove_extra' : item.ctaKey}">${t(isSelected ? 'btn_remove_extra' : item.ctaKey, isSelected ? 'Remove' : item.fallbackCta || 'Activar')}</span>
                         </button>
@@ -1107,19 +1137,17 @@ window.renderDjHero = (tabKey = 'weddings', animate = true) => {
                     : `$${item.price}.00`;
 
                 const footerNote = isVIP
-                    ? `<div style="font-size: 8px; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; margin-bottom: 12px; width: 100%; text-align: center; line-height: 1.2;">Custom production available</div>`
+                    ? `<div class="mdj-talent-card-enter">Custom production available</div>`
                     : `<div style="margin-bottom: 12px;"></div>`;
 
                 return `
-                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card${activeStateClass}" data-dj-tab-key="${key}" style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; min-height: 320px; transition: transform 0.3s ease;">
-                        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-start; align-items: center;">
-                            <div class="hero-card-emoji" style="font-size: 28px; margin-bottom: 12px;">${emoji}</div>
-                            <h3 class="hero-card-title hl-type-name" data-i18n="${item.nameKey}" style="font-size: 15px; line-height: 1.2; margin-bottom: 8px; color: var(--gold); font-family: 'Playfair Display', serif;">${t(item.nameKey, item.fallbackName)}</h3>
-                            <p class="hero-card-text" data-i18n="${item.descKey}" style="font-size: 11px; opacity: 0.8; margin-bottom: auto; color: white; line-height: 1.35; width: 100%;">${t(item.descKey, item.fallbackDesc)}</p>
-                            <div class="hero-card-price hl-type-price" style="font-size: 18px; font-weight: 700; color: var(--gold); margin-top: 15px;">${priceDisplay}</div>
-                            ${footerNote}
-                        </div>
-                        <button class="${btnClass}" data-action="hl-activate-direct" data-id="${item.id}" style="font-size: 10px; padding: 10px 5px; margin-top: auto; border-radius: 50px; letter-spacing: 0.5px;">
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card${activeStateClass}" data-dj-tab-key="${key}">
+                        <div class="hero-card-emoji" aria-hidden="true">${emoji}</div>
+                        <h3 class="hero-card-title hl-type-name" data-i18n="${item.nameKey}">${t(item.nameKey, item.fallbackName)}</h3>
+                        <p class="hero-card-text" data-i18n="${item.descKey}">${t(item.descKey, item.fallbackDesc)}</p>
+                        <div class="hero-card-price hl-type-price">${priceDisplay}</div>
+                        ${footerNote}
+                        <button class="btn-agregar" data-action="hl-activate-direct" data-id="${item.id}">
                             <span class="hl-btn-icon">${icon}</span>
                             <span class="hl-btn-text" data-i18n="${isSelected ? 'btn_remove_extra' : item.ctaKey}">${btnText}</span>
                         </button>
@@ -1312,18 +1340,18 @@ window.renderFxHero = (currentTabKey = 'sparks', animate = true) => {
                 const btnLabel = isSelected ? t('btn_remove_extra', 'Remove') : t(item.ctaKey, 'Consultar');
                 const iconHtml = isSelected ? '<span class="hl-btn-icon">✓</span>' : '<span class="hl-btn-icon"></span>';
                 return `
-                        <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card${activeStateClass}" data-fx-key="${key}" style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
+                        <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card${activeStateClass}" data-fx-key="${key}">
                             <div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">${item.emoji || '✨'}</div>
-                            <h3 class="hl-card-title" data-i18n="${item.nameKey}" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">
+                            <h3 class="hero-card-title hl-card-title" data-i18n="${item.nameKey}" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">
                                 ${t(item.nameKey, item.fallbackName)}
                             </h3>
-                            <p class="hl-card-desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">
+                            <p class="hero-card-text hl-card-desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">
                                 ${item.fallbackDesc || ""}
                             </p>
-                            <div class="hl-card-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">
+                            <div class="hero-card-price hl-card-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">
                                 ${item.priceString ? item.priceString : (item.price ? '$' + item.price + '.00' : 'Cotizar')}
                             </div>
-                            <button class="${btnClass}" data-action="open-fx" style="width: 100%; border: 1px solid var(--gold); background: ${btnBg}; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="event.stopPropagation();">
+                            <button class="${btnClass}" data-action="hl-activate-direct" data-id="${item.id}" style="width: 100%; border: 1px solid var(--gold); background: ${btnBg}; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;">
                                 ${iconHtml}
                                 <span class="hl-btn-text">${btnLabel}</span>
                             </button>
@@ -1442,19 +1470,19 @@ window.renderLightingHero = (currentTabKey = 'movingHeads', animate = true) => {
                 const activeStateClass = isActive ? " active" : "";
 
                 return `
-                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card${activeStateClass}" data-lighting-key="${key}" style="flex: 1 1 0; min-width: 200px; max-width: 260px; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-sizing: border-box; min-height: 320px; gap: 10px;">
+                    <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card${activeStateClass}" data-lighting-key="${key}">
                         <div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">${item.emoji || '💡'}</div>
-                        <h3 class="hl-card-title" data-i18n="${item.nameKey}" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">
+                        <h3 class="hero-card-title hl-card-title" data-i18n="${item.nameKey}" style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2;">
                             ${t(item.nameKey, item.fallbackName)}
                         </h3>
-                        <p class="hl-card-desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">
+                        <p class="hero-card-text hl-card-desc" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: rgba(255,255,255,0.7); font-size: 11px; margin: 0; flex-grow: 1; line-height: 1.4;">
                             ${item.fallbackDesc || ""}
                         </p>
-                        <div class="hl-card-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">
+                        <div class="hero-card-price hl-card-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">
                             ${item.priceString ? item.priceString : (item.price ? '$' + item.price + '.00' : 'Cotizar')}
                         </div>
-                        <button class="${btnClass}" data-action="open-lighting" style="width: 100%; border: 1px solid var(--gold); background: ${isSelected ? 'rgba(197,160,89,0.2)' : 'transparent'}; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="event.stopPropagation();">
-                            ${icon ? '<span class="hl-btn-icon">${icon}</span>' : ''}
+                        <button class="${btnClass}" data-action="hl-activate-direct" data-id="${item.id}" style="width: 100%; border: 1px solid var(--gold); background: ${isSelected ? 'rgba(197,160,89,0.2)' : 'transparent'}; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            ${icon ? `<span class="hl-btn-icon">${icon}</span>` : ''}
                             <span class="hl-btn-text">${btnText}</span>
                         </button>
                     </div>
@@ -1556,7 +1584,7 @@ window.renderHoraLocaCatalogue = () => {
         const btnText = isSelected ? (window.t('btn_added_exp', 'Añadido') || t('btn_added_exp', 'Añadido')) : (window.t('btn_active_exp', 'Activar esta Experiencia') || t('btn_active_exp', 'Activar esta Experiencia'));
 
         return `
-        <div class="talent-cat-card hero-glass-card hl-type-card" id="hl-card-${pack.id}" data-action="select-hl-package" data-id="${pack.id}" style="flex: 1 1 0; padding: 20px 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; min-height: 320px; transition: transform 0.3s ease;">
+        <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card" id="hl-card-${pack.id}" data-action="select-hl-package" data-id="${pack.id}">
             <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-start; align-items: center;">
                 <div class="hero-card-emoji" style="font-size: 28px; margin-bottom: 12px;">${emoji}</div>
                 <h3 class="hero-card-title hl-type-name" data-i18n="data_${pack.id}_name" style="font-size: 15px; line-height: 1.2; margin-bottom: 8px; color: var(--gold); font-family: 'Playfair Display', serif;">${pName}</h3>
@@ -2124,11 +2152,67 @@ window.renderRentalCatalog = (categoryId) => {
                 gap: 8px;
             }
         </style>
+        <div class="mdj-rental-catalog-scroll-wrapper" style="width: 100%;">
         <div class="mdj-rental-catalog-carousel" data-mdj-ui-tick-scroll>
     `;
 
-    let cardsHtml = '';
+    // Icons map for audio and equipment
+    const catIcons = {
+        'pa_small': '🔊',
+        'pa_medium': '🔊 🔊',
+        'pa_large': '🔊 🔊 🔊',
+        'wireless_mic': '🎤',
+        'dj_monitor': '📻',
+        'audio_mixer': '🎚️',
+        
+        // Lighting & FX
+        'led_panel_small': '📺',
+        'led_panel_large': '🖥️',
+        'moving_heads': '🔦',
+        'uplighting_pack': '💡',
+        'laser_show': '🎇',
+        'fog_machine': '🌫️',
+        'low_fog_machine': '☁️',
+        'bubble_machine': '🫧',
+        'spark_machine': '✨',
+        'led_video_small': '📱',
+        'led_video_medium': '🖥️',
+        'led_video_large': '🎬',
+        'indoor_led_screen': '📟',
+        'outdoor_led_screen': '🏟️',
+        'led_tv_stand': '🖥️',
+        
+        // Furniture
+        'f_chairs': '🪑',
+        'f_cocktail': '🍸',
+        'f_dining': '🍽️',
+        'f_floral': '💐',
+        'f_led': '🛋️',
+        'f_linens': '🧵',
+        'f_tables': '🪚',
+        'f_backdrop': '🖼️',
+        
+        // Tents & AC
+        'tent_clear': '🎪',
+        'tent_white': '⛺',
+        'ac_unit': '❄️',
+        
+        // Inflatables
+        'castle_lite': '🏰',
+        'castle_basic': '🎠',
+        'castle_big': '🎡',
+        
+        // Stages
+        'stage_small': '🧱',
+        'stage_medium': '🏟️',
+        'stage_large': '🏗️',
+        'truss_arch': '⛩️',
+        'truss_box_full': '🧊',
+        'truss_ultra': '🌉'
+    };
 
+    let cardsHtml = '';
+    
     catalog.items.forEach(item => {
         if (window.rentalDraftQty[item.id] === undefined) {
             window.rentalDraftQty[item.id] = 0;
@@ -2137,18 +2221,18 @@ window.renderRentalCatalog = (categoryId) => {
 
         const isAdded = window.selectedPackage.some(p => p.id === item.id);
         const isTalent = item.category === 'talent';
-        const btnClass = isAdded ? 'cta cta-remove' : 'cta';
+        const btnClass = isAdded ? 'btn-agregar active' : 'btn-agregar';
 
-        let btnText = isAdded ? 'REMOVE' : 'ADD';
+        let btnText = isAdded ? 'QUITAR' : 'AGREGAR AL PAQUETE';
         if (isTalent) {
             btnText = isAdded ? 'CANCELAR' : 'RESERVAR';
         }
 
         const qtyHtml = isTalent ? '' : `
-                            <div class="qty">
-                                <button class="qty-btn-action" data-action="r-qty-down" data-id="${item.id}">−</button>
-                                <span id="qty-val-${item.id}" class="qty-val-display">${qty}</span>
-                                <button class="qty-btn-action" data-action="r-qty-up" data-id="${item.id}">+</button>
+                            <div class="qty" style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(212,175,37,0.3);">
+                                <button class="qty-btn-action" data-action="r-qty-down" data-id="${item.id}" style="background: none; border: none; color: var(--gold); font-size: 16px; cursor: pointer; padding: 0 4px;">−</button>
+                                <span id="qty-val-${item.id}" class="qty-val-display" style="color: white; font-family: Inter, sans-serif; font-size: 12px; min-width: 14px; text-align: center;">${qty}</span>
+                                <button class="qty-btn-action" data-action="r-qty-up" data-id="${item.id}" style="background: none; border: none; color: var(--gold); font-size: 16px; cursor: pointer; padding: 0 4px;">+</button>
                             </div>
         `;
 
@@ -2156,27 +2240,73 @@ window.renderRentalCatalog = (categoryId) => {
         const imgSrc = imgRaw ? mdjV(imgRaw) : '';
         const mediaHtml = `<img src="${imgSrc}" alt="${item.name}" style="width: 100%; height: auto; aspect-ratio: 4/5; object-fit: cover; display: block;">`;
 
+        const emoji = catIcons[item.id] || '🔌';
+
+        let customDescription = '';
+        if (item.desc) {
+            customDescription = item.desc;
+        } else if (item.id === 'pa_small') {
+             customDescription = 'Sistema de sonido compacto ideal para espacios cerrados y audiencias hasta 50 personas. Incluye altavoces activos y trípodes.';
+        } else if (item.id === 'pa_medium') {
+             customDescription = 'Configuración versátil para eventos medianos. Subwoofers potentes y agudos cristalinos para hasta 150 invitados.';
+        } else if (item.id === 'pa_large') {
+             customDescription = 'Arreglo lineal (Line Array) de alto rendimiento para conciertos o bodas de gran formato. Cobertura acústica impecable.';
+        } else if (item.id === 'wireless_mic') {
+             customDescription = 'Micrófonos UHF de calidad profesional (Shure/Sennheiser). Alcance extendido sin interferencias para discursos y cantantes.';
+        } else if (item.id === 'dj_monitor') {
+             customDescription = 'Monitores de cabina dedicados para DJs. Respuesta plana y presión sonora adecuada para mezclas precisas.';
+        } else if (item.id === 'audio_mixer') {
+             customDescription = 'Consola de mezcla analógica/digital para conectar múltiples fuentes de audio. Ecualización y efectos integrados.';
+        } else if (item.category === 'lighting') {
+             customDescription = 'Iluminación y sistemas visuales profesionales para elevar la experiencia visual de su evento, con control DMX y configuración personalizada.';
+        } else if (item.category === 'furniture') {
+             customDescription = 'Mobiliario premium y elementos de decoración seleccionados para aportar elegancia, confort y estilo a cualquier espacio de celebración.';
+        } else if (item.id && item.id.startsWith('tent')) {
+             customDescription = 'Estructuras de carpa de alta resistencia y diseño elegante, ideales para proteger a sus invitados de las inclemencias del tiempo.';
+        } else if (item.id && item.id.startsWith('castle')) {
+             customDescription = 'Atracciones inflables seguras y divertidas, perfectas para entretener a los más pequeños en fiestas infantiles y eventos familiares.';
+        } else if (item.id && (item.id.startsWith('stage') || item.id.startsWith('truss'))) {
+             customDescription = 'Estructuras de escenario y soporte técnico robusto para garantizar presentaciones en vivo seguras y de alto impacto visual.';
+        } else {
+             // Fallback description for other items if no desc provided
+             customDescription = 'Equipamiento profesional de alta calidad, testeado y certificado para garantizar un rendimiento óptimo en su evento.';
+        }
+
         cardsHtml += `
-            <div class="product-card" data-rental-id="${item.id}">
-                <div class="product-image">
+            <div class="product-card glass-card hero-glass-card" data-rental-id="${item.id}" style="width: 250px !important; min-width: 250px !important; min-height: 400px !important; padding: 10px !important; border: 2px solid var(--gold) !important; box-sizing: border-box !important; display: flex !important; flex-direction: column !important; align-items: flex-start !important; text-align: left !important; background: rgba(0,0,0,0.4); overflow: hidden; position: relative;">
+                
+                <!-- Emoji Area at Top -->
+                <div class="hero-card-emoji" aria-hidden="true" style="text-align: left; font-size: 38px; margin-bottom: 5px;">
+                    ${emoji}
+                </div>
+
+                <!-- Title -->
+                <div class="hero-card-title" style="margin-bottom: 5px; font-family: 'Playfair Display', serif; color: var(--gold); font-size: 15px; font-weight: 600; line-height: 1.2;">
+                    ${item.name}
+                </div>
+                
+                <div class="hero-card-text" style="flex-grow: 1; font-family: -apple-system, sans-serif; color: rgba(255,255,255,0.7); font-size: 12px; line-height: 1.4;">
+                    ${customDescription}
+                </div>
+
+                <div class="product-image" style="display:none;">
                     ${mediaHtml}
-
-                    <div class="product-overlay">
-                        <div class="overlay-top" ${isTalent ? 'style="justify-content: center;"' : ''}>
-                            <div class="price-wrap">
-                                <span class="price">$${item.price}</span>
-                                <span class="unit">${item.unit || '/u'}</span>
-                            </div>
-
-                            ${qtyHtml}
+                </div>
+                
+                <div class="product-overlay" style="position: relative; margin-top: auto; padding: 0; display: flex; flex-direction: column; gap: 10px; width: 100%; box-sizing: border-box; background: transparent; border: none; margin-bottom: 12px;">
+                    <div class="overlay-top" ${isTalent ? 'style="justify-content: center;"' : ''} style="margin-bottom: 0;">
+                        <div class="price-wrap">
+                            <span class="price" style="font-family: Inter, sans-serif; font-size: 16px; font-weight: 700; color: #d4af37;">$${item.price}</span>
+                            <span class="unit" style="font-size: 12px; opacity: 0.7; color: #fff; margin-left: 2px; display: none;">${item.unit || '/u'}</span>
                         </div>
 
-                        <div class="overlay-bottom">
-                            <div class="title">${item.name}</div>
-                            <button class="${btnClass}" data-action="r-add-cart" data-id="${item.id}" data-price="${item.price}" data-name="${item.name}" data-category="${item.category || ''}">${btnText}</button>
-                        </div>
+                        ${qtyHtml}
                     </div>
 
+                    <div class="overlay-bottom">
+                        <div class="title" style="display:none;">${item.name}</div>
+                        <button class="${btnClass}" data-action="r-add-cart" data-id="${item.id}" data-price="${item.price}" data-name="${item.name}" data-category="${item.category || ''}" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--gold); background: transparent; color: var(--gold); font-family: -apple-system, sans-serif; font-weight: 600; cursor: pointer; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; transition: all 0.3s ease; margin-bottom: 2px;">${btnText}</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -2184,8 +2314,17 @@ window.renderRentalCatalog = (categoryId) => {
 
     html += cardsHtml;
     html += '</div>'; // Close track
+    html += '</div>'; // Close scroll wrapper
 
     grid.innerHTML = html;
+
+    // Purge the old dynamically injected style to avoid conflicts
+    const styleTags = grid.querySelectorAll('style');
+    styleTags.forEach(tag => {
+        if(tag.innerHTML.includes('.product-overlay')) {
+            tag.remove();
+        }
+    });
 
     if (typeof window.mdjUiTickAutoInit === 'function') {
         window.mdjUiTickAutoInit();
@@ -2331,7 +2470,12 @@ window.initRentalCatalogInfiniteCarousel = function () {
 
     const originals = Array.from(track.querySelectorAll(':scope > .product-card:not(.mdj-rental-carousel-clone)'));
     const n = originals.length;
-    if (n < 2) return;
+    
+    // DESACTIVAR INFINITO SI HAY POCAS TARJETAS (EVITA PARKINSON) Y MANTENER A LA IZQUIERDA
+    if (n < 20) {
+        track.style.setProperty('justify-content', 'flex-start', 'important');
+        return;
+    }
 
     function cloneCard(el) {
         const c = el.cloneNode(true);
@@ -2559,9 +2703,6 @@ window.mdjRentalsTryMountTalentStripInfinite = function (trackOrId, cloneClass) 
  */
 window.mdjRentalsRestripInfiniteAfterModalShow = function (modalId) {
     const map = {
-        'staff-modal': ['staff-roster-grid', 'mdj-staff-carousel-clone'],
-        'payasos-modal': ['payasos-roster-grid', 'mdj-payasos-carousel-clone'],
-        'mc-modal': ['mc-roster-scroll', 'mdj-mc-carousel-clone'],
         'horaloca-modal': ['horaloca-grid', 'mdj-horaloca-carousel-clone'],
         'roster-modal': ['roster-grid', 'mdj-roster-hero-carousel-clone'],
         'dj-modal': ['dj-roster-grid', 'mdj-dj-roster-carousel-clone']
@@ -2932,7 +3073,25 @@ window.togglePackageItem = (id, name, price) => {
 
     if (isChecked) {
         if (!window.selectedPackage.find(item => item.id === id)) {
-            window.selectedPackage.push({ id, name, price });
+            // Determinar la categoría basándonos en el ID para el agrupamiento en el carrito
+            let cat = 'general';
+            if (id.startsWith('dj_')) cat = 'dj';
+            else if (id.startsWith('hl_') || id.startsWith('hora_loca')) cat = 'horaloca';
+            else if (id.startsWith('live_')) cat = 'live';
+            else if (id.startsWith('visuals_') || id.startsWith('vis_')) cat = 'visuals';
+            else if (id.startsWith('mc_')) cat = 'mc';
+            else if (id.startsWith('staff_')) cat = 'staff';
+            else if (id.startsWith('payaso_')) cat = 'payaso';
+            else if (id.startsWith('fx_')) cat = 'fx';
+            else if (id.startsWith('lighting_')) cat = 'lighting';
+            
+            window.selectedPackage.push({ 
+                id, 
+                name, 
+                price,
+                category: cat,
+                type: 'rental'
+            });
         }
     } else {
         window.selectedPackage = window.selectedPackage.filter(item => item.id !== id);
@@ -2941,9 +3100,35 @@ window.togglePackageItem = (id, name, price) => {
         window.mdjRentalsSyncTogglePack({ id: id, name: name, price: price, added: !!isChecked });
     }
     window.updatePackageSummary();
+    
 };
 
 window.updatePackageSummary = () => {
+    // Update hardcoded talent buttons in DOM
+    document.querySelectorAll('#mc-roster-scroll button[data-action="hl-activate-direct"], #staff-roster-grid button[data-action="hl-activate-direct"], #payasos-roster-grid button[data-action="hl-activate-direct"]').forEach(btn => {
+        const id = btn.getAttribute('data-id');
+        if (!id) return;
+        const isSelected = window.selectedPackage && window.selectedPackage.some(p => p.id === id);
+        
+        if (isSelected) {
+            btn.classList.add('active');
+            btn.classList.add('hl-btn-added');
+            btn.style.background = 'rgba(197,160,89,0.2)';
+            btn.style.color = '#fff';
+            btn.style.borderColor = 'var(--gold)';
+            btn.setAttribute('data-i18n', 'btn_remove_extra');
+            btn.textContent = window.t ? window.t('btn_remove_extra', 'Quitar extra') : 'QUITAR EXTRA';
+        } else {
+            btn.classList.remove('active');
+            btn.classList.remove('hl-btn-added');
+            btn.style.background = 'transparent';
+            btn.style.color = 'var(--gold)';
+            btn.style.borderColor = 'var(--gold)';
+            btn.setAttribute('data-i18n', 'btn_active_exp');
+            btn.textContent = window.t ? window.t('btn_active_exp', 'Activar esta Experiencia') : 'ACTIVAR ESTA EXPERIENCIA';
+        }
+    });
+
     const summaries = document.querySelectorAll('.package-summary-bar');
     if (!summaries || summaries.length === 0) return;
 
@@ -3353,7 +3538,13 @@ document.addEventListener('click', async (e) => {
         if (isSelected) {
             window.selectedPackage = window.selectedPackage.filter(item => item.id !== id);
         } else {
-            window.selectedPackage.push({ id, name, price });
+            window.selectedPackage.push({ 
+                id, 
+                name, 
+                price,
+                category: 'live',
+                type: 'rental'
+            });
         }
         window.updatePackageSummary();
         // CTA update doesn't need animation
@@ -3373,36 +3564,125 @@ document.addEventListener('click', async (e) => {
         if (!pack && window.liveMusicTabs) pack = Object.values(window.liveMusicTabs).find(p => p.id === id);
         if (!pack && window.visualTabs) pack = Object.values(window.visualTabs).find(p => p.id === id);
         if (!pack && window.mcTabs) pack = Object.values(window.mcTabs).find(p => p.id === id);
+        if (!pack && window.djTabs) pack = Object.values(window.djTabs).find(p => p.id === id);
+        if (!pack && window.fxItems) pack = Object.values(window.fxItems).find(p => p.id === id);
+        if (!pack && window.lightingItems) pack = Object.values(window.lightingItems).find(p => p.id === id);
+        if (!pack && window.staffRoles) pack = Object.values(window.staffRoles).find(p => p.id === id);
+        if (!pack && window.payasosRoles) pack = Object.values(window.payasosRoles).find(p => p.id === id);
         if (!pack && id === 'dj_family' && window.djTabs && window.djTabs.family) {
             pack = window.djTabs.family;
         }
 
         if (pack) {
-            window.selectedPackage = Array.isArray(window.selectedPackage) ? window.selectedPackage : [];
-            const isSelected = window.selectedPackage.some(p => p.id === id);
+            // === PASO 1: NEGOCIO (Determinación de estado) ===
+            const nameKey = pack.nameKey || ('data_' + pack.id + '_name');
+            const fallback = pack.fallbackName || pack.name || 'Premium Package';
+            const packName = typeof t === 'function' ? t(nameKey, fallback) : fallback;
+            
+            // Determinar categoría para compatibilidad legacy
+            let cat = 'general';
+            if (id.startsWith('dj_')) cat = 'dj';
+            else if (id.startsWith('hl_') || id.startsWith('hora_loca')) cat = 'horaloca';
+            else if (id.startsWith('live_')) cat = 'live';
+            else if (id.startsWith('visuals_') || id.startsWith('vis_')) cat = 'visuals';
+            else if (id.startsWith('mc_')) cat = 'mc';
+            else if (id.startsWith('staff_')) cat = 'staff';
+            else if (id.startsWith('payaso_')) cat = 'payaso';
+            else if (id.startsWith('fx_')) cat = 'fx';
+            else if (id.startsWith('lighting_')) cat = 'lighting';
 
-            if (isSelected) {
-                window.selectedPackage = window.selectedPackage.filter(p => p.id !== id);
+            // Comprobar estado actual en EventBuilder (la verdadera fuente de verdad) o fallback a selectedPackage
+            let isCurrentlySelected = false;
+            if (window.MDJ_EVENT_BUILDER_V1 && window.MDJEventBuilder) {
+                const draft = window.MDJEventBuilder.getDraft();
+                isCurrentlySelected = (draft.lines || []).some(l => l.catalog_sku === id);
             } else {
-                const nameKey = pack.nameKey || ('data_' + pack.id + '_name');
-                const fallback = pack.fallbackName || pack.name || 'Premium Package';
-                window.selectedPackage.push({ id: pack.id, name: t(nameKey, fallback), price: pack.price || 0 });
+                window.selectedPackage = Array.isArray(window.selectedPackage) ? window.selectedPackage : [];
+                isCurrentlySelected = window.selectedPackage.some(p => p.id === id);
+            }
+            
+            const willBeAdded = !isCurrentlySelected;
+
+            // === PASO 2: SINCRONIZACIÓN (Envío de señales) ===
+            let syncSuccess = false;
+            
+            try {
+                if (window.MDJ_EVENT_BUILDER_V1) {
+                    if (id === 'dj_family' && typeof window.mdjRentalsSyncDjFamily === 'function') {
+                        window.mdjRentalsSyncDjFamily({ pack: pack, added: willBeAdded });
+                        syncSuccess = true;
+                    } else if (typeof window.mdjRentalsSyncTogglePack === 'function') {
+                        window.mdjRentalsSyncTogglePack({ 
+                            id: id, 
+                            name: packName, 
+                            price: pack.price || 0, 
+                            added: willBeAdded 
+                        });
+                        syncSuccess = true;
+                    }
+                } else {
+                    // Fallback para modo local (sin EventBuilder)
+                    syncSuccess = true; 
+                }
+            } catch (err) {
+                console.error('[MDJ rentals] Fallo en Sincronización del carrito', err);
+                syncSuccess = false;
             }
 
-            window.updatePackageSummary();
-
-            if (id === 'dj_family' && window.MDJ_EVENT_BUILDER_V1 && typeof window.mdjRentalsSyncDjFamily === 'function') {
-                window.mdjRentalsSyncDjFamily({ pack: pack, added: !isSelected });
+            // === PASO 3: VERIFICACIÓN (Chequeo de estado real) ===
+            let verifiedAsExpected = false;
+            if (syncSuccess && window.MDJ_EVENT_BUILDER_V1 && window.MDJEventBuilder) {
+                const updatedDraft = window.MDJEventBuilder.getDraft();
+                const existsNow = (updatedDraft.lines || []).some(l => l.catalog_sku === id);
+                // Si queríamos agregar y ahora existe, O queríamos quitar y ya no existe -> Exitoso
+                verifiedAsExpected = (willBeAdded === existsNow);
+            } else if (syncSuccess) {
+                verifiedAsExpected = true; // Fallback V0 local
             }
 
-            if (id === 'dj_family' && typeof window.renderDjHero === 'function') {
-                window.renderDjHero(window.activeDjTabLocked || 'weddings', false);
+            // === PASO 4: UI (Actualización Visual CONDICIONADA) ===
+            if (verifiedAsExpected) {
+                if (window.MDJ_EVENT_BUILDER_V1 && window.MDJEventBuilder) {
+                    // Estabilización de Exclusividad: 
+                    // Sincronizamos el array legado directamente desde el draft del EventBuilder (Fuente de Verdad).
+                    // Si el EventBuilder reemplazó un servicio exclusivo (ej. un slot 'dj_primary'), 
+                    // el antiguo ya no estará en 'draft.lines', limpiando automáticamente la UI.
+                    const draft = window.MDJEventBuilder.getDraft();
+                    window.selectedPackage = (draft.lines || []).map(line => ({
+                        id: line.catalog_sku,
+                        name: line.name,
+                        price: line.unit_price_usd || 0,
+                        category: line.category_key || 'general',
+                        type: 'rental',
+                        quantity: line.quantity || 1
+                    }));
+                } else {
+                    // Modo local sin EventBuilder (Legacy support)
+                    window.selectedPackage = Array.isArray(window.selectedPackage) ? window.selectedPackage : [];
+                    if (willBeAdded) {
+                        window.selectedPackage.push({ 
+                            id: pack.id, 
+                            name: packName, 
+                            price: pack.price || 0,
+                            category: cat,
+                            type: 'rental'
+                        });
+                    } else {
+                        window.selectedPackage = window.selectedPackage.filter(p => p.id !== id);
+                    }
+                }
+
+                // Disparar renders
+                window.updatePackageSummary();
+                if (window.renderHoraLocaCatalogue) window.renderHoraLocaCatalogue();
+                if (window.renderLiveHero && window.activeCategory !== 'mc') window.renderLiveHero(window.activeLiveTabLocked || 'sax', false);
+                if (window.renderDjHero) window.renderDjHero(window.activeDjTabLocked || 'weddings', false);
+                if (window.renderFxHero) window.renderFxHero(window.activeFxTabLocked || 'sparks', false);
+                if (window.renderLightingHero) window.renderLightingHero(window.activeLightingTabLocked || 'movingHeads', false);
+                if (window.i18n) window.i18n.updateUI();
+            } else {
+                console.warn('[MDJ rentals] Verificación fallida. UI no alterada para prevenir desincronización.');
             }
-
-            if (window.renderHoraLocaCatalogue) window.renderHoraLocaCatalogue();
-            if (window.renderLiveHero && window.activeCategory !== 'mc') window.renderLiveHero(null, false);
-
-            if (window.i18n) window.i18n.updateUI();
         }
         return;
     }
@@ -3501,7 +3781,14 @@ document.addEventListener('click', async (e) => {
         const unitPrice = parseFloat(btn.getAttribute('data-price'));
         let qty = window.rentalDraftQty[id] || 0;
 
-        const isCurrentlyAdded = window.selectedPackage.some(p => p.id === id);
+        // PASO 1: NEGOCIO — leer estado real desde MDJEventBuilder (fuente de verdad)
+        let isCurrentlyAdded;
+        if (window.MDJ_EVENT_BUILDER_V1 && window.MDJEventBuilder) {
+            const draft = window.MDJEventBuilder.getDraft();
+            isCurrentlyAdded = (draft.lines || []).some(l => l.catalog_sku === id);
+        } else {
+            isCurrentlyAdded = window.selectedPackage.some(p => p.id === id);
+        }
         const category = btn.getAttribute('data-category');
         const isTalent = category === 'talent';
 
@@ -3512,6 +3799,11 @@ document.addEventListener('click', async (e) => {
             window.rentalDraftQty[id] = 0;
             const valEl = document.getElementById(`qty-val-${id}`);
             if (valEl) valEl.innerText = 0;
+
+            // PASO 2: SINCRONIZACIÓN — notificar al EventBuilder (REMOVE)
+            if (window.MDJ_EVENT_BUILDER_V1 && typeof window.mdjRentalsSyncTogglePack === 'function') {
+                window.mdjRentalsSyncTogglePack({ id: id, name: name, price: unitPrice, added: false });
+            }
 
             // --- REVERTIR AL VIDEO BASE EN REMOVE ---
             const heroVideo = document.querySelector('#rental-multi-video-container .active-vid');
@@ -3542,10 +3834,16 @@ document.addEventListener('click', async (e) => {
                 price: unitPrice,
                 quantity: qty,
                 total: unitPrice * qty,
+                category: category,
                 type: 'rental'
             });
             btn.className = 'cta cta-remove';
             btn.innerText = isTalent ? 'CANCELAR' : 'REMOVE';
+
+            // PASO 2: SINCRONIZACIÓN — notificar al EventBuilder (ADD)
+            if (window.MDJ_EVENT_BUILDER_V1 && typeof window.mdjRentalsSyncTogglePack === 'function') {
+                window.mdjRentalsSyncTogglePack({ id: id, name: name, price: unitPrice * qty, added: true });
+            }
 
             // --- HERO VIDEO POR ITEM (FIX DIRECTO) ---
             let item = null;
@@ -3957,7 +4255,14 @@ window.mdjTalentSelectorInfiniteApply = function () {
         return;
     }
     var sw = track.scrollWidth;
-    if (sw > 120) track.scrollLeft = Math.round(sw / 4);
+    // PENDIENTE (ticket): left border del hub aún mordido — scroll alignment mejorado,
+    // offset izquierdo sin resolver por conflicto de especificidad CSS vs inline block.
+    if (sw > 120) {
+        var firstCard = track.querySelector('.talent-cat-card:not(.mdj-talent-loop-clone)');
+        var slot = firstCard ? (firstCard.offsetWidth + 20) : 270;
+        var raw = Math.round(sw / 4);
+        track.scrollLeft = Math.round(raw / slot) * slot;
+    }
 };
 
 window.mdjTalentSelectorInfiniteApplyRetry = function (attempt) {
@@ -4387,8 +4692,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    loadRentalsData();
+    await loadRentalsData();
     mdjRentalsTryResumeCheckoutAfterAuth();
+
+    // 3. EVENT BUILDER V1: Sincronización Inicial (Auditoría de Carga Inicial)
+    if (window.MDJ_EVENT_BUILDER_V1 && window.MDJEventBuilder) {
+        try {
+            // El EventBuilder ya hidrató su estado local desde localStorage
+            const draft = window.MDJEventBuilder.getDraft();
+            if (draft && Array.isArray(draft.lines) && draft.lines.length > 0) {
+                // Sincronizar hacia abajo (hacia rentals.js)
+                window.selectedPackage = draft.lines.map(line => ({
+                    id: line.catalog_sku,
+                    name: line.name,
+                    price: line.unit_price_usd || 0,
+                    category: line.category_key || 'general',
+                    type: 'rental',
+                    quantity: line.quantity || 1
+                }));
+                // Forzar repintado de la UI de resúmenes
+                if (typeof window.updatePackageSummary === 'function') {
+                    window.updatePackageSummary();
+                }
+            }
+        } catch (errSync) {
+            console.warn('[MDJ rentals] Fallo en hidratación inicial desde EventBuilder', errSync);
+        }
+    }
 
     const runTalentHubChrome = () => {
         if (typeof window.mdjRentalsStripPublicDjTalentCards === 'function') {
@@ -4409,13 +4739,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof window.initTalentCarouselDragClickGuard === 'function') {
             window.initTalentCarouselDragClickGuard();
         }
-        if (typeof window.mdjRentalsTryMountTalentStripInfinite === 'function') {
-            window.mdjRentalsTryMountTalentStripInfinite('staff-roster-grid', 'mdj-staff-carousel-clone');
-            window.mdjRentalsTryMountTalentStripInfinite('payasos-roster-grid', 'mdj-payasos-carousel-clone');
-            window.mdjRentalsTryMountTalentStripInfinite('mc-roster-scroll', 'mdj-mc-carousel-clone');
-        }
         if (typeof window.mdjRentalsInitStripDragClickGuard === 'function') {
-            ['staff-roster-grid', 'payasos-roster-grid', 'mc-roster-scroll'].forEach(function (sid) {
+            ['staff-roster-grid', 'mc-roster-scroll'].forEach(function (sid) {
                 const el = document.getElementById(sid);
                 if (el) window.mdjRentalsInitStripDragClickGuard(el);
             });
@@ -4456,11 +4781,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 if (typeof window.mdjTalentSelectorInfiniteApplyRetry === 'function') {
                     window.mdjTalentSelectorInfiniteApplyRetry(0);
-                }
-                if (typeof window.mdjRentalsTryMountTalentStripInfinite === 'function') {
-                    window.mdjRentalsTryMountTalentStripInfinite('staff-roster-grid', 'mdj-staff-carousel-clone');
-                    window.mdjRentalsTryMountTalentStripInfinite('payasos-roster-grid', 'mdj-payasos-carousel-clone');
-                    window.mdjRentalsTryMountTalentStripInfinite('mc-roster-scroll', 'mdj-mc-carousel-clone');
                 }
             },
             { passive: true }

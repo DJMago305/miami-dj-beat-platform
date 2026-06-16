@@ -234,770 +234,7 @@ Riesgo: romper carga del catálogo.
             object-fit: cover;
         }
     </style>
-    <!-- EVENT BUILDER — fullscreen Event Cart (scoped); gated by MDJ_EVENT_BUILDER_V1 -->
-    <style id="rentals-event-builder">
-        body.mdj-eb-cart-open {
-            overflow: hidden;
-        }
-
-        /* Carrito a pantalla completa: el header real queda bajo overlay/drawer (no subir z-index del #mainHeader aquí). */
-
-        body.mdj-event-builder-on #mdj-event-builder-root {
-            display: block;
-        }
-
-        #mdj-event-builder-root {
-            display: none;
-        }
-
-        #mdj-event-builder-root .mdj-eb-fab {
-            position: fixed;
-            left: clamp(12px, 2vw, 20px);
-            bottom: clamp(88px, 12vh, 120px);
-            z-index: 9400;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 16px;
-            border-radius: 999px;
-            border: 2px solid rgba(212, 175, 55, 0.88);
-            background: rgba(10, 12, 22, 0.9);
-            color: rgba(212, 175, 55, 0.95);
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            cursor: pointer;
-            box-shadow: 0 0 18px rgba(212, 175, 55, 0.22);
-        }
-
-        #mdj-event-builder-root .mdj-eb-fab__count {
-            min-width: 20px;
-            height: 20px;
-            padding: 0 6px;
-            border-radius: 999px;
-            background: rgba(212, 175, 55, 0.22);
-            font-size: 11px;
-            line-height: 20px;
-            text-align: center;
-        }
-
-        /* Rentals: Event Cart header twin (same glass/circle as shop cart; color + badge differ) */
-        body.page-mdj-rentals #mdj-event-builder-root .mdj-eb-fab {
-            display: none !important;
-        }
-
-        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn {
-            margin-left: 10px;
-            border-color: rgba(72, 160, 210, 0.72);
-            color: rgba(170, 228, 255, 0.98);
-            box-shadow: inset 0 0 0 1px rgba(72, 160, 210, 0.22), 0 2px 12px rgba(0, 24, 48, 0.42);
-        }
-
-        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn:hover {
-            background: rgba(72, 160, 210, 0.2);
-            border-color: rgba(130, 210, 255, 0.95);
-            box-shadow: 0 0 22px rgba(80, 180, 240, 0.5), 0 0 36px rgba(40, 140, 200, 0.28),
-                inset 0 0 18px rgba(72, 160, 210, 0.18);
-        }
-
-        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn:focus-visible {
-            border-color: rgba(130, 220, 255, 0.95);
-            box-shadow: 0 0 20px rgba(90, 190, 255, 0.55);
-        }
-
-        @keyframes mdj-eb-event-cart-pulse {
-            0%,
-            100% {
-                box-shadow: 0 0 12px rgba(72, 160, 210, 0.35), inset 0 0 10px rgba(72, 160, 210, 0.12);
-                border-color: rgba(90, 170, 220, 0.75);
-            }
-
-            50% {
-                box-shadow: 0 0 24px rgba(100, 190, 255, 0.55), 0 0 36px rgba(60, 150, 210, 0.3),
-                    inset 0 0 14px rgba(72, 160, 210, 0.22);
-                border-color: rgba(160, 220, 255, 0.95);
-            }
-        }
-
-        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn.has-items {
-            background: rgba(72, 160, 210, 0.14);
-            border-color: rgba(100, 185, 235, 0.8);
-            box-shadow: 0 0 14px rgba(72, 160, 210, 0.38), inset 0 0 12px rgba(72, 160, 210, 0.14);
-            animation: mdj-eb-event-cart-pulse 2.1s ease-in-out infinite;
-        }
-
-        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn.has-items:hover {
-            animation: none;
-            box-shadow: 0 0 26px rgba(100, 200, 255, 0.55), 0 0 44px rgba(60, 160, 220, 0.32),
-                inset 0 0 18px rgba(72, 160, 210, 0.22);
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn.has-items {
-                animation: none;
-            }
-        }
-
-        body.page-mdj-rentals #mdj-eb-header-count.header-cart-count {
-            background: linear-gradient(180deg, #2a8cbc, #1a5a8a);
-            color: #fff;
-        }
-
-        #mdj-event-builder-root .mdj-eb-overlay[hidden],
-        #mdj-event-builder-root .mdj-eb-drawer[hidden] {
-            display: none !important;
-        }
-
-        #mdj-event-builder-root .mdj-eb-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 11490;
-            background: rgba(4, 6, 14, 0.72);
-            backdrop-filter: blur(4px);
-        }
-
-        #mdj-event-builder-root .mdj-eb-drawer {
-            position: fixed;
-            inset: 0;
-            z-index: 11500;
-            width: 100%;
-            height: 100%;
-            min-height: 100dvh;
-            max-width: none;
-            box-sizing: border-box;
-            padding-top: env(safe-area-inset-top, 0px);
-            background: linear-gradient(165deg, rgba(14, 16, 28, 0.99), rgba(8, 10, 18, 0.995));
-            border-top: none;
-            box-shadow: none;
-        }
-
-        #mdj-event-builder-root .mdj-eb-drawer:not([hidden]) {
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Event Cart topbar — escala fullscreen: más altura, aire lateral y separación (sin tocar #mainNav del sitio). */
-        #mdj-event-builder-root .mdj-eb-cart-topbar {
-            flex-shrink: 0;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: center;
-            gap: 0;
-            min-height: clamp(58px, 9vw, 68px);
-            padding: clamp(18px, 2.2vw, 22px) clamp(20px, 4vw, 48px);
-            border-bottom: 1px solid rgba(212, 175, 55, 0.22);
-            background: #000;
-            background-image: none;
-            box-shadow: none;
-            box-sizing: border-box;
-            width: 100%;
-        }
-
-        #mdj-event-builder-root .mdj-eb-cart-topbar a {
-            display: inline;
-            padding: 6px 0.2em 8px;
-            margin: 0;
-            box-sizing: border-box;
-            font-family: inherit;
-            font-size: var(--mdj-nav-font-size, clamp(16px, 1.4vw, 20px));
-            line-height: 1.25;
-            font-weight: var(--mdj-nav-font-weight, 800);
-            letter-spacing: var(--mdj-nav-letter-spacing, 0.08em);
-            text-transform: uppercase;
-            text-decoration: none;
-            color: rgba(245, 236, 220, 0.85);
-            border: none;
-            border-radius: 0;
-            border-bottom: 3px solid transparent;
-            background: transparent;
-            white-space: nowrap;
-        }
-
-        #mdj-event-builder-root .mdj-eb-cart-topbar a:not(:last-child)::after {
-            content: '/';
-            display: inline;
-            margin: 0 clamp(0.55em, 1.1vw, 0.9em);
-            font-weight: 400;
-            font-size: var(--mdj-nav-font-size, clamp(16px, 1.4vw, 20px));
-            letter-spacing: 0;
-            text-transform: none;
-            color: rgba(200, 200, 200, 0.45);
-            pointer-events: none;
-        }
-
-        /* Alineado con #mainNav.mdj-mainnav-flex: Shop dorado; Services activo en rentals */
-        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='shop'],
-        #mdj-event-builder-root .mdj-eb-cart-topbar a[href*='shop.html'] {
-            color: rgba(224, 195, 130, 0.96);
-        }
-
-        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='services'] {
-            color: var(--gold, #c5a059);
-            border-bottom-color: var(--gold, #c5a059);
-        }
-
-        #mdj-event-builder-root .mdj-eb-cart-topbar a:hover {
-            color: rgba(255, 252, 245, 0.98);
-            border-bottom-color: transparent;
-            background: transparent;
-        }
-
-        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='services']:hover,
-        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='shop']:hover {
-            color: rgba(255, 252, 245, 0.98);
-        }
-
-        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='services']:hover {
-            border-bottom-color: var(--gold, #c5a059);
-        }
-
-        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='shop']:hover {
-            color: rgba(240, 215, 150, 1);
-        }
-
-        @media (max-width: 640px) {
-            #mdj-event-builder-root .mdj-eb-cart-topbar {
-                justify-content: flex-start;
-                overflow-x: auto;
-                flex-wrap: nowrap;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            #mdj-event-builder-root .mdj-eb-cart-topbar a {
-                flex: 0 0 auto;
-                display: inline-flex;
-                align-items: baseline;
-            }
-
-            #mdj-event-builder-root .mdj-eb-cart-topbar a:not(:last-child)::after {
-                display: inline-flex;
-                align-items: center;
-            }
-        }
-
-        #mdj-event-builder-root .mdj-eb-panel__body {
-            flex: 1 1 auto;
-            min-height: 0;
-            overflow: auto;
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(260px, 380px);
-            gap: 20px;
-            padding: 16px clamp(14px, 3vw, 28px) 28px;
-            max-width: 1280px;
-            margin: 0 auto;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        #mdj-event-builder-root .mdj-eb-panel__main {
-            min-height: 0;
-            display: flex;
-            flex-direction: column;
-        }
-
-        @media (max-width: 768px) {
-            #mdj-event-builder-root .mdj-eb-panel__body {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        #mdj-event-builder-root .mdj-eb-drawer__head {
-            flex-shrink: 0;
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 20px clamp(14px, 3vw, 28px) 14px;
-            max-width: 1280px;
-            margin: 0 auto;
-            width: 100%;
-            box-sizing: border-box;
-            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-        }
-
-        #mdj-event-builder-root .mdj-eb-drawer__head h2 {
-            margin: 0;
-            font-family: 'Playfair Display', serif;
-            font-size: 1.35rem;
-            font-weight: 600;
-            color: rgba(212, 175, 55, 0.95);
-        }
-
-        #mdj-event-builder-root .mdj-eb-drawer__head-main {
-            flex: 1 1 auto;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        #mdj-event-builder-root .mdj-eb-context-bar {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: flex-end;
-            gap: 8px 12px;
-        }
-
-        #mdj-event-builder-root .mdj-eb-context-bar__field {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            min-width: 0;
-        }
-
-        #mdj-event-builder-root .mdj-eb-context-bar__field--assign {
-            flex: 1 1 200px;
-            min-width: min(100%, 220px);
-        }
-
-        #mdj-event-builder-root .mdj-eb-context-bar__hint {
-            font-size: 9px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: rgba(255, 255, 255, 0.52);
-            line-height: 1.2;
-        }
-
-        #mdj-event-builder-root .mdj-eb-context-bar__select {
-            min-width: 0;
-            max-width: 100%;
-            min-height: 34px;
-            padding: 5px 10px;
-            border-radius: 8px;
-            border: 1px solid rgba(212, 175, 55, 0.38);
-            background: rgba(0, 0, 0, 0.42);
-            color: rgba(255, 255, 255, 0.94);
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        #mdj-event-builder-root .mdj-eb-context-bar__select--day {
-            width: clamp(64px, 14vw, 80px);
-        }
-
-        #mdj-event-builder-root .mdj-eb-context-bar__select--month {
-            width: clamp(108px, 24vw, 132px);
-        }
-
-        #mdj-event-builder-root .mdj-eb-context-bar__select--year {
-            width: clamp(72px, 16vw, 90px);
-        }
-
-        #mdj-event-builder-root .mdj-eb-context-bar__select--assign {
-            width: 100%;
-        }
-
-        @media (min-width: 900px) {
-            #mdj-event-builder-root .mdj-eb-drawer__head-main {
-                flex-direction: row;
-                flex-wrap: wrap;
-                align-items: center;
-                column-gap: 18px;
-                row-gap: 8px;
-            }
-
-            #mdj-event-builder-root .mdj-eb-context-bar {
-                flex: 1 1 auto;
-                justify-content: flex-end;
-                min-width: min(100%, 560px);
-            }
-
-            #mdj-event-builder-root .mdj-eb-context-bar__select--assign {
-                width: auto;
-                min-width: 220px;
-                max-width: min(100%, 340px);
-            }
-        }
-
-        #mdj-event-builder-root .mdj-eb-drawer__head > .mdj-eb-close {
-            margin-top: 4px;
-        }
-
-        #mdj-event-builder-root .mdj-eb-close {
-            flex-shrink: 0;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: 1px solid rgba(212, 175, 55, 0.45);
-            background: rgba(255, 255, 255, 0.04);
-            color: rgba(255, 255, 255, 0.88);
-            font-size: 22px;
-            line-height: 1;
-            cursor: pointer;
-        }
-
-        #mdj-event-builder-root .mdj-eb-lines {
-            flex: 1 1 auto;
-            min-height: 0;
-            overflow-y: auto;
-            padding: 4px 0 8px;
-        }
-
-        #mdj-event-builder-root .mdj-eb-empty {
-            margin: 0;
-            opacity: 0.75;
-            font-size: 13px;
-            line-height: 1.5;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        #mdj-event-builder-root .mdj-eb-empty code {
-            font-size: 12px;
-            display: block;
-            margin-top: 8px;
-            color: rgba(212, 175, 55, 0.85);
-        }
-
-        #mdj-event-builder-root .mdj-eb-line {
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            gap: 0;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        #mdj-event-builder-root .mdj-eb-line:last-child {
-            border-bottom: none;
-        }
-
-        #mdj-event-builder-root .mdj-eb-line__row {
-            display: flex;
-            flex-direction: row;
-            align-items: flex-start;
-            gap: 12px;
-            width: 100%;
-            min-width: 0;
-        }
-
-        #mdj-event-builder-root .mdj-eb-line__thumb {
-            width: 48px;
-            height: 48px;
-            flex: 0 0 48px;
-            display: block;
-            border-radius: 8px;
-            object-fit: cover;
-            border: 1px solid rgba(212, 175, 55, 0.35);
-            background: rgba(255, 255, 255, 0.06);
-        }
-
-        #mdj-event-builder-root .mdj-eb-line__thumb--ph {
-            background: linear-gradient(135deg, rgba(212, 175, 55, 0.18), rgba(255, 255, 255, 0.05));
-        }
-
-        #mdj-event-builder-root .mdj-eb-line__meta {
-            flex: 1 1 auto;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
-
-        #mdj-event-builder-root .mdj-eb-line__cat {
-            font-size: 10px;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: rgba(212, 175, 55, 0.78);
-        }
-
-        #mdj-event-builder-root .mdj-eb-line__name {
-            font-size: 14px;
-            font-weight: 600;
-            color: #fff;
-        }
-
-        #mdj-event-builder-root .mdj-eb-line__qty {
-            opacity: 0.65;
-            font-weight: 500;
-            font-size: 0.92em;
-        }
-
-        #mdj-event-builder-root .mdj-eb-line__price {
-            font-size: 14px;
-            font-weight: 700;
-            color: rgba(212, 175, 55, 0.95);
-        }
-
-        #mdj-event-builder-root .mdj-eb-line__actions {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            flex-shrink: 0;
-        }
-
-        #mdj-event-builder-root .mdj-eb-line__replace,
-        #mdj-event-builder-root .mdj-eb-line__remove {
-            border: none;
-            background: transparent;
-            color: rgba(212, 175, 55, 0.9);
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            padding: 0;
-            text-align: right;
-        }
-
-        #mdj-event-builder-root .mdj-eb-line__remove {
-            color: rgba(255, 130, 130, 0.92);
-        }
-
-        #mdj-event-builder-root .mdj-eb-line--dj-family .mdj-eb-line__dj-extra {
-            width: 100%;
-            min-width: 0;
-            margin-top: 10px;
-            padding-top: 12px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick {
-            width: 100%;
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick__summary {
-            cursor: pointer;
-            list-style: none;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: rgba(212, 175, 55, 0.95);
-            user-select: none;
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick__summary::-webkit-details-marker {
-            display: none;
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick__summary::after {
-            content: '';
-            display: inline-block;
-            width: 0;
-            height: 0;
-            margin-left: 8px;
-            vertical-align: middle;
-            border-left: 5px solid transparent;
-            border-right: 5px solid transparent;
-            border-top: 6px solid rgba(212, 175, 55, 0.75);
-            transition: transform 0.15s ease;
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick[open] .mdj-eb-dj-pick__summary::after {
-            transform: rotate(180deg);
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick__panel {
-            margin-top: 10px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            border: 1px solid rgba(212, 175, 55, 0.28);
-            border-radius: 8px;
-            background: rgba(0, 0, 0, 0.38);
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick-table {
-            width: 100%;
-            min-width: 640px;
-            border-collapse: collapse;
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick-table__th,
-        #mdj-event-builder-root .mdj-eb-dj-pick-table__td {
-            padding: 8px 10px;
-            border-right: 1px solid rgba(255, 255, 255, 0.07);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            text-align: left;
-            vertical-align: middle;
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick-table__th:last-child,
-        #mdj-event-builder-root .mdj-eb-dj-pick-table__td:last-child {
-            border-right: none;
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick-table thead .mdj-eb-dj-pick-table__th {
-            font-size: 9px;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: rgba(212, 175, 55, 0.88);
-            background: rgba(0, 0, 0, 0.5);
-            white-space: nowrap;
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick-table tbody tr:last-child .mdj-eb-dj-pick-table__td {
-            border-bottom: none;
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick-table__th--photo,
-        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--photo {
-            width: 52px;
-            text-align: center;
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick-table__avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 6px;
-            object-fit: cover;
-            display: block;
-            margin: 0 auto;
-            border: 1px solid rgba(212, 175, 55, 0.4);
-            background: rgba(255, 255, 255, 0.06);
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--stage {
-            font-weight: 700;
-            font-size: 11px;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            color: #fff;
-            white-space: nowrap;
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--legal {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.62);
-            white-space: nowrap;
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick-table__stars {
-            color: rgba(212, 175, 55, 0.95);
-            letter-spacing: 1px;
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick-table__score {
-            color: rgba(255, 255, 255, 0.65);
-            font-size: 11px;
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--rating {
-            white-space: nowrap;
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--status {
-            font-size: 11px;
-            color: rgba(130, 220, 160, 0.95);
-            white-space: nowrap;
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick-table__link {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 6px;
-            border: 1px solid rgba(212, 175, 55, 0.55);
-            background: rgba(255, 255, 255, 0.04);
-            color: rgba(255, 255, 255, 0.92);
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick-table__link:hover {
-            border-color: rgba(212, 175, 55, 0.95);
-            color: rgba(212, 175, 55, 0.98);
-        }
-
-        #mdj-event-builder-root .mdj-eb-dj-pick-table__select {
-            padding: 6px 12px;
-            border-radius: 6px;
-            border: 1px solid rgba(212, 175, 55, 0.55);
-            background: linear-gradient(180deg, rgba(212, 175, 55, 0.35), rgba(160, 130, 40, 0.55));
-            color: #0a0a0c;
-            font-size: 10px;
-            font-weight: 800;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            cursor: not-allowed;
-            opacity: 0.55;
-            white-space: nowrap;
-        }
-
-        #mdj-event-builder-root .mdj-eb-panel__aside {
-            min-height: 0;
-        }
-
-        #mdj-event-builder-root .mdj-eb-drawer__foot {
-            padding: 16px 18px 22px;
-            border: 1px solid rgba(212, 175, 55, 0.22);
-            border-radius: 12px;
-            background: rgba(0, 0, 0, 0.28);
-        }
-
-        @media (min-width: 769px) {
-            #mdj-event-builder-root .mdj-eb-panel__aside .mdj-eb-drawer__foot {
-                position: sticky;
-                top: 12px;
-            }
-        }
-
-        #mdj-event-builder-root .mdj-eb-totals {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 14px;
-        }
-
-        #mdj-event-builder-root .mdj-eb-totals__row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.78);
-        }
-
-        #mdj-event-builder-root .mdj-eb-totals__row--total {
-            font-size: 15px;
-            font-weight: 700;
-            color: #fff;
-            padding-top: 6px;
-            margin-top: 4px;
-            border-top: 1px solid rgba(212, 175, 55, 0.25);
-        }
-
-        #mdj-event-builder-root .mdj-eb-cta {
-            width: 100%;
-            padding: 14px 18px;
-            border-radius: 999px;
-            border: 2px solid rgba(212, 175, 55, 0.88);
-            background: rgba(212, 175, 55, 0.14);
-            color: rgba(212, 175, 55, 0.98);
-            font-size: 12px;
-            font-weight: 800;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            cursor: pointer;
-        }
-
-        #mdj-event-builder-root .mdj-eb-toast {
-            position: fixed;
-            left: 50%;
-            bottom: 24px;
-            transform: translateX(-50%);
-            z-index: 11560;
-            max-width: min(92vw, 420px);
-            padding: 12px 18px;
-            border-radius: 12px;
-            border: 1px solid rgba(212, 175, 55, 0.4);
-            background: rgba(12, 14, 24, 0.96);
-            color: #fff;
-            font-size: 13px;
-            line-height: 1.45;
-            text-align: center;
-            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
-        }
-
-        body.mdj-event-builder-on .package-summary-bar {
-            display: none !important;
-        }
-    </style>
+    <!-- EVENT BUILDER CSS — universal, served from /css/mdj-event-builder.css -->
     <!-- Rentals: barra social por encima del overlay de modales (no ocultarla). Checkout por encima del resto de modales. -->
     <style id="rentals-social-and-checkout-stack">
         body.page-mdj-rentals #mdj-social-sticky-bar.social-sticky-bar {
@@ -1814,6 +1051,7 @@ Riesgo: romper carga del catálogo.
             border-radius: 8px;
         }
     </style>
+  <link rel="stylesheet" href="./css/mdj-event-builder.css?v=20260616-crm-4">
 </head>
 
 <body class="notranslate page-mdj-rentals">
@@ -1912,10 +1150,10 @@ Riesgo: romper carga del catálogo.
     <div class="hero-video-overlay"
         style="position: fixed; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
 
-    <main id="app" data-mdj-page="services" class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
-        <div style="text-align: center; margin-bottom: 80px;">
+    <main id="app" data-mdj-page="services" class="container" style="padding: 0 18px 100px 18px; margin-top: -100px; position: relative; z-index: 10;">
+        <div style="text-align: center; margin-bottom: 0;">
             <h1 id="rentals-headline"
-                style="font-family: 'Playfair Display', serif; font-size: clamp(40px, 5vw, 70px); -webkit-text-fill-color: rgba(197, 160, 89, 0.15); -webkit-text-stroke: 1px var(--gold); filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.2)); opacity: 0; transform: translateY(30px); animation: revealText 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;"
+                style="margin-top: 0; font-family: 'Playfair Display', serif; font-size: clamp(40px, 5vw, 70px); -webkit-text-fill-color: rgba(197, 160, 89, 0.15); -webkit-text-stroke: 1px var(--gold); filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.2)); opacity: 0; transform: translateY(30px); animation: revealText 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;"
                 data-i18n="rentals-title">Producción de EVENTOS</h1>
             <p style="color: var(--gold); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 3px; margin-top: 15px; opacity: 0; animation: revealText 1s 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;"
                 data-i18n="rentals-hero-subtitle">
@@ -2073,9 +1311,10 @@ Riesgo: romper carga del catálogo.
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./js/mdj-safe-storage.js?v=20260616-1"></script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
-    <script src="./translations.js?v=20260422-nav-labels-1"></script>
-    <script src="./i18n.js?v=20260415-MAGIC-HOVER-UNIFIED"></script>
+    <script defer src="./translations.js?v=20260422-nav-labels-1"></script>
+    <script defer src="./i18n.js?v=20260415-MAGIC-HOVER-UNIFIED"></script>
     <script>
         // ── 1) UTILIDADES DE SESIÓN & SEGURIDAD ──
         async function getSessionSafe() {
@@ -2255,7 +1494,7 @@ Riesgo: romper carga del catálogo.
         /* Galería + carruseles rentals con data-mdj-ui-tick-scroll (trinquete TikTok). */
         window.MDJ_ENABLE_UI_TICK_AUDIO = true;
     </script>
-    <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+    <script defer src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
     <script>
         (function () {
             'use strict';
@@ -2492,17 +1731,15 @@ Riesgo: romper carga del catálogo.
             }
         })();
     </script>
-    <script src="./data/rentalsData.js?v=20260414-rental-mp4-under90mb"></script>
-    <script src="./subscription.js?v=20260422-find-dj-rank"></script>
-    <script src="./js/artists.js?v=20260514-artists-hub-cleanup"></script>
+    <script defer src="./data/rentalsData.js?v=20260414-rental-mp4-under90mb"></script>
+    <script defer src="./subscription.js?v=20260422-find-dj-rank"></script>
+    <script defer src="./js/artists.js?v=20260514-artists-hub-cleanup"></script>
     <!-- EVENT BUILDER — flag + scripts (rentals hub + drawer) -->
     <script>
         window.MDJ_EVENT_BUILDER_V1 = true;
     </script>
-    <script src="./js/mdj-event-builder-adapter.js?v=20260514-eb-1a"></script>
-    <script src="./js/mdj-event-builder.js?v=20260603-eb-context-date-bar-1"></script>
-    <script src="./js/mdj-event-builder-rentals-bridge.js?v=20260514-eb-1b1"></script>
-    <script src="./js/rentals.js?v=20260514-strip-public-dj-hub"></script>
+    <script defer src="./js/mdj-event-builder-rentals-bridge.js?v=20260514-eb-1b1"></script>
+    <script defer src="./js/rentals.js?v=20260514-strip-public-dj-hub"></script>
     <!-- ── MC MODAL ── -->
     <div id="mc-modal" class="modal-overlay modal-hidden">
         <div class="modal-content cinematic-hero-shell">
@@ -2517,11 +1754,11 @@ Riesgo: romper carga del catálogo.
             </div>
 
             <!-- Dual Video Background for Seamless Transitions -->
-            <video class="hero-shell-video" id="mc-video-host" autoplay muted loop playsinline preload="auto"
+            <video class="hero-shell-video" id="mc-video-host" autoplay muted loop playsinline preload="metadata"
                 style="transition: opacity 0.6s ease; opacity: 1;">
                 <source src="./assets/mc-club-host/mc-club-host.mp4" type="video/mp4">
             </video>
-            <video class="hero-shell-video" id="mc-video-maestro" autoplay muted loop playsinline preload="auto"
+            <video class="hero-shell-video" id="mc-video-maestro" autoplay muted loop playsinline preload="metadata"
                 style="transition: opacity 0.6s ease; opacity: 0;">
                 <source src="./assets/mc-club-host/MC.mp4" type="video/mp4">
             </video>
@@ -2611,7 +1848,7 @@ Riesgo: romper carga del catálogo.
             <!-- Hero: capa ambient + capa focus (preview a pantalla completa; nunca en tarjeta) -->
             <div class="mdj-talent-hero-media" aria-hidden="true">
                 <video id="talent-shell-ambient" class="hero-shell-video" autoplay muted loop playsinline
-                    preload="auto">
+                    preload="metadata">
                     <source src="./assets/home/Home for Miami DJ Beat.mp4" type="video/mp4">
                 </video>
                 <video id="talent-shell-focus" class="hero-shell-video" muted loop playsinline preload="metadata"></video>
@@ -2726,7 +1963,7 @@ Riesgo: romper carga del catálogo.
             <div class="hl-hero-container mdj-hero-modal-root">
                 <div class="mdj-hero-media-layer" aria-hidden="true">
                 <video id="hl-hero-video" autoplay muted loop playsinline class="hl-hero-video"
-                    preload="auto"></video>
+                    preload="metadata"></video>
                 <div class="hl-hero-overlay"></div>
                 </div>
 
@@ -2783,7 +2020,7 @@ Riesgo: romper carga del catálogo.
             <div class="live-hero-container mdj-hero-modal-root">
                 <div class="mdj-hero-media-layer" aria-hidden="true">
                 <video id="live-hero-video" class="live-hero-video" autoplay muted loop playsinline
-                    preload="auto"></video>
+                    preload="metadata"></video>
 
                 <div class="live-hero-overlay"></div>
                 </div>
@@ -2830,7 +2067,7 @@ Riesgo: romper carga del catálogo.
             <div class="live-hero-container mdj-hero-modal-root">
                 <div class="mdj-hero-media-layer" aria-hidden="true">
                 <video id="staff-hero-video" class="live-hero-video" autoplay muted loop playsinline
-                    preload="auto"></video>
+                    preload="metadata"></video>
                 <div class="live-hero-overlay"></div>
                 </div>
 
@@ -2894,7 +2131,7 @@ Riesgo: romper carga del catálogo.
             <div class="live-hero-container mdj-hero-modal-root">
                 <div class="mdj-hero-media-layer" aria-hidden="true">
                 <video id="payasos-hero-video" class="live-hero-video" autoplay muted loop playsinline
-                    preload="auto"></video>
+                    preload="metadata"></video>
                 <div class="live-hero-overlay"></div>
                 </div>
 
@@ -2966,7 +2203,7 @@ Riesgo: romper carga del catálogo.
             <div class="live-hero-container mdj-hero-modal-root">
                 <div class="mdj-hero-media-layer" aria-hidden="true">
                 <!-- Dynamic Background Media -->
-                <video id="dj-hero-video" class="live-hero-video" autoplay muted loop playsinline preload="auto"
+                <video id="dj-hero-video" class="live-hero-video" autoplay muted loop playsinline preload="metadata"
                     style="filter: brightness(0.7);"></video>
 
                 <div class="live-hero-overlay"></div>
@@ -3008,7 +2245,7 @@ Riesgo: romper carga del catálogo.
             </div>
 
             <div class="mdj-hero-media-layer mdj-hero-media-layer--shell" aria-hidden="true">
-            <video class="hero-shell-video" id="fx-hero-video" autoplay muted loop playsinline preload="auto"
+            <video class="hero-shell-video" id="fx-hero-video" autoplay muted loop playsinline preload="metadata"
                 style="opacity: 0.9; filter: brightness(0.9); pointer-events: none;">
                 <source src="./assets/Special_Effects/SPARKULAR.mp4" type="video/mp4">
             </video>
@@ -3061,7 +2298,7 @@ Riesgo: romper carga del catálogo.
             </div>
 
             <div class="mdj-hero-media-layer mdj-hero-media-layer--shell" aria-hidden="true">
-            <video class="hero-shell-video" id="lighting-hero-video" autoplay muted loop playsinline preload="auto"
+            <video class="hero-shell-video" id="lighting-hero-video" autoplay muted loop playsinline preload="metadata"
                 style="opacity: 0.9; filter: brightness(0.9); pointer-events: none;">
                 <source src="./assets/Special_Effects/Moving_Head_Lights.mp4" type="video/mp4">
             </video>
@@ -3335,27 +2572,27 @@ Riesgo: romper carga del catálogo.
             <div id="rental-multi-video-container"
                 style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;">
                 <video class="hero-shell-video rental-bg-vid active-vid" data-category="furniture" autoplay muted loop
-                    playsinline preload="auto">
+                    playsinline preload="metadata">
                     <source src="./assets/furniture-decor/dining-tables.mp4" type="video/mp4">
                 </video>
                 <video class="hero-shell-video rental-bg-vid" data-category="tents" autoplay muted loop playsinline
-                    preload="auto">
+                    preload="none">
                     <source src="./assets/tents/carpas-main.mp4" type="video/mp4">
                 </video>
                 <video class="hero-shell-video rental-bg-vid" data-category="inflatables" autoplay muted loop
-                    playsinline preload="auto">
+                    playsinline preload="none">
                     <source src="./assets/inflatables/lite-castle.mp4" type="video/mp4">
                 </video>
                 <video class="hero-shell-video rental-bg-vid" data-category="stages" autoplay muted loop playsinline
-                    preload="auto">
+                    preload="none">
                     <source src="./assets/Tent & Event Structures/stage-small.mp4?v=20260414-under90mb" type="video/mp4">
                 </video>
                 <video class="hero-shell-video rental-bg-vid" data-category="audio" autoplay muted loop playsinline
-                    preload="auto">
+                    preload="none">
                     <source src="./assets/audio/pa-small.mp4" type="video/mp4">
                 </video>
                 <video class="hero-shell-video rental-bg-vid" data-category="lighting" autoplay muted loop playsinline
-                    preload="auto">
+                    preload="none">
                     <source src="./assets/lighting/led-small.mp4" type="video/mp4">
                 </video>
             </div>
@@ -3396,123 +2633,7 @@ Riesgo: romper carga del catálogo.
         </div>
     </div>
 
-    <!-- EVENT BUILDER — lateral drawer 1A (local); does not replace package-summary-bar -->
-    <div id="mdj-event-builder-root" hidden aria-hidden="true">
-        <button type="button" id="mdj-eb-fab" class="mdj-eb-fab" aria-label="Open event cart">
-            <span class="mdj-eb-fab__label">My Cart</span>
-            <span id="mdj-eb-fab-count" class="mdj-eb-fab__count" hidden>0</span>
-        </button>
-        <div class="mdj-eb-overlay" id="mdj-eb-overlay" hidden></div>
-        <aside id="mdj-eb-drawer" class="mdj-eb-drawer mdj-eb-panel" role="dialog" aria-labelledby="mdj-eb-title" hidden>
-            <nav class="mdj-eb-cart-topbar" aria-label="Navegación del sitio (vista carrito)">
-                <a href="./index.html" data-mdj-nav="home" data-i18n="nav-home">Home</a>
-                <a href="./rentals.html" data-mdj-nav="services" data-i18n="nav-services">Services</a>
-                <a href="./events.html" data-mdj-nav="venues" data-i18n="nav-rentals">Events</a>
-                <a href="./shop.html" data-mdj-nav="shop" data-i18n="nav-shop">Shop</a>
-                <a href="./jobs.html" data-mdj-nav="jobs" data-i18n="nav-jobs">Jobs</a>
-                <a href="./contact.html" data-mdj-nav="contact" data-i18n="nav-contact">Contact</a>
-                <a href="./client-account.html" data-mdj-nav="client-config" data-i18n="nav-client-settings">⚙️CONFIG</a>
-                <a href="./client-portal.html" data-mdj-nav="mi-portal" data-i18n="header-mi-portal">MY PORTAL</a>
-            </nav>
-            <header class="mdj-eb-drawer__head">
-                <div class="mdj-eb-drawer__head-main">
-                    <h2 id="mdj-eb-title">Event Cart</h2>
-                    <div class="mdj-eb-context-bar" role="group" aria-label="Fecha y evento">
-                        <label class="mdj-eb-context-bar__field">
-                            <span class="mdj-eb-context-bar__hint">Día</span>
-                            <select class="mdj-eb-context-bar__select mdj-eb-context-bar__select--day" aria-label="Día" autocomplete="off">
-                                <option value="" selected disabled>Día</option>
-                                <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
-                            <option value="10">10</option>
-                            <option value="11">11</option>
-                            <option value="12">12</option>
-                            <option value="13">13</option>
-                            <option value="14">14</option>
-                            <option value="15">15</option>
-                            <option value="16">16</option>
-                            <option value="17">17</option>
-                            <option value="18">18</option>
-                            <option value="19">19</option>
-                            <option value="20">20</option>
-                            <option value="21">21</option>
-                            <option value="22">22</option>
-                            <option value="23">23</option>
-                            <option value="24">24</option>
-                            <option value="25">25</option>
-                            <option value="26">26</option>
-                            <option value="27">27</option>
-                            <option value="28">28</option>
-                            <option value="29">29</option>
-                            <option value="30">30</option>
-                            <option value="31">31</option>
-                            </select>
-                        </label>
-                        <label class="mdj-eb-context-bar__field">
-                            <span class="mdj-eb-context-bar__hint">Mes</span>
-                            <select class="mdj-eb-context-bar__select mdj-eb-context-bar__select--month" aria-label="Mes" autocomplete="off">
-                                <option value="" selected disabled>Mes</option>
-                                <option value="1">1 — Ene</option>
-                            <option value="2">2 — Feb</option>
-                            <option value="3">3 — Mar</option>
-                            <option value="4">4 — Abr</option>
-                            <option value="5">5 — May</option>
-                            <option value="6">6 — Jun</option>
-                            <option value="7">7 — Jul</option>
-                            <option value="8">8 — Ago</option>
-                            <option value="9">9 — Sep</option>
-                            <option value="10">10 — Oct</option>
-                            <option value="11">11 — Nov</option>
-                            <option value="12">12 — Dic</option>
-                            </select>
-                        </label>
-                        <label class="mdj-eb-context-bar__field">
-                            <span class="mdj-eb-context-bar__hint">Año</span>
-                            <select class="mdj-eb-context-bar__select mdj-eb-context-bar__select--year" aria-label="Año" autocomplete="off">
-                                <option value="" selected disabled>Año</option>
-                                <option value="2025">2025</option>
-                                <option value="2026">2026</option>
-                                <option value="2027">2027</option>
-                                <option value="2028">2028</option>
-                            </select>
-                        </label>
-                        <label class="mdj-eb-context-bar__field mdj-eb-context-bar__field--assign">
-                            <span class="mdj-eb-context-bar__hint">Asignar a evento</span>
-                            <select class="mdj-eb-context-bar__select mdj-eb-context-bar__select--assign" aria-label="Asignar a evento" autocomplete="off">
-                                <option value="" selected disabled>Asignar</option>
-                                <option value="mock-wedding">Wedding — 2026-09-22</option>
-                                <option value="mock-afterparty">After-Party — 2026-09-25</option>
-                            </select>
-                        </label>
-                    </div>
-                </div>
-                <button type="button" id="mdj-eb-close" class="mdj-eb-close" aria-label="Close">&times;</button>
-            </header>
-            <div class="mdj-eb-panel__body">
-                <div class="mdj-eb-panel__main">
-                    <div id="mdj-eb-lines" class="mdj-eb-lines"></div>
-                </div>
-                <aside class="mdj-eb-panel__aside" aria-label="Order summary">
-                    <div class="mdj-eb-drawer__foot">
-                        <div class="mdj-eb-totals">
-                            <div class="mdj-eb-totals__row"><span>Subtotal</span><span id="mdj-eb-subtotal">$0.00</span></div>
-                            <div class="mdj-eb-totals__row"><span>Sales tax (7%)</span><span id="mdj-eb-tax">$0.00</span></div>
-                            <div class="mdj-eb-totals__row mdj-eb-totals__row--total"><span>Total</span><span id="mdj-eb-total">$0.00</span></div>
-                        </div>
-                        <button type="button" id="mdj-eb-cta" class="mdj-eb-cta">Add to My Event</button>
-                    </div>
-                </aside>
-            </div>
-        </aside>
-        <div id="mdj-eb-toast" class="mdj-eb-toast" hidden role="status"></div>
-    </div>
+    <!-- EVENT BUILDER root: injected by mdj-event-builder-shell.js -->
 
     <!-- ── DYNAMIC PACKAGE SUMMARY BAR (Phase 1 UI Concept) ── -->
     <!-- Mantenemos display:flex explícito para visualizar el diseño estático,
@@ -3534,7 +2655,7 @@ Riesgo: romper carga del catálogo.
 
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
     <link rel="stylesheet" href="./mdj-assistant.css" />
-    <script src="./mdj-assistant.js?v=20260415-CLONE-FORCE-V1"></script>
+    <script defer src="./mdj-assistant.js?v=20260415-CLONE-FORCE-V1"></script>
     <div id="mdj-assistant-booth">
         <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
         <div class="booth-window">
@@ -3564,11 +2685,11 @@ Riesgo: romper carga del catálogo.
         </div>
     </div>
 
-    <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+    <script defer src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
     <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
 
-    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-      <script src="./mdj-shared-header.js?v=20260603-art-007c-staff-same-entry-1"></script>
+    <script defer src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+      <script defer src="./mdj-shared-header.js?v=20260603-art-007c-staff-same-entry-1"></script>
   <script id="mdj-vista-cero-guest-nav-restore">
 (function () {
   function mdjVistaCeroGuest() {
@@ -3649,9 +2770,13 @@ Riesgo: romper carga del catálogo.
   }
 })();
   </script>
-  <script src="./mdj-mainnav-infinite.js?v=20260516-home-nav-stable-1"></script>
-    <script src="./mdj-profile-nav-context.js?v=20260418-owner-nav-parity"></script>
-  <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+  <script defer src="./mdj-mainnav-infinite.js?v=20260516-home-nav-stable-1"></script>
+    <script defer src="./mdj-profile-nav-context.js?v=20260418-owner-nav-parity"></script>
+  <script defer src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+  <!-- Universal Event Builder cart: shell → adapter → builder (order matters) -->
+  <script defer src="./js/mdj-event-builder-shell.js?v=20260616-shell-2"></script>
+  <script defer src="./js/mdj-event-builder-adapter.js?v=20260514-eb-1a"></script>
+  <script defer src="./js/mdj-event-builder.js?v=20260603-eb-context-date-bar-1"></script>
 </body>
 
 </html>

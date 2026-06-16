@@ -1,0 +1,81 @@
+# AUDITORÍA DE CAMBIOS PENDIENTES - SISTEMA DE RENTALS Y EVENT BUILDER
+
+## 1. CONFIRMACIÓN DE DEPENDENCIAS
+Confirmo que la función `removeByCatalogSku` **sí existe** exactamente con ese nombre y estructura en el archivo `web/js/mdj-event-builder.js`. He verificado el código fuente actual y la función está expuesta públicamente en la interfaz de `MDJEventBuilder` (línea 1493: `removeByCatalogSku: removeByCatalogSku`).
+
+## 2. VERIFICACIÓN DE CÓDIGO
+Aquí está el bloque de código completo extraído directamente de `web/js/mdj-event-builder.js` (líneas 263-273):
+
+```javascript
+    function removeByCatalogSku(sku) {
+        var key = String(sku || '');
+        if (!key) {
+            return;
+        }
+        state.lines.filter(function (l) {
+            return l.catalog_sku === key;
+        }).forEach(function (l) {
+            removeLine(l.line_id);
+        });
+    }
+```
+
+## 3. MITIGACIÓN DE FALLOS (Fallback de Seguridad)
+Para garantizar que el botón **nunca se bloquee**, incluso si el Event Builder no está inicializado o falla, la lógica de exclusividad en `rentals.js` se envolverá en un bloque de seguridad estricto (`try...catch` implícito mediante validación de existencia).
+
+El mecanismo de fallback es el siguiente:
+1.  **Validación de Existencia:** Antes de intentar llamar a `removeByCatalogSku`, el código verifica `if (window.MDJ_EVENT_BUILDER_V1 && window.MDJEventBuilder && typeof window.MDJEventBuilder.removeByCatalogSku === 'function')`. Si alguna de estas condiciones es falsa (ej. el script no cargó), la llamada se omite silenciosamente.
+2.  **Independencia de Estado:** La eliminación del ítem en la memoria local (`window.selectedPackage = window.selectedPackage.filter(...)`) se ejecuta de manera independiente y **antes** de intentar sincronizar con el Event Builder. Así, si el Event Builder falla, el carrito local (`rentals.js`) seguirá funcionando correctamente y el botón cambiará de estado sin bloquearse.
+
+## 4. ESTRUCTURA LÓGICA DEL CAMBIO
+El cambio se aplicará en dos partes:
+
+**A. En `web/js/mdj-event-builder-rentals-bridge.js` (Función de Sincronización Segura):**
+```javascript
+    global.mdjRentalsSyncDirectActivate = function (opts) {
+        if (!global.MDJ_EVENT_BUILDER_V1) return;
+        var EB = global.MDJEventBuilder;
+        var Ad = global.MDJEventBuilderAdapter;
+        
+        // Validación estricta para evitar TypeError
+        if (!EB || !Ad || !opts || !opts.pack || !opts.pack.id) return;
+        
+        var pack = opts.pack;
+        
+        // Salida temprana segura para eliminación
+        if (!opts.added) {
+            if (typeof EB.removeByCatalogSku === 'function') {
+                EB.removeByCatalogSku(pack.id);
+            }
+            return;
+        }
+        
+        // ... (resto de la lógica para agregar el ítem)
+    };
+```
+
+**B. En `web/js/rentals.js` (Exclusividad Mutua Segura):**
+```javascript
+                // MUTUAL EXCLUSIVITY FIX:
+                const exclusiveCategories = ['dj', 'live', 'mc', 'horaloca', 'visuals'];
+                if (exclusiveCategories.includes(cat)) {
+                    const oldItems = window.selectedPackage.filter(p => p.category === cat);
+                    
+                    // 1. Intentar sincronizar eliminación con Event Builder (con Fallback)
+                    oldItems.forEach(oldItem => {
+                        if (window.MDJ_EVENT_BUILDER_V1 && window.MDJEventBuilder && typeof window.MDJEventBuilder.removeByCatalogSku === 'function') {
+                            try {
+                                window.MDJEventBuilder.removeByCatalogSku(oldItem.id);
+                            } catch (e) {
+                                console.warn("MDJEventBuilder sync failed, continuing local cart update.");
+                            }
+                        }
+                    });
+                    
+                    // 2. Eliminar de la memoria local (Garantizado)
+                    window.selectedPackage = window.selectedPackage.filter(p => p.category !== cat);
+                }
+```
+
+---
+ESTADO: ESPERANDO ORDEN 'EJECUTAR' DEL PROPIETARIO.

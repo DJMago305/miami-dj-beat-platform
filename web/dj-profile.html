@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <script src="./js/mdj-compat-boot.js?v=20260430-1"></script>
+    <script defer src="./js/mdj-compat-boot.js?v=20260430-1"></script>
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>MDJPRO App — DJ Professional Infrastructure</title>
     <script>
@@ -134,10 +134,13 @@
         }
     </style>
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260412-profile" />
-    <link
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link
         href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700;1,800&family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&display=swap"
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./js/mdj-safe-storage.js?v=20260616-1"></script>
     <script src="./supabase-config.js?v=20260602-auth-gate-1"></script>
     <script>
         (function djProfileAuthGuard() {
@@ -206,9 +209,9 @@
             go();
         })();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="./flow-handler.js?v=202605131800-fase-b-statement"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="./flow-handler.js?v=202605131800-fase-b-statement"></script>
 
     <!-- Open Graph / Meta sharing -->
     <meta property="og:type" content="website">
@@ -3183,7 +3186,7 @@
                                 <div class="f-title">FOUNDING MEMBER</div>
                                 <div class="f-sub" id="pub-member-number"
                                     style="display:flex; align-items:center; gap:8px;">
-                                    <img src="./assets/certified-badge.png"
+                                    <img loading="lazy" src="./assets/certified-badge.png"
                                         style="width:24px; height:24px; object-fit:contain;" alt="Certified Badge">
                                     <span>Miami DJ Beat Certified · #1 of 10</span>
                                 </div>
@@ -3607,8 +3610,8 @@
     </footer>
 
     <!-- Translations & Base Logic -->
-    <script src="./translations.js?v=20260428-sft-wordmark-bicolor"></script>
-    <script src="./i18n.js?v=20260427-lang-default"></script>
+    <script defer src="./translations.js?v=20260428-sft-wordmark-bicolor"></script>
+    <script defer src="./i18n.js?v=20260427-lang-default"></script>
     <script>
         // 🔧 Motor Principal de Logout (A prueba de fallos)
         window.doLogout = async function doLogout(e) {
@@ -6561,7 +6564,7 @@
 
                 <div class="dl-card" style="margin-top:20px; text-align: left;">
                     <div class="dl-visual">
-                        <img src="./assets/mdjpro_laptop.png" alt="MDJPRO Laptop Mockup">
+                        <img loading="lazy" src="./assets/mdjpro_laptop.png" alt="MDJPRO Laptop Mockup">
                     </div>
                     <div class="dl-info">
                         <!-- Serato Style Branding -->
@@ -7130,7 +7133,7 @@
             <div style="font-size: 30px; z-index: 10;">🤖</div>
         </div>
     </div>
-    <script src="./mdj-assistant.js?v=20260412-profile"></script>
+    <script defer src="./mdj-assistant.js?v=20260412-profile"></script>
 
     <style>
         .sft-overlay {
@@ -10445,7 +10448,7 @@
                 <!-- Tarjeta de Canción Seleccionada -->
                 <div id="sftSelectedTrack" style="display:none;">
                     <div class="sft-selected-card">
-                        <img id="sftTrackImg" src="" alt="Album Art">
+                        <img loading="lazy" id="sftTrackImg" src="" alt="Album Art">
                         <div>
                             <div id="sftTrackName" style="color:#fff; font-weight:800; font-size:16px;"></div>
                             <div id="sftTrackArtist" style="color:var(--gold); font-size:13px; font-weight:600;"></div>
@@ -11136,7 +11139,7 @@
                             // iTunes returns artworkUrl30, artworkUrl60, artworkUrl100
                             const imgUrl = track.artworkUrl100 || './assets/dj-avatar-placeholder.png';
                             item.innerHTML = `
-                                <img class="sft-result-img" src="${imgUrl}" alt="">
+                                <img loading="lazy" class="sft-result-img" src="${imgUrl}" alt="">
                                 <div class="sft-result-info">
                                     <span class="sft-result-title">${track.trackName}</span>
                                     <span class="sft-result-artist">${track.artistName}</span>
@@ -12790,7 +12793,7 @@
                 html += '<tr class="sft-cab-pl-tr' + trStripeCls + '" data-req-id="' + sftEscStr(rid) + '"'
                     + (sftSt ? ' data-sft-status="' + sftEscStr(sftSt) + '"' : '')
                     + (qAttr ? ' data-sft-q="' + qAttr + '"' : '') + '">';
-                html += '<td><img class="sft-cab-thumb sft-cab-thumb--table" src="' + sftSafePosterUrl(artSrc) + '" alt="" width="40" height="40"></td>';
+                html += '<td><img loading="lazy" class="sft-cab-thumb sft-cab-thumb--table" src="' + sftSafePosterUrl(artSrc) + '" alt="" width="40" height="40"></td>';
                 html += '<td><div class="sft-cab-pl-title">' + sftEscStr(songDisplay) + songBadge + '</div></td>';
                 html += '<td class="sft-cab-pl-muted">' + sftEscStr(artist) + '</td>';
                 html += '<td class="sft-cab-pl-album sft-cab-pl-messenger">' + sftEscStr(messengerText || '—') + '</td>';
@@ -14033,7 +14036,7 @@
                 var qPoster = activeRequestInfo.poster || './assets/dj-avatar-placeholder.png';
                 var htmlQ = '<div class="sft-queue-item" id="' + itemId + '">' +
                     '<div class="sft-queue-info">' +
-                    '<img src="' + qPoster.replace(/"/g, '') + '" alt="Cover">' +
+                    '<img loading="lazy" src="' + qPoster.replace(/"/g, '') + '" alt="Cover">' +
                     '<div class="sft-queue-meta">' +
                     '<div class="sft-queue-title-row"><span>' + sftEscStr(qSong) +
                     ' <span style="display:inline; color:var(--gold);">+$' + djCutCached.toFixed(2) + '</span></span>' +
@@ -14124,13 +14127,15 @@
             try { alert('Por favor espera a que se renderice el código QR.'); } catch (e2) { void e2; }
         }
     </script>
-    <script src="./subscription.js?v=20260412-profile"></script>
-    <script src="./monetization.js?v=20260422-sft-math"></script>
+    <script defer src="./subscription.js?v=20260412-profile"></script>
+    <script defer src="./monetization.js?v=20260422-sft-math"></script>
 
-    <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script src="./mdj-shared-header.js?v=20260603-art-007c-staff-same-entry-1"></script>
-  <script src="./mdj-owner-tabs-marquee.js?v=20260427-no-marquee"></script>
-  <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+    <script defer src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
+    <script defer src="./mdj-shared-header.js?v=20260603-art-007c-staff-same-entry-1"></script>
+  <script defer src="./mdj-owner-tabs-marquee.js?v=20260427-no-marquee"></script>
+  <script defer src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+  <!-- Cart pill: badge + redirect to rentals (no heavy scripts needed here) -->
+  <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
 </body>
 
 </html>

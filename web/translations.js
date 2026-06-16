@@ -1805,6 +1805,8 @@ const translations = {
         "data_mus_timbal_desc": "Percusión en vivo para elevar la energía en la pista.",
         "data_mus_singer_name": "Cantante Lírica / Show Live",
         "data_mus_singer_desc": "Voz potente para momentos clave y ceremonias.",
+        "data_mus_band_name": "Bandas & Orquestas",
+        "data_mus_band_desc": "Ensambles de gran formato, desde jazz hasta orquestas latinas para eventos de lujo.",
         "data_vis_photo_name": "Fotografía Profesional (4h)",
         "data_vis_photo_desc": "Captura de alta fidelidad con retoque editorial.",
         "data_vis_video_name": "Videografía Highlight Reel",
