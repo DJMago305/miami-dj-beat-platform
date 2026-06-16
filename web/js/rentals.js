@@ -185,7 +185,7 @@ window.activeLiveTab = "sax"; window.liveMusicTabs = {
         descKey: "data_mus_band_desc",
         priceLabelKey: "live_band_price",
         ctaKey: "btn_add_to_pack",
-        video: "./assets/live-music/Live_Bandas_&_Orquestas.mp4",
+        video: "https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/live-music/Live_Bandas_%26_Orquestas.mp4",
         fallbackName: "Bandas & Orquestas",
         fallbackSubtitle: "Select the live music talent you wish to add to your package.",
         fallbackDesc: "Ensambles de gran formato, desde jazz hasta orquestas latinas para eventos de lujo.",
@@ -976,7 +976,7 @@ window.renderLiveHero = (tabKey = null, animate = true) => {
                 if (item.id === 'live_band') {
                     mediaContent = `
                         <div class="hero-card-video-container" style="width: 100%; margin-bottom: 10px;">
-                            <video src="./assets/live-music/Live_Bandas_&_Orquestas.mp4" autoplay loop muted playsinline></video>
+                            <video src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/live-music/Live_Bandas_%26_Orquestas.mp4" autoplay loop muted playsinline></video>
                         </div>
                     `;
                 }
