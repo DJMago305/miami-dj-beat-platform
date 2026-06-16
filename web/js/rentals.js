@@ -973,13 +973,6 @@ window.renderLiveHero = (tabKey = null, animate = true) => {
                 else if (item.id.includes('drone')) emoji = '🚁';
 
                 let mediaContent = `<div class="hl-card-icon" style="font-size: 32px; margin-bottom: 5px;">${emoji}</div>`;
-                if (item.id === 'live_band') {
-                    mediaContent = `
-                        <div class="hero-card-video-container" style="width: 100%; margin-bottom: 10px;">
-                            <video src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/live-music/Live_Bandas_&_Orquestas%20.mp4" autoplay loop muted playsinline></video>
-                        </div>
-                    `;
-                }
 
                 return `
                     <div class="talent-cat-card hero-glass-card hl-type-card mdj-magic-hover-card${activeStateClass}" data-roster-key="${key}">
