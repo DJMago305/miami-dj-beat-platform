@@ -64,33 +64,151 @@
         return null;
     }
 
+    function imgFrom(obj) {
+        if (!obj) return null;
+        var raw = obj.img || obj.image || obj.image_url || obj.poster || '';
+        return raw ? mdjV(raw) : null;
+    }
+
     function mdjRentalsLookupTogglePackItem(id) {
-        var talent = lookupTalentRow(id);
-        if (talent) {
-            var imgT = talent.img || talent.image || '';
-            var catKey = talent.id && String(talent.id).indexOf('visuals_') === 0 ? 'visuals' : 'live_music';
-            var catLabel = catKey === 'visuals' ? 'Visuals & Photo' : 'Live Music';
-            return {
-                image_url: imgT ? mdjV(imgT) : null,
-                category_key: catKey,
-                category_label: catLabel
-            };
+        var sku = String(id || '');
+
+        // ── DJ packages (djTabs) ──────────────────────────
+        if (global.djTabs) {
+            var djKeys = Object.keys(global.djTabs);
+            for (var d = 0; d < djKeys.length; d++) {
+                var djPack = global.djTabs[djKeys[d]];
+                if (djPack && djPack.id === sku) {
+                    return { image_url: imgFrom(djPack), category_key: 'dj', category_label: 'DJ / Performance' };
+                }
+            }
         }
+        if (sku.indexOf('dj_') === 0) {
+            return { image_url: null, category_key: 'dj', category_label: 'DJ / Performance' };
+        }
+
+        // ── Hora Loca main packages (hlPackages) ─────────
+        if (Array.isArray(global.hlPackages)) {
+            for (var h = 0; h < global.hlPackages.length; h++) {
+                if (global.hlPackages[h] && global.hlPackages[h].id === sku) {
+                    return { image_url: imgFrom(global.hlPackages[h]), category_key: 'horaloca', category_label: 'Hora Loca Experience' };
+                }
+            }
+        }
+        if (sku.indexOf('hl_') === 0) {
+            return { image_url: null, category_key: 'horaloca', category_label: 'Hora Loca Experience' };
+        }
+
+        // ── Hora Loca extras ─────────────────────────────
         var extra = lookupHlExtra(id);
         if (extra) {
-            var imgE = extra.img || extra.image || '';
-            return {
-                image_url: imgE ? mdjV(imgE) : null,
-                category_key: 'horaloca',
-                category_label: 'Hora Loca Add-on'
-            };
+            return { image_url: imgFrom(extra), category_key: 'horaloca', category_label: 'Hora Loca Experience' };
         }
-        return {
-            image_url: null,
-            category_key: 'addon',
-            category_label: 'Package Add-on'
-        };
+
+        // ── Músicos / visuals (talentData) ───────────────
+        var talent = lookupTalentRow(id);
+        if (talent) {
+            var tCat = sku.indexOf('visuals_') === 0 ? 'visuals' : 'live';
+            return { image_url: imgFrom(talent), category_key: tCat, category_label: tCat === 'visuals' ? 'Visuals & Photo' : 'Live Music' };
+        }
+
+        // ── MC (mcTabs) ──────────────────────────────────
+        if (global.mcTabs) {
+            var mcKeys = Object.keys(global.mcTabs);
+            for (var m = 0; m < mcKeys.length; m++) {
+                var mcPack = global.mcTabs[mcKeys[m]];
+                if (mcPack && mcPack.id === sku) {
+                    return { image_url: imgFrom(mcPack), category_key: 'mc', category_label: 'MC y Presentadores' };
+                }
+            }
+        }
+        if (sku.indexOf('mc_') === 0) {
+            return { image_url: null, category_key: 'mc', category_label: 'MC y Presentadores' };
+        }
+
+        // ── Staff ────────────────────────────────────────
+        if (Array.isArray(global.staffRoles)) {
+            for (var s = 0; s < global.staffRoles.length; s++) {
+                if (global.staffRoles[s] && global.staffRoles[s].id === sku) {
+                    return { image_url: imgFrom(global.staffRoles[s]), category_key: 'staff', category_label: 'Staff de Servicio' };
+                }
+            }
+        }
+        if (sku.indexOf('staff_') === 0) {
+            return { image_url: null, category_key: 'staff', category_label: 'Staff de Servicio' };
+        }
+
+        // ── Payasos ──────────────────────────────────────
+        if (Array.isArray(global.payasosRoles)) {
+            for (var py = 0; py < global.payasosRoles.length; py++) {
+                if (global.payasosRoles[py] && global.payasosRoles[py].id === sku) {
+                    return { image_url: imgFrom(global.payasosRoles[py]), category_key: 'payaso', category_label: 'Entretenimiento Infantil' };
+                }
+            }
+        }
+        if (sku.indexOf('payaso_') === 0) {
+            return { image_url: null, category_key: 'payaso', category_label: 'Entretenimiento Infantil' };
+        }
+
+        // ── FX ───────────────────────────────────────────
+        if (global.fxItems) {
+            var fxKeys = Object.keys(global.fxItems);
+            for (var f = 0; f < fxKeys.length; f++) {
+                var fxItem = global.fxItems[fxKeys[f]];
+                if (fxItem && fxItem.id === sku) {
+                    return { image_url: imgFrom(fxItem), category_key: 'fx', category_label: 'Efectos Especiales' };
+                }
+            }
+        }
+        if (sku.indexOf('fx_') === 0) {
+            return { image_url: null, category_key: 'fx', category_label: 'Efectos Especiales' };
+        }
+
+        // ── Lighting ─────────────────────────────────────
+        if (global.lightingItems) {
+            var liKeys = Object.keys(global.lightingItems);
+            for (var li = 0; li < liKeys.length; li++) {
+                var liItem = global.lightingItems[liKeys[li]];
+                if (liItem && liItem.id === sku) {
+                    return { image_url: imgFrom(liItem), category_key: 'lighting', category_label: 'Iluminación y Pantallas LED' };
+                }
+            }
+        }
+        if (sku.indexOf('lighting_') === 0) {
+            return { image_url: null, category_key: 'lighting', category_label: 'Iluminación y Pantallas LED' };
+        }
+
+        // ── Live music prefixes ──────────────────────────
+        if (sku.indexOf('live_') === 0 || sku.indexOf('sax_') === 0 || sku.indexOf('percussion_') === 0 || sku.indexOf('booth360') === 0) {
+            return { image_url: null, category_key: 'live', category_label: 'Músicos en Vivo' };
+        }
+        if (sku.indexOf('visuals_') === 0 || sku.indexOf('photo_') === 0 || sku.indexOf('video_') === 0 || sku.indexOf('drone_') === 0) {
+            return { image_url: null, category_key: 'visuals', category_label: 'Captura & Visuales' };
+        }
+
+        // ── Catálogo dinámico (rentalCatalogs) ───────────
+        if (global.rentalCatalogs) {
+            var rcKeys = Object.keys(global.rentalCatalogs);
+            for (var r = 0; r < rcKeys.length; r++) {
+                var rc = global.rentalCatalogs[rcKeys[r]];
+                if (rc && Array.isArray(rc.items)) {
+                    for (var ri = 0; ri < rc.items.length; ri++) {
+                        if (rc.items[ri] && rc.items[ri].id === sku) {
+                            return { image_url: imgFrom(rc.items[ri]), category_key: rcKeys[r], category_label: rc.title || rcKeys[r] };
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Fallback ─────────────────────────────────────
+        return { image_url: null, category_key: 'addon', category_label: 'Package Add-on' };
     }
+
+    /** Expuesto para migraciones: re-infiere category_key dado un catalog_sku */
+    global.mdjRentalsInferCategoryKey = function (catalogSku) {
+        return mdjRentalsLookupTogglePackItem(catalogSku).category_key;
+    };
 
     global.mdjRentalsSyncTogglePack = function (opts) {
         if (!global.MDJ_EVENT_BUILDER_V1) {

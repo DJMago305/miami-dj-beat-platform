@@ -1166,6 +1166,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         full_name: fullName,
                         plan: planParam,
                         status: 'ACTIVE',
+                        available: true,
                         member_id: memberId,
                         referral_code: referralCode,
                         photo_status: 'pending',
@@ -1173,6 +1174,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         review_count: 0
                     };
 
+                    // Specialty — from signup form field or sessionStorage roster
+                    const specialtyEl = document.getElementById('signup-specialty');
+                    const specialtyVal = specialtyEl && specialtyEl.value ? specialtyEl.value.trim() : null;
+                    if (specialtyVal) {
+                        profilePayload.artist_specialty = specialtyVal;
+                    } else {
+                        // Fallback: read from jobs roster sessionStorage if available
+                        try {
+                            const rawR = sessionStorage.getItem('mdj_jobs_roster_categories');
+                            if (rawR) {
+                                const jobR = JSON.parse(rawR);
+                                const firstLabel = Array.isArray(jobR && jobR.labels) && jobR.labels.length ? String(jobR.labels[0]).trim().toLowerCase() : null;
+                                if (firstLabel) profilePayload.artist_specialty = firstLabel;
+                            }
+                        } catch (eSpec) { void eSpec; }
+                    }
                     if (phone) profilePayload.phone = phone;
                     if (addrCity) profilePayload.city = addrCity;
                     const addrBlock = mdjFormatSignupAddressBlock(

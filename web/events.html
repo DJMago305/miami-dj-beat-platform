@@ -188,7 +188,7 @@
             <div class="mdj-venues-video-frame">
               <video data-mdj-reel="Mojitos_calle_8.mp4"
                 data-mdj-reel-fallback="./assets/eventos-venues-patrocinadores/reels/El_Valle_Restaurante.mp4" muted playsinline loop
-                preload="auto"></video>
+                preload="none"></video>
               <div class="mdj-venues-video-meta">
                 <div class="mdj-venues-video-venue" data-i18n="exp-venue-title-mojitos">Mojitos Calle 8</div>
                 <div class="mdj-venues-video-type" data-i18n="exp-type-latin">Latin Luxury Nightlife</div>
@@ -200,7 +200,7 @@
             <div class="mdj-venues-video-frame">
               <video data-mdj-reel="El_Valle_Restaurante.mp4"
                 data-mdj-reel-fallback="./assets/eventos-venues-patrocinadores/reels/Mojitos_calle_8.mp4" muted playsinline loop
-                preload="auto"></video>
+                preload="none"></video>
               <div class="mdj-venues-video-meta">
                 <div class="mdj-venues-video-venue" data-i18n="exp-venue-title-valle">El Valle Restaurant</div>
                 <div class="mdj-venues-video-type" data-i18n="exp-type-dining">Sophisticated Dining</div>
@@ -212,7 +212,7 @@
             <div class="mdj-venues-video-frame">
               <video data-mdj-reel="Sundowners_Key_Largo.mp4"
                 data-mdj-reel-fallback="./assets/eventos-venues-patrocinadores/reels/El_Valle_Restaurante.mp4" muted playsinline loop
-                preload="auto"></video>
+                preload="none"></video>
               <div class="mdj-venues-video-meta">
                 <div class="mdj-venues-video-venue" data-i18n="exp-venue-title-sundowners">Sundowners, Key Largo</div>
                 <div class="mdj-venues-video-type" data-i18n="exp-type-waterfront">Brunch Fri–Sun · Dinner Thursdays</div>
@@ -224,7 +224,7 @@
             <div class="mdj-venues-video-frame">
               <video data-mdj-reel="Baila_Con_Micho.mp4"
                 data-mdj-reel-fallback="./assets/eventos-venues-patrocinadores/reels/Mojitos_calle_8.mp4" muted playsinline loop
-                preload="auto"></video>
+                preload="none"></video>
               <div class="mdj-venues-video-meta">
                 <div class="mdj-venues-video-venue" data-i18n="exp-venue-title-baila">Baila Con Micho</div>
                 <div class="mdj-venues-video-type" data-i18n="exp-type-baila">Escuela de baile</div>
@@ -348,9 +348,10 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./js/mdj-safe-storage.js?v=20260616-1"></script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
-    <script src="./translations.js?v=20260422-nav-labels-1"></script>
-    <script src="./i18n.js?v=20260415-MAGIC-HOVER-UNIFIED"></script>
+    <script defer src="./translations.js?v=20260422-nav-labels-1"></script>
+    <script defer src="./i18n.js?v=20260415-MAGIC-HOVER-UNIFIED"></script>
     <script>
         window.MDJ_ENABLE_NAV_TICK_AUDIO = true;
         if (typeof window.mdjHeroVideoPrime !== 'function') {
@@ -366,16 +367,16 @@
             };
         }
     </script>
-    <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+    <script defer src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
     <script src="./js/venues-showcase.js?v=20260423-baila-reel-aliases" defer></script>
     <script src="./js/venue-photo-gallery.js?v=20260423-manifest-json-parse-guard" defer></script>
     <script src="./js/residencies-carousel.js?v=20260425-residencies-arrows-always" defer></script>
-    <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+    <script defer src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
     <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
-    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-    <script src="./mdj-shared-header.js?v=20260603-buyer-nav-order-8"></script>
-  <script src="./mdj-mainnav-infinite.js?v=20260531-compact-nav-no-carousel-1"></script>
-    <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+    <script defer src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+    <script defer src="./mdj-shared-header.js?v=20260603-buyer-nav-order-8"></script>
+  <script defer src="./mdj-mainnav-infinite.js?v=20260531-compact-nav-no-carousel-1"></script>
+    <script defer src="./mdj-social-bar.js?v=20260423-social-restore"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('#app video[data-mdj-reel]').forEach(function (video) {
@@ -385,6 +386,8 @@
             else if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
         });
     </script>
+  <!-- Cart pill: badge + redirect to rentals (no heavy scripts needed here) -->
+  <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
 </body>
 
 </html>

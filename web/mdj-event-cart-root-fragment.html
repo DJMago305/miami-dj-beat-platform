@@ -1,4 +1,4 @@
-<div id="mdj-event-builder-root" hidden aria-hidden="true">
+    <div id="mdj-event-builder-root" hidden aria-hidden="true">
         <button type="button" id="mdj-eb-fab" class="mdj-eb-fab" aria-label="Open event cart">
             <span class="mdj-eb-fab__label">My Cart</span>
             <span id="mdj-eb-fab-count" class="mdj-eb-fab__count" hidden>0</span>
@@ -8,16 +8,16 @@
             <nav class="mdj-eb-cart-topbar" aria-label="Navegación del sitio (vista carrito)">
                 <a href="./index.html" data-mdj-nav="home" data-i18n="nav-home">Home</a>
                 <a href="./rentals.html" data-mdj-nav="services" data-i18n="nav-services">Services</a>
-                <a href="./index.html#experience" data-mdj-nav="venues" data-i18n="nav-rentals">Events</a>
+                <a href="./events.html" data-mdj-nav="venues" data-i18n="nav-rentals">Events</a>
                 <a href="./shop.html" data-mdj-nav="shop" data-i18n="nav-shop">Shop</a>
-                <a href="./client-portal.html" data-mdj-nav="mi-portal" data-i18n="header-mi-portal">MY PORTAL</a>
                 <a href="./jobs.html" data-mdj-nav="jobs" data-i18n="nav-jobs">Jobs</a>
-                <a href="./index.html#contact" data-mdj-nav="contact" data-i18n="nav-contact">Contact</a>
-                <a href="./account-profile.html" data-mdj-nav="config" data-i18n="nav-config">⚙️CONFIG</a>
+                <a href="./contact.html" data-mdj-nav="contact" data-i18n="nav-contact">Contact</a>
+                <a href="./client-account.html" data-mdj-nav="client-config" data-i18n="nav-client-settings">⚙️CONFIG</a>
+                <a href="./client-portal.html" data-mdj-nav="mi-portal" data-i18n="header-mi-portal">MY PORTAL</a>
             </nav>
             <header class="mdj-eb-drawer__head">
                 <div class="mdj-eb-drawer__head-main">
-                    <h2 id="mdj-eb-title">Event Cart</h2>
+                    <h2 id="mdj-eb-title">Event Cart <span id="mdj-eb-order-num" class="mdj-eb-order-num"></span></h2>
                     <div class="mdj-eb-context-bar" role="group" aria-label="Fecha y evento">
                         <label class="mdj-eb-context-bar__field">
                             <span class="mdj-eb-context-bar__hint">Día</span>
@@ -60,18 +60,18 @@
                             <span class="mdj-eb-context-bar__hint">Mes</span>
                             <select class="mdj-eb-context-bar__select mdj-eb-context-bar__select--month" aria-label="Mes" autocomplete="off">
                                 <option value="" selected disabled>Mes</option>
-                                <option value="1">Ene</option>
-                            <option value="2">Feb</option>
-                            <option value="3">Mar</option>
-                            <option value="4">Abr</option>
-                            <option value="5">May</option>
-                            <option value="6">Jun</option>
-                            <option value="7">Jul</option>
-                            <option value="8">Ago</option>
-                            <option value="9">Sep</option>
-                            <option value="10">Oct</option>
-                            <option value="11">Nov</option>
-                            <option value="12">Dic</option>
+                                <option value="1">1 — Ene</option>
+                            <option value="2">2 — Feb</option>
+                            <option value="3">3 — Mar</option>
+                            <option value="4">4 — Abr</option>
+                            <option value="5">5 — May</option>
+                            <option value="6">6 — Jun</option>
+                            <option value="7">7 — Jul</option>
+                            <option value="8">8 — Ago</option>
+                            <option value="9">9 — Sep</option>
+                            <option value="10">10 — Oct</option>
+                            <option value="11">11 — Nov</option>
+                            <option value="12">12 — Dic</option>
                             </select>
                         </label>
                         <label class="mdj-eb-context-bar__field">
@@ -87,28 +87,28 @@
                         <label class="mdj-eb-context-bar__field mdj-eb-context-bar__field--assign">
                             <span class="mdj-eb-context-bar__hint">Asignar a evento</span>
                             <select class="mdj-eb-context-bar__select mdj-eb-context-bar__select--assign" aria-label="Asignar a evento" autocomplete="off">
-                                <option value="" selected disabled>Asignar…</option>
+                                <option value="" selected disabled>Asignar</option>
+                                <option value="mock-wedding">Wedding — 2026-09-22</option>
+                                <option value="mock-afterparty">After-Party — 2026-09-25</option>
                             </select>
                         </label>
                     </div>
                 </div>
-                <button type="button" id="mdj-eb-close" class="mdj-eb-close" aria-label="Close">&times;</button>
+                <div class="mdj-eb-head-actions">
+                    <button type="button" id="mdj-eb-cta" class="mdj-eb-cta">ADD TO MY EVENT</button>
+                    <button type="button" id="mdj-eb-close" class="mdj-eb-close" aria-label="Close">&times;</button>
+                </div>
             </header>
             <div class="mdj-eb-panel__body">
                 <div class="mdj-eb-panel__main">
                     <div id="mdj-eb-lines" class="mdj-eb-lines"></div>
                 </div>
-                <aside class="mdj-eb-panel__aside" aria-label="Order summary">
-                    <div class="mdj-eb-drawer__foot">
-                        <div class="mdj-eb-totals">
-                            <div class="mdj-eb-totals__row"><span>Subtotal</span><span id="mdj-eb-subtotal">$0.00</span></div>
-                            <div class="mdj-eb-totals__row"><span>Sales tax (7%)</span><span id="mdj-eb-tax">$0.00</span></div>
-                            <div class="mdj-eb-totals__row mdj-eb-totals__row--total"><span>Total</span><span id="mdj-eb-total">$0.00</span></div>
-                        </div>
-                        <button type="button" id="mdj-eb-cta" class="mdj-eb-cta">Add to My Event</button>
-                    </div>
-                </aside>
             </div>
+            <!-- hidden refs kept for JS render() compat -->
+            <span id="mdj-eb-subtotal" hidden>$0.00</span>
+            <span id="mdj-eb-tax" hidden>$0.00</span>
+            <span id="mdj-eb-total" hidden>$0.00</span>
         </aside>
         <div id="mdj-eb-toast" class="mdj-eb-toast" hidden role="status"></div>
     </div>
+

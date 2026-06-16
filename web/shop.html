@@ -7,6 +7,7 @@
          v20260525-shop-isolated -->
     <script>window.location.replace('https://miami-dj-beat-store.myshopify.com/?shop_sign_in=true');</script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./js/mdj-safe-storage.js?v=20260616-1"></script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -16,6 +17,7 @@
     <link rel="prefetch" href="./mdj-event-cart-root-fragment.html?v=20260531-month-clean-1" as="fetch" crossorigin />
     <link rel="prefetch" href="./mdj-event-cart.css?v=20260531-no-fab-1" as="style" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
@@ -1761,7 +1763,7 @@
                 <div class="modal-hero-container">
                     <div class="zoom-wrapper" id="heroZoomContainer" onmousemove="handleZoom(event)"
                         onmouseenter="enterZoom(event)" onmouseleave="leaveZoom()">
-                        <img id="modalImg" src="" alt="Product" />
+                        <img loading="lazy" id="modalImg" src="" alt="Product" />
                         <div id="zoomLens"></div>
                     </div>
                 </div>
@@ -2062,7 +2064,7 @@
                 return `
                 <div class="product-card">
                     <div>
-                        <img class="product-img" src="${item.image}" alt="${pName}" />
+                        <img loading="lazy" class="product-img" src="${item.image}" alt="${pName}" />
                         <h3 style="margin-bottom: 10px; font-size: 18px; line-height: 1.3;">${pName}</h3>
                         <p style="font-size: 13px; color: var(--muted); line-height: 1.4; margin-bottom: 20px;">
                             ${pDesc}
@@ -2098,7 +2100,7 @@
             mainImg.src = currentActiveItem.image;
 
             const galleryHtml = (currentActiveItem.images || []).map((thumb, index) => `
-                <img src="${thumb}" class="modal-thumbnail ${index === 0 ? 'active' : ''}" 
+                <img loading="lazy" src="${thumb}" class="modal-thumbnail ${index === 0 ? 'active' : ''}" 
                      onmouseover="changeMainImage(this, '${thumb}')" />
             `).join('');
             document.getElementById('modalGallery').innerHTML = galleryHtml;
@@ -2625,7 +2627,7 @@
 
                     return `
                     <div class="cart-item">
-                        <img src="${imgStr}" class="cart-item-img" alt="">
+                        <img loading="lazy" src="${imgStr}" class="cart-item-img" alt="">
                         <div class="cart-item-info">
                             <div class="cart-item-name">${printName}</div>
                             <div class="cart-item-meta">${dict.cart_qty}${item.quantity || 1} | $${item.price.toFixed(2)}</div>
@@ -3035,7 +3037,7 @@
 
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
     <link rel="stylesheet" href="./mdj-assistant.css" />
-    <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
+    <script defer src="./mdj-assistant.js?v=20260411-booth-policy"></script>
     <div id="mdj-assistant-booth">
         <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
         <div class="booth-window">
@@ -3301,8 +3303,8 @@
         </div>
 
         <!-- ── SYSTEM INJECTIONS ── -->
-        <script src="./translations.js?v=20260422-nav-labels-1"></script>
-        <script src="./i18n.js?v=20260330"></script>
+        <script defer src="./translations.js?v=20260422-nav-labels-1"></script>
+        <script defer src="./i18n.js?v=20260330"></script>
         <script>
             // Si el idioma cambia desde la tienda, actualizamos dinamicamente la interfaz
             document.addEventListener('languageChanged', (e) => {
@@ -3315,14 +3317,16 @@
             });
         </script>
 
-    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-  <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
-      <script src="./mdj-shared-header.js?v=20260603-buyer-nav-order-8"></script>
-  <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
-  <script src="./mdj-mainnav-infinite.js?v=20260531-compact-nav-no-carousel-1"></script>
-    <script src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
-    <script src="./mdj-profile-nav-context.js?v=20260603-art-007c-staff-same-entry-1"></script>
-  <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+    <script defer src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+  <script defer src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+      <script defer src="./mdj-shared-header.js?v=20260603-buyer-nav-order-8"></script>
+  <script defer src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+  <script defer src="./mdj-mainnav-infinite.js?v=20260531-compact-nav-no-carousel-1"></script>
+    <script defer src="./mdj-owner-tabs-marquee.js?v=20260414-studio-tabs"></script>
+    <script defer src="./mdj-profile-nav-context.js?v=20260603-art-007c-staff-same-entry-1"></script>
+  <script defer src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+  <!-- Cart pill: badge + redirect to rentals (no heavy scripts needed here) -->
+  <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
 </body>
 
 </html>

@@ -4080,10 +4080,10 @@ a.residency-card--map:focus-visible {
   align-items: center;
   text-align: center;
   width: 100%;
-  max-width: 1000px;
+  max-width: 1400px;
   height: 100%;
   min-height: 100vh;
-  padding: 120px 40px 40px;
+  padding: 120px 20px 40px;
   box-sizing: border-box;
   margin: 0 auto;
 }
@@ -4945,7 +4945,7 @@ body:has(.lang-btn.active[data-lang="es"]) #roster-modal .live-tab[data-live-tab
 }
 
 .package-entrance-anim {
-  animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes slideUpFade {
@@ -4953,7 +4953,6 @@ body:has(.lang-btn.active[data-lang="es"]) #roster-modal .live-tab[data-live-tab
     opacity: 0;
     transform: translateY(100%);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -5117,7 +5116,7 @@ body:has(.lang-btn.active[data-lang="es"]) #roster-modal .live-tab[data-live-tab
   overflow: hidden;
   display: flex !important;
   flex-direction: column !important;
-  justify-content: space-between !important;
+  justify-content: flex-start !important; /* Cabecera natural arriba */
   padding: 4vh 0 8vh 0 !important;
   box-sizing: border-box !important;
   width: 96vw !important;
@@ -6150,8 +6149,8 @@ body.mdj-artist-academy #mainHeader.header {
   height: 18px;
   padding: 0 5px;
   border-radius: 999px;
-  background: #c0392b;
-  color: #fff;
+  background: #c5a059;
+  color: #0a0a0a;
   font-size: 11px;
   font-weight: 800;
   line-height: 18px;
@@ -6827,19 +6826,21 @@ body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
 
 .cinematic-hero-shell .grid5.cinematic-hero-cards {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   justify-items: center;
   align-items: stretch;
-  gap: clamp(14px, 2vw, 22px);
+  gap: clamp(4px, 1vw, 12px);
+  transition: all 0.3s ease-in-out;
 }
 
 .cinematic-hero-shell .grid5.cinematic-hero-cards .hero-glass-card,
 .cinematic-hero-shell .grid5.cinematic-hero-cards .talent-cat-card {
   width: 100%;
   max-width: 260px;
-  min-width: 0;
+  min-width: 200px;
   box-sizing: border-box;
   justify-self: center;
+  transition: transform 0.3s ease-out, border-color 0.3s ease-out, background-color 0.3s ease-out, min-width 0.3s ease-in-out;
 }
 
 .cinematic-hero-shell .grid5.cinematic-hero-cards .hero-card-title {
@@ -7306,3 +7307,434 @@ body.page-home #home-hero .hero-grid {
     gap: 16px !important;
   }
 }
+
+/* ORDEN DE MANDO: Liberación de Modales de Talento (Inline Override) */
+#dj-roster-grid,
+#roster-grid,
+#horaloca-grid,
+#staff-roster-grid,
+#payasos-roster-grid,
+#mc-roster-scroll,
+#lighting-roster-grid,
+#fx-roster-grid {
+  /* 1. Maximización Extrema: Usar todo el ancho posible */
+  max-width: 100% !important;
+  width: 100% !important;
+  
+  /* 2. Reacomodo de Alineación base (sin colchón derecho aún, se aplicará caja por caja) */
+  transform: none !important;
+  margin-left: 0 !important;
+  padding-left: 28px !important;
+  padding-right: 28px !important;
+  box-sizing: border-box !important;
+  
+  /* 3. Ajuste Definitivo de Alineación: Eliminar el espacio muerto central */
+  justify-content: flex-start !important;
+  
+  /* 4. Amortiguación visual para que el grid se redimensione fluido */
+  transition: all 0.3s ease-in-out !important;
+}
+
+/* -------------------------------------------------------------------------
+   CORRECCIONES ESPECÍFICAS (CAJA POR CAJA)
+   ------------------------------------------------------------------------- */
+
+/* CAJA 1: HORA LOCA (#horaloca-grid) */
+#horaloca-modal .hl-hero-container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* Espaciado izquierdo via margin — modelo canonico aprobado 2026-06-15 */
+#horaloca-grid {
+    margin-left: 20px !important;
+    padding-left: 0 !important;
+}
+
+/* --- CORRECCIÓN FINAL: MARGEN EXTERNO FORZADO --- */
+/* ARREGLO MAESTRO: ESPACIO Y POSICIÓN */
+#roster-grid, #horaloca-grid, #mc-roster-scroll, #payasos-roster-grid, #dj-roster-grid, 
+#lighting-roster-grid, #staff-roster-grid, #fx-roster-grid, 
+.mdj-rental-catalog-carousel, .talent-selector-carousel {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    
+    /* 1. EL ESPACIO: 28px de aire a los lados */
+    padding-left: 28px !important; 
+    padding-right: 28px !important;
+    
+    /* 2. Centrado vertical de tarjetas dentro del carrusel */
+    align-items: center !important;
+    
+    gap: 20px !important;
+}
+
+/* Ocultar scrollbar SOLO en los carruseles de Rentals (sin afectar el resto del sitio) */
+#roster-grid::-webkit-scrollbar,
+#horaloca-grid::-webkit-scrollbar,
+#mc-roster-scroll::-webkit-scrollbar,
+#payasos-roster-grid::-webkit-scrollbar,
+#dj-roster-grid::-webkit-scrollbar,
+#lighting-roster-grid::-webkit-scrollbar,
+#staff-roster-grid::-webkit-scrollbar,
+#fx-roster-grid::-webkit-scrollbar,
+#rental-dynamic-modal .mdj-rental-catalog-carousel::-webkit-scrollbar,
+#talent-selector-modal .talent-selector-carousel::-webkit-scrollbar { 
+    display: none !important; 
+}
+
+/* CAJA 2: MÚSICOS EN VIVO (#roster-grid) */
+#roster-modal .live-hero-container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+#roster-grid {
+    margin-left: 20px !important;
+    padding-left: 0 !important;
+}
+
+/* CAJA 3: MC & PRESENTADORES (#mc-roster-scroll) */
+#mc-modal .live-hero-container,
+#mc-modal .mdj-hero-modal-root {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+#mc-roster-scroll {
+    margin-left: 20px !important;
+    padding-left: 0 !important;
+}
+
+/* CAJA 5: PAYASOS (#payasos-roster-grid) */
+#payasos-modal .live-hero-container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+#payasos-roster-grid {
+    margin-left: 20px !important;
+    padding-left: 0 !important;
+}
+
+/* CAJA 6: DJ / ACTUACIÓN (#dj-roster-grid) */
+#dj-modal .live-hero-container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* Espaciado izquierdo vía margin (externo al scroll — immune al bug WebKit padding + ::before roto con clones JS) */
+#dj-roster-grid {
+    margin-left: 20px !important;
+    padding-left: 0 !important;
+}
+
+/* CAJA 7: ILUMINACIÓN (#lighting-roster-grid) */
+#lighting-modal .live-hero-container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+#lighting-roster-grid {
+    margin-left: 20px !important;
+    padding-left: 0 !important;
+}
+
+        /* CAJA 8: EFECTOS ESPECIALES (#fx-roster-grid) */
+#fx-modal .live-hero-container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+#fx-roster-grid {
+    margin-left: 20px !important;
+    padding-left: 0 !important;
+}
+
+/* CAJA 0: HUB PRINCIPAL — TALENT SELECTOR
+   PENDIENTE: left border del carrusel aún no resuelto. Ticket abierto.
+   El carousel usa mdjTalentSelectorInfiniteApply (JS) para scroll alignment por slot.
+   No aplicar padding/margin aquí hasta resolver especificidad vs inline block de rentals.html */
+
+/* CAJA 9: RENTALS DINÁMICOS (.mdj-rental-catalog-carousel) */
+/* Espaciado izquierdo — modelo canónico aprobado 2026-06-15 */
+#rental-dynamic-modal .mdj-rental-catalog-carousel {
+    margin-left: 30px !important;
+    padding-left: 0 !important;
+}
+
+/* Evitar Efecto Parkinson (Tembleque por hover en el borde) */
+#rental-dynamic-modal .product-card:hover {
+    transform: none !important;
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.4) !important;
+}
+
+#rental-dynamic-modal .mdj-rental-catalog-carousel .product-card {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* CAJA 4: EVENT STAFF (#staff-roster-grid) */
+#staff-modal .live-hero-container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+#staff-roster-grid {
+    margin-left: 20px !important;
+    padding-left: 0 !important;
+}
+
+/* ADN VISUAL para tarjetas de Modales (Reemplazo de estilos en línea sucios) */
+.hero-glass-card .hero-card-title {
+    font-size: 15px !important;
+    line-height: 1.2 !important;
+    margin-bottom: 8px !important;
+    color: var(--gold) !important;
+}
+
+.hero-glass-card .hero-card-text {
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+    color: rgba(255,255,255,0.7) !important;
+    margin: 0 !important;
+    flex-grow: 1 !important; /* CRÍTICO: Esto empuja el precio y botón al fondo en TODAS las tarjetas */
+}
+
+.hero-glass-card .hero-card-price {
+    font-family: Inter, sans-serif !important;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: var(--gold) !important;
+    margin-top: auto !important; /* CRÍTICO: Alinea los precios en el mismo paralelo horizontal */
+    margin-bottom: 12px !important;
+}
+
+.hero-glass-card .btn-agregar {
+    width: 100% !important;
+    border: 1px solid var(--gold) !important;
+    background: transparent !important;
+    color: var(--gold) !important;
+    padding: 10px 0 !important;
+    border-radius: 50px !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+}
+
+.hero-glass-card .btn-agregar:hover {
+    background: rgba(197, 160, 89, 0.2) !important;
+}
+
+/* Aislando el diseño cinemático a la sección Services, tal como ordenó el usuario */
+#rentals-services-grid > .tile.glass-card,
+#rentals-services-grid > .equipment-card,
+#equipment-grid > .tile.glass-card,
+#equipment-grid > .equipment-card {
+  /* COMPACTACIÓN: Eliminar márgenes laterales excesivos */
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  /* MASA: flex-basis mayor para verse más robustas (aprox 4 por fila) */
+  flex: 0 0 calc(25% - 12px) !important;
+  /* Garantizar anchos para dar presencia física */
+  min-width: 250px !important;
+  max-width: 320px !important;
+  /* BORDE: Grosor y color de marca para solidez */
+  border: 2px solid var(--gold) !important;
+}
+
+#rentals-services-grid,
+#equipment-grid {
+  justify-content: flex-start !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  /* COMPACTACIÓN: Reducir gap para que el aire sea mínimo */
+  gap: 8px !important;
+}
+
+/* Opcional: Aseguramos que la base del modal de DJ tampoco lo encajone */
+#dj-modal .live-hero-shell,
+#roster-modal .live-hero-shell,
+#horaloca-modal .modal-content {
+  width: 98vw !important;
+  max-width: none !important;
+}
+
+/* Ejecución de Purgado de Espacio Superior: */
+/* Purgado total de espacio superior en la página Services */
+#app, 
+main, 
+.main-content, 
+#services-container {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Forzar el inicio del título al tope del viewport */
+h1 {
+    margin-top: 0 !important;
+    padding-top: 10px !important; /* Ajuste mínimo solo para que no choque */
+}
+
+/* Compactación de la zona de texto superior para ganar espacio en la primera vista */
+h1 {
+    margin-bottom: 5px !important; /* Reducido drásticamente */
+}
+
+h1 + p, 
+h1 + .subtitulo, 
+h1 + div {
+    margin-top: 0 !important;
+    margin-bottom: 15px !important; /* Acercamos el texto a las tarjetas */
+    font-size: 0.9em !important;   /* Ligera reducción para ganar espacio vertical */
+}
+
+/* Ajuste del contenedor del grid para ganar el máximo espacio posible */
+#rentals-services-grid {
+    margin-top: 5px !important;
+    padding-top: 0 !important;
+}
+
+/* Forzar que el main no tenga márgenes muertos */
+main#app {
+    padding-top: 5px !important;
+}
+
+/* --- PLANTILLA MAESTRA DE ESTRUCTURA --- */
+/* Aplica estas clases a los contenedores que necesites estandarizar */
+
+.template-grid-master {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    gap: 20px !important; /* Separación exacta entre tarjetas */
+    padding: 20px !important; /* Espacio alrededor del grid */
+}
+
+.template-card-master {
+    width: 250px !important; /* Ancho estándar del modelo */
+    min-height: 400px !important; /* Altura estándar del modelo */
+    padding: 10px !important; /* Espaciado interno (tu orden de los 10px) */
+    border: 2px solid var(--gold) !important;
+    box-sizing: border-box !important;
+    
+    /* Alineación de contenido interno */
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+}
+
+/* --- ESTABILIZADOR DE TEMBLOR (Layout Lockdown) --- */
+
+#dj-roster-grid,
+#roster-grid,
+#rental-dynamic-grid,
+#rental-dynamic-modal .product-card,
+.mdj-magic-hover-card {
+    /* 1. Detener los cálculos de movimiento del navegador */
+    will-change: transform !important;
+
+    /* 2. Forzar al navegador a que el tamaño no cambie dinámicamente */
+    contain: content !important;
+
+    /* 3. Eliminar animaciones de transición que causan el parpadeo */
+    transition: none !important;
+}
+
+/* 4. Asegurar que las reglas de espacio queden fijas sin recalcularse */
+.hero-glass-card {
+    padding: 10px !important;
+    box-sizing: border-box !important;
+}
+
+/* --- BLINDAJE DE TITANIO: ANULACIÓN DE ESTILOS INLINE --- */
+/* Eliminamos cualquier posibilidad de que el JS fuerce un cambio en la estructura */
+
+[class*="magic-hover"], 
+.mdj-magic-hover-card {
+    /* Forzamos que la propiedad transform sea ignorada por completo si es inyectada */
+    transform: none !important;
+    
+    /* Impedimos que el elemento reaccione al hover de JavaScript */
+    pointer-events: auto !important; 
+    
+    /* Aseguramos que la transición sea nula para evitar animaciones fantasma */
+    transition: box-shadow 0.3s ease !important; /* Solo mantenemos el brillo del halo */
+}
+
+/* --- HOTFIX: Neutralización de Escala Física --- */
+/* Eliminamos el escalado, pero permitimos que el halo (sombra) mantenga el feedback visual */
+.mdj-magic-hover-card:hover,
+.mdj-magic-hover-card.active {
+    transform: none !important; /* Detiene el movimiento físico que causa el salto */
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5) !important; /* Mantiene el resplandor sin mover la caja */
+}
+
+/* --- ESTABILIZADOR DE VIDEO EN TARJETA --- */
+.hero-card-video-container video {
+    width: 100% !important;
+    height: 180px !important; /* Altura fija para no desplazar el texto */
+    object-fit: cover !important;
+    border-radius: 8px !important;
+    pointer-events: none !important; /* Evita que el video interfiera con el mouse */
+}
+
+/* --- APLICACIÓN DEL MODELO MAESTRO A MODALES DE TALENTO INTERNOS --- */
+
+/* 1. Estándar del Contenedor (Grid) - Excluyendo el carrusel principal para no romperlo */
+#dj-roster-grid,
+#roster-grid,
+#horaloca-grid,
+#staff-roster-grid,
+#payasos-roster-grid,
+#mc-roster-scroll,
+#lighting-roster-grid,
+#fx-roster-grid { 
+    display: flex !important;
+    flex-wrap: nowrap !important; /* Mantenemos nowrap para el carrusel horizontal */
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+    gap: 20px !important;      /* Separación exacta entre tarjetas */
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    position: relative !important;
+    z-index: 10 !important;
+    
+    /* Soporte para que los carruseles infinitos no oculten el scroll */
+    padding-bottom: 20px !important;
+}
+
+/* 2. Estándar de la Caja (Tarjeta) - Modales internos */
+#dj-roster-grid .hero-glass-card,
+#roster-grid .hero-glass-card,
+#horaloca-grid .hero-glass-card,
+#staff-roster-grid .hero-glass-card,
+#payasos-roster-grid .hero-glass-card,
+#mc-roster-scroll .hero-glass-card,
+#lighting-roster-grid .hero-glass-card,
+#fx-roster-grid .hero-glass-card { 
+    width: 250px !important;    /* Ancho del modelo validado */
+    min-width: 250px !important; 
+    min-height: 400px !important; 
+    padding: 10px !important;   /* El "aire" interno de 10px que solicitaste */
+    border: 2px solid var(--gold) !important;
+    box-sizing: border-box !important;
+    
+    /* Alineación de contenido */
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+}
+
+/* 3. Reseteo de elementos internos para que no estiren la caja */
+#dj-roster-grid .hero-glass-card > *,
+#roster-grid .hero-glass-card > *,
+#horaloca-grid .hero-glass-card > *,
+#staff-roster-grid .hero-glass-card > *,
+#payasos-roster-grid .hero-glass-card > *,
+#mc-roster-scroll .hero-glass-card > * {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+}
+

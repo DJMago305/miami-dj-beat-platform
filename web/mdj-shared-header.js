@@ -2549,13 +2549,13 @@
     window.MDJ_EVENT_BUILDER_V1 = true;
     return mdjEnsureSubscriptionScriptForEventCart()
       .then(function () {
-        return mdjAppendScriptOnce('./js/mdj-event-builder-adapter.js?v=20260531-eb-label-clean-1');
+        return mdjAppendScriptOnce('./js/mdj-event-builder-adapter.js?v=20260514-eb-1a');
       })
       .then(function () {
-        return mdjAppendScriptOnce('./js/mdj-event-builder.js?v=20260601-grid-5col-3');
+        return mdjAppendScriptOnce('./js/mdj-event-builder.js?v=20260603-eb-context-date-bar-1');
       })
       .then(function () {
-        return mdjAppendScriptOnce('./js/mdj-event-builder-rentals-bridge.js?v=20260531-eb-label-clean-1');
+        return mdjAppendScriptOnce('./js/mdj-event-builder-rentals-bridge.js?v=20260514-eb-1b1');
       });
   }
 
@@ -2603,9 +2603,11 @@
       btn.className = 'header-cart-btn mdj-eb-header-cart-open';
       btn.setAttribute('title', 'Event cart');
       btn.setAttribute('aria-label', 'Open event cart');
+      /* Gold hardcoded — works on every page regardless of which CSS loads */
+      btn.style.cssText = 'color:rgba(212,175,55,0.95);border:1px solid rgba(197,160,89,0.42);background:rgba(255,255,255,0.08);border-radius:50%;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;position:relative;flex-shrink:0;';
       btn.innerHTML =
         '<span aria-hidden="true">🛒</span>' +
-        '<span id="mdj-eb-header-count" class="header-cart-count" hidden></span>';
+        '<span id="mdj-eb-header-count" class="header-cart-count" hidden style="background:#c5a059;color:#0a0a0a;position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;font-size:11px;font-weight:800;line-height:18px;text-align:center;"></span>';
       if (!useSlotFallback) {
         if (shopLink && shopLink.parentNode === row) {
           if (shopLink.nextSibling) {
@@ -3834,7 +3836,7 @@
     var flowLink = document.getElementById('mainNav-flow-link') ||
                    nav.querySelector('a[data-mdj-nav="flow"]');
     if (flowLink) {
-      var _flowUid = window.__mdjNavOwnUserId || localStorage.getItem('sb-current-user-id') || '';
+      var _flowUid = window.__mdjNavOwnUserId || (function(){ try { return localStorage.getItem('sb-current-user-id'); } catch(e) { return null; } }()) || '';
       flowLink.href = _flowUid
         ? './dj-dashboard.html?tab=flow&id=' + encodeURIComponent(_flowUid)
         : './dj-dashboard.html?tab=flow';
@@ -3849,7 +3851,7 @@
     var profileLink = document.getElementById('mainNav-guest-mi-perfil-link') ||
                       nav.querySelector('a[data-mdj-nav="profile"]');
     if (profileLink) {
-      var _pUid = window.__mdjNavOwnUserId || localStorage.getItem('sb-current-user-id') || '';
+      var _pUid = window.__mdjNavOwnUserId || (function(){ try { return localStorage.getItem('sb-current-user-id'); } catch(e) { return null; } }()) || '';
       profileLink.href = _pUid ? './dj-profile.html?id=' + encodeURIComponent(_pUid) : './dj-profile.html';
       profileLink.removeAttribute('aria-hidden');
       profileLink.removeAttribute('tabindex');
@@ -3859,7 +3861,7 @@
     var agendaLink = document.getElementById('mainNav-agenda-link') ||
                      nav.querySelector('a[data-mdj-nav="agenda"]');
     if (agendaLink) {
-      var _agUid = window.__mdjNavOwnUserId || localStorage.getItem('sb-current-user-id') || '';
+      var _agUid = window.__mdjNavOwnUserId || (function(){ try { return localStorage.getItem('sb-current-user-id'); } catch(e) { return null; } }()) || '';
       agendaLink.href = _agUid
         ? './dj-dashboard.html?tab=dashboard&id=' + encodeURIComponent(_agUid)
         : './dj-dashboard.html?tab=dashboard';
@@ -3880,7 +3882,7 @@
 
     /* Retorna true solo cuando el UID está disponible.
        Cuando lo encuentra, agenda un fix de seguridad 800ms después (posterior a todo el auth-chain). */
-    var _resolvedUid = window.__mdjNavOwnUserId || localStorage.getItem('sb-current-user-id') || '';
+    var _resolvedUid = window.__mdjNavOwnUserId || (function(){ try { return localStorage.getItem('sb-current-user-id'); } catch(e) { return null; } }()) || '';
     if (_resolvedUid && !window.__mdjAccountSettingsNavLocked) {
       window.__mdjAccountSettingsNavLocked = true;
       setTimeout(function () {
@@ -4224,7 +4226,7 @@
 
     if (flowEl.tagName === 'A') {
       /* shop.html: anchor inyectado — href actualizado con uid */
-      var _uid0 = window.__mdjNavOwnUserId || localStorage.getItem('sb-current-user-id') || '';
+      var _uid0 = window.__mdjNavOwnUserId || (function(){ try { return localStorage.getItem('sb-current-user-id'); } catch(e) { return null; } }()) || '';
       flowEl.href = _uid0
         ? './dj-dashboard.html?tab=flow&id=' + encodeURIComponent(_uid0)
         : './dj-dashboard.html?tab=flow';
@@ -4233,7 +4235,7 @@
       flowEl.onclick = function (e) {
         e.preventDefault();
         e.stopPropagation();
-        var _uid = window.__mdjNavOwnUserId || localStorage.getItem('sb-current-user-id') || '';
+        var _uid = window.__mdjNavOwnUserId || (function(){ try { return localStorage.getItem('sb-current-user-id'); } catch(e) { return null; } }()) || '';
         window.location.href = _uid
           ? './dj-dashboard.html?tab=flow&id=' + encodeURIComponent(_uid)
           : './dj-dashboard.html?tab=flow';
@@ -4316,7 +4318,7 @@
        Se reemplaza el href completo (incluyendo ?mdj_nav=profile si venía así)
        para garantizar que la página destino no sea redirigida por falta de parámetros. ── */
     if (agendaEl && agendaEl.tagName === 'A') {
-      var _agUid = window.__mdjNavOwnUserId || localStorage.getItem('sb-current-user-id') || '';
+      var _agUid = window.__mdjNavOwnUserId || (function(){ try { return localStorage.getItem('sb-current-user-id'); } catch(e) { return null; } }()) || '';
       agendaEl.href = _agUid
         ? './dj-dashboard.html?tab=dashboard&id=' + encodeURIComponent(_agUid)
         : './dj-dashboard.html?tab=dashboard';
@@ -4353,7 +4355,7 @@
        reintentamos el patch de AGENDA con uid una vez que el auth-chain resuelve. */
     if (done) {
       setTimeout(function () {
-        var _uid = window.__mdjNavOwnUserId || localStorage.getItem('sb-current-user-id') || '';
+        var _uid = window.__mdjNavOwnUserId || (function(){ try { return localStorage.getItem('sb-current-user-id'); } catch(e) { return null; } }()) || '';
         if (!_uid) return;
         var owT = document.getElementById('owner-tabs');
         if (!owT) return;

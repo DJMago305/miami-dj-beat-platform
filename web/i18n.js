@@ -1,6 +1,6 @@
 // I18n Global Manager
 const i18n = {
-    currentLang: localStorage.getItem('mdjpro_lang') || 'en',
+    currentLang: (function(){ try { return localStorage.getItem('mdjpro_lang') || 'en'; } catch(e) { return 'en'; } }()),
 
     init() {
         this.updateUI();
@@ -9,7 +9,7 @@ const i18n = {
 
     setLanguage(lang) {
         this.currentLang = lang;
-        localStorage.setItem('mdjpro_lang', lang);
+        try { localStorage.setItem('mdjpro_lang', lang); } catch(e) { void e; }
         if (document.documentElement) {
             document.documentElement.lang = lang === 'es' ? 'es' : 'en';
         }

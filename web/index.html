@@ -1416,19 +1416,20 @@
     </div>
   </footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./supabase-config.js?v=20260423-gallery-dedupe-comment"></script>
-  <script src="./translations.js?v=20260423-gallery-heading"></script>
-  <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
-  <script src="./form-handler.js?v=20260420-deploy"></script>
-  <script src="./header-smart-search.js?v=20260515-unified-header-geometry-1"></script>
-  <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
-  <script src="./mdj-shared-header.js?v=20260603-buyer-nav-order-8"></script>
+  <script src="./js/mdj-safe-storage.js?v=20260616-1"></script>
+    <script src="./supabase-config.js?v=20260423-gallery-dedupe-comment"></script>
+  <script defer src="./translations.js?v=20260423-gallery-heading"></script>
+  <script defer src="./i18n.js?v=20260420-index-experience-rutas"></script>
+  <script defer src="./form-handler.js?v=20260420-deploy"></script>
+  <script defer src="./header-smart-search.js?v=20260515-unified-header-geometry-1"></script>
+  <script defer src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+  <script defer src="./mdj-shared-header.js?v=20260603-buyer-nav-order-8"></script>
   <script>
     /* Inicio: trinquete en #mainNav (scroll + flechas); no reactiva tick en otros carruseles por scroll. */
     window.MDJ_ENABLE_NAV_TICK_AUDIO = true;
   </script>
-  <script src="./mdj-carousel-scroll-tick.js?v=20260421-wheel-resume-tick"></script>
-  <script src="./mdj-mainnav-infinite.js?v=20260531-compact-nav-no-carousel-1"></script>
+  <script defer src="./mdj-carousel-scroll-tick.js?v=20260421-wheel-resume-tick"></script>
+  <script defer src="./mdj-mainnav-infinite.js?v=20260531-compact-nav-no-carousel-1"></script>
   <script>
     /* Tras i18n / hidratar slots del menú, el ancho del rail cambia: remontar overflow + flechas + tick. */
     (function () {
@@ -1863,7 +1864,7 @@
     }
   </script>
   <link rel="stylesheet" href="./mdj-assistant.css?v=20260411-7" />
-  <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
+  <script defer src="./mdj-assistant.js?v=20260411-booth-policy"></script>
   <!-- MDJ Assistant Booth (AI Sales Agent) -->
   <div id="mdj-assistant-booth">
     <!-- Chat Window -->
@@ -1896,9 +1897,11 @@
       <div style="font-size: 30px; z-index: 10;">🤖</div>
     </div>
   </div>
-  <script src="./subscription.js?v=20260226-1"></script>
-  <script src="./monetization.js?v=20260411-policy"></script>
-  <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+  <script defer src="./subscription.js?v=20260226-1"></script>
+  <script defer src="./monetization.js?v=20260411-policy"></script>
+  <script defer src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+  <!-- Cart pill: badge + redirect to rentals (no heavy scripts needed here) -->
+  <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
 </body>
 
 </html>

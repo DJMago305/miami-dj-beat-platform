@@ -1877,7 +1877,7 @@
     <section class="hero-2027" id="hero-section">
 
         <!-- VIDEO DE FONDO: URL = MDB_ASSETS_URL + "Jobs/Jobs Miami DJ Beat.mp4" (Supabase bucket `assets`) o fallback local ./assets/... -->
-        <video id="hero-video" class="hero-video-bg" autoplay muted loop playsinline src=""></video>
+        <video preload="none" id="hero-video" class="hero-video-bg" autoplay muted loop playsinline src=""></video>
 
         <!-- Overlay cinematográfico (vignette) -->
         <div class="hero-video-overlay"></div>
@@ -2430,7 +2430,7 @@
                                 style="width: 120px; height: 120px; border-radius: 50%; overflow: hidden; background: rgba(0,0,0,0.5); border: 2px dashed rgba(197, 160, 89, 0.4); display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer;"
                                 onclick="document.getElementById('profile-photo-input').click()">
                                 <span id="avatar-placeholder" style="font-size: 40px; opacity: 0.5;">👤</span>
-                                <img id="photo-preview" src=""
+                                <img loading="lazy" id="photo-preview" src=""
                                     style="width: 100%; height: 100%; object-fit: cover; display: none; position: absolute; top:0; left:0;">
                             </div>
                             <div>
@@ -2635,7 +2635,7 @@
                         <button type="button" onclick="document.getElementById('set-photo-input').click()"
                             style="background:rgba(255,255,255,0.05); color:var(--gold); border:1px solid var(--gold); border-radius:12px; padding:15px 30px; font-weight:800; cursor:pointer; letter-spacing: 1px;">SUBIR
                             SET COMPLETO</button>
-                        <img id="set-photo-thumb" src="" alt=""
+                        <img loading="lazy" id="set-photo-thumb" src="" alt=""
                             style="display:none; width:120px; height:80px; object-fit:cover; border-radius:15px; border:1px solid var(--gold);">
                     </div>
                     <input type="hidden" id="set-photo-data">
@@ -2725,7 +2725,8 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./subscription.js?v=20260418-PURGE-SEAL"></script>
+    <script defer src="./subscription.js?v=20260418-PURGE-SEAL"></script>
+    <script src="./js/mdj-safe-storage.js?v=20260616-1"></script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
     <script>
         (function () {
@@ -2739,9 +2740,9 @@
             }
         })();
     </script>
-    <script src="./translations.js?v=20260422-nav-labels-1"></script>
-    <script src="./i18n.js?v=20260418-PURGE-SEAL"></script>
-    <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+    <script defer src="./translations.js?v=20260422-nav-labels-1"></script>
+    <script defer src="./i18n.js?v=20260418-PURGE-SEAL"></script>
+    <script defer src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
     <script>
         /* --- [x] Vision 2027 UI Transformation
            - [x] Hero Simplification (Clean Vision 2027)
@@ -4405,7 +4406,7 @@
                     onclick="document.getElementById('eq-file-${uid}').click()"
                     style="background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.15);border-radius:6px;width:32px;height:32px;cursor:pointer;font-size:14px;flex-shrink:0;"
                     title="Subir foto del equipo">&#128247;</button>
-                <img class="eq-thumb" src="" alt=""
+                <img loading="lazy" class="eq-thumb" src="" alt=""
                     style="display:none;width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid rgba(255,255,255,0.15);flex-shrink:0;">
                 <button type="button" onclick="removeTechItem(this)"
                     style="background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.15);border-radius:6px;width:32px;height:32px;cursor:pointer;font-size:18px;font-weight:300;flex-shrink:0;"
@@ -4980,7 +4981,7 @@
     </script>
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
     <link rel="stylesheet" href="./mdj-assistant.css" />
-    <script src="./mdj-assistant.js?v=20260418-PURGE-SEAL"></script>
+    <script defer src="./mdj-assistant.js?v=20260418-PURGE-SEAL"></script>
     <div id="mdj-assistant-booth">
         <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
         <div class="booth-window">
@@ -5009,15 +5010,17 @@
             <div style="font-size: 30px; z-index: 10;">🤖</div>
         </div>
     </div>
-    <script src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
+    <script defer src="./mdj-identity.js?v=20260422-identity-db-wins-1"></script>
     <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
 
-    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-      <script src="./mdj-shared-header.js?v=20260603-buyer-nav-order-8"></script>
-  <script src="./mdj-mainnav-infinite.js?v=20260531-compact-nav-no-carousel-1"></script>
-    <script src="./mdj-owner-tabs-marquee.js?v=20260429-static-strip"></script>
-    <script src="./mdj-profile-nav-context.js?v=20260603-art-007c-staff-same-entry-1"></script>
-  <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+    <script defer src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+      <script defer src="./mdj-shared-header.js?v=20260603-buyer-nav-order-8"></script>
+  <script defer src="./mdj-mainnav-infinite.js?v=20260531-compact-nav-no-carousel-1"></script>
+    <script defer src="./mdj-owner-tabs-marquee.js?v=20260429-static-strip"></script>
+    <script defer src="./mdj-profile-nav-context.js?v=20260603-art-007c-staff-same-entry-1"></script>
+  <script defer src="./mdj-social-bar.js?v=20260423-social-restore"></script>
+  <!-- Cart pill: badge + redirect to rentals (no heavy scripts needed here) -->
+  <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
 </body>
 
 </html>

@@ -830,6 +830,24 @@
                     </div>
                     <p id="signup-phone-talent-hint" class="login-field-hint hidden" style="margin:-6px 0 0 2px;"
                         data-i18n="login-signup-phone-hint-talent">Obligatorio para talento: te contactamos por trabajo.</p>
+                    <!-- Especialidad — solo visible para cuentas de talento/artista -->
+                    <div id="signup-specialty-row" class="mdj-field-outlined hidden" style="margin-top:10px;">
+                        <select id="signup-specialty" name="artist_specialty" style="width:100%;padding:14px 12px 4px;background:transparent;border:none;outline:none;color:inherit;font-size:15px;cursor:pointer;">
+                            <option value="" disabled selected></option>
+                            <option value="dj">DJ</option>
+                            <option value="bartender">Bartender</option>
+                            <option value="mesero">Mesero / Camarero</option>
+                            <option value="cocinero">Cocinero / Chef</option>
+                            <option value="drone">Operador de Drone</option>
+                            <option value="mc">MC / Presentador / Animador</option>
+                            <option value="fotografo">Fotógrafo / Videógrafo</option>
+                            <option value="musicos en vivo">Músico en Vivo / Orquesta / Banda</option>
+                            <option value="hora loca">Hora Loca</option>
+                            <option value="payaso">Payaso / Entretenimiento Infantil</option>
+                            <option value="staff">Staff General</option>
+                        </select>
+                        <label for="signup-specialty" class="mdj-field-outlined__label"><span>Profesión / Especialidad *</span></label>
+                    </div>
                     <div class="mdj-signup-row mdj-signup-row--2">
                         <div class="mdj-field-outlined">
                             <div class="pwd-wrapper">
@@ -1069,16 +1087,22 @@
                 var labC = document.getElementById('signup-phone-label-client');
                 var phHint = document.getElementById('signup-phone-talent-hint');
                 var addrOptionalIds = ['signup-address-line1', 'signup-address-city', 'signup-address-state', 'signup-address-zip', 'signup-address-country'];
+                var specRow = document.getElementById('signup-specialty-row');
+                var specSel = document.getElementById('signup-specialty');
                 if (userType === 'talent') {
                     if (labT) labT.classList.remove('hidden');
                     if (labC) labC.classList.add('hidden');
                     if (phHint) phHint.classList.remove('hidden');
                     if (phIn) phIn.setAttribute('required', 'required');
+                    if (specRow) specRow.classList.remove('hidden');
+                    if (specSel) specSel.setAttribute('required', 'required');
                 } else {
                     if (labT) labT.classList.add('hidden');
                     if (labC) labC.classList.remove('hidden');
                     if (phHint) phHint.classList.add('hidden');
                     if (phIn) phIn.removeAttribute('required');
+                    if (specRow) specRow.classList.add('hidden');
+                    if (specSel) { specSel.removeAttribute('required'); specSel.value = ''; }
                 }
                 /* Dirección: nunca required en HTML5 — el alta no debe depender de calle/depto (patrón consumer estándar). */
                 addrOptionalIds.forEach(function (id) {

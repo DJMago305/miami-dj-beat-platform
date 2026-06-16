@@ -1,0 +1,42 @@
+# Auditoría de Cambios - Sincronización y Exclusividad de Rentals
+
+## 1. Verificación de Dependencia (`removeByCatalogSku`)
+La función `window.MDJEventBuilder.removeByCatalogSku` **sí existe** en la arquitectura actual.
+**Archivo donde se define:** `web/js/mdj-event-builder.js` (Línea 250 aprox., dentro del objeto `MDJEventBuilder`).
+Esta función es el método oficial del Event Builder (Fase 1B) para eliminar líneas del carrito lateral basándose en el ID del catálogo.
+
+## 2. Integridad de Datos (Manejo del `TypeError`)
+El error anterior ocurría porque al pasar `added: false`, el código intentaba leer `pack.image` o `pack.video` de un objeto `pack` que solo contenía el `id`.
+La validación implementada en `mdjRentalsSyncDirectActivate` (en `web/js/mdj-event-builder-rentals-bridge.js`) es la siguiente:
+
+```javascript
+    global.mdjRentalsSyncDirectActivate = function (opts) {
+        if (!global.MDJ_EVENT_BUILDER_V1) return;
+        var EB = global.MDJEventBuilder;
+        var Ad = global.MDJEventBuilderAdapter;
+        
+        // VALIDACIÓN ESTRICTA: Asegurar que tenemos los objetos base
+        if (!EB || !Ad || !opts || !opts.pack || !opts.pack.id) {
+            return;
+        }
+        
+        var pack = opts.pack;
+        
+        // SALIDA TEMPRANA: Si es una eliminación, removemos y salimos ANTES de leer propiedades visuales
+        if (!opts.added) {
+            EB.removeByCatalogSku(pack.id);
+            return;
+        }
+        
+        // ... (Solo si es added: true, procedemos a leer nameKey, image, video, etc.)
+```
+
+## 3. Prueba de Humo (Comportamiento tras Refresco)
+**Escenario:** El usuario selecciona el DJ A, refresca la página, y luego selecciona el DJ B.
+**Comportamiento Garantizado:**
+1. Al refrescar la página, `rentals.js` inicializa `window.selectedPackage` leyendo de `sessionStorage.getItem('mdj_rentals_cart_backup')` (esto ocurre en la inicialización global del archivo).
+2. El DJ A se carga en memoria con su propiedad `category: 'dj'`.
+3. Al hacer clic en el DJ B, el evento `click` dispara la lógica de exclusividad.
+4. El sistema lee `window.selectedPackage`, encuentra al DJ A (porque tiene `category: 'dj'`), y ejecuta `window.MDJEventBuilder.removeByCatalogSku(DJ_A_ID)`.
+5. Luego, inserta al DJ B en `window.selectedPackage` y llama a `mdjRentalsSyncDirectActivate` con `added: true` para el DJ B.
+6. El carrito lateral se actualiza mostrando solo al DJ B.

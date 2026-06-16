@@ -47,9 +47,10 @@
 
     /** Family Events DJ table: fetch once (memory cache); read-only public_dj_profiles. */
     var ebFamilyDjInFlight = false;
-    var ebFamilyDjReady = false;
-    var ebFamilyDjRows = [];
-    var ebFamilyDjSource = '';
+    var ebFamilyDjReady   = false;
+    var ebFamilyDjRows    = [];   // top-3 global (backward compat)
+    var ebAllDjNorm       = [];   // todos los artistas normalizados para filtrado por categoría
+    var ebFamilyDjSource  = '';
 
     var ebActiveUserId = null;
     var ebUiBound = false;
@@ -179,6 +180,44 @@
         });
     }
 
+    // Infiere category_key desde prefijos de ID conocidos + rentalCatalogs
+    function mdjEbInferCategoryFromSku(sku) {
+        var s = String(sku || '');
+        if (s.indexOf('dj_') === 0) return 'dj';
+        if (s.indexOf('hl_') === 0) return 'horaloca';
+        if (s.indexOf('mc_') === 0) return 'mc';
+        if (s.indexOf('staff_') === 0) return 'staff';
+        if (s.indexOf('payaso_') === 0) return 'payaso';
+        if (s.indexOf('fx_') === 0) return 'fx';
+        if (s.indexOf('live_') === 0 || s.indexOf('sax_') === 0 || s.indexOf('percussion_') === 0) return 'live';
+        if (s.indexOf('visuals_') === 0 || s.indexOf('photo_') === 0 || s.indexOf('video_') === 0 || s.indexOf('drone_') === 0) return 'visuals';
+        if (
+            s.indexOf('led_') === 0 || s.indexOf('moving_heads') === 0 || s.indexOf('uplighting') === 0 ||
+            s.indexOf('laser_') === 0 || s.indexOf('fog_') === 0 || s.indexOf('low_fog') === 0 ||
+            s.indexOf('bubble_') === 0 || s.indexOf('spark_') === 0 ||
+            s.indexOf('indoor_led') === 0 || s.indexOf('outdoor_led') === 0 || s.indexOf('led_tv') === 0
+        ) return 'lighting';
+        if (s.indexOf('pa_') === 0 || s.indexOf('wireless_mic') === 0 || s.indexOf('dj_monitor') === 0 || s.indexOf('audio_') === 0) return 'audio';
+        if (s.indexOf('f_') === 0) return 'furniture';
+        if (s.indexOf('truss_') === 0 || s.indexOf('stage_') === 0 || s.indexOf('goalpost') === 0) return 'stages';
+        if (s.indexOf('tent_') === 0 || s.indexOf('canopy_') === 0 || s.indexOf('marquee_') === 0) return 'tents';
+        if (s.indexOf('inflat') === 0 || s.indexOf('bounce_') === 0 || s.indexOf('castle_') === 0) return 'inflatables';
+        // Búsqueda exhaustiva en rentalCatalogs
+        var rc = global.rentalCatalogs;
+        if (rc) {
+            var keys = Object.keys(rc);
+            for (var k = 0; k < keys.length; k++) {
+                var cat = rc[keys[k]];
+                if (cat && Array.isArray(cat.items)) {
+                    for (var j = 0; j < cat.items.length; j++) {
+                        if (cat.items[j] && cat.items[j].id === s) return keys[k];
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     function hydrateDraft() {
         var saved = readJson(getDraftKey(), null);
         if (saved && saved.schema_version === 1 && Array.isArray(saved.lines)) {
@@ -192,6 +231,23 @@
             for (i = 0; i < state.lines.length; i++) {
                 if (state.lines[i] && state.lines[i].image_url === EB_BROKEN_DJ_FAMILY_IMAGE) {
                     state.lines[i].image_url = null;
+                    migrated = true;
+                }
+                // Re-infer stale category_key ('addon'/'general') using prefix rules + rentalCatalogs
+                var sl = state.lines[i];
+                if (sl && (sl.category_key === 'addon' || sl.category_key === 'general') && sl.catalog_sku) {
+                    var newCat = mdjEbInferCategoryFromSku(sl.catalog_sku);
+                    if (!newCat && typeof global.mdjRentalsInferCategoryKey === 'function') {
+                        newCat = global.mdjRentalsInferCategoryKey(sl.catalog_sku);
+                    }
+                    if (newCat && newCat !== 'addon' && newCat !== 'general') {
+                        sl.category_key = newCat;
+                        migrated = true;
+                    }
+                }
+                // Migrar líneas sin line_status (cotizado por defecto)
+                if (sl && !sl.line_status) {
+                    sl.line_status = 'cotizado';
                     migrated = true;
                 }
             }
@@ -229,6 +285,9 @@
         var line = adapter.buildLineFromCatalog(dto);
         if (!line) {
             return null;
+        }
+        if (!line.line_status) {
+            line.line_status = 'cotizado';
         }
         if (slotIsSingleton(line.slot)) {
             state.lines = state.lines.filter(function (l) {
@@ -314,16 +373,27 @@
         return !!(line && line.slot === 'dj_primary' && line.catalog_sku === 'dj_family');
     }
 
+    var TALENT_CAJON_KEYS = {
+        dj: 1, horaloca: 1, live: 1, live_music: 1,
+        visuals: 1, mc: 1, staff: 1, payaso: 1
+    };
+
+    function lineIsTalentRow(line) {
+        return !!(line && TALENT_CAJON_KEYS[line.category_key]);
+    }
+
     function mdjEbNormalizeMockFamilyRows() {
         return MDJ_EB_MOCK_DJS_FAMILY.map(function (dj) {
             return {
-                user_id: '',
-                stage: dj.stage,
-                legal: dj.legal,
+                user_id:    '',
+                stage:      dj.stage,
+                legal:      dj.legal,
                 stars_label: dj.stars_label,
                 score_paren: dj.score_paren,
-                status: dj.status,
-                avatar_url: dj.avatar_url
+                status:     dj.status,
+                avatar_url: dj.avatar_url,
+                tier_label: dj.tier_label || 'LITE',
+                specialty:  dj.specialty || 'DJ'
             };
         });
     }
@@ -365,14 +435,26 @@
             av = './assets/branding/logo-transparent.png';
         }
         var uid = row.user_id ? String(row.user_id).trim() : '';
+        var pl  = String(row.plan || '').toUpperCase();
+        var pt  = String(row.plan_type || '').toUpperCase();
+        var tierLabel = 'LITE';
+        if (pl === 'ELITE' || pt.indexOf('ELITE') !== -1) {
+            tierLabel = 'ELITE';
+        } else if (pl === 'PRO' || row.is_premium === true || pt === 'PRO_MONTHLY' || pt === 'PRO_ANNUAL' || pt === 'PRO') {
+            tierLabel = 'PRO';
+        }
         return {
-            user_id: uid,
-            stage: stage,
-            legal: legal,
+            user_id:    uid,
+            stage:      stage,
+            legal:      legal,
             stars_label: mdjEbRatingToStarsLabel(row.rating),
             score_paren: mdjEbReviewParen(row),
-            status: row.available ? 'Available' : '—',
-            avatar_url: av
+            status:     row.available ? 'Available' : '—',
+            avatar_url: av,
+            tier_label: tierLabel,
+            // Si artist_specialty está vacío, el perfil es de DJ por defecto
+            // (public_dj_profiles es una tabla de artistas DJ)
+            specialty:  String(row.artist_specialty || 'DJ').trim() || 'DJ'
         };
     }
 
@@ -966,7 +1048,7 @@
         var i;
         var need = false;
         for (i = 0; i < state.lines.length; i++) {
-            if (lineIsDjFamilyEvent(state.lines[i])) {
+            if (lineIsTalentRow(state.lines[i])) {
                 need = true;
                 break;
             }
@@ -976,16 +1058,18 @@
         }
         var sb = typeof global.getSupabaseClient === 'function' ? global.getSupabaseClient() : null;
         if (!sb || typeof sb.from !== 'function') {
-            ebFamilyDjReady = true;
+            ebFamilyDjReady  = true;
             ebFamilyDjSource = 'mock';
-            ebFamilyDjRows = mdjEbNormalizeMockFamilyRows();
+            ebFamilyDjRows   = mdjEbNormalizeMockFamilyRows();
+            ebAllDjNorm      = ebFamilyDjRows.slice();
             return;
         }
         ebFamilyDjInFlight = true;
-        /* Columnas alineadas con la vista desplegada: evitar verified/review_count si la vista no los expone (400 → mock). */
+        /* Incluir artist_specialty para filtrado por categoría de cajón. */
         var sel =
             'user_id, dj_slug, stage_name, dj_name, full_name, photo_url, rating, available,' +
-            'plan, plan_type, plan_status, plan_expires_at, is_premium, subscription_status';
+            'plan, plan_type, plan_status, plan_expires_at, is_premium, subscription_status,' +
+            'artist_specialty';
         var q = sb
             .from('public_dj_profiles')
             .select(sel)
@@ -995,11 +1079,12 @@
             .limit(120);
         var p = q.then ? q : null;
         if (!p || typeof p.then !== 'function') {
-            ebFamilyDjInFlight = false;
-            ebFamilyDjReady = true;
-            ebFamilyDjSource = 'mock';
-            ebFamilyDjRows = mdjEbNormalizeMockFamilyRows();
-            return;
+        ebFamilyDjInFlight = false;
+        ebFamilyDjReady    = true;
+        ebFamilyDjSource   = 'mock';
+        ebFamilyDjRows     = mdjEbNormalizeMockFamilyRows();
+        ebAllDjNorm        = ebFamilyDjRows.slice();
+        return;
         }
         p.then(function (res) {
             ebFamilyDjInFlight = false;
@@ -1011,9 +1096,10 @@
                 } catch (eLog) {
                     void eLog;
                 }
-                ebFamilyDjReady = true;
+                ebFamilyDjReady  = true;
                 ebFamilyDjSource = 'mock';
-                ebFamilyDjRows = mdjEbNormalizeMockFamilyRows();
+                ebFamilyDjRows   = mdjEbNormalizeMockFamilyRows();
+                ebAllDjNorm      = ebFamilyDjRows.slice();
                 render();
                 return;
             }
@@ -1021,15 +1107,22 @@
                 data = [];
             }
             var picked = mdjEbPickFamilyDjRows(data);
-            ebFamilyDjReady = true;
+            ebFamilyDjReady  = true;
             ebFamilyDjSource = 'supabase';
-            ebFamilyDjRows = picked.map(mdjEbNormalizeFamilyDjRowFromPublic).filter(Boolean);
+            ebFamilyDjRows   = picked.map(mdjEbNormalizeFamilyDjRowFromPublic).filter(Boolean);
+            // Pool completo para filtrado por categoría (PRO primero, sin límite de 3)
+            ebAllDjNorm = data
+                .filter(function (r) { return r && r.available === true && r.user_id && !mdjEbIsNonBookableStaffRosterRow(r); })
+                .sort(function (a, b) { return mdjEbFamilyRowPickScore(b) - mdjEbFamilyRowPickScore(a); })
+                .map(mdjEbNormalizeFamilyDjRowFromPublic)
+                .filter(Boolean);
             render();
         }).catch(function (err) {
             ebFamilyDjInFlight = false;
-            ebFamilyDjReady = true;
+            ebFamilyDjReady  = true;
             ebFamilyDjSource = 'mock';
-            ebFamilyDjRows = mdjEbNormalizeMockFamilyRows();
+            ebFamilyDjRows   = mdjEbNormalizeMockFamilyRows();
+            ebAllDjNorm      = ebFamilyDjRows.slice();
             try {
                 console.warn('[MDJEventBuilder] family roster:', err && err.message ? err.message : err);
             } catch (e2) {
@@ -1037,6 +1130,184 @@
             }
             render();
         });
+    }
+
+    /**
+     * Mapa category_key → fragmentos de texto que pueden aparecer en artist_specialty.
+     * Cuando un artista nuevo se registra con la specialty correcta, aparece automáticamente
+     * en la lista del cajón correspondiente sin ningún cambio de código.
+     */
+    /** Reads day/month/year selects → ISO date string YYYY-MM-DD, or '' if incomplete. */
+    function mdjEbReadContextDateIso() {
+        var sels = mdjEbGetContextDateSelects();
+        var y = sels.year && sels.year.value ? String(sels.year.value).trim() : '';
+        var m = sels.month && sels.month.value ? String(parseInt(sels.month.value, 10)) : '';
+        var d = sels.day && sels.day.value ? String(parseInt(sels.day.value, 10)) : '';
+        if (!y || !m || !d || isNaN(parseInt(m, 10)) || isNaN(parseInt(d, 10))) { return ''; }
+        var mm = parseInt(m, 10) < 10 ? '0' + parseInt(m, 10) : String(parseInt(m, 10));
+        var dd = parseInt(d, 10) < 10 ? '0' + parseInt(d, 10) : String(parseInt(d, 10));
+        return y + '-' + mm + '-' + dd;
+    }
+
+    /**
+     * Queries Supabase leads for the given date and returns a plain object map
+     * { [artist_uuid]: true } for every artist already assigned to a lead on that date.
+     * Reads leads.notes.selected_services[].selected_artist_id (MVP-A schema).
+     * Returns {} (no-busy) on any error or when no date is provided.
+     */
+    async function mdjEbFetchBusyArtistIdsForDate(db, dateIso) {
+        var busyMap = {};
+        if (!db || !dateIso || !/^\d{4}-\d{2}-\d{2}$/.test(dateIso)) { return busyMap; }
+        try {
+            var res = await db
+                .from('leads')
+                .select('notes')
+                .gte('event_date', dateIso + 'T00:00:00')
+                .lte('event_date', dateIso + 'T23:59:59')
+                .neq('status', 'cancelled');
+            if (res.error || !Array.isArray(res.data)) { return busyMap; }
+            res.data.forEach(function (row) {
+                try {
+                    var notes = row.notes;
+                    if (typeof notes === 'string') { notes = JSON.parse(notes); }
+                    var services = notes && Array.isArray(notes.selected_services) ? notes.selected_services : [];
+                    services.forEach(function (svc) {
+                        if (svc && svc.selected_artist_id) {
+                            busyMap[String(svc.selected_artist_id).trim()] = true;
+                        }
+                    });
+                } catch (e) { /* ignore parse errors per row */ }
+            });
+        } catch (e) { /* ignore network / permission errors */ }
+        return busyMap;
+    }
+
+    var SPECIALTY_CAJON_MAP = {
+        dj:         ['dj', 'open format', 'wedding', 'latin', 'edm', 'hip hop', 'reggaeton', 'house', 'techno', 'trap', 'productor'],
+        horaloca:   ['hora loca'],
+        live:       ['músicos en vivo', 'musicos en vivo', 'orquesta', 'banda', 'cantante', 'violinista', 'saxofonista', 'percusionista', 'live'],
+        live_music: ['músicos en vivo', 'musicos en vivo', 'orquesta', 'banda', 'cantante'],
+        mc:         ['mc', 'presentador', 'animador'],
+        visuals:    ['captura', 'visual', 'foto booth', '360', 'fotografo', 'videografo'],
+        payaso:     ['payaso', 'clown', 'infantil'],
+        staff:      ['staff', 'bartender', 'mesero', 'camarero', 'cocinero', 'chef', 'limpieza', 'utileria', 'operador', 'drone']
+    };
+
+    var EB_TIER_ORDER = { ELITE: 3, PRO: 2, LITE: 1 };
+
+    /**
+     * Retorna los top-3 artistas del pool completo (ebAllDjNorm) filtrados por categoría.
+     * PRO/ELITE siempre primero. Si no hay match de specialty, devuelve los top-3 globales.
+     * Cualquier artista que en el futuro se registre con la specialty correcta aparece aquí.
+     */
+    function mdjEbFilterTalentForCategory(categoryKey) {
+        var pool = ebAllDjNorm && ebAllDjNorm.length ? ebAllDjNorm : (ebFamilyDjRows || []);
+        var keywords = SPECIALTY_CAJON_MAP[categoryKey] || [];
+        // Sin fallback: si no hay artistas en esta categoría se retorna vacío
+        // y el picker muestra cartel "Pendiente de asignación por el board"
+        if (keywords.length === 0) { return []; }
+        var matched = pool.filter(function (row) {
+            var sp = String(row.specialty || '').toLowerCase();
+            return keywords.some(function (kw) { return sp.indexOf(kw) !== -1; });
+        });
+        matched.sort(function (a, b) {
+            return (EB_TIER_ORDER[b.tier_label] || 0) - (EB_TIER_ORDER[a.tier_label] || 0);
+        });
+        return matched.slice(0, 3);
+    }
+
+    function renderTalentMiniCard(dj, line, isBusy) {
+        var uid      = String(dj.user_id || '').trim();
+        var selected = !!(line.selected_artist_id && uid && String(line.selected_artist_id).trim() === uid);
+        var selectable = ebFamilyDjSource === 'supabase' && mdjEbUuidLike(uid);
+        var tier     = dj.tier_label || 'LITE';
+        var profileHref = uid ? './dj-profile.html?id=' + encodeURIComponent(uid) : './dj-profile.html';
+        var busyBadge = isBusy
+            ? '<span class="mdj-eb-talent-mini__busy-badge" title="Artista ya asignado en otro evento esta fecha">⚠ Ocupado</span>'
+            : '';
+        var btnHtml;
+        if (selectable) {
+            btnHtml =
+                '<button type="button"' +
+                ' class="mdj-eb-talent-mini__assign' + (selected ? ' mdj-eb-talent-mini__assign--active' : '') + (isBusy ? ' mdj-eb-talent-mini__assign--busy' : '') + '"' +
+                ' data-mdj-eb-roster-select="1"' +
+                ' data-line-id="' + escapeHtml(line.line_id) + '"' +
+                ' data-artist-id="' + escapeHtml(uid) + '"' +
+                ' data-artist-stage="' + escapeHtml(dj.stage) + '"' +
+                ' data-artist-photo="' + escapeHtml(dj.avatar_url) + '"' +
+                ' data-artist-profile-href="' + escapeHtml(profileHref) + '"' +
+                ' aria-pressed="' + (selected ? 'true' : 'false') + '">' +
+                (selected ? '✓ Asignado — Cambiar' : (isBusy ? 'Asignar igualmente' : 'Asignar')) +
+                '</button>';
+        } else {
+            btnHtml = '<button type="button" class="mdj-eb-talent-mini__assign" disabled>Vista previa</button>';
+        }
+        var profileUrl = uid ? './dj-profile.html?id=' + encodeURIComponent(uid) : './dj-profile.html';
+        return (
+            '<div class="mdj-eb-talent-mini__card' + (selected ? ' mdj-eb-talent-mini__card--selected' : '') + (isBusy ? ' mdj-eb-talent-mini__card--busy' : '') + '">' +
+            '<img class="mdj-eb-talent-mini__avatar" src="' + escapeHtml(dj.avatar_url) + '" alt="" width="52" height="52" loading="lazy">' +
+            '<div class="mdj-eb-talent-mini__info">' +
+            '<div class="mdj-eb-talent-mini__top">' +
+            '<span class="mdj-eb-talent-mini__stage">' + escapeHtml(dj.stage) + '</span>' +
+            '<span class="mdj-eb-talent-mini__tier mdj-eb-talent-mini__tier--' + tier.toLowerCase() + '">' + tier + '</span>' +
+            busyBadge +
+            '</div>' +
+            '<div class="mdj-eb-talent-mini__legal">' + escapeHtml(dj.legal) + '</div>' +
+            '</div>' +
+            '<div class="mdj-eb-talent-mini__actions">' +
+            btnHtml +
+            '<a class="mdj-eb-talent-mini__profile-link" href="' + escapeHtml(profileUrl) + '" target="_blank" rel="noopener">Ver perfil</a>' +
+            '</div>' +
+            '</div>'
+        );
+    }
+
+    /**
+     * @param {object} line  - cart line object
+     * @param {object} [busyMap] - { [uuid]: true } artists already booked on the selected date
+     * @param {boolean} [checkingAvailability] - true while async fetch is in progress
+     */
+    function renderTalentMiniPickerHtml(line, busyMap, checkingAvailability) {
+        busyMap = busyMap || {};
+        if (!ebFamilyDjReady) {
+            return (
+                '<div class="mdj-eb-talent-mini">' +
+                '<div class="mdj-eb-talent-mini__loading">Cargando talentos…</div>' +
+                '</div>'
+            );
+        }
+        var artists = mdjEbFilterTalentForCategory(line.category_key);
+        if (!artists || artists.length === 0) {
+            return (
+                '<div class="mdj-eb-talent-mini">' +
+                '<div class="mdj-eb-talent-mini__pending">' +
+                '<span class="mdj-eb-talent-mini__pending-icon">⏳</span>' +
+                '<div class="mdj-eb-talent-mini__pending-body">' +
+                '<strong>Pendiente de confirmación</strong>' +
+                '<p>No hay artistas registrados en esta categoría aún. ' +
+                'El board / staff revisará la solicitud y asignará al profesional correspondiente.</p>' +
+                '</div>' +
+                '</div>' +
+                '</div>'
+            );
+        }
+        var availabilityNote = checkingAvailability
+            ? '<div class="mdj-eb-talent-mini__avail-note mdj-eb-talent-mini__avail-note--checking">Verificando disponibilidad…</div>'
+            : (Object.keys(busyMap).length > 0
+                ? '<div class="mdj-eb-talent-mini__avail-note">Disponibilidad verificada para la fecha del evento.</div>'
+                : '');
+        var cards = artists.map(function (dj) {
+            var uid = String(dj.user_id || '').trim();
+            var isBusy = !!(uid && busyMap[uid]);
+            return renderTalentMiniCard(dj, line, isBusy);
+        }).join('');
+        return (
+            '<div class="mdj-eb-talent-mini">' +
+            '<div class="mdj-eb-talent-mini__label">Top talentos · PRO primero:</div>' +
+            availabilityNote +
+            '<div class="mdj-eb-talent-mini__cards">' + cards + '</div>' +
+            '</div>'
+        );
     }
 
     function renderDjFamilyPickerHtml(line) {
@@ -1075,75 +1346,253 @@
         );
     }
 
+    // Mapa category_key → nombre del cajón en rentals.html
+    var EB_CAJON_LABELS = {
+        dj:          'Entretenimiento y Talento',
+        horaloca:    'Entretenimiento y Talento',
+        live:        'Entretenimiento y Talento',
+        live_music:  'Entretenimiento y Talento',
+        visuals:     'Entretenimiento y Talento',
+        mc:          'Entretenimiento y Talento',
+        staff:       'Entretenimiento y Talento',
+        payaso:      'Entretenimiento y Talento',
+        fx:          'Efectos Especiales',
+        lighting:    'Iluminación y Pantallas LED',
+        audio:       'Audio y Sonido Profesional',
+        tents:       'Carpas y Estructuras',
+        furniture:   'Mobiliario y Decoración',
+        inflatables: 'Castillos Inflables',
+        staging:     'Stage & Event Structures',
+        stages:      'Stage & Event Structures',
+        addon:       'Servicios Adicionales',
+        general:     'Servicios Adicionales'
+    };
+
+    // Orden canónico de cajones + catch-all
+    var CAJON_ORDER = [
+        'Entretenimiento y Talento',
+        'Audio y Sonido Profesional',
+        'Iluminación y Pantallas LED',
+        'Mobiliario y Decoración',
+        'Efectos Especiales',
+        'Carpas y Estructuras',
+        'Stage & Event Structures',
+        'Castillos Inflables',
+        'Servicios Adicionales'
+    ];
+
+    var CRM_TABLE_HEAD =
+        '<thead>' +
+        '<tr class="mdj-eb-crm-thead-row">' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--ln">#</th>' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--svc">Servicio / Add-on</th>' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--desc">Descripción</th>' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--qty">Cant.</th>' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--upr">P. Unit</th>' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--sub">Subtotal</th>' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--sta">Estado</th>' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--prv">Proveedor</th>' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--nts">Notas</th>' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--act">Acción</th>' +
+        '</tr>' +
+        '</thead>';
+
+    var EB_STATUS_CONFIG = {
+        cotizado:      { label: 'Cotizado',      cls: 'mdj-eb-crm-badge--cotizado' },
+        en_proceso:    { label: 'En proceso',    cls: 'mdj-eb-crm-badge--proceso' },
+        confirmado:    { label: 'Confirmado',    cls: 'mdj-eb-crm-badge--confirmado' },
+        no_disponible: { label: 'No disponible', cls: 'mdj-eb-crm-badge--nodisponible' }
+    };
+
+    function mdjEbStatusBadge(status) {
+        var cfg = EB_STATUS_CONFIG[String(status || 'cotizado')] || EB_STATUS_CONFIG['cotizado'];
+        return '<span class="mdj-eb-crm-badge ' + cfg.cls + '">' + cfg.label + '</span>';
+    }
+
     function renderLines(container) {
         if (!container) {
             return;
         }
-        if (!state.lines.length) {
-            container.innerHTML =
-                '<p class="mdj-eb-empty">No services added yet. Browse Entertainment &amp; Talent and use Add to Package.</p>';
-            return;
-        }
+
+        // Preservar estado del DJ picker abierto
         var preserveOpenLineId = null;
         var openDet = container.querySelector('details.mdj-eb-dj-pick[open]');
         if (openDet) {
-            var hostArt = openDet.closest('article[data-line-id]');
-            if (hostArt) {
-                preserveOpenLineId = hostArt.getAttribute('data-line-id');
+            var hostRow = openDet.closest('tr[data-line-id]');
+            if (hostRow) {
+                preserveOpenLineId = hostRow.getAttribute('data-line-id');
             }
         }
-        container.innerHTML = state.lines
-            .map(function (line) {
-            var rawImg = line.image_url ? String(line.image_url).trim() : '';
-            var imgOk = rawImg && rawImg !== EB_BROKEN_DJ_FAMILY_IMAGE && rawImg.indexOf('family-events.jpg') === -1;
-            var thumb = imgOk
-                ? '<img class="mdj-eb-line__thumb" src="' + escapeHtml(rawImg) + '" alt="" loading="lazy">'
-                : '<div class="mdj-eb-line__thumb mdj-eb-line__thumb--ph" aria-hidden="true"></div>';
+
+        // Agrupar líneas por cajón
+        var linesByCajon = {};
+        CAJON_ORDER.forEach(function (name) { linesByCajon[name] = []; });
+        state.lines.forEach(function (line) {
+            var key = EB_CAJON_LABELS[line.category_key] || EB_CAJON_LABELS[line.category_label] || 'Servicios Adicionales';
+            if (!linesByCajon[key]) {
+                linesByCajon[key] = [];
+            }
+            linesByCajon[key].push(line);
+        });
+
+        // Renderizar una fila CRM para una línea dentro de su cajón
+        function renderCrmRow(line, idxInCajon) {
+            var qty = Math.max(1, line.quantity || 1);
+            var unitPrice = parseFloat(line.unit_price_usd) || 0;
+            if (!unitPrice && qty > 0) {
+                unitPrice = Math.round((parseFloat(line.line_total_usd) || 0) / qty * 100) / 100;
+            }
+            var subtotalLine = Math.round(qty * unitPrice * 100) / 100;
+            var isTalent = lineIsTalentRow(line);
+
+            // Ícono de perfil por categoría de talento
+            var TALENT_PROFILE_ICON = {
+                dj: '🎧', horaloca: '🎉', live: '🎵', live_music: '🎵',
+                mc: '🎤', visuals: '📷', payaso: '🎪', staff: '👤'
+            };
+
+            // URL del perfil del artista asignado
+            var artistHref = '';
+            if (isTalent && line.selected_artist_id) {
+                artistHref = line.selected_artist_profile_href
+                    || ('./dj-profile.html?id=' + encodeURIComponent(line.selected_artist_id));
+            }
+
+            // DESCRIPCIÓN: solo nombre del artista, sin enlace ni flecha
+            var selCell;
+            if (isTalent && line.selected_artist_stage_name) {
+                selCell = '<span class="mdj-eb-crm-sel-name">' + escapeHtml(String(line.selected_artist_stage_name)) + '</span>';
+            } else {
+                selCell = isTalent ? '<span class="mdj-eb-crm-sel-hint">Seleccionar talento</span>' : '';
+            }
+
+            // PROVEEDOR: MDJB si seleccionado en plataforma, nombre de vendedor si venta manual, — si nada
+            var providerText;
+            if (isTalent && line.selected_artist_stage_name) {
+                if (line.selected_artist_roster_type === 'talent') {
+                    providerText = 'MDJB';
+                } else if (line.provider_name) {
+                    providerText = escapeHtml(String(line.provider_name));
+                } else {
+                    providerText = 'MDJB';
+                }
+            } else {
+                providerText = '—';
+            }
+
+            // NOTAS: ícono de categoría como enlace al perfil artístico
+            // Si hay artista asignado → su perfil; si no → directorio de artistas
+            var notesCell = '';
+            if (isTalent) {
+                var icon = TALENT_PROFILE_ICON[line.category_key] || '🔗';
+                var linkHref = artistHref || './find-dj.html';
+                var linkTitle = artistHref ? 'Ver perfil artístico' : 'Explorar artistas disponibles';
+                var linkOpacity = artistHref ? '' : ' style="opacity:0.40;"';
+                notesCell = '<a class="mdj-eb-crm-notes-link" href="' + escapeHtml(linkHref) + '" target="_blank" rel="noopener" title="' + linkTitle + '"' + linkOpacity + '>' + icon + '</a>';
+            }
+
             var replaceBtn = line.replaceable
-                ? '<button type="button" class="mdj-eb-line__replace" data-line-id="' + escapeHtml(line.line_id) + '" data-slot="' + escapeHtml(line.slot) + '">Replace</button>'
+                ? '<button type="button" class="mdj-eb-line__replace mdj-eb-crm-act-btn" data-line-id="' + escapeHtml(line.line_id) + '" data-slot="' + escapeHtml(line.slot) + '" title="Reemplazar">↺</button>'
                 : '';
-            var qtyLabel = line.quantity > 1 ? ' <span class="mdj-eb-line__qty">×' + line.quantity + '</span>' : '';
-            var djFamily = lineIsDjFamilyEvent(line);
-            var lineClass = djFamily ? 'mdj-eb-line mdj-eb-line--dj-family' : 'mdj-eb-line';
-            var djPickChip =
-                djFamily && line.selected_artist_stage_name
-                    ? '<span class="mdj-eb-line__dj-pick-chip">Selected DJ: ' +
-                      escapeHtml(String(line.selected_artist_stage_name)) +
-                      '</span>'
-                    : '';
-            var djExtra = djFamily ? renderDjFamilyPickerHtml(line) : '';
+            var removeBtn =
+                '<button type="button" class="mdj-eb-line__remove mdj-eb-crm-act-btn mdj-eb-crm-act-btn--rm" data-line-id="' + escapeHtml(line.line_id) + '" title="Quitar">✕</button>';
+
             return (
-                '<article class="' + lineClass + '" data-line-id="' + escapeHtml(line.line_id) + '">' +
-                '<div class="mdj-eb-line__row">' +
-                thumb +
-                '<div class="mdj-eb-line__meta">' +
-                '<span class="mdj-eb-line__cat">' + escapeHtml(line.category_label) + '</span>' +
-                '<span class="mdj-eb-line__name">' + escapeHtml(line.name) + qtyLabel + '</span>' +
-                djPickChip +
-                '<span class="mdj-eb-line__price">' + money(line.line_total_usd) + '</span>' +
-                '</div>' +
-                '<div class="mdj-eb-line__actions">' +
-                replaceBtn +
-                '<button type="button" class="mdj-eb-line__remove" data-line-id="' + escapeHtml(line.line_id) + '">Remove</button>' +
-                '</div>' +
-                '</div>' +
-                djExtra +
-                '</article>'
+                '<tr class="mdj-eb-crm-row' + (isTalent ? ' mdj-eb-crm-row--talent' : '') + '"' +
+                (isTalent ? ' data-mdj-talent-row="1"' : '') +
+                ' data-line-id="' + escapeHtml(line.line_id) + '">' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--ln">' + (idxInCajon + 1) + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--svc">' + escapeHtml(line.name) + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--desc">' + selCell + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--qty">' + qty + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--upr">' + money(unitPrice) + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--sub mdj-eb-crm-td--sub-val">' + money(subtotalLine) + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--sta">' + mdjEbStatusBadge(line.line_status) + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--prv">' + providerText + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--nts">' + notesCell + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--act">' + replaceBtn + removeBtn + '</td>' +
+                '</tr>'
             );
-        })
-            .join('');
+        }
+
+        // Renderizar todos los cajones (vacíos con fila placeholder, llenos con sus filas)
+        var sectionsHtml = CAJON_ORDER.filter(function (n) { return n !== 'Servicios Adicionales'; }).concat(
+            linesByCajon['Servicios Adicionales'] && linesByCajon['Servicios Adicionales'].length ? ['Servicios Adicionales'] : []
+        ).map(function (cajonName) {
+            var lines = linesByCajon[cajonName] || [];
+            var isEmpty = lines.length === 0;
+            var countLabel = isEmpty
+                ? '<span class="mdj-eb-cajon-title-bar__count mdj-eb-cajon-title-bar__count--empty">—</span>'
+                : '<span class="mdj-eb-cajon-title-bar__count">' + lines.length + ' servicio' + (lines.length !== 1 ? 's' : '') + '</span>';
+            var bodyContent = isEmpty
+                ? '<tr class="mdj-eb-crm-row--empty"><td colspan="10" class="mdj-eb-crm-td--empty">Sin servicios seleccionados</td></tr>'
+                : lines.map(renderCrmRow).join('');
+            return (
+                '<section class="mdj-eb-cajon-section' + (isEmpty ? ' mdj-eb-cajon-section--empty' : '') + '">' +
+                '<div class="mdj-eb-cajon-title-bar">' +
+                '<span class="mdj-eb-cajon-title-bar__name">' + escapeHtml(cajonName) + '</span>' +
+                countLabel +
+                '</div>' +
+                '<div class="mdj-eb-crm-scroll">' +
+                '<table class="mdj-eb-crm-table" cellspacing="0" cellpadding="0">' +
+                CRM_TABLE_HEAD +
+                '<tbody>' + bodyContent + '</tbody>' +
+                '</table>' +
+                '</div>' +
+                '</section>'
+            );
+        }).join('');
+
+        var totals = computeTotals();
+        var deposit30 = Math.round(totals.subtotal * 0.30 * 100) / 100;
+        var balance70 = Math.round(totals.subtotal * 0.70 * 100) / 100;
+
+        // Si sectionsHtml está vacío pero hay líneas, es que todas son addon sin mapear
+        var visibleContent = sectionsHtml.trim();
+        if (!visibleContent && state.lines.length > 0) {
+            visibleContent = '<p class="mdj-eb-empty">Cargando categorías… si persiste, recarga la página.</p>';
+        }
+
+        var summaryHtml = state.lines.length
+            ? '<div class="mdj-eb-crm-summary">' +
+              '<div class="mdj-eb-crm-sum-row"><span class="mdj-eb-crm-sum-lbl">Subtotal servicios</span><span class="mdj-eb-crm-sum-val">' + money(totals.subtotal) + '</span></div>' +
+              '<div class="mdj-eb-crm-sum-row mdj-eb-crm-sum-row--deposit"><span class="mdj-eb-crm-sum-lbl">Depósito 30%</span><span class="mdj-eb-crm-sum-val">' + money(deposit30) + '</span></div>' +
+              '<div class="mdj-eb-crm-sum-row"><span class="mdj-eb-crm-sum-lbl">Balance 70%</span><span class="mdj-eb-crm-sum-val">' + money(balance70) + '</span></div>' +
+              '<div class="mdj-eb-crm-sum-row mdj-eb-crm-sum-row--tax"><span class="mdj-eb-crm-sum-lbl">Sales Tax (7%)</span><span class="mdj-eb-crm-sum-val">' + money(totals.tax) + '</span></div>' +
+              '<div class="mdj-eb-crm-sum-row mdj-eb-crm-sum-row--total"><span class="mdj-eb-crm-sum-lbl">TOTAL</span><span class="mdj-eb-crm-sum-val">' + money(totals.total) + '</span></div>' +
+              '</div>'
+            : '';
+
+        container.innerHTML = '<div class="mdj-eb-cajones-wrap">' + visibleContent + '</div>' + summaryHtml;
+
         if (preserveOpenLineId) {
-            var artOpen = container.querySelector('article[data-line-id="' + preserveOpenLineId + '"]');
-            if (artOpen) {
-                var detOpen = artOpen.querySelector('details.mdj-eb-dj-pick');
-                if (detOpen) {
-                    detOpen.setAttribute('open', '');
+            var rowOpen = container.querySelector('tr[data-line-id="' + preserveOpenLineId + '"]');
+            if (rowOpen) {
+                var nextTr = rowOpen.nextElementSibling;
+                if (nextTr && nextTr.classList.contains('mdj-eb-crm-picker-row')) {
+                    var detOpen = nextTr.querySelector('details.mdj-eb-dj-pick');
+                    if (detOpen) {
+                        detOpen.setAttribute('open', '');
+                    }
                 }
             }
         }
     }
 
+    function mdjEbUpdateOrderNum() {
+        var el = global.document.getElementById('mdj-eb-order-num');
+        if (!el) { return; }
+        var id = String(state.draft_id || '').replace(/-/g, '').toUpperCase();
+        if (!id) { el.textContent = ''; return; }
+        // Año del evento si está fijado; si no, año actual
+        var year = (state.event_year && String(state.event_year).length === 4)
+            ? String(state.event_year)
+            : String(new Date().getFullYear());
+        el.textContent = 'MDJB-' + year + '-' + id.slice(0, 8);
+    }
+
     function render() {
+        mdjEbUpdateOrderNum();
         var totals = computeTotals();
         var subEl = global.document.getElementById('mdj-eb-subtotal');
         var taxEl = global.document.getElementById('mdj-eb-tax');
@@ -1336,9 +1785,43 @@
         }
         state.assigned_lead_id = leadId;
         persistDraft();
+
+        // Fase 2 — persist order snapshot to event_builder_orders (non-blocking)
+        (function () {
+            try {
+                var draftKey = state.draft_id || (String(uid).substring(0, 8) + '-' + Date.now());
+                var contextDate = mdjEbReadContextDateIso() || null;
+                var orderPayload = {
+                    draft_id:       draftKey,
+                    user_id:        uid,
+                    lead_id:        leadId || null,
+                    event_date:     contextDate || null,
+                    lines:          services,
+                    subtotal_usd:   totals.subtotal  || 0,
+                    tax_usd:        totals.tax        || 0,
+                    total_usd:      totals.total      || 0,
+                    deposit_usd:    Math.round((totals.total || 0) * 0.30 * 100) / 100,
+                    order_status:   'pending',
+                    updated_at:     new Date().toISOString()
+                };
+                db.from('event_builder_orders')
+                    .upsert(orderPayload, { onConflict: 'draft_id' })
+                    .then(function (res) {
+                        if (res && res.error) {
+                            try { console.warn('[MDJEventBuilder] event_builder_orders upsert:', res.error.message); } catch (e) { void e; }
+                        }
+                    })
+                    .catch(function () { /* non-blocking */ });
+            } catch (eOrd) { /* non-blocking */ }
+        }());
+
+        // Clear cart lines after successful commit (order is now saved)
+        state.lines = [];
+        state.assigned_lead_id = '';
+        persistDraft();
+
         showToast(
-            'Paquete guardado en el evento. El carrito sigue igual para que puedas seguir editando. Mi Portal: ./client-portal.html?lead=' +
-                leadId
+            '✓ Orden guardada. Mi Portal: ./client-portal.html?lead=' + leadId
         );
         closeDrawer();
         void mdjEbRefreshAssignDropdown();
@@ -1420,7 +1903,7 @@
                     }
                     var ix;
                     for (ix = 0; ix < state.lines.length; ix++) {
-                        if (state.lines[ix].line_id === lid && lineIsDjFamilyEvent(state.lines[ix])) {
+                        if (state.lines[ix].line_id === lid && lineIsTalentRow(state.lines[ix])) {
                             state.lines[ix].selected_artist_id = aid;
                             state.lines[ix].selected_artist_stage_name =
                                 rosterBtn.getAttribute('data-artist-stage') || '';
@@ -1428,7 +1911,7 @@
                                 rosterBtn.getAttribute('data-artist-photo') || '';
                             state.lines[ix].selected_artist_profile_href =
                                 rosterBtn.getAttribute('data-artist-profile-href') || '';
-                            state.lines[ix].selected_artist_roster_type = 'talent_dj';
+                            state.lines[ix].selected_artist_roster_type = 'talent';
                             break;
                         }
                     }
@@ -1451,6 +1934,13 @@
                     } else {
                         showToast('Replace preview: add another test item for this slot via console.');
                     }
+                    return;
+                }
+                // Talent row click → toggle mini picker
+                // Excluir clics en el ícono de notas (ese abre el perfil, no el picker)
+                var talentTr = e.target.closest && e.target.closest('tr[data-mdj-talent-row="1"]');
+                if (talentTr && !e.target.closest('.mdj-eb-crm-notes-link')) {
+                    mdjEbToggleTalentPicker(linesEl, talentTr.getAttribute('data-line-id'));
                 }
             });
         }
@@ -1460,6 +1950,52 @@
                 closeDrawer();
             }
         });
+    }
+
+    function mdjEbToggleTalentPicker(linesEl, lineId) {
+        if (!lineId) { return; }
+        var doc = global.document;
+        // Eliminar cualquier picker abierto
+        var existing = linesEl.querySelectorAll('.mdj-eb-talent-picker-row');
+        var alreadyOpen = false;
+        existing.forEach(function (el) {
+            if (el.getAttribute('data-picker-for') === lineId) { alreadyOpen = true; }
+            el.parentNode && el.parentNode.removeChild(el);
+        });
+        if (alreadyOpen) { return; } // toggle off
+        // Buscar la línea en el estado
+        var line = null;
+        for (var i = 0; i < state.lines.length; i++) {
+            if (state.lines[i].line_id === lineId) { line = state.lines[i]; break; }
+        }
+        if (!line) { return; }
+        // Activar fetch si aún no está listo
+        mdjEbTriggerFamilyDjFetchIfNeeded();
+        // Encontrar el <tr> correspondiente
+        var tr = linesEl.querySelector('tr[data-line-id="' + lineId + '"]');
+        if (!tr) { return; }
+        // Crear e inyectar el picker row (inicial: sin disponibilidad aún)
+        var pickerTr = doc.createElement('tr');
+        pickerTr.className = 'mdj-eb-talent-picker-row';
+        pickerTr.setAttribute('data-picker-for', lineId);
+        var td = doc.createElement('td');
+        td.setAttribute('colspan', '10');
+        td.className = 'mdj-eb-talent-picker-cell';
+        var dateIso = mdjEbReadContextDateIso();
+        var needsAvailCheck = !!(dateIso);
+        td.innerHTML = renderTalentMiniPickerHtml(line, {}, needsAvailCheck);
+        pickerTr.appendChild(td);
+        tr.insertAdjacentElement('afterend', pickerTr);
+        // Async: fetch availability and re-render picker cell if date is set
+        if (needsAvailCheck) {
+            var db = typeof global.getSupabaseClient === 'function' ? global.getSupabaseClient() : null;
+            mdjEbFetchBusyArtistIdsForDate(db, dateIso).then(function (busyMap) {
+                // Re-render only if the picker is still open for this line
+                var stillOpen = linesEl.querySelector('tr.mdj-eb-talent-picker-row[data-picker-for="' + lineId + '"] .mdj-eb-talent-picker-cell');
+                if (!stillOpen) { return; }
+                stillOpen.innerHTML = renderTalentMiniPickerHtml(line, busyMap, false);
+            }).catch(function () { /* silently ignore */ });
+        }
     }
 
     function init() {
