@@ -966,7 +966,7 @@ window.renderLiveHero = (tabKey = null, animate = true) => {
                 if (item.id === 'visuals_booth360' || key === 'booth360') emoji = '🎥🔄';
                 else if (item.id === 'visuals_magic_mirror' || key === 'magicMirror') emoji = '🪞';
                 else if (item.id.includes('sax')) emoji = '🎷';
-                else if (item.id.includes('band')) emoji = '🎷';
+                else if (item.id.includes('band')) emoji = '🎼';
                 else if (item.id.includes('percussion') || item.id.includes('timbal')) emoji = '🥁';
                 else if (item.id.includes('photo')) emoji = '📸';
                 else if (item.id.includes('video') && !item.id.includes('drone')) emoji = '🎥';
