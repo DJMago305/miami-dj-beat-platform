@@ -516,7 +516,9 @@
             gateBody.setAttribute('data-i18n', 'nav-tools-lite-gate-body');
             gateCta.setAttribute('data-i18n', 'nav-tools-lite-gate-cta');
             gatePortal.setAttribute('data-i18n', 'nav-tools-lite-gate-portal');
-            gateCta.setAttribute('href', './jobs.html#selection-screen');
+            gateCta.removeAttribute('href');
+            gateCta.style.cursor = 'pointer';
+            gateCta.onclick = function(e) { e.preventDefault(); mdjCheckoutPro('monthly'); };
             gatePortal.setAttribute('href', './client-portal.html');
           } else if (tier === 'client_only' && gateTitle && gateBody && gateCta && gatePortal) {
             gateTitle.setAttribute('data-i18n', 'nav-tools-client-gate-title');
@@ -537,6 +539,38 @@
     </script>
   <!-- Cart pill: badge + redirect to rentals -->
   <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
+  <script>
+    async function mdjCheckoutPro(billing) {
+      billing = billing || 'monthly';
+      var btn = event && event.currentTarget ? event.currentTarget : null;
+      var orig = btn ? btn.innerHTML : '';
+      if (btn) { btn.disabled = true; btn.innerHTML = 'Conectando...'; }
+      try {
+        var sb = window.getSupabaseClient ? window.getSupabaseClient() : (window._supabase || window._supabaseClient);
+        if (!sb) throw new Error('Sin conexión Supabase.');
+        var sessRes = await sb.auth.getSession();
+        var session = sessRes && sessRes.data && sessRes.data.session;
+        if (!session) { window.location.href = './login.html?plan=pro&redirect=dj-tools'; return; }
+        var fnUrl = typeof window.mdbSupabaseFunctionUrl === 'function' ? window.mdbSupabaseFunctionUrl('create-checkout') : '';
+        if (!fnUrl) throw new Error('Edge Function no configurada.');
+        var res = await fetch(fnUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + session.access_token,
+            'apikey': typeof window.MDB_SUPABASE_ANON_KEY === 'string' ? window.MDB_SUPABASE_ANON_KEY : '',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ billing: billing, successUrl: window.location.origin + '/dj-dashboard.html?payment=success' })
+        });
+        var payload = await res.json();
+        if (!res.ok || !payload.url) throw new Error(payload.error || 'Sin URL de checkout.');
+        window.location.href = payload.url;
+      } catch (err) {
+        alert('Error al iniciar el pago: ' + (err && err.message ? err.message : String(err)));
+        if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+      }
+    }
+  </script>
 </body>
 
 </html>

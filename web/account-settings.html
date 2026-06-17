@@ -1903,7 +1903,7 @@
           <div style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:2px;">PLAN PRO</div>
           <h3>Perfil<br>Verificado</h3>
           <p>Con plan PRO tu perfil aparece primero en búsquedas y recibe eventos asignados automáticamente.</p>
-          <a id="btn-activate-pro" href="./jobs.html?plan=PRO" class="reward-redeem">Activar PRO</a>
+          <button id="btn-activate-pro" class="reward-redeem" onclick="mdjCheckoutPro('monthly')">Activar PRO</button>
         </div>
         <div class="reward-card">
           <div style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:2px;">QR EXCLUSIVO</div>
@@ -2054,7 +2054,7 @@
         </div>
         <div class="acct-row" style="border-top:1px solid rgba(255,255,255,0.04);">
           <div class="acct-row-info"><div class="acct-lbl">Ciclo de facturación</div><div class="acct-val" id="billing-cadence">—</div></div>
-          <a id="billing-upgrade-btn" href="./jobs.html?plan=PRO" class="acct-edit">Upgrade →</a>
+          <button id="billing-upgrade-btn" class="acct-edit" onclick="mdjCheckoutPro('monthly')">Upgrade →</button>
         </div>
       </div>
 
@@ -6955,6 +6955,38 @@
   <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
   <!-- Cart pill: badge + redirect to rentals -->
   <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
+  <script>
+    async function mdjCheckoutPro(billing) {
+      billing = billing || 'monthly';
+      var btn = event && event.currentTarget ? event.currentTarget : null;
+      var orig = btn ? btn.innerHTML : '';
+      if (btn) { btn.disabled = true; btn.innerHTML = 'Conectando...'; }
+      try {
+        var sb = window.getSupabaseClient ? window.getSupabaseClient() : (window._supabase || window._supabaseClient);
+        if (!sb) throw new Error('Sin conexión Supabase.');
+        var sessRes = await sb.auth.getSession();
+        var session = sessRes && sessRes.data && sessRes.data.session;
+        if (!session) { window.location.href = './login.html?plan=pro&redirect=account-settings'; return; }
+        var fnUrl = typeof window.mdbSupabaseFunctionUrl === 'function' ? window.mdbSupabaseFunctionUrl('create-checkout') : '';
+        if (!fnUrl) throw new Error('Edge Function no configurada.');
+        var res = await fetch(fnUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + session.access_token,
+            'apikey': typeof window.MDB_SUPABASE_ANON_KEY === 'string' ? window.MDB_SUPABASE_ANON_KEY : '',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ billing: billing, successUrl: window.location.origin + '/account-settings.html?payment=success' })
+        });
+        var payload = await res.json();
+        if (!res.ok || !payload.url) throw new Error(payload.error || 'Sin URL de checkout.');
+        window.location.href = payload.url;
+      } catch (err) {
+        alert('Error al iniciar el pago: ' + (err && err.message ? err.message : String(err)));
+        if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+      }
+    }
+  </script>
 </body>
 
 </html>
