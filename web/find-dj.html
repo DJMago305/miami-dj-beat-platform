@@ -133,195 +133,36 @@
 </header>
 
     <style>
-        .hero {
-            padding: 140px 20px 60px;
-            text-align: center;
-            background: radial-gradient(circle at top, rgba(197, 160, 89, 0.08) 0%, transparent 70%);
-        }
 
-        .hero-badge {
-            display: inline-block;
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            border-radius: 999px;
-            padding: 5px 14px;
-            margin-bottom: 24px;
-            background: rgba(197, 160, 89, 0.1);
-            color: var(--gold);
-            border: 1px solid rgba(197, 160, 89, 0.3);
-        }
-
-        .hero h1 {
-            font-size: clamp(32px, 6vw, 56px);
-            font-weight: 900;
-            line-height: 1.1;
-            margin-bottom: 16px;
-            letter-spacing: -1px;
-        }
-
-        .hero h1 span {
-            color: var(--gold);
-        }
-
-        .hero p {
-            color: var(--muted);
-            font-size: 16px;
-            max-width: 600px;
-            margin: 0 auto 40px;
-        }
-
-        /* ── SEARCH CARD ── */
-        .search-card {
-            max-width: 860px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, .04);
-            border: 1px solid rgba(255, 255, 255, .1);
-            border-radius: 20px;
-            padding: 24px;
-            backdrop-filter: blur(12px);
-            text-align: left;
-        }
-
-        .search-grid {
-            display: grid;
-            gap: 16px;
-            grid-template-columns: 1fr;
-        }
-
-        @media(min-width:700px) {
-            .search-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
-        @media(min-width:1000px) {
-            .search-grid {
-                grid-template-columns: 1.2fr 1fr 1fr 1fr;
-            }
-        }
-
-        .field label {
-            display: block;
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--muted);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-
-        .field input,
-        .field select {
-            width: 100%;
-            background: rgba(0, 0, 0, .35);
-            border: 1.5px solid rgba(255, 255, 255, .1);
-            border-radius: 10px;
-            padding: 10px 12px;
-            color: #fff;
-            font-size: 13px;
-            font-family: inherit;
-            outline: none;
-            transition: all .2s;
-        }
-
-        .field input:focus,
-        .field select:focus {
-            border-color: var(--gold);
-            background: rgba(0, 0, 0, .5);
-        }
-
-        .btn-search {
-            width: 100%;
-            padding: 14px;
-            background: var(--gold);
-            color: #000;
-            font-weight: 900;
-            font-size: 14px;
-            font-family: inherit;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            margin-top: 16px;
-            transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
-            letter-spacing: .5px;
-            box-shadow: 0 4px 15px rgba(197, 160, 89, 0.2);
-        }
-
-        .btn-search:hover {
-            background: var(--gold2);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(197, 160, 89, 0.3);
-        }
-
-        /* ── MULTI-SELECT ── */
-        .multi-select-container {
-            position: relative;
-        }
-
-        .multi-select-display {
-            width: 100%;
-            background: rgba(0, 0, 0, .35);
-            border: 1.5px solid rgba(255, 255, 255, .1);
-            border-radius: 10px;
-            padding: 10px 12px;
-            color: #fff;
-            font-size: 13px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .multi-select-options {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: #0f172a;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            margin-top: 8px;
-            max-height: 250px;
-            overflow-y: auto;
-            z-index: 100;
-            padding: 8px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-        }
-
-        .multi-select-options.active {
-            display: block;
-        }
-
-        /* ── DJ GRID: fichas compactas (cliente: foto + nombre → perfil público) ── */
+        /* ── DJ GRID: tarjetas de talento ── */
         .dj-grid {
-            max-width: 1100px;
-            margin: 40px auto 100px;
+            max-width: 1160px;
+            margin: 32px auto 100px;
             padding: 0 20px;
             display: grid;
-            gap: 16px;
-            grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        }
+
+        @media (max-width: 500px) {
+            .dj-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
         }
 
         .find-dj-chip {
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 14px 10px 12px;
+            border-radius: 20px;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            text-align: center;
             transition: border-color .25s, transform .25s, box-shadow .25s;
             backdrop-filter: blur(10px);
         }
 
         .find-dj-chip:hover {
             transform: translateY(-4px);
-            border-color: rgba(197, 160, 89, 0.55);
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+            border-color: rgba(197, 160, 89, 0.6);
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
         }
 
         .find-dj-chip__link {
@@ -329,49 +170,107 @@
             color: #fff;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 8px;
+            flex: 1;
+        }
+
+        .find-dj-chip__photo-wrap {
+            position: relative;
             width: 100%;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            background: rgba(255,255,255,0.04);
         }
 
         .find-dj-chip__photo {
-            width: 72px;
-            height: 72px;
-            border-radius: 50%;
+            width: 100%;
+            height: 100%;
             object-fit: cover;
-            border: 2px solid rgba(197, 160, 89, 0.35);
+            object-position: top center;
+            display: block;
+            transition: transform .4s ease;
+        }
+
+        .find-dj-chip:hover .find-dj-chip__photo {
+            transform: scale(1.05);
+        }
+
+        .find-dj-chip__specialty-tag {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.85);
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 999px;
+        }
+
+        .find-dj-chip__body {
+            padding: 14px 14px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            justify-content: flex-start;
+        }
+
+        .find-dj-chip__name-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
         }
 
         .find-dj-chip__name {
-            font-size: 12.5px;
+            font-size: 15px;
             font-weight: 900;
-            line-height: 1.25;
-            max-width: 100%;
+            line-height: 1.2;
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .find-dj-chip__city {
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            font-weight: 600;
+        }
+
+        .find-dj-chip__bio {
+            font-size: 11.5px;
+            color: rgba(255,255,255,0.55);
+            line-height: 1.45;
+            margin-top: 4px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         .find-dj-chip__tier {
-            margin-top: 4px;
+            margin-top: 2px;
         }
 
         .find-dj-chip__rent {
-            margin-top: 10px;
-            width: 100%;
-            padding: 8px 6px;
-            font-size: 10px;
+            margin: 10px 14px 14px;
+            padding: 10px 12px;
+            font-size: 11px;
             font-weight: 900;
-            letter-spacing: 0.02em;
+            letter-spacing: 0.04em;
             text-align: center;
             text-decoration: none;
-            border-radius: 10px;
-            border: 1px solid var(--gold);
+            border-radius: 12px;
+            border: 1.5px solid var(--gold);
             color: var(--gold);
-            background: rgba(197, 160, 89, 0.1);
+            background: rgba(197, 160, 89, 0.08);
             transition: background .2s, color .2s;
+            text-transform: uppercase;
         }
 
         .find-dj-chip__rent:hover {
@@ -411,63 +310,7 @@
         }
     </style>
 
-    <section class="hero">
-        <div class="hero-badge">Verified Talent Network</div>
-        <h1>Find the Perfect <span>DJ Beat</span></h1>
-        <p>Book certified professional artists in Miami. Real-time availability matching.</p>
-
-        <div class="search-card">
-            <div class="search-grid">
-                <div class="field">
-                    <label>📅 Event Date</label>
-                    <div style="display:flex; gap:6px;">
-                        <input type="date" id="f-date" style="color-scheme: dark;">
-                    </div>
-                </div>
-                <div class="field">
-                    <label>🎭 Talent Category</label>
-                    <div class="multi-select-container">
-                        <div class="multi-select-display" id="role-display" onclick="toggleRoleDropdown()">Anyone</div>
-                        <div class="multi-select-options" id="role-options">
-                            <div style="padding: 10px;"><input type="checkbox" value="DJ"> DJ</div>
-                            <div style="padding: 10px;"><input type="checkbox" value="MC"> MC / Host</div>
-                            <div style="padding: 10px;"><input type="checkbox" value="SAX"> Saxophonist</div>
-                            <div style="padding: 10px;"><input type="checkbox" value="PERC"> Percussionist</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="field">
-                    <label>📍 Area</label>
-                    <select id="f-city">
-                        <option value="">All Miami</option>
-                        <option>Miami</option>
-                        <option>Miami Beach</option>
-                        <option>Coral Gables</option>
-                        <option>Doral</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label>💰 Budget</label>
-                    <select id="f-budget">
-                        <option value="">Any</option>
-                        <option value="500">$500</option>
-                        <option value="1000">$1,000</option>
-                        <option value="2000">$2,000</option>
-                    </select>
-                </div>
-            </div>
-            <button class="btn-search" onclick="searchDJs()">🔍 SEARCH TALENT</button>
-        </div>
-    </section>
-
-    <p id="find-dj-priority-note" class="find-dj-priority-note" data-i18n="find-dj-priority-note">MDJPRO partners
-        (paid) appear first when you search. Free LITE profiles stay visible for backup when PRO talent is busy,
-        away, or unavailable.</p>
-
-    <p id="find-dj-client-hint" style="max-width:720px;margin:-8px auto 20px;padding:0 20px;font-size:12px;line-height:1.5;color:rgba(255,255,255,0.45);text-align:center;">
-        Listado compacto: toca la foto o el nombre para ver el <strong>perfil público</strong> del artista. «Rentar…» abre el flujo de reservas según la categoría.
-    </p>
-    <div id="state-msg" style="text-align: center; color: var(--muted); padding: 40px;">Select filters and search.</div>
+    <div id="state-msg" style="text-align:center;color:var(--muted);padding:60px 20px 20px;"></div>
     <div class="dj-grid" id="dj-grid"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -487,9 +330,6 @@
             return new URLSearchParams(window.location.search);
         }
 
-        function toggleRoleDropdown() {
-            document.getElementById('role-options').classList.toggle('active');
-        }
 
         function tierBadgeHtml(dj) {
             var sub = window.MDB_SUBSCRIPTION;
@@ -521,24 +361,54 @@
             msg.innerHTML = 'Searching...';
             grid.innerHTML = '';
 
-            const city = document.getElementById('f-city').value;
+            const cityEl = document.getElementById('f-city');
+            const city = cityEl ? cityEl.value : '';
             const params = getUrlParams();
             const nameQ = sanitizeSearchToken(params.get('q') || '');
+            const specialtyQ = sanitizeSearchToken(params.get('specialty') || '');
             const intent = params.get('intent');
-            const categoryFromUrl = params.get('category') || params.get('role') || '';
+            const categoryFromUrl = params.get('category') || params.get('role') || specialtyQ;
 
-            var selectFull = 'user_id, dj_slug, stage_name, photo_url, bio_short, city, roles, artist_specialty, plan, plan_type, plan_status, plan_expires_at, is_premium, subscription_status';
-            var selectMin = 'user_id, dj_slug, stage_name, photo_url, bio_short, city, roles, artist_specialty, plan';
+            var selectFull = 'user_id, dj_slug, stage_name, full_name, mdjb_id, photo_url, bio_short, city, roles, artist_specialty, plan, plan_type, plan_status, plan_expires_at, is_premium, subscription_status';
+            var selectMid  = 'user_id, dj_slug, stage_name, full_name, photo_url, bio_short, city, roles, artist_specialty, plan';
+            var selectMin  = 'user_id, dj_slug, stage_name, photo_url, bio_short, city, roles, artist_specialty, plan';
 
-            function buildQuery(sel) {
+            function buildNameFilter(q, mode) {
+                // mode: 'full' = stage+full_name+mdjb_id | 'mid' = stage+full_name | 'min' = stage only
+                if (mode === 'full') {
+                    q = q.or('stage_name.ilike.%' + nameQ + '%,full_name.ilike.%' + nameQ + '%,mdjb_id.ilike.%' + nameQ + '%');
+                } else if (mode === 'mid') {
+                    q = q.or('stage_name.ilike.%' + nameQ + '%,full_name.ilike.%' + nameQ + '%');
+                } else {
+                    q = q.ilike('stage_name', '%' + nameQ + '%');
+                }
+                return q;
+            }
+
+            function buildQuery(sel, nameMode) {
                 var q = db.from('public_dj_profiles').select(sel).eq('available', true);
                 if (city) q = q.ilike('city', '%' + city + '%');
-                if (nameQ) q = q.or('stage_name.ilike.%' + nameQ + '%,dj_slug.ilike.%' + nameQ + '%');
+                if (nameQ) {
+                    q = buildNameFilter(q, nameMode || 'min');
+                } else if (specialtyQ) {
+                    var spTokens = specialtyQ.split(/\s+/).filter(Boolean);
+                    var spClauses = [];
+                    spTokens.forEach(function (tok) {
+                        spClauses.push('artist_specialty.ilike.%' + tok + '%');
+                        spClauses.push('roles.ilike.%' + tok + '%');
+                    });
+                    q = q.or(spClauses.join(','));
+                } else {
+                    // Directory mode: only DJ-type artists
+                    q = q.or('artist_specialty.ilike.%dj%,roles.ilike.%dj%');
+                }
                 return q.limit(120);
             }
 
-            var res = await buildQuery(selectFull);
-            if (res.error) res = await buildQuery(selectMin);
+            // Cascade: full (stage+full_name+mdjb_id) → mid (stage+full_name) → min (stage only)
+            var res = await buildQuery(selectFull, 'full');
+            if (res.error) res = await buildQuery(selectMid, 'mid');
+            if (res.error) res = await buildQuery(selectMin, 'min');
 
             const { data: raw, error } = res;
 
@@ -573,14 +443,27 @@
                 var rentHref = './rentals.html?' + rentQ;
                 var rentLabel = esc(rentalCtaLabel(dj, categoryFromUrl));
                 var imgSrc = img || './assets/dj-avatar-placeholder.png';
-                var titleAttr = esc((dj.bio_short || '').slice(0, 140));
+                var rawSpecialty = String(dj.artist_specialty || dj.roles || '').split(',')[0].trim();
+                var specialtyTag = rawSpecialty ? esc(rawSpecialty.slice(0, 18)) : '';
+                var cityStr = dj.city ? '📍 ' + esc(dj.city) : '';
+                var bioStr = dj.bio_short ? esc(String(dj.bio_short).slice(0, 110)) : '';
+                var disabledAttrs = uid ? '' : ' onclick="return false" style="opacity:0.5;pointer-events:none"';
                 return (
                     '<article class="find-dj-chip">' +
-                    '<a class="find-dj-chip__link" href="' + profHref + '"' + (uid ? '' : ' onclick="return false" style="opacity:0.5;pointer-events:none"') + ' title="' + titleAttr + '">' +
+                    '<a class="find-dj-chip__link" href="' + profHref + '"' + disabledAttrs + '>' +
+                    '<div class="find-dj-chip__photo-wrap">' +
                     '<img class="find-dj-chip__photo" src="' + imgSrc + '" alt="' + name + '" loading="lazy" />' +
+                    (specialtyTag ? '<span class="find-dj-chip__specialty-tag">' + specialtyTag + '</span>' : '') +
+                    '</div>' +
+                    '<div class="find-dj-chip__body">' +
+                    '<div class="find-dj-chip__name-row">' +
                     '<span class="find-dj-chip__name">' + name + '</span>' +
-                    '</a>' +
                     tierBadgeHtml(dj) +
+                    '</div>' +
+                    (cityStr ? '<span class="find-dj-chip__city">' + cityStr + '</span>' : '') +
+                    (bioStr ? '<p class="find-dj-chip__bio">' + bioStr + '</p>' : '') +
+                    '</div>' +
+                    '</a>' +
                     '<a class="find-dj-chip__rent" href="' + (uid ? rentHref : '#') + '"' + (uid ? '' : ' onclick="return false"') + '>' + rentLabel + '</a>' +
                     '</article>'
                 );
@@ -588,16 +471,10 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
-            const p = getUrlParams();
-            const from = (p.get('from') || '').trim().toLowerCase();
-            if (from === 'header' || from === 'smartsearch') {
-                searchDJs();
-                return;
-            }
-            const q = p.get('q');
-            if (q && q.trim()) searchDJs();
+            searchDJs();
         });
     </script>
+
 
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
     <link rel="stylesheet" href="./mdj-assistant.css" />
@@ -633,10 +510,9 @@
 
     <script src="./header-smart-search.js?v=20260421-smartsearch-dj-directory"></script>
   <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-      <script src="./mdj-shared-header.js?v=20260516-tier-badge-unified-1"></script>
+      <script src="./mdj-shared-header.js?v=20260617-db-wins-buyer-fix"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260516-home-nav-stable-1"></script>
-  <script src="./mdj-social-bar.js?v=20260423-social-restore"></script>
   <!-- Cart pill: badge + redirect to rentals -->
   <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
 </body>

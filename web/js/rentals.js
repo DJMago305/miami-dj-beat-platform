@@ -4800,4 +4800,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (typeof window.initMcModalMagicHover === 'function') {
         window.initMcModalMagicHover();
     }
+
+    // URL param: ?open=<category> — auto-open talent modal from header search
+    (function () {
+        var sp = new URLSearchParams(window.location.search);
+        var openTarget = (sp.get('open') || '').toLowerCase().trim();
+        if (!openTarget) return;
+        var OPEN_MAP = {
+            // Talent modals
+            'dj':         { id: 'dj-modal',       render: function () { if (typeof window.renderDjHero === 'function') window.renderDjHero('weddings', false); } },
+            'staff':      { id: 'staff-modal',     render: function () { if (typeof window.renderStaffHero === 'function') window.renderStaffHero('bartender', false); } },
+            'mc':         { id: 'mc-modal',        render: null },
+            'horaloca':   { id: 'horaloca-modal',  render: function () { if (typeof window.renderHoraLocaCatalogue === 'function') window.renderHoraLocaCatalogue(); } },
+            'payasos':    { id: 'payasos-modal',   render: function () { if (typeof window.renderPayasosHero === 'function') window.renderPayasosHero('gif', false); } },
+            'roster':     { id: 'roster-modal',    render: function () { if (typeof window.renderLiveHero === 'function') window.renderLiveHero('sax', false); } },
+            // FX / Lighting modals
+            'fx':         { id: 'fx-modal',        render: function () { if (typeof window.renderFxHero === 'function') window.renderFxHero('sparks', false); } },
+            'lighting':   { id: 'lighting-modal',  render: null },
+            // Rental catalog (rental-dynamic-modal)
+            'audio':       { catalog: 'audio' },
+            'furniture':   { catalog: 'furniture' },
+            'tents':       { catalog: 'tents' },
+            'inflatables': { catalog: 'inflatables' },
+            'stages':      { catalog: 'stages' },
+            'lighting-gear': { catalog: 'lighting' }
+        };
+        var entry = OPEN_MAP[openTarget];
+        if (!entry) return;
+        setTimeout(function () {
+            if (entry.catalog) {
+                var cm = document.getElementById('rental-dynamic-modal');
+                if (!cm) return;
+                cm.classList.remove('modal-hidden');
+                cm.classList.add('modal-visible');
+                document.body.classList.add('body-modal-lock');
+                if (typeof window.renderRentalCatalog === 'function') window.renderRentalCatalog(entry.catalog);
+                return;
+            }
+            var m = document.getElementById(entry.id);
+            if (!m) return;
+            m.classList.remove('modal-hidden');
+            m.classList.add('modal-visible');
+            document.body.classList.add('body-modal-lock');
+            if (typeof entry.render === 'function') entry.render();
+            if (typeof window.mdjRentalsRestripInfiniteAfterModalShow === 'function') {
+                window.mdjRentalsRestripInfiniteAfterModalShow(entry.id);
+            }
+        }, 120);
+    }());
 });

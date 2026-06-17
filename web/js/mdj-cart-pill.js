@@ -67,7 +67,8 @@
                 var draft = JSON.parse(raw);
                 var lines = Array.isArray(draft && draft.lines) ? draft.lines : [];
                 var qty = lines.reduce(function (sum, l) {
-                    return sum + (parseInt(l.qty, 10) || 1);
+                    var n = parseInt(l.qty, 10);
+                    return sum + (n > 0 ? n : 0);
                 }, 0);
                 if (qty > bestCount) { bestCount = qty; }
             }
