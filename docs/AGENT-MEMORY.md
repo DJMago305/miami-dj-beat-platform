@@ -20,7 +20,15 @@
 | ID | Descripción | Prioridad |
 |----|-------------|-----------|
 | TICKET-COMMS-001 | Sistema de notificaciones staff (suscripciones, leads, pedidos) | 🔴 ALTA |
-| TICKET-INDEX-SYNTAX-001 | SyntaxError Parser error index.html:1864 (pre-existente) | 🟡 BAJA |
+
+### ✅ Tickets cerrados hoy (2026-06-16)
+| ID | Descripción |
+|----|-------------|
+| TICKET-EB-STATUS-ADMIN Fase 2 | Event Builder orders table + admin panel |
+| TICKET-010 | Banda en Vivo video CDN + card fix + emoji |
+| TICKET-CDN-LIVE | live-sax, live-percussion, live-singer → Supabase CDN |
+| TICKET-EXCL-MUTUA | Exclusividad mutua categorías rentals.js |
+| TICKET-INDEX-SYNTAX-001 | SyntaxError brace extra index.html:1864 — CERRADO ✅ |
 
 ---
 
@@ -128,4 +136,4 @@ live-music/Live_Bandas_&_Orquestas%20.mp4
 | 2026-06-13 | — | Setup inicial, arquitectura base |
 | 2026-06-14 | — | Event Builder MVP, carrito universal |
 | 2026-06-15 | #85 | Cart wiring audit, CRM tables, talent picker |
-| 2026-06-16 | #86-91 | EB Fase 2, TICKET-010 videos, exclusividad mutua, CDN fix |
+| 2026-06-16 | #86-92 | EB Fase 2, TICKET-010 videos, exclusividad mutua, CDN fix, SyntaxError index.html |
