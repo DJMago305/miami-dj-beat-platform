@@ -183,7 +183,7 @@ El CEO identificó que la plataforma está **pobre de comunicación**. No hay al
 
 ---
 
-## ACTA DE CIERRE — SESIÓN 2026-06-16
+## ACTA DE CIERRE — SESIÓN 2026-06-16 (PRIMERA PARTE)
 
 | Campo | Valor |
 |-------|-------|
@@ -192,7 +192,77 @@ El CEO identificó que la plataforma está **pobre de comunicación**. No hay al
 | Tickets cerrados | TICKET-EB-STATUS-ADMIN Fase 2, TICKET-010, TICKET-INDEX-SYNTAX-001, videos live-music CDN, exclusividad mutua |
 | PRs a main | #86, #87, #88, #89, #90, #91, #92 |
 | Estado Vercel | ✅ Ready (prod) |
-| Errores conocidos abiertos | 0 |
 | Próxima prioridad | TICKET-COMMS-001 — Sistema de comunicaciones staff |
+| Autorizado por | DJMago305 (CEO / Capitán) |
+| Ejecutado por | Agente IA — Ingeniero Jefe |
+
+---
+
+## SESIÓN NOCTURNA — 2026-06-16 (23:20 - 23:39 UTC-4)
+*Bugs críticos reportados por DJYuyo (artista subscrito) desde móvil y confirmados por CEO*
+
+### TICKET-ROLE-REDIRECT-002 — MI PORTAL vs MI PERFIL en cuentas artistas
+
+**Síntoma:** DJYuyo (artista LITE con `dj_profiles` + `client_profiles`) veía "MI PORTAL" en el nav principal en lugar de "MI PERFIL". Clickar "MI PORTAL" llevaba al portal de cliente.
+
+**Investigación:** Dos rutas de código independientes clasificaban al artista como buyer:
+
+#### Bug #1 — `mdj-shared-header.js` línea 196
+```js
+// ANTES
+if (opts.hasClientRow && mdjIsBuyerJourneyPage()) return true;
+```
+`mdjIsBuyerJourneyPage()` devuelve `true` para `index.html`. Artistas con `client_profiles` en la home page → `isBuyerSession = true` → MI PORTAL.
+
+**Fix (PR #97):**
+```js
+// DESPUÉS
+if (opts.hasClientRow && !opts.hasDjProfile && mdjIsBuyerJourneyPage()) return true;
+```
+
+#### Bug #2 — `mdj-identity.js` línea 60 (root cause principal)
+```js
+// ANTES
+} else if (hasClientRow) {
+  principal = 'buyer';   // sin verificar si existe djRow
+```
+Si `dj_profiles.role` es null/vacío: `dr = ''` → falsy → salta a `hasClientRow` → `principal = 'buyer'`. Esto disparaba en línea 190 de `mdjResolveBuyerSession` **antes** que el fix del PR #97.
+
+**Fix (PR #98):**
+```js
+// DESPUÉS
+} else if (hasClientRow && !dj) {
+  principal = 'buyer';   // solo si NO existe djRow
+```
+
+**Impacto de los dos fixes combinados:**
+
+| Usuario | Antes | Después |
+|---------|-------|---------|
+| Artista con client_profiles (role=null) | ❌ MI PORTAL | ✅ MI PERFIL |
+| Artista con client_profiles (role='artist') | ❌ MI PORTAL | ✅ MI PERFIL |
+| Cliente puro (sin dj_profiles) | ✅ MI PORTAL | ✅ MI PORTAL |
+
+### PRs Sesión Nocturna
+
+| PR | Archivo | Línea | Fix |
+|----|---------|-------|-----|
+| #94 | `web/mdj-shared-header.js` | 2975 | Partial fix: owner/staff roles en jwtArtist (sesión anterior) |
+| #95 | `web/account-settings.html`, `web/dj-tools.html` | varios | Flash visual CSS delay (sesión anterior) |
+| #96 | `web/account-settings.html`, `web/dj-tools.html`, `web/dj-profile.html` | varios | Botones PRO → Stripe checkout (sesión anterior) |
+| **#97** | `web/mdj-shared-header.js` | 196 | `!hasDjProfile` en buyer journey check |
+| **#98** | `web/mdj-identity.js` | 60 | `!dj` en hasClientRow → buyer classifier |
+
+## ACTA DE CIERRE — SESIÓN NOCTURNA 2026-06-16
+
+| Campo | Valor |
+|-------|-------|
+| Fecha | 2026-06-16 |
+| Hora de cierre | 23:39 UTC-4 |
+| Tickets cerrados | TICKET-ROLE-REDIRECT-002 (definitivo, 2 PRs), TICKET-NAV-ARTIST-003, TICKET-DJTOOLS-006 (flash), TICKET-PRO-CHECKOUT-004, TICKET-CASHFLOW-005 |
+| PRs nocturnos a main | #97, #98 |
+| PRs anteriores en sesión | #94, #95, #96 |
+| Estado Vercel | ✅ Deploying (post PR #98) |
+| Tickets pendientes | TICKET-DJTOOLS-006 (standalone app), TICKET-SEARCH-007, TICKET-COMMS-001 |
 | Autorizado por | DJMago305 (CEO / Capitán) |
 | Ejecutado por | Agente IA — Ingeniero Jefe |
