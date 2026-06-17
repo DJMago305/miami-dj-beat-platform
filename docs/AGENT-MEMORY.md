@@ -19,16 +19,28 @@
 ### ⚠️ Tickets abiertos
 | ID | Descripción | Prioridad |
 |----|-------------|-----------|
-| TICKET-COMMS-001 | Sistema de notificaciones staff (suscripciones, leads, pedidos) | 🔴 ALTA |
+| TICKET-DJTOOLS-006 (app) | Compra standalone MDJPRO App — necesita Stripe price ID | 🔴 ALTA |
+| TICKET-SEARCH-007 | Resultados búsqueda feos + filtro incorrecto (bartenders en DJ search) | 🟡 MEDIA |
+| TICKET-COMMS-001 | Sistema de notificaciones staff (suscripciones, leads, pedidos) | 🟡 ESTRATÉGICO |
 
-### ✅ Tickets cerrados hoy (2026-06-16)
-| ID | Descripción |
-|----|-------------|
-| TICKET-EB-STATUS-ADMIN Fase 2 | Event Builder orders table + admin panel |
-| TICKET-010 | Banda en Vivo video CDN + card fix + emoji |
-| TICKET-CDN-LIVE | live-sax, live-percussion, live-singer → Supabase CDN |
-| TICKET-EXCL-MUTUA | Exclusividad mutua categorías rentals.js |
-| TICKET-INDEX-SYNTAX-001 | SyntaxError brace extra index.html:1864 — CERRADO ✅ |
+### ✅ Tickets cerrados (2026-06-16 completo)
+| ID | PR | Descripción |
+|----|----|-------------|
+| TICKET-EB-STATUS-ADMIN Fase 2 | #86 | Event Builder orders table + admin panel |
+| TICKET-010 | #87, #88 | Banda en Vivo video CDN + card fix + emoji |
+| TICKET-CDN-LIVE | #90 | live-sax, live-percussion, live-singer → Supabase CDN |
+| TICKET-EXCL-MUTUA | #91 | Exclusividad mutua categorías rentals.js |
+| TICKET-INDEX-SYNTAX-001 | #92 | SyntaxError brace extra index.html:1864 |
+| TICKET-NAV-ARTIST-003 | #95 | Flash visual al entrar a Configuraciones (CSS delay) |
+| TICKET-DJTOOLS-006 (flash) | #95 | Pantallazo PRO content en DJ Tools (display:none) |
+| TICKET-PRO-CHECKOUT-004 | #96 | Botones PRO wired a Stripe create-checkout Edge Function |
+| TICKET-CASHFLOW-005 | — | Cash Flow verificado — sin bug, datos vacíos son normales |
+| TICKET-ROLE-REDIRECT-002 | #97+#98 | MI PORTAL → MI PERFIL artistas (doble fix identity+header) |
+
+### 🔴 ANTI-REGRESIÓN CRÍTICA — Identidad de usuario (lección 2026-06-16)
+- **`mdj-identity.js` línea 60:** `else if (hasClientRow && !dj)` — NO cambiar a `hasClientRow` solo o artistas con ambas filas vuelven a ver MI PORTAL
+- **`mdj-shared-header.js` línea 196:** `hasClientRow && !hasDjProfile && mdjIsBuyerJourneyPage()` — NO quitar `!hasDjProfile` o artistas en home page vuelven a ser clasificados como compradores
+- **Regla:** Artista con `client_profiles` + `dj_profiles` → SIEMPRE performer, nunca buyer
 
 ---
 
