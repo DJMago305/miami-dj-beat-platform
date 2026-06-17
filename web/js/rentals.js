@@ -3596,6 +3596,19 @@ document.addEventListener('click', async (e) => {
             
             const willBeAdded = !isCurrentlySelected;
 
+            // === EXCLUSIVIDAD MUTUA (un solo slot por categoría exclusiva) ===
+            const exclusiveCategories = ['dj', 'live', 'mc', 'horaloca', 'visuals'];
+            if (willBeAdded && exclusiveCategories.includes(cat)) {
+                const oldItems = (window.selectedPackage || []).filter(p => p.category === cat && p.id !== id);
+                oldItems.forEach(function (oldItem) {
+                    if (window.MDJ_EVENT_BUILDER_V1 && window.MDJEventBuilder && typeof window.MDJEventBuilder.removeByCatalogSku === 'function') {
+                        try { window.MDJEventBuilder.removeByCatalogSku(oldItem.id); } catch (eEx) { void eEx; }
+                    }
+                });
+                // Limpiar array legado independientemente del EB
+                window.selectedPackage = (window.selectedPackage || []).filter(p => p.category !== cat);
+            }
+
             // === PASO 2: SINCRONIZACIÓN (Envío de señales) ===
             let syncSuccess = false;
             
