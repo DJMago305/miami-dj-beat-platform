@@ -193,7 +193,7 @@
     if (idn && idn.hasClientRow && (idn.dbRole === 'client' || idn.dbRole === 'cliente')) return true;
     if (opts.clientRow && !opts.hasDjProfile) return true;
     /* client_profiles en recorrido público comprador (p. ej. Wendy con dj_profiles paralelo). */
-    if (opts.hasClientRow && mdjIsBuyerJourneyPage()) return true;
+    if (opts.hasClientRow && !opts.hasDjProfile && mdjIsBuyerJourneyPage()) return true;
     try {
       var su = String(opts.settingsUrl || '');
       if (su.indexOf('client-account') !== -1 || su.indexOf('client-portal') !== -1) return true;
