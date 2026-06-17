@@ -2972,6 +2972,7 @@
             : metaUt === 'talent' ||
               metaUt === 'dj' ||
               (appRole && String(appRole).toLowerCase() === 'artist') ||
+              (appRole && /^(owner|manager|admin|staff|seller)$/i.test(String(appRole))) ||
               (!!p && djRowRole !== 'client');
           var appRoleLower = appRole ? String(appRole).toLowerCase() : '';
           var metadataSaysClient = metaUtLower === 'client' || appRoleLower === 'client';
