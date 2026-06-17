@@ -126,8 +126,53 @@ https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/live-mu
 
 ---
 
+## TRABAJO ADICIONAL (post-PR #88)
+
+### fix(live-music): URLs Supabase CDN para live-sax, live-percussion, live-singer — PR #90
+- Los 3 videos confirmados en Supabase Storage (HTTP 200)
+- Rutas relativas `./assets/live-music/*.mp4` → URLs absolutas CDN
+- Archivo: `web/js/rentals.js` líneas 146, 160, 174
+
+### feat(rentals): Exclusividad mutua categorías exclusivas — PR #91
+- Al seleccionar artista nuevo en categoría exclusiva (`dj`, `live`, `mc`, `horaloca`, `visuals`), el anterior se elimina automáticamente del carrito
+- Bloque insertado entre `willBeAdded` y PASO 2 del handler `hl-activate-direct`
+- Archivo: `web/js/rentals.js` (~línea 3598)
+- Fallback seguro si Event Builder no está disponible
+
+### docs: TICKET-INDEX-SYNTAX-001
+- Documentado en `docs/tickets/TICKET-INDEX-SYNTAX-001.md`
+- `SyntaxError: Parser error` en `index.html:1864` — pre-existente, no crítico
+- Requiere autorización explícita del Capitán antes de intervenir
+
+---
+
+## PRs MERGEADOS (sesión completa)
+
+| PR | Título | Estado |
+|----|--------|--------|
+| #86 | feat: Event Builder Fase 2 + talent registration + admin tools + Banda en Vivo | ✅ main |
+| #87 | fix: correct Banda en Vivo Supabase CDN URL (%20 space) | ✅ main |
+| #88 | fix(ticket-010): remove inline video from card + correct emoji | ✅ main |
+| #89 | docs: session log 2026-06-16 | ✅ main |
+| #90 | fix(live-music): Supabase CDN URLs para 3 videos live-music | ✅ main |
+| #91 | feat(rentals): mutual exclusivity exclusive talent categories | ✅ main |
+
+---
+
+## PRÓXIMA PRIORIDAD — SISTEMA DE COMUNICACIONES MDJ
+
+El CEO identificó que la plataforma está **pobre de comunicación**. No hay alertas automáticas cuando:
+- Un cliente nuevo se registra
+- Un artista nuevo se registra
+- Alguien contrata un servicio / genera un lead
+- Alguien hace un pedido en el Event Builder
+- Alguien compra en la tienda
+
+**Plan de trabajo documentado en:** `docs/tickets/TICKET-COMMS-001-notificaciones-staff.md`
+
+---
+
 ## PENDIENTES PARA PRÓXIMA SESIÓN
 
-1. **`auditoria_pendientes.txt` — Exclusividad mutua en `rentals.js`:** Al seleccionar un artista de categoría exclusiva (`dj`, `live`, `mc`…), desseleccionar el anterior del carrito local. Plan documentado y listo para ejecutar.
-2. **`SyntaxError: Parser error` en `index.html:1864`:** Error pre-existente en bloque IntersectionObserver. No bloquea funcionamiento pero vale investigar.
-3. **Otros videos en `live-music/`:** `live-sax.mp4`, `live-percussion.mp4`, `live-singer.mp4` usan rutas relativas (`./assets/live-music/...`). Si esos archivos no están trackeados en git, podrían no servir en producción. Verificar y migrar a URLs Supabase CDN si es necesario.
+1. **TICKET-COMMS-001** — Sistema de notificaciones y comunicación interna (PRIORIDAD ALTA)
+2. **TICKET-INDEX-SYNTAX-001** — `SyntaxError: Parser error` en `index.html:1864` (BAJA)
