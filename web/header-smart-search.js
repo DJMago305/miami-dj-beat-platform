@@ -37,6 +37,155 @@
 
   var AVAILABILITY_INTENT = /\b(availability|disponibilidad|available|book(\s+a)?\s*dj|contratar(\s+un)?\s*dj|dj\s+para|wedding\s+dj|dj\s+boda)\b/i;
 
+  var RENTAL_TALENT_INTENTS = [
+    {
+      re: /^(mc|emcee[a-z]*|host[a-z]*|announcer[a-z]*|presenter[a-z]*|presentador[a-z]*|maestro(\s*de(\s*ceremonia[a-z]*)?)?|ceremonia[a-z]*)$/i,
+      specialty: 'mc host',
+      findLabel: 'Ver MC / Presentadores disponibles',
+      rentLabel: 'MC / Presentador — Rentar',
+      rentHref:  './rentals.html?open=mc'
+    },
+    {
+      re: /^(bartender[a-z]*|bart[a-z]*|waiter[a-z]*|server[a-z]*|catering[a-z]*|mesero[a-z]*|staff[a-z]*|chef[a-z]*|barra[a-z]*|coctele[a-z]*)$/i,
+      specialty: 'bartender mesero',
+      findLabel: 'Ver bartenders / staff disponibles',
+      rentLabel: 'Staff — Bartender · Mesero · Chef (Rentar)',
+      rentHref:  './rentals.html?open=staff'
+    },
+    {
+      re: /^(payaso[a-z]*|clown[a-z]*|circus[a-z]*|circo[a-z]*|entertainer[a-z]*|juggler[a-z]*|santa[a-z]*|gif[a-z]*|show[a-z]*|mimo[a-z]*|mime[a-z]*)$/i,
+      specialty: 'payaso show',
+      findLabel: 'Ver payasos / shows disponibles',
+      rentLabel: 'Payasos / Show — Rentar',
+      rentHref:  './rentals.html?open=payasos'
+    },
+    {
+      re: /^(hora(\s*loca[a-z]*)?|horaloca[a-z]*|hora_loca|crazy(\s*hour[a-z]*)?|loca|robot(\s*led[a-z]*)?|character[a-z]*|personaje[a-z]*|led[a-z]*)$/i,
+      specialty: 'hora loca',
+      findLabel: 'Ver Hora Loca disponibles',
+      rentLabel: 'Hora Loca Experience — Rentar',
+      rentHref:  './rentals.html?open=horaloca'
+    },
+    {
+      re: /^(musico[a-z]*|musician[a-z]*|saxo[a-z]*|saxophone[a-z]*|sax[a-z]*|percusi[a-z]*|percussioni[a-z]*|timbal[a-z]*|drummer[a-z]*|bongo[a-z]*|conga[a-z]*|banda[a-z]*|live(\s*band[a-z]*|\s*music[a-z]*)?|violin[a-z]*)$/i,
+      specialty: 'musico sax',
+      findLabel: 'Ver músicos en vivo disponibles',
+      rentLabel: 'Músicos en Vivo — Rentar',
+      rentHref:  './rentals.html?open=roster'
+    },
+    {
+      re: /^(audio[a-z]*|sound[a-z]*|sonido[a-z]*|microfono[a-z]*|microphone[a-z]*|mic[a-z]*|speaker[a-z]*|bocina[a-z]*|parlante[a-z]*|mixer[a-z]*|consola[a-z]*|monitor[a-z]*|pa(\s*system[a-z]*)?)$/i,
+      specialty: 'audio sonido',
+      findLabel: 'Ver talento de audio disponible',
+      rentLabel: 'Audio y Sonido Profesional — Rentar',
+      rentHref:  './rentals.html?open=audio'
+    },
+    {
+      re: /^(iluminaci[a-z]*|lighting[a-z]*|lights?|laser[a-z]*|uplighting[a-z]*|pantalla[a-z]*|screen[a-z]*|led(\s*screen[a-z]*|\s*wall[a-z]*|\s*panel[a-z]*)?)$/i,
+      specialty: 'iluminacion',
+      findLabel: 'Ver talento con iluminación',
+      rentLabel: 'Iluminación y Pantallas LED — Rentar',
+      rentHref:  './rentals.html?open=lighting-gear'
+    },
+    {
+      re: /^(fx[a-z]*|effect[a-z]*|efecto[a-z]*|confetti[a-z]*|confeti[a-z]*|cold\s*spark[a-z]*|chispa[a-z]*|spark[a-z]*|smoke[a-z]*|niebla[a-z]*|fog[a-z]*|snow[a-z]*|nieve[a-z]*|bubble[a-z]*|burbuja[a-z]*|dancefloor[a-z]*|pista(\s*led[a-z]*)?)$/i,
+      specialty: 'fx efectos',
+      findLabel: 'Ver artistas con efectos visuales',
+      rentLabel: 'Efectos Visuales FX — Rentar',
+      rentHref:  './rentals.html?open=fx'
+    },
+    {
+      re: /^(furniture[a-z]*|decor[a-z]*|mueble[a-z]*|chair[a-z]*|silla[a-z]*|table[a-z]*|mesa[a-z]*|decoraci[a-z]*|floral[a-z]*|linen[a-z]*|mantel[a-z]*|lounge[a-z]*|backdrop[a-z]*)$/i,
+      specialty: 'decoracion',
+      findLabel: 'Ver artistas de decoración',
+      rentLabel: 'Furniture & Decor — Rentar',
+      rentHref:  './rentals.html?open=furniture'
+    },
+    {
+      re: /^(tent[a-z]*|canopy[a-z]*|carpa[a-z]*|toldo[a-z]*|air\s*conditioning[a-z]*|aire(\s*acondicionado[a-z]*)?|ac\b)$/i,
+      specialty: 'carpa',
+      findLabel: 'Ver opciones de carpas / estructuras',
+      rentLabel: 'Carpas & Estructuras — Rentar',
+      rentHref:  './rentals.html?open=tents'
+    },
+    {
+      re: /^(inflatable[a-z]*|bounce[a-z]*|inflable[a-z]*|castillo[a-z]*|castle[a-z]*|kids?|children[a-z]*|ni[ñn]o[a-z]*|brinca[a-z]*)$/i,
+      specialty: 'inflable kids',
+      findLabel: 'Ver entretenimiento para niños',
+      rentLabel: 'Kids & Inflatables — Rentar',
+      rentHref:  './rentals.html?open=inflatables'
+    },
+    {
+      re: /^(stage[a-z]*|escenario[a-z]*|tarima[a-z]*|truss[a-z]*|structure[a-z]*|estructura[a-z]*|concert[a-z]*|concierto[a-z]*|staging[a-z]*)$/i,
+      specialty: 'escenario',
+      findLabel: 'Ver artistas de escenario',
+      rentLabel: 'Escenario & Estructuras — Rentar',
+      rentHref:  './rentals.html?open=stages'
+    }
+  ];
+
+  function renderNameSearchQuickLink(input, query) {
+    removeDropdown();
+    var wrap = ensureDropdownWrap(input);
+    if (!wrap) return;
+    var dd = document.createElement('div');
+    dd.id = DROPDOWN_ID;
+    dd.setAttribute('role', 'listbox');
+    dd.className = 'mdj-header-event-teaser-dropdown';
+    var label = t('header-search-name-fallback', 'Search "' + query + '" in talent directory', 'Buscar "' + query + '" en el directorio');
+    dd.innerHTML =
+      '<div class="mdj-teaser-head">' + portalEscape(t('header-search-name-head', 'Talent Directory', 'Directorio de talento')) + '</div>' +
+      '<ul class="mdj-teaser-list">' +
+      '<li><button type="button" class="mdj-teaser-row mdjs-name-search-go">' +
+      '🔍 ' + portalEscape(label) +
+      '</button></li></ul>';
+    var go = dd.querySelector('.mdjs-name-search-go');
+    if (go) {
+      go.addEventListener('click', function () {
+        removeDropdown();
+        navigate('./find-dj.html?q=' + encodeURIComponent(query));
+      });
+    }
+    dd.addEventListener('mousedown', function (e) { e.preventDefault(); });
+    wrap.appendChild(dd);
+  }
+
+  function findRentalTalentIntent(raw) {
+    var s = String(raw || '').trim();
+    if (!s || s.length > 40) return null;
+    for (var i = 0; i < RENTAL_TALENT_INTENTS.length; i++) {
+      if (RENTAL_TALENT_INTENTS[i].re.test(s)) return RENTAL_TALENT_INTENTS[i];
+    }
+    return null;
+  }
+
+  function renderRentalTalentQuickLink(input, intent) {
+    removeDropdown();
+    var wrap = ensureDropdownWrap(input);
+    if (!wrap) return;
+    var dd = document.createElement('div');
+    dd.id = DROPDOWN_ID;
+    dd.setAttribute('role', 'listbox');
+    dd.className = 'mdj-header-event-teaser-dropdown';
+    var findHref = './find-dj.html?specialty=' + encodeURIComponent(intent.specialty);
+    dd.innerHTML =
+      '<div class="mdj-teaser-head">Entretenimiento y Talento</div>' +
+      '<ul class="mdj-teaser-list">' +
+      '<li><button type="button" class="mdj-teaser-row mdjs-talent-find-go">' + portalEscape(intent.findLabel) + '</button></li>' +
+      '<li><button type="button" class="mdj-teaser-row mdjs-talent-rent-go">' + portalEscape(intent.rentLabel) + '</button></li>' +
+      '</ul>';
+    var goFind = dd.querySelector('.mdjs-talent-find-go');
+    if (goFind) {
+      goFind.addEventListener('click', function () { removeDropdown(); navigate(findHref); });
+    }
+    var goRent = dd.querySelector('.mdjs-talent-rent-go');
+    if (goRent) {
+      goRent.addEventListener('click', function () { removeDropdown(); navigate(intent.rentHref); });
+    }
+    dd.addEventListener('mousedown', function (e) { e.preventDefault(); });
+    wrap.appendChild(dd);
+  }
+
   /** Listado completo de DJs en find-dj (no confundir con “dj tools”, tienda, etc.). */
   function isDjDirectoryIntent(raw) {
     var s = String(raw || '').trim().toLowerCase();
@@ -63,18 +212,29 @@
     dd.className = 'mdj-header-event-teaser-dropdown';
     var head = t('header-search-dj-directory-head', 'DJ directory', 'Directorio de DJs');
     var btn = t('header-search-dj-directory-btn', 'Show all available DJs', 'Ver todos los DJs disponibles');
+    var btnRent = t('header-search-dj-rent-btn', 'DJ / Actuación — Rentar', 'DJ / Actuación — Rentar');
     dd.innerHTML =
       '<div class="mdj-teaser-head">' +
       portalEscape(head) +
       '</div><ul class="mdj-teaser-list">' +
       '<li><button type="button" class="mdj-teaser-row mdjs-dj-directory-go">' +
       portalEscape(btn) +
+      '</button></li>' +
+      '<li><button type="button" class="mdj-teaser-row mdjs-dj-rent-go">' +
+      portalEscape(btnRent) +
       '</button></li></ul>';
     var go = dd.querySelector('.mdjs-dj-directory-go');
     if (go) {
       go.addEventListener('click', function () {
         removeDropdown();
         navigate(djDirectoryHref());
+      });
+    }
+    var goRent = dd.querySelector('.mdjs-dj-rent-go');
+    if (goRent) {
+      goRent.addEventListener('click', function () {
+        removeDropdown();
+        navigate('./rentals.html?open=dj');
       });
     }
     dd.addEventListener('mousedown', function (e) {
@@ -399,6 +559,11 @@
       return Promise.resolve(djDirectoryHref());
     }
 
+    var rentalIntent = findRentalTalentIntent(raw);
+    if (rentalIntent) {
+      return Promise.resolve('./find-dj.html?specialty=' + encodeURIComponent(rentalIntent.specialty));
+    }
+
     var direct = matchPublicRoute(raw);
     if (direct) return Promise.resolve(direct);
 
@@ -515,14 +680,23 @@
             renderDjDirectoryQuickLink(input);
             return;
           }
+          var rentalIntent = findRentalTalentIntent(v);
+          if (rentalIntent) {
+            renderRentalTalentQuickLink(input, rentalIntent);
+            return;
+          }
           if (matchPublicRoute(v) || ACCOUNT_SETTINGS.test(v) || ACCOUNT_DASH.test(v) || ACCOUNT_PROFILE.test(v)) {
             removeDropdown();
             return;
           }
           fetchEventTeasers(v).then(function (rows) {
             if (normalize(input.value) !== v) return;
-            if (rows && rows.length) renderTeaserDropdown(input, rows);
-            else removeDropdown();
+            if (rows && rows.length) {
+              renderTeaserDropdown(input, rows);
+            } else {
+              // Fallback: suggest searching talent directory by name
+              renderNameSearchQuickLink(input, v);
+            }
           });
         }, 280);
       },
