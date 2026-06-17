@@ -1016,7 +1016,8 @@
     .acct-side-link.danger:hover { color: #ff5555; }
     .acct-body { background: #0a0a0a; padding: 52px; overflow-y: visible; }
     .acct-panel { display: none; }
-    .acct-panel.active { display: block; }
+    .acct-panel.active { display: block; animation: mdj-panel-reveal 0.35s ease 0.25s both; }
+    @keyframes mdj-panel-reveal { from { opacity: 0; } to { opacity: 1; } }
     .acct-h1 {
       font-size: 26px; font-weight: 800; color: #fff;
       margin: 0 0 30px; letter-spacing: -0.5px;
