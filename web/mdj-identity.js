@@ -57,7 +57,7 @@
       principal = 'performer';
     } else if (isExplicitClient || (appR === 'client' && !dr)) {
       principal = 'buyer';
-    } else if (hasClientRow) {
+    } else if (hasClientRow && !dj) {
       principal = 'buyer';
     } else {
       principal = 'performer';
