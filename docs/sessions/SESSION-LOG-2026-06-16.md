@@ -315,16 +315,42 @@ Esto permitió identificar que `mdjResolveBuyerSession` retornaba `true` a pesar
 
 ---
 
-## ACTA DE CIERRE — SESIÓN NOCTURNA 2026-06-16
+## ACTA DE CIERRE — SESIÓN MADRUGADA 2026-06-17
 
 | Campo | Valor |
 |-------|-------|
-| Fecha | 2026-06-16 |
-| Hora de cierre | 23:39 UTC-4 |
-| Tickets cerrados | TICKET-ROLE-REDIRECT-002 (definitivo, 2 PRs), TICKET-NAV-ARTIST-003, TICKET-DJTOOLS-006 (flash), TICKET-PRO-CHECKOUT-004, TICKET-CASHFLOW-005 |
-| PRs nocturnos a main | #97, #98 |
-| PRs anteriores en sesión | #94, #95, #96 |
-| Estado Vercel | ✅ Deploying (post PR #98) |
+| Fecha | 2026-06-17 |
+| Hora de cierre | 00:46 UTC-4 |
+| Root cause final | `app_metadata.role='client'` en JWT de DJYuyo → `metadataSaysClient=true` → buyer session forzado |
+| Tickets cerrados definitivamente | TICKET-ROLE-REDIRECT-002 ✅ |
+| Tickets resueltos colateralmente | TICKET-NAV-ARTIST-003, TICKET-DJTOOLS-006 flash, TICKET-PRO-CHECKOUT-004 |
+| PRs madrugada a main | #101 (fix definitivo) |
+| PRs de soporte | #97 (mdj-shared-header L196), #98 (mdj-identity L60), #100 (cache-bust identity) |
+| Cache bust | `mdj-shared-header.js ?v=20260617-db-wins-buyer-fix` |
+| Estado Vercel | ✅ Deploying (post PR #101) |
 | Tickets pendientes | TICKET-DJTOOLS-006 (standalone app), TICKET-SEARCH-007, TICKET-COMMS-001 |
+| Verificado en | localhost con cuenta DJYuyo — MI PERFIL ✅ + CONFIG ✅ |
 | Autorizado por | DJMago305 (CEO / Capitán) |
 | Ejecutado por | Agente IA — Ingeniero Jefe |
+
+---
+
+## HISTORIAL COMPLETO DE PRs — SESIÓN 2026-06-16 / 2026-06-17
+
+| PR | Archivo | Descripción | Estado |
+|----|---------|-------------|--------|
+| #86 | múltiples | Event Builder Fase 2 + talent registration | ✅ main |
+| #87 | rentals.js | Banda en Vivo CDN URL fix | ✅ main |
+| #88 | rentals.js | Remove inline video + emoji fix | ✅ main |
+| #89 | docs/ | Session log 2026-06-16 | ✅ main |
+| #90 | rentals.js | live-music CDN URLs (3 videos) | ✅ main |
+| #91 | rentals.js | Mutual exclusivity categories | ✅ main |
+| #92 | index.html | SyntaxError brace fix L1864 | ✅ main |
+| #94 | mdj-shared-header.js | jwtArtist: owner/staff roles L2975 | ✅ main |
+| #95 | account-settings.html, dj-tools.html | Flash CSS delay + display:none | ✅ main |
+| #96 | account-settings.html, dj-tools.html, dj-profile.html | PRO → Stripe checkout | ✅ main |
+| #97 | mdj-shared-header.js | !hasDjProfile guard L196 | ✅ main |
+| #98 | mdj-identity.js | !dj guard L60 | ✅ main |
+| #99 | docs/ | Notarización sesión nocturna | ✅ main |
+| #100 | 43x HTML | Cache bust mdj-identity.js version string | ✅ main |
+| **#101** | **mdj-shared-header.js + HTML** | **DB wins — 3 bugs L191/L3231/L3278 + cache bust header** | **✅ main** |
