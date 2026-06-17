@@ -253,6 +253,68 @@ Si `dj_profiles.role` es null/vacío: `dr = ''` → falsy → salta a `hasClient
 | **#97** | `web/mdj-shared-header.js` | 196 | `!hasDjProfile` en buyer journey check |
 | **#98** | `web/mdj-identity.js` | 60 | `!dj` en hasClientRow → buyer classifier |
 
+---
+
+## SESIÓN MADRUGADA — 2026-06-17 (00:20 - 00:39 UTC-4)
+*Continuación diagnóstico TICKET-ROLE-REDIRECT-002 — bug persistente tras PRs #94-#100*
+
+### Root cause real — 3 bugs en `mdj-shared-header.js`
+
+#### BUG A — `mdjResolveBuyerSession` línea 191 (CAUSA RAÍZ PRINCIPAL)
+```js
+// ANTES — app_metadata.role='client' en JWT fuerza buyer aunque exista dj_profiles
+if (opts.sessionIsExplicitClient || opts.metadataSaysClient) return true;
+
+// DESPUÉS — DB wins: dj_profiles con rol no-cliente bloquea el JWT client claim
+if ((opts.sessionIsExplicitClient || opts.metadataSaysClient) && !opts.hasDjProfile) return true;
+```
+DJYuyo tenía `app_metadata.role = 'client'` en su JWT (registrado primero como cliente).
+`metadataSaysClient = true` → `mdjResolveBuyerSession` retornaba `true` → MI PORTAL.
+`idn.principal = 'performer'` era correcto pero nunca llegaba a controlar el nav.
+
+#### BUG B — `mdjEnsureMiPortalInMainNav` llamado incondicionalmente (línea 3231)
+```js
+// ANTES — siempre revelaba MI PORTAL en páginas con nav completo
+if (!_compactNavCheck || isBuyerSession) {
+  mdjEnsureMiPortalInMainNav(miPortalHref, miPortalNavOpts);
+}
+
+// DESPUÉS — solo para buyer + reset explícito del placeholder para artistas
+if (isBuyerSession) {
+  mdjEnsureMiPortalInMainNav(miPortalHref, miPortalNavOpts);
+} else {
+  var _portalSlot = document.getElementById('mainNav-mi-portal-link');
+  if (_portalSlot) {
+    _portalSlot.classList.remove('mdj-mi-portal--hydrating');
+    _portalSlot.classList.add('mdj-mi-portal--guest');
+    _portalSlot.setAttribute('aria-hidden', 'true');
+    _portalSlot.setAttribute('tabindex', '-1');
+  }
+}
+```
+
+#### BUG C — `showConfigOnHome` excluía artistas con `client_profiles` (línea 3278)
+```js
+// ANTES — !hasClientRow ocultaba CONFIG para artistas con ambas filas
+var showConfigOnHome = onPublicHome && !!window.__mdjNavOwnUserId && !isBuyerSession && !hasClientRow;
+
+// DESPUÉS — isBuyerSession es la fuente correcta
+var showConfigOnHome = onPublicHome && !!window.__mdjNavOwnUserId && !isBuyerSession;
+```
+
+**Resultado tras los 3 fixes:** DJYuyo en localhost muestra **MI PERFIL** ✅ y **CONFIG** ✅
+
+**Método de diagnóstico:** Consola del browser con cuenta de DJYuyo logueada en localhost reveló:
+- `principal: "performer"` (identity correcto)
+- `buyer: true` (buyer session incorrectamente true)
+- `portal classes: mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--mainnav-reserved-slot`
+
+Esto permitió identificar que `mdjResolveBuyerSession` retornaba `true` a pesar de que `mdjClassifyPlatformIdentity` era correcto → bug en línea 191.
+
+**PRs:** Pendiente deploy (requiere APROBADO PUSH + APROBADO DEPLOY PRODUCCIÓN)
+
+---
+
 ## ACTA DE CIERRE — SESIÓN NOCTURNA 2026-06-16
 
 | Campo | Valor |

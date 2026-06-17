@@ -188,7 +188,8 @@
     if (opts.isClient === true) return true;
     var idn = opts.idn;
     if (idn && idn.principal === 'buyer') return true;
-    if (opts.sessionIsExplicitClient || opts.metadataSaysClient) return true;
+    /* DB wins: si existe dj_profiles con rol no-cliente, el JWT 'client' en app_metadata no fuerza buyer session. */
+    if ((opts.sessionIsExplicitClient || opts.metadataSaysClient) && !opts.hasDjProfile) return true;
     if (idn && idn.hasClientRow && !opts.hasDjProfile) return true;
     if (idn && idn.hasClientRow && (idn.dbRole === 'client' || idn.dbRole === 'cliente')) return true;
     if (opts.clientRow && !opts.hasDjProfile) return true;
@@ -3228,15 +3229,24 @@
           if (document.getElementById('mainNav')) {
             /* Nav compacto: MY PORTAL para cliente siempre; artista/staff no usan esta fila para portal. */
             var _compactNavCheck = (function () { var _n = document.getElementById('mainNav'); return !!(_n && _n.getAttribute('data-mdj-compact-nav') === '1'); }());
-            if (!_compactNavCheck || isBuyerSession) {
+            if (isBuyerSession) {
               mdjEnsureMiPortalInMainNav(miPortalHref, miPortalNavOpts);
+            } else {
+              /* Artista/staff: reset del placeholder MI PORTAL que se mostró durante la carga. */
+              var _portalSlot = document.getElementById('mainNav-mi-portal-link');
+              if (_portalSlot) {
+                _portalSlot.classList.remove('mdj-mi-portal--hydrating');
+                _portalSlot.classList.add('mdj-mi-portal--guest');
+                _portalSlot.setAttribute('aria-hidden', 'true');
+                _portalSlot.setAttribute('tabindex', '-1');
+              }
             }
             var hdrDup = document.getElementById('header-mi-portal-btn');
             if (hdrDup) hdrDup.style.display = 'none';
           } else {
             mdjEnsureMiPortalButton(miPortalHref);
           }
-          mdjEnsureMiPortalMobile(miPortalHref, miPortalNavOpts);
+          if (isBuyerSession) mdjEnsureMiPortalMobile(miPortalHref, miPortalNavOpts);
           var showMyArtisticProfileMainNav = mdjResolveShowMyArtisticProfileMainNav({
             isClient: isClient,
             isNavStaffSolo: isNavStaffSolo,
@@ -3264,8 +3274,9 @@
             !isDjStaff &&
             (navTier === 'artist_lite' || navTier === 'artist_pro');
           /* Inicio: ⚙️ CONFIG artista/staff; comprador → Configuraciones (client-account). */
+          /* hasClientRow ya no excluye artistas (pueden tener ambas filas); isBuyerSession es la fuente correcta. */
           var showConfigOnHome =
-            onPublicHome && !!window.__mdjNavOwnUserId && !isBuyerSession && !hasClientRow;
+            onPublicHome && !!window.__mdjNavOwnUserId && !isBuyerSession;
           mdjApplyAgendaMainNavLink(
             !!showArtistDashMainNav && !onPublicHome && !isCompactNav && !showArtistHeaderNav,
             './dj-dashboard.html?tab=dashboard'
