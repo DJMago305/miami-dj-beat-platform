@@ -3458,7 +3458,7 @@
                             <div style="font-size:11px; font-weight:800; color:var(--gold); letter-spacing:0.06em;">SOUNDFORTIPS™ LIVE <span style="opacity:0.75;">· PRO de pago</span></div>
                             <p style="font-size:11px; color:rgba(255,255,255,0.55); margin:8px 0 0; line-height:1.4;">
                                 SoundForTips es solo para <strong>DJ PRO con suscripción de pago</strong> (MDJPRO): peticiones con propina, cabina, SMS al fan y registro de la noche. LITE no incluye esta función.</p>
-                            <a href="javascript:void(0)" onclick="mdjCheckoutPro('monthly')" style="display:inline-block;margin-top:10px;font-size:12px;font-weight:800;color:var(--gold);text-decoration:underline;">Activar PRO →</a>
+                            <a href="./dj-dashboard.html#panel-billing" style="display:inline-block;margin-top:10px;font-size:12px;font-weight:800;color:var(--gold);text-decoration:underline;">Activar PRO →</a>
                         </div>
                     </div>
                 </div>
@@ -5555,7 +5555,7 @@
                     if (bb) {
                         if (!window._mdjSftProAllowed) {
                             bb.style.display = 'block';
-                            bb.innerHTML = '<strong>Cabina SoundForTips</strong> — Disponible con <strong>plan PRO</strong> activo. <a href="./shop.html" style="color:#c5a059;font-weight:800;text-decoration:underline;">Ver planes →</a>';
+                            bb.innerHTML = '<strong>Cabina SoundForTips</strong> — Disponible con <strong>plan PRO</strong> activo. <a href="./dj-tools.html?mdj_nav=profile#djt-plan-section" style="color:#c5a059;font-weight:800;text-decoration:underline;">Ver planes →</a>';
                         } else {
                             bb.style.display = 'block';
                             if (typeof window.sftUpdateBoothBannerPending === 'function') window.sftUpdateBoothBannerPending();
@@ -6301,7 +6301,7 @@
     <div id="tab-flow" class="dj-panel serato-pane">
         <div id="flow-pro-required" style="display:none; max-width:900px; margin: 20px auto 0; padding: 16px 20px; background: rgba(197,160,89,0.12); border: 1px solid rgba(197,160,89,0.35); border-radius: 12px; color: rgba(255,255,255,0.9); font-size: 14px; text-align: center;" role="status">
             <span data-i18n="flow-pro-required-msg">Flujo de Caja: disponible para todos los artistas. SoundForTips™ requiere MDJPRO de pago.</span>
-            <a href="./shop.html" style="color: var(--gold); margin-left: 8px; font-weight: 800;" data-i18n="flow-pro-shop">Suscribirse PRO</a>
+            <a href="./dj-tools.html?mdj_nav=profile#djt-plan-section" style="color: var(--gold); margin-left: 8px; font-weight: 800;" data-i18n="flow-pro-shop">Suscribirse PRO</a>
         </div>
 
         <div class="flow-dashboard">
@@ -6511,7 +6511,7 @@
                 <span class="sft-tab-gate-icon" aria-hidden="true">🎧</span>
                 <div class="sft-tab-gate-copy">
                     <span data-i18n="sft-tab-gate-msg">SoundForTips™ requiere MDJPRO de pago activo.</span>
-                    <a href="./shop.html" class="sft-tab-gate-cta" data-i18n="flow-pro-shop">Ver planes PRO</a>
+                    <a href="./dj-tools.html?mdj_nav=profile#djt-plan-section" class="sft-tab-gate-cta" data-i18n="flow-pro-shop">Ver planes PRO</a>
                 </div>
             </div>
             <!-- SOUNDFORTIPS LIVE QUEUE -->

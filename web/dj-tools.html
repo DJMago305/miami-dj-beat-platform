@@ -69,6 +69,30 @@
             stroke: #d99aff;
         }
 
+        /* Loading spinner — visible while session resolves (TICKET-DJTOOLS-006 anti-flash) */
+        #dj-tools-gate-loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 40vh;
+            gap: 16px;
+            color: rgba(255,255,255,0.35);
+            font-size: 13px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+        #dj-tools-gate-loader .djt-spinner {
+            width: 32px;
+            height: 32px;
+            border: 2px solid rgba(197,160,89,0.2);
+            border-top-color: var(--gold, #c5a059);
+            border-radius: 50%;
+            animation: djt-spin 0.8s linear infinite;
+        }
+        @keyframes djt-spin { to { transform: rotate(360deg); } }
+        #dj-tools-gate-loader.hidden { display: none; }
+
         body.page-dj-tools .mdjpro-gate-icon {
             width: 56px;
             height: 56px;
@@ -197,6 +221,10 @@
 </header>
 
     <main>
+        <!-- Loading placeholder: visible while JS resolves session (TICKET-DJTOOLS-006) -->
+        <div id="dj-tools-gate-loader" aria-hidden="true">
+            <div class="djt-spinner"></div>
+        </div>
         <div id="dj-tools-client-gate"
             style="display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:48px 24px 80px; min-height:52vh; box-sizing:border-box;">
             <div class="mdjpro-gate-icon" aria-hidden="true">
@@ -232,8 +260,9 @@
                     <div class="cta-row" style="justify-content: center; margin-top: 40px;">
                         <a href="./downloads.html" class="btn primary" style="padding: 16px 32px; font-size: 18px;"
                             data-i18n="tools-btn-download">Descargar MDJPRO</a>
-                        <a href="#early-access" class="btn" style="padding: 16px 32px; font-size: 18px;"
-                            data-i18n="tools-btn-early-access">Acceso Anticipado</a>
+                        <a href="#" class="btn" style="padding: 16px 32px; font-size: 18px;"
+                            data-i18n="tools-btn-early-access"
+                            onclick="event.preventDefault(); if(typeof mdjCheckoutPro === 'function') mdjCheckoutPro('app_monthly');">Acceso Anticipado</a>
                     </div>
                 </div>
 
@@ -248,7 +277,7 @@
                         </div>
                         <h3 style="color: #ff9f43;" data-i18n="tools-feature-lr-title">Load Root</h3>
                         <p data-i18n="tools-feature-lr-teaser">Load Root — point MDJPRO at your master music folder on Mac. macOS security bookmark, one pick, local-only. Required before Scan, Wizard, and Tag Master.</p>
-                        <a href="./load-root.html" class="btn primary dj-tools-feature-cta"
+                        <a href="./load-root.html?mdj_nav=profile" class="btn primary dj-tools-feature-cta"
                             style="padding: 8px 16px; font-size: 13px;" data-i18n="tools-feature-lr-cta">Explore Load Root</a>
                     </div>
                     <div class="tile" style="border: 1px solid rgba(175,82,222,0.35); background: rgba(175,82,222,0.05);">
@@ -260,7 +289,7 @@
                         </div>
                         <h3 style="color: #d99aff;" data-i18n="tools-feature-clean-title">Library Cleaning</h3>
                         <p data-i18n="tools-feature-clean-teaser">Tag Master — batch ID3, metadata hygiene, and local Save before the gig. The cleaning room your library deserves.</p>
-                        <a href="./tag-master.html" class="btn primary dj-tools-feature-cta"
+                        <a href="./tag-master.html?mdj_nav=profile" class="btn primary dj-tools-feature-cta"
                             style="padding: 8px 16px; font-size: 13px;" data-i18n="tools-feature-clean-cta">Explore Tag Master</a>
                     </div>
                     <div class="tile" style="border: 1px solid rgba(197,160,89,0.4); background: rgba(197,160,89,0.04);">
@@ -274,7 +303,7 @@
                         </div>
                         <h3 style="color: var(--gold);" data-i18n="tools-feature-smart-title">Smart Crates</h3>
                         <p data-i18n="tools-feature-smart-teaser">The phonoteca shelf a pro DJ builds over years — deployed on your drive in seconds. MDJPRO Premium DNA.</p>
-                        <a href="./library-wizard.html" class="btn primary dj-tools-feature-cta"
+                        <a href="./library-wizard.html?mdj_nav=profile" class="btn primary dj-tools-feature-cta"
                             style="padding: 8px 16px; font-size: 13px;" data-i18n="tools-feature-smart-cta">Explore Library Wizard DNA</a>
                     </div>
                     <div class="tile" style="border: 1px solid var(--gold); background: rgba(197,160,89,0.05);">
@@ -286,7 +315,7 @@
                         </div>
                         <h3 style="color: var(--gold);" data-i18n="tools-feature-health-title">Salud y economía del artista</h3>
                         <p data-i18n="tools-feature-health-teaser">Cash Flow — private artist economics on the web: revenue KPIs, professional health index, bank-style statements, and tax export. Visible only to you. SoundForTips™ live booth is separate (paid PRO).</p>
-                        <a href="./cash-flow.html" class="btn primary dj-tools-feature-cta"
+                        <a href="./cash-flow.html?mdj_nav=profile" class="btn primary dj-tools-feature-cta"
                             style="padding: 8px 16px; font-size: 13px;" data-i18n="tools-feature-health-cta">Explore Cash Flow</a>
                     </div>
                 </div>
@@ -349,6 +378,124 @@
                     </div>
                 </div>
             </div>
+        </section>
+
+        <!-- ── Plan / billing section — visible to all artists inside DJ Tools ── -->
+        <section id="djt-plan-section" style="padding:80px 24px;background:linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(197,160,89,0.04) 50%,rgba(0,0,0,0) 100%);">
+            <style>
+                #djt-plan-section .djt-bill-card {
+                    flex:1;min-width:0;position:relative;
+                    padding:28px 20px 24px;
+                    background:rgba(255,255,255,0.03);
+                    border:1px solid rgba(197,160,89,0.18);
+                    border-radius:16px;
+                    cursor:pointer;
+                    transition:background 0.18s, border-color 0.18s, transform 0.15s;
+                    text-align:center;
+                    color:rgba(255,255,255,0.55);
+                }
+                #djt-plan-section .djt-bill-card:hover {
+                    background:rgba(197,160,89,0.07);
+                    border-color:rgba(197,160,89,0.4);
+                    transform:translateY(-2px);
+                }
+                #djt-plan-section .djt-bill-card.djt-bill-selected {
+                    background:rgba(197,160,89,0.13);
+                    border-color:var(--gold,#c5a059);
+                    color:#fff;
+                }
+                #djt-plan-section .djt-bill-card .djt-bill-label {
+                    font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;
+                }
+                #djt-plan-section .djt-bill-card .djt-bill-price {
+                    font-size:32px;font-weight:900;color:var(--gold,#c5a059);line-height:1;margin-bottom:4px;
+                }
+                #djt-plan-section .djt-bill-card .djt-bill-per {
+                    font-size:11px;opacity:0.5;margin-bottom:10px;
+                }
+                #djt-plan-section .djt-bill-card .djt-bill-badge {
+                    display:inline-block;font-size:10px;font-weight:800;letter-spacing:1px;
+                    padding:3px 10px;border-radius:20px;text-transform:uppercase;
+                }
+                #djt-plan-section .djt-bill-card .djt-bill-badge.save-gold { background:rgba(197,160,89,0.18);color:var(--gold,#c5a059); }
+                #djt-plan-section .djt-bill-card .djt-bill-badge.save-green { background:rgba(34,197,94,0.15);color:#4ade80; }
+                #djt-plan-section .djt-bill-card .djt-best-badge {
+                    position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+                    background:var(--gold,#c5a059);color:#000;
+                    font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase;
+                    padding:4px 14px;border-radius:20px;white-space:nowrap;
+                }
+                #djt-plan-divider {
+                    width:48px;height:2px;
+                    background:linear-gradient(90deg,transparent,var(--gold,#c5a059),transparent);
+                    margin:0 auto 40px;
+                }
+            </style>
+
+            <div class="container" style="max-width:640px;text-align:center;">
+                <div style="font-size:10px;font-weight:800;letter-spacing:4px;color:var(--gold);margin-bottom:14px;opacity:0.7;text-transform:uppercase;">PRO Artist Plan</div>
+                <h2 style="font-size:1.8rem;font-weight:900;margin:0 0 12px;line-height:1.2;">Activa Miami DJ Beat PRO Artist</h2>
+                <p style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.7;margin:0 0 10px;">Perfil PRO · MDJPRO App incluida · Jobs · SoundForTips™ · visibilidad premium.</p>
+                <div id="djt-plan-divider"></div>
+
+                <div style="display:flex;gap:14px;margin-bottom:28px;flex-wrap:wrap;" id="djt-page-billing-btns">
+
+                    <button type="button" data-billing="monthly" class="djt-bill-card djt-bill-selected">
+                        <div class="djt-bill-label">Mensual</div>
+                        <div class="djt-bill-price">$100</div>
+                        <div class="djt-bill-per">/ mes</div>
+                    </button>
+
+                    <button type="button" data-billing="semestral" class="djt-bill-card">
+                        <div class="djt-bill-label">6 Meses</div>
+                        <div class="djt-bill-price">$480</div>
+                        <div class="djt-bill-per">$80 / mes</div>
+                        <span class="djt-bill-badge save-gold">Ahorra $120</span>
+                    </button>
+
+                    <button type="button" data-billing="annual" class="djt-bill-card">
+                        <div class="djt-best-badge">Mejor valor</div>
+                        <div class="djt-bill-label">Anual</div>
+                        <div class="djt-bill-price">$840</div>
+                        <div class="djt-bill-per">$70 / mes</div>
+                        <span class="djt-bill-badge save-green">Ahorra $360</span>
+                    </button>
+
+                </div>
+
+                <button type="button" id="djt-page-activate-btn"
+                    style="width:100%;max-width:420px;padding:18px 32px;background:var(--gold);border:none;border-radius:14px;color:#000;font-size:15px;font-weight:900;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:opacity 0.2s, transform 0.15s;box-shadow:0 4px 32px rgba(197,160,89,0.25);"
+                    onmouseenter="this.style.opacity='0.88';this.style.transform='translateY(-1px)'"
+                    onmouseleave="this.style.opacity='1';this.style.transform='translateY(0)'">
+                    ⚡ Activar PRO Artist
+                </button>
+
+                <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:16px;line-height:1.6;">
+                    Cancela cuando quieras · Sin contratos · Pago seguro via Stripe
+                </p>
+            </div>
+
+            <script>
+            (function () {
+                var selectedBilling = 'monthly';
+                var cards = document.querySelectorAll('#djt-page-billing-btns .djt-bill-card');
+                cards.forEach(function (card) {
+                    card.addEventListener('click', function () {
+                        var b = card.getAttribute('data-billing');
+                        if (b !== 'monthly' && b !== 'semestral' && b !== 'annual') return;
+                        selectedBilling = b;
+                        cards.forEach(function (c) { c.classList.remove('djt-bill-selected'); });
+                        card.classList.add('djt-bill-selected');
+                    });
+                });
+                var activateBtn = document.getElementById('djt-page-activate-btn');
+                if (activateBtn) {
+                    activateBtn.addEventListener('click', function () {
+                        if (typeof mdjCheckoutPro === 'function') mdjCheckoutPro(selectedBilling);
+                    });
+                }
+            })();
+            </script>
         </section>
         </div>
     </main>
@@ -489,12 +636,14 @@
       document.addEventListener('DOMContentLoaded', async function () {
         var gate = document.getElementById('dj-tools-client-gate');
         var body = document.getElementById('dj-tools-artist-content');
+        var loader = document.getElementById('dj-tools-gate-loader');
         if (!gate || !body) return;
         try {
           if (typeof window.checkSessionForNav === 'function') {
             await window.checkSessionForNav();
           }
         } catch (e0) { /* ignore */ }
+        if (loader) loader.classList.add('hidden');
         var tier = window.__mdjLastNavTier;
         var unlocked = window.__mdjProToolsUnlocked === true;
         var _idn = window.__mdjLastPlatformIdentity;
@@ -504,23 +653,30 @@
           body.style.display = '';
           return;
         }
-        if (tier === 'client_only' || tier === 'artist_lite') {
+        if (tier === 'artist_lite') {
+          // LITE artists see the full content — only download is locked
+          gate.style.display = 'none';
+          body.style.display = '';
+          // Disable download button and inject upgrade block below it
+          var dlBtn = body.querySelector('a[href*="downloads.html"]');
+          if (dlBtn) {
+            dlBtn.removeAttribute('href');
+            dlBtn.removeAttribute('data-i18n');
+            dlBtn.style.cursor = 'not-allowed';
+            dlBtn.style.pointerEvents = 'none';
+            dlBtn.style.opacity = '0.7';
+            dlBtn.style.border = '1px solid rgba(197,160,89,0.4)';
+            dlBtn.textContent = '🔒 Descargar MDJPRO';
+            dlBtn.title = 'Requiere plan PRO activo';
+          }
+        } else if (tier === 'client_only') {
           gate.style.display = 'flex';
           body.style.display = 'none';
           var gateTitle = gate.querySelector('h2');
           var gateBody = gate.querySelector('p');
           var gateCta = gate.querySelector('a.btn.primary');
           var gatePortal = gate.querySelector('a.btn:not(.primary)');
-          if (tier === 'artist_lite' && gateTitle && gateBody && gateCta && gatePortal) {
-            gateTitle.setAttribute('data-i18n', 'nav-tools-lite-gate-title');
-            gateBody.setAttribute('data-i18n', 'nav-tools-lite-gate-body');
-            gateCta.setAttribute('data-i18n', 'nav-tools-lite-gate-cta');
-            gatePortal.setAttribute('data-i18n', 'nav-tools-lite-gate-portal');
-            gateCta.removeAttribute('href');
-            gateCta.style.cursor = 'pointer';
-            gateCta.onclick = function(e) { e.preventDefault(); mdjCheckoutPro('monthly'); };
-            gatePortal.setAttribute('href', './client-portal.html');
-          } else if (tier === 'client_only' && gateTitle && gateBody && gateCta && gatePortal) {
+          if (gateTitle && gateBody && gateCta && gatePortal) {
             gateTitle.setAttribute('data-i18n', 'nav-tools-client-gate-title');
             gateBody.setAttribute('data-i18n', 'nav-tools-client-gate-body');
             gateCta.setAttribute('data-i18n', 'nav-tools-client-gate-cta');
@@ -534,6 +690,14 @@
         } else {
           gate.style.display = 'none';
           body.style.display = '';
+        }
+
+        // Scroll to plan section if arriving from SoundForTips / profile CTAs
+        if (window.location.hash === '#djt-plan-section') {
+          setTimeout(function () {
+            var planSec = document.getElementById('djt-plan-section');
+            if (planSec) planSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 300);
         }
       });
     </script>

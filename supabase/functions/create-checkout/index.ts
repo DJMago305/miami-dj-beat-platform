@@ -98,12 +98,16 @@ serve(async (req) => {
 
 
         const billingRaw = String(body.billing || "monthly").toLowerCase().trim();
-        /** Alineado con Jobs: monthly | semestral | annual (cobro recurrente en Stripe según cada Price). */
-        const billing: "monthly" | "semestral" | "annual" =
+        /** Alineado con Jobs: monthly | semestral | annual | app_monthly | app_annual */
+        const billing: "monthly" | "semestral" | "annual" | "app_monthly" | "app_annual" =
             billingRaw === "annual" || billingRaw === "yearly"
                 ? "annual"
                 : billingRaw === "semestral" || billingRaw === "semester" || billingRaw === "6m" || billingRaw === "biannual"
                 ? "semestral"
+                : billingRaw === "app_monthly"
+                ? "app_monthly"
+                : billingRaw === "app_annual"
+                ? "app_annual"
                 : "monthly";
 
         const referralCode = (body.ref || "").trim().toUpperCase();
@@ -112,6 +116,8 @@ serve(async (req) => {
         const STRIPE_PRICE_MONTHLY = Deno.env.get("STRIPE_PRICE_MONTHLY")!;
         const STRIPE_PRICE_ANNUAL = Deno.env.get("STRIPE_PRICE_ANNUAL")!;
         const STRIPE_PRICE_SEMESTRAL = (Deno.env.get("STRIPE_PRICE_SEMESTRAL") || "").trim();
+        const STRIPE_PRICE_APP_MONTHLY = (Deno.env.get("STRIPE_PRICE_APP_MONTHLY") || "").trim();
+        const STRIPE_PRICE_APP_ANNUAL = (Deno.env.get("STRIPE_PRICE_APP_ANNUAL") || "").trim();
         const SITE_URL = Deno.env.get("SITE_URL") || "http://localhost:3000";
         const siteOrigin = new URL(SITE_URL.replace(/\/$/, "") || "http://localhost:3000").origin;
 
@@ -145,12 +151,34 @@ serve(async (req) => {
                 return new Response(
                     JSON.stringify({
                         error: "Semestral price not configured.",
-                        detail: "Create a Stripe Price with 6-month billing (e.g. recurring interval month, interval_count 6) and set STRIPE_PRICE_SEMESTRAL in Supabase Edge Function secrets.",
+                        detail: "Set STRIPE_PRICE_SEMESTRAL in Supabase Edge Function secrets.",
                     }),
                     { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
                 );
             }
             priceId = STRIPE_PRICE_SEMESTRAL;
+        } else if (billing === "app_monthly") {
+            if (!STRIPE_PRICE_APP_MONTHLY) {
+                return new Response(
+                    JSON.stringify({
+                        error: "App monthly price not configured.",
+                        detail: "Set STRIPE_PRICE_APP_MONTHLY in Supabase Edge Function secrets.",
+                    }),
+                    { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+                );
+            }
+            priceId = STRIPE_PRICE_APP_MONTHLY;
+        } else if (billing === "app_annual") {
+            if (!STRIPE_PRICE_APP_ANNUAL) {
+                return new Response(
+                    JSON.stringify({
+                        error: "App annual price not configured.",
+                        detail: "Set STRIPE_PRICE_APP_ANNUAL in Supabase Edge Function secrets.",
+                    }),
+                    { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+                );
+            }
+            priceId = STRIPE_PRICE_APP_ANNUAL;
         } else {
             priceId = STRIPE_PRICE_MONTHLY;
         }
@@ -237,12 +265,12 @@ serve(async (req) => {
             success_url: successUrl,
             cancel_url: `${SITE_URL.replace(/\/$/, "")}/jobs.html?payment=cancelled`,
             "metadata[user_id]": user.id,
-            "metadata[product_line]": "mdj_artist_pro",
+            "metadata[product_line]": (billing === "app_monthly" || billing === "app_annual") ? "mdjpro_app" : "mdj_artist_pro",
             "metadata[billing]": billing,
             "metadata[referral_code]": referralCode,
             "metadata[referrer_id]": referrerId || "",
             "subscription_data[metadata][user_id]": user.id,
-            "subscription_data[metadata][product_line]": "mdj_artist_pro",
+            "subscription_data[metadata][product_line]": (billing === "app_monthly" || billing === "app_annual") ? "mdjpro_app" : "mdj_artist_pro",
             allow_promotion_codes: "true",
         };
 

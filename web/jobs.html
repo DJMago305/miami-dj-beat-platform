@@ -2130,16 +2130,6 @@
                         <span class="jobs-role-card-catalog-note-sub" data-i18n="jobs-role-carousel-catalog-note-sub">Esta tarjeta es solo informativa — no hay casilla ni envío.</span>
                     </div>
                 </div>
-                <div class="jobs-after-roles-cta-wrap" id="jobs-after-roles-cta-wrap">
-                    <!-- Enlace real (como header): invitado navega aunque falle JS; sesión → data-jobs-cta-mode=account + handler. -->
-                    <a class="jobs-after-roles-cta" id="jobs-after-roles-cta"
-                        href="./login.html?signup=free&amp;user_type=talent&amp;redirect=jobs"
-                        data-jobs-signup-href="./login.html?signup=free&amp;user_type=talent&amp;redirect=jobs"
-                        data-jobs-cta-mode="signup"
-                        data-i18n="jobs-after-roles-cta-signup">Crea tu cuenta</a>
-                    <p class="jobs-after-roles-cta-subline" id="jobs-after-roles-cta-subline"
-                        data-i18n="jobs-after-roles-cta-auth-hint">En la siguiente pantalla podrás iniciar sesión o registrarte como talento.</p>
-                </div>
             </div>
 
             <div class="level-portal-container">
@@ -2178,6 +2168,12 @@
                         style="margin:12px 0 0;font-size:11px;line-height:1.45;color:rgba(255,255,255,0.45);font-weight:600;">
                         Cuenta gratuita (LITE). Puedes pasar a PRO cuando quieras desde esta misma página o desde tu
                         panel.</p>
+                    <button type="button"
+                        style="margin-top:16px;width:100%;padding:12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.18);border-radius:10px;color:#fff;font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:background 0.2s;"
+                        onmouseenter="this.style.background='rgba(255,255,255,0.13)'" onmouseleave="this.style.background='rgba(255,255,255,0.07)'"
+                        onclick="event.stopPropagation(); selectPlan(this.closest('.level-portal'), 'lite')">
+                        ELEGIR PLAN BÁSICO (GRATIS)
+                    </button>
                 </div>
 
                 <!-- Portal 2: PRO (FOUNDER PRICE) -->
@@ -2202,10 +2198,12 @@
                     <p class="jobs-portal-roles-mirror-label" data-i18n="jobs-portal-card-roles-label">Your roster categories</p>
                     <div class="jobs-portal-roles-mirror-values jobs-portal-roles-mirror-values--pro" aria-live="polite">—</div>
 
-                    <p class="jobs-pro-card-next-step-hint" data-i18n="jobs-pro-card-next-step-hint"
-                        style="margin:16px 0 0;font-size:11px;line-height:1.5;color:rgba(255,255,255,0.5);font-weight:600;">
-                        Después de elegir PRO, el siguiente bloque te permite elegir periodo (mensual / 6 meses / año),
-                        opcionalmente un referido y pagar con Stripe; luego completas la misma solicitud que LITE.</p>
+                    <button type="button"
+                        style="margin-top:16px;width:100%;padding:13px;background:var(--gold);border:none;border-radius:10px;color:#000;font-size:13px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:opacity 0.2s;"
+                        onmouseenter="this.style.opacity='0.85'" onmouseleave="this.style.opacity='1'"
+                        onclick="event.stopPropagation(); selectPlan(this.closest('.level-portal'), 'pro')">
+                        ⚡ ELEGIR PLAN PRO — $100/mes
+                    </button>
                 </div>
             </div>
 
@@ -2236,26 +2234,24 @@
                     <div
                         style="padding:12px;background:rgba(197,160,89,0.06);border-radius:10px;border:1px solid rgba(197,160,89,0.15);">
                         <div id="price-monthly-display">
-                            <span style="font-size:26px;font-weight:900;color:#fff;">$80</span>
-                            <span style="font-size:13px;color:rgba(255,255,255,0.4);">/mes · Founder Price</span>
-                            <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:3px;">Precio sube con
-                                demanda — Bloquea tu precio ahora</div>
+                            <span id="jobs-pro-price-monthly-val" style="font-size:26px;font-weight:900;color:#fff;">$100</span>
+                            <span style="font-size:13px;color:rgba(255,255,255,0.4);">/mes</span>
                         </div>
                         <div id="price-semestral-display" style="display:none;">
-                            <span style="font-size:26px;font-weight:900;color:#fff;">$400</span>
+                            <span id="jobs-pro-price-semestral-val" style="font-size:26px;font-weight:900;color:#fff;">$480</span>
                             <span style="font-size:13px;color:rgba(255,255,255,0.4);"
-                                data-i18n="jobs-pro-price-semestral-line">/6 meses · Ahorra $80</span>
+                                data-i18n="jobs-pro-price-semestral-line">/6 meses · Ahorra $120</span>
                             <div
                                 style="margin-top:6px;display:inline-block;background:rgba(197,160,89,0.12);border:1px solid rgba(197,160,89,0.3);color:var(--gold);font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;"
-                                data-i18n="jobs-pro-promo-semestral-tag">🎁 Promo 6 meses + 1 mes gratis</div>
+                                data-i18n="jobs-pro-promo-semestral-tag">🎁 2 meses gratis vs mensual</div>
                         </div>
                         <div id="price-annual-display" style="display:none;">
-                            <span style="font-size:26px;font-weight:900;color:var(--gold);">$720</span>
+                            <span id="jobs-pro-price-annual-val" style="font-size:26px;font-weight:900;color:var(--gold);">$840</span>
                             <span style="font-size:13px;color:rgba(255,255,255,0.4);"
-                                data-i18n="jobs-pro-price-annual-line">/año · Ahorra $240</span>
+                                data-i18n="jobs-pro-price-annual-line">/año · Ahorra $360</span>
                             <div
                                 style="margin-top:6px;display:inline-block;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#22c55e;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;"
-                                data-i18n="jobs-pro-promo-annual-tag">🎁 Promo anual + 3 meses gratis</div>
+                                data-i18n="jobs-pro-promo-annual-tag">🎁 3 meses gratis vs mensual</div>
                         </div>
                     </div>
                     <div style="margin-top:10px;">
@@ -2266,8 +2262,17 @@
                             Código válido — $20 de descuento en tu primer mes</div>
                     </div>
                     <input type="hidden" id="billing-period" value="monthly">
+                    <div style="margin:14px 0 12px;padding:12px 14px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.3);border-radius:10px;display:flex;align-items:flex-start;gap:10px;">
+                        <span style="font-size:18px;line-height:1;">🎁</span>
+                        <div>
+                            <div style="font-size:11px;font-weight:900;letter-spacing:1px;color:var(--gold);margin-bottom:3px;">INCLUIDO CON EL PLAN PRO</div>
+                            <div style="font-size:12px;color:rgba(255,255,255,0.75);line-height:1.5;">
+                                Acceso completo a la plataforma MDJ <strong style="color:#fff;">+</strong> descarga de la app <strong style="color:var(--gold);">MDJPRO</strong> para Mac — herramienta profesional de gestión de DJ.
+                            </div>
+                        </div>
+                    </div>
                     <p class="jobs-pro-billing-note" data-i18n="jobs-pro-billing-note"
-                        style="margin:14px 0 16px;font-size:11px;line-height:1.45;color:rgba(255,255,255,0.5);font-weight:600;">
+                        style="margin:0 0 16px;font-size:11px;line-height:1.45;color:rgba(255,255,255,0.5);font-weight:600;">
                         Pago seguro con tarjeta mediante Stripe (suscripción según el periodo). La tarjeta queda
                         asociada a tu cuenta; la gestionas en el dashboard → configuración de pagos.</p>
                     <button type="button" class="btn primary" id="jobs-pro-stripe-btn" onclick="jobsStartProStripeCheckout()"
@@ -2285,6 +2290,17 @@
                         style="padding:15px 60px;font-size:16px;border-radius:15px;text-transform:uppercase;font-weight:800;border:none;flex:1;min-width:300px;width:100%;">ENVIAR
                         SOLICITUD</button>
                 </div>
+            </div>
+
+            <div class="jobs-after-roles-cta-wrap" id="jobs-after-roles-cta-wrap">
+                <!-- Enlace real (como header): invitado navega aunque falle JS; sesión → data-jobs-cta-mode=account + handler. -->
+                <a class="jobs-after-roles-cta" id="jobs-after-roles-cta"
+                    href="./login.html?signup=free&amp;user_type=talent&amp;redirect=jobs"
+                    data-jobs-signup-href="./login.html?signup=free&amp;user_type=talent&amp;redirect=jobs"
+                    data-jobs-cta-mode="signup"
+                    data-i18n="jobs-after-roles-cta-signup">Crea tu cuenta</a>
+                <p class="jobs-after-roles-cta-subline" id="jobs-after-roles-cta-subline"
+                    data-i18n="jobs-after-roles-cta-auth-hint">En la siguiente pantalla podrás iniciar sesión o registrarte como talento.</p>
             </div>
         </section>
 
@@ -2774,6 +2790,24 @@
                     .maybeSingle();
                 if (profile && profile.photo_url) document.querySelector('.avatar').src = profile.photo_url;
                 void updateJobsArtistPlanStatusBanner(session, profile);
+                // Wire up "Get PRO" header button for logged-in artists
+                var getProBtn = document.getElementById('header-get-pro-btn');
+                if (getProBtn) {
+                    var isPrem = window.MDB_SUBSCRIPTION && typeof window.MDB_SUBSCRIPTION.isPremiumTier === 'function'
+                        ? window.MDB_SUBSCRIPTION.isPremiumTier(profile)
+                        : (profile && (profile.is_premium || ['pro','elite'].includes((profile.plan||'').toLowerCase())));
+                    if (isPrem) {
+                        getProBtn.style.display = 'none';
+                    } else {
+                        getProBtn.removeAttribute('href');
+                        getProBtn.setAttribute('href', '#selection-screen');
+                        getProBtn.onclick = function (e) {
+                            e.preventDefault();
+                            var proPortal = document.querySelectorAll('#selection-screen .level-portal')[1];
+                            if (proPortal) selectPlan(proPortal, 'pro');
+                        };
+                    }
+                }
             } else {
                 void updateJobsArtistPlanStatusBanner(null, null);
             }
@@ -3202,7 +3236,19 @@
                     refInput.value = urlRef.toUpperCase();
                     validateReferralCode(urlRef);
                 }
-            }            // ── localStorage autofill (from autofill.html helper) ────
+            }
+
+            // Auto-select PRO plan when URL contains ?plan=pro (e.g. from dj-tools gate or dj-profile)
+            const urlPlan = new URLSearchParams(window.location.search).get('plan');
+            if (urlPlan && urlPlan.toLowerCase() === 'pro') {
+                const proPortalEl = document.querySelector('.level-portal[onclick*="pro"]') ||
+                    Array.from(document.querySelectorAll('.level-portal')).find(el => (el.getAttribute('onclick') || '').includes("'pro'"));
+                if (proPortalEl && typeof selectPlan === 'function') {
+                    setTimeout(function () { selectPlan(proPortalEl, 'pro'); }, 500);
+                }
+            }
+
+            // ── localStorage autofill (from autofill.html helper) ────
             if (new URLSearchParams(window.location.search).get('autofill') === '1') {
                 const afData = JSON.parse(localStorage.getItem('mdjpro_autofill') || 'null');
                 if (afData) {
