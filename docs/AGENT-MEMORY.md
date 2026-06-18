@@ -24,7 +24,7 @@
 ### ⚠️ Tickets abiertos
 | ID | Descripción | Prioridad |
 |----|-------------|-----------|
-| STRIPE-SECRETS-CHECK | Confirmar `STRIPE_PRICE_APP_MONTHLY=price_1TjV9aDtBrAhSobylMVTFqV0` en Supabase Secrets | 🔴 ALTA |
+| STRIPE-SECRETS-CHECK | ✅ CERRADO — todos los secretos Stripe confirmados en Supabase (ver tabla de secretos) | ✅ |
 | FASE-6B-QA | QA manual Event Builder: toast + SQL + Staff Board (lo ejecuta el Capitán) | 🔴 ALTA |
 | TICKET-COUPON-001 | Cupón primera compra $80 — Stripe + secreto + `create-checkout` | 🟡 MEDIA |
 | TICKET-REFERRAL-001 | Códigos de referido de manager con descuento | 🟡 MEDIA |
@@ -121,15 +121,27 @@ Artista (cualquier tier) → dj-tools.html → "Acceso Anticipado"
   - `'miamidjbeat_pro'` — requiere plan PRO activo
   - `'manual'` — sin gate de elegibilidad (usado por webhook app_monthly)
 
-### Secretos Supabase Edge Functions
-| Secreto | Valor | Uso |
-|---|---|---|
-| `STRIPE_SECRET_KEY` | sk_live_... | Auth Stripe API |
-| `STRIPE_WEBHOOK_SECRET` | whsec_... | Verificar firma webhook |
-| `STRIPE_PRICE_MONTHLY` | price_... | Plan PRO mensual $100 |
-| `STRIPE_PRICE_SEMESTRAL` | price_... | Plan PRO 6 meses $480 |
-| `STRIPE_PRICE_ANNUAL` | price_... | Plan PRO anual $840 |
-| `STRIPE_PRICE_APP_MONTHLY` | `price_1TjV9aDtBrAhSobylMVTFqV0` | MDJPRO App $19.99/mes — **verificar activo** |
+### Secretos Supabase Edge Functions (todos confirmados ✅ — 2026-06-18)
+| Secreto | Uso |
+|---|---|
+| `STRIPE_WEBHOOK_SECRET` | Verificar firma webhook Stripe |
+| `STRIPE_SECRET_KEY` | Auth Stripe API |
+| `STRIPE_PRICE_MONTHLY` | Plan PRO Artist mensual $100 (membresía web + licencia MDJPRO incluida) |
+| `STRIPE_PRICE_SEMESTRAL` | Plan PRO Artist 6 meses $480 (membresía web + licencia MDJPRO incluida) |
+| `STRIPE_PRICE_ANNUAL` | Plan PRO Artist anual $840 (membresía web + licencia MDJPRO incluida) |
+| `STRIPE_PRICE_APP_MONTHLY` | MDJPRO App standalone $19.99/mes (sin membresía web) |
+| `STRIPE_PRICE_APP_ANNUAL` | MDJPRO App standalone anual (sin membresía web — sin botón UI activo aún) |
+| `MDJ_OWNER_EMAIL` | Email del owner para notificaciones |
+| `RESEND_API_KEY` | Servicio de email transaccional |
+| `FROM_EMAIL` | Dirección remitente de emails |
+| `SITE_URL` | URL base del sitio |
+| `OPENAI_API_KEY` | OpenAI — AI Booth / asistente |
+| `ELEVENLABS_API_KEY` | ElevenLabs TTS — voz del Booth |
+| `ELEVENLABS_VOICE_ID` | ID de voz ElevenLabs activa |
+| `TWILIO_ACCOUNT_SID` | Twilio — SMS/WhatsApp staff |
+| `TWILIO_AUTH_TOKEN` | Twilio auth |
+| `TWILIO_PHONE_NUMBER` | Número Twilio remitente |
+| `EDGE_TWILIO_AUTH` | Token de auth interno para Edge Functions Twilio |
 
 ### Videos (todos en Supabase CDN)
 ```
