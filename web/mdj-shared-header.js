@@ -2977,12 +2977,14 @@
               (!!p && djRowRole !== 'client');
           var appRoleLower = appRole ? String(appRole).toLowerCase() : '';
           var metadataSaysClient = metaUtLower === 'client' || appRoleLower === 'client';
-          /* jwtArtist: no forzar «cliente» solo por tener client_profiles (muchos artistas tienen ambas filas). */
+          /* jwtArtist: no forzar «cliente» solo por tener client_profiles (muchos artistas tienen ambas filas).
+           * Guard djProfileErr: si la query de dj_profiles falló (red lenta en móvil), p=null por error, no por
+           * ausencia real de perfil — no clasificar como cliente en ese caso (TICKET-ROLE-REDIRECT-002). */
           var isClient = sessionIsExplicitClient
             ? true
             : (p && djRowRole === 'client') ||
-              (!p && hasClientRow && !jwtArtist) ||
-              (!p && metadataSaysClient && !jwtArtist);
+              (!p && !djProfileErr && hasClientRow && !jwtArtist) ||
+              (!p && !djProfileErr && metadataSaysClient && !jwtArtist);
 
           var viewingOwnDjProfile = false;
           try {

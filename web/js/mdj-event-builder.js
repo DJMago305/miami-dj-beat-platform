@@ -1786,42 +1786,43 @@
         state.assigned_lead_id = leadId;
         persistDraft();
 
-        // Fase 2 — persist order snapshot to event_builder_orders (non-blocking)
-        (function () {
-            try {
-                var draftKey = state.draft_id || (String(uid).substring(0, 8) + '-' + Date.now());
-                var contextDate = mdjEbReadContextDateIso() || null;
-                var orderPayload = {
-                    draft_id:       draftKey,
-                    user_id:        uid,
-                    lead_id:        leadId || null,
-                    event_date:     contextDate || null,
-                    lines:          services,
-                    subtotal_usd:   totals.subtotal  || 0,
-                    tax_usd:        totals.tax        || 0,
-                    total_usd:      totals.total      || 0,
-                    deposit_usd:    Math.round((totals.total || 0) * 0.30 * 100) / 100,
-                    order_status:   'pending',
-                    updated_at:     new Date().toISOString()
-                };
-                db.from('event_builder_orders')
-                    .upsert(orderPayload, { onConflict: 'draft_id' })
-                    .then(function (res) {
-                        if (res && res.error) {
-                            try { console.warn('[MDJEventBuilder] event_builder_orders upsert:', res.error.message); } catch (e) { void e; }
-                        }
-                    })
-                    .catch(function () { /* non-blocking */ });
-            } catch (eOrd) { /* non-blocking */ }
-        }());
+        // Fase 2 — persist order snapshot to event_builder_orders (blocking: await result before success)
+        var draftKey = state.draft_id || (String(uid).substring(0, 8) + '-' + Date.now());
+        var contextDate = mdjEbReadContextDateIso() || null;
+        var orderPayload = {
+            draft_id:       draftKey,
+            user_id:        uid,
+            lead_id:        leadId || null,
+            event_date:     contextDate || null,
+            lines:          services,
+            subtotal_usd:   totals.subtotal  || 0,
+            tax_usd:        totals.tax        || 0,
+            total_usd:      totals.total      || 0,
+            deposit_usd:    Math.round((totals.total || 0) * 0.30 * 100) / 100,
+            order_status:   'pending',
+            updated_at:     new Date().toISOString()
+        };
+        var upsertRes;
+        try {
+            upsertRes = await db.from('event_builder_orders')
+                .upsert(orderPayload, { onConflict: 'draft_id' });
+        } catch (eOrd) {
+            console.error('[MDJEventBuilder] event_builder_orders upsert exception:', eOrd);
+            upsertRes = { error: eOrd };
+        }
+        if (upsertRes && upsertRes.error) {
+            console.error('[MDJEventBuilder] event_builder_orders upsert failed:', upsertRes.error.message || upsertRes.error);
+            showToast('⚠️ No se pudo guardar la orden en el tablero. Revisa conexión o permisos. (draft: ' + draftKey + ')');
+            return;
+        }
 
-        // Clear cart lines after successful commit (order is now saved)
+        // Upsert confirmed — safe to clear cart and show success
         state.lines = [];
         state.assigned_lead_id = '';
         persistDraft();
 
         showToast(
-            '✓ Orden guardada. Mi Portal: ./client-portal.html?lead=' + leadId
+            '✓ Orden guardada para el cliente y visible en el tablero. Mi Portal: ./client-portal.html?lead=' + leadId
         );
         closeDrawer();
         void mdjEbRefreshAssignDropdown();

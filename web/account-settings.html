@@ -1288,7 +1288,7 @@
     <!-- ── Sidebar ── -->
     <aside class="acct-side">
       <nav>
-        <button class="acct-side-link active" onclick="showPanel('account',this)">
+        <button class="acct-side-link" onclick="showPanel('account',this)">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
           Cuenta
         </button>
@@ -1339,7 +1339,7 @@
     <div class="acct-body">
 
     <!-- PANEL: CUENTA ─────────────────────────────────────────── -->
-    <div id="panel-account" class="acct-panel active">
+    <div id="panel-account" class="acct-panel">
 
     <!-- SECCIÓN EYEBROW MINIMALISTA (Reemplazo del Hero Gigante) -->
     <div style="width: 100%; display: flex; justify-content: flex-start; margin-bottom: 24px;">
@@ -1903,7 +1903,7 @@
           <div style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:2px;">PLAN PRO</div>
           <h3>Perfil<br>Verificado</h3>
           <p>Con plan PRO tu perfil aparece primero en búsquedas y recibe eventos asignados automáticamente.</p>
-          <button id="btn-activate-pro" class="reward-redeem" onclick="mdjCheckoutPro('monthly')">Activar PRO</button>
+          <a id="btn-activate-pro" class="reward-redeem" href="./dj-dashboard.html#panel-billing">Activar PRO</a>
         </div>
         <div class="reward-card">
           <div style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:2px;">QR EXCLUSIVO</div>
@@ -2054,7 +2054,7 @@
         </div>
         <div class="acct-row" style="border-top:1px solid rgba(255,255,255,0.04);">
           <div class="acct-row-info"><div class="acct-lbl">Ciclo de facturación</div><div class="acct-val" id="billing-cadence">—</div></div>
-          <button id="billing-upgrade-btn" class="acct-edit" onclick="mdjCheckoutPro('monthly')">Upgrade →</button>
+          <a id="billing-upgrade-btn" class="acct-edit" href="./dj-dashboard.html#panel-billing">Upgrade →</a>
         </div>
       </div>
 
@@ -2140,7 +2140,7 @@
       </div>
       <div id="cfg-lite-notice" style="display:none;margin-top:16px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.3);border-radius:12px;padding:16px 20px;">
         <strong style="color:var(--gold);">Public profile visibility — PRO/ELITE only</strong>
-        <p style="font-size:12px;margin:6px 0 0;color:rgba(255,255,255,0.6);">Your profile won't be listed on Google with the LITE plan. <a href="./jobs.html" style="color:var(--gold);">Upgrade to PRO →</a></p>
+        <p style="font-size:12px;margin:6px 0 0;color:rgba(255,255,255,0.6);">Your profile won't be listed on Google with the LITE plan. <a href="./dj-dashboard.html#panel-billing" style="color:var(--gold);">Upgrade to PRO →</a></p>
       </div>
       <div id="pro-mdjpro-activation-card" class="acct-card" style="display:none;margin-top:18px;">
         <div class="acct-row" style="flex-wrap:wrap;align-items:flex-start;">
@@ -6986,6 +6986,15 @@
         if (btn) { btn.disabled = false; btn.innerHTML = orig; }
       }
     }
+
+    /* ── Default panel: si ningún hash ni ?panel= activó un panel, mostrar Cuenta ── */
+    (function () {
+      var anyActive = document.querySelector('.acct-panel.active');
+      if (!anyActive && typeof window.showPanel === 'function') {
+        var btn = document.querySelector('.acct-side-link[onclick*="\'account\'"]');
+        window.showPanel('account', btn || null);
+      }
+    })();
   </script>
 </body>
 

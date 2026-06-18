@@ -291,9 +291,41 @@ serve(async (req) => {
                 const referralCode = (session.metadata?.referral_code || "") as string;
                 if (!userId || !subId) break;
                 const productLine = (session.metadata?.product_line as string | undefined) || "mdj_artist_pro";
+
+                // ── MDJPRO App standalone — does NOT grant MDJ Platform PRO ──
+                if (productLine === "mdjpro_app") {
+                    console.log(
+                        `[Webhook] mdjpro_app checkout | user=${userId} | subId=${subId} — issuing MDJPRO license (plan_source=manual)`,
+                    );
+                    // SECURITY WALL: intentionally no dj_profiles.plan update here.
+                    // App-only purchase does not grant MDJ Platform PRO Artist tier.
+                    const licenseResult = await supabase.rpc("mdjpro_issue_license", {
+                        p_uid: userId,
+                        p_plan_source: "manual",
+                    });
+                    if (licenseResult.error) {
+                        console.error(
+                            `[Webhook] mdjpro_issue_license error | user=${userId}`,
+                            licenseResult.error,
+                        );
+                    } else {
+                        const lr = licenseResult.data as { ok?: boolean; reason?: string } | null;
+                        if (lr?.ok === false) {
+                            console.warn(
+                                `[Webhook] mdjpro_issue_license not ok | user=${userId} | reason=${lr.reason}`,
+                            );
+                        } else {
+                            console.log(
+                                `[Webhook] mdjpro_issue_license success | user=${userId}`,
+                            );
+                        }
+                    }
+                    break;
+                }
+
                 if (productLine !== "mdj_artist_pro") {
                     console.log(
-                        `[Webhook] checkout session subscription: skip dj_profiles (product_line=${productLine}) — implement client_profiles path separately`,
+                        `[Webhook] checkout session subscription: unknown product_line=${productLine}, skip — implement separately`,
                     );
                     break;
                 }

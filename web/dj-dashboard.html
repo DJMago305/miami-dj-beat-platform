@@ -4277,7 +4277,38 @@
                                 </div>
                             </div>
                         </div>
-                        <p class="acct-sec-lbl">Payments</p>
+
+                        <!-- ── PRO Artist upgrade block — caja principal billing plantilla artista ── -->
+                        <div id="dash-pro-upgrade-block" style="margin-top:24px;padding:20px 24px;background:rgba(197,160,89,0.06);border:1px solid rgba(197,160,89,0.25);border-radius:14px;">
+                            <div style="font-size:11px;font-weight:800;letter-spacing:2px;color:var(--gold,#c5a059);margin-bottom:6px;">⚡ PRO ARTIST</div>
+                            <p style="font-size:13px;color:rgba(255,255,255,0.65);line-height:1.5;margin:0 0 16px;">Incluye perfil PRO, visibilidad prioritaria, Jobs, DJ Tools (app MDJPRO) y SoundForTips™.</p>
+                            <div style="display:flex;border:1px solid rgba(197,160,89,0.3);border-radius:10px;overflow:hidden;margin-bottom:14px;" id="dash-billing-btns">
+                                <button type="button" data-billing="monthly"
+                                    style="flex:1;padding:12px 6px;background:rgba(197,160,89,0.18);border:none;color:#fff;font-size:11px;font-weight:800;cursor:pointer;transition:background 0.15s;line-height:1.4;"
+                                    class="dash-bill-btn">
+                                    Mensual<br><span style="font-size:16px;color:var(--gold,#c5a059);">$100</span>
+                                </button>
+                                <button type="button" data-billing="semestral"
+                                    style="flex:1;padding:12px 6px;background:transparent;border:none;border-left:1px solid rgba(197,160,89,0.2);color:rgba(255,255,255,0.6);font-size:11px;font-weight:800;cursor:pointer;transition:background 0.15s;line-height:1.4;"
+                                    class="dash-bill-btn">
+                                    6 meses<br><span style="font-size:16px;">$480</span><br>
+                                    <span style="font-size:9px;color:var(--gold,#c5a059);font-weight:700;">Ahorra $120</span>
+                                </button>
+                                <button type="button" data-billing="annual"
+                                    style="flex:1;padding:12px 6px;background:transparent;border:none;border-left:1px solid rgba(197,160,89,0.2);color:rgba(255,255,255,0.6);font-size:11px;font-weight:800;cursor:pointer;transition:background 0.15s;line-height:1.4;"
+                                    class="dash-bill-btn">
+                                    Anual<br><span style="font-size:16px;">$840</span><br>
+                                    <span style="font-size:9px;color:#22c55e;font-weight:700;">Ahorra $360</span>
+                                </button>
+                            </div>
+                            <button type="button" id="dash-activate-pro-btn"
+                                style="width:100%;padding:14px;background:var(--gold,#c5a059);border:none;border-radius:10px;color:#000;font-size:14px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:opacity 0.2s;"
+                                onmouseenter="this.style.opacity='0.85'" onmouseleave="this.style.opacity='1'">
+                                ⚡ Activar PRO Artist
+                            </button>
+                        </div>
+
+                        <p class="acct-sec-lbl" style="margin-top:24px;">Payments</p>
                         <div class="acct-card">
                             <div
                                 style="padding:14px 24px;font-size:11px;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,0.3);text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,0.05);">
@@ -6820,6 +6851,75 @@
         });
     </script>
 
+    <!-- ── PRO Artist billing selector logic + mdjCheckoutPro for dashboard ── -->
+    <script>
+    (function () {
+        // Wire billing selector in #dash-pro-upgrade-block
+        var selectedBilling = 'monthly';
+        function initDashBillingSelector() {
+            var btns = document.querySelectorAll('.dash-bill-btn');
+            btns.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var b = btn.getAttribute('data-billing');
+                    if (b !== 'monthly' && b !== 'semestral' && b !== 'annual') return;
+                    selectedBilling = b;
+                    btns.forEach(function (bb) {
+                        bb.style.background = 'transparent';
+                        bb.style.color = 'rgba(255,255,255,0.6)';
+                    });
+                    btn.style.background = 'rgba(197,160,89,0.18)';
+                    btn.style.color = '#fff';
+                });
+            });
+            var activateBtn = document.getElementById('dash-activate-pro-btn');
+            if (activateBtn) {
+                activateBtn.addEventListener('click', function () {
+                    if (typeof mdjCheckoutPro === 'function') mdjCheckoutPro(selectedBilling);
+                });
+            }
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initDashBillingSelector);
+        } else {
+            initDashBillingSelector();
+        }
+    })();
+
+    async function mdjCheckoutPro(billing) {
+        billing = billing || 'monthly';
+        // Guard: only platform PRO billings allowed — no app_monthly / app_annual
+        if (billing !== 'monthly' && billing !== 'semestral' && billing !== 'annual') return;
+        var btn = document.getElementById('dash-activate-pro-btn');
+        var orig = btn ? btn.innerHTML : '';
+        if (btn) { btn.disabled = true; btn.innerHTML = 'Conectando...'; }
+        try {
+            var sb = window.getSupabaseClient ? window.getSupabaseClient() : (window._supabase || window.supabase);
+            if (!sb) throw new Error('Sin conexión Supabase.');
+            var sessRes = await sb.auth.getSession();
+            var session = sessRes && sessRes.data && sessRes.data.session;
+            if (!session) { window.location.href = './login.html?plan=pro'; return; }
+            var fnUrl = typeof window.mdbSupabaseFunctionUrl === 'function'
+                ? window.mdbSupabaseFunctionUrl('create-checkout') : '';
+            if (!fnUrl) throw new Error('Edge Function no configurada.');
+            var res = await fetch(fnUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + session.access_token,
+                    'apikey': typeof window.MDB_SUPABASE_ANON_KEY === 'string' ? window.MDB_SUPABASE_ANON_KEY : '',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ billing: billing, successUrl: window.location.origin + '/dj-dashboard.html?payment=success' })
+            });
+            var payload = await res.json();
+            if (!res.ok || !payload.url) throw new Error(payload.error || 'Sin URL de checkout.');
+            window.location.href = payload.url;
+        } catch (err) {
+            alert('Error al iniciar el pago: ' + (err && err.message ? err.message : String(err)));
+            if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+        }
+    }
+    </script>
+
     <script src="./header-smart-search.js?v=20260421-smartsearch-dj-directory"></script>
     <script src="./mdj-shared-header.js?v=20260603-art-007c-staff-same-entry-1"></script>
     <script src="./js/mdj-profile-owner-link.js?v=20260516-perf-ab-1"></script>
@@ -6827,6 +6927,30 @@
   <script src="./mdj-social-bar.js?v=20260513-dashboard-private"></script>
   <!-- Cart pill: badge + redirect to rentals -->
   <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
+  <script>
+    // Activate panel from URL hash (e.g. #panel-billing from SoundForTips / profile CTAs)
+    // Uses setTimeout(0) so it runs after all other DOMContentLoaded listeners finish
+    (function () {
+        function activatePanelFromHash() {
+            setTimeout(function () {
+                var hash = window.location.hash || '';
+                var match = hash.match(/^#panel-(.+)$/);
+                if (!match) return;
+                var panelId = match[1];
+                var panel = document.getElementById('panel-' + panelId);
+                if (!panel) return;
+                var btn = document.querySelector('.acct-side-link[onclick*="showPanel(\'' + panelId + '\'"]');
+                if (typeof showPanel === 'function') showPanel(panelId, btn || null);
+                panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 0);
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', activatePanelFromHash);
+        } else {
+            activatePanelFromHash();
+        }
+    })();
+  </script>
 </body>
 
 </html>
