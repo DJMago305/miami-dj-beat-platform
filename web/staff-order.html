@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="es" class="mdj-admin-gate-pending">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Staff — Editar Orden | Miami DJ Beat</title>
+
+  <!-- Auth gate: hide until staff confirmed -->
+  <style id="mdj-staff-order-gate-css">
+    html.mdj-admin-gate-pending body { visibility: hidden !important; }
+  </style>
+
+  <link rel="stylesheet" href="./styles.css?v=20260615-staff-order" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260602-auth-gate-1" />
+  <link rel="stylesheet" href="./css/mdj-event-builder.css?v=20260616-crm-4" />
+
+  <style>
+    :root {
+      --gold: #c5a059;
+      --bg: #080c14;
+      --surface: #0e1320;
+      --line: rgba(255,255,255,0.09);
+      --text: rgba(255,255,255,0.88);
+      --muted: rgba(255,255,255,0.45);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+    }
+
+    /* ── Page shell ── */
+    #so-page {
+      width: 100%;
+      padding: 28px 32px 80px;
+    }
+
+    /* ── Back bar ── */
+    #so-back-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    #so-back-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    #so-back-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 18px;
+      border-radius: 6px;
+      border: 1px solid rgba(197,160,89,0.8);
+      background: rgba(197,160,89,0.50);
+      color: #d4af37;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    #so-back-btn:hover { background: rgba(197,160,89,0.65); border-color: var(--gold); }
+
+    #so-order-id-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+    }
+    .so-lead-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 12px;
+      font-family: monospace;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      border: 1px solid rgba(197,160,89,0.35);
+    }
+    .so-lead-pill--label {
+      background: rgba(197,160,89,0.15);
+      color: rgba(197,160,89,0.80);
+      border-radius: 6px 0 0 6px;
+      border-right: none;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+    }
+    .so-lead-pill--id {
+      background: rgba(255,255,255,0.04);
+      color: #ffffff;
+      border-radius: 0 6px 6px 0;
+    }
+
+    /* ── Cards ── */
+    .so-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+
+    .so-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin: 0 0 14px;
+    }
+
+    /* ── Info card specific ── */
+    #so-info-card {
+      background: rgba(197,160,89,0.04);
+    }
+    #so-info-card .so-card-title {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: rgba(197,160,89,0.55);
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(197,160,89,0.12);
+      margin-bottom: 16px;
+    }
+
+    /* ── Info table ── */
+    .so-info-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    .so-info-table th {
+      padding: 8px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #ffffff;
+      background: rgba(197,160,89,0.50);
+      border: 1px solid rgba(197,160,89,0.30);
+      text-align: left;
+      white-space: nowrap;
+    }
+    .so-info-table td {
+      padding: 10px 14px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #d4af37;
+      border: 1px solid rgba(197,160,89,0.12);
+      background: rgba(0,0,0,0.15);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .so-info-table td:first-child,
+    .so-info-table th:first-child {
+      border-left: none;
+    }
+    .so-info-table td:last-child,
+    .so-info-table th:last-child {
+      border-right: none;
+    }
+
+    /* ── Order status badge ── */
+    .so-status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .so-status--pending    { background: rgba(255,180,0,0.15);  color: #ffb400; border: 1px solid rgba(255,180,0,0.3); }
+    .so-status--in_review  { background: rgba(90,150,255,0.12); color: #7eb8f7; border: 1px solid rgba(90,150,255,0.3); }
+    .so-status--confirmed  { background: rgba(0,200,120,0.12);  color: #00c878; border: 1px solid rgba(0,200,120,0.3); }
+    .so-status--cancelled  { background: rgba(255,60,60,0.10);  color: #ff6060; border: 1px solid rgba(255,60,60,0.25); }
+
+    /* ── Staff actions ── */
+    #so-actions-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .so-action-btn {
+      padding: 9px 18px;
+      border-radius: 7px;
+      border: 1px solid transparent;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.08s, filter 0.08s;
+      white-space: nowrap;
+      overflow: hidden;
+      flex-shrink: 0;
+      box-sizing: border-box;
+    }
+    .so-action-btn:active { filter: brightness(1.4); }
+    .so-action-btn--gold  {
+      background: rgba(197,160,89,0.50);
+      border-color: rgba(197,160,89,0.75);
+      color: #f0d080;
+    }
+    .so-action-btn--gold:hover  { background: rgba(197,160,89,0.70); }
+    .so-action-btn--green {
+      background: rgba(0,200,120,0.45);
+      border-color: rgba(0,200,120,0.70);
+      color: #a0ffdb;
+    }
+    .so-action-btn--green:hover { background: rgba(0,200,120,0.65); }
+    .so-action-btn--save {
+      background: rgba(197,160,89,0.50);
+      border-color: rgba(197,160,89,0.80);
+      color: #d4af37;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 9px 0;
+      width: 120px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .so-action-btn--save:hover { background: rgba(197,160,89,0.70); }
+    .so-action-btn--red   {
+      background: rgba(255,80,80,0.45);
+      border-color: rgba(255,80,80,0.70);
+      color: #ffbbbb;
+    }
+    .so-action-btn--red:hover   { background: rgba(255,80,80,0.65); }
+    .so-action-btn--blue  {
+      background: rgba(90,150,255,0.45);
+      border-color: rgba(90,150,255,0.70);
+      color: #cce0ff;
+    }
+    .so-action-btn--blue:hover  { background: rgba(90,150,255,0.65); }
+
+    /* ── Line inline editing ── */
+    .so-line-edit-btn {
+      padding: 4px 10px;
+      border-radius: 5px;
+      border: 1px solid rgba(197,160,89,0.3);
+      background: transparent;
+      color: var(--gold);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.12s;
+      white-space: nowrap;
+    }
+    .so-line-edit-btn:hover { background: rgba(197,160,89,0.1); }
+
+    .so-line-status-sel {
+      background: #0e1320;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 5px;
+      color: var(--text);
+      font-size: 13px;
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+
+    /* ── Staff notes textarea ── */
+    #so-staff-notes {
+      width: 100%;
+      min-height: 90px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      padding: 10px 14px;
+      resize: vertical;
+    }
+    #so-staff-notes:focus { outline: none; border-color: rgba(197,160,89,0.5); }
+
+    /* ── Shared input ── */
+    .so-add-input {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 13px;
+      padding: 8px 10px;
+    }
+    .so-add-input::placeholder { color: var(--muted); }
+    .so-add-input:focus { outline: none; border-color: rgba(197,160,89,0.4); }
+    .so-add-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── Section catalog panel (per cajón) ── */
+    .so-catalog-panel {
+      display: none;
+      background: rgba(0,0,0,0.35);
+      border-top: 1px solid rgba(212,175,55,0.18);
+      padding: 16px 18px 18px;
+    }
+    .so-catalog-panel.open { display: block; }
+
+    .so-catalog-panel-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(212,175,55,0.6);
+      margin: 0 0 12px;
+    }
+
+    /* Quick-pick service cards */
+    .so-catalog-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .so-catalog-card {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 10px 14px;
+      border-radius: 7px;
+      border: 1px solid rgba(212,175,55,0.22);
+      background: rgba(212,175,55,0.04);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      min-width: 140px;
+    }
+    .so-catalog-card:hover {
+      background: rgba(212,175,55,0.10);
+      border-color: rgba(212,175,55,0.55);
+    }
+    .so-catalog-card__name {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.92);
+    }
+    .so-catalog-card__price {
+      font-size: 12px;
+      color: rgba(212,175,55,0.80);
+    }
+
+    /* Custom entry row inside panel */
+    .so-catalog-custom {
+      display: grid;
+      grid-template-columns: 2fr 90px 110px auto;
+      gap: 8px;
+      align-items: end;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .so-catalog-custom-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+
+    /* ── Save toast ── */
+    #so-toast {
+      position: fixed;
+      bottom: 28px;
+      right: 24px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      background: #0e1320;
+      border: 1px solid rgba(0,200,120,0.5);
+      color: #00c878;
+      font-size: 13px;
+      font-weight: 600;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 9999;
+    }
+    #so-toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    #so-toast.error {
+      border-color: rgba(255,80,80,0.5);
+      color: #ff6060;
+    }
+
+    /* ── Loading / error states ── */
+    #so-loading, #so-error {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+    #so-error { color: #ff6060; }
+
+    /* ══════════════════════════════════════════
+       CRM TABLE — standalone scope override
+       Mirrors mdj-event-builder.css but scoped
+       to #so-lines-container instead of #mdj-event-builder-root
+    ══════════════════════════════════════════ */
+
+    #so-lines-container .mdj-eb-crm-scroll {
+      width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+    #so-lines-container .mdj-eb-cajones-wrap {
+      display: flex; flex-direction: column; gap: 0;
+    }
+    #so-lines-container .mdj-eb-cajon-section {
+      border: 1px solid rgba(212,175,55,0.20); margin-bottom: 18px;
+    }
+    #so-lines-container .mdj-eb-cajon-section--empty .mdj-eb-cajon-title-bar {
+      background: rgba(212,175,55,0.03);
+    }
+    #so-lines-container .mdj-eb-cajon-section--empty .mdj-eb-cajon-title-bar__name {
+      opacity: 0.45;
+    }
+    #so-lines-container .mdj-eb-cajon-title-bar__count--empty { color: rgba(255,255,255,0.20); }
+    #so-lines-container .mdj-eb-cajon-title-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 16px; background: rgba(212,175,55,0.07);
+      border-bottom: 1px solid rgba(212,175,55,0.22);
+    }
+    #so-lines-container .mdj-eb-cajon-title-bar__name {
+      font-family: Inter, sans-serif; font-size: 13px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.10em; color: rgba(212,175,55,0.95);
+    }
+    #so-lines-container .mdj-eb-cajon-title-bar__count {
+      font-size: 12px; color: rgba(212,175,55,0.55);
+    }
+    #so-lines-container .mdj-eb-crm-td--empty {
+      text-align: left; color: rgba(255,255,255,0.22); font-style: italic;
+      font-size: 12px; padding: 9px 14px;
+      border-left: 1px solid rgba(212,175,55,0.20);
+      border-right: 1px solid rgba(212,175,55,0.20);
+    }
+    #so-lines-container .mdj-eb-crm-table {
+      width: 100%; min-width: 900px; border-collapse: collapse; border-spacing: 0;
+      font-family: Inter, 'Helvetica Neue', sans-serif; font-size: 14px;
+    }
+    #so-lines-container .mdj-eb-crm-thead-row { background: rgba(0,0,0,0.55); }
+    #so-lines-container .mdj-eb-crm-th {
+      padding: 11px 13px; font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      color: #ffffff;
+      background: rgba(197,160,89,0.50);
+      border-right: 1px solid rgba(212,175,55,0.30);
+      border-bottom: 1px solid rgba(212,175,55,0.35);
+      border-top: 1px solid rgba(212,175,55,0.30);
+      white-space: nowrap; vertical-align: middle; text-align: left;
+    }
+    #so-lines-container .mdj-eb-crm-th:first-child { border-left: 1px solid rgba(212,175,55,0.30); }
+    #so-lines-container .mdj-eb-crm-th:last-child  { border-right: 1px solid rgba(212,175,55,0.30); }
+    #so-lines-container .mdj-eb-crm-th--ln,
+    #so-lines-container .mdj-eb-crm-th--qty,
+    #so-lines-container .mdj-eb-crm-th--upr,
+    #so-lines-container .mdj-eb-crm-th--sub,
+    #so-lines-container .mdj-eb-crm-th--act { text-align: center; }
+
+    #so-lines-container .mdj-eb-crm-row { background: rgba(10,10,14,0.70); transition: background 0.12s; }
+    #so-lines-container .mdj-eb-crm-row:nth-child(even) { background: rgba(22,22,30,0.75); }
+    #so-lines-container .mdj-eb-crm-row:hover { background: rgba(212,175,55,0.05); }
+
+    #so-lines-container .mdj-eb-crm-td {
+      padding: 12px 13px;
+      border-right: 1px solid rgba(255,255,255,0.07);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.88); vertical-align: middle;
+      font-size: 14px; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; max-width: 0; box-sizing: border-box;
+    }
+    #so-lines-container .mdj-eb-crm-td:first-child { border-left: 1px solid rgba(212,175,55,0.20); }
+    #so-lines-container .mdj-eb-crm-td:last-child  { border-right: 1px solid rgba(212,175,55,0.20); }
+    #so-lines-container .mdj-eb-crm-row:last-child .mdj-eb-crm-td { border-bottom: 1px solid rgba(212,175,55,0.20); }
+
+    #so-lines-container .mdj-eb-crm-td--ln     { width: 36px;  text-align: center; color: rgba(255,255,255,0.30); font-size: 13px; }
+    #so-lines-container .mdj-eb-crm-td--svc    { font-weight: 600; color: #fff; }
+    #so-lines-container .mdj-eb-crm-td--desc   { min-width: 140px; color: rgba(255,255,255,0.85); font-style: italic; }
+    #so-lines-container .mdj-eb-crm-td--artist { min-width: 120px; color: rgba(212,175,55,0.90); font-weight: 600; }
+    #so-lines-container .mdj-eb-crm-th--artist { min-width: 120px; }
+    #so-lines-container .so-svc-header:hover { background: rgba(212,175,55,0.15); color: #fff; }
+    #so-lines-container .mdj-eb-crm-td--qty { width: 46px;  text-align: center; }
+    #so-lines-container .mdj-eb-crm-td--upr { width: 110px; text-align: right; }
+    #so-lines-container .mdj-eb-crm-td--sub { width: 96px;  text-align: right; }
+    #so-lines-container .mdj-eb-crm-td--sta { width: 140px; text-align: center; }
+    #so-lines-container .mdj-eb-crm-td--prv { width: 120px; }
+    #so-lines-container .mdj-eb-crm-td--nts { width: 140px; color: rgba(255,255,255,0.40); font-style: italic; }
+    #so-lines-container .mdj-eb-crm-td--act { width: 56px;  text-align: center; white-space: nowrap; }
+    #so-lines-container .mdj-eb-crm-td--sub-val { font-weight: 700; color: rgba(212,175,55,0.95); }
+
+    #so-lines-container .mdj-eb-crm-row--empty { pointer-events: none; }
+    #so-lines-container .mdj-eb-crm-row--empty:hover { background: transparent; }
+
+    /* Badges */
+    #so-lines-container .mdj-eb-crm-badge {
+      display: inline-block; padding: 3px 9px; border-radius: 3px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; white-space: nowrap;
+    }
+    #so-lines-container .mdj-eb-crm-badge--cotizado {
+      background: rgba(212,175,55,0.10); border: 1px solid rgba(212,175,55,0.40); color: rgba(212,175,55,0.95);
+    }
+    #so-lines-container .mdj-eb-crm-badge--proceso {
+      background: rgba(80,140,255,0.10); border: 1px solid rgba(80,140,255,0.40); color: rgba(130,180,255,0.95);
+    }
+    #so-lines-container .mdj-eb-crm-badge--confirmado {
+      background: rgba(60,180,100,0.12); border: 1px solid rgba(60,200,120,0.40); color: rgba(100,220,150,0.95);
+    }
+    #so-lines-container .mdj-eb-crm-badge--nodisponible {
+      background: rgba(220,70,70,0.10); border: 1px solid rgba(220,70,70,0.40); color: rgba(255,110,110,0.95);
+    }
+
+    /* Financial summary */
+    #so-lines-container .mdj-eb-crm-summary {
+      margin-top: 16px; padding: 16px 20px;
+      border: 1px solid rgba(212,175,55,0.25); background: rgba(0,0,0,0.40);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    #so-lines-container .mdj-eb-crm-sum-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-family: Inter, sans-serif; font-size: 14px;
+    }
+    #so-lines-container .mdj-eb-crm-sum-lbl { color: rgba(255,255,255,0.60); font-size: 14px; }
+    #so-lines-container .mdj-eb-crm-sum-val { color: rgba(255,255,255,0.88); font-weight: 600; font-size: 14px; }
+    #so-lines-container .mdj-eb-crm-sum-row--deposit .mdj-eb-crm-sum-lbl,
+    #so-lines-container .mdj-eb-crm-sum-row--deposit .mdj-eb-crm-sum-val { color: rgba(212,175,55,0.85); }
+    #so-lines-container .mdj-eb-crm-sum-row--tax {
+      border-top: 1px solid rgba(255,255,255,0.07); padding-top: 8px;
+    }
+    #so-lines-container .mdj-eb-crm-sum-row--total {
+      border-top: 1px solid rgba(212,175,55,0.35); padding-top: 10px; margin-top: 2px;
+    }
+    #so-lines-container .mdj-eb-crm-sum-row--total .mdj-eb-crm-sum-lbl {
+      font-size: 14px; font-weight: 700; color: rgba(212,175,55,0.95); letter-spacing: 0.06em;
+    }
+    #so-lines-container .mdj-eb-crm-sum-row--total .mdj-eb-crm-sum-val {
+      font-size: 20px; font-weight: 700; color: rgba(212,175,55,1);
+    }
+
+    /* inputs inside cells — override max-width:0 constraint */
+    #so-lines-container .mdj-eb-crm-td input,
+    #so-lines-container .mdj-eb-crm-td select { max-width: none; }
+
+    @media (max-width: 640px) {
+      #so-page { padding: 16px 12px 80px; }
+      #so-add-line-form { grid-template-columns: 1fr 1fr; }
+      .so-info-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Shared header (invisible on this staff page, required for auth scripts) ── -->
+  <div id="mainHeader" style="display:none;" aria-hidden="true">
+    <div class="mdj-header-r1-auth-cluster">
+      <div id="role-badge"></div>
+      <div class="account session-pending" id="header-auth-zone" style="display:none;"></div>
+      <a href="./login.html" id="header-login-btn" class="btn-pill gold" style="display:none;">Log in</a>
+    </div>
+    <nav id="mainNav"></nav>
+  </div>
+
+  <!-- ── Page wrapper ── -->
+  <div id="so-page">
+
+    <!-- Loading state -->
+    <div id="so-loading">Cargando orden…</div>
+
+    <!-- Error state (hidden by default) -->
+    <div id="so-error" style="display:none;"></div>
+
+    <!-- Main content (hidden until loaded) -->
+    <div id="so-main" style="display:none;">
+
+      <!-- Back bar -->
+      <div id="so-back-bar">
+        <div id="so-back-bar-left">
+          <span id="so-order-id-label"></span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <a id="so-ver-orden-btn" href="#" target="_blank" style="display:inline-flex;align-items:center;padding:7px 18px;border-radius:6px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;">Ver Orden</a>
+          <a id="so-back-btn" href="./admin-dashboard.html#leads">Volver a Leads</a>
+        </div>
+      </div>
+
+      <!-- Client + Event info card -->
+      <div class="so-card" id="so-info-card">
+        <p class="so-card-title">Información del Evento</p>
+        <div style="overflow-x:auto;">
+          <table class="so-info-table" id="so-info-grid"></table>
+        </div>
+      </div>
+
+      <!-- Staff action buttons -->
+      <div id="so-actions-bar">
+        <button class="so-action-btn so-action-btn--blue"  data-set-status="in_review">Marcar En Revisión</button>
+        <button class="so-action-btn so-action-btn--gold"  data-set-status="confirmed">Confirmar Orden</button>
+        <button class="so-action-btn so-action-btn--red"   data-set-status="cancelled">Cancelar Orden</button>
+        <button class="so-action-btn so-action-btn--save" id="so-save-btn">Save</button>
+      </div>
+
+      <!-- Order lines (CRM table with sections + per-section catalog) -->
+      <div class="so-card" style="padding:16px 20px;">
+        <p class="so-card-title" style="margin:0 0 14px;">Líneas de Servicio</p>
+        <!-- CRM sections rendered by JS — each section includes its own + Agregar panel -->
+        <div id="so-lines-container"></div>
+      </div>
+
+      <!-- Staff notes -->
+      <div class="so-card">
+        <p class="so-card-title">Notas del Staff</p>
+        <textarea id="so-staff-notes" placeholder="Notas internas de seguimiento, asignaciones manuales, observaciones…"></textarea>
+      </div>
+
+    </div><!-- /#so-main -->
+  </div><!-- /#so-page -->
+
+  <!-- Toast notification -->
+  <div id="so-toast"></div>
+
+  <!-- ── Scripts ── -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-config.js?v=20260602-auth-gate-1"></script>
+
+  <script>
+  (function () {
+    'use strict';
+
+    /* ─────────── Constants ─────────── */
+    var TAX_RATE = 0.07;
+
+    var EB_CAJON_LABELS = {
+      dj: 'Entretenimiento y Talento', horaloca: 'Entretenimiento y Talento', mc: 'Entretenimiento y Talento',
+      live: 'Entretenimiento y Talento', live_music: 'Entretenimiento y Talento',
+      visuals: 'Entretenimiento y Talento', staff: 'Entretenimiento y Talento', payaso: 'Entretenimiento y Talento',
+      fx: 'Efectos Especiales', lighting: 'Iluminación y Pantallas LED',
+      audio: 'Audio y Sonido Profesional', tents: 'Carpas y Estructuras',
+      furniture: 'Mobiliario y Decoración', inflatables: 'Castillos Inflables',
+      staging: 'Stage & Event Structures', stages: 'Stage & Event Structures',
+      addon: 'Servicios Adicionales', general: 'Servicios Adicionales'
+    };
+
+    var CAJON_ORDER = [
+      'Entretenimiento y Talento', 'Audio y Sonido Profesional',
+      'Iluminación y Pantallas LED', 'Mobiliario y Decoración',
+      'Efectos Especiales', 'Carpas y Estructuras',
+      'Stage & Event Structures', 'Castillos Inflables', 'Servicios Adicionales'
+    ];
+
+    var STATUS_CONFIG = {
+      cotizado:      { label: 'Cotizado',       cls: 'mdj-eb-crm-badge--cotizado' },
+      en_proceso:    { label: 'En proceso',      cls: 'mdj-eb-crm-badge--proceso' },
+      confirmado:    { label: 'Confirmado',      cls: 'mdj-eb-crm-badge--confirmado' },
+      no_disponible: { label: 'No disponible',   cls: 'mdj-eb-crm-badge--nodisponible' }
+    };
+
+    /* ─────────── Catalog per section ─────────── */
+    var SECTION_CATALOG = {
+      'Entretenimiento y Talento': [
+        { name: 'DJ / Actuación',               category_key: 'dj',       unit_price_usd: 1500 },
+        { name: 'DJ / Fiestas Privadas',        category_key: 'dj',       unit_price_usd: 500  },
+        { name: 'DJ / Clubs & Nightlife',       category_key: 'dj',       unit_price_usd: 500  },
+        { name: 'DJ / Eventos Familiares',      category_key: 'dj',       unit_price_usd: 350  },
+        { name: 'Hora Loca', description: 'Premium Pack', category_key: 'horaloca', unit_price_usd: 1200 },
+        { name: 'Hora Loca', description: 'Basic Pack',   category_key: 'horaloca', unit_price_usd: 800  },
+        { name: 'MC Profesional',               category_key: 'mc',       unit_price_usd: 450  },
+        { name: 'Saxofonista en Vivo',          category_key: 'live',     unit_price_usd: 600  },
+        { name: 'Violinista en Vivo',           category_key: 'live',     unit_price_usd: 500  },
+        { name: 'Payaso / Show Infantil',       category_key: 'payaso',   unit_price_usd: 300  },
+        { name: 'Cobertura Foto / Video',       category_key: 'visuals',  unit_price_usd: 800  },
+        { name: 'Staff de Evento (por persona)',category_key: 'staff',    unit_price_usd: 150  }
+      ],
+      'Audio y Sonido Profesional': [
+        { name: 'Small PA System',             category_key: 'audio', unit_price_usd: 150  },
+        { name: 'Medium PA System',            category_key: 'audio', unit_price_usd: 350  },
+        { name: 'Large PA System',             category_key: 'audio', unit_price_usd: 600  },
+        { name: 'Subwoofer (add-on)',           category_key: 'audio', unit_price_usd: 150  },
+        { name: 'Wireless Microphone',         category_key: 'audio', unit_price_usd: 75   },
+        { name: 'DJ Monitor / Stage Monitor',  category_key: 'audio', unit_price_usd: 100  }
+      ],
+      'Iluminación y Pantallas LED': [
+        { name: 'Uplighting Package',          category_key: 'lighting', unit_price_usd: 350  },
+        { name: 'LED Wall / Screen',           category_key: 'lighting', unit_price_usd: 800  },
+        { name: 'Moving Head Lights',          category_key: 'lighting', unit_price_usd: 400  },
+        { name: 'Laser Show Package',          category_key: 'lighting', unit_price_usd: 500  },
+        { name: 'Gobo Projection',             category_key: 'lighting', unit_price_usd: 200  },
+        { name: 'Pin Spot Lights',             category_key: 'lighting', unit_price_usd: 120  },
+        { name: 'Disco Ball',                  category_key: 'lighting', unit_price_usd: 80   }
+      ],
+      'Mobiliario y Decoración': [
+        { name: 'High-Top Cocktail Tables',    category_key: 'furniture', unit_price_usd: 20   },
+        { name: 'Premium Seating (per chair)', category_key: 'furniture', unit_price_usd: 6    },
+        { name: 'Custom Linen Package',        category_key: 'furniture', unit_price_usd: 200  },
+        { name: 'Bar Station Setup',           category_key: 'furniture', unit_price_usd: 350  },
+        { name: 'Lounge Furniture Set',        category_key: 'furniture', unit_price_usd: 600  },
+        { name: 'Pipe & Drape',                category_key: 'furniture', unit_price_usd: 250  },
+        { name: 'Dance Floor',                 category_key: 'furniture', unit_price_usd: 500  }
+      ],
+      'Efectos Especiales': [
+        { name: 'CO2 Jets & Cannons',          category_key: 'fx', unit_price_usd: 400  },
+        { name: 'Cold Sparks',                 category_key: 'fx', unit_price_usd: 300  },
+        { name: 'Confetti Cannons',            category_key: 'fx', unit_price_usd: 200  },
+        { name: 'Fog / Smoke Machine',         category_key: 'fx', unit_price_usd: 150  },
+        { name: 'Bubble Machine',              category_key: 'fx', unit_price_usd: 100  }
+      ],
+      'Carpas y Estructuras': [
+        { name: '20×20 White Frame Tent',      category_key: 'tents', unit_price_usd: 500  },
+        { name: '20×40 White Frame Tent',      category_key: 'tents', unit_price_usd: 800  },
+        { name: '40×40 White Frame Tent',      category_key: 'tents', unit_price_usd: 1200 },
+        { name: 'Portable A/C Unit',           category_key: 'tents', unit_price_usd: 250  },
+        { name: 'Tent Sidewalls',              category_key: 'tents', unit_price_usd: 100  }
+      ],
+      'Stage & Event Structures': [
+        { name: 'Full Box Truss Structure',    category_key: 'staging', unit_price_usd: 1800 },
+        { name: 'DJ Riser / Stage Riser',      category_key: 'staging', unit_price_usd: 300  },
+        { name: 'Portable Stage Platform',     category_key: 'staging', unit_price_usd: 600  },
+        { name: 'Podium / Lectern',            category_key: 'staging', unit_price_usd: 100  }
+      ],
+      'Castillos Inflables': [
+        { name: 'Standard Bouncy Castle',      category_key: 'inflatables', unit_price_usd: 250  },
+        { name: 'Combo Obstacle Course',       category_key: 'inflatables', unit_price_usd: 400  },
+        { name: 'Water Slide',                 category_key: 'inflatables', unit_price_usd: 350  }
+      ],
+      'Servicios Adicionales': [
+        { name: 'Generator Rental',            category_key: 'addon', unit_price_usd: 400  },
+        { name: 'Event Coordination (hour)',   category_key: 'addon', unit_price_usd: 75   },
+        { name: 'Valet Parking Service',       category_key: 'addon', unit_price_usd: 500  },
+        { name: 'Security Guard (per person)', category_key: 'addon', unit_price_usd: 150  }
+      ]
+    };
+
+    var ORDER_STATUS_LABEL = {
+      pending:    { label: 'Pendiente',   cls: 'so-status--pending' },
+      in_review:  { label: 'En Revisión', cls: 'so-status--in_review' },
+      confirmed:  { label: 'Confirmado',  cls: 'so-status--confirmed' },
+      cancelled:  { label: 'Cancelado',   cls: 'so-status--cancelled' }
+    };
+
+    /* ─────────── State ─────────── */
+    var supabase = null;
+    var leadId = null;
+    var eboId  = null;        // event_builder_orders.id
+    var lead   = null;
+    var lines  = [];          // working copy of lines
+    var orderStatus  = 'pending';
+    var staffName    = 'OWNER'; // default; overwritten with real name on auth
+    var cachedClientName = '';
+
+    /* ─────────── DOM refs ─────────── */
+    var elLoading   = document.getElementById('so-loading');
+    var elError     = document.getElementById('so-error');
+    var elMain      = document.getElementById('so-main');
+    var elIdLabel   = document.getElementById('so-order-id-label');
+    var elStatusBdg = document.getElementById('so-status-badge');
+    var elInfoGrid  = document.getElementById('so-info-grid');
+    var elLines     = document.getElementById('so-lines-container');
+    var elNotes     = document.getElementById('so-staff-notes');
+    var elToast     = document.getElementById('so-toast');
+    var elSaveBtn   = document.getElementById('so-save-btn');
+
+    /* ─────────── Category guesser (for legacy {name,price,qty} services) ─────────── */
+    var CATEGORY_KEYWORDS = [
+      { key: 'dj',        words: ['dj ','dj/','dj,','disc jockey','actuación','actuacion','wedding','corpo','private part','club','nightclub','family event','quinceañera','quince','bar mitzvah','school event'] },
+      { key: 'horaloca',  words: ['hora loca','horaloca','hora-loca'] },
+      { key: 'mc',        words: [' mc ',' mc,','master of ceremony','emcee','host mc'] },
+      { key: 'live',      words: ['saxo','trumpet','violin','string','live band','live music','band','músico','musico','guitarist','pianist','piano','sax '] },
+      { key: 'audio',     words: ['pa system','pa-system','speaker','sound system','subwoofer','woofer','mixer','microphone','mic ','mic,','audio','loudspeaker','monitor','amplifier'] },
+      { key: 'lighting',  words: ['uplighting','uplight','light','led','screen','projection','projector','laser','strobe','gobo','wash','spotlight','pin spot','pinspot','disco ball','dmx'] },
+      { key: 'furniture', words: ['cocktail','high-top','lounge','furniture','chair','table','linen','bar stool','sofa','couch','dance floor','dancefloor','carpet','drape','draping','pipe'] },
+      { key: 'fx',        words: ['co2','jet','cannon','fog','smoke','confetti','sparkler','spark','cold spark','flame','fire','cryo','bubble'] },
+      { key: 'tents',     words: ['tent','carpa','canopy','toldo','gazebo','shelter'] },
+      { key: 'staging',   words: ['truss','stage','staging','riser','platform','structure','box truss','podium'] },
+      { key: 'payaso',    words: ['clown','payaso','magician','mago','balloon','face paint','animación','animacion','kid','children'] },
+      { key: 'visuals',   words: ['photo','foto','video','camera','cameraman','photographer','videographer','photobooth','photo booth'] },
+      { key: 'staff',     words: ['staff','security','bartend','waiter','valet','coordinator','event manager','hostess'] }
+    ];
+
+    function guessCategoryKey(name) {
+      var n = String(name || '').toLowerCase();
+      for (var i = 0; i < CATEGORY_KEYWORDS.length; i++) {
+        var words = CATEGORY_KEYWORDS[i].words;
+        for (var j = 0; j < words.length; j++) {
+          if (n.indexOf(words[j]) !== -1) return CATEGORY_KEYWORDS[i].key;
+        }
+      }
+      return 'addon';
+    }
+
+    /* ─────────── Utilities ─────────── */
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    function money(n) {
+      return '$' + (parseFloat(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function uuid4() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+      });
+    }
+
+    function showToast(msg, isError) {
+      elToast.textContent = msg;
+      elToast.className = 'visible' + (isError ? ' error' : '');
+      clearTimeout(elToast._t);
+      elToast._t = setTimeout(function () { elToast.className = ''; }, 3200);
+    }
+
+    function setLoading(show) {
+      elLoading.style.display = show ? '' : 'none';
+    }
+
+    function setError(msg) {
+      elLoading.style.display = 'none';
+      elError.style.display = '';
+      elError.textContent = msg;
+    }
+
+    /* ─────────── Render ─────────── */
+    function renderStatusBadge(status) {
+      /* badge removed from top bar — status now lives in info table */
+    }
+
+    var STATUS_COLOR = {
+      pending:   '#ffb400',
+      in_review: '#7eb8f7',
+      confirmed: '#00c878',
+      cancelled: '#ff6060'
+    };
+    function renderInfoGrid(l, clientName) {
+      var cfg         = ORDER_STATUS_LABEL[orderStatus] || ORDER_STATUS_LABEL['pending'];
+      var statusLabel = cfg.label;
+      var statusColor = STATUS_COLOR[orderStatus] || STATUS_COLOR['pending'];
+      var fields = [
+        { label: 'Cliente',          val: clientName || l.name || l.contact_person || '—' },
+        { label: 'Email',            val: l.email || '—' },
+        { label: 'Teléfono',         val: l.phone || '—' },
+        { label: 'Tipo de Evento',   val: l.event_type || '—' },
+        { label: 'Fecha del Evento', val: l.event_date || '—' },
+        { label: 'Ubicación',        val: l.location || '—' },
+        { label: 'Estado Lead',      val: statusLabel, color: statusColor }
+      ];
+      var headers = fields.map(function(f){ return '<th>' + esc(f.label) + '</th>'; }).join('');
+      var cells   = fields.map(function(f){
+        var style = f.color ? ' style="color:' + f.color + ';font-weight:700;"' : '';
+        return '<td' + style + '>' + esc(f.val) + '</td>';
+      }).join('');
+      elInfoGrid.innerHTML = '<thead><tr>' + headers + '</tr></thead><tbody><tr>' + cells + '</tr></tbody>';
+    }
+
+    function cajonForLine(line) {
+      return EB_CAJON_LABELS[line.category_key] || EB_CAJON_LABELS[line.category_label] || 'Servicios Adicionales';
+    }
+
+    function renderLineBadge(status) {
+      var cfg = STATUS_CONFIG[status] || STATUS_CONFIG['cotizado'];
+      return '<span class="mdj-eb-crm-badge ' + cfg.cls + '">' + cfg.label + '</span>';
+    }
+
+    /* Build catalog panel HTML for a given sectionName */
+    function buildCatalogPanel(sectionName) {
+      var panelId   = 'so-cat-panel-' + sectionName.replace(/[^a-z0-9]/gi, '_');
+      var items     = SECTION_CATALOG[sectionName] || [];
+
+      var quickCards = items.map(function (item) {
+        var label = item.description ? item.name + ' — ' + item.description : item.name;
+        return '<button class="so-catalog-card" ' +
+          'data-cat-add="1" ' +
+          'data-section="' + esc(sectionName) + '" ' +
+          'data-name="' + esc(item.name) + '" ' +
+          'data-desc="' + esc(item.description || '') + '" ' +
+          'data-cat-key="' + esc(item.category_key) + '" ' +
+          'data-price="' + item.unit_price_usd + '">' +
+          '<span class="so-catalog-card__name">' + esc(label) + '</span>' +
+          '<span class="so-catalog-card__price">$' + item.unit_price_usd.toLocaleString('en-US') + '</span>' +
+          '</button>';
+      }).join('');
+
+      var customRow =
+        '<div class="so-catalog-custom">' +
+          '<div>' +
+            '<div class="so-catalog-custom-label">Servicio personalizado</div>' +
+            '<input class="so-add-input" style="width:100%;" placeholder="Nombre del servicio…" ' +
+              'id="so-cust-name-' + esc(sectionName.replace(/[^a-z0-9]/gi,'_')) + '" />' +
+          '</div>' +
+          '<div>' +
+            '<div class="so-catalog-custom-label">Cant.</div>' +
+            '<input class="so-add-input" style="width:100%;" type="number" min="1" value="1" ' +
+              'id="so-cust-qty-' + esc(sectionName.replace(/[^a-z0-9]/gi,'_')) + '" />' +
+          '</div>' +
+          '<div>' +
+            '<div class="so-catalog-custom-label">P. Unit (USD)</div>' +
+            '<input class="so-add-input" style="width:100%;" type="number" min="0" placeholder="0.00" ' +
+              'id="so-cust-price-' + esc(sectionName.replace(/[^a-z0-9]/gi,'_')) + '" />' +
+          '</div>' +
+          '<div style="padding-bottom:1px;">' +
+            '<button class="so-action-btn so-action-btn--gold" style="height:36px;padding:0 14px;white-space:nowrap;" ' +
+              'data-cat-custom="1" data-section="' + esc(sectionName) + '">+ Agregar</button>' +
+          '</div>' +
+        '</div>';
+
+      return '<div class="so-catalog-panel" id="' + panelId + '">' +
+        '<p class="so-catalog-panel-title">Agregar servicio</p>' +
+        '<div class="so-catalog-grid">' + quickCards + '</div>' +
+        customRow +
+        '</div>';
+    }
+
+    function renderLines() {
+      // Group by section
+      var bySection = {};
+      CAJON_ORDER.forEach(function (n) { bySection[n] = []; });
+      lines.forEach(function (line) {
+        var key = cajonForLine(line);
+        if (!bySection[key]) bySection[key] = [];
+        bySection[key].push(line);
+      });
+
+      // All sections always visible (staff needs to add to any)
+      var sectionsHtml = CAJON_ORDER.map(function (sectionName) {
+        var sLines = bySection[sectionName] || [];
+        var isEmpty = sLines.length === 0;
+        var countLabel = isEmpty
+          ? '<span class="mdj-eb-cajon-title-bar__count mdj-eb-cajon-title-bar__count--empty">—</span>'
+          : '<span class="mdj-eb-cajon-title-bar__count">' + sLines.length + ' servicio' + (sLines.length !== 1 ? 's' : '') + '</span>';
+
+        var panelId = 'so-cat-panel-' + sectionName.replace(/[^a-z0-9]/gi, '_');
+
+        var addBtn = '<button class="so-line-edit-btn" style="font-size:11px;" ' +
+          'data-toggle-panel="' + esc(panelId) + '">+ Agregar servicio</button>';
+
+        var rows = isEmpty
+          ? '<tr class="mdj-eb-crm-row--empty"><td colspan="10" class="mdj-eb-crm-td--empty">Sin servicios — usa "+ Agregar servicio" para añadir</td></tr>'
+          : sLines.map(function (line, idx) {
+              var qty       = Math.max(1, line.quantity || 1);
+              var unitPrice = parseFloat(line.unit_price_usd) || 0;
+              if (!unitPrice && qty > 0) unitPrice = Math.round((parseFloat(line.line_total_usd)||0)/qty*100)/100;
+              var subtotal  = Math.round(qty * unitPrice * 100) / 100;
+              var statusSel = '<select class="so-line-status-sel" data-line-id="' + esc(line.line_id) + '" data-field="line_status">' +
+                Object.keys(STATUS_CONFIG).map(function (k) {
+                  return '<option value="' + k + '"' + (line.line_status === k ? ' selected' : '') + '>' + STATUS_CONFIG[k].label + '</option>';
+                }).join('') + '</select>';
+              var priceInput  = '<input class="so-add-input" style="width:80px;padding:4px 7px;font-size:12px;" type="number" min="0" step="0.01" ' +
+                'data-line-id="' + esc(line.line_id) + '" data-field="unit_price_usd" value="' + unitPrice + '" />';
+              var providerInput = '<input class="so-add-input" style="width:90px;padding:4px 7px;font-size:12px;" type="text" placeholder="MDJB" ' +
+                'data-line-id="' + esc(line.line_id) + '" data-field="provider_name" value="' + esc(line.provider_name || '') + '" />';
+              var notesInput  = '<input class="so-add-input" style="width:110px;padding:4px 7px;font-size:12px;" type="text" placeholder="Notas…" ' +
+                'data-line-id="' + esc(line.line_id) + '" data-field="staff_note" value="' + esc(line.staff_note || '') + '" />';
+              var removeBtn = '<button class="so-line-edit-btn" style="border-color:rgba(255,80,80,0.4);color:#ff6060;" ' +
+                'data-remove-line="' + esc(line.line_id) + '" title="Quitar">✕</button>';
+              return '<tr class="mdj-eb-crm-row" data-line-id="' + esc(line.line_id) + '">' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--ln">' + (idx+1) + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--svc">' + esc(line.name) + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--desc">' + esc(line.description || '') + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--artist">' +
+                  (['Entretenimiento y Talento','Audio y Sonido Profesional','Iluminación y Pantallas LED','Mobiliario y Decoración','Efectos Especiales','Stage & Event Structures','Castillos Inflables','Servicios Adicionales'].indexOf(sectionName) !== -1
+                    ? '<input class="so-add-input" style="width:100%;padding:4px 7px;font-size:12px;color:rgba(212,175,55,0.90);font-weight:600;" ' +
+                      'type="text" placeholder="' + (sectionName === 'Entretenimiento y Talento' ? 'Artista / Corp…' : 'Nombre empresa…') + '" ' +
+                      'data-line-id="' + esc(line.line_id) + '" data-field="selected_artist_stage_name" ' +
+                      'value="' + esc(line.selected_artist_stage_name || '') + '" />'
+                    : '') +
+                  '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--qty">' +
+                  '<input class="so-add-input" style="width:54px;padding:4px 6px;font-size:13px;text-align:center;" ' +
+                  'type="number" min="1" ' +
+                  'data-line-id="' + esc(line.line_id) + '" data-field="quantity" ' +
+                  'value="' + qty + '" /></td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--upr">' + priceInput + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--sub mdj-eb-crm-td--sub-val" data-subtotal-cell="' + esc(line.line_id) + '">' + money(subtotal) + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--sta">' + statusSel + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--prv">' + providerInput + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--nts">' + notesInput + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--act">' + removeBtn + '</td>' +
+                '</tr>';
+            }).join('');
+
+        return '<section class="mdj-eb-cajon-section' + (isEmpty ? ' mdj-eb-cajon-section--empty' : '') + '">' +
+          '<div class="mdj-eb-cajon-title-bar">' +
+          '<span class="mdj-eb-cajon-title-bar__name">' + esc(sectionName) + '</span>' +
+          '<div style="display:flex;align-items:center;gap:12px;">' + countLabel + addBtn + '</div>' +
+          '</div>' +
+          buildCatalogPanel(sectionName) +
+          '<div class="mdj-eb-crm-scroll">' +
+          '<table class="mdj-eb-crm-table" cellspacing="0" cellpadding="0">' +
+          '<thead><tr class="mdj-eb-crm-thead-row">' +
+          '<th class="mdj-eb-crm-th mdj-eb-crm-th--ln">#</th>' +
+          '<th class="mdj-eb-crm-th mdj-eb-crm-th--svc so-svc-header" ' +
+            'data-toggle-panel="so-cat-panel-' + sectionName.replace(/[^a-z0-9]/gi, '_') + '" ' +
+            'title="Clic para agregar servicio" ' +
+            'style="cursor:pointer;user-select:none;">Servicio / Add-on ＋</th>' +
+          '<th class="mdj-eb-crm-th mdj-eb-crm-th--desc">Descripción</th>' +
+          '<th class="mdj-eb-crm-th mdj-eb-crm-th--artist">' + (sectionName === 'Entretenimiento y Talento' ? 'Artista' : 'Compañía') + '</th>' +
+          '<th class="mdj-eb-crm-th mdj-eb-crm-th--qty">Cant.</th>' +
+          '<th class="mdj-eb-crm-th mdj-eb-crm-th--upr">P. Unit</th>' +
+          '<th class="mdj-eb-crm-th mdj-eb-crm-th--sub">Subtotal</th>' +
+          '<th class="mdj-eb-crm-th mdj-eb-crm-th--sta">Estado</th>' +
+          '<th class="mdj-eb-crm-th mdj-eb-crm-th--prv">Proveedor</th>' +
+          '<th class="mdj-eb-crm-th mdj-eb-crm-th--nts">Notas</th>' +
+          '<th class="mdj-eb-crm-th mdj-eb-crm-th--act">Acción</th>' +
+          '</tr></thead>' +
+          '<tbody>' + rows + '</tbody></table></div></section>';
+      }).join('');
+
+      // Financial summary
+      var subtotalAll = lines.reduce(function (acc, l) {
+        var q = Math.max(1, l.quantity || 1);
+        var u = parseFloat(l.unit_price_usd) || 0;
+        if (!u && q > 0) u = Math.round((parseFloat(l.line_total_usd)||0)/q*100)/100;
+        return acc + Math.round(q * u * 100) / 100;
+      }, 0);
+      var tax   = Math.round(subtotalAll * TAX_RATE * 100) / 100;
+      var total = Math.round((subtotalAll + tax) * 100) / 100;
+      var dep30 = Math.round(subtotalAll * 0.30 * 100) / 100;
+      var bal70 = Math.round(subtotalAll * 0.70 * 100) / 100;
+
+      var summaryHtml = lines.length
+        ? '<div class="mdj-eb-crm-summary">' +
+          '<div class="mdj-eb-crm-sum-row"><span class="mdj-eb-crm-sum-lbl">Subtotal servicios</span><span class="mdj-eb-crm-sum-val">' + money(subtotalAll) + '</span></div>' +
+          '<div class="mdj-eb-crm-sum-row mdj-eb-crm-sum-row--deposit"><span class="mdj-eb-crm-sum-lbl">Depósito 30%</span><span class="mdj-eb-crm-sum-val">' + money(dep30) + '</span></div>' +
+          '<div class="mdj-eb-crm-sum-row"><span class="mdj-eb-crm-sum-lbl">Balance 70%</span><span class="mdj-eb-crm-sum-val">' + money(bal70) + '</span></div>' +
+          '<div class="mdj-eb-crm-sum-row mdj-eb-crm-sum-row--tax"><span class="mdj-eb-crm-sum-lbl">Sales Tax (7%)</span><span class="mdj-eb-crm-sum-val">' + money(tax) + '</span></div>' +
+          '<div class="mdj-eb-crm-sum-row mdj-eb-crm-sum-row--total"><span class="mdj-eb-crm-sum-lbl">TOTAL</span><span class="mdj-eb-crm-sum-val">' + money(total) + '</span></div>' +
+          '</div>'
+        : '';
+
+      elLines.innerHTML = '<div class="mdj-eb-cajones-wrap">' + sectionsHtml + '</div>' + summaryHtml;
+    }
+
+    /* ─────────── Line mutations ─────────── */
+    function findLine(lineId) {
+      for (var i = 0; i < lines.length; i++) {
+        if (lines[i].line_id === lineId) return lines[i];
+      }
+      return null;
+    }
+
+    function handleLineInput(e) {
+      var target = e.target;
+      var lineId = target.dataset.lineId;
+      var field  = target.dataset.field;
+      if (!lineId || !field) return;
+      var line = findLine(lineId);
+      if (!line) return;
+      if (field === 'unit_price_usd' || field === 'quantity') {
+        if (field === 'unit_price_usd') line.unit_price_usd = parseFloat(target.value) || 0;
+        if (field === 'quantity')       line.quantity       = Math.max(1, parseInt(target.value, 10) || 1);
+        var cell = elLines.querySelector('[data-subtotal-cell="' + lineId + '"]');
+        if (cell) {
+          var q = Math.max(1, line.quantity || 1);
+          cell.textContent = money(Math.round(q * line.unit_price_usd * 100) / 100);
+        }
+      } else {
+        line[field] = target.value;
+      }
+    }
+
+    function handleRemoveLine(lineId) {
+      lines = lines.filter(function (l) { return l.line_id !== lineId; });
+      renderLines();
+    }
+
+    /* ─────────── Save ─────────── */
+    async function save() {
+      if (!supabase) return;
+      elSaveBtn.disabled = true;
+      elSaveBtn.textContent = 'Saving…';
+
+      var totals = (function () {
+        var sub = lines.reduce(function (acc, l) {
+          var q = Math.max(1, l.quantity || 1);
+          var u = parseFloat(l.unit_price_usd) || 0;
+          if (!u && q > 0) u = Math.round((parseFloat(l.line_total_usd)||0)/q*100)/100;
+          return acc + Math.round(q * u * 100) / 100;
+        }, 0);
+        var tax   = Math.round(sub * TAX_RATE * 100) / 100;
+        var total = Math.round((sub + tax) * 100) / 100;
+        return { subtotal: sub, tax: tax, total: total, deposit: Math.round(sub * 0.30 * 100)/100 };
+      })();
+
+      var payload = {
+        lines:          lines,
+        order_status:   orderStatus,
+        staff_notes:    elNotes.value,
+        subtotal_usd:   totals.subtotal,
+        tax_usd:        totals.tax,
+        total_usd:      totals.total,
+        deposit_usd:    totals.deposit,
+        updated_at:     new Date().toISOString()
+      };
+
+      var err;
+      if (eboId) {
+        // Update existing EBO
+        var res = await supabase.from('event_builder_orders').update(payload).eq('id', eboId);
+        err = res.error;
+      } else {
+        // Create new EBO linked to lead
+        var insertRes = await supabase.from('event_builder_orders').insert(Object.assign({}, payload, {
+          draft_id:    lead.id,
+          lead_id:     lead.id,
+          user_id:     lead.client_user_id || null,
+          event_name:  lead.event_type || 'Event',
+          event_date:  lead.event_date || null
+        })).select('id').single();
+        err = insertRes.error;
+        if (!err && insertRes.data) eboId = insertRes.data.id;
+      }
+
+      // Sync leads.status to reflect order_status
+      var ORDER_TO_LEAD_STATUS = {
+        pending:   'NEW',
+        in_review: 'MATCHED',
+        confirmed: 'CONFIRMED',
+        cancelled: 'CANCELLED'
+      };
+      var newLeadStatus = ORDER_TO_LEAD_STATUS[orderStatus];
+      if (newLeadStatus && leadId) {
+        await supabase.from('leads').update({ status: newLeadStatus }).eq('id', leadId);
+      }
+
+      elSaveBtn.disabled = false;
+      elSaveBtn.textContent = 'Save';
+
+      if (err) {
+        console.error('[staff-order save]', err);
+        showToast('Error al guardar: ' + err.message, true);
+      } else {
+        renderStatusBadge(orderStatus);
+        showToast('Cambios guardados correctamente ✓');
+      }
+    }
+
+    /* ─────────── Add line from catalog ─────────── */
+    function addLineFromCatalog(name, categoryKey, price, qty, description) {
+      qty   = parseInt(qty, 10)    || 1;
+      price = parseFloat(price)    || 0;
+      lines.push({
+        line_id:        uuid4(),
+        name:           name,
+        category_key:   categoryKey,
+        category_label: EB_CAJON_LABELS[categoryKey] || 'Servicios Adicionales',
+        quantity:       qty,
+        unit_price_usd: price,
+        line_total_usd: Math.round(qty * price * 100) / 100,
+        line_status:    'cotizado',
+        provider_name:  staffName,
+        staff_note:     '',
+        selected_artist_stage_name: '',
+        description:    description || ''
+      });
+      renderLines();
+      showToast(name + ' agregado ✓');
+    }
+
+    /* ─────────── Events ─────────── */
+    function bindEvents() {
+      // Status action buttons — change + auto-save
+      document.querySelectorAll('[data-set-status]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          orderStatus = btn.dataset.setStatus;
+          renderStatusBadge(orderStatus);
+          renderInfoGrid(lead, cachedClientName);
+          showToast('Estado cambiado a: ' + ((ORDER_STATUS_LABEL[orderStatus] || {}).label || orderStatus) + ' — guardando…');
+          save();
+        });
+      });
+
+      // Save
+      elSaveBtn.addEventListener('click', save);
+
+      // Delegated events on lines container
+      elLines.addEventListener('input', handleLineInput);
+
+      elLines.addEventListener('click', function (e) {
+        // Remove line
+        var removeBtn = e.target.closest('[data-remove-line]');
+        if (removeBtn) { handleRemoveLine(removeBtn.dataset.removeLine); return; }
+
+        // Toggle catalog panel
+        var toggleBtn = e.target.closest('[data-toggle-panel]');
+        if (toggleBtn) {
+          var panelId = toggleBtn.dataset.togglePanel;
+          var panel   = document.getElementById(panelId);
+          if (panel) {
+            var isOpen = panel.classList.toggle('open');
+            toggleBtn.textContent = isOpen ? '✕ Cerrar' : '+ Agregar servicio';
+          }
+          return;
+        }
+
+        // Quick-pick catalog card
+        var catCard = e.target.closest('[data-cat-add]');
+        if (catCard) {
+          addLineFromCatalog(
+            catCard.dataset.name,
+            catCard.dataset.catKey,
+            catCard.dataset.price,
+            1,
+            catCard.dataset.desc || ''
+          );
+          // Close the panel
+          var pId = 'so-cat-panel-' + catCard.dataset.section.replace(/[^a-z0-9]/gi, '_');
+          var p   = document.getElementById(pId);
+          if (p) {
+            p.classList.remove('open');
+            var tb = p.previousElementSibling && p.previousElementSibling.querySelector('[data-toggle-panel]');
+            if (tb) tb.textContent = '+ Agregar servicio';
+          }
+          return;
+        }
+
+        // Custom add button
+        var custBtn = e.target.closest('[data-cat-custom]');
+        if (custBtn) {
+          var section  = custBtn.dataset.section;
+          var sfx      = section.replace(/[^a-z0-9]/gi, '_');
+          var nameEl   = document.getElementById('so-cust-name-' + sfx);
+          var qtyEl    = document.getElementById('so-cust-qty-' + sfx);
+          var priceEl  = document.getElementById('so-cust-price-' + sfx);
+          var custName = nameEl ? nameEl.value.trim() : '';
+          if (!custName) { showToast('Ingresa el nombre del servicio', true); return; }
+          var catKey = Object.keys(EB_CAJON_LABELS).find(function (k) {
+            return EB_CAJON_LABELS[k] === section;
+          }) || guessCategoryKey(custName);
+          addLineFromCatalog(
+            custName,
+            catKey,
+            priceEl ? priceEl.value : 0,
+            qtyEl   ? qtyEl.value  : 1
+          );
+          if (nameEl)  nameEl.value  = '';
+          if (priceEl) priceEl.value = '';
+          if (qtyEl)   qtyEl.value   = '1';
+          return;
+        }
+      });
+    }
+
+    /* ─────────── Package → canonical service name map ─────────── */
+    var PACKAGE_TO_CANONICAL = {
+      // DJ packages — go to "Artista" cajón (category_key: dj)
+      'Weddings & Corporate':  { name: 'DJ / Actuación',    key: 'dj'       },
+      'Private Parties':       { name: 'DJ / Actuación',    key: 'dj'       },
+      'Clubs & Nightlife':     { name: 'DJ / Actuación',    key: 'dj'       },
+      'Family Events':         { name: 'DJ / Actuación',    key: 'dj'       },
+      'School Events':         { name: 'DJ / Actuación',    key: 'dj'       },
+      'Corporate Events':      { name: 'DJ / Actuación',    key: 'dj'       },
+      // Hora Loca — goes to "Artista" cajón
+      'Premium Hora Loca Pack':{ name: 'Hora Loca',         key: 'horaloca' },
+      'Basic Hora Loca Pack':  { name: 'Hora Loca',         key: 'horaloca' },
+      'Hora Loca Pack':        { name: 'Hora Loca',         key: 'horaloca' },
+      // MC
+      'Club Host MC':          { name: 'MC Profesional',    key: 'mc'       }
+    };
+
+    /* ─────────── Line normalizer ─────────── */
+    /**
+     * Converts any stored format ({name,price,qty} legacy or full line object)
+     * into the working line shape used by renderLines().
+     *
+     * Input:  "Weddings & Corporate — DJ: DJMago305"
+     * Output: name = "DJ / Actuación"
+     *         description = "Weddings & Corporate | DJMago305"
+     */
+    function normalizeLine(svc, i) {
+      var rawName    = svc.name || svc.label || ('Servicio ' + (i + 1));
+      var artistName = svc.selected_artist_stage_name || '';
+      var packageType = '';
+
+      // Split "PackageName — Role: ArtistName"
+      if (!artistName) {
+        var sep = rawName.indexOf(' — ');
+        if (sep !== -1) {
+          var after     = rawName.slice(sep + 3);
+          var colonIdx  = after.indexOf(': ');
+          artistName    = colonIdx !== -1 ? after.slice(colonIdx + 2).trim() : after.trim();
+          rawName       = rawName.slice(0, sep).trim();
+        }
+      }
+
+      // Map package type → canonical service name
+      var canonical = PACKAGE_TO_CANONICAL[rawName];
+      if (canonical) {
+        packageType = rawName;
+        rawName     = canonical.name;
+      }
+
+      // DESCRIPCIÓN cell = package type only ("Weddings & Corporate")
+      // PROVEEDOR cell   = artist name      ("DJMago305")
+      var description  = svc.description || packageType;
+
+      var catKey = (canonical && canonical.key) || svc.category_key || svc.category || guessCategoryKey(rawName);
+      return {
+        line_id:                    svc.line_id || uuid4(),
+        name:                       rawName,
+        category_key:               catKey,
+        category_label:             svc.category_label || EB_CAJON_LABELS[catKey] || 'Servicios Adicionales',
+        quantity:                   parseInt(svc.quantity || svc.qty, 10) || 1,
+        unit_price_usd:             parseFloat(svc.unit_price_usd || svc.price) || 0,
+        line_total_usd:             parseFloat(svc.line_total_usd || svc.subtotal) || 0,
+        line_status:                svc.line_status || 'cotizado',
+        provider_name:              svc.provider_name || (artistName || packageType ? 'MDJB' : ''),
+        staff_note:                 svc.staff_note || svc.notes || '',
+        selected_artist_stage_name: artistName,
+        description:                description
+      };
+    }
+
+    /* ─────────── Load data ─────────── */
+    async function loadOrder() {
+      var params = new URLSearchParams(window.location.search);
+      leadId = params.get('lead');
+      if (!leadId) {
+        setError('No se especificó ninguna orden (falta parámetro ?lead=).');
+        return;
+      }
+
+      supabase = window.getSupabaseClient ? window.getSupabaseClient() : null;
+      if (!supabase) {
+        setTimeout(loadOrder, 400);
+        return;
+      }
+
+      // Auth gate — staff only
+      var { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        document.documentElement.classList.remove('mdj-admin-gate-pending');
+        window.location.href = './login.html?next=./staff-order.html%3Flead=' + encodeURIComponent(leadId);
+        return;
+      }
+
+      var { data: profile } = await supabase
+        .from('dj_profiles')
+        .select('role,full_name,stage_name')
+        .eq('user_id', session.user.id)
+        .single();
+
+      // Capture staff name for provider field on manual adds
+      var metaName = (session.user.user_metadata || {}).full_name || '';
+      var djFullName = (profile || {}).full_name || '';
+      if (djFullName)  staffName = djFullName;
+      else if (metaName) staffName = metaName;
+      // fallback stays 'OWNER'
+
+      var appRole = ((session.user.app_metadata || {}).role || '').toLowerCase();
+      var dbRole  = ((profile || {}).role || '').toLowerCase();
+      var STAFF_ROLES = ['admin','owner','manager','seller'];
+      var isStaff = STAFF_ROLES.indexOf(appRole) !== -1 || STAFF_ROLES.indexOf(dbRole) !== -1;
+
+      if (!isStaff) {
+        document.documentElement.classList.remove('mdj-admin-gate-pending');
+        window.location.href = './index.html';
+        return;
+      }
+
+      document.documentElement.classList.remove('mdj-admin-gate-pending');
+
+      // Load lead
+      var { data: leadData, error: leadErr } = await supabase
+        .from('leads')
+        .select('id,email,name,phone,event_date,location,contact_person,budget,status,notes,event_type,client_user_id,lead_outcome')
+        .eq('id', leadId)
+        .maybeSingle();
+
+      if (leadErr || !leadData) {
+        setError('No se encontró la orden con ID: ' + leadId);
+        return;
+      }
+      lead = leadData;
+
+      // Client name from client_profiles
+      var clientName = '';
+      if (lead.client_user_id) {
+        var { data: cp } = await supabase
+          .from('client_profiles')
+          .select('full_name')
+          .eq('user_id', lead.client_user_id)
+          .single();
+        if (cp && cp.full_name) clientName = cp.full_name;
+      }
+
+      // Load EBO (event_builder_orders) if exists
+      var { data: ebo } = await supabase
+        .from('event_builder_orders')
+        .select('id,lines,order_status,staff_notes,subtotal_usd,total_usd')
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (ebo) {
+        eboId         = ebo.id;
+        orderStatus   = ebo.order_status || 'pending';
+        elNotes.value = ebo.staff_notes || '';
+        lines = (Array.isArray(ebo.lines) ? ebo.lines : []).map(normalizeLine);
+      } else {
+        // Fall back to leads.notes.selected_services
+        try {
+          var n = JSON.parse(lead.notes || '{}');
+          if (n.selected_services && Array.isArray(n.selected_services)) {
+            lines = n.selected_services.map(normalizeLine);
+          }
+        } catch (e) { /* notes not JSON */ }
+      }
+
+      // Render
+      setLoading(false);
+      elMain.style.display = '';
+      elIdLabel.innerHTML = '<span class="so-lead-pill so-lead-pill--label">Lead</span><span class="so-lead-pill so-lead-pill--id">#' + leadId.slice(0, 8).toUpperCase() + '</span>';
+      cachedClientName = clientName;
+      var verOrdenBtn = document.getElementById('so-ver-orden-btn');
+      if (verOrdenBtn) verOrdenBtn.href = './client-portal.html?lead=' + encodeURIComponent(leadId);
+      renderStatusBadge(orderStatus);
+      renderInfoGrid(lead, cachedClientName);
+      renderLines();
+      bindEvents();
+    }
+
+    /* ─────────── Boot ─────────── */
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadOrder);
+    } else {
+      loadOrder();
+    }
+
+  })();
+  </script>
+</body>
+</html>
