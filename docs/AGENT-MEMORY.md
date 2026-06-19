@@ -3,7 +3,7 @@
 
 ---
 
-## ESTADO ACTUAL DE LA PLATAFORMA (actualizado 2026-06-18)
+## ESTADO ACTUAL DE LA PLATAFORMA (actualizado 2026-06-19)
 
 ### ✅ Funcional y estable
 - Event Builder (carrito) — `rentals.html` y `services.html`
@@ -24,17 +24,20 @@
 ### ⚠️ Tickets abiertos
 | ID | Descripción | Prioridad |
 |----|-------------|-----------|
-| STRIPE-SECRETS-CHECK | ✅ CERRADO — todos los secretos Stripe confirmados en Supabase (ver tabla de secretos) | ✅ |
+| TICKET-CLIENT-PORTAL-OWNER | Ver orden bloqueado para owner — RLS fix aplicado pero persiste. Ver SESSION-LOG-2026-06-18 | 🔴 CRÍTICO |
 | FASE-6B-QA | QA manual Event Builder: toast + SQL + Staff Board (lo ejecuta el Capitán) | 🔴 ALTA |
 | TICKET-COUPON-001 | Cupón primera compra $80 — Stripe + secreto + `create-checkout` | 🟡 MEDIA |
 | TICKET-REFERRAL-001 | Códigos de referido de manager con descuento | 🟡 MEDIA |
 | TICKET-COMMS-001 | Sistema de notificaciones staff (inbox interno → email → WhatsApp) | 🟡 ESTRATÉGICO |
 | TICKET-004 (a→h) | Arquitectura financiera de órdenes — contratos, ledger, comisiones, pagos DJ | 🔵 ESTRATÉGICO |
-| TICKET-VERCEL-DEPLOY | Confirmar PR #104 mergeado activó deploy en Vercel (probar ventana privada) | 🟡 MEDIA |
 
 ### ✅ Tickets cerrados (histórico completo)
 | ID | PR | Descripción | Fecha |
 |----|----|-------------|-------|
+| TICKET-STAFF-ORDER + MI PORTAL supertique | #105 `51c4425` | `staff-order.html` nuevo + MI PORTAL event hub cableado completo | 2026-06-19 |
+| TICKET-MIGRATION-RLS-LEADS | migration `20260619190000` | DELETE policies para leads + EBO (cliente y staff_management) | 2026-06-19 |
+| TICKET-UI-BUTTON-STABILITY | — | Botones staff-order + Delete portal: min-width fijo, sin saltos | 2026-06-19 |
+| TICKET-CLIENT-PORTAL-LOGISTICS-TABLE | — | Cerrado: flujo funciona; tabla profesional reemplaza cards anticuadas | 2026-06-19 |
 | TICKET-EB-STATUS-ADMIN Fase 2 | #86 | Event Builder orders table + admin panel | 2026-06-16 |
 | TICKET-010 | #87, #88 | Banda en Vivo video CDN + card fix + emoji | 2026-06-16 |
 | TICKET-CDN-LIVE | #90 | live-sax, live-percussion, live-singer → Supabase CDN | 2026-06-16 |
@@ -53,6 +56,7 @@
 | TICKET-JOBS-AUTOSELECT | #104 | Auto-select plan PRO con `?plan=pro` en URL | 2026-06-18 |
 | TICKET-EVENTBUILDER-006A | #104 | Catch silencioso → await con toast error/éxito | 2026-06-18 |
 | TICKET-BACKEND-STRIPE-SECURITY | prod | `product_line` condicional + rama `mdjpro_app` en webhook | 2026-06-18 |
+| TICKET-LEADS-TABLE-001 | local | Rediseño tabla Leads: 2 tablas, cliente wired, font 15px, Excel borders | 2026-06-18 |
 
 ---
 
@@ -101,8 +105,28 @@ Artista (cualquier tier) → dj-tools.html → "Acceso Anticipado"
 2. "ADD TO MY EVENT" → guarda en `leads.notes.selected_services` + upsert AWAIT a `event_builder_orders`
 3. Si upsert falla → toast error, carrito no se limpia
 4. Si upsert ok → toast éxito, carrito se limpia, drawer cierra
-5. Staff ve órdenes en Admin Dashboard → sección "Órdenes Event Builder"
+5. Staff ve órdenes en Admin Dashboard → "Ver orden" → `staff-order.html?lead=UUID`
 6. Badge universal: `mdj-cart-pill.js` lee localStorage → redirige a `rentals.html?cart=open`
+
+### Flujo staff-order ↔ cliente (cableado 2026-06-19)
+```
+Admin Dashboard → "Ver orden" → staff-order.html?lead=UUID
+  → Staff edita líneas, cambia status (auto-save al clic)
+  → save() → event_builder_orders UPDATE + leads.status SYNC
+  → Cliente entra a MI PORTAL → client-portal.js
+  → loadLeadItems: lee EBO.lines primero (staff-edited), fallback leads.notes
+  → Tabla eventos: Estado Lead = order_status con colores (Pendiente/En Revisión/Confirmado/Cancelado)
+  → Ver Orden → client-portal.html?lead=UUID (vista cliente)
+  → Delete → EBO cascade delete → leads delete
+```
+
+### Mapeo status staff → DB
+| order_status | leads.status |
+|---|---|
+| pending | NEW |
+| in_review | MATCHED |
+| confirmed | CONFIRMED |
+| cancelled | CANCELLED |
 
 ### Tablas Supabase principales
 - `leads` — solicitudes de clientes (event_date, notes JSONB con selected_services)
@@ -230,3 +254,4 @@ Cada orden de evento tiene 6 capas financieras separadas con visibilidad por rol
 | 2026-06-16 | #86-92 | EB Fase 2, videos CDN, exclusividad mutua, SyntaxError |
 | 2026-06-17 | #95-103 | Role redirect fix, flash fixes, PRO checkout, Smart Search |
 | 2026-06-18 | #104 | PRO flow completo, MDJPRO App standalone, backend security, plantillas confirmadas |
+| 2026-06-19 | #105 `73f360c` | `staff-order.html` + MI PORTAL cableado total + RLS migrations + button stability — **todos los tickets cerrados** |
