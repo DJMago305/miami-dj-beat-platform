@@ -11,6 +11,28 @@ function portalEscapeHtml(s) {
         .replace(/'/g, '&#39;');
 }
 
+async function portalDeleteLead(leadId, btn) {
+    if (!confirm('¿Eliminar esta orden? Esta acción no se puede deshacer.')) return;
+    var db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+    if (!db) { alert('Error: no se pudo conectar.'); return; }
+    var origText = btn.textContent;
+    btn.textContent = '...';
+    btn.disabled = true;
+    try {
+        // Delete associated EBO first (avoid orphan)
+        await db.from('event_builder_orders').delete().eq('lead_id', leadId);
+        // Delete the lead
+        var { error } = await db.from('leads').delete().eq('id', leadId);
+        if (error) throw error;
+        var row = btn.closest('tr');
+        if (row) row.remove();
+    } catch (e) {
+        alert('Error al eliminar: ' + (e.message || e));
+        btn.textContent = origText;
+        btn.disabled = false;
+    }
+}
+
 async function mdjPortalFetchCheckoutJson(resp) {
     var text = await resp.text();
     var data;
@@ -228,7 +250,7 @@ var PORTAL_I18N_FB = {
         'portal-event-datetime-pending': 'Date / time pending',
         'portal-events-title': 'My events',
         'portal-events-upcoming': 'Upcoming',
-        'portal-events-past': 'Past & history',
+        'portal-events-past': 'History',
         'portal-events-open': 'Open',
         'portal-events-status': 'Status',
         'portal-events-date': 'Date',
@@ -324,7 +346,7 @@ var PORTAL_I18N_FB = {
         'portal-event-datetime-pending': 'Fecha y hora pendientes',
         'portal-events-title': 'Mis eventos',
         'portal-events-upcoming': 'Próximos',
-        'portal-events-past': 'Pasados e historial',
+        'portal-events-past': 'Historial',
         'portal-events-open': 'Abrir',
         'portal-events-status': 'Estado',
         'portal-events-date': 'Fecha',
@@ -1539,7 +1561,30 @@ const PortalApp = {
     async loadLeadItems(leadId) {
         let items = [];
         let meetings = [];
-        if (this.currentLead.notes) {
+
+        // Try event_builder_orders.lines first (staff-edited lines take priority)
+        try {
+            var dbLI = window.getSupabaseClient ? window.getSupabaseClient() : null;
+            if (dbLI) {
+                var { data: ebo } = await dbLI
+                    .from('event_builder_orders')
+                    .select('lines')
+                    .eq('lead_id', leadId)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+                if (ebo && Array.isArray(ebo.lines) && ebo.lines.length) {
+                    items = ebo.lines.map(function(l) {
+                        var qty   = parseInt(l.quantity || l.qty, 10) || 1;
+                        var price = parseFloat(l.unit_price_usd || l.price) || 0;
+                        return { name: l.name || '', price: price, qty: qty };
+                    });
+                }
+            }
+        } catch (eEbo) { /* fallback below */ }
+
+        // Fallback: leads.notes.selected_services
+        if (!items.length && this.currentLead.notes) {
             try {
                 const parsed = JSON.parse(this.currentLead.notes);
                 if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
@@ -1547,15 +1592,11 @@ const PortalApp = {
                     meetings = Array.isArray(parsed.meetings) ? parsed.meetings : [];
                 }
             } catch (e) {
-                try {
-                    console.warn('[portal] loadLeadItems: notes JSON invalid for lead', leadId, e);
-                } catch (eLog) {
-                    void eLog;
-                }
                 items = [];
                 meetings = [];
             }
         }
+
         this.items = items;
         this.meetings = meetings;
         this.renderCart();
@@ -3129,6 +3170,18 @@ const PortalApp = {
             }
             var leads = q.data || [];
             if (leads.length === 1) {
+                // Enrich the single lead with order_status before redirecting
+                try {
+                    var eboS = await db.from('event_builder_orders')
+                        .select('order_status')
+                        .eq('lead_id', leads[0].id)
+                        .order('created_at', { ascending: false })
+                        .limit(1)
+                        .maybeSingle();
+                    if (eboS.data && eboS.data.order_status) {
+                        leads[0] = Object.assign({}, leads[0], { order_status: eboS.data.order_status });
+                    }
+                } catch(eSingle) { /* fallback */ }
                 portalRememberHubLeads(session.user.id, leads);
                 var path1 = (window.location.pathname || '/client-portal.html').split('?')[0];
                 window.location.replace(path1 + '?lead=' + encodeURIComponent(leads[0].id));
@@ -3141,6 +3194,20 @@ const PortalApp = {
                 } catch (eHub) { /* ignore */ }
                 this._sessionSnapshot = session;
                 this.clientProfile = clientRow || this.clientProfile;
+                // Enrich leads with order_status from event_builder_orders
+                var leadIds = leads.map(function(l){ return l.id; });
+                try {
+                    var eboQ = await db.from('event_builder_orders')
+                        .select('lead_id, order_status')
+                        .in('lead_id', leadIds);
+                    if (eboQ.data && eboQ.data.length) {
+                        var eboMap = {};
+                        eboQ.data.forEach(function(r){ eboMap[r.lead_id] = r.order_status; });
+                        leads = leads.map(function(l){
+                            return Object.assign({}, l, { order_status: eboMap[l.id] || null });
+                        });
+                    }
+                } catch(eEbo) { /* fallback: no order_status */ }
                 this.showMyEventsHub(session, clientRow, leads);
                 return true;
             }
@@ -3197,59 +3264,86 @@ const PortalApp = {
             return portalLeadIsPast(L);
         });
 
-        function cardHtml(l) {
-            var dt = l.event_date ? portalEscapeHtml(String(l.event_date)) : '—';
-            var ty = l.event_type ? portalEscapeHtml(String(l.event_type)) : 'Event';
-            var st = l.status ? portalEscapeHtml(String(l.status)) : '';
-            var href = './client-portal.html?lead=' + encodeURIComponent(l.id);
-            return (
-                '<a href="' +
-                href +
-                '" class="portal-event-card" style="display:block;padding:14px 18px;margin-bottom:10px;border-radius:14px;text-decoration:none;color:#fff;border:1px solid rgba(197,160,89,0.35);background:rgba(197,160,89,0.08);">' +
-                '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">' +
-                '<div><strong style="color:var(--gold);">' +
-                ty +
-                '</strong><div class="fineprint" style="margin-top:4px;opacity:0.75;">' +
-                portalEscapeHtml(portalT('portal-events-date')) +
-                ': ' +
-                dt +
-                '</div></div>' +
-                '<div style="text-align:right;"><span class="fineprint" style="opacity:0.65;">' +
-                portalEscapeHtml(portalT('portal-events-status')) +
-                '</span><br><span style="font-weight:800;">' +
-                st +
-                '</span><br><span style="font-size:12px;color:var(--gold);font-weight:800;">' +
-                portalEscapeHtml(portalT('portal-events-open')) +
-                ' →</span></div></div></a>'
-            );
+        var TH = 'padding:9px 14px;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#fff;background:rgba(197,160,89,0.50);border:1px solid rgba(197,160,89,0.30);text-align:left;white-space:nowrap;';
+        var TD = 'padding:10px 14px;font-size:14px;font-weight:600;color:#d4af37;border:1px solid rgba(197,160,89,0.12);background:rgba(0,0,0,0.15);';
+
+        function rowHtml(l) {
+            var dt   = l.event_date ? portalEscapeHtml(String(l.event_date).replace(/-/g, '/')) : '—';
+            var EVENT_TYPE_DISPLAY = { 'After-Party': 'After Party' };
+            var rawTy = l.event_type ? String(l.event_type) : 'Event';
+            var ty = portalEscapeHtml(EVENT_TYPE_DISPLAY[rawTy] || rawTy);
+            var loc  = l.location   ? portalEscapeHtml(String(l.location))   : '—';
+            var ORDER_LABELS = { pending:'Pendiente', in_review:'En Revisión', confirmed:'Confirmado', cancelled:'Cancelado' };
+            var ORDER_COLORS = { pending:'#ffb400', in_review:'#7eb8f7', confirmed:'#00c878', cancelled:'#ff6060' };
+            // Fallback map for raw lead statuses (no order created yet)
+            var LEAD_STATUS_LABELS = { NEW:'Pendiente', MATCHED:'En Revisión', CONFIRMED:'Confirmado', CANCELLED:'Cancelado' };
+            var LEAD_STATUS_COLORS = { NEW:'#ffb400', MATCHED:'#7eb8f7', CONFIRMED:'#00c878', CANCELLED:'#ff6060' };
+            var rawSt = l.order_status || null;
+            var rawLeadSt = l.status ? String(l.status).toUpperCase() : null;
+            var stLabel = rawSt
+                ? (ORDER_LABELS[rawSt] || rawSt)
+                : (rawLeadSt ? (LEAD_STATUS_LABELS[rawLeadSt] || rawLeadSt) : '—');
+            var stColor = rawSt
+                ? (ORDER_COLORS[rawSt] || '#d4af37')
+                : (rawLeadSt ? (LEAD_STATUS_COLORS[rawLeadSt] || '#d4af37') : '#d4af37');
+            var st = '<span style="color:' + stColor + ';font-weight:700;">' + stLabel + '</span>';
+            var lid  = l.id ? String(l.id).slice(0,8).toUpperCase() : '—';
+            var href      = './client-portal.html?lead=' + encodeURIComponent(l.id);
+            var hrefOrder = './client-portal.html?lead=' + encodeURIComponent(l.id);
+            var leadPill =
+                '<span style="font-family:monospace;font-size:13px;font-weight:700;color:#fff;letter-spacing:0.05em;">#' + lid + '</span>';
+            var btns =
+                '<a href="' + hrefOrder + '" style="display:inline-block;padding:6px 10px;border-radius:6px;border:1px solid rgba(197,160,89,0.6);background:rgba(197,160,89,0.45);color:#fff;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;vertical-align:middle;">Ver Orden</a>' +
+                '&nbsp;<button onclick="portalDeleteLead(\'' + l.id + '\',this)" style="display:inline-block;padding:6px 12px;border-radius:6px;border:1px solid rgba(220,60,60,0.6);background:rgba(220,60,60,0.45);color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-sizing:border-box;vertical-align:middle;min-width:64px;text-align:center;overflow:hidden;flex-shrink:0;">Delete</button>';
+            return '<tr>' +
+                '<td style="' + TD + '">' + leadPill + '</td>' +
+                '<td style="' + TD + '">' + ty + '</td>' +
+                '<td style="' + TD + '">' + dt + '</td>' +
+                '<td style="' + TD + 'word-break:break-word;white-space:normal;">' + loc + '</td>' +
+                '<td style="' + TD + 'color:inherit;">' + st + '</td>' +
+                '<td style="' + TD + 'white-space:nowrap;">' + btns + '</td>' +
+                '</tr>';
+        }
+
+        function buildTable(rows) {
+            var emptyRow = !rows.length
+                ? '<tr><td colspan="6" style="' + TD + 'text-align:center;color:rgba(255,255,255,0.35);font-style:italic;">Sin registros</td></tr>'
+                : '';
+            return '<div style="overflow-x:auto;">' +
+                '<table style="width:100%;border-collapse:collapse;table-layout:fixed;">' +
+                '<colgroup>' +
+                '<col style="width:110px;">' +
+                '<col style="width:150px;">' +
+                '<col style="width:110px;">' +
+                '<col>' +
+                '<col style="width:130px;">' +
+                '<col style="width:220px;">' +
+                '</colgroup>' +
+                '<thead><tr>' +
+                '<th style="' + TH + '">Lead</th>' +
+                '<th style="' + TH + '">Tipo de Evento</th>' +
+                '<th style="' + TH + '">Fecha</th>' +
+                '<th style="' + TH + '">Ubicación</th>' +
+                '<th style="' + TH + '">Estado Lead</th>' +
+                '<th style="' + TH + '">Acciones</th>' +
+                '</tr></thead>' +
+                '<tbody>' + (rows.length ? rows.map(rowHtml).join('') : emptyRow) + '</tbody>' +
+                '</table></div>';
         }
 
         var sectionUp =
             '<h3 style="margin:0 0 12px;font-size:15px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(197,160,89,0.9);">' +
             portalEscapeHtml(portalT('portal-events-upcoming')) +
-            '</h3><div class="portal-events-sublist">' +
-            (upcoming.length
-                ? upcoming.map(cardHtml).join('')
-                : '<p class="fineprint" style="opacity:0.6;">—</p>') +
-            '</div>';
+            '</h3>' + buildTable(upcoming);
         var sectionPast =
             '<h3 style="margin:24px 0 12px;font-size:15px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.45);">' +
             portalEscapeHtml(portalT('portal-events-past')) +
-            '</h3><div class="portal-events-sublist portal-events-sublist--past">' +
-            (past.length ? past.map(cardHtml).join('') : '<p class="fineprint" style="opacity:0.45;">—</p>') +
-            '</div>';
+            '</h3>' + buildTable(past);
 
         var main = document.querySelector('main');
         if (main) {
             main.innerHTML =
-                '<div class="container" style="padding: 20px 0 60px;max-width:720px;margin:0 auto;">' +
-                '<div class="info-card" style="margin-bottom:20px;">' +
-                '<h2 style="margin:0 0 6px;font-size:22px;">' +
-                portalEscapeHtml(portalT('portal-events-title')) +
-                '</h2>' +
-                '<p class="fineprint" style="opacity:0.7;margin:0;">' +
-                portalEscapeHtml(portalT('portal-pick-event-intro')) +
-                '</p></div>' +
+                '<div style="width:100%;max-width:none;padding:20px 32px 60px;box-sizing:border-box;">' +
                 '<div id="events-list" class="portal-events-list">' +
                 sectionUp +
                 sectionPast +
