@@ -628,7 +628,7 @@ function portalWelcomeSubI18nKey(ctx, clientRow) {
  */
 async function portalFetchLeadsForLoggedInUser(db, sessionUserId, emailNorm) {
     var cols =
-        'id,email,client_user_id,event_type,event_date,status,created_at,payment_status,balance_paid,total_amount';
+        'id,email,client_user_id,event_type,event_date,event_start_time,event_end_time,location,status,created_at,payment_status,balance_paid,total_amount';
     var seen = {};
     var rows = [];
     function absorb(data) {
@@ -729,7 +729,7 @@ var MDJ_LEADS_HUB_COLUMNS =
     'id,email,client_user_id,event_type,event_date,status,created_at,payment_status,balance_paid,total_amount';
 
 var MDJ_LEADS_BROWSER_COLUMNS =
-    'id,email,client_user_id,full_name,phone,event_type,event_date,status,created_at,location,notes,payment_status,balance_paid,total_amount,assigned_staff_id,assigned_staff_name';
+    'id,email,client_user_id,full_name,phone,event_type,event_date,event_start_time,event_end_time,status,created_at,location,notes,payment_status,balance_paid,total_amount,assigned_staff_id,assigned_staff_name';
 
 var MDJ_LEADS_SAFE_COLUMNS = MDJ_LEADS_BROWSER_COLUMNS;
 
@@ -1743,6 +1743,10 @@ const PortalApp = {
                 }
             }
         }
+        var logTimeIn  = document.getElementById('log-timein');
+        var logTimeOut = document.getElementById('log-timeout');
+        if (logTimeIn)  logTimeIn.textContent  = l.event_start_time || '—';
+        if (logTimeOut) logTimeOut.textContent = l.event_end_time   || '—';
         if (logGate) logGate.textContent = l.gate_code || 'A confirmar';
         var contactLine = l.contact_person && String(l.contact_person).trim()
             ? portalFirstNameOnly(String(l.contact_person).trim())
@@ -3268,11 +3272,13 @@ const PortalApp = {
         var TD = 'padding:10px 14px;font-size:14px;font-weight:600;color:#d4af37;border:1px solid rgba(197,160,89,0.12);background:rgba(0,0,0,0.15);';
 
         function rowHtml(l) {
-            var dt   = l.event_date ? portalEscapeHtml(String(l.event_date).replace(/-/g, '/')) : '—';
+            var dt   = l.event_date ? portalEscapeHtml(String(l.event_date).replace(/-/g, ' / ')) : '—';
             var EVENT_TYPE_DISPLAY = { 'After-Party': 'After Party' };
             var rawTy = l.event_type ? String(l.event_type) : 'Event';
             var ty = portalEscapeHtml(EVENT_TYPE_DISPLAY[rawTy] || rawTy);
-            var loc  = l.location   ? portalEscapeHtml(String(l.location))   : '—';
+            var loc  = l.location        ? portalEscapeHtml(String(l.location))             : '—';
+            var tin  = l.event_start_time ? portalEscapeHtml(String(l.event_start_time))    : '—';
+            var tout = l.event_end_time   ? portalEscapeHtml(String(l.event_end_time))      : '—';
             var ORDER_LABELS = { pending:'Pendiente', in_review:'En Revisión', confirmed:'Confirmado', cancelled:'Cancelado' };
             var ORDER_COLORS = { pending:'#ffb400', in_review:'#7eb8f7', confirmed:'#00c878', cancelled:'#ff6060' };
             // Fallback map for raw lead statuses (no order created yet)
@@ -3298,7 +3304,9 @@ const PortalApp = {
             return '<tr>' +
                 '<td style="' + TD + '">' + leadPill + '</td>' +
                 '<td style="' + TD + '">' + ty + '</td>' +
-                '<td style="' + TD + '">' + dt + '</td>' +
+                '<td style="' + TD + 'white-space:nowrap;">' + dt + '</td>' +
+                '<td style="' + TD + 'white-space:nowrap;">' + tin + '</td>' +
+                '<td style="' + TD + 'white-space:nowrap;">' + tout + '</td>' +
                 '<td style="' + TD + 'word-break:break-word;white-space:normal;">' + loc + '</td>' +
                 '<td style="' + TD + 'color:inherit;">' + st + '</td>' +
                 '<td style="' + TD + 'white-space:nowrap;">' + btns + '</td>' +
@@ -3307,22 +3315,26 @@ const PortalApp = {
 
         function buildTable(rows) {
             var emptyRow = !rows.length
-                ? '<tr><td colspan="6" style="' + TD + 'text-align:center;color:rgba(255,255,255,0.35);font-style:italic;">Sin registros</td></tr>'
+                ? '<tr><td colspan="8" style="' + TD + 'text-align:center;color:rgba(255,255,255,0.35);font-style:italic;">Sin registros</td></tr>'
                 : '';
             return '<div style="overflow-x:auto;">' +
                 '<table style="width:100%;border-collapse:collapse;table-layout:fixed;">' +
                 '<colgroup>' +
-                '<col style="width:110px;">' +
-                '<col style="width:150px;">' +
-                '<col style="width:110px;">' +
+                '<col style="width:92px;">' +
+                '<col style="width:115px;">' +
+                '<col style="width:122px;">' +
+                '<col style="width:76px;">' +
+                '<col style="width:76px;">' +
                 '<col>' +
-                '<col style="width:130px;">' +
-                '<col style="width:220px;">' +
+                '<col style="width:112px;">' +
+                '<col style="width:185px;">' +
                 '</colgroup>' +
                 '<thead><tr>' +
                 '<th style="' + TH + '">Lead</th>' +
                 '<th style="' + TH + '">Tipo de Evento</th>' +
                 '<th style="' + TH + '">Fecha</th>' +
+                '<th style="' + TH + '">Time In</th>' +
+                '<th style="' + TH + '">Time Out</th>' +
                 '<th style="' + TH + '">Ubicación</th>' +
                 '<th style="' + TH + '">Estado Lead</th>' +
                 '<th style="' + TH + '">Acciones</th>' +
