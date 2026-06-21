@@ -40,7 +40,9 @@ Cuando el staff modifica, aprueba o agrega algo en una orden, el sistema debe no
 ## NOTIFICACIÓN 2 — DJ ASIGNADO
 
 **Cuándo dispara:**
-- Cuando el staff asigna un DJ a la orden (`assigned_dj_id` se puebla)
+- Cuando el staff asigna un DJ **Y** el cliente ya realizó depósito o pago total
+- Condición obligatoria: `payment_status IN ('PARTIAL','PAID')` o `event_builder_orders.payment_status IN ('deposit_paid','paid_full')`
+- Si el DJ se asigna antes del depósito → la notificación se **retiene** hasta que el pago ocurra
 
 **Canal:** Email + SMS
 
