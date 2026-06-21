@@ -20,7 +20,7 @@ Cuando el staff modifica, aprueba o agrega algo en una orden, el sistema debe no
 - Actualización de horario (Time In / Time Out)
 - Actualización de ubicación
 
-**Canal:** Email (prioritario) + SMS (si hay teléfono)
+**Canal:** Email + SMS ✅ (ambos obligatorios)
 
 **Contenido del mensaje:**
 - Nombre del cliente
@@ -50,7 +50,7 @@ Cuando el staff modifica, aprueba o agrega algo en una orden, el sistema debe no
 - Time In / Time Out
 - Dirección / Ubicación
 - Nombre del cliente de contacto
-- Teléfono del contacto (opcional — a confirmar con Capitán)
+- Teléfono del cliente — **SOLO si `payment_status = PARTIAL` o `PAID`** (depósito realizado) ✅
 
 **PROHIBIDO incluir en el mensaje del DJ:**
 - ❌ Precio / presupuesto
@@ -82,8 +82,10 @@ Cuando el staff modifica, aprueba o agrega algo en una orden, el sistema debe no
 ## PASOS PARA LA PRÓXIMA SESIÓN
 
 ```
-PASO 1 — Capitán decide: ¿email solo o email + SMS para cliente?
-PASO 2 — Capitán decide: ¿incluir teléfono de contacto en notif al DJ?
+PASO 1 — ✅ RESUELTO: cliente recibe Email + SMS
+PASO 2 — ✅ RESUELTO: DJ recibe teléfono del cliente SOLO después del depósito
+          Condición: leads.payment_status IN ('PARTIAL', 'PAID') o
+                     event_builder_orders.payment_status IN ('deposit_paid', 'paid_full')
 PASO 3 — Crear Edge Functions (notify-client + notify-dj)
 PASO 4 — Cablear disparo en staff-order.html → Save + asignación DJ
 PASO 5 — Test real: modificar orden → verificar email/SMS llega
