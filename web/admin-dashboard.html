@@ -283,6 +283,81 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
+        /* ── Leads table — clean spreadsheet style ── */
+        #leads-container .leads-table-wrap {
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 72vh;
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 8px;
+        }
+        #leads-container table {
+            margin-top: 0;
+            font-size: 15px;
+        }
+        #leads-container thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(197,160,89,0.50);
+            padding: 11px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            border-bottom: 2px solid rgba(197,160,89,0.3);
+            border-right: 1px solid rgba(197,160,89,0.30);
+            white-space: nowrap;
+            color: #1a1a2e;
+        }
+        #leads-container thead th:last-child { border-right: none; }
+        #leads-container td {
+            padding: 13px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-right: 1px solid rgba(255,255,255,0.05);
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        #leads-container td:last-child { border-right: none; }
+        #leads-container tr:hover td { background: rgba(255,255,255,0.025); }
+        #leads-container .leads-dot {
+            display: inline-block;
+            width: 9px; height: 9px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+        #leads-container .leads-dot--red    { background: #ef4444; }
+        #leads-container .leads-dot--yellow { background: #f59e0b; }
+        #leads-container .leads-dot--green  { background: #22c55e; }
+        #leads-container .leads-link {
+            color: var(--gold, #c5a059);
+            font-weight: 700;
+            font-size: 12px;
+            text-decoration: none;
+            letter-spacing: 0.05em;
+        }
+        #leads-container .leads-link:hover { text-decoration: underline; }
+        #leads-container .leads-status {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            padding: 3px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        #leads-container .leads-status--new      { background: rgba(99,102,241,0.18); color: #a5b4fc; }
+        #leads-container .leads-status--matched  { background: rgba(245,158,11,0.18); color: #fcd34d; }
+        #leads-container .leads-status--confirmed{ background: rgba(34,197,94,0.18);  color: #86efac; }
+        #leads-container .leads-status--done     { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.4); }
+        #leads-container .leads-table-label {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.45);
+            margin: 0 0 8px 2px;
+        }
+
         /* Activity Feed Styles */
         .activity-item {
             display: flex;
@@ -915,16 +990,12 @@
             </aside>
 
             <section class="content">
-                <div class="manager-header">
-                    <h1>Panel de Control del Manager</h1>
-                    <div id="role-badge" class="status-badge"
-                        style="background: rgba(183,148,62,0.1); color: var(--gold); border: 1px solid var(--gold);">
-                        Detectando Rol...</div>
-                </div>
+
+                <div id="role-badge" style="display:none;"></div>
 
                 <!-- Leads Section -->
-                <div class="admin-card" id="leads">
-                    <h3>Nuevas Solicitudes de Clientes</h3>
+                <div id="leads" style="display:none;">
+                    <h3 style="color:var(--gold);font-size:16px;font-weight:700;letter-spacing:.04em;margin:0 0 14px 0;text-transform:uppercase;">Solicitudes de Clientes</h3>
                     <div id="leads-container">
                         <div class="loading-spinner">Cargando leads...</div>
                     </div>
@@ -1995,74 +2066,85 @@
 
                 // Load Leads (explicit columns — no stripe_customer_id / payment tokens in staff UI)
                 const MDJ_ADMIN_LEADS_COLUMNS =
-                    'id,email,full_name,phone,event_date,location,gate_code,contact_person,budget,status,notes,lead_outcome,lead_outcome_reason,event_type,assigned_dj_id,assigned_dj_name,client_contact,name,client_name,service_type,created_at,payment_status,balance_paid,total_amount,client_user_id';
+                    'id,email,name,phone,event_date,location,contact_person,budget,status,notes,lead_outcome,lead_outcome_reason,event_type,assigned_dj_id,assigned_dj_name,created_at,payment_status,balance_paid,total_amount,client_user_id,dj_agreed_payout_usd,dj_payout_released_at';
                 const { data: leads, error: leadError } = await supabase
                     .from('leads')
                     .select(MDJ_ADMIN_LEADS_COLUMNS)
                     .order('created_at', { ascending: false });
+                if (leadError) console.error('[Leads query error]', leadError);
+
+                // Fetch client names from client_profiles by client_user_id
+                let clientNameMap = {};
+                if (leads && leads.length > 0) {
+                    const uids = [...new Set(leads.map(l => l.client_user_id).filter(Boolean))];
+                    if (uids.length > 0) {
+                        const { data: profiles } = await supabase
+                            .from('client_profiles')
+                            .select('user_id,full_name')
+                            .in('user_id', uids);
+                        if (profiles) profiles.forEach(p => { if (p.full_name) clientNameMap[p.user_id] = p.full_name; });
+                    }
+                }
 
                 const leadsContainer = document.getElementById('leads-container');
                 if (leads && leads.length > 0) {
+                    const pending   = leads.filter(l => !['completed','closed_won','closed_lost','no_show','cancelled'].includes((l.status||'').toLowerCase()));
+                    const completed = leads.filter(l =>  ['completed','closed_won','closed_lost','no_show','cancelled'].includes((l.status||'').toLowerCase()));
+
+                    function dotColor(l) {
+                        const s = (l.status||'').toLowerCase();
+                        if (['completed','closed_won'].includes(s)) return 'green';
+                        if (['confirmed','matched'].includes(s))    return 'yellow';
+                        return 'red';
+                    }
+                    function fmtPhone(raw) {
+                        var d = String(raw || '').replace(/\D/g, '');
+                        if (d.length === 10) return '(' + d.slice(0,3) + ')-' + d.slice(3,6) + '-' + d.slice(6);
+                        if (d.length === 11 && d[0] === '1') return '(' + d.slice(1,4) + ')-' + d.slice(4,7) + '-' + d.slice(7);
+                        return raw || '—';
+                    }
+                    function statusClass(s) {
+                        s = (s||'').toLowerCase();
+                        if (s === 'new')       return 'leads-status--new';
+                        if (s === 'matched')   return 'leads-status--matched';
+                        if (s === 'confirmed') return 'leads-status--confirmed';
+                        return 'leads-status--done';
+                    }
+                    function statusLabel(s) {
+                        const map = { NEW:'Pendiente', MATCHED:'Vinculado', CONFIRMED:'Confirmado', CANCELLED:'Cancelado', COMPLETED:'Completado', CONTACTED:'Contactado' };
+                        return map[(s||'').toUpperCase()] || (s || '—');
+                    }
+                    function tableHead() {
+                        return `<thead><tr>
+                            <th></th><th># Orden</th><th>Cliente</th><th>Evento</th>
+                            <th>Contacto</th><th>Teléfono</th><th>Fecha</th><th>Estado</th><th>Detalles</th>
+                        </tr></thead>`;
+                    }
+                    function buildRows(list, rowClass) {
+                        return list.map(l => `
+                            <tr class="leads-data-row ${rowClass}">
+                                <td><span class="leads-dot leads-dot--${dotColor(l)}"></span></td>
+                                <td style="font-size:12px;color:rgba(255,255,255,0.4);font-family:monospace;">${l.id ? l.id.slice(0,8).toUpperCase() : '—'}</td>
+                                <td><strong>${clientNameMap[l.client_user_id] || l.full_name || l.name || l.contact_person || '—'}</strong></td>
+                                <td>${l.event_type || '—'}</td>
+                                <td style="color:rgba(255,255,255,0.6);">${l.email || '—'}</td>
+                                <td style="color:rgba(255,255,255,0.6);">${fmtPhone(l.phone)}</td>
+                                <td style="font-variant-numeric:tabular-nums;">${l.event_date || '—'}</td>
+                                <td><span class="leads-status ${statusClass(l.status)}">${statusLabel(l.status)}</span></td>
+                                <td><a class="leads-link" href="./staff-order.html?lead=${l.id}" target="_blank">Ver orden</a></td>
+                            </tr>`).join('');
+                    }
+
                     leadsContainer.innerHTML = `
-                    <table>
-                        <thead>
-                                <tr>
-                                    <th>Tier</th>
-                                    <th>Cliente / Evento</th>
-                                    <th>Contacto</th>
-                                    <th>Fecha / Ubicación</th>
-                                    <th>Presupuesto</th>
-                                    <th>Estado</th>
-                                    <th>Resultado</th>
-                                    <th>DJ Asignado</th>
-                                    <th>Blueprint</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${leads.map(lead => {
-                        const count = leads.filter(l => l.email === lead.email).length;
-                        const tier = getLoyaltyTier(count);
-                        const djLabel = lead.assigned_dj_name
-                            ? `<span style="color:var(--admin-accent); font-weight:700;">🎧 ${lead.assigned_dj_name}</span><br><button class="btn-pill" style="margin-top:4px; font-size:10px;" onclick='openMatchModal("${lead.id}", "${lead.event_type}", "${lead.event_date}")'>Cambiar</button>`
-                            : `<button class="btn-pill gold" onclick='openMatchModal("${lead.id}", "${lead.event_type}", "${lead.event_date}")'>🎯 Asignar DJ</button>`;
-                        const statusClass = lead.status === 'MATCHED' ? 'status-approved'
-                            : lead.status === 'CONFIRMED' ? 'status-approved'
-                                : 'status-new';
-                        const lo = lead.lead_outcome || 'open';
-                        const outcomeSel = `
-                            <select class="btn-pill" style="max-width:140px;font-size:10px;padding:4px 8px;"
-                              onchange="applyLeadOutcome('${lead.id}', this.value)"
-                              title="Lección aprendida — Ganado / Perdido">
-                              <option value="open" ${lo === 'open' ? 'selected' : ''}>Abierto</option>
-                              <option value="follow_up" ${lo === 'follow_up' ? 'selected' : ''}>Seguimiento</option>
-                              <option value="closed_won" ${lo === 'closed_won' ? 'selected' : ''}>Ganado</option>
-                              <option value="closed_lost" ${lo === 'closed_lost' ? 'selected' : ''}>Perdido</option>
-                              <option value="no_show" ${lo === 'no_show' ? 'selected' : ''}>No show</option>
-                            </select>`;
-                        return `
-                                    <tr>
-                                        <td>${tier}</td>
-                                        <td><strong>${lead.full_name || 'Sin Nombre'}</strong><br><small>${lead.email}</small><br><span class="badge" style="font-size:9px;">${lead.event_type}</span></td>
-                                        <td><small>${lead.phone || '—'}</small></td>
-                                        <td><strong>${lead.event_date || '—'}</strong><br><small>${lead.location || '—'}</small></td>
-                                        <td style="color:var(--gold); font-weight:700;">${lead.budget || '—'}</td>
-                                        <td><span class="status-badge ${statusClass}">${lead.status}</span></td>
-                                        <td style="white-space:nowrap;">${outcomeSel}</td>
-                                        <td>${djLabel}</td>
-                                        <td style="white-space:nowrap;">
-                                            ${lead.notes ? `<button class="btn-pill" style="border-color:var(--gold); color:var(--gold);" onclick='showBlueprint("${lead.id}")'>👁️ Ver</button>` : '<small style="opacity:0.5;">Pendiente</small>'}
-                                            ${(()=>{ try { const n=JSON.parse(lead.notes||'{}'); return Array.isArray(n.selected_services)&&n.selected_services.length>0 ? `<button class="btn-pill" style="margin-top:4px;border-color:#7eb8f7;color:#7eb8f7;" onclick='showCartLines("${lead.id}")'>📋 Líneas</button>` : ''; } catch(e){ return ''; } })()}
-                                        </td>
-                                        <td style="white-space:nowrap;">
-                                            <button class="btn-pill" onclick='window.open("./client-portal.html?lead=${lead.id}&mode=manager", "_blank")' title="Abrir Portal">Portal</button>
-                                            <button class="btn-pill gold" onclick='showInvoiceModal("${lead.id}")' title="Generar Factura">Factura</button>
-                                        </td>
-                                    </tr>
-                                `;
-                    }).join('')}
-                            </tbody>
-                        </table>
+                    <p class="leads-table-label">🔴 Pendientes (${pending.length})</p>
+                    <div class="leads-table-wrap">
+                        <table>${tableHead()}<tbody>${buildRows(pending, 'leads-pending-row')}</tbody></table>
+                    </div>
+
+                    <p class="leads-table-label" style="margin-top:28px;">✅ Completadas (${completed.length})</p>
+                    <div class="leads-table-wrap">
+                        <table>${tableHead()}<tbody>${completed.length ? buildRows(completed, 'leads-completed-row') : '<tr><td colspan="9" style="color:rgba(255,255,255,0.3);padding:14px 10px;font-size:13px;">Sin órdenes completadas aún.</td></tr>'}</tbody></table>
+                    </div>
                     `;
                 } else {
                     leadsContainer.innerHTML = '<p class="fineprint">No hay leads registrados aún.</p>';

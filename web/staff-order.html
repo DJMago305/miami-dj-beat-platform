@@ -849,23 +849,46 @@
       confirmed: '#00c878',
       cancelled: '#ff6060'
     };
+    function formatPhone(raw) {
+      var d = String(raw || '').replace(/\D/g, '');
+      if (d.length === 10) return '(' + d.slice(0,3) + ')-' + d.slice(3,6) + '-' + d.slice(6);
+      if (d.length === 11 && d[0] === '1') return '(' + d.slice(1,4) + ')-' + d.slice(4,7) + '-' + d.slice(7);
+      return raw || '—';
+    }
     function renderInfoGrid(l, clientName) {
       var cfg         = ORDER_STATUS_LABEL[orderStatus] || ORDER_STATUS_LABEL['pending'];
       var statusLabel = cfg.label;
       var statusColor = STATUS_COLOR[orderStatus] || STATUS_COLOR['pending'];
       var fields = [
-        { label: 'Cliente',          val: clientName || l.name || l.contact_person || '—' },
-        { label: 'Email',            val: l.email || '—' },
-        { label: 'Teléfono',         val: l.phone || '—' },
-        { label: 'Tipo de Evento',   val: l.event_type || '—' },
-        { label: 'Fecha del Evento', val: l.event_date || '—' },
-        { label: 'Ubicación',        val: l.location || '—' },
-        { label: 'Estado Lead',      val: statusLabel, color: statusColor }
+        { label: 'Cliente',          val: clientName || l.name || l.contact_person || '—', width: '105px' },
+        { label: 'Email',            val: l.email || '—',                                  width: '155px' },
+        { label: 'Teléfono',         val: formatPhone(l.phone),                            width: '108px' },
+        { label: 'Tipo de Evento',   val: l.event_type || '—',                             width: '92px'  },
+        { label: 'Fecha del Evento', val: l.event_date ? l.event_date.replace(/-/g, ' / ') : '—', width: '122px' },
+        { label: 'Time In',          val: l.event_start_time || '', inputId: 'so-timein-input',   inputType: 'time', width: '58px'  },
+        { label: 'Time Out',         val: l.event_end_time   || '', inputId: 'so-timeout-input',  inputType: 'time', width: '58px'  },
+        { label: 'Ubicación',        val: l.location || '',         inputId: 'so-location-input',                    width: '162px' },
+        { label: 'Estado Lead',      val: statusLabel, color: statusColor,                                           width: '88px'  }
       ];
-      var headers = fields.map(function(f){ return '<th>' + esc(f.label) + '</th>'; }).join('');
-      var cells   = fields.map(function(f){
-        var style = f.color ? ' style="color:' + f.color + ';font-weight:700;"' : '';
-        return '<td' + style + '>' + esc(f.val) + '</td>';
+      var inputStyle = 'background:transparent;border:none;border-bottom:1px solid rgba(197,160,89,0.45);' +
+        'color:#d4af37;font-size:14px;font-weight:600;width:100%;outline:none;padding:2px 0;';
+      var headers = fields.map(function(f){
+        var w = f.width ? ' style="width:' + f.width + ';min-width:' + f.width + '"' : '';
+        return '<th' + w + '>' + esc(f.label) + '</th>';
+      }).join('');
+      var cells = fields.map(function(f){
+        var w = f.width ? 'width:' + f.width + ';min-width:' + f.width + ';' : '';
+        var c = f.color ? 'color:' + f.color + ';font-weight:700;' : '';
+        if (f.inputId) {
+          var iType = f.inputType || 'text';
+          var extra = iType === 'time' ? 'color-scheme:dark;' : '';
+          var ph    = iType === 'time' ? '--:--' : 'Dirección del evento…';
+          return '<td style="' + w + 'overflow:visible;">' +
+            '<input id="' + f.inputId + '" type="' + iType + '" value="' + esc(f.val) + '" ' +
+            'placeholder="' + ph + '" style="' + inputStyle + extra + '" /></td>';
+        }
+        var s = (w || c) ? ' style="' + w + c + '"' : '';
+        return '<td' + s + '>' + esc(f.val) + '</td>';
       }).join('');
       elInfoGrid.innerHTML = '<thead><tr>' + headers + '</tr></thead><tbody><tr>' + cells + '</tr></tbody>';
     }
@@ -1128,16 +1151,24 @@
         if (!err && insertRes.data) eboId = insertRes.data.id;
       }
 
-      // Sync leads.status to reflect order_status
+      // Sync leads.status + editable fields in one UPDATE
       var ORDER_TO_LEAD_STATUS = {
         pending:   'NEW',
         in_review: 'MATCHED',
         confirmed: 'CONFIRMED',
         cancelled: 'CANCELLED'
       };
+      var leadsUpdate = {};
       var newLeadStatus = ORDER_TO_LEAD_STATUS[orderStatus];
-      if (newLeadStatus && leadId) {
-        await supabase.from('leads').update({ status: newLeadStatus }).eq('id', leadId);
+      if (newLeadStatus) leadsUpdate.status = newLeadStatus;
+      var elTimeIn   = document.getElementById('so-timein-input');
+      var elTimeOut  = document.getElementById('so-timeout-input');
+      var elLocation = document.getElementById('so-location-input');
+      if (elTimeIn)   leadsUpdate.event_start_time = elTimeIn.value   || null;
+      if (elTimeOut)  leadsUpdate.event_end_time   = elTimeOut.value  || null;
+      if (elLocation) leadsUpdate.location         = elLocation.value.trim() || null;
+      if (Object.keys(leadsUpdate).length && leadId) {
+        await supabase.from('leads').update(leadsUpdate).eq('id', leadId);
       }
 
       elSaveBtn.disabled = false;
@@ -1380,7 +1411,7 @@
       // Load lead
       var { data: leadData, error: leadErr } = await supabase
         .from('leads')
-        .select('id,email,name,phone,event_date,location,contact_person,budget,status,notes,event_type,client_user_id,lead_outcome')
+        .select('id,email,name,phone,event_date,event_start_time,event_end_time,location,contact_person,budget,status,notes,event_type,client_user_id,lead_outcome')
         .eq('id', leadId)
         .maybeSingle();
 
