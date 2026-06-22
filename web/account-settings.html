@@ -4023,6 +4023,24 @@
         if (f) _stageFile(f);
       });
 
+      /* ── TICKET-HERO-CONFIG-FOCAL-CONTROL-002: Click-on-preview → focal point ──
+         Translates the click position within the preview container to _fxp/_fyp (0–100%).
+         Ignores clicks on internal controls (Change Banner button, file input). */
+      _heroDrop.addEventListener('click', function (e) {
+        /* Only active when an image is loaded in the preview */
+        if (!document.querySelector('#hero-dropzone img.mdj-hero-thumb')) return;
+        /* Ignore clicks on the Change Banner button or file input */
+        if (e.target.closest('#btn-change-hero') || e.target.id === 'hero-upload') return;
+        var rect = _heroDrop.getBoundingClientRect();
+        var newFxp = Math.round(((e.clientX - rect.left) / rect.width)  * 100);
+        var newFyp = Math.round(((e.clientY - rect.top)  / rect.height) * 100);
+        _fxp = Math.max(0, Math.min(100, newFxp));
+        _fyp = Math.max(0, Math.min(100, newFyp));
+        var img = document.querySelector('#hero-dropzone img.mdj-hero-thumb');
+        if (img) _applyFocalZoom(img);
+        if (_heroSaveBtn) _heroSaveBtn.disabled = false;
+      });
+
       /* ── Save handler ───────────────────────────────────────────── */
       if (_heroSaveBtn) {
         _heroSaveBtn.addEventListener('click', async function () {
@@ -4120,7 +4138,7 @@
 
       /* ── D-pad directional handlers ─────────────────────────────── */
       (function () {
-        var STEP = 5; /* % per click */
+        var STEP = 2; /* % per click — TICKET-HERO-CONFIG-FOCAL-CONTROL-002: reducido de 5 a 2 para control fino */
         var _interval = null;
 
         function _nudge(dx, dy) {
