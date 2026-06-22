@@ -1504,6 +1504,14 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
   white-space: nowrap !important;
 }
 
+/* Active underline fix: ::after { position:absolute } needs relative on the host element */
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-config-link.active,
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-mi-portal-link.active {
+  position: relative !important;
+}
+
 body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
   > a#mainNav-config-link[aria-hidden="true"],
 body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
@@ -1632,6 +1640,22 @@ body:not(.mdj-buyer-session):not(.mdj-is-client)
 #mainHeader.header.mdj-header-unified .header-nav .container
   > #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-compact-nav="1"] {
   justify-content: flex-start !important;
+}
+
+/*
+ * Home page — staff/owner nav: 8 ítems superan el ancho centrado → mismo fix que contact.html.
+ * justify-content: flex-start evita que INICIO quede desplazado por el overflow centrado.
+ * Aplica solo cuando body.mdj-staff-nav está presente (clase que el JS inyecta al autenticar staff).
+ */
+@media (min-width: 1001px) {
+  body.page-home.mdj-staff-nav
+    #mainHeader.header.mdj-header-unified
+    .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav {
+    justify-content: flex-start !important;
+    overflow-x: clip !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /*
@@ -1778,6 +1802,25 @@ body.mdj-is-client #mainHeader #mainNav > a#mainNav-config-link[data-mdj-nav="cl
     row-gap: 0 !important;
     overflow-x: visible !important;
     overflow-y: visible !important;
+  }
+
+  /* Staff/owner nav — páginas compactas: 8 ítems superan el centrado → INICIO queda fuera del borde izquierdo.
+   * Mismo fix que home page (body.page-home.mdj-staff-nav): justify-content: flex-start + clip.
+   * Especificidad extra (mdj-staff-nav) supera el justify-content: center del bloque de arriba. */
+  body.page-jobs.mdj-staff-nav
+    #mainHeader.header.mdj-header-unified .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.page-shop.mdj-staff-nav
+    #mainHeader.header.mdj-header-unified .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.page-mdj-rentals.mdj-staff-nav
+    #mainHeader.header.mdj-header-unified .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.page-mdj-events.mdj-staff-nav
+    #mainHeader.header.mdj-header-unified .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav {
+    justify-content: flex-start !important;
+    overflow-x: clip !important;
   }
 
   body.page-jobs #mainHeader #mainNav > a#mainNav-config-link[aria-hidden="true"],
