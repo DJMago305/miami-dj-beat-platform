@@ -267,8 +267,6 @@
     } catch (eBuyerDrift) {
       void eBuyerDrift;
     }
-    /* Sin overflow real → sin deriva (el nav ya cabe; scrollear causaría temblor innecesario). */
-    if (nav.scrollWidth <= nav.clientWidth + 4) return;
     stopDrift(nav);
     var speed = 0.32;
     var navRef = nav;
@@ -468,17 +466,6 @@
     } catch (eSkip) {
       void eSkip;
     }
-    /* Páginas internas: el nav cabe sin overflow → carrusel y deriva causan movimiento innecesario. */
-    try {
-      var b = document.body;
-      if (b && (
-        b.classList.contains('page-mdj-contact') ||
-        b.classList.contains('page-mdj-events') ||
-        b.classList.contains('page-jobs') ||
-        b.classList.contains('page-mdj-rentals') ||
-        b.classList.contains('page-shop')
-      )) return true;
-    } catch (eInner) { void eInner; }
     var n = getNav();
     if (n && n.getAttribute('data-mdj-compact-nav') === '1') return true;
     return false;
