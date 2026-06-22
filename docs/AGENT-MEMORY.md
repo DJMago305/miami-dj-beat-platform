@@ -4,7 +4,97 @@
 ---
 
 ## 📋 LECTURA DIARIA OBLIGATORIA — LEER ANTES DE CUALQUIER ACCIÓN
-*Última actualización: 2026-06-22 15:29 UTC-4. Dictada por el Capitán. No omitir.*
+*Última actualización: 2026-06-22 16:54 UTC-4. Dictada por el Capitán. No omitir.*
+
+---
+
+## 🟢 CLIENT NAV STABILITY BASELINE — LOCKED FOR PRODUCTION — 2026-06-22
+
+```
+╔══════════════════════════════════════════════════════════╗
+║         NAVIGATION FREEZE BASELINE                       ║
+║  Version : PR109                                         ║
+║  Status  : APPROVED                                      ║
+║  Date    : 2026-06-22                                    ║
+║  DO NOT MODIFY WITHOUT APPROVED TICKET                   ║
+╚══════════════════════════════════════════════════════════╝
+```
+
+### Estado: BASELINE ESTABLE ✓ — DO NOT MODIFY WITHOUT APPROVED TICKET
+
+**Validado manualmente por QA en producción — 2026-06-22 16:45 UTC-4**
+
+### Métricas de baseline aprobadas (perfil CLIENTE)
+
+| Métrica | Valor aprobado |
+|---|---|
+| `navOverflowX` | **0** |
+| `navClientWidth` | 1200px |
+| `navScrollWidth` | 1200px |
+| `columnGap` | **2px** |
+| Clipping lateral | Ninguno |
+| Desplazamiento visual entre páginas | Ninguno |
+| Recorte de caracteres | Ninguno |
+| MI PORTAL | Estable |
+
+### Páginas auditadas y aprobadas
+
+| Página | Estado |
+|---|---|
+| `contact.html` | ✓ APROBADO |
+| `services.html` | ✓ APROBADO |
+| `events.html` | ✓ APROBADO |
+| `jobs.html` | ✓ APROBADO |
+| `client-portal.html` | ✓ APROBADO |
+
+### Tickets cerrados que construyen este baseline
+
+| Ticket | Resultado |
+|---|---|
+| TICKET-CLIENT-NAV-LEFT-CLIP-019 | CERRADO ✓ |
+| TICKET-CLIENT-NAV-INTERNAL-CLIP | CERRADO ✓ |
+| TICKET-CLIENT-PORTAL-NAV-CLS | CERRADO ✓ |
+| TICKET-OWNER-STAFF-NAV-CLS | CERRADO ✓ |
+
+### 🔒 NAVIGATION LOCKED — ELEMENTOS PROTEGIDOS
+
+Los siguientes elementos están **CONGELADOS** en estado PRODUCTION BASELINE:
+
+- Header comprador (`mdj-buyer-session` / `mdj-is-client`)
+- Header artista (perfil artístico)
+- Header owner/staff (`mdj-staff-nav`)
+- Orden visual de tabs aprobado
+- Separadores visuales (`/`)
+- Espaciado horizontal validado (`column-gap: 2px` cliente interno, `clamp(3px,0.35vw,6px)` global)
+- Anchuras de tabs validadas
+- Comportamiento responsive validado
+
+### 🚫 ARCHIVOS CONGELADOS — NO MODIFICAR SIN TICKET APROBADO
+
+| Archivo | Zona congelada |
+|---|---|
+| `web/header-unified.css` | Todas las zonas de navegación aprobadas |
+| `web/mdj-shared-header.js` | Lógica completa de nav/header |
+| `web/mdj-mainnav-infinite.js` | Skip-logic y carousel |
+| Orden visual de tabs | No reordenar |
+| Espaciados de tabs | No alterar |
+| Anchuras de tabs | No alterar |
+| Lógica buyer journey | No modificar |
+
+### ✅ REGLA OPERATIVA — MODIFICACIONES FUTURAS
+
+Cualquier cambio en header / nav requiere obligatoriamente:
+
+1. Abrir ticket nuevo con nombre explícito
+2. Justificar impacto en los 3 perfiles (cliente / artista / owner-staff)
+3. Solo lectura primero — diagnóstico antes de tocar código
+4. Mostrar diff antes de aplicar
+5. Validación visual en localhost por el Capitán
+6. Aprobación explícita antes de PR
+7. PR pequeño — solo archivos de nav en scope
+8. No mezclar con docs, migrations, Supabase, staff-order
+
+---
 
 ---
 
