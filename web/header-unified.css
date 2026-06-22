@@ -17,7 +17,7 @@
   --mdj-nav-link-px:        clamp(4px, 0.45vw, 7px);   /* padding lateral por link — compactado globalmente */
   --mdj-nav-link-py-t:      4px;                       /* padding top */
   --mdj-nav-link-py-b:      8px;                       /* padding bottom */
-  --mdj-nav-gap:            clamp(3px, 0.35vw, 6px);   /* gap entre links — compactado globalmente */
+  --mdj-nav-gap:            clamp(3px, 0.35vw, 4px);   /* gap entre links — compactado globalmente */
   --mdj-nav-font-size:      clamp(16px, 1.4vw, 20px);
   --mdj-nav-font-weight:    800;
   --mdj-nav-letter-spacing: 0.14em;
@@ -1504,6 +1504,14 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
   white-space: nowrap !important;
 }
 
+/* Active underline fix: ::after { position:absolute } needs relative on the host element */
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-config-link.active,
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-mi-portal-link.active {
+  position: relative !important;
+}
+
 body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
   > a#mainNav-config-link[aria-hidden="true"],
 body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
@@ -1544,6 +1552,25 @@ body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
   > a[data-mdj-nav="tools"] {
+  display:        none    !important;
+  visibility:     hidden  !important;
+  opacity:        0       !important;
+  pointer-events: none    !important;
+  width:          0       !important;
+  min-width:      0       !important;
+  max-width:      0       !important;
+  flex:           0 0 0   !important;
+  overflow:       hidden  !important;
+  padding:        0       !important;
+  margin:         0       !important;
+}
+
+/* OWNER/STAFF: MI PORTAL colapsado a cero aunque mdj-buyer-session esté presente (perfil dual).
+   Staff/Owner usa #mainNav-guest-mi-perfil-link (MI PERFIL); no debe reservar MI PORTAL. */
+body.mdj-staff-nav
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-mi-portal-link {
   display:        none    !important;
   visibility:     hidden  !important;
   opacity:        0       !important;
@@ -1632,6 +1659,22 @@ body:not(.mdj-buyer-session):not(.mdj-is-client)
 #mainHeader.header.mdj-header-unified .header-nav .container
   > #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-compact-nav="1"] {
   justify-content: flex-start !important;
+}
+
+/*
+ * Home page — staff/owner nav: 8 ítems superan el ancho centrado → mismo fix que contact.html.
+ * justify-content: flex-start evita que INICIO quede desplazado por el overflow centrado.
+ * Aplica solo cuando body.mdj-staff-nav está presente (clase que el JS inyecta al autenticar staff).
+ */
+@media (min-width: 1001px) {
+  body.page-home.mdj-staff-nav
+    #mainHeader.header.mdj-header-unified
+    .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav {
+    justify-content: flex-start !important;
+    overflow-x: clip !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /*
@@ -1779,6 +1822,10 @@ body.mdj-is-client #mainHeader #mainNav > a#mainNav-config-link[data-mdj-nav="cl
     overflow-x: visible !important;
     overflow-y: visible !important;
   }
+
+  /* Staff/owner nav — jobs/shop/rentals/events: el primer-frame ya usa center (regla de arriba).
+   * NO se sobreescribe a flex-start para evitar el salto visual cuando mdj-staff-nav se añade tras auth.
+   * El bloque anterior (body.page-home.mdj-staff-nav) conserva flex-start solo para Inicio. */
 
   body.page-jobs #mainHeader #mainNav > a#mainNav-config-link[aria-hidden="true"],
   body.page-jobs #mainHeader #mainNav > a#mainNav-mi-portal-link.mdj-mi-portal--guest,

@@ -3356,17 +3356,21 @@
                 _ownerMp.classList.remove('mdj-mainnav-reserved-slot');
                 _ownerMp.removeAttribute('aria-hidden');
                 _ownerMp.removeAttribute('tabindex');
-                _ownerMp.style.removeProperty('display');
+                _ownerMp.style.setProperty('display', 'inline-flex', 'important');
+                _ownerMp.style.setProperty('min-width', 'max-content', 'important');
+                _ownerMp.style.setProperty('max-width', 'none', 'important');
+                _ownerMp.style.setProperty('width', 'auto', 'important');
+                _ownerMp.style.setProperty('flex', '0 0 auto', 'important');
+                _ownerMp.style.setProperty('pointer-events', 'auto', 'important');
                 _ownerMp.style.removeProperty('visibility');
-                _ownerMp.style.removeProperty('pointer-events');
-                /* Position: right after ⚙️ CONFIG (jobs slot hidden, MI PERFIL replaces it). */
+                /* Position: after CONTACTO (last visible nav item for owner). */
                 var _oNav = document.getElementById('mainNav');
-                var _oCfg = document.getElementById('mainNav-config-link');
-                var _oStf = document.getElementById('mainNav-staff-or-profile');
-                if (_oNav && _oCfg && _oCfg.parentNode === _oNav && _oCfg.nextSibling !== _ownerMp) {
-                  _oNav.insertBefore(_ownerMp, _oCfg.nextSibling || null);
-                } else if (_oNav && _oStf && _oStf.parentNode === _oNav && _oStf !== _ownerMp) {
-                  _oNav.insertBefore(_ownerMp, _oStf);
+                var _oContact = _oNav && _oNav.querySelector('a[data-mdj-nav="contact"]');
+                if (_oNav && _oContact && _oContact.parentNode === _oNav && _oContact.nextSibling !== _ownerMp) {
+                  if (_oContact.nextSibling) _oNav.insertBefore(_ownerMp, _oContact.nextSibling);
+                  else _oNav.appendChild(_ownerMp);
+                } else if (_oNav && _ownerMp.parentNode !== _oNav) {
+                  _oNav.appendChild(_ownerMp);
                 }
               }
             }
@@ -3414,10 +3418,23 @@
             mdjInstallMainNavStaticMode();
           }
           /* i18n solo toca [data-i18n]; por si el HTML inicial trae header-mi-portal en la 8.ª celda, reforzar staff.
-             Guard: no re-mostrar MI PORTAL en Home — mdjNormalizePublicHomeMainNav() ya lo ocultó (TICKET-002). */
+             Guard: no re-mostrar MI PORTAL en Home — mdjNormalizePublicHomeMainNav() ya lo ocultó (TICKET-002).
+             Owner guard: miPortalHref=dj-profile.html → mdjEnsureMiPortalInMainNav sets #mainNav-mi-portal-link
+             text to "MI PERFIL" creating a duplicate. Owner/admin/manager already have
+             #mainNav-guest-mi-perfil-link so keep #mainNav-mi-portal-link hidden. */
           if (isDjStaff && document.getElementById('mainNav') && !mdjIsPublicHomePage()) {
-            mdjEnsureMiPortalInMainNav(miPortalHref, miPortalNavOpts);
-            mdjEnsureMiPortalMobile(miPortalHref, miPortalNavOpts);
+            var _isOwnerLikeRole = appRoleLower === 'owner' || appRoleLower === 'admin' || appRoleLower === 'manager';
+            if (_isOwnerLikeRole) {
+              var _mpPortalSlot = document.getElementById('mainNav-mi-portal-link');
+              if (_mpPortalSlot) {
+                _mpPortalSlot.classList.add('mdj-mainnav-reserved-slot');
+                _mpPortalSlot.setAttribute('aria-hidden', 'true');
+                _mpPortalSlot.setAttribute('tabindex', '-1');
+              }
+            } else {
+              mdjEnsureMiPortalInMainNav(miPortalHref, miPortalNavOpts);
+              mdjEnsureMiPortalMobile(miPortalHref, miPortalNavOpts);
+            }
           }
 
           mdjApplyHeaderAuthPillSession(true);
@@ -3669,9 +3686,13 @@
                 _mpFinal.classList.remove('mdj-mainnav-reserved-slot');
                 _mpFinal.removeAttribute('aria-hidden');
                 _mpFinal.removeAttribute('tabindex');
-                _mpFinal.style.removeProperty('display');
+                _mpFinal.style.setProperty('display', 'inline-flex', 'important');
+                _mpFinal.style.setProperty('min-width', 'max-content', 'important');
+                _mpFinal.style.setProperty('max-width', 'none', 'important');
+                _mpFinal.style.setProperty('width', 'auto', 'important');
+                _mpFinal.style.setProperty('flex', '0 0 auto', 'important');
+                _mpFinal.style.setProperty('pointer-events', 'auto', 'important');
                 _mpFinal.style.removeProperty('visibility');
-                _mpFinal.style.removeProperty('pointer-events');
                 var _uid = String(window.__mdjNavOwnUserId).trim();
                 _mpFinal.href = './dj-profile.html?id=' + encodeURIComponent(_uid);
               }
@@ -3694,9 +3715,13 @@
               _mpFinal2.classList.remove('mdj-mainnav-reserved-slot');
               _mpFinal2.removeAttribute('aria-hidden');
               _mpFinal2.removeAttribute('tabindex');
-              _mpFinal2.style.removeProperty('display');
+              _mpFinal2.style.setProperty('display', 'inline-flex', 'important');
+              _mpFinal2.style.setProperty('min-width', 'max-content', 'important');
+              _mpFinal2.style.setProperty('max-width', 'none', 'important');
+              _mpFinal2.style.setProperty('width', 'auto', 'important');
+              _mpFinal2.style.setProperty('flex', '0 0 auto', 'important');
+              _mpFinal2.style.setProperty('pointer-events', 'auto', 'important');
               _mpFinal2.style.removeProperty('visibility');
-              _mpFinal2.style.removeProperty('pointer-events');
               _mpFinal2.href = './dj-profile.html?id=' + encodeURIComponent(String(window.__mdjNavOwnUserId).trim());
             }
           }
@@ -3759,9 +3784,13 @@
         _mp.classList.remove('mdj-mainnav-reserved-slot');
         _mp.removeAttribute('aria-hidden');
         _mp.removeAttribute('tabindex');
-        _mp.style.removeProperty('display');
+        _mp.style.setProperty('display', 'inline-flex', 'important');
+        _mp.style.setProperty('min-width', 'max-content', 'important');
+        _mp.style.setProperty('max-width', 'none', 'important');
+        _mp.style.setProperty('width', 'auto', 'important');
+        _mp.style.setProperty('flex', '0 0 auto', 'important');
+        _mp.style.setProperty('pointer-events', 'auto', 'important');
         _mp.style.removeProperty('visibility');
-        _mp.style.removeProperty('pointer-events');
         if (!_mp.getAttribute('href') || _mp.getAttribute('href') === '#' ||
             _mp.getAttribute('href').indexOf('login') !== -1) {
           _mp.href = './dj-profile.html?id=' + encodeURIComponent(String(uid).trim());

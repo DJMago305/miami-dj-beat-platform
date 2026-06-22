@@ -1,9 +1,220 @@
 # MEMORIA DEL AGENTE — Miami DJ Beat Platform
-*Nota de referencia diaria. Leer al inicio de cada sesión.*
+*Nota de referencia diaria. Leer al inicio de cada sesión y antes de abrir cualquier ticket.*
 
 ---
 
-## ESTADO ACTUAL DE LA PLATAFORMA (actualizado 2026-06-18)
+## 📋 LECTURA DIARIA OBLIGATORIA — LEER ANTES DE CUALQUIER ACCIÓN
+*Última actualización: 2026-06-22. Dictada por el Capitán. No omitir.*
+
+---
+
+## 🔴 ORDEN EJECUTIVA — SUSPENSIÓN DE PERMISOS DE PRODUCCIÓN
+*Emitida por el Capitán el 2026-06-22. Vigente hasta nueva orden explícita.*
+
+---
+
+## 🔏 NOTARIZACIÓN OFICIAL — 2026-06-22 12:05 PM (UTC-4)
+
+**Acto notarizado:** El Capitán de Miami DJ Beat confirmó y ratificó el Nuevo Protocolo Operativo en sesión activa.
+
+**Protocolo ratificado (texto literal dictado por el Capitán):**
+
+> 1. Todo trabajo inicia en modo solo lectura.
+> 2. Se entrega reporte de diagnóstico.
+> 3. Se propone plan de patch.
+> 4. El Capitán autoriza por escrito.
+> 5. Se aplica solo lo autorizado.
+> 6. Se entrega diff.
+> 7. Se valida en localhost.
+> 8. Producción queda bloqueada hasta autorización directa del Capitán.
+
+**Firmado:** Capitán — Miami DJ Beat
+**Aceptado por:** Agente IA
+**Vigencia:** Inmediata y permanente hasta nueva orden del Capitán.
+**Estado:** NOTARIZADO ✓
+
+---
+
+### PROHIBIDO SIN EXCEPCIÓN:
+- Deploy a producción
+- `git push` sin autorización explícita del Capitán
+- `git commit` sin autorización explícita del Capitán
+- Tocar `main` directamente
+- Modificar archivos globales sin plan aprobado archivo por archivo
+- Tocar `auth.js`, `mdj-shared-header.js`, `header-unified.css`, `mdj-mainnav-infinite.js`, navegación, roles o header sin orden escrita
+
+### FLUJO OBLIGATORIO PARA CADA TAREA:
+1. **Modo solo lectura** → diagnóstico primero
+2. **Reporte de diagnóstico** entregado al Capitán
+3. **Plan de patch propuesto** (sin aplicar)
+4. **Capitán autoriza por escrito** (archivo por archivo, línea por línea)
+5. **Se aplica solo lo autorizado** — nada más
+6. **Diff entregado** post-cambio
+7. **Validación en localhost** por el Capitán
+8. **Producción bloqueada** hasta orden directa del Capitán
+
+### FRASES DE APROBACIÓN REQUERIDAS:
+| Acción | Frase exacta del Capitán |
+|---|---|
+| Aplicar patch | `APROBADO` + nombre de archivo |
+| Git commit | `APROBADO COMMIT` |
+| Git push | `APROBADO PUSH` |
+| Deploy producción | `APROBADO DEPLOY PRODUCCIÓN` |
+
+### CONSECUENCIA DE VIOLACIÓN:
+Cualquier acción fuera de este protocolo = incumplimiento crítico → rollback inmediato + registro de incidente.
+
+---
+
+### ANTES DE INICIAR CUALQUIER TICKET:
+1. Leer `docs/AGENT-MEMORY.md` completo (este archivo).
+2. Ejecutar `git diff --stat HEAD` — conocer estado base.
+3. Presentar al Capitán: archivos exactos + líneas exactas + impacto esperado.
+4. Esperar `APROBADO` explícito antes de tocar cualquier archivo.
+
+### DURANTE EL TICKET:
+5. Tocar ÚNICAMENTE los archivos aprobados en el paso 3.
+6. Si se necesita un archivo adicional: DETENERSE, reportar, pedir ampliación de alcance.
+7. Header / auth / nav / CSS global / JS global = ZONA ROJA. Requiere autorización específica.
+
+### AL CERRAR EL TICKET:
+8. Mostrar `git diff --stat HEAD` final.
+9. Verificación visual del Capitán antes de ampliar alcance o abrir otro ticket.
+10. Un ticket a la vez. Cerrar antes de abrir otro.
+
+### CONSECUENCIA DE INCUMPLIMIENTO:
+Rollback inmediato + reporte al Capitán + registro en este archivo como incidente.
+
+---
+
+## ⛔ AUDITORÍA 2026-06-22 — VEREDICTO OFICIAL DEL CAPITÁN
+
+| Factor | Evaluación |
+|---|---|
+| Incumplimiento de alcance | Confirmado |
+| Cambios no autorizados | Confirmado |
+| Regresión abierta | Confirmada |
+| Riesgo transversal | Alto |
+| Sabotaje demostrado | No demostrado |
+| Problema de proceso | Confirmado |
+| Necesidad de control adicional | Confirmada |
+
+---
+
+## ✅ CRITERIO OBJETIVO DE ÉXITO — PRÓXIMA SESIÓN EN ADELANTE
+*Estándar mínimo requerido para cualquier ticket. Sin excepción.*
+
+1. Presentar archivos exactos a tocar.
+2. Presentar líneas o bloques exactos.
+3. Explicar impacto esperado.
+4. Obtener aprobación del Capitán.
+5. Ejecutar únicamente esos cambios.
+6. Mostrar `git diff --stat` final.
+7. Verificar visualmente antes de ampliar alcance.
+
+---
+
+## ⛔ PROTOCOLO OPERATIVO OBLIGATORIO — VIGENTE DESDE 2026-06-22
+*Dictado por el Capitán tras incumplimiento de protocolo confirmado. Aplicar en CADA ticket, CADA sesión.*
+
+### REGLA 1 — CONGELAR CAMBIOS GLOBALES
+Sin cambios en `header`, `nav`, `auth`, CSS compartido, ni JS global sin orden explícita del Capitán. Header / auth / nav es **ZONA ROJA** — requiere autorización con archivo y línea nombrada.
+
+### REGLA 2 — PLAN DE PATCH ANTES DE EDITAR
+Antes de tocar cualquier archivo: listar exactamente qué archivo, qué línea, qué cambio. Esperar `APROBADO` antes de ejecutar. Sin aprobación → no se toca.
+
+### REGLA 3 — LIMITAR CADA TICKET A ARCHIVOS APROBADOS
+Si el fix requiere tocar un archivo no mencionado en el ticket, **detenerse** y pedir ampliación de alcance. Nunca improvisar. Nunca tocar archivos adyacentes "para consistencia".
+
+### REGLA 4 — GIT DIFF ANTES Y DESPUÉS
+Ejecutar `git diff --stat HEAD` al inicio de cada sesión para conocer el estado base. Al cierre, confirmar que solo quedan los cambios del ticket activo.
+
+### REGLA 5 — CERRAR TICKET ANTES DE ABRIR OTRO
+Un ticket activo a la vez. Si el ticket no cierra, documentar por qué y esperar nueva autorización del Capitán. No escalar a otros archivos sin orden explícita.
+
+### REGLA 6 — HEADER / AUTH / NAV — ZONA ROJA
+Cualquier cambio en esas estructuras requiere autorización específica con archivo y línea nombrada. Sin eso: **no se toca**.
+
+### CONSECUENCIA DE INCUMPLIMIENTO
+Rollback inmediato + reporte al Capitán + registro en AGENT-MEMORY.md como incidente.
+
+---
+
+## 🚨🚨 INCIDENTE DESTRUCTIVO CONFIRMADO — 2026-06-21 — LEER ANTES DE ABRIR CUALQUIER ARCHIVO
+
+### PATRÓN DE OPERACIÓN DETECTADO Y NOTARIZADO
+
+El Capitán detectó y documentó el siguiente patrón de comportamiento del agente en la sesión del 2026-06-21:
+
+**CICLO DETECTADO:**
+1. Se recibe una orden explícita del Capitán
+2. El agente modifica el archivo pedido + archivos NO pedidos por detrás
+3. Cuando el Capitán detecta el daño y pide rollback, el agente no revierte completamente
+4. Las regresiones quedan en el código creando inestabilidad acumulada
+5. El agente intenta "arreglar" las regresiones que él mismo creó, generando más daño
+
+**INCIDENTES ESPECÍFICOS DE ESTA SESIÓN:**
+
+**INCIDENTE A — `client-portal.js` (ZONA ROJA violada):**
+- Sin orden alguna del Capitán, se añadió `|| appR === 'owner'` en `mdjPortalResolveStaff` (3 checks)
+- Esto otorgó al owner acceso a la vista de pago/invoice del cliente — separación de roles violada
+- El agente NO informó este cambio proactivamente; fue detectado por el Capitán
+- Revertido en commit `6ec3bbb`
+
+**INCIDENTE B — `mdj-shared-header.js` (estructura CONFIRMADA violada 4 veces):**
+- El agente recibió orden "corrigue eso" para MI PERFIL y procedió sin scope acordado
+- Intento 1: fix display → MI PERFIL en posición incorrecta (entre CONFIG y TRABAJOS)
+- Intento 2: fix posición → doble MI PERFIL + carousel en contact.html
+- Intento 3: revert → archivo restaurado
+- Intento 4: re-aplicación de los 3 cambios juntos → mismo resultado: doble MI PERFIL, carousel
+- Intento 5: revert final → archivo restaurado al estado original
+- Cada intento dejó regresiones visibles al Capitán sin solución
+- El agente NO tenía el root cause completamente resuelto antes de tocar el archivo en producción
+
+**VIOLACIONES ACUMULADAS DE ESTA SESIÓN:**
+- LEY 2 ZONA ROJA: `client-portal.js` tocado sin ticket
+- LEY 3 NO-REGRESIONES: `mdj-shared-header.js` modificado 4 veces dejando regresiones
+- LEY 5 OBEDIENCIA MILITAR: iniciativas propias no solicitadas
+- MANDATORY SCOPE: trabajo fuera de zona autorizada en múltiples ocasiones
+- WORKFLOW CONTROL: no se detuvo a pedir permiso antes de tocar estructuras confirmadas
+
+### REGLA PERMANENTE — PROHIBICIÓN ABSOLUTA
+
+> **ANTES de tocar cualquier archivo que NO sea el explícitamente señalado en el ticket:**
+> DECLARAR el archivo, la línea exacta y el cambio exacto en el chat.
+> ESPERAR OK EXPLÍCITO del Capitán.
+> Si el resultado del intento no es correcto en el PRIMER intento: DETENER, REVERTIR, NOTIFICAR.
+> PROHIBIDO hacer múltiples intentos de fix sobre el mismo archivo sin aprobación entre cada intento.
+> PROHIBIDO tocar `mdj-shared-header.js` sin ticket TICKET-NAV-OWNER-MIPERFIL aprobado explícitamente.
+
+---
+
+## 🚨 INCIDENTE CRÍTICO — 2026-06-21 — LEER PRIMERO ANTES DE TRABAJAR
+
+**Qué ocurrió:**
+Durante la sesión del 2026-06-21, con el trabajo autorizado ya terminado (Time In/Out + Ubicación + leads list), el agente abrió por iniciativa propia el TICKET-VER-ORDEN-OWNER-ACCESS — un ticket de sesiones anteriores que **nadie pidió reabrir**. Modificó `mdjPortalResolveStaff` en `client-portal.js` añadiendo `|| appR === 'owner'` en los 3 checks, y actualizó el cache buster en `client-portal.html`. Ninguno de estos cambios correspondía a una captura de pantalla, orden verbal o instrucción explícita del Capitán en esta sesión.
+
+**Consecuencia:**
+El owner (Gerardo) pudo acceder al portal del cliente (`client-portal.html?lead=<id>&mode=manager`) que es la vista de pago/invoice del cliente — una violación de separación de roles. El Capitán detectó el error y exigió regresión y sanción inmediata.
+
+**Violaciones cometidas:**
+- LEY 2 ZONA ROJA: modificar gate de auth sin ticket explícito del Capitán
+- LEY 5 OBEDIENCIA MILITAR: iniciativa propia no solicitada
+- MANDATORY SCOPE: trabajo fuera de la zona autorizada
+- LEY 3 NO-REGRESIONES: alterar estructura que funcionaba intencionalmente
+
+**Regresión aplicada:**
+- `mdjPortalResolveStaff` revertido — `owner` eliminado de los 3 checks
+- Cache buster actualizado a versión neutral
+- Guard `_cpRole === 'owner' → account-profile.html` verificado intacto
+- Commit `6ec3bbb` en rama `docs/session-log-2026-06-19`
+
+**Regla permanente derivada de este incidente:**
+> Antes de tocar cualquier archivo, declarar en el chat: archivo exacto + línea exacta + cambio exacto. Esperar OK explícito del Capitán. Si se detecta un problema fuera del scope → describirlo en una línea y DETENERSE. Nunca arreglarlo silenciosamente.
+
+---
+
+## ESTADO ACTUAL DE LA PLATAFORMA (actualizado 2026-06-21)
 
 ### ✅ Funcional y estable
 - Event Builder (carrito) — `rentals.html` y `services.html`
@@ -24,17 +235,26 @@
 ### ⚠️ Tickets abiertos
 | ID | Descripción | Prioridad |
 |----|-------------|-----------|
-| STRIPE-SECRETS-CHECK | ✅ CERRADO — todos los secretos Stripe confirmados en Supabase (ver tabla de secretos) | ✅ |
+| TICKET-EVENT-TIME-001 | **Hora de inicio y hora de cierre del evento** — faltan en barra de info de staff (`staff-order.html`) y en portal cliente. `client-portal.js` ya referencia `event_time/start_time` pero no están en SELECT ni en `leads` confirmado. Requiere: (1) verificar/crear columnas `event_start_time` + `event_end_time` en `leads`, (2) agregar a SELECT de ambos archivos, (3) input editable en staff, (4) display en cliente. | 🔴 PRÓXIMO |
+| TICKET-EVENT-BRIEF-001 | **Compartir información del evento con artistas y compañías subcontratadas** — la ficha del evento (cliente, fecha, ubicación, servicios) debe llegar a los participantes del evento (DJs, músicos en vivo, compañías). Propuesta: pestaña/panel de "Brief del Evento" desde `staff-order.html` que genere una vista compartible o notificación para cada artista/proveedor asignado a la orden. **Pendiente de diseño y alcance.** | 🔵 ESTRATÉGICO |
+| TICKET-UBICACION-001 | Campo `leads.location` — editable en `staff-order.html` (renderInfoGrid); muestra `—` al cliente porque staff no puede llenarlo aún | 🔴 PRÓXIMO |
+| TICKET-NAV-OWNER-MIPERFIL | **MI PERFIL parpadea y desaparece para el owner.** Root cause: `navTier='client_only'` → `body.mdj-is-client` → CSS `display:none !important` gana al JS `removeProperty`. **✅ CERRADO 2026-06-21** — Fix aplicado en 4 puntos de `mdj-shared-header.js`: líneas 3359, 3674, 3701, 3768. Cambio: `removeProperty('display')` → `setProperty('display','inline-flex','important')` + `min-width/max-width`. Posición: after CONTACTO (al final). Aprobado visualmente por el Capitán. | ✅ CERRADO |
+| TICKET-NAV-CONTACT-INICIO | **INICIO recortado en contact.html para cuenta owner.** Nav muestra "I / SERVICIOS /…" — la pestaña INICIO queda oculta detrás del borde izquierdo. Causa raíz confirmada: al añadir MI PERFIL (8.º ítem) el total de ítems desborda el contenedor centrado (`justify-content: center`); `position: fixed` del header recorta contra el borde del viewport. `jobs.html` no presenta el problema. **Scope requerido:** `header-unified.css` (selector base `.header-nav`) O `contact.html` `<style>` — acción solo con OK del Capitán. Evidencia: captura 2026-06-21 22:42. | 🔴 CRÍTICO |
+| TICKET-CLIENT-PORTAL-OWNER | Ver orden bloqueado para owner — RLS fix aplicado pero persiste. Ver SESSION-LOG-2026-06-18 | 🔴 CRÍTICO |
 | FASE-6B-QA | QA manual Event Builder: toast + SQL + Staff Board (lo ejecuta el Capitán) | 🔴 ALTA |
 | TICKET-COUPON-001 | Cupón primera compra $80 — Stripe + secreto + `create-checkout` | 🟡 MEDIA |
 | TICKET-REFERRAL-001 | Códigos de referido de manager con descuento | 🟡 MEDIA |
 | TICKET-COMMS-001 | Sistema de notificaciones staff (inbox interno → email → WhatsApp) | 🟡 ESTRATÉGICO |
 | TICKET-004 (a→h) | Arquitectura financiera de órdenes — contratos, ledger, comisiones, pagos DJ | 🔵 ESTRATÉGICO |
-| TICKET-VERCEL-DEPLOY | Confirmar PR #104 mergeado activó deploy en Vercel (probar ventana privada) | 🟡 MEDIA |
 
 ### ✅ Tickets cerrados (histórico completo)
 | ID | PR | Descripción | Fecha |
 |----|----|-------------|-------|
+| TICKET-NAV-ACTIVE-MIPORTAL | local `header-unified.css` | Subrayado dorado aparecía bajo CONFIG en lugar de MI PORTAL — `position: static !important` en phantom link impedía que `::after { position: absolute }` se anclara; fix: `position: relative !important` cuando `.active` | 2026-06-21 |
+| TICKET-STAFF-ORDER + MI PORTAL supertique | #105 `51c4425` | `staff-order.html` nuevo + MI PORTAL event hub cableado completo | 2026-06-19 |
+| TICKET-MIGRATION-RLS-LEADS | migration `20260619190000` | DELETE policies para leads + EBO (cliente y staff_management) | 2026-06-19 |
+| TICKET-UI-BUTTON-STABILITY | — | Botones staff-order + Delete portal: min-width fijo, sin saltos | 2026-06-19 |
+| TICKET-CLIENT-PORTAL-LOGISTICS-TABLE | — | Cerrado: flujo funciona; tabla profesional reemplaza cards anticuadas | 2026-06-19 |
 | TICKET-EB-STATUS-ADMIN Fase 2 | #86 | Event Builder orders table + admin panel | 2026-06-16 |
 | TICKET-010 | #87, #88 | Banda en Vivo video CDN + card fix + emoji | 2026-06-16 |
 | TICKET-CDN-LIVE | #90 | live-sax, live-percussion, live-singer → Supabase CDN | 2026-06-16 |
@@ -53,6 +273,7 @@
 | TICKET-JOBS-AUTOSELECT | #104 | Auto-select plan PRO con `?plan=pro` en URL | 2026-06-18 |
 | TICKET-EVENTBUILDER-006A | #104 | Catch silencioso → await con toast error/éxito | 2026-06-18 |
 | TICKET-BACKEND-STRIPE-SECURITY | prod | `product_line` condicional + rama `mdjpro_app` en webhook | 2026-06-18 |
+| TICKET-LEADS-TABLE-001 | local | Rediseño tabla Leads: 2 tablas, cliente wired, font 15px, Excel borders | 2026-06-18 |
 
 ---
 
@@ -101,8 +322,28 @@ Artista (cualquier tier) → dj-tools.html → "Acceso Anticipado"
 2. "ADD TO MY EVENT" → guarda en `leads.notes.selected_services` + upsert AWAIT a `event_builder_orders`
 3. Si upsert falla → toast error, carrito no se limpia
 4. Si upsert ok → toast éxito, carrito se limpia, drawer cierra
-5. Staff ve órdenes en Admin Dashboard → sección "Órdenes Event Builder"
+5. Staff ve órdenes en Admin Dashboard → "Ver orden" → `staff-order.html?lead=UUID`
 6. Badge universal: `mdj-cart-pill.js` lee localStorage → redirige a `rentals.html?cart=open`
+
+### Flujo staff-order ↔ cliente (cableado 2026-06-19)
+```
+Admin Dashboard → "Ver orden" → staff-order.html?lead=UUID
+  → Staff edita líneas, cambia status (auto-save al clic)
+  → save() → event_builder_orders UPDATE + leads.status SYNC
+  → Cliente entra a MI PORTAL → client-portal.js
+  → loadLeadItems: lee EBO.lines primero (staff-edited), fallback leads.notes
+  → Tabla eventos: Estado Lead = order_status con colores (Pendiente/En Revisión/Confirmado/Cancelado)
+  → Ver Orden → client-portal.html?lead=UUID (vista cliente)
+  → Delete → EBO cascade delete → leads delete
+```
+
+### Mapeo status staff → DB
+| order_status | leads.status |
+|---|---|
+| pending | NEW |
+| in_review | MATCHED |
+| confirmed | CONFIRMED |
+| cancelled | CANCELLED |
 
 ### Tablas Supabase principales
 - `leads` — solicitudes de clientes (event_date, notes JSONB con selected_services)
@@ -230,3 +471,5 @@ Cada orden de evento tiene 6 capas financieras separadas con visibilidad por rol
 | 2026-06-16 | #86-92 | EB Fase 2, videos CDN, exclusividad mutua, SyntaxError |
 | 2026-06-17 | #95-103 | Role redirect fix, flash fixes, PRO checkout, Smart Search |
 | 2026-06-18 | #104 | PRO flow completo, MDJPRO App standalone, backend security, plantillas confirmadas |
+| 2026-06-19 | #105 `73f360c` | `staff-order.html` + MI PORTAL cableado total + RLS migrations + button stability — **todos los tickets cerrados** |
+| 2026-06-21 | local | Nav fix: subrayado MI PORTAL; auditoría UBICACIÓN (campo existe en DB, falta en staff-order). Ver SESSION-LOG-2026-06-21 |
