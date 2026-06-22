@@ -4,7 +4,49 @@
 ---
 
 ## 📋 LECTURA DIARIA OBLIGATORIA — LEER ANTES DE CUALQUIER ACCIÓN
-*Última actualización: 2026-06-22. Dictada por el Capitán. No omitir.*
+*Última actualización: 2026-06-22 15:29 UTC-4. Dictada por el Capitán. No omitir.*
+
+---
+
+## 🔴 INCIDENTE PR #106 → REGRESIÓN DE NAVEGACIÓN — NOTARIZADO 2026-06-22
+
+### Estado oficial
+| PR | Resultado | Acción |
+|---|---|---|
+| PR #106 | **REGRESIÓN** — introdujo duplicado MI PERFIL + overflow en OWNER/STAFF | Revertido vía PR #107 |
+| PR #107 | **ESTABLE** — restauró navegación correcta en producción | Mergeado a `main` |
+
+### Archivos que PR #107 restauró a estado estable
+- `web/client-portal.html`
+- `web/contact.html`
+- `web/events.html`
+- `web/header-unified.css`
+- `web/mdj-mainnav-infinite.js`
+- `web/rentals.html`
+- `web/services.html`
+
+### PROHIBIDO REINTRODUCIR — VIGENTE PERMANENTEMENTE
+1. `#mainNav-mi-portal-link` visible como **MI PERFIL** bajo `body.mdj-staff-nav`
+2. Duplicado de MI PERFIL en menú OWNER/STAFF
+3. Carrusel/infinite nav activo en páginas internas (events, rentals, services, contact, jobs)
+4. INICIO desplazado fuera del viewport por overflow lateral
+5. Overflow lateral del menú (`navOverflowX > 0`)
+6. Cambios de nav/header mezclados con docs, tickets, migrations, Supabase o staff-order en el mismo PR
+
+### Causa raíz confirmada (PR #106)
+- `mdjEnsureMiPortalInMainNav` revelaba y renombraba `#mainNav-mi-portal-link` como "MI PERFIL" cuando `miPortalHref` contenía `dj-profile.html` — incluso para OWNER con sesión dual (staff + client).
+- El guard correcto es: si `body.mdj-staff-nav` → colapsar `#mainNav-mi-portal-link` a zero y hacer `return` antes de cualquier reveal/rename.
+
+### Regla nueva — TICKETS DE NAV/HEADER
+Cualquier cambio futuro en header / nav / auth debe cumplir:
+1. Ticket separado (no mezclar con otras features)
+2. Diff mínimo — solo el bloque afectado
+3. Solo lectura primero — diagnóstico antes de tocar código
+4. Validación visual en localhost confirmada por el Capitán
+5. PR pequeño — únicamente archivos de nav/header en scope
+6. Sin mezcla de archivos externos (docs, migrations, Supabase, staff-order)
+
+---
 
 ---
 
