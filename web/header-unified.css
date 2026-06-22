@@ -2831,3 +2831,41 @@ body.mdj-staff-nav.page-admin-dashboard
   margin:         0       !important;
   pointer-events: none    !important;
 }
+
+/* TICKET-CLIENT-NAV-INTERNAL-CLIP: cliente en páginas internas (contact/rentals/events/jobs) —
+   column-gap reducido a 2px para eliminar overflow en sesión mdj-buyer-session / mdj-is-client.
+   No afecta guest, owner ni staff. */
+@media (min-width: 1001px) {
+  body.page-mdj-contact.mdj-buyer-session
+    #mainHeader.header.mdj-header-unified .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.page-mdj-contact.mdj-is-client
+    #mainHeader.header.mdj-header-unified .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.page-mdj-rentals.mdj-buyer-session
+    #mainHeader.header.mdj-header-unified .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.page-mdj-rentals.mdj-is-client
+    #mainHeader.header.mdj-header-unified .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.page-mdj-events.mdj-buyer-session
+    #mainHeader.header.mdj-header-unified .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.page-mdj-events.mdj-is-client
+    #mainHeader.header.mdj-header-unified .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.page-jobs.mdj-buyer-session
+    #mainHeader.header.mdj-header-unified .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.page-jobs.mdj-is-client
+    #mainHeader.header.mdj-header-unified .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.mdj-private-dashboard.mdj-buyer-session
+    #mainHeader.header.mdj-header-unified .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav,
+  body.mdj-private-dashboard.mdj-is-client
+    #mainHeader.header.mdj-header-unified .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav {
+    column-gap: 2px !important;
+  }
+}
