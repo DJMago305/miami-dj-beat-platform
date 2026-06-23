@@ -3959,21 +3959,35 @@
         };
 
         // ── Role photo cards: clic en la foto = checkbox nativo (un solo toggle) + persistencia ──
+        // TICKET-CONFIG-CATEGORIA-001 — JOBS WIRING GUARD:
+        // Jobs puede inicializar artist_specialty si está vacío o básico (1 parte).
+        // Si CONFIG ya guardó especialidades detalladas (≥2 partes separadas por ·), se preservan.
         function persistJobRolesToProfile() {
             if (!supabase) return;
             const selectedRoles = Array.from(document.querySelectorAll('input[name="roles"]:checked')).map(c => c.value);
             var specLine = mdjJobsBuildArtistSpecialtyLine();
             supabase.auth.getSession().then(({ data: { session } }) => {
                 if (!session) return;
+                /* Read current artist_specialty before overwriting */
                 supabase
                     .from('dj_profiles')
-                    .update({ roles: selectedRoles.join(', '), artist_specialty: specLine || null })
+                    .select('artist_specialty')
                     .eq('user_id', session.user.id)
-                    .then(({ error }) => {
-                        if (error) {
-                            void error;
-                        }
-                        void updateJobsAfterRolesCta();
+                    .maybeSingle()
+                    .then(({ data: cur }) => {
+                        var currentSpec = (cur && cur.artist_specialty) || '';
+                        var parts = currentSpec.split('·').map(function (p) { return p.trim(); }).filter(Boolean);
+                        /* Preserve if artist has a CONFIG-detailed specialty (2+ parts = tipo + al menos 1 chip/comercial).
+                           Jobs only writes if field is empty or contains just a single role name. */
+                        var specToSave = parts.length >= 2 ? currentSpec : (specLine || null);
+                        supabase
+                            .from('dj_profiles')
+                            .update({ roles: selectedRoles.join(', '), artist_specialty: specToSave })
+                            .eq('user_id', session.user.id)
+                            .then(({ error }) => {
+                                if (error) { void error; }
+                                void updateJobsAfterRolesCta();
+                            });
                     });
             });
         }
