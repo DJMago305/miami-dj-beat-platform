@@ -1292,6 +1292,10 @@
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
           Cuenta
         </button>
+        <button class="acct-side-link" onclick="showPanel('categoria',this)">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          Categoría
+        </button>
         <button class="acct-side-link" onclick="showPanel('agenda',this)">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           Agenda / Disponibilidad
@@ -1708,6 +1712,68 @@
     </div>
 
     </div><!-- /panel-account -->
+
+    <!-- PANEL: CATEGORÍA ──────────────────────────────────────── -->
+    <div id="panel-categoria" class="acct-panel" style="padding-top:16px;">
+      <h1 class="acct-h1">Categoría Artística</h1>
+      <p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 24px;">Esta línea aparece en tu perfil público encima de tu nombre.</p>
+
+      <div class="acct-card">
+        <div class="acct-card-body" style="padding:24px 28px 28px;">
+
+          <!-- ── TIPO PRINCIPAL ── -->
+          <div style="margin-bottom:24px;">
+            <label class="cfg-label" style="font-size:10px;letter-spacing:2px;" for="cat-tipo">Tipo principal</label>
+            <select id="cat-tipo" class="sys-input" style="margin-top:8px;max-width:260px;">
+              <option value="DJ / Actuación">DJ / Actuación</option>
+              <option value="MC y Presentadores">MC y Presentadores</option>
+              <option value="Hora Loca Experience">Hora Loca Experience</option>
+              <option value="Músicos en Vivo">Músicos en Vivo</option>
+              <option value="Captura y Visuales">Captura y Visuales</option>
+              <option value="Staff">Staff</option>
+              <option value="Payasos &amp; Comediantes">Payasos &amp; Comediantes</option>
+            </select>
+          </div>
+
+          <!-- ── DIVIDER ── -->
+          <div style="border-top:1px solid rgba(255,255,255,0.07);margin:0 -28px 24px;"></div>
+
+          <!-- ── ESPECIALIDADES (chips — JS los genera dinámicamente según tipo) ── -->
+          <div id="cat-section-dj">
+            <label id="cat-chips-label" class="cfg-label" style="font-size:10px;letter-spacing:2px;display:block;margin-bottom:14px;">Especialidades</label>
+            <div id="cat-chips" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;">
+              <!-- populated by JS -->
+            </div>
+          </div>
+
+          <!-- ── NOMBRE COMERCIAL (visible para Hora Loca y Payasos) ── -->
+          <div id="cat-section-comercial" style="display:none;">
+            <label class="cfg-label" style="font-size:10px;letter-spacing:2px;" for="cat-nombre-comercial">Nombre comercial</label>
+            <input id="cat-nombre-comercial" type="text" class="sys-input" style="margin-top:8px;"
+              placeholder="Hora Loca Miami" maxlength="80" autocomplete="off" />
+            <p style="font-size:11px;color:rgba(255,255,255,0.35);margin:6px 0 0;">Nombre que aparecerá en tu perfil público.</p>
+          </div>
+
+          <!-- ── DIVIDER ── -->
+          <div style="border-top:1px solid rgba(255,255,255,0.07);margin:24px -28px 24px;"></div>
+
+          <!-- ── PREVIEW VIVO ── -->
+          <div style="margin-bottom:24px;">
+            <label class="cfg-label" style="font-size:10px;letter-spacing:2px;display:block;margin-bottom:10px;">Preview</label>
+            <p style="font-size:11px;color:rgba(255,255,255,0.4);margin:0 0 10px;">Así aparecerás:</p>
+            <div id="cat-preview" style="padding:14px 20px;background:rgba(197,160,89,0.06);border:1px solid rgba(197,160,89,0.22);border-radius:10px;font-size:13px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:rgba(197,160,89,0.9);line-height:1.5;min-height:44px;">
+              DJ · OPEN FORMAT · HIALEAH
+            </div>
+            <p style="font-size:11px;color:rgba(255,255,255,0.3);margin:6px 0 0;">La ciudad se agrega automáticamente desde tu perfil.</p>
+          </div>
+
+          <!-- ── FEEDBACK + SAVE ── -->
+          <p id="cat-msg" style="display:none;font-size:13px;margin-bottom:12px;"></p>
+          <button id="cat-save-btn" class="sys-btn primary" type="button">Guardar categoría</button>
+
+        </div>
+      </div>
+    </div><!-- /panel-categoria -->
 
     <!-- PANEL: AGENDA ─────────────────────────────────────────── -->
     <div id="panel-agenda" class="acct-panel">
@@ -4350,13 +4416,14 @@
     (function () {
       /* ── Panel switcher ── */
       function showPanel(id, btn) {
-        document.querySelectorAll('#panel-account,#panel-agenda,#panel-rewards,#panel-products,#panel-notifications,#panel-billing,#panel-soundfortips,#panel-devices,#panel-socials,#panel-create-profile,#panel-danger,#panel-campaign').forEach(function (p) {
+        document.querySelectorAll('#panel-account,#panel-categoria,#panel-agenda,#panel-rewards,#panel-products,#panel-notifications,#panel-billing,#panel-soundfortips,#panel-devices,#panel-socials,#panel-create-profile,#panel-danger,#panel-campaign').forEach(function (p) {
           p.classList.remove('active');
         });
         var target = document.getElementById('panel-' + id);
         if (target) target.classList.add('active');
         document.querySelectorAll('.acct-side-link').forEach(function (b) { b.classList.remove('active'); });
         if (btn) btn.classList.add('active');
+        if (id === 'categoria' && typeof loadCategoriaPanel === 'function') loadCategoriaPanel();
         if (id === 'billing' && typeof refreshBillingPanel === 'function') refreshBillingPanel();
         if (id === 'agenda' && typeof loadSettingsForm === 'function') {
           loadSettingsForm().catch(function (e) { console.warn('[agenda] load error:', e); });
@@ -4373,6 +4440,249 @@
         if (id === 'create-profile') loadCreateProfilePanel();
       }
       window.showPanel = showPanel;
+
+      /* ── TICKET-CONFIG-CATEGORIA-001 v3: Taxonomía final Miami DJ Beat ───── */
+      (function () {
+
+        /* ── Single source of truth for all categories ─────────────────── */
+        var CAT_TAXONOMY = {
+          'DJ / Actuación': {
+            type: 'chips',
+            label: 'Especialidades DJ',
+            displayAs: 'DJ',
+            items: ['Open Format','Latin Format','Wedding','Corporate','Official','Resident','Warm-Up','Mobile','Club','Private Events','Festival','Luxury Events','Bilingual','Radio','Producer','Artistic Manager','Headliner','Opening','Closing','Support','Guest','Tour','Show','Scratch','Competition','Destination Wedding','Yacht Party']
+          },
+          'MC y Presentadores': {
+            type: 'chips',
+            label: 'Especialidades MC',
+            items: ['MC','Animador','Master of Ceremonies','Bilingual MC','Wedding MC','Corporate MC','Event Host','Party Host','Festival Host','Presenter','Announcer','Stage Host','Brand Ambassador']
+          },
+          'Hora Loca Experience': { type: 'manual', label: '' },
+          'Músicos en Vivo': {
+            type: 'chips',
+            label: 'Especialidades Músicos',
+            items: ['Singer','Band','Saxophonist','Violinist','Percussionist','Guitarist','Pianist','Drummer','Trumpet Player','Solo Musician','Duo','Trio','Orchestra']
+          },
+          'Captura y Visuales': {
+            type: 'chips',
+            label: 'Especialidades Visuales',
+            items: ['Photographer','Videographer','Drone Operator','Content Creator','Live Streaming','Event Coverage','Photo Booth','360 Booth','LED Visuals','VJ']
+          },
+          'Staff': {
+            type: 'chips',
+            label: 'Especialidades Staff',
+            items: ['Event Coordinator','Event Manager','Production Assistant','Stage Manager','Security Staff','Brand Staff','Hospitality Staff','Registration Staff','Setup Crew','Breakdown Crew','Bartender','Waiter','Waitress','Cook','Dishwasher','Cleaning Crew']
+          },
+          'Payasos & Comediantes': {
+            type: 'chips+manual',
+            label: 'Especialidades',
+            items: ['Clown','Comedian','Kids Entertainer','Character Performer','Magic Show']
+          }
+        };
+
+        /* ── Chip styles (injected once) ──────────────────────────────── */
+        var _catStyleDone = false;
+        function _injectCatStyles() {
+          if (_catStyleDone) return; _catStyleDone = true;
+          var s = document.createElement('style');
+          s.textContent = [
+            '.mdj-cat-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;',
+            'border:1px solid rgba(255,255,255,0.10);border-radius:8px;cursor:pointer;',
+            'font-size:12px;font-weight:700;letter-spacing:.05em;color:rgba(255,255,255,0.45);',
+            'transition:border-color .15s,color .15s,background .15s;user-select:none;}',
+            '.mdj-cat-chip:hover{border-color:rgba(197,160,89,0.35);color:rgba(197,160,89,0.8);}',
+            '.mdj-cat-chip input{display:none;}',
+            '.mdj-cat-chip:has(input:checked){border-color:rgba(197,160,89,0.65);',
+            'background:rgba(197,160,89,0.09);color:rgba(197,160,89,1);font-weight:800;}'
+          ].join('');
+          document.head.appendChild(s);
+        }
+
+        /* ── Helpers ───────────────────────────────────────────────────── */
+        function _getCatDef(tipo) {
+          return CAT_TAXONOMY[tipo] || CAT_TAXONOMY['DJ / Actuación'];
+        }
+
+        /* Render chips into #cat-chips; pre-check items in checkedList */
+        function _renderChips(items, checkedList) {
+          var container = document.getElementById('cat-chips');
+          if (!container) return;
+          container.innerHTML = '';
+          (items || []).forEach(function (item) {
+            var lbl = document.createElement('label');
+            lbl.className = 'mdj-cat-chip';
+            var cb = document.createElement('input');
+            cb.type = 'checkbox'; cb.value = item;
+            cb.checked = (checkedList || []).indexOf(item) !== -1;
+            lbl.appendChild(cb);
+            lbl.appendChild(document.createTextNode('\u00a0' + item));
+            container.appendChild(lbl);
+          });
+        }
+
+        /* Show/hide chip section and manual section according to category type */
+        function _toggleSections(tipo) {
+          var def    = _getCatDef(tipo);
+          var djSec  = document.getElementById('cat-section-dj');
+          var comSec = document.getElementById('cat-section-comercial');
+          var lblEl  = document.getElementById('cat-chips-label');
+          var showChips  = def.type === 'chips' || def.type === 'chips+manual';
+          var showManual = def.type === 'manual' || def.type === 'chips+manual';
+          if (djSec)  djSec.style.display  = showChips  ? '' : 'none';
+          if (comSec) comSec.style.display = showManual ? '' : 'none';
+          if (lblEl && def.label) lblEl.textContent = def.label;
+          /* Clear the hidden section to prevent contamination */
+          if (!showManual) {
+            var comEl = document.getElementById('cat-nombre-comercial');
+            if (comEl) comEl.value = '';
+          }
+          if (!showChips) _renderChips([], []);
+        }
+
+        /* Parse stored artist_specialty → { tipo, chips[], comercial } */
+        function _parseSpecialty(raw) {
+          if (!raw) return { tipo: 'DJ / Actuación', chips: [], comercial: '' };
+          var parts = raw.split('·').map(function (p) { return p.trim(); }).filter(Boolean);
+          var tipo  = parts[0];
+          /* Reverse-map displayAs aliases back to taxonomy keys */
+          if (!CAT_TAXONOMY[tipo]) {
+            var found = Object.keys(CAT_TAXONOMY).filter(function (k) {
+              return CAT_TAXONOMY[k].displayAs === tipo;
+            })[0];
+            tipo = found || 'DJ / Actuación';
+          }
+          var def  = _getCatDef(tipo);
+          var rest = parts.slice(1);
+          if (def.type === 'manual') {
+            return { tipo: tipo, chips: [], comercial: rest.join(' · ') };
+          }
+          var known    = def.items || [];
+          var chips    = rest.filter(function (v) { return known.indexOf(v) !== -1; });
+          var unknowns = rest.filter(function (v) { return known.indexOf(v) === -1; });
+          return { tipo: tipo, chips: chips, comercial: unknowns.join(' · ') };
+        }
+
+        /* Build specialty string from current UI (NO city — city appended by hero JS) */
+        function _buildSpecialty() {
+          var tipo  = (document.getElementById('cat-tipo') || {}).value || 'DJ / Actuación';
+          var def   = _getCatDef(tipo);
+          /* Use displayAs alias when set (e.g. "DJ / Actuación" → saves as "DJ") */
+          var parts = [def.displayAs || tipo];
+          if (def.type !== 'manual') {
+            var chips = Array.from(document.querySelectorAll('#cat-chips input:checked')).map(function (c) { return c.value; });
+            Array.prototype.push.apply(parts, chips);
+          }
+          if (def.type !== 'chips') {
+            var com = ((document.getElementById('cat-nombre-comercial') || {}).value || '').trim();
+            if (com) parts.push(com);
+          }
+          return parts.join(' · ');
+        }
+
+        /* Update live preview */
+        function _updatePreview() {
+          var spec    = _buildSpecialty();
+          var preview = document.getElementById('cat-preview');
+          if (!preview) return;
+          var city = window._mdjCatCity || '';
+          preview.textContent = city ? (spec + ' · ' + city).toUpperCase() : spec.toUpperCase();
+        }
+
+        /* Hydrate UI from stored value */
+        function _hydrateUI(raw, city) {
+          var parsed = _parseSpecialty(raw);
+          window._mdjCatCity = city || '';
+          var tipoEl = document.getElementById('cat-tipo');
+          /* Map tipo value to select option (handle legacy and missing) */
+          var effectiveTipo = 'DJ / Actuación';
+          if (tipoEl) {
+            var match = Array.from(tipoEl.options).some(function (o) { return o.value === parsed.tipo; });
+            effectiveTipo = match ? parsed.tipo : 'DJ / Actuación';
+            tipoEl.value = effectiveTipo;
+          }
+          /* Render chips for effective tipo, pre-check stored chips */
+          var def = _getCatDef(effectiveTipo);
+          _renderChips(def.items || [], def.type !== 'manual' ? parsed.chips : []);
+          /* Populate comercial field only when relevant */
+          var comEl = document.getElementById('cat-nombre-comercial');
+          if (comEl) comEl.value = def.type !== 'chips' ? parsed.comercial : '';
+          _toggleSections(effectiveTipo);
+          _updatePreview();
+        }
+
+        /* Wire listeners once (uses delegation on #cat-chips for dynamic chips) */
+        var _catWiredOnce = false;
+        function _wireListeners() {
+          if (_catWiredOnce) return; _catWiredOnce = true;
+          var tipoEl = document.getElementById('cat-tipo');
+          if (tipoEl) {
+            tipoEl.addEventListener('change', function () {
+              var tipo = tipoEl.value;
+              var def  = _getCatDef(tipo);
+              _renderChips(def.items || [], []); /* fresh chips, nothing pre-checked */
+              _toggleSections(tipo);
+              _updatePreview();
+            });
+          }
+          /* Delegation: handles dynamically generated chips without re-wiring */
+          var chipsWrap = document.getElementById('cat-chips');
+          if (chipsWrap) chipsWrap.addEventListener('change', _updatePreview);
+          var comEl = document.getElementById('cat-nombre-comercial');
+          if (comEl) comEl.addEventListener('input', _updatePreview);
+          var saveBtn = document.getElementById('cat-save-btn');
+          if (saveBtn) saveBtn.addEventListener('click', _saveCategoria);
+        }
+
+        /* Save to Supabase */
+        async function _saveCategoria() {
+          var msg = document.getElementById('cat-msg');
+          var btn = document.getElementById('cat-save-btn');
+          var sb  = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+          if (!sb) return;
+          try {
+            var { data: { session } } = await sb.auth.getSession();
+            if (!session) { _catShowMsg(msg, 'Sin sesión activa.', 'error'); return; }
+            if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+            var spec = _buildSpecialty();
+            var { error } = await sb.from('dj_profiles')
+              .update({ artist_specialty: spec || null })
+              .eq('user_id', session.user.id);
+            if (error) throw error;
+            _catShowMsg(msg, '✓ Categoría guardada.', 'ok');
+          } catch (err) {
+            _catShowMsg(msg, 'Error: ' + (err.message || err), 'error');
+          } finally {
+            if (btn) { btn.disabled = false; btn.textContent = 'Guardar categoría'; }
+          }
+        }
+
+        function _catShowMsg(el, text, type) {
+          if (!el) return;
+          el.textContent = text;
+          el.style.color = type === 'ok' ? '#34d399' : '#ef4444';
+          el.style.display = 'block';
+          setTimeout(function () { el.style.display = 'none'; }, 3500);
+        }
+
+        /* Public entry point — called by showPanel('categoria') */
+        window.loadCategoriaPanel = async function loadCategoriaPanel() {
+          _injectCatStyles();
+          var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+          if (!sb) return;
+          try {
+            var { data: { session } } = await sb.auth.getSession();
+            if (!session) return;
+            var { data: p } = await sb.from('dj_profiles')
+              .select('artist_specialty, city')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+            _hydrateUI(p ? (p.artist_specialty || '') : '', p ? (p.city || '') : '');
+            _wireListeners();
+          } catch (e) { console.warn('[categoria] loadCategoriaPanel:', e); }
+        };
+
+      }());
+      /* ── /TICKET-CONFIG-CATEGORIA-001 ────────────────────────────────── */
 
       /* ── Populate sidebar avatar/name/email from existing session data ── */
       function _hydrateSidebarFromSession() {
