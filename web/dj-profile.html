@@ -4594,10 +4594,13 @@
             }
 
             // ── Roles label hero (sin PLAN PRO; va en #pub-hero-plan-pill) ──
+            // TICKET-PROFILE-HERO-SPECIALTY-001: artist_specialty tiene prioridad sobre roles traducidos.
             const roleEl = document.getElementById('pub-role-label');
             if (roleEl) {
                 let roleLine = '';
-                if (p.roles) {
+                if (p.artist_specialty) {
+                    roleLine = p.artist_specialty.trim();
+                } else if (p.roles) {
                     const roleArr = p.roles.split(',').map(r => (ROLE_LABELS[r.trim().toUpperCase()] || r.trim()));
                     roleLine = roleArr.join(' · ');
                 }
