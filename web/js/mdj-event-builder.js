@@ -1182,15 +1182,49 @@
         return busyMap;
     }
 
+    /* TICKET-MATCHING-TAXONOMY-MAP-001: alineado con taxonomía oficial PR #113.
+       Sin géneros musicales en DJ. Keywords en inglés y español para cobertura total.
+       Agregar aquí nuevas especialidades cuando el artista las configure en CONFIG → Categoría. */
     var SPECIALTY_CAJON_MAP = {
-        dj:         ['dj', 'open format', 'wedding', 'latin', 'edm', 'hip hop', 'reggaeton', 'house', 'techno', 'trap', 'productor'],
-        horaloca:   ['hora loca'],
-        live:       ['músicos en vivo', 'musicos en vivo', 'orquesta', 'banda', 'cantante', 'violinista', 'saxofonista', 'percusionista', 'live'],
-        live_music: ['músicos en vivo', 'musicos en vivo', 'orquesta', 'banda', 'cantante'],
-        mc:         ['mc', 'presentador', 'animador'],
-        visuals:    ['captura', 'visual', 'foto booth', '360', 'fotografo', 'videografo'],
-        payaso:     ['payaso', 'clown', 'infantil'],
-        staff:      ['staff', 'bartender', 'mesero', 'camarero', 'cocinero', 'chef', 'limpieza', 'utileria', 'operador', 'drone']
+        dj: [
+            'dj', 'open format', 'latin format', 'wedding', 'corporate', 'official',
+            'resident', 'warm-up', 'mobile', 'club', 'private events', 'festival',
+            'luxury events', 'bilingual', 'radio', 'producer', 'artistic manager',
+            'headliner', 'opening', 'closing', 'support', 'guest', 'tour', 'show',
+            'scratch', 'competition', 'destination wedding', 'yacht party'
+        ],
+        horaloca: ['hora loca', 'hora loca experience'],
+        live: [
+            'músicos en vivo', 'musicos en vivo', 'singer', 'band', 'saxophonist',
+            'violinist', 'percussionist', 'guitarist', 'pianist', 'drummer',
+            'trumpet player', 'solo musician', 'duo', 'trio', 'orchestra',
+            'orquesta', 'cantante', 'live'
+        ],
+        live_music: [
+            'músicos en vivo', 'musicos en vivo', 'singer', 'band', 'orchestra', 'orquesta', 'cantante'
+        ],
+        mc: [
+            'mc', 'mc y presentadores', 'presentador', 'animador',
+            'master of ceremonies', 'bilingual mc', 'wedding mc', 'corporate mc',
+            'event host', 'party host', 'festival host', 'presenter',
+            'announcer', 'stage host', 'brand ambassador'
+        ],
+        visuals: [
+            'captura', 'captura y visuales', 'visual', 'photo booth', 'foto booth',
+            '360', 'photographer', 'videographer', 'content creator',
+            'live streaming', 'event coverage', 'led visuals', 'vj', 'drone operator'
+        ],
+        payaso: [
+            'payaso', 'payasos', 'clown', 'comedian', 'kids entertainer',
+            'character performer', 'magic show', 'infantil'
+        ],
+        staff: [
+            'staff', 'bartender', 'waiter', 'waitress', 'cook', 'dishwasher',
+            'cleaning crew', 'mesero', 'camarero', 'cocinero',
+            'event coordinator', 'event manager', 'production assistant',
+            'stage manager', 'security staff', 'brand staff',
+            'hospitality staff', 'registration staff', 'setup crew', 'breakdown crew', 'drone'
+        ]
     };
 
     var EB_TIER_ORDER = { ELITE: 3, PRO: 2, LITE: 1 };
