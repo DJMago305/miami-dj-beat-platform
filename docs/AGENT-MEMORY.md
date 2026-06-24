@@ -4,7 +4,7 @@
 ---
 
 ## 📋 LECTURA DIARIA OBLIGATORIA — LEER ANTES DE CUALQUIER ACCIÓN
-*Última actualización: 2026-06-22 16:54 UTC-4. Dictada por el Capitán. No omitir.*
+*Última actualización: 2026-06-23 00:40 UTC-4. Cierre de sesión nocturna: matching taxonomy mergeado, tickets jobs documentados, taller limpio. Protocolo QA-primero registrado para próxima sesión.*
 
 ---
 
@@ -95,6 +95,183 @@ Cualquier cambio en header / nav requiere obligatoriamente:
 8. No mezclar con docs, migrations, Supabase, staff-order
 
 ---
+
+---
+
+## ✅ TICKET-HERO-CONFIG-FOCAL-CONTROL-002 — CERRADO / PR #111 — 2026-06-22
+
+**Archivo:** `web/account-settings.html` (solo este archivo)
+**Impacto:** Editor hero/banner en CONFIG — mejora de control de encuadre. Cero cambios en hero público.
+
+### Cambios implementados
+1. **Click-sobre-preview:** Listener en `#hero-dropzone` que traduce click → `_fxp` / `_fyp` (0–100%), aplica `_applyFocalZoom`, activa botón Save. Ignora clicks en `#btn-change-hero` y `#hero-upload`.
+2. **Paso d-pad:** `STEP = 5` → `STEP = 2` (51 posiciones vs 21 anteriores = control fino).
+
+### Estado
+- PR: #111 — MERGED ✅
+- Deploy: COMPLETADO ✅
+- Hero público (`dj-profile.html`): INTACTO
+
+---
+
+## 🟡 TICKET-PRO-CHECKOUT-004 — PARCIALMENTE RESUELTO (~80%) — NOTARIZADO 2026-06-22
+
+**Auditoría completada el 2026-06-22. Solo lectura — cero cambios.**
+
+### Estado real del código (no el ticket)
+El ticket describe un estado ANTERIOR. El código actual ya tiene el flujo parcialmente corregido:
+
+| Componente | Estado |
+|---|---|
+| `create-checkout` Edge Function | COMPLETO (monthly/semestral/annual/MDJPRO) |
+| `stripe-webhook` Edge Function | COMPLETO (checkout.completed, invoice.paid, sub.deleted, MDJPRO auto-license) |
+| Botones upgrade en `dj-dashboard.html` | ✅ Llaman Edge Function directamente |
+| Botones upgrade en `dj-tools.html` | ✅ Llaman Edge Function directamente |
+| Botones upgrade en `jobs.html` | ✅ Llaman Edge Function directamente |
+| Botones en `account-settings.html` | 🔀 Redirigen a `dj-dashboard.html#panel-billing` |
+
+### Único bloqueante no verificable desde local
+Los secrets de Stripe en **Supabase Dashboard → Production**:
+- `STRIPE_SECRET_KEY`
+- `STRIPE_PRICE_MONTHLY`
+- `STRIPE_PRICE_ANNUAL`
+- `STRIPE_WEBHOOK_SECRET`
+
+Si están configurados → ticket RESUELTO. Si no → bloqueante real de producción.
+
+### `mdbSupabaseFunctionUrl('n')`
+`'n'` es alias/clave corta para `create-checkout` en `supabase-config.js`. Es válido. Los archivos actualizados usan la clave explícita `'create-checkout'`.
+
+### Veredicto
+**B) PARCIALMENTE RESUELTO** — Pendiente confirmación de secrets en producción por el Capitán.
+
+---
+
+## ✅ TICKET-CONFIG-CATEGORIA-001 — CERRADO / MERGED / APROBADO — 2026-06-22
+
+### Estado
+```
+STATUS: CLOSED ✅
+STATUS: MERGED ✅
+STATUS: APPROVED ✅
+Fecha: 2026-06-22
+```
+
+### Archivos afectados
+- `web/account-settings.html` — nuevo panel "Categoría" + IIFE JS completo
+- `web/jobs.html` — guard en `persistJobRolesToProfile()`
+
+### Taxonomía oficial aprobada — REFERENCIA CANÓNICA
+
+**Categorías principales (`#cat-tipo`):**
+
+| Valor interno | Guardado como (`displayAs`) |
+|---|---|
+| `DJ / Actuación` | `DJ` |
+| `MC y Presentadores` | — |
+| `Hora Loca Experience` | — |
+| `Músicos en Vivo` | — |
+| `Captura y Visuales` | — |
+| `Staff` | — |
+| `Payasos & Comediantes` | — |
+
+**Especialidades DJ aprobadas (28 chips — SIN géneros musicales):**
+```
+Open Format · Latin Format · Wedding · Corporate · Official · Resident · Warm-Up
+Mobile · Club · Private Events · Festival · Luxury Events · Bilingual · Radio
+Producer · Artistic Manager · Headliner · Opening · Closing · Support · Guest
+Tour · Show · Scratch · Competition · Destination Wedding · Yacht Party
+```
+
+### Reglas de negocio aprobadas — NO MODIFICAR
+
+1. **PROHIBIDO** incluir géneros musicales en Categoría (House, EDM, Salsa, Bachata, Reggaeton, Merengue, Hip-Hop, etc.)
+2. **Las especialidades = función profesional**, no estilo musical.
+3. **Preview y guardado:** siempre `"DJ"` nunca `"DJ / Actuación"` → `displayAs: 'DJ'`
+4. **Banquet Hall** → NO es categoría DJ ni especialidad DJ.
+5. **Production Company** → NO es categoría principal.
+6. **Staff incluye:** Bartender, Waiter, Waitress, Cook, Dishwasher, Cleaning Crew, personal operativo.
+7. **La plataforma es también bolsa de empleo y reclutamiento de eventos.**
+
+### Jobs Wiring Guard — aprobado
+
+**`jobs.html` → `persistJobRolesToProfile()`:**
+- `roles` → Jobs siempre actualiza.
+- `artist_specialty` → Jobs solo escribe si tiene **0 o 1 parte** (vacío o básico).
+- Si `artist_specialty` tiene **≥ 2 partes** → CONFIG es dueño → Jobs preserva sin sobrescribir.
+
+**Propietario de campos:**
+| Campo | Dueño |
+|---|---|
+| `dj_profiles.roles` | Jobs |
+| `dj_profiles.artist_specialty` | CONFIG → Categoría |
+
+### Formato de string en DB
+
+```
+DJ · Open Format · Headliner · Producer
+MC y Presentadores · Wedding MC · Bilingual MC
+Staff · Bartender · Waiter
+Hora Loca Experience · Hora Loca Miami
+Payasos & Comediantes · Clown · Happy Kids Entertainment
+```
+
+### Hero público (dj-profile.html)
+`artist_specialty` se renderiza en `#pub-role-label` como prioridad sobre `roles`.
+City se agrega automáticamente: `artist_specialty + ' · ' + city`.
+
+### Usar como referencia oficial para
+- Perfiles artísticos futuros
+- Búsqueda de talento
+- Jobs / directorio
+- Matching de staff para eventos
+
+---
+
+---
+
+## ✅ TICKET-PROFILE-HERO-SPECIALTY-001 — CERRADO — 2026-06-22
+
+**Archivo:** `web/dj-profile.html` — solo bloque `#pub-role-label` (~líneas 4597–4608)
+
+### Problema
+El hero del perfil público ignora `p.artist_specialty`. Solo usa `p.roles` (traducido por ROLE_LABELS) + `p.city`. Si `p.roles = null` solo aparece la ciudad.
+
+### Fix mínimo (cuando Capitán autorice)
+Priorizar `p.artist_specialty` en el bloque del `#pub-role-label`:
+```javascript
+let roleLine = '';
+if (p.artist_specialty) {
+    roleLine = p.artist_specialty.trim();
+} else if (p.roles) {
+    const roleArr = p.roles.split(',').map(r => (ROLE_LABELS[r.trim().toUpperCase()] || r.trim()));
+    roleLine = roleArr.join(' · ');
+}
+// + city/region como antes
+```
+
+### Resultado esperado
+DJYuyo con `artist_specialty = 'DJ · Open Format'` y `city = 'HIALEAH'` → muestra: **"DJ · Open Format · HIALEAH"**
+
+### ⚠ Advertencia — doble semántica de artist_specialty
+- `jobs.html` escribe texto público legible: "Open Format · DJ"
+- `admin-dashboard.html` escribe código interno de staff: 'dj', 'bartender', 'drone'
+Deuda técnica existente. El fix del hero usa la semántica de `jobs.html` (correcta para display artístico).
+
+---
+
+## ⏸ TICKET-HERO-CONFIG-PREVIEW-MISMATCH-001 — PAUSADO (REVERTIDO) — 2026-06-22
+
+**Bug:** Preview del editor en CONFIG no reproduce el crop del hero público.
+
+**Causa raíz técnica:**
+- Preview: `aspect-ratio: 19/6` (ratio fijo 3.17:1)
+- Público: `height: 380px; width: 100%` → ratio variable por viewport (1440px = 3.79:1, 1920px = 5.05:1)
+- Con banner 1920×600 el preview muestra casi sin crop, el público en ≥1440px recorta ~220px verticalmente
+
+**Patch propuesto:** `aspect-ratio: 19/5` (3.8:1, fiel a 1440px desktop)
+
+**Estado:** REVERTIDO por el Capitán. Sin cambios en producción. Ticket en pausa — requiere nueva autorización para continuar.
 
 ---
 
@@ -566,6 +743,46 @@ Cada orden de evento tiene 6 capas financieras separadas con visibilidad por rol
 ### Archivos LOCKED (no tocar sin alcance explícito)
 `web/index.html`, `web/styles.css`, `web/dj-knowledge.html`, `web/courses.html`, `web/jobs.html`, `web/dj-profile.html`, `web/dj-dashboard.html`
 
+### 🔴 PROHIBICIONES ABSOLUTAS — jobs.html (dictadas por el Capitán 2026-06-23)
+1. **NO parches por hipótesis** — ningún cambio en `jobs.html` sin evidencia real de DevTools.
+2. **NO commits de `jobs.html` sin QA visual previo** — localhost + login LITE + reproducción confirmada.
+3. **NO mezclar tickets** — cada ticket de jobs tiene su propio ciclo de QA aislado.
+4. **NO deploy de Jobs** hasta reproducir el fallo en localhost y obtener autorización explícita.
+
+### ✅ CHECKLIST OBLIGATORIO — jobs.html (10 condiciones, todas requeridas)
+*Dictado por el Capitán 2026-06-23 00:42 UTC-4. Sin excepción.*
+
+```
+[ ] 1. localhost activo
+[ ] 2. login con artista LITE real (dj_profiles existente)
+[ ] 3. DevTools → Console abierto
+[ ] 4. DevTools → Network abierto
+[ ] 5. fallo reproducido completamente
+[ ] 6. evidencia capturada (screenshot + consola + network)
+[ ] 7. causa demostrada con evidencia
+[ ] 8. patch aislado al ticket correspondiente
+[ ] 9. QA visual aprobado por el Capitán
+[10] 10. LUEGO commit
+```
+
+**Ninguna condición es opcional. Las 10 deben estar marcadas antes de `git commit`.**
+
+### 🚫 CONDICIONES DE RECHAZO AUTOMÁTICO — jobs.html
+*Dictado por el Capitán 2026-06-23 00:43 UTC-4.*
+
+Si el agente usa cualquiera de estas frases o acciones → **patch rechazado automáticamente, sin discusión:**
+
+| Frase / Acción prohibida | Razón |
+|---|---|
+| `"Creo que es..."` | Hipótesis sin evidencia |
+| `"Probablemente sea..."` | Hipótesis sin evidencia |
+| `"El patch debería..."` | Condicional sin prueba |
+| `"Vamos a probar..."` | Experimentación sin QA previo |
+| Commit antes de QA visual | Viola protocolo del Capitán |
+| Deploy antes de reproducir el fallo | Viola protocolo del Capitán |
+
+**El agente solo habla en evidencias. Si no hay evidencia, no hay patch.**
+
 ---
 
 ## REGLAS ANTI-REGRESIÓN CRÍTICAS
@@ -605,3 +822,4 @@ Cada orden de evento tiene 6 capas financieras separadas con visibilidad por rol
 | 2026-06-18 | #104 | PRO flow completo, MDJPRO App standalone, backend security, plantillas confirmadas |
 | 2026-06-19 | #105 `73f360c` | `staff-order.html` + MI PORTAL cableado total + RLS migrations + button stability — **todos los tickets cerrados** |
 | 2026-06-21 | local | Nav fix: subrayado MI PORTAL; auditoría UBICACIÓN (campo existe en DB, falta en staff-order). Ver SESSION-LOG-2026-06-21 |
+| 2026-06-22/23 | #111 #112 #113 `311a601` | Hero focal control, artist specialty hero, CONFIG Categoría + Jobs Guard, Matching Taxonomy Map. Tickets Jobs abiertos pendientes QA. Ver SESSION-LOG-2026-06-23 |

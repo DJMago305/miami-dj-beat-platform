@@ -614,6 +614,78 @@
                 padding: 10px 8px;
             }
         }
+        /* Wider card when signup form is visible — login stays at 640px */
+        .login-container:has(#signup-form:not(.hidden)) {
+            max-width: min(1020px, calc(100vw - 28px));
+            padding-left:  clamp(20px, 5vw, 64px);
+            padding-right: clamp(20px, 5vw, 64px);
+        }
+        /* Instagram hidden at signup — can be added later from Config Artista */
+        #talent-fields-2      { display: none !important; }
+        /* Address intro text hidden — fields speak for themselves */
+        #signup-address-intro { display: none !important; }
+
+        /* Flow cleanup: banners, hint, back-button hidden — plan chosen in Jobs before arriving here */
+        #login-plan-flow-banners-wrap { display: none !important; }
+        #login-signup-jobs-context    { display: none !important; }
+        #mdj-signup-plan-back-artist  { display: none !important; }
+
+        /* Plan badge — shows selected plan from Jobs */
+        #mdj-signup-plan-badge {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.10);
+            border-radius: 8px;
+            padding: 9px 16px;
+            margin-bottom: 18px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: .06em;
+        }
+        #mdj-signup-plan-badge.is-visible { display: flex; }
+        #mdj-signup-plan-badge.is-lite  { color: #fff; border-color: rgba(255,255,255,.15); }
+        #mdj-signup-plan-badge.is-pro   { color: var(--gold, #c9a34f); border-color: rgba(201,163,79,.40); background: rgba(201,163,79,.07); }
+        #mdj-signup-plan-badge .badge-icon { font-size: 18px; line-height: 1; }
+
+        /* ── Labels above inputs in signup form (not floating inside border) ── */
+        /* column-reverse: DOM order = input → label; visual order = label (top) → input */
+        #signup-form .mdj-field-outlined {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 5px;
+        }
+        #signup-form .mdj-field-outlined__label {
+            position: static !important;
+            transform: none !important;
+            top: auto !important;
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            letter-spacing: .08em !important;
+            text-transform: uppercase;
+            color: rgba(197,160,89,.90) !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: none !important;
+        }
+        /* Suppress the float-up animation states — label is always in place */
+        #signup-form .mdj-field-outlined:focus-within > .mdj-field-outlined__label,
+        #signup-form .mdj-field-outlined:has(> input:not(:placeholder-shown)) > .mdj-field-outlined__label,
+        #signup-form .mdj-field-outlined:has(.pwd-wrapper > input:not(:placeholder-shown)) > .mdj-field-outlined__label {
+            top: auto !important;
+            transform: none !important;
+            font-size: 11px !important;
+            color: rgba(197,160,89,.90) !important;
+        }
+        /* Reduce input top-padding — no floating label inside anymore */
+        #signup-form .mdj-field-outlined > input:not([type='checkbox']):not([type='radio']),
+        #signup-form .mdj-field-outlined > .pwd-wrapper > input {
+            padding: 11px 14px !important;
+            min-height: 46px !important;
+        }
     </style>
 </head>
 
@@ -756,19 +828,28 @@
                 <input type="hidden" id="signup-usertype" name="user_type" value="talent">
                 <input type="hidden" id="signup-plan-intent" name="plan_intent" value="lite" />
                 <p id="login-signup-jobs-context" class="login-signup-context-hint" data-i18n="login-signup-jobs-same-email-context" role="note" style="display: none;">One email means one Miami DJ Beat login. Your client and artist profiles can share that same email.</p>
-                <div id="mdj-signup-plan-section" class="mdj-signup-plan-section">
+                <div id="mdj-signup-plan-section" class="mdj-signup-plan-section" style="display:none">
                     <p class="mdj-signup-plan-headline" data-i18n="signup-plan-headline">Create account</p>
                     <div class="mdj-signup-plan-grid" role="group" aria-label="Plan">
-                        <button type="button" class="mdj-signup-plan-card is-selected" id="mdj-plan-lite" data-mdj-plan="lite"
-                            aria-pressed="true">
+                        <button type="button" class="mdj-signup-plan-card is-selected" id="mdj-plan-lite" data-mdj-plan="lite" aria-pressed="true">
                             <span class="mdj-signup-plan-eyebrow" data-i18n="signup-plan-eyebrow-artist">Artists</span>
                             <span class="mdj-signup-plan-title" data-i18n="signup-plan-lite-title">Free · LITE</span>
                             <span class="mdj-signup-plan-desc" data-i18n="signup-plan-lite-desc">Account here; continue on Jobs. No payment on this screen.</span>
                         </button>
-                        <button type="button" class="mdj-signup-plan-card" id="mdj-plan-pro" data-mdj-plan="pro" aria-pressed="false">
+                        <button type="button" class="mdj-signup-plan-card" id="mdj-plan-pro-monthly" data-mdj-plan="pro_monthly" aria-pressed="false">
                             <span class="mdj-signup-plan-eyebrow" data-i18n="signup-plan-eyebrow-artist">Artists</span>
-                            <span class="mdj-signup-plan-title" data-i18n="signup-plan-pro-title">PRO</span>
-                            <span class="mdj-signup-plan-desc" data-i18n="signup-plan-pro-desc">Register here; pay and choose billing on Jobs (Stripe).</span>
+                            <span class="mdj-signup-plan-title">PRO Mensual</span>
+                            <span class="mdj-signup-plan-desc">$100/mes · Paga en Jobs (Stripe) después de registrarte.</span>
+                        </button>
+                        <button type="button" class="mdj-signup-plan-card" id="mdj-plan-pro-6mo" data-mdj-plan="pro_6mo" aria-pressed="false">
+                            <span class="mdj-signup-plan-eyebrow" data-i18n="signup-plan-eyebrow-artist">Artists</span>
+                            <span class="mdj-signup-plan-title">PRO 6 Meses</span>
+                            <span class="mdj-signup-plan-desc">$480 · 2 meses gratis vs mensual.</span>
+                        </button>
+                        <button type="button" class="mdj-signup-plan-card" id="mdj-plan-pro-annual" data-mdj-plan="pro_annual" aria-pressed="false">
+                            <span class="mdj-signup-plan-eyebrow" data-i18n="signup-plan-eyebrow-artist">Artists</span>
+                            <span class="mdj-signup-plan-title">PRO Anual</span>
+                            <span class="mdj-signup-plan-desc">$840 · 3 meses gratis vs mensual.</span>
                         </button>
                     </div>
                     <p class="mdj-signup-plan-client">
@@ -778,6 +859,12 @@
                 <p id="mdj-signup-plan-back-artist" class="mdj-signup-plan-back-artist" aria-live="polite">
                     <button type="button" id="mdj-signup-back-artist" data-i18n="signup-plan-back-artist">← Artist signup (LITE / PRO)</button>
                 </p>
+                <!-- Plan badge: populated by mdjRenderSignupPlanBadge() from URL ?plan= / localStorage -->
+                <div id="mdj-signup-plan-badge" role="status" aria-live="polite">
+                    <span class="badge-icon" id="mdj-signup-plan-badge-icon" aria-hidden="true"></span>
+                    <span id="mdj-signup-plan-badge-value"></span>
+                </div>
+
                 <div class="mdj-field-outlined">
                     <input type="text" id="signup-name" name="signup_stage_or_username" autocomplete="nickname"
                         maxlength="80" data-i18n-hold="login-signup-stage-placeholder" placeholder=" " />
@@ -874,7 +961,7 @@
                     </div>
                 </div>
                 <fieldset class="login-signup-address" id="signup-address-fieldset" aria-describedby="signup-address-intro">
-                    <legend data-i18n="login-signup-address-legend">Dirección (eventos / facturación)</legend>
+                    <legend data-i18n="login-signup-address-legend">Address</legend>
                     <p id="signup-address-intro" class="signup-addr-intro" data-i18n="login-signup-address-intro">Usa el autocompletado del navegador cuando aparezca. Para talento (portal Jobs) son obligatorios calle, ciudad, estado, código postal y país.</p>
                     <div class="signup-addr-grid">
                         <label><span data-i18n="login-signup-address-line1-label">Calle y número</span>
@@ -1096,6 +1183,32 @@
                     if (phIn) phIn.setAttribute('required', 'required');
                     if (specRow) specRow.classList.remove('hidden');
                     if (specSel) specSel.setAttribute('required', 'required');
+                    /* Pre-fill specialty from jobs.html category cards (sessionStorage) — only if not already set */
+                    if (specSel && !specSel.value) {
+                        try {
+                            var _roster = JSON.parse(sessionStorage.getItem('mdj_jobs_roster_categories') || 'null');
+                            if (_roster && Array.isArray(_roster.codes) && _roster.codes.length > 0) {
+                                var _CODE_TO_SPEC = {
+                                    'dj':                   'dj',
+                                    'mc y presentadores':   'mc',
+                                    'staff':                'staff',
+                                    'payasos':              'payaso',
+                                    'músicos en vivo':      'musicos en vivo',
+                                    'musicos en vivo':      'musicos en vivo',
+                                    'hora loca experience': 'hora loca',
+                                    'hora loca':            'hora loca',
+                                    'captura y visuales':   'fotografo',
+                                    'bartender':            'bartender',
+                                    'mesero':               'mesero',
+                                    'cocinero':             'cocinero',
+                                    'drone':                'drone'
+                                };
+                                var _firstCode = String(_roster.codes[0]).toLowerCase().trim();
+                                var _specVal = _CODE_TO_SPEC[_firstCode];
+                                if (_specVal) specSel.value = _specVal;
+                            }
+                        } catch (eSpec) { void eSpec; }
+                    }
                 } else {
                     if (labT) labT.classList.add('hidden');
                     if (labC) labC.classList.remove('hidden');
@@ -1116,17 +1229,21 @@
             } catch (e) { void e; }
         }
 
-        function mdjSetSignupPlanCards(liteOn, proOn) {
-            var a = document.getElementById('mdj-plan-lite');
-            var b = document.getElementById('mdj-plan-pro');
-            if (a) {
-                a.classList.toggle('is-selected', !!liteOn);
-                a.setAttribute('aria-pressed', liteOn ? 'true' : 'false');
-            }
-            if (b) {
-                b.classList.toggle('is-selected', !!proOn);
-                b.setAttribute('aria-pressed', proOn ? 'true' : 'false');
-            }
+        /* Actualizado para 4 cards: lite | pro_monthly | pro_6mo | pro_annual */
+        function mdjSetSignupPlanCards(activePlan) {
+            var cards = [
+                { id: 'mdj-plan-lite',       plan: 'lite'       },
+                { id: 'mdj-plan-pro-monthly', plan: 'pro_monthly' },
+                { id: 'mdj-plan-pro-6mo',     plan: 'pro_6mo'    },
+                { id: 'mdj-plan-pro-annual',  plan: 'pro_annual' },
+            ];
+            cards.forEach(function (c) {
+                var el = document.getElementById(c.id);
+                if (!el) return;
+                var on = (c.plan === activePlan);
+                el.classList.toggle('is-selected', on);
+                el.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
         }
 
         function syncSignupPlanUiFromState() {
@@ -1140,15 +1257,22 @@
                 if (String(su.value || '').toLowerCase() === 'client') {
                     sec.classList.add('is-hidden');
                     if (back) back.classList.add('is-visible');
-                    mdjSetSignupPlanCards(false, false);
+                    mdjSetSignupPlanCards('');
                     return;
                 }
                 sec.classList.remove('is-hidden');
                 if (back) back.classList.remove('is-visible');
-                var wantPro =
-                    (pq.get('plan') || '').toLowerCase() === 'pro' || String(pi.value || '').toLowerCase() === 'pro';
-                pi.value = wantPro ? 'pro' : 'lite';
-                mdjSetSignupPlanCards(!wantPro, wantPro);
+                /* Resolver plan activo: URL param → hidden input → defecto lite */
+                var VALID = ['lite', 'pro_monthly', 'pro_6mo', 'pro_annual'];
+                var urlPlan = (pq.get('plan') || '').toLowerCase();
+                /* Legacy: ?plan=pro → pro_monthly */
+                if (urlPlan === 'pro') urlPlan = 'pro_monthly';
+                var storedPlan = String(pi.value || '').toLowerCase();
+                if (storedPlan === 'pro') storedPlan = 'pro_monthly';
+                var activePlan = (VALID.indexOf(urlPlan) >= 0 ? urlPlan : null) ||
+                                 (VALID.indexOf(storedPlan) >= 0 ? storedPlan : 'lite');
+                pi.value = activePlan;
+                mdjSetSignupPlanCards(activePlan);
             } catch (e) { void e; }
         }
 
@@ -1156,18 +1280,23 @@
             try {
                 var su = document.getElementById('signup-usertype');
                 var pi = document.getElementById('signup-plan-intent');
+                /* Accepted modes: lite | pro_monthly | pro_6mo | pro_annual (legacy: pro → pro_monthly) */
+                var resolved = mode === 'pro' ? 'pro_monthly' : (mode || 'lite');
                 if (su) su.value = 'talent';
-                if (pi) pi.value = mode === 'pro' ? 'pro' : 'lite';
+                if (pi) pi.value = resolved;
+                /* Guardar plan en localStorage para que jobs.html lo auto-seleccione al volver */
+                try { localStorage.setItem('mdj_pending_plan', resolved); } catch (eLS) { void eLS; }
                 if (!skipUrl) {
                     var u = new URL(window.location.href);
                     u.searchParams.set('signup', 'free');
                     u.searchParams.set('redirect', 'jobs');
                     u.searchParams.delete('account');
-                    if (mode === 'pro') u.searchParams.set('plan', 'pro');
+                    if (resolved !== 'lite') u.searchParams.set('plan', resolved);
                     else u.searchParams.delete('plan');
                     history.replaceState(null, '', u.pathname + u.search + u.hash);
                 }
                 applySignupUserTypeFromUrl();
+                mdjRenderSignupPlanBadge();
             } catch (e) { void e; }
         }
 
@@ -1189,20 +1318,14 @@
 
         (function bindSignupPlanPicker() {
             function go() {
-                var lite = document.getElementById('mdj-plan-lite');
-                var pro = document.getElementById('mdj-plan-pro');
+                /* Bind all 4 plan cards generically via data-mdj-plan */
+                document.querySelectorAll('[data-mdj-plan]').forEach(function (card) {
+                    card.addEventListener('click', function () {
+                        mdjSelectArtistPlan(card.getAttribute('data-mdj-plan'), false);
+                    });
+                });
                 var clientBtn = document.getElementById('mdj-signup-client-only');
                 var back = document.getElementById('mdj-signup-back-artist');
-                if (lite) {
-                    lite.addEventListener('click', function () {
-                        mdjSelectArtistPlan('lite', false);
-                    });
-                }
-                if (pro) {
-                    pro.addEventListener('click', function () {
-                        mdjSelectArtistPlan('pro', false);
-                    });
-                }
                 if (clientBtn) {
                     clientBtn.addEventListener('click', function () {
                         mdjApplySignupClientOnly();
@@ -1224,6 +1347,7 @@
             applySignupUserTypeFromUrl();
             applyContactLeadPrefill();
             void updateLoginPlanFlowBanner();
+            mdjRenderSignupPlanBadge();
         };
 
         /** Desde la pestaña Entrar: pasar a «Crear cuenta» sin recargar; reflejar signup=free en la URL y recalcular tipo (equivalente a enlace directo al alta). */
@@ -1244,6 +1368,7 @@
                 loginForm.classList.add('hidden');
                 applySignupUserTypeFromUrl();
                 applyContactLeadPrefill();
+                mdjRenderSignupPlanBadge();
             });
         })();
 
@@ -1344,6 +1469,40 @@
             }
         }
 
+        /** Render the plan badge above the signup form based on ?plan= / localStorage / #signup-plan-intent */
+        function mdjRenderSignupPlanBadge() {
+            try {
+                var PLAN_META = {
+                    'lite':        { label: 'Free',               icon: '⚡', tier: 'lite' },
+                    'pro':         { label: 'PRO Mensual',        icon: '💼', tier: 'pro'  },
+                    'pro_monthly': { label: 'PRO Mensual',        icon: '💼', tier: 'pro'  },
+                    'pro_6mo':     { label: 'PRO 6 Meses',        icon: '🏆', tier: 'pro'  },
+                    'pro_annual':  { label: 'PRO Anual',          icon: '👑', tier: 'pro'  }
+                };
+                var badge   = document.getElementById('mdj-signup-plan-badge');
+                var iconEl  = document.getElementById('mdj-signup-plan-badge-icon');
+                var valueEl = document.getElementById('mdj-signup-plan-badge-value');
+                if (!badge || !valueEl) return;
+
+                var plan = '';
+                try { plan = new URLSearchParams(window.location.search).get('plan') || ''; } catch (e) { void e; }
+                if (!plan) { try { plan = localStorage.getItem('mdj_pending_plan') || ''; } catch (e) { void e; } }
+                if (!plan) {
+                    var pi = document.getElementById('signup-plan-intent');
+                    if (pi) plan = pi.value || '';
+                }
+                plan = (plan || '').toLowerCase().trim();
+                var meta = PLAN_META[plan];
+                if (!meta) return;
+
+                if (iconEl) iconEl.textContent = meta.icon;
+                valueEl.textContent = meta.label;
+                badge.classList.remove('is-pro', 'is-lite');
+                badge.classList.add('is-visible');
+                badge.classList.add(meta.tier === 'pro' ? 'is-pro' : 'is-lite');
+            } catch (e) { void e; }
+        }
+
         if (wantsSignup) {
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', function () {
@@ -1351,6 +1510,7 @@
                     mdbOpenSignupTabIfRequested();
                     applyContactLeadPrefill();
                     mdjInitSignupPhoneFormatter();
+                    mdjRenderSignupPlanBadge();
                 });
             } else {
                 requestAnimationFrame(function () {
@@ -1358,6 +1518,7 @@
                     mdbOpenSignupTabIfRequested();
                     applyContactLeadPrefill();
                     mdjInitSignupPhoneFormatter();
+                    mdjRenderSignupPlanBadge();
                 });
             }
         } else {

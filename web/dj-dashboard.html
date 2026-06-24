@@ -4355,6 +4355,25 @@
                                 <button type="button" class="acct-edit" id="pro-hw-copy-btn" onclick="copyProHwToken(event)">Copiar</button>
                             </div>
                         </div>
+
+                        <!-- MDJPRO License snapshot — visible solo para PRO/ELITE con licencia emitida -->
+                        <div id="dash-mdjpro-license-card" class="acct-card" style="display:none;margin-top:18px;">
+                            <div style="padding:14px 24px;font-size:11px;font-weight:800;letter-spacing:2px;color:var(--gold,#c5a059);text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,0.05);">
+                                🔑 Licencia MDJPRO Desktop
+                            </div>
+                            <div class="acct-row" style="flex-wrap:wrap;align-items:flex-start;">
+                                <div class="acct-row-info" style="flex:1;min-width:min(100%,260px);">
+                                    <div class="acct-lbl">License key</div>
+                                    <div class="acct-val" id="dash-license-display" style="font-family:ui-monospace,monospace;letter-spacing:2px;word-break:break-all;">—</div>
+                                    <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;">
+                                        <span style="font-size:11px;color:rgba(255,255,255,0.4);" id="dash-license-status"></span>
+                                        <span style="font-size:11px;color:rgba(255,255,255,0.4);" id="dash-license-tier"></span>
+                                        <span style="font-size:11px;color:rgba(255,255,255,0.4);" id="dash-license-seats"></span>
+                                    </div>
+                                </div>
+                                <a href="./downloads.html" class="acct-edit" style="align-self:flex-start;white-space:nowrap;">↓ Descargar MDJPRO</a>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- SOUNDFORTIPS: instrucciones Zelle / Venmo / PayPal para fans (perfil público) -->
@@ -6300,6 +6319,33 @@
                 if (!p) return;
 
                 hydrateBillingPanelFromProfile(p);
+
+                // MDJPRO license snapshot — solo si plan PRO/ELITE
+                if (p.plan === 'PRO' || p.plan === 'ELITE') {
+                    try {
+                        const { data: snap } = await sb.rpc('mdjpro_license_snapshot');
+                        const lic = snap && snap.license;
+                        const licCard = document.getElementById('dash-mdjpro-license-card');
+                        if (licCard) {
+                            licCard.style.display = 'block';
+                            const dispEl = document.getElementById('dash-license-display');
+                            const statEl = document.getElementById('dash-license-status');
+                            const tierEl = document.getElementById('dash-license-tier');
+                            const seatEl = document.getElementById('dash-license-seats');
+                            if (lic) {
+                                if (dispEl) dispEl.textContent = lic.license_display || '—';
+                                if (statEl) statEl.textContent = 'Estado: ' + (lic.status || '—');
+                                if (tierEl) tierEl.textContent = 'Tier: ' + (lic.tier || '—');
+                                if (seatEl) seatEl.textContent = 'Seats: ' + (lic.seats_used != null ? lic.seats_used : 0) + ' / ' + (lic.seats_allowed || 2);
+                            } else {
+                                // Licencia aún no emitida (webhook en proceso)
+                                if (dispEl) dispEl.textContent = 'Licencia MDJPRO en proceso. Refresca en unos segundos.';
+                                if (dispEl) dispEl.style.color = 'rgba(255,255,255,0.45)';
+                                if (dispEl) dispEl.style.letterSpacing = 'normal';
+                            }
+                        }
+                    } catch (eLic) { void eLic; }
+                }
             } catch (e) {
                 console.warn('loadSubscriptionData:', e.message);
             }
