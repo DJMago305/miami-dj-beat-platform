@@ -4,7 +4,58 @@
 ---
 
 ## 📋 LECTURA DIARIA OBLIGATORIA — LEER ANTES DE CUALQUIER ACCIÓN
-*Última actualización: 2026-06-23 00:40 UTC-4. Cierre de sesión nocturna: matching taxonomy mergeado, tickets jobs documentados, taller limpio. Protocolo QA-primero registrado para próxima sesión.*
+*Última actualización: 2026-06-24 04:50 UTC-4. Cierre de sesión nocturna: account-settings billing cards rediseñados, header fix aplicado, licencia MDJPRO visible en Suscripción y pagos + Dashboard. PR abierto contra main. 3 tickets pendientes próxima sesión.*
+
+---
+
+## ✅ SESIÓN 2026-06-24 — CERRADA / PR ABIERTO — `feat/config-artist-category-taxonomy`
+
+**Rama:** `feat/config-artist-category-taxonomy` — push OK, PR abierto, `Able to merge` confirmado.
+**5 commits / 12 files changed.** No hacer merge sin revisión final del diff en GitHub.
+
+### Tickets cerrados esta sesión — SELLADOS ✓
+
+| Ticket | Archivo | Resultado |
+|---|---|---|
+| UI-ACCOUNT-HEADER-001/002 | `account-settings.html` | Causa raíz: `body { padding: 0 }` interno aplastaba `padding-top: 156px` de `styles.css`. Fix: reemplazar por `padding-top: calc(var(--header-height,84px) + var(--header-nav-band,72px))` + `margin-top: 0` en `.mdj-has-sidebar`. ✅ |
+| UI-BILLING-CARDS-001 | `account-settings.html` | Tarjeta Artista: eyebrow `ARTISTA` + `Plan: PRO`. Tarjeta MDJPRO: eyebrow `MDJPRO DESKTOP` + `Licencia: MDJP-****`. ✅ |
+| UI-PRODUCTS-LICENSE-CARD-001 | `account-settings.html` | Panel Productos: eyebrow `MDJPRO APP` / `Producto: MDJPRO` + bloque `Licencia Activa` separado. ✅ |
+| UI-MDJPRO-LICENSE-CARD-002/003 | `account-settings.html` | Tarjeta MDJPRO Desktop: solo título + badge + `Licencia:` + key. Sin Tier/Seats/Descargar. ✅ |
+| PRO-003A.2 | `account-settings.html` | `refreshBillingPanel()` llama `mdjpro_license_snapshot()` si plan PRO/ELITE → muestra key mascarada, status verde, tier/seats o "en proceso". LITE ve PRÓXIMAMENTE. ✅ |
+| PRO-003C | `account-settings.html` | Eyebrow dinámico: PRO/ELITE → "Artist PRO Web", owner → "Plan Plataforma", LITE → "Plan Artista". ✅ |
+| PRO-003A (dashboard) | `dj-dashboard.html` | Tarjeta `#dash-mdjpro-license-card` en `#panel-billing`. `loadSubscriptionData()` llama RPC si PRO/ELITE. ✅ |
+| PRO-002 | `jobs.html` | `successUrl` de Stripe → `dj-dashboard.html` (en lugar de `jobs.html`). ✅ |
+| LOGIN-SIGNUP-FLOW-001 | `login.html` | Formulario artista: más ancho, labels arriba, badge de plan, pre-fill especialidad desde Jobs. ✅ |
+
+### Arquitectura de licencias MDJPRO — SELLADA / REFERENCIA
+
+```
+mdjpro_license_keys tabla:
+  key_hash    → SHA-256(key + pepper) — NUNCA expuesto al browser
+  key_last4   → últimos 4 chars — solo para display mascarado
+  plaintext_shown_at → timestamp — pero NO se guarda el plaintext
+
+mdjpro_license_snapshot() RPC:
+  → devuelve: license_display = "MDJP-****-****-****-XXXX"
+  → NO devuelve plaintext — nunca existió en DB
+  → accesible: authenticated + service_role
+
+mdjpro_issue_license(uid, plan_source):
+  → genera plaintext en memoria Postgres
+  → retorna license_key_plaintext en JSON (UNA VEZ)
+  → NO persiste plaintext en ninguna tabla
+  → security_role only — el usuario final no puede llamarla
+```
+
+**Consecuencia directa:** El botón 👁 para revelar licencia completa es **NO VIABLE** sin rediseño arquitectónico. Ver LICENSE-RECOVERY-001.
+
+### Tickets pendientes próxima sesión — EN ORDEN DE PRIORIDAD
+
+| # | Ticket | Descripción |
+|---|---|---|
+| 1 | **ACADEMIA-CERT-OWNER-001** | Owner/fundador DJMago305 no tiene certificación Academia. Auditar: tabla certificaciones, `loadAcademiaStatus()`, `user_id`, ¿emisión manual o INSERT en Supabase? NO resolver con frontend falso. |
+| 2 | **TICKET-JOBS-PAYASOS-CAROUSEL-QA** | Carousel Payasos suspendido. Diff aplicado en `mdjJobsRoleInfiniteApply()` — no QA visual aprobado. Reproducir en DevTools, aprobar o revertir. 10-point checklist obligatorio. |
+| 3 | **LICENSE-RECOVERY-001** | Diseño futuro: `recovery_token_hash` + email post-pago + reemisión segura. No urgente. |
 
 ---
 
@@ -823,3 +874,4 @@ Si el agente usa cualquiera de estas frases o acciones → **patch rechazado aut
 | 2026-06-19 | #105 `73f360c` | `staff-order.html` + MI PORTAL cableado total + RLS migrations + button stability — **todos los tickets cerrados** |
 | 2026-06-21 | local | Nav fix: subrayado MI PORTAL; auditoría UBICACIÓN (campo existe en DB, falta en staff-order). Ver SESSION-LOG-2026-06-21 |
 | 2026-06-22/23 | #111 #112 #113 `311a601` | Hero focal control, artist specialty hero, CONFIG Categoría + Jobs Guard, Matching Taxonomy Map. Tickets Jobs abiertos pendientes QA. Ver SESSION-LOG-2026-06-23 |
+| 2026-06-24 | PR abierto `feat/config-artist-category-taxonomy` (`eefbec4`…`9ff7c9d`) | Account Settings billing cards rediseñados, header spacing fix, licencia MDJPRO en Suscripción/pagos + Dashboard, signup flow artista mejorado, PRO Stripe success → dj-dashboard. Pendientes: ACADEMIA-CERT-OWNER-001 / PAYASOS-QA / LICENSE-RECOVERY-001. |
