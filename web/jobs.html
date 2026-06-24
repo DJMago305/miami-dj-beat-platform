@@ -289,8 +289,8 @@
         /* HUD Selection Portals - Vision 2027 Extreme */
         .level-portal-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-            gap: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
             margin-top: 80px;
         }
 
@@ -387,12 +387,14 @@
         .level-portal {
             background: rgba(10, 10, 10, 0.6);
             border: 2px solid rgba(197, 160, 89, 0.45);
-            padding: 60px 40px;
+            padding: 28px 24px;
             position: relative;
             transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
             cursor: pointer;
             overflow: hidden;
             backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
         }
 
         .level-portal::before {
@@ -424,16 +426,36 @@
         }
 
         .level-portal.selected {
-            border-color: var(--gold);
-            background: rgba(197, 160, 89, 0.08);
-            box-shadow: 0 0 40px rgba(197, 160, 89, 0.15);
+            border-color: var(--gold) !important;
+            background: rgba(197, 160, 89, 0.12) !important;
+            box-shadow:
+                0 0 0 2px var(--gold),
+                0 0 40px rgba(197, 160, 89, 0.55),
+                0 0 80px rgba(197, 160, 89, 0.2) !important;
             transform: translateY(-5px);
         }
 
+        .level-portal.selected::before {
+            opacity: 1;
+        }
+
+        /* Estado por defecto de los círculos PRO (reemplaza inline style eliminado) */
+        .portal-icon-wrap--pro {
+            background: rgba(197, 160, 89, 0.1);
+            border-color: rgba(197, 160, 89, 0.5);
+        }
+
         .level-portal.selected .portal-clip {
-            border-color: var(--gold);
+            border-color: var(--gold) !important;
             width: 45px;
             height: 45px;
+        }
+
+        .level-portal.selected .portal-icon-wrap {
+            background: var(--gold) !important;
+            color: #000 !important;
+            border-color: var(--gold) !important;
+            box-shadow: 0 0 30px rgba(197, 160, 89, 0.9) !important;
         }
 
         .activate-container {
@@ -2142,7 +2164,7 @@
                     <p class="jobs-portal-roles-strip-hint" data-i18n="jobs-portal-roles-strip-hint">These tags are stored with your application so Miami DJ Beat can match client requests (e.g. orchestra) and staff can search by role and date.</p>
                 </div>
                 <!-- Portal 1: LITE -->
-                <div class="level-portal" onclick="selectPlan(this, 'lite')">
+                <div class="level-portal" data-plan="lite" onclick="selectPlan(this, 'lite')">
                     <div class="portal-clip clip-tl"></div>
                     <div class="portal-clip clip-tr"></div>
                     <div class="portal-clip clip-bl"></div>
@@ -2151,59 +2173,113 @@
                     <div class="portal-scan-line"></div>
                     <div class="portal-icon-wrap"><span style="font-size:32px;">⚡</span></div>
                     <h3 class="portal-title" data-i18n="jobs-lite-title">PLAN BÁSICO (LITE)</h3>
-                    <p class="portal-desc" data-i18n="jobs-lite-desc">Derecho a descarga de la App. Registro
-                        obligatorio. Elegible para reclutamiento manual solo si no hay disponibilidad Pro.
+                    <p class="portal-desc" data-i18n="jobs-lite-desc">Registro en la Red Miami DJ Beat.
+                        Elegible para reclutamiento manual solo si no hay disponibilidad Pro.
                         <br><span style="color:var(--gold); font-size:11px; margin-top:5px; display:block;">Ideal para:
                             Promotores, Influencers, Fotógrafos y Managers.</span>
                     </p>
                     <p class="jobs-portal-roles-mirror-label" data-i18n="jobs-portal-card-roles-label">Your roster categories</p>
                     <div class="jobs-portal-roles-mirror-values jobs-portal-roles-mirror-values--lite" aria-live="polite">—</div>
-                    <div
-                        style="margin-top:16px;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.07);">
-                        <div style="font-size:22px;font-weight:900;color:#fff;">FREE</div>
-                        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;"
-                            data-i18n="jobs-lite-price-note">Basic network access</div>
+                    <div style="margin-top:auto;padding-top:16px;">
+                        <div style="padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.07);">
+                            <div style="font-size:22px;font-weight:900;color:#fff;">FREE</div>
+                            <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;"
+                                data-i18n="jobs-lite-price-note">Basic network access</div>
+                        </div>
                     </div>
-                    <p class="jobs-lite-free-note" data-i18n="jobs-lite-free-note"
-                        style="margin:12px 0 0;font-size:11px;line-height:1.45;color:rgba(255,255,255,0.45);font-weight:600;">
-                        Cuenta gratuita (LITE). Puedes pasar a PRO cuando quieras desde esta misma página o desde tu
-                        panel.</p>
-                    <button type="button"
-                        style="margin-top:16px;width:100%;padding:12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.18);border-radius:10px;color:#fff;font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:background 0.2s;"
-                        onmouseenter="this.style.background='rgba(255,255,255,0.13)'" onmouseleave="this.style.background='rgba(255,255,255,0.07)'"
-                        onclick="event.stopPropagation(); selectPlan(this.closest('.level-portal'), 'lite')">
-                        ELEGIR PLAN BÁSICO (GRATIS)
-                    </button>
                 </div>
 
-                <!-- Portal 2: PRO (FOUNDER PRICE) -->
-                <div class="level-portal" onclick="selectPlan(this, 'pro')">
+                <!-- Portal 2: PRO MENSUAL -->
+                <div class="level-portal" data-plan="pro_monthly" onclick="selectPlan(this, 'pro_monthly')">
                     <div class="portal-clip clip-tl" style="border-color:var(--gold);"></div>
                     <div class="portal-clip clip-tr" style="border-color:var(--gold);"></div>
                     <div class="portal-clip clip-bl" style="border-color:var(--gold);"></div>
                     <div class="portal-clip clip-br" style="border-color:var(--gold);"></div>
-                    <div class="portal-data-header" style="color:var(--gold);">AUTH_LEVEL: ELITE // RANK: DOMINANCE
-                    </div>
+                    <div class="portal-data-header" style="color:var(--gold);">AUTH_LEVEL: ELITE // PLAN: MONTHLY</div>
                     <div class="portal-scan-line"></div>
-
-                    <div class="portal-icon-wrap" style="background:rgba(197,160,89,0.1);border-color:var(--gold);">
+                    <div class="portal-icon-wrap portal-icon-wrap--pro">
                         <span style="font-size:32px;">💼</span>
                     </div>
-                    <h3 class="portal-title" data-i18n="jobs-pro-title">PLAN PRO (ÉLITE)</h3>
-                    <p class="portal-desc" data-i18n="jobs-pro-desc">App MDJPRO Elite + Cursos + Certificación. Acceso
-                        prioritario a contratos Premium y estatus en la Red Élite.
-                        <br><span style="color:var(--gold); font-size:11px; margin-top:5px; display:block;">Recomendado
-                            para: DJs, MCs, Cantantes y Live Bands.</span>
+                    <h3 class="portal-title">PLAN PRO MENSUAL</h3>
+                    <p class="portal-desc">Cursos + Certificación. Acceso prioritario a contratos Premium y estatus en la Red Élite.
+                        <br><span style="color:var(--gold); font-size:11px; margin-top:5px; display:block;">Recomendado para: DJs, MCs, Cantantes y Live Bands.</span>
                     </p>
                     <p class="jobs-portal-roles-mirror-label" data-i18n="jobs-portal-card-roles-label">Your roster categories</p>
                     <div class="jobs-portal-roles-mirror-values jobs-portal-roles-mirror-values--pro" aria-live="polite">—</div>
+                    <div style="margin-top:auto;padding-top:16px;">
+                        <div style="padding:12px;background:rgba(197,160,89,0.06);border-radius:10px;border:1px solid rgba(197,160,89,0.2);">
+                            <span id="portal-card-price-monthly" style="font-size:22px;font-weight:900;color:#fff;">$100</span>
+                            <span style="font-size:12px;color:rgba(255,255,255,0.4);">/mes</span>
+                        </div>
+                        <button type="button"
+                            style="margin-top:12px;width:100%;padding:13px;background:var(--gold);border:none;border-radius:10px;color:#000;font-size:12px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:opacity 0.2s;"
+                            onmouseenter="this.style.opacity='0.85'" onmouseleave="this.style.opacity='1'"
+                            onclick="event.stopPropagation(); selectPlan(this.closest('.level-portal'), 'pro_monthly')">
+                            ⚡ ELEGIR MENSUAL
+                        </button>
+                    </div>
+                </div>
 
-                    <button type="button"
-                        style="margin-top:16px;width:100%;padding:13px;background:var(--gold);border:none;border-radius:10px;color:#000;font-size:13px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:opacity 0.2s;"
-                        onmouseenter="this.style.opacity='0.85'" onmouseleave="this.style.opacity='1'"
-                        onclick="event.stopPropagation(); selectPlan(this.closest('.level-portal'), 'pro')">
-                        ⚡ ELEGIR PLAN PRO — $100/mes
-                    </button>
+                <!-- Portal 3: PRO 6 MESES -->
+                <div class="level-portal" data-plan="pro_6mo" onclick="selectPlan(this, 'pro_6mo')">
+                    <div class="portal-clip clip-tl" style="border-color:var(--gold);"></div>
+                    <div class="portal-clip clip-tr" style="border-color:var(--gold);"></div>
+                    <div class="portal-clip clip-bl" style="border-color:var(--gold);"></div>
+                    <div class="portal-clip clip-br" style="border-color:var(--gold);"></div>
+                    <div class="portal-data-header" style="color:var(--gold);">AUTH_LEVEL: ELITE // PLAN: 6-MONTH</div>
+                    <div class="portal-scan-line"></div>
+                    <div class="portal-icon-wrap portal-icon-wrap--pro">
+                        <span style="font-size:32px;">🏆</span>
+                    </div>
+                    <h3 class="portal-title">PLAN PRO 6 MESES</h3>
+                    <p class="portal-desc">Cursos + Certificación. Acceso prioritario a contratos Premium y estatus en la Red Élite.
+                        <br><span style="color:var(--gold); font-size:11px; margin-top:5px; display:block;">🎁 2 meses gratis vs mensual.</span>
+                    </p>
+                    <p class="jobs-portal-roles-mirror-label" data-i18n="jobs-portal-card-roles-label">Your roster categories</p>
+                    <div class="jobs-portal-roles-mirror-values jobs-portal-roles-mirror-values--pro" aria-live="polite">—</div>
+                    <div style="margin-top:auto;padding-top:16px;">
+                        <div style="padding:12px;background:rgba(197,160,89,0.06);border-radius:10px;border:1px solid rgba(197,160,89,0.2);">
+                            <span id="portal-card-price-6mo" style="font-size:22px;font-weight:900;color:#fff;">$480</span>
+                            <span style="font-size:12px;color:rgba(255,255,255,0.4);">/6 meses</span>
+                        </div>
+                        <button type="button"
+                            style="margin-top:12px;width:100%;padding:13px;background:var(--gold);border:none;border-radius:10px;color:#000;font-size:12px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:opacity 0.2s;"
+                            onmouseenter="this.style.opacity='0.85'" onmouseleave="this.style.opacity='1'"
+                            onclick="event.stopPropagation(); selectPlan(this.closest('.level-portal'), 'pro_6mo')">
+                            ⚡ ELEGIR 6 MESES
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Portal 4: PRO ANUAL -->
+                <div class="level-portal" data-plan="pro_annual" onclick="selectPlan(this, 'pro_annual')">
+                    <div class="portal-clip clip-tl" style="border-color:var(--gold);"></div>
+                    <div class="portal-clip clip-tr" style="border-color:var(--gold);"></div>
+                    <div class="portal-clip clip-bl" style="border-color:var(--gold);"></div>
+                    <div class="portal-clip clip-br" style="border-color:var(--gold);"></div>
+                    <div class="portal-data-header" style="color:var(--gold);">AUTH_LEVEL: ELITE // PLAN: ANNUAL</div>
+                    <div class="portal-scan-line"></div>
+                    <div class="portal-icon-wrap portal-icon-wrap--pro">
+                        <span style="font-size:32px;">👑</span>
+                    </div>
+                    <h3 class="portal-title">PLAN PRO ANUAL</h3>
+                    <p class="portal-desc">Cursos + Certificación. Acceso prioritario a contratos Premium y estatus en la Red Élite.
+                        <br><span style="color:var(--gold); font-size:11px; margin-top:5px; display:block;">🎁 3 meses gratis vs mensual.</span>
+                    </p>
+                    <p class="jobs-portal-roles-mirror-label" data-i18n="jobs-portal-card-roles-label">Your roster categories</p>
+                    <div class="jobs-portal-roles-mirror-values jobs-portal-roles-mirror-values--pro" aria-live="polite">—</div>
+                    <div style="margin-top:auto;padding-top:16px;">
+                        <div style="padding:12px;background:rgba(197,160,89,0.06);border-radius:10px;border:1px solid rgba(197,160,89,0.2);">
+                            <span id="portal-card-price-annual" style="font-size:22px;font-weight:900;color:var(--gold);">$840</span>
+                            <span style="font-size:12px;color:rgba(255,255,255,0.4);">/año</span>
+                        </div>
+                        <button type="button"
+                            style="margin-top:12px;width:100%;padding:13px;background:var(--gold);border:none;border-radius:10px;color:#000;font-size:12px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:opacity 0.2s;"
+                            onmouseenter="this.style.opacity='0.85'" onmouseleave="this.style.opacity='1'"
+                            onclick="event.stopPropagation(); selectPlan(this.closest('.level-portal'), 'pro_annual')">
+                            ⚡ ELEGIR ANUAL
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -2298,7 +2374,8 @@
                     href="./login.html?signup=free&amp;user_type=talent&amp;redirect=jobs"
                     data-jobs-signup-href="./login.html?signup=free&amp;user_type=talent&amp;redirect=jobs"
                     data-jobs-cta-mode="signup"
-                    data-i18n="jobs-after-roles-cta-signup">Crea tu cuenta</a>
+                    data-i18n="jobs-after-roles-cta-signup"
+                    data-jobs-create-btn="1">Crea tu cuenta</a>
                 <p class="jobs-after-roles-cta-subline" id="jobs-after-roles-cta-subline"
                     data-i18n="jobs-after-roles-cta-auth-hint">En la siguiente pantalla podrás iniciar sesión o registrarte como talento.</p>
             </div>
@@ -2766,13 +2843,13 @@
            - [x] Implement CSS reveal animations
         */
 
-        const supabase = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+        const _supa = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
         /** Misma URL que header «Suscripción gratis» / selectPlan(PRO) — registro talento + vuelta a Jobs. */
         const JOBS_GUEST_SIGNUP_URL = './login.html?signup=free&user_type=talent&redirect=jobs';
 
         async function updateHeaderAuth() {
-            if (!supabase) return;
-            const { data: { session } } = await supabase.auth.getSession();
+            if (!_supa) return;
+            const { data: { session } } = await _supa.auth.getSession();
             const loginBtn = document.getElementById('header-login-btn');
             const authZone = document.getElementById('header-auth-zone');
             if (session) {
@@ -2783,7 +2860,7 @@
                     loginBtn.style.visibility = 'visible';
                 }
                 if (authZone) authZone.style.display = 'block';
-                const { data: profile } = await supabase
+                const { data: profile } = await _supa
                     .from('dj_profiles')
                     .select('photo_url, plan, plan_type, plan_status, plan_expires_at, subscription_status, is_premium')
                     .eq('user_id', session.user.id)
@@ -2999,7 +3076,7 @@
             }
 
             var key = 'jobs-after-roles-cta-signup';
-            if (!supabase) {
+            if (!_supa) {
                 if (subline) subline.style.display = '';
                 setGuestCtaLink();
                 el.setAttribute('data-i18n', key);
@@ -3008,7 +3085,7 @@
             }
 
             try {
-                const { data: { session } } = await supabase.auth.getSession();
+                const { data: { session } } = await _supa.auth.getSession();
                 if (session) {
                     if (subline) subline.style.display = 'none';
                     el.setAttribute('href', '#');
@@ -3020,7 +3097,7 @@
                     } else if (role === 'admin' || role === 'manager' || role === 'seller') {
                         key = 'jobs-after-roles-cta-staff-panel';
                     } else {
-                        const { data: p } = await supabase
+                        const { data: p } = await _supa
                             .from('dj_profiles')
                             .select('user_id, full_name, stage_name, dj_name, photo_url, bio, bio_long, bio_short, roles')
                             .eq('user_id', session.user.id)
@@ -3056,14 +3133,14 @@
 
         /** Con sesión: misma acción que el avatar (#accountBtn) — solo se llama con data-jobs-cta-mode=account. */
         async function jobsAfterRolesCtaAccountNavigate() {
-            if (!supabase) {
+            if (!_supa) {
                 window.location.href = JOBS_GUEST_SIGNUP_URL;
                 return;
             }
             let session = null;
             try {
                 const { data } = await jobsPromiseWithTimeout(
-                    supabase.auth.getSession(),
+                    _supa.auth.getSession(),
                     4500,
                     'getSession'
                 );
@@ -3118,6 +3195,16 @@
                         href = JOBS_GUEST_SIGNUP_URL;
                     }
                     e.preventDefault();
+                    /* Inject selected plan into URL and localStorage before navigating */
+                    var VALID_SIGNUP_PLANS = ['lite', 'pro_monthly', 'pro_6mo', 'pro_annual'];
+                    if (selectedJobsPlan && VALID_SIGNUP_PLANS.indexOf(selectedJobsPlan) >= 0) {
+                        try { localStorage.setItem('mdj_pending_plan', selectedJobsPlan); } catch (eLP) { void eLP; }
+                        try {
+                            var _u = new URL(href, window.location.origin);
+                            _u.searchParams.set('plan', selectedJobsPlan);
+                            href = _u.pathname + _u.search;
+                        } catch (eU) { href += '&plan=' + encodeURIComponent(selectedJobsPlan); }
+                    }
                     window.location.assign(href);
                 }
             });
@@ -3131,8 +3218,8 @@
 
         // ── Auth Gate: decide what to show on load ───────────────────
         async function initAuthGate() {
-            if (!supabase) return;
-            const { data: { session } } = await supabase.auth.getSession();
+            if (!_supa) return;
+            const { data: { session } } = await _supa.auth.getSession();
             const gate = document.getElementById('auth-gate');
             const selection = document.getElementById('selection-screen');
             const proForm = document.getElementById('pro-form-section');
@@ -3198,8 +3285,8 @@
             updateHeaderAuth();
             await initAuthGate();
             try {
-                if (supabase) {
-                    const { data: { session: sGate } } = await supabase.auth.getSession();
+                if (_supa) {
+                    const { data: { session: sGate } } = await _supa.auth.getSession();
                     if (sGate) await jobsEvaluateClientToArtistBanner(sGate);
                 }
             } catch (eG) { /* ignore */ }
@@ -3238,15 +3325,52 @@
                 }
             }
 
-            // Auto-select PRO plan when URL contains ?plan=pro (e.g. from dj-tools gate or dj-profile)
-            const urlPlan = new URLSearchParams(window.location.search).get('plan');
-            if (urlPlan && urlPlan.toLowerCase() === 'pro') {
-                const proPortalEl = document.querySelector('.level-portal[onclick*="pro"]') ||
-                    Array.from(document.querySelectorAll('.level-portal')).find(el => (el.getAttribute('onclick') || '').includes("'pro'"));
-                if (proPortalEl && typeof selectPlan === 'function') {
-                    setTimeout(function () { selectPlan(proPortalEl, 'pro'); }, 500);
+            // Auto-select plan from ?plan= URL param (dj-tools gate, dj-profile, etc.)
+            // OR from localStorage (user returning after login/signup redirect).
+            // Supported values: lite | pro | pro_monthly | pro_6mo | pro_annual
+            (function autoSelectPendingPlan() {
+                const VALID_PLANS = ['lite', 'pro', 'pro_monthly', 'pro_6mo', 'pro_annual'];
+
+                let pending = new URLSearchParams(window.location.search).get('plan') || '';
+                if (!pending) {
+                    try { pending = localStorage.getItem('mdj_pending_plan') || ''; } catch (e) { void e; }
                 }
-            }
+                pending = pending.toLowerCase();
+                if (!VALID_PLANS.includes(pending)) return;
+
+                // Consume localStorage so it only fires once
+                try { localStorage.removeItem('mdj_pending_plan'); } catch (e) { void e; }
+
+                // Normalise generic 'pro' → default monthly
+                const resolved = (pending === 'pro') ? 'pro_monthly' : pending;
+
+                setTimeout(function () {
+                    if (typeof applyPortalSelection === 'function') {
+                        applyPortalSelection(resolved);
+                        // Scroll portal into view so user sees the selected card
+                        const portalSection = document.getElementById('level-selection-portal');
+                        if (portalSection) {
+                            portalSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+
+                    // Fix C: PRO plan auto-launch Stripe after returning from signup
+                    // Guard: only fires once per page load (sessionStorage flag prevents double-trigger)
+                    if (resolved === 'lite') return;
+                    var _checkoutFlag = 'mdj_auto_checkout_started';
+                    try { if (sessionStorage.getItem(_checkoutFlag) === '1') return; } catch (e) { void e; }
+                    if (typeof _supa === 'undefined' || !_supa) return;
+                    _supa.auth.getSession().then(function (r) {
+                        var sess = r && r.data && r.data.session;
+                        if (!sess) return; // guest → wait for manual click
+                        try { sessionStorage.setItem(_checkoutFlag, '1'); } catch (e) { void e; }
+                        selectedPlan = 'pro';
+                        var _billing = MDJ_PLAN_BILLING_MAP[resolved] || 'monthly';
+                        setBilling(_billing);
+                        jobsStartProStripeCheckout();
+                    }).catch(function (e) { void e; });
+                }, 500);
+            })();
 
             // ── localStorage autofill (from autofill.html helper) ────
             if (new URLSearchParams(window.location.search).get('autofill') === '1') {
@@ -3374,17 +3498,17 @@
         // ── Validate referral code ────────────────────────────────────
         async function validateReferralCode(code) {
             if (!code || code.length < 4) return;
-            if (!supabase) return;
-            const { data } = await supabase.from('dj_profiles').select('user_id').eq('referral_code', code.toUpperCase()).maybeSingle();
+            if (!_supa) return;
+            const { data } = await _supa.from('dj_profiles').select('user_id').eq('referral_code', code.toUpperCase()).maybeSingle();
             const note = document.getElementById('referral-discount-note');
             if (note) note.style.display = data ? 'block' : 'none';
         }
 
         // ── Load platform pricing from Supabase (admin-configurable) ──
         async function loadPlatformPricing() {
-            if (!supabase) return;
+            if (!_supa) return;
             try {
-                const { data } = await supabase
+                const { data } = await _supa
                     .from('platform_settings')
                     .select('key, value')
                     .in('key', ['pro_price_monthly', 'pro_price_semestral', 'pro_price_annual',
@@ -3420,6 +3544,13 @@
                     if (priceSpan && s.pro_price_annual) priceSpan.textContent = '$' + s.pro_price_annual;
                     if (labelSpan && s.pro_label_annual) labelSpan.textContent = '/año · Ahorra $' + (s.pro_price_monthly * 12 - parseInt(s.pro_price_annual));
                 }
+                // Portal cards prices (new 4-card layout)
+                var cMo = document.getElementById('portal-card-price-monthly');
+                if (cMo && s.pro_price_monthly) cMo.textContent = '$' + s.pro_price_monthly;
+                var c6mo = document.getElementById('portal-card-price-6mo');
+                if (c6mo && s.pro_price_semestral) c6mo.textContent = '$' + s.pro_price_semestral;
+                var cAn = document.getElementById('portal-card-price-annual');
+                if (cAn && s.pro_price_annual) cAn.textContent = '$' + s.pro_price_annual;
             } catch (e) {
                 void e;
             }
@@ -3469,8 +3600,8 @@
 
         /** Oculta fila de contraseña del formulario PRO si ya hay sesión (evita pedirla dos veces). */
         function jobsSyncProFormPasswordVisibility() {
-            if (!supabase) return;
-            supabase.auth.getSession().then(function (res) {
+            if (!_supa) return;
+            _supa.auth.getSession().then(function (res) {
                 var sess = res && res.data && res.data.session;
                 var pw = document.getElementById('job-password');
                 var row = pw && pw.closest('.grid2');
@@ -3503,14 +3634,14 @@
 
         /** Cliente con fila en client_profiles y sin dj_profiles: ofrecer activación artista (sin mezclar con registro nuevo). */
         async function jobsEvaluateClientToArtistBanner(session) {
-            if (!supabase || !session || !session.user) return;
+            if (!_supa || !session || !session.user) return;
             var banner = document.getElementById('jobs-client-to-artist-banner');
             if (!banner) return;
             try {
                 var uid = session.user.id;
                 var pr = await Promise.all([
-                    supabase.from('dj_profiles').select('user_id').eq('user_id', uid).maybeSingle(),
-                    supabase.from('client_profiles').select('user_id').eq('user_id', uid).maybeSingle()
+                    _supa.from('dj_profiles').select('user_id').eq('user_id', uid).maybeSingle(),
+                    _supa.from('client_profiles').select('user_id').eq('user_id', uid).maybeSingle()
                 ]);
                 var dj = pr[0] && pr[0].data;
                 var cl = pr[1] && pr[1].data;
@@ -3531,7 +3662,7 @@
         // ── Gate: CREATE ACCOUNT — talent/dj + auto-login + redirección al panel (no flujo cliente)
         async function gateSignup(e) {
             e.preventDefault();
-            if (!supabase) return;
+            if (!_supa) return;
             const btn = document.getElementById('gate-signup-btn');
             const err = document.getElementById('gate-signup-error');
             const name = document.getElementById('gate-name').value.trim();
@@ -3542,7 +3673,7 @@
             btn.textContent = jobsGateT('gate-creating', 'Creando cuenta...', 'Creating account...');
             err.style.display = 'none';
 
-            const { data: signData, error } = await supabase.auth.signUp({
+            const { data: signData, error } = await _supa.auth.signUp({
                 email,
                 password: pass,
                 options: {
@@ -3578,7 +3709,7 @@
 
             var session = signData && signData.session;
             if (!session) {
-                var signInRes = await supabase.auth.signInWithPassword({ email: email, password: pass });
+                var signInRes = await _supa.auth.signInWithPassword({ email: email, password: pass });
                 if (!signInRes.error && signInRes.data && signInRes.data.session) {
                     session = signInRes.data.session;
                 }
@@ -3599,11 +3730,11 @@
             const user = session.user;
 
             try {
-                const { data: existingDj } = await supabase.from('dj_profiles').select('user_id').eq('user_id', user.id).maybeSingle();
+                const { data: existingDj } = await _supa.from('dj_profiles').select('user_id').eq('user_id', user.id).maybeSingle();
                 if (!existingDj) {
                     const memberId = 'DJ-' + user.id.substring(0, 6).toUpperCase();
                     const referralCode = 'REF' + memberId.replace('DJ-', '').substring(0, 5);
-                    const { error: djErr } = await supabase.from('dj_profiles').insert([{
+                    const { error: djErr } = await _supa.from('dj_profiles').insert([{
                         user_id: user.id,
                         email: email,
                         dj_name: name,
@@ -3647,7 +3778,7 @@
         // ── Gate: LOGIN ──────────────────────────────────────────────
         async function gateLogin(e) {
             e.preventDefault();
-            if (!supabase) return;
+            if (!_supa) return;
             const btn = document.getElementById('gate-login-btn');
             const err = document.getElementById('gate-login-error');
             const email = document.getElementById('gate-login-email').value.trim();
@@ -3656,7 +3787,7 @@
             btn.disabled = true; btn.textContent = 'Verificando...';
             err.style.display = 'none';
 
-            const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+            const { error } = await _supa.auth.signInWithPassword({ email, password: pass });
 
             if (error) {
                 err.textContent = error.message; err.style.display = 'block';
@@ -3664,7 +3795,7 @@
                 return;
             }
 
-            const { data: { session: sessAfter } } = await supabase.auth.getSession();
+            const { data: { session: sessAfter } } = await _supa.auth.getSession();
             if (sessAfter) await jobsEvaluateClientToArtistBanner(sessAfter);
             await onGateSuccess();
         }
@@ -3677,7 +3808,7 @@
             if (selection) selection.style.display = '';
             await updateHeaderAuth();
             jobsSyncProFormPasswordVisibility();
-            const { data: { session: s2 } } = await supabase.auth.getSession();
+            const { data: { session: s2 } } = await _supa.auth.getSession();
             if (s2) await jobsEvaluateClientToArtistBanner(s2);
             await prefillProfileForm();
             await updateJobsAfterRolesCta();
@@ -3691,11 +3822,11 @@
         // ── Pre-fill form with saved profile data ────────────────────
         async function prefillProfileForm() {
             try {
-                if (!supabase) return;
-                const { data: { session } } = await supabase.auth.getSession();
+                if (!_supa) return;
+                const { data: { session } } = await _supa.auth.getSession();
                 if (!session) return; // Not logged in — nothing to fill
 
-                const { data: p } = await supabase
+                const { data: p } = await _supa
                     .from('dj_profiles')
                     .select('*')
                     .eq('user_id', session.user.id)
@@ -3776,8 +3907,11 @@
                 if (selectionScreen && proFormSection) {
                     proFormSection.classList.remove('hidden');
                     if (planHidden) planHidden.value = (p.plan || 'PRO').toUpperCase();
+                    /* Patch B: solo ocultar tarjetas de plan si el perfil YA es PRO/ELITE activo.
+                       Si es LITE/free/null, las tarjetas quedan visibles para que pueda hacer upgrade. */
+                    var isAlreadyPro = p.plan && (p.plan.toLowerCase() === 'pro' || p.plan.toLowerCase() === 'elite');
                     var portalContainer = selectionScreen.querySelector('.level-portal-container');
-                    if (portalContainer) portalContainer.classList.add('hidden-by-prefill');
+                    if (portalContainer && isAlreadyPro) portalContainer.classList.add('hidden-by-prefill');
                     var activateC = document.getElementById('activate-container');
                     if (activateC) activateC.classList.remove('visible');
                     var payStep = document.getElementById('jobs-pro-payment-step');
@@ -3794,39 +3928,71 @@
         }
 
         let selectedPlan = null;
-        function selectPlan(el, type) {
-            /* PRO exige cuenta: primero registro/login; LITE se puede explorar sin sesión. */
-            if (type === 'pro') {
-                if (!supabase) {
-                    window.location.href = './login.html?signup=free&user_type=talent&redirect=jobs';
-                    return;
-                }
-                supabase.auth.getSession().then(function (res) {
-                    var session = res && res.data && res.data.session;
-                    if (!session) {
-                        window.location.href = './login.html?signup=free&user_type=talent&redirect=jobs';
-                        return;
-                    }
-                    document.querySelectorAll('.level-portal').forEach(p => p.classList.remove('selected'));
-                    el.classList.add('selected');
-                    selectedPlan = type;
-                    syncJobsPlanStepUI();
-                    var ac = document.getElementById('activate-container');
-                    if (ac) ac.classList.add('visible');
-                    var payEl = document.getElementById('jobs-pro-payment-step');
-                    if (payEl) payEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    else if (ac) ac.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                });
-                return;
-            }
-            document.querySelectorAll('.level-portal').forEach(p => p.classList.remove('selected'));
-            el.classList.add('selected');
-            selectedPlan = type;
-            document.getElementById('activate-container').classList.add('visible');
+        let selectedJobsPlan = null;
+        /* billing-period map: plan type → value accepted by create-checkout */
+        var MDJ_PLAN_BILLING_MAP = { 'pro': 'monthly', 'pro_monthly': 'monthly', 'pro_6mo': 'semestral', 'pro_annual': 'annual' };
 
-            // Subtle scroll to button to ensure visibility
-            document.getElementById('activate-container').scrollIntoView({ behavior: 'smooth', block: 'center' });
-            syncJobsPlanStepUI();
+        /* Aplica selección visual INMEDIATA — no depende de auth ni async */
+        function applyPortalSelection(type) {
+            selectedJobsPlan = type;
+            document.querySelectorAll('.level-portal').forEach(function (card) {
+                card.classList.remove('selected');
+            });
+            var selectedCard = document.querySelector('.level-portal[data-plan="' + type + '"]');
+            if (selectedCard) selectedCard.classList.add('selected');
+            var createBtn = document.getElementById('jobs-after-roles-cta');
+            if (createBtn) createBtn.disabled = false;
+        }
+
+        /* Selector de tarjeta — solo visual, sin async ni redirect */
+        function selectPlan(el, type) {
+            applyPortalSelection(type);
+            /* Mantener selectedPlan para compatibilidad con jobsStartProStripeCheckout guard */
+            selectedPlan = (type === 'lite') ? 'lite' : 'pro';
+        }
+
+        /* Handler principal del botón CREA TU CUENTA.
+           Función síncrona — sin guard de JWT (getSessionAccountRole lee app_metadata
+           que puede ser null para artistas LITE, causando redirect erróneo a client-portal). */
+        function jobsCreateAccountFromSelectedPlan() {
+            if (!selectedJobsPlan) {
+                alert('Selecciona un plan primero.');
+                return false;
+            }
+            if (selectedJobsPlan === 'lite') {
+                openTalentSignup('lite');
+                return false;
+            }
+            if (selectedJobsPlan === 'pro_monthly') {
+                selectedPlan = 'pro';
+                setBilling('monthly');
+                jobsStartProStripeCheckout();
+                return false;
+            }
+            if (selectedJobsPlan === 'pro_6mo') {
+                selectedPlan = 'pro';
+                setBilling('semestral');
+                jobsStartProStripeCheckout();
+                return false;
+            }
+            if (selectedJobsPlan === 'pro_annual') {
+                selectedPlan = 'pro';
+                setBilling('annual');
+                jobsStartProStripeCheckout();
+                return false;
+            }
+            return false;
+        }
+
+        /* Registro Lite / gratuito — sin Stripe.
+           Guarda el plan elegido en localStorage antes de redirigir
+           para auto-seleccionarlo al volver desde login. */
+        function openTalentSignup(plan) {
+            if (plan) {
+                try { localStorage.setItem('mdj_pending_plan', plan); } catch (e) { void e; }
+            }
+            var planParam = plan ? '&plan=' + encodeURIComponent(plan) : '';
+            window.location.href = './login.html?signup=free&user_type=talent&redirect=jobs' + planParam;
         }
 
         function activatePlan() {
@@ -3874,16 +4040,18 @@
                 btn.innerHTML = 'Conectando con Stripe...';
             }
             try {
-                if (!supabase) throw new Error('Sin conexión.');
-                const { data: { session } } = await supabase.auth.getSession();
+                if (!_supa) throw new Error('Sin conexión.');
+                const { data: { session } } = await _supa.auth.getSession();
                 if (!session) {
-                    window.location.href = JOBS_GUEST_SIGNUP_URL;
+                    /* Patch A: guardar plan pendiente para auto-selección al volver */
+                    try { localStorage.setItem('mdj_pending_plan', selectedJobsPlan || 'pro_monthly'); } catch (e) { void e; }
+                    var _proGuestPlan = encodeURIComponent(selectedJobsPlan || 'pro_monthly');
+                    window.location.href = JOBS_GUEST_SIGNUP_URL + '&plan=' + _proGuestPlan;
                     return;
                 }
                 const billing = document.getElementById('billing-period')?.value || 'monthly';
                 const refCode = (document.getElementById('referral-code-input')?.value || '').trim().toUpperCase();
-                const returnUrl = new URL('jobs.html', window.location.origin + '/');
-                returnUrl.searchParams.set('stripe_return', '1');
+                const returnUrl = new URL('dj-dashboard.html', window.location.origin + '/');
                 const checkoutFn =
                     typeof window.mdbSupabaseFunctionUrl === 'function' ? window.mdbSupabaseFunctionUrl('create-checkout') : '';
                 if (!checkoutFn) throw new Error('Supabase no configurado (create-checkout).');
@@ -3928,8 +4096,8 @@
             try {
                 var p = new URLSearchParams(window.location.search);
                 if (p.get('stripe_return') !== '1' || String(p.get('payment') || '').toLowerCase() !== 'success') return;
-                if (!supabase) return;
-                var sessRes = await supabase.auth.getSession();
+                if (!_supa) return;
+                var sessRes = await _supa.auth.getSession();
                 var session = sessRes && sessRes.data && sessRes.data.session;
                 if (!session) return;
                 try {
@@ -3963,13 +4131,13 @@
         // Jobs puede inicializar artist_specialty si está vacío o básico (1 parte).
         // Si CONFIG ya guardó especialidades detalladas (≥2 partes separadas por ·), se preservan.
         function persistJobRolesToProfile() {
-            if (!supabase) return;
+            if (!_supa) return;
             const selectedRoles = Array.from(document.querySelectorAll('input[name="roles"]:checked')).map(c => c.value);
             var specLine = mdjJobsBuildArtistSpecialtyLine();
-            supabase.auth.getSession().then(({ data: { session } }) => {
+            _supa.auth.getSession().then(({ data: { session } }) => {
                 if (!session) return;
                 /* Read current artist_specialty before overwriting */
-                supabase
+                _supa
                     .from('dj_profiles')
                     .select('artist_specialty')
                     .eq('user_id', session.user.id)
@@ -3980,7 +4148,7 @@
                         /* Preserve if artist has a CONFIG-detailed specialty (2+ parts = tipo + al menos 1 chip/comercial).
                            Jobs only writes if field is empty or contains just a single role name. */
                         var specToSave = parts.length >= 2 ? currentSpec : (specLine || null);
-                        supabase
+                        _supa
                             .from('dj_profiles')
                             .update({ roles: selectedRoles.join(', '), artist_specialty: specToSave })
                             .eq('user_id', session.user.id)
@@ -4026,7 +4194,10 @@
                 return;
             }
             var sw = car.scrollWidth;
-            if (sw > 120) car.scrollLeft = Math.round(sw / 4);
+            if (sw > 120) {
+                var cardW = 304;
+                car.scrollLeft = Math.max(0, Math.round(sw / 4) - cardW);
+            }
         };
 
         window.mdjJobsRoleInfiniteApplyRetry = function (attempt) {
@@ -4296,6 +4467,7 @@
 
         // Experience Helper Logic — full card with days, dates, link
         const DAYS = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'];
+        const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
         function addExperienceEntry() {
             const container = document.getElementById('experience-list');
@@ -4655,7 +4827,7 @@
             window.submitProForm = async function () {
                 const submitBtn = document.getElementById('pro-submit-btn');
                 const originalText = submitBtn ? submitBtn.innerHTML : '';
-                if (!supabase) {
+                if (!_supa) {
                     alert('No se pudo iniciar la conexión de sesión. Recarga la página o entra desde «Suscripción gratis» en el menú.');
                     return;
                 }
@@ -4699,7 +4871,7 @@
                 errorDiv.style.display = 'none';
 
                 // ── Password validation ───────────────────────────────────
-                let currentSession = (await supabase.auth.getSession()).data.session;
+                let currentSession = (await _supa.auth.getSession()).data.session;
 
                 // If not logged in, create account with form fields
                 if (!currentSession) {
@@ -4719,7 +4891,7 @@
                     submitBtn.disabled = true;
                     submitBtn.innerHTML = '⚙️ Creando cuenta...';
 
-                    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                    const { data: signUpData, error: signUpError } = await _supa.auth.signUp({
                         email: emailVal,
                         password: passwordVal,
                         options: {
@@ -4756,11 +4928,11 @@
                     }
                     currentSession = signUpData.session;
                     if (!currentSession) {
-                        var si2 = await supabase.auth.signInWithPassword({ email: emailVal, password: passwordVal });
+                        var si2 = await _supa.auth.signInWithPassword({ email: emailVal, password: passwordVal });
                         if (!si2.error && si2.data && si2.data.session) currentSession = si2.data.session;
                     }
                     if (!currentSession) {
-                        currentSession = (await supabase.auth.getSession()).data.session;
+                        currentSession = (await _supa.auth.getSession()).data.session;
                     }
                 }
 
@@ -4802,7 +4974,7 @@
 
                 const billingPeriodVal = (document.getElementById('billing-period')?.value || 'monthly').toLowerCase();
 
-                const { error } = await supabase
+                const { error } = await _supa
                     .from('dj_profiles')
                     .upsert({
                         user_id: currentSession.user.id,
@@ -4847,7 +5019,7 @@
 
                 // Try saving extended bio fields silently (columns may not exist yet)
                 try {
-                    await supabase.from('dj_profiles').update({
+                    await _supa.from('dj_profiles').update({
                         bio_short: (document.getElementById('bio-short')?.value || '').trim(),
                         bio_long: (document.getElementById('bio-long')?.value || '').trim(),
                         bio_language: document.getElementById('bio-language')?.value || 'es',
@@ -4872,7 +5044,7 @@
                             if (sessionStorage.getItem('jobs_pro_checkout_ok') === '1') skipCheckout = true;
                         } catch (eSs) { void eSs; }
                         if (!skipCheckout) {
-                            const { data: profCk } = await supabase
+                            const { data: profCk } = await _supa
                                 .from('dj_profiles')
                                 .select('plan, plan_type, plan_status, plan_expires_at, subscription_status, is_premium')
                                 .eq('user_id', currentSession.user.id)
@@ -4891,7 +5063,7 @@
                         // Fallback: usuario PRO sin pago previo (enlace antiguo / flujo atípico) → Stripe al enviar
                         submitBtn.innerHTML = 'Redirigiendo a pago...';
                         try {
-                            const { data: { session: authSession } } = await supabase.auth.getSession();
+                            const { data: { session: authSession } } = await _supa.auth.getSession();
                             const billing = document.getElementById('billing-period')?.value || 'monthly';
                             const refCode = (document.getElementById('referral-code-input')?.value || '').trim().toUpperCase();
                             const returnUrl = new URL('jobs.html', window.location.origin + '/');
