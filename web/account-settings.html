@@ -119,7 +119,7 @@
       color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       margin: 0;
-      padding: 0;
+      padding-top: calc(var(--header-height, 84px) + var(--header-nav-band, 72px));
     }
 
     /* owner-tabs: sticky — mismo patrón que jobs/shop/dj-tools (mdj-from-profile) */
@@ -133,7 +133,7 @@
     /* Centrado de Pantalla y Prevención de Solapamiento con Header (franja VIP + #mainNav) */
     .account-layout {
       max-width: 680px;
-      margin: 196px auto 80px auto;
+      margin: 16px auto 80px auto;
       padding: 12px 20px 0;
       display: flex;
       flex-direction: column;
@@ -663,6 +663,10 @@
     body.mdj-account-settings main.account-layout {
       margin-bottom: 80px;
     }
+    /* billing-mdjpro-dl-btn oculto permanentemente en Suscripción y pagos */
+    #billing-mdjpro-dl-btn { display: none !important; }
+    /* cert-status: oculto — si no hay número de certificado el campo habla por sí solo */
+    #billing-cert-status { display: none !important; }
 
 
     body.mdj-account-settings .system-card,
@@ -955,6 +959,7 @@
     /* Full-width override when sidebar is active */
     .account-layout.mdj-has-sidebar {
       max-width: 100%;
+      margin-top: 0;
       margin-left: 0;
       margin-right: 0;
       padding: 0;
@@ -1995,14 +2000,20 @@
       </div>
       <div id="products-list">
         <div class="prod-card">
-          <div class="prod-name">MDJPRO App</div>
+          <div>
+            <div style="font-size:10px;font-weight:800;letter-spacing:0.16em;color:rgba(255,255,255,0.35);text-transform:uppercase;margin-bottom:2px;">MDJPRO App</div>
+            <div class="prod-name" style="font-size:13px;">Producto: MDJPRO</div>
+          </div>
           <span id="mdjpro-plan-badge" class="prod-badge lite">LITE</span>
         </div>
         <div id="mdjpro-license-row" style="display:none;margin-top:10px;padding:10px 14px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.22);border-radius:8px;">
-          <div style="font-size:10px;font-weight:800;letter-spacing:0.18em;color:rgba(197,160,89,0.7);margin-bottom:4px;">ACTIVE LICENSE</div>
-          <div id="mdjpro-license-number" style="font-size:13px;font-weight:700;color:#f0cc80;letter-spacing:0.06em;font-family:monospace;">—</div>
-          <div id="mdjpro-license-status" style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:6px;letter-spacing:0.06em;"></div>
-          <div id="mdjpro-license-seats" style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:4px;letter-spacing:0.06em;"></div>
+          <div style="font-size:10px;font-weight:800;letter-spacing:0.18em;color:rgba(197,160,89,0.7);margin-bottom:6px;text-transform:uppercase;">Licencia Activa</div>
+          <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px;">
+            <span style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:600;">Licencia:</span>
+            <div id="mdjpro-license-number" style="font-size:13px;font-weight:700;color:#f0cc80;letter-spacing:0.06em;font-family:monospace;">—</div>
+          </div>
+          <div id="mdjpro-license-status" style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:4px;letter-spacing:0.06em;"></div>
+          <div id="mdjpro-license-seats" style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:2px;letter-spacing:0.06em;"></div>
         </div>
       </div>
       <div id="products-add-section">
@@ -2107,8 +2118,11 @@
               </svg>
             </div>
             <div>
-              <div style="font-size:11px;font-weight:800;letter-spacing:0.14em;color:rgba(255,255,255,0.35);text-transform:uppercase;">Plan Artista</div>
-              <div style="font-size:15px;font-weight:800;color:#fff;" id="billing-plan">—</div>
+              <div id="billing-plan-eyebrow" style="font-size:11px;font-weight:800;letter-spacing:0.14em;color:rgba(255,255,255,0.35);text-transform:uppercase;">Artista</div>
+              <div style="display:flex;align-items:baseline;gap:6px;margin-top:3px;">
+                <span style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:600;">Plan:</span>
+                <div style="font-size:15px;font-weight:800;color:#fff;" id="billing-plan">—</div>
+              </div>
             </div>
           </div>
           <div style="text-align:right;">
@@ -2124,8 +2138,8 @@
         </div>
       </div>
 
-      <!-- ── TARJETA 2: MDJPRO App ── -->
-      <div class="acct-card" style="margin-bottom:14px;opacity:0.7;">
+      <!-- ── TARJETA 2: MDJPRO Desktop — dinámica (PRO: licencia snapshot / LITE: PRÓXIMAMENTE) ── -->
+      <div class="acct-card" style="margin-bottom:14px;" id="billing-mdjpro-card">
         <div style="padding:14px 20px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.05);">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="acct-sub-icon" aria-hidden="true">
@@ -2142,14 +2156,16 @@
               </svg>
             </div>
             <div>
-              <div style="font-size:11px;font-weight:800;letter-spacing:0.14em;color:rgba(255,255,255,0.35);text-transform:uppercase;">MDJPRO App</div>
-              <div id="mdjpro-app-plan" style="font-size:15px;font-weight:800;color:#fff;">—</div>
+              <div style="font-size:11px;font-weight:800;letter-spacing:0.14em;color:rgba(255,255,255,0.35);text-transform:uppercase;">MDJPRO Desktop</div>
             </div>
           </div>
-          <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:5px;background:rgba(250,204,21,0.1);color:#facc15;letter-spacing:0.1em;">PRÓXIMAMENTE</span>
+          <span id="billing-mdjpro-badge" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:5px;background:rgba(250,204,21,0.1);color:#facc15;letter-spacing:0.1em;">—</span>
         </div>
-        <div class="acct-row">
-          <div class="acct-row-info" style="font-size:12px;color:rgba(255,255,255,0.35);">La app nativa MDJPRO para tu estación de trabajo. Disponible muy pronto para suscriptores PRO.</div>
+        <div class="acct-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+          <div class="acct-lbl">Licencia:</div>
+          <div id="billing-mdjpro-display" style="font-size:14px;font-weight:700;color:#f0cc80;font-family:ui-monospace,monospace;letter-spacing:0.06em;word-break:break-all;">—</div>
+          <div id="billing-mdjpro-meta" style="display:none !important;"></div>
+          <a id="billing-mdjpro-dl-btn" href="./downloads.html" class="acct-edit" style="display:none !important;">↓ Descargar</a>
         </div>
       </div>
 
@@ -5051,6 +5067,14 @@
           var _role = p.role ? String(p.role).toLowerCase() : '';
           if (_role === 'owner') { planEl.textContent = '✦ OWNER · PRO'; planEl.style.background = 'linear-gradient(135deg,#c5a059,#f0cc80)'; planEl.style.webkitBackgroundClip = 'text'; planEl.style.webkitTextFillColor = 'transparent'; }
           else { planEl.textContent = pl ? pl.toUpperCase() : '—'; planEl.style = ''; }
+          /* Eyebrow dinámico según plan/role */
+          var eyebrowEl = document.getElementById('billing-plan-eyebrow');
+          if (eyebrowEl) {
+            var _plUp = pl.toUpperCase();
+            if (_role === 'owner') eyebrowEl.textContent = 'Plan Plataforma';
+            else if (_plUp === 'PRO' || _plUp === 'ELITE') eyebrowEl.textContent = 'Artist PRO Web';
+            else eyebrowEl.textContent = 'Plan Artista';
+          }
           /* Ocultar botón Upgrade para owner/PRO */
           var upBtn = document.getElementById('billing-upgrade-btn');
           if (upBtn && (_role === 'owner' || pl.toUpperCase() === 'PRO' || pl.toUpperCase() === 'ELITE')) upBtn.style.display = 'none';
@@ -5098,6 +5122,38 @@
             .eq('user_id', session.user.id).single();
           if (p) hydrateBillingPanelFromProfile(p);
           await loadAcademiaStatus(session.user.email, p ? p.role : '');
+
+          // MDJPRO license — dinámico en Tarjeta 2
+          var bdisplay = document.getElementById('billing-mdjpro-display');
+          var bbadge   = document.getElementById('billing-mdjpro-badge');
+          var bmeta    = document.getElementById('billing-mdjpro-meta');
+          var bdlbtn   = document.getElementById('billing-mdjpro-dl-btn');
+          var isPro    = p && (p.plan === 'PRO' || p.plan === 'ELITE' || (p.role && p.role.toLowerCase() === 'owner'));
+
+          if (!isPro) {
+            if (bdisplay) { bdisplay.textContent = '—'; bdisplay.style.fontFamily = 'inherit'; bdisplay.style.color = '#fff'; }
+            if (bbadge)   bbadge.textContent = 'PRÓXIMAMENTE';
+            if (bmeta)    bmeta.textContent = 'Disponible para suscriptores PRO activos.';
+            if (bdlbtn)   bdlbtn.style.display = 'none';
+          } else {
+            try {
+              var snapRes2 = await sb.rpc('mdjpro_license_snapshot');
+              var snap2    = snapRes2 && snapRes2.data;
+              var lic2     = snap2 && snap2.license;
+              if (lic2) {
+                if (bdisplay) bdisplay.textContent = lic2.license_display || '—';
+                if (bbadge)   { bbadge.textContent = String(lic2.status || 'active').toUpperCase(); bbadge.style.background = 'rgba(34,197,94,0.12)'; bbadge.style.color = '#22c55e'; }
+                if (bmeta)    bmeta.textContent = 'Tier: ' + (lic2.tier || 'PREMIUM') + '  ·  Seats: ' + (lic2.seats_used != null ? lic2.seats_used : 0) + ' / ' + (lic2.seats_allowed || 2);
+                if (bdlbtn)   bdlbtn.style.display = '';
+              } else {
+                // Licencia PRO pero aún no emitida (webhook en tránsito)
+                if (bdisplay) { bdisplay.textContent = 'Licencia en proceso. Refresca en unos segundos.'; bdisplay.style.fontFamily = 'inherit'; bdisplay.style.color = 'rgba(255,255,255,0.45)'; }
+                if (bbadge)   { bbadge.textContent = 'PRO'; bbadge.style.background = 'rgba(34,197,94,0.12)'; bbadge.style.color = '#22c55e'; }
+                if (bmeta)    bmeta.textContent = 'La licencia se genera automáticamente al confirmar el pago.';
+                if (bdlbtn)   bdlbtn.style.display = '';
+              }
+            } catch (eLic2) { void eLic2; }
+          }
         } catch(e) { console.warn('[billing] refreshBillingPanel:', e); }
       }
       window.refreshBillingPanel = refreshBillingPanel;
