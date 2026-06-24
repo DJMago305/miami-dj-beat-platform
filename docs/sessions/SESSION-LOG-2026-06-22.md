@@ -154,3 +154,161 @@ Mientras el número de ítems visibles antes de CONTACTO varíe según la sesió
 ---
 
 **Sesión cerrada. Pasamos a la siguiente tarea.**
+
+---
+
+# SESIÓN TARDE/NOCHE — 2026-06-22 (17:00–19:50 UTC-4)
+
+**Agente:** Cursor AI (Sonnet 4.6)
+**Capitán:** DJMago305 / Gerardo A Valle
+**Estado al cierre:** ✅ TRABAJOS COMPLETADOS Y DEPLOYADOS
+
+---
+
+## 1. Navigation Freeze Baseline — Notarizado y mergeado
+
+La documentación `NAVIGATION FREEZE BASELINE` fue commiteada en rama `docs/nav-freeze-baseline` y mergeada a `main`. Git status limpio confirmado.
+
+---
+
+## 2. AUDITORÍA EXCLUSIVA — TICKET-PRO-CHECKOUT-004
+
+### Hallazgos confirmados con evidencia directa de código
+
+**Backend (Edge Functions):**
+- `supabase/functions/create-checkout/index.ts` — COMPLETO. Maneja monthly/semestral/annual/app_monthly/app_annual, crea Stripe customer, referidos, audit log.
+- `supabase/functions/stripe-webhook/index.ts` — COMPLETO. Maneja `checkout.session.completed → plan='PRO'`, `invoice.paid`, `invoice.payment_failed`, `subscription.deleted`, `subscription.updated`. Idempotencia via `processed_webhooks`. Auto-issue licencia MDJPRO.
+- `supabase/config.toml` — `create-checkout` requiere JWT (correcto). `stripe-webhook` sin JWT (correcto para Stripe server-to-server).
+
+**Frontend (botones Upgrade PRO — estado actual en código):**
+
+| Archivo | Elemento | Acción actual |
+|---|---|---|
+| `account-settings.html` L.1906 | `#btn-activate-pro` | Redirige a `dj-dashboard.html#panel-billing` |
+| `account-settings.html` L.2057 | `#billing-upgrade-btn` | Redirige a `dj-dashboard.html#panel-billing` |
+| `dj-dashboard.html` L.6888-6920 | `#dash-activate-pro-btn` | `mdjCheckoutPro()` → Edge Function directa ✅ |
+| `dj-tools.html` L.707-736 | Botón "⚡ Activar PRO Artist" | `mdjCheckoutPro()` → Edge Function directa ✅ |
+| `jobs.html` L.3887-3916 | `#jobs-pro-stripe-btn` | Edge Function directa ✅ |
+| `dj-profile.html` L.3461 | Link SFT gate | Redirige a `dj-dashboard.html#panel-billing` |
+
+**El ticket describe un estado ANTERIOR (botones a `jobs.html?plan=PRO` dead-end). El código actual ya fue parcialmente corregido. El flujo completo funciona vía `dj-dashboard.html#panel-billing`.**
+
+**Veredicto:** B) PARCIALMENTE RESUELTO — ~80% completitud. El único bloqueante no verificable desde local: `STRIPE_PRICE_MONTHLY`, `STRIPE_SECRET_KEY` y `STRIPE_WEBHOOK_SECRET` en Supabase Production Secrets Dashboard.
+
+**`mdbSupabaseFunctionUrl('n')`:** `'n'` es alias/clave abreviada para `create-checkout`. Se usa en archivos más antiguos. Los archivos actualizados (`jobs.html`, `dj-dashboard.html`, `dj-tools.html`) ya usan la clave explícita `'create-checkout'`.
+
+---
+
+## 3. TICKET-HERO-CONFIG-PREVIEW-MISMATCH-001 — REVERTIDO
+
+**Bug investigado:** Preview del editor de Hero/Banner en CONFIG no representaba el crop real del perfil público.
+
+**Causa raíz encontrada:**
+- Preview container usa `aspect-ratio: 19/6 = 3.17:1` (fijo)
+- Hero público usa `height: 380px; width: 100%` → ratio varía con viewport (1440px = 3.79:1, 1920px = 5.05:1)
+- La preview solo es fiel al perfil público a exactamente ~1200px de ancho (así lo documenta el comentario en el código)
+- Con banner nativo 1920×600 (≈3.2:1), el preview muestra casi sin crop. El público en 1440px+ recorta 220px de altura.
+
+**Patch propuesto:** `aspect-ratio: 19/6 → 19/5` (1 línea CSS). Aplicado → REVERTIDO por el Capitán. Ticket en pausa.
+
+**Estado:** ROLLED BACK — git diff vacío. Sin cambios en producción.
+
+---
+
+## 4. TICKET-HERO-CONFIG-FOCAL-CONTROL-002 — ✅ CERRADO / PR #111 / DEPLOYED
+
+### Investigación previa (solo lectura)
+
+Controles existentes en el editor de hero:
+- D-pad 4 flechas: paso 5% por click (solo 21 posiciones en eje Y — demasiado grueso)
+- Zoom slider: rango 80–200%, paso 5
+- Click-sobre-preview: prometido en hint UI `"Click on the preview or use the arrows"` pero **NO IMPLEMENTADO** — sin event listener
+
+### Cambios implementados
+
+**Archivo único:** `web/account-settings.html` — +19 líneas, -1 línea
+
+**Cambio 1 — Click-sobre-preview** (líneas 4026–4042):
+```javascript
+_heroDrop.addEventListener('click', function (e) {
+  if (!document.querySelector('#hero-dropzone img.mdj-hero-thumb')) return;
+  if (e.target.closest('#btn-change-hero') || e.target.id === 'hero-upload') return;
+  var rect = _heroDrop.getBoundingClientRect();
+  _fxp = Math.max(0, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width)  * 100)));
+  _fyp = Math.max(0, Math.min(100, Math.round(((e.clientY - rect.top)  / rect.height) * 100)));
+  var img = document.querySelector('#hero-dropzone img.mdj-hero-thumb');
+  if (img) _applyFocalZoom(img);
+  if (_heroSaveBtn) _heroSaveBtn.disabled = false;
+});
+```
+
+**Cambio 2 — Paso d-pad:** `STEP = 5` → `STEP = 2` (21 posiciones → 51 posiciones)
+
+### Deploy
+- Branch: `fix/hero-config-focal-control`
+- PR: #111
+- Merge: ✅ Completado
+- Deploy: ✅ Completado
+- Riesgo: Bajo
+- Hero público (`dj-profile.html`): **INTACTO — cero cambios**
+
+---
+
+## Tickets con estado al cierre de sesión (tarde/noche)
+
+| Ticket | Estado | Archivos |
+|---|---|---|
+| NAVIGATION FREEZE BASELINE | ✅ DOCUMENTADO Y MERGEADO | docs/nav-freeze-baseline |
+| TICKET-PRO-CHECKOUT-004 | 🟡 PARCIALMENTE RESUELTO (~80%) | Pendiente confirmación secrets producción |
+| TICKET-HERO-CONFIG-PREVIEW-MISMATCH-001 | ⏸ PAUSADO | Revertido — sin cambios en producción |
+| TICKET-HERO-CONFIG-FOCAL-CONTROL-002 | ✅ CERRADO | PR #111 |
+| TICKET-PROFILE-HERO-SPECIALTY-001 | ✅ CERRADO | `web/dj-profile.html` |
+| TICKET-CONFIG-CATEGORIA-001 | ✅ CERRADO / MERGED / APROBADO | `web/account-settings.html` + `web/jobs.html` |
+
+---
+
+## Pendientes para próxima sesión
+
+1. **TICKET-PRO-CHECKOUT-004:** Verificar en Supabase Dashboard que los secrets de Stripe están configurados en producción (`STRIPE_PRICE_MONTHLY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`). Si están configurados, el ticket puede cerrarse como RESUELTO.
+2. **TICKET-HERO-CONFIG-PREVIEW-MISMATCH-001:** Decisión del Capitán si se desea ajustar el ratio del preview o explorar otra solución.
+3. **Gates PRO** (`dj-profile.html`, SoundForTips, DJ Tools): Verificar en producción que el flujo completo artista LITE → PRO funciona end-to-end.
+4. **Géneros musicales:** El Capitán mencionó una futura sección independiente para géneros (House, Salsa, Reggaeton, etc.) — separada de Categoría. Pendiente ticket nuevo cuando el Capitán lo solicite.
+
+---
+
+# AUDITORÍA — CATEGORÍAS PERFIL ARTÍSTICO — 2026-06-22 20:05 UTC-4
+
+**Modo:** SOLO LECTURA — cero cambios realizados  
+**Disparador:** DJYuyo muestra solo "HIALEAH" pero no "DJ · OPEN FORMAT" en el perfil público
+
+## Hallazgos confirmados
+
+### Campos relacionados con categoría en dj_profiles
+
+| Campo | Quién escribe | Quién lee en hero público |
+|---|---|---|
+| `roles` | `jobs.html` checkbox roles | `dj-profile.html` L4600 → ROLE_LABELS → `#pub-role-label` |
+| `artist_specialty` | `jobs.html` L3970 (auto-build desde roles) + admin | **NADIE** — ignorado en hero ❌ |
+| `category` | `dj-dashboard.html` `cfg-category` | **NADIE** — no está en `public_dj_profiles` view ❌ |
+
+### Causa raíz
+
+`p.artist_specialty` existe en la data (viene en `public_dj_profiles` view) pero el bloque JS del hero (`dj-profile.html` L4597-4608) lo ignora completamente. Solo usa `p.roles` + `p.city`.
+
+Para DJYuyo: `p.roles = null` → roleLine vacío → solo muestra `p.city = 'HIALEAH'`.
+
+### Nota sobre doble semántica de artist_specialty
+
+- `jobs.html`: "Open Format · DJ" (texto legible público para perfil artístico)
+- `admin-dashboard.html`: 'dj', 'bartender', 'drone' (código interno de staff)
+
+Son dos usos incompatibles del mismo campo — deuda técnica existente.
+
+## Tickets abiertos resultantes
+
+| Ticket | Archivo | Acción |
+|---|---|---|
+| TICKET-CONFIG-CATEGORIA-001 | `account-settings.html` | Panel nuevo "Categoría" para editar `artist_specialty` |
+| TICKET-PROFILE-HERO-SPECIALTY-001 | `dj-profile.html` | Usar `p.artist_specialty` en `#pub-role-label` (L4597-4608) |
+
+**Estado:** Pendiente autorización del Capitán. Sin cambios realizados.
