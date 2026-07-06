@@ -673,6 +673,347 @@
             color: rgba(197, 160, 89, 0.92);
         }
 
+        /* Invoice manual — PO panels UX (v20260706-invoice-panels-1) */
+        #production-module-host .mdj-prod-inv-panel {
+            width: 100%;
+            max-width: none;
+            box-sizing: border-box;
+        }
+
+        #production-module-host .mdj-prod-inv-panel-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 0 0 14px;
+        }
+
+        #production-module-host .mdj-prod-inv-panel-head-main {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+
+        #production-module-host .mdj-prod-inv-panel-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 28px;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: 1px solid rgba(197, 160, 89, 0.45);
+            background: rgba(197, 160, 89, 0.16);
+            color: rgba(197, 160, 89, 0.98);
+            font-size: 13px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        #production-module-host .mdj-prod-inv-panel-title {
+            margin: 0;
+            font-weight: 800;
+            font-size: 12px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(197, 160, 89, 0.92);
+            line-height: 1.35;
+        }
+
+        #production-module-host .mdj-prod-inv-panel-body {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #production-module-host .mdj-prod-inv-client-lookup-row {
+            padding-bottom: 10px;
+            margin-bottom: 4px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        #production-module-host .mdj-prod-inv-panel--client input.price-input::placeholder {
+            color: rgba(255, 255, 255, 0.58);
+            opacity: 1;
+        }
+
+        #production-module-host .mdj-prod-inv-panel--client input.price-input::-webkit-input-placeholder {
+            color: rgba(255, 255, 255, 0.58);
+            opacity: 1;
+        }
+
+        #production-module-host .mdj-prod-inv-panel--client input.price-input::-moz-placeholder {
+            color: rgba(255, 255, 255, 0.58);
+            opacity: 1;
+        }
+
+        #production-module-host .mdj-prod-inv-add-line-btn {
+            border: 1px solid rgba(197, 160, 89, 0.75);
+            border-radius: 50px;
+            padding: 8px 18px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            cursor: pointer;
+            background: rgba(197, 160, 89, 0.55);
+            color: rgba(245, 230, 200, 0.92);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+            transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease,
+                box-shadow 0.18s ease, transform 0.12s ease;
+        }
+
+        #production-module-host .mdj-prod-inv-add-line-btn:hover {
+            background: rgba(197, 160, 89, 0.88);
+            border-color: rgba(224, 193, 120, 0.95);
+            color: #fff8e8;
+            box-shadow: 0 0 14px rgba(197, 160, 89, 0.45);
+        }
+
+        #production-module-host .mdj-prod-inv-add-line-btn:active {
+            background: rgba(197, 160, 89, 1);
+            transform: scale(0.97);
+            box-shadow: 0 0 8px rgba(197, 160, 89, 0.35);
+        }
+
+        #production-module-host .mdj-prod-inv-del-line-btn {
+            border: 1px solid rgba(220, 72, 72, 0.75);
+            border-radius: 50px;
+            padding: 4px 12px;
+            min-width: 32px;
+            font-size: 14px;
+            font-weight: 800;
+            line-height: 1;
+            cursor: pointer;
+            background: rgba(200, 55, 55, 0.55);
+            color: rgba(255, 210, 210, 0.95);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease,
+                box-shadow 0.18s ease, transform 0.12s ease;
+        }
+
+        #production-module-host .mdj-prod-inv-del-line-btn:hover {
+            background: rgba(220, 72, 72, 0.88);
+            border-color: rgba(255, 120, 120, 0.95);
+            color: #fff;
+            box-shadow: 0 0 12px rgba(220, 72, 72, 0.45);
+        }
+
+        #production-module-host .mdj-prod-inv-del-line-btn:active {
+            background: rgba(200, 45, 45, 1);
+            transform: scale(0.94);
+            box-shadow: 0 0 6px rgba(220, 72, 72, 0.35);
+        }
+
+        #production-module-host .mdj-prod-inv-create-account-footer {
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            opacity: 0.88;
+        }
+
+        #production-module-host .mdj-prod-cobro-head {
+            margin-bottom: 14px;
+        }
+
+        #production-module-host .mdj-prod-inv-field-lbl-row {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 0;
+        }
+
+        #production-module-host .mdj-prod-inv-help--inline .mdj-prod-inv-help-icon {
+            width: 20px;
+            height: 20px;
+            font-size: 11px;
+        }
+
+        #production-module-host .mdj-prod-inv-help {
+            position: relative;
+            display: inline-flex;
+            flex: 0 0 auto;
+            align-items: center;
+            justify-content: center;
+            cursor: help;
+            outline: none;
+        }
+
+        #production-module-host .mdj-prod-inv-help-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 1px solid rgba(197, 160, 89, 0.55);
+            background: rgba(197, 160, 89, 0.12);
+            color: rgba(197, 160, 89, 0.98);
+            font-size: 13px;
+            font-weight: 800;
+            line-height: 1;
+            box-shadow: 0 0 12px rgba(197, 160, 89, 0.12);
+        }
+
+        #production-module-host .mdj-prod-inv-help-tip {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            z-index: 60;
+            width: min(320px, calc(100vw - 48px));
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(197, 160, 89, 0.42);
+            background: rgba(8, 12, 20, 0.97);
+            color: rgba(248, 250, 252, 0.92);
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1.45;
+            letter-spacing: 0.01em;
+            text-transform: none;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.15s ease, visibility 0.15s ease;
+        }
+
+        #production-module-host .mdj-prod-inv-help:hover .mdj-prod-inv-help-tip,
+        #production-module-host .mdj-prod-inv-help:focus .mdj-prod-inv-help-tip,
+        #production-module-host .mdj-prod-inv-help:focus-within .mdj-prod-inv-help-tip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #production-module-host .mdj-prod-inv-panel--totals .mdj-prod-inv-summary-card {
+            margin-top: 0;
+        }
+
+        #production-module-host .mdj-prod-fin-discount-tab {
+            box-sizing: border-box;
+            padding: 10px 14px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(197, 160, 89, 0.42);
+            background: rgba(0, 0, 0, 0.28);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+
+        #production-module-host .mdj-prod-fin-discount-tab-title {
+            margin: 0;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(197, 160, 89, 0.95);
+            line-height: 1.35;
+        }
+
+        #production-module-host .mdj-prod-fin-discount-tab-note {
+            margin: 6px 0 0;
+            font-size: 11px;
+            line-height: 1.35;
+            opacity: 0.55;
+            color: rgba(248, 250, 252, 0.88);
+        }
+
+        #production-module-host .mdj-prod-inv-action-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: stretch;
+            gap: 12px 22px;
+            margin-top: 14px;
+            padding: 12px 18px;
+            border-radius: 12px;
+            background: linear-gradient(145deg, rgba(22, 20, 18, 0.78), rgba(10, 9, 8, 0.92));
+            border: 1px solid rgba(197, 160, 89, 0.24);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+
+        #production-module-host .mdj-prod-inv-action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-width: 74px;
+            flex: 0 0 auto;
+            max-width: 110px;
+            padding: 10px 8px 8px;
+            border: 1px solid rgba(197, 160, 89, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            color: rgba(224, 201, 155, 0.94);
+            cursor: pointer;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, transform 0.12s ease, color 0.2s ease;
+        }
+
+        #production-module-host .mdj-prod-inv-action-btn:hover:not(:disabled):not(.mdj-prod-inv-action-btn--pending) {
+            border-color: rgba(212, 175, 95, 0.68);
+            background: rgba(197, 160, 89, 0.1);
+            box-shadow: 0 0 18px rgba(197, 160, 89, 0.2);
+            color: #edd9a6;
+        }
+
+        #production-module-host .mdj-prod-inv-action-btn:active:not(:disabled):not(.mdj-prod-inv-action-btn--pending) {
+            transform: scale(0.95);
+            box-shadow: 0 0 10px rgba(197, 160, 89, 0.28);
+        }
+
+        #production-module-host .mdj-prod-inv-action-btn:focus-visible {
+            outline: 2px solid rgba(197, 160, 89, 0.55);
+            outline-offset: 2px;
+        }
+
+        #production-module-host .mdj-prod-inv-action-btn--pending,
+        #production-module-host .mdj-prod-inv-action-btn:disabled {
+            opacity: 0.42;
+            cursor: not-allowed;
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+
+        #production-module-host .mdj-prod-inv-action-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+        }
+
+        #production-module-host .mdj-prod-inv-action-icon svg {
+            width: 28px;
+            height: 28px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.75;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        #production-module-host .mdj-prod-inv-action-lbl {
+            font-size: 10px;
+            line-height: 1.25;
+            text-align: center;
+            letter-spacing: 0.02em;
+            color: rgba(210, 190, 150, 0.88);
+            max-width: 100%;
+            word-break: break-word;
+        }
+
+        @media (max-width: 520px) {
+            #production-module-host .mdj-prod-inv-action-bar {
+                gap: 10px 16px;
+                padding: 10px 12px;
+            }
+
+            #production-module-host .mdj-prod-inv-action-btn {
+                min-width: calc(50% - 16px);
+                flex: 0 1 calc(50% - 16px);
+                max-width: calc(50% - 16px);
+            }
+        }
+
         #production-module-host .mdj-prod-addr-section {
             margin-top: 4px;
         }
@@ -1603,7 +1944,6 @@
 
                 <div class="admin-card" id="production" style="display:none;">
                     <h3 style="margin-top:0;" data-i18n="prod-admin-title"></h3>
-                    <p class="fineprint" style="margin-bottom:16px;" data-i18n="prod-admin-intro"></p>
                     <div id="production-module-host"></div>
                 </div>
 

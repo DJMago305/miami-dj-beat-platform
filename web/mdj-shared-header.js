@@ -32,8 +32,47 @@
         clearTimeout(window.__mdjNavBootTimeout);
         window.__mdjNavBootTimeout = null;
       }
+      if (typeof window.mdjEnsureAccountSettingsOwnerStripNav === 'function') {
+        window.mdjEnsureAccountSettingsOwnerStripNav();
+      }
     } catch (e) { /* ignore */ }
   }
+
+  /** Owner Config: #owner-tabs manda; anular fila #mainNav 8-pillar tras auth / inject. */
+  function mdjEnsureAccountSettingsOwnerStripNav() {
+    try {
+      var page = (window.location.pathname.split('/').pop() || '').toLowerCase();
+      if (page !== 'account-settings.html') return;
+      if (!document.body || !document.body.classList.contains('mdj-from-profile')) return;
+      var bar = document.querySelector('#mainHeader .header-nav');
+      if (bar) {
+        bar.style.setProperty('display', 'none', 'important');
+        bar.style.setProperty('visibility', 'hidden', 'important');
+        bar.style.setProperty('pointer-events', 'none', 'important');
+      }
+      var strip = document.getElementById('owner-tabs');
+      if (strip) {
+        strip.style.removeProperty('visibility');
+        strip.style.removeProperty('opacity');
+        strip.style.removeProperty('pointer-events');
+        strip.setAttribute('data-mdj-no-marquee', '1');
+        var cont = strip.querySelector('.container');
+        if (cont) cont.setAttribute('data-mdj-no-marquee', '1');
+      }
+    } catch (e) { /* noop */ }
+  }
+  window.mdjEnsureAccountSettingsOwnerStripNav = mdjEnsureAccountSettingsOwnerStripNav;
+
+  /* account-settings.html: strip artista desde el primer paint (antes del auth-chain). */
+  (function mdjBootAccountSettingsProfileNavEarly() {
+    try {
+      var page = (window.location.pathname.split('/').pop() || '').toLowerCase();
+      if (page !== 'account-settings.html' || !document.body) return;
+      document.body.classList.add('mdj-from-profile');
+      var bar = document.querySelector('#mainHeader .header-nav');
+      if (bar) bar.style.setProperty('display', 'none', 'important');
+    } catch (e) { /* noop */ }
+  })();
 
   function mdjApplyAuthBootMask() {
     try {
@@ -561,6 +600,29 @@
       return page === 'admin-dashboard.html' || page === 'account-profile.html';
     } catch (eSb) {
       return false;
+    }
+  }
+
+  /** STAFF building (#owner-tabs): Owner → dj-profile público; resto staff → account-profile. */
+  function mdjApplyStaffBuildingMiPerfilLink(el) {
+    if (!el || el.tagName !== 'A' || !mdjIsStaffBuildingPage()) return;
+    var uid = window.__mdjNavOwnUserId ? String(window.__mdjNavOwnUserId).trim() : '';
+    if (!uid) {
+      try {
+        uid = String(localStorage.getItem('sb-current-user-id') || '').trim();
+      } catch (eUid) {
+        uid = '';
+      }
+    }
+    var idn = window.__mdjLastPlatformIdentity;
+    var role = idn && idn.dbRole ? String(idn.dbRole).toLowerCase() : '';
+    if (!role && window.__mdjpro && window.__mdjpro.role) {
+      role = String(window.__mdjpro.role).toLowerCase();
+    }
+    if (role === 'owner' && uid) {
+      el.href = './dj-profile.html?id=' + encodeURIComponent(uid);
+    } else {
+      el.href = './account-profile.html';
     }
   }
 
@@ -3374,6 +3436,10 @@
                 }
               }
             }
+            if (appRoleLower === 'owner') {
+              var _staffMiPerfil = document.querySelector('#owner-tabs [data-i18n="menu-account"]');
+              mdjApplyStaffBuildingMiPerfilLink(_staffMiPerfil);
+            }
             /* Flujo de caja: reveal at slot 5 (after SHOP, before CONFIG).
                mdjApplyFlowMainNavLink(false) runs at line ~2686 before this guard,
                so we run AFTER it and override. */
@@ -3826,6 +3892,7 @@
   window.mdjRefreshAllStaffNavLinks = mdjRefreshAllStaffNavLinks;
   window.mdjRefreshOwnerStripStaffLinks = mdjRefreshOwnerStripStaffLinks;
   window.mdjIsStaffBuildingPage = mdjIsStaffBuildingPage;
+  window.mdjApplyStaffBuildingMiPerfilLink = mdjApplyStaffBuildingMiPerfilLink;
   mdjInstallGlobalStaffNavCapture();
 })();
 
@@ -3866,6 +3933,13 @@
 
   /* Devuelve true cuando flowLink ya existe y fue procesado */
   function reorderOwnerMenu() {
+    if (document.body && document.body.classList.contains('mdj-from-profile') &&
+        window.location.pathname.indexOf('account-settings.html') !== -1) {
+      if (typeof window.mdjEnsureAccountSettingsOwnerStripNav === 'function') {
+        window.mdjEnsureAccountSettingsOwnerStripNav();
+      }
+      return true;
+    }
     var nav = document.getElementById('mainNav');
     if (!nav) return false;
 
@@ -4352,9 +4426,9 @@
       }
     }
 
-    /* ── MI PERFIL (owner-tabs): edificio Staff → account-profile (C-1) ── */
-    if (perfilEl && perfilEl.tagName === 'A' && _staffBuildingPage) {
-      perfilEl.href = './account-profile.html';
+    /* ── MI PERFIL (owner-tabs): STAFF building — Owner → dj-profile; resto → account-profile (C-1) ── */
+    if (perfilEl && _staffBuildingPage && typeof window.mdjApplyStaffBuildingMiPerfilLink === 'function') {
+      window.mdjApplyStaffBuildingMiPerfilLink(perfilEl);
     }
 
     /* ── AGENDA: forzar href a dj-dashboard.html?tab=dashboard&id=<uid>
@@ -4380,6 +4454,10 @@
 
     if (_page === 'dj-dashboard.html' && typeof window.__mdjSyncDashOwnerStripActive === 'function') {
       window.__mdjSyncDashOwnerStripActive();
+    }
+
+    if (_page === 'account-settings.html' && typeof window.mdjEnsureAccountSettingsOwnerStripNav === 'function') {
+      window.mdjEnsureAccountSettingsOwnerStripNav();
     }
 
     return true; /* nodos presentes; poll detiene */
@@ -4408,6 +4486,10 @@
                    cT.querySelector('a[data-i18n="dash-your-profile"]');
         if (agEl && agEl.tagName === 'A') {
           agEl.href = './dj-dashboard.html?tab=dashboard&id=' + encodeURIComponent(_uid);
+        }
+        var mpEl = cT.querySelector('[data-i18n="menu-account"]');
+        if (mpEl && typeof window.mdjApplyStaffBuildingMiPerfilLink === 'function') {
+          window.mdjApplyStaffBuildingMiPerfilLink(mpEl);
         }
         if (typeof window.mdjRefreshAllStaffNavLinks === 'function') {
           window.mdjRefreshAllStaffNavLinks();

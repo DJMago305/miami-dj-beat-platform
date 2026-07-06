@@ -57,6 +57,12 @@ const i18n = {
                 const text = this.t(key);
                 if (text) el.setAttribute('aria-label', text);
             });
+
+            document.querySelectorAll('[data-i18n-title]').forEach(el => {
+                const key = el.getAttribute('data-i18n-title');
+                const text = this.t(key);
+                if (text) el.setAttribute('title', text);
+            });
         }
 
         document.querySelectorAll('.lang-btn').forEach(btn => {

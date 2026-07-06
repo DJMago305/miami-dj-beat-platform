@@ -3,8 +3,64 @@
 
 ---
 
+## 🔒 CASH FLOW PRODUCT DEFINITION BASELINE — LOCKED — 2026-07-06
+
+```
+╔══════════════════════════════════════════════════════════╗
+║     CASH FLOW PRODUCT DEFINITION BASELINE                ║
+║  Status  : APPROVED BY PRODUCT OWNER                     ║
+║  Date    : 2026-07-06                                    ║
+║  Doc     : docs/architecture/CASH-FLOW-PRODUCT-DEFINITION-V1.md
+║  DO NOT IMPLEMENT WITHOUT APPROVED TICKET                ║
+╚══════════════════════════════════════════════════════════╝
+```
+
+### Tickets documentales completados (Cash Flow — 2026-07-06)
+
+| Ticket | Modo | Resultado |
+|---|---|---|
+| **TICKET-V1-CASH-FLOW-ARCHITECTURE-AUDIT-001** | Solo lectura | Auditoría arquitectura + cableado del negocio completada |
+| **TICKET-V1-CASH-FLOW-DECISION-BRIEF-001** | Análisis | Decision Brief entregado al PO |
+| **TICKET-V1-CASH-FLOW-PRODUCT-DEFINITION-002** | Documentación | Definición producto aprobada PO (chat) |
+| **TICKET-V1-CASH-FLOW-PERSIST-PRODUCT-DEFINITION-003** | Documentación | Persistido en `docs/architecture/CASH-FLOW-PRODUCT-DEFINITION-V1.md` |
+
+### Decisiones PO selladas — Cash Flow
+
+| Área | Decisión |
+|---|---|
+| **Cash Flow Artista** | **Opción 1D** — wallet DJ + salud operativa MDJ + eventos + tips + reputación interna |
+| **Cobro vs wallet** | Cobro al cliente (`leads.balance_paid`) **≠** dinero disponible DJ; wallet tras `staff_release_event_dj_payout` |
+| **Cash Flow Empresa** | Producto **separado** Owner/Manager — prioridad **P1** (antes de V2 completa); **no** en tab artista |
+| **Movimiento canónico** | **CFMovement — Opción 3B** por fases: read-map / audit log primero; **sin auto-release** payout |
+| **Estrellas** | **Dos capas:** públicas (reviews) vs Salud MDJ interna (dashboard/owner); hero público = reviews |
+| **Ranking marketplace** | **Ticket separado** — no implementar ahora; PRO mantiene prioridad comercial |
+| **TICKET-004** | **North star phased** — 5 capas + ledger; no big-bang |
+
+### Congelado — Cash Flow (sin ticket PO explícito)
+
+- Manual Invoice V1 (`production-module.js`, Producción)
+- Stripe Payment Link / Checkout UX
+- Print Invoice
+- Depósito / Pago Total selector
+- Header / Nav
+- `create-event-payment` Edge
+- `stripe-webhook` (rama event deposit)
+- `staff_release_event_dj_payout` RPC
+
+### Próximos tickets (pendiente autorización PO)
+
+- CFMovement read-map spec (doc-only)
+- CFMovement fase 1 implement
+- Cash Flow Empresa UI P1
+- Hero público = reviews only (deuda V1 documentada)
+- `TICKET-V1-MARKETPLACE-RANKING-POLICY-005`
+
+**Referencia canónica:** `docs/architecture/CASH-FLOW-PRODUCT-DEFINITION-V1.md`
+
+---
+
 ## 📋 LECTURA DIARIA OBLIGATORIA — LEER ANTES DE CUALQUIER ACCIÓN
-*Última actualización: 2026-06-23 00:40 UTC-4. Cierre de sesión nocturna: matching taxonomy mergeado, tickets jobs documentados, taller limpio. Protocolo QA-primero registrado para próxima sesión.*
+*Última actualización: 2026-07-06 UTC-4. Cash Flow Product Definition Baseline aprobado PO — ver sección congelada arriba y `docs/architecture/CASH-FLOW-PRODUCT-DEFINITION-V1.md`. Invoice V1 baseline local commits `62cd301` + `d492306`. Sin push/deploy Cash Flow docs.*
 
 ---
 

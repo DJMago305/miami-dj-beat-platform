@@ -2594,8 +2594,8 @@ body.mdj-staff-nav.page-dj-tools
    Show rules (2,7,2) por data-mdj-nav exacto — sin falsos positivos.
    ============================================================ */
 
-/* 1. Nuclear hide (2,6,2) */
-body.mdj-account-settings
+/* 1. Nuclear hide (2,6,2) — solo cuando NO hay strip artista (#owner-tabs) */
+body.mdj-account-settings:not(.mdj-from-profile)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav > a {
   display:    none    !important;
@@ -2609,22 +2609,22 @@ body.mdj-account-settings
   flex:       0 0 0   !important;
 }
 
-/* 2. Show only 8 tabs (2,7,2) */
-body.mdj-account-settings #mainHeader.header.mdj-header-unified
+/* 2. Show only 8 tabs (2,7,2) — legacy #mainNav; Owner Config usa #owner-tabs (10 pilares) */
+body.mdj-account-settings:not(.mdj-from-profile) #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav > a[data-mdj-nav="home"],
-body.mdj-account-settings #mainHeader.header.mdj-header-unified
+body.mdj-account-settings:not(.mdj-from-profile) #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav > a[data-mdj-nav="services"],
-body.mdj-account-settings #mainHeader.header.mdj-header-unified
+body.mdj-account-settings:not(.mdj-from-profile) #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav > a[data-mdj-nav="venues"],
-body.mdj-account-settings #mainHeader.header.mdj-header-unified
+body.mdj-account-settings:not(.mdj-from-profile) #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav > a[data-mdj-nav="shop"],
-body.mdj-account-settings #mainHeader.header.mdj-header-unified
+body.mdj-account-settings:not(.mdj-from-profile) #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav > a[data-mdj-nav="flow"],
-body.mdj-account-settings #mainHeader.header.mdj-header-unified
+body.mdj-account-settings:not(.mdj-from-profile) #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav > a[data-mdj-nav="config"],
-body.mdj-account-settings #mainHeader.header.mdj-header-unified
+body.mdj-account-settings:not(.mdj-from-profile) #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav > a[data-mdj-nav="profile"],
-body.mdj-account-settings #mainHeader.header.mdj-header-unified
+body.mdj-account-settings:not(.mdj-from-profile) #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav > a[data-mdj-nav="staff"] {
   display:        inline-flex !important;
   visibility:     visible     !important;
@@ -2633,6 +2633,62 @@ body.mdj-account-settings #mainHeader.header.mdj-header-unified
   min-width:      max-content !important;
   margin:         0 10px      !important;
   pointer-events: auto        !important;
+}
+
+/* ── ACCOUNT-SETTINGS Owner Config — #owner-tabs 10 pilares (paridad producción)
+   Suprime fila #mainNav 8-pillar cuando mdj-profile-nav-context activa el strip.
+   Sin carrusel / clip en STAFF u otras etiquetas. v20260705-config-owner-strip-parity-1 */
+body.mdj-account-settings.mdj-from-profile #mainHeader.header.mdj-header-unified .header-nav {
+  display:        none    !important;
+  visibility:     hidden  !important;
+  height:         0       !important;
+  min-height:     0       !important;
+  max-height:     0       !important;
+  overflow:       hidden  !important;
+  pointer-events: none    !important;
+  flex:           0 0 0   !important;
+  margin:         0       !important;
+  padding:        0       !important;
+}
+
+body.mdj-account-settings.mdj-from-profile #owner-tabs,
+body.mdj-account-settings.mdj-from-profile .dj-owner-tabs {
+  visibility:     visible !important;
+  opacity:        1       !important;
+  pointer-events: auto    !important;
+}
+
+body.mdj-account-settings.mdj-from-profile #owner-tabs .container,
+body.mdj-account-settings.mdj-from-profile .dj-owner-tabs .container {
+  overflow-x:       visible !important;
+  overflow-y:       visible !important;
+  -webkit-overflow-scrolling: auto !important;
+  overscroll-behavior-x: auto !important;
+  justify-content:  space-between !important;
+}
+
+body.mdj-account-settings.mdj-from-profile #owner-tabs .container .dj-tab-btn,
+body.mdj-account-settings.mdj-from-profile .dj-owner-tabs .container .dj-tab-btn,
+body.mdj-account-settings.mdj-from-profile #owner-tabs .container a[data-mdj-nav="staff"],
+body.mdj-account-settings.mdj-from-profile .dj-owner-tabs .container a[data-mdj-nav="staff"] {
+  flex-shrink:    0           !important;
+  min-width:      max-content !important;
+  max-width:      none        !important;
+  width:          auto        !important;
+  overflow:       visible     !important;
+  text-overflow:  clip        !important;
+  white-space:    nowrap      !important;
+}
+
+@media (min-width: 1001px) {
+  body.mdj-account-settings.mdj-from-profile .dj-owner-tabs .dj-tab-btn,
+  body.mdj-account-settings.mdj-from-profile .dj-owner-tabs .dj-owner-academy-btn {
+    font-size: var(--mdj-nav-font-size) !important;
+    font-weight: var(--mdj-nav-font-weight) !important;
+    letter-spacing: var(--mdj-nav-letter-spacing) !important;
+    padding-left: var(--mdj-nav-link-px) !important;
+    padding-right: var(--mdj-nav-link-px) !important;
+  }
 }
 
 /* ============================================================
