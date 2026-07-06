@@ -1,0 +1,40 @@
+/** MOD-002 Session Manager — public API — TICKET-V2-RUNTIME-SESSION-001 */
+
+export { SessionError, isSessionError } from './errors';
+export {
+  clearSession,
+  destroySession,
+  getSessionManager,
+  getSessionProviderForTests,
+  getSessionSnapshot,
+  getSessionState,
+  getSessionStoreForTests,
+  ingestAuthHandle,
+  initializeSession,
+  resetSessionForTests,
+} from './session-service';
+export { SessionProvider } from './session-provider';
+export { SessionStore, resetSessionStoreCounterForTests } from './session-store';
+export type { SessionStoreConfigSlice } from './session-store';
+export {
+  assertTransition,
+  getEntryState,
+  isValidTransition,
+  listValidTransitionsFrom,
+  SESSION_STATE_MACHINE_STATES,
+  SESSION_TRANSITION_TABLE,
+} from './state-machine';
+export type {
+  AuthHandle,
+  AuthProvider,
+  HydrationPhase,
+  InitializeSessionOptions,
+  SessionErrorCode,
+  SessionLifecycleState,
+  SessionPublicApi,
+  SessionSnapshot,
+  SessionStateMachineState,
+  SessionTransitionEvent,
+  SessionTransitionFrom,
+  UserRef,
+} from './types';
