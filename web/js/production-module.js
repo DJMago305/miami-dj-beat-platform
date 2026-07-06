@@ -339,7 +339,7 @@
         '<button type="button" class="mdj-prod-inv-action-btn" id="prod-inv-open-print" data-i18n-aria="prod-inv-action-print" data-i18n-title="prod-inv-action-print-tip">' +
         '<span class="mdj-prod-inv-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></span>' +
         '<span class="mdj-prod-inv-action-lbl" data-i18n="prod-inv-action-print"></span></button>' +
-        '<button type="button" class="mdj-prod-inv-action-btn mdj-prod-inv-action-btn--pending" id="prod-inv-action-copy-link" disabled aria-disabled="true" data-i18n-aria="prod-inv-action-copy-link" data-i18n-title="prod-inv-action-copy-link-tip">' +
+        '<button type="button" class="mdj-prod-inv-action-btn" id="prod-inv-action-copy-link" data-i18n-aria="prod-inv-action-copy-link" data-i18n-title="prod-inv-action-copy-link-tip">' +
         '<span class="mdj-prod-inv-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>' +
         '<span class="mdj-prod-inv-action-lbl" data-i18n="prod-inv-action-copy-link"></span></button>' +
         '<button type="button" class="mdj-prod-inv-action-btn" id="prod-inv-create-account" data-i18n-aria="prod-inv-action-create-account" data-i18n-title="prod-inv-action-create-account-tip">' +
@@ -422,6 +422,12 @@
       if (stripeDepBtn) {
         stripeDepBtn.onclick = function () {
           void self._sendDepositStripeLink();
+        };
+      }
+      var copyLinkBtn = document.getElementById('prod-inv-action-copy-link');
+      if (copyLinkBtn) {
+        copyLinkBtn.onclick = function () {
+          void self._copyPaymentLink();
         };
       }
       var zelleDepBtn = document.getElementById('prod-cobro-zelle-deposit');
@@ -1247,26 +1253,25 @@
       }
     },
 
-    _sendDepositStripeLink: async function () {
-      var stEl = document.getElementById('prod-cobro-status');
+    _showEventCheckoutError: function (stEl, out) {
+      if (!stEl || !out) return;
+      if (out.code === 'save_first') {
+        stEl.textContent = prodT('prod-cobro-err-save-first');
+      } else if (out.code === 'need_email') {
+        stEl.textContent = prodT('prod-cobro-stripe-need-email');
+      } else if (out.code === 'config') {
+        stEl.textContent = prodT('prod-inv-create-err-config');
+      } else {
+        stEl.textContent = prodT('prod-cobro-stripe-fail') + ' ' + (out.message || '');
+      }
+    },
+
+    /** Lead + email + charge mode → create-event-payment URL (sin abrir Stripe). */
+    _createEventCheckoutUrl: async function () {
       var leadEl = document.getElementById('prod-cobro-lead-id');
       var leadId = leadEl ? leadEl.value.trim() : '';
       if (!/^[0-9a-f-]{36}$/i.test(leadId)) {
-        if (stEl) stEl.textContent = prodT('prod-cobro-err-save-first');
-        return;
-      }
-      var stripeTab = null;
-      try {
-        stripeTab = window.open('about:blank', '_blank');
-      } catch (openErr) {
-        stripeTab = null;
-      }
-      function closeStripeTab() {
-        try {
-          if (stripeTab && !stripeTab.closed) stripeTab.close();
-        } catch (closeErr) {
-          /* ignore */
-        }
+        return { ok: false, code: 'save_first' };
       }
       var emailEl = document.getElementById('prod-inv-client-email');
       var clientEmail = emailEl ? emailEl.value.trim().toLowerCase() : '';
@@ -1294,18 +1299,14 @@
         }
       }
       if (!clientEmail) {
-        closeStripeTab();
-        if (stEl) stEl.textContent = prodT('prod-cobro-stripe-need-email');
-        return;
+        return { ok: false, code: 'need_email' };
       }
       var CHECKOUT_FN =
         typeof global.mdbSupabaseFunctionUrl === 'function'
           ? global.mdbSupabaseFunctionUrl('create-event-payment')
           : '';
       if (!CHECKOUT_FN) {
-        closeStripeTab();
-        if (stEl) stEl.textContent = prodT('prod-inv-create-err-config');
-        return;
+        return { ok: false, code: 'config' };
       }
       var evTypeEl = document.getElementById('prod-cobro-event-type');
       var evDateEl = document.getElementById('prod-cobro-event-date');
@@ -1323,10 +1324,6 @@
       } else {
         amountCents = Math.max(Math.round(depositUsd * 100), 15000);
         checkoutDesc = 'Depósito de reserva — ' + eventType + ' · ' + eventDate;
-      }
-      var btn = document.getElementById('prod-cobro-stripe-deposit');
-      if (btn) {
-        btn.disabled = true;
       }
       try {
         var resp = await fetch(CHECKOUT_FN, {
@@ -1346,43 +1343,103 @@
           return {};
         });
         if (!resp.ok || !result.url) {
-          throw new Error((result && result.error) || 'checkout');
+          return {
+            ok: false,
+            code: 'checkout',
+            message: (result && result.error) || 'checkout'
+          };
         }
-        var url = String(result.url);
-        if (stripeTab && !stripeTab.closed) {
-          stripeTab.location.href = url;
-          try {
-            stripeTab.opener = null;
-          } catch (_) {
-            /* ignore */
-          }
-        } else {
-          window.open(url, '_blank', 'noopener');
-        }
-        var copied = false;
-        try {
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            await navigator.clipboard.writeText(url);
-            copied = true;
-          }
-        } catch (clipErr) {
-          copied = false;
-        }
-        if (!copied) {
-          window.prompt(prodT('prod-cobro-stripe-prompt'), url);
-        }
-        if (stEl) {
-          var lang = (document.documentElement.lang || 'en').slice(0, 2).toLowerCase();
-          stEl.textContent =
-            lang === 'es'
-              ? 'Stripe abierto. Si el navegador bloqueó la pestaña, el enlace quedó copiado.'
-              : 'Stripe opened. If the browser blocked the tab, the link was copied.';
-        }
-        void this._refreshCobroStatus(leadId);
+        return { ok: true, url: String(result.url), leadId: leadId };
       } catch (e) {
-        closeStripeTab();
-        if (stEl) stEl.textContent = prodT('prod-cobro-stripe-fail') + ' ' + ((e && e.message) || '');
+        return { ok: false, code: 'checkout', message: (e && e.message) || 'checkout' };
       }
+    },
+
+    _copyPaymentLink: async function () {
+      var stEl = document.getElementById('prod-cobro-status');
+      var btn = document.getElementById('prod-inv-action-copy-link');
+      if (btn) btn.disabled = true;
+      var out = await this._createEventCheckoutUrl();
+      if (!out.ok) {
+        this._showEventCheckoutError(stEl, out);
+        if (btn) btn.disabled = false;
+        return;
+      }
+      var url = out.url;
+      var copied = false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(url);
+          copied = true;
+        }
+      } catch (clipErr) {
+        copied = false;
+      }
+      if (!copied) {
+        window.prompt(prodT('prod-cobro-stripe-prompt'), url);
+      }
+      if (stEl) stEl.textContent = prodT('prod-cobro-copy-link-ok');
+      void this._refreshCobroStatus(out.leadId);
+      if (btn) btn.disabled = false;
+    },
+
+    _sendDepositStripeLink: async function () {
+      var stEl = document.getElementById('prod-cobro-status');
+      var stripeTab = null;
+      try {
+        stripeTab = window.open('about:blank', '_blank');
+      } catch (openErr) {
+        stripeTab = null;
+      }
+      function closeStripeTab() {
+        try {
+          if (stripeTab && !stripeTab.closed) stripeTab.close();
+        } catch (closeErr) {
+          /* ignore */
+        }
+      }
+      var btn = document.getElementById('prod-cobro-stripe-deposit');
+      if (btn) {
+        btn.disabled = true;
+      }
+      var out = await this._createEventCheckoutUrl();
+      if (!out.ok) {
+        closeStripeTab();
+        this._showEventCheckoutError(stEl, out);
+        if (btn) btn.disabled = false;
+        return;
+      }
+      var url = out.url;
+      if (stripeTab && !stripeTab.closed) {
+        stripeTab.location.href = url;
+        try {
+          stripeTab.opener = null;
+        } catch (_) {
+          /* ignore */
+        }
+      } else {
+        window.open(url, '_blank', 'noopener');
+      }
+      var copied = false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(url);
+          copied = true;
+        }
+      } catch (clipErr) {
+        copied = false;
+      }
+      if (!copied) {
+        window.prompt(prodT('prod-cobro-stripe-prompt'), url);
+      }
+      if (stEl) {
+        var lang = (document.documentElement.lang || 'en').slice(0, 2).toLowerCase();
+        stEl.textContent =
+          lang === 'es'
+            ? 'Stripe abierto. Si el navegador bloqueó la pestaña, el enlace quedó copiado.'
+            : 'Stripe opened. If the browser blocked the tab, the link was copied.';
+      }
+      void this._refreshCobroStatus(out.leadId);
       if (btn) btn.disabled = false;
     },
 
