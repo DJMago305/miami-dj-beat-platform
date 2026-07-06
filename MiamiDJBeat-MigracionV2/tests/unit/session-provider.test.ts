@@ -6,6 +6,7 @@ import { initializeLogging, resetLoggingForTests } from '@mdj/shared/logging';
 import { SessionProvider } from '../../shared/session/runtime/session-provider';
 import { SessionStore, resetSessionStoreCounterForTests } from '../../shared/session/runtime/session-store';
 import { SessionError } from '../../shared/session/runtime/errors';
+import { areSessionEventListenersRegistered, resetSessionEventListenersForTests } from '../../shared/session/runtime/session-listeners';
 
 const VALID_LOCAL_ENV = {
   MDJ_V2_ENV: 'local',
@@ -46,6 +47,7 @@ describe('MOD-002 SessionProvider — TICKET-MOD-002-SESSION-PROVIDER-STORE-001'
 
   beforeEach(() => {
     resetSessionStoreCounterForTests();
+    resetSessionEventListenersForTests();
     resetSessionForTestsDeps();
     store = new SessionStore();
     provider = new SessionProvider(store);
@@ -118,5 +120,56 @@ describe('MOD-002 SessionProvider — TICKET-MOD-002-SESSION-PROVIDER-STORE-001'
 
     expect(events).toContain('created:initial');
     expect(events).toContain('ready');
+  });
+
+  it('registers event listeners idempotently on initialize', () => {
+    bootThroughErrorHandler();
+    provider.initialize({ portal: 'client' });
+    expect(areSessionEventListenersRegistered()).toBe(true);
+    provider.initialize({ portal: 'client' });
+    expect(areSessionEventListenersRegistered()).toBe(true);
+  });
+
+  it('handles USER_LOGIN bus event with mock payload', () => {
+    bootThroughErrorHandler();
+    provider.initialize({ portal: 'client' });
+
+    getEventBus().publish({
+      name: 'USER_LOGIN',
+      payload: {
+        userId: 'bus-user-1',
+        handoffId: 'handoff-bus-1',
+        accessTokenRef: 'token-bus',
+        expiresAt: new Date(Date.now() + 60_000).toISOString(),
+        issuedAt: new Date().toISOString(),
+        provider: 'mock',
+      },
+      emitter: { moduleId: 'MOD-001' },
+      scope: 'public',
+    });
+
+    const snapshot = provider.getPublicApi().getSnapshot();
+    expect(snapshot.user?.userId).toBe('bus-user-1');
+    expect(snapshot.state).toBe('SESSION_READY');
+  });
+
+  it('SYSTEM_READY after boot does not duplicate SESSION_READY emissions', () => {
+    bootThroughErrorHandler();
+    let readyCount = 0;
+    getEventBus().subscribe('SESSION_READY', () => {
+      readyCount += 1;
+    });
+
+    provider.initialize({ portal: 'client' });
+    const afterInit = readyCount;
+
+    getEventBus().publish({
+      name: 'SYSTEM_READY',
+      payload: { busVersion: '1.0.0' },
+      emitter: { moduleId: 'MOD-004', subsystem: 'test' },
+      scope: 'internal',
+    });
+
+    expect(readyCount).toBe(afterInit);
   });
 });

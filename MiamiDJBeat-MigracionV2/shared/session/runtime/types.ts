@@ -99,3 +99,39 @@ export type SessionErrorCode =
 export type InitializeSessionOptions = {
   portal: PortalId;
 };
+
+/** Official session events emitted by MOD-002 (Phase 3 wiring). */
+export type SessionEmitEventName =
+  | 'SESSION_CREATED'
+  | 'SESSION_READY'
+  | 'SESSION_DESTROYED'
+  | 'SESSION_EXPIRED'
+  | 'SESSION_ERROR';
+
+export type UserLoginEventPayload = {
+  readonly userId: string;
+  readonly handoffId?: string;
+  readonly accessTokenRef?: string;
+  readonly refreshTokenRef?: string;
+  readonly expiresAt?: string;
+  readonly issuedAt?: string;
+  readonly provider?: AuthProvider;
+};
+
+export type UserLogoutEventPayload = {
+  readonly reason: string;
+  readonly userId?: string;
+};
+
+export type RoleChangedEventPayload = {
+  readonly userId: string;
+  readonly role: string;
+  readonly principal: string;
+  readonly roles?: readonly string[];
+};
+
+export type PermissionChangedEventPayload = {
+  readonly userId: string;
+  readonly snapshotVersion?: number;
+  readonly capabilities?: readonly string[];
+};

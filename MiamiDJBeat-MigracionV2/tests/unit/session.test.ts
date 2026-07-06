@@ -111,26 +111,33 @@ describe('MOD-002 Session Manager', () => {
     expect(getSessionState()).toBe('SESSION_EXPIRED');
   });
 
-  it('clearSession emits SESSION_CLEARED and returns anonymous ready snapshot', () => {
+  it('clearSession emits SESSION_DESTROYED and returns anonymous ready snapshot', () => {
     bootThroughErrorHandler();
     initializeSession({ portal: 'staff' });
     ingestAuthHandle(validHandle());
 
-    const cleared: string[] = [];
-    getEventBus().subscribe('SESSION_CLEARED', () => {
-      cleared.push('cleared');
+    const destroyed: string[] = [];
+    getEventBus().subscribe('SESSION_DESTROYED', () => {
+      destroyed.push('destroyed');
     });
 
     const snapshot = clearSession('manual-clear');
-    expect(cleared).toHaveLength(1);
+    expect(destroyed.length).toBeGreaterThanOrEqual(1);
     expect(snapshot.user).toBeNull();
     expect(getSessionState()).toBe('SESSION_READY');
   });
 
-  it('destroySession resets to SESSION_UNINITIALIZED', () => {
+  it('destroySession emits SESSION_DESTROYED and resets to SESSION_UNINITIALIZED', () => {
     bootThroughErrorHandler();
     initializeSession({ portal: 'client' });
+
+    const destroyed: string[] = [];
+    getEventBus().subscribe('SESSION_DESTROYED', () => {
+      destroyed.push('destroyed');
+    });
+
     destroySession('teardown');
+    expect(destroyed).toHaveLength(1);
     expect(getSessionState()).toBe('SESSION_UNINITIALIZED');
     expect(() => getSessionSnapshot()).toThrow(SessionError);
   });

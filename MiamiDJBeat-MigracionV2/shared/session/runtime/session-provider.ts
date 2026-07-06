@@ -1,17 +1,25 @@
 /** MOD-002 Session Manager — provider — TICKET-MOD-002-SESSION-PROVIDER-STORE-001 */
 
-import { getConfig, type PortalId } from '@mdj/shared/config';
+import { getConfig } from '@mdj/shared/config';
 import { normalizeError } from '@mdj/shared/errors';
-import { getEventBus } from '@mdj/shared/events';
 import { getLogger } from '@mdj/shared/logging';
 import { SessionError } from './errors';
+import {
+  ensureSessionEventListeners,
+  publishSessionEvent,
+  resetSessionEventListenersForTests,
+} from './session-listeners';
 import { SessionStore, type SessionStoreConfigSlice } from './session-store';
 import type {
   AuthHandle,
   InitializeSessionOptions,
+  PermissionChangedEventPayload,
+  RoleChangedEventPayload,
   SessionLifecycleState,
   SessionPublicApi,
   SessionSnapshot,
+  UserLoginEventPayload,
+  UserLogoutEventPayload,
 } from './types';
 
 function validateAuthHandle(handle: AuthHandle): void {
@@ -42,30 +50,37 @@ function validateAuthHandle(handle: AuthHandle): void {
   }
 }
 
-function publishEvent(
-  name: 'SESSION_CREATED' | 'SESSION_READY' | 'SESSION_CLEARED' | 'SESSION_EXPIRED',
-  payload: Record<string, unknown>,
-): void {
-  getEventBus().publish({
-    name,
-    payload,
-    emitter: { moduleId: 'MOD-002', subsystem: 'session' },
-    scope: name === 'SESSION_READY' || name === 'SESSION_EXPIRED' ? 'public' : 'internal',
-  });
+function userLoginPayloadToAuthHandle(payload: UserLoginEventPayload): AuthHandle {
+  if (!payload.userId) {
+    throw new SessionError('SESSION_ERROR_INVALID_HANDLE', 'USER_LOGIN payload is missing userId.');
+  }
+
+  return {
+    handoffId: payload.handoffId ?? `handoff-${payload.userId}`,
+    userId: payload.userId,
+    accessTokenRef: payload.accessTokenRef ?? 'mock-access-ref',
+    refreshTokenRef: payload.refreshTokenRef,
+    expiresAt: payload.expiresAt ?? new Date(Date.now() + 3_600_000).toISOString(),
+    provider: payload.provider ?? 'mock',
+    issuedAt: payload.issuedAt ?? new Date().toISOString(),
+  };
 }
 
-/** Orchestrates session lifecycle using SessionStore + state machine. */
+/** Orchestrates session lifecycle using SessionStore + state machine + Event Bus. */
 export class SessionProvider {
   private readonly store: SessionStore;
   private frozenApi: SessionPublicApi | null = null;
+  private logoutInProgress = false;
 
   constructor(store: SessionStore) {
     this.store = store;
   }
 
   reset(): void {
+    resetSessionEventListenersForTests();
     this.store.reset();
     this.frozenApi = null;
+    this.logoutInProgress = false;
   }
 
   getStore(): SessionStore {
@@ -101,6 +116,113 @@ export class SessionProvider {
     });
   }
 
+  private wireEventListeners(): void {
+    ensureSessionEventListeners({
+      onSystemReady: () => this.handleSystemReadyEvent(),
+      onUserLogin: (payload) => this.handleUserLoginEvent(payload),
+      onUserLogout: (payload) => this.handleUserLogoutEvent(payload),
+      onRoleChanged: (payload) => this.handleRoleChangedEvent(payload),
+      onPermissionChanged: (payload) => this.handlePermissionChangedEvent(payload),
+    });
+  }
+
+  /** Idempotent — no duplicate boot when initializeSession() already completed. */
+  handleSystemReadyEvent(): void {
+    if (this.store.getLifecycleState() === 'SESSION_READY' && this.frozenApi) {
+      return;
+    }
+
+    if (!this.frozenApi) {
+      return;
+    }
+
+    if (this.store.getMachineState() === 'INITIAL') {
+      this.markReadyAnonymous();
+    }
+  }
+
+  handleUserLoginEvent(payload: UserLoginEventPayload): void {
+    if (!this.frozenApi) {
+      return;
+    }
+
+    try {
+      this.ingestAuthHandle(userLoginPayloadToAuthHandle(payload));
+    } catch (error) {
+      if (error instanceof SessionError) {
+        publishSessionEvent('SESSION_ERROR', {
+          code: error.code,
+          sessionId: this.store.getSessionId(),
+        });
+      }
+      throw error;
+    }
+  }
+
+  handleUserLogoutEvent(payload: UserLogoutEventPayload): void {
+    if (!this.frozenApi || this.logoutInProgress) {
+      return;
+    }
+
+    this.logoutInProgress = true;
+    try {
+      this.clearSession(payload.reason);
+    } finally {
+      this.logoutInProgress = false;
+    }
+  }
+
+  handleRoleChangedEvent(payload: RoleChangedEventPayload): void {
+    if (!this.frozenApi || !payload.userId) {
+      return;
+    }
+
+    const snapshot = this.store.getSnapshot();
+    if (snapshot.user?.userId && snapshot.user.userId !== payload.userId) {
+      return;
+    }
+
+    this.store.bumpSnapshotVersion();
+    this.republishReadySnapshot('role-changed');
+  }
+
+  handlePermissionChangedEvent(payload: PermissionChangedEventPayload): void {
+    if (!this.frozenApi || !payload.userId) {
+      return;
+    }
+
+    const snapshot = this.store.getSnapshot();
+    if (snapshot.user?.userId && snapshot.user.userId !== payload.userId) {
+      return;
+    }
+
+    const machine = this.store.getMachineState();
+    if (machine === 'AUTHENTICATED') {
+      this.store.applyMachineTransition('AUTHENTICATED', 'PERMISSION_CHANGED', 'AUTHENTICATED');
+    } else if (machine === 'ANONYMOUS') {
+      this.store.applyMachineTransition('ANONYMOUS', 'PERMISSION_CHANGED', 'ANONYMOUS');
+    }
+
+    this.store.bumpSnapshotVersion();
+    this.republishReadySnapshot('permission-changed');
+  }
+
+  private republishReadySnapshot(reason: string): void {
+    const lifecycle = this.store.getLifecycleState();
+    if (lifecycle !== 'SESSION_READY' && lifecycle !== 'SIGNED_IN') {
+      return;
+    }
+
+    const readyLifecycle: SessionLifecycleState = 'SESSION_READY';
+    const snapshot = this.store.publishSnapshot(this.configSlice(), readyLifecycle);
+    publishSessionEvent('SESSION_READY', {
+      portal: snapshot.portal,
+      sessionId: snapshot.sessionId,
+      state: snapshot.state,
+      reason,
+    });
+  }
+
   /** Boot path — anonymous SESSION_READY (baseline PO 2026-07-06). */
   markReadyAnonymous(): SessionSnapshot {
     this.store.clearIdentity();
@@ -117,11 +239,11 @@ export class SessionProvider {
 
     const snapshot = this.store.publishSnapshot(this.configSlice(), 'SESSION_READY');
 
-    publishEvent('SESSION_CREATED', {
+    publishSessionEvent('SESSION_CREATED', {
       userId: 'anonymous',
       hydrationPhase: 'initial',
     });
-    publishEvent('SESSION_READY', {
+    publishSessionEvent('SESSION_READY', {
       portal: this.store.getPortal(),
       sessionId: this.store.getSessionId(),
       state: snapshot.state,
@@ -149,9 +271,19 @@ export class SessionProvider {
     } catch (error) {
       if (error instanceof SessionError && error.code === 'SESSION_ERROR_EXPIRED_HANDLE') {
         this.store.setLifecycleState('SESSION_EXPIRED');
-        publishEvent('SESSION_EXPIRED', { reason: 'expired', sessionId: this.store.getSessionId() });
+        publishSessionEvent('SESSION_EXPIRED', {
+          reason: 'expired',
+          sessionId: this.store.getSessionId(),
+        });
         normalizeError(error, { moduleId: 'MOD-002' });
         throw error;
+      }
+
+      if (error instanceof SessionError) {
+        publishSessionEvent('SESSION_ERROR', {
+          code: error.code,
+          sessionId: this.store.getSessionId(),
+        });
       }
       normalizeError(error, { moduleId: 'MOD-002' });
       throw error;
@@ -174,13 +306,13 @@ export class SessionProvider {
     }
 
     this.store.publishSnapshot(this.configSlice(), 'SIGNED_IN');
-    publishEvent('SESSION_CREATED', {
+    publishSessionEvent('SESSION_CREATED', {
       userId: handle.userId,
       hydrationPhase: 'signed_in',
     });
 
     const readySnapshot = this.store.publishSnapshot(this.configSlice(), 'SESSION_READY');
-    publishEvent('SESSION_READY', {
+    publishSessionEvent('SESSION_READY', {
       portal: this.store.getPortal(),
       sessionId: this.store.getSessionId(),
       state: readySnapshot.state,
@@ -203,7 +335,6 @@ export class SessionProvider {
     this.store.bumpSnapshotVersion();
 
     this.store.publishSnapshot(this.configSlice(), 'SIGNED_OUT');
-    publishEvent('SESSION_CLEARED', { sessionId: this.store.getSessionId(), reason });
 
     getLogger().info('Session cleared', {
       moduleId: 'MOD-002',
@@ -211,11 +342,14 @@ export class SessionProvider {
       reason,
     });
 
-    return this.rebootstrapAnonymousMachine();
+    return this.rebootstrapAnonymousMachine(reason);
   }
 
   destroySession(reason = 'destroy'): void {
-    publishEvent('SESSION_CLEARED', { sessionId: this.store.getSessionId(), reason });
+    publishSessionEvent('SESSION_DESTROYED', {
+      reason,
+      sessionId: this.store.getSessionId(),
+    });
     this.store.invalidateSnapshot();
     this.frozenApi = null;
 
@@ -227,6 +361,7 @@ export class SessionProvider {
 
   initialize(options: InitializeSessionOptions): SessionPublicApi {
     if (this.store.getLifecycleState() === 'SESSION_READY' && this.frozenApi) {
+      this.wireEventListeners();
       return this.frozenApi;
     }
 
@@ -240,6 +375,7 @@ export class SessionProvider {
     });
 
     this.frozenApi = this.buildPublicApi();
+    this.wireEventListeners();
     this.markReadyAnonymous();
 
     return this.frozenApi;
@@ -259,12 +395,16 @@ export class SessionProvider {
     return this.store.getLifecycleState();
   }
 
-  private rebootstrapAnonymousMachine(): SessionSnapshot {
+  private rebootstrapAnonymousMachine(reason: string): SessionSnapshot {
     const machine = this.store.getMachineState();
 
     if (machine === 'AUTHENTICATED' || machine === 'ANONYMOUS' || machine === 'EXPIRED') {
       this.store.applyMachineTransition(machine, 'USER_LOGOUT', 'LOGGING_OUT');
       this.store.applyMachineTransition('LOGGING_OUT', 'TEARDOWN_COMPLETE', 'DESTROYED');
+      publishSessionEvent('SESSION_DESTROYED', {
+        reason,
+        sessionId: this.store.getSessionId(),
+      });
       this.store.applyMachineTransition('DESTROYED', 'NEW_BOOT_CYCLE', 'INITIAL');
       this.store.applyMachineTransition('INITIAL', 'SYSTEM_READY', 'LOADING');
     }
@@ -272,3 +412,5 @@ export class SessionProvider {
     return this.markReadyAnonymous();
   }
 }
+
+export { resetSessionEventListenersForTests };

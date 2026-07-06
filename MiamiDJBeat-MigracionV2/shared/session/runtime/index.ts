@@ -13,6 +13,17 @@ export {
   initializeSession,
   resetSessionForTests,
 } from './session-service';
+export {
+  areSessionEventListenersRegistered,
+  ensureSessionEventListeners,
+  parsePermissionChangedPayload,
+  parseRoleChangedPayload,
+  parseUserLoginPayload,
+  parseUserLogoutPayload,
+  publishSessionEvent,
+  resetSessionEventListenersForTests,
+} from './session-listeners';
+export type { SessionEventListenerHandlers } from './session-listeners';
 export { SessionProvider } from './session-provider';
 export { SessionStore, resetSessionStoreCounterForTests } from './session-store';
 export type { SessionStoreConfigSlice } from './session-store';
@@ -29,6 +40,7 @@ export type {
   AuthProvider,
   HydrationPhase,
   InitializeSessionOptions,
+  SessionEmitEventName,
   SessionErrorCode,
   SessionLifecycleState,
   SessionPublicApi,
@@ -36,5 +48,9 @@ export type {
   SessionStateMachineState,
   SessionTransitionEvent,
   SessionTransitionFrom,
+  UserLoginEventPayload,
+  UserLogoutEventPayload,
+  RoleChangedEventPayload,
+  PermissionChangedEventPayload,
   UserRef,
 } from './types';
