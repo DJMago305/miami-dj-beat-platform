@@ -4,6 +4,8 @@ import type { PortalId } from '@mdj/shared/config';
 import { assertTransition } from './state-machine';
 import type {
   HydrationPhase,
+  HydrationTrace,
+  HydrationTraceStep,
   SessionLifecycleState,
   SessionSnapshot,
   SessionStateMachineState,
@@ -44,6 +46,7 @@ export class SessionStore {
   private currentUser: UserRef | null = null;
   private expiresAt: string | null = null;
   private hydrationPhase: HydrationPhase = 'none';
+  private hydrationTrace: HydrationTrace | null = null;
   private isRefreshing = false;
   private frozenSnapshot: SessionSnapshot | null = null;
 
@@ -56,8 +59,44 @@ export class SessionStore {
     this.currentUser = null;
     this.expiresAt = null;
     this.hydrationPhase = 'none';
+    this.hydrationTrace = null;
     this.isRefreshing = false;
     this.frozenSnapshot = null;
+  }
+
+  beginHydrationTrace(): void {
+    this.hydrationTrace = Object.freeze({
+      steps: Object.freeze([] as HydrationTraceStep[]),
+      startedAt: new Date().toISOString(),
+      completedAt: null,
+    });
+  }
+
+  appendHydrationTraceStep(step: HydrationTraceStep): void {
+    if (!this.hydrationTrace) {
+      this.beginHydrationTrace();
+    }
+
+    const current = this.hydrationTrace as HydrationTrace;
+    this.hydrationTrace = Object.freeze({
+      ...current,
+      steps: Object.freeze([...current.steps, step]),
+    });
+  }
+
+  completeHydrationTrace(): void {
+    if (!this.hydrationTrace) {
+      return;
+    }
+
+    this.hydrationTrace = Object.freeze({
+      ...this.hydrationTrace,
+      completedAt: new Date().toISOString(),
+    });
+  }
+
+  getHydrationTrace(): HydrationTrace | null {
+    return this.hydrationTrace;
   }
 
   getMachineState(): SessionStateMachineState | null {
@@ -164,6 +203,7 @@ export class SessionStore {
     this.lifecycleState = 'SESSION_UNINITIALIZED';
     this.clearIdentity();
     this.hydrationPhase = 'none';
+    this.hydrationTrace = null;
     this.isRefreshing = false;
   }
 }

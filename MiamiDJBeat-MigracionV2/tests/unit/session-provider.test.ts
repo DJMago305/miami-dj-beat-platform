@@ -71,6 +71,7 @@ describe('MOD-002 SessionProvider — TICKET-MOD-002-SESSION-PROVIDER-STORE-001'
     expect(snapshot.user).toBeNull();
     expect(snapshot.hydrationPhase).toBe('initial');
     expect(Object.isFrozen(snapshot)).toBe(true);
+    expect(store.getHydrationTrace()?.steps).toContain('restore_empty');
   });
 
   it('ingestAuthHandle drives LOADING → AUTHENTICATED machine path', () => {

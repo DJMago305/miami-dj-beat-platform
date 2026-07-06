@@ -47,6 +47,24 @@ export type SessionLifecycleState =
 
 export type HydrationPhase = 'initial' | 'signed_in' | 'none';
 
+/** Traceable hydration steps — TICKET-MOD-002-SESSION-HYDRATION-RESTORE-001. */
+export type HydrationTraceStep =
+  | 'boot_started'
+  | 'restore_begin'
+  | 'restore_empty'
+  | 'restore_found'
+  | 'restore_expired'
+  | 'restore_invalid'
+  | 'validate_anonymous'
+  | 'validate_authenticated'
+  | 'ready';
+
+export type HydrationTrace = {
+  readonly steps: readonly HydrationTraceStep[];
+  readonly startedAt: string;
+  readonly completedAt: string | null;
+};
+
 export type AuthProvider = 'mock' | 'supabase';
 
 export type AuthHandle = {

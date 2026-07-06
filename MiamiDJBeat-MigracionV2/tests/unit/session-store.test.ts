@@ -89,4 +89,19 @@ describe('MOD-002 SessionStore — TICKET-MOD-002-SESSION-PROVIDER-STORE-001', (
     expect(store.getLifecycleState()).toBe('SESSION_UNINITIALIZED');
     expect(store.getMachineState()).toBeNull();
   });
+
+  it('hydration trace records steps and completes immutably', () => {
+    store.beginHydrationTrace();
+    store.appendHydrationTraceStep('boot_started');
+    store.appendHydrationTraceStep('restore_begin');
+    store.appendHydrationTraceStep('restore_empty');
+    store.completeHydrationTrace();
+
+    const trace = store.getHydrationTrace();
+    expect(trace).not.toBeNull();
+    expect(Object.isFrozen(trace)).toBe(true);
+    expect(Object.isFrozen(trace?.steps)).toBe(true);
+    expect(trace?.steps).toEqual(['boot_started', 'restore_begin', 'restore_empty']);
+    expect(trace?.completedAt).not.toBeNull();
+  });
 });

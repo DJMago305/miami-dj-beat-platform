@@ -5,6 +5,13 @@ import { normalizeError } from '@mdj/shared/errors';
 import { getLogger } from '@mdj/shared/logging';
 import { SessionError } from './errors';
 import {
+  createNoopPersistencePort,
+  PERSISTED_SESSION_RECORD_VERSION,
+  type PersistedSessionRecord,
+  type PersistencePort,
+  type RestoreResult,
+} from './persistence-port';
+import {
   ensureSessionEventListeners,
   publishSessionEvent,
   resetSessionEventListenersForTests,
@@ -21,6 +28,25 @@ import type {
   UserLoginEventPayload,
   UserLogoutEventPayload,
 } from './types';
+
+function unwrapRestoreResult(result: RestoreResult | Promise<RestoreResult>): RestoreResult {
+  if (result instanceof Promise) {
+    throw new SessionError(
+      'SESSION_ERROR_NOT_READY',
+      'PersistencePort.restore() must be synchronous during boot hydration.',
+    );
+  }
+  return result;
+}
+
+function isExpiredIsoTimestamp(value: string | null | undefined): boolean {
+  if (!value) {
+    return false;
+  }
+
+  const expiryMs = Date.parse(value);
+  return Number.isNaN(expiryMs) || expiryMs <= Date.now();
+}
 
 function validateAuthHandle(handle: AuthHandle): void {
   const requiredFields = [
@@ -69,11 +95,13 @@ function userLoginPayloadToAuthHandle(payload: UserLoginEventPayload): AuthHandl
 /** Orchestrates session lifecycle using SessionStore + state machine + Event Bus. */
 export class SessionProvider {
   private readonly store: SessionStore;
+  private readonly persistencePort: PersistencePort;
   private frozenApi: SessionPublicApi | null = null;
   private logoutInProgress = false;
 
-  constructor(store: SessionStore) {
+  constructor(store: SessionStore, persistencePort: PersistencePort = createNoopPersistencePort()) {
     this.store = store;
+    this.persistencePort = persistencePort;
   }
 
   reset(): void {
@@ -85,6 +113,10 @@ export class SessionProvider {
 
   getStore(): SessionStore {
     return this.store;
+  }
+
+  getPersistencePort(): PersistencePort {
+    return this.persistencePort;
   }
 
   private configSlice(): SessionStoreConfigSlice {
@@ -137,7 +169,7 @@ export class SessionProvider {
     }
 
     if (this.store.getMachineState() === 'INITIAL') {
-      this.markReadyAnonymous();
+      this.runHydrationRestore();
     }
   }
 
@@ -223,21 +255,68 @@ export class SessionProvider {
     });
   }
 
-  /** Boot path — anonymous SESSION_READY (baseline PO 2026-07-06). */
+  /** Boot path — anonymous SESSION_READY (baseline PO 2026-07-06). Skips persistence restore. */
   markReadyAnonymous(): SessionSnapshot {
-    this.store.clearIdentity();
+    return this.completeAnonymousReady();
+  }
+
+  /** Boot hydration — restore from PersistencePort then validate (Phase 4). */
+  runHydrationRestore(): SessionSnapshot {
+    this.store.beginHydrationTrace();
+    this.store.appendHydrationTraceStep('boot_started');
     this.store.setHydrationPhase('initial');
-    this.store.bumpSnapshotVersion();
 
     if (this.store.getMachineState() === 'INITIAL') {
       this.store.applyMachineTransition('INITIAL', 'SYSTEM_READY', 'LOADING');
     }
 
+    this.store.appendHydrationTraceStep('restore_begin');
+    const restoreResult = unwrapRestoreResult(this.persistencePort.restore());
+
+    if (!restoreResult.found || !restoreResult.record) {
+      return this.completeAnonymousReady({ restoreReason: 'restore_empty' });
+    }
+
+    return this.applyRestoredRecord(restoreResult.record);
+  }
+
+  private completeAnonymousReady(options?: {
+    restoreReason?: 'restore_empty' | 'restore_expired' | 'restore_invalid';
+    validateEvent?: 'VALIDATE_OK_NO_USER' | 'VALIDATE_FAIL_RECOVERABLE';
+  }): SessionSnapshot {
+    const tracing = Boolean(options?.restoreReason);
+
+    if (options?.restoreReason) {
+      this.store.appendHydrationTraceStep(options.restoreReason);
+    }
+
+    this.store.clearIdentity();
+    this.store.setHydrationPhase('initial');
+    this.store.bumpSnapshotVersion();
+
+    const machine = this.store.getMachineState();
+    if (machine === 'INITIAL') {
+      this.store.applyMachineTransition('INITIAL', 'SYSTEM_READY', 'LOADING');
+    }
+
     if (this.store.getMachineState() === 'LOADING') {
-      this.store.applyMachineTransition('LOADING', 'VALIDATE_OK_NO_USER', 'ANONYMOUS');
+      this.store.applyMachineTransition(
+        'LOADING',
+        options?.validateEvent ?? 'VALIDATE_OK_NO_USER',
+        'ANONYMOUS',
+      );
+    }
+
+    if (tracing) {
+      this.store.appendHydrationTraceStep('validate_anonymous');
     }
 
     const snapshot = this.store.publishSnapshot(this.configSlice(), 'SESSION_READY');
+
+    if (tracing) {
+      this.store.appendHydrationTraceStep('ready');
+      this.store.completeHydrationTrace();
+    }
 
     publishSessionEvent('SESSION_CREATED', {
       userId: 'anonymous',
@@ -255,9 +334,73 @@ export class SessionProvider {
       portal: this.store.getPortal(),
       state: snapshot.state,
       machineState: this.store.getMachineState(),
+      hydrationTrace: this.store.getHydrationTrace()?.steps,
     });
 
     return snapshot;
+  }
+
+  private applyRestoredRecord(record: PersistedSessionRecord): SessionSnapshot {
+    if (record.recordVersion !== PERSISTED_SESSION_RECORD_VERSION) {
+      return this.completeAnonymousReady({
+        restoreReason: 'restore_invalid',
+        validateEvent: 'VALIDATE_FAIL_RECOVERABLE',
+      });
+    }
+
+    if (isExpiredIsoTimestamp(record.expiresAt)) {
+      return this.completeAnonymousReady({
+        restoreReason: 'restore_expired',
+        validateEvent: 'VALIDATE_FAIL_RECOVERABLE',
+      });
+    }
+
+    const userId = record.userId?.trim();
+    if (!userId) {
+      return this.completeAnonymousReady({ restoreReason: 'restore_empty' });
+    }
+
+    this.store.appendHydrationTraceStep('restore_found');
+    this.store.setUser({
+      userId,
+      email: record.email,
+      mdjbId: record.mdjbId,
+    });
+    this.store.setExpiresAt(record.expiresAt ?? null);
+    this.store.setHydrationPhase('initial');
+    this.store.bumpSnapshotVersion();
+
+    if (this.store.getMachineState() === 'LOADING') {
+      this.store.applyMachineTransition('LOADING', 'VALIDATE_OK_USER', 'AUTHENTICATED');
+    }
+
+    this.store.appendHydrationTraceStep('validate_authenticated');
+    this.store.publishSnapshot(this.configSlice(), 'SIGNED_IN');
+    publishSessionEvent('SESSION_CREATED', {
+      userId,
+      hydrationPhase: 'initial',
+    });
+
+    const readySnapshot = this.store.publishSnapshot(this.configSlice(), 'SESSION_READY');
+    this.store.appendHydrationTraceStep('ready');
+    this.store.completeHydrationTrace();
+
+    publishSessionEvent('SESSION_READY', {
+      portal: this.store.getPortal(),
+      sessionId: this.store.getSessionId(),
+      state: readySnapshot.state,
+    });
+
+    getLogger().info('Session restored from persistence', {
+      moduleId: 'MOD-002',
+      sessionId: this.store.getSessionId(),
+      userId,
+      hydrationPhase: 'initial',
+      machineState: this.store.getMachineState(),
+      hydrationTrace: this.store.getHydrationTrace()?.steps,
+    });
+
+    return readySnapshot;
   }
 
   ingestAuthHandle(handle: AuthHandle): SessionSnapshot {
@@ -375,8 +518,8 @@ export class SessionProvider {
     });
 
     this.frozenApi = this.buildPublicApi();
+    this.runHydrationRestore();
     this.wireEventListeners();
-    this.markReadyAnonymous();
 
     return this.frozenApi;
   }

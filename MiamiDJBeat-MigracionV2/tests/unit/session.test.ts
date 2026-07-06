@@ -71,6 +71,7 @@ describe('MOD-002 Session Manager', () => {
     expect(snapshot.hydrationPhase).toBe('initial');
     expect(snapshot.sessionId).toMatch(/^ses_/);
     expect(Object.isFrozen(snapshot)).toBe(true);
+    expect(getSessionStoreForTests().getHydrationTrace()?.steps).toContain('restore_empty');
   });
 
   it('emits SESSION_CREATED and SESSION_READY on boot', () => {
