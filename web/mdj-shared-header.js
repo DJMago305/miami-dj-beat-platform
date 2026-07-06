@@ -603,6 +603,29 @@
     }
   }
 
+  /** STAFF building (#owner-tabs): Owner → dj-profile público; resto staff → account-profile. */
+  function mdjApplyStaffBuildingMiPerfilLink(el) {
+    if (!el || el.tagName !== 'A' || !mdjIsStaffBuildingPage()) return;
+    var uid = window.__mdjNavOwnUserId ? String(window.__mdjNavOwnUserId).trim() : '';
+    if (!uid) {
+      try {
+        uid = String(localStorage.getItem('sb-current-user-id') || '').trim();
+      } catch (eUid) {
+        uid = '';
+      }
+    }
+    var idn = window.__mdjLastPlatformIdentity;
+    var role = idn && idn.dbRole ? String(idn.dbRole).toLowerCase() : '';
+    if (!role && window.__mdjpro && window.__mdjpro.role) {
+      role = String(window.__mdjpro.role).toLowerCase();
+    }
+    if (role === 'owner' && uid) {
+      el.href = './dj-profile.html?id=' + encodeURIComponent(uid);
+    } else {
+      el.href = './account-profile.html';
+    }
+  }
+
   /** Login staff entry — flag mdj_staff_entry evita cadena auth → CONFIG artista (ART-007B). */
   function mdjBuildStaffEntryLoginHref() {
     return './login.html?next=./admin-dashboard.html&mdj_staff_entry=1';
@@ -3413,6 +3436,10 @@
                 }
               }
             }
+            if (appRoleLower === 'owner') {
+              var _staffMiPerfil = document.querySelector('#owner-tabs [data-i18n="menu-account"]');
+              mdjApplyStaffBuildingMiPerfilLink(_staffMiPerfil);
+            }
             /* Flujo de caja: reveal at slot 5 (after SHOP, before CONFIG).
                mdjApplyFlowMainNavLink(false) runs at line ~2686 before this guard,
                so we run AFTER it and override. */
@@ -3865,6 +3892,7 @@
   window.mdjRefreshAllStaffNavLinks = mdjRefreshAllStaffNavLinks;
   window.mdjRefreshOwnerStripStaffLinks = mdjRefreshOwnerStripStaffLinks;
   window.mdjIsStaffBuildingPage = mdjIsStaffBuildingPage;
+  window.mdjApplyStaffBuildingMiPerfilLink = mdjApplyStaffBuildingMiPerfilLink;
   mdjInstallGlobalStaffNavCapture();
 })();
 
@@ -4398,9 +4426,9 @@
       }
     }
 
-    /* ── MI PERFIL (owner-tabs): edificio Staff → account-profile (C-1) ── */
-    if (perfilEl && perfilEl.tagName === 'A' && _staffBuildingPage) {
-      perfilEl.href = './account-profile.html';
+    /* ── MI PERFIL (owner-tabs): STAFF building — Owner → dj-profile; resto → account-profile (C-1) ── */
+    if (perfilEl && _staffBuildingPage && typeof window.mdjApplyStaffBuildingMiPerfilLink === 'function') {
+      window.mdjApplyStaffBuildingMiPerfilLink(perfilEl);
     }
 
     /* ── AGENDA: forzar href a dj-dashboard.html?tab=dashboard&id=<uid>
@@ -4458,6 +4486,10 @@
                    cT.querySelector('a[data-i18n="dash-your-profile"]');
         if (agEl && agEl.tagName === 'A') {
           agEl.href = './dj-dashboard.html?tab=dashboard&id=' + encodeURIComponent(_uid);
+        }
+        var mpEl = cT.querySelector('[data-i18n="menu-account"]');
+        if (mpEl && typeof window.mdjApplyStaffBuildingMiPerfilLink === 'function') {
+          window.mdjApplyStaffBuildingMiPerfilLink(mpEl);
         }
         if (typeof window.mdjRefreshAllStaffNavLinks === 'function') {
           window.mdjRefreshAllStaffNavLinks();
