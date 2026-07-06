@@ -32,8 +32,47 @@
         clearTimeout(window.__mdjNavBootTimeout);
         window.__mdjNavBootTimeout = null;
       }
+      if (typeof window.mdjEnsureAccountSettingsOwnerStripNav === 'function') {
+        window.mdjEnsureAccountSettingsOwnerStripNav();
+      }
     } catch (e) { /* ignore */ }
   }
+
+  /** Owner Config: #owner-tabs manda; anular fila #mainNav 8-pillar tras auth / inject. */
+  function mdjEnsureAccountSettingsOwnerStripNav() {
+    try {
+      var page = (window.location.pathname.split('/').pop() || '').toLowerCase();
+      if (page !== 'account-settings.html') return;
+      if (!document.body || !document.body.classList.contains('mdj-from-profile')) return;
+      var bar = document.querySelector('#mainHeader .header-nav');
+      if (bar) {
+        bar.style.setProperty('display', 'none', 'important');
+        bar.style.setProperty('visibility', 'hidden', 'important');
+        bar.style.setProperty('pointer-events', 'none', 'important');
+      }
+      var strip = document.getElementById('owner-tabs');
+      if (strip) {
+        strip.style.removeProperty('visibility');
+        strip.style.removeProperty('opacity');
+        strip.style.removeProperty('pointer-events');
+        strip.setAttribute('data-mdj-no-marquee', '1');
+        var cont = strip.querySelector('.container');
+        if (cont) cont.setAttribute('data-mdj-no-marquee', '1');
+      }
+    } catch (e) { /* noop */ }
+  }
+  window.mdjEnsureAccountSettingsOwnerStripNav = mdjEnsureAccountSettingsOwnerStripNav;
+
+  /* account-settings.html: strip artista desde el primer paint (antes del auth-chain). */
+  (function mdjBootAccountSettingsProfileNavEarly() {
+    try {
+      var page = (window.location.pathname.split('/').pop() || '').toLowerCase();
+      if (page !== 'account-settings.html' || !document.body) return;
+      document.body.classList.add('mdj-from-profile');
+      var bar = document.querySelector('#mainHeader .header-nav');
+      if (bar) bar.style.setProperty('display', 'none', 'important');
+    } catch (e) { /* noop */ }
+  })();
 
   function mdjApplyAuthBootMask() {
     try {
@@ -3866,6 +3905,13 @@
 
   /* Devuelve true cuando flowLink ya existe y fue procesado */
   function reorderOwnerMenu() {
+    if (document.body && document.body.classList.contains('mdj-from-profile') &&
+        window.location.pathname.indexOf('account-settings.html') !== -1) {
+      if (typeof window.mdjEnsureAccountSettingsOwnerStripNav === 'function') {
+        window.mdjEnsureAccountSettingsOwnerStripNav();
+      }
+      return true;
+    }
     var nav = document.getElementById('mainNav');
     if (!nav) return false;
 
@@ -4380,6 +4426,10 @@
 
     if (_page === 'dj-dashboard.html' && typeof window.__mdjSyncDashOwnerStripActive === 'function') {
       window.__mdjSyncDashOwnerStripActive();
+    }
+
+    if (_page === 'account-settings.html' && typeof window.mdjEnsureAccountSettingsOwnerStripNav === 'function') {
+      window.mdjEnsureAccountSettingsOwnerStripNav();
     }
 
     return true; /* nodos presentes; poll detiene */
