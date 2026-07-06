@@ -1,0 +1,139 @@
+# Miami DJ Beat — Documentación V2 (Baseline)
+
+**Ticket:** TICKET-DOCS-V2-BASELINE-001  
+**Estado:** Baseline indexado en repo  
+**Fecha:** 2026-07-06  
+**Alcance:** Solo documentación — **cero** cambios en `web/`, Supabase, Invoice, Cash Flow, Stripe o Header/Nav.
+
+---
+
+## Propósito
+
+Este directorio es la **fuente documental oficial del laboratorio V2** (`MiamiDJBeat-MigracionV2`), aislado de producción V1.
+
+La Constitución (`MIAMIDJBEAT-PROYECTO-CONSTITUCION.md`) manda sobre cualquier documento inferior. El runtime V2 vive en la carpeta hermana `MiamiDJBeat-MigracionV2/` (scaffold local; **no** incluido en este commit salvo ticket explícito).
+
+---
+
+## Jerarquía documental
+
+| Nivel | Documento | Rol |
+|-------|-----------|-----|
+| 1 — Máxima | `MIAMIDJBEAT-PROYECTO-CONSTITUCION.md` | Constitución del proyecto |
+| 2 — Decisiones | `../DECISIONS.md` | Registro oficial DECISION-V2-001 … 003 |
+| 3 — Gobernanza | `GOVERNANCE/` | Pipeline agentes, gates, autorización |
+| 4 — Operación | `NOTA-DIARIA-OPERACION-PERMANENTE.md` | Guía operativa diaria |
+| 5 — Arquitectura | `ARCHITECTURE/` | Handbook + mapas (boot, deps, events, errors) |
+| 6 — Diseño | `MiamiDJBeat-V2-SYSTEM-BLUEPRINT.md` · `MiamiDJBeat-V2-MODULE-CATALOG.md` · `MiamiDJBeat-V2-ARQUITECTURA-VIVA.md` | Blueprint y catálogo MOD |
+| 7 — Lab fundacional | `../V2-LAB/` | Visión, reglas, roadmap del laboratorio |
+| 8 — Progreso | `SHARED-CORE-PROGRESS.md` · `MiamiDJBeat-MigracionV2-MEMORIA.md` | Tablero y memoria ejecutiva |
+| 9 — Sesiones | `SESSION-SUMMARIES/` | Resúmenes técnicos por jornada |
+
+---
+
+## Mapa de archivos (`docs/V2/`)
+
+### Raíz
+
+| Archivo | Descripción |
+|---------|-------------|
+| `MIAMIDJBEAT-PROYECTO-CONSTITUCION.md` | Constitución V2 — separación permanente V1/V2 |
+| `MIAMIDJBEAT-PRODUCT-OWNER-VALIDATION-PROTOCOL.md` | Governance Baseline PO (v3.1) |
+| `MiamiDJBeat-V2-ARQUITECTURA-VIVA.md` | Arquitectura viva — capas y portales |
+| `MiamiDJBeat-V2-SYSTEM-BLUEPRINT.md` | Blueprint sistema |
+| `MiamiDJBeat-V2-MODULE-CATALOG.md` | Catálogo MOD-xxx Shared Core |
+| `MiamiDJBeat-MigracionV2-MEMORIA.md` | Memoria ejecutiva migración |
+| `SHARED-CORE-PROGRESS.md` | Tablero documental Shared Core (16 MOD) |
+| `NOTA-DIARIA-LAB-001.md` | Nota fundacional del laboratorio |
+| `NOTA-DIARIA-OPERACION-PERMANENTE.md` | Operation Guide permanente |
+
+### `ARCHITECTURE/`
+
+| Archivo | Descripción |
+|---------|-------------|
+| `ARCHITECTURE-HANDBOOK.md` | Puerta de navegación documental |
+| `MODULE-INDEX.md` | Índice de módulos |
+| `BOOT-SEQUENCE.md` | Secuencia de arranque |
+| `DEPENDENCY-MAP.md` | Grafo de dependencias |
+| `EVENT-MAP.md` | Mapa de eventos |
+| `ERROR-MAP.md` | Mapa de errores |
+| `CONTRACT-INDEX.md` | Índice de contratos |
+| `DECISION-INDEX.md` | Índice ADR / decisiones técnicas |
+| `GLOSSARY.md` | Glosario |
+
+### `GOVERNANCE/`
+
+Ver `GOVERNANCE/README.md` — pipeline agente, checklist violaciones, formulario autorización, startup gate.
+
+### `SESSION-SUMMARIES/`
+
+| Archivo | Descripción |
+|---------|-------------|
+| `2026-07-05.md` | Resumen técnico extendido — jornada fundacional Shared Core |
+
+---
+
+## Documentos en raíz `docs/` (relacionados)
+
+| Archivo | Relación con V2 |
+|---------|-----------------|
+| `DECISIONS.md` | Registro oficial de DECISION-V2-001, 002, 003 |
+| `NOTA-DIARIA-2026-07-05.md` | Cabecera operativa del día (cierre fase fundacional). Detalle → `SESSION-SUMMARIES/2026-07-05.md` |
+| `NOTA-DIARIA-2026-07-06.md` | Nota V1 (Invoice / Cash Flow / Nav) — **en `main`**, fuera de baseline V2 |
+
+---
+
+## Laboratorio (`docs/V2-LAB/`)
+
+Índice completo: [`../V2-LAB/README.md`](../V2-LAB/README.md)
+
+Ocho documentos fundacionales (01–08): visión, arquitectura, reglas, migración, estructura, prohibiciones, quality gates, roadmap.
+
+---
+
+## V1 crossover — Owner strip (traceabilidad)
+
+Tickets P0 de **runtime V1** (`web/mdj-shared-header.js`, `dj-profile.html`). Documentados aquí por trazabilidad con el contrato V2 `OWNER_STRIP_READY`; **no** son specs del laboratorio V2.
+
+| Ticket | Estado al baseline | Notas |
+|--------|-------------------|-------|
+| `../tickets/TICKET-P0-OWNER-STRIP-CONTRACT-V2-001.md` | Implementado — QA visual PO pendiente | Contrato `OWNER_STRIP_READY` en dj-profile |
+| `../tickets/TICKET-P0-OWNER-STRIP-LIFECYCLE-INVESTIGATION-001.md` | Abierto — solo investigación | Sin parches autorizados en header |
+| `../tickets/TICKET-P0-OWNER-STRIP-STAFF-LOCAL-PROD-PARITY-001.md` | Abierto — paridad STAFF/orden | Distinto de fix Mi Perfil (PR #116 `f69b66e`) |
+
+---
+
+## Decisiones selladas (resumen)
+
+| ID | Título | Doc |
+|----|--------|-----|
+| DECISION-V2-001 | Constitución oficial | `MIAMIDJBEAT-PROYECTO-CONSTITUCION.md` |
+| DECISION-V2-002 | Documentation First | `SHARED-CORE-PROGRESS.md` |
+| DECISION-V2-003 | Runtime stack (TS/Vite/Vitest) | `MiamiDJBeat-MigracionV2/docs/adr/ADR-DECISION-V2-003-RUNTIME-STACK.md` |
+
+Detalle completo: [`../DECISIONS.md`](../DECISIONS.md).
+
+---
+
+## Fuera de alcance de este baseline
+
+| Item | Motivo |
+|------|--------|
+| `web/` | Producción V1 — congelada salvo ticket |
+| `MiamiDJBeat-MigracionV2/` (runtime) | Scaffold local; commit bajo ticket runtime separado |
+| `MiamiDJBeat-MigracionV2/.env` | Secretos — nunca en git |
+| Invoice · Cash Flow · Stripe · Header/Nav V1 | Baselines V1 en `docs/architecture/` y PR #116 |
+
+---
+
+## Arranque recomendado (agente / arquitecto)
+
+1. `GOVERNANCE/AGENT-STARTUP-GATE.md`
+2. `MIAMIDJBEAT-PROYECTO-CONSTITUCION.md`
+3. `MIAMIDJBEAT-PRODUCT-OWNER-VALIDATION-PROTOCOL.md`
+4. `ARCHITECTURE/ARCHITECTURE-HANDBOOK.md`
+5. Ticket activo autorizado por PO
+
+---
+
+*TICKET-DOCS-V2-BASELINE-001 — Documentation only — 2026-07-06*
