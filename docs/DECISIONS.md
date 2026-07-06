@@ -133,3 +133,84 @@ La ratificación **no** sustituye ticket explícito ni validación PO por archiv
 ### Aprobación
 
 Product Owner — TICKET-V2-ADR-RATIFICATION-CLOSURE-001 (2026-07-05)
+
+---
+
+## DECISION-V2-004
+
+| Campo | Valor |
+|-------|-------|
+| **Fecha** | 2026-07-06 |
+| **Título** | Bootline Baseline — localhost validado antes de desarrollo funcional V2 |
+| **Estado** | **LOCKED** |
+| **Ticket cierre** | TICKET-V2-BOOTLINE-BASELINE-001 |
+| **Evidencia** | `docs/V2/SESSION-SUMMARIES/2026-07-05.md` § Validación Localhost — 2026-07-06 |
+
+### Descripción
+
+**El desarrollo funcional de V2 no comenzará hasta disponer de una baseline visual validada en localhost.**
+
+Queda sellada la baseline operativa del laboratorio tras validación PO (2026-07-06):
+
+- Vite ejecutándose en puerto **5173**
+- Tres portales (**Client** · **Artist** · **Staff**) con HTTP **200**
+- Boot scaffold completo: Config · Bus · Logging · Error Handler · Session ready
+- **Business logic = false**
+- **Sin integración Supabase** funcional
+- **Sin cambios de código** en el acto de validación/baseline
+
+### Consecuencias
+
+| Autorizado tras LOCKED | No autorizado sin ticket + PO |
+|------------------------|-------------------------------|
+| Apertura **MOD-002 Session Manager** (desarrollo funcional) | Lógica de negocio en portales |
+| Tickets runtime acotados al módulo autorizado | Cutover V1 · cambios `web/` |
+| Referencia a esta baseline en tickets V2 | Modificar DECISION-V2-004 sin ADR PO |
+
+### Aprobación
+
+Product Owner — TICKET-V2-BOOTLINE-BASELINE-001 (2026-07-06)
+
+---
+
+## DECISION-V2-005
+
+| Campo | Valor |
+|-------|-------|
+| **Fecha** | 2026-07-06 |
+| **Título** | MOD-002 Session Manager Local Baseline Approved |
+| **Estado** | **LOCKED LOCAL** |
+| **Ticket cierre** | TICKET-MOD-002-SESSION-CLOSEOUT-DOCS-001 |
+| **Evidencia** | `docs/V2/SESSION-SUMMARIES/2026-07-05.md` § MOD-002 Session Manager — Closeout Local (2026-07-06) |
+
+### Descripción
+
+Queda documentado el **cierre funcional local** de **MOD-002 Session Manager** tras seis fases de implementación controlada en el laboratorio `MiamiDJBeat-MigracionV2/`:
+
+1. **State Machine** — máquina de 9 estados y tests de transición (`0a0a556`)
+2. **Provider + Store** — orquestación, snapshot inmutable, facade de servicio (`c14c3d0`)
+3. **Event Bus Wiring** — listeners idempotentes y emisión de eventos SESSION (`9878ffc`)
+4. **Hydration + Restore** — fase de hidratación, `PersistencePort` interno mock/noop (`131fba9`)
+5. **Auth Handoff Boundary** — contrato MOD-001 ↔ MOD-002 sin Auth real (`263f437`)
+6. **Refresh + Expiry** — `REFRESHING`, guard single-flight, `SESSION_EXPIRED` (`ec4090c`)
+
+Baseline operativa preservada:
+
+- Boot scaffold intacto (`boot.ts` congelado)
+- Tres portales en `:5173` con **Session: ready** y **Business logic: false**
+- **112/112** tests unitarios · **3/3** e2e aprobados (corrida pre-closeout)
+- Validación visual PO en localhost confirmada
+- **Sin push · sin PR · sin Supabase · sin login real**
+
+### Consecuencias
+
+| Autorizado tras LOCKED LOCAL | No autorizado sin ticket + PO |
+|------------------------------|-------------------------------|
+| Apertura documental/implementación **MOD-003 Permissions** | Push/merge/deploy producción |
+| Tickets runtime acotados a MOD-003+ | Cambios `web/` · Supabase prod |
+| Referencia a commits MOD-002 en tickets V2 | Modificar DECISION-V2-005 sin ADR PO |
+| Continuar lab local sobre baseline MOD-002 | Business logic en portales |
+
+### Aprobación
+
+Product Owner — TICKET-MOD-002-SESSION-CLOSEOUT-DOCS-001 (2026-07-06) — **PENDIENTE DE APROBACIÓN PO PARA INICIAR MOD-003 PERMISSIONS**

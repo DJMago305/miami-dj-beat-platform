@@ -72,10 +72,13 @@ Portal independiente para **compradores y clientes VIP**: cuenta, contratación,
 
 ### Tipos de usuarios
 
+> **Taxonomía oficial V2:** `PROFILE-TAXONOMY.md` §1 — Client Profile Types (TICKET-V2-PROFILE-TAXONOMY-001).
+
 | Tipo | Identidad | Descripción |
 |------|-----------|-------------|
-| **Cliente estándar** | `client_profiles` · MDJB **C** | Comprador registrado |
-| **Cliente VIP** | `client_profiles` + reglas lealtad | Crown + label VIP; cupones |
+| **Regular Client** | `client_profiles` · MDJB **C** | Cliente inicial / estándar |
+| **VIP Client** | `client_profiles` + reglas lealtad | Recurrente; crown + label VIP; cupones |
+| **Commercial Client** | `client_profiles` + entidad comercial | Contrata vía empresa (club, venue, corp., etc.) |
 | **Invitado** | Sin sesión | Browse limitado; checkout con registro |
 
 ### Módulos
@@ -101,14 +104,14 @@ Portal independiente para **compradores y clientes VIP**: cuenta, contratación,
 
 ### Permisos
 
-| Acción | Cliente | VIP | Invitado |
-|--------|---------|-----|----------|
-| Ver catálogo shop | ✅ | ✅ | ✅ limitado |
-| Checkout | ✅ | ✅ | tras registro |
-| Ver propias órdenes | ✅ | ✅ | ❌ |
-| Ver panel artista | ❌ | ❌ | ❌ |
-| Ver panel staff | ❌ | ❌ | ❌ |
-| Editar `dj_profiles` | ❌ | ❌ | ❌ |
+| Acción | Regular | VIP | Commercial | Invitado |
+|--------|---------|-----|------------|----------|
+| Ver catálogo shop | ✅ | ✅ | ✅ | ✅ limitado |
+| Checkout | ✅ | ✅ | ✅ | tras registro |
+| Ver propias órdenes | ✅ | ✅ | ✅ | ❌ |
+| Ver panel artista | ❌ | ❌ | ❌ | ❌ |
+| Ver panel staff | ❌ | ❌ | ❌ | ❌ |
+| Editar `dj_profiles` | ❌ | ❌ | ❌ | ❌ |
 
 ### Eventos emitidos (portal)
 
@@ -151,6 +154,22 @@ Portal independiente para **compradores y clientes VIP**: cuenta, contratación,
 Portal independiente para **DJs y performers**: presencia pública, operación de agenda, economía del artista y herramientas PRO.
 
 ### Tipos de artista
+
+> **Categorías artísticas V2:** `PROFILE-TAXONOMY.md` §3 — Artist Categories.  
+> **Tier comercial** (LITE/PRO/ELITE) permanece ortogonal a la categoría.
+
+| Categoría (ejemplos) | ID taxonomía |
+|----------------------|--------------|
+| DJ | `artist.dj` |
+| Singer / Solo Artist | `artist.singer_solo` |
+| Band / Orchestra / Group | `artist.band_group` |
+| MC / Host | `artist.mc_host` |
+| Dancer / Performer | `artist.dancer_performer` |
+| Clown / Kids Entertainment | `artist.clown_kids` |
+| Musician | `artist.musician` |
+| Other Custom Artist Category | `artist.custom` |
+
+#### Tier comercial (señal de pago)
 
 | Tier | Señal comercial | Acceso |
 |------|-----------------|--------|
@@ -245,12 +264,14 @@ Operación interna: **Owner, Admin, Manager, Seller** en un portal con permisos 
 
 ### Roles
 
+> **Taxonomía recuperable V2 (PO):** Owner · Manager · Seller — ver `PROFILE-TAXONOMY.md` §2.
+
 | Rol | Función Postgres | Escritura producción |
 |-----|------------------|----------------------|
 | **Owner** | `is_staff_management` | Plena |
-| **Admin** | `is_staff_management` | Plena |
 | **Manager** | `is_staff_management` | Plena |
 | **Seller** | `is_staff` sin management | Limitada |
+| **Admin** | `is_staff_management` | Plena (par Blueprint; ver nota taxonomía) |
 
 MDJB **M** (admin/owner/manager) · **S** (seller)
 

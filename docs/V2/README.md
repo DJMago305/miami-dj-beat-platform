@@ -15,12 +15,32 @@ La Constitución (`MIAMIDJBEAT-PROYECTO-CONSTITUCION.md`) manda sobre cualquier 
 
 ---
 
+## Estado del Laboratorio
+
+**Baseline:** TICKET-V2-BOOTLINE-BASELINE-001 (2026-07-06) — validación visual PO aprobada.  
+**MOD-002:** TICKET-MOD-002-SESSION-CLOSEOUT-DOCS-001 (2026-07-06) — **LOCAL BASELINE APPROVED** · DECISION-V2-005 (LOCKED LOCAL).
+
+Estado actual:
+
+- ✅ **Scaffold operativo** — Vite en puerto 5173; tres portales (Client · Artist · Staff) responden HTTP 200.
+- ✅ **Boot validado** — Config loaded · Bus ready · Logging ready · Error Handler ready · Session ready.
+- ✅ **MOD-002 Session Manager — cierre funcional local** — 6 fases implementadas y commiteadas en `main` local (**sin push / sin PR**).
+- ✅ **Tests aprobados** — **112/112** unitarios · **3/3** e2e Playwright (última corrida pre-closeout).
+- ✅ **Validación visual PO** — los tres portales mantienen `Session: ready` y `Business logic: false`.
+- ✅ **Business Logic deshabilitada** — `businessLogic: false` en los tres portales.
+- ✅ **Sin integración Supabase** — sin egress API funcional ni auth real en runtime V2.
+
+Detalle MOD-002: `SESSION-SUMMARIES/2026-07-05.md` § MOD-002 Session Manager — Closeout Local (2026-07-06).  
+Detalle boot scaffold: § Validación Localhost — 2026-07-06.
+
+---
+
 ## Jerarquía documental
 
 | Nivel | Documento | Rol |
 |-------|-----------|-----|
 | 1 — Máxima | `MIAMIDJBEAT-PROYECTO-CONSTITUCION.md` | Constitución del proyecto |
-| 2 — Decisiones | `../DECISIONS.md` | Registro oficial DECISION-V2-001 … 003 |
+| 2 — Decisiones | `../DECISIONS.md` | Registro oficial DECISION-V2-001 … 005 |
 | 3 — Gobernanza | `GOVERNANCE/` | Pipeline agentes, gates, autorización |
 | 4 — Operación | `NOTA-DIARIA-OPERACION-PERMANENTE.md` | Guía operativa diaria |
 | 5 — Arquitectura | `ARCHITECTURE/` | Handbook + mapas (boot, deps, events, errors) |
@@ -43,6 +63,7 @@ La Constitución (`MIAMIDJBEAT-PROYECTO-CONSTITUCION.md`) manda sobre cualquier 
 | `MiamiDJBeat-V2-SYSTEM-BLUEPRINT.md` | Blueprint sistema |
 | `MiamiDJBeat-V2-MODULE-CATALOG.md` | Catálogo MOD-xxx Shared Core |
 | `MiamiDJBeat-MigracionV2-MEMORIA.md` | Memoria ejecutiva migración |
+| `PROFILE-TAXONOMY.md` | Client Profile Types · Staff Roles · Artist Categories |
 | `SHARED-CORE-PROGRESS.md` | Tablero documental Shared Core (16 MOD) |
 | `NOTA-DIARIA-LAB-001.md` | Nota fundacional del laboratorio |
 | `NOTA-DIARIA-OPERACION-PERMANENTE.md` | Operation Guide permanente |
@@ -70,6 +91,7 @@ Ver `GOVERNANCE/README.md` — pipeline agente, checklist violaciones, formulari
 | Archivo | Descripción |
 |---------|-------------|
 | `2026-07-05.md` | Resumen técnico extendido — jornada fundacional Shared Core |
+| `PROFILE-TAXONOMY.md` | Taxonomía perfiles recuperables Client · Artist · Staff (pre MOD-003) |
 
 ---
 
@@ -77,7 +99,7 @@ Ver `GOVERNANCE/README.md` — pipeline agente, checklist violaciones, formulari
 
 | Archivo | Relación con V2 |
 |---------|-----------------|
-| `DECISIONS.md` | Registro oficial de DECISION-V2-001, 002, 003 |
+| `DECISIONS.md` | Registro oficial de DECISION-V2-001 … 005 |
 | `NOTA-DIARIA-2026-07-05.md` | Cabecera operativa del día (cierre fase fundacional). Detalle → `SESSION-SUMMARIES/2026-07-05.md` |
 | `NOTA-DIARIA-2026-07-06.md` | Nota V1 (Invoice / Cash Flow / Nav) — **en `main`**, fuera de baseline V2 |
 
@@ -110,8 +132,29 @@ Tickets P0 de **runtime V1** (`web/mdj-shared-header.js`, `dj-profile.html`). Do
 | DECISION-V2-001 | Constitución oficial | `MIAMIDJBEAT-PROYECTO-CONSTITUCION.md` |
 | DECISION-V2-002 | Documentation First | `SHARED-CORE-PROGRESS.md` |
 | DECISION-V2-003 | Runtime stack (TS/Vite/Vitest) | `MiamiDJBeat-MigracionV2/docs/adr/ADR-DECISION-V2-003-RUNTIME-STACK.md` |
+| DECISION-V2-004 | Bootline baseline localhost | `SESSION-SUMMARIES/2026-07-05.md` § Validación Localhost — 2026-07-06 |
+| DECISION-V2-005 | MOD-002 Session Manager local baseline | `SESSION-SUMMARIES/2026-07-05.md` § MOD-002 Closeout — 2026-07-06 |
 
 Detalle completo: [`../DECISIONS.md`](../DECISIONS.md).
+
+---
+
+## MOD-002 Session Manager — resumen closeout (local)
+
+| Fase | Entregable | Commit local (`main`) |
+|------|------------|------------------------|
+| 1 | State Machine (9 estados, tabla de transiciones, tests) | `0a0a556` |
+| 2 | SessionProvider + SessionStore (facade, snapshot inmutable) | `c14c3d0` |
+| 3 | Event Bus wiring (listeners idempotentes, eventos SESSION_*) | `9878ffc` |
+| 4 | Hydration + Restore (`PersistencePort` noop/in-memory) | `131fba9` |
+| 5 | Auth Handoff Boundary (`AuthSessionBoundary`, `deliverAuthHandoff`) | `263f437` |
+| 6 | Refresh + Expiry (`REFRESHING`, single-flight, `SESSION_EXPIRED`) | `ec4090c` |
+
+**Congelado (no modificado en MOD-002):** `bootstrap/boot.ts` · Config · Event Bus · Logging · Error Handler · portales · Vite routing.
+
+**Próximo paso documental:** aprobación PO de **`PROFILE-TAXONOMY.md`** (TICKET-V2-PROFILE-TAXONOMY-001) → iniciar **MOD-003 Permissions** (ticket dedicado).
+
+**Deploy:** sin push · sin PR · sin producción.
 
 ---
 
@@ -120,7 +163,7 @@ Detalle completo: [`../DECISIONS.md`](../DECISIONS.md).
 | Item | Motivo |
 |------|--------|
 | `web/` | Producción V1 — congelada salvo ticket |
-| `MiamiDJBeat-MigracionV2/` (runtime) | Scaffold local; commit bajo ticket runtime separado |
+| `MiamiDJBeat-MigracionV2/` (runtime) | MOD-002 Session Manager commiteado localmente; push bajo `APROBADO PUSH` |
 | `MiamiDJBeat-MigracionV2/.env` | Secretos — nunca en git |
 | Invoice · Cash Flow · Stripe · Header/Nav V1 | Baselines V1 en `docs/architecture/` y PR #116 |
 

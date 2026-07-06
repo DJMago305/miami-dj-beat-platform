@@ -43,7 +43,7 @@ Permiso operativo atómico evaluado vía `hasCapability()` en runtime futuro. Fu
 
 ### Client Portal
 
-Portal MOD-101+ para compradores y clientes VIP. Proyección buyer — sin herramientas artista/staff. Blueprint Sección 3.
+Portal MOD-101+ para compradores. Subtipos recuperables: **Regular Client**, **VIP Client**, **Commercial Client** — ver `PROFILE-TAXONOMY.md` §1.
 
 ### Components Library
 
@@ -52,6 +52,10 @@ MOD-009. Biblioteca de UI reutilizable (botones, modales, inputs). Consume Desig
 ### Contract
 
 Acuerdo escrito de inputs, outputs, estados, errores y límites entre módulos. Transversal: `CONTRACTS.md`. Especializados: `*-CONTRACT.md`.
+
+### Commercial Client
+
+Subtipo Client Portal (`client.commercial`): comprador que contrata vía entidad comercial (club, venue, corporación). Ver `PROFILE-TAXONOMY.md`.
 
 ---
 
@@ -125,6 +129,10 @@ Dominio de órdenes/contratos comerciales en backend. Referenciado en Blueprint;
 
 ## P
 
+### Performer Profile
+
+Plantilla recuperable Artist Portal (`dj_profiles`, MDJB **A**). Subtipos por **Artist Category** — ver `PROFILE-TAXONOMY.md` §3. Distinto de tier comercial LITE/PRO/ELITE.
+
 ### Portal
 
 Superficie de producto independiente: **Client**, **Artist** o **Staff**. Cada uno con shell propio (MOD-101, MOD-201, MOD-301).
@@ -133,6 +141,10 @@ Superficie de producto independiente: **Client**, **Artist** o **Staff**. Cada u
 
 Layout, navegación y gates de un portal. Emite `PORTAL_READY` cuando surface lista. Depende de Session + Theme + i18n.
 
+### Profile Taxonomy
+
+Taxonomía oficial de subtipos recuperables por portal. Canónico: `docs/V2/PROFILE-TAXONOMY.md` (TICKET-V2-PROFILE-TAXONOMY-001). Prerrequisito MOD-003.
+
 ### Provider
 
 Proveedor externo de identidad (futuro Supabase Auth). Contrato: `auth/AUTH-PROVIDER-CONTRACT.md`.
@@ -140,6 +152,10 @@ Proveedor externo de identidad (futuro Supabase Auth). Contrato: `auth/AUTH-PROV
 ---
 
 ## R
+
+### Regular Client
+
+Subtipo Client Portal por defecto (`client.regular`): comprador estándar sin VIP ni entidad comercial. Ver `PROFILE-TAXONOMY.md`.
 
 ### Responsive Engine
 
@@ -196,6 +212,10 @@ Producción actual (`web/`). Intacta durante lab V2. No modificada por tickets d
 ### V2 / MigracionV2
 
 Laboratorio aislado `MiamiDJBeat-MigracionV2/`. Documentación y scaffold. Sin cutover hasta PO.
+
+### VIP Client
+
+Subtipo Client Portal (`client.vip`): cliente recurrente con historial de múltiples rentas/contrataciones; crown + label VIP. Ver `PROFILE-TAXONOMY.md`.
 
 ---
 

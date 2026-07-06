@@ -50,6 +50,7 @@
 
 | Documento | MOD | Tema |
 |-----------|-----|------|
+| **`docs/V2/PROFILE-TAXONOMY.md`** | pre-003 | Client · Staff · Artist subtipos recuperables (TICKET-V2-PROFILE-TAXONOMY-001) |
 | `permissions/ACCESS-RULES.md` | MOD-003 | Guards y capability checks |
 | `permissions/ROLE-MATRIX.md` | MOD-003 | Matriz roles (referencia DB) |
 | `permissions/CAPABILITY-CATALOG.md` | MOD-003 | Catálogo capabilities |
