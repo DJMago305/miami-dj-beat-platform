@@ -1,11 +1,17 @@
 /** MOD-002 Session Manager — service facade — TICKET-V2-RUNTIME-SESSION-001 */
 
 import { getErrorState } from '@mdj/shared/errors';
+import {
+  getAuthSessionBoundary,
+  resetAuthSessionBoundaryForTests,
+} from './auth-session-boundary';
 import { SessionError } from './errors';
 import { SessionProvider } from './session-provider';
 import { resetSessionStoreCounterForTests, SessionStore } from './session-store';
 import type {
   AuthHandle,
+  AuthHandoffInput,
+  IdentitySnapshot,
   InitializeSessionOptions,
   SessionLifecycleState,
   SessionPublicApi,
@@ -32,8 +38,13 @@ export function getSessionSnapshot(): SessionSnapshot {
   return getSessionManager().getSnapshot();
 }
 
-export function ingestAuthHandle(handle: AuthHandle): SessionSnapshot {
-  return getSessionManager().ingestAuthHandle(handle);
+export function ingestAuthHandle(handle: AuthHandle, identity?: IdentitySnapshot): SessionSnapshot {
+  return getSessionManager().ingestAuthHandle(handle, identity);
+}
+
+/** MOD-001 → MOD-002 handoff entry — contract facade for Auth module. */
+export function deliverAuthHandoff(input: AuthHandoffInput): SessionSnapshot {
+  return ingestAuthHandle(input.handle, input.identity);
 }
 
 export function clearSession(reason?: string): SessionSnapshot {
@@ -58,8 +69,13 @@ export function getSessionStoreForTests(): SessionStore {
   return sessionStore;
 }
 
+export function getAuthSessionBoundaryForTests() {
+  return getAuthSessionBoundary();
+}
+
 /** Test-only reset — not for production portals. */
 export function resetSessionForTests(): void {
   sessionProvider.reset();
   resetSessionStoreCounterForTests();
+  resetAuthSessionBoundaryForTests();
 }

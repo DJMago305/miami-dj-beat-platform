@@ -77,6 +77,54 @@ export type AuthHandle = {
   readonly issuedAt: string;
 };
 
+/** MOD-001 identity allow-list — AUTH-SESSION-BOUNDARY.md §4. */
+export type IdentitySnapshot = {
+  readonly userId: string;
+  readonly email?: string;
+  readonly mdjbId?: string;
+  readonly displayName?: string;
+  readonly authProvider?: AuthProvider;
+};
+
+/** MOD-001 → MOD-002 handoff envelope — contract only, no Auth implementation. */
+export type AuthHandoffInput = {
+  readonly handle: AuthHandle;
+  readonly identity?: IdentitySnapshot;
+  readonly portalContext?: PortalId;
+};
+
+export type ValidatedAuthHandoff = {
+  readonly handle: AuthHandle;
+  readonly userRef: UserRef;
+  readonly hydrationPhase: 'signed_in';
+};
+
+export type AuthHandoffRejection = {
+  readonly ok: false;
+  readonly handoffId: string;
+  readonly code: SessionErrorCode;
+  readonly message: string;
+};
+
+export type AuthHandoffAcceptance = {
+  readonly ok: true;
+  readonly handoffId: string;
+  readonly userId: string;
+  readonly hydrationPhase: 'signed_in';
+};
+
+export type AuthHandoffResult = AuthHandoffAcceptance | AuthHandoffRejection;
+
+export type AuthLogoutInput = {
+  readonly reason: string;
+  readonly userId?: string;
+};
+
+export type AuthLogoutBoundaryResult = {
+  readonly reason: string;
+  readonly userId?: string;
+};
+
 export type UserRef = {
   readonly userId: string;
   readonly email?: string;
@@ -101,7 +149,7 @@ export type SessionSnapshot = {
 };
 
 export type SessionPublicApi = {
-  readonly ingestAuthHandle: (handle: AuthHandle) => SessionSnapshot;
+  readonly ingestAuthHandle: (handle: AuthHandle, identity?: IdentitySnapshot) => SessionSnapshot;
   readonly clearSession: (reason?: string) => SessionSnapshot;
   readonly destroySession: (reason?: string) => void;
   readonly getSnapshot: () => SessionSnapshot;

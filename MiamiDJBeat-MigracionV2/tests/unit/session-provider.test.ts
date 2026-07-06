@@ -4,6 +4,7 @@ import { initializeErrorHandler, resetErrorHandlerForTests } from '@mdj/shared/e
 import { getEventBus, initializeEventBus, resetEventBusForTests } from '@mdj/shared/events';
 import { initializeLogging, resetLoggingForTests } from '@mdj/shared/logging';
 import { SessionProvider } from '../../shared/session/runtime/session-provider';
+import { AuthSessionBoundary } from '../../shared/session/runtime/auth-session-boundary';
 import { SessionStore, resetSessionStoreCounterForTests } from '../../shared/session/runtime/session-store';
 import { SessionError } from '../../shared/session/runtime/errors';
 import { areSessionEventListenersRegistered, resetSessionEventListenersForTests } from '../../shared/session/runtime/session-listeners';
@@ -78,12 +79,28 @@ describe('MOD-002 SessionProvider — TICKET-MOD-002-SESSION-PROVIDER-STORE-001'
     bootThroughErrorHandler();
     provider.initialize({ portal: 'artist' });
 
-    const snapshot = provider.ingestAuthHandle(validHandle());
+    const boundary = new AuthSessionBoundary();
+    const handoff = boundary.createMockAuthHandoff('user-123');
+    const snapshot = provider.ingestAuthHandle(handoff.handle, handoff.identity);
 
     expect(store.getMachineState()).toBe('AUTHENTICATED');
     expect(snapshot.state).toBe('SESSION_READY');
     expect(snapshot.user?.userId).toBe('user-123');
     expect(snapshot.hydrationPhase).toBe('signed_in');
+  });
+
+  it('ingestAuthHandle via AuthSessionBoundary maps identity email onto snapshot user', () => {
+    bootThroughErrorHandler();
+    provider.initialize({ portal: 'client' });
+
+    const boundary = provider.getAuthBoundary();
+    const handoff = boundary.createMockAuthHandoff('user-identity-1', {}, {
+      userId: 'user-identity-1',
+      email: 'identity@example.com',
+    });
+
+    const snapshot = provider.ingestAuthHandle(handoff.handle, handoff.identity);
+    expect(snapshot.user?.email).toBe('identity@example.com');
   });
 
   it('clearSession returns anonymous ready snapshot after authenticated session', () => {

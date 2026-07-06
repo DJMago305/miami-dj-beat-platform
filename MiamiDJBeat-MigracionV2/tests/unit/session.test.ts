@@ -5,7 +5,9 @@ import { getEventBus, initializeEventBus, resetEventBusForTests } from '@mdj/sha
 import { initializeLogging, resetLoggingForTests } from '@mdj/shared/logging';
 import {
   clearSession,
+  deliverAuthHandoff,
   destroySession,
+  getAuthSessionBoundaryForTests,
   getSessionSnapshot,
   getSessionState,
   getSessionStoreForTests,
@@ -93,21 +95,44 @@ describe('MOD-002 Session Manager', () => {
     bootThroughErrorHandler();
     initializeSession({ portal: 'client' });
 
-    const snapshot = ingestAuthHandle(validHandle());
+    const handoff = getAuthSessionBoundaryForTests().createMockAuthHandoff('user-123');
+    const snapshot = deliverAuthHandoff(handoff);
     expect(snapshot.state).toBe('SESSION_READY');
     expect(snapshot.user?.userId).toBe('user-123');
     expect(snapshot.hydrationPhase).toBe('signed_in');
+  });
+
+  it('deliverAuthHandoff moves ANONYMOUS machine state to AUTHENTICATED', () => {
+    bootThroughErrorHandler();
+    initializeSession({ portal: 'client' });
+
+    expect(getSessionStoreForTests().getMachineState()).toBe('ANONYMOUS');
+
+    const handoff = getAuthSessionBoundaryForTests().createMockAuthHandoff('handoff-user-1');
+    deliverAuthHandoff(handoff);
+
+    expect(getSessionStoreForTests().getMachineState()).toBe('AUTHENTICATED');
+    expect(getSessionState()).toBe('SESSION_READY');
+  });
+
+  it('logout via clearSession returns ANONYMOUS after authenticated handoff', () => {
+    bootThroughErrorHandler();
+    initializeSession({ portal: 'staff' });
+    deliverAuthHandoff(getAuthSessionBoundaryForTests().createMockAuthHandoff('logout-user'));
+
+    const snapshot = clearSession('auth-logout');
+    expect(snapshot.user).toBeNull();
+    expect(getSessionState()).toBe('SESSION_READY');
+    expect(getSessionStoreForTests().getMachineState()).toBe('ANONYMOUS');
   });
 
   it('rejects expired AuthHandle with SESSION_EXPIRED', () => {
     bootThroughErrorHandler();
     initializeSession({ portal: 'client' });
 
-    expect(() =>
-      ingestAuthHandle(
-        validHandle({ expiresAt: new Date(Date.now() - 1_000).toISOString() }),
-      ),
-    ).toThrow(SessionError);
+    const expired = getAuthSessionBoundaryForTests().createMockExpiredHandoff('expired-user');
+
+    expect(() => deliverAuthHandoff(expired)).toThrow(SessionError);
 
     expect(getSessionState()).toBe('SESSION_EXPIRED');
   });

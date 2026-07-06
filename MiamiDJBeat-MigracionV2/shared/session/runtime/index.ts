@@ -2,8 +2,15 @@
 
 export { SessionError, isSessionError } from './errors';
 export {
+  AuthSessionBoundary,
+  getAuthSessionBoundary,
+  resetAuthSessionBoundaryForTests,
+} from './auth-session-boundary';
+export {
   clearSession,
+  deliverAuthHandoff,
   destroySession,
+  getAuthSessionBoundaryForTests,
   getSessionManager,
   getSessionProviderForTests,
   getSessionSnapshot,
@@ -43,10 +50,17 @@ export {
 } from './state-machine';
 export type {
   AuthHandle,
+  AuthHandoffAcceptance,
+  AuthHandoffInput,
+  AuthHandoffRejection,
+  AuthHandoffResult,
+  AuthLogoutBoundaryResult,
+  AuthLogoutInput,
   AuthProvider,
   HydrationPhase,
   HydrationTrace,
   HydrationTraceStep,
+  IdentitySnapshot,
   InitializeSessionOptions,
   SessionEmitEventName,
   SessionErrorCode,
@@ -61,4 +75,5 @@ export type {
   RoleChangedEventPayload,
   PermissionChangedEventPayload,
   UserRef,
+  ValidatedAuthHandoff,
 } from './types';

@@ -5,6 +5,10 @@ import { normalizeError } from '@mdj/shared/errors';
 import { getLogger } from '@mdj/shared/logging';
 import { SessionError } from './errors';
 import {
+  AuthSessionBoundary,
+  getAuthSessionBoundary,
+} from './auth-session-boundary';
+import {
   createNoopPersistencePort,
   PERSISTED_SESSION_RECORD_VERSION,
   type PersistedSessionRecord,
@@ -19,6 +23,7 @@ import {
 import { SessionStore, type SessionStoreConfigSlice } from './session-store';
 import type {
   AuthHandle,
+  IdentitySnapshot,
   InitializeSessionOptions,
   PermissionChangedEventPayload,
   RoleChangedEventPayload,
@@ -48,60 +53,22 @@ function isExpiredIsoTimestamp(value: string | null | undefined): boolean {
   return Number.isNaN(expiryMs) || expiryMs <= Date.now();
 }
 
-function validateAuthHandle(handle: AuthHandle): void {
-  const requiredFields = [
-    handle.handoffId,
-    handle.userId,
-    handle.accessTokenRef,
-    handle.expiresAt,
-    handle.issuedAt,
-  ];
-
-  if (requiredFields.some((value) => value.length === 0)) {
-    throw new SessionError('SESSION_ERROR_INVALID_HANDLE', 'AuthHandle is missing required fields.');
-  }
-
-  const allowedProviders: AuthHandle['provider'][] = ['mock', 'supabase'];
-  if (!allowedProviders.includes(handle.provider)) {
-    throw new SessionError('SESSION_ERROR_INVALID_HANDLE', 'AuthHandle provider is invalid.');
-  }
-
-  const expiryMs = Date.parse(handle.expiresAt);
-  if (Number.isNaN(expiryMs)) {
-    throw new SessionError('SESSION_ERROR_INVALID_HANDLE', 'AuthHandle expiresAt is invalid.');
-  }
-
-  if (expiryMs <= Date.now()) {
-    throw new SessionError('SESSION_ERROR_EXPIRED_HANDLE', 'AuthHandle is expired.');
-  }
-}
-
-function userLoginPayloadToAuthHandle(payload: UserLoginEventPayload): AuthHandle {
-  if (!payload.userId) {
-    throw new SessionError('SESSION_ERROR_INVALID_HANDLE', 'USER_LOGIN payload is missing userId.');
-  }
-
-  return {
-    handoffId: payload.handoffId ?? `handoff-${payload.userId}`,
-    userId: payload.userId,
-    accessTokenRef: payload.accessTokenRef ?? 'mock-access-ref',
-    refreshTokenRef: payload.refreshTokenRef,
-    expiresAt: payload.expiresAt ?? new Date(Date.now() + 3_600_000).toISOString(),
-    provider: payload.provider ?? 'mock',
-    issuedAt: payload.issuedAt ?? new Date().toISOString(),
-  };
-}
-
 /** Orchestrates session lifecycle using SessionStore + state machine + Event Bus. */
 export class SessionProvider {
   private readonly store: SessionStore;
   private readonly persistencePort: PersistencePort;
+  private readonly authBoundary: AuthSessionBoundary;
   private frozenApi: SessionPublicApi | null = null;
   private logoutInProgress = false;
 
-  constructor(store: SessionStore, persistencePort: PersistencePort = createNoopPersistencePort()) {
+  constructor(
+    store: SessionStore,
+    persistencePort: PersistencePort = createNoopPersistencePort(),
+    authBoundary: AuthSessionBoundary = getAuthSessionBoundary(),
+  ) {
     this.store = store;
     this.persistencePort = persistencePort;
+    this.authBoundary = authBoundary;
   }
 
   reset(): void {
@@ -119,6 +86,10 @@ export class SessionProvider {
     return this.persistencePort;
   }
 
+  getAuthBoundary(): AuthSessionBoundary {
+    return this.authBoundary;
+  }
+
   private configSlice(): SessionStoreConfigSlice {
     const config = getConfig();
     return {
@@ -134,7 +105,8 @@ export class SessionProvider {
 
   private buildPublicApi(): SessionPublicApi {
     return Object.freeze({
-      ingestAuthHandle: (handle: AuthHandle) => this.ingestAuthHandle(handle),
+      ingestAuthHandle: (handle: AuthHandle, identity?: IdentitySnapshot) =>
+        this.ingestAuthHandle(handle, identity),
       clearSession: (reason?: string) => this.clearSession(reason),
       destroySession: (reason?: string) => this.destroySession(reason),
       getSnapshot: () => {
@@ -179,7 +151,8 @@ export class SessionProvider {
     }
 
     try {
-      this.ingestAuthHandle(userLoginPayloadToAuthHandle(payload));
+      const handle = this.authBoundary.buildAuthHandleFromUserLogin(payload);
+      this.ingestAuthHandle(handle);
     } catch (error) {
       if (error instanceof SessionError) {
         publishSessionEvent('SESSION_ERROR', {
@@ -198,7 +171,8 @@ export class SessionProvider {
 
     this.logoutInProgress = true;
     try {
-      this.clearSession(payload.reason);
+      const logout = this.authBoundary.normalizeLogout(payload);
+      this.clearSession(logout.reason);
     } finally {
       this.logoutInProgress = false;
     }
@@ -403,20 +377,22 @@ export class SessionProvider {
     return readySnapshot;
   }
 
-  ingestAuthHandle(handle: AuthHandle): SessionSnapshot {
+  ingestAuthHandle(handle: AuthHandle, identity?: IdentitySnapshot): SessionSnapshot {
     const lifecycle = this.store.getLifecycleState();
     if (lifecycle !== 'SESSION_READY' && lifecycle !== 'SIGNED_OUT' && lifecycle !== 'SESSION_EXPIRED') {
       throw new SessionError('SESSION_ERROR_NOT_READY', 'Session is not ready to ingest AuthHandle.');
     }
 
+    let validated;
     try {
-      validateAuthHandle(handle);
+      validated = this.authBoundary.validateAuthHandoff({ handle, identity });
     } catch (error) {
       if (error instanceof SessionError && error.code === 'SESSION_ERROR_EXPIRED_HANDLE') {
         this.store.setLifecycleState('SESSION_EXPIRED');
         publishSessionEvent('SESSION_EXPIRED', {
           reason: 'expired',
           sessionId: this.store.getSessionId(),
+          handoffId: handle.handoffId,
         });
         normalizeError(error, { moduleId: 'MOD-002' });
         throw error;
@@ -426,12 +402,14 @@ export class SessionProvider {
         publishSessionEvent('SESSION_ERROR', {
           code: error.code,
           sessionId: this.store.getSessionId(),
+          handoffId: handle.handoffId,
         });
       }
       normalizeError(error, { moduleId: 'MOD-002' });
       throw error;
     }
 
+    const acceptedHandle = validated.handle;
     const machine = this.store.getMachineState();
     if (machine === 'ANONYMOUS' || machine === 'EXPIRED') {
       this.store.applyMachineTransition(machine, 'USER_LOGIN', 'LOADING');
@@ -439,9 +417,9 @@ export class SessionProvider {
       this.store.applyMachineTransition('AUTHENTICATED', 'USER_LOGIN', 'LOADING');
     }
 
-    this.store.setUser({ userId: handle.userId });
-    this.store.setExpiresAt(handle.expiresAt);
-    this.store.setHydrationPhase('signed_in');
+    this.store.setUser(validated.userRef);
+    this.store.setExpiresAt(acceptedHandle.expiresAt);
+    this.store.setHydrationPhase(validated.hydrationPhase);
     this.store.bumpSnapshotVersion();
 
     if (this.store.getMachineState() === 'LOADING') {
@@ -450,8 +428,9 @@ export class SessionProvider {
 
     this.store.publishSnapshot(this.configSlice(), 'SIGNED_IN');
     publishSessionEvent('SESSION_CREATED', {
-      userId: handle.userId,
-      hydrationPhase: 'signed_in',
+      userId: validated.userRef.userId,
+      hydrationPhase: validated.hydrationPhase,
+      handoffId: acceptedHandle.handoffId,
     });
 
     const readySnapshot = this.store.publishSnapshot(this.configSlice(), 'SESSION_READY');
@@ -459,13 +438,15 @@ export class SessionProvider {
       portal: this.store.getPortal(),
       sessionId: this.store.getSessionId(),
       state: readySnapshot.state,
+      handoffId: acceptedHandle.handoffId,
     });
 
-    getLogger().info('Session signed in via AuthHandle', {
+    getLogger().info('Session signed in via AuthHandle handoff', {
       moduleId: 'MOD-002',
       sessionId: this.store.getSessionId(),
-      userId: handle.userId,
-      hydrationPhase: 'signed_in',
+      userId: validated.userRef.userId,
+      handoffId: acceptedHandle.handoffId,
+      hydrationPhase: validated.hydrationPhase,
       machineState: this.store.getMachineState(),
     });
 
