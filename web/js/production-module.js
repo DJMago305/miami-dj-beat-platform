@@ -6,7 +6,6 @@
   'use strict';
 
   var FLOW_PRINT_KEY = 'mdj_event_flow_print_v1';
-  var INV_PRINT_KEY = 'mdj_staff_invoice_print_v1';
 
   function esc(s) {
     if (s == null) return '';
@@ -95,9 +94,86 @@
     return lines.join('\n');
   }
 
+  /** UUID vacío = cliente manual; UUID válido = registrado; otro = inválido. */
+  function resolveProdInvClientUserId() {
+    var el = document.getElementById('prod-inv-client');
+    var raw = el ? String(el.value || '').trim() : '';
+    if (!raw) {
+      return { ok: true, uuid: null, manual: true };
+    }
+    if (/^[0-9a-f-]{36}$/i.test(raw)) {
+      return { ok: true, uuid: raw.toLowerCase(), manual: false };
+    }
+    return { ok: false, uuid: null, manual: false };
+  }
+
+  /** Mail del Panel 1 (trim + lowercase). Vacío si no hay valor. */
+  function readProdInvClientEmail() {
+    var emailEl = document.getElementById('prod-inv-client-email');
+    return emailEl ? emailEl.value.trim().toLowerCase() : '';
+  }
+
+  /** Panel 5 — modo de cobro Stripe: deposit (default) | full */
+  function readProdCobroChargeMode() {
+    var fullEl = document.getElementById('prod-cobro-charge-mode-full');
+    if (fullEl && fullEl.checked) return 'full';
+    return 'deposit';
+  }
+
   global.MDJProduction = {
     _inited: false,
     _i18nListenerBound: false,
+
+    _panelHeadHtml: function (num, titleKey, helpKey) {
+      return (
+        '<div class="mdj-prod-inv-panel-head">' +
+        '<div class="mdj-prod-inv-panel-head-main">' +
+        '<span class="mdj-prod-inv-panel-num" aria-hidden="true">' +
+        num +
+        '</span>' +
+        '<p class="fineprint mdj-prod-inv-panel-title" data-i18n="' +
+        titleKey +
+        '"></p>' +
+        '</div>' +
+        '<span class="mdj-prod-inv-help" tabindex="0">' +
+        '<span class="mdj-prod-inv-help-icon" aria-hidden="true">?</span>' +
+        '<span class="mdj-prod-inv-help-tip" role="tooltip" data-i18n="' +
+        helpKey +
+        '"></span>' +
+        '</span></div>'
+      );
+    },
+
+    _sectionHeadHtml: function (titleKey, helpKey) {
+      return (
+        '<div class="mdj-prod-inv-panel-head mdj-prod-cobro-head">' +
+        '<div class="mdj-prod-inv-panel-head-main">' +
+        '<p class="fineprint mdj-prod-inv-box-title" style="margin:0;" data-i18n="' +
+        titleKey +
+        '"></p>' +
+        '</div>' +
+        '<span class="mdj-prod-inv-help" tabindex="0">' +
+        '<span class="mdj-prod-inv-help-icon" aria-hidden="true">?</span>' +
+        '<span class="mdj-prod-inv-help-tip" role="tooltip" data-i18n="' +
+        helpKey +
+        '"></span>' +
+        '</span></div>'
+      );
+    },
+
+    _numberedTitleHeadHtml: function (num, titleKey) {
+      return (
+        '<div class="mdj-prod-inv-panel-head">' +
+        '<div class="mdj-prod-inv-panel-head-main">' +
+        '<span class="mdj-prod-inv-panel-num" aria-hidden="true">' +
+        num +
+        '</span>' +
+        '<p class="fineprint mdj-prod-inv-panel-title" data-i18n="' +
+        titleKey +
+        '"></p>' +
+        '</div></div>'
+      );
+    },
 
     init: function () {
       if (this._inited) return;
@@ -128,43 +204,25 @@
       return (
         '<div class="admin-card mdj-prod-inner-card" style="margin-top:0;border:1px solid var(--line);">' +
         '<div id="prod-panel-inv" style="display:block;">' +
-        '<p class="fineprint" style="margin-top:0;line-height:1.55;" data-i18n="prod-inv-intro"></p>' +
-        '<p class="fineprint mdj-prod-inv-calc-hint" style="margin:10px 0 12px;line-height:1.5;opacity:0.92;" data-i18n="prod-inv-calc-hint"></p>' +
-        '<details class="mdj-prod-inv-moretools fineprint" style="margin:0 0 16px;opacity:0.88;">' +
-        '<summary class="mdj-prod-inv-moretools-sum" data-i18n="prod-inv-more-tools-sum"></summary>' +
-        '<div class="mdj-prod-inv-moretools-body" style="margin-top:10px;line-height:1.55;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.25);" data-i18n="prod-inv-more-tools-body"></div>' +
-        '</details>' +
-        '<div class="mdj-prod-inv-box mdj-prod-inv-box--info">' +
-        '<p class="fineprint mdj-prod-inv-box-title" data-i18n="prod-inv-box-info-title"></p>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
-        '<details class="mdj-prod-inv-create-client fineprint" style="grid-column:1/-1;margin:0 0 8px;opacity:0.92;" open>' +
-        '<summary style="cursor:pointer;color:var(--gold);font-weight:700;" data-i18n="prod-inv-create-account-sum"></summary>' +
-        '<div style="margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.22);">' +
-        '<p class="fineprint" style="margin:0 0 10px;line-height:1.45;" data-i18n="prod-inv-create-account-help"></p>' +
-        '<label class="fineprint" style="display:flex;align-items:flex-start;gap:8px;margin:0 0 12px;">' +
-        '<input type="checkbox" id="prod-inv-client-auth-ok" style="margin-top:2px;flex-shrink:0;" />' +
-        '<span data-i18n="prod-inv-create-account-auth"></span></label>' +
-        '<label class="fineprint" data-i18n="prod-inv-create-account-email-lbl"></label>' +
-        '<input type="email" id="prod-inv-new-client-email" class="price-input" style="width:100%;margin-top:4px;" maxlength="120" autocomplete="email" data-i18n-hold="prod-inv-create-account-email-ph" />' +
-        '<label class="fineprint" style="display:block;margin-top:10px;" data-i18n="prod-inv-create-account-name-lbl"></label>' +
-        '<input type="text" id="prod-inv-new-client-name" class="price-input" style="width:100%;margin-top:4px;" maxlength="120" autocomplete="name" data-i18n-hold="prod-inv-create-account-name-ph" />' +
-        '<button type="button" class="btn secondary small" id="prod-inv-create-account" style="margin-top:12px;" data-i18n="prod-inv-create-account-btn"></button>' +
-        '<div id="prod-inv-create-account-msg" class="fineprint" style="margin-top:10px;min-height:1.2em;color:var(--admin-accent);white-space:pre-wrap;"></div>' +
-        '</div></details>' +
+        '<div class="mdj-prod-inv-panel mdj-prod-inv-panel--client mdj-prod-inv-box mdj-prod-inv-box--info">' +
+        this._panelHeadHtml('1', 'prod-inv-panel-1-title', 'prod-inv-panel-1-help') +
+        '<div class="mdj-prod-inv-panel-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+        '<div style="grid-column:1/-1;" class="mdj-prod-inv-client-lookup-row">' +
+        '<label class="fineprint" data-i18n="prod-inv-client-lookup-lbl"></label>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">' +
+        '<input type="text" id="prod-inv-client-lookup" class="price-input" style="flex:1 1 220px;min-width:0;" autocomplete="off" spellcheck="false" data-i18n-hold="prod-inv-client-lookup-ph" />' +
+        '<button type="button" class="btn secondary small" id="prod-inv-client-lookup-btn" data-i18n="prod-inv-client-lookup-btn"></button>' +
+        '</div>' +
+        '<div id="prod-inv-client-lookup-msg" class="fineprint" style="margin-top:8px;min-height:1.2em;opacity:0.88;"></div>' +
+        '</div>' +
+        '<div style="grid-column:1/-1;"><label class="fineprint" data-i18n="prod-inv-buyer-name-lbl"></label>' +
+        '<input type="text" id="prod-inv-buyer-name" class="price-input" style="width:100%;margin-top:4px;" autocomplete="name" /></div>' +
+        '<div style="grid-column:1/-1;"><label class="fineprint" data-i18n="prod-inv-company-name-lbl"></label>' +
+        '<input type="text" id="prod-inv-company-name" class="price-input" style="width:100%;margin-top:4px;" data-i18n-hold="prod-inv-company-ph" autocomplete="organization" /></div>' +
         '<div><label class="fineprint" data-i18n="prod-inv-client-phone-lbl"></label>' +
         '<input type="tel" id="prod-inv-client-phone" class="price-input" style="width:100%;margin-top:4px;" maxlength="40" autocomplete="tel" data-i18n-hold="prod-inv-client-phone-ph" /></div>' +
         '<div><label class="fineprint" data-i18n="prod-inv-client-email-lbl"></label>' +
         '<input type="email" id="prod-inv-client-email" class="price-input" style="width:100%;margin-top:4px;" maxlength="120" autocomplete="email" data-i18n-hold="prod-inv-client-email-ph" /></div>' +
-        '<div style="grid-column:1/-1;"><label class="fineprint" data-i18n="prod-inv-buyer-name-lbl"></label>' +
-        '<input type="text" id="prod-inv-buyer-name" class="price-input" style="width:100%;margin-top:4px;" autocomplete="name" /></div>' +
-        '<div style="grid-column:1/-1;"><label class="fineprint" data-i18n="prod-inv-client-lbl"></label>' +
-        '<input type="text" id="prod-inv-client" class="price-input" style="width:100%;margin-top:4px;" required autocomplete="off" spellcheck="false" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" title="Auth user UUID (36 characters) — required to save" /></div>' +
-        '<details class="mdj-prod-inv-company fineprint" style="grid-column:1/-1;margin:0;opacity:0.92;">' +
-        '<summary class="mdj-prod-inv-company-sum" style="cursor:pointer;color:var(--gold);font-weight:700;" data-i18n="prod-inv-company-section-sum"></summary>' +
-        '<div style="margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.22);">' +
-        '<label class="fineprint" data-i18n="prod-inv-company-name-lbl"></label>' +
-        '<input type="text" id="prod-inv-company-name" class="price-input" style="width:100%;margin-top:4px;" data-i18n-hold="prod-inv-company-ph" autocomplete="organization" />' +
-        '</div></details>' +
         '<div style="grid-column:1/-1;" class="mdj-prod-addr-section">' +
         '<p class="fineprint mdj-prod-addr-section-title" data-i18n="prod-inv-billing-section"></p>' +
         '<div class="mdj-prod-addr-grid">' +
@@ -178,20 +236,22 @@
         '<div id="prod-inv-bill-wrap-state-us">' +
         '<label class="fineprint" data-i18n="prod-inv-addr-state-lbl"></label>' +
         '<select id="prod-inv-bill-select-state-us" class="price-input" style="width:100%;margin-top:4px;" aria-label="State"></select>' +
-        '<p class="fineprint" style="margin:4px 0 0;font-size:11px;opacity:0.5;line-height:1.35;" data-i18n="prod-inv-addr-state-hint"></p>' +
         '</div>' +
         '<div id="prod-inv-bill-wrap-state-intl" style="display:none;">' +
         '<label class="fineprint" data-i18n="prod-inv-addr-state-intl-lbl"></label>' +
         '<input type="text" id="prod-inv-bill-input-state-intl" class="price-input" style="width:100%;margin-top:4px;" />' +
         '</div></div>' +
         '<div><label class="fineprint" data-i18n="prod-inv-addr-zip-lbl"></label>' +
-        '<input type="text" id="prod-inv-bill-zip" class="price-input" style="width:100%;margin-top:4px;" maxlength="12" autocomplete="postal-code" />' +
-        '<p class="fineprint" style="margin:4px 0 0;font-size:11px;opacity:0.5;line-height:1.35;" data-i18n="prod-inv-addr-zip-hint"></p></div>' +
+        '<input type="text" id="prod-inv-bill-zip" class="price-input" style="width:100%;margin-top:4px;" maxlength="12" autocomplete="postal-code" /></div>' +
         '<div><label class="fineprint" data-i18n="prod-inv-addr-country-lbl"></label>' +
         '<select id="prod-inv-bill-select-country" class="price-input" style="width:100%;margin-top:4px;" aria-label="Country"></select></div>' +
         '</div></div>' +
+        '<input type="hidden" id="prod-inv-client" value="" />' +
+        '</div></div></div>' +
+        '<div class="mdj-prod-inv-panel mdj-prod-inv-panel--event mdj-prod-inv-box">' +
+        this._panelHeadHtml('2', 'prod-inv-panel-2-title', 'prod-inv-panel-2-help') +
+        '<div class="mdj-prod-inv-panel-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
         '<div style="grid-column:1/-1;" class="mdj-prod-addr-section">' +
-        '<p class="fineprint mdj-prod-addr-section-title" data-i18n="prod-inv-event-section"></p>' +
         '<div class="mdj-prod-addr-grid">' +
         '<div style="grid-column:1/-1;"><label class="fineprint" data-i18n="prod-inv-addr-street-lbl"></label>' +
         '<input type="text" id="prod-inv-ev-street" class="price-input" style="width:100%;margin-top:4px;" data-i18n-hold="prod-inv-addr-street-ph" /></div>' +
@@ -203,40 +263,35 @@
         '<div id="prod-inv-ev-wrap-state-us">' +
         '<label class="fineprint" data-i18n="prod-inv-addr-state-lbl"></label>' +
         '<select id="prod-inv-ev-select-state-us" class="price-input" style="width:100%;margin-top:4px;" aria-label="State"></select>' +
-        '<p class="fineprint" style="margin:4px 0 0;font-size:11px;opacity:0.5;line-height:1.35;" data-i18n="prod-inv-addr-state-hint"></p>' +
         '</div>' +
         '<div id="prod-inv-ev-wrap-state-intl" style="display:none;">' +
         '<label class="fineprint" data-i18n="prod-inv-addr-state-intl-lbl"></label>' +
         '<input type="text" id="prod-inv-ev-input-state-intl" class="price-input" style="width:100%;margin-top:4px;" />' +
         '</div></div>' +
         '<div><label class="fineprint" data-i18n="prod-inv-addr-zip-lbl"></label>' +
-        '<input type="text" id="prod-inv-ev-zip" class="price-input" style="width:100%;margin-top:4px;" maxlength="12" autocomplete="postal-code" />' +
-        '<p class="fineprint" style="margin:4px 0 0;font-size:11px;opacity:0.5;line-height:1.35;" data-i18n="prod-inv-addr-zip-hint"></p></div>' +
+        '<input type="text" id="prod-inv-ev-zip" class="price-input" style="width:100%;margin-top:4px;" maxlength="12" autocomplete="postal-code" /></div>' +
         '<div><label class="fineprint" data-i18n="prod-inv-addr-country-lbl"></label>' +
         '<select id="prod-inv-ev-select-country" class="price-input" style="width:100%;margin-top:4px;" aria-label="Country"></select></div>' +
         '</div></div>' +
-        '</div></div>' +
+        '</div></div></div>' +
         '<div class="mdj-prod-inv-box mdj-prod-inv-box--quote">' +
-        '<p class="fineprint mdj-prod-inv-box-title" data-i18n="prod-inv-box-quote-title"></p>' +
+        this._numberedTitleHeadHtml('3', 'prod-inv-box-quote-title') +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">' +
         '<div><label class="fineprint" data-i18n="prod-inv-type-lbl"></label><select id="prod-inv-kind" class="price-input" style="width:100%;margin-top:4px;">' +
         '<option value="quote" data-i18n="prod-doc-quote"></option>' +
         '<option value="invoice" data-i18n="prod-doc-invoice"></option></select></div>' +
         '<div><label class="fineprint" data-i18n="prod-inv-tax-lbl"></label><input type="number" id="prod-inv-tax" class="price-input" style="width:100%;margin-top:4px;" value="7" step="0.01" min="0" max="100" /></div>' +
         '</div>' +
-        '<div style="margin:0 0 12px;display:flex;gap:8px;flex-wrap:wrap;">' +
-        '<button type="button" class="btn-pill" id="prod-inv-add-line" data-i18n="prod-inv-add-line"></button>' +
-        '<button type="button" class="btn primary" id="prod-inv-save" data-i18n="prod-inv-save"></button>' +
-        '<button type="button" class="btn gold" id="prod-inv-open-print" data-i18n="prod-inv-print"></button>' +
+        '<div style="margin:0 0 8px;display:flex;justify-content:flex-end;">' +
+        '<button type="button" class="mdj-prod-inv-add-line-btn" id="prod-inv-add-line" data-i18n="prod-inv-add-line"></button>' +
         '</div>' +
         '<div id="prod-inv-lines"></div>' +
+        '<button type="button" id="prod-inv-save" data-i18n="prod-inv-save" hidden style="display:none;" aria-hidden="true" tabindex="-1"></button>' +
         '<div class="mdj-prod-inv-box mdj-prod-inv-box--quote" style="margin-top:14px;">' +
-        '<p class="fineprint mdj-prod-inv-box-title" data-i18n="prod-cobro-title"></p>' +
-        '<p class="fineprint" style="margin:0 0 12px;line-height:1.45;opacity:0.9;" data-i18n="prod-cobro-intro"></p>' +
+        this._sectionHeadHtml('prod-cobro-title', 'prod-cobro-section-help') +
         '<input type="hidden" id="prod-cobro-lead-id" value="" />' +
+        '<input type="hidden" id="prod-cobro-event-date" value="" />' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">' +
-        '<div><label class="fineprint" data-i18n="prod-cobro-event-date-lbl"></label>' +
-        '<input type="date" id="prod-cobro-event-date" class="price-input" style="width:100%;margin-top:4px;" /></div>' +
         '<div><label class="fineprint" data-i18n="prod-cobro-event-type-lbl"></label>' +
         '<select id="prod-cobro-event-type" class="price-input" style="width:100%;margin-top:4px;">' +
         '<option value="Wedding" data-i18n="prod-opt-wedding"></option>' +
@@ -245,21 +300,63 @@
         '<option value="Private Party" data-i18n="prod-cobro-opt-private"></option>' +
         '<option value="Event Services" data-i18n="prod-cobro-opt-services"></option>' +
         '</select></div>' +
-        '<div style="grid-column:1/-1;"><label class="fineprint" data-i18n="prod-cobro-dj-lbl"></label>' +
+        '<div style="grid-column:1/-1;"><label class="fineprint mdj-prod-inv-field-lbl-row">' +
+        '<span data-i18n="prod-cobro-dj-lbl"></span>' +
+        '<span class="mdj-prod-inv-help mdj-prod-inv-help--inline" tabindex="0">' +
+        '<span class="mdj-prod-inv-help-icon" aria-hidden="true">?</span>' +
+        '<span class="mdj-prod-inv-help-tip" role="tooltip" data-i18n="prod-cobro-dj-help"></span>' +
+        '</span></label>' +
         '<select id="prod-cobro-dj" class="price-input" style="width:100%;margin-top:4px;"><option value="">—</option></select></div>' +
         '<div><label class="fineprint" data-i18n="prod-cobro-dj-payout-lbl"></label>' +
         '<input type="number" id="prod-cobro-dj-payout" class="price-input" style="width:100%;margin-top:4px;" min="0" step="0.01" placeholder="0.00" /></div>' +
         '<div><label class="fineprint" data-i18n="prod-cobro-deposit-lbl"></label>' +
         '<input type="text" id="prod-cobro-deposit-display" class="price-input" style="width:100%;margin-top:4px;" readonly tabindex="-1" aria-readonly="true" /></div>' +
-        '</div>' +
-        '<div id="prod-cobro-status" class="fineprint" style="margin:0 0 10px;min-height:1.2em;opacity:0.88;"></div>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
-        '<button type="button" class="btn secondary" id="prod-cobro-stripe-deposit" data-i18n="prod-cobro-stripe-deposit"></button>' +
-        '<button type="button" class="btn secondary" id="prod-cobro-zelle-deposit" data-i18n="prod-cobro-zelle-deposit"></button>' +
-        '<button type="button" class="btn secondary" id="prod-cobro-zelle-confirm" data-i18n="prod-cobro-zelle-confirm" style="display:none;"></button>' +
-        '<button type="button" class="btn gold" id="prod-cobro-release-dj" data-i18n="prod-cobro-release-dj"></button>' +
         '</div></div>' +
+        '<div class="mdj-prod-inv-panel mdj-prod-inv-panel--totals mdj-prod-inv-box">' +
+        this._panelHeadHtml('4', 'prod-inv-panel-3-title', 'prod-inv-panel-3-help') +
+        '<div class="mdj-prod-inv-panel-body">' +
         '<div id="prod-inv-summary-card" class="mdj-prod-inv-summary-card" aria-live="polite"></div>' +
+        '</div></div>' +
+        '<div class="mdj-prod-inv-panel mdj-prod-inv-panel--actions mdj-prod-inv-box">' +
+        this._panelHeadHtml('5', 'prod-inv-panel-5-title', 'prod-inv-panel-5-help') +
+        '<div class="mdj-prod-inv-panel-body">' +
+        '<div id="prod-cobro-status" class="fineprint" style="margin:0 0 10px;min-height:1.2em;opacity:0.88;"></div>' +
+        '<div class="mdj-prod-fin-discount-tab" aria-label="Manager discount">' +
+        '<p class="mdj-prod-fin-discount-tab-title" data-i18n="prod-fin-manager-discount"></p>' +
+        '<p class="mdj-prod-fin-discount-tab-note fineprint" data-i18n="prod-fin-manager-discount-pending"></p>' +
+        '</div>' +
+        '<div class="mdj-prod-cobro-charge-mode" style="margin:0 0 12px;">' +
+        '<label class="fineprint" data-i18n="prod-cobro-charge-mode-lbl"></label>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:12px 18px;margin-top:6px;">' +
+        '<label class="fineprint" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">' +
+        '<input type="radio" name="prod-cobro-charge-mode" id="prod-cobro-charge-mode-deposit" value="deposit" checked />' +
+        '<span data-i18n="prod-cobro-charge-mode-deposit"></span></label>' +
+        '<label class="fineprint" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">' +
+        '<input type="radio" name="prod-cobro-charge-mode" id="prod-cobro-charge-mode-full" value="full" />' +
+        '<span data-i18n="prod-cobro-charge-mode-full"></span></label>' +
+        '</div></div>' +
+        '<div class="mdj-prod-inv-action-bar" role="toolbar" aria-label="Invoice actions">' +
+        '<button type="button" class="mdj-prod-inv-action-btn" id="prod-inv-open-print" data-i18n-aria="prod-inv-action-print" data-i18n-title="prod-inv-action-print-tip">' +
+        '<span class="mdj-prod-inv-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></span>' +
+        '<span class="mdj-prod-inv-action-lbl" data-i18n="prod-inv-action-print"></span></button>' +
+        '<button type="button" class="mdj-prod-inv-action-btn mdj-prod-inv-action-btn--pending" id="prod-inv-action-copy-link" disabled aria-disabled="true" data-i18n-aria="prod-inv-action-copy-link" data-i18n-title="prod-inv-action-copy-link-tip">' +
+        '<span class="mdj-prod-inv-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>' +
+        '<span class="mdj-prod-inv-action-lbl" data-i18n="prod-inv-action-copy-link"></span></button>' +
+        '<button type="button" class="mdj-prod-inv-action-btn" id="prod-inv-create-account" data-i18n-aria="prod-inv-action-create-account" data-i18n-title="prod-inv-action-create-account-tip">' +
+        '<span class="mdj-prod-inv-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></span>' +
+        '<span class="mdj-prod-inv-action-lbl" data-i18n="prod-inv-action-create-account"></span></button>' +
+        '<button type="button" class="mdj-prod-inv-action-btn" id="prod-inv-action-save" data-i18n-aria="prod-inv-action-save" data-i18n-title="prod-inv-action-save-tip">' +
+        '<span class="mdj-prod-inv-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span>' +
+        '<span class="mdj-prod-inv-action-lbl" data-i18n="prod-inv-action-save"></span></button>' +
+        '<button type="button" class="mdj-prod-inv-action-btn" id="prod-cobro-stripe-deposit" data-i18n-aria="prod-inv-action-stripe" data-i18n-title="prod-inv-action-stripe-tip">' +
+        '<span class="mdj-prod-inv-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>' +
+        '<span class="mdj-prod-inv-action-lbl" data-i18n="prod-inv-action-stripe"></span></button>' +
+        '</div>' +
+        '<div id="prod-inv-create-account-msg" class="fineprint" style="margin-top:8px;min-height:1.2em;opacity:0.88;white-space:pre-wrap;"></div>' +
+        '<button type="button" id="prod-cobro-zelle-deposit" data-i18n="prod-cobro-zelle-deposit" hidden style="display:none;" aria-hidden="true" tabindex="-1"></button>' +
+        '<button type="button" id="prod-cobro-zelle-confirm" data-i18n="prod-cobro-zelle-confirm" hidden style="display:none;" aria-hidden="true" tabindex="-1"></button>' +
+        '<button type="button" id="prod-cobro-release-dj" data-i18n="prod-cobro-release-dj" hidden style="display:none;" aria-hidden="true" tabindex="-1"></button>' +
+        '</div></div>' +
         '<div id="prod-inv-msg" class="fineprint" style="margin-top:8px;color:var(--admin-accent);"></div>' +
         '<h4 style="margin:22px 0 8px;color:var(--gold);" data-i18n="prod-inv-list-h"></h4><div id="prod-inv-list" class="fineprint"></div>' +
         '</div>' +
@@ -284,10 +381,19 @@
       document.getElementById('prod-inv-save').onclick = function () {
         void self._saveInvoice();
       };
-      document.getElementById('prod-inv-open-print').onclick = function () {
-        self._pushInvoicePrint();
-        window.open('./staff-invoice-print.html', '_blank', 'noopener');
-      };
+      var saveActionBtn = document.getElementById('prod-inv-action-save');
+      if (saveActionBtn) {
+        saveActionBtn.onclick = function () {
+          var legacySave = document.getElementById('prod-inv-save');
+          if (legacySave) legacySave.click();
+        };
+      }
+      var printBtn = document.getElementById('prod-inv-open-print');
+      if (printBtn) {
+        printBtn.onclick = function () {
+          self._pushInvoicePrint();
+        };
+      }
       if (typeof global.mdjInitProductionInvAddressBlocks === 'function') {
         global.mdjInitProductionInvAddressBlocks();
       }
@@ -296,6 +402,21 @@
         createAcctBtn.onclick = function () {
           void self._createClientAccountFromPanel();
         };
+      }
+      var lookupBtn = document.getElementById('prod-inv-client-lookup-btn');
+      if (lookupBtn) {
+        lookupBtn.onclick = function () {
+          void self._lookupClientByAccount();
+        };
+      }
+      var lookupInput = document.getElementById('prod-inv-client-lookup');
+      if (lookupInput) {
+        lookupInput.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            void self._lookupClientByAccount();
+          }
+        });
       }
       var stripeDepBtn = document.getElementById('prod-cobro-stripe-deposit');
       if (stripeDepBtn) {
@@ -530,7 +651,7 @@
               '<td><input class="price-input" data-if="unit" type="number" min="0" step="0.01" value="' +
               esc(String(L.unit)) +
               '" style="width:100px"/></td>' +
-              '<td><button type="button" class="btn-pill red" data-del-inv="' +
+              '<td><button type="button" class="mdj-prod-inv-del-line-btn" data-del-inv="' +
               i +
               '">×</button></td></tr>'
             );
@@ -611,10 +732,16 @@
       }
       var sm = await db.auth.getSession();
       var uid = sm.data && sm.data.session && sm.data.session.user && sm.data.session.user.id;
-      var cuid = document.getElementById('prod-inv-client').value.trim();
-      if (!/^[0-9a-f-]{36}$/i.test(cuid)) {
+      var clientRef = resolveProdInvClientUserId();
+      if (!clientRef.ok) {
         msg.style.color = '#ff5555';
         msg.textContent = prodT('prod-msg-invalid-uuid');
+        return;
+      }
+      var clientEmail = readProdInvClientEmail();
+      if (!clientEmail) {
+        msg.style.color = '#ff5555';
+        msg.textContent = prodT('prod-msg-save-need-email');
         return;
       }
       this._updateInvTotal();
@@ -627,92 +754,253 @@
         msg.textContent = (leadErr && leadErr.message) || String(leadErr);
         return;
       }
-      var lines = this._invLines.map(function (L) {
-        return {
-          desc: (L.desc || '').trim(),
-          qty: Number(L.qty) || 0,
-          unit: Number(L.unit) || 0,
-          unit_cents: Math.round((Number(L.unit) || 0) * 100)
+      if (clientRef.uuid) {
+        var lines = this._invLines.map(function (L) {
+          return {
+            desc: (L.desc || '').trim(),
+            qty: Number(L.qty) || 0,
+            unit: Number(L.unit) || 0,
+            unit_cents: Math.round((Number(L.unit) || 0) * 100)
+          };
+        });
+        var payload = {
+          created_by: uid,
+          client_user_id: clientRef.uuid,
+          lead_id: leadId,
+          doc_kind: document.getElementById('prod-inv-kind').value,
+          client_label: document.getElementById('prod-inv-buyer-name').value.trim() || null,
+          client_company_name: document.getElementById('prod-inv-company-name').value.trim() || null,
+          client_phone: (function () {
+            var el = document.getElementById('prod-inv-client-phone');
+            return el ? el.value.trim() || null : null;
+          })(),
+          client_email: (function () {
+            var el = document.getElementById('prod-inv-client-email');
+            return el ? el.value.trim() || null : null;
+          })(),
+          line_items: lines,
+          subtotal_cents: Math.round(t.sub * 100),
+          tax_pct: t.taxPct,
+          total_cents: Math.round(t.total * 100),
+          currency: 'USD',
+          billing_address: formatInvAddrLines('bill') || null,
+          event_address: formatInvAddrLines('ev') || null,
+          notes: null,
+          status: 'sent'
         };
-      });
-      var payload = {
-        created_by: uid,
-        client_user_id: cuid,
-        lead_id: leadId,
-        doc_kind: document.getElementById('prod-inv-kind').value,
-        client_label: document.getElementById('prod-inv-buyer-name').value.trim() || null,
-        client_company_name: document.getElementById('prod-inv-company-name').value.trim() || null,
-        client_phone: (function () {
-          var el = document.getElementById('prod-inv-client-phone');
-          return el ? el.value.trim() || null : null;
-        })(),
-        client_email: (function () {
-          var el = document.getElementById('prod-inv-client-email');
-          return el ? el.value.trim() || null : null;
-        })(),
-        line_items: lines,
-        subtotal_cents: Math.round(t.sub * 100),
-        tax_pct: t.taxPct,
-        total_cents: Math.round(t.total * 100),
-        currency: 'USD',
-        billing_address: formatInvAddrLines('bill') || null,
-        event_address: formatInvAddrLines('ev') || null,
-        notes: null,
-        status: 'sent'
-      };
-      var ins = await db.from('mdj_staff_manual_invoices').insert(payload).select('id').single();
-      if (ins.error) {
-        msg.style.color = '#ff5555';
-        msg.textContent = ins.error.message || String(ins.error);
-        return;
+        var ins = await db.from('mdj_staff_manual_invoices').insert(payload).select('id').single();
+        if (ins.error) {
+          msg.style.color = '#ff5555';
+          msg.textContent = ins.error.message || String(ins.error);
+          return;
+        }
+        if (leadId && ins.data && ins.data.id) {
+          await db.from('leads').update({ staff_invoice_id: ins.data.id }).eq('id', leadId);
+        }
+        msg.style.color = 'var(--admin-accent)';
+        msg.textContent = prodT('prod-msg-saved-inv');
+      } else {
+        msg.style.color = 'var(--admin-accent)';
+        msg.textContent = prodT('prod-msg-saved-manual-lead');
       }
-      if (leadId && ins.data && ins.data.id) {
-        await db.from('leads').update({ staff_invoice_id: ins.data.id }).eq('id', leadId);
+      if (leadId) {
         var leadHidden = document.getElementById('prod-cobro-lead-id');
         if (leadHidden) leadHidden.value = leadId;
         void this._refreshCobroStatus(leadId);
       }
-      msg.style.color = 'var(--admin-accent)';
-      msg.textContent = prodT('prod-msg-saved-inv');
       void this._refreshLists();
     },
 
     _pushInvoicePrint: function () {
+      if (typeof global.mdjOpenInvoicePrint !== 'function') {
+        var bridgeMsg = document.getElementById('prod-inv-msg');
+        if (bridgeMsg) {
+          bridgeMsg.style.color = '#f88';
+          bridgeMsg.textContent = 'Print bridge unavailable. Reload admin dashboard.';
+        }
+        return;
+      }
       this._updateInvTotal();
       var t = this._lastInvTotals;
       var lines = this._invLines.map(function (L) {
         return { desc: L.desc, qty: Number(L.qty) || 0, unit: Number(L.unit) || 0 };
       });
-      var o = {
+      var companyEl = document.getElementById('prod-inv-company-name');
+      var buyerEl = document.getElementById('prod-inv-buyer-name');
+      var emailEl = document.getElementById('prod-inv-client-email');
+      var phoneEl = document.getElementById('prod-inv-client-phone');
+      var company = companyEl ? companyEl.value.trim() : '';
+      var name = buyerEl ? buyerEl.value.trim() : '';
+      var email = emailEl ? emailEl.value.trim() : '';
+      var phone = phoneEl ? phoneEl.value.trim() : '';
+      var billing = formatInvAddrLines('bill');
+      var billParts = [];
+      if (company) billParts.push(company);
+      if (name) billParts.push(name);
+      if (billing) billParts.push(billing);
+      if (email) billParts.push(email);
+      if (phone) billParts.push('Tel: ' + phone);
+      var evTypeEl = document.getElementById('prod-cobro-event-type');
+      var evDateEl = document.getElementById('prod-cobro-event-date');
+      var eventType = evTypeEl ? String(evTypeEl.value || '').trim() : '';
+      var eventDate = evDateEl ? String(evDateEl.value || '').trim() : '';
+      var eventAddr = formatInvAddrLines('ev');
+      var eventParts = [];
+      if (eventType) eventParts.push(eventType);
+      if (eventAddr) eventParts.push(eventAddr);
+      if (eventDate) eventParts.push(eventDate);
+      var kindEl = document.getElementById('prod-inv-kind');
+      var docKind = kindEl ? kindEl.value : 'quote';
+      var notes = 'Thank you for your business. ';
+      if (docKind === 'quote') {
+        notes += 'This document is a quote. ';
+      }
+      notes += 'For questions, reply by email.';
+      var payload = {
         v: 1,
         ref: '#MDJ-' + String(Date.now()).slice(-8),
-        dateStr: new Date().toLocaleDateString(),
-        clientLabel: document.getElementById('prod-inv-buyer-name').value.trim(),
-        clientCompanyName: document.getElementById('prod-inv-company-name').value.trim(),
-        clientPhone: (function () {
-          var el = document.getElementById('prod-inv-client-phone');
-          return el ? String(el.value || '').trim() : '';
-        })(),
-        clientEmail: (function () {
-          var el = document.getElementById('prod-inv-client-email');
-          return el ? String(el.value || '').trim() : '';
-        })(),
-        contactPhoneLabel: prodT('prod-inv-print-contact-phone'),
-        contactEmailLabel: prodT('prod-inv-print-contact-email'),
-        companyPrintPrefix: prodT('prod-inv-print-company-prefix'),
-        docKind: document.getElementById('prod-inv-kind').value,
+        dateStr: new Date().toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }),
+        billTo: billParts.length ? billParts.join('\n') : 'Client',
+        eventLoc: eventParts.length ? eventParts.join('\n') : 'Event',
         lines: lines,
-        subtotal: t.sub,
         taxPct: t.taxPct,
-        taxAmt: t.taxAmt,
-        total: t.total,
-        billingAddress: formatInvAddrLines('bill') || '',
-        eventAddress: formatInvAddrLines('ev') || '',
-        notes: ''
+        notes: notes,
+        sourceReturnUrl: './admin-dashboard.html'
       };
       try {
-        sessionStorage.setItem(INV_PRINT_KEY, JSON.stringify(o));
-      } catch (e) {}
+        global.mdjOpenInvoicePrint(payload);
+      } catch (e) {
+        var errMsg = document.getElementById('prod-inv-msg');
+        if (errMsg) {
+          errMsg.style.color = '#f88';
+          errMsg.textContent = (e && e.message) || String(e);
+        }
+      }
+    },
+
+    _clientProfileSelect:
+      'user_id,full_name,email,phone,company_name,address_street,address_apt,city,address_state,address_zip,address_country',
+
+    _parseClientAccountQuery: function (raw) {
+      var q = String(raw || '').trim();
+      if (!q) return { kind: 'empty' };
+      var compact = q.replace(/\s+/g, '');
+      if (/^[0-9a-f-]{36}$/i.test(compact)) {
+        return { kind: 'uuid', value: compact.toLowerCase() };
+      }
+      var normalized = compact.toUpperCase();
+      if (/^MDJB-[A-Z0-9]{4}-[A-Z0-9]{4}-[CSAM]$/.test(normalized)) {
+        return { kind: 'mdjb', stem: normalized.replace(/-[CSAM]$/, ''), full: normalized };
+      }
+      if (/^MDJB-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(normalized)) {
+        return { kind: 'mdjb', stem: normalized, full: normalized };
+      }
+      return { kind: 'unknown', value: q };
+    },
+
+    _applyClientProfileToInvPanel: function (row) {
+      if (!row) return;
+      function setVal(id, val) {
+        var node = document.getElementById(id);
+        if (node && val != null && String(val).trim()) node.value = String(val).trim();
+      }
+      if (row.user_id) setVal('prod-inv-client', row.user_id);
+      setVal('prod-inv-buyer-name', row.full_name);
+      setVal('prod-inv-company-name', row.company_name);
+      setVal('prod-inv-client-phone', row.phone);
+      setVal('prod-inv-client-email', row.email);
+      setVal('prod-inv-bill-street', row.address_street);
+      setVal('prod-inv-bill-apt', row.address_apt);
+      setVal('prod-inv-bill-city', row.city);
+      setVal('prod-inv-bill-zip', row.address_zip);
+      var country = row.address_country || 'United States';
+      var cSel = document.getElementById('prod-inv-bill-select-country');
+      if (cSel) {
+        cSel.value = country;
+        cSel.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      var st = row.address_state || '';
+      if (country === 'United States') {
+        setVal('prod-inv-bill-select-state-us', st);
+      } else {
+        setVal('prod-inv-bill-input-state-intl', st);
+      }
+    },
+
+    _lookupClientByAccount: async function () {
+      var msgEl = document.getElementById('prod-inv-client-lookup-msg');
+      function setLookupMsg(text, isMuted) {
+        if (!msgEl) return;
+        msgEl.textContent = text || '';
+        msgEl.style.color = isMuted ? 'rgba(255,255,255,0.55)' : 'var(--admin-accent)';
+      }
+      var inputEl = document.getElementById('prod-inv-client-lookup');
+      var parsed = this._parseClientAccountQuery(inputEl ? inputEl.value : '');
+      if (parsed.kind === 'empty') {
+        setLookupMsg(prodT('prod-inv-client-lookup-empty'), true);
+        return;
+      }
+      if (parsed.kind === 'unknown') {
+        setLookupMsg(prodT('prod-inv-client-lookup-not-found'), true);
+        return;
+      }
+      var db = global.getSupabaseClient && global.getSupabaseClient();
+      if (!db) {
+        setLookupMsg(prodT('prod-inv-create-err-db'), true);
+        return;
+      }
+      setLookupMsg(prodT('prod-inv-client-lookup-working'), false);
+      var self = this;
+      try {
+        var userId = parsed.kind === 'uuid' ? parsed.value : null;
+        if (parsed.kind === 'mdjb') {
+          var mdjbRes = await db
+            .from('mdjb_account_ids')
+            .select('user_id,class,stem')
+            .eq('stem', parsed.stem)
+            .maybeSingle();
+          if (mdjbRes.error) throw mdjbRes.error;
+          if (!mdjbRes.data || !mdjbRes.data.user_id) {
+            setLookupMsg(prodT('prod-inv-client-lookup-not-found'), true);
+            return;
+          }
+          userId = mdjbRes.data.user_id;
+          if (inputEl && mdjbRes.data.stem && mdjbRes.data.class) {
+            inputEl.value = mdjbRes.data.stem + '-' + mdjbRes.data.class;
+          }
+        }
+        var byUser = await db
+          .from('client_profiles')
+          .select(this._clientProfileSelect)
+          .eq('user_id', userId)
+          .maybeSingle();
+        if (byUser.error) throw byUser.error;
+        if (byUser.data) {
+          self._applyClientProfileToInvPanel(byUser.data);
+          setLookupMsg(prodT('prod-inv-client-lookup-found'), false);
+          return;
+        }
+        if (parsed.kind === 'uuid') {
+          var byId = await db
+            .from('client_profiles')
+            .select(this._clientProfileSelect)
+            .eq('id', userId)
+            .maybeSingle();
+          if (byId.error) throw byId.error;
+          if (byId.data) {
+            self._applyClientProfileToInvPanel(byId.data);
+            setLookupMsg(prodT('prod-inv-client-lookup-found'), false);
+            return;
+          }
+        }
+        setLookupMsg(prodT('prod-inv-client-lookup-not-found'), true);
+      } catch (e) {
+        setLookupMsg((e && e.message) || prodT('prod-inv-create-err-network'), true);
+      }
     },
 
     _createClientAccountFromPanel: async function () {
@@ -743,21 +1031,18 @@
         return detail || code || prodT('prod-inv-create-err-generic');
       }
       var authOk = document.getElementById('prod-inv-client-auth-ok');
-      if (!authOk || !authOk.checked) {
+      if (authOk && !authOk.checked) {
         setMsg(prodT('prod-inv-create-err-auth'), true);
         return;
       }
-      var newEmailEl = document.getElementById('prod-inv-new-client-email');
       var invEmailEl = document.getElementById('prod-inv-client-email');
-      var email = (newEmailEl && newEmailEl.value.trim()) || (invEmailEl && invEmailEl.value.trim()) || '';
+      var email = invEmailEl && invEmailEl.value.trim() ? invEmailEl.value.trim() : '';
       if (!email) {
         setMsg(prodT('prod-inv-create-err-email'), true);
         return;
       }
-      var nmEl = document.getElementById('prod-inv-new-client-name');
       var buyerEl = document.getElementById('prod-inv-buyer-name');
-      var fullName =
-        (nmEl && nmEl.value.trim()) || (buyerEl && buyerEl.value.trim()) || '';
+      var fullName = buyerEl && buyerEl.value.trim() ? buyerEl.value.trim() : '';
       var phoneEl = document.getElementById('prod-inv-client-phone');
       var phone = phoneEl ? phoneEl.value.trim() : '';
       var db = global.getSupabaseClient && global.getSupabaseClient();
@@ -850,11 +1135,20 @@
     _upsertEventLead: async function (totalUsd, db) {
       var leadEl = document.getElementById('prod-cobro-lead-id');
       var existingId = leadEl ? leadEl.value.trim() : '';
-      var cuid = document.getElementById('prod-inv-client').value.trim();
-      var emailEl = document.getElementById('prod-inv-client-email');
-      var email = emailEl ? emailEl.value.trim().toLowerCase() : '';
+      var clientRef = resolveProdInvClientUserId();
+      if (!clientRef.ok) {
+        throw new Error(prodT('prod-msg-invalid-uuid'));
+      }
+      var email = readProdInvClientEmail();
       var buyerEl = document.getElementById('prod-inv-buyer-name');
       var contact = buyerEl ? buyerEl.value.trim() : '';
+      var companyEl = document.getElementById('prod-inv-company-name');
+      var company = companyEl ? companyEl.value.trim() : '';
+      if (company && contact) {
+        contact = company + ' — ' + contact;
+      } else if (company && !contact) {
+        contact = company;
+      }
       var evDateEl = document.getElementById('prod-cobro-event-date');
       var eventDate =
         evDateEl && evDateEl.value ? evDateEl.value : new Date().toISOString().slice(0, 10);
@@ -869,9 +1163,8 @@
       var payoutEl = document.getElementById('prod-cobro-dj-payout');
       var payoutUsd = payoutEl ? parseFloat(payoutEl.value) : NaN;
       var depositUsd = calcEventDepositUsd(totalUsd);
+      var eventLoc = formatInvAddrLines('ev');
       var base = {
-        client_user_id: cuid,
-        email: email || null,
         contact_person: contact || null,
         event_type: eventType,
         event_date: eventDate,
@@ -881,11 +1174,24 @@
         assigned_dj_name: djName || null,
         dj_agreed_payout_usd: isFinite(payoutUsd) && payoutUsd > 0 ? payoutUsd : null
       };
+      if (email) {
+        base.email = email;
+      }
+      if (eventLoc) {
+        base.location = eventLoc;
+      }
+      if (clientRef.uuid) {
+        base.client_user_id = clientRef.uuid;
+      }
       if (existingId && /^[0-9a-f-]{36}$/i.test(existingId)) {
         var up = await db.from('leads').update(base).eq('id', existingId).select('id').single();
         if (up.error) throw up.error;
         return existingId;
       }
+      if (!email) {
+        throw new Error(prodT('prod-msg-save-need-email'));
+      }
+      base.email = email;
       var insPayload = Object.assign(
         {
           balance_paid: 0,
@@ -949,19 +1255,55 @@
         if (stEl) stEl.textContent = prodT('prod-cobro-err-save-first');
         return;
       }
+      var stripeTab = null;
+      try {
+        stripeTab = window.open('about:blank', '_blank');
+      } catch (openErr) {
+        stripeTab = null;
+      }
+      function closeStripeTab() {
+        try {
+          if (stripeTab && !stripeTab.closed) stripeTab.close();
+        } catch (closeErr) {
+          /* ignore */
+        }
+      }
+      var emailEl = document.getElementById('prod-inv-client-email');
+      var clientEmail = emailEl ? emailEl.value.trim().toLowerCase() : '';
       this._updateInvTotal();
       var t = this._lastInvTotals;
       var depositUsd = calcEventDepositUsd(t.total);
-      var amountCents = Math.max(Math.round(depositUsd * 100), 15000);
+      var chargeMode = readProdCobroChargeMode();
+      var balancePaidUsd = 0;
       var db = global.getSupabaseClient && global.getSupabaseClient();
       if (db) {
-        await db.from('leads').update({ deposit_required_usd: depositUsd, total_amount: t.total }).eq('id', leadId);
+        var leadPatch = { deposit_required_usd: depositUsd, total_amount: t.total };
+        if (clientEmail) leadPatch.email = clientEmail;
+        await db.from('leads').update(leadPatch).eq('id', leadId);
+        if (!clientEmail) {
+          var lr = await db.from('leads').select('email').eq('id', leadId).maybeSingle();
+          if (lr.data && lr.data.email) {
+            clientEmail = String(lr.data.email).trim().toLowerCase();
+          }
+        }
+        if (chargeMode === 'full') {
+          var br = await db.from('leads').select('balance_paid').eq('id', leadId).maybeSingle();
+          if (br.data && br.data.balance_paid != null && isFinite(Number(br.data.balance_paid))) {
+            balancePaidUsd = Number(br.data.balance_paid);
+          }
+        }
+      }
+      if (!clientEmail) {
+        closeStripeTab();
+        if (stEl) stEl.textContent = prodT('prod-cobro-stripe-need-email');
+        return;
       }
       var CHECKOUT_FN =
         typeof global.mdbSupabaseFunctionUrl === 'function'
           ? global.mdbSupabaseFunctionUrl('create-event-payment')
           : '';
       if (!CHECKOUT_FN) {
+        closeStripeTab();
         if (stEl) stEl.textContent = prodT('prod-inv-create-err-config');
         return;
       }
@@ -969,6 +1311,19 @@
       var evDateEl = document.getElementById('prod-cobro-event-date');
       var eventType = evTypeEl ? evTypeEl.value : 'Event';
       var eventDate = evDateEl && evDateEl.value ? evDateEl.value : 'TBD';
+      var amountCents;
+      var checkoutDesc;
+      if (chargeMode === 'full') {
+        var remainingUsd = Math.max(0, t.total - balancePaidUsd);
+        if (!isFinite(remainingUsd) || remainingUsd <= 0) {
+          remainingUsd = Math.max(0, t.total);
+        }
+        amountCents = Math.max(Math.round(remainingUsd * 100), 100);
+        checkoutDesc = 'Pago total — ' + eventType + ' · ' + eventDate;
+      } else {
+        amountCents = Math.max(Math.round(depositUsd * 100), 15000);
+        checkoutDesc = 'Depósito de reserva — ' + eventType + ' · ' + eventDate;
+      }
       var btn = document.getElementById('prod-cobro-stripe-deposit');
       if (btn) {
         btn.disabled = true;
@@ -984,7 +1339,7 @@
             lead_id: leadId,
             amount_cents: amountCents,
             deposit_required_usd: depositUsd,
-            description: 'Depósito de reserva — ' + eventType + ' · ' + eventDate
+            description: checkoutDesc
           })
         });
         var result = await resp.json().catch(function () {
@@ -994,18 +1349,38 @@
           throw new Error((result && result.error) || 'checkout');
         }
         var url = String(result.url);
+        if (stripeTab && !stripeTab.closed) {
+          stripeTab.location.href = url;
+          try {
+            stripeTab.opener = null;
+          } catch (_) {
+            /* ignore */
+          }
+        } else {
+          window.open(url, '_blank', 'noopener');
+        }
+        var copied = false;
         try {
           if (navigator.clipboard && navigator.clipboard.writeText) {
             await navigator.clipboard.writeText(url);
-            if (stEl) stEl.textContent = prodT('prod-cobro-stripe-copied');
-          } else {
-            window.prompt(prodT('prod-cobro-stripe-prompt'), url);
+            copied = true;
           }
         } catch (clipErr) {
+          copied = false;
+        }
+        if (!copied) {
           window.prompt(prodT('prod-cobro-stripe-prompt'), url);
+        }
+        if (stEl) {
+          var lang = (document.documentElement.lang || 'en').slice(0, 2).toLowerCase();
+          stEl.textContent =
+            lang === 'es'
+              ? 'Stripe abierto. Si el navegador bloqueó la pestaña, el enlace quedó copiado.'
+              : 'Stripe opened. If the browser blocked the tab, the link was copied.';
         }
         void this._refreshCobroStatus(leadId);
       } catch (e) {
+        closeStripeTab();
         if (stEl) stEl.textContent = prodT('prod-cobro-stripe-fail') + ' ' + ((e && e.message) || '');
       }
       if (btn) btn.disabled = false;
