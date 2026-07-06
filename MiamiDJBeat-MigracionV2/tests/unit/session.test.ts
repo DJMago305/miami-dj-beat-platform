@@ -7,12 +7,15 @@ import {
   clearSession,
   deliverAuthHandoff,
   destroySession,
+  detectSessionExpiry,
   getAuthSessionBoundaryForTests,
   getSessionSnapshot,
   getSessionState,
   getSessionStoreForTests,
+  handleSessionExpiry,
   ingestAuthHandle,
   initializeSession,
+  refreshSession,
   resetSessionForTests,
   SessionError,
 } from '@mdj/shared/session';
@@ -181,5 +184,28 @@ describe('MOD-002 Session Manager', () => {
 
     const store = getSessionStoreForTests();
     expect(store.getMachineState()).toBe('ANONYMOUS');
+  });
+
+  it('refreshSession via service returns AUTHENTICATED SESSION_READY snapshot', async () => {
+    bootThroughErrorHandler();
+    initializeSession({ portal: 'client' });
+    deliverAuthHandoff(getAuthSessionBoundaryForTests().createMockAuthHandoff('service-refresh-user'));
+
+    const snapshot = await refreshSession({ reason: 'service-refresh' });
+
+    expect(snapshot.state).toBe('SESSION_READY');
+    expect(getSessionStoreForTests().getMachineState()).toBe('AUTHENTICATED');
+    expect(snapshot.isRefreshing).toBe(false);
+  });
+
+  it('handleSessionExpiry via service emits SESSION_EXPIRED lifecycle', () => {
+    bootThroughErrorHandler();
+    initializeSession({ portal: 'client' });
+    deliverAuthHandoff(getAuthSessionBoundaryForTests().createMockAuthHandoff('service-expiry-user'));
+
+    const snapshot = handleSessionExpiry('timer-expiry');
+    expect(snapshot.state).toBe('SESSION_EXPIRED');
+    expect(getSessionState()).toBe('SESSION_EXPIRED');
+    expect(detectSessionExpiry().expired).toBe(false);
   });
 });

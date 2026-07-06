@@ -27,12 +27,71 @@ import type {
   InitializeSessionOptions,
   PermissionChangedEventPayload,
   RoleChangedEventPayload,
+  SessionExpiryProbe,
   SessionLifecycleState,
   SessionPublicApi,
+  SessionRefreshOptions,
+  SessionRefreshPort,
+  SessionRefreshPortResult,
+  SessionRefreshRequest,
   SessionSnapshot,
   UserLoginEventPayload,
   UserLogoutEventPayload,
 } from './types';
+
+export type MockRefreshPortConfig = {
+  readonly fail?: boolean;
+  readonly delayMs?: number;
+  readonly failReason?: string;
+  readonly newExpiresAt?: () => string;
+};
+
+/** Default boot port — synchronous mock refresh success. */
+export function createNoopRefreshPort(): SessionRefreshPort {
+  return createMockRefreshPort();
+}
+
+/** Lab/test refresh port — optional delay for single-flight assertions. */
+export function createMockRefreshPort(config: MockRefreshPortConfig = {}): SessionRefreshPort {
+  return {
+    refresh: (request: SessionRefreshRequest) => {
+      const execute = (): SessionRefreshPortResult => {
+        if (config.fail) {
+          return Object.freeze({
+            ok: false,
+            reason: config.failReason ?? 'mock-refresh-failed',
+          });
+        }
+
+        return Object.freeze({
+          ok: true,
+          expiresAt: config.newExpiresAt?.() ?? new Date(Date.now() + 3_600_000).toISOString(),
+          accessTokenRef: request.accessTokenRef,
+        });
+      };
+
+      if (config.delayMs && config.delayMs > 0) {
+        return new Promise((resolve) => {
+          setTimeout(() => resolve(execute()), config.delayMs);
+        });
+      }
+
+      return execute();
+    },
+  };
+}
+
+function unwrapRefreshResult(
+  result: SessionRefreshPortResult | Promise<SessionRefreshPortResult>,
+): SessionRefreshPortResult | Promise<SessionRefreshPortResult> {
+  return result;
+}
+
+async function resolveRefreshResult(
+  result: SessionRefreshPortResult | Promise<SessionRefreshPortResult>,
+): Promise<SessionRefreshPortResult> {
+  return result instanceof Promise ? result : result;
+}
 
 function unwrapRestoreResult(result: RestoreResult | Promise<RestoreResult>): RestoreResult {
   if (result instanceof Promise) {
@@ -58,17 +117,21 @@ export class SessionProvider {
   private readonly store: SessionStore;
   private readonly persistencePort: PersistencePort;
   private readonly authBoundary: AuthSessionBoundary;
+  private readonly refreshPort: SessionRefreshPort;
   private frozenApi: SessionPublicApi | null = null;
   private logoutInProgress = false;
+  private refreshInFlight: Promise<SessionSnapshot> | null = null;
 
   constructor(
     store: SessionStore,
     persistencePort: PersistencePort = createNoopPersistencePort(),
     authBoundary: AuthSessionBoundary = getAuthSessionBoundary(),
+    refreshPort: SessionRefreshPort = createNoopRefreshPort(),
   ) {
     this.store = store;
     this.persistencePort = persistencePort;
     this.authBoundary = authBoundary;
+    this.refreshPort = refreshPort;
   }
 
   reset(): void {
@@ -76,6 +139,7 @@ export class SessionProvider {
     this.store.reset();
     this.frozenApi = null;
     this.logoutInProgress = false;
+    this.refreshInFlight = null;
   }
 
   getStore(): SessionStore {
@@ -88,6 +152,10 @@ export class SessionProvider {
 
   getAuthBoundary(): AuthSessionBoundary {
     return this.authBoundary;
+  }
+
+  getRefreshPort(): SessionRefreshPort {
+    return this.refreshPort;
   }
 
   private configSlice(): SessionStoreConfigSlice {
@@ -109,6 +177,7 @@ export class SessionProvider {
         this.ingestAuthHandle(handle, identity),
       clearSession: (reason?: string) => this.clearSession(reason),
       destroySession: (reason?: string) => this.destroySession(reason),
+      refreshSession: (options?: SessionRefreshOptions) => this.refreshSession(options),
       getSnapshot: () => {
         try {
           return this.store.getSnapshot();
@@ -453,7 +522,166 @@ export class SessionProvider {
     return readySnapshot;
   }
 
+  detectSessionExpiry(): SessionExpiryProbe {
+    try {
+      const snapshot = this.store.getSnapshot();
+      const expired =
+        snapshot.user !== null &&
+        snapshot.expiresAt !== null &&
+        isExpiredIsoTimestamp(snapshot.expiresAt);
+
+      return Object.freeze({
+        expired,
+        expiresAt: snapshot.expiresAt,
+        sessionId: snapshot.sessionId,
+      });
+    } catch {
+      return Object.freeze({
+        expired: false,
+        expiresAt: null,
+        sessionId: '',
+      });
+    }
+  }
+
+  handleSessionExpiry(reason = 'expiry-detected'): SessionSnapshot {
+    if (!this.frozenApi) {
+      throw new SessionError('SESSION_ERROR_NOT_READY', 'Session is not initialized.');
+    }
+
+    const machine = this.store.getMachineState();
+    if (machine === 'AUTHENTICATED') {
+      this.store.applyMachineTransition('AUTHENTICATED', 'EXPIRY_DETECTED', 'EXPIRED');
+    }
+
+    this.store.setRefreshing(false);
+    this.store.setLifecycleState('SESSION_EXPIRED');
+    this.store.bumpSnapshotVersion();
+
+    const snapshot = this.store.publishSnapshot(this.configSlice(), 'SESSION_EXPIRED');
+    publishSessionEvent('SESSION_EXPIRED', {
+      reason,
+      sessionId: this.store.getSessionId(),
+    });
+
+    getLogger().info('Session expired', {
+      moduleId: 'MOD-002',
+      sessionId: this.store.getSessionId(),
+      reason,
+      machineState: this.store.getMachineState(),
+    });
+
+    return snapshot;
+  }
+
+  /** Single-flight refresh — concurrent callers await the same in-flight operation. */
+  refreshSession(options?: SessionRefreshOptions): Promise<SessionSnapshot> {
+    if (this.refreshInFlight) {
+      return this.refreshInFlight;
+    }
+
+    this.refreshInFlight = this.executeRefreshSession(options).finally(() => {
+      this.refreshInFlight = null;
+    });
+
+    return this.refreshInFlight;
+  }
+
+  private async executeRefreshSession(options?: SessionRefreshOptions): Promise<SessionSnapshot> {
+    if (!this.frozenApi) {
+      throw new SessionError('SESSION_ERROR_NOT_READY', 'Session is not initialized.');
+    }
+
+    const machine = this.store.getMachineState();
+    if (machine !== 'AUTHENTICATED') {
+      throw new SessionError(
+        'SESSION_ERROR_NOT_READY',
+        'Session refresh requires AUTHENTICATED machine state.',
+      );
+    }
+
+    const snapshot = this.store.getSnapshot();
+    if (!snapshot.user) {
+      throw new SessionError('SESSION_ERROR_NOT_READY', 'Session refresh requires an authenticated user.');
+    }
+
+    this.store.applyMachineTransition('AUTHENTICATED', 'REFRESH_START', 'REFRESHING');
+    this.store.setRefreshing(true);
+    this.store.bumpSnapshotVersion();
+    this.store.publishSnapshot(this.configSlice(), 'SESSION_READY');
+
+    const refreshResult = await resolveRefreshResult(
+      unwrapRefreshResult(
+        this.refreshPort.refresh({
+          sessionId: this.store.getSessionId(),
+          userId: snapshot.user.userId,
+          accessTokenRef: options?.accessTokenRef ?? 'mock-access-ref',
+          expiresAt: snapshot.expiresAt,
+        }),
+      ),
+    );
+
+    if (!refreshResult.ok) {
+      return this.finalizeRefreshFailure(refreshResult.reason, options?.reason);
+    }
+
+    return this.finalizeRefreshSuccess(refreshResult.expiresAt, options?.reason);
+  }
+
+  private finalizeRefreshSuccess(expiresAt: string, reason?: string): SessionSnapshot {
+    if (this.store.getMachineState() === 'REFRESHING') {
+      this.store.applyMachineTransition('REFRESHING', 'REFRESH_OK', 'AUTHENTICATED');
+    }
+
+    this.store.setExpiresAt(expiresAt);
+    this.store.setRefreshing(false);
+    this.store.bumpSnapshotVersion();
+
+    const readySnapshot = this.store.publishSnapshot(this.configSlice(), 'SESSION_READY');
+    publishSessionEvent('SESSION_READY', {
+      portal: readySnapshot.portal,
+      sessionId: readySnapshot.sessionId,
+      state: readySnapshot.state,
+      reason: reason ?? 'refresh-ok',
+    });
+
+    getLogger().info('Session refresh succeeded', {
+      moduleId: 'MOD-002',
+      sessionId: this.store.getSessionId(),
+      expiresAt,
+      machineState: this.store.getMachineState(),
+    });
+
+    return readySnapshot;
+  }
+
+  private finalizeRefreshFailure(failReason: string, triggerReason?: string): SessionSnapshot {
+    if (this.store.getMachineState() === 'REFRESHING') {
+      this.store.applyMachineTransition('REFRESHING', 'REFRESH_FAIL', 'EXPIRED');
+    }
+
+    this.store.setRefreshing(false);
+    this.store.setLifecycleState('SESSION_EXPIRED');
+    this.store.bumpSnapshotVersion();
+
+    const expiredSnapshot = this.store.publishSnapshot(this.configSlice(), 'SESSION_EXPIRED');
+    publishSessionEvent('SESSION_EXPIRED', {
+      reason: triggerReason ?? failReason,
+      sessionId: this.store.getSessionId(),
+    });
+
+    getLogger().info('Session refresh failed — expired', {
+      moduleId: 'MOD-002',
+      sessionId: this.store.getSessionId(),
+      reason: triggerReason ?? failReason,
+      machineState: this.store.getMachineState(),
+    });
+
+    return expiredSnapshot;
+  }
+
   clearSession(reason = 'clear'): SessionSnapshot {
+    this.refreshInFlight = null;
     this.store.clearIdentity();
     this.store.setHydrationPhase('none');
     this.store.bumpSnapshotVersion();

@@ -3,7 +3,10 @@ import { initializeConfiguration, resetConfigurationForTests } from '@mdj/shared
 import { initializeErrorHandler, resetErrorHandlerForTests } from '@mdj/shared/errors';
 import { getEventBus, initializeEventBus, resetEventBusForTests } from '@mdj/shared/events';
 import { initializeLogging, resetLoggingForTests } from '@mdj/shared/logging';
-import { SessionProvider } from '../../shared/session/runtime/session-provider';
+import {
+  createMockRefreshPort,
+  SessionProvider,
+} from '../../shared/session/runtime/session-provider';
 import { AuthSessionBoundary } from '../../shared/session/runtime/auth-session-boundary';
 import { SessionStore, resetSessionStoreCounterForTests } from '../../shared/session/runtime/session-store';
 import { SessionError } from '../../shared/session/runtime/errors';
@@ -189,5 +192,24 @@ describe('MOD-002 SessionProvider — TICKET-MOD-002-SESSION-PROVIDER-STORE-001'
     });
 
     expect(readyCount).toBe(afterInit);
+  });
+
+  it('refreshSession success keeps AUTHENTICATED and SESSION_READY', async () => {
+    bootThroughErrorHandler();
+    const refreshProvider = new SessionProvider(
+      store,
+      undefined,
+      undefined,
+      createMockRefreshPort({ newExpiresAt: () => new Date(Date.now() + 120_000).toISOString() }),
+    );
+
+    const handoff = new AuthSessionBoundary().createMockAuthHandoff('provider-refresh-user');
+    refreshProvider.initialize({ portal: 'client' });
+    refreshProvider.ingestAuthHandle(handoff.handle, handoff.identity);
+
+    const snapshot = await refreshProvider.refreshSession();
+    expect(store.getMachineState()).toBe('AUTHENTICATED');
+    expect(snapshot.state).toBe('SESSION_READY');
+    expect(snapshot.isRefreshing).toBe(false);
   });
 });

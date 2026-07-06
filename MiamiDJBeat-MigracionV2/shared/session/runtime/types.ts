@@ -152,6 +152,7 @@ export type SessionPublicApi = {
   readonly ingestAuthHandle: (handle: AuthHandle, identity?: IdentitySnapshot) => SessionSnapshot;
   readonly clearSession: (reason?: string) => SessionSnapshot;
   readonly destroySession: (reason?: string) => void;
+  readonly refreshSession: (options?: SessionRefreshOptions) => Promise<SessionSnapshot>;
   readonly getSnapshot: () => SessionSnapshot;
   readonly getState: () => SessionLifecycleState;
 };
@@ -200,4 +201,41 @@ export type PermissionChangedEventPayload = {
   readonly userId: string;
   readonly snapshotVersion?: number;
   readonly capabilities?: readonly string[];
+};
+
+/** MOD-001 refresh contract input — mock/internal only (Phase 6). */
+export type SessionRefreshRequest = {
+  readonly sessionId: string;
+  readonly userId: string;
+  readonly accessTokenRef: string;
+  readonly expiresAt: string | null;
+};
+
+export type SessionRefreshPortSuccess = {
+  readonly ok: true;
+  readonly expiresAt: string;
+  readonly accessTokenRef?: string;
+};
+
+export type SessionRefreshPortFailure = {
+  readonly ok: false;
+  readonly reason: string;
+};
+
+export type SessionRefreshPortResult = SessionRefreshPortSuccess | SessionRefreshPortFailure;
+
+/** Internal refresh port — not a real Auth/network backend. */
+export type SessionRefreshPort = {
+  refresh(request: SessionRefreshRequest): SessionRefreshPortResult | Promise<SessionRefreshPortResult>;
+};
+
+export type SessionRefreshOptions = {
+  readonly reason?: string;
+  readonly accessTokenRef?: string;
+};
+
+export type SessionExpiryProbe = {
+  readonly expired: boolean;
+  readonly expiresAt: string | null;
+  readonly sessionId: string;
 };

@@ -13,8 +13,10 @@ import type {
   AuthHandoffInput,
   IdentitySnapshot,
   InitializeSessionOptions,
+  SessionExpiryProbe,
   SessionLifecycleState,
   SessionPublicApi,
+  SessionRefreshOptions,
   SessionSnapshot,
 } from './types';
 
@@ -53,6 +55,18 @@ export function clearSession(reason?: string): SessionSnapshot {
 
 export function destroySession(reason?: string): void {
   getSessionManager().destroySession(reason);
+}
+
+export function refreshSession(options?: SessionRefreshOptions): Promise<SessionSnapshot> {
+  return getSessionManager().refreshSession(options);
+}
+
+export function detectSessionExpiry(): SessionExpiryProbe {
+  return sessionProvider.detectSessionExpiry();
+}
+
+export function handleSessionExpiry(reason?: string): SessionSnapshot {
+  return sessionProvider.handleSessionExpiry(reason);
 }
 
 export function getSessionManager(): SessionPublicApi {

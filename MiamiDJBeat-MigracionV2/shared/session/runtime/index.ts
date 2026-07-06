@@ -10,14 +10,17 @@ export {
   clearSession,
   deliverAuthHandoff,
   destroySession,
+  detectSessionExpiry,
   getAuthSessionBoundaryForTests,
   getSessionManager,
   getSessionProviderForTests,
   getSessionSnapshot,
   getSessionState,
   getSessionStoreForTests,
+  handleSessionExpiry,
   ingestAuthHandle,
   initializeSession,
+  refreshSession,
   resetSessionForTests,
 } from './session-service';
 export {
@@ -31,7 +34,8 @@ export {
   resetSessionEventListenersForTests,
 } from './session-listeners';
 export type { SessionEventListenerHandlers } from './session-listeners';
-export { SessionProvider } from './session-provider';
+export { SessionProvider, createMockRefreshPort, createNoopRefreshPort } from './session-provider';
+export type { MockRefreshPortConfig } from './session-provider';
 export {
   createInMemoryPersistencePort,
   createNoopPersistencePort,
@@ -66,6 +70,13 @@ export type {
   SessionErrorCode,
   SessionLifecycleState,
   SessionPublicApi,
+  SessionRefreshOptions,
+  SessionRefreshPort,
+  SessionRefreshPortFailure,
+  SessionRefreshPortResult,
+  SessionRefreshPortSuccess,
+  SessionRefreshRequest,
+  SessionExpiryProbe,
   SessionSnapshot,
   SessionStateMachineState,
   SessionTransitionEvent,
