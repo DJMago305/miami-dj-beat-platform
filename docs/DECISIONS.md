@@ -307,3 +307,53 @@ Evidencia de validación:
 ### Aprobación
 
 Product Owner — TICKET-MOD-003-CLOSEOUT-LOCAL-001 (2026-07-06) — **PENDIENTE DE APROBACIÓN PO PARA MOD-003 FASE 4 — ROUTE GUARDS**
+
+---
+
+## DECISION-V2-008
+
+| Campo | Valor |
+|-------|-------|
+| **Fecha** | 2026-07-06 |
+| **Título** | MOD-003 Route Guards Local Baseline Approved |
+| **Estado** | **LOCKED LOCAL** |
+| **Ticket cierre** | TICKET-MOD-003-ROUTE-GUARDS-CLOSEOUT-DOCS-001 |
+| **Evidencia** | `docs/V2/SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Route Guards Closeout Local (2026-07-06) |
+
+### Descripción
+
+Se completa **MOD-003 Fase 4 — Route Guards** en el laboratorio `MiamiDJBeat-MigracionV2/`:
+
+| Componente | Commit |
+|------------|--------|
+| **Route Capability Map** | `eb8372d` |
+| **Route Guards (`canActivateRoute`)** | `eb8372d` |
+| **Unit tests Route Guards** | `eb8372d` |
+
+Evidencia de validación:
+
+- **47** rutas registradas (`ROUTE_CAPABILITY_MAP`) — client 11 · artist 14 · staff 22
+- **184/184** tests unitarios · **3/3** e2e Playwright
+- Validación visual PO aprobada — client · artist · staff
+- Boot · Session · portales — **sin cambios**
+- **Business logic: false** · **Sin push · sin PR · sin Supabase**
+
+### Consecuencias
+
+| Regla | Detalle |
+|-------|---------|
+| Consumo obligatorio | Toda activación de ruta futura debe usar **`canActivateRoute()`** + `PermissionSnapshot` |
+| Prohibido | Guards de ruta que reimplementen `hasCapability()` o consulten rol directo |
+| Congelado | `route-capability-map.ts` · `route-guards.ts` · exports en `permissions/runtime/index.ts` |
+| Próximo módulo autorizado | **MOD-003 Fase 5 — Component Guards** |
+
+| Autorizado tras LOCKED LOCAL | No autorizado sin ticket + PO |
+|------------------------------|-------------------------------|
+| Apertura **MOD-003 Fase 5 — Component Guards** | Push/merge/deploy producción |
+| Tickets runtime acotados a guards MOD-003+ | Modificar Route Guards congelado sin ADR PO |
+| Router real · redirect · nav hide | Sin ticket portal explícito |
+| Continuar lab local sobre baseline Route Guards | Business logic en portales |
+
+### Aprobación
+
+Product Owner — TICKET-MOD-003-ROUTE-GUARDS-CLOSEOUT-DOCS-001 (2026-07-06) — **PENDIENTE DE APROBACIÓN PO PARA MOD-003 FASE 5 — COMPONENT GUARDS**

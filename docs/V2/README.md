@@ -34,26 +34,27 @@ La Constitución (`MIAMIDJBEAT-PROYECTO-CONSTITUCION.md`) manda sobre cualquier 
 | **Fase 2** | Profile Matrix + Role Matrix Bridge | `24339a1` |
 | **Fase 3A** | Permission Resolver | `aa702ff` |
 | **Fase 3B** | Session Permission Snapshot | `fb78b1e` |
+| **Fase 4** | Route Guards — `canActivateRoute()` · 47 rutas | `eb8372d` |
 
 | Métrica | Resultado |
 |---------|-----------|
-| **Tests** | **162/162** unitarios |
+| **Tests** | **184/184** unitarios |
 | **E2E** | **3/3** Playwright |
 | **Visual** | PO aprobado — client · artist · staff |
-| **Estado** | **LOCAL BASELINE APPROVED** (DECISION-V2-007) |
+| **Estado** | **LOCAL BASELINE APPROVED** (DECISION-V2-007 · DECISION-V2-008) |
 
 Estado actual:
 
 - ✅ **Scaffold operativo** — Vite en puerto 5173; tres portales (Client · Artist · Staff) responden HTTP 200.
 - ✅ **Boot validado** — Config loaded · Bus ready · Logging ready · Error Handler ready · Session ready.
 - ✅ **MOD-002 Session Manager** — **LOCKED LOCAL** — 6 fases commiteadas (**sin push / sin PR**).
-- ✅ **MOD-003 Permissions Core** — Fases 1–3B commiteadas; **PermissionSnapshot** integrado en Session (**sin push / sin PR**).
-- ✅ **Tests aprobados** — **162/162** unitarios · **3/3** e2e Playwright.
+- ✅ **MOD-003 Permissions** — Fases 1–4 commiteadas; Route Guards puros (**sin push / sin PR**).
+- ✅ **Tests aprobados** — **184/184** unitarios · **3/3** e2e Playwright.
 - ✅ **Validación visual PO** — `Session: ready` · `Business logic: false` — sin cambio visual.
 - ✅ **Sin integración Supabase** — sin egress API funcional ni auth real en runtime V2.
 
 Detalle MOD-002: `SESSION-SUMMARIES/2026-07-05.md` § MOD-002 Session Manager — Closeout Local (2026-07-06).  
-Detalle MOD-003: `SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Closeout Local (2026-07-06).  
+Detalle MOD-003: `SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Closeout Local (2026-07-06) · § MOD-003 Route Guards Closeout Local (2026-07-06).  
 Detalle boot scaffold: § Validación Localhost — 2026-07-06.
 
 ---
@@ -63,7 +64,7 @@ Detalle boot scaffold: § Validación Localhost — 2026-07-06.
 | Nivel | Documento | Rol |
 |-------|-----------|-----|
 | 1 — Máxima | `MIAMIDJBEAT-PROYECTO-CONSTITUCION.md` | Constitución del proyecto |
-| 2 — Decisiones | `../DECISIONS.md` | Registro oficial DECISION-V2-001 … 007 |
+| 2 — Decisiones | `../DECISIONS.md` | Registro oficial DECISION-V2-001 … 008 |
 | 3 — Gobernanza | `GOVERNANCE/` | Pipeline agentes, gates, autorización |
 | 4 — Operación | `NOTA-DIARIA-OPERACION-PERMANENTE.md` | Guía operativa diaria |
 | 5 — Arquitectura | `ARCHITECTURE/` | Handbook + mapas (boot, deps, events, errors) |
@@ -122,7 +123,7 @@ Ver `GOVERNANCE/README.md` — pipeline agente, checklist violaciones, formulari
 
 | Archivo | Relación con V2 |
 |---------|-----------------|
-| `DECISIONS.md` | Registro oficial de DECISION-V2-001 … 007 |
+| `DECISIONS.md` | Registro oficial de DECISION-V2-001 … 008 |
 | `NOTA-DIARIA-2026-07-05.md` | Cabecera operativa del día (cierre fase fundacional). Detalle → `SESSION-SUMMARIES/2026-07-05.md` |
 | `NOTA-DIARIA-2026-07-06.md` | Nota V1 (Invoice / Cash Flow / Nav) — **en `main`**, fuera de baseline V2 |
 
@@ -159,6 +160,7 @@ Tickets P0 de **runtime V1** (`web/mdj-shared-header.js`, `dj-profile.html`). Do
 | DECISION-V2-005 | MOD-002 Session Manager local baseline | `SESSION-SUMMARIES/2026-07-05.md` § MOD-002 Closeout — 2026-07-06 |
 | DECISION-V2-006 | MOD-003 Permissions local checkpoint (Fases 1–2) | `SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Local Checkpoint — 2026-07-06 |
 | DECISION-V2-007 | MOD-003 Permissions Core local baseline (Fases 1–3B) | `SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Closeout Local — 2026-07-06 |
+| DECISION-V2-008 | MOD-003 Route Guards local baseline (Fase 4) | `SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Route Guards Closeout Local — 2026-07-06 |
 
 Detalle completo: [`../DECISIONS.md`](../DECISIONS.md).
 
@@ -177,13 +179,13 @@ Detalle completo: [`../DECISIONS.md`](../DECISIONS.md).
 
 **Congelado (no modificado sin ticket PO):** `bootstrap/boot.ts` · Config · Event Bus · Logging · Error Handler · Session Core · Permission Core · portales · Vite routing.
 
-**Próximo paso documental:** **MOD-003 Fase 4 — Route Guards** — **PENDIENTE DE APROBACIÓN PO**.
+**Próximo paso documental:** **MOD-003 Fase 5 — Component Guards** — **PENDIENTE DE APROBACIÓN PO**.
 
 **Deploy:** sin push · sin PR · sin producción.
 
 ---
 
-## MOD-003 Permissions — resumen closeout local (Fases 1–3B)
+## MOD-003 Permissions — resumen closeout local (Fases 1–4)
 
 | Fase | Entregable | Commit local (`main`) |
 |------|------------|------------------------|
@@ -191,14 +193,15 @@ Detalle completo: [`../DECISIONS.md`](../DECISIONS.md).
 | 2 | Profile Matrix + Role Matrix Bridge | `24339a1` |
 | 3A | Permission Resolver — `resolvePermissionSnapshot()`, `hasCapability()` | `aa702ff` |
 | 3B | Session Permission Snapshot wire | `fb78b1e` |
+| 4 | Route Guards — `ROUTE_CAPABILITY_MAP` (47 rutas) · `canActivateRoute()` | `eb8372d` |
 
-**Núcleo congelado:** Capability Registry · Role Matrix · Profile Matrix · Permission Resolver · Session Permission Snapshot.
+**Núcleo congelado:** Capability Registry · Role Matrix · Profile Matrix · Permission Resolver · Session Permission Snapshot · Route Guards.
 
-**Explicitamente fuera de MOD-003 Fases 1–3B:**
+**Explicitamente fuera de MOD-003 Fase 4:**
 
-- Route Guards UI · Supabase snapshot · business logic en portales
+- Router real · redirect · nav hide · Supabase snapshot · business logic en portales
 
-**Tests aprobados (post Fase 3B):** **162/162** unit · **3/3** e2e · visual localhost PO en client / artist / staff.
+**Tests aprobados (post Fase 4):** **184/184** unit · **3/3** e2e · visual localhost PO en client / artist / staff.
 
 ---
 
@@ -207,7 +210,7 @@ Detalle completo: [`../DECISIONS.md`](../DECISIONS.md).
 | Item | Motivo |
 |------|--------|
 | `web/` | Producción V1 — congelada salvo ticket |
-| `MiamiDJBeat-MigracionV2/` (runtime) | MOD-002 + MOD-003 Fases 1–3B commiteados localmente; push bajo `APROBADO PUSH` |
+| `MiamiDJBeat-MigracionV2/` (runtime) | MOD-002 + MOD-003 Fases 1–4 commiteados localmente; push bajo `APROBADO PUSH` |
 | `MiamiDJBeat-MigracionV2/.env` | Secretos — nunca en git |
 | Invoice · Cash Flow · Stripe · Header/Nav V1 | Baselines V1 en `docs/architecture/` y PR #116 |
 

@@ -111,3 +111,26 @@ El laboratorio mantiene:
 **Próximo trabajo aprobado:** **MOD-003 Fase 4 — Route Guards** — **PENDIENTE DE APROBACIÓN PO**.
 
 Detalle extendido: `docs/V2/SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Closeout Local.
+
+---
+
+## Cierre MOD-003 Route Guards (2026-07-06)
+
+**Ticket:** TICKET-MOD-003-ROUTE-GUARDS-CLOSEOUT-DOCS-001 · **Decisión:** DECISION-V2-008 (**LOCKED LOCAL**)
+
+### Resumen ejecutivo
+
+MOD-003 **Fase 4 — Route Guards** queda completada. Módulo puro `canActivateRoute()` sobre **47** rutas registradas; delega en `hasCapability()` sin tocar Boot, Session ni portales.
+
+| Métrica | Resultado |
+|---------|-----------|
+| **Commit** | `eb8372d` |
+| **Rutas** | **47** (client 11 · artist 14 · staff 22) |
+| **Tests unitarios** | **184/184** |
+| **E2E** | **3/3** |
+| **Visual PO** | Aprobado — client · artist · staff |
+| **Push / PR** | No ejecutados |
+
+**Próximo trabajo aprobado:** **MOD-003 Fase 5 — Component Guards** — **PENDIENTE DE APROBACIÓN PO**.
+
+Detalle extendido: `docs/V2/SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Route Guards Closeout Local.
