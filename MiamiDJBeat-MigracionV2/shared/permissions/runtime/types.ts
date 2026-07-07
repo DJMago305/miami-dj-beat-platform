@@ -115,7 +115,35 @@ export type PermissionErrorCode =
   | 'PERM_PORTAL_NOT_ALLOWED'
   | 'PERM_INVALID_PROFILE'
   | 'PERM_INVALID_ARTIST_TIER'
-  | 'PERM_DOCUMENTED_ROLE_NOT_FOUND';
+  | 'PERM_DOCUMENTED_ROLE_NOT_FOUND'
+  | 'PERM_ROLE_CAPABILITY_MATRIX_MISSING'
+  | 'PERM_CAPABILITY_DENIED'
+  | 'PERM_SNAPSHOT_REQUIRED';
+
+export type SnapshotFlags = {
+  readonly clientVip?: boolean;
+  readonly sftOk?: boolean;
+};
+
+export type PermissionResolverInput = {
+  readonly profile: ProfileResolveInput;
+  readonly portal: PermissionPortalId;
+  readonly flags?: SnapshotFlags;
+  readonly userId?: string | null;
+  readonly snapshotVersion?: number;
+};
+
+export type PermissionSnapshot = {
+  readonly snapshotVersion: number;
+  readonly resolvedAt: string;
+  readonly userId: string | null;
+  readonly portal: PermissionPortalId;
+  readonly profile: ResolvedProfile;
+  readonly documentedRole: DocumentedRoleId;
+  readonly flags: SnapshotFlags;
+  readonly capabilities: readonly CapabilityId[];
+  readonly capabilityCount: number;
+};
 
 export const CAPABILITY_ID_FORMAT =
   /^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)+$/;
