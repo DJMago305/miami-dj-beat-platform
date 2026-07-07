@@ -134,3 +134,27 @@ MOD-003 **Fase 4 — Route Guards** queda completada. Módulo puro `canActivateR
 **Próximo trabajo aprobado:** **MOD-003 Fase 5 — Component Guards** — **PENDIENTE DE APROBACIÓN PO**.
 
 Detalle extendido: `docs/V2/SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Route Guards Closeout Local.
+
+---
+
+## Cierre MOD-003 Permissions Complete (2026-07-06)
+
+**Ticket:** TICKET-MOD-003-STAFF-WIRE-AND-CLOSEOUT-001 · **Decisión:** DECISION-V2-009 (**LOCKED LOCAL**)
+
+### Resumen ejecutivo
+
+MOD-003 **Permissions** queda **completado** en baseline local: núcleo (Fases 1–3B) + Route Guards (Fase 4) + Component Map/Guards (Fase 5A–5B) + Portal Wires Client/Artist/Staff (Fase 5C).
+
+| Métrica | Resultado |
+|---------|-----------|
+| **Commits clave** | `5f3547d` · `24339a1` · `aa702ff` · `fb78b1e` · `eb8372d` · `aa6d9e4` · `abe188c` · `fdc69fa` · `3ba23d8` · `f6451e5` |
+| **Componentes** | **52** (client 12 · artist 14 · staff 26) |
+| **Rutas** | **47** (client 11 · artist 14 · staff 22) |
+| **Tests unitarios** | **234/234** |
+| **E2E** | **3/3** |
+| **Visual PO** | Aprobado — client · artist · staff — `Business logic: false` |
+| **Push / PR** | No ejecutados |
+
+**Próximo trabajo aprobado:** **MOD-004 Theme System** — **PENDIENTE DE APROBACIÓN PO**.
+
+Detalle extendido: `docs/V2/SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Permissions Complete Local Baseline.

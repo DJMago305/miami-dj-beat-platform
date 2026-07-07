@@ -357,3 +357,62 @@ Evidencia de validación:
 ### Aprobación
 
 Product Owner — TICKET-MOD-003-ROUTE-GUARDS-CLOSEOUT-DOCS-001 (2026-07-06) — **PENDIENTE DE APROBACIÓN PO PARA MOD-003 FASE 5 — COMPONENT GUARDS**
+
+---
+
+## DECISION-V2-009
+
+| Campo | Valor |
+|-------|-------|
+| **Fecha** | 2026-07-06 |
+| **Título** | MOD-003 Permissions Complete Local Baseline Approved |
+| **Estado** | **LOCKED LOCAL** |
+| **Ticket cierre** | TICKET-MOD-003-STAFF-WIRE-AND-CLOSEOUT-001 |
+| **Evidencia** | `docs/V2/SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Permissions Complete Local Baseline (2026-07-06) |
+
+### Descripción
+
+Se completa **MOD-003 Permissions** en el laboratorio `MiamiDJBeat-MigracionV2/` — núcleo + guards + wires en los tres portales:
+
+| Componente | Commit |
+|------------|--------|
+| **Capability Registry** | `5f3547d` |
+| **Profile Matrix + Role Matrix Bridge** | `24339a1` |
+| **Permission Resolver** | `aa702ff` |
+| **Session Permission Wire** | `fb78b1e` |
+| **Route Guards** | `eb8372d` |
+| **Component Map** (52 componentes) | `aa6d9e4` |
+| **Component Guards** | `abe188c` |
+| **Client Portal Wire** (12 componentes) | `fdc69fa` |
+| **Artist Portal Wire** (14 componentes) | `3ba23d8` |
+| **Staff Portal Wire** (26 componentes) | `f6451e5` |
+
+Evidencia de validación:
+
+- **52** componentes registrados — client 12 · artist 14 · staff 26
+- **47** rutas registradas — client 11 · artist 14 · staff 22
+- **234/234** tests unitarios · **3/3** e2e Playwright
+- Validación visual PO aprobada — client · artist · staff
+- Boot · Session · Shared Core — **sin cambios**
+- Portal wires: resolve-only — **sin hide · sin nav · sin router · sin business logic**
+- **Business logic: false** · **Sin push · sin PR · sin Supabase**
+
+### Consecuencias
+
+| Regla | Detalle |
+|-------|---------|
+| Consumo obligatorio | Rutas → **`canActivateRoute()`** · UI → **`canRenderComponent()` / `canEnableComponent()` / `canUseAction()`** vía registry portal |
+| Prohibido | Reimplementar `hasCapability()` en portales o consultar rol JWT directo |
+| Congelado | Capability Registry · Profile/Role Matrix · Permission Resolver · Session Permission Wire · Route Guards · Component Map · Component Guards · Client/Artist/Staff wires |
+| Próximo módulo autorizado | **MOD-004 Theme System** (boot sequence post-permissions) |
+
+| Autorizado tras LOCKED LOCAL | No autorizado sin ticket + PO |
+|------------------------------|-------------------------------|
+| Apertura **MOD-004 Theme System** | Push/merge/deploy producción |
+| Tickets runtime acotados a Theme/i18n/Flags o portal shells | Modificar núcleo MOD-003 congelado sin ADR PO |
+| Portal guard UX (hide/disable) | Sin ticket portal explícito |
+| Continuar lab local sobre baseline MOD-003 completo | Business logic en portales |
+
+### Aprobación
+
+Product Owner — TICKET-MOD-003-STAFF-WIRE-AND-CLOSEOUT-001 (2026-07-06) — **PENDIENTE DE APROBACIÓN PO PARA MOD-004 THEME SYSTEM**
