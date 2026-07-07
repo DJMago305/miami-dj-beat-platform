@@ -22,7 +22,36 @@ export type ThemeDefinition = {
 export type ThemeErrorCode =
   | 'THEME_INVALID_ID'
   | 'THEME_NOT_REGISTERED'
-  | 'THEME_REGISTRY_EMPTY';
+  | 'THEME_REGISTRY_EMPTY'
+  | 'THEME_RUNTIME_NOT_READY';
+
+export type ThemeRuntimeLifecycleState =
+  | 'UNKNOWN'
+  | 'INITIALIZING'
+  | 'THEME_RESOLVED'
+  | 'READY'
+  | 'FAILED';
+
+export type ThemeSnapshot = {
+  readonly lifecycle: 'READY';
+  readonly resolvedAt: string;
+  readonly themeId: ThemeId;
+  readonly mode: ThemeMode;
+  readonly tokens: ThemeTokenMap;
+  readonly reason: ThemeResolveReason;
+};
+
+export type ThemeRuntimeState = {
+  readonly lifecycle: ThemeRuntimeLifecycleState;
+  readonly snapshot: ThemeSnapshot | null;
+  readonly initializedAt: string | null;
+  readonly errorCode?: ThemeErrorCode;
+};
+
+/** Session theme values are passed as data only — never read from Session runtime. */
+export type InitializeThemeRuntimeInput = ThemeResolveInput & {
+  readonly sessionThemeMode?: ThemeMode | string;
+};
 
 export type ThemeModePreference = 'dark' | 'light' | 'system';
 

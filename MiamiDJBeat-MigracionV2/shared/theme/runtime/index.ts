@@ -1,4 +1,4 @@
-/** MOD-007 Theme Manager — public API — TICKET-MOD-007-THEME-REGISTRY-001 · TICKET-MOD-007-THEME-RESOLVER-001 */
+/** MOD-007 Theme Manager — public API — TICKET-MOD-007-THEME-REGISTRY-001 · TICKET-MOD-007-THEME-RESOLVER-001 · TICKET-MOD-007-THEME-RUNTIME-001 */
 
 export { ThemeError, isThemeError } from './errors';
 export {
@@ -21,7 +21,15 @@ export {
   resolveFallbackTheme,
   resolveTheme,
 } from './theme-resolver';
+export {
+  getActiveTheme,
+  getThemeRuntimeState,
+  initializeThemeRuntime,
+  isThemeReady,
+  resetThemeRuntimeForTests,
+} from './theme-runtime';
 export type {
+  InitializeThemeRuntimeInput,
   ThemeDefinition,
   ThemeErrorCode,
   ThemeId,
@@ -30,6 +38,9 @@ export type {
   ThemeResolveInput,
   ThemeResolveReason,
   ThemeResolveResult,
+  ThemeRuntimeLifecycleState,
+  ThemeRuntimeState,
+  ThemeSnapshot,
   ThemeTokenMap,
 } from './types';
 export {
