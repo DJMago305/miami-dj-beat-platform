@@ -28,6 +28,13 @@ export {
   isThemeReady,
   resetThemeRuntimeForTests,
 } from './theme-runtime';
+export {
+  bootIntegrateTheme,
+  getThemeBootEventPayloadForTests,
+  resetThemeBootIntegrationForTests,
+  wereThemeBootEventsEmittedForTests,
+} from './theme-boot-integration';
+export { applyThemeTokensToRoot, tokenKeyToCssVariable } from './theme-tokens';
 export type {
   InitializeThemeRuntimeInput,
   ThemeDefinition,
