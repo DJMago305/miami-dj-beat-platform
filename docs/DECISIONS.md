@@ -255,3 +255,55 @@ Evidencia de validación:
 ### Aprobación
 
 Product Owner — TICKET-MOD-003-LOCAL-CHECKPOINT-DOCS-001 (2026-07-06) — **PENDIENTE DE APROBACIÓN PO PARA MOD-003 FASE 3 — PERMISSION RESOLVER**
+
+---
+
+## DECISION-V2-007
+
+| Campo | Valor |
+|-------|-------|
+| **Fecha** | 2026-07-06 |
+| **Título** | MOD-003 Permissions Core Local Baseline Approved |
+| **Estado** | **LOCKED LOCAL** |
+| **Ticket cierre** | TICKET-MOD-003-CLOSEOUT-LOCAL-001 |
+| **Evidencia** | `docs/V2/SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Closeout Local (2026-07-06) |
+
+### Descripción
+
+Se completa el **núcleo arquitectónico** del sistema de permisos MOD-003 hasta **Fase 3B** en el laboratorio `MiamiDJBeat-MigracionV2/`:
+
+| Componente | Commit |
+|------------|--------|
+| **Capability Registry** | `5f3547d` |
+| **Profile Matrix** | `24339a1` |
+| **Role Matrix** | `24339a1` |
+| **Permission Resolver** | `aa702ff` |
+| **Session ↔ Permission Snapshot** | `fb78b1e` |
+
+Evidencia de validación:
+
+- **162/162** tests unitarios · **3/3** e2e Playwright
+- Validación visual PO aprobada — client · artist · staff
+- Boot · Config · Bus · Logging · Error Handler · Session — sin regresiones
+- **Business logic: false** · **Sin push · sin PR · sin Supabase**
+
+### Consecuencias
+
+| Regla | Detalle |
+|-------|---------|
+| Consumo obligatorio | Todo desarrollo futuro de autorización debe consumir **PermissionSnapshot** vía Session |
+| Prohibido | Checks manuales por rol dentro de portales (`if (role === 'Owner')`) |
+| Obligatorio | Toda autorización mediante **`hasCapability()`** |
+| Congelado | Capability Registry · Role Matrix · Profile Matrix · Permission Resolver · Session Permission Snapshot |
+| Próximo módulo autorizado | **MOD-003 Fase 4 — Route Guards** |
+
+| Autorizado tras LOCKED LOCAL | No autorizado sin ticket + PO |
+|------------------------------|-------------------------------|
+| Apertura **MOD-003 Fase 4 — Route Guards** | Push/merge/deploy producción |
+| Tickets runtime acotados a guards MOD-003+ | Modificar núcleo Permissions congelado |
+| Referencia a commits MOD-003 en tickets V2 | Modificar DECISION-V2-007 sin ADR PO |
+| Continuar lab local sobre baseline MOD-003 | Business logic en portales |
+
+### Aprobación
+
+Product Owner — TICKET-MOD-003-CLOSEOUT-LOCAL-001 (2026-07-06) — **PENDIENTE DE APROBACIÓN PO PARA MOD-003 FASE 4 — ROUTE GUARDS**

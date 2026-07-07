@@ -80,3 +80,34 @@ Detalle extendido: `docs/V2/SESSION-SUMMARIES/2026-07-05.md` § MOD-002 Closeout
 **Siguiente paso:** **PENDIENTE DE APROBACIÓN PO PARA MOD-003 FASE 3 — PERMISSION RESOLVER.**
 
 Detalle extendido: `docs/V2/SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Permissions — Local Checkpoint.
+
+---
+
+## Cierre MOD-003 (2026-07-06)
+
+**Ticket:** TICKET-MOD-003-CLOSEOUT-LOCAL-001 · **Decisión:** DECISION-V2-007 (**LOCKED LOCAL**)
+
+### Resumen ejecutivo
+
+MOD-003 queda **completado hasta Fase 3B**. **PermissionSnapshot** ya forma parte de Session al llegar a `SESSION_READY`.
+
+El laboratorio mantiene:
+
+- **162** tests unitarios · **3/3** e2e
+- Validación visual del Product Owner — client · artist · staff
+- **Sin regresiones**
+- **Sin cambios** en Boot · Config · Bus · Logging · Error Handler
+- **Sin cambios visuales** en portales
+
+| Fase | Commit |
+|------|--------|
+| Capability Registry | `5f3547d` |
+| Profile + Role Matrix | `24339a1` |
+| Permission Resolver | `aa702ff` |
+| Session Permission Snapshot | `fb78b1e` |
+
+**Push / PR:** no ejecutados.
+
+**Próximo trabajo aprobado:** **MOD-003 Fase 4 — Route Guards** — **PENDIENTE DE APROBACIÓN PO**.
+
+Detalle extendido: `docs/V2/SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Closeout Local.
