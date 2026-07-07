@@ -19,7 +19,30 @@ export type ThemeDefinition = {
   readonly tokens: ThemeTokenMap;
 };
 
-export type ThemeErrorCode = 'THEME_INVALID_ID' | 'THEME_NOT_REGISTERED';
+export type ThemeErrorCode =
+  | 'THEME_INVALID_ID'
+  | 'THEME_NOT_REGISTERED'
+  | 'THEME_REGISTRY_EMPTY';
+
+export type ThemeModePreference = 'dark' | 'light' | 'system';
+
+export type ThemeResolveReason = 'config' | 'user' | 'system' | 'fallback';
+
+export type ThemeResolveInput = {
+  readonly configDefaultMode: ThemeMode | string;
+  readonly userPreference?: ThemeModePreference | string;
+  readonly systemPreference?: ThemeMode | string;
+  readonly themeId?: string;
+};
+
+export type ThemeResolveResult = {
+  readonly themeId: ThemeId;
+  readonly mode: ThemeMode;
+  readonly tokens: ThemeTokenMap;
+  readonly reason: ThemeResolveReason;
+};
+
+export const FALLBACK_THEME_ID: ThemeId = 'mdj-dark-gold-high-contrast';
 
 export const DEFAULT_DARK_THEME_ID: ThemeId = 'mdj-dark-gold';
 
