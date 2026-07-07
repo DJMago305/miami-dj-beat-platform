@@ -416,3 +416,97 @@ Evidencia de validación:
 ### Aprobación
 
 Product Owner — TICKET-MOD-003-STAFF-WIRE-AND-CLOSEOUT-001 (2026-07-06) — **PENDIENTE DE APROBACIÓN PO PARA MOD-004 THEME SYSTEM**
+
+---
+
+## DECISION-V2-010
+
+| Campo | Valor |
+|-------|-------|
+| **Fecha** | 2026-07-06 |
+| **Título** | Gobernanza prevalece sobre criterio técnico |
+| **Estado** | **APROBADA** |
+| **Ticket cierre** | TICKET-V2-END-OF-DAY-DOCUMENTATION-2026-07-06 |
+| **Evidencia** | Incidente gobernanza commit metadata + regresión staff shell (2026-07-06) |
+
+### Descripción
+
+**La gobernanza del Product Owner prevalece sobre cualquier criterio técnico, incluyendo conveniencia del agente, velocidad de entrega o “mejor práctica” no autorizada.**
+
+Ningún atajo operativo (amend, reset destructivo, scope creep, trailers de commit) puede sustituir el protocolo de ticket + alcance + validación PO.
+
+### Consecuencias
+
+| Obligatorio | Prohibido sin PO |
+|-------------|------------------|
+| Detener ante conflicto ticket vs necesidad técnica | Improvisar fuera de alcance |
+| Informe + espera PO | Priorizar “verde tests” ampliando archivos no autorizados |
+| Mensaje commit exacto PO | Metadata no autorizada en commits |
+
+### Aprobación
+
+Product Owner — TICKET-V2-END-OF-DAY-DOCUMENTATION-2026-07-06 (2026-07-06)
+
+---
+
+## DECISION-V2-011
+
+| Campo | Valor |
+|-------|-------|
+| **Fecha** | 2026-07-06 |
+| **Título** | Prohibición de alcance fuera de ticket sin Informe Técnico |
+| **Estado** | **APROBADA** |
+| **Ticket cierre** | TICKET-V2-END-OF-DAY-DOCUMENTATION-2026-07-06 |
+| **Referencia** | Regla 11 + Regla 12 — `.cursorrules` / workflow-control |
+
+### Descripción
+
+Queda **prohibido** introducir archivos, líneas de código o prerrequisitos técnicos **fuera del ticket autorizado** sin:
+
+1. **DETENER** la implementación.
+2. Presentar **Informe Técnico** (Regla 11) al Product Owner.
+3. Obtener **aprobación expresa** por escrito ampliando el alcance.
+
+### Consecuencias
+
+| Autorizado | No autorizado |
+|------------|---------------|
+| Cambios estrictamente en archivos listados por PO | “Drive-by” fixes en shared, tests ajenos, package.json, docs no pedidos |
+| Informe + ticket nuevo para prerrequisitos | Asumir que un fix colateral es “obvio” |
+| Commits acotados a lista PO | Mezclar infra no commiteada sin ticket de durabilidad |
+
+### Aprobación
+
+Product Owner — TICKET-V2-END-OF-DAY-DOCUMENTATION-2026-07-06 (2026-07-06)
+
+---
+
+## DECISION-V2-012
+
+| Campo | Valor |
+|-------|-------|
+| **Fecha** | 2026-07-06 |
+| **Título** | Integridad de mensajes de commit autorizados |
+| **Estado** | **APROBADA** |
+| **Ticket cierre** | TICKET-V2-END-OF-DAY-DOCUMENTATION-2026-07-06 |
+| **Referencia** | Regla 13 — workflow-control / no-auto-deploy |
+
+### Descripción
+
+Los mensajes de commit deben coincidir **exactamente** con los autorizados por el Product Owner en el ticket de commit.
+
+Queda **prohibido** agregar trailers (`Co-authored-by`, `Signed-off-by`, u otros) **sin autorización expresa** del Product Owner.
+
+Si un hook de entorno inyecta metadata no autorizada, el commit no se considera conforme hasta rectificación explícita aprobada por PO — **sin** usar operaciones destructivas que descarten trabajo no commiteado.
+
+### Consecuencias
+
+| Obligatorio | Prohibido |
+|-------------|-----------|
+| Verificar `git log -1 --format='%B'` post-commit | Trailers no autorizados |
+| Mensaje literal del ticket | `git reset --hard` solo para limpiar metadata |
+| Protocolo PO para rectificación (`commit-tree` bajo autorización) | Amend/push improvisados |
+
+### Aprobación
+
+Product Owner — TICKET-V2-END-OF-DAY-DOCUMENTATION-2026-07-06 (2026-07-06)

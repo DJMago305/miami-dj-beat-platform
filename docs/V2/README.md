@@ -17,9 +17,37 @@ La Constitución (`MIAMIDJBEAT-PROYECTO-CONSTITUCION.md`) manda sobre cualquier 
 
 ## Estado del Laboratorio
 
-**Baseline:** TICKET-V2-BOOTLINE-BASELINE-001 (2026-07-06) — validación visual PO aprobada.
+**Baseline:** TICKET-V2-BOOTLINE-BASELINE-001 (2026-07-06) — validación visual PO aprobada.  
+**Cierre jornada V2:** TICKET-V2-END-OF-DAY-DOCUMENTATION-2026-07-06 — tres dashboards MVP · suite verde.
 
-### MOD-002
+### Estado actual (módulos operativos local)
+
+| Módulo | Estado |
+|--------|--------|
+| ✅ **MOD-002** Sessions | LOCKED LOCAL (DECISION-V2-005) |
+| ✅ **MOD-003** Permissions | LOCKED LOCAL — completo Fases 1–5C (DECISION-V2-009) |
+| ✅ **MOD-007** Theme Manager | Operativo local — registry · resolver · runtime · boot integration |
+| ✅ **MOD-008** Portal Shell | Operativo visual localhost |
+| ✅ **MOD-009** Components Foundation | Descriptores MVP commiteados (`c0f94eb`) |
+| ✅ **MOD-010** Client Dashboard MVP | Commiteado (`abdf3d2`) |
+| ✅ **MOD-011** Artist Dashboard MVP | Commiteado (`5ef4362`) |
+| ✅ **MOD-012** Staff Dashboard MVP | Commiteado (`51e0b4c`) |
+
+### Métricas al cierre 2026-07-06
+
+| Métrica | Resultado |
+|---------|-----------|
+| **Tests unitarios** | **297/297** PASS |
+| **E2E Playwright** | **3/3** PASS |
+| **Localhost** | Client · Artist · Staff dashboards operativos |
+| **Git HEAD** | `f73f9bb` — `fix(v2-theme): restore public theme exports` |
+| **Push / PR** | NO |
+
+Detalle jornada: `SESSION-SUMMARIES/2026-07-06.md` · nota operativa: `../NOTA-DIARIA-2026-07-06.md` § CIERRE DE JORNADA.
+
+---
+
+### MOD-002 (histórico baseline)
 
 | Campo | Valor |
 |-------|-------|
@@ -67,7 +95,7 @@ Detalle boot scaffold: § Validación Localhost — 2026-07-06.
 | Nivel | Documento | Rol |
 |-------|-----------|-----|
 | 1 — Máxima | `MIAMIDJBEAT-PROYECTO-CONSTITUCION.md` | Constitución del proyecto |
-| 2 — Decisiones | `../DECISIONS.md` | Registro oficial DECISION-V2-001 … 009 |
+| 2 — Decisiones | `../DECISIONS.md` | Registro oficial DECISION-V2-001 … 012 |
 | 3 — Gobernanza | `GOVERNANCE/` | Pipeline agentes, gates, autorización |
 | 4 — Operación | `NOTA-DIARIA-OPERACION-PERMANENTE.md` | Guía operativa diaria |
 | 5 — Arquitectura | `ARCHITECTURE/` | Handbook + mapas (boot, deps, events, errors) |
@@ -118,6 +146,7 @@ Ver `GOVERNANCE/README.md` — pipeline agente, checklist violaciones, formulari
 | Archivo | Descripción |
 |---------|-------------|
 | `2026-07-05.md` | Resumen técnico extendido — jornada fundacional Shared Core |
+| `2026-07-06.md` | Cierre jornada — MOD-007 · dashboards MVP · gobernanza · suite verde |
 | `PROFILE-TAXONOMY.md` | Taxonomía perfiles recuperables Client · Artist · Staff (pre MOD-003) |
 
 ---
@@ -128,7 +157,7 @@ Ver `GOVERNANCE/README.md` — pipeline agente, checklist violaciones, formulari
 |---------|-----------------|
 | `DECISIONS.md` | Registro oficial de DECISION-V2-001 … 009 |
 | `NOTA-DIARIA-2026-07-05.md` | Cabecera operativa del día (cierre fase fundacional). Detalle → `SESSION-SUMMARIES/2026-07-05.md` |
-| `NOTA-DIARIA-2026-07-06.md` | Nota V1 (Invoice / Cash Flow / Nav) — **en `main`**, fuera de baseline V2 |
+| `NOTA-DIARIA-2026-07-06.md` | Nota operativa del día — V1 Invoice/Cash Flow + **§ CIERRE DE JORNADA V2** |
 
 ---
 
@@ -165,6 +194,9 @@ Tickets P0 de **runtime V1** (`web/mdj-shared-header.js`, `dj-profile.html`). Do
 | DECISION-V2-007 | MOD-003 Permissions Core local baseline (Fases 1–3B) | `SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Closeout Local — 2026-07-06 |
 | DECISION-V2-008 | MOD-003 Route Guards local baseline (Fase 4) | `SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Route Guards Closeout Local — 2026-07-06 |
 | DECISION-V2-009 | MOD-003 Permissions complete local baseline (Fases 1–5C) | `SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Permissions Complete Local Baseline — 2026-07-06 |
+| DECISION-V2-010 | Gobernanza prevalece sobre criterio técnico | `../DECISIONS.md` · `SESSION-SUMMARIES/2026-07-06.md` |
+| DECISION-V2-011 | Prohibición alcance fuera de ticket sin Informe Técnico | `../DECISIONS.md` · Regla 11/12 |
+| DECISION-V2-012 | Integridad mensajes commit — sin trailers no autorizados | `../DECISIONS.md` · Regla 13 |
 
 Detalle completo: [`../DECISIONS.md`](../DECISIONS.md).
 
@@ -183,7 +215,7 @@ Detalle completo: [`../DECISIONS.md`](../DECISIONS.md).
 
 **Congelado (no modificado sin ticket PO):** `bootstrap/boot.ts` · Config · Event Bus · Logging · Error Handler · Session Core · Permission Core · portales · Vite routing.
 
-**Próximo paso documental:** **MOD-004 Theme System** — **PENDIENTE DE APROBACIÓN PO**.
+**Próximo paso documental:** siguiente ticket funcional **solo tras validación PO** al inicio de sesión (auditoría solo lectura). Infra MOD-008 pendiente de commit dedicado para durabilidad Git.
 
 **Deploy:** sin push · sin PR · sin producción.
 
