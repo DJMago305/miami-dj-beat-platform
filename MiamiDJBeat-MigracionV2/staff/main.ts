@@ -6,7 +6,18 @@ import {
 } from '../shared/layout/render-portal-shell';
 import { STAFF_SHELL_CONTENT } from '../shared/navigation/staff-shell.config';
 import { resolveStaffPortalComponentGuards } from './component-guards-wire';
+import { renderStaffDashboardMvp } from './render-staff-dashboard-mvp';
 import '../shared/layout/portal-shell.css';
+import './dashboard-mvp.css';
+
+function mountStaffDashboard(app: HTMLElement): void {
+  const mainRegion = app.querySelector<HTMLElement>('[data-mdj-shell-region="main"]');
+  if (!mainRegion) {
+    return;
+  }
+
+  renderStaffDashboardMvp(mainRegion);
+}
 
 function main(): void {
   const boot = bootScaffold(undefined, 'staff');
@@ -56,6 +67,8 @@ function main(): void {
       version: MDJ_V2_SCAFFOLD_VERSION,
     }),
   );
+
+  mountStaffDashboard(app);
 }
 
 main();
