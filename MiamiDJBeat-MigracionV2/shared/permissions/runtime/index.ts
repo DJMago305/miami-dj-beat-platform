@@ -1,4 +1,4 @@
-/** MOD-003 Permissions — public API — TICKET-MOD-003-CAPABILITY-REGISTRY-001 · TICKET-MOD-003-PROFILE-MATRIX-001 · TICKET-MOD-003-PERMISSION-RESOLVER-001 */
+/** MOD-003 Permissions — public API — TICKET-MOD-003-CAPABILITY-REGISTRY-001 · TICKET-MOD-003-PROFILE-MATRIX-001 · TICKET-MOD-003-PERMISSION-RESOLVER-001 · TICKET-MOD-003-ROUTE-GUARDS-001 */
 
 export { PermissionError, isPermissionError } from './errors';
 export {
@@ -21,6 +21,27 @@ export {
   listEffectiveCapabilities,
   resolvePermissionSnapshot,
 } from './permission-resolver';
+export {
+  ROUTE_CAPABILITY_MAP,
+  ROUTE_COUNT,
+  canActivateRoute,
+  getRouteDefinition,
+  isRegisteredRoute,
+  listRoutesForPortal,
+} from './route-guards';
+export type {
+  RouteAccessMode,
+  RouteCapabilityMatch,
+  RouteDefinition,
+  RouteGuardAllowedResult,
+  RouteGuardDeniedResult,
+  RouteGuardDenyReason,
+  RouteGuardInput,
+  RouteGuardResult,
+  RouteId,
+  RoutePortalId,
+  RouteRedirectHint,
+} from './route-guards';
 export {
   PROFILE_COUNT,
   PROFILE_REGISTRY,
