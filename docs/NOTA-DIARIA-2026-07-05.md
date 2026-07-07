@@ -57,4 +57,26 @@ Detalle extendido: `docs/V2/SESSION-SUMMARIES/2026-07-05.md` § MOD-002 Closeout
 
 - Documentación únicamente — **sin código**.
 - Debe influir MOD-003 Permissions y futuros dashboards — **no implementar aún**.
-- **Estado:** PENDIENTE DE APROBACIÓN PO PARA MOD-003 PERMISSIONS.
+- **Estado:** Taxonomía documentada; runtime Fases 1–2 completadas — ver § MOD-003 Local Checkpoint.
+
+---
+
+## Cierre — MOD-003 Permissions checkpoint local (2026-07-06)
+
+**Ticket:** TICKET-MOD-003-LOCAL-CHECKPOINT-DOCS-001 · **Decisión:** DECISION-V2-006 (**LOCKED LOCAL**)
+
+| Campo | Valor |
+|-------|-------|
+| **Estado MOD-003** | **LOCAL CHECKPOINT APPROVED** — Fases 1–2 |
+| **Baseline MOD-002** | **Congelada** — Session Manager intacto; sirve de base para Permissions |
+| **Fase 1** | Capability Registry — 51 capabilities — commit `5f3547d` |
+| **Fase 2** | Profile Matrix + Role Matrix Bridge — commit `24339a1` |
+| **Tests** | 131/131 unit · 3/3 e2e |
+| **Visual PO** | `:5173/client|artist|staff` — Session: ready · Business logic: false (sin cambio visual) |
+| **Push / PR** | **No ejecutados** |
+
+**Explicitamente fuera de Fases 1–2:** Permission Resolver · `hasCapability()` · wiring Session/Boot · Supabase.
+
+**Siguiente paso:** **PENDIENTE DE APROBACIÓN PO PARA MOD-003 FASE 3 — PERMISSION RESOLVER.**
+
+Detalle extendido: `docs/V2/SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Permissions — Local Checkpoint.
