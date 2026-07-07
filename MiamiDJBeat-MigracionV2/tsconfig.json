@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "useDefineForClassFields": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@mdj/bootstrap/*": ["bootstrap/*"],
+      "@mdj/shared/*": ["shared/runtime/*"],
+      "@mdj/shared/config": ["shared/config/runtime/index.ts"],
+      "@mdj/shared/config/*": ["shared/config/runtime/*"],
+      "@mdj/shared/events": ["shared/events/runtime/index.ts"],
+      "@mdj/shared/events/*": ["shared/events/runtime/*"],
+      "@mdj/shared/logging": ["shared/logging/runtime/index.ts"],
+      "@mdj/shared/logging/*": ["shared/logging/runtime/*"],
+      "@mdj/shared/errors": ["shared/errors/runtime/index.ts"],
+      "@mdj/shared/errors/*": ["shared/errors/runtime/*"],
+      "@mdj/shared/session": ["shared/session/runtime/index.ts"],
+      "@mdj/shared/session/*": ["shared/session/runtime/*"],
+      "@mdj/shared/theme": ["shared/theme/runtime/index.ts"],
+      "@mdj/shared/theme/*": ["shared/theme/runtime/*"]
+    },
+    "types": ["vite/client"]
+  },
+  "include": ["bootstrap", "shared/runtime", "shared/config/runtime", "shared/events/runtime", "shared/logging/runtime", "shared/errors/runtime", "shared/session/runtime", "shared/theme/runtime", "client", "artist", "staff", "tests"]
+}
