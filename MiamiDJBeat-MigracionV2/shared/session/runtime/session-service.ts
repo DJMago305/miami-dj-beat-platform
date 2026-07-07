@@ -1,12 +1,16 @@
-/** MOD-002 Session Manager — service facade — TICKET-V2-RUNTIME-SESSION-001 */
+/** MOD-002 Session Manager — service facade — TICKET-V2-RUNTIME-SESSION-001 · TICKET-MOD-003-PERMISSION-SESSION-WIRE-001 */
 
 import { getErrorState } from '@mdj/shared/errors';
+import { hasCapability, type PermissionPortalId, type ProfileResolveInput, type SnapshotFlags } from '../../permissions/runtime';
 import {
   getAuthSessionBoundary,
   resetAuthSessionBoundaryForTests,
 } from './auth-session-boundary';
 import { SessionError } from './errors';
-import { SessionProvider } from './session-provider';
+import {
+  SessionProvider,
+  type SessionSnapshotWithPermissions,
+} from './session-provider';
 import { resetSessionStoreCounterForTests, SessionStore } from './session-store';
 import type {
   AuthHandle,
@@ -38,6 +42,36 @@ export function getSessionState(): SessionLifecycleState {
 
 export function getSessionSnapshot(): SessionSnapshot {
   return getSessionManager().getSnapshot();
+}
+
+export function asSessionSnapshotWithPermissions(
+  snapshot: SessionSnapshot,
+): SessionSnapshotWithPermissions {
+  return snapshot as SessionSnapshotWithPermissions;
+}
+
+export function hasSessionCapability(
+  capabilityId: string,
+  portal?: PermissionPortalId,
+): boolean {
+  const snapshot = asSessionSnapshotWithPermissions(getSessionSnapshot());
+  if (!snapshot.permissions) {
+    return false;
+  }
+
+  return hasCapability(snapshot.permissions, capabilityId, portal);
+}
+
+export function setSessionPermissionProfileForTests(profile: ProfileResolveInput): void {
+  sessionProvider.setPermissionProfileForTests(profile);
+}
+
+export function setSessionPermissionFlagsForTests(flags: SnapshotFlags): void {
+  sessionProvider.setPermissionFlagsForTests(flags);
+}
+
+export function getSessionPermissionResolverInvokeCountForTests(): number {
+  return sessionProvider.getPermissionResolverInvokeCountForTests();
 }
 
 export function ingestAuthHandle(handle: AuthHandle, identity?: IdentitySnapshot): SessionSnapshot {

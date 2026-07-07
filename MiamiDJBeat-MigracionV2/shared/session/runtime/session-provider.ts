@@ -1,8 +1,16 @@
-/** MOD-002 Session Manager — provider — TICKET-MOD-002-SESSION-PROVIDER-STORE-001 */
+/** MOD-002 Session Manager — provider — TICKET-MOD-002-SESSION-PROVIDER-STORE-001 · TICKET-MOD-003-PERMISSION-SESSION-WIRE-001 */
 
 import { getConfig } from '@mdj/shared/config';
 import { normalizeError } from '@mdj/shared/errors';
 import { getLogger } from '@mdj/shared/logging';
+import {
+  hasCapability,
+  resolvePermissionSnapshot,
+  type PermissionPortalId,
+  type PermissionSnapshot,
+  type ProfileResolveInput,
+  type SnapshotFlags,
+} from '../../permissions/runtime';
 import { SessionError } from './errors';
 import {
   AuthSessionBoundary,
@@ -38,6 +46,19 @@ import type {
   UserLoginEventPayload,
   UserLogoutEventPayload,
 } from './types';
+
+export type SessionPermissionAttachment = {
+  readonly permissions: PermissionSnapshot;
+  readonly permissionVersion: number;
+  readonly resolvedAt: string;
+  readonly capabilityCount: number;
+};
+
+export type SessionSnapshotWithPermissions = SessionSnapshot & SessionPermissionAttachment;
+
+function toPermissionPortal(portal: SessionSnapshot['portal']): PermissionPortalId {
+  return portal;
+}
 
 export type MockRefreshPortConfig = {
   readonly fail?: boolean;
@@ -121,6 +142,10 @@ export class SessionProvider {
   private frozenApi: SessionPublicApi | null = null;
   private logoutInProgress = false;
   private refreshInFlight: Promise<SessionSnapshot> | null = null;
+  private enrichedSnapshot: SessionSnapshotWithPermissions | null = null;
+  private permissionProfile: ProfileResolveInput = { kind: 'guest' };
+  private permissionFlags: SnapshotFlags = {};
+  private permissionResolverInvokeCount = 0;
 
   constructor(
     store: SessionStore,
@@ -140,6 +165,10 @@ export class SessionProvider {
     this.frozenApi = null;
     this.logoutInProgress = false;
     this.refreshInFlight = null;
+    this.enrichedSnapshot = null;
+    this.permissionProfile = { kind: 'guest' };
+    this.permissionFlags = {};
+    this.permissionResolverInvokeCount = 0;
   }
 
   getStore(): SessionStore {
@@ -156,6 +185,81 @@ export class SessionProvider {
 
   getRefreshPort(): SessionRefreshPort {
     return this.refreshPort;
+  }
+
+  setPermissionProfileForTests(profile: ProfileResolveInput): void {
+    this.permissionProfile = profile;
+  }
+
+  setPermissionFlagsForTests(flags: SnapshotFlags): void {
+    this.permissionFlags = Object.freeze({ ...flags });
+  }
+
+  getPermissionResolverInvokeCountForTests(): number {
+    return this.permissionResolverInvokeCount;
+  }
+
+  private defaultAuthenticatedProfile(portal: SessionSnapshot['portal']): ProfileResolveInput {
+    switch (portal) {
+      case 'client':
+        return { kind: 'client', profileId: 'client.regular' };
+      case 'staff':
+        return { kind: 'staff', profileId: 'staff.seller' };
+      case 'artist':
+        return { kind: 'artist', profileId: 'artist.dj', tier: 'Lite' };
+      default:
+        return { kind: 'guest' };
+    }
+  }
+
+  private attachPermissions(baseSnapshot: SessionSnapshot): SessionSnapshotWithPermissions {
+    const permissionSnapshot = resolvePermissionSnapshot({
+      profile: this.permissionProfile,
+      portal: toPermissionPortal(baseSnapshot.portal),
+      flags: this.permissionFlags,
+      userId: baseSnapshot.user?.userId ?? null,
+      snapshotVersion: baseSnapshot.snapshotVersion,
+    });
+
+    const enriched: SessionSnapshotWithPermissions = Object.freeze({
+      ...baseSnapshot,
+      roles: Object.freeze([permissionSnapshot.documentedRole]),
+      capabilities: Object.freeze([...permissionSnapshot.capabilities]),
+      permissions: permissionSnapshot,
+      permissionVersion: permissionSnapshot.snapshotVersion,
+      resolvedAt: permissionSnapshot.resolvedAt,
+      capabilityCount: permissionSnapshot.capabilityCount,
+    });
+
+    return enriched;
+  }
+
+  private publishSessionSnapshot(lifecycle: SessionLifecycleState): SessionSnapshot {
+    const base = this.store.publishSnapshot(this.configSlice(), lifecycle);
+    if (lifecycle !== 'SESSION_READY') {
+      this.enrichedSnapshot = null;
+      return base;
+    }
+
+    const enriched = this.attachPermissions(base);
+    this.enrichedSnapshot = enriched;
+    this.permissionResolverInvokeCount += 1;
+    return enriched;
+  }
+
+  private resolveSnapshotForRead(): SessionSnapshot {
+    if (this.enrichedSnapshot) {
+      return this.enrichedSnapshot;
+    }
+
+    const base = this.store.getSnapshot();
+    if (base.state === 'SESSION_READY') {
+      const enriched = this.attachPermissions(base);
+      this.enrichedSnapshot = enriched;
+      return enriched;
+    }
+
+    return base;
   }
 
   private configSlice(): SessionStoreConfigSlice {
@@ -180,7 +284,7 @@ export class SessionProvider {
       refreshSession: (options?: SessionRefreshOptions) => this.refreshSession(options),
       getSnapshot: () => {
         try {
-          return this.store.getSnapshot();
+          return this.resolveSnapshotForRead();
         } catch {
           throw new SessionError('SESSION_ERROR_NOT_READY', 'Session snapshot is not available.');
         }
@@ -289,7 +393,7 @@ export class SessionProvider {
     }
 
     const readyLifecycle: SessionLifecycleState = 'SESSION_READY';
-    const snapshot = this.store.publishSnapshot(this.configSlice(), readyLifecycle);
+    const snapshot = this.publishSessionSnapshot(readyLifecycle);
     publishSessionEvent('SESSION_READY', {
       portal: snapshot.portal,
       sessionId: snapshot.sessionId,
@@ -328,6 +432,7 @@ export class SessionProvider {
     validateEvent?: 'VALIDATE_OK_NO_USER' | 'VALIDATE_FAIL_RECOVERABLE';
   }): SessionSnapshot {
     const tracing = Boolean(options?.restoreReason);
+    this.permissionProfile = { kind: 'guest' };
 
     if (options?.restoreReason) {
       this.store.appendHydrationTraceStep(options.restoreReason);
@@ -354,7 +459,7 @@ export class SessionProvider {
       this.store.appendHydrationTraceStep('validate_anonymous');
     }
 
-    const snapshot = this.store.publishSnapshot(this.configSlice(), 'SESSION_READY');
+    const snapshot = this.publishSessionSnapshot('SESSION_READY');
 
     if (tracing) {
       this.store.appendHydrationTraceStep('ready');
@@ -412,6 +517,7 @@ export class SessionProvider {
     this.store.setExpiresAt(record.expiresAt ?? null);
     this.store.setHydrationPhase('initial');
     this.store.bumpSnapshotVersion();
+    this.permissionProfile = this.defaultAuthenticatedProfile(this.store.getPortal());
 
     if (this.store.getMachineState() === 'LOADING') {
       this.store.applyMachineTransition('LOADING', 'VALIDATE_OK_USER', 'AUTHENTICATED');
@@ -424,7 +530,7 @@ export class SessionProvider {
       hydrationPhase: 'initial',
     });
 
-    const readySnapshot = this.store.publishSnapshot(this.configSlice(), 'SESSION_READY');
+    const readySnapshot = this.publishSessionSnapshot('SESSION_READY');
     this.store.appendHydrationTraceStep('ready');
     this.store.completeHydrationTrace();
 
@@ -491,6 +597,10 @@ export class SessionProvider {
     this.store.setHydrationPhase(validated.hydrationPhase);
     this.store.bumpSnapshotVersion();
 
+    if (this.permissionProfile.kind === 'guest') {
+      this.permissionProfile = this.defaultAuthenticatedProfile(this.store.getPortal());
+    }
+
     if (this.store.getMachineState() === 'LOADING') {
       this.store.applyMachineTransition('LOADING', 'VALIDATE_OK_USER', 'AUTHENTICATED');
     }
@@ -502,7 +612,7 @@ export class SessionProvider {
       handoffId: acceptedHandle.handoffId,
     });
 
-    const readySnapshot = this.store.publishSnapshot(this.configSlice(), 'SESSION_READY');
+    const readySnapshot = this.publishSessionSnapshot('SESSION_READY');
     publishSessionEvent('SESSION_READY', {
       portal: this.store.getPortal(),
       sessionId: this.store.getSessionId(),
@@ -608,7 +718,7 @@ export class SessionProvider {
     this.store.applyMachineTransition('AUTHENTICATED', 'REFRESH_START', 'REFRESHING');
     this.store.setRefreshing(true);
     this.store.bumpSnapshotVersion();
-    this.store.publishSnapshot(this.configSlice(), 'SESSION_READY');
+    this.publishSessionSnapshot('SESSION_READY');
 
     const refreshResult = await resolveRefreshResult(
       unwrapRefreshResult(
@@ -637,7 +747,7 @@ export class SessionProvider {
     this.store.setRefreshing(false);
     this.store.bumpSnapshotVersion();
 
-    const readySnapshot = this.store.publishSnapshot(this.configSlice(), 'SESSION_READY');
+    const readySnapshot = this.publishSessionSnapshot('SESSION_READY');
     publishSessionEvent('SESSION_READY', {
       portal: readySnapshot.portal,
       sessionId: readySnapshot.sessionId,

@@ -7,21 +7,26 @@ export {
   resetAuthSessionBoundaryForTests,
 } from './auth-session-boundary';
 export {
+  asSessionSnapshotWithPermissions,
   clearSession,
   deliverAuthHandoff,
   destroySession,
   detectSessionExpiry,
   getAuthSessionBoundaryForTests,
   getSessionManager,
+  getSessionPermissionResolverInvokeCountForTests,
   getSessionProviderForTests,
   getSessionSnapshot,
   getSessionState,
   getSessionStoreForTests,
   handleSessionExpiry,
+  hasSessionCapability,
   ingestAuthHandle,
   initializeSession,
   refreshSession,
   resetSessionForTests,
+  setSessionPermissionFlagsForTests,
+  setSessionPermissionProfileForTests,
 } from './session-service';
 export {
   areSessionEventListenersRegistered,
@@ -35,7 +40,11 @@ export {
 } from './session-listeners';
 export type { SessionEventListenerHandlers } from './session-listeners';
 export { SessionProvider, createMockRefreshPort, createNoopRefreshPort } from './session-provider';
-export type { MockRefreshPortConfig } from './session-provider';
+export type {
+  MockRefreshPortConfig,
+  SessionPermissionAttachment,
+  SessionSnapshotWithPermissions,
+} from './session-provider';
 export {
   createInMemoryPersistencePort,
   createNoopPersistencePort,

@@ -4,6 +4,7 @@ import { resetErrorHandlerForTests, initializeErrorHandler } from '@mdj/shared/e
 import { getEventBus, initializeEventBus, resetEventBusForTests } from '@mdj/shared/events';
 import { initializeLogging, resetLoggingForTests } from '@mdj/shared/logging';
 import {
+  asSessionSnapshotWithPermissions,
   clearSession,
   deliverAuthHandoff,
   destroySession,
@@ -76,6 +77,7 @@ describe('MOD-002 Session Manager', () => {
     expect(snapshot.hydrationPhase).toBe('initial');
     expect(snapshot.sessionId).toMatch(/^ses_/);
     expect(Object.isFrozen(snapshot)).toBe(true);
+    expect(asSessionSnapshotWithPermissions(snapshot).permissions.documentedRole).toBe('guest');
     expect(getSessionStoreForTests().getHydrationTrace()?.steps).toContain('restore_empty');
   });
 
