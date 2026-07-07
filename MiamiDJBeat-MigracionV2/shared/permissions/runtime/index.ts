@@ -1,4 +1,4 @@
-/** MOD-003 Permissions — public API — TICKET-MOD-003-CAPABILITY-REGISTRY-001 · TICKET-MOD-003-PROFILE-MATRIX-001 · TICKET-MOD-003-PERMISSION-RESOLVER-001 · TICKET-MOD-003-ROUTE-GUARDS-001 · TICKET-MOD-003-COMPONENT-MAP-001 */
+/** MOD-003 Permissions — public API — TICKET-MOD-003-CAPABILITY-REGISTRY-001 · TICKET-MOD-003-PROFILE-MATRIX-001 · TICKET-MOD-003-PERMISSION-RESOLVER-001 · TICKET-MOD-003-ROUTE-GUARDS-001 · TICKET-MOD-003-COMPONENT-MAP-001 · TICKET-MOD-003-COMPONENT-GUARDS-001 */
 
 export { PermissionError, isPermissionError } from './errors';
 export {
@@ -58,6 +58,17 @@ export type {
   ComponentPortalId,
   ComponentStatePolicy,
 } from './component-capability-map';
+export {
+  canEnableComponent,
+  canRenderComponent,
+  canUseAction,
+} from './component-guards';
+export type {
+  ComponentGuardInput,
+  ComponentGuardReason,
+  ComponentGuardResult,
+  ComponentVisibilityPolicy,
+} from './component-guards';
 export {
   PROFILE_COUNT,
   PROFILE_REGISTRY,
