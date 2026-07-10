@@ -8,4 +8,10 @@ export {
   type BootAuthActivationResult,
   type BootAuthRegistration,
 } from './initialize-auth';
+export {
+  getBootMemoryTransportForTests,
+  initializeApiForBoot,
+  resetBootApiWiringForTests,
+  type BootApiInitializationResult,
+} from './initialize-api';
 export { bootScaffold, type BootFailure, type BootResult, type BootSuccess } from './boot';

@@ -1,6 +1,6 @@
 /**
  * TICKET-V2-BOOTSTRAP-RUNTIME-P0-001
- * Boot: CONFIG → BUS → LOGGING → ERROR → AUTH(register) → SESSION → AUTH(activate) → RUNTIME → SYSTEM_READY → THEME
+ * Boot: CONFIG → BUS → LOGGING → ERROR → AUTH(register) → SESSION → AUTH(activate) → API CLIENT → RUNTIME → SYSTEM_READY → THEME
  */
 
 import {
@@ -44,6 +44,7 @@ import {
 } from '@mdj/shared/session';
 import { bootIntegrateTheme } from '../shared/theme/runtime/theme-boot-integration';
 import { activateAuthForBoot, registerAuthForBoot } from './initialize-auth';
+import { initializeApiForBoot } from './initialize-api';
 
 export {
   BOOT_AUTH_HANDOFF_MODE,
@@ -54,6 +55,12 @@ export {
   type BootAuthActivationResult,
   type BootAuthRegistration,
 } from './initialize-auth';
+export {
+  getBootMemoryTransportForTests,
+  initializeApiForBoot,
+  resetBootApiWiringForTests,
+  type BootApiInitializationResult,
+} from './initialize-api';
 
 export type BootPhase =
   | 'config'
@@ -62,6 +69,7 @@ export type BootPhase =
   | 'error-handler'
   | 'auth'
   | 'session'
+  | 'api-client'
   | 'runtime'
   | 'system-ready'
   | 'theme';
@@ -131,6 +139,25 @@ export function bootScaffold(envOverrides?: RawEnvMap, portal: PortalId = 'clien
         themeReady: false,
         errorCode: authActivation.code,
         message: authActivation.message,
+      };
+    }
+
+    const apiBoot = initializeApiForBoot(portal);
+    if (!apiBoot.ok) {
+      return {
+        ok: false,
+        phase: 'api-client',
+        configLoaded: true,
+        busReady: true,
+        loggingReady: true,
+        errorHandlerReady: true,
+        authReady: true,
+        sessionReady: getSessionState() === 'SESSION_READY',
+        runtimeReady: false,
+        systemReadyConfirmed: false,
+        themeReady: false,
+        errorCode: apiBoot.code,
+        message: apiBoot.message,
       };
     }
 

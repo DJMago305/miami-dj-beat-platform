@@ -1,6 +1,14 @@
 /** MOD-005 API Client — public service exports — TICKET-V2-PHASE-4-MOD-005-FOUNDATION-001 */
 
 export { ApiClient, createApiClient } from './api-client';
+export {
+  getApiClient,
+  getApiClientState,
+  initializeApiClient,
+  resetApiClientForTests,
+  type ApiClientLifecycleState,
+  type InitializeApiClientDependencies,
+} from './api-service';
 export type { ApiClientDeps } from './api-client';
 export {
   ApiClientError,
