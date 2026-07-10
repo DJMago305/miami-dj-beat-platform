@@ -5,15 +5,14 @@ import {
   ThemeError,
   getActiveTheme,
   getThemeDefinition,
-  getThemeRuntimeLifecycleForTests,
   getThemeRuntimeState,
   initializeThemeRuntime,
   isThemeError,
   isThemeReady,
   resetThemeRuntimeForTests,
 } from '../../shared/theme/runtime';
-import * as themeResolver from '../../shared/theme/runtime/theme-resolver';
 import { getThemeRuntimeLifecycleForTests } from '../../shared/theme/runtime/theme-runtime';
+import * as themeResolver from '../../shared/theme/runtime/theme-resolver';
 
 describe('MOD-007 Theme Runtime', () => {
   afterEach(() => {

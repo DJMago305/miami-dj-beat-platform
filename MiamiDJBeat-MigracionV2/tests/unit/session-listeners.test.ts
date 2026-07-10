@@ -72,8 +72,8 @@ describe('MOD-002 Session Listeners — TICKET-MOD-002-SESSION-EVENT-WIRING-001'
 
     const published = getEventBus().publish({
       name: 'SYSTEM_READY',
-      payload: { busVersion: '1.0.0' },
-      emitter: { moduleId: 'MOD-004', subsystem: 'test' },
+      payload: { busVersion: '1.0.0', runtimeVersion: '0.1.0-runtime-p0' },
+      emitter: { moduleId: 'MOD-RUNTIME', subsystem: 'test' },
       scope: 'internal',
     });
 

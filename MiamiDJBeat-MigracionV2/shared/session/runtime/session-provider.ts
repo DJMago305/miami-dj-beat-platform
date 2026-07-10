@@ -4,7 +4,6 @@ import { getConfig } from '@mdj/shared/config';
 import { normalizeError } from '@mdj/shared/errors';
 import { getLogger } from '@mdj/shared/logging';
 import {
-  hasCapability,
   resolvePermissionSnapshot,
   type PermissionPortalId,
   type PermissionSnapshot,

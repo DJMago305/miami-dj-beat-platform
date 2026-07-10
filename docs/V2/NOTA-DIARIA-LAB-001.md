@@ -608,6 +608,135 @@ Authentication · Session Manager · Permissions · Event Bus · Configuration �
 
 ---
 
+## Cierre de Fase 2 — Bootstrap Runtime P0
+
+**Ticket:** TICKET-V2-BOOTSTRAP-RUNTIME-P0-001 · TICKET-V2-END-OF-PHASE-002-001  
+**Fecha cierre:** 2026-07-10  
+**Estado:** **FASE 2 CERRADA Y DOCUMENTADA** — validación visual PO aprobada
+
+### Estado final del runtime
+
+| Campo | Valor |
+|-------|-------|
+| **Fase** | FASE 2 — Bootstrap + Runtime P0 |
+| **Raíz lab** | `MiamiDJBeat-MigracionV2/` |
+| **Dev server** | `http://localhost:5173` (Vite MPA) |
+| **V1 producción** | Intacta — cero modificaciones |
+| **Implementación runtime** | Bootstrap chain operativo · tres portales shell |
+| **Typecheck / Build / Tests** | ✅ Aprobados (304/304 unit) |
+
+### Resultado validación visual (Product Owner)
+
+| Portal | Visual | Hard refresh | Console | Network |
+|--------|--------|--------------|---------|---------|
+| Client (`/client/`) | ✅ | ✅ | ✅ | ✅ |
+| Artist (`/artist/`) | ✅ | ✅ | ✅ | ✅ |
+| Staff (`/staff/`) | ✅ | ✅ | ✅ | ✅ |
+
+| Criterio transversal | Estado |
+|----------------------|--------|
+| Runtime bootstrap | ✅ Aprobado |
+| Separación entre portales | ✅ Aprobado |
+| Responsive básico | ✅ Aprobado |
+| `SYSTEM_READY` (una sola emisión) | ✅ Validado |
+
+### Portales aprobados
+
+- **Client Portal** — shell + dashboard MVP · boot status pills · aislamiento confirmado.
+- **Artist Portal** — shell + dashboard MVP · sin imports cruzados desde staff.
+- **Staff Portal** — shell + dashboard MVP · sin imports cruzados desde client.
+
+### Orden definitivo del boot
+
+Cadena oficial en `bootstrap/boot.ts` (`bootScaffold()`):
+
+```
+1. initializeConfiguration()     → Config FROZEN
+2. initializeEventBus()          → BUS_READY (MOD-004)
+3. initializeLogging()           → LOG_READY (lifecycle interno)
+4. initializeErrorHandler()      → ERR_READY (lifecycle interno)
+5. initializeSession()           → SESSION_CREATED → SESSION_READY (MOD-002)
+6. initializeRuntime()           → RUNTIME_READY (lifecycle interno)
+7. emitSystemReady()             → SYSTEM_READY (MOD-RUNTIME, una vez)
+8. bootIntegrateTheme()          → THEME_READY → THEME_CHANGED (MOD-007)
+```
+
+Post portal (`bootstrapPortal()` en `client|artist|staff/main.ts`):
+
+```
+PORTAL_READY → DASHBOARD_READY
+```
+
+### Cambio autorizado en `catalog.ts` (MOD-004)
+
+Único cambio tracked autorizado por PO en módulo congelado MOD-004:
+
+| Evento | Emisor autorizado | Payload requerido | Rol |
+|--------|-------------------|-------------------|-----|
+| `BUS_READY` | MOD-004 | `busVersion` | Interno — emitido por `initializeEventBus()` |
+| `SYSTEM_READY` | **MOD-RUNTIME** | `busVersion`, `runtimeVersion` | Reservado runtime — emitido por `emitSystemReady()` post-`initializeRuntime()` |
+
+`SYSTEM_READY` ya **no** es emitido por MOD-004 en init del bus.
+
+### Estado por módulo (Fase 2)
+
+| Módulo | Estado Fase 2 | Notas |
+|--------|---------------|-------|
+| **MOD-004 Event Bus** | ✅ VALIDADO EN LOCALHOST | In-memory bus · `BUS_READY` · catálogo actualizado |
+| **MOD-006 Configuration** | ✅ Operativo en boot | Fase 0 runtime — congelado salvo ticket |
+| **MOD-002 Session** | ✅ Operativo en boot | Guest hydrate · `SESSION_READY` · congelado |
+| **MOD-003 Permissions** | ✅ Wire en snapshot | Resolver en session provider · sin UI permisos |
+| **MOD-007 Theme** | ✅ VALIDADO EN LOCALHOST | `THEME_READY` post-`SYSTEM_READY` |
+| **MOD-010 Logging** | ✅ Operativo en boot | Lifecycle interno |
+| **MOD-014 Error Handler** | ✅ Operativo en boot | Lifecycle interno |
+| **MOD-RUNTIME Bootstrap P0** | ✅ VALIDADO EN LOCALHOST | Registry · state · lifecycle · portal bootstrap |
+
+### `SYSTEM_READY`
+
+- Emitido **exactamente una vez** por portal (verificado en `boot-event-trace.mjs` y `portal-runtime-verify.mjs`).
+- Emisor: **MOD-RUNTIME** vía `emitSystemReady()`.
+- Ocurre **después** de `initializeRuntime()`, no en init del Event Bus.
+- Payload incluye `runtimeVersion`.
+
+### `BUS_READY`
+
+- Emitido por **MOD-004** al completar `initializeEventBus()`.
+- Sustituye la emisión previa de `SYSTEM_READY` en fase bus.
+- `onceEligible: true` en catálogo.
+
+### Theme
+
+- Integración post-`SYSTEM_READY` vía `bootIntegrateTheme()`.
+- Emite `THEME_READY` y `THEME_CHANGED`.
+- Tokens aplicados en shell de portales.
+- Sin cambios de spec documental en este cierre.
+
+### Session
+
+- `initializeSession()` en cadena boot · snapshot guest en lab.
+- Eventos: `SESSION_CREATED`, `SESSION_READY`.
+- Módulo congelado; única excepción mecánica: eliminación import no usado (`hasCapability`) en `session-provider.ts`.
+
+### Permissions
+
+- Wire en snapshot de sesión vía `resolvePermissionSnapshot()`.
+- Sin gates UI ni módulos de producción sensibles en Fase 2.
+- Módulo congelado.
+
+### Runtime (MOD-RUNTIME P0)
+
+- `shared/runtime/` — registry, state, lifecycle, event-wiring, `runtime-service`, `portal-bootstrap`.
+- Tres portales usan `bootstrapPortal()` unificado.
+- Sin lógica de negocio · sin Supabase · sin Stripe.
+
+### Próxima fase
+
+**FASE 3** — pendiente orden explícita del Product Owner. Sin apertura automática.
+
+*No commit · No push · No deploy · No producción*
+
+---
+
 ## Cierre expediente — DECISION-V2-003 — 2026-07-05
 
 **Ticket:** TICKET-V2-ADR-RATIFICATION-CLOSURE-001

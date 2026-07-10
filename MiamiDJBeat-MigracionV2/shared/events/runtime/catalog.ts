@@ -5,10 +5,19 @@ import type { CatalogEntry } from './types';
 /** Base + extended catalog entries from EVENT-BUS-SPEC.md (validation only). */
 export const EVENT_CATALOG: readonly CatalogEntry[] = [
   {
-    name: 'SYSTEM_READY',
+    name: 'BUS_READY',
     scope: 'internal',
     authorizedEmitters: ['MOD-004'],
     requiredPayloadKeys: ['busVersion'],
+    onceEligible: true,
+    defaultVersion: 1,
+  },
+  {
+    name: 'SYSTEM_READY',
+    scope: 'internal',
+    authorizedEmitters: ['MOD-RUNTIME'],
+    requiredPayloadKeys: ['busVersion', 'runtimeVersion'],
+    onceEligible: true,
     defaultVersion: 1,
   },
   {

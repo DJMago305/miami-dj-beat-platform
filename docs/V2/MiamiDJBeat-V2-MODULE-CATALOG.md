@@ -4,11 +4,11 @@
 
 ## CATÁLOGO OFICIAL DE MÓDULOS
 
-**Versión:** 1.0  
-**Ticket:** TICKET-V2-MODULE-CATALOG-001  
+**Versión:** 1.2  
+**Ticket:** TICKET-V2-MODULE-CATALOG-001 · TICKET-V2-DOC-CONSOLIDATION-001  
 **Proyecto:** MiamiDJBeat-MigracionV2  
 **Referencia:** `docs/V2/MiamiDJBeat-V2-SYSTEM-BLUEPRINT.md`  
-**Estado:** Inventario oficial — sin implementación
+**Estado:** Inventario oficial — estados documental, runtime y validación separados
 
 ---
 
@@ -22,13 +22,31 @@ Este documento contiene el **inventario oficial de todos los módulos** del sist
 | **Registro obligatorio** | Ningún módulo se desarrolla si no está aquí |
 | **Solo documentación** | Este ticket no implementa código |
 
-Cada módulo tendrá: ID, nombre, descripción, prioridad, estado, dependencias y portal propietario.
+Cada módulo tendrá: ID, nombre, descripción, prioridad, **estado documental**, **estado runtime**, **validación**, dependencias y portal propietario.
 
 ---
 
 ## SECCIÓN 2 — ESTADOS OFICIALES
 
-Estados válidos del ciclo de vida de un módulo:
+### Dimensiones de estado (normalizado TICKET-V2-DOC-CONSOLIDATION-001)
+
+Cada módulo registra **tres dimensiones independientes**. No mezclar en una sola columna.
+
+| Dimensión | Valores oficiales | Significado |
+|-----------|-------------------|-------------|
+| **Estado documental** | PENDIENTE · DOCUMENTACIÓN PARCIAL · DOCUMENTADO | Avance de la spec en `shared/{módulo}/` o equivalente |
+| **Estado runtime** | PENDIENTE · IMPLEMENTADO · OPERATIVO EN BOOT · BLOQUEADO · NO APLICA | Presencia y madurez de implementación en lab V2 |
+| **Validación** | PENDIENTE · VALIDADO EN LOCALHOST · APROBADO PO · NO APLICA | Gate técnico/funcional y aprobación Product Owner |
+
+**Reglas semánticas:**
+
+- `VALIDADO EN LOCALHOST` pertenece **solo** a **Validación**, nunca a Estado runtime.
+- Participar en el boot (`OPERATIVO EN BOOT`) **no** implica validación PO del módulo.
+- `VALIDADO EN LOCALHOST` ≠ aprobado para cutover producción. V1 permanece producción.
+
+**Convención visual en tablas:** ✅ = valor confirmado · ⏳ = pendiente · ⚙️ = operativo parcial en boot.
+
+### Ciclo de vida del módulo (transiciones)
 
 | Estado | Significado |
 |--------|-------------|
@@ -60,82 +78,64 @@ Transiciones no saltan estados sin ticket y evidencia.
 
 ## SECCIÓN 4 — SHARED CORE
 
-| ID | Nombre | Descripción | Prioridad | Estado | Dependencias |
-|----|--------|-------------|-----------|--------|--------------|
-| MOD-001 | Authentication | Sign-in, sign-out, provider Supabase, gates | P0 | DOCUMENTACIÓN COMPLETA | Supabase Auth |
-| MOD-002 | Session Manager | Hydrate, INITIAL_SESSION vs SIGNED_IN, estado sesión | P0 | DOCUMENTACIÓN COMPLETA | MOD-001 |
-| MOD-003 | Permissions | Snapshot acceso, guards, matriz roles buyer/performer/staff | P0 | DOCUMENTACIÓN COMPLETA | MOD-001, MOD-002, RPC snapshot |
-| MOD-004 | Event Bus | Contratos emit/listen tipados; catch-up; once | P0 | DOCUMENTACIÓN COMPLETA | MOD-002 |
-| MOD-005 | API Client | Wrapper Supabase + Edge; errores HTTP → body | P0 | DOCUMENTACIÓN COMPLETA | MOD-006 |
-| MOD-006 | Configuration | Env, constants, portal ids, deploy root URLs | P0 | DOCUMENTACIÓN COMPLETA | — |
-| MOD-007 | Theme Manager | Tokens dark/gold, variables, THEME_CHANGED | P0 | DOCUMENTACIÓN COMPLETA | MOD-006 |
-| MOD-008 | Design System | Tipografía, spacing, primitivas visuales base | P0 | DOCUMENTACIÓN COMPLETA | MOD-007 |
-| MOD-009 | Components Library | Botones, modales, tablas, inputs reutilizables | P1 | DOCUMENTACIÓN COMPLETA | MOD-008 |
-| MOD-010 | Logging | Logs estructurados cliente; niveles; sin PII cruda | P1 | DOCUMENTACIÓN COMPLETA | MOD-006 |
-| MOD-011 | Notifications | Toast, inbox hook, NOTIFICATION_CREATED | P1 | DOCUMENTACIÓN COMPLETA | MOD-004, MOD-005 |
-| MOD-012 | Storage | Almacenamiento local client; namespaces `mdj_v2_*` | P1 | DOCUMENTACIÓN COMPLETA | MOD-005 |
-| MOD-013 | Feature Flags | Toggles cutover y módulos; env + runtime | P1 | DOCUMENTACIÓN COMPLETA | MOD-006 |
-| MOD-014 | Error Handler | Surface error/detail; fallbacks UX | P0 | DOCUMENTACIÓN COMPLETA | MOD-010 |
-| MOD-015 | Internationalization | EN canónico, ES fallback, LANGUAGE_CHANGED | P0 | DOCUMENTACIÓN COMPLETA | MOD-006 |
-| MOD-016 | Responsive Engine | Breakpoints, nav mobile contract, layout helpers | P1 | DOCUMENTACIÓN COMPLETA | MOD-008 |
+Tabla **única y autoritativa** — cada módulo aparece **una sola vez**.
 
-**Ubicación futura:** `MiamiDJBeat-MigracionV2/shared/`
+| ID | Módulo | Descripción | Prioridad | Estado documental | Estado runtime | Validación | Dependencias | Portal propietario | Ticket spec | Carpeta spec |
+|----|--------|-------------|-----------|-------------------|----------------|------------|--------------|-------------------|-------------|--------------|
+| MOD-001 | Authentication | Sign-in, sign-out, provider Supabase, gates | P0 | ✅ DOCUMENTADO | ⏳ PENDIENTE | ⏳ PENDIENTE | Supabase Auth | SHARED / TRANSVERSAL | 012 | `shared/auth/` |
+| MOD-002 | Session Manager | Hydrate, INITIAL_SESSION vs SIGNED_IN, estado sesión | P0 | ✅ DOCUMENTADO | ⚙️ OPERATIVO EN BOOT | ⏳ PENDIENTE | MOD-001 | SHARED / TRANSVERSAL | 005 | `shared/session/` |
+| MOD-003 | Permissions | Snapshot acceso, guards, matriz roles buyer/performer/staff | P0 | ✅ DOCUMENTADO | ⚙️ OPERATIVO EN BOOT | ⏳ PENDIENTE | MOD-001, MOD-002, RPC snapshot | SHARED / TRANSVERSAL | 004 | `shared/permissions/` |
+| MOD-004 | Event Bus | Contratos emit/listen tipados; catch-up; once | P0 | ✅ DOCUMENTADO | ✅ IMPLEMENTADO / OPERATIVO | ✅ VALIDADO EN LOCALHOST — APROBADO PO (Fase 2) | MOD-002 | SHARED / TRANSVERSAL | 003 | `shared/events/` |
+| MOD-005 | API Client | Wrapper Supabase + Edge; errores HTTP → body | P0 | ✅ DOCUMENTADO | ⏳ PENDIENTE | ⏳ PENDIENTE | MOD-006 | SHARED / TRANSVERSAL | 010 | `shared/api/` |
+| MOD-006 | Configuration | Env, constants, portal ids, deploy root URLs | P0 | ✅ DOCUMENTADO | ⚙️ OPERATIVO EN BOOT | ⏳ PENDIENTE | — | SHARED / TRANSVERSAL | 006 | `shared/config/` |
+| MOD-007 | Theme Manager | Tokens dark/gold, variables, THEME_CHANGED | P0 | ✅ DOCUMENTADO | ✅ IMPLEMENTADO / OPERATIVO | ✅ VALIDADO EN LOCALHOST — APROBADO PO (Fase 2) | MOD-006 | SHARED / TRANSVERSAL | 014 | `shared/theme/` |
+| MOD-008 | Design System | Tipografía, spacing, primitivas visuales base | P0 | ✅ DOCUMENTADO | ⏳ PENDIENTE | ⏳ PENDIENTE | MOD-007 | SHARED / TRANSVERSAL | 016 | `shared/design-system/` |
+| MOD-009 | Components Library | Botones, modales, tablas, inputs reutilizables | P1 | ✅ DOCUMENTADO | ⏳ PENDIENTE | ⏳ PENDIENTE | MOD-008 | SHARED / TRANSVERSAL | 017 | `shared/components/` |
+| MOD-010 | Logging | Logs estructurados cliente; niveles; sin PII cruda | P1 | ✅ DOCUMENTADO | ⚙️ OPERATIVO EN BOOT | ⏳ PENDIENTE | MOD-006 | SHARED / TRANSVERSAL | 007 | `shared/logging/` |
+| MOD-011 | Notifications | Toast, inbox hook, NOTIFICATION_CREATED | P1 | ✅ DOCUMENTADO | ⏳ PENDIENTE | ⏳ PENDIENTE | MOD-004, MOD-005 | SHARED / TRANSVERSAL | 009 | `shared/notifications/` |
+| MOD-012 | Storage | Almacenamiento local client; namespaces `mdj_v2_*` | P1 | ✅ DOCUMENTADO | ⏳ PENDIENTE | ⏳ PENDIENTE | MOD-005 | SHARED / TRANSVERSAL | 011 | `shared/storage/` |
+| MOD-013 | Feature Flags | Toggles cutover y módulos; env + runtime | P1 | ✅ DOCUMENTADO | ⏳ PENDIENTE | ⏳ PENDIENTE | MOD-006 | SHARED / TRANSVERSAL | 015 | `shared/feature-flags/` |
+| MOD-014 | Error Handler | Surface error/detail; fallbacks UX | P0 | ✅ DOCUMENTADO | ⚙️ OPERATIVO EN BOOT | ⏳ PENDIENTE | MOD-010 | SHARED / TRANSVERSAL | 008 | `shared/errors/` |
+| MOD-015 | Internationalization | EN canónico, ES fallback, LANGUAGE_CHANGED | P0 | ✅ DOCUMENTADO | ⏳ PENDIENTE | ⏳ PENDIENTE | MOD-006 | SHARED / TRANSVERSAL | 013 | `shared/i18n/` |
+| MOD-016 | Responsive Engine | Breakpoints, nav mobile contract, layout helpers | P1 | ✅ DOCUMENTADO | ⏳ PENDIENTE | ⏳ PENDIENTE | MOD-008 | SHARED / TRANSVERSAL | 018 | `shared/responsive/` |
 
----
+**Ubicación:** `MiamiDJBeat-MigracionV2/shared/`
 
-## SECCIÓN 4B — SHARED CORE DOCUMENTADO (2026-07-05)
+**Inventario Shared Core:** 16 módulos · **16 documentados** (2026-07-05 · tickets 003–018) · **0 pendientes de spec**.
 
-Módulos con **especificación técnica completa** (tickets TICKET-V2-SHARED-CORE-003 a 012). Sin implementación runtime.
-
-| ID | Módulo | Ticket spec | Carpeta spec |
-|----|--------|-------------|--------------|
-| MOD-001 | Authentication | 012 | `shared/auth/` |
-| MOD-002 | Session Manager | 005 | `shared/session/` |
-| MOD-003 | Permissions | 004 | `shared/permissions/` |
-| MOD-004 | Event Bus | 003 | `shared/events/` |
-| MOD-005 | API Client | 010 | `shared/api/` |
-| MOD-006 | Configuration | 006 | `shared/config/` |
-| MOD-010 | Logging | 007 | `shared/logging/` |
-| MOD-011 | Notifications | 009 | `shared/notifications/` |
-| MOD-012 | Storage | 011 | `shared/storage/` |
-| MOD-014 | Error Handler | 008 | `shared/errors/` |
-| MOD-015 | Internationalization | 013 | `shared/i18n/` |
-| MOD-007 | Theme Manager | 014 | `shared/theme/` |
-| MOD-013 | Feature Flags | 015 | `shared/feature-flags/` |
-| MOD-008 | Design System | 016 | `shared/design-system/` |
-| MOD-009 | Components Library | 017 | `shared/components/` |
-| MOD-016 | Responsive Engine | 018 | `shared/responsive/` |
-
-**Inventario oficial Shared Core:** 16 módulos · **16 documentados** · **0 pendientes** · **100%** documental.
-
-> **Fuente única de IDs:** este catálogo. Specs en `shared/` referencian estos IDs (normalizado TICKET-V2-DOC-CONSISTENCY-001). `CONTRACTS.md` (ticket 002) es artefacto transversal — **no** cuenta como módulo.
-
-### ✅ COMPLETADOS — Documentación (PO gate implementación)
-
-| Módulo | Estado | Implementación |
-|--------|--------|----------------|
-| **MOD-001** Authentication | **DOCUMENTACIÓN COMPLETA** | **PENDIENTE** |
-| **MOD-002** Session Manager | **DOCUMENTACIÓN COMPLETA** | **PENDIENTE** |
-| **MOD-003** Permissions | **DOCUMENTACIÓN COMPLETA** | **PENDIENTE** |
-| **MOD-004** Event Bus | **DOCUMENTACIÓN COMPLETA** | **PENDIENTE** |
-| **MOD-005** API Client | **DOCUMENTACIÓN COMPLETA** | **PENDIENTE** |
-| **MOD-006** Configuration | **DOCUMENTACIÓN COMPLETA** | **PENDIENTE** |
-| **MOD-010** Logging | **DOCUMENTACIÓN COMPLETA** | **PENDIENTE** |
-| **MOD-011** Notifications | **DOCUMENTACIÓN COMPLETA** | **PENDIENTE** |
-| **MOD-012** Storage | **DOCUMENTACIÓN COMPLETA** | **PENDIENTE** |
-| **MOD-014** Error Handler | **DOCUMENTACIÓN COMPLETA** | **PENDIENTE** |
-| **MOD-015** Internationalization | **DOCUMENTACIÓN COMPLETA** | **PENDIENTE** |
-| **MOD-007** Theme Manager | **DOCUMENTACIÓN COMPLETA** | **PENDIENTE** |
-| **MOD-013** Feature Flags | **DOCUMENTACIÓN COMPLETA** | **PENDIENTE** |
-| **MOD-008** Design System | **DOCUMENTACIÓN COMPLETA** | **PENDIENTE** |
-| **MOD-009** Components Library | **DOCUMENTACIÓN COMPLETA** | **PENDIENTE** |
-| **MOD-016** Responsive Engine | **DOCUMENTACIÓN COMPLETA** | **PENDIENTE** |
+> **Fuente única de IDs:** este catálogo. `CONTRACTS.md` (ticket 002) es artefacto transversal — **no** cuenta como módulo.
 
 Documentos transversales: `shared/CONTRACTS.md` (ticket 002).
 
-### Pendientes de especificación Shared Core
+---
 
-**Ninguno.** Shared Core MOD-001–016 — **documentación completa** (2026-07-05 · ticket 018).
+## SECCIÓN 4B — ANEXO FASE 2 (BOOTSTRAP RUNTIME P0)
+
+**Tickets:** TICKET-V2-BOOTSTRAP-RUNTIME-P0-001 · TICKET-V2-END-OF-PHASE-002-001  
+**Fecha:** 2026-07-10 · **Entorno:** `http://localhost:5173` (lab V2)
+
+Los estados runtime y validación de módulos Shared Core están en **Sección 4** (tabla única). Este anexo registra solo evidencia transversal de Fase 2 — **sin duplicar filas de módulo**.
+
+### Runtime Bootstrap P0 (capa transversal — no es MOD del inventario)
+
+| Área | Estado runtime | Validación | Evidencia |
+|------|----------------|------------|-----------|
+| Bootstrap + Runtime Registry | ✅ IMPLEMENTADO / OPERATIVO | ✅ VALIDADO EN LOCALHOST — APROBADO PO (Fase 2) | `SYSTEM_READY` × 1 · registry · lifecycle · 3 portales |
+
+### Portales shell validados
+
+| Portal | URL | Validación |
+|--------|-----|------------|
+| Client | `http://localhost:5173/client/` | ✅ APROBADO PO |
+| Artist | `http://localhost:5173/artist/` | ✅ APROBADO PO |
+| Staff | `http://localhost:5173/staff/` | ✅ APROBADO PO |
+
+### Evidencia técnica Fase 2 (referencia)
+
+| Módulo | Evidencia localhost |
+|--------|---------------------|
+| MOD-004 Event Bus | `BUS_READY` · bus in-memory · 16 tests unit |
+| MOD-007 Theme Manager | `THEME_READY` post-`SYSTEM_READY` · 12 tests theme |
 
 ---
 
@@ -335,6 +335,6 @@ Modificaciones al catálogo (nuevo módulo, cambio P0, retiro): ticket de catál
 
 ---
 
-*Module Catalog v1.0 — 2026-07-05 — TICKET-V2-MODULE-CATALOG-001*
+*Module Catalog v1.2 — 2026-07-05 (origen) · consolidado 2026-07-10 — TICKET-V2-DOC-CONSOLIDATION-001*
 
-*Sin implementación. Referencia obligatoria para todo desarrollo V2.*
+*Referencia obligatoria para todo desarrollo V2. Sección 4: tabla única con estados documental / runtime / validación y portal propietario separados.*
