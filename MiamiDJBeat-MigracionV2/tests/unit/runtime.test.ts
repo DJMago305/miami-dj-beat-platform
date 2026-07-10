@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { bootScaffold } from '@mdj/bootstrap/boot';
+import {
+  activateAuthForBoot,
+  bootScaffold,
+  registerAuthForBoot,
+  resetBootAuthWiringForTests,
+} from '@mdj/bootstrap/boot';
 import {
   EVENT_BUS_VERSION,
   getEventBus,
@@ -34,6 +39,7 @@ import {
   initializeSession,
   resetSessionForTests,
 } from '@mdj/shared/session';
+import { resetAuthForTests } from '../../shared/auth/runtime';
 import { resetThemeBootIntegrationForTests } from '@mdj/shared/theme';
 
 const VALID_LOCAL_ENV = {
@@ -55,12 +61,16 @@ function bootThroughSession(portal: 'client' | 'artist' | 'staff'): void {
   initializeEventBus();
   initializeLogging({ source: 'test', moduleId: 'MOD-010' });
   initializeErrorHandler();
+  registerAuthForBoot();
   initializeSession({ portal });
+  activateAuthForBoot(portal);
 }
 
 /** TICKET-V2-BOOTSTRAP-RUNTIME-P0-001 */
 describe('MOD-RUNTIME — Registry · State · Lifecycle · Event wiring', () => {
   beforeEach(() => {
+    resetBootAuthWiringForTests();
+    resetAuthForTests();
     resetThemeBootIntegrationForTests();
     resetRuntimeForTests();
     resetSessionForTests();
@@ -85,10 +95,18 @@ describe('MOD-RUNTIME — Registry · State · Lifecycle · Event wiring', () =>
 
     expect(snapshot.lifecycle).toBe('RUNTIME_READY');
     expect(snapshot.portal).toBe('client');
-    expect(snapshot.registrySize).toBeGreaterThanOrEqual(6);
+    expect(snapshot.registrySize).toBeGreaterThanOrEqual(7);
     expect(areRuntimeEventListenersRegistered()).toBe(true);
     expect(runtime.getRegistry().map((entry) => entry.moduleId)).toEqual(
-      expect.arrayContaining(['MOD-006', 'MOD-004', 'MOD-010', 'MOD-014', 'MOD-002', 'MOD-RUNTIME']),
+      expect.arrayContaining([
+        'MOD-006',
+        'MOD-004',
+        'MOD-010',
+        'MOD-014',
+        'MOD-001',
+        'MOD-002',
+        'MOD-RUNTIME',
+      ]),
     );
   });
 

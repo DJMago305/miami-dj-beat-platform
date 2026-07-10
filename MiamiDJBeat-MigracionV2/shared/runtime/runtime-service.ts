@@ -1,5 +1,6 @@
 /** MOD-RUNTIME — service facade — TICKET-V2-BOOTSTRAP-RUNTIME-P0-001 */
 
+import { getAuthService } from '../auth/runtime';
 import { getConfigState } from '@mdj/shared/config';
 import { EVENT_BUS_VERSION, getEventBus, getEventBusState } from '@mdj/shared/events';
 import { getErrorState } from '@mdj/shared/errors';
@@ -62,6 +63,7 @@ function registerCoreModules(): void {
   registerRuntimeModule('MOD-004', 'Event Bus', getEventBusState());
   registerRuntimeModule('MOD-010', 'Logging', 'LOG_READY');
   registerRuntimeModule('MOD-014', 'Error Handler', getErrorState());
+  registerRuntimeModule('MOD-001', 'Authentication', getAuthService().getState());
   registerRuntimeModule('MOD-002', 'Session', getSessionState());
 }
 
