@@ -259,26 +259,67 @@ Registry dinámico post-login/logout · metadata provider/portal · producción 
 | Runtime Registry solo observabilidad estática | ✅ DEFINIDO |
 | `MemoryTransport` para laboratorio | ✅ DEFINIDO |
 
-### Pendiente (post-discovery — no implementado)
+### Pendiente (post-discovery — movido a SECCIÓN 4H si completado)
+
+Ver **SECCIÓN 4H** para estado actual de Bootstrap Wiring.
+
+**Documentación discovery:** `docs/V2/SESSION-SUMMARIES/2026-07-10-MOD-005-API-CLIENT-DISCOVERY.md` · `docs/V2/TICKETS/TICKET-V2-PHASE-5-MOD-005-API-CLIENT-DISCOVERY-001.md`
+
+---
+
+## SECCIÓN 4H — ANEXO FASE 6 (MOD-005 API BOOTSTRAP WIRING)
+
+**Tickets:** TICKET-V2-PHASE-6-MOD-005-API-BOOTSTRAP-WIRING-001 · TICKET-V2-PHASE-6-MOD-005-POST-WIRING-DOCUMENTATION-001
+**Fecha:** 2026-07-10 · **Entorno:** `http://localhost:5173` (lab V2)
+**Commit técnico local:** `990010bc7ba123b2bc456471440f1ad89441998a` — `feat(v2-api): wire API client into bootstrap`
+**HEAD previo:** `c5c949f5b275bb11a2527a788c69635f7298e80d`
+
+### MOD-005 API Bootstrap Wiring — ✅ COMPLETADO
 
 | Componente | Estado |
 |------------|--------|
-| Bootstrap wiring | ⏳ PENDIENTE |
-| API singleton (`initializeApiClient` / `getApiClient`) | ⏳ PENDIENTE |
-| SessionReader live en boot | ⏳ PENDIENTE |
+| `shared/api/runtime/api-service.ts` | ✅ CREADO — singleton frozen |
+| `initializeApiClient()` / `getApiClient()` / `getApiClientState()` | ✅ OPERATIVO |
+| `bootstrap/initialize-api.ts` | ✅ CREADO |
+| `initializeApiForBoot(portal)` | ✅ OPERATIVO |
+| `SessionReaderPort` live | ✅ OPERATIVO — Session snapshot + Event Bus `USER_LOGIN` |
+| Integración en `boot.ts` | ✅ Fase `api-client` antes de Runtime |
+| `MemoryTransport` únicamente | ✅ VALIDADO — sin red real |
+| `bootScaffold()` síncrono | ✅ PRESERVADO |
+| Sin import Auth en API runtime | ✅ VALIDADO |
+| Tests wiring | ✅ 19 nuevos (`boot-api-wiring.test.ts`) |
+| Suite global | ✅ 448/448 PASS |
+| Test files | ✅ 44/44 PASS |
+| Validación visual PO | ⏳ NO APLICA |
+| Producción / merge / preview | ❌ NO AUTORIZADO |
+
+### Cadena boot actualizada
+
+```
+Config → Bus → Logging → Error → registerAuthForBoot → Session → activateAuthForBoot
+→ initializeApiForBoot → Runtime → SYSTEM_READY → Theme
+```
+
+### Explícitamente NO completado
+
+| Componente | Estado |
+|------------|--------|
 | Runtime Registry MOD-005 | ⏳ PENDIENTE |
-| `cancelAll()` en logout | ⏳ PENDIENTE |
+| `USER_LOGOUT` → `cancelAll()` | ⏳ PENDIENTE |
 | `normalizeApiError()` | ⏳ PENDIENTE |
+| `FetchTransport` | ⏳ PENDIENTE |
 | `invokeEdge()` / `rpc()` | ⏳ PENDIENTE |
-| `FetchTransport` / Supabase real | ⏳ PENDIENTE |
+| Supabase adapter | ⏳ FUERA DE ALCANCE |
+| API pública Session para Authorization opaca | ⏳ PENDIENTE |
+| Tests stale-token / relogin / wrong-userId | ⏳ PENDIENTE |
 | Producción | ❌ NO |
 | Publicación remota | ❌ NO |
 
-### Próximo ticket recomendado (sin abrir)
+### Deuda arquitectónica aceptada (solo lab)
 
-`TICKET-V2-PHASE-6-MOD-005-API-BOOTSTRAP-WIRING-001`
+Event Bus history usado temporalmente para resolver `accessTokenRef` — no fuente canónica ideal. Ver session summary para detalle.
 
-**Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-10-MOD-005-API-CLIENT-DISCOVERY.md` · `docs/V2/TICKETS/TICKET-V2-PHASE-5-MOD-005-API-CLIENT-DISCOVERY-001.md`
+**Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-10-MOD-005-BOOTSTRAP-WIRING.md` · `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-POST-WIRING-DOCUMENTATION-001.md`
 
 ---
 
@@ -506,23 +547,25 @@ Modificaciones al catálogo (nuevo módulo, cambio P0, retiro): ticket de catál
 
 ---
 
-### Baseline Final Fase 5 — 2026-07-10
+### Baseline Final Fase 6 — 2026-07-10
 
-**Ticket notarización:** TICKET-V2-END-OF-DAY-NOTARIZATION-2026-07-10-001
-**HEAD:** `59549097fb0cf0d147cf9d4e6bc9bdd497bffea1` — `docs(v2): close phase 5 and record MOD-005 discovery`
-**Acta:** `docs/V2/SESSION-SUMMARIES/2026-07-10-PHASE-5-FINAL-HANDOFF.md`
+**Ticket implementación:** TICKET-V2-PHASE-6-MOD-005-API-BOOTSTRAP-WIRING-001
+**HEAD técnico:** `990010bc7ba123b2bc456471440f1ad89441998a` — `feat(v2-api): wire API client into bootstrap`
+**Acta Fase 5:** `docs/V2/SESSION-SUMMARIES/2026-07-10-PHASE-5-FINAL-HANDOFF.md`
+**Acta Fase 6:** `docs/V2/SESSION-SUMMARIES/2026-07-10-MOD-005-BOOTSTRAP-WIRING.md`
 
-| Módulo / capacidad | Estado Fase 5 |
+| Módulo / capacidad | Estado Fase 6 |
 |--------------------|---------------|
 | MOD-001 Foundation | ✅ COMPLETADA |
 | MOD-001 Bootstrap Wiring | ✅ COMPLETADO |
 | MOD-001 Runtime Registry | ✅ COMPLETADO |
 | MOD-014 Auth normalization | ✅ COMPLETADA |
-| MOD-005 Foundation (Fase 4) | ✅ IMPLEMENTADA — sin cambio en este baseline |
+| MOD-005 Foundation (Fase 4) | ✅ IMPLEMENTADA |
 | MOD-005 Discovery Fase 5 | ✅ COMPLETADO |
-| MOD-005 Bootstrap Wiring | ⏳ PENDIENTE |
-| Test baseline | **429/429** · **43/43 files** |
-| Próximo ticket | `TICKET-V2-PHASE-6-MOD-005-API-BOOTSTRAP-WIRING-001` (sin abrir) |
+| MOD-005 Bootstrap Wiring | ✅ COMPLETADO |
+| Runtime Registry MOD-005 | ⏳ PENDIENTE |
+| Test baseline | **448/448** · **44/44 files** |
+| Próximo ticket recomendado | Runtime Registry MOD-005 o Session opaque Authorization API (sin abrir) |
 | Publicación | Solo local — sin push / PR / Preview / merge / deploy |
 | Producción / V1 | ✅ Intactas · `origin/main` `13bb4c4` · PR #117 `d847e19` |
 

@@ -1264,3 +1264,116 @@ Regla vinculante: **SIN DEPLOY ≠ SIN PREVIEW ≠ SIN PR** — cada ticket decl
 | **Producción** | ✅ Intacta |
 
 *Notarización documental preparada · Commit manual: `docs(v2): notarize phase 5 final handoff`*
+
+---
+
+## Cierre de Jornada — 2026-07-10 (MOD-005 Bootstrap Wiring)
+
+**Ticket implementación:** TICKET-V2-PHASE-6-MOD-005-API-BOOTSTRAP-WIRING-001
+**Ticket documentación:** TICKET-V2-PHASE-6-MOD-005-POST-WIRING-DOCUMENTATION-001
+**Fecha:** 2026-07-10
+**Rama:** `plan/v2-phase-4-api-client`
+**HEAD técnico:** `990010bc7ba123b2bc456471440f1ad89441998a`
+**Commit técnico:** `feat(v2-api): wire API client into bootstrap`
+**HEAD previo:** `c5c949f5b275bb11a2527a788c69635f7298e80d` — `docs(v2): notarize phase 5 final handoff`
+
+### Objetivo del ticket
+
+Integrar MOD-005 API Client en la cadena de boot V2 mediante singleton de servicio, `MemoryTransport` para laboratorio, `SessionReaderPort` live indirecto vía Session + Event Bus, inicialización posterior a Auth/Session y anterior a Runtime — **sin** red real, **sin** Supabase, **sin** import directo de Auth en API runtime.
+
+### Archivos creados
+
+| Archivo | Responsabilidad |
+|---------|-----------------|
+| `MiamiDJBeat-MigracionV2/shared/api/runtime/api-service.ts` | Singleton `initializeApiClient` / `getApiClient` / lifecycle |
+| `MiamiDJBeat-MigracionV2/bootstrap/initialize-api.ts` | Composición boot: MemoryTransport + SessionReaderPort live |
+| `MiamiDJBeat-MigracionV2/tests/unit/boot-api-wiring.test.ts` | 19 tests de wiring boot API |
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `MiamiDJBeat-MigracionV2/shared/api/runtime/index.ts` | Exports singleton API service |
+| `MiamiDJBeat-MigracionV2/bootstrap/boot.ts` | Fase `api-client` en cadena boot |
+| `MiamiDJBeat-MigracionV2/bootstrap/index.ts` | Re-exports wiring API boot |
+
+**Total:** 6 archivos · +585 / −1 líneas
+
+### Orden final del boot
+
+```
+1. initializeConfiguration()     → Config FROZEN
+2. initializeEventBus()          → BUS_READY
+3. initializeLogging()           → LOG_READY
+4. initializeErrorHandler()       → ERR_READY
+5. registerAuthForBoot()         → MockAuthProvider + AuthService
+6. initializeSession({ portal }) → SESSION_READY (guest o preparado)
+7. activateAuthForBoot(portal)   → restore mock · USER_LOGIN opcional
+8. initializeApiForBoot(portal)  → API_READY (MOD-005) ← nuevo
+9. initializeRuntime({ portal }) → RUNTIME_READY
+10. emitSystemReady()            → SYSTEM_READY (×1)
+11. bootIntegrateTheme()         → THEME_READY
+```
+
+**`bootScaffold()` permanece síncrono** — sin cambio de firma ni entrypoints.
+
+### Validación técnica
+
+| Gate | Resultado |
+|------|-----------|
+| `boot-api-wiring.test.ts` | ✅ 19/19 PASS |
+| Suite global | ✅ 448/448 PASS |
+| Test files | ✅ 44/44 PASS |
+| `git diff --check` | ✅ PASS |
+| Working tree post-commit técnico | ✅ Limpio |
+
+### Estado del laboratorio
+
+| Campo | Valor |
+|-------|-------|
+| **Fase** | Fase 6 — MOD-005 Bootstrap Wiring |
+| **Entorno** | `http://localhost:5173` (lab V2 únicamente) |
+| **V1 producción** | ✅ Intacta |
+| **Publicación remota** | ⛔ NO — sin push · sin PR · sin Preview · sin merge · sin deploy |
+| **`origin/main`** | ✅ `13bb4c4` intacto |
+| **PR #117** | ✅ `d847e19` intacto |
+
+### Módulos completados (esta sesión)
+
+| Módulo / capacidad | Estado |
+|--------------------|--------|
+| MOD-005 Foundation (Fase 4) | ✅ Sin cambio — base previa |
+| MOD-005 API Service singleton | ✅ COMPLETADO |
+| MOD-005 Bootstrap Wiring | ✅ COMPLETADO |
+| MOD-005 `boot-api-wiring.test.ts` | ✅ 19 tests |
+
+### Módulos pendientes
+
+| Componente | Estado |
+|------------|--------|
+| Runtime Registry MOD-005 | ⏳ PENDIENTE |
+| `USER_LOGOUT` → `cancelAll()` | ⏳ PENDIENTE |
+| `normalizeApiError()` | ⏳ PENDIENTE |
+| `FetchTransport` | ⏳ PENDIENTE |
+| `invokeEdge()` / `rpc()` | ⏳ PENDIENTE |
+| Supabase adapter | ⏳ FUERA DE ALCANCE |
+| API pública Session para Authorization opaca | ⏳ PENDIENTE |
+| Tests stale-token / relogin / wrong-userId | ⏳ PENDIENTE |
+
+### Riesgos abiertos (aceptados solo para lab)
+
+- `SessionReaderPort` resuelve `accessTokenRef` mediante historial `USER_LOGIN` del Event Bus — **no** desde snapshot público de Session.
+- Event Bus history **no** es fuente canónica ideal de credenciales opacas.
+- Sin validación de `handoffId`, `expiresAt`, `provider` ni portal en lookup Bootstrap.
+- Si Session signed-in pero historial sin `USER_LOGIN` matching → API inicia **sin Authorization** (no boot failure).
+- Solución aprobada **únicamente para laboratorio local** — **no autorizada** para merge, preview ni producción.
+
+### Próxima fase (sin abrir)
+
+1. Commit documental de este cierre (pendiente PO).
+2. Ticket recomendado: **Runtime Registry MOD-005** o **Session public opaque Authorization API** + tests stale-token — según prioridad PO.
+3. Cualquier merge/preview/producción requiere resolver deuda Event Bus history.
+
+**Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-10-MOD-005-BOOTSTRAP-WIRING.md` · `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-POST-WIRING-DOCUMENTATION-001.md`
+
+*Commit técnico completado · Documentación sin commit · Detenerse hasta orden PO*
