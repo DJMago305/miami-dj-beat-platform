@@ -46,6 +46,7 @@ Ningún agente puede trabajar en MiamiDJBeat — V1, V2, documentación, runtime
 | **[AGENT-READING-CHECKLIST.md](./AGENT-READING-CHECKLIST.md)** | Checklist que **debe completarse** antes de iniciar |
 | **[AGENT-WORK-AUTHORIZATION-FORM.md](./AGENT-WORK-AUTHORIZATION-FORM.md)** | Plantilla obligatoria de declaración de alcance por ticket |
 | **[GOVERNANCE-VIOLATION-CHECKLIST.md](./GOVERNANCE-VIOLATION-CHECKLIST.md)** | Autoauditoría previa y final — posibles violaciones |
+| **[INCIDENT-V2-PR-PREVIEW-001.md](./INCIDENT-V2-PR-PREVIEW-001.md)** | **Incidente gobernanza 2026-07-10** — PR activa Preview automático; política LOCALHOST / RAMA / PR / PREVIEW / PRODUCCIÓN |
 
 **Documento maestro de referencia (fuera de esta carpeta):** [MIAMIDJBEAT GOVERNANCE BASELINE v3.1](../MIAMIDJBEAT-PRODUCT-OWNER-VALIDATION-PROTOCOL.md)
 
@@ -88,4 +89,6 @@ Este Gate y Pipeline **no reemplazan** el Baseline — lo **operacionalizan** pa
 
 ---
 
-*TICKET-V2-GOVERNANCE-AGENT-ONBOARDING-GATE-001 · TICKET-V2-GOVERNANCE-AGENT-PIPELINE-001 — 2026-07-05*
+*SIN DEPLOY* no implica automáticamente *SIN PREVIEW* ni *SIN PR*. Ver [INCIDENT-V2-PR-PREVIEW-001.md](./INCIDENT-V2-PR-PREVIEW-001.md).
+
+*TICKET-V2-GOVERNANCE-AGENT-ONBOARDING-GATE-001 · TICKET-V2-GOVERNANCE-AGENT-PIPELINE-001 — 2026-07-05 · incidente PR Preview — 2026-07-10*
