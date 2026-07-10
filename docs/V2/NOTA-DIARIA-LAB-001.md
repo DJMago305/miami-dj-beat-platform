@@ -655,11 +655,15 @@ Cadena oficial en `bootstrap/boot.ts` (`bootScaffold()`):
 2. initializeEventBus()          → BUS_READY (MOD-004)
 3. initializeLogging()           → LOG_READY (lifecycle interno)
 4. initializeErrorHandler()      → ERR_READY (lifecycle interno)
-5. initializeSession()           → SESSION_CREATED → SESSION_READY (MOD-002)
-6. initializeRuntime()           → RUNTIME_READY (lifecycle interno)
-7. emitSystemReady()             → SYSTEM_READY (MOD-RUNTIME, una vez)
-8. bootIntegrateTheme()          → THEME_READY → THEME_CHANGED (MOD-007)
+5. registerAuthForBoot()         → MockAuthProvider + AuthService (MOD-001, sin restore)
+6. initializeSession()           → listeners USER_LOGIN → SESSION_READY guest (MOD-002)
+7. activateAuthForBoot(portal)   → restore mock · USER_LOGIN opcional (MOD-001)
+8. initializeRuntime()           → RUNTIME_READY (lifecycle interno)
+9. emitSystemReady()             → SYSTEM_READY (MOD-RUNTIME, una vez)
+10. bootIntegrateTheme()         → THEME_READY → THEME_CHANGED (MOD-007)
 ```
+
+> **Actualización 2026-07-10:** pasos 5–7 añadidos por commit `0866d19` — `feat(v2-auth): wire authentication into bootstrap`. `bootScaffold()` permanece **síncrono**.
 
 Post portal (`bootstrapPortal()` en `client|artist|staff/main.ts`):
 
@@ -974,6 +978,55 @@ Escritura paralela del editor / undo / sync u otro proceso — **no determinado 
 | Validación | 16/16 · 410/410 · working tree limpio · V1/Theme alineados con HEAD |
 
 **Documentación incidente:** `docs/V2/GOVERNANCE/INCIDENT-V2-POST-COMMIT-WORKTREE-CONTAMINATION-001.md`
+
+---
+
+## MOD-001 Auth Bootstrap Wiring — cierre técnico local
+
+**Ticket:** TICKET-V2-PHASE-5-MOD-001-AUTH-BOOTSTRAP-WIRING-001
+**Fecha:** 2026-07-10
+**Rama:** `plan/v2-phase-4-api-client`
+**HEAD previo:** `7a0c9e821ee07f90f3df656e69495f51d445a04f`
+**Commit técnico:** `0866d19575dd63c5127a958f2cecacee293cf626` — `feat(v2-auth): wire authentication into bootstrap`
+
+### Entregables
+
+| Métrica | Valor |
+|---------|-------|
+| Archivos | 7 (2 creados · 5 modificados) |
+| Líneas | +543 / −5 |
+| Tests nuevos wiring | 12 |
+| Suite global | 422/422 PASS |
+| Test files | 42/42 PASS |
+| Working tree post-commit | Limpio |
+| V2 Staff localhost | HTTP 200 |
+
+### Alcance confirmado
+
+Wiring MOD-001 completado localmente · MockAuthProvider · Event Bus como **única** ruta handoff · `SessionHandoffPort` ausente · `initialize-auth.ts` creado · `boot-auth-wiring.test.ts` creado · boot síncrono · degradación guest documentada · sin Supabase · sin Storage · sin UI · sin publicación remota.
+
+### Módulos congelados intactos
+
+Session Manager Fase 3 · API Client Fase 4 · Theme Fase 2 · MOD-014 · Event Bus catalog · V1 · PR #117 · `origin/main`.
+
+### Deuda registrada
+
+1. `initializeForBoot()` acoplado a MockAuthProvider.
+2. Restore síncrono duplicado parcialmente.
+3. `provider unavailable` sin test dedicado.
+4. `BootFailure phase: 'auth'` sin test dedicado.
+5. MOD-001 no registrado en Runtime Registry.
+6. Portal no viaja por payload `USER_LOGIN`.
+7. `bootMockProvider` global en bootstrap.
+8. Supabase requerirá boot async futuro.
+
+### Gobernanza
+
+Sin push · sin PR · sin Preview · sin merge · sin deploy.
+
+**Documentación:** `SESSION-SUMMARIES/2026-07-10-MOD-001-AUTH-BOOTSTRAP-WIRING.md` · `TICKETS/TICKET-V2-PHASE-5-MOD-001-AUTH-BOOTSTRAP-WIRING-001.md`
+
+*Pendiente commit documental · Detenerse hasta orden PO*
 
 ---
 

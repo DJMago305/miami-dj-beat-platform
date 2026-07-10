@@ -82,7 +82,7 @@ Tabla **única y autoritativa** — cada módulo aparece **una sola vez**.
 
 | ID | Módulo | Descripción | Prioridad | Estado documental | Estado runtime | Validación | Dependencias | Portal propietario | Ticket spec | Carpeta spec |
 |----|--------|-------------|-----------|-------------------|----------------|------------|--------------|-------------------|-------------|--------------|
-| MOD-001 | Authentication | Sign-in, sign-out, provider Supabase, gates | P0 | ✅ DOCUMENTADO | ✅ IMPLEMENTADO (foundation mock) | ✅ VALIDADO EN LOCALHOST — Fase 5 (técnico; sin PO visual) | MOD-006, MOD-004 · Supabase futuro | SHARED / TRANSVERSAL | 012 | `shared/auth/` |
+| MOD-001 | Authentication | Sign-in, sign-out, provider Supabase, gates | P0 | ✅ DOCUMENTADO | ✅ IMPLEMENTADO / OPERATIVO EN BOOT (mock wiring) | ✅ VALIDADO EN LOCALHOST — Fase 5 (técnico; sin PO visual) | MOD-006, MOD-004 · Supabase futuro | SHARED / TRANSVERSAL | 012 | `shared/auth/` |
 | MOD-002 | Session Manager | Hydrate, INITIAL_SESSION vs SIGNED_IN, estado sesión | P0 | ✅ DOCUMENTADO | ✅ IMPLEMENTADO / OPERATIVO | ✅ VALIDADO EN LOCALHOST — APROBADO PO (Fase 3) | MOD-001 | SHARED / TRANSVERSAL | 005 | `shared/session/` |
 | MOD-003 | Permissions | Snapshot acceso, guards, matriz roles buyer/performer/staff | P0 | ✅ DOCUMENTADO | ⚙️ OPERATIVO EN BOOT | ⏳ PENDIENTE | MOD-001, MOD-002, RPC snapshot | SHARED / TRANSVERSAL | 004 | `shared/permissions/` |
 | MOD-004 | Event Bus | Contratos emit/listen tipados; catch-up; once | P0 | ✅ DOCUMENTADO | ✅ IMPLEMENTADO / OPERATIVO | ✅ VALIDADO EN LOCALHOST — APROBADO PO (Fase 2) | MOD-002 | SHARED / TRANSVERSAL | 003 | `shared/events/` |
@@ -157,13 +157,50 @@ Los estados runtime y validación de módulos Shared Core están en **Sección 4
 | Tests MOD-001 | ✅ 13 nuevos (9 + 4) |
 | Suite global | ✅ 394/394 PASS |
 | Validación técnica | ✅ COMPLETADA |
-| Validación visual PO | ⏳ NO APLICA — sin UI ni boot wiring |
+| Validación visual PO | ⏳ NO APLICA — sin UI (foundation) |
+
+### Explícitamente NO completado (foundation)
+
+Supabase Auth real · MOD-012 Storage · `auth_ref` persistente · UI login · OAuth · refresh real de proveedor · producción · publicación remota.
+
+**Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-10-MOD-001-AUTH-FOUNDATION.md` · `docs/V2/TICKETS/TICKET-V2-PHASE-5-MOD-001-AUTH-FOUNDATION-001.md`
+
+---
+
+## SECCIÓN 4E — ANEXO FASE 5 (MOD-001 AUTH BOOTSTRAP WIRING)
+
+**Tickets:** TICKET-V2-PHASE-5-MOD-001-AUTH-BOOTSTRAP-WIRING-001 · TICKET-V2-PHASE-5-MOD-001-AUTH-BOOTSTRAP-WIRING-DOCS-001
+**Fecha:** 2026-07-10 · **Entorno:** `http://localhost:5173` (lab V2)
+**Commit técnico local:** `0866d19575dd63c5127a958f2cecacee293cf626` — `feat(v2-auth): wire authentication into bootstrap`
+**HEAD previo:** `7a0c9e821ee07f90f3df656e69495f51d445a04f`
+
+### Bootstrap wiring — COMPLETADO LOCALMENTE
+
+| Componente | Estado |
+|------------|--------|
+| `bootstrap/initialize-auth.ts` | ✅ CREADO |
+| `registerAuthForBoot()` / `activateAuthForBoot()` | ✅ OPERATIVO |
+| Handoff Event Bus único (`USER_LOGIN`) | ✅ VALIDADO |
+| `SessionHandoffPort` | ❌ AUSENTE (por diseño) |
+| `bootScaffold()` síncrono | ✅ PRESERVADO |
+| Degradación guest | ✅ DOCUMENTADA |
+| Tests wiring | ✅ 12 nuevos |
+| Suite global | ✅ 422/422 PASS |
+| Test files | ✅ 42/42 PASS |
+| Runtime Registry MOD-001 | ⏳ PENDIENTE |
+| Validación visual PO | ⏳ NO APLICA |
+
+### Cadena boot actualizada
+
+```
+Config → Bus → Logging → Error → registerAuthForBoot → Session → activateAuthForBoot → Runtime → SYSTEM_READY → Theme
+```
 
 ### Explícitamente NO completado
 
-Supabase Auth real · bootstrap wiring · MOD-012 Storage · `auth_ref` persistente · UI login · OAuth · refresh real de proveedor · producción · publicación remota.
+Supabase Auth · MOD-012 Storage · Registry MOD-001 · MOD-001↔MOD-014 wiring · UI login · boot async · producción · publicación remota.
 
-**Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-10-MOD-001-AUTH-FOUNDATION.md` · `docs/V2/TICKETS/TICKET-V2-PHASE-5-MOD-001-AUTH-FOUNDATION-001.md`
+**Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-10-MOD-001-AUTH-BOOTSTRAP-WIRING.md` · `docs/V2/TICKETS/TICKET-V2-PHASE-5-MOD-001-AUTH-BOOTSTRAP-WIRING-001.md`
 
 ---
 
