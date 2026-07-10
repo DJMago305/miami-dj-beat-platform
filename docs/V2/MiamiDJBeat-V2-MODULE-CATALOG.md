@@ -83,7 +83,7 @@ Tabla **única y autoritativa** — cada módulo aparece **una sola vez**.
 | ID | Módulo | Descripción | Prioridad | Estado documental | Estado runtime | Validación | Dependencias | Portal propietario | Ticket spec | Carpeta spec |
 |----|--------|-------------|-----------|-------------------|----------------|------------|--------------|-------------------|-------------|--------------|
 | MOD-001 | Authentication | Sign-in, sign-out, provider Supabase, gates | P0 | ✅ DOCUMENTADO | ⏳ PENDIENTE | ⏳ PENDIENTE | Supabase Auth | SHARED / TRANSVERSAL | 012 | `shared/auth/` |
-| MOD-002 | Session Manager | Hydrate, INITIAL_SESSION vs SIGNED_IN, estado sesión | P0 | ✅ DOCUMENTADO | ⚙️ OPERATIVO EN BOOT | ⏳ PENDIENTE | MOD-001 | SHARED / TRANSVERSAL | 005 | `shared/session/` |
+| MOD-002 | Session Manager | Hydrate, INITIAL_SESSION vs SIGNED_IN, estado sesión | P0 | ✅ DOCUMENTADO | ✅ IMPLEMENTADO / OPERATIVO | ✅ VALIDADO EN LOCALHOST — APROBADO PO (Fase 3) | MOD-001 | SHARED / TRANSVERSAL | 005 | `shared/session/` |
 | MOD-003 | Permissions | Snapshot acceso, guards, matriz roles buyer/performer/staff | P0 | ✅ DOCUMENTADO | ⚙️ OPERATIVO EN BOOT | ⏳ PENDIENTE | MOD-001, MOD-002, RPC snapshot | SHARED / TRANSVERSAL | 004 | `shared/permissions/` |
 | MOD-004 | Event Bus | Contratos emit/listen tipados; catch-up; once | P0 | ✅ DOCUMENTADO | ✅ IMPLEMENTADO / OPERATIVO | ✅ VALIDADO EN LOCALHOST — APROBADO PO (Fase 2) | MOD-002 | SHARED / TRANSVERSAL | 003 | `shared/events/` |
 | MOD-005 | API Client | Wrapper Supabase + Edge; errores HTTP → body | P0 | ✅ DOCUMENTADO | ⏳ PENDIENTE | ⏳ PENDIENTE | MOD-006 | SHARED / TRANSVERSAL | 010 | `shared/api/` |

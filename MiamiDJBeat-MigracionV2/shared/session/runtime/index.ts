@@ -9,18 +9,23 @@ export {
 export {
   asSessionSnapshotWithPermissions,
   clearSession,
+  createSession,
   deliverAuthHandoff,
   destroySession,
   detectSessionExpiry,
+  expireSession,
   getAuthSessionBoundaryForTests,
   getSessionManager,
   getSessionPermissionResolverInvokeCountForTests,
   getSessionProviderForTests,
+  getSessionRegistry,
+  getSessionRegistryForTests,
   getSessionSnapshot,
   getSessionState,
   getSessionStoreForTests,
   handleSessionExpiry,
   hasSessionCapability,
+  hydrateSession,
   ingestAuthHandle,
   initializeSession,
   refreshSession,
@@ -51,6 +56,19 @@ export {
   PERSISTED_SESSION_RECORD_VERSION,
 } from './persistence-port';
 export type { PersistedSessionRecord, PersistencePort, RestoreResult } from './persistence-port';
+export {
+  createLocalStorageAdapter,
+  createMemoryStorageAdapter,
+  createSessionStorageAdapter,
+  SESSION_STORAGE_KEY,
+} from './session-storage';
+export type { SessionStorageAdapter, SessionStorageBackend } from './session-storage';
+export {
+  resetSessionRegistryForTests,
+  SessionRegistry,
+} from './session-registry';
+export type { SessionRegistryEntry } from './session-registry';
+export type { SessionLifecycleApi } from './session-lifecycle';
 export { SessionStore, resetSessionStoreCounterForTests } from './session-store';
 export type { SessionStoreConfigSlice } from './session-store';
 export {

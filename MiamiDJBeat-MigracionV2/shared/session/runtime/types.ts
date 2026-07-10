@@ -161,7 +161,8 @@ export type SessionErrorCode =
   | 'SESSION_ERROR_INVALID_HANDLE'
   | 'SESSION_ERROR_EXPIRED_HANDLE'
   | 'SESSION_ERROR_NOT_READY'
-  | 'SESSION_ERROR_ILLEGAL_TRANSITION';
+  | 'SESSION_ERROR_ILLEGAL_TRANSITION'
+  | 'SESSION_ERROR_VALIDATE_FATAL';
 
 export type InitializeSessionOptions = {
   portal: PortalId;
@@ -171,6 +172,7 @@ export type InitializeSessionOptions = {
 export type SessionEmitEventName =
   | 'SESSION_CREATED'
   | 'SESSION_READY'
+  | 'SESSION_REFRESH'
   | 'SESSION_DESTROYED'
   | 'SESSION_EXPIRED'
   | 'SESSION_ERROR';

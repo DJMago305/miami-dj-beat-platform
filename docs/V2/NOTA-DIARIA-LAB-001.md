@@ -729,11 +729,75 @@ PORTAL_READY → DASHBOARD_READY
 - Tres portales usan `bootstrapPortal()` unificado.
 - Sin lógica de negocio · sin Supabase · sin Stripe.
 
+### Próxima fase (post Fase 2)
+
+**FASE 3** — abierta por PO con ticket MOD-002 Session Manager Foundation. Ver cierre formal abajo.
+
+---
+
+## Cierre de Fase 3 — MOD-002 Session Manager
+
+**Ticket:** TICKET-V2-PHASE-3-MOD-002-CLOSURE-001  
+**Rama local:** `feat/v2-phase-3-session-manager`  
+**HEAD pre-commit:** `a8908a5244343987b0477b7df999be8190603097`  
+**Fecha:** 2026-07-10  
+**Entorno:** `http://localhost:5173` (lab V2 únicamente)
+
+### Alcance implementado
+
+| Área | Detalle |
+|------|---------|
+| **Máquina de estados** | 9 estados (`INITIAL`, `LOADING`, `ANONYMOUS`, `AUTHENTICATED`, `REFRESHING`, `EXPIRED`, `ERROR`, `DESTROYED`, `SIGNED_OUT`) — sin cambios de tabla Fase 2 |
+| **Session Registry** | Singleton in-memory · `register` / `getActive` / `clear` · `expiresAt` sincronizado desde snapshot |
+| **Lifecycle API** | `createSession`, `hydrateSession`, `expireSession`, `destroySession`, `refreshSession` vía `session-service.ts` |
+| **Storage adapters** | `memory`, `localStorage`, `sessionStorage` (`session-storage.ts`) |
+| **Eventos** | `SESSION_CREATED`, `SESSION_READY`, `SESSION_REFRESH`, `SESSION_EXPIRED`, `SESSION_DESTROYED`, `SESSION_ERROR` |
+| **Camino fatal ERROR** | Portal allowlist mismatch en restore → `SESSION_ERROR_VALIDATE_FATAL` → máquina `ERROR` · sin `SESSION_READY` duplicado |
+| **Aislamiento portales** | Registry y store limpios tras `resetSessionForTests()` · Client / Artist / Staff sin contaminación cruzada |
+
+### Validación técnica
+
+| Gate | Resultado |
+|------|-----------|
+| `npm run typecheck` | ✅ exit 0 |
+| `npm test` | ✅ 325/325 PASS |
+| `npm run build` | ✅ exit 0 |
+| `session-phase3-foundation.test.ts` | ✅ 21/21 PASS |
+
+### Validación visual Product Owner
+
+| Portal | Session ready | Runtime ready | Aislamiento | Veredicto |
+|--------|---------------|---------------|-------------|-----------|
+| Client | ✅ | ✅ | ✅ | ✅ APROBADO PO |
+| Artist | ✅ | ✅ | ✅ | ✅ APROBADO PO |
+| Staff | ✅ | ✅ | ✅ | ✅ APROBADO PO |
+
+Sin errores visuales detectados en los tres portales.
+
+### Gobernanza de cierre
+
+| Acción | Estado |
+|--------|--------|
+| Commit local Fase 3 | ✅ Autorizado en este ticket |
+| Push | ❌ No autorizado |
+| PR | ❌ No autorizado |
+| Preview | ❌ No autorizado |
+| Merge | ❌ No autorizado |
+| Deploy / producción | ❌ No autorizado |
+| Miami DJ Beat V1 (`web/`) | ✅ Intacta |
+| PR #117 remoto | ✅ Intacto (`d847e19`) |
+| `origin/main` | ✅ Intacto (`13bb4c4`) |
+| MOD-005 API Client | ❌ No abierto |
+
+### Deuda pendiente no bloqueante
+
+- Scripts Node con `mdj-alias-loader.mjs` documentados como **NO SOPORTADOS** en Node 25; usar `register-mdj-loader.mjs` — requiere ticket separado; sin cambios en scripts en este cierre.
+
 ### Próxima fase
 
-**FASE 3** — pendiente orden explícita del Product Owner. Sin apertura automática.
+**Pendiente orden explícita del Product Owner** para el siguiente módulo. Sin apertura automática de MOD-005 ni otros módulos.
 
-*No commit · No push · No deploy · No producción*
+*Commit local controlado · Sin push · Sin deploy · Sin producción*
 
 ---
 

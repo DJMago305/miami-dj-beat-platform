@@ -27,6 +27,7 @@ import {
   publishSessionEvent,
   resetSessionEventListenersForTests,
 } from './session-listeners';
+import { getSessionRegistry } from './session-registry';
 import { SessionStore, type SessionStoreConfigSlice } from './session-store';
 import type {
   AuthHandle,
@@ -42,6 +43,7 @@ import type {
   SessionRefreshPortResult,
   SessionRefreshRequest,
   SessionSnapshot,
+  SessionErrorCode,
   UserLoginEventPayload,
   UserLogoutEventPayload,
 } from './types';
@@ -145,6 +147,7 @@ export class SessionProvider {
   private permissionProfile: ProfileResolveInput = { kind: 'guest' };
   private permissionFlags: SnapshotFlags = {};
   private permissionResolverInvokeCount = 0;
+  private fatalErrorEmitted = false;
 
   constructor(
     store: SessionStore,
@@ -161,6 +164,7 @@ export class SessionProvider {
   reset(): void {
     resetSessionEventListenersForTests();
     this.store.reset();
+    getSessionRegistry().clear();
     this.frozenApi = null;
     this.logoutInProgress = false;
     this.refreshInFlight = null;
@@ -168,6 +172,7 @@ export class SessionProvider {
     this.permissionProfile = { kind: 'guest' };
     this.permissionFlags = {};
     this.permissionResolverInvokeCount = 0;
+    this.fatalErrorEmitted = false;
   }
 
   getStore(): SessionStore {
@@ -233,16 +238,52 @@ export class SessionProvider {
     return enriched;
   }
 
+  private syncSessionRegistry(snapshot: SessionSnapshot): void {
+    const role =
+      snapshot.roles[0] ??
+      (snapshot.user ? 'authenticated' : 'guest');
+    getSessionRegistry().register(
+      snapshot,
+      this.store.getMachineState(),
+      role,
+      snapshot.capabilities,
+    );
+  }
+
+  private persistSessionRecord(snapshot: SessionSnapshot): void {
+    if (!this.persistencePort.persist) {
+      return;
+    }
+
+    this.persistencePort.persist(
+      Object.freeze({
+        recordVersion: PERSISTED_SESSION_RECORD_VERSION,
+        sessionId: snapshot.sessionId,
+        portal: snapshot.portal,
+        userId: snapshot.user?.userId ?? null,
+        email: snapshot.user?.email,
+        mdjbId: snapshot.user?.mdjbId,
+        expiresAt: snapshot.expiresAt,
+        locale: snapshot.locale,
+        theme: snapshot.theme,
+        persistedAt: new Date().toISOString(),
+      }),
+    );
+  }
+
   private publishSessionSnapshot(lifecycle: SessionLifecycleState): SessionSnapshot {
     const base = this.store.publishSnapshot(this.configSlice(), lifecycle);
     if (lifecycle !== 'SESSION_READY') {
       this.enrichedSnapshot = null;
+      this.syncSessionRegistry(base);
       return base;
     }
 
     const enriched = this.attachPermissions(base);
     this.enrichedSnapshot = enriched;
     this.permissionResolverInvokeCount += 1;
+    this.syncSessionRegistry(enriched);
+    this.persistSessionRecord(enriched);
     return enriched;
   }
 
@@ -304,6 +345,10 @@ export class SessionProvider {
 
   /** Idempotent — no duplicate boot when initializeSession() already completed. */
   handleSystemReadyEvent(): void {
+    if (this.store.getMachineState() === 'ERROR') {
+      return;
+    }
+
     if (this.store.getLifecycleState() === 'SESSION_READY' && this.frozenApi) {
       return;
     }
@@ -401,6 +446,38 @@ export class SessionProvider {
     });
   }
 
+  private completeFatalValidate(code: SessionErrorCode, reason: string): never {
+    if (this.store.getMachineState() === 'LOADING') {
+      this.store.applyMachineTransition('LOADING', 'VALIDATE_FAIL_FATAL', 'ERROR');
+    }
+
+    this.persistencePort.clear?.();
+    this.store.setLifecycleState('SESSION_UNINITIALIZED');
+    this.store.bumpSnapshotVersion();
+
+    const errorSnapshot = this.store.publishSnapshot(this.configSlice(), 'SESSION_UNINITIALIZED');
+    this.syncSessionRegistry(errorSnapshot);
+
+    if (!this.fatalErrorEmitted) {
+      publishSessionEvent('SESSION_ERROR', {
+        code,
+        sessionId: this.store.getSessionId(),
+        reason,
+      });
+      this.fatalErrorEmitted = true;
+    }
+
+    getLogger().error('Session validate fatal', {
+      moduleId: 'MOD-002',
+      sessionId: this.store.getSessionId(),
+      code,
+      reason,
+      machineState: this.store.getMachineState(),
+    });
+
+    throw new SessionError(code, reason);
+  }
+
   /** Boot path — anonymous SESSION_READY (baseline PO 2026-07-06). Skips persistence restore. */
   markReadyAnonymous(): SessionSnapshot {
     return this.completeAnonymousReady();
@@ -488,6 +565,16 @@ export class SessionProvider {
   }
 
   private applyRestoredRecord(record: PersistedSessionRecord): SessionSnapshot {
+    if (
+      record.portal &&
+      record.portal !== this.store.getPortal()
+    ) {
+      this.completeFatalValidate(
+        'SESSION_ERROR_VALIDATE_FATAL',
+        `portal-allowlist-mismatch: expected ${this.store.getPortal()}, found ${record.portal}`,
+      );
+    }
+
     if (record.recordVersion !== PERSISTED_SESSION_RECORD_VERSION) {
       return this.completeAnonymousReady({
         restoreReason: 'restore_invalid',
@@ -668,6 +755,7 @@ export class SessionProvider {
     this.store.bumpSnapshotVersion();
 
     const snapshot = this.store.publishSnapshot(this.configSlice(), 'SESSION_EXPIRED');
+    this.syncSessionRegistry(snapshot);
     publishSessionEvent('SESSION_EXPIRED', {
       reason,
       sessionId: this.store.getSessionId(),
@@ -681,6 +769,11 @@ export class SessionProvider {
     });
 
     return snapshot;
+  }
+
+  /** Lifecycle — explicit expiry transition with SESSION_EXPIRED emission. */
+  expireSession(reason = 'expiry-detected'): SessionSnapshot {
+    return this.handleSessionExpiry(reason);
   }
 
   /** Single-flight refresh — concurrent callers await the same in-flight operation. */
@@ -719,6 +812,12 @@ export class SessionProvider {
     this.store.bumpSnapshotVersion();
     this.publishSessionSnapshot('SESSION_READY');
 
+    publishSessionEvent('SESSION_REFRESH', {
+      sessionId: this.store.getSessionId(),
+      userId: snapshot.user.userId,
+      phase: 'start',
+    });
+
     const refreshResult = await resolveRefreshResult(
       unwrapRefreshResult(
         this.refreshPort.refresh({
@@ -747,6 +846,11 @@ export class SessionProvider {
     this.store.bumpSnapshotVersion();
 
     const readySnapshot = this.publishSessionSnapshot('SESSION_READY');
+    publishSessionEvent('SESSION_REFRESH', {
+      sessionId: readySnapshot.sessionId,
+      userId: readySnapshot.user?.userId ?? 'anonymous',
+      phase: 'done',
+    });
     publishSessionEvent('SESSION_READY', {
       portal: readySnapshot.portal,
       sessionId: readySnapshot.sessionId,
@@ -774,6 +878,7 @@ export class SessionProvider {
     this.store.bumpSnapshotVersion();
 
     const expiredSnapshot = this.store.publishSnapshot(this.configSlice(), 'SESSION_EXPIRED');
+    this.syncSessionRegistry(expiredSnapshot);
     publishSessionEvent('SESSION_EXPIRED', {
       reason: triggerReason ?? failReason,
       sessionId: this.store.getSessionId(),
@@ -807,10 +912,13 @@ export class SessionProvider {
   }
 
   destroySession(reason = 'destroy'): void {
+    const sessionId = this.store.getSessionId();
     publishSessionEvent('SESSION_DESTROYED', {
       reason,
-      sessionId: this.store.getSessionId(),
+      sessionId,
     });
+    getSessionRegistry().remove(sessionId);
+    this.persistencePort.clear?.();
     this.store.invalidateSnapshot();
     this.frozenApi = null;
 
@@ -820,7 +928,8 @@ export class SessionProvider {
     });
   }
 
-  initialize(options: InitializeSessionOptions): SessionPublicApi {
+  /** Lifecycle — allocate session identity and public API without hydration. */
+  createSession(options: InitializeSessionOptions): SessionPublicApi {
     if (this.store.getLifecycleState() === 'SESSION_READY' && this.frozenApi) {
       this.wireEventListeners();
       return this.frozenApi;
@@ -828,7 +937,7 @@ export class SessionProvider {
 
     this.store.beginSession(options.portal);
 
-    getLogger().info('Session initialization started', {
+    getLogger().info('Session creation started', {
       moduleId: 'MOD-002',
       portal: options.portal,
       state: this.store.getLifecycleState(),
@@ -836,10 +945,27 @@ export class SessionProvider {
     });
 
     this.frozenApi = this.buildPublicApi();
-    this.runHydrationRestore();
     this.wireEventListeners();
-
     return this.frozenApi;
+  }
+
+  /** Lifecycle — restore and validate persisted session state. */
+  hydrateSession(): SessionSnapshot {
+    if (!this.frozenApi) {
+      throw new SessionError('SESSION_ERROR_NOT_READY', 'Call createSession() before hydrateSession().');
+    }
+    return this.runHydrationRestore();
+  }
+
+  initialize(options: InitializeSessionOptions): SessionPublicApi {
+    if (this.store.getLifecycleState() === 'SESSION_READY' && this.frozenApi) {
+      this.wireEventListeners();
+      return this.frozenApi;
+    }
+
+    const api = this.createSession(options);
+    this.runHydrationRestore();
+    return api;
   }
 
   getPublicApi(): SessionPublicApi {

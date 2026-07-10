@@ -12,6 +12,10 @@ import {
   type SessionSnapshotWithPermissions,
 } from './session-provider';
 import { resetSessionStoreCounterForTests, SessionStore } from './session-store';
+import {
+  getSessionRegistry,
+  resetSessionRegistryForTests,
+} from './session-registry';
 import type {
   AuthHandle,
   AuthHandoffInput,
@@ -103,6 +107,24 @@ export function handleSessionExpiry(reason?: string): SessionSnapshot {
   return sessionProvider.handleSessionExpiry(reason);
 }
 
+/** Lifecycle facade — explicit expiry transition. */
+export function expireSession(reason?: string): SessionSnapshot {
+  return sessionProvider.expireSession(reason);
+}
+
+/** Lifecycle facade — create session identity without hydration. */
+export function createSession(options: InitializeSessionOptions): SessionPublicApi {
+  if (getErrorState() !== 'ERR_READY') {
+    throw new SessionError('SESSION_ERROR_NOT_READY', 'Error Handler must be ERR_READY before Session creation.');
+  }
+  return sessionProvider.createSession(options);
+}
+
+/** Lifecycle facade — restore and validate persisted session state. */
+export function hydrateSession(): SessionSnapshot {
+  return sessionProvider.hydrateSession();
+}
+
 export function getSessionManager(): SessionPublicApi {
   return sessionProvider.getPublicApi();
 }
@@ -117,6 +139,12 @@ export function getSessionStoreForTests(): SessionStore {
   return sessionStore;
 }
 
+export function getSessionRegistryForTests() {
+  return getSessionRegistry();
+}
+
+export { getSessionRegistry } from './session-registry';
+
 export function getAuthSessionBoundaryForTests() {
   return getAuthSessionBoundary();
 }
@@ -125,5 +153,6 @@ export function getAuthSessionBoundaryForTests() {
 export function resetSessionForTests(): void {
   sessionProvider.reset();
   resetSessionStoreCounterForTests();
+  resetSessionRegistryForTests();
   resetAuthSessionBoundaryForTests();
 }
