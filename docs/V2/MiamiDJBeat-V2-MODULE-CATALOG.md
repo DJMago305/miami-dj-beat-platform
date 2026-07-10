@@ -187,7 +187,7 @@ Supabase Auth real · MOD-012 Storage · `auth_ref` persistente · UI login · O
 | Tests wiring | ✅ 12 nuevos |
 | Suite global | ✅ 422/422 PASS |
 | Test files | ✅ 42/42 PASS |
-| Runtime Registry MOD-001 | ⏳ PENDIENTE |
+| Runtime Registry MOD-001 | ✅ COMPLETADO — `2405b20` |
 | Validación visual PO | ⏳ NO APLICA |
 
 ### Cadena boot actualizada
@@ -198,9 +198,87 @@ Config → Bus → Logging → Error → registerAuthForBoot → Session → act
 
 ### Explícitamente NO completado
 
-Supabase Auth · MOD-012 Storage · Registry MOD-001 · MOD-001↔MOD-014 wiring · UI login · boot async · producción · publicación remota.
+Supabase Auth · MOD-012 Storage · MOD-001↔MOD-014 wiring · UI login · boot async · producción · publicación remota.
 
 **Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-10-MOD-001-AUTH-BOOTSTRAP-WIRING.md` · `docs/V2/TICKETS/TICKET-V2-PHASE-5-MOD-001-AUTH-BOOTSTRAP-WIRING-001.md`
+
+---
+
+## SECCIÓN 4F — ANEXO FASE 5 (MOD-001 RUNTIME REGISTRY)
+
+**Tickets:** TICKET-V2-PHASE-5-MOD-001-RUNTIME-REGISTRY-DISCOVERY-001 · TICKET-V2-PHASE-5-MOD-001-RUNTIME-REGISTRY-001
+**Fecha:** 2026-07-10 · **Entorno:** `http://localhost:5173` (lab V2)
+**Commit técnico local:** `2405b20eaaef4f1a41df00055a8a07a1629a1431` — `feat(v2-runtime): register MOD-001 authentication`
+**HEAD previo:** `d3c46fde4a80cde32ddfe5bf48a7aa7502d0d610`
+
+### Runtime Registry MOD-001 — COMPLETADO LOCALMENTE
+
+| Componente | Estado |
+|------------|--------|
+| `MOD-001` en `RuntimeModuleId` | ✅ AÑADIDO |
+| Registro estático en `registerCoreModules()` | ✅ OPERATIVO |
+| `lifecycleState` = `getAuthService().getState()` (snapshot boot) | ✅ VALIDADO |
+| Guest boot → `UNAUTHENTICATED` | ✅ VALIDADO |
+| Restore válido → `SESSION_HANDOFF_SUCCEEDED` | ✅ VALIDADO |
+| Sin sincronización dinámica post-boot | ✅ POLÍTICA ACEPTADA |
+| Tests registry | ✅ 7 nuevos (`runtime-registry-auth.test.ts`) |
+| Suite global | ✅ 429/429 PASS |
+| Test files | ✅ 43/43 PASS |
+
+### Explícitamente NO completado
+
+Registry dinámico post-login/logout · metadata provider/portal · producción · publicación remota.
+
+---
+
+## SECCIÓN 4G — ANEXO FASE 5 (MOD-005 API CLIENT DISCOVERY)
+
+**Ticket:** TICKET-V2-PHASE-5-MOD-005-API-CLIENT-DISCOVERY-001
+**Fecha:** 2026-07-10 · **Entorno:** `http://localhost:5173` (lab V2)
+**Tipo:** Análisis y planificación únicamente — **sin commit técnico**
+
+### Foundation Fase 4 (sin cambio)
+
+| Componente | Estado |
+|------------|--------|
+| Foundation runtime | ✅ IMPLEMENTADA — commit `36ae1bc` (Fase 4) |
+| Validación Fase 4 | ✅ VALIDADO EN LOCALHOST — APROBADO PO (sin modificar) |
+| `createApiClient()` / `ApiClientPublicApi` | ✅ EXISTENTE |
+| `TransportPort` | ✅ IMPLEMENTADO |
+| `MockTransport` / `MemoryTransport` | ✅ DISPONIBLES |
+| Retry / timeout / cancel / `ApiFailure` | ✅ IMPLEMENTADOS |
+
+### Discovery Fase 5 — COMPLETADO
+
+| Componente | Estado |
+|------------|--------|
+| Discovery arquitectónico | ✅ COMPLETADO |
+| Arquitectura recomendada | E + D — capa central + adapters desacoplados |
+| Auth indirecto vía `SessionReaderPort` | ✅ DEFINIDO |
+| Sin import directo Auth en API core | ✅ DEFINIDO |
+| Runtime Registry solo observabilidad estática | ✅ DEFINIDO |
+| `MemoryTransport` para laboratorio | ✅ DEFINIDO |
+
+### Pendiente (post-discovery — no implementado)
+
+| Componente | Estado |
+|------------|--------|
+| Bootstrap wiring | ⏳ PENDIENTE |
+| API singleton (`initializeApiClient` / `getApiClient`) | ⏳ PENDIENTE |
+| SessionReader live en boot | ⏳ PENDIENTE |
+| Runtime Registry MOD-005 | ⏳ PENDIENTE |
+| `cancelAll()` en logout | ⏳ PENDIENTE |
+| `normalizeApiError()` | ⏳ PENDIENTE |
+| `invokeEdge()` / `rpc()` | ⏳ PENDIENTE |
+| `FetchTransport` / Supabase real | ⏳ PENDIENTE |
+| Producción | ❌ NO |
+| Publicación remota | ❌ NO |
+
+### Próximo ticket recomendado (sin abrir)
+
+`TICKET-V2-PHASE-6-MOD-005-API-BOOTSTRAP-WIRING-001`
+
+**Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-10-MOD-005-API-CLIENT-DISCOVERY.md` · `docs/V2/TICKETS/TICKET-V2-PHASE-5-MOD-005-API-CLIENT-DISCOVERY-001.md`
 
 ---
 

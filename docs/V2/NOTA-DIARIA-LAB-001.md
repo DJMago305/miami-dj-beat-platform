@@ -1030,6 +1030,123 @@ Sin push · sin PR · sin Preview · sin merge · sin deploy.
 
 ---
 
+## MOD-001 Runtime Registry — cierre técnico local
+
+**Ticket:** TICKET-V2-PHASE-5-MOD-001-RUNTIME-REGISTRY-001
+**Fecha:** 2026-07-10
+**Rama:** `plan/v2-phase-4-api-client`
+**HEAD previo:** `d3c46fde4a80cde32ddfe5bf48a7aa7502d0d610`
+**Commit técnico:** `2405b20eaaef4f1a41df00055a8a07a1629a1431` — `feat(v2-runtime): register MOD-001 authentication`
+
+### Entregables
+
+| Métrica | Valor |
+|---------|-------|
+| Archivos | 4 (2 modificados runtime + 1 test modificado + 1 test nuevo) |
+| Líneas | +246 / −3 |
+| Tests nuevos registry | 7 |
+| Suite global | 429/429 PASS |
+| Test files | 43/43 PASS |
+| Working tree post-commit | Limpio |
+
+### Alcance confirmado
+
+Registro estático MOD-001 en `registerCoreModules()` · snapshot `getAuthService().getState()` · sin sincronización dinámica · sin listeners USER_LOGIN/LOGOUT · sin cambios Bootstrap/Auth/Session · sin Supabase · sin publicación remota.
+
+### Deuda registrada
+
+1. Registry stale tras login/logout post-boot (limitación aceptada).
+2. `initializeRuntime()` presupone Auth inicializado.
+3. Provider y portal fuera de metadata registry.
+
+**Documentación:** pendiente ticket docs separado.
+
+---
+
+## MOD-005 API Client — discovery Fase 5
+
+**Ticket:** TICKET-V2-PHASE-5-MOD-005-API-CLIENT-DISCOVERY-001
+**Fecha:** 2026-07-10
+**Rama:** `plan/v2-phase-4-api-client`
+**HEAD:** `2405b20eaaef4f1a41df00055a8a07a1629a1431`
+**Tipo:** Análisis y planificación únicamente — **sin commit técnico**
+
+### Hallazgos
+
+| Área | Estado |
+|------|--------|
+| Foundation Fase 4 (`36ae1bc`) | ✅ Ya implementada — `createApiClient`, `TransportPort`, retry/timeout/cancel |
+| Gap real | Boot wiring · singleton · SessionReader live · Registry MOD-005 · `cancelAll()` logout |
+| Arquitectura | E + D — único egress Shared Core + adapters desacoplados |
+| Auth | Indirecto vía `SessionReaderPort` — sin import Auth en core |
+| Runtime | Solo observabilidad estática — sin dependencia directa |
+| Lab transport | `MemoryTransport` — Fetch/Supabase futuros |
+| Pendiente | `normalizeApiError()` · `invokeEdge`/`rpc` · bootstrap wiring |
+
+### Veredicto discovery
+
+**MOD-005 API CLIENT LISTO PARA APERTURA** (ticket wiring: `TICKET-V2-PHASE-6-MOD-005-API-BOOTSTRAP-WIRING-001` — sin abrir).
+
+**Documentación:** `SESSION-SUMMARIES/2026-07-10-MOD-005-API-CLIENT-DISCOVERY.md` · `TICKETS/TICKET-V2-PHASE-5-MOD-005-API-CLIENT-DISCOVERY-001.md`
+
+*Sin implementación · Sin commit técnico · Detenerse hasta orden PO*
+
+---
+
+## Cierre de Jornada — 2026-07-10 — Fase 5
+
+**Ticket:** TICKET-V2-END-OF-DAY-DOCUMENTATION-2026-07-10-002
+**Tipo:** Documentación de cierre de jornada — sin implementación adicional · sin commit documental en este paso
+
+### Cronología de la jornada
+
+| Orden | Hito | Estado |
+|-------|------|--------|
+| 1 | MOD-001 Authentication Foundation | ✅ `ded41b6` + docs `72813da` |
+| 2 | MOD-014 Auth Error Normalization | ✅ `6784307` + docs `7a0c9e8` |
+| 3 | Incidente post-commit working tree contamination | ✅ Recuperado — INCIDENT-V2-POST-COMMIT-WORKTREE-CONTAMINATION-001 |
+| 4 | MOD-001 Auth Bootstrap Wiring | ✅ `0866d19` + docs `d3c46fd` |
+| 5 | MOD-001 Runtime Registry | ✅ `2405b20` |
+| 6 | MOD-005 API Client Discovery | ✅ Análisis únicamente — sin commit técnico |
+
+### Commits locales relevantes (Fase 5)
+
+| Commit | Mensaje |
+|--------|---------|
+| `ded41b6d342dce21e054285cc59ecebb357171e4` | `feat(v2-auth): add MOD-001 authentication foundation` |
+| `72813da2d15e313edae646c62e871fdd1ff43bbd` | `docs(v2-auth): close MOD-001 authentication foundation` |
+| `67843074f13aac44f22d19bcc6858e84287284e4` | `feat(v2-errors): add auth error normalization` |
+| `7a0c9e821ee07f90f3df656e69495f51d445a04f` | `docs(v2-errors): close MOD-014 and record recovery incident` |
+| `0866d19575dd63c5127a958f2cecacee293cf626` | `feat(v2-auth): wire authentication into bootstrap` |
+| `d3c46fde4a80cde32ddfe5bf48a7aa7502d0d610` | `docs(v2-auth): close authentication bootstrap wiring` |
+| `2405b20eaaef4f1a41df00055a8a07a1629a1431` | `feat(v2-runtime): register MOD-001 authentication` |
+
+### Estado final
+
+| Métrica | Valor |
+|---------|-------|
+| Suite global | ✅ 429/429 PASS |
+| Test files | ✅ 43/43 PASS |
+| Working tree | ✅ Limpio |
+| Rama | `plan/v2-phase-4-api-client` |
+| HEAD | `2405b20eaaef4f1a41df00055a8a07a1629a1431` |
+| Publicación remota | ⛔ NO — sin push · sin PR · sin Preview · sin merge · sin deploy |
+| Producción / V1 | ✅ Intactas |
+| `origin/main` | ✅ `13bb4c4` intacto |
+| PR #117 | ✅ `d847e19` intacto |
+
+### Próximo ticket recomendado (sin abrir)
+
+`TICKET-V2-PHASE-6-MOD-005-API-BOOTSTRAP-WIRING-001` — alcance tentativo: `api-service.ts`, `initialize-api.ts`, `boot.ts`, `boot-api-wiring.test.ts`; opcional con PO: Registry MOD-005 · `USER_LOGOUT` → `cancelAll()`.
+
+### Gobernanza
+
+Sin push · sin PR · sin Preview · sin merge · sin deploy · sin producción.
+
+*Jornada Fase 5 documentada · Detenerse hasta nueva orden del Product Owner*
+
+---
+
 ## Cierre de Jornada — 2026-07-10
 
 **Ticket:** TICKET-V2-END-OF-SESSION-2026-07-10-001  
