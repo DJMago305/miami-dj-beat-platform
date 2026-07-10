@@ -506,6 +506,28 @@ Modificaciones al catálogo (nuevo módulo, cambio P0, retiro): ticket de catál
 
 ---
 
+### Baseline Final Fase 5 — 2026-07-10
+
+**Ticket notarización:** TICKET-V2-END-OF-DAY-NOTARIZATION-2026-07-10-001
+**HEAD:** `59549097fb0cf0d147cf9d4e6bc9bdd497bffea1` — `docs(v2): close phase 5 and record MOD-005 discovery`
+**Acta:** `docs/V2/SESSION-SUMMARIES/2026-07-10-PHASE-5-FINAL-HANDOFF.md`
+
+| Módulo / capacidad | Estado Fase 5 |
+|--------------------|---------------|
+| MOD-001 Foundation | ✅ COMPLETADA |
+| MOD-001 Bootstrap Wiring | ✅ COMPLETADO |
+| MOD-001 Runtime Registry | ✅ COMPLETADO |
+| MOD-014 Auth normalization | ✅ COMPLETADA |
+| MOD-005 Foundation (Fase 4) | ✅ IMPLEMENTADA — sin cambio en este baseline |
+| MOD-005 Discovery Fase 5 | ✅ COMPLETADO |
+| MOD-005 Bootstrap Wiring | ⏳ PENDIENTE |
+| Test baseline | **429/429** · **43/43 files** |
+| Próximo ticket | `TICKET-V2-PHASE-6-MOD-005-API-BOOTSTRAP-WIRING-001` (sin abrir) |
+| Publicación | Solo local — sin push / PR / Preview / merge / deploy |
+| Producción / V1 | ✅ Intactas · `origin/main` `13bb4c4` · PR #117 `d847e19` |
+
+---
+
 *Module Catalog v1.2 — 2026-07-05 (origen) · consolidado 2026-07-10 — TICKET-V2-DOC-CONSOLIDATION-001*
 
 *Referencia obligatoria para todo desarrollo V2. Sección 4: tabla única con estados documental / runtime / validación y portal propietario separados.*
