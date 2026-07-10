@@ -905,6 +905,78 @@ Sin push · sin PR · sin Preview · sin merge · sin deploy.
 
 ---
 
+## MOD-014 Auth Error Normalization — cierre técnico local
+
+**Ticket:** TICKET-V2-PHASE-5-MOD-014-AUTH-ERROR-NORMALIZATION-001
+**Fecha:** 2026-07-10
+**Rama:** `plan/v2-phase-4-api-client`
+**HEAD previo:** `72813da2d15e313edae646c62e871fdd1ff43bbd`
+**Commit técnico:** `67843074f13aac44f22d19bcc6858e84287284e4` — `feat(v2-errors): add auth error normalization`
+
+### Entregables
+
+| Métrica | Valor |
+|---------|-------|
+| Archivos | 6 (4 runtime modificados + 1 runtime nuevo + 1 test) |
+| Líneas | +451 / −2 |
+| Tests nuevos MOD-014 | 16 |
+| Suite global | 410/410 PASS |
+| Test files | 41/41 PASS |
+| Working tree post-recuperación | Limpio |
+| V2 Staff localhost | HTTP 200 (`http://localhost:5173/staff/`) |
+
+### Alcance confirmado
+
+`normalizeAuthError()` · mapping ERR-AUTH-001…010 → ERR-0100…0109 · redacción ampliada · sin wiring MOD-001 · sin `normalizeApiError()` · sin Supabase · sin publicación remota.
+
+### Gobernanza
+
+Sin push · sin PR · sin Preview · sin merge · sin deploy.
+
+**Documentación:** `SESSION-SUMMARIES/2026-07-10-MOD-014-AUTH-ERROR-NORMALIZATION.md` · `TICKETS/TICKET-V2-PHASE-5-MOD-014-AUTH-ERROR-NORMALIZATION-001.md`
+
+*Pendiente commit documental · Detenerse hasta orden PO*
+
+---
+
+## Incidente post-commit — working tree contamination
+
+**Incidente:** INCIDENT-V2-POST-COMMIT-WORKTREE-CONTAMINATION-001
+**Fecha:** 2026-07-10
+**Ticket activo al detectar:** TICKET-V2-PHASE-5-MOD-014-AUTH-ERROR-NORMALIZATION-001
+
+### Síntoma
+
+Tras el commit `6784307`, el working tree quedó con **8 archivos contaminados** unstaged:
+
+- `D` `auth-normalize.ts`
+- `M` `catalog.ts`, `error-handler-service.ts`, `index.ts`, `redact.ts`
+- `M` `theme/runtime/index.ts`
+- `M` `web/admin-dashboard.html`, `web/js/production-module.js`
+
+### Impacto local
+
+- MOD-014 revertido parcialmente **en disco** (commit git intacto).
+- Theme: exports eliminados en working tree.
+- V1: regresión local de invoice panels (`v20260706-invoice-panels-1`).
+- Remoto y producción: **sin impacto**.
+
+### Origen probable
+
+Escritura paralela del editor / undo / sync u otro proceso — **no determinado con certeza absoluta**. El commit usó índice staged correcto; el disco divergió (~13:21:38–13:21:46 vs commit 13:22:48).
+
+### Recuperación
+
+| Paso | Acción |
+|------|--------|
+| Preservación | Respaldo en `/Users/djmago/Desktop/INCIDENT-V2-POST-COMMIT-2026-07-10` |
+| Restauración | `git restore --source=HEAD` de 8 archivos |
+| Validación | 16/16 · 410/410 · working tree limpio · V1/Theme alineados con HEAD |
+
+**Documentación incidente:** `docs/V2/GOVERNANCE/INCIDENT-V2-POST-COMMIT-WORKTREE-CONTAMINATION-001.md`
+
+---
+
 ## Cierre de Jornada — 2026-07-10
 
 **Ticket:** TICKET-V2-END-OF-SESSION-2026-07-10-001  

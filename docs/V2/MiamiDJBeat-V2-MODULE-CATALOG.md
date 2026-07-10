@@ -95,7 +95,7 @@ Tabla **única y autoritativa** — cada módulo aparece **una sola vez**.
 | MOD-011 | Notifications | Toast, inbox hook, NOTIFICATION_CREATED | P1 | ✅ DOCUMENTADO | ⏳ PENDIENTE | ⏳ PENDIENTE | MOD-004, MOD-005 | SHARED / TRANSVERSAL | 009 | `shared/notifications/` |
 | MOD-012 | Storage | Almacenamiento local client; namespaces `mdj_v2_*` | P1 | ✅ DOCUMENTADO | ⏳ PENDIENTE | ⏳ PENDIENTE | MOD-005 | SHARED / TRANSVERSAL | 011 | `shared/storage/` |
 | MOD-013 | Feature Flags | Toggles cutover y módulos; env + runtime | P1 | ✅ DOCUMENTADO | ⏳ PENDIENTE | ⏳ PENDIENTE | MOD-006 | SHARED / TRANSVERSAL | 015 | `shared/feature-flags/` |
-| MOD-014 | Error Handler | Surface error/detail; fallbacks UX | P0 | ✅ DOCUMENTADO | ⚙️ OPERATIVO EN BOOT | ⏳ PENDIENTE | MOD-010 | SHARED / TRANSVERSAL | 008 | `shared/errors/` |
+| MOD-014 | Error Handler | Surface error/detail; fallbacks UX | P0 | ✅ DOCUMENTADO | ⚙️ OPERATIVO EN BOOT | ✅ VALIDADO EN LOCALHOST — Fase 5 auth normalize (técnico) | MOD-010 | SHARED / TRANSVERSAL | 008 | `shared/errors/` |
 | MOD-015 | Internationalization | EN canónico, ES fallback, LANGUAGE_CHANGED | P0 | ✅ DOCUMENTADO | ⏳ PENDIENTE | ⏳ PENDIENTE | MOD-006 | SHARED / TRANSVERSAL | 013 | `shared/i18n/` |
 | MOD-016 | Responsive Engine | Breakpoints, nav mobile contract, layout helpers | P1 | ✅ DOCUMENTADO | ⏳ PENDIENTE | ⏳ PENDIENTE | MOD-008 | SHARED / TRANSVERSAL | 018 | `shared/responsive/` |
 
@@ -164,6 +164,34 @@ Los estados runtime y validación de módulos Shared Core están en **Sección 4
 Supabase Auth real · bootstrap wiring · MOD-012 Storage · `auth_ref` persistente · UI login · OAuth · refresh real de proveedor · producción · publicación remota.
 
 **Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-10-MOD-001-AUTH-FOUNDATION.md` · `docs/V2/TICKETS/TICKET-V2-PHASE-5-MOD-001-AUTH-FOUNDATION-001.md`
+
+---
+
+## SECCIÓN 4D — ANEXO FASE 5 (MOD-014 AUTH ERROR NORMALIZATION)
+
+**Tickets:** TICKET-V2-PHASE-5-MOD-014-AUTH-ERROR-NORMALIZATION-001 · TICKET-V2-PHASE-5-MOD-014-AUTH-ERROR-NORMALIZATION-DOCS-001
+**Fecha:** 2026-07-10 · **Entorno:** `http://localhost:5173` (lab V2)
+**Commit técnico local:** `67843074f13aac44f22d19bcc6858e84287284e4` — `feat(v2-errors): add auth error normalization`
+
+### Auth error normalization — COMPLETADA LOCALMENTE
+
+| Componente | Estado |
+|------------|--------|
+| `normalizeAuthError()` | ✅ IMPLEMENTADO |
+| Mapping ERR-AUTH-001…010 | ✅ COMPLETO |
+| Catálogo runtime ERR-0100…0109 | ✅ COMPLETO |
+| Redacción ampliada (`redact.ts`) | ✅ COMPLETADA |
+| Tests MOD-014 auth normalize | ✅ 16 nuevos |
+| Suite global | ✅ 410/410 PASS |
+| Test files | ✅ 41/41 PASS |
+| Validación técnica | ✅ COMPLETADA |
+| Validación visual PO | ⏳ NO APLICA — sin UI ni wiring |
+
+### Explícitamente NO completado
+
+MOD-001 ↔ MOD-014 wiring · `normalizeApiError()` · Supabase provider mapping · UI de errores · producción · publicación remota.
+
+**Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-10-MOD-014-AUTH-ERROR-NORMALIZATION.md` · `docs/V2/TICKETS/TICKET-V2-PHASE-5-MOD-014-AUTH-ERROR-NORMALIZATION-001.md` · `docs/V2/GOVERNANCE/INCIDENT-V2-POST-COMMIT-WORKTREE-CONTAMINATION-001.md`
 
 ---
 
