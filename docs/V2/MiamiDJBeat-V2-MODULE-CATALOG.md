@@ -82,7 +82,7 @@ Tabla **única y autoritativa** — cada módulo aparece **una sola vez**.
 
 | ID | Módulo | Descripción | Prioridad | Estado documental | Estado runtime | Validación | Dependencias | Portal propietario | Ticket spec | Carpeta spec |
 |----|--------|-------------|-----------|-------------------|----------------|------------|--------------|-------------------|-------------|--------------|
-| MOD-001 | Authentication | Sign-in, sign-out, provider Supabase, gates | P0 | ✅ DOCUMENTADO | ⏳ PENDIENTE | ⏳ PENDIENTE | Supabase Auth | SHARED / TRANSVERSAL | 012 | `shared/auth/` |
+| MOD-001 | Authentication | Sign-in, sign-out, provider Supabase, gates | P0 | ✅ DOCUMENTADO | ✅ IMPLEMENTADO (foundation mock) | ✅ VALIDADO EN LOCALHOST — Fase 5 (técnico; sin PO visual) | MOD-006, MOD-004 · Supabase futuro | SHARED / TRANSVERSAL | 012 | `shared/auth/` |
 | MOD-002 | Session Manager | Hydrate, INITIAL_SESSION vs SIGNED_IN, estado sesión | P0 | ✅ DOCUMENTADO | ✅ IMPLEMENTADO / OPERATIVO | ✅ VALIDADO EN LOCALHOST — APROBADO PO (Fase 3) | MOD-001 | SHARED / TRANSVERSAL | 005 | `shared/session/` |
 | MOD-003 | Permissions | Snapshot acceso, guards, matriz roles buyer/performer/staff | P0 | ✅ DOCUMENTADO | ⚙️ OPERATIVO EN BOOT | ⏳ PENDIENTE | MOD-001, MOD-002, RPC snapshot | SHARED / TRANSVERSAL | 004 | `shared/permissions/` |
 | MOD-004 | Event Bus | Contratos emit/listen tipados; catch-up; once | P0 | ✅ DOCUMENTADO | ✅ IMPLEMENTADO / OPERATIVO | ✅ VALIDADO EN LOCALHOST — APROBADO PO (Fase 2) | MOD-002 | SHARED / TRANSVERSAL | 003 | `shared/events/` |
@@ -136,6 +136,34 @@ Los estados runtime y validación de módulos Shared Core están en **Sección 4
 |--------|---------------------|
 | MOD-004 Event Bus | `BUS_READY` · bus in-memory · 16 tests unit |
 | MOD-007 Theme Manager | `THEME_READY` post-`SYSTEM_READY` · 12 tests theme |
+
+---
+
+## SECCIÓN 4C — ANEXO FASE 5 (MOD-001 AUTH FOUNDATION)
+
+**Tickets:** TICKET-V2-PHASE-5-MOD-001-AUTH-FOUNDATION-001 · TICKET-V2-PHASE-5-MOD-001-AUTH-FOUNDATION-DOCS-001
+**Fecha:** 2026-07-10 · **Entorno:** `http://localhost:5173` (lab V2)
+**Commit técnico local:** `ded41b6d342dce21e054285cc59ecebb357171e4` — `feat(v2-auth): add MOD-001 authentication foundation`
+
+### Foundation runtime — COMPLETADA LOCALMENTE
+
+| Componente | Estado |
+|------------|--------|
+| MockAuthProvider | ✅ COMPLETADO — offline, determinístico |
+| Máquina de estados (12) | ✅ COMPLETADA — 25 transiciones |
+| AuthService | ✅ COMPLETADO |
+| AuthPort / SessionHandoffPort | ✅ COMPLETADOS |
+| Integración mock Auth → Session | ✅ VALIDADA — Event Bus `USER_LOGIN` |
+| Tests MOD-001 | ✅ 13 nuevos (9 + 4) |
+| Suite global | ✅ 394/394 PASS |
+| Validación técnica | ✅ COMPLETADA |
+| Validación visual PO | ⏳ NO APLICA — sin UI ni boot wiring |
+
+### Explícitamente NO completado
+
+Supabase Auth real · bootstrap wiring · MOD-012 Storage · `auth_ref` persistente · UI login · OAuth · refresh real de proveedor · producción · publicación remota.
+
+**Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-10-MOD-001-AUTH-FOUNDATION.md` · `docs/V2/TICKETS/TICKET-V2-PHASE-5-MOD-001-AUTH-FOUNDATION-001.md`
 
 ---
 

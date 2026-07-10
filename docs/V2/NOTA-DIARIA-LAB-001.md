@@ -869,6 +869,42 @@ Validación **contractual y técnica** — MOD-005 no conectado a UI ni boot.
 
 ---
 
+## MOD-001 Authentication Foundation — cierre técnico local
+
+**Ticket:** TICKET-V2-PHASE-5-MOD-001-AUTH-FOUNDATION-001
+**Fecha:** 2026-07-10
+**Rama:** `plan/v2-phase-4-api-client`
+**HEAD previo:** `6d4fbb3477df81eda2a96d95af4cf0095a92c967`
+**Commit técnico:** `ded41b6d342dce21e054285cc59ecebb357171e4` — `feat(v2-auth): add MOD-001 authentication foundation`
+
+### Entregables
+
+| Métrica | Valor |
+|---------|-------|
+| Archivos | 11 (9 runtime + 2 tests) |
+| Líneas añadidas | +1.476 |
+| Tests nuevos MOD-001 | 13 |
+| Suite global | 394/394 PASS |
+| Working tree post-commit | Limpio |
+
+### Alcance confirmado
+
+Mock-only · sin Supabase · sin boot wiring · sin persistencia · sin UI login · sin publicación remota.
+
+### Módulos congelados intactos
+
+Bootstrap Fase 2 · Session Manager Fase 3 · API Client Fase 4 · V1 · PR #117 · `origin/main`.
+
+### Gobernanza
+
+Sin push · sin PR · sin Preview · sin merge · sin deploy.
+
+**Documentación:** `SESSION-SUMMARIES/2026-07-10-MOD-001-AUTH-FOUNDATION.md` · `TICKETS/TICKET-V2-PHASE-5-MOD-001-AUTH-FOUNDATION-001.md`
+
+*Pendiente commit documental · Detenerse hasta orden PO*
+
+---
+
 ## Cierre de Jornada — 2026-07-10
 
 **Ticket:** TICKET-V2-END-OF-SESSION-2026-07-10-001  
