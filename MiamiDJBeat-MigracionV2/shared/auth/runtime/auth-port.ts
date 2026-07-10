@@ -11,8 +11,13 @@ import type {
   SignOutResult,
 } from './types';
 
+export type AuthInitializeOptions = {
+  readonly portal?: PortalId;
+};
+
 export type AuthPort = {
-  readonly initialize: () => Promise<RestoreAuthResult>;
+  readonly initialize: (options?: AuthInitializeOptions) => Promise<RestoreAuthResult>;
+  readonly initializeForBoot: (portal: PortalId) => RestoreAuthResult;
   readonly getSnapshot: () => AuthSnapshot;
   readonly getState: () => AuthSnapshot['state'];
   readonly signIn: (credentials: SignInCredentials, portal: PortalId) => Promise<SignInResult>;

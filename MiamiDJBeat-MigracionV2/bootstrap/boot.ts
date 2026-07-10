@@ -1,6 +1,6 @@
 /**
  * TICKET-V2-BOOTSTRAP-RUNTIME-P0-001
- * Boot: CONFIG → BUS → LOGGING → ERROR → SESSION → RUNTIME → SYSTEM_READY → THEME
+ * Boot: CONFIG → BUS → LOGGING → ERROR → AUTH(register) → SESSION → AUTH(activate) → RUNTIME → SYSTEM_READY → THEME
  */
 
 import {
@@ -27,6 +27,8 @@ import {
   initializeLogging,
   type LoggingLifecycleState,
 } from '@mdj/shared/logging';
+import { getAuthService } from '../shared/auth/runtime';
+import type { AuthLifecycleState } from '../shared/auth/runtime/types';
 import {
   emitSystemReady,
   getRuntimeState,
@@ -41,12 +43,24 @@ import {
   type SessionLifecycleState,
 } from '@mdj/shared/session';
 import { bootIntegrateTheme } from '../shared/theme/runtime/theme-boot-integration';
+import { activateAuthForBoot, registerAuthForBoot } from './initialize-auth';
+
+export {
+  BOOT_AUTH_HANDOFF_MODE,
+  activateAuthForBoot,
+  getBootMockAuthProviderForTests,
+  registerAuthForBoot,
+  resetBootAuthWiringForTests,
+  type BootAuthActivationResult,
+  type BootAuthRegistration,
+} from './initialize-auth';
 
 export type BootPhase =
   | 'config'
   | 'event-bus'
   | 'logging'
   | 'error-handler'
+  | 'auth'
   | 'session'
   | 'runtime'
   | 'system-ready'
@@ -59,6 +73,7 @@ export type BootSuccess = {
   busReady: true;
   loggingReady: true;
   errorHandlerReady: true;
+  authReady: true;
   sessionReady: true;
   runtimeReady: true;
   systemReadyConfirmed: true;
@@ -68,6 +83,7 @@ export type BootSuccess = {
   busState: BusLifecycleState;
   loggingState: LoggingLifecycleState;
   errorHandlerState: ErrorHandlerLifecycleState;
+  authState: AuthLifecycleState;
   sessionState: SessionLifecycleState;
   runtimeState: RuntimeSnapshot;
 };
@@ -79,6 +95,7 @@ export type BootFailure = {
   busReady: boolean;
   loggingReady: boolean;
   errorHandlerReady: boolean;
+  authReady: boolean;
   sessionReady: boolean;
   runtimeReady: boolean;
   systemReadyConfirmed: boolean;
@@ -95,7 +112,28 @@ export function bootScaffold(envOverrides?: RawEnvMap, portal: PortalId = 'clien
     initializeEventBus();
     initializeLogging({ source: 'boot', moduleId: 'MOD-010' });
     initializeErrorHandler();
+    registerAuthForBoot();
     initializeSession({ portal });
+
+    const authActivation = activateAuthForBoot(portal);
+    if (!authActivation.ok && !authActivation.recoverable) {
+      return {
+        ok: false,
+        phase: 'auth',
+        configLoaded: true,
+        busReady: true,
+        loggingReady: true,
+        errorHandlerReady: true,
+        authReady: false,
+        sessionReady: getSessionState() === 'SESSION_READY',
+        runtimeReady: false,
+        systemReadyConfirmed: false,
+        themeReady: false,
+        errorCode: authActivation.code,
+        message: authActivation.message,
+      };
+    }
+
     initializeRuntime({ portal });
     emitSystemReady();
 
@@ -114,6 +152,7 @@ export function bootScaffold(envOverrides?: RawEnvMap, portal: PortalId = 'clien
         busReady: true,
         loggingReady: true,
         errorHandlerReady: true,
+        authReady: true,
         sessionReady: true,
         runtimeReady: true,
         systemReadyConfirmed: true,
@@ -130,6 +169,7 @@ export function bootScaffold(envOverrides?: RawEnvMap, portal: PortalId = 'clien
       busReady: true,
       loggingReady: true,
       errorHandlerReady: true,
+      authReady: true,
       sessionReady: true,
       runtimeReady: true,
       systemReadyConfirmed: true,
@@ -139,6 +179,7 @@ export function bootScaffold(envOverrides?: RawEnvMap, portal: PortalId = 'clien
       busState: getEventBusState(),
       loggingState: getLoggingState(),
       errorHandlerState: getErrorState(),
+      authState: getAuthService().getState(),
       sessionState: getSessionState(),
       runtimeState: getRuntimeState(),
     };
@@ -151,6 +192,7 @@ export function bootScaffold(envOverrides?: RawEnvMap, portal: PortalId = 'clien
         busReady: false,
         loggingReady: false,
         errorHandlerReady: false,
+        authReady: false,
         sessionReady: false,
         runtimeReady: false,
         systemReadyConfirmed: false,
@@ -167,6 +209,7 @@ export function bootScaffold(envOverrides?: RawEnvMap, portal: PortalId = 'clien
         busReady: getEventBusState() === 'BUS_READY',
         loggingReady: getLoggingState() === 'LOG_READY',
         errorHandlerReady: getErrorState() === 'ERR_READY',
+        authReady: true,
         sessionReady: getSessionState() === 'SESSION_READY',
         runtimeReady: false,
         systemReadyConfirmed: false,

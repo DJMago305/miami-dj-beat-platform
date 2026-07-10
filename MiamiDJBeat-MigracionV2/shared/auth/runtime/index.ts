@@ -2,6 +2,7 @@
 
 export type { AuthProviderPort } from './auth-provider-port';
 export type { AuthPort } from './auth-port';
+export type { AuthInitializeOptions } from './auth-port';
 export type { SessionHandoffDeliveryInput, SessionHandoffPort } from './session-handoff-port';
 
 export { AuthError, createAuthError, isAuthError } from './errors';

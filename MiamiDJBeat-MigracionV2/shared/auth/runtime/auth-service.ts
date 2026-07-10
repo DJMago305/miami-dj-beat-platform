@@ -2,9 +2,10 @@
 
 import type { PortalId } from '@mdj/shared/config';
 import { getEventBus } from '@mdj/shared/events';
-import type { AuthPort } from './auth-port';
+import type { AuthInitializeOptions, AuthPort } from './auth-port';
 import type { AuthProviderPort } from './auth-provider-port';
 import { AuthError } from './errors';
+import { MockAuthProvider } from './mock-auth-provider';
 import type { SessionHandoffDeliveryInput, SessionHandoffPort } from './session-handoff-port';
 import { assertAuthTransition } from './state-machine';
 import type {
@@ -13,6 +14,7 @@ import type {
   AuthSnapshot,
   AuthTransitionEvent,
   BuiltAuthHandoff,
+  ProviderRestoreResult,
   RefreshAuthResult,
   RestoreAuthResult,
   SignInCredentials,
@@ -72,9 +74,27 @@ export class AuthService implements AuthPort {
 
   constructor(private readonly deps: AuthServiceDependencies) {}
 
-  async initialize(): Promise<RestoreAuthResult> {
+  async initialize(options?: AuthInitializeOptions): Promise<RestoreAuthResult> {
+    if (options?.portal) {
+      this.portal = options.portal;
+    }
     this.applyTransition('BOOT_START', 'CHECKING_EXISTING_AUTH');
     return this.restoreInternal();
+  }
+
+  initializeForBoot(portal: PortalId): RestoreAuthResult {
+    this.portal = portal;
+    this.applyTransition('BOOT_START', 'CHECKING_EXISTING_AUTH');
+
+    if (!(this.deps.provider instanceof MockAuthProvider)) {
+      throw new AuthError(
+        'ERR-AUTH-006',
+        'Boot synchronous auth restore requires MockAuthProvider.',
+      );
+    }
+
+    const restoreResult = restoreMockAuthProviderSync(this.deps.provider);
+    return this.applyRestoreResult(restoreResult);
   }
 
   getSnapshot(): AuthSnapshot {
@@ -251,7 +271,10 @@ export class AuthService implements AuthPort {
 
   private async restoreInternal(): Promise<RestoreAuthResult> {
     const restoreResult = await this.deps.provider.restore();
+    return this.applyRestoreResult(restoreResult);
+  }
 
+  private applyRestoreResult(restoreResult: ProviderRestoreResult): RestoreAuthResult {
     if (!restoreResult.ok) {
       this.applyTransition('SIGN_IN_FAIL', 'UNAUTHENTICATED');
       return {
@@ -309,7 +332,14 @@ export class AuthService implements AuthPort {
     provider: BuiltAuthHandoff['handle']['provider'];
     portal: PortalId;
   }): SignInResult {
-    this.applyTransition('SIGN_IN_SUCCESS', 'AUTHENTICATED_IDENTITY_RECEIVED');
+    if (this.state === 'AUTHENTICATING') {
+      this.applyTransition('SIGN_IN_SUCCESS', 'AUTHENTICATED_IDENTITY_RECEIVED');
+    } else if (this.state !== 'AUTHENTICATED_IDENTITY_RECEIVED') {
+      throw new AuthError(
+        'ERR-AUTH-001',
+        `Identity handoff is not allowed from state ${this.state}.`,
+      );
+    }
 
     const handoff = this.buildHandoff(input);
     this.userId = input.userId;
@@ -429,6 +459,62 @@ export class AuthService implements AuthPort {
     this.clearIdentity();
     this.updatedAt = new Date().toISOString();
   }
+}
+
+type MockAuthProviderBootView = MockAuthProvider & {
+  readonly unavailable: boolean;
+  readonly failRestore: boolean;
+};
+
+function restoreMockAuthProviderSync(provider: MockAuthProvider): ProviderRestoreResult {
+  const internal = provider as MockAuthProviderBootView;
+
+  if (internal.unavailable) {
+    return {
+      ok: false,
+      code: 'ERR-AUTH-006',
+      message: 'Mock provider unavailable during restore.',
+    };
+  }
+
+  if (internal.failRestore) {
+    return {
+      ok: false,
+      code: 'ERR-AUTH-004',
+      message: 'Mock provider restore failed.',
+    };
+  }
+
+  const activeRecord = provider.getActiveRecordForTests();
+  if (!activeRecord) {
+    return Object.freeze({ ok: true, empty: true });
+  }
+
+  if (Date.parse(activeRecord.expiresAt) <= Date.now()) {
+    void provider.signOut({ reason: 'expired' });
+    return {
+      ok: false,
+      code: 'ERR-AUTH-007',
+      message: 'Mock provider restore found expired token.',
+    };
+  }
+
+  return Object.freeze({
+    ok: true,
+    userId: activeRecord.userId,
+    identity: Object.freeze({
+      userId: activeRecord.userId,
+      email: activeRecord.email,
+      mdjbId: activeRecord.mdjbId,
+      displayName: activeRecord.displayName,
+      authProvider: 'mock',
+    }),
+    accessTokenRef: activeRecord.accessTokenRef,
+    refreshTokenRef: activeRecord.refreshTokenRef,
+    expiresAt: activeRecord.expiresAt,
+    issuedAt: activeRecord.issuedAt,
+    provider: 'mock',
+  });
 }
 
 export function createAuthService(deps: AuthServiceDependencies): AuthService {
