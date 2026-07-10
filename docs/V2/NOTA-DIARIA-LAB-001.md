@@ -801,6 +801,74 @@ Sin errores visuales detectados en los tres portales.
 
 ---
 
+## Cierre de Fase 4 — MOD-005 API Client
+
+**Ticket:** TICKET-V2-PHASE-4-MOD-005-CLOSURE-001  
+**Rama local:** `plan/v2-phase-4-api-client`  
+**HEAD pre-commit:** `45b8b6a7abeecfce1a3c1161b03a4b3f7a006e3b`  
+**Fecha:** 2026-07-10  
+**Entorno:** `http://localhost:5173` (lab V2 únicamente)
+
+### Alcance implementado
+
+| Área | Detalle |
+|------|---------|
+| **Runtime** | `shared/api/runtime/` — 11 archivos TypeScript (~1.400 LOC) |
+| **ApiClient** | `createApiClient()` · `request` / `get` / `post` / `put` / `delete` · `cancel` / `cancelAll` |
+| **Transportes** | `MemoryTransport` (cola FIFO) · `MockTransport` (handler programable) — sin fetch productivo |
+| **Pipeline** | URL build · body serialize/parse · headers inject · correlationId / requestId |
+| **Retry** | Policy configurable · GET/DELETE default retryable (network/timeout/5xx) · POST/PUT sin `retrySafe` |
+| **Timeout** | `AbortController` interno por intento · defaults 15s read / 30s write |
+| **Cancelación** | `cancel(requestId)` · `cancelAll()` · `AbortSignal` externo · abort durante backoff |
+| **Errores** | Normalización propia `{ code, message, details, status }` — sin bridge MOD-014 |
+| **Session Reader Port** | Read-only `sessionId` / `portal` / `actorType` — sin tokens reales del store |
+| **Seguridad** | Redacción `anonKey`, `Set-Cookie`, headers sensibles, metadata anidada inmutable |
+
+### Integraciones
+
+| Módulo | Estado |
+|--------|--------|
+| **MOD-006 Configuration** | ✅ INTEGRACIÓN REAL — `getConfig().api.publicUrl` / `AppConfig` |
+| **MOD-010 Logging** | ✅ INTEGRACIÓN REAL (opcional) — meta redactada post-request |
+| **MOD-014 Error Handler** | ⏳ INTEGRACIÓN FUTURA — no importado en foundation |
+| **MOD-002 Session** | ✅ ADAPTER — `SessionReaderPort` + `createSessionReaderFromSnapshot()` |
+| **Bootstrap / portales** | ❌ Sin wiring — Fase 2/3 congeladas |
+
+### Restricciones respetadas
+
+Sin Supabase · sin Stripe · sin Edge real · sin fetch productivo · sin cambios en `bootstrap/` · sin cambios en portales · sin V1 · sin MOD-001.
+
+### Validación técnica
+
+| Gate | Resultado |
+|------|-----------|
+| `npm run typecheck` | ✅ exit 0 |
+| `npm test` | ✅ 381/381 PASS |
+| `npm run build` | ✅ exit 0 |
+| `api-client-foundation.test.ts` | ✅ 56/56 PASS |
+
+Validación **contractual y técnica** — MOD-005 no conectado a UI ni boot.
+
+### Gobernanza de cierre
+
+| Acción | Estado |
+|--------|--------|
+| Commit local Fase 4 | ✅ Autorizado en este ticket |
+| Push / PR / Preview / merge / deploy | ❌ No autorizado |
+| Miami DJ Beat V1 | ✅ Intacta |
+| PR #117 remoto | ✅ Intacto (`d847e19`) |
+| `origin/main` | ✅ Intacto (`13bb4c4`) |
+| MOD-001 Authentication | ❌ No abierto |
+| Fase 5 | ❌ No iniciada |
+
+### Próxima fase
+
+**Pendiente orden explícita del Product Owner.** Sin apertura automática de MOD-001, Fase 5 ni wiring boot.
+
+*Commit local controlado · Sin push · Sin deploy · Sin producción*
+
+---
+
 ## Cierre expediente — DECISION-V2-003 — 2026-07-05
 
 **Ticket:** TICKET-V2-ADR-RATIFICATION-CLOSURE-001
