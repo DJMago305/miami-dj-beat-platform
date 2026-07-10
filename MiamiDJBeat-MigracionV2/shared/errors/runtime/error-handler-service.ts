@@ -3,6 +3,7 @@
 import { ConfigError } from '@mdj/shared/config';
 import { getEventBus } from '@mdj/shared/events';
 import { getLogger, getLoggingState } from '@mdj/shared/logging';
+import { resolveAuthNormalization } from './auth-normalize';
 import {
   inferCategoryFromCode,
   lookupCatalogEntry,
@@ -244,6 +245,14 @@ export function createAppError(input: CreateAppErrorInput): AppError {
 
 export function normalizeError(input: unknown, context?: NormalizeContext): NormalizedError {
   return getErrorHandler().normalizeError(input, context);
+}
+
+function internalNormalizeAuthError(input: unknown, context: NormalizeContext = {}): NormalizedError {
+  return recordNormalizedError(resolveAuthNormalization(input, context));
+}
+
+export function normalizeAuthError(input: unknown, context?: NormalizeContext): NormalizedError {
+  return internalNormalizeAuthError(input, context ?? {});
 }
 
 export function clearErrorHistory(): void {
