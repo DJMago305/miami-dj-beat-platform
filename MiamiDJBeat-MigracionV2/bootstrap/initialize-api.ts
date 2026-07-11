@@ -4,12 +4,14 @@ import { getConfig, type PortalId } from '@mdj/shared/config';
 import { getEventBus } from '@mdj/shared/events';
 import { getSessionAuthorizationHeader, getSessionSnapshot } from '@mdj/shared/session';
 import {
+  createFetchTransport,
   createMemoryTransport,
   createSessionReaderFromSnapshot,
   getApiClient,
   getApiClientState,
   initializeApiClient,
   type MemoryTransport,
+  type TransportPort,
 } from '../shared/api/runtime';
 
 export type BootApiInitializationResult =
@@ -17,6 +19,7 @@ export type BootApiInitializationResult =
   | { readonly ok: false; readonly code: string; readonly message: string };
 
 let bootMemoryTransport: MemoryTransport | null = null;
+let bootTransport: TransportPort | null = null;
 let logoutCancellationWired = false;
 const logoutCancellationSubscriptionIds: string[] = [];
 
@@ -25,6 +28,20 @@ function createLiveSessionReader() {
     () => getSessionSnapshot(),
     () => getSessionAuthorizationHeader(),
   );
+}
+
+function createBootTransport(): TransportPort {
+  const mode = getConfig().api.transportMode;
+
+  if (mode === 'fetch') {
+    bootMemoryTransport = null;
+    bootTransport = createFetchTransport();
+    return bootTransport;
+  }
+
+  bootMemoryTransport = createMemoryTransport();
+  bootTransport = bootMemoryTransport;
+  return bootMemoryTransport;
 }
 
 function cancelAllInFlightApiRequests(): void {
@@ -70,10 +87,10 @@ export function initializeApiForBoot(_portal: PortalId): BootApiInitializationRe
   }
 
   try {
-    bootMemoryTransport = createMemoryTransport();
+    const transport = createBootTransport();
     initializeApiClient({
       config,
-      transport: bootMemoryTransport,
+      transport,
       sessionReader: createLiveSessionReader(),
       moduleId: 'MOD-005',
     });
@@ -82,6 +99,7 @@ export function initializeApiForBoot(_portal: PortalId): BootApiInitializationRe
     return { ok: true, state: 'API_READY' };
   } catch (error) {
     bootMemoryTransport = null;
+    bootTransport = null;
     return {
       ok: false,
       code: 'ERR-API-BOOT',
@@ -110,4 +128,5 @@ export function resetBootApiWiringForTests(): void {
   }
 
   bootMemoryTransport = null;
+  bootTransport = null;
 }

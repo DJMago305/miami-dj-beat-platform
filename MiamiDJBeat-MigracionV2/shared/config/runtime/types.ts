@@ -6,6 +6,8 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
 
 export type SessionStorageBackend = 'local' | 'session' | 'cookie';
 
+export type ApiTransportMode = 'memory' | 'fetch';
+
 export type PortalId = 'client' | 'artist' | 'staff';
 
 export type ConfigLifecycleState = 'UNLOADED' | 'LOADING' | 'FROZEN' | 'ERROR';
@@ -28,6 +30,7 @@ export type AppConfig = {
   readonly api: {
     readonly publicUrl: string;
     readonly anonKey: string;
+    readonly transportMode: ApiTransportMode;
   };
   readonly session: {
     readonly storage: SessionStorageBackend;
@@ -68,6 +71,7 @@ export type ParsedConfigDraft = {
   logLevel: LogLevel;
   apiPublicUrl: string;
   apiAnonKey: string;
+  apiTransportMode: ApiTransportMode;
   sessionStorage: SessionStorageBackend;
   refreshBeforeMs: number;
   features: {

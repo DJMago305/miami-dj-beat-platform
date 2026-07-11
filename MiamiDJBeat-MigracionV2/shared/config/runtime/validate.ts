@@ -2,6 +2,7 @@
 
 import { ConfigError } from './errors';
 import type {
+  ApiTransportMode,
   AppConfig,
   LogLevel,
   MdjEnvironment,
@@ -121,6 +122,11 @@ function parseLogLevel(raw: RawEnvMap, env: MdjEnvironment, warnings: string[]):
   return level;
 }
 
+function parseApiTransportMode(raw: RawEnvMap): ApiTransportMode {
+  const configured = raw.MDJ_V2_API_TRANSPORT?.trim().toLowerCase();
+  return configured === 'fetch' ? 'fetch' : 'memory';
+}
+
 function assertNoV1PathInUrls(...urls: string[]): void {
   for (const url of urls) {
     if (url.includes('/web/')) {
@@ -197,6 +203,7 @@ export function parseAndValidateConfig(raw: RawEnvMap): { config: AppConfig; war
     logLevel: parseLogLevel(raw, env, warnings),
     apiPublicUrl,
     apiAnonKey,
+    apiTransportMode: parseApiTransportMode(raw),
     sessionStorage,
     refreshBeforeMs,
     features: {
@@ -225,6 +232,7 @@ export function parseAndValidateConfig(raw: RawEnvMap): { config: AppConfig; war
     api: {
       publicUrl: draft.apiPublicUrl,
       anonKey: draft.apiAnonKey,
+      transportMode: draft.apiTransportMode,
     },
     session: {
       storage: draft.sessionStorage,

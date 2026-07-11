@@ -12,6 +12,7 @@ import {
   resetBootAuthWiringForTests,
 } from '@mdj/bootstrap/boot';
 import {
+  getConfig,
   getConfigState,
   initializeConfiguration,
   resetConfigurationForTests,
@@ -115,8 +116,11 @@ function countEvent(name: string): number {
     .filter((entry) => entry.name === name).length;
 }
 
-function bootThroughAuthActivate(portal: 'client' | 'artist' | 'staff'): void {
-  initializeConfiguration(VALID_LOCAL_ENV);
+function bootThroughAuthActivate(
+  portal: 'client' | 'artist' | 'staff',
+  configOverrides: Record<string, string> = {},
+): void {
+  initializeConfiguration({ ...VALID_LOCAL_ENV, ...configOverrides });
   initializeEventBus();
   initializeLogging({ source: 'boot', moduleId: 'MOD-010' });
   initializeErrorHandler();
@@ -437,6 +441,80 @@ describe('MOD-005 API bootstrap wiring — TICKET-V2-PHASE-6-MOD-005-API-BOOTSTR
     expect(getErrorState()).toBe('ERR_READY');
     expect(getSessionState()).toBe('SESSION_READY');
     expect(getApiClientState()).toBe('API_READY');
+  });
+});
+
+describe('MOD-005 API transport wiring — TICKET-V2-PHASE-6-FETCH-TRANSPORT-CONFIG-CONTRACT-001', () => {
+  beforeEach(() => {
+    resetBootWiringState();
+  });
+
+  it('defaults to memory transport when MDJ_V2_API_TRANSPORT is unset', () => {
+    bootThroughAuthActivate('client');
+    expect(getConfig().api.transportMode).toBe('memory');
+
+    const apiBoot = initializeApiForBoot('client');
+    expect(apiBoot.ok).toBe(true);
+    expect(getBootMemoryTransportForTests()).toBeDefined();
+  });
+
+  it('falls back to memory for empty, unknown, or invalid transport flags', () => {
+    for (const value of [undefined, '', 'supabase', 'auto', 'MEMORY']) {
+      resetBootWiringState();
+      const env =
+        value === undefined
+          ? VALID_LOCAL_ENV
+          : { ...VALID_LOCAL_ENV, MDJ_V2_API_TRANSPORT: value };
+      initializeConfiguration(env);
+      expect(getConfig().api.transportMode).toBe('memory');
+    }
+  });
+
+  it('selects fetch transport only when MDJ_V2_API_TRANSPORT=fetch', () => {
+    initializeConfiguration({ ...VALID_LOCAL_ENV, MDJ_V2_API_TRANSPORT: 'fetch' });
+    expect(getConfig().api.transportMode).toBe('fetch');
+  });
+
+  it('uses FetchTransport without real network when fetch mode is enabled', async () => {
+    bootThroughAuthActivate('client', { MDJ_V2_API_TRANSPORT: 'fetch' });
+
+    const fetchStub = vi.fn(async () =>
+      new Response('{"via":"fetch-wiring"}', {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchStub);
+
+    try {
+      const apiBoot = initializeApiForBoot('client');
+      expect(apiBoot.ok).toBe(true);
+      expect(() => getBootMemoryTransportForTests()).toThrow(/memory transport is not initialized/i);
+
+      const result = await getApiClient().get<{ via: string }>('/lab/fetch-wiring');
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.via).toBe('fetch-wiring');
+      }
+      expect(fetchStub).toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('does not invoke fetch during API boot initialization', () => {
+    bootThroughAuthActivate('client', { MDJ_V2_API_TRANSPORT: 'fetch' });
+
+    const fetchStub = vi.fn();
+    vi.stubGlobal('fetch', fetchStub);
+
+    try {
+      const apiBoot = initializeApiForBoot('client');
+      expect(apiBoot.ok).toBe(true);
+      expect(fetchStub).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
 

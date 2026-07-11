@@ -80,4 +80,25 @@ describe('MOD-006 Configuration', () => {
     expect(() => getConfig()).toThrowError(/not initialized/i);
     expect(getConfigState()).toBe('UNLOADED');
   });
+
+  it('defaults api.transportMode to memory when MDJ_V2_API_TRANSPORT is unset', () => {
+    const config = initializeConfiguration(VALID_LOCAL_ENV);
+    expect(config.api.transportMode).toBe('memory');
+  });
+
+  it('resolves api.transportMode from MDJ_V2_API_TRANSPORT with trim and case-insensitive fetch', () => {
+    const config = initializeConfiguration({
+      ...VALID_LOCAL_ENV,
+      MDJ_V2_API_TRANSPORT: ' FETCH ',
+    });
+    expect(config.api.transportMode).toBe('fetch');
+  });
+
+  it('falls back api.transportMode to memory for unknown transport flags', () => {
+    const config = initializeConfiguration({
+      ...VALID_LOCAL_ENV,
+      MDJ_V2_API_TRANSPORT: 'supabase',
+    });
+    expect(config.api.transportMode).toBe('memory');
+  });
 });

@@ -9,6 +9,7 @@ export {
   resetConfigurationForTests,
 } from './config-service';
 export type {
+  ApiTransportMode,
   AppConfig,
   ConfigErrorCode,
   ConfigLifecycleState,
