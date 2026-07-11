@@ -1565,3 +1565,46 @@ MOD-005 API Client registrado en Runtime Registry como snapshot estático (`API_
 **Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-RUNTIME-REGISTRY-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-11-MOD-005-RUNTIME-REGISTRY-IMPLEMENTATION.md`
 
 *Documentación post-implementación · sin commit hasta orden PO*
+
+---
+
+## Discovery — Runtime Logout Cancellation — 2026-07-11
+
+**Ticket:** TICKET-V2-PHASE-6-RUNTIME-LOGOUT-CANCELLATION-DISCOVERY-001
+**Modo:** discovery y documentación únicamente — **sin** runtime · **sin** tests · **sin** commit
+**Rama:** `plan/v2-phase-4-api-client`
+**HEAD:** `d43573241f88821702a4d8b4b05febda3e0969a4`
+
+### Causa raíz
+
+`cancelAll()` **existe** en MOD-005 (`api-client.ts`, maps `inFlight` + `operationAbort`) y está documentado como logout hook, pero **no está cableado** a `USER_LOGOUT` ni `SESSION_DESTROYED` en bootstrap. Auth emite logout → Session `clearSession()` invalida credencial; requests HTTP in-flight pueden completar.
+
+### Recursos auditados
+
+Auth `signOut` / `emitUserLogout` · Session `handleUserLogoutEvent` / `clearSession` / `destroySession` · Event Bus dispatch FIFO · API Client `cancel` / `cancelAll` / `resetApiClientForTests` · `boot.ts` / `initialize-api.ts` · Runtime Registry (sin coordinación) · tests `api-client-foundation`, `boot-api-wiring`, `session-authorization`.
+
+### Diseño recomendado
+
+**Opción B — composition root:** `bootstrap/initialize-api.ts` suscribe `USER_LOGOUT` + `SESSION_DESTROYED` → `getApiClient().cancelAll()` (idempotente). Complemento: `resetApiClientForTests()` llama `cancelAll()` antes de null. Rechazadas: listener dentro de API Client (A), Runtime coordinator (D), solo tests (E).
+
+### Riesgos
+
+| Riesgo | Nivel |
+|--------|-------|
+| Request completa post-logout | CONFIRMADO |
+| Respuesta tardía al caller | CONFIRMADO |
+| Relogin con promises del user anterior | POSIBLE |
+| `resetApiClientForTests` sin abort | CONFIRMADO |
+
+### Estado
+
+- Discovery: **COMPLETADO**
+- Implementación: **PENDIENTE — NO AUTORIZADA**
+- MOD-002 / MOD-005 / MOD-RUNTIME: sin cambio funcional
+- Baseline tests: **471/471**
+
+### Próximo paso (sujeto PO)
+
+`TICKET-V2-PHASE-6-RUNTIME-LOGOUT-CANCELLATION-IMPLEMENTATION-001` — wire bootstrap + tests integración.
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-RUNTIME-LOGOUT-CANCELLATION-DISCOVERY-001.md`

@@ -368,6 +368,21 @@ Config → Bus → Logging → Error → registerAuthForBoot → Session → act
 
 **Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-RUNTIME-REGISTRY-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-11-MOD-005-RUNTIME-REGISTRY-IMPLEMENTATION.md`
 
+### Discovery Runtime Logout Cancellation — 2026-07-11
+
+**Ticket:** TICKET-V2-PHASE-6-RUNTIME-LOGOUT-CANCELLATION-DISCOVERY-001
+
+| Ítem | Estado |
+|------|--------|
+| `cancelAll()` en MOD-005 | ✅ EXISTE — no cableado a logout |
+| Deuda `USER_LOGOUT` → `cancelAll()` | ✅ DOCUMENTADA |
+| Diseño recomendado | Opción B — bootstrap composition root |
+| Implementación | ⏳ PENDIENTE — no autorizada |
+| Cambio funcional MOD-002 / MOD-005 / MOD-RUNTIME | ❌ Ninguno |
+| Suite baseline | **471/471 PASS** |
+
+**Documentación discovery:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-RUNTIME-LOGOUT-CANCELLATION-DISCOVERY-001.md`
+
 ---
 
 ## SECCIÓN 4D — ANEXO FASE 5 (MOD-014 AUTH ERROR NORMALIZATION)
@@ -617,7 +632,9 @@ Modificaciones al catálogo (nuevo módulo, cambio P0, retiro): ticket de catál
 | Session Opaque Authorization Implementation | ✅ COMPLETADA — `3c53bc8` (2026-07-11) |
 | MOD-005 Runtime Registry Discovery | ✅ COMPLETADO (2026-07-11) |
 | Runtime Registry MOD-005 Implementation | ✅ COMPLETADA — `35c35ff` (2026-07-11) |
-| Próximo ticket recomendado | `USER_LOGOUT` → `cancelAll()` o FetchTransport (sujeto PO) |
+| Runtime Logout Cancellation Discovery | ✅ COMPLETADO (2026-07-11) |
+| Runtime Logout Cancellation Implementation | ⏳ PENDIENTE — **NO AUTORIZADA** |
+| Próximo ticket recomendado | `TICKET-V2-PHASE-6-RUNTIME-LOGOUT-CANCELLATION-IMPLEMENTATION-001` (sujeto PO) |
 | Publicación | Solo local — sin push / PR / Preview / merge / deploy |
 | Producción / V1 | ✅ Intactas · `origin/main` `13bb4c4` · PR #117 `d847e19` |
 
