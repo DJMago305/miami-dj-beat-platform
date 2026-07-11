@@ -100,7 +100,12 @@ export type ApiRequestOptions = {
   readonly context?: Partial<RequestContext>;
 };
 
-export type InvokeEdgeOptions = Omit<ApiRequestOptions, 'path' | 'method' | 'body'>;
+export type SupabaseInvokeAuthMode = 'session' | 'anon';
+
+export type InvokeEdgeOptions = Omit<ApiRequestOptions, 'path' | 'method' | 'body'> & {
+  /** Default `session`. Use `anon` only for explicit guest/public checkout flows. */
+  readonly authMode?: SupabaseInvokeAuthMode;
+};
 
 export type ApiRequest = ApiRequestOptions & {
   readonly method: ApiMethod;
@@ -137,6 +142,7 @@ export type ApiClientPublicApi = {
 
 export type ApiClientConfig = {
   readonly baseUrl: string;
+  readonly anonKey?: string;
   readonly defaultTimeoutMs?: number;
   readonly readTimeoutMs?: number;
   readonly writeTimeoutMs?: number;

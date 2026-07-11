@@ -41,6 +41,11 @@ export {
   sanitizeEdgeFunctionName,
   serializeBody,
 } from './request-pipeline';
+export {
+  mergeSupabaseInvokeCallerHeaders,
+  resolveSupabaseInvokeHeaders,
+} from './supabase-invoke-headers';
+export type { ResolveSupabaseInvokeHeadersInput } from './supabase-invoke-headers';
 export { computeBackoffMs, DEFAULT_RETRY_POLICY, resolveRetryPolicy, sleep } from './retry-policy';
 export { redactHeaders, redactRequestMeta } from './redact';
 export {
@@ -70,4 +75,5 @@ export type {
   NormalizeApiErrorInput,
   RequestContext,
   RetryPolicy,
+  SupabaseInvokeAuthMode,
 } from './types';

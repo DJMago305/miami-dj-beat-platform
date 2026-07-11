@@ -19,6 +19,10 @@ import {
   sanitizeEdgeFunctionName,
   serializeBody,
 } from './request-pipeline';
+import {
+  mergeSupabaseInvokeCallerHeaders,
+  resolveSupabaseInvokeHeaders,
+} from './supabase-invoke-headers';
 import { computeBackoffMs, resolveRetryPolicy, sleep } from './retry-policy';
 import type { SessionReaderPort } from './session-reader-port';
 import { TransportCancelledError, TransportNetworkError, type TransportPort } from './transport-port';
@@ -310,11 +314,19 @@ export class ApiClient implements ApiClientPublicApi {
       );
     }
 
+    const { authMode = 'session', headers: callerHeaders, ...requestOptions } = options;
+    const policyHeaders = resolveSupabaseInvokeHeaders({
+      authMode,
+      anonKey: this.resolveAnonKey(),
+      sessionAuthorization: this.sessionReader?.getAuthorizationHeader() ?? null,
+    });
+
     return this.request<T>({
-      ...options,
+      ...requestOptions,
       method: 'POST',
       path: `/functions/v1/${sanitized.name}`,
       body,
+      headers: mergeSupabaseInvokeCallerHeaders(callerHeaders, policyHeaders),
     });
   }
 
@@ -382,6 +394,20 @@ export class ApiClient implements ApiClientPublicApi {
     }
 
     return headers;
+  }
+
+  private resolveAnonKey(): string | null {
+    const configured = this.config.anonKey?.trim();
+    if (configured) {
+      return configured;
+    }
+
+    try {
+      const loaded = getConfig().api.anonKey?.trim();
+      return loaded || null;
+    } catch {
+      return null;
+    }
   }
 
   private buildMetadata(
@@ -469,6 +495,7 @@ function resolveClientConfig(config?: AppConfig | ApiClientConfig): ApiClientCon
   if (config && 'api' in config) {
     return {
       baseUrl: config.api.publicUrl,
+      anonKey: config.api.anonKey,
       defaultPortal: undefined,
       defaultRetryPolicy: undefined,
     };
@@ -481,6 +508,7 @@ function resolveClientConfig(config?: AppConfig | ApiClientConfig): ApiClientCon
   const loaded = getConfig();
   return {
     baseUrl: loaded.api.publicUrl,
+    anonKey: loaded.api.anonKey,
   };
 }
 

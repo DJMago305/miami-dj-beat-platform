@@ -7,7 +7,10 @@ import { resetSessionForTests } from '@mdj/shared/session';
 import {
   createApiClient,
   createMemoryTransport,
+  createStaticSessionReader,
+  mergeSupabaseInvokeCallerHeaders,
   resetApiRequestCounterForTests,
+  resolveSupabaseInvokeHeaders,
   sanitizeEdgeFunctionName,
 } from '../../shared/api/runtime';
 
@@ -50,7 +53,10 @@ describe('MOD-005 invokeEdge — TICKET-V2-PHASE-6-INVOKE-EDGE-IMPLEMENTATION-00
       status: 200,
       body: { ok: true, url: 'https://checkout.stripe.com/session' },
     });
-    const client = createApiClient({ transport, config: { baseUrl: 'https://example.supabase.co' } });
+    const client = createApiClient({
+      transport,
+      config: { baseUrl: 'https://example.supabase.co', anonKey: 'YOUR_ANON_KEY' },
+    });
 
     const result = await client.invokeEdge<{ ok: boolean; url: string }>('create-checkout', {
       success_url: 'https://example.com/ok',
@@ -70,7 +76,10 @@ describe('MOD-005 invokeEdge — TICKET-V2-PHASE-6-INVOKE-EDGE-IMPLEMENTATION-00
     bootDeps();
     const transport = createMemoryTransport();
     transport.enqueue({ kind: 'response', status: 200, body: { ok: true } });
-    const client = createApiClient({ transport, config: { baseUrl: 'https://example.supabase.co' } });
+    const client = createApiClient({
+      transport,
+      config: { baseUrl: 'https://example.supabase.co', anonKey: 'YOUR_ANON_KEY' },
+    });
 
     const result = await client.invokeEdge('/notify-new-lead/');
     expect(result.ok).toBe(true);
@@ -86,7 +95,10 @@ describe('MOD-005 invokeEdge — TICKET-V2-PHASE-6-INVOKE-EDGE-IMPLEMENTATION-00
       status: 422,
       body: { error: 'validation', detail: 'field-x' },
     });
-    const client = createApiClient({ transport, config: { baseUrl: 'https://example.supabase.co' } });
+    const client = createApiClient({
+      transport,
+      config: { baseUrl: 'https://example.supabase.co', anonKey: 'YOUR_ANON_KEY' },
+    });
 
     const result = await client.invokeEdge('validate-input', { field: 'x' });
     expect(result.ok).toBe(false);
@@ -104,7 +116,10 @@ describe('MOD-005 invokeEdge — TICKET-V2-PHASE-6-INVOKE-EDGE-IMPLEMENTATION-00
       status: 200,
       body: { error: 'business-fail', detail: 'nope' },
     });
-    const client = createApiClient({ transport, config: { baseUrl: 'https://example.supabase.co' } });
+    const client = createApiClient({
+      transport,
+      config: { baseUrl: 'https://example.supabase.co', anonKey: 'YOUR_ANON_KEY' },
+    });
 
     const result = await client.invokeEdge('edge-fn');
     expect(result.ok).toBe(false);
@@ -119,7 +134,10 @@ describe('MOD-005 invokeEdge — TICKET-V2-PHASE-6-INVOKE-EDGE-IMPLEMENTATION-00
     async (functionName) => {
       bootDeps();
       const transport = createMemoryTransport();
-      const client = createApiClient({ transport, config: { baseUrl: 'https://example.supabase.co' } });
+      const client = createApiClient({
+      transport,
+      config: { baseUrl: 'https://example.supabase.co', anonKey: 'YOUR_ANON_KEY' },
+    });
 
       const result = await client.invokeEdge(functionName);
       expect(result.ok).toBe(false);
@@ -135,10 +153,174 @@ describe('MOD-005 invokeEdge — TICKET-V2-PHASE-6-INVOKE-EDGE-IMPLEMENTATION-00
     const transport = createMemoryTransport();
     transport.enqueue({ kind: 'network-error' });
     transport.enqueue({ kind: 'response', status: 200, body: { ok: true } });
-    const client = createApiClient({ transport, config: { baseUrl: 'https://example.supabase.co' } });
+    const client = createApiClient({
+      transport,
+      config: { baseUrl: 'https://example.supabase.co', anonKey: 'YOUR_ANON_KEY' },
+    });
 
     await client.invokeEdge('create-checkout', { plan: 'pro' });
     expect(transport.calls).toHaveLength(1);
+  });
+
+  it('includes apikey on invokeEdge when anonKey is configured', async () => {
+    bootDeps();
+    const transport = createMemoryTransport();
+    transport.enqueue({ kind: 'response', status: 200, body: { ok: true } });
+    const client = createApiClient({
+      transport,
+      config: { baseUrl: 'https://example.supabase.co', anonKey: 'YOUR_ANON_KEY' },
+    });
+
+    await client.invokeEdge('create-course-checkout');
+    expect(transport.calls[0]?.headers.apikey).toBe('YOUR_ANON_KEY');
+  });
+});
+
+describe('MOD-005 invokeEdge header policy — TICKET-V2-PHASE-6-EDGE-HEADER-POLICY-IMPLEMENTATION-001', () => {
+  beforeEach(() => {
+    resetSessionForTests();
+    resetErrorHandlerForTests();
+    resetLoggingForTests();
+    resetEventBusForTests();
+    resetConfigurationForTests();
+    resetApiRequestCounterForTests();
+  });
+
+  const anonKey = 'YOUR_ANON_KEY';
+  const baseConfig = { baseUrl: 'https://example.supabase.co', anonKey };
+
+  function clientWithSession(authorizationHeader: string | null) {
+    const transport = createMemoryTransport();
+    transport.enqueue({ kind: 'response', status: 200, body: { ok: true } });
+    return {
+      transport,
+      client: createApiClient({
+        transport,
+        config: baseConfig,
+        sessionReader: createStaticSessionReader({
+          portal: 'client',
+          sessionId: 'ses_test',
+          authorizationHeader,
+          actorType: authorizationHeader ? 'authenticated' : 'guest',
+        }),
+      }),
+    };
+  }
+
+  it('session mode with signed-in user sends session Authorization and apikey', async () => {
+    bootDeps();
+    const { client, transport } = clientWithSession('Bearer user-jwt-token');
+
+    await client.invokeEdge('create-checkout', { plan: 'pro' });
+
+    expect(transport.calls[0]?.headers.Authorization).toBe('Bearer user-jwt-token');
+    expect(transport.calls[0]?.headers.apikey).toBe(anonKey);
+  });
+
+  it('session mode without session sends apikey only', async () => {
+    bootDeps();
+    const { client, transport } = clientWithSession(null);
+
+    await client.invokeEdge('notify-new-lead');
+
+    expect(transport.calls[0]?.headers.Authorization).toBeUndefined();
+    expect(transport.calls[0]?.headers.apikey).toBe(anonKey);
+  });
+
+  it('anon mode without session mirrors V1 mdjSupabaseAnonInvokeHeaders', async () => {
+    bootDeps();
+    const { client, transport } = clientWithSession(null);
+
+    await client.invokeEdge('create-course-checkout', { success_url: 'https://example.com/ok' }, { authMode: 'anon' });
+
+    expect(transport.calls[0]?.headers.Authorization).toBe(`Bearer ${anonKey}`);
+    expect(transport.calls[0]?.headers.apikey).toBe(anonKey);
+  });
+
+  it('anon mode with active session prefers session Authorization over anon bearer', async () => {
+    bootDeps();
+    const { client, transport } = clientWithSession('Bearer user-jwt-token');
+
+    await client.invokeEdge('create-checkout', {}, { authMode: 'anon' });
+
+    expect(transport.calls[0]?.headers.Authorization).toBe('Bearer user-jwt-token');
+    expect(transport.calls[0]?.headers.apikey).toBe(anonKey);
+  });
+
+  it('strips caller-supplied Authorization and apikey before applying policy', async () => {
+    bootDeps();
+    const { client, transport } = clientWithSession('Bearer user-jwt-token');
+
+    await client.invokeEdge(
+      'create-checkout',
+      {},
+      {
+        headers: {
+          Authorization: 'Bearer caller-override',
+          apikey: 'caller-key',
+          'X-Trace': 'ok',
+        },
+      },
+    );
+
+    expect(transport.calls[0]?.headers.Authorization).toBe('Bearer user-jwt-token');
+    expect(transport.calls[0]?.headers.apikey).toBe(anonKey);
+    expect(transport.calls[0]?.headers['X-Trace']).toBe('ok');
+  });
+
+  it('does not apply Supabase header policy to generic post()', async () => {
+    bootDeps();
+    const transport = createMemoryTransport();
+    transport.enqueue({ kind: 'response', status: 200, body: { ok: true } });
+    const client = createApiClient({ transport, config: baseConfig });
+
+    await client.post('/functions/v1/create-checkout', { plan: 'pro' });
+
+    expect(transport.calls[0]?.headers.apikey).toBeUndefined();
+    expect(transport.calls[0]?.headers.Authorization).toBeUndefined();
+  });
+});
+
+describe('resolveSupabaseInvokeHeaders', () => {
+  it('session mode with session authorization', () => {
+    expect(
+      resolveSupabaseInvokeHeaders({
+        authMode: 'session',
+        anonKey: 'anon-key',
+        sessionAuthorization: 'Bearer user',
+      }),
+    ).toEqual({
+      apikey: 'anon-key',
+      Authorization: 'Bearer user',
+    });
+  });
+
+  it('anon mode without session authorization', () => {
+    expect(
+      resolveSupabaseInvokeHeaders({
+        authMode: 'anon',
+        anonKey: 'anon-key',
+        sessionAuthorization: null,
+      }),
+    ).toEqual({
+      apikey: 'anon-key',
+      Authorization: 'Bearer anon-key',
+    });
+  });
+});
+
+describe('mergeSupabaseInvokeCallerHeaders', () => {
+  it('removes reserved headers and preserves unrelated caller headers', () => {
+    expect(
+      mergeSupabaseInvokeCallerHeaders(
+        { Authorization: 'Bearer x', apikey: 'y', 'X-Trace': 'ok' },
+        { apikey: 'policy-key', Authorization: 'Bearer policy' },
+      ),
+    ).toEqual({
+      'X-Trace': 'ok',
+      apikey: 'policy-key',
+      Authorization: 'Bearer policy',
+    });
   });
 });
 
