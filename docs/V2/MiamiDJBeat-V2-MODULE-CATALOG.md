@@ -306,7 +306,7 @@ Config → Bus → Logging → Error → registerAuthForBoot → Session → act
 | Componente | Estado |
 |------------|--------|
 | Runtime Registry MOD-005 | ✅ COMPLETADO — `35c35ff` (2026-07-11) |
-| `USER_LOGOUT` → `cancelAll()` | ⏳ PENDIENTE |
+| `USER_LOGOUT` → `cancelAll()` | ✅ CERRADO — `5ab93af` (2026-07-11) |
 | `normalizeApiError()` | ⏳ PENDIENTE |
 | `FetchTransport` | ⏳ PENDIENTE |
 | `invokeEdge()` / `rpc()` | ⏳ PENDIENTE |
@@ -382,6 +382,25 @@ Config → Bus → Logging → Error → registerAuthForBoot → Session → act
 | Suite baseline | **471/471 PASS** |
 
 **Documentación discovery:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-RUNTIME-LOGOUT-CANCELLATION-DISCOVERY-001.md`
+
+### Implementación Runtime Logout Cancellation — 2026-07-11
+
+**Ticket:** TICKET-V2-PHASE-6-RUNTIME-LOGOUT-CANCELLATION-IMPLEMENTATION-001
+**Commit:** `5ab93afb93f79b1dfa2624dff194bfe3f6f875d2` — `feat(v2-api): cancel in-flight requests on logout`
+
+| Ítem | Estado |
+|------|--------|
+| Runtime Logout Cancellation Discovery | ✅ COMPLETADO |
+| Runtime Logout Cancellation Implementation | ✅ COMPLETADA |
+| `USER_LOGOUT` → `cancelAll()` | ✅ CERRADO |
+| `SESSION_DESTROYED` → `cancelAll()` | ✅ CERRADO |
+| `resetApiClientForTests()` → `cancelAll()` | ✅ CERRADO |
+| Diseño Opción B (bootstrap) | ✅ IMPLEMENTADO |
+| Cambio funcional MOD-002 / MOD-RUNTIME | ❌ Ninguno |
+| Suite | **479/479 PASS** · **45/45 files** |
+| Validación visual PO | ✅ APPROVED |
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-RUNTIME-LOGOUT-CANCELLATION-IMPLEMENTATION-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-11-RUNTIME-LOGOUT-CANCELLATION-IMPLEMENTATION.md`
 
 ---
 
@@ -626,15 +645,16 @@ Modificaciones al catálogo (nuevo módulo, cambio P0, retiro): ticket de catál
 | MOD-005 Discovery Fase 5 | ✅ COMPLETADO |
 | MOD-005 Bootstrap Wiring | ✅ COMPLETADO |
 | Runtime Registry MOD-005 | ✅ COMPLETADO — `35c35ff` (2026-07-11) |
-| Test baseline | **471/471** · **45/45 files** |
+| Test baseline | **479/479** · **45/45 files** |
 | Session Opaque Authorization Discovery | ✅ COMPLETADO (2026-07-11) |
 | Session Opaque Authorization Discovery Corrections | ✅ APLICADAS (2026-07-11) |
 | Session Opaque Authorization Implementation | ✅ COMPLETADA — `3c53bc8` (2026-07-11) |
 | MOD-005 Runtime Registry Discovery | ✅ COMPLETADO (2026-07-11) |
 | Runtime Registry MOD-005 Implementation | ✅ COMPLETADA — `35c35ff` (2026-07-11) |
 | Runtime Logout Cancellation Discovery | ✅ COMPLETADO (2026-07-11) |
-| Runtime Logout Cancellation Implementation | ⏳ PENDIENTE — **NO AUTORIZADA** |
-| Próximo ticket recomendado | `TICKET-V2-PHASE-6-RUNTIME-LOGOUT-CANCELLATION-IMPLEMENTATION-001` (sujeto PO) |
+| Runtime Logout Cancellation Implementation | ✅ COMPLETADA — `5ab93af` (2026-07-11) |
+| Product Owner validation (logout cancellation) | ✅ APPROVED |
+| Próximo ticket recomendado | `FetchTransport` o `normalizeApiError()` (sujeto PO) |
 | Publicación | Solo local — sin push / PR / Preview / merge / deploy |
 | Producción / V1 | ✅ Intactas · `origin/main` `13bb4c4` · PR #117 `d847e19` |
 

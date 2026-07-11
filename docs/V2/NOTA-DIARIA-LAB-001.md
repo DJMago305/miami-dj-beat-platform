@@ -1608,3 +1608,40 @@ Auth `signOut` / `emitUserLogout` · Session `handleUserLogoutEvent` / `clearSes
 `TICKET-V2-PHASE-6-RUNTIME-LOGOUT-CANCELLATION-IMPLEMENTATION-001` — wire bootstrap + tests integración.
 
 **Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-RUNTIME-LOGOUT-CANCELLATION-DISCOVERY-001.md`
+
+---
+
+## Cierre técnico — Runtime Logout Cancellation — 2026-07-11
+
+**Ticket implementación:** TICKET-V2-PHASE-6-RUNTIME-LOGOUT-CANCELLATION-IMPLEMENTATION-001
+**Estado:** IMPLEMENTADO, PROBADO, APROBADO PO Y COMMITTEADO LOCALMENTE
+**Rama:** `plan/v2-phase-4-api-client`
+**Commit:** `5ab93afb93f79b1dfa2624dff194bfe3f6f875d2` — `feat(v2-api): cancel in-flight requests on logout`
+**Discovery previo:** `3b08c52` — `TICKET-V2-PHASE-6-RUNTIME-LOGOUT-CANCELLATION-DISCOVERY-001`
+
+### Objetivo cumplido
+
+Cerrado el circuito lifecycle `USER_LOGOUT` / `SESSION_DESTROYED` → `apiClient.cancelAll()` vía bootstrap (Opción B).
+
+| Antes | Después |
+|-------|---------|
+| Requests in-flight sobreviven al logout | Abort síncrono en mismo tick del Event Bus |
+| `resetApiClientForTests()` sin abort | `cancelAll()` antes de null singleton |
+
+### Archivos (4)
+
+`bootstrap/initialize-api.ts` · `shared/api/runtime/api-service.ts` · `tests/unit/{api-client-foundation,boot-api-wiring}.test.ts`
+
+### Validación
+
+| Capa | Resultado |
+|------|-----------|
+| Suite | **479/479 PASS** · 45 files |
+| Pruebas nuevas | 8 logout cancellation |
+| Localhost visual PO | ✅ client / artist / staff |
+| Working tree pre-cierre doc | Limpio |
+| Push / deploy | ❌ NO |
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-RUNTIME-LOGOUT-CANCELLATION-IMPLEMENTATION-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-11-RUNTIME-LOGOUT-CANCELLATION-IMPLEMENTATION.md`
+
+*Documentación post-implementación · sin commit hasta orden PO*
