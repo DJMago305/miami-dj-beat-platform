@@ -1723,3 +1723,115 @@ Facade canónica `normalizeApiError(input)` en MOD-005; `api-client.ts` delega t
 **Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-NORMALIZE-API-ERROR-IMPLEMENTATION-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-11-MOD-005-NORMALIZE-API-ERROR-IMPLEMENTATION.md`
 
 *Documentación post-implementación · sin commit hasta orden PO*
+
+---
+
+## FetchTransport Discovery — 2026-07-11
+
+**Ticket:** TICKET-V2-PHASE-6-FETCH-TRANSPORT-DISCOVERY-001
+**Commit cierre:** `a902f94` — `docs(v2-api): close fetch transport discovery`
+**Estado:** DISCOVERY COMPLETADO — implementación no autorizada en ese ticket
+
+Hallazgo: `TransportPort` operativo con `MemoryTransport`; sin `fetch()` en runtime MOD-005. Diseño canónico: `FetchTransport` delega wire HTTP; API Client conserva retry/timeout/cancel/normalize.
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-FETCH-TRANSPORT-DISCOVERY-001.md`
+
+---
+
+## FetchTransport Adapter — 2026-07-11
+
+**Ticket:** TICKET-V2-PHASE-6-FETCH-TRANSPORT-ADAPTER-001 (impl)
+**Commit:** `e6578a58de5742a761b7149e222726dcf5f8bf10` — `feat(v2-api): add fetch transport adapter`
+**Estado:** IMPLEMENTADO Y COMMITTEADO LOCALMENTE
+
+| Capa | Resultado |
+|------|-----------|
+| `createFetchTransport()` | ✅ `TransportPort` + `AbortSignal` |
+| Suite post-adapter | **500/500 PASS** (baseline de esa fase) |
+| Push / deploy | ❌ NO |
+
+---
+
+## FetchTransport Wiring + Canonical Config Contract — 2026-07-11
+
+**Tickets:** TICKET-V2-PHASE-6-FETCH-TRANSPORT-WIRING-001 · TICKET-V2-PHASE-6-FETCH-TRANSPORT-CONFIG-CONTRACT-001
+**Commit:** `6dbf8d00c82e372a569abcd2481881b7390aa2b5` — `feat(v2-api): wire fetch transport through canonical config`
+
+| Antes | Después |
+|-------|---------|
+| Canal paralelo `bootTransportEnvOverrides` | `getConfig().api.transportMode` canónico MOD-006 |
+| Default boot | `memory` |
+| Flag `MDJ_V2_API_TRANSPORT=fetch` (trim + case-insensitive) | Activa `FetchTransport` vía config |
+
+| Capa | Resultado |
+|------|-----------|
+| Suite | **509/509 PASS** |
+| Egress en boot | ❌ Ninguno |
+| Push / deploy | ❌ NO |
+
+---
+
+## invokeEdge Discovery — 2026-07-11
+
+**Ticket:** TICKET-V2-PHASE-6-INVOKE-EDGE-DISCOVERY-001
+**Commit cierre:** `35d8a29` — `docs(v2-api): close invoke edge discovery`
+**Estado:** DISCOVERY COMPLETADO — implementación no autorizada en ese ticket
+
+Hallazgos: facade ausente; path genérico `post('/functions/v1/...')` disponible; 422 y business-200 ya normalizados; HTTP 400 aún no mapea a `API_EDGE_REJECTED`; `apikey`/anon guest pendiente ticket separado.
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-INVOKE-EDGE-DISCOVERY-001.md`
+
+---
+
+## invokeEdge Facade — 2026-07-11
+
+**Ticket:** TICKET-V2-PHASE-6-INVOKE-EDGE-IMPLEMENTATION-001
+**Commit:** `3b4f57255a82e17c264205f14f6cf7123591c86e` — `feat(v2-api): add invokeEdge facade`
+**Estado:** IMPLEMENTADO Y COMMITTEADO LOCALMENTE
+
+| Regla | Valor |
+|-------|-------|
+| Método | POST fijo |
+| Path | `/functions/v1/{sanitizedName}` |
+| Implementación | Thin wrapper sobre `request()` |
+| Retry default | Desactivado |
+| Headers Supabase guest | ⏳ PENDIENTE — Edge Header Policy |
+
+| Capa | Resultado |
+|------|-----------|
+| Suite | **521/521 PASS** · 47 files |
+| Push / deploy | ❌ NO |
+
+---
+
+## Cierre de Jornada — 2026-07-11 (Fase 6)
+
+**Ticket:** TICKET-V2-END-OF-DAY-CLOSE-2026-07-11-001
+**Rama:** `plan/v2-phase-4-api-client`
+**HEAD final:** `3b4f57255a82e17c264205f14f6cf7123591c86e` — `feat(v2-api): add invokeEdge facade`
+
+### Entregables del día
+
+Session Opaque Authorization · Runtime Registry MOD-005 · Runtime Logout Cancellation · Canonical API Error Normalization · FetchTransport (discovery + adapter + wiring + config contract) · invokeEdge (discovery + facade).
+
+### Baseline final
+
+| Métrica | Valor |
+|---------|-------|
+| Test Files | **47/47 PASS** |
+| Tests | **521/521 PASS** |
+| Validación visual PO | ✅ Client · Artist · Staff |
+| Working tree (pre-cierre doc) | Limpio |
+| Push / PR / merge / deploy | ❌ NO |
+
+### Deudas pendientes (no iniciadas)
+
+Edge Header Policy (discovery + impl) · `rpc()` (discovery + impl) · Supabase adapter · MOD-014 bridge · docs finales wiring/invokeEdge si PO lo exige.
+
+### Próximo ticket recomendado
+
+`TICKET-V2-PHASE-6-EDGE-HEADER-POLICY-DISCOVERY-001` — **PENDIENTE AUTORIZACIÓN PO**
+
+**Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-11-PHASE-6-END-OF-DAY.md` · `docs/V2/TICKETS/TICKET-V2-END-OF-DAY-CLOSE-2026-07-11-001.md`
+
+*JORNADA CERRADA EN PUNTO SEGURO — WORKING TREE LIMPIO ANTES DEL CIERRE DOCUMENTAL — SIN PUSH*

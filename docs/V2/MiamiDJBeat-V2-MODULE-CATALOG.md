@@ -307,9 +307,11 @@ Config → Bus → Logging → Error → registerAuthForBoot → Session → act
 |------------|--------|
 | Runtime Registry MOD-005 | ✅ COMPLETADO — `35c35ff` (2026-07-11) |
 | `USER_LOGOUT` → `cancelAll()` | ✅ CERRADO — `5ab93af` (2026-07-11) |
-| `normalizeApiError()` | ⏳ PENDIENTE |
-| `FetchTransport` | ⏳ PENDIENTE |
-| `invokeEdge()` / `rpc()` | ⏳ PENDIENTE |
+| `normalizeApiError()` | ✅ COMPLETADO — `24b7da8` (2026-07-11) |
+| `FetchTransport` | ✅ COMPLETADO — `e6578a5` adapter · `6dbf8d0` wiring + `api.transportMode` |
+| `invokeEdge()` | ✅ COMPLETADO — `3b4f572` facade (2026-07-11) |
+| `rpc()` | ⏳ PENDIENTE |
+| Edge Header Policy (`apikey`/anon guest) | ⏳ PENDIENTE — ticket separado |
 | Supabase adapter | ⏳ FUERA DE ALCANCE |
 | API pública Session para Authorization opaca | ✅ IMPLEMENTADO (`3c53bc8`) |
 | Tests stale-token / relogin / wrong-userId | ✅ CUBIERTOS (`session-authorization.test.ts`) |
@@ -422,6 +424,46 @@ Config → Bus → Logging → Error → registerAuthForBoot → Session → act
 
 **Documentación discovery:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-NORMALIZE-API-ERROR-DISCOVERY-001.md`
 **Documentación implementación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-NORMALIZE-API-ERROR-IMPLEMENTATION-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-11-MOD-005-NORMALIZE-API-ERROR-IMPLEMENTATION.md`
+
+### FetchTransport — 2026-07-11
+
+| Ítem | Estado |
+|------|--------|
+| Discovery | ✅ COMPLETADO — `a902f94` |
+| Adapter `createFetchTransport()` | ✅ COMPLETADO — `e6578a5` |
+| Bootstrap wiring + `api.transportMode` MOD-006 | ✅ COMPLETADO — `6dbf8d0` |
+| Default boot transport | `memory` |
+| Egress HTTP en tests/boot | ❌ Ninguno |
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-FETCH-TRANSPORT-DISCOVERY-001.md`
+
+### invokeEdge — 2026-07-11
+
+| Ítem | Estado |
+|------|--------|
+| Discovery | ✅ COMPLETADO — `35d8a29` |
+| Facade `invokeEdge(name, body, opts?)` | ✅ COMPLETADO — `3b4f572` |
+| Thin wrapper sobre `request()` | ✅ POST `/functions/v1/{sanitizedName}` |
+| Retry default | Desactivado |
+| `apikey` / anon guest headers | ⏳ PENDIENTE — Edge Header Policy |
+| Suite final jornada | **521/521 PASS** · **47/47 files** |
+
+**Documentación discovery:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-INVOKE-EDGE-DISCOVERY-001.md`
+
+### Cierre de jornada Fase 6 — 2026-07-11
+
+**Ticket:** TICKET-V2-END-OF-DAY-CLOSE-2026-07-11-001
+**HEAD:** `3b4f57255a82e17c264205f14f6cf7123591c86e`
+
+| Portal | Validación PO |
+|--------|---------------|
+| Client | ✅ |
+| Artist | ✅ |
+| Staff | ✅ |
+
+**Próximo ticket recomendado:** `TICKET-V2-PHASE-6-EDGE-HEADER-POLICY-DISCOVERY-001` (no abierto).
+
+**Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-11-PHASE-6-END-OF-DAY.md` · `docs/V2/TICKETS/TICKET-V2-END-OF-DAY-CLOSE-2026-07-11-001.md`
 
 ---
 
