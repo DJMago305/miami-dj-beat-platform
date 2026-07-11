@@ -1463,7 +1463,7 @@ Análisis de deuda arquitectónica: `SessionReaderPort` obtiene `accessTokenRef`
 
 - Discovery: **COMPLETADO Y CORREGIDO**
 - Implementación: **COMPLETADA** — commit `3c53bc8` (2026-07-11); ver sección «Implementación — Session Opaque Authorization»
-- Runtime Registry MOD-005: discovery completado; implementación **pendiente — no autorizada**
+- Runtime Registry MOD-005: discovery ✅ completado; implementación **COMPLETADA** (`35c35ff`, 2026-07-11)
 
 ---
 
@@ -1531,3 +1531,37 @@ MOD-005 API Client operativo en bootstrap (`API_READY`) pero **ausente** del Run
 `TICKET-V2-PHASE-6-MOD-005-RUNTIME-REGISTRY-001` — implementación acotada.
 
 **Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-RUNTIME-REGISTRY-DISCOVERY-001.md`
+
+---
+
+## Implementación — MOD-005 Runtime Registry — 2026-07-11
+
+**Ticket:** TICKET-V2-PHASE-6-MOD-005-RUNTIME-REGISTRY-001
+**Estado:** IMPLEMENTADO, PROBADO, APROBADO PO Y COMMITTEADO LOCALMENTE
+**Rama:** `plan/v2-phase-4-api-client`
+**Commit:** `35c35ff4b7071194c097587ac7479d33a9c8d61b` — `feat(v2-runtime): register MOD-005 in runtime registry`
+**Discovery previo:** `TICKET-V2-PHASE-6-MOD-005-RUNTIME-REGISTRY-DISCOVERY-001`
+
+### Objetivo cumplido
+
+MOD-005 API Client registrado en Runtime Registry como snapshot estático (`API_READY`).
+
+| Antes | Después |
+|-------|---------|
+| 7 entradas (sin MOD-005) | 8 entradas — MOD-005 entre MOD-002 y MOD-RUNTIME |
+
+### Archivos (4)
+
+`shared/runtime/{types,runtime-service}.ts` · `tests/unit/{runtime-registry-auth,runtime}.test.ts`
+
+### Validación
+
+| Capa | Resultado |
+|------|-----------|
+| Suite | **471/471 PASS** · 45 files |
+| Localhost visual PO | ✅ client / artist / staff |
+| Push / deploy | ❌ NO |
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-RUNTIME-REGISTRY-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-11-MOD-005-RUNTIME-REGISTRY-IMPLEMENTATION.md`
+
+*Documentación post-implementación · sin commit hasta orden PO*

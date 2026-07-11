@@ -288,7 +288,8 @@ Ver **SECCIÓN 4H** para estado actual de Bootstrap Wiring.
 | `bootScaffold()` síncrono | ✅ PRESERVADO |
 | Sin import Auth en API runtime | ✅ VALIDADO |
 | Tests wiring | ✅ 22 (`boot-api-wiring.test.ts`) |
-| Suite global | ✅ 465/465 PASS |
+| Runtime Registry MOD-005 | ✅ COMPLETADO — `35c35ff` |
+| Suite global | ✅ 471/471 PASS |
 | Test files | ✅ 45/45 PASS |
 | Validación visual PO | ⏳ NO APLICA |
 | Producción / merge / preview | ❌ NO AUTORIZADO |
@@ -304,7 +305,7 @@ Config → Bus → Logging → Error → registerAuthForBoot → Session → act
 
 | Componente | Estado |
 |------------|--------|
-| Runtime Registry MOD-005 | ⏳ PENDIENTE — NO AUTORIZADA (discovery ✅ COMPLETADO) |
+| Runtime Registry MOD-005 | ✅ COMPLETADO — `35c35ff` (2026-07-11) |
 | `USER_LOGOUT` → `cancelAll()` | ⏳ PENDIENTE |
 | `normalizeApiError()` | ⏳ PENDIENTE |
 | `FetchTransport` | ⏳ PENDIENTE |
@@ -352,6 +353,20 @@ Config → Bus → Logging → Error → registerAuthForBoot → Session → act
 | Credenciales en registry | ❌ PROHIBIDO (post-opaque-auth) |
 
 **Documentación discovery:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-RUNTIME-REGISTRY-DISCOVERY-001.md`
+
+### Implementación MOD-005 Runtime Registry — 2026-07-11
+
+**Ticket:** TICKET-V2-PHASE-6-MOD-005-RUNTIME-REGISTRY-001
+**Commit:** `35c35ff4b7071194c097587ac7479d33a9c8d61b` — `feat(v2-runtime): register MOD-005 in runtime registry`
+
+| Ítem | Estado |
+|------|--------|
+| MOD-005 en Runtime Registry | ✅ COMPLETADO |
+| Diseño Opción A (estático) | ✅ IMPLEMENTADO |
+| `registrySize` | 8 entradas |
+| Suite | **471/471 PASS** |
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-RUNTIME-REGISTRY-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-11-MOD-005-RUNTIME-REGISTRY-IMPLEMENTATION.md`
 
 ---
 
@@ -595,14 +610,14 @@ Modificaciones al catálogo (nuevo módulo, cambio P0, retiro): ticket de catál
 | MOD-005 Foundation (Fase 4) | ✅ IMPLEMENTADA |
 | MOD-005 Discovery Fase 5 | ✅ COMPLETADO |
 | MOD-005 Bootstrap Wiring | ✅ COMPLETADO |
-| Runtime Registry MOD-005 | ⏳ PENDIENTE — NO AUTORIZADA (discovery ✅ COMPLETADO) |
-| Test baseline | **465/465** · **45/45 files** |
+| Runtime Registry MOD-005 | ✅ COMPLETADO — `35c35ff` (2026-07-11) |
+| Test baseline | **471/471** · **45/45 files** |
 | Session Opaque Authorization Discovery | ✅ COMPLETADO (2026-07-11) |
 | Session Opaque Authorization Discovery Corrections | ✅ APLICADAS (2026-07-11) |
 | Session Opaque Authorization Implementation | ✅ COMPLETADA — `3c53bc8` (2026-07-11) |
 | MOD-005 Runtime Registry Discovery | ✅ COMPLETADO (2026-07-11) |
-| Runtime Registry MOD-005 Implementation | ⏳ PENDIENTE — NO AUTORIZADA |
-| Próximo ticket recomendado | `TICKET-V2-PHASE-6-MOD-005-RUNTIME-REGISTRY-001` (sujeto PO) |
+| Runtime Registry MOD-005 Implementation | ✅ COMPLETADA — `35c35ff` (2026-07-11) |
+| Próximo ticket recomendado | `USER_LOGOUT` → `cancelAll()` o FetchTransport (sujeto PO) |
 | Publicación | Solo local — sin push / PR / Preview / merge / deploy |
 | Producción / V1 | ✅ Intactas · `origin/main` `13bb4c4` · PR #117 `d847e19` |
 
