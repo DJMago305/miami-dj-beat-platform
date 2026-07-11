@@ -1462,5 +1462,72 @@ Análisis de deuda arquitectónica: `SessionReaderPort` obtiene `accessTokenRef`
 ### Estado post-correcciones
 
 - Discovery: **COMPLETADO Y CORREGIDO**
-- Implementación: **PENDIENTE — no autorizada**
-- Próximo paso: autorización PO para `TICKET-V2-PHASE-6-SESSION-OPAQUE-AUTHORIZATION-IMPLEMENTATION-001`
+- Implementación: **COMPLETADA** — commit `3c53bc8` (2026-07-11); ver sección «Implementación — Session Opaque Authorization»
+- Runtime Registry MOD-005: discovery completado; implementación **pendiente — no autorizada**
+
+---
+
+## Implementación — Session Opaque Authorization — 2026-07-11
+
+**Ticket:** TICKET-V2-PHASE-6-SESSION-OPAQUE-AUTHORIZATION-IMPLEMENTATION-001
+**QA coverage:** TICKET-V2-PHASE-6-SESSION-OPAQUE-AUTHORIZATION-QA-COVERAGE-001
+**Estado:** IMPLEMENTADO, PROBADO, APROBADO PO Y COMMITTEADO LOCALMENTE
+**Rama:** `plan/v2-phase-4-api-client`
+**Commit:** `3c53bc899a0cbbaf58574883f2a579c0b85f865b` — `feat(v2-session): add opaque authorization reader`
+**Discovery previo:** `9160978bb35a9d2e645d41e2aa6388e2cfdc2ab2`
+
+### Objetivo cumplido
+
+Eliminar dependencia del historial Event Bus para `Authorization` en bootstrap MOD-005.
+
+| Antes | Después |
+|-------|---------|
+| Auth → Session → Event Bus history → API Client | Auth → Session → `getSessionAuthorizationHeader()` → API Client |
+
+### Archivos (8)
+
+`bootstrap/initialize-api.ts` · `shared/session/runtime/{session-store,session-provider,session-service,types,index}.ts` · `tests/unit/{boot-api-wiring,session-authorization}.test.ts`
+
+### Validación
+
+| Capa | Resultado |
+|------|-----------|
+| Suite | **465/465 PASS** · 45 files |
+| Session authorization tests | 14 (matriz 9 estados) |
+| Localhost visual PO | ✅ client / artist / staff |
+| Push / deploy | ❌ NO |
+
+### Deuda cerrada
+
+Event Bus history como fuente indirecta de `accessTokenRef` para MOD-005 — **cerrada**.
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-SESSION-OPAQUE-AUTHORIZATION-IMPLEMENTATION-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-11-SESSION-OPAQUE-AUTHORIZATION-IMPLEMENTATION.md`
+
+*Documentación post-implementación · sin commit hasta orden PO*
+
+---
+
+## Discovery — MOD-005 Runtime Registry — 2026-07-11
+
+**Ticket:** TICKET-V2-PHASE-6-MOD-005-RUNTIME-REGISTRY-DISCOVERY-001
+**Modo:** discovery y documentación únicamente — **sin** runtime · **sin** tests · **sin** commit
+**Rama:** `plan/v2-phase-4-api-client`
+**HEAD:** `3c53bc899a0cbbaf58574883f2a579c0b85f865b`
+
+### Hallazgo
+
+MOD-005 API Client operativo en bootstrap (`API_READY`) pero **ausente** del Runtime Registry (7 entradas hoy: MOD-006…MOD-002 + MOD-RUNTIME). Post-opaque-auth, el registry **no debe** almacenar credenciales.
+
+### Diseño recomendado
+
+**Opción A — registry mínimo estático** (mirror MOD-001 `2405b20`):
+
+- `registerRuntimeModule('MOD-005', 'API Client', getApiClientState())`
+- Sin sync dinámica post-login/logout
+- Prohibido: `accessTokenRef`, Authorization, userId, credentialVersion, expiresAt
+
+### Próximo paso (sujeto PO)
+
+`TICKET-V2-PHASE-6-MOD-005-RUNTIME-REGISTRY-001` — implementación acotada.
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-RUNTIME-REGISTRY-DISCOVERY-001.md`

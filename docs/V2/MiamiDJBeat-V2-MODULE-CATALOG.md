@@ -282,14 +282,14 @@ Ver **SECCIÓN 4H** para estado actual de Bootstrap Wiring.
 | `initializeApiClient()` / `getApiClient()` / `getApiClientState()` | ✅ OPERATIVO |
 | `bootstrap/initialize-api.ts` | ✅ CREADO |
 | `initializeApiForBoot(portal)` | ✅ OPERATIVO |
-| `SessionReaderPort` live | ✅ OPERATIVO — Session snapshot + Event Bus `USER_LOGIN` |
+| `SessionReaderPort` live | ✅ OPERATIVO — Session `getSessionAuthorizationHeader()` (sin Event Bus history) |
 | Integración en `boot.ts` | ✅ Fase `api-client` antes de Runtime |
 | `MemoryTransport` únicamente | ✅ VALIDADO — sin red real |
 | `bootScaffold()` síncrono | ✅ PRESERVADO |
 | Sin import Auth en API runtime | ✅ VALIDADO |
-| Tests wiring | ✅ 19 nuevos (`boot-api-wiring.test.ts`) |
-| Suite global | ✅ 448/448 PASS |
-| Test files | ✅ 44/44 PASS |
+| Tests wiring | ✅ 22 (`boot-api-wiring.test.ts`) |
+| Suite global | ✅ 465/465 PASS |
+| Test files | ✅ 45/45 PASS |
 | Validación visual PO | ⏳ NO APLICA |
 | Producción / merge / preview | ❌ NO AUTORIZADO |
 
@@ -304,22 +304,22 @@ Config → Bus → Logging → Error → registerAuthForBoot → Session → act
 
 | Componente | Estado |
 |------------|--------|
-| Runtime Registry MOD-005 | ⏳ PENDIENTE |
+| Runtime Registry MOD-005 | ⏳ PENDIENTE — NO AUTORIZADA (discovery ✅ COMPLETADO) |
 | `USER_LOGOUT` → `cancelAll()` | ⏳ PENDIENTE |
 | `normalizeApiError()` | ⏳ PENDIENTE |
 | `FetchTransport` | ⏳ PENDIENTE |
 | `invokeEdge()` / `rpc()` | ⏳ PENDIENTE |
 | Supabase adapter | ⏳ FUERA DE ALCANCE |
-| API pública Session para Authorization opaca | ⏳ PENDIENTE |
-| Tests stale-token / relogin / wrong-userId | ⏳ PENDIENTE |
+| API pública Session para Authorization opaca | ✅ IMPLEMENTADO (`3c53bc8`) |
+| Tests stale-token / relogin / wrong-userId | ✅ CUBIERTOS (`session-authorization.test.ts`) |
 | Producción | ❌ NO |
 | Publicación remota | ❌ NO |
 
-### Deuda arquitectónica aceptada (solo lab)
+### Deuda arquitectónica — Event Bus history
 
-Event Bus history usado temporalmente para resolver `accessTokenRef` — no fuente canónica ideal. Ver session summary para detalle.
+~~Event Bus history usado temporalmente para resolver `accessTokenRef`~~ — **CERRADA** 2026-07-11 (`3c53bc8`). Ver session summary opaque authorization.
 
-**Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-10-MOD-005-BOOTSTRAP-WIRING.md` · `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-POST-WIRING-DOCUMENTATION-001.md`
+**Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-10-MOD-005-BOOTSTRAP-WIRING.md` · `docs/V2/SESSION-SUMMARIES/2026-07-11-SESSION-OPAQUE-AUTHORIZATION-IMPLEMENTATION.md` · `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-POST-WIRING-DOCUMENTATION-001.md` · `docs/V2/TICKETS/TICKET-V2-PHASE-6-SESSION-OPAQUE-AUTHORIZATION-IMPLEMENTATION-001.md`
 
 ### Discovery Session Opaque Authorization — 2026-07-11
 
@@ -331,12 +331,27 @@ Event Bus history usado temporalmente para resolver `accessTokenRef` — no fuen
 | Discovery documental | ✅ COMPLETADO |
 | Correcciones documentales discovery | ✅ APLICADAS (2026-07-11) |
 | Decisión técnica | APROBABLE CON CORRECCIONES DOCUMENTALES |
-| Implementación API opaca Session | ⏳ PENDIENTE — no autorizada |
-| Estado funcional MOD-002 | ✅ Sin cambio |
-| Estado funcional MOD-005 Bootstrap Wiring | ✅ Sin cambio (workaround lab vigente) |
-| Diseño recomendado | `SessionAuthorizationReaderPort` + slot privado SessionStore |
+| Implementación API opaca Session | ✅ COMPLETADA — commit `3c53bc8` (2026-07-11) |
+| Estado funcional MOD-002 | ✅ Slot privado + facade autorización |
+| Estado funcional MOD-005 Bootstrap Wiring | ✅ Sin dependencia Event Bus history |
+| Diseño implementado | `getSessionAuthorizationHeader()` + slot privado SessionStore |
 
 **Documentación discovery:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-SESSION-OPAQUE-AUTHORIZATION-DISCOVERY-001.md`
+**Documentación implementación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-SESSION-OPAQUE-AUTHORIZATION-IMPLEMENTATION-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-11-SESSION-OPAQUE-AUTHORIZATION-IMPLEMENTATION.md`
+
+### Discovery MOD-005 Runtime Registry — 2026-07-11
+
+**Ticket:** TICKET-V2-PHASE-6-MOD-005-RUNTIME-REGISTRY-DISCOVERY-001
+
+| Ítem | Estado |
+|------|--------|
+| Registry actual (7 módulos) | ✅ DOCUMENTADO |
+| MOD-005 ausente | ✅ CONFIRMADO |
+| Diseño recomendado | Opción A — estático `getApiClientState()` |
+| Implementación | ⏳ PENDIENTE — no autorizada |
+| Credenciales en registry | ❌ PROHIBIDO (post-opaque-auth) |
+
+**Documentación discovery:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-RUNTIME-REGISTRY-DISCOVERY-001.md`
 
 ---
 
@@ -580,12 +595,14 @@ Modificaciones al catálogo (nuevo módulo, cambio P0, retiro): ticket de catál
 | MOD-005 Foundation (Fase 4) | ✅ IMPLEMENTADA |
 | MOD-005 Discovery Fase 5 | ✅ COMPLETADO |
 | MOD-005 Bootstrap Wiring | ✅ COMPLETADO |
-| Runtime Registry MOD-005 | ⏳ PENDIENTE |
-| Test baseline | **448/448** · **44/44 files** |
+| Runtime Registry MOD-005 | ⏳ PENDIENTE — NO AUTORIZADA (discovery ✅ COMPLETADO) |
+| Test baseline | **465/465** · **45/45 files** |
 | Session Opaque Authorization Discovery | ✅ COMPLETADO (2026-07-11) |
 | Session Opaque Authorization Discovery Corrections | ✅ APLICADAS (2026-07-11) |
-| Session Opaque Authorization Implementation | ⏳ PENDIENTE — no autorizada |
-| Próximo ticket recomendado | `TICKET-V2-PHASE-6-SESSION-OPAQUE-AUTHORIZATION-IMPLEMENTATION-001` (sujeto PO) o Runtime Registry MOD-005 |
+| Session Opaque Authorization Implementation | ✅ COMPLETADA — `3c53bc8` (2026-07-11) |
+| MOD-005 Runtime Registry Discovery | ✅ COMPLETADO (2026-07-11) |
+| Runtime Registry MOD-005 Implementation | ⏳ PENDIENTE — NO AUTORIZADA |
+| Próximo ticket recomendado | `TICKET-V2-PHASE-6-MOD-005-RUNTIME-REGISTRY-001` (sujeto PO) |
 | Publicación | Solo local — sin push / PR / Preview / merge / deploy |
 | Producción / V1 | ✅ Intactas · `origin/main` `13bb4c4` · PR #117 `d847e19` |
 
