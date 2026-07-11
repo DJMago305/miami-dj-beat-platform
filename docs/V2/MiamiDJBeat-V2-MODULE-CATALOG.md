@@ -402,6 +402,22 @@ Config → Bus → Logging → Error → registerAuthForBoot → Session → act
 
 **Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-RUNTIME-LOGOUT-CANCELLATION-IMPLEMENTATION-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-11-RUNTIME-LOGOUT-CANCELLATION-IMPLEMENTATION.md`
 
+### Discovery MOD-005 Normalize API Error — 2026-07-11
+
+**Ticket:** TICKET-V2-PHASE-6-MOD-005-NORMALIZE-API-ERROR-DISCOVERY-001
+
+| Ítem | Estado |
+|------|--------|
+| `ApiError` tipo canónico | ✅ EXISTE (4 campos) |
+| `normalizeApiError()` facade | ❌ AUSENTE — granular only |
+| `API_RATE_LIMITED` / 429 | ❌ GAP vs spec ERR-0506 |
+| Diseño recomendado | Opción B + C — facade en `errors.ts` |
+| Implementación | ⏳ PENDIENTE — no autorizada |
+| Secuencia PO | normalizeApiError → FetchTransport → MOD-014 bridge |
+| Suite baseline | **479/479 PASS** |
+
+**Documentación discovery:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-NORMALIZE-API-ERROR-DISCOVERY-001.md`
+
 ---
 
 ## SECCIÓN 4D — ANEXO FASE 5 (MOD-014 AUTH ERROR NORMALIZATION)
@@ -654,7 +670,9 @@ Modificaciones al catálogo (nuevo módulo, cambio P0, retiro): ticket de catál
 | Runtime Logout Cancellation Discovery | ✅ COMPLETADO (2026-07-11) |
 | Runtime Logout Cancellation Implementation | ✅ COMPLETADA — `5ab93af` (2026-07-11) |
 | Product Owner validation (logout cancellation) | ✅ APPROVED |
-| Próximo ticket recomendado | `FetchTransport` o `normalizeApiError()` (sujeto PO) |
+| MOD-005 Normalize API Error Discovery | ✅ COMPLETADO (2026-07-11) |
+| MOD-005 Normalize API Error Implementation | ⏳ PENDIENTE — no autorizada |
+| Próximo ticket recomendado | `TICKET-V2-PHASE-6-MOD-005-NORMALIZE-API-ERROR-IMPLEMENTATION-001` (sujeto PO) |
 | Publicación | Solo local — sin push / PR / Preview / merge / deploy |
 | Producción / V1 | ✅ Intactas · `origin/main` `13bb4c4` · PR #117 `d847e19` |
 

@@ -1645,3 +1645,42 @@ Cerrado el circuito lifecycle `USER_LOGOUT` / `SESSION_DESTROYED` → `apiClient
 **Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-RUNTIME-LOGOUT-CANCELLATION-IMPLEMENTATION-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-11-RUNTIME-LOGOUT-CANCELLATION-IMPLEMENTATION.md`
 
 *Documentación post-implementación · sin commit hasta orden PO*
+
+---
+
+## Discovery — MOD-005 Normalize API Error — 2026-07-11
+
+**Ticket:** TICKET-V2-PHASE-6-MOD-005-NORMALIZE-API-ERROR-DISCOVERY-001
+**Modo:** discovery y documentación únicamente — **sin** runtime · **sin** tests · **sin** commit
+**Rama:** `plan/v2-phase-4-api-client`
+**HEAD:** `e7390b6e5d16f95ede02a0e241ea426bb87947d2`
+
+### Causa raíz
+
+`ApiError` existe como plain object (`code`, `message`, `details`, `status`) y normalización **granular** en `errors.ts`, pero **no** hay `normalizeApiError()` facade única. Spec `API-ERRORS.md` documenta pipeline MOD-014 no implementado. Gap crítico antes de FetchTransport / Edge / RPC / Supabase.
+
+### Hallazgos
+
+| Ítem | Estado |
+|------|--------|
+| `normalizeApiError()` MOD-005 | ❌ AUSENTE |
+| `API_RATE_LIMITED` / HTTP 429 | ❌ AUSENTE (cae en `API_HTTP_ERROR`) |
+| HTTP 408/504 → `API_TIMEOUT` | ❌ GAP |
+| `API_CANCELLED` / `API_TIMEOUT` | ✅ DISTINTOS en runtime |
+| MOD-014 bridge | ❌ AUSENTE |
+
+### Diseño recomendado
+
+**Opción B + C:** `normalizeApiError(input)` en `errors.ts` delegando a funciones actuales; extender códigos (429); cerrar gaps 408/504; mantener `ApiError` frozen plain object; MOD-014 bridge en ticket separado.
+
+### Estado
+
+- Discovery: **COMPLETADO**
+- Implementación: **PENDIENTE — NO AUTORIZADA**
+- Baseline tests: **479/479**
+
+### Próximo paso (sujeto PO)
+
+`TICKET-V2-PHASE-6-MOD-005-NORMALIZE-API-ERROR-IMPLEMENTATION-001`
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-NORMALIZE-API-ERROR-DISCOVERY-001.md`
