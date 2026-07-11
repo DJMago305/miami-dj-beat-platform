@@ -25,6 +25,8 @@ export {
   normalizeTimeoutFailure,
   normalizeUnknownFailure,
 } from './errors';
+export { createFetchTransport, FetchTransport } from './fetch-transport';
+export type { FetchTransportOptions } from './fetch-transport';
 export { createMemoryTransport, MemoryTransport } from './memory-transport';
 export type { MemoryTransportEntry } from './memory-transport';
 export { createMockTransport, mockNetworkError, mockResponse, MockTransport } from './mock-transport';
