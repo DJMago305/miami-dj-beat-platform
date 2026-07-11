@@ -1377,3 +1377,90 @@ Integrar MOD-005 API Client en la cadena de boot V2 mediante singleton de servic
 **Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-10-MOD-005-BOOTSTRAP-WIRING.md` · `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-POST-WIRING-DOCUMENTATION-001.md`
 
 *Commit técnico completado · Documentación sin commit · Detenerse hasta orden PO*
+
+---
+
+## Discovery — Session Opaque Authorization — 2026-07-11
+
+**Ticket:** TICKET-V2-PHASE-6-SESSION-OPAQUE-AUTHORIZATION-DISCOVERY-001
+**Modo:** discovery y documentación únicamente — **sin** runtime · **sin** tests · **sin** commit
+**Rama:** `plan/v2-phase-4-api-client`
+**HEAD:** `ffc363636abfd18e61987d94f18bcc482cb42471`
+
+### Ticket abierto
+
+Análisis de deuda arquitectónica: `SessionReaderPort` obtiene `accessTokenRef` mediante historial `USER_LOGIN` del Event Bus (`initialize-api.ts`), porque `SessionSnapshot` público no expone credencial opaca.
+
+### Archivos estudiados
+
+| Área | Archivos |
+|------|----------|
+| Documentación | `NOTA-DIARIA-LAB-001.md`, `MiamiDJBeat-V2-MODULE-CATALOG.md`, `SESSION-SUMMARIES/2026-07-10-MOD-005-*`, `ARCHITECTURE/BOOT-SEQUENCE.md`, `GOVERNANCE/*`, `AUTH-SESSION-BOUNDARY.md`, `SESSION-SPEC.md`, `EVENT-BUS-SPEC.md` |
+| Session MOD-002 | `shared/session/runtime/*` (store, provider, service, listeners, types, persistence-port) |
+| Auth MOD-001 | `shared/auth/runtime/auth-service.ts`, `AUTH-SESSION-BOUNDARY.md` (relación handoff) |
+| Event Bus MOD-004 | `event-bus-service.ts`, `types.ts`, `catalog.ts` |
+| API Client MOD-005 | `session-reader-port.ts`, `api-client.ts`, `api-service.ts`, `bootstrap/initialize-api.ts`, `boot-api-wiring.test.ts` |
+| Bootstrap | `bootstrap/boot.ts`, `bootstrap/index.ts` |
+
+### Causa raíz
+
+`ingestAuthHandle()` valida y acepta `AuthHandle.accessTokenRef` pero `SessionStore` persiste solo `UserRef` + `expiresAt`. No existe API pública Session para lectura opaca. El wiring Fase 6 compensó con reverse-scan de `getEventBus().getHistory()` — Event Bus como almacén indirecto de credenciales.
+
+### Diseño recomendado
+
+**Opción B — `SessionAuthorizationReaderPort`** con pull síncrono (compatible con `api-client.ts`):
+
+- Slot privado en `SessionStore` para `accessTokenRef` + bind `userId`.
+- Facade `getSessionAuthorizationHeader(): string | null` — header preformado, sin ref en snapshot.
+- `initialize-api.ts` deja de consultar historial del bus.
+- Invalidación en `clearSession` / `destroySession` / ingest nuevo usuario.
+- Durante `REFRESHING`: retener última credencial válida hasta resultado.
+
+### Riesgos
+
+| Riesgo | Estado |
+|--------|--------|
+| Stale token (refresh Session-only) | CONFIRMADO |
+| Historial ausente con sesión signed-in | CONFIRMADO |
+| Wrong-user / lookup solo por userId | CONFIRMADO |
+| Acoplamiento MOD-005 → MOD-004 | CONFIRMADO |
+| Logout tardío en API | NO OBSERVADO en tests (guard snapshot mitiga) |
+| Eviction historial (cap 100) | POSIBLE |
+
+### Implementación
+
+**NO AUTORIZADA** en este ticket. Requiere ticket explícito PO (propuesto: `TICKET-V2-PHASE-6-SESSION-OPAQUE-AUTHORIZATION-IMPLEMENTATION-001`).
+
+### Próximo paso (sujeto a aprobación PO)
+
+1. Validar discovery con Product Owner.
+2. Si aprobado: abrir ticket de implementación acotado (store + facade + bootstrap + tests).
+3. Mantener prohibición merge/preview/prod hasta cerrar deuda o aceptación explícita solo-lab.
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-SESSION-OPAQUE-AUTHORIZATION-DISCOVERY-001.md`
+
+---
+
+## Correcciones documentales — Session Opaque Authorization — 2026-07-11
+
+**Ticket correcciones:** TICKET-V2-PHASE-6-SESSION-OPAQUE-AUTHORIZATION-DISCOVERY-CORRECTIONS-001
+**Decisión técnica:** APROBABLE CON CORRECCIONES DOCUMENTALES
+**Implementación runtime:** NO AUTORIZADA
+
+### Correcciones aplicadas al discovery
+
+| # | Corrección |
+|---|------------|
+| 3.1 | Tabla completa de 9 estados oficiales con comportamiento de autorización |
+| 3.2 | EXPIRED con `user` presente — reader niega aunque slot poblado; prueba obligatoria añadida |
+| 3.3 | `destroySession()` exige `clearCredential()` explícito |
+| 3.4 | Política refresh sin/con nuevo `accessTokenRef` |
+| 3.5 | Defensa interna `expiresAt` vencido → `null` |
+| 3.6 | Consumidores — gobernanza sin enforcement runtime |
+| 3.7 | Superficie mínima producción: solo `getSessionAuthorizationHeader()` |
+
+### Estado post-correcciones
+
+- Discovery: **COMPLETADO Y CORREGIDO**
+- Implementación: **PENDIENTE — no autorizada**
+- Próximo paso: autorización PO para `TICKET-V2-PHASE-6-SESSION-OPAQUE-AUTHORIZATION-IMPLEMENTATION-001`

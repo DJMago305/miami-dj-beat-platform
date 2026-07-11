@@ -321,6 +321,23 @@ Event Bus history usado temporalmente para resolver `accessTokenRef` — no fuen
 
 **Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-10-MOD-005-BOOTSTRAP-WIRING.md` · `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-POST-WIRING-DOCUMENTATION-001.md`
 
+### Discovery Session Opaque Authorization — 2026-07-11
+
+**Ticket:** TICKET-V2-PHASE-6-SESSION-OPAQUE-AUTHORIZATION-DISCOVERY-001
+
+| Ítem | Estado |
+|------|--------|
+| Deuda Session/API Client (Event Bus history) | ✅ ANALIZADA |
+| Discovery documental | ✅ COMPLETADO |
+| Correcciones documentales discovery | ✅ APLICADAS (2026-07-11) |
+| Decisión técnica | APROBABLE CON CORRECCIONES DOCUMENTALES |
+| Implementación API opaca Session | ⏳ PENDIENTE — no autorizada |
+| Estado funcional MOD-002 | ✅ Sin cambio |
+| Estado funcional MOD-005 Bootstrap Wiring | ✅ Sin cambio (workaround lab vigente) |
+| Diseño recomendado | `SessionAuthorizationReaderPort` + slot privado SessionStore |
+
+**Documentación discovery:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-SESSION-OPAQUE-AUTHORIZATION-DISCOVERY-001.md`
+
 ---
 
 ## SECCIÓN 4D — ANEXO FASE 5 (MOD-014 AUTH ERROR NORMALIZATION)
@@ -565,7 +582,10 @@ Modificaciones al catálogo (nuevo módulo, cambio P0, retiro): ticket de catál
 | MOD-005 Bootstrap Wiring | ✅ COMPLETADO |
 | Runtime Registry MOD-005 | ⏳ PENDIENTE |
 | Test baseline | **448/448** · **44/44 files** |
-| Próximo ticket recomendado | Runtime Registry MOD-005 o Session opaque Authorization API (sin abrir) |
+| Session Opaque Authorization Discovery | ✅ COMPLETADO (2026-07-11) |
+| Session Opaque Authorization Discovery Corrections | ✅ APLICADAS (2026-07-11) |
+| Session Opaque Authorization Implementation | ⏳ PENDIENTE — no autorizada |
+| Próximo ticket recomendado | `TICKET-V2-PHASE-6-SESSION-OPAQUE-AUTHORIZATION-IMPLEMENTATION-001` (sujeto PO) o Runtime Registry MOD-005 |
 | Publicación | Solo local — sin push / PR / Preview / merge / deploy |
 | Producción / V1 | ✅ Intactas · `origin/main` `13bb4c4` · PR #117 `d847e19` |
 
