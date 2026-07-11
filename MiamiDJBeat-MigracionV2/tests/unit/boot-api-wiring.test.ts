@@ -439,3 +439,157 @@ describe('MOD-005 API bootstrap wiring — TICKET-V2-PHASE-6-MOD-005-API-BOOTSTR
     expect(getApiClientState()).toBe('API_READY');
   });
 });
+
+describe('MOD-005 API logout cancellation wiring — TICKET-V2-PHASE-6-RUNTIME-LOGOUT-CANCELLATION-IMPLEMENTATION-001', () => {
+  beforeEach(() => {
+    resetBootWiringState();
+  });
+
+  it('wires USER_LOGOUT and SESSION_DESTROYED to cancelAll in bootstrap source', () => {
+    const root = resolve(__dirname, '../..');
+    const source = readFileSync(resolve(root, BOOT_API_WIRING_FILE), 'utf8');
+
+    expect(source).toMatch(/USER_LOGOUT/);
+    expect(source).toMatch(/SESSION_DESTROYED/);
+    expect(source).toMatch(/cancelAll/);
+    expect(source).not.toMatch(/shared\/session\/runtime/);
+    expect(source).not.toMatch(/shared\/auth\/runtime/);
+  });
+
+  it('invokes cancelAll when USER_LOGOUT is published', async () => {
+    bootScaffold(VALID_LOCAL_ENV, 'client');
+
+    const transport = getBootMemoryTransportForTests();
+    transport.enqueue({ kind: 'response', status: 200, body: { ok: true }, delayMs: 200 });
+
+    const pending = getApiClient().get('/lab/user-logout-event');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const publishResult = getEventBus().publish({
+      name: 'USER_LOGOUT',
+      payload: { reason: 'test' },
+      emitter: { moduleId: 'MOD-001', subsystem: 'test' },
+      scope: 'public',
+    });
+    expect(publishResult.ok).toBe(true);
+
+    const result = await pending;
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('API_CANCELLED');
+    }
+  });
+
+  it('invokes cancelAll when SESSION_DESTROYED is published', async () => {
+    bootScaffold(VALID_LOCAL_ENV, 'client');
+
+    const transport = getBootMemoryTransportForTests();
+    transport.enqueue({ kind: 'response', status: 200, body: { ok: true }, delayMs: 200 });
+
+    const pending = getApiClient().get('/lab/session-destroyed-event');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const publishResult = getEventBus().publish({
+      name: 'SESSION_DESTROYED',
+      payload: { reason: 'test' },
+      emitter: { moduleId: 'MOD-002', subsystem: 'test' },
+      scope: 'internal',
+    });
+    expect(publishResult.ok).toBe(true);
+
+    const result = await pending;
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('API_CANCELLED');
+    }
+  });
+
+  it('aborts an in-flight request when logout happens during the request', async () => {
+    registerAuthForBoot();
+    seedValidMockRestore('mock-user-client-1', 'client@lab.test');
+    bootScaffold(VALID_LOCAL_ENV, 'client');
+
+    const transport = getBootMemoryTransportForTests();
+    transport.enqueue({ kind: 'response', status: 200, body: { ok: true }, delayMs: 200 });
+
+    const pending = getApiClient().get('/lab/in-flight-logout');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    await getAuthService().signOut();
+
+    const result = await pending;
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('API_CANCELLED');
+    }
+  });
+
+  it('cancels multiple in-flight requests on logout', async () => {
+    registerAuthForBoot();
+    seedValidMockRestore('mock-user-client-1', 'client@lab.test');
+    bootScaffold(VALID_LOCAL_ENV, 'client');
+
+    const transport = getBootMemoryTransportForTests();
+    transport.enqueue({ kind: 'response', status: 200, body: { n: 1 }, delayMs: 200 });
+    transport.enqueue({ kind: 'response', status: 200, body: { n: 2 }, delayMs: 200 });
+
+    const first = getApiClient().get('/lab/concurrent-a');
+    const second = getApiClient().get('/lab/concurrent-b');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    await getAuthService().signOut();
+
+    const [firstResult, secondResult] = await Promise.all([first, second]);
+    expect(firstResult.ok).toBe(false);
+    expect(secondResult.ok).toBe(false);
+    if (!firstResult.ok && !secondResult.ok) {
+      expect(firstResult.error.code).toBe('API_CANCELLED');
+      expect(secondResult.error.code).toBe('API_CANCELLED');
+    }
+  });
+
+  it('does not leave prior-user requests alive after relogin', async () => {
+    registerAuthForBoot();
+    seedValidMockRestore('mock-user-client-1', 'client@lab.test');
+    bootScaffold(VALID_LOCAL_ENV, 'client');
+
+    const transport = getBootMemoryTransportForTests();
+    transport.enqueue({ kind: 'response', status: 200, body: { user: 1 }, delayMs: 200 });
+
+    const priorUserRequest = getApiClient().get('/lab/prior-user');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    await getAuthService().signOut();
+
+    ingestAuthHandle({
+      handoffId: 'handoff-client-2',
+      userId: 'mock-user-client-2',
+      accessTokenRef: 'mock-mock-user-client-2-access',
+      refreshTokenRef: 'mock-mock-user-client-2-refresh',
+      expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+      provider: 'mock',
+      issuedAt: new Date().toISOString(),
+    });
+
+    transport.enqueue({ kind: 'response', status: 200, body: { user: 2 } });
+    const nextUserResult = await getApiClient().get('/lab/next-user');
+    const priorUserResult = await priorUserRequest;
+
+    expect(priorUserResult.ok).toBe(false);
+    if (!priorUserResult.ok) {
+      expect(priorUserResult.error.code).toBe('API_CANCELLED');
+    }
+    expect(nextUserResult.ok).toBe(true);
+  });
+
+  it('allows repeated cancelAll without throwing', async () => {
+    registerAuthForBoot();
+    seedValidMockRestore('mock-user-client-1', 'client@lab.test');
+    bootScaffold(VALID_LOCAL_ENV, 'client');
+
+    const client = getApiClient();
+    expect(() => client.cancelAll()).not.toThrow();
+    expect(() => client.cancelAll()).not.toThrow();
+    await expect(getAuthService().signOut()).resolves.toMatchObject({ ok: true });
+  });
+});

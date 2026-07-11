@@ -1,10 +1,13 @@
 /** MOD-005 API Client — boot wiring — TICKET-V2-PHASE-6-MOD-005-API-BOOTSTRAP-WIRING-001 */
 
 import { getConfig, type PortalId } from '@mdj/shared/config';
+import { getEventBus } from '@mdj/shared/events';
 import { getSessionAuthorizationHeader, getSessionSnapshot } from '@mdj/shared/session';
 import {
   createMemoryTransport,
   createSessionReaderFromSnapshot,
+  getApiClient,
+  getApiClientState,
   initializeApiClient,
   type MemoryTransport,
 } from '../shared/api/runtime';
@@ -14,12 +17,44 @@ export type BootApiInitializationResult =
   | { readonly ok: false; readonly code: string; readonly message: string };
 
 let bootMemoryTransport: MemoryTransport | null = null;
+let logoutCancellationWired = false;
+const logoutCancellationSubscriptionIds: string[] = [];
 
 function createLiveSessionReader() {
   return createSessionReaderFromSnapshot(
     () => getSessionSnapshot(),
     () => getSessionAuthorizationHeader(),
   );
+}
+
+function cancelAllInFlightApiRequests(): void {
+  if (getApiClientState() !== 'API_READY') {
+    return;
+  }
+
+  getApiClient().cancelAll();
+}
+
+function wireApiClientLogoutCancellation(): void {
+  if (logoutCancellationWired) {
+    return;
+  }
+
+  const bus = getEventBus();
+
+  logoutCancellationSubscriptionIds.push(
+    bus.subscribe('USER_LOGOUT', () => {
+      cancelAllInFlightApiRequests();
+    }),
+  );
+
+  logoutCancellationSubscriptionIds.push(
+    bus.subscribe('SESSION_DESTROYED', () => {
+      cancelAllInFlightApiRequests();
+    }),
+  );
+
+  logoutCancellationWired = true;
 }
 
 export function initializeApiForBoot(_portal: PortalId): BootApiInitializationResult {
@@ -42,6 +77,7 @@ export function initializeApiForBoot(_portal: PortalId): BootApiInitializationRe
       sessionReader: createLiveSessionReader(),
       moduleId: 'MOD-005',
     });
+    wireApiClientLogoutCancellation();
 
     return { ok: true, state: 'API_READY' };
   } catch (error) {
@@ -64,5 +100,14 @@ export function getBootMemoryTransportForTests(): MemoryTransport {
 
 /** Test-only reset — not for production portals. */
 export function resetBootApiWiringForTests(): void {
+  if (logoutCancellationWired) {
+    const bus = getEventBus();
+    for (const subscriptionId of logoutCancellationSubscriptionIds) {
+      bus.unsubscribe(subscriptionId);
+    }
+    logoutCancellationSubscriptionIds.length = 0;
+    logoutCancellationWired = false;
+  }
+
   bootMemoryTransport = null;
 }

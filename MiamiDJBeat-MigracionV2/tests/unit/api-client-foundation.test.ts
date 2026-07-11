@@ -15,8 +15,11 @@ import {
   createMockTransport,
   createSessionReaderFromSnapshot,
   createStaticSessionReader,
+  getApiClient,
+  initializeApiClient,
   mockResponse,
   normalizeUnknownFailure,
+  resetApiClientForTests,
   resetApiRequestCounterForTests,
 } from '../../shared/api/runtime';
 import {
@@ -444,6 +447,35 @@ describe('MOD-005 API Client foundation — TICKET-V2-PHASE-4-MOD-005-FOUNDATION
     const pending = client.get('/one');
     await new Promise((resolve) => setTimeout(resolve, 0));
     client.cancelAll();
+    const result = await pending;
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('API_CANCELLED');
+    }
+  });
+
+  it('resetApiClientForTests aborts pending requests before clearing singleton', async () => {
+    bootDeps();
+    const transport = createMockTransport((input) => {
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => resolve(mockResponse(200, { ok: true })), 100);
+        input.signal?.addEventListener(
+          'abort',
+          () => {
+            clearTimeout(timer);
+            reject(new Error('aborted'));
+          },
+          { once: true },
+        );
+      });
+    });
+
+    initializeApiClient({ transport, config: { baseUrl: 'https://example.supabase.co' } });
+    const pending = getApiClient().get('/pending-reset');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    resetApiClientForTests();
+
     const result = await pending;
     expect(result.ok).toBe(false);
     if (!result.ok) {

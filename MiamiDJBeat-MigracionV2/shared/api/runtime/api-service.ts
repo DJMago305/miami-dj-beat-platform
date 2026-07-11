@@ -59,6 +59,7 @@ export function getApiClientState(): ApiClientLifecycleState {
 
 /** Test-only reset — not for production portals. */
 export function resetApiClientForTests(): void {
+  frozenClient?.cancelAll();
   frozenClient = null;
   lifecycleState = 'API_UNINITIALIZED';
 }
