@@ -100,6 +100,8 @@ export type ApiRequestOptions = {
   readonly context?: Partial<RequestContext>;
 };
 
+export type InvokeEdgeOptions = Omit<ApiRequestOptions, 'path' | 'method' | 'body'>;
+
 export type ApiRequest = ApiRequestOptions & {
   readonly method: ApiMethod;
   readonly requestId: string;
@@ -128,6 +130,7 @@ export type ApiClientPublicApi = {
   readonly post: <T = unknown>(path: string, body?: unknown, options?: Omit<ApiRequestOptions, 'path' | 'method' | 'body'>) => Promise<ApiResponse<T>>;
   readonly put: <T = unknown>(path: string, body?: unknown, options?: Omit<ApiRequestOptions, 'path' | 'method' | 'body'>) => Promise<ApiResponse<T>>;
   readonly delete: <T = unknown>(path: string, options?: Omit<ApiRequestOptions, 'path' | 'method'>) => Promise<ApiResponse<T>>;
+  readonly invokeEdge: <T = unknown>(functionName: string, body?: unknown, options?: InvokeEdgeOptions) => Promise<ApiResponse<T>>;
   readonly cancel: (requestId: string) => void;
   readonly cancelAll: () => void;
 };

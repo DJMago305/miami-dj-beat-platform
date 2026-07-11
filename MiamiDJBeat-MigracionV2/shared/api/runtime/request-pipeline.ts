@@ -80,3 +80,28 @@ export function parseJsonBody(bodyText: string): { ok: true; data: unknown } | {
     return { ok: false };
   }
 }
+
+export function sanitizeEdgeFunctionName(
+  functionName: string,
+): { ok: true; name: string } | { ok: false; error: ReturnType<typeof normalizeInvalidPayload> } {
+  const trimmed = functionName.trim();
+  if (!trimmed) {
+    return { ok: false, error: normalizeInvalidPayload('Edge function name is required.') };
+  }
+
+  if (
+    trimmed.includes('..') ||
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('//')
+  ) {
+    return { ok: false, error: normalizeInvalidPayload('Invalid Edge function name.') };
+  }
+
+  const normalized = trimmed.replace(/^\/+/, '').replace(/\/+$/, '');
+  if (!normalized || normalized.includes('/')) {
+    return { ok: false, error: normalizeInvalidPayload('Invalid Edge function name.') };
+  }
+
+  return { ok: true, name: normalized };
+}

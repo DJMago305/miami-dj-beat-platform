@@ -38,6 +38,7 @@ export {
   parseJsonBody,
   resetApiRequestCounterForTests,
   resolveTimeoutMs,
+  sanitizeEdgeFunctionName,
   serializeBody,
 } from './request-pipeline';
 export { computeBackoffMs, DEFAULT_RETRY_POLICY, resolveRetryPolicy, sleep } from './retry-policy';
@@ -65,6 +66,7 @@ export type {
   ApiRequestOptions,
   ApiResponse,
   ApiSuccess,
+  InvokeEdgeOptions,
   NormalizeApiErrorInput,
   RequestContext,
   RetryPolicy,

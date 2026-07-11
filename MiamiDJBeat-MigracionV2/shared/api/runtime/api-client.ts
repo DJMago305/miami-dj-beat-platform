@@ -16,6 +16,7 @@ import {
   nextRequestId,
   parseJsonBody,
   resolveTimeoutMs,
+  sanitizeEdgeFunctionName,
   serializeBody,
 } from './request-pipeline';
 import { computeBackoffMs, resolveRetryPolicy, sleep } from './retry-policy';
@@ -28,6 +29,7 @@ import type {
   ApiMetadata,
   ApiRequestOptions,
   ApiResponse,
+  InvokeEdgeOptions,
   RequestContext,
 } from './types';
 
@@ -289,6 +291,33 @@ export class ApiClient implements ApiClientPublicApi {
     return this.request<T>({ ...options, path, method: 'DELETE' });
   }
 
+  async invokeEdge<T = unknown>(
+    functionName: string,
+    body?: unknown,
+    options: InvokeEdgeOptions = {},
+  ): Promise<ApiResponse<T>> {
+    const sanitized = sanitizeEdgeFunctionName(functionName);
+    if (!sanitized.ok) {
+      const requestId = options.context?.requestId ?? nextRequestId();
+      const correlationId = nextCorrelationId(options.context?.correlationId);
+      return this.failureResponse(
+        sanitized.error,
+        requestId,
+        correlationId,
+        { ...options, path: '/functions/v1/invalid', method: 'POST', body },
+        1,
+        0,
+      );
+    }
+
+    return this.request<T>({
+      ...options,
+      method: 'POST',
+      path: `/functions/v1/${sanitized.name}`,
+      body,
+    });
+  }
+
   cancel(requestId: string): void {
     this.operationAbort.get(requestId)?.abort('cancel');
     for (const [id, entry] of this.inFlight.entries()) {
@@ -430,6 +459,7 @@ export function createApiClient(deps: ApiClientDeps): ApiClientPublicApi {
     post: client.post.bind(client),
     put: client.put.bind(client),
     delete: client.delete.bind(client),
+    invokeEdge: client.invokeEdge.bind(client),
     cancel: client.cancel.bind(client),
     cancelAll: client.cancelAll.bind(client),
   });
