@@ -1684,3 +1684,42 @@ Cerrado el circuito lifecycle `USER_LOGOUT` / `SESSION_DESTROYED` → `apiClient
 `TICKET-V2-PHASE-6-MOD-005-NORMALIZE-API-ERROR-IMPLEMENTATION-001`
 
 **Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-NORMALIZE-API-ERROR-DISCOVERY-001.md`
+
+---
+
+## Cierre técnico — MOD-005 Normalize API Error — 2026-07-11
+
+**Ticket implementación:** TICKET-V2-PHASE-6-MOD-005-NORMALIZE-API-ERROR-IMPLEMENTATION-001
+**Estado:** IMPLEMENTADO, PROBADO, APROBADO PO Y COMMITTEADO LOCALMENTE
+**Rama:** `plan/v2-phase-4-api-client`
+**Commit:** `24b7da85ca3df0d1332dd2f45447eea84139904b` — `feat(v2-api): add canonical api error normalization`
+**Discovery previo:** `TICKET-V2-PHASE-6-MOD-005-NORMALIZE-API-ERROR-DISCOVERY-001`
+
+### Objetivo cumplido
+
+Facade canónica `normalizeApiError(input)` en MOD-005; `api-client.ts` delega todas las rutas de error sin alterar request loop.
+
+| Antes | Después |
+|-------|---------|
+| Normalizadores granulares llamados directamente | `normalizeApiError(NormalizeApiErrorInput)` único punto de entrada |
+| HTTP 429 → `API_HTTP_ERROR` | HTTP 429 → `API_RATE_LIMITED` |
+| HTTP 408/504 sin `API_TIMEOUT` | 408/504 → `API_TIMEOUT` |
+| Business 200 `{ error }` → `API_UNKNOWN` | Business 200 → `API_EDGE_REJECTED` |
+
+### Archivos (5)
+
+`shared/api/runtime/{types,errors,api-client,index}.ts` · `tests/unit/api-client-foundation.test.ts`
+
+### Validación
+
+| Capa | Resultado |
+|------|-----------|
+| Suite | **491/491 PASS** · 45 files |
+| Pruebas nuevas | 11 normalizeApiError |
+| Localhost visual PO | ✅ client / artist / staff |
+| Working tree pre-cierre doc | Limpio |
+| Push / deploy | ❌ NO |
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-NORMALIZE-API-ERROR-IMPLEMENTATION-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-11-MOD-005-NORMALIZE-API-ERROR-IMPLEMENTATION.md`
+
+*Documentación post-implementación · sin commit hasta orden PO*

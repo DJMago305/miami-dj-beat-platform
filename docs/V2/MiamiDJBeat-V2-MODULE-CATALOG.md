@@ -409,14 +409,19 @@ Config → Bus → Logging → Error → registerAuthForBoot → Session → act
 | Ítem | Estado |
 |------|--------|
 | `ApiError` tipo canónico | ✅ EXISTE (4 campos) |
-| `normalizeApiError()` facade | ❌ AUSENTE — granular only |
-| `API_RATE_LIMITED` / 429 | ❌ GAP vs spec ERR-0506 |
-| Diseño recomendado | Opción B + C — facade en `errors.ts` |
-| Implementación | ⏳ PENDIENTE — no autorizada |
-| Secuencia PO | normalizeApiError → FetchTransport → MOD-014 bridge |
-| Suite baseline | **479/479 PASS** |
+| `normalizeApiError()` facade | ✅ IMPLEMENTADA — `24b7da8` (2026-07-11) |
+| `API_RATE_LIMITED` / 429 | ✅ CERRADO |
+| HTTP 408/504 → `API_TIMEOUT` | ✅ CERRADO |
+| Business 200 → `API_EDGE_REJECTED` | ✅ CERRADO |
+| `API_NETWORK` preservado | ✅ Histórico compatible |
+| Diseño | Opción B + C — facade en `errors.ts` |
+| Implementación | ✅ COMPLETADA — `24b7da8` (2026-07-11) |
+| Secuencia PO | FetchTransport → MOD-014 bridge (post-normalize) |
+| Suite baseline actual | **491/491 PASS** · **45/45 files** |
+| Product Owner validation | ✅ APPROVED |
 
 **Documentación discovery:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-NORMALIZE-API-ERROR-DISCOVERY-001.md`
+**Documentación implementación:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-MOD-005-NORMALIZE-API-ERROR-IMPLEMENTATION-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-11-MOD-005-NORMALIZE-API-ERROR-IMPLEMENTATION.md`
 
 ---
 
@@ -661,7 +666,7 @@ Modificaciones al catálogo (nuevo módulo, cambio P0, retiro): ticket de catál
 | MOD-005 Discovery Fase 5 | ✅ COMPLETADO |
 | MOD-005 Bootstrap Wiring | ✅ COMPLETADO |
 | Runtime Registry MOD-005 | ✅ COMPLETADO — `35c35ff` (2026-07-11) |
-| Test baseline | **479/479** · **45/45 files** |
+| Test baseline | **491/491** · **45/45 files** |
 | Session Opaque Authorization Discovery | ✅ COMPLETADO (2026-07-11) |
 | Session Opaque Authorization Discovery Corrections | ✅ APLICADAS (2026-07-11) |
 | Session Opaque Authorization Implementation | ✅ COMPLETADA — `3c53bc8` (2026-07-11) |
@@ -671,8 +676,9 @@ Modificaciones al catálogo (nuevo módulo, cambio P0, retiro): ticket de catál
 | Runtime Logout Cancellation Implementation | ✅ COMPLETADA — `5ab93af` (2026-07-11) |
 | Product Owner validation (logout cancellation) | ✅ APPROVED |
 | MOD-005 Normalize API Error Discovery | ✅ COMPLETADO (2026-07-11) |
-| MOD-005 Normalize API Error Implementation | ⏳ PENDIENTE — no autorizada |
-| Próximo ticket recomendado | `TICKET-V2-PHASE-6-MOD-005-NORMALIZE-API-ERROR-IMPLEMENTATION-001` (sujeto PO) |
+| MOD-005 Normalize API Error Implementation | ✅ COMPLETADA — `24b7da8` (2026-07-11) |
+| Product Owner validation (normalize API error) | ✅ APPROVED |
+| Próximo ticket recomendado | `FetchTransport` discovery (sujeto PO — no abierto) |
 | Publicación | Solo local — sin push / PR / Preview / merge / deploy |
 | Producción / V1 | ✅ Intactas · `origin/main` `13bb4c4` · PR #117 `d847e19` |
 
