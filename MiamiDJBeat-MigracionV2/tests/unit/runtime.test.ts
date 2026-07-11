@@ -2,9 +2,12 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   activateAuthForBoot,
   bootScaffold,
+  initializeApiForBoot,
   registerAuthForBoot,
+  resetBootApiWiringForTests,
   resetBootAuthWiringForTests,
 } from '@mdj/bootstrap/boot';
+import { resetApiClientForTests } from '../../shared/api/runtime';
 import {
   EVENT_BUS_VERSION,
   getEventBus,
@@ -64,12 +67,16 @@ function bootThroughSession(portal: 'client' | 'artist' | 'staff'): void {
   registerAuthForBoot();
   initializeSession({ portal });
   activateAuthForBoot(portal);
+  const apiBoot = initializeApiForBoot(portal);
+  expect(apiBoot.ok).toBe(true);
 }
 
 /** TICKET-V2-BOOTSTRAP-RUNTIME-P0-001 */
 describe('MOD-RUNTIME — Registry · State · Lifecycle · Event wiring', () => {
   beforeEach(() => {
     resetBootAuthWiringForTests();
+    resetBootApiWiringForTests();
+    resetApiClientForTests();
     resetAuthForTests();
     resetThemeBootIntegrationForTests();
     resetRuntimeForTests();
@@ -95,7 +102,7 @@ describe('MOD-RUNTIME — Registry · State · Lifecycle · Event wiring', () =>
 
     expect(snapshot.lifecycle).toBe('RUNTIME_READY');
     expect(snapshot.portal).toBe('client');
-    expect(snapshot.registrySize).toBeGreaterThanOrEqual(7);
+    expect(snapshot.registrySize).toBeGreaterThanOrEqual(8);
     expect(areRuntimeEventListenersRegistered()).toBe(true);
     expect(runtime.getRegistry().map((entry) => entry.moduleId)).toEqual(
       expect.arrayContaining([
@@ -105,6 +112,7 @@ describe('MOD-RUNTIME — Registry · State · Lifecycle · Event wiring', () =>
         'MOD-014',
         'MOD-001',
         'MOD-002',
+        'MOD-005',
         'MOD-RUNTIME',
       ]),
     );

@@ -1,5 +1,6 @@
 /** MOD-RUNTIME — service facade — TICKET-V2-BOOTSTRAP-RUNTIME-P0-001 */
 
+import { getApiClientState } from '../api/runtime/api-service';
 import { getAuthService } from '../auth/runtime';
 import { getConfigState } from '@mdj/shared/config';
 import { EVENT_BUS_VERSION, getEventBus, getEventBusState } from '@mdj/shared/events';
@@ -65,6 +66,7 @@ function registerCoreModules(): void {
   registerRuntimeModule('MOD-014', 'Error Handler', getErrorState());
   registerRuntimeModule('MOD-001', 'Authentication', getAuthService().getState());
   registerRuntimeModule('MOD-002', 'Session', getSessionState());
+  registerRuntimeModule('MOD-005', 'API Client', getApiClientState());
 }
 
 function buildPublicApi(): RuntimePublicApi {

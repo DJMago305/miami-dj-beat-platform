@@ -16,6 +16,7 @@ export type RuntimeModuleId =
   | 'MOD-014'
   | 'MOD-001'
   | 'MOD-002'
+  | 'MOD-005'
   | 'MOD-007'
   | 'MOD-RUNTIME';
 

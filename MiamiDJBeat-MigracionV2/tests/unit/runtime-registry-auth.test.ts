@@ -3,9 +3,12 @@ import {
   activateAuthForBoot,
   bootScaffold,
   getBootMockAuthProviderForTests,
+  initializeApiForBoot,
   registerAuthForBoot,
+  resetBootApiWiringForTests,
   resetBootAuthWiringForTests,
 } from '@mdj/bootstrap/boot';
+import { resetApiClientForTests } from '../../shared/api/runtime';
 import {
   getConfigState,
   initializeConfiguration,
@@ -64,11 +67,14 @@ const EXPECTED_CORE_REGISTRY_ORDER = [
   'MOD-014',
   'MOD-001',
   'MOD-002',
+  'MOD-005',
   'MOD-RUNTIME',
 ] as const;
 
 function resetBootState(): void {
   resetBootAuthWiringForTests();
+  resetBootApiWiringForTests();
+  resetApiClientForTests();
   resetAuthHandoffCounterForTests();
   resetAuthForTests();
   resetSessionForTests();
@@ -88,6 +94,12 @@ function bootThroughAuthActivation(portal: 'client' | 'artist' | 'staff'): void 
   registerAuthForBoot();
   initializeSession({ portal });
   activateAuthForBoot(portal);
+  const apiBoot = initializeApiForBoot(portal);
+  expect(apiBoot.ok).toBe(true);
+}
+
+function getMod005RegistryEntry() {
+  return getRuntime().getRegistry().find((entry) => entry.moduleId === 'MOD-005');
 }
 
 function seedValidMockRestore(userId: string, email: string): void {
@@ -139,14 +151,14 @@ describe('MOD-001 Runtime Registry — static boot snapshot', () => {
     expect(getAuthService().getState()).toBe('SESSION_HANDOFF_SUCCEEDED');
   });
 
-  it('registers MOD-001 exactly once with registry size 7', () => {
+  it('registers MOD-001 exactly once with registry size 8', () => {
     bootThroughAuthActivation('staff');
     const runtime = initializeRuntime({ portal: 'staff' });
     const registry = runtime.getRegistry();
     const mod001Entries = registry.filter((entry) => entry.moduleId === 'MOD-001');
 
     expect(mod001Entries).toHaveLength(1);
-    expect(runtime.getSnapshot().registrySize).toBe(7);
+    expect(runtime.getSnapshot().registrySize).toBe(8);
   });
 
   it('preserves existing core modules and canonical registry order', () => {
@@ -218,5 +230,89 @@ describe('MOD-001 Runtime Registry — static boot snapshot', () => {
     emitSystemReady();
     expect(getEventBus().getHistory().filter((entry) => entry.name === 'SYSTEM_READY')).toHaveLength(1);
     expect(getSessionState()).toBe('SESSION_READY');
+  });
+});
+
+/** TICKET-V2-PHASE-6-MOD-005-RUNTIME-REGISTRY-001 */
+describe('MOD-005 Runtime Registry — static boot snapshot', () => {
+  beforeEach(() => {
+    resetBootState();
+  });
+
+  it('registers MOD-005 with label API Client and API_READY on guest boot', () => {
+    bootThroughAuthActivation('client');
+    const runtime = initializeRuntime({ portal: 'client' });
+    const mod005 = runtime.getRegistry().find((entry) => entry.moduleId === 'MOD-005');
+
+    expect(mod005).toBeDefined();
+    expect(mod005?.label).toBe('API Client');
+    expect(mod005?.lifecycleState).toBe('API_READY');
+    expect(mod005?.registeredAt).toEqual(expect.any(Number));
+    expect(Object.keys(mod005 ?? {})).toEqual(['moduleId', 'label', 'lifecycleState', 'registeredAt']);
+  });
+
+  it('registers API_READY after signed-in bootScaffold', () => {
+    registerAuthForBoot();
+    seedValidMockRestore('mock-user-client-1', 'client@lab.test');
+
+    const boot = bootScaffold(VALID_LOCAL_ENV, 'client');
+    expect(boot.ok).toBe(true);
+    if (!boot.ok) {
+      return;
+    }
+
+    const mod005 = getMod005RegistryEntry();
+    expect(mod005?.label).toBe('API Client');
+    expect(mod005?.lifecycleState).toBe('API_READY');
+  });
+
+  it('registers MOD-005 exactly once with registry size 8', () => {
+    bootThroughAuthActivation('artist');
+    const runtime = initializeRuntime({ portal: 'artist' });
+    const mod005Entries = runtime.getRegistry().filter((entry) => entry.moduleId === 'MOD-005');
+
+    expect(mod005Entries).toHaveLength(1);
+    expect(runtime.getSnapshot().registrySize).toBe(8);
+  });
+
+  it('places MOD-005 after MOD-002 and before MOD-RUNTIME', () => {
+    bootThroughAuthActivation('client');
+    const runtime = initializeRuntime({ portal: 'client' });
+    const moduleIds = runtime.getRegistry().map((entry) => entry.moduleId);
+
+    expect(moduleIds).toEqual([...EXPECTED_CORE_REGISTRY_ORDER]);
+    expect(moduleIds.indexOf('MOD-005')).toBe(moduleIds.indexOf('MOD-002') + 1);
+    expect(moduleIds.indexOf('MOD-RUNTIME')).toBe(moduleIds.indexOf('MOD-005') + 1);
+  });
+
+  it('does not expose Authorization or credential fields in registry entries', () => {
+    bootThroughAuthActivation('client');
+    initializeRuntime({ portal: 'client' });
+    const serialized = JSON.stringify(getRuntime().getRegistry());
+
+    expect(serialized).not.toMatch(/Authorization/i);
+    expect(serialized).not.toMatch(/accessTokenRef/i);
+    expect(serialized).not.toMatch(/Bearer /);
+    expect(serialized).not.toMatch(/credentialVersion/i);
+    expect(serialized).not.toMatch(/expiresAt/i);
+  });
+
+  it('does not synchronize MOD-005 registry on post-boot signIn', async () => {
+    const boot = bootScaffold(VALID_LOCAL_ENV, 'client');
+    expect(boot.ok).toBe(true);
+    if (!boot.ok) {
+      return;
+    }
+
+    const registryStateBefore = getMod005RegistryEntry()?.lifecycleState;
+    expect(registryStateBefore).toBe('API_READY');
+
+    const signInResult = await getAuthService().signIn(
+      { email: 'client@lab.test', password: 'lab-pass' },
+      'client',
+    );
+    expect(signInResult.ok).toBe(true);
+
+    expect(getMod005RegistryEntry()?.lifecycleState).toBe(registryStateBefore);
   });
 });
