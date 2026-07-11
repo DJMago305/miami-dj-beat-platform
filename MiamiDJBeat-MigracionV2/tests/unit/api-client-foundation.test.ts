@@ -18,6 +18,7 @@ import {
   getApiClient,
   initializeApiClient,
   mockResponse,
+  normalizeApiError,
   normalizeUnknownFailure,
   resetApiClientForTests,
   resetApiRequestCounterForTests,
@@ -480,6 +481,94 @@ describe('MOD-005 API Client foundation — TICKET-V2-PHASE-4-MOD-005-FOUNDATION
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.code).toBe('API_CANCELLED');
+    }
+  });
+});
+
+describe('MOD-005 API Client — normalizeApiError — TICKET-V2-PHASE-6-MOD-005-NORMALIZE-API-ERROR-IMPLEMENTATION-001', () => {
+  it('maps cancelled input to API_CANCELLED', () => {
+    const error = normalizeApiError({ kind: 'cancelled' });
+    expect(error.code).toBe('API_CANCELLED');
+    expect(error.status).toBe(0);
+  });
+
+  it('maps timeout input to API_TIMEOUT', () => {
+    const error = normalizeApiError({ kind: 'timeout' });
+    expect(error.code).toBe('API_TIMEOUT');
+    expect(error.status).toBe(0);
+  });
+
+  it('maps timeout input with HTTP 504 status', () => {
+    const error = normalizeApiError({ kind: 'timeout', status: 504 });
+    expect(error.code).toBe('API_TIMEOUT');
+    expect(error.status).toBe(504);
+  });
+
+  it('maps network input to API_NETWORK', () => {
+    const error = normalizeApiError({ kind: 'network', message: 'offline' });
+    expect(error.code).toBe('API_NETWORK');
+    expect(error.message).toBe('offline');
+  });
+
+  it('maps HTTP 429 to API_RATE_LIMITED', () => {
+    const error = normalizeApiError({
+      kind: 'http',
+      status: 429,
+      bodyText: '{"error":"rate-limit"}',
+      parsedBody: { error: 'rate-limit' },
+    });
+    expect(error.code).toBe('API_RATE_LIMITED');
+    expect(error.status).toBe(429);
+  });
+
+  it.each([408, 504])('maps HTTP %i to API_TIMEOUT via http kind', (status) => {
+    const error = normalizeApiError({ kind: 'http', status, bodyText: '' });
+    expect(error.code).toBe('API_TIMEOUT');
+    expect(error.status).toBe(status);
+  });
+
+  it('maps bad-response without business payload to API_PARSE_ERROR', () => {
+    const error = normalizeApiError({ kind: 'bad-response', bodyText: 'not-json' });
+    expect(error.code).toBe('API_PARSE_ERROR');
+  });
+
+  it('maps bad-response business payload to API_EDGE_REJECTED on HTTP 200', () => {
+    const error = normalizeApiError({
+      kind: 'bad-response',
+      status: 200,
+      bodyText: '{"error":"validation","detail":"field-x"}',
+      parsedBody: { error: 'validation', detail: 'field-x' },
+    });
+    expect(error.code).toBe('API_EDGE_REJECTED');
+    expect(error.status).toBe(200);
+  });
+
+  it('maps unknown input to API_UNKNOWN', () => {
+    const error = normalizeApiError({ kind: 'unknown', message: 'fallback' });
+    expect(error.code).toBe('API_UNKNOWN');
+    expect(error.message).toBe('fallback');
+  });
+
+  it('is idempotent for the same input', () => {
+    const input = { kind: 'http' as const, status: 404, bodyText: '{"error":"missing"}', parsedBody: { error: 'missing' } };
+    const first = normalizeApiError(input);
+    const second = normalizeApiError(input);
+    expect(second).toEqual(first);
+  });
+
+  it('maps HTTP 429 through client request path', async () => {
+    bootDeps();
+    const transport = createMemoryTransport();
+    transport.enqueue({ kind: 'response', status: 429, body: { error: 'too-many' } });
+    const client = createApiClient({ transport, config: { baseUrl: 'https://example.supabase.co' } });
+
+    const result = await client.get('/limited', {
+      retryPolicy: { maxAttempts: 1, backoffMs: [0], retryOn: ['API_RATE_LIMITED'], jitter: false },
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('API_RATE_LIMITED');
+      expect(result.error.status).toBe(429);
     }
   });
 });

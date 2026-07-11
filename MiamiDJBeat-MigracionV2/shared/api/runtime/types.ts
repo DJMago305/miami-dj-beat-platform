@@ -31,7 +31,47 @@ export type ApiErrorCode =
   | 'API_CANCELLED'
   | 'API_CONFIG_ERROR'
   | 'API_INVALID_PAYLOAD'
+  | 'API_RATE_LIMITED'
   | 'API_UNKNOWN';
+
+export type NormalizeApiErrorInput =
+  | {
+      readonly kind: 'cancelled';
+      readonly cause?: unknown;
+      readonly message?: string;
+    }
+  | {
+      readonly kind: 'timeout';
+      readonly status?: number;
+      readonly cause?: unknown;
+      readonly message?: string;
+    }
+  | {
+      readonly kind: 'network';
+      readonly cause?: unknown;
+      readonly message?: string;
+    }
+  | {
+      readonly kind: 'http';
+      readonly status: number;
+      readonly bodyText?: string;
+      readonly parsedBody?: unknown;
+      readonly cause?: unknown;
+      readonly message?: string;
+    }
+  | {
+      readonly kind: 'bad-response';
+      readonly status?: number;
+      readonly bodyText?: string;
+      readonly parsedBody?: unknown;
+      readonly cause?: unknown;
+      readonly message?: string;
+    }
+  | {
+      readonly kind: 'unknown';
+      readonly cause?: unknown;
+      readonly message?: string;
+    };
 
 export type ApiError = {
   readonly code: ApiErrorCode;

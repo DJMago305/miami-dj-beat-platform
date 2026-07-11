@@ -1,6 +1,8 @@
 /** MOD-005 API Client — error normalization — TICKET-V2-PHASE-4-MOD-005-FOUNDATION-001 */
 
-import type { ApiError, ApiErrorCode } from './types';
+import type { ApiError, ApiErrorCode, NormalizeApiErrorInput } from './types';
+
+export type { NormalizeApiErrorInput } from './types';
 
 export class ApiClientError extends Error {
   readonly apiError: ApiError;
@@ -29,12 +31,96 @@ export function createApiError(
   return freezeApiError({ code, message, details, status });
 }
 
+function withMessageOverride(error: ApiError, message?: string): ApiError {
+  if (!message) {
+    return error;
+  }
+  return createApiError(error.code, message, error.status, error.details);
+}
+
+function isHttpTimeoutStatus(status: number): boolean {
+  return status === 408 || status === 504;
+}
+
+export function normalizeApiError(input: NormalizeApiErrorInput): ApiError {
+  switch (input.kind) {
+    case 'cancelled':
+      return withMessageOverride(normalizeCancellationFailure(), input.message);
+
+    case 'timeout': {
+      const status = input.status !== undefined && isHttpTimeoutStatus(input.status) ? input.status : 0;
+      return withMessageOverride(createApiError('API_TIMEOUT', 'Request timed out.', status, null), input.message);
+    }
+
+    case 'network':
+      return withMessageOverride(
+        normalizeNetworkFailure(resolveNetworkMessage(input.message, input.cause)),
+        input.message,
+      );
+
+    case 'http': {
+      const bodyText = input.bodyText ?? '';
+      const parsedBody = input.parsedBody ?? null;
+
+      if (isHttpTimeoutStatus(input.status)) {
+        return withMessageOverride(
+          createApiError('API_TIMEOUT', 'Request timed out.', input.status, null),
+          input.message,
+        );
+      }
+
+      if (input.status === 429) {
+        const details = extractErrorDetails(parsedBody, bodyText);
+        return withMessageOverride(
+          createApiError('API_RATE_LIMITED', 'Too many requests.', 429, details),
+          input.message,
+        );
+      }
+
+      return withMessageOverride(normalizeHttpStatusError(input.status, bodyText, parsedBody), input.message);
+    }
+
+    case 'bad-response': {
+      const bodyText = input.bodyText ?? '';
+      const parsedBody = input.parsedBody;
+      const status = input.status ?? 0;
+
+      if (parsedBody !== undefined && parsedBody !== null && hasBusinessErrorFlag(parsedBody)) {
+        return withMessageOverride(
+          normalizeHttpStatusError(status > 0 ? status : 200, bodyText, parsedBody),
+          input.message,
+        );
+      }
+
+      return withMessageOverride(normalizeParseFailure(), input.message);
+    }
+
+    case 'unknown':
+      return withMessageOverride(normalizeUnknownFailure(input.message), input.message);
+
+    default:
+      return normalizeUnknownFailure();
+  }
+}
+
 export function normalizeHttpStatusError(
   status: number,
   bodyText: string,
   parsedBody: unknown,
 ): ApiError {
   const details = extractErrorDetails(parsedBody, bodyText);
+
+  if (status >= 200 && status < 300 && hasBusinessErrorFlag(parsedBody)) {
+    return createApiError('API_EDGE_REJECTED', 'Edge rejected the request.', status, details);
+  }
+
+  if (isHttpTimeoutStatus(status)) {
+    return createApiError('API_TIMEOUT', 'Request timed out.', status, null);
+  }
+
+  if (status === 429) {
+    return createApiError('API_RATE_LIMITED', 'Too many requests.', 429, details);
+  }
 
   if (status === 422) {
     return createApiError('API_EDGE_REJECTED', 'Edge rejected the request.', status, details);
@@ -105,6 +191,11 @@ export function isRetryableError(
     return false;
   }
 
+  if (error.code === 'API_RATE_LIMITED' || error.status === 429) {
+    const isRead = method === 'GET' || method === 'DELETE' || method === 'HEAD';
+    return isRead || retrySafe === true;
+  }
+
   if (error.status === 401 || error.status === 403 || error.status === 404 || error.status === 409 || error.status === 422) {
     return false;
   }
@@ -154,4 +245,14 @@ export function hasBusinessErrorFlag(parsedBody: unknown): boolean {
     return false;
   }
   return typeof (parsedBody as Record<string, unknown>).error === 'string';
+}
+
+function resolveNetworkMessage(message: string | undefined, cause: unknown): string {
+  if (message) {
+    return message;
+  }
+  if (cause instanceof Error && cause.message) {
+    return cause.message;
+  }
+  return 'Network request failed.';
 }

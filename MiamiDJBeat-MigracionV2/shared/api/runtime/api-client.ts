@@ -7,11 +7,7 @@ import { getLogger } from '@mdj/shared/logging';
 import {
   hasBusinessErrorFlag,
   isRetryableError,
-  normalizeCancellationFailure,
-  normalizeHttpStatusError,
-  normalizeNetworkFailure,
-  normalizeParseFailure,
-  normalizeTimeoutFailure,
+  normalizeApiError,
 } from './errors';
 import { redactRequestMeta } from './redact';
 import {
@@ -90,7 +86,7 @@ export class ApiClient implements ApiClientPublicApi {
       for (let attempt = 1; attempt <= retryPolicy.maxAttempts; attempt += 1) {
         if (operationSignal.aborted) {
           return this.failureResponse(
-            normalizeCancellationFailure(),
+            normalizeApiError({ kind: 'cancelled' }),
             requestId,
             correlationId,
             options,
@@ -131,11 +127,12 @@ export class ApiClient implements ApiClientPublicApi {
 
           if (transportResult.status < 200 || transportResult.status >= 300) {
             const parsed = parseJsonBody(transportResult.bodyText);
-            const apiError = normalizeHttpStatusError(
-              transportResult.status,
-              transportResult.bodyText,
-              parsed.ok ? parsed.data : null,
-            );
+            const apiError = normalizeApiError({
+              kind: 'http',
+              status: transportResult.status,
+              bodyText: transportResult.bodyText,
+              parsedBody: parsed.ok ? parsed.data : null,
+            });
             lastFailure = { ok: false, status: apiError.status, error: apiError, metadata };
             this.logResult('warn', options.path, method, lastFailure);
 
@@ -147,7 +144,7 @@ export class ApiClient implements ApiClientPublicApi {
                 await sleep(computeBackoffMs(retryPolicy, attempt - 1), operationSignal);
               } catch {
                 return this.failureResponse(
-                  normalizeCancellationFailure(),
+                  normalizeApiError({ kind: 'cancelled' }),
                   requestId,
                   correlationId,
                   options,
@@ -165,7 +162,10 @@ export class ApiClient implements ApiClientPublicApi {
           const parsed = parseJsonBody(transportResult.bodyText);
           if (!parsed.ok) {
             const failure = this.failureResponse(
-              normalizeParseFailure(),
+              normalizeApiError({
+                kind: 'bad-response',
+                bodyText: transportResult.bodyText,
+              }),
               requestId,
               correlationId,
               options,
@@ -178,7 +178,12 @@ export class ApiClient implements ApiClientPublicApi {
           }
 
           if (hasBusinessErrorFlag(parsed.data)) {
-            const apiError = normalizeHttpStatusError(200, transportResult.bodyText, parsed.data);
+            const apiError = normalizeApiError({
+              kind: 'bad-response',
+              status: 200,
+              bodyText: transportResult.bodyText,
+              parsedBody: parsed.data,
+            });
             const failure: ApiFailure = {
               ok: false,
               status: apiError.status,
@@ -221,7 +226,7 @@ export class ApiClient implements ApiClientPublicApi {
               await sleep(computeBackoffMs(retryPolicy, attempt - 1), operationSignal);
             } catch {
               return this.failureResponse(
-                normalizeCancellationFailure(),
+                normalizeApiError({ kind: 'cancelled' }),
                 requestId,
                 correlationId,
                 options,
@@ -240,7 +245,7 @@ export class ApiClient implements ApiClientPublicApi {
       return (
         lastFailure ??
         this.failureResponse(
-          normalizeNetworkFailure('Retry attempts exhausted without a response.'),
+          normalizeApiError({ kind: 'network', message: 'Retry attempts exhausted without a response.' }),
           requestId,
           correlationId,
           options,
@@ -487,14 +492,18 @@ function mergeAbortSignals(
 function mapTransportException(error: unknown, signal?: AbortSignal) {
   if (error instanceof TransportCancelledError || signal?.aborted) {
     if (signal?.reason === 'timeout') {
-      return normalizeTimeoutFailure();
+      return normalizeApiError({ kind: 'timeout', cause: error });
     }
-    return normalizeCancellationFailure();
+    return normalizeApiError({ kind: 'cancelled', cause: error });
   }
 
   if (error instanceof TransportNetworkError) {
-    return normalizeNetworkFailure(error.message);
+    return normalizeApiError({ kind: 'network', message: error.message, cause: error });
   }
 
-  return normalizeNetworkFailure(error instanceof Error ? error.message : 'Unknown transport failure.');
+  return normalizeApiError({
+    kind: 'network',
+    message: error instanceof Error ? error.message : 'Unknown transport failure.',
+    cause: error,
+  });
 }

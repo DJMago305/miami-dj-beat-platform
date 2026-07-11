@@ -17,6 +17,7 @@ export {
   isApiClientError,
   isRetryableError,
   normalizeCancellationFailure,
+  normalizeApiError,
   normalizeHttpStatusError,
   normalizeInvalidPayload,
   normalizeNetworkFailure,
@@ -62,6 +63,7 @@ export type {
   ApiRequestOptions,
   ApiResponse,
   ApiSuccess,
+  NormalizeApiErrorInput,
   RequestContext,
   RetryPolicy,
 } from './types';
