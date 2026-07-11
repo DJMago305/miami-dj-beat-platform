@@ -21,6 +21,9 @@ import type {
   AuthHandoffInput,
   IdentitySnapshot,
   InitializeSessionOptions,
+  SessionAuthorizationNoneReason,
+  SessionAuthorizationReaderPort,
+  SessionAuthorizationState,
   SessionExpiryProbe,
   SessionLifecycleState,
   SessionPublicApi,
@@ -46,6 +49,49 @@ export function getSessionState(): SessionLifecycleState {
 
 export function getSessionSnapshot(): SessionSnapshot {
   return getSessionManager().getSnapshot();
+}
+
+/** MOD-005 composition root — opaque Authorization header from Session slot (no Event Bus). */
+export function getSessionAuthorizationHeader(): string | null {
+  return sessionStore.resolveAuthorizationHeader();
+}
+
+export function getSessionAuthorizationState(): SessionAuthorizationState {
+  const header = sessionStore.resolveAuthorizationHeader();
+  const userId = sessionStore.getCurrentUser()?.userId;
+  const machine = sessionStore.getMachineState();
+
+  if (header && userId) {
+    return Object.freeze({
+      kind: 'ready',
+      authorizationHeader: header,
+      credentialVersion: sessionStore.getCredentialVersion(),
+      userId,
+      isRefreshing: sessionStore.isRefreshingCredential(),
+    });
+  }
+
+  let reason: SessionAuthorizationNoneReason = 'anonymous';
+  if (machine === 'EXPIRED') {
+    reason = 'expired';
+  } else if (machine === 'DESTROYED') {
+    reason = 'destroyed';
+  } else if (machine === 'ERROR') {
+    reason = 'error';
+  } else if (sessionStore.getBoundUserId() && userId && sessionStore.getBoundUserId() !== userId) {
+    reason = 'unbound';
+  } else if (!sessionStore.getAccessTokenRef() && userId) {
+    reason = 'cleared';
+  }
+
+  return Object.freeze({ kind: 'none', reason });
+}
+
+export function createSessionAuthorizationReader(): SessionAuthorizationReaderPort {
+  return Object.freeze({
+    getAuthorizationHeader: () => getSessionAuthorizationHeader(),
+    getAuthorizationState: () => getSessionAuthorizationState(),
+  });
 }
 
 export function asSessionSnapshotWithPermissions(

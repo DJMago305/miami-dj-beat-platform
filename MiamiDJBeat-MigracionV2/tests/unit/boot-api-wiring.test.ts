@@ -50,8 +50,10 @@ import {
 } from '../../shared/api/runtime';
 import * as apiClientModule from '../../shared/api/runtime/api-client';
 import {
+  getSessionAuthorizationHeader,
   getSessionSnapshot,
   getSessionState,
+  ingestAuthHandle,
   initializeSession,
   resetSessionForTests,
 } from '@mdj/shared/session';
@@ -77,6 +79,8 @@ const API_RUNTIME_FILES = [
   'shared/api/runtime/session-reader-port.ts',
   'shared/api/runtime/memory-transport.ts',
 ] as const;
+
+const BOOT_API_WIRING_FILE = 'bootstrap/initialize-api.ts';
 
 function resetBootWiringState(): void {
   resetBootApiWiringForTests();
@@ -202,6 +206,65 @@ describe('MOD-005 API bootstrap wiring — TICKET-V2-PHASE-6-MOD-005-API-BOOTSTR
       expect(source).not.toMatch(/shared\/auth\/runtime/);
       expect(source).not.toMatch(/getAuthService/);
     }
+  });
+
+  it('resolves Authorization from Session slot without Event Bus history lookup', () => {
+    const root = resolve(__dirname, '../..');
+    const source = readFileSync(resolve(root, BOOT_API_WIRING_FILE), 'utf8');
+
+    expect(source).toMatch(/getSessionAuthorizationHeader/);
+    expect(source).not.toMatch(/getEventBus\(\)\.getHistory/);
+    expect(source).not.toMatch(/parseUserLoginPayload/);
+  });
+
+  it('omits Authorization after logout even when USER_LOGIN remains in bus history', async () => {
+    registerAuthForBoot();
+    seedValidMockRestore('mock-user-client-1', 'client@lab.test');
+
+    const boot = bootScaffold(VALID_LOCAL_ENV, 'client');
+    expect(boot.ok).toBe(true);
+    if (!boot.ok) {
+      return;
+    }
+
+    expect(getSessionAuthorizationHeader()).toBe('Bearer mock-mock-user-client-1-access');
+    expect(countEvent('USER_LOGIN')).toBeGreaterThan(0);
+
+    const transport = getBootMemoryTransportForTests();
+    transport.enqueue({ kind: 'response', status: 200, body: { ok: true } });
+    await getApiClient().get('/lab/signed-in');
+    expect(transport.calls[0]?.headers.Authorization).toBe('Bearer mock-mock-user-client-1-access');
+
+    await getAuthService().signOut();
+
+    expect(getSessionAuthorizationHeader()).toBeNull();
+    transport.enqueue({ kind: 'response', status: 200, body: { ok: true } });
+    await getApiClient().get('/lab/post-logout');
+    expect(transport.calls[1]?.headers.Authorization).toBeUndefined();
+  });
+
+  it('uses updated Authorization after relogin with a different user', async () => {
+    registerAuthForBoot();
+    seedValidMockRestore('mock-user-client-1', 'client@lab.test');
+    bootScaffold(VALID_LOCAL_ENV, 'client');
+
+    expect(getSessionAuthorizationHeader()).toBe('Bearer mock-mock-user-client-1-access');
+
+    await getAuthService().signOut();
+    expect(getSessionAuthorizationHeader()).toBeNull();
+
+    ingestAuthHandle({
+      handoffId: 'handoff-client-2',
+      userId: 'mock-user-client-2',
+      accessTokenRef: 'mock-mock-user-client-2-access',
+      refreshTokenRef: 'mock-mock-user-client-2-refresh',
+      expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+      provider: 'mock',
+      issuedAt: new Date().toISOString(),
+    });
+
+    expect(getSessionSnapshot().user?.userId).toBe('mock-user-client-2');
+    expect(getSessionAuthorizationHeader()).toBe('Bearer mock-mock-user-client-2-access');
   });
 
   it('returns the same frozen singleton from getApiClient()', () => {

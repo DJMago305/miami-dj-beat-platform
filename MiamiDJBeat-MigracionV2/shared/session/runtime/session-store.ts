@@ -49,6 +49,9 @@ export class SessionStore {
   private hydrationTrace: HydrationTrace | null = null;
   private isRefreshing = false;
   private frozenSnapshot: SessionSnapshot | null = null;
+  private accessTokenRef: string | null = null;
+  private boundUserId: string | null = null;
+  private credentialVersion = 0;
 
   reset(): void {
     this.machineState = null;
@@ -62,6 +65,9 @@ export class SessionStore {
     this.hydrationTrace = null;
     this.isRefreshing = false;
     this.frozenSnapshot = null;
+    this.accessTokenRef = null;
+    this.boundUserId = null;
+    this.credentialVersion = 0;
   }
 
   beginHydrationTrace(): void {
@@ -131,6 +137,10 @@ export class SessionStore {
     this.currentUser = user;
   }
 
+  getCurrentUser(): UserRef | null {
+    return this.currentUser;
+  }
+
   setExpiresAt(value: string | null): void {
     this.expiresAt = value;
   }
@@ -146,6 +156,109 @@ export class SessionStore {
   clearIdentity(): void {
     this.currentUser = null;
     this.expiresAt = null;
+  }
+
+  setCredential(accessTokenRef: string, boundUserId: string): void {
+    const trimmed = accessTokenRef.trim();
+    if (!trimmed || !boundUserId) {
+      return;
+    }
+
+    this.accessTokenRef = trimmed;
+    this.boundUserId = boundUserId;
+    this.credentialVersion += 1;
+  }
+
+  updateCredentialAccessToken(accessTokenRef: string, boundUserId: string): void {
+    const trimmed = accessTokenRef.trim();
+    if (!trimmed || !boundUserId) {
+      return;
+    }
+
+    if (this.accessTokenRef === trimmed && this.boundUserId === boundUserId) {
+      return;
+    }
+
+    this.accessTokenRef = trimmed;
+    this.boundUserId = boundUserId;
+    this.credentialVersion += 1;
+  }
+
+  clearCredential(): void {
+    if (this.accessTokenRef === null && this.boundUserId === null) {
+      return;
+    }
+
+    this.accessTokenRef = null;
+    this.boundUserId = null;
+    this.credentialVersion += 1;
+  }
+
+  getAccessTokenRef(): string | null {
+    return this.accessTokenRef;
+  }
+
+  getBoundUserId(): string | null {
+    return this.boundUserId;
+  }
+
+  getCredentialVersion(): number {
+    return this.credentialVersion;
+  }
+
+  isRefreshingCredential(): boolean {
+    return this.isRefreshing;
+  }
+
+  private isExpiredIsoTimestamp(value: string | null): boolean {
+    if (!value) {
+      return false;
+    }
+
+    const expiryMs = Date.parse(value);
+    return Number.isNaN(expiryMs) || expiryMs <= Date.now();
+  }
+
+  private isAuthorizationDeniedByMachineState(): boolean {
+    const machine = this.machineState;
+    if (!machine) {
+      return true;
+    }
+
+    return (
+      machine === 'INITIAL' ||
+      machine === 'LOADING' ||
+      machine === 'ANONYMOUS' ||
+      machine === 'EXPIRED' ||
+      machine === 'LOGGING_OUT' ||
+      machine === 'DESTROYED' ||
+      machine === 'ERROR'
+    );
+  }
+
+  /** Internal — preformatted Authorization header for MOD-005 composition root. */
+  resolveAuthorizationHeader(): string | null {
+    if (this.isAuthorizationDeniedByMachineState()) {
+      return null;
+    }
+
+    if (!this.currentUser) {
+      return null;
+    }
+
+    if (!this.accessTokenRef || !this.boundUserId) {
+      return null;
+    }
+
+    if (this.boundUserId !== this.currentUser.userId) {
+      return null;
+    }
+
+    if (this.isExpiredIsoTimestamp(this.expiresAt)) {
+      return null;
+    }
+
+    return `Bearer ${this.accessTokenRef}`;
   }
 
   beginSession(portal: PortalId): void {
@@ -202,6 +315,7 @@ export class SessionStore {
     this.machineState = null;
     this.lifecycleState = 'SESSION_UNINITIALIZED';
     this.clearIdentity();
+    this.clearCredential();
     this.hydrationPhase = 'none';
     this.hydrationTrace = null;
     this.isRefreshing = false;

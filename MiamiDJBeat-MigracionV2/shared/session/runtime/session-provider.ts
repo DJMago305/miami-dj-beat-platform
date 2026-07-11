@@ -41,6 +41,7 @@ import type {
   SessionRefreshOptions,
   SessionRefreshPort,
   SessionRefreshPortResult,
+  SessionRefreshPortSuccess,
   SessionRefreshRequest,
   SessionSnapshot,
   SessionErrorCode,
@@ -680,6 +681,7 @@ export class SessionProvider {
 
     this.store.setUser(validated.userRef);
     this.store.setExpiresAt(acceptedHandle.expiresAt);
+    this.store.setCredential(acceptedHandle.accessTokenRef, validated.userRef.userId);
     this.store.setHydrationPhase(validated.hydrationPhase);
     this.store.bumpSnapshotVersion();
 
@@ -823,7 +825,7 @@ export class SessionProvider {
         this.refreshPort.refresh({
           sessionId: this.store.getSessionId(),
           userId: snapshot.user.userId,
-          accessTokenRef: options?.accessTokenRef ?? 'mock-access-ref',
+          accessTokenRef: options?.accessTokenRef ?? this.store.getAccessTokenRef() ?? 'mock-access-ref',
           expiresAt: snapshot.expiresAt,
         }),
       ),
@@ -833,15 +835,19 @@ export class SessionProvider {
       return this.finalizeRefreshFailure(refreshResult.reason, options?.reason);
     }
 
-    return this.finalizeRefreshSuccess(refreshResult.expiresAt, options?.reason);
+    return this.finalizeRefreshSuccess(refreshResult, options?.reason);
   }
 
-  private finalizeRefreshSuccess(expiresAt: string, reason?: string): SessionSnapshot {
+  private finalizeRefreshSuccess(refreshResult: SessionRefreshPortSuccess, reason?: string): SessionSnapshot {
     if (this.store.getMachineState() === 'REFRESHING') {
       this.store.applyMachineTransition('REFRESHING', 'REFRESH_OK', 'AUTHENTICATED');
     }
 
-    this.store.setExpiresAt(expiresAt);
+    this.store.setExpiresAt(refreshResult.expiresAt);
+    const userId = this.store.getSnapshot().user?.userId;
+    if (refreshResult.accessTokenRef && userId) {
+      this.store.updateCredentialAccessToken(refreshResult.accessTokenRef, userId);
+    }
     this.store.setRefreshing(false);
     this.store.bumpSnapshotVersion();
 
@@ -861,7 +867,7 @@ export class SessionProvider {
     getLogger().info('Session refresh succeeded', {
       moduleId: 'MOD-002',
       sessionId: this.store.getSessionId(),
-      expiresAt,
+      expiresAt: refreshResult.expiresAt,
       machineState: this.store.getMachineState(),
     });
 
@@ -896,6 +902,7 @@ export class SessionProvider {
 
   clearSession(reason = 'clear'): SessionSnapshot {
     this.refreshInFlight = null;
+    this.store.clearCredential();
     this.store.clearIdentity();
     this.store.setHydrationPhase('none');
     this.store.bumpSnapshotVersion();
@@ -913,6 +920,7 @@ export class SessionProvider {
 
   destroySession(reason = 'destroy'): void {
     const sessionId = this.store.getSessionId();
+    this.store.clearCredential();
     publishSessionEvent('SESSION_DESTROYED', {
       reason,
       sessionId,

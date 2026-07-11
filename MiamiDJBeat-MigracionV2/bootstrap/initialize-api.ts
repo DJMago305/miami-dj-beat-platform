@@ -1,12 +1,7 @@
 /** MOD-005 API Client — boot wiring — TICKET-V2-PHASE-6-MOD-005-API-BOOTSTRAP-WIRING-001 */
 
 import { getConfig, type PortalId } from '@mdj/shared/config';
-import { getEventBus } from '@mdj/shared/events';
-import {
-  getSessionSnapshot,
-  parseUserLoginPayload,
-  type SessionSnapshot,
-} from '@mdj/shared/session';
+import { getSessionAuthorizationHeader, getSessionSnapshot } from '@mdj/shared/session';
 import {
   createMemoryTransport,
   createSessionReaderFromSnapshot,
@@ -20,38 +15,10 @@ export type BootApiInitializationResult =
 
 let bootMemoryTransport: MemoryTransport | null = null;
 
-function resolveAuthorizationHeader(snapshot: SessionSnapshot): string | null {
-  if (!snapshot.user) {
-    return null;
-  }
-
-  const history = getEventBus().getHistory();
-  for (let index = history.length - 1; index >= 0; index -= 1) {
-    const entry = history[index];
-    if (!entry || entry.name !== 'USER_LOGIN') {
-      continue;
-    }
-
-    const payload = parseUserLoginPayload(entry);
-    if (payload.userId !== snapshot.user.userId) {
-      continue;
-    }
-
-    const accessTokenRef = payload.accessTokenRef?.trim();
-    if (!accessTokenRef) {
-      return null;
-    }
-
-    return `Bearer ${accessTokenRef}`;
-  }
-
-  return null;
-}
-
 function createLiveSessionReader() {
   return createSessionReaderFromSnapshot(
     () => getSessionSnapshot(),
-    resolveAuthorizationHeader,
+    () => getSessionAuthorizationHeader(),
   );
 }
 

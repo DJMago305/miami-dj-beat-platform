@@ -241,3 +241,26 @@ export type SessionExpiryProbe = {
   readonly expiresAt: string | null;
   readonly sessionId: string;
 };
+
+export type SessionAuthorizationNoneReason =
+  | 'anonymous'
+  | 'cleared'
+  | 'expired'
+  | 'destroyed'
+  | 'error'
+  | 'unbound';
+
+export type SessionAuthorizationState =
+  | { readonly kind: 'none'; readonly reason: SessionAuthorizationNoneReason }
+  | {
+      readonly kind: 'ready';
+      readonly authorizationHeader: string;
+      readonly credentialVersion: number;
+      readonly userId: string;
+      readonly isRefreshing: boolean;
+    };
+
+export type SessionAuthorizationReaderPort = {
+  readonly getAuthorizationHeader: () => string | null;
+  readonly getAuthorizationState: () => SessionAuthorizationState;
+};
