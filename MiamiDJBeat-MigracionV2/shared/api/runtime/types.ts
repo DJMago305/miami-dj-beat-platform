@@ -107,6 +107,11 @@ export type InvokeEdgeOptions = Omit<ApiRequestOptions, 'path' | 'method' | 'bod
   readonly authMode?: SupabaseInvokeAuthMode;
 };
 
+export type RpcOptions = Omit<ApiRequestOptions, 'path' | 'method' | 'body'> & {
+  /** Default `session`. Use `anon` only for explicit guest/public RPC flows. */
+  readonly authMode?: SupabaseInvokeAuthMode;
+};
+
 export type ApiRequest = ApiRequestOptions & {
   readonly method: ApiMethod;
   readonly requestId: string;
@@ -136,6 +141,11 @@ export type ApiClientPublicApi = {
   readonly put: <T = unknown>(path: string, body?: unknown, options?: Omit<ApiRequestOptions, 'path' | 'method' | 'body'>) => Promise<ApiResponse<T>>;
   readonly delete: <T = unknown>(path: string, options?: Omit<ApiRequestOptions, 'path' | 'method'>) => Promise<ApiResponse<T>>;
   readonly invokeEdge: <T = unknown>(functionName: string, body?: unknown, options?: InvokeEdgeOptions) => Promise<ApiResponse<T>>;
+  readonly rpc: <T = unknown>(
+    functionName: string,
+    params?: Record<string, unknown>,
+    options?: RpcOptions,
+  ) => Promise<ApiResponse<T>>;
   readonly cancel: (requestId: string) => void;
   readonly cancelAll: () => void;
 };

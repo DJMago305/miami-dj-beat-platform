@@ -105,3 +105,36 @@ export function sanitizeEdgeFunctionName(
 
   return { ok: true, name: normalized };
 }
+
+const SAFE_RPC_FUNCTION_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
+export function sanitizeRpcFunctionName(
+  functionName: string,
+): { ok: true; name: string } | { ok: false; error: ReturnType<typeof normalizeInvalidPayload> } {
+  const trimmed = functionName.trim();
+  if (!trimmed) {
+    return { ok: false, error: normalizeInvalidPayload('RPC function name is required.') };
+  }
+
+  if (
+    trimmed.includes('..') ||
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('//') ||
+    trimmed.includes('?') ||
+    trimmed.includes('#')
+  ) {
+    return { ok: false, error: normalizeInvalidPayload('Invalid RPC function name.') };
+  }
+
+  const normalized = trimmed.replace(/^\/+/, '').replace(/\/+$/, '');
+  if (!normalized || normalized.includes('/')) {
+    return { ok: false, error: normalizeInvalidPayload('Invalid RPC function name.') };
+  }
+
+  if (!SAFE_RPC_FUNCTION_NAME_PATTERN.test(normalized)) {
+    return { ok: false, error: normalizeInvalidPayload('Invalid RPC function name.') };
+  }
+
+  return { ok: true, name: normalized };
+}

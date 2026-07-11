@@ -39,6 +39,7 @@ export {
   resetApiRequestCounterForTests,
   resolveTimeoutMs,
   sanitizeEdgeFunctionName,
+  sanitizeRpcFunctionName,
   serializeBody,
 } from './request-pipeline';
 export {
@@ -72,6 +73,7 @@ export type {
   ApiResponse,
   ApiSuccess,
   InvokeEdgeOptions,
+  RpcOptions,
   NormalizeApiErrorInput,
   RequestContext,
   RetryPolicy,

@@ -17,6 +17,7 @@ import {
   parseJsonBody,
   resolveTimeoutMs,
   sanitizeEdgeFunctionName,
+  sanitizeRpcFunctionName,
   serializeBody,
 } from './request-pipeline';
 import {
@@ -35,7 +36,11 @@ import type {
   ApiResponse,
   InvokeEdgeOptions,
   RequestContext,
+  RpcOptions,
 } from './types';
+
+/** RPC default timeout — spec `api.timeout.rpcMs` deferred to MOD-006. */
+const DEFAULT_RPC_TIMEOUT_MS = 15_000;
 
 export type ApiClientDeps = {
   readonly transport: TransportPort;
@@ -330,6 +335,42 @@ export class ApiClient implements ApiClientPublicApi {
     });
   }
 
+  async rpc<T = unknown>(
+    functionName: string,
+    params?: Record<string, unknown>,
+    options: RpcOptions = {},
+  ): Promise<ApiResponse<T>> {
+    const sanitized = sanitizeRpcFunctionName(functionName);
+    if (!sanitized.ok) {
+      const requestId = options.context?.requestId ?? nextRequestId();
+      const correlationId = nextCorrelationId(options.context?.correlationId);
+      return this.failureResponse(
+        sanitized.error,
+        requestId,
+        correlationId,
+        { ...options, path: '/rest/v1/rpc/invalid', method: 'POST', body: params },
+        1,
+        0,
+      );
+    }
+
+    const { authMode = 'session', headers: callerHeaders, timeoutMs, ...requestOptions } = options;
+    const policyHeaders = resolveSupabaseInvokeHeaders({
+      authMode,
+      anonKey: this.resolveAnonKey(),
+      sessionAuthorization: this.sessionReader?.getAuthorizationHeader() ?? null,
+    });
+
+    return this.request<T>({
+      ...requestOptions,
+      method: 'POST',
+      path: `/rest/v1/rpc/${sanitized.name}`,
+      body: params ?? {},
+      timeoutMs: timeoutMs ?? DEFAULT_RPC_TIMEOUT_MS,
+      headers: mergeSupabaseInvokeCallerHeaders(callerHeaders, policyHeaders),
+    });
+  }
+
   cancel(requestId: string): void {
     this.operationAbort.get(requestId)?.abort('cancel');
     for (const [id, entry] of this.inFlight.entries()) {
@@ -486,6 +527,7 @@ export function createApiClient(deps: ApiClientDeps): ApiClientPublicApi {
     put: client.put.bind(client),
     delete: client.delete.bind(client),
     invokeEdge: client.invokeEdge.bind(client),
+    rpc: client.rpc.bind(client),
     cancel: client.cancel.bind(client),
     cancelAll: client.cancelAll.bind(client),
   });
