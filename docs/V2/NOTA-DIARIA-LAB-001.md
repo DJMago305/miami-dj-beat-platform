@@ -1835,3 +1835,83 @@ Edge Header Policy (discovery + impl) · `rpc()` (discovery + impl) · Supabase 
 **Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-11-PHASE-6-END-OF-DAY.md` · `docs/V2/TICKETS/TICKET-V2-END-OF-DAY-CLOSE-2026-07-11-001.md`
 
 *JORNADA CERRADA EN PUNTO SEGURO — WORKING TREE LIMPIO ANTES DEL CIERRE DOCUMENTAL — SIN PUSH*
+
+---
+
+## Continuidad documental — 2026-07-12
+
+**Ticket:** TICKET-V2-PHASE-6-POST-RPC-DOCUMENTATION-001
+**Modo:** documentación únicamente — sin runtime · sin commit en este ticket
+**Rama:** `plan/v2-phase-4-api-client`
+
+### HEAD y commits sincronizados
+
+| Campo | Valor |
+|-------|-------|
+| **HEAD actual** | `50fa2f5c54f864187dda80bb6a9c2a8753cf0460` — `feat(v2-api): add rpc facade` |
+| **Commit previo documental** | `92895b7` — `docs(v2-api): close edge header and rpc discovery` |
+| **Edge Header Policy** | `d4d9803` — `feat(v2-api): add invokeEdge supabase header policy` |
+| **Cierre EOD histórico** | `3b4f572` — `feat(v2-api): add invokeEdge facade` (baseline documental anterior) |
+
+### Entregables técnicos posteriores al cierre EOD 2026-07-11
+
+| Entrega | Estado | Commit |
+|---------|--------|--------|
+| Edge Header Policy (`resolveSupabaseInvokeHeaders`, `authMode`) | ✅ COMPLETADO | `d4d9803` |
+| Cierre discovery Edge Header + RPC | ✅ DOCUMENTAL | `92895b7` |
+| Facade `rpc(fn, params?, opts?)` | ✅ COMPLETADO | `50fa2f5` |
+
+### Baseline técnico actualizado
+
+| Métrica | Valor |
+|---------|-------|
+| Comando suite | `npm test` (`vitest run`) |
+| Test Files | **48/48 PASS** |
+| Tests | **559/559 PASS** |
+| Incremento vs EOD 2026-07-11 | +1 file (`rpc.test.ts`) · +38 tests |
+| Egress HTTP en suite | ❌ Ninguno (MemoryTransport / stub fetch) |
+
+### Superficie MOD-005 API Client (runtime)
+
+| Facade / capacidad | Estado |
+|--------------------|--------|
+| `request` / `get` / `post` / `put` / `delete` | ✅ Operativo |
+| `invokeEdge()` | ✅ Operativo + política headers Supabase |
+| `rpc()` | ✅ Operativo + misma política headers · timeout default 15s |
+| `cancel` / `cancelAll` | ✅ Operativo (logout wired) |
+| `FetchTransport` | ✅ Implementado — **desactivado por defecto** (`api.transportMode` = `memory`) |
+| Supabase adapter | ⏳ PENDIENTE |
+| MOD-014 Error Bridge | ⏳ PENDIENTE |
+| Consumidores dominio en portales | ⏳ PENDIENTE |
+
+### Validación
+
+| Capa | Estado |
+|------|--------|
+| Suite Vitest | ✅ 559/559 PASS |
+| Localhost `http://localhost:5173` | ✅ HTTP 200 — Client · Artist · Staff |
+| Validación visual PO | ✅ Aprobada (2026-07-11 y reanudación 2026-07-12) |
+
+### Publicación
+
+| Acción | Estado |
+|--------|--------|
+| Push | ❌ NO |
+| PR | ❌ NO |
+| Merge | ❌ NO |
+| Preview | ❌ NO |
+| Deploy | ❌ NO |
+
+### Deudas pendientes (sin cambio de alcance)
+
+- Supabase adapter
+- MOD-014 Error Bridge
+- Wiring domain services (`invokeEdge` / `rpc` en consumidores de negocio)
+- Egress QA con `MDJ_V2_API_TRANSPORT=fetch` (solo con ticket PO)
+- `api.timeout.rpcMs` en MOD-006 (deuda documentada en implementación RPC)
+
+### Próximo bloque sugerido (no abierto sin PO)
+
+Fase 7 — Supabase adapter o wiring MOD-003 snapshot vía `rpc()` — según prioridad PO.
+
+*Documentación sincronizada — TICKET-V2-PHASE-6-POST-RPC-DOCUMENTATION-001 — sin commit en este ticket*

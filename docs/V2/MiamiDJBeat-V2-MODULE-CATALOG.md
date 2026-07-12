@@ -309,10 +309,11 @@ Config → Bus → Logging → Error → registerAuthForBoot → Session → act
 | `USER_LOGOUT` → `cancelAll()` | ✅ CERRADO — `5ab93af` (2026-07-11) |
 | `normalizeApiError()` | ✅ COMPLETADO — `24b7da8` (2026-07-11) |
 | `FetchTransport` | ✅ COMPLETADO — `e6578a5` adapter · `6dbf8d0` wiring + `api.transportMode` |
-| `invokeEdge()` | ✅ COMPLETADO — `3b4f572` facade (2026-07-11) |
-| `rpc()` | ⏳ PENDIENTE |
-| Edge Header Policy (`apikey`/anon guest) | ⏳ PENDIENTE — ticket separado |
-| Supabase adapter | ⏳ FUERA DE ALCANCE |
+| `invokeEdge()` | ✅ COMPLETADO — `3b4f572` facade · headers `d4d9803` (2026-07-11) |
+| `rpc()` | ✅ COMPLETADO — `50fa2f5` facade (2026-07-11) |
+| Edge Header Policy (`apikey`/anon guest) | ✅ COMPLETADO — `d4d9803` · `resolveSupabaseInvokeHeaders` |
+| Supabase adapter | ⏳ PENDIENTE |
+| MOD-014 Error Bridge | ⏳ PENDIENTE |
 | API pública Session para Authorization opaca | ✅ IMPLEMENTADO (`3c53bc8`) |
 | Tests stale-token / relogin / wrong-userId | ✅ CUBIERTOS (`session-authorization.test.ts`) |
 | Producción | ❌ NO |
@@ -445,15 +446,37 @@ Config → Bus → Logging → Error → registerAuthForBoot → Session → act
 | Facade `invokeEdge(name, body, opts?)` | ✅ COMPLETADO — `3b4f572` |
 | Thin wrapper sobre `request()` | ✅ POST `/functions/v1/{sanitizedName}` |
 | Retry default | Desactivado |
-| `apikey` / anon guest headers | ⏳ PENDIENTE — Edge Header Policy |
-| Suite final jornada | **521/521 PASS** · **47/47 files** |
+| Edge Header Policy (`apikey`, `Authorization`, `authMode`) | ✅ COMPLETADO — `d4d9803` |
 
-**Documentación discovery:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-INVOKE-EDGE-DISCOVERY-001.md`
+**Documentación discovery:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-INVOKE-EDGE-DISCOVERY-001.md` · `docs/V2/TICKETS/TICKET-V2-PHASE-6-EDGE-HEADER-POLICY-DISCOVERY-001.md`
+
+### rpc() — 2026-07-11
+
+| Ítem | Estado |
+|------|--------|
+| Discovery | ✅ COMPLETADO — `92895b7` (cierre doc) |
+| Facade `rpc(name, params?, opts?)` | ✅ COMPLETADO — `50fa2f5` |
+| Thin wrapper sobre `request()` | ✅ POST `/rest/v1/rpc/{sanitizedName}` |
+| Headers Supabase | ✅ Reutiliza `resolveSupabaseInvokeHeaders` |
+| Timeout default | 15s (local; `api.timeout.rpcMs` en MOD-006 pendiente) |
+| Retry default | Desactivado |
+| Tests | ✅ `rpc.test.ts` — 28 tests |
+
+**Documentación discovery:** `docs/V2/TICKETS/TICKET-V2-PHASE-6-RPC-DISCOVERY-001.md`
+
+### Baseline técnico MOD-005 — actualizado 2026-07-12
+
+| Métrica | Valor |
+|---------|-------|
+| HEAD | `50fa2f5c54f864187dda80bb6a9c2a8753cf0460` |
+| Suite oficial | **559/559 PASS** · **48/48 files** |
+| Boot transport default | `memory` — FetchTransport disponible vía `api.transportMode` |
+| Egress en boot/tests | ❌ Ninguno por defecto |
 
 ### Cierre de jornada Fase 6 — 2026-07-11
 
 **Ticket:** TICKET-V2-END-OF-DAY-CLOSE-2026-07-11-001
-**HEAD:** `3b4f57255a82e17c264205f14f6cf7123591c86e`
+**HEAD al cierre documental:** `3b4f57255a82e17c264205f14f6cf7123591c86e`
 
 | Portal | Validación PO |
 |--------|---------------|
@@ -461,7 +484,7 @@ Config → Bus → Logging → Error → registerAuthForBoot → Session → act
 | Artist | ✅ |
 | Staff | ✅ |
 
-**Próximo ticket recomendado:** `TICKET-V2-PHASE-6-EDGE-HEADER-POLICY-DISCOVERY-001` (no abierto).
+**Continuidad post-EOD:** Edge Header Policy (`d4d9803`) · RPC facade (`50fa2f5`) · baseline **559/559** — ver `SESSION-SUMMARIES/2026-07-11-PHASE-6-END-OF-DAY.md` § Actualización posterior al cierre — 2026-07-12.
 
 **Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-11-PHASE-6-END-OF-DAY.md` · `docs/V2/TICKETS/TICKET-V2-END-OF-DAY-CLOSE-2026-07-11-001.md`
 
@@ -708,7 +731,7 @@ Modificaciones al catálogo (nuevo módulo, cambio P0, retiro): ticket de catál
 | MOD-005 Discovery Fase 5 | ✅ COMPLETADO |
 | MOD-005 Bootstrap Wiring | ✅ COMPLETADO |
 | Runtime Registry MOD-005 | ✅ COMPLETADO — `35c35ff` (2026-07-11) |
-| Test baseline | **491/491** · **45/45 files** |
+| Test baseline histórico (wiring 2026-07-11) | **491/491** · **45/45 files** |
 | Session Opaque Authorization Discovery | ✅ COMPLETADO (2026-07-11) |
 | Session Opaque Authorization Discovery Corrections | ✅ APLICADAS (2026-07-11) |
 | Session Opaque Authorization Implementation | ✅ COMPLETADA — `3c53bc8` (2026-07-11) |
@@ -720,12 +743,18 @@ Modificaciones al catálogo (nuevo módulo, cambio P0, retiro): ticket de catál
 | MOD-005 Normalize API Error Discovery | ✅ COMPLETADO (2026-07-11) |
 | MOD-005 Normalize API Error Implementation | ✅ COMPLETADA — `24b7da8` (2026-07-11) |
 | Product Owner validation (normalize API error) | ✅ APPROVED |
-| Próximo ticket recomendado | `FetchTransport` discovery (sujeto PO — no abierto) |
+| FetchTransport discovery + adapter + wiring | ✅ COMPLETADO — `a902f94` · `e6578a5` · `6dbf8d0` |
+| invokeEdge facade + Edge Header Policy | ✅ COMPLETADO — `3b4f572` · `d4d9803` |
+| rpc() facade | ✅ COMPLETADO — `50fa2f5` |
+| Test baseline actual | **559/559** · **48/48 files** (2026-07-12) |
+| Supabase adapter | ⏳ PENDIENTE |
+| MOD-014 Error Bridge | ⏳ PENDIENTE |
+| Próximo bloque sugerido | Fase 7 — adapter o domain wiring (sujeto PO — no abierto) |
 | Publicación | Solo local — sin push / PR / Preview / merge / deploy |
 | Producción / V1 | ✅ Intactas · `origin/main` `13bb4c4` · PR #117 `d847e19` |
 
 ---
 
-*Module Catalog v1.2 — 2026-07-05 (origen) · consolidado 2026-07-10 — TICKET-V2-DOC-CONSOLIDATION-001*
+*Module Catalog v1.2 — 2026-07-05 (origen) · consolidado 2026-07-10 — TICKET-V2-DOC-CONSOLIDATION-001 · continuidad MOD-005 2026-07-12 — TICKET-V2-PHASE-6-POST-RPC-DOCUMENTATION-001*
 
 *Referencia obligatoria para todo desarrollo V2. Sección 4: tabla única con estados documental / runtime / validación y portal propietario separados.*

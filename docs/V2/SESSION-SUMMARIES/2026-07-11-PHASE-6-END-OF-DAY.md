@@ -119,3 +119,60 @@ d435732 docs(v2): close MOD-005 runtime registry implementation
 ---
 
 *JORNADA CERRADA EN PUNTO SEGURO — WORKING TREE LIMPIO ANTES DEL CIERRE DOCUMENTAL — SIN PUSH*
+
+---
+
+## Actualización posterior al cierre — 2026-07-12
+
+**Ticket sincronización:** TICKET-V2-PHASE-6-POST-RPC-DOCUMENTATION-001
+**Modo:** documentación únicamente — el cierre histórico de 2026-07-11 (HEAD `3b4f572`, baseline 521/521) permanece válido como snapshot de esa jornada.
+
+### Commits adicionales (post-EOD)
+
+| Orden | Hash | Mensaje |
+|-------|------|---------|
+| 1 | `d4d9803` | `feat(v2-api): add invokeEdge supabase header policy` |
+| 2 | `92895b7` | `docs(v2-api): close edge header and rpc discovery` |
+| 3 | `50fa2f5` | `feat(v2-api): add rpc facade` |
+
+### HEAD y baseline técnico actual
+
+| Campo | Al cierre 2026-07-11 | Actualizado 2026-07-12 |
+|-------|----------------------|-------------------------|
+| HEAD | `3b4f572` | **`50fa2f5`** |
+| Test files | 47/47 | **48/48** |
+| Tests | 521/521 | **559/559** |
+| Delta tests | — | **+38** (`rpc.test.ts` y ampliación header policy) |
+
+### Entregables incorporados
+
+| Entrega | Estado |
+|---------|--------|
+| Edge Header Policy en `invokeEdge()` | ✅ `d4d9803` — `apikey`, `Authorization`, `authMode: session \| anon` |
+| `rpc()` facade | ✅ `50fa2f5` — POST `/rest/v1/rpc/{sanitizedName}` · timeout 15s default |
+| Discovery Edge Header + RPC (cierre doc) | ✅ `92895b7` |
+
+### Validación
+
+| Capa | Estado |
+|------|--------|
+| Suite Vitest (`npm test`) | ✅ **559/559 PASS** |
+| Localhost tres portales | ✅ HTTP 200 |
+| Validación visual Product Owner | ✅ Aprobada (2026-07-11 y reanudación 2026-07-12) |
+| FetchTransport en boot | ❌ Inactivo por defecto (`memory`) |
+
+### Trabajo todavía pendiente
+
+| Componente | Estado |
+|------------|--------|
+| Supabase adapter | ⏳ PENDIENTE |
+| MOD-014 Error Bridge | ⏳ PENDIENTE |
+| Consumidores dominio (`invokeEdge` / `rpc` en servicios) | ⏳ PENDIENTE |
+| Egress QA FetchTransport | ⏳ PENDIENTE — ticket separado |
+| Push / PR / merge / deploy | ❌ NO |
+
+### Punto de reanudación documental
+
+Fase 6 API Client surface **completa** a nivel facade (`invokeEdge` + `rpc` + headers). Próximo bloque sugerido: **Fase 7** — adapter Supabase o wiring domain — pendiente autorización PO.
+
+*Sincronizado — TICKET-V2-PHASE-6-POST-RPC-DOCUMENTATION-001 — sin commit en este ticket*

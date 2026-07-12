@@ -19,6 +19,28 @@ La Constitución (`MIAMIDJBEAT-PROYECTO-CONSTITUCION.md`) manda sobre cualquier 
 
 **Baseline:** TICKET-V2-BOOTLINE-BASELINE-001 (2026-07-06) — validación visual PO aprobada.  
 **Cierre jornada V2:** TICKET-V2-END-OF-DAY-DOCUMENTATION-2026-07-06 — tres dashboards MVP · suite verde.
+**Continuidad Fase 6:** TICKET-V2-PHASE-6-POST-RPC-DOCUMENTATION-001 (2026-07-12) — documentación sincronizada al HEAD `50fa2f5`.
+
+### Continuidad operativa — MOD-005 API Client (2026-07-12)
+
+| Campo | Valor |
+|-------|-------|
+| **Rama** | `plan/v2-phase-4-api-client` |
+| **HEAD** | `50fa2f5c54f864187dda80bb6a9c2a8753cf0460` — `feat(v2-api): add rpc facade` |
+| **Tests unitarios (suite oficial)** | **559/559 PASS** · **48/48 files** (`npm test`) |
+| **Localhost** | `http://localhost:5173` — Client · Artist · Staff HTTP 200 |
+| **Push / PR / deploy** | NO |
+
+| Superficie MOD-005 | Estado |
+|--------------------|--------|
+| `request` / verbos HTTP | ✅ Operativo en boot |
+| `invokeEdge()` | ✅ + Edge Header Policy (`d4d9803`) |
+| `rpc()` | ✅ (`50fa2f5`) |
+| `FetchTransport` | ✅ implementado — **inactivo por defecto** (`api.transportMode` = `memory`) |
+| Supabase adapter | ⏳ Pendiente |
+| MOD-014 Error Bridge | ⏳ Pendiente |
+
+Detalle: `NOTA-DIARIA-LAB-001.md` § Continuidad documental — 2026-07-12 · `SESSION-SUMMARIES/2026-07-11-PHASE-6-END-OF-DAY.md` § Actualización posterior al cierre — 2026-07-12.
 
 ### Estado actual (módulos operativos local)
 
@@ -32,6 +54,7 @@ La Constitución (`MIAMIDJBEAT-PROYECTO-CONSTITUCION.md`) manda sobre cualquier 
 | ✅ **MOD-010** Client Dashboard MVP | Commiteado (`abdf3d2`) |
 | ✅ **MOD-011** Artist Dashboard MVP | Commiteado (`5ef4362`) |
 | ✅ **MOD-012** Staff Dashboard MVP | Commiteado (`51e0b4c`) |
+| ✅ **MOD-005** API Client | Operativo en boot — `invokeEdge()` · `rpc()` · headers Supabase · ver continuidad 2026-07-12 arriba |
 
 ### Métricas al cierre 2026-07-06
 
@@ -74,15 +97,22 @@ Detalle jornada: `SESSION-SUMMARIES/2026-07-06.md` · nota operativa: `../NOTA-D
 | **Visual** | PO aprobado — client · artist · staff |
 | **Estado** | **LOCKED LOCAL** (DECISION-V2-009) |
 
-Estado actual:
+Estado actual (histórico 2026-07-06 — conservado):
 
 - ✅ **Scaffold operativo** — Vite en puerto 5173; tres portales (Client · Artist · Staff) responden HTTP 200.
 - ✅ **Boot validado** — Config loaded · Bus ready · Logging ready · Error Handler ready · Session ready.
 - ✅ **MOD-002 Session Manager** — **LOCKED LOCAL** — 6 fases commiteadas (**sin push / sin PR**).
 - ✅ **MOD-003 Permissions** — **completo** — Fases 1–5C commiteadas; wires resolve-only (**sin push / sin PR**).
-- ✅ **Tests aprobados** — **234/234** unitarios · **3/3** e2e Playwright.
+- ✅ **Tests aprobados (2026-07-06)** — **234/234** unitarios · **3/3** e2e Playwright.
 - ✅ **Validación visual PO** — `Session: ready` · `Business logic: false` — sin cambio visual.
-- ✅ **Sin integración Supabase** — sin egress API funcional ni auth real en runtime V2.
+- ✅ **Sin integración Supabase (2026-07-06)** — sin egress API funcional ni auth real en runtime V2.
+
+Estado actual (continuidad 2026-07-12 — ver sección MOD-005 arriba):
+
+- ✅ **MOD-005 API Client** — boot `API_READY` · `invokeEdge()` · `rpc()` · Edge Header Policy · **559/559** tests.
+- ✅ **FetchTransport** — disponible; boot default **memory** (sin egress).
+- ⏳ **Supabase adapter** · **MOD-014 bridge** · consumidores dominio — pendientes.
+- ❌ **Push / deploy** — no autorizado.
 
 Detalle MOD-002: `SESSION-SUMMARIES/2026-07-05.md` § MOD-002 Session Manager — Closeout Local (2026-07-06).  
 Detalle MOD-003: `SESSION-SUMMARIES/2026-07-05.md` § MOD-003 Permissions Complete Local Baseline (2026-07-06).  
