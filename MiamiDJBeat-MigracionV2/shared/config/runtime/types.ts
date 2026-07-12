@@ -49,6 +49,7 @@ export type AppConfig = {
     readonly eventBus: boolean;
     readonly strictConfig: boolean;
     readonly debugPanel: boolean;
+    readonly accessSnapshotPermissions: boolean;
   };
   readonly derived: {
     readonly portalIds: readonly PortalId[];
@@ -78,6 +79,7 @@ export type ParsedConfigDraft = {
     eventBus: boolean;
     strictConfig: boolean;
     debugPanel: boolean;
+    accessSnapshotPermissions: boolean;
   };
   warnings: string[];
 };

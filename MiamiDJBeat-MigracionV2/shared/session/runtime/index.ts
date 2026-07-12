@@ -8,6 +8,7 @@ export {
 } from './auth-session-boundary';
 export {
   asSessionSnapshotWithPermissions,
+  awaitSessionAuthOutcome,
   clearSession,
   createSession,
   createSessionAuthorizationReader,
@@ -20,6 +21,9 @@ export {
   getSessionAuthorizationState,
   getSessionManager,
   getSessionPermissionResolverInvokeCountForTests,
+  getSessionPermissionFlagsForTests,
+  getSessionPermissionProfileForTests,
+  getSessionPermissionsResolutionPhaseForTests,
   getSessionProviderForTests,
   getSessionRegistry,
   getSessionRegistryForTests,
@@ -32,6 +36,7 @@ export {
   ingestAuthHandle,
   initializeSession,
   refreshSession,
+  registerAccessPermissionResolutionPort,
   resetSessionForTests,
   setSessionPermissionFlagsForTests,
   setSessionPermissionProfileForTests,
@@ -53,6 +58,10 @@ export type {
   SessionPermissionAttachment,
   SessionSnapshotWithPermissions,
 } from './session-provider';
+export type {
+  AccessPermissionResolutionPort,
+  PermissionsResolutionPhase,
+} from './access-permission-resolution-port';
 export {
   createInMemoryPersistencePort,
   createNoopPersistencePort,
@@ -99,6 +108,7 @@ export type {
   SessionAuthorizationNoneReason,
   SessionAuthorizationReaderPort,
   SessionAuthorizationState,
+  SessionAuthOutcome,
   SessionEmitEventName,
   SessionErrorCode,
   SessionLifecycleState,

@@ -7,6 +7,7 @@ import {
   createMockRefreshPort,
   SessionProvider,
 } from '../../shared/session/runtime/session-provider';
+import { awaitSessionAuthOutcome } from '../../shared/session/runtime/session-service';
 import { AuthSessionBoundary } from '../../shared/session/runtime/auth-session-boundary';
 import { SessionStore, resetSessionStoreCounterForTests } from '../../shared/session/runtime/session-store';
 import { SessionError } from '../../shared/session/runtime/errors';
@@ -79,13 +80,15 @@ describe('MOD-002 SessionProvider — TICKET-MOD-002-SESSION-PROVIDER-STORE-001'
     expect(store.getHydrationTrace()?.steps).toContain('restore_empty');
   });
 
-  it('ingestAuthHandle drives LOADING → AUTHENTICATED machine path', () => {
+  it('ingestAuthHandle drives LOADING → AUTHENTICATED machine path', async () => {
     bootThroughErrorHandler();
     provider.initialize({ portal: 'artist' });
 
     const boundary = new AuthSessionBoundary();
     const handoff = boundary.createMockAuthHandoff('user-123');
-    const snapshot = provider.ingestAuthHandle(handoff.handle, handoff.identity);
+    const snapshot = await awaitSessionAuthOutcome(
+      provider.ingestAuthHandle(handoff.handle, handoff.identity),
+    );
 
     expect(store.getMachineState()).toBe('AUTHENTICATED');
     expect(snapshot.state).toBe('SESSION_READY');
@@ -93,7 +96,7 @@ describe('MOD-002 SessionProvider — TICKET-MOD-002-SESSION-PROVIDER-STORE-001'
     expect(snapshot.hydrationPhase).toBe('signed_in');
   });
 
-  it('ingestAuthHandle via AuthSessionBoundary maps identity email onto snapshot user', () => {
+  it('ingestAuthHandle via AuthSessionBoundary maps identity email onto snapshot user', async () => {
     bootThroughErrorHandler();
     provider.initialize({ portal: 'client' });
 
@@ -103,7 +106,9 @@ describe('MOD-002 SessionProvider — TICKET-MOD-002-SESSION-PROVIDER-STORE-001'
       email: 'identity@example.com',
     });
 
-    const snapshot = provider.ingestAuthHandle(handoff.handle, handoff.identity);
+    const snapshot = await awaitSessionAuthOutcome(
+      provider.ingestAuthHandle(handoff.handle, handoff.identity),
+    );
     expect(snapshot.user?.email).toBe('identity@example.com');
   });
 

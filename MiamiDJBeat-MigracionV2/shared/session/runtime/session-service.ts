@@ -7,6 +7,10 @@ import {
   resetAuthSessionBoundaryForTests,
 } from './auth-session-boundary';
 import { SessionError } from './errors';
+import type {
+  AccessPermissionResolutionPort,
+  PermissionsResolutionPhase,
+} from './access-permission-resolution-port';
 import {
   SessionProvider,
   type SessionSnapshotWithPermissions,
@@ -25,6 +29,7 @@ import type {
   SessionAuthorizationReaderPort,
   SessionAuthorizationState,
   SessionExpiryProbe,
+  SessionAuthOutcome,
   SessionLifecycleState,
   SessionPublicApi,
   SessionRefreshOptions,
@@ -120,16 +125,37 @@ export function setSessionPermissionFlagsForTests(flags: SnapshotFlags): void {
   sessionProvider.setPermissionFlagsForTests(flags);
 }
 
+export function getSessionPermissionProfileForTests(): ProfileResolveInput {
+  return sessionProvider.getPermissionProfileForTests();
+}
+
+export function getSessionPermissionFlagsForTests(): SnapshotFlags {
+  return sessionProvider.getPermissionFlagsForTests();
+}
+
 export function getSessionPermissionResolverInvokeCountForTests(): number {
   return sessionProvider.getPermissionResolverInvokeCountForTests();
 }
 
-export function ingestAuthHandle(handle: AuthHandle, identity?: IdentitySnapshot): SessionSnapshot {
+export function registerAccessPermissionResolutionPort(
+  port: AccessPermissionResolutionPort | null,
+): void {
+  sessionProvider.setAccessPermissionResolutionPort(port);
+}
+
+export function getSessionPermissionsResolutionPhaseForTests(): PermissionsResolutionPhase {
+  return sessionProvider.getPermissionsResolutionPhaseForTests();
+}
+
+export function ingestAuthHandle(
+  handle: AuthHandle,
+  identity?: IdentitySnapshot,
+): SessionAuthOutcome {
   return getSessionManager().ingestAuthHandle(handle, identity);
 }
 
 /** MOD-001 → MOD-002 handoff entry — contract facade for Auth module. */
-export function deliverAuthHandoff(input: AuthHandoffInput): SessionSnapshot {
+export function deliverAuthHandoff(input: AuthHandoffInput): SessionAuthOutcome {
   return ingestAuthHandle(input.handle, input.identity);
 }
 
@@ -167,8 +193,13 @@ export function createSession(options: InitializeSessionOptions): SessionPublicA
 }
 
 /** Lifecycle facade — restore and validate persisted session state. */
-export function hydrateSession(): SessionSnapshot {
+export function hydrateSession(): SessionAuthOutcome {
   return sessionProvider.hydrateSession();
+}
+
+/** Normalizes sync or async auth/hydrate outcomes to a settled snapshot. */
+export async function awaitSessionAuthOutcome(outcome: SessionAuthOutcome): Promise<SessionSnapshot> {
+  return outcome;
 }
 
 export function getSessionManager(): SessionPublicApi {
@@ -198,6 +229,7 @@ export function getAuthSessionBoundaryForTests() {
 /** Test-only reset — not for production portals. */
 export function resetSessionForTests(): void {
   sessionProvider.reset();
+  sessionProvider.setAccessPermissionResolutionPort(null);
   resetSessionStoreCounterForTests();
   resetSessionRegistryForTests();
   resetAuthSessionBoundaryForTests();

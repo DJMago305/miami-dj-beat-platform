@@ -2,6 +2,7 @@
 
 import type {
   InitializeSessionOptions,
+  SessionAuthOutcome,
   SessionPublicApi,
   SessionRefreshOptions,
   SessionSnapshot,
@@ -9,7 +10,7 @@ import type {
 
 export type SessionLifecycleApi = {
   readonly createSession: (options: InitializeSessionOptions) => SessionPublicApi;
-  readonly hydrateSession: () => SessionSnapshot;
+  readonly hydrateSession: () => SessionAuthOutcome;
   readonly refreshSession: (options?: SessionRefreshOptions) => Promise<SessionSnapshot>;
   readonly expireSession: (reason?: string) => SessionSnapshot;
   readonly destroySession: (reason?: string) => void;

@@ -5,6 +5,7 @@ import { getEventBus, initializeEventBus, resetEventBusForTests } from '@mdj/sha
 import { initializeLogging, resetLoggingForTests } from '@mdj/shared/logging';
 import {
   asSessionSnapshotWithPermissions,
+  awaitSessionAuthOutcome,
   clearSession,
   deliverAuthHandoff,
   destroySession,
@@ -96,12 +97,12 @@ describe('MOD-002 Session Manager', () => {
     expect(events).toContain('ready');
   });
 
-  it('ingestAuthHandle transitions to SIGNED_IN and SESSION_READY', () => {
+  it('ingestAuthHandle transitions to SIGNED_IN and SESSION_READY', async () => {
     bootThroughErrorHandler();
     initializeSession({ portal: 'client' });
 
     const handoff = getAuthSessionBoundaryForTests().createMockAuthHandoff('user-123');
-    const snapshot = deliverAuthHandoff(handoff);
+    const snapshot = await awaitSessionAuthOutcome(deliverAuthHandoff(handoff));
     expect(snapshot.state).toBe('SESSION_READY');
     expect(snapshot.user?.userId).toBe('user-123');
     expect(snapshot.hydrationPhase).toBe('signed_in');

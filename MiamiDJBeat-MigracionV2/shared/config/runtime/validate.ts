@@ -210,6 +210,10 @@ export function parseAndValidateConfig(raw: RawEnvMap): { config: AppConfig; war
       eventBus: parseBoolean(raw.MDJ_V2_FEATURE_EVENT_BUS, true),
       strictConfig: strict,
       debugPanel: parseBoolean(raw.MDJ_V2_FEATURE_DEBUG_PANEL, env === 'local'),
+      accessSnapshotPermissions: parseBoolean(
+        raw.MDJ_V2_FEATURE_ACCESS_SNAPSHOT_PERMISSIONS,
+        false,
+      ),
     },
     warnings,
   };

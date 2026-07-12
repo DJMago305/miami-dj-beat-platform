@@ -16,6 +16,7 @@ import {
 import { SessionStore, resetSessionStoreCounterForTests } from '../../shared/session/runtime/session-store';
 import { assertTransition } from '../../shared/session/runtime/state-machine';
 import {
+  awaitSessionAuthOutcome,
   createSession,
   deliverAuthHandoff,
   destroySession,
@@ -180,7 +181,7 @@ describe('MOD-002 Phase 3 corrections — TICKET-V2-PHASE-3-MOD-002-CORRECTION-0
   });
 
   describe('CORRECCIÓN 2 — runtime ERROR path', () => {
-    it('recoverable invalid record version falls back to ANONYMOUS without SESSION_ERROR', () => {
+    it('recoverable invalid record version falls back to ANONYMOUS without SESSION_ERROR', async () => {
       bootThroughErrorHandler();
       const events: string[] = [];
       getEventBus().subscribe('SESSION_ERROR', () => events.push('SESSION_ERROR'));
@@ -192,7 +193,7 @@ describe('MOD-002 Phase 3 corrections — TICKET-V2-PHASE-3-MOD-002-CORRECTION-0
         createMemoryStorageAdapter({ recordVersion: 99, userId: 'bad-version-user' }),
       );
       provider.createSession({ portal: 'client' });
-      const snapshot = provider.hydrateSession();
+      const snapshot = await awaitSessionAuthOutcome(provider.hydrateSession());
 
       expect(store.getMachineState()).toBe('ANONYMOUS');
       expect(snapshot.state).toBe('SESSION_READY');
@@ -263,7 +264,7 @@ describe('MOD-002 Phase 3 corrections — TICKET-V2-PHASE-3-MOD-002-CORRECTION-0
   });
 
   describe('CORRECCIÓN 3 — invalid JSON storage', () => {
-    it('invalid JSON clears storage and hydrates to ANONYMOUS without crash', () => {
+    it('invalid JSON clears storage and hydrates to ANONYMOUS without crash', async () => {
       bootThroughErrorHandler();
       localStorage.setItem(SESSION_STORAGE_KEY, '{not-valid-json');
 
@@ -280,7 +281,7 @@ describe('MOD-002 Phase 3 corrections — TICKET-V2-PHASE-3-MOD-002-CORRECTION-0
       const store = new SessionStore();
       const provider = new SessionProvider(store, adapter);
       provider.createSession({ portal: 'client' });
-      const snapshot = provider.hydrateSession();
+      const snapshot = await awaitSessionAuthOutcome(provider.hydrateSession());
 
       expect(snapshot.user).toBeNull();
       expect(store.getMachineState()).toBe('ANONYMOUS');
@@ -362,13 +363,13 @@ describe('MOD-002 Phase 3 corrections — TICKET-V2-PHASE-3-MOD-002-CORRECTION-0
   });
 
   describe('baseline Phase 3 foundation', () => {
-    it('lifecycle facade supports createSession + hydrateSession', () => {
+    it('lifecycle facade supports createSession + hydrateSession', async () => {
       bootThroughErrorHandler();
 
       const api = createSession({ portal: 'artist' });
       expect(api.getState()).toBe('INITIAL_SESSION');
 
-      const snapshot = hydrateSession();
+      const snapshot = await awaitSessionAuthOutcome(hydrateSession());
       expect(snapshot.state).toBe('SESSION_READY');
       expect(snapshot.portal).toBe('artist');
       expect(snapshot.user).toBeNull();
@@ -390,7 +391,7 @@ describe('MOD-002 Phase 3 corrections — TICKET-V2-PHASE-3-MOD-002-CORRECTION-0
       expect(Array.isArray(active?.capabilities)).toBe(true);
     });
 
-    it('memory storage adapter restores authenticated session on hydrate', () => {
+    it('memory storage adapter restores authenticated session on hydrate', async () => {
       bootThroughErrorHandler();
       const store = new SessionStore();
       const adapter = createMemoryStorageAdapter({
@@ -401,7 +402,7 @@ describe('MOD-002 Phase 3 corrections — TICKET-V2-PHASE-3-MOD-002-CORRECTION-0
       const provider = new SessionProvider(store, adapter);
 
       provider.createSession({ portal: 'staff' });
-      const snapshot = provider.hydrateSession();
+      const snapshot = await awaitSessionAuthOutcome(provider.hydrateSession());
 
       expect(snapshot.user?.userId).toBe('memory-user-1');
       expect(store.getMachineState()).toBe('AUTHENTICATED');

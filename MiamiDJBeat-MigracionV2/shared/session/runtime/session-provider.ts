@@ -1,6 +1,6 @@
 /** MOD-002 Session Manager — provider — TICKET-MOD-002-SESSION-PROVIDER-STORE-001 · TICKET-MOD-003-PERMISSION-SESSION-WIRE-001 */
 
-import { getConfig } from '@mdj/shared/config';
+import { getConfig, type PortalId } from '@mdj/shared/config';
 import { normalizeError } from '@mdj/shared/errors';
 import { getLogger } from '@mdj/shared/logging';
 import {
@@ -10,6 +10,11 @@ import {
   type ProfileResolveInput,
   type SnapshotFlags,
 } from '../../permissions/runtime';
+import type { AccessPermissionResolutionFailure } from '../../services/access-permissions';
+import type {
+  AccessPermissionResolutionPort,
+  PermissionsResolutionPhase,
+} from './access-permission-resolution-port';
 import { SessionError } from './errors';
 import {
   AuthSessionBoundary,
@@ -35,6 +40,7 @@ import type {
   InitializeSessionOptions,
   PermissionChangedEventPayload,
   RoleChangedEventPayload,
+  SessionAuthOutcome,
   SessionExpiryProbe,
   SessionLifecycleState,
   SessionPublicApi,
@@ -57,6 +63,14 @@ export type SessionPermissionAttachment = {
 };
 
 export type SessionSnapshotWithPermissions = SessionSnapshot & SessionPermissionAttachment;
+
+type LastValidPermissionIdentity = {
+  readonly userId: string;
+  readonly sessionId: string;
+  readonly portal: PortalId;
+};
+
+type PermissionResolutionTrigger = 'auth-handoff' | 'restore';
 
 function toPermissionPortal(portal: SessionSnapshot['portal']): PermissionPortalId {
   return portal;
@@ -149,6 +163,18 @@ export class SessionProvider {
   private permissionFlags: SnapshotFlags = {};
   private permissionResolverInvokeCount = 0;
   private fatalErrorEmitted = false;
+  private accessPermissionResolutionPort: AccessPermissionResolutionPort | null = null;
+  private permissionsResolutionPhase: PermissionsResolutionPhase = 'idle';
+  private permissionsResolveInFlight: Promise<SessionSnapshot> | null = null;
+  private permissionsResolveInFlightGeneration: number | null = null;
+  private sessionPermissionGeneration = 0;
+  private permissionResolutionAbortController: AbortController | null = null;
+  private lastValidPermissionProfile: ProfileResolveInput | null = null;
+  private lastValidPermissionFlags: SnapshotFlags = {};
+  private lastValidPermissionSnapshot: PermissionSnapshot | null = null;
+  private lastValidPermissionIdentity: LastValidPermissionIdentity | null = null;
+  private lastPermissionResolutionFailure: AccessPermissionResolutionFailure | null = null;
+  private sessionAuthOutcomeInFlight: Promise<SessionSnapshot> | null = null;
 
   constructor(
     store: SessionStore,
@@ -174,6 +200,142 @@ export class SessionProvider {
     this.permissionFlags = {};
     this.permissionResolverInvokeCount = 0;
     this.fatalErrorEmitted = false;
+    this.invalidatePermissionResolutionState(false);
+    this.accessPermissionResolutionPort = null;
+  }
+
+  setAccessPermissionResolutionPort(port: AccessPermissionResolutionPort | null): void {
+    this.accessPermissionResolutionPort = port;
+  }
+
+  getPermissionsResolutionPhaseForTests(): PermissionsResolutionPhase {
+    return this.permissionsResolutionPhase;
+  }
+
+  private invalidatePermissionResolutionState(bumpGeneration: boolean): void {
+    if (bumpGeneration) {
+      this.sessionPermissionGeneration += 1;
+    }
+    this.permissionResolutionAbortController?.abort();
+    this.permissionResolutionAbortController = null;
+    this.permissionsResolveInFlight = null;
+    this.permissionsResolveInFlightGeneration = null;
+    this.permissionsResolutionPhase = 'idle';
+    this.clearLastValidPermissionCache();
+    this.lastPermissionResolutionFailure = null;
+    this.sessionAuthOutcomeInFlight = null;
+  }
+
+  private clearLastValidPermissionCache(): void {
+    this.lastValidPermissionProfile = null;
+    this.lastValidPermissionFlags = {};
+    this.lastValidPermissionSnapshot = null;
+    this.lastValidPermissionIdentity = null;
+  }
+
+  private buildPermissionIdentity(userId: string): LastValidPermissionIdentity {
+    return Object.freeze({
+      userId,
+      sessionId: this.store.getSessionId(),
+      portal: this.store.getPortal(),
+    });
+  }
+
+  private matchesPermissionIdentity(
+    left: LastValidPermissionIdentity,
+    right: LastValidPermissionIdentity,
+  ): boolean {
+    return (
+      left.userId === right.userId &&
+      left.sessionId === right.sessionId &&
+      left.portal === right.portal
+    );
+  }
+
+  private invalidateLastValidUnlessSameIdentity(identity: LastValidPermissionIdentity): void {
+    if (!this.lastValidPermissionIdentity) {
+      return;
+    }
+
+    if (!this.matchesPermissionIdentity(this.lastValidPermissionIdentity, identity)) {
+      this.clearLastValidPermissionCache();
+    }
+  }
+
+  private cloneProfileResolveInput(profile: ProfileResolveInput): ProfileResolveInput {
+    return Object.freeze({ ...profile });
+  }
+
+  private clonePermissionSnapshot(snapshot: PermissionSnapshot): PermissionSnapshot {
+    return Object.freeze({
+      ...snapshot,
+      capabilities: Object.freeze([...snapshot.capabilities]),
+      flags: Object.freeze({ ...snapshot.flags }),
+      profile: Object.freeze({ ...snapshot.profile }),
+    });
+  }
+
+  private trackSessionAuthOutcome(outcome: SessionAuthOutcome): Promise<SessionSnapshot> {
+    const tracked = outcome instanceof Promise ? outcome : Promise.resolve(outcome);
+    if (outcome instanceof Promise) {
+      this.sessionAuthOutcomeInFlight = tracked;
+      tracked.finally(() => {
+        if (this.sessionAuthOutcomeInFlight === tracked) {
+          this.sessionAuthOutcomeInFlight = null;
+        }
+      });
+    }
+    return tracked;
+  }
+
+  private commitSessionAuthOutcome(outcome: SessionAuthOutcome): void {
+    const tracked = this.trackSessionAuthOutcome(outcome);
+    if (outcome instanceof Promise) {
+      tracked.catch((error) => this.handleSessionAuthOutcomeError(error));
+    }
+  }
+
+  private handleSessionAuthOutcomeError(error: unknown): void {
+    if (error instanceof SessionError) {
+      publishSessionEvent('SESSION_ERROR', {
+        code: error.code,
+        sessionId: this.store.getSessionId(),
+      });
+    }
+    getLogger().info('Session auth outcome rejected', {
+      moduleId: 'MOD-002',
+      sessionId: this.store.getSessionId(),
+      error: error instanceof Error ? error.message : 'unknown',
+    });
+  }
+
+  getSessionAuthOutcomeInFlightForTests(): Promise<SessionSnapshot> | null {
+    return this.sessionAuthOutcomeInFlight;
+  }
+
+  getLastPermissionResolutionFailureForTests(): AccessPermissionResolutionFailure | null {
+    return this.lastPermissionResolutionFailure;
+  }
+
+  getLastValidPermissionIdentityForTests(): LastValidPermissionIdentity | null {
+    return this.lastValidPermissionIdentity;
+  }
+
+  getLastValidPermissionSnapshotForTests(): PermissionSnapshot | null {
+    return this.lastValidPermissionSnapshot;
+  }
+
+  private bumpSessionPermissionGeneration(): number {
+    this.sessionPermissionGeneration += 1;
+    return this.sessionPermissionGeneration;
+  }
+
+  private isPermissionGenerationCurrent(generation: number, sessionId: string): boolean {
+    return (
+      generation === this.sessionPermissionGeneration &&
+      this.store.getSessionId() === sessionId &&
+      this.store.getMachineState() === 'AUTHENTICATED'
+    );
   }
 
   getStore(): SessionStore {
@@ -200,6 +362,14 @@ export class SessionProvider {
     this.permissionFlags = Object.freeze({ ...flags });
   }
 
+  getPermissionProfileForTests(): ProfileResolveInput {
+    return this.permissionProfile;
+  }
+
+  getPermissionFlagsForTests(): SnapshotFlags {
+    return this.permissionFlags;
+  }
+
   getPermissionResolverInvokeCountForTests(): number {
     return this.permissionResolverInvokeCount;
   }
@@ -215,6 +385,206 @@ export class SessionProvider {
       default:
         return { kind: 'guest' };
     }
+  }
+
+  private isAccessSnapshotPermissionsEnabled(): boolean {
+    return getConfig().features.accessSnapshotPermissions === true;
+  }
+
+  private applyMinimumPermissions(): void {
+    this.permissionProfile = { kind: 'guest' };
+    this.permissionFlags = {};
+    this.enrichedSnapshot = null;
+  }
+
+  private applyResolvedPermissions(
+    profile: ProfileResolveInput,
+    flags: SnapshotFlags,
+    permissions: PermissionSnapshot,
+    userId: string,
+  ): SessionSnapshotWithPermissions {
+    const clonedProfile = this.cloneProfileResolveInput(profile);
+    const clonedFlags = Object.freeze({ ...flags });
+    this.permissionProfile = clonedProfile;
+    this.permissionFlags = clonedFlags;
+    this.enrichedSnapshot = null;
+
+    const enriched = this.attachPermissions(this.store.getSnapshot());
+    this.lastValidPermissionProfile = clonedProfile;
+    this.lastValidPermissionFlags = clonedFlags;
+    this.lastValidPermissionSnapshot = this.clonePermissionSnapshot(permissions);
+    this.lastValidPermissionIdentity = this.buildPermissionIdentity(userId);
+    this.lastPermissionResolutionFailure = null;
+    return enriched;
+  }
+
+  private applyFailurePolicy(): void {
+    this.permissionsResolutionPhase = 'failed';
+    const currentUserId = this.store.getSnapshot().user?.userId;
+    const currentIdentity =
+      currentUserId !== undefined ? this.buildPermissionIdentity(currentUserId) : null;
+    const canReuseLastValid =
+      currentIdentity !== null &&
+      this.lastValidPermissionIdentity !== null &&
+      this.lastValidPermissionProfile !== null &&
+      this.matchesPermissionIdentity(this.lastValidPermissionIdentity, currentIdentity);
+
+    if (canReuseLastValid && this.lastValidPermissionProfile) {
+      this.permissionProfile = this.lastValidPermissionProfile;
+      this.permissionFlags = Object.freeze({ ...this.lastValidPermissionFlags });
+    } else {
+      this.clearLastValidPermissionCache();
+      this.applyMinimumPermissions();
+    }
+    this.enrichedSnapshot = null;
+  }
+
+  private combinePermissionSignals(
+    signals: readonly (AbortSignal | undefined)[],
+  ): AbortSignal | undefined {
+    const active = signals.filter((signal): signal is AbortSignal => signal !== undefined);
+    if (active.length === 0) {
+      return undefined;
+    }
+    if (active.length === 1) {
+      return active[0];
+    }
+    if (typeof AbortSignal.any === 'function') {
+      return AbortSignal.any(active);
+    }
+
+    const controller = new AbortController();
+    for (const signal of active) {
+      if (signal.aborted) {
+        controller.abort();
+        break;
+      }
+      signal.addEventListener('abort', () => controller.abort(), { once: true });
+    }
+    return controller.signal;
+  }
+
+  private publishAuthenticatedSessionReady(reason: string): SessionSnapshot {
+    const readySnapshot = this.publishSessionSnapshot('SESSION_READY');
+    publishSessionEvent('SESSION_READY', {
+      portal: readySnapshot.portal,
+      sessionId: readySnapshot.sessionId,
+      state: readySnapshot.state,
+      reason,
+    });
+    return readySnapshot;
+  }
+
+  private async resolveAndCommitAccessPermissions(
+    trigger: PermissionResolutionTrigger,
+    generation: number,
+    sessionId: string,
+    signal?: AbortSignal,
+  ): Promise<SessionSnapshot> {
+    if (!this.isAccessSnapshotPermissionsEnabled()) {
+      throw new SessionError(
+        'SESSION_ERROR_NOT_READY',
+        'Access snapshot permissions are disabled for this resolve call.',
+      );
+    }
+
+    const port = this.accessPermissionResolutionPort;
+    if (!port) {
+      this.applyFailurePolicy();
+      return this.store.getSnapshot();
+    }
+
+    if (
+      this.permissionsResolveInFlight &&
+      this.permissionsResolveInFlightGeneration === generation
+    ) {
+      return this.permissionsResolveInFlight;
+    }
+
+    if (this.permissionsResolveInFlight) {
+      this.permissionResolutionAbortController?.abort();
+      this.permissionsResolveInFlight = null;
+      this.permissionsResolveInFlightGeneration = null;
+    }
+
+    if (this.store.getMachineState() !== 'AUTHENTICATED') {
+      this.applyFailurePolicy();
+      return this.store.getSnapshot();
+    }
+
+    this.permissionsResolutionPhase = 'pending';
+    const abortController = new AbortController();
+    this.permissionResolutionAbortController = abortController;
+    const combinedSignal = this.combinePermissionSignals([signal, abortController.signal]);
+
+    const execution = (async (): Promise<SessionSnapshot> => {
+      try {
+        const snapshot = this.store.getSnapshot();
+        const userId = snapshot.user?.userId;
+        if (!userId) {
+          this.applyFailurePolicy();
+          return snapshot;
+        }
+
+        const result = await port.resolve({
+          portal: this.store.getPortal(),
+          userId,
+          sessionId: snapshot.sessionId,
+          snapshotVersion: snapshot.snapshotVersion,
+          signal: combinedSignal,
+        });
+
+        if (!this.isPermissionGenerationCurrent(generation, sessionId)) {
+          this.permissionsResolutionPhase = 'idle';
+          return this.store.getSnapshot();
+        }
+
+        if (!result.ok) {
+          if (result.cancelled || result.stale) {
+            this.permissionsResolutionPhase = 'idle';
+            return this.store.getSnapshot();
+          }
+
+          this.lastPermissionResolutionFailure = result;
+          this.applyFailurePolicy();
+          getLogger().info('Access permission resolution failed', {
+            moduleId: 'MOD-002',
+            trigger,
+            stage: result.stage,
+            retryable: result.retryable,
+            permissionsResolutionPhase: this.permissionsResolutionPhase,
+            resolutionEpoch: result.resolutionEpoch,
+          });
+          return this.store.getSnapshot();
+        }
+
+        this.applyResolvedPermissions(result.profile, result.flags, result.permissions, userId);
+        this.permissionsResolutionPhase = 'resolved';
+        return this.publishAuthenticatedSessionReady(`access-snapshot-${trigger}`);
+      } catch (error) {
+        if (this.isPermissionGenerationCurrent(generation, sessionId)) {
+          this.lastPermissionResolutionFailure = null;
+          this.applyFailurePolicy();
+        }
+        getLogger().info('Access permission resolution threw', {
+          moduleId: 'MOD-002',
+          trigger,
+          permissionsResolutionPhase: this.permissionsResolutionPhase,
+          error: error instanceof Error ? error.message : 'unknown',
+        });
+        return this.store.getSnapshot();
+      } finally {
+        this.permissionsResolveInFlight = null;
+        this.permissionsResolveInFlightGeneration = null;
+        if (this.permissionResolutionAbortController === abortController) {
+          this.permissionResolutionAbortController = null;
+        }
+      }
+    })();
+
+    this.permissionsResolveInFlight = execution;
+    this.permissionsResolveInFlightGeneration = generation;
+    return execution;
   }
 
   private attachPermissions(baseSnapshot: SessionSnapshot): SessionSnapshotWithPermissions {
@@ -312,6 +682,7 @@ export class SessionProvider {
         eventBus: config.features.eventBus,
         strictConfig: config.features.strictConfig,
         debugPanel: config.features.debugPanel,
+        accessSnapshotPermissions: config.features.accessSnapshotPermissions,
       },
     };
   }
@@ -359,7 +730,7 @@ export class SessionProvider {
     }
 
     if (this.store.getMachineState() === 'INITIAL') {
-      this.runHydrationRestore();
+      this.commitSessionAuthOutcome(this.runHydrationRestore());
     }
   }
 
@@ -370,7 +741,7 @@ export class SessionProvider {
 
     try {
       const handle = this.authBoundary.buildAuthHandleFromUserLogin(payload);
-      this.ingestAuthHandle(handle);
+      this.commitSessionAuthOutcome(this.ingestAuthHandle(handle));
     } catch (error) {
       if (error instanceof SessionError) {
         publishSessionEvent('SESSION_ERROR', {
@@ -433,7 +804,11 @@ export class SessionProvider {
 
   private republishReadySnapshot(reason: string): void {
     const lifecycle = this.store.getLifecycleState();
-    if (lifecycle !== 'SESSION_READY' && lifecycle !== 'SIGNED_IN') {
+    if (this.isAccessSnapshotPermissionsEnabled()) {
+      if (this.permissionsResolutionPhase !== 'resolved' || lifecycle !== 'SESSION_READY') {
+        return;
+      }
+    } else if (lifecycle !== 'SESSION_READY' && lifecycle !== 'SIGNED_IN') {
       return;
     }
 
@@ -485,7 +860,7 @@ export class SessionProvider {
   }
 
   /** Boot hydration — restore from PersistencePort then validate (Phase 4). */
-  runHydrationRestore(): SessionSnapshot {
+  runHydrationRestore(): SessionAuthOutcome {
     this.store.beginHydrationTrace();
     this.store.appendHydrationTraceStep('boot_started');
     this.store.setHydrationPhase('initial');
@@ -565,7 +940,7 @@ export class SessionProvider {
     return snapshot;
   }
 
-  private applyRestoredRecord(record: PersistedSessionRecord): SessionSnapshot {
+  private applyRestoredRecord(record: PersistedSessionRecord): SessionAuthOutcome {
     if (
       record.portal &&
       record.portal !== this.store.getPortal()
@@ -595,6 +970,17 @@ export class SessionProvider {
       return this.completeAnonymousReady({ restoreReason: 'restore_empty' });
     }
 
+    if (!this.isAccessSnapshotPermissionsEnabled()) {
+      return this.applyRestoredRecordFlagOff(record, userId);
+    }
+
+    return this.applyRestoredRecordFlagOn(record, userId);
+  }
+
+  private applyRestoredRecordFlagOff(
+    record: PersistedSessionRecord,
+    userId: string,
+  ): SessionSnapshot {
     this.store.appendHydrationTraceStep('restore_found');
     this.store.setUser({
       userId,
@@ -639,9 +1025,73 @@ export class SessionProvider {
     return readySnapshot;
   }
 
-  ingestAuthHandle(handle: AuthHandle, identity?: IdentitySnapshot): SessionSnapshot {
+  private async applyRestoredRecordFlagOn(
+    record: PersistedSessionRecord,
+    userId: string,
+  ): Promise<SessionSnapshot> {
+    this.store.appendHydrationTraceStep('restore_found');
+    this.store.setUser({
+      userId,
+      email: record.email,
+      mdjbId: record.mdjbId,
+    });
+    this.store.setExpiresAt(record.expiresAt ?? null);
+    this.store.setHydrationPhase('initial');
+    this.store.bumpSnapshotVersion();
+    this.invalidateLastValidUnlessSameIdentity(this.buildPermissionIdentity(userId));
+    this.applyMinimumPermissions();
+
+    if (this.store.getMachineState() === 'LOADING') {
+      this.store.applyMachineTransition('LOADING', 'VALIDATE_OK_USER', 'AUTHENTICATED');
+    }
+
+    this.store.appendHydrationTraceStep('validate_authenticated');
+    this.store.publishSnapshot(this.configSlice(), 'SIGNED_IN');
+    publishSessionEvent('SESSION_CREATED', {
+      userId,
+      hydrationPhase: 'initial',
+    });
+
+    const generation = this.bumpSessionPermissionGeneration();
+    const sessionId = this.store.getSessionId();
+    const outcome = await this.resolveAndCommitAccessPermissions('restore', generation, sessionId);
+
+    this.store.appendHydrationTraceStep('ready');
+    this.store.completeHydrationTrace();
+
+    getLogger().info('Session restored from persistence', {
+      moduleId: 'MOD-002',
+      sessionId: this.store.getSessionId(),
+      userId,
+      hydrationPhase: 'initial',
+      machineState: this.store.getMachineState(),
+      hydrationTrace: this.store.getHydrationTrace()?.steps,
+      permissionsResolutionPhase: this.permissionsResolutionPhase,
+    });
+
+    return outcome;
+  }
+
+  ingestAuthHandle(handle: AuthHandle, identity?: IdentitySnapshot): SessionAuthOutcome {
+    if (!this.isAccessSnapshotPermissionsEnabled()) {
+      return this.ingestAuthHandleFlagOff(handle, identity);
+    }
+    return this.ingestAuthHandleFlagOn(handle, identity);
+  }
+
+  private ingestAuthHandleAllowsLifecycle(lifecycle: SessionLifecycleState): boolean {
+    if (lifecycle === 'SESSION_READY' || lifecycle === 'SIGNED_OUT' || lifecycle === 'SESSION_EXPIRED') {
+      return true;
+    }
+    return this.isAccessSnapshotPermissionsEnabled() && lifecycle === 'SIGNED_IN';
+  }
+
+  private ingestAuthHandleFlagOff(
+    handle: AuthHandle,
+    identity?: IdentitySnapshot,
+  ): SessionSnapshot {
     const lifecycle = this.store.getLifecycleState();
-    if (lifecycle !== 'SESSION_READY' && lifecycle !== 'SIGNED_OUT' && lifecycle !== 'SESSION_EXPIRED') {
+    if (!this.ingestAuthHandleAllowsLifecycle(lifecycle)) {
       throw new SessionError('SESSION_ERROR_NOT_READY', 'Session is not ready to ingest AuthHandle.');
     }
 
@@ -718,6 +1168,89 @@ export class SessionProvider {
     });
 
     return readySnapshot;
+  }
+
+  private async ingestAuthHandleFlagOn(
+    handle: AuthHandle,
+    identity?: IdentitySnapshot,
+  ): Promise<SessionSnapshot> {
+    const lifecycle = this.store.getLifecycleState();
+    if (!this.ingestAuthHandleAllowsLifecycle(lifecycle)) {
+      throw new SessionError('SESSION_ERROR_NOT_READY', 'Session is not ready to ingest AuthHandle.');
+    }
+
+    let validated;
+    try {
+      validated = this.authBoundary.validateAuthHandoff({ handle, identity });
+    } catch (error) {
+      if (error instanceof SessionError && error.code === 'SESSION_ERROR_EXPIRED_HANDLE') {
+        this.store.setLifecycleState('SESSION_EXPIRED');
+        publishSessionEvent('SESSION_EXPIRED', {
+          reason: 'expired',
+          sessionId: this.store.getSessionId(),
+          handoffId: handle.handoffId,
+        });
+        normalizeError(error, { moduleId: 'MOD-002' });
+        throw error;
+      }
+
+      if (error instanceof SessionError) {
+        publishSessionEvent('SESSION_ERROR', {
+          code: error.code,
+          sessionId: this.store.getSessionId(),
+          handoffId: handle.handoffId,
+        });
+      }
+      normalizeError(error, { moduleId: 'MOD-002' });
+      throw error;
+    }
+
+    const acceptedHandle = validated.handle;
+    const machine = this.store.getMachineState();
+    if (machine === 'ANONYMOUS' || machine === 'EXPIRED') {
+      this.store.applyMachineTransition(machine, 'USER_LOGIN', 'LOADING');
+    } else if (machine === 'AUTHENTICATED') {
+      this.store.applyMachineTransition('AUTHENTICATED', 'USER_LOGIN', 'LOADING');
+    }
+
+    this.store.setUser(validated.userRef);
+    this.store.setExpiresAt(acceptedHandle.expiresAt);
+    this.store.setCredential(acceptedHandle.accessTokenRef, validated.userRef.userId);
+    this.store.setHydrationPhase(validated.hydrationPhase);
+    this.store.bumpSnapshotVersion();
+    this.invalidateLastValidUnlessSameIdentity(this.buildPermissionIdentity(validated.userRef.userId));
+    this.applyMinimumPermissions();
+
+    if (this.store.getMachineState() === 'LOADING') {
+      this.store.applyMachineTransition('LOADING', 'VALIDATE_OK_USER', 'AUTHENTICATED');
+    }
+
+    this.store.publishSnapshot(this.configSlice(), 'SIGNED_IN');
+    publishSessionEvent('SESSION_CREATED', {
+      userId: validated.userRef.userId,
+      hydrationPhase: validated.hydrationPhase,
+      handoffId: acceptedHandle.handoffId,
+    });
+
+    const generation = this.bumpSessionPermissionGeneration();
+    const sessionId = this.store.getSessionId();
+    const outcome = await this.resolveAndCommitAccessPermissions(
+      'auth-handoff',
+      generation,
+      sessionId,
+    );
+
+    getLogger().info('Session signed in via AuthHandle handoff', {
+      moduleId: 'MOD-002',
+      sessionId: this.store.getSessionId(),
+      userId: validated.userRef.userId,
+      handoffId: acceptedHandle.handoffId,
+      hydrationPhase: validated.hydrationPhase,
+      machineState: this.store.getMachineState(),
+      permissionsResolutionPhase: this.permissionsResolutionPhase,
+    });
+
+    return outcome;
   }
 
   detectSessionExpiry(): SessionExpiryProbe {
@@ -902,6 +1435,7 @@ export class SessionProvider {
 
   clearSession(reason = 'clear'): SessionSnapshot {
     this.refreshInFlight = null;
+    this.invalidatePermissionResolutionState(true);
     this.store.clearCredential();
     this.store.clearIdentity();
     this.store.setHydrationPhase('none');
@@ -920,6 +1454,7 @@ export class SessionProvider {
 
   destroySession(reason = 'destroy'): void {
     const sessionId = this.store.getSessionId();
+    this.invalidatePermissionResolutionState(true);
     this.store.clearCredential();
     publishSessionEvent('SESSION_DESTROYED', {
       reason,
@@ -958,7 +1493,7 @@ export class SessionProvider {
   }
 
   /** Lifecycle — restore and validate persisted session state. */
-  hydrateSession(): SessionSnapshot {
+  hydrateSession(): SessionAuthOutcome {
     if (!this.frozenApi) {
       throw new SessionError('SESSION_ERROR_NOT_READY', 'Call createSession() before hydrateSession().');
     }
@@ -972,7 +1507,7 @@ export class SessionProvider {
     }
 
     const api = this.createSession(options);
-    this.runHydrationRestore();
+    this.commitSessionAuthOutcome(this.runHydrationRestore());
     return api;
   }
 

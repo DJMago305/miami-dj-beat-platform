@@ -148,8 +148,12 @@ export type SessionSnapshot = {
   readonly isRefreshing: boolean;
 };
 
+/** Canonical auth/hydrate return — sync when flag OFF; Promise when flag ON resolves permissions.
+ *  Consumers needing a settled snapshot must use `awaitSessionAuthOutcome()` from session-service. */
+export type SessionAuthOutcome = SessionSnapshot | Promise<SessionSnapshot>;
+
 export type SessionPublicApi = {
-  readonly ingestAuthHandle: (handle: AuthHandle, identity?: IdentitySnapshot) => SessionSnapshot;
+  readonly ingestAuthHandle: (handle: AuthHandle, identity?: IdentitySnapshot) => SessionAuthOutcome;
   readonly clearSession: (reason?: string) => SessionSnapshot;
   readonly destroySession: (reason?: string) => void;
   readonly refreshSession: (options?: SessionRefreshOptions) => Promise<SessionSnapshot>;
