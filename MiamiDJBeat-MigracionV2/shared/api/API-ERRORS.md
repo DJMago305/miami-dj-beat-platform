@@ -76,6 +76,9 @@ ApiResponse (ok: false)
 | API_HTTP_ERROR | ERROR | `error.api.http.{status}` |
 | API_NETWORK | WARNING | `error.network.unavailable` |
 | API_CANCELLED | INFO | (suppress toast default) |
+| API_INVALID_PAYLOAD | INFO (ERR-0800) | `error.api.invalid_payload` via `normalizeApiClientError()` |
+
+**MOD-014 bridge v1** (`normalizeApiClientError`) maps only: `API_HTTP_ERROR`, `API_PARSE_ERROR`, `API_TIMEOUT`, `API_CANCELLED`, `API_INVALID_PAYLOAD`. Other `ApiErrorCode` values fall back to `ERR-0999` until a future ticket authorizes them.
 
 ---
 

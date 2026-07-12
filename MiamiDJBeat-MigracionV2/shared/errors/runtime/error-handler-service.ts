@@ -3,7 +3,9 @@
 import { ConfigError } from '@mdj/shared/config';
 import { getEventBus } from '@mdj/shared/events';
 import { getLogger, getLoggingState } from '@mdj/shared/logging';
+import { resolveApiNormalization } from './api-normalize';
 import { resolveAuthNormalization } from './auth-normalize';
+import { resolveDomainNormalization } from './domain-normalize';
 import {
   inferCategoryFromCode,
   lookupCatalogEntry,
@@ -251,8 +253,24 @@ function internalNormalizeAuthError(input: unknown, context: NormalizeContext = 
   return recordNormalizedError(resolveAuthNormalization(input, context));
 }
 
+function internalNormalizeApiClientError(input: unknown, context: NormalizeContext = {}): NormalizedError {
+  return recordNormalizedError(resolveApiNormalization(input, context));
+}
+
+function internalNormalizeDomainError(input: unknown, context: NormalizeContext = {}): NormalizedError {
+  return recordNormalizedError(resolveDomainNormalization(input, context));
+}
+
 export function normalizeAuthError(input: unknown, context?: NormalizeContext): NormalizedError {
   return internalNormalizeAuthError(input, context ?? {});
+}
+
+export function normalizeApiClientError(input: unknown, context?: NormalizeContext): NormalizedError {
+  return internalNormalizeApiClientError(input, context ?? {});
+}
+
+export function normalizeDomainError(input: unknown, context?: NormalizeContext): NormalizedError {
+  return internalNormalizeDomainError(input, context ?? {});
 }
 
 export function clearErrorHistory(): void {

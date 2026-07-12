@@ -98,6 +98,9 @@ ERR-{NNNN}
 | ERR-0501 | API_PARSE_ERROR | ERROR | retryable |
 | ERR-0502 | API_TIMEOUT | WARNING | retryable |
 | ERR-0503 | API_EDGE_REJECTED | ERROR | recoverable |
+| ERR-0504 | API_CANCELLED | INFO | ignorable |
+
+**Runtime MOD-014 bridge v1** (`catalog.ts`): `ERR-0500`, `ERR-0501`, `ERR-0502`, `ERR-0504` activos. `ERR-0503` documentado; wiring runtime diferido.
 
 ### Storage (0600–0699)
 
