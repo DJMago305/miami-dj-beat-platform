@@ -42,6 +42,38 @@ La Constitución (`MIAMIDJBEAT-PROYECTO-CONSTITUCION.md`) manda sobre cualquier 
 
 Detalle: `NOTA-DIARIA-LAB-001.md` § Continuidad documental — 2026-07-12 · `SESSION-SUMMARIES/2026-07-11-PHASE-6-END-OF-DAY.md` § Actualización posterior al cierre — 2026-07-12.
 
+### Continuidad — 2026-07-12 (cierre de sesión / ausencia PO)
+
+| Campo | Valor |
+|-------|-------|
+| **HEAD committeado** | `671e0c0` — Session permissions wiring (`feat(v2-session): wire access permissions resolution`) |
+| **Typecheck remediation** | ⏳ En working tree — `exit 0` — sin commit |
+| **Phase 9 Staff Operations Preview** | ⏳ En working tree — validación visual PO pendiente |
+| **Localhost** | `http://localhost:5173` — PID 99921 activo al cierre |
+| **Suite** | 747/747 PASS (`npm test`) |
+| **Próxima apertura** | Auditoría solo lectura obligatoria — ver `SESSION-SUMMARIES/2026-07-12-PHASE-8-9-END-OF-SESSION.md` |
+| **Push / deploy** | ❌ No |
+
+Handoff: `TICKET-V2-END-OF-SESSION-HANDOFF-2026-07-12-001.md`
+
+### Continuidad — 2026-07-20
+
+| Campo | Valor |
+|-------|-------|
+| **Rama** | `plan/v2-phase-4-api-client` |
+| **HEAD actual** | `58256813a3ad1fb0e0731e6d5ebc2fb00ff83761` — `feat(v2-staff): add operations preview module` |
+| **Commit A** | `77e969d01b0ca8575cfbcc6f718e9839de10461e` — `fix(v2-types): resolve preexisting typecheck debt` |
+| **Commit B** | `58256813a3ad1fb0e0731e6d5ebc2fb00ff83761` — `feat(v2-staff): add operations preview module` |
+| **Phase 8 remediation** | ✅ Committeada localmente (Grupo A) |
+| **Phase 9 Operations Preview** | ✅ Corregida (preview permissions) · **VALIDADO VISUALMENTE POR EL PRODUCT OWNER** · committeada localmente (Grupo B) |
+| **Suite** | **756/756 PASS** · **55/55 files** · typecheck exit 0 |
+| **Documentación Grupo C** | Actualizada — pendiente commit documental separado |
+| **Push / PR / merge / deploy** | ❌ NO |
+
+Detalle reapertura: `NOTA-DIARIA-LAB-001.md` § Reapertura y cierre técnico-documental — 2026-07-20 · `SESSION-SUMMARIES/2026-07-12-PHASE-8-9-END-OF-SESSION.md` § Follow-up de reapertura — 2026-07-20.
+
+> La sección «Continuidad — 2026-07-12» arriba conserva el handoff histórico al cierre de sesión del 12 de julio.
+
 ### Estado actual (módulos operativos local)
 
 | Módulo | Estado |

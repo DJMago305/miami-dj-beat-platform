@@ -1915,3 +1915,158 @@ Edge Header Policy (discovery + impl) · `rpc()` (discovery + impl) · Supabase 
 Fase 7 — Supabase adapter o wiring MOD-003 snapshot vía `rpc()` — según prioridad PO.
 
 *Documentación sincronizada — TICKET-V2-PHASE-6-POST-RPC-DOCUMENTATION-001 — sin commit en este ticket*
+
+---
+
+## Cierre de sesión — 2026-07-12 — Ausencia temporal PO
+
+**Ticket:** TICKET-V2-END-OF-SESSION-HANDOFF-2026-07-12-001
+
+### Contexto
+
+- El Product Owner estará fuera de Miami aproximadamente **una semana**.
+- **No hay autorización** para trabajo automático, commits, push, merge ni deploy durante su ausencia.
+- La reanudación debe comenzar con **auditoría solo lectura** — no asumir aprobación por ausencia del PO.
+
+### Repositorio (al cierre ~16:37 EDT)
+
+| Campo | Valor |
+|-------|-------|
+| **Rama** | `plan/v2-phase-4-api-client` |
+| **HEAD committeado** | `671e0c0758ff6b3fcb7ed76a3c7336522fcf0acf` — `feat(v2-session): wire access permissions resolution` |
+| **Staging** | Vacío |
+| **Working tree** | 12 modified + 4 untracked — **no descartar** |
+| **Push / PR / deploy** | ❌ No |
+
+### Servidor localhost
+
+| Campo | Valor |
+|-------|-------|
+| **Puerto** | 5173 |
+| **PID** | 99921 (`node`) |
+| **HTTP Staff** | 200 OK (Vite) |
+| **Nota** | Intentar segunda instancia `npm run dev` produce `Port 5173 is already in use` — instancia previa sigue activa |
+
+### Phase 8
+
+| Bloque | Estado |
+|--------|--------|
+| Session permissions wiring | ✅ **Committeado** en `671e0c0` |
+| Typecheck debt remediation | ⏳ **Working tree** — `exit 0` validado — **sin commit** |
+| Feature flag permissions | OFF (default) |
+| Boot factory orchestrator | ❌ No implementado |
+
+### Phase 9
+
+| Bloque | Estado |
+|--------|--------|
+| Staff **Operations Preview** | ⏳ **Working tree** — implementado |
+| Validación visual PO | ❌ **PENDIENTE** |
+| URLs | `/staff/` · `?previewRole=owner|manager|seller` |
+
+### Validación técnica al cierre
+
+| Gate | Resultado |
+|------|-----------|
+| `npm run typecheck` | exit 0 |
+| `npm test` | 747/747 PASS · 54 files |
+
+### Commits futuros (propuestos, no ejecutados)
+
+1. `fix(v2-types): resolve preexisting typecheck debt` — Grupo A
+2. `feat(v2-staff): add operations preview module` — Grupo B
+3. `docs(v2): add phase 8 and 9 session handoff` — Grupo C
+
+**No mezclar** A, B y C sin autorización PO explícita.
+
+### Documentación de handoff
+
+- `docs/V2/SESSION-SUMMARIES/2026-07-12-PHASE-8-9-END-OF-SESSION.md`
+- `docs/V2/TICKETS/TICKET-V2-END-OF-SESSION-HANDOFF-2026-07-12-001.md`
+
+*Cierre documental — sin commit en este ticket — esperar PO*
+
+---
+
+## Reapertura y cierre técnico-documental — 2026-07-20
+
+**Ticket:** TICKET-V2-DOCUMENTATION-CLOSE-PHASE-8-9-2026-07-20-001 · reapertura `TICKET-V2-REOPEN-AUDIT-2026-07-20-001` · fix `TICKET-V2-PHASE-9-PREVIEW-PERMISSIONS-RECALCULATION-FIX-001` · commits `TICKET-V2-PHASE-8-9-SEPARATED-COMMITS-2026-07-20-001`
+
+> **Nota histórica:** la sección «Cierre de sesión — 2026-07-12» arriba conserva el estado al 12 de julio (HEAD `671e0c0`, 747/747 tests, Operations Preview pendiente de validación PO). Esta sección documenta la **continuidad posterior** sin alterar ese registro.
+
+### Startup Gate documental
+
+Auditoría de reapertura completada: Constitución, Baseline, Pipeline, Operation Guide, `.cursorrules`, gobernanza V2 y handoff 2026-07-12 leídos antes de trabajo autorizado.
+
+### Auditoría de reapertura (2026-07-20)
+
+| Campo | Resultado |
+|-------|-----------|
+| **Rama** | `plan/v2-phase-4-api-client` ✅ confirmada |
+| **HEAD inicial reapertura** | `671e0c0758ff6b3fcb7ed76a3c7336522fcf0acf` ✅ |
+| **Working tree** | Preservado — 14 tracked + 7 untracked (21 rutas) — sin restore/stash/clean |
+| **Staging inicial** | Vacío ✅ |
+| **Puerto 5173** | Libre al inicio de auditoría; Vite levantado en instancia única para validación |
+| **`npm run typecheck`** | exit 0 |
+| **`npm test`** | 756/756 PASS · 55/55 files |
+
+### Corrección Phase 9 — preview permissions
+
+| Item | Detalle |
+|------|---------|
+| **Causa raíz** | `setSessionPermissionProfileForTests()` actualizaba `permissionProfile` pero **no** invalidaba `enrichedSnapshot`; `completeAnonymousReady()` fuerza guest en boot anónimo |
+| **Síntoma** | Debug mostraba `profileId: staff.owner` con `documentedRole: guest` y 0/6 capabilities ON |
+| **Solución** | DEV-only: tras `bootScaffold()`, `applyStaffPreviewRoleForDev()` + mock `deliverAuthHandoff()` para republish `SESSION_READY` con permisos recalculados |
+| **Alcance** | Solo Grupo B Staff — **sin** modificar `shared/session/runtime/*` |
+| **Producción** | Sin `?previewRole` el comportamiento guest normal no cambia |
+| **Pruebas** | `tests/unit/staff-preview-role.test.ts` — 9 tests de integración del flujo preview |
+
+### Validación visual Product Owner
+
+**Operations Preview — VALIDADO VISUALMENTE POR EL PRODUCT OWNER** (Safari, 2026-07-20)
+
+| Rol | Capabilities ON | Veredicto |
+|-----|-----------------|-----------|
+| OWNER | 6/6 | ✅ |
+| MANAGER | 6/6 | ✅ |
+| SELLER | 1/6 (`staff.reports.read`) | ✅ |
+
+Perfil, rol, lifecycle `SESSION_READY`, layout, tabla mock y métricas mock — aprobados.
+
+### Commits locales separados (A y B)
+
+| Commit | Hash | Mensaje | Archivos |
+|--------|------|---------|----------|
+| **A** | `77e969d01b0ca8575cfbcc6f718e9839de10461e` | `fix(v2-types): resolve preexisting typecheck debt` | 8 — Grupo A |
+| **B** | `58256813a3ad1fb0e0731e6d5ebc2fb00ff83761` | `feat(v2-staff): add operations preview module` | 8 — Grupo B |
+
+**HEAD post A+B:** `58256813a3ad1fb0e0731e6d5ebc2fb00ff83761`
+
+Mensajes exactos — sin trailers `Co-authored-by` ni metadata adicional (Regla 13 / DECISION-V2-012).
+
+### Estado técnico final (post A+B)
+
+| Gate | Resultado |
+|------|-----------|
+| `npm run typecheck` | exit 0 |
+| `npm test` | **756/756 PASS** · **55/55 files** |
+| Staging post A+B | Vacío |
+| Pendiente pre-commit C | Solo Grupo C (5 archivos documentación) |
+
+### Push / deploy
+
+| Acción | Estado |
+|--------|--------|
+| git push | ❌ NO |
+| PR | ❌ NO |
+| merge | ❌ NO |
+| deploy | ❌ NO |
+
+### Siguiente paso
+
+1. Commit documental local separado — Grupo C — mensaje propuesto: `docs(v2): close phase 8 and 9 reopening`
+2. Auditoría final post-commit C
+3. Push solo con frase **`APROBADO PUSH`**
+4. Deploy solo con frase **`APROBADO DEPLOY PRODUCCIÓN`**
+
+*Documentación Grupo C actualizada — TICKET-V2-DOCUMENTATION-CLOSE-PHASE-8-9-2026-07-20-001 — sin commit en este ticket*
