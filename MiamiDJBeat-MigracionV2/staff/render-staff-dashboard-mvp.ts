@@ -26,6 +26,7 @@ import {
   STAFF_REPORTS,
 } from './dashboard-mvp-data';
 import { mountComponentDescriptor } from './mount-component-descriptor';
+import { createOperationsPreviewSection } from './render-operations-preview';
 
 function resolveStaffDashboardThemeBinding(): MdjThemeBinding {
   const tokens = getThemeDefinition('mdj-dark-gold')?.tokens;
@@ -354,6 +355,7 @@ export function renderStaffDashboardMvp(mainRegion: HTMLElement): void {
   const contentGrid = document.createElement('div');
   contentGrid.className = 'mdj-client-dashboard__grid';
   contentGrid.append(
+    createOperationsPreviewSection(themeBinding),
     createQuickActionsSection(themeBinding),
     createProfileSection(themeBinding),
     createLeadsSection(themeBinding),

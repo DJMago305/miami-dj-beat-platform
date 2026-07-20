@@ -34,6 +34,7 @@ describe('MOD-012 Staff Dashboard MVP render', () => {
     expect(main.classList.contains('mdj-client-dashboard')).toBe(true);
     expect(main.querySelector('[data-mdj-component="HeroBanner"]')).not.toBeNull();
     expect(main.querySelectorAll('[data-mdj-component="KpiCard"]')).toHaveLength(4);
+    expect(main.querySelector('[data-mdj-staff-section="operations-preview"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-staff-section="quick-actions"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-staff-section="staff-profile"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-staff-section="leads-pipeline"]')).not.toBeNull();
@@ -44,6 +45,7 @@ describe('MOD-012 Staff Dashboard MVP render', () => {
     expect(main.querySelector('[data-mdj-staff-section="reports-preview"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-staff-section="notifications"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-staff-section="activity-timeline"]')).not.toBeNull();
+    expect(main.querySelectorAll('.mdj-operations-preview__capability')).toHaveLength(6);
     expect(main.querySelector('[data-mdj-component="ProfileCard"]')).not.toBeNull();
   });
 });

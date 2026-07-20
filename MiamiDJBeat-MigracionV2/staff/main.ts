@@ -3,6 +3,7 @@ import { bootstrapPortal } from '../shared/runtime/index';
 import { STAFF_SHELL_CONTENT } from '../shared/navigation/staff-shell.config';
 import { resolveStaffPortalComponentGuards } from './component-guards-wire';
 import { renderStaffDashboardMvp } from './render-staff-dashboard-mvp';
+import { applyStaffPreviewRoleForDev } from './staff-preview-role';
 import '../shared/layout/portal-shell.css';
 import './dashboard-mvp.css';
 
@@ -11,6 +12,9 @@ function main(): void {
   if (!app) return;
 
   const boot = bootScaffold(undefined, 'staff');
+  if (boot.ok) {
+    applyStaffPreviewRoleForDev();
+  }
   const guards = boot.ok ? resolveStaffPortalComponentGuards() : { componentCount: 0 };
 
   bootstrapPortal({
