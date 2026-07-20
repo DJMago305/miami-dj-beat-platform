@@ -13,7 +13,6 @@ import {
   getSessionStoreForTests,
   ingestAuthHandle,
   initializeSession,
-  refreshSession,
   resetSessionForTests,
 } from '@mdj/shared/session';
 import { SessionProvider } from '../../shared/session/runtime/session-provider';

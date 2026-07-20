@@ -1,6 +1,6 @@
 /** MOD-014 Error Handler — API client bridge — TICKET-V2-PHASE-8-MOD-014-ERROR-BRIDGE-CONTRACT-FIX-001 */
 
-import type { ApiError, ApiFailure, ApiMetadata } from '../../api/runtime/types';
+import type { ApiError, ApiMetadata } from '../../api/runtime/types';
 import { lookupCatalogEntry } from './catalog';
 import { redactErrorMessage } from './redact';
 import type { NormalizeContext, NormalizedError } from './types';

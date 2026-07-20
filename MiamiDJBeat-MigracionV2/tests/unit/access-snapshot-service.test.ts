@@ -91,7 +91,7 @@ function createRecordingAdapter(): {
     getAuthContext: vi.fn(),
     cancel: vi.fn(),
     cancelAll: vi.fn(),
-  }) as SupabaseAdapter;
+  }) as unknown as SupabaseAdapter;
 
   return { adapter, invokeRpc };
 }
@@ -140,7 +140,10 @@ describe('Access Snapshot domain service — TICKET-V2-PHASE-7-DOMAIN-SERVICE-WI
     expect(transport.calls[0]?.headers.Authorization).toBe('Bearer user-jwt-token');
     expect(transport.calls[0]?.bodyText).toBe('{}');
     if (result.ok) {
-      expect(result.data.profile_kind).toBe('buyer');
+      expect(result.data.ok).toBe(true);
+      if (result.data.ok) {
+        expect(result.data.profile_kind).toBe('buyer');
+      }
     }
   });
 
@@ -174,7 +177,9 @@ describe('Access Snapshot domain service — TICKET-V2-PHASE-7-DOMAIN-SERVICE-WI
     type ForbiddenKeys = 'authMode' | 'requireSession';
     type HasForbiddenKeys = ForbiddenKeys extends keyof FetchOptions ? true : false;
 
-    expectTypeOf<HasForbiddenKeys>().toEqualTypeOf<false>();
+    type ForbiddenKeysCheck = HasForbiddenKeys extends false ? (false extends HasForbiddenKeys ? true : false) : false;
+    const _forbiddenKeysCheck: ForbiddenKeysCheck = true as ForbiddenKeysCheck;
+    void _forbiddenKeysCheck;
   });
 
   it('fetchSnapshot blocks without session and returns API_INVALID_PAYLOAD', async () => {
@@ -554,13 +559,3 @@ describe('Access Snapshot domain service — TICKET-V2-PHASE-7-DOMAIN-SERVICE-WI
     });
   });
 });
-
-// Vitest compile-time helper — ensures fetch options stay sealed.
-function expectTypeOf<T>(): { toEqualTypeOf<U>(): void } {
-  return {
-    toEqualTypeOf<U>(): void {
-      const _assert: T extends U ? (U extends T ? true : false) : false = true;
-      void _assert;
-    },
-  };
-}

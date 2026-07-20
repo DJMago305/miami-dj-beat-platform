@@ -9,6 +9,7 @@ import {
   MDJ_ACCESS_SNAPSHOT_PROFILE_KINDS,
   MDJ_ACCESS_SNAPSHOT_RPC,
   type AccessSnapshotFetchOptions,
+  type AccessSnapshotMappingCode,
   type AccessSnapshotMappingResult,
   type AccessSnapshotServiceResult,
   type MdjAccessSnapshotPayload,
@@ -158,7 +159,7 @@ function mapArtistTier(value: number | null | undefined): ArtistTier {
 }
 
 function mappingFailure(
-  code: AccessSnapshotMappingResult extends { ok: false; code: infer C } ? C : never,
+  code: AccessSnapshotMappingCode,
   reason?: string,
 ): AccessSnapshotMappingResult {
   return Object.freeze({

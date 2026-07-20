@@ -106,9 +106,14 @@ export function createSupabaseAdapter(input: CreateSupabaseAdapterInput): Supaba
         return buildRequireSessionFailure(request.options?.context);
       }
 
+      const rpcParams =
+        request.params === undefined
+          ? undefined
+          : (request.params as Record<string, unknown>);
+
       return apiClient.rpc<TResponse>(
         request.functionName,
-        request.params,
+        rpcParams,
         toClientOptions(request.options),
       );
     },

@@ -5,9 +5,9 @@ import type { NormalizedError, normalizeApiClientError, normalizeDomainError, no
 import type {
   PermissionSnapshot,
   ProfileResolveInput,
-  resolvePermissionSnapshot,
   SnapshotFlags,
 } from '../../permissions/runtime/types';
+import { resolvePermissionSnapshot } from '../../permissions/runtime';
 import type { AccessSnapshotService } from '../access-snapshot';
 
 export type AccessPermissionFailureStage =

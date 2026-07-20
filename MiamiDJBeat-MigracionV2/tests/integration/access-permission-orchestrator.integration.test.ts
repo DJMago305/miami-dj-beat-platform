@@ -66,7 +66,7 @@ type IntegrationChain = {
 function bootLab(): void {
   initializeConfiguration(VALID_LOCAL_ENV);
   initializeEventBus();
-  initializeLogging({ source: 'integration', moduleId: 'MOD-010' });
+  initializeLogging({ source: 'test', moduleId: 'MOD-010' });
   initializeErrorHandler();
 }
 

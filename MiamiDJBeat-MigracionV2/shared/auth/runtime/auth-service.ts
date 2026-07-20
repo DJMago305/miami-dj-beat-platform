@@ -461,15 +461,23 @@ export class AuthService implements AuthPort {
   }
 }
 
-type MockAuthProviderBootView = MockAuthProvider & {
+type MockAuthProviderBootStateReader = {
   readonly unavailable: boolean;
   readonly failRestore: boolean;
 };
 
-function restoreMockAuthProviderSync(provider: MockAuthProvider): ProviderRestoreResult {
-  const internal = provider as MockAuthProviderBootView;
+function readMockAuthProviderBootState(provider: MockAuthProvider): MockAuthProviderBootStateReader {
+  const bootState = provider as unknown as MockAuthProviderBootStateReader;
+  return {
+    unavailable: bootState.unavailable === true,
+    failRestore: bootState.failRestore === true,
+  };
+}
 
-  if (internal.unavailable) {
+function restoreMockAuthProviderSync(provider: MockAuthProvider): ProviderRestoreResult {
+  const { unavailable, failRestore } = readMockAuthProviderBootState(provider);
+
+  if (unavailable) {
     return {
       ok: false,
       code: 'ERR-AUTH-006',
@@ -477,7 +485,7 @@ function restoreMockAuthProviderSync(provider: MockAuthProvider): ProviderRestor
     };
   }
 
-  if (internal.failRestore) {
+  if (failRestore) {
     return {
       ok: false,
       code: 'ERR-AUTH-004',
