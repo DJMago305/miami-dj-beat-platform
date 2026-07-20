@@ -2,6 +2,7 @@ import { bootScaffold } from '@mdj/bootstrap/boot';
 import { bootstrapPortal } from '../shared/runtime/index';
 import { STAFF_SHELL_CONTENT } from '../shared/navigation/staff-shell.config';
 import { resolveStaffPortalComponentGuards } from './component-guards-wire';
+import { resolveStaffDashboardDataProvider } from './data/staff-dashboard-provider-factory';
 import { renderStaffDashboardMvp } from './render-staff-dashboard-mvp';
 import { applyStaffPreviewRoleForDev } from './staff-preview-role';
 import '../shared/layout/portal-shell.css';
@@ -15,6 +16,7 @@ function main(): void {
   if (boot.ok) {
     applyStaffPreviewRoleForDev();
   }
+  const staffDataProvider = resolveStaffDashboardDataProvider();
   const guards = boot.ok ? resolveStaffPortalComponentGuards() : { componentCount: 0 };
 
   bootstrapPortal({
@@ -25,7 +27,7 @@ function main(): void {
     mountDashboard: (root) => {
       const mainRegion = root.querySelector<HTMLElement>('[data-mdj-shell-region="main"]');
       if (!mainRegion) return;
-      renderStaffDashboardMvp(mainRegion);
+      renderStaffDashboardMvp(mainRegion, staffDataProvider);
     },
   });
 }

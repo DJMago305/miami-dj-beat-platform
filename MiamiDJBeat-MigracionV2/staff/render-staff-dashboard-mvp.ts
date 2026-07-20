@@ -26,6 +26,8 @@ import {
   STAFF_REPORTS,
 } from './dashboard-mvp-data';
 import { mountComponentDescriptor } from './mount-component-descriptor';
+import type { StaffDashboardDataProvider } from './data/staff-dashboard-data-provider';
+import { resolveStaffDashboardDataProvider } from './data/staff-dashboard-provider-factory';
 import { createOperationsPreviewSection } from './render-operations-preview';
 
 function resolveStaffDashboardThemeBinding(): MdjThemeBinding {
@@ -326,7 +328,10 @@ function createActivitySection(themeBinding: MdjThemeBinding): HTMLElement {
   return section;
 }
 
-export function renderStaffDashboardMvp(mainRegion: HTMLElement): void {
+export function renderStaffDashboardMvp(
+  mainRegion: HTMLElement,
+  dataProvider: StaffDashboardDataProvider = resolveStaffDashboardDataProvider(),
+): void {
   const themeBinding = resolveStaffDashboardThemeBinding();
   mainRegion.classList.add('mdj-client-dashboard');
   mainRegion.replaceChildren();
@@ -355,7 +360,7 @@ export function renderStaffDashboardMvp(mainRegion: HTMLElement): void {
   const contentGrid = document.createElement('div');
   contentGrid.className = 'mdj-client-dashboard__grid';
   contentGrid.append(
-    createOperationsPreviewSection(themeBinding),
+    createOperationsPreviewSection(themeBinding, dataProvider),
     createQuickActionsSection(themeBinding),
     createProfileSection(themeBinding),
     createLeadsSection(themeBinding),
