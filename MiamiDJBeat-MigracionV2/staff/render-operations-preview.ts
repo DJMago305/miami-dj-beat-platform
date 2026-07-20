@@ -14,11 +14,13 @@ import type { MdjThemeBinding } from '../shared/components/index';
 import { createPanel, createSectionHeader } from '../shared/components/index';
 import {
   STAFF_OPERATIONS_CAPABILITY_CARDS,
-  STAFF_OPERATIONS_PREVIEW_EVENTS,
-  STAFF_OPERATIONS_PREVIEW_METRICS,
   STAFF_PREVIEW_OPERATOR_NAMES,
   STAFF_PREVIEW_ROLE_DISPLAY,
 } from './operations-preview-data';
+import {
+  getDefaultStaffDashboardDataProvider,
+  type StaffDashboardDataProvider,
+} from './data/staff-dashboard-data-provider';
 import { mountComponentDescriptor } from './mount-component-descriptor';
 import { buildStaffPreviewRoleUrl, type StaffPreviewRole } from './staff-preview-role';
 
@@ -129,7 +131,10 @@ function createCapabilityCardsBlock(themeBinding: MdjThemeBinding): HTMLElement 
   return block;
 }
 
-function createMockEventsBlock(themeBinding: MdjThemeBinding): HTMLElement {
+function createMockEventsBlock(
+  themeBinding: MdjThemeBinding,
+  dataProvider: StaffDashboardDataProvider,
+): HTMLElement {
   const block = createOperationsBlock('Mock events', themeBinding);
   const panel = block.querySelector('.mdj-operations-preview__panel');
   if (!panel) return block;
@@ -148,7 +153,7 @@ function createMockEventsBlock(themeBinding: MdjThemeBinding): HTMLElement {
   `;
 
   const tbody = document.createElement('tbody');
-  for (const row of STAFF_OPERATIONS_PREVIEW_EVENTS) {
+  for (const row of dataProvider.getEvents()) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${row.event}</td>
@@ -164,7 +169,10 @@ function createMockEventsBlock(themeBinding: MdjThemeBinding): HTMLElement {
   return block;
 }
 
-function createMockMetricsBlock(themeBinding: MdjThemeBinding): HTMLElement {
+function createMockMetricsBlock(
+  themeBinding: MdjThemeBinding,
+  dataProvider: StaffDashboardDataProvider,
+): HTMLElement {
   const block = createOperationsBlock('Mock metrics', themeBinding);
   const panel = block.querySelector('.mdj-operations-preview__panel');
   if (!panel) return block;
@@ -172,7 +180,7 @@ function createMockMetricsBlock(themeBinding: MdjThemeBinding): HTMLElement {
   const grid = document.createElement('div');
   grid.className = 'mdj-operations-preview__metrics';
 
-  for (const metric of STAFF_OPERATIONS_PREVIEW_METRICS) {
+  for (const metric of dataProvider.getMetrics()) {
     const card = document.createElement('article');
     card.className = 'mdj-operations-preview__metric';
     card.innerHTML = `
@@ -242,7 +250,10 @@ function createPreviewRoleSwitcher(): HTMLElement | null {
   return toolbar;
 }
 
-export function createOperationsPreviewSection(themeBinding: MdjThemeBinding): HTMLElement {
+export function createOperationsPreviewSection(
+  themeBinding: MdjThemeBinding,
+  dataProvider: StaffDashboardDataProvider = getDefaultStaffDashboardDataProvider(),
+): HTMLElement {
   const section = document.createElement('section');
   section.className = 'mdj-client-dashboard__section mdj-client-dashboard__section--wide mdj-operations-preview';
   section.dataset.mdjStaffSection = 'operations-preview';
@@ -263,8 +274,8 @@ export function createOperationsPreviewSection(themeBinding: MdjThemeBinding): H
   grid.append(
     createActiveProfileBlock(themeBinding),
     createCapabilityCardsBlock(themeBinding),
-    createMockEventsBlock(themeBinding),
-    createMockMetricsBlock(themeBinding),
+    createMockEventsBlock(themeBinding, dataProvider),
+    createMockMetricsBlock(themeBinding, dataProvider),
   );
 
   if (import.meta.env.DEV) {

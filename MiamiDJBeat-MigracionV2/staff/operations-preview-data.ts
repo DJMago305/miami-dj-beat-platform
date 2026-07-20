@@ -1,18 +1,10 @@
-/** Phase 9 — Operations Preview — mock data only (no backend). */
+/** Phase 9 — Operations Preview — UI config (capabilities + dev preview roles). */
 
-export const STAFF_OPERATIONS_PREVIEW_EVENTS = Object.freeze([
-  { event: 'Wedding Miami Beach', client: 'Valle Events LLC', date: 'Aug 14, 2026', status: 'Confirmed' },
-  { event: 'Corporate Dinner', client: 'Brickell Rooftop Co.', date: 'Aug 03, 2026', status: 'Production' },
-  { event: 'Birthday Coral Gables', client: 'Miami Shores Villa', date: 'Jul 19, 2026', status: 'Lead' },
-  { event: 'Fashion Show', client: 'Wynwood Creative Group', date: 'Sep 02, 2026', status: 'Matching' },
-] as const);
-
-export const STAFF_OPERATIONS_PREVIEW_METRICS = Object.freeze([
-  { label: 'Active events', value: '12' },
-  { label: 'Pending invoices', value: '7' },
-  { label: 'DJs assigned', value: '18' },
-  { label: 'Monthly sales', value: '$42,800' },
-] as const);
+/** @deprecated Import metrics/events from staff/data/staff-dashboard-mock-data via StaffDashboardDataProvider. */
+export {
+  STAFF_MOCK_EVENTS as STAFF_OPERATIONS_PREVIEW_EVENTS,
+  STAFF_MOCK_METRICS as STAFF_OPERATIONS_PREVIEW_METRICS,
+} from './data/staff-dashboard-mock-data';
 
 export const STAFF_OPERATIONS_CAPABILITY_CARDS = Object.freeze([
   { id: 'create-events', label: 'Create events', capabilityId: 'staff.leads.write' },
