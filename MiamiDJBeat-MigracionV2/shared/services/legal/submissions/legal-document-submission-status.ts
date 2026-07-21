@@ -26,6 +26,12 @@ export function isTerminalLegalDocumentSubmissionStatus(
   return (TERMINAL_LEGAL_DOCUMENT_SUBMISSION_STATUSES as readonly string[]).includes(status);
 }
 
+export function isLegalDocumentSubmissionStatus(
+  value: string,
+): value is LegalDocumentSubmissionStatus {
+  return (LEGAL_DOCUMENT_SUBMISSION_STATUSES as readonly string[]).includes(value);
+}
+
 export function isActiveLegalDocumentSubmissionStatus(status: LegalDocumentSubmissionStatus): boolean {
   return status !== 'deleted';
 }
