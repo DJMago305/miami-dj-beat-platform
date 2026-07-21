@@ -346,6 +346,22 @@ Detalle completo: [`../DECISIONS.md`](../DECISIONS.md).
 
 ---
 
+## Legal Center V2 — LC-10 Discovery (2026-07-21)
+
+| Campo | Valor |
+|-------|-------|
+| **Rama** | `plan/v2-phase-4-api-client` |
+| **HEAD baseline** | `519f9ae` — `feat(v2-legal): add legal audit trail foundation` |
+| **Ticket** | LC-10 Persistence Adapter Discovery — **aprobado PO** |
+| **Estado** | LC-10 CERRADO — DISCOVERY APROBADO POR EL PRODUCT OWNER |
+| **Suite** | **958/958 PASS** · typecheck exit 0 · cero cambios runtime |
+| **Próxima fase** | LC-11 — Persistence Schema & Read-Only Adapters (**pendiente ticket**) |
+| **Push / deploy** | ❌ NO |
+
+Detalle: [`TICKETS/TICKET-V2-LEGAL-CENTER-LC-10-PERSISTENCE-ADAPTER-DISCOVERY-001.md`](TICKETS/TICKET-V2-LEGAL-CENTER-LC-10-PERSISTENCE-ADAPTER-DISCOVERY-001.md)
+
+---
+
 ## Fuera de alcance de este baseline
 
 | Item | Motivo |

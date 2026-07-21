@@ -2256,3 +2256,22 @@ Layout · mock metrics · mock events · textos · orden de secciones — **sin 
 **Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-11B-STAFF-DASHBOARD-PROVIDER-UNIFICATION-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-20-PHASE-11B-CLOSURE.md`
 
 *Phase 11-B documentada y cerrada localmente — sin commit · sin push · sin deploy*
+
+---
+
+## Continuidad — Legal Center LC-10 Discovery (2026-07-21)
+
+| Campo | Valor |
+|-------|-------|
+| **Rama** | `plan/v2-phase-4-api-client` |
+| **HEAD baseline** | `519f9ae082c57b9be221e9909c5d1443918399a5` |
+| **Ticket** | LC-10 — Persistence Adapter Discovery |
+| **Estado** | **LC-10 CERRADO — DISCOVERY APROBADO POR EL PRODUCT OWNER** |
+| **Alcance** | Solo documentación — cero runtime |
+| **Suite** | 958 PASS · typecheck PASS · HTTP 200 × 5 |
+| **Próxima fase** | LC-11 — Persistence Schema & Read-Only Adapters (pendiente ticket) |
+| **LC-11** | ❌ No iniciado |
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-LEGAL-CENTER-LC-10-PERSISTENCE-ADAPTER-DISCOVERY-001.md`
+
+*LC-10 aprobado PO — sin persistencia real · sin Supabase activo · sin push*
