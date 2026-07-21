@@ -105,6 +105,19 @@ describe('Phase 10 — StaffDashboardDataProvider', () => {
     expect(snapshot).toEqual(STAFF_MOCK_DASHBOARD_SNAPSHOT);
   });
 
+  it('exposes approved MVP dashboard fixtures through getMvpView()', () => {
+    const mvpView = getDefaultStaffDashboardDataProvider().getMvpView();
+
+    expect(mvpView.kpis).toHaveLength(4);
+    expect(mvpView.kpis.map((entry) => entry.label)).toContain('Matching Queue');
+    expect(mvpView.profile.operatorName).toBe('Staff Operator');
+    expect(mvpView.quickActions).toHaveLength(5);
+    expect(mvpView.pipelineLeads).toHaveLength(3);
+    expect(mvpView.invoiceQueue).toHaveLength(3);
+    expect(mvpView.productionSummaries).toHaveLength(3);
+    expect(mvpView.matchingSummaries).toHaveLength(3);
+  });
+
   it('serializes and parses a dashboard snapshot without data loss', () => {
     const snapshot = getDefaultStaffDashboardDataProvider().getDashboardSnapshot();
     const json = serializeStaffDashboardSnapshot(snapshot);

@@ -5,6 +5,7 @@ import { initializeEventBus, resetEventBusForTests } from '@mdj/shared/events';
 import { initializeLogging, resetLoggingForTests } from '@mdj/shared/logging';
 import {
   createEmptyStaffDashboardDataProvider,
+  getDefaultStaffDashboardDataProvider,
   type StaffDashboardDataProvider,
 } from '../../staff/data/staff-dashboard-data-provider';
 import {
@@ -69,6 +70,8 @@ function countOperationsEvents(root: ParentNode): number {
 }
 
 function createTestProvider(label: string): StaffDashboardDataProvider {
+  const emptyMvpView = createEmptyStaffDashboardDataProvider().getMvpView();
+
   return Object.freeze({
     getMetrics: () => [{ id: 'test-metric', label, value: '99' }],
     getEvents: () => [
@@ -97,6 +100,7 @@ function createTestProvider(label: string): StaffDashboardDataProvider {
       leads: [],
       invoices: [],
     }),
+    getMvpView: () => emptyMvpView,
   });
 }
 
@@ -246,7 +250,7 @@ describe('Phase 11-A — StaffDashboardDataProvider factory', () => {
     expect(main).not.toBeNull();
     if (!main) return;
 
-    renderStaffDashboardMvp(main);
+    renderStaffDashboardMvp(main, getDefaultStaffDashboardDataProvider());
 
     expect(main.textContent).toContain('Active events');
     expect(main.textContent).toContain('12');

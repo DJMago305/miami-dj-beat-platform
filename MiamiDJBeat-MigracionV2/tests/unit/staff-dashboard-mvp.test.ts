@@ -7,6 +7,7 @@ import {
   STAFF_PROFILE,
   STAFF_QUICK_ACTIONS,
 } from '../../staff/dashboard-mvp-data';
+import { getDefaultStaffDashboardDataProvider } from '../../staff/data/staff-dashboard-data-provider';
 import { renderStaffDashboardMvp } from '../../staff/render-staff-dashboard-mvp';
 
 describe('MOD-012 Staff Dashboard MVP data', () => {
@@ -29,7 +30,7 @@ describe('MOD-012 Staff Dashboard MVP render', () => {
     expect(main).not.toBeNull();
     if (!main) return;
 
-    renderStaffDashboardMvp(main);
+    renderStaffDashboardMvp(main, getDefaultStaffDashboardDataProvider());
 
     expect(main.classList.contains('mdj-client-dashboard')).toBe(true);
     expect(main.querySelector('[data-mdj-component="HeroBanner"]')).not.toBeNull();

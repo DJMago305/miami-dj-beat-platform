@@ -1,5 +1,9 @@
 /** Phase 10 — Staff dashboard data provider — mock-only, no fetch. */
 
+import type {
+  StaffInvoice,
+  StaffLead,
+} from '../contracts/staff-dashboard-contracts';
 import {
   StaffDashboardDataError,
   type StaffDashboardQueues,
@@ -7,14 +11,112 @@ import {
   type StaffMetric,
   type StaffOperationsEvent,
 } from '../contracts/staff-dashboard-contracts';
+import {
+  STAFF_ACTIVITY,
+  STAFF_CRM,
+  STAFF_DASHBOARD_KPIS,
+  STAFF_MATCHING,
+  STAFF_NOTIFICATIONS,
+  STAFF_PRODUCTION,
+  STAFF_PROFILE,
+  STAFF_QUICK_ACTIONS,
+  STAFF_REPORTS,
+} from '../dashboard-mvp-data';
 import { STAFF_MOCK_DASHBOARD_SNAPSHOT } from './staff-dashboard-mock-data';
+
+export type StaffDashboardKpiView = {
+  readonly label: string;
+  readonly value: string;
+  readonly hint: string;
+};
+
+export type StaffProfileView = {
+  readonly operatorName: string;
+  readonly role: string;
+  readonly status: string;
+  readonly coverage: string;
+};
+
+export type StaffSummaryRowView = {
+  readonly label: string;
+  readonly value: string;
+};
+
+export type StaffActivityView = {
+  readonly time: string;
+  readonly detail: string;
+};
+
+export type StaffDashboardMvpView = {
+  readonly kpis: readonly StaffDashboardKpiView[];
+  readonly profile: StaffProfileView;
+  readonly quickActions: readonly string[];
+  readonly pipelineLeads: readonly StaffLead[];
+  readonly invoiceQueue: readonly StaffInvoice[];
+  readonly crm: readonly StaffSummaryRowView[];
+  readonly productionSummaries: readonly string[];
+  readonly matchingSummaries: readonly string[];
+  readonly reports: readonly StaffSummaryRowView[];
+  readonly notifications: readonly string[];
+  readonly activity: readonly StaffActivityView[];
+};
 
 export type StaffDashboardDataProvider = {
   getMetrics(): readonly StaffMetric[];
   getEvents(): readonly StaffOperationsEvent[];
   getQueues(): StaffDashboardQueues;
   getDashboardSnapshot(): StaffDashboardSnapshot;
+  getMvpView(): StaffDashboardMvpView;
 };
+
+const DEFAULT_MVP_VIEW: StaffDashboardMvpView = Object.freeze({
+  kpis: STAFF_DASHBOARD_KPIS,
+  profile: STAFF_PROFILE,
+  quickActions: STAFF_QUICK_ACTIONS,
+  pipelineLeads: STAFF_MOCK_DASHBOARD_SNAPSHOT.leads,
+  invoiceQueue: STAFF_MOCK_DASHBOARD_SNAPSHOT.invoices,
+  crm: STAFF_CRM,
+  productionSummaries: STAFF_PRODUCTION,
+  matchingSummaries: STAFF_MATCHING,
+  reports: STAFF_REPORTS,
+  notifications: STAFF_NOTIFICATIONS,
+  activity: STAFF_ACTIVITY,
+});
+
+const EMPTY_MVP_VIEW: StaffDashboardMvpView = Object.freeze({
+  kpis: Object.freeze([]),
+  profile: Object.freeze({
+    operatorName: '',
+    role: '',
+    status: '',
+    coverage: '',
+  }),
+  quickActions: Object.freeze([]),
+  pipelineLeads: Object.freeze([]),
+  invoiceQueue: Object.freeze([]),
+  crm: Object.freeze([]),
+  productionSummaries: Object.freeze([]),
+  matchingSummaries: Object.freeze([]),
+  reports: Object.freeze([]),
+  notifications: Object.freeze([]),
+  activity: Object.freeze([]),
+});
+
+function cloneMvpView(view: StaffDashboardMvpView): StaffDashboardMvpView {
+  return Object.freeze({
+    kpis: Object.freeze([...view.kpis]),
+    profile: Object.freeze({ ...view.profile }),
+    quickActions: Object.freeze([...view.quickActions]),
+    pipelineLeads: Object.freeze([...view.pipelineLeads]),
+    invoiceQueue: Object.freeze([...view.invoiceQueue]),
+    crm: Object.freeze([...view.crm]),
+    productionSummaries: Object.freeze([...view.productionSummaries]),
+    matchingSummaries: Object.freeze([...view.matchingSummaries]),
+    reports: Object.freeze([...view.reports]),
+    notifications: Object.freeze([...view.notifications]),
+    activity: Object.freeze([...view.activity]),
+  });
+}
 
 const EMPTY_SNAPSHOT: StaffDashboardSnapshot = Object.freeze({
   version: 1,
@@ -68,20 +170,23 @@ function assertValidSnapshot(snapshot: StaffDashboardSnapshot): void {
 
 export function createStaffDashboardDataProvider(
   snapshot: StaffDashboardSnapshot = STAFF_MOCK_DASHBOARD_SNAPSHOT,
+  mvpView: StaffDashboardMvpView = DEFAULT_MVP_VIEW,
 ): StaffDashboardDataProvider {
   assertValidSnapshot(snapshot);
   const frozenSnapshot = cloneSnapshot(snapshot);
+  const frozenMvpView = cloneMvpView(mvpView);
 
   return Object.freeze({
     getMetrics: () => frozenSnapshot.metrics,
     getEvents: () => frozenSnapshot.events,
     getQueues: () => frozenSnapshot.queues,
     getDashboardSnapshot: () => frozenSnapshot,
+    getMvpView: () => frozenMvpView,
   });
 }
 
 export function createEmptyStaffDashboardDataProvider(): StaffDashboardDataProvider {
-  return createStaffDashboardDataProvider(EMPTY_SNAPSHOT);
+  return createStaffDashboardDataProvider(EMPTY_SNAPSHOT, EMPTY_MVP_VIEW);
 }
 
 let defaultProvider: StaffDashboardDataProvider = createStaffDashboardDataProvider();

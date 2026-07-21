@@ -4,6 +4,7 @@ import { initializeErrorHandler, resetErrorHandlerForTests } from '@mdj/shared/e
 import { initializeEventBus, resetEventBusForTests } from '@mdj/shared/events';
 import { initializeLogging, resetLoggingForTests } from '@mdj/shared/logging';
 import { STAFF_OPERATIONS_CAPABILITY_CARDS } from '../../staff/operations-preview-data';
+import { getDefaultStaffDashboardDataProvider } from '../../staff/data/staff-dashboard-data-provider';
 import { renderStaffDashboardMvp } from '../../staff/render-staff-dashboard-mvp';
 import {
   applyStaffPreviewRoleForDev,
@@ -169,7 +170,7 @@ describe('Phase 9 — staff preview role permissions recalculation', () => {
     if (!main) return;
 
     bootStaffSessionWithPreview('?previewRole=owner');
-    renderStaffDashboardMvp(main);
+    renderStaffDashboardMvp(main, getDefaultStaffDashboardDataProvider());
     expect(countEnabledPreviewCards(main)).toBe(6);
 
     resetSessionForTests();
@@ -183,7 +184,7 @@ describe('Phase 9 — staff preview role permissions recalculation', () => {
     if (!sellerMain) return;
 
     bootStaffSessionWithPreview('?previewRole=seller');
-    renderStaffDashboardMvp(sellerMain);
+    renderStaffDashboardMvp(sellerMain, getDefaultStaffDashboardDataProvider());
     expect(countEnabledPreviewCards(sellerMain)).toBe(1);
   });
 });

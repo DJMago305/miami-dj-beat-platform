@@ -13,21 +13,9 @@ import {
 } from '../shared/components/index';
 import { getThemeDefinition } from '../shared/theme/runtime/theme-registry';
 import {
-  STAFF_ACTIVITY,
-  STAFF_CRM,
-  STAFF_DASHBOARD_KPIS,
-  STAFF_INVOICES,
-  STAFF_LEADS,
-  STAFF_MATCHING,
-  STAFF_NOTIFICATIONS,
-  STAFF_PRODUCTION,
-  STAFF_PROFILE,
-  STAFF_QUICK_ACTIONS,
-  STAFF_REPORTS,
-} from './dashboard-mvp-data';
+  type StaffDashboardDataProvider,
+} from './data/staff-dashboard-data-provider';
 import { mountComponentDescriptor } from './mount-component-descriptor';
-import type { StaffDashboardDataProvider } from './data/staff-dashboard-data-provider';
-import { resolveStaffDashboardDataProvider } from './data/staff-dashboard-provider-factory';
 import { createOperationsPreviewSection } from './render-operations-preview';
 
 function resolveStaffDashboardThemeBinding(): MdjThemeBinding {
@@ -95,8 +83,12 @@ function createSummaryRow(label: string, value: string): HTMLDivElement {
   return row;
 }
 
-function createQuickActionsSection(themeBinding: MdjThemeBinding): HTMLElement {
+function createQuickActionsSection(
+  themeBinding: MdjThemeBinding,
+  dataProvider: StaffDashboardDataProvider,
+): HTMLElement {
   const section = createStaffSection('quick-actions', true);
+  const mvpView = dataProvider.getMvpView();
 
   section.append(
     mountComponentDescriptor(
@@ -107,7 +99,7 @@ function createQuickActionsSection(themeBinding: MdjThemeBinding): HTMLElement {
   const grid = document.createElement('div');
   grid.className = 'mdj-client-quick-actions';
 
-  for (const label of STAFF_QUICK_ACTIONS) {
+  for (const label of mvpView.quickActions) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'mdj-client-quick-actions__button';
@@ -120,8 +112,12 @@ function createQuickActionsSection(themeBinding: MdjThemeBinding): HTMLElement {
   return section;
 }
 
-function createProfileSection(themeBinding: MdjThemeBinding): HTMLElement {
+function createProfileSection(
+  themeBinding: MdjThemeBinding,
+  dataProvider: StaffDashboardDataProvider,
+): HTMLElement {
   const section = createStaffSection('staff-profile');
+  const profile = dataProvider.getMvpView().profile;
 
   section.append(
     mountComponentDescriptor(
@@ -130,9 +126,9 @@ function createProfileSection(themeBinding: MdjThemeBinding): HTMLElement {
     mountComponentDescriptor(
       createProfileCard(
         {
-          name: STAFF_PROFILE.operatorName,
-          role: STAFF_PROFILE.role,
-          meta: `${STAFF_PROFILE.status} · ${STAFF_PROFILE.coverage}`,
+          name: profile.operatorName,
+          role: profile.role,
+          meta: `${profile.status} · ${profile.coverage}`,
         },
         themeBinding,
       ),
@@ -142,15 +138,18 @@ function createProfileSection(themeBinding: MdjThemeBinding): HTMLElement {
   const details = document.createElement('dl');
   details.className = 'mdj-client-summary-list';
   details.append(
-    createSummaryRow('Status', STAFF_PROFILE.status),
-    createSummaryRow('Coverage', STAFF_PROFILE.coverage),
+    createSummaryRow('Status', profile.status),
+    createSummaryRow('Coverage', profile.coverage),
   );
   section.append(details);
 
   return section;
 }
 
-function createLeadsSection(themeBinding: MdjThemeBinding): HTMLElement {
+function createLeadsSection(
+  themeBinding: MdjThemeBinding,
+  dataProvider: StaffDashboardDataProvider,
+): HTMLElement {
   const section = createStaffSection('leads-pipeline', true);
 
   const panel = mountComponentDescriptor(
@@ -161,7 +160,7 @@ function createLeadsSection(themeBinding: MdjThemeBinding): HTMLElement {
   const timeline = document.createElement('div');
   timeline.className = 'mdj-client-timeline';
 
-  for (const lead of STAFF_LEADS) {
+  for (const lead of dataProvider.getMvpView().pipelineLeads) {
     const item = document.createElement('article');
     item.className = 'mdj-client-timeline__item';
 
@@ -190,7 +189,10 @@ function createLeadsSection(themeBinding: MdjThemeBinding): HTMLElement {
   return section;
 }
 
-function createInvoicesSection(themeBinding: MdjThemeBinding): HTMLElement {
+function createInvoicesSection(
+  themeBinding: MdjThemeBinding,
+  dataProvider: StaffDashboardDataProvider,
+): HTMLElement {
   const section = createStaffSection('invoices-queue');
 
   const panel = mountComponentDescriptor(
@@ -211,7 +213,7 @@ function createInvoicesSection(themeBinding: MdjThemeBinding): HTMLElement {
   `;
 
   const tbody = document.createElement('tbody');
-  for (const invoice of STAFF_INVOICES) {
+  for (const invoice of dataProvider.getMvpView().invoiceQueue) {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${invoice.id}</td>
@@ -228,62 +230,80 @@ function createInvoicesSection(themeBinding: MdjThemeBinding): HTMLElement {
   return section;
 }
 
-function createCrmSection(themeBinding: MdjThemeBinding): HTMLElement {
+function createCrmSection(
+  themeBinding: MdjThemeBinding,
+  dataProvider: StaffDashboardDataProvider,
+): HTMLElement {
   const section = createStaffSection('crm-snapshot');
 
   const panel = mountComponentDescriptor(
     createPanel({ title: 'CRM Snapshot', variant: 'glass' }, themeBinding),
   );
-  panel.append(createSummaryList(STAFF_CRM));
+  panel.append(createSummaryList(dataProvider.getMvpView().crm));
   section.append(panel);
   return section;
 }
 
-function createProductionSection(themeBinding: MdjThemeBinding): HTMLElement {
+function createProductionSection(
+  themeBinding: MdjThemeBinding,
+  dataProvider: StaffDashboardDataProvider,
+): HTMLElement {
   const section = createStaffSection('production-tasks');
 
   const panel = mountComponentDescriptor(
     createPanel({ title: 'Production Tasks', variant: 'elevated' }, themeBinding),
   );
-  panel.append(createList(STAFF_PRODUCTION));
+  panel.append(createList(dataProvider.getMvpView().productionSummaries));
   section.append(panel);
   return section;
 }
 
-function createMatchingSection(themeBinding: MdjThemeBinding): HTMLElement {
+function createMatchingSection(
+  themeBinding: MdjThemeBinding,
+  dataProvider: StaffDashboardDataProvider,
+): HTMLElement {
   const section = createStaffSection('matching-queue');
 
   const panel = mountComponentDescriptor(
     createPanel({ title: 'Matching Queue', variant: 'glass' }, themeBinding),
   );
-  panel.append(createList(STAFF_MATCHING));
+  panel.append(createList(dataProvider.getMvpView().matchingSummaries));
   section.append(panel);
   return section;
 }
 
-function createReportsSection(themeBinding: MdjThemeBinding): HTMLElement {
+function createReportsSection(
+  themeBinding: MdjThemeBinding,
+  dataProvider: StaffDashboardDataProvider,
+): HTMLElement {
   const section = createStaffSection('reports-preview');
 
   const panel = mountComponentDescriptor(
     createPanel({ title: 'Reports Preview', variant: 'elevated' }, themeBinding),
   );
-  panel.append(createSummaryList(STAFF_REPORTS));
+  panel.append(createSummaryList(dataProvider.getMvpView().reports));
   section.append(panel);
   return section;
 }
 
-function createNotificationsSection(themeBinding: MdjThemeBinding): HTMLElement {
+function createNotificationsSection(
+  themeBinding: MdjThemeBinding,
+  dataProvider: StaffDashboardDataProvider,
+): HTMLElement {
   const section = createStaffSection('notifications');
 
   const panel = mountComponentDescriptor(
     createPanel({ title: 'Notifications', variant: 'elevated' }, themeBinding),
   );
-  panel.append(createList(STAFF_NOTIFICATIONS));
+  panel.append(createList(dataProvider.getMvpView().notifications));
   section.append(panel);
   return section;
 }
 
-function createActivitySection(themeBinding: MdjThemeBinding): HTMLElement {
+function createActivitySection(
+  themeBinding: MdjThemeBinding,
+  dataProvider: StaffDashboardDataProvider,
+): HTMLElement {
   const section = createStaffSection('activity-timeline', true);
 
   section.append(
@@ -295,7 +315,7 @@ function createActivitySection(themeBinding: MdjThemeBinding): HTMLElement {
   const timeline = document.createElement('div');
   timeline.className = 'mdj-client-activity';
 
-  for (const entry of STAFF_ACTIVITY) {
+  for (const entry of dataProvider.getMvpView().activity) {
     const item = document.createElement('article');
     item.className = 'mdj-client-activity__item';
 
@@ -330,9 +350,10 @@ function createActivitySection(themeBinding: MdjThemeBinding): HTMLElement {
 
 export function renderStaffDashboardMvp(
   mainRegion: HTMLElement,
-  dataProvider: StaffDashboardDataProvider = resolveStaffDashboardDataProvider(),
+  dataProvider: StaffDashboardDataProvider,
 ): void {
   const themeBinding = resolveStaffDashboardThemeBinding();
+  const mvpView = dataProvider.getMvpView();
   mainRegion.classList.add('mdj-client-dashboard');
   mainRegion.replaceChildren();
 
@@ -352,25 +373,23 @@ export function renderStaffDashboardMvp(
     createDashboardCard({ variant: 'kpi-grid', region: 'kpis' }, themeBinding),
   );
   kpiGrid.replaceChildren(
-    ...STAFF_DASHBOARD_KPIS.map((kpi) =>
-      mountComponentDescriptor(createKpiCard(kpi, themeBinding)),
-    ),
+    ...mvpView.kpis.map((kpi) => mountComponentDescriptor(createKpiCard(kpi, themeBinding))),
   );
 
   const contentGrid = document.createElement('div');
   contentGrid.className = 'mdj-client-dashboard__grid';
   contentGrid.append(
     createOperationsPreviewSection(themeBinding, dataProvider),
-    createQuickActionsSection(themeBinding),
-    createProfileSection(themeBinding),
-    createLeadsSection(themeBinding),
-    createInvoicesSection(themeBinding),
-    createCrmSection(themeBinding),
-    createProductionSection(themeBinding),
-    createMatchingSection(themeBinding),
-    createReportsSection(themeBinding),
-    createNotificationsSection(themeBinding),
-    createActivitySection(themeBinding),
+    createQuickActionsSection(themeBinding, dataProvider),
+    createProfileSection(themeBinding, dataProvider),
+    createLeadsSection(themeBinding, dataProvider),
+    createInvoicesSection(themeBinding, dataProvider),
+    createCrmSection(themeBinding, dataProvider),
+    createProductionSection(themeBinding, dataProvider),
+    createMatchingSection(themeBinding, dataProvider),
+    createReportsSection(themeBinding, dataProvider),
+    createNotificationsSection(themeBinding, dataProvider),
+    createActivitySection(themeBinding, dataProvider),
   );
 
   mainRegion.append(hero, kpiGrid, contentGrid);
