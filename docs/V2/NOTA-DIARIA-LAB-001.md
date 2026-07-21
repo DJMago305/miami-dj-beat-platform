@@ -2070,3 +2070,189 @@ Mensajes exactos — sin trailers `Co-authored-by` ni metadata adicional (Regla 
 4. Deploy solo con frase **`APROBADO DEPLOY PRODUCCIÓN`**
 
 *Documentación Grupo C actualizada — TICKET-V2-DOCUMENTATION-CLOSE-PHASE-8-9-2026-07-20-001 — sin commit en este ticket*
+
+---
+
+## Cierre de jornada — 2026-07-20
+
+**Ticket:** TICKET-V2-END-OF-DAY-DOCUMENTATION-2026-07-20-001
+**Modo:** Documentación de cierre — laboratorio listo para pausa operativa del Product Owner
+
+### Estado del repositorio
+
+| Campo | Valor |
+|-------|-------|
+| **Rama activa** | `plan/v2-phase-4-api-client` |
+| **HEAD actual** | `577cb4a8d82ea789b5a2ec6ec9cf834be931de2` — `feat(v2-staff): add provider factory` |
+| **Working tree** | ✅ Limpio |
+| **Staging** | ✅ Vacío |
+| **Push / PR / merge / deploy** | ❌ NO |
+
+### Commits de la jornada (Staff data layer)
+
+| Fase | Hash | Mensaje |
+|------|------|---------|
+| Phase 8 (Grupo A) | `77e969d01b0ca8575cfbcc6f718e9839de10461e` | `fix(v2-types): resolve preexisting typecheck debt` |
+| Phase 9 (Grupo B) | `58256813a3ad1fb0e0731e6d5ebc2fb00ff83761` | `feat(v2-staff): add operations preview module` |
+| Docs Grupo C | `eb72ffc` | `docs(v2): close phase 8 and 9 reopening` |
+| **Phase 10** | `c897fc5a8eddc09b6871458335aa592d34a2baa0` | `feat(v2-staff): add dashboard data contracts` |
+| **Phase 11-A** | `577cb4a8d82ea789b5a2ec6ec9cf834be931de2` | `feat(v2-staff): add provider factory` |
+
+### Validación técnica
+
+| Gate | Resultado |
+|------|-----------|
+| `npm run typecheck` | ✅ exit 0 |
+| Test files | ✅ **57/57 PASS** |
+| Tests | ✅ **776/776 PASS** |
+| Vite | ✅ PID **88949** · `http://localhost:5173` |
+
+### Validación visual Safari (Product Owner)
+
+| Rol | Lifecycle | Capabilities ON | Veredicto |
+|-----|-----------|-----------------|-----------|
+| Guest | `SESSION_READY` | 0/6 | ✅ |
+| Owner | `SESSION_READY` | 6/6 | ✅ |
+| Manager | `SESSION_READY` | 6/6 | ✅ |
+| Seller | `SESSION_READY` | 1/6 | ✅ |
+
+Layout aprobado · mock metrics intactas (4) · mock events intactos (4) · sin overflow · sin texto cortado.
+
+### Operations Preview
+
+| Item | Estado |
+|------|--------|
+| Módulo | ✅ Implementado (Phase 9) · preview permissions corregidas |
+| Métricas mock | 4 — Active events · Pending invoices · DJs assigned · Monthly sales |
+| Eventos mock | 4 filas — Wedding Miami Beach · Corporate Dinner · Birthday Coral Gables · Quinceañera Doral |
+| Capability cards | 6 — ON/OFF vía `hasSessionCapability()` · independiente del data provider |
+| Consumo de datos | ✅ Phase 10+ — `StaffDashboardDataProvider` vía factory (Phase 11-A) |
+
+### StaffDashboardDataProvider (Phase 10)
+
+| Item | Detalle |
+|------|---------|
+| Contrato | `getMetrics()` · `getEvents()` · `getQueues()` · `getDashboardSnapshot()` |
+| Implementación activa | Mock-only — `staff/data/staff-dashboard-mock-data.ts` |
+| Serialización | `serializeStaffDashboardSnapshot()` · `parseStaffDashboardSnapshot()` |
+| Errores | `StaffDashboardDataError` — snapshot inválido / JSON malformado |
+| Integración runtime | ❌ Sin fetch · sin RPC · sin Supabase · sin Session |
+
+### Provider Factory (Phase 11-A)
+
+| Item | Detalle |
+|------|---------|
+| Entry point | `resolveStaffDashboardDataProvider()` en `staff/data/staff-dashboard-provider-factory.ts` |
+| Resolución | Una vez en `staff/main.ts` → inyectado a `renderStaffDashboardMvp()` |
+| Implementación | Mock/default únicamente — delega a singleton existente en `staff-dashboard-data-provider.ts` |
+| Tests override | `setStaffDashboardDataProviderForTests()` · `resetStaffDashboardDataProviderForTests()` |
+| Desacoplamiento | Renderer no conoce ApiClient · Supabase · RPC · fetch · Session services |
+
+### Dual data source (deuda conocida — no bloqueante)
+
+| Fuente | Consumidor |
+|--------|------------|
+| `StaffDashboardDataProvider` | Operations Preview (métricas · eventos · colas en contrato) |
+| `dashboard-mvp-data.ts` | KPIs · profile · leads · invoices · production · matching · CRM · reports · activity · notifications del MVP dashboard |
+
+Unificación pendiente — **Phase 11-B** (sin abrir).
+
+### Próximo trabajo pendiente
+
+1. **Reapertura:** auditoría solo lectura — `git status` · `git rev-parse HEAD` · leer `SESSION-SUMMARIES/2026-07-20-PHASE-10-11A-END-OF-SESSION.md`
+2. **Ticket sugerido (sin abrir):** `TICKET-V2-PHASE-11B-STAFF-DASHBOARD-PROVIDER-UNIFICATION-001` — migrar `dashboard-mvp-data.ts` hacia `StaffDashboardDataProvider`
+3. **Prohibido sin PO:** Session · Permissions · Bootstrap · Supabase · RPC · producción · push · deploy
+
+**Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-20-PHASE-10-11A-END-OF-SESSION.md` · tickets históricos Phase 10 y 11-A en `docs/V2/TICKETS/`
+
+*Jornada 2026-07-20 cerrada — laboratorio en punto seguro — sin push · sin deploy*
+
+---
+
+## Cierre técnico — Phase 11-B
+
+**Ticket:** TICKET-V2-PHASE-11B-STAFF-DASHBOARD-PROVIDER-UNIFICATION-001 · cierre documental TICKET-V2-PHASE-11B-CLOSURE-DOCUMENTATION-001
+**Fecha:** 2026-07-20
+**Estado:** **IMPLEMENTADO · VALIDADO VISUALMENTE POR EL PRODUCT OWNER · PENDIENTE COMMIT LOCAL**
+
+### Objetivo del ticket
+
+Completar la unificación del dashboard MVP Staff bajo `StaffDashboardDataProvider`, eliminando la dependencia directa del renderer sobre `dashboard-mvp-data.ts`, manteniendo mock-only · sin Supabase · sin RPC · sin fetch · sin cambios visuales.
+
+### Arquitectura final
+
+```
+staff/main.ts
+  resolveStaffDashboardDataProvider()          ← factory Phase 11-A
+  renderStaffDashboardMvp(mainRegion, provider) ← inyección obligatoria
+
+StaffDashboardDataProvider
+  getMetrics() · getEvents() · getQueues() · getDashboardSnapshot()   ← Phase 10
+  getMvpView()                                                         ← Phase 11-B
+
+dashboard-mvp-data.ts  →  fixture interno del provider (no importado por renderer)
+render-staff-dashboard-mvp.ts  →  solo renderiza datos del provider recibido
+```
+
+Corrección posterior (inyección explícita): `renderStaffDashboardMvp` **exige** `dataProvider: StaffDashboardDataProvider` — sin `getDefaultStaffDashboardDataProvider()` ni factory en el renderer.
+
+### Eliminación de dependencia directa del renderer
+
+| Antes (post 11-A) | Después (11-B) |
+|-------------------|----------------|
+| Operations Preview vía provider | ✅ Sin cambio |
+| KPIs · profile · leads · invoices · CRM · etc. vía import directo `dashboard-mvp-data.ts` | ✅ vía `provider.getMvpView()` |
+| Default implícito en renderer | ❌ Eliminado — parámetro obligatorio |
+
+### Uso obligatorio de StaffDashboardDataProvider
+
+- Contrato Phase 10 preservado + `getMvpView(): StaffDashboardMvpView`.
+- Fixture MVP encapsulado en `staff/data/staff-dashboard-data-provider.ts` (importa `dashboard-mvp-data.ts` internamente).
+- Tests que invocan el renderer pasan provider explícito (`resolveStaffDashboardDataProvider()` o `getDefaultStaffDashboardDataProvider()`).
+
+### Factory desde main.ts
+
+```typescript
+const staffDataProvider = resolveStaffDashboardDataProvider();
+renderStaffDashboardMvp(mainRegion, staffDataProvider);
+```
+
+Secuencia boot → preview role → resolución → render **sin cambio**. Permisos independientes del data layer.
+
+### Validación visual Product Owner
+
+**COMPLETADA** (Safari · localhost:5173/staff/)
+
+| Rol | Lifecycle | Capabilities ON |
+|-----|-----------|-----------------|
+| Guest | `SESSION_READY` | 0/6 |
+| Owner | `SESSION_READY` | 6/6 |
+| Manager | `SESSION_READY` | 6/6 |
+| Seller | `SESSION_READY` | 1/6 |
+
+Layout · mock metrics · mock events · textos · orden de secciones — **sin cambios visuales**.
+
+### Resultados técnicos finales
+
+| Gate | Resultado |
+|------|-----------|
+| `npm run typecheck` | ✅ exit 0 |
+| Test files | ✅ **58/58 PASS** |
+| Tests | ✅ **786/786 PASS** |
+| HEAD committeado (base) | `577cb4a8d82ea789b5a2ec6ec9cf834be931de2` — Phase 11-A |
+| Implementación 11-B | ⏳ En working tree — **sin commit** |
+| Push / PR / merge / deploy | ❌ NO |
+
+### Estado del laboratorio
+
+| Área | Estado |
+|------|--------|
+| Staff dashboard data layer | ✅ Unificado bajo `StaffDashboardDataProvider` |
+| Dual data source | ✅ **Cerrada** — renderer desacoplado de fixtures |
+| Runtime real (Supabase/RPC) | ⏳ Phase 11-C+ — **no abierta** |
+| V1 producción | ✅ Intacta |
+| Documentación Phase 11-B | ✅ Cerrada localmente |
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-PHASE-11B-STAFF-DASHBOARD-PROVIDER-UNIFICATION-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-20-PHASE-11B-CLOSURE.md`
+
+*Phase 11-B documentada y cerrada localmente — sin commit · sin push · sin deploy*

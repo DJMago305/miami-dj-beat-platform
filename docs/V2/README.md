@@ -61,18 +61,56 @@ Handoff: `TICKET-V2-END-OF-SESSION-HANDOFF-2026-07-12-001.md`
 | Campo | Valor |
 |-------|-------|
 | **Rama** | `plan/v2-phase-4-api-client` |
-| **HEAD actual** | `58256813a3ad1fb0e0731e6d5ebc2fb00ff83761` — `feat(v2-staff): add operations preview module` |
-| **Commit A** | `77e969d01b0ca8575cfbcc6f718e9839de10461e` — `fix(v2-types): resolve preexisting typecheck debt` |
-| **Commit B** | `58256813a3ad1fb0e0731e6d5ebc2fb00ff83761` — `feat(v2-staff): add operations preview module` |
-| **Phase 8 remediation** | ✅ Committeada localmente (Grupo A) |
-| **Phase 9 Operations Preview** | ✅ Corregida (preview permissions) · **VALIDADO VISUALMENTE POR EL PRODUCT OWNER** · committeada localmente (Grupo B) |
-| **Suite** | **756/756 PASS** · **55/55 files** · typecheck exit 0 |
-| **Documentación Grupo C** | Actualizada — pendiente commit documental separado |
+| **HEAD actual** | `577cb4a8d82ea789b5a2ec6ec9cf834be931de2` — `feat(v2-staff): add provider factory` |
+| **Commit Phase 10** | `c897fc5a8eddc09b6871458335aa592d34a2baa0` — `feat(v2-staff): add dashboard data contracts` |
+| **Commit Phase 11-A** | `577cb4a8d82ea789b5a2ec6ec9cf834be931de2` — `feat(v2-staff): add provider factory` |
+| **Phase 8 typecheck remediation** | ✅ `77e969d` — committeada |
+| **Phase 9 Operations Preview** | ✅ `5825681` · preview permissions corregidas · **VALIDADO VISUALMENTE POR EL PRODUCT OWNER** |
+| **Suite** | **776/776 PASS** · **57/57 files** · typecheck exit 0 |
+| **Vite** | PID 88949 · `http://localhost:5173` |
+| **Working tree** | ✅ Limpio |
 | **Push / PR / merge / deploy** | ❌ NO |
 
-Detalle reapertura: `NOTA-DIARIA-LAB-001.md` § Reapertura y cierre técnico-documental — 2026-07-20 · `SESSION-SUMMARIES/2026-07-12-PHASE-8-9-END-OF-SESSION.md` § Follow-up de reapertura — 2026-07-20.
+#### Estado del dashboard Staff
+
+| Área | Fuente de datos | Estado |
+|------|-----------------|--------|
+| Operations Preview — métricas · eventos | `StaffDashboardDataProvider` vía factory | ✅ Unificado (Phase 10–11-A) |
+| Operations Preview — capability cards | `hasSessionCapability()` / preview role | ✅ Independiente del provider |
+| KPIs · profile · leads · invoices · production · matching · CRM · reports · activity · notifications | `dashboard-mvp-data.ts` directo | ⏳ Pendiente unificación Phase 11-B |
+
+#### Qué quedó desacoplado (Phase 11-A)
+
+- `staff/main.ts` resuelve el provider **una vez** con `resolveStaffDashboardDataProvider()`.
+- `renderStaffDashboardMvp()` recibe `StaffDashboardDataProvider` — no conoce transporte (ApiClient · Supabase · RPC · fetch · Session).
+- Permisos y preview roles permanecen en `staff-preview-role.ts` — **sin mezcla** con el data layer.
+
+#### Qué permanece en `dashboard-mvp-data.ts`
+
+`STAFF_DASHBOARD_KPIS` · `STAFF_PROFILE` · `STAFF_QUICK_ACTIONS` · `STAFF_LEADS` · `STAFF_INVOICES` · `STAFF_PRODUCTION` · `STAFF_MATCHING` · `STAFF_CRM` · `STAFF_REPORTS` · `STAFF_ACTIVITY` · `STAFF_NOTIFICATIONS` — consumidos directamente por `render-staff-dashboard-mvp.ts` fuera de Operations Preview.
+
+#### Próxima fase recomendada (sin abrir)
+
+`TICKET-V2-PHASE-11C-STAFF-RUNTIME-ADAPTER-LAB-001` (o equivalente PO) — adapter lab stub sobre `StaffDashboardDataProvider`; sin Supabase producción · sin RPC · sin Session changes.
+
+Detalle: `NOTA-DIARIA-LAB-001.md` § Cierre de jornada — 2026-07-20 · `SESSION-SUMMARIES/2026-07-20-PHASE-10-11A-END-OF-SESSION.md`.
 
 > La sección «Continuidad — 2026-07-12» arriba conserva el handoff histórico al cierre de sesión del 12 de julio.
+
+### Phase 11-B — Staff dashboard provider unification (2026-07-20)
+
+| Campo | Valor |
+|-------|-------|
+| **Estado** | ✅ **Completada** · **VALIDADA VISUALMENTE POR EL PRODUCT OWNER** |
+| **HEAD base (pre-commit 11-B)** | `577cb4a8d82ea789b5a2ec6ec9cf834be931de2` — `feat(v2-staff): add provider factory` |
+| **Suite** | **786/786 PASS** · **58/58 files** · typecheck exit 0 |
+| **StaffDashboardDataProvider** | Consolidado — Operations Preview + MVP dashboard vía `getMvpView()` |
+| **Renderer** | Desacoplado de `dashboard-mvp-data.ts` — inyección obligatoria desde `main.ts` |
+| **Fixtures** | `dashboard-mvp-data.ts` permanece como mock interno del provider |
+| **Futuro** | Dashboard preparado para fuentes reales sin tocar renderer |
+| **Commit / push** | ⏳ Pendiente autorización PO |
+
+Detalle: `NOTA-DIARIA-LAB-001.md` § Cierre técnico — Phase 11-B · `SESSION-SUMMARIES/2026-07-20-PHASE-11B-CLOSURE.md` · `TICKETS/TICKET-V2-PHASE-11B-STAFF-DASHBOARD-PROVIDER-UNIFICATION-001.md`.
 
 ### Estado actual (módulos operativos local)
 
