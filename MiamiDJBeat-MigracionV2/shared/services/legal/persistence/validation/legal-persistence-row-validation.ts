@@ -2,6 +2,7 @@
 
 import { isLegalDocumentInstanceStatus } from '../../domain/legal-document-instance-status';
 import { isLegalAuditAction } from '../../audit/legal-audit-action';
+import { isValidLegalAuditCorrelationId } from '../../audit/legal-audit-immutability';
 import { LEGAL_AUDIT_ENTITY_TYPES, LEGAL_AUDIT_OUTCOMES } from '../../audit/legal-audit-event-types';
 import { isLegalDocumentSubmissionStatus } from '../../submissions/legal-document-submission-status';
 import { isLegalW9RequestStatus } from '../../workflows/legal-w9-request-status';
@@ -251,6 +252,25 @@ export function validateLegalDocumentSubmissionRow(
   );
 }
 
+function validateRelatedEntityIdsArray(
+  value: unknown,
+): LegalPersistenceResult<readonly string[]> {
+  if (!Array.isArray(value)) {
+    return legalPersistenceError('invalid_persistence_row', 'related_entity_ids must be an array.');
+  }
+  const normalized: string[] = [];
+  for (const entry of value) {
+    if (typeof entry !== 'string' || !entry.trim()) {
+      return legalPersistenceError(
+        'invalid_persistence_row',
+        'related_entity_ids entries must be non-empty strings.',
+      );
+    }
+    normalized.push(entry.trim());
+  }
+  return legalPersistenceSuccess(Object.freeze(normalized));
+}
+
 export function validateLegalAuditEventRow(row: LegalAuditEventRow): LegalPersistenceResult<LegalAuditEventRow> {
   const id = requireUuid(row.id, 'id');
   if (!id.ok) return id;
@@ -272,8 +292,17 @@ export function validateLegalAuditEventRow(row: LegalAuditEventRow): LegalPersis
   if (!occurredAt.ok) return occurredAt;
   const metadata = validateMetadata(row.metadata, 'metadata');
   if (!metadata.ok) return metadata;
-  const related = validateMetadata(row.related_entity_ids, 'related_entity_ids');
+  const related = validateRelatedEntityIdsArray(row.related_entity_ids);
   if (!related.ok) return related;
+  const correlationId = requireBusinessId(
+    row.correlation_id,
+    /^LAC-[0-9]{6,}$/,
+    'correlation_id',
+  );
+  if (!correlationId.ok) return correlationId;
+  if (!isValidLegalAuditCorrelationId(correlationId.value)) {
+    return legalPersistenceError('invalid_persistence_row', 'correlation_id must match LAC-###### format.');
+  }
   return legalPersistenceSuccess(
     Object.freeze({
       ...row,
@@ -281,6 +310,7 @@ export function validateLegalAuditEventRow(row: LegalAuditEventRow): LegalPersis
       business_id: businessId.value,
       metadata: metadata.value,
       related_entity_ids: related.value,
+      correlation_id: correlationId.value,
     }),
   );
 }

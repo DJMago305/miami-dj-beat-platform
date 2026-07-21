@@ -23,6 +23,9 @@ import {
   legalPersistenceSuccess,
   type LegalPersistenceResult,
 } from '../legal-persistence-errors';
+import {
+  mapRelatedEntityIdsArrayToDomain,
+} from '../shared/legal-audit-related-entity-ids';
 import type {
   LegalAuditEventRow,
   LegalDocumentInstanceRow,
@@ -240,12 +243,7 @@ export function mapLegalAuditEventRowToDomain(row: LegalAuditEventRow): LegalPer
   if (!validated.ok) {
     return validated;
   }
-  const related: Record<string, string> = {};
-  for (const [key, value] of Object.entries(validated.value.related_entity_ids)) {
-    if (typeof value === 'string') {
-      related[key] = value;
-    }
-  }
+  const related = mapRelatedEntityIdsArrayToDomain(validated.value.related_entity_ids);
   const event = freezeLegalAuditEvent({
     id: validated.value.business_id,
     sequence: validated.value.sequence,
@@ -265,7 +263,7 @@ export function mapLegalAuditEventRowToDomain(row: LegalAuditEventRow): LegalPer
     ...(validated.value.next_state ? { nextState: Object.freeze({ ...validated.value.next_state }) } : {}),
     outcome: validated.value.outcome as LegalAuditEvent['outcome'],
     ...(validated.value.reason_code ? { reasonCode: validated.value.reason_code } : {}),
-    ...(validated.value.correlation_id ? { correlationId: validated.value.correlation_id } : {}),
+    correlationId: validated.value.correlation_id,
     ...(validated.value.request_id ? { requestId: validated.value.request_id } : {}),
     metadata: Object.freeze({ ...validated.value.metadata }),
   });

@@ -25,6 +25,9 @@ import {
   type LegalReadAccessContext,
 } from '../legal-read-access-context';
 import {
+  resolveAuditRecipientIdFromRelatedEntityIds,
+} from '../shared/legal-audit-related-entity-ids';
+import {
   canReadAuditEventForContext,
   ensureAuditReadAccess,
   ensureDeletedSubmissionAccess,
@@ -277,10 +280,7 @@ export function createMemoryLegalReadRepositories(
     const sorted = sortAuditRowsBySequence(rows);
     const visible = Object.freeze(
       sorted.filter((row) => {
-        const recipientId =
-          typeof row.related_entity_ids.recipientId === 'string'
-            ? row.related_entity_ids.recipientId
-            : null;
+        const recipientId = resolveAuditRecipientIdFromRelatedEntityIds(row.related_entity_ids);
         return canReadAuditEventForContext(context, recipientId, row.actor_id, row.actor_portal);
       }),
     );
@@ -297,10 +297,7 @@ export function createMemoryLegalReadRepositories(
       if (!access.ok) return access;
       const row = store.auditEvents.find((item) => item.business_id === eventId.trim());
       if (!row) return notFound('Audit event', eventId);
-      const recipientId =
-        typeof row.related_entity_ids.recipientId === 'string'
-          ? row.related_entity_ids.recipientId
-          : null;
+      const recipientId = resolveAuditRecipientIdFromRelatedEntityIds(row.related_entity_ids);
       if (
         !canReadAuditEventForContext(context, recipientId, row.actor_id, row.actor_portal)
       ) {

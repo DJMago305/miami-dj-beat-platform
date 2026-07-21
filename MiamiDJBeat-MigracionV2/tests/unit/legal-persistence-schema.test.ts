@@ -89,6 +89,23 @@ describe('LC-11 persistence schema validation', () => {
     expect(validateLegalAuditEventRow(LC11_FIXTURE_AUDIT_ROWS[0]).ok).toBe(true);
     const auditMapped = mapLegalAuditEventRowToDomain(LC11_FIXTURE_AUDIT_ROWS[0]);
     expect(auditMapped.ok && auditMapped.value.sequence).toBe(1);
+    if (auditMapped.ok) {
+      expect(auditMapped.value.correlationId).toBe('LAC-000101');
+      expect(auditMapped.value.relatedEntityIds.recipientId).toBe('ART-DEMO-001');
+    }
+  });
+
+  it('rejects audit rows with object-shaped related_entity_ids or missing correlation_id', () => {
+    const invalidRelated = validateLegalAuditEventRow({
+      ...LC11_FIXTURE_AUDIT_ROWS[0],
+      related_entity_ids: [''] as unknown as readonly string[],
+    });
+    expect(invalidRelated.ok).toBe(false);
+    const invalidCorrelation = validateLegalAuditEventRow({
+      ...LC11_FIXTURE_AUDIT_ROWS[0],
+      correlation_id: 'INVALID',
+    });
+    expect(invalidCorrelation.ok).toBe(false);
   });
 
   it('maps template row to contract domain', () => {

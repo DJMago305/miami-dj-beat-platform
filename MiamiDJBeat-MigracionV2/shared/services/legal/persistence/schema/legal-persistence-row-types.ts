@@ -159,12 +159,12 @@ export type LegalAuditEventRow = {
   readonly action: string;
   readonly entity_type: string;
   readonly entity_id: string;
-  readonly related_entity_ids: LegalPersistenceMetadata;
+  readonly related_entity_ids: readonly string[];
   readonly previous_state: LegalPersistenceMetadata | null;
   readonly next_state: LegalPersistenceMetadata | null;
   readonly outcome: string;
   readonly reason_code: string | null;
-  readonly correlation_id: string | null;
+  readonly correlation_id: string;
   readonly request_id: string | null;
   readonly metadata: LegalPersistenceMetadata;
 };
