@@ -25,6 +25,8 @@ import type {
   StaffLegalCenterViewModel,
   StaffLegalPortalRole,
 } from './legal-portal-view-models';
+import { appendW9CollectionSections } from './legal-w9-workflow-shell-mapper';
+import { LEGAL_W9_DEMO_ARTIST_RECIPIENT_ID } from '../workflows';
 import type { LegalProviderContext } from './legal-provider-factory';
 
 const CATEGORY_TITLES: Record<LegalDocumentCategory, string> = {
@@ -324,7 +326,8 @@ export async function buildStaffLegalCenterShellViewModel(
           ])
         : Object.freeze([]);
 
-  return buildStaffShellFromViewModel(model, sections);
+  const withW9Collection = appendW9CollectionSections(sections, { portal: 'staff', role: input.role });
+  return buildStaffShellFromViewModel(model, withW9Collection);
 }
 
 export async function buildArtistLegalCenterShellViewModel(
@@ -336,10 +339,14 @@ export async function buildArtistLegalCenterShellViewModel(
     profileId,
     viewerProfileId: input.viewerProfileId ?? profileId,
   });
-  const sections =
+  const baseSections =
     model.state === 'ready'
       ? await buildSectionsForProfile(provider, profileId, 'artist', { includeTaxSection: true })
       : Object.freeze([]);
+  const sections = appendW9CollectionSections(baseSections, {
+    portal: 'artist',
+    artistActorId: LEGAL_W9_DEMO_ARTIST_RECIPIENT_ID,
+  });
   return buildArtistShellFromViewModel(model, sections);
 }
 

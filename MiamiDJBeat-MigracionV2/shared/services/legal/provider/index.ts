@@ -7,6 +7,7 @@ export * from './legal-portal-adapters';
 export * from './legal-lab-preview-render';
 export * from './legal-center-shell-mapper';
 export * from './legal-template-asset-download-mapper';
+export * from './legal-w9-workflow-shell-mapper';
 export {
   resolveLegalTemplateAssetUrl,
   listSharedLegalTemplateAssetsForPortal,
