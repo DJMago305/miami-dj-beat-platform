@@ -3,9 +3,11 @@ import { bootstrapPortal } from '../shared/runtime/index';
 import { STAFF_SHELL_CONTENT } from '../shared/navigation/staff-shell.config';
 import { resolveStaffPortalComponentGuards } from './component-guards-wire';
 import { resolveStaffDashboardDataProvider } from './data/staff-dashboard-provider-factory';
+import { resolveStaffLegalPortalBundle } from './legal/staff-legal-provider-wire';
 import { renderStaffDashboardMvp } from './render-staff-dashboard-mvp';
 import { applyStaffPreviewRoleForDev } from './staff-preview-role';
 import '../shared/layout/portal-shell.css';
+import '../shared/services/legal/ui/legal-center-shell.css';
 import './dashboard-mvp.css';
 
 function main(): void {
@@ -17,6 +19,7 @@ function main(): void {
     applyStaffPreviewRoleForDev();
   }
   const staffDataProvider = resolveStaffDashboardDataProvider();
+  const staffLegalBundle = resolveStaffLegalPortalBundle();
   const guards = boot.ok ? resolveStaffPortalComponentGuards() : { componentCount: 0 };
 
   bootstrapPortal({
@@ -28,6 +31,8 @@ function main(): void {
       const mainRegion = root.querySelector<HTMLElement>('[data-mdj-shell-region="main"]');
       if (!mainRegion) return;
       renderStaffDashboardMvp(mainRegion, staffDataProvider);
+      const contentGrid = mainRegion.querySelector('.mdj-client-dashboard__grid');
+      staffLegalBundle.renderLegalCenterShell(contentGrid ?? mainRegion);
     },
   });
 }

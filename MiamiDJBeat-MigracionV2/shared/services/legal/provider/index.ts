@@ -5,3 +5,4 @@ export * from './legal-provider-factory';
 export * from './legal-portal-view-models';
 export * from './legal-portal-adapters';
 export * from './legal-lab-preview-render';
+export * from './legal-center-shell-mapper';
