@@ -43,6 +43,7 @@ export type LegalW9Request = {
   readonly viewedAt?: string;
   readonly completedAt?: string;
   readonly metadata: LegalW9RequestMetadata;
+  readonly submissionId?: string;
 };
 
 export type RequestW9Input = {

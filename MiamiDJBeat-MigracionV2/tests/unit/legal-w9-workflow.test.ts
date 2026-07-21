@@ -442,10 +442,10 @@ describe('LC-7 W-9 workflow — transition matrix', () => {
       requested: ['available', 'cancelled', 'expired'],
       available: ['viewed', 'cancelled', 'expired'],
       viewed: ['awaiting_upload', 'cancelled', 'expired'],
-      awaiting_upload: ['cancelled', 'expired'],
+      awaiting_upload: ['submitted', 'cancelled', 'expired'],
       expired: [],
       cancelled: [],
-      submitted: [],
+      submitted: ['accepted', 'rejected'],
       accepted: [],
       rejected: [],
     } as const;
@@ -509,7 +509,7 @@ describe('LC-7 regression — LC-5/LC-6 and client fiscal isolation', () => {
     const artistHtml = renderLegalCenterShell(artistShell).outerHTML;
     expect(artistHtml).toContain('Assigned W-9 Request');
     expect(artistHtml).toContain('Download W-9');
-    expect(artistHtml).toContain('Upload coming soon');
+    expect(artistHtml).toContain('Submission pipeline ready');
   });
 
   it('staff seller shell omits W-9 collection section', async () => {

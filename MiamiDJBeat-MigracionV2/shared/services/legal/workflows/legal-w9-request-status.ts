@@ -11,14 +11,14 @@ export const LEGAL_W9_OPERATIONAL_STATUSES = [
 
 export type LegalW9OperationalStatus = (typeof LEGAL_W9_OPERATIONAL_STATUSES)[number];
 
-/** Reserved for LC-8 — no public transitions in LC-7. */
-export const LEGAL_W9_RESERVED_STATUSES = ['submitted', 'accepted', 'rejected'] as const;
+/** Reserved for LC-8 — now operational via submission flow. */
+export const LEGAL_W9_LC8_STATUSES = ['submitted', 'accepted', 'rejected'] as const;
 
-export type LegalW9ReservedStatus = (typeof LEGAL_W9_RESERVED_STATUSES)[number];
+export type LegalW9ReservedStatus = (typeof LEGAL_W9_LC8_STATUSES)[number];
 
 export const LEGAL_W9_REQUEST_STATUSES = [
   ...LEGAL_W9_OPERATIONAL_STATUSES,
-  ...LEGAL_W9_RESERVED_STATUSES,
+  ...LEGAL_W9_LC8_STATUSES,
 ] as const;
 
 export type LegalW9RequestStatus = (typeof LEGAL_W9_REQUEST_STATUSES)[number];
@@ -26,7 +26,6 @@ export type LegalW9RequestStatus = (typeof LEGAL_W9_REQUEST_STATUSES)[number];
 export const TERMINAL_LEGAL_W9_REQUEST_STATUSES = [
   'expired',
   'cancelled',
-  'submitted',
   'accepted',
   'rejected',
 ] as const satisfies readonly LegalW9RequestStatus[];

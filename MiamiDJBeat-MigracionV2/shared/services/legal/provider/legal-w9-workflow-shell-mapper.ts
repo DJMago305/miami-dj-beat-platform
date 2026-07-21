@@ -26,6 +26,12 @@ function mapW9StatusToCardStatus(status: LegalW9Request['status']): LegalDocumen
       return 'viewed';
     case 'awaiting_upload':
       return 'pending';
+    case 'submitted':
+      return 'pending';
+    case 'accepted':
+      return 'signed';
+    case 'rejected':
+      return 'rejected';
     case 'expired':
       return 'expired';
     case 'cancelled':
@@ -33,6 +39,21 @@ function mapW9StatusToCardStatus(status: LegalW9Request['status']): LegalDocumen
     default:
       return 'pending';
   }
+}
+
+function resolveStaffSubmissionStatusPreview(
+  request: LegalW9Request,
+  actor: LegalWorkflowActor,
+  service: InMemoryLegalW9WorkflowService,
+): string {
+  const preview = service.getW9SubmissionPublicView(actor, request.id);
+  if (preview.ok && preview.value) {
+    return `Submission status: ${preview.value.statusLabel}`;
+  }
+  if (request.status === 'awaiting_upload') {
+    return 'Submission status: Awaiting upload';
+  }
+  return 'Submission status: Pending';
 }
 
 function resolveRecipientDownloadAction(
@@ -51,10 +72,15 @@ function resolveRecipientDownloadAction(
   });
 }
 
-function buildStaffRequestCard(request: LegalW9Request): LegalDocumentCardViewModel {
+function buildStaffRequestCard(
+  request: LegalW9Request,
+  actor: LegalWorkflowActor,
+  service: InMemoryLegalW9WorkflowService,
+): LegalDocumentCardViewModel {
+  const submissionPreview = resolveStaffSubmissionStatusPreview(request, actor, service);
   return Object.freeze({
     id: request.id,
-    title: `${request.recipient.displayName} · ${request.recipient.recipientType.toUpperCase()}`,
+    title: `${request.recipient.displayName} · ${request.recipient.recipientType.toUpperCase()} · ${submissionPreview}`,
     type: 'w9',
     status: mapW9StatusToCardStatus(request.status),
     createdAt: request.requestedAt,
@@ -66,10 +92,23 @@ function buildStaffRequestCard(request: LegalW9Request): LegalDocumentCardViewMo
 
 function buildArtistRequestCard(request: LegalW9Request): LegalDocumentCardViewModel {
   const downloadAction = resolveRecipientDownloadAction(request, 'artist');
+  const isPreSubmission =
+    request.status === 'available' ||
+    request.status === 'viewed' ||
+    request.status === 'awaiting_upload';
+  const pipelineTitle = isPreSubmission
+    ? 'Assigned W-9 Request · Submission pipeline ready'
+    : request.status === 'submitted'
+      ? 'Assigned W-9 Request · Submission received'
+      : request.status === 'accepted'
+        ? 'Assigned W-9 Request · Submission accepted'
+        : request.status === 'rejected'
+          ? 'Assigned W-9 Request · Submission rejected'
+          : 'Assigned W-9 Request';
 
   return Object.freeze({
     id: request.id,
-    title: 'Assigned W-9 Request · Upload coming soon',
+    title: pipelineTitle,
     type: 'w9',
     status: mapW9StatusToCardStatus(request.status),
     createdAt: request.requestedAt,
@@ -101,7 +140,7 @@ export function buildStaffW9CollectionSection(
   const listed = service.listW9Requests(actor);
   const requestCards =
     listed.ok && listed.value.length > 0
-      ? listed.value.map((request) => buildStaffRequestCard(request))
+      ? listed.value.map((request) => buildStaffRequestCard(request, actor, service))
       : [];
 
   const documents = Object.freeze([

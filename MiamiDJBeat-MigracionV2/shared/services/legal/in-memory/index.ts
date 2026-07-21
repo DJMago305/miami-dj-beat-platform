@@ -8,3 +8,4 @@ export * from './legal-projection-builders';
 export * from './legal-status-resolver';
 export * from './in-memory-legal-document-instance-service';
 export * from './in-memory-legal-w9-workflow-service';
+export * from './in-memory-legal-document-storage';

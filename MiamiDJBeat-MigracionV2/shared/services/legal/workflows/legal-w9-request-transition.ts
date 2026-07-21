@@ -10,7 +10,6 @@ import { freezeLegalW9Request } from './legal-w9-request-immutability';
 import type { LegalW9Request } from './legal-w9-request-types';
 import {
   isTerminalLegalW9RequestStatus,
-  type LegalW9OperationalStatus,
   type LegalW9RequestStatus,
 } from './legal-w9-request-status';
 
@@ -18,10 +17,10 @@ const ALLOWED_TRANSITIONS = {
   requested: ['available', 'cancelled', 'expired'],
   available: ['viewed', 'cancelled', 'expired'],
   viewed: ['awaiting_upload', 'cancelled', 'expired'],
-  awaiting_upload: ['cancelled', 'expired'],
+  awaiting_upload: ['submitted', 'cancelled', 'expired'],
   expired: [],
   cancelled: [],
-  submitted: [],
+  submitted: ['accepted', 'rejected'],
   accepted: [],
   rejected: [],
 } as const satisfies Record<LegalW9RequestStatus, readonly LegalW9RequestStatus[]>;
@@ -41,7 +40,7 @@ export function canTransitionLegalW9RequestStatus(
 
 export function applyLegalW9RequestStatusTransition(
   request: LegalW9Request,
-  nextStatus: LegalW9OperationalStatus,
+  nextStatus: LegalW9RequestStatus,
   updatedAt: string,
 ): LegalW9WorkflowResult<LegalW9Request> {
   if (isTerminalLegalW9RequestStatus(request.status)) {
@@ -71,6 +70,12 @@ export function applyLegalW9RequestStatusTransition(
       updatedAt,
       ...(nextStatus === 'viewed' || nextStatus === 'awaiting_upload'
         ? { viewedAt: request.viewedAt ?? updatedAt }
+        : {}),
+      ...(nextStatus === 'submitted'
+        ? { reviewStatus: 'pending_review' as const }
+        : {}),
+      ...(nextStatus === 'accepted' || nextStatus === 'rejected'
+        ? { reviewStatus: 'complete' as const, completedAt: updatedAt }
         : {}),
     }),
   );

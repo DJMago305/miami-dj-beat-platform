@@ -7,10 +7,28 @@ import {
 } from '../domain/legal-document-instance-clock';
 import { isValidLegalDocumentInstanceTimestamp } from '../domain/legal-document-instance-factory';
 import type { LegalDocumentInstanceStatus } from '../domain/legal-document-instance-status';
+import { canTransitionLegalDocumentStatus } from '../domain/legal-document-instance-transition';
 import {
   createInMemoryLegalDocumentInstanceService,
   type InMemoryLegalDocumentInstanceService,
 } from '../in-memory/in-memory-legal-document-instance-service';
+import {
+  createInMemoryLegalDocumentStorage,
+} from '../in-memory/in-memory-legal-document-storage';
+import {
+  canActorDeleteSubmissions,
+  canActorListSubmissions,
+  canActorReviewSubmissions,
+  canActorSubmitW9Document,
+  canActorViewSubmission,
+} from '../submissions/legal-document-submission-permissions';
+import { toSubmissionPublicView } from '../submissions/legal-document-submission-transition';
+import type {
+  LegalDocumentSubmission,
+  LegalDocumentSubmissionPublicView,
+  LegalDocumentSubmissionSubmittedBy,
+} from '../submissions/legal-document-submission-types';
+import type { LegalDocumentStoragePort } from '../submissions/legal-document-storage-port';
 import { mapW9WorkflowStatusToInstanceStatus } from '../workflows/legal-w9-instance-mapping';
 import {
   applyLegalW9RequestStatusTransition,
@@ -31,7 +49,6 @@ import {
 import {
   isActiveLegalW9RequestStatus,
   isTerminalLegalW9RequestStatus,
-  type LegalW9OperationalStatus,
   type LegalW9RequestStatus,
 } from '../workflows/legal-w9-request-status';
 import type {
@@ -54,9 +71,22 @@ import {
   type LegalWorkflowActor,
 } from '../workflows/legal-w9-workflow-actor';
 
+export type SubmitW9DocumentInput = {
+  readonly actor: LegalWorkflowActor;
+  readonly workflowId: LegalW9RequestId;
+  readonly filename: string;
+  readonly mimeType: string;
+  readonly sizeBytes: number;
+  readonly checksum: string;
+  readonly contentReference: string;
+  readonly submittedByDisplayName: string;
+  readonly metadata?: Readonly<Record<string, string | number | boolean | null>>;
+};
+
 export type InMemoryLegalW9WorkflowServiceOptions = {
   readonly clock?: LegalDocumentInstanceClock;
   readonly instanceService?: InMemoryLegalDocumentInstanceService;
+  readonly storage?: LegalDocumentStoragePort;
   readonly seedDemo?: boolean;
 };
 
@@ -133,6 +163,7 @@ function verifyW9TemplateForRecipient(
 export class InMemoryLegalW9WorkflowService {
   private readonly clock: LegalDocumentInstanceClock;
   private readonly instanceService: InMemoryLegalDocumentInstanceService;
+  private readonly storage: LegalDocumentStoragePort;
   private readonly requests = new Map<LegalW9RequestId, LegalW9Request>();
   private sequence = 0;
 
@@ -143,10 +174,19 @@ export class InMemoryLegalW9WorkflowService {
       createInMemoryLegalDocumentInstanceService({
         clock: this.clock,
       });
+    this.storage =
+      options.storage ??
+      createInMemoryLegalDocumentStorage({
+        clock: this.clock,
+      });
 
     if (options.seedDemo) {
       this.seedDemoRequest();
     }
+  }
+
+  getStoragePort(): LegalDocumentStoragePort {
+    return this.storage;
   }
 
   private seedDemoRequest(): void {
@@ -243,6 +283,16 @@ export class InMemoryLegalW9WorkflowService {
 
     const path: LegalDocumentInstanceStatus[] = [];
     let cursor = currentStatus;
+    if (targetStatus === 'signed' || targetStatus === 'rejected') {
+      const moved = this.instanceService.transitionStatus(documentInstanceId, targetStatus);
+      if (!moved.ok) {
+        return legalW9WorkflowError('w9_instance_transition_failed', moved.message, {
+          code: moved.code,
+        });
+      }
+      return legalW9WorkflowSuccess(true);
+    }
+
     const transitions: Array<[LegalDocumentInstanceStatus, LegalDocumentInstanceStatus]> = [
       ['draft', 'pending'],
       ['pending', 'sent'],
@@ -272,6 +322,84 @@ export class InMemoryLegalW9WorkflowService {
     }
 
     return legalW9WorkflowSuccess(true);
+  }
+
+  private validateInstanceSyncForWorkflowStatus(
+    documentInstanceId: string,
+    workflowStatus: LegalW9RequestStatus,
+  ): LegalW9WorkflowResult<true> {
+    const targetStatus = mapW9WorkflowStatusToInstanceStatus(workflowStatus);
+    if (!targetStatus) {
+      return legalW9WorkflowSuccess(true);
+    }
+
+    const current = this.instanceService.getInstanceById(documentInstanceId);
+    if (!current.ok) {
+      return legalW9WorkflowError(
+        'w9_instance_transition_failed',
+        current.message,
+        Object.freeze({ code: current.code }),
+      );
+    }
+
+    return this.validateInstanceCanReachStatus(current.value.status, targetStatus);
+  }
+
+  private validateInstanceCanReachStatus(
+    currentStatus: LegalDocumentInstanceStatus,
+    targetStatus: LegalDocumentInstanceStatus,
+  ): LegalW9WorkflowResult<true> {
+    if (currentStatus === targetStatus) {
+      return legalW9WorkflowSuccess(true);
+    }
+
+    if (targetStatus === 'signed' || targetStatus === 'rejected') {
+      if (!canTransitionLegalDocumentStatus(currentStatus, targetStatus)) {
+        return legalW9WorkflowError(
+          'w9_instance_transition_failed',
+          `Unable to align instance from ${currentStatus} to ${targetStatus}.`,
+          Object.freeze({ currentStatus, targetStatus }),
+        );
+      }
+      return legalW9WorkflowSuccess(true);
+    }
+
+    const transitions: Array<[LegalDocumentInstanceStatus, LegalDocumentInstanceStatus]> = [
+      ['draft', 'pending'],
+      ['pending', 'sent'],
+      ['sent', 'viewed'],
+    ];
+    let cursor = currentStatus;
+    while (cursor !== targetStatus) {
+      const step = transitions.find(([from]) => from === cursor);
+      if (!step) {
+        return legalW9WorkflowError(
+          'w9_instance_transition_failed',
+          `Unable to align instance from ${cursor} to ${targetStatus}.`,
+          Object.freeze({ currentStatus: cursor, targetStatus }),
+        );
+      }
+      if (!canTransitionLegalDocumentStatus(cursor, step[1])) {
+        return legalW9WorkflowError(
+          'w9_instance_transition_failed',
+          `Unable to align instance from ${cursor} to ${targetStatus}.`,
+          Object.freeze({ currentStatus: cursor, targetStatus }),
+        );
+      }
+      cursor = step[1];
+    }
+
+    return legalW9WorkflowSuccess(true);
+  }
+
+  private applyPersistedWorkflowTransition(
+    request: LegalW9Request,
+  ): LegalW9WorkflowResult<LegalW9Request> {
+    const synced = this.syncInstanceToWorkflowStatus(request.documentInstanceId, request.status);
+    if (!synced.ok) {
+      return synced;
+    }
+    return legalW9WorkflowSuccess(this.persistRequest(request));
   }
 
   private findActiveRequestForRecipient(
@@ -489,7 +617,7 @@ export class InMemoryLegalW9WorkflowService {
   private transitionWorkflow(
     actor: LegalWorkflowActor,
     id: LegalW9RequestId,
-    nextStatus: LegalW9OperationalStatus,
+    nextStatus: LegalW9RequestStatus,
     transitionFn: (
       request: LegalW9Request,
       updatedAt: string,
@@ -588,6 +716,463 @@ export class InMemoryLegalW9WorkflowService {
     }
 
     return this.transitionWorkflow(actor, id, 'expired');
+  }
+
+  private buildSubmittedBy(
+    actor: LegalWorkflowActor,
+    displayName: string,
+  ): LegalDocumentSubmissionSubmittedBy {
+    return Object.freeze({
+      actorId: actor.actorId,
+      displayName: displayName.trim(),
+      portal: actor.portal,
+      ...(actor.portal === 'staff' && actor.role ? { role: actor.role } : {}),
+    });
+  }
+
+  private getLinkedSubmission(
+    request: LegalW9Request,
+  ): LegalW9WorkflowResult<LegalDocumentSubmission> | ReturnType<typeof legalW9WorkflowError> {
+    if (!request.submissionId) {
+      return legalW9WorkflowError(
+        'w9_invalid_status_transition',
+        `W-9 request ${request.id} has no linked submission.`,
+        Object.freeze({ requestId: request.id }),
+      );
+    }
+    const submission = this.storage.getSubmission(request.submissionId);
+    if (!submission.ok) {
+      return legalW9WorkflowError(
+        'w9_instance_transition_failed',
+        submission.message,
+        Object.freeze({ code: submission.code }),
+      );
+    }
+    if (submission.value.workflowId !== request.id) {
+      return legalW9WorkflowError(
+        'w9_invalid_status_transition',
+        `Submission ${submission.value.id} is not linked to workflow ${request.id}.`,
+      );
+    }
+    return legalW9WorkflowSuccess(submission.value);
+  }
+
+  submitW9Document(input: SubmitW9DocumentInput): LegalW9WorkflowResult<LegalW9Request> {
+    if (!canActorSubmitW9Document(input.actor)) {
+      return legalW9WorkflowError(
+        'w9_actor_not_authorized',
+        'Only artists can submit W-9 documents.',
+      );
+    }
+
+    const current = this.requests.get(input.workflowId);
+    if (!current) {
+      return legalW9WorkflowError(
+        'w9_request_not_found',
+        `W-9 request not found: ${input.workflowId}`,
+        Object.freeze({ id: input.workflowId }),
+      );
+    }
+
+    const auth = this.authorizeRead(input.actor, current);
+    if (!auth.ok) {
+      return auth;
+    }
+
+    if (current.status !== 'awaiting_upload') {
+      return legalW9WorkflowError(
+        'w9_invalid_status_transition',
+        `W-9 request ${current.id} must be awaiting_upload before submission.`,
+        Object.freeze({ status: current.status }),
+      );
+    }
+
+    const now = this.now();
+    const planned = applyLegalW9RequestStatusTransition(current, 'submitted', now);
+    if (!planned.ok) {
+      return planned;
+    }
+
+    const instancePlan = this.validateInstanceSyncForWorkflowStatus(
+      current.documentInstanceId,
+      planned.value.status,
+    );
+    if (!instancePlan.ok) {
+      return instancePlan;
+    }
+
+    const stored = this.storage.storeSubmission({
+      documentInstanceId: current.documentInstanceId,
+      workflowId: current.id,
+      templateId: current.templateId,
+      templateVersionId: current.templateVersionId,
+      filename: input.filename,
+      mimeType: input.mimeType,
+      sizeBytes: input.sizeBytes,
+      checksum: input.checksum,
+      contentReference: input.contentReference,
+      submittedBy: this.buildSubmittedBy(input.actor, input.submittedByDisplayName),
+      metadata: input.metadata,
+      initialStatus: 'uploaded',
+    });
+    if (!stored.ok) {
+      return legalW9WorkflowError(
+        'w9_instance_transition_failed',
+        stored.message,
+        Object.freeze({ code: stored.code }),
+      );
+    }
+
+    const linked = freezeLegalW9Request({
+      ...planned.value,
+      submissionId: stored.value.id,
+    });
+
+    const applied = this.applyPersistedWorkflowTransition(linked);
+    if (!applied.ok) {
+      const purged = this.storage.purgeUnlinkedSubmission(stored.value.id);
+      if (!purged.ok) {
+        return legalW9WorkflowError(
+          'w9_instance_transition_failed',
+          purged.message,
+          Object.freeze({ code: purged.code }),
+        );
+      }
+      return applied;
+    }
+
+    return applied;
+  }
+
+  markSubmissionUnderReview(
+    actor: LegalWorkflowActor,
+    workflowId: LegalW9RequestId,
+  ): LegalW9WorkflowResult<LegalDocumentSubmission> {
+    if (!canActorReviewSubmissions(actor)) {
+      return legalW9WorkflowError(
+        'w9_actor_not_authorized',
+        'Only staff owner/manager can review W-9 submissions.',
+      );
+    }
+
+    const current = this.requests.get(workflowId);
+    if (!current) {
+      return legalW9WorkflowError('w9_request_not_found', `W-9 request not found: ${workflowId}`, {
+        id: workflowId,
+      });
+    }
+
+    if (current.status !== 'submitted') {
+      return legalW9WorkflowError(
+        'w9_invalid_status_transition',
+        `W-9 request ${workflowId} must be submitted before review.`,
+        Object.freeze({ status: current.status }),
+      );
+    }
+
+    const linked = this.getLinkedSubmission(current);
+    if (!linked.ok) {
+      return linked;
+    }
+
+    if (!canActorViewSubmission(actor, linked.value.submittedBy)) {
+      return legalW9WorkflowError(
+        'w9_actor_not_authorized',
+        'Actor is not authorized to review this submission.',
+      );
+    }
+
+    const reviewed = this.storage.transitionSubmission(linked.value.id, 'under_review');
+    if (!reviewed.ok) {
+      return legalW9WorkflowError(
+        'w9_instance_transition_failed',
+        reviewed.message,
+        Object.freeze({ code: reviewed.code }),
+      );
+    }
+
+    this.persistRequest(
+      freezeLegalW9Request({
+        ...current,
+        updatedAt: this.now(),
+      }),
+    );
+
+    return legalW9WorkflowSuccess(reviewed.value);
+  }
+
+  acceptSubmission(
+    actor: LegalWorkflowActor,
+    workflowId: LegalW9RequestId,
+  ): LegalW9WorkflowResult<LegalW9Request> {
+    if (!canActorReviewSubmissions(actor)) {
+      return legalW9WorkflowError(
+        'w9_actor_not_authorized',
+        'Only staff owner/manager can accept W-9 submissions.',
+      );
+    }
+
+    const current = this.requests.get(workflowId);
+    if (!current) {
+      return legalW9WorkflowError('w9_request_not_found', `W-9 request not found: ${workflowId}`, {
+        id: workflowId,
+      });
+    }
+
+    if (isTerminalLegalW9RequestStatus(current.status)) {
+      return legalW9WorkflowError(
+        'w9_request_already_terminal',
+        `W-9 request ${workflowId} is terminal (${current.status}).`,
+        Object.freeze({ status: current.status }),
+      );
+    }
+
+    const linked = this.getLinkedSubmission(current);
+    if (!linked.ok) {
+      return linked;
+    }
+
+    if (linked.value.status !== 'under_review') {
+      return legalW9WorkflowError(
+        'w9_invalid_status_transition',
+        `Submission ${linked.value.id} must be under_review before acceptance.`,
+        Object.freeze({ submissionStatus: linked.value.status }),
+      );
+    }
+
+    const now = this.now();
+    const planned = applyLegalW9RequestStatusTransition(current, 'accepted', now);
+    if (!planned.ok) {
+      return planned;
+    }
+
+    const instancePlan = this.validateInstanceSyncForWorkflowStatus(
+      current.documentInstanceId,
+      planned.value.status,
+    );
+    if (!instancePlan.ok) {
+      return instancePlan;
+    }
+
+    const acceptedSubmission = this.storage.transitionSubmission(linked.value.id, 'accepted');
+    if (!acceptedSubmission.ok) {
+      return legalW9WorkflowError(
+        'w9_instance_transition_failed',
+        acceptedSubmission.message,
+        Object.freeze({ code: acceptedSubmission.code }),
+      );
+    }
+
+    const applied = this.applyPersistedWorkflowTransition(planned.value);
+    if (!applied.ok) {
+      const rollback = this.storage.transitionSubmission(linked.value.id, 'under_review');
+      if (!rollback.ok) {
+        return legalW9WorkflowError(
+          'w9_instance_transition_failed',
+          rollback.message,
+          Object.freeze({ code: rollback.code }),
+        );
+      }
+      return applied;
+    }
+
+    return applied;
+  }
+
+  rejectSubmission(
+    actor: LegalWorkflowActor,
+    workflowId: LegalW9RequestId,
+  ): LegalW9WorkflowResult<LegalW9Request> {
+    if (!canActorReviewSubmissions(actor)) {
+      return legalW9WorkflowError(
+        'w9_actor_not_authorized',
+        'Only staff owner/manager can reject W-9 submissions.',
+      );
+    }
+
+    const current = this.requests.get(workflowId);
+    if (!current) {
+      return legalW9WorkflowError('w9_request_not_found', `W-9 request not found: ${workflowId}`, {
+        id: workflowId,
+      });
+    }
+
+    if (isTerminalLegalW9RequestStatus(current.status)) {
+      return legalW9WorkflowError(
+        'w9_request_already_terminal',
+        `W-9 request ${workflowId} is terminal (${current.status}).`,
+        Object.freeze({ status: current.status }),
+      );
+    }
+
+    const linked = this.getLinkedSubmission(current);
+    if (!linked.ok) {
+      return linked;
+    }
+
+    if (linked.value.status !== 'under_review') {
+      return legalW9WorkflowError(
+        'w9_invalid_status_transition',
+        `Submission ${linked.value.id} must be under_review before rejection.`,
+        Object.freeze({ submissionStatus: linked.value.status }),
+      );
+    }
+
+    const now = this.now();
+    const planned = applyLegalW9RequestStatusTransition(current, 'rejected', now);
+    if (!planned.ok) {
+      return planned;
+    }
+
+    const instancePlan = this.validateInstanceSyncForWorkflowStatus(
+      current.documentInstanceId,
+      planned.value.status,
+    );
+    if (!instancePlan.ok) {
+      return instancePlan;
+    }
+
+    const rejectedSubmission = this.storage.transitionSubmission(linked.value.id, 'rejected');
+    if (!rejectedSubmission.ok) {
+      return legalW9WorkflowError(
+        'w9_instance_transition_failed',
+        rejectedSubmission.message,
+        Object.freeze({ code: rejectedSubmission.code }),
+      );
+    }
+
+    const applied = this.applyPersistedWorkflowTransition(planned.value);
+    if (!applied.ok) {
+      const rollback = this.storage.transitionSubmission(linked.value.id, 'under_review');
+      if (!rollback.ok) {
+        return legalW9WorkflowError(
+          'w9_instance_transition_failed',
+          rollback.message,
+          Object.freeze({ code: rollback.code }),
+        );
+      }
+      return applied;
+    }
+
+    return applied;
+  }
+
+  deleteW9Submission(
+    actor: LegalWorkflowActor,
+    workflowId: LegalW9RequestId,
+  ): LegalW9WorkflowResult<LegalDocumentSubmission> {
+    if (!canActorDeleteSubmissions(actor)) {
+      return legalW9WorkflowError(
+        'w9_actor_not_authorized',
+        'Only staff owner can delete W-9 submissions.',
+      );
+    }
+
+    const current = this.requests.get(workflowId);
+    if (!current) {
+      return legalW9WorkflowError('w9_request_not_found', `W-9 request not found: ${workflowId}`, {
+        id: workflowId,
+      });
+    }
+
+    const linked = this.getLinkedSubmission(current);
+    if (!linked.ok) {
+      return linked;
+    }
+
+    const deleted = this.storage.deleteSubmission(linked.value.id);
+    if (!deleted.ok) {
+      return legalW9WorkflowError(
+        'w9_instance_transition_failed',
+        deleted.message,
+        Object.freeze({ code: deleted.code }),
+      );
+    }
+
+    return legalW9WorkflowSuccess(deleted.value);
+  }
+
+  getW9SubmissionPublicView(
+    actor: LegalWorkflowActor,
+    workflowId: LegalW9RequestId,
+  ): LegalW9WorkflowResult<LegalDocumentSubmissionPublicView | null> {
+    const current = this.requests.get(workflowId);
+    if (!current) {
+      return legalW9WorkflowError('w9_request_not_found', `W-9 request not found: ${workflowId}`, {
+        id: workflowId,
+      });
+    }
+
+    const auth = this.authorizeRead(actor, current);
+    if (!auth.ok) {
+      return auth;
+    }
+
+    if (!current.submissionId) {
+      if (current.status === 'awaiting_upload') {
+        return legalW9WorkflowSuccess(
+          Object.freeze({
+            id: 'LDS-PENDING',
+            filename: 'w9-submission-pending.pdf',
+            mimeType: 'application/pdf',
+            sizeBytes: 0,
+            status: 'pending_upload' as const,
+            submittedAt: current.updatedAt,
+            updatedAt: current.updatedAt,
+            statusLabel: 'Awaiting upload',
+          }),
+        );
+      }
+      return legalW9WorkflowSuccess(null);
+    }
+
+    const submission = this.storage.getSubmission(current.submissionId);
+    if (!submission.ok) {
+      return legalW9WorkflowError(
+        'w9_instance_transition_failed',
+        submission.message,
+        Object.freeze({ code: submission.code }),
+      );
+    }
+
+    if (!canActorViewSubmission(actor, submission.value.submittedBy)) {
+      return legalW9WorkflowError(
+        'w9_actor_not_authorized',
+        'Actor is not authorized to view this submission.',
+      );
+    }
+
+    if (submission.value.status === 'deleted') {
+      return legalW9WorkflowSuccess(null);
+    }
+
+    return legalW9WorkflowSuccess(toSubmissionPublicView(submission.value));
+  }
+
+  listW9Submissions(
+    actor: LegalWorkflowActor,
+  ): LegalW9WorkflowResult<readonly LegalDocumentSubmissionPublicView[]> {
+    if (!canActorListSubmissions(actor)) {
+      return legalW9WorkflowError(
+        'w9_actor_not_authorized',
+        'Actor is not authorized to list W-9 submissions.',
+      );
+    }
+
+    const rows = this.storage.listSubmissions().filter((row) => {
+      if (actor.portal === 'artist') {
+        const request = row.workflowId ? this.requests.get(row.workflowId as LegalW9RequestId) : undefined;
+        return (
+          request !== undefined &&
+          canActorAccessW9Request(actor, request.recipient.recipientType, request.recipient.recipientId)
+        );
+      }
+      return canActorViewSubmission(actor, row.submittedBy);
+    });
+
+    return legalW9WorkflowSuccess(
+      Object.freeze(rows.map((row) => toSubmissionPublicView(row))),
+    );
   }
 }
 

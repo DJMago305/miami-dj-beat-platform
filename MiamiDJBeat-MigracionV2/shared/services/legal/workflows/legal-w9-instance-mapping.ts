@@ -5,7 +5,15 @@ import type { LegalW9RequestStatus } from './legal-w9-request-status';
 
 export const LEGAL_W9_TO_INSTANCE_STATUS: Readonly<
   Record<
-    'requested' | 'available' | 'viewed' | 'awaiting_upload' | 'expired' | 'cancelled',
+    | 'requested'
+    | 'available'
+    | 'viewed'
+    | 'awaiting_upload'
+    | 'submitted'
+    | 'accepted'
+    | 'rejected'
+    | 'expired'
+    | 'cancelled',
     LegalDocumentInstanceStatus
   >
 > = Object.freeze({
@@ -13,6 +21,9 @@ export const LEGAL_W9_TO_INSTANCE_STATUS: Readonly<
   available: 'sent',
   viewed: 'viewed',
   awaiting_upload: 'viewed',
+  submitted: 'viewed',
+  accepted: 'signed',
+  rejected: 'rejected',
   expired: 'expired',
   cancelled: 'cancelled',
 });
