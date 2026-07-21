@@ -6,3 +6,12 @@ export * from './legal-portal-view-models';
 export * from './legal-portal-adapters';
 export * from './legal-lab-preview-render';
 export * from './legal-center-shell-mapper';
+export {
+  resolveLegalTemplateAssetUrl,
+  listSharedLegalTemplateAssetsForPortal,
+  listReadySharedLegalTemplateAssetsForPortal,
+  getLegalTemplateAssetCatalogEntry,
+  listLegalTemplateAssetCatalogEntries,
+  listReadyLegalTemplateAssetCatalogEntries,
+  canPortalAccessLegalTemplateAsset,
+} from '../assets';
