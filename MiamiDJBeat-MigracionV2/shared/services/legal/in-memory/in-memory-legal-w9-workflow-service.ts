@@ -29,6 +29,11 @@ import type {
   LegalDocumentSubmissionSubmittedBy,
 } from '../submissions/legal-document-submission-types';
 import type { LegalDocumentStoragePort } from '../submissions/legal-document-storage-port';
+import type { AppendLegalAuditEventInput } from '../audit/legal-audit-event-types';
+import type { LegalAuditRecorder } from '../audit/legal-audit-recorder';
+import {
+  mapWorkflowActorToAuditActor,
+} from '../audit/legal-audit-permissions';
 import { mapW9WorkflowStatusToInstanceStatus } from '../workflows/legal-w9-instance-mapping';
 import {
   applyLegalW9RequestStatusTransition,
@@ -87,6 +92,7 @@ export type InMemoryLegalW9WorkflowServiceOptions = {
   readonly clock?: LegalDocumentInstanceClock;
   readonly instanceService?: InMemoryLegalDocumentInstanceService;
   readonly storage?: LegalDocumentStoragePort;
+  readonly auditRecorder?: LegalAuditRecorder;
   readonly seedDemo?: boolean;
 };
 
@@ -164,15 +170,18 @@ export class InMemoryLegalW9WorkflowService {
   private readonly clock: LegalDocumentInstanceClock;
   private readonly instanceService: InMemoryLegalDocumentInstanceService;
   private readonly storage: LegalDocumentStoragePort;
+  private readonly auditRecorder?: LegalAuditRecorder;
   private readonly requests = new Map<LegalW9RequestId, LegalW9Request>();
   private sequence = 0;
 
   constructor(options: InMemoryLegalW9WorkflowServiceOptions = {}) {
     this.clock = options.clock ?? createSystemLegalDocumentInstanceClock();
+    this.auditRecorder = options.auditRecorder;
     this.instanceService =
       options.instanceService ??
       createInMemoryLegalDocumentInstanceService({
         clock: this.clock,
+        auditRecorder: this.auditRecorder,
       });
     this.storage =
       options.storage ??
@@ -183,6 +192,54 @@ export class InMemoryLegalW9WorkflowService {
     if (options.seedDemo) {
       this.seedDemoRequest();
     }
+  }
+
+  getAuditRecorder(): LegalAuditRecorder | undefined {
+    return this.auditRecorder;
+  }
+
+  getAuditTrail() {
+    return this.auditRecorder?.getTrail();
+  }
+
+  private auditDenied(
+    actor: LegalWorkflowActor,
+    action: AppendLegalAuditEventInput['action'],
+    entityType: AppendLegalAuditEventInput['entityType'],
+    entityId: string,
+    domainCode: string,
+    metadata?: AppendLegalAuditEventInput['metadata'],
+  ): void {
+    this.auditRecorder?.recordDenied({
+      actor: mapWorkflowActorToAuditActor(actor),
+      action,
+      entityType,
+      entityId,
+      domainCode,
+      metadata,
+    });
+  }
+
+  private auditSuccessEventsOrRollback<T>(
+    value: T,
+    rollback: () => void,
+    events: readonly Omit<AppendLegalAuditEventInput, 'outcome'>[],
+  ): LegalW9WorkflowResult<T> {
+    if (!this.auditRecorder) {
+      return legalW9WorkflowSuccess(value);
+    }
+    for (const event of events) {
+      const appended = this.auditRecorder.recordSuccess(event);
+      if (!appended.ok) {
+        rollback();
+        return legalW9WorkflowError(
+          'w9_instance_transition_failed',
+          appended.message,
+          Object.freeze({ code: appended.code }),
+        );
+      }
+    }
+    return legalW9WorkflowSuccess(value);
   }
 
   getStoragePort(): LegalDocumentStoragePort {
@@ -426,9 +483,78 @@ export class InMemoryLegalW9WorkflowService {
     return legalW9WorkflowSuccess(true);
   }
 
+  private mapStatusToW9AuditAction(
+    status: LegalW9RequestStatus,
+  ): AppendLegalAuditEventInput['action'] | null {
+    switch (status) {
+      case 'available':
+        return 'w9_made_available';
+      case 'viewed':
+        return 'w9_viewed';
+      case 'awaiting_upload':
+        return 'w9_awaiting_upload';
+      case 'submitted':
+        return 'w9_submitted';
+      case 'accepted':
+        return 'w9_accepted';
+      case 'rejected':
+        return 'w9_rejected';
+      case 'cancelled':
+        return 'w9_cancelled';
+      case 'expired':
+        return 'w9_expired';
+      default:
+        return null;
+    }
+  }
+
+  private persistWorkflowWithAudit(
+    actor: LegalWorkflowActor,
+    previous: LegalW9Request,
+    next: LegalW9Request,
+    actionOverride?: AppendLegalAuditEventInput['action'],
+    correlationId?: string,
+  ): LegalW9WorkflowResult<LegalW9Request> {
+    const persisted = this.persistRequest(next);
+    const action = actionOverride ?? this.mapStatusToW9AuditAction(next.status);
+    if (!action || !this.auditRecorder) {
+      return legalW9WorkflowSuccess(persisted);
+    }
+    const auditResult = this.auditRecorder.recordSuccess({
+      actor: mapWorkflowActorToAuditActor(actor),
+      action,
+      entityType: 'w9_request',
+      entityId: persisted.id,
+      previousState: Object.freeze({ status: previous.status }),
+      nextState: Object.freeze({ status: persisted.status }),
+      relatedEntityIds: Object.freeze({
+        documentInstanceId: persisted.documentInstanceId,
+        recipientId: persisted.recipient.recipientId,
+      }),
+      correlationId,
+      metadata: Object.freeze({ recipientId: persisted.recipient.recipientId }),
+    });
+    if (!auditResult.ok) {
+      this.requests.set(previous.id, freezeLegalW9Request(previous));
+      return legalW9WorkflowError(
+        'w9_instance_transition_failed',
+        auditResult.message,
+        Object.freeze({ code: auditResult.code }),
+      );
+    }
+    return legalW9WorkflowSuccess(persisted);
+  }
+
   requestW9(input: RequestW9Input): LegalW9WorkflowResult<LegalW9Request> {
     const roleResult = assertStaffRole(input.actor);
     if (!roleResult.ok) {
+      this.auditDenied(
+        input.actor,
+        'w9_requested',
+        'w9_request',
+        input.id ?? 'W9R-PENDING',
+        roleResult.code,
+      );
       return roleResult;
     }
 
@@ -452,6 +578,13 @@ export class InMemoryLegalW9WorkflowService {
       input.recipient.recipientId,
     );
     if (active) {
+      this.auditDenied(
+        input.actor,
+        'w9_requested',
+        'w9_request',
+        active.id,
+        'w9_active_request_exists',
+      );
       return legalW9WorkflowError(
         'w9_active_request_exists',
         'An active W-9 request already exists for this recipient.',
@@ -549,7 +682,12 @@ export class InMemoryLegalW9WorkflowService {
       metadata: Object.freeze({ ...(input.metadata ?? {}) }),
     });
 
-    return legalW9WorkflowSuccess(this.persistRequest(request));
+    return this.persistWorkflowWithAudit(
+      input.actor,
+      request,
+      request,
+      'w9_requested',
+    );
   }
 
   getW9RequestById(
@@ -572,6 +710,7 @@ export class InMemoryLegalW9WorkflowService {
     filter: ListW9RequestsFilter = {},
   ): LegalW9WorkflowResult<readonly LegalW9Request[]> {
     if (!canActorListW9Requests(actor)) {
+      this.auditDenied(actor, 'legal_access_denied', 'w9_request', 'W9R-LIST', 'w9_actor_not_authorized');
       return legalW9WorkflowError('w9_actor_not_authorized', 'Actor is not authorized to list W-9 requests.');
     }
 
@@ -644,7 +783,7 @@ export class InMemoryLegalW9WorkflowService {
       return synced;
     }
 
-    return legalW9WorkflowSuccess(this.persistRequest(updated.value));
+    return this.persistWorkflowWithAudit(actor, current, updated.value);
   }
 
   makeW9Available(actor: LegalWorkflowActor, id: LegalW9RequestId): LegalW9WorkflowResult<LegalW9Request> {
@@ -759,6 +898,13 @@ export class InMemoryLegalW9WorkflowService {
 
   submitW9Document(input: SubmitW9DocumentInput): LegalW9WorkflowResult<LegalW9Request> {
     if (!canActorSubmitW9Document(input.actor)) {
+      this.auditDenied(
+        input.actor,
+        'w9_submitted',
+        'w9_request',
+        input.workflowId,
+        'w9_actor_not_authorized',
+      );
       return legalW9WorkflowError(
         'w9_actor_not_authorized',
         'Only artists can submit W-9 documents.',
@@ -841,7 +987,40 @@ export class InMemoryLegalW9WorkflowService {
       return applied;
     }
 
-    return applied;
+    const correlationId = this.auditRecorder?.nextCorrelationId();
+    return this.auditSuccessEventsOrRollback(
+      applied.value,
+      () => {
+        this.requests.set(current.id, freezeLegalW9Request(current));
+        void this.storage.purgeUnlinkedSubmission(stored.value.id);
+      },
+      correlationId
+        ? [
+            {
+              actor: mapWorkflowActorToAuditActor(input.actor, input.submittedByDisplayName),
+              action: 'w9_submitted',
+              entityType: 'w9_request',
+              entityId: applied.value.id,
+              previousState: Object.freeze({ status: current.status }),
+              nextState: Object.freeze({ status: applied.value.status }),
+              correlationId,
+              relatedEntityIds: Object.freeze({
+                submissionId: stored.value.id,
+                documentInstanceId: current.documentInstanceId,
+              }),
+            },
+            {
+              actor: mapWorkflowActorToAuditActor(input.actor, input.submittedByDisplayName),
+              action: 'submission_uploaded',
+              entityType: 'legal_document_submission',
+              entityId: stored.value.id,
+              nextState: Object.freeze({ status: 'uploaded' }),
+              correlationId,
+              relatedEntityIds: Object.freeze({ workflowId: current.id }),
+            },
+          ]
+        : [],
+    );
   }
 
   markSubmissionUnderReview(
@@ -897,6 +1076,28 @@ export class InMemoryLegalW9WorkflowService {
         updatedAt: this.now(),
       }),
     );
+
+    const correlationId = this.auditRecorder?.nextCorrelationId();
+    this.auditRecorder?.recordSuccess({
+      actor: mapWorkflowActorToAuditActor(actor),
+      action: 'w9_marked_under_review',
+      entityType: 'w9_request',
+      entityId: current.id,
+      previousState: Object.freeze({ status: current.status }),
+      nextState: Object.freeze({ status: current.status }),
+      correlationId,
+      metadata: Object.freeze({ recipientId: current.recipient.recipientId }),
+    });
+    this.auditRecorder?.recordSuccess({
+      actor: mapWorkflowActorToAuditActor(actor),
+      action: 'submission_review_started',
+      entityType: 'legal_document_submission',
+      entityId: reviewed.value.id,
+      previousState: Object.freeze({ status: 'uploaded' }),
+      nextState: Object.freeze({ status: 'under_review' }),
+      correlationId,
+      relatedEntityIds: Object.freeze({ workflowId: current.id }),
+    });
 
     return legalW9WorkflowSuccess(reviewed.value);
   }
@@ -976,7 +1177,44 @@ export class InMemoryLegalW9WorkflowService {
       return applied;
     }
 
-    return applied;
+    const correlationId = this.auditRecorder?.nextCorrelationId();
+    return this.auditSuccessEventsOrRollback(
+      applied.value,
+      () => {
+        this.requests.set(current.id, freezeLegalW9Request(current));
+        void this.storage.transitionSubmission(linked.value.id, 'under_review');
+      },
+      correlationId
+        ? [
+            {
+              actor: mapWorkflowActorToAuditActor(actor),
+              action: 'submission_accepted',
+              entityType: 'legal_document_submission',
+              entityId: linked.value.id,
+              previousState: Object.freeze({ status: 'under_review' }),
+              nextState: Object.freeze({ status: 'accepted' }),
+              correlationId,
+            },
+            {
+              actor: mapWorkflowActorToAuditActor(actor),
+              action: 'w9_accepted',
+              entityType: 'w9_request',
+              entityId: applied.value.id,
+              previousState: Object.freeze({ status: current.status }),
+              nextState: Object.freeze({ status: 'accepted' }),
+              correlationId,
+            },
+            {
+              actor: mapWorkflowActorToAuditActor(actor),
+              action: 'instance_status_changed',
+              entityType: 'legal_document_instance',
+              entityId: current.documentInstanceId,
+              nextState: Object.freeze({ status: 'signed' }),
+              correlationId,
+            },
+          ]
+        : [],
+    );
   }
 
   rejectSubmission(
@@ -1054,7 +1292,36 @@ export class InMemoryLegalW9WorkflowService {
       return applied;
     }
 
-    return applied;
+    const correlationId = this.auditRecorder?.nextCorrelationId();
+    return this.auditSuccessEventsOrRollback(
+      applied.value,
+      () => {
+        this.requests.set(current.id, freezeLegalW9Request(current));
+        void this.storage.transitionSubmission(linked.value.id, 'under_review');
+      },
+      correlationId
+        ? [
+            {
+              actor: mapWorkflowActorToAuditActor(actor),
+              action: 'submission_rejected',
+              entityType: 'legal_document_submission',
+              entityId: linked.value.id,
+              previousState: Object.freeze({ status: 'under_review' }),
+              nextState: Object.freeze({ status: 'rejected' }),
+              correlationId,
+            },
+            {
+              actor: mapWorkflowActorToAuditActor(actor),
+              action: 'w9_rejected',
+              entityType: 'w9_request',
+              entityId: applied.value.id,
+              previousState: Object.freeze({ status: current.status }),
+              nextState: Object.freeze({ status: 'rejected' }),
+              correlationId,
+            },
+          ]
+        : [],
+    );
   }
 
   deleteW9Submission(
@@ -1089,7 +1356,23 @@ export class InMemoryLegalW9WorkflowService {
       );
     }
 
-    return legalW9WorkflowSuccess(deleted.value);
+    return this.auditSuccessEventsOrRollback(
+      deleted.value,
+      () => {
+        void this.storage.transitionSubmission(linked.value.id, linked.value.status);
+      },
+      [
+        {
+          actor: mapWorkflowActorToAuditActor(actor),
+          action: 'submission_deleted',
+          entityType: 'legal_document_submission',
+          entityId: linked.value.id,
+          previousState: Object.freeze({ status: linked.value.status }),
+          nextState: Object.freeze({ status: 'deleted' }),
+          relatedEntityIds: Object.freeze({ workflowId: current.id }),
+        },
+      ],
+    );
   }
 
   getW9SubmissionPublicView(
@@ -1105,6 +1388,13 @@ export class InMemoryLegalW9WorkflowService {
 
     const auth = this.authorizeRead(actor, current);
     if (!auth.ok) {
+      this.auditDenied(
+        actor,
+        'legal_access_denied',
+        'w9_request',
+        workflowId,
+        auth.code,
+      );
       return auth;
     }
 
@@ -1136,6 +1426,13 @@ export class InMemoryLegalW9WorkflowService {
     }
 
     if (!canActorViewSubmission(actor, submission.value.submittedBy)) {
+      this.auditDenied(
+        actor,
+        'legal_access_denied',
+        'legal_document_submission',
+        submission.value.id,
+        'w9_actor_not_authorized',
+      );
       return legalW9WorkflowError(
         'w9_actor_not_authorized',
         'Actor is not authorized to view this submission.',
@@ -1145,6 +1442,15 @@ export class InMemoryLegalW9WorkflowService {
     if (submission.value.status === 'deleted') {
       return legalW9WorkflowSuccess(null);
     }
+
+    this.auditRecorder?.recordSuccess({
+      actor: mapWorkflowActorToAuditActor(actor),
+      action: 'legal_sensitive_record_viewed',
+      entityType: 'legal_document_submission',
+      entityId: submission.value.id,
+      relatedEntityIds: Object.freeze({ workflowId: current.id }),
+      metadata: Object.freeze({ recipientId: current.recipient.recipientId }),
+    });
 
     return legalW9WorkflowSuccess(toSubmissionPublicView(submission.value));
   }

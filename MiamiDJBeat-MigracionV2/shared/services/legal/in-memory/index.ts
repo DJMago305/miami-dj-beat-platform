@@ -9,3 +9,4 @@ export * from './legal-status-resolver';
 export * from './in-memory-legal-document-instance-service';
 export * from './in-memory-legal-w9-workflow-service';
 export * from './in-memory-legal-document-storage';
+export * from './in-memory-legal-audit-trail';

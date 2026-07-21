@@ -75,7 +75,8 @@ export class InMemoryLegalDocumentStorage implements LegalDocumentStoragePort {
         Object.freeze({ id: created.value.id }),
       );
     }
-    return legalDocumentSubmissionSuccess(this.persist(created.value));
+    const persisted = this.persist(created.value);
+    return legalDocumentSubmissionSuccess(persisted);
   }
 
   getSubmission(id: LegalDocumentSubmissionId): LegalDocumentSubmissionResult<LegalDocumentSubmission> {

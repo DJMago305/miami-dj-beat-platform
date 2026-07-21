@@ -27,10 +27,15 @@ import type {
 } from '../domain/legal-document-instance-types';
 import { isTerminalLegalDocumentInstanceStatus } from '../domain/legal-document-instance-status';
 import type { LegalDocumentInstanceStatus } from '../domain/legal-document-instance-status';
+import {
+  createSystemLegalAuditActor,
+} from '../audit/legal-audit-permissions';
+import type { LegalAuditRecorder } from '../audit/legal-audit-recorder';
 
 export type InMemoryLegalDocumentInstanceServiceOptions = {
   readonly clock?: LegalDocumentInstanceClock;
   readonly initialSequence?: number;
+  readonly auditRecorder?: LegalAuditRecorder;
 };
 
 export type ListLegalDocumentInstancesFilter = {
@@ -43,12 +48,18 @@ function cloneInstance(instance: LegalDocumentInstance): LegalDocumentInstance {
 
 export class InMemoryLegalDocumentInstanceService {
   private readonly clock: LegalDocumentInstanceClock;
+  private readonly auditRecorder?: LegalAuditRecorder;
   private readonly instances = new Map<LegalDocumentInstanceId, LegalDocumentInstance>();
   private sequence: number;
 
   constructor(options: InMemoryLegalDocumentInstanceServiceOptions = {}) {
     this.clock = options.clock ?? createSystemLegalDocumentInstanceClock();
+    this.auditRecorder = options.auditRecorder;
     this.sequence = options.initialSequence ?? 0;
+  }
+
+  getAuditRecorder(): LegalAuditRecorder | undefined {
+    return this.auditRecorder;
   }
 
   private nextSequence(): number {
@@ -85,7 +96,28 @@ export class InMemoryLegalDocumentInstanceService {
 
     this.instances.set(result.value.id, result.value);
     this.syncSequenceFromInstanceId(result.value.id);
-    return legalDocumentInstanceSuccess(cloneInstance(result.value));
+    const cloned = cloneInstance(result.value);
+    if (
+      this.auditRecorder &&
+      !this.auditRecorder.recordSuccess({
+        actor: createSystemLegalAuditActor(),
+        action: 'instance_created',
+        entityType: 'legal_document_instance',
+        entityId: cloned.id,
+        nextState: Object.freeze({ status: cloned.status }),
+        relatedEntityIds: Object.freeze({
+          templateId: cloned.templateId,
+          recipientId: cloned.recipient.recipientId,
+        }),
+      }).ok
+    ) {
+      this.instances.delete(result.value.id);
+      return legalDocumentInstanceError(
+        'invalid_status_transition',
+        'Audit append failed during instance creation.',
+      );
+    }
+    return legalDocumentInstanceSuccess(cloned);
   }
 
   getInstanceById(id: LegalDocumentInstanceId): LegalDocumentInstanceResult<LegalDocumentInstance> {
@@ -142,12 +174,49 @@ export class InMemoryLegalDocumentInstanceService {
 
     const transition = transitionLegalDocumentInstanceStatus(current, nextStatus, this.clock.now());
     if (!transition.ok) {
+      if (this.auditRecorder) {
+        this.auditRecorder.recordFailed({
+          actor: createSystemLegalAuditActor(),
+          action: 'instance_status_changed',
+          entityType: 'legal_document_instance',
+          entityId: id,
+          previousState: Object.freeze({ status: current.status }),
+          nextState: Object.freeze({ status: nextStatus }),
+          domainCode: transition.code,
+        });
+      }
       return transition;
     }
 
     this.instances.set(id, transition.value);
     this.syncSequenceFromInstanceId(id);
-    return legalDocumentInstanceSuccess(cloneInstance(transition.value));
+    const cloned = cloneInstance(transition.value);
+    const action =
+      nextStatus === 'cancelled'
+        ? 'instance_cancelled'
+        : nextStatus === 'expired'
+          ? 'instance_expired'
+          : nextStatus === 'viewed'
+            ? 'instance_viewed'
+            : 'instance_status_changed';
+    if (
+      this.auditRecorder &&
+      !this.auditRecorder.recordSuccess({
+        actor: createSystemLegalAuditActor(),
+        action,
+        entityType: 'legal_document_instance',
+        entityId: id,
+        previousState: Object.freeze({ status: current.status }),
+        nextState: Object.freeze({ status: nextStatus }),
+      }).ok
+    ) {
+      this.instances.set(id, current);
+      return legalDocumentInstanceError(
+        'invalid_status_transition',
+        'Audit append failed during instance transition.',
+      );
+    }
+    return legalDocumentInstanceSuccess(cloned);
   }
 
   cancelInstance(id: LegalDocumentInstanceId): LegalDocumentInstanceResult<LegalDocumentInstance> {

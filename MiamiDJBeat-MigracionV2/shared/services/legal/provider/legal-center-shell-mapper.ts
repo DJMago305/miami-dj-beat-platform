@@ -26,6 +26,7 @@ import type {
   StaffLegalPortalRole,
 } from './legal-portal-view-models';
 import { appendW9CollectionSections } from './legal-w9-workflow-shell-mapper';
+import { appendLegalAuditSections } from './legal-audit-shell-mapper';
 import { LEGAL_W9_DEMO_ARTIST_RECIPIENT_ID } from '../workflows';
 import type { LegalProviderContext } from './legal-provider-factory';
 
@@ -327,7 +328,8 @@ export async function buildStaffLegalCenterShellViewModel(
         : Object.freeze([]);
 
   const withW9Collection = appendW9CollectionSections(sections, { portal: 'staff', role: input.role });
-  return buildStaffShellFromViewModel(model, withW9Collection);
+  const withAudit = appendLegalAuditSections(withW9Collection, { portal: 'staff', role: input.role });
+  return buildStaffShellFromViewModel(model, withAudit);
 }
 
 export async function buildArtistLegalCenterShellViewModel(
@@ -347,7 +349,11 @@ export async function buildArtistLegalCenterShellViewModel(
     portal: 'artist',
     artistActorId: LEGAL_W9_DEMO_ARTIST_RECIPIENT_ID,
   });
-  return buildArtistShellFromViewModel(model, sections);
+  const withAudit = appendLegalAuditSections(sections, {
+    portal: 'artist',
+    artistActorId: LEGAL_W9_DEMO_ARTIST_RECIPIENT_ID,
+  });
+  return buildArtistShellFromViewModel(model, withAudit);
 }
 
 export async function buildClientLegalCenterShellViewModel(
