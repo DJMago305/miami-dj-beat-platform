@@ -5,17 +5,20 @@ import type { DocumentsLibraryRow } from '../contracts/legal-projections';
 import type { LegalProfileId } from '../contracts/legal-ids';
 import { LEGAL_FIXTURE_PROFILE_IDS } from '../in-memory/legal-fixtures';
 import type {
+  LegalCenterShellPortal,
   LegalCenterShellViewModel,
   LegalDocumentCardStatus,
   LegalDocumentCardViewModel,
   LegalDocumentCategory,
   LegalSectionViewModel,
 } from '../ui/legal-shell-types';
+import { LEGAL_DOWNLOAD_COMING_SOON_ACTION } from '../ui/legal-shell-types';
 import {
   buildArtistLegalProfileViewModel,
   buildClientLegalDocumentsViewModel,
   buildStaffLegalCenterViewModel,
 } from './legal-portal-adapters';
+import { mapTemplateAssetToDownloadAction } from './legal-template-asset-download-mapper';
 import type {
   ArtistLegalProfileViewModel,
   ClientLegalDocumentsViewModel,
@@ -104,7 +107,10 @@ function mapW9StatusToCardStatus(w9Status: string): LegalDocumentCardStatus {
   return 'pending';
 }
 
-function rowToDocumentCard(row: DocumentsLibraryRow): LegalDocumentCardViewModel {
+function rowToDocumentCard(
+  row: DocumentsLibraryRow,
+  portal: LegalCenterShellPortal,
+): LegalDocumentCardViewModel {
   const timestamp = row.signedOrAcceptedAt ?? '2026-01-01T00:00:00.000Z';
   return Object.freeze({
     id: row.documentId,
@@ -114,15 +120,21 @@ function rowToDocumentCard(row: DocumentsLibraryRow): LegalDocumentCardViewModel
     createdAt: timestamp,
     updatedAt: row.signedOrAcceptedAt ?? row.expiresAt ?? timestamp,
     requiresSignature: row.category === 'CTR' || row.templateCode.startsWith('CTR-'),
-    downloadAvailable: row.finalArtifactId !== undefined,
+    downloadAction: mapTemplateAssetToDownloadAction({
+      portal,
+      templateCode: row.templateCode,
+    }),
   });
 }
 
-function groupRowsIntoSections(rows: readonly DocumentsLibraryRow[]): LegalSectionViewModel[] {
+function groupRowsIntoSections(
+  rows: readonly DocumentsLibraryRow[],
+  portal: LegalCenterShellPortal,
+): LegalSectionViewModel[] {
   const buckets = new Map<LegalDocumentCategory, LegalDocumentCardViewModel[]>();
 
   for (const row of rows) {
-    const card = rowToDocumentCard(row);
+    const card = rowToDocumentCard(row, portal);
     const existing = buckets.get(card.type) ?? [];
     buckets.set(card.type, [...existing, card]);
   }
@@ -140,10 +152,11 @@ function groupRowsIntoSections(rows: readonly DocumentsLibraryRow[]): LegalSecti
 async function buildSectionsForProfile(
   provider: LegalProviderContext,
   profileId: LegalProfileId,
+  portal: LegalCenterShellPortal,
   options: { readonly includeTaxSection: boolean },
 ): Promise<readonly LegalSectionViewModel[]> {
   const library = await provider.ports.documents.getLibraryView(profileId);
-  const sections = groupRowsIntoSections(library?.rows ?? []);
+  const sections = groupRowsIntoSections(library?.rows ?? [], portal);
 
   if (options.includeTaxSection) {
     const taxCenter = await provider.ports.tax.getTaxCenterView(profileId);
@@ -163,7 +176,12 @@ async function buildSectionsForProfile(
               createdAt: taxCenter.approvedAt ?? '2026-01-01T00:00:00.000Z',
               updatedAt: taxCenter.approvedAt ?? '2026-07-20T21:00:00.000Z',
               requiresSignature: taxCenter.w9Status !== 'approved',
-              downloadAvailable: taxCenter.w9ArtifactId !== undefined,
+              downloadAction: mapTemplateAssetToDownloadAction({
+                portal,
+                templateCode: 'SPC-001',
+                templateVersionId: 'TV-SPC-001-1',
+                label: 'Download W-9',
+              }),
             }),
           ]),
         }),
@@ -281,7 +299,7 @@ export async function buildStaffLegalCenterShellViewModel(
   const sampleProfileId = LEGAL_FIXTURE_PROFILE_IDS.artistGreen;
   const sections =
     model.state === 'ready' && input.role !== 'staff_seller'
-      ? await buildSectionsForProfile(provider, sampleProfileId, { includeTaxSection })
+      ? await buildSectionsForProfile(provider, sampleProfileId, 'staff', { includeTaxSection })
       : model.state === 'ready'
         ? Object.freeze([
             Object.freeze({
@@ -298,7 +316,7 @@ export async function buildStaffLegalCenterShellViewModel(
                     createdAt: '2026-07-20T21:00:00.000Z',
                     updatedAt: '2026-07-20T21:00:00.000Z',
                     requiresSignature: true,
-                    downloadAvailable: false,
+                    downloadAction: LEGAL_DOWNLOAD_COMING_SOON_ACTION,
                   }),
                 ),
               ),
@@ -320,7 +338,7 @@ export async function buildArtistLegalCenterShellViewModel(
   });
   const sections =
     model.state === 'ready'
-      ? await buildSectionsForProfile(provider, profileId, { includeTaxSection: true })
+      ? await buildSectionsForProfile(provider, profileId, 'artist', { includeTaxSection: true })
       : Object.freeze([]);
   return buildArtistShellFromViewModel(model, sections);
 }
@@ -336,7 +354,7 @@ export async function buildClientLegalCenterShellViewModel(
   });
   const sections =
     model.state === 'ready'
-      ? await buildSectionsForProfile(provider, profileId, { includeTaxSection: false })
+      ? await buildSectionsForProfile(provider, profileId, 'client', { includeTaxSection: false })
       : Object.freeze([]);
   return buildClientShellFromViewModel(model, sections);
 }

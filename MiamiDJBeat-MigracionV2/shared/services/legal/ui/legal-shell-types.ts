@@ -29,6 +29,26 @@ export const LEGAL_DOCUMENT_CATEGORIES = [
 
 export type LegalDocumentCategory = (typeof LEGAL_DOCUMENT_CATEGORIES)[number];
 
+export type LegalDocumentDownloadAction =
+  | {
+      readonly availability: 'available';
+      readonly label: string;
+      readonly url: string;
+      readonly filename?: string;
+    }
+  | {
+      readonly availability: 'coming_soon';
+      readonly label: string;
+    }
+  | {
+      readonly availability: 'forbidden';
+    };
+
+export const LEGAL_DOWNLOAD_COMING_SOON_ACTION: LegalDocumentDownloadAction = Object.freeze({
+  availability: 'coming_soon',
+  label: 'Coming soon',
+});
+
 export type LegalDocumentCardViewModel = {
   readonly id: string;
   readonly title: string;
@@ -37,7 +57,7 @@ export type LegalDocumentCardViewModel = {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly requiresSignature: boolean;
-  readonly downloadAvailable: boolean;
+  readonly downloadAction: LegalDocumentDownloadAction;
 };
 
 export type LegalSectionViewModel = {

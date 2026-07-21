@@ -16,9 +16,11 @@ import {
   createLegalDocumentCard,
   createLegalSection,
   createLegalStatusBadge,
+  LEGAL_DOWNLOAD_COMING_SOON_ACTION,
   renderLegalCenterShell,
   type LegalCenterShellViewModel,
 } from '../../shared/services/legal/ui';
+import { LEGAL_TEMPLATE_ASSET_URLS } from '../../shared/services/legal/assets/legal-template-asset-urls';
 
 describe('legal center UI shell — LC-4 — TICKET-V2-LEGAL-CENTER-UI-SHELL-001', () => {
   it('renders LegalCenterShell with portal marker', () => {
@@ -50,7 +52,7 @@ describe('legal center UI shell — LC-4 — TICKET-V2-LEGAL-CENTER-UI-SHELL-001
             createdAt: '2026-01-01T00:00:00.000Z',
             updatedAt: '2026-01-15T00:00:00.000Z',
             requiresSignature: true,
-            downloadAvailable: true,
+            downloadAction: LEGAL_DOWNLOAD_COMING_SOON_ACTION,
           }),
         ]),
       }),
@@ -86,10 +88,58 @@ describe('legal center UI shell — LC-4 — TICKET-V2-LEGAL-CENTER-UI-SHELL-001
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-02T00:00:00.000Z',
         requiresSignature: false,
-        downloadAvailable: false,
+        downloadAction: LEGAL_DOWNLOAD_COMING_SOON_ACTION,
       }),
     );
     expect(card.querySelector('.mdj-legal-status-badge')).not.toBeNull();
+    expect(card.querySelector('.mdj-legal-document-card__download-link')).toBeNull();
+    expect(card.textContent).toContain('Coming soon');
+  });
+
+  it('renders authorized download link with secure rel attributes', () => {
+    const runtimeUrl = LEGAL_TEMPLATE_ASSET_URLS['tax/SPC-001/TV-SPC-001-1/fw9-corporate'];
+    const card = createLegalDocumentCard(
+      Object.freeze({
+        id: 'DOC-W9',
+        title: 'W-9 Status',
+        type: 'w9',
+        status: 'signed',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-02T00:00:00.000Z',
+        requiresSignature: false,
+        downloadAction: Object.freeze({
+          availability: 'available',
+          label: 'Download W-9',
+          url: runtimeUrl,
+          filename: 'fw9-corporate.pdf',
+        }),
+      }),
+    );
+
+    const link = card.querySelector('.mdj-legal-document-card__download-link') as HTMLAnchorElement | null;
+    expect(link).not.toBeNull();
+    expect(link?.href).toContain('fw9-corporate');
+    expect(link?.target).toBe('_blank');
+    expect(link?.rel).toBe('noopener noreferrer');
+    expect(link?.textContent).toBe('Download W-9');
+  });
+
+  it('does not render download row when action is forbidden', () => {
+    const card = createLegalDocumentCard(
+      Object.freeze({
+        id: 'DOC-FORBIDDEN',
+        title: 'Hidden W-9',
+        type: 'w9',
+        status: 'rejected',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-02T00:00:00.000Z',
+        requiresSignature: false,
+        downloadAction: Object.freeze({ availability: 'forbidden' }),
+      }),
+    );
+
+    expect(card.textContent).not.toContain('Download:');
+    expect(card.querySelector('a')).toBeNull();
   });
 
   it('maps lifecycle statuses to card statuses', () => {
@@ -98,7 +148,7 @@ describe('legal center UI shell — LC-4 — TICKET-V2-LEGAL-CENTER-UI-SHELL-001
     expect(mapLifecycleToCardStatus('VOIDED')).toBe('rejected');
   });
 
-  it('integrates provider mapper for artist shell sections', async () => {
+  it('integrates artist shell with authorized W-9 download action', async () => {
     const provider = resolveLegalProvider({ mode: 'IN_MEMORY' });
     const shell = await buildArtistLegalCenterShellViewModel(provider, {
       profileId: LEGAL_FIXTURE_PROFILE_IDS.artistGreen,
@@ -106,9 +156,16 @@ describe('legal center UI shell — LC-4 — TICKET-V2-LEGAL-CENTER-UI-SHELL-001
     });
 
     expect(shell.state).toBe('ready');
-    expect(shell.sections.length).toBeGreaterThan(0);
+    const w9Section = shell.sections.find((section) => section.sectionId === 'section-w9-center');
+    expect(w9Section).toBeDefined();
+    const w9Card = w9Section?.documents[0];
+    expect(w9Card?.downloadAction.availability).toBe('available');
+    if (w9Card?.downloadAction.availability === 'available') {
+      expect(w9Card.downloadAction.label).toBe('Download W-9');
+    }
+
     const rendered = createLegalCenterShell(shell);
-    expect(rendered.dataset.mdjLegalCenterShell).toBe('artist');
+    expect(rendered.querySelector('.mdj-legal-document-card__download-link')).not.toBeNull();
   });
 
   it('integrates staff shell without exposing store', async () => {
