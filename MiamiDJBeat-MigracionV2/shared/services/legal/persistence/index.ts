@@ -14,3 +14,4 @@ export * from './memory/memory-legal-read-repositories';
 export * from './transport/legal-persistence-read-transport';
 export * from './supabase/supabase-legal-read-repositories';
 export * from './provider/legal-read-persistence-provider';
+export * from './identity';
