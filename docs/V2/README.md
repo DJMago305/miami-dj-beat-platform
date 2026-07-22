@@ -362,6 +362,79 @@ Detalle: [`TICKETS/TICKET-V2-LEGAL-CENTER-LC-10-PERSISTENCE-ADAPTER-DISCOVERY-00
 
 ---
 
+## Legal Center V2 — LC-12 / LC-13A / LC-13B-0 (2026-07-21)
+
+| Campo | Valor |
+|-------|-------|
+| **Rama** | `plan/v2-phase-4-api-client` |
+| **HEAD actual** | `c66a839d773baf75e169e0568864e528fb0ce98c` |
+| **Working tree** | ✅ Limpio |
+| **Suite** | **1029/1029 PASS** · typecheck exit 0 · HTTP 200 × 5 |
+| **Migration LC-12** | Versionada localmente — **NO aplicada** |
+| **Supabase remoto** | ❌ NO |
+| **Push / deploy** | ❌ NO |
+
+### Tickets cerrados (sesión 2026-07-21)
+
+| Ticket | Estado PO |
+|--------|-----------|
+| LC-12 — Local Persistence Schema Foundation | ✅ CERRADO — APROBADO TÉCNICAMENTE PO |
+| LC-13A — Read Security & RPC Discovery | ✅ CERRADO — DISCOVERY APROBADO PO |
+| LC-13B-0 — Identity Bridge Discovery | ✅ CERRADO — DISCOVERY APROBADO PO |
+
+### Commits (Legal Center)
+
+| Hash | Mensaje |
+|------|---------|
+| `40ff9c8` | `feat(v2-legal): add local persistence schema foundation` |
+| `fdbcba5` | `docs(v2-legal): approve read security and rpc discovery` |
+| `c66a839` | `docs(v2-legal): approve identity bridge discovery` |
+
+### Próximo trabajo
+
+**LC-13B — Identity Bridge & Legal Profile Lookup Implementation** (autorizado tras LC-13B-0; **no** RLS · **no** RPC SQL · **no** migration apply · **no** Supabase remoto · **no** deploy).
+
+Handoff: [`SESSION-SUMMARIES/2026-07-21-LEGAL-CENTER-END-OF-SESSION.md`](SESSION-SUMMARIES/2026-07-21-LEGAL-CENTER-END-OF-SESSION.md)
+
+---
+
+## Legal Center V2 — LC-13B Implementation (2026-07-22)
+
+| Campo | Valor |
+|-------|-------|
+| **Rama** | `plan/v2-phase-4-api-client` |
+| **HEAD base** | `c66a839d773baf75e169e0568864e528fb0ce98c` |
+| **Ticket** | LC-13B — Identity Bridge & Legal Profile Lookup Implementation |
+| **Estado PO** | ✅ **APROBADO TÉCNICAMENTE POR PRODUCT OWNER** |
+| **Suite** | **1046/1046 PASS** · typecheck exit 0 · HTTP **5/5** |
+| **Identity bridge** | ✅ Activo localmente (`resolveLegalReadAccessContextFromSession`) |
+| **Profile lookup** | ✅ In-memory adapter (`LegalProfileLookupPort`) |
+| **Staff wire** | ✅ Session/PermissionSnapshot — **`previewRole` sin autoridad** · fail-closed `staff_seller` |
+| **Backend remoto** | ❌ NO Supabase · ❌ NO SQL · ❌ NO RLS/RPC aplicados |
+| **Push / deploy** | ❌ NO · cambios **sin commit** |
+
+### Entregables LC-13B
+
+- Módulo `shared/services/legal/persistence/identity/` (bridge + lookup port + memory adapter + role mapper)
+- `staff/legal/staff-legal-provider-wire.ts` — bridge de sesión
+- 14 tests unitarios + integración wire + 3 casos hardening fail-closed
+
+### Seguridad confirmada
+
+Guest/anónimo → `staff_seller` · `previewRole=owner` no eleva · `clearSession()` no conserva owner · `portal_mismatch` fail-closed · `actorId` = `STAFF-*` / `ART-*` / `CLI-*` (nunca UUID auth crudo).
+
+### Nota forense
+
+Excepción `SyntaxError: Unexpected token '%'` al importar `legal-template-asset-urls.ts` con **tsx/Node bare** — contrato Vite `?url` (LC-5). **No** regresión pipeline.
+
+Handoff: [`SESSION-SUMMARIES/2026-07-22-LEGAL-CENTER-LC-13B-END-OF-SESSION.md`](SESSION-SUMMARIES/2026-07-22-LEGAL-CENTER-LC-13B-END-OF-SESSION.md)
+
+### Próximo trabajo (discovery LC-13B-0 §19)
+
+**LC-13B RLS/RPC** — SQL policies + 7 read RPCs · gate: bridge live + LC-12 local apply (ticket PO separado).
+
+---
+
 ## Fuera de alcance de este baseline
 
 | Item | Motivo |

@@ -2275,3 +2275,120 @@ Layout · mock metrics · mock events · textos · orden de secciones — **sin 
 **Documentación:** `docs/V2/TICKETS/TICKET-V2-LEGAL-CENTER-LC-10-PERSISTENCE-ADAPTER-DISCOVERY-001.md`
 
 *LC-10 aprobado PO — sin persistencia real · sin Supabase activo · sin push*
+
+---
+
+## Cierre de sesión — Legal Center — 2026-07-21
+
+**Ticket handoff:** `TICKET-V2-END-OF-SESSION-HANDOFF-2026-07-21-001`
+
+| Campo | Valor |
+|-------|-------|
+| **Rama activa** | `plan/v2-phase-4-api-client` |
+| **HEAD actual** | `c66a839d773baf75e169e0568864e528fb0ce98c` |
+| **Último commit** | `docs(v2-legal): approve identity bridge discovery` |
+| **Working tree** | ✅ Limpio |
+| **typecheck** | ✅ exit 0 |
+| **Suite** | ✅ **1029/1029 PASS** |
+| **HTTP** | ✅ 200 × 5 (`localhost:5173`) |
+| **Migration LC-12 aplicada** | ❌ NO |
+| **Supabase remoto** | ❌ NO |
+| **Push / merge / PR / deploy** | ❌ NO |
+
+### Tickets cerrados hoy
+
+| Ticket | Estado |
+|--------|--------|
+| LC-12 — Local Persistence Schema Foundation | ✅ CERRADO — APROBADO TÉCNICAMENTE PO |
+| LC-13A — Read Security & RPC Discovery | ✅ CERRADO — DISCOVERY APROBADO PO |
+| LC-13B-0 — Identity Bridge Discovery | ✅ CERRADO — DISCOVERY APROBADO PO |
+
+### Commits generados (Legal Center)
+
+| Hash | Mensaje |
+|------|---------|
+| `40ff9c8e` | `feat(v2-legal): add local persistence schema foundation` |
+| `fdbcba50` | `docs(v2-legal): approve read security and rpc discovery` |
+| `c66a839d` | `docs(v2-legal): approve identity bridge discovery` |
+
+### Restricciones activas
+
+Sin push · sin merge · sin PR · sin deploy · sin Supabase remoto · sin SQL aplicado · sin migrations ejecutadas · sin producción.
+
+### Regla global Product Owner
+
+Nada de Miami DJ Beat V2 podrá llegar a producción hasta que toda la plataforma esté terminada y aprobada explícitamente por el Product Owner.
+
+### Próximo trabajo autorizado
+
+**LC-13B — Identity Bridge & Legal Profile Lookup Implementation**
+
+Bridge: `Auth + Session + PermissionSnapshot + Legal profile lookup` → `LegalReadAccessContext`
+
+LC-13B **no debe** incluir (sin ampliación PO): RLS · RPC SQL · migration apply · Supabase remoto · producción.
+
+**LC-13B implementación:** ❌ NO iniciada.
+
+**Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-21-LEGAL-CENTER-END-OF-SESSION.md`
+
+*Handoff documental — sin commit en TICKET-V2-END-OF-SESSION-HANDOFF-2026-07-21-001*
+
+**SESIÓN DOCUMENTADA — LISTA PARA REAPERTURA**
+
+---
+
+## Legal Center LC-13B — Implementación y cierre documental — 2026-07-22
+
+**Tickets:** LC-13B impl · `TICKET-V2-LC-13B-POST-IMPLEMENTATION-FORENSIC-VERIFY-001` · `TICKET-V2-LC-13B-FAIL-CLOSED-INTEGRATION-HARDENING-001` · `TICKET-V2-LC-13B-DOCUMENTATION-CLOSEOUT-001`
+
+| Campo | Valor |
+|-------|-------|
+| **Baseline HEAD** | `c66a839d773baf75e169e0568864e528fb0ce98c` |
+| **Rama** | `plan/v2-phase-4-api-client` |
+| **Estado PO** | ✅ **LC-13B APROBADO TÉCNICAMENTE POR PRODUCT OWNER** |
+| **Working tree** | Runtime LC-13B + tests + docs **sin commit** |
+
+### Cronología
+
+1. **Baseline** — HEAD `c66a839` (LC-13B-0 discovery commit) · suite histórica 1029 PASS.
+2. **Implementación LC-13B** — bridge `resolveLegalReadAccessContextFromSession` · `LegalProfileLookupPort` · memory adapter · staff wire sin `previewRole`.
+3. **Revisión forense** — excepción tsx/Node en `legal-template-asset-urls.ts` (`pdf?url`) clasificada como diagnóstico ad-hoc · gates oficiales PASS.
+4. **Hardening fail-closed** — 3 tests integración guest · previewRole malicioso · clearSession.
+5. **Aprobación PO** — LC-13B cerrado técnicamente.
+6. **Cierre documental** — este ticket · **pendiente commit selectivo PO**.
+
+### Arquitectura registrada
+
+`SessionSnapshot` + `PermissionSnapshot` + `LegalProfileLookupPort` → `resolveLegalReadAccessContextFromSession()` → `LegalReadAccessContext`
+
+IDs: `STAFF-*` · `ART-*` · `CLI-*` — no UUID auth como `actorId`.
+
+### Validación final
+
+| Gate | Resultado |
+|------|-----------|
+| Suite | **1046/1046 PASS** (80 files) |
+| typecheck | ✅ |
+| HTTP | **5/5** — portales + PDF W-9 Vite directo |
+| git diff --check | ✅ |
+
+### Hardening
+
+- Guest/anónimo → `staff_seller`
+- `previewRole=owner` sin identidad → no eleva
+- Sesión limpiada → no conserva owner
+- Sin cambios runtime adicionales en hardening (solo tests)
+
+### Restricciones intactas
+
+Sin commit · sin push · sin merge · sin PR · sin deploy · sin SQL · sin migrations apply · sin Supabase remoto · sin producción V2.
+
+### Próximo paso (discovery)
+
+**LC-13B RLS/RPC** — SQL policies + 7 read RPCs (LC-13B-0 §19 · LC-13A). Requiere ticket PO + gate LC-12 local apply.
+
+**Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-22-LEGAL-CENTER-LC-13B-END-OF-SESSION.md`
+
+*Cierre documental LC-13B — sin commit en TICKET-V2-LC-13B-DOCUMENTATION-CLOSEOUT-001*
+
+**LC-13B DOCUMENTADO — PENDIENTE COMMIT SELECTIVO PO**
