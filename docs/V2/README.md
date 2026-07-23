@@ -500,6 +500,26 @@ Validación: PostgreSQL `postgres:16` efímero · apply LC-12 + LC-13A · 22/22 
 
 Handoff: [`SESSION-SUMMARIES/2026-07-22-LC13A-READ-SECURITY-VALIDATION.md`](SESSION-SUMMARIES/2026-07-22-LC13A-READ-SECURITY-VALIDATION.md) · [`TICKETS/TICKET-V2-LEGAL-CENTER-LC-13A-ISOLATED-READ-SECURITY-VALIDATION-001.md`](TICKETS/TICKET-V2-LEGAL-CENTER-LC-13A-ISOLATED-READ-SECURITY-VALIDATION-001.md)
 
+**Commit local:** `043f2cc` — `feat(v2-legal): add LC-13A isolated read security` (PO aprobado).
+
+---
+
+## Legal Center V2 — LC-13B Identity Integration Discovery (2026-07-22)
+
+| Campo | Valor |
+|-------|-------|
+| **Ticket** | LC-13B — Identity Integration Discovery |
+| **Estado** | **LC-13B IDENTITY INTEGRATION DISCOVERY COMPLETADO — PENDIENTE DE REVISIÓN PO** |
+| **Runtime bridge** | ✅ Live (`resolveLegalReadAccessContextFromSession`) |
+| **SQL identity stub LC-13A** | ❌ No productivo — reemplazo futuro |
+| **Integración prod lookup** | ❌ **PENDIENTE** |
+| **Bootstrap / cadena 110** | ❌ **BLOCKED_BY_LEGACY_BOOTSTRAP_DEBT** |
+| **Commit** | ❌ NO autorizado en este ticket |
+
+Diseño: inventario identidades · mapa resolución auth→RLS→RPC · contrato `LegalIdentityContext` · compatibilidad KEEP/REPLACE/REMOVE · matriz portales · dependencias writes/links.
+
+Handoff: [`SESSION-SUMMARIES/2026-07-22-LC13B-IDENTITY-DISCOVERY.md`](SESSION-SUMMARIES/2026-07-22-LC13B-IDENTITY-DISCOVERY.md) · [`TICKETS/TICKET-V2-LEGAL-CENTER-LC-13B-IDENTITY-INTEGRATION-DISCOVERY-001.md`](TICKETS/TICKET-V2-LEGAL-CENTER-LC-13B-IDENTITY-INTEGRATION-DISCOVERY-001.md)
+
 ---
 
 ## Fuera de alcance de este baseline

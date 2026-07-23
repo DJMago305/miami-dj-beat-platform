@@ -2483,4 +2483,27 @@ Sin commit · sin push · sin merge · sin PR · sin deploy · sin SQL · sin mi
 
 > **LC-13A READ SECURITY VALIDADA EN POSTGRES AISLADO — PENDIENTE DE REVISIÓN Y APROBACIÓN PO**
 
+**Commit local:** `043f2cc` — PO aprobado LC-13A isolated validation.
+
 **Documentación:** `docs/V2/TICKETS/TICKET-V2-LEGAL-CENTER-LC-13A-ISOLATED-READ-SECURITY-VALIDATION-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-22-LC13A-READ-SECURITY-VALIDATION.md`
+
+---
+
+## Legal Center LC-13B — Identity integration discovery — 2026-07-22
+
+**Ticket:** `TICKET-V2-LEGAL-CENTER-LC-13B-IDENTITY-INTEGRATION-DISCOVERY-001`
+
+| Campo | Valor |
+|-------|-------|
+| **HEAD baseline** | `043f2cc5f86e1b9a2d8b7dfc735ea455a5727a09` |
+| **Modo** | Discovery + arquitectura — sin SQL · sin runtime |
+| **Bridge runtime** | ✅ Live — no reemplazar; extender lookup prod |
+| **Stub `legal_lc13_*`** | Clasificado REMOVE (prod) / KEEP RLS+RPC |
+| **Bootstrap** | ❌ BLOCKED — sin reparación en alcance |
+| **Commit** | ❌ NO autorizado |
+
+**Estado:**
+
+> **LC-13B IDENTITY INTEGRATION DISCOVERY COMPLETADO — PENDIENTE DE REVISIÓN Y APROBACIÓN PO**
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-LEGAL-CENTER-LC-13B-IDENTITY-INTEGRATION-DISCOVERY-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-22-LC13B-IDENTITY-DISCOVERY.md`
