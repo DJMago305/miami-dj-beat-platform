@@ -431,7 +431,37 @@ Handoff: [`SESSION-SUMMARIES/2026-07-22-LEGAL-CENTER-LC-13B-END-OF-SESSION.md`](
 
 ### Próximo trabajo (discovery LC-13B-0 §19)
 
-**LC-13B RLS/RPC** — SQL policies + 7 read RPCs · gate: bridge live + LC-12 local apply (ticket PO separado).
+**LC-13B RLS/RPC** — SQL policies + 7 read RPCs · gate: bridge live + LC-12 DDL aprobado · **no autorizado** hasta ticket PO explícito (cadena global bloqueada por bootstrap legacy).
+
+---
+
+## Legal Center V2 — LC-12 Isolated Validation (2026-07-22)
+
+| Campo | Valor |
+|-------|-------|
+| **Rama** | `plan/v2-phase-4-api-client` |
+| **HEAD docs** | `d26e896187314e1e10b59ab2c9ec751b8fe4a46e` |
+| **LC-12 DDL** | ✅ **APPROVED_BY_PO_IN_ISOLATED_POSTGRES** |
+| **Cadena 110 migraciones** | ❌ **BLOCKED_BY_LEGACY_BOOTSTRAP_DEBT** |
+| **LC-12 production apply** | ❌ **NOT_AUTHORIZED** |
+| **LC-13 RLS/RPC** | ❌ **NOT_IMPLEMENTED / DEFERRED** |
+| **Push / deploy** | ❌ **NOT_AUTHORIZED** |
+
+### Fallo apply cadena Supabase (local)
+
+`supabase start` falló en migración `20260302_flow_tab_implementation.sql` — SQLSTATE `42P01` — `public.dj_profiles` does not exist. LC-12 no alcanzada. Sin remoto.
+
+Discovery: `TICKETS/TICKET-V2-SUPABASE-EMPTY-DB-BOOTSTRAP-DISCOVERY-001.md` — clasificación **MULTIPLE_CAUSES**.
+
+### Validación aislada LC-12 (PASS PO)
+
+PostgreSQL `postgres:16` temporal · sin puertos publicados · apply LC-12 exit 0 · 7 tablas · 1 secuencia · 12 FKs · append-only validado · `BEGIN/ROLLBACK` sintético · contenedor/volumen eliminados.
+
+**Estado oficial:**
+
+> **LC-12 DDL VALIDADO Y APROBADO EN POSTGRES AISLADO — APPLY MEDIANTE CADENA SUPABASE COMPLETA BLOQUEADO POR DEUDA LEGACY DE BOOTSTRAP.**
+
+Handoff: [`SESSION-SUMMARIES/2026-07-22-LEGAL-CENTER-LC-12-ISOLATED-VALIDATION-CLOSEOUT.md`](SESSION-SUMMARIES/2026-07-22-LEGAL-CENTER-LC-12-ISOLATED-VALIDATION-CLOSEOUT.md)
 
 ---
 

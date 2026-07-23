@@ -2411,6 +2411,31 @@ Sin commit · sin push · sin merge · sin PR · sin deploy · sin SQL · sin mi
 | **SQL apply** | ❌ NO |
 | **Push / deploy** | ❌ NO |
 
-**Apply local LC-12:** continúa bloqueado hasta instalación y validación manual de Docker + ticket PO de aplicación.
+**Apply local LC-12 (cadena Supabase):** bloqueado por deuda bootstrap legacy — ver sección closeout 2026-07-22 abajo.
 
 **Documentación:** `docs/V2/TICKETS/TICKET-V2-LEGAL-CENTER-LC-12-LOCAL-APPLY-PREREQUISITE-HARDENING-001.md`
+
+---
+
+## Legal Center LC-12 — Isolated validation closeout — 2026-07-22
+
+**Tickets:** `TICKET-V2-LEGAL-CENTER-LC-12-LOCAL-MIGRATION-APPLY-001` · `TICKET-V2-SUPABASE-EMPTY-DB-BOOTSTRAP-DISCOVERY-001` · `TICKET-V2-LEGAL-CENTER-LC-12-ISOLATED-POSTGRES-VALIDATION-001` · `TICKET-V2-LEGAL-CENTER-LC-12-ISOLATED-VALIDATION-DOCUMENTATION-CLOSEOUT-001`
+
+| Campo | Valor |
+|-------|-------|
+| **HEAD** | `d26e896187314e1e10b59ab2c9ec751b8fe4a46e` |
+| **Apply cadena (`supabase start`)** | ❌ FAIL — `20260302` · SQLSTATE `42P01` · `dj_profiles` ausente |
+| **Discovery bootstrap** | ✅ **MULTIPLE_CAUSES** — 110 migraciones no reconstruyen base vacía |
+| **LC-12 DDL aislado** | ✅ **APPROVED_BY_PO_IN_ISOLATED_POSTGRES** |
+| **Cadena global apply** | ❌ **BLOCKED_BY_LEGACY_BOOTSTRAP_DEBT** |
+| **LC-13 RLS/RPC** | ❌ **NOT_IMPLEMENTED / DEFERRED** |
+| **Commit docs closeout** | ⏳ Pendiente autorización PO |
+| **Push / deploy** | ❌ NO |
+
+**Estado oficial PO:**
+
+> **LC-12 DDL VALIDADO Y APROBADO EN POSTGRES AISLADO — APPLY MEDIANTE CADENA SUPABASE COMPLETA BLOQUEADO POR DEUDA LEGACY DE BOOTSTRAP.**
+
+**Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-22-LEGAL-CENTER-LC-12-ISOLATED-VALIDATION-CLOSEOUT.md`
+
+*Cierre documental LC-12 aislado — sin commit en TICKET-V2-LEGAL-CENTER-LC-12-ISOLATED-VALIDATION-DOCUMENTATION-CLOSEOUT-001*
