@@ -2462,3 +2462,25 @@ Sin commit · sin push · sin merge · sin PR · sin deploy · sin SQL · sin mi
 > **LC-13 DISCOVERY COMPLETADO — PENDIENTE DE REVISIÓN Y APROBACIÓN PO**
 
 **Documentación:** `docs/V2/TICKETS/TICKET-V2-LEGAL-CENTER-LC-13-DISCOVERY-AND-PLANNING-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-22-LEGAL-CENTER-LC-13-DISCOVERY.md`
+
+---
+
+## Legal Center LC-13A — Read security validación aislada — 2026-07-22
+
+**Ticket:** `TICKET-V2-LEGAL-CENTER-LC-13A-ISOLATED-READ-SECURITY-VALIDATION-001`
+
+| Campo | Valor |
+|-------|-------|
+| **HEAD baseline** | `41e0bedfc906b7f438d38d3f9a60c6b1d7a8ba34` |
+| **Modo** | PG 16 aislado · LC-12 + LC-13A · sin cadena 110 |
+| **Migración LC-13A** | `20260722101300_legal_center_read_security_lc13a.sql` |
+| **Pruebas** | 22 PASS · 0 FAIL |
+| **Bootstrap legacy** | ❌ sin reparación |
+| **Producción / Supabase remoto** | ❌ NO |
+| **Commit** | ❌ NO autorizado |
+
+**Estado:**
+
+> **LC-13A READ SECURITY VALIDADA EN POSTGRES AISLADO — PENDIENTE DE REVISIÓN Y APROBACIÓN PO**
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-LEGAL-CENTER-LC-13A-ISOLATED-READ-SECURITY-VALIDATION-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-22-LC13A-READ-SECURITY-VALIDATION.md`

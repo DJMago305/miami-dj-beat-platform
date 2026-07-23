@@ -485,6 +485,23 @@ Handoff: [`SESSION-SUMMARIES/2026-07-22-LEGAL-CENTER-LC-13-DISCOVERY.md`](SESSIO
 
 ---
 
+## Legal Center V2 — LC-13A Read Security Isolated Validation (2026-07-22)
+
+| Campo | Valor |
+|-------|-------|
+| **Ticket** | LC-13A — RLS + 7 read RPCs |
+| **Estado** | **LC-13A READ SECURITY VALIDADA EN POSTGRES AISLADO — PENDIENTE DE REVISIÓN PO** |
+| **Migración** | `supabase/migrations/20260722101300_legal_center_read_security_lc13a.sql` |
+| **Apply cadena Supabase** | ❌ **BLOCKED_BY_LEGACY_BOOTSTRAP_DEBT** |
+| **Producción / deploy** | ❌ **NOT_AUTHORIZED** |
+| **Commit** | ❌ NO autorizado en ticket de validación |
+
+Validación: PostgreSQL `postgres:16` efímero · apply LC-12 + LC-13A · 22/22 pruebas PASS · RLS 15 policies · 7 RPC `SECURITY INVOKER` · contenedor/volumen eliminados.
+
+Handoff: [`SESSION-SUMMARIES/2026-07-22-LC13A-READ-SECURITY-VALIDATION.md`](SESSION-SUMMARIES/2026-07-22-LC13A-READ-SECURITY-VALIDATION.md) · [`TICKETS/TICKET-V2-LEGAL-CENTER-LC-13A-ISOLATED-READ-SECURITY-VALIDATION-001.md`](TICKETS/TICKET-V2-LEGAL-CENTER-LC-13A-ISOLATED-READ-SECURITY-VALIDATION-001.md)
+
+---
+
 ## Fuera de alcance de este baseline
 
 | Item | Motivo |
