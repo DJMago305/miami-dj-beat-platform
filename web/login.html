@@ -326,6 +326,14 @@
             outline: none;
         }
 
+        .login-container .form select#signup-address-state {
+            -webkit-appearance: menulist;
+            appearance: auto;
+            background-image: none;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
         .login-forgot-row {
             text-align: right;
             margin-top: -6px;
@@ -561,16 +569,6 @@
             text-transform: uppercase;
             color: rgba(197, 160, 89, 0.9);
             margin-bottom: 10px;
-        }
-        .mdj-signup-intent-context {
-            margin: 0 0 12px;
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(197, 160, 89, 0.35);
-            background: rgba(197, 160, 89, 0.08);
-            font-size: 13px;
-            line-height: 1.45;
-            color: rgba(255, 255, 255, 0.88);
         }
         .mdj-signup-intent-grid {
             display: grid;
@@ -933,7 +931,6 @@
                 <input type="hidden" id="signup-plan-intent" name="plan_intent" value="lite" />
                 <fieldset id="mdj-signup-intent-section" class="mdj-signup-intent-section">
                     <legend id="mdj-signup-intent-legend-text">¿Para qué crearás tu cuenta?</legend>
-                    <p id="mdj-signup-intent-context" class="mdj-signup-intent-context" hidden role="note"></p>
                     <div class="mdj-signup-intent-grid" role="radiogroup" aria-labelledby="mdj-signup-intent-legend-text" aria-required="true">
                         <button type="button" class="mdj-signup-intent-card" id="mdj-intent-client" data-mdj-intent="client" aria-pressed="false">
                             <span class="mdj-signup-intent-title">Contratar servicios</span>
@@ -1091,8 +1088,12 @@
                         <div class="signup-addr-grid signup-addr-grid-2">
                             <label><span data-i18n="login-signup-address-city-label">Ciudad</span>
                                 <input type="text" id="signup-address-city" name="address-level2" autocomplete="address-level2" maxlength="120" data-i18n-hold="login-signup-address-placeholder-city" placeholder="Miami"></label>
-                            <label><span data-i18n="login-signup-address-state-label">Estado / provincia</span>
-                                <input type="text" id="signup-address-state" name="address-level1" autocomplete="address-level1" maxlength="80" data-i18n-hold="login-signup-address-placeholder-state" placeholder="FL"></label>
+                            <label id="signup-address-state-us-wrap"><span data-i18n="login-signup-address-state-label">Estado / provincia</span>
+                                <select id="signup-address-state" name="address-level1" autocomplete="address-level1">
+                                    <option value="">— Select state —</option>
+                                </select></label>
+                            <label id="signup-address-state-intl-wrap" style="display:none;"><span data-i18n="login-signup-address-state-label">Estado / provincia</span>
+                                <input type="text" id="signup-address-state-intl" maxlength="80" data-i18n-hold="login-signup-address-placeholder-state" placeholder="FL"></label>
                         </div>
                         <div class="signup-addr-grid signup-addr-grid-2">
                             <label><span data-i18n="login-signup-address-zip-label">Código postal</span>
@@ -1141,6 +1142,7 @@
     <script src="./i18n.js?v=20260513-outlined-hold-skip"></script>
     <script src="./security-shield.js?v=20260305-1"></script>
     <script src="./js/mdj-account-forms.js?v=20260513-outlined-float"></script>
+    <script src="./account-address-data.js?v=20260422-country-select-only"></script>
     <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
     <script src="./auth.js?v=20260702-onboarding-intent-001"></script>
 
@@ -1301,6 +1303,59 @@
             } catch (e2) { return false; }
         }
 
+        function mdjLoginPopulateSignupUSStates() {
+            var sel = document.getElementById('signup-address-state');
+            if (!sel || sel.dataset.mdjPopulated === '1') return;
+            var states = window.MDJ_US_STATES || [];
+            states.forEach(function (st) {
+                var o = document.createElement('option');
+                o.value = st.code;
+                o.textContent = st.name + ' (' + st.code + ')';
+                sel.appendChild(o);
+            });
+            if (Array.from(sel.options).some(function (o) { return o.value === 'FL'; })) {
+                sel.value = 'FL';
+            }
+            sel.dataset.mdjPopulated = '1';
+        }
+
+        function mdjLoginSyncSignupAddressStateField() {
+            var countryEl = document.getElementById('signup-address-country');
+            var usWrap = document.getElementById('signup-address-state-us-wrap');
+            var intlWrap = document.getElementById('signup-address-state-intl-wrap');
+            var usSel = document.getElementById('signup-address-state') || document.getElementById('signup-address-state-us-store');
+            var intlIn = document.getElementById('signup-address-state-intl') || document.getElementById('signup-address-state-intl-store');
+            if (!countryEl || !usWrap || !intlWrap || !usSel || !intlIn) return;
+            var isUs = countryEl.value === 'United States';
+            usWrap.style.display = isUs ? '' : 'none';
+            intlWrap.style.display = isUs ? 'none' : '';
+            if (isUs) {
+                usSel.id = 'signup-address-state';
+                usSel.setAttribute('name', 'address-level1');
+                usSel.setAttribute('autocomplete', 'address-level1');
+                intlIn.id = 'signup-address-state-intl-store';
+                intlIn.removeAttribute('name');
+                intlIn.removeAttribute('autocomplete');
+            } else {
+                intlIn.id = 'signup-address-state';
+                intlIn.setAttribute('name', 'address-level1');
+                intlIn.setAttribute('autocomplete', 'address-level1');
+                usSel.id = 'signup-address-state-us-store';
+                usSel.removeAttribute('name');
+                usSel.removeAttribute('autocomplete');
+            }
+        }
+
+        function mdjLoginInitSignupAddressStateSelectors() {
+            mdjLoginPopulateSignupUSStates();
+            mdjLoginSyncSignupAddressStateField();
+            var countryEl = document.getElementById('signup-address-country');
+            if (countryEl && countryEl.dataset.mdjStateSync !== '1') {
+                countryEl.dataset.mdjStateSync = '1';
+                countryEl.addEventListener('change', mdjLoginSyncSignupAddressStateField);
+            }
+        }
+
         function mdjClearSignupIntentError() {
             var err = document.getElementById('signup-intent-error');
             if (err) { err.hidden = true; err.textContent = ''; }
@@ -1324,7 +1379,6 @@
             var summary = document.getElementById('mdj-signup-intent-summary');
             var ackLabel = document.getElementById('signup-intent-ack-label');
             var ack = document.getElementById('signup-intent-ack');
-            var ctx = document.getElementById('mdj-signup-intent-context');
             if (!block || !summary) return;
             if (userType === 'client' || userType === 'talent') {
                 block.classList.remove('hidden');
@@ -1340,13 +1394,6 @@
                 block.classList.add('hidden');
                 if (ack) ack.checked = false;
                 summary.textContent = '';
-            }
-            if (ctx) {
-                var showJobs = mdjIsJobsSignupEntryContext() && userType === 'talent';
-                ctx.hidden = !showJobs;
-                if (showJobs) {
-                    ctx.textContent = 'Llegaste desde Jobs: este registro crea o activa tu perfil artístico. Puedes cambiar a Cliente arriba si solo quieres contratar servicios.';
-                }
             }
             mdjClearSignupIntentError();
         }
@@ -1740,6 +1787,7 @@
         if (wantsSignup) {
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', function () {
+                    mdjLoginInitSignupAddressStateSelectors();
                     applySignupUserTypeFromUrl();
                     mdbOpenSignupTabIfRequested();
                     applyContactLeadPrefill();
@@ -1748,6 +1796,7 @@
                 });
             } else {
                 requestAnimationFrame(function () {
+                    mdjLoginInitSignupAddressStateSelectors();
                     applySignupUserTypeFromUrl();
                     mdbOpenSignupTabIfRequested();
                     applyContactLeadPrefill();
@@ -1784,6 +1833,7 @@
         }
 
         applySignupUserTypeFromUrl();
+        mdjLoginInitSignupAddressStateSelectors();
 
         // ── After successful login or signup → redirect back ───────
         // Uses lazy singleton to avoid CDN race condition.

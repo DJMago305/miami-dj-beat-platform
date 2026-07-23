@@ -2454,7 +2454,19 @@
                             </div>
                         </label>
                         <label><span>CIUDAD DE RESIDENCIA <span style="color:#ff5555;">*</span></span>
-                            <input type="text" id="job-city" required placeholder="Ej: Miami, FL">
+                            <input type="text" id="job-city" required placeholder="Ej: Miami" autocomplete="address-level2">
+                        </label>
+                    </div>
+
+                    <div class="grid2" style="margin-top: 24px;">
+                        <label><span>ESTADO O PROVINCIA <span style="color:#ff5555;">*</span></span>
+                            <select id="job-state" name="address-level1" required autocomplete="address-level1"
+                                style="width:100%;background:rgba(255,255,255,0.05);color:#fff;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:12px;font-size:14px;color-scheme:dark;cursor:pointer;-webkit-appearance:menulist;appearance:auto;pointer-events:auto;position:relative;z-index:1;">
+                                <option value="">— Seleccionar —</option>
+                            </select>
+                        </label>
+                        <label aria-hidden="true" style="visibility:hidden;pointer-events:none;"><span>&nbsp;</span>
+                            <select tabindex="-1" disabled style="opacity:0;height:0;padding:0;border:0;"></select>
                         </label>
                     </div>
 
@@ -2797,6 +2809,24 @@
                 </div>
             </div>
 
+            <!-- Employment account intent (guest signup — hidden when session exists) -->
+            <div id="employment-artist-intent-block"
+                style="margin-top: 40px; padding: 24px 28px; background: rgba(197,160,89,0.08); border-radius: 20px; border: 1px solid rgba(197,160,89,0.35);">
+                <p style="margin:0 0 12px;font-size:12px;line-height:1.45;color:rgba(255,255,255,0.9);">
+                    Al enviar esta solicitud se creará una <strong>cuenta artística/profesional</strong> en Miami DJ Beat. Podrás solicitar trabajos y ofrecer tus servicios como artista. Confirma tu intención antes de continuar.
+                </p>
+                <label style="display:flex;gap:10px;align-items:flex-start;margin:0 0 10px;font-size:12px;line-height:1.4;cursor:pointer;">
+                    <input type="checkbox" id="employment-artist-intent-ack" style="margin-top:2px;flex-shrink:0;width:auto;">
+                    <span>Confirmo que quiero crear una cuenta artística/profesional para ofrecer servicios (no una cuenta Cliente).</span>
+                </label>
+                <p id="employment-artist-intent-error" style="color:#ff5555;font-size:12px;margin:0 0 10px;display:none;" role="alert"></p>
+                <p style="margin:0;font-size:11px;line-height:1.5;text-align:center;color:rgba(255,255,255,0.75);">
+                    <a href="./login.html?redirect=jobs" style="color:var(--gold);font-weight:700;text-decoration:underline;">¿Ya tienes cuenta? Iniciar sesión</a>
+                    ·
+                    <a href="./login.html?account=client" style="color:var(--gold);font-weight:700;text-decoration:underline;">¿Solo quieres contratar servicios? Crear cuenta Cliente</a>
+                </p>
+            </div>
+
             <!-- Privacy -->
             <div
                 style="margin-top: 40px; padding: 30px; background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);">
@@ -2830,6 +2860,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script defer src="./subscription.js?v=20260418-PURGE-SEAL"></script>
     <script src="./js/mdj-safe-storage.js?v=20260616-1"></script>
+    <script src="./account-address-data.js?v=20260422-country-select-only"></script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
     <script>
         (function () {
@@ -3303,6 +3334,7 @@
             ensureJobsRoleCheckMarks();
             initJobsRoleCarouselDragClickGuard();
             addExperienceEntry();
+            jobsInitEmploymentStateSelect();
             await prefillProfileForm();
             jobsSyncProFormPasswordVisibility();
             await updateJobsAfterRolesCta();
@@ -3608,6 +3640,64 @@
             );
         }
 
+        function jobsInitEmploymentStateSelect() {
+            var sel = document.getElementById('job-state');
+            if (!sel || sel.dataset.mdjPopulated === '1') return;
+            var states = window.MDJ_US_STATES || [];
+            states.forEach(function (st) {
+                var o = document.createElement('option');
+                o.value = st.code;
+                o.textContent = st.name + ' (' + st.code + ')';
+                sel.appendChild(o);
+            });
+            if (Array.from(sel.options).some(function (o) { return o.value === 'FL'; })) {
+                sel.value = 'FL';
+            }
+            sel.dataset.mdjPopulated = '1';
+        }
+
+        function jobsResetEmploymentArtistIntent() {
+            var ack = document.getElementById('employment-artist-intent-ack');
+            var err = document.getElementById('employment-artist-intent-error');
+            if (ack) ack.checked = false;
+            if (err) {
+                err.textContent = '';
+                err.style.display = 'none';
+            }
+        }
+
+        function jobsSyncEmploymentArtistIntentVisibility(hasSession) {
+            var block = document.getElementById('employment-artist-intent-block');
+            if (!block) return;
+            block.style.display = hasSession ? 'none' : 'block';
+            if (hasSession) jobsResetEmploymentArtistIntent();
+        }
+
+        /** Cliente con fila en client_profiles y sin dj_profiles: bloquear upsert artístico silencioso desde employment. */
+        async function jobsEmploymentBlockSilentClientArtist(session) {
+            if (!_supa || !session || !session.user) return { blocked: false };
+            try {
+                var uid = session.user.id;
+                var pr = await Promise.all([
+                    _supa.from('dj_profiles').select('user_id').eq('user_id', uid).maybeSingle(),
+                    _supa.from('client_profiles').select('user_id').eq('user_id', uid).maybeSingle()
+                ]);
+                var dj = pr[0] && pr[0].data;
+                var cl = pr[1] && pr[1].data;
+                if (cl && cl.user_id && (!dj || !dj.user_id)) {
+                    return {
+                        blocked: true,
+                        message: jobsGateT(
+                            'jobs-employment-client-no-silent-artist',
+                            'Tu cuenta es de Cliente. Este formulario no creará un perfil artístico automáticamente. Usa el mensaje en la parte superior de Jobs o contacta soporte para activar tu perfil de Artista.',
+                            'Your account is a Client account. This form will not silently create an Artist profile. Use the banner at the top of Jobs or contact support to activate your Artist profile.'
+                        )
+                    };
+                }
+            } catch (eBlock) { /* ignore — do not block on transient read errors */ }
+            return { blocked: false };
+        }
+
         /** Oculta fila de contraseña del formulario PRO si ya hay sesión (evita pedirla dos veces). */
         function jobsSyncProFormPasswordVisibility() {
             if (!_supa) return;
@@ -3615,30 +3705,32 @@
                 var sess = res && res.data && res.data.session;
                 var pw = document.getElementById('job-password');
                 var row = pw && pw.closest('.grid2');
-                if (!row) return;
-                if (sess) {
-                    row.style.display = 'none';
-                    if (pw) {
-                        pw.removeAttribute('required');
-                        pw.value = '';
-                    }
-                    var pc = document.getElementById('job-password-confirm');
-                    if (pc) {
-                        pc.removeAttribute('required');
-                        pc.value = '';
-                    }
-                } else {
-                    row.style.display = '';
-                    if (pw) {
-                        pw.setAttribute('required', 'required');
-                        pw.setAttribute('minlength', '8');
-                    }
-                    var pc2 = document.getElementById('job-password-confirm');
-                    if (pc2) {
-                        pc2.setAttribute('required', 'required');
-                        pc2.setAttribute('minlength', '8');
+                if (row) {
+                    if (sess) {
+                        row.style.display = 'none';
+                        if (pw) {
+                            pw.removeAttribute('required');
+                            pw.value = '';
+                        }
+                        var pc = document.getElementById('job-password-confirm');
+                        if (pc) {
+                            pc.removeAttribute('required');
+                            pc.value = '';
+                        }
+                    } else {
+                        row.style.display = '';
+                        if (pw) {
+                            pw.setAttribute('required', 'required');
+                            pw.setAttribute('minlength', '8');
+                        }
+                        var pc2 = document.getElementById('job-password-confirm');
+                        if (pc2) {
+                            pc2.setAttribute('required', 'required');
+                            pc2.setAttribute('minlength', '8');
+                        }
                     }
                 }
+                jobsSyncEmploymentArtistIntentVisibility(!!sess);
             });
         }
 
@@ -4022,6 +4114,8 @@
             if (!selectedPlan) return;
             document.getElementById('selection-screen').classList.add('hidden');
             document.getElementById('pro-form-section').classList.remove('hidden');
+            jobsResetEmploymentArtistIntent();
+            jobsSyncProFormPasswordVisibility();
 
             const existingHidden = document.getElementById('selected-plan-hidden');
             if (existingHidden) existingHidden.value = selectedPlan.toUpperCase();
@@ -4847,9 +4941,23 @@
         }
 
         if (form) {
+            (function bindEmploymentArtistIntentAck() {
+                var ack = document.getElementById('employment-artist-intent-ack');
+                if (!ack) return;
+                ack.addEventListener('change', function () {
+                    if (!ack.checked) return;
+                    var err = document.getElementById('employment-artist-intent-error');
+                    if (err) {
+                        err.textContent = '';
+                        err.style.display = 'none';
+                    }
+                });
+            })();
+
             window.submitProForm = async function () {
                 const submitBtn = document.getElementById('pro-submit-btn');
                 const originalText = submitBtn ? submitBtn.innerHTML : '';
+                if (submitBtn && submitBtn.disabled) return;
                 if (!_supa) {
                     alert('No se pudo iniciar la conexión de sesión. Recarga la página o entra desde «Suscripción gratis» en el menú.');
                     return;
@@ -4866,6 +4974,8 @@
                 if (!firstName) errors.push('Nombre (First Name) es requerido');
                 if (!lastName) errors.push('Apellido (Last Name) es requerido');
                 if (!emailVal) errors.push('Email es requerido');
+                const stateVal = document.getElementById('job-state')?.value || '';
+                if (!stateVal) errors.push('Selecciona estado o provincia');
 
                 const selectedRoles = Array.from(document.querySelectorAll('input[name="roles"]:checked')).map(cb => cb.value);
                 if (selectedRoles.length === 0) errors.push('Selecciona al menos un rol (DJ Residente, Eventos, etc.)');
@@ -4909,6 +5019,31 @@
                         errorDiv.style.display = 'block';
                         errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         return;
+                    }
+
+                    const artistAck = document.getElementById('employment-artist-intent-ack');
+                    const artistAckErr = document.getElementById('employment-artist-intent-error');
+                    if (!artistAck || !artistAck.checked) {
+                        const intentMsg = jobsGateT(
+                            'jobs-employment-artist-intent-required',
+                            'Confirma que quieres crear una cuenta artística/profesional antes de continuar, o usa los enlaces para iniciar sesión o crear cuenta Cliente.',
+                            'Confirm you want a professional artist account before continuing, or use the links to log in or create a Client account.'
+                        );
+                        if (artistAckErr) {
+                            artistAckErr.textContent = intentMsg;
+                            artistAckErr.style.display = 'block';
+                        } else {
+                            errorList.innerHTML = '<li>' + intentMsg + '</li>';
+                            errorDiv.style.display = 'block';
+                        }
+                        const intentBlock = document.getElementById('employment-artist-intent-block');
+                        if (intentBlock) intentBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        else errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        return;
+                    }
+                    if (artistAckErr) {
+                        artistAckErr.textContent = '';
+                        artistAckErr.style.display = 'none';
                     }
 
                     submitBtn.disabled = true;
@@ -4961,6 +5096,16 @@
 
                 if (!currentSession) {
                     alert('No se pudo iniciar sesión. Por favor intenta de nuevo.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                    return;
+                }
+
+                const clientArtistBlock = await jobsEmploymentBlockSilentClientArtist(currentSession);
+                if (clientArtistBlock.blocked) {
+                    errorList.innerHTML = '<li>' + clientArtistBlock.message + '</li>';
+                    errorDiv.style.display = 'block';
+                    errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalText;
                     return;
