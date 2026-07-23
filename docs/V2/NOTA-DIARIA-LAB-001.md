@@ -2530,3 +2530,26 @@ Sin commit · sin push · sin merge · sin PR · sin deploy · sin SQL · sin mi
 > **LC-13B PRODUCTIVE LOOKUP ADAPTER DESIGN COMPLETADO — IMPLEMENTATION NOT STARTED — PRODUCTION SQL INTEGRATION REMAINS BLOCKED — PENDIENTE DE REVISIÓN Y APROBACIÓN PO**
 
 **Documentación:** `docs/V2/TICKETS/TICKET-V2-LEGAL-CENTER-LC-13B-PRODUCTIVE-LOOKUP-ADAPTER-DESIGN-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-22-LC13B-PRODUCTIVE-LOOKUP-ADAPTER-DESIGN.md`
+
+---
+
+## Legal Center LC-13B — TypeScript lookup adapter implementation — 2026-07-22
+
+**Ticket:** `TICKET-V2-LEGAL-CENTER-LC-13B-TS-LOOKUP-ADAPTER-IMPLEMENTATION-001`
+
+| Campo | Valor |
+|-------|-------|
+| **HEAD baseline** | `32ea3e69e80f4696abd6e03b2e56ae58fc05a975` |
+| **Modo** | TypeScript lab — sin SQL · sin Supabase remoto |
+| **Cache** | `LegalProfileResolutionCache` (memory-only) |
+| **Prefetch** | `LegalProfileAccessPrefetchService` → `ApiClient.rpc('legal_resolve_profile_access')` |
+| **Adapter** | `createSupabaseLegalProfileLookup` (sync cache-backed) |
+| **Staff wire** | `MEMORY_FIXTURE` default · `CACHE_BACKED` vía `transportMode` |
+| **Tests** | 35 nuevos + regresión bridge · suite 1068 PASS |
+| **Commit** | ❌ NO autorizado |
+
+**Estado:**
+
+> **LC-13B TYPESCRIPT LOOKUP ADAPTER IMPLEMENTADO EN LAB — CACHE Y PREFETCH VALIDATED — STAFF FAIL-CLOSED PRESERVED — SQL RPC NOT IMPLEMENTED — PRODUCTION NOT AUTHORIZED — PENDIENTE DE REVISIÓN Y VALIDACIÓN PO**
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-LEGAL-CENTER-LC-13B-TS-LOOKUP-ADAPTER-IMPLEMENTATION-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-22-LC13B-TS-LOOKUP-ADAPTER-IMPLEMENTATION.md`

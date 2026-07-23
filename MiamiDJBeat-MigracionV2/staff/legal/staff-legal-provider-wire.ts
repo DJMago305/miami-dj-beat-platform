@@ -10,7 +10,7 @@ import {
   type StaffLegalPortalRole,
 } from '../../shared/services/legal/provider';
 import {
-  DEFAULT_MEMORY_LEGAL_PROFILE_LOOKUP,
+  resolveLegalProfileLookupPort,
   resolveLegalReadAccessContextFromSession,
 } from '../../shared/services/legal/persistence/identity';
 import { renderLegalCenterShell } from '../../shared/services/legal/ui';
@@ -44,7 +44,7 @@ function resolveStaffLegalRoleFromSession(): StaffLegalPortalRole {
   const bridgeResult = resolveLegalReadAccessContextFromSession({
     session: snapshot,
     permissions: snapshot.permissions,
-    legalProfileLookup: DEFAULT_MEMORY_LEGAL_PROFILE_LOOKUP,
+    legalProfileLookup: resolveLegalProfileLookupPort(),
   });
 
   if (!bridgeResult.ok || bridgeResult.value.actorType !== 'staff' || bridgeResult.value.portal !== 'staff') {
