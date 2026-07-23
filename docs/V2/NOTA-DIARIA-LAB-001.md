@@ -2506,4 +2506,27 @@ Sin commit · sin push · sin merge · sin PR · sin deploy · sin SQL · sin mi
 
 > **LC-13B IDENTITY INTEGRATION DISCOVERY COMPLETADO — PENDIENTE DE REVISIÓN Y APROBACIÓN PO**
 
+**Commit local:** `3c36a5b` — PO aprobado LC-13B identity discovery.
+
 **Documentación:** `docs/V2/TICKETS/TICKET-V2-LEGAL-CENTER-LC-13B-IDENTITY-INTEGRATION-DISCOVERY-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-22-LC13B-IDENTITY-DISCOVERY.md`
+
+---
+
+## Legal Center LC-13B — Productive lookup adapter design — 2026-07-22
+
+**Ticket:** `TICKET-V2-LEGAL-CENTER-LC-13B-PRODUCTIVE-LOOKUP-ADAPTER-DESIGN-001`
+
+| Campo | Valor |
+|-------|-------|
+| **HEAD baseline** | `3c36a5bc31ef2b41e74bb292e095bf16b03bcaa9` |
+| **Modo** | Diseño técnico — sin TS · sin SQL |
+| **Adapter** | `SupabaseLegalProfileLookupAdapter` (prefetch + cache sync) |
+| **RPC nueva** | `legal_resolve_profile_access` recomendada |
+| **GO** | READY_FOR_IMPLEMENTATION_TICKET |
+| **Commit** | ❌ NO autorizado |
+
+**Estado:**
+
+> **LC-13B PRODUCTIVE LOOKUP ADAPTER DESIGN COMPLETADO — IMPLEMENTATION NOT STARTED — PRODUCTION SQL INTEGRATION REMAINS BLOCKED — PENDIENTE DE REVISIÓN Y APROBACIÓN PO**
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-LEGAL-CENTER-LC-13B-PRODUCTIVE-LOOKUP-ADAPTER-DESIGN-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-22-LC13B-PRODUCTIVE-LOOKUP-ADAPTER-DESIGN.md`

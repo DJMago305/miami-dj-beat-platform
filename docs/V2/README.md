@@ -520,6 +520,23 @@ Diseño: inventario identidades · mapa resolución auth→RLS→RPC · contrato
 
 Handoff: [`SESSION-SUMMARIES/2026-07-22-LC13B-IDENTITY-DISCOVERY.md`](SESSION-SUMMARIES/2026-07-22-LC13B-IDENTITY-DISCOVERY.md) · [`TICKETS/TICKET-V2-LEGAL-CENTER-LC-13B-IDENTITY-INTEGRATION-DISCOVERY-001.md`](TICKETS/TICKET-V2-LEGAL-CENTER-LC-13B-IDENTITY-INTEGRATION-DISCOVERY-001.md)
 
+**Commit local:** `3c36a5b` — `docs(v2-legal): record LC-13B identity discovery` (PO aprobado).
+
+---
+
+## Legal Center V2 — LC-13B Productive Lookup Adapter Design (2026-07-22)
+
+| Campo | Valor |
+|-------|-------|
+| **Ticket** | LC-13B — Productive `LegalProfileLookupPort` adapter design |
+| **Estado** | **LC-13B PRODUCTIVE LOOKUP ADAPTER DESIGN COMPLETADO — PENDIENTE DE REVISIÓN PO** |
+| **Decisión RPC** | Nueva `legal_resolve_profile_access` + composición con `mdj_access_snapshot` |
+| **Patrón adapter** | Prefetch async → cache sync · bridge sin reescritura |
+| **GO / NO-GO** | **READY_FOR_IMPLEMENTATION_TICKET** |
+| **Commit** | ❌ NO autorizado en este ticket |
+
+Handoff: [`SESSION-SUMMARIES/2026-07-22-LC13B-PRODUCTIVE-LOOKUP-ADAPTER-DESIGN.md`](SESSION-SUMMARIES/2026-07-22-LC13B-PRODUCTIVE-LOOKUP-ADAPTER-DESIGN.md) · [`TICKETS/TICKET-V2-LEGAL-CENTER-LC-13B-PRODUCTIVE-LOOKUP-ADAPTER-DESIGN-001.md`](TICKETS/TICKET-V2-LEGAL-CENTER-LC-13B-PRODUCTIVE-LOOKUP-ADAPTER-DESIGN-001.md)
+
 ---
 
 ## Fuera de alcance de este baseline
