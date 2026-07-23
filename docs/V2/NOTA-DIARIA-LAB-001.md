@@ -2439,3 +2439,26 @@ Sin commit · sin push · sin merge · sin PR · sin deploy · sin SQL · sin mi
 **Documentación:** `docs/V2/SESSION-SUMMARIES/2026-07-22-LEGAL-CENTER-LC-12-ISOLATED-VALIDATION-CLOSEOUT.md`
 
 *Cierre documental LC-12 aislado — sin commit en TICKET-V2-LEGAL-CENTER-LC-12-ISOLATED-VALIDATION-DOCUMENTATION-CLOSEOUT-001*
+
+---
+
+## Legal Center LC-13 — Discovery y planificación — 2026-07-22
+
+**Ticket:** `TICKET-V2-LEGAL-CENTER-LC-13-DISCOVERY-AND-PLANNING-001`
+
+| Campo | Valor |
+|-------|-------|
+| **HEAD** | `5b071328e35a1781d1d4f38c611ad41522ffed33` |
+| **Modo** | Discovery + documentación — sin SQL · sin runtime · sin Supabase |
+| **LC-13 discovery** | ✅ Completado — pendiente revisión PO |
+| **LC-13A read matrices** | Referenciadas como base canónica |
+| **RLS / RPC implementación** | ❌ NOT_IMPLEMENTED / DEFERRED |
+| **Bootstrap legacy** | Documentado — no resuelto |
+| **Commit docs** | ⏳ Pendiente autorización PO |
+| **Push / deploy** | ❌ NO |
+
+**Estado:**
+
+> **LC-13 DISCOVERY COMPLETADO — PENDIENTE DE REVISIÓN Y APROBACIÓN PO**
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-LEGAL-CENTER-LC-13-DISCOVERY-AND-PLANNING-001.md` · `docs/V2/SESSION-SUMMARIES/2026-07-22-LEGAL-CENTER-LC-13-DISCOVERY.md`

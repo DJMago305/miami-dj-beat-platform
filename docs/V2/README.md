@@ -465,6 +465,26 @@ Handoff: [`SESSION-SUMMARIES/2026-07-22-LEGAL-CENTER-LC-12-ISOLATED-VALIDATION-C
 
 ---
 
+## Legal Center V2 — LC-13 Discovery (2026-07-22)
+
+| Campo | Valor |
+|-------|-------|
+| **Ticket** | LC-13 — Secure Access Architecture (discovery + planning) |
+| **Estado** | **LC-13 DISCOVERY COMPLETADO — PENDIENTE DE REVISIÓN PO** |
+| **LC-13A read** | Matrices existentes en `docs/V2/LEGAL/LC-13A-*` — base canónica read |
+| **LC-13B bridge** | ✅ Runtime aprobado · identidad business IDs |
+| **RLS / RPC SQL** | ❌ **NOT_IMPLEMENTED / DEFERRED** |
+| **Bootstrap legacy** | ❌ **BLOCKED_BY_LEGACY_BOOTSTRAP_DEBT** (no resuelto en LC-13) |
+| **Implementación** | ❌ NO autorizada · commit docs pendiente PO |
+
+### Alcance documentado
+
+RLS conceptual · 7 read RPC (LC-13A) · extensiones propuestas (dashboard, public link) · matriz Owner/Manager/Seller · enlaces públicos · auditoría · e-sign compat · impacto bootstrap.
+
+Handoff: [`SESSION-SUMMARIES/2026-07-22-LEGAL-CENTER-LC-13-DISCOVERY.md`](SESSION-SUMMARIES/2026-07-22-LEGAL-CENTER-LC-13-DISCOVERY.md) · [`TICKETS/TICKET-V2-LEGAL-CENTER-LC-13-DISCOVERY-AND-PLANNING-001.md`](TICKETS/TICKET-V2-LEGAL-CENTER-LC-13-DISCOVERY-AND-PLANNING-001.md)
+
+---
+
 ## Fuera de alcance de este baseline
 
 | Item | Motivo |
