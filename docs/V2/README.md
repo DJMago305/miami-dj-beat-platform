@@ -282,6 +282,19 @@ Tickets P0 de **runtime V1** (`web/mdj-shared-header.js`, `dj-profile.html`). Do
 
 ---
 
+## V1 crossover — Profile reconciliation (traceabilidad)
+
+Tickets V1 de **intención de alta / inspección / planificación de perfiles**. Ubicación canónica: `../tickets/`. **No** autorizan escritura remota por sí solos.
+
+| Ticket | Estado | Notas |
+|--------|--------|-------|
+| `../tickets/TICKET-V1-PROFILE-ONBOARDING-UX-FIX-001.md` | Implementado · PO UX aprobado | `a787220` — altas futuras |
+| `../tickets/TICKET-V1-JOBS-EMPLOYMENT-ACCOUNT-INTENT-FIX-001.md` | Implementado · PO UX aprobado | `07785ae` — employment intent |
+| `../tickets/TICKET-V1-PROFILE-READONLY-DATA-INSPECTION-001.md` | Cerrado — read-only | `cc1969c` — Q15, Ary, Aron |
+| `../tickets/TICKET-V1-PROFILE-RECONCILIATION-PLAN-001.md` | **PLANNING ONLY** | Plan reversible; sin reconciliación ejecutada |
+
+---
+
 ## Decisiones selladas (resumen)
 
 | ID | Título | Doc |
