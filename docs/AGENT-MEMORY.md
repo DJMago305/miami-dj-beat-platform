@@ -879,3 +879,4 @@ Si el agente usa cualquiera de estas frases o acciones → **patch rechazado aut
 | 2026-06-19 | #105 `73f360c` | `staff-order.html` + MI PORTAL cableado total + RLS migrations + button stability — **todos los tickets cerrados** |
 | 2026-06-21 | local | Nav fix: subrayado MI PORTAL; auditoría UBICACIÓN (campo existe en DB, falta en staff-order). Ver SESSION-LOG-2026-06-21 |
 | 2026-06-22/23 | #111 #112 #113 `311a601` | Hero focal control, artist specialty hero, CONFIG Categoría + Jobs Guard, Matching Taxonomy Map. Tickets Jobs abiertos pendientes QA. Ver SESSION-LOG-2026-06-23 |
+| 2026-07-23 | — `cc1969c` | Onboarding intent (`a787220`), Employment signup + Visual Pass 001 (`07785ae`), inspección read-only remota Q15 documentada (`TICKET-V1-PROFILE-READONLY-DATA-INSPECTION-001`). Sin push/deploy. Próximo: `TICKET-V1-PROFILE-RECONCILIATION-PLAN-001` (no autorizado). Ver `NOTA-DIARIA-2026-07-23.md` |

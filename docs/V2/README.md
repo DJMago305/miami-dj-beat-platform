@@ -258,6 +258,7 @@ Ver `GOVERNANCE/README.md` — pipeline agente, checklist violaciones, formulari
 | `DECISIONS.md` | Registro oficial de DECISION-V2-001 … 009 |
 | `NOTA-DIARIA-2026-07-05.md` | Cabecera operativa del día (cierre fase fundacional). Detalle → `SESSION-SUMMARIES/2026-07-05.md` |
 | `NOTA-DIARIA-2026-07-06.md` | Nota operativa del día — V1 Invoice/Cash Flow + **§ CIERRE DE JORNADA V2** |
+| `NOTA-DIARIA-2026-07-23.md` | Nota operativa del día — V1 Profile onboarding, Employment intent, inspección read-only remota |
 
 ---
 
