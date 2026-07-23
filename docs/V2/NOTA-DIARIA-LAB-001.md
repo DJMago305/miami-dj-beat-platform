@@ -2392,3 +2392,25 @@ Sin commit · sin push · sin merge · sin PR · sin deploy · sin SQL · sin mi
 *Cierre documental LC-13B — sin commit en TICKET-V2-LC-13B-DOCUMENTATION-CLOSEOUT-001*
 
 **LC-13B DOCUMENTADO — PENDIENTE COMMIT SELECTIVO PO**
+
+---
+
+## Legal Center LC-12 — Prerrequisitos versionables — 2026-07-22
+
+**Ticket:** `TICKET-V2-LEGAL-CENTER-LC-12-LOCAL-APPLY-PREREQUISITE-HARDENING-001`
+
+| Campo | Valor |
+|-------|-------|
+| **Readiness LC-12** | ✅ Completado (`TICKET-V2-LEGAL-CENTER-LC-12-LOCAL-MIGRATION-APPLY-READINESS-001`) |
+| **Migration LC-12 SQL** | Estáticamente apta · **NO aplicada** |
+| **Docker** | ❌ Ausente al audit · prerrequisito manual pendiente |
+| **Link remoto** | ⚠️ Metadata detectada en `supabase/.temp/` · sin operación remota |
+| **seed.sql** | ✅ Corregido — `supabase/seed.sql` neutro (comentarios only) |
+| **Supabase start/stop** | ❌ NO ejecutado |
+| **unlink** | ❌ NO ejecutado |
+| **SQL apply** | ❌ NO |
+| **Push / deploy** | ❌ NO |
+
+**Apply local LC-12:** continúa bloqueado hasta instalación y validación manual de Docker + ticket PO de aplicación.
+
+**Documentación:** `docs/V2/TICKETS/TICKET-V2-LEGAL-CENTER-LC-12-LOCAL-APPLY-PREREQUISITE-HARDENING-001.md`
