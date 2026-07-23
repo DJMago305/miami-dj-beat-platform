@@ -552,6 +552,24 @@ Handoff: [`SESSION-SUMMARIES/2026-07-22-LC13B-PRODUCTIVE-LOOKUP-ADAPTER-DESIGN.m
 
 Handoff: [`SESSION-SUMMARIES/2026-07-22-LC13B-TS-LOOKUP-ADAPTER-IMPLEMENTATION.md`](SESSION-SUMMARIES/2026-07-22-LC13B-TS-LOOKUP-ADAPTER-IMPLEMENTATION.md) · [`TICKETS/TICKET-V2-LEGAL-CENTER-LC-13B-TS-LOOKUP-ADAPTER-IMPLEMENTATION-001.md`](TICKETS/TICKET-V2-LEGAL-CENTER-LC-13B-TS-LOOKUP-ADAPTER-IMPLEMENTATION-001.md)
 
+**Commit local:** `467b6d2` — `feat(v2-legal): add LC-13B lookup adapter foundation`
+
+---
+
+## Legal Center V2 — LC-13B SQL Identity RPC (2026-07-22)
+
+| Campo | Valor |
+|-------|-------|
+| **Ticket** | LC-13B-SQL — `legal_resolve_profile_access` isolated Postgres |
+| **Estado** | **LC-13B SQL IDENTITY RPC IMPLEMENTED IN ISOLATED POSTGRES — PENDIENTE DE REVISIÓN PO** |
+| **Baseline** | `467b6d2ebccaa7753f1265dee968e10e5df223f4` · rama `plan/v2-phase-4-api-client` |
+| **Validación** | 17 PASS · 0 FAIL · `postgres:16` efímero |
+| **TypeScript** | ❌ congelado — sin cambios |
+| **Commit** | ❌ NO autorizado en este ticket |
+| **Producción** | ❌ NO autorizada |
+
+Handoff: [`SESSION-SUMMARIES/2026-07-22-LC13B-SQL-IDENTITY-RPC-IMPLEMENTATION.md`](SESSION-SUMMARIES/2026-07-22-LC13B-SQL-IDENTITY-RPC-IMPLEMENTATION.md) · [`TICKETS/TICKET-V2-LEGAL-CENTER-LC-13B-SQL-ISOLATED-IDENTITY-RPC-IMPLEMENTATION-001.md`](TICKETS/TICKET-V2-LEGAL-CENTER-LC-13B-SQL-ISOLATED-IDENTITY-RPC-IMPLEMENTATION-001.md)
+
 ---
 
 ## Fuera de alcance de este baseline
