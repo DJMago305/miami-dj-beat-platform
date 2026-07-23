@@ -1960,6 +1960,16 @@
 
                 <!-- CREAR CUENTA form -->
                 <form id="gate-signup-form" class="form" autocomplete="on" onsubmit="gateSignup(event)">
+                    <p class="gate-intent-explainer" style="margin:0 0 12px;padding:10px 12px;border-radius:10px;border:1px solid rgba(197,160,89,0.35);background:rgba(197,160,89,0.08);font-size:12px;line-height:1.45;color:rgba(255,255,255,0.9);">
+                        Jobs crea o activa un <strong>perfil artístico</strong> para ofrecer tus servicios en Miami DJ Beat. Confirma tu intención antes de registrarte.
+                    </p>
+                    <label class="gate-intent-confirm" style="display:flex;gap:10px;align-items:flex-start;margin:0 0 12px;font-size:12px;line-height:1.4;cursor:pointer;">
+                        <input type="checkbox" id="gate-artist-intent-ack" style="margin-top:2px;flex-shrink:0;">
+                        <span>Confirmo que quiero crear un perfil artístico para ofrecer servicios (no una cuenta Cliente).</span>
+                    </label>
+                    <p style="margin:0 0 14px;font-size:11px;line-height:1.4;text-align:center;">
+                        <a href="./login.html?account=client" style="color:var(--gold);font-weight:700;text-decoration:underline;">¿Solo quieres contratar servicios? Crear cuenta Cliente</a>
+                    </p>
                     <label><span data-i18n="gate-name-label">NOMBRE ARTÍSTICO</span>
                         <input type="text" id="gate-name" required placeholder="DJ Futuro" autocomplete="name">
                     </label>
@@ -3668,6 +3678,19 @@
             const name = document.getElementById('gate-name').value.trim();
             const email = document.getElementById('gate-signup-email').value.trim();
             const pass = document.getElementById('gate-signup-pass').value;
+            const artistAck = document.getElementById('gate-artist-intent-ack');
+
+            if (!artistAck || !artistAck.checked) {
+                err.textContent = jobsGateT(
+                    'jobs-gate-artist-intent-required',
+                    'Confirma que quieres crear un perfil artístico antes de continuar, o usa el enlace para cuenta Cliente.',
+                    'Confirm you want an artist profile before continuing, or use the Client account link.'
+                );
+                err.style.display = 'block';
+                btn.disabled = false;
+                btn.innerHTML = jobsGateT('gate-btn-signup', '🚀 CREAR MI CUENTA', '🚀 CREATE MY ACCOUNT');
+                return;
+            }
 
             btn.disabled = true;
             btn.textContent = jobsGateT('gate-creating', 'Creando cuenta...', 'Creating account...');
