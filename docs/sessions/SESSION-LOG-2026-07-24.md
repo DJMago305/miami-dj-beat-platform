@@ -32,8 +32,9 @@ Evolución del módulo **Staff → Actividad operativa** desde feed vertical (OW
 
 | Campo | Valor |
 |-------|-------|
-| **Hash** | `COMMIT_HASH_PLACEHOLDER` |
-| **Mensaje** | `feat(v1-staff): Staff Activity Operations Center data grid (DATAGRID-001–006)` |
+| **Hash** | `56b36209ff7d189e39d1e6c3eae09bfc017d0196` |
+| **Mensaje (commit funcional)** | `feat(v1-staff): Staff Activity Operations Center data grid (DATAGRID-001–006)` |
+| **Mensaje preferido PO (referencia)** | `feat(v1-staff): evolve activity into operations center` — *sin reescribir historial; el hash funcional permanece intacto* |
 | **Push** | **NO** — esperar **`APROBADO PUSH`** |
 
 ---
@@ -95,3 +96,27 @@ git diff --check: (sin conflictos de whitespace)
 1. PO revisa localhost `#actividad`.  
 2. Si aprueba: **`APROBADO PUSH`** en rama acordada (idealmente rama V1/`main` según gobernanza PO).  
 3. No deploy prod sin **`APROBADO DEPLOY PRODUCCIÓN`**.
+
+---
+
+## Documentación post-commit (TICKET-V1-DOCUMENTATION-CLOSE-001)
+
+**Fecha cierre doc:** 2026-07-24
+**Regla:** sin `git commit --amend` · commit funcional **no modificado**
+
+| Item | Estado |
+|------|--------|
+| Commit funcional `56b3620…` | **Intacto** — runtime + tickets DATAGRID-001–006 + índice |
+| SESSION-LOG hash real | **Actualizado en working tree** (pendiente commit doc separado) |
+| [CONTINUITY-AUDIT-001](../tickets/TICKET-V1-CONTINUITY-AUDIT-001.md) | **Completo** · untracked · bloque separado (finanzas/manual payments) |
+| `docs/INCIDENTS/` | **Aislado** · untracked · no mezclar con V1 Operations Center |
+
+### Archivos documentales pendientes (sin commit)
+
+| Archivo | Motivo |
+|---------|--------|
+| `docs/sessions/SESSION-LOG-2026-07-24.md` | Corrección hash + nota PO + cierre doc |
+| `docs/tickets/TICKET-V1-CONTINUITY-AUDIT-001.md` | Auditoría V1 finanzas — commit doc futuro |
+| `docs/INCIDENTS/**` | Incidente V1/V2 — commit / ticket separado |
+
+**Recomendación PO:** opción **B** — agrupar en un **commit exclusivamente documental** (`docs: post-commit session log and V1 continuity audit`) cuando autorice; mantener **separados** incidente vs V1 finanzas vs Operations Center.
