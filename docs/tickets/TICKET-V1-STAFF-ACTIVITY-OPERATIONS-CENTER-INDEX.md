@@ -2,8 +2,9 @@
 
 **Módulo:** Staff Portal → **Actividad operativa** (`#actividad` · `web/admin-dashboard.html`)  
 **Predecesor:** [TICKET-V1-OWNER-OPS-FEED-MVP-001](./TICKET-V1-OWNER-OPS-FEED-MVP-001.md) (feed vertical MVP)  
-**Última alineación:** 2026-07-24  
-**Commit local:** ver [SESSION-LOG-2026-07-24.md](../sessions/SESSION-LOG-2026-07-24.md)  
+**Última alineación:** 2026-07-24 — **sesión cerrada · PO aprobó visual localhost**
+**Commit funcional:** `56b36209ff7d189e39d1e6c3eae09bfc017d0196`
+**HEAD rama (referencia):** `314d6f8` — ver [SESSION-LOG-2026-07-24.md](../sessions/SESSION-LOG-2026-07-24.md)
 **Push / prod:** pendiente **`APROBADO PUSH`** / **`APROBADO DEPLOY PRODUCCIÓN`**
 
 ---
@@ -61,7 +62,13 @@ Evolución UI-only del feed operativo a **Data Grid CRM** con:
 |-----|-------|
 | `http://localhost:8080/admin-dashboard.html#actividad` | Grid, search, header sólido, drawer |
 
-Sesión staff con datos reales: **pendiente cierre PO**.
+Sesión staff con datos reales: **PO aprobó visual** (2026-07-24).
+
+---
+
+## Próximo trabajo V1 (post-sesión)
+
+**No** refinamiento UI del grid. Siguiente foco funcional: **Manual Offline Payments** — ver [CONTINUITY-AUDIT-001](./TICKET-V1-CONTINUITY-AUDIT-001.md).
 
 ---
 
