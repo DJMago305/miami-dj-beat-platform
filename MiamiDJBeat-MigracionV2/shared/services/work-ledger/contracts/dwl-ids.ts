@@ -1,4 +1,4 @@
-/** DWL data contracts — nominal IDs — TICKET-V2-DWL-DC-1-CORE-WORK-CONTRACTS-001 */
+/** DWL data contracts — nominal IDs — DC-1 + DC-2 */
 
 /**
  * Branded string IDs — compile-time nominal separation (pattern: OFTL FinancialObligationId).
@@ -6,6 +6,8 @@
  */
 export type WorkRecordId = string & { readonly __brand: 'WorkRecordId' };
 export type WorkSessionId = string & { readonly __brand: 'WorkSessionId' };
+export type WorkSetId = string & { readonly __brand: 'WorkSetId' };
+export type WorkCoverageRecordId = string & { readonly __brand: 'WorkCoverageRecordId' };
 export type WorkAssignmentReferenceId = string & {
   readonly __brand: 'WorkAssignmentReferenceId';
 };
@@ -26,6 +28,14 @@ export function asWorkRecordId(value: string): WorkRecordId {
 
 export function asWorkSessionId(value: string): WorkSessionId {
   return value as WorkSessionId;
+}
+
+export function asWorkSetId(value: string): WorkSetId {
+  return value as WorkSetId;
+}
+
+export function asWorkCoverageRecordId(value: string): WorkCoverageRecordId {
+  return value as WorkCoverageRecordId;
 }
 
 export function asWorkAssignmentReferenceId(value: string): WorkAssignmentReferenceId {

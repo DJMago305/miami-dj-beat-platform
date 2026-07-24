@@ -1,11 +1,17 @@
-/** DWL data contracts — core entities — TICKET-V2-DWL-DC-1-CORE-WORK-CONTRACTS-001 */
+/** DWL data contracts — core entities — DC-1 + DC-2 (C-003 WorkSet · C-005 WorkCoverageRecord) */
 
 import type {
   AttendanceStatus,
+  CoverageReasonCode,
+  CoverageScopeKind,
+  CoverageStatus,
+  CoverageType,
   PerformanceStatus,
   WorkRecordStatus,
   WorkRole,
   WorkSessionStatus,
+  WorkSetStatus,
+  WorkSetType,
 } from './dwl-enums';
 import type {
   ArtistProfileId,
@@ -14,8 +20,10 @@ import type {
   ProfessionalIdentityId,
   VenueId,
   WorkAssignmentReferenceId,
+  WorkCoverageRecordId,
   WorkRecordId,
   WorkSessionId,
+  WorkSetId,
 } from './dwl-ids';
 import type {
   IanaTimezone,
@@ -86,4 +94,91 @@ export type WorkSession = {
   readonly venueId?: VenueId;
   readonly notes?: string;
   readonly auditMetadata: WorkAuditMetadata;
+};
+
+/**
+ * DWL-C-003 — optional operational subdivision of a WorkSession.
+ * Not compensation · not metrics SSOT · always requires parent WorkSession.
+ */
+export type WorkSet = {
+  readonly schemaVersion: WorkLedgerSchemaVersion;
+  readonly workSetId: WorkSetId;
+  readonly workSessionId: WorkSessionId;
+  readonly workRecordId: WorkRecordId;
+  readonly sequence: number;
+  readonly label?: string;
+  readonly scheduledStartAt: IsoDateTimeString;
+  readonly scheduledEndAt: IsoDateTimeString;
+  readonly actualStartAt?: IsoDateTimeString;
+  readonly actualEndAt?: IsoDateTimeString;
+  readonly setStatus: WorkSetStatus;
+  readonly setType?: WorkSetType;
+  readonly venueId?: VenueId;
+  readonly stageReference?: string;
+  readonly performedByProfessionalIdentity?: ProfessionalIdentityReference;
+  readonly performedByArtistProfileId?: ArtistProfileId;
+  readonly notes?: string;
+  readonly sourceReference: WorkSourceReference;
+  readonly auditMetadata: WorkAuditMetadata;
+};
+
+/** Provisional authorization metadata — Evidence/Approval deferred to DC-3. */
+export type WorkCoverageAuthorizationContext = {
+  readonly authorizedByUserId?: MdjUserId;
+  readonly authorizationReference?: string;
+  readonly provisional?: boolean;
+};
+
+/** Exactly one explicit coverage scope per record (DC-2 §18.1). */
+export type WorkCoverageScope =
+  | {
+      readonly scopeKind: Extract<CoverageScopeKind, 'WORK_RECORD_SCOPE'>;
+      readonly workRecordId: WorkRecordId;
+    }
+  | {
+      readonly scopeKind: Extract<CoverageScopeKind, 'WORK_SESSION_SCOPE'>;
+      readonly workRecordId: WorkRecordId;
+      readonly workSessionId: WorkSessionId;
+    }
+  | {
+      readonly scopeKind: Extract<CoverageScopeKind, 'WORK_SET_SCOPE'>;
+      readonly workRecordId: WorkRecordId;
+      readonly workSessionId: WorkSessionId;
+      readonly workSetId: WorkSetId;
+    }
+  | {
+      readonly scopeKind: Extract<CoverageScopeKind, 'TIME_RANGE_SCOPE'>;
+      readonly workRecordId: WorkRecordId;
+      readonly workSessionId?: WorkSessionId;
+      readonly workSetId?: WorkSetId;
+    };
+
+/**
+ * DWL-C-005 — canonical coverage/substitution fact.
+ * Preserves original assigned identity and covering performer separately.
+ * Not payment · not compensation · not obligation · not dispute resolution.
+ */
+export type WorkCoverageRecord = {
+  readonly schemaVersion: WorkLedgerSchemaVersion;
+  readonly workCoverageRecordId: WorkCoverageRecordId;
+  readonly workRecordId: WorkRecordId;
+  readonly coverageType: CoverageType;
+  readonly coverageStatus: CoverageStatus;
+  readonly coverageScope: WorkCoverageScope;
+  readonly coveredArtistProfileId: ArtistProfileId;
+  readonly coveredProfessionalIdentityId: ProfessionalIdentityId;
+  readonly coveringArtistProfileId: ArtistProfileId;
+  readonly coveringProfessionalIdentityId: ProfessionalIdentityId;
+  readonly effectiveStartAt: IsoDateTimeString;
+  readonly effectiveEndAt: IsoDateTimeString;
+  readonly reasonCode: CoverageReasonCode;
+  readonly reasonNotes?: string;
+  readonly authorizationContext?: WorkCoverageAuthorizationContext;
+  readonly sourceReference: WorkSourceReference;
+  readonly createdByUserId: MdjUserId;
+  readonly auditMetadata: WorkAuditMetadata;
+  readonly supersedesCoverageRecordId?: WorkCoverageRecordId;
+  readonly correctionReason?: string;
+  readonly correctedAt?: IsoDateTimeString;
+  readonly correctedByUserId?: MdjUserId;
 };

@@ -1,6 +1,6 @@
 /**
  * DWL data contracts — public exports
- * TICKET-V2-DWL-DC-1-CORE-WORK-CONTRACTS-001
+ * DC-1 core work contracts + DC-2 WorkSet / WorkCoverageRecord
  *
  * Work Ledger domain types — operational work facts only.
  * Compensation, OFTL, Cash Flow, and Notification Center are separate domains (future DC-4+).
