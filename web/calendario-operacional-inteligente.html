@@ -1,0 +1,802 @@
+<meta charset="utf-8">
+<title>Calendario Operacional Inteligente — Miami DJ Beat</title>
+<style>
+  :root {
+    --ground:#f3f4f9;--panel:#ffffff;--panel-2:#f7f8fc;
+    --ink:#16182a;--ink-soft:#474d6b;--ink-mute:#9096b0;
+    --line:rgba(30,40,90,0.10);--line-soft:rgba(30,40,90,0.055);
+    --today:#ff2d55;--today-ink:#fff;
+    --set:#ff2e86;--staff:#ff7a4d;--prod:#8b6cff;--pago:#10b3a3;--clima:#f5a623;--cliente:#3d8bff;--owner:#8a91b4;
+    --pot:#f5a623;--act:#10b3a3;--vip:#ff2e86;
+    --shadow:0 18px 44px -26px rgba(24,30,70,0.40);
+    --sunset:linear-gradient(115deg,#ff2e86,#ff7a4d 55%,#ffbe3d);
+    --matrix:linear-gradient(115deg,#3d8bff,#8b6cff 60%,#ff2e86);
+    --sans:"Helvetica Neue",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{--ground:#05070f;--panel:#0e1226;--panel-2:#0a0d1e;--ink:#f3f5ff;--ink-soft:#aeb6da;--ink-mute:#6b7297;--line:rgba(150,162,220,0.16);--line-soft:rgba(150,162,220,0.08);--shadow:0 22px 54px -26px rgba(0,0,0,0.8);--owner:#7b83ad;}}
+  :root[data-theme="dark"]{--ground:#05070f;--panel:#0e1226;--panel-2:#0a0d1e;--ink:#f3f5ff;--ink-soft:#aeb6da;--ink-mute:#6b7297;--line:rgba(150,162,220,0.16);--line-soft:rgba(150,162,220,0.08);--shadow:0 22px 54px -26px rgba(0,0,0,0.8);--owner:#7b83ad;}
+  :root[data-theme="light"]{--ground:#f3f4f9;--panel:#ffffff;--panel-2:#f7f8fc;--ink:#16182a;--ink-soft:#474d6b;--ink-mute:#9096b0;--line:rgba(30,40,90,0.10);--line-soft:rgba(30,40,90,0.055);--shadow:0 18px 44px -26px rgba(24,30,70,0.40);--owner:#8a91b4;}
+
+  *{box-sizing:border-box;} body{margin:0;}
+  .wrap{font-family:var(--sans);color:var(--ink);background:var(--ground);background-image:radial-gradient(ellipse 70% 40% at 50% -8%,rgba(255,46,134,0.10),transparent 60%);min-height:100vh;-webkit-font-smoothing:antialiased;padding:clamp(10px,2vw,22px);}
+  .app{max-width:1240px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:82vh;position:relative;}
+
+  .toolbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--panel);}
+  .tb-left,.tb-right{display:flex;align-items:center;gap:6px;} .tb-right{justify-content:flex-end;}
+  .iconbtn{position:relative;width:34px;height:30px;border-radius:9px;border:none;cursor:pointer;background:transparent;color:var(--ink-soft);display:grid;place-items:center;}
+  .iconbtn:hover{background:var(--panel-2);} .iconbtn svg{width:18px;height:18px;}
+  .iconbtn[aria-selected="true"]{background:color-mix(in srgb,var(--set) 16%,transparent);color:var(--set);}
+  .iconbtn .badge{position:absolute;top:-3px;right:-2px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:var(--today);color:#fff;font-size:9.5px;font-weight:700;display:grid;place-items:center;font-family:var(--mono);}
+  .brand-dot{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--sunset);color:#1a0a12;font-size:15px;}
+  .seg{display:inline-flex;background:var(--panel-2);border-radius:11px;padding:3px;border:1px solid var(--line-soft);}
+  .seg button{border:none;background:transparent;cursor:pointer;font-family:var(--sans);font-size:13.5px;font-weight:600;color:var(--ink-soft);padding:6px 15px;border-radius:8px;}
+  .seg button[aria-selected="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,0.12);}
+
+  /* context bar */
+  .ctx{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 22px;border-bottom:1px solid var(--line);background:var(--panel-2);}
+  .roleswitch{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:3px;}
+  .roleswitch button{border:none;background:transparent;cursor:pointer;font-family:var(--sans);font-size:12.5px;font-weight:650;color:var(--ink-soft);padding:6px 12px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;}
+  .roleswitch button svg{width:14px;height:14px;}
+  .roleswitch button[aria-selected="true"].r-art{background:color-mix(in srgb,var(--set) 16%,transparent);color:var(--set);}
+  .roleswitch button[aria-selected="true"].r-own{background:color-mix(in srgb,var(--cliente) 16%,transparent);color:var(--cliente);}
+  .ctx .who{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--ink);}
+  .ctx select{padding:6px 9px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:13px;font-family:var(--sans);font-weight:600;}
+  .ctx .consent{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:650;color:var(--pago);font-family:var(--mono);}
+  .ctx .consent svg{width:13px;height:13px;}
+  .ctx .iso{margin-left:auto;display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink-mute);font-family:var(--mono);}
+  .ctx .iso svg{width:13px;height:13px;color:var(--staff);}
+  .roster{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto;}
+  .rchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink);padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);cursor:pointer;}
+  .rchip .pip{width:9px;height:9px;border-radius:50%;background:var(--c);}
+  .rchip small{color:var(--ink-mute);font-family:var(--mono);font-size:10.5px;}
+
+  .head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;padding:14px 22px 6px;}
+  .head h1{margin:0;font-size:clamp(22px,3vw,32px);letter-spacing:-0.02em;font-weight:800;}
+  .head .sub{color:var(--ink-mute);font-size:15px;margin-left:4px;font-weight:500;text-transform:lowercase;}
+  .nav{display:flex;align-items:center;gap:4px;} .nav.hidden{visibility:hidden;}
+  .nav .today{font-size:13px;font-weight:650;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);cursor:pointer;}
+  .nav .arrow{width:32px;height:30px;border-radius:9px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;}
+  .view{padding:8px 18px 20px;flex:1;}
+
+  .year-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:26px 30px;padding:8px 4px;}
+  .mini h3{margin:0 0 8px;color:var(--set);font-size:17px;font-weight:700;cursor:pointer;}
+  .mini .dow,.mini .cells{display:grid;grid-template-columns:repeat(7,1fr);}
+  .mini .dow span{text-align:center;font-size:10.5px;color:var(--ink-mute);font-weight:600;padding-bottom:3px;}
+  .mini .cells button{aspect-ratio:1;border:none;background:transparent;cursor:pointer;position:relative;font-size:11.5px;color:var(--ink);font-variant-numeric:tabular-nums;border-radius:50%;display:grid;place-items:center;padding:0;}
+  .mini .cells button.out{color:var(--ink-mute);opacity:.45;}
+  .mini .cells button.today{background:var(--today);color:var(--today-ink);font-weight:700;}
+  .mini .cells button .dot{position:absolute;bottom:2px;width:4px;height:4px;border-radius:50%;background:var(--set);}
+  .mini .cells button.today .dot{background:#fff;}
+
+  .month{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .month .dow{display:grid;grid-template-columns:repeat(7,1fr);background:var(--panel-2);border-bottom:1px solid var(--line);}
+  .month .dow span{padding:8px 10px;font-size:12px;color:var(--ink-mute);font-weight:600;text-transform:lowercase;}
+  .month .weeks{display:grid;grid-template-rows:repeat(6,minmax(96px,1fr));}
+  .month .wk{display:grid;grid-template-columns:repeat(7,1fr);}
+  .mcell{border-right:1px solid var(--line-soft);border-top:1px solid var(--line-soft);padding:4px 5px;min-width:0;overflow:hidden;cursor:pointer;}
+  .mcell:nth-child(7n){border-right:none;}
+  .mcell .dnum{font-size:12.5px;color:var(--ink);font-weight:600;text-align:right;padding:1px 4px;font-variant-numeric:tabular-nums;}
+  .mcell.out .dnum{color:var(--ink-mute);opacity:.5;}
+  .mcell.today .dnum{display:inline-block;float:right;background:var(--today);color:var(--today-ink);border-radius:50%;width:21px;height:21px;line-height:21px;text-align:center;}
+  .chip{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink);padding:2px 4px;border-radius:5px;margin-top:2px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .chip:hover{background:var(--panel-2);}
+  .chip .sq{flex:none;width:8px;height:8px;border-radius:2.5px;background:var(--c);}
+  .chip .apip{flex:none;width:7px;height:7px;border-radius:50%;background:var(--a);}
+  .chip.solid{background:color-mix(in srgb,var(--c) 16%,transparent);}
+  .chip .tm{color:var(--ink-mute);font-variant-numeric:tabular-nums;}
+  .more{font-size:11px;color:var(--ink-mute);padding:2px 5px;font-weight:600;}
+
+  .tl{display:grid;grid-template-columns:56px 1fr;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .allday{display:grid;grid-template-columns:56px 1fr;border-bottom:1px solid var(--line);background:var(--panel-2);}
+  .allday .lbl{font-size:10.5px;color:var(--ink-mute);padding:6px;text-align:right;font-weight:600;}
+  .ad-cols{display:grid;} .ad-col{padding:4px 5px;border-left:1px solid var(--line-soft);min-width:0;} .ad-col:first-child{border-left:none;}
+  .colhead{display:grid;} .colhead .h{text-align:center;padding:8px 4px 6px;border-left:1px solid var(--line-soft);font-size:13px;} .colhead .h:first-child{border-left:none;}
+  .colhead .h .dn{font-weight:700;font-size:15px;margin-left:6px;font-variant-numeric:tabular-nums;}
+  .colhead .h.today .dn{background:var(--today);color:var(--today-ink);border-radius:50%;width:24px;height:24px;line-height:24px;display:inline-block;text-align:center;margin-left:4px;}
+  .colhead .h .wd{color:var(--ink-mute);text-transform:lowercase;} .colhead .h.today .wd{color:var(--today);}
+  .grid-scroll{max-height:520px;overflow-y:auto;}
+  .grid-body{display:grid;grid-template-columns:56px 1fr;position:relative;}
+  .hours{display:flex;flex-direction:column;}
+  .hours .hr{height:52px;text-align:right;padding-right:8px;font-size:10.5px;color:var(--ink-mute);transform:translateY(-6px);font-variant-numeric:tabular-nums;}
+  .cols{position:relative;display:grid;} .col{position:relative;border-left:1px solid var(--line-soft);} .col:first-child{border-left:none;}
+  .hlines{position:absolute;inset:0;pointer-events:none;} .hlines i{display:block;height:52px;border-top:1px solid var(--line-soft);}
+  .tev{position:absolute;left:3px;right:3px;border-radius:7px;padding:4px 7px;cursor:pointer;background:color-mix(in srgb,var(--c) 18%,var(--panel));border-left:3px solid var(--c);overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.08);}
+  .tev:hover{filter:brightness(1.04);} .tev.sel{outline:2px solid var(--c);outline-offset:1px;}
+  .tev b{display:block;font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.2;} .tev span{font-size:11px;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
+  .nowline{position:absolute;left:0;right:0;height:2px;background:var(--today);z-index:5;}
+  .nowline::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--today);}
+
+  .day-layout{display:grid;grid-template-columns:1fr 320px;gap:16px;}
+  .detail{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--panel-2);align-self:start;}
+  .detail .empty{color:var(--ink-mute);font-size:14px;text-align:center;padding:30px 10px;}
+  .detail .dcal{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:650;color:var(--c);}
+  .detail .dcal .sq{width:10px;height:10px;border-radius:3px;background:var(--c);}
+  .detail h4{margin:10px 0 2px;font-size:20px;letter-spacing:-0.01em;}
+  .detail .when{color:var(--ink-mute);font-size:13px;font-variant-numeric:tabular-nums;margin-bottom:14px;}
+  .detail .venue{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-soft);padding:10px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:12px;}
+  .detail .venue svg{width:16px;height:16px;color:var(--ink-mute);flex:none;}
+  .detail .artline{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-mute);margin-bottom:10px;}
+  .detail .artline .pip{width:9px;height:9px;border-radius:50%;background:var(--a);}
+  .layers-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-mute);margin:2px 0 8px;}
+  .layer{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;padding:7px 0;}
+  .layer .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:color-mix(in srgb,var(--lc) 16%,transparent);color:var(--lc);}
+  .layer .ic svg{width:16px;height:16px;} .layer .lt{font-size:13px;color:var(--ink);} .layer .lt small{display:block;color:var(--ink-mute);font-size:11px;}
+  .layer .val{font-size:12px;font-family:var(--mono);color:var(--lc);white-space:nowrap;}
+  .lx-map{--lc:var(--staff)} .lx-clima{--lc:var(--clima)} .lx-pago{--lc:var(--pago)} .lx-staff{--lc:var(--set)} .lx-temporal{--lc:var(--prod)}
+  .notify-row{display:flex;align-items:center;gap:8px;margin-top:14px;padding:9px 11px;border-radius:10px;background:color-mix(in srgb,var(--cliente) 12%,transparent);color:var(--ink-soft);font-size:12.5px;}
+  .notify-row svg{width:15px;height:15px;color:var(--cliente);flex:none;}
+  .opp{margin-top:12px;padding:11px;border-radius:10px;background:color-mix(in srgb,var(--set) 10%,transparent);border:1px dashed color-mix(in srgb,var(--set) 45%,transparent);font-size:12.5px;color:var(--ink-soft);}
+  .opp b{color:var(--set);}
+  .act{margin-top:12px;width:100%;padding:9px;border-radius:10px;border:none;cursor:pointer;background:var(--sunset);color:#1a0a12;font-weight:700;font-size:13px;font-family:var(--sans);}
+
+  .rem-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .rem-col{border:1px solid var(--line);border-radius:14px;background:var(--panel-2);padding:14px;display:flex;flex-direction:column;gap:9px;min-height:120px;}
+  .rem-col>h4{margin:0 0 2px;font-size:13px;display:flex;align-items:center;gap:8px;color:var(--ink);}
+  .rem-col>h4 .cnt{font-family:var(--mono);font-size:11px;color:var(--ink-mute);margin-left:auto;}
+  .rem-col.today>h4 b{color:var(--today);} .rem-col.future>h4 b{color:var(--pago);} .rem-col.past>h4 b{color:var(--ink-mute);}
+  .rcard{border:1px solid var(--line);border-radius:11px;background:var(--panel);padding:11px 12px;display:flex;gap:10px;align-items:flex-start;}
+  .rcard .ricon{width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;font-size:16px;background:color-mix(in srgb,var(--c) 16%,transparent);}
+  .rcard .rb{flex:1;min-width:0;}
+  .rcard .rt{font-size:13.5px;font-weight:650;line-height:1.25;}
+  .rcard .rs{font-size:11.5px;color:var(--ink-mute);margin-top:2px;}
+  .rcard .rmeta{display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap;}
+  .pill{font-size:10.5px;font-weight:650;padding:2px 8px;border-radius:999px;font-family:var(--mono);}
+  .pill.chan{background:color-mix(in srgb,var(--cliente) 15%,transparent);color:var(--cliente);}
+  .pill.when{background:var(--panel-2);color:var(--ink-mute);}
+  .pill.art{background:color-mix(in srgb,var(--a) 16%,transparent);color:var(--a);}
+  .pill.auto{background:color-mix(in srgb,var(--pago) 15%,transparent);color:var(--pago);display:inline-flex;align-items:center;gap:4px;}
+  .pill.auto svg{width:11px;height:11px;}
+  .rem-empty{color:var(--ink-mute);font-size:12.5px;padding:8px 4px;}
+
+  .crm-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;}
+  .crm-stats{display:flex;gap:8px;flex-wrap:wrap;}
+  .stat{border:1px solid var(--line);border-radius:11px;background:var(--panel-2);padding:8px 14px;}
+  .stat b{display:block;font-size:20px;font-variant-numeric:tabular-nums;letter-spacing:-0.02em;}
+  .stat span{font-size:11px;color:var(--ink-mute);}
+  .btn-new{border:none;cursor:pointer;background:var(--sunset);color:#1a0a12;font-weight:700;font-size:13px;padding:9px 15px;border-radius:10px;font-family:var(--sans);}
+  .crm-table{border:1px solid var(--line);border-radius:14px;overflow:hidden;} .crm-scroll{overflow-x:auto;}
+  table.crm{width:100%;border-collapse:collapse;font-size:13px;min-width:720px;}
+  table.crm th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);font-weight:600;padding:11px 14px;background:var(--panel-2);border-bottom:1px solid var(--line);}
+  table.crm td{padding:11px 14px;border-bottom:1px solid var(--line-soft);vertical-align:middle;}
+  table.crm tr:last-child td{border-bottom:none;} table.crm tr:hover td{background:var(--panel-2);}
+  .cname{font-weight:650;} .cnote{color:var(--ink-mute);font-size:11.5px;}
+  .cart{display:inline-flex;align-items:center;gap:6px;font-size:12px;} .cart .pip{width:8px;height:8px;border-radius:50%;background:var(--a);}
+  .estado{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;font-family:var(--mono);}
+  .estado.Potencial{background:color-mix(in srgb,var(--pot) 16%,transparent);color:var(--pot);}
+  .estado.Activo{background:color-mix(in srgb,var(--act) 16%,transparent);color:var(--act);}
+  .estado.VIP{background:color-mix(in srgb,var(--vip) 16%,transparent);color:var(--vip);}
+  .cdate{font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:12px;color:var(--ink-soft);}
+  .pencil{border:1px solid var(--line);background:var(--panel);border-radius:8px;width:28px;height:26px;cursor:pointer;color:var(--ink-mute);display:grid;place-items:center;} .pencil svg{width:14px;height:14px;}
+  .newform{display:grid;grid-template-columns:1.4fr .9fr .9fr .9fr auto;gap:8px;padding:12px;border:1px dashed var(--line);border-radius:12px;background:var(--panel-2);margin-bottom:12px;align-items:end;}
+  .newform label{font-size:10.5px;color:var(--ink-mute);font-weight:600;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;}
+  .newform input,.newform select{width:100%;padding:8px 9px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:13px;font-family:var(--sans);}
+  .newform .save{border:none;cursor:pointer;background:var(--pago);color:#04211d;font-weight:700;padding:9px 14px;border-radius:9px;font-size:13px;height:37px;}
+
+  /* CONTINUIDAD / ENGAGEMENT */
+  .eng-stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  .eng-note{font-size:12.5px;color:var(--ink-soft);background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:14px;}
+  .gov{font-size:12px;color:var(--ink-soft);background:color-mix(in srgb,var(--prod) 10%,transparent);border:1px solid color-mix(in srgb,var(--prod) 42%,transparent);border-radius:10px;padding:10px 12px;margin-bottom:14px;display:flex;gap:9px;align-items:flex-start;}
+  .gov b{color:var(--ink);}
+  .occ{border:1px solid var(--line);border-radius:13px;background:var(--panel);padding:14px 16px;margin-bottom:12px;}
+  .occ-title{font-weight:700;font-size:15px;letter-spacing:-0.01em;}
+  .occ-sub{font-size:12px;color:var(--ink-mute);margin-top:2px;}
+  .occ-strip{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+  .yr{display:flex;flex-direction:column;align-items:center;gap:5px;width:80px;}
+  .yr .yn{font-family:var(--mono);font-size:11px;color:var(--ink-mute);}
+  .yr .cellbox{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:18px;border:1.5px solid var(--line);}
+  .yr .yl{font-size:10px;color:var(--ink-mute);text-align:center;line-height:1.2;}
+  .yr.ok .cellbox{background:color-mix(in srgb,var(--pago) 18%,transparent);border-color:var(--pago);color:var(--pago);}
+  .yr.prot .cellbox{background:color-mix(in srgb,var(--clima) 18%,transparent);border-color:var(--clima);}
+  .yr.ign .cellbox{border-style:dashed;color:var(--ink-mute);}
+  .pnote{font-size:12px;margin-top:10px;padding:8px 10px;border-radius:9px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .pnote.prot{background:color-mix(in srgb,var(--clima) 10%,transparent);color:var(--ink-soft);}
+  .pnote.ign{background:var(--panel-2);color:var(--ink-mute);}
+  .pnote .train{color:var(--prod);font-weight:700;}
+  .notz{margin-left:auto;border:none;cursor:pointer;background:var(--sunset);color:#1a0a12;font-weight:700;font-size:11.5px;padding:5px 11px;border-radius:8px;font-family:var(--sans);}
+  .noteform{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;padding:10px;border:1px dashed var(--line);border-radius:10px;background:var(--panel-2);}
+  .noteform select,.noteform input:not([type=checkbox]){padding:7px 9px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:12.5px;font-family:var(--sans);}
+  .noteform .nz-detail{flex:1;min-width:150px;}
+  .noteform .nz-order{flex:1;min-width:170px;}
+  .occ-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+  .prov{color:var(--cliente);font-weight:700;}
+  .locked{text-align:center;color:var(--ink-mute);font-size:14px;padding:36px 16px;border:1px dashed var(--line);border-radius:14px;background:var(--panel-2);}
+  .locked b{color:var(--ink);}
+  .noteform .nz-train{font-size:11.5px;color:var(--ink-soft);display:inline-flex;align-items:center;gap:5px;}
+  .noteform .nz-save{border:none;cursor:pointer;background:var(--pago);color:#04211d;font-weight:700;padding:8px 13px;border-radius:8px;font-size:12.5px;font-family:var(--sans);}
+
+  .legend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:12px 22px 18px;border-top:1px solid var(--line);}
+  .legend .li{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-soft);}
+  .legend .li .sq{width:10px;height:10px;border-radius:3px;background:var(--c);}
+  .legend .note{margin-left:auto;font-size:11.5px;color:var(--ink-mute);font-family:var(--mono);}
+
+  /* consent overlay */
+  .overlay{position:absolute;inset:0;z-index:40;background:color-mix(in srgb,var(--ground) 82%,transparent);backdrop-filter:blur(6px);display:grid;place-items:center;padding:20px;}
+  .overlay[hidden]{display:none;}
+  .modal{max-width:520px;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:26px;}
+  .modal .tc-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--set);}
+  .modal h3{margin:8px 0 6px;font-size:22px;letter-spacing:-0.01em;}
+  .modal p.mlead{margin:0 0 16px;color:var(--ink-soft);font-size:14px;}
+  .modal ul{margin:0 0 18px;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;}
+  .modal li{display:flex;gap:10px;font-size:13px;color:var(--ink-soft);}
+  .modal li svg{width:17px;height:17px;flex:none;margin-top:1px;}
+  .modal li.ok svg{color:var(--pago);} .modal li.no svg{color:var(--staff);}
+  .modal .check{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;color:var(--ink-soft);background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:11px 12px;margin-bottom:16px;cursor:pointer;}
+  .modal .check input{margin-top:2px;width:16px;height:16px;accent-color:var(--set);}
+  .modal .mbtns{display:flex;gap:10px;}
+  .modal .accept{flex:1;border:none;cursor:pointer;background:var(--sunset);color:#1a0a12;font-weight:750;font-size:14px;padding:12px;border-radius:11px;font-family:var(--sans);}
+  .modal .accept:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.3);}
+  .modal .cancel{border:1px solid var(--line);background:var(--panel);color:var(--ink-soft);cursor:pointer;font-weight:650;font-size:13px;padding:12px 16px;border-radius:11px;font-family:var(--sans);}
+
+  @media (max-width:900px){.rem-grid{grid-template-columns:1fr;}.newform{grid-template-columns:1fr 1fr;}}
+  @media (max-width:840px){.year-grid{grid-template-columns:repeat(2,1fr);}.day-layout{grid-template-columns:1fr;}.toolbar{grid-template-columns:auto 1fr auto;}.roster{margin-left:0;}}
+  @media (max-width:560px){.year-grid{grid-template-columns:1fr;}.seg button{padding:6px 9px;font-size:12px;}.ctx .iso{margin-left:0;}}
+  /* Pantalla completa / full-width — la app llena toda la ventana */
+  .wrap{padding:0 !important;}
+  .app{max-width:none !important;border-radius:0 !important;border-left:none !important;border-right:none !important;min-height:100vh !important;box-shadow:none !important;}
+</style>
+
+<div class="wrap">
+  <div class="app">
+    <div class="toolbar">
+      <div class="tb-left">
+        <div class="brand-dot" title="Miami DJ Beat">🎧</div>
+        <button class="iconbtn" id="btnRem" title="Recordatorios y notificaciones">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          <span class="badge" id="remBadge">0</span>
+        </button>
+        <button class="iconbtn" id="btnCrm" title="Base de datos de clientes">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 19v-1.5A3.5 3.5 0 0 0 12.5 14h-5A3.5 3.5 0 0 0 4 17.5V19"/><circle cx="10" cy="8" r="3.2"/><path d="M20 19v-1.5a3.5 3.5 0 0 0-2.5-3.35"/></svg>
+        </button>
+        <button class="iconbtn" id="btnCon" title="Continuidad y engagement">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5v14h16"/><path d="M7 15l3.5-4 3 2L20 7"/></svg>
+        </button>
+        <button class="iconbtn" id="btnNotz" title="Notarización (solo manager)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9.3 12l1.9 1.9L15 10"/></svg>
+        </button>
+        <button class="iconbtn" title="Nuevo evento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
+      </div>
+      <div class="seg" role="tablist" id="seg">
+        <button role="tab" data-view="dia">Día</button>
+        <button role="tab" data-view="semana">Semana</button>
+        <button role="tab" data-view="mes">Mes</button>
+        <button role="tab" data-view="ano">Año</button>
+      </div>
+      <div class="tb-right">
+        <button class="iconbtn" id="fsToggle" title="Pantalla completa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/></svg></button>
+        <button class="iconbtn" id="themeToggle" title="Día / Noche"></button>
+        <button class="iconbtn" title="Buscar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></button>
+      </div>
+    </div>
+
+    <div class="ctx" id="ctx"></div>
+
+    <div class="head">
+      <div><h1 id="title">—</h1></div>
+      <div class="nav" id="nav">
+        <button class="arrow" id="prev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button class="today" id="today">Hoy</button>
+        <button class="arrow" id="next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>
+    </div>
+
+    <div class="view" id="view"></div>
+
+    <div class="legend" id="legend"></div>
+
+    <div class="overlay" id="overlay" hidden>
+      <div class="modal">
+        <div class="tc-eyebrow">Términos y condiciones · Artista</div>
+        <h3 id="tcTitle">Permiso de uso de datos</h3>
+        <p class="mlead">Para que el sistema de <b>Miami DJ Beat</b> trabaje a tu favor, necesitamos tu autorización para registrar y usar los datos de tu agenda con fines profesionales.</p>
+        <ul>
+          <li class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Autorizas registrar tus contactos y fechas recurrentes (cumpleaños, aniversarios) para <b>generarte trabajo</b> y publicidad dirigida.</span></li>
+          <li class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Tu calendario es <b>personal e independiente</b>: el sistema te recuerda las fechas de tus contactos para gestionarte eventos.</span></li>
+          <li class="no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg><span>No accedes a la base de datos de <b>otros artistas</b>. Cada artista está aislado.</span></li>
+          <li class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Miami DJ Beat (Owner) consolida la información en el <b>calendario master</b> solo para gestionar eventos futuros.</span></li>
+        </ul>
+        <label class="check"><input type="checkbox" id="tcCheck"><span>He leído y acepto los términos y condiciones, y autorizo el uso profesional de mis datos.</span></label>
+        <div class="mbtns">
+          <button class="accept" id="tcAccept" disabled>Aceptar y activar mi calendario</button>
+          <button class="cancel" id="tcCancel">Ahora no</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var TODAY=new Date(2026,7,10);
+  var MONTHS=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  var MON_L=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  var DOW1=["D","L","M","M","J","V","S"],DOWL=["dom","lun","mar","mié","jue","vie","sáb"],DOWF=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+  var CALN={set:"Sets / Reservas",staff:"Staff / Cobertura",prod:"Producción",pago:"Pagos / Cobros",clima:"Clima",cliente:"Cliente"};
+  var START=8,END=27,H=52,NOW=21.5;
+
+  var ARTISTS=[{id:"mago",n:"DJ Mago",c:"#ff2e86"},{id:"luna",n:"DJ Luna",c:"#3d8bff"},{id:"tropi",n:"DJ Tropikal",c:"#10b3a3"}];
+  function artName(id){for(var i=0;i<ARTISTS.length;i++)if(ARTISTS[i].id===id)return ARTISTS[i].n;return"Matrix";}
+  function artColor(id){for(var i=0;i<ARTISTS.length;i++)if(ARTISTS[i].id===id)return ARTISTS[i].c;return"var(--owner)";}
+
+  var BASE_EV=[
+    {d:"2026-08-09",cal:"prod",ad:true,t:"Curaduría de playlist — set del sábado",artist:"mago"},
+    {d:"2026-08-10",cal:"set",s:23,e:25,t:"Set — Club E11EVEN",venue:"E11EVEN · Downtown Miami",artist:"mago",
+      meta:{map:{v:"22 min",s:"tráfico moderado"},clima:{v:"Despejado",s:"28° · interior"},pago:{v:"40% saldo",s:"por cobrar"},staff:{v:"2 técnicos",s:"asignados"},temporal:{v:"OK",s:"sin conflictos"}}},
+    {d:"2026-08-10",cal:"pago",ad:true,t:"Vence saldo — LIV Nightclub",artist:"mago"},
+    {d:"2026-08-11",cal:"prod",s:18,e:19.5,t:"Prueba de sonido — Rooftop",venue:"Rooftop Wynwood",artist:"mago",meta:{map:{v:"18 min",s:"desde base"},staff:{v:"1 técnico",s:"montaje"}}},
+    {d:"2026-08-12",cal:"set",s:22,e:24,t:"Set — Rooftop Wynwood",venue:"Rooftop Wynwood · al aire libre",artist:"mago",
+      meta:{map:{v:"18 min",s:"tráfico ligero"},clima:{v:"Nublado",s:"20% lluvia"},pago:{v:"Pagado",s:"100%"},staff:{v:"2 técnicos",s:"confirmados"},temporal:{v:"OK",s:"sin conflictos"}}},
+    {d:"2026-08-12",cal:"staff",s:21,e:24.5,t:"Cobertura staff — 2 técnicos",artist:"mago"},
+    {d:"2026-08-13",cal:"pago",ad:true,t:"Cobro anticipo — Space Miami",artist:"mago"},
+    {d:"2026-08-14",cal:"set",s:23,e:26,t:"Set — Space Miami (Terrace)",venue:"Space Miami · terraza",artist:"mago",
+      meta:{map:{v:"25 min",s:"salir 22:20"},clima:{v:"Lluvia",s:"60% · al aire libre"},pago:{v:"50% saldo",s:"por cobrar"},staff:{v:"3 técnicos",s:"asignados"},temporal:{v:"OK",s:"sin conflictos"}}},
+    {d:"2026-08-14",cal:"prod",s:19,e:21,t:"Montaje + prueba de sonido",venue:"Space Miami",artist:"mago"},
+    {d:"2026-08-14",cal:"clima",ad:true,t:"⚠ Alerta lluvia — venue al aire libre",artist:"mago"},
+    {d:"2026-08-15",cal:"set",s:20,e:23,t:"Beach Party — Nikki Beach",venue:"Nikki Beach · playa",artist:"mago",
+      meta:{map:{v:"31 min",s:"tráfico alto"},clima:{v:"Despejado",s:"29° · atardecer"},pago:{v:"Pagado",s:"anticipo 100%"},staff:{v:"3 técnicos",s:"confirmados"},temporal:{v:"OK",s:"sin conflictos"}}},
+    {d:"2026-08-15",cal:"staff",s:18,e:23.5,t:"Cobertura staff — 3 técnicos",artist:"mago"},
+    {d:"2026-08-01",cal:"set",s:23,e:25.5,t:"Set — Story Nightclub",venue:"Story · South Beach",artist:"luna"},
+    {d:"2026-08-03",cal:"prod",ad:true,t:"Entrega de mezcla — corporativo",artist:"tropi"},
+    {d:"2026-08-05",cal:"set",s:20,e:24,t:"Set privado — Yate",venue:"Marina · Biscayne",artist:"luna"},
+    {d:"2026-08-07",cal:"set",s:22,e:25,t:"Set — Mango's Tropical",artist:"tropi"},
+    {d:"2026-08-07",cal:"pago",ad:true,t:"Cobro final — Story",artist:"luna"},
+    {d:"2026-08-16",cal:"pago",ad:true,t:"Cierre financiero semanal — Matrix",artist:"owner"},
+    {d:"2026-08-18",cal:"set",s:23,e:26,t:"Set — Kaos",venue:"Kaos · Wynwood",artist:"mago"},
+    {d:"2026-08-20",cal:"set",s:19,e:22,t:"Evento corporativo — Brickell",venue:"Brickell City Centre",artist:"luna"},
+    {d:"2026-08-20",cal:"staff",ad:true,t:"Cobertura staff — 2 técnicos",artist:"luna"},
+    {d:"2026-08-21",cal:"set",s:23,e:26,t:"Set — Space (Main Room)",artist:"mago"},
+    {d:"2026-08-22",cal:"set",s:20,e:23,t:"Beach set — SLS",artist:"tropi"},
+    {d:"2026-08-25",cal:"prod",s:14,e:18,t:"Sesión de grabación — estudio",artist:"tropi"},
+    {d:"2026-08-27",cal:"set",s:23,e:25.5,t:"Set — E11EVEN",artist:"mago"},
+    {d:"2026-08-28",cal:"set",s:21,e:24,t:"Festival slot — Bayfront Park",venue:"Bayfront · al aire libre",artist:"luna"},
+    {d:"2026-08-29",cal:"set",s:18,e:22,t:"Boda — Vizcaya",venue:"Vizcaya Gardens",artist:"luna"},
+    {d:"2026-08-29",cal:"staff",ad:true,t:"Cobertura staff — 4 técnicos",artist:"luna"},
+    {d:"2026-08-31",cal:"pago",ad:true,t:"Cierre de mes — conciliación",artist:"owner"}
+  ];
+
+  var CLIENTS=[
+    {n:"Alejandro Ruiz",estado:"VIP",bday:"08-03",since:"2023-08-14",chan:"WhatsApp",note:"Contrata 2×/mes",owner:"mago"},
+    {n:"Daniela Prieto",estado:"Activo",bday:"08-09",since:"2022-08-20",chan:"Email",note:"Corporativo mensual",owner:"mago"},
+    {n:"Paula Duarte",estado:"VIP",bday:"08-10",since:"2021-08-10",chan:"WhatsApp",note:"Cumple HOY · felicitar",owner:"mago"},
+    {n:"Sofía Marín",estado:"Potencial",bday:"08-11",since:"",chan:"Instagram",note:"Interesada en boda",owner:"mago"},
+    {n:"Gabriel Ochoa",estado:"Activo",bday:"08-12",since:"2023-08-12",chan:"WhatsApp",note:"Rooftop recurrente",owner:"mago"},
+    {n:"Lucía Fernández",estado:"Potencial",bday:"08-14",since:"",chan:"Email",note:"Boda octubre · cotizar",owner:"mago"},
+    {n:"Diego Salas",estado:"Potencial",bday:"08-27",since:"",chan:"WhatsApp",note:"Pidió demo",owner:"mago"},
+    {n:"Mariana Solís",estado:"Activo",bday:"08-05",since:"2024-08-05",chan:"Instagram",note:"Eventos privados",owner:"luna"},
+    {n:"Bismarck Team",estado:"VIP",bday:"08-15",since:"2021-08-15",chan:"WhatsApp",note:"Cliente ancla · cumple 53",owner:"luna"},
+    {n:"Renata Cano",estado:"VIP",bday:"08-20",since:"2020-08-20",chan:"WhatsApp",note:"6 años · fidelizar",owner:"luna"},
+    {n:"Camila Navarro",estado:"Activo",bday:"08-29",since:"2022-08-29",chan:"WhatsApp",note:"Boda Vizcaya",owner:"luna"},
+    {n:"Andrés Vidal",estado:"Activo",bday:"08-18",since:"2024-08-18",chan:"WhatsApp",note:"Club mensual",owner:"tropi"},
+    {n:"Tomás Herrera",estado:"Potencial",bday:"08-22",since:"",chan:"Instagram",note:"Frío · re-enganchar",owner:"tropi"},
+    {n:"Emilio Castro",estado:"Potencial",bday:"08-31",since:"",chan:"Email",note:"Nuevo lead",owner:"tropi"}
+  ];
+
+  // ---- MEMORIA DE CONTINUIDAD (ocasiones recurrentes año a año) ----
+  var OCCASIONS=[
+    {id:"o1",artist:"mago",label:"Fiesta privada · Casa Prieto",venue:"Coral Gables",hist:[{y:2023,dj:"mago"},{y:2024,dj:"mago"},{y:2025,dj:"mago"}]},
+    {id:"o2",artist:"mago",label:"Aniversario · LIV Nightclub",venue:"LIV · South Beach",hist:[{y:2024,dj:"mago"},{y:2025,dj:null,note:{reason:"otro_evento",detail:"Recomendado, pero tenía set en Space esa noche",kind:"proteccion_popularidad"}},{y:2026,dj:"mago"}]},
+    {id:"o3",artist:"mago",label:"Corporativo anual · Brickell",venue:"Brickell City Centre",hist:[{y:2024,dj:"mago"},{y:2025,dj:null}]},
+    {id:"o4",artist:"luna",label:"Boda de temporada · Vizcaya",venue:"Vizcaya Gardens",hist:[{y:2023,dj:"luna"},{y:2024,dj:"luna"},{y:2025,dj:"luna"}]},
+    {id:"o5",artist:"luna",label:"Yate privado · Biscayne",venue:"Marina",hist:[{y:2024,dj:"luna"},{y:2025,dj:null,note:{reason:"vacaciones",detail:"De vacaciones esa semana",kind:"proteccion_popularidad"}}]},
+    {id:"o6",artist:"tropi",label:"Beach set · SLS",venue:"SLS South Beach",hist:[{y:2024,dj:"tropi"},{y:2025,dj:"tropi"}]},
+    {id:"o7",artist:"tropi",label:"Grabación anual · estudio",venue:"Estudio",hist:[{y:2025,dj:"tropi"}]}
+  ];
+  var REASONS={otro_evento:"Ocupado en otro evento",no_disponible:"No disponible",vacaciones:"Vacaciones",enfermo:"Enfermo",decision_cliente:"Decisión del cliente",problema:"Problema (aprendizaje)"};
+  function reasonLabel(r){return REASONS[r]||r;}
+
+  var EV=[];
+  function rebuild(){
+    var gen=[];
+    CLIENTS.forEach(function(c){
+      if(c.bday&&c.bday.indexOf("08-")===0)gen.push({d:"2026-"+c.bday,cal:"cliente",ad:true,kind:"cumple",t:"🎂 "+c.n+" — cumpleaños",client:c,artist:c.owner});
+      if(c.since){var p=c.since.split("-");if(p[1]==="08"){var yrs=2026-(+p[0]);if(yrs>=1)gen.push({d:"2026-08-"+p[2],cal:"cliente",ad:true,kind:"aniv",t:"🎉 "+c.n+" — aniversario ("+yrs+" año"+(yrs>1?"s":"")+")",client:c,artist:c.owner});}}
+    });
+    EV=BASE_EV.concat(gen);updateBadge();
+  }
+
+  var state={view:"mes",date:new Date(2026,7,10),sel:null,crmForm:false,role:"owner",artist:"mago",consent:{},pendingRole:null,notz:null};
+
+  function pad(n){return(n<10?"0":"")+n;}
+  function key(dt){return dt.getFullYear()+"-"+pad(dt.getMonth()+1)+"-"+pad(dt.getDate());}
+  function parse(k){var p=k.split("-");return new Date(+p[0],+p[1]-1,+p[2]);}
+  function same(a,b){return a.getFullYear()==b.getFullYear()&&a.getMonth()==b.getMonth()&&a.getDate()==b.getDate();}
+  function addDays(dt,n){var x=new Date(dt);x.setDate(x.getDate()+n);return x;}
+  function startOfWeek(dt){return addDays(dt,-dt.getDay());}
+  function inScope(e){return state.role==="owner"?true:e.artist===state.artist;}
+  function evOn(k){return EV.filter(function(e){return e.d===k&&inScope(e);});}
+  function scopedClients(){return state.role==="owner"?CLIENTS:CLIENTS.filter(function(c){return c.owner===state.artist;});}
+  function fmtHour(h){h=((h%24)+24)%24;if(h===0)return"12 a.m.";if(h===12)return"12 p.m.";if(h<12)return h+" a.m.";return(h-12)+" p.m.";}
+  function fmtT(h){var hh=((h%24)+24)%24,m=Math.round((h-Math.floor(h))*60);var ap=hh<12?"a":"p";var d=hh%12;if(d===0)d=12;return d+(m?":"+pad(m):"")+" "+ap+".m.";}
+  function daysBetween(a,b){return Math.round((parse(key(b))-parse(key(a)))/86400000);}
+  function relLabel(dt){var n=daysBetween(TODAY,dt);if(n===0)return"hoy";if(n===1)return"mañana";if(n===-1)return"ayer";if(n>0)return"en "+n+" días";return"hace "+(-n)+" días";}
+
+  var seg=document.getElementById("seg"),view=document.getElementById("view"),titleEl=document.getElementById("title"),nav=document.getElementById("nav"),ctx=document.getElementById("ctx"),legend=document.getElementById("legend");
+  var btnRem=document.getElementById("btnRem"),btnCrm=document.getElementById("btnCrm"),btnCon=document.getElementById("btnCon"),btnNotz=document.getElementById("btnNotz");
+  var overlay=document.getElementById("overlay"),tcCheck=document.getElementById("tcCheck"),tcAccept=document.getElementById("tcAccept"),tcCancel=document.getElementById("tcCancel"),tcTitle=document.getElementById("tcTitle");
+
+  seg.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;state.view=b.dataset.view;state.sel=null;render();});
+  btnRem.addEventListener("click",function(){state.view="recordatorios";render();});
+  btnCrm.addEventListener("click",function(){state.view="clientes";render();});
+  btnCon.addEventListener("click",function(){state.view="continuidad";state.notz=null;render();});
+  btnNotz.addEventListener("click",function(){state.view="notarizacion";state.notz=null;render();});
+  document.getElementById("prev").addEventListener("click",function(){step(-1);});
+  document.getElementById("next").addEventListener("click",function(){step(1);});
+  document.getElementById("today").addEventListener("click",function(){state.date=new Date(2026,7,10);render();});
+
+  tcCheck.addEventListener("change",function(){tcAccept.disabled=!tcCheck.checked;});
+  tcCancel.addEventListener("click",function(){overlay.hidden=true;state.pendingRole=null;});
+  tcAccept.addEventListener("click",function(){state.consent[state.artist]=true;overlay.hidden=true;state.role="artista";state.view="mes";state.sel=null;render();});
+
+  function requestArtist(artistId){
+    state.artist=artistId;
+    if(state.consent[artistId]){state.role="artista";state.view="mes";state.sel=null;render();}
+    else{tcTitle.textContent="Permiso de uso de datos · "+artName(artistId);tcCheck.checked=false;tcAccept.disabled=true;overlay.hidden=false;}
+  }
+
+  function step(dir){var d=state.date;
+    if(state.view==="ano")state.date=new Date(d.getFullYear()+dir,d.getMonth(),d.getDate());
+    else if(state.view==="mes")state.date=new Date(d.getFullYear(),d.getMonth()+dir,1);
+    else if(state.view==="semana")state.date=addDays(d,7*dir);
+    else state.date=addDays(d,dir);
+    render();
+  }
+  function updateBadge(){var c=0;EV.forEach(function(e){if(e.cal!=="cliente"||!inScope(e))return;var n=daysBetween(TODAY,parse(e.d));if(n>=0&&n<=7)c++;});document.getElementById("remBadge").textContent=c;}
+
+  var BELL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
+
+  function renderCtx(){
+    var h='<div class="roleswitch">'
+      +'<button class="r-art" data-role="artista" aria-selected="'+(state.role==="artista")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Artista</button>'
+      +'<button class="r-own" data-role="owner" aria-selected="'+(state.role==="owner")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="5" rx="1.5"/><rect x="3" y="11" width="18" height="5" rx="1.5"/><path d="M7 18h10"/></svg>Owner · Matrix</button>'
+      +'</div>';
+    if(state.role==="artista"){
+      h+='<div class="who"><span>Eres:</span><select id="artSel">';
+      ARTISTS.forEach(function(a){h+='<option value="'+a.id+'"'+(a.id===state.artist?' selected':'')+'>'+a.n+'</option>';});
+      h+='</select></div>';
+      h+='<span class="consent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>T&C aceptados</span>';
+      h+='<span class="iso"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Solo ves tu información</span>';
+    } else {
+      h+='<div class="who"><span style="color:var(--cliente);font-weight:700">Calendario Master</span><span style="color:var(--ink-mute);font-size:12px">consolida a todos los artistas</span></div>';
+      h+='<div class="roster">';
+      ARTISTS.forEach(function(a){var cnt=EV.filter(function(e){return e.artist===a.id;}).length;
+        h+='<button class="rchip" data-art="'+a.id+'" style="--c:'+a.c+'"><span class="pip"></span>'+a.n+' <small>'+cnt+'</small></button>';});
+      h+='</div>';
+    }
+    ctx.innerHTML=h;
+    ctx.querySelectorAll(".roleswitch button").forEach(function(b){b.onclick=function(){
+      var r=b.dataset.role;
+      if(r==="owner"){state.role="owner";state.view=(state.view==="clientes"||state.view==="recordatorios")?state.view:"mes";state.sel=null;render();}
+      else requestArtist(state.artist);
+    };});
+    var sel=document.getElementById("artSel");if(sel)sel.onchange=function(){requestArtist(sel.value);};
+    ctx.querySelectorAll(".rchip").forEach(function(b){b.onclick=function(){state.consent[b.dataset.art]=true;requestArtist(b.dataset.art);};});
+  }
+
+  function renderLegend(){
+    var items=[["set","Sets / Reservas"],["staff","Staff / Cobertura"],["prod","Producción"],["pago","Pagos / Cobros"],["clima","Clima"],["cliente","Clientes (cumple/aniv.)"]];
+    var h="";items.forEach(function(it){h+='<span class="li" style="--c:var(--'+it[0]+')"><span class="sq"></span>'+it[1]+'</span>';});
+    h+='<span class="note">'+(state.role==="owner"?"vista master · datos de todos los artistas":"herramienta del artista · datos aislados")+'</span>';
+    legend.innerHTML=h;
+  }
+
+  function render(){
+    // Notarización es exclusiva del manager (owner). Si baja a Artista, se cierra.
+    if(state.view==="notarizacion"&&state.role!=="owner"){state.view="continuidad";}
+    var v=state.view;
+    Array.prototype.forEach.call(seg.children,function(b){b.setAttribute("aria-selected",b.dataset.view===v);});
+    btnRem.setAttribute("aria-selected",v==="recordatorios");
+    btnCrm.setAttribute("aria-selected",v==="clientes");
+    btnCon.setAttribute("aria-selected",v==="continuidad");
+    btnNotz.setAttribute("aria-selected",v==="notarizacion");
+    btnNotz.style.display=(state.role==="owner")?"":"none";  // solo manager/owner
+    nav.className="nav"+((v==="recordatorios"||v==="clientes"||v==="continuidad"||v==="notarizacion")?" hidden":"");
+    updateBadge();renderCtx();renderLegend();
+    if(v==="ano")renderYear();
+    else if(v==="mes")renderMonth();
+    else if(v==="semana")renderWeek();
+    else if(v==="dia")renderDay();
+    else if(v==="recordatorios")renderRem();
+    else if(v==="continuidad")renderCon();
+    else if(v==="notarizacion")renderNotz();
+    else renderCrm();
+  }
+
+  function renderYear(){
+    var y=state.date.getFullYear();titleEl.innerHTML=y;var html='<div class="year-grid">';
+    for(var m=0;m<12;m++){html+='<div class="mini"><h3 data-m="'+m+'">'+MONTHS[m]+'</h3><div class="dow">';
+      for(var i=0;i<7;i++)html+='<span>'+DOW1[i]+'</span>';html+='</div><div class="cells">';
+      var first=new Date(y,m,1),lead=first.getDay(),dim=new Date(y,m+1,0).getDate(),prevDim=new Date(y,m,0).getDate();
+      for(var c=0;c<42;c++){var dnum,cls="",dt;
+        if(c<lead){dnum=prevDim-lead+1+c;cls="out";dt=new Date(y,m-1,dnum);}
+        else if(c-lead<dim){dnum=c-lead+1;dt=new Date(y,m,dnum);}
+        else{dnum=c-lead-dim+1;cls="out";dt=new Date(y,m+1,dnum);}
+        if(!cls&&same(dt,TODAY))cls="today";
+        var has=(!cls||cls==="today")&&evOn(key(dt)).length>0;
+        html+='<button class="'+cls+'" data-date="'+key(dt)+'">'+dnum+(has?'<span class="dot"></span>':'')+'</button>';
+      } html+='</div></div>';
+    } html+='</div>';view.innerHTML=html;
+    view.querySelectorAll(".mini h3").forEach(function(h){h.onclick=function(){state.date=new Date(y,+h.dataset.m,1);state.view="mes";render();};});
+    view.querySelectorAll(".mini .cells button").forEach(function(b){b.onclick=function(){state.date=parse(b.dataset.date);state.view="dia";state.sel=null;render();};});
+  }
+
+  function renderMonth(){
+    var y=state.date.getFullYear(),m=state.date.getMonth();titleEl.innerHTML=MONTHS[m]+' de '+y;
+    var first=new Date(y,m,1),lead=first.getDay();var html='<div class="month"><div class="dow">';
+    for(var i=0;i<7;i++)html+='<span>'+DOWL[i]+'</span>';html+='</div><div class="weeks">';
+    var cur=addDays(first,-lead),owner=(state.role==="owner");
+    for(var w=0;w<6;w++){html+='<div class="wk">';
+      for(var d=0;d<7;d++){var k=key(cur),out=cur.getMonth()!==m,isT=same(cur,TODAY);
+        html+='<div class="mcell'+(out?' out':'')+(isT?' today':'')+'" data-date="'+k+'"><div class="dnum">'+cur.getDate()+'</div>';
+        var list=evOn(k),shown=list.slice(0,4);
+        shown.forEach(function(e){var pip=owner?'<span class="apip" style="--a:'+artColor(e.artist)+'"></span>':'';
+          html+='<div class="chip'+(e.ad?' solid':'')+'" style="--c:var(--'+e.cal+')" data-id="'+eid(e)+'">'+pip+(e.ad?'':'<span class="sq"></span>')+(e.ad?'':'<span class="tm">'+fmtT(e.s).replace(":00","")+'</span> ')+'<span>'+e.t+'</span></div>';});
+        if(list.length>4)html+='<div class="more">y '+(list.length-4)+' más</div>';
+        html+='</div>';cur=addDays(cur,1);
+      } html+='</div>';
+    } html+='</div></div>';view.innerHTML=html;
+    view.querySelectorAll(".mcell").forEach(function(c){c.onclick=function(ev){if(ev.target.closest(".chip"))return;state.date=parse(c.dataset.date);state.view="dia";state.sel=null;render();};});
+    view.querySelectorAll(".chip").forEach(function(ch){ch.onclick=function(ev){ev.stopPropagation();var e=findEv(ch.dataset.id);state.sel=e;state.date=parse(e.d);state.view="dia";render();};});
+  }
+
+  function renderWeek(){
+    var sow=startOfWeek(state.date),y=sow.getFullYear();titleEl.innerHTML=MONTHS[state.date.getMonth()]+' de '+y;
+    var days=[];for(var i=0;i<7;i++)days.push(addDays(sow,i));view.innerHTML=buildTimeline(days);wireTimed();
+  }
+  function renderDay(){
+    var d=state.date;titleEl.innerHTML=MON_L[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear()+' <span class="sub">'+DOWF[d.getDay()]+'</span>';
+    var tl=buildTimeline([d]);view.innerHTML='<div class="day-layout"><div>'+tl+'</div><div class="detail" id="detail"></div></div>';
+    if(!state.sel){var te=evOn(key(d));if(te.length)state.sel=te[0];}
+    renderDetail();wireTimed();
+  }
+
+  function buildTimeline(days){
+    var owner=(state.role==="owner");
+    var html='<div class="tl"><div class="allday"><div class="lbl">todo el día</div><div class="ad-cols colhead" style="grid-template-columns:repeat('+days.length+',1fr)">';
+    days.forEach(function(dt){var t=same(dt,TODAY);html+='<div class="h'+(t?' today':'')+'"><span class="wd">'+DOWL[dt.getDay()]+'</span><span class="dn">'+dt.getDate()+'</span></div>';});
+    html+='</div></div><div class="allday"><div class="lbl"></div><div class="ad-cols" style="grid-template-columns:repeat('+days.length+',1fr)">';
+    days.forEach(function(dt){html+='<div class="ad-col">';
+      evOn(key(dt)).filter(function(e){return e.ad;}).forEach(function(e){var pip=owner?'<span class="apip" style="--a:'+artColor(e.artist)+'"></span>':'';html+='<div class="chip solid" style="--c:var(--'+e.cal+')" data-id="'+eid(e)+'">'+pip+e.t+'</div>';});
+      html+='</div>';});
+    html+='</div></div><div class="grid-scroll" id="gscroll"><div class="grid-body"><div class="hours">';
+    for(var h=START;h<=END;h++)html+='<div class="hr">'+fmtHour(h)+'</div>';
+    html+='</div><div class="cols" style="grid-template-columns:repeat('+days.length+',1fr)">';
+    days.forEach(function(dt){html+='<div class="col"><div class="hlines">';for(var h=START;h<END;h++)html+='<i></i>';html+='</div>';
+      if(same(dt,TODAY))html+='<div class="nowline" style="top:'+((NOW-START)*H)+'px"></div>';
+      evOn(key(dt)).filter(function(e){return !e.ad;}).forEach(function(e){var top=(e.s-START)*H,hgt=Math.max((e.e-e.s)*H-3,26);var selCls=(state.sel&&eid(state.sel)===eid(e))?' sel':'';
+        html+='<div class="tev'+selCls+'" style="--c:var(--'+e.cal+');top:'+top+'px;height:'+hgt+'px" data-id="'+eid(e)+'"><b>'+e.t+'</b><span>'+fmtT(e.s)+' – '+fmtT(e.e)+'</span></div>';});
+      html+='</div>';});
+    html+='</div></div></div></div>';return html;
+  }
+
+  function eid(e){return e.d+"|"+e.t;}
+  function findEv(id){for(var i=0;i<EV.length;i++)if(eid(EV[i])===id)return EV[i];return null;}
+  function wireTimed(){
+    view.querySelectorAll("[data-id]").forEach(function(el){el.onclick=function(){var e=findEv(el.dataset.id);if(!e)return;state.sel=e;if(state.view!=="dia"){state.date=parse(e.d);state.view="dia";render();}else render();};});
+    var gs=document.getElementById("gscroll");if(gs)gs.scrollTop=(17-START)*H;
+  }
+
+  var LAYERS=[
+    {k:"map",cls:"lx-map",name:"Traslado (mapas)",ic:'<path d="M9 3 3 6v15l6-3 6 3 6-3V3l-6 3-6-3Z"/><path d="M9 3v15M15 6v15"/>'},
+    {k:"clima",cls:"lx-clima",name:"Clima",ic:'<path d="M17.5 19a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.6 1.5A3.5 3.5 0 0 0 6.5 19z"/>'},
+    {k:"pago",cls:"lx-pago",name:"Financiero",ic:'<path d="M12 3v18M7 7h7.5a2.5 2.5 0 0 1 0 5H9a2.5 2.5 0 0 0 0 5h8"/>'},
+    {k:"staff",cls:"lx-staff",name:"Staff",ic:'<path d="M16 19v-1.5A3.5 3.5 0 0 0 12.5 14h-5A3.5 3.5 0 0 0 4 17.5V19"/><circle cx="10" cy="8" r="3.2"/><path d="M20 19v-1.5a3.5 3.5 0 0 0-2.5-3.35"/>'},
+    {k:"temporal",cls:"lx-temporal",name:"Temporal",ic:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'}
+  ];
+
+  function renderDetail(){
+    var el=document.getElementById("detail");if(!el)return;var e=state.sel;
+    if(!e){el.innerHTML='<div class="empty">Selecciona un evento para ver sus capas de inteligencia.</div>';return;}
+    var dt=parse(e.d);var when=e.ad?'Todo el día':(fmtT(e.s)+' – '+fmtT(e.e));
+    var h='<div class="dcal" style="--c:var(--'+e.cal+')"><span class="sq"></span>'+CALN[e.cal]+'</div><h4>'+e.t+'</h4>';
+    h+='<div class="when">'+DOWF[dt.getDay()]+', '+dt.getDate()+' '+MON_L[dt.getMonth()]+' · '+when+'</div>';
+    if(state.role==="owner")h+='<div class="artline"><span class="pip" style="--a:'+artColor(e.artist)+'"></span>Artista: '+artName(e.artist)+'</div>';
+    if(e.venue)h+='<div class="venue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>'+e.venue+'</div>';
+    if(e.meta){h+='<div class="layers-lbl">Capas de inteligencia</div>';
+      LAYERS.forEach(function(L){var m=e.meta[L.k];if(!m)return;h+='<div class="layer '+L.cls+'"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+L.ic+'</svg></div><div class="lt">'+L.name+'<small>'+m.s+'</small></div><div class="val">'+m.v+'</div></div>';});
+    }
+    if(e.client){var c=e.client;
+      h+='<div class="layers-lbl">Cliente en base de datos</div>';
+      h+='<div class="layer lx-pago"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></div><div class="lt">'+c.n+'<small>'+c.note+'</small></div><div class="val">'+c.estado+'</div></div>';
+      h+='<div class="notify-row">'+BELL+'Notificación '+c.chan+' programada · se envía en la fecha.</div>';
+      if(state.role==="artista")h+='<div class="opp"><b>Oportunidad:</b> es su '+(e.kind==="aniv"?"aniversario":"cumpleaños")+'. Miami DJ Beat puede gestionarte un evento con este contacto.</div>';
+      h+='<button class="act">Enviar felicitación por '+c.chan+'</button>';
+    }
+    el.innerHTML=h;
+    var act=el.querySelector(".act");if(act)act.onclick=function(){act.textContent="✓ Felicitación programada";act.style.background="var(--pago)";act.style.color="#04211d";};
+  }
+
+  function buildReminders(){
+    var r=[];
+    EV.filter(inScope).forEach(function(e){
+      if(e.cal==="cliente")r.push({dt:parse(e.d),icon:e.kind==="aniv"?"🎉":"🎂",title:e.t.replace(/^🎂 |^🎉 /,""),sub:(e.client?e.client.estado+" · "+e.client.note:""),chan:e.client?e.client.chan:"WhatsApp",cal:"cliente",art:e.artist,auto:true});
+      else if(e.cal==="pago")r.push({dt:parse(e.d),icon:"💵",title:e.t,sub:"Cobro / conciliación",chan:"Interno",cal:"pago",art:e.artist});
+      else if(e.cal==="clima")r.push({dt:parse(e.d),icon:"🌧",title:e.t,sub:"Riesgo operativo",chan:"Push",cal:"clima",art:e.artist});
+      else if(e.cal==="set")r.push({dt:parse(e.d),icon:"🎧",title:e.t,sub:e.venue||"Evento confirmado",chan:"Push",cal:"set",art:e.artist});
+    });
+    r.sort(function(a,b){return a.dt-b.dt;});return r;
+  }
+  function renderRem(){
+    titleEl.innerHTML='Recordatorios <span class="sub">pasados · presentes · futuros</span>';
+    var all=buildReminders(),past=[],today=[],fut=[];
+    all.forEach(function(x){var n=daysBetween(TODAY,x.dt);if(n<0)past.push(x);else if(n===0)today.push(x);else fut.push(x);});
+    past=past.slice(Math.max(0,past.length-6));fut=fut.slice(0,8);
+    view.innerHTML='<div class="rem-grid">'+col("past","Pasados","seguimiento",past)+col("today","Hoy","10 ago",today)+col("future","Próximos","7 días",fut)+'</div>';
+  }
+  function col(cls,label,meta,items){
+    var owner=(state.role==="owner");
+    var h='<div class="rem-col '+cls+'"><h4><b>'+label+'</b><span class="cnt">'+meta+' · '+items.length+'</span></h4>';
+    if(!items.length)h+='<div class="rem-empty">Sin recordatorios.</div>';
+    items.forEach(function(x){
+      h+='<div class="rcard"><div class="ricon" style="--c:var(--'+x.cal+')">'+x.icon+'</div><div class="rb"><div class="rt">'+x.title+'</div>'+(x.sub?'<div class="rs">'+x.sub+'</div>':'')
+        +'<div class="rmeta"><span class="pill when">'+relLabel(x.dt)+'</span><span class="pill chan">'+x.chan+'</span>'
+        +(x.auto?'<span class="pill auto">'+BELL+'auto</span>':'')
+        +(owner?'<span class="pill art" style="--a:'+artColor(x.art)+'">'+artName(x.art)+'</span>':'')
+        +'</div></div></div>';
+    });
+    return h+'</div>';
+  }
+
+  function renderCrm(){
+    var owner=(state.role==="owner");
+    var list=scopedClients();
+    titleEl.innerHTML=(owner?'Base de clientes · Matrix':'Mis clientes')+' <span class="sub">'+list.length+' registros</span>';
+    var pot=list.filter(function(c){return c.estado==="Potencial";}).length,act=list.filter(function(c){return c.estado==="Activo";}).length,vip=list.filter(function(c){return c.estado==="VIP";}).length;
+    var html='<div class="crm-head"><div class="crm-stats">'
+      +'<div class="stat"><b>'+list.length+'</b><span>'+(owner?'Total (todos los artistas)':'En tu base')+'</span></div>'
+      +'<div class="stat" style="color:var(--pot)"><b>'+pot+'</b><span>Potenciales</span></div>'
+      +'<div class="stat" style="color:var(--act)"><b>'+act+'</b><span>Activos</span></div>'
+      +'<div class="stat" style="color:var(--vip)"><b>'+vip+'</b><span>VIP</span></div>'
+      +'</div><button class="btn-new" id="btnNew">＋ Nuevo cliente</button></div>';
+    if(state.crmForm){
+      html+='<div class="newform">'
+        +'<div><label>Nombre</label><input id="f-n" placeholder="Nombre y apellido"></div>'
+        +'<div><label>Estado</label><select id="f-e"><option>Potencial</option><option>Activo</option><option>VIP</option></select></div>'
+        +'<div><label>Cumpleaños</label><input id="f-b" type="date" value="2026-08-15"></div>'
+        +'<div><label>'+(owner?'Artista':'Canal')+'</label>';
+      if(owner){html+='<select id="f-a">';ARTISTS.forEach(function(a){html+='<option value="'+a.id+'">'+a.n+'</option>';});html+='</select>';}
+      else{html+='<select id="f-c"><option>WhatsApp</option><option>Instagram</option><option>Email</option><option>SMS</option></select>';}
+      html+='</div><button class="save" id="f-save">Guardar</button></div>';
+    }
+    html+='<div class="crm-table"><div class="crm-scroll"><table class="crm"><thead><tr><th>Cliente</th>'+(owner?'<th>Artista</th>':'')+'<th>Estado</th><th>Cumpleaños</th><th>Aniversario</th><th>Canal</th><th>Notif.</th><th></th></tr></thead><tbody>';
+    list.forEach(function(c){
+      var bday=c.bday?c.bday.split("-")[1]+" ago":"—";
+      var aniv=c.since?(function(){var p=c.since.split("-");return p[2]+" "+MON_L[+p[1]-1].slice(0,3)+" · "+(2026-(+p[0]))+"a";})():"—";
+      html+='<tr><td><div class="cname">'+c.n+'</div><div class="cnote">'+c.note+'</div></td>'
+        +(owner?'<td><span class="cart" style="--a:'+artColor(c.owner)+'"><span class="pip"></span>'+artName(c.owner)+'</span></td>':'')
+        +'<td><span class="estado '+c.estado+'">'+c.estado+'</span></td><td class="cdate">'+bday+'</td><td class="cdate">'+aniv+'</td><td class="cdate">'+c.chan+'</td>'
+        +'<td><span class="pill auto">'+BELL+'auto</span></td>'
+        +'<td><button class="pencil" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L18 10l-4-4L4 16v4Z"/><path d="M13 5l4 4"/></svg></button></td></tr>';
+    });
+    html+='</tbody></table></div></div>';view.innerHTML=html;
+    document.getElementById("btnNew").onclick=function(){state.crmForm=!state.crmForm;render();};
+    var save=document.getElementById("f-save");
+    if(save)save.onclick=function(){
+      var n=document.getElementById("f-n").value.trim();if(!n){document.getElementById("f-n").focus();return;}
+      var bd=document.getElementById("f-b").value,mmdd=bd?bd.slice(5):"08-15";
+      var own=owner?document.getElementById("f-a").value:state.artist;
+      var chan=owner?"WhatsApp":document.getElementById("f-c").value;
+      CLIENTS.push({n:n,estado:document.getElementById("f-e").value,bday:mmdd,since:"",chan:chan,note:"Nuevo lead · agregado hoy",owner:own});
+      state.crmForm=false;rebuild();render();
+    };
+  }
+
+  // ---------- CONTINUIDAD / ENGAGEMENT (no punitivo) ----------
+  function occYears(o){return o.hist.slice().sort(function(a,b){return a.y-b.y;});}
+  function engFor(list){var reb=0,prot=0,ign=0;
+    list.forEach(function(o){o.hist.forEach(function(h){
+      if(h.dj===o.artist)reb++;
+      else if(h.dj===null){if(h.note)prot++;else ign++;}
+    });});
+    return {reb:reb,prot:prot,ign:ign,pop:reb+prot};
+  }
+  function renderCon(){
+    var owner=(state.role==="owner");
+    var list=OCCASIONS.filter(function(o){return owner?true:o.artist===state.artist;});
+    titleEl.innerHTML=(owner?'Continuidad · Matrix':'Mi continuidad')+' <span class="sub">popularidad no punitiva</span>';
+    var e=engFor(list);
+    var html='<div class="eng-stats">'
+      +'<div class="stat" style="color:var(--set)"><b>'+e.pop+'</b><span>Popularidad (solo suma)</span></div>'
+      +'<div class="stat" style="color:var(--pago)"><b>'+e.reb+'</b><span>Recontrataciones</span></div>'
+      +'<div class="stat" style="color:var(--clima)"><b>'+e.prot+'</b><span>Vacíos protegidos</span></div>'
+      +'<div class="stat" style="color:var(--ink-mute)"><b>'+e.ign+'</b><span>Vacíos ignorados (neutral)</span></div>'
+      +'</div>';
+    html+='<div class="eng-note">La popularidad <b>solo acumula</b> — un vacío de continuidad nunca la baja. Si el manager lo <b>notariza</b>, queda protegido y explicado; si no, <b>se pasa por alto</b> (sin penalización). Un problema notarizado alimenta el <b>entrenamiento del sistema</b>, no sanciona al DJ.</div>';
+    html+='<div class="gov">⚖ <span><b>Uso restringido:</b> estas notas son solo para uso y desarrollo interno de la empresa. No son de uso personal, no se usan para bullying, ni para tomar medidas contra ningún artista.</span></div>';
+    list.forEach(function(o){
+      html+='<div class="occ"><div class="occ-head"><div><div class="occ-title">'+o.label+'</div><div class="occ-sub">'+o.venue+(owner?' · '+artName(o.artist):'')+'</div></div></div><div class="occ-strip">';
+      occYears(o).forEach(function(h){
+        var cls,ic,lbl;
+        if(h.dj===o.artist){cls="ok";ic="✓";lbl="atendió";}
+        else if(h.dj===null&&h.note){cls="prot";ic="🛡";lbl="protegido";}
+        else{cls="ign";ic="—";lbl="sin nota";}
+        html+='<div class="yr '+cls+'"><span class="yn">'+h.y+'</span><span class="cellbox">'+ic+'</span><span class="yl">'+lbl+'</span></div>';
+      });
+      html+='</div>';
+      occYears(o).forEach(function(h){
+        if(h.dj!==null)return;
+        if(h.note){
+          var prov=h.note.author==="manager_ia"?' · <span class="prov">Manager IA · por orden del owner</span>':' · <span class="prov">Manager</span>';
+          html+='<div class="pnote prot">🛡 '+h.y+' · '+reasonLabel(h.note.reason)+' — '+h.note.detail+(h.note.kind==="incidente_aprendizaje"?' · <span class="train">→ entrenamiento</span>':'')+prov+'</div>';
+        } else {
+          html+='<div class="pnote ign">— '+h.y+' · sin notarizar · se pasa por alto (no penaliza)</div>';
+        }
+      });
+      html+='</div>';
+    });
+    view.innerHTML=html;
+  }
+  function findOcc(id){for(var i=0;i<OCCASIONS.length;i++)if(OCCASIONS[i].id===id)return OCCASIONS[i];return null;}
+
+  // ---------- NOTARIZACIÓN · pestaña independiente (solo manager / orden del owner) ----------
+  function renderNotz(){
+    titleEl.innerHTML='Notarización <span class="sub">manager · orden del owner</span>';
+    if(state.role!=="owner"){view.innerHTML='<div class="locked">🔒 Espacio exclusivo del <b>manager / owner</b>. Cambia a <b>Owner · Matrix</b> para notarizar.</div>';return;}
+    var gaps=[];
+    OCCASIONS.forEach(function(o){o.hist.forEach(function(h){if(h.dj===null&&!h.note)gaps.push({o:o,h:h});});});
+    var html='<div class="eng-note">Espacio exclusivo del <b>manager</b>: aquí se crean las notas de continuidad — <b>no</b> desde el calendario. El <b>Manager IA</b> solo puede notarizar cuando recibe una <b>orden explícita del owner</b> (queda registrada en la nota). Protege la popularidad del DJ y/o alimenta el entrenamiento del sistema; nunca penaliza.</div>';
+    html+='<div class="gov">⚖ <span><b>Uso restringido:</b> estas notas son solo para uso y desarrollo interno de la empresa. No son de uso personal, no se usan para bullying, ni para tomar medidas contra ningún artista.</span></div>';
+    if(!gaps.length)html+='<div class="pnote ign">No hay vacíos abiertos para notarizar.</div>';
+    gaps.forEach(function(g){
+      var open=(state.notz&&state.notz.o===g.o.id&&state.notz.y===g.h.y);
+      html+='<div class="occ"><div class="occ-head"><div><div class="occ-title">'+g.o.label+' · '+g.h.y+'</div><div class="occ-sub">'+g.o.venue+' · '+artName(g.o.artist)+'</div></div>'
+        +(open?'':'<button class="notz" data-o="'+g.o.id+'" data-y="'+g.h.y+'">Crear notarización</button>')+'</div>';
+      if(open){
+        html+='<div class="noteform" data-o="'+g.o.id+'" data-y="'+g.h.y+'">'
+          +'<select class="nz-reason"><option value="otro_evento">Ocupado en otro evento</option><option value="no_disponible">No disponible</option><option value="vacaciones">Vacaciones</option><option value="enfermo">Enfermo</option><option value="decision_cliente">Decisión del cliente</option><option value="problema">Problema (aprendizaje)</option></select>'
+          +'<input class="nz-detail" type="text" placeholder="Detalle de la razón">'
+          +'<select class="nz-author"><option value="manager">Manager (humano)</option><option value="manager_ia">Manager IA (orden del owner)</option></select>'
+          +'<input class="nz-order" type="text" placeholder="Orden explícita del owner (requerida para IA)" style="display:none">'
+          +'<label class="nz-train"><input type="checkbox" class="nz-train-c"> entrenamiento</label>'
+          +'<button class="nz-save">Notarizar</button></div>';
+      }
+      html+='</div>';
+    });
+    view.innerHTML=html;
+    view.querySelectorAll(".notz").forEach(function(b){b.onclick=function(){state.notz={o:b.dataset.o,y:+b.dataset.y};render();};});
+    var form=view.querySelector(".noteform");
+    if(form){
+      var authSel=form.querySelector(".nz-author"),orderIn=form.querySelector(".nz-order");
+      authSel.onchange=function(){orderIn.style.display=(authSel.value==="manager_ia")?"":"none";};
+      form.querySelector(".nz-save").onclick=function(){
+        var o=findOcc(form.dataset.o),y=+form.dataset.y,h=o.hist.filter(function(x){return x.y===y;})[0];
+        var author=authSel.value,order=orderIn.value.trim();
+        if(author==="manager_ia"&&!order){orderIn.focus();return;}
+        var train=form.querySelector(".nz-train-c").checked;
+        h.note={reason:form.querySelector(".nz-reason").value,detail:form.querySelector(".nz-detail").value||"Notarizado por el manager",kind:train?"incidente_aprendizaje":"proteccion_popularidad",author:author,ownerOrder:author==="manager_ia"?order:null};
+        state.notz=null;render();
+      };
+    }
+  }
+
+  rebuild();render();
+})();
+</script>
+<script>
+(function(){
+  var root=document.documentElement, btn=document.getElementById("themeToggle");
+  if(!btn) return;
+  var SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  var MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+  function isDark(){ var t=root.getAttribute("data-theme"); if(t) return t==="dark"; return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches); }
+  function paint(){ btn.innerHTML = isDark() ? SUN : MOON; }   // muestra a dónde vas: sol=ir a día, luna=ir a noche
+  try{ var s=localStorage.getItem("coi_theme"); if(s) root.setAttribute("data-theme", s); }catch(e){}
+  paint();
+  btn.addEventListener("click", function(){
+    var goDark = !isDark();
+    root.setAttribute("data-theme", goDark ? "dark" : "light");
+    try{ localStorage.setItem("coi_theme", goDark ? "dark" : "light"); }catch(e){}
+    paint();
+  });
+})();
+</script>
+<script>
+(function(){
+  var fsBtn=document.getElementById("fsToggle"); if(!fsBtn) return;
+  function inFS(){ return document.fullscreenElement || document.webkitFullscreenElement; }
+  fsBtn.addEventListener("click", function(){
+    if(inFS()){ (document.exitFullscreen || document.webkitExitFullscreen || function(){}).call(document); }
+    else { var el=document.documentElement; (el.requestFullscreen || el.webkitRequestFullscreen || function(){}).call(el); }
+  });
+})();
+</script>
