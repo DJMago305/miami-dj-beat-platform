@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Owner · Matrix (Calendario del Staff) — Miami DJ Beat</title>
+<!--
+  PASO 4 (UI Owner/Staff) · verlo-ya con MOCK DATA.
+  Página nueva standalone (no reemplaza nada). El "Calendario del Staff" = "Agenda
+  Owner" = Matrix: la misma superficie general. Consolida a TODOS los artistas,
+  pero SOLO los que dieron consentimiento (regla validada por RLS: is_staff_management
+  + EXISTS(consent)). Datos de muestra reflejan el esquema validado 1:1.
+  Notarización: solo manager; Manager IA solo con orden explícita del owner.
+  Uso restringido de las notas: interno/desarrollo, no personal, no bullying,
+  no medidas contra artistas.
+-->
+<style>
+  :root{
+    --ground:#f3f4f9;--panel:#fff;--panel-2:#f7f8fc;--ink:#16182a;--ink-soft:#474d6b;--ink-mute:#9096b0;
+    --line:rgba(30,40,90,.10);--line-soft:rgba(30,40,90,.055);--today:#ff2d55;
+    --set:#ff2e86;--staff:#ff7a4d;--prod:#8b6cff;--pago:#10b3a3;--clima:#f5a623;--cliente:#3d8bff;
+    --shadow:0 18px 44px -26px rgba(24,30,70,.4);--sunset:linear-gradient(115deg,#ff2e86,#ff7a4d 55%,#ffbe3d);
+    --sans:"Helvetica Neue",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{--ground:#05070f;--panel:#0e1226;--panel-2:#0a0d1e;--ink:#f3f5ff;--ink-soft:#aeb6da;--ink-mute:#6b7297;--line:rgba(150,162,220,.16);--line-soft:rgba(150,162,220,.08);--shadow:0 22px 54px -26px rgba(0,0,0,.8);}}
+  *{box-sizing:border-box;}body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--ground);background-image:radial-gradient(ellipse 70% 40% at 50% -8%,rgba(61,139,255,.10),transparent 60%);-webkit-font-smoothing:antialiased;min-height:100vh;padding:clamp(10px,2vw,22px);}
+  .app{max-width:1100px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:80vh;}
+  .top{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .brand{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(115deg,#3d8bff,#8b6cff);font-size:16px;}
+  .who b{font-size:14px;display:block;}.who span{font-size:11px;color:var(--ink-mute);}
+  .grow{flex:1;}
+  .roster{display:flex;gap:6px;flex-wrap:wrap;}
+  .rchip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel-2);}
+  .rchip .pip{width:9px;height:9px;border-radius:50%;background:var(--c);}
+  .rchip small{font-family:var(--mono);font-size:10px;}
+  .rchip.no{opacity:.55;} .rchip.no small{color:var(--ink-mute);}
+  .rchip.yes small{color:var(--pago);}
+
+  .seg{display:flex;gap:4px;padding:10px 18px 0;}
+  .seg button{border:none;background:transparent;cursor:pointer;font-family:var(--sans);font-size:14px;font-weight:650;color:var(--ink-mute);padding:9px 14px;border-radius:10px 10px 0 0;position:relative;}
+  .seg button[aria-selected="true"]{color:var(--ink);}
+  .seg button[aria-selected="true"]::after{content:"";position:absolute;left:12px;right:12px;bottom:0;height:3px;border-radius:3px;background:linear-gradient(90deg,#3d8bff,#8b6cff);}
+  .view{padding:16px 18px 22px;flex:1;}
+  .h1{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:0 0 3px;}
+  .sub{color:var(--ink-mute);font-size:13px;margin:0 0 16px;}
+
+  .month{border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);background:var(--panel-2);border-bottom:1px solid var(--line);}
+  .dow span{padding:8px 10px;font-size:12px;color:var(--ink-mute);font-weight:600;text-transform:lowercase;}
+  .weeks{display:grid;grid-template-rows:repeat(6,minmax(84px,1fr));}
+  .wk{display:grid;grid-template-columns:repeat(7,1fr);}
+  .cell{border-right:1px solid var(--line-soft);border-top:1px solid var(--line-soft);padding:4px 5px;min-width:0;overflow:hidden;}
+  .cell:nth-child(7n){border-right:none;}
+  .cell .dn{font-size:12.5px;font-weight:600;text-align:right;padding:1px 4px;}
+  .cell.out .dn{color:var(--ink-mute);opacity:.5;}
+  .cell.today .dn{display:inline-block;float:right;background:var(--today);color:#fff;border-radius:50%;width:21px;height:21px;line-height:21px;text-align:center;}
+  .ev{display:flex;align-items:center;gap:4px;font-size:11px;padding:2px 4px;border-radius:5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ev .apip{flex:none;width:7px;height:7px;border-radius:50%;background:var(--a);}
+  .ev .sq{flex:none;width:8px;height:8px;border-radius:2.5px;background:var(--c);}
+  .ev.solid{background:color-mix(in srgb,var(--c) 15%,transparent);}
+
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  .stat{border:1px solid var(--line);border-radius:11px;background:var(--panel-2);padding:8px 14px;}
+  .stat b{display:block;font-size:20px;font-variant-numeric:tabular-nums;}.stat span{font-size:11px;color:var(--ink-mute);}
+  .note{font-size:12.5px;color:var(--ink-soft);background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:14px;}
+  .gov{font-size:12px;color:var(--ink-soft);background:color-mix(in srgb,var(--prod) 10%,transparent);border:1px solid color-mix(in srgb,var(--prod) 42%,transparent);border-radius:10px;padding:10px 12px;margin-bottom:14px;}
+  .gov b{color:var(--ink);}
+
+  .occ{border:1px solid var(--line);border-radius:13px;background:var(--panel);padding:14px 16px;margin-bottom:12px;}
+  .occ-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .occ-title{font-weight:700;font-size:15px;}.occ-sub{font-size:12px;color:var(--ink-mute);margin-top:2px;}
+  .strip{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+  .yr{display:flex;flex-direction:column;align-items:center;gap:5px;width:80px;}
+  .yr .yn{font-family:var(--mono);font-size:11px;color:var(--ink-mute);}
+  .yr .box{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:18px;border:1.5px solid var(--line);}
+  .yr .yl{font-size:10px;color:var(--ink-mute);}
+  .yr.ok .box{background:color-mix(in srgb,var(--pago) 18%,transparent);border-color:var(--pago);color:var(--pago);}
+  .yr.prot .box{background:color-mix(in srgb,var(--clima) 18%,transparent);border-color:var(--clima);}
+  .yr.ign .box{border-style:dashed;color:var(--ink-mute);}
+  .pnote{font-size:12px;margin-top:10px;padding:8px 10px;border-radius:9px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .pnote.prot{background:color-mix(in srgb,var(--clima) 10%,transparent);color:var(--ink-soft);}
+  .pnote.ign{background:var(--panel-2);color:var(--ink-mute);}
+  .prov{color:var(--cliente);font-weight:700;}
+  .btn{border:none;cursor:pointer;font-family:var(--sans);font-weight:700;border-radius:8px;}
+  .notz{background:var(--sunset);color:#1a0a12;font-size:11.5px;padding:5px 11px;}
+  .noteform{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;padding:10px;border:1px dashed var(--line);border-radius:10px;background:var(--panel-2);}
+  .noteform select,.noteform input{padding:7px 9px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:12.5px;font-family:var(--sans);}
+  .noteform .det{flex:1;min-width:140px;} .noteform .ord{flex:1;min-width:160px;}
+  .noteform .save{background:var(--pago);color:#04211d;padding:8px 13px;font-size:12.5px;}
+  .foot{padding:12px 18px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--ink-mute);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand">🗄️</div>
+    <div class="who"><b>Owner · Matrix</b><span>Calendario del Staff · consolida a todos los artistas</span></div>
+    <div class="grow"></div>
+    <div class="roster" id="roster"></div>
+  </div>
+  <div class="seg" id="seg">
+    <button data-v="cal" aria-selected="true">Calendario</button>
+    <button data-v="con">Continuidad</button>
+    <button data-v="not">Notarización</button>
+  </div>
+  <div class="view" id="view"></div>
+  <div class="foot">Prototipo Paso 4 · datos de muestra · Matrix ve solo artistas con consentimiento (regla validada por RLS)</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var MESES_C=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  var DOWL=["dom","lun","mar","mié","jue","vie","sáb"];
+  var TODAY=new Date();TODAY.setHours(0,0,0,0);
+  function pad(n){return(n<10?"0":"")+n;}
+  function iso(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+  function addDays(d,n){var x=new Date(d);x.setDate(x.getDate()+n);return x;}
+  function cm(day){return TODAY.getFullYear()+"-"+pad(TODAY.getMonth()+1)+"-"+pad(day);}
+  function near(n,year){return year+iso(addDays(TODAY,n)).slice(4);}
+
+  var ARTISTS=[
+    {id:"mago",name:"DJ Mago",c:"#ff2e86",consent:true},
+    {id:"luna",name:"DJ Luna",c:"#3d8bff",consent:false},   // NO consintió → oculto en Matrix
+    {id:"tropi",name:"DJ Tropikal",c:"#10b3a3",consent:true}
+  ];
+  function art(id){for(var i=0;i<ARTISTS.length;i++)if(ARTISTS[i].id===id)return ARTISTS[i];return{name:"—",c:"var(--ink-mute)"};}
+  function consented(id){var a=art(id);return a&&a.consent;}
+
+  // artist_agenda_events (con artist_user_id)
+  var EVENTS=[
+    {artist:"mago", title:"Set — E11EVEN",  cat:"set", starts_at:cm(5)+"T23:00", all_day:false},
+    {artist:"mago", title:"Set — Rooftop",  cat:"set", starts_at:cm(12)+"T22:00",all_day:false},
+    {artist:"tropi",title:"Set — Mango's",  cat:"set", starts_at:cm(7)+"T22:00", all_day:false},
+    {artist:"tropi",title:"Grabación",      cat:"prod",starts_at:cm(19)+"T14:00",all_day:false},
+    {artist:"luna", title:"Set — Story",    cat:"set", starts_at:cm(9)+"T23:00", all_day:false},   // oculto (luna sin consent)
+    {artist:"luna", title:"Boda — Vizcaya", cat:"set", starts_at:cm(22)+"T18:00",all_day:false},   // oculto
+    {artist:"mago", title:"Cierre financiero", cat:"pago", starts_at:cm(16), all_day:true}
+  ];
+  // cumpleaños (contactos) por artista
+  var BDAYS=[
+    {artist:"mago", name:"Paula Duarte",  md:near(2,1991)},
+    {artist:"tropi",name:"Andrés Vidal",  md:near(6,1990)},
+    {artist:"luna", name:"Renata Cano",   md:near(4,1990)}    // oculto
+  ];
+
+  // continuidad (ocasiones año a año) — solo artistas consentidos se muestran
+  var OCC=[
+    {id:"o1",artist:"mago",label:"Fiesta privada · Casa Prieto",venue:"Coral Gables",hist:[{y:2023,dj:"mago"},{y:2024,dj:"mago"},{y:2025,dj:"mago"}]},
+    {id:"o2",artist:"mago",label:"Aniversario · LIV",venue:"LIV",hist:[{y:2024,dj:"mago"},{y:2025,dj:null,note:{reason:"otro_evento",detail:"Recomendado, pero tenía set en Space",author:"manager"}},{y:2026,dj:"mago"}]},
+    {id:"o3",artist:"mago",label:"Corporativo anual · Brickell",venue:"Brickell CC",hist:[{y:2024,dj:"mago"},{y:2025,dj:null}]},
+    {id:"o4",artist:"tropi",label:"Beach set · SLS",venue:"SLS",hist:[{y:2024,dj:"tropi"},{y:2025,dj:"tropi"}]}
+  ];
+  var REASONS={otro_evento:"Ocupado en otro evento",no_disponible:"No disponible",vacaciones:"Vacaciones",enfermo:"Enfermo",decision_cliente:"Decisión del cliente",problema:"Problema (aprendizaje)"};
+
+  var view=document.getElementById("view"),seg=document.getElementById("seg");
+  var state={v:"cal",notz:null};
+  seg.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;state.v=b.dataset.v;state.notz=null;render();});
+
+  function renderRoster(){
+    var h="";ARTISTS.forEach(function(a){h+='<span class="rchip '+(a.consent?'yes':'no')+'" style="--c:'+a.c+'"><span class="pip"></span>'+a.name+' <small>'+(a.consent?'consint.':'sin consent.')+'</small></span>';});
+    document.getElementById("roster").innerHTML=h;
+  }
+
+  function render(){
+    Array.prototype.forEach.call(seg.children,function(b){b.setAttribute("aria-selected",b.dataset.v===state.v);});
+    renderRoster();
+    if(state.v==="cal")renderCal();else if(state.v==="con")renderCon();else renderNot();
+  }
+
+  function renderCal(){
+    var y=TODAY.getFullYear(),m=TODAY.getMonth(),first=new Date(y,m,1),lead=first.getDay();
+    var byDate={};function push(k,o){(byDate[k]=byDate[k]||[]).push(o);}
+    EVENTS.filter(function(e){return consented(e.artist);}).forEach(function(e){push(e.starts_at.slice(0,10),{t:e.title,cat:e.cat,ad:e.all_day,artist:e.artist,tm:e.all_day?null:e.starts_at.slice(11)});});
+    BDAYS.filter(function(b){return consented(b.artist);}).forEach(function(b){var p=b.md.split("-");var d=new Date(y,+p[1]-1,+p[2]);if(d.getMonth()===m)push(iso(d),{t:"🎂 "+b.name,cat:"cliente",ad:true,artist:b.artist});});
+    var h='<h1 class="h1">'+MESES_C[m]+' de '+y+'</h1><p class="sub">Consolidado de artistas <b>con consentimiento</b>. DJ Luna no consintió → sus eventos no aparecen.</p>';
+    h+='<div class="month"><div class="dow">';for(var i=0;i<7;i++)h+='<span>'+DOWL[i]+'</span>';h+='</div><div class="weeks">';
+    var cur=addDays(first,-lead);
+    for(var w=0;w<6;w++){h+='<div class="wk">';
+      for(var d=0;d<7;d++){var k=iso(cur),out=cur.getMonth()!==m,isT=cur.getTime()===TODAY.getTime();
+        h+='<div class="cell'+(out?' out':'')+(isT?' today':'')+'"><div class="dn">'+cur.getDate()+'</div>';
+        (byDate[k]||[]).slice(0,4).forEach(function(o){h+='<div class="ev'+(o.ad?' solid':'')+'" style="--c:var(--'+o.cat+')"><span class="apip" style="--a:'+art(o.artist).c+'"></span>'+(o.ad?'':'<span class="sq"></span>')+o.t+'</div>';});
+        h+='</div>';cur=addDays(cur,1);
+      }h+='</div>';}
+    h+='</div></div>';view.innerHTML=h;
+  }
+
+  function occYears(o){return o.hist.slice().sort(function(a,b){return a.y-b.y;});}
+  function eng(list){var reb=0,prot=0,ign=0;list.forEach(function(o){o.hist.forEach(function(hh){if(hh.dj===o.artist)reb++;else if(hh.dj===null){if(hh.note)prot++;else ign++;}});});return{reb:reb,prot:prot,ign:ign,pop:reb+prot};}
+
+  function renderCon(){
+    var list=OCC.filter(function(o){return consented(o.artist);});
+    var e=eng(list);
+    var h='<h1 class="h1">Continuidad · Matrix</h1><p class="sub">Popularidad no punitiva — solo suma. Solo artistas con consentimiento.</p>';
+    h+='<div class="stats"><div class="stat" style="color:var(--set)"><b>'+e.pop+'</b><span>Popularidad</span></div><div class="stat" style="color:var(--pago)"><b>'+e.reb+'</b><span>Recontrataciones</span></div><div class="stat" style="color:var(--clima)"><b>'+e.prot+'</b><span>Vacíos protegidos</span></div><div class="stat" style="color:var(--ink-mute)"><b>'+e.ign+'</b><span>Vacíos ignorados</span></div></div>';
+    h+='<div class="note">Un vacío nunca baja la popularidad: si el manager lo <b>notariza</b> queda protegido; si no, <b>se pasa por alto</b>. La notarización se hace en la pestaña <b>Notarización</b>.</div>';
+    list.forEach(function(o){
+      h+='<div class="occ"><div class="occ-head"><div><div class="occ-title">'+o.label+'</div><div class="occ-sub">'+o.venue+' · '+art(o.artist).name+'</div></div></div><div class="strip">';
+      occYears(o).forEach(function(hh){var cls,ic;if(hh.dj===o.artist){cls="ok";ic="✓";}else if(hh.dj===null&&hh.note){cls="prot";ic="🛡";}else{cls="ign";ic="—";}h+='<div class="yr '+cls+'"><span class="yn">'+hh.y+'</span><span class="box">'+ic+'</span></div>';});
+      h+='</div>';
+      occYears(o).forEach(function(hh){if(hh.dj!==null)return;if(hh.note){var prov=hh.note.author==="manager_ia"?'<span class="prov">Manager IA · orden del owner</span>':'<span class="prov">Manager</span>';h+='<div class="pnote prot">🛡 '+hh.y+' · '+(REASONS[hh.note.reason]||hh.note.reason)+' — '+hh.note.detail+' · '+prov+'</div>';}else{h+='<div class="pnote ign">— '+hh.y+' · sin notarizar · se pasa por alto (no penaliza)</div>';}});
+      h+='</div>';
+    });
+    view.innerHTML=h;
+  }
+
+  function renderNot(){
+    var gaps=[];OCC.filter(function(o){return consented(o.artist);}).forEach(function(o){o.hist.forEach(function(hh){if(hh.dj===null&&!hh.note)gaps.push({o:o,h:hh});});});
+    var h='<h1 class="h1">Notarización</h1><p class="sub">Manager · orden del owner</p>';
+    h+='<div class="note">Espacio exclusivo del <b>manager</b>. El <b>Manager IA</b> solo puede notarizar con una <b>orden explícita del owner</b> (queda registrada). Protege la popularidad; nunca penaliza.</div>';
+    h+='<div class="gov">⚖ <b>Uso restringido:</b> estas notas son solo para uso y desarrollo interno de la empresa. No son de uso personal, no se usan para bullying, ni para tomar medidas contra ningún artista.</div>';
+    if(!gaps.length)h+='<div class="pnote ign">No hay vacíos abiertos para notarizar.</div>';
+    gaps.forEach(function(g){
+      var open=state.notz&&state.notz.o===g.o.id&&state.notz.y===g.h.y;
+      h+='<div class="occ"><div class="occ-head"><div><div class="occ-title">'+g.o.label+' · '+g.h.y+'</div><div class="occ-sub">'+g.o.venue+' · '+art(g.o.artist).name+'</div></div>'+(open?'':'<button class="btn notz" data-o="'+g.o.id+'" data-y="'+g.h.y+'">Crear notarización</button>')+'</div>';
+      if(open){
+        h+='<div class="noteform" data-o="'+g.o.id+'" data-y="'+g.h.y+'">'
+          +'<select class="rsn"><option value="otro_evento">Ocupado en otro evento</option><option value="no_disponible">No disponible</option><option value="vacaciones">Vacaciones</option><option value="enfermo">Enfermo</option><option value="decision_cliente">Decisión del cliente</option><option value="problema">Problema (aprendizaje)</option></select>'
+          +'<input class="det" type="text" placeholder="Detalle de la razón">'
+          +'<select class="aut"><option value="manager">Manager (humano)</option><option value="manager_ia">Manager IA (orden del owner)</option></select>'
+          +'<input class="ord" type="text" placeholder="Orden explícita del owner (requerida para IA)" style="display:none">'
+          +'<button class="btn save">Notarizar</button></div>';
+      }
+      h+='</div>';
+    });
+    view.innerHTML=h;
+    view.querySelectorAll(".notz").forEach(function(b){b.onclick=function(){state.notz={o:b.dataset.o,y:+b.dataset.y};render();};});
+    var f=view.querySelector(".noteform");
+    if(f){var aut=f.querySelector(".aut"),ord=f.querySelector(".ord");
+      aut.onchange=function(){ord.style.display=aut.value==="manager_ia"?"":"none";};
+      f.querySelector(".save").onclick=function(){
+        var o=OCC.filter(function(x){return x.id===f.dataset.o;})[0],y=+f.dataset.y,hh=o.hist.filter(function(x){return x.y===y;})[0];
+        var author=aut.value,order=ord.value.trim();
+        if(author==="manager_ia"&&!order){ord.focus();return;}
+        hh.note={reason:f.querySelector(".rsn").value,detail:f.querySelector(".det").value||"Notarizado por el manager",author:author,owner_order_ref:author==="manager_ia"?order:null};
+        state.notz=null;state.v="con";render();
+      };
+    }
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
