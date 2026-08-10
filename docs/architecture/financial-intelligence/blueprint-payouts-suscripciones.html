@@ -1,0 +1,451 @@
+<title>Blueprint de Arquitectura de Pagos y Cobros — MIAMI DJ BEAT</title>
+<style>
+  :root {
+    --ground: #f6f7fb;
+    --panel: #ffffff;
+    --panel-2: #fbfbfe;
+    --ink: #1a1f36;
+    --ink-soft: #4a5170;
+    --ink-faint: #8a91ad;
+    --line: #e5e8f2;
+    --line-strong: #d3d8ea;
+    --violet: #5b54d6;
+    --violet-soft: #ece9fb;
+    --violet-ink: #3f379e;
+    --green: #0d9b6c;
+    --green-soft: #e2f5ee;
+    --green-ink: #0a7050;
+    --amber-soft: #fbeed2;
+    --amber-ink: #8a5a08;
+    --red: #c0392b;
+    --shadow: 0 1px 2px rgba(26,31,54,.05), 0 8px 28px rgba(26,31,54,.06);
+    --shadow-sm: 0 1px 2px rgba(26,31,54,.06);
+    --radius: 14px;
+    --radius-sm: 9px;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0d1020;
+      --panel: #161a2c;
+      --panel-2: #12162536;
+      --ink: #eef0f8;
+      --ink-soft: #a7adc8;
+      --ink-faint: #6b7196;
+      --line: #262c44;
+      --line-strong: #333a58;
+      --violet: #8b83ff;
+      --violet-soft: #211f42;
+      --violet-ink: #b4adff;
+      --green: #34c896;
+      --green-soft: #123027;
+      --green-ink: #5fd9b0;
+      --amber-soft: #33280f;
+      --amber-ink: #e0b264;
+      --red: #e57368;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 34px rgba(0,0,0,.4);
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --ground: #f6f7fb; --panel: #ffffff; --panel-2: #fbfbfe;
+    --ink: #1a1f36; --ink-soft: #4a5170; --ink-faint: #8a91ad;
+    --line: #e5e8f2; --line-strong: #d3d8ea;
+    --violet: #5b54d6; --violet-soft: #ece9fb; --violet-ink: #3f379e;
+    --green: #0d9b6c; --green-soft: #e2f5ee; --green-ink: #0a7050;
+    --amber-soft: #fbeed2; --amber-ink: #8a5a08; --red: #c0392b;
+    --shadow: 0 1px 2px rgba(26,31,54,.05), 0 8px 28px rgba(26,31,54,.06);
+    --shadow-sm: 0 1px 2px rgba(26,31,54,.06);
+  }
+  :root[data-theme="dark"] {
+    --ground: #0d1020; --panel: #161a2c; --panel-2: #12162536;
+    --ink: #eef0f8; --ink-soft: #a7adc8; --ink-faint: #6b7196;
+    --line: #262c44; --line-strong: #333a58;
+    --violet: #8b83ff; --violet-soft: #211f42; --violet-ink: #b4adff;
+    --green: #34c896; --green-soft: #123027; --green-ink: #5fd9b0;
+    --amber-soft: #33280f; --amber-ink: #e0b264; --red: #e57368;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 34px rgba(0,0,0,.4);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .doc {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    padding: clamp(16px, 3vw, 40px);
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+
+  /* ---------- Header ---------- */
+  header.masthead { text-align: center; margin-bottom: 30px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--violet-ink);
+    background: var(--violet-soft); border: 1px solid var(--line-strong);
+    padding: 5px 12px; border-radius: 100px; margin-bottom: 16px;
+  }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--violet); }
+  h1.title {
+    font-size: clamp(24px, 4.2vw, 40px); line-height: 1.08; margin: 0 auto;
+    max-width: 18ch; font-weight: 800; letter-spacing: -.02em; text-wrap: balance;
+  }
+  .subtitle { color: var(--ink-soft); font-size: clamp(14px, 1.6vw, 17px); margin: 12px auto 0; max-width: 60ch; }
+
+  /* ---------- Section scaffold ---------- */
+  section.block { margin-top: 26px; }
+  .section-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+  .section-num {
+    font-family: var(--mono); font-size: 12px; font-weight: 700;
+    color: #fff; background: var(--ink); border-radius: 7px;
+    padding: 3px 8px; letter-spacing: .05em; flex: none;
+  }
+  :root[data-theme="dark"] .section-num,
+  @media (prefers-color-scheme: dark) { }
+  .section-title { font-size: clamp(16px, 2.2vw, 21px); font-weight: 750; letter-spacing: -.01em; margin: 0; }
+  .section-sub { color: var(--ink-faint); font-size: 13px; margin: 2px 0 0; }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+  }
+
+  /* ---------- 1. Two-way flow ---------- */
+  .flow-intro { padding: 20px 22px; color: var(--ink-soft); font-size: 14px; border-bottom: 1px solid var(--line); }
+  .flow-intro b { color: var(--ink); }
+  .flow {
+    display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr auto 1fr;
+    align-items: stretch; gap: 6px; padding: 22px; overflow-x: auto;
+  }
+  .node {
+    min-width: 148px; padding: 16px 14px; border-radius: var(--radius-sm);
+    border: 1px solid var(--line-strong); background: var(--panel-2);
+    display: flex; flex-direction: column; gap: 6px; text-align: center;
+  }
+  .node.company { border-color: var(--ink); border-width: 1.5px; }
+  .node.flowA { border-color: var(--violet); background: var(--violet-soft); }
+  .node.flowB { border-color: var(--green); background: var(--green-soft); }
+  .node .ico { font-size: 22px; line-height: 1; }
+  .node .nlabel { font-weight: 700; font-size: 14px; letter-spacing: -.01em; }
+  .node .ndesc { font-size: 11.5px; color: var(--ink-soft); line-height: 1.4; }
+  .node .tag {
+    align-self: center; font-family: var(--mono); font-size: 10px; letter-spacing: .06em;
+    text-transform: uppercase; padding: 2px 8px; border-radius: 100px; font-weight: 600;
+  }
+  .node.flowA .tag { background: var(--violet); color: #fff; }
+  .node.flowB .tag { background: var(--green); color: #fff; }
+  .arrow { display: flex; align-items: center; justify-content: center; color: var(--ink-faint); font-size: 20px; font-weight: 700; }
+  .arrow.v { color: var(--violet); }
+  .arrow.g { color: var(--green); }
+
+  /* ---------- Two blocks grid ---------- */
+  .blocks { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 26px; }
+  .bcard { display: flex; flex-direction: column; overflow: hidden; }
+  .bcard > .bhead { padding: 16px 20px; color: #fff; }
+  .bcard.b1 > .bhead { background: linear-gradient(135deg, var(--violet-ink), var(--violet)); }
+  .bcard.b2 > .bhead { background: linear-gradient(135deg, var(--green-ink), var(--green)); }
+  .bhead .bkicker { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
+  .bhead .btitle { font-size: 16px; font-weight: 750; margin-top: 3px; letter-spacing: -.01em; }
+  .bbody { padding: 18px 20px; display: flex; flex-direction: column; gap: 16px; }
+  .kv { font-size: 13px; color: var(--ink-soft); }
+  .kv b { color: var(--ink); }
+
+  /* mockup shell */
+  .mock {
+    border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+    background: var(--panel-2); overflow: hidden;
+  }
+  .mock-h { padding: 12px 14px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .mock-h .mt { font-weight: 700; font-size: 13.5px; }
+  .mock-b { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+
+  .pill {
+    font-size: 11px; font-weight: 650; padding: 2px 9px; border-radius: 100px;
+    display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+  }
+  .pill.ok { background: var(--green-soft); color: var(--green-ink); }
+  .pill.warn { background: var(--amber-soft); color: var(--amber-ink); }
+  .pill.info { background: var(--violet-soft); color: var(--violet-ink); }
+  .pill .d { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  .plan-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .plan-name { font-size: 15px; font-weight: 750; }
+  .plan-meta { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+  .btn {
+    font-family: var(--sans); font-size: 12.5px; font-weight: 650; border: none;
+    padding: 9px 14px; border-radius: 8px; cursor: default;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .btn.violet { background: var(--violet); color: #fff; }
+  .btn.green { background: var(--green); color: #fff; }
+
+  table.inv { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.inv th { text-align: left; color: var(--ink-faint); font-weight: 600; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; padding: 0 10px 8px 0; }
+  table.inv td { padding: 8px 10px 8px 0; border-top: 1px solid var(--line); color: var(--ink-soft); }
+  table.inv td.amt { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); }
+  table.inv .id { font-family: var(--mono); font-size: 11px; }
+
+  .radio-opt { border: 1px solid var(--line-strong); border-radius: var(--radius-sm); padding: 12px 13px; display: flex; gap: 11px; }
+  .radio-opt.sel { border-color: var(--green); background: var(--green-soft); }
+  .radio-opt .rc { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line-strong); flex: none; margin-top: 2px; position: relative; }
+  .radio-opt.sel .rc { border-color: var(--green); }
+  .radio-opt.sel .rc::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--green); }
+  .opt-title { font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .opt-desc { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+
+  .status-grid { display: grid; grid-template-columns: auto 1fr; gap: 7px 14px; font-size: 12px; }
+  .status-grid dt { color: var(--ink-faint); }
+  .status-grid dd { margin: 0; text-align: right; font-weight: 600; }
+  .status-grid dd .mono { font-family: var(--mono); font-weight: 500; }
+  .check { color: var(--green); font-weight: 800; }
+
+  .field-lite { border: 1px dashed var(--line-strong); border-radius: 8px; padding: 9px 11px; font-size: 12px; color: var(--ink-faint); background: var(--panel); }
+
+  .note-safe {
+    display: flex; gap: 11px; align-items: flex-start; font-size: 12.5px;
+    color: var(--ink-soft); background: var(--violet-soft);
+    border: 1px solid var(--line-strong); border-radius: var(--radius-sm); padding: 12px 14px;
+  }
+  .note-safe .shield { color: var(--violet); font-size: 18px; line-height: 1; flex: none; }
+  .note-safe b { color: var(--ink); }
+
+  /* ---------- 3. Security cards ---------- */
+  .sec-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: 16px; }
+  .sec-card { padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--panel); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 9px; }
+  .sec-card .sico { width: 34px; height: 34px; border-radius: 9px; background: var(--violet-soft); color: var(--violet); display: flex; align-items: center; justify-content: center; font-size: 17px; }
+  .sec-card h4 { margin: 0; font-size: 12.5px; font-weight: 750; letter-spacing: -.005em; text-transform: uppercase; }
+  .sec-card p { margin: 0; font-size: 12px; color: var(--ink-soft); line-height: 1.45; }
+  .sec-card .trace { margin-top: auto; display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 10.5px; }
+  .chip { background: var(--panel-2); border: 1px solid var(--line-strong); border-radius: 6px; padding: 3px 7px; color: var(--ink-soft); }
+  .role-row { display: flex; gap: 10px; margin-top: auto; }
+  .role { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 650; }
+  .role .x { color: var(--red); } .role .y { color: var(--green); }
+
+  /* ---------- Footer gate ---------- */
+  .gate {
+    margin-top: 26px; display: flex; gap: 13px; align-items: flex-start;
+    background: var(--amber-soft); border: 1px solid var(--line-strong);
+    border-radius: var(--radius); padding: 16px 18px; font-size: 13px; color: var(--amber-ink);
+  }
+  .gate .gi { font-size: 18px; flex: none; }
+  .gate b { color: var(--ink); }
+  .gate code { font-family: var(--mono); background: var(--panel); border: 1px solid var(--line-strong); border-radius: 5px; padding: 1px 6px; font-size: 11.5px; color: var(--ink); }
+
+  .meta-foot { margin-top: 20px; text-align: center; font-size: 11.5px; color: var(--ink-faint); font-family: var(--mono); letter-spacing: .03em; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 860px) {
+    .blocks { grid-template-columns: 1fr; }
+    .sec-grid { grid-template-columns: repeat(2, 1fr); }
+    .flow { grid-template-columns: none; grid-auto-flow: row; }
+    .flow .arrow { transform: rotate(90deg); }
+  }
+  @media (max-width: 520px) {
+    .sec-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="doc">
+  <div class="wrap">
+
+    <header class="masthead">
+      <span class="eyebrow"><span class="dot"></span>Referencia conceptual · Estándar bancario</span>
+      <h1 class="title">Blueprint de Arquitectura de Pagos y Cobros</h1>
+      <p class="subtitle">Módulo: Payouts, Suscripciones y Gestión Financiera — Futuro Bloque / Fase 1 de la plataforma MIAMI DJ BEAT.</p>
+    </header>
+
+    <!-- 1. TWO-WAY ARCHITECTURE -->
+    <section class="block">
+      <div class="section-head">
+        <span class="section-num">01</span>
+        <div>
+          <h2 class="section-title">Arquitectura de Dos Vías</h2>
+          <p class="section-sub">Separación estricta de flujos financieros (compliance)</p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="flow-intro">
+          El sistema separa estrictamente el dinero <b>entrante</b> y <b>saliente</b> para cumplir con las normativas legales y de cumplimiento financiero. Mezclar los ingresos por suscripción de la empresa con los pagos directos a terceros destruiría la contabilidad corporativa.
+        </div>
+        <div class="flow">
+          <div class="node">
+            <div class="ico">👥</div>
+            <div class="nlabel">Clientes / Fans</div>
+            <div class="ndesc">Compras, suscripciones, apps, propinas</div>
+          </div>
+          <div class="arrow v">→</div>
+          <div class="node flowA">
+            <span class="tag">Flujo A · Ingresos</span>
+            <div class="ico">💳</div>
+            <div class="ndesc">Procesado vía <b>Stripe Checkout</b> / portal unificado</div>
+          </div>
+          <div class="arrow v">→</div>
+          <div class="node company">
+            <div class="ico">🏛️</div>
+            <div class="nlabel">MIAMI DJ BEAT</div>
+            <div class="ndesc">Empresa (cuenta corporativa)</div>
+          </div>
+          <div class="arrow g">→</div>
+          <div class="node flowB">
+            <span class="tag">Flujo B · Salidas</span>
+            <div class="ico">🏦</div>
+            <div class="ndesc">Procesado vía <b>Stripe Connect Express</b> (KYC automatizado)</div>
+          </div>
+          <div class="arrow g">→</div>
+          <div class="node">
+            <div class="ico">🎧</div>
+            <div class="nlabel">Artistas / DJs</div>
+            <div class="ndesc">Payouts, comisiones, tips, ganancias</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BLOCKS 1 & 2 -->
+    <div class="blocks">
+
+      <!-- BLOQUE 1 -->
+      <div class="panel bcard b1">
+        <div class="bhead">
+          <div class="bkicker">Bloque 1 · El DJ paga a la plataforma</div>
+          <div class="btitle">Gestión de Suscripciones Propias</div>
+        </div>
+        <div class="bbody">
+          <div class="kv"><b>Propósito:</b> permitir al artista autogestionar sus planes y herramientas de software sin fricción.</div>
+          <div class="kv"><b>Estándar bancario:</b> sesión alojada de facturación externa (patrón SaaS seguro).</div>
+
+          <div class="mock">
+            <div class="mock-h">
+              <span class="mt">Suscripción Actual</span>
+              <span class="pill ok"><span class="d"></span>Activo</span>
+            </div>
+            <div class="mock-b">
+              <div class="plan-row">
+                <div>
+                  <div class="plan-name">👑 Plan Pro Monthly</div>
+                  <div class="plan-meta">Renovación: 15 de junio de 2026 · Pago: <span style="color:var(--green-ink);font-weight:650">Succeeded</span></div>
+                </div>
+                <button class="btn violet">Gestionar en Stripe ↗</button>
+              </div>
+              <table class="inv">
+                <thead><tr><th>Fecha</th><th>Factura #</th><th>Monto</th><th>Estado</th></tr></thead>
+                <tbody>
+                  <tr><td>15 May 2026</td><td class="id">INV-2026-0052</td><td class="amt">$29.99</td><td><span class="pill ok"><span class="d"></span>Succeeded</span></td></tr>
+                  <tr><td>15 Abr 2026</td><td class="id">INV-2026-0041</td><td class="amt">$29.99</td><td><span class="pill ok"><span class="d"></span>Succeeded</span></td></tr>
+                  <tr><td>15 Mar 2026</td><td class="id">INV-2026-0030</td><td class="amt">$29.99</td><td><span class="pill ok"><span class="d"></span>Succeeded</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="note-safe">
+            <span class="shield">🛡️</span>
+            <span>La gestión de pagos ocurre <b>100% en Stripe</b> (PCI-DSS). MIAMI DJ BEAT nunca almacena datos de tarjetas.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BLOQUE 2 -->
+      <div class="panel bcard b2">
+        <div class="bhead">
+          <div class="bkicker">Bloque 2 · La plataforma paga al DJ</div>
+          <div class="btitle">Configuración de Cobros y Payouts</div>
+        </div>
+        <div class="bbody">
+          <div class="kv"><b>Propósito:</b> recibir de forma automática los fondos generados por eventos, gigs o propinas.</div>
+          <div class="kv"><b>Estándar bancario:</b> onboarding de Stripe Connect Express + método de respaldo manual.</div>
+
+          <div class="mock">
+            <div class="mock-h"><span class="mt">Método Preferido de Cobro</span></div>
+            <div class="mock-b">
+              <div class="radio-opt sel">
+                <div class="rc"></div>
+                <div>
+                  <div class="opt-title">Opción 1: Stripe Connect <span class="pill ok"><span class="d"></span>Conectado</span></div>
+                  <div class="opt-desc">Recibe pagos automáticamente en tu cuenta bancaria vía Stripe.</div>
+                </div>
+              </div>
+              <div class="radio-opt">
+                <div class="rc"></div>
+                <div>
+                  <div class="opt-title">Opción 2: Zelle / Transferencia <span class="pill warn"><span class="d"></span>No configurado</span></div>
+                  <div class="opt-desc">Método de respaldo manual controlado por <span style="font-family:var(--mono);font-size:11px">billing_settings</span>.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mock">
+            <div class="mock-h"><span class="mt">Estado de tu cuenta Connect</span><span class="pill ok"><span class="d"></span>Conectado</span></div>
+            <div class="mock-b">
+              <dl class="status-grid">
+                <dt>Cuenta Connect ID</dt><dd><span class="mono">acct_1N7X…SR8k</span></dd>
+                <dt>Última verificación</dt><dd>12 May 2026 <span class="check">✓</span></dd>
+                <dt>Payouts habilitados</dt><dd>Sí <span class="check">✓</span></dd>
+                <dt>Cuenta bancaria</dt><dd><span class="mono">•••• 6789</span> <span class="check">✓</span></dd>
+              </dl>
+              <button class="btn green">🔒 Conectar cuenta de pagos</button>
+              <div class="field-lite">KYC: identidad, información fiscal (SSN / EIN) y cuenta bancaria — gestionado dentro del flujo seguro de Stripe.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. SECURITY LOGIC -->
+    <section class="block">
+      <div class="section-head">
+        <span class="section-num">03</span>
+        <div>
+          <h2 class="section-title">Lógica de Seguridad y Control</h2>
+          <p class="section-sub">Reglas de negocio que garantizan la integridad del ledger</p>
+        </div>
+      </div>
+      <div class="sec-grid">
+        <div class="sec-card">
+          <div class="sico">🔒</div>
+          <h4>Cero almacenamiento sensible</h4>
+          <p>Ningún dato de tarjetas ni cuentas bancarias reside en la base local. Todo vive en los vaults seguros de Stripe (PCI-DSS).</p>
+        </div>
+        <div class="sec-card">
+          <div class="sico">🧾</div>
+          <h4>Trazabilidad contable</h4>
+          <p>Cada transferencia genera un registro inmutable que asocia el ID de factura con el ID de transferencia bancaria.</p>
+          <div class="trace"><span class="chip">Factura #F-1345</span><span style="color:var(--ink-faint)">→</span><span class="chip">tr_1A2B3C…</span></div>
+        </div>
+        <div class="sec-card">
+          <div class="sico">🧑‍⚖️</div>
+          <h4>Validación de roles</h4>
+          <p>Un middleware de permisos impide que un usuario tipo cliente acceda a los paneles de payouts del artista.</p>
+          <div class="role-row"><span class="role"><span class="x">✕</span>Cliente</span><span class="role"><span class="y">✓</span>Artista / DJ</span></div>
+        </div>
+        <div class="sec-card">
+          <div class="sico">🛡️</div>
+          <h4>Cumplimiento y KYC</h4>
+          <p>Toda la verificación de identidad (KYC) se realiza dentro del flujo seguro de Stripe Connect Express.</p>
+        </div>
+        <div class="sec-card">
+          <div class="sico">📒</div>
+          <h4>Registro inmutable</h4>
+          <p>Todos los eventos financieros (entrantes y salientes) quedan en un ledger corporativo inmutable para auditoría y reconciliación.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- GATE -->
+    <div class="gate">
+      <span class="gi">⏳</span>
+      <div>
+        <b>Documento de referencia conceptual.</b> Este blueprint no autoriza trabajo por sí solo. La apertura de la Fase 1 de este módulo está condicionada a dos gates aún <b>NO cumplidos</b>: <code>Package 5 · COMPLETE</code> + <b>autorización explícita del PO</b>. La futura Fase 1 verificará este insumo contra el código real antes de darlo por válido.
+      </div>
+    </div>
+
+    <div class="meta-foot">MIAMI DJ BEAT · TICKET-V1-ARTIST-FINANCIAL-STRIPE-CONNECT-BLUEPRINT-001 · Insumo conceptual, no especificación cerrada</div>
+
+  </div>
+</div>
