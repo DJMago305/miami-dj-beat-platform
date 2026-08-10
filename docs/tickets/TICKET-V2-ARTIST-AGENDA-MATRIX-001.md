@@ -152,6 +152,19 @@ Con memoria de continuidad **no punitiva** y notarización gobernada.
 
 ---
 
+## Reanudar (próxima sesión) — checkpoint 2026-08-10
+
+Estado: pasos 1–2 (datos) validados en local; UI artista+owner consolidada y visible en localhost con datos de muestra. Todo commiteado en `plan/v2-artist-agenda-matrix`, **sin push**, sin migración promovida.
+
+Orden de prioridades confirmado por el owner para retomar:
+1. **Conexión con credenciales (tú):** `supabase login` → `link --project-ref <ref>` → `db pull` → `start` para levantar el local real. Luego yo promuevo las 2 SQL a `supabase/migrations/`, aplico local y cableo la página del calendario de mock → datos en vivo.
+2. **Integración progresiva con la app de Clima + reemplazo del calendario viejo** — previo **reporte técnico/visual** (regla de no-remoción sin reporte); coordinar con la línea de clima (diferida).
+3. **Motor de Automatización IA de ventas** como pieza propia de la app, solo con autorización explícita (paso de alto riesgo).
+
+Ver en localhost: `cd web && python3 -m http.server 8123 --bind 127.0.0.1` → `http://localhost:8123/calendario-operacional-inteligente.html`
+
+---
+
 ## Referencias
 
 - Memoria de proyecto: re-arquitectura de agenda del artista (decisión Opción A + modelo no punitivo).
