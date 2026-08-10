@@ -18,11 +18,14 @@ Re-arquitectura de la agenda del artista hacia un **Calendario Operacional Intel
 
 ```
 GATE DE DISEÑO: APROBADO POR EL PO — 2026-08-10 (100%)
-SIN CÓDIGO APLICADO · SIN MIGRACIÓN EN supabase/migrations/ · SIN COMMIT
+PASOS 1–2 (fundación + continuidad): VALIDADOS EN LOCAL — 2026-08-10 (sandbox desechable)
+SIN CÓDIGO APLICADO A REMOTO · SIN MIGRACIÓN EN supabase/migrations/ · SIN COMMIT
 PERSISTENCIA: SOLO SUPABASE LOCAL DE PRUEBA (gate vigente — no remoto)
 PASOS 5–6 (alto riesgo): NO autorizados (por defecto)
-PRÓXIMO: checkpoint fase 4 → rama dedicada → Supabase local → paso 1
+PRÓXIMO: paso 3 — UI de lectura del artista
 ```
+
+**Evidencia de validación (pasos 1–2):** `docs/architecture/temporal-intelligence/artist-agenda_STEP-1-2-LOCAL-VALIDATION.md`
 
 **Gate de diseño aprobado.** La ejecución sigue bloqueada hasta abrir la rama dedicada; commit/push/deploy y persistencia remota siguen **no** autorizados.
 
@@ -60,8 +63,8 @@ PRÓXIMO: checkpoint fase 4 → rama dedicada → Supabase local → paso 1
 
 Convertir la agenda del artista en un **Calendario Operacional Inteligente** de dos herramientas conectadas:
 
-- **Herramienta del Artista** (reutilizable, independiente): trabaja desde la base del propio artista; le recuerda fechas recurrentes de sus contactos para generarle trabajo. **Datos aislados** — un artista no ve datos de otro.
-- **Owner · Matrix** (central): consolida a **todos** los artistas (solo con consentimiento) para gestionar eventos futuros.
+- **Calendario del Artista** (reutilizable, independiente): trabaja desde la base del propio artista; le recuerda fechas recurrentes de sus contactos para generarle trabajo. **Datos aislados** — un artista no ve datos de otro.
+- **Calendario del Staff = Agenda Owner = Matrix** (central): son la **misma** superficie — la que tiene **toda** la información general de todos los artistas (solo con consentimiento). Gobernada por `public.is_staff_management` (**admin / owner / manager**). Se puede rotular "Agenda Owner"; es equivalente al calendario del staff de gestión.
 
 Con memoria de continuidad **no punitiva** y notarización gobernada.
 
@@ -79,6 +82,12 @@ Con memoria de continuidad **no punitiva** y notarización gobernada.
 - Envío real de notificaciones (WhatsApp/SMS/email).
 - Agente IA de ventas + Manager IA.
 - Sincronización con Calendario de Apple/Google (fase 2 opcional, encima — nunca el motor).
+
+**Ubicación y reemplazo (definido por el owner — 2026-08-10):**
+- El Calendario Operacional Inteligente **reemplaza** al calendario/agenda actual (p. ej. `web/js/agenda-engine.js` en dashboards de artista).
+- Se ubica en la **parte inferior de la app de Clima** (sección weather).
+- ⚠ El reemplazo del calendario viejo activa la regla permanente **"no remoción sin reporte"**: requiere **reporte de análisis técnico + visual** antes de remover/reemplazar. Se ejecuta en la fase de UI (paso 3–4), **no** en la fundación de datos.
+- ⚠ La integración en la app de Clima toca la **re-arquitectura de clima (diferida)**: coordinar con esa línea, **no** expandirla desde este ticket.
 
 ---
 
@@ -125,14 +134,14 @@ Con memoria de continuidad **no punitiva** y notarización gobernada.
 
 ## Criterios de aceptación (fase de fundación · pasos 1–4)
 
-- [ ] Migraciones Parte 1 y 2 aplican en Supabase **local** con exit 0.
-- [ ] Prueba RLS con JWT de artista: solo ve **sus** contactos/eventos; cero fugas de otros artistas.
-- [ ] Prueba RLS de gestión: Matrix ve todos **solo** con consentimiento; sin consentimiento, no ve.
-- [ ] `dj_engagement_summary()` nunca resta; vacío sin nota = ignorado; vacío notarizado = protegido.
-- [ ] Insertar nota `manager_ia` **sin** `owner_order_ref` **falla** (CHECK).
-- [ ] El DJ puede leer sus notas; no puede escribir notarizaciones.
-- [ ] UI de lectura del artista con gate de consentimiento al primer ingreso.
-- [ ] Sin commit / push / deploy sin aprobación PO.
+- [x] Migraciones Parte 1 y 2 aplican en Supabase **local** con exit 0. *(2026-08-10)*
+- [x] Prueba RLS con JWT de artista: solo ve **sus** contactos y eventos; cero fugas. *(contactos T1/T2; eventos A1/A2)*
+- [x] Prueba RLS de gestión: Matrix ve todos **solo** con consentimiento; sin consentimiento, no ve. *(contactos T3; eventos A2)*
+- [x] `dj_engagement_summary()` nunca resta; vacío sin nota = ignorado; vacío notarizado = protegido. *(C: reb=4, protegidos=1, ignorados=1, popularidad=5)*
+- [x] Insertar nota `manager_ia` **sin** `owner_order_ref` **falla** (CHECK). *(T4/T5)*
+- [x] El DJ puede leer sus notas; no puede escribir notarizaciones. *(B1/B2)*
+- [ ] UI de lectura del artista con gate de consentimiento al primer ingreso. *(paso 3)*
+- [x] Sin commit / push / deploy sin aprobación PO. *(respetado)*
 
 ---
 
