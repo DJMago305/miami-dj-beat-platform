@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendario Operacional Inteligente — Artista · Miami DJ Beat</title>
+<!--
+  PASO 3 (UI del artista) · verlo-ya con MOCK DATA.
+  Página nueva, standalone: NO reemplaza el calendario viejo (eso requiere el
+  reporte de análisis técnico+visual). Los datos de muestra reflejan 1:1 el
+  esquema validado en local (Parte 1/2):
+    artist_agenda_consent · artist_contacts · artist_agenda_events · dj_continuity_notes
+  Aislamiento del artista y consentimiento: aquí simulados en el cliente;
+  en producción se aplican por RLS en Supabase (ya validado).
+-->
+<style>
+  :root{
+    --ground:#f3f4f9;--panel:#fff;--panel-2:#f7f8fc;--ink:#16182a;--ink-soft:#474d6b;--ink-mute:#9096b0;
+    --line:rgba(30,40,90,.10);--line-soft:rgba(30,40,90,.055);--today:#ff2d55;
+    --set:#ff2e86;--staff:#ff7a4d;--prod:#8b6cff;--pago:#10b3a3;--clima:#f5a623;--cliente:#3d8bff;
+    --pot:#f5a623;--act:#10b3a3;--vip:#ff2e86;
+    --shadow:0 18px 44px -26px rgba(24,30,70,.4);--sunset:linear-gradient(115deg,#ff2e86,#ff7a4d 55%,#ffbe3d);
+    --sans:"Helvetica Neue",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{--ground:#05070f;--panel:#0e1226;--panel-2:#0a0d1e;--ink:#f3f5ff;--ink-soft:#aeb6da;--ink-mute:#6b7297;--line:rgba(150,162,220,.16);--line-soft:rgba(150,162,220,.08);--shadow:0 22px 54px -26px rgba(0,0,0,.8);}}
+  *{box-sizing:border-box;}body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--ground);background-image:radial-gradient(ellipse 70% 40% at 50% -8%,rgba(255,46,134,.10),transparent 60%);-webkit-font-smoothing:antialiased;min-height:100vh;padding:clamp(10px,2vw,22px);}
+  .app{max-width:1080px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--shadow);position:relative;min-height:80vh;display:flex;flex-direction:column;}
+
+  .top{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .brand{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:var(--sunset);font-size:16px;}
+  .who{display:flex;flex-direction:column;line-height:1.15;}
+  .who b{font-size:14px;}.who span{font-size:11px;color:var(--ink-mute);}
+  .grow{flex:1;}
+  .matrix-chip{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:650;font-family:var(--mono);padding:6px 11px;border-radius:999px;border:1px solid var(--line);cursor:pointer;background:var(--panel-2);}
+  .matrix-chip .dot{width:9px;height:9px;border-radius:50%;}
+  .matrix-chip.on{color:var(--pago);}.matrix-chip.on .dot{background:var(--pago);}
+  .matrix-chip.off{color:var(--ink-mute);}.matrix-chip.off .dot{background:var(--ink-mute);}
+
+  .seg{display:flex;gap:4px;padding:10px 18px 0;}
+  .seg button{border:none;background:transparent;cursor:pointer;font-family:var(--sans);font-size:14px;font-weight:650;color:var(--ink-mute);padding:9px 14px;border-radius:10px 10px 0 0;position:relative;}
+  .seg button[aria-selected="true"]{color:var(--ink);}
+  .seg button[aria-selected="true"]::after{content:"";position:absolute;left:12px;right:12px;bottom:0;height:3px;border-radius:3px;background:var(--sunset);}
+  .view{padding:16px 18px 22px;flex:1;}
+
+  .h1{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:0 0 3px;}
+  .sub{color:var(--ink-mute);font-size:13px;margin:0 0 16px;}
+
+  /* month */
+  .month{border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);background:var(--panel-2);border-bottom:1px solid var(--line);}
+  .dow span{padding:8px 10px;font-size:12px;color:var(--ink-mute);font-weight:600;text-transform:lowercase;}
+  .weeks{display:grid;grid-template-rows:repeat(6,minmax(84px,1fr));}
+  .wk{display:grid;grid-template-columns:repeat(7,1fr);}
+  .cell{border-right:1px solid var(--line-soft);border-top:1px solid var(--line-soft);padding:4px 5px;min-width:0;overflow:hidden;}
+  .cell:nth-child(7n){border-right:none;}
+  .cell .dn{font-size:12.5px;font-weight:600;text-align:right;padding:1px 4px;color:var(--ink);}
+  .cell.out .dn{color:var(--ink-mute);opacity:.5;}
+  .cell.today .dn{display:inline-block;float:right;background:var(--today);color:#fff;border-radius:50%;width:21px;height:21px;line-height:21px;text-align:center;}
+  .ev{display:flex;align-items:center;gap:5px;font-size:11px;padding:2px 4px;border-radius:5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ev .sq{flex:none;width:8px;height:8px;border-radius:2.5px;background:var(--c);}
+  .ev.solid{background:color-mix(in srgb,var(--c) 16%,transparent);}
+
+  /* contacts */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;}
+  .card{border:1px solid var(--line);border-radius:13px;background:var(--panel);padding:14px;}
+  .card .nm{font-weight:700;font-size:15px;}
+  .card .nt{color:var(--ink-mute);font-size:12px;margin:2px 0 10px;}
+  .row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-soft);padding:4px 0;font-variant-numeric:tabular-nums;}
+  .row svg{width:14px;height:14px;color:var(--ink-mute);flex:none;}
+  .estado{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;font-family:var(--mono);}
+  .estado.Potencial{background:color-mix(in srgb,var(--pot) 16%,transparent);color:var(--pot);}
+  .estado.Activo{background:color-mix(in srgb,var(--act) 16%,transparent);color:var(--act);}
+  .estado.VIP{background:color-mix(in srgb,var(--vip) 16%,transparent);color:var(--vip);}
+
+  /* reminders */
+  .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:720px){.rgrid{grid-template-columns:1fr;}}
+  .rcol{border:1px solid var(--line);border-radius:14px;background:var(--panel-2);padding:14px;}
+  .rcol h4{margin:0 0 10px;font-size:13px;}
+  .rcard{border:1px solid var(--line);border-radius:11px;background:var(--panel);padding:11px 12px;display:flex;gap:10px;align-items:flex-start;margin-bottom:9px;}
+  .rcard .ic{width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;font-size:16px;background:color-mix(in srgb,var(--cliente) 15%,transparent);}
+  .rcard .rt{font-size:13.5px;font-weight:650;}
+  .rcard .rs{font-size:11.5px;color:var(--ink-mute);margin-top:2px;}
+  .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;}
+  .pill{font-size:10.5px;font-weight:650;padding:2px 8px;border-radius:999px;font-family:var(--mono);}
+  .pill.when{background:var(--panel-2);color:var(--ink-mute);}
+  .pill.chan{background:color-mix(in srgb,var(--cliente) 15%,transparent);color:var(--cliente);}
+  .pill.auto{background:color-mix(in srgb,var(--pago) 15%,transparent);color:var(--pago);}
+  .opp{margin-top:9px;padding:9px 11px;border-radius:9px;background:color-mix(in srgb,var(--set) 9%,transparent);border:1px dashed color-mix(in srgb,var(--set) 45%,transparent);font-size:12px;color:var(--ink-soft);}
+  .opp b{color:var(--set);}
+  .empty{color:var(--ink-mute);font-size:12.5px;padding:6px 2px;}
+
+  .foot{padding:12px 18px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--ink-mute);display:flex;gap:14px;flex-wrap:wrap;}
+
+  /* consent overlay */
+  .overlay{position:absolute;inset:0;z-index:30;background:color-mix(in srgb,var(--ground) 80%,transparent);backdrop-filter:blur(6px);display:grid;place-items:center;padding:20px;}
+  .overlay[hidden]{display:none;}
+  .modal{max-width:520px;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:26px;}
+  .modal .eb{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--set);}
+  .modal h3{margin:8px 0 6px;font-size:22px;letter-spacing:-.01em;}
+  .modal p{margin:0 0 14px;color:var(--ink-soft);font-size:14px;}
+  .modal ul{margin:0 0 16px;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;}
+  .modal li{display:flex;gap:10px;font-size:13px;color:var(--ink-soft);}
+  .modal li svg{width:17px;height:17px;flex:none;margin-top:1px;color:var(--pago);}
+  .modal .btns{display:flex;gap:10px;}
+  .modal .accept{flex:1;border:none;cursor:pointer;background:var(--sunset);color:#1a0a12;font-weight:750;font-size:14px;padding:12px;border-radius:11px;font-family:var(--sans);}
+  .modal .deny{border:1px solid var(--line);background:var(--panel);color:var(--ink-soft);cursor:pointer;font-weight:650;font-size:13px;padding:12px 16px;border-radius:11px;font-family:var(--sans);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand">🎧</div>
+    <div class="who"><b id="artistName">—</b><span>Calendario del Artista · lectura</span></div>
+    <div class="grow"></div>
+    <button class="matrix-chip" id="matrixChip" title="Visibilidad en la Matrix del Owner"><span class="dot"></span><span id="matrixLbl">—</span></button>
+  </div>
+
+  <div class="seg" id="seg">
+    <button data-v="cal" aria-selected="true">Calendario</button>
+    <button data-v="con">Contactos</button>
+    <button data-v="rem">Recordatorios</button>
+  </div>
+
+  <div class="view" id="view"></div>
+
+  <div class="foot">
+    <span>Prototipo Paso 3 · datos de muestra</span>
+    <span>Esquema: artist_contacts · artist_agenda_events · artist_agenda_consent</span>
+    <span id="footConsent"></span>
+  </div>
+
+  <!-- Consent gate (primer ingreso) -->
+  <div class="overlay" id="overlay" hidden>
+    <div class="modal">
+      <div class="eb">Primer ingreso · Términos y condiciones</div>
+      <h3>Permiso de uso de datos</h3>
+      <p>Para que <b>Miami DJ Beat</b> te consiga trabajo a partir de las fechas de tus contactos, necesitamos tu autorización para usar los datos de tu agenda. Tú decides.</p>
+      <ul>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Autorizas el uso <b>profesional</b> de tus fechas recurrentes para generarte eventos.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Tu calendario es <b>personal y aislado</b>: nadie más ve tus contactos.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Solo con tu <b>consentimiento</b> el Owner puede consolidar tus fechas en la Matrix.</span></li>
+      </ul>
+      <div class="btns">
+        <button class="accept" id="btnAccept">Aceptar y compartir con la Matrix</button>
+        <button class="deny" id="btnDeny">Solo mi calendario</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  var MESES_C=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  var DOWL=["dom","lun","mar","mié","jue","vie","sáb"], DOWF=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+  var TODAY=new Date(); TODAY.setHours(0,0,0,0);
+  function pad(n){return(n<10?"0":"")+n;}
+  function iso(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+  function addDays(d,n){var x=new Date(d);x.setDate(x.getDate()+n);return x;}
+  function cm(day){return TODAY.getFullYear()+"-"+pad(TODAY.getMonth()+1)+"-"+pad(day);}     // día del mes actual
+  function near(n,year){return year+iso(addDays(TODAY,n)).slice(4);}                          // hoy+n con año pasado
+
+  // ── Identidad del artista (mock; en prod = auth.uid()) ──
+  var ARTIST={ id:"11111111-1111-1111-1111-111111111111", name:"DJ Mago" };
+
+  // ── artist_agenda_consent (persistido en el navegador para simular "una vez") ──
+  var CKEY="coi_consent_"+ARTIST.id;
+  function getConsent(){ try{return JSON.parse(localStorage.getItem(CKEY));}catch(e){return null;} }
+  function setConsent(c){ localStorage.setItem(CKEY, JSON.stringify(c)); }
+
+  // ── artist_contacts (campos = esquema) ──
+  var CONTACTS=[
+    {id:"c1", artist_user_id:ARTIST.id, full_name:"Paula Duarte",   email:"paula.d@mail.com",  phone:"+1 305 ••• 4821", birthday:near(1,1991),  anniversary:near(-40,2021), preferred_channel:"whatsapp",  status:"VIP",       notes:"Contrata seguido"},
+    {id:"c2", artist_user_id:ARTIST.id, full_name:"Carlos Beltrán", email:"carlos.b@mail.com", phone:"+1 305 ••• 1190", birthday:near(3,1987),  anniversary:null,           preferred_channel:"whatsapp",  status:"Potencial", notes:"Cotización enviada · seguir"},
+    {id:"c3", artist_user_id:ARTIST.id, full_name:"Gabriel Ochoa",  email:"gabriel.o@mail.com",phone:"+1 786 ••• 3345", birthday:near(6,1990),  anniversary:near(6,2023),   preferred_channel:"instagram", status:"Activo",    notes:"Rooftop recurrente"},
+    {id:"c4", artist_user_id:ARTIST.id, full_name:"Lucía Fernández",email:"lucia.f@mail.com",  phone:"+1 305 ••• 7782", birthday:near(11,1993), anniversary:null,           preferred_channel:"email",     status:"Potencial", notes:"Boda en octubre · cotizar"},
+    {id:"c5", artist_user_id:ARTIST.id, full_name:"Daniela Prieto",  email:"daniela.p@mail.com",phone:"+1 786 ••• 9051", birthday:near(19,1989), anniversary:near(-12,2022), preferred_channel:"email",     status:"Activo",    notes:"Corporativo mensual"},
+    {id:"c6", artist_user_id:ARTIST.id, full_name:"Diego Salas",    email:"diego.s@mail.com",  phone:"+1 305 ••• 2210", birthday:near(24,1995), anniversary:null,           preferred_channel:"whatsapp",  status:"Potencial", notes:"Pidió demo"}
+  ];
+
+  // ── artist_agenda_events (campos = esquema) ──
+  var EVENTS=[
+    {id:"e1", artist_user_id:ARTIST.id, title:"Set — Club E11EVEN",       category:"set",   starts_at:cm(5)+"T23:00",  all_day:false, venue:"E11EVEN · Downtown", contact_id:null, source:"booking"},
+    {id:"e2", artist_user_id:ARTIST.id, title:"Set — Rooftop Wynwood",    category:"set",   starts_at:cm(12)+"T22:00", all_day:false, venue:"Rooftop Wynwood",   contact_id:"c3", source:"booking"},
+    {id:"e3", artist_user_id:ARTIST.id, title:"Prueba de sonido",         category:"prod",  starts_at:cm(12)+"T18:00", all_day:false, venue:"Rooftop Wynwood",   contact_id:null, source:"manual"},
+    {id:"e4", artist_user_id:ARTIST.id, title:"Set — Space (Terrace)",    category:"set",   starts_at:cm(18)+"T23:00", all_day:false, venue:"Space Miami",       contact_id:null, source:"booking"},
+    {id:"e5", artist_user_id:ARTIST.id, title:"Vence saldo — LIV",        category:"pago",  starts_at:cm(9),           all_day:true,  venue:null,                contact_id:null, source:"manual"},
+    {id:"e6", artist_user_id:ARTIST.id, title:"Beach Party — Nikki Beach",category:"set",   starts_at:cm(25)+"T20:00", all_day:false, venue:"Nikki Beach",       contact_id:null, source:"booking"}
+  ];
+
+  var CATN={set:"Set",staff:"Staff",prod:"Producción",pago:"Cobro",clima:"Clima",cliente:"Cliente"};
+
+  // ── recurrencias: próxima ocurrencia (ignora año) ──
+  function nextRecurring(mdStr){ if(!mdStr) return null;
+    var p=mdStr.split("-"), y=TODAY.getFullYear(); var d=new Date(y, +p[1]-1, +p[2]);
+    if(d<TODAY) d=new Date(y+1, +p[1]-1, +p[2]); return d;
+  }
+  function relLabel(d){ var n=Math.round((d-TODAY)/86400000); if(n===0)return"hoy"; if(n===1)return"mañana"; return"en "+n+" días"; }
+
+  // ── DOM ──
+  var view=document.getElementById("view"), seg=document.getElementById("seg");
+  var overlay=document.getElementById("overlay");
+  document.getElementById("artistName").textContent=ARTIST.name;
+  var state={v:"cal"};
+
+  seg.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;state.v=b.dataset.v;render();});
+  document.getElementById("btnAccept").onclick=function(){ setConsent({artist_user_id:ARTIST.id, accepted_at:new Date().toISOString(), terms_version:"v1", allow_professional_use:true, allow_publicity:true, revoked_at:null}); overlay.hidden=true; render(); };
+  document.getElementById("btnDeny").onclick=function(){ setConsent({artist_user_id:ARTIST.id, accepted_at:new Date().toISOString(), terms_version:"v1", allow_professional_use:false, allow_publicity:false, revoked_at:null}); overlay.hidden=true; render(); };
+  document.getElementById("matrixChip").onclick=function(){ var c=getConsent(); if(!c)return; c.allow_professional_use=!c.allow_professional_use; c.allow_publicity=c.allow_professional_use; setConsent(c); render(); };
+
+  function render(){
+    Array.prototype.forEach.call(seg.children,function(b){b.setAttribute("aria-selected", b.dataset.v===state.v);});
+    var c=getConsent();
+    // gate de primer ingreso
+    if(!c){ overlay.hidden=false; } else { overlay.hidden=true; }
+    // chip de visibilidad Matrix
+    var chip=document.getElementById("matrixChip"), lbl=document.getElementById("matrixLbl"), fc=document.getElementById("footConsent");
+    var shares = c && c.allow_professional_use && !c.revoked_at;
+    chip.className="matrix-chip "+(shares?"on":"off");
+    lbl.textContent = shares ? "Compartes con la Matrix" : "Solo tu calendario";
+    fc.textContent = c ? ("consentimiento: "+(shares?"activo":"denegado")) : "consentimiento: pendiente";
+
+    if(state.v==="cal") renderCal();
+    else if(state.v==="con") renderCon();
+    else renderRem();
+  }
+
+  function renderCal(){
+    var y=TODAY.getFullYear(), m=TODAY.getMonth();
+    var first=new Date(y,m,1), lead=first.getDay();
+    // eventos por fecha (incluye cumpleaños/aniversarios como all-day 'cliente')
+    var byDate={};
+    function push(dateStr, obj){ (byDate[dateStr]=byDate[dateStr]||[]).push(obj); }
+    EVENTS.forEach(function(e){ push(e.starts_at.slice(0,10), {t:e.title, cat:e.category, ad:e.all_day, tm:e.all_day?null:e.starts_at.slice(11)} ); });
+    CONTACTS.forEach(function(k){
+      if(k.birthday){ var d=nextRecurring(k.birthday); if(d.getMonth()===m&&d.getFullYear()===y) push(iso(d), {t:"🎂 "+k.full_name, cat:"cliente", ad:true}); }
+      if(k.anniversary){ var a=nextRecurring(k.anniversary); if(a && a.getMonth()===m&&a.getFullYear()===y) push(iso(a), {t:"🎉 "+k.full_name, cat:"cliente", ad:true}); }
+    });
+    var h='<h1 class="h1">'+MESES_C[m]+' de '+y+'</h1><p class="sub">Tus eventos y fechas — solo tú los ves.</p>';
+    h+='<div class="month"><div class="dow">'; for(var i=0;i<7;i++)h+='<span>'+DOWL[i]+'</span>'; h+='</div><div class="weeks">';
+    var cur=addDays(first,-lead);
+    for(var w=0;w<6;w++){ h+='<div class="wk">';
+      for(var d=0;d<7;d++){ var k=iso(cur), out=cur.getMonth()!==m, isT=cur.getTime()===TODAY.getTime();
+        h+='<div class="cell'+(out?' out':'')+(isT?' today':'')+'"><div class="dn">'+cur.getDate()+'</div>';
+        (byDate[k]||[]).slice(0,4).forEach(function(o){
+          h+='<div class="ev'+(o.ad?' solid':'')+'" style="--c:var(--'+o.cat+')">'+(o.ad?'':'<span class="sq"></span>')+(o.tm?'<span style="color:var(--ink-mute)">'+fmt12(o.tm)+'</span> ':'')+o.t+'</div>';
+        });
+        h+='</div>'; cur=addDays(cur,1);
+      } h+='</div>';
+    }
+    h+='</div></div>'; view.innerHTML=h;
+  }
+  function fmt12(hm){ var p=hm.split(":"),H=+p[0]; var ap=H<12?"a":"p"; var h=H%12; if(h===0)h=12; return h+(p[1]!=="00"?":"+p[1]:"")+" "+ap+"m"; }
+
+  function renderCon(){
+    var h='<h1 class="h1">Mis contactos</h1><p class="sub">Base aislada del artista — '+CONTACTS.length+' contactos. Nadie más los ve.</p><div class="grid">';
+    CONTACTS.forEach(function(k){
+      h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:start;gap:8px"><div><div class="nm">'+k.full_name+'</div><div class="nt">'+k.notes+'</div></div><span class="estado '+k.status+'">'+k.status+'</span></div>';
+      h+='<div class="row">'+icoCake+' Cumpleaños · '+fmtMD(k.birthday)+'</div>';
+      if(k.anniversary) h+='<div class="row">'+icoStar+' Aniversario · '+fmtMD(k.anniversary)+'</div>';
+      h+='<div class="row">'+icoChat+' '+cap(k.preferred_channel)+'</div>';
+      h+='</div>';
+    });
+    h+='</div>'; view.innerHTML=h;
+  }
+  function fmtMD(s){ if(!s)return"—"; var p=s.split("-"); return p[2]+" "+MESES[+p[1]-1]; }
+  function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+
+  function renderRem(){
+    var shares = (function(){var c=getConsent();return c&&c.allow_professional_use&&!c.revoked_at;})();
+    var list=[];
+    CONTACTS.forEach(function(k){
+      if(k.birthday){ var d=nextRecurring(k.birthday); list.push({d:d,icon:"🎂",kind:"cumpleaños",name:k.full_name,chan:k.preferred_channel,status:k.status}); }
+      if(k.anniversary){ var a=nextRecurring(k.anniversary); list.push({d:a,icon:"🎉",kind:"aniversario",name:k.full_name,chan:k.preferred_channel,status:k.status}); }
+    });
+    list.sort(function(a,b){return a.d-b.d;});
+    var hoy=list.filter(function(x){return x.d.getTime()===TODAY.getTime();});
+    var prox=list.filter(function(x){return x.d>TODAY;}).slice(0,8);
+    var h='<h1 class="h1">Recordatorios recurrentes</h1><p class="sub">Fechas de tus contactos. '+(shares?'Al estar activo el consentimiento, Miami DJ Beat puede gestionarte trabajo con ellos.':'Consentimiento denegado: se te recuerdan, pero no se comparten con la Matrix.')+'</p>';
+    h+='<div class="rgrid"><div class="rcol"><h4>Hoy</h4>'+cards(hoy,shares)+'</div><div class="rcol"><h4>Próximos</h4>'+cards(prox,shares)+'</div></div>';
+    view.innerHTML=h;
+  }
+  function cards(items,shares){
+    if(!items.length) return '<div class="empty">Sin recordatorios.</div>';
+    var h="";
+    items.forEach(function(x){
+      h+='<div class="rcard"><div class="ic">'+x.icon+'</div><div style="flex:1;min-width:0"><div class="rt">'+x.name+' — '+x.kind+'</div><div class="rs">'+x.status+'</div>'
+        +'<div class="meta"><span class="pill when">'+relLabel(x.d)+'</span><span class="pill chan">'+cap(x.chan)+'</span>'+(shares?'<span class="pill auto">🔔 auto</span>':'')+'</div>'
+        +(shares?'<div class="opp"><b>Oportunidad:</b> Miami DJ Beat puede proponerle un evento a '+x.name+'.</div>':'')
+        +'</div></div>';
+    });
+    return h;
+  }
+
+  var icoCake='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 20h16v-8H4z"/><path d="M4 15c2 0 2 1.5 4 1.5S10 15 12 15s2 1.5 4 1.5 2-1.5 4-1.5"/><path d="M12 8V5M12 5l1-1.5M12 5l-1-1.5"/></svg>';
+  var icoStar='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z"/></svg>';
+  var icoChat='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg>';
+
+  render();
+})();
+</script>
+</body>
+</html>
