@@ -136,6 +136,21 @@ Orden de autoridad (de mayor a menor). Un documento inferior **no** puede contra
 | `docs/V2/MIAMI-DJ-BEAT-V1-TO-V2-MIGRATION-BLUEPRINT.md` | Blueprint migración V1→V2 | OFICIAL (tracked) |
 | `docs/V2/SHARED-CORE-PROGRESS.md` | Progreso Shared Core | OFICIAL (tracked) |
 | `docs/V2/PROFILE-TAXONOMY.md` | Taxonomía de perfiles | OFICIAL (tracked) |
+| `docs/V2/PROFILES-V1-V2-MAPPING-MATRIX.md` | Matriz V1→V2 Read DTOs (Paso 1 discovery) | OFICIAL (working tree, untracked / modified) |
+| `docs/V2/PROFILES-CYCLE-CLOSURE.md` | Cierre ciclo perfiles V2 (Pasos 0–8) · auditoría lab 55/55 | OFICIAL (working tree, untracked) |
+| `docs/V2/ARCHITECTURE/PROFILE-V1-TO-V2-READ-MODEL-MATRIX-001.md` | Pointer a matriz lab / cierre | OFICIAL (working tree / tracked) |
+| `docs/V2/BOOKINGS-V1-V2-MAPPING-MATRIX.md` | Matriz Agenda/Bookings V1→V2 (ciclo lectura cerrado Pasos 1–6) | OFICIAL (working tree, untracked / modified) |
+| `docs/V2/BOOKINGS-CYCLE-CLOSURE.md` | Cierre ciclo Agenda/Bookings V2 (Pasos 1–6) · auditoría lab 93/93 | OFICIAL (working tree, untracked) |
+| `docs/V2/FINANCIAL-V1-V2-MAPPING-MATRIX.md` | Matriz Finanzas/Pagos V1→V2 (ciclo lectura cerrado Pasos 1–6) | OFICIAL (working tree, untracked / modified) |
+| `docs/V2/FINANCIAL-CYCLE-CLOSURE.md` | Cierre ciclo Finanzas/Pagos V2 (Pasos 1–6) · auditoría lab 133/133 | OFICIAL (working tree, untracked) |
+| `docs/V2/WEATHER-V1-V2-MAPPING-MATRIX.md` | Matriz Weather Engine V1→V2 (ciclo lectura cerrado Pasos 1–6) | OFICIAL (working tree, untracked / modified) |
+| `docs/V2/WEATHER-CYCLE-CLOSURE.md` | Cierre ciclo Weather Engine V2 (Pasos 1–6) · auditoría lab 46/46 | OFICIAL (working tree, untracked) |
+| `docs/V2/SESSION-AUTH-WIRING-MATRIX.md` | Matriz Session & Auth Wiring V1→V2 (ciclo lectura cerrado Pasos 1–6) | OFICIAL (working tree, untracked / modified) |
+| `docs/V2/SESSION-AUTH-WIRING-CLOSURE.md` | Cierre ciclo Session & Auth Wiring V2 (Pasos 1–6) · auditoría lab 48/48 · global 1368/1368 | OFICIAL (working tree, untracked) |
+| `docs/V2/CLIENT-MUTATIONS-MATRIX.md` | Matriz Writers Phase · Slice 1 Client (contratos CreateBooking / OfflinePaymentProof) | OFICIAL (working tree, untracked / modified) |
+| `docs/V2/ARTIST-MUTATIONS-MATRIX.md` | Matriz Writers Phase · Slice 2 Artist (contratos RespondGigAssignment / AcknowledgePayout) | OFICIAL (working tree, untracked / modified) |
+| `docs/V2/STAFF-MUTATIONS-MATRIX.md` | Matriz Writers Phase · Slice 3 Staff (contratos ReviewOfflinePayment / AssignArtistToBooking) | OFICIAL (working tree, untracked / modified) |
+| `docs/V2/WRITERS-PHASE-CLOSURE.md` | Cierre Writers Phase V2 Slices 1–3 · auditoría lab mutaciones 58/58 | OFICIAL (working tree, untracked) |
 | `docs/V2/PHASE-4-MOD-005-API-CLIENT-PLANNING.md` | Planning MOD-005 | OFICIAL (tracked) |
 | `docs/V2/MiamiDJBeat-MigracionV2-MEMORIA.md` | Memoria lab MigracionV2 | OFICIAL (tracked) |
 
@@ -230,7 +245,9 @@ Colección de tickets del laboratorio (fases Shared Core, API client, Legal Cent
 > **Design Bible** (experiencia visual · FROZEN · SHA `e2ba0662d27e831005738b7ed7a1d134f69d9a3dc9c65e80e6b9e76533ddbcb7`) y
 > **Visual Prototype Direction** (Fase 3, PO-approved direction). Ninguno de esos tres archivos existe en `miami-dj-beat-platform`.
 >
-> Los artefactos Weather presentes **en este checkout** son **NO canónicos**: quedaron aquí por una sesión ejecutada en el worktree equivocado. Reclasificados (no promovidos, no fusionados) por `TICKET-V1-WEATHER-DIVERGENT-ARTIFACT-RECLASSIFICATION-001` (2026-08-08) por decisión explícita del Product Owner.
+> Los artefactos Weather presentes **en este checkout** bajo `docs/architecture/weather-intelligence/` son **NO canónicos**: quedaron aquí por una sesión ejecutada en el worktree equivocado. Reclasificados (no promovidos, no fusionados) por `TICKET-V1-WEATHER-DIVERGENT-ARTIFACT-RECLASSIFICATION-001` (2026-08-08) por decisión explícita del Product Owner.
+>
+> **Weather Engine V2 (lab read-only)** — **distinto** de Candidate C: ciclo cerrado en `docs/V2/WEATHER-CYCLE-CLOSURE.md` + matriz `docs/V2/WEATHER-V1-V2-MAPPING-MATRIX.md` + runtime `MiamiDJBeat-MigracionV2/shared/services/weather/` y portales `staff|artist|client/weather/`. **No** sustituye ni modifica Candidate C; **no** toca `web/` V1 weather.
 
 | Ruta (este checkout) | Clasificación | Procedencia |
 |------|-----|-------------|
@@ -238,6 +255,8 @@ Colección de tickets del laboratorio (fases Shared Core, API client, Legal Cent
 | `docs/architecture/weather-intelligence/MIAMI-DJ-BEAT-WEATHER-INTELLIGENCE-ENGINE-CANDIDATE-B.md` | **HISTORICAL / NON-CANONICAL** — Candidate B (Event Environment View), superseded by Candidate C | working tree, untracked |
 | `docs/architecture/weather-intelligence/MIAMI-DJ-BEAT-WEATHER-DESIGN-BIBLE-V1.md` | **REFERENCE ONLY / NON-CANONICAL** — divergent visual exploration (SHA `e8aa244e…`); NO es la Design Bible canónica (`e2ba0662…`) | working tree, untracked |
 | `MIAMI-DJ-BEAT-WEATHER-VISUAL-EXPERIENCE-PHASE-REGISTER-V1.md` | **REMOVED** — stray session artifact eliminado por este ticket | — |
+| `docs/V2/WEATHER-V1-V2-MAPPING-MATRIX.md` · `docs/V2/WEATHER-CYCLE-CLOSURE.md` | **OFICIAL lab V2** — Read Model Weather Engine V2 (ciclo cerrado Pasos 1–6) | working tree, untracked / modified |
+| `MiamiDJBeat-MigracionV2/shared/services/weather/` · `*/weather/` portals | **OFICIAL lab V2** — servicio + UI read-only | working tree |
 
 ---
 
@@ -257,7 +276,10 @@ Colección de tickets del laboratorio (fases Shared Core, API client, Legal Cent
 | Workflow Git / deploy | `docs/workflow-control.md` + `.cursor/rules/*` | Humano + agentes |
 | Supabase apply | `SUPABASE-RUNBOOK.md` | No lo hace Vercel solo |
 | MDJPRO licensing | `docs/mdjpro-licensing-architecture.md` | Producto MDJPRO |
-| Weather V1 (canónico) | Worktree `offline-payment` — **NO en este checkout** | Candidate C `9efeb20b…` (FROZEN) + Design Bible `e2ba0662…` (FROZEN) + Prototype Direction; ver §3.13. Los artefactos Weather de este checkout son **NO canónicos**. |
+| Weather V1 (canónico) | Worktree `offline-payment` — **NO en este checkout** | Candidate C `9efeb20b…` (FROZEN) + Design Bible `e2ba0662…` (FROZEN) + Prototype Direction; ver §3.13. Los artefactos Weather A/B/Design divergente de este checkout son **NO canónicos**. |
+| Weather Engine V2 (lab read-only) | `docs/V2/WEATHER-CYCLE-CLOSURE.md` · `docs/V2/WEATHER-V1-V2-MAPPING-MATRIX.md` · `MiamiDJBeat-MigracionV2/**/weather/**` | Ciclo Pasos 1–6 cerrado (46/46); **no** sustituye Candidate C; **no** writers |
+| Session & Auth Wiring V2 (lab read-only) | `docs/V2/SESSION-AUTH-WIRING-CLOSURE.md` · `docs/V2/SESSION-AUTH-WIRING-MATRIX.md` · `MiamiDJBeat-MigracionV2/**/session-wiring/**` · `**/session/*-session-wiring-pilot*` | Ciclo Pasos 1–6 cerrado (48/48 wiring · 1368/1368 global); **no** Auth writers · **no** SQL/RLS |
+| Writers Phase V2 (lab mutations) | `docs/V2/WRITERS-PHASE-CLOSURE.md` · `docs/V2/{CLIENT,ARTIST,STAFF}-MUTATIONS-MATRIX.md` · `MiamiDJBeat-MigracionV2/shared/services/{client,artist,staff}-mutations/` · `*/mutations/` portals | Slices 1–3 cerrados (58/58 mutaciones); store idempotencia lab; **no** Supabase writers · **no** commit/deploy |
 | MDJPRO manual usuario | `web/manuals/MDJPRO_Manual/**` | No es manual de plataforma V1/Accounting |
 | Entrada repo | `README.md` | Mínimo; no es el índice maestro |
 | **Este índice** | `docs/MASTER-DOCUMENTATION-INDEX.md` | Organización únicamente |
