@@ -1,0 +1,168 @@
+/** MOD-301 Slice 2 — Staff Master Calendar Read View — scoped styles */
+
+.mdj-staff-calendar-read {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--mdj-shell-border, rgba(212, 175, 55, 0.28));
+  border-radius: 0.85rem;
+  background: var(--mdj-shell-glass, rgba(12, 12, 14, 0.72));
+}
+
+.mdj-staff-calendar-read__eyebrow {
+  margin: 0;
+  font-family: Cinzel, serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mdj-shell-muted, rgba(245, 230, 180, 0.72));
+}
+
+.mdj-staff-calendar-read__title {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: 1.35rem;
+  color: var(--mdj-shell-fg, #f6efd8);
+}
+
+.mdj-staff-calendar-read__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.mdj-staff-calendar-read__summary-chip {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 4.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.35rem;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  background: rgba(212, 175, 55, 0.06);
+}
+
+.mdj-staff-calendar-read__summary-label {
+  font-size: 0.65rem;
+  color: var(--mdj-shell-muted, rgba(245, 230, 180, 0.65));
+}
+
+.mdj-staff-calendar-read__summary-value {
+  font-size: 0.9rem;
+  color: #f0d78a;
+}
+
+.mdj-staff-calendar-read__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.mdj-staff-calendar-read__filter {
+  appearance: none;
+  cursor: pointer;
+  padding: 0.25rem 0.55rem;
+  border-radius: 0.3rem;
+  border: 1px solid rgba(160, 160, 170, 0.4);
+  background: transparent;
+  color: rgba(220, 220, 230, 0.85);
+  font-size: 0.75rem;
+}
+
+.mdj-staff-calendar-read__filter.is-active {
+  border-color: rgba(212, 175, 55, 0.7);
+  color: #f0d78a;
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.mdj-staff-calendar-read__cards {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.mdj-staff-calendar-read__card {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.55rem;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.mdj-staff-calendar-read__card-title {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--mdj-shell-fg, #f6efd8);
+}
+
+.mdj-staff-calendar-read__badge {
+  justify-self: start;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.3rem;
+  font-size: 0.7rem;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+}
+
+.mdj-staff-calendar-read__badge--Confirmed {
+  color: #9be7b8;
+  border-color: rgba(90, 200, 140, 0.5);
+}
+
+.mdj-staff-calendar-read__badge--Draft {
+  color: rgba(220, 220, 230, 0.85);
+}
+
+.mdj-staff-calendar-read__badge--InProgress {
+  color: #e8c89a;
+}
+
+.mdj-staff-calendar-read__badge--Completed {
+  color: #a8c8e8;
+}
+
+.mdj-staff-calendar-read__badge--Cancelled {
+  color: #e8b39a;
+}
+
+.mdj-staff-calendar-read__card-meta {
+  margin: 0;
+}
+
+.mdj-staff-calendar-read__row {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+}
+
+.mdj-staff-calendar-read__row dt {
+  margin: 0;
+  color: var(--mdj-shell-muted, rgba(245, 230, 180, 0.65));
+}
+
+.mdj-staff-calendar-read__row dd {
+  margin: 0;
+  color: var(--mdj-shell-fg, #f6efd8);
+}
+
+.mdj-staff-calendar-read__contact,
+.mdj-staff-calendar-read__pii-note,
+.mdj-staff-calendar-read__empty {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--mdj-shell-muted, rgba(245, 230, 180, 0.62));
+}
+
+.mdj-staff-calendar-read__section-title {
+  margin: 0 0 0.35rem;
+  font-family: Cinzel, serif;
+  font-size: 0.85rem;
+  color: #e6d39a;
+}
+
+.mdj-staff-calendar-read__slot-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.8rem;
+  color: var(--mdj-shell-fg, #f6efd8);
+}

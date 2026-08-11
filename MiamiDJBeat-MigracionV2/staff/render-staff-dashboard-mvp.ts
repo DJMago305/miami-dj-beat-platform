@@ -7,7 +7,6 @@ import {
   createHeroBanner,
   createKpiCard,
   createPanel,
-  createProfileCard,
   createSectionHeader,
   type MdjThemeBinding,
 } from '../shared/components/index';
@@ -17,6 +16,16 @@ import {
 } from './data/staff-dashboard-data-provider';
 import { mountComponentDescriptor } from './mount-component-descriptor';
 import { createOperationsPreviewSection } from './render-operations-preview';
+import { mountStaffIdentityReadSliceSync } from './identity/mount-staff-identity-read-slice';
+import { mountStaffCalendarReadSliceSync } from './calendar/mount-staff-calendar-read-slice';
+import { mountStaffFinanceReadSliceSync } from './finance/mount-staff-finance-read-slice';
+import { mountStaffWeatherReadSliceSync } from './weather/mount-staff-weather-read-slice';
+import { mountStaffMutationsSliceSync } from './mutations/mount-staff-mutations-slice';
+import type { StaffMutationsAdapter } from '../shared/services/staff-mutations/index';
+import {
+  renderStaffSessionWiringBadge,
+  type StaffSessionWiringInjection,
+} from './session/staff-session-wiring-pilot';
 
 function resolveStaffDashboardThemeBinding(): MdjThemeBinding {
   const tokens = getThemeDefinition('mdj-dark-gold')?.tokens;
@@ -69,20 +78,6 @@ function createList(items: readonly string[]): HTMLElement {
   return list;
 }
 
-function createSummaryRow(label: string, value: string): HTMLDivElement {
-  const row = document.createElement('div');
-  row.className = 'mdj-client-summary-list__row';
-
-  const dt = document.createElement('dt');
-  dt.textContent = label;
-
-  const dd = document.createElement('dd');
-  dd.textContent = value;
-
-  row.append(dt, dd);
-  return row;
-}
-
 function createQuickActionsSection(
   themeBinding: MdjThemeBinding,
   dataProvider: StaffDashboardDataProvider,
@@ -112,37 +107,44 @@ function createQuickActionsSection(
   return section;
 }
 
+/** MOD-301 Slice 1 — identity slot; hydrated by mountStaffIdentityReadSliceSync. */
 function createProfileSection(
-  themeBinding: MdjThemeBinding,
-  dataProvider: StaffDashboardDataProvider,
+  _themeBinding: MdjThemeBinding,
+  _dataProvider: StaffDashboardDataProvider,
 ): HTMLElement {
-  const section = createStaffSection('staff-profile');
-  const profile = dataProvider.getMvpView().profile;
+  return createStaffSection('staff-profile');
+}
 
-  section.append(
-    mountComponentDescriptor(
-      createSectionHeader({ title: 'Staff Profile', variant: 'module-grid' }, themeBinding),
-    ),
-    mountComponentDescriptor(
-      createProfileCard(
-        {
-          name: profile.operatorName,
-          role: profile.role,
-          meta: `${profile.status} · ${profile.coverage}`,
-        },
-        themeBinding,
-      ),
-    ),
-  );
+/** MOD-301 Slice 2 — master calendar slot; hydrated by mountStaffCalendarReadSliceSync. */
+function createMasterCalendarSection(): HTMLElement {
+  return createStaffSection('master-calendar', true);
+}
 
-  const details = document.createElement('dl');
-  details.className = 'mdj-client-summary-list';
-  details.append(
-    createSummaryRow('Status', profile.status),
-    createSummaryRow('Coverage', profile.coverage),
-  );
-  section.append(details);
+/** MOD-301 Financial Slice — master finance slot; hydrated by mountStaffFinanceReadSliceSync. */
+function createMasterFinanceSection(): HTMLElement {
+  return createStaffSection('master-finance', true);
+}
 
+/** MOD-301 Weather Slice — weather risk console slot; hydrated by mountStaffWeatherReadSliceSync. */
+function createMasterWeatherSection(): HTMLElement {
+  return createStaffSection('master-weather', true);
+}
+
+/** Writers Phase · Slice 3 · Paso 3 — staff mutation forms slot. */
+function createStaffMutationsSection(): HTMLElement {
+  return createStaffSection('staff-mutations', true);
+}
+
+/** MOD-301 Session Wiring Pilot — badge slot (role + redacted bearer). */
+function createSessionWiringSection(
+  sessionWiring: StaffSessionWiringInjection,
+): HTMLElement {
+  const section = createStaffSection('session-wiring', true);
+  const host = document.createElement('div');
+  host.className = 'mdj-staff-session-wiring-host';
+  host.dataset.mdjStaffSessionHost = 'mod-301-sw';
+  renderStaffSessionWiringBadge(host, sessionWiring);
+  section.append(host);
   return section;
 }
 
@@ -351,6 +353,8 @@ function createActivitySection(
 export function renderStaffDashboardMvp(
   mainRegion: HTMLElement,
   dataProvider: StaffDashboardDataProvider,
+  sessionWiring?: StaffSessionWiringInjection | null,
+  mutationsAdapter?: StaffMutationsAdapter | null,
 ): void {
   const themeBinding = resolveStaffDashboardThemeBinding();
   const mvpView = dataProvider.getMvpView();
@@ -378,10 +382,18 @@ export function renderStaffDashboardMvp(
 
   const contentGrid = document.createElement('div');
   contentGrid.className = 'mdj-client-dashboard__grid';
-  contentGrid.append(
+  const sections: HTMLElement[] = [];
+  if (sessionWiring) {
+    sections.push(createSessionWiringSection(sessionWiring));
+  }
+  sections.push(
     createOperationsPreviewSection(themeBinding, dataProvider),
     createQuickActionsSection(themeBinding, dataProvider),
     createProfileSection(themeBinding, dataProvider),
+    createMasterCalendarSection(),
+    createMasterFinanceSection(),
+    createMasterWeatherSection(),
+    createStaffMutationsSection(),
     createLeadsSection(themeBinding, dataProvider),
     createInvoicesSection(themeBinding, dataProvider),
     createCrmSection(themeBinding, dataProvider),
@@ -391,6 +403,28 @@ export function renderStaffDashboardMvp(
     createNotificationsSection(themeBinding, dataProvider),
     createActivitySection(themeBinding, dataProvider),
   );
+  contentGrid.append(...sections);
 
   mainRegion.append(hero, kpiGrid, contentGrid);
+
+  const calendarAudience =
+    sessionWiring?.context.sessionRole === 'staff_seller' ? 'staff_seller' : 'staff_full';
+  const financeAudience =
+    sessionWiring?.context.sessionRole === 'staff_seller' ? 'staff_seller' : 'staff_full';
+  const weatherAudience =
+    sessionWiring?.context.sessionRole === 'staff_seller' ? 'staff_seller' : 'staff_master';
+
+  mountStaffIdentityReadSliceSync(mainRegion, undefined, sessionWiring);
+  mountStaffCalendarReadSliceSync(mainRegion, undefined, calendarAudience, sessionWiring);
+  mountStaffFinanceReadSliceSync(mainRegion, undefined, financeAudience, sessionWiring);
+  mountStaffWeatherReadSliceSync(mainRegion, undefined, weatherAudience, sessionWiring);
+  if (mutationsAdapter && sessionWiring?.context.userId) {
+    mountStaffMutationsSliceSync(
+      mainRegion,
+      mutationsAdapter,
+      sessionWiring.context,
+      sessionWiring.context.userId,
+      sessionWiring,
+    );
+  }
 }

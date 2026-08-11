@@ -8,7 +8,12 @@ const rootDir = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   test: {
     environment: 'jsdom',
-    include: ['tests/unit/**/*.test.ts', 'tests/integration/**/*.test.ts'],
+    include: [
+      'tests/unit/**/*.test.ts',
+      'tests/unit/**/*.spec.ts',
+      'tests/integration/**/*.test.ts',
+      'tests/integration/**/*.spec.ts',
+    ],
     passWithNoTests: false,
   },
   resolve: {

@@ -15,6 +15,297 @@ La Constitución (`MIAMIDJBEAT-PROYECTO-CONSTITUCION.md`) manda sobre cualquier 
 
 ---
 
+## Continuidad — 2026-08-11 (Cierre ciclo Perfiles V2 · Pasos 0–8)
+
+| Campo | Valor |
+|-------|-------|
+| **Documento de cierre** | [`PROFILES-CYCLE-CLOSURE.md`](./PROFILES-CYCLE-CLOSURE.md) |
+| **Matriz discovery** | [`PROFILES-V1-V2-MAPPING-MATRIX.md`](./PROFILES-V1-V2-MAPPING-MATRIX.md) |
+| **Taxonomía** | [`PROFILE-TAXONOMY.md`](./PROFILE-TAXONOMY.md) |
+| **Lab** | `MiamiDJBeat-MigracionV2` · `http://localhost:5173` |
+| **Suite ciclo perfiles** | **55/55 PASS** (Vitest: contracts + service + identity + UI Slice 1 × 3 portales) |
+| **Typecheck lab** | `tsc --noEmit` exit 0 |
+| **Portales** | `/client/` · `/artist/` · `/staff/` → HTTP **200** |
+| **Read model** | `AccessSnapshotDTO` · `ClientProfileReadDTO` · `ArtistProfileReadDTO` · `StaffIdentityDTO` · `PublicArtistCardDTO` |
+| **UI Slice 1** | MOD-103 (`client/profile/`) · MOD-204 (`artist/profile/`) · MOD-301 (`staff/identity/`) |
+| **Writers / SQL / RLS** | ❌ No incluidos |
+| **Commit / push / deploy** | ❌ No — artefactos locales `M` / `??` |
+
+**Veredicto:** ciclo read-only de perfiles V2 **cerrado en laboratorio**. Post-ciclo (writers, wiring session productivo, extensión RPC) requiere ticket + OK PO.
+
+---
+
+## Continuidad — 2026-08-11 (Cierre ciclo Agenda / Bookings V2 · Pasos 1–6)
+
+| Campo | Valor |
+|-------|-------|
+| **Documento de cierre** | [`BOOKINGS-CYCLE-CLOSURE.md`](./BOOKINGS-CYCLE-CLOSURE.md) |
+| **Matriz discovery** | [`BOOKINGS-V1-V2-MAPPING-MATRIX.md`](./BOOKINGS-V1-V2-MAPPING-MATRIX.md) |
+| **Lab** | `MiamiDJBeat-MigracionV2` · `http://localhost:5173` |
+| **Suite consolidada** | **93/93 PASS** (Vitest: Perfiles 55 + Agenda servicio/UI 38) |
+| **Typecheck lab** | `tsc --noEmit` exit 0 |
+| **Portales** | `/client/` · `/artist/` · `/staff/` → HTTP **200** |
+| **Read model** | `BookingSnapshotDTO` · `CalendarSlotDTO` · `EventDetailReadDTO` |
+| **Servicio** | `shared/services/bookings/` · `fetchOwnBookings` · `fetchArtistSchedule` · `fetchMasterSchedule` · `fetchEventDetail` |
+| **UI Slice 2** | MOD-103 (`client/bookings/`) · MOD-204 (`artist/schedule/`) · MOD-301 (`staff/calendar/`) |
+| **Writers / SQL / RLS** | ❌ No incluidos |
+| **Commit / push / deploy** | ❌ No — artefactos locales `M` / `??` |
+| **Aislamiento** | V1 `web/` · Weather · Centro Financiero · ciclo Perfiles sellado — intactos |
+
+**Veredicto:** ciclo read-only de Agenda / Bookings V2 **cerrado en laboratorio**. Post-ciclo (writers, slots persistidos, FullCalendar productivo, wiring auth) requiere ticket + OK PO.
+
+---
+
+## Continuidad — 2026-08-11 (Cierre ciclo Finanzas & Pagos V2 · Pasos 1–6)
+
+| Campo | Valor |
+|-------|-------|
+| **Documento de cierre** | [`FINANCIAL-CYCLE-CLOSURE.md`](./FINANCIAL-CYCLE-CLOSURE.md) |
+| **Matriz discovery** | [`FINANCIAL-V1-V2-MAPPING-MATRIX.md`](./FINANCIAL-V1-V2-MAPPING-MATRIX.md) |
+| **Lab** | `MiamiDJBeat-MigracionV2` · `http://localhost:5173` |
+| **Suite consolidada** | **133/133 PASS** (Vitest: Perfiles 55 + Agenda 38 + Finanzas 40) |
+| **Typecheck lab** | `tsc --noEmit` exit 0 |
+| **Portales** | `/client/` · `/artist/` · `/staff/` → HTTP **200** |
+| **Read model** | `PaymentReceiptReadDTO` · `TransactionHistoryDTO` · `FinancialBalanceReadDTO` |
+| **Servicio** | `shared/services/financial/` · `fetchOwnPaymentReceipts` · `fetchArtistWalletBalance` · `fetchMasterFinancialLedger` |
+| **UI Financial Slice** | MOD-103 (`client/finance/`) · MOD-204 (`artist/finance/`) · MOD-301 (`staff/finance/`) |
+| **Aislamiento** | OFTL `shared/services/finance/` **intacto** · Weather · V1 `web/` · ciclos Perfiles/Agenda sellados |
+| **Writers / SQL / RLS** | ❌ No incluidos |
+| **Commit / push / deploy** | ❌ No — artefactos locales `M` / `??` |
+
+**Veredicto:** ciclo read-only de Finanzas & Pagos V2 **cerrado en laboratorio**. Post-ciclo (writers offline payment, cf_movements, wiring auth, OFTL bridge) requiere ticket + OK PO.
+
+---
+
+## Continuidad — 2026-08-11 (Cierre ciclo Weather Engine V2 · Pasos 1–6)
+
+| Campo | Valor |
+|-------|-------|
+| **Documento de cierre** | [`WEATHER-CYCLE-CLOSURE.md`](./WEATHER-CYCLE-CLOSURE.md) |
+| **Matriz discovery** | [`WEATHER-V1-V2-MAPPING-MATRIX.md`](./WEATHER-V1-V2-MAPPING-MATRIX.md) |
+| **Lab** | `MiamiDJBeat-MigracionV2` · `http://localhost:5173` |
+| **Suite ciclo Weather** | **46/46 PASS** (service 15 + staff 11 + artist 10 + client 10) |
+| **Suite global lab (ref.)** | **1320/1320 PASS** (105 files) |
+| **Typecheck lab** | `tsc --noEmit` exit 0 |
+| **Portales** | `/client/` · `/artist/` · `/staff/` → HTTP **200** |
+| **Read model** | `WeatherForecastReadDTO` · `EventWeatherAlertDTO` · `VenueOutdoorRiskDTO` |
+| **Servicio** | `shared/services/weather/` · `fetchClientEventWeather` · `fetchArtistGigWeather` · `fetchMasterWeatherConsole` |
+| **UI Weather Slice** | MOD-103 (`client/weather/`) · MOD-204 (`artist/weather/`) · MOD-301 (`staff/weather/`) |
+| **Riesgo canónico** | `Low` · `Moderate` · `Severe` · `Critical` |
+| **Arquitectura canónica V1 (referencia)** | Candidate C FROZEN (worktree offline-payment) — **no** modificado |
+| **Aislamiento** | V1 `web/` weather **intacto** · OFTL `finance/` · ciclos Perfiles/Agenda/Finanzas sellados |
+| **Writers / SQL / RLS** | ❌ No incluidos (sin cancel/reschedule) |
+| **Commit / push / deploy** | ❌ No — artefactos locales `M` / `??` |
+
+**Veredicto:** ciclo read-only de Weather Engine V2 **cerrado en laboratorio**. Post-ciclo (Edge proxy, geo venue, Visual Engine, writers) requiere ticket + OK PO.
+
+---
+
+## Continuidad — 2026-08-11 (Inicio Dominio Session & Auth Wiring V2 · Paso 1)
+
+| Campo | Valor |
+|-------|-------|
+| **Matriz discovery** | [`SESSION-AUTH-WIRING-MATRIX.md`](./SESSION-AUTH-WIRING-MATRIX.md) |
+| **Types lab** | `MiamiDJBeat-MigracionV2/shared/types/session.types.ts` |
+| **Lab** | `MiamiDJBeat-MigracionV2` · `http://localhost:5173` |
+| **Read model (Paso 1)** | `SessionContextDTO` · `AuthBearerHeaderDTO` |
+| **Roles de cableado** | `guest` · `client` · `artist` · `staff` · `staff_seller` |
+| **Runtime existente (referencia)** | MOD-002 Session · MOD-005 `SessionReaderPort` — **no** reabrir Auth writers |
+| **Prerrequisitos** | Perfiles + Agenda + Finanzas + Weather **sellados** |
+| **Aislamiento** | V1 `web/` auth **intacto** · `supabase/` · 4 dominios sellados |
+| **Writers auth / SQL / RLS** | ❌ No incluidos (sin login/register/reset/role mutation) |
+| **Commit / push / deploy** | ❌ No — artefactos locales `M` / `??` |
+
+**Veredicto Paso 1:** discovery + contratos TypeScript read-only de sesión **listos para auditoría PO**. Paso 2 (mappers/inyección a servicios) requiere OK explícito.
+
+---
+
+## Continuidad — 2026-08-11 (Cierre ciclo Session & Auth Wiring V2 · Pasos 1–6)
+
+| Campo | Valor |
+|-------|-------|
+| **Cierre** | [`SESSION-AUTH-WIRING-CLOSURE.md`](./SESSION-AUTH-WIRING-CLOSURE.md) |
+| **Matriz (sellada)** | [`SESSION-AUTH-WIRING-MATRIX.md`](./SESSION-AUTH-WIRING-MATRIX.md) |
+| **Suite ciclo Wiring** | **48/48 PASS** (adapter 15 + staff 11 + artist 11 + client 11) |
+| **Suite sesión lab (MOD-002 + wiring)** | **204/204 PASS** |
+| **Suite global lab** | **1368/1368 PASS** (109 files) |
+| **Typecheck** | `tsc --noEmit` OK |
+| **Portales** | `/staff/` · `/artist/` · `/client/` → HTTP **200** · Session Injection Pilot active |
+| **Read model** | `SessionContextDTO` · `AuthBearerHeaderDTO` |
+| **Adapter** | `shared/services/session-wiring/` · `getLabSessionContext` · `verifyDomainAccessWithSession` |
+| **UI Session Pilots** | MOD-301 (`staff/session/`) · MOD-204 (`artist/session/`) · MOD-103 (`client/session/`) |
+| **Scope** | Staff role gate · Artist `assigned_dj_id` · Client `client_id` |
+| **Aislamiento** | V1 `web/` auth · `supabase/` · OFTL · 4 dominios sellados — **intactos** |
+| **Writers auth / SQL / RLS / commit / deploy** | ❌ Prohibidos |
+
+**Veredicto:** ciclo read-only de Session & Auth Wiring V2 **cerrado en laboratorio**. Post-ciclo (JWT verify productivo, Auth writers, SessionReaderPort enrichment) requiere ticket + OK PO.
+
+---
+
+## Continuidad — 2026-08-11 (Inicio Writers Phase V2 · Slice 1 Client · Paso 1)
+
+| Campo | Valor |
+|-------|-------|
+| **Matriz** | [`CLIENT-MUTATIONS-MATRIX.md`](./CLIENT-MUTATIONS-MATRIX.md) |
+| **Types lab** | `MiamiDJBeat-MigracionV2/shared/types/client.mutations.types.ts` |
+| **Mutaciones** | `CreateBookingRequestDTO` · `SubmitOfflinePaymentProofDTO` |
+| **Resultados** | `SUCCESS` · `VALIDATION_ERROR` · `UNAUTHORIZED_ROLE` |
+| **Validación** | Sanitize · PII redact · payload limits · idempotency key · role gate puro |
+| **Persistencia Supabase** | ❌ **Prohibida** en este paso (contratos only) |
+| **Prerrequisitos** | 5 Dominios Read Model + Session Wiring **sellados** |
+| **Aislamiento** | V1 `web/` · `supabase/` · OFTL · Read Models · Artist/Staff writers — intactos |
+| **Commit / push / deploy** | ❌ No — artefactos locales `M` / `??` |
+
+**Veredicto Paso 1:** contratos TypeScript + matriz de mutaciones Client **listos para auditoría PO**. Paso 2 (adapter lab / idempotency store) requiere OK explícito — **sin** `supabase.insert` aún.
+
+---
+
+## Continuidad — 2026-08-11 (Writers Phase · Slice 1 Client · Paso 2)
+
+| Campo | Valor |
+|-------|-------|
+| **SPEC** | `MiamiDJBeat-MigracionV2/shared/services/client-mutations/CLIENT-MUTATIONS-SPEC.md` |
+| **Adapter** | `createClientMutationsAdapter` · `submitBookingRequest` · `submitOfflinePaymentProof` |
+| **Idempotency** | `lab-idempotency.store.ts` (in-memory) · replay / `IDEMPOTENCY_CONFLICT` |
+| **Tests** | `tests/unit/client-mutations.service.spec.ts` |
+| **Persistencia** | Lab records only — **cero** Supabase prod |
+| **Commit / push / deploy** | ❌ No |
+
+**Veredicto Paso 2:** adapter lab + store de idempotencia **operativos en Vitest**. Paso 3 (UI portal) requiere OK PO.
+
+---
+
+## Continuidad — 2026-08-11 (Writers Phase · Slice 1 Client · Paso 3 — sellado)
+
+| Campo | Valor |
+|-------|-------|
+| **UI** | `client/mutations/` — booking request + offline payment proof forms |
+| **Wire** | `client/main.ts` · `render-client-dashboard-mvp.ts` |
+| **Tests** | `tests/unit/client-mutations-ui.spec.ts` (+ dashboard slot) |
+| **Persistencia** | Lab adapter only — **cero** fetch/Supabase |
+| **Commit / push / deploy** | ❌ No |
+
+**Veredicto Slice 1:** Client writers lab (contratos → adapter → UI) **sellados** en laboratorio.
+
+---
+
+## Continuidad — 2026-08-11 (Inicio Writers Phase V2 · Slice 2 Artist · Paso 1)
+
+| Campo | Valor |
+|-------|-------|
+| **Matriz** | [`ARTIST-MUTATIONS-MATRIX.md`](./ARTIST-MUTATIONS-MATRIX.md) |
+| **Types lab** | `MiamiDJBeat-MigracionV2/shared/types/artist.mutations.types.ts` |
+| **Mutaciones** | `RespondGigAssignmentDTO` · `AcknowledgePayoutDTO` |
+| **Resultados** | `SUCCESS` · `VALIDATION_ERROR` · `UNAUTHORIZED_ROLE` · `GIG_NOT_ASSIGNED` (+ `IDEMPOTENCY_CONFLICT` tipado) |
+| **Scope** | `assigned_dj_id` == session `userId` (rol `artist`) |
+| **Validación** | Sanitize · redact · payload limits · idempotency key · role/assignment gates puros · discriminante `ok` |
+| **Persistencia Supabase** | ❌ **Prohibida** en este paso (contratos only) |
+| **Prerrequisitos** | Read Models + Session Wiring + **Slice 1 Client** sellados |
+| **Aislamiento** | V1 `web/` · `supabase/` · OFTL · Read Models · Client Slice 1 · Staff writers — intactos |
+| **Commit / push / deploy** | ❌ No — artefactos locales `M` / `??` |
+
+**Veredicto Paso 1:** contratos TypeScript + matriz de mutaciones Artist **listos para auditoría PO**. Paso 2 (adapter lab / idempotency store) requiere OK explícito — **sin** `supabase.insert` aún.
+
+---
+
+## Continuidad — 2026-08-11 (Writers Phase · Slice 2 Artist · Paso 2)
+
+| Campo | Valor |
+|-------|-------|
+| **SPEC** | `MiamiDJBeat-MigracionV2/shared/services/artist-mutations/ARTIST-MUTATIONS-SPEC.md` |
+| **Adapter** | `createArtistMutationsAdapter` · `respondGigAssignment` · `acknowledgePayout` |
+| **Idempotency** | Shared `lab-idempotency.store.ts` (`actorUserId` scope) · replay / `IDEMPOTENCY_CONFLICT` |
+| **Assignment** | `assertGigAssignedToArtist` · `gigAssignedDjId` → `GIG_NOT_ASSIGNED` |
+| **Lab statuses** | `accepted_lab` · `declined_lab` · `acknowledged_lab` |
+| **Tests** | `tests/unit/artist-mutations.service.spec.ts` |
+| **Persistencia** | Lab records only — **cero** Supabase prod |
+| **Commit / push / deploy** | ❌ No |
+
+**Veredicto Paso 2:** adapter lab Artist + store compartido **operativos en Vitest**. Paso 3 (UI portal) requiere OK PO.
+
+---
+
+## Continuidad — 2026-08-11 (Writers Phase · Slice 2 Artist · Paso 3 — sellado)
+
+| Campo | Valor |
+|-------|-------|
+| **UI** | `artist/mutations/` — gig decision (Accept/Decline) + payout ack forms |
+| **Wire** | `artist/main.ts` · `render-artist-dashboard-mvp.ts` |
+| **Tests** | `tests/unit/artist-mutations-ui.spec.ts` (+ dashboard slot) |
+| **Persistencia** | Lab adapter only — **cero** fetch/Supabase |
+| **Commit / push / deploy** | ❌ No |
+
+**Veredicto Slice 2:** Artist writers lab (contratos → adapter → UI) **sellados** en laboratorio.
+
+---
+
+## Continuidad — 2026-08-11 (Inicio Writers Phase V2 · Slice 3 Staff · Paso 1)
+
+| Campo | Valor |
+|-------|-------|
+| **Matriz** | [`STAFF-MUTATIONS-MATRIX.md`](./STAFF-MUTATIONS-MATRIX.md) |
+| **Types lab** | `MiamiDJBeat-MigracionV2/shared/types/staff.mutations.types.ts` |
+| **Mutaciones** | `ReviewOfflinePaymentDTO` · `AssignArtistToBookingDTO` |
+| **Resultados** | `SUCCESS` · `VALIDATION_ERROR` · `UNAUTHORIZED_ROLE` · `PAYMENT_NOT_FOUND` · `BOOKING_NOT_FOUND` (+ `IDEMPOTENCY_CONFLICT` tipado) |
+| **Role gate** | `staff` \| `staff_seller` |
+| **Validación** | Sanitize · redact · payload limits · idempotency key · existence gates puros · discriminante `ok` |
+| **Persistencia Supabase** | ❌ **Prohibida** en este paso (contratos only) |
+| **Prerrequisitos** | Read Models + Session Wiring + **Slice 1 Client** + **Slice 2 Artist** sellados |
+| **Aislamiento** | V1 `web/` · `supabase/` · OFTL · Read Models · Client/Artist writers — intactos |
+| **Commit / push / deploy** | ❌ No — artefactos locales `M` / `??` |
+
+**Veredicto Paso 1:** contratos TypeScript + matriz de mutaciones Staff **listos para auditoría PO**. Paso 2 (adapter lab / idempotency store) requiere OK explícito — **sin** `supabase.insert` aún.
+
+---
+
+## Continuidad — 2026-08-11 (Writers Phase · Slice 3 Staff · Paso 2)
+
+| Campo | Valor |
+|-------|-------|
+| **SPEC** | `MiamiDJBeat-MigracionV2/shared/services/staff-mutations/STAFF-MUTATIONS-SPEC.md` |
+| **Adapter** | `createStaffMutationsAdapter` · `reviewOfflinePayment` · `assignArtistToBooking` |
+| **Idempotency** | Shared `lab-idempotency.store.ts` (`actorUserId` scope) · replay / `IDEMPOTENCY_CONFLICT` |
+| **Existence** | `knownPaymentIds` / `knownBookingIds` → `PAYMENT_NOT_FOUND` / `BOOKING_NOT_FOUND` |
+| **Lab statuses** | `approved_lab` · `rejected_lab` · `assigned_lab` |
+| **Tests** | `tests/unit/staff-mutations.service.spec.ts` |
+| **Persistencia** | Lab records only — **cero** Supabase prod |
+| **Commit / push / deploy** | ❌ No |
+
+**Veredicto Paso 2:** adapter lab Staff + store compartido **operativos en Vitest**. Paso 3 (UI portal) requiere OK PO.
+
+---
+
+## Continuidad — 2026-08-11 (Writers Phase · Slice 3 Staff · Paso 3 — sellado)
+
+| Campo | Valor |
+|-------|-------|
+| **UI** | `staff/mutations/` — payment review (Approve/Reject) + artist assignment forms |
+| **Wire** | `staff/main.ts` · `render-staff-dashboard-mvp.ts` |
+| **Tests** | `tests/unit/staff-mutations-ui.spec.ts` (+ dashboard slot) |
+| **Persistencia** | Lab adapter only — **cero** fetch/Supabase |
+| **Commit / push / deploy** | ❌ No |
+
+**Veredicto Slice 3:** Staff writers lab (contratos → adapter → UI) **sellados** en laboratorio.
+
+---
+
+## Continuidad — 2026-08-11 (Cierre Writers Phase V2 · Slices 1–3)
+
+| Campo | Valor |
+|-------|-------|
+| **Cierre** | [`WRITERS-PHASE-CLOSURE.md`](./WRITERS-PHASE-CLOSURE.md) |
+| **Matrices** | [`CLIENT-MUTATIONS-MATRIX.md`](./CLIENT-MUTATIONS-MATRIX.md) · [`ARTIST-MUTATIONS-MATRIX.md`](./ARTIST-MUTATIONS-MATRIX.md) · [`STAFF-MUTATIONS-MATRIX.md`](./STAFF-MUTATIONS-MATRIX.md) |
+| **Modelo** | Contratos `ok` · adapters lab · **idempotencia compartida** `lab-idempotency.store.ts` · UI tres portales |
+| **Suite mutaciones** | **58/58 PASS** (6 files: service + UI × Client/Artist/Staff) |
+| **Typecheck** | `tsc --noEmit` OK |
+| **Portales** | `/client/` · `/artist/` · `/staff/` — mutation slices montados · HTTP 200 |
+| **Persistencia Supabase** | ❌ Lab only — **cero** writers productivos |
+| **Commit / push / deploy** | ❌ No — artefactos locales `M` / `??` |
+
+**Veredicto Writers Phase:** ciclo de mutaciones lab V2 (Slices 1–3) **cerrado en laboratorio**. Persistencia productiva / Edge / Auth writers requieren ticket + OK PO posteriores.
+
+---
+
 ## Estado del Laboratorio
 
 **Baseline:** TICKET-V2-BOOTLINE-BASELINE-001 (2026-07-06) — validación visual PO aprobada.  
@@ -219,6 +510,20 @@ Detalle boot scaffold: § Validación Localhost — 2026-07-06.
 | `MiamiDJBeat-V2-MODULE-CATALOG.md` | Catálogo MOD-xxx Shared Core |
 | `MiamiDJBeat-MigracionV2-MEMORIA.md` | Memoria ejecutiva migración |
 | `PROFILE-TAXONOMY.md` | Client Profile Types · Staff Roles · Artist Categories |
+| `PROFILES-V1-V2-MAPPING-MATRIX.md` | Matriz discovery V1→V2 Read DTOs (Paso 1) |
+| `PROFILES-CYCLE-CLOSURE.md` | Cierre ciclo perfiles V2 Pasos 0–8 (auditoría lab) |
+| `BOOKINGS-V1-V2-MAPPING-MATRIX.md` | Matriz discovery Agenda/Bookings V1→V2 (ciclo lectura cerrado) |
+| `BOOKINGS-CYCLE-CLOSURE.md` | Cierre ciclo Agenda/Bookings V2 Pasos 1–6 (auditoría lab 93/93) |
+| `FINANCIAL-V1-V2-MAPPING-MATRIX.md` | Matriz discovery Finanzas/Pagos V1→V2 (ciclo lectura cerrado) |
+| `FINANCIAL-CYCLE-CLOSURE.md` | Cierre ciclo Finanzas/Pagos V2 Pasos 1–6 (auditoría lab 133/133) |
+| `WEATHER-V1-V2-MAPPING-MATRIX.md` | Matriz discovery Weather Engine V1→V2 (ciclo lectura cerrado) |
+| `WEATHER-CYCLE-CLOSURE.md` | Cierre ciclo Weather Engine V2 Pasos 1–6 (auditoría lab 46/46) |
+| `SESSION-AUTH-WIRING-MATRIX.md` | Matriz Session & Auth Wiring V1→V2 (ciclo lectura cerrado Pasos 1–6) |
+| `SESSION-AUTH-WIRING-CLOSURE.md` | Cierre ciclo Session & Auth Wiring V2 Pasos 1–6 (auditoría lab 48/48 · global 1368/1368) |
+| `CLIENT-MUTATIONS-MATRIX.md` | Matriz Writers Phase · Slice 1 Client · Paso 1 (contratos CreateBooking / OfflinePaymentProof) |
+| `ARTIST-MUTATIONS-MATRIX.md` | Matriz Writers Phase · Slice 2 Artist · Paso 1 (contratos RespondGigAssignment / AcknowledgePayout) |
+| `STAFF-MUTATIONS-MATRIX.md` | Matriz Writers Phase · Slice 3 Staff · Paso 1 (contratos ReviewOfflinePayment / AssignArtistToBooking) |
+| `WRITERS-PHASE-CLOSURE.md` | Cierre Writers Phase V2 Slices 1–3 (auditoría lab mutaciones 58/58 · store + UI tres portales) |
 | `SHARED-CORE-PROGRESS.md` | Tablero documental Shared Core (16 MOD) |
 | `NOTA-DIARIA-LAB-001.md` | Nota fundacional del laboratorio |
 | `NOTA-DIARIA-OPERACION-PERMANENTE.md` | Operation Guide permanente |

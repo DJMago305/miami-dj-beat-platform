@@ -38,6 +38,14 @@ describe('MOD-012 Staff Dashboard MVP render', () => {
     expect(main.querySelector('[data-mdj-staff-section="operations-preview"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-staff-section="quick-actions"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-staff-section="staff-profile"]')).not.toBeNull();
+    expect(main.querySelector('[data-mdj-component="StaffIdentityReadView"]')).not.toBeNull();
+    expect(main.querySelector('[data-mdj-staff-section="master-calendar"]')).not.toBeNull();
+    expect(main.querySelector('[data-mdj-component="StaffCalendarReadView"]')).not.toBeNull();
+    expect(main.querySelector('[data-mdj-staff-section="master-finance"]')).not.toBeNull();
+    expect(main.querySelector('[data-mdj-component="StaffFinanceReadView"]')).not.toBeNull();
+    expect(main.querySelector('[data-mdj-staff-section="master-weather"]')).not.toBeNull();
+    expect(main.querySelector('[data-mdj-component="StaffWeatherReadView"]')).not.toBeNull();
+    expect(main.querySelector('[data-mdj-staff-section="staff-mutations"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-staff-section="leads-pipeline"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-staff-section="invoices-queue"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-staff-section="crm-snapshot"]')).not.toBeNull();
@@ -47,6 +55,5 @@ describe('MOD-012 Staff Dashboard MVP render', () => {
     expect(main.querySelector('[data-mdj-staff-section="notifications"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-staff-section="activity-timeline"]')).not.toBeNull();
     expect(main.querySelectorAll('.mdj-operations-preview__capability')).toHaveLength(6);
-    expect(main.querySelector('[data-mdj-component="ProfileCard"]')).not.toBeNull();
   });
 });

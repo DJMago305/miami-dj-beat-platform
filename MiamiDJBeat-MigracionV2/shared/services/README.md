@@ -38,4 +38,5 @@ Orquestar acceso a datos de negocio compartidos entre portales: órdenes, perfil
 
 ## Estado
 
-Arquitectura física — **sin implementación** (TICKET-V2-SHARED-CORE-001).
+- `access-snapshot/`, `access-permissions/`, `legal/`, `finance/`, `work-ledger/` — operativos en lab (fases previas).
+- `profiles/` — **Paso 2** (2026-08-11): read DTOs + resolvers puros · **sin writers** · **sin SQL**.

@@ -8,7 +8,6 @@ import {
   createKpiCard,
   createModuleCard,
   createPanel,
-  createProfileCard,
   createSectionHeader,
   type MdjThemeBinding,
 } from '../shared/components/index';
@@ -16,17 +15,24 @@ import { getThemeDefinition } from '../shared/theme/runtime/theme-registry';
 import {
   ARTIST_ACTIVITY,
   ARTIST_ANALYTICS,
-  ARTIST_CALENDAR_EVENTS,
-  ARTIST_CASH_FLOW,
   ARTIST_DASHBOARD_KPIS,
   ARTIST_JOBS,
   ARTIST_MEDIA,
   ARTIST_NOTIFICATIONS,
-  ARTIST_PROFILE,
   ARTIST_SONG4TIPS,
   ARTIST_UPCOMING_GIGS,
 } from './dashboard-mvp-data';
 import { mountComponentDescriptor } from './mount-component-descriptor';
+import { mountArtistProfileReadSliceSync } from './profile/mount-artist-profile-read-slice';
+import { mountArtistScheduleReadSliceSync } from './schedule/mount-artist-schedule-read-slice';
+import { mountArtistFinanceReadSliceSync } from './finance/mount-artist-finance-read-slice';
+import { mountArtistWeatherReadSliceSync } from './weather/mount-artist-weather-read-slice';
+import { mountArtistMutationsSliceSync } from './mutations/mount-artist-mutations-slice';
+import type { ArtistMutationsAdapter } from '../shared/services/artist-mutations/index';
+import {
+  renderArtistSessionWiringBadge,
+  type ArtistSessionWiringInjection,
+} from './session/artist-session-wiring-pilot';
 
 function resolveArtistDashboardThemeBinding(): MdjThemeBinding {
   const tokens = getThemeDefinition('mdj-dark-gold')?.tokens;
@@ -79,48 +85,9 @@ function createList(items: readonly string[]): HTMLElement {
   return list;
 }
 
-function createProfileSection(themeBinding: MdjThemeBinding): HTMLElement {
-  const section = createArtistSection('artist-profile');
-
-  section.append(
-    mountComponentDescriptor(
-      createSectionHeader({ title: 'Artist Profile', variant: 'module-grid' }, themeBinding),
-    ),
-    mountComponentDescriptor(
-      createProfileCard(
-        {
-          name: ARTIST_PROFILE.stageName,
-          role: ARTIST_PROFILE.level,
-          meta: `${ARTIST_PROFILE.status} · ${ARTIST_PROFILE.specialty}`,
-        },
-        themeBinding,
-      ),
-    ),
-  );
-
-  const details = document.createElement('dl');
-  details.className = 'mdj-client-summary-list';
-  details.append(
-    createSummaryRow('Status', ARTIST_PROFILE.status),
-    createSummaryRow('Specialty', ARTIST_PROFILE.specialty),
-  );
-  section.append(details);
-
-  return section;
-}
-
-function createSummaryRow(label: string, value: string): HTMLDivElement {
-  const row = document.createElement('div');
-  row.className = 'mdj-client-summary-list__row';
-
-  const dt = document.createElement('dt');
-  dt.textContent = label;
-
-  const dd = document.createElement('dd');
-  dd.textContent = value;
-
-  row.append(dt, dd);
-  return row;
+/** MOD-204 Slice 1 — profile slot; hydrated by mountArtistProfileReadSliceSync. */
+function createProfileSection(_themeBinding: MdjThemeBinding): HTMLElement {
+  return createArtistSection('artist-profile');
 }
 
 function createUpcomingGigsSection(themeBinding: MdjThemeBinding): HTMLElement {
@@ -163,25 +130,34 @@ function createUpcomingGigsSection(themeBinding: MdjThemeBinding): HTMLElement {
   return section;
 }
 
-function createCalendarSection(themeBinding: MdjThemeBinding): HTMLElement {
-  const section = createArtistSection('calendar');
-
-  const panel = mountComponentDescriptor(
-    createPanel({ title: 'Calendar', variant: 'elevated' }, themeBinding),
-  );
-  panel.append(createList(ARTIST_CALENDAR_EVENTS.map((event) => `${event.date} — ${event.label}`)));
-  section.append(panel);
-  return section;
+/** MOD-204 Slice 2 — schedule slot; hydrated by mountArtistScheduleReadSliceSync. */
+function createArtistScheduleSection(): HTMLElement {
+  return createArtistSection('artist-schedule', true);
 }
 
-function createCashFlowSection(themeBinding: MdjThemeBinding): HTMLElement {
-  const section = createArtistSection('cash-flow');
+/** MOD-204 Financial Slice — wallet slot; hydrated by mountArtistFinanceReadSliceSync. */
+function createArtistWalletSection(): HTMLElement {
+  return createArtistSection('artist-wallet', true);
+}
 
-  const panel = mountComponentDescriptor(
-    createPanel({ title: 'Cash Flow', variant: 'glass' }, themeBinding),
-  );
-  panel.append(createSummaryList(ARTIST_CASH_FLOW));
-  section.append(panel);
+/** MOD-204 Weather Slice — gig weather radar slot; hydrated by mountArtistWeatherReadSliceSync. */
+function createArtistWeatherSection(): HTMLElement {
+  return createArtistSection('artist-weather', true);
+}
+
+/** Writers Phase · Slice 2 · Paso 3 — artist mutation forms slot. */
+function createArtistMutationsSection(): HTMLElement {
+  return createArtistSection('artist-mutations', true);
+}
+
+/** MOD-204 Session Wiring Pilot — badge slot (ARTIST + masked DJ id). */
+function createSessionWiringSection(sessionWiring: ArtistSessionWiringInjection): HTMLElement {
+  const section = createArtistSection('session-wiring', true);
+  const host = document.createElement('div');
+  host.className = 'mdj-artist-session-wiring-host';
+  host.dataset.mdjArtistSessionHost = 'mod-204-sw';
+  renderArtistSessionWiringBadge(host, sessionWiring);
+  section.append(host);
   return section;
 }
 
@@ -295,7 +271,11 @@ function createActivitySection(themeBinding: MdjThemeBinding): HTMLElement {
   return section;
 }
 
-export function renderArtistDashboardMvp(mainRegion: HTMLElement): void {
+export function renderArtistDashboardMvp(
+  mainRegion: HTMLElement,
+  sessionWiring?: ArtistSessionWiringInjection | null,
+  mutationsAdapter?: ArtistMutationsAdapter | null,
+): void {
   const themeBinding = resolveArtistDashboardThemeBinding();
   mainRegion.classList.add('mdj-client-dashboard');
   mainRegion.replaceChildren();
@@ -323,11 +303,17 @@ export function renderArtistDashboardMvp(mainRegion: HTMLElement): void {
 
   const contentGrid = document.createElement('div');
   contentGrid.className = 'mdj-client-dashboard__grid';
-  contentGrid.append(
+  const sections: HTMLElement[] = [];
+  if (sessionWiring) {
+    sections.push(createSessionWiringSection(sessionWiring));
+  }
+  sections.push(
     createProfileSection(themeBinding),
     createUpcomingGigsSection(themeBinding),
-    createCalendarSection(themeBinding),
-    createCashFlowSection(themeBinding),
+    createArtistScheduleSection(),
+    createArtistWalletSection(),
+    createArtistWeatherSection(),
+    createArtistMutationsSection(),
     createSong4TipsSection(themeBinding),
     createJobsSection(themeBinding),
     createMediaSection(themeBinding),
@@ -335,6 +321,20 @@ export function renderArtistDashboardMvp(mainRegion: HTMLElement): void {
     createNotificationsSection(themeBinding),
     createActivitySection(themeBinding),
   );
+  contentGrid.append(...sections);
 
   mainRegion.append(hero, kpiGrid, contentGrid);
+  mountArtistProfileReadSliceSync(mainRegion, undefined, sessionWiring);
+  mountArtistScheduleReadSliceSync(mainRegion, undefined, sessionWiring);
+  mountArtistFinanceReadSliceSync(mainRegion, undefined, sessionWiring);
+  mountArtistWeatherReadSliceSync(mainRegion, undefined, sessionWiring);
+  if (mutationsAdapter && sessionWiring?.assignedDjUserId) {
+    mountArtistMutationsSliceSync(
+      mainRegion,
+      mutationsAdapter,
+      sessionWiring.context,
+      sessionWiring.assignedDjUserId,
+      sessionWiring,
+    );
+  }
 }

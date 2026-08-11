@@ -17,13 +17,22 @@ import {
   CLIENT_DASHBOARD_KPIS,
   CLIENT_DOCUMENTS,
   CLIENT_NOTIFICATIONS,
-  CLIENT_PENDING_PAYMENTS,
   CLIENT_QUICK_ACTIONS,
   CLIENT_RECENT_ORDERS,
   CLIENT_UPCOMING_EVENTS,
   CLIENT_VIP,
 } from './dashboard-mvp-data';
 import { mountComponentDescriptor } from './mount-component-descriptor';
+import { mountClientProfileReadSliceSync } from './profile/mount-client-profile-read-slice';
+import { mountClientBookingsReadSliceSync } from './bookings/mount-client-bookings-read-slice';
+import { mountClientFinanceReadSliceSync } from './finance/mount-client-finance-read-slice';
+import { mountClientWeatherReadSliceSync } from './weather/mount-client-weather-read-slice';
+import { mountClientMutationsSliceSync } from './mutations/mount-client-mutations-slice';
+import type { ClientMutationsAdapter } from '../shared/services/client-mutations/index';
+import {
+  renderClientSessionWiringBadge,
+  type ClientSessionWiringInjection,
+} from './session/client-session-wiring-pilot';
 
 function resolveClientDashboardThemeBinding(): MdjThemeBinding {
   const tokens = getThemeDefinition('mdj-dark-gold')?.tokens;
@@ -32,6 +41,58 @@ function resolveClientDashboardThemeBinding(): MdjThemeBinding {
   }
 
   return createComponentThemeBinding(tokens);
+}
+
+function createClientProfileSection(): HTMLElement {
+  const section = document.createElement('section');
+  section.className = 'mdj-client-dashboard__section mdj-client-dashboard__section--wide';
+  section.dataset.mdjClientSection = 'client-profile';
+  return section;
+}
+
+/** MOD-103 Slice 2 — bookings slot; hydrated by mountClientBookingsReadSliceSync. */
+function createClientBookingsSection(): HTMLElement {
+  const section = document.createElement('section');
+  section.className = 'mdj-client-dashboard__section mdj-client-dashboard__section--wide';
+  section.dataset.mdjClientSection = 'client-bookings';
+  return section;
+}
+
+/** MOD-103 Financial Slice — payments slot; hydrated by mountClientFinanceReadSliceSync. */
+function createClientPaymentsSection(): HTMLElement {
+  const section = document.createElement('section');
+  section.className = 'mdj-client-dashboard__section mdj-client-dashboard__section--wide';
+  section.dataset.mdjClientSection = 'client-payments';
+  return section;
+}
+
+/** MOD-103 Weather Slice — event weather slot; hydrated by mountClientWeatherReadSliceSync. */
+function createClientWeatherSection(): HTMLElement {
+  const section = document.createElement('section');
+  section.className = 'mdj-client-dashboard__section mdj-client-dashboard__section--wide';
+  section.dataset.mdjClientSection = 'client-weather';
+  return section;
+}
+
+/** Writers Phase · Slice 1 · Paso 3 — client mutation forms slot. */
+function createClientMutationsSection(): HTMLElement {
+  const section = document.createElement('section');
+  section.className = 'mdj-client-dashboard__section mdj-client-dashboard__section--wide';
+  section.dataset.mdjClientSection = 'client-mutations';
+  return section;
+}
+
+/** MOD-103 Session Wiring Pilot — badge slot (CLIENT + masked client id). */
+function createSessionWiringSection(sessionWiring: ClientSessionWiringInjection): HTMLElement {
+  const section = document.createElement('section');
+  section.className = 'mdj-client-dashboard__section mdj-client-dashboard__section--wide';
+  section.dataset.mdjClientSection = 'session-wiring';
+  const host = document.createElement('div');
+  host.className = 'mdj-client-session-wiring-host';
+  host.dataset.mdjClientSessionHost = 'mod-103-sw';
+  renderClientSessionWiringBadge(host, sessionWiring);
+  section.append(host);
+  return section;
 }
 
 function createQuickActionsSection(themeBinding: MdjThemeBinding): HTMLElement {
@@ -140,37 +201,6 @@ function createRecentOrdersSection(themeBinding: MdjThemeBinding): HTMLElement {
 
   table.append(tbody);
   panel.append(table);
-  section.append(panel);
-  return section;
-}
-
-function createPaymentsSection(themeBinding: MdjThemeBinding): HTMLElement {
-  const section = document.createElement('section');
-  section.className = 'mdj-client-dashboard__section';
-  section.dataset.mdjClientSection = 'pending-payments';
-
-  const panel = mountComponentDescriptor(
-    createPanel({ title: 'Pending Payments', variant: 'glass' }, themeBinding),
-  );
-
-  const list = document.createElement('dl');
-  list.className = 'mdj-client-summary-list';
-
-  for (const item of CLIENT_PENDING_PAYMENTS) {
-    const row = document.createElement('div');
-    row.className = 'mdj-client-summary-list__row';
-
-    const dt = document.createElement('dt');
-    dt.textContent = item.label;
-
-    const dd = document.createElement('dd');
-    dd.textContent = item.value;
-
-    row.append(dt, dd);
-    list.append(row);
-  }
-
-  panel.append(list);
   section.append(panel);
   return section;
 }
@@ -293,7 +323,11 @@ function createActivitySection(themeBinding: MdjThemeBinding): HTMLElement {
   return section;
 }
 
-export function renderClientDashboardMvp(mainRegion: HTMLElement): void {
+export function renderClientDashboardMvp(
+  mainRegion: HTMLElement,
+  sessionWiring?: ClientSessionWiringInjection | null,
+  mutationsAdapter?: ClientMutationsAdapter | null,
+): void {
   const themeBinding = resolveClientDashboardThemeBinding();
   mainRegion.classList.add('mdj-client-dashboard');
   mainRegion.replaceChildren();
@@ -321,16 +355,38 @@ export function renderClientDashboardMvp(mainRegion: HTMLElement): void {
 
   const contentGrid = document.createElement('div');
   contentGrid.className = 'mdj-client-dashboard__grid';
-  contentGrid.append(
+  const sections: HTMLElement[] = [];
+  if (sessionWiring) {
+    sections.push(createSessionWiringSection(sessionWiring));
+  }
+  sections.push(
+    createClientProfileSection(),
+    createClientBookingsSection(),
+    createClientPaymentsSection(),
+    createClientWeatherSection(),
+    createClientMutationsSection(),
     createQuickActionsSection(themeBinding),
     createUpcomingEventsSection(themeBinding),
     createRecentOrdersSection(themeBinding),
-    createPaymentsSection(themeBinding),
     createDocumentsSection(themeBinding),
     createVipSection(themeBinding),
     createNotificationsSection(themeBinding),
     createActivitySection(themeBinding),
   );
+  contentGrid.append(...sections);
 
   mainRegion.append(hero, kpiGrid, contentGrid);
+  mountClientProfileReadSliceSync(mainRegion, undefined, sessionWiring);
+  mountClientBookingsReadSliceSync(mainRegion, undefined, sessionWiring);
+  mountClientFinanceReadSliceSync(mainRegion, undefined, sessionWiring);
+  mountClientWeatherReadSliceSync(mainRegion, undefined, sessionWiring);
+  if (mutationsAdapter && sessionWiring?.clientUserId) {
+    mountClientMutationsSliceSync(
+      mainRegion,
+      mutationsAdapter,
+      sessionWiring.context,
+      sessionWiring.clientUserId,
+      sessionWiring,
+    );
+  }
 }

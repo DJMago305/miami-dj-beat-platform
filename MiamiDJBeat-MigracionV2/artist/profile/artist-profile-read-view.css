@@ -1,0 +1,130 @@
+/** MOD-204 Slice 1 — Artist Profile Read View — scoped styles */
+
+.mdj-artist-profile-read {
+  display: grid;
+  gap: 1rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--mdj-shell-border, rgba(212, 175, 55, 0.28));
+  border-radius: 0.85rem;
+  background: var(--mdj-shell-glass, rgba(12, 12, 14, 0.72));
+}
+
+.mdj-artist-profile-read__eyebrow {
+  margin: 0;
+  font-family: Cinzel, serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mdj-shell-muted, rgba(245, 230, 180, 0.72));
+}
+
+.mdj-artist-profile-read__stage {
+  margin: 0.15rem 0 0.55rem;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.55rem;
+  color: var(--mdj-shell-fg, #f6efd8);
+}
+
+.mdj-artist-profile-read__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+}
+
+.mdj-artist-profile-read__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.35rem;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  color: var(--mdj-shell-fg, #f6efd8);
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.mdj-artist-profile-read__badge--tier {
+  border-color: rgba(212, 175, 55, 0.65);
+  color: #f0d78a;
+}
+
+.mdj-artist-profile-read__badge--sft-eligible {
+  border-color: rgba(90, 200, 140, 0.55);
+  color: #9be7b8;
+}
+
+.mdj-artist-profile-read__badge--sft-not_eligible {
+  border-color: rgba(200, 120, 90, 0.55);
+  color: #e8b39a;
+}
+
+.mdj-artist-profile-read__badge--sft-unknown {
+  border-color: rgba(160, 160, 170, 0.45);
+  color: rgba(220, 220, 230, 0.85);
+}
+
+.mdj-artist-profile-read__section-title {
+  margin: 0 0 0.45rem;
+  font-family: Cinzel, serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  color: #e6d39a;
+}
+
+.mdj-artist-profile-read__section {
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(212, 175, 55, 0.16);
+}
+
+.mdj-artist-profile-read__list,
+.mdj-artist-profile-read__meta {
+  margin: 0;
+}
+
+.mdj-artist-profile-read__row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 9rem) 1fr;
+  gap: 0.35rem 0.75rem;
+  padding: 0.2rem 0;
+}
+
+.mdj-artist-profile-read__label {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--mdj-shell-muted, rgba(245, 230, 180, 0.65));
+}
+
+.mdj-artist-profile-read__value {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--mdj-shell-fg, #f6efd8);
+  word-break: break-word;
+}
+
+.mdj-artist-profile-read__bio-primary {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--mdj-shell-fg, #f6efd8);
+}
+
+.mdj-artist-profile-read__pii-note,
+.mdj-artist-profile-read__empty {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--mdj-shell-muted, rgba(245, 230, 180, 0.62));
+}
+
+.mdj-artist-profile-read__photo {
+  display: block;
+  margin-top: 0.65rem;
+  max-width: 8.5rem;
+  max-height: 8.5rem;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+}

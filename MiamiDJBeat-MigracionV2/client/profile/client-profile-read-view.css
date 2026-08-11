@@ -1,0 +1,113 @@
+/** MOD-103 Slice 1 — Client Profile Read View — scoped styles */
+
+.mdj-client-profile-read {
+  display: grid;
+  gap: 1rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--mdj-shell-border, rgba(212, 175, 55, 0.28));
+  border-radius: 0.85rem;
+  background: var(--mdj-shell-glass, rgba(12, 12, 14, 0.72));
+}
+
+.mdj-client-profile-read__eyebrow {
+  margin: 0;
+  font-family: Cinzel, serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mdj-shell-muted, rgba(245, 230, 180, 0.72));
+}
+
+.mdj-client-profile-read__name {
+  margin: 0.15rem 0 0.55rem;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.55rem;
+  color: var(--mdj-shell-fg, #f6efd8);
+}
+
+.mdj-client-profile-read__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+}
+
+.mdj-client-profile-read__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.35rem;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  color: var(--mdj-shell-fg, #f6efd8);
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.mdj-client-profile-read__badge--vip-vip {
+  border-color: rgba(212, 175, 55, 0.75);
+  color: #f0d78a;
+}
+
+.mdj-client-profile-read__badge--vip-regular {
+  border-color: rgba(160, 160, 170, 0.45);
+  color: rgba(220, 220, 230, 0.85);
+}
+
+.mdj-client-profile-read__badge--commercial-commercial {
+  border-color: rgba(120, 170, 220, 0.55);
+  color: #a8c8e8;
+}
+
+.mdj-client-profile-read__badge--commercial-individual {
+  border-color: rgba(160, 160, 170, 0.4);
+  color: rgba(220, 220, 230, 0.8);
+}
+
+.mdj-client-profile-read__section-title {
+  margin: 0 0 0.45rem;
+  font-family: Cinzel, serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  color: #e6d39a;
+}
+
+.mdj-client-profile-read__section {
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(212, 175, 55, 0.16);
+}
+
+.mdj-client-profile-read__list,
+.mdj-client-profile-read__meta {
+  margin: 0;
+}
+
+.mdj-client-profile-read__row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 10rem) 1fr;
+  gap: 0.35rem 0.75rem;
+  padding: 0.2rem 0;
+}
+
+.mdj-client-profile-read__label {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--mdj-shell-muted, rgba(245, 230, 180, 0.65));
+}
+
+.mdj-client-profile-read__value {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--mdj-shell-fg, #f6efd8);
+  word-break: break-word;
+}
+
+.mdj-client-profile-read__pii-note,
+.mdj-client-profile-read__empty {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--mdj-shell-muted, rgba(245, 230, 180, 0.62));
+}

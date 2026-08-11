@@ -1,0 +1,51 @@
+/** MOD-301 Session Wiring Pilot — Staff session badge — scoped styles */
+
+.mdj-staff-session-wiring {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--mdj-shell-border, rgba(212, 175, 55, 0.28));
+  border-radius: 0.85rem;
+  background: var(--mdj-shell-glass, rgba(12, 12, 14, 0.72));
+}
+
+.mdj-staff-session-wiring__eyebrow {
+  margin: 0;
+  font-family: Cinzel, serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mdj-shell-muted, rgba(245, 230, 180, 0.72));
+}
+
+.mdj-staff-session-wiring__title {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: 1.2rem;
+  color: var(--mdj-shell-fg, #f6efd8);
+}
+
+.mdj-staff-session-wiring__role,
+.mdj-staff-session-wiring__bearer,
+.mdj-staff-session-wiring__status,
+.mdj-staff-session-wiring__note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(230, 220, 190, 0.9);
+}
+
+.mdj-staff-session-wiring__domains {
+  margin: 0.15rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.75rem;
+  color: rgba(230, 220, 190, 0.85);
+}
+
+.mdj-staff-session-wiring [data-mdj-session-status='ready'] {
+  color: #9be7b8;
+}
+
+.mdj-staff-session-wiring [data-mdj-session-status='gated'] {
+  color: #e8b39a;
+}

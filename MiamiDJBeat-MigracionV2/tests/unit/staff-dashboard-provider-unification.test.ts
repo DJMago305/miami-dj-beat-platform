@@ -77,7 +77,10 @@ describe('Phase 11-B — Staff dashboard provider unification', () => {
     const mainSource = readFileSync(MAIN_PATH, 'utf8');
 
     expect(mainSource).toContain('resolveStaffDashboardDataProvider()');
-    expect(mainSource).toContain('renderStaffDashboardMvp(mainRegion, staffDataProvider)');
+    expect(mainSource).toContain(
+      'renderStaffDashboardMvp(mainRegion, staffDataProvider, sessionWiring, mutationsAdapter)',
+    );
+    expect(mainSource).toContain('resolveStaffSessionWiringPilot');
   });
 
   it('removes direct dashboard-mvp-data and provider resolution imports from the renderer', () => {
