@@ -1,0 +1,223 @@
+/**
+ * V2 lab bridge — visual parity with production header + clean workspace.
+ * Hides lab diagnostic chrome; keeps mutation forms clickable.
+ */
+
+/* ── Document offset for fixed V1 #mainHeader (2 rows) ─────── */
+body.mdj-v2-lab {
+  --mdj-v2-header-offset: calc(
+    var(--header-height, 84px) + var(--header-nav-band, 72px) + env(safe-area-inset-top, 0px)
+  );
+  padding-top: var(--mdj-v2-header-offset) !important;
+  min-height: 100vh;
+  position: relative;
+  z-index: 0;
+  overflow-x: hidden;
+  scroll-padding-top: var(--mdj-v2-header-offset);
+}
+
+body.mdj-v2-lab.mdj-v2-lab--client,
+body.mdj-v2-lab.mdj-v2-lab--artist,
+body.mdj-v2-lab.mdj-v2-lab--staff {
+  background:
+    radial-gradient(circle at 82% -10%, rgba(197, 160, 89, 0.14), transparent 32%),
+    radial-gradient(circle at 10% 100%, rgba(197, 160, 89, 0.06), transparent 28%),
+    linear-gradient(180deg, #080810 0%, #07090e 100%);
+  color: var(--text, #e8eefc);
+}
+
+/* ── Real V1 header host ──────────────────────────────────── */
+body.mdj-v2-lab #mdj-v2-v1-site-header-host {
+  position: relative;
+  z-index: 1000;
+}
+
+body.mdj-v2-lab #mainHeader.header.mdj-header-unified {
+  display: block !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  z-index: 1000 !important;
+}
+
+/* Force MI PORTAL + CONFIG visible in lab (production reveals via auth JS) */
+html body.mdj-v2-lab #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a#mainNav-mi-portal-link,
+html body.mdj-v2-lab.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a#mainNav-mi-portal-link,
+html body.mdj-v2-lab.mdj-buyer-session #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a#mainNav-mi-portal-link,
+html body.mdj-v2-lab #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a#mainNav-config-link,
+html body.mdj-v2-lab.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a#mainNav-config-link,
+html body.mdj-v2-lab.mdj-buyer-session #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a#mainNav-config-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  min-width: max-content !important;
+  max-width: none !important;
+  width: auto !important;
+  flex: 0 0 auto !important;
+  overflow: visible !important;
+  position: relative !important;
+  padding: var(--mdj-nav-link-py-t, 0.35rem) var(--mdj-nav-link-px, 0.75rem) var(--mdj-nav-link-py-b, 0.35rem) !important;
+  margin: 0 !important;
+}
+
+/* Lab logged-in header: nuke guest CTAs (V1 CSS uses display:!important on #header-login-btn) */
+html body.mdj-v2-lab.mdj-logged-in-header #mainHeader.header.mdj-header-unified .header-actions #header-login-btn,
+html body.mdj-v2-lab.mdj-logged-in-header #mainHeader.header.mdj-header-unified .header-actions #header-get-pro-btn,
+html body.mdj-v2-lab.mdj-logged-in-header #mainHeader.header.mdj-header-unified .header-actions #header-subscribe-free-btn,
+html body.mdj-v2-lab.mdj-logged-in-header #mainHeader.header.mdj-header-unified .header-actions .mdj-v2-lab-guest-cta,
+html body.mdj-v2-lab.mdj-logged-in-header #header-login-btn-mobile,
+html body.mdj-v2-lab.mdj-logged-in-header #header-subscribe-free-mobile {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  max-width: 0 !important;
+  min-width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+body.mdj-v2-lab.mdj-logged-in-header #header-auth-zone,
+body.mdj-v2-lab.mdj-logged-in-header #mdjAccountVipRoot,
+body.mdj-v2-lab.mdj-logged-in-header #accountBtn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.55rem;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+body.mdj-v2-lab.mdj-logged-in-header #accountBtn .avatar {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  border: 2px solid rgba(197, 160, 89, 0.75) !important;
+  object-fit: cover !important;
+  object-position: center 18% !important;
+}
+
+body.mdj-v2-lab.mdj-logged-in-header #mdjAccountDisplayName {
+  display: inline-block !important;
+  color: #f6efd8 !important;
+  font-family: Cinzel, Georgia, serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* Hide session-wiring diagnostic chrome (DOM kept for unit tests) */
+body.mdj-v2-lab .mdj-v2-lab-legacy-mvp,
+body.mdj-v2-lab [data-mdj-client-section='session-wiring'],
+body.mdj-v2-lab [data-mdj-artist-section='session-wiring'],
+body.mdj-v2-lab [data-mdj-staff-section='session-wiring'],
+body.mdj-v2-lab .mdj-client-session-wiring,
+body.mdj-v2-lab .mdj-artist-session-wiring,
+body.mdj-v2-lab .mdj-staff-session-wiring {
+  display: none !important;
+}
+
+/* Soften lab-only diagnostic eyebrow copy inside profile cards */
+body.mdj-v2-lab [data-mdj-component] [class*='__source'],
+body.mdj-v2-lab .mdj-client-profile-read__eyebrow,
+body.mdj-v2-lab .mdj-artist-profile-read__eyebrow,
+body.mdj-v2-lab .mdj-staff-identity-read__eyebrow {
+  display: none !important;
+}
+
+/* ── Hide lab diagnostic chrome (DOM kept for unit tests) ─── */
+body.mdj-v2-lab .mdj-portal-shell__header,
+body.mdj-v2-lab [data-mdj-shell-region='header'],
+body.mdj-v2-lab [data-mdj-shell-region='runtime-status'],
+body.mdj-v2-lab .mdj-shell-header-status,
+body.mdj-v2-lab .mdj-portal-shell__sidebar,
+body.mdj-v2-lab [data-mdj-shell-region='sidebar'] {
+  display: none !important;
+}
+
+/* Full-width main like production portals */
+body.mdj-v2-lab .mdj-portal-shell__layout {
+  grid-template-rows: 1fr !important;
+  min-height: calc(100vh - var(--mdj-v2-header-offset));
+}
+
+body.mdj-v2-lab .mdj-portal-shell__body {
+  display: block !important;
+  grid-template-columns: none !important;
+  min-height: 0;
+}
+
+body.mdj-v2-lab .mdj-portal-shell__main {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 1.25rem 1.25rem 2rem;
+  position: relative;
+  z-index: 2;
+  overflow: visible;
+  pointer-events: auto !important;
+}
+
+body.mdj-v2-lab #app.mdj-portal-shell,
+body.mdj-v2-lab .mdj-portal-shell {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  pointer-events: auto !important;
+  min-height: calc(100vh - var(--mdj-v2-header-offset));
+}
+
+body.mdj-v2-lab .mdj-v2-v1-shell-host {
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Mutation forms: keep clickable under V1 globals ───────── */
+body.mdj-v2-lab [data-mdj-client-section='client-mutations'],
+body.mdj-v2-lab [data-mdj-artist-section='artist-mutations'],
+body.mdj-v2-lab [data-mdj-staff-section='staff-mutations'],
+body.mdj-v2-lab .mdj-client-mutations-slice,
+body.mdj-v2-lab .mdj-artist-mutations-slice,
+body.mdj-v2-lab .mdj-staff-mutations-slice,
+body.mdj-v2-lab .mdj-client-mutations-form,
+body.mdj-v2-lab .mdj-artist-mutations-form,
+body.mdj-v2-lab .mdj-staff-mutations-form {
+  position: relative !important;
+  z-index: 20 !important;
+  pointer-events: auto !important;
+  isolation: isolate;
+}
+
+body.mdj-v2-lab .mdj-client-mutations-form__submit,
+body.mdj-v2-lab .mdj-artist-mutations-form__submit,
+body.mdj-v2-lab .mdj-staff-mutations-form__submit,
+body.mdj-v2-lab button[type='submit'][data-mdj-submit] {
+  position: relative !important;
+  z-index: 21 !important;
+  pointer-events: auto !important;
+  cursor: pointer;
+}
+
+body.mdj-v2-lab .mdj-client-mutations-form input,
+body.mdj-v2-lab .mdj-client-mutations-form select,
+body.mdj-v2-lab .mdj-client-mutations-form textarea,
+body.mdj-v2-lab .mdj-artist-mutations-form input,
+body.mdj-v2-lab .mdj-artist-mutations-form select,
+body.mdj-v2-lab .mdj-artist-mutations-form textarea,
+body.mdj-v2-lab .mdj-staff-mutations-form input,
+body.mdj-v2-lab .mdj-staff-mutations-form select,
+body.mdj-v2-lab .mdj-staff-mutations-form textarea {
+  position: relative !important;
+  z-index: 21 !important;
+  pointer-events: auto !important;
+  cursor: text;
+}

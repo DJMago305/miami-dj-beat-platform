@@ -7,3 +7,12 @@ dist/
 playwright-report/
 test-results/
 coverage/
+
+# Dev-only static asset source for the /v1/* proxy (serve-ui-v1-clone-plugin.ts).
+# ~1.5GB, never bundled/shipped (see that file's own comment) -- provenance/
+# regeneration steps not yet documented anywhere; flagged in the git-hygiene
+# audit, 2026-08-12, pending the Capitan's decision on how to document it.
+ui-v1-clone/
+
+# Manual QA/dev screenshots, not source.
+.local-screenshots/

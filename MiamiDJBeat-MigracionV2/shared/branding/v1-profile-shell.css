@@ -1,0 +1,315 @@
+/**
+ * V2 Priority 2 · audit fix — V1 profile fragment styles for lab portals.
+ * Classes mirrored from ui-v1-clone (client-account / dj-profile / system-card).
+ * Scoped under body.mdj-v2-lab so they do not fight mutation CTAs.
+ */
+
+/* ── Client account profile grid (from client-account.html) ── */
+body.mdj-v2-lab .mdj-v2-v1-profile.ca-profile-panel,
+body.mdj-v2-lab .mdj-client-profile-read.mdj-v2-v1-profile {
+  display: block;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+body.mdj-v2-lab .ca-profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.15fr);
+  gap: 1.15rem;
+  align-items: start;
+}
+
+body.mdj-v2-lab .ca-profile-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+body.mdj-v2-lab .system-card.ca-profile-section {
+  background: #111112;
+  border: 1px solid rgba(197, 160, 89, 0.22);
+  border-radius: 12px;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  margin: 0;
+}
+
+body.mdj-v2-lab .ca-profile-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.95rem 1.1rem 0.55rem;
+}
+
+body.mdj-v2-lab .ca-profile-section__head h2 {
+  margin: 0;
+  font-family: 'Cinzel', serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold, #c5a059);
+}
+
+body.mdj-v2-lab .system-card-body {
+  padding: 0.35rem 1.1rem 1.1rem;
+}
+
+body.mdj-v2-lab #ca-profile-avatar,
+body.mdj-v2-lab .mdj-v2-v1-profile__avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(197, 160, 89, 0.55);
+  background: rgba(255, 255, 255, 0.06);
+  margin: 0 auto 0.85rem;
+}
+
+body.mdj-v2-lab #ca-profile-avatar img,
+body.mdj-v2-lab .mdj-v2-v1-profile__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+body.mdj-v2-lab .ca-profile-contact-group {
+  display: grid;
+  gap: 0.75rem;
+}
+
+body.mdj-v2-lab .ca-profile-contact-tile {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.85rem;
+  align-items: start;
+  padding: 0.95rem 1.05rem;
+  border-radius: 12px;
+  border: 1px solid rgba(197, 160, 89, 0.2);
+  background: rgba(15, 15, 18, 0.92);
+}
+
+body.mdj-v2-lab .ca-profile-contact-tile__icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.65rem;
+  display: grid;
+  place-items: center;
+  background: rgba(197, 160, 89, 0.12);
+  color: var(--gold, #c5a059);
+  font-size: 1rem;
+}
+
+body.mdj-v2-lab .ca-profile-contact-tile__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+body.mdj-v2-lab .ca-profile-contact-tile__head h2 {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 230, 180, 0.78);
+}
+
+body.mdj-v2-lab .ca-profile-contact-tile__value {
+  margin: 0;
+  color: #f6efd8;
+  font-size: 0.95rem;
+  word-break: break-word;
+}
+
+@media (max-width: 900px) {
+  body.mdj-v2-lab .ca-profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Artist dj-hero fragment (from dj-profile.html) ────────── */
+body.mdj-v2-lab .mdj-artist-profile-read.mdj-v2-v1-artist-profile {
+  display: grid;
+  gap: 1rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero {
+  position: relative;
+  width: 100%;
+  min-height: 220px;
+  height: auto;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(197, 160, 89, 0.28);
+  background: linear-gradient(135deg, #0a0a0a 0%, #141414 50%, #0d0d0d 100%);
+  pointer-events: none;
+}
+
+body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-hero-bg-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 28%;
+  opacity: 0.55;
+}
+
+body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, rgba(0, 0, 0, 0.55) 0%, transparent 45%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, transparent 45%);
+  pointer-events: none;
+}
+
+body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-hero-inset {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(197, 160, 89, 0.65);
+  z-index: 2;
+  background: #111;
+}
+
+body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-hero-inset img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 1;
+}
+
+body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  min-height: 220px;
+  padding: 1.35rem 1.25rem 1.2rem;
+}
+
+body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-hero-role {
+  margin: 0 0 0.35rem;
+  font-family: 'Cinzel', serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold, #c5a059);
+}
+
+body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-hero-name {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: clamp(1.6rem, 3vw, 2.35rem);
+  color: #fff;
+  line-height: 1.1;
+}
+
+body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-hero-name .dot {
+  color: var(--gold, #c5a059);
+}
+
+body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-hero-plan-pill {
+  display: inline-flex;
+  margin-top: 0.65rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(197, 160, 89, 0.45);
+  background: rgba(197, 160, 89, 0.12);
+  color: #f6efd8;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Keep lab sections readable under hero */
+body.mdj-v2-lab .mdj-v2-v1-artist-profile .mdj-artist-profile-read__section,
+body.mdj-v2-lab .mdj-v2-v1-artist-profile .mdj-artist-profile-read__header {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+/* ── Staff system-card identity (from styles.css system-card) ─ */
+body.mdj-v2-lab .mdj-staff-identity-read.mdj-v2-v1-staff-profile {
+  display: grid;
+  gap: 1rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-staff-profile .system-card {
+  background: #111112;
+  border: 1px solid rgba(197, 160, 89, 0.22);
+  border-radius: 12px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+}
+
+body.mdj-v2-lab .mdj-v2-v1-staff-profile .system-card-header {
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+body.mdj-v2-lab .mdj-v2-v1-staff-profile .system-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(197, 160, 89, 0.12);
+  border: 1px solid rgba(197, 160, 89, 0.35);
+  display: grid;
+  place-items: center;
+  color: var(--gold, #c5a059);
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-staff-profile .system-meta h2 {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: 1.45rem;
+  color: #f6efd8;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-staff-profile .system-meta p {
+  margin: 0.35rem 0 0;
+  color: rgba(245, 230, 180, 0.72);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-staff-profile .system-card-body {
+  padding: 1rem 1.25rem 1.25rem;
+  display: grid;
+  gap: 1rem;
+}

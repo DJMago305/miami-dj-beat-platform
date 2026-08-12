@@ -1,0 +1,1384 @@
+        body.mdj-eb-cart-open {
+            overflow: hidden;
+        }
+
+        /* Carrito a pantalla completa: el header real queda bajo overlay/drawer (no subir z-index del #mainHeader aquí). */
+
+        body.mdj-event-builder-on #mdj-event-builder-root {
+            display: block;
+        }
+
+        #mdj-event-builder-root {
+            display: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-fab {
+            position: fixed;
+            left: clamp(12px, 2vw, 20px);
+            bottom: clamp(88px, 12vh, 120px);
+            z-index: 9400;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            border: 2px solid rgba(212, 175, 55, 0.88);
+            background: rgba(10, 12, 22, 0.9);
+            color: rgba(212, 175, 55, 0.95);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 0 18px rgba(212, 175, 55, 0.22);
+        }
+
+        #mdj-event-builder-root .mdj-eb-fab__count {
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            border-radius: 999px;
+            background: rgba(212, 175, 55, 0.22);
+            font-size: 11px;
+            line-height: 20px;
+            text-align: center;
+        }
+
+        /* FAB oculto en todas las páginas — el botón del carrito va en el header (shared header lo crea) */
+        #mdj-event-builder-root .mdj-eb-fab {
+            display: none !important;
+        }
+
+        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn {
+            margin-left: 10px;
+            border-color: rgba(197, 160, 89, 0.42);
+            color: rgba(212, 175, 55, 0.95);
+            box-shadow: inset 0 0 0 1px rgba(197, 160, 89, 0.12), 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn:hover {
+            background: rgba(197, 160, 89, 0.22);
+            border-color: rgba(197, 160, 89, 0.95);
+            box-shadow: 0 0 22px rgba(197, 160, 89, 0.55), 0 0 42px rgba(197, 160, 89, 0.28),
+                inset 0 0 20px rgba(197, 160, 89, 0.15);
+        }
+
+        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn:focus-visible {
+            border-color: rgba(197, 160, 89, 0.95);
+            box-shadow: 0 0 20px rgba(197, 160, 89, 0.5);
+        }
+
+        @keyframes mdj-eb-event-cart-pulse {
+            0%,
+            100% {
+                box-shadow: 0 0 12px rgba(197, 160, 89, 0.32), inset 0 0 10px rgba(197, 160, 89, 0.1);
+                border-color: rgba(197, 160, 89, 0.6);
+            }
+
+            50% {
+                box-shadow: 0 0 26px rgba(197, 160, 89, 0.55), 0 0 38px rgba(197, 160, 89, 0.28),
+                    inset 0 0 16px rgba(197, 160, 89, 0.2);
+                border-color: rgba(232, 200, 120, 0.95);
+            }
+        }
+
+        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn.has-items {
+            background: rgba(197, 160, 89, 0.14);
+            border-color: rgba(197, 160, 89, 0.65);
+            box-shadow: 0 0 14px rgba(197, 160, 89, 0.35), inset 0 0 12px rgba(197, 160, 89, 0.12);
+            animation: mdj-eb-event-cart-pulse 2.1s ease-in-out infinite;
+        }
+
+        body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn.has-items:hover {
+            animation: none;
+            box-shadow: 0 0 26px rgba(197, 160, 89, 0.6), 0 0 48px rgba(197, 160, 89, 0.3),
+                inset 0 0 18px rgba(197, 160, 89, 0.2);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            body.page-mdj-rentals button#mdj-eb-header-cart-open.header-cart-btn.has-items {
+                animation: none;
+            }
+        }
+
+        body.page-mdj-rentals #mdj-eb-header-count.header-cart-count {
+            background: #c5a059;
+            color: #0a0a0a;
+        }
+
+        #mdj-event-builder-root .mdj-eb-overlay[hidden],
+        #mdj-event-builder-root .mdj-eb-drawer[hidden] {
+            display: none !important;
+        }
+
+        #mdj-event-builder-root .mdj-eb-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 11490;
+            background: rgba(4, 6, 14, 0.72);
+            backdrop-filter: blur(4px);
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer {
+            position: fixed;
+            inset: 0;
+            z-index: 11500;
+            width: 100%;
+            height: 100%;
+            min-height: 100dvh;
+            max-width: none;
+            box-sizing: border-box;
+            padding-top: env(safe-area-inset-top, 0px);
+            background: linear-gradient(165deg, rgba(14, 16, 28, 0.99), rgba(8, 10, 18, 0.995));
+            border-top: none;
+            box-shadow: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer:not([hidden]) {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Número de orden / invoice en el header */
+        #mdj-eb-order-num {
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(212,175,55,0.70);
+            letter-spacing: 0.06em;
+            margin-left: 10px;
+            font-family: 'Courier New', monospace;
+            vertical-align: middle;
+        }
+
+        /* Event Cart topbar — escala fullscreen: más altura, aire lateral y separación (sin tocar #mainNav del sitio). */
+        #mdj-event-builder-root .mdj-eb-cart-topbar {
+            flex-shrink: 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            min-height: clamp(58px, 9vw, 68px);
+            padding: clamp(18px, 2.2vw, 22px) clamp(20px, 4vw, 48px);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.22);
+            background: #000;
+            background-image: none;
+            box-shadow: none;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a {
+            display: inline;
+            padding: 6px 0.2em 8px;
+            margin: 0;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: var(--mdj-nav-font-size, clamp(16px, 1.4vw, 20px));
+            line-height: 1.25;
+            font-weight: var(--mdj-nav-font-weight, 800);
+            letter-spacing: var(--mdj-nav-letter-spacing, 0.08em);
+            text-transform: uppercase;
+            text-decoration: none;
+            color: rgba(245, 236, 220, 0.85);
+            border: none;
+            border-radius: 0;
+            border-bottom: 3px solid transparent;
+            background: transparent;
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a:not(:last-child)::after {
+            content: '/';
+            display: inline;
+            margin: 0 clamp(0.55em, 1.1vw, 0.9em);
+            font-weight: 400;
+            font-size: var(--mdj-nav-font-size, clamp(16px, 1.4vw, 20px));
+            letter-spacing: 0;
+            text-transform: none;
+            color: rgba(200, 200, 200, 0.45);
+            pointer-events: none;
+        }
+
+        /* Alineado con #mainNav.mdj-mainnav-flex: Shop dorado; Services activo en rentals */
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='shop'],
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[href*='shop.html'] {
+            color: rgba(224, 195, 130, 0.96);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='services'] {
+            color: var(--gold, #c5a059);
+            border-bottom-color: var(--gold, #c5a059);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a:hover {
+            color: rgba(255, 252, 245, 0.98);
+            border-bottom-color: transparent;
+            background: transparent;
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='services']:hover,
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='shop']:hover {
+            color: rgba(255, 252, 245, 0.98);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='services']:hover {
+            border-bottom-color: var(--gold, #c5a059);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cart-topbar a[data-mdj-nav='shop']:hover {
+            color: rgba(240, 215, 150, 1);
+        }
+
+        @media (max-width: 640px) {
+            #mdj-event-builder-root .mdj-eb-cart-topbar {
+                justify-content: flex-start;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #mdj-event-builder-root .mdj-eb-cart-topbar a {
+                flex: 0 0 auto;
+                display: inline-flex;
+                align-items: baseline;
+            }
+
+            #mdj-event-builder-root .mdj-eb-cart-topbar a:not(:last-child)::after {
+                display: inline-flex;
+                align-items: center;
+            }
+        }
+
+        #mdj-event-builder-root .mdj-eb-panel__body {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: auto;
+            display: block;
+            padding: 16px clamp(14px, 3vw, 28px) 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #mdj-event-builder-root .mdj-eb-panel__main {
+            width: 100%;
+            min-height: 0;
+        }
+
+        /* CTA footer bar */
+        #mdj-event-builder-root .mdj-eb-cta-footer {
+            padding: 14px clamp(14px, 3vw, 28px) 20px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer__head {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px clamp(14px, 3vw, 28px) 14px;
+            width: 100%;
+            box-sizing: border-box;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        #mdj-event-builder-root .mdj-eb-head-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer__head h2 {
+            margin: 0;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: rgba(212, 175, 55, 0.95);
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer__head-main {
+            flex: 1 1 auto;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 8px 12px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__field {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 0;
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__field--assign {
+            flex: 1 1 200px;
+            min-width: min(100%, 220px);
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__hint {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.52);
+            line-height: 1.2;
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__select {
+            min-width: 0;
+            max-width: 100%;
+            min-height: 34px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(212, 175, 55, 0.38);
+            background: rgba(0, 0, 0, 0.42);
+            color: rgba(255, 255, 255, 0.94);
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__select--day {
+            width: clamp(64px, 14vw, 80px);
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__select--month {
+            width: clamp(108px, 24vw, 132px);
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__select--year {
+            width: clamp(72px, 16vw, 90px);
+        }
+
+        #mdj-event-builder-root .mdj-eb-context-bar__select--assign {
+            width: 100%;
+        }
+
+        @media (min-width: 900px) {
+            #mdj-event-builder-root .mdj-eb-drawer__head-main {
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: center;
+                column-gap: 18px;
+                row-gap: 8px;
+            }
+
+            #mdj-event-builder-root .mdj-eb-context-bar {
+                flex: 1 1 auto;
+                justify-content: flex-end;
+                min-width: min(100%, 560px);
+            }
+
+            #mdj-event-builder-root .mdj-eb-context-bar__select--assign {
+                width: auto;
+                min-width: 220px;
+                max-width: min(100%, 340px);
+            }
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer__head > .mdj-eb-close {
+            margin-top: 4px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-close {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid rgba(212, 175, 55, 0.45);
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.88);
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        #mdj-event-builder-root .mdj-eb-lines {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 4px 0 8px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-empty {
+            margin: 0;
+            opacity: 0.75;
+            font-size: 13px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        #mdj-event-builder-root .mdj-eb-empty code {
+            font-size: 12px;
+            display: block;
+            margin-top: 8px;
+            color: rgba(212, 175, 55, 0.85);
+        }
+
+        /* ══════════════════════════════════════════════
+           CRM SALES TABLE — Event Builder
+        ══════════════════════════════════════════════ */
+
+        #mdj-event-builder-root .mdj-eb-crm-scroll {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 0;
+        }
+
+        /* ── Cajones wrapper ── */
+        #mdj-event-builder-root .mdj-eb-cajones-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        #mdj-event-builder-root .mdj-eb-cajon-section {
+            border-left: 1px solid rgba(212, 175, 55, 0.20);
+            border-right: 1px solid rgba(212, 175, 55, 0.20);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.20);
+            margin-bottom: 22px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-cajon-section:first-child,
+        #mdj-event-builder-root .mdj-eb-cajon-section {
+            border-top: 1px solid rgba(212, 175, 55, 0.20);
+        }
+
+        /* cajón vacío: título atenuado */
+        #mdj-event-builder-root .mdj-eb-cajon-section--empty .mdj-eb-cajon-title-bar {
+            background: rgba(212, 175, 55, 0.03);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cajon-section--empty .mdj-eb-cajon-title-bar__name {
+            opacity: 0.45;
+        }
+
+        #mdj-event-builder-root .mdj-eb-cajon-title-bar__count--empty {
+            color: rgba(255, 255, 255, 0.20);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cajon-title-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 13px 16px;
+            background: rgba(212, 175, 55, 0.07);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.22);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cajon-title-bar__name {
+            font-family: Inter, sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.10em;
+            color: rgba(212, 175, 55, 0.95);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cajon-title-bar__count {
+            font-size: 12px;
+            color: rgba(212, 175, 55, 0.55);
+        }
+
+        /* empty row inside table */
+        #mdj-event-builder-root .mdj-eb-crm-td--empty {
+            text-align: left;
+            color: rgba(255, 255, 255, 0.22);
+            font-style: italic;
+            font-size: 12px;
+            padding: 9px 14px;
+            border-left: 1px solid rgba(212, 175, 55, 0.20);
+            border-right: 1px solid rgba(212, 175, 55, 0.20);
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-table {
+            width: 100%;
+            min-width: 780px;
+            border-collapse: collapse;
+            border-spacing: 0;
+            font-family: Inter, 'Helvetica Neue', sans-serif;
+            font-size: 14px;
+        }
+
+        /* ── Header row ── */
+        #mdj-event-builder-root .mdj-eb-crm-thead-row {
+            background: rgba(0, 0, 0, 0.55);
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-th {
+            padding: 11px 13px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: rgba(212, 175, 55, 0.90);
+            border-right: 1px solid rgba(212, 175, 55, 0.20);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.35);
+            border-top: 1px solid rgba(212, 175, 55, 0.20);
+            white-space: nowrap;
+            vertical-align: middle;
+            text-align: left;
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-th:first-child {
+            border-left: 1px solid rgba(212, 175, 55, 0.20);
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-th:last-child {
+            border-right: 1px solid rgba(212, 175, 55, 0.20);
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-th--ln,
+        #mdj-event-builder-root .mdj-eb-crm-th--qty,
+        #mdj-event-builder-root .mdj-eb-crm-th--upr,
+        #mdj-event-builder-root .mdj-eb-crm-th--sub,
+        #mdj-event-builder-root .mdj-eb-crm-th--act { text-align: center; }
+
+        /* ── Data rows ── */
+        #mdj-event-builder-root .mdj-eb-crm-row {
+            background: rgba(10, 10, 14, 0.70);
+            transition: background 0.12s ease;
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-row:nth-child(even) {
+            background: rgba(22, 22, 30, 0.75);
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-row:hover {
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        /* ── Cells ── */
+        #mdj-event-builder-root .mdj-eb-crm-td {
+            padding: 12px 13px;
+            border-right: 1px solid rgba(255, 255, 255, 0.07);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.88);
+            vertical-align: middle;
+            font-size: 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 0;
+            box-sizing: border-box;
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-td:first-child {
+            border-left: 1px solid rgba(212, 175, 55, 0.20);
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-td:last-child {
+            border-right: 1px solid rgba(212, 175, 55, 0.20);
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-row:last-child .mdj-eb-crm-td {
+            border-bottom: 1px solid rgba(212, 175, 55, 0.20);
+        }
+
+        /* ── Column widths (10 cols — Categoría movida al título del cajón) ── */
+        #mdj-event-builder-root .mdj-eb-crm-td--ln  { width: 36px;  text-align: center; color: rgba(255,255,255,0.30); font-size: 13px; }
+        #mdj-event-builder-root .mdj-eb-crm-td--svc { font-weight: 600; color: #fff; }
+        #mdj-event-builder-root .mdj-eb-crm-td--desc{ min-width: 220px; color: rgba(255,255,255,0.85); font-style: italic; }
+        #mdj-event-builder-root .mdj-eb-crm-td--qty { width: 46px;  text-align: center; }
+        #mdj-event-builder-root .mdj-eb-crm-td--upr { width: 90px;  text-align: right; }
+        #mdj-event-builder-root .mdj-eb-crm-td--sub { width: 96px;  text-align: right; }
+        #mdj-event-builder-root .mdj-eb-crm-td--sta { width: 90px;  text-align: center; }
+        #mdj-event-builder-root .mdj-eb-crm-td--prv { width: 100px; }
+        #mdj-event-builder-root .mdj-eb-crm-td--nts { width: 100px; color: rgba(255,255,255,0.40); font-style: italic; }
+        #mdj-event-builder-root .mdj-eb-crm-td--act { width: 64px;  text-align: center; white-space: nowrap; }
+
+        #mdj-event-builder-root .mdj-eb-crm-td--sub-val {
+            font-weight: 700;
+            color: rgba(212, 175, 55, 0.95);
+        }
+
+        /* ── Category tag ── */
+        #mdj-event-builder-root .mdj-eb-crm-cat-tag {
+            display: inline-block;
+            padding: 3px 7px;
+            border-radius: 3px;
+            background: rgba(212, 175, 55, 0.07);
+            border: 1px solid rgba(212, 175, 55, 0.20);
+            font-size: 10.5px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: rgba(212, 175, 55, 0.80);
+            white-space: nowrap;
+        }
+
+        /* ── Seleccionar cell — nombre del talento/artista ── */
+        #mdj-event-builder-root .mdj-eb-crm-sel-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(212, 175, 55, 0.90);
+        }
+
+        /* ── DJ chip ── */
+        #mdj-event-builder-root .mdj-eb-crm-dj-chip {
+            display: block;
+            font-size: 11px;
+            color: rgba(212, 175, 55, 0.65);
+            margin-top: 2px;
+            font-weight: 500;
+        }
+
+        /* ── Status badge ── */
+        #mdj-event-builder-root .mdj-eb-crm-badge {
+            display: inline-block;
+            padding: 3px 9px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+        /* COTIZADO — amarillo (precio conocido, pendiente de confirmar disponibilidad) */
+        #mdj-event-builder-root .mdj-eb-crm-badge--cotizado {
+            background: rgba(212,175,55,0.10);
+            border: 1px solid rgba(212,175,55,0.40);
+            color: rgba(212,175,55,0.95);
+        }
+        /* EN PROCESO — azul (staff gestionando) */
+        #mdj-event-builder-root .mdj-eb-crm-badge--proceso {
+            background: rgba(80,140,255,0.10);
+            border: 1px solid rgba(80,140,255,0.40);
+            color: rgba(130,180,255,0.95);
+        }
+        /* CONFIRMADO — verde (disponibilidad y reserva confirmadas) */
+        #mdj-event-builder-root .mdj-eb-crm-badge--confirmado {
+            background: rgba(60,180,100,0.12);
+            border: 1px solid rgba(60,200,120,0.40);
+            color: rgba(100,220,150,0.95);
+        }
+        /* NO DISPONIBLE — rojo (se busca alternativa) */
+        #mdj-event-builder-root .mdj-eb-crm-badge--nodisponible {
+            background: rgba(220,70,70,0.10);
+            border: 1px solid rgba(220,70,70,0.40);
+            color: rgba(255,110,110,0.95);
+        }
+
+        /* ── Action buttons ── */
+        #mdj-event-builder-root .mdj-eb-crm-act-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.18);
+            background: transparent;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            transition: all 0.15s ease;
+            vertical-align: middle;
+            color: rgba(255,255,255,0.65);
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-act-btn--rm {
+            border-color: rgba(220, 70, 70, 0.40);
+            color: rgba(255, 100, 100, 0.90);
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-act-btn--rm:hover {
+            background: rgba(200, 40, 40, 0.22);
+            border-color: rgba(255, 100, 100, 0.75);
+            color: #ff6464;
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-act-btn:not(.mdj-eb-crm-act-btn--rm):hover {
+            border-color: rgba(212, 175, 55, 0.75);
+            color: rgba(212, 175, 55, 0.95);
+            background: rgba(212, 175, 55, 0.08);
+        }
+
+        /* ── TICKET-CART-CSS-TABLES: missing class coverage ──────────────── */
+
+        /* CRM empty row (no services selected) */
+        #mdj-event-builder-root .mdj-eb-crm-row--empty {
+            pointer-events: none;
+        }
+        #mdj-event-builder-root .mdj-eb-crm-row--empty:hover {
+            background: transparent;
+        }
+
+        /* DJ picker table — row hover & selected states */
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__tr {
+            transition: background 0.12s;
+        }
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__tr:hover {
+            background: rgba(212, 175, 55, 0.05);
+        }
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__tr--selected {
+            background: rgba(212, 175, 55, 0.10);
+            outline: 1px solid rgba(212, 175, 55, 0.35);
+            outline-offset: -1px;
+        }
+
+        /* DJ picker table — column sizing */
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--select { width: 100px; text-align: center; }
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--visit  { width: 80px;  text-align: center; }
+
+        /* DJ picker — select button active state */
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__select--selected {
+            background: linear-gradient(180deg, rgba(212,175,55,0.70), rgba(160,130,40,0.90));
+            border-color: #d4af37;
+            color: #0a0a0c;
+            cursor: pointer;
+            opacity: 1;
+        }
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__select--selected:hover {
+            background: rgba(212,175,55,0.90);
+            border-color: #fff;
+        }
+
+        /* DJ picker — summary label */
+        #mdj-event-builder-root .mdj-eb-dj-pick__summary-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: rgba(212,175,55,0.80);
+        }
+
+        /* Replace button (↺) */
+        #mdj-event-builder-root .mdj-eb-line__replace {
+            color: rgba(255,255,255,0.55);
+        }
+        #mdj-event-builder-root .mdj-eb-line__replace:hover {
+            color: rgba(255,255,255,0.90);
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.30);
+        }
+
+        /* CRM th column modifiers — widths controlled by td; th just needs no hover */
+        #mdj-event-builder-root .mdj-eb-crm-th--svc,
+        #mdj-event-builder-root .mdj-eb-crm-th--desc,
+        #mdj-event-builder-root .mdj-eb-crm-th--sta,
+        #mdj-event-builder-root .mdj-eb-crm-th--prv,
+        #mdj-event-builder-root .mdj-eb-crm-th--nts { /* inherits mdj-eb-crm-th */ }
+
+        /* Talent picker row — no zebra / no hover (it's a sub-panel, not a data row) */
+        #mdj-event-builder-root .mdj-eb-talent-picker-row {
+            background: transparent !important;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-picker-row:hover {
+            background: transparent !important;
+        }
+
+        /* ── end TICKET-CART-CSS-TABLES ────────────────────────────────── */
+
+        /* mdj-eb-line__remove alias → keep handler class working */
+        #mdj-event-builder-root .mdj-eb-line__remove {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            border: 1px solid rgba(220, 70, 70, 0.40);
+            background: transparent;
+            color: rgba(255, 100, 100, 0.90);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        #mdj-event-builder-root .mdj-eb-line__remove:hover {
+            background: rgba(200, 40, 40, 0.22);
+            border-color: rgba(255, 100, 100, 0.75);
+            color: #ff6464;
+        }
+
+        /* ── DJ picker row ── */
+        #mdj-event-builder-root .mdj-eb-crm-picker-row {
+            background: rgba(5, 5, 10, 0.85);
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-picker-cell {
+            padding: 12px 14px;
+            border-left: 1px solid rgba(212, 175, 55, 0.22);
+            border-right: 1px solid rgba(212, 175, 55, 0.22);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.22);
+        }
+
+        /* ── Talent row — clickable hint ── */
+        #mdj-event-builder-root .mdj-eb-crm-row--talent { cursor: pointer; }
+        #mdj-event-builder-root .mdj-eb-crm-row--talent:hover { background: rgba(212,175,55,0.06); }
+        #mdj-event-builder-root .mdj-eb-crm-sel-hint {
+            font-size: 12px;
+            color: rgba(212,175,55,0.55);
+            font-style: italic;
+            letter-spacing: 0.02em;
+        }
+        #mdj-event-builder-root .mdj-eb-crm-sel-name {
+            font-size: 13px;
+            color: rgba(212,175,55,0.95);
+            font-weight: 600;
+        }
+        /* Ícono de perfil artístico en columna Notas */
+        #mdj-event-builder-root .mdj-eb-crm-notes-link {
+            font-size: 17px;
+            text-decoration: none;
+            opacity: 0.75;
+            transition: opacity 0.15s, transform 0.15s;
+            display: inline-block;
+        }
+        #mdj-event-builder-root .mdj-eb-crm-notes-link:hover {
+            opacity: 1;
+            transform: scale(1.18);
+        }
+
+        /* ── Talent mini picker ── */
+        #mdj-event-builder-root .mdj-eb-talent-picker-cell {
+            padding: 0 !important;
+            border-top: none !important;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini {
+            background: rgba(12,12,18,0.96);
+            border-top: 1px solid rgba(212,175,55,0.30);
+            border-bottom: 2px solid rgba(212,175,55,0.22);
+            padding: 14px 20px 18px;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__loading {
+            padding: 16px 20px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.45);
+            font-style: italic;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.10em;
+            color: rgba(212,175,55,0.65);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__cards {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        /* Card horizontal: avatar | info | acciones */
+        #mdj-event-builder-root .mdj-eb-talent-mini__card {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 7px;
+            padding: 10px 16px;
+            transition: border-color 0.15s;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__card:hover {
+            border-color: rgba(212,175,55,0.40);
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__card--selected {
+            border-color: rgba(212,175,55,0.75);
+            background: rgba(212,175,55,0.06);
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255,255,255,0.12);
+            flex-shrink: 0;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__card--selected .mdj-eb-talent-mini__avatar {
+            border-color: rgba(212,175,55,0.70);
+        }
+        /* Info block — crece para llenar espacio */
+        #mdj-event-builder-root .mdj-eb-talent-mini__info {
+            flex: 1;
+            min-width: 0;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 3px;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__stage {
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__tier {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__tier--elite {
+            background: rgba(212,175,55,0.18);
+            border: 1px solid rgba(212,175,55,0.60);
+            color: #d4af37;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__tier--pro {
+            background: rgba(160,120,255,0.14);
+            border: 1px solid rgba(160,120,255,0.45);
+            color: rgba(190,160,255,0.95);
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__tier--lite {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.18);
+            color: rgba(255,255,255,0.45);
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__legal {
+            font-size: 11px;
+            color: rgba(255,255,255,0.38);
+        }
+        /* Acciones — lado derecho */
+        #mdj-event-builder-root .mdj-eb-talent-mini__actions {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__assign {
+            padding: 5px 14px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            cursor: pointer;
+            border: 1px solid rgba(212,175,55,0.55);
+            background: transparent;
+            color: rgba(212,175,55,0.90);
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__assign:hover:not(:disabled) {
+            background: rgba(212,175,55,0.14);
+            border-color: #d4af37;
+            color: #d4af37;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__assign--active {
+            background: rgba(212,175,55,0.16);
+            border-color: #d4af37;
+            color: #d4af37;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__assign:disabled {
+            opacity: 0.35;
+            cursor: default;
+        }
+        /* Availability states */
+        #mdj-event-builder-root .mdj-eb-talent-mini__card--busy {
+            border-color: rgba(255, 165, 0, 0.45);
+            background: rgba(255, 140, 0, 0.07);
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__busy-badge {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background: rgba(255, 140, 0, 0.20);
+            color: #ffaa33;
+            border: 1px solid rgba(255, 140, 0, 0.40);
+            white-space: nowrap;
+            margin-left: 6px;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__assign--busy {
+            border-color: rgba(255, 140, 0, 0.50);
+            color: rgba(255, 165, 0, 0.80);
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__avail-note {
+            font-size: 11px;
+            color: rgba(255,255,255,0.45);
+            margin-bottom: 8px;
+            padding: 4px 8px;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__avail-note--checking {
+            color: rgba(212,175,55,0.60);
+            animation: mdj-pulse 1.2s ease-in-out infinite;
+        }
+        @keyframes mdj-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.45; }
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__profile-link {
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            border: 1px solid rgba(255,255,255,0.18);
+            background: transparent;
+            color: rgba(255,255,255,0.60);
+            text-decoration: none;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__profile-link:hover {
+            border-color: rgba(255,255,255,0.40);
+            color: rgba(255,255,255,0.90);
+        }
+        /* ── Cartel "Pendiente de confirmación del board" ── */
+        #mdj-event-builder-root .mdj-eb-talent-mini__pending {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            background: rgba(255,200,50,0.05);
+            border: 1px solid rgba(255,200,50,0.22);
+            border-radius: 7px;
+            padding: 14px 18px;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__pending-icon {
+            font-size: 22px;
+            flex-shrink: 0;
+            line-height: 1;
+            margin-top: 2px;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__pending-body strong {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: rgba(255,210,80,0.95);
+            margin-bottom: 4px;
+        }
+        #mdj-event-builder-root .mdj-eb-talent-mini__pending-body p {
+            margin: 0;
+            font-size: 12px;
+            color: rgba(255,255,255,0.50);
+            line-height: 1.5;
+        }
+
+        /* ── Summary / resumen comercial ── */
+        #mdj-event-builder-root .mdj-eb-crm-summary {
+            margin-top: 16px;
+            padding: 16px 20px;
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            background: rgba(0, 0, 0, 0.40);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-sum-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: Inter, sans-serif;
+            font-size: 14px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-sum-lbl {
+            color: rgba(255, 255, 255, 0.60);
+            font-size: 14px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-sum-val {
+            color: rgba(255, 255, 255, 0.88);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-sum-row--deposit .mdj-eb-crm-sum-lbl,
+        #mdj-event-builder-root .mdj-eb-crm-sum-row--deposit .mdj-eb-crm-sum-val {
+            color: rgba(212, 175, 55, 0.85);
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-sum-row--tax {
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+            padding-top: 8px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-sum-row--total {
+            border-top: 1px solid rgba(212, 175, 55, 0.35);
+            padding-top: 10px;
+            margin-top: 2px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-sum-row--total .mdj-eb-crm-sum-lbl {
+            font-size: 14px;
+            font-weight: 700;
+            color: rgba(212, 175, 55, 0.95);
+            letter-spacing: 0.06em;
+        }
+
+        #mdj-event-builder-root .mdj-eb-crm-sum-row--total .mdj-eb-crm-sum-val {
+            font-size: 20px;
+            font-weight: 700;
+            color: rgba(212, 175, 55, 1);
+        }
+
+        /* ── DJ family extra (legacy compat) ── */
+        #mdj-event-builder-root .mdj-eb-line--dj-family .mdj-eb-line__dj-extra {
+            width: 100%;
+            min-width: 0;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick {
+            width: 100%;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick__summary {
+            cursor: pointer;
+            list-style: none;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(212, 175, 55, 0.95);
+            user-select: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick__summary::-webkit-details-marker {
+            display: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick__summary::after {
+            content: '';
+            display: inline-block;
+            width: 0;
+            height: 0;
+            margin-left: 8px;
+            vertical-align: middle;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 6px solid rgba(212, 175, 55, 0.75);
+            transition: transform 0.15s ease;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick[open] .mdj-eb-dj-pick__summary::after {
+            transform: rotate(180deg);
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick__panel {
+            margin-top: 10px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border: 1px solid rgba(212, 175, 55, 0.28);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.38);
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table {
+            width: 100%;
+            min-width: 640px;
+            border-collapse: collapse;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__th,
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td {
+            padding: 8px 10px;
+            border-right: 1px solid rgba(255, 255, 255, 0.07);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__th:last-child,
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td:last-child {
+            border-right: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table thead .mdj-eb-dj-pick-table__th {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(212, 175, 55, 0.88);
+            background: rgba(0, 0, 0, 0.5);
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table tbody tr:last-child .mdj-eb-dj-pick-table__td {
+            border-bottom: none;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__th--photo,
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--photo {
+            width: 52px;
+            text-align: center;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            object-fit: cover;
+            display: block;
+            margin: 0 auto;
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--stage {
+            font-weight: 700;
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--legal {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.62);
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__stars {
+            color: rgba(212, 175, 55, 0.95);
+            letter-spacing: 1px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__score {
+            color: rgba(255, 255, 255, 0.65);
+            font-size: 11px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--rating {
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__td--status {
+            font-size: 11px;
+            color: rgba(130, 220, 160, 0.95);
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__link {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(212, 175, 55, 0.55);
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__link:hover {
+            border-color: rgba(212, 175, 55, 0.95);
+            color: rgba(212, 175, 55, 0.98);
+        }
+
+        #mdj-event-builder-root .mdj-eb-dj-pick-table__select {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(212, 175, 55, 0.55);
+            background: linear-gradient(180deg, rgba(212, 175, 55, 0.35), rgba(160, 130, 40, 0.55));
+            color: #0a0a0c;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: not-allowed;
+            opacity: 0.55;
+            white-space: nowrap;
+        }
+
+        #mdj-event-builder-root .mdj-eb-panel__aside {
+            min-height: 0;
+        }
+
+        #mdj-event-builder-root .mdj-eb-drawer__foot {
+            padding: 16px 18px 22px;
+            border: 1px solid rgba(212, 175, 55, 0.22);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.28);
+        }
+
+        @media (min-width: 769px) {
+            #mdj-event-builder-root .mdj-eb-panel__aside .mdj-eb-drawer__foot {
+                position: sticky;
+                top: 12px;
+            }
+        }
+
+        #mdj-event-builder-root .mdj-eb-totals {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        #mdj-event-builder-root .mdj-eb-totals__row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        #mdj-event-builder-root .mdj-eb-totals__row--total {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            padding-top: 6px;
+            margin-top: 4px;
+            border-top: 1px solid rgba(212, 175, 55, 0.25);
+        }
+
+        #mdj-event-builder-root .mdj-eb-cta {
+            padding: 13px 32px;
+            border-radius: 6px;
+            border: 1px solid rgba(212, 175, 55, 0.75);
+            background: rgba(212, 175, 55, 0.12);
+            color: rgba(212, 175, 55, 0.98);
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+
+        #mdj-event-builder-root .mdj-eb-cta:hover {
+            background: rgba(212, 175, 55, 0.22);
+            border-color: rgba(212, 175, 55, 1);
+        }
+
+        #mdj-event-builder-root .mdj-eb-toast {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translateX(-50%);
+            z-index: 11560;
+            max-width: min(92vw, 420px);
+            padding: 12px 18px;
+            border-radius: 12px;
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            background: rgba(12, 14, 24, 0.96);
+            color: #fff;
+            font-size: 13px;
+            line-height: 1.45;
+            text-align: center;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+        }
+
+        body.mdj-event-builder-on .package-summary-bar {
+            display: none !important;
+        }
