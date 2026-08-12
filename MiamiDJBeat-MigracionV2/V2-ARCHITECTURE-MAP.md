@@ -107,7 +107,37 @@ Las 3 vistas de perfil (`ClientProfileReadView`, `ArtistProfileReadView`, `Staff
 
 ---
 
-## 4. Estado de pruebas
+## 4. Identidad universal (MDJB-ID) y atribución de origen
+
+Regla canónica registrada por el Capitán, 2026-08-12. Estado verificado línea por línea contra el código actual — no es aspiracional donde se marca ✅, y se marca honestamente como pendiente donde no existe todavía.
+
+### 4.1 MDJB-ID — Identificador Único Universal — ✅ implementado para los 4 roles
+
+`mdjbId: string | null` vive en `shared/services/profiles/profiles.types.ts` como campo canónico en:
+
+| Rol | DTO | Línea | Mostrado en UI |
+|---|---|---|---|
+| Client | `ClientProfileReadDTO` | `profiles.types.ts:102` | `client/profile/render-client-profile-read-view.ts:89` |
+| Artist | `ArtistProfileReadDTO` | `profiles.types.ts:126` | `artist/profile/render-artist-profile-read-view.ts:87` |
+| Staff | `StaffIdentityDTO` | `profiles.types.ts:180` | `staff/identity/render-staff-identity-read-view.ts:87` |
+| Owner | `AccessSnapshotSuccessDTO` (snapshot de sesión, agnóstico de rol vía `role: string \| null`) | `profiles.types.ts:52` | expuesto vía `mdj_access_snapshot()` — Owner no tiene tabla de perfil propia, es una variante privilegiada de Staff en este esquema |
+
+Confirmado en vivo esta sesión: `MDJB-TEST-0003-A` (Artist) y `MDJB-WENDY-C` (Client) renderizando correctamente en sus respectivas vistas de perfil.
+
+### 4.2 Trazabilidad de origen (`referrerEmployeeId` / `attributionSource`) — ⚠️ registrado, NO implementado
+
+Búsqueda exhaustiva (`referrerEmployeeId`, `attributionSource`, `referrer_employee`, `attribution_source`) en `shared/`, `artist/`, `client/`, `staff/`, `docs/` — **cero resultados**. Estos campos no existen todavía en ningún DTO, fixture, ni tabla documentada.
+
+Queda registrado aquí como regla canónica pendiente, a la espera de autorización explícita para implementar (no se agregó a los DTOs compartidos en esta ronda — es un cambio de esquema/tipos con impacto cruzado en los 3 portales, fuera del alcance de una corrección visual):
+
+- `referrerEmployeeId: string | null` — staff/artist que originó la referencia, cuando aplica.
+- `attributionSource: 'QR' | 'Artist Referral' | 'Organic Web'` — canal de origen del lead/cliente.
+
+**Candidato de ubicación futura:** ambos campos encajarían naturalmente en `ClientProfileReadDTO` (junto a `sourceRef`, que ya existe como campo de origen genérico en `profiles.types.ts:98` y podría ser el precursor directo de `attributionSource`).
+
+---
+
+## 5. Estado de pruebas
 
 | Verificación | Resultado |
 |---|---|
@@ -117,7 +147,7 @@ Las 3 vistas de perfil (`ClientProfileReadView`, `ArtistProfileReadView`, `Staff
 
 ---
 
-## 5. Historial de commits de esta consolidación
+## 6. Historial de commits de esta consolidación
 
 Todos locales, aislados en `plan/v2-artist-agenda-matrix`, sin push ni PR:
 
@@ -130,8 +160,9 @@ Todos locales, aislados en `plan/v2-artist-agenda-matrix`, sin push ni PR:
 
 ---
 
-## 6. Pendientes conocidos (no bloqueantes para la Auditoría Visual Final)
+## 7. Pendientes conocidos (no bloqueantes para la Auditoría Visual Final)
 
 - Mutación de disponibilidad y edición de perfil para Artist — no existe adaptador.
 - Mutación de estado de leads para Staff — no existe adaptador.
 - Refresh cruzado post-mutación (listas de lectura) en los 3 portales — arquitectura intencionalmente aislada, no cableada.
+- `referrerEmployeeId` / `attributionSource` (§4.2) — regla canónica registrada, campos no implementados en los DTOs compartidos.
