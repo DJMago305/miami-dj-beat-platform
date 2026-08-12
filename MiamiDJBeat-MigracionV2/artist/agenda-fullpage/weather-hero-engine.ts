@@ -15,6 +15,7 @@ import { constellations, moonAltAz as moonAltAzRaw } from '../../shared/weather-
 
 export function initWeatherHeroEngine() {
   let disposed = false;
+  let rafId = null;   // tracked so dispose() can cancelAnimationFrame the in-flight frame, not just flip a flag
 
   // PREVIEW = true shows the dev controls (weather/time/date/scene/live). In the
   // real app set to false to hide them (users must not fake the weather).
@@ -427,12 +428,15 @@ export function initWeatherHeroEngine() {
   function sh(t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);
     if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))console.error(gl.getShaderInfoLog(o));return o;}
   const prog=gl.createProgram();
-  gl.attachShader(prog,sh(gl.VERTEX_SHADER,VERT));
-  gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,FRAG));
+  const vertShader=sh(gl.VERTEX_SHADER,VERT);
+  const fragShader=sh(gl.FRAGMENT_SHADER,FRAG);
+  gl.attachShader(prog,vertShader);
+  gl.attachShader(prog,fragShader);
   gl.linkProgram(prog);gl.useProgram(prog);
   const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
   const loc=gl.getAttribLocation(prog,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  const loseContextExt=gl.getExtension('WEBGL_lose_context');   // MOD-213 — WebGL resource governance: released in dispose()
   const U=n=>gl.getUniformLocation(prog,n);
   const uRes=U('uRes'),uTime=U('uTime'),uSun=U('uSun'),uAz=U('uAz'),uCloud=U('uCloud'),uStorm=U('uStorm'),uWind=U('uWind'),uScene=U('uScene');
   const uRain=U('uRain'),uSnow=U('uSnow'),uFog=U('uFog'),uFlash=U('uFlash');
@@ -610,6 +614,7 @@ export function initWeatherHeroEngine() {
   }
   let lastHourBucket=-1;
   function frame(now){
+    if(disposed) return;   // guard against a frame already in flight when dispose() ran
     const t=(now-t0)/1000;
     const dt=Math.min(0.05, Math.max(0.0, t-lastT)); lastT=t;
     const dayTgt=(dayFixed>=0.0)?dayFixed:((t/1200)+0.72)%1.0;   // cycle (~20 min) or a chosen fixed phase
@@ -686,16 +691,17 @@ export function initWeatherHeroEngine() {
     gl.uniform1f(uBoltSeed,boltSeed);
     gl.uniform1f(uScene, scene);       // 0 = sea (Miami bay), 1 = Miami downtown, 2 = mountains
     gl.drawArrays(gl.TRIANGLES,0,3);
-    if(!reduce && running) requestAnimationFrame(frame);
+    if(!reduce && running && !disposed) rafId=requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+  rafId=requestAnimationFrame(frame);
   // Pause the render loop while the tab/pane is hidden — saves battery/GPU. On
   // return, re-anchor lastT so dt stays clamped (no giant catch-up frame).
-  document.addEventListener('visibilitychange', ()=>{
+  function handleVisibilityChange(){
     if(document.hidden){ running=false; }
-    else if(!running){ running=true; lastT=(performance.now()-t0)/1000; requestAnimationFrame(frame); }
-  });
-  function tick(){ if(reduce) requestAnimationFrame(frame); }   // repaint once in reduced-motion
+    else if(!running && !disposed){ running=true; lastT=(performance.now()-t0)/1000; rafId=requestAnimationFrame(frame); }
+  }
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  function tick(){ if(reduce && !disposed) rafId=requestAnimationFrame(frame); }   // repaint once in reduced-motion
   document.querySelectorAll('#scenes button').forEach(function(b){
     b.addEventListener('click',function(){
       document.querySelectorAll('#scenes button').forEach(function(x){x.classList.remove('on')});
@@ -735,10 +741,25 @@ export function initWeatherHeroEngine() {
     sl.addEventListener('input',upd); upd();
   })();
 
+  // MOD-213 — WebGL resource governance: stop the render loop, release every
+  // GPU-side allocation, and drop the global listeners this engine owns, so
+  // an unmount/refresh of the Agenda tab can't leave an orphaned WebGL
+  // context (VRAM growth, WindowServer hangs on macOS, and eventually
+  // "Cannot read properties of null (reading 'createProgram')" once the
+  // browser's live-context limit is hit).
   function dispose() {
+    if (disposed) return;
     disposed = true;
     running = false;
+    if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+    if (liveTimer) { clearInterval(liveTimer); liveTimer = null; }
     removeEventListener('resize', resize);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    gl.deleteBuffer(buf);
+    gl.deleteShader(vertShader);
+    gl.deleteShader(fragShader);
+    gl.deleteProgram(prog);
+    if (loseContextExt) loseContextExt.loseContext();
   }
   return dispose;
 }
