@@ -6,6 +6,7 @@ import { MDJ_V1_ASSET_BASE } from '../shared/branding/mount-v1-site-header';
 import { getLabPortalIdentity } from '../shared/branding/lab-portal-identity-ssot';
 import { STAFF_LEADS } from './dashboard-mvp-data';
 import type { StaffDashboardDataProvider } from './data/staff-dashboard-data-provider';
+import { wireStaffSidebarRouter } from './tabs/staff-tab-controller';
 
 export type StaffV1LayoutOptions = {
   readonly photoUrl?: string | null;
@@ -165,7 +166,7 @@ export function buildStaffV1OpsLayout(
   sidebar.innerHTML = `
     <a href="#profile" class="side-link side-link--staff-settings" style="display:flex;align-items:center;gap:9px;">Perfil</a>
     <div class="sidebar-group-label">Clientes</div>
-    <a href="#leads" class="side-link active" style="display:flex;align-items:center;gap:9px;">Leads</a>
+    <a href="#leads" class="side-link" style="display:flex;align-items:center;gap:9px;">Leads</a>
     <a href="#actividad" class="side-link" style="display:flex;align-items:center;gap:9px;">Actividad</a>
     <a href="#crm" class="side-link" style="display:flex;align-items:center;gap:9px;">Base CRM</a>
     <div class="sidebar-group-label">Equipo</div>
@@ -173,73 +174,118 @@ export function buildStaffV1OpsLayout(
     <a href="#staff" class="side-link" style="display:flex;align-items:center;gap:9px;">Staff</a>
     <div class="sidebar-group-label">Operaciones</div>
     <a href="#writers" class="side-link" style="display:flex;align-items:center;gap:9px;">Writers · Pagos</a>
-    <a href="#production" class="side-link" style="display:flex;align-items:center;gap:9px;">Production</a>
+    <a href="#finance" class="side-link" style="display:flex;align-items:center;gap:9px;">Finanzas</a>
   `.trim();
 
   const content = document.createElement('section');
   content.className = 'content';
 
   content.append(buildOwnerHeroBanner(options));
-  content.append(buildLeadsTable(dataProvider));
 
+  /* MOD-208 — hash-router panels (Capitan, 2026-08-12), mirrors
+     ui-v1-clone/admin-dashboard.html's .side-link + hashchange pattern:
+     #profile  = staff identity (real) + operations-preview overview (legacy).
+     #leads    = "Solicitudes de Clientes" table (real, lab-mock labeled,
+                 per Capitan's explicit instruction) + leads-pipeline
+                 (legacy duplicate of the same pipelineLeads data, stays
+                 hidden as before).
+     #actividad = activity timeline (real-ish placeholder, unchanged).
+     #crm      = CRM snapshot (unchanged).
+     #djs      = "Gestión de DJs": master calendar (DJ scheduling, real) +
+                 matching queue (DJ↔client matching, legacy placeholder).
+                 Fixes the broken #djs sidebar link from the passive QA
+                 audit — previously had no matching panel at all.
+     #staff    = "Staff / Equipo": production tasks (event logistics, real,
+                 absorbs the old standalone #production link — same panel,
+                 no more duplicate anchor) + weather risk (legacy) + quick
+                 actions (legacy) + notifications (legacy). Fixes the
+                 broken #staff sidebar link.
+     #writers  = Payment Review & Artist Assignment forms (real, unchanged).
+     #finance  = NEW sidebar entry: master finance (real balance/matrix) +
+                 invoices queue (legacy) + reports preview (legacy) —
+                 "Matriz de pagos, facturación y resumen administrativo"
+                 had no dedicated panel before this round. */
+  const panels: Record<string, HTMLElement> = {};
+  const createPanel = (id: string): HTMLElement => {
+    const panel = document.createElement('section');
+    panel.className = 'mdj-staff-tab-panel';
+    panel.dataset.tabPanel = id;
+    panels[id] = panel;
+    return panel;
+  };
+
+  const profilePanel = createPanel('profile');
+  const profileSlot = createSectionSlot('staff-profile');
+  const opsPreview = createSectionSlot('operations-preview', true);
+  opsPreview.classList.add('mdj-v2-lab-legacy-mvp');
+  profilePanel.append(profileSlot, opsPreview);
+
+  const leadsPanel = createPanel('leads');
+  const leadsPipe = createSectionSlot('leads-pipeline', true);
+  leadsPipe.classList.add('mdj-v2-lab-legacy-mvp');
+  leadsPanel.append(buildLeadsTable(dataProvider), leadsPipe);
+
+  const actividadPanel = createPanel('actividad');
+  const activity = createSectionSlot('activity-timeline', true);
+  actividadPanel.append(activity);
+
+  const crmPanel = createPanel('crm');
+  const crm = createSectionSlot('crm-snapshot');
+  crmPanel.append(crm);
+
+  const djsPanel = createPanel('djs');
+  const cal = createSectionSlot('master-calendar', true);
+  const matching = createSectionSlot('matching-queue');
+  matching.classList.add('mdj-v2-lab-legacy-mvp');
+  djsPanel.append(cal, matching);
+
+  const staffPanel = createPanel('staff');
+  const production = createSectionSlot('production-tasks');
+  const weather = createSectionSlot('master-weather', true);
+  weather.classList.add('mdj-v2-lab-legacy-mvp');
+  const quick = createSectionSlot('quick-actions', true);
+  quick.classList.add('mdj-v2-lab-legacy-mvp');
+  const notif = createSectionSlot('notifications');
+  notif.classList.add('mdj-v2-lab-legacy-mvp');
+  staffPanel.append(production, weather, quick, notif);
+
+  const writersPanel = createPanel('writers');
   const mutationsCard = document.createElement('div');
   mutationsCard.className = 'admin-card mdj-v2-v1-ops-card';
-  mutationsCard.id = 'writers';
   const mutationsTitle = document.createElement('h3');
   mutationsTitle.className = 'mdj-v2-v1-ops-card__title';
   mutationsTitle.textContent = 'Writers · Payment Review & Artist Assignment';
   const mutationsHost = createSectionSlot('staff-mutations', true);
   mutationsHost.classList.add('mdj-v2-v1-mutations-slot');
   mutationsCard.append(mutationsTitle, mutationsHost);
-  content.append(mutationsCard);
+  writersPanel.append(mutationsCard);
 
-  const profileSlot = createSectionSlot('staff-profile');
-  profileSlot.id = 'profile';
-  content.append(profileSlot);
-
-  const opsPreview = createSectionSlot('operations-preview', true);
-  opsPreview.classList.add('mdj-v2-lab-legacy-mvp');
-  const quick = createSectionSlot('quick-actions', true);
-  quick.classList.add('mdj-v2-lab-legacy-mvp');
-  const cal = createSectionSlot('master-calendar', true);
+  const financePanel = createPanel('finance');
   const fin = createSectionSlot('master-finance', true);
-  const weather = createSectionSlot('master-weather', true);
-  weather.classList.add('mdj-v2-lab-legacy-mvp');
-  const leadsPipe = createSectionSlot('leads-pipeline', true);
-  leadsPipe.classList.add('mdj-v2-lab-legacy-mvp');
   const invoices = createSectionSlot('invoices-queue');
   invoices.classList.add('mdj-v2-lab-legacy-mvp');
-  const crm = createSectionSlot('crm-snapshot');
-  crm.id = 'crm';
-  const production = createSectionSlot('production-tasks');
-  production.id = 'production';
-  const matching = createSectionSlot('matching-queue');
-  matching.classList.add('mdj-v2-lab-legacy-mvp');
   const reports = createSectionSlot('reports-preview');
   reports.classList.add('mdj-v2-lab-legacy-mvp');
-  const notif = createSectionSlot('notifications');
-  notif.classList.add('mdj-v2-lab-legacy-mvp');
-  const activity = createSectionSlot('activity-timeline', true);
-  activity.id = 'actividad';
+  financePanel.append(fin, invoices, reports);
 
-  content.append(
-    opsPreview,
-    quick,
-    cal,
-    fin,
-    weather,
-    leadsPipe,
-    invoices,
-    crm,
-    production,
-    matching,
-    reports,
-    notif,
-    activity,
+  const panelsWrap = document.createElement('div');
+  panelsWrap.className = 'mdj-staff-tab-panels';
+  panelsWrap.append(
+    profilePanel,
+    leadsPanel,
+    actividadPanel,
+    crmPanel,
+    djsPanel,
+    staffPanel,
+    writersPanel,
+    financePanel,
   );
+  content.append(panelsWrap);
 
   grid.append(sidebar, content);
   root.append(grid);
+
+  wireStaffSidebarRouter(sidebar, panels, 'leads');
 
   return { root, content, mutationsHost };
 }

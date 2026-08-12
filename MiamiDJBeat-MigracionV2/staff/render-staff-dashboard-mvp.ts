@@ -416,7 +416,8 @@ export function renderStaffDashboardMvp(
   if (sessionWiring) {
     const sessionSection = createSessionWiringSection(sessionWiring);
     sessionSection.classList.add('mdj-v2-lab-legacy-mvp');
-    layout.content.append(sessionSection);
+    const profilePanel = layout.root.querySelector<HTMLElement>('[data-tab-panel="profile"]');
+    (profilePanel ?? layout.content).append(sessionSection);
   }
 
   mainRegion.append(legacyHero, legacyKpis, layout.root);
