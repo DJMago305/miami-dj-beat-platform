@@ -93,6 +93,20 @@ function renderFilterBar(
   return bar;
 }
 
+/**
+ * MOD-212 — `row.occurredAt` carries a raw ISO timestamp
+ * ("2026-08-01T12:00:00.000Z"); "When" was showing that string as-is
+ * instead of a readable date (visual audit finding, 2026-08-12). Same
+ * fix already applied to Client's "Paid at" in client-finance-read-view-model.ts.
+ */
+function formatDate(value: string): string {
+  const t = value.trim();
+  if (!t || t === '—') return t;
+  const parsed = new Date(t);
+  if (Number.isNaN(parsed.getTime())) return t;
+  return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 function renderRow(row: StaffFinanceReadViewModel['rows'][number]): HTMLElement {
   const article = document.createElement('article');
   article.className = 'mdj-staff-finance-read__row-card';
@@ -119,7 +133,7 @@ function renderRow(row: StaffFinanceReadViewModel['rows'][number]): HTMLElement 
     ['Client', row.clientLabel],
     ['Artist', row.artistLabel],
     ['Kind', row.kind],
-    ['When', row.occurredAt],
+    ['When', formatDate(row.occurredAt)],
     ['Reference', row.referenceLabel ?? '—'],
   ];
   for (const [label, value] of pairs) {

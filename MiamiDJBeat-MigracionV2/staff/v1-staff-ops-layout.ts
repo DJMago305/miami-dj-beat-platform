@@ -102,7 +102,15 @@ function buildOwnerHeroBanner(options?: StaffV1LayoutOptions): HTMLElement {
 
 function buildLeadsTable(dataProvider: StaffDashboardDataProvider): HTMLElement {
   const wrap = document.createElement('div');
-  wrap.id = 'leads';
+  /* MOD-212 — was `wrap.id = 'leads'`, a literal element id left over from
+     before the MOD-208 hash-router refactor. Since #leads is the router's
+     default panel, every fresh load also matched this id and triggered the
+     browser's native anchor-scroll to it, jump-scrolling the page ~150px
+     and cutting off the sidebar/hero (visual audit finding, 2026-08-12).
+     #djs/#staff/#finance never had a matching literal id, so they never
+     jumped — this made #leads the only inconsistent panel. Routing now
+     relies solely on `data-tab-panel="leads"` (staff-tab-controller.ts),
+     which was already the real navigation mechanism. */
   wrap.className = 'mdj-v2-leads-panel';
   wrap.style.display = 'block';
 
