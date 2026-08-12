@@ -48,7 +48,6 @@ describe('MOD-010 Client Dashboard MVP render', () => {
     expect(main.querySelector('[data-mdj-client-section="client-weather"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-component="ClientWeatherReadView"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-client-section="client-mutations"]')).not.toBeNull();
-    expect(main.querySelector('[data-mdj-client-section="upcoming-events"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-client-section="recent-orders"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-client-section="documents"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-client-section="vip-membership"]')).not.toBeNull();

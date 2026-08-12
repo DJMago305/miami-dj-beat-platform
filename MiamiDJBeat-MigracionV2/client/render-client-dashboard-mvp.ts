@@ -17,9 +17,9 @@ import {
   CLIENT_DASHBOARD_KPIS,
   CLIENT_DOCUMENTS,
   CLIENT_NOTIFICATIONS,
+  CLIENT_PENDING_PAYMENTS,
   CLIENT_QUICK_ACTIONS,
   CLIENT_RECENT_ORDERS,
-  CLIENT_UPCOMING_EVENTS,
   CLIENT_VIP,
 } from './dashboard-mvp-data';
 import { mountComponentDescriptor } from './mount-component-descriptor';
@@ -33,6 +33,10 @@ import {
   type ClientSessionWiringInjection,
 } from './session/client-session-wiring-pilot';
 import { applyV1BrandShell } from '../shared/branding/apply-v1-brand-shell';
+import {
+  createClientTabController,
+  wireClientTabController,
+} from './tabs/client-tab-controller';
 
 function resolveClientDashboardThemeBinding(): MdjThemeBinding {
   const tokens = getThemeDefinition('mdj-dark-gold')?.tokens;
@@ -123,48 +127,6 @@ function createQuickActionsSection(themeBinding: MdjThemeBinding): HTMLElement {
   return section;
 }
 
-function createUpcomingEventsSection(themeBinding: MdjThemeBinding): HTMLElement {
-  const section = document.createElement('section');
-  section.className = 'mdj-client-dashboard__section mdj-client-dashboard__section--wide';
-  section.dataset.mdjClientSection = 'upcoming-events';
-
-  const panel = mountComponentDescriptor(
-    createPanel({ title: 'Upcoming Events', variant: 'glass' }, themeBinding),
-  );
-  panel.classList.add('mdj-client-panel--timeline');
-
-  const timeline = document.createElement('div');
-  timeline.className = 'mdj-client-timeline';
-
-  for (const event of CLIENT_UPCOMING_EVENTS) {
-    const item = document.createElement('article');
-    item.className = 'mdj-client-timeline__item';
-
-    const date = document.createElement('p');
-    date.className = 'mdj-client-timeline__date';
-    date.textContent = event.date;
-
-    const title = document.createElement('h3');
-    title.className = 'mdj-client-timeline__title';
-    title.textContent = event.title;
-
-    const venue = document.createElement('p');
-    venue.className = 'mdj-client-timeline__meta';
-    venue.textContent = event.venue;
-
-    const status = document.createElement('span');
-    status.className = 'mdj-client-timeline__status';
-    status.textContent = event.status;
-
-    item.append(date, title, venue, status);
-    timeline.append(item);
-  }
-
-  panel.append(timeline);
-  section.append(panel);
-  return section;
-}
-
 function createRecentOrdersSection(themeBinding: MdjThemeBinding): HTMLElement {
   const section = document.createElement('section');
   section.className = 'mdj-client-dashboard__section';
@@ -228,6 +190,38 @@ function createDocumentsSection(themeBinding: MdjThemeBinding): HTMLElement {
   }
 
   section.append(list);
+  return section;
+}
+
+/**
+ * MOD-207 — Pagos y Finanzas tab: CLIENT_PENDING_PAYMENTS summary (balance
+ * due, next reminder, payment method). Previously only fed the Hero KPI
+ * strip's "Pending Payments" card with no section rendering the list itself.
+ */
+function createPendingPaymentsSection(themeBinding: MdjThemeBinding): HTMLElement {
+  const section = document.createElement('section');
+  section.className = 'mdj-client-dashboard__section';
+  section.dataset.mdjClientSection = 'pending-payments';
+
+  const panel = mountComponentDescriptor(
+    createPanel({ title: 'Pending Payments', variant: 'glass' }, themeBinding),
+  );
+
+  const list = document.createElement('dl');
+  list.className = 'mdj-client-summary-list';
+  for (const item of CLIENT_PENDING_PAYMENTS) {
+    const row = document.createElement('div');
+    row.className = 'mdj-client-summary-list__row';
+    const dt = document.createElement('dt');
+    dt.textContent = item.label;
+    const dd = document.createElement('dd');
+    dd.textContent = item.value;
+    row.append(dt, dd);
+    list.append(row);
+  }
+
+  panel.append(list);
+  section.append(panel);
   return section;
 }
 
@@ -344,6 +338,7 @@ export function renderClientDashboardMvp(
       themeBinding,
     ),
   );
+  hero.classList.add('mdj-client-dashboard__section--wide');
 
   const kpiGrid = mountComponentDescriptor(
     createDashboardCard({ variant: 'kpi-grid', region: 'kpis' }, themeBinding),
@@ -353,30 +348,65 @@ export function renderClientDashboardMvp(
       mountComponentDescriptor(createKpiCard(kpi, themeBinding)),
     ),
   );
+  kpiGrid.classList.add('mdj-client-dashboard__section--wide');
 
-  const contentGrid = document.createElement('div');
-  contentGrid.className = 'mdj-client-dashboard__grid';
-  const sections: HTMLElement[] = [];
+  /* MOD-207 — definitive tab distribution (Capitan, 2026-08-12), mirrors
+     ui-v1-clone/client-account.html's .ca-panel + .is-active pattern (same
+     mechanism already ported for Artist in MOD-206):
+     #overview = Hero + KPIs (SSOT) + real Profile/Contact/Config + VIP +
+                 Quick Actions + Notifications + Activity (account-level,
+                 not booking/finance-specific).
+     #bookings = real Bookings slice ("My Reservations & Event Flow") +
+                 CLIENT_RECENT_ORDERS + booking request/payment-proof forms
+                 + event Documents (contracts/riders/insurance) + event
+                 Weather — Weather/Documents placed here as the closest
+                 event-scoped fit (same reasoning as Agenda's Gig Weather
+                 Radar in MOD-206). Legacy "upcoming-events" section
+                 (CLIENT_UPCOMING_EVENTS timeline) REMOVED outright, not
+                 just hidden — fully superseded by the real Bookings slice,
+                 same pattern as "upcoming-gigs" in MOD-206 (Capitan,
+                 2026-08-12). CLIENT_UPCOMING_EVENTS itself stays — still
+                 feeds the Hero KPI strip's "Active Events" card.
+     #finance  = real Payment Receipts/balance slice + new
+                 Pending Payments summary (CLIENT_PENDING_PAYMENTS had no
+                 rendering section before this round — it only fed the KPI
+                 strip). */
+  const { tabBar, panels } = createClientTabController([
+    { id: 'overview', label: 'Perfil y Resumen' },
+    { id: 'bookings', label: 'Eventos y Reservas' },
+    { id: 'finance', label: 'Pagos y Finanzas' },
+  ]);
+
   if (sessionWiring) {
-    sections.push(createSessionWiringSection(sessionWiring));
+    panels.overview.append(createSessionWiringSection(sessionWiring));
   }
-  sections.push(
+  panels.overview.append(
+    hero,
+    kpiGrid,
     createClientProfileSection(),
-    createClientBookingsSection(),
-    createClientPaymentsSection(),
-    createClientWeatherSection(),
-    createClientMutationsSection(),
-    createQuickActionsSection(themeBinding),
-    createUpcomingEventsSection(themeBinding),
-    createRecentOrdersSection(themeBinding),
-    createDocumentsSection(themeBinding),
     createVipSection(themeBinding),
+    createQuickActionsSection(themeBinding),
     createNotificationsSection(themeBinding),
     createActivitySection(themeBinding),
   );
-  contentGrid.append(...sections);
 
-  mainRegion.append(hero, kpiGrid, contentGrid);
+  panels.bookings.append(
+    createClientBookingsSection(),
+    createRecentOrdersSection(themeBinding),
+    createClientMutationsSection(),
+    createClientWeatherSection(),
+    createDocumentsSection(themeBinding),
+  );
+
+  panels.finance.append(createClientPaymentsSection(), createPendingPaymentsSection(themeBinding));
+
+  const tabPanelsWrap = document.createElement('div');
+  tabPanelsWrap.className = 'mdj-client-tab-panels';
+  tabPanelsWrap.append(panels.overview, panels.bookings, panels.finance);
+
+  wireClientTabController(tabBar, panels);
+
+  mainRegion.append(tabBar, tabPanelsWrap);
   /* Priority 2 · Paso 1 — V1 master container + brand mark (visual only). */
   applyV1BrandShell(mainRegion, 'client');
   mountClientProfileReadSliceSync(mainRegion, undefined, sessionWiring);

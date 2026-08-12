@@ -8,9 +8,10 @@ test.describe('MOD-008 Portal Shell — client · artist · staff', () => {
     await expect(page.locator('[data-mdj-shell-region="sidebar"]')).toBeVisible();
     await expect(page.getByRole('heading', { name: /Your Miami DJ Beat Client Dashboard/i })).toBeVisible();
     await expect(page.locator('[data-mdj-client-section="quick-actions"]')).toBeVisible();
-    await expect(page.locator('[data-mdj-client-section="upcoming-events"]')).toBeVisible();
-    await expect(page.locator('[data-mdj-client-section="recent-orders"]')).toBeVisible();
     await expect(page.locator('[data-mdj-client-section="vip-membership"]')).toBeVisible();
+    // MOD-207 — Eventos y Reservas tab: hidden until switched to.
+    await page.locator('.mdj-client-tabs__btn[data-tab="bookings"]').click();
+    await expect(page.locator('[data-mdj-client-section="recent-orders"]')).toBeVisible();
     await expect(page.locator('[data-mdj-component="KpiCard"]')).toHaveCount(4);
     await expect(page.locator('[data-mdj-status="session"]')).toContainText('ready');
   });

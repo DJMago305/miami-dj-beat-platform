@@ -5,10 +5,45 @@
   gap: 1.15rem;
 }
 
-.mdj-client-dashboard__grid {
+.mdj-client-dashboard__grid,
+.mdj-client-tab-panel {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+}
+
+/* MOD-207 — tab system (hidden/.is-active), mirrors ui-v1-clone/
+   client-account.html's .ca-panel + .is-active and the Artist portal's
+   MOD-206 mechanism. */
+.mdj-client-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1.15rem;
+  border-bottom: 1px solid var(--mdj-shell-border);
+  padding-bottom: 0.75rem;
+}
+
+.mdj-client-tabs__btn {
+  background: transparent;
+  border: 1px solid var(--mdj-shell-border);
+  border-radius: 999px;
+  padding: 0.5rem 1.1rem;
+  color: var(--mdj-shell-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.mdj-client-tabs__btn.is-active {
+  background: var(--gold, #c5a059);
+  color: #1a1206;
+  border-color: transparent;
+}
+
+.mdj-client-tab-panel[hidden] {
+  display: none;
 }
 
 .mdj-client-dashboard__section {
@@ -220,7 +255,8 @@
 }
 
 @media (max-width: 1100px) {
-  .mdj-client-dashboard__grid {
+  .mdj-client-dashboard__grid,
+  .mdj-client-tab-panel {
     grid-template-columns: 1fr;
   }
 
