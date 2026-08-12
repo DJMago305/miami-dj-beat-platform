@@ -129,7 +129,7 @@ function createQuickActionsSection(themeBinding: MdjThemeBinding): HTMLElement {
 
 function createRecentOrdersSection(themeBinding: MdjThemeBinding): HTMLElement {
   const section = document.createElement('section');
-  section.className = 'mdj-client-dashboard__section';
+  section.className = 'mdj-client-dashboard__section mdj-client-dashboard__section--wide';
   section.dataset.mdjClientSection = 'recent-orders';
 
   const panel = mountComponentDescriptor(
@@ -170,7 +170,7 @@ function createRecentOrdersSection(themeBinding: MdjThemeBinding): HTMLElement {
 
 function createDocumentsSection(themeBinding: MdjThemeBinding): HTMLElement {
   const section = document.createElement('section');
-  section.className = 'mdj-client-dashboard__section';
+  section.className = 'mdj-client-dashboard__section mdj-client-dashboard__section--wide';
   section.dataset.mdjClientSection = 'documents';
 
   section.append(
@@ -230,13 +230,19 @@ function createVipSection(themeBinding: MdjThemeBinding): HTMLElement {
   section.className = 'mdj-client-dashboard__section';
   section.dataset.mdjClientSection = 'vip-membership';
 
+  /* MOD-211 — was hardcoded 'Premium' regardless of actual VIP status,
+     contradicting "Cliente regular" clients with no active membership
+     (visual audit finding, 2026-08-12). Derives from the same SSOT status
+     the rest of the card already uses. */
+  const vipTag = CLIENT_VIP.status === 'vip' ? 'VIP' : 'STANDARD';
+
   section.append(
     mountComponentDescriptor(
       createModuleCard(
         {
           title: CLIENT_VIP.tier,
           description: `${CLIENT_VIP.perks}. ${CLIENT_VIP.renewal}.`,
-          tag: 'Premium',
+          tag: vipTag,
         },
         themeBinding,
       ),
@@ -390,6 +396,10 @@ export function renderClientDashboardMvp(
     createActivitySection(themeBinding),
   );
 
+  /* MOD-211 — Recent Orders and Documents were the only two non-`--wide`
+     (half-width) sections in this panel, each landing alone in its own
+     grid row with the other half empty (visual audit finding,
+     2026-08-12). Both now carry `--wide` like every other section here. */
   panels.bookings.append(
     createClientBookingsSection(),
     createRecentOrdersSection(themeBinding),

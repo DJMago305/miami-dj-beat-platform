@@ -82,6 +82,7 @@ export const CLIENT_ACTIVITY = Object.freeze([
 
 export const CLIENT_VIP = Object.freeze({
   tier: realClientProfileVm.vipLabel,
+  status: realClientProfileVm.vipStatus,
   perks:
     realClientProfileVm.vipStatus === 'vip'
       ? 'Priority booking · Exclusive discounts · Dedicated concierge'

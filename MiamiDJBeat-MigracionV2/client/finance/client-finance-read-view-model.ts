@@ -54,6 +54,19 @@ function display(value: string | null | undefined, fallback = '—'): string {
   return t.length > 0 ? t : fallback;
 }
 
+/**
+ * MOD-211 — `receipt.issuedAt` is a full ISO timestamp
+ * ("2026-08-01T12:00:00.000Z"); "Paid at" was showing that raw string
+ * instead of a readable date (visual audit finding, 2026-08-12).
+ */
+function formatDate(value: string | null | undefined, fallback = '—'): string {
+  const t = typeof value === 'string' ? value.trim() : '';
+  if (!t) return fallback;
+  const parsed = new Date(t);
+  if (Number.isNaN(parsed.getTime())) return t;
+  return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 function money(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return '—';
   return `$${n.toFixed(2)}`;
@@ -113,7 +126,7 @@ export function toClientReceiptCard(
     amountDueLabel: due == null ? '—' : money(due),
     method: receipt.method,
     transactionStatus: receipt.transactionStatus,
-    paidAt: display(receipt.issuedAt),
+    paidAt: formatDate(receipt.issuedAt),
     referenceLabel: maskPaymentReference(receipt.referenceLabel),
     previewLabel: 'Receipt preview (read-only) — PDF download not enabled in this slice',
     breakdownLabel: breakdown,
