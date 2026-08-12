@@ -1,12 +1,5 @@
 /** MOD-010 Client Dashboard — placeholder data — TICKET-MOD-010-CLIENT-DASHBOARD-MVP-001 */
 
-export const CLIENT_DASHBOARD_KPIS = Object.freeze([
-  { label: 'Active Events', value: '2', hint: 'Next event in 12 days' },
-  { label: 'Open Orders', value: '4', hint: '2 awaiting confirmation' },
-  { label: 'Pending Payments', value: '$1,240', hint: '1 invoice due soon' },
-  { label: 'VIP Status', value: 'Gold', hint: 'Member since 2024' },
-] as const);
-
 export const CLIENT_QUICK_ACTIONS = Object.freeze([
   'Request DJ',
   'Create Event',
@@ -71,3 +64,34 @@ export const CLIENT_VIP = Object.freeze({
   perks: 'Priority booking · Exclusive discounts · Dedicated concierge',
   renewal: 'Renews Jan 2027',
 } as const);
+
+/**
+ * Hero KPI strip, derived from the fixture arrays above instead of a second,
+ * independent set of hardcoded numbers — so the Hero can never silently
+ * drift out of sync with the sections it summarizes (audit finding,
+ * 2026-08-12: the previous static CLIENT_DASHBOARD_KPIS didn't even agree
+ * with CLIENT_RECENT_ORDERS's own length). Still lab-mock, same as every
+ * other fixture in this file — just computed from one source, not two.
+ */
+export const CLIENT_DASHBOARD_KPIS = Object.freeze([
+  {
+    label: 'Active Events',
+    value: String(CLIENT_UPCOMING_EVENTS.length),
+    hint: `${CLIENT_UPCOMING_EVENTS.filter((e) => e.status === 'Confirmed').length} confirmed`,
+  },
+  {
+    label: 'Open Orders',
+    value: String(CLIENT_RECENT_ORDERS.length),
+    hint: `${CLIENT_RECENT_ORDERS.filter((o) => o.status !== 'Completed').length} need action`,
+  },
+  {
+    label: 'Pending Payments',
+    value: CLIENT_PENDING_PAYMENTS.find((p) => p.label === 'Balance due')?.value ?? '—',
+    hint: `Next reminder: ${CLIENT_PENDING_PAYMENTS.find((p) => p.label === 'Next auto-reminder')?.value ?? '—'}`,
+  },
+  {
+    label: 'VIP Status',
+    value: CLIENT_VIP.tier.replace(/^VIP\s+/, ''),
+    hint: CLIENT_VIP.renewal,
+  },
+] as const);

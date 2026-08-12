@@ -336,7 +336,7 @@ export function renderClientDashboardMvp(
   const hero = mountComponentDescriptor(
     createHeroBanner(
       {
-        eyebrow: 'Welcome back',
+        eyebrow: 'Welcome back · lab mock / client portal overview',
         title: 'Your Miami DJ Beat Client Dashboard',
         subtitle:
           'Plan unforgettable events, track orders, manage payments, and access VIP benefits — all in one place.',
