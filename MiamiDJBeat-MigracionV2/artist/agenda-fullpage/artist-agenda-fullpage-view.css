@@ -214,21 +214,29 @@ body.mdj-v2-lab .mdj-weather-hero-engine .rail {
   flex-direction: column;
   gap: 15px;
 }
-body.mdj-v2-lab .mdj-weather-hero-engine .brand {
+/* MOD-210 — was plain `.brand`, colliding with the global unscoped
+   `.brand::before` rule (site header logo swatch: 82x82px gold circle,
+   sized down to 42px only when scoped under #mainHeader). This engine's
+   `.brand` isn't inside #mainHeader, so it inherited the un-scoped 82px
+   gold `::before` at `top:50%` of its own box — landing as a floating
+   gold square partway down the rail (root cause of the visual-audit
+   finding, 2026-08-12). Renamed instead of touching the shared header
+   rule, which is correct and used elsewhere across the real site. */
+body.mdj-v2-lab .mdj-weather-hero-engine .mdj-weather-hero-engine__brand {
   display: flex;
   flex-direction: column;
   padding: 0 4px;
   line-height: 1;
 }
-body.mdj-v2-lab .mdj-weather-hero-engine .brand b {
+body.mdj-v2-lab .mdj-weather-hero-engine .mdj-weather-hero-engine__brand b {
   font-size: 21px;
   font-weight: 800;
 }
-body.mdj-v2-lab .mdj-weather-hero-engine .brand b i {
+body.mdj-v2-lab .mdj-weather-hero-engine .mdj-weather-hero-engine__brand b i {
   color: var(--cool);
   font-style: normal;
 }
-body.mdj-v2-lab .mdj-weather-hero-engine .brand span {
+body.mdj-v2-lab .mdj-weather-hero-engine .mdj-weather-hero-engine__brand span {
   font-size: 11px;
   letter-spacing: 0.32em;
   color: var(--ink-soft);

@@ -47,7 +47,7 @@ function createHero(): HTMLElement {
     <div class="exp">
       <div class="date"><span class="dow" id="d-dow"></span><span class="num" id="d-num"></span><span class="my" id="d-my"></span></div>
       <aside class="rail">
-        <div class="brand"><b>MIAMI <i>DJ</i> BEAT</b><span>CLIMA EN VIVO · 3D</span></div>
+        <div class="mdj-weather-hero-engine__brand"><b>MIAMI <i>DJ</i> BEAT</b><span>CLIMA EN VIVO · 3D</span></div>
         <div class="panel glass">
           <h2>MEDICIONES ACTUALES</h2>
           <ul class="rows" id="metrics"></ul>
