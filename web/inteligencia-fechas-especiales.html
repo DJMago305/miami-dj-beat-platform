@@ -6,7 +6,7 @@
     --line:rgba(232,198,106,0.16); --line-soft:rgba(255,255,255,0.06);
     --text:#ece7db; --soft:#b7b0a0; --mute:#7d786a;
     --gold:#e8c66a; --gold-deep:#c9a24a; --gold-soft:#f2e0a6;
-    --plat:#d3dae9; --standard:#8b8778; --rose:#e6b8c4; --good:#57d6a8; --warn:#f0a85a;
+    --plat:#d3dae9; --standard:#8b8778; --good:#57d6a8;
     --gold-grad:linear-gradient(135deg,#f2e0a6,#e8c66a 45%,#c9a24a);
     --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
     --sans:"Helvetica Neue",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -17,7 +17,6 @@
     background-image:radial-gradient(ellipse 60% 40% at 80% -5%,rgba(232,198,106,0.10),transparent 55%),radial-gradient(ellipse 50% 40% at 0% 100%,rgba(232,198,106,0.05),transparent 55%);}
   .wrap{max-width:1240px;margin:0 auto;padding:clamp(16px,3vw,40px);}
 
-  /* header */
   .head{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between;padding-bottom:18px;border-bottom:1px solid var(--line);}
   .brand{display:flex;align-items:center;gap:14px;}
   .crest{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:var(--gold-grad);color:#1a1204;box-shadow:0 8px 30px -10px rgba(232,198,106,0.5);}
@@ -26,7 +25,7 @@
   h1 .g{background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
   .toggles{display:flex;flex-wrap:wrap;gap:8px;}
   .tg{display:inline-flex;align-items:center;gap:9px;cursor:pointer;user-select:none;font-size:12.5px;color:var(--soft);
-    padding:8px 13px;border:1px solid var(--line-soft);border-radius:999px;background:var(--panel);transition:.2s;}
+    padding:8px 13px;border:1px solid var(--line-soft);border-radius:999px;background:var(--panel);transition:.2s;font-family:var(--sans);}
   .tg:hover{border-color:var(--line);}
   .tg .sw{width:34px;height:19px;border-radius:999px;background:var(--raise);position:relative;transition:.2s;flex:none;}
   .tg .sw::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:var(--mute);transition:.2s;}
@@ -34,8 +33,9 @@
   .tg[aria-pressed="true"] .sw{background:color-mix(in srgb,var(--gold) 40%,transparent);}
   .tg[aria-pressed="true"] .sw::after{transform:translateX(15px);background:var(--gold);}
   .tg .dot{width:8px;height:8px;border-radius:2px;}
+  .tg.action{color:var(--text);border-color:var(--line);background:var(--panel-2);font-weight:600;}
+  .tg.action:hover{border-color:var(--gold);color:var(--gold);}
 
-  /* layout */
   .grid{display:grid;grid-template-columns:1.55fr 1fr;gap:20px;margin-top:22px;align-items:start;}
   @media (max-width:900px){.grid{grid-template-columns:1fr;}}
   .card{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line-soft);border-radius:18px;box-shadow:0 24px 60px -40px #000;}
@@ -48,7 +48,6 @@
   .navm button:hover{border-color:var(--line);color:var(--gold);}
   .navm .m{font-family:var(--serif);font-size:16px;min-width:150px;text-align:center;}
 
-  /* month grid */
   .dow{display:grid;grid-template-columns:repeat(7,1fr);padding:0 10px;}
   .dow span{padding:6px;font-size:10.5px;color:var(--mute);text-transform:uppercase;letter-spacing:.12em;text-align:center;}
   .weeks{display:grid;grid-template-rows:repeat(6,minmax(74px,1fr));padding:0 10px 12px;}
@@ -65,7 +64,6 @@
   .chip.sp{background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--gold-soft);}
   .chip.sp.plat{background:color-mix(in srgb,var(--plat) 12%,transparent);color:var(--plat);}
 
-  /* aside widgets */
   .aside{display:flex;flex-direction:column;gap:20px;}
   .mile{display:flex;flex-direction:column;gap:8px;padding:6px 14px 16px;max-height:360px;overflow-y:auto;}
   .m-row{display:grid;grid-template-columns:44px 1fr auto;gap:11px;align-items:center;padding:10px;border:1px solid var(--line-soft);border-radius:12px;background:var(--panel-2);cursor:pointer;transition:.15s;}
@@ -82,7 +80,6 @@
   .tier.Standard{background:rgba(255,255,255,0.06);color:var(--soft);}
   .tier.Staff{background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good);}
 
-  /* trigger panel */
   .trg{padding:6px 14px 16px;display:flex;flex-direction:column;gap:10px;}
   .trow{border:1px solid var(--line-soft);border-radius:12px;padding:11px 12px;background:var(--panel-2);}
   .trow .th{display:flex;align-items:center;gap:8px;justify-content:space-between;}
@@ -100,10 +97,9 @@
   .foot{margin-top:22px;padding-top:16px;border-top:1px solid var(--line-soft);font-family:var(--mono);font-size:11px;color:var(--mute);line-height:1.7;}
   .foot b{color:var(--soft);}
 
-  /* modal */
   .overlay{position:fixed;inset:0;z-index:50;background:rgba(4,5,8,0.72);backdrop-filter:blur(7px);display:grid;place-items:center;padding:20px;opacity:0;pointer-events:none;transition:.22s;}
   .overlay.on{opacity:1;pointer-events:auto;}
-  .modal{max-width:440px;width:100%;background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:20px;padding:24px;transform:scale(.96) translateY(8px);transition:.22s;box-shadow:0 40px 90px -30px #000;}
+  .modal{max-width:460px;width:100%;background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:20px;padding:24px;transform:scale(.96) translateY(8px);transition:.22s;box-shadow:0 40px 90px -30px #000;max-height:88vh;overflow-y:auto;}
   .overlay.on .modal{transform:none;}
   .modal .x{float:right;border:none;background:transparent;color:var(--mute);font-size:20px;cursor:pointer;line-height:1;}
   .modal .mbadge{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;font-size:26px;background:var(--raise);border:1px solid var(--line);}
@@ -118,7 +114,18 @@
   .modal .mact .act{justify-content:center;padding:11px;font-size:13px;}
   .modal .primary{background:var(--gold-grad);color:#1a1204;border:none;}
   .modal .primary:hover{filter:brightness(1.05);color:#1a1204;}
+  .modal .edit{background:transparent;border:1px solid var(--line);color:var(--soft);margin-top:2px;}
+  .modal .edit:hover{border-color:var(--gold);color:var(--gold);}
   .simnote{font-family:var(--mono);font-size:10px;color:var(--mute);text-align:center;margin-top:12px;}
+
+  .form{display:flex;flex-direction:column;gap:12px;margin-top:6px;}
+  .form .fr{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .form label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mute);font-family:var(--mono);display:block;margin-bottom:5px;}
+  .form input,.form select{width:100%;padding:9px 11px;border-radius:10px;border:1px solid var(--line-soft);background:var(--panel-2);color:var(--text);font-size:13px;font-family:var(--sans);}
+  .form input:focus,.form select:focus{outline:none;border-color:var(--gold);}
+  .form .save{background:var(--gold-grad);color:#1a1204;border:none;font-weight:700;padding:12px;border-radius:11px;cursor:pointer;font-size:14px;font-family:var(--sans);margin-top:4px;}
+
+  [data-cid]:focus-visible,.act:focus-visible,.tg:focus-visible,.navm button:focus-visible,.modal .x:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:8px;}
   @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
 </style>
 
@@ -135,6 +142,8 @@
       <button class="tg" data-layer="gigs" aria-pressed="true"><span class="sw"></span><span class="dot" style="background:var(--soft)"></span>Eventos / Gigs</button>
       <button class="tg" data-layer="vip" aria-pressed="true"><span class="sw"></span><span class="dot" style="background:var(--gold)"></span>Cumpleaños & Aniversarios VIP</button>
       <button class="tg" data-layer="staff" aria-pressed="true"><span class="sw"></span><span class="dot" style="background:var(--good)"></span>Fechas de Staff / Internas</button>
+      <button class="tg action" id="btnNew">＋ Nuevo perfil</button>
+      <button class="tg action" id="btnReset">↺ Reiniciar demo</button>
     </div>
   </header>
 
@@ -165,8 +174,8 @@
   </div>
 
   <div class="foot">
-    <b>Arquitectura por capas</b> · Capa 1 CRM (fechas fijas) → <b>DateEngine</b> proyecta ocurrencias recurrentes (edad/aniversario en vivo, bisiestos: 29-feb → 28-feb en año no bisiesto) → <b>NotificationEngine</b> programa 7 días / 1 día 9:00 / mismo día 8:00.<br>
-    Prototipo · las acciones (WhatsApp/SMS · Email · Descuento VIP) son <b>simuladas</b>: el envío real es backend con revisión de privacidad y credenciales, nunca desde el frontend.
+    <b>Arquitectura por capas</b> · Capa 1 CRM (fechas fijas, editable) → <b>DateEngine</b> proyecta ocurrencias recurrentes (edad/aniversario en vivo, bisiestos: 29-feb → 28-feb en año no bisiesto) → <b>NotificationEngine</b> programa 7 días / 1 día 9:00 / mismo día 8:00.<br>
+    Prototipo · datos guardados en tu navegador. Las acciones abren un <b>borrador</b> (WhatsApp/SMS/Email) que TÚ envías; el descuento VIP es simulado. El envío automático real y la fidelización viven en backend, nunca en el frontend.
   </div>
 </div>
 
@@ -174,43 +183,36 @@
 
 <script>
 "use strict";
-/* ══════════ Capa 1 · CRM (SSOT de fechas fijas) ══════════ */
 var TODAY=new Date();TODAY.setHours(0,0,0,0);
 function pad(n){return(n<10?"0":"")+n;}
-function offset(n){var d=new Date(TODAY);d.setDate(d.getDate()+n);return d;}      // fecha hoy+n
-function md(n,year){var d=offset(n);return year+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());} // 'YYYY-MM-DD'
+function offset(n){var d=new Date(TODAY);d.setDate(d.getDate()+n);return d;}
+function md(n,year){var d=offset(n);return year+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
 
-var CRM=[
-  {id:"wendy", name:"Wendy Castellanos", kind:"client", vip_tier:"Platinum", channel:"WhatsApp",
-    birth_date:md(2,1990), anniversary_date:md(12,2019), anniversary_type:"Boda"},
-  {id:"vantage", name:"Grupo Vantage", kind:"client", vip_tier:"Platinum", channel:"Email",
-    birth_date:null, anniversary_date:md(6,2021), anniversary_type:"Corporativo"},
-  {id:"paula", name:"Paula Duarte", kind:"client", vip_tier:"Platinum", channel:"WhatsApp",
-    birth_date:md(0,1992), anniversary_date:null, anniversary_type:null},
-  {id:"carlos", name:"Carlos Mendoza", kind:"client", vip_tier:"Gold", channel:"SMS",
-    birth_date:md(4,1986), anniversary_date:null, anniversary_type:null},
-  {id:"renata", name:"Renata Cano", kind:"client", vip_tier:"Gold", channel:"WhatsApp",
-    birth_date:md(20,1991), anniversary_date:md(9,2016), anniversary_type:"Boda"},
-  {id:"marcax", name:"Lanzamiento Marca X", kind:"client", vip_tier:"Gold", channel:"Email",
-    birth_date:null, anniversary_date:md(15,2023), anniversary_type:"Lanzamiento"},
-  {id:"sofia", name:"Sofía Marín", kind:"client", vip_tier:"Standard", channel:"Email",
-    birth_date:md(7,1994), anniversary_date:null, anniversary_type:null},
-  {id:"diego", name:"Diego Salas", kind:"client", vip_tier:"Standard", channel:"SMS",
-    birth_date:md(26,1996), anniversary_date:null, anniversary_type:null},
-  {id:"luna", name:"DJ Luna (Staff)", kind:"staff", vip_tier:null, channel:"WhatsApp",
-    birth_date:md(3,1993), anniversary_date:md(18,2022), anniversary_type:"Contratación"},
-  {id:"andres", name:"Andrés Vidal (Staff)", kind:"staff", vip_tier:null, channel:"WhatsApp",
-    birth_date:md(11,1990), anniversary_date:null, anniversary_type:null}
-];
+/* ══ Persistencia local (Capa 1 editable + estado de acciones) ══ */
+var STORE_CRM="fe_crm_v1", STORE_SENT="fe_sent_v1";
+function seedCRM(){ return [
+  {id:"wendy", name:"Wendy Castellanos", kind:"client", vip_tier:"Platinum", channel:"WhatsApp", birth_date:md(2,1990), anniversary_date:md(12,2019), anniversary_type:"Boda"},
+  {id:"vantage", name:"Grupo Vantage", kind:"client", vip_tier:"Platinum", channel:"Email", birth_date:null, anniversary_date:md(6,2021), anniversary_type:"Corporativo"},
+  {id:"paula", name:"Paula Duarte", kind:"client", vip_tier:"Platinum", channel:"WhatsApp", birth_date:md(0,1992), anniversary_date:null, anniversary_type:null},
+  {id:"carlos", name:"Carlos Mendoza", kind:"client", vip_tier:"Gold", channel:"SMS", birth_date:md(4,1986), anniversary_date:null, anniversary_type:null},
+  {id:"renata", name:"Renata Cano", kind:"client", vip_tier:"Gold", channel:"WhatsApp", birth_date:md(20,1991), anniversary_date:md(9,2016), anniversary_type:"Boda"},
+  {id:"marcax", name:"Lanzamiento Marca X", kind:"client", vip_tier:"Gold", channel:"Email", birth_date:null, anniversary_date:md(15,2023), anniversary_type:"Lanzamiento"},
+  {id:"sofia", name:"Sofía Marín", kind:"client", vip_tier:"Standard", channel:"Email", birth_date:md(7,1994), anniversary_date:null, anniversary_type:null},
+  {id:"diego", name:"Diego Salas", kind:"client", vip_tier:"Standard", channel:"SMS", birth_date:md(26,1996), anniversary_date:null, anniversary_type:null},
+  {id:"luna", name:"DJ Luna (Staff)", kind:"staff", vip_tier:null, channel:"WhatsApp", birth_date:md(3,1993), anniversary_date:md(18,2022), anniversary_type:"Contratación"},
+  {id:"andres", name:"Andrés Vidal (Staff)", kind:"staff", vip_tier:null, channel:"WhatsApp", birth_date:md(11,1990), anniversary_date:null, anniversary_type:null}
+];}
+function loadCRM(){ try{var s=localStorage.getItem(STORE_CRM);if(s)return JSON.parse(s);}catch(e){} var c=seedCRM();try{localStorage.setItem(STORE_CRM,JSON.stringify(c));}catch(e){} return c; }
+function saveCRM(){ try{localStorage.setItem(STORE_CRM,JSON.stringify(CRM));}catch(e){} }
+function loadSent(){ try{var s=localStorage.getItem(STORE_SENT);if(s)return JSON.parse(s);}catch(e){} return {}; }
+function saveSent(){ try{localStorage.setItem(STORE_SENT,JSON.stringify(state.sent));}catch(e){} }
+var CRM=loadCRM();
+function findContact(id){for(var i=0;i<CRM.length;i++)if(CRM[i].id===id)return CRM[i];return null;}
 
-/* ══════════ Capa 2 · Gigs / Agenda ══════════ */
-var BOOKINGS=[
-  {title:"Gig — Rooftop Wynwood", date:md(3,2026)},
-  {title:"Montaje — Space Miami", date:md(8,2026)},
-  {title:"Gig — Nikki Beach", date:md(14,2026)}
-];
+/* ══ Capa 2 · Gigs ══ */
+var BOOKINGS=[{title:"Gig — Rooftop Wynwood", date:md(3,2026)},{title:"Montaje — Space Miami", date:md(8,2026)},{title:"Gig — Nikki Beach", date:md(14,2026)}];
 
-/* ══════════ DateEngine · cálculo puro de fechas ══════════ */
+/* ══ DateEngine ══ */
 var DateEngine={
   isLeap:function(y){return (y%4===0 && y%100!==0) || (y%400===0);},
   parse:function(s){var p=s.split("-");return {y:+p[0],m:+p[1],d:+p[2]};},
@@ -220,28 +222,22 @@ var DateEngine={
   yearsAt:function(originStr,occ){return occ.getFullYear()-this.parse(originStr).y;}
 };
 
-/* ══════════ NotificationEngine · disparadores ══════════ */
+/* ══ NotificationEngine ══ */
 var NotificationEngine={
   triggersFor:function(occ){
     var t7=new Date(occ);t7.setDate(t7.getDate()-7);
     var t1=new Date(occ);t1.setDate(t1.getDate()-1);t1.setHours(9,0,0,0);
     var t0=new Date(occ);t0.setHours(8,0,0,0);
-    return [
-      {key:"7d",label:"7 días · aviso",at:t7},
-      {key:"1d",label:"1 día · 9:00",at:t1},
-      {key:"0d",label:"Hoy · 8:00",at:t0}
-    ];
+    return [{key:"7d",label:"7 días · aviso",at:t7},{key:"1d",label:"1 día · 9:00",at:t1},{key:"0d",label:"Hoy · 8:00",at:t0}];
   },
-  status:function(at){var now=new Date();return at<=now?"due":"pend";}
+  status:function(at){return at<=new Date()?"due":"pend";}
 };
 
-/* ══════════ LayerEngine · proyección dinámica de fechas especiales ══════════ */
+/* ══ LayerEngine ══ */
 var TIERW={Platinum:3,Gold:2,Standard:1};
 function badgeFor(type,anivType){ if(type==="cumple")return "🎂"; if(anivType==="Boda")return "💍"; return "🏆"; }
 function ordinal(n){return "#"+n;}
-
 var LayerEngine={
-  // proyecta todas las fechas especiales entre from y from+days
   projectRange:function(from,days){
     var out=[];var limit=new Date(from);limit.setDate(limit.getDate()+days);
     CRM.forEach(function(c){
@@ -249,69 +245,59 @@ var LayerEngine={
         var type=pair[0],dateStr=pair[1];if(!dateStr)return;
         var occ=DateEngine.next(dateStr,from);
         if(occ<=limit){
-          var num=DateEngine.yearsAt(dateStr,occ);
-          out.push({
-            contact:c,type:type,occ:occ,num:num,
-            days:DateEngine.daysUntil(occ,from),
-            badge:badgeFor(type,c.anniversary_type),
-            layer:c.kind==="staff"?"staff":"vip",
-            tierW:c.kind==="staff"?0:(TIERW[c.vip_tier]||0)
-          });
+          out.push({contact:c,type:type,occ:occ,num:DateEngine.yearsAt(dateStr,occ),days:DateEngine.daysUntil(occ,from),badge:badgeFor(type,c.anniversary_type),layer:c.kind==="staff"?"staff":"vip",tierW:c.kind==="staff"?0:(TIERW[c.vip_tier]||0)});
         }
       });
     });
     out.sort(function(a,b){ if(b.tierW!==a.tierW)return b.tierW-a.tierW; return a.days-b.days; });
     return out;
   },
-  // ocurrencias que caen en un mes calendario dado (para la grilla)
-  occurrencesInMonth:function(year,month){ // month 0-based
+  occurrencesInMonth:function(year,month){
     var res=[];
     CRM.forEach(function(c){
       [["cumple",c.birth_date],["aniversario",c.anniversary_date]].forEach(function(pair){
         var type=pair[0],dateStr=pair[1];if(!dateStr)return;
-        var o=DateEngine.parse(dateStr);
-        if(o.m-1!==month)return;
+        var o=DateEngine.parse(dateStr);if(o.m-1!==month)return;
         var day=o.d;if(o.m===2&&o.d===29&&!DateEngine.isLeap(year))day=28;
-        var occ=new Date(year,month,day);
-        res.push({day:day,contact:c,type:type,num:occ.getFullYear()-o.y,badge:badgeFor(type,c.anniversary_type),layer:c.kind==="staff"?"staff":"vip",tier:c.vip_tier});
+        res.push({day:day,contact:c,type:type,num:year-o.y,badge:badgeFor(type,c.anniversary_type),layer:c.kind==="staff"?"staff":"vip",tier:c.vip_tier});
       });
     });
     return res;
   }
 };
 
-/* ══════════ UI ══════════ */
+/* ══ UI ══ */
 var MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 var DOWL=["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
-var state={ month:new Date(TODAY.getFullYear(),TODAY.getMonth(),1), layers:{gigs:true,vip:true,staff:true}, sent:{} };
-
+var state={ month:new Date(TODAY.getFullYear(),TODAY.getMonth(),1), layers:{gigs:true,vip:true,staff:true}, sent:loadSent() };
 var $=function(id){return document.getElementById(id);};
-$("toggles").addEventListener("click",function(e){var b=e.target.closest(".tg");if(!b)return;var l=b.dataset.layer;state.layers[l]=!state.layers[l];b.setAttribute("aria-pressed",state.layers[l]);render();});
+
+$("toggles").addEventListener("click",function(e){var b=e.target.closest(".tg[data-layer]");if(!b)return;var l=b.dataset.layer;state.layers[l]=!state.layers[l];b.setAttribute("aria-pressed",state.layers[l]);render();});
 $("prev").onclick=function(){state.month=new Date(state.month.getFullYear(),state.month.getMonth()-1,1);render();};
 $("next").onclick=function(){state.month=new Date(state.month.getFullYear(),state.month.getMonth()+1,1);render();};
 $("today").onclick=function(){state.month=new Date(TODAY.getFullYear(),TODAY.getMonth(),1);render();};
+$("btnNew").onclick=function(){openForm(null);};
+$("btnReset").onclick=function(){ try{localStorage.removeItem(STORE_CRM);localStorage.removeItem(STORE_SENT);}catch(e){} CRM=seedCRM();saveCRM();state.sent={};saveSent();closeDetail();render(); };
+
+/* accesibilidad: Enter/Espacio en tarjetas clicables */
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"){closeDetail();return;}
+  if((e.key==="Enter"||e.key===" ")){var t=e.target;if(t&&t.dataset&&t.dataset.cid&&(t.classList.contains("chip")||t.classList.contains("m-row"))){e.preventDefault();t.click();}}
+});
 
 function fmtOcc(d){return d.getDate()+" "+MESES[d.getMonth()].slice(0,3).toLowerCase();}
 function relLabel(n){return n===0?"hoy":(n===1?"mañana":"en "+n+" d");}
-
-function render(){
-  renderCalendar();
-  renderMilestones();
-  renderTriggers();
-}
+function cleanName(n){return n.replace(/ \(Staff\)$/,"");}
+function render(){renderCalendar();renderMilestones();renderTriggers();}
 
 function renderCalendar(){
   var y=state.month.getFullYear(),m=state.month.getMonth();
   $("monthTitle").textContent=MESES[m]+" "+y;
   var dowH="";for(var i=0;i<7;i++)dowH+="<span>"+DOWL[i]+"</span>";$("dow").innerHTML=dowH;
   var first=new Date(y,m,1),lead=first.getDay();
-  // índice de especiales por día
   var sp={};
   if(state.layers.vip||state.layers.staff){
-    LayerEngine.occurrencesInMonth(y,m).forEach(function(o){
-      if(o.layer==="vip"&&!state.layers.vip)return; if(o.layer==="staff"&&!state.layers.staff)return;
-      (sp[o.day]=sp[o.day]||[]).push(o);
-    });
+    LayerEngine.occurrencesInMonth(y,m).forEach(function(o){ if(o.layer==="vip"&&!state.layers.vip)return; if(o.layer==="staff"&&!state.layers.staff)return; (sp[o.day]=sp[o.day]||[]).push(o); });
   }
   var gigs={};
   if(state.layers.gigs){BOOKINGS.forEach(function(b){var p=b.date.split("-");if(+p[1]-1===m&&+p[0]===y)(gigs[+p[2]]=gigs[+p[2]]||[]).push(b);});}
@@ -325,11 +311,10 @@ function renderCalendar(){
         (gigs[day]||[]).forEach(function(g){h+='<div class="chip gig"><span class="sq"></span>'+g.title+'</div>';});
         (sp[day]||[]).forEach(function(o){
           var plat=o.tier==="Platinum"?" plat":"";
-          h+='<div class="chip sp'+plat+'" data-cid="'+o.contact.id+'" data-type="'+o.type+'"><span class="ic">'+o.badge+'</span>'+o.contact.name.replace(" (Staff)","")+' '+(o.type==="aniversario"?ordinal(o.num):o.num+"a")+'</div>';
+          h+='<div class="chip sp'+plat+'" tabindex="0" role="button" aria-label="'+cleanName(o.contact.name)+' '+o.type+'" data-cid="'+o.contact.id+'" data-type="'+o.type+'"><span class="ic">'+o.badge+'</span>'+cleanName(o.contact.name)+' '+(o.type==="aniversario"?ordinal(o.num):o.num+"a")+'</div>';
         });
       }
-      h+='</div>';
-      cur.setDate(cur.getDate()+1);
+      h+='</div>'; cur.setDate(cur.getDate()+1);
     } h+='</div>';
   }
   $("weeks").innerHTML=h;
@@ -345,8 +330,8 @@ function renderMilestones(){
     var tierCls=x.contact.kind==="staff"?"Staff":(x.contact.vip_tier||"Standard");
     var ring=x.tierW>=3?"plat":(x.tierW>=2?"gold":"");
     var label=x.type==="cumple"?("Cumpleaños · "+x.num+" años"):("Aniversario de "+(x.contact.anniversary_type||"cliente")+" "+ordinal(x.num));
-    h+='<div class="m-row '+ring+'" data-cid="'+x.contact.id+'" data-type="'+x.type+'"><div class="m-badge">'+x.badge+'</div>'
-      +'<div><div class="m-name">'+x.contact.name.replace(" (Staff)","")+'</div><div class="m-sub">'+label+' · '+x.contact.channel+'</div><div style="margin-top:5px"><span class="tier '+tierCls+'">'+tierCls+'</span></div></div>'
+    h+='<div class="m-row '+ring+'" tabindex="0" role="button" aria-label="'+cleanName(x.contact.name)+'" data-cid="'+x.contact.id+'" data-type="'+x.type+'"><div class="m-badge">'+x.badge+'</div>'
+      +'<div><div class="m-name">'+cleanName(x.contact.name)+'</div><div class="m-sub">'+label+' · '+x.contact.channel+'</div><div style="margin-top:5px"><span class="tier '+tierCls+'">'+tierCls+'</span></div></div>'
       +'<div class="m-when"><b>'+fmtOcc(x.occ)+'</b><span>'+relLabel(x.days)+'</span></div></div>';
   });
   $("mile").innerHTML=h;
@@ -360,62 +345,97 @@ function renderTriggers(){
   all.forEach(function(x){
     var trg=NotificationEngine.triggersFor(x.occ);
     var steps=trg.map(function(t){return '<span class="step '+(NotificationEngine.status(t.at)==="due"?"due":"")+'">'+t.label+'</span>';}).join("");
-    h+='<div class="trow"><div class="th"><b>'+x.badge+' '+x.contact.name.replace(" (Staff)","")+'</b><span class="tier '+(x.contact.kind==="staff"?"Staff":(x.contact.vip_tier||"Standard"))+'">'+relLabel(x.days)+'</span></div>'
-      +'<div class="steps">'+steps+'</div>'
-      +'<div class="actions">'+actionButtons(x,"trg")+'</div></div>';
+    h+='<div class="trow"><div class="th"><b>'+x.badge+' '+cleanName(x.contact.name)+'</b><span class="tier '+(x.contact.kind==="staff"?"Staff":(x.contact.vip_tier||"Standard"))+'">'+relLabel(x.days)+'</span></div><div class="steps">'+steps+'</div><div class="actions">'+actionButtons(x,"trg")+'</div></div>';
   });
   $("trg").innerHTML=h;
   wireActions($("trg"));
 }
 
+/* acciones: abren un borrador (wa.me/sms/mailto) — el usuario envía */
+function draftUrl(kind,x){
+  var c=x.contact,name=cleanName(c.name),isC=x.type==="cumple";
+  var origin=isC?c.birth_date:c.anniversary_date;
+  var num=DateEngine.yearsAt(origin,DateEngine.next(origin,TODAY));
+  var msg=isC?("¡Feliz cumpleaños, "+name+"! 🎂 De parte de todo el equipo de Miami DJ Beat, te deseamos un día increíble.")
+             :("¡Feliz aniversario, "+name+"! 🥂 Gracias por "+num+" año"+(num>1?"s":"")+" de confianza con Miami DJ Beat.");
+  if(kind==="mail"){var subj=isC?("Feliz cumpleaños "+name):("Feliz aniversario "+name);return "mailto:?subject="+encodeURIComponent(subj)+"&body="+encodeURIComponent(msg);}
+  if(c.channel==="SMS")return "sms:?&body="+encodeURIComponent(msg);
+  return "https://wa.me/?text="+encodeURIComponent(msg);
+}
+function openDraft(url){var a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener";document.body.appendChild(a);a.click();a.remove();}
+
 function actionButtons(x,scope){
-  var id=scope+"_"+x.contact.id+"_"+x.type;
-  var chan=x.contact.channel==="Email"?"📧 Email":("💬 "+x.contact.channel);
-  var s=state.sent[id]||{};
-  return '<button class="act msg'+(s.msg?" done":"")+'" data-a="msg" data-id="'+id+'" data-chan="'+x.contact.channel+'">'+(s.msg?"✓ Enviado":chan)+'</button>'
-    + (x.contact.channel==="Email"?"":'<button class="act mail'+(s.mail?" done":"")+'" data-a="mail" data-id="'+id+'">'+(s.mail?"✓ Correo":"📧 Correo")+'</button>')
-    + (x.contact.kind==="staff"?"":'<button class="act gift'+(s.gift?" done":"")+'" data-a="gift" data-id="'+id+'">'+(s.gift?"✓ Descuento VIP":"🎁 Descuento VIP")+'</button>');
+  var c=x.contact,id=scope+"_"+c.id+"_"+x.type,s=state.sent[id]||{};
+  var chanLabel=c.channel==="Email"?"📧 Email":("💬 "+c.channel);
+  var common='data-cid="'+c.id+'" data-type="'+x.type+'" data-id="'+id+'"';
+  var out='<button class="act'+(scope==="modal"?" primary":"")+' msg'+(s.msg?" done":"")+'" '+common+' data-a="msg">'+(s.msg?"✓ Borrador abierto":chanLabel)+'</button>';
+  if(c.channel!=="Email") out+='<button class="act mail'+(s.mail?" done":"")+'" '+common+' data-a="mail">'+(s.mail?"✓ Correo":"📧 Correo")+'</button>';
+  if(c.kind!=="staff") out+='<button class="act gift'+(s.gift?" done":"")+'" '+common+' data-a="gift">'+(s.gift?"✓ Descuento VIP":"🎁 Descuento VIP")+'</button>';
+  return out;
 }
 function wireActions(root){
   root.querySelectorAll(".act").forEach(function(b){
     if(b.classList.contains("done"))return;
     b.onclick=function(){
-      var id=b.dataset.id,a=b.dataset.a;state.sent[id]=state.sent[id]||{};state.sent[id][a]=true;
-      b.classList.add("done");
-      b.textContent = a==="msg"?"✓ Enviado":(a==="mail"?"✓ Correo":"✓ Descuento VIP");
+      var id=b.dataset.id,a=b.dataset.a,c=findContact(b.dataset.cid);var x={contact:c,type:b.dataset.type};
+      if(a==="gift"){ b.textContent="✓ VIP-"+Math.random().toString(36).slice(2,6).toUpperCase(); }
+      else { openDraft(draftUrl(a,x)); b.textContent = a==="msg"?"✓ Borrador abierto":"✓ Correo"; }
+      b.classList.add("done"); state.sent[id]=state.sent[id]||{}; state.sent[id][a]=true; saveSent();
     };
   });
 }
 
-/* modal detalle */
+/* modal detalle / formulario */
 var overlay=$("overlay"),modal=$("modal");
 overlay.addEventListener("click",function(e){if(e.target===overlay)closeDetail();});
-document.addEventListener("keydown",function(e){if(e.key==="Escape")closeDetail();});
 function closeDetail(){overlay.classList.remove("on");}
 
 function openDetail(cid,type){
-  var c=null;for(var i=0;i<CRM.length;i++)if(CRM[i].id===cid){c=CRM[i];break;}if(!c)return;
-  var dateStr=type==="cumple"?c.birth_date:c.anniversary_date;
-  var occ=DateEngine.next(dateStr,TODAY);var num=DateEngine.yearsAt(dateStr,occ);var days=DateEngine.daysUntil(occ,TODAY);
+  var c=findContact(cid);if(!c)return;
+  var dateStr=type==="cumple"?c.birth_date:c.anniversary_date;if(!dateStr)return;
+  var occ=DateEngine.next(dateStr,TODAY),num=DateEngine.yearsAt(dateStr,occ),days=DateEngine.daysUntil(occ,TODAY);
   var badge=badgeFor(type,c.anniversary_type);
   var typeLabel=type==="cumple"?"Cumpleaños":("Aniversario de "+(c.anniversary_type||"cliente"));
   var numLabel=type==="cumple"?(num+" años"):ordinal(num);
   var tierCls=c.kind==="staff"?"Staff":(c.vip_tier||"Standard");
-  var x={contact:c,type:type};
-  var h='<button class="x" id="mx">×</button><div class="mbadge">'+badge+'</div>'
-    +'<h3>'+c.name.replace(" (Staff)","")+'</h3><div class="mtype">'+typeLabel+' · <span class="tier '+tierCls+'">'+tierCls+'</span></div>'
+  var h='<button class="x" id="mx" aria-label="Cerrar">×</button><div class="mbadge">'+badge+'</div>'
+    +'<h3>'+cleanName(c.name)+'</h3><div class="mtype">'+typeLabel+' · <span class="tier '+tierCls+'">'+tierCls+'</span></div>'
     +'<div class="mgrid">'
       +'<div class="mfield"><div class="k">'+(type==="cumple"?"Edad":"Aniversario")+'</div><div class="v big">'+numLabel+'</div></div>'
       +'<div class="mfield"><div class="k">Fecha</div><div class="v">'+fmtOcc(occ)+' · '+relLabel(days)+'</div></div>'
       +'<div class="mfield"><div class="k">Canal preferido</div><div class="v">'+c.channel+'</div></div>'
       +'<div class="mfield"><div class="k">Registro (SSOT)</div><div class="v" style="font-family:var(--mono);font-size:12px">'+dateStr+'</div></div>'
     +'</div>'
-    +'<div class="mact">'+actionButtons(x,"modal").replace(/class="act /g,'class="act ').replace('class="act msg','class="act primary msg')+'</div>'
-    +'<div class="simnote">Acciones simuladas · el envío real se ejecuta en backend</div>';
-  modal.innerHTML=h;
-  $("mx").onclick=closeDetail;
-  wireActions(modal);
-  overlay.classList.add("on");
+    +'<div class="mact">'+actionButtons({contact:c,type:type},"modal")+'<button class="act edit" id="mEdit">✎ Editar perfil</button></div>'
+    +'<div class="simnote">Las acciones abren un borrador que tú envías · el descuento VIP es simulado</div>';
+  modal.innerHTML=h;$("mx").onclick=closeDetail;$("mEdit").onclick=function(){openForm(c);};
+  wireActions(modal);overlay.classList.add("on");
+}
+
+function openForm(c){
+  var isNew=!c; c=c||{id:null,name:"",kind:"client",vip_tier:"Standard",channel:"WhatsApp",birth_date:"",anniversary_date:"",anniversary_type:"Boda"};
+  function opt(v,cur){return '<option'+(v===cur?" selected":"")+'>'+v+'</option>';}
+  var h='<button class="x" id="mx" aria-label="Cerrar">×</button><div class="mbadge">👤</div><h3>'+(isNew?"Nuevo perfil":"Editar perfil")+'</h3>'
+    +'<div class="mtype">Capa 1 · SSOT de fechas fijas</div>'
+    +'<div class="form">'
+      +'<div><label>Nombre</label><input id="f_name" value="'+(c.name||"").replace(/"/g,"&quot;")+'" placeholder="Nombre y apellido"></div>'
+      +'<div class="fr"><div><label>Tipo</label><select id="f_kind"><option value="client"'+(c.kind==="client"?" selected":"")+'>Cliente</option><option value="staff"'+(c.kind==="staff"?" selected":"")+'>Staff</option></select></div>'
+        +'<div><label>Nivel VIP</label><select id="f_tier">'+opt("Platinum",c.vip_tier)+opt("Gold",c.vip_tier)+opt("Standard",c.vip_tier)+'</select></div></div>'
+      +'<div class="fr"><div><label>Canal</label><select id="f_chan">'+opt("WhatsApp",c.channel)+opt("SMS",c.channel)+opt("Email",c.channel)+'</select></div>'
+        +'<div><label>Tipo aniversario</label><select id="f_atype">'+opt("Boda",c.anniversary_type)+opt("Corporativo",c.anniversary_type)+opt("Lanzamiento",c.anniversary_type)+opt("Contratación",c.anniversary_type)+'</select></div></div>'
+      +'<div class="fr"><div><label>Cumpleaños</label><input id="f_bday" type="date" value="'+(c.birth_date||"")+'"></div>'
+        +'<div><label>Aniversario</label><input id="f_aday" type="date" value="'+(c.anniversary_date||"")+'"></div></div>'
+      +'<button class="save" id="f_save">'+(isNew?"Crear perfil":"Guardar cambios")+'</button>'
+    +'</div>';
+  modal.innerHTML=h;$("mx").onclick=closeDetail;overlay.classList.add("on");
+  $("f_save").onclick=function(){
+    var name=$("f_name").value.trim();if(!name){$("f_name").focus();return;}
+    var rec={ id:c.id||("c"+Date.now()), name:name, kind:$("f_kind").value, vip_tier:$("f_kind").value==="staff"?null:$("f_tier").value,
+      channel:$("f_chan").value, birth_date:$("f_bday").value||null, anniversary_date:$("f_aday").value||null,
+      anniversary_type:$("f_aday").value?$("f_atype").value:null };
+    if(c.id){ for(var i=0;i<CRM.length;i++)if(CRM[i].id===c.id){CRM[i]=rec;break;} } else { CRM.push(rec); }
+    saveCRM();closeDetail();render();
+  };
 }
 
 render();
