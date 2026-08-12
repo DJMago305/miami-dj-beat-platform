@@ -47,7 +47,7 @@ describe('MOD-204 Slice 1 — renderArtistProfileReadView', () => {
     document.body.innerHTML = '<div id="host"></div>';
   });
 
-  it('renders header, bio, residency, and media sections (no Legal Identity — owner-only, lives in Config)', () => {
+  it('renders header, residency, and media sections (no Legal Identity or Bio — owner-private data lives in Config, Bio moved to its own V1-structure card)', () => {
     const host = document.querySelector<HTMLElement>('#host');
     expect(host).not.toBeNull();
     if (!host) return;
@@ -59,7 +59,7 @@ describe('MOD-204 Slice 1 — renderArtistProfileReadView', () => {
     expect(root?.getAttribute('data-mdj-mod')).toBe('MOD-204');
     expect(host.querySelector('[data-mdj-artist-profile-section="header"]')).not.toBeNull();
     expect(host.querySelector('[data-mdj-artist-profile-section="private-identity"]')).toBeNull();
-    expect(host.querySelector('[data-mdj-artist-profile-section="bio"]')).not.toBeNull();
+    expect(host.querySelector('[data-mdj-artist-profile-section="bio"]')).toBeNull();
     expect(host.querySelector('[data-mdj-artist-profile-section="residency"]')).not.toBeNull();
     expect(host.querySelector('[data-mdj-artist-profile-section="media"]')).not.toBeNull();
     expect(host.querySelector('[data-mdj-artist-tier="Pro"]')?.textContent).toBe('Pro');

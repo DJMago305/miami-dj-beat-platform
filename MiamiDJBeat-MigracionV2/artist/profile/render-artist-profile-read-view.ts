@@ -91,32 +91,6 @@ function renderHeader(vm: ArtistProfileReadViewModel, sourceLabel: string): HTML
   return header;
 }
 
-function renderBio(vm: ArtistProfileReadViewModel): HTMLElement {
-  const section = createSection('Bio', 'bio');
-  if (!vm.bioPrimary && !vm.bioShort && !vm.bioLong && !vm.bioEn) {
-    appendEmptyHint(section, 'No bio on file.');
-    return section;
-  }
-
-  if (vm.bioPrimary) {
-    const primary = document.createElement('p');
-    primary.className = 'mdj-artist-profile-read__bio-primary';
-    primary.textContent = vm.bioPrimary;
-    section.append(primary);
-  }
-
-  const list = document.createElement('dl');
-  list.className = 'mdj-artist-profile-read__list';
-  if (vm.bioShort && vm.bioShort !== vm.bioPrimary) {
-    list.append(createSummaryRow('Short', vm.bioShort));
-  }
-  if (vm.bioLong && vm.bioLong !== vm.bioPrimary) {
-    list.append(createSummaryRow('Long', vm.bioLong));
-  }
-  if (list.childElementCount > 0) section.append(list);
-  return section;
-}
-
 function renderResidency(vm: ArtistProfileReadViewModel): HTMLElement {
   const section = createSection('Residency', 'residency');
   const list = document.createElement('dl');
@@ -192,6 +166,9 @@ function renderMedia(vm: ArtistProfileReadViewModel): HTMLElement {
  * No Legal Identity section (full name / email) — that's owner-only account
  * data, edited exclusively in the Config tab (PO decision, 2026-08-12); it
  * was never public and doesn't belong in this public press-kit view.
+ * No Bio here either (MOD-217, 2026-08-12) — Bio is now its own standalone
+ * V1-structure card (renderArtistBioCard in render-artist-profile-v1-extras.ts),
+ * matching ui-v1-clone/dj-profile.html's separate collapsible .pub-bio-card.
  */
 export function renderArtistProfileReadView(
   container: HTMLElement,
@@ -207,12 +184,7 @@ export function renderArtistProfileReadView(
   root.dataset.mdjMod = 'MOD-204';
   root.setAttribute('aria-label', 'Artist profile read view');
 
-  root.append(
-    renderHeader(vm, sourceLabel),
-    renderBio(vm),
-    renderResidency(vm),
-    renderMedia(vm),
-  );
+  root.append(renderHeader(vm, sourceLabel), renderResidency(vm), renderMedia(vm));
 
   for (const el of root.querySelectorAll('form, button[type="submit"], input, textarea, select')) {
     el.remove();

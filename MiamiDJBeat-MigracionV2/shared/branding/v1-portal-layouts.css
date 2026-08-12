@@ -240,45 +240,22 @@ body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-social-icon--copied {
   color: #0a1a10;
 }
 
-/* MOD-206 — real tab system (display/hidden toggle), mirrors
+/* MOD-206 — real panel system (display/hidden toggle), mirrors
    ui-v1-clone/dj-profile.html's .dj-panel + switchProfileTab() pattern. */
 
-/* MOD-209 — tab bar + Vista Personal/Pública switch share one row, switch
-   pushed to the far right (Capitan correction, 2026-08-12) — was its own
-   stacked row inside #profile before. */
+/* MOD-216 — no button-bar here anymore (PO correction, 2026-08-12: it
+   duplicated #owner-tabs up top, "colapsando" the system with the same
+   destinations twice). This row now carries only the Vista Personal/
+   Pública switch, right-aligned under the hero. */
 body.mdj-v2-lab .mdj-artist-tabs-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 0.75rem;
   margin: 1rem 0 1.25rem;
   border-bottom: 1px solid rgba(197, 160, 89, 0.2);
   padding-bottom: 0.75rem;
-}
-
-body.mdj-v2-lab .mdj-artist-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-body.mdj-v2-lab .mdj-artist-tabs__btn {
-  background: transparent;
-  border: 1px solid rgba(197, 160, 89, 0.3);
-  border-radius: 999px;
-  padding: 0.5rem 1.1rem;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.82rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-}
-
-body.mdj-v2-lab .mdj-artist-tabs__btn.is-active {
-  background: var(--gold, #c5a059);
-  color: #1a1206;
-  border-color: transparent;
 }
 
 body.mdj-v2-lab .mdj-artist-tab-panel[hidden] {

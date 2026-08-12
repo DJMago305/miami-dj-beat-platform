@@ -30,6 +30,9 @@ import './session/artist-session-wiring-pilot.css';
 import './mutations/artist-mutations-view.css';
 import './agenda-fullpage/artist-agenda-fullpage-view.css';
 import './config/artist-config-form.css';
+/* MOD-217 — real V1 reviews-carousel styling (ui-v1-clone/profile.css), artist-only. */
+import '../ui-v1-clone/profile.css';
+import './profile/artist-profile-v1-extras.css';
 
 function main(): void {
   applyV1LabDocumentClasses('artist');

@@ -5,10 +5,7 @@
 
 import { MDJ_V1_ASSET_BASE } from '../shared/branding/mount-v1-site-header';
 import { getLabPortalIdentity } from '../shared/branding/lab-portal-identity-ssot';
-import {
-  createArtistTabController,
-  wireArtistTabController,
-} from './tabs/artist-tab-controller';
+import { createArtistTabController } from './tabs/artist-tab-controller';
 import {
   createArtistViewModeToggle,
   wireArtistViewModeToggle,
@@ -23,6 +20,12 @@ import type { ArtistSocialLinksDTO } from '../shared/services/profiles/index';
 import type { ArtistTier } from '../shared/permissions/runtime/types';
 import { artistLabProfileStore } from './profile/artist-lab-profile-store';
 import { renderArtistConfigForm } from './config/render-artist-config-form';
+import {
+  renderArtistBioCard,
+  renderArtistReviewsCard,
+  renderArtistAvailabilityCard,
+  renderArtistInteractCard,
+} from './profile/render-artist-profile-v1-extras';
 
 export type ArtistV1LayoutOptions = {
   readonly profile?: {
@@ -44,7 +47,7 @@ export type ArtistV1LayoutSlots = {
   readonly root: HTMLElement;
   readonly hero: HTMLElement;
   readonly mainCol: HTMLElement;
-  /** MOD-206 — the 3-tab bar + panels wrapper (Mi Perfil / Agenda · Gigs / Ingresos · Wallet). */
+  /** MOD-216 — the 4 content panels wrapper (Mi Perfil / Agenda · Gigs / Ingresos · Wallet / Config), switched by the top #owner-tabs strip — no button row of its own. */
   readonly tabPanelsWrap: HTMLElement;
   readonly mutationsHost: HTMLElement;
 };
@@ -127,8 +130,8 @@ export function mountArtistOwnerTabs(): HTMLElement {
     <a href="#agenda-fullpage" class="dj-tab-btn" data-i18n="dash-your-profile" data-mdj-agenda-fullpage-link="1">Agenda</a>
     <a href="#config" class="dj-tab-btn" data-i18n="nav-settings" data-mdj-config-tab-link="1">⚙️ CONFIG</a>
     <a href="${MDJ_V1_ASSET_BASE}/dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-tools">DJ Tools</a>
-    <a href="${MDJ_V1_ASSET_BASE}/dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="flow-dash">Cash Flow</a>
-    <a href="/artist/" class="dj-tab-btn active" data-i18n="menu-account">Mi Perfil</a>
+    <a href="#wallet" class="dj-tab-btn" data-i18n="flow-dash" data-mdj-wallet-tab-link="1">Cash Flow</a>
+    <a href="/artist/" class="dj-tab-btn active" data-i18n="menu-account" data-mdj-profile-tab-link="1">Mi Perfil</a>
     <a href="/staff/" class="dj-tab-btn" data-mdj-nav="staff">STAFF</a>
     <a href="${MDJ_V1_ASSET_BASE}/dj-profile.html?tab=sft&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-soundfortips">SoundForTips™</a>
   `.trim();
@@ -267,8 +270,15 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
                 stage name / city / role tag / social links live here, not
                 inline in the read-only Mi Perfil view — writes go to
                 artistLabProfileStore, which the Hero + Mi Perfil both
-                subscribe to. */
-  const { tabBar, panels } = createArtistTabController([
+                subscribe to.
+     MOD-216 — no second tab-button row (PO correction, 2026-08-12): the
+     top #owner-tabs strip is the artist page's ONLY tab bar. A separate
+     row here duplicated destinations already in #owner-tabs (Agenda,
+     CONFIG, Mi Perfil) — createArtistTabController still builds these 4
+     `panels` (content + hidden-attribute switching), but its `tabBar` is
+     discarded; wireArtistOwnerTabsPanelSwitch (render-artist-dashboard-mvp.ts)
+     drives visibility directly from #owner-tabs' own links instead. */
+  const { panels } = createArtistTabController([
     { id: 'profile', label: 'Mi Perfil' },
     { id: 'agenda', label: 'Agenda · Gigs' },
     { id: 'wallet', label: 'Ingresos · Wallet' },
@@ -279,8 +289,8 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
      [data-mdj-profile-visibility="private-only"] (Legal identity), the
      Analytics section, and the SoundForTips payment-config link — see the
      [data-mdj-view-mode="public"] rules in v1-portal-layouts.css.
-     Positioned on the tab bar's own row, right-aligned (Capitan correction,
-     2026-08-12) — not stacked as its own row inside the #profile panel. */
+     Right-aligned in its own slim row under the hero (Capitan correction,
+     2026-08-12) — no longer paired with a tab-button bar, just this toggle. */
   const viewModeToggle = createArtistViewModeToggle();
   wireArtistViewModeToggle(viewModeToggle, panels.profile);
 
@@ -289,7 +299,15 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
   const songSlot = createSectionSlot('song4tips');
   const mediaSlot = createSectionSlot('media-library');
   const analyticsSlot = createSectionSlot('analytics');
-  panels.profile.append(profileSlot, mediaSlot, analyticsSlot, songSlot);
+  panels.profile.append(profileSlot);
+  /* MOD-217 — clon 1:1 de secciones reales de V1 (ui-v1-clone/dj-profile.html),
+     mismo orden de lectura: Opiniones justo después del info card, luego
+     Bio propia, Disponibilidad, e Interactuar/QR al final. */
+  renderArtistReviewsCard(panels.profile);
+  renderArtistBioCard(panels.profile);
+  renderArtistAvailabilityCard(panels.profile);
+  renderArtistInteractCard(panels.profile);
+  panels.profile.append(mediaSlot, analyticsSlot, songSlot);
 
   const mutationsCard = document.createElement('div');
   mutationsCard.className = 'dj-card mdj-v2-v1-ops-card';
@@ -325,11 +343,9 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
   tabPanelsWrap.className = 'mdj-artist-tab-panels';
   tabPanelsWrap.append(panels.profile, panels.agenda, panels.wallet, panels.config);
 
-  wireArtistTabController(tabBar, panels);
-
   const tabsRow = document.createElement('div');
   tabsRow.className = 'mdj-artist-tabs-row';
-  tabsRow.append(tabBar, viewModeToggle.root);
+  tabsRow.append(viewModeToggle.root);
 
   root.append(hero, tabsRow, tabPanelsWrap, body);
 

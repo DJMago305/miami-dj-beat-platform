@@ -252,48 +252,54 @@ function createActivitySection(themeBinding: MdjThemeBinding): HTMLElement {
   return section;
 }
 
-/**
- * MOD-206 — the top "Agenda" nav link used to anchor-scroll straight to
- * #agenda-fullpage; that target now lives inside the hidden-by-default
- * "Agenda · Gigs" tab panel, so the link must switch tabs first, then scroll.
- */
-function wireAgendaFullpageNavLink(layoutRoot: HTMLElement): void {
-  const link = document.querySelector<HTMLAnchorElement>('[data-mdj-agenda-fullpage-link="1"]');
-  if (!link) return;
-
-  link.addEventListener('click', (event) => {
-    event.preventDefault();
-    const tabButton = layoutRoot.querySelector<HTMLButtonElement>(
-      '.mdj-artist-tabs__btn[data-tab="agenda"]',
-    );
-    tabButton?.click();
-    document.getElementById('agenda-fullpage')?.scrollIntoView({ behavior: 'smooth' });
-  });
+/** MOD-216 — shows one [data-tab-panel] and hides the rest, no button-bar involved. */
+function showArtistPanel(layoutRoot: HTMLElement, panelId: string): void {
+  for (const panel of layoutRoot.querySelectorAll<HTMLElement>('[data-tab-panel]')) {
+    panel.hidden = panel.dataset.tabPanel !== panelId;
+  }
 }
 
 /**
- * MOD-215 — the top "⚙️ CONFIG" nav link used to redirect out to
- * /v1/account-settings.html; per PO architecture decision (progressive
- * per-portal migration, not a V1/V2 Big Bang merge), it now switches to the
- * native "#config" tab inside this same V2 SPA instead of leaving the page.
+ * MOD-216 — the artist page's ONLY tab bar is the top #owner-tabs strip
+ * (PO correction, 2026-08-12: a separate button row under the hero
+ * duplicated destinations already up there — Agenda, CONFIG, Mi Perfil —
+ * and "colapsaba" the system by showing the same thing twice). Clicking
+ * Mi Perfil / Agenda / Cash Flow / CONFIG up top now switches the panel
+ * below directly; Academia, Shop, DJ Tools, STAFF, SoundForTips stay as
+ * real links to their own separate V1 pages/portals.
  */
-function wireArtistConfigNavLink(layoutRoot: HTMLElement): void {
-  const link = document.querySelector<HTMLAnchorElement>('[data-mdj-config-tab-link="1"]');
-  if (!link) return;
+function wireArtistOwnerTabsPanelSwitch(layoutRoot: HTMLElement): void {
+  const ownerTabs = document.getElementById('owner-tabs');
+  if (!ownerTabs) return;
 
-  link.addEventListener('click', (event) => {
-    event.preventDefault();
-    const tabButton = layoutRoot.querySelector<HTMLButtonElement>(
-      '.mdj-artist-tabs__btn[data-tab="config"]',
-    );
-    tabButton?.click();
-    layoutRoot.querySelector('.mdj-artist-tab-panels')?.scrollIntoView({ behavior: 'smooth' });
-  });
+  const targets: ReadonlyArray<{ readonly linkSelector: string; readonly panelId: string }> = [
+    { linkSelector: '[data-mdj-profile-tab-link="1"]', panelId: 'profile' },
+    { linkSelector: '[data-mdj-agenda-fullpage-link="1"]', panelId: 'agenda' },
+    { linkSelector: '[data-mdj-wallet-tab-link="1"]', panelId: 'wallet' },
+    { linkSelector: '[data-mdj-config-tab-link="1"]', panelId: 'config' },
+  ];
+
+  for (const { linkSelector, panelId } of targets) {
+    const link = ownerTabs.querySelector<HTMLAnchorElement>(linkSelector);
+    if (!link) continue;
+
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      showArtistPanel(layoutRoot, panelId);
+      for (const btn of ownerTabs.querySelectorAll<HTMLAnchorElement>('.dj-tab-btn')) {
+        btn.classList.toggle('active', btn === link);
+      }
+      layoutRoot.querySelector('.mdj-artist-tab-panels')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
+  }
 }
 
 /**
  * INSTRUCCIÓN 2026-08-12 — SoundForTips™'s "Configurar Métodos de Pago"
- * button switches to the "#wallet" tab (real Cash Flow / Balance SSOT /
+ * button switches to the wallet panel (real Cash Flow / Balance SSOT /
  * Payment Config), since SoundForTips itself stays a #profile-scoped app
  * that only reads DJ payout-routing config, not a financial module.
  */
@@ -304,10 +310,12 @@ function wireSong4TipsPaymentConfigLink(layoutRoot: HTMLElement): void {
   if (!link) return;
 
   link.addEventListener('click', () => {
-    const tabButton = layoutRoot.querySelector<HTMLButtonElement>(
-      '.mdj-artist-tabs__btn[data-tab="wallet"]',
-    );
-    tabButton?.click();
+    showArtistPanel(layoutRoot, 'wallet');
+    const ownerTabs = document.getElementById('owner-tabs');
+    const cashFlowLink = ownerTabs?.querySelector<HTMLAnchorElement>('[data-mdj-wallet-tab-link="1"]');
+    for (const btn of ownerTabs?.querySelectorAll<HTMLAnchorElement>('.dj-tab-btn') ?? []) {
+      btn.classList.toggle('active', btn === cashFlowLink);
+    }
     layoutRoot.querySelector('[data-mdj-artist-section="artist-wallet"]')?.scrollIntoView({
       behavior: 'smooth',
     });
@@ -388,8 +396,7 @@ export function renderArtistDashboardMvp(
 
   mainRegion.append(legacyHero, legacyKpis, layout.root);
   applyV1BrandShell(mainRegion, 'artist');
-  wireAgendaFullpageNavLink(layout.root);
-  wireArtistConfigNavLink(layout.root);
+  wireArtistOwnerTabsPanelSwitch(layout.root);
   wireSong4TipsPaymentConfigLink(layout.root);
   mountArtistProfileReadSliceSync(mainRegion, undefined, sessionWiring);
   mountArtistScheduleReadSliceSync(mainRegion, undefined, sessionWiring);
