@@ -19,7 +19,7 @@ const SOCIAL_FIELDS: ReadonlyArray<{ readonly platform: ArtistSocialPlatform; re
   { platform: 'mixcloud', label: 'Mixcloud', placeholder: 'https://mixcloud.com/tu-usuario' },
 ];
 
-function field(name: string, label: string, input: HTMLInputElement): HTMLLabelElement {
+function field(name: string, label: string, input: HTMLInputElement | HTMLTextAreaElement): HTMLLabelElement {
   const wrap = document.createElement('label');
   wrap.className = 'mdj-artist-config-form__field';
   wrap.dataset.mdjField = name;
@@ -40,6 +40,16 @@ function textInput(name: string, value: string, opts?: { readonly type?: string;
   if (opts?.required) input.required = true;
   input.autocomplete = 'off';
   return input;
+}
+
+function textArea(name: string, value: string, opts?: { readonly placeholder?: string; readonly rows?: number }): HTMLTextAreaElement {
+  const textarea = document.createElement('textarea');
+  textarea.className = 'mdj-artist-config-form__input mdj-artist-config-form__textarea';
+  textarea.name = name;
+  textarea.value = value;
+  textarea.rows = opts?.rows ?? 3;
+  if (opts?.placeholder) textarea.placeholder = opts.placeholder;
+  return textarea;
 }
 
 function setFeedback(el: HTMLElement, kind: 'success' | 'idle', message: string): void {
@@ -69,6 +79,7 @@ export function renderArtistConfigForm(container: HTMLElement): void {
   const stageNameInput = textInput('stageName', state.stageName, { required: true });
   const cityInput = textInput('city', state.city);
   const roleTagInput = textInput('roleTag', state.roleTag, { placeholder: 'DJ · Producer' });
+  const bioInput = textArea('bio', state.bio, { placeholder: 'Cuéntale al público quién eres como artista…', rows: 4 });
 
   const socialFieldset = document.createElement('fieldset');
   socialFieldset.className = 'mdj-artist-config-form__social';
@@ -82,6 +93,24 @@ export function renderArtistConfigForm(container: HTMLElement): void {
     socialInputs.set(platform, input);
     socialFieldset.append(field(platform, label, input));
   }
+
+  /* MOD-215 — owner-only account data (PO decision, 2026-08-12): edited
+     exclusively here, never shown in the public "Mi Perfil" read view. */
+  const privateFieldset = document.createElement('fieldset');
+  privateFieldset.className = 'mdj-artist-config-form__social';
+  const privateLegend = document.createElement('legend');
+  privateLegend.textContent = 'Datos personales (privados)';
+  const privateNote = document.createElement('p');
+  privateNote.className = 'mdj-artist-config-form__note';
+  privateNote.textContent = 'Nunca se muestran en tu Mi Perfil público — solo tú los ves aquí.';
+  privateFieldset.append(privateLegend, privateNote);
+
+  const legalFullNameInput = textInput('legalFullName', state.legalFullName);
+  const emailInput = textInput('email', state.email, { type: 'email' });
+  privateFieldset.append(
+    field('legalFullName', 'Nombre legal', legalFullNameInput),
+    field('email', 'Email', emailInput),
+  );
 
   const actions = document.createElement('div');
   actions.className = 'mdj-artist-config-form__actions';
@@ -104,7 +133,9 @@ export function renderArtistConfigForm(container: HTMLElement): void {
     field('stageName', 'Nombre artístico', stageNameInput),
     field('city', 'Ciudad', cityInput),
     field('roleTag', 'Categoría / Rol', roleTagInput),
+    field('bio', 'Bio', bioInput),
     socialFieldset,
+    privateFieldset,
     actions,
   );
 
@@ -121,7 +152,10 @@ export function renderArtistConfigForm(container: HTMLElement): void {
       stageName: stageNameInput.value.trim() || state.stageName,
       city: cityInput.value.trim(),
       roleTag: roleTagInput.value.trim() || 'DJ · Producer',
+      bio: bioInput.value.trim(),
       socialLinks,
+      legalFullName: legalFullNameInput.value.trim(),
+      email: emailInput.value.trim(),
     });
 
     setFeedback(feedback, 'success', 'Guardado ✓');

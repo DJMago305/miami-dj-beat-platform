@@ -17,6 +17,10 @@ export type ArtistLabProfileState = {
   readonly city: string;
   readonly roleTag: string;
   readonly socialLinks: ArtistSocialLinksDTO;
+  readonly bio: string;
+  /** Owner-only account data — edited in Config, never displayed in "Mi Perfil" (PO decision, 2026-08-12). */
+  readonly legalFullName: string;
+  readonly email: string;
 };
 
 type ArtistLabProfileListener = (state: ArtistLabProfileState) => void;
@@ -51,6 +55,9 @@ const INITIAL_STATE: ArtistLabProfileState = Object.freeze({
   city: LAB_ARTIST_PROFILE_DJMAGO305.city ?? 'Miami',
   roleTag: 'DJ · Producer',
   socialLinks: LAB_ARTIST_PROFILE_DJMAGO305.socialLinks ?? EMPTY_SOCIAL_LINKS,
+  bio: LAB_ARTIST_PROFILE_DJMAGO305.bioEn ?? LAB_ARTIST_PROFILE_DJMAGO305.bio ?? '',
+  legalFullName: LAB_ARTIST_PROFILE_DJMAGO305.fullName ?? '',
+  email: LAB_ARTIST_PROFILE_DJMAGO305.email ?? '',
 });
 
 export const artistLabProfileStore = createArtistLabProfileStore(INITIAL_STATE);
@@ -64,5 +71,8 @@ export function buildEffectiveArtistProfile(): ArtistProfileReadDTO {
     djName: state.stageName,
     city: state.city,
     socialLinks: state.socialLinks,
+    bioEn: state.bio,
+    fullName: state.legalFullName,
+    email: state.email,
   });
 }

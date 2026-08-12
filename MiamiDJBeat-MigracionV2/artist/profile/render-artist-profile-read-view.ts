@@ -91,27 +91,6 @@ function renderHeader(vm: ArtistProfileReadViewModel, sourceLabel: string): HTML
   return header;
 }
 
-function renderPrivateIdentity(vm: ArtistProfileReadViewModel): HTMLElement {
-  const section = createSection('Legal identity (owner private)', 'private-identity');
-  /* MOD-209 — hidden by the artist-view-mode-toggle when switched to "Vista
-     Pública (Cliente)"; owner-only legal data was never meant for clients. */
-  section.dataset.mdjProfileVisibility = 'private-only';
-  const note = document.createElement('p');
-  note.className = 'mdj-artist-profile-read__pii-note';
-  note.textContent =
-    'Legal full name and email are owner-only. They are not public brand signals.';
-  section.append(note);
-
-  const list = document.createElement('dl');
-  list.className = 'mdj-artist-profile-read__list';
-  list.append(
-    createSummaryRow('Legal full name', vm.legalFullName ?? '—'),
-    createSummaryRow('Email', vm.emailPrivate ?? '—'),
-  );
-  section.append(list);
-  return section;
-}
-
 function renderBio(vm: ArtistProfileReadViewModel): HTMLElement {
   const section = createSection('Bio', 'bio');
   if (!vm.bioPrimary && !vm.bioShort && !vm.bioLong && !vm.bioEn) {
@@ -210,6 +189,9 @@ function renderMedia(vm: ArtistProfileReadViewModel): HTMLElement {
  * and name on screen (visual audit finding, 2026-08-12, fixed same day).
  * `renderHeader()` still carries the info the page-level hero doesn't show
  * (tier/category/SFT badges, handle, MDJB ID, Song4Tips booth status).
+ * No Legal Identity section (full name / email) — that's owner-only account
+ * data, edited exclusively in the Config tab (PO decision, 2026-08-12); it
+ * was never public and doesn't belong in this public press-kit view.
  */
 export function renderArtistProfileReadView(
   container: HTMLElement,
@@ -227,7 +209,6 @@ export function renderArtistProfileReadView(
 
   root.append(
     renderHeader(vm, sourceLabel),
-    renderPrivateIdentity(vm),
     renderBio(vm),
     renderResidency(vm),
     renderMedia(vm),

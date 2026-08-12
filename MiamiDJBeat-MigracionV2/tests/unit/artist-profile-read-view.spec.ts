@@ -47,7 +47,7 @@ describe('MOD-204 Slice 1 — renderArtistProfileReadView', () => {
     document.body.innerHTML = '<div id="host"></div>';
   });
 
-  it('renders header, private identity, bio, residency, and media sections', () => {
+  it('renders header, bio, residency, and media sections (no Legal Identity — owner-only, lives in Config)', () => {
     const host = document.querySelector<HTMLElement>('#host');
     expect(host).not.toBeNull();
     if (!host) return;
@@ -58,14 +58,14 @@ describe('MOD-204 Slice 1 — renderArtistProfileReadView', () => {
     expect(root).not.toBeNull();
     expect(root?.getAttribute('data-mdj-mod')).toBe('MOD-204');
     expect(host.querySelector('[data-mdj-artist-profile-section="header"]')).not.toBeNull();
-    expect(host.querySelector('[data-mdj-artist-profile-section="private-identity"]')).not.toBeNull();
+    expect(host.querySelector('[data-mdj-artist-profile-section="private-identity"]')).toBeNull();
     expect(host.querySelector('[data-mdj-artist-profile-section="bio"]')).not.toBeNull();
     expect(host.querySelector('[data-mdj-artist-profile-section="residency"]')).not.toBeNull();
     expect(host.querySelector('[data-mdj-artist-profile-section="media"]')).not.toBeNull();
     expect(host.querySelector('[data-mdj-artist-tier="Pro"]')?.textContent).toBe('Pro');
     expect(host.querySelector('[data-mdj-sft-gate="eligible"]')).not.toBeNull();
     expect(host.textContent).toContain('DJMago305');
-    expect(host.textContent).toContain('Gerardo A Valle');
+    expect(host.textContent).not.toContain('Gerardo A Valle');
     expect(host.textContent).toContain('Miami');
   });
 
