@@ -5,6 +5,10 @@
 
 import { MDJ_V1_ASSET_BASE } from '../shared/branding/mount-v1-site-header';
 import { getLabPortalIdentity } from '../shared/branding/lab-portal-identity-ssot';
+import {
+  createArtistTabController,
+  wireArtistTabController,
+} from './tabs/artist-tab-controller';
 
 export type ArtistV1LayoutOptions = {
   readonly profile?: {
@@ -18,7 +22,8 @@ export type ArtistV1LayoutSlots = {
   readonly root: HTMLElement;
   readonly hero: HTMLElement;
   readonly mainCol: HTMLElement;
-  readonly sideCol: HTMLElement;
+  /** MOD-206 — the 3-tab bar + panels wrapper (Mi Perfil / Agenda · Gigs / Ingresos · Wallet). */
+  readonly tabPanelsWrap: HTMLElement;
   readonly mutationsHost: HTMLElement;
 };
 
@@ -106,16 +111,10 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
   `.trim();
 
   const body = document.createElement('div');
-  body.className = 'dj-body';
+  body.className = 'dj-body dj-body--no-sidebar';
 
   const mainCol = document.createElement('div');
   mainCol.className = 'dj-main-col';
-
-  const sideCol = document.createElement('div');
-  sideCol.className = 'dj-side-col';
-  const sideStack = document.createElement('div');
-  sideStack.className = 'sidebar-stack';
-  sideCol.append(sideStack);
 
   const mutationsCard = document.createElement('div');
   mutationsCard.className = 'dj-card mdj-v2-v1-ops-card';
@@ -139,28 +138,55 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
   walletSlot.classList.add('mdj-v2-v1-ops-card');
   mainCol.append(walletSlot);
 
-  const profileSlot = createSectionSlot('artist-profile');
-  profileSlot.classList.add('owner-card');
-  sideStack.append(profileSlot);
-
+  /* Real slice (Gig Weather Radar, real per-gig risk/forecast/advice) — no
+     legacy-hide class. Was previously caught by the same generic hide
+     mechanism as the placeholder sections below; fixed 2026-08-12. */
   const weatherSlot = createSectionSlot('artist-weather', true);
-  weatherSlot.classList.add('mdj-v2-lab-legacy-mvp');
-  const songSlot = createSectionSlot('song4tips');
-  songSlot.classList.add('mdj-v2-lab-legacy-mvp');
   const jobsSlot = createSectionSlot('jobs-marketplace');
   jobsSlot.classList.add('mdj-v2-lab-legacy-mvp');
-  const mediaSlot = createSectionSlot('media-library');
-  mediaSlot.classList.add('mdj-v2-lab-legacy-mvp');
-  const analyticsSlot = createSectionSlot('analytics');
-  analyticsSlot.classList.add('mdj-v2-lab-legacy-mvp');
   const notifSlot = createSectionSlot('notifications');
   notifSlot.classList.add('mdj-v2-lab-legacy-mvp');
   const activitySlot = createSectionSlot('activity-timeline', true);
   activitySlot.classList.add('mdj-v2-lab-legacy-mvp');
+  mainCol.append(weatherSlot, jobsSlot, notifSlot, activitySlot);
 
-  mainCol.append(weatherSlot, songSlot, jobsSlot, mediaSlot, analyticsSlot, notifSlot, activitySlot);
-  body.append(mainCol, sideCol);
-  root.append(hero, body);
+  body.append(mainCol);
 
-  return { root, hero, mainCol, sideCol, mutationsHost };
+  /* MOD-206 — "Mi Perfil" tab (Perfil + Bio, real; Media/Analytics/SoundForTips,
+     un-hidden by explicit PO decision 2026-08-12, honestly labeled below).
+     "Agenda · Gigs" / "Ingresos · Wallet" left prepared/empty — moving the real
+     schedule/wallet/mutations content into them is a separate, future round. */
+  const { tabBar, panels } = createArtistTabController([
+    { id: 'profile', label: 'Mi Perfil' },
+    { id: 'agenda', label: 'Agenda · Gigs' },
+    { id: 'wallet', label: 'Ingresos · Wallet' },
+  ]);
+
+  const profileSlot = createSectionSlot('artist-profile');
+  profileSlot.classList.add('owner-card');
+  const songSlot = createSectionSlot('song4tips');
+  const mediaSlot = createSectionSlot('media-library');
+  const analyticsSlot = createSectionSlot('analytics');
+  panels.profile.append(profileSlot, mediaSlot, analyticsSlot, songSlot);
+
+  const agendaPrepared = document.createElement('p');
+  agendaPrepared.className = 'mdj-artist-tab-panel__prepared-note';
+  agendaPrepared.textContent =
+    'Pestaña preparada — Agenda, Gigs y Writers se trasladarán aquí en una ronda futura.';
+  panels.agenda.append(agendaPrepared);
+
+  const walletPrepared = document.createElement('p');
+  walletPrepared.className = 'mdj-artist-tab-panel__prepared-note';
+  walletPrepared.textContent = 'Pestaña preparada — Ingresos/Wallet se trasladará aquí en una ronda futura.';
+  panels.wallet.append(walletPrepared);
+
+  const tabPanelsWrap = document.createElement('div');
+  tabPanelsWrap.className = 'mdj-artist-tab-panels';
+  tabPanelsWrap.append(panels.profile, panels.agenda, panels.wallet);
+
+  wireArtistTabController(tabBar, panels);
+
+  root.append(hero, tabBar, tabPanelsWrap, body);
+
+  return { root, hero, mainCol, tabPanelsWrap, mutationsHost };
 }

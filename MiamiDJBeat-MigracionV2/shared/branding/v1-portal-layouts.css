@@ -143,6 +143,55 @@ body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-name .dot {
   color: var(--gold, #c5a059);
 }
 
+/* MOD-206 — real tab system (display/hidden toggle), mirrors
+   ui-v1-clone/dj-profile.html's .dj-panel + switchProfileTab() pattern. */
+body.mdj-v2-lab .mdj-artist-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0 1.25rem;
+  border-bottom: 1px solid rgba(197, 160, 89, 0.2);
+  padding-bottom: 0.75rem;
+}
+
+body.mdj-v2-lab .mdj-artist-tabs__btn {
+  background: transparent;
+  border: 1px solid rgba(197, 160, 89, 0.3);
+  border-radius: 999px;
+  padding: 0.5rem 1.1rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+body.mdj-v2-lab .mdj-artist-tabs__btn.is-active {
+  background: var(--gold, #c5a059);
+  color: #1a1206;
+  border-color: transparent;
+}
+
+body.mdj-v2-lab .mdj-artist-tab-panel[hidden] {
+  display: none;
+}
+
+body.mdj-v2-lab .mdj-artist-tab-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+body.mdj-v2-lab .mdj-artist-tab-panel__prepared-note,
+body.mdj-v2-lab .mdj-artist-tab-panel__lab-badge {
+  margin: 0 0 0.6rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px dashed rgba(197, 160, 89, 0.4);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.78rem;
+  width: fit-content;
+}
+
 body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);

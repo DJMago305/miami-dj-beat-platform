@@ -165,10 +165,19 @@ function createSessionWiringSection(sessionWiring: ArtistSessionWiringInjection)
   return section;
 }
 
+/** MOD-206 — honest disclosure for the 3 sections un-hidden into "Mi Perfil". */
+function createLabMockNote(text: string): HTMLElement {
+  const note = document.createElement('p');
+  note.className = 'mdj-artist-tab-panel__lab-badge';
+  note.textContent = text;
+  return note;
+}
+
 function createSong4TipsSection(themeBinding: MdjThemeBinding): HTMLElement {
   const section = createArtistSection('song4tips');
 
   section.append(
+    createLabMockNote('lab mock — placeholder, sin cableado real todavía'),
     mountComponentDescriptor(
       createModuleCard(
         {
@@ -199,6 +208,7 @@ function createMediaSection(themeBinding: MdjThemeBinding): HTMLElement {
   const section = createArtistSection('media-library');
 
   section.append(
+    createLabMockNote('lab mock — placeholder, sin cableado real todavía'),
     mountComponentDescriptor(
       createSectionHeader({ title: 'Media Library', variant: 'module-grid' }, themeBinding),
     ),
@@ -214,6 +224,7 @@ function createAnalyticsSection(themeBinding: MdjThemeBinding): HTMLElement {
   const panel = mountComponentDescriptor(
     createPanel({ title: 'Analytics', variant: 'glass' }, themeBinding),
   );
+  section.append(createLabMockNote('lab mock — placeholder, sin cableado real todavía'));
   panel.append(createSummaryList(ARTIST_ANALYTICS));
   section.append(panel);
   return section;
@@ -322,23 +333,32 @@ export function renderArtistDashboardMvp(
   const replaceLegacy = (
     sectionId: string,
     factory: () => HTMLElement,
+    options?: { readonly legacy?: boolean },
   ): void => {
     const slot = layout.root.querySelector<HTMLElement>(
       `[data-mdj-artist-section="${sectionId}"]`,
     );
     if (!slot) return;
     const built = factory();
-    built.classList.add('mdj-v2-lab-legacy-mvp');
+    if (options?.legacy !== false) {
+      built.classList.add('mdj-v2-lab-legacy-mvp');
+    }
     slot.replaceWith(built);
   };
 
-  replaceLegacy('song4tips', () => createSong4TipsSection(themeBinding));
+  /* MOD-206 — un-hidden into the "Mi Perfil" tab, PO decision 2026-08-12
+     (previously CSS-hidden as "Capitan rejected" legacy MVP lists; now shown
+     as honestly-labeled placeholders instead). Everything else keeps its
+     prior hidden treatment unchanged. */
+  replaceLegacy('song4tips', () => createSong4TipsSection(themeBinding), { legacy: false });
   replaceLegacy('jobs-marketplace', () => createJobsSection(themeBinding));
-  replaceLegacy('media-library', () => createMediaSection(themeBinding));
-  replaceLegacy('analytics', () => createAnalyticsSection(themeBinding));
+  replaceLegacy('media-library', () => createMediaSection(themeBinding), { legacy: false });
+  replaceLegacy('analytics', () => createAnalyticsSection(themeBinding), { legacy: false });
   replaceLegacy('notifications', () => createNotificationsSection(themeBinding));
   replaceLegacy('activity-timeline', () => createActivitySection(themeBinding));
-  replaceLegacy('artist-weather', () => createArtistWeatherSection());
+  /* Real slice (Gig Weather Radar) — was accidentally caught by the generic
+     legacy-hide default; fixed 2026-08-12, PO-authorized. */
+  replaceLegacy('artist-weather', () => createArtistWeatherSection(), { legacy: false });
 
   if (sessionWiring) {
     const sessionSection = createSessionWiringSection(sessionWiring);
