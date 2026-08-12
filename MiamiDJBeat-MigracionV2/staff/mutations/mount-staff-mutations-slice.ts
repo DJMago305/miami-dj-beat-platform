@@ -58,21 +58,3 @@ export function mountStaffMutationsSlice(input: MountStaffMutationsSliceInput): 
     staffUserId: input.staffUserId,
   });
 }
-
-export function mountStaffMutationsSliceSync(
-  mainRegion: HTMLElement,
-  adapter: StaffMutationsAdapter,
-  sessionContext: SessionContextDTO,
-  staffUserId: string,
-  sessionWiring?: StaffSessionWiringInjection | null,
-): void {
-  const slot = resolveSlot(mainRegion);
-  if (!slot) return;
-  mountStaffMutationsSlice({
-    mainRegion,
-    adapter,
-    sessionContext,
-    staffUserId,
-    sessionWiring,
-  });
-}

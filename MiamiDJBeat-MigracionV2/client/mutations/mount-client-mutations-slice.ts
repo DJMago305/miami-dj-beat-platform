@@ -56,21 +56,3 @@ export function mountClientMutationsSlice(input: MountClientMutationsSliceInput)
     clientUserId: input.clientUserId,
   });
 }
-
-export function mountClientMutationsSliceSync(
-  mainRegion: HTMLElement,
-  adapter: ClientMutationsAdapter,
-  sessionContext: SessionContextDTO,
-  clientUserId: string,
-  sessionWiring?: ClientSessionWiringInjection | null,
-): void {
-  const slot = resolveSlot(mainRegion);
-  if (!slot) return;
-  mountClientMutationsSlice({
-    mainRegion,
-    adapter,
-    sessionContext,
-    clientUserId,
-    sessionWiring,
-  });
-}

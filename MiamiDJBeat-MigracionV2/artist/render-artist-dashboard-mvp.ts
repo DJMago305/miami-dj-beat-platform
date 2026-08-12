@@ -27,12 +27,16 @@ import { mountArtistProfileReadSliceSync } from './profile/mount-artist-profile-
 import { mountArtistScheduleReadSliceSync } from './schedule/mount-artist-schedule-read-slice';
 import { mountArtistFinanceReadSliceSync } from './finance/mount-artist-finance-read-slice';
 import { mountArtistWeatherReadSliceSync } from './weather/mount-artist-weather-read-slice';
-import { mountArtistMutationsSliceSync } from './mutations/mount-artist-mutations-slice';
 import type { ArtistMutationsAdapter } from '../shared/services/artist-mutations/index';
 import {
   renderArtistSessionWiringBadge,
   type ArtistSessionWiringInjection,
 } from './session/artist-session-wiring-pilot';
+import { applyV1BrandShell } from '../shared/branding/apply-v1-brand-shell';
+import {
+  buildArtistV1PortalLayout,
+  mountArtistOwnerTabs,
+} from './v1-artist-portal-layout';
 
 function resolveArtistDashboardThemeBinding(): MdjThemeBinding {
   const tokens = getThemeDefinition('mdj-dark-gold')?.tokens;
@@ -274,13 +278,17 @@ function createActivitySection(themeBinding: MdjThemeBinding): HTMLElement {
 export function renderArtistDashboardMvp(
   mainRegion: HTMLElement,
   sessionWiring?: ArtistSessionWiringInjection | null,
-  mutationsAdapter?: ArtistMutationsAdapter | null,
+  _mutationsAdapter?: ArtistMutationsAdapter | null,
 ): void {
   const themeBinding = resolveArtistDashboardThemeBinding();
-  mainRegion.classList.add('mdj-client-dashboard');
+  mainRegion.classList.add('mdj-client-dashboard', 'mdj-v2-v1-artist-host');
   mainRegion.replaceChildren();
 
-  const hero = mountComponentDescriptor(
+  mountArtistOwnerTabs();
+  const layout = buildArtistV1PortalLayout();
+
+  /* Legacy MVP nodes kept for unit tests; visually hidden via .mdj-v2-lab-legacy-* */
+  const legacyHero = mountComponentDescriptor(
     createHeroBanner(
       {
         eyebrow: 'Performer workspace',
@@ -291,50 +299,59 @@ export function renderArtistDashboardMvp(
       themeBinding,
     ),
   );
+  legacyHero.classList.add('mdj-v2-lab-legacy-hero');
 
-  const kpiGrid = mountComponentDescriptor(
+  const legacyKpis = mountComponentDescriptor(
     createDashboardCard({ variant: 'kpi-grid', region: 'kpis' }, themeBinding),
   );
-  kpiGrid.replaceChildren(
+  legacyKpis.classList.add('mdj-v2-lab-legacy-kpis');
+  legacyKpis.replaceChildren(
     ...ARTIST_DASHBOARD_KPIS.map((kpi) =>
       mountComponentDescriptor(createKpiCard(kpi, themeBinding)),
     ),
   );
 
-  const contentGrid = document.createElement('div');
-  contentGrid.className = 'mdj-client-dashboard__grid';
-  const sections: HTMLElement[] = [];
-  if (sessionWiring) {
-    sections.push(createSessionWiringSection(sessionWiring));
-  }
-  sections.push(
-    createProfileSection(themeBinding),
-    createUpcomingGigsSection(themeBinding),
-    createArtistScheduleSection(),
-    createArtistWalletSection(),
-    createArtistWeatherSection(),
-    createArtistMutationsSection(),
-    createSong4TipsSection(themeBinding),
-    createJobsSection(themeBinding),
-    createMediaSection(themeBinding),
-    createAnalyticsSection(themeBinding),
-    createNotificationsSection(themeBinding),
-    createActivitySection(themeBinding),
+  const gigsSlot = layout.root.querySelector<HTMLElement>(
+    '[data-mdj-artist-section="upcoming-gigs"]',
   );
-  contentGrid.append(...sections);
+  if (gigsSlot) {
+    const built = createUpcomingGigsSection(themeBinding);
+    gigsSlot.replaceWith(built);
+  }
 
-  mainRegion.append(hero, kpiGrid, contentGrid);
+  const replaceLegacy = (
+    sectionId: string,
+    factory: () => HTMLElement,
+  ): void => {
+    const slot = layout.root.querySelector<HTMLElement>(
+      `[data-mdj-artist-section="${sectionId}"]`,
+    );
+    if (!slot) return;
+    const built = factory();
+    built.classList.add('mdj-v2-lab-legacy-mvp');
+    slot.replaceWith(built);
+  };
+
+  replaceLegacy('song4tips', () => createSong4TipsSection(themeBinding));
+  replaceLegacy('jobs-marketplace', () => createJobsSection(themeBinding));
+  replaceLegacy('media-library', () => createMediaSection(themeBinding));
+  replaceLegacy('analytics', () => createAnalyticsSection(themeBinding));
+  replaceLegacy('notifications', () => createNotificationsSection(themeBinding));
+  replaceLegacy('activity-timeline', () => createActivitySection(themeBinding));
+  replaceLegacy('artist-weather', () => createArtistWeatherSection());
+
+  if (sessionWiring) {
+    const sessionSection = createSessionWiringSection(sessionWiring);
+    sessionSection.classList.add('mdj-v2-lab-legacy-mvp');
+    layout.mainCol.append(sessionSection);
+  }
+
+  mainRegion.append(legacyHero, legacyKpis, layout.root);
+  applyV1BrandShell(mainRegion, 'artist');
   mountArtistProfileReadSliceSync(mainRegion, undefined, sessionWiring);
   mountArtistScheduleReadSliceSync(mainRegion, undefined, sessionWiring);
   mountArtistFinanceReadSliceSync(mainRegion, undefined, sessionWiring);
   mountArtistWeatherReadSliceSync(mainRegion, undefined, sessionWiring);
-  if (mutationsAdapter && sessionWiring?.assignedDjUserId) {
-    mountArtistMutationsSliceSync(
-      mainRegion,
-      mutationsAdapter,
-      sessionWiring.context,
-      sessionWiring.assignedDjUserId,
-      sessionWiring,
-    );
-  }
+  /* Artist mutations slice mounted once, downstream, in artist/main.ts's mountDashboard —
+     not here, to avoid the double-mount this replaced (render-then-remount on the same slot). */
 }

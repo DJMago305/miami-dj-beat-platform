@@ -20,12 +20,16 @@ import { mountStaffIdentityReadSliceSync } from './identity/mount-staff-identity
 import { mountStaffCalendarReadSliceSync } from './calendar/mount-staff-calendar-read-slice';
 import { mountStaffFinanceReadSliceSync } from './finance/mount-staff-finance-read-slice';
 import { mountStaffWeatherReadSliceSync } from './weather/mount-staff-weather-read-slice';
-import { mountStaffMutationsSliceSync } from './mutations/mount-staff-mutations-slice';
 import type { StaffMutationsAdapter } from '../shared/services/staff-mutations/index';
 import {
   renderStaffSessionWiringBadge,
   type StaffSessionWiringInjection,
 } from './session/staff-session-wiring-pilot';
+import { applyV1BrandShell } from '../shared/branding/apply-v1-brand-shell';
+import {
+  buildStaffV1OpsLayout,
+  mountStaffOwnerTabs,
+} from './v1-staff-ops-layout';
 
 function resolveStaffDashboardThemeBinding(): MdjThemeBinding {
   const tokens = getThemeDefinition('mdj-dark-gold')?.tokens;
@@ -354,14 +358,17 @@ export function renderStaffDashboardMvp(
   mainRegion: HTMLElement,
   dataProvider: StaffDashboardDataProvider,
   sessionWiring?: StaffSessionWiringInjection | null,
-  mutationsAdapter?: StaffMutationsAdapter | null,
+  _mutationsAdapter?: StaffMutationsAdapter | null,
 ): void {
   const themeBinding = resolveStaffDashboardThemeBinding();
   const mvpView = dataProvider.getMvpView();
-  mainRegion.classList.add('mdj-client-dashboard');
+  mainRegion.classList.add('mdj-client-dashboard', 'mdj-v2-v1-staff-host');
   mainRegion.replaceChildren();
 
-  const hero = mountComponentDescriptor(
+  mountStaffOwnerTabs();
+  const layout = buildStaffV1OpsLayout(dataProvider);
+
+  const legacyHero = mountComponentDescriptor(
     createHeroBanner(
       {
         eyebrow: 'Backoffice control',
@@ -372,40 +379,48 @@ export function renderStaffDashboardMvp(
       themeBinding,
     ),
   );
+  legacyHero.classList.add('mdj-v2-lab-legacy-hero');
 
-  const kpiGrid = mountComponentDescriptor(
+  const legacyKpis = mountComponentDescriptor(
     createDashboardCard({ variant: 'kpi-grid', region: 'kpis' }, themeBinding),
   );
-  kpiGrid.replaceChildren(
+  legacyKpis.classList.add('mdj-v2-lab-legacy-kpis');
+  legacyKpis.replaceChildren(
     ...mvpView.kpis.map((kpi) => mountComponentDescriptor(createKpiCard(kpi, themeBinding))),
   );
 
-  const contentGrid = document.createElement('div');
-  contentGrid.className = 'mdj-client-dashboard__grid';
-  const sections: HTMLElement[] = [];
-  if (sessionWiring) {
-    sections.push(createSessionWiringSection(sessionWiring));
-  }
-  sections.push(
-    createOperationsPreviewSection(themeBinding, dataProvider),
-    createQuickActionsSection(themeBinding, dataProvider),
-    createProfileSection(themeBinding, dataProvider),
-    createMasterCalendarSection(),
-    createMasterFinanceSection(),
-    createMasterWeatherSection(),
-    createStaffMutationsSection(),
-    createLeadsSection(themeBinding, dataProvider),
-    createInvoicesSection(themeBinding, dataProvider),
-    createCrmSection(themeBinding, dataProvider),
-    createProductionSection(themeBinding, dataProvider),
-    createMatchingSection(themeBinding, dataProvider),
-    createReportsSection(themeBinding, dataProvider),
-    createNotificationsSection(themeBinding, dataProvider),
-    createActivitySection(themeBinding, dataProvider),
-  );
-  contentGrid.append(...sections);
+  const replaceLegacy = (sectionId: string, factory: () => HTMLElement): void => {
+    const slot = layout.root.querySelector<HTMLElement>(
+      `[data-mdj-staff-section="${sectionId}"]`,
+    );
+    if (!slot) return;
+    const built = factory();
+    built.classList.add('mdj-v2-lab-legacy-mvp');
+    slot.replaceWith(built);
+  };
 
-  mainRegion.append(hero, kpiGrid, contentGrid);
+  replaceLegacy('operations-preview', () =>
+    createOperationsPreviewSection(themeBinding, dataProvider),
+  );
+  replaceLegacy('quick-actions', () => createQuickActionsSection(themeBinding, dataProvider));
+  replaceLegacy('leads-pipeline', () => createLeadsSection(themeBinding, dataProvider));
+  replaceLegacy('invoices-queue', () => createInvoicesSection(themeBinding, dataProvider));
+  replaceLegacy('crm-snapshot', () => createCrmSection(themeBinding, dataProvider));
+  replaceLegacy('production-tasks', () => createProductionSection(themeBinding, dataProvider));
+  replaceLegacy('matching-queue', () => createMatchingSection(themeBinding, dataProvider));
+  replaceLegacy('reports-preview', () => createReportsSection(themeBinding, dataProvider));
+  replaceLegacy('notifications', () => createNotificationsSection(themeBinding, dataProvider));
+  replaceLegacy('activity-timeline', () => createActivitySection(themeBinding, dataProvider));
+  replaceLegacy('master-weather', () => createMasterWeatherSection());
+
+  if (sessionWiring) {
+    const sessionSection = createSessionWiringSection(sessionWiring);
+    sessionSection.classList.add('mdj-v2-lab-legacy-mvp');
+    layout.content.append(sessionSection);
+  }
+
+  mainRegion.append(legacyHero, legacyKpis, layout.root);
+  applyV1BrandShell(mainRegion, 'staff');
 
   const calendarAudience =
     sessionWiring?.context.sessionRole === 'staff_seller' ? 'staff_seller' : 'staff_full';
@@ -418,13 +433,6 @@ export function renderStaffDashboardMvp(
   mountStaffCalendarReadSliceSync(mainRegion, undefined, calendarAudience, sessionWiring);
   mountStaffFinanceReadSliceSync(mainRegion, undefined, financeAudience, sessionWiring);
   mountStaffWeatherReadSliceSync(mainRegion, undefined, weatherAudience, sessionWiring);
-  if (mutationsAdapter && sessionWiring?.context.userId) {
-    mountStaffMutationsSliceSync(
-      mainRegion,
-      mutationsAdapter,
-      sessionWiring.context,
-      sessionWiring.context.userId,
-      sessionWiring,
-    );
-  }
+  /* Staff mutations slice mounted once, downstream, in staff/main.ts's mountDashboard —
+     not here, to avoid the double-mount this replaced (render-then-remount on the same slot). */
 }

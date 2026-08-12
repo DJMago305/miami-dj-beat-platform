@@ -27,12 +27,12 @@ import { mountClientProfileReadSliceSync } from './profile/mount-client-profile-
 import { mountClientBookingsReadSliceSync } from './bookings/mount-client-bookings-read-slice';
 import { mountClientFinanceReadSliceSync } from './finance/mount-client-finance-read-slice';
 import { mountClientWeatherReadSliceSync } from './weather/mount-client-weather-read-slice';
-import { mountClientMutationsSliceSync } from './mutations/mount-client-mutations-slice';
 import type { ClientMutationsAdapter } from '../shared/services/client-mutations/index';
 import {
   renderClientSessionWiringBadge,
   type ClientSessionWiringInjection,
 } from './session/client-session-wiring-pilot';
+import { applyV1BrandShell } from '../shared/branding/apply-v1-brand-shell';
 
 function resolveClientDashboardThemeBinding(): MdjThemeBinding {
   const tokens = getThemeDefinition('mdj-dark-gold')?.tokens;
@@ -85,7 +85,8 @@ function createClientMutationsSection(): HTMLElement {
 /** MOD-103 Session Wiring Pilot — badge slot (CLIENT + masked client id). */
 function createSessionWiringSection(sessionWiring: ClientSessionWiringInjection): HTMLElement {
   const section = document.createElement('section');
-  section.className = 'mdj-client-dashboard__section mdj-client-dashboard__section--wide';
+  section.className =
+    'mdj-client-dashboard__section mdj-client-dashboard__section--wide mdj-v2-lab-legacy-mvp';
   section.dataset.mdjClientSection = 'session-wiring';
   const host = document.createElement('div');
   host.className = 'mdj-client-session-wiring-host';
@@ -326,7 +327,7 @@ function createActivitySection(themeBinding: MdjThemeBinding): HTMLElement {
 export function renderClientDashboardMvp(
   mainRegion: HTMLElement,
   sessionWiring?: ClientSessionWiringInjection | null,
-  mutationsAdapter?: ClientMutationsAdapter | null,
+  _mutationsAdapter?: ClientMutationsAdapter | null,
 ): void {
   const themeBinding = resolveClientDashboardThemeBinding();
   mainRegion.classList.add('mdj-client-dashboard');
@@ -376,17 +377,12 @@ export function renderClientDashboardMvp(
   contentGrid.append(...sections);
 
   mainRegion.append(hero, kpiGrid, contentGrid);
+  /* Priority 2 · Paso 1 — V1 master container + brand mark (visual only). */
+  applyV1BrandShell(mainRegion, 'client');
   mountClientProfileReadSliceSync(mainRegion, undefined, sessionWiring);
   mountClientBookingsReadSliceSync(mainRegion, undefined, sessionWiring);
   mountClientFinanceReadSliceSync(mainRegion, undefined, sessionWiring);
   mountClientWeatherReadSliceSync(mainRegion, undefined, sessionWiring);
-  if (mutationsAdapter && sessionWiring?.clientUserId) {
-    mountClientMutationsSliceSync(
-      mainRegion,
-      mutationsAdapter,
-      sessionWiring.context,
-      sessionWiring.clientUserId,
-      sessionWiring,
-    );
-  }
+  /* Client mutations slice mounted once, downstream, in client/main.ts's mountDashboard —
+     not here, to avoid the double-mount this replaced (render-then-remount on the same slot). */
 }

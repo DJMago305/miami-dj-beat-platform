@@ -41,8 +41,10 @@
 
 ## Tests
 
-`tests/unit/artist-mutations.service.spec.ts`
+`tests/unit/artist-mutations.service.spec.ts` (adapter) + `tests/unit/artist-mutations-ui.spec.ts` (UI wiring)
 
-## Siguiente paso (requiere OK PO)
+## Paso 3 — UI `/artist/` wire — **COMPLETADO/CERRADO** (2026-08-11)
 
-Paso 3 — UI `/artist/` wire — **aún sin** Supabase productivo salvo ticket explícito.
+`respondGigAssignment` y `acknowledgePayout` están cableados a formularios reales en `artist/mutations/` (`artist-gig-decision-form.ts`, `artist-payout-ack-form.ts`), montados una sola vez desde `artist/main.ts` vía `mountArtistMutationsSlice()`. Verificado end-to-end por `artist-mutations-ui.spec.ts`.
+
+Sigue vigente para cualquier paso futuro: **aún sin** Supabase productivo — el adapter permanece in-memory (lab records), sin escritura real a base de datos, salvo ticket explícito que autorice esa siguiente fase.

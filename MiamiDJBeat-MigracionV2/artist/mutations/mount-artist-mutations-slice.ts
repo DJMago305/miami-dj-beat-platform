@@ -57,21 +57,3 @@ export function mountArtistMutationsSlice(input: MountArtistMutationsSliceInput)
     gigAssignedDjId: input.sessionWiring?.assignedDjUserId ?? input.artistUserId,
   });
 }
-
-export function mountArtistMutationsSliceSync(
-  mainRegion: HTMLElement,
-  adapter: ArtistMutationsAdapter,
-  sessionContext: SessionContextDTO,
-  artistUserId: string,
-  sessionWiring?: ArtistSessionWiringInjection | null,
-): void {
-  const slot = resolveSlot(mainRegion);
-  if (!slot) return;
-  mountArtistMutationsSlice({
-    mainRegion,
-    adapter,
-    sessionContext,
-    artistUserId,
-    sessionWiring,
-  });
-}

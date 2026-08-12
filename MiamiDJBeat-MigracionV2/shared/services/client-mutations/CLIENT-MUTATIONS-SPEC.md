@@ -40,8 +40,10 @@
 
 ## Tests
 
-`tests/unit/client-mutations.service.spec.ts`
+`tests/unit/client-mutations.service.spec.ts` (adapter) + `tests/unit/client-mutations-ui.spec.ts` (UI wiring)
 
-## Siguiente paso (requiere OK PO)
+## Paso 3+ — UI client / wire portal — **COMPLETADO/CERRADO** (2026-08-11)
 
-Paso 3+ — UI client / wire portal — **aún sin** Supabase productivo salvo ticket explícito.
+`submitBookingRequest` y `submitOfflinePaymentProof` están cableados a formularios reales en `client/mutations/` (`client-booking-request-form.ts`, `client-offline-payment-proof-form.ts`), montados una sola vez desde `client/main.ts` vía `mountClientMutationsSlice()`. Verificado end-to-end por `client-mutations-ui.spec.ts`. El adjunto de comprobante es intencionalmente no funcional (solo se registra el nombre de archivo localmente; nunca se sube) — comportamiento de lab documentado, no pendiente.
+
+Sigue vigente para cualquier paso futuro: **aún sin** Supabase productivo — el adapter permanece in-memory (lab records), sin escritura real a base de datos, salvo ticket explícito que autorice esa siguiente fase.
