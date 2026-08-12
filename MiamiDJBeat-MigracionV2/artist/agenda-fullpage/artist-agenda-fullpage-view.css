@@ -1,0 +1,165 @@
+/* MOD-205 — Artist Agenda full-page layout (structural shell).
+   Hero placeholder reserves 100vh; Matrix area follows via smooth scroll. */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body.mdj-v2-lab .mdj-agenda-fullpage {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body.mdj-v2-lab .mdj-agenda-fullpage__hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: radial-gradient(ellipse at top, rgba(197, 160, 89, 0.12) 0%, rgba(5, 5, 7, 1) 70%);
+  border-bottom: 1px solid rgba(197, 160, 89, 0.25);
+  box-sizing: border-box;
+  padding: 2rem 1.25rem;
+}
+
+body.mdj-v2-lab .mdj-agenda-fullpage__hero-canvas-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 960px;
+}
+
+body.mdj-v2-lab .mdj-agenda-fullpage__hero-badge {
+  margin: 0;
+  padding: 0.4rem 0.9rem;
+  border: 1px dashed rgba(197, 160, 89, 0.55);
+  border-radius: 999px;
+  color: rgba(245, 230, 180, 0.85);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+body.mdj-v2-lab .mdj-agenda-fullpage__hero-indicators {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+body.mdj-v2-lab .mdj-agenda-fullpage__hero-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: 88px;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(197, 160, 89, 0.25);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+body.mdj-v2-lab .mdj-agenda-fullpage__hero-indicator-value {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.4rem;
+  color: var(--gold, #c5a059);
+}
+
+body.mdj-v2-lab .mdj-agenda-fullpage__hero-indicator-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+body.mdj-v2-lab .mdj-agenda-fullpage__cycle-control {
+  display: flex;
+  gap: 0.5rem;
+}
+
+body.mdj-v2-lab .mdj-agenda-fullpage__cycle-btn {
+  padding: 0.5rem 1.1rem;
+  border: 1px solid rgba(197, 160, 89, 0.35);
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(245, 230, 180, 0.6);
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  cursor: not-allowed;
+}
+
+body.mdj-v2-lab .mdj-agenda-fullpage__scroll-cue {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(197, 160, 89, 0.45);
+  border-radius: 50%;
+  color: var(--gold, #c5a059);
+  font-size: 1.1rem;
+  text-decoration: none;
+}
+
+body.mdj-v2-lab .mdj-agenda-fullpage__matrix {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 2.5rem 1.25rem 3rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+body.mdj-v2-lab .mdj-agenda-fullpage__lab-badge {
+  margin: 0;
+  padding: 0.5rem 0.85rem;
+  border: 1px dashed rgba(197, 160, 89, 0.4);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.78rem;
+  width: fit-content;
+}
+
+body.mdj-v2-lab .mdj-agenda-fullpage__extended-module {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(197, 160, 89, 0.2);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+body.mdj-v2-lab .mdj-agenda-fullpage__extended-title {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 640px) {
+  body.mdj-v2-lab .mdj-agenda-fullpage__hero-indicators {
+    gap: 0.6rem;
+  }
+
+  body.mdj-v2-lab .mdj-agenda-fullpage__hero-indicator {
+    min-width: 72px;
+    padding: 0.6rem 0.75rem;
+  }
+}

@@ -1,6 +1,7 @@
 import { bootScaffold } from '@mdj/bootstrap/boot';
 import { bootstrapPortal } from '../shared/runtime/index';
 import { ARTIST_SHELL_CONTENT } from '../shared/navigation/artist-shell.config';
+import { applyV1LabDocumentClasses } from '../shared/branding/apply-v1-brand-shell';
 import { resolveArtistPortalComponentGuards } from './component-guards-wire';
 import { resolveArtistLegalPortalBundle } from './legal/artist-legal-provider-wire';
 import { renderArtistDashboardMvp } from './render-artist-dashboard-mvp';
@@ -9,8 +10,14 @@ import { mountArtistScheduleReadSlice } from './schedule/mount-artist-schedule-r
 import { mountArtistFinanceReadSlice } from './finance/mount-artist-finance-read-slice';
 import { mountArtistWeatherReadSlice } from './weather/mount-artist-weather-read-slice';
 import { mountArtistMutationsSlice } from './mutations/mount-artist-mutations-slice';
+import { mountArtistAgendaFullpage } from './agenda-fullpage/mount-artist-agenda-fullpage';
 import { resolveArtistSessionWiringPilot } from './session/artist-session-wiring-pilot';
 import { createArtistMutationsAdapter } from '../shared/services/artist-mutations/index';
+/* Priority 2 · Paso 1 — V1 clone visual identity (ui-v1-clone only). */
+import '../shared/branding/v1-visual-entry.css';
+import '../shared/branding/v1-lab-bridge.css';
+import '../shared/branding/v1-profile-shell.css';
+import '../shared/branding/v1-portal-layouts.css';
 import '../shared/layout/portal-shell.css';
 import '../shared/services/legal/ui/legal-center-shell.css';
 import './dashboard-mvp.css';
@@ -20,8 +27,10 @@ import './finance/artist-finance-read-view.css';
 import './weather/artist-weather-read-view.css';
 import './session/artist-session-wiring-pilot.css';
 import './mutations/artist-mutations-view.css';
+import './agenda-fullpage/artist-agenda-fullpage-view.css';
 
 function main(): void {
+  applyV1LabDocumentClasses('artist');
   const app = document.querySelector('#app') as HTMLElement | null;
   if (!app) return;
 
@@ -59,6 +68,8 @@ function main(): void {
           sessionWiring,
         });
       }
+      // MOD-205 — Agenda full-page shell (100vh Hero placeholder + Matrix area).
+      mountArtistAgendaFullpage(mainRegion);
       const contentGrid = mainRegion.querySelector('.mdj-client-dashboard__grid');
       artistLegalBundle.renderLegalCenterShell(contentGrid ?? mainRegion);
     },
