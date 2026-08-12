@@ -51,7 +51,34 @@ export function initWeatherHeroEngine() {
   })();
 
   const canvas = document.getElementById('gl');
-  const gl = canvas.getContext('webgl', {antialias:true, premultipliedAlpha:false});
+  // ===================== DEVICE TIERING (GPU governance) =====================
+  // Weak/old machines, reduced-motion users, and anything without WebGL must
+  // NEVER run the heavy raymarch shader — otherwise the platform is too heavy to
+  // sit next to Serato/Rekordbox/Traktor on a modest laptop. Those devices get a
+  // lightweight time-based CSS sky gradient instead (installStaticSky, below):
+  // near-zero GPU. Capable machines get the full WebGL engine.
+  function isLowEndDevice(){
+    try{
+      if(matchMedia('(prefers-reduced-motion:reduce)').matches) return true;      // user asked for less motion → light path
+      if((navigator.hardwareConcurrency||8) <= 4) return true;                    // ≤4 CPU cores → treat as weak
+      if(navigator.deviceMemory && navigator.deviceMemory <= 4) return true;      // ≤4 GB RAM (Chromium exposes deviceMemory)
+      return false;
+    }catch(e){ return false; }
+  }
+  // no-op WebGL stub: lets the one-time setup code below run harmlessly on weak
+  // devices WITHOUT creating a real GPU context. Every property is a function
+  // returning 1 (truthy), so `gl.CONST` args and `gl.method()` calls are safe.
+  function noopGL(){ return new Proxy({}, { get:function(){ return function(){ return 1; }; } }); }
+  const lowEnd = isLowEndDevice();
+  let staticSkyTimer = null;
+  let gl = null, capable = false;
+  if(!lowEnd){ try{ gl = canvas.getContext('webgl', {antialias:true, premultipliedAlpha:false}); capable = !!gl; }catch(e){ capable = false; } }
+  if(!capable){ gl = noopGL(); }   // weak/old/no-WebGL → stub; the engine setup no-ops, static sky takes over at boot
+  // GPU safety: if the driver resets the context (GPU/WindowServer pressure),
+  // STOP drawing on the dead context instead of spamming errors. preventDefault
+  // lets the browser restore it; a fresh context needs a remount.
+  function handleContextLost(e){ e.preventDefault(); running=false; }
+  canvas.addEventListener('webglcontextlost', handleContextLost, false);
   const VERT = 'attribute vec2 p; void main(){ gl_Position = vec4(p,0.0,1.0); }';
   const FRAG = [
   'precision highp float;',
@@ -461,7 +488,7 @@ export function initWeatherHeroEngine() {
   }
   addEventListener('resize',resize);resize();
   const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  let t0=performance.now(); let scene=0; let running=true;
+  let t0=performance.now(); let scene=0; let running=capable;   // weak/static devices: the render loop never starts
   // ===================== M0 · THE SEAM =====================
   // The engine + UI consume ONLY the AtmosphericState contract below.
   // A PROVIDER produces it. mockProvider = fallback/dev. The real Edge
@@ -613,8 +640,12 @@ export function initWeatherHeroEngine() {
       : '🛰️ Conectando…';
   }
   let lastHourBucket=-1;
+  const FPS_CAP=60, MIN_FRAME_MS=1000/FPS_CAP; let lastDrawWall=0;   // frame throttle: cap draws to ~60fps
   function frame(now){
-    if(disposed) return;   // guard against a frame already in flight when dispose() ran
+    if(disposed || !capable) return;   // stop if disposed, or a static-sky device
+    if(!reduce && running && !disposed) rafId=requestAnimationFrame(frame);   // keep the loop alive at vsync…
+    if(now-lastDrawWall < MIN_FRAME_MS) return;                               // …but skip GPU work above 60fps (ProMotion hits 120; halves GPU load, no visible change)
+    lastDrawWall=now;
     const t=(now-t0)/1000;
     const dt=Math.min(0.05, Math.max(0.0, t-lastT)); lastT=t;
     const dayTgt=(dayFixed>=0.0)?dayFixed:((t/1200)+0.72)%1.0;   // cycle (~20 min) or a chosen fixed phase
@@ -691,9 +722,33 @@ export function initWeatherHeroEngine() {
     gl.uniform1f(uBoltSeed,boltSeed);
     gl.uniform1f(uScene, scene);       // 0 = sea (Miami bay), 1 = Miami downtown, 2 = mountains
     gl.drawArrays(gl.TRIANGLES,0,3);
-    if(!reduce && running && !disposed) rafId=requestAnimationFrame(frame);
   }
-  rafId=requestAnimationFrame(frame);
+  // ---- Static sky (weak devices / no WebGL): a time-based CSS gradient painted
+  // on the canvas, retinted every few minutes to follow the real hour. Zero GPU.
+  function skyGradientCSS(date){
+    const h = date.getHours() + date.getMinutes()/60;
+    const K = [                                       // hour -> [topRGB, bottomRGB] sky anchors
+      {h:0,  top:[6,13,26],    bot:[13,32,51]},        // deep night
+      {h:6,  top:[26,35,72],   bot:[190,131,79]},      // dawn — indigo over warm horizon
+      {h:9,  top:[30,95,168],  bot:[191,224,245]},     // morning blue
+      {h:15, top:[33,110,190], bot:[200,232,250]},     // full day
+      {h:19, top:[23,33,69],   bot:[224,102,63]},      // dusk — Miami orange
+      {h:22, top:[8,16,30],    bot:[15,32,50]},         // dusk -> night
+      {h:24, top:[6,13,26],    bot:[13,32,51]}
+    ];
+    let a=K[0], b=K[K.length-1];
+    for(let i=0;i<K.length-1;i++){ if(h>=K[i].h && h<=K[i+1].h){ a=K[i]; b=K[i+1]; break; } }
+    const f = (b.h===a.h) ? 0 : (h-a.h)/(b.h-a.h);     // interpolate between the two nearest anchors
+    const mix = (x,y)=>Math.round(x+(y-x)*f);
+    const rgb = (p,q)=>'rgb('+mix(p[0],q[0])+','+mix(p[1],q[1])+','+mix(p[2],q[2])+')';
+    return 'linear-gradient(180deg, '+rgb(a.top,b.top)+' 0%, '+rgb(a.bot,b.bot)+' 100%)';
+  }
+  function installStaticSky(){
+    canvas.style.background = skyGradientCSS(new Date());
+    staticSkyTimer = setInterval(function(){ canvas.style.background = skyGradientCSS(new Date()); refreshState(); }, 300000);  // retint sky + refresh metrics every 5 min
+  }
+  if(capable) rafId=requestAnimationFrame(frame);   // capable machine → start the WebGL engine
+  else        installStaticSky();                   // weak / old / reduced-motion / no-WebGL → static gradient sky
   // Pause the render loop while the tab/pane is hidden — saves battery/GPU. On
   // return, re-anchor lastT so dt stays clamped (no giant catch-up frame).
   function handleVisibilityChange(){
@@ -701,6 +756,14 @@ export function initWeatherHeroEngine() {
     else if(!running && !disposed){ running=true; lastT=(performance.now()-t0)/1000; rafId=requestAnimationFrame(frame); }
   }
   document.addEventListener('visibilitychange', handleVisibilityChange);
+  // Also pause when the WINDOW loses focus — document.hidden does NOT fire when
+  // our window is merely BEHIND another app, so a DJ working in Serato would keep
+  // us burning GPU in the background. blur/focus closes that gap: leave for Serato
+  // → ~0 GPU; click us back → resume (re-anchoring lastT so dt stays clamped).
+  function pauseLoop(){ running=false; }
+  function resumeLoop(){ if(capable && !running && !document.hidden && !disposed){ running=true; lastT=(performance.now()-t0)/1000; rafId=requestAnimationFrame(frame); } }
+  addEventListener('blur',  pauseLoop);    // switched to Serato / another app → stop drawing
+  addEventListener('focus', resumeLoop);   // back on our window → resume
   function tick(){ if(reduce && !disposed) rafId=requestAnimationFrame(frame); }   // repaint once in reduced-motion
   document.querySelectorAll('#scenes button').forEach(function(b){
     b.addEventListener('click',function(){
@@ -753,13 +816,17 @@ export function initWeatherHeroEngine() {
     running = false;
     if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
     if (liveTimer) { clearInterval(liveTimer); liveTimer = null; }
+    if (staticSkyTimer) { clearInterval(staticSkyTimer); staticSkyTimer = null; }   // static-sky retint timer
     removeEventListener('resize', resize);
     document.removeEventListener('visibilitychange', handleVisibilityChange);
+    removeEventListener('blur', pauseLoop);
+    removeEventListener('focus', resumeLoop);
+    canvas.removeEventListener('webglcontextlost', handleContextLost);
     gl.deleteBuffer(buf);
     gl.deleteShader(vertShader);
     gl.deleteShader(fragShader);
     gl.deleteProgram(prog);
-    if (loseContextExt) loseContextExt.loseContext();
+    if (capable && loseContextExt) loseContextExt.loseContext();   // only a real context needs releasing
   }
   return dispose;
 }
