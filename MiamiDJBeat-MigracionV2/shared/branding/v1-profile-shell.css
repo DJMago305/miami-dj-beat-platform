@@ -144,11 +144,17 @@ body.mdj-v2-lab .mdj-artist-profile-read.mdj-v2-v1-artist-profile {
   background: transparent;
 }
 
+/* MOD-213 — fixed aspect-ratio (was height:auto driven purely by
+   .dj-hero-content's 220px min-height, unrelated to the cover photo's own
+   1920x775 ratio; object-fit:cover then cropped inconsistently across
+   viewport widths — visual audit finding, 2026-08-12). 16/6 ≈ 2.67:1,
+   close to the source photo's real 2.48:1, so cover only needs a mild,
+   consistent crop instead of an unpredictable one. */
 body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero {
   position: relative;
   width: 100%;
+  aspect-ratio: 16 / 6;
   min-height: 220px;
-  height: auto;
   overflow: hidden;
   border-radius: 14px;
   border: 1px solid rgba(197, 160, 89, 0.28);
@@ -197,11 +203,11 @@ body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-hero-inset img {
 }
 
 body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-hero-content {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 2;
   display: flex;
   align-items: flex-end;
-  min-height: 220px;
   padding: 1.35rem 1.25rem 1.2rem;
 }
 

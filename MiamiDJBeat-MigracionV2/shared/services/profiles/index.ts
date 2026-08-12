@@ -7,6 +7,7 @@ export type {
   AccessSnapshotRpcPayload,
   AccessSnapshotSuccessDTO,
   ArtistProfileReadDTO,
+  ArtistSocialLinksDTO,
   ArtistTaxonomySignals,
   BuyerBillingTier,
   ClientProfileReadDTO,

@@ -3,9 +3,25 @@
  * READ-ONLY display projection from ArtistProfileReadDTO. No writers.
  */
 
-import type { ArtistProfileReadDTO } from '../../shared/services/profiles/index';
+import type { ArtistProfileReadDTO, ArtistSocialLinksDTO } from '../../shared/services/profiles/index';
 
 export type ArtistProfileSftGateStatus = 'eligible' | 'not_eligible' | 'unknown';
+
+export type ArtistSocialPlatform = 'instagram' | 'youtube' | 'spotify' | 'soundcloud' | 'mixcloud';
+
+export type ArtistSocialLinkVM = {
+  readonly platform: ArtistSocialPlatform;
+  readonly label: string;
+  readonly url: string;
+};
+
+const SOCIAL_PLATFORM_LABELS: Readonly<Record<ArtistSocialPlatform, string>> = Object.freeze({
+  instagram: 'Instagram',
+  youtube: 'YouTube',
+  spotify: 'Spotify',
+  soundcloud: 'SoundCloud',
+  mixcloud: 'Mixcloud',
+});
 
 export type ArtistProfileReadViewModel = {
   readonly stageName: string;
@@ -32,8 +48,8 @@ export type ArtistProfileReadViewModel = {
   readonly photoUrl: string | null;
   readonly backgroundUrl: string | null;
   readonly hourlyRateLabel: string | null;
-  /** Social URLs not yet on DTO — Slice 1 shows empty state. */
-  readonly socialLinksAvailable: false;
+  readonly socialLinksAvailable: boolean;
+  readonly socialLinks: readonly ArtistSocialLinkVM[];
 };
 
 function displayOrNull(value: string | null | undefined): string | null {
@@ -66,6 +82,26 @@ function boolLabel(value: boolean | null, yes: string, no: string): string | nul
   return null;
 }
 
+/** Filters to only the platforms the artist actually linked — no blank/placeholder entries. */
+function resolveSocialLinks(
+  links: ArtistSocialLinksDTO | null,
+): readonly ArtistSocialLinkVM[] {
+  if (!links) return [];
+  const platforms: readonly ArtistSocialPlatform[] = [
+    'instagram',
+    'youtube',
+    'spotify',
+    'soundcloud',
+    'mixcloud',
+  ];
+  const resolved: ArtistSocialLinkVM[] = [];
+  for (const platform of platforms) {
+    const url = displayOrNull(links[platform]);
+    if (url) resolved.push({ platform, label: SOCIAL_PLATFORM_LABELS[platform], url });
+  }
+  return Object.freeze(resolved);
+}
+
 /**
  * Pure mapper — ArtistProfileReadDTO → display strings for MOD-204 Slice 1.
  */
@@ -79,6 +115,7 @@ export function toArtistProfileReadViewModel(
     'Artist';
   const sft = resolveSftGate(profile);
   const username = displayOrNull(profile.username);
+  const socialLinks = resolveSocialLinks(profile.socialLinks);
   const rating =
     profile.rating != null
       ? `${profile.rating.toFixed(1)}${
@@ -116,6 +153,7 @@ export function toArtistProfileReadViewModel(
     backgroundUrl: displayOrNull(profile.backgroundUrl),
     hourlyRateLabel:
       profile.hourlyRateUsd != null ? `$${profile.hourlyRateUsd.toFixed(0)} / hr` : null,
-    socialLinksAvailable: false,
+    socialLinksAvailable: socialLinks.length > 0,
+    socialLinks,
   });
 }

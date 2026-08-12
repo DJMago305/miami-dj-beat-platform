@@ -22,6 +22,18 @@ export const LAB_ARTIST_PROFILE_DJMAGO305: ArtistProfileReadDTO = Object.freeze(
   backgroundUrl: LAB_IDENTITY_ARTIST_DJMAGO305.backgroundUrl,
   mdjbId: LAB_IDENTITY_ARTIST_DJMAGO305.mdjbId,
   email: LAB_IDENTITY_ARTIST_DJMAGO305.email,
+  /* MOD-213 — lab mock social handles (visual audit fix, 2026-08-12).
+     ArtistProfileReadDTO.socialLinks stays null upstream until the real
+     dj_profiles social columns are mapped; this lab fixture populates it
+     so the profile view can render real badges instead of the "await DTO
+     mapping" placeholder. */
+  socialLinks: Object.freeze({
+    instagram: 'https://instagram.com/djmago305',
+    youtube: 'https://youtube.com/@djmago305',
+    spotify: 'https://open.spotify.com/artist/djmago305',
+    soundcloud: 'https://soundcloud.com/djmago305',
+    mixcloud: null,
+  }),
 });
 
 export const LAB_ARTIST_PROFILE_DEFAULT: ArtistProfileReadDTO = LAB_ARTIST_PROFILE_DJMAGO305;

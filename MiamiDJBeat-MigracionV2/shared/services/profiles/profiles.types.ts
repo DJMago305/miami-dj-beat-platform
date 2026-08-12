@@ -107,6 +107,20 @@ export type ClientProfileReadDTO = {
 };
 
 /**
+ * ArtistSocialLinksDTO — MOD-213 · `public.dj_profiles` social handles.
+ * Each field is a full URL or null when the artist hasn't linked that
+ * platform. Optional/nullable on the parent DTO — artists created before
+ * this field existed simply carry `socialLinks: null`.
+ */
+export type ArtistSocialLinksDTO = {
+  readonly instagram: string | null;
+  readonly youtube: string | null;
+  readonly spotify: string | null;
+  readonly soundcloud: string | null;
+  readonly mixcloud: string | null;
+};
+
+/**
  * ArtistProfileReadDTO — MOD-204 owner · `public.dj_profiles`.
  * `fullName` = legal; `stageName` / `djName` = artistic brand.
  */
@@ -142,6 +156,7 @@ export type ArtistProfileReadDTO = {
   readonly reviewCount: number | null;
   readonly soundfortipsActive: boolean | null;
   readonly sftOk: boolean | null;
+  readonly socialLinks: ArtistSocialLinksDTO | null;
   readonly createdAt: string | null;
   readonly updatedAt: string | null;
 };

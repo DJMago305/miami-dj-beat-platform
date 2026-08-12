@@ -38,11 +38,16 @@ body.mdj-v2-lab .mdj-v2-v1-artist-portal {
   width: 100%;
 }
 
+/* MOD-213 — aspect-ratio, not a fixed height (was height:320px, which wins
+   the cascade over v1-profile-shell.css's aspect-ratio rule at equal
+   specificity and forces the cover photo into an unrelated 4.375:1 box —
+   visual audit finding, 2026-08-12). 16/6 ≈ 2.67:1, close to the source
+   photo's real 2.48:1, for a mild, consistent crop at any viewport width. */
 body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero {
   position: relative;
   width: 100%;
-  min-height: 280px;
-  height: 320px;
+  aspect-ratio: 16 / 6;
+  min-height: 220px;
   overflow: hidden;
   border-radius: 14px;
   border: 1px solid rgba(197, 160, 89, 0.28);
@@ -145,13 +150,25 @@ body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-name .dot {
 
 /* MOD-206 — real tab system (display/hidden toggle), mirrors
    ui-v1-clone/dj-profile.html's .dj-panel + switchProfileTab() pattern. */
+
+/* MOD-209 — tab bar + Vista Personal/Pública switch share one row, switch
+   pushed to the far right (Capitan correction, 2026-08-12) — was its own
+   stacked row inside #profile before. */
+body.mdj-v2-lab .mdj-artist-tabs-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 1rem 0 1.25rem;
+  border-bottom: 1px solid rgba(197, 160, 89, 0.2);
+  padding-bottom: 0.75rem;
+}
+
 body.mdj-v2-lab .mdj-artist-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin: 1rem 0 1.25rem;
-  border-bottom: 1px solid rgba(197, 160, 89, 0.2);
-  padding-bottom: 0.75rem;
 }
 
 body.mdj-v2-lab .mdj-artist-tabs__btn {

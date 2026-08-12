@@ -131,6 +131,7 @@ export const MOCK_ARTIST_PROFILE_DJ_PRO: ArtistProfileReadDTO = Object.freeze({
   reviewCount: 12,
   soundfortipsActive: true,
   sftOk: true,
+  socialLinks: null,
   createdAt: '2026-08-01T00:00:00.000Z',
   updatedAt: '2026-08-01T00:00:00.000Z',
 });

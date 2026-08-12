@@ -147,10 +147,12 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
     { id: 'wallet', label: 'Ingresos · Wallet' },
   ]);
 
-  /* MOD-209 — Vista Personal/Pública switch, top of #profile. Public mode
-     hides [data-mdj-profile-visibility="private-only"] (Legal identity),
-     the Analytics section, and the SoundForTips payment-config link — see
-     the [data-mdj-view-mode="public"] rules in v1-portal-layouts.css. */
+  /* MOD-209 — Vista Personal/Pública switch. Public mode hides
+     [data-mdj-profile-visibility="private-only"] (Legal identity), the
+     Analytics section, and the SoundForTips payment-config link — see the
+     [data-mdj-view-mode="public"] rules in v1-portal-layouts.css.
+     Positioned on the tab bar's own row, right-aligned (Capitan correction,
+     2026-08-12) — not stacked as its own row inside the #profile panel. */
   const viewModeToggle = createArtistViewModeToggle();
   wireArtistViewModeToggle(viewModeToggle, panels.profile);
 
@@ -159,7 +161,7 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
   const songSlot = createSectionSlot('song4tips');
   const mediaSlot = createSectionSlot('media-library');
   const analyticsSlot = createSectionSlot('analytics');
-  panels.profile.append(viewModeToggle.root, profileSlot, mediaSlot, analyticsSlot, songSlot);
+  panels.profile.append(profileSlot, mediaSlot, analyticsSlot, songSlot);
 
   const mutationsCard = document.createElement('div');
   mutationsCard.className = 'dj-card mdj-v2-v1-ops-card';
@@ -192,7 +194,11 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
 
   wireArtistTabController(tabBar, panels);
 
-  root.append(hero, tabBar, tabPanelsWrap, body);
+  const tabsRow = document.createElement('div');
+  tabsRow.className = 'mdj-artist-tabs-row';
+  tabsRow.append(tabBar, viewModeToggle.root);
+
+  root.append(hero, tabsRow, tabPanelsWrap, body);
 
   return { root, hero, mainCol, tabPanelsWrap, mutationsHost };
 }

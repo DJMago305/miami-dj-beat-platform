@@ -168,11 +168,25 @@ function renderMedia(vm: ArtistProfileReadViewModel): HTMLElement {
   );
   section.append(list);
 
-  if (!vm.socialLinksAvailable) {
-    appendEmptyHint(
-      section,
-      'Social URLs (Instagram, etc.) await DTO mapping — display-only placeholder.',
-    );
+  if (vm.socialLinksAvailable) {
+    const socialList = document.createElement('ul');
+    socialList.className = 'mdj-artist-profile-read__social-links';
+    socialList.setAttribute('aria-label', 'Social media links');
+    for (const link of vm.socialLinks) {
+      const item = document.createElement('li');
+      const anchor = document.createElement('a');
+      anchor.className = 'mdj-artist-profile-read__social-link';
+      anchor.href = link.url;
+      anchor.target = '_blank';
+      anchor.rel = 'noopener noreferrer';
+      anchor.dataset.mdjSocialPlatform = link.platform;
+      anchor.textContent = link.label;
+      item.append(anchor);
+      socialList.append(item);
+    }
+    section.append(socialList);
+  } else {
+    appendEmptyHint(section, 'No social media links on file for this artist yet.');
   }
 
   if (vm.photoUrl) {

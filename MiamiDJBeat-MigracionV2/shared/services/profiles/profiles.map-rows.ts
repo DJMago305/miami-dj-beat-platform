@@ -143,6 +143,11 @@ export function mapArtistProfileRow(
     reviewCount: asNumber(row.review_count),
     soundfortipsActive: asBoolean(row.soundfortips_active),
     sftOk: opts?.sftOk ?? null,
+    /* MOD-213 — real dj_profiles social-handle columns not confirmed/wired
+       yet; null here until that mapping is explicitly authorized. Lab
+       fixtures populate this field directly for local UI development
+       (see artist/profile/artist-profile-read-fixtures.ts). */
+    socialLinks: null,
     createdAt: asString(row.created_at),
     updatedAt: asString(row.updated_at),
   });
