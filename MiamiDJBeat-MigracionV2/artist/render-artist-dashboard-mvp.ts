@@ -272,6 +272,26 @@ function wireAgendaFullpageNavLink(layoutRoot: HTMLElement): void {
 }
 
 /**
+ * MOD-215 — the top "⚙️ CONFIG" nav link used to redirect out to
+ * /v1/account-settings.html; per PO architecture decision (progressive
+ * per-portal migration, not a V1/V2 Big Bang merge), it now switches to the
+ * native "#config" tab inside this same V2 SPA instead of leaving the page.
+ */
+function wireArtistConfigNavLink(layoutRoot: HTMLElement): void {
+  const link = document.querySelector<HTMLAnchorElement>('[data-mdj-config-tab-link="1"]');
+  if (!link) return;
+
+  link.addEventListener('click', (event) => {
+    event.preventDefault();
+    const tabButton = layoutRoot.querySelector<HTMLButtonElement>(
+      '.mdj-artist-tabs__btn[data-tab="config"]',
+    );
+    tabButton?.click();
+    layoutRoot.querySelector('.mdj-artist-tab-panels')?.scrollIntoView({ behavior: 'smooth' });
+  });
+}
+
+/**
  * INSTRUCCIÓN 2026-08-12 — SoundForTips™'s "Configurar Métodos de Pago"
  * button switches to the "#wallet" tab (real Cash Flow / Balance SSOT /
  * Payment Config), since SoundForTips itself stays a #profile-scoped app
@@ -369,6 +389,7 @@ export function renderArtistDashboardMvp(
   mainRegion.append(legacyHero, legacyKpis, layout.root);
   applyV1BrandShell(mainRegion, 'artist');
   wireAgendaFullpageNavLink(layout.root);
+  wireArtistConfigNavLink(layout.root);
   wireSong4TipsPaymentConfigLink(layout.root);
   mountArtistProfileReadSliceSync(mainRegion, undefined, sessionWiring);
   mountArtistScheduleReadSliceSync(mainRegion, undefined, sessionWiring);

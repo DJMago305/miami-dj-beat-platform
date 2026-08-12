@@ -125,7 +125,7 @@ export function mountArtistOwnerTabs(): HTMLElement {
     <a href="${MDJ_V1_ASSET_BASE}/academia.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-academia">Academia</a>
     <a href="${MDJ_V1_ASSET_BASE}/shop.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-shop">Shop</a>
     <a href="#agenda-fullpage" class="dj-tab-btn" data-i18n="dash-your-profile" data-mdj-agenda-fullpage-link="1">Agenda</a>
-    <a href="${MDJ_V1_ASSET_BASE}/account-settings.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-settings">⚙️ CONFIG</a>
+    <a href="#config" class="dj-tab-btn" data-i18n="nav-settings" data-mdj-config-tab-link="1">⚙️ CONFIG</a>
     <a href="${MDJ_V1_ASSET_BASE}/dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-tools">DJ Tools</a>
     <a href="${MDJ_V1_ASSET_BASE}/dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="flow-dash">Cash Flow</a>
     <a href="/artist/" class="dj-tab-btn active" data-i18n="menu-account">Mi Perfil</a>
