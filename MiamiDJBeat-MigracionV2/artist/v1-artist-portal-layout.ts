@@ -9,6 +9,10 @@ import {
   createArtistTabController,
   wireArtistTabController,
 } from './tabs/artist-tab-controller';
+import {
+  createArtistViewModeToggle,
+  wireArtistViewModeToggle,
+} from './profile/artist-view-mode-toggle';
 
 export type ArtistV1LayoutOptions = {
   readonly profile?: {
@@ -143,12 +147,19 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
     { id: 'wallet', label: 'Ingresos · Wallet' },
   ]);
 
+  /* MOD-209 — Vista Personal/Pública switch, top of #profile. Public mode
+     hides [data-mdj-profile-visibility="private-only"] (Legal identity),
+     the Analytics section, and the SoundForTips payment-config link — see
+     the [data-mdj-view-mode="public"] rules in v1-portal-layouts.css. */
+  const viewModeToggle = createArtistViewModeToggle();
+  wireArtistViewModeToggle(viewModeToggle, panels.profile);
+
   const profileSlot = createSectionSlot('artist-profile');
   profileSlot.classList.add('owner-card');
   const songSlot = createSectionSlot('song4tips');
   const mediaSlot = createSectionSlot('media-library');
   const analyticsSlot = createSectionSlot('analytics');
-  panels.profile.append(profileSlot, mediaSlot, analyticsSlot, songSlot);
+  panels.profile.append(viewModeToggle.root, profileSlot, mediaSlot, analyticsSlot, songSlot);
 
   const mutationsCard = document.createElement('div');
   mutationsCard.className = 'dj-card mdj-v2-v1-ops-card';

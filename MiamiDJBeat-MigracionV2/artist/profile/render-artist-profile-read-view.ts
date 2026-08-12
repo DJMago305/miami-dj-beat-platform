@@ -93,6 +93,9 @@ function renderHeader(vm: ArtistProfileReadViewModel, sourceLabel: string): HTML
 
 function renderPrivateIdentity(vm: ArtistProfileReadViewModel): HTMLElement {
   const section = createSection('Legal identity (owner private)', 'private-identity');
+  /* MOD-209 — hidden by the artist-view-mode-toggle when switched to "Vista
+     Pública (Cliente)"; owner-only legal data was never meant for clients. */
+  section.dataset.mdjProfileVisibility = 'private-only';
   const note = document.createElement('p');
   note.className = 'mdj-artist-profile-read__pii-note';
   note.textContent =
@@ -187,6 +190,12 @@ function renderMedia(vm: ArtistProfileReadViewModel): HTMLElement {
 /**
  * Renders a read-only artist profile panel into `container` (replaces children).
  * Guarantees zero interactive writers (no form / submit / save controls).
+ * No internal `.dj-hero` banner — the page-level identity hero (cover photo,
+ * avatar, stage name) already renders once above the tab system
+ * (v1-artist-portal-layout.ts); duplicating it here doubled the same photo
+ * and name on screen (visual audit finding, 2026-08-12, fixed same day).
+ * `renderHeader()` still carries the info the page-level hero doesn't show
+ * (tier/category/SFT badges, handle, MDJB ID, Song4Tips booth status).
  */
 export function renderArtistProfileReadView(
   container: HTMLElement,
@@ -197,7 +206,7 @@ export function renderArtistProfileReadView(
   const vm = toArtistProfileReadViewModel(profile);
 
   const root = document.createElement('article');
-  root.className = 'mdj-artist-profile-read';
+  root.className = 'mdj-artist-profile-read mdj-v2-v1-artist-profile';
   root.dataset.mdjComponent = 'ArtistProfileReadView';
   root.dataset.mdjMod = 'MOD-204';
   root.setAttribute('aria-label', 'Artist profile read view');
@@ -210,7 +219,6 @@ export function renderArtistProfileReadView(
     renderMedia(vm),
   );
 
-  // Hard guard: strip any accidental form/submit if future edits regress.
   for (const el of root.querySelectorAll('form, button[type="submit"], input, textarea, select')) {
     el.remove();
   }

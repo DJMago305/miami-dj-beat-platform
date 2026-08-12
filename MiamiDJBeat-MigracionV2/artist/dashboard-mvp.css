@@ -6,3 +6,38 @@
   border-radius: 0.85rem;
   background: var(--mdj-shell-glass);
 }
+
+/* MOD-009 shell Panel component — was defined for client/staff but missing
+   here, so Panel(variant: 'glass'|'elevated') rendered with zero border/
+   padding/background (visual audit finding, 2026-08-12, fixed same day). */
+.mdj-shell-panel {
+  padding: 1rem;
+  border: 1px solid var(--mdj-shell-border);
+  border-radius: 0.85rem;
+  background: var(--mdj-shell-glass);
+}
+
+.mdj-shell-panel--elevated,
+.mdj-shell-panel.mdj-shell-panel--elevated {
+  background: var(--mdj-shell-bg-elevated);
+}
+
+.mdj-shell-empty-state {
+  margin-top: 0.65rem;
+  padding: 0.85rem;
+  border: 1px dashed rgba(212, 175, 55, 0.22);
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.mdj-shell-empty-state__title {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.mdj-shell-empty-state__description,
+.mdj-shell-empty-state__hint {
+  margin: 0.35rem 0 0;
+  color: var(--mdj-shell-muted);
+  font-size: 0.8rem;
+}

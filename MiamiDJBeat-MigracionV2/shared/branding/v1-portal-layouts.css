@@ -212,6 +212,119 @@ body.mdj-v2-lab .mdj-song4tips-payment-link:hover {
   color: #1a1206;
 }
 
+/* MOD-209 — Vista Personal (Edición) ↔ Vista Pública (Cliente) switch, top
+   of #profile. Minimalist by design (Capitan correction, 2026-08-12): no
+   permanent text label sits next to the switch — state changes surface via
+   a self-dismissing toast, and the explanation lives only behind "?". */
+body.mdj-v2-lab .mdj-artist-view-mode-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: fit-content;
+}
+
+body.mdj-v2-lab .mdj-artist-view-mode-toggle__help {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+  padding: 0;
+}
+
+body.mdj-v2-lab .mdj-artist-view-mode-toggle__help:hover {
+  border-color: var(--gold, #c5a059);
+  color: var(--gold, #c5a059);
+}
+
+body.mdj-v2-lab .mdj-artist-view-mode-toast {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  margin: 0;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid rgba(197, 160, 89, 0.4);
+  border-radius: 0.6rem;
+  background: rgba(10, 10, 12, 0.95);
+  color: var(--gold, #c5a059);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 30;
+}
+
+body.mdj-v2-lab .mdj-artist-view-mode-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.mdj-v2-lab .mdj-artist-view-mode-toast {
+    transition: opacity 0.01ms;
+  }
+}
+
+body.mdj-v2-lab .mdj-artist-view-mode-toggle__switch {
+  position: relative;
+  flex: none;
+  width: 42px;
+  height: 24px;
+  border: 1px solid rgba(197, 160, 89, 0.4);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  padding: 0;
+}
+
+body.mdj-v2-lab .mdj-artist-view-mode-toggle__switch[aria-checked='true'] {
+  background: var(--gold, #c5a059);
+  border-color: transparent;
+}
+
+body.mdj-v2-lab .mdj-artist-view-mode-toggle__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.18s ease;
+}
+
+body.mdj-v2-lab .mdj-artist-view-mode-toggle__switch[aria-checked='false'] .mdj-artist-view-mode-toggle__thumb {
+  transform: translateX(18px);
+  background: #1a1206;
+}
+
+/* Vista Pública (Cliente), vs. the default Vista Personal (Edición) — hides
+   owner-only/internal content within #profile: Legal identity, Analytics
+   (métricas de rendimiento), and the SoundForTips payment-config link.
+   Bio, Media/Fotos, and SoundForTips™ itself stay visible — same content
+   a client sees. */
+body.mdj-v2-lab .mdj-artist-tab-panel[data-tab-panel='profile'][data-mdj-view-mode='public']
+  [data-mdj-profile-visibility='private-only'],
+body.mdj-v2-lab .mdj-artist-tab-panel[data-tab-panel='profile'][data-mdj-view-mode='public']
+  [data-mdj-artist-section='analytics'],
+body.mdj-v2-lab .mdj-artist-tab-panel[data-tab-panel='profile'][data-mdj-view-mode='public']
+  [data-mdj-song4tips-payment-config-link='1'] {
+  display: none !important;
+}
+
 body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
