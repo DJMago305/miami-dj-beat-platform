@@ -9,9 +9,20 @@
  * project); "🛰️ En vivo" fetches a real Edge Function if configured,
  * and gracefully falls back to mock with an honest status label if not —
  * same honesty pattern as the rest of this lab, not something added here.
- * Matrix area below stays a clearly-labeled placeholder (out of this
- * round's scope — only the Hero engine was authorized to be ported).
+ *
+ * Matrix area: "Pronóstico 10 días" stays an honest placeholder — no
+ * 10-day-scoped forecast exists anywhere in this lab to connect it to
+ * (the real weather fixtures are per-gig, not calendar-day). "DJ Advice"
+ * is real — it reuses the same gearAdvice computed by the Artist portal's
+ * own Weather slice (artist/weather/), not new/invented content.
  */
+
+import { LAB_ARTIST_GIG_WEATHER } from '../weather/artist-weather-read-fixtures';
+import { toArtistWeatherReadViewModel } from '../weather/artist-weather-read-view-model';
+import {
+  annotateArtistMountSourceLabel,
+  type ArtistSessionWiringInjection,
+} from '../session/artist-session-wiring-pilot';
 
 function createLabMockBadge(text: string): HTMLElement {
   const badge = document.createElement('p');
@@ -109,20 +120,76 @@ function createHero(): HTMLElement {
   return hero;
 }
 
-function createExtendedModule(title: string, ariaLabel: string): HTMLElement {
+function createTenDayForecastModule(): HTMLElement {
   const section = document.createElement('section');
   section.className = 'mdj-agenda-fullpage__extended-module';
-  section.setAttribute('aria-label', ariaLabel);
+  section.setAttribute('aria-label', 'Pronóstico extendido a 10 días (placeholder)');
 
   const heading = document.createElement('h3');
   heading.className = 'mdj-agenda-fullpage__extended-title';
-  heading.textContent = title;
+  heading.textContent = 'Pronóstico 10 días';
 
-  section.append(heading, createLabMockBadge('lab mock — pendiente de integración real'));
+  section.append(
+    heading,
+    createLabMockBadge(
+      'lab mock — sin fuente de pronóstico a 10 días en este lab (los fixtures reales de clima son por gig, no por calendario)',
+    ),
+  );
   return section;
 }
 
-function createMatrix(): HTMLElement {
+/** Real: reuses artist/weather/'s own gearAdvice computation, not invented content. */
+function createDjAdviceModule(
+  sessionWiring?: ArtistSessionWiringInjection | null,
+): HTMLElement {
+  const section = document.createElement('section');
+  section.className = 'mdj-agenda-fullpage__extended-module';
+  section.setAttribute('aria-label', 'Recomendaciones operativas para el DJ, por gig asignado');
+
+  const heading = document.createElement('h3');
+  heading.className = 'mdj-agenda-fullpage__extended-title';
+  heading.textContent = 'DJ Advice';
+
+  const sourceLabel = annotateArtistMountSourceLabel('lab mock', sessionWiring, 'weather');
+  section.append(heading, createLabMockBadge(sourceLabel));
+
+  const vm = toArtistWeatherReadViewModel({
+    risks: LAB_ARTIST_GIG_WEATHER.risks,
+    forecasts: LAB_ARTIST_GIG_WEATHER.forecasts,
+    alerts: LAB_ARTIST_GIG_WEATHER.alerts,
+  });
+
+  const list = document.createElement('ul');
+  list.className = 'mdj-agenda-fullpage__advice-list';
+  for (const card of vm.cards) {
+    const item = document.createElement('li');
+    item.className = 'mdj-agenda-fullpage__advice-item';
+
+    const gigLabel = document.createElement('strong');
+    gigLabel.textContent = `${card.eventTitle} (${card.venueLabel})`;
+    item.append(gigLabel);
+
+    if (card.gearAdvice.length > 0) {
+      const adviceList = document.createElement('ul');
+      for (const advice of card.gearAdvice) {
+        const adviceItem = document.createElement('li');
+        adviceItem.dataset.mdjAdviceCode = advice.code;
+        adviceItem.textContent = advice.message;
+        adviceList.append(adviceItem);
+      }
+      item.append(adviceList);
+    } else {
+      const none = document.createElement('p');
+      none.textContent = card.wardrobeHint;
+      item.append(none);
+    }
+    list.append(item);
+  }
+  section.append(list);
+  return section;
+}
+
+function createMatrix(sessionWiring?: ArtistSessionWiringInjection | null): HTMLElement {
   const matrix = document.createElement('section');
   matrix.className = 'mdj-agenda-fullpage__matrix';
   matrix.id = 'agenda-matrix';
@@ -136,22 +203,27 @@ function createMatrix(): HTMLElement {
   matrix.append(
     heading,
     createLabMockBadge('lab mock — Calendario/Gigs pendiente de integración real'),
-    createExtendedModule('Pronóstico 10 días', 'Pronóstico extendido a 10 días (placeholder)'),
-    createExtendedModule('DJ Advice', 'Recomendaciones operativas para el DJ (placeholder)'),
+    createTenDayForecastModule(),
+    createDjAdviceModule(sessionWiring),
   );
   return matrix;
 }
 
 /**
  * Builds the full-page Agenda shell (Hero 100vh + Matrix area) and
- * appends it to `root`. Pure structure — no data, no adapters.
+ * appends it to `root`. `sessionWiring` only labels the DJ Advice
+ * module's source honestly — the Hero and the rest of the shell stay
+ * pure structure.
  */
-export function renderArtistAgendaFullpageView(root: HTMLElement): void {
+export function renderArtistAgendaFullpageView(
+  root: HTMLElement,
+  sessionWiring?: ArtistSessionWiringInjection | null,
+): void {
   const section = document.createElement('section');
   section.className = 'mdj-agenda-fullpage';
   section.id = 'agenda-fullpage';
   section.dataset.mdjComponent = 'ArtistAgendaFullpage';
 
-  section.append(createHero(), createMatrix());
+  section.append(createHero(), createMatrix(sessionWiring));
   root.append(section);
 }

@@ -109,6 +109,10 @@ function buildLeadsTable(dataProvider: StaffDashboardDataProvider): HTMLElement 
   title.className = 'mdj-v2-leads-panel__title';
   title.textContent = 'Solicitudes de Clientes';
 
+  const sourceBadge = document.createElement('p');
+  sourceBadge.className = 'mdj-v2-leads-panel__source-badge';
+  sourceBadge.textContent = 'lab mock / client requests';
+
   const tableWrap = document.createElement('div');
   tableWrap.className = 'leads-table-wrap';
   tableWrap.id = 'leads-container';
@@ -141,7 +145,7 @@ function buildLeadsTable(dataProvider: StaffDashboardDataProvider): HTMLElement 
   }
   table.append(tbody);
   tableWrap.append(table);
-  wrap.append(title, tableWrap);
+  wrap.append(title, sourceBadge, tableWrap);
   return wrap;
 }
 

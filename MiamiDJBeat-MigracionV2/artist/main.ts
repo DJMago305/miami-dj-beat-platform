@@ -69,7 +69,7 @@ function main(): void {
         });
       }
       // MOD-205 — Agenda full-page shell (100vh Hero placeholder + Matrix area).
-      mountArtistAgendaFullpage(mainRegion);
+      mountArtistAgendaFullpage(mainRegion, sessionWiring);
       const contentGrid = mainRegion.querySelector('.mdj-client-dashboard__grid');
       artistLegalBundle.renderLegalCenterShell(contentGrid ?? mainRegion);
     },

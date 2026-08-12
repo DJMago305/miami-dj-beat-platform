@@ -1,5 +1,26 @@
 /** MOD-010 Client Dashboard — placeholder data — TICKET-MOD-010-CLIENT-DASHBOARD-MVP-001 */
 
+import { LAB_CLIENT_PROFILE_DEFAULT } from './profile/client-profile-read-fixtures';
+import { toClientProfileReadViewModel } from './profile/client-profile-read-view-model';
+import { LAB_CLIENT_RECEIPTS } from './finance/client-finance-read-fixtures';
+import { toClientFinanceReadViewModel } from './finance/client-finance-read-view-model';
+
+/**
+ * Real view models from the SAME fixtures the Client Profile and Finance
+ * read-slices mount elsewhere on this page — CLIENT_VIP and
+ * CLIENT_PENDING_PAYMENTS below derive from these instead of an
+ * independent, driftable set of numbers (audit finding, 2026-08-12: the
+ * Hero claimed "VIP Gold" while the real profile slice showed the same
+ * client as "Cliente regular"; the Hero also claimed a "$1,240" balance
+ * while the real finance slice computed "$7,000.00" outstanding).
+ */
+const realClientProfileVm = toClientProfileReadViewModel(LAB_CLIENT_PROFILE_DEFAULT);
+const realClientFinanceVm = toClientFinanceReadViewModel({
+  receipts: LAB_CLIENT_RECEIPTS.receipts,
+  transactions: LAB_CLIENT_RECEIPTS.transactions,
+  balance: LAB_CLIENT_RECEIPTS.balance,
+});
+
 export const CLIENT_QUICK_ACTIONS = Object.freeze([
   'Request DJ',
   'Create Event',
@@ -36,7 +57,7 @@ export const CLIENT_RECENT_ORDERS = Object.freeze([
 ] as const);
 
 export const CLIENT_PENDING_PAYMENTS = Object.freeze([
-  { label: 'Balance due', value: '$1,240' },
+  { label: 'Balance due', value: `$${realClientFinanceVm.summary.totalDueUsd.toFixed(2)}` },
   { label: 'Next auto-reminder', value: 'Jul 12' },
   { label: 'Payment method', value: 'Visa ···· 4242' },
 ] as const);
@@ -60,10 +81,13 @@ export const CLIENT_ACTIVITY = Object.freeze([
 ] as const);
 
 export const CLIENT_VIP = Object.freeze({
-  tier: 'VIP Gold',
-  perks: 'Priority booking · Exclusive discounts · Dedicated concierge',
-  renewal: 'Renews Jan 2027',
-} as const);
+  tier: realClientProfileVm.vipLabel,
+  perks:
+    realClientProfileVm.vipStatus === 'vip'
+      ? 'Priority booking · Exclusive discounts · Dedicated concierge'
+      : 'No VIP membership active for this account yet.',
+  renewal: realClientProfileVm.vipStatus === 'vip' ? 'Renews Jan 2027' : '—',
+});
 
 /**
  * Hero KPI strip, derived from the fixture arrays above instead of a second,

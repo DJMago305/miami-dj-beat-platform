@@ -7,15 +7,22 @@
 
 import { renderArtistAgendaFullpageView } from './render-artist-agenda-fullpage-view';
 import { initWeatherHeroEngine } from './weather-hero-engine';
+import type { ArtistSessionWiringInjection } from '../session/artist-session-wiring-pilot';
 
 /**
  * Appends the Agenda full-page section to `mainRegion` and boots the WebGL
  * engine, if not already present. Idempotent: calling twice is a no-op.
+ * `sessionWiring` is threaded through only to label the DJ Advice module's
+ * data source honestly (same annotateArtistMountSourceLabel convention as
+ * every other real slice) - the Hero engine itself doesn't need it.
  * Returns a dispose function (stops the render loop + removes listeners),
  * or null if the section was already mounted by a prior call.
  */
-export function mountArtistAgendaFullpage(mainRegion: HTMLElement): (() => void) | null {
+export function mountArtistAgendaFullpage(
+  mainRegion: HTMLElement,
+  sessionWiring?: ArtistSessionWiringInjection | null,
+): (() => void) | null {
   if (mainRegion.querySelector('#agenda-fullpage')) return null;
-  renderArtistAgendaFullpageView(mainRegion);
+  renderArtistAgendaFullpageView(mainRegion, sessionWiring);
   return initWeatherHeroEngine();
 }
