@@ -13,12 +13,23 @@ import {
   createArtistViewModeToggle,
   wireArtistViewModeToggle,
 } from './profile/artist-view-mode-toggle';
+import {
+  resolveSocialLinks,
+  SOCIAL_PLATFORM_ICON_SVG,
+  SOCIAL_SHARE_ICON_SVG,
+} from './profile/artist-profile-read-view-model';
+import { LAB_ARTIST_PROFILE_DJMAGO305 } from './profile/artist-profile-read-fixtures';
+import type { ArtistSocialLinksDTO } from '../shared/services/profiles/index';
 
 export type ArtistV1LayoutOptions = {
   readonly profile?: {
     readonly photoUrl?: string | null;
     readonly backgroundUrl?: string | null;
     readonly stageName?: string | null;
+    readonly socialLinks?: ArtistSocialLinksDTO | null;
+    readonly city?: string | null;
+    readonly rating?: number | null;
+    readonly reviewCount?: number | null;
   } | null;
 };
 
@@ -36,6 +47,46 @@ function createSectionSlot(sectionId: string, wide = false): HTMLElement {
   section.className = `mdj-client-dashboard__section${wide ? ' mdj-client-dashboard__section--wide' : ''} dj-card mdj-v2-v1-slot`;
   section.dataset.mdjArtistSection = sectionId;
   return section;
+}
+
+/** 5-star row, filled count from the real rating (rounded) — same rating shown in the Residency section below. */
+function buildHeroRatingStarsHtml(rating: number | null): string {
+  const filled = rating != null ? Math.round(Math.min(5, Math.max(0, rating))) : 0;
+  return Array.from({ length: 5 }, (_, i) =>
+    i < filled
+      ? '<span class="dj-rating__star dj-rating__star--filled">★</span>'
+      : '<span class="dj-rating__star">★</span>',
+  ).join('');
+}
+
+const SHARE_FEEDBACK_RESET_MS = 1800;
+
+/** Copies the profile URL to the clipboard; briefly swaps the button's label for feedback. */
+function wireArtistHeroShareButton(hero: HTMLElement): void {
+  const button = hero.querySelector<HTMLButtonElement>('[data-mdj-hero-share-btn="1"]');
+  if (!button) return;
+
+  const idleLabel = button.title;
+  let resetTimer: ReturnType<typeof setTimeout> | null = null;
+
+  button.addEventListener('click', () => {
+    navigator.clipboard?.writeText(window.location.href).then(
+      () => {
+        button.title = '¡Enlace copiado!';
+        button.setAttribute('aria-label', '¡Enlace copiado!');
+        button.classList.add('dj-social-icon--copied');
+        if (resetTimer) clearTimeout(resetTimer);
+        resetTimer = setTimeout(() => {
+          button.title = idleLabel;
+          button.setAttribute('aria-label', idleLabel);
+          button.classList.remove('dj-social-icon--copied');
+        }, SHARE_FEEDBACK_RESET_MS);
+      },
+      () => {
+        /* clipboard denied/unavailable — no-op, button stays a silent no-op rather than throwing */
+      },
+    );
+  });
 }
 
 /** Capitan strip: INICIO / ACADEMIA / SHOP / AGENDA / CONFIG / DJ TOOLS / CASH FLOW / MI PERFIL / STAFF / SOUNDFORTIPS */
@@ -91,6 +142,30 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
   const stageName = options?.profile?.stageName || identity.stageName || identity.displayName;
   const photo = (options?.profile?.photoUrl || identity.photoUrl).trim();
   const cover = (options?.profile?.backgroundUrl || identity.backgroundUrl).trim();
+  /* MOD-213 — hero social row (V1 parity, ui-v1-clone/dj-profile.html .dj-social-row).
+     No SSOT field for this yet, so it falls back to the same lab fixture the
+     Artist Profile body section already reads (LAB_ARTIST_PROFILE_DJMAGO305). */
+  const socialLinks = resolveSocialLinks(
+    options?.profile?.socialLinks ?? LAB_ARTIST_PROFILE_DJMAGO305.socialLinks,
+  );
+  /* MOD-213 — role tag + rating (fidelity pass vs. miamidjbeat.com, 2026-08-12):
+     city comes from the same lab fixture as the profile body's Residency
+     section (LAB_ARTIST_PROFILE_DJMAGO305.city), so the two never disagree. */
+  const city = options?.profile?.city || LAB_ARTIST_PROFILE_DJMAGO305.city || '';
+  const roleLabel = city ? `DJ · PRODUCER · ${city.toUpperCase()}` : 'DJ · PRODUCER';
+  const rating = options?.profile?.rating ?? LAB_ARTIST_PROFILE_DJMAGO305.rating;
+  const ratingHtml = buildHeroRatingStarsHtml(rating);
+  const socialRowHtml = `
+    <div class="dj-social-row">
+      ${socialLinks
+        .map(
+          (link) =>
+            `<a class="dj-social-icon" href="${link.url}" target="_blank" rel="noopener noreferrer" title="${link.label}" aria-label="${link.label}">${SOCIAL_PLATFORM_ICON_SVG[link.platform]}</a>`,
+        )
+        .join('')}
+      <button type="button" class="dj-social-icon share-btn" data-mdj-hero-share-btn="1" title="Compartir perfil" aria-label="Compartir perfil">${SOCIAL_SHARE_ICON_SVG}</button>
+    </div>
+  `.trim();
 
   const hero = document.createElement('div');
   hero.className = 'dj-hero mdj-v2-v1-dj-hero';
@@ -107,12 +182,15 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
     </div>
     <div class="dj-hero-content">
       <div class="dj-hero-left">
-        <div class="dj-hero-role" id="pub-role-label">DJ · PRODUCER</div>
+        <div class="dj-hero-role" id="pub-role-label">${roleLabel}</div>
         <h1 id="pub-name" class="dj-hero-name">${stageName}<span class="dot">.</span></h1>
-        <div class="dj-rating" id="pub-hero-rating"></div>
+        <div class="dj-rating" id="pub-hero-rating">${ratingHtml}</div>
+        ${socialRowHtml}
       </div>
     </div>
   `.trim();
+
+  wireArtistHeroShareButton(hero);
 
   const body = document.createElement('div');
   body.className = 'dj-body dj-body--no-sidebar';

@@ -117,17 +117,21 @@ body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-inset img {
   opacity: 1;
 }
 
+/* MOD-213 — elevated content block (fidelity pass vs. miamidjbeat.com,
+   2026-08-12): a much larger bottom padding lifts the whole name/rating/
+   social cluster off the hero's floor so it floats at chest height instead
+   of sitting flush against the bottom edge. */
 body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-content {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: flex-end;
-  padding: 1.5rem 1.35rem;
+  padding: 1.75rem 1.5rem 3.5rem;
   z-index: 2;
 }
 
 body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-role {
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.4rem;
   font-family: Cinzel, serif;
   font-size: 0.72rem;
   letter-spacing: 0.16em;
@@ -135,17 +139,90 @@ body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-role {
   color: var(--gold, #c5a059);
 }
 
+/* MOD-213 — bumped up for a more prominent, imposing name scale (was
+   clamp(1.8rem,4vw,2.8rem)), matching miamidjbeat.com's hero typography. */
 body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-name {
-  margin: 0;
+  margin: 0 0 0.5rem;
   font-family: 'Playfair Display', Georgia, serif;
   font-style: italic;
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-size: clamp(2.1rem, 4.6vw, 3.4rem);
   color: #fff;
   line-height: 1.05;
 }
 
 body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-name .dot {
   color: var(--gold, #c5a059);
+}
+
+/* MOD-213 — 5-star rating row (fidelity pass vs. miamidjbeat.com). Filled
+   count comes from the same rating shown in the profile body's Residency
+   section, so the two never disagree. */
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-rating {
+  display: flex;
+  gap: 0.15rem;
+  margin: 0 0 0.6rem;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-rating__star {
+  color: rgba(255, 255, 255, 0.22);
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-rating__star--filled {
+  color: var(--gold, #c5a059);
+}
+
+/* MOD-213 — floating social icon row (V1 parity, ui-v1-clone/dj-profile.html
+   .dj-social-row), restored under the artist name in the hero. */
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-social-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-social-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(197, 160, 89, 0.35);
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-social-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-social-icon:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(197, 160, 89, 0.65);
+  transform: translateY(-2px);
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-social-icon.share-btn {
+  background: var(--gold, #c5a059);
+  border-color: transparent;
+  color: #1a1206;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-social-icon.share-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 15px rgba(197, 160, 89, 0.4);
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-social-icon--copied {
+  background: rgba(90, 200, 140, 0.85);
+  border-color: transparent;
+  color: #0a1a10;
 }
 
 /* MOD-206 — real tab system (display/hidden toggle), mirrors

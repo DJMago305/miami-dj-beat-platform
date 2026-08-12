@@ -23,6 +23,24 @@ const SOCIAL_PLATFORM_LABELS: Readonly<Record<ArtistSocialPlatform, string>> = O
   mixcloud: 'Mixcloud',
 });
 
+/** Simplified line-glyphs (not official brand marks) for the hero's floating icon row. */
+export const SOCIAL_PLATFORM_ICON_SVG: Readonly<Record<ArtistSocialPlatform, string>> = Object.freeze({
+  instagram:
+    '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor"/></svg>',
+  youtube:
+    '<svg viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="13" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.2 9.3v5.4l4.9-2.7z" fill="currentColor"/></svg>',
+  spotify:
+    '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6.8 10.2c3.4-1 7-.7 10 1M7.2 13c2.8-.75 5.7-.5 8.2.85M7.6 15.7c2.3-.55 4.6-.4 6.6.7" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
+  soundcloud:
+    '<svg viewBox="0 0 24 24"><path d="M3.5 14.5v3M6 12.5v5M8.5 11v6.5M11 12.2v5.3M13.5 9.5v8h6.2a3 3 0 0 0 .3-6c-.35-2.3-2.3-4-4.5-4-1.15 0-2.2.45-3 1.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  mixcloud:
+    '<svg viewBox="0 0 24 24"><path d="M3 14c1.6-3.4 3.2-3.4 4.8 0 1.6-5.4 3.2-5.4 4.8 0 1.6-3.4 3.2-3.4 4.8 0 1.6-3.4 3.2-3.4 4.6 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+});
+
+/** Hero "share profile" icon — always shown, independent of linked platforms. */
+export const SOCIAL_SHARE_ICON_SVG =
+  '<svg viewBox="0 0 24 24"><circle cx="18" cy="5.5" r="2.3" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="6" cy="12" r="2.3" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="18.5" r="2.3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 10.8l8-4.2M8 13.2l8 4.2" stroke="currentColor" stroke-width="1.5"/></svg>';
+
 export type ArtistProfileReadViewModel = {
   readonly stageName: string;
   readonly djName: string | null;
@@ -83,7 +101,7 @@ function boolLabel(value: boolean | null, yes: string, no: string): string | nul
 }
 
 /** Filters to only the platforms the artist actually linked — no blank/placeholder entries. */
-function resolveSocialLinks(
+export function resolveSocialLinks(
   links: ArtistSocialLinksDTO | null,
 ): readonly ArtistSocialLinkVM[] {
   if (!links) return [];

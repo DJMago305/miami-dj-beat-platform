@@ -202,17 +202,22 @@ body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-hero-inset img {
   opacity: 1;
 }
 
+/* MOD-213 — this selector (4 classes) outranks the equivalent rule in
+   v1-portal-layouts.css (3 classes) and was silently winning the cascade,
+   so the padding bump made there never actually rendered — found via a live
+   measurement mismatch (fidelity pass vs. miamidjbeat.com, 2026-08-12).
+   Kept in sync with v1-portal-layouts.css's copy going forward. */
 body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-hero-content {
   position: absolute;
   inset: 0;
   z-index: 2;
   display: flex;
   align-items: flex-end;
-  padding: 1.35rem 1.25rem 1.2rem;
+  padding: 1.75rem 1.5rem 3.5rem;
 }
 
 body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-hero-role {
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.4rem;
   font-family: 'Cinzel', serif;
   font-size: 0.72rem;
   letter-spacing: 0.14em;
@@ -221,16 +226,32 @@ body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-hero-role {
 }
 
 body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-hero-name {
-  margin: 0;
+  margin: 0 0 0.5rem;
   font-family: 'Playfair Display', Georgia, serif;
   font-style: italic;
   font-weight: 600;
-  font-size: clamp(1.6rem, 3vw, 2.35rem);
+  font-size: clamp(2.1rem, 4.6vw, 3.4rem);
   color: #fff;
-  line-height: 1.1;
+  line-height: 1.05;
 }
 
 body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-hero-name .dot {
+  color: var(--gold, #c5a059);
+}
+
+body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-rating {
+  display: flex;
+  gap: 0.15rem;
+  margin: 0 0 0.6rem;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-rating__star {
+  color: rgba(255, 255, 255, 0.22);
+}
+
+body.mdj-v2-lab .dj-hero.mdj-v2-v1-dj-hero .dj-rating__star--filled {
   color: var(--gold, #c5a059);
 }
 
