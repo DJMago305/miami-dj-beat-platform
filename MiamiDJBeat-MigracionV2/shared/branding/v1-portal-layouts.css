@@ -77,11 +77,17 @@ body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-overlay {
   pointer-events: none;
 }
 
+/* MOD-213 — column stack so the tier pill + verified pill (independent
+   real account flags) don't collide inline. */
 body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-top-stack {
   position: absolute;
   top: 1rem;
   left: 1rem;
   z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
 }
 
 body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-plan-pill {
@@ -95,6 +101,15 @@ body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-plan-pill {
   font-size: 0.72rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+/* MOD-213 — verified = passed the MDJB certification course, independent of
+   paid tier — distinct emerald accent so it never reads as "just another
+   tier". */
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-plan-pill--verified {
+  border-color: rgba(90, 200, 140, 0.55);
+  background: rgba(90, 200, 140, 0.14);
+  color: #b8ecce;
 }
 
 body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-inset {

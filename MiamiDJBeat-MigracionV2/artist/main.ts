@@ -6,6 +6,7 @@ import { resolveArtistPortalComponentGuards } from './component-guards-wire';
 import { resolveArtistLegalPortalBundle } from './legal/artist-legal-provider-wire';
 import { renderArtistDashboardMvp } from './render-artist-dashboard-mvp';
 import { mountArtistProfileReadSlice } from './profile/mount-artist-profile-read-slice';
+import { artistLabProfileStore, buildEffectiveArtistProfile } from './profile/artist-lab-profile-store';
 import { mountArtistScheduleReadSlice } from './schedule/mount-artist-schedule-read-slice';
 import { mountArtistFinanceReadSlice } from './finance/mount-artist-finance-read-slice';
 import { mountArtistWeatherReadSlice } from './weather/mount-artist-weather-read-slice';
@@ -28,6 +29,7 @@ import './weather/artist-weather-read-view.css';
 import './session/artist-session-wiring-pilot.css';
 import './mutations/artist-mutations-view.css';
 import './agenda-fullpage/artist-agenda-fullpage-view.css';
+import './config/artist-config-form.css';
 
 function main(): void {
   applyV1LabDocumentClasses('artist');
@@ -52,6 +54,15 @@ function main(): void {
       if (!mainRegion) return;
       renderArtistDashboardMvp(mainRegion, sessionWiring, mutationsAdapter);
       void mountArtistProfileReadSlice({ mainRegion, sessionWiring });
+      // MOD-215 — Config-tab saves (stage name / city / social links) re-render
+      // Mi Perfil with the merged profile so it never disagrees with the Hero.
+      artistLabProfileStore.subscribe(() => {
+        void mountArtistProfileReadSlice({
+          mainRegion,
+          sessionWiring,
+          fallbackProfile: buildEffectiveArtistProfile(),
+        });
+      });
       // MOD-204 Slice 2 — schedule (lab mock; gated + scoped by session wiring).
       void mountArtistScheduleReadSlice({ mainRegion, sessionWiring });
       // MOD-204 Financial Slice — wallet (lab mock; gated + scoped by session wiring).

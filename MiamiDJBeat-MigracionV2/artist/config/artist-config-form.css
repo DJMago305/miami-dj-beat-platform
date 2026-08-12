@@ -1,0 +1,90 @@
+/** MOD-215 Artist Config Form — Perfil / Config tab */
+
+.mdj-artist-config-form {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--mdj-shell-border, rgba(212, 175, 55, 0.28));
+  border-radius: 0.85rem;
+  background: var(--mdj-shell-glass, rgba(12, 12, 14, 0.72));
+}
+
+.mdj-artist-config-form__note {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: rgba(230, 220, 190, 0.72);
+}
+
+.mdj-artist-config-form__field {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.mdj-artist-config-form__label {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mdj-shell-muted, rgba(245, 230, 180, 0.72));
+}
+
+.mdj-artist-config-form__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.45rem;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  background: rgba(8, 8, 10, 0.85);
+  color: #f6efd8;
+  font: inherit;
+}
+
+.mdj-artist-config-form__input:focus-visible {
+  outline: 2px solid var(--gold, #c5a059);
+  outline-offset: 1px;
+}
+
+.mdj-artist-config-form__social {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.35rem 0 0;
+  padding: 0.75rem 0.75rem 0.35rem;
+  border: 1px dashed rgba(212, 175, 55, 0.3);
+  border-radius: 0.6rem;
+}
+
+.mdj-artist-config-form__social legend {
+  padding: 0 0.35rem;
+  font-family: Cinzel, serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold, #c5a059);
+}
+
+.mdj-artist-config-form__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.2rem;
+}
+
+.mdj-artist-config-form__save {
+  padding: 0.55rem 1.1rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  background: linear-gradient(180deg, rgba(212, 175, 55, 0.28), rgba(212, 175, 55, 0.12));
+  color: #f6efd8;
+  font: inherit;
+  cursor: pointer;
+}
+
+.mdj-artist-config-form__feedback {
+  min-height: 1.2em;
+  font-size: 0.78rem;
+}
+
+.mdj-artist-config-form__feedback[data-mdj-feedback='success'] {
+  color: #9be7b8;
+}

@@ -20,6 +20,9 @@ import {
 } from './profile/artist-profile-read-view-model';
 import { LAB_ARTIST_PROFILE_DJMAGO305 } from './profile/artist-profile-read-fixtures';
 import type { ArtistSocialLinksDTO } from '../shared/services/profiles/index';
+import type { ArtistTier } from '../shared/permissions/runtime/types';
+import { artistLabProfileStore } from './profile/artist-lab-profile-store';
+import { renderArtistConfigForm } from './config/render-artist-config-form';
 
 export type ArtistV1LayoutOptions = {
   readonly profile?: {
@@ -30,6 +33,10 @@ export type ArtistV1LayoutOptions = {
     readonly city?: string | null;
     readonly rating?: number | null;
     readonly reviewCount?: number | null;
+    /** Paid account tier (Lite = free, Pro/Elite = paid) — drives the hero's plan pill. */
+    readonly commercialTier?: ArtistTier | null;
+    /** Passed the MDJB certification course — independent of commercialTier. */
+    readonly verified?: boolean | null;
   } | null;
 };
 
@@ -57,6 +64,16 @@ function buildHeroRatingStarsHtml(rating: number | null): string {
       ? '<span class="dj-rating__star dj-rating__star--filled">★</span>'
       : '<span class="dj-rating__star">★</span>',
   ).join('');
+}
+
+/** Shared by the initial hero build and the Config-store subscription (MOD-215), so both stay in sync. */
+function buildSocialRowInnerHtml(links: ReturnType<typeof resolveSocialLinks>): string {
+  return `${links
+    .map(
+      (link) =>
+        `<a class="dj-social-icon" href="${link.url}" target="_blank" rel="noopener noreferrer" title="${link.label}" aria-label="${link.label}">${SOCIAL_PLATFORM_ICON_SVG[link.platform]}</a>`,
+    )
+    .join('')}<button type="button" class="dj-social-icon share-btn" data-mdj-hero-share-btn="1" title="Compartir perfil" aria-label="Compartir perfil">${SOCIAL_SHARE_ICON_SVG}</button>`;
 }
 
 const SHARE_FEEDBACK_RESET_MS = 1800;
@@ -139,33 +156,33 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
 
   /* SSOT: LabPortalIdentity · mirrors V1 dj_profiles photo_url / background_url / stage_name */
   const identity = getLabPortalIdentity('artist');
-  const stageName = options?.profile?.stageName || identity.stageName || identity.displayName;
+  /* MOD-215 — stageName/city/roleTag/socialLinks now default to the shared
+     Config-tab store (artistLabProfileStore) instead of the static lab
+     fixture directly, so editing Config re-renders the Hero live. Explicit
+     `options?.profile?.X` still wins when passed (tests, future real data). */
+  const labState = artistLabProfileStore.getState();
+  const stageName = options?.profile?.stageName || labState.stageName || identity.stageName || identity.displayName;
   const photo = (options?.profile?.photoUrl || identity.photoUrl).trim();
   const cover = (options?.profile?.backgroundUrl || identity.backgroundUrl).trim();
-  /* MOD-213 — hero social row (V1 parity, ui-v1-clone/dj-profile.html .dj-social-row).
-     No SSOT field for this yet, so it falls back to the same lab fixture the
-     Artist Profile body section already reads (LAB_ARTIST_PROFILE_DJMAGO305). */
-  const socialLinks = resolveSocialLinks(
-    options?.profile?.socialLinks ?? LAB_ARTIST_PROFILE_DJMAGO305.socialLinks,
-  );
-  /* MOD-213 — role tag + rating (fidelity pass vs. miamidjbeat.com, 2026-08-12):
-     city comes from the same lab fixture as the profile body's Residency
-     section (LAB_ARTIST_PROFILE_DJMAGO305.city), so the two never disagree. */
-  const city = options?.profile?.city || LAB_ARTIST_PROFILE_DJMAGO305.city || '';
-  const roleLabel = city ? `DJ · PRODUCER · ${city.toUpperCase()}` : 'DJ · PRODUCER';
+  const socialLinks = resolveSocialLinks(options?.profile?.socialLinks ?? labState.socialLinks);
+  const city = options?.profile?.city || labState.city || '';
+  const roleTag = labState.roleTag || 'DJ · Producer';
+  const roleLabel = city ? `${roleTag.toUpperCase()} · ${city.toUpperCase()}` : roleTag.toUpperCase();
   const rating = options?.profile?.rating ?? LAB_ARTIST_PROFILE_DJMAGO305.rating;
   const ratingHtml = buildHeroRatingStarsHtml(rating);
-  const socialRowHtml = `
-    <div class="dj-social-row">
-      ${socialLinks
-        .map(
-          (link) =>
-            `<a class="dj-social-icon" href="${link.url}" target="_blank" rel="noopener noreferrer" title="${link.label}" aria-label="${link.label}">${SOCIAL_PLATFORM_ICON_SVG[link.platform]}</a>`,
-        )
-        .join('')}
-      <button type="button" class="dj-social-icon share-btn" data-mdj-hero-share-btn="1" title="Compartir perfil" aria-label="Compartir perfil">${SOCIAL_SHARE_ICON_SVG}</button>
-    </div>
-  `.trim();
+  /* MOD-213 — PRO/tier and VERIFIED are two independent real account flags
+     (PO correction, 2026-08-12): commercialTier = paid vs. free account,
+     verified = passed the MDJB certification course. Previously a single
+     hardcoded "✦ ARTISTA · VERIFICADO" string conflated the two; now each
+     renders its own pill from the real ArtistProfileReadDTO fields already
+     mapped for the profile body below (never disagrees with it). */
+  const commercialTier = options?.profile?.commercialTier ?? LAB_ARTIST_PROFILE_DJMAGO305.commercialTier;
+  const verified = options?.profile?.verified ?? LAB_ARTIST_PROFILE_DJMAGO305.verified;
+  const tierPillHtml = `<div id="pub-hero-plan-pill" class="dj-hero-plan-pill dj-hero-plan-pill--${commercialTier.toLowerCase()}">✦ PLAN ${commercialTier.toUpperCase()}</div>`;
+  const verifiedPillHtml = verified
+    ? '<div class="dj-hero-plan-pill dj-hero-plan-pill--verified">✓ VERIFICADO</div>'
+    : '';
+  const socialRowHtml = `<div class="dj-social-row">${buildSocialRowInnerHtml(socialLinks)}</div>`;
 
   const hero = document.createElement('div');
   hero.className = 'dj-hero mdj-v2-v1-dj-hero';
@@ -174,8 +191,9 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
   hero.innerHTML = `
     <img class="dj-hero-bg-photo loaded" id="hero-bg-photo" src="${cover}" alt="Cover — ${stageName}" />
     <div class="dj-hero-overlay"></div>
-    <div id="pub-hero-top-stack" class="dj-hero-top-stack" style="display:block;">
-      <div id="pub-hero-plan-pill" class="dj-hero-plan-pill dj-hero-plan-pill--pro">✦ ARTISTA · VERIFICADO</div>
+    <div id="pub-hero-top-stack" class="dj-hero-top-stack">
+      ${tierPillHtml}
+      ${verifiedPillHtml}
     </div>
     <div class="dj-hero-inset">
       <img id="pub-photo-inset" class="loaded" src="${photo}" alt="${stageName}" />
@@ -191,6 +209,32 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
   `.trim();
 
   wireArtistHeroShareButton(hero);
+
+  /* MOD-215 — Config-tab save reflects into the Hero live: surgically patch
+     just name/role/social-row, leaving the WebGL canvas, tabs, and other
+     panels untouched (a full hero rebuild would clobber Agenda's mounted
+     weather engine). Explicit `options?.profile?.X` overrides (tests) still
+     win over store updates, same priority as the initial build above. */
+  artistLabProfileStore.subscribe((state) => {
+    const nextCity = options?.profile?.city || state.city || '';
+    const nextRoleTag = state.roleTag || 'DJ · Producer';
+    const nextRoleLabel = nextCity
+      ? `${nextRoleTag.toUpperCase()} · ${nextCity.toUpperCase()}`
+      : nextRoleTag.toUpperCase();
+    const nextSocialLinks = resolveSocialLinks(options?.profile?.socialLinks ?? state.socialLinks);
+
+    const nameEl = hero.querySelector('.dj-hero-name');
+    if (nameEl) {
+      nameEl.innerHTML = `${options?.profile?.stageName || state.stageName}<span class="dot">.</span>`;
+    }
+    const roleEl = hero.querySelector('.dj-hero-role');
+    if (roleEl) roleEl.textContent = nextRoleLabel;
+    const socialRow = hero.querySelector('.dj-social-row');
+    if (socialRow) {
+      socialRow.innerHTML = buildSocialRowInnerHtml(nextSocialLinks);
+      wireArtistHeroShareButton(hero);
+    }
+  });
 
   const body = document.createElement('div');
   body.className = 'dj-body dj-body--no-sidebar';
@@ -218,11 +262,17 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
                 Legacy "upcoming-gigs" (hardcoded ARTIST_UPCOMING_GIGS) REMOVED
                 outright — fully superseded by the real artist-schedule slice,
                 not just hidden.
-     #wallet  = real Finance/Wallet slice (Cash Flow, SSOT balance, pending). */
+     #wallet  = real Finance/Wallet slice (Cash Flow, SSOT balance, pending).
+     #config  = MOD-215, Config tab (PO correction, 2026-08-12): editable
+                stage name / city / role tag / social links live here, not
+                inline in the read-only Mi Perfil view — writes go to
+                artistLabProfileStore, which the Hero + Mi Perfil both
+                subscribe to. */
   const { tabBar, panels } = createArtistTabController([
     { id: 'profile', label: 'Mi Perfil' },
     { id: 'agenda', label: 'Agenda · Gigs' },
     { id: 'wallet', label: 'Ingresos · Wallet' },
+    { id: 'config', label: '⚙️ Config' },
   ]);
 
   /* MOD-209 — Vista Personal/Pública switch. Public mode hides
@@ -266,9 +316,14 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
   walletSlot.classList.add('mdj-v2-v1-ops-card');
   panels.wallet.append(walletSlot);
 
+  const configSlot = createSectionSlot('artist-config');
+  configSlot.classList.add('owner-card');
+  renderArtistConfigForm(configSlot);
+  panels.config.append(configSlot);
+
   const tabPanelsWrap = document.createElement('div');
   tabPanelsWrap.className = 'mdj-artist-tab-panels';
-  tabPanelsWrap.append(panels.profile, panels.agenda, panels.wallet);
+  tabPanelsWrap.append(panels.profile, panels.agenda, panels.wallet, panels.config);
 
   wireArtistTabController(tabBar, panels);
 
