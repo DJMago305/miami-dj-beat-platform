@@ -1,0 +1,405 @@
+/** V2 lab — artist & staff V1 layout chrome (hero, owner-tabs, admin-grid). */
+
+/* Extra offset for artist/staff strip under fixed site header */
+body.mdj-v2-lab.dj-profile,
+body.mdj-v2-lab.mdj-artist-academy,
+body.mdj-v2-lab.page-admin-dashboard {
+  --mdj-owner-strip-band: 72px;
+  padding-top: calc(
+    var(--header-height, 84px) + var(--header-nav-band, 72px) + var(--mdj-owner-strip-band) +
+      env(safe-area-inset-top, 0px)
+  ) !important;
+}
+
+body.mdj-v2-lab #owner-tabs.dj-owner-tabs {
+  display: block !important;
+  visibility: visible !important;
+  position: fixed;
+  top: calc(var(--header-height, 84px) + var(--header-nav-band, 72px) + env(safe-area-inset-top, 0px));
+  left: 0;
+  right: 0;
+  z-index: 999;
+}
+
+/* Hide plain MVP lists Capitan rejected */
+body.mdj-v2-lab .mdj-v2-lab-legacy-mvp {
+  display: none !important;
+}
+
+body.mdj-v2-lab .mdj-v2-lab-legacy-hero,
+body.mdj-v2-lab .mdj-v2-lab-legacy-kpis {
+  display: none !important;
+}
+
+/* ── Artist portal ───────────────────────────────────────── */
+body.mdj-v2-lab .mdj-v2-v1-artist-portal {
+  display: grid;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero {
+  position: relative;
+  width: 100%;
+  min-height: 280px;
+  height: 320px;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(197, 160, 89, 0.28);
+  background: #0a0a0a;
+  pointer-events: none;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-bg-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 28%;
+  opacity: 0.92;
+  filter: none;
+  z-index: 0;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.25) 55%, transparent 100%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-top-stack {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 3;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-plan-pill {
+  display: inline-flex !important;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(197, 160, 89, 0.55);
+  background: rgba(197, 160, 89, 0.16);
+  color: #f6efd8;
+  font-family: Cinzel, serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-inset {
+  position: absolute;
+  top: 1.1rem;
+  right: 1.1rem;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(197, 160, 89, 0.7);
+  z-index: 3;
+  background: #111;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-inset img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 1;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: 1.5rem 1.35rem;
+  z-index: 2;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-role {
+  margin: 0 0 0.35rem;
+  font-family: Cinzel, serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold, #c5a059);
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-name {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  color: #fff;
+  line-height: 1.05;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-hero-name .dot {
+  color: var(--gold, #c5a059);
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 1.15rem;
+  align-items: start;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-main-col,
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .sidebar-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+body.mdj-v2-lab .dj-card,
+body.mdj-v2-lab .admin-card,
+body.mdj-v2-lab .mdj-v2-v1-ops-card {
+  background: rgba(15, 15, 18, 0.92);
+  border: 1px solid rgba(197, 160, 89, 0.22);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+body.mdj-v2-lab .mdj-v2-v1-ops-card__title {
+  margin: 0 0 0.85rem;
+  font-family: Cinzel, serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold, #c5a059);
+}
+
+body.mdj-v2-lab .mdj-v2-v1-mutations-slot {
+  position: relative;
+  z-index: 20;
+  pointer-events: auto !important;
+}
+
+@media (max-width: 960px) {
+  body.mdj-v2-lab .mdj-v2-v1-artist-portal .dj-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Staff ops console ───────────────────────────────────── */
+body.mdj-v2-lab .mdj-v2-v1-staff-portal {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-staff-portal .admin-grid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 16px;
+  margin-top: 8px;
+  align-items: start;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-staff-portal .sidebar {
+  background: var(--panel, #0f1623);
+  border-radius: 10px;
+  padding: 14px 12px;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  height: fit-content;
+  position: sticky;
+  top: calc(
+    var(--header-height, 84px) + var(--header-nav-band, 72px) + var(--mdj-owner-strip-band, 72px) + 14px
+  );
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+  z-index: 40;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-staff-portal .sidebar-group-label {
+  margin: 0.85rem 0 0.35rem;
+  padding: 0 0.5rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(197, 160, 89, 0.75);
+}
+
+body.mdj-v2-lab .mdj-v2-v1-staff-portal .side-link {
+  display: flex !important;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px 11px 16px;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 3px;
+  font-size: 14px;
+  border-left: 2px solid transparent;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-staff-portal .side-link:hover,
+body.mdj-v2-lab .mdj-v2-v1-staff-portal .side-link.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+  border-left-color: rgba(197, 160, 89, 0.55);
+}
+
+body.mdj-v2-lab .mdj-v2-v1-staff-portal .content {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+body.mdj-v2-lab .mdj-v2-owner-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(197, 160, 89, 0.35);
+  width: 100%;
+  aspect-ratio: 21 / 6;
+  min-height: 240px;
+  background: #050505;
+}
+
+/* Corporate owner: never artistic DJMago305 cover */
+body.mdj-v2-lab .mdj-v2-owner-hero__photo {
+  display: none !important;
+}
+
+body.mdj-v2-lab .mdj-v2-owner-hero__bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
+  opacity: 0.88;
+  filter: none;
+  z-index: 1;
+  pointer-events: none;
+}
+
+body.mdj-v2-lab .mdj-v2-owner-hero__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(
+    90deg,
+    rgba(5, 5, 7, 0.6) 0%,
+    rgba(5, 5, 7, 0.18) 42%,
+    rgba(5, 5, 7, 0.08) 58%,
+    rgba(5, 5, 7, 0.4) 100%
+  );
+}
+
+body.mdj-v2-lab .mdj-v2-owner-hero__content {
+  position: relative;
+  z-index: 3;
+  padding: 1.5rem 1.4rem;
+  max-width: min(52%, 28rem);
+}
+
+body.mdj-v2-lab .mdj-v2-owner-hero__inset {
+  position: absolute;
+  top: 1.1rem;
+  right: 1.1rem;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(197, 160, 89, 0.75);
+  z-index: 4;
+  background: #111;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.65);
+}
+
+body.mdj-v2-lab .mdj-v2-owner-hero__inset img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 12%;
+  box-sizing: border-box;
+  background: #111;
+}
+
+body.mdj-v2-lab .mdj-v2-owner-hero__eyebrow {
+  margin: 0 0 0.45rem;
+  color: var(--gold, #c5a059);
+  font-family: Cinzel, serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+}
+
+body.mdj-v2-lab .mdj-v2-owner-hero__title {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  color: #fff;
+}
+
+body.mdj-v2-lab .mdj-v2-owner-hero__meta {
+  margin: 0.45rem 0 0;
+  color: rgba(245, 230, 180, 0.72);
+  font-size: 0.85rem;
+}
+
+body.mdj-v2-lab .mdj-v2-leads-panel__title {
+  margin: 0 0 0.85rem;
+  color: var(--gold, #c5a059);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+body.mdj-v2-lab .mdj-v2-leads-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+body.mdj-v2-lab .mdj-v2-leads-table th,
+body.mdj-v2-lab .mdj-v2-leads-table td {
+  padding: 0.75rem 0.65rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+}
+
+body.mdj-v2-lab .mdj-v2-leads-table th {
+  color: rgba(197, 160, 89, 0.85);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+body.mdj-v2-lab .leads-status--open {
+  color: #8fe0b8;
+  font-weight: 600;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-staff-portal .mdj-staff-mutations-form,
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .mdj-artist-mutations-form {
+  position: relative;
+  z-index: 21;
+  pointer-events: auto !important;
+}
+
+body.mdj-v2-lab .mdj-v2-v1-staff-portal .mdj-staff-mutations-form__submit,
+body.mdj-v2-lab .mdj-v2-v1-artist-portal .mdj-artist-mutations-form__submit {
+  pointer-events: auto !important;
+  cursor: pointer;
+  z-index: 22;
+}
+
+@media (max-width: 900px) {
+  body.mdj-v2-lab .mdj-v2-v1-staff-portal .admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  body.mdj-v2-lab .mdj-v2-v1-staff-portal .sidebar {
+    position: static;
+    max-height: none;
+  }
+}
