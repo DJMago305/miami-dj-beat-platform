@@ -21,7 +21,6 @@ test.describe('MOD-008 Portal Shell — client · artist · staff', () => {
     await expect(page.locator('[data-mdj-shell-region="sidebar"]')).toBeVisible();
     await expect(page.getByRole('heading', { name: /Your Miami DJ Beat Artist Dashboard/i })).toBeVisible();
     await expect(page.locator('[data-mdj-artist-section="artist-profile"]')).toBeVisible();
-    await expect(page.locator('[data-mdj-artist-section="upcoming-gigs"]')).toBeVisible();
     await expect(page.locator('[data-mdj-artist-section="song4tips"]')).toBeVisible();
     await expect(page.locator('[data-mdj-artist-section="jobs-marketplace"]')).toBeVisible();
     await expect(page.locator('[data-mdj-component="KpiCard"]')).toHaveCount(4);

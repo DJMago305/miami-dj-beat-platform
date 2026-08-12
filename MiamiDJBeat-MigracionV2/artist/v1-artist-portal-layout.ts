@@ -116,46 +116,27 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
   const mainCol = document.createElement('div');
   mainCol.className = 'dj-main-col';
 
-  const mutationsCard = document.createElement('div');
-  mutationsCard.className = 'dj-card mdj-v2-v1-ops-card';
-  const mutationsTitle = document.createElement('h3');
-  mutationsTitle.className = 'mdj-v2-v1-ops-card__title';
-  mutationsTitle.textContent = 'Writers · Gig & Payout';
-  const mutationsHost = createSectionSlot('artist-mutations', true);
-  mutationsHost.classList.add('mdj-v2-v1-mutations-slot');
-  mutationsCard.append(mutationsTitle, mutationsHost);
-  mainCol.append(mutationsCard);
-
-  const gigsSlot = createSectionSlot('upcoming-gigs', true);
-  gigsSlot.classList.add('mdj-v2-v1-ops-card');
-  mainCol.append(gigsSlot);
-
-  const scheduleSlot = createSectionSlot('artist-schedule', true);
-  scheduleSlot.classList.add('mdj-v2-v1-ops-card');
-  mainCol.append(scheduleSlot);
-
-  const walletSlot = createSectionSlot('artist-wallet', true);
-  walletSlot.classList.add('mdj-v2-v1-ops-card');
-  mainCol.append(walletSlot);
-
-  /* Real slice (Gig Weather Radar, real per-gig risk/forecast/advice) — no
-     legacy-hide class. Was previously caught by the same generic hide
-     mechanism as the placeholder sections below; fixed 2026-08-12. */
-  const weatherSlot = createSectionSlot('artist-weather', true);
   const jobsSlot = createSectionSlot('jobs-marketplace');
   jobsSlot.classList.add('mdj-v2-lab-legacy-mvp');
   const notifSlot = createSectionSlot('notifications');
   notifSlot.classList.add('mdj-v2-lab-legacy-mvp');
   const activitySlot = createSectionSlot('activity-timeline', true);
   activitySlot.classList.add('mdj-v2-lab-legacy-mvp');
-  mainCol.append(weatherSlot, jobsSlot, notifSlot, activitySlot);
+  mainCol.append(jobsSlot, notifSlot, activitySlot);
 
   body.append(mainCol);
 
-  /* MOD-206 — "Mi Perfil" tab (Perfil + Bio, real; Media/Analytics/SoundForTips,
-     un-hidden by explicit PO decision 2026-08-12, honestly labeled below).
-     "Agenda · Gigs" / "Ingresos · Wallet" left prepared/empty — moving the real
-     schedule/wallet/mutations content into them is a separate, future round. */
+  /* MOD-206 — definitive tab distribution (Capitan, 2026-08-12):
+     #profile = Perfil + Bio + Media/Analytics + SoundForTips (unchanged).
+     #agenda  = Agenda Full-Page (Hero WebGL + Matrix, appended separately by
+                mountArtistAgendaFullpage) + Writers/Mutations + real Schedule
+                + Gig Weather Radar (moved in from mainCol, PO decision
+                2026-08-12 — per-gig forecast now lives in Agenda's own
+                context instead of sitting outside the tab system).
+                Legacy "upcoming-gigs" (hardcoded ARTIST_UPCOMING_GIGS) REMOVED
+                outright — fully superseded by the real artist-schedule slice,
+                not just hidden.
+     #wallet  = real Finance/Wallet slice (Cash Flow, SSOT balance, pending). */
   const { tabBar, panels } = createArtistTabController([
     { id: 'profile', label: 'Mi Perfil' },
     { id: 'agenda', label: 'Agenda · Gigs' },
@@ -169,16 +150,30 @@ export function buildArtistV1PortalLayout(options?: ArtistV1LayoutOptions): Arti
   const analyticsSlot = createSectionSlot('analytics');
   panels.profile.append(profileSlot, mediaSlot, analyticsSlot, songSlot);
 
-  const agendaPrepared = document.createElement('p');
-  agendaPrepared.className = 'mdj-artist-tab-panel__prepared-note';
-  agendaPrepared.textContent =
-    'Pestaña preparada — Agenda, Gigs y Writers se trasladarán aquí en una ronda futura.';
-  panels.agenda.append(agendaPrepared);
+  const mutationsCard = document.createElement('div');
+  mutationsCard.className = 'dj-card mdj-v2-v1-ops-card';
+  const mutationsTitle = document.createElement('h3');
+  mutationsTitle.className = 'mdj-v2-v1-ops-card__title';
+  mutationsTitle.textContent = 'Writers · Gig & Payout';
+  const mutationsHost = createSectionSlot('artist-mutations', true);
+  mutationsHost.classList.add('mdj-v2-v1-mutations-slot');
+  mutationsCard.append(mutationsTitle, mutationsHost);
 
-  const walletPrepared = document.createElement('p');
-  walletPrepared.className = 'mdj-artist-tab-panel__prepared-note';
-  walletPrepared.textContent = 'Pestaña preparada — Ingresos/Wallet se trasladará aquí en una ronda futura.';
-  panels.wallet.append(walletPrepared);
+  const scheduleSlot = createSectionSlot('artist-schedule', true);
+  scheduleSlot.classList.add('mdj-v2-v1-ops-card');
+
+  const weatherSlot = createSectionSlot('artist-weather', true);
+  weatherSlot.classList.add('mdj-v2-v1-ops-card');
+
+  panels.agenda.append(mutationsCard, scheduleSlot, weatherSlot);
+  /* The 100vh WebGL Hero + Matrix mounts itself directly into this panel
+     (mountArtistAgendaFullpage looks up [data-tab-panel="agenda"]) — appended
+     after this function returns, once main.ts calls it, landing right after
+     weatherSlot in DOM order (i.e. just after the per-gig forecast). */
+
+  const walletSlot = createSectionSlot('artist-wallet', true);
+  walletSlot.classList.add('mdj-v2-v1-ops-card');
+  panels.wallet.append(walletSlot);
 
   const tabPanelsWrap = document.createElement('div');
   tabPanelsWrap.className = 'mdj-artist-tab-panels';

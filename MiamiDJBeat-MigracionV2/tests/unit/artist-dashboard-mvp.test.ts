@@ -1,11 +1,7 @@
 /** MOD-011 Artist Dashboard MVP — unit tests — TICKET-MOD-011-ARTIST-DASHBOARD-MVP-001 */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  ARTIST_DASHBOARD_KPIS,
-  ARTIST_PROFILE,
-  ARTIST_UPCOMING_GIGS,
-} from '../../artist/dashboard-mvp-data';
+import { ARTIST_DASHBOARD_KPIS, ARTIST_PROFILE } from '../../artist/dashboard-mvp-data';
 import { renderArtistDashboardMvp } from '../../artist/render-artist-dashboard-mvp';
 
 describe('MOD-011 Artist Dashboard MVP data', () => {
@@ -13,7 +9,6 @@ describe('MOD-011 Artist Dashboard MVP data', () => {
     expect(ARTIST_DASHBOARD_KPIS).toHaveLength(4);
     expect(ARTIST_DASHBOARD_KPIS.map((entry) => entry.label)).toContain('Jobs Available');
     expect(ARTIST_PROFILE.stageName).toBe('DJMago305');
-    expect(ARTIST_UPCOMING_GIGS).toHaveLength(3);
   });
 });
 
@@ -34,7 +29,6 @@ describe('MOD-011 Artist Dashboard MVP render', () => {
     expect(main.querySelectorAll('[data-mdj-component="KpiCard"]')).toHaveLength(4);
     expect(main.querySelector('[data-mdj-artist-section="artist-profile"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-component="ArtistProfileReadView"]')).not.toBeNull();
-    expect(main.querySelector('[data-mdj-artist-section="upcoming-gigs"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-artist-section="artist-schedule"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-component="ArtistScheduleReadView"]')).not.toBeNull();
     expect(main.querySelector('[data-mdj-artist-section="artist-wallet"]')).not.toBeNull();

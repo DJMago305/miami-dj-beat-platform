@@ -20,7 +20,6 @@ import {
   ARTIST_MEDIA,
   ARTIST_NOTIFICATIONS,
   ARTIST_SONG4TIPS,
-  ARTIST_UPCOMING_GIGS,
 } from './dashboard-mvp-data';
 import { mountComponentDescriptor } from './mount-component-descriptor';
 import { mountArtistProfileReadSliceSync } from './profile/mount-artist-profile-read-slice';
@@ -94,46 +93,6 @@ function createProfileSection(_themeBinding: MdjThemeBinding): HTMLElement {
   return createArtistSection('artist-profile');
 }
 
-function createUpcomingGigsSection(themeBinding: MdjThemeBinding): HTMLElement {
-  const section = createArtistSection('upcoming-gigs', true);
-
-  const panel = mountComponentDescriptor(
-    createPanel({ title: 'Upcoming Gigs', variant: 'glass' }, themeBinding),
-  );
-  panel.classList.add('mdj-client-panel--timeline');
-
-  const timeline = document.createElement('div');
-  timeline.className = 'mdj-client-timeline';
-
-  for (const gig of ARTIST_UPCOMING_GIGS) {
-    const item = document.createElement('article');
-    item.className = 'mdj-client-timeline__item';
-
-    const date = document.createElement('p');
-    date.className = 'mdj-client-timeline__date';
-    date.textContent = gig.date;
-
-    const title = document.createElement('h3');
-    title.className = 'mdj-client-timeline__title';
-    title.textContent = gig.title;
-
-    const venue = document.createElement('p');
-    venue.className = 'mdj-client-timeline__meta';
-    venue.textContent = gig.venue;
-
-    const payout = document.createElement('span');
-    payout.className = 'mdj-client-timeline__status';
-    payout.textContent = gig.payout;
-
-    item.append(date, title, venue, payout);
-    timeline.append(item);
-  }
-
-  panel.append(timeline);
-  section.append(panel);
-  return section;
-}
-
 /** MOD-204 Slice 2 — schedule slot; hydrated by mountArtistScheduleReadSliceSync. */
 function createArtistScheduleSection(): HTMLElement {
   return createArtistSection('artist-schedule', true);
@@ -176,6 +135,12 @@ function createLabMockNote(text: string): HTMLElement {
 function createSong4TipsSection(themeBinding: MdjThemeBinding): HTMLElement {
   const section = createArtistSection('song4tips');
 
+  const paymentConfigLink = document.createElement('button');
+  paymentConfigLink.type = 'button';
+  paymentConfigLink.className = 'mdj-song4tips-payment-link';
+  paymentConfigLink.dataset.mdjSong4tipsPaymentConfigLink = '1';
+  paymentConfigLink.textContent = 'Configurar Métodos de Pago';
+
   section.append(
     createLabMockNote('lab mock — placeholder, sin cableado real todavía'),
     mountComponentDescriptor(
@@ -188,6 +153,7 @@ function createSong4TipsSection(themeBinding: MdjThemeBinding): HTMLElement {
         themeBinding,
       ),
     ),
+    paymentConfigLink,
   );
 
   return section;
@@ -286,6 +252,48 @@ function createActivitySection(themeBinding: MdjThemeBinding): HTMLElement {
   return section;
 }
 
+/**
+ * MOD-206 — the top "Agenda" nav link used to anchor-scroll straight to
+ * #agenda-fullpage; that target now lives inside the hidden-by-default
+ * "Agenda · Gigs" tab panel, so the link must switch tabs first, then scroll.
+ */
+function wireAgendaFullpageNavLink(layoutRoot: HTMLElement): void {
+  const link = document.querySelector<HTMLAnchorElement>('[data-mdj-agenda-fullpage-link="1"]');
+  if (!link) return;
+
+  link.addEventListener('click', (event) => {
+    event.preventDefault();
+    const tabButton = layoutRoot.querySelector<HTMLButtonElement>(
+      '.mdj-artist-tabs__btn[data-tab="agenda"]',
+    );
+    tabButton?.click();
+    document.getElementById('agenda-fullpage')?.scrollIntoView({ behavior: 'smooth' });
+  });
+}
+
+/**
+ * INSTRUCCIÓN 2026-08-12 — SoundForTips™'s "Configurar Métodos de Pago"
+ * button switches to the "#wallet" tab (real Cash Flow / Balance SSOT /
+ * Payment Config), since SoundForTips itself stays a #profile-scoped app
+ * that only reads DJ payout-routing config, not a financial module.
+ */
+function wireSong4TipsPaymentConfigLink(layoutRoot: HTMLElement): void {
+  const link = layoutRoot.querySelector<HTMLButtonElement>(
+    '[data-mdj-song4tips-payment-config-link="1"]',
+  );
+  if (!link) return;
+
+  link.addEventListener('click', () => {
+    const tabButton = layoutRoot.querySelector<HTMLButtonElement>(
+      '.mdj-artist-tabs__btn[data-tab="wallet"]',
+    );
+    tabButton?.click();
+    layoutRoot.querySelector('[data-mdj-artist-section="artist-wallet"]')?.scrollIntoView({
+      behavior: 'smooth',
+    });
+  });
+}
+
 export function renderArtistDashboardMvp(
   mainRegion: HTMLElement,
   sessionWiring?: ArtistSessionWiringInjection | null,
@@ -321,14 +329,6 @@ export function renderArtistDashboardMvp(
       mountComponentDescriptor(createKpiCard(kpi, themeBinding)),
     ),
   );
-
-  const gigsSlot = layout.root.querySelector<HTMLElement>(
-    '[data-mdj-artist-section="upcoming-gigs"]',
-  );
-  if (gigsSlot) {
-    const built = createUpcomingGigsSection(themeBinding);
-    gigsSlot.replaceWith(built);
-  }
 
   const replaceLegacy = (
     sectionId: string,
@@ -368,6 +368,8 @@ export function renderArtistDashboardMvp(
 
   mainRegion.append(legacyHero, legacyKpis, layout.root);
   applyV1BrandShell(mainRegion, 'artist');
+  wireAgendaFullpageNavLink(layout.root);
+  wireSong4TipsPaymentConfigLink(layout.root);
   mountArtistProfileReadSliceSync(mainRegion, undefined, sessionWiring);
   mountArtistScheduleReadSliceSync(mainRegion, undefined, sessionWiring);
   mountArtistFinanceReadSliceSync(mainRegion, undefined, sessionWiring);

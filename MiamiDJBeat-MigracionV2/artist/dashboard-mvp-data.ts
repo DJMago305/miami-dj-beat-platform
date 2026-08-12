@@ -14,27 +14,6 @@ export const ARTIST_PROFILE = Object.freeze({
   specialty: 'Open Format · Latin · EDM',
 } as const);
 
-export const ARTIST_UPCOMING_GIGS = Object.freeze([
-  {
-    date: 'Jul 11, 2026',
-    title: 'South Beach Rooftop Set',
-    venue: '1 Hotel · Miami Beach',
-    payout: '$1,200',
-  },
-  {
-    date: 'Jul 19, 2026',
-    title: 'Private Villa Wedding',
-    venue: 'Coral Gables Estate',
-    payout: '$2,400',
-  },
-  {
-    date: 'Aug 03, 2026',
-    title: 'Corporate Summer Mixer',
-    venue: 'Brickell City Centre',
-    payout: '$1,650',
-  },
-] as const);
-
 export const ARTIST_CALENDAR_EVENTS = Object.freeze([
   { date: 'Jul 11', label: 'Rooftop Set · Confirmed' },
   { date: 'Jul 19', label: 'Villa Wedding · Confirmed' },
