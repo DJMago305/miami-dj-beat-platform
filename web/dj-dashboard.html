@@ -2902,6 +2902,33 @@
 
         <!-- TAB 3: Cash Flow (economic / analytics) -->
         <div id="tab-flow" class="dash-tab-panel">
+            <!-- MDJB 2026-08-14: acceso OWNER-ONLY al Business Financial Intelligence (herramienta inteligente, DEMO). FUERA de la LOCKED SECTION. -->
+            <div id="bfi-access-card" style="display:none;max-width:1100px;margin:0 auto;padding:24px 20px 0;">
+              <a href="./business-financial-intelligence.html" style="display:flex;align-items:center;gap:16px;text-decoration:none;background:linear-gradient(135deg,rgba(197,160,89,0.12),rgba(102,163,255,0.08));border:1px solid rgba(197,160,89,0.35);border-radius:16px;padding:18px 22px;">
+                <div style="font-size:30px;line-height:1;">🧠</div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:16px;font-weight:800;color:var(--gold,#c5a059);letter-spacing:.02em;">Business Financial Intelligence <span style="font-size:10px;font-weight:700;color:#e2504f;border:1px solid rgba(226,80,79,.4);border-radius:6px;padding:2px 6px;margin-left:8px;vertical-align:middle;white-space:nowrap;">🔒 OWNER · DEMO</span></div>
+                  <div style="font-size:12.5px;color:rgba(255,255,255,0.55);margin-top:4px;">Matriz financiera inteligente — Corporate · Business Units · Artist. Abierta para tus consultas.</div>
+                </div>
+                <div style="font-size:20px;color:rgba(255,255,255,0.4);">&#8594;</div>
+              </a>
+            </div>
+            <script>
+            (function(){
+              function reveal(){
+                var sb=window.getSupabaseClient?window.getSupabaseClient():window.supabase;
+                if(!sb||!sb.auth){ return setTimeout(reveal,300); }
+                sb.auth.getSession().then(function(r){
+                  var sess=r.data.session; if(!sess) return;
+                  sb.from('dj_profiles').select('role').eq('user_id',sess.user.id).maybeSingle().then(function(res){
+                    var role=String(res.data&&res.data.role?res.data.role:'').toLowerCase().trim();
+                    if(role==='owner'){ var c=document.getElementById('bfi-access-card'); if(c) c.style.display='block'; }
+                  }).catch(function(){});
+                }).catch(function(){});
+              }
+              reveal();
+            })();
+            </script>
             <section style="padding: 40px 0;">
                 <!-- LOCKED SECTION: DO NOT MODIFY -->
                 <div class="container">
