@@ -35,19 +35,20 @@ const ALLOWED_ROLES = new Set(["owner", "admin", "manager", "seller"]);
 
 async function verifyStaff(
     req: Request,
-): Promise<{ ok: true; userId: string } | { ok: false; status: number; error: string; detail?: string }> {
+): Promise<{ ok: true; userId: string; name: string; role: string } | { ok: false; status: number; error: string; detail?: string }> {
     const authHeader = req.headers.get("Authorization") ?? "";
     const jwt = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
     if (!jwt) return { ok: false, status: 401, error: "missing_authorization" };
     const { data: { user }, error } = await ADMIN.auth.getUser(jwt);
     if (error || !user?.id) return { ok: false, status: 401, error: "invalid_session" };
     const { data: prof } = await ADMIN
-        .from("dj_profiles").select("role").eq("user_id", user.id).maybeSingle();
+        .from("dj_profiles").select("role,stage_name,dj_name,full_name").eq("user_id", user.id).maybeSingle();
     const role = String(prof?.role ?? "").toLowerCase().trim();
     if (!ALLOWED_ROLES.has(role)) {
         return { ok: false, status: 403, error: "forbidden_not_staff", detail: role || "sin_rol" };
     }
-    return { ok: true, userId: user.id };
+    const name = String(prof?.stage_name || prof?.dj_name || prof?.full_name || "").trim();
+    return { ok: true, userId: user.id, name, role };
 }
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
@@ -305,8 +306,17 @@ serve(async (req: Request) => {
     // Roster real (en vivo desde public_dj_profiles, cacheado 5 min).
     const rosterContext = await fetchProRoster();
 
+    // Identidad del usuario actual (del candado) — para personalizar y adaptar al rol.
+    const userBlock =
+        `\n\n### USUARIO ACTUAL (con quien hablas AHORA)\n` +
+        `Nombre: ${gate.name || "sin nombre"}\n` +
+        `Rol: ${gate.role}\n` +
+        `Trátalo por su nombre. Si su rol es 'owner' es el dueño (el Capitán): confianza y acceso totales. ` +
+        `Si es admin/manager/seller es staff: ayúdalo dentro de lo que le corresponde a su rol.`;
+
     const systemContent =
         SYSTEM_PROMPT +
+        userBlock +
         rosterContext +
         (sessionContext ? `\n\n### Contexto de sesión actual:\n${sessionContext}` : "");
 

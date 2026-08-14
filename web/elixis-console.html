@@ -302,14 +302,31 @@
   // Sin sesión → te manda a tu login principal (el único) y vuelve aquí.
   var supa = (typeof window.getSupabaseClient === "function") ? window.getSupabaseClient() : null;
   var accessToken = null;
+  var userName = "";
+  var userRole = "";
   var LOGIN_URL = "./login.html?next=elixis-console.html";
   function goLogin(){ try{ window.location.replace(LOGIN_URL); }catch(e){} }
 
+  function showGreeting(){
+    var first = userName ? userName.split(" ")[0] : "";
+    var greet;
+    if(userRole === "owner"){
+      greet = "Capitán" + (first ? " " + first : "") + " al habla. Soy ELIXIS, tu copiloto estratégico de Miami DJ Beat. ¿Por dónde arrancamos hoy?";
+    } else if(first){
+      greet = first + ", bienvenido. Soy ELIXIS, el agente de Miami DJ Beat. Estoy para lo tuyo — ¿en qué arrancamos?";
+    } else {
+      greet = "ELIXIS a tu servicio. ¿En qué te ayudo hoy?";
+    }
+    addRow("elixis", greet);
+    input.focus();
+  }
+
   async function initAuth(){
     if(!supa) return; // sin cliente no verificamos aquí; el backend igual bloquea
+    var session = null;
     try{
       var r = await supa.auth.getSession();
-      var session = (r && r.data) ? r.data.session : null;
+      session = (r && r.data) ? r.data.session : null;
       if(session && session.access_token){
         accessToken = session.access_token;   // ya estás dentro → ELIXIS abre
       } else {
@@ -317,9 +334,18 @@
         return;
       }
     }catch(e){ goLogin(); return; }
+    // Identidad del usuario: saludar por nombre + adaptar al rol
     try{
-      supa.auth.onAuthStateChange(function(_ev, session){
-        accessToken = session ? session.access_token : null;
+      var pr = await supa.from("dj_profiles")
+        .select("stage_name,dj_name,full_name,role").eq("user_id", session.user.id).maybeSingle();
+      var p = (pr && pr.data) ? pr.data : {};
+      userName = String(p.stage_name || p.dj_name || p.full_name || "").trim();
+      userRole = String(p.role || "").toLowerCase().trim();
+    }catch(e){}
+    showGreeting();
+    try{
+      supa.auth.onAuthStateChange(function(_ev, s){
+        accessToken = s ? s.access_token : null;
         if(!accessToken) goLogin();
       });
     }catch(e){}
@@ -600,9 +626,7 @@
     micBtn.style.display = "none";   // navegador sin reconocimiento de voz
   }
 
-  // ── Greeting (estático, no gasta llamada) ──────────
-  addRow("elixis", "Capitán al habla. Soy ELIXIS, tu copiloto estratégico de Miami DJ Beat. ¿Por dónde arrancamos hoy?");
-  input.focus();
+  // El saludo personalizado lo dispara initAuth() tras identificar al usuario.
 })();
 </script>
 </body>
