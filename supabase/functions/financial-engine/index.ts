@@ -57,6 +57,39 @@ Deno.serve(async (req: Request) => {
       if (staffRes.data !== true) return json({ ok: false, error: "NOT_STAFF" }, 403);
     }
 
+    // 1.5) IMPORT (Fase 3): residency_schedule real -> venues + agreements canónicos.
+    //      Idempotente: dedup por nombre de venue y por (venue+título) de agreement.
+    if (body.action === "import_residencies") {
+      const { data: rows, error } = await svc.from("residency_schedule").select("*").eq("active", true);
+      if (error) return json({ ok: false, error: "read_residency_failed", detail: error.message }, 500);
+      let store = await loadStore(svc);
+      const now = () => new Date().toISOString();
+      const idg = () => crypto.randomUUID();
+      let venuesCreated = 0, agreementsCreated = 0;
+      for (const r of (rows ?? [])) {
+        let venue = store.venues.find((v: any) => v.name === r.venue);
+        if (!venue) {
+          const out = engine.commands.createVenue(store, { name: r.venue, now: now(), idGenerator: idg, idempotencyKey: crypto.randomUUID() });
+          if (!(out.result && out.result.ok)) continue;
+          store = out.store; venue = out.result.data; venuesCreated++;
+        }
+        const title = `Residencia ${r.shift} · ${r.venue}`;
+        if (!store.venueAgreements.find((a: any) => a.venueId === venue.id && a.title === title)) {
+          const rateCents = Math.round(Number(r.venue_pay_usd || 0) * 100);
+          const out = engine.commands.createVenueAgreement(store, {
+            venueId: venue.id, title, frequency: "WEEKLY",
+            scheduledDays: [r.shift === "noche" ? "friday" : "saturday"],
+            rateByDay: rateCents > 0 ? { [r.shift]: rateCents } : {},
+            effectiveFrom: String(r.created_at || now()).slice(0, 10),
+            now: now(), idGenerator: idg, idempotencyKey: crypto.randomUUID(),
+          });
+          if (out.result && out.result.ok) { store = out.store; agreementsCreated++; }
+        }
+      }
+      await persistStore(svc, store);
+      return json({ ok: true, imported: { residencies: (rows ?? []).length, venuesCreated, agreementsCreated } });
+    }
+
     // 2) Hidratar el store desde las 13 tablas
     const store = await loadStore(svc);
 
