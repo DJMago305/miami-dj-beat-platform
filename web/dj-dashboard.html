@@ -907,11 +907,32 @@
                   var prof = (await sb.from('dj_profiles').select('id').eq('user_id', sess.user.id).single()).data;
                   if(!prof) return null;
                   var d = new Date(); var iso = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-                  var rows = (await sb.from('leads').select('event_type,event_date,location,status,budget')
-                                .eq('assigned_dj_id', prof.id).eq('event_date', iso).limit(1)).data;
-                  var ev = rows && rows[0]; if(!ev) return null;
+                  var dow = d.getDay();
+                  function t12(t){ if(!t) return null; var p=String(t).split(':'); var h=+p[0], m=+p[1]||0; if(isNaN(h)) return null; var ap=h<12?'AM':'PM'; var hh=h%12; if(hh===0)hh=12; return hh+(m?':'+String(m).padStart(2,'0'):'')+' '+ap; }
+                  function num(t){ if(!t) return null; var p=String(t).split(':'); var h=+p[0]; if(isNaN(h)) return null; return h+(+p[1]||0)/60; }
+                  var events = [];
+                  // 1) Eventos puntuales (leads) de hoy — comportamiento previo, sin limit(1)
                   var ST = { CONFIRMED:'Confirmado', MATCHED:'Asignado', COMPLETED:'Completado', CANCELLED:'Cancelado', PENDING:'Pendiente' };
-                  return { lead:(ev.event_type||'Evento')+(ev.status?' · '+(ST[ev.status]||ev.status):''), loc: ev.location || '—' };
+                  var leads = (await sb.from('leads').select('event_type,event_date,location,status')
+                                 .eq('assigned_dj_id', prof.id).eq('event_date', iso)).data || [];
+                  leads.forEach(function(ev){ if(ev.status==='CANCELLED') return;
+                    events.push({ lead:(ev.event_type||'Evento')+(ev.status?' · '+(ST[ev.status]||ev.status):''), loc:ev.location||'—', start:'Sin horario', end:'Sin horario', s:null, e:null }); });
+                  // 2) Residencias recurrentes de hoy — MISMO origen que el calendario (residency_schedule por día de semana)
+                  var rsel='day_of_week,venue,start_time,end_time';
+                  var rq = await sb.from('residency_schedule').select(rsel+',dj_id').eq('active',true).eq('day_of_week',dow);
+                  if(rq.error) rq = await sb.from('residency_schedule').select(rsel).eq('active',true).eq('day_of_week',dow);
+                  ((rq.data)||[]).filter(function(r){ return !r.dj_id || r.dj_id===prof.id; }).forEach(function(r){
+                    var s=num(r.start_time), e=num(r.end_time); if(e!=null && s!=null && e<s) e+=24;
+                    events.push({ lead:'Residencia · '+(r.venue||''), loc:r.venue||'—', start:t12(r.start_time)||'Sin horario', end:t12(r.end_time)||'Sin horario', s:s, e:e }); });
+                  if(!events.length) return null;
+                  // primario = el que ocurre AHORA; si no, el próximo; si no, el primero. Nota "+N hoy" si hay más.
+                  events.sort(function(a,b){ return (a.s==null?99:a.s)-(b.s==null?99:b.s); });
+                  var nowH = d.getHours()+d.getMinutes()/60;
+                  var primary = events.filter(function(x){ return x.s!=null && x.e!=null && x.s<=nowH && nowH<=x.e; })[0]
+                             || events.filter(function(x){ return x.s!=null && x.s>=nowH; })[0]
+                             || events[0];
+                  var extra = events.length - 1;
+                  return { lead: primary.lead + (extra>0? ' · +'+extra+' hoy':''), start:primary.start, end:primary.end, loc:primary.loc };
                 }catch(_e){ return null; }
               }
               var sent=false;
