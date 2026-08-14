@@ -476,9 +476,15 @@
       +(window.__COI_STAFF===false ? '' : '<button class="r-own" data-role="owner" aria-selected="'+(state.role==="owner")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="5" rx="1.5"/><rect x="3" y="11" width="18" height="5" rx="1.5"/><path d="M7 18h10"/></svg>Owner · Matrix</button>')
       +'</div>';
     if(state.role==="artista"){
-      h+='<div class="who"><span>Eres:</span><select id="artSel">';
-      ARTISTS.forEach(function(a){h+='<option value="'+a.id+'"'+(a.id===state.artist?' selected':'')+'>'+a.n+'</option>';});
-      h+='</select></div>';
+      if(window.__COI_STAFF===false){
+        // ARTISTA REAL: bloqueado en sí mismo. SIN selector — solo su propia agenda (nombre fijo).
+        h+='<div class="who"><span>Eres:</span><b style="color:var(--ink);font-weight:700">'+esc(artName(state.artist))+'</b></div>';
+      } else {
+        // Staff en modo Artista: puede inspeccionar cualquier artista (selector).
+        h+='<div class="who"><span>Eres:</span><select id="artSel">';
+        ARTISTS.forEach(function(a){h+='<option value="'+a.id+'"'+(a.id===state.artist?' selected':'')+'>'+a.n+'</option>';});
+        h+='</select></div>';
+      }
       h+='<span class="consent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>T&C aceptados</span>';
       h+='<span class="iso"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Solo ves tu información</span>';
     } else {
