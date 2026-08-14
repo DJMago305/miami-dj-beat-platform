@@ -139,6 +139,16 @@
   .detail .venue svg{width:16px;height:16px;color:var(--ink-mute);flex:none;}
   .detail .artline{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-mute);margin-bottom:10px;}
   .detail .artline .pip{width:9px;height:9px;border-radius:50%;background:var(--a);}
+  .detail-hd{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line);}
+  .detail-hd h3{font-size:15px;font-weight:700;letter-spacing:-0.01em;text-transform:capitalize;color:var(--ink);}
+  .detail-hd .cnt{font-family:var(--mono);font-size:11px;color:var(--ink-mute);white-space:nowrap;}
+  .ev-card{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--panel);margin-bottom:12px;cursor:pointer;transition:border-color .15s,box-shadow .15s;}
+  .ev-card:last-child{margin-bottom:0;}
+  .ev-card:hover{border-color:color-mix(in srgb,var(--ink) 22%,transparent);}
+  .ev-card.sel{border-color:var(--set);box-shadow:0 0 0 1px var(--set) inset;}
+  .ev-card h4{margin:8px 0 4px;font-size:16px;letter-spacing:-0.01em;}
+  .ev-card .when{display:flex;align-items:center;gap:6px;color:var(--ink-soft);font-size:13px;font-variant-numeric:tabular-nums;font-weight:600;margin-bottom:10px;}
+  .ev-card .when svg{width:14px;height:14px;color:var(--ink-mute);flex:none;}
   .layers-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-mute);margin:2px 0 8px;}
   .layer{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;padding:7px 0;}
   .layer .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:color-mix(in srgb,var(--lc) 16%,transparent);color:var(--lc);}
@@ -329,12 +339,13 @@
 <script>
 (function(){
   "use strict";
-  var TODAY=new Date(2026,7,10);
+  var _n0=new Date();
+  var TODAY=new Date(_n0.getFullYear(),_n0.getMonth(),_n0.getDate());  // día REAL de hoy (medianoche local)
   var MONTHS=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   var MON_L=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   var DOW1=["D","L","M","M","J","V","S"],DOWL=["dom","lun","mar","mié","jue","vie","sáb"],DOWF=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
   var CALN={set:"Sets / Reservas",staff:"Staff / Cobertura",prod:"Producción",pago:"Pagos / Cobros",clima:"Clima",cliente:"Cliente"};
-  var START=8,END=27,H=52,NOW=21.5;
+  var START=8,END=27,H=52,NOW=_n0.getHours()+_n0.getMinutes()/60;  // línea "ahora" = hora REAL
 
   var ARTISTS=[{id:"mago",n:"DJ Mago",c:"#ff2e86"},{id:"luna",n:"DJ Luna",c:"#3d8bff"},{id:"tropi",n:"DJ Tropikal",c:"#10b3a3"}];
   function artName(id){for(var i=0;i<ARTISTS.length;i++)if(ARTISTS[i].id===id)return ARTISTS[i].n;return"Matrix";}
@@ -420,7 +431,7 @@
     EV=BASE_EV.concat(gen);updateBadge();
   }
 
-  var state={view:"mes",date:new Date(2026,7,10),sel:null,crmForm:false,role:"owner",artist:"mago",consent:{},pendingRole:null,notz:null};
+  var state={view:"mes",date:new Date(TODAY),sel:null,crmForm:false,role:"owner",artist:"mago",consent:{},pendingRole:null,notz:null};
 
   function pad(n){return(n<10?"0":"")+n;}
   function key(dt){return dt.getFullYear()+"-"+pad(dt.getMonth()+1)+"-"+pad(dt.getDate());}
@@ -447,7 +458,7 @@
   btnNotz.addEventListener("click",function(){state.view="notarizacion";state.notz=null;render();});
   document.getElementById("prev").addEventListener("click",function(){step(-1);});
   document.getElementById("next").addEventListener("click",function(){step(1);});
-  document.getElementById("today").addEventListener("click",function(){state.date=new Date(2026,7,10);render();});
+  document.getElementById("today").addEventListener("click",function(){state.date=new Date(TODAY);state.sel=null;render();});
 
   tcCheck.addEventListener("change",function(){tcAccept.disabled=!tcCheck.checked;});
   tcCancel.addEventListener("click",function(){overlay.hidden=true;state.pendingRole=null;});
@@ -581,8 +592,7 @@
   function renderDay(){
     var d=state.date;titleEl.innerHTML=MON_L[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear()+' <span class="sub">'+DOWF[d.getDay()]+'</span>';
     var tl=buildTimeline([d]);view.innerHTML='<div class="day-layout"><div>'+tl+'</div><div class="detail" id="detail"></div></div>';
-    if(!state.sel){var te=evOn(key(d));if(te.length)state.sel=te[0];}
-    renderDetail();wireTimed();
+    renderDayDetail(d);wireTimed();
   }
 
   function buildTimeline(days){
@@ -619,12 +629,11 @@
     {k:"temporal",cls:"lx-temporal",name:"Temporal",ic:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'}
   ];
 
-  function renderDetail(){
-    var el=document.getElementById("detail");if(!el)return;var e=state.sel;
-    if(!e){el.innerHTML='<div class="empty">Selecciona un evento para ver sus capas de inteligencia.</div>';return;}
-    var dt=parse(e.d);var when=e.ad?'Todo el día':(fmtT(e.s)+' – '+fmtT(e.e));
+  // Devuelve el detalle de UN evento (chip de calendario, hora, artista, venue, capas de inteligencia, cliente).
+  function eventCardHTML(e){
+    var when=e.ad?'Todo el día':(fmtT(e.s)+' – '+fmtT(e.e));
     var h='<div class="dcal" style="--c:var(--'+e.cal+')"><span class="sq"></span>'+CALN[e.cal]+'</div><h4>'+e.t+'</h4>';
-    h+='<div class="when">'+DOWF[dt.getDay()]+', '+dt.getDate()+' '+MON_L[dt.getMonth()]+' · '+when+'</div>';
+    h+='<div class="when"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'+when+'</div>';
     if(state.role==="owner")h+='<div class="artline"><span class="pip" style="--a:'+artColor(e.artist)+'"></span>Artista: '+artName(e.artist)+'</div>';
     if(e.venue)h+='<div class="venue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>'+e.venue+'</div>';
     if(e.meta){h+='<div class="layers-lbl">Capas de inteligencia</div>';
@@ -637,8 +646,22 @@
       if(state.role==="artista")h+='<div class="opp"><b>Oportunidad:</b> es su '+(e.kind==="aniv"?"aniversario":"cumpleaños")+'. Miami DJ Beat puede gestionarte un evento con este contacto.</div>';
       h+='<button class="act">Enviar felicitación por '+c.chan+'</button>';
     }
+    return h;
+  }
+
+  // Panel lateral del día: lista TODOS los eventos de ese día (con su hora y detalle). Si hay 2, aparecen los 2.
+  function renderDayDetail(d){
+    var el=document.getElementById("detail");if(!el)return;
+    var list=evOn(key(d)).slice().sort(function(a,b){var sa=a.ad?-1:(a.s==null?0:a.s),sb=b.ad?-1:(b.s==null?0:b.s);return sa-sb;});
+    var hd='<div class="detail-hd"><h3>'+DOWF[d.getDay()]+' '+d.getDate()+' '+MON_L[d.getMonth()]+'</h3><span class="cnt">'+list.length+(list.length===1?' evento':' eventos')+'</span></div>';
+    if(!list.length){el.innerHTML=hd+'<div class="empty">Día sin eventos en la agenda.</div>';return;}
+    var h=hd;
+    list.forEach(function(e){h+='<div class="ev-card'+((state.sel&&eid(state.sel)===eid(e))?' sel':'')+'" data-detid="'+eid(e)+'">'+eventCardHTML(e)+'</div>';});
     el.innerHTML=h;
-    var act=el.querySelector(".act");if(act)act.onclick=function(){act.textContent="✓ Felicitación programada";act.style.background="var(--pago)";act.style.color="#04211d";};
+    el.querySelectorAll(".ev-card").forEach(function(card){
+      var act=card.querySelector(".act");if(act)act.onclick=function(ev){ev.stopPropagation();act.textContent="✓ Felicitación programada";act.style.background="var(--pago)";act.style.color="#04211d";};
+      card.onclick=function(ev){if(ev.target.closest(".act"))return;var e=findEv(card.dataset.detid);if(e){state.sel=e;render();}};
+    });
   }
 
   function buildReminders(){
