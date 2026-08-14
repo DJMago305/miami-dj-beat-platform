@@ -884,14 +884,16 @@
     if(!sb || !sb.auth){ return setTimeout(setupRole, 300); }
     var sess=(await sb.auth.getSession()).data.session;
     if(!sess){ return setTimeout(setupRole, 300); }
-    var res=await sb.from('dj_profiles').select('role,stage_name,dj_name').eq('user_id', sess.user.id).maybeSingle();
+    var res=await sb.from('dj_profiles').select('id,role,stage_name,dj_name').eq('user_id', sess.user.id).maybeSingle();
     var role=String(res.data&&res.data.role?res.data.role:'').toLowerCase().trim();
     window.__COI_STAFF = ['admin','owner','manager','seller'].indexOf(role)!==-1;
     if(!window.__COI_STAFF){
-      // Artista: SOLO su propia agenda (aislada). Se fija su identidad y se bloquea en modo Artista.
+      // Artista: SOLO su propia agenda (aislada). state.artist = dj_profiles.id, porque los eventos
+      // lo referencian así (leads.assigned_dj_id = dj_profiles.id, NO el user_id de auth).
+      var djId=(res.data&&res.data.id)?res.data.id:sess.user.id;
       var nm=(res.data&&(res.data.stage_name||res.data.dj_name))||'Mi agenda';
-      if(!ARTISTS.some(function(a){return a.id===sess.user.id;})) ARTISTS.push({id:sess.user.id,n:nm,c:'#3d8bff'});
-      state.role='artista'; state.artist=sess.user.id; state.consent[sess.user.id]=true;
+      if(!ARTISTS.some(function(a){return a.id===djId;})) ARTISTS.push({id:djId,n:nm,c:'#3d8bff'});
+      state.role='artista'; state.artist=djId; state.consent[djId]=true;
     } else {
       state.role='owner';
     }
