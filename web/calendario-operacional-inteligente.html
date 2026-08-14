@@ -1,5 +1,26 @@
 <meta charset="utf-8">
 <title>Calendario Operacional Inteligente — Miami DJ Beat</title>
+<!-- ── Guard: vista operacional SOLO para staff/owner (NO artistas ni clientes). ──
+     Usa dj_profiles.role (misma fuente de verdad que admin-dashboard, NO el JWT). ── -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+<script>
+(function(){
+  async function gate(){
+    var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+    if(!sb || !sb.auth){ return setTimeout(gate, 300); }
+    var sess = (await sb.auth.getSession()).data.session;
+    if(!sess){ location.replace('./login.html?next=./calendario-operacional-inteligente.html'); return; }
+    var res = await sb.from('dj_profiles').select('role').eq('user_id', sess.user.id).maybeSingle();
+    var role = String(res.data && res.data.role ? res.data.role : '').toLowerCase().trim();
+    var STAFF = ['admin','owner','manager','seller'];
+    if(!(res.data && STAFF.indexOf(role) !== -1)){
+      location.replace('./login.html?next=./admin-dashboard.html&mdj_staff_entry=1');   // no-staff → puerta staff
+    }
+  }
+  gate();
+})();
+</script>
 <style>
   :root {
     --ground:#f3f4f9;--panel:#ffffff;--panel-2:#f7f8fc;
@@ -387,10 +408,14 @@
 
   var EV=[];
   function rebuild(){
-    var gen=[];
+    // Capa dinámica "Aniversarios VIP": desde CLIENTS reales (client_profiles) genera cumpleaños/aniversarios
+    // como eventos recurrentes en años cercanos (para navegar). El SSOT es la fecha; el evento se genera.
+    var gen=[], nowY=(new Date()).getFullYear(), years=[nowY-1, nowY, nowY+1];
     CLIENTS.forEach(function(c){
-      if(c.bday&&c.bday.indexOf("08-")===0)gen.push({d:"2026-"+c.bday,cal:"cliente",ad:true,kind:"cumple",t:"🎂 "+c.n+" — cumpleaños",client:c,artist:c.owner});
-      if(c.since){var p=c.since.split("-");if(p[1]==="08"){var yrs=2026-(+p[0]);if(yrs>=1)gen.push({d:"2026-08-"+p[2],cal:"cliente",ad:true,kind:"aniv",t:"🎉 "+c.n+" — aniversario ("+yrs+" año"+(yrs>1?"s":"")+")",client:c,artist:c.owner});}}
+      years.forEach(function(y){
+        if(c.bday)  gen.push({ d:y+"-"+c.bday,  cal:"cliente", ad:true, kind:"cumple", t:"🎂 "+c.n+" — cumpleaños",  client:c, artist:c.owner||"_none" });
+        if(c.anniv) gen.push({ d:y+"-"+c.anniv, cal:"cliente", ad:true, kind:"aniv",   t:"🎉 "+c.n+" — aniversario", client:c, artist:c.owner||"_none" });
+      });
     });
     EV=BASE_EV.concat(gen);updateBadge();
   }
@@ -769,7 +794,93 @@
     }
   }
 
+  // ═══ B2 · DATOS REALES desde Supabase (tabla leads) ═══
+  // La RLS filtra sola: staff/owner ven TODOS los leads; un artista solo los suyos
+  // (y de todos modos no llega aquí por el guard de la página). Solo LECTURA.
+  var DJ_PALETTE = ["#ff2e86","#3d8bff","#10b3a3","#8b6cff","#f5a623","#ff7a4d","#54d29a","#c5a059"];
+  function _t2h(t){ if(!t) return null; var p=String(t).split(":"); var h=(+p[0])+((+p[1]||0)/60); return isNaN(h)?null:h; }
+  function mapLeads(rows){
+    var amap={}, pal=0, evs=[];
+    rows.forEach(function(L){
+      var did=L.assigned_dj_id||"_none", dn=L.assigned_dj_name||"Sin asignar";
+      if(!amap[did]) amap[did]={ id:did, n:dn, c:(did==="_none"?"var(--owner)":DJ_PALETTE[pal++ % DJ_PALETTE.length]) };
+      var s=_t2h(L.event_start_time), e=_t2h(L.event_end_time);
+      var venue=L.venue||L.event_location||L.location||L.city||"";
+      var meta={};
+      if(L.total_amount||L.budget) meta.pago={ v:(L.total_amount? "$"+L.total_amount : String(L.budget)), s:(L.payment_status||L.status||"") };
+      if(L.assigned_staff_name) meta.staff={ v:L.assigned_staff_name, s:"staff asignado" };
+      evs.push({ d:L.event_date, cal:"set", artist:did, ad:(s===null),
+                 s:(s===null?0:s), e:(e!==null?e:(s!==null?s+2:0)),
+                 t:(L.event_type||L.name||"Evento")+(L.status? " · "+L.status : ""),
+                 venue:venue, meta:(Object.keys(meta).length? meta : null) });
+    });
+    return { evs:evs, artists:Object.keys(amap).map(function(k){return amap[k];}) };
+  }
+  async function loadRealLeads(){
+    try{
+      var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+      if(!sb || !sb.from || !sb.auth){ return setTimeout(loadRealLeads, 300); }   // cliente aún no listo → reintenta
+      var sess=(await sb.auth.getSession()).data.session;                          // ASEGURA la sesión restaurada antes de consultar
+      if(!sess){ return setTimeout(loadRealLeads, 300); }                          // sin sesión aún → reintenta (si no, RLS = anon = 0 filas)
+      var r=await sb.from("leads").select("event_date,event_start_time,event_end_time,event_type,name,venue,location,event_location,city,status,payment_status,total_amount,budget,assigned_dj_id,assigned_dj_name,assigned_staff_name");
+      if(r.error) throw r.error;
+      var m=mapLeads((r.data||[]).filter(function(x){ return x.event_date; }));
+      _leadsEv=m.evs; ARTISTS=m.artists.concat(_resEv.length?[_resArtist]:[]); BASE_EV=_leadsEv.concat(_resEv);
+      rebuild(); render();
+    }catch(err){ console.warn("[Matrix] carga de leads falló:", err); }
+  }
+  // ═══ FASE 1 · Fechas VIP reales (client_profiles.birth_date / wedding_anniversary) ═══
+  // Si las columnas aún no existen (SQL sin correr), la query falla y se salta sin romper nada.
+  async function loadClientDates(){
+    try{
+      var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+      if(!sb || !sb.from || !sb.auth){ return setTimeout(loadClientDates, 300); }
+      if(!(await sb.auth.getSession()).data.session){ return setTimeout(loadClientDates, 300); }
+      var r=await sb.from("client_profiles").select("id, full_name, birth_date, wedding_anniversary, tier_level");
+      if(r.error) throw r.error;
+      var md=function(d){ return d ? String(d).slice(5,10) : null; };   // "YYYY-MM-DD" → "MM-DD"
+      CLIENTS=(r.data||[]).map(function(c){
+        return { n:c.full_name||"Cliente", estado:(c.tier_level||""), bday:md(c.birth_date), anniv:md(c.wedding_anniversary), chan:"", note:"", owner:"_none" };
+      }).filter(function(c){ return c.bday || c.anniv; });
+      rebuild(); render();
+    }catch(err){ console.warn("[Matrix] fechas de clientes (¿columnas SSOT creadas?):", err.message||err); }
+  }
+  // ═══ Residencias recurrentes reales (tabla residency_schedule) ═══
+  var _leadsEv=[], _resEv=[];
+  var _resArtist={id:"_res",n:"DJMago305 · Residencias",c:"#c5a059"};
+  async function loadResidencies(){
+    try{
+      var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+      if(!sb || !sb.from || !sb.auth){ return setTimeout(loadResidencies, 300); }
+      if(!(await sb.auth.getSession()).data.session){ return setTimeout(loadResidencies, 300); }
+      var r=await sb.from("residency_schedule").select("day_of_week,shift,venue,dj_name,start_time,end_time,venue_pay_usd").eq("active",true);
+      if(r.error) throw r.error;
+      var rules=r.data||[], evs=[];
+      var y=(state.date&&state.date.getFullYear)?state.date.getFullYear():2026;
+      function pad(n){return (n<10?"0":"")+n;}
+      for(var d=new Date(y,0,1), end=new Date(y,11,31); d<=end; d.setDate(d.getDate()+1)){
+        var dow=d.getDay();
+        rules.forEach(function(rule){
+          if(Number(rule.day_of_week)!==dow) return;
+          var s=_t2h(rule.start_time), e=_t2h(rule.end_time);
+          if(s!==null && e!==null && e<s) e=e+24;   // cruza medianoche
+          var iso=d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+          evs.push({ d:iso, cal:"set", artist:"_res", ad:false,
+            s:(s===null?0:s), e:(e!==null?e:(s!==null?s+2:0)),
+            t:"Residencia · "+(rule.venue||""), venue:(rule.venue||""),
+            meta:{ pago:{ v:"$"+Number(rule.venue_pay_usd||0), s:"venue paga · "+(rule.dj_name||"DJMago305") } } });
+        });
+      }
+      _resEv=evs;
+      if(!ARTISTS.some(function(a){return a.id==="_res";})) ARTISTS=ARTISTS.concat([_resArtist]);
+      BASE_EV=_leadsEv.concat(_resEv); rebuild(); render();
+    }catch(err){ console.warn("[Matrix] residencias:", err.message||err); }
+  }
+  BASE_EV=[]; CLIENTS=[]; ARTISTS=[];   // arrancamos vacío: los datos reales llegan de Supabase (nada de mock)
   rebuild();render();
+  loadRealLeads();
+  loadClientDates();
+  loadResidencies();
 })();
 </script>
 <script>
