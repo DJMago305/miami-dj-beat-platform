@@ -100,3 +100,36 @@ web/js/mdj-financial-projection-sync.local-selftest.mjs
 web/js/mdj-local-projection-engine.js
 web/serve.json
 ```
+
+---
+
+## Resultado del ENSAYO en seco (worktree temporal, borrado)
+
+Cherry-pick del subconjunto `(bfi)` sobre main → **CONFLICTO** en `7ca1b7e`
+(`web/dj-dashboard.html`, `web/business-financial-intelligence.html`).
+
+**Causa:** el trabajo financiero está ENTRELAZADO — abarca varios prefijos
+(`bfi`/`financial`/`prod`) a lo largo de sesiones, depende de commits anteriores
+(la maqueta business-financial-intelligence.html se creó en sesión previa; el
+switch/tarjeta también), y modifica archivos COMPARTIDOS (dj-dashboard.html) que
+también llevan cambios NO financieros de los otros ~164 commits. Un cherry-pick de
+un subconjunto NO aísla lo financiero: se rompe.
+
+## Estrategia CORREGIDA para el PR (recomendada): snapshot curado, NO cherry-pick
+
+En vez de reproducir la historia enredada, se hace un PR con el ESTADO FINAL de los
+archivos financieros (que está probado y correcto):
+1. `git checkout -b feat/motor-bfi main`
+2. Copiar el estado ACTUAL de los archivos financieros (lista de "Archivos del PR"
+   arriba) desde la rama de trabajo a la rama nueva:
+   `git checkout plan/v2-artist-agenda-matrix -- <cada archivo financiero>`
+   (archivos NUEVOS entran limpios; los 3 COMPARTIDOS —vercel.json, dj-dashboard.html,
+   elixis-chat/index.ts— se revisan a mano para llevar SOLO los cambios financieros).
+3. Un (o pocos) commits limpios: "feat: motor BFI + ELIXIS financiero".
+4. Correr los 9 self-tests; revisar diff completo; `gh pr create`.
+5. Los 3 compartidos son el único punto que requiere revisión manual (llevar el cambio
+   financiero sin arrastrar cambios de clima/nav/identidad).
+6. OK del PO antes de mergear.
+
+**Ventaja:** PR limpio, atómico, revisable, sin la historia enredada; el estado final
+es lo que importa y ya está probado (9/9).
