@@ -23,7 +23,8 @@
   .date .my{font-size:14px;font-weight:500;letter-spacing:.16em;color:var(--ink-dim)}
 
   .rail{position:absolute;left:24px;top:26px;bottom:104px;width:360px;display:flex;flex-direction:column;gap:15px}
-  .brand{display:flex;flex-direction:column;padding:0 4px;line-height:1}
+  .brand{display:flex;flex-direction:row;align-items:center;gap:14px;padding:0 4px;line-height:1}
+  .brand-id{display:flex;flex-direction:column;line-height:1}
   .brand b{font-size:21px;font-weight:800}.brand b i{color:var(--cool);font-style:normal}
   .brand span{font-size:11px;letter-spacing:.32em;color:var(--ink-soft);margin-top:6px}
   .panel{border-radius:20px;padding:15px 17px}
@@ -86,12 +87,13 @@
     -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
   .datectl .dlbl{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--gold);min-width:58px;text-align:center}
   .datectl input[type=range]{width:190px;accent-color:var(--gold);cursor:pointer;background:transparent}
-  .livebtn{position:absolute;left:24px;bottom:64px;pointer-events:auto;font:inherit;font-size:12.5px;font-weight:700;
-    letter-spacing:.04em;cursor:pointer;border-radius:999px;padding:9px 16px;
+  .livebtn{position:static;pointer-events:auto;font:inherit;font-size:11px;font-weight:700;
+    letter-spacing:.04em;cursor:pointer;border-radius:999px;padding:6px 12px;white-space:nowrap;flex:none;
     background:rgba(10,16,26,.55);border:1px solid var(--stroke);color:var(--ink-dim);
     -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
   .livebtn.on{background:var(--ok);color:#04140c;border-color:transparent}
   .livebtn.warn{background:var(--warn);color:#2a1c04;border-color:transparent}
+  .livebtn.degraded{background:rgba(61,139,255,.16);border-color:rgba(61,139,255,.55);color:#9cc4ff}
   /* mobile metrics strip — replaces the (hidden) side rail on phones/tablets */
   .mstrip{display:none}
   .mstrip .chip{display:flex;flex-direction:column;align-items:center;gap:2px;

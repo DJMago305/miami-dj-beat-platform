@@ -59,10 +59,14 @@ const lowEnd = isLowEndDevice();
 let gl = null, capable = false;
 if(!lowEnd){ try{ gl = canvas.getContext('webgl', {antialias:true, premultipliedAlpha:false}); capable = !!gl; }catch(e){ capable = false; } }
 if(!capable){ gl = noopGL(); }   // weak/old/no-WebGL → stub; the real engine setup no-ops, static sky takes over at boot
+let heroDegraded = !capable;     // true = clima en modo BAJA RESOLUCIÓN (cielo estático): equipo débil o contexto WebGL perdido
 // GPU safety: if the driver resets the context (happens around GPU/WindowServer
 // pressure), STOP drawing on the dead context instead of spamming errors. We
-// preventDefault so the browser can restore it; a fresh context needs a reload.
-canvas.addEventListener('webglcontextlost', function(e){ e.preventDefault(); running=false; }, false);
+// preventDefault so the browser can restore it. CLAVE (regla del PO): caemos al
+// cielo estático para que el clima NUNCA quede en blanco — justo cuando el DJ
+// corre Serato y el GPU está bajo presión. El indicador pasa a "Baja resolución".
+canvas.addEventListener('webglcontextlost', function(e){ e.preventDefault(); running=false; heroDegraded=true; installStaticSky(); if(typeof updateLiveUI==='function') updateLiveUI(); }, false);
+canvas.addEventListener('webglcontextrestored', function(){ /* un contexto nuevo requeriría reinicio completo; mantenemos el cielo estático para no arriesgar quedar en blanco */ }, false);
 const VERT = 'attribute vec2 p; void main(){ gl_Position = vec4(p,0.0,1.0); }';
 const FRAG = [
 'precision highp float;',
@@ -613,12 +617,19 @@ function setLive(on){
 function dropLive(){ if(liveMode){ liveMode=false; if(liveTimer){clearInterval(liveTimer);liveTimer=null;} liveStatus=''; updateLiveUI(); } }
 function updateLiveUI(){
   const b=document.getElementById('livebtn'); if(!b)return;
-  b.classList.toggle('on', liveMode && liveStatus!=='fallback');
-  b.classList.toggle('warn', liveStatus==='fallback');
-  b.textContent = !liveMode ? '🛰️ En vivo'
-    : liveStatus==='live' ? '🛰️ EN VIVO'
-    : liveStatus==='fallback' ? '🛰️ Sin conexión · mock'
+  var degraded = heroDegraded || !capable;   // visual en cielo estático = baja resolución (rendimiento)
+  b.classList.toggle('on', liveMode && liveStatus!=='fallback' && !degraded);   // satélite conectado
+  b.classList.toggle('warn', liveStatus==='fallback' && !degraded);             // offline
+  b.classList.toggle('degraded', degraded);                                     // baja resolución
+  b.textContent = degraded ? '▽ Baja resolución'
+    : !liveMode ? '🛰️ En vivo'
+    : liveStatus==='live' ? '🛰️ En vivo'
+    : liveStatus==='fallback' ? '⚠ Sin conexión'
     : '🛰️ Conectando…';
+  b.title = degraded ? 'Modo rendimiento (cielo estático) para no congelar la máquina — el clima nunca queda en blanco'
+    : liveStatus==='fallback' ? 'Sin conexión al satélite de datos — usando datos locales'
+    : liveMode ? 'Conectado al satélite de datos (en vivo)'
+    : 'Toca para conectar al satélite de datos en vivo';
 }
 let lastHourBucket=-1;
 const FPS_CAP=60, MIN_FRAME_MS=1000/FPS_CAP; let lastDrawWall=0;   // frame throttle: cap draws to ~60fps
@@ -724,12 +735,16 @@ function skyGradientCSS(date){
   const rgb = (p,q)=>'rgb('+mix(p[0],q[0])+','+mix(p[1],q[1])+','+mix(p[2],q[2])+')';
   return 'linear-gradient(180deg, '+rgb(a.top,b.top)+' 0%, '+rgb(a.bot,b.bot)+' 100%)';
 }
+var _staticSky=false;
 function installStaticSky(){
+  if(_staticSky) return;                 // idempotente: no apilar intervalos si el contexto se pierde varias veces
+  _staticSky=true;
   canvas.style.background = skyGradientCSS(new Date());
   setInterval(function(){ canvas.style.background = skyGradientCSS(new Date()); refreshState(); }, 300000);  // retint sky + refresh metrics every 5 min
 }
 if(capable) requestAnimationFrame(frame);   // capable machine → start the WebGL engine
 else        installStaticSky();             // weak / old / reduced-motion / no-WebGL → static gradient sky
+updateLiveUI();                             // estado inicial del indicador (En vivo / Baja resolución)
 // Pause the render loop while the pane is hidden OR the window loses focus.
 // document.hidden alone does NOT fire when our window is merely BEHIND another
 // app — so a DJ working in Serato (our window behind theirs) would keep us
