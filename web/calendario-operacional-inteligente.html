@@ -137,7 +137,12 @@
   .day-split::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:4px;height:36px;border-radius:3px;background:var(--ink-mute);opacity:.45;transition:background .15s,opacity .15s;}
   .day-split:hover::before,.day-split.drag::before{background:var(--set);width:3px;}
   .day-split:hover::after,.day-split.drag::after{background:var(--set);opacity:1;}
-  .detail{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--panel-2);align-self:start;min-width:0;}
+  .detail{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--panel-2);align-self:start;min-width:0;display:flex;flex-direction:column;max-height:600px;}
+  /* Contenedor de tarjetas: altura fija con SCROLL interno. Las tarjetas NUNCA se encogen
+     (tamaño fijo); si hay más eventos de los que caben, se recorren con scroll / carrusel. */
+  .ev-cards{flex:1 1 auto;min-height:0;overflow-y:auto;scroll-behavior:smooth;padding-right:6px;margin-right:-4px;}
+  .ev-cards::-webkit-scrollbar{width:8px;} .ev-cards::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
+  .ev-cards .ev-card{flex:none;}
   .detail .empty{color:var(--ink-mute);font-size:14px;text-align:center;padding:30px 10px;}
   .detail .dcal{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:650;color:var(--c);}
   .detail .dcal .sq{width:10px;height:10px;border-radius:3px;background:var(--c);}
@@ -147,7 +152,7 @@
   .detail .venue svg{width:16px;height:16px;color:var(--ink-mute);flex:none;}
   .detail .artline{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-mute);margin-bottom:10px;}
   .detail .artline .pip{width:9px;height:9px;border-radius:50%;background:var(--a);}
-  .detail-hd{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line);}
+  .detail-hd{display:flex;flex:none;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line);}
   .detail-hd h3{font-size:15px;font-weight:700;letter-spacing:-0.01em;text-transform:capitalize;color:var(--ink);}
   .detail-hd .cnt{font-family:var(--mono);font-size:11px;color:var(--ink-mute);white-space:nowrap;}
   .ev-card{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--panel);margin-bottom:12px;cursor:pointer;transition:border-color .15s,box-shadow .15s;}
@@ -684,15 +689,41 @@
   // Panel lateral del día: lista TODOS los eventos de ese día (con su hora y detalle). Si hay 2, aparecen los 2.
   function renderDayDetail(d){
     var el=document.getElementById("detail");if(!el)return;
+    if(_dayCarousel){clearInterval(_dayCarousel);_dayCarousel=null;}   // corta el carrusel previo antes de re-render
     var list=evOn(key(d)).slice().sort(function(a,b){var sa=a.ad?-1:(a.s==null?0:a.s),sb=b.ad?-1:(b.s==null?0:b.s);return sa-sb;});
     var hd='<div class="detail-hd"><h3>'+DOWF[d.getDay()]+' '+d.getDate()+' '+MON_L[d.getMonth()]+'</h3><span class="cnt">'+list.length+(list.length===1?' evento':' eventos')+'</span></div>';
     if(!list.length){el.innerHTML=hd+'<div class="empty">Día sin eventos en la agenda.</div>';return;}
-    var h=hd;
+    var h='';
     list.forEach(function(e){h+='<div class="ev-card'+((state.sel&&eid(state.sel)===eid(e))?' sel':'')+'" data-detid="'+eid(e)+'">'+eventCardHTML(e)+'</div>';});
-    el.innerHTML=h;
+    el.innerHTML=hd+'<div class="ev-cards" id="evCards">'+h+'</div>';
     el.querySelectorAll(".ev-card").forEach(function(card){
       var act=card.querySelector(".act");if(act)act.onclick=function(ev){ev.stopPropagation();act.textContent="✓ Felicitación programada";act.style.background="var(--pago)";act.style.color="#04211d";};
       card.onclick=function(ev){if(ev.target.closest(".act"))return;var e=findEv(card.dataset.detid);if(e){state.sel=e;render();}};
+    });
+    startDayCarousel();
+  }
+
+  // Carrusel automático del panel del día: si hay MÁS eventos de los que caben en la caja,
+  // los recorre solo (cada ~2.6s) para que el usuario note que hay más (ej. un cumpleaños
+  // además de las residencias). Tarjetas de tamaño FIJO; scroll manual pausa el auto un rato.
+  var _dayCarousel=null;
+  function startDayCarousel(){
+    if(_dayCarousel){clearInterval(_dayCarousel);_dayCarousel=null;}
+    var box=document.getElementById("evCards"); if(!box) return;
+    requestAnimationFrame(function(){
+      var cards=box.querySelectorAll(".ev-card"); if(cards.length<2) return;
+      if(box.scrollHeight <= box.clientHeight+8) return;   // todo cabe → no hace falta carrusel
+      var paused=false, idx=0;
+      box.addEventListener("pointerenter", function(){ paused=true; });
+      box.addEventListener("pointerleave", function(){ paused=false; });
+      box.addEventListener("scroll", function(){ paused=true; clearTimeout(box.__rp); box.__rp=setTimeout(function(){ paused=false; }, 4500); }, {passive:true});
+      _dayCarousel=setInterval(function(){
+        if(!box.isConnected){ clearInterval(_dayCarousel); _dayCarousel=null; return; }
+        if(paused) return;
+        idx=(idx+1)%cards.length;
+        var target = idx===0 ? 0 : (box.scrollTop + (cards[idx].getBoundingClientRect().top - box.getBoundingClientRect().top) - 4);
+        box.scrollTo({ top:Math.max(0,target), behavior:"smooth" });
+      }, 2600);
     });
   }
 
