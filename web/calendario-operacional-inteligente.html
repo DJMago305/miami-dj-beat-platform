@@ -128,8 +128,16 @@
   .nowline{position:absolute;left:0;right:0;height:2px;background:var(--today);z-index:5;}
   .nowline::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--today);}
 
-  .day-layout{display:grid;grid-template-columns:1fr 320px;gap:16px;}
-  .detail{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--panel-2);align-self:start;}
+  /* Vista Día: 2 paneles con DIVISOR VERTICAL ARRASTRABLE. Por defecto el panel de
+     eventos (detalle) pesa más que la línea de horas; el usuario decide con la barra. */
+  .day-layout{display:grid;grid-template-columns:var(--day-tl,44%) 16px minmax(0,1fr);gap:0;align-items:start;}
+  .day-layout .day-tl{min-width:0;}
+  .day-split{align-self:stretch;position:relative;cursor:col-resize;touch-action:none;min-height:320px;}
+  .day-split::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%);background:var(--line);border-radius:3px;transition:background .15s,width .15s;}
+  .day-split::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:4px;height:36px;border-radius:3px;background:var(--ink-mute);opacity:.45;transition:background .15s,opacity .15s;}
+  .day-split:hover::before,.day-split.drag::before{background:var(--set);width:3px;}
+  .day-split:hover::after,.day-split.drag::after{background:var(--set);opacity:1;}
+  .detail{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--panel-2);align-self:start;min-width:0;}
   .detail .empty{color:var(--ink-mute);font-size:14px;text-align:center;padding:30px 10px;}
   .detail .dcal{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:650;color:var(--c);}
   .detail .dcal .sq{width:10px;height:10px;border-radius:3px;background:var(--c);}
@@ -260,7 +268,7 @@
   .modal .cancel{border:1px solid var(--line);background:var(--panel);color:var(--ink-soft);cursor:pointer;font-weight:650;font-size:13px;padding:12px 16px;border-radius:11px;font-family:var(--sans);}
 
   @media (max-width:900px){.rem-grid{grid-template-columns:1fr;}.newform{grid-template-columns:1fr 1fr;}}
-  @media (max-width:840px){.year-grid{grid-template-columns:repeat(2,1fr);}.day-layout{grid-template-columns:1fr;}.toolbar{grid-template-columns:auto 1fr auto;}.roster{margin-left:0;}}
+  @media (max-width:840px){.year-grid{grid-template-columns:repeat(2,1fr);}.day-layout{grid-template-columns:1fr;gap:16px;}.day-split{display:none;}.toolbar{grid-template-columns:auto 1fr auto;}.roster{margin-left:0;}}
   @media (max-width:560px){.year-grid{grid-template-columns:1fr;}.seg button{padding:6px 9px;font-size:12px;}.ctx .iso{margin-left:0;}}
   /* Pantalla completa / full-width — la app llena toda la ventana */
   .wrap{padding:0 !important;}
@@ -443,7 +451,7 @@
   function evOn(k){return EV.filter(function(e){return e.d===k&&inScope(e);});}
   function scopedClients(){return state.role==="owner"?CLIENTS:CLIENTS.filter(function(c){return c.owner===state.artist;});}
   function fmtHour(h){h=((h%24)+24)%24;if(h===0)return"12 a.m.";if(h===12)return"12 p.m.";if(h<12)return h+" a.m.";return(h-12)+" p.m.";}
-  function fmtT(h){var hh=((h%24)+24)%24,m=Math.round((h-Math.floor(h))*60);var ap=hh<12?"a":"p";var d=hh%12;if(d===0)d=12;return d+(m?":"+pad(m):"")+" "+ap+".m.";}
+  function fmtT(h){var hh=((h%24)+24)%24,m=Math.round((h-Math.floor(h))*60);var ap=hh<12?"a":"p";var d=Math.floor(hh)%12;if(d===0)d=12;return d+(m?":"+pad(m):"")+" "+ap+".m.";}
   function daysBetween(a,b){return Math.round((parse(key(b))-parse(key(a)))/86400000);}
   function relLabel(dt){var n=daysBetween(TODAY,dt);if(n===0)return"hoy";if(n===1)return"mañana";if(n===-1)return"ayer";if(n>0)return"en "+n+" días";return"hace "+(-n)+" días";}
 
@@ -591,8 +599,8 @@
   }
   function renderDay(){
     var d=state.date;titleEl.innerHTML=MON_L[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear()+' <span class="sub">'+DOWF[d.getDay()]+'</span>';
-    var tl=buildTimeline([d]);view.innerHTML='<div class="day-layout"><div>'+tl+'</div><div class="detail" id="detail"></div></div>';
-    renderDayDetail(d);wireTimed();
+    var tl=buildTimeline([d]);view.innerHTML='<div class="day-layout" id="dayLayout"><div class="day-tl">'+tl+'</div><div class="day-split" id="daySplit" title="Arrastra para ajustar · doble clic para restablecer"></div><div class="detail" id="detail"></div></div>';
+    renderDayDetail(d);wireTimed();wireDaySplit();
   }
 
   function buildTimeline(days){
@@ -619,6 +627,30 @@
   function wireTimed(){
     view.querySelectorAll("[data-id]").forEach(function(el){el.onclick=function(){var e=findEv(el.dataset.id);if(!e)return;state.sel=e;if(state.view!=="dia"){state.date=parse(e.d);state.view="dia";render();}else render();};});
     var gs=document.getElementById("gscroll");if(gs)gs.scrollTop=(17-START)*H;
+  }
+
+  // Divisor vertical arrastrable de la vista Día: el usuario decide cuánto espacio
+  // dan las horas del día vs. la información de los eventos. Se recuerda (localStorage);
+  // doble clic restablece el reparto por defecto.
+  function wireDaySplit(){
+    var lay=document.getElementById("dayLayout"), sp=document.getElementById("daySplit");
+    if(!lay||!sp) return;
+    try{ var saved=localStorage.getItem("mdjDaySplit"); if(saved) lay.style.setProperty("--day-tl", saved); }catch(_e){}
+    var dragging=false;
+    sp.addEventListener("pointerdown", function(e){ dragging=true; sp.classList.add("drag"); try{ sp.setPointerCapture(e.pointerId); }catch(_e){} e.preventDefault(); });
+    sp.addEventListener("pointermove", function(e){
+      if(!dragging) return;
+      var r=lay.getBoundingClientRect(); if(r.width<=0) return;
+      var pct=((e.clientX - r.left)/r.width)*100;
+      pct=Math.max(22, Math.min(78, pct));            // ni las horas ni el detalle desaparecen
+      var val=pct.toFixed(1)+"%";
+      lay.style.setProperty("--day-tl", val);
+      try{ localStorage.setItem("mdjDaySplit", val); }catch(_e){}
+    });
+    function end(){ if(dragging){ dragging=false; sp.classList.remove("drag"); } }
+    sp.addEventListener("pointerup", end);
+    sp.addEventListener("pointercancel", end);
+    sp.addEventListener("dblclick", function(){ lay.style.removeProperty("--day-tl"); try{ localStorage.removeItem("mdjDaySplit"); }catch(_e){} });
   }
 
   var LAYERS=[
