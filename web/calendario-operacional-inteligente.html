@@ -980,7 +980,14 @@
       // Solo su propio dj_pay_usd. El staff/owner sí ve el desglose completo.
       var _pay=_staff?"venue_pay_usd,dj_pay_usd":"dj_pay_usd";
       var _base="day_of_week,shift,venue,dj_name,start_time,end_time";
-      async function _resq(sel){ var rr=await sb.from("residency_schedule").select(sel+",dj_id").eq("active",true); if(rr.error){ rr=await sb.from("residency_schedule").select(sel).eq("active",true); } return rr; }
+      // Puerta SEGURA primero (la vista aplica el candado de venue_pay a nivel DB); si aún no existe, cae a la base.
+      async function _resq(sel){
+        var rr=await sb.from("residency_schedule_secure").select(sel+",dj_id").eq("active",true);
+        if(rr.error) rr=await sb.from("residency_schedule_secure").select(sel).eq("active",true);
+        if(rr.error) rr=await sb.from("residency_schedule").select(sel+",dj_id").eq("active",true);
+        if(rr.error) rr=await sb.from("residency_schedule").select(sel).eq("active",true);
+        return rr;
+      }
       var r=await _resq(_base+","+_pay);
       if(r.error){ r=await _resq(_base+(_staff?",venue_pay_usd":"")); }   // dj_pay_usd aún no existe en la tabla → degradar sin romper
       if(r.error) throw r.error;
