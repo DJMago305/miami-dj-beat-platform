@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 2,
+  "venues": [
+    { "id": "venue-001", "name": "Synthetic Venue A", "address": "100 Test Ave", "status": "ACTIVE" },
+    { "id": "venue-002", "name": "Synthetic Venue B", "address": "200 Test Ave", "status": "ACTIVE" }
+  ],
+  "agreements": [
+    { "id": "agr-001", "venueId": "venue-001", "title": "Weekly Friday", "frequency": "weekly", "scheduledDays": ["friday"], "rateByDay": { "friday": 280 }, "currency": "USD", "effectiveFrom": "2026-07-01", "status": "ACTIVE" },
+    { "id": "agr-002", "venueId": "venue-002", "title": "Weekly Saturday", "frequency": "weekly", "scheduledDays": ["saturday"], "rateByDay": { "saturday": 300 }, "currency": "USD", "effectiveFrom": "2026-07-01", "status": "ACTIVE" }
+  ],
+  "occurrences": [
+    { "id": "occ-001", "venueId": "venue-999-missing", "agreementId": "agr-001", "date": "2026-07-17", "shift": "default", "startTime": "21:00", "status": "COMPLETED" },
+    { "id": "occ-002", "venueId": "venue-002", "agreementId": "agr-002", "date": "2026-07-18", "shift": "default", "startTime": "21:00", "status": "SCHEDULED" },
+    { "id": "occ-003", "venueId": "venue-002", "agreementId": "agr-002", "date": "2026-07-18", "shift": "default", "startTime": "21:00", "status": "SCHEDULED" }
+  ],
+  "casualServices": [
+    { "id": "casual-001", "venueId": "venue-001", "date": "2026-07-20", "shift": "default", "startTime": "20:00", "status": "SCHEDULED" }
+  ],
+  "deposits": [
+    { "id": "dep-001", "amount": 420, "currency": "USD", "paymentMethod": "check", "receivedDate": "2026-07-17", "checkNumber": "CHK-1001", "status": "received", "leadId": "lead-abc-123" },
+    { "id": "dep-002", "amount": 150, "currency": "USD", "paymentMethod": "cash", "receivedDate": "2026-07-18", "status": "received", "invoiceId": "!!invalid-format!!" }
+  ],
+  "payments": [
+    { "id": "pay-001", "amount": 210, "currency": "USD", "method": "zelle", "paidDate": "2026-07-19", "status": "completed", "payeeId": "payee-001", "paymentType": "dj_payment" },
+    { "id": "pay-002", "amount": 60, "currency": "USD", "method": "cash", "paidDate": "2026-07-19", "status": "completed", "payeeId": "payee-999-missing", "paymentType": "vendor_payment" }
+  ],
+  "payees": [
+    { "id": "payee-001", "displayName": "Synthetic Payee One" }
+  ],
+  "venuePayments": [
+    { "id": "vpay-001", "venueId": "venue-002", "agreementId": "agr-002", "occurrenceId": "occ-002", "amount": 220, "currency": "USD", "status": "pending", "performanceDate": "2026-07-18" },
+    { "id": "vpay-002", "venueId": "venue-002", "agreementId": "agr-002", "occurrenceId": "occ-003", "amount": 300, "currency": "USD", "status": "received", "performanceDate": "2026-07-18" }
+  ],
+  "venueIncomes": [
+    { "id": "vincome-001", "venueId": "venue-002", "scheduleId": "agr-002", "concept": "Synthetic Venue B — weekly performance", "amount": 300, "currency": "USD", "status": "pending", "performanceDate": "2026-07-18" }
+  ],
+  "performanceFinancialRecords": [
+    {
+      "id": "pfr-001",
+      "occurrenceId": "occ-002",
+      "agreementId": "agr-002",
+      "rateAmount": 300,
+      "currency": "USD",
+      "assignedProfileId": "dj-profile-synthetic-1",
+      "expectedArtistPayout": 180,
+      "collectedAmount": 300,
+      "collectionStatus": "collected",
+      "djPayoutStatus": "paid"
+    },
+    {
+      "id": "pfr-002",
+      "occurrenceId": "occ-002",
+      "agreementId": "agr-002",
+      "rateAmount": 300,
+      "currency": "USD",
+      "assignedProfileId": "dj-profile-synthetic-1",
+      "expectedArtistPayout": 180
+    }
+  ],
+  "auditHistory": [
+    { "id": "audit-001", "action": "agreement_created", "actor": { "id": "staff-synthetic-1", "name": "Synthetic Staff" }, "timestamp": "2026-07-01T10:00:00.000Z" },
+    { "id": "audit-002", "action": "store_migration", "actor": { "id": "system", "name": "System" }, "timestamp": "2026-07-05T00:00:00.000Z" }
+  ],
+  "incomeSchedules": [
+    { "id": "sched-legacy-001", "venueId": "venue-001", "rateAmount": 280 }
+  ],
+  "ledger": [
+    { "id": "hist-legacy-001", "type": "venue_income", "amount": 280 }
+  ]
+}
