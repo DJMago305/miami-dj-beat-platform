@@ -118,7 +118,11 @@ Lee CÓMO te habla la persona y refleja su estilo, manteniendo siempre tu identi
 - Viene FORMAL / de negocios → ponte más ejecutivo, preciso y estratégico.
 - Viene RELAJADO / amistoso → sé cálido, cercano y conversacional.
 - Va DIRECTO / corto → ve al grano, sin rodeos, respuestas breves.
-Refleja su registro (formalidad, longitud, energía, si usa emojis o no). Nunca suenes a guion ni a robot: suena a una persona real que ajusta su tono a quien tiene enfrente.`;
+Refleja su registro (formalidad, longitud, energía, si usa emojis o no). Nunca suenes a guion ni a robot: suena a una persona real que ajusta su tono a quien tiene enfrente.
+
+### LO QUE PUEDES Y NO PUEDES HACER (human-in-the-loop)
+PUEDES: redactar (mensajes de seguimiento, cobros, propuestas, textos), calcular, analizar y recomendar. Entrega los textos listos para copiar.
+NO PUEDES por tu cuenta: enviar mensajes/emails, mover dinero, ni cambiar datos. Eso lo EJECUTA el humano. Cuando prepares algo para enviar, acláralo con un "listo para que lo envíes tú".`;
 
 // ─── CONTEXTO DE NEGOCIO — residencias y tarifas (dado por el Capitán) ────────
 // NO está en la BD (la agenda/tarifas viven en la re-arquitectura pendiente).
@@ -343,6 +347,47 @@ async function fetchFinancialSummary(role: string): Promise<string> {
     }
 }
 
+// ─── LEADS EN VIVO (solicitudes/consultas desde leads, service role) ─────────
+let _leadsCache: string | null = null;
+let _leadsCacheAt = 0;
+const LEADS_TTL_MS = 60 * 1000;
+
+async function fetchLeadsPipeline(): Promise<string> {
+    const now = Date.now();
+    if (_leadsCache !== null && now - _leadsCacheAt < LEADS_TTL_MS) return _leadsCache;
+    try {
+        const { data } = await ADMIN
+            .from("leads")
+            .select("name,event_type,event_date,venue,event_location,status,lead_outcome,total_amount,budget_estimate,assigned_dj_name,created_at")
+            .order("created_at", { ascending: false })
+            .limit(30);
+        if (!Array.isArray(data) || data.length === 0) {
+            _leadsCache = ""; _leadsCacheAt = now; return "";
+        }
+        const lines = data.map((l) => {
+            const who = l.name || "Sin nombre";
+            const ev = l.event_type ? ` · ${l.event_type}` : "";
+            const date = l.event_date ? ` · ${l.event_date}` : "";
+            const place = l.venue || l.event_location || "";
+            const placeStr = place ? ` · ${place}` : "";
+            const st = String(l.lead_outcome || l.status || "nuevo").toUpperCase();
+            const amt = l.total_amount || l.budget_estimate;
+            const amtStr = amt ? ` · $${Math.round(Number(amt))}` : "";
+            const dj = l.assigned_dj_name ? ` · DJ: ${l.assigned_dj_name}` : " · sin DJ asignado";
+            return `• ${who}${ev}${date}${placeStr} [${st}]${amtStr}${dj}`;
+        });
+        _leadsCache =
+            "\n\n### LEADS / SOLICITUDES — Consultas de clientes (datos en vivo, tabla leads)\n" +
+            "Solicitudes de booking entrantes. Úsalas cuando pregunten por leads, solicitudes, consultas o clientes potenciales. NUNCA inventes.\n\n" +
+            lines.join("\n");
+        _leadsCacheAt = now;
+        return _leadsCache;
+    } catch (e) {
+        console.error("[elixis-chat] leads fetch error:", e);
+        _leadsCache = ""; _leadsCacheAt = Date.now(); return "";
+    }
+}
+
 // ─── TIPOS ───────────────────────────────────────────────────────────────────
 
 interface ChatMessage {
@@ -445,6 +490,9 @@ serve(async (req: Request) => {
     // Finanzas reales (solo owner/admin/manager; cacheado 1 min).
     const financeContext = await fetchFinancialSummary(gate.role);
 
+    // Leads / solicitudes entrantes (cacheado 1 min).
+    const leadsContext = await fetchLeadsPipeline();
+
     // Identidad del usuario actual (del candado) — para personalizar y adaptar al rol.
     const userBlock =
         `\n\n### USUARIO ACTUAL (con quien hablas AHORA)\n` +
@@ -460,6 +508,7 @@ serve(async (req: Request) => {
         rosterContext +
         bookingsContext +
         financeContext +
+        leadsContext +
         (sessionContext ? `\n\n### Contexto de sesión actual:\n${sessionContext}` : "");
 
     const messages: ChatMessage[] = [
