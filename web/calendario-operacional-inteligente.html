@@ -137,12 +137,12 @@
   .day-split::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:4px;height:36px;border-radius:3px;background:var(--ink-mute);opacity:.45;transition:background .15s,opacity .15s;}
   .day-split:hover::before,.day-split.drag::before{background:var(--set);width:3px;}
   .day-split:hover::after,.day-split.drag::after{background:var(--set);opacity:1;}
-  .detail{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--panel-2);align-self:start;min-width:0;display:flex;flex-direction:column;}
-  /* Carrusel de UNA tarjeta a la vez: cada evento es su propia tarjeta. Cuando coinciden
-     varios eventos, la tarjeta COMPLETA se desliza hacia arriba para mostrar la siguiente —
-     NUNCA hay scroll dentro de una misma tarjeta. */
-  .ev-cards{overflow:hidden;position:relative;transition:height .55s cubic-bezier(.4,0,.2,1);}
-  .ev-track{display:flex;flex-direction:column;gap:12px;transition:transform .55s cubic-bezier(.4,0,.2,1);will-change:transform;}
+  .detail{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--panel-2);align-self:stretch;min-width:0;display:flex;flex-direction:column;}
+  /* El panel llena el alto (igual que el timeline). Se ven ~2 tarjetas completas; si hay
+     más eventos, la tarjeta COMPLETA se desliza hacia arriba y el resto va apareciendo —
+     NUNCA hay scroll dentro de una misma tarjeta. Las tarjetas no cambian de tamaño. */
+  .ev-cards{flex:1 1 auto;min-height:0;overflow:hidden;position:relative;}
+  .ev-track{display:flex;flex-direction:column;gap:14px;min-height:100%;transition:transform .55s cubic-bezier(.4,0,.2,1);will-change:transform;}
   .ev-track .ev-card{flex:none;margin-bottom:0;}
   .ev-dots{display:flex;justify-content:center;gap:6px;padding-top:14px;flex:none;}
   .ev-dot{width:6px;height:6px;border-radius:50%;background:var(--line);cursor:pointer;transition:background .3s,width .3s;}
@@ -718,28 +718,37 @@
     var box=document.getElementById("evCards"); if(!box) return;
     var track=box.querySelector(".ev-track"); if(!track) return;
     var cards=track.children, n=cards.length; if(!n) return;
-    var dots=(document.getElementById("evDots")||{}).children;
+    var dotsWrap=document.getElementById("evDots"), dots=dotsWrap?dotsWrap.children:null;
+    var detail=document.getElementById("detail");
     requestAnimationFrame(function(){
-      // medir alto y posición de cada tarjeta ANTES de transformar
-      var base=cards[0].getBoundingClientRect().top, offs=[], hts=[];
-      for(var i=0;i<n;i++){ offs[i]=Math.round(cards[i].getBoundingClientRect().top-base); hts[i]=cards[i].offsetHeight; }
-      var idx=0, paused=false;
-      function show(i){
-        idx=i;
-        box.style.height=hts[i]+"px";                        // la caja = alto de UNA tarjeta completa
-        track.style.transform="translateY(-"+offs[i]+"px)";  // desliza la tarjeta i hasta el tope
-        if(dots) for(var k=0;k<dots.length;k++) dots[k].classList.toggle("on", k===i);
-      }
-      show(0);
-      if(n<2) return;                                        // un solo evento → sin rotación
-      box.addEventListener("pointerenter", function(){ paused=true; });
-      box.addEventListener("pointerleave", function(){ paused=false; });
-      if(dots) for(var k=0;k<dots.length;k++){ (function(kk){ dots[kk].addEventListener("click", function(){ show(kk); paused=true; clearTimeout(box.__rp); box.__rp=setTimeout(function(){paused=false;}, 6000); }); })(k); }
-      _dayCarousel=setInterval(function(){
-        if(!box.isConnected){ clearInterval(_dayCarousel); _dayCarousel=null; return; }
-        if(paused) return;
-        show((idx+1)%n);
-      }, 3000);
+      // El panel toma el MISMO alto que el timeline de al lado (llena el espacio, sin zona muerta).
+      var tl=document.querySelector(".day-layout .day-tl");
+      var capH=tl?Math.round(tl.getBoundingClientRect().height):560;
+      if(detail) detail.style.height=capH+"px";
+      if(dotsWrap) dotsWrap.style.display="none";           // ocultos para medir
+      track.style.justifyContent="flex-start";
+      track.style.transform="translateY(0px)";
+      requestAnimationFrame(function(){                     // medir tras aplicar el alto
+        var boxH=box.clientHeight;
+        var last=cards[n-1], contentH=last.offsetTop+last.offsetHeight;   // relativo a #evCards
+        if(contentH<=boxH+6){
+          // Caben TODAS (ej. 2 residencias): se ven las 2, repartidas para llenar el alto.
+          track.style.justifyContent=(n>1?"space-between":"flex-start");
+          return;                                           // dots quedan ocultos, sin rotación
+        }
+        // Hay MÁS de las que caben: se ven ~2 y el resto va apareciendo (desliza card-by-card).
+        if(dotsWrap) dotsWrap.style.display="";
+        boxH=box.clientHeight;
+        var maxShift=Math.max(0, contentH-boxH), offs=[];
+        for(var i=0;i<n;i++) offs[i]=cards[i].offsetTop;
+        var idx=0, paused=false;
+        function show(i){ idx=i; track.style.transform="translateY(-"+Math.min(offs[i],maxShift)+"px)"; if(dots) for(var k=0;k<dots.length;k++) dots[k].classList.toggle("on",k===i); }
+        show(0);
+        box.addEventListener("pointerenter", function(){ paused=true; });
+        box.addEventListener("pointerleave", function(){ paused=false; });
+        if(dots) for(var k=0;k<dots.length;k++){ (function(kk){ dots[kk].addEventListener("click", function(){ show(kk); paused=true; clearTimeout(box.__rp); box.__rp=setTimeout(function(){paused=false;},6000); }); })(k); }
+        _dayCarousel=setInterval(function(){ if(!box.isConnected){ clearInterval(_dayCarousel); _dayCarousel=null; return; } if(paused) return; show((idx+1)%n); }, 3000);
+      });
     });
   }
 
