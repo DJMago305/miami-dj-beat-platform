@@ -516,26 +516,18 @@
     voiceToggle.style.display = "none";
   }
 
-  var currentAudio = null;
-  function stopAudio(){
-    if(currentAudio){ try{ currentAudio.pause(); currentAudio.src=""; }catch(e){} currentAudio = null; }
-    if(synth){ try{ synth.cancel(); }catch(e){} }
-  }
+  // Desbloqueo de audio: un elemento "armado" con el primer gesto del usuario
+  // para que la voz natural (OpenAI) SIEMPRE suene, sin bloqueo de autoplay.
+  var currentAudio = null, _audioArmed = false;
+  var _SILENT = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+  function _voiceEl(){ if(!currentAudio){ currentAudio = new Audio(); } return currentAudio; }
+  function armAudio(){ if(_audioArmed) return; var el=_voiceEl(); try{ el.src=_SILENT; var p=el.play(); if(p&&p.then)p.then(function(){_audioArmed=true;}).catch(function(){}); }catch(e){} }
+  ["pointerdown","keydown","touchstart"].forEach(function(ev){ document.addEventListener(ev, armAudio); });
+  function stopAudio(){ if(currentAudio){ try{ currentAudio.pause(); }catch(e){} } if(synth){ try{ synth.cancel(); }catch(e){} } }
   function cleanForSpeech(text){
     return String(text||"").replace(/[*_`#>]/g,"").replace(/https?:\/\/\S+/g,"").trim();
   }
-  // Voz del navegador (fallback gratis, robótica).
-  function browserSpeak(clean){
-    if(!synth || !clean) return;
-    try{
-      synth.cancel();
-      var u = new SpeechSynthesisUtterance(clean);
-      if(esVoice){ u.voice = esVoice; u.lang = esVoice.lang; } else { u.lang = "es-ES"; }
-      u.rate = 1.02; u.pitch = 1.0;
-      synth.speak(u);
-    }catch(e){ /* noop */ }
-  }
-  // Voz PREMIUM (OpenAI vía elixis-tts) con fallback automático al navegador.
+  // Voz PREMIUM (OpenAI vía elixis-tts) — natural o nada; NUNCA voz robótica del navegador.
   async function speak(text){
     if(!voiceOn) return;
     var clean = cleanForSpeech(text);
@@ -543,23 +535,18 @@
     stopAudio();
     var url = (typeof window.mdbSupabaseFunctionUrl === "function")
       ? window.mdbSupabaseFunctionUrl("elixis-tts") : null;
-    if(!url){ browserSpeak(clean); return; }
+    if(!url) return;
     try{
       var res = await fetch(url, { method:"POST", headers: invokeHeaders(), body: JSON.stringify({ text: clean, voice: selectedVoice }) });
       var ct = res.headers.get("content-type") || "";
       if(res.ok && ct.indexOf("audio") !== -1){
         var blob = await res.blob();
-        var a = new Audio(URL.createObjectURL(blob));
-        currentAudio = a;
-        a.onended = function(){ try{ URL.revokeObjectURL(a.src); }catch(e){} };
-        try { await a.play(); }
-        catch(e){ browserSpeak(clean); }   // autoplay bloqueado → navegador
-        return;
+        var el = _voiceEl();
+        try{ el.pause(); }catch(e){}
+        el.src = URL.createObjectURL(blob);
+        el.play().catch(function(){});
       }
-      browserSpeak(clean);                  // error del proveedor → navegador
-    }catch(e){
-      browserSpeak(clean);                  // sin red → navegador
-    }
+    }catch(e){ /* natural-o-nada: sin voz robótica */ }
   }
 
   if(voiceToggle){

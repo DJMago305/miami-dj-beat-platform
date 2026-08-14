@@ -354,6 +354,13 @@
       return d.reply;
     }catch(e){ return 'No pude conectar. Revisa tu conexión.'; }
   }
+  /* Desbloqueo de audio: un solo elemento "armado" con el primer gesto del usuario,
+     para que la voz natural (OpenAI) SIEMPRE suene y nunca caiga a algo robótico. */
+  var _audioArmed=false;
+  var _SILENT="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+  function _voiceEl(){ if(!_cvAudio){ _cvAudio=new Audio(); } return _cvAudio; }
+  function _armAudio(){ if(_audioArmed)return; var el=_voiceEl(); try{ el.src=_SILENT; var p=el.play(); if(p&&p.then)p.then(function(){_audioArmed=true;}).catch(function(){}); }catch(e){} }
+  ['pointerdown','keydown','touchstart'].forEach(function(ev){ document.addEventListener(ev,_armAudio); });
   async function speakReal(text){
     var url = window.mdbSupabaseFunctionUrl ? window.mdbSupabaseFunctionUrl('elixis-tts') : null;
     if(!url||!text) return;
@@ -362,9 +369,10 @@
       var res = await fetch(url,{ method:'POST', headers:_invokeHeaders(), body:JSON.stringify({ text:clean, voice:(localStorage.getItem('elixis_voice')||'ash') }) });
       if(res.ok && (res.headers.get('content-type')||'').indexOf('audio')!==-1){
         var b = await res.blob();
-        if(_cvAudio){ try{_cvAudio.pause();}catch(_){}}
-        _cvAudio = new Audio(URL.createObjectURL(b));
-        _cvAudio.play().catch(function(){});
+        var el=_voiceEl();
+        try{ el.pause(); }catch(_){}
+        el.src=URL.createObjectURL(b);
+        el.play().catch(function(){});
       }
     }catch(e){}
   }
