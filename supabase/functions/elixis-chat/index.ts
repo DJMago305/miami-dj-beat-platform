@@ -388,6 +388,37 @@ async function fetchLeadsPipeline(): Promise<string> {
     }
 }
 
+// ─── AGENDA EN VIVO (residency_schedule — fuente de verdad de la agenda) ──────
+// Si la tabla existe con datos, ELIXIS usa ESTO en vez del BUSINESS_CONTEXT
+// hardcodeado. Si no (aún no creada), fetch falla → fallback al hardcodeado.
+const DOW_ES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+async function fetchResidencySchedule(): Promise<string> {
+    try {
+        const { data, error } = await ADMIN
+            .from("residency_schedule")
+            .select("day_of_week,shift,venue,dj_name,start_time,end_time,venue_pay_usd,dj_pay_usd")
+            .eq("active", true)
+            .order("day_of_week", { ascending: true })
+            .order("start_time", { ascending: true });
+        if (error || !Array.isArray(data) || data.length === 0) return "";
+        let gross = 0;
+        const lines = data.map((s) => {
+            gross += Number(s.venue_pay_usd) || 0;
+            const st = String(s.start_time).slice(0, 5), et = String(s.end_time).slice(0, 5);
+            return `- ${DOW_ES[Number(s.day_of_week)]} (${s.shift}): ${s.venue} · ${st}–${et} · ${s.dj_name} · venue paga $${Number(s.venue_pay_usd)}, DJ $${Number(s.dj_pay_usd)}`;
+        });
+        return "\n\n### CONTEXTO DE NEGOCIO — Agenda de residencias (fuente: BD, tabla residency_schedule)\n" +
+            "Agenda semanal recurrente (todas residencias de DJMago305 salvo cobertura):\n" +
+            lines.join("\n") +
+            `\nIngreso semanal de venues: $${gross}/semana. Margen por evento = pago del venue − pago del DJ cuando se asigna a otro DJ; si toca DJMago305, el pago del venue es ingreso directo.\n` +
+            "EVENTO ESPECIAL — jueves 20: Mojitos Calle 8 con Ruddy La Scala, 7:30pm hasta el cierre; DJ Solitario cubre Sundowner (noche) ese jueves.\n" +
+            "Usa esto para calcular ingresos, costos y márgenes. No inventes datos.";
+    } catch (e) {
+        console.error("[elixis-chat] residency fetch error:", e);
+        return "";
+    }
+}
+
 // ─── TIPOS ───────────────────────────────────────────────────────────────────
 
 interface ChatMessage {
@@ -501,10 +532,13 @@ serve(async (req: Request) => {
         `Trátalo por su nombre. Si su rol es 'owner' es el dueño (el Capitán): confianza y acceso totales. ` +
         `Si es admin/manager/seller es staff: ayúdalo dentro de lo que le corresponde a su rol.`;
 
+    // Agenda: la tabla residency_schedule manda; si no existe aún, cae al hardcodeado.
+    const agendaContext = (await fetchResidencySchedule()) || BUSINESS_CONTEXT;
+
     const systemContent =
         SYSTEM_PROMPT +
         userBlock +
-        BUSINESS_CONTEXT +
+        agendaContext +
         rosterContext +
         bookingsContext +
         financeContext +
