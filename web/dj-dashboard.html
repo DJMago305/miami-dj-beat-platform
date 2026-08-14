@@ -1024,7 +1024,10 @@
                         </div>
 
                         <!-- DETALLES DEL EVENTO SELECCIONADO -->
-                        <div id="dash-left-event-details" style="margin-top: 20px;">
+                        <!-- [OCULTO 2026-08-14] Redundante: la vista "Día" del Calendario Operacional Inteligente
+                             (staff-matrix-frame) ya muestra los eventos del día con hora y detalle. Se oculta (no se
+                             borra aún) hasta validación visual del PO; los 3 consumidores JS hacen early-return si no está. -->
+                        <div id="dash-left-event-details" style="margin-top: 20px; display: none;">
                             <div id="dash-event-detail-card"
                                 style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 32px; text-align: left; min-height: 200px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden;">
                                 <div id="dash-event-detail-empty" style="text-align: center; opacity: 0.4;">
