@@ -3208,8 +3208,16 @@
                  inyecta por JS al tope de #tab-flow (sobrevive al ocultar la sección
                  personal) y alterna la visibilidad personal ⇄ Matrix. -->
             <style>
-              .ofm-bar{display:flex;justify-content:flex-end;align-items:center;gap:11px;
-                max-width:1100px;margin:0 auto 6px;padding:2px 4px 0;}
+              /* barra negra consolidada: branding izquierda + controles derecha, una fila compacta */
+              .ofm-bar{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
+                margin:0 0 4px;padding:7px 16px;
+                background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0));
+                border-bottom:1px solid rgba(255,255,255,.06);}
+              .ofm-brand{display:flex;align-items:center;gap:9px;min-width:0;}
+              .ofm-brand-mk{color:#e8c987;font-size:13px;line-height:1;flex:0 0 auto;}
+              .ofm-brand-tx{font-size:12.5px;font-weight:800;letter-spacing:.02em;color:rgba(255,255,255,.92);line-height:1.08;white-space:nowrap;}
+              .ofm-brand-tx small{display:block;font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(232,201,135,.72);}
+              .ofm-ctrls{display:flex;align-items:center;gap:11px;flex-wrap:wrap;justify-content:flex-end;}
               .ofm-bar .ofm-tag{font-size:9px;font-weight:800;letter-spacing:.14em;
                 color:#c5a059;border:1px solid rgba(197,160,89,.5);border-radius:999px;
                 padding:3px 9px;text-transform:uppercase;white-space:nowrap;}
@@ -3227,22 +3235,22 @@
               .ofm-toggle.on{background:linear-gradient(135deg,#c5a059,#e8c987);
                 border-color:rgba(197,160,89,.75);box-shadow:0 0 14px rgba(197,160,89,.45);}
               .ofm-toggle.on .ofm-knob{left:28px;}
-              #ofm-business-view{max-width:none;margin:6px 0 0;padding:0;}
-              #ofm-business-view .ofm-frame-head{display:flex;align-items:center;gap:10px;justify-content:space-between;
-                margin:0 4px 10px;font-size:11px;font-weight:800;letter-spacing:1.5px;
-                text-transform:uppercase;color:rgba(255,255,255,.32);}
-              #ofm-matrix-frame{width:100%;height:calc(100vh - 110px);min-height:640px;border:none;
+              #ofm-business-view{max-width:none;margin:0;padding:0;}
+              #ofm-matrix-frame{width:100%;height:calc(100vh - 100px);min-height:640px;border:none;
                 border-radius:0;background:#0b0b0f;display:block;}
               .ofm-expand{background:rgba(197,160,89,.10);border:1px solid rgba(197,160,89,.4);color:#e8c987;
                 font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
                 border-radius:8px;padding:6px 11px;white-space:nowrap;transition:background .2s;}
               .ofm-expand:hover{background:rgba(197,160,89,.20);}
+              /* botón salir flotante — solo visible en pantalla completa */
+              .ofm-exit{display:none;position:fixed;top:14px;right:16px;z-index:10000;
+                background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.25);color:#fff;
+                font-size:12px;font-weight:800;cursor:pointer;border-radius:10px;padding:8px 13px;backdrop-filter:blur(6px);}
+              .ofm-exit:hover{background:rgba(0,0,0,.82);}
               /* pantalla completa del Matrix */
               #ofm-business-view.ofm-full{position:fixed;inset:0;z-index:9998;max-width:none;margin:0;padding:0;background:#000;}
-              #ofm-business-view.ofm-full #ofm-matrix-frame{height:100vh;min-height:0;border-radius:0;border:none;}
-              #ofm-business-view.ofm-full .ofm-frame-head{position:fixed;top:12px;right:16px;left:auto;margin:0;z-index:9999;
-                background:rgba(0,0,0,.55);border-radius:10px;padding:6px 10px;backdrop-filter:blur(6px);}
-              #ofm-business-view.ofm-full .ofm-head-label{display:none;}
+              #ofm-business-view.ofm-full #ofm-matrix-frame{height:100vh;min-height:0;}
+              #ofm-business-view.ofm-full .ofm-exit{display:block;}
               /* día/noche: ícono sol/luna que alterna al tocarlo (igual que el themeToggle del sitio) */
               .ofm-sep{width:1px;height:20px;background:rgba(255,255,255,.14);flex:0 0 auto;}
               .ofm-daynight{width:30px;height:28px;display:inline-flex;align-items:center;justify-content:center;
@@ -3253,10 +3261,7 @@
             </style>
 
             <div id="ofm-business-view" style="display:none;">
-              <div class="ofm-frame-head">
-                <span class="ofm-head-label">🧠 Owner Financial IA · Matrix — Corporate · Business Units · Artist</span>
-                <button id="ofm-expand" class="ofm-expand" type="button" aria-label="Pantalla completa">⛶ Pantalla completa</button>
-              </div>
+              <button id="ofm-exit" class="ofm-exit" type="button" aria-label="Salir de pantalla completa">✕ Salir</button>
               <iframe id="ofm-matrix-frame" data-src="./business-financial-intelligence.html"
                       title="Owner Financial IA — Matrix" loading="lazy"
                       referrerpolicy="same-origin"></iframe>
@@ -3276,9 +3281,15 @@
                 var frame=q('ofm-matrix-frame');
                 var card=q('bfi-access-card');                        // tarjeta antigua (la reemplaza el switch)
 
-                // --- barra + switch (arriba a la derecha, pequeño) ---
+                // --- barra negra consolidada: branding (izq) + controles (der) ---
                 var bar=document.createElement('div');
                 bar.className='ofm-bar'; bar.id='ofm-bar';
+
+                // branding subido a la barra negra — sirve para las 2 páginas (PFS y Matrix)
+                var brand=document.createElement('div'); brand.className='ofm-brand';
+                brand.innerHTML='<span class="ofm-brand-mk">◆</span><span class="ofm-brand-tx">Miami DJ Beat<small>Financial Intelligence</small></span>';
+
+                var ctrls=document.createElement('div'); ctrls.className='ofm-ctrls';
                 var tag=document.createElement('span'); tag.className='ofm-tag'; tag.textContent='◆ OWNER';
                 var lbl=document.createElement('span'); lbl.className='ofm-lbl';
                 var tog=document.createElement('button');
@@ -3295,8 +3306,14 @@
                 dtog.type='button'; dtog.className='ofm-daynight';
                 dtog.setAttribute('aria-label','Modo día / noche del Matrix');
 
-                bar.appendChild(tag); bar.appendChild(lbl); bar.appendChild(tog);
-                bar.appendChild(sep); bar.appendChild(dtog);
+                // botón pantalla completa (entra) — en la barra, solo visible en modo business
+                var expand=document.createElement('button');
+                expand.type='button'; expand.id='ofm-expand'; expand.className='ofm-expand';
+                expand.setAttribute('aria-label','Pantalla completa'); expand.innerHTML='⛶ Pantalla completa';
+
+                ctrls.appendChild(tag); ctrls.appendChild(lbl); ctrls.appendChild(tog);
+                ctrls.appendChild(sep); ctrls.appendChild(dtog); ctrls.appendChild(expand);
+                bar.appendChild(brand); bar.appendChild(ctrls);
                 flow.insertBefore(bar, flow.firstChild);
 
                 function apply(mode, persist){
@@ -3309,6 +3326,7 @@
                   if(section) section.style.display = on ? 'none' : '';
                   if(card) card.style.display = 'none';   // el switch reemplaza la tarjeta de acceso
                   if(biz)  biz.style.display  = on ? 'block' : 'none';
+                  if(expand) expand.style.display = on ? '' : 'none';  // fullscreen solo aplica al Matrix
                   if(on && frame && !frame.getAttribute('src')){    // lazy-load del Matrix
                     frame.setAttribute('src', frame.getAttribute('data-src'));
                   }
@@ -3336,11 +3354,10 @@
 
                 // --- pantalla completa del Matrix: fullscreen NATIVO (todo el monitor,
                 //     oculta barra/pestañas del navegador); fallback a modo CSS si no hay API ---
-                var expand=document.getElementById('ofm-expand');
+                var exitBtn=document.getElementById('ofm-exit');   // salir (flotante, dentro del business-view)
                 function fsEl(){ return document.fullscreenElement || document.webkitFullscreenElement || null; }
                 function paintFull(full){
                   biz.classList.toggle('ofm-full', full);
-                  if(expand) expand.innerHTML = full ? '✕ Salir' : '⛶ Pantalla completa';
                   document.body.style.overflow = full ? 'hidden' : '';
                 }
                 function goFull(){
@@ -3353,9 +3370,8 @@
                   if(fsEl()){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); }
                   paintFull(false);
                 }
-                if(expand){ expand.addEventListener('click', function(){
-                  (biz.classList.contains('ofm-full') || fsEl()) ? leaveFull() : goFull();
-                }); }
+                if(expand) expand.addEventListener('click', goFull);
+                if(exitBtn) exitBtn.addEventListener('click', leaveFull);
                 function onFsChange(){ paintFull(fsEl()===biz); }   // sincroniza con F11/Esc del navegador
                 document.addEventListener('fullscreenchange', onFsChange);
                 document.addEventListener('webkitfullscreenchange', onFsChange);
