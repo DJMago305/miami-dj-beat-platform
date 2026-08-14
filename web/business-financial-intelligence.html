@@ -29,7 +29,7 @@
 
   :root {
     color-scheme: dark;
-    --banner-h: 38px;
+    --banner-h: 26px;
     --bg: #07090e;
     --surface: #0f1623;
     --surface-2: #0c1320;
@@ -88,12 +88,13 @@
   /* ---------- Target-state governance banner (persistent, non-dismissible) ---------- */
   .target-state-banner {
     position: fixed; top: 0; left: 0; right: 0; z-index: 60; height: var(--banner-h);
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    background: repeating-linear-gradient(135deg, var(--warning), var(--warning) 10px, #4a3405 10px, #4a3405 20px);
-    color: #1b1204; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: .4px;
-    text-align: center; padding: 0 12px; border-bottom: 1px solid rgba(0,0,0,.25);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: color-mix(in srgb, var(--warning) 12%, var(--bg));
+    color: var(--text-muted); font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: .2px;
+    text-align: center; padding: 0 14px; border-bottom: 1px solid color-mix(in srgb, var(--warning) 32%, transparent);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .target-state-banner b { text-decoration: underline; }
+  .target-state-banner b { color: var(--warning); text-decoration: none; }
 
   .app { display: grid; grid-template-columns: 272px 1fr; min-height: calc(100vh - var(--banner-h)); }
 
@@ -360,7 +361,7 @@
 
   /* ---------- Mobile ---------- */
   .menu-btn { display:none; }
-  @media (max-width: 900px) {
+  @media (max-width: 1024px) {
     .app { grid-template-columns: 1fr; }
     .sidebar {
       position: fixed; inset: var(--banner-h) 30% 0 0; height: auto; z-index: 30; transform: translateX(-100%); transition: transform .2s; width: auto;
@@ -377,7 +378,7 @@
 </style>
 
 <div class="target-state-banner" role="note">
-  ⚠ <b>CONCEPTO DE ESTADO OBJETIVO</b> — no es línea base de implementación · IMPLEMENTATION AUTHORIZED: NO · North Star §39
+  ⚠ <b>Maqueta / demo</b> · datos de ejemplo · no autorizado para implementación (North Star §39)
 </div>
 <div class="app" id="app">
   <div class="drawer-backdrop" id="drawerBackdrop"></div>
