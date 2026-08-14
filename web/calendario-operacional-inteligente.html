@@ -515,6 +515,10 @@
     btnCon.setAttribute("aria-selected",v==="continuidad");
     btnNotz.setAttribute("aria-selected",v==="notarizacion");
     btnNotz.style.display=(state.role==="owner")?"":"none";  // solo manager/owner
+    btnCon.style.display=(state.role==="owner")?"":"none";   // Continuidad: solo staff (gestión de DJs)
+    btnRem.style.display="none";   // Recordatorios: FUERA del calendario (va a módulo de comunicación dedicado o a una tarea de ELIXIS AI) — decisión del owner
+    if(state.view==="recordatorios") state.view="mes";   // nadie lo usa aquí (ningún perfil)
+    if(state.role!=="owner" && state.view==="continuidad") state.view="mes";
     nav.className="nav"+((v==="recordatorios"||v==="clientes"||v==="continuidad"||v==="notarizacion")?" hidden":"");
     updateBadge();renderCtx();renderLegend();
     if(v==="ano")renderYear();
@@ -825,7 +829,7 @@
       var r=await sb.from("leads").select("event_date,event_start_time,event_end_time,event_type,name,venue,location,event_location,city,status,payment_status,total_amount,budget,assigned_dj_id,assigned_dj_name,assigned_staff_name");
       if(r.error) throw r.error;
       var m=mapLeads((r.data||[]).filter(function(x){ return x.event_date; }));
-      _leadsEv=m.evs; ARTISTS=m.artists.concat(_resEv.length?[_resArtist]:[]); BASE_EV=_leadsEv.concat(_resEv);
+      _leadsEv=m.evs; ARTISTS=m.artists.concat(_resEv.some(function(e){return e.artist==="_res";})?[_resArtist]:[]); BASE_EV=_leadsEv.concat(_resEv);
       rebuild(); render();
     }catch(err){ console.warn("[Matrix] carga de leads falló:", err); }
   }
@@ -853,7 +857,9 @@
       var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
       if(!sb || !sb.from || !sb.auth){ return setTimeout(loadResidencies, 300); }
       if(!(await sb.auth.getSession()).data.session){ return setTimeout(loadResidencies, 300); }
-      var r=await sb.from("residency_schedule").select("day_of_week,shift,venue,dj_name,start_time,end_time,venue_pay_usd").eq("active",true);
+      var _rsel="day_of_week,shift,venue,dj_name,start_time,end_time,venue_pay_usd";
+      var r=await sb.from("residency_schedule").select(_rsel+",dj_id").eq("active",true);
+      if(r.error){ r=await sb.from("residency_schedule").select(_rsel).eq("active",true); }  // dj_id aún no existe → fallback
       if(r.error) throw r.error;
       var rules=r.data||[], evs=[];
       var y=(state.date&&state.date.getFullYear)?state.date.getFullYear():2026;
@@ -865,14 +871,15 @@
           var s=_t2h(rule.start_time), e=_t2h(rule.end_time);
           if(s!==null && e!==null && e<s) e=e+24;   // cruza medianoche
           var iso=d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
-          evs.push({ d:iso, cal:"set", artist:"_res", ad:false,
+          evs.push({ d:iso, cal:"set", artist:(rule.dj_id||"_res"), ad:false,
             s:(s===null?0:s), e:(e!==null?e:(s!==null?s+2:0)),
             t:"Residencia · "+(rule.venue||""), venue:(rule.venue||""),
             meta:{ pago:{ v:"$"+Number(rule.venue_pay_usd||0), s:"venue paga · "+(rule.dj_name||"DJMago305") } } });
         });
       }
       _resEv=evs;
-      if(!ARTISTS.some(function(a){return a.id==="_res";})) ARTISTS=ARTISTS.concat([_resArtist]);
+      var _hasResChip=evs.some(function(e){return e.artist==="_res";});
+      if(_hasResChip && !ARTISTS.some(function(a){return a.id==="_res";})) ARTISTS=ARTISTS.concat([_resArtist]);
       BASE_EV=_leadsEv.concat(_resEv); rebuild(); render();
     }catch(err){ console.warn("[Matrix] residencias:", err.message||err); }
   }
