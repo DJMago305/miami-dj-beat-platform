@@ -329,7 +329,7 @@
     try{
       var r = await _supa.auth.getSession();
       var s = (r&&r.data)?r.data.session:null;
-      if(s&&s.access_token){ _token = s.access_token; }
+      if(s&&s.access_token){ _token = s.access_token; loadRealClients(); }
       else { _goLogin(); return; }
       _supa.auth.onAuthStateChange(function(_e,ss){ _token = ss?ss.access_token:null; if(!_token) _goLogin(); });
     }catch(e){ _goLogin(); }
@@ -340,6 +340,25 @@
     if(pub) h.apikey=pub;
     h.Authorization='Bearer '+(_token||pub);
     return h;
+  }
+  /* Pantalla CLIENTES → leads reales (RLS: staff/owner ve sus leads) */
+  async function loadRealClients(){
+    if(!_supa) return;
+    try{
+      var r = await _supa.from('leads')
+        .select('name,contact_person,email,event_type,city,event_location,status,lead_outcome,total_amount,budget_estimate,event_date,created_at')
+        .order('created_at',{ascending:false}).limit(30);
+      var rows=(r&&r.data)?r.data:[];
+      if(!rows.length) return;
+      function mapSt(s){ s=String(s||'').toLowerCase(); if(/won|confirm|paid|active|complet/.test(s))return 'active'; if(/lost|cancel|declin|dead/.test(s))return 'lead'; return 'opportunity'; }
+      CLIENTS = rows.map(function(l){
+        var val=l.total_amount||l.budget_estimate;
+        var last=l.event_type?(l.event_type+(l.event_date?' · '+l.event_date:'')):(l.lead_outcome||l.status||'Consulta');
+        var nm=l.name||l.contact_person||(l.email?String(l.email).split('@')[0]:'')||'Cliente';
+        return { n:nm, co:l.city||l.event_location||'—', st:mapSt(l.lead_outcome||l.status), last:{es:last,en:last}, val:val?('$'+Math.round(Number(val))):'—' };
+      });
+      if(state.screen==='clients'||state.screen==='clientDetail') render();
+    }catch(e){}
   }
   async function askElixis(text){
     var url = window.mdbSupabaseFunctionUrl ? window.mdbSupabaseFunctionUrl('elixis-chat') : null;
