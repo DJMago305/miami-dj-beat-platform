@@ -732,9 +732,10 @@
         var boxH=box.clientHeight;
         var last=cards[n-1], contentH=last.offsetTop+last.offsetHeight;   // relativo a #evCards
         if(contentH<=boxH+6){
-          // Caben TODAS (ej. 2 residencias): se ven las 2, repartidas para llenar el alto.
-          track.style.justifyContent=(n>1?"space-between":"flex-start");
-          return;                                           // dots quedan ocultos, sin rotación
+          // Caben TODAS (ej. 2 residencias): tarjetas JUNTAS arriba (sin separarlas), así se ve
+          // COMPLETO lo que se monetiza en cada venue (el 2do no queda cortado). Espacio libre abajo.
+          track.style.justifyContent="flex-start";
+          return;                                           // dots ocultos, sin rotación
         }
         // Hay MÁS de las que caben: se ven ~2 y el resto va apareciendo (desliza card-by-card).
         if(dotsWrap) dotsWrap.style.display="";
