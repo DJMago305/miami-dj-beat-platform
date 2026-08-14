@@ -3227,12 +3227,22 @@
               .ofm-toggle.on{background:linear-gradient(135deg,#c5a059,#e8c987);
                 border-color:rgba(197,160,89,.75);box-shadow:0 0 14px rgba(197,160,89,.45);}
               .ofm-toggle.on .ofm-knob{left:28px;}
-              #ofm-business-view{max-width:1200px;margin:6px auto 8px;}
-              #ofm-business-view .ofm-frame-head{display:flex;align-items:center;gap:10px;
+              #ofm-business-view{max-width:1600px;margin:6px auto 8px;padding:0 8px;}
+              #ofm-business-view .ofm-frame-head{display:flex;align-items:center;gap:10px;justify-content:space-between;
                 margin:0 4px 10px;font-size:11px;font-weight:800;letter-spacing:1.5px;
                 text-transform:uppercase;color:rgba(255,255,255,.32);}
-              #ofm-matrix-frame{width:100%;height:82vh;min-height:560px;border:1px solid rgba(197,160,89,.32);
+              #ofm-matrix-frame{width:100%;height:calc(100vh - 118px);min-height:640px;border:1px solid rgba(197,160,89,.32);
                 border-radius:16px;background:#0b0b0f;display:block;}
+              .ofm-expand{background:rgba(197,160,89,.10);border:1px solid rgba(197,160,89,.4);color:#e8c987;
+                font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
+                border-radius:8px;padding:6px 11px;white-space:nowrap;transition:background .2s;}
+              .ofm-expand:hover{background:rgba(197,160,89,.20);}
+              /* pantalla completa del Matrix */
+              #ofm-business-view.ofm-full{position:fixed;inset:0;z-index:9998;max-width:none;margin:0;padding:0;background:#000;}
+              #ofm-business-view.ofm-full #ofm-matrix-frame{height:100vh;min-height:0;border-radius:0;border:none;}
+              #ofm-business-view.ofm-full .ofm-frame-head{position:fixed;top:12px;right:16px;left:auto;margin:0;z-index:9999;
+                background:rgba(0,0,0,.55);border-radius:10px;padding:6px 10px;backdrop-filter:blur(6px);}
+              #ofm-business-view.ofm-full .ofm-head-label{display:none;}
               /* día/noche (tematiza el Matrix) */
               .ofm-sep{width:1px;height:20px;background:rgba(255,255,255,.14);flex:0 0 auto;}
               .ofm-daynight{position:relative;width:52px;height:28px;border-radius:999px;
@@ -3248,7 +3258,10 @@
             </style>
 
             <div id="ofm-business-view" style="display:none;">
-              <div class="ofm-frame-head">🧠 Owner Financial IA · Matrix — Corporate · Business Units · Artist</div>
+              <div class="ofm-frame-head">
+                <span class="ofm-head-label">🧠 Owner Financial IA · Matrix — Corporate · Business Units · Artist</span>
+                <button id="ofm-expand" class="ofm-expand" type="button" aria-label="Pantalla completa">⛶ Pantalla completa</button>
+              </div>
               <iframe id="ofm-matrix-frame" data-src="./business-financial-intelligence.html"
                       title="Owner Financial IA — Matrix" loading="lazy"
                       referrerpolicy="same-origin"></iframe>
@@ -3325,6 +3338,20 @@
                 }
                 dtog.addEventListener('click', function(){
                   applyTheme(dtog.classList.contains('day')?'night':'day', true);
+                });
+
+                // --- pantalla completa del Matrix ---
+                var expand=document.getElementById('ofm-expand');
+                function setFull(full){
+                  biz.classList.toggle('ofm-full', full);
+                  if(expand) expand.innerHTML = full ? '✕ Minimizar' : '⛶ Pantalla completa';
+                  document.body.style.overflow = full ? 'hidden' : '';
+                }
+                if(expand){ expand.addEventListener('click', function(){
+                  setFull(!biz.classList.contains('ofm-full'));
+                }); }
+                document.addEventListener('keydown', function(e){
+                  if(e.key==='Escape' && biz.classList.contains('ofm-full')) setFull(false);
                 });
                 if(frame){ frame.addEventListener('load', function(){   // re-aplica al cargar el Matrix
                   var t='night'; try{ t=localStorage.getItem(THEME_KEY)||'night'; }catch(e){}
