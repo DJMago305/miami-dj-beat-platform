@@ -381,7 +381,34 @@
   ⚠ <b>Maqueta / demo</b> · datos de ejemplo · no autorizado para implementación (North Star §39)
 </div>
 <script>try{if(window.self!==window.top)document.documentElement.classList.add('mdj-embedded');}catch(e){document.documentElement.classList.add('mdj-embedded');}</script>
-<style>html.mdj-embedded .brand{display:none;} html.mdj-embedded .sidebar{padding-top:16px;}</style>
+<style>
+  html.mdj-embedded .brand{display:none;} html.mdj-embedded .sidebar{padding-top:16px;}
+  .sb-collapse-btn{display:none;}
+  @media (min-width:1025px){
+    .sb-collapse-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;
+      background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);border-radius:9px;cursor:pointer;
+      font-size:16px;line-height:1;flex:0 0 auto;transition:background .15s;}
+    .sb-collapse-btn:hover{background:var(--surface-1);}
+    .app.sb-collapsed{grid-template-columns:1fr;}
+    .app.sb-collapsed .sidebar{display:none;}
+  }
+</style>
+<script>
+  (function(){
+    var KEY='mdjMatrixSidebarCollapsed';
+    function wire(){
+      var btn=document.getElementById('sbCollapse'), app=document.getElementById('app');
+      if(!btn||!app){ return setTimeout(wire,150); }
+      function paint(c){ app.classList.toggle('sb-collapsed', c); btn.innerHTML = c ? '»' : '«';
+        btn.title = c ? 'Mostrar panel lateral' : 'Recoger panel lateral'; }
+      var saved=false; try{ saved=localStorage.getItem(KEY)==='1'; }catch(e){}
+      paint(saved);
+      btn.addEventListener('click', function(){ var c=!app.classList.contains('sb-collapsed'); paint(c);
+        try{ localStorage.setItem(KEY, c?'1':'0'); }catch(e){} });
+    }
+    wire();
+  })();
+</script>
 <div class="app" id="app">
   <div class="drawer-backdrop" id="drawerBackdrop"></div>
 
@@ -418,6 +445,7 @@
   <div class="main">
     <header class="topbar">
       <div class="topbar-left">
+        <button class="sb-collapse-btn" id="sbCollapse" type="button" aria-label="Recoger / mostrar panel lateral" title="Recoger / mostrar panel">«</button>
         <button class="menu-btn" id="menuBtn">☰ Menú</button>
         <div class="crumbs" id="crumbs"></div>
         <h1 id="screenTitle">Resumen corporativo</h1>
