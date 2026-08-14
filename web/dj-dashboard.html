@@ -3233,6 +3233,18 @@
                 text-transform:uppercase;color:rgba(255,255,255,.32);}
               #ofm-matrix-frame{width:100%;height:82vh;min-height:560px;border:1px solid rgba(197,160,89,.32);
                 border-radius:16px;background:#0b0b0f;display:block;}
+              /* día/noche (tematiza el Matrix) */
+              .ofm-sep{width:1px;height:20px;background:rgba(255,255,255,.14);flex:0 0 auto;}
+              .ofm-daynight{position:relative;width:52px;height:28px;border-radius:999px;
+                border:1px solid rgba(255,255,255,.18);background:rgba(110,130,190,.20);cursor:pointer;
+                flex:0 0 auto;padding:0;transition:background .25s,border-color .25s,box-shadow .25s;outline-offset:3px;}
+              .ofm-daynight .ofm-dn-knob{position:absolute;top:2px;left:2px;width:22px;height:22px;
+                border-radius:50%;background:#e6ebf7;display:flex;align-items:center;justify-content:center;
+                font-size:11px;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.45);
+                transition:left .25s cubic-bezier(.4,1.3,.5,1),background .25s;}
+              .ofm-daynight.day{background:linear-gradient(135deg,#f6c453,#ffe08a);
+                border-color:rgba(246,196,83,.7);box-shadow:0 0 12px rgba(246,196,83,.4);}
+              .ofm-daynight.day .ofm-dn-knob{left:28px;background:#fff;}
             </style>
 
             <div id="ofm-business-view" style="display:none;">
@@ -3245,6 +3257,7 @@
             <script>
             (function(){
               var MODE_KEY='mdjOwnerFinMode';       // 'personal' | 'business'
+              var THEME_KEY='mdjFinTheme';          // 'night' | 'day' (tema del Matrix)
               function q(id){return document.getElementById(id);}
               function getSb(){return window.getSupabaseClient?window.getSupabaseClient():window.supabase;}
 
@@ -3265,7 +3278,18 @@
                 tog.setAttribute('role','switch');
                 tog.setAttribute('aria-label','Cambiar entre Sistema Personal (PFS) y Owner Financial IA');
                 tog.innerHTML='<span class="ofm-knob"></span>';
+
+                // día/noche (tematiza el Matrix, que ya soporta ambos) — al lado del switch
+                var sep=document.createElement('span'); sep.className='ofm-sep';
+                var dtog=document.createElement('button');
+                dtog.type='button'; dtog.className='ofm-daynight';
+                dtog.setAttribute('role','switch');
+                dtog.setAttribute('aria-label','Modo día / noche del Matrix');
+                dtog.innerHTML='<span class="ofm-dn-knob"></span>';
+                var dknob=dtog.querySelector('.ofm-dn-knob');
+
                 bar.appendChild(tag); bar.appendChild(lbl); bar.appendChild(tog);
+                bar.appendChild(sep); bar.appendChild(dtog);
                 flow.insertBefore(bar, flow.firstChild);
 
                 function apply(mode, persist){
@@ -3287,6 +3311,28 @@
                 tog.addEventListener('click', function(){
                   apply(bar.classList.contains('on')?'personal':'business', true);
                 });
+
+                // --- día/noche: tematiza el Matrix (body[data-mode]) ---
+                function applyTheme(theme, persist){       // 'day' | 'night'
+                  var day=(theme==='day');
+                  dtog.classList.toggle('day', day);
+                  dtog.setAttribute('aria-checked', day?'true':'false');
+                  dtog.title = day ? 'Modo día (Matrix claro)' : 'Modo noche (Matrix oscuro)';
+                  if(dknob) dknob.textContent = day ? '☀️' : '🌙';
+                  try{ var d=frame&&frame.contentDocument;
+                    if(d&&d.body) d.body.setAttribute('data-mode', day?'light':'dark'); }catch(e){}
+                  if(persist){ try{ localStorage.setItem(THEME_KEY, theme); }catch(e){} }
+                }
+                dtog.addEventListener('click', function(){
+                  applyTheme(dtog.classList.contains('day')?'night':'day', true);
+                });
+                if(frame){ frame.addEventListener('load', function(){   // re-aplica al cargar el Matrix
+                  var t='night'; try{ t=localStorage.getItem(THEME_KEY)||'night'; }catch(e){}
+                  applyTheme(t, false);
+                }); }
+                var savedTheme='night';
+                try{ savedTheme=localStorage.getItem(THEME_KEY)||'night'; }catch(e){}
+                applyTheme(savedTheme, false);
 
                 var saved='personal';
                 try{ saved = localStorage.getItem(MODE_KEY)||'personal'; }catch(e){}
