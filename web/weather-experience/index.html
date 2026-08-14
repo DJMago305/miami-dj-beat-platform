@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<script>
+/* Base robusta: fija la carpeta de este index para que styles.css y js/hero.js
+   carguen bien aunque el servidor use clean-URLs (quita /index.html y deja
+   /weather-experience SIN barra final, lo que rompía las rutas relativas y
+   cargaba el CSS del sitio raíz en vez del del hero). */
+(function(){var p=location.pathname;p=p.replace(/\/[^\/]*\.html?$/i,'/');if(!/\/$/.test(p))p+='/';var b=document.createElement('base');b.href=location.origin+p;document.head.insertBefore(b,document.head.firstChild);})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MDJB — Atmospheric Experience 3D</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div class="exp">
+  <div class="date"><span class="dow" id="d-dow"></span><span class="num" id="d-num"></span><span class="my" id="d-my"></span></div>
+
+  <aside class="rail">
+    <div class="brand"><b>MIAMI <i>DJ</i> BEAT</b><span>CLIMA EN VIVO · 3D</span></div>
+    <div class="panel glass">
+      <h2>MEDICIONES ACTUALES</h2>
+      <ul class="rows" id="metrics"></ul>
+    </div>
+    <div class="panel glass">
+      <h2>PRONÓSTICO POR HORAS</h2>
+      <div class="hr" id="hourly"></div>
+    </div>
+    <div class="ev glass panel">
+      <h3>EVENTO DE HOY</h3>
+      <p id="ev-lead">—</p>
+      <div class="grid">
+        <div><span class="k">START TIME</span><span class="vv" id="ev-start">—</span></div>
+        <div><span class="k">END TIME</span><span class="vv" id="ev-end">—</span></div>
+        <div><span class="k">BUFFER</span><span class="vv" id="ev-buffer">—</span></div>
+      </div>
+      <div class="grid two">
+        <div><span class="k">LOCALIZACIÓN</span><span class="vv" id="ev-loc">—</span></div>
+        <div><span class="k">ATARDECER</span><span class="vv gold" id="ev-sunset">—</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <section class="center">
+    <div class="temp" id="c-temp">—°</div>
+    <div class="cond" id="c-cond">—</div>
+    <div class="hilo" id="c-hilo"></div>
+    <div class="divider"></div>
+    <div class="loc"><span id="c-loc">📍 —</span><span class="sub">CONDICIONES ACTUALES</span></div>
+    <div class="clock" aria-hidden="true"><div class="dial" id="clockdial"><div class="hand h" id="handH"></div><div class="hand m" id="handM"></div><span class="cap"></span></div></div>
+    <!-- métricas para teléfono: el riel lateral se oculta <900px, esta tira lo reemplaza -->
+    <div class="mstrip" id="mstrip"></div>
+  </section>
+
+  <button class="livebtn" id="livebtn" title="Conecta al clima real (Edge Function). En el artefacto usa mock por seguridad del navegador.">🛰️ En vivo</button>
+  <div class="badge">MOTOR ATMOSFÉRICO <b>WebGL 3D</b> · ciclo día→noche en vivo</div>
+  <div class="datectl" id="datectl" title="Viaja por el año — mira la luna y las constelaciones cambiar">
+    <span class="dlbl" id="dlbl">HOY</span>
+    <input type="range" id="dslider" min="1" max="365" step="1" aria-label="Fecha del cielo">
+  </div>
+  <div class="timeofday" id="timeofday">
+    <button data-t="dawn">🌅 Amanecer</button>
+    <button data-t="day">☀️ Día</button>
+    <button data-t="dusk">🌇 Atardecer</button>
+    <button data-t="night">🌙 Noche</button>
+    <button data-t="cycle" class="on">🔄 Ciclo</button>
+  </div>
+  <div class="weather" id="weather">
+    <button data-w="clear">☀️ Despejado</button>
+    <button data-w="cloudy" class="on">⛅ Nublado</button>
+    <button data-w="overcast">☁️ Cubierto</button>
+    <button data-w="rain">🌧️ Lluvia</button>
+    <button data-w="storm">⛈️ Tormenta</button>
+    <button data-w="snow">🌨️ Nieve</button>
+    <button data-w="fog">🌫️ Niebla</button>
+    <button data-w="wind">🌬️ Viento</button>
+  </div>
+  <div class="scenes" id="scenes">
+    <button data-s="0" class="on">🌊 Mar</button>
+    <button data-s="1">🏙️ Ciudad</button>
+    <button data-s="2">⛰️ Montañas</button>
+  </div>
+</div>
+
+<script type="module" src="js/hero.js"></script>
+</body>
+</html>
