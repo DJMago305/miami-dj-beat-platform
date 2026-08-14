@@ -545,64 +545,108 @@ serve(async (req: Request) => {
         leadsContext +
         (sessionContext ? `\n\n### Contexto de sesión actual:\n${sessionContext}` : "");
 
-    const messages: ChatMessage[] = [
+    // ─── ELIXIS ⇄ MOTOR FINANCIERO (Fase 5) ────────────────────────────────
+    // Herramienta que Claude DELEGA al financial-engine cuando la consulta es
+    // del sector financiero. Los montos del motor vienen en centavos.
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const FINANCIAL_TOOL = {
+        name: "consultar_finanzas",
+        description:
+            "Consulta el MOTOR FINANCIERO canónico de Miami DJ Beat para métricas REALES en vivo. " +
+            "Úsalo SIEMPRE que pregunten por dinero/finanzas: caja neta, ingresos, egresos, cuentas por cobrar/pagar. " +
+            "NUNCA inventes cifras financieras: si la pregunta es financiera, llama esta herramienta y usa su resultado.",
+        input_schema: {
+            type: "object",
+            properties: {
+                metrica: {
+                    type: "string",
+                    enum: ["getNetCash", "getCashInflow", "getCashOutflow", "getAccountsReceivable", "getAccountsPayable"],
+                    description:
+                        "getNetCash=caja neta; getCashInflow=ingresos cobrados; getCashOutflow=egresos pagados; " +
+                        "getAccountsReceivable=por cobrar (venues deben); getAccountsPayable=por pagar (a DJs/proveedores)",
+                },
+            },
+            required: ["metrica"],
+        },
+    };
+
+    async function runFinancialTool(metrica: string): Promise<string> {
+        try {
+            const base = Deno.env.get("FINANCIAL_ENGINE_URL") ||
+                `${Deno.env.get("SUPABASE_URL")}/functions/v1/financial-engine`;
+            const key = Deno.env.get("FINANCIAL_ENGINE_KEY") || Deno.env.get("SUPABASE_ANON_KEY") || "";
+            const r = await fetch(base, {
+                method: "POST",
+                headers: { apikey: key, Authorization: authHeader || `Bearer ${key}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "query", name: metrica, args: [] }),
+            });
+            const j = await r.json();
+            if (!j || j.ok !== true) return JSON.stringify({ error: (j && j.error) || "motor no disponible" });
+            const cents = typeof j.data === "number" ? j.data : null;
+            return JSON.stringify(cents !== null ? { metrica, cents, usd: cents / 100 } : { metrica, data: j.data });
+        } catch (e) {
+            return JSON.stringify({ error: String((e as Error)?.message ?? e) });
+        }
+    }
+
+    // Conversación con soporte de bloques (tool_use / tool_result).
+    const convo: Array<{ role: string; content: unknown }> = [
         ...history,
         { role: "user", content: userMessage },
     ];
 
-    let claudeRes: Response;
-    try {
-        claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
-            method: "POST",
-            headers: {
-                "x-api-key": apiKey,
-                "anthropic-version": ANTHROPIC_VERSION,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                model: MODEL,
-                max_tokens: MAX_TOKENS,
-                temperature: 0.7,
-                system: systemContent,
-                messages,
-            }),
-        });
-    } catch (err) {
-        console.error("[elixis-chat] Anthropic fetch error:", err);
-        return new Response(
-            JSON.stringify({ error: "AI provider unreachable" }),
-            { status: 502, headers: { ...cors, "Content-Type": "application/json" } }
-        );
-    }
+    let reply = "";
+    for (let round = 0; round < 3; round++) {
+        let cRes: Response;
+        try {
+            cRes = await fetch("https://api.anthropic.com/v1/messages", {
+                method: "POST",
+                headers: { "x-api-key": apiKey, "anthropic-version": ANTHROPIC_VERSION, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    model: MODEL,
+                    max_tokens: MAX_TOKENS,
+                    temperature: 0.7,
+                    system: systemContent,
+                    tools: [FINANCIAL_TOOL],
+                    messages: convo,
+                }),
+            });
+        } catch (err) {
+            console.error("[elixis-chat] Anthropic fetch error:", err);
+            return new Response(JSON.stringify({ error: "AI provider unreachable" }),
+                { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+        }
+        if (!cRes.ok) {
+            const errBody = await cRes.text();
+            console.error("[elixis-chat] Anthropic error", cRes.status, errBody);
+            return new Response(JSON.stringify({ error: "AI provider error" }),
+                { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+        }
+        const data = await cRes.json();
+        const blocks: Array<Record<string, unknown>> = Array.isArray(data.content) ? data.content : [];
+        const text = blocks.filter((b) => b?.type === "text").map((b) => String(b.text ?? "")).join("").trim();
 
-    if (!claudeRes.ok) {
-        const errBody = await claudeRes.text();
-        console.error("[elixis-chat] Anthropic error", claudeRes.status, errBody);
-        return new Response(
-            JSON.stringify({ error: "AI provider error" }),
-            { status: 502, headers: { ...cors, "Content-Type": "application/json" } }
-        );
+        if (data.stop_reason === "tool_use") {
+            convo.push({ role: "assistant", content: blocks });
+            const results: unknown[] = [];
+            for (const b of blocks.filter((b) => b?.type === "tool_use")) {
+                const out = b.name === "consultar_finanzas"
+                    ? await runFinancialTool(String((b.input as Record<string, unknown>)?.metrica ?? ""))
+                    : JSON.stringify({ error: "herramienta desconocida" });
+                results.push({ type: "tool_result", tool_use_id: b.id, content: out });
+            }
+            convo.push({ role: "user", content: results });
+            continue; // otra vuelta: Claude responde usando el resultado del motor
+        }
+        reply = text;
+        break;
     }
-
-    const data = await claudeRes.json();
-    // Respuesta de Claude: { content: [ { type: "text", text: "..." }, ... ] }
-    const reply: string = Array.isArray(data.content)
-        ? data.content
-              .filter((b: Record<string, unknown>) => b?.type === "text")
-              .map((b: Record<string, unknown>) => String(b.text ?? ""))
-              .join("")
-              .trim()
-        : "";
 
     if (!reply) {
-        return new Response(
-            JSON.stringify({ error: "Empty response from AI" }),
-            { status: 502, headers: { ...cors, "Content-Type": "application/json" } }
-        );
+        return new Response(JSON.stringify({ error: "Empty response from AI" }),
+            { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
     }
 
-    return new Response(
-        JSON.stringify({ reply }),
-        { status: 200, headers: { ...cors, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ reply }),
+        { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
 });
