@@ -210,6 +210,58 @@ async function fetchProRoster(): Promise<string> {
     }
 }
 
+// ─── BOOKINGS EN VIVO (órdenes reales desde event_builder_orders, service role) ─
+// Solo se llama tras verificar staff/owner. Datos privados → NO usa la anon key.
+// (dj_events está vacío: los bookings reales viven en event_builder_orders + leads.)
+let _bookingsCache: string | null = null;
+let _bookingsCacheAt = 0;
+const BOOKINGS_TTL_MS = 60 * 1000; // 1 min
+
+function _money(n: unknown): string {
+    if (n == null || n === "") return "—";
+    const v = Number(n);
+    return Number.isFinite(v) ? `$${v.toFixed(0)}` : "—";
+}
+function _payLabel(p: unknown): string {
+    const s = String(p ?? "").toLowerCase();
+    return s === "paid_full" ? "Pagado" : s === "deposit_paid" ? "Depósito pagado" : "Sin pagar";
+}
+
+async function fetchUpcomingBookings(): Promise<string> {
+    const now = Date.now();
+    if (_bookingsCache !== null && now - _bookingsCacheAt < BOOKINGS_TTL_MS) {
+        return _bookingsCache;
+    }
+    try {
+        const { data, error } = await ADMIN
+            .from("event_builder_orders")
+            .select("draft_id,event_name,event_date,order_status,total_usd,amount_paid_usd,payment_status")
+            .neq("order_status", "cancelled")
+            .order("event_date", { ascending: true, nullsFirst: false })
+            .limit(40);
+        if (error || !Array.isArray(data) || data.length === 0) {
+            _bookingsCache = ""; _bookingsCacheAt = now; return "";
+        }
+        const lines = data.map((o) => {
+            const date = o.event_date ? o.event_date : "sin fecha";
+            const st = String(o.order_status ?? "").toUpperCase();
+            return `• #${o.draft_id} — ${o.event_name || "Evento sin nombre"} — ${date} [${st}] ` +
+                `| Total ${_money(o.total_usd)}, pagado ${_money(o.amount_paid_usd)} (${_payLabel(o.payment_status)})`;
+        });
+        _bookingsCache =
+            "\n\n### BOOKINGS REALES — Órdenes de eventos de Miami DJ Beat (datos en vivo)\n" +
+            "Estas son las órdenes/bookings reales (tabla event_builder_orders): nombre, fecha, estado y pago. " +
+            "Úsalas cuando pregunten por bookings, eventos, órdenes, pagos o fechas. " +
+            "NUNCA inventes; si no hay para lo que piden, dilo con honestidad.\n\n" +
+            lines.join("\n");
+        _bookingsCacheAt = now;
+        return _bookingsCache;
+    } catch (e) {
+        console.error("[elixis-chat] bookings fetch error:", e);
+        _bookingsCache = ""; _bookingsCacheAt = Date.now(); return "";
+    }
+}
+
 // ─── TIPOS ───────────────────────────────────────────────────────────────────
 
 interface ChatMessage {
@@ -306,6 +358,9 @@ serve(async (req: Request) => {
     // Roster real (en vivo desde public_dj_profiles, cacheado 5 min).
     const rosterContext = await fetchProRoster();
 
+    // Agenda real (próximos eventos desde dj_events, cacheado 1 min).
+    const bookingsContext = await fetchUpcomingBookings();
+
     // Identidad del usuario actual (del candado) — para personalizar y adaptar al rol.
     const userBlock =
         `\n\n### USUARIO ACTUAL (con quien hablas AHORA)\n` +
@@ -318,6 +373,7 @@ serve(async (req: Request) => {
         SYSTEM_PROMPT +
         userBlock +
         rosterContext +
+        bookingsContext +
         (sessionContext ? `\n\n### Contexto de sesión actual:\n${sessionContext}` : "");
 
     const messages: ChatMessage[] = [
