@@ -1,33 +1,29 @@
 -- ═══════════════════════════════════════════════════════════════════
--- Fase 1 — RLS / confidencialidad de las 13 tablas financial_ (STAFF-ONLY)
+-- RLS / confidencialidad de las 13 tablas financial_ (OWNER + STAFF)
 --
--- El dominio financiero canónico (financial_*) es OWNER/CORPORATIVO. El artista
--- NUNCA lo consulta directo (su vista es dj_ledger + residency_schedule_secure,
--- ya existentes/separadas). Aquí: solo staff (owner/manager/vendedor, via
--- public.is_staff) lee/escribe estas tablas; anon revocado; service_role (edge
--- functions) conserva su bypass normal.
+-- El dominio financiero canónico (financial_*) es OWNER/CORPORATIVO. Solo
+-- owner/admin/manager/vendedor lo leen/escriben; anon revocado; service_role
+-- (el motor / edge functions) conserva su bypass. El artista NUNCA lo consulta
+-- directo (su vista es dj_ledger + residency_schedule_secure, separadas).
 --
--- SEGURO PARA PRUEBA Y PRODUCCIÓN: el stub de is_staff SOLO se crea si la función
--- no existe (en prod ya existe la real — NO se toca). Correr primero en PRUEBA
--- (mdjb-ensayo); en producción requiere gate explícito del PO.
+-- IMPORTANTE: se usa una función propia `can_read_financial` que INCLUYE owner
+-- — el `is_staff` de V1 EXCLUYE al owner, y el owner SÍ debe ver su dominio
+-- financiero. Depende de public.dj_profiles (existe en producción).
+--
+-- Correr en PRODUCCIÓN requiere gate explícito del PO.
 -- ═══════════════════════════════════════════════════════════════════
 
--- 1) is_staff — en PRODUCCIÓN ya existe la real (admin/owner/manager/vendedor).
---    En PRUEBA no existe -> stub mínimo (un uuid de "staff de prueba") para verificar.
-DO $do$
-BEGIN
-  IF to_regprocedure('public.is_staff(uuid)') IS NULL THEN
-    EXECUTE $q$
-      CREATE FUNCTION public.is_staff(uid uuid) RETURNS boolean
-      LANGUAGE sql STABLE AS $body$
-        SELECT uid = '00000000-0000-0000-0000-000000000001'::uuid
-      $body$
-    $q$;
-  END IF;
-END
-$do$;
+-- 1) Acceso financiero: owner + admin + manager + vendedor (mismo criterio que el motor).
+CREATE OR REPLACE FUNCTION public.can_read_financial(p_uid uuid) RETURNS boolean
+LANGUAGE sql STABLE SET search_path = public AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.dj_profiles d
+    WHERE d.user_id = p_uid
+      AND lower(trim(coalesce(d.role, ''))) IN ('owner', 'admin', 'manager', 'seller')
+  );
+$$;
 
--- 2) RLS staff-only en las 13 tablas
+-- 2) RLS en las 13 tablas
 DO $do$
 DECLARE
   t text;
@@ -42,16 +38,16 @@ BEGIN
   FOREACH t IN ARRAY tbls LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
     EXECUTE format('REVOKE ALL ON public.%I FROM anon', t);
-    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', t || '_staff_only', t);
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', t || '_fin_access', t);
     EXECUTE format(
       'CREATE POLICY %I ON public.%I FOR ALL TO authenticated ' ||
-      'USING (public.is_staff(auth.uid())) WITH CHECK (public.is_staff(auth.uid()))',
-      t || '_staff_only', t);
+      'USING (public.can_read_financial(auth.uid())) WITH CHECK (public.can_read_financial(auth.uid()))',
+      t || '_fin_access', t);
   END LOOP;
 END
 $do$;
 
--- 3) VERIFICACIÓN — debe devolver 13 filas: rls_activo = true, politicas = 1
+-- 3) VERIFICACIÓN — 13 filas: rls_activo = true, politicas = 1
 SELECT
   c.relname        AS tabla,
   c.relrowsecurity AS rls_activo,
