@@ -130,9 +130,9 @@ NO PUEDES por tu cuenta: enviar mensajes/emails, mover dinero, ni cambiar datos.
 const BUSINESS_CONTEXT = `
 
 ### CONTEXTO DE NEGOCIO — Residencias, agenda y tarifas (fuente: el Capitán, no la BD)
-AGENDA SEMANAL RECURRENTE (se repite cada semana):
-- Jueves: Sundowner Key Largo (DJMago305) — noche 5:00pm–9:00pm.
-- Viernes día: Sundowner Key Largo — 12:30pm–5:00pm.
+AGENDA SEMANAL RECURRENTE (todas son residencias de DJMago305; se repite cada semana):
+- Jueves: Sundowner Key Largo — noche 5:00pm–9:30pm.
+- Viernes día: Sundowner Key Largo — 12:00pm–5:00pm.
 - Viernes noche: Mojitos Calle 8 — 7:00pm–12:30am.
 - Sábado día: Sundowner Key Largo — 12:00pm–5:00pm.
 - Sábado noche: El Valle Restaurante — 8:00pm–2:00am.
