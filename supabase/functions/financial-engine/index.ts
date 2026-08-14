@@ -52,9 +52,13 @@ Deno.serve(async (req: Request) => {
       const { data: userRes } = await userClient.auth.getUser();
       const uid = userRes?.user?.id;
       if (!uid) return json({ ok: false, error: "NO_SESSION" }, 401);
-      const staffRes = await svc.rpc("is_staff", { uid });
-      if (staffRes.error) return json({ ok: false, error: "STAFF_CHECK_FAILED", detail: staffRes.error.message }, 500);
-      if (staffRes.data !== true) return json({ ok: false, error: "NOT_STAFF" }, 403);
+      // Rol directo (INCLUYE owner — is_staff de V1 lo excluye). Mismo criterio que elixis-chat.
+      const { data: prof, error: profErr } = await svc.from("dj_profiles").select("role").eq("user_id", uid).maybeSingle();
+      if (profErr) return json({ ok: false, error: "ROLE_CHECK_FAILED", detail: profErr.message }, 500);
+      const role = String(prof?.role ?? "").toLowerCase().trim();
+      if (!new Set(["owner", "admin", "manager", "seller"]).has(role)) {
+        return json({ ok: false, error: "NOT_STAFF", detail: role || "sin_rol" }, 403);
+      }
     }
 
     // 1.5) IMPORT (Fase 3): residency_schedule real -> venues + agreements canónicos.
