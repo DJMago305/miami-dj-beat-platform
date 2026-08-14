@@ -1065,18 +1065,16 @@
                           if(!sess) return;
                           var res = await sb.from('dj_profiles').select('role').eq('user_id', sess.user.id).maybeSingle();
                           var role = String(res.data && res.data.role ? res.data.role : '').toLowerCase().trim();
-                          // MAPEO CORRECTO por rol: staff/owner → calendario Operacional Inteligente (Owner·Matrix,
-                          // consolida a todos); artista → su calendario personal. El calendario inteligente es solo-staff
-                          // (su gate() rechaza no-staff). Unificarlo para artistas = re-arq de aislamiento (gate + RLS), aparte.
-                          if(['admin','owner','manager','seller'].indexOf(role) !== -1){
-                            var box = document.getElementById('staff-matrix-embed');
-                            var frame = document.getElementById('staff-matrix-frame');
-                            var personal = document.querySelector('#tab-dashboard .agenda-sidebar.calendar-column');
-                            if(frame && !frame.getAttribute('src')) frame.setAttribute('src', './calendario-operacional-inteligente.html');
-                            if(box) box.style.display = 'block';
-                            if(personal) personal.style.display = 'none';   // staff no usa el calendario personal del artista
-                          }
-                          // artista: no hace nada → conserva su calendario personal
+                          // TODOS ven el Calendario Operacional Inteligente: staff/owner → Owner·Matrix (consolida a todos);
+                          // artista → su modo personal AISLADO (el propio calendario detecta el rol vía gate()+setupRole y
+                          // bloquea al artista en lo suyo). El FullCalendar personal viejo queda OCULTO (no borrado).
+                          void role;
+                          var box = document.getElementById('staff-matrix-embed');
+                          var frame = document.getElementById('staff-matrix-frame');
+                          var personal = document.querySelector('#tab-dashboard .agenda-sidebar.calendar-column');
+                          if(frame && !frame.getAttribute('src')) frame.setAttribute('src', './calendario-operacional-inteligente.html');
+                          if(box) box.style.display = 'block';
+                          if(personal) personal.style.display = 'none';
                         }catch(_e){}
                       }
                       pickAgenda();

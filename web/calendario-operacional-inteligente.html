@@ -14,9 +14,9 @@
     var res = await sb.from('dj_profiles').select('role').eq('user_id', sess.user.id).maybeSingle();
     var role = String(res.data && res.data.role ? res.data.role : '').toLowerCase().trim();
     var STAFF = ['admin','owner','manager','seller'];
-    if(!(res.data && STAFF.indexOf(role) !== -1)){
-      location.replace('./login.html?next=./admin-dashboard.html&mdj_staff_entry=1');   // no-staff → puerta staff
-    }
+    // Artistas (no-staff) AHORA SÍ entran, en su modo Artista aislado (RLS los limita a lo suyo). Solo se exige sesión.
+    window.__COI_STAFF = !!(res.data && STAFF.indexOf(role) !== -1);
+    window.__COI_UID = sess.user.id;
   }
   gate();
 })();
@@ -473,7 +473,7 @@
   function renderCtx(){
     var h='<div class="roleswitch">'
       +'<button class="r-art" data-role="artista" aria-selected="'+(state.role==="artista")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Artista</button>'
-      +'<button class="r-own" data-role="owner" aria-selected="'+(state.role==="owner")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="5" rx="1.5"/><rect x="3" y="11" width="18" height="5" rx="1.5"/><path d="M7 18h10"/></svg>Owner · Matrix</button>'
+      +(window.__COI_STAFF===false ? '' : '<button class="r-own" data-role="owner" aria-selected="'+(state.role==="owner")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="5" rx="1.5"/><rect x="3" y="11" width="18" height="5" rx="1.5"/><path d="M7 18h10"/></svg>Owner · Matrix</button>')
       +'</div>';
     if(state.role==="artista"){
       h+='<div class="who"><span>Eres:</span><select id="artSel">';
@@ -878,6 +878,26 @@
   }
   BASE_EV=[]; CLIENTS=[]; ARTISTS=[];   // arrancamos vacío: los datos reales llegan de Supabase (nada de mock)
   rebuild();render();
+  // ═══ Rol real: staff → Owner·Matrix; artista → su modo personal aislado ═══
+  async function setupRole(){
+    var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+    if(!sb || !sb.auth){ return setTimeout(setupRole, 300); }
+    var sess=(await sb.auth.getSession()).data.session;
+    if(!sess){ return setTimeout(setupRole, 300); }
+    var res=await sb.from('dj_profiles').select('role,stage_name,dj_name').eq('user_id', sess.user.id).maybeSingle();
+    var role=String(res.data&&res.data.role?res.data.role:'').toLowerCase().trim();
+    window.__COI_STAFF = ['admin','owner','manager','seller'].indexOf(role)!==-1;
+    if(!window.__COI_STAFF){
+      // Artista: SOLO su propia agenda (aislada). Se fija su identidad y se bloquea en modo Artista.
+      var nm=(res.data&&(res.data.stage_name||res.data.dj_name))||'Mi agenda';
+      if(!ARTISTS.some(function(a){return a.id===sess.user.id;})) ARTISTS.push({id:sess.user.id,n:nm,c:'#3d8bff'});
+      state.role='artista'; state.artist=sess.user.id; state.consent[sess.user.id]=true;
+    } else {
+      state.role='owner';
+    }
+    rebuild(); render();
+  }
+  setupRole();
   loadRealLeads();
   loadClientDates();
   loadResidencies();
