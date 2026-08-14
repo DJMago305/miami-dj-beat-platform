@@ -137,12 +137,16 @@
   .day-split::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:4px;height:36px;border-radius:3px;background:var(--ink-mute);opacity:.45;transition:background .15s,opacity .15s;}
   .day-split:hover::before,.day-split.drag::before{background:var(--set);width:3px;}
   .day-split:hover::after,.day-split.drag::after{background:var(--set);opacity:1;}
-  .detail{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--panel-2);align-self:start;min-width:0;display:flex;flex-direction:column;max-height:600px;}
-  /* Contenedor de tarjetas: altura fija con SCROLL interno. Las tarjetas NUNCA se encogen
-     (tamaño fijo); si hay más eventos de los que caben, se recorren con scroll / carrusel. */
-  .ev-cards{flex:1 1 auto;min-height:0;overflow-y:auto;scroll-behavior:smooth;padding-right:6px;margin-right:-4px;}
-  .ev-cards::-webkit-scrollbar{width:8px;} .ev-cards::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
-  .ev-cards .ev-card{flex:none;}
+  .detail{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--panel-2);align-self:start;min-width:0;display:flex;flex-direction:column;}
+  /* Carrusel de UNA tarjeta a la vez: cada evento es su propia tarjeta. Cuando coinciden
+     varios eventos, la tarjeta COMPLETA se desliza hacia arriba para mostrar la siguiente —
+     NUNCA hay scroll dentro de una misma tarjeta. */
+  .ev-cards{overflow:hidden;position:relative;transition:height .55s cubic-bezier(.4,0,.2,1);}
+  .ev-track{display:flex;flex-direction:column;gap:12px;transition:transform .55s cubic-bezier(.4,0,.2,1);will-change:transform;}
+  .ev-track .ev-card{flex:none;margin-bottom:0;}
+  .ev-dots{display:flex;justify-content:center;gap:6px;padding-top:14px;flex:none;}
+  .ev-dot{width:6px;height:6px;border-radius:50%;background:var(--line);cursor:pointer;transition:background .3s,width .3s;}
+  .ev-dot.on{background:var(--set);width:18px;}
   .detail .empty{color:var(--ink-mute);font-size:14px;text-align:center;padding:30px 10px;}
   .detail .dcal{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:650;color:var(--c);}
   .detail .dcal .sq{width:10px;height:10px;border-radius:3px;background:var(--c);}
@@ -695,7 +699,8 @@
     if(!list.length){el.innerHTML=hd+'<div class="empty">Día sin eventos en la agenda.</div>';return;}
     var h='';
     list.forEach(function(e){h+='<div class="ev-card'+((state.sel&&eid(state.sel)===eid(e))?' sel':'')+'" data-detid="'+eid(e)+'">'+eventCardHTML(e)+'</div>';});
-    el.innerHTML=hd+'<div class="ev-cards" id="evCards">'+h+'</div>';
+    var _dots='';for(var _i=0;_i<list.length;_i++)_dots+='<span class="ev-dot" data-i="'+_i+'"></span>';
+    el.innerHTML=hd+'<div class="ev-cards" id="evCards"><div class="ev-track">'+h+'</div></div>'+(list.length>1?'<div class="ev-dots" id="evDots">'+_dots+'</div>':'');
     el.querySelectorAll(".ev-card").forEach(function(card){
       var act=card.querySelector(".act");if(act)act.onclick=function(ev){ev.stopPropagation();act.textContent="✓ Felicitación programada";act.style.background="var(--pago)";act.style.color="#04211d";};
       card.onclick=function(ev){if(ev.target.closest(".act"))return;var e=findEv(card.dataset.detid);if(e){state.sel=e;render();}};
@@ -703,27 +708,38 @@
     startDayCarousel();
   }
 
-  // Carrusel automático del panel del día: si hay MÁS eventos de los que caben en la caja,
-  // los recorre solo (cada ~2.6s) para que el usuario note que hay más (ej. un cumpleaños
-  // además de las residencias). Tarjetas de tamaño FIJO; scroll manual pausa el auto un rato.
+  // Carrusel del panel del día: UNA tarjeta por evento, se muestra una a la vez y la tarjeta
+  // COMPLETA se desliza hacia arriba para mostrar la siguiente (nunca scroll dentro de una
+  // tarjeta). Auto cada 3s cuando coinciden 2+ eventos; pausa al pasar el mouse; puntos abajo
+  // (clic para saltar). Ejemplo: 2 residencias + un cumpleaños → se van rotando de a una.
   var _dayCarousel=null;
   function startDayCarousel(){
     if(_dayCarousel){clearInterval(_dayCarousel);_dayCarousel=null;}
     var box=document.getElementById("evCards"); if(!box) return;
+    var track=box.querySelector(".ev-track"); if(!track) return;
+    var cards=track.children, n=cards.length; if(!n) return;
+    var dots=(document.getElementById("evDots")||{}).children;
     requestAnimationFrame(function(){
-      var cards=box.querySelectorAll(".ev-card"); if(cards.length<2) return;
-      if(box.scrollHeight <= box.clientHeight+8) return;   // todo cabe → no hace falta carrusel
-      var paused=false, idx=0;
+      // medir alto y posición de cada tarjeta ANTES de transformar
+      var base=cards[0].getBoundingClientRect().top, offs=[], hts=[];
+      for(var i=0;i<n;i++){ offs[i]=Math.round(cards[i].getBoundingClientRect().top-base); hts[i]=cards[i].offsetHeight; }
+      var idx=0, paused=false;
+      function show(i){
+        idx=i;
+        box.style.height=hts[i]+"px";                        // la caja = alto de UNA tarjeta completa
+        track.style.transform="translateY(-"+offs[i]+"px)";  // desliza la tarjeta i hasta el tope
+        if(dots) for(var k=0;k<dots.length;k++) dots[k].classList.toggle("on", k===i);
+      }
+      show(0);
+      if(n<2) return;                                        // un solo evento → sin rotación
       box.addEventListener("pointerenter", function(){ paused=true; });
       box.addEventListener("pointerleave", function(){ paused=false; });
-      box.addEventListener("scroll", function(){ paused=true; clearTimeout(box.__rp); box.__rp=setTimeout(function(){ paused=false; }, 4500); }, {passive:true});
+      if(dots) for(var k=0;k<dots.length;k++){ (function(kk){ dots[kk].addEventListener("click", function(){ show(kk); paused=true; clearTimeout(box.__rp); box.__rp=setTimeout(function(){paused=false;}, 6000); }); })(k); }
       _dayCarousel=setInterval(function(){
         if(!box.isConnected){ clearInterval(_dayCarousel); _dayCarousel=null; return; }
         if(paused) return;
-        idx=(idx+1)%cards.length;
-        var target = idx===0 ? 0 : (box.scrollTop + (cards[idx].getBoundingClientRect().top - box.getBoundingClientRect().top) - 4);
-        box.scrollTo({ top:Math.max(0,target), behavior:"smooth" });
-      }, 2600);
+        show((idx+1)%n);
+      }, 3000);
     });
   }
 
