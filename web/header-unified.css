@@ -893,6 +893,18 @@
     position: static !important;
   }
 
+  /* ═══ MDJB nav-def 2026-08-13 · RAÍZ de las "columnas invisibles" ═══
+     Los slots OCULTOS del #mainNav (aria-hidden) desaparecen de verdad con display:none —
+     NO reservan ancho fantasma. Antes usaban visibility:hidden → ocupaban 140-220px cada uno
+     → el nav se desbordaba → se activaba el carrusel (mdj-mainnav-infinite). Ataca la causa:
+     sin ancho fantasma → sin overflow → el carrusel no se activa. Sigue aria-hidden, así que
+     cuando el JS revela un slot (por rol), vuelve a mostrarse. Reversible: borrar esta regla. */
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a[aria-hidden='true'] {
+    display: none !important;
+  }
+
   /* CONFIG / MI PORTAL: visibles con .mdj-mainnav-reserved-slot — «/» explícito (pisa content:none de slots). */
   #mainHeader.header.mdj-header-unified
     #mainNav.mdj-mainnav-flex.nav.top-nav

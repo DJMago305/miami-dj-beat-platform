@@ -1019,6 +1019,25 @@
     .acct-side-link.active svg { opacity: 1; }
     .acct-side-link.danger { color: rgba(255,80,80,0.6); }
     .acct-side-link.danger:hover { color: #ff5555; }
+    /* ── SIDEBAR COLAPSABLE (reutilizable) — cerrada = solo iconos, da todo el ancho al contenido ── */
+    .acct-side-toggle {
+      display:flex; align-items:center; justify-content:center;
+      width:38px; height:38px; margin:0 0 16px 20px; align-self:flex-start; padding:0;
+      border:1px solid rgba(255,255,255,0.12); border-radius:10px;
+      background:rgba(255,255,255,0.04); color:rgba(255,255,255,0.7);
+      cursor:pointer; transition:background .15s,color .15s,border-color .15s; flex-shrink:0;
+    }
+    .acct-side-toggle:hover { color:#fff; background:rgba(255,255,255,0.09); border-color:rgba(255,255,255,0.22); }
+    .acct-side-toggle svg { width:20px; height:20px; }
+    .acct-wrap.mdj-side-collapsed .acct-side-toggle { margin:0 auto 14px; align-self:center; }
+    .acct-wrap { transition: grid-template-columns .22s ease; }
+    .acct-wrap.mdj-side-collapsed { grid-template-columns: 64px 1fr; }
+    .acct-wrap.mdj-side-collapsed .acct-side { padding:16px 0; align-items:center; }
+    .acct-wrap.mdj-side-collapsed .acct-side-avatar { width:40px; height:40px; margin-bottom:0; }
+    .acct-wrap.mdj-side-collapsed .acct-side-name,
+    .acct-wrap.mdj-side-collapsed .acct-side-email { display:none; }
+    .acct-wrap.mdj-side-collapsed .acct-side-link { justify-content:center; gap:0; padding:13px 0; font-size:0; }
+    .acct-wrap.mdj-side-collapsed .acct-side-link svg { opacity:.8; }
     .acct-body { background: #0a0a0a; padding: 52px; overflow-y: visible; }
     .acct-panel { display: none; }
     .acct-panel.active { display: block; animation: mdj-panel-reveal 0.35s ease 0.25s both; }
@@ -1195,7 +1214,7 @@
   </style>
 </head>
 
-<body class="notranslate mdj-account-settings mdj-nav-booting">
+<body class="notranslate mdj-account-settings mdj-from-profile mdj-nav-booting">
   <!-- CABECERA ESTÁNDAR GLOBAL -->
   <!-- MDJ canonical site header — keep in sync with index #mainHeader; use ./index.html# anchors for subpages -->
 <header class="header mdj-header-unified" id="mainHeader">
@@ -1269,29 +1288,50 @@
   </div>
   <div class="header-nav">
     <div class="container">
-      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" data-mdj-compact-nav="1">
-        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
-        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
-        <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
-        <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-mdj-nav="shop">Shop</a>
-        <a href="./dj-dashboard.html?tab=flow" id="mainNav-flow-link" class="mdj-flow-mainnav" data-mdj-nav="flow">CASH FLOW</a>
+      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav">
+        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
+        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
+        <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
+        <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
         <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
-        <a href="./account-settings.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
-        <a href="./dj-profile.html" id="mainNav-guest-mi-perfil-link" class="mdj-guest-mi-perfil-mainnav" data-mdj-nav="profile">MI PERFIL</a>
-        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
-        <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
-        <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" aria-hidden="true" tabindex="-1">MY PORTAL</a>
+        <a href="./dj-dashboard.html?tab=dashboard" id="mainNav-agenda-link" class="mdj-agenda-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="agenda" data-i18n="dash-your-profile" aria-hidden="true" tabindex="-1">SCHEDULE</a>
+        <a href="./account-settings.html?mdj_nav=profile" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+        <a href="./dj-dashboard.html?tab=flow" id="mainNav-flow-link" class="mdj-flow-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="flow" data-i18n="flow-dash" aria-hidden="true" tabindex="-1">Cash Flow</a>
+        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
+        <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+        <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" data-i18n="header-mi-portal" aria-hidden="true" tabindex="-1">MI PORTAL</a>
         <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
       </nav>
     </div>
   </div>
 </header>
 
+    <!-- MDJB nav-fix 2026-08-14: strip #owner-tabs (mismos pilares que dj-profile/academia).
+         account-settings CARECÍA de este elemento → su nav se veía distinta (caía al #mainNav
+         mutilado). Con CONFIG activo. Reversible. -->
+    <nav class="dj-owner-tabs" id="owner-tabs" aria-label="Navegación de cuenta">
+        <div class="container">
+            <a href="./index.html" class="dj-tab-btn dj-tab-btn--home" data-i18n="nav-home">Home</a>
+            <a href="./jobs.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-jobs">Jobs</a>
+            <a href="./shop.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-shop">Shop</a>
+            <a href="./dj-dashboard.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="dash-your-profile">Agenda</a>
+            <a href="./account-settings.html?mdj_nav=profile" class="dj-tab-btn active" data-i18n="nav-settings">⚙️ CONFIG</a>
+            <a href="./academia.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-academia">Academia</a>
+            <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-tools">DJ Tools</a>
+            <a href="./dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="flow-dash">CASH FLOW</a>
+            <a href="./dj-profile.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="menu-account">Mi Perfil</a>
+            <a href="./dj-profile.html?tab=sft&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-soundfortips">SoundForTips™</a>
+        </div>
+    </nav>
+
   <main class="account-layout mdj-settings-has-split mdj-has-sidebar">
   <div class="acct-wrap">
 
     <!-- ── Sidebar ── -->
     <aside class="acct-side">
+      <button class="acct-side-toggle" id="acctSideToggle" type="button" title="Contraer / expandir menú" aria-label="Contraer o expandir el menú lateral">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="9" y1="4" x2="9" y2="20"/></svg>
+      </button>
       <nav>
         <button class="acct-side-link" onclick="showPanel('account',this)">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
@@ -2650,6 +2690,21 @@
 
     </div><!-- /acct-body -->
   </div><!-- /acct-wrap -->
+
+  <script>
+    /* ── Sidebar colapsable (staff/owner) — recuerda el estado. Reutilizable en otras vistas con sidebar. ── */
+    (function(){
+      var wrap=document.querySelector('.acct-wrap'), btn=document.getElementById('acctSideToggle');
+      if(!wrap||!btn) return;
+      var KEY='mdjSettingsSidebarCollapsed';
+      try{ if(localStorage.getItem(KEY)==='1') wrap.classList.add('mdj-side-collapsed'); }catch(e){}
+      btn.addEventListener('click', function(){
+        var collapsed=wrap.classList.toggle('mdj-side-collapsed');
+        btn.setAttribute('aria-expanded', collapsed?'false':'true');
+        try{ localStorage.setItem(KEY, collapsed?'1':'0'); }catch(e){}
+      });
+    })();
+  </script>
 
   </main>
 

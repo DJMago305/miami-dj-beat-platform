@@ -40,6 +40,9 @@
 
   /** Owner Config: #owner-tabs manda; anular fila #mainNav 8-pillar tras auth / inject. */
   function mdjEnsureAccountSettingsOwnerStripNav() {
+    /* MDJB nav-def 2026-08-13: account-settings usa el #mainNav estándar (igual que dj-profile,
+       la página que funciona). Se elimina el "strip" especial de esta página (abuso de alcance). */
+    return;
     try {
       var page = (window.location.pathname.split('/').pop() || '').toLowerCase();
       if (page !== 'account-settings.html') return;
@@ -65,6 +68,8 @@
 
   /* account-settings.html: strip artista desde el primer paint (antes del auth-chain). */
   (function mdjBootAccountSettingsProfileNavEarly() {
+    /* MDJB nav-def 2026-08-13: no forzar "modo perfil" ni ocultar el nav en account-settings. */
+    return;
     try {
       var page = (window.location.pathname.split('/').pop() || '').toLowerCase();
       if (page !== 'account-settings.html' || !document.body) return;
@@ -3224,9 +3229,10 @@
 
           /** Matriz: cliente solo | artista LITE | artista PRO (incl. staff con dj_profiles: misma pastilla Talento/Dueño). */
           var navTier;
-          if (isDjStaff || appRoleLower === 'owner') {
-            navTier = 'client_only'; /* staff/owner → never artist rail, even if dj_profiles row exists */
-          } else if (hasDjProfile) {
+          /* MDJB nav-fix 2026-08-13: revierte regresión 97bc51c ("staff/owner → never artist rail").
+             Un owner/staff que ADEMÁS tiene dj_profile ES artista → debe ver el rail de artista.
+             Precedencia restaurada al baseline pre-regresión (dj_profile primero). */
+          if (hasDjProfile) {
             navTier = isProUser ? 'artist_pro' : 'artist_lite';
           } else if (isClient) {
             navTier = 'client_only';
@@ -3323,6 +3329,18 @@
           } else {
             document.body.classList.remove('mdj-staff-nav');
           }
+          /* MDJB nav-def 2026-08-13: señal ÚNICA y autoritativa de rol para el nav estático
+             (CSS-gated). Aditivo: no cambia comportamiento; solo publica el rol ya resuelto.
+             management = owner/admin/manager (híbrido artista+staff) · seller = staff solo. */
+          try {
+            var _mdjNavRole =
+              (isClient || isBuyerSession) ? 'client'
+              : isNavStaffSolo ? 'seller'
+              : isDjStaff ? 'management'
+              : (navTier === 'artist_lite' || navTier === 'artist_pro') ? 'artist'
+              : 'guest';
+            document.body.setAttribute('data-mdj-nav-role', _mdjNavRole);
+          } catch (eRole) { void eRole; }
           var showArtistDashMainNav = !isClient && (navTier === 'artist_lite' || navTier === 'artist_pro');
           var onPublicHome = mdjIsPublicHomePage();
           /* Centinela nav compacto: services/events usan data-mdj-compact-nav="1" → bloquea inyección de Agenda/Flow/rail artista. */
@@ -4586,4 +4604,40 @@
   } else {
     _patchMainNavShop();
   }
+})();
+
+/* ── MDJB 2026-08-14: FÉNIX AI en la nav de STAFF (owner) — reemplaza SoundForTips ──
+   SoundForTips es feature de artista; las cuentas de oficina (owner/manager/vendedor) NO la
+   necesitan (trabajo de oficina). En su lugar acceden a FÉNIX AI. El candado real ya vive en
+   elixis-console.html (exige sesión + userRole "owner"). Se REUTILIZA el tab existente de
+   SoundForTips (no se agrega elemento nuevo → no pelea con el reorden del strip). Espera a que
+   el reorden termine (Jobs oculto) para no romperlo, y es idempotente. Aislado y reversible. */
+(function mdjFenixStaffNavTab(){
+  function isStaff(){
+    var b=document.body; if(!b) return false;
+    var role=(b.getAttribute('data-mdj-nav-role')||'').toLowerCase();
+    if(role==='management'||role==='seller') return true;
+    return b.classList.contains('mdj-staff-nav') && !b.classList.contains('mdj-artist-nav');
+  }
+  function reorderDone(strip){ var j=strip.querySelector('[data-i18n="nav-jobs"]'); return !j || getComputedStyle(j).display==='none'; }
+  function apply(force){
+    if(!isStaff()) return false;                                     // artistas conservan SoundForTips
+    var strip=document.getElementById('owner-tabs'); if(!strip) return false;
+    if(!force && !reorderDone(strip)) return false;                  // esperar al reorden
+    var sft=strip.querySelector('[data-i18n="nav-soundfortips"]') || strip.querySelector('[data-tab="sft"]');
+    if(!sft) return false;
+    sft.setAttribute('data-mdj-nav','fenix');
+    sft.removeAttribute('data-i18n');                                // que i18n no reescriba el texto
+    sft.removeAttribute('data-tab'); sft.removeAttribute('onclick');
+    sft.title='FÉNIX AI — asistente del owner (acceso restringido)';
+    if(sft.tagName==='A'){ sft.setAttribute('href','./elixis-console.html'); sft.removeAttribute('target'); sft.removeAttribute('rel'); }
+    else { try{ sft.type='button'; }catch(e){} sft.onclick=function(ev){ if(ev){ ev.preventDefault(); ev.stopPropagation(); } window.location.href='./elixis-console.html'; }; }
+    sft.innerHTML='FÉNIX AI <span class="dj-tab-lock-icon" aria-hidden="true" style="font-size:.82em;opacity:.85;margin-left:3px;">🔒</span>';
+    return true;
+  }
+  function boot(){
+    if(apply(false)) return;
+    var n=0, iv=setInterval(function(){ n++; if(apply(n>=12) || n>=18){ clearInterval(iv); } }, 350);
+  }
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', boot); } else { boot(); }
 })();
