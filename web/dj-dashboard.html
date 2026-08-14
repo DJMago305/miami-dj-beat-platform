@@ -3202,6 +3202,113 @@
               reveal();
             })();
             </script>
+
+            <!-- ══ OWNER MODE SWITCH · PFS (personal) ⇄ Owner Financial IA (Matrix) ══
+                 Bloque autónomo, owner-only. NO modifica la zona LOCKED: el switch se
+                 inyecta por JS al tope de #tab-flow (sobrevive al ocultar la sección
+                 personal) y alterna la visibilidad personal ⇄ Matrix. -->
+            <style>
+              .ofm-bar{display:flex;justify-content:flex-end;align-items:center;gap:11px;
+                max-width:1100px;margin:0 auto 6px;padding:2px 4px 0;}
+              .ofm-bar .ofm-tag{font-size:9px;font-weight:800;letter-spacing:.14em;
+                color:#c5a059;border:1px solid rgba(197,160,89,.5);border-radius:999px;
+                padding:3px 9px;text-transform:uppercase;white-space:nowrap;}
+              .ofm-bar .ofm-lbl{font-size:11px;font-weight:800;letter-spacing:.05em;
+                text-transform:uppercase;white-space:nowrap;transition:color .25s;
+                color:rgba(255,255,255,.55);}
+              .ofm-bar.on .ofm-lbl{color:#e8c987;}
+              .ofm-toggle{position:relative;width:52px;height:28px;border-radius:999px;
+                border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.12);
+                cursor:pointer;flex:0 0 auto;transition:background .25s,border-color .25s,box-shadow .25s;
+                padding:0;outline-offset:3px;}
+              .ofm-toggle .ofm-knob{position:absolute;top:2px;left:2px;width:22px;height:22px;
+                border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.45);
+                transition:left .25s cubic-bezier(.4,1.3,.5,1);}
+              .ofm-toggle.on{background:linear-gradient(135deg,#c5a059,#e8c987);
+                border-color:rgba(197,160,89,.75);box-shadow:0 0 14px rgba(197,160,89,.45);}
+              .ofm-toggle.on .ofm-knob{left:28px;}
+              #ofm-business-view{max-width:1200px;margin:6px auto 8px;}
+              #ofm-business-view .ofm-frame-head{display:flex;align-items:center;gap:10px;
+                margin:0 4px 10px;font-size:11px;font-weight:800;letter-spacing:1.5px;
+                text-transform:uppercase;color:rgba(255,255,255,.32);}
+              #ofm-matrix-frame{width:100%;height:82vh;min-height:560px;border:1px solid rgba(197,160,89,.32);
+                border-radius:16px;background:#0b0b0f;display:block;}
+            </style>
+
+            <div id="ofm-business-view" style="display:none;">
+              <div class="ofm-frame-head">🧠 Owner Financial IA · Matrix — Corporate · Business Units · Artist</div>
+              <iframe id="ofm-matrix-frame" data-src="./business-financial-intelligence.html"
+                      title="Owner Financial IA — Matrix" loading="lazy"
+                      referrerpolicy="same-origin"></iframe>
+            </div>
+
+            <script>
+            (function(){
+              var MODE_KEY='mdjOwnerFinMode';       // 'personal' | 'business'
+              function q(id){return document.getElementById(id);}
+              function getSb(){return window.getSupabaseClient?window.getSupabaseClient():window.supabase;}
+
+              function build(){
+                var flow=q('tab-flow'); if(!flow||q('ofm-bar')) return;
+                var section=flow.querySelector(':scope > section');   // vista personal (LOCKED)
+                var biz=q('ofm-business-view');
+                var frame=q('ofm-matrix-frame');
+                var card=q('bfi-access-card');                        // tarjeta antigua (la reemplaza el switch)
+
+                // --- barra + switch (arriba a la derecha, pequeño) ---
+                var bar=document.createElement('div');
+                bar.className='ofm-bar'; bar.id='ofm-bar';
+                var tag=document.createElement('span'); tag.className='ofm-tag'; tag.textContent='◆ OWNER';
+                var lbl=document.createElement('span'); lbl.className='ofm-lbl';
+                var tog=document.createElement('button');
+                tog.type='button'; tog.className='ofm-toggle';
+                tog.setAttribute('role','switch');
+                tog.setAttribute('aria-label','Cambiar entre Sistema Personal (PFS) y Owner Financial IA');
+                tog.innerHTML='<span class="ofm-knob"></span>';
+                bar.appendChild(tag); bar.appendChild(lbl); bar.appendChild(tog);
+                flow.insertBefore(bar, flow.firstChild);
+
+                function apply(mode, persist){
+                  var on = (mode==='business');
+                  bar.classList.toggle('on', on);
+                  tog.classList.toggle('on', on);
+                  tog.setAttribute('aria-checked', on?'true':'false');
+                  lbl.textContent = on ? 'Owner Financial IA' : 'PFS';
+                  lbl.title = on ? 'Owner Financial IA · Matrix' : 'PFS · Sistema Personal de Finanzas';
+                  if(section) section.style.display = on ? 'none' : '';
+                  if(card) card.style.display = 'none';   // el switch reemplaza la tarjeta de acceso
+                  if(biz)  biz.style.display  = on ? 'block' : 'none';
+                  if(on && frame && !frame.getAttribute('src')){    // lazy-load del Matrix
+                    frame.setAttribute('src', frame.getAttribute('data-src'));
+                  }
+                  if(persist){ try{ localStorage.setItem(MODE_KEY, mode); }catch(e){} }
+                }
+
+                tog.addEventListener('click', function(){
+                  apply(bar.classList.contains('on')?'personal':'business', true);
+                });
+
+                var saved='personal';
+                try{ saved = localStorage.getItem(MODE_KEY)||'personal'; }catch(e){}
+                apply(saved, false);
+              }
+
+              // solo owner
+              function init(){
+                var sb=getSb();
+                if(!sb||!sb.auth){ return setTimeout(init,300); }
+                sb.auth.getSession().then(function(r){
+                  var sess=r.data.session; if(!sess) return;
+                  sb.from('dj_profiles').select('role').eq('user_id',sess.user.id).maybeSingle()
+                    .then(function(res){
+                      var role=String(res.data&&res.data.role?res.data.role:'').toLowerCase().trim();
+                      if(role==='owner') build();
+                    }).catch(function(){});
+                }).catch(function(){});
+              }
+              init();
+            })();
+            </script>
         </div>
 
         <!-- ══ PAYMENT MODAL ═════════════════════════════════════════ -->
