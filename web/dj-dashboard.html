@@ -3334,18 +3334,33 @@
                   applyTheme(curTheme==='day'?'night':'day', true);
                 });
 
-                // --- pantalla completa del Matrix ---
+                // --- pantalla completa del Matrix: fullscreen NATIVO (todo el monitor,
+                //     oculta barra/pestañas del navegador); fallback a modo CSS si no hay API ---
                 var expand=document.getElementById('ofm-expand');
-                function setFull(full){
+                function fsEl(){ return document.fullscreenElement || document.webkitFullscreenElement || null; }
+                function paintFull(full){
                   biz.classList.toggle('ofm-full', full);
-                  if(expand) expand.innerHTML = full ? '✕ Minimizar' : '⛶ Pantalla completa';
+                  if(expand) expand.innerHTML = full ? '✕ Salir' : '⛶ Pantalla completa';
                   document.body.style.overflow = full ? 'hidden' : '';
                 }
+                function goFull(){
+                  var req = biz.requestFullscreen || biz.webkitRequestFullscreen;
+                  if(req){ try{ var p = req.call(biz); if(p && p.catch) p.catch(function(){ paintFull(true); }); }
+                           catch(e){ paintFull(true); } }
+                  else paintFull(true);              // navegador sin API -> modo CSS
+                }
+                function leaveFull(){
+                  if(fsEl()){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); }
+                  paintFull(false);
+                }
                 if(expand){ expand.addEventListener('click', function(){
-                  setFull(!biz.classList.contains('ofm-full'));
+                  (biz.classList.contains('ofm-full') || fsEl()) ? leaveFull() : goFull();
                 }); }
+                function onFsChange(){ paintFull(fsEl()===biz); }   // sincroniza con F11/Esc del navegador
+                document.addEventListener('fullscreenchange', onFsChange);
+                document.addEventListener('webkitfullscreenchange', onFsChange);
                 document.addEventListener('keydown', function(e){
-                  if(e.key==='Escape' && biz.classList.contains('ofm-full')) setFull(false);
+                  if(e.key==='Escape' && biz.classList.contains('ofm-full') && !fsEl()) paintFull(false);
                 });
                 if(frame){ frame.addEventListener('load', function(){   // re-aplica al cargar el Matrix
                   applyTheme(curTheme, false);
