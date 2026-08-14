@@ -478,7 +478,7 @@
     if(state.role==="artista"){
       if(window.__COI_STAFF===false){
         // ARTISTA REAL: bloqueado en sí mismo. SIN selector — solo su propia agenda (nombre fijo).
-        h+='<div class="who"><span>Eres:</span><b style="color:var(--ink);font-weight:700">'+esc(artName(state.artist))+'</b></div>';
+        h+='<div class="who"><span>Eres:</span><b style="color:var(--ink);font-weight:700">'+artName(state.artist)+'</b></div>';
       } else {
         // Staff en modo Artista: puede inspeccionar cualquier artista (selector).
         h+='<div class="who"><span>Eres:</span><select id="artSel">';
