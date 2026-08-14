@@ -120,6 +120,32 @@ Lee CÓMO te habla la persona y refleja su estilo, manteniendo siempre tu identi
 - Va DIRECTO / corto → ve al grano, sin rodeos, respuestas breves.
 Refleja su registro (formalidad, longitud, energía, si usa emojis o no). Nunca suenes a guion ni a robot: suena a una persona real que ajusta su tono a quien tiene enfrente.`;
 
+// ─── CONTEXTO DE NEGOCIO — residencias y tarifas (dado por el Capitán) ────────
+// NO está en la BD (la agenda/tarifas viven en la re-arquitectura pendiente).
+// Config editable: actualizar aquí si cambian venues, horarios o tarifas.
+const BUSINESS_CONTEXT = `
+
+### CONTEXTO DE NEGOCIO — Residencias, agenda y tarifas (fuente: el Capitán, no la BD)
+AGENDA SEMANAL RECURRENTE (se repite cada semana):
+- Jueves: Sundowner Key Largo (DJMago305) — noche 5:00pm–9:00pm.
+- Viernes día: Sundowner Key Largo — 12:30pm–5:00pm.
+- Viernes noche: Mojitos Calle 8 — 7:00pm–12:30am.
+- Sábado día: Sundowner Key Largo — 12:00pm–5:00pm.
+- Sábado noche: El Valle Restaurante — 8:00pm–2:00am.
+- Domingo día: Sundowner Key Largo — 12:00pm–5:00pm.
+
+TARIFAS (lo que paga cada venue a Miami DJ Beat por evento):
+- Sundowner Key Largo: jueves $300; viernes/sábado/domingo $350 c/u.
+- Mojitos Calle 8: viernes noche $475; eventos extra artísticos $350.
+- El Valle Restaurante: sábado noche $350.
+COSTO POR DJ: $250 por evento (DJ asignado o cobertura ocasional).
+Margen por evento = pago del venue − $250 cuando se asigna a otro DJ; si toca DJMago305, el pago del venue es ingreso directo.
+Ingreso semanal de venues (residencias): $300+$350+$475+$350+$350+$350 = $2,175/semana (~$9,400/mes).
+
+EVENTO ESPECIAL — jueves 20: Mojitos Calle 8 con el artista Ruddy La Scala, 7:30pm hasta el cierre. Ese jueves 20, DJ Solitario cubre Sundowner Key Largo (turno noche) en lugar de DJMago305.
+
+Usa esta agenda y tarifas para calcular ingresos, costos y márgenes de residencias cuando pregunten. Si un dato no está aquí ni en la BD, dilo con honestidad; no inventes.`;
+
 // ─── ROSTER EN VIVO (artistas reales desde public_dj_profiles) ───────────────
 // Mismo patrón que booth-chat: solo campos PÚBLICOS, con la anon key que
 // Supabase inyecta automáticamente. Cacheado 5 min. NO expone datos privados.
@@ -262,6 +288,61 @@ async function fetchUpcomingBookings(): Promise<string> {
     }
 }
 
+// ─── FINANZAS EN VIVO (agregado de event_builder_orders + dj_ledger) ─────────
+// Datos sensibles → SOLO roles con acceso financiero (owner/admin/manager).
+let _financeCache: string | null = null;
+let _financeCacheAt = 0;
+const FINANCE_TTL_MS = 60 * 1000;
+const FINANCE_ROLES = new Set(["owner", "admin", "manager"]);
+
+async function fetchFinancialSummary(role: string): Promise<string> {
+    if (!FINANCE_ROLES.has(role)) return ""; // seller y otros: sin finanzas
+    const now = Date.now();
+    if (_financeCache !== null && now - _financeCacheAt < FINANCE_TTL_MS) return _financeCache;
+    try {
+        const money = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
+
+        // Ingresos por bookings (la plata real)
+        const { data: orders } = await ADMIN
+            .from("event_builder_orders")
+            .select("total_usd,amount_paid_usd,payment_status,order_status")
+            .neq("order_status", "cancelled")
+            .limit(500);
+        let booked = 0, collected = 0, unpaid = 0, depositPaid = 0, paidFull = 0;
+        for (const o of (orders ?? [])) {
+            booked += Number(o.total_usd) || 0;
+            collected += Number(o.amount_paid_usd) || 0;
+            const p = String(o.payment_status ?? "").toLowerCase();
+            if (p === "paid_full") paidFull++;
+            else if (p === "deposit_paid") depositPaid++;
+            else unpaid++;
+        }
+        const pending = booked - collected;
+
+        // Ledger de la plataforma (movimientos)
+        const { data: ledger } = await ADMIN
+            .from("dj_ledger").select("amount_cents,status").limit(1000);
+        let available = 0, ledgerPending = 0;
+        for (const l of (ledger ?? [])) {
+            const amt = (Number(l.amount_cents) || 0) / 100;
+            if (l.status === "available") available += amt;
+            else if (l.status === "pending") ledgerPending += amt;
+        }
+
+        _financeCache =
+            "\n\n### FINANZAS REALES — Miami DJ Beat (datos en vivo, solo staff financiero)\n" +
+            `Bookings: Facturado ${money(booked)} | Cobrado ${money(collected)} | ` +
+            `POR COBRAR ${money(pending)}. Órdenes: ${paidFull} pagadas, ${depositPaid} con depósito, ${unpaid} sin pagar.\n` +
+            `Ledger: disponible ${money(available)}, pendiente ${money(ledgerPending)}.\n` +
+            "Usa estas cifras cuando pregunten por dinero, ingresos, cobros o finanzas. NUNCA inventes números.";
+        _financeCacheAt = now;
+        return _financeCache;
+    } catch (e) {
+        console.error("[elixis-chat] finance fetch error:", e);
+        return "";
+    }
+}
+
 // ─── TIPOS ───────────────────────────────────────────────────────────────────
 
 interface ChatMessage {
@@ -358,8 +439,11 @@ serve(async (req: Request) => {
     // Roster real (en vivo desde public_dj_profiles, cacheado 5 min).
     const rosterContext = await fetchProRoster();
 
-    // Agenda real (próximos eventos desde dj_events, cacheado 1 min).
+    // Bookings reales (event_builder_orders, cacheado 1 min).
     const bookingsContext = await fetchUpcomingBookings();
+
+    // Finanzas reales (solo owner/admin/manager; cacheado 1 min).
+    const financeContext = await fetchFinancialSummary(gate.role);
 
     // Identidad del usuario actual (del candado) — para personalizar y adaptar al rol.
     const userBlock =
@@ -372,8 +456,10 @@ serve(async (req: Request) => {
     const systemContent =
         SYSTEM_PROMPT +
         userBlock +
+        BUSINESS_CONTEXT +
         rosterContext +
         bookingsContext +
+        financeContext +
         (sessionContext ? `\n\n### Contexto de sesión actual:\n${sessionContext}` : "");
 
     const messages: ChatMessage[] = [
