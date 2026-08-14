@@ -329,7 +329,7 @@
     try{
       var r = await _supa.auth.getSession();
       var s = (r&&r.data)?r.data.session:null;
-      if(s&&s.access_token){ _token = s.access_token; loadRealClients(); }
+      if(s&&s.access_token){ _token = s.access_token; loadRealClients(); loadRealNotifs(); }
       else { _goLogin(); return; }
       _supa.auth.onAuthStateChange(function(_e,ss){ _token = ss?ss.access_token:null; if(!_token) _goLogin(); });
     }catch(e){ _goLogin(); }
@@ -358,6 +358,32 @@
         return { n:nm, co:l.city||l.event_location||'—', st:mapSt(l.lead_outcome||l.status), last:{es:last,en:last}, val:val?('$'+Math.round(Number(val))):'—' };
       });
       if(state.screen==='clients'||state.screen==='clientDetail') render();
+    }catch(e){}
+  }
+  /* Pantalla NOTIFICACIONES → alertas reales derivadas de leads */
+  async function loadRealNotifs(){
+    if(!_supa) return;
+    try{
+      var r = await _supa.from('leads')
+        .select('name,contact_person,email,event_type,event_date,total_amount,payment_status,assigned_dj_name,created_at')
+        .order('created_at',{ascending:false}).limit(30);
+      var rows=(r&&r.data)?r.data:[];
+      if(!rows.length) return;
+      function nameOf(l){ return l.name||l.contact_person||(l.email?String(l.email).split('@')[0]:'')||'Cliente'; }
+      var out=[];
+      var sinDj=rows.filter(function(l){return !l.assigned_dj_name;}).length;
+      if(sinDj>0) out.push({lvl:'critical',ico:'warn',t:{es:sinDj+' solicitudes sin DJ asignado',en:sinDj+' leads without a DJ'},d:{es:'Requieren tu asignación',en:'Need assignment'},time:''});
+      rows.forEach(function(l){
+        var ps=String(l.payment_status||'').toLowerCase();
+        var val=Number(l.total_amount||0);
+        if(val>0 && ps!=='paid_full' && ps!=='paid'){
+          var txt=nameOf(l)+' · '+(l.event_type||'evento')+(l.event_date?' · '+l.event_date:'')+' · $'+Math.round(val);
+          out.push({lvl:'important',ico:'dollar',t:{es:'Pago pendiente',en:'Pending payment'},d:{es:txt,en:txt},time:''});
+        }
+      });
+      if(!out.length) out.push({lvl:'info',ico:'check',t:{es:'Todo al día',en:'All caught up'},d:{es:'Sin alertas pendientes',en:'No pending alerts'},time:''});
+      NOTIFS = out.slice(0,10);
+      if(state.screen==='notifications') render();
     }catch(e){}
   }
   async function askElixis(text){
