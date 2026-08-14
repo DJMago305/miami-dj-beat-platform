@@ -758,6 +758,13 @@
                 margin-top: 12px !important; /* inline 20px */
                 margin-bottom: 10px !important; /* inline 20px */
             }
+            /* #1 (PO): dividir la sección en dos — PRONÓSTICO a la izquierda, MÉTRICAS
+               (Humedad/Viento/Sensación/Visibilidad) a la DERECHA. En pantallas angostas se apila. */
+            #tab-dashboard .wx-overlay{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:center;gap:18px;}
+            #tab-dashboard .wx-overlay > #hourly-forecast-permanent{flex:1 1 100%;}
+            #tab-dashboard .wx-overlay > #daily-forecast-container{flex:1 1 420px;min-width:0;margin-top:0 !important;}
+            #tab-dashboard .wx-overlay > #weather-data-grid{flex:0 1 300px;grid-template-columns:1fr !important;align-self:flex-start;margin-top:0 !important;margin-bottom:0 !important;}
+            @media (max-width:760px){#tab-dashboard .wx-overlay > #daily-forecast-container,#tab-dashboard .wx-overlay > #weather-data-grid{flex-basis:100%;}#tab-dashboard .wx-overlay > #weather-data-grid{grid-template-columns:1fr 1fr !important;}}
 
             #tab-dashboard #calendar-master {
                 position: relative;
@@ -972,7 +979,7 @@
                             </div>
 
                             <!-- Weather Content Overlay -->
-                            <div
+                            <div class="wx-overlay"
                                 style="position: relative; z-index: 5; padding: 40px; color: #fff; text-align: center;">
                                 <style>#weather-location,#weather-main-temp,#weather-condition-label,#weather-high-low,#weather-description-text{display:none!important;}</style>
                                 <div id="weather-location"
