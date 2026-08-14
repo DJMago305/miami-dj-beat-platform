@@ -878,6 +878,53 @@
 
         <!-- TAB 1: Agenda (existing content) -->
         <div id="tab-dashboard" class="dash-tab-panel active">
+            <!-- ── Layout vertical full-page de AGENDA (paridad con weather-lab): HERO clima 100vh → scroll → calendario + módulos. Sin máscara de bordes del sistema viejo. Reversible: borrar este <style>. ── -->
+            <style id="agenda-vertical-layout">
+              #tab-dashboard > section:first-of-type { padding: 16px 0 0 !important; margin-top: 0 !important; }   /* poco aire bajo el menú (antes 62px) */
+              #tab-dashboard .hero-grid { display: block !important; max-width: none !important; }        /* apila las columnas verticalmente */
+              #tab-dashboard .agenda-main, #tab-dashboard .agenda-sidebar { width: 100% !important; max-width: 100% !important; }
+              #tab-dashboard .agenda-main { padding-top: 0 !important; }
+              /* HERO inmersivo a 100vh, en flujo (no fondo), sin marco ni máscara de bordes */
+              #tab-dashboard #booth-hero-container { min-height: 0 !important; margin: 0 0 24px 0 !important; border: 0 !important; border-radius: 0 !important; }
+              #tab-dashboard #booth-hero-container > .weather-scene { position: relative !important; inset: auto !important; top: auto !important; left: auto !important; width: 100% !important; height: calc(100vh - 174px) !important; border-radius: 0 !important; overflow: hidden !important; pointer-events: auto !important; -webkit-mask: none !important; mask: none !important; }  /* 174px = header fijo (158) + gap (16): el HERO cabe exacto bajo el menú */
+              #tab-dashboard #booth-hero-container > .weather-scene > iframe { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; pointer-events: auto !important; }
+              /* los módulos de datos fluyen DEBAJO del HERO al hacer scroll */
+              #tab-dashboard .weather-content { z-index: auto !important; }
+              #tab-dashboard .agenda-sidebar { margin-top: 8px !important; }
+            </style>
+            <script>
+            /* ── Alimenta el HERO de clima con el gig REAL de HOY (tabla leads).
+               Reúsa la sesión Supabase de la página; sin keys nuevas. El detalle
+               completo se queda en los módulos de agenda de abajo. Aditivo/reversible. ── */
+            (function(){
+              function heroFrame(){ return document.querySelector('#tab-dashboard #booth-hero-container > .weather-scene > iframe'); }
+              var payload;   // undefined=aún no consultado · null=sin evento hoy · obj=gig de hoy
+              async function fetchToday(){
+                try{
+                  var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                  if(!sb || !sb.auth) return null;
+                  var sess = (await sb.auth.getSession()).data.session; if(!sess) return null;
+                  var prof = (await sb.from('dj_profiles').select('id').eq('user_id', sess.user.id).single()).data;
+                  if(!prof) return null;
+                  var d = new Date(); var iso = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+                  var rows = (await sb.from('leads').select('event_type,event_date,location,status,budget')
+                                .eq('assigned_dj_id', prof.id).eq('event_date', iso).limit(1)).data;
+                  var ev = rows && rows[0]; if(!ev) return null;
+                  var ST = { CONFIRMED:'Confirmado', MATCHED:'Asignado', COMPLETED:'Completado', CANCELLED:'Cancelado', PENDING:'Pendiente' };
+                  return { lead:(ev.event_type||'Evento')+(ev.status?' · '+(ST[ev.status]||ev.status):''), loc: ev.location || '—' };
+                }catch(_e){ return null; }
+              }
+              var sent=false;
+              async function send(){
+                if(sent) return;
+                var f = heroFrame(); if(!f || !f.contentWindow) return;
+                if(payload===undefined) payload = await fetchToday();
+                if(payload){ f.contentWindow.postMessage({ type:'mdjb:today-event', event:payload }, '*'); sent=true; }
+              }
+              window.addEventListener('message', function(e){ if(e.data && e.data.type==='mdjb:hero-ready'){ sent=false; send(); } });
+              window.addEventListener('load', function(){ send(); setTimeout(send,1500); setTimeout(send,4000); });
+            })();
+            </script>
             <section style="padding: 60px 0; margin-top: 20px;">
                 <div class="container hero-grid" style="align-items: flex-start;">
                     <!-- Left Column: Business Logic -->
@@ -896,91 +943,17 @@
 
                             <div class="weather-scene"
                                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; border-radius: 24px; z-index: 0;">
-                                <!-- Layer 1: Sky Base Layer -->
-                                <div class="sky-base clear-day" id="weather-layer-base">
-                                    <img class="sky-base-img" src="./assets/weather/Cielo Azul.png" alt="">
-                                </div>
-
-                                <!-- Layer 1b: Stars Layer (Behind clouds for night scenes) -->
-                                <div class="sky-stars" id="weather-stars">
-                                    <img class="stars-img" src="./assets/weather/stars-night.png" alt="">
-                                    <img class="milky-way-img" src="./assets/weather/cielo%20estrellado%20hermoso.png"
-                                        alt="">
-                                </div>
-
-                                <!-- Layer 2: Horizontal Cloud Carousel -->
-                                <div class="sky-clouds" id="weather-layer-clouds">
-                                    <!-- Static Cloud for 'Muy Nublado' (behind carousel, in front of sun) -->
-                                    <img class="static-cloud-muy-nublado" src="./assets/weather/Nublado.png" alt="">
-
-                                    <!-- Panoramic Cloud Carousel for partly-cloudy and cloudy scenes -->
-                                    <!-- 
-                                    ================================================================================
-                                    [LOCKED] WEATHER SKY ENGINE BASELINE
-                                    DO NOT MODIFY CLOUD ENGINE LOGIC WITHOUT EXPLICIT USER APPROVAL.
-                                    This system is locked because it controls:
-                                    - panoramic hero sizing
-                                    - physical cloud occlusion (clouds naturally blocking sun/moon)
-                                    - infinite loop sequencing (Sequence A + Clone Sequence B)
-                                    - PNG proportion rules
-
-                                    Do not refactor, simplify, replace assets, optimize, or clean up this system 
-                                    unless explicitly instructed to by the user. 
-                                    Source of truth: .agents/workflows/weather_widget_clouds_blueprint.md
-                                    ================================================================================
-                                    -->
-                                    <div class="cloud-layer-front nubes-largas-fast-container"
-                                        id="cloud-carousel-layer">
-                                        <!-- Sequence A (First Train) -->
-                                        <img src="./assets/weather/nubes-seamless.png" alt="">
-                                        <img src="./assets/weather/nubes-blancas.png" alt="">
-                                        <img src="./assets/weather/nubes-bonitas.png" alt="">
-                                        <!-- Sequence B (Clone Train for Seamless -50% Loop) -->
-                                        <img src="./assets/weather/nubes-seamless.png" alt="">
-                                        <img src="./assets/weather/nubes-blancas.png" alt="">
-                                        <img src="./assets/weather/nubes-bonitas.png" alt="">
-                                    </div>
-
-                                    <!-- Removed Sunset Specific Infinite Carousel (now unified with nubes-largas-fast-container) -->
-                                    <!-- ==================== END LOCKED ENGINE HTML ==================== -->
-                                    <!-- Static/Drifting Cloud PNGs for rain/storm scenes -->
-                                    <img class="cloud-layer-back night-cloud-p"
-                                        src="./assets/weather/Nubes%20Oscuras%20Para%20Tormenta.png" alt="">
-                                    <img class="cloud-layer-back rain-cloud" src="./assets/weather/Nublado.png" alt="">
-                                    <img class="cloud-layer-back storm-cloud"
-                                        src="./assets/weather/Nubes%20Oscuras%20Para%20Tormenta.png" alt="">
-                                    <img class="cloud-layer-back storm-day-cloud" src="./assets/weather/Nublado.png"
-                                        alt="">
-                                </div>
-
-                                <!-- Layer 3: Vertical Rain/Snow Layer -->
-                                <div class="sky-precipitation" id="weather-layer-precipitation">
-                                    <div class="sky-rain-layer" id="weather-layer-rain"></div>
-                                    <div class="sky-snow-layer" id="weather-layer-snow">
-                                        <div class="snow-layer-small"></div>
-                                        <div class="snow-layer-large"></div>
-                                    </div>
-                                    <div class="sky-storm-layer" id="weather-layer-storm"></div>
-                                </div>
-
-                                <!-- Layer 4: Lightning Overlay Layer -->
-                                <div class="sky-lightning" id="weather-layer-lightning">
-                                    <img class="rayo-storm-asset rayo-1" src="./assets/weather/Rayo%20Storm.png" alt="">
-                                    <img class="rayo-storm-asset rayo-2"
-                                        src="./assets/weather/Rayo%20Storm%20Definido.png" alt="">
-                                </div>
-
-                                <!-- Layer 5: Sun / Moon Layer -->
-                                <div class="sky-astral-front" id="weather-layer-astral">
-                                    <img class="sun-asset" id="sun-element" src="./assets/weather/sunny-real.png"
-                                        alt="">
-                                    <img class="moon-asset" id="moon-element" src="./assets/weather/moon.png" alt="">
-                                </div>
+                                <!-- ── NUEVO HERO WebGL 3D (reemplaza el motor CSS .weather-scene) — paridad con weather-lab, reversible vía git ── -->
+                                <iframe src="./weather-experience/index.html"
+                                    title="Clima MDJB — HERO Atmosférico 3D"
+                                    loading="lazy"
+                                    style="position:absolute; inset:0; width:100%; height:100%; border:0; border-radius:20px;"></iframe>
                             </div>
 
                             <!-- Weather Content Overlay -->
                             <div
                                 style="position: relative; z-index: 5; padding: 40px; color: #fff; text-align: center;">
+                                <style>#weather-location,#weather-main-temp,#weather-condition-label,#weather-high-low,#weather-description-text{display:none!important;}</style>
                                 <div id="weather-location"
                                     style="font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.6); margin-bottom: 10px; letter-spacing: 2px; text-transform: uppercase;">
                                     Miami, FL — USA
@@ -1075,7 +1048,43 @@
                     Scope: #calendar-master, FullCalendar overrides.
                     ================================================================================ 
                     -->
-                    <div class="agenda-sidebar calendar-column" style="position: relative; z-index: 80;">
+                    <!-- ── Agenda operacional (Matrix) — SOLO staff/owner/manager/seller. Se decide por rol (dj_profiles.role): el artista mantiene su calendario personal de abajo. ── -->
+                    <div id="staff-matrix-embed" style="display:none; width:100%; margin-top:8px;">
+                      <iframe id="staff-matrix-frame" title="Agenda operacional — Miami DJ Beat" loading="lazy"
+                        style="width:100%; height:calc(100vh - 120px); min-height:700px; border:0; border-radius:0; display:block;"></iframe>
+                    </div>
+                    <script>
+                    (function(){
+                      // Dos agendas por rol: staff/owner/manager/seller ven la Matrix operacional (todos los eventos + quién);
+                      // el artista mantiene su calendario personal. Usa dj_profiles.role (misma fuente que el resto de la app).
+                      async function pickAgenda(){
+                        try{
+                          var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                          if(!sb || !sb.auth){ return setTimeout(pickAgenda, 300); }
+                          var sess = (await sb.auth.getSession()).data.session;
+                          if(!sess) return;
+                          var res = await sb.from('dj_profiles').select('role').eq('user_id', sess.user.id).maybeSingle();
+                          var role = String(res.data && res.data.role ? res.data.role : '').toLowerCase().trim();
+                          if(['admin','owner','manager','seller'].indexOf(role) !== -1){
+                            var box = document.getElementById('staff-matrix-embed');
+                            var frame = document.getElementById('staff-matrix-frame');
+                            var personal = document.querySelector('#tab-dashboard .agenda-sidebar.calendar-column');
+                            if(frame && !frame.getAttribute('src')) frame.setAttribute('src', './calendario-operacional-inteligente.html');
+                            if(box) box.style.display = 'block';
+                            if(personal) personal.style.display = 'none';   // staff no usa el calendario personal del artista
+                          }
+                          // artista: no hace nada → conserva su calendario personal
+                        }catch(_e){}
+                      }
+                      pickAgenda();
+                    })();
+                    </script>
+                    <!-- ═══ NUEVO · Calendario Operacional Inteligente (reemplaza el FullCalendar viejo; el viejo queda OCULTO abajo, NO borrado — pendiente reporte visual + removal) ═══ -->
+                    <div style="width:100%; grid-column:1 / -1; flex-basis:100%; position: relative; z-index: 80; margin-top:14px;">
+                      <iframe src="./calendario-operacional-inteligente.html" title="Calendario Operacional Inteligente · Miami DJ Beat" loading="lazy"
+                        style="width:100%; height:760px; border:1px solid rgba(197,160,89,0.25); border-radius:14px; background:#0a0b0f; display:block;"></iframe>
+                    </div>
+                    <div class="agenda-sidebar calendar-column" style="display:none; position: relative; z-index: 80;">
                         <div class="admin-card agenda-card-container calendar-card"
                             style="padding: 0; position: relative; overflow: visible; border: 1px solid rgba(197,160,89,0.25); min-height: 500px; background: rgba(6,6,10,0.35) !important; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 1;">
 
