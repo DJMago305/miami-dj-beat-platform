@@ -199,6 +199,45 @@
   }
   #voiceSelect:focus{border-color:var(--line)}
   .settings-hint{font-size:11px;color:#5f656e;line-height:1.4}
+  .logout-btn{
+    margin-top:4px;background:transparent;border:1px solid var(--line-soft);color:var(--muted);
+    border-radius:10px;padding:9px;font:inherit;font-size:13px;cursor:pointer;
+  }
+  .logout-btn:hover{border-color:var(--danger);color:#f2b7ab}
+
+  /* candado de acceso */
+  .auth-gate{
+    position:fixed; inset:0; z-index:100;
+    background:radial-gradient(900px 500px at 50% 0%, rgba(212,175,55,.12), transparent 60%), var(--bg);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .auth-gate[hidden]{display:none}
+  .auth-card{
+    width:min(380px,92vw); background:var(--panel); border:1px solid var(--line);
+    border-radius:20px; padding:32px 26px; box-shadow:0 24px 70px rgba(0,0,0,.6);
+    display:flex; flex-direction:column; align-items:center; gap:9px;
+  }
+  .auth-logo{width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 2px 12px rgba(212,175,55,.4))}
+  .auth-title{
+    font-family:"Bodoni 72","Didot",Georgia,serif;font-size:34px;font-weight:700;letter-spacing:.16em;
+    background:linear-gradient(180deg,var(--gold-2),var(--gold));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .auth-sub{font-size:11px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px}
+  .auth-form{display:flex;flex-direction:column;gap:10px;width:100%;margin-top:4px}
+  .auth-input{
+    background:var(--panel-2);color:var(--text);border:1px solid var(--line-soft);
+    border-radius:12px;padding:13px 15px;font:inherit;font-size:15px;outline:none;
+  }
+  .auth-input:focus{border-color:var(--line)}
+  .auth-btn{
+    margin-top:2px;border:1px solid var(--line);border-radius:12px;padding:13px;cursor:pointer;
+    background:linear-gradient(160deg,var(--gold-2),var(--gold));color:#111;font:inherit;font-weight:700;font-size:15px;transition:transform .12s;
+  }
+  .auth-btn:hover{transform:translateY(-1px)}
+  .auth-btn:disabled{opacity:.6;cursor:progress;transform:none}
+  .auth-msg{font-size:13px;color:var(--danger);min-height:18px}
+  .auth-note{font-size:11px;color:#5f656e;line-height:1.5;margin-top:4px}
 
   @media (max-width:520px){
     .sub{display:none}
@@ -234,6 +273,7 @@
       <option value="verse">Verse — expresiva</option>
     </select>
     <div class="settings-hint">Solo voces masculinas. Se aplica a la próxima respuesta.</div>
+    <button id="logoutBtn" class="logout-btn" type="button">Cerrar sesión</button>
   </div>
 
   <main class="stream" id="stream" aria-live="polite"></main>
@@ -256,6 +296,42 @@
 
   var history = [];        // { role:'user'|'assistant', content }
   var busy = false;
+
+  // ── CANDADO DE ACCESO — reusa TU login principal (login.html) ──────
+  // Con sesión de owner/staff → ELIXIS abre directo, sin pedir nada.
+  // Sin sesión → te manda a tu login principal (el único) y vuelve aquí.
+  var supa = (typeof window.getSupabaseClient === "function") ? window.getSupabaseClient() : null;
+  var accessToken = null;
+  var LOGIN_URL = "./login.html?next=elixis-console.html";
+  function goLogin(){ try{ window.location.replace(LOGIN_URL); }catch(e){} }
+
+  async function initAuth(){
+    if(!supa) return; // sin cliente no verificamos aquí; el backend igual bloquea
+    try{
+      var r = await supa.auth.getSession();
+      var session = (r && r.data) ? r.data.session : null;
+      if(session && session.access_token){
+        accessToken = session.access_token;   // ya estás dentro → ELIXIS abre
+      } else {
+        goLogin();                             // no logueado → a tu login principal
+        return;
+      }
+    }catch(e){ goLogin(); return; }
+    try{
+      supa.auth.onAuthStateChange(function(_ev, session){
+        accessToken = session ? session.access_token : null;
+        if(!accessToken) goLogin();
+      });
+    }catch(e){}
+  }
+  var logoutBtn = document.getElementById("logoutBtn");
+  if(logoutBtn){
+    logoutBtn.addEventListener("click", async function(){
+      try{ if(supa) await supa.auth.signOut(); }catch(e){}
+      accessToken = null; goLogin();
+    });
+  }
+  initAuth();
 
   // ── Render helpers ─────────────────────────────────
   function el(tag, cls, txt){
@@ -319,10 +395,12 @@
     return null;
   }
   function invokeHeaders(){
-    if(typeof window.mdjSupabaseAnonInvokeHeaders === "function"){
-      return window.mdjSupabaseAnonInvokeHeaders();
-    }
-    return { "Content-Type":"application/json" };
+    var pub = window.MDB_SUPABASE_ANON_KEY || "";
+    var h = { "Content-Type":"application/json" };
+    if(pub) h.apikey = pub;
+    // Con sesión mandamos el token del usuario; el candado server-side lo verifica.
+    h.Authorization = "Bearer " + (accessToken || pub);
+    return h;
   }
 
   async function askElixis(message){
@@ -341,6 +419,8 @@
       hideTyping();
       var data = {};
       try { data = await res.json(); } catch(_) {}
+      if(res.status === 401){ goLogin(); return; }
+      if(res.status === 403){ addError("Esta cuenta no tiene acceso de owner/staff" + (data.detail ? " (rol: " + data.detail + ")" : "") + "."); return; }
       if(!res.ok || !data.reply){
         addError("ELIXIS tuvo un problema (" + res.status + "): " + (data.error || "sin respuesta") + ".");
         return;

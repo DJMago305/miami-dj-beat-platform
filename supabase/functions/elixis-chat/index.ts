@@ -6,6 +6,7 @@
 // El secreto ANTHROPIC_API_KEY vive cifrado en Supabase (Edge Functions → Secrets).
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // ─── MODELO ──────────────────────────────────────────────────────────────────
 // Haiku 4.5 = el más barato/rápido para pruebas. Para subir de nivel (más
@@ -19,6 +20,35 @@ const MAX_TOKENS = 512;
 // la vieja SUPABASE_ANON_KEY inyectada ya no sirve contra REST.
 const PUBLISHABLE_KEY = "sb_publishable_IMhi16lHj2dAk51AdUOK8w_U7s89-Ff";
 const SUPABASE_URL_FALLBACK = "https://hkuvuqupbxwkiykxvqdr.supabase.co";
+
+// ─── CANDADO — solo staff/owner (verificación server-side) ───────────────────
+// El que llama debe mandar Authorization: Bearer <access_token del usuario>.
+// Verificamos el JWT con service_role y exigimos dj_profiles.role staff/owner.
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const ADMIN = createClient(
+    Deno.env.get("SUPABASE_URL") || SUPABASE_URL_FALLBACK,
+    SERVICE_ROLE_KEY,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+);
+// is_staff() de V1 excluye 'owner'; aquí lo incluimos para no bloquear al Capitán.
+const ALLOWED_ROLES = new Set(["owner", "admin", "manager", "seller"]);
+
+async function verifyStaff(
+    req: Request,
+): Promise<{ ok: true; userId: string } | { ok: false; status: number; error: string; detail?: string }> {
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const jwt = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+    if (!jwt) return { ok: false, status: 401, error: "missing_authorization" };
+    const { data: { user }, error } = await ADMIN.auth.getUser(jwt);
+    if (error || !user?.id) return { ok: false, status: 401, error: "invalid_session" };
+    const { data: prof } = await ADMIN
+        .from("dj_profiles").select("role").eq("user_id", user.id).maybeSingle();
+    const role = String(prof?.role ?? "").toLowerCase().trim();
+    if (!ALLOWED_ROLES.has(role)) {
+        return { ok: false, status: 403, error: "forbidden_not_staff", detail: role || "sin_rol" };
+    }
+    return { ok: true, userId: user.id };
+}
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
 
@@ -219,6 +249,15 @@ serve(async (req: Request) => {
                     "Retry-After": "60",
                 },
             }
+        );
+    }
+
+    // 🔒 Candado: solo staff/owner autenticado
+    const gate = await verifyStaff(req);
+    if (!gate.ok) {
+        return new Response(
+            JSON.stringify({ error: gate.error, detail: gate.detail }),
+            { status: gate.status, headers: { ...cors, "Content-Type": "application/json" } },
         );
     }
 
