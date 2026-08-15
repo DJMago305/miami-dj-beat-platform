@@ -394,6 +394,423 @@
             color: var(--muted);
         }
 
+        /* Owner Operations Feed — TICKET-V1-OWNER-OPS-FEED-MVP-001 */
+        .owner-ops-feed-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+        .owner-ops-feed-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .owner-ops-feed-filter-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.72);
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .owner-ops-feed-filter-btn:hover {
+            border-color: rgba(197, 160, 89, 0.45);
+            color: #fff;
+        }
+        .owner-ops-feed-filter-btn.active {
+            border-color: rgba(197, 160, 89, 0.75);
+            color: var(--gold);
+            background: rgba(197, 160, 89, 0.1);
+        }
+        .owner-ops-feed-meta {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.45);
+        }
+        .owner-ops-source-warn {
+            font-size: 12px;
+            color: rgba(245, 158, 11, 0.92);
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.22);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+        }
+        .owner-ops-feed-ref {
+            font-size: 10px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: rgba(197, 160, 89, 0.85);
+            margin-top: 4px;
+        }
+
+        /* Owner Ops Data Grid — TICKET-V1-STAFF-ACTIVITY-DATAGRID-001 */
+        /* Layout refinements — TICKET-V1-STAFF-ACTIVITY-DATAGRID-002 */
+        #actividad.admin-card {
+            padding: 14px 16px 16px;
+            margin-bottom: 12px;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        #actividad .owner-ops-feed-toolbar {
+            margin-bottom: 8px;
+            gap: 8px;
+        }
+        #actividad .owner-ops-feed-toolbar h3 {
+            margin: 0;
+        }
+        #actividad .owner-ops-feed-toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        #actividad .owner-ops-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        #actividad .owner-ops-feed-filters {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+        }
+        #actividad .owner-ops-feed-filter-btn {
+            padding: 5px 10px;
+            font-size: 11px;
+        }
+        /* Search — TICKET-V1-STAFF-ACTIVITY-DATAGRID-003 / 005 */
+        #actividad .owner-ops-search-wrap {
+            position: relative;
+            flex: 1 1 420px;
+            min-width: min(100%, 420px);
+            max-width: 100%;
+            margin-left: auto;
+        }
+        #actividad .owner-ops-search-icon {
+            position: absolute;
+            left: 11px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            color: rgba(255, 255, 255, 0.42);
+            pointer-events: none;
+            z-index: 1;
+        }
+        #actividad .owner-ops-search-input {
+            width: 100%;
+            min-height: 30px;
+            height: 30px;
+            padding: 0 12px 0 36px !important;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(10, 10, 18, 0.88);
+            color: #fff;
+            font-size: 12px !important;
+            line-height: 30px;
+            box-sizing: border-box;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        #actividad .owner-ops-search-input::placeholder {
+            color: rgba(255, 255, 255, 0.38);
+        }
+        #actividad .owner-ops-search-input:focus {
+            outline: none;
+            border-color: rgba(197, 160, 89, 0.75);
+            box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.18);
+        }
+        #actividad .owner-ops-search-input::-webkit-search-decoration,
+        #actividad .owner-ops-search-input::-webkit-search-cancel-button {
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        #actividad .owner-ops-secondary-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+        }
+        #actividad .owner-ops-secondary-filters select {
+            background: rgba(10, 10, 18, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 12px !important;
+            padding: 6px 10px !important;
+            min-height: 30px;
+            line-height: 1.3;
+            box-sizing: border-box;
+            flex: 0 1 auto;
+            min-width: 0;
+        }
+        #actividad #owner-ops-feed-container {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+        }
+        #actividad .owner-ops-grid-wrap {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: calc(100vh - 220px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.15);
+            box-sizing: border-box;
+            isolation: isolate;
+        }
+        #actividad .owner-ops-grid {
+            width: 100%;
+            max-width: 100%;
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 12px;
+        }
+        /* Header sólido — TICKET-V1-STAFF-ACTIVITY-DATAGRID-004 */
+        #actividad .owner-ops-grid thead {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+        }
+        #actividad .owner-ops-grid thead tr {
+            background: #B8923A;
+        }
+        #actividad .owner-ops-grid thead th {
+            position: sticky;
+            top: 0;
+            z-index: 31;
+            background: #B8923A;
+            padding: 8px 8px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            border-bottom: 2px solid #8F7028;
+            border-right: 1px solid #8F7028;
+            white-space: nowrap;
+            color: #12101a;
+            text-align: left;
+            user-select: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 2px 0 #8F7028;
+        }
+        #actividad .owner-ops-grid thead th:last-child { border-right: none; }
+        #actividad .owner-ops-grid thead th.owner-ops-sortable {
+            cursor: pointer;
+        }
+        #actividad .owner-ops-grid thead th.owner-ops-sortable:hover {
+            background: #A68232;
+        }
+        #actividad .owner-ops-grid thead th .owner-ops-sort-ind {
+            color: #3d3018;
+            font-size: 10px;
+            margin-left: 4px;
+        }
+        #actividad .owner-ops-grid tbody {
+            position: relative;
+            z-index: 1;
+        }
+        #actividad .owner-ops-grid tbody td {
+            padding: 7px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-right: 1px solid rgba(255, 255, 255, 0.04);
+            vertical-align: middle;
+            color: rgba(255, 255, 255, 0.88);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        #actividad .owner-ops-grid tbody td.owner-ops-col-actions {
+            overflow: visible;
+            white-space: nowrap;
+        }
+        #actividad .owner-ops-source-warn {
+            margin-bottom: 8px;
+            padding: 6px 10px;
+        }
+        #actividad .owner-ops-grid tbody td:last-child { border-right: none; }
+        #actividad .owner-ops-grid tbody tr {
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+        #actividad .owner-ops-grid tbody tr:hover td {
+            background: rgba(197, 160, 89, 0.06);
+        }
+        #actividad .owner-ops-grid tbody tr.owner-ops-row--selected td {
+            background: rgba(197, 160, 89, 0.12);
+        }
+        #actividad .owner-ops-type-pill {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        #actividad .owner-ops-type-pill--lead { background: rgba(99, 102, 241, 0.18); color: #a5b4fc; }
+        #actividad .owner-ops-type-pill--registro { background: rgba(34, 197, 94, 0.15); color: #86efac; }
+        #actividad .owner-ops-type-pill--mensaje { background: rgba(56, 189, 248, 0.15); color: #7dd3fc; }
+        #actividad .owner-ops-type-pill--ticket { background: rgba(245, 158, 11, 0.18); color: #fcd34d; }
+        #actividad .owner-ops-type-pill--pago { background: rgba(197, 160, 89, 0.2); color: var(--gold); }
+        #actividad .owner-ops-grid-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: nowrap;
+        }
+        #actividad .owner-ops-grid-actions .btn {
+            padding: 3px 7px;
+            font-size: 10px;
+            white-space: nowrap;
+        }
+        #actividad .owner-ops-ref-cell {
+            font-family: ui-monospace, monospace;
+            font-size: 11px;
+            color: rgba(197, 160, 89, 0.9);
+        }
+        .owner-ops-drawer-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.72);
+            backdrop-filter: blur(4px);
+            z-index: 4000;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .owner-ops-drawer-panel {
+            width: min(480px, 100vw);
+            height: 100%;
+            overflow-y: auto;
+            background: linear-gradient(165deg, rgba(26, 26, 46, 0.98), rgba(12, 12, 20, 0.98));
+            border-left: 1px solid rgba(197, 160, 89, 0.35);
+            box-shadow: -12px 0 40px rgba(0, 0, 0, 0.45);
+            padding: 24px 22px 32px;
+        }
+        .owner-ops-drawer-panel h3 {
+            margin: 0 0 6px;
+            color: var(--gold);
+            font-size: 18px;
+        }
+        .owner-ops-drawer-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .owner-ops-drawer-kv {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 8px 12px;
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+        .owner-ops-drawer-kv dt {
+            color: rgba(255, 255, 255, 0.45);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .owner-ops-drawer-kv dd {
+            margin: 0;
+            color: #fff;
+        }
+        .owner-ops-drawer-timeline {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 16px;
+            margin-top: 8px;
+        }
+        .owner-ops-drawer-timeline h4 {
+            margin: 0 0 12px;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--gold);
+        }
+        .owner-ops-drawer-timeline-item {
+            padding: 10px 0 10px 14px;
+            border-left: 2px solid rgba(197, 160, 89, 0.4);
+            margin-left: 4px;
+            margin-bottom: 8px;
+        }
+        .owner-ops-drawer-timeline-item time {
+            display: block;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.45);
+            margin-bottom: 4px;
+        }
+        /* Drawer action buttons — TICKET-V1-STAFF-ACTIVITY-DATAGRID-006 */
+        .owner-ops-drawer-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .owner-ops-drawer-action-btn {
+            -webkit-appearance: none;
+            appearance: none;
+            font-family: inherit;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 36px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            line-height: 1.2;
+            color: #F5F5F5;
+            background: #1C2230;
+            border: 1px solid #4A4F5C;
+            box-sizing: border-box;
+            transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+        }
+        .owner-ops-drawer-action-btn:hover {
+            background: #B8923A;
+            color: #111318;
+            border-color: #B8923A;
+        }
+        .owner-ops-drawer-action-btn:focus {
+            outline: none;
+        }
+        .owner-ops-drawer-action-btn:focus-visible {
+            outline: 2px solid #D4AF5A;
+            outline-offset: 2px;
+        }
+        .owner-ops-drawer-action-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        .owner-ops-drawer-action-btn:disabled:hover {
+            background: #1C2230;
+            color: #F5F5F5;
+            border-color: #4A4F5C;
+        }
+
         .loading-spinner {
             text-align: center;
             padding: 40px;
@@ -1239,11 +1656,15 @@
                   <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                   Leads
                 </a>
+                <a href="#actividad" class="side-link" style="display:flex;align-items:center;gap:9px;">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                  Actividad
+                </a>
                 <a href="#eb-orders" class="side-link" onclick="loadEbOrders()" style="display:flex;align-items:center;gap:9px;">
                   <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
                   Órdenes Event Builder
                 </a>
-                <a href="#crm" class="side-link" onclick="loadCRM()" style="display:flex;align-items:center;gap:9px;">
+                <a href="#crm" class="side-link" style="display:flex;align-items:center;gap:9px;">
                   <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                   Base CRM
                 </a>
@@ -1342,6 +1763,57 @@
                     </div>
                 </div>
 
+                <!-- Owner Operations Feed — TICKET-V1-OWNER-OPS-FEED-MVP-001 -->
+                <div class="admin-card" id="actividad" style="display:none;">
+                    <div class="owner-ops-feed-toolbar">
+                        <h3 style="color:var(--gold);">Actividad operativa</h3>
+                        <div class="owner-ops-feed-toolbar-actions">
+                            <span id="owner-ops-feed-meta" class="owner-ops-feed-meta"></span>
+                            <button type="button" class="btn secondary small" onclick="loadOwnerOpsFeed()">↺ Actualizar</button>
+                        </div>
+                    </div>
+                    <div class="owner-ops-controls">
+                    <div class="owner-ops-feed-filters" role="toolbar" aria-label="Filtrar actividad">
+                        <button type="button" class="owner-ops-feed-filter-btn active" data-ops-filter="all" onclick="setOwnerOpsFeedFilter('all', this)">Todos</button>
+                        <button type="button" class="owner-ops-feed-filter-btn" data-ops-filter="leads" onclick="setOwnerOpsFeedFilter('leads', this)">Leads</button>
+                        <button type="button" class="owner-ops-feed-filter-btn" data-ops-filter="registro" onclick="setOwnerOpsFeedFilter('registro', this)">Registros</button>
+                        <button type="button" class="owner-ops-feed-filter-btn" data-ops-filter="mensajes" onclick="setOwnerOpsFeedFilter('mensajes', this)">Mensajes / Tickets</button>
+                        <button type="button" class="owner-ops-feed-filter-btn" data-ops-filter="pagos" onclick="setOwnerOpsFeedFilter('pagos', this)">Pagos / MDJPRO</button>
+                        <div class="owner-ops-search-wrap">
+                            <svg class="owner-ops-search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+                            <input type="search" id="owner-ops-grid-search" class="owner-ops-search-input" placeholder="Search" aria-label="Search" oninput="setOwnerOpsGridSearch(this.value)">
+                        </div>
+                    </div>
+                    <div class="owner-ops-secondary-filters" role="group" aria-label="Filtros secundarios">
+                        <select id="owner-ops-grid-date" aria-label="Filtrar por fecha" onchange="setOwnerOpsGridDate(this.value)">
+                            <option value="all">Todas las fechas</option>
+                            <option value="today">Hoy</option>
+                            <option value="7d">7 días</option>
+                            <option value="30d">30 días</option>
+                        </select>
+                        <select id="owner-ops-grid-status" aria-label="Filtrar por estado" onchange="setOwnerOpsGridStatus(this.value)">
+                            <option value="all">Estado</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="leido">Leído</option>
+                            <option value="pagado">Pagado</option>
+                            <option value="parcial">Parcial</option>
+                        </select>
+                        <select id="owner-ops-grid-type" aria-label="Filtrar por tipo" onchange="setOwnerOpsGridType(this.value)">
+                            <option value="all">Tipo</option>
+                            <option value="lead">Lead</option>
+                            <option value="registro">Registro</option>
+                            <option value="mensaje">Mensaje</option>
+                            <option value="ticket">Ticket</option>
+                            <option value="pago">Pago</option>
+                        </select>
+                    </div>
+                    </div>
+                    <div id="owner-ops-feed-source-warnings"></div>
+                    <div id="owner-ops-feed-container">
+                        <div class="loading-spinner">Selecciona Actividad o pulsa Actualizar…</div>
+                    </div>
+                </div>
+
                 <!-- Event Builder Orders Section -->
                 <div class="admin-card" id="eb-orders" style="display:none;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
@@ -1408,7 +1880,7 @@
                             <p class="fineprint">Base de datos centralizada para comunicación futura</p>
                         </div>
                         <div style="display:flex; gap:10px;">
-                            <button class="btn secondary small" onclick="loadCRM()">↺ Actualizar</button>
+                            <button class="btn secondary small" onclick="window.loadCRM && window.loadCRM()">↺ Actualizar</button>
                         </div>
                     </div>
 
@@ -3807,7 +4279,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     const target = hrefRaw.replace('#', '');
                     if (!target) return;
                     // Show target section, hide others — with anti-CLS fade
-                    const sections = ['leads', 'eb-orders', 'crm', 'djs', 'staff', 'registry-section', 'analytics', 'content', 'apps', 'production', 'wedding-plan', 'create-profiles', 'event-blueprint', 'fashion-show-panel'];
+                    const sections = ['leads', 'actividad', 'eb-orders', 'crm', 'djs', 'staff', 'registry-section', 'analytics', 'content', 'apps', 'production', 'wedding-plan', 'create-profiles', 'event-blueprint', 'fashion-show-panel'];
                     const eventPanels = ['event-blueprint', 'fashion-show-panel'];
                     sections.forEach(id => {
                         const el = document.getElementById(id);
@@ -3831,6 +4303,14 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         window.MDJProduction.init();
                     }
 
+                    if (target === 'actividad' && typeof window.loadOwnerOpsFeed === 'function') {
+                        window.loadOwnerOpsFeed();
+                    }
+
+                    if (target === 'crm' && typeof window.loadCRM === 'function') {
+                        window.loadCRM();
+                    }
+
                     // Scroll to top when switching sections (except wedding-plan which is fixed)
                     if (target !== 'wedding-plan') window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -3841,7 +4321,6 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     }
                 });
             });
-            handleHashNavigation();
 
             // ── Wedding Plan — close button ────────────────────
             /* ══════════════════════════════════════════════════════════════════
@@ -4438,6 +4917,700 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 
                 // Cargar actividad al mismo tiempo que el staff
                 if (window.loadStaffActivity) window.loadStaffActivity();
+            };
+
+            // ── Owner Operations Feed — TICKET-V1-OWNER-OPS-FEED-MVP-001
+            //    Data Grid UI — TICKET-V1-STAFF-ACTIVITY-DATAGRID-001
+            window._ownerOpsFeedState = {
+                filter: 'all',
+                items: [],
+                sourceErrors: {},
+                lastUpdated: null,
+                search: '',
+                dateRange: 'all',
+                statusFilter: 'all',
+                typeFilter: 'all',
+                sortCol: 'date',
+                sortDir: 'desc',
+                selectedIndex: null
+            };
+
+            var _OWNER_OPS_STAFF_ROLES = { owner: 1, admin: 1, manager: 1, seller: 1 };
+            var _OWNER_OPS_FEED_LIMIT = 20;
+            var _OWNER_OPS_FEED_MAX_ITEMS = 60;
+
+            function _ownerOpsKindLabel(kind) {
+                var map = {
+                    lead: 'Lead',
+                    registro: 'Registro',
+                    mensaje: 'Mensaje',
+                    ticket: 'Ticket',
+                    pago: 'Pago',
+                    mdjpro: 'MDJPRO'
+                };
+                return map[kind] || kind || '—';
+            }
+
+            function _ownerOpsEscapeHtml(str) {
+                return String(str == null ? '' : str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+
+            function _ownerOpsLeadStatusLabel(status) {
+                var map = {
+                    NEW: 'Pendiente',
+                    MATCHED: 'Vinculado',
+                    CONFIRMED: 'Confirmado',
+                    CANCELLED: 'Cancelado',
+                    COMPLETED: 'Completado',
+                    CONTACTED: 'Contactado'
+                };
+                return map[(status || '').toUpperCase()] || (status || '—');
+            }
+
+            function _ownerOpsFmtDate(value) {
+                var d = value instanceof Date ? value : new Date(value);
+                if (isNaN(d.getTime())) return '—';
+                return d.toLocaleString('es-ES', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            function _ownerOpsFmtMoney(cents, currency) {
+                var amount = (Number(cents) || 0) / 100;
+                try {
+                    return new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: String(currency || 'usd').toUpperCase()
+                    }).format(amount);
+                } catch (e) {
+                    return '$' + amount.toFixed(2);
+                }
+            }
+
+            function _ownerOpsFeedMatchesFilter(item, filter) {
+                if (!item || filter === 'all') return true;
+                if (filter === 'leads') return item.kind === 'lead';
+                if (filter === 'registro') return item.kind === 'registro';
+                if (filter === 'mensajes') return item.kind === 'mensaje' || item.kind === 'ticket';
+                if (filter === 'pagos') return item.kind === 'pago' || item.kind === 'mdjpro';
+                return true;
+            }
+
+            function _ownerOpsGridMatchesDate(item, range) {
+                if (!item || !item.date || range === 'all') return true;
+                var now = new Date();
+                var d = item.date instanceof Date ? item.date : new Date(item.date);
+                if (isNaN(d.getTime())) return false;
+                if (range === 'today') {
+                    return d.toDateString() === now.toDateString();
+                }
+                if (range === '7d') {
+                    return (now.getTime() - d.getTime()) <= 7 * 24 * 60 * 60 * 1000;
+                }
+                if (range === '30d') {
+                    return (now.getTime() - d.getTime()) <= 30 * 24 * 60 * 60 * 1000;
+                }
+                return true;
+            }
+
+            function _ownerOpsGridMatchesStatus(item, statusFilter) {
+                if (!item || statusFilter === 'all') return true;
+                var blob = [
+                    item.colStatus,
+                    item.colPayment,
+                    item.detail,
+                    item.title
+                ].join(' ').toLowerCase();
+                if (statusFilter === 'pendiente') {
+                    return /pendiente|sin leer|unpaid|new|pending|—/.test(blob) && !/pagado|paid|confirmado|leído|leido|matched|completed/.test(blob);
+                }
+                if (statusFilter === 'leido') {
+                    return /leído|leido|confirmado|matched|contacted|completed|sent/.test(blob);
+                }
+                if (statusFilter === 'pagado') {
+                    return /pagado|paid|paid_full|deposit_paid/.test(blob);
+                }
+                if (statusFilter === 'parcial') {
+                    return /partial|parcial|deposit/.test(blob);
+                }
+                return true;
+            }
+
+            function _ownerOpsGridMatchesSearch(item, query) {
+                if (!query) return true;
+                var q = String(query).trim().toLowerCase();
+                if (!q) return true;
+                var hay = [
+                    item.title,
+                    item.desc,
+                    item.detail,
+                    item.ref,
+                    item.source,
+                    item.colClient,
+                    item.colProduct,
+                    item.colStatus,
+                    item.colPayment,
+                    item.colResponsible,
+                    _ownerOpsKindLabel(item.kind)
+                ].join(' ').toLowerCase();
+                return hay.indexOf(q) !== -1;
+            }
+
+            function _ownerOpsGridSortValue(item, col) {
+                if (!item) return '';
+                if (col === 'date' || col === 'updated') {
+                    var t = item.date instanceof Date ? item.date.getTime() : new Date(item.date).getTime();
+                    return isNaN(t) ? 0 : t;
+                }
+                if (col === 'client') return String(item.colClient || '').toLowerCase();
+                if (col === 'status') return String(item.colStatus || '').toLowerCase();
+                if (col === 'type') return String(item.kind || '').toLowerCase();
+                if (col === 'payment') return String(item.colPayment || '').toLowerCase();
+                if (col === 'responsible') return String(item.colResponsible || '').toLowerCase();
+                return String(item[col] || '').toLowerCase();
+            }
+
+            function _ownerOpsApplyGridFilters(items, state) {
+                return (items || []).filter(function (item) {
+                    if (!_ownerOpsFeedMatchesFilter(item, state.filter)) return false;
+                    if (state.typeFilter !== 'all' && item.kind !== state.typeFilter) return false;
+                    if (!_ownerOpsGridMatchesDate(item, state.dateRange)) return false;
+                    if (!_ownerOpsGridMatchesStatus(item, state.statusFilter)) return false;
+                    if (!_ownerOpsGridMatchesSearch(item, state.search)) return false;
+                    return true;
+                }).sort(function (a, b) {
+                    var col = state.sortCol || 'date';
+                    var dir = state.sortDir === 'asc' ? 1 : -1;
+                    var va = _ownerOpsGridSortValue(a, col);
+                    var vb = _ownerOpsGridSortValue(b, col);
+                    if (typeof va === 'number' && typeof vb === 'number') {
+                        return (va - vb) * dir;
+                    }
+                    va = String(va);
+                    vb = String(vb);
+                    if (va < vb) return -1 * dir;
+                    if (va > vb) return 1 * dir;
+                    return 0;
+                });
+            }
+
+            window.setOwnerOpsGridSearch = function (value) {
+                window._ownerOpsFeedState.search = value || '';
+                if (typeof window.renderOwnerOpsFeed === 'function') window.renderOwnerOpsFeed();
+            };
+
+            window.setOwnerOpsGridDate = function (value) {
+                window._ownerOpsFeedState.dateRange = value || 'all';
+                if (typeof window.renderOwnerOpsFeed === 'function') window.renderOwnerOpsFeed();
+            };
+
+            window.setOwnerOpsGridStatus = function (value) {
+                window._ownerOpsFeedState.statusFilter = value || 'all';
+                if (typeof window.renderOwnerOpsFeed === 'function') window.renderOwnerOpsFeed();
+            };
+
+            window.setOwnerOpsGridType = function (value) {
+                window._ownerOpsFeedState.typeFilter = value || 'all';
+                if (typeof window.renderOwnerOpsFeed === 'function') window.renderOwnerOpsFeed();
+            };
+
+            window.setOwnerOpsGridSort = function (col) {
+                var state = window._ownerOpsFeedState;
+                if (state.sortCol === col) {
+                    state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+                } else {
+                    state.sortCol = col;
+                    state.sortDir = col === 'date' ? 'desc' : 'asc';
+                }
+                if (typeof window.renderOwnerOpsFeed === 'function') window.renderOwnerOpsFeed();
+            };
+
+            window.setOwnerOpsFeedFilter = function (filter, btnEl) {
+                window._ownerOpsFeedState.filter = filter || 'all';
+                document.querySelectorAll('.owner-ops-feed-filter-btn').forEach(function (btn) {
+                    btn.classList.toggle('active', btn === btnEl);
+                });
+                if (typeof window.renderOwnerOpsFeed === 'function') window.renderOwnerOpsFeed();
+            };
+
+            window.renderOwnerOpsFeed = function () {
+                var container = document.getElementById('owner-ops-feed-container');
+                var metaEl = document.getElementById('owner-ops-feed-meta');
+                var warningsEl = document.getElementById('owner-ops-feed-source-warnings');
+                var state = window._ownerOpsFeedState || { items: [], sourceErrors: {}, filter: 'all' };
+                if (!container) return;
+
+                if (warningsEl) {
+                    var warnKeys = Object.keys(state.sourceErrors || {});
+                    if (warnKeys.length) {
+                        warningsEl.innerHTML = warnKeys.map(function (key) {
+                            return '<div class="owner-ops-source-warn">No se pudo cargar esta fuente: <strong>' +
+                                key + '</strong> — ' + String(state.sourceErrors[key]) + '</div>';
+                        }).join('');
+                    } else {
+                        warningsEl.innerHTML = '';
+                    }
+                }
+
+                var filtered = _ownerOpsApplyGridFilters(state.items || [], state);
+
+                if (metaEl) {
+                    var metaParts = [];
+                    if (state.lastUpdated) metaParts.push('Última actualización: ' + _ownerOpsFmtDate(state.lastUpdated));
+                    metaParts.push(filtered.length + ' fila' + (filtered.length === 1 ? '' : 's'));
+                    if ((state.items || []).length !== filtered.length) {
+                        metaParts.push('de ' + (state.items || []).length + ' total');
+                    }
+                    metaEl.textContent = metaParts.join(' · ');
+                }
+
+                if (!filtered.length) {
+                    var allFailed = !state.items || !state.items.length;
+                    var allSourcesFailed = allFailed && Object.keys(state.sourceErrors || {}).length >= 2;
+                    container.innerHTML = '<p class="fineprint" style="padding:16px 4px;">' +
+                        (allSourcesFailed
+                            ? 'No se pudo cargar ninguna fuente de actividad. Revisa la consola o pulsa Actualizar.'
+                            : 'No hay actividad reciente para este filtro.') +
+                        '</p>';
+                    return;
+                }
+
+                function sortInd(col) {
+                    if (state.sortCol !== col) return '<span class="owner-ops-sort-ind">↕</span>';
+                    return '<span class="owner-ops-sort-ind">' + (state.sortDir === 'asc' ? '↑' : '↓') + '</span>';
+                }
+
+                var rowsHtml = filtered.map(function (item, idx) {
+                    var globalIdx = (state.items || []).indexOf(item);
+                    if (globalIdx < 0) globalIdx = idx;
+                    var typeClass = 'owner-ops-type-pill--' + (item.kind || 'lead');
+                    var selectedClass = state.selectedIndex === globalIdx ? ' owner-ops-row--selected' : '';
+                    var actions = '<div class="owner-ops-grid-actions" onclick="event.stopPropagation()">' +
+                        '<button type="button" class="btn secondary small" onclick="openOwnerOpsDetail(' + globalIdx + ')">Detalle</button>';
+                    if (item.entityType === 'lead' && item.entityId) {
+                        actions += '<button type="button" class="btn secondary small" onclick="ownerOpsNavLead(\'' + item.entityId + '\')">Lead</button>';
+                    }
+                    if (item.leadId) {
+                        actions += '<button type="button" class="btn secondary small" onclick="ownerOpsNavLead(\'' + item.leadId + '\')">Portal</button>';
+                    }
+                    if (item.entityType === 'registro' && item.entityId) {
+                        actions += '<button type="button" class="btn secondary small" onclick="ownerOpsNavCrm()">CRM</button>';
+                    }
+                    if (item.kind === 'pago') {
+                        actions += '<button type="button" class="btn secondary small" onclick="ownerOpsNavAnalytics()">Pagos</button>';
+                    }
+                    if (item.kind === 'ticket') {
+                        actions += '<button type="button" class="btn secondary small" onclick="openOwnerOpsDetail(' + globalIdx + ')">Ticket</button>';
+                    }
+                    actions += '</div>';
+
+                    return '<tr class="owner-ops-grid-row' + selectedClass + '" data-ops-idx="' + globalIdx + '" onclick="openOwnerOpsDetail(' + globalIdx + ')">' +
+                        '<td>' + _ownerOpsEscapeHtml(_ownerOpsFmtDate(item.date)) + '</td>' +
+                        '<td><span class="owner-ops-type-pill ' + typeClass + '">' + _ownerOpsEscapeHtml(_ownerOpsKindLabel(item.kind)) + '</span></td>' +
+                        '<td>' + _ownerOpsEscapeHtml(item.colClient || '—') + '</td>' +
+                        '<td title="' + _ownerOpsEscapeHtml(item.colProduct || item.desc || '') + '">' + _ownerOpsEscapeHtml(item.colProduct || item.desc || '—') + '</td>' +
+                        '<td>' + _ownerOpsEscapeHtml(item.colStatus || '—') + '</td>' +
+                        '<td>' + _ownerOpsEscapeHtml(item.colPayment || '—') + '</td>' +
+                        '<td>' + _ownerOpsEscapeHtml(item.colResponsible || '—') + '</td>' +
+                        '<td>' + _ownerOpsEscapeHtml(item.source || '—') + '</td>' +
+                        '<td>' + _ownerOpsEscapeHtml(_ownerOpsFmtDate(item.colUpdated || item.date)) + '</td>' +
+                        '<td class="owner-ops-ref-cell">' + _ownerOpsEscapeHtml(item.ref || '—') + '</td>' +
+                        '<td class="owner-ops-col-actions">' + actions + '</td>' +
+                        '</tr>';
+                }).join('');
+
+                container.innerHTML =
+                    '<div class="owner-ops-grid-wrap">' +
+                    '<table class="owner-ops-grid" role="grid" aria-label="Actividad operativa">' +
+                    '<colgroup>' +
+                    '<col style="width:9%;"><col style="width:7%;"><col style="width:11%;"><col style="width:13%;">' +
+                    '<col style="width:8%;"><col style="width:9%;"><col style="width:9%;"><col style="width:9%;">' +
+                    '<col style="width:9%;"><col style="width:7%;"><col style="width:9%;">' +
+                    '</colgroup>' +
+                    '<thead><tr>' +
+                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'date\')">Fecha' + sortInd('date') + '</th>' +
+                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'type\')">Tipo' + sortInd('type') + '</th>' +
+                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'client\')">Cliente' + sortInd('client') + '</th>' +
+                    '<th>Evento / Producto</th>' +
+                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'status\')">Estado' + sortInd('status') + '</th>' +
+                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'payment\')">Pago' + sortInd('payment') + '</th>' +
+                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'responsible\')">Responsable' + sortInd('responsible') + '</th>' +
+                    '<th>Origen</th>' +
+                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'updated\')">Última act.' + sortInd('updated') + '</th>' +
+                    '<th>Ref</th>' +
+                    '<th>Acciones</th>' +
+                    '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
+            };
+
+            window.openOwnerOpsDetail = function (itemIndex) {
+                var state = window._ownerOpsFeedState || {};
+                var item = (state.items || [])[itemIndex];
+                if (!item) return;
+                state.selectedIndex = itemIndex;
+
+                document.getElementById('owner-ops-detail-drawer')?.remove();
+
+                var backdrop = document.createElement('div');
+                backdrop.id = 'owner-ops-detail-drawer';
+                backdrop.className = 'owner-ops-drawer-backdrop';
+                backdrop.onclick = function (e) {
+                    if (e.target === backdrop) backdrop.remove();
+                };
+
+                var timeline = [
+                    { time: _ownerOpsFmtDate(item.date), text: item.title + ' — ' + (item.desc || '') },
+                    { time: 'Origen: ' + (item.source || '—'), text: item.detail || 'Sin observaciones adicionales.' }
+                ];
+                if (item.ref) {
+                    timeline.push({ time: 'Referencia', text: item.ref });
+                }
+
+                var rawRows = '';
+                if (item.raw && typeof item.raw === 'object') {
+                    rawRows = Object.keys(item.raw).map(function (key) {
+                        var val = item.raw[key];
+                        if (val == null || val === '') val = '—';
+                        else if (typeof val === 'object') val = JSON.stringify(val);
+                        return '<dt>' + _ownerOpsEscapeHtml(key) + '</dt><dd>' + _ownerOpsEscapeHtml(val) + '</dd>';
+                    }).join('');
+                }
+
+                var navBtns = '<div class="owner-ops-drawer-actions">';
+                navBtns += '<button type="button" class="owner-ops-drawer-action-btn" onclick="ownerOpsNavLeadsSection()">Ir a Leads</button>';
+                if (item.entityType === 'lead' && item.entityId) {
+                    navBtns += '<button type="button" class="owner-ops-drawer-action-btn" onclick="ownerOpsNavLead(\'' + item.entityId + '\')">Abrir Lead (Portal)</button>';
+                }
+                if (item.leadId) {
+                    navBtns += '<button type="button" class="owner-ops-drawer-action-btn" onclick="ownerOpsNavLead(\'' + item.leadId + '\')">Portal del evento</button>';
+                }
+                navBtns += '<button type="button" class="owner-ops-drawer-action-btn" onclick="ownerOpsNavCrm()">Ir al CRM</button>';
+                if (item.kind === 'pago') {
+                    navBtns += '<button type="button" class="owner-ops-drawer-action-btn" onclick="ownerOpsNavAnalytics()">Ver Analytics</button>';
+                }
+                navBtns += '</div>';
+
+                backdrop.innerHTML =
+                    '<div class="owner-ops-drawer-panel" style="position:relative;" onclick="event.stopPropagation()">' +
+                    '<button type="button" class="owner-ops-drawer-close" aria-label="Cerrar" onclick="document.getElementById(\'owner-ops-detail-drawer\').remove()">&times;</button>' +
+                    '<div style="font-size:11px;font-weight:800;letter-spacing:0.12em;color:rgba(197,160,89,0.85);margin-bottom:6px;">DETALLE · SOLO LECTURA</div>' +
+                    '<h3>' + _ownerOpsEscapeHtml(item.title) + '</h3>' +
+                    '<p class="fineprint" style="margin:0 0 16px;">' + _ownerOpsEscapeHtml(item.desc || '') + '</p>' +
+                    '<dl class="owner-ops-drawer-kv">' +
+                    '<dt>Fecha</dt><dd>' + _ownerOpsEscapeHtml(_ownerOpsFmtDate(item.date)) + '</dd>' +
+                    '<dt>Tipo</dt><dd>' + _ownerOpsEscapeHtml(_ownerOpsKindLabel(item.kind)) + '</dd>' +
+                    '<dt>Cliente</dt><dd>' + _ownerOpsEscapeHtml(item.colClient || '—') + '</dd>' +
+                    '<dt>Producto</dt><dd>' + _ownerOpsEscapeHtml(item.colProduct || '—') + '</dd>' +
+                    '<dt>Estado</dt><dd>' + _ownerOpsEscapeHtml(item.colStatus || '—') + '</dd>' +
+                    '<dt>Pago</dt><dd>' + _ownerOpsEscapeHtml(item.colPayment || '—') + '</dd>' +
+                    '<dt>Responsable</dt><dd>' + _ownerOpsEscapeHtml(item.colResponsible || '—') + '</dd>' +
+                    '<dt>Origen</dt><dd>' + _ownerOpsEscapeHtml(item.source || '—') + '</dd>' +
+                    '<dt>Referencia</dt><dd>' + _ownerOpsEscapeHtml(item.ref || '—') + '</dd>' +
+                    (rawRows ? rawRows : '') +
+                    '</dl>' +
+                    '<div class="owner-ops-drawer-timeline">' +
+                    '<h4>Timeline / Observaciones</h4>' +
+                    timeline.map(function (t) {
+                        return '<div class="owner-ops-drawer-timeline-item"><time>' + _ownerOpsEscapeHtml(t.time) + '</time><div>' + _ownerOpsEscapeHtml(t.text) + '</div></div>';
+                    }).join('') +
+                    '</div>' +
+                    navBtns +
+                    '</div>';
+
+                document.body.appendChild(backdrop);
+                if (typeof window.renderOwnerOpsFeed === 'function') window.renderOwnerOpsFeed();
+            };
+
+            window.ownerOpsNavLead = function (leadId) {
+                if (!leadId) return;
+                window.open('./client-portal.html?lead=' + encodeURIComponent(leadId), '_blank', 'noopener');
+            };
+
+            window.ownerOpsNavLeadsSection = function () {
+                document.getElementById('owner-ops-detail-drawer')?.remove();
+                var link = document.querySelector('.side-link[href="#leads"]');
+                if (link) link.click();
+                else window.location.hash = 'leads';
+            };
+
+            window.ownerOpsNavCrm = function () {
+                document.getElementById('owner-ops-detail-drawer')?.remove();
+                var link = document.querySelector('.side-link[href="#crm"]');
+                if (link) link.click();
+                else window.location.hash = 'crm';
+            };
+
+            window.ownerOpsNavAnalytics = function () {
+                document.getElementById('owner-ops-detail-drawer')?.remove();
+                var link = document.querySelector('.side-link[href="#analytics"]');
+                if (link) link.click();
+                else window.location.hash = 'analytics';
+            };
+
+            window.loadOwnerOpsFeed = async function () {
+                var db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+                var container = document.getElementById('owner-ops-feed-container');
+                var metaEl = document.getElementById('owner-ops-feed-meta');
+                var warningsEl = document.getElementById('owner-ops-feed-source-warnings');
+                if (!db || !container) return;
+
+                var prevFilter = (window._ownerOpsFeedState && window._ownerOpsFeedState.filter) || 'all';
+                var prevSearch = (window._ownerOpsFeedState && window._ownerOpsFeedState.search) || '';
+                var prevDate = (window._ownerOpsFeedState && window._ownerOpsFeedState.dateRange) || 'all';
+                var prevStatus = (window._ownerOpsFeedState && window._ownerOpsFeedState.statusFilter) || 'all';
+                var prevType = (window._ownerOpsFeedState && window._ownerOpsFeedState.typeFilter) || 'all';
+                var prevSortCol = (window._ownerOpsFeedState && window._ownerOpsFeedState.sortCol) || 'date';
+                var prevSortDir = (window._ownerOpsFeedState && window._ownerOpsFeedState.sortDir) || 'desc';
+                container.innerHTML = '<div class="loading-spinner">Cargando actividad operativa…</div>';
+                if (warningsEl) warningsEl.innerHTML = '';
+                if (metaEl) metaEl.textContent = 'Consultando fuentes…';
+
+                var sourceErrors = {};
+                var activities = [];
+
+                var leadsRes = await db
+                    .from('leads')
+                    .select('id,name,contact_person,email,event_type,location,status,payment_status,created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(_OWNER_OPS_FEED_LIMIT);
+                if (leadsRes.error) {
+                    sourceErrors.leads = leadsRes.error.message || 'Error de lectura';
+                    console.error('[OwnerOpsFeed][leads]', leadsRes.error);
+                } else {
+                    (leadsRes.data || []).forEach(function (l) {
+                        var clientName = l.name || l.contact_person || l.email || 'Cliente';
+                        activities.push({
+                            kind: 'lead',
+                            icon: '📋',
+                            title: 'Nuevo lead',
+                            desc: (l.event_type || 'Evento') + ' · ' + clientName,
+                            detail: (l.location || '—') + ' · ' + _ownerOpsLeadStatusLabel(l.status),
+                            ref: l.id ? String(l.id).slice(0, 8).toUpperCase() : '—',
+                            source: 'leads',
+                            date: new Date(l.created_at),
+                            colClient: clientName,
+                            colProduct: l.event_type || 'Evento',
+                            colStatus: _ownerOpsLeadStatusLabel(l.status),
+                            colPayment: l.payment_status || '—',
+                            colResponsible: '—',
+                            colUpdated: new Date(l.created_at),
+                            entityType: 'lead',
+                            entityId: l.id,
+                            raw: l
+                        });
+                    });
+                }
+
+                var clientsRes = await db
+                    .from('client_profiles')
+                    .select('id,full_name,email,created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(15);
+                if (clientsRes.error) {
+                    sourceErrors.client_profiles = clientsRes.error.message || 'Error de lectura';
+                    console.error('[OwnerOpsFeed][client_profiles]', clientsRes.error);
+                } else {
+                    (clientsRes.data || []).forEach(function (c) {
+                        activities.push({
+                            kind: 'registro',
+                            icon: '👤',
+                            title: 'Nuevo registro · Cliente',
+                            desc: (c.full_name || 'Sin nombre') + (c.email ? ' · ' + c.email : ''),
+                            detail: 'Alta en client_profiles',
+                            ref: c.id ? String(c.id).slice(0, 8).toUpperCase() : '—',
+                            source: 'client_profiles',
+                            date: new Date(c.created_at),
+                            colClient: c.full_name || c.email || '—',
+                            colProduct: 'Alta cliente',
+                            colStatus: 'Registrado',
+                            colPayment: '—',
+                            colResponsible: '—',
+                            colUpdated: new Date(c.created_at),
+                            entityType: 'registro',
+                            entityId: c.id,
+                            raw: c
+                        });
+                    });
+                }
+
+                var djsRes = await db
+                    .from('dj_profiles')
+                    .select('id,full_name,stage_name,email,role,created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(25);
+                if (djsRes.error) {
+                    var djErr = djsRes.error;
+                    sourceErrors.dj_profiles = djErr.message || 'Error de lectura';
+                    console.error('[OwnerOpsFeed][dj_profiles]', {
+                        message: djErr.message,
+                        details: djErr.details,
+                        hint: djErr.hint,
+                        code: djErr.code
+                    });
+                } else {
+                    (djsRes.data || []).forEach(function (d) {
+                        var role = String(d.role || '').toLowerCase();
+                        if (_OWNER_OPS_STAFF_ROLES[role]) return;
+                        activities.push({
+                            kind: 'registro',
+                            icon: '🎧',
+                            title: 'Nuevo registro · Artista / DJ',
+                            desc: (d.stage_name || d.full_name || 'Sin nombre') + (d.email ? ' · ' + d.email : ''),
+                            detail: 'Alta en dj_profiles',
+                            ref: d.id ? String(d.id).slice(0, 8).toUpperCase() : '—',
+                            source: 'dj_profiles',
+                            date: new Date(d.created_at),
+                            colClient: d.stage_name || d.full_name || '—',
+                            colProduct: 'Alta artista',
+                            colStatus: 'Registrado',
+                            colPayment: '—',
+                            colResponsible: '—',
+                            colUpdated: new Date(d.created_at),
+                            entityType: 'registro',
+                            entityId: d.id,
+                            raw: d
+                        });
+                    });
+                }
+
+                var portalRes = await db
+                    .from('portal_messages')
+                    .select('id,lead_id,sender_role,is_read,created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(15);
+                if (portalRes.error) {
+                    sourceErrors.portal_messages = portalRes.error.message || 'Error de lectura';
+                    console.error('[OwnerOpsFeed][portal_messages]', portalRes.error);
+                } else {
+                    (portalRes.data || []).forEach(function (m) {
+                        var direction = m.sender_role === 'client' ? 'Cliente → Staff' : 'Staff → Cliente';
+                        activities.push({
+                            kind: 'mensaje',
+                            icon: '💬',
+                            title: 'Nuevo mensaje · Portal',
+                            desc: direction + ' · Conversación pendiente de seguimiento',
+                            detail: m.is_read ? 'Leído' : 'Sin leer',
+                            ref: m.lead_id ? String(m.lead_id).slice(0, 8).toUpperCase() : '—',
+                            source: 'portal_messages',
+                            date: new Date(m.created_at),
+                            colClient: '—',
+                            colProduct: 'Portal mensaje',
+                            colStatus: m.is_read ? 'Leído' : 'Sin leer',
+                            colPayment: '—',
+                            colResponsible: m.sender_role || '—',
+                            colUpdated: new Date(m.created_at),
+                            leadId: m.lead_id,
+                            entityType: 'mensaje',
+                            entityId: m.id,
+                            raw: m
+                        });
+                    });
+                }
+
+                var inboxRes = await db
+                    .from('platform_inbox_messages')
+                    .select('id,ticket_id,from_name,from_role,is_read,created_at,platform_tickets(subject,status)')
+                    .order('created_at', { ascending: false })
+                    .limit(15);
+                if (inboxRes.error) {
+                    sourceErrors.platform_inbox_messages = inboxRes.error.message || 'Error de lectura';
+                    console.error('[OwnerOpsFeed][platform_inbox_messages]', inboxRes.error);
+                } else {
+                    (inboxRes.data || []).forEach(function (m) {
+                        var ticket = m.platform_tickets || {};
+                        activities.push({
+                            kind: 'ticket',
+                            icon: '🎫',
+                            title: 'Ticket · Inbox plataforma',
+                            desc: (ticket.subject || 'Sin asunto') + ' · ' + (m.from_name || m.from_role || 'Staff'),
+                            detail: 'Estado: ' + (ticket.status || '—') + (m.is_read ? '' : ' · Sin leer'),
+                            ref: m.ticket_id ? String(m.ticket_id).slice(0, 8).toUpperCase() : '—',
+                            source: 'platform_inbox',
+                            date: new Date(m.created_at),
+                            colClient: m.from_name || m.from_role || '—',
+                            colProduct: ticket.subject || 'Ticket',
+                            colStatus: ticket.status || '—',
+                            colPayment: '—',
+                            colResponsible: m.from_name || m.from_role || '—',
+                            colUpdated: new Date(m.created_at),
+                            entityType: 'ticket',
+                            entityId: m.ticket_id,
+                            raw: { message: m, ticket: ticket }
+                        });
+                    });
+                }
+
+                var paymentsRes = await db
+                    .from('payments')
+                    .select('id,amount_cents,currency,status,plan,created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(15);
+                if (paymentsRes.error) {
+                    sourceErrors.payments = paymentsRes.error.message || 'Error de lectura';
+                    console.error('[OwnerOpsFeed][payments]', paymentsRes.error);
+                } else {
+                    (paymentsRes.data || []).forEach(function (p) {
+                        var payLabel = _ownerOpsFmtMoney(p.amount_cents, p.currency) + ' · Plan ' + (p.plan || '—');
+                        activities.push({
+                            kind: 'pago',
+                            icon: '💳',
+                            title: 'Pago registrado',
+                            desc: payLabel,
+                            detail: 'Estado: ' + (p.status || '—'),
+                            ref: p.id ? String(p.id).slice(0, 8).toUpperCase() : '—',
+                            source: 'payments',
+                            date: new Date(p.created_at),
+                            colClient: '—',
+                            colProduct: p.plan || 'MDJPRO / Plan',
+                            colStatus: p.status || '—',
+                            colPayment: payLabel,
+                            colResponsible: '—',
+                            colUpdated: new Date(p.created_at),
+                            entityType: 'pago',
+                            entityId: p.id,
+                            raw: p
+                        });
+                    });
+                }
+
+                activities.sort(function (a, b) {
+                    return (b.date && b.date.getTime ? b.date.getTime() : 0) - (a.date && a.date.getTime ? a.date.getTime() : 0);
+                });
+                activities = activities.slice(0, _OWNER_OPS_FEED_MAX_ITEMS);
+
+                window._ownerOpsFeedState = {
+                    filter: prevFilter,
+                    items: activities,
+                    sourceErrors: sourceErrors,
+                    lastUpdated: new Date(),
+                    search: prevSearch,
+                    dateRange: prevDate,
+                    statusFilter: prevStatus,
+                    typeFilter: prevType,
+                    sortCol: prevSortCol,
+                    sortDir: prevSortDir,
+                    selectedIndex: null
+                };
+
+                document.querySelectorAll('.owner-ops-feed-filter-btn').forEach(function (btn) {
+                    btn.classList.toggle('active', btn.getAttribute('data-ops-filter') === prevFilter);
+                });
+                var searchEl = document.getElementById('owner-ops-grid-search');
+                if (searchEl && searchEl.value !== prevSearch) searchEl.value = prevSearch;
+                var dateEl = document.getElementById('owner-ops-grid-date');
+                if (dateEl) dateEl.value = prevDate;
+                var statusEl = document.getElementById('owner-ops-grid-status');
+                if (statusEl) statusEl.value = prevStatus;
+                var typeEl = document.getElementById('owner-ops-grid-type');
+                if (typeEl) typeEl.value = prevType;
+
+                window.renderOwnerOpsFeed();
             };
 
             // ── Staff Activity Feed ───────────────────────────
@@ -5135,6 +6308,9 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 });
                 renderRegistryTable(filtered);
             };
+
+            /* Hash routing after all panel loaders are registered (avoids ReferenceError on #actividad / #crm). */
+            handleHashNavigation();
 
         </script>
         <!-- MDJ Assistant Booth (AI Sales Agent) -->
