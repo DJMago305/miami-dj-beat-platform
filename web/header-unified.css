@@ -2439,6 +2439,18 @@ body.mdj-artist-academy #owner-tabs .container .dj-tab-btn {
   opacity: 1 !important;
 }
 
+/* ── OWNER/STAFF STRIP — atajo STAFF condicional (determinístico, sin JS) ──
+ * El tab .dj-tab-btn--staff-only vive ESTÁTICO en el HTML de cada tira de artista
+ * (#owner-tabs), pero SOLO se muestra a owner/staff (data-mdj-nav-role
+ * management|seller). Artista / cliente / invitado / pre-auth: oculto.
+ * Respeta fix(staff-tab) 161a45d (artist/client buildings no exponen rutas staff)
+ * devolviéndole al OWNER su atajo al edificio staff, sin carrera async.
+ * v20260814-owner-staff-shortcut */
+body:not([data-mdj-nav-role="management"]):not([data-mdj-nav-role="seller"])
+  .dj-owner-tabs .dj-tab-btn--staff-only {
+  display: none !important;
+}
+
 /* ============================================================
    STAFF — SERVICES & EVENTS: compact nav + no carousel
    Applies when body.mdj-staff-nav is present (Owner/Manager/Seller)
