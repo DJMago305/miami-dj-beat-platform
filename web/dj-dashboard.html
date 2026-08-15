@@ -15,7 +15,7 @@
     <!-- FullCalendar CSS -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
-    <link rel="stylesheet" href="./header-unified.css?v=20260516-wordmark-clear-r-1" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260814-owner-staff-shortcut-1" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260411-booth-policy" />
     <link rel="stylesheet" href="./weather-effects.css" />
@@ -635,6 +635,7 @@
             <a href="./dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="flow-dash"
                 title="Cash Flow — revenue &amp; metrics (this page)">CASH FLOW</a>
             <a href="./dj-profile.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="menu-account">Mi Perfil</a>
+            <a href="./admin-dashboard.html" class="dj-tab-btn dj-tab-btn--staff-only" data-mdj-nav="staff" data-i18n="nav-staff">STAFF</a>
             <a href="./dj-profile.html?tab=sft&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-soundfortips">SoundForTips™</a>
         </div>
     </nav>
@@ -758,6 +759,15 @@
                 margin-top: 12px !important; /* inline 20px */
                 margin-bottom: 10px !important; /* inline 20px */
             }
+            /* #1 (PO): dividir la sección en dos — PRONÓSTICO a la izquierda, MÉTRICAS
+               (Humedad/Viento/Sensación/Visibilidad) a la DERECHA. En pantallas angostas se apila. */
+            #tab-dashboard .wx-overlay{display:flex;flex-wrap:wrap;align-items:stretch;justify-content:center;gap:18px;}
+            /* DOS MITADES lado a lado — experiencia visual del clima: por horas (izq) y 10 días (der). */
+            #tab-dashboard .wx-overlay > #hourly-forecast-permanent{flex:1 1 46%;min-width:0;margin-top:0 !important;display:flex;flex-direction:column;justify-content:center;}
+            #tab-dashboard .wx-overlay > #daily-forecast-container{flex:1 1 46%;min-width:0;margin-top:0 !important;}
+            /* Métricas (medición): tira horizontal debajo, secundaria. */
+            #tab-dashboard .wx-overlay > #weather-data-grid{flex:1 1 100%;grid-template-columns:repeat(4,1fr) !important;margin-top:0 !important;margin-bottom:0 !important;align-self:auto;}
+            @media (max-width:820px){#tab-dashboard .wx-overlay > #hourly-forecast-permanent,#tab-dashboard .wx-overlay > #daily-forecast-container{flex-basis:100%;}#tab-dashboard .wx-overlay > #weather-data-grid{grid-template-columns:1fr 1fr !important;}}
 
             #tab-dashboard #calendar-master {
                 position: relative;
@@ -878,6 +888,77 @@
 
         <!-- TAB 1: Agenda (existing content) -->
         <div id="tab-dashboard" class="dash-tab-panel active">
+            <!-- ── Layout vertical full-page de AGENDA (paridad con weather-lab): HERO clima 100vh → scroll → calendario + módulos. Sin máscara de bordes del sistema viejo. Reversible: borrar este <style>. ── -->
+            <style id="agenda-vertical-layout">
+              #tab-dashboard > section:first-of-type { padding: 16px 0 0 !important; margin-top: 0 !important; }   /* poco aire bajo el menú (antes 62px) */
+              #tab-dashboard .hero-grid { display: block !important; max-width: none !important; }        /* apila las columnas verticalmente */
+              #tab-dashboard .agenda-main, #tab-dashboard .agenda-sidebar { width: 100% !important; max-width: 100% !important; }
+              #tab-dashboard .agenda-main { padding-top: 0 !important; }
+              /* HERO inmersivo a 100vh, en flujo (no fondo), sin marco ni máscara de bordes */
+              #tab-dashboard #booth-hero-container { min-height: 0 !important; margin: 0 0 24px 0 !important; border: 0 !important; border-radius: 0 !important; }
+              #tab-dashboard #booth-hero-container > .weather-scene { position: relative !important; inset: auto !important; top: auto !important; left: auto !important; width: 100% !important; height: calc(100vh - 174px) !important; border-radius: 0 !important; overflow: hidden !important; pointer-events: auto !important; -webkit-mask: none !important; mask: none !important; }  /* 174px = header fijo (158) + gap (16): el HERO cabe exacto bajo el menú */
+              #tab-dashboard #booth-hero-container > .weather-scene > iframe { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; pointer-events: auto !important; }
+              /* los módulos de datos fluyen DEBAJO del HERO al hacer scroll */
+              #tab-dashboard .weather-content { z-index: auto !important; }
+              #tab-dashboard .agenda-sidebar { margin-top: 8px !important; }
+            </style>
+            <script>
+            /* ── Alimenta el HERO de clima con el gig REAL de HOY (tabla leads).
+               Reúsa la sesión Supabase de la página; sin keys nuevas. El detalle
+               completo se queda en los módulos de agenda de abajo. Aditivo/reversible. ── */
+            (function(){
+              function heroFrame(){ return document.querySelector('#tab-dashboard #booth-hero-container > .weather-scene > iframe'); }
+              var payload;   // undefined=aún no consultado · null=sin evento hoy · obj=gig de hoy
+              async function fetchToday(){
+                try{
+                  var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                  if(!sb || !sb.auth) return null;
+                  var sess = (await sb.auth.getSession()).data.session; if(!sess) return null;
+                  var prof = (await sb.from('dj_profiles').select('id').eq('user_id', sess.user.id).single()).data;
+                  if(!prof) return null;
+                  var d = new Date(); var iso = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+                  var dow = d.getDay();
+                  function t12(t){ if(!t) return null; var p=String(t).split(':'); var h=+p[0], m=+p[1]||0; if(isNaN(h)) return null; var ap=h<12?'AM':'PM'; var hh=h%12; if(hh===0)hh=12; return hh+(m?':'+String(m).padStart(2,'0'):'')+' '+ap; }
+                  function num(t){ if(!t) return null; var p=String(t).split(':'); var h=+p[0]; if(isNaN(h)) return null; return h+(+p[1]||0)/60; }
+                  var events = [];
+                  // 1) Eventos puntuales (leads) de hoy — comportamiento previo, sin limit(1)
+                  var ST = { CONFIRMED:'Confirmado', MATCHED:'Asignado', COMPLETED:'Completado', CANCELLED:'Cancelado', PENDING:'Pendiente' };
+                  var leads = (await sb.from('leads').select('event_type,event_date,location,status')
+                                 .eq('assigned_dj_id', prof.id).eq('event_date', iso)).data || [];
+                  leads.forEach(function(ev){ if(ev.status==='CANCELLED') return;
+                    events.push({ lead:(ev.event_type||'Evento')+(ev.status?' · '+(ST[ev.status]||ev.status):''), loc:ev.location||'—', start:'Sin horario', end:'Sin horario', s:null, e:null }); });
+                  // 2) Residencias recurrentes de hoy — MISMO origen que el calendario (residency_schedule por día de semana)
+                  var rsel='day_of_week,venue,start_time,end_time';
+                  // Puerta SEGURA primero (candado de venue_pay a nivel DB); si aún no existe, cae a la base.
+                  var rq = await sb.from('residency_schedule_secure').select(rsel+',dj_id').eq('active',true).eq('day_of_week',dow);
+                  if(rq.error) rq = await sb.from('residency_schedule_secure').select(rsel).eq('active',true).eq('day_of_week',dow);
+                  if(rq.error) rq = await sb.from('residency_schedule').select(rsel+',dj_id').eq('active',true).eq('day_of_week',dow);
+                  if(rq.error) rq = await sb.from('residency_schedule').select(rsel).eq('active',true).eq('day_of_week',dow);
+                  ((rq.data)||[]).filter(function(r){ return !r.dj_id || r.dj_id===prof.id; }).forEach(function(r){
+                    var s=num(r.start_time), e=num(r.end_time); if(e!=null && s!=null && e<s) e+=24;
+                    events.push({ lead:'Residencia · '+(r.venue||''), loc:r.venue||'—', start:t12(r.start_time)||'Sin horario', end:t12(r.end_time)||'Sin horario', s:s, e:e }); });
+                  if(!events.length) return null;
+                  // primario = el que ocurre AHORA; si no, el próximo; si no, el primero. Nota "+N hoy" si hay más.
+                  events.sort(function(a,b){ return (a.s==null?99:a.s)-(b.s==null?99:b.s); });
+                  var nowH = d.getHours()+d.getMinutes()/60;
+                  var primary = events.filter(function(x){ return x.s!=null && x.e!=null && x.s<=nowH && nowH<=x.e; })[0]
+                             || events.filter(function(x){ return x.s!=null && x.s>=nowH; })[0]
+                             || events[0];
+                  var extra = events.length - 1;
+                  return { lead: primary.lead + (extra>0? ' · +'+extra+' hoy':''), start:primary.start, end:primary.end, loc:primary.loc };
+                }catch(_e){ return null; }
+              }
+              var sent=false;
+              async function send(){
+                if(sent) return;
+                var f = heroFrame(); if(!f || !f.contentWindow) return;
+                if(payload===undefined) payload = await fetchToday();
+                if(payload){ f.contentWindow.postMessage({ type:'mdjb:today-event', event:payload }, '*'); sent=true; }
+              }
+              window.addEventListener('message', function(e){ if(e.data && e.data.type==='mdjb:hero-ready'){ sent=false; send(); } });
+              window.addEventListener('load', function(){ send(); setTimeout(send,1500); setTimeout(send,4000); });
+            })();
+            </script>
             <section style="padding: 60px 0; margin-top: 20px;">
                 <div class="container hero-grid" style="align-items: flex-start;">
                     <!-- Left Column: Business Logic -->
@@ -896,91 +977,17 @@
 
                             <div class="weather-scene"
                                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; border-radius: 24px; z-index: 0;">
-                                <!-- Layer 1: Sky Base Layer -->
-                                <div class="sky-base clear-day" id="weather-layer-base">
-                                    <img class="sky-base-img" src="./assets/weather/Cielo Azul.png" alt="">
-                                </div>
-
-                                <!-- Layer 1b: Stars Layer (Behind clouds for night scenes) -->
-                                <div class="sky-stars" id="weather-stars">
-                                    <img class="stars-img" src="./assets/weather/stars-night.png" alt="">
-                                    <img class="milky-way-img" src="./assets/weather/cielo%20estrellado%20hermoso.png"
-                                        alt="">
-                                </div>
-
-                                <!-- Layer 2: Horizontal Cloud Carousel -->
-                                <div class="sky-clouds" id="weather-layer-clouds">
-                                    <!-- Static Cloud for 'Muy Nublado' (behind carousel, in front of sun) -->
-                                    <img class="static-cloud-muy-nublado" src="./assets/weather/Nublado.png" alt="">
-
-                                    <!-- Panoramic Cloud Carousel for partly-cloudy and cloudy scenes -->
-                                    <!-- 
-                                    ================================================================================
-                                    [LOCKED] WEATHER SKY ENGINE BASELINE
-                                    DO NOT MODIFY CLOUD ENGINE LOGIC WITHOUT EXPLICIT USER APPROVAL.
-                                    This system is locked because it controls:
-                                    - panoramic hero sizing
-                                    - physical cloud occlusion (clouds naturally blocking sun/moon)
-                                    - infinite loop sequencing (Sequence A + Clone Sequence B)
-                                    - PNG proportion rules
-
-                                    Do not refactor, simplify, replace assets, optimize, or clean up this system 
-                                    unless explicitly instructed to by the user. 
-                                    Source of truth: .agents/workflows/weather_widget_clouds_blueprint.md
-                                    ================================================================================
-                                    -->
-                                    <div class="cloud-layer-front nubes-largas-fast-container"
-                                        id="cloud-carousel-layer">
-                                        <!-- Sequence A (First Train) -->
-                                        <img src="./assets/weather/nubes-seamless.png" alt="">
-                                        <img src="./assets/weather/nubes-blancas.png" alt="">
-                                        <img src="./assets/weather/nubes-bonitas.png" alt="">
-                                        <!-- Sequence B (Clone Train for Seamless -50% Loop) -->
-                                        <img src="./assets/weather/nubes-seamless.png" alt="">
-                                        <img src="./assets/weather/nubes-blancas.png" alt="">
-                                        <img src="./assets/weather/nubes-bonitas.png" alt="">
-                                    </div>
-
-                                    <!-- Removed Sunset Specific Infinite Carousel (now unified with nubes-largas-fast-container) -->
-                                    <!-- ==================== END LOCKED ENGINE HTML ==================== -->
-                                    <!-- Static/Drifting Cloud PNGs for rain/storm scenes -->
-                                    <img class="cloud-layer-back night-cloud-p"
-                                        src="./assets/weather/Nubes%20Oscuras%20Para%20Tormenta.png" alt="">
-                                    <img class="cloud-layer-back rain-cloud" src="./assets/weather/Nublado.png" alt="">
-                                    <img class="cloud-layer-back storm-cloud"
-                                        src="./assets/weather/Nubes%20Oscuras%20Para%20Tormenta.png" alt="">
-                                    <img class="cloud-layer-back storm-day-cloud" src="./assets/weather/Nublado.png"
-                                        alt="">
-                                </div>
-
-                                <!-- Layer 3: Vertical Rain/Snow Layer -->
-                                <div class="sky-precipitation" id="weather-layer-precipitation">
-                                    <div class="sky-rain-layer" id="weather-layer-rain"></div>
-                                    <div class="sky-snow-layer" id="weather-layer-snow">
-                                        <div class="snow-layer-small"></div>
-                                        <div class="snow-layer-large"></div>
-                                    </div>
-                                    <div class="sky-storm-layer" id="weather-layer-storm"></div>
-                                </div>
-
-                                <!-- Layer 4: Lightning Overlay Layer -->
-                                <div class="sky-lightning" id="weather-layer-lightning">
-                                    <img class="rayo-storm-asset rayo-1" src="./assets/weather/Rayo%20Storm.png" alt="">
-                                    <img class="rayo-storm-asset rayo-2"
-                                        src="./assets/weather/Rayo%20Storm%20Definido.png" alt="">
-                                </div>
-
-                                <!-- Layer 5: Sun / Moon Layer -->
-                                <div class="sky-astral-front" id="weather-layer-astral">
-                                    <img class="sun-asset" id="sun-element" src="./assets/weather/sunny-real.png"
-                                        alt="">
-                                    <img class="moon-asset" id="moon-element" src="./assets/weather/moon.png" alt="">
-                                </div>
+                                <!-- ── NUEVO HERO WebGL 3D (reemplaza el motor CSS .weather-scene) — paridad con weather-lab, reversible vía git ── -->
+                                <iframe src="./weather-experience/index.html"
+                                    title="Clima MDJB — HERO Atmosférico 3D"
+                                    loading="lazy"
+                                    style="position:absolute; inset:0; width:100%; height:100%; border:0; border-radius:20px;"></iframe>
                             </div>
 
                             <!-- Weather Content Overlay -->
-                            <div
+                            <div class="wx-overlay"
                                 style="position: relative; z-index: 5; padding: 40px; color: #fff; text-align: center;">
+                                <style>#weather-location,#weather-main-temp,#weather-condition-label,#weather-high-low,#weather-description-text{display:none!important;}</style>
                                 <div id="weather-location"
                                     style="font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.6); margin-bottom: 10px; letter-spacing: 2px; text-transform: uppercase;">
                                     Miami, FL — USA
@@ -1051,7 +1058,10 @@
                         </div>
 
                         <!-- DETALLES DEL EVENTO SELECCIONADO -->
-                        <div id="dash-left-event-details" style="margin-top: 20px;">
+                        <!-- [OCULTO 2026-08-14] Redundante: la vista "Día" del Calendario Operacional Inteligente
+                             (staff-matrix-frame) ya muestra los eventos del día con hora y detalle. Se oculta (no se
+                             borra aún) hasta validación visual del PO; los 3 consumidores JS hacen early-return si no está. -->
+                        <div id="dash-left-event-details" style="margin-top: 20px; display: none;">
                             <div id="dash-event-detail-card"
                                 style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 32px; text-align: left; min-height: 200px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden;">
                                 <div id="dash-event-detail-empty" style="text-align: center; opacity: 0.4;">
@@ -1075,6 +1085,38 @@
                     Scope: #calendar-master, FullCalendar overrides.
                     ================================================================================ 
                     -->
+                    <!-- ── Agenda operacional (Matrix) — SOLO staff/owner/manager/seller. Se decide por rol (dj_profiles.role): el artista mantiene su calendario personal de abajo. ── -->
+                    <div id="staff-matrix-embed" style="display:none; width:100%; margin-top:8px;">
+                      <iframe id="staff-matrix-frame" title="Agenda operacional — Miami DJ Beat" loading="lazy"
+                        style="width:100%; height:calc(100vh - 120px); min-height:700px; border:0; border-radius:0; display:block;"></iframe>
+                    </div>
+                    <script>
+                    (function(){
+                      // Dos agendas por rol: staff/owner/manager/seller ven la Matrix operacional (todos los eventos + quién);
+                      // el artista mantiene su calendario personal. Usa dj_profiles.role (misma fuente que el resto de la app).
+                      async function pickAgenda(){
+                        try{
+                          var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                          if(!sb || !sb.auth){ return setTimeout(pickAgenda, 300); }
+                          var sess = (await sb.auth.getSession()).data.session;
+                          if(!sess) return;
+                          var res = await sb.from('dj_profiles').select('role').eq('user_id', sess.user.id).maybeSingle();
+                          var role = String(res.data && res.data.role ? res.data.role : '').toLowerCase().trim();
+                          // TODOS ven el Calendario Operacional Inteligente: staff/owner → Owner·Matrix (consolida a todos);
+                          // artista → su modo personal AISLADO (el propio calendario detecta el rol vía gate()+setupRole y
+                          // bloquea al artista en lo suyo). El FullCalendar personal viejo queda OCULTO (no borrado).
+                          void role;
+                          var box = document.getElementById('staff-matrix-embed');
+                          var frame = document.getElementById('staff-matrix-frame');
+                          var personal = document.querySelector('#tab-dashboard .agenda-sidebar.calendar-column');
+                          if(frame && !frame.getAttribute('src')) frame.setAttribute('src', './calendario-operacional-inteligente.html');
+                          if(box) box.style.display = 'block';
+                          if(personal) personal.style.display = 'none';
+                        }catch(_e){}
+                      }
+                      pickAgenda();
+                    })();
+                    </script>
                     <div class="agenda-sidebar calendar-column" style="position: relative; z-index: 80;">
                         <div class="admin-card agenda-card-container calendar-card"
                             style="padding: 0; position: relative; overflow: visible; border: 1px solid rgba(197,160,89,0.25); min-height: 500px; background: rgba(6,6,10,0.35) !important; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 1;">
@@ -3131,6 +3173,240 @@
                     </p>
                 </div>
             </section>
+
+            <!-- MDJB 2026-08-14: Business Financial Intelligence — DEBAJO del cash flow personal (owner-only, DEMO).
+                 Arriba = reglas/finanzas PERSONALES del owner; aqui = metricas GENERALES / Matrix / Accounting. -->
+            <div id="bfi-access-card" style="display:none;max-width:1100px;margin:34px auto 8px;">
+              <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.32);margin:0 4px 10px;">Inteligencia financiera general</div>
+              <a href="./business-financial-intelligence.html" style="display:flex;align-items:center;gap:16px;text-decoration:none;background:linear-gradient(135deg,rgba(197,160,89,0.12),rgba(102,163,255,0.08));border:1px solid rgba(197,160,89,0.35);border-radius:16px;padding:18px 22px;">
+                <div style="font-size:30px;line-height:1;">🧠</div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:16px;font-weight:800;color:var(--gold,#c5a059);letter-spacing:.02em;">Business Financial Intelligence <span style="font-size:10px;font-weight:700;color:#e2504f;border:1px solid rgba(226,80,79,.4);border-radius:6px;padding:2px 6px;margin-left:8px;vertical-align:middle;white-space:nowrap;">🔒 OWNER · DEMO</span></div>
+                  <div style="font-size:12.5px;color:rgba(255,255,255,0.55);margin-top:4px;">Métricas generales · Matrix · Accounting — Corporate · Business Units · Artist. Abierta para tus consultas.</div>
+                </div>
+                <div style="font-size:20px;color:rgba(255,255,255,0.4);">&#8594;</div>
+              </a>
+            </div>
+            <script>
+            (function(){
+              function reveal(){
+                var sb=window.getSupabaseClient?window.getSupabaseClient():window.supabase;
+                if(!sb||!sb.auth){ return setTimeout(reveal,300); }
+                sb.auth.getSession().then(function(r){
+                  var sess=r.data.session; if(!sess) return;
+                  sb.from('dj_profiles').select('role').eq('user_id',sess.user.id).maybeSingle().then(function(res){
+                    var role=String(res.data&&res.data.role?res.data.role:'').toLowerCase().trim();
+                    if(role==='owner'){ var c=document.getElementById('bfi-access-card'); if(c) c.style.display='block'; }
+                  }).catch(function(){});
+                }).catch(function(){});
+              }
+              reveal();
+            })();
+            </script>
+
+            <!-- ══ OWNER MODE SWITCH · PFS (personal) ⇄ Owner Financial IA (Matrix) ══
+                 Bloque autónomo, owner-only. NO modifica la zona LOCKED: el switch se
+                 inyecta por JS al tope de #tab-flow (sobrevive al ocultar la sección
+                 personal) y alterna la visibilidad personal ⇄ Matrix. -->
+            <style>
+              /* barra negra consolidada: branding izquierda + controles derecha, una fila compacta */
+              .ofm-bar{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
+                margin:0 0 4px;padding:7px 16px;
+                background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0));
+                border-bottom:1px solid rgba(255,255,255,.06);}
+              .ofm-brand{display:flex;align-items:center;gap:9px;min-width:0;}
+              .ofm-brand-mk{color:#e8c987;font-size:13px;line-height:1;flex:0 0 auto;}
+              .ofm-brand-tx{font-size:12.5px;font-weight:800;letter-spacing:.02em;color:rgba(255,255,255,.92);line-height:1.08;white-space:nowrap;}
+              .ofm-brand-tx small{display:block;font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(232,201,135,.72);}
+              .ofm-ctrls{display:flex;align-items:center;gap:11px;flex-wrap:wrap;justify-content:flex-end;}
+              .ofm-bar .ofm-tag{font-size:9px;font-weight:800;letter-spacing:.14em;
+                color:#c5a059;border:1px solid rgba(197,160,89,.5);border-radius:999px;
+                padding:3px 9px;text-transform:uppercase;white-space:nowrap;}
+              .ofm-bar .ofm-lbl{font-size:11px;font-weight:800;letter-spacing:.05em;
+                text-transform:uppercase;white-space:nowrap;transition:color .25s;
+                color:rgba(255,255,255,.55);}
+              .ofm-bar.on .ofm-lbl{color:#e8c987;}
+              .ofm-toggle{position:relative;width:52px;height:28px;border-radius:999px;
+                border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.12);
+                cursor:pointer;flex:0 0 auto;transition:background .25s,border-color .25s,box-shadow .25s;
+                padding:0;outline-offset:3px;}
+              .ofm-toggle .ofm-knob{position:absolute;top:2px;left:2px;width:22px;height:22px;
+                border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.45);
+                transition:left .25s cubic-bezier(.4,1.3,.5,1);}
+              .ofm-toggle.on{background:linear-gradient(135deg,#c5a059,#e8c987);
+                border-color:rgba(197,160,89,.75);box-shadow:0 0 14px rgba(197,160,89,.45);}
+              .ofm-toggle.on .ofm-knob{left:28px;}
+              #ofm-business-view{max-width:none;margin:0;padding:0;}
+              #ofm-matrix-frame{width:100%;height:calc(100vh - 100px);min-height:640px;border:none;
+                border-radius:0;background:#0b0b0f;display:block;}
+              .ofm-expand{background:rgba(197,160,89,.10);border:1px solid rgba(197,160,89,.4);color:#e8c987;
+                font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
+                border-radius:8px;padding:6px 11px;white-space:nowrap;transition:background .2s;}
+              .ofm-expand:hover{background:rgba(197,160,89,.20);}
+              /* botón salir flotante — solo visible en pantalla completa */
+              .ofm-exit{display:none;position:fixed;top:14px;right:16px;z-index:10000;
+                background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.25);color:#fff;
+                font-size:12px;font-weight:800;cursor:pointer;border-radius:10px;padding:8px 13px;backdrop-filter:blur(6px);}
+              .ofm-exit:hover{background:rgba(0,0,0,.82);}
+              /* pantalla completa del Matrix */
+              #ofm-business-view.ofm-full{position:fixed;inset:0;z-index:9998;max-width:none;margin:0;padding:0;background:#000;}
+              #ofm-business-view.ofm-full #ofm-matrix-frame{height:100vh;min-height:0;}
+              #ofm-business-view.ofm-full .ofm-exit{display:block;}
+              /* día/noche: ícono sol/luna que alterna al tocarlo (igual que el themeToggle del sitio) */
+              .ofm-sep{width:1px;height:20px;background:rgba(255,255,255,.14);flex:0 0 auto;}
+              .ofm-daynight{width:30px;height:28px;display:inline-flex;align-items:center;justify-content:center;
+                background:transparent;border:1px solid rgba(255,255,255,.16);border-radius:9px;color:#e8c987;
+                cursor:pointer;padding:0;flex:0 0 auto;transition:background .2s,border-color .2s;}
+              .ofm-daynight:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.30);}
+              .ofm-daynight svg{width:16px;height:16px;display:block;}
+            </style>
+
+            <div id="ofm-business-view" style="display:none;">
+              <button id="ofm-exit" class="ofm-exit" type="button" aria-label="Salir de pantalla completa">✕ Salir</button>
+              <iframe id="ofm-matrix-frame" data-src="./business-financial-intelligence.html"
+                      title="Owner Financial IA — Matrix" loading="lazy"
+                      referrerpolicy="same-origin"></iframe>
+            </div>
+
+            <script>
+            (function(){
+              var MODE_KEY='mdjOwnerFinMode';       // 'personal' | 'business'
+              var THEME_KEY='mdjFinTheme';          // 'night' | 'day' (tema del Matrix)
+              function q(id){return document.getElementById(id);}
+              function getSb(){return window.getSupabaseClient?window.getSupabaseClient():window.supabase;}
+
+              function build(){
+                var flow=q('tab-flow'); if(!flow||q('ofm-bar')) return;
+                var section=flow.querySelector(':scope > section');   // vista personal (LOCKED)
+                var biz=q('ofm-business-view');
+                var frame=q('ofm-matrix-frame');
+                var card=q('bfi-access-card');                        // tarjeta antigua (la reemplaza el switch)
+
+                // --- barra negra consolidada: branding (izq) + controles (der) ---
+                var bar=document.createElement('div');
+                bar.className='ofm-bar'; bar.id='ofm-bar';
+
+                // branding subido a la barra negra — sirve para las 2 páginas (PFS y Matrix)
+                var brand=document.createElement('div'); brand.className='ofm-brand';
+                brand.innerHTML='<span class="ofm-brand-mk">◆</span><span class="ofm-brand-tx">Miami DJ Beat<small>Financial Intelligence</small></span>';
+
+                var ctrls=document.createElement('div'); ctrls.className='ofm-ctrls';
+                var tag=document.createElement('span'); tag.className='ofm-tag'; tag.textContent='◆ OWNER';
+                var lbl=document.createElement('span'); lbl.className='ofm-lbl';
+                var tog=document.createElement('button');
+                tog.type='button'; tog.className='ofm-toggle';
+                tog.setAttribute('role','switch');
+                tog.setAttribute('aria-label','Cambiar entre Sistema Personal (PFS) y Owner Financial IA');
+                tog.innerHTML='<span class="ofm-knob"></span>';
+
+                // día/noche: ícono sol/luna que alterna al tocarlo (Matrix) — al lado del switch
+                var sep=document.createElement('span'); sep.className='ofm-sep';
+                var SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+                var MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+                var dtog=document.createElement('button');
+                dtog.type='button'; dtog.className='ofm-daynight';
+                dtog.setAttribute('aria-label','Modo día / noche del Matrix');
+
+                // botón pantalla completa (entra) — en la barra, solo visible en modo business
+                var expand=document.createElement('button');
+                expand.type='button'; expand.id='ofm-expand'; expand.className='ofm-expand';
+                expand.setAttribute('aria-label','Pantalla completa'); expand.innerHTML='⛶ Pantalla completa';
+
+                ctrls.appendChild(tag); ctrls.appendChild(lbl); ctrls.appendChild(tog);
+                ctrls.appendChild(sep); ctrls.appendChild(dtog); ctrls.appendChild(expand);
+                bar.appendChild(brand); bar.appendChild(ctrls);
+                flow.insertBefore(bar, flow.firstChild);
+
+                function apply(mode, persist){
+                  var on = (mode==='business');
+                  bar.classList.toggle('on', on);
+                  tog.classList.toggle('on', on);
+                  tog.setAttribute('aria-checked', on?'true':'false');
+                  lbl.textContent = on ? 'Owner Financial IA' : 'PFS';
+                  lbl.title = on ? 'Owner Financial IA · Matrix' : 'PFS · Sistema Personal de Finanzas';
+                  if(section) section.style.display = on ? 'none' : '';
+                  if(card) card.style.display = 'none';   // el switch reemplaza la tarjeta de acceso
+                  if(biz)  biz.style.display  = on ? 'block' : 'none';
+                  if(expand) expand.style.display = on ? '' : 'none';  // fullscreen solo aplica al Matrix
+                  if(on && frame && !frame.getAttribute('src')){    // lazy-load del Matrix
+                    frame.setAttribute('src', frame.getAttribute('data-src'));
+                  }
+                  if(persist){ try{ localStorage.setItem(MODE_KEY, mode); }catch(e){} }
+                }
+
+                tog.addEventListener('click', function(){
+                  apply(bar.classList.contains('on')?'personal':'business', true);
+                });
+
+                // --- día/noche: ícono sol/luna alterna al tocarlo, tematiza el Matrix ---
+                var curTheme='night';
+                function applyTheme(theme, persist){       // 'day' | 'night'
+                  curTheme=theme;
+                  var day=(theme==='day');
+                  dtog.innerHTML = day ? MOON : SUN;   // el ícono muestra a DÓNDE vas (sol=ir a día, luna=ir a noche)
+                  dtog.title = day ? 'Modo día · toca para noche' : 'Modo noche · toca para día';
+                  try{ var d=frame&&frame.contentDocument;
+                    if(d&&d.body) d.body.setAttribute('data-mode', day?'light':'dark'); }catch(e){}
+                  if(persist){ try{ localStorage.setItem(THEME_KEY, theme); }catch(e){} }
+                }
+                dtog.addEventListener('click', function(){
+                  applyTheme(curTheme==='day'?'night':'day', true);
+                });
+
+                // --- pantalla completa del Matrix: fullscreen NATIVO (todo el monitor,
+                //     oculta barra/pestañas del navegador); fallback a modo CSS si no hay API ---
+                var exitBtn=document.getElementById('ofm-exit');   // salir (flotante, dentro del business-view)
+                function fsEl(){ return document.fullscreenElement || document.webkitFullscreenElement || null; }
+                function paintFull(full){
+                  biz.classList.toggle('ofm-full', full);
+                  document.body.style.overflow = full ? 'hidden' : '';
+                }
+                function goFull(){
+                  var req = biz.requestFullscreen || biz.webkitRequestFullscreen;
+                  if(req){ try{ var p = req.call(biz); if(p && p.catch) p.catch(function(){ paintFull(true); }); }
+                           catch(e){ paintFull(true); } }
+                  else paintFull(true);              // navegador sin API -> modo CSS
+                }
+                function leaveFull(){
+                  if(fsEl()){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); }
+                  paintFull(false);
+                }
+                if(expand) expand.addEventListener('click', goFull);
+                if(exitBtn) exitBtn.addEventListener('click', leaveFull);
+                function onFsChange(){ paintFull(fsEl()===biz); }   // sincroniza con F11/Esc del navegador
+                document.addEventListener('fullscreenchange', onFsChange);
+                document.addEventListener('webkitfullscreenchange', onFsChange);
+                document.addEventListener('keydown', function(e){
+                  if(e.key==='Escape' && biz.classList.contains('ofm-full') && !fsEl()) paintFull(false);
+                });
+                if(frame){ frame.addEventListener('load', function(){   // re-aplica al cargar el Matrix
+                  applyTheme(curTheme, false);
+                }); }
+                var savedTheme='night';
+                try{ savedTheme=localStorage.getItem(THEME_KEY)||'night'; }catch(e){}
+                applyTheme(savedTheme, false);
+
+                var saved='personal';
+                try{ saved = localStorage.getItem(MODE_KEY)||'personal'; }catch(e){}
+                apply(saved, false);
+              }
+
+              // solo owner
+              function init(){
+                var sb=getSb();
+                if(!sb||!sb.auth){ return setTimeout(init,300); }
+                sb.auth.getSession().then(function(r){
+                  var sess=r.data.session; if(!sess) return;
+                  sb.from('dj_profiles').select('role').eq('user_id',sess.user.id).maybeSingle()
+                    .then(function(res){
+                      var role=String(res.data&&res.data.role?res.data.role:'').toLowerCase().trim();
+                      if(role==='owner') build();
+                    }).catch(function(){});
+                }).catch(function(){});
+              }
+              init();
+            })();
+            </script>
         </div>
 
         <!-- ══ PAYMENT MODAL ═════════════════════════════════════════ -->

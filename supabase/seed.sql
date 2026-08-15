@@ -1,0 +1,5 @@
+-- Intentionally empty.
+-- Miami DJ Beat V2 currently has no approved local seed data.
+-- This file exists so `supabase db reset` can complete using the
+-- configured local seed path without introducing production,
+-- personal, fiscal, authentication, or Legal Center records.

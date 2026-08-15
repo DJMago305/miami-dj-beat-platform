@@ -716,6 +716,13 @@ function mdjForceAuthNavigation(url) {
     return true;
 }
 
+/** Signup intent: only explicit client|talent from #signup-usertype — no URL fallback. */
+function mdjReadValidatedSignupUserType() {
+    const raw = String(document.getElementById('signup-usertype')?.value || '').trim().toLowerCase();
+    if (raw === 'client' || raw === 'talent') return raw;
+    return null;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     const signupForm = document.getElementById('signup-form');
@@ -1002,26 +1009,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 const instagram = document.getElementById('signup-instagram')?.value.trim().replace(/^@/, '') || '';
                 const planParam = new URLSearchParams(window.location.search).get('plan') || 'LITE';
 
-                const qpEarly = new URLSearchParams(window.location.search);
-                const explicitUtEarly = (qpEarly.get('user_type') || '').toLowerCase();
-                const redirectEarly = qpEarly.get('redirect');
-                const signupEarly = (qpEarly.get('signup') || '').toLowerCase();
-                let rosterEarly = null;
-                try {
-                    rosterEarly = JSON.parse(sessionStorage.getItem('mdj_jobs_roster_categories') || 'null');
-                } catch (eRo) {
-                    void eRo;
+                const userType = mdjReadValidatedSignupUserType();
+                if (!userType) {
+                    const intentPickMsg = mdjAuthT(
+                        'auth-signup-intent-required',
+                        'Selecciona si contratas servicios o los ofreces como artista.',
+                        'Choose whether you are hiring services or offering artistic services.'
+                    );
+                    const intentErrEl = document.getElementById('signup-intent-error');
+                    if (intentErrEl) {
+                        intentErrEl.hidden = false;
+                        intentErrEl.textContent = intentPickMsg;
+                    }
+                    throw new Error(intentPickMsg);
                 }
-                const hasJobsRosterEarly = rosterEarly && Array.isArray(rosterEarly.codes) && rosterEarly.codes.length > 0;
-                const fromHiddenEarly = (document.getElementById('signup-usertype')?.value || 'client').toLowerCase();
-                let resolvedUserType =
-                    explicitUtEarly ||
-                    (redirectEarly === 'jobs' || signupEarly === 'free' || hasJobsRosterEarly ? 'talent' : fromHiddenEarly);
-                if (explicitUtEarly === 'talent' || explicitUtEarly === 'artist' || explicitUtEarly === 'dj') {
-                    resolvedUserType = 'talent';
-                }
-                if (explicitUtEarly === 'client' && (redirectEarly === 'jobs' || hasJobsRosterEarly)) {
-                    resolvedUserType = 'talent';
+                const intentAck = document.getElementById('signup-intent-ack');
+                if (!intentAck || !intentAck.checked) {
+                    throw new Error(
+                        mdjAuthT(
+                            'auth-signup-intent-ack-required',
+                            'Confirma el tipo de cuenta antes de registrarte.',
+                            'Confirm your account type before signing up.'
+                        )
+                    );
                 }
 
                 if (!firstName || !lastName) {
@@ -1079,7 +1089,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     );
                 }
 
-                if (resolvedUserType === 'talent' && phoneDigits.length < 10) {
+                if (userType === 'talent' && phoneDigits.length < 10) {
                     throw new Error(
                         mdjAuthT(
                             'auth-signup-phone-required-talent',
@@ -1090,8 +1100,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 /* Dirección postal: no bloquea el alta (mismo criterio que Apple/Meta/Instagram: cuenta primero; dirección en Ajustes). */
 
-                // 1. Create Auth user — talento si viene de Jobs, alta gratis, o eligió categorías en el carrusel (sessionStorage).
-                const userType = resolvedUserType;
+                // 1. Create Auth user — user_type from explicit signup intent only (client | talent).
                 const suHidden = document.getElementById('signup-usertype');
                 if (suHidden) suHidden.value = userType;
                 const refCode = mdjGetReferralDjId();
