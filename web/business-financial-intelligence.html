@@ -613,6 +613,12 @@
 
   function kpi(key, rangeId, offsetPeriods){
     offsetPeriods = offsetPeriods || 0;
+    /* ── Fase 4: datos REALES del motor sobreescriben el demo, SOLO a nivel
+       corporativo y periodo actual (offset 0). Otros niveles/periodos: demo. */
+    if(window.__mdjRealKpis && state.level==='corporate' && offsetPeriods===0
+       && window.__mdjRealKpis[key]!==undefined && window.__mdjRealKpis[key]!==null){
+      return window.__mdjRealKpis[key];
+    }
     var rm = rangeMeta(rangeId);
     var seedStr = key+"|"+scopeKey()+"|"+rangeId+"|off"+offsetPeriods;
     var noise = rand(seedStr,0.86,1.14);
@@ -1391,6 +1397,9 @@
     $("sidebar").classList.remove("show");
   }
 
+  /* Fase 4: puente global para que el gate (otro <script>) inyecte datos reales y re-renderice */
+  window.__mdjBfiApplyReal = function(realKpis){ window.__mdjRealKpis = realKpis; try{ render(); }catch(e){} };
+
   renderNav();
   render();
 })();
@@ -1411,10 +1420,33 @@
       if(!sess){ location.replace('./login.html?next=business-financial-intelligence.html'); return; }
       var res=await sb.from('dj_profiles').select('role').eq('user_id', sess.user.id).maybeSingle();
       var role=String(res.data&&res.data.role?res.data.role:'').toLowerCase().trim();
-      if(role==='owner'){ openUp(); }                    // OWNER -> abierto completo
+      if(role==='owner'){ openUp(); mdjBfiLoadReal(sb); } // OWNER -> abierto + datos reales (Fase 4)
       else { set('Acceso restringido', 'Esta seccion financiera es exclusiva del Owner. Managers y vendedores necesitan autorizacion explicita del Owner.'); }
     }catch(e){ set('Error de acceso', (e&&e.message)||''); }
   });
+
+  /* ── Fase 4: cablea el KPI "Cash disponible" al motor financiero real ──
+     Increment 1: getNetCash. Degrada elegante: si el motor no responde, se
+     queda con el demo (no rompe el dashboard). El motor devuelve CENTAVOS. */
+  async function mdjBfiLoadReal(sb){
+    try{
+      async function q(name){
+        var r = await sb.functions.invoke('financial-engine', { body:{ action:'query', name:name, args:[] } });
+        if(r.error || !r.data || !r.data.ok || typeof r.data.data!=='number') return null;
+        return r.data.data; // el motor devuelve CENTAVOS
+      }
+      var net = await q('getNetCash');
+      if(net===null) return; // motor no respondió -> se queda con demo
+      var real = { cash: net/100 };
+      var ar = await q('getAccountsReceivable'); if(ar!==null) real.receivablesOpen = ar/100;
+      var ap = await q('getAccountsPayable');    if(ap!==null) real.payablesOpen  = ap/100;
+      /* Cableado: CAJA + CxC + CxP reales. Ingreso/margen/DSO siguen demo
+         (el motor aún no calcula métricas contables). Los indicadores "DEMO DATA"
+         se mantienen a propósito hasta que esos KPIs tengan fuente real. */
+      if(typeof window.__mdjBfiApplyReal==='function') window.__mdjBfiApplyReal(real);
+      else window.__mdjRealKpis = real;
+    }catch(e){ /* silencioso: se queda con demo, no rompe el dashboard */ }
+  }
 })();
 </script>
 </body>
