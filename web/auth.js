@@ -400,17 +400,23 @@ function mdjPerformPostAuthRedirect(db, user) {
         const role = rawRole === 'talent' || rawRole === 'dj' ? 'artist' : rawRole;
         const dr0 = djRow && djRow.role != null ? String(djRow.role).toLowerCase().trim() : '';
         /*
-         * Post-login: solo admin / manager / seller → back-office por defecto.
-         * `owner` (dueño MDJ) sigue con is_staff en RLS y ve el enlace Staff, pero aterriza en perfil de
-         * artista — evita mezclar "cuenta de DJ" con apertura automática del panel de manager.
+         * Post-login (Hito 1 — portal STAFF): owner → /staff (Matrix Principal).
+         * admin / manager / seller → back-office (admin-dashboard) por defecto, hasta que
+         * sus módulos vivan en /staff. El owner sigue con is_staff en RLS; dj-profile/dj-dashboard
+         * quedan alcanzables desde el nav del portal (Mi Agenda).
          */
         const LANDING_STAFF_ROLES = ['admin', 'manager', 'seller'];
+        const ownerRoleForRedirect = idn
+            ? String(idn.dbRole || '').toLowerCase().trim() === 'owner'
+            : (dr0 === 'owner' || role === 'owner');
         const isStaffForRedirect = idn
             ? LANDING_STAFF_ROLES.indexOf(String(idn.dbRole || '').toLowerCase().trim()) >= 0
             : LANDING_STAFF_ROLES.indexOf(dr0) >= 0;
 
         let targetUrl = './dj-profile.html';
-        if (isStaffForRedirect) {
+        if (ownerRoleForRedirect) {
+            targetUrl = './staff.html';
+        } else if (isStaffForRedirect) {
             targetUrl = './admin-dashboard.html';
         } else if (role === 'client') {
             targetUrl = './client-portal.html';
@@ -694,7 +700,7 @@ function mdjLoginSafeFallbackUrl(user) {
     if (!user) return './index.html';
     const raw = String(mdjResolveEffectiveUserRole(user) || '').toLowerCase();
     const ut = String(user.user_metadata?.user_type || '').toLowerCase();
-    if (raw === 'owner') return './dj-dashboard.html';
+    if (raw === 'owner') return './staff.html';
     if (raw === 'client' || ut === 'client') return './client-portal.html';
     if (raw === 'admin' || raw === 'manager' || raw === 'seller') return './admin-dashboard.html';
     if (raw === 'talent' || raw === 'dj' || raw === 'artist' || ut === 'talent' || ut === 'artist' || ut === 'dj') {
