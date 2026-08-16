@@ -365,6 +365,10 @@ deno_version = 2
 [functions.create-event-payment]
 verify_jwt = false
 
+# Staff-only quote → EBO deposit Checkout (JWT + role check inside the function)
+[functions.create-quote-deposit]
+verify_jwt = false
+
 # Public checkout (browser fetch + anon key)
 [functions.create-course-checkout]
 verify_jwt = false
