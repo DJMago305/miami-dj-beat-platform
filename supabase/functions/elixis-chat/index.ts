@@ -397,6 +397,33 @@ async function fetchResidencySchedule(): Promise<string> {
     }
 }
 
+// ─── MEMORIA CONTEXTUAL (agent_memory — solo lectura, fail-soft) ─────────────
+async function fetchAgentMemory(staffUserId: string): Promise<string> {
+    try {
+        const { data, error } = await ADMIN
+            .from("agent_memory")
+            .select("mem_key,mem_value,updated_at")
+            .eq("agent_id", "elixis")
+            .eq("staff_user_id", staffUserId)
+            .order("updated_at", { ascending: false })
+            .limit(40);
+        if (error || !Array.isArray(data) || data.length === 0) return "";
+        const lines = data.map((row) => {
+            const k = String(row.mem_key ?? "").trim();
+            const v = String(row.mem_value ?? "").trim();
+            if (!k || !v) return "";
+            return `- ${k}: ${v}`;
+        }).filter(Boolean);
+        if (!lines.length) return "";
+        return "\n\n### MEMORIA CONTEXTUAL (fuente: BD, tabla agent_memory)\n" +
+            "Notas persistentes de este staff con ELIXIS. Úsalas como contexto; no las inventes ni las contradigas.\n" +
+            lines.join("\n");
+    } catch (e) {
+        console.error("[elixis-chat] agent_memory fetch error:", e);
+        return "";
+    }
+}
+
 // ─── TIPOS ───────────────────────────────────────────────────────────────────
 
 interface ChatMessage {
@@ -513,9 +540,13 @@ serve(async (req: Request) => {
     // Agenda: solo residency_schedule. Sin filas o con error → contexto honesto, sin inventar.
     const agendaContext = await fetchResidencySchedule();
 
+    // Memoria persistente de este staff (R6). Vacío o error → sin bloque, no inventar.
+    const memoryContext = await fetchAgentMemory(gate.userId);
+
     const systemContent =
         SYSTEM_PROMPT +
         userBlock +
+        memoryContext +
         agendaContext +
         rosterContext +
         bookingsContext +
