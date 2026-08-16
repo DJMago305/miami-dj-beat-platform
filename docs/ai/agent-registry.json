@@ -1,12 +1,31 @@
 {
   "schema": "mdj.agent-registry.v1",
-  "note": "R4 / IA rule 2. Declarative catalog only. ELIXIS runtime still reads its tool list from elixis-chat until a later ticket wires this file.",
+  "note": "R4 / IA rule 2 + R11. Catalog only. Runtime tools still live in elixis-chat; the orchestrator routes intent and forwards to that specialist.",
   "agents": [
+    {
+      "id": "elixis-orchestrator",
+      "name": "ELIXIS Orchestrator",
+      "version": "1.0.0",
+      "kind": "orchestrator",
+      "mission": "Classify staff intent (finance, lead_note, general) and delegate to specialist agents. Does not call tools or mutate records.",
+      "role_required": ["is_staff", "office"],
+      "tools": [],
+      "write_tools": [],
+      "delegates_to": ["elixis"],
+      "approval_policy": "none",
+      "data_scope": {
+        "read": [],
+        "write": []
+      },
+      "memory": "stateless",
+      "triggers": ["staff authenticated POST to elixis-orchestrator"]
+    },
     {
       "id": "elixis",
       "name": "ELIXIS",
       "version": "1.0.0",
-      "mission": "Staff/office executive assistant: read authoritative data, calculate via approved adapters, draft copy, and append a staff lead note via crear_nota_lead. Does not send messages or move money.",
+      "kind": "specialist",
+      "mission": "Staff/office specialist for finance reads (consultar_finanzas) and staff lead notes (crear_nota_lead). Invoked directly or via elixis-orchestrator. Does not send messages or move money.",
       "role_required": ["is_staff", "office"],
       "tools": [
         {

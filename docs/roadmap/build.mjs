@@ -511,6 +511,7 @@ const roadmap = (() => {
         if (ref.kind === "integrity") return !!(intBy[ref.id] || {}).met;
         if (ref.kind === "airule") return !!(aiBy[ref.n] || {}).met;
         if (ref.kind === "cap") return capState[ref.id] === "verified";
+        if (ref.kind === "grep" && ref.probe) return runProbe(ref.probe).met;
         return false;
     };
     const items = MAP.roadmap.map((t) => ({ ...t, ok: isDone(t.ref) }));
