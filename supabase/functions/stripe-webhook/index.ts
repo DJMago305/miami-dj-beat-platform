@@ -209,6 +209,73 @@ serve(async (req) => {
                 const session = event.data.object;
                 const leadId = session.metadata?.lead_id;
                 const userId = session.metadata?.user_id;
+                const quoteSource = String(session.metadata?.source ?? "") === "quote";
+
+                // ── Branch Q: Miami DJ Beat LLC quote deposit (additive; before generic lead) ──
+                if (quoteSource) {
+                    const amountPaid = (session.amount_total ?? 0) / 100;
+                    const eboId = String(session.metadata?.ebo_id ?? "").trim();
+                    const quoteId = String(session.metadata?.quote_id ?? "").trim();
+                    const piRaw = session.payment_intent;
+                    const piId = typeof piRaw === "string"
+                        ? piRaw
+                        : (piRaw && typeof piRaw === "object" && "id" in piRaw ? String((piRaw as { id: string }).id) : null);
+
+                    if (eboId) {
+                        const { data: ebo } = await supabase
+                            .from("event_builder_orders")
+                            .select("amount_paid_usd, deposit_usd, total_usd")
+                            .eq("id", eboId)
+                            .maybeSingle();
+                        const prevEbo = parseFloat(String(ebo?.amount_paid_usd ?? 0));
+                        const newEboPaid = prevEbo + amountPaid;
+                        const eboTotal = parseFloat(String(ebo?.total_usd ?? 0));
+                        const eboPayStatus = eboTotal > 0 && newEboPaid >= eboTotal ? "paid_full" : "deposit_paid";
+                        await supabase.from("event_builder_orders").update({
+                            amount_paid_usd: newEboPaid,
+                            payment_status: eboPayStatus,
+                            stripe_pi_id: piId,
+                        }).eq("id", eboId);
+                    }
+
+                    if (leadId) {
+                        const { data: lead } = await supabase
+                            .from("leads")
+                            .select("balance_paid, total_amount, staff_invoice_id")
+                            .eq("id", leadId)
+                            .single();
+                        const prevPaid = parseFloat(lead?.balance_paid ?? 0);
+                        const total = parseFloat(lead?.total_amount ?? 0);
+                        const newPaid = prevPaid + amountPaid;
+                        const newStatus = total > 0 && newPaid >= total ? "PAID" : "PARTIAL";
+                        await supabase.from("leads").update({
+                            payment_status: newStatus,
+                            balance_paid: newPaid,
+                            stripe_session_id: session.id,
+                            status: newStatus === "PAID" ? "CONFIRMED" : "MATCHED",
+                        }).eq("id", leadId);
+                        if (lead?.staff_invoice_id && newStatus === "PAID") {
+                            await supabase
+                                .from("mdj_staff_manual_invoices")
+                                .update({ status: "paid" })
+                                .eq("id", lead.staff_invoice_id);
+                        }
+                    }
+
+                    try {
+                        await supabase.rpc("agent_action_log_write", {
+                            p_actor: "stripe-webhook",
+                            p_action: "quote_deposit_paid",
+                            p_target: quoteId || eboId || "quote",
+                            p_result: `ok:${eboId}:${amountPaid}`,
+                            p_agent_id: "quote-checkout",
+                        });
+                    } catch (auditErr) {
+                        console.error("[Webhook] quote audit:", auditErr);
+                    }
+                    console.log(`✅ Quote deposit paid: quote ${quoteId} | ebo ${eboId} | $${amountPaid}`);
+                    break;
+                }
 
                 // ── Branch A: Event Deposit (client paying for event) ──
                 if (leadId) {
