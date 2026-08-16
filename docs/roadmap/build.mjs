@@ -612,8 +612,8 @@ const idx = [
     { n: "15", t: "Evidencia", i: "db", tab: "evidencia", c: all.length },
 ];
 const idxHtml = idx.map((i) => i.g
-    ? `\n      <div class="sidebar-group-label">${esc(i.g)}</div>`
-    : `\n      <button class="side-link" data-tab="${i.tab}"${i.layer ? ` data-layer="${i.layer}"` : ""} type="button">
+    ? `\n    <div class="side3-group">${esc(i.g)}</div>`
+    : `\n    <button class="side3-link" data-tab="${i.tab}"${i.layer ? ` data-layer="${i.layer}"` : ""} type="button">
         ${svg(i.i)}<span class="sl-t">${esc(i.t)}</span>${i.c !== undefined ? `<span class="sl-c${i.warn && i.c ? " w" : ""}">${i.c}</span>` : ""}
       </button>`).join("");
 
@@ -628,6 +628,7 @@ const html = `<meta charset="utf-8">
   --gold:#8a6a12;--goldf:#a8831c;--ok:#227a54;--prop:#2f6aa8;--unk:#78818f;--risk:#a5433b;--warn:#8a6a12;
   --cli:#2f6aa8;--art:#8a4f8f;--stf:#227a54;
   --fn:#2f6aa8;--pg:#8a6a12;--js:#6a5aa0;--sql:#227a54;--doc:#78818f;--cfg:#a5433b;
+  --gold-a16:rgba(197,160,89,.16);--gold-a40:rgba(197,160,89,.4);--hover-a:rgba(20,26,36,.06);
   --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
@@ -636,6 +637,7 @@ const html = `<meta charset="utf-8">
   --gold:#c5a059;--goldf:#dbb977;--ok:#37c98f;--prop:#5c9ee6;--unk:#6b7484;--risk:#e2685c;--warn:#d4af37;
   --cli:#5c9ee6;--art:#c084c9;--stf:#37c98f;
   --fn:#5c9ee6;--pg:#d4af37;--js:#9b8ad6;--sql:#37c98f;--doc:#8891a2;--cfg:#e2685c;
+  --gold-a16:rgba(197,160,89,.16);--gold-a40:rgba(197,160,89,.4);--hover-a:rgba(255,255,255,.05);
 }}
 :root[data-theme="dark"]{
   --ground:#070910;--panel:#0f131b;--panel2:#141924;--rail:#0c1017;--line:#212836;--edge:#333b4a;
@@ -643,6 +645,7 @@ const html = `<meta charset="utf-8">
   --gold:#c5a059;--goldf:#dbb977;--ok:#37c98f;--prop:#5c9ee6;--unk:#6b7484;--risk:#e2685c;--warn:#d4af37;
   --cli:#5c9ee6;--art:#c084c9;--stf:#37c98f;
   --fn:#5c9ee6;--pg:#d4af37;--js:#9b8ad6;--sql:#37c98f;--doc:#8891a2;--cfg:#e2685c;
+  --gold-a16:rgba(197,160,89,.16);--gold-a40:rgba(197,160,89,.4);--hover-a:rgba(255,255,255,.05);
 }
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;background:var(--ground);color:var(--ink);
@@ -678,27 +681,24 @@ button[disabled]{opacity:.4;cursor:default}
 
 /* ── shell ── */
 .shell{display:grid;grid-template-columns:274px minmax(0,1fr) 384px;gap:0;align-items:start}
-.railwrap{position:sticky;top:71px;max-height:calc(100vh - 71px);overflow-y:auto;padding:14px 12px 40px}
-/* Convención de barra lateral de la plataforma (web/staff-admin.html):
-   aside.sidebar + .sidebar-group-label + .side-link, icono 15px currentColor.
-   Los colores literales del original se tokenizan para que el tema claro también funcione. */
-.sidebar{background:var(--panel);border-radius:10px;padding:14px 12px;border:1px solid var(--line);height:fit-content}
-.sidebar-group-label{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
-  color:var(--gold);padding:22px 16px 7px;text-shadow:0 0 18px color-mix(in srgb,var(--gold) 35%,transparent)}
-.sidebar-group-label.sgl-top{padding-top:6px}
-.side-link{display:flex;align-items:center;gap:9px;width:100%;text-align:left;
-  padding:11px 14px 11px 16px;color:var(--soft);text-decoration:none;background:transparent;
-  border:0;border-left:2px solid transparent;border-radius:0 6px 6px 0;margin-bottom:3px;
-  font-size:14px;font-weight:500;letter-spacing:.2px;cursor:pointer;
-  transition:color .15s,background .15s,border-color .15s}
-.side-link svg{flex:0 0 15px}
-.side-link .sl-t{flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.side-link .sl-c{font-family:var(--mono);font-size:10.5px;color:var(--faint)}
-.side-link .sl-c.w{color:var(--risk)}
-.side-link:hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent);
-  border-left-color:color-mix(in srgb,var(--gold) 40%,transparent)}
-.side-link[aria-current="true"]{color:var(--gold);background:color-mix(in srgb,var(--gold) 9%,transparent);
-  border-left-color:var(--gold);font-weight:700}
+.railwrap{position:sticky;top:71px;max-height:calc(100vh - 71px);overflow-y:auto;overflow-x:hidden;
+  padding:10px 0 44px;border-right:1px solid var(--line);background:var(--rail)}
+/* Convención de barra lateral vigente del portal STAFF (Hito 1, web/staff.html):
+   .staff-side3 / .side3-group / .side3-link — riel a toda altura con borde derecho,
+   marca de activo por box-shadow interior, no por border-left.
+   Los literales blancos del original se tokenizan para que el tema claro funcione. */
+.side3-group{padding:12px 14px 12px 15px;font-size:11px;font-weight:800;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--gold)}
+.side3-link{display:flex;align-items:center;gap:11px;width:100%;background:none;border:none;
+  color:var(--soft);font-family:inherit;font-size:13.5px;text-align:left;cursor:pointer;white-space:nowrap;
+  padding:9px 14px 9px 15px;border-radius:0;transition:background .15s,color .15s,box-shadow .15s}
+.side3-link svg{flex:0 0 15px}
+.side3-link .sl-t{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis}
+.side3-link .sl-c{font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+.side3-link .sl-c.w{color:var(--risk)}
+.side3-link:hover{background:var(--hover-a);color:var(--ink)}
+.side3-link[aria-current="true"]{background:var(--gold-a16);color:var(--goldf);
+  box-shadow:inset 3px 0 0 #c5a059}
 .main{min-width:0;padding:18px 20px 70px}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
 .tab{padding:7px 14px;font-size:13.5px}
@@ -792,7 +792,7 @@ svg.radial{min-width:1030px} svg.map{min-width:1040px}
 .mods{margin:11px 0 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .mods-t{font:700 9.5px/1 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
 .mods code.gone{color:var(--risk);border-color:var(--risk)}
-section.on>.cap-head{background:linear-gradient(90deg,color-mix(in srgb,var(--goldf) 18%,transparent),transparent)}
+section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparent)}
 
 /* svg capas + pipelines */
 .band-bg{fill:var(--panel2);stroke:var(--line)} .band-edge{fill:var(--edge)}
@@ -880,7 +880,7 @@ section.on>.cap-head{background:linear-gradient(90deg,color-mix(in srgb,var(--go
 }
 @media (max-width:820px){
   .shell{grid-template-columns:minmax(0,1fr)}
-  .railwrap{position:static;max-height:none;padding:12px}
+  .railwrap{position:static;max-height:none;border-right:0;border-bottom:1px solid var(--line);padding:8px 0}
   .insp{width:100%;top:auto;bottom:0;height:80%;border-radius:12px 12px 0 0}
   .ai-row{grid-template-columns:20px 1fr} .ai-row .tag{grid-column:2;justify-self:start} .inv ul{columns:1}
 }
@@ -914,11 +914,8 @@ section.on>.cap-head{background:linear-gradient(90deg,color-mix(in srgb,var(--go
 
 <div class="shell">
 
-  <div class="railwrap">
-    <aside class="sidebar" aria-label="Índice maestro">
-      <div class="sidebar-group-label sgl-top">Índice maestro</div>${idxHtml}
-    </aside>
-  </div>
+  <nav class="railwrap staff-side3" aria-label="Índice maestro">${idxHtml}
+  </nav>
 
   <main class="main">
     <div class="tabs" role="tablist">
@@ -1138,9 +1135,9 @@ section.on>.cap-head{background:linear-gradient(90deg,color-mix(in srgb,var(--go
   document.querySelectorAll('.tab').forEach(function(t){
     t.addEventListener('click', function(){ showPane(t.dataset.pane); filterLayer(null); });
   });
-  document.querySelectorAll('.side-link').forEach(function(b){
+  document.querySelectorAll('.side3-link').forEach(function(b){
     b.addEventListener('click', function(){
-      document.querySelectorAll('.side-link').forEach(function(x){ x.removeAttribute('aria-current'); });
+      document.querySelectorAll('.side3-link').forEach(function(x){ x.removeAttribute('aria-current'); });
       b.setAttribute('aria-current', 'true');
       showPane(b.dataset.tab);
       filterLayer(b.dataset.layer || null);
