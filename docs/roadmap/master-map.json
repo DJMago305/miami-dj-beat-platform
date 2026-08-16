@@ -75,7 +75,7 @@
   "classify": [
     [
       "L8",
-      "^supabase/functions/(elixis-chat|elixis-tts|booth-chat|booth-tts|atmosphere|mdj-heartbeat)$"
+      "^supabase/functions/(elixis-chat|elixis-orchestrator|elixis-tts|booth-chat|booth-tts|atmosphere|mdj-heartbeat)$"
     ],
     [
       "L8",
@@ -1637,7 +1637,15 @@
       "why": "Es el salto de asistente a empleado digital. Deliberadamente va después de la auditoría, el gate y el registro: en ese orden el riesgo está contenido; en cualquier otro, no.",
       "done": "Una herramienta mutante existe y pasa por el gate y la auditoría.",
       "ref": {
-        "kind": "none"
+        "kind": "grep",
+        "probe": {
+          "kind": "grep",
+          "pattern": "crear_nota_lead|agent_lead_notes",
+          "paths": [
+            "supabase"
+          ],
+          "expect": "present"
+        }
       },
       "deps": [
         "R2",
