@@ -106,7 +106,7 @@ function grepHits(pattern, paths) {
         const files = statSync(abs).isDirectory()
             ? tree().filter((n) => !n.dir && n.rel.startsWith(p + "/")).map((n) => n.rel) : [p];
         for (const f of files) {
-            if (!/\.(html|js|ts|sql|md|json)$/i.test(f)) continue;
+            if (!/\.(html|js|ts|sql|md|json|yml|yaml)$/i.test(f)) continue;
             try { if (re.test(readFileSync(join(ROOT, f), "utf8"))) hits.push(f); } catch { /* noop */ }
         }
     }
