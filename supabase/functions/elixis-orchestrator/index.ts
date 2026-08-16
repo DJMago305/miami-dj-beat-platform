@@ -1,6 +1,6 @@
 // supabase/functions/elixis-orchestrator/index.ts
 // R11 / IA rule 1 — intent router. Does not call tools or mutate records.
-// Classifies the staff message, then forwards the original request to elixis-chat.
+// Classifies the staff message (finance, lead_note, agenda, quote, general), then forwards to elixis-chat.
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -66,7 +66,7 @@ function isRateLimited(req: Request): boolean {
     return hits.length > RATE_LIMIT;
 }
 
-type Intent = "finance" | "lead_note" | "agenda" | "general";
+type Intent = "finance" | "lead_note" | "agenda" | "quote" | "general";
 
 function classifyIntent(message: string): Intent {
     const t = message.toLowerCase();
@@ -82,6 +82,11 @@ function classifyIntent(message: string): Intent {
         return "finance";
     }
     if (
+        /consultar_catalogo_precios|generar_cotizacion_evento|\bcotiz|\bpresupuesto|\bquote\b|cat[aá]logo de precios|hora extra/.test(t)
+    ) {
+        return "quote";
+    }
+    if (
         /consultar_agenda_artista|registrar_evento_agenda|\bagenda\b|\bcalendario\b|\bdisponib/.test(t)
     ) {
         return "agenda";
@@ -93,6 +98,7 @@ const SPECIALIST: Record<Intent, string> = {
     finance: "elixis",
     lead_note: "elixis",
     agenda: "elixis",
+    quote: "elixis",
     general: "elixis",
 };
 

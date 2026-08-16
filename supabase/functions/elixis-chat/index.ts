@@ -8,6 +8,13 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { approval_gate } from "../_shared/approval-gate.ts";
+import {
+    bucketSums,
+    computeQuoteTotals,
+    mergeCatalog,
+    parseCatalogOverlay,
+    resolveQuoteLines,
+} from "../_shared/event-quote-catalog.ts";
 
 // ─── MODELO ──────────────────────────────────────────────────────────────────
 // Haiku 4.5 = el más barato/rápido para pruebas. Para subir de nivel (más
@@ -121,8 +128,8 @@ Lee CÓMO te habla la persona y refleja su estilo, manteniendo siempre tu identi
 Refleja su registro (formalidad, longitud, energía, si usa emojis o no). Nunca suenes a guion ni a robot: suena a una persona real que ajusta su tono a quien tiene enfrente.
 
 ### LO QUE PUEDES Y NO PUEDES HACER (human-in-the-loop)
-PUEDES: redactar (mensajes de seguimiento, cobros, propuestas, textos), calcular, analizar, recomendar, crear una nota interna de staff en un lead existente (tool crear_nota_lead), consultar la agenda personal de un artista (consultar_agenda_artista) y registrar un bloque en esa agenda (registrar_evento_agenda). Entrega los textos listos para copiar.
-NO PUEDES por tu cuenta: enviar mensajes/emails, mover dinero, ni cambiar estado, montos o asignaciones de un lead. Cuando prepares algo para enviar, acláralo con un "listo para que lo envíes tú".`;
+PUEDES: redactar (mensajes de seguimiento, cobros, propuestas, textos), calcular, analizar, recomendar, crear una nota interna de staff en un lead existente (tool crear_nota_lead), consultar la agenda personal de un artista (consultar_agenda_artista), registrar un bloque en esa agenda (registrar_evento_agenda), consultar el catálogo de precios de Miami DJ Beat LLC (consultar_catalogo_precios) y generar un borrador de cotización (generar_cotizacion_evento). Entrega los textos listos para copiar. NUNCA inventes precios: usa esas tools.
+NO PUEDES por tu cuenta: enviar mensajes/emails, mover dinero, ni cambiar estado, montos o asignaciones de un lead, ni crear órdenes formales. Cuando prepares algo para enviar, acláralo con un "listo para que lo envíes tú".`;
 
 // ─── ROSTER EN VIVO (artistas reales desde public_dj_profiles) ───────────────
 // Mismo patrón que booth-chat: solo campos PÚBLICOS, con la anon key que
@@ -643,6 +650,69 @@ serve(async (req: Request) => {
         },
     };
 
+    const CATALOG_READ_TOOL = {
+        name: "consultar_catalogo_precios",
+        description:
+            "Lee el catálogo de precios vigente de Miami DJ Beat LLC (platform_settings + fallback). " +
+            "Úsalo para listar SKUs y precios unitarios. NUNCA inventes un precio.",
+        input_schema: {
+            type: "object",
+            properties: {
+                bucket: {
+                    type: "string",
+                    enum: ["talent", "equipment", "all"],
+                    description: "Filtro opcional: talent, equipment o all (default all).",
+                },
+            },
+        },
+    };
+
+    const QUOTE_WRITE_TOOL = {
+        name: "generar_cotizacion_evento",
+        description:
+            "Genera un borrador de cotización de Miami DJ Beat LLC (event_quotes). " +
+            "El servidor calcula line = unit × qty, tax 7% y depósito 30% sobre el subtotal. " +
+            "No crea órdenes formales. No inventes SKUs ni montos: usa el catálogo.",
+        input_schema: {
+            type: "object",
+            properties: {
+                tipo_evento: {
+                    type: "string",
+                    enum: ["wedding", "corporate", "private", "clubs", "family", "holiday"],
+                    description: "Paquete DJ base. wedding/corporate = dj_weddings (5h). private/clubs/family = 4h. holiday = 5h.",
+                },
+                horas: {
+                    type: "number",
+                    description: "Duración 1–16. Horas extra DJ = $100/h sobre la base del tipo.",
+                },
+                servicios: {
+                    type: "array",
+                    description: "Add-ons del catálogo. Cada ítem: { sku, qty? }.",
+                    items: {
+                        type: "object",
+                        properties: {
+                            sku: { type: "string", description: "SKU canónico (dj_private, hl_robot, live_sax, fx_sparks, pa_medium, …)." },
+                            qty: { type: "number", description: "Cantidad. Default 1." },
+                        },
+                        required: ["sku"],
+                    },
+                },
+                lead_id: {
+                    type: "string",
+                    description: "UUID opcional de public.leads.id. No inventes un lead_id.",
+                },
+                event_date: {
+                    type: "string",
+                    description: "Fecha opcional YYYY-MM-DD.",
+                },
+                nota: {
+                    type: "string",
+                    description: "Nota interna opcional, 1 a 2000 caracteres.",
+                },
+            },
+        },
+    };
+
     const LEAD_NOTE_TOOL = {
         name: "crear_nota_lead",
         description:
@@ -667,10 +737,18 @@ serve(async (req: Request) => {
     const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
     function toolGateInput(toolName: string): { tool: string; policy: string; mode: "read" | "write" } {
-        if (toolName === "consultar_finanzas" || toolName === "consultar_agenda_artista") {
+        if (
+            toolName === "consultar_finanzas"
+            || toolName === "consultar_agenda_artista"
+            || toolName === "consultar_catalogo_precios"
+        ) {
             return { tool: toolName, policy: "none", mode: "read" };
         }
-        if (toolName === "crear_nota_lead" || toolName === "registrar_evento_agenda") {
+        if (
+            toolName === "crear_nota_lead"
+            || toolName === "registrar_evento_agenda"
+            || toolName === "generar_cotizacion_evento"
+        ) {
             return { tool: toolName, policy: "auto_staff", mode: "write" };
         }
         return { tool: toolName, policy: "require_approval", mode: "write" };
@@ -800,6 +878,102 @@ serve(async (req: Request) => {
         return JSON.stringify({ ok: true, event_id: eventId, dj_user_id: djUserId });
     }
 
+    async function loadCatalogOverlay(): Promise<Record<string, number>> {
+        const { data, error } = await ADMIN
+            .from("platform_settings")
+            .select("value")
+            .eq("key", "rentals_catalog_prices")
+            .maybeSingle();
+        if (error || !data) return {};
+        return parseCatalogOverlay(data.value);
+    }
+
+    async function runCatalogReadTool(input: Record<string, unknown>): Promise<string> {
+        const overlay = await loadCatalogOverlay();
+        const bucket = String(input?.bucket ?? "all").trim().toLowerCase();
+        const items = mergeCatalog(overlay).filter((item) => {
+            if (bucket === "talent" || bucket === "equipment") return item.bucket === bucket;
+            return true;
+        });
+        return JSON.stringify({
+            ok: true,
+            brand: "Miami DJ Beat LLC",
+            tax_rate: 0.07,
+            deposit_rate: 0.30,
+            extra_hour_sku: "dj_extra_hour",
+            items,
+        });
+    }
+
+    function parseEventDate(value: unknown): string | null {
+        const raw = String(value ?? "").trim();
+        if (!raw) return null;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+        const ms = Date.parse(`${raw}T00:00:00Z`);
+        if (!Number.isFinite(ms)) return null;
+        return raw;
+    }
+
+    async function runQuoteWriteTool(input: Record<string, unknown>): Promise<string> {
+        const overlay = await loadCatalogOverlay();
+        const resolved = resolveQuoteLines({
+            servicios: input?.servicios,
+            tipo_evento: input?.tipo_evento,
+            horas: input?.horas,
+            overlay,
+        });
+        if (!resolved.ok) {
+            await recordActionLog("generar_cotizacion_evento", "invalid", `error:${resolved.error}`);
+            return JSON.stringify({ error: resolved.error });
+        }
+        const leadId = String(input?.lead_id ?? "").trim();
+        if (leadId && !UUID_RE.test(leadId)) {
+            await recordActionLog("generar_cotizacion_evento", leadId, "error:lead_id_invalido");
+            return JSON.stringify({ error: "lead_id_invalido" });
+        }
+        const nota = String(input?.nota ?? "").trim();
+        if (nota && nota.length > 2000) {
+            await recordActionLog("generar_cotizacion_evento", leadId || "quote", "error:nota_invalida");
+            return JSON.stringify({ error: "nota_invalida" });
+        }
+        const eventDate = parseEventDate(input?.event_date);
+        if (input?.event_date != null && String(input.event_date).trim() !== "" && !eventDate) {
+            await recordActionLog("generar_cotizacion_evento", leadId || "quote", "error:fecha_invalida");
+            return JSON.stringify({ error: "fecha_invalida" });
+        }
+        const totals = computeQuoteTotals(resolved.lines);
+        const buckets = bucketSums(resolved.lines);
+        const { data: quoteId, error } = await ADMIN.rpc("event_quote_record", {
+            p_staff_user_id: gate.userId,
+            p_lines: resolved.lines,
+            p_lead_id: leadId || null,
+            p_event_date: eventDate,
+            p_event_type: resolved.tipo_evento,
+            p_hours: resolved.horas,
+            p_notes: nota || null,
+            p_agent_id: "elixis",
+        });
+        if (error || !quoteId) {
+            const detail = error?.message ?? "rpc";
+            await recordActionLog("generar_cotizacion_evento", leadId || "quote", `error:${detail}`.slice(0, 2000));
+            return JSON.stringify({ error: "cotizacion_no_creada" });
+        }
+        await recordActionLog("generar_cotizacion_evento", String(quoteId), `ok:${quoteId}`);
+        return JSON.stringify({
+            ok: true,
+            brand: "Miami DJ Beat LLC",
+            quote_id: quoteId,
+            tipo_evento: resolved.tipo_evento,
+            horas: resolved.horas,
+            horas_base: resolved.horas_base,
+            horas_extra: resolved.horas_extra,
+            lines: resolved.lines,
+            ...buckets,
+            margen_usd: null,
+            ...totals,
+        });
+    }
+
     async function runFinancialTool(metrica: string): Promise<string> {
         try {
             const base = Deno.env.get("FINANCIAL_ENGINE_URL") ||
@@ -837,7 +1011,7 @@ serve(async (req: Request) => {
                     max_tokens: MAX_TOKENS,
                     temperature: 0.7,
                     system: systemContent,
-                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL],
+                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, CATALOG_READ_TOOL, QUOTE_WRITE_TOOL],
                     messages: convo,
                 }),
             });
@@ -908,6 +1082,26 @@ serve(async (req: Request) => {
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
                 } else if (toolName === "registrar_evento_agenda") {
                     out = await runAgendaWriteTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "consultar_catalogo_precios") {
+                    out = await runCatalogReadTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "generar_cotizacion_evento") {
+                    out = await runQuoteWriteTool((b.input as Record<string, unknown>) ?? {});
                     let failed = true;
                     try {
                         const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
