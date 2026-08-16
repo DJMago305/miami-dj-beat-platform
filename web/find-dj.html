@@ -314,7 +314,8 @@
     <div class="dj-grid" id="dj-grid"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <script src="./supabase-config.js?v=20260816-pr2-wiring"></script>
+    <script src="./mdj-referral.js?v=20260816-pr2-wiring"></script>
     <script src="./translations.js?v=20260422-nav-labels-1"></script>
     <script src="./i18n.js?v=20260226-1"></script>
     <script src="./subscription.js?v=20260422-find-dj-rank"></script>
@@ -437,7 +438,7 @@
                 var img = esc(dj.photo_url || '');
                 var uid = dj.user_id != null ? String(dj.user_id).trim() : '';
                 var profHref = uid
-                    ? './dj-profile.html?id=' + encodeURIComponent(uid) + '&tab=public'
+                    ? './profile.html?id=' + encodeURIComponent(uid) + '&ref=' + encodeURIComponent(uid)
                     : '#';
                 var rentQ = 'utm_source=find-dj&intent=rent&dj=' + encodeURIComponent(uid || String(dj.dj_slug || '').trim());
                 var rentHref = './rentals.html?' + rentQ;

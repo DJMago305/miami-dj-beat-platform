@@ -58,13 +58,22 @@ window.mdjSupabaseAnonInvokeHeaders = function () {
     return h;
 };
 
+/* Public artist profile + referral QR. dj-profile.html (LOCKED) reads this
+   in mdjBuildPublicFanProfileUrl / buildMiamiPublicQrUrl — do not edit that file. */
+window.MDB_QR_PROFILE_PATH = "/profile.html";
+
 window.mdjFanPublicProfileUrl = function (djUserId, opts) {
     try {
         if (!djUserId) return "";
         var o = opts || {};
-        var u = new URL("dj-profile.html", window.location.href);
-        u.searchParams.set("id", String(djUserId));
-        u.searchParams.set("view", "public");
+        var path = (typeof window.MDB_QR_PROFILE_PATH === "string" && window.MDB_QR_PROFILE_PATH.trim())
+            ? window.MDB_QR_PROFILE_PATH.trim()
+            : "/profile.html";
+        if (path.charAt(0) === "/") path = path.slice(1);
+        var u = new URL(path, window.location.href);
+        var id = String(djUserId);
+        u.searchParams.set("id", id);
+        u.searchParams.set("ref", id);
         if (o.sftOpen) u.searchParams.set("sft_open", "1");
         if (o.sftDebug) u.searchParams.set("sft_debug", "1");
         return u.href;
