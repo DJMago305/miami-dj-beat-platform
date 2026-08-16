@@ -87,7 +87,7 @@
     ],
     [
       "L7",
-      "^supabase/functions/(financial-engine|stripe-webhook|create-checkout|create-course-checkout|create-event-payment|create-buyer-billing-portal|create-sft-tip-checkout|create-platform-account|get-buyer-payment-methods|settle-sft-manual-platform-fee|verify-client-billing-unlock|register-sft-fan-request)$"
+      "^supabase/functions/(financial-engine|stripe-webhook|create-checkout|create-course-checkout|create-event-payment|create-quote-deposit|create-buyer-billing-portal|create-sft-tip-checkout|create-platform-account|get-buyer-payment-methods|settle-sft-manual-platform-fee|verify-client-billing-unlock|register-sft-fan-request)$"
     ],
     [
       "L7",
@@ -179,7 +179,7 @@
     ],
     [
       "L1",
-      "^web/(index|services|find-dj|directory|contact|rentals|shop|academia|courses|article|jobs|dj-profile|registry|downloads|library-wizard|tag-master|weather-lab|booth|blank-a4|autofill|mobile-iphone-preview|load-root|mdj-event-cart-root-fragment)\\.html$"
+      "^web/(index|services|find-dj|directory|contact|rentals|shop|academia|courses|article|jobs|dj-profile|registry|downloads|library-wizard|tag-master|weather-lab|booth|blank-a4|autofill|mobile-iphone-preview|load-root|mdj-event-cart-root-fragment|quote)\\.html$"
     ],
     [
       "L1",
@@ -540,7 +540,7 @@
       "body": [
         "ELIXIS corre del lado del servidor, verifica el rol de quien pregunta contra la base antes de responder, y recibe contexto vivo: artistas, bookings, pipeline, residencias, finanzas y catálogo de Miami DJ Beat LLC.",
         "Las tools pasan por <b>approval-gate</b> y el catálogo vive en <code>docs/ai/agent-registry.json</code>. Lectura: finanzas, agenda, catálogo de precios. Escritura auditada: nota de lead, bloque de agenda, borrador de cotización.",
-        "<code>generar_cotizacion_evento</code> persiste un draft en <code>event_quotes</code> con totales calculados en el RPC. No crea órdenes formales ni sesiones de Stripe.",
+        "<code>generar_cotizacion_evento</code> persiste un draft en <code>event_quotes</code> con totales calculados en el RPC. No crea órdenes formales ni sesiones de Stripe: eso lo hace staff con <code>event_quote_convert_to_order</code> y <code>create-quote-deposit</code>.",
         "Por eso este capítulo tiene su propia sección de sondas más abajo: el estado de la IA no se declara, se mide."
       ],
       "focus": [
@@ -1235,9 +1235,14 @@
       "sot": "supabase/migrations/20260816200000_event_quotes.sql",
       "impl": [
         "supabase/migrations/20260816200000_event_quotes.sql",
+        "supabase/migrations/20260816210000_event_quotes_public_read.sql",
+        "supabase/migrations/20260816220000_event_quote_convert_to_order.sql",
         "supabase/functions/_shared/event-quote-catalog.ts",
         "supabase/functions/elixis-chat",
-        "supabase/functions/_shared/approval-gate.ts"
+        "supabase/functions/_shared/approval-gate.ts",
+        "supabase/functions/create-quote-deposit",
+        "web/quote.html",
+        "web/js/production-module.js"
       ],
       "tests": [],
       "docs": [
@@ -1248,11 +1253,10 @@
         "cap-elixis",
         "cap-leads"
       ],
-      "used": [],
-      "unknowns": [
-        "No hay vista pública de la cotización ni aceptación por el cliente.",
-        "El draft no se convierte en event_builder_orders ni en sesión de depósito Stripe."
-      ]
+      "used": [
+        "cap-production"
+      ],
+      "unknowns": []
     },
     {
       "id": "cap-portal-msgs",
@@ -1767,7 +1771,7 @@
       "id": "R12",
       "title": "Cotizaciones ELIXIS para Miami DJ Beat LLC",
       "why": "Staff necesitaba un presupuesto estandarizado sin inventar precios y sin crear una orden formal.",
-      "done": "consultar_catalogo_precios y generar_cotizacion_evento existen; event_quotes y event_quote_record calculan totales en servidor.",
+      "done": "Flujo completo: draft ELIXIS → quote.html + get_public_event_quote → event_quote_convert_to_order → create-quote-deposit → webhook source=quote → UI staff en production-module.js.",
       "ref": {
         "kind": "cap",
         "id": "cap-event-quotes"
