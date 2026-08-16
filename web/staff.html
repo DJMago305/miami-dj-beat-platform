@@ -15,12 +15,15 @@
   <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./supabase-config.js?v=20260814-bfi"></script>
+  <!-- QR: misma librería que el perfil (qrcodejs) para generar el código nativo -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 
   <style>
     /* ══════════ Portal STAFF — shell modular, bounded context /staff ══════════ */
     :root{ --gold:#c5a059; --gold-lt:#e8c987; --bg:#050810; --panel:#0b0f18; --line:rgba(255,255,255,.10); }
     *{box-sizing:border-box;}
-    body{margin:0;background:var(--bg);color:#e8eaed;
+    /* El portal tiene su PROPIA topbar: anula el padding-top del header fijo del sitio (styles.css) que dejaba un hueco negro arriba. */
+    body{margin:0;padding:0 !important;background:var(--bg);color:#e8eaed;
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
       min-height:100vh;display:flex;flex-direction:column;}
 
@@ -29,7 +32,7 @@
       padding:12px 22px;background:linear-gradient(180deg,#0a0e16,#070a11);
       border-bottom:1px solid var(--line);flex-wrap:wrap;}
     .staff-brand{display:flex;align-items:center;gap:11px;min-width:0;}
-    .staff-brand .mk{color:var(--gold-lt);font-size:17px;line-height:1;}
+    .staff-brand .mk{width:34px;height:34px;flex:none;object-fit:contain;display:block;}
     .staff-brand .tx{font-size:15px;font-weight:900;letter-spacing:.02em;line-height:1.1;white-space:nowrap;}
     .staff-brand .tx small{display:block;font-size:8.5px;font-weight:700;letter-spacing:.16em;
       text-transform:uppercase;color:rgba(232,201,135,.72);}
@@ -43,16 +46,34 @@
     #staff-logout:hover{background:#e04b3a;}
 
     /* ── Nav propia (aislada de la tira de artista), poblada por RBAC ── */
-    .staff-nav{display:flex;align-items:center;gap:4px;padding:0 16px;background:#070a11;
+    .staff-nav{display:none;align-items:center;gap:4px;padding:0 16px;background:#070a11;
       border-bottom:1px solid var(--line);overflow-x:auto;min-height:47px;}
     .staff-nav a,.staff-nav button{background:transparent;border:none;border-bottom:2px solid transparent;
       color:rgba(255,255,255,.62);font-size:12.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
       padding:14px 16px;cursor:pointer;white-space:nowrap;text-decoration:none;transition:color .2s,border-color .2s;font-family:inherit;}
     .staff-nav a:hover,.staff-nav button:hover{color:var(--gold-lt);}
     .staff-nav [data-view].active{color:var(--gold-lt);border-bottom-color:var(--gold);}
-    .staff-nav .ext{margin-left:auto;color:rgba(255,255,255,.42);font-weight:700;}
-    .staff-nav .ext + .ext{margin-left:0;}
-    .staff-nav .ext:hover{color:#fff;}
+    /* Menú unificado: todas las pestañas juntas y con el mismo estilo (sin partir la barra a un lado y al otro). */
+    /* Etiqueta de sección al extremo derecho del menú (dinámica). */
+    .staff-nav .staff-nav-title{margin-left:auto;align-self:center;padding-left:16px;font-size:11px;font-weight:800;
+      letter-spacing:.10em;text-transform:uppercase;color:var(--gold-lt);white-space:nowrap;}
+
+    /* ── Menú PRINCIPAL (tira dorada grande, réplica del estilo del perfil artista) ── */
+    .staff-topnav{display:flex;align-items:stretch;gap:0;padding:0 clamp(16px,4vw,56px);
+      background:linear-gradient(180deg,#0a0e16,#070a11);border-bottom:1px solid var(--line);
+      overflow-x:auto;overflow-y:hidden;}
+    .staff-topnav button{background:none;border:none;color:rgba(255,255,255,.52);
+      font-size:17px;font-weight:900;letter-spacing:.14em;cursor:pointer;text-transform:uppercase;
+      position:relative;transition:color .2s ease;display:flex;align-items:center;justify-content:center;
+      padding:20px clamp(12px,2vw,26px);white-space:nowrap;flex-shrink:0;font-family:inherit;}
+    .staff-topnav .tab-help{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;
+      border:1.5px solid currentColor;border-radius:50%;font-size:9px;font-weight:800;letter-spacing:0;margin-left:7px;line-height:1;}
+    .staff-topnav button.tab-sealed,.staff-topnav button.tab-sealed:hover{color:rgba(255,255,255,.3);cursor:default;}
+    .staff-topnav .tab-lock{font-size:13px;margin-left:6px;line-height:1;}
+    .staff-topnav button:hover{color:rgba(255,255,255,.92);}
+    .staff-topnav button.active{color:var(--gold);}
+    .staff-topnav button.active::after{content:"";position:absolute;bottom:0;
+      left:clamp(12px,2vw,26px);right:clamp(12px,2vw,26px);height:2px;background:var(--gold);}
 
     /* ── Main + módulos/vistas ── */
     .staff-main{flex:1;min-height:0;position:relative;}
@@ -73,23 +94,16 @@
       cursor:pointer;padding:0;transition:background .2s,border-color .2s;}
     .ofm-daynight:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.30);}
     .ofm-daynight svg{width:16px;height:16px;display:block;}
-    .ofm-expand{background:rgba(197,160,89,.10);border:1px solid rgba(197,160,89,.4);color:var(--gold-lt);
-      font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
-      border-radius:8px;padding:6px 11px;white-space:nowrap;transition:background .2s;}
-    .ofm-expand:hover{background:rgba(197,160,89,.20);}
-    #ofm-business-view{height:calc(100vh - 132px);}
-    #ofm-matrix-frame,#elixis-frame{width:100%;height:100%;min-height:520px;border:none;background:#0b0b0f;display:block;}
-    #view-elixis{height:calc(100vh - 96px);}
-    #ofm-business-view.ofm-full{position:fixed;inset:0;z-index:9998;height:100vh;background:#000;}
-    #ofm-business-view.ofm-full #ofm-matrix-frame{height:100vh;}
-    #ofm-business-view.ofm-full .ofm-exit{display:block;}
-    .ofm-exit{display:none;position:fixed;top:14px;right:16px;z-index:10000;background:rgba(0,0,0,.6);
-      border:1px solid rgba(255,255,255,.25);color:#fff;font-size:12px;font-weight:800;cursor:pointer;
-      border-radius:10px;padding:8px 13px;backdrop-filter:blur(6px);}
-    .ofm-exit:hover{background:rgba(0,0,0,.82);}
+    #ofm-business-view{height:calc(100vh - 116px);}
+    #ofm-matrix-frame,#elixis-frame,#miperfil-frame,#agenda-frame,#cashflow-frame,#config-frame{width:100%;height:100%;min-height:520px;border:none;background:#0b0b0f;display:block;}
+    #view-elixis,#view-miperfil,#view-agenda,#view-cashflow,#view-config{height:calc(100vh - 116px);}
+    #view-agenda,#view-cashflow,#view-config{position:relative;}
+    .agenda-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      background:#0b0f18;color:rgba(255,255,255,.55);font-size:13px;letter-spacing:.04em;z-index:2;}
+    .agenda-loading.hidden{display:none;}
 
     /* ── Módulo stub (manager/vendedor — estructura RBAC lista) ── */
-    .stub-wrap{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 160px);padding:24px;}
+    .stub-wrap{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 116px);padding:24px;}
     .stub-card{max-width:560px;text-align:center;background:var(--panel);border:1px solid var(--line);
       border-radius:18px;padding:40px 34px;}
     .stub-card h2{margin:0 0 10px;font-size:22px;color:var(--gold-lt);}
@@ -98,44 +112,509 @@
       color:var(--gold-lt);text-decoration:none;font-weight:800;font-size:12.5px;letter-spacing:.06em;
       text-transform:uppercase;border-radius:10px;padding:12px 20px;transition:background .2s;}
     .stub-card .go:hover{background:rgba(197,160,89,.24);}
+
+    /* ══════════ Módulo GOBERNANZA (autocontenido · Human-in-the-Loop) ══════════ */
+    .gov-demo{font-size:9px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;
+      color:#e0b64d;background:rgba(224,182,77,.10);border:1px solid rgba(224,182,77,.34);
+      border-radius:999px;padding:2px 8px;white-space:nowrap;}
+    .gov-scroll{max-height:calc(100vh - 153px);overflow-y:auto;padding:24px 24px 64px;}
+    /* ═══ MENÚ LATERAL STAFF: sidebar (iconos + grupos plegables + botón contraer) + panel de contenido ═══ */
+    .staff-shell{display:flex;height:calc(100vh - 116px);}
+    .staff-side3{width:250px;flex:none;background:#0a0e16;border-right:1px solid var(--line);overflow-y:auto;overflow-x:hidden;padding:10px 0 44px;transition:width .18s ease;}
+    .staff-side3.collapsed{width:60px;}
+    .side3-top{display:flex;align-items:center;gap:11px;padding:2px 14px 12px;}
+    .side3-brand{font-size:13px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);}
+    .side3-collapse{display:flex;align-items:center;justify-content:center;width:36px;height:34px;flex:none;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:8px;color:var(--gold);cursor:pointer;}
+    .side3-collapse svg{width:17px;height:17px;}
+    .side3-collapse:hover{background:rgba(197,160,89,.16);}
+    .side3-group,.side3-link{display:flex;align-items:center;gap:11px;width:100%;background:none;border:none;color:rgba(255,255,255,.78);font-family:inherit;text-align:left;cursor:pointer;white-space:nowrap;}
+    .side3-group{padding:12px 14px 12px 15px;font-size:11px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--gold);}
+    .side3-group:hover{background:rgba(255,255,255,.04);}
+    .side3-link{padding:9px 14px 9px 17px;font-size:13px;font-weight:600;}
+    .side3-link:hover{background:rgba(255,255,255,.05);color:#fff;}
+    .side3-link.active{background:rgba(197,160,89,.16);color:var(--gold-lt);box-shadow:inset 3px 0 0 var(--gold);}
+    .side3-solo{padding:12px 14px 12px 15px;font-size:13px;font-weight:800;color:var(--gold-lt);border-bottom:1px solid var(--line);margin-bottom:2px;}
+    .side3-ic{flex:none;width:18px;display:inline-flex;align-items:center;justify-content:center;color:currentColor;font-size:13px;}
+    .side3-ic svg{width:16px;height:16px;}
+    .side3-tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+    .side3-car{flex:none;font-size:10px;color:var(--gold);transition:transform .2s;}
+    .side3-group:not(.open) .side3-car{transform:rotate(-90deg);}
+    .side3-lock{flex:none;font-size:12px;}
+    .side3-items{overflow:hidden;max-height:0;transition:max-height .22s ease;}
+    .side3-items.open{max-height:340px;}
+    /* colapsado → solo iconos */
+    .staff-side3.collapsed .side3-tx,.staff-side3.collapsed .side3-car,.staff-side3.collapsed .side3-lock,.staff-side3.collapsed .side3-brand{display:none;}
+    .staff-side3.collapsed .side3-top{justify-content:center;padding-left:0;padding-right:0;}
+    /* responsive: en pantallas angostas el sidebar auto-colapsa a iconos y el contenido toma el ancho */
+    @media(max-width:640px){
+      .staff-side3{width:56px;}
+      .staff-side3 .side3-tx,.staff-side3 .side3-car,.staff-side3 .side3-lock,.staff-side3 .side3-brand{display:none;}
+      .staff-side3 .side3-items{max-height:none;overflow:visible;}
+      .staff-side3 .side3-group,.staff-side3 .side3-link,.staff-side3 .side3-solo,.staff-side3 .side3-top{justify-content:center;gap:0;padding-left:0;padding-right:0;}
+      #sc3-gob .gov-scroll{padding:16px 14px 50px;}
+    }
+    /* ═══ MODO DÍA (tema claro del portal) — el botón central alterna data-theme en <html>. Base del día/noche global. ═══ */
+    :root[data-theme="day"]{ --bg:#eef1f5; --panel:#ffffff; --line:rgba(14,18,28,.13); --gold:#9a7a33; --gold-lt:#7a5f22; }
+    :root[data-theme="day"] body{ background:var(--bg); color:#1b1f27; }
+    :root[data-theme="day"] .staff-topbar{ background:linear-gradient(180deg,#ffffff,#e9edf3); }
+    :root[data-theme="day"] .staff-brand .tx{ color:#1b1f27; }
+    :root[data-theme="day"] .staff-brand .tx small{ color:#8a6d2e; }
+    :root[data-theme="day"] #staff-name{ color:rgba(20,25,35,.85); }
+    :root[data-theme="day"] .staff-topnav{ background:linear-gradient(180deg,#f5f7fb,#e6ebf1); }
+    :root[data-theme="day"] .staff-topnav button{ color:rgba(20,25,35,.55); }
+    :root[data-theme="day"] .staff-topnav button:hover{ color:rgba(20,25,35,.9); }
+    :root[data-theme="day"] .staff-topnav button.tab-sealed,:root[data-theme="day"] .staff-topnav button.tab-sealed:hover{ color:rgba(20,25,35,.32); }
+    :root[data-theme="day"] .ofm-daynight{ border-color:rgba(14,18,28,.2); }
+    :root[data-theme="day"] .ofm-daynight:hover{ background:rgba(14,18,28,.05); }
+    :root[data-theme="day"] .staff-side3{ background:#f4f6f9; }
+    :root[data-theme="day"] .side3-group,:root[data-theme="day"] .side3-link{ color:rgba(20,25,35,.78); }
+    :root[data-theme="day"] .side3-link:hover{ background:rgba(14,18,28,.05); color:#000; }
+    :root[data-theme="day"] .side3-collapse{ background:rgba(14,18,28,.05); }
+    :root[data-theme="day"] .staff-content3{ background:#eef1f5; }
+    :root[data-theme="day"] #sc3-gob,:root[data-theme="day"] .sc3-loading{ background:#eef1f5; }
+    :root[data-theme="day"] .gov-head h3{ color:#1b1f27; }
+    :root[data-theme="day"] .gov-head p{ color:rgba(20,25,35,.62); }
+    :root[data-theme="day"] .gov-card .nm{ color:#12151b; }
+    :root[data-theme="day"] .gov-card .sub,:root[data-theme="day"] .gov-card .access,:root[data-theme="day"] .gov-chip{ color:rgba(20,25,35,.62); }
+    :root[data-theme="day"] .gov-card.ghost .av{ background:rgba(14,18,28,.08); color:rgba(20,25,35,.5); }
+    :root[data-theme="day"] .gov-req .body .t{ color:#1b1f27; }
+    :root[data-theme="day"] .gov-req .body .meta{ color:rgba(20,25,35,.55); }
+    :root[data-theme="day"] .gov-table th{ color:rgba(20,25,35,.55); }
+    :root[data-theme="day"] .gov-table td{ color:rgba(20,25,35,.8); }
+    :root[data-theme="day"] .gov-table .who{ color:#12151b; }
+    :root[data-theme="day"] .gov-empty{ color:rgba(20,25,35,.5); }
+    .staff-side3.collapsed .side3-items{max-height:none;overflow:visible;}
+    .staff-side3.collapsed .side3-group,.staff-side3.collapsed .side3-link,.staff-side3.collapsed .side3-solo{justify-content:center;gap:0;padding-left:0;padding-right:0;}
+    /* panel de contenido */
+    .staff-content3{flex:1;min-width:0;position:relative;background:#070a10;}
+    .sc3-panel{display:none;position:absolute;inset:0;}
+    .sc3-panel.active{display:block;}
+    #sc3-gob{overflow-y:auto;}
+    #sc3-gob .gov-scroll{max-height:none;overflow:visible;padding:22px 22px 60px;}
+    .sc3-frame{width:100%;height:100%;border:0;display:block;background:#0a0e16;}
+    .sc3-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--gold-lt);font-size:13px;font-weight:700;letter-spacing:.02em;background:#0a0e16;z-index:2;}
+    .sc3-loading.hidden{display:none;}
+    .acc-spin{width:15px;height:15px;border:2px solid rgba(197,160,89,.3);border-top-color:var(--gold);border-radius:50%;display:inline-block;animation:accspin .7s linear infinite;}
+    @keyframes accspin{to{transform:rotate(360deg);}}
+    .gov-section{max-width:none;margin:0 0 30px;}
+    .gov-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 15px;
+      padding-bottom:11px;border-bottom:1px solid var(--line);}
+    .gov-head .eyebrow{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);}
+    .gov-head h3{margin:0;font-size:19px;font-weight:800;color:#f2f4f7;letter-spacing:.01em;}
+    .gov-head p{margin:0;flex-basis:100%;font-size:12.5px;color:rgba(255,255,255,.55);line-height:1.5;}
+
+    .gov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:14px;}
+    .gov-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 17px;
+      display:flex;flex-direction:column;gap:10px;}
+    .gov-card.apex{border-color:rgba(197,160,89,.55);background:linear-gradient(180deg,rgba(197,160,89,.08),rgba(197,160,89,.02));}
+    .gov-card.ghost{opacity:.62;border-style:dashed;}
+    .gov-card .who{display:flex;align-items:center;gap:11px;}
+    .gov-card .av{width:38px;height:38px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+      font-weight:900;font-size:15px;color:#0a0e16;background:linear-gradient(135deg,var(--gold-lt),var(--gold));}
+    .gov-card.ghost .av{background:rgba(255,255,255,.10);color:rgba(255,255,255,.5);}
+    .gov-card .nm{font-size:14px;font-weight:800;color:#fff;line-height:1.25;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+    .gov-card .sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:1px;}
+    .gov-chip{align-self:flex-start;font-size:9.5px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;
+      border-radius:999px;padding:3px 9px;border:1px solid var(--line);color:rgba(255,255,255,.7);}
+    .gov-chip.owner{color:var(--gold);border-color:rgba(197,160,89,.5);}
+    .gov-card .access{font-size:11.5px;color:rgba(255,255,255,.6);line-height:1.45;}
+
+    .gov-req{background:var(--panel);border:1px solid var(--line);border-left:3px solid #e0b64d;border-radius:12px;
+      padding:15px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:11px;}
+    .gov-req .body{flex:1;min-width:230px;}
+    .gov-req .body .t{font-size:13.5px;font-weight:600;color:#eef;line-height:1.4;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+    .gov-req .body .t b{color:var(--gold-lt);font-weight:800;}
+    .gov-req .body .meta{font-size:11px;color:rgba(255,255,255,.5);margin-top:4px;}
+    .gov-req .actions{display:flex;gap:9px;}
+    .gov-btn{border:none;border-radius:9px;padding:9px 16px;font-size:11.5px;font-weight:800;letter-spacing:.04em;
+      cursor:pointer;font-family:inherit;transition:filter .15s;}
+    .gov-btn:hover{filter:brightness(1.14);}
+    .gov-btn.ok{background:#1f7a4d;color:#fff;}
+    .gov-btn.no{background:transparent;border:1px solid rgba(224,120,120,.55);color:#e88;}
+    .gov-empty{border:1px dashed var(--line);border-radius:12px;padding:18px;color:rgba(255,255,255,.5);
+      font-size:12.5px;text-align:center;}
+
+    .gov-table-wrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:6px 8px;overflow-x:auto;}
+    .gov-table{width:100%;border-collapse:collapse;font-size:12px;}
+    .gov-table th{text-align:left;font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+      color:rgba(255,255,255,.45);padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;}
+    .gov-table td{padding:11px 10px;border-bottom:1px solid rgba(255,255,255,.055);color:rgba(255,255,255,.8);vertical-align:top;}
+    .gov-table tr:last-child td{border-bottom:none;}
+    .gov-table .who{font-weight:700;color:#fff;white-space:nowrap;}
+    .gov-table .who.ai{color:#7fc7e8;}
+    .gov-table .res{font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+      border-radius:999px;padding:3px 8px;white-space:nowrap;}
+    .gov-table .res.ok{color:#7fdca0;background:rgba(31,122,77,.18);}
+    .gov-table .res.no{color:#e99;background:rgba(200,80,80,.15);}
+    .gov-table .res.wait{color:#e0b64d;background:rgba(224,182,77,.14);}
+
+    /* ══════════ MI PERFIL — transporte NATIVO de la tarjeta de owner ══════════ */
+    #perfil-scroll{max-height:calc(100vh - 116px);overflow-y:auto;padding:28px 24px 60px;}
+    .pf-wrap{max-width:900px;margin:0 auto;}
+    /* HERO = TODA la etiqueta: el banner es el fondo completo de la tarjeta y el perfil flota encima */
+    .pf-hero{position:relative;background:linear-gradient(135deg,rgba(197,160,89,.10),rgba(11,15,24,.35));
+      border:1px solid var(--line);border-radius:20px;overflow:hidden;}
+    .pf-banner{display:none;position:absolute;inset:0;z-index:0;}
+    .pf-hero.has-banner .pf-banner{display:block;}
+    .pf-banner img{width:100%;height:100%;object-fit:cover;display:block;}
+    .pf-scrim{display:none;}
+    .pf-hero.has-banner .pf-scrim{display:block;position:absolute;inset:0;z-index:0;
+      background:linear-gradient(180deg,rgba(8,11,18,.05) 24%,rgba(8,11,18,.72) 56%,rgba(8,11,18,.97));}
+    /* CENTRADO (PO): avatar arriba + info (badge, nombre, estrellas, redes) centrados y simétricos, subidos del fondo */
+    .pf-hero-body{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;flex-wrap:wrap;padding:38px 28px;}
+    .pf-hero-body .pf-id{flex:none;min-width:0;display:flex;flex-direction:column;align-items:center;}
+    .pf-hero-body .pf-socials{justify-content:center;}
+    .pf-hero.has-banner .pf-hero-body{min-height:380px;}
+    .pf-hero.has-banner .pf-name,.pf-hero.has-banner .pf-role,.pf-hero.has-banner .pf-badge{text-shadow:0 2px 10px rgba(0,0,0,.7);}
+    .pf-photo{width:132px;height:132px;border-radius:50%;object-fit:cover;flex:none;
+      border:2px solid rgba(197,160,89,.55);background:#0b0f18;}
+    .pf-id{flex:1;min-width:230px;}
+    .pf-badge{display:inline-block;font-size:10px;font-weight:900;letter-spacing:.14em;color:var(--gold);
+      border:1px solid rgba(197,160,89,.5);border-radius:999px;padding:5px 12px;text-transform:uppercase;}
+    .pf-role{margin-top:13px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55);}
+    .pf-name{margin:4px 0 0;font-size:34px;font-weight:900;color:#fff;letter-spacing:-.5px;line-height:1.05;}
+    .pf-stars{margin-top:7px;color:var(--gold);letter-spacing:3px;font-size:15px;}
+    .pf-socials{display:flex;gap:10px;margin-top:15px;flex-wrap:wrap;}
+    .pf-socials a{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+      background:rgba(255,255,255,.06);border:1px solid var(--line);color:#fff;transition:background .15s,color .15s;}
+    .pf-socials a:hover{background:rgba(197,160,89,.16);color:var(--gold-lt);}
+    .pf-socials svg{width:18px;height:18px;display:block;}
+    .pf-soon{max-width:900px;margin:22px auto 0;font-size:12px;color:rgba(255,255,255,.42);
+      border:1px dashed var(--line);border-radius:12px;padding:14px 16px;text-align:center;}
+    .pf-section{max-width:900px;margin:20px auto 0;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;}
+    .pf-section-head{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;}
+    .pf-bio{margin:0;font-size:14px;line-height:1.7;color:rgba(255,255,255,.82);white-space:pre-line;}
+    .pf-grid{max-width:900px;margin:20px auto 0;display:grid;grid-template-columns:1.6fr 1fr;gap:16px;align-items:start;}
+    .pf-grid .pf-section{margin:0;max-width:none;}
+    @media(max-width:640px){.pf-grid{grid-template-columns:1fr;}}
+    .pf-rev-avg{font-size:12px;font-weight:800;color:var(--gold);margin:-2px 0 12px;}
+    .pf-reviews{display:flex;flex-direction:column;gap:11px;}
+    .pf-review{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:rgba(255,255,255,.02);}
+    .pf-review .stars{color:var(--gold);font-size:12px;letter-spacing:2px;}
+    .pf-review .txt{margin:6px 0 0;font-size:13px;color:rgba(255,255,255,.8);line-height:1.5;}
+    .pf-review .who{margin-top:6px;font-size:11px;color:rgba(255,255,255,.45);}
+    .pf-empty-rev{font-size:12.5px;color:rgba(255,255,255,.45);border:1px dashed var(--line);border-radius:12px;padding:18px;text-align:center;}
+    /* carrusel de opiniones (auto-avanza una a la vez) */
+    .pf-rev-vp{position:relative;overflow:hidden;min-height:60px;}
+    .pf-rev-slide{transition:transform .42s ease, opacity .42s ease;}
+    .pf-rev-slide.exit{transform:translateX(-22px);opacity:0;}
+    .pf-rev-slide.enter{transform:translateX(22px);opacity:0;transition:none;}
+    .pf-rev-slide .stars{color:var(--gold);font-size:12px;letter-spacing:2px;}
+    .pf-rev-slide .txt{margin:8px 0 0;font-size:14px;color:rgba(255,255,255,.85);line-height:1.55;}
+    .pf-rev-slide .who{margin-top:8px;font-size:11px;color:rgba(255,255,255,.45);}
+    .pf-rev-count{margin-top:12px;font-size:10px;font-weight:800;letter-spacing:.1em;color:rgba(255,255,255,.35);text-align:right;}
+    .pf-qr-card{text-align:center;}
+    .pf-qr-paper{background:#fff;border-radius:14px;padding:12px;display:inline-block;margin-top:4px;}
+    .pf-qr-paper #pf-qrcode img,.pf-qr-paper #pf-qrcode canvas{display:block;}
+    .pf-qr-cap{margin-top:12px;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);}
+    .pf-share-btn{display:inline-block;margin-top:12px;font-size:11.5px;font-weight:800;letter-spacing:.04em;border-radius:10px;padding:9px 16px;cursor:pointer;font-family:inherit;color:var(--gold-lt);border:1px solid rgba(197,160,89,.5);background:transparent;}
+    .pf-share-btn:hover{background:rgba(197,160,89,.12);}
+    /* estrellas del hero (agregado real) */
+    .pf-stars .on{color:var(--gold);}
+    .pf-stars .off{color:rgba(255,255,255,.2);}
+    /* input de opinión interactivo */
+    .pf-rate{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--line);}
+    .pf-rate-lead{font-size:12px;font-weight:800;color:rgba(255,255,255,.72);margin-bottom:8px;}
+    .pf-stars-input{display:flex;gap:4px;}
+    .pf-star{background:none;border:none;cursor:pointer;font-size:26px;line-height:1;padding:2px 3px;color:rgba(255,255,255,.85);transition:color .12s,transform .1s;}
+    .pf-star:hover{transform:scale(1.12);}
+    .pf-star.on{color:var(--gold);}
+    .pf-rate-dialog{display:none;margin-top:12px;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:12px;padding:14px;}
+    .pf-rate-dialog.open{display:block;}
+    .pf-rate-picked{font-size:12px;color:var(--gold);font-weight:800;letter-spacing:2px;margin-bottom:10px;}
+    .pf-rate-lowhint{display:none;font-size:12px;color:#e0b64d;background:rgba(224,182,77,.10);border:1px solid rgba(224,182,77,.3);border-radius:8px;padding:9px 11px;margin-bottom:10px;line-height:1.45;}
+    .pf-rate-lowhint.show{display:block;}
+    #pf-rate-comment{width:100%;box-sizing:border-box;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:9px;color:#fff;padding:9px 11px;font-size:13px;font-family:inherit;resize:vertical;}
+    .pf-rate-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:10px;}
+    .pf-rate-cancel{background:transparent;border:1px solid var(--line);color:rgba(255,255,255,.6);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+    .pf-rate-submit{background:var(--gold);border:none;color:#0a0e16;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;}
+    .pf-rate-submit:hover{filter:brightness(1.08);}
+    .pf-rate-msg{font-size:11.5px;margin-top:9px;color:rgba(255,255,255,.6);line-height:1.4;}
   </style>
 </head>
 <body>
   <header class="staff-topbar">
     <div class="staff-brand">
-      <span class="mk">◆</span>
+      <img class="mk" src="./assets/branding/fenix-emblem-160.png" alt="Miami DJ Beat — Fénix" width="34" height="34" />
       <span class="tx">MIAMI DJ BEAT LLC<small id="brand-sub">Staff Command Center</small></span>
     </div>
     <div class="staff-actions">
+      <button type="button" id="ofm-daynight" class="ofm-daynight" title="Modo día / noche" aria-label="Modo día / noche (global)"></button>
       <span id="role-badge">◆ Staff</span>
       <span id="staff-name"></span>
       <button id="staff-logout" type="button">SALIR</button>
     </div>
   </header>
 
-  <!-- Nav ISLADA (poblada por RBAC según el rol) -->
+  <!-- Menú PRINCIPAL (tira dorada grande, estilo perfil) — interactivo, poblado por RBAC -->
+  <nav class="staff-topnav" id="staff-topnav" aria-label="Menú principal"></nav>
+
+  <!-- Nav ISLADA de módulos (poblada por RBAC según el rol) -->
   <nav class="staff-nav" id="staff-nav" aria-label="Navegación de staff"></nav>
 
   <main class="staff-main">
     <!-- ═══ Módulo OWNER (Matrix Principal) — solo rol owner ═══ -->
     <div id="module-owner" class="staff-module">
-      <section id="view-financiero" class="staff-view active">
-        <div class="ofm-bar">
-          <span class="lbl">◆ Owner Financial IA — Matrix</span>
-          <div class="ofm-ctrls">
-            <span class="ofm-sep"></span>
-            <button type="button" id="ofm-daynight" class="ofm-daynight" aria-label="Modo día / noche del Matrix"></button>
-            <button type="button" id="ofm-expand" class="ofm-expand" aria-label="Pantalla completa">⛶ Pantalla completa</button>
-          </div>
-        </div>
-        <div id="ofm-business-view">
-          <button id="ofm-exit" class="ofm-exit" type="button" aria-label="Salir de pantalla completa">✕ Salir</button>
-          <iframe id="ofm-matrix-frame" src="./business-financial-intelligence.html"
-                  title="Owner Financial IA — Matrix" referrerpolicy="same-origin"></iframe>
-        </div>
-      </section>
       <section id="view-elixis" class="staff-view">
         <iframe id="elixis-frame" data-src="./elixis-console.html" title="ELIXIS — consola" referrerpolicy="same-origin"></iframe>
+      </section>
+
+      <!-- ═══ Vista AGENDA — muestra staff-agenda.html DENTRO del portal (debajo del menú, como FINANCIERO). Archivo del tronco nuevo, independiente del viejo. ═══ -->
+      <section id="view-agenda" class="staff-view">
+        <div id="agenda-loading" class="agenda-loading">Cargando agenda…</div>
+        <iframe id="agenda-frame" data-src="./staff-agenda.html" title="Agenda" referrerpolicy="same-origin"></iframe>
+      </section>
+
+      <!-- ═══ Vista CASH FLOW — misma copia del tronco nuevo abriendo el tab flow (?tab=flow). 1:1, sin modificar. ═══ -->
+      <section id="view-cashflow" class="staff-view">
+        <div id="cashflow-loading" class="agenda-loading">Cargando Cash Flow…</div>
+        <iframe id="cashflow-frame" data-src="./staff-agenda.html?tab=flow" title="Cash Flow" referrerpolicy="same-origin"></iframe>
+      </section>
+
+      <!-- ═══ Vista CONFIG — transplante de account-settings al tronco nuevo (staff-config.html) ═══ -->
+      <section id="view-config" class="staff-view">
+        <div id="config-loading" class="agenda-loading">Cargando Config…</div>
+        <iframe id="config-frame" data-src="./staff-config.html" title="Config" referrerpolicy="same-origin"></iframe>
+      </section>
+
+      <!-- ═══ Vista MI PERFIL — TRANSPORTE NATIVO del perfil al tronco nuevo (sin iframe/link al viejo) ═══ -->
+      <section id="view-miperfil" class="staff-view">
+        <div id="perfil-scroll">
+          <div class="pf-wrap">
+            <div class="pf-hero" id="pf-hero">
+              <div class="pf-banner" id="pf-banner"><img id="pf-banner-img" alt="" loading="lazy"></div>
+              <div class="pf-scrim"></div>
+              <div class="pf-hero-body">
+              <img class="pf-photo" id="pf-photo" alt="" src="./assets/dj-avatar-placeholder.png">
+              <div class="pf-id">
+                <span class="pf-badge" id="pf-badge">◆ OWNER</span>
+                <div class="pf-role" id="pf-role">—</div>
+                <h1 class="pf-name" id="pf-name">—</h1>
+                <div class="pf-stars" id="pf-hero-stars" aria-label="Rating">★★★★★</div>
+                <div class="pf-socials" id="pf-socials"></div>
+              </div>
+              </div>
+            </div>
+            <div class="pf-section">
+              <div class="pf-section-head">Bio</div>
+              <p class="pf-bio" id="pf-bio">—</p>
+            </div>
+
+            <div class="pf-grid">
+              <div class="pf-section">
+                <div class="pf-section-head" id="pf-rev-title">Opiniones</div>
+                <div class="pf-rev-avg" id="pf-rev-avg"></div>
+                <div class="pf-rate" id="pf-rate">
+                  <div class="pf-rate-lead">Deja tu opinión</div>
+                  <div class="pf-stars-input" id="pf-stars-input" role="group" aria-label="Tu valoración de 1 a 5 estrellas">
+                    <button type="button" class="pf-star" data-star="1" aria-label="1 estrella">★</button>
+                    <button type="button" class="pf-star" data-star="2" aria-label="2 estrellas">★</button>
+                    <button type="button" class="pf-star" data-star="3" aria-label="3 estrellas">★</button>
+                    <button type="button" class="pf-star" data-star="4" aria-label="4 estrellas">★</button>
+                    <button type="button" class="pf-star" data-star="5" aria-label="5 estrellas">★</button>
+                  </div>
+                  <div class="pf-rate-dialog" id="pf-rate-dialog">
+                    <div class="pf-rate-picked" id="pf-rate-picked"></div>
+                    <div class="pf-rate-lowhint" id="pf-rate-lowhint">Cuéntanos: ¿por qué esa valoración y no 5 estrellas? ¿En qué podemos mejorar? Tu explicación ayuda.</div>
+                    <textarea id="pf-rate-comment" rows="3" maxlength="600" placeholder="Escribe tu comentario…"></textarea>
+                    <div class="pf-rate-actions">
+                      <button type="button" class="pf-rate-cancel" id="pf-rate-cancel">Cancelar</button>
+                      <button type="button" class="pf-rate-submit" id="pf-rate-submit">Publicar opinión</button>
+                    </div>
+                    <div class="pf-rate-msg" id="pf-rate-msg"></div>
+                  </div>
+                </div>
+                <div class="pf-reviews" id="pf-reviews"></div>
+              </div>
+              <div class="pf-section pf-qr-card">
+                <div class="pf-section-head">Interactuar</div>
+                <div class="pf-qr-paper"><div id="pf-qrcode"></div></div>
+                <div class="pf-qr-cap">Comparte tu enlace de invitación</div>
+                <button class="pf-share-btn" id="pf-share" type="button">Compartir enlace</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ Vista GOBERNANZA (autocontenida · cero rebotes) ═══ -->
+      <section id="view-gobernanza" class="staff-view">
+       <div class="staff-shell">
+        <!-- ═══ MENÚ LATERAL STAFF (iconos + grupos plegables + botón contraer). Gobernanza es UN ítem, no el contenedor. ═══ -->
+        <aside class="staff-side3" id="staff-side3">
+          <!-- Encabezado decorativo + botón contraer -->
+          <div class="side3-top">
+            <button type="button" class="side3-collapse" id="side3-collapse" title="Contraer / expandir menú" aria-label="Contraer o expandir el menú lateral">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+            </button>
+            <span class="side3-brand">Staff</span>
+          </div>
+
+          <!-- Grupo GOBERNANZA (owner) → sección Permisos -->
+          <button type="button" class="side3-group open" data-group="gobernanza" title="Gobernanza">
+            <span class="side3-ic">◆</span><span class="side3-tx">Gobernanza</span><span class="side3-lock" title="Owner · desbloqueado">🔓</span><span class="side3-car">▾</span>
+          </button>
+          <div class="side3-items open" data-items="gobernanza">
+            <button type="button" class="side3-link active" data-sec="gob" title="Permisos"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="side3-tx">Permisos</span></button>
+          </div>
+
+          <!-- Grupo CLIENTES -->
+          <button type="button" class="side3-group" data-group="clientes" title="Clientes">
+            <span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="side3-tx">Clientes</span><span class="side3-car">▾</span>
+          </button>
+          <div class="side3-items" data-items="clientes">
+            <button type="button" class="side3-link" data-sec="admin" data-nav="leads" title="Leads"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="side3-tx">Leads</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="actividad" title="Actividad"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span class="side3-tx">Actividad</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="eb-orders" title="Órdenes Event Builder"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span class="side3-tx">Órdenes Event Builder</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="crm" title="Base CRM"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span><span class="side3-tx">Base CRM</span></button>
+          </div>
+
+          <!-- Grupo EQUIPO -->
+          <button type="button" class="side3-group" data-group="equipo" title="Equipo">
+            <span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="side3-tx">Equipo</span><span class="side3-car">▾</span>
+          </button>
+          <div class="side3-items" data-items="equipo">
+            <button type="button" class="side3-link" data-sec="admin" data-nav="djs" title="Gestión de DJs"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span><span class="side3-tx">Gestión de DJs</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="staff" title="Staff"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span class="side3-tx">Staff</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="create-profiles" title="Crear Perfiles"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></span><span class="side3-tx">Crear Perfiles</span><span class="side3-lock" title="Owner-only">🔑</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="registry-section" title="Certificados"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span><span class="side3-tx">Certificados</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="analytics" title="Analytics"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span><span class="side3-tx">Analytics</span></button>
+          </div>
+
+          <!-- Grupo OPERACIONES -->
+          <button type="button" class="side3-group" data-group="operaciones" title="Operaciones">
+            <span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></span><span class="side3-tx">Operaciones</span><span class="side3-car">▾</span>
+          </button>
+          <div class="side3-items" data-items="operaciones">
+            <button type="button" class="side3-link" data-sec="admin" data-nav="content" title="Contenido y Precios"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span><span class="side3-tx">Contenido y Precios</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-go="mdjpro" title="MDJPRO Descargas"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span><span class="side3-tx">MDJPRO Descargas</span><span class="side3-lock" title="Owner-only">🔑</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="apps" title="Hosting de Apps"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/></svg></span><span class="side3-tx">Hosting de Apps</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="production" title="Producción"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="side3-tx">Producción</span></button>
+            <button type="button" class="side3-link" data-sec="inbox" title="Inbox · Tickets"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span><span class="side3-tx">Inbox · Tickets</span></button>
+          </div>
+
+          <!-- Grupo EVENTOS -->
+          <button type="button" class="side3-group" data-group="eventos" title="Eventos">
+            <span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span class="side3-tx">Eventos</span><span class="side3-car">▾</span>
+          </button>
+          <div class="side3-items" data-items="eventos">
+            <button type="button" class="side3-link" data-sec="admin" data-nav="wedding-plan" title="Wedding Plan"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span><span class="side3-tx">Wedding Plan</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-go="ev-quinceanera" data-nav="event-blueprint" title="Quinceañera"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></span><span class="side3-tx">Quinceañera</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-go="ev-show" data-nav="event-blueprint" title="Show / Concierto"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></span><span class="side3-tx">Show / Concierto</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-go="ev-privada" data-nav="event-blueprint" title="Fiesta Privada"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="side3-tx">Fiesta Privada</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-go="ev-corporativa" data-nav="event-blueprint" title="Fiesta Corporativa"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></span><span class="side3-tx">Fiesta Corporativa</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="fashion-show-panel" title="Pasarela / Fashion Show"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></span><span class="side3-tx">Pasarela / Fashion Show</span></button>
+          </div>
+        </aside>
+
+        <!-- ═══ PANEL DE CONTENIDO ═══ -->
+        <div class="staff-content3">
+          <!-- Gobernanza (nativo) -->
+          <div class="sc3-panel active" id="sc3-gob">
+        <div class="gov-scroll">
+
+          <!-- 1 · Jerarquía del equipo -->
+          <section class="gov-section">
+            <div class="gov-head">
+              <span class="eyebrow">01 · Equipo</span>
+              <h3>Jerarquía del equipo</h3>
+              <p>El Owner en la cúspide. Managers y vendedores entrarán a este mismo edificio con vistas restringidas por rol (RBAC en la interfaz + RLS en los datos).</p>
+            </div>
+            <div class="gov-grid">
+              <div class="gov-card apex">
+                <div class="who">
+                  <div class="av">G</div>
+                  <div><div class="nm">Gerardo A. Valle</div><div class="sub">Cuenta Owner · SuperAdmin</div></div>
+                </div>
+                <span class="gov-chip owner">◆ Owner</span>
+                <div class="access">Acceso total: caja real, Matrix BFI, márgenes, precios, configuración y soberanía del sistema.</div>
+              </div>
+              <div class="gov-card ghost">
+                <div class="who">
+                  <div class="av">L</div>
+                  <div><div class="nm">Lucciano Valle <span class="gov-demo">ejemplo</span></div><div class="sub">Manager (futuro)</div></div>
+                </div>
+                <span class="gov-chip">Manager</span>
+                <div class="access">Operaciones y supervisión. Las herramientas sensibles requieren llave temporal del Owner.</div>
+              </div>
+              <div class="gov-card ghost">
+                <div class="who">
+                  <div class="av">+</div>
+                  <div><div class="nm">Vendedor</div><div class="sub">Sin vendedores todavía</div></div>
+                </div>
+                <span class="gov-chip">Vendedor</span>
+                <div class="access">Vista de ventas restringida. La invitación se habilita al conectar el backend de cuentas.</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2 · Aprobación de llaves (Human-in-the-Loop) -->
+          <section class="gov-section">
+            <div class="gov-head">
+              <span class="eyebrow">02 · Human-in-the-Loop</span>
+              <h3>Aprobación de llaves</h3>
+              <p>Cuando un miembro del staff pide una herramienta sensible de ELIXIS (envíos masivos, cambio de precios), la solicitud aparece aquí. Tú, y solo tú, otorgas o niegas la llave temporal.</p>
+            </div>
+            <div id="gov-requests">
+              <div class="gov-req" data-req="1">
+                <div class="body">
+                  <div class="t"><b>Lucciano Valle</b> (Manager) solicita: <b>herramienta de correos masivos de ELIXIS</b> <span class="gov-demo">ejemplo</span></div>
+                  <div class="meta">Motivo: campaña de evento · llave temporal solicitada: 24 h · hace 5 min</div>
+                </div>
+                <div class="actions">
+                  <button type="button" class="gov-btn ok" data-act="ok" data-who="Lucciano Valle" data-tool="Correos masivos ELIXIS">Autorizar</button>
+                  <button type="button" class="gov-btn no" data-act="no" data-who="Lucciano Valle" data-tool="Correos masivos ELIXIS">Denegar</button>
+                </div>
+              </div>
+              <div class="gov-req" data-req="2">
+                <div class="body">
+                  <div class="t"><b>ELIXIS</b> propone: <b>cambiar precio</b> — Camiseta Tour $30 → $25 (promoción) <span class="gov-demo">ejemplo</span></div>
+                  <div class="meta">Cierre de negociación · requiere aprobación humana · hace 12 min</div>
+                </div>
+                <div class="actions">
+                  <button type="button" class="gov-btn ok" data-act="ok" data-who="ELIXIS" data-tool="Cambio de precio (Camiseta Tour)">Autorizar</button>
+                  <button type="button" class="gov-btn no" data-act="no" data-who="ELIXIS" data-tool="Cambio de precio (Camiseta Tour)">Denegar</button>
+                </div>
+              </div>
+            </div>
+            <div id="gov-requests-empty" class="gov-empty" style="display:none;">🔒 Sin solicitudes pendientes. Las nuevas peticiones de llave aparecerán aquí.</div>
+          </section>
+
+          <!-- 3 · Registro de auditoría -->
+          <section class="gov-section">
+            <div class="gov-head">
+              <span class="eyebrow">03 · Trazabilidad</span>
+              <h3>Registro de auditoría</h3>
+              <p>Quién ejecutó qué, y cuándo. Cada acción de un agente (ELIXIS) o del staff queda registrada de forma transparente.</p>
+            </div>
+            <div class="gov-table-wrap">
+              <table class="gov-table">
+                <thead><tr><th>Fecha / Hora</th><th>Actor</th><th>Acción</th><th>Objetivo</th><th>Resultado</th></tr></thead>
+                <tbody id="gov-audit">
+                  <tr><td>15 ago · 10:42</td><td class="who ai">ELIXIS</td><td>Cerró negociación</td><td>Evento Club Space · $1,600</td><td><span class="res wait">Pend. aprob.</span></td></tr>
+                  <tr><td>15 ago · 09:18</td><td class="who">Gerardo A. Valle</td><td>Autorizó llave</td><td>Correos masivos → Lucciano · 24h</td><td><span class="res ok">Autorizado</span></td></tr>
+                  <tr><td>14 ago · 18:05</td><td class="who ai">ELIXIS</td><td>Redactó mensajes</td><td>3 clientes · seguimiento</td><td><span class="res ok">Enviado</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p style="margin:12px 0 0;font-size:11px;color:rgba(255,255,255,.4);">Filas de ejemplo (demo). El registro real se llenará al conectar el backend de permisos y herramientas de ELIXIS.</p>
+          </section>
+
+        </div>
+          </div>
+
+          <!-- Sección de staff-admin: iframe COMPARTIDO (cambia de sección sin recargar vía __staffNav) -->
+          <div class="sc3-panel" id="sc3-admin">
+            <div class="sc3-loading" id="sc3-loading"><span class="acc-spin"></span> <span id="sc3-load-tx">Cargando…</span></div>
+            <iframe id="sc3-iframe" class="sc3-frame" title="Sección STAFF"></iframe>
+          </div>
+          <!-- Inbox · Tickets: staff-config en modo bare -->
+          <div class="sc3-panel" id="sc3-inbox">
+            <div class="sc3-loading" id="sc3-inbox-loading"><span class="acc-spin"></span> Cargando Inbox…</div>
+            <iframe id="sc3-inbox-iframe" class="sc3-frame" data-src="./staff-config.html?panel=notifications&bare=1" title="Inbox · Tickets" loading="lazy"></iframe>
+          </div>
+        </div><!-- /staff-content3 -->
+       </div><!-- /staff-shell -->
       </section>
     </div>
 
@@ -155,7 +634,10 @@
   (function(){
     var STAFF_ROLES = ['owner','admin','manager','seller'];
     function getSb(){ return window.getSupabaseClient ? window.getSupabaseClient() : window.supabase; }
-    function reveal(){ document.documentElement.classList.remove('mdj-staff-gate-pending'); }
+    function reveal(){
+      document.documentElement.classList.remove('mdj-staff-gate-pending');
+      document.documentElement.classList.remove('mdj-auth-resolving'); // supabase-config la agrega; aquí no hay shared-header que la quite
+    }
     function el(id){ return document.getElementById(id); }
 
     /* ── Gate STAFF (solo fila dj_profiles.role, nunca JWT solo — patrón admin-dashboard) ── */
@@ -197,12 +679,28 @@
       el('brand-sub').textContent='Owner Command Center';
       el('module-owner').classList.add('active');
       // nav propia del owner
-      el('staff-nav').innerHTML =
-        '<button type="button" data-view="financiero" class="active">Financiero</button>'+
-        '<button type="button" data-view="elixis">ELIXIS</button>'+
-        '<a class="ext" href="./admin-dashboard.html" title="Gobernanza / supervisión staff">Gobernanza</a>'+
-        '<a class="ext" href="./dj-dashboard.html" title="Tu agenda de DJ">Mi Agenda</a>'+
-        '<a class="ext" href="./account-settings.html" title="Configuración">Config</a>';
+      el('staff-nav').innerHTML = '';  // barra de módulos DISUELTA — queda un solo menú dorado (todo reubicado en el top-nav)
+
+      // Menú PRINCIPAL (tira dorada) — interactivo. Placeholder: marca la pestaña activa;
+      // cada pestaña se cableará como menú interactivo poco a poco.
+      el('staff-topnav').innerHTML =
+        '<button type="button" data-href="./index.html">Inicio</button>'+
+        '<button type="button" data-href="./academia.html">Academia</button>'+
+        '<button type="button" data-href="./shop.html">Shop</button>'+
+        '<button type="button" data-top="agenda">Agenda</button>'+
+        '<button type="button" data-top="config">⚙ Config</button>'+
+        '<button type="button" data-href="./dj-tools.html">DJ Tools</button>'+
+        '<button type="button" data-top="cashflow">Cash Flow</button>'+
+        '<button type="button" data-top="miperfil">Mi Perfil <span class="tab-help">?</span></button>'+
+        '<button type="button" data-top="gobernanza" class="active">Staff</button>'+
+        '<button type="button" data-top="elixis">Fénix AI</button>'+
+        '<button type="button" class="tab-sealed" disabled>Road Map <span class="tab-lock">🔒</span></button>';  // sellada — página + mapa maestro (4 capas · ELIXIS instructor) a futuro  // FÉNIX AI abre a ELIXIS (su voz/mensajero)
+      var topBtns=document.querySelectorAll('#staff-topnav button');
+      topBtns.forEach(function(b){ b.addEventListener('click', function(){
+        if(b.dataset.href){ window.location.href=b.dataset.href; return; }  // INICIO/ACADEMIA/SHOP/DJ TOOLS: navegan a su página (no se transporta nada)
+        topBtns.forEach(function(x){ x.classList.remove('active'); }); b.classList.add('active');
+        if(b.dataset.top){ showView(b.dataset.top); }  // miperfil / agenda: vista interna del portal (debajo del menú)
+      }); });
 
       // switch de vistas (Financiero ⇄ ELIXIS)
       var btns=document.querySelectorAll('#staff-nav [data-view]');
@@ -210,38 +708,263 @@
       function showView(v){
         views.forEach(function(s){ s.classList.toggle('active', s.id==='view-'+v); });
         btns.forEach(function(b){ b.classList.toggle('active', b.dataset.view===v); });
+        var lbl=el('staff-section');
+        if(lbl) lbl.textContent = v==='financiero' ? '◆ Financial Matrix IA' : v==='elixis' ? '◆ ELIXIS' : v==='gobernanza' ? '◆ Gobernanza' : v==='miperfil' ? '◆ Mi Perfil' : v==='agenda' ? '◆ Agenda' : v==='cashflow' ? '◆ Cash Flow' : v==='config' ? '◆ Config' : '';
         if(v==='elixis'){ var f=el('elixis-frame'); if(f&&!f.getAttribute('src')) f.setAttribute('src', f.getAttribute('data-src')); }
+        if(v==='agenda'){ var af=el('agenda-frame'); if(af&&!af.getAttribute('src')){ var ld=el('agenda-loading');
+          if(af.addEventListener) af.addEventListener('load', function(){ if(ld) ld.classList.add('hidden'); });
+          setTimeout(function(){ af.setAttribute('src', af.getAttribute('data-src')); }, 30);
+          setTimeout(function(){ if(ld) ld.classList.add('hidden'); }, 8000); } }
+        if(v==='cashflow'){ var cf=el('cashflow-frame'); if(cf&&!cf.getAttribute('src')){ var cld=el('cashflow-loading');
+          if(cf.addEventListener) cf.addEventListener('load', function(){ if(cld) cld.classList.add('hidden'); });
+          setTimeout(function(){ cf.setAttribute('src', cf.getAttribute('data-src')); }, 30);
+          setTimeout(function(){ if(cld) cld.classList.add('hidden'); }, 8000); } }
+        if(v==='config'){ var xf=el('config-frame'); if(xf&&!xf.getAttribute('src')){ var xld=el('config-loading');
+          if(xf.addEventListener) xf.addEventListener('load', function(){ if(xld) xld.classList.add('hidden'); });
+          setTimeout(function(){ xf.setAttribute('src', xf.getAttribute('data-src')); }, 30);
+          setTimeout(function(){ if(xld) xld.classList.add('hidden'); }, 8000); } }
       }
-      btns.forEach(function(b){ b.addEventListener('click', function(){ showView(b.dataset.view); }); });
+      btns.forEach(function(b){ b.addEventListener('click', function(){ topBtns.forEach(function(x){ x.classList.remove('active'); }); showView(b.dataset.view); }); });
+      showView('gobernanza');  // FINANCIERO fusionado en CASH FLOW; aterrizaje por defecto = Gobernanza
 
-      // Matrix: día/noche (ícono sol/luna) + pantalla completa nativa (reusa ofm de dj-dashboard)
-      var frame=el('ofm-matrix-frame'), biz=el('ofm-business-view'), dtog=el('ofm-daynight'),
-          expand=el('ofm-expand'), exitBtn=el('ofm-exit');
+      // ── DÍA/NOCHE GLOBAL del portal (botón central ÚNICO). Alterna data-theme en <html> + DIFUNDE a los marcos (base lista para adaptar los secundarios). ──
+      var dtog=el('ofm-daynight');
       var SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
       var MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
-      var THEME_KEY='mdjFinTheme', curTheme='night';
+      var THEME_KEY='mdjStaffTheme';
+      function broadcastTheme(mode){   /* mode: 'light' | 'dark' — difunde a los marcos que soporten día/noche (ej. Matrix BFI). Base para ir adaptando los demás. */
+        try{ document.querySelectorAll('iframe').forEach(function(f){
+          try{ var d=f.contentDocument; if(d&&d.body) d.body.setAttribute('data-mode', mode); }catch(e){}
+          try{ if(f.contentWindow) f.contentWindow.postMessage({mdjTheme:mode}, '*'); }catch(e){}
+        }); }catch(e){}
+      }
       function applyTheme(theme, persist){
-        curTheme=theme; var day=(theme==='day');
+        var day=(theme==='day');
+        document.documentElement.setAttribute('data-theme', day?'day':'night');
         if(dtog){ dtog.innerHTML=day?MOON:SUN; dtog.title=day?'Modo día · toca para noche':'Modo noche · toca para día'; }
-        try{ var d=frame&&frame.contentDocument; if(d&&d.body) d.body.setAttribute('data-mode', day?'light':'dark'); }catch(e){}
+        broadcastTheme(day?'light':'dark');
         if(persist){ try{ localStorage.setItem(THEME_KEY, theme); }catch(e){} }
       }
-      if(dtog) dtog.addEventListener('click', function(){ applyTheme(curTheme==='day'?'night':'day', true); });
-      if(frame) frame.addEventListener('load', function(){ applyTheme(curTheme, false); });
+      if(dtog) dtog.addEventListener('click', function(){ var cur=(document.documentElement.getAttribute('data-theme')==='day')?'day':'night'; applyTheme(cur==='day'?'night':'day', true); });
+      /* cuando cualquier marco carga, re-difúndele el tema actual */
+      document.addEventListener('load', function(e){ if(e.target&&e.target.tagName==='IFRAME'){ var t=document.documentElement.getAttribute('data-theme'); broadcastTheme(t==='day'?'light':'dark'); } }, true);
       var st='night'; try{ st=localStorage.getItem(THEME_KEY)||'night'; }catch(e){}
       applyTheme(st, false);
 
-      function fsEl(){ return document.fullscreenElement || document.webkitFullscreenElement || null; }
-      function paintFull(full){ biz.classList.toggle('ofm-full', full); document.body.style.overflow=full?'hidden':''; }
-      function goFull(){ var req=biz.requestFullscreen||biz.webkitRequestFullscreen;
-        if(req){ try{ var p=req.call(biz); if(p&&p.catch) p.catch(function(){paintFull(true);}); }catch(e){ paintFull(true); } } else paintFull(true); }
-      function leaveFull(){ if(fsEl()){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); } paintFull(false); }
-      if(expand) expand.addEventListener('click', goFull);
-      if(exitBtn) exitBtn.addEventListener('click', leaveFull);
-      function onFs(){ paintFull(fsEl()===biz); }
-      document.addEventListener('fullscreenchange', onFs);
-      document.addEventListener('webkitfullscreenchange', onFs);
-      document.addEventListener('keydown', function(e){ if(e.key==='Escape' && biz.classList.contains('ofm-full') && !fsEl()) paintFull(false); });
+      wireGovernance();
+      wireStaffSidebar();
+      mountPerfil(sb);
+    }
+
+    /* ── Menú lateral ACORDEÓNICO (regla del sistema): cada pestaña abre su página entera; una abierta a la vez ── */
+    function wireStaffSidebar(){
+      var side=el('staff-side3'); if(!side) return;
+      var iframe=el('sc3-iframe'), loading=el('sc3-loading'), loadTx=el('sc3-load-tx');
+      var panels={ gob:el('sc3-gob'), admin:el('sc3-admin'), inbox:el('sc3-inbox') };
+      function showPanel(k){ for(var p in panels){ if(panels[p]) panels[p].classList.toggle('active', p===k); } }
+      /* botón: contrae/expande toda la barra a solo iconos */
+      var col=el('side3-collapse'); if(col) col.addEventListener('click', function(){ side.classList.toggle('collapsed'); });
+      /* grupos = acordeón (uno abierto a la vez, "abanico") */
+      side.querySelectorAll('.side3-group').forEach(function(g){ g.addEventListener('click', function(){
+        var key=g.getAttribute('data-group');
+        var items=side.querySelector('.side3-items[data-items="'+key+'"]');
+        var willOpen=!g.classList.contains('open');
+        side.querySelectorAll('.side3-group').forEach(function(x){ x.classList.remove('open'); });
+        side.querySelectorAll('.side3-items').forEach(function(x){ x.classList.remove('open'); });
+        if(willOpen){ g.classList.add('open'); if(items) items.classList.add('open'); }
+      }); });
+      /* carga una sección de staff-admin en el iframe COMPARTIDO (sin recargar si ya está montado) */
+      function loadAdmin(opt, label){
+        showPanel('admin');
+        if(loading){ loading.classList.remove('hidden'); if(loadTx) loadTx.textContent='Cargando '+(label||'')+'…'; }
+        if(!iframe) return;
+        if(!iframe.__loaded){
+          var url='./staff-admin.html';
+          if(opt.go) url='./staff-admin.html?go='+opt.go+(opt.hash?('#'+opt.hash):'');
+          else if(opt.hash) url='./staff-admin.html#'+opt.hash;
+          iframe.onload=function(){ iframe.__loaded=true; if(loading) loading.classList.add('hidden'); };
+          iframe.setAttribute('src', url);
+          setTimeout(function(){ if(loading) loading.classList.add('hidden'); }, 9000);
+        } else {
+          try{ iframe.contentWindow.__staffNav(opt); }catch(e){}
+          setTimeout(function(){ if(loading) loading.classList.add('hidden'); }, 400);
+        }
+      }
+      /* items del menú */
+      side.querySelectorAll('.side3-link').forEach(function(a){ a.addEventListener('click', function(){
+        side.querySelectorAll('.side3-link').forEach(function(x){ x.classList.remove('active'); });
+        a.classList.add('active');
+        var sec=a.getAttribute('data-sec');
+        if(sec==='gob'){ showPanel('gob'); return; }
+        if(sec==='inbox'){ showPanel('inbox');
+          var f=el('sc3-inbox-iframe'), il=el('sc3-inbox-loading');
+          if(f && !f.getAttribute('src')){ if(f.addEventListener) f.addEventListener('load', function(){ if(il) il.classList.add('hidden'); });
+            f.setAttribute('src', f.getAttribute('data-src')); setTimeout(function(){ if(il) il.classList.add('hidden'); }, 9000); }
+          return;
+        }
+        loadAdmin({ hash:a.getAttribute('data-nav')||null, go:a.getAttribute('data-go')||null }, a.getAttribute('title')||'');
+      }); });
+    }
+
+    /* ── Gobernanza (demo): autorizar/denegar mueve la solicitud al registro de auditoría ── */
+    function wireGovernance(){
+      var reqWrap=el('gov-requests'), emptyEl=el('gov-requests-empty'), audit=el('gov-audit');
+      if(!reqWrap) return;
+      function checkEmpty(){ if(emptyEl) emptyEl.style.display = reqWrap.querySelector('.gov-req') ? 'none' : 'block'; }
+      function stamp(){ var d=new Date(), M=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+        return d.getDate()+' '+M[d.getMonth()]+' · '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+      reqWrap.addEventListener('click', function(e){
+        var b=e.target.closest('.gov-btn'); if(!b) return;
+        var card=b.closest('.gov-req'), ok=(b.dataset.act==='ok');
+        var who=b.dataset.who||'—', tool=b.dataset.tool||'—';
+        if(audit){
+          var tr=document.createElement('tr');
+          tr.innerHTML='<td>'+stamp()+'</td><td class="who">Gerardo A. Valle</td><td>'+(ok?'Autorizó':'Denegó')+' llave</td>'+
+                       '<td>'+tool+' → '+who+'</td><td><span class="res '+(ok?'ok':'no')+'">'+(ok?'Autorizado':'Denegado')+' (demo)</span></td>';
+          audit.insertBefore(tr, audit.firstChild);
+        }
+        if(card) card.remove();
+        checkEmpty();
+      });
+      checkEmpty();
+    }
+
+    /* ── MI PERFIL: transporte NATIVO de la tarjeta de owner (lee dj_profiles del owner; SIN link al viejo) ── */
+    function mountPerfil(sb){
+      (async function(){
+        try{
+          var sess=(await sb.auth.getSession()).data.session; if(!sess) return;
+          var r=await sb.from('dj_profiles').select('*').eq('user_id', sess.user.id).maybeSingle();
+          var p=r.data||{};
+          if(p.dj_name) el('pf-name').textContent=p.dj_name;
+          // Nuevo motor: NO se usa el rol de artista (DJ · ciudad, eso queda en el viejo). Aquí es la cuenta Staff · Owner.
+          el('pf-role').textContent='Staff · Owner';
+          var b=el('pf-badge'); if(b) b.textContent='◆ OWNER'+(p.verified===true?' · VERIFICADO':'');
+          var photo=p.photo_url||p.avatar_url||p.image_url||'';   // canónico: dj_profiles.photo_url (igual que CONFIG/dj-profile)
+          if(photo){ var im=el('pf-photo'); im.src=photo; if(p.dj_name) im.alt=p.dj_name; }
+          // HERO banner — COINCIDE con CONFIG: background_url + focal (photo_focal_x/y) + zoom (hero_bg_zoom), igual que dj-profile
+          var bg=(p.background_url||'').toString().trim();
+          if(bg){ var heroEl=el('pf-hero'), bi=el('pf-banner-img');
+            var fx=(p.photo_focal_x!=null)?Math.max(0,Math.min(100,Number(p.photo_focal_x))):50;
+            var fy=(p.photo_focal_y!=null)?Math.max(0,Math.min(100,Number(p.photo_focal_y))):50;
+            var zm=(p.hero_bg_zoom!=null)?Math.max(80,Math.min(200,Number(p.hero_bg_zoom))):100;
+            if(bi){ bi.style.objectPosition=fx+'% '+fy+'%'; bi.style.transform='scale('+Math.max(1,(zm/100))+')'; bi.style.transformOrigin=fx+'% '+fy+'%'; bi.src=bg; if(p.dj_name) bi.alt='Portada — '+p.dj_name; }  /* scale mínimo 1: el banner SIEMPRE llena el hero (cover), el zoom-in >100% sigue; el zoom-out no deja huecos */
+            if(heroEl) heroEl.classList.add('has-banner');
+          }
+          var SOC=[
+            {f:['social_instagram','instagram_url'],t:'Instagram',svg:'<rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.3" fill="currentColor"/>'},
+            {f:['social_youtube','youtube_url'],t:'YouTube',svg:'<rect x="2" y="5" width="20" height="14" rx="4" fill="currentColor"/><path d="M10 9l6 3-6 3z" fill="#0b0f18"/>'},
+            {f:['social_tiktok','tiktok_url'],t:'TikTok',svg:'<path d="M14 3c.3 2 1.7 3.5 3.7 3.8V9c-1.4 0-2.7-.4-3.7-1.1v5.6a4.8 4.8 0 1 1-4.8-4.8c.3 0 .6 0 .9.1v2.5a2.4 2.4 0 1 0 1.7 2.2V3z" fill="currentColor"/>'},
+            {f:['social_facebook','facebook_url'],t:'Facebook',svg:'<path d="M13.5 21v-8H16l.4-3h-2.9V8.2c0-.9.3-1.5 1.6-1.5H16.5V4.1C16.2 4 15.3 4 14.3 4c-2.1 0-3.6 1.3-3.6 3.7V10H8v3h2.7v8z" fill="currentColor"/>'},
+            {f:['social_web','website_url'],def:'https://www.miamidjbeat.com/',t:'Web',svg:'<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.6 2.6 2.6 15.4 0 18M12 3c-2.6 2.6-2.6 15.4 0 18" fill="none" stroke="currentColor" stroke-width="1.4"/>'}
+          ];
+          var row=el('pf-socials');
+          if(row){ row.innerHTML=SOC.map(function(s){ var href=''; for(var i=0;i<s.f.length;i++){ var v=p[s.f[i]]; if(v&&String(v).trim()&&String(v)!=='null'){ href=String(v).trim(); break; } } if(!href) href=s.def||''; if(!href) return ''; if(!/^(https?:|mailto:|tel:)/i.test(href)) href='https://'+href.replace(/^\/+/,''); return '<a href="'+href+'" target="_blank" rel="noopener noreferrer" title="'+s.t+'" aria-label="'+s.t+'"><svg viewBox="0 0 24 24">'+s.svg+'</svg></a>'; }).join(''); }
+          var bio=(p.bio||p.bio_long||p.bio_short||'').trim();
+          var bioEl=el('pf-bio'); if(bioEl&&bio) bioEl.textContent=bio;
+
+          // QR/Compartir — el owner es TRABAJADOR (no artista): su enlace de invitación apunta al LANDING
+          // oficial + ?ref=<su user_id> (contrato nativo "?ref=DJ_UUID" → mdb_referral_dj_id, que index.html capta).
+          // NO apunta a profile.html (plantilla de artista) — respeta la segregación por categoría.
+          var shareUrl='https://www.miamidjbeat.com/?ref='+encodeURIComponent(sess.user.id);
+          try{
+            var qc=el('pf-qrcode');
+            if(qc && window.QRCode){
+              qc.innerHTML='';
+              var ql=(window.QRCode.CorrectLevel?window.QRCode.CorrectLevel.M:0);
+              new window.QRCode(qc,{text:shareUrl,width:180,height:180,colorDark:'#000000',colorLight:'#ffffff',correctLevel:ql});
+            }
+          }catch(eq){}
+          try{
+            var shb=el('pf-share');
+            if(shb) shb.addEventListener('click',function(){
+              if(navigator.share){ navigator.share({title:'Miami DJ Beat',url:shareUrl}).catch(function(){}); }
+              else if(navigator.clipboard){ navigator.clipboard.writeText(shareUrl).then(function(){ var o=shb.textContent; shb.textContent='¡Enlace copiado!'; setTimeout(function(){ shb.textContent=o; },1600); }).catch(function(){}); }
+            });
+          }catch(esh){}
+
+          // OPINIONES — mismo bundle que el perfil (RPC get_dj_public_review_bundle).
+          try{
+            var rev=[], avg=null, cnt=0;
+            if(sb.rpc){
+              var rb=await sb.rpc('get_dj_public_review_bundle',{p_dj_user_id:sess.user.id});
+              if(!rb.error && rb.data){ var d=rb.data; if(typeof d==='string'){ try{ d=JSON.parse(d); }catch(_){ d=null; } } if(d){ rev=Array.isArray(d.reviews)?d.reviews:[]; avg=d.avg_rating; cnt=Number(d.review_count)||0; } }
+            }
+            var titEl=el('pf-rev-title'); if(titEl) titEl.textContent = cnt>0 ? 'Opiniones de clientes' : 'Opiniones · sin reseñas aún';
+            var avgEl=el('pf-rev-avg'); if(avgEl) avgEl.textContent = cnt>0 ? ('★ '+Number(avg).toFixed(1)+' · '+cnt+' reseñas') : '';
+            var listEl=el('pf-reviews');
+            if(listEl) mdjRenderRevCarousel(listEl, rev.slice(0,8));
+          }catch(er){}
+
+          // Hero stars = agregado real de reseñas (cantidad + balance de la gente)
+          try{ var hs=el('pf-hero-stars'); if(hs){ var rr=(cnt>0&&avg!=null)?Math.max(0,Math.min(5,Math.round(Number(avg)))):0; hs.innerHTML='<span class="on">'+'★'.repeat(rr)+'</span><span class="off">'+'★'.repeat(5-rr)+'</span>'; } }catch(eh){}
+
+          // Input interactivo de opinión (owner = preview: no se reseña a sí mismo)
+          wireReviewInput(sb, sess.user.id, sess.user.id);
+        }catch(e){}
+      })();
+    }
+
+    /* ── OPINIÓN interactiva: 5 estrellas → diálogo → (rating bajo pide explicación) → submit RPC (upsert = editable por su autor) ── */
+    function wireReviewInput(sb, profileOwnerId, viewerId){
+      var input=el('pf-stars-input'); if(!input || input.dataset.bound) return; input.dataset.bound='1';
+      var dlg=el('pf-rate-dialog'), picked=el('pf-rate-picked'), low=el('pf-rate-lowhint'),
+          comment=el('pf-rate-comment'), submit=el('pf-rate-submit'), cancel=el('pf-rate-cancel'), msg=el('pf-rate-msg');
+      var isSelf = profileOwnerId && viewerId && String(profileOwnerId)===String(viewerId);
+      var current=0;
+      function paint(n){ current=Math.min(5,Math.max(0,n||0)); [].forEach.call(input.querySelectorAll('.pf-star'),function(b){ b.classList.toggle('on', parseInt(b.dataset.star,10)<=current && current>0); }); }
+      function open(){ if(dlg) dlg.classList.add('open'); if(picked) picked.textContent='Tu valoración: '+'★'.repeat(current)+'☆'.repeat(5-current); if(low) low.classList.toggle('show', current>0&&current<=3); if(msg) msg.textContent=''; }
+      input.addEventListener('click', function(e){ var b=e.target.closest('.pf-star'); if(!b) return; paint(parseInt(b.dataset.star,10)); open(); if(comment) comment.focus(); });
+      if(cancel) cancel.addEventListener('click', function(){ if(dlg) dlg.classList.remove('open'); paint(0); if(comment) comment.value=''; });
+      if(submit) submit.addEventListener('click', async function(){
+        if(current<1){ if(msg){ msg.style.color='#e0b64d'; msg.textContent='Elige de 1 a 5 estrellas.'; } return; }
+        var txt=comment&&comment.value?comment.value.trim():'';
+        if(current<=3 && !txt){ if(msg){ msg.style.color='#e0b64d'; msg.textContent='Para una valoración baja, cuéntanos el porqué — nos ayuda a mejorar.'; } if(comment) comment.focus(); return; }
+        if(isSelf){ if(msg){ msg.style.color='#e0b64d'; msg.textContent='Vista owner (preview): así valorarán tus clientes. No puedes reseñar tu propio perfil.'; } return; }
+        submit.disabled=true; var prev=submit.textContent; submit.textContent='Enviando…';
+        try{
+          var res=await sb.rpc('submit_dj_public_review',{p_dj_user_id:profileOwnerId,p_rating:current,p_comment:txt||null});
+          if(res&&res.error){ if(msg){ msg.style.color='#e88'; msg.textContent=/own profile|propio/i.test(res.error.message||'')?'No puedes reseñar tu propio perfil.':(res.error.message||'No se pudo guardar.'); } }
+          else { if(msg){ msg.style.color='#7fdca0'; msg.textContent='¡Gracias! Tu opinión se publicó.'; } if(dlg) dlg.classList.remove('open'); if(comment) comment.value=''; paint(0); }
+        }catch(e2){ if(msg){ msg.style.color='#e88'; msg.textContent='Error de conexión.'; } }
+        submit.disabled=false; submit.textContent=prev;
+      });
+    }
+
+    /* ── Carrusel de opiniones: muestra UNA a la vez y auto-avanza (misma lógica que el viejo) ── */
+    function mdjRenderRevCarousel(host, reviews){
+      if(!host) return;
+      if(window._pfRevTimer){ clearTimeout(window._pfRevTimer); window._pfRevTimer=null; }
+      host.innerHTML='';
+      if(!reviews || !reviews.length){ var em=document.createElement('div'); em.className='pf-empty-rev'; em.textContent='Sin reseñas aún.'; host.appendChild(em); return; }
+      var vp=document.createElement('div'); vp.className='pf-rev-vp'; vp.setAttribute('aria-live','polite');
+      var slide=document.createElement('div'); slide.className='pf-rev-slide'; vp.appendChild(slide); host.appendChild(vp);
+      if(reviews.length>1){ var c=document.createElement('div'); c.className='pf-rev-count'; c.id='pf-rev-count'; host.appendChild(c); }
+      var idx=0, reduce=false;
+      try{ reduce=window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+      function fill(i){
+        slide.innerHTML='';
+        var r=reviews[i]||{};
+        var rt=Math.max(0,Math.min(5,Math.round(Number(r.rating||r.stars||0))));
+        var st=document.createElement('div'); st.className='stars'; st.textContent='★★★★★'.slice(0,rt)+'☆☆☆☆☆'.slice(0,5-rt); slide.appendChild(st);
+        var txt=String(r.comment||r.text||r.review||'').trim();
+        if(txt){ var pp=document.createElement('p'); pp.className='txt'; pp.textContent=txt; slide.appendChild(pp); }
+        var who=String(r.author||r.client_name||r.name||r.reviewer||'Cliente').trim();
+        var wd=document.createElement('div'); wd.className='who'; wd.textContent='— '+who; slide.appendChild(wd);
+        var cc=document.getElementById('pf-rev-count'); if(cc) cc.textContent=(i+1)+' / '+reviews.length;
+      }
+      function delay(i){ var r=reviews[i]||{}; var len=String(r.comment||r.text||r.review||'').length; return Math.min(9000, Math.max(3800, 2600+len*40)); }
+      function schedule(){ if(reviews.length<=1) return; window._pfRevTimer=setTimeout(advance, delay(idx)); }
+      function advance(){
+        var nx=(idx+1)%reviews.length;
+        if(reduce){ idx=nx; fill(idx); schedule(); return; }
+        slide.classList.add('exit');
+        window._pfRevTimer=setTimeout(function(){
+          idx=nx; slide.classList.remove('exit'); slide.classList.add('enter'); fill(idx);
+          void slide.offsetWidth; slide.classList.remove('enter'); schedule();
+        }, 420);
+      }
+      fill(0); schedule();
     }
 
     /* ── Módulo STUB: manager/vendedor (estructura lista, vista por construir) ── */
