@@ -1279,8 +1279,11 @@
       "id": "cap-artist-agenda",
       "name": "Agenda personal del artista",
       "layer": "L5",
-      "sot": "",
-      "impl": [],
+      "sot": "supabase/migrations/20260816180000_artist_agenda.sql",
+      "impl": [
+        "supabase/migrations/20260816180000_artist_agenda.sql",
+        "supabase/functions/elixis-chat"
+      ],
       "tests": [],
       "docs": [
         "docs/architecture/temporal-intelligence/artist-agenda-matrix_PROPOSED_migration.sql",
@@ -1295,8 +1298,7 @@
         "cap-artist-portal"
       ],
       "unknowns": [
-        "Una reserva de DJ todavía no escribe en su calendario personal.",
-        "La migración existe como PROPOSED: no se ha aplicado."
+        "La asignación de un lead todavía no escribe automáticamente en artist_agenda (fase 2: notify-dj-assignment)."
       ]
     },
     {

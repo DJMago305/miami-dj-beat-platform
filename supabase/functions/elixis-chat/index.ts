@@ -121,7 +121,7 @@ Lee CÓMO te habla la persona y refleja su estilo, manteniendo siempre tu identi
 Refleja su registro (formalidad, longitud, energía, si usa emojis o no). Nunca suenes a guion ni a robot: suena a una persona real que ajusta su tono a quien tiene enfrente.
 
 ### LO QUE PUEDES Y NO PUEDES HACER (human-in-the-loop)
-PUEDES: redactar (mensajes de seguimiento, cobros, propuestas, textos), calcular, analizar, recomendar, y crear una nota interna de staff en un lead existente (tool crear_nota_lead). Entrega los textos listos para copiar.
+PUEDES: redactar (mensajes de seguimiento, cobros, propuestas, textos), calcular, analizar, recomendar, crear una nota interna de staff en un lead existente (tool crear_nota_lead), consultar la agenda personal de un artista (consultar_agenda_artista) y registrar un bloque en esa agenda (registrar_evento_agenda). Entrega los textos listos para copiar.
 NO PUEDES por tu cuenta: enviar mensajes/emails, mover dinero, ni cambiar estado, montos o asignaciones de un lead. Cuando prepares algo para enviar, acláralo con un "listo para que lo envíes tú".`;
 
 // ─── ROSTER EN VIVO (artistas reales desde public_dj_profiles) ───────────────
@@ -174,7 +174,8 @@ async function fetchProRoster(): Promise<string> {
             const isPremium = artist.is_premium === true;
             const tier = isPremium || plan.includes("elite") ? "ELITE" : plan.includes("pro") ? "PRO" : "LITE";
 
-            const parts = [`**${name}** [${tier}]`];
+            const uid = artist.user_id ? ` [${artist.user_id}]` : "";
+            const parts = [`**${name}**${uid} [${tier}]`];
             if (artist.city) parts.push(String(artist.city).trim());
             if (artist.artist_specialty) parts.push(String(artist.artist_specialty).trim());
             if (artist.current_venue) parts.push(`Venue: ${String(artist.current_venue).trim()}`);
@@ -200,7 +201,7 @@ async function fetchProRoster(): Promise<string> {
 
         _rosterCache =
             "\n\n### ROSTER REAL DE TU PLATAFORMA — Artistas registrados en Miami DJ Beat (datos en vivo)\n" +
-            "Estos son los artistas reales del Capitán. Úsalos cuando pregunte por su roster, artistas o categorías.\n" +
+            "Estos son los artistas reales del Capitán. El UUID entre corchetes es dj_profiles.user_id (para consultar_agenda_artista / registrar_evento_agenda).\n" +
             "REGLA ABSOLUTA: NUNCA inventes nombres ni datos. Si no hay artistas de la categoría pedida, dilo con honestidad.\n" +
             "ELITE y PRO son los de pago; LITE los gratuitos. Filtra por ciudad/bio si el Capitán lo pide.\n\n" +
             lines.join("\n\n");
@@ -580,6 +581,68 @@ serve(async (req: Request) => {
         },
     };
 
+    const AGENDA_READ_TOOL = {
+        name: "consultar_agenda_artista",
+        description:
+            "Lee la agenda personal (artist_agenda) de un DJ. No inventes bloques. " +
+            "Usa el UUID del artista que aparece entre corchetes en el roster.",
+        input_schema: {
+            type: "object",
+            properties: {
+                dj_user_id: {
+                    type: "string",
+                    description: "UUID de auth.users / dj_profiles.user_id (el valor entre corchetes en el roster).",
+                },
+                desde: {
+                    type: "string",
+                    description: "ISO 8601 opcional: inicio del rango a leer.",
+                },
+                hasta: {
+                    type: "string",
+                    description: "ISO 8601 opcional: fin del rango a leer.",
+                },
+            },
+            required: ["dj_user_id"],
+        },
+    };
+
+    const AGENDA_WRITE_TOOL = {
+        name: "registrar_evento_agenda",
+        description:
+            "Registra un bloque en la agenda personal de un artista (artist_agenda). " +
+            "No cambia leads ni asignaciones. Usa el UUID del roster. No inventes dj_user_id.",
+        input_schema: {
+            type: "object",
+            properties: {
+                dj_user_id: {
+                    type: "string",
+                    description: "UUID de dj_profiles.user_id (entre corchetes en el roster).",
+                },
+                starts_at: {
+                    type: "string",
+                    description: "Inicio del bloque, ISO 8601.",
+                },
+                ends_at: {
+                    type: "string",
+                    description: "Fin del bloque, ISO 8601 (posterior a starts_at).",
+                },
+                title: {
+                    type: "string",
+                    description: "Título del bloque, 1 a 200 caracteres.",
+                },
+                nota: {
+                    type: "string",
+                    description: "Detalle opcional, 1 a 2000 caracteres.",
+                },
+                lead_id: {
+                    type: "string",
+                    description: "UUID opcional de public.leads.id si el bloque nace de un lead.",
+                },
+            },
+            required: ["dj_user_id", "starts_at", "ends_at", "title"],
+        },
+    };
+
     const LEAD_NOTE_TOOL = {
         name: "crear_nota_lead",
         description:
@@ -604,8 +667,12 @@ serve(async (req: Request) => {
     const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
     function toolGateInput(toolName: string): { tool: string; policy: string; mode: "read" | "write" } {
-        if (toolName === "consultar_finanzas") return { tool: toolName, policy: "none", mode: "read" };
-        if (toolName === "crear_nota_lead") return { tool: toolName, policy: "auto_staff", mode: "write" };
+        if (toolName === "consultar_finanzas" || toolName === "consultar_agenda_artista") {
+            return { tool: toolName, policy: "none", mode: "read" };
+        }
+        if (toolName === "crear_nota_lead" || toolName === "registrar_evento_agenda") {
+            return { tool: toolName, policy: "auto_staff", mode: "write" };
+        }
         return { tool: toolName, policy: "require_approval", mode: "write" };
     }
 
@@ -659,6 +726,80 @@ serve(async (req: Request) => {
         return JSON.stringify({ ok: true, note_id: noteId, lead_id: leadId });
     }
 
+    function parseIso(value: unknown): string | null {
+        const raw = String(value ?? "").trim();
+        if (!raw) return null;
+        const ms = Date.parse(raw);
+        if (!Number.isFinite(ms)) return null;
+        return new Date(ms).toISOString();
+    }
+
+    async function runAgendaReadTool(input: Record<string, unknown>): Promise<string> {
+        const djUserId = String(input?.dj_user_id ?? "").trim();
+        if (!UUID_RE.test(djUserId)) {
+            return JSON.stringify({ error: "dj_user_id_invalido" });
+        }
+        const fromIso = parseIso(input?.desde);
+        const toIso = parseIso(input?.hasta);
+        let q = ADMIN
+            .from("artist_agenda")
+            .select("id,dj_user_id,starts_at,ends_at,title,body,lead_id,source,created_at")
+            .eq("dj_user_id", djUserId)
+            .order("starts_at", { ascending: true })
+            .limit(40);
+        if (fromIso) q = q.gte("starts_at", fromIso);
+        if (toIso) q = q.lte("starts_at", toIso);
+        const { data, error } = await q;
+        if (error) return JSON.stringify({ error: "agenda_no_disponible" });
+        return JSON.stringify({ ok: true, dj_user_id: djUserId, events: Array.isArray(data) ? data : [] });
+    }
+
+    async function runAgendaWriteTool(input: Record<string, unknown>): Promise<string> {
+        const djUserId = String(input?.dj_user_id ?? "").trim();
+        const title = String(input?.title ?? "").trim();
+        const nota = String(input?.nota ?? "").trim();
+        const leadId = String(input?.lead_id ?? "").trim();
+        const startsAt = parseIso(input?.starts_at);
+        const endsAt = parseIso(input?.ends_at);
+        if (!UUID_RE.test(djUserId)) {
+            await recordActionLog("registrar_evento_agenda", djUserId || "invalid", "error:dj_user_id_invalido");
+            return JSON.stringify({ error: "dj_user_id_invalido" });
+        }
+        if (!startsAt || !endsAt || endsAt <= startsAt) {
+            await recordActionLog("registrar_evento_agenda", djUserId, "error:rango_invalido");
+            return JSON.stringify({ error: "rango_invalido" });
+        }
+        if (title.length < 1 || title.length > 200) {
+            await recordActionLog("registrar_evento_agenda", djUserId, "error:titulo_invalido");
+            return JSON.stringify({ error: "titulo_invalido" });
+        }
+        if (nota && nota.length > 2000) {
+            await recordActionLog("registrar_evento_agenda", djUserId, "error:nota_invalida");
+            return JSON.stringify({ error: "nota_invalida" });
+        }
+        if (leadId && !UUID_RE.test(leadId)) {
+            await recordActionLog("registrar_evento_agenda", djUserId, "error:lead_id_invalido");
+            return JSON.stringify({ error: "lead_id_invalido" });
+        }
+        const { data: eventId, error } = await ADMIN.rpc("artist_agenda_record", {
+            p_dj_user_id: djUserId,
+            p_starts_at: startsAt,
+            p_ends_at: endsAt,
+            p_title: title,
+            p_body: nota || null,
+            p_lead_id: leadId || null,
+            p_staff_user_id: gate.userId,
+            p_agent_id: "elixis",
+        });
+        if (error || !eventId) {
+            const detail = error?.message ?? "rpc";
+            await recordActionLog("registrar_evento_agenda", djUserId, `error:${detail}`.slice(0, 2000));
+            return JSON.stringify({ error: "evento_no_registrado" });
+        }
+        await recordActionLog("registrar_evento_agenda", djUserId, `ok:${eventId}`);
+        return JSON.stringify({ ok: true, event_id: eventId, dj_user_id: djUserId });
+    }
+
     async function runFinancialTool(metrica: string): Promise<string> {
         try {
             const base = Deno.env.get("FINANCIAL_ENGINE_URL") ||
@@ -696,7 +837,7 @@ serve(async (req: Request) => {
                     max_tokens: MAX_TOKENS,
                     temperature: 0.7,
                     system: systemContent,
-                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL],
+                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL],
                     messages: convo,
                 }),
             });
@@ -724,7 +865,11 @@ serve(async (req: Request) => {
                 await recordAiKpi(decision.allowed ? "gate_allow" : "gate_deny");
                 let out: string;
                 if (!decision.allowed) {
-                    const target = String((b.input as Record<string, unknown>)?.lead_id ?? toolName);
+                    const target = String(
+                        (b.input as Record<string, unknown>)?.lead_id
+                        ?? (b.input as Record<string, unknown>)?.dj_user_id
+                        ?? toolName,
+                    );
                     await recordActionLog(toolName || "unknown_tool", target, `denied:${decision.reason ?? "approval_required"}`);
                     out = JSON.stringify({
                         error: decision.requires_approval ? "approval_required" : "herramienta desconocida",
@@ -743,6 +888,26 @@ serve(async (req: Request) => {
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
                 } else if (toolName === "crear_nota_lead") {
                     out = await runLeadNoteTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "consultar_agenda_artista") {
+                    out = await runAgendaReadTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "registrar_evento_agenda") {
+                    out = await runAgendaWriteTool((b.input as Record<string, unknown>) ?? {});
                     let failed = true;
                     try {
                         const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
