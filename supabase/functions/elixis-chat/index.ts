@@ -121,8 +121,8 @@ Lee CÓMO te habla la persona y refleja su estilo, manteniendo siempre tu identi
 Refleja su registro (formalidad, longitud, energía, si usa emojis o no). Nunca suenes a guion ni a robot: suena a una persona real que ajusta su tono a quien tiene enfrente.
 
 ### LO QUE PUEDES Y NO PUEDES HACER (human-in-the-loop)
-PUEDES: redactar (mensajes de seguimiento, cobros, propuestas, textos), calcular, analizar y recomendar. Entrega los textos listos para copiar.
-NO PUEDES por tu cuenta: enviar mensajes/emails, mover dinero, ni cambiar datos. Eso lo EJECUTA el humano. Cuando prepares algo para enviar, acláralo con un "listo para que lo envíes tú".`;
+PUEDES: redactar (mensajes de seguimiento, cobros, propuestas, textos), calcular, analizar, recomendar, y crear una nota interna de staff en un lead existente (tool crear_nota_lead). Entrega los textos listos para copiar.
+NO PUEDES por tu cuenta: enviar mensajes/emails, mover dinero, ni cambiar estado, montos o asignaciones de un lead. Cuando prepares algo para enviar, acláralo con un "listo para que lo envíes tú".`;
 
 // ─── ROSTER EN VIVO (artistas reales desde public_dj_profiles) ───────────────
 // Mismo patrón que booth-chat: solo campos PÚBLICOS, con la anon key que
@@ -333,7 +333,7 @@ async function fetchLeadsPipeline(): Promise<string> {
     try {
         const { data } = await ADMIN
             .from("leads")
-            .select("name,event_type,event_date,venue,event_location,status,lead_outcome,total_amount,budget_estimate,assigned_dj_name,created_at")
+            .select("id,name,event_type,event_date,venue,event_location,status,lead_outcome,total_amount,budget_estimate,assigned_dj_name,created_at")
             .order("created_at", { ascending: false })
             .limit(30);
         if (!Array.isArray(data) || data.length === 0) {
@@ -349,11 +349,12 @@ async function fetchLeadsPipeline(): Promise<string> {
             const amt = l.total_amount || l.budget_estimate;
             const amtStr = amt ? ` · $${Math.round(Number(amt))}` : "";
             const dj = l.assigned_dj_name ? ` · DJ: ${l.assigned_dj_name}` : " · sin DJ asignado";
-            return `• ${who}${ev}${date}${placeStr} [${st}]${amtStr}${dj}`;
+            const id = l.id ? ` [${l.id}]` : "";
+            return `•${id} ${who}${ev}${date}${placeStr} [${st}]${amtStr}${dj}`;
         });
         _leadsCache =
             "\n\n### LEADS / SOLICITUDES — Consultas de clientes (datos en vivo, tabla leads)\n" +
-            "Solicitudes de booking entrantes. Úsalas cuando pregunten por leads, solicitudes, consultas o clientes potenciales. NUNCA inventes.\n\n" +
+            "Solicitudes de booking entrantes. El UUID entre corchetes es leads.id (para crear_nota_lead). NUNCA inventes.\n\n" +
             lines.join("\n");
         _leadsCacheAt = now;
         return _leadsCache;
@@ -579,6 +580,35 @@ serve(async (req: Request) => {
         },
     };
 
+    const LEAD_NOTE_TOOL = {
+        name: "crear_nota_lead",
+        description:
+            "Crea una nota interna de staff sobre un lead existente. No cambia estado, montos ni asignación. " +
+            "Usa el UUID del lead que aparece entre corchetes en el pipeline. No inventes un lead_id.",
+        input_schema: {
+            type: "object",
+            properties: {
+                lead_id: {
+                    type: "string",
+                    description: "UUID de public.leads.id (el valor entre corchetes en el pipeline).",
+                },
+                nota: {
+                    type: "string",
+                    description: "Texto de la nota de staff, 1 a 2000 caracteres. Sin volcar PII innecesaria.",
+                },
+            },
+            required: ["lead_id", "nota"],
+        },
+    };
+
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    function toolGateInput(toolName: string): { tool: string; policy: string; mode: "read" | "write" } {
+        if (toolName === "consultar_finanzas") return { tool: toolName, policy: "none", mode: "read" };
+        if (toolName === "crear_nota_lead") return { tool: toolName, policy: "auto_staff", mode: "write" };
+        return { tool: toolName, policy: "require_approval", mode: "write" };
+    }
+
     async function recordAiKpi(event: "gate_allow" | "gate_deny" | "tool_ok" | "tool_error"): Promise<void> {
         try {
             const { error } = await ADMIN.rpc("ai_kpi_record", { p_agent_id: "elixis", p_event: event });
@@ -586,6 +616,47 @@ serve(async (req: Request) => {
         } catch (e) {
             console.error("[elixis-chat] ai_kpi record error:", e);
         }
+    }
+
+    async function recordActionLog(action: string, target: string, result: string): Promise<void> {
+        try {
+            const { error } = await ADMIN.rpc("agent_action_log_write", {
+                p_actor: gate.userId,
+                p_action: action.slice(0, 128),
+                p_target: target.slice(0, 512),
+                p_result: result.slice(0, 2000),
+                p_agent_id: "elixis",
+            });
+            if (error) console.error("[elixis-chat] action log error:", error.message);
+        } catch (e) {
+            console.error("[elixis-chat] action log error:", e);
+        }
+    }
+
+    async function runLeadNoteTool(input: Record<string, unknown>): Promise<string> {
+        const leadId = String(input?.lead_id ?? "").trim();
+        const nota = String(input?.nota ?? "").trim();
+        if (!UUID_RE.test(leadId)) {
+            await recordActionLog("crear_nota_lead", leadId || "invalid", "error:lead_id_invalido");
+            return JSON.stringify({ error: "lead_id_invalido" });
+        }
+        if (nota.length < 1 || nota.length > 2000) {
+            await recordActionLog("crear_nota_lead", leadId, "error:nota_invalida");
+            return JSON.stringify({ error: "nota_invalida" });
+        }
+        const { data: noteId, error } = await ADMIN.rpc("agent_lead_note_create", {
+            p_lead_id: leadId,
+            p_staff_user_id: gate.userId,
+            p_body: nota,
+            p_agent_id: "elixis",
+        });
+        if (error || !noteId) {
+            const detail = error?.message ?? "rpc";
+            await recordActionLog("crear_nota_lead", leadId, `error:${detail}`.slice(0, 2000));
+            return JSON.stringify({ error: "nota_no_creada" });
+        }
+        await recordActionLog("crear_nota_lead", leadId, `ok:${noteId}`);
+        return JSON.stringify({ ok: true, note_id: noteId, lead_id: leadId });
     }
 
     async function runFinancialTool(metrica: string): Promise<string> {
@@ -625,7 +696,7 @@ serve(async (req: Request) => {
                     max_tokens: MAX_TOKENS,
                     temperature: 0.7,
                     system: systemContent,
-                    tools: [FINANCIAL_TOOL],
+                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL],
                     messages: convo,
                 }),
             });
@@ -649,14 +720,18 @@ serve(async (req: Request) => {
             const results: unknown[] = [];
             for (const b of blocks.filter((b) => b?.type === "tool_use")) {
                 const toolName = String(b.name ?? "");
-                const gate = approval_gate({
-                    tool: toolName,
-                    policy: "none",
-                    mode: toolName === "consultar_finanzas" ? "read" : "write",
-                });
-                await recordAiKpi(gate.allowed ? "gate_allow" : "gate_deny");
+                const decision = approval_gate(toolGateInput(toolName));
+                await recordAiKpi(decision.allowed ? "gate_allow" : "gate_deny");
                 let out: string;
-                if (gate.allowed && toolName === "consultar_finanzas") {
+                if (!decision.allowed) {
+                    const target = String((b.input as Record<string, unknown>)?.lead_id ?? toolName);
+                    await recordActionLog(toolName || "unknown_tool", target, `denied:${decision.reason ?? "approval_required"}`);
+                    out = JSON.stringify({
+                        error: decision.requires_approval ? "approval_required" : "herramienta desconocida",
+                        requires_approval: decision.requires_approval,
+                        reason: decision.reason,
+                    });
+                } else if (toolName === "consultar_finanzas") {
                     out = await runFinancialTool(String((b.input as Record<string, unknown>)?.metrica ?? ""));
                     let failed = true;
                     try {
@@ -666,11 +741,18 @@ serve(async (req: Request) => {
                         failed = true;
                     }
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "crear_nota_lead") {
+                    out = await runLeadNoteTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
                 } else {
-                    out = JSON.stringify({
-                        error: gate.requires_approval ? "approval_required" : "herramienta desconocida",
-                        requires_approval: gate.requires_approval,
-                    });
+                    out = JSON.stringify({ error: "herramienta desconocida", requires_approval: true });
                 }
                 results.push({ type: "tool_result", tool_use_id: b.id, content: out });
             }
