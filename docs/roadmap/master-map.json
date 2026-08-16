@@ -462,7 +462,7 @@
         "El artista entra por onboarding, arma su perfil público y define su disponibilidad. Ese perfil es lo que el cliente ve en el catálogo, así que la calidad del perfil es parte del producto.",
         "Cuando hay un evento que le calza, recibe una <b>oferta de asignación</b> que puede aceptar o rechazar. La asignación no se le impone en silencio.",
         "Su centro financiero le muestra lo suyo y solo lo suyo. Un artista nunca ve el ledger de otro; eso lo garantiza la capa de identidad, no una pantalla.",
-        "<b>Pendiente conocido:</b> la reserva de un DJ todavía no escribe en su calendario personal. La agenda del artista está en rediseño, no simplemente sin cablear."
+        "La reserva de un DJ escribe en <b>artist_agenda</b> (source assignment). El portal del artista (<code>dj-dashboard.html</code>) lee esa tabla en vivo bajo RLS."
       ],
       "focus": [
         "L3",
@@ -535,12 +535,12 @@
       "audience": [
         "staff"
       ],
-      "lead": "La capa más joven del ecosistema y la que se vigila más de cerca. Hoy ELIXIS lee, calcula y redacta. Todavía no ejecuta.",
+      "lead": "La capa más joven del ecosistema y la que se vigila más de cerca. ELIXIS lee, calcula, anota, agenda y cotiza en borrador. No envía mensajes ni mueve dinero.",
       "graphic": "ai",
       "body": [
-        "ELIXIS corre del lado del servidor, verifica el rol de quien pregunta contra la base antes de responder, y recibe contexto vivo: artistas, bookings, pipeline, residencias y finanzas.",
-        "Tiene <b>una sola herramienta real</b>: consultar el motor financiero. Todo lo demás es lectura y redacción — deja los textos listos para que un humano los envíe.",
-        "Lo que aún no existe: registro formal de agentes, gate de aprobación implementado en código y auditoría de acciones. Hoy el freno es que no tiene ninguna herramienta de escritura; el día que la tenga, esos tres huecos se vuelven críticos.",
+        "ELIXIS corre del lado del servidor, verifica el rol de quien pregunta contra la base antes de responder, y recibe contexto vivo: artistas, bookings, pipeline, residencias, finanzas y catálogo de Miami DJ Beat LLC.",
+        "Las tools pasan por <b>approval-gate</b> y el catálogo vive en <code>docs/ai/agent-registry.json</code>. Lectura: finanzas, agenda, catálogo de precios. Escritura auditada: nota de lead, bloque de agenda, borrador de cotización.",
+        "<code>generar_cotizacion_evento</code> persiste un draft en <code>event_quotes</code> con totales calculados en el RPC. No crea órdenes formales ni sesiones de Stripe.",
         "Por eso este capítulo tiene su propia sección de sondas más abajo: el estado de la IA no se declara, se mide."
       ],
       "focus": [
@@ -1221,10 +1221,37 @@
       ],
       "used": [
         "cap-agenda",
-        "cap-invoicing"
+        "cap-invoicing",
+        "cap-event-quotes"
       ],
       "unknowns": [
         "¿Dónde vive la etapa del pipeline comercial: en el lead o en el evento?"
+      ]
+    },
+    {
+      "id": "cap-event-quotes",
+      "name": "Cotizaciones Miami DJ Beat LLC",
+      "layer": "L4",
+      "sot": "supabase/migrations/20260816200000_event_quotes.sql",
+      "impl": [
+        "supabase/migrations/20260816200000_event_quotes.sql",
+        "supabase/functions/_shared/event-quote-catalog.ts",
+        "supabase/functions/elixis-chat",
+        "supabase/functions/_shared/approval-gate.ts"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/ai/event-quotes.md",
+        "docs/ai/agent-registry.json"
+      ],
+      "deps": [
+        "cap-elixis",
+        "cap-leads"
+      ],
+      "used": [],
+      "unknowns": [
+        "No hay vista pública de la cotización ni aceptación por el cliente.",
+        "El draft no se convierte en event_builder_orders ni en sesión de depósito Stripe."
       ]
     },
     {
@@ -1284,13 +1311,12 @@
         "supabase/migrations/20260816180000_artist_agenda.sql",
         "supabase/migrations/20260816190000_artist_agenda_assignment_sync.sql",
         "supabase/functions/elixis-chat",
-        "supabase/functions/notify-dj-assignment"
+        "supabase/functions/notify-dj-assignment",
+        "web/dj-dashboard.html"
       ],
       "tests": [],
       "docs": [
-        "docs/architecture/temporal-intelligence/artist-agenda-matrix_PROPOSED_migration.sql",
-        "docs/architecture/temporal-intelligence/artist-agenda_STEP-1-2-LOCAL-VALIDATION.md",
-        "docs/architecture/temporal-intelligence/agenda-replacement-analysis_2026-08-14.md"
+        "docs/ai/artist-agenda.md"
       ],
       "deps": [
         "cap-agenda",
@@ -1299,9 +1325,7 @@
       "used": [
         "cap-artist-portal"
       ],
-      "unknowns": [
-        "El portal del artista (dj-dashboard.html) todavía no consume artist_agenda."
-      ]
+      "unknowns": []
     },
     {
       "id": "cap-assignment",
@@ -1476,23 +1500,25 @@
       "sot": "supabase/functions/elixis-chat/index.ts",
       "impl": [
         "supabase/functions/elixis-chat",
+        "supabase/functions/elixis-orchestrator",
         "supabase/functions/elixis-tts",
+        "supabase/functions/_shared/approval-gate.ts",
         "web/elixis-console.html",
         "web/mdj-commander.html"
       ],
       "tests": [],
       "docs": [
-        "docs/ai"
+        "docs/ai/agent-registry.json",
+        "docs/ai/event-quotes.md"
       ],
       "deps": [
         "cap-identity",
         "cap-financial-engine"
       ],
-      "used": [],
-      "unknowns": [
-        "Sin registro de agentes, sin gate de aprobación en código y sin auditoría.",
-        "La agenda y tarifas viven hardcodeadas dentro de la función."
-      ]
+      "used": [
+        "cap-event-quotes"
+      ],
+      "unknowns": []
     },
     {
       "id": "cap-booth",
@@ -1699,8 +1725,8 @@
     {
       "id": "R9",
       "title": "Agenda personal del artista",
-      "why": "Única capacidad en PROPOSED: la migración existe como propuesta y no está aplicada. Hoy una reserva de DJ no escribe en su calendario personal.",
-      "done": "La capacidad pasa a VERIFIED: hay código, no solo documento.",
+      "why": "Una reserva de DJ y un bloque de ELIXIS deben verse en el calendario personal del artista, no solo en leads.",
+      "done": "artist_agenda en producción; dj-dashboard.html consume las filas propias bajo RLS.",
       "ref": {
         "kind": "cap",
         "id": "cap-artist-agenda"
@@ -1736,6 +1762,21 @@
         "R5"
       ],
       "impact": "medio"
+    },
+    {
+      "id": "R12",
+      "title": "Cotizaciones ELIXIS para Miami DJ Beat LLC",
+      "why": "Staff necesitaba un presupuesto estandarizado sin inventar precios y sin crear una orden formal.",
+      "done": "consultar_catalogo_precios y generar_cotizacion_evento existen; event_quotes y event_quote_record calculan totales en servidor.",
+      "ref": {
+        "kind": "cap",
+        "id": "cap-event-quotes"
+      },
+      "deps": [
+        "R4",
+        "R5"
+      ],
+      "impact": "alto"
     }
   ]
 }

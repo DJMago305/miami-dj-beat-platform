@@ -13,7 +13,7 @@ MDJPRO is the desktop application (macOS). A **license key** (`MDJP-XXXX-XXXX-XX
 **Commercial rule:** MDJPRO PREMIUM is granted when:
 
 - Miami DJ Beat **Artist PRO** subscription is active (`miamidjbeat_pro`), **or**
-- A standalone MDJPRO subscription exists (`mdjpro_standalone` — not implemented yet).
+- A standalone MDJPRO subscription (`mdjpro_standalone`) is a planned second grant path; Artist PRO is the wired commercial path today.
 
 Artist PRO checkout is the first commercial path wired in Fase 1.
 

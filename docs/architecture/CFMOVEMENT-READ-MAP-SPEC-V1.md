@@ -431,7 +431,7 @@ Staff libera manualmente    → dj_ledger           [CFMovement dj_payout]
 |-----------|----------|
 | `docs/architecture/CASH-FLOW-PRODUCT-DEFINITION-V1.md` | Producto CFMovement 3B; glosario y congelados |
 | `docs/architecture/MASTER-WIRING-AUDIT-V1.md` | Writers/readers, pipeline financiero V1, brechas H1–H3 |
-| `docs/tickets/TICKET-004-financial-order-architecture.md` | North star `order_ledger` — no implementado |
+| `docs/tickets/TICKET-004-financial-order-architecture.md` | North star `order_ledger` — fuera del alcance de Cash Flow V1 |
 | `docs/tickets/TICKET-V1-INVOICE-UX-PANELS-001.md` | Invoice V1 baseline congelado |
 
 ---
