@@ -7,7 +7,7 @@
       "name": "ELIXIS Orchestrator",
       "version": "1.0.0",
       "kind": "orchestrator",
-      "mission": "Classify staff intent (finance, lead_note, general) and delegate to specialist agents. Does not call tools or mutate records.",
+      "mission": "Classify staff intent (finance, lead_note, agenda, general) and delegate to specialist agents. Does not call tools or mutate records.",
       "role_required": ["is_staff", "office"],
       "tools": [],
       "write_tools": [],
@@ -25,7 +25,7 @@
       "name": "ELIXIS",
       "version": "1.0.0",
       "kind": "specialist",
-      "mission": "Staff/office specialist for finance reads (consultar_finanzas) and staff lead notes (crear_nota_lead). Invoked directly or via elixis-orchestrator. Does not send messages or move money.",
+      "mission": "Staff/office specialist for finance reads, staff lead notes, and artist agenda blocks. Invoked directly or via elixis-orchestrator. Does not send messages or move money.",
       "role_required": ["is_staff", "office"],
       "tools": [
         {
@@ -48,6 +48,20 @@
           "approval_policy": "auto_staff",
           "via": "agent_lead_note_create",
           "audit": "agent_action_log_write"
+        },
+        {
+          "name": "consultar_agenda_artista",
+          "mode": "read",
+          "target": "artist_agenda",
+          "approval_policy": "none"
+        },
+        {
+          "name": "registrar_evento_agenda",
+          "mode": "write",
+          "target": "artist_agenda",
+          "approval_policy": "auto_staff",
+          "via": "artist_agenda_record",
+          "audit": "agent_action_log_write"
         }
       ],
       "approval_policy": "none",
@@ -57,17 +71,20 @@
           "residency_schedule",
           "public_dj_profiles roster",
           "event_builder_orders bookings",
-          "leads pipeline"
+          "leads pipeline",
+          "artist_agenda"
         ],
         "write": [
-          "agent_lead_notes"
+          "agent_lead_notes",
+          "artist_agenda"
         ]
       },
       "memory": "stateless",
       "memory_detail": "conversation-only; context is rebuilt each turn; no agent_memory table",
       "triggers": ["staff authenticated POST to elixis-chat"],
       "write_tools": [
-        "crear_nota_lead"
+        "crear_nota_lead",
+        "registrar_evento_agenda"
       ]
     }
   ]

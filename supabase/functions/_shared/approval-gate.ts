@@ -1,8 +1,8 @@
 // R3 / V2 — human approval gate for agent tools.
 // R5: first registered write tool (crear_nota_lead) may pass with policy auto_staff.
 
-const REGISTERED_READ_TOOLS = new Set(["consultar_finanzas"]);
-const REGISTERED_WRITE_TOOLS = new Set(["crear_nota_lead"]);
+const REGISTERED_READ_TOOLS = new Set(["consultar_finanzas", "consultar_agenda_artista"]);
+const REGISTERED_WRITE_TOOLS = new Set(["crear_nota_lead", "registrar_evento_agenda"]);
 
 export type ApprovalMode = "read" | "write";
 export type ApprovalPolicy = "none" | "auto_staff" | "require_approval" | string;

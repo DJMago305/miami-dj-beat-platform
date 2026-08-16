@@ -66,7 +66,7 @@ function isRateLimited(req: Request): boolean {
     return hits.length > RATE_LIMIT;
 }
 
-type Intent = "finance" | "lead_note" | "general";
+type Intent = "finance" | "lead_note" | "agenda" | "general";
 
 function classifyIntent(message: string): Intent {
     const t = message.toLowerCase();
@@ -81,12 +81,18 @@ function classifyIntent(message: string): Intent {
     ) {
         return "finance";
     }
+    if (
+        /consultar_agenda_artista|registrar_evento_agenda|\bagenda\b|\bcalendario\b|\bdisponib/.test(t)
+    ) {
+        return "agenda";
+    }
     return "general";
 }
 
 const SPECIALIST: Record<Intent, string> = {
     finance: "elixis",
     lead_note: "elixis",
+    agenda: "elixis",
     general: "elixis",
 };
 
