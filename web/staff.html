@@ -59,21 +59,27 @@
       letter-spacing:.10em;text-transform:uppercase;color:var(--gold-lt);white-space:nowrap;}
 
     /* ── Menú PRINCIPAL (tira dorada grande, réplica del estilo del perfil artista) ── */
-    .staff-topnav{display:flex;align-items:stretch;gap:0;padding:0 clamp(16px,4vw,56px) 6px;
-      background:linear-gradient(180deg,#0a0e16,#070a11);border-bottom:1px solid var(--line);
-      overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
-    .staff-topnav button{background:none;border:none;color:rgba(255,255,255,.52);
-      font-size:17px;font-weight:900;letter-spacing:.14em;cursor:pointer;text-transform:uppercase;
+    .staff-topnav{display:flex;align-items:stretch;justify-content:center;gap:0;padding:4px clamp(16px,4vw,56px) 8px;
+      background:transparent;border-bottom:none;
+      overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;
+      overscroll-behavior-x:contain;}
+    .staff-topnav button{background:none;border:none;color:rgba(255,255,255,.88);
+      font-size:clamp(16px,1.4vw,20px);font-weight:800;letter-spacing:.14em;cursor:pointer;text-transform:uppercase;
       position:relative;transition:color .2s ease;display:flex;align-items:center;justify-content:center;
-      padding:20px clamp(12px,2vw,26px) 22px;white-space:nowrap;flex-shrink:0;font-family:inherit;}
+      padding:4px clamp(4px,0.45vw,7px) 8px;white-space:nowrap;flex-shrink:0;min-width:12ch;font-family:inherit;}
+    .staff-topnav button + button::before{content:"/";color:rgba(197,160,89,.4);font-weight:500;margin-right:.68em;line-height:1;}
     .staff-topnav .tab-help{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;
       border:1.5px solid currentColor;border-radius:50%;font-size:9px;font-weight:800;letter-spacing:0;margin-left:7px;line-height:1;}
     .staff-topnav button.tab-sealed,.staff-topnav button.tab-sealed:hover{color:rgba(255,255,255,.3);cursor:default;}
     .staff-topnav .tab-lock{font-size:13px;margin-left:6px;line-height:1;}
     .staff-topnav button:hover{color:rgba(255,255,255,.92);}
     .staff-topnav button.active{color:var(--gold);}
-    .staff-topnav button.active::after{content:"";position:absolute;bottom:0;
-      left:clamp(12px,2vw,26px);right:clamp(12px,2vw,26px);height:2px;background:var(--gold);}
+    .staff-topnav button::after{content:"";position:absolute;bottom:0;left:4px;right:4px;height:2px;background:var(--gold);opacity:0;}
+    .staff-topnav button.active::after{opacity:1;}
+    @media (max-width:768px){
+      .staff-topnav{justify-content:flex-start;padding:4px 10px 6px;}
+      .staff-topnav button{font-size:13px;letter-spacing:.10em;padding:4px 8px 8px;min-width:12ch;}
+    }
 
     /* ── Main + módulos/vistas ── */
     .staff-main{flex:1;min-height:0;position:relative;}
@@ -160,7 +166,7 @@
     :root[data-theme="day"] .staff-brand .tx{ color:#1b1f27; }
     :root[data-theme="day"] .staff-brand .tx small{ color:#8a6d2e; }
     :root[data-theme="day"] #staff-name{ color:rgba(20,25,35,.85); }
-    :root[data-theme="day"] .staff-topnav{ background:linear-gradient(180deg,#f5f7fb,#e6ebf1); }
+    :root[data-theme="day"] .staff-topnav{ background:transparent; }
     :root[data-theme="day"] .staff-topnav button{ color:rgba(20,25,35,.55); }
     :root[data-theme="day"] .staff-topnav button:hover{ color:rgba(20,25,35,.9); }
     :root[data-theme="day"] .staff-topnav button.tab-sealed,:root[data-theme="day"] .staff-topnav button.tab-sealed:hover{ color:rgba(20,25,35,.32); }
