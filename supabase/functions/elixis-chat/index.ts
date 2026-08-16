@@ -16,18 +16,17 @@ const MODEL = "claude-haiku-4-5-20251001";
 const ANTHROPIC_VERSION = "2023-06-01";
 const MAX_TOKENS = 512;
 
-// Llave PÚBLICA (safe for browser) — misma que web/supabase-config.js. Solo lee datos
-// públicos (public_dj_profiles). El proyecto migró al formato sb_publishable_, por lo que
-// la vieja SUPABASE_ANON_KEY inyectada ya no sirve contra REST.
-const PUBLISHABLE_KEY = "sb_publishable_IMhi16lHj2dAk51AdUOK8w_U7s89-Ff";
-const SUPABASE_URL_FALLBACK = "https://hkuvuqupbxwkiykxvqdr.supabase.co";
+// Public REST key for roster reads: env only (anon or publishable). No hardcoded literals.
+function envPublicRestKey(): string {
+    return Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
+}
 
 // ─── CANDADO — solo staff/owner (verificación server-side) ───────────────────
 // El que llama debe mandar Authorization: Bearer <access_token del usuario>.
 // Verificamos el JWT con service_role y exigimos dj_profiles.role staff/owner.
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const ADMIN = createClient(
-    Deno.env.get("SUPABASE_URL") || SUPABASE_URL_FALLBACK,
+    Deno.env.get("SUPABASE_URL") ?? "",
     SERVICE_ROLE_KEY,
     { auth: { persistSession: false, autoRefreshToken: false } },
 );
@@ -139,8 +138,9 @@ async function fetchProRoster(): Promise<string> {
         return _rosterCache;
     }
     try {
-        const supabaseUrl = (Deno.env.get("SUPABASE_URL") || SUPABASE_URL_FALLBACK).replace(/\/$/, "");
-        if (!supabaseUrl) return "";
+        const supabaseUrl = (Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "");
+        const publicKey = envPublicRestKey();
+        if (!supabaseUrl || !publicKey) return "";
 
         const url =
             supabaseUrl +
@@ -150,7 +150,7 @@ async function fetchProRoster(): Promise<string> {
             "&limit=60";
 
         const res = await fetch(url, {
-            headers: { apikey: PUBLISHABLE_KEY, Authorization: `Bearer ${PUBLISHABLE_KEY}` },
+            headers: { apikey: publicKey, Authorization: `Bearer ${publicKey}` },
         });
         if (!res.ok) {
             console.error("[elixis-chat] roster fetch failed:", res.status);
