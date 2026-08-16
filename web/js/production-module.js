@@ -358,6 +358,9 @@
         '<button type="button" id="prod-cobro-release-dj" data-i18n="prod-cobro-release-dj" hidden style="display:none;" aria-hidden="true" tabindex="-1"></button>' +
         '</div></div>' +
         '<div id="prod-inv-msg" class="fineprint" style="margin-top:8px;color:var(--admin-accent);"></div>' +
+        '<h4 style="margin:22px 0 8px;color:var(--gold);" data-i18n="prod-elixis-quotes-h"></h4>' +
+        '<p class="fineprint" style="margin:0 0 8px;opacity:0.8;" data-i18n="prod-elixis-quotes-hint"></p>' +
+        '<div id="prod-elixis-quote-list" class="fineprint"></div>' +
         '<h4 style="margin:22px 0 8px;color:var(--gold);" data-i18n="prod-inv-list-h"></h4><div id="prod-inv-list" class="fineprint"></div>' +
         '</div>' +
         '</div>' +
@@ -452,6 +455,7 @@
       if (evDateEl && !evDateEl.value) {
         evDateEl.value = new Date().toISOString().slice(0, 10);
       }
+      self._bindElixisQuoteList();
       void self._loadCobroDjRoster();
       this._invLines = [{ desc: prodT('prod-inv-default-line'), qty: 1, unit: 0 }];
       this._renderInvLines();
@@ -459,6 +463,7 @@
 
     _flowRows: [],
     _invLines: [],
+    _elixisCheckoutUrls: {},
 
     _renderFlowTable: function () { /* removed — Planificación tab eliminated */ },
 
@@ -1542,9 +1547,303 @@
       if (btn) btn.disabled = false;
     },
 
+    _elixisQuoteLocked: function (q, eboPay) {
+      var st = String((q && q.status) || '').toLowerCase();
+      if (st === 'void' || st === 'expired') return true;
+      var pay = String(eboPay || '').toLowerCase();
+      return pay === 'deposit_paid' || pay === 'paid_full';
+    },
+
+    _elixisQuoteErrText: function (code, detail) {
+      var key =
+        code === 'missing_authorization' || code === 'invalid_session'
+          ? 'prod-elixis-err-session'
+          : code === 'forbidden_not_staff'
+            ? 'prod-elixis-err-forbidden'
+            : code === 'falta_email_lead'
+              ? 'prod-elixis-err-email'
+              : code === 'convert_failed'
+                ? 'prod-elixis-err-convert'
+                : code === 'stripe_session' || code === 'stripe_unconfigured'
+                  ? 'prod-elixis-err-stripe'
+                  : 'prod-elixis-err-generic';
+      var base = prodT(key) || prodT('prod-elixis-err-generic');
+      if (detail && code === 'convert_failed') return base + ' ' + String(detail);
+      return base;
+    },
+
+    _bindElixisQuoteList: function () {
+      var host = document.getElementById('prod-elixis-quote-list');
+      if (!host || host.getAttribute('data-bound') === '1') return;
+      host.setAttribute('data-bound', '1');
+      var self = this;
+      host.addEventListener('click', function (ev) {
+        var charge = ev.target.closest('[data-elixis-charge]');
+        if (charge) {
+          ev.preventDefault();
+          void self._chargeElixisQuoteDeposit(charge);
+          return;
+        }
+        var openBtn = ev.target.closest('[data-elixis-open]');
+        if (openBtn) {
+          ev.preventDefault();
+          var openUrl = openBtn.getAttribute('data-url') || '';
+          if (openUrl) window.open(openUrl, '_blank', 'noopener');
+          return;
+        }
+        var copyBtn = ev.target.closest('[data-elixis-copy]');
+        if (copyBtn) {
+          ev.preventDefault();
+          void self._copyElixisCheckoutUrl(copyBtn);
+        }
+      });
+    },
+
+    _setElixisRowMsg: function (row, text, isError) {
+      if (!row) return;
+      var msg = row.querySelector('[data-elixis-msg]');
+      if (!msg) return;
+      msg.style.color = isError ? '#ff5555' : 'var(--admin-accent)';
+      msg.textContent = text || '';
+    },
+
+    _showElixisCheckoutActions: function (row, url) {
+      if (!row || !url) return;
+      var openBtn = row.querySelector('[data-elixis-open]');
+      var copyBtn = row.querySelector('[data-elixis-copy]');
+      if (openBtn) {
+        openBtn.setAttribute('data-url', url);
+        openBtn.hidden = false;
+        openBtn.disabled = false;
+      }
+      if (copyBtn) {
+        copyBtn.setAttribute('data-url', url);
+        copyBtn.hidden = false;
+        copyBtn.disabled = false;
+      }
+    },
+
+    _copyElixisCheckoutUrl: async function (btn) {
+      var row = btn && btn.closest('[data-quote-id]');
+      var url = btn ? String(btn.getAttribute('data-url') || '') : '';
+      if (!url) return;
+      var copied = false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(url);
+          copied = true;
+        }
+      } catch (clipErr) {
+        copied = false;
+      }
+      if (!copied) {
+        window.prompt(prodT('prod-cobro-stripe-prompt'), url);
+      }
+      this._setElixisRowMsg(row, prodT('prod-elixis-copy-ok'), false);
+    },
+
+    _chargeElixisQuoteDeposit: async function (btn) {
+      var row = btn && btn.closest('[data-quote-id]');
+      if (!row || btn.disabled) return;
+      var quoteId = String(row.getAttribute('data-quote-id') || '').trim();
+      var leadId = String(row.getAttribute('data-lead-id') || '').trim();
+      if (!/^[0-9a-f-]{36}$/i.test(leadId)) {
+        var hidden = document.getElementById('prod-cobro-lead-id');
+        leadId = hidden ? hidden.value.trim() : '';
+      }
+      if (!/^[0-9a-f-]{36}$/i.test(quoteId)) return;
+      if (!/^[0-9a-f-]{36}$/i.test(leadId)) {
+        this._setElixisRowMsg(row, prodT('prod-elixis-need-lead'), true);
+        return;
+      }
+      var db = global.getSupabaseClient && global.getSupabaseClient();
+      if (!db) {
+        this._setElixisRowMsg(row, prodT('prod-msg-supabase-off'), true);
+        return;
+      }
+      var sess = await db.auth.getSession();
+      var token = sess && sess.data && sess.data.session && sess.data.session.access_token;
+      if (!token) {
+        this._setElixisRowMsg(row, prodT('prod-elixis-err-session'), true);
+        return;
+      }
+      var fnUrl =
+        typeof global.mdbSupabaseFunctionUrl === 'function'
+          ? global.mdbSupabaseFunctionUrl('create-quote-deposit')
+          : '';
+      if (!fnUrl) {
+        this._setElixisRowMsg(row, prodT('prod-inv-create-err-config'), true);
+        return;
+      }
+      var label = btn.querySelector('[data-elixis-charge-lbl]') || btn;
+      var prev = label.textContent;
+      btn.disabled = true;
+      label.textContent = prodT('prod-elixis-generating');
+      this._setElixisRowMsg(row, '', false);
+      try {
+        var res = await fetch(fnUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token,
+            apikey: typeof global.MDB_SUPABASE_ANON_KEY === 'string' ? global.MDB_SUPABASE_ANON_KEY : ''
+          },
+          body: JSON.stringify({ quote_id: quoteId, lead_id: leadId })
+        });
+        var body = await res.json().catch(function () {
+          return {};
+        });
+        if (!res.ok || !body || body.ok !== true || !body.url) {
+          this._setElixisRowMsg(
+            row,
+            this._elixisQuoteErrText(body && body.error, body && body.detail),
+            true
+          );
+          btn.disabled = false;
+          label.textContent = prev;
+          return;
+        }
+        this._elixisCheckoutUrls[quoteId] = {
+          url: String(body.url),
+          depositUsd: body.deposit_usd
+        };
+        this._showElixisCheckoutActions(row, String(body.url));
+        this._setElixisRowMsg(
+          row,
+          prodTVar('prod-elixis-ready', { amount: money(body.deposit_usd) }),
+          false
+        );
+        label.textContent = prev;
+        btn.disabled = false;
+        void this._refreshElixisQuotes();
+        void this._refreshCobroStatus(leadId);
+      } catch (e) {
+        this._setElixisRowMsg(row, prodT('prod-elixis-err-generic') + ' ' + ((e && e.message) || ''), true);
+        btn.disabled = false;
+        label.textContent = prev;
+      }
+    },
+
+    _refreshElixisQuotes: async function () {
+      var host = document.getElementById('prod-elixis-quote-list');
+      if (!host) return;
+      var db = global.getSupabaseClient && global.getSupabaseClient();
+      if (!db) {
+        host.innerHTML = '<span style="opacity:0.5">' + esc(prodT('prod-msg-supabase-off')) + '</span>';
+        return;
+      }
+      var r = await db
+        .from('event_quotes')
+        .select('id, lead_id, event_date, event_type, deposit_usd, total_usd, status, ebo_id, created_at')
+        .order('created_at', { ascending: false })
+        .limit(12);
+      if (r.error) {
+        host.innerHTML = '<span style="color:#ff5555">' + esc(r.error.message || String(r.error)) + '</span>';
+        return;
+      }
+      var rows = r.data || [];
+      if (!rows.length) {
+        host.innerHTML = '<span style="opacity:0.5">' + esc(prodT('prod-elixis-quotes-empty')) + '</span>';
+        return;
+      }
+      var eboPay = {};
+      var eboIds = rows
+        .map(function (q) {
+          return q.ebo_id;
+        })
+        .filter(Boolean);
+      if (eboIds.length) {
+        var ebo = await db.from('event_builder_orders').select('id, payment_status').in('id', eboIds);
+        if (!ebo.error && ebo.data) {
+          ebo.data.forEach(function (o) {
+            eboPay[o.id] = o.payment_status;
+          });
+        }
+      }
+      var self = this;
+      var currentLeadEl = document.getElementById('prod-cobro-lead-id');
+      var currentLead = currentLeadEl ? currentLeadEl.value.trim() : '';
+      host.innerHTML = rows
+        .map(function (q) {
+          var pay = q.ebo_id ? eboPay[q.ebo_id] : '';
+          var locked = self._elixisQuoteLocked(q, pay);
+          var leadAttr = q.lead_id ? String(q.lead_id) : currentLead;
+          var st = String(q.status || 'draft');
+          var badge = locked
+            ? pay === 'deposit_paid' || pay === 'paid_full'
+              ? prodT('prod-elixis-paid')
+              : prodT('prod-elixis-locked')
+            : st;
+          var match =
+            currentLead && q.lead_id && String(q.lead_id) === currentLead
+              ? ' border-color:var(--gold);'
+              : '';
+          return (
+            '<div class="mdj-prod-elixis-row" data-quote-id="' +
+            esc(q.id) +
+            '" data-lead-id="' +
+            esc(leadAttr || '') +
+            '" style="margin:0 0 10px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;' +
+            match +
+            '">' +
+            '<div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;">' +
+            '<strong>' +
+            esc(q.event_type || '—') +
+            '</strong>' +
+            '<span>' +
+            esc(q.event_date || '') +
+            '</span>' +
+            '<span>dep $' +
+            money(q.deposit_usd) +
+            ' · tot $' +
+            money(q.total_usd) +
+            '</span>' +
+            '<span style="opacity:0.75;">' +
+            esc(badge) +
+            '</span>' +
+            '<code style="opacity:0.7;">' +
+            esc(String(q.id).slice(0, 8)) +
+            '</code>' +
+            '<a href="./quote.html?id=' +
+            encodeURIComponent(q.id) +
+            '" target="_blank" rel="noopener" style="color:var(--gold);">' +
+            esc(prodT('prod-elixis-view')) +
+            '</a></div>' +
+            '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center;">' +
+            '<button type="button" class="btn secondary small" data-elixis-charge' +
+            (locked ? ' disabled' : '') +
+            '><span data-elixis-charge-lbl>' +
+            esc(prodT('prod-elixis-charge-deposit')) +
+            '</span></button>' +
+            '<button type="button" class="btn secondary small" data-elixis-open hidden>' +
+            esc(prodT('prod-elixis-open-stripe')) +
+            '</button>' +
+            '<button type="button" class="btn secondary small" data-elixis-copy hidden>' +
+            esc(prodT('prod-elixis-copy-link')) +
+            '</button></div>' +
+            '<div data-elixis-msg class="fineprint" style="margin-top:6px;min-height:1.2em;"></div></div>'
+          );
+        })
+        .join('');
+      var urls = this._elixisCheckoutUrls || {};
+      rows.forEach(function (q) {
+        var saved = urls[q.id];
+        if (!saved || !saved.url || self._elixisQuoteLocked(q, q.ebo_id ? eboPay[q.ebo_id] : '')) return;
+        var rowEl = host.querySelector('[data-quote-id="' + q.id + '"]');
+        if (!rowEl) return;
+        self._showElixisCheckoutActions(rowEl, saved.url);
+        self._setElixisRowMsg(
+          rowEl,
+          prodTVar('prod-elixis-ready', { amount: money(saved.depositUsd) }),
+          false
+        );
+      });
+    },
+
     _refreshLists: async function () {
       var db = global.getSupabaseClient && global.getSupabaseClient();
       if (!db) return;
+      void this._refreshElixisQuotes();
       var fl = document.getElementById('prod-flow-list');
       var il = document.getElementById('prod-inv-list');
       if (fl) {
