@@ -1,10 +1,11 @@
 // R3 / V2 — human approval gate for agent tools.
-// Declarative only: no pending-approval table, no write tools. R4 registry is the catalog.
+// R5: first registered write tool (crear_nota_lead) may pass with policy auto_staff.
 
 const REGISTERED_READ_TOOLS = new Set(["consultar_finanzas"]);
+const REGISTERED_WRITE_TOOLS = new Set(["crear_nota_lead"]);
 
 export type ApprovalMode = "read" | "write";
-export type ApprovalPolicy = "none" | string;
+export type ApprovalPolicy = "none" | "auto_staff" | "require_approval" | string;
 
 export type ApprovalDecision = {
     allowed: boolean;
@@ -20,18 +21,22 @@ export function approval_gate(input: {
     const tool = String(input?.tool ?? "").trim();
     const policy = String(input?.policy ?? "").trim();
     const mode = String(input?.mode ?? "").trim();
-    const registered = REGISTERED_READ_TOOLS.has(tool);
 
-    if (!registered || mode === "write") {
-        return {
-            allowed: false,
-            requires_approval: true,
-            reason: !registered ? "unregistered_tool" : "write_requires_approval",
-        };
+    if (mode === "read") {
+        if (REGISTERED_READ_TOOLS.has(tool) && policy === "none") {
+            return { allowed: true, requires_approval: false };
+        }
+        return { allowed: false, requires_approval: true, reason: "approval_required" };
     }
 
-    if (mode === "read" && policy === "none") {
-        return { allowed: true, requires_approval: false };
+    if (mode === "write") {
+        if (!REGISTERED_WRITE_TOOLS.has(tool)) {
+            return { allowed: false, requires_approval: true, reason: "unregistered_tool" };
+        }
+        if (policy === "auto_staff") {
+            return { allowed: true, requires_approval: false };
+        }
+        return { allowed: false, requires_approval: true, reason: "write_requires_approval" };
     }
 
     return { allowed: false, requires_approval: true, reason: "approval_required" };
