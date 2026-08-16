@@ -1,0 +1,31 @@
+#!/bin/sh
+# Road Master Map — regeneración automática tras cada commit.
+#
+# Copia versionada del bloque que vive en .git/hooks/post-commit (los hooks no
+# se versionan, así que esta copia es la que sobrevive a un clon nuevo).
+#
+# Instalar en una máquina nueva:
+#   cat docs/roadmap/post-commit.hook >> .git/hooks/post-commit
+#   chmod +x .git/hooks/post-commit
+#
+# Regenera solo el HTML (~0.8 s). El PDF necesita Chrome headless y tarda
+# varios segundos, así que no entra en el hook: se pide a mano cuando hace falta
+#   node docs/roadmap/build.mjs --pdf
+# o exportando ROADMAP_PDF=1 antes de commitear.
+
+# ─── road-master-map ─────────────────────────────────────────────────────────
+if command -v node >/dev/null 2>&1; then
+    _rmm_root=$(git rev-parse --show-toplevel 2>/dev/null)
+    if [ -n "$_rmm_root" ] && [ -f "$_rmm_root/docs/roadmap/build.mjs" ]; then
+        if [ "$ROADMAP_PDF" = "1" ]; then _rmm_args="--pdf"; else _rmm_args=""; fi
+        if _rmm_out=$(node "$_rmm_root/docs/roadmap/build.mjs" $_rmm_args 2>&1); then
+            printf 'road master map · %s\n' "$(printf '%s' "$_rmm_out" | sed -n '3p' | sed 's/^ *//')"
+        else
+            printf 'road master map · no se pudo regenerar (el commit no se ve afectado)\n' >&2
+            printf '%s\n' "$_rmm_out" >&2
+        fi
+        unset _rmm_out _rmm_args
+    fi
+    unset _rmm_root
+fi
+# ─── /road-master-map ────────────────────────────────────────────────────────
