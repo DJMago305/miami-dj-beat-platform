@@ -319,7 +319,7 @@
   /* ───── i18n ───── */
   var lang=localStorage.getItem('mdjc_lang')||'es';
   function T(es,en){return lang==='es'?es:en;}
-  /* ═══ CONEXIÓN REAL — Supabase Auth + ELIXIS backend (elixis-chat / elixis-tts) ═══ */
+  /* ═══ CONEXIÓN REAL — Supabase Auth + ELIXIS backend (elixis-orchestrator / elixis-tts) ═══ */
   var _supa = (typeof window.getSupabaseClient==='function') ? window.getSupabaseClient() : null;
   var _token = null, _rec = null, _cvAudio = null;
   var _elixisHistory = [];
@@ -387,7 +387,7 @@
     }catch(e){}
   }
   async function askElixis(text){
-    var url = window.mdbSupabaseFunctionUrl ? window.mdbSupabaseFunctionUrl('elixis-chat') : null;
+    var url = window.mdbSupabaseFunctionUrl ? window.mdbSupabaseFunctionUrl('elixis-orchestrator') : null;
     if(!url) return 'No pude ubicar el servidor.';
     try{
       var res = await fetch(url,{ method:'POST', headers:_invokeHeaders(), body:JSON.stringify({ message:text, history:_elixisHistory.slice(-20) }) });
