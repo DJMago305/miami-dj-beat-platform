@@ -1535,9 +1535,63 @@
             font-size: 14px;
         }
     </style>
+<script>/* Esta página es SOLO para mostrarse DENTRO del portal (iframe). Si se abre directa, rebota al portal. */
+if (window.self === window.top) { window.location.replace('./staff.html'); }</script>
 </head>
 
 <body class="notranslate page-admin-dashboard mdj-artist-academy">
+    <!-- ── Embed en el portal STAFF: oculta el menú viejo + sidebar + footer; deja SOLO la sección enmarcada. El acordeón del portal ES el menú ahora. ── -->
+    <style id="mdj-staff-embed">
+      #mainHeader, #owner-tabs, #mainNav, .footer, #mdj-social-sticky-bar { display: none !important; }
+      aside.sidebar { display: none !important; }
+      main.container { max-width: none !important; padding-top: 0 !important; }
+      .admin-grid { display: block !important; }
+      .admin-grid > .content, .content { width: 100% !important; max-width: 100% !important; }
+      body { padding-top: 0 !important; }
+      #mdj-back-portal { position: fixed; top: 12px; left: 14px; z-index: 99999; display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(10,14,22,.86); border: 1px solid rgba(197,160,89,.55); color: #e8c987; font-weight: 800; font-size: 12px;
+        letter-spacing: .04em; border-radius: 10px; padding: 8px 13px; text-decoration: none; backdrop-filter: blur(6px); }
+    </style>
+    <a id="mdj-back-portal" href="./staff.html">← Portal</a>
+    <script>
+      (function(){
+        if (window.self !== window.top) { var bp=document.getElementById('mdj-back-portal'); if(bp) bp.style.display='none'; }
+        var IDS = ['mainHeader','owner-tabs','mainNav'];
+        function hide(){ IDS.forEach(function(id){ var e=document.getElementById(id); if(e) e.style.setProperty('display','none','important'); });
+          document.querySelectorAll('.footer, #mdj-social-sticky-bar, aside.sidebar').forEach(function(e){ e.style.setProperty('display','none','important'); }); }
+        function watch(){ IDS.forEach(function(id){ var e=document.getElementById(id); if(e && !e.__mdjLock){ e.__mdjLock=1;
+          new MutationObserver(function(){ if(getComputedStyle(e).display!=='none') e.style.setProperty('display','none','important'); }).observe(e,{attributes:true,attributeFilter:['style','class']}); } });
+          var sb=document.querySelector('aside.sidebar'); if(sb && !sb.__mdjLock){ sb.__mdjLock=1;
+            new MutationObserver(function(){ if(getComputedStyle(sb).display!=='none') sb.style.setProperty('display','none','important'); }).observe(sb,{attributes:true,attributeFilter:['style','class']}); } }
+        function run(){ hide(); watch(); }
+        document.addEventListener('DOMContentLoaded', run); window.addEventListener('load', run);
+        [200,700,1500,3000].forEach(function(t){ setTimeout(run, t); });
+      })();
+    </script>
+    <script>
+    /* Navegación del portal STAFF dentro del iframe: ?go=<token> en la carga inicial + window.__staffNav({hash|go}) para cambiar de sección SIN recargar. Los 4 tipos de evento comparten #event-blueprint; mdjpro es panel dentro de #content. */
+    (function(){
+      var EVENTS = {'ev-quinceanera':'quinceanera','ev-show':'show','ev-privada':'privada','ev-corporativa':'corporativa'};
+      function clickLink(sel){ var l=document.querySelector('.side-link[href="'+sel+'"]'); if(l){ l.click(); return true; } return false; }
+      function runGo(go){
+        try{
+          if(EVENTS[go]){ clickLink('#event-blueprint'); if(typeof loadEventBlueprint==='function') loadEventBlueprint(EVENTS[go]); return; }
+          if(go==='mdjpro'){ clickLink('#content');   /* el panel MDJPRO vive DENTRO de #content (Contenido y Precios) */
+            var el=document.getElementById('mdjpro-downloads-panel');
+            if(el){ el.style.display='block';
+              try{ if(typeof loadMdjproDownloadsCatalog==='function') loadMdjproDownloadsCatalog(); }catch(_){}
+              setTimeout(function(){ try{ el.scrollIntoView({block:'start'}); }catch(_){} }, 250); } return; }
+        }catch(e){}
+      }
+      /* API que llama el portal padre para cambiar de sección SIN recargar el iframe */
+      window.__staffNav = function(opt){ opt=opt||{};
+        if(opt.go){ runGo(opt.go); } else if(opt.hash){ clickLink('#'+opt.hash); }
+        try{ window.scrollTo(0,0); }catch(_){}
+      };
+      function boot(){ var go=new URLSearchParams(location.search).get('go'); if(go){ setTimeout(function(){ runGo(go); },350); setTimeout(function(){ runGo(go); },1200); } }
+      if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+    })();
+    </script>
     <!-- MDJ canonical site header — keep in sync with index #mainHeader; use ./index.html# anchors for subpages -->
 <header class="header mdj-header-unified" id="mainHeader">
   <div class="header-top">
@@ -2870,7 +2924,8 @@
                 const { data: { session } } = await supabase.auth.getSession();
                 if (!session) {
                     document.documentElement.classList.remove('mdj-admin-gate-pending');
-                    window.location.href = './login.html';
+                    /* Enmarcado en el portal STAFF: NO rebotar a login (evita el cascade iframe→login que puede tumbar la sesión del parent). El portal padre maneja la sesión. */
+                    if (window.self === window.top) { window.location.href = './login.html'; }
                     return;
                 }
 

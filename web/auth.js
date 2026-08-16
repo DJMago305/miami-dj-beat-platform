@@ -518,10 +518,15 @@ function mdjGetReferralDjId() {
     try {
         const a = localStorage.getItem('mdb_referral_dj_id');
         const b = localStorage.getItem('mdj_active_affiliate_dj');
-        return (a || b || '').trim();
-    } catch (e) {
-        return '';
-    }
+        if (a || b) return (a || b || '').trim();
+    } catch (e) { /* ignore */ }
+    // Respaldo por cookie (durabilidad 90d) escrita por mdj-referral.js en vistas públicas nuevas (p.ej. profile.html).
+    // Primario sigue siendo la llave NATIVA mdb_referral_dj_id de arriba.
+    try {
+        const m = document.cookie.match(/(?:^|; )mdj_ref=([^;]*)/);
+        if (m && m[1]) return decodeURIComponent(m[1]).trim();
+    } catch (e) { /* ignore */ }
+    return '';
 }
 
 /**
@@ -623,6 +628,7 @@ async function mdjEnsureAuthProfileRows(db, user) {
                 rating: 1.0,
                 review_count: 0
             };
+            if (refCode) profilePayload.source_ref = refCode;   // atribución del referido: quién trajo al DJ (cierra el hueco vs clientes; el reparto lo resuelve Bloque 5)
             if (phone) profilePayload.phone = phone;
             if (cityForColumn) profilePayload.city = cityForColumn;
             const addrBlock = mdjFormatSignupAddressBlock(

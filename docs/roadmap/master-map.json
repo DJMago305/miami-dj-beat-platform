@@ -1,0 +1,1729 @@
+{
+  "meta": {
+    "org": "MIAMI DJ BEAT LLC",
+    "reference": "La estructura de capas se tomó como referencia de forma del Master Instruction Manual v1.0. El contenido no se copia de ese documento: se descubre del repositorio en cada corrida."
+  },
+  "audiences": [
+    {
+      "id": "cliente",
+      "label": "Cliente",
+      "blurb": "Quien contrata una noche: qué pide, qué firma, qué paga y qué ve."
+    },
+    {
+      "id": "artista",
+      "label": "Artista",
+      "blurb": "Quien toca: su perfil, su agenda, sus asignaciones y su dinero."
+    },
+    {
+      "id": "staff",
+      "label": "Staff",
+      "blurb": "Quien opera el negocio: leads, agenda, asignaciones, cobros y gobierno."
+    }
+  ],
+  "layers": [
+    {
+      "id": "L1",
+      "name": "Marca y experiencia pública",
+      "responsibility": "Sitio público, servicios, catálogo de artistas, contenido y captura de leads."
+    },
+    {
+      "id": "L2",
+      "name": "Identidad y acceso",
+      "responsibility": "Autenticación, rol, autorización, sesión y políticas RLS en la base."
+    },
+    {
+      "id": "L3",
+      "name": "Portales por rol",
+      "responsibility": "Experiencias separadas de Cliente, Artista y Staff/Operaciones."
+    },
+    {
+      "id": "L4",
+      "name": "Núcleo comercial",
+      "responsibility": "Leads, CRM, mensajería de portal, órdenes y conversión."
+    },
+    {
+      "id": "L5",
+      "name": "Operación de eventos",
+      "responsibility": "Agenda, ciclo del evento, asignación de talento y logística."
+    },
+    {
+      "id": "L6",
+      "name": "Documentos y cumplimiento",
+      "responsibility": "Certificados, verificación pública, legal y evidencia."
+    },
+    {
+      "id": "L7",
+      "name": "Núcleo financiero",
+      "responsibility": "Stripe, ledger, facturación, payouts, Sound For Tips e inteligencia de caja."
+    },
+    {
+      "id": "L8",
+      "name": "Inteligencia y automatización",
+      "responsibility": "ELIXIS, Booth, voz, atmósfera y automatismos."
+    },
+    {
+      "id": "L9",
+      "name": "Datos e integraciones",
+      "responsibility": "Esquema, licenciamiento MDJ PRO, SMS y servicios externos."
+    },
+    {
+      "id": "L10",
+      "name": "Gobierno y evolución",
+      "responsibility": "Documentación, decisiones, tickets, runbooks y auditorías."
+    }
+  ],
+  "classify": [
+    [
+      "L8",
+      "^supabase/functions/(elixis-chat|elixis-tts|booth-chat|booth-tts|atmosphere|mdj-heartbeat)$"
+    ],
+    [
+      "L8",
+      "^web/(elixis-console\\.html|mdj-commander\\.html|mdj-assistant\\.js)$"
+    ],
+    [
+      "L8",
+      "^supabase/migrations/.*(ai_booth|booth_learning|booth_lead).*\\.sql$"
+    ],
+    [
+      "L7",
+      "^supabase/functions/(financial-engine|stripe-webhook|create-checkout|create-course-checkout|create-event-payment|create-buyer-billing-portal|create-sft-tip-checkout|create-platform-account|get-buyer-payment-methods|settle-sft-manual-platform-fee|verify-client-billing-unlock|register-sft-fan-request)$"
+    ],
+    [
+      "L7",
+      "^web/(business-financial-intelligence|cash-flow|centro-financiero-artista|client-billing|admin-quick-invoice|manual-invoice-generator|staff-invoice-print|invoice-editable|invoice-now|invoice-office-template|invoice-template-print)\\.html$"
+    ],
+    [
+      "L7",
+      "^web/(account-billing|monetization|subscription|invoice-print-bridge)\\.js$"
+    ],
+    [
+      "L7",
+      "^supabase/migrations/.*(stripe|billing|ledger|invoice|payment|cashflow|cash_flow|discount|soundfortips|sft_|_sft|cobro|loyalty|purchases).*\\.sql$"
+    ],
+    [
+      "L6",
+      "^web/(certificate-template.*|verify|legal|standards|certification|certification-about|practical-evaluation)\\.html$"
+    ],
+    [
+      "L6",
+      "^web/certification\\.js$"
+    ],
+    [
+      "L6",
+      "^supabase/functions/send-certificate$"
+    ],
+    [
+      "L6",
+      "^supabase/migrations/.*(contracts|doc_storage).*\\.sql$"
+    ],
+    [
+      "L5",
+      "^web/(staff-agenda|calendario-operacional-inteligente|inteligencia-fechas-especiales|event-flow-print|events|party-planner|wedding-planning)\\.html$"
+    ],
+    [
+      "L5",
+      "^web/(dj-logistics-engine|flow-handler|party-planner)\\.js$"
+    ],
+    [
+      "L5",
+      "^supabase/functions/(notify-dj-assignment|notify-event-note)$"
+    ],
+    [
+      "L5",
+      "^supabase/migrations/.*(event|flow|show_plans|fashion_show|residency).*\\.sql$"
+    ],
+    [
+      "L4",
+      "^web/(admin-dashboard|admin|staff-order)\\.html$"
+    ],
+    [
+      "L4",
+      "^supabase/functions/(notify-new-lead|notify-portal-message|notify-dj-sms|notify-photo-rejection|send-sft-client-sms|send-subscription-welcome|staff-create-client-account)$"
+    ],
+    [
+      "L4",
+      "^supabase/migrations/.*(lead|portal_message|portal_chat|inbox_ticket|client_profiles|commercial|crm).*\\.sql$"
+    ],
+    [
+      "L3",
+      "^web/(client-portal|client-account|account-profile|account-settings|dj-dashboard|dj-tools|dj-knowledge|staff|staff-admin|staff-config|profile|artist-onboarding)\\.html$"
+    ],
+    [
+      "L3",
+      "^web/(client-portal|role-guard|mdj-profile-nav-context|account-address-data|account-address-selectors)\\.js$"
+    ],
+    [
+      "L3",
+      "^supabase/migrations/.*(staff|portal|access_tier).*\\.sql$"
+    ],
+    [
+      "L2",
+      "^web/(login|forgot-password|reset-password)\\.html$"
+    ],
+    [
+      "L2",
+      "^web/(auth|auth-check|mdj-identity|security-shield)\\.js$"
+    ],
+    [
+      "L2",
+      "^supabase/functions/(admin-update|notify-new-device-login|notify-account-profile-change)$"
+    ],
+    [
+      "L2",
+      "^supabase/scripts/identity_.*\\.sql$"
+    ],
+    [
+      "L2",
+      "^supabase/migrations/.*(rls|role|is_staff|identity|auth|login_device|known_device|username|containment_wall|privacy|data_shield|policies|policy|rbac).*\\.sql$"
+    ],
+    [
+      "L1",
+      "^web/(index|services|find-dj|directory|contact|rentals|shop|academia|courses|article|jobs|dj-profile|registry|downloads|library-wizard|tag-master|weather-lab|booth|blank-a4|autofill|mobile-iphone-preview|load-root|mdj-event-cart-root-fragment)\\.html$"
+    ],
+    [
+      "L1",
+      "^web/(i18n|translations|articles-loader|profile-loader|course-data|weather-api|weather-astral|header-smart-search|mdj-shared-header|mdj-mainnav-infinite|mdj-owner-tabs-marquee|mdj-carousel-scroll-tick|mdj-social-bar|mdj-referral|mdj-building-resolver|form-handler)\\.js$"
+    ],
+    [
+      "L1",
+      "^supabase/migrations/.*(public_dj_profiles|dj_public_reviews|visit|hero|avatar|bio_columns|teaser|carousel).*\\.sql$"
+    ],
+    [
+      "L9",
+      "^web/supabase-config\\.js$"
+    ],
+    [
+      "L9",
+      "^vercel\\.json$"
+    ],
+    [
+      "L9",
+      "^supabase/functions/(mdj-activate|mdjpro-activate-handoff|mdjpro-install-handoff)$"
+    ],
+    [
+      "L9",
+      "^supabase/functions/TWILIO_SUPABASE_SETUP\\.md$"
+    ],
+    [
+      "L9",
+      "^supabase/migrations/.*\\.sql$"
+    ],
+    [
+      "L10",
+      "^docs/.*\\.md$"
+    ],
+    [
+      "L10",
+      "^(README|AI_RULES|AI_RULES2|SUPABASE-RUNBOOK|REGRESSION-CHECKPOINT)\\.md$"
+    ],
+    [
+      "L10",
+      "^scripts/.*$"
+    ],
+    [
+      "L10",
+      "^supabase/scripts/.*\\.sql$"
+    ],
+    [
+      "L7",
+      "^web/js/mdj-(accounting|financial)-.*$"
+    ],
+    [
+      "L7",
+      "^web/js/mdj-local-projection-engine\\.js$"
+    ],
+    [
+      "L7",
+      "^web/js/fixtures/.*$"
+    ],
+    [
+      "L5",
+      "^web/js/(agenda-engine|event-intelligence|event-weather|production-module|production-templates|production-inv-address)\\.js$"
+    ],
+    [
+      "L5",
+      "^web/js/mdj-event-builder.*$"
+    ],
+    [
+      "L5",
+      "^web/documents/.*$"
+    ],
+    [
+      "L8",
+      "^web/js/(booth-elevenlabs|mdj-booth-manual-bridge)\\.js$"
+    ],
+    [
+      "L3",
+      "^web/js/(client-account|mdj-account-forms|mdj-dashboard-hub|mdj-profile-owner-link)\\.js$"
+    ],
+    [
+      "L2",
+      "^web/js/(auth|mdj-safe-storage)\\.js$"
+    ],
+    [
+      "L6",
+      "^web/(manuals|certificate)/.*$"
+    ],
+    [
+      "L6",
+      "^web/(CLIENT_TERMS|DJ_AGREEMENT|PRIVACY_POLICY|PRO_PARTNER_POLICY)\\.md$"
+    ],
+    [
+      "L1",
+      "^web/(assets|content|data|includes|components|weather-experience)/.*$"
+    ],
+    [
+      "L1",
+      "^web/js/(academy-media-loader|artists|downloads|mdj-ambient-music|mdj-cart-pill|mdj-videos-force-mute|rentals|residencies-carousel|services-catalog|venue-photo-gallery|venues-showcase|weather-engine|weather-logistics)\\.js$"
+    ],
+    [
+      "L9",
+      "^web/(sql|db)/.*$"
+    ],
+    [
+      "L9",
+      "^web/(package|package-lock|serve|vercel)\\.json$"
+    ],
+    [
+      "L9",
+      "^web/js/mdj-compat-boot\\.js$"
+    ],
+    [
+      "L10",
+      "^\\.github/workflows/.*$"
+    ],
+    [
+      "L10",
+      "^docs/.*\\.(html|sql|json)$"
+    ],
+    [
+      "L10",
+      "^web/(docs)/.*$"
+    ],
+    [
+      "L10",
+      "^web/rentals_ui_rules\\.md$"
+    ],
+    [
+      "L7",
+      "^web/js/mdj-ar-.*$"
+    ],
+    [
+      "L10",
+      "^web/scripts/.*$"
+    ],
+    [
+      "L10",
+      "^docs/roadmap/.*$"
+    ]
+  ],
+  "scan": {
+    "roots": [
+      "web",
+      "supabase/functions",
+      "supabase/migrations",
+      "supabase/scripts",
+      "docs",
+      "scripts",
+      ".github/workflows"
+    ],
+    "extraFiles": [
+      "vercel.json",
+      "README.md",
+      "AI_RULES.md",
+      "AI_RULES2.md",
+      "SUPABASE-RUNBOOK.md",
+      "REGRESSION-CHECKPOINT.md"
+    ],
+    "include": "\\.(html|js|mjs|ts|sql|md|json|yml)$"
+  },
+  "kinds": [
+    {
+      "id": "function",
+      "label": "Edge Functions",
+      "re": "^supabase/functions/[^/]+$"
+    },
+    {
+      "id": "page",
+      "label": "Páginas",
+      "re": "^web/.*\\.html$"
+    },
+    {
+      "id": "script",
+      "label": "Módulos JS",
+      "re": "^web/.*\\.js$"
+    },
+    {
+      "id": "config",
+      "label": "Configuración",
+      "re": "^(vercel\\.json|scripts/.*)$"
+    },
+    {
+      "id": "ci",
+      "label": "Workflows CI",
+      "re": "^\\.github/workflows/.*"
+    },
+    {
+      "id": "migration",
+      "label": "Migraciones SQL",
+      "re": "^supabase/(migrations|scripts)/.*\\.sql$"
+    },
+    {
+      "id": "doc",
+      "label": "Documentos",
+      "re": "\\.md$"
+    }
+  ],
+  "chapters": [
+    {
+      "id": "cap-1",
+      "title": "El ecosistema en una vista",
+      "audience": [
+        "cliente",
+        "artista",
+        "staff"
+      ],
+      "lead": "Miami DJ Beat no es un sitio web con una base de datos detrás: son diez capas apiladas, cada una con un trabajo distinto y con permiso para hablar solo con sus vecinas.",
+      "graphic": "map",
+      "body": [
+        "Léelo de abajo hacia arriba y de arriba hacia abajo. Arriba está lo que el público toca. Abajo está lo que ningún usuario ve nunca: el esquema de datos, las políticas de acceso y el gobierno del proyecto.",
+        "La regla que sostiene todo el mapa es una sola: <b>un concepto de negocio tiene un solo dueño</b>. El dinero se calcula en un único motor; la identidad se decide en una única capa; la agenda vive en un único lugar. Cuando una pantalla necesita un dato, lo pide — no lo vuelve a calcular.",
+        "El número al final de cada franja es cuántas piezas reales del repositorio viven hoy en esa capa. Ese número lo cuenta el generador, no yo."
+      ],
+      "focus": [],
+      "modules": []
+    },
+    {
+      "id": "cap-2",
+      "title": "Quién es quién",
+      "audience": [
+        "artista",
+        "staff"
+      ],
+      "lead": "Antes de que nada funcione, el sistema tiene que saber quién eres. No hay una sola cuenta con superpoderes: hay categorías, y cada una vive en su propio portal.",
+      "graphic": "roles",
+      "body": [
+        "Cliente, Artista y Staff son <b>tres mundos separados a propósito</b>. Cada portal se implementa por su cuenta, incluida su barra de navegación. Compartir un menú entre portales ya fue una regresión en V1 y por eso no se repite.",
+        "El Owner no es un DJ. Son dos cuentas distintas, con correo y login distintos, aunque las manejen las mismas manos. Esa separación es lo que permite auditar quién hizo qué.",
+        "La decisión de qué puede ver cada quien <b>no se toma en el navegador</b>. Se toma en la base, con políticas RLS. El frontend solo esconde botones; la base es la que niega el dato."
+      ],
+      "focus": [
+        "L2",
+        "L3"
+      ],
+      "modules": [
+        "web/auth.js",
+        "web/role-guard.js",
+        "web/mdj-identity.js",
+        "web/security-shield.js",
+        "supabase/scripts/identity_ssot_rbac_phase1_smoketest.sql"
+      ]
+    },
+    {
+      "id": "cap-3",
+      "title": "El viaje del cliente",
+      "audience": [
+        "cliente",
+        "staff"
+      ],
+      "lead": "Desde que alguien busca un DJ en Miami hasta que la noche termina y queda la factura pagada. Este es el recorrido que más veces se repite en la plataforma.",
+      "graphic": "journey-cliente",
+      "body": [
+        "El cliente entra por la capa pública, pide una fecha y con eso nace un <b>lead</b>. Ese lead es el mismo objeto que después se convierte en evento: no se vuelve a teclear en otro sistema.",
+        "Antes de que el evento se confirme hay dos compuertas que no se saltan: el <b>documento</b> (acuerdo de servicio) y el <b>depósito</b>. Si una falla, el evento no avanza de estado, aunque la fecha ya esté en el calendario.",
+        "Después del evento, el cliente conserva su portal: su historial, sus facturas, sus comprobantes y el chat con el equipo. No se le cierra la puerta cuando termina la noche."
+      ],
+      "focus": [
+        "L1",
+        "L4",
+        "L6",
+        "L7"
+      ],
+      "modules": [
+        "web/find-dj.html",
+        "web/services.html",
+        "web/client-portal.html",
+        "web/client-billing.html",
+        "supabase/functions/notify-new-lead",
+        "supabase/functions/create-event-payment"
+      ]
+    },
+    {
+      "id": "cap-4",
+      "title": "El viaje del artista",
+      "audience": [
+        "artista",
+        "staff"
+      ],
+      "lead": "Un artista no es un recurso que el sistema asigna: es un usuario con su propio portal, su propia agenda y su propio dinero.",
+      "graphic": "journey-artista",
+      "body": [
+        "El artista entra por onboarding, arma su perfil público y define su disponibilidad. Ese perfil es lo que el cliente ve en el catálogo, así que la calidad del perfil es parte del producto.",
+        "Cuando hay un evento que le calza, recibe una <b>oferta de asignación</b> que puede aceptar o rechazar. La asignación no se le impone en silencio.",
+        "Su centro financiero le muestra lo suyo y solo lo suyo. Un artista nunca ve el ledger de otro; eso lo garantiza la capa de identidad, no una pantalla.",
+        "<b>Pendiente conocido:</b> la reserva de un DJ todavía no escribe en su calendario personal. La agenda del artista está en rediseño, no simplemente sin cablear."
+      ],
+      "focus": [
+        "L3",
+        "L5",
+        "L7"
+      ],
+      "modules": [
+        "web/artist-onboarding.html",
+        "web/dj-dashboard.html",
+        "web/dj-profile.html",
+        "web/centro-financiero-artista.html",
+        "supabase/functions/notify-dj-assignment"
+      ]
+    },
+    {
+      "id": "cap-5",
+      "title": "El día del staff",
+      "audience": [
+        "staff"
+      ],
+      "lead": "El portal de staff es el puesto de mando: aquí se ve lo que los otros dos portales no pueden ver, y aquí se toman las decisiones que mueven dinero y fechas.",
+      "graphic": "journey-staff",
+      "body": [
+        "El staff trabaja sobre agregadores: la agenda y el Matrix <b>leen</b> datos de toda la plataforma pero reparten hacia abajo solo lo necesario. Es un flujo de una sola dirección, y quien lo hace cumplir es RLS.",
+        "Las acciones que importan — confirmar un cobro, asignar un artista, cambiar el estado de un evento — dejan rastro. Una acción consecuente sin registro es un defecto, no una comodidad.",
+        "Dentro del staff hay grados: management y ventas no ven lo mismo. El portal es uno, los permisos son varios."
+      ],
+      "focus": [
+        "L3",
+        "L4",
+        "L5"
+      ],
+      "modules": [
+        "web/staff.html",
+        "web/staff-agenda.html",
+        "web/staff-admin.html",
+        "web/staff-order.html",
+        "web/admin-dashboard.html"
+      ]
+    },
+    {
+      "id": "cap-6",
+      "title": "Cómo se mueve el dinero",
+      "audience": [
+        "cliente",
+        "artista",
+        "staff"
+      ],
+      "lead": "Un solo motor calcula. Todo lo demás lo consulta. Esa es la única regla que el núcleo financiero no negocia.",
+      "graphic": "money",
+      "body": [
+        "El dinero entra por Stripe o por comprobante manual, se registra, y desde ahí lo consume todo el que tenga permiso: la factura del cliente, el payout del artista, la caja del owner.",
+        "<code>financial-engine</code> es el único que produce cifras. Ninguna pantalla suma por su cuenta y ningún agente inventa un número: cuando ELIXIS habla de dinero, llama al motor.",
+        "Sound For Tips corre sobre el mismo esquema: propina del fan, comisión de plataforma, liquidación. No es un segundo sistema financiero, es otra entrada al mismo."
+      ],
+      "focus": [
+        "L7"
+      ],
+      "modules": [
+        "supabase/functions/financial-engine",
+        "supabase/functions/stripe-webhook",
+        "supabase/functions/create-checkout",
+        "web/business-financial-intelligence.html",
+        "web/cash-flow.html"
+      ]
+    },
+    {
+      "id": "cap-7",
+      "title": "ELIXIS, la capa de inteligencia",
+      "audience": [
+        "staff"
+      ],
+      "lead": "La capa más joven del ecosistema y la que se vigila más de cerca. Hoy ELIXIS lee, calcula y redacta. Todavía no ejecuta.",
+      "graphic": "ai",
+      "body": [
+        "ELIXIS corre del lado del servidor, verifica el rol de quien pregunta contra la base antes de responder, y recibe contexto vivo: artistas, bookings, pipeline, residencias y finanzas.",
+        "Tiene <b>una sola herramienta real</b>: consultar el motor financiero. Todo lo demás es lectura y redacción — deja los textos listos para que un humano los envíe.",
+        "Lo que aún no existe: registro formal de agentes, gate de aprobación implementado en código y auditoría de acciones. Hoy el freno es que no tiene ninguna herramienta de escritura; el día que la tenga, esos tres huecos se vuelven críticos.",
+        "Por eso este capítulo tiene su propia sección de sondas más abajo: el estado de la IA no se declara, se mide."
+      ],
+      "focus": [
+        "L8"
+      ],
+      "modules": [
+        "supabase/functions/elixis-chat",
+        "supabase/functions/elixis-tts",
+        "supabase/functions/booth-chat",
+        "web/elixis-console.html",
+        "web/mdj-commander.html"
+      ]
+    },
+    {
+      "id": "cap-8",
+      "title": "Datos, gobierno y cómo evoluciona",
+      "audience": [
+        "staff"
+      ],
+      "lead": "La parte que nadie ve y que decide si la plataforma envejece bien o se contradice a sí misma.",
+      "graphic": "governance",
+      "body": [
+        "El esquema se mueve solo por migraciones versionadas. No hay cambios silenciosos en la base: si no está en una migración, no ocurrió.",
+        "Cada decisión con impacto duradero deja documento. Los tickets, los runbooks y las auditorías forenses del repositorio son el historial de por qué la plataforma es como es.",
+        "La regla de oro para lo que viene: <b>ningún documento puede afirmar un estado que el código contradice</b>. Cuando los dos discrepan, se audita — no se crea una segunda verdad. Este mapa existe justamente para que esa discrepancia se vea sola."
+      ],
+      "focus": [
+        "L9",
+        "L10"
+      ],
+      "modules": [
+        "docs/MASTER-DOCUMENTATION-INDEX.md",
+        "docs/DECISIONS.md",
+        "SUPABASE-RUNBOOK.md",
+        "AI_RULES.md",
+        "web/supabase-config.js"
+      ]
+    }
+  ],
+  "graphics": {
+    "roles": {
+      "kind": "roles",
+      "top": {
+        "t": "OWNER",
+        "s": "visión completa · aprueba lo consecuente"
+      },
+      "cols": [
+        {
+          "t": "CLIENTE",
+          "s": "sus eventos, facturas y documentos",
+          "tone": "cli"
+        },
+        {
+          "t": "ARTISTA",
+          "s": "su perfil, agenda, asignaciones y payouts",
+          "tone": "art"
+        },
+        {
+          "t": "STAFF",
+          "s": "operación, cobros y asignaciones · por grado",
+          "tone": "stf"
+        }
+      ],
+      "base": {
+        "t": "POLÍTICAS RLS EN LA BASE",
+        "s": "el frontend esconde botones — la base niega el dato"
+      }
+    },
+    "journey-cliente": {
+      "kind": "pipeline",
+      "steps": [
+        {
+          "t": "Descubre",
+          "s": "sitio público · catálogo"
+        },
+        {
+          "t": "Pide fecha",
+          "s": "nace el lead"
+        },
+        {
+          "t": "Propuesta",
+          "s": "servicio y monto"
+        },
+        {
+          "t": "Documento",
+          "s": "acuerdo firmado",
+          "tone": "gate"
+        },
+        {
+          "t": "Depósito",
+          "s": "Stripe o comprobante",
+          "tone": "gate"
+        },
+        {
+          "t": "Evento confirmado",
+          "s": "entra a la agenda",
+          "tone": "ok"
+        },
+        {
+          "t": "La noche",
+          "s": "ejecución y soporte"
+        },
+        {
+          "t": "Cierre",
+          "s": "factura final y portal"
+        }
+      ]
+    },
+    "journey-artista": {
+      "kind": "pipeline",
+      "steps": [
+        {
+          "t": "Onboarding",
+          "s": "alta y verificación"
+        },
+        {
+          "t": "Perfil público",
+          "s": "lo que el cliente ve"
+        },
+        {
+          "t": "Disponibilidad",
+          "s": "fechas y bloqueos"
+        },
+        {
+          "t": "Oferta",
+          "s": "acepta o rechaza",
+          "tone": "gate"
+        },
+        {
+          "t": "Evento",
+          "s": "detalles e instrucciones"
+        },
+        {
+          "t": "Payout",
+          "s": "su centro financiero",
+          "tone": "ok"
+        },
+        {
+          "t": "Agenda personal",
+          "s": "en rediseño",
+          "tone": "warn"
+        }
+      ]
+    },
+    "journey-staff": {
+      "kind": "pipeline",
+      "steps": [
+        {
+          "t": "Bandeja de leads",
+          "s": "entra trabajo nuevo"
+        },
+        {
+          "t": "Califica",
+          "s": "servicio, fecha, monto"
+        },
+        {
+          "t": "Agenda",
+          "s": "conflicto y disponibilidad"
+        },
+        {
+          "t": "Asigna artista",
+          "s": "oferta al talento"
+        },
+        {
+          "t": "Cobra",
+          "s": "confirma el pago",
+          "tone": "gate"
+        },
+        {
+          "t": "Produce",
+          "s": "logística y montaje"
+        },
+        {
+          "t": "Concilia",
+          "s": "payouts y caja",
+          "tone": "ok"
+        }
+      ]
+    },
+    "money": {
+      "kind": "pipeline",
+      "steps": [
+        {
+          "t": "Entrada",
+          "s": "Stripe · Zelle · propina"
+        },
+        {
+          "t": "Registro",
+          "s": "ledger y estado de pago"
+        },
+        {
+          "t": "financial-engine",
+          "s": "el único que calcula",
+          "tone": "core"
+        },
+        {
+          "t": "Factura cliente",
+          "s": "portal del cliente"
+        },
+        {
+          "t": "Payout artista",
+          "s": "centro financiero",
+          "tone": "ok"
+        },
+        {
+          "t": "Caja del owner",
+          "s": "BFI y flujo de caja",
+          "tone": "ok"
+        }
+      ]
+    },
+    "governance": {
+      "kind": "pipeline",
+      "steps": [
+        {
+          "t": "Migración",
+          "s": "el esquema solo cambia aquí",
+          "tone": "core"
+        },
+        {
+          "t": "Ticket",
+          "s": "por qué se cambia"
+        },
+        {
+          "t": "Implementación",
+          "s": "código en rama"
+        },
+        {
+          "t": "Validación local",
+          "s": "antes de tocar producción",
+          "tone": "gate"
+        },
+        {
+          "t": "Aprobación PO",
+          "s": "decisión del owner",
+          "tone": "gate"
+        },
+        {
+          "t": "Release controlado",
+          "s": "con rollback listo",
+          "tone": "ok"
+        }
+      ]
+    },
+    "ai": {
+      "kind": "ai"
+    },
+    "gap": {
+      "kind": "pipeline",
+      "steps": [
+        {
+          "t": "Estado verificado",
+          "s": "lo que el árbol demuestra hoy",
+          "tone": "ok"
+        },
+        {
+          "t": "Objetivo aprobado",
+          "s": "a dónde debe llegar",
+          "tone": "core"
+        },
+        {
+          "t": "Brecha",
+          "s": "lo que falta, con su sonda"
+        },
+        {
+          "t": "Dependencias",
+          "s": "qué bloquea a qué"
+        },
+        {
+          "t": "Orden de ejecución",
+          "s": "calculado, no opinado",
+          "tone": "gate"
+        },
+        {
+          "t": "Validación",
+          "s": "la sonda cierra la fila sola",
+          "tone": "ok"
+        }
+      ]
+    }
+  },
+  "aiRules": [
+    {
+      "n": 1,
+      "rule": "Un orquestador coordina la intención y delega en agentes especializados.",
+      "probe": {
+        "kind": "path",
+        "patterns": [
+          "supabase/functions/*orchestrator*",
+          "supabase/functions/*agent-manager*"
+        ],
+        "expect": "present"
+      },
+      "note": "Hoy ELIXIS es un agente monolítico en una sola Edge Function. No hay orquestador ni agentes por dominio."
+    },
+    {
+      "n": 2,
+      "rule": "Cada agente declara misión, tools permitidas, alcance de datos, permisos, triggers, memoria y política de aprobación.",
+      "probe": {
+        "kind": "path",
+        "patterns": [
+          "**/agent-registry*",
+          "**/agents/*.json",
+          "**/agents/*.yaml"
+        ],
+        "expect": "present"
+      },
+      "note": "No existe registro de agentes: la misión vive en un system prompt hardcodeado y las tools en un array literal."
+    },
+    {
+      "n": 3,
+      "rule": "Las acciones sensibles pasan por un gate de aprobación humana implementado en código.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "approval_required|requires_approval|approval_gate",
+        "paths": [
+          "supabase/functions"
+        ],
+        "expect": "present"
+      },
+      "note": "El human-in-the-loop es de prompt, no de arquitectura. Se cumple solo porque ELIXIS aún no tiene tools de escritura."
+    },
+    {
+      "n": 4,
+      "rule": "El agente lee datos autoritativos e invoca adapters aprobados en vez de mutar la base directamente.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "financial-engine",
+        "paths": [
+          "supabase/functions/elixis-chat"
+        ],
+        "expect": "present"
+      },
+      "note": "Cumple: la tool consultar_finanzas llama al motor canónico en vez de calcular por su cuenta."
+    },
+    {
+      "n": 5,
+      "rule": "La memoria de negocio persiste separada del contexto conversacional transitorio.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "agent_memory|ai_memory|business_memory",
+        "paths": [
+          "supabase/migrations"
+        ],
+        "expect": "present"
+      },
+      "note": "Sin memoria persistente: cada petición es stateless y el contexto se reconstruye entero en cada turno."
+    },
+    {
+      "n": 6,
+      "rule": "Toda acción consecuente de un agente queda registrada en auditoría.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "ai_audit|agent_audit|agent_action_log",
+        "paths": [
+          "supabase/migrations"
+        ],
+        "expect": "present"
+      },
+      "note": "No hay auditoría de IA. Existe ai_booth_interactions para el Booth, pero no cubre acciones de ELIXIS."
+    },
+    {
+      "n": 7,
+      "rule": "Los KPIs de la capa de IA están instrumentados: misiones, aprobaciones, fallos, tasa de excepción.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "missions_completed|ai_kpi|exception_rate",
+        "paths": [
+          "supabase",
+          "web"
+        ],
+        "expect": "present"
+      },
+      "note": "Sin instrumentar."
+    }
+  ],
+  "integrity": [
+    {
+      "id": "V1",
+      "title": "Verdad de negocio hardcodeada dentro de una Edge Function",
+      "detail": "Agenda de residencias, venues, tarifas, márgenes y un evento con fecha viven escritos a mano en supabase/functions/elixis-chat/index.ts. El comentario del propio archivo admite que ese dato «NO está en la BD». Es una segunda fuente de verdad desplegada, y envejece sola.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "BUSINESS_CONTEXT",
+        "paths": [
+          "supabase/functions/elixis-chat"
+        ],
+        "expect": "absent"
+      },
+      "severity": "alta"
+    },
+    {
+      "id": "V2",
+      "title": "El gate de aprobación humana no está en el código",
+      "detail": "El system prompt le dice a ELIXIS que no puede enviar mensajes, mover dinero ni cambiar datos. Eso se cumple hoy solo porque no se le ha dado ninguna herramienta mutante. La primera que se le dé, el candado no existe.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "approval_required|requires_approval|approval_gate",
+        "paths": [
+          "supabase/functions"
+        ],
+        "expect": "present"
+      },
+      "severity": "alta"
+    },
+    {
+      "id": "V3",
+      "title": "Sin rastro de auditoría para acciones de agentes",
+      "detail": "No existe migración ni tabla que registre actor, acción, objetivo, resultado y timestamp de lo que hace un agente. Sin eso, ninguna tool de escritura debería aprobarse para producción.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "ai_audit|agent_audit|agent_action_log",
+        "paths": [
+          "supabase/migrations"
+        ],
+        "expect": "present"
+      },
+      "severity": "alta"
+    },
+    {
+      "id": "V4",
+      "title": "Self-tests de la línea financiera presentes",
+      "detail": "web/js/ contiene self-tests y harnesses de equivalencia para el motor financiero (*.local-selftest.mjs, *-harness-*.mjs, fixtures). No es una suite completa del producto, pero la parte que mueve dinero sí tiene comprobaciones ejecutables.",
+      "probe": {
+        "kind": "path",
+        "patterns": [
+          "web/js/*.local-selftest.mjs",
+          "web/js/*harness*.mjs"
+        ],
+        "expect": "present"
+      },
+      "severity": "media"
+    },
+    {
+      "id": "V5",
+      "title": "Clave publicable de Supabase fijada en código de servidor",
+      "detail": "supabase/functions/elixis-chat/index.ts lleva la publishable key y la URL del proyecto como literales de respaldo. Son valores públicos por diseño, pero fijarlos en código obliga a redesplegar la función para rotarlos.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "sb_publishable_",
+        "paths": [
+          "supabase/functions"
+        ],
+        "expect": "absent"
+      },
+      "severity": "media"
+    },
+    {
+      "id": "V6",
+      "title": "Índice maestro de documentación presente",
+      "detail": "docs/MASTER-DOCUMENTATION-INDEX.md existe y da el punto de entrada a las especificaciones canónicas del repositorio.",
+      "probe": {
+        "kind": "path",
+        "patterns": [
+          "docs/MASTER-DOCUMENTATION-INDEX.md"
+        ],
+        "expect": "present"
+      },
+      "severity": "media"
+    },
+    {
+      "id": "V7",
+      "title": "Los self-tests no se ejecutan en CI",
+      "detail": "Existen 9 archivos de self-test y harness, pero package.json no define un script de pruebas y ningún workflow de .github/workflows los invoca. Hoy corren solo si alguien los lanza a mano, así que una regresión financiera puede llegar a un release sin que nadie la note.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "selftest|harness|npm test|node --test",
+        "paths": [
+          ".github/workflows"
+        ],
+        "expect": "present"
+      },
+      "severity": "alta"
+    },
+    {
+      "id": "V8",
+      "title": "Auditoría de RLS automatizada en CI",
+      "detail": "El repositorio ejecuta un workflow de baseline de RLS. Siendo la autorización la pieza que decide qué ve cada rol, tenerla vigilada de forma automática es la protección más valiosa que hay hoy en el pipeline.",
+      "probe": {
+        "kind": "path",
+        "patterns": [
+          ".github/workflows/rls-baseline-audit.yml"
+        ],
+        "expect": "present"
+      },
+      "severity": "media"
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "cap-financial-engine",
+      "name": "Motor financiero canónico",
+      "layer": "L7",
+      "sot": "supabase/functions/financial-engine/index.ts",
+      "impl": [
+        "supabase/functions/financial-engine"
+      ],
+      "tests": [
+        "web/js/mdj-financial-canonical-equivalence-harness-007C.mjs",
+        "web/js/mdj-financial-adapter-cross-validation-harness-007D.mjs",
+        "web/js/mdj-financial-local-services.local-selftest.mjs"
+      ],
+      "docs": [
+        "docs/architecture/MIAMI-DJ-BEAT-V1-CANONICAL-FINANCIAL-ARCHITECTURE.md",
+        "docs/BFI-MOTOR-PLAN-TECNICO.md"
+      ],
+      "deps": [
+        "cap-identity"
+      ],
+      "used": [
+        "cap-bfi",
+        "cap-elixis",
+        "cap-invoicing"
+      ],
+      "unknowns": [
+        "¿Qué ocurre cuando Stripe y el ledger discrepan? No hay conciliación automática visible.",
+        "¿Quién es responsable de cerrar el período contable?"
+      ]
+    },
+    {
+      "id": "cap-bfi",
+      "name": "Business Financial Intelligence",
+      "layer": "L7",
+      "sot": "web/business-financial-intelligence.html",
+      "impl": [
+        "web/business-financial-intelligence.html",
+        "web/js/mdj-accounting-financial-runtime.js"
+      ],
+      "tests": [
+        "web/js/mdj-accounting-financial-runtime.local-selftest.mjs"
+      ],
+      "docs": [
+        "docs/BFI-MOTOR-PLAN-TECNICO.md",
+        "docs/BFI-FASE6-RUNBOOK-PRODUCCION.md",
+        "docs/architecture/CASH-FLOW-PRODUCT-DEFINITION-V1.md"
+      ],
+      "deps": [
+        "cap-financial-engine"
+      ],
+      "used": [],
+      "unknowns": [
+        "¿Las proyecciones a futuro usan una fórmula validada o siguen marcadas como pendientes?"
+      ]
+    },
+    {
+      "id": "cap-cashflow",
+      "name": "Flujo de caja",
+      "layer": "L7",
+      "sot": "web/cash-flow.html",
+      "impl": [
+        "web/cash-flow.html",
+        "web/js/mdj-local-projection-engine.js"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/architecture/CASH-FLOW-PRODUCT-DEFINITION-V1.md",
+        "docs/architecture/CFMOVEMENT-READ-MAP-SPEC-V1.md"
+      ],
+      "deps": [
+        "cap-financial-engine"
+      ],
+      "used": [],
+      "unknowns": [
+        "Sin self-test propio: la proyección no tiene comprobación ejecutable."
+      ]
+    },
+    {
+      "id": "cap-stripe",
+      "name": "Cobros con Stripe",
+      "layer": "L7",
+      "sot": "supabase/functions/stripe-webhook/index.ts",
+      "impl": [
+        "supabase/functions/stripe-webhook",
+        "supabase/functions/create-checkout",
+        "supabase/functions/create-event-payment",
+        "supabase/functions/create-course-checkout"
+      ],
+      "tests": [],
+      "docs": [],
+      "deps": [
+        "cap-identity"
+      ],
+      "used": [
+        "cap-invoicing",
+        "cap-client-portal"
+      ],
+      "unknowns": [
+        "¿Hay reintento y idempotencia probados para el webhook?",
+        "Sin documento propio que describa el contrato del webhook."
+      ]
+    },
+    {
+      "id": "cap-invoicing",
+      "name": "Facturación",
+      "layer": "L7",
+      "sot": "web/manual-invoice-generator.html",
+      "impl": [
+        "web/manual-invoice-generator.html",
+        "web/invoice-editable.html",
+        "web/staff-invoice-print.html",
+        "web/admin-quick-invoice.html",
+        "web/js/invoice-print-bridge.js"
+      ],
+      "tests": [],
+      "docs": [],
+      "deps": [
+        "cap-financial-engine",
+        "cap-stripe"
+      ],
+      "used": [
+        "cap-client-portal"
+      ],
+      "unknowns": [
+        "Cinco superficies distintas de factura: ¿cuál es la canónica?"
+      ]
+    },
+    {
+      "id": "cap-sft",
+      "name": "Sound For Tips",
+      "layer": "L7",
+      "sot": "supabase/functions/register-sft-fan-request/index.ts",
+      "impl": [
+        "supabase/functions/register-sft-fan-request",
+        "supabase/functions/create-sft-tip-checkout",
+        "supabase/functions/settle-sft-manual-platform-fee",
+        "supabase/functions/send-sft-client-sms"
+      ],
+      "tests": [],
+      "docs": [],
+      "deps": [
+        "cap-stripe",
+        "cap-artist-portal"
+      ],
+      "used": [],
+      "unknowns": [
+        "¿La liquidación manual de la comisión tiene cierre auditable?"
+      ]
+    },
+    {
+      "id": "cap-payouts",
+      "name": "Payouts al artista",
+      "layer": "L7",
+      "sot": "web/centro-financiero-artista.html",
+      "impl": [
+        "web/centro-financiero-artista.html"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/architecture/financial-intelligence/blueprint-payouts-suscripciones.html"
+      ],
+      "deps": [
+        "cap-financial-engine",
+        "cap-identity"
+      ],
+      "used": [
+        "cap-artist-portal"
+      ],
+      "unknowns": [
+        "El blueprint de payouts con Stripe Connect está diseñado pero no construido: ¿qué parte del centro actual es definitiva?"
+      ]
+    },
+    {
+      "id": "cap-leads",
+      "name": "Captura y CRM de leads",
+      "layer": "L4",
+      "sot": "supabase/functions/notify-new-lead/index.ts",
+      "impl": [
+        "supabase/functions/notify-new-lead",
+        "web/admin-dashboard.html",
+        "web/js/artists.js"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/tickets/MDJPRO-ADMIN-DASHBOARD-REPORT.md"
+      ],
+      "deps": [
+        "cap-identity"
+      ],
+      "used": [
+        "cap-agenda",
+        "cap-invoicing"
+      ],
+      "unknowns": [
+        "¿Dónde vive la etapa del pipeline comercial: en el lead o en el evento?"
+      ]
+    },
+    {
+      "id": "cap-portal-msgs",
+      "name": "Mensajería de portal",
+      "layer": "L4",
+      "sot": "supabase/functions/notify-portal-message/index.ts",
+      "impl": [
+        "supabase/functions/notify-portal-message"
+      ],
+      "tests": [],
+      "docs": [],
+      "deps": [
+        "cap-identity"
+      ],
+      "used": [
+        "cap-client-portal",
+        "cap-artist-portal",
+        "cap-staff-portal"
+      ],
+      "unknowns": [
+        "¿Se conserva el hilo completo de conversación por evento?"
+      ]
+    },
+    {
+      "id": "cap-agenda",
+      "name": "Agenda operacional",
+      "layer": "L5",
+      "sot": "web/staff-agenda.html",
+      "impl": [
+        "web/staff-agenda.html",
+        "web/calendario-operacional-inteligente.html",
+        "web/js/agenda-engine.js",
+        "web/js/event-intelligence.js"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/architecture/temporal-intelligence/agenda-replacement-analysis_2026-08-14.md"
+      ],
+      "deps": [
+        "cap-leads"
+      ],
+      "used": [
+        "cap-assignment",
+        "cap-production"
+      ],
+      "unknowns": [
+        "¿La detección de conflictos de fecha es automática o visual?"
+      ]
+    },
+    {
+      "id": "cap-artist-agenda",
+      "name": "Agenda personal del artista",
+      "layer": "L5",
+      "sot": "",
+      "impl": [],
+      "tests": [],
+      "docs": [
+        "docs/architecture/temporal-intelligence/artist-agenda-matrix_PROPOSED_migration.sql",
+        "docs/architecture/temporal-intelligence/artist-agenda_STEP-1-2-LOCAL-VALIDATION.md",
+        "docs/architecture/temporal-intelligence/agenda-replacement-analysis_2026-08-14.md"
+      ],
+      "deps": [
+        "cap-agenda",
+        "cap-assignment"
+      ],
+      "used": [
+        "cap-artist-portal"
+      ],
+      "unknowns": [
+        "Una reserva de DJ todavía no escribe en su calendario personal.",
+        "La migración existe como PROPOSED: no se ha aplicado."
+      ]
+    },
+    {
+      "id": "cap-assignment",
+      "name": "Asignación de talento",
+      "layer": "L5",
+      "sot": "supabase/functions/notify-dj-assignment/index.ts",
+      "impl": [
+        "supabase/functions/notify-dj-assignment",
+        "supabase/functions/notify-dj-sms"
+      ],
+      "tests": [],
+      "docs": [],
+      "deps": [
+        "cap-agenda",
+        "cap-identity"
+      ],
+      "used": [
+        "cap-artist-portal",
+        "cap-artist-agenda"
+      ],
+      "unknowns": [
+        "¿Existe registro del rechazo de una asignación y de su motivo?"
+      ]
+    },
+    {
+      "id": "cap-production",
+      "name": "Producción y logística",
+      "layer": "L5",
+      "sot": "web/js/production-module.js",
+      "impl": [
+        "web/js/production-module.js",
+        "web/js/production-templates.js",
+        "web/dj-logistics-engine.js",
+        "web/event-flow-print.html"
+      ],
+      "tests": [],
+      "docs": [],
+      "deps": [
+        "cap-agenda"
+      ],
+      "used": [],
+      "unknowns": [
+        "¿El costo de producción llega al cálculo de rentabilidad del evento?"
+      ]
+    },
+    {
+      "id": "cap-identity",
+      "name": "Identidad, roles y RLS",
+      "layer": "L2",
+      "sot": "supabase/scripts/identity_ssot_rbac_phase1_smoketest.sql",
+      "impl": [
+        "web/auth.js",
+        "web/role-guard.js",
+        "web/mdj-identity.js",
+        "web/security-shield.js",
+        "supabase/migrations/20260812120000_identity_ssot_rbac_phase1.sql"
+      ],
+      "tests": [
+        ".github/workflows/rls-baseline-audit.yml",
+        "supabase/scripts/identity_ssot_rbac_phase1_smoketest.sql"
+      ],
+      "docs": [
+        "AI_RULES.md",
+        "docs/informe-cumplimiento-auth-release-2026-04.md"
+      ],
+      "deps": [],
+      "used": [
+        "cap-client-portal",
+        "cap-artist-portal",
+        "cap-staff-portal",
+        "cap-financial-engine",
+        "cap-elixis"
+      ],
+      "unknowns": [
+        "La fase 2 del SSOT de identidad existe como script, no como migración aplicada."
+      ]
+    },
+    {
+      "id": "cap-client-portal",
+      "name": "Portal del cliente",
+      "layer": "L3",
+      "sot": "web/client-portal.html",
+      "impl": [
+        "web/client-portal.html",
+        "web/client-account.html",
+        "web/client-billing.html",
+        "web/js/client-account.js"
+      ],
+      "tests": [],
+      "docs": [],
+      "deps": [
+        "cap-identity"
+      ],
+      "used": [],
+      "unknowns": [
+        "¿El cliente puede descargar toda su documentación desde un solo lugar?"
+      ]
+    },
+    {
+      "id": "cap-artist-portal",
+      "name": "Portal del artista",
+      "layer": "L3",
+      "sot": "web/dj-dashboard.html",
+      "impl": [
+        "web/dj-dashboard.html",
+        "web/dj-tools.html",
+        "web/artist-onboarding.html",
+        "web/js/mdj-dashboard-hub.js"
+      ],
+      "tests": [],
+      "docs": [],
+      "deps": [
+        "cap-identity"
+      ],
+      "used": [],
+      "unknowns": [
+        "¿Los niveles PRO y VERIFIED están cableados a la interfaz o solo existen en los datos?"
+      ]
+    },
+    {
+      "id": "cap-staff-portal",
+      "name": "Portal del staff",
+      "layer": "L3",
+      "sot": "web/staff.html",
+      "impl": [
+        "web/staff.html",
+        "web/staff-admin.html",
+        "web/staff-config.html",
+        "web/staff-order.html"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/tickets/BEHAVIOR-staff-nav-services-events.md",
+        "docs/tickets/INCIDENT-001-staff-black-screen-routing.md"
+      ],
+      "deps": [
+        "cap-identity"
+      ],
+      "used": [],
+      "unknowns": [
+        "El portal está en Hito 1: ¿qué módulos faltan del alcance acordado?"
+      ]
+    },
+    {
+      "id": "cap-certification",
+      "name": "Academia y certificación",
+      "layer": "L6",
+      "sot": "supabase/functions/send-certificate/index.ts",
+      "impl": [
+        "supabase/functions/send-certificate",
+        "web/certification.html",
+        "web/verify.html",
+        "web/academia.html",
+        "web/js/certification.js"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/tickets/MDJPRO-ACAD-CABLE-011-courses-modulo6-connector-photos.md"
+      ],
+      "deps": [
+        "cap-identity"
+      ],
+      "used": [],
+      "unknowns": [
+        "¿La verificación pública de un certificado resiste manipulación del identificador?"
+      ]
+    },
+    {
+      "id": "cap-elixis",
+      "name": "ELIXIS — agente ejecutivo",
+      "layer": "L8",
+      "sot": "supabase/functions/elixis-chat/index.ts",
+      "impl": [
+        "supabase/functions/elixis-chat",
+        "supabase/functions/elixis-tts",
+        "web/elixis-console.html",
+        "web/mdj-commander.html"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/ai"
+      ],
+      "deps": [
+        "cap-identity",
+        "cap-financial-engine"
+      ],
+      "used": [],
+      "unknowns": [
+        "Sin registro de agentes, sin gate de aprobación en código y sin auditoría.",
+        "La agenda y tarifas viven hardcodeadas dentro de la función."
+      ]
+    },
+    {
+      "id": "cap-booth",
+      "name": "Booth IA",
+      "layer": "L8",
+      "sot": "supabase/functions/booth-chat/index.ts",
+      "impl": [
+        "supabase/functions/booth-chat",
+        "supabase/functions/booth-tts",
+        "web/booth.html",
+        "web/js/booth-elevenlabs.js"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/tickets/MDJPRO-BOOTH-MANUAL-016-manual-knowledge-gates.md"
+      ],
+      "deps": [
+        "cap-identity"
+      ],
+      "used": [],
+      "unknowns": [
+        "¿El aprendizaje del Booth alimenta algo o solo se acumula?"
+      ]
+    },
+    {
+      "id": "cap-mdjpro",
+      "name": "Licenciamiento MDJ PRO",
+      "layer": "L9",
+      "sot": "docs/mdjpro-licensing-architecture.md",
+      "impl": [
+        "supabase/functions/mdj-activate",
+        "supabase/functions/mdjpro-activate-handoff",
+        "supabase/functions/mdjpro-install-handoff"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/mdjpro-licensing-architecture.md"
+      ],
+      "deps": [
+        "cap-identity"
+      ],
+      "used": [],
+      "unknowns": [
+        "¿Cómo se revoca una licencia ya activada?"
+      ]
+    },
+    {
+      "id": "cap-weather",
+      "name": "Inteligencia atmosférica",
+      "layer": "L1",
+      "sot": "supabase/functions/atmosphere/index.ts",
+      "impl": [
+        "supabase/functions/atmosphere",
+        "web/weather-lab.html",
+        "web/js/weather-engine.js",
+        "web/js/weather-logistics.js"
+      ],
+      "tests": [],
+      "docs": [],
+      "deps": [],
+      "used": [
+        "cap-agenda"
+      ],
+      "unknowns": [
+        "La experiencia HERO existe sin desplegar: ¿entra a producción o se queda en laboratorio?"
+      ]
+    },
+    {
+      "id": "cap-referral",
+      "name": "Atribución de referidos",
+      "layer": "L1",
+      "sot": "web/mdj-referral.js",
+      "impl": [
+        "web/mdj-referral.js",
+        "supabase/scripts/referral_attribution_phaseC_PROD.sql"
+      ],
+      "tests": [],
+      "docs": [],
+      "deps": [
+        "cap-identity"
+      ],
+      "used": [
+        "cap-leads"
+      ],
+      "unknowns": [
+        "El script de atribución existe como script, no como migración aplicada.",
+        "¿Cómo se liquida la comisión del referido?"
+      ]
+    }
+  ],
+  "driftPhrases": "pendiente de cablear|no implementado|not implemented|sin cablear|UI wiring pending|todavía no existe|aún no existe",
+  "roadmap": [
+    {
+      "id": "R1",
+      "title": "Sacar la verdad de negocio del código de ELIXIS",
+      "why": "Agenda de residencias, venues, tarifas y un evento con fecha viven hardcodeados en una Edge Function desplegada. Es una segunda fuente de verdad que envejece sola y que nadie puede corregir sin redesplegar.",
+      "done": "La sonda deja de encontrar BUSINESS_CONTEXT en supabase/functions/elixis-chat.",
+      "ref": {
+        "kind": "integrity",
+        "id": "V1"
+      },
+      "deps": [],
+      "impact": "alto"
+    },
+    {
+      "id": "R2",
+      "title": "Tabla de auditoría de acciones de agentes",
+      "why": "No existe registro de actor, acción, objetivo, resultado y timestamp para lo que hace un agente. Sin eso ninguna herramienta de escritura puede aprobarse para producción.",
+      "done": "Existe una migración con la tabla de auditoría de IA.",
+      "ref": {
+        "kind": "integrity",
+        "id": "V3"
+      },
+      "deps": [],
+      "impact": "alto"
+    },
+    {
+      "id": "R3",
+      "title": "Gate de aprobación humana implementado en código",
+      "why": "Hoy el freno vive en el system prompt: es una promesa del modelo, no un candado. Se cumple solo porque ELIXIS todavía no tiene ninguna herramienta mutante.",
+      "done": "El código de las funciones declara un gate de aprobación explícito.",
+      "ref": {
+        "kind": "integrity",
+        "id": "V2"
+      },
+      "deps": [
+        "R2"
+      ],
+      "impact": "alto"
+    },
+    {
+      "id": "R4",
+      "title": "Registro formal de agentes",
+      "why": "La misión, las herramientas permitidas, el alcance de datos y la política de aprobación viven hardcodeados. Sin registro no hay forma de razonar sobre qué puede hacer cada agente.",
+      "done": "Existe un registro de agentes declarativo en el árbol.",
+      "ref": {
+        "kind": "airule",
+        "n": 2
+      },
+      "deps": [],
+      "impact": "medio"
+    },
+    {
+      "id": "R5",
+      "title": "Primera herramienta de escritura para ELIXIS",
+      "why": "Es el salto de asistente a empleado digital. Deliberadamente va después de la auditoría, el gate y el registro: en ese orden el riesgo está contenido; en cualquier otro, no.",
+      "done": "Una herramienta mutante existe y pasa por el gate y la auditoría.",
+      "ref": {
+        "kind": "none"
+      },
+      "deps": [
+        "R2",
+        "R3",
+        "R4"
+      ],
+      "impact": "alto"
+    },
+    {
+      "id": "R6",
+      "title": "Memoria de negocio persistente",
+      "why": "Cada petición es stateless y el contexto se reconstruye entero en cada turno. Con la verdad de negocio ya en la base (R1), la memoria deja de ser un parche y pasa a ser una lectura.",
+      "done": "Existe una migración de memoria de agente o de negocio.",
+      "ref": {
+        "kind": "airule",
+        "n": 5
+      },
+      "deps": [
+        "R1"
+      ],
+      "impact": "medio"
+    },
+    {
+      "id": "R7",
+      "title": "Self-tests financieros corriendo en CI",
+      "why": "Hay 9 self-tests y harnesses que hoy solo corren si alguien los lanza a mano. Una regresión financiera puede llegar a un release sin que nadie la note.",
+      "done": "Un workflow de .github/workflows los invoca.",
+      "ref": {
+        "kind": "integrity",
+        "id": "V7"
+      },
+      "deps": [],
+      "impact": "alto"
+    },
+    {
+      "id": "R8",
+      "title": "Sacar la publishable key del código de servidor",
+      "why": "Está fijada como literal de respaldo. Es un valor público por diseño, pero fijarlo obliga a redesplegar la función para rotarlo.",
+      "done": "La sonda deja de encontrar el literal en supabase/functions.",
+      "ref": {
+        "kind": "integrity",
+        "id": "V5"
+      },
+      "deps": [],
+      "impact": "bajo"
+    },
+    {
+      "id": "R9",
+      "title": "Agenda personal del artista",
+      "why": "Única capacidad en PROPOSED: la migración existe como propuesta y no está aplicada. Hoy una reserva de DJ no escribe en su calendario personal.",
+      "done": "La capacidad pasa a VERIFIED: hay código, no solo documento.",
+      "ref": {
+        "kind": "cap",
+        "id": "cap-artist-agenda"
+      },
+      "deps": [],
+      "impact": "alto"
+    },
+    {
+      "id": "R10",
+      "title": "KPIs de la capa de IA instrumentados",
+      "why": "Misiones, aprobaciones, fallos y tasa de excepción no se miden. Sin eso no hay forma de saber si la IA aporta o estorba.",
+      "done": "Los KPIs aparecen instrumentados en el árbol.",
+      "ref": {
+        "kind": "airule",
+        "n": 7
+      },
+      "deps": [
+        "R2"
+      ],
+      "impact": "bajo"
+    },
+    {
+      "id": "R11",
+      "title": "Orquestador y agentes especializados",
+      "why": "ELIXIS es hoy un agente monolítico. Separar por dominio solo tiene sentido cuando ya existe el registro que declara qué puede hacer cada uno.",
+      "done": "Existe un orquestador en el árbol.",
+      "ref": {
+        "kind": "airule",
+        "n": 1
+      },
+      "deps": [
+        "R4",
+        "R5"
+      ],
+      "impact": "medio"
+    }
+  ]
+}

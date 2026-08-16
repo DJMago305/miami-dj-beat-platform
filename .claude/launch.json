@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "migracion-v2-lab",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "MiamiDJBeat-MigracionV2"],
+      "port": 5173
+    },
+    {
+      "name": "web-official",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "serve", "--prefix", "web"],
+      "port": 8000
+    },
+    {
+      "name": "roadmap",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8099", "--directory", "docs/roadmap"],
+      "port": 8099
+    }
+  ]
+}
