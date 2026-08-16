@@ -579,6 +579,15 @@ serve(async (req: Request) => {
         },
     };
 
+    async function recordAiKpi(event: "gate_allow" | "gate_deny" | "tool_ok" | "tool_error"): Promise<void> {
+        try {
+            const { error } = await ADMIN.rpc("ai_kpi_record", { p_agent_id: "elixis", p_event: event });
+            if (error) console.error("[elixis-chat] ai_kpi record error:", error.message);
+        } catch (e) {
+            console.error("[elixis-chat] ai_kpi record error:", e);
+        }
+    }
+
     async function runFinancialTool(metrica: string): Promise<string> {
         try {
             const base = Deno.env.get("FINANCIAL_ENGINE_URL") ||
@@ -645,12 +654,24 @@ serve(async (req: Request) => {
                     policy: "none",
                     mode: toolName === "consultar_finanzas" ? "read" : "write",
                 });
-                const out = gate.allowed && toolName === "consultar_finanzas"
-                    ? await runFinancialTool(String((b.input as Record<string, unknown>)?.metrica ?? ""))
-                    : JSON.stringify({
+                await recordAiKpi(gate.allowed ? "gate_allow" : "gate_deny");
+                let out: string;
+                if (gate.allowed && toolName === "consultar_finanzas") {
+                    out = await runFinancialTool(String((b.input as Record<string, unknown>)?.metrica ?? ""));
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown };
+                        failed = parsed != null && parsed.error != null;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else {
+                    out = JSON.stringify({
                         error: gate.requires_approval ? "approval_required" : "herramienta desconocida",
                         requires_approval: gate.requires_approval,
                     });
+                }
                 results.push({ type: "tool_result", tool_use_id: b.id, content: out });
             }
             convo.push({ role: "user", content: results });
