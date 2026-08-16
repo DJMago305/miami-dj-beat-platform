@@ -41,6 +41,8 @@ This file closes integrity probe **V6**. It does not invent missing documents.
 | Document | Role |
 |---|---|
 | [agent-registry.json](./ai/agent-registry.json) | R4 declarative agent and tool catalog |
+| [event-quotes.md](./ai/event-quotes.md) | Miami DJ Beat LLC quote drafts: catalog tools, `event_quotes`, server totals |
+| [artist-agenda.md](./ai/artist-agenda.md) | Artist agenda: `artist_agenda` + live `dj-dashboard.html` read |
 | [system-agent-v1.md](./ai/system-agent-v1.md) | ELIXIS / assistant system prompt v1 |
 | [tracking-contract.md](./ai/tracking-contract.md) | Booth capture / attribution contract |
 | [booth-tracking-contract.md](./ai/booth-tracking-contract.md) | Booth tracking (historical companion) |
