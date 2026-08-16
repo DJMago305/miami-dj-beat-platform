@@ -124,32 +124,6 @@ Refleja su registro (formalidad, longitud, energía, si usa emojis o no). Nunca 
 PUEDES: redactar (mensajes de seguimiento, cobros, propuestas, textos), calcular, analizar y recomendar. Entrega los textos listos para copiar.
 NO PUEDES por tu cuenta: enviar mensajes/emails, mover dinero, ni cambiar datos. Eso lo EJECUTA el humano. Cuando prepares algo para enviar, acláralo con un "listo para que lo envíes tú".`;
 
-// ─── CONTEXTO DE NEGOCIO — residencias y tarifas (dado por el Capitán) ────────
-// NO está en la BD (la agenda/tarifas viven en la re-arquitectura pendiente).
-// Config editable: actualizar aquí si cambian venues, horarios o tarifas.
-const BUSINESS_CONTEXT = `
-
-### CONTEXTO DE NEGOCIO — Residencias, agenda y tarifas (fuente: el Capitán, no la BD)
-AGENDA SEMANAL RECURRENTE (todas son residencias de DJMago305; se repite cada semana):
-- Jueves: Sundowner Key Largo — noche 5:00pm–9:30pm.
-- Viernes día: Sundowner Key Largo — 12:00pm–5:00pm.
-- Viernes noche: Mojitos Calle 8 — 7:00pm–12:30am.
-- Sábado día: Sundowner Key Largo — 12:00pm–5:00pm.
-- Sábado noche: El Valle Restaurante — 8:00pm–2:00am.
-- Domingo día: Sundowner Key Largo — 12:00pm–5:00pm.
-
-TARIFAS (lo que paga cada venue a Miami DJ Beat por evento):
-- Sundowner Key Largo: jueves $300; viernes/sábado/domingo $350 c/u.
-- Mojitos Calle 8: viernes noche $475; eventos extra artísticos $350.
-- El Valle Restaurante: sábado noche $350.
-COSTO POR DJ: $250 por evento (DJ asignado o cobertura ocasional).
-Margen por evento = pago del venue − $250 cuando se asigna a otro DJ; si toca DJMago305, el pago del venue es ingreso directo.
-Ingreso semanal de venues (residencias): $300+$350+$475+$350+$350+$350 = $2,175/semana (~$9,400/mes).
-
-EVENTO ESPECIAL — jueves 20: Mojitos Calle 8 con el artista Ruddy La Scala, 7:30pm hasta el cierre. Ese jueves 20, DJ Solitario cubre Sundowner Key Largo (turno noche) en lugar de DJMago305.
-
-Usa esta agenda y tarifas para calcular ingresos, costos y márgenes de residencias cuando pregunten. Si un dato no está aquí ni en la BD, dilo con honestidad; no inventes.`;
-
 // ─── ROSTER EN VIVO (artistas reales desde public_dj_profiles) ───────────────
 // Mismo patrón que booth-chat: solo campos PÚBLICOS, con la anon key que
 // Supabase inyecta automáticamente. Cacheado 5 min. NO expone datos privados.
@@ -388,34 +362,37 @@ async function fetchLeadsPipeline(): Promise<string> {
     }
 }
 
-// ─── AGENDA EN VIVO (residency_schedule — fuente de verdad de la agenda) ──────
-// Si la tabla existe con datos, ELIXIS usa ESTO en vez del BUSINESS_CONTEXT
-// hardcodeado. Si no (aún no creada), fetch falla → fallback al hardcodeado.
+// ─── AGENDA EN VIVO (residency_schedule — fuente de verdad en la BD) ──────────
 const DOW_ES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const RESIDENCY_ABSENT =
+    "\n\n### CONTEXTO DE NEGOCIO — Agenda de residencias\n" +
+    "No hay filas activas en public.residency_schedule (tabla vacía, error de lectura o sin datos). " +
+    "No inventes agenda, tarifas, venues ni eventos especiales. Si preguntan, dilo con honestidad.\n";
 async function fetchResidencySchedule(): Promise<string> {
     try {
-        const { data, error } = await ADMIN
+        const { data: residencyData, error } = await ADMIN
             .from("residency_schedule")
             .select("day_of_week,shift,venue,dj_name,start_time,end_time,venue_pay_usd,dj_pay_usd")
             .eq("active", true)
             .order("day_of_week", { ascending: true })
             .order("start_time", { ascending: true });
-        if (error || !Array.isArray(data) || data.length === 0) return "";
+        if (error || !Array.isArray(residencyData) || residencyData.length === 0) {
+            return RESIDENCY_ABSENT;
+        }
         let gross = 0;
-        const lines = data.map((s) => {
+        const lines = residencyData.map((s) => {
             gross += Number(s.venue_pay_usd) || 0;
             const st = String(s.start_time).slice(0, 5), et = String(s.end_time).slice(0, 5);
             return `- ${DOW_ES[Number(s.day_of_week)]} (${s.shift}): ${s.venue} · ${st}–${et} · ${s.dj_name} · venue paga $${Number(s.venue_pay_usd)}, DJ $${Number(s.dj_pay_usd)}`;
         });
         return "\n\n### CONTEXTO DE NEGOCIO — Agenda de residencias (fuente: BD, tabla residency_schedule)\n" +
-            "Agenda semanal recurrente (todas residencias de DJMago305 salvo cobertura):\n" +
+            "Agenda semanal recurrente (filas activas en residency_schedule):\n" +
             lines.join("\n") +
             `\nIngreso semanal de venues: $${gross}/semana. Margen por evento = pago del venue − pago del DJ cuando se asigna a otro DJ; si toca DJMago305, el pago del venue es ingreso directo.\n` +
-            "EVENTO ESPECIAL — jueves 20: Mojitos Calle 8 con Ruddy La Scala, 7:30pm hasta el cierre; DJ Solitario cubre Sundowner (noche) ese jueves.\n" +
-            "Usa esto para calcular ingresos, costos y márgenes. No inventes datos.";
+            "Usa solo estas filas para calcular ingresos, costos y márgenes. No inventes datos que no estén en la consulta.";
     } catch (e) {
         console.error("[elixis-chat] residency fetch error:", e);
-        return "";
+        return RESIDENCY_ABSENT;
     }
 }
 
@@ -532,8 +509,8 @@ serve(async (req: Request) => {
         `Trátalo por su nombre. Si su rol es 'owner' es el dueño (el Capitán): confianza y acceso totales. ` +
         `Si es admin/manager/seller es staff: ayúdalo dentro de lo que le corresponde a su rol.`;
 
-    // Agenda: la tabla residency_schedule manda; si no existe aún, cae al hardcodeado.
-    const agendaContext = (await fetchResidencySchedule()) || BUSINESS_CONTEXT;
+    // Agenda: solo residency_schedule. Sin filas o con error → contexto honesto, sin inventar.
+    const agendaContext = await fetchResidencySchedule();
 
     const systemContent =
         SYSTEM_PROMPT +
