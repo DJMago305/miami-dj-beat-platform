@@ -1546,8 +1546,8 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
 
 /*
  * Vista Cero (anon, sin mdj-buyer-session ni mdj-is-client):
- * 6 visibles — Inicio · Servicios · Eventos · Shop · Trabajos · Contacto.
- * CONFIG / MI PERFIL / MI PORTAL / STAFF / DJ TOOLS no se muestran (login = ENTRAR).
+ * 8 visibles — Inicio · Servicios · Eventos · Shop · ⚙️ CONFIG · Trabajos · Contacto · MI PERFIL.
+ * MI PORTAL / STAFF / DJ TOOLS no se muestran (CONFIG + MI PERFIL → login).
  */
 body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
@@ -1561,14 +1561,6 @@ body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
   > a#mainNav-staff-link,
-body:not(.mdj-buyer-session):not(.mdj-is-client)
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a#mainNav-config-link,
-body:not(.mdj-buyer-session):not(.mdj-is-client)
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a#mainNav-guest-mi-perfil-link,
 body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
@@ -1602,7 +1594,7 @@ body:not(.mdj-buyer-session):not(.mdj-is-client)
   overflow:       visible     !important;
 }
 
-/* Vista Cero: «/» Inicio ya tiene active; cadena pública sin CONFIG ni MI PERFIL */
+/* Vista Cero: «/» Inicio ya tiene active; cadena de 8: … Shop / CONFIG / Trabajos / Contacto / MI PERFIL */
 body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
@@ -1614,11 +1606,19 @@ body:not(.mdj-buyer-session):not(.mdj-is-client)
 body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav='shop'] ~ a[data-mdj-nav='jobs']::before,
+  > a[data-mdj-nav='shop'] ~ a#mainNav-config-link::before,
 body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav='jobs'] ~ a[data-mdj-nav='contact']::before {
+  > a#mainNav-config-link ~ a[data-mdj-nav='jobs']::before,
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav='jobs'] ~ a[data-mdj-nav='contact']::before,
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a[data-mdj-nav='contact'] ~ a#mainNav-guest-mi-perfil-link::before {
   content: '\002F' !important;
   color: rgba(197, 160, 89, 0.4) !important;
   font-weight: 500 !important;
@@ -1626,6 +1626,26 @@ body:not(.mdj-buyer-session):not(.mdj-is-client)
   line-height: 1 !important;
   text-shadow: none !important;
   position: static !important;
+}
+
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-config-link:not(.mdj-mainnav-reserved-slot):not([aria-hidden="true"]),
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-guest-mi-perfil-link:not(.mdj-mainnav-reserved-slot):not([aria-hidden="true"]) {
+  display:        inline-flex !important;
+  visibility:     visible     !important;
+  opacity:        1           !important;
+  pointer-events: auto        !important;
+  flex:           0 0 auto    !important;
+  min-width:      12ch        !important;
+  width:          auto        !important;
+  max-width:      none        !important;
+  margin:         0           !important;
+  overflow:       visible     !important;
 }
 
 /*

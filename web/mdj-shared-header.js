@@ -483,9 +483,12 @@
           a.setAttribute('tabindex', '-1');
         });
       }
-      if (window.showMyArtisticProfileMainNav) {
+      if (!_isClientHome) {
         var mi = mdjEnsureGuestMiPerfilMainNavLink();
         if (mi) {
+          if (!window.showMyArtisticProfileMainNav) {
+            mi.href = './login.html';
+          }
           mi.classList.remove('mdj-mainnav-reserved-slot');
           mi.removeAttribute('aria-hidden');
           mi.removeAttribute('tabindex');
@@ -865,7 +868,7 @@
         : mdjBuildArtistPublicProfileHref();
       mdjApplyArtistSessionNav(show, href);
       if (!show) {
-        mdjHideGuestMiPerfilMainNavSlot();
+        mdjRevealGuestMiPerfilNavSlot();
       }
       /* Staff: MI PERFIL destination by sub-role.
          Owner  → public manager profile (dj-profile.html?id=uid).
@@ -1049,7 +1052,9 @@
         }
       }
     }
-    el.href = mdjBuildArtistPublicProfileHref();
+    el.href = window.__mdjNavOwnUserId
+      ? mdjBuildArtistPublicProfileHref()
+      : './login.html';
     try {
       if (window.i18n && typeof window.i18n.t === 'function') {
         var tx = window.i18n.t('nav-my-profile');
@@ -1084,20 +1089,19 @@
     el.style.removeProperty('display');
   }
 
-  /** MI PERFIL en #mainNav: solo sesión artista/staff. Vista Cero (anon) no lo muestra — login es ENTRAR. */
+  /** MI PERFIL en #mainNav: Vista Cero (anon) + artista/staff. Anon → ./login.html. */
   function mdjRevealGuestMiPerfilNavSlot() {
-    var hasSession = !!(window.__mdjNavOwnUserId && String(window.__mdjNavOwnUserId).trim());
-    var _idn0 = window.__mdjLastPlatformIdentity;
-    var staffOk = !!( _idn0 && _idn0.staffInDb );
-    var artistOk = window.showMyArtisticProfileMainNav === true;
-    if (!hasSession && !staffOk && !artistOk) {
-      mdjHideGuestMiPerfilMainNavSlot();
-      return;
-    }
     var el = document.getElementById('mainNav-guest-mi-perfil-link') || mdjEnsureGuestMiPerfilMainNavLink();
     if (!el) return;
     var _idn = window.__mdjLastPlatformIdentity;
-    el.href = (_idn && _idn.staffInDb) ? './account-settings.html' : './login.html';
+    var hasSession = !!(window.__mdjNavOwnUserId && String(window.__mdjNavOwnUserId).trim());
+    if (_idn && _idn.staffInDb) {
+      el.href = './account-settings.html';
+    } else if (hasSession && window.showMyArtisticProfileMainNav === true) {
+      el.href = mdjBuildArtistPublicProfileHref();
+    } else {
+      el.href = './login.html';
+    }
     el.classList.remove('mdj-mainnav-reserved-slot');
     el.removeAttribute('aria-hidden');
     el.removeAttribute('tabindex');
@@ -1292,7 +1296,7 @@
 
   /**
    * #mainNav ⚙ CONFIG — misma ruta que la píldora superior (`settingsUrl`): panel artista, cuenta staff o portal cliente.
-   * Sin sesión: hueco colapsado (`.mdj-mainnav-reserved-slot` + `header-unified.css`).
+   * Vista Cero: visible → ./login.html. Sesión: panel artista / cuenta staff / portal cliente.
    */
   function mdjApplyConfigMainNavLink(show, href) {
     var a = mdjEnsureConfigMainNavNode();
@@ -1759,8 +1763,8 @@
   }
 
   /**
-   * Guest-only (zero-login): contrato PROD-BLOCKER-001-FIX-2 — 8 pestañas públicas.
-   * Visible: Home · Services · Events · Shop · CONFIG · Jobs · Contact · MI PERFIL
+   * Guest-only (zero-login / Vista Cero): 8 pestañas públicas.
+   * Visible: Inicio · Servicios · Eventos · Shop · ⚙️ CONFIG · Trabajos · Contacto · MI PERFIL
    * CONFIG → ./login.html; MI PERFIL → ./login.html; ocultos: MI PORTAL · DJ TOOLS · STAFF
    * Sale si hay sesión comprador/cliente o uid activo (no toca artista/staff/owner logueados).
    */
@@ -1802,7 +1806,7 @@
       nav.querySelectorAll('a[data-mdj-nav="' + key + '"]').forEach(mdjRevealMainNavSlot);
     });
 
-    mdjApplyConfigMainNavLink(false);
+    mdjApplyConfigMainNavLink(true, './login.html');
     mdjResetMainNavPortalGuestSlot();
     mdjApplyStaffMainNavLink(false);
 
@@ -1819,7 +1823,7 @@
         else nav.appendChild(miPerfil);
       }
       miPerfil.href = './login.html';
-      mdjHideGuestMiPerfilMainNavSlot();
+      mdjRevealGuestMiPerfilNavSlot();
     }
   }
 
@@ -2997,7 +3001,7 @@
         mdjApplyFlowMainNavLink(false);
         mdjApplyNavTierStatusBadge(null);
         mdjApplyArtistHeaderRow2(false);
-        mdjHideGuestMiPerfilMainNavSlot();
+        mdjRevealGuestMiPerfilNavSlot();
         mdjRevealGuestRoleEntryNav();
         /* PRO/FREE: ya ocultos vía mdjHeaderHideMonetizationCtasPending() + CSS hasta sesión. */
         return;
@@ -3611,7 +3615,7 @@
         mdjApplyAgendaMainNavLink(false);
         mdjApplyFlowMainNavLink(false);
         mdjApplyNavTierStatusBadge(null);
-        mdjHideGuestMiPerfilMainNavSlot();
+        mdjRevealGuestMiPerfilNavSlot();
         mdjRevealGuestRoleEntryNav();
       }
     } catch (err) {
@@ -3637,7 +3641,7 @@
       mdjApplyFlowMainNavLink(false);
       mdjApplyNavTierStatusBadge(null);
       mdjApplyArtistHeaderRow2(false);
-      mdjHideGuestMiPerfilMainNavSlot();
+      mdjRevealGuestMiPerfilNavSlot();
       mdjRevealGuestRoleEntryNav();
     } finally {
       mdjSetHeaderAuthPillsPending(false);
@@ -3735,7 +3739,7 @@
     window.showMyArtisticProfileMainNav = false;
     mdjInstallMainNavStaticMode();
     mdjEnsureGuestMiPerfilMainNavLink();
-    mdjHideGuestMiPerfilMainNavSlot();
+    mdjRevealGuestMiPerfilNavSlot();
     mdjStripPublicEventsFromMainNav();
     mdjNormalizePublicHomeMainNav();
     void mdjAutodetectArtistMiPerfilNav();
