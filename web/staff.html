@@ -694,7 +694,7 @@
         '<button type="button" data-top="miperfil">Mi Perfil <span class="tab-help">?</span></button>'+
         '<button type="button" data-top="gobernanza" class="active">Staff</button>'+
         '<button type="button" data-top="elixis">Fénix AI</button>'+
-        '<button type="button" class="tab-sealed" disabled>Road Map <span class="tab-lock">🔒</span></button>';  // sellada — página + mapa maestro (4 capas · ELIXIS instructor) a futuro  // FÉNIX AI abre a ELIXIS (su voz/mensajero)
+        '<button type="button" data-href="./road-map.html">Road Map</button>';  // abre road-map.html — mapa raíz del ecosistema; candado owner/staff en la propia página  // FÉNIX AI abre a ELIXIS (su voz/mensajero)
       var topBtns=document.querySelectorAll('#staff-topnav button');
       topBtns.forEach(function(b){ b.addEventListener('click', function(){
         if(b.dataset.href){ window.location.href=b.dataset.href; return; }  // INICIO/ACADEMIA/SHOP/DJ TOOLS: navegan a su página (no se transporta nada)

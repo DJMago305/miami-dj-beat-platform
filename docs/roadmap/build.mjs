@@ -1214,6 +1214,56 @@ console.log(`  truth mode: ${nVer} verified · ${nProp} proposed · ${nUnk} unkn
 console.log(`  IA ${aiMet}/${aiRules.length} · integridad ${integrity.length - openV.length}/${integrity.length}`);
 for (const v of openV) console.log(`  ABIERTO ${v.id} — ${v.title}`);
 
+
+/* ═══ Modo portal ════════════════════════════════════════════════════════
+   `--portal` emite web/road-map.html: la misma página, con el candado real
+   de la casa (sesión + rol contra dj_profiles), igual que elixis-console.html.
+   El tab de la nav es cosmético; quien decide es esta página.               */
+
+if (process.argv.includes("--portal")) {
+    const HEAD = `<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./supabase-config.js"></script>
+<style>html{visibility:hidden}html.mdj-ok{visibility:visible}
+.rm-back{position:fixed;left:14px;bottom:14px;z-index:80;font:600 12.5px system-ui,sans-serif;
+  text-decoration:none;padding:8px 13px;border-radius:7px;border:1px solid #c5a059;color:#c5a059;background:#0f131b}</style>
+`;
+    const GATE = `
+<a class="rm-back" href="./staff.html">← Portal STAFF</a>
+<script>
+(function(){
+  "use strict";
+  // Mismo patrón que elixis-console.html: reusa el login principal, sin pedir nada aparte.
+  var ALLOWED = { owner:1, admin:1, manager:1, seller:1 };
+  var LOGIN = "./login.html?next=road-map.html";
+  var supa = (typeof window.getSupabaseClient === "function") ? window.getSupabaseClient() : null;
+  function go(){ try{ window.location.replace(LOGIN); }catch(e){} }
+  function open(){ document.documentElement.classList.add("mdj-ok"); }
+  (async function(){
+    if(!supa){ go(); return; }
+    var session=null;
+    try{ var r=await supa.auth.getSession(); session=(r&&r.data)?r.data.session:null; }catch(e){}
+    if(!session){ go(); return; }
+    var role="";
+    try{
+      var pr=await supa.from("dj_profiles").select("role").eq("user_id",session.user.id).maybeSingle();
+      role=String(((pr&&pr.data)||{}).role||"").toLowerCase().trim();
+    }catch(e){}
+    if(!ALLOWED[role]){ go(); return; }
+    open();
+    try{ supa.auth.onAuthStateChange(function(_e,s){ if(!s) go(); }); }catch(e){}
+  })();
+})();
+<\/script>
+`;
+    const portal = HEAD + html.replace('<meta charset="utf-8">\n', "") + GATE;
+    const pOut = join(ROOT, "web/road-map.html");
+    writeFileSync(pOut, portal, "utf8");
+    console.log(`\u2713 web/road-map.html (${(portal.length / 1024).toFixed(1)} KB) \u2014 con candado owner/staff`);
+}
+
 if (process.argv.includes("--pdf")) {
     const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
     const pdf = join(HERE, "Road-Master-Map.pdf");
