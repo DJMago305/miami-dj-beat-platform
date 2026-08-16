@@ -16,6 +16,21 @@
         return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     }
 
+    /** Office (owner / manager / seller): never clone #owner-tabs. Native overflow-x only. */
+    function isOfficeNav() {
+        var b = document.body;
+        if (!b) return false;
+        if (b.classList.contains('mdj-staff-nav')) return true;
+        var role = (b.getAttribute('data-mdj-nav-role') || '').toLowerCase();
+        return role === 'management' || role === 'seller';
+    }
+
+    function refreshFenixPatch() {
+        if (typeof window.mdjApplyFenixStaffNavTab === 'function') {
+            try { window.mdjApplyFenixStaffNavTab(); } catch (e) { /* noop */ }
+        }
+    }
+
     function applyTrackGap(track, computedContainer) {
         var g = computedContainer.columnGap;
         if (!g || g === 'normal' || g === '0px') g = computedContainer.gap;
@@ -29,8 +44,10 @@
         for (var i = 0; i < n; i++) {
             (function (a, b) {
                 b.setAttribute('aria-hidden', 'true');
+                b.style.pointerEvents = 'none';
                 b.querySelectorAll('a, button').forEach(function (el) {
                     el.tabIndex = -1;
+                    el.style.pointerEvents = 'none';
                 });
                 b.addEventListener('click', function (e) {
                     e.preventDefault();
@@ -81,6 +98,7 @@
         var trackB = trackA.cloneNode(true);
         trackB.classList.add(CLS_CLONE);
         trackB.setAttribute('aria-hidden', 'true');
+        trackB.style.pointerEvents = 'none';
         applyTrackGap(trackB, csGap);
         wireClone(trackA, trackB);
 
@@ -98,6 +116,7 @@
         }
         setDur();
         requestAnimationFrame(setDur);
+        refreshFenixPatch();
     }
 
     /** Margen para subpíxeles / Safari+Retina (p. ej. Mac Studio): evita marquee falso y texto “montado”. */
@@ -119,6 +138,11 @@
         if (!nav) return;
         var container = nav.querySelector(':scope > .container');
         if (!container) return;
+
+        if (isOfficeNav() || nav.getAttribute('data-mdj-no-marquee') === '1' || container.getAttribute('data-mdj-no-marquee') === '1') {
+            if (container.dataset.mdjOwnerMarquee === '1') destroyMarquee(container, nav);
+            return;
+        }
 
         if (prefersReducedMotion()) {
             if (container.dataset.mdjOwnerMarquee === '1') destroyMarquee(container, nav);
