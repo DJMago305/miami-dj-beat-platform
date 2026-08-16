@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Proposal — Miami DJ Beat LLC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@0,500;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-config.js?v=20260816-public-quote-1"></script>
+  <style>
+    :root {
+      --bg: #08090c;
+      --gold: #c5a059;
+      --gold-2: #e8d5a3;
+      --text: #f4f1ea;
+      --muted: rgba(255, 255, 255, 0.48);
+      --line: rgba(197, 160, 89, 0.22);
+      --glass: rgba(255, 255, 255, 0.03);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; }
+    body {
+      background:
+        radial-gradient(ellipse at 50% -10%, rgba(197, 160, 89, 0.14), transparent 52%),
+        var(--bg);
+    }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 36px 20px 64px; }
+    .brand { text-align: center; margin-bottom: 28px; }
+    .brand img { width: 72px; height: 72px; object-fit: contain; }
+    .brand h1 {
+      font-family: Cinzel, serif;
+      font-size: 15px;
+      letter-spacing: 0.16em;
+      color: var(--gold);
+      margin: 10px 0 0;
+      text-transform: uppercase;
+    }
+    .brand p { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+    .card {
+      background: var(--glass);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 28px 24px;
+      backdrop-filter: blur(20px);
+    }
+    .state { text-align: center; padding: 36px 12px; color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .eyebrow {
+      font-family: Cinzel, serif;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin: 0 0 8px;
+    }
+    .title {
+      font-family: "Playfair Display", serif;
+      font-style: italic;
+      font-size: 28px;
+      margin: 0 0 6px;
+    }
+    .meta { color: var(--muted); font-size: 13px; margin-bottom: 22px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 10px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); text-align: left; }
+    th { color: var(--muted); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; }
+    td.num, th.num { text-align: right; }
+    .totals { margin-top: 18px; }
+    .tot-row { display: flex; justify-content: space-between; gap: 16px; padding: 7px 0; font-size: 14px; color: var(--muted); }
+    .tot-row.deposit { color: var(--gold); }
+    .tot-row.total { color: var(--text); font-weight: 800; font-size: 18px; border-top: 1px solid var(--line); margin-top: 8px; padding-top: 12px; }
+    .notes { margin-top: 18px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 44px; padding: 0 18px; border-radius: 12px;
+      font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-decoration: none;
+      border: 1px solid var(--line); color: var(--text);
+    }
+    .btn.gold { background: var(--gold); color: #1a1408; border-color: transparent; }
+    .btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+    .legal { margin-top: 22px; text-align: center; color: var(--muted); font-size: 11px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="brand">
+      <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat LLC">
+      <h1>Miami DJ Beat LLC</h1>
+      <p>Event proposal</p>
+    </header>
+    <section class="card" id="quote-root" aria-live="polite">
+      <div class="state">Loading your proposal…</div>
+    </section>
+  </main>
+  <script>
+    (function () {
+      var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      var WA = "https://wa.me/13056071780";
+      var MAIL = "mailto:miamidjbeat@gmail.com";
+      var root = document.getElementById("quote-root");
+
+      function esc(s) {
+        return String(s == null ? "" : s)
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      }
+      function money(n) {
+        var v = Number(n);
+        if (!isFinite(v)) return "—";
+        return "$" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+      function typeLabel(t) {
+        var map = {
+          wedding: "Wedding",
+          corporate: "Corporate",
+          private: "Private party",
+          clubs: "Clubs & nightlife",
+          family: "Family event",
+          holiday: "Holiday & special"
+        };
+        return map[String(t || "").toLowerCase()] || (t ? String(t) : "Event");
+      }
+      function emptyState(kind) {
+        var copy = kind === "expired"
+          ? "This proposal is no longer available. Contact an advisor for an updated quote."
+          : "We could not find this proposal. Check the link or contact an advisor.";
+        root.innerHTML =
+          '<div class="state"><p>' + copy + '</p>' +
+          '<div class="actions" style="justify-content:center">' +
+          '<a class="btn gold" href="' + WA + '?text=' + encodeURIComponent("Hello, I need help with a Miami DJ Beat LLC proposal.") + '" target="_blank" rel="noopener noreferrer">Contactar a un Asesor</a>' +
+          '<a class="btn" href="' + MAIL + '">Email</a></div></div>';
+      }
+      function render(q) {
+        var lines = Array.isArray(q.lines) ? q.lines : [];
+        var rows = lines.map(function (ln) {
+          return "<tr><td>" + esc(ln.name || "Service") + "</td>" +
+            '<td class="num">' + esc(ln.qty) + "</td>" +
+            '<td class="num">' + money(ln.unit_usd) + "</td>" +
+            '<td class="num">' + money(ln.line_usd) + "</td></tr>";
+        }).join("");
+        var date = q.event_date ? String(q.event_date) : "Date TBD";
+        var taxPct = Math.round(Number(q.tax_rate || 0.07) * 100);
+        var depPct = Math.round(Number(q.deposit_rate || 0.30) * 100);
+        var waText = "Hello, I am reviewing proposal " + q.id + " from Miami DJ Beat LLC.";
+        var notes = q.notes ? '<p class="notes">' + esc(q.notes) + "</p>" : "";
+        root.innerHTML =
+          '<p class="eyebrow">Proposal</p>' +
+          '<h2 class="title">' + esc(typeLabel(q.event_type)) + "</h2>" +
+          '<p class="meta">' + esc(date) + " · Miami DJ Beat LLC</p>" +
+          '<table><thead><tr><th>Concept</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Line</th></tr></thead>' +
+          "<tbody>" + (rows || '<tr><td colspan="4">No line items</td></tr>') + "</tbody></table>" +
+          '<div class="totals">' +
+          '<div class="tot-row"><span>Subtotal</span><span>' + money(q.subtotal_usd) + "</span></div>" +
+          '<div class="tot-row"><span>Sales Tax (' + taxPct + '%)</span><span>' + money(q.tax_usd) + "</span></div>" +
+          '<div class="tot-row deposit"><span>Deposit (' + depPct + '%)</span><span>' + money(q.deposit_usd) + "</span></div>" +
+          '<div class="tot-row total"><span>Total</span><span>' + money(q.total_usd) + "</span></div>" +
+          "</div>" + notes +
+          '<div class="actions">' +
+          '<a class="btn gold" href="' + WA + "?text=" + encodeURIComponent(waText) + '" target="_blank" rel="noopener noreferrer">Contactar a un Asesor</a>' +
+          '<a class="btn" href="' + MAIL + '?subject=' + encodeURIComponent("Proposal " + q.id) + '">Email</a>' +
+          '<span class="btn" aria-disabled="true" title="A manager will confirm your booking. Payment is not available on this page.">Aceptar Propuesta</span>' +
+          "</div>" +
+          '<p class="legal">Draft proposal. Totals are informational. Accepting a booking happens with a Miami DJ Beat LLC advisor — not on this page.</p>';
+      }
+
+      var id = new URLSearchParams(location.search).get("id") || "";
+      if (!UUID_RE.test(id)) { emptyState("not_found"); return; }
+      var sb = window.getSupabaseClient ? window.getSupabaseClient() : null;
+      if (!sb) { emptyState("not_found"); return; }
+      sb.rpc("get_public_event_quote", { p_quote_id: id }).then(function (res) {
+        if (res.error || !res.data) { emptyState("not_found"); return; }
+        var data = res.data;
+        if (data.ok !== true) { emptyState(data.error === "expired" ? "expired" : "not_found"); return; }
+        render(data);
+      }).catch(function () { emptyState("not_found"); });
+    })();
+  </script>
+</body>
+</html>
