@@ -602,7 +602,7 @@
   function mdjIsStaffBuildingPage() {
     try {
       var page = (window.location.pathname.split('/').pop() || '').toLowerCase();
-      return page === 'admin-dashboard.html' || page === 'account-profile.html';
+      return page === 'admin-dashboard.html' || page === 'account-profile.html' || page === 'staff.html';
     } catch (eSb) {
       return false;
     }
@@ -640,7 +640,8 @@
   function mdjBuildArtistStaffMainNavHref() {
     var idn = window.__mdjLastPlatformIdentity;
     if (idn && idn.staffInDb) {
-      return './admin-dashboard.html';
+      if (idn.managementInDb) return './staff.html';
+      return './admin-dashboard.html#staff';
     }
     return mdjBuildStaffEntryLoginHref();
   }
@@ -864,7 +865,7 @@
         : mdjBuildArtistPublicProfileHref();
       mdjApplyArtistSessionNav(show, href);
       if (!show) {
-        mdjRevealGuestMiPerfilNavSlot();
+        mdjHideGuestMiPerfilMainNavSlot();
       }
       /* Staff: MI PERFIL destination by sub-role.
          Owner  → public manager profile (dj-profile.html?id=uid).
@@ -958,7 +959,7 @@
         el.classList.toggle('active', k === 'my-profile');
       });
       return;
-    } else if (path === 'admin-dashboard.html' || path === 'account-profile.html') {
+    } else if (path === 'admin-dashboard.html' || path === 'account-profile.html' || path === 'staff.html') {
       nav.querySelectorAll('a[data-mdj-artist-nav]').forEach(function (el) {
         var k = el.getAttribute('data-mdj-artist-nav');
         el.classList.toggle('active', k === 'staff');
@@ -1083,8 +1084,16 @@
     el.style.removeProperty('display');
   }
 
-  /** Guest state: MI PERFIL is the sole desktop nav login entry. Call after every guest-state finalization. */
+  /** MI PERFIL en #mainNav: solo sesión artista/staff. Vista Cero (anon) no lo muestra — login es ENTRAR. */
   function mdjRevealGuestMiPerfilNavSlot() {
+    var hasSession = !!(window.__mdjNavOwnUserId && String(window.__mdjNavOwnUserId).trim());
+    var _idn0 = window.__mdjLastPlatformIdentity;
+    var staffOk = !!( _idn0 && _idn0.staffInDb );
+    var artistOk = window.showMyArtisticProfileMainNav === true;
+    if (!hasSession && !staffOk && !artistOk) {
+      mdjHideGuestMiPerfilMainNavSlot();
+      return;
+    }
     var el = document.getElementById('mainNav-guest-mi-perfil-link') || mdjEnsureGuestMiPerfilMainNavLink();
     if (!el) return;
     var _idn = window.__mdjLastPlatformIdentity;
@@ -1793,7 +1802,7 @@
       nav.querySelectorAll('a[data-mdj-nav="' + key + '"]').forEach(mdjRevealMainNavSlot);
     });
 
-    mdjApplyConfigMainNavLink(true, './login.html');
+    mdjApplyConfigMainNavLink(false);
     mdjResetMainNavPortalGuestSlot();
     mdjApplyStaffMainNavLink(false);
 
@@ -1810,6 +1819,7 @@
         else nav.appendChild(miPerfil);
       }
       miPerfil.href = './login.html';
+      mdjHideGuestMiPerfilMainNavSlot();
     }
   }
 
@@ -2987,7 +2997,7 @@
         mdjApplyFlowMainNavLink(false);
         mdjApplyNavTierStatusBadge(null);
         mdjApplyArtistHeaderRow2(false);
-        mdjRevealGuestMiPerfilNavSlot();
+        mdjHideGuestMiPerfilMainNavSlot();
         mdjRevealGuestRoleEntryNav();
         /* PRO/FREE: ya ocultos vía mdjHeaderHideMonetizationCtasPending() + CSS hasta sesión. */
         return;
@@ -3601,7 +3611,7 @@
         mdjApplyAgendaMainNavLink(false);
         mdjApplyFlowMainNavLink(false);
         mdjApplyNavTierStatusBadge(null);
-        mdjRevealGuestMiPerfilNavSlot();
+        mdjHideGuestMiPerfilMainNavSlot();
         mdjRevealGuestRoleEntryNav();
       }
     } catch (err) {
@@ -3627,7 +3637,7 @@
       mdjApplyFlowMainNavLink(false);
       mdjApplyNavTierStatusBadge(null);
       mdjApplyArtistHeaderRow2(false);
-      mdjRevealGuestMiPerfilNavSlot();
+      mdjHideGuestMiPerfilMainNavSlot();
       mdjRevealGuestRoleEntryNav();
     } finally {
       mdjSetHeaderAuthPillsPending(false);
@@ -4380,7 +4390,9 @@
 
     /* ── STAFF: edificio artista → ART-007B; edificio Staff → nav interna sin tocar ── */
     var staffEl = c.querySelector('a[data-mdj-nav="staff"]');
-    var _staffBuildingPage = _page === 'admin-dashboard.html' || _page === 'account-profile.html';
+    var _staffBuildingPage = typeof window.mdjIsStaffBuildingPage === 'function'
+      ? window.mdjIsStaffBuildingPage()
+      : (_page === 'admin-dashboard.html' || _page === 'account-profile.html' || _page === 'staff.html');
     if (!_staffBuildingPage) {
       if (!staffEl) {
         staffEl = document.createElement('a');

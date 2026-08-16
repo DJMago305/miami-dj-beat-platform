@@ -1545,8 +1545,9 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
 }
 
 /*
- * Zero-login guest (sin mdj-buyer-session ni mdj-is-client): MI PORTAL / STAFF / DJ TOOLS ocultos.
- * Contrato PROD-BLOCKER-001-FIX-2 — 8 visibles: Home · Services · Events · Shop · CONFIG · Jobs · Contact · MI PERFIL
+ * Vista Cero (anon, sin mdj-buyer-session ni mdj-is-client):
+ * 6 visibles — Inicio · Servicios · Eventos · Shop · Trabajos · Contacto.
+ * CONFIG / MI PERFIL / MI PORTAL / STAFF / DJ TOOLS no se muestran (login = ENTRAR).
  */
 body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
@@ -1560,6 +1561,14 @@ body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
   > a#mainNav-staff-link,
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-config-link,
+body:not(.mdj-buyer-session):not(.mdj-is-client)
+  #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-guest-mi-perfil-link,
 body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
@@ -1580,15 +1589,7 @@ body:not(.mdj-buyer-session):not(.mdj-is-client)
 body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a#mainNav-config-link:not([aria-hidden="true"]),
-body:not(.mdj-buyer-session):not(.mdj-is-client)
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav="venues"]:not([aria-hidden="true"]),
-body:not(.mdj-buyer-session):not(.mdj-is-client)
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a#mainNav-guest-mi-perfil-link:not(.mdj-mainnav-reserved-slot):not([aria-hidden="true"]) {
+  > a[data-mdj-nav="venues"]:not([aria-hidden="true"]) {
   display:        inline-flex !important;
   visibility:     visible     !important;
   opacity:        1           !important;
@@ -1601,15 +1602,7 @@ body:not(.mdj-buyer-session):not(.mdj-is-client)
   overflow:       visible     !important;
 }
 
-body:not(.mdj-buyer-session):not(.mdj-is-client)
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a#mainNav-config-link:not([aria-hidden="true"]) {
-  letter-spacing: 0.05em !important;
-  word-spacing: -0.12em !important;
-}
-
-/* Guest zero-login: «/» entre Services · Events · Shop · CONFIG · Jobs · Contact · MI PERFIL */
+/* Vista Cero: «/» Inicio ya tiene active; cadena pública sin CONFIG ni MI PERFIL */
 body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
@@ -1621,19 +1614,11 @@ body:not(.mdj-buyer-session):not(.mdj-is-client)
 body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav='shop'] ~ a#mainNav-config-link::before,
+  > a[data-mdj-nav='shop'] ~ a[data-mdj-nav='jobs']::before,
 body:not(.mdj-buyer-session):not(.mdj-is-client)
   #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a#mainNav-config-link ~ a[data-mdj-nav='jobs']::before,
-body:not(.mdj-buyer-session):not(.mdj-is-client)
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav='jobs'] ~ a[data-mdj-nav='contact']::before,
-body:not(.mdj-buyer-session):not(.mdj-is-client)
-  #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav
-  > a[data-mdj-nav='contact'] ~ a#mainNav-guest-mi-perfil-link::before {
+  > a[data-mdj-nav='jobs'] ~ a[data-mdj-nav='contact']::before {
   content: '\002F' !important;
   color: rgba(197, 160, 89, 0.4) !important;
   font-weight: 500 !important;
@@ -2403,6 +2388,15 @@ body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-action
  * Override de styles.css (locked): clamp(14→16px), letter-spacing 0.12→0.14em.
  * ──────────────────────────────────────────────────────────────────────────── */
 @media (min-width: 1001px) {
+  body.dj-profile .dj-owner-tabs .container,
+  body.mdj-from-profile .dj-owner-tabs .container,
+  body.mdj-academia-hub .dj-owner-tabs .container,
+  body.mdj-artist-academy .dj-owner-tabs .container {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: stretch !important;
+    flex-wrap: nowrap !important;
+  }
   body.dj-profile .dj-owner-tabs .dj-tab-btn,
   body.dj-profile .dj-owner-tabs .dj-owner-academy-btn,
   body.mdj-from-profile .dj-owner-tabs .dj-tab-btn,
@@ -2416,6 +2410,16 @@ body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-action
     letter-spacing: var(--mdj-nav-letter-spacing) !important;
     padding-left: var(--mdj-nav-link-px) !important;
     padding-right: var(--mdj-nav-link-px) !important;
+  }
+  body.dj-profile .dj-owner-tabs .container > .dj-tab-btn + .dj-tab-btn::before,
+  body.mdj-from-profile .dj-owner-tabs .container > .dj-tab-btn + .dj-tab-btn::before,
+  body.mdj-academia-hub .dj-owner-tabs .container > .dj-tab-btn + .dj-tab-btn::before,
+  body.mdj-artist-academy .dj-owner-tabs .container > .dj-tab-btn + .dj-tab-btn::before {
+    content: '\002F' !important;
+    color: rgba(197, 160, 89, 0.4) !important;
+    font-weight: 500 !important;
+    margin-right: 0.68em !important;
+    line-height: 1 !important;
   }
 }
 
