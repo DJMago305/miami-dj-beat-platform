@@ -4647,5 +4647,6 @@
     apply(false);
     var n=0, iv=setInterval(function(){ n++; apply(n>=12); if(n>=18){ clearInterval(iv); } }, 350);
   }
+  window.mdjApplyFenixStaffNavTab = function () { apply(true); };
   if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', boot); } else { boot(); }
 })();

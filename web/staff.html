@@ -59,13 +59,13 @@
       letter-spacing:.10em;text-transform:uppercase;color:var(--gold-lt);white-space:nowrap;}
 
     /* ── Menú PRINCIPAL (tira dorada grande, réplica del estilo del perfil artista) ── */
-    .staff-topnav{display:flex;align-items:stretch;gap:0;padding:0 clamp(16px,4vw,56px);
+    .staff-topnav{display:flex;align-items:stretch;gap:0;padding:0 clamp(16px,4vw,56px) 6px;
       background:linear-gradient(180deg,#0a0e16,#070a11);border-bottom:1px solid var(--line);
-      overflow-x:auto;overflow-y:hidden;}
+      overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
     .staff-topnav button{background:none;border:none;color:rgba(255,255,255,.52);
       font-size:17px;font-weight:900;letter-spacing:.14em;cursor:pointer;text-transform:uppercase;
       position:relative;transition:color .2s ease;display:flex;align-items:center;justify-content:center;
-      padding:20px clamp(12px,2vw,26px);white-space:nowrap;flex-shrink:0;font-family:inherit;}
+      padding:20px clamp(12px,2vw,26px) 22px;white-space:nowrap;flex-shrink:0;font-family:inherit;}
     .staff-topnav .tab-help{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;
       border:1.5px solid currentColor;border-radius:50%;font-size:9px;font-weight:800;letter-spacing:0;margin-left:7px;line-height:1;}
     .staff-topnav button.tab-sealed,.staff-topnav button.tab-sealed:hover{color:rgba(255,255,255,.3);cursor:default;}
@@ -640,6 +640,59 @@
     }
     function el(id){ return document.getElementById(id); }
 
+    function clearHiddenStaffNav(){
+      var n=el('staff-nav');
+      if(n) n.innerHTML='';
+    }
+
+    /* Única tira visible. #staff-nav queda vacío (display:none). */
+    function paintStaffTopnav(html, onInternal){
+      clearHiddenStaffNav();
+      var bar=el('staff-topnav');
+      if(!bar) return [];
+      bar.innerHTML=html;
+      var topBtns=bar.querySelectorAll('button');
+      topBtns.forEach(function(b){
+        b.addEventListener('click', function(){
+          if(b.disabled || b.classList.contains('tab-sealed')) return;
+          if(b.dataset.href){ window.location.href=b.dataset.href; return; }
+          topBtns.forEach(function(x){ x.classList.remove('active'); });
+          b.classList.add('active');
+          if(b.dataset.top && typeof onInternal==='function') onInternal(b.dataset.top);
+        });
+      });
+      return topBtns;
+    }
+
+    function staffTopnavHtml(role){
+      var start=
+        '<button type="button" data-href="./index.html">Inicio</button>'+
+        '<button type="button" data-href="./academia.html">Academia</button>'+
+        '<button type="button" data-href="./shop.html">Shop</button>';
+      if(role==='owner'){
+        return start+
+          '<button type="button" data-top="agenda">Agenda</button>'+
+          '<button type="button" data-top="config">⚙ Config</button>'+
+          '<button type="button" data-href="./dj-tools.html">DJ Tools</button>'+
+          '<button type="button" data-top="cashflow">Cash Flow</button>'+
+          '<button type="button" data-top="miperfil">Mi Perfil <span class="tab-help">?</span></button>'+
+          '<button type="button" data-top="gobernanza" class="active">Staff</button>'+
+          '<button type="button" data-top="elixis">Fénix AI</button>'+
+          '<button type="button" class="tab-sealed" disabled>Road Map <span class="tab-lock">🔒</span></button>';
+      }
+      if(role==='seller'){
+        return start+
+          '<button type="button" class="active">Ventas</button>'+
+          '<button type="button" data-href="./account-profile.html">Mi Perfil</button>'+
+          '<button type="button" data-href="./admin-dashboard.html">Mi Panel</button>';
+      }
+      return start+
+        '<button type="button" data-href="./dj-tools.html">DJ Tools</button>'+
+        '<button type="button" class="active">Operaciones</button>'+
+        '<button type="button" data-href="./account-profile.html">Mi Perfil</button>'+
+        '<button type="button" data-href="./admin-dashboard.html">Mi Panel</button>';
+    }
+
     /* ── Gate STAFF (solo fila dj_profiles.role, nunca JWT solo — patrón admin-dashboard) ── */
     function wait(cb,n){
       var sb=getSb();
@@ -678,29 +731,6 @@
     function mountOwner(sb){
       el('brand-sub').textContent='Owner Command Center';
       el('module-owner').classList.add('active');
-      // nav propia del owner
-      el('staff-nav').innerHTML = '';  // barra de módulos DISUELTA — queda un solo menú dorado (todo reubicado en el top-nav)
-
-      // Menú PRINCIPAL (tira dorada) — interactivo. Placeholder: marca la pestaña activa;
-      // cada pestaña se cableará como menú interactivo poco a poco.
-      el('staff-topnav').innerHTML =
-        '<button type="button" data-href="./index.html">Inicio</button>'+
-        '<button type="button" data-href="./academia.html">Academia</button>'+
-        '<button type="button" data-href="./shop.html">Shop</button>'+
-        '<button type="button" data-top="agenda">Agenda</button>'+
-        '<button type="button" data-top="config">⚙ Config</button>'+
-        '<button type="button" data-href="./dj-tools.html">DJ Tools</button>'+
-        '<button type="button" data-top="cashflow">Cash Flow</button>'+
-        '<button type="button" data-top="miperfil">Mi Perfil <span class="tab-help">?</span></button>'+
-        '<button type="button" data-top="gobernanza" class="active">Staff</button>'+
-        '<button type="button" data-top="elixis">Fénix AI</button>'+
-        '<button type="button" class="tab-sealed" disabled>Road Map <span class="tab-lock">🔒</span></button>';  // sellada — página + mapa maestro (4 capas · ELIXIS instructor) a futuro  // FÉNIX AI abre a ELIXIS (su voz/mensajero)
-      var topBtns=document.querySelectorAll('#staff-topnav button');
-      topBtns.forEach(function(b){ b.addEventListener('click', function(){
-        if(b.dataset.href){ window.location.href=b.dataset.href; return; }  // INICIO/ACADEMIA/SHOP/DJ TOOLS: navegan a su página (no se transporta nada)
-        topBtns.forEach(function(x){ x.classList.remove('active'); }); b.classList.add('active');
-        if(b.dataset.top){ showView(b.dataset.top); }  // miperfil / agenda: vista interna del portal (debajo del menú)
-      }); });
 
       // switch de vistas (Financiero ⇄ ELIXIS)
       var btns=document.querySelectorAll('#staff-nav [data-view]');
@@ -724,7 +754,7 @@
           setTimeout(function(){ xf.setAttribute('src', xf.getAttribute('data-src')); }, 30);
           setTimeout(function(){ if(xld) xld.classList.add('hidden'); }, 8000); } }
       }
-      btns.forEach(function(b){ b.addEventListener('click', function(){ topBtns.forEach(function(x){ x.classList.remove('active'); }); showView(b.dataset.view); }); });
+      paintStaffTopnav(staffTopnavHtml('owner'), showView);
       showView('gobernanza');  // FINANCIERO fusionado en CASH FLOW; aterrizaje por defecto = Gobernanza
 
       // ── DÍA/NOCHE GLOBAL del portal (botón central ÚNICO). Alterna data-theme en <html> + DIFUNDE a los marcos (base lista para adaptar los secundarios). ──
@@ -973,9 +1003,7 @@
       el('brand-sub').textContent = isSeller ? 'Ventas' : 'Operaciones';
       el('stub-title').textContent = isSeller ? 'Módulo de Ventas' : 'Módulo de Operaciones';
       el('module-stub').classList.add('active');
-      el('staff-nav').innerHTML =
-        '<button type="button" class="active">'+(isSeller?'Ventas':'Operaciones')+'</button>'+
-        '<a class="ext" href="./admin-dashboard.html" title="Panel actual">Mi Panel</a>';
+      paintStaffTopnav(staffTopnavHtml(role));
     }
   })();
   </script>
