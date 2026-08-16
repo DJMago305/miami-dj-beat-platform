@@ -39,7 +39,7 @@ serve(async (req) => {
         // ── 1. Fetch lead details ─────────────────────────────────────
         const { data: lead, error: leadErr } = await sb
             .from("leads")
-            .select("id, event_type, event_date, location, budget, email, phone, notes, assigned_dj_name")
+            .select("id, event_type, event_date, event_start_time, event_end_time, location, budget, email, phone, notes, assigned_dj_name")
             .eq("id", lead_id)
             .single();
 
@@ -48,27 +48,19 @@ serve(async (req) => {
         }
 
         // ── 2. Fetch DJ email from dj_profiles ────────────────────────
-        const { data: djProfile, error: djErr } = await sb
+        const { data: djProfile } = await sb
             .from("dj_profiles")
-            .select("id, dj_name, stage_name, email")
+            .select("id, user_id, dj_name, stage_name, email")
             .eq("id", dj_id)
-            .single();
+            .maybeSingle();
 
         // Fall back to user email via auth if dj_profiles doesn't have email directly
         let dj_email = djProfile?.email ?? "";
+        const dj_user_id = String(djProfile?.user_id ?? "").trim();
 
-        if (!dj_email && djProfile) {
-            // Try looking up via user_id in auth (service role can do this)
-            const { data: djUser } = await sb
-                .from("dj_profiles")
-                .select("user_id")
-                .eq("id", dj_id)
-                .single();
-
-            if (djUser?.user_id) {
-                const { data: authUser } = await sb.auth.admin.getUserById(djUser.user_id);
-                dj_email = authUser?.user?.email ?? "";
-            }
+        if (!dj_email && dj_user_id) {
+            const { data: authUser } = await sb.auth.admin.getUserById(dj_user_id);
+            dj_email = authUser?.user?.email ?? "";
         }
 
         const portalLink = `${PORTAL_BASE}?lead=${encodeURIComponent(lead_id)}&mode=manager`;
@@ -111,11 +103,26 @@ serve(async (req) => {
             await sendEmail(MANAGER_EMAIL, mgSubject, mgHtml);
         }
 
+        // ── 5. Agenda personal (fail-soft: never block the emails) ────
+        const agenda = await syncArtistAgenda({
+            req,
+            lead_id,
+            dj_user_id,
+            event_type: String(lead.event_type ?? ""),
+            event_date: String(lead.event_date ?? ""),
+            event_start_time: lead.event_start_time != null ? String(lead.event_start_time) : "",
+            event_end_time: lead.event_end_time != null ? String(lead.event_end_time) : "",
+            location: String(lead.location ?? ""),
+        });
+
         return json({
             ok: true,
             dj_email_sent: !!dj_email,
             manager_email_sent: !!MANAGER_EMAIL,
             dj_email,
+            agenda_synced: agenda.ok,
+            agenda_event_id: agenda.event_id ?? null,
+            agenda_error: agenda.error ?? null,
         });
 
     } catch (e) {
@@ -247,6 +254,99 @@ function buildManagerEmail(p: { dj_name: string; client_email: string; event_typ
   </div>
   <div class="footer">Miami DJ Beat LLC · Resumen automático de asignación</div>
 </div></body></html>`;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function normalizeTime(raw: string, fallback: string): string {
+    const m = /^(\d{1,2}):(\d{2})(?::(\d{2}))?/.exec(String(raw || "").trim());
+    if (!m) return fallback;
+    const hh = String(Math.min(23, Number(m[1]))).padStart(2, "0");
+    return `${hh}:${m[2]}:${m[3] ?? "00"}`;
+}
+
+function wallClockToIso(date: string, time: string): string | null {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+    const t = normalizeTime(time, "");
+    if (!t) return null;
+    try {
+        const TemporalCtor = (globalThis as { Temporal?: { ZonedDateTime: { from: (s: string) => { toInstant: () => { toString: () => string } } } } }).Temporal;
+        if (TemporalCtor?.ZonedDateTime) {
+            return TemporalCtor.ZonedDateTime.from(`${date}T${t}[America/New_York]`).toInstant().toString();
+        }
+    } catch { /* fall through */ }
+    const ms = Date.parse(`${date}T${t}-04:00`);
+    return Number.isFinite(ms) ? new Date(ms).toISOString() : null;
+}
+
+function assignmentWindow(eventDate: string, startRaw: string, endRaw: string): { starts_at: string; ends_at: string } | null {
+    const startTime = normalizeTime(startRaw, "18:00:00");
+    let endTime = normalizeTime(endRaw, "");
+    const starts_at = wallClockToIso(eventDate, startTime);
+    if (!starts_at) return null;
+    if (!endTime) {
+        const [hh, mm, ss] = startTime.split(":").map(Number);
+        const endH = Math.min(23, hh + 4);
+        endTime = `${String(endH).padStart(2, "0")}:${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
+        if (endH === hh) endTime = "23:59:00";
+    }
+    let ends_at = wallClockToIso(eventDate, endTime);
+    if (ends_at && ends_at <= starts_at) {
+        const next = new Date(`${eventDate}T12:00:00-04:00`);
+        next.setUTCDate(next.getUTCDate() + 1);
+        const nextDate = next.toISOString().slice(0, 10);
+        ends_at = wallClockToIso(nextDate, endTime);
+    }
+    if (!ends_at || ends_at <= starts_at) return null;
+    return { starts_at, ends_at };
+}
+
+async function staffUserIdFromReq(req: Request): Promise<string | null> {
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const jwt = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+    if (!jwt) return null;
+    const { data: { user } } = await sb.auth.getUser(jwt);
+    return user?.id && UUID_RE.test(user.id) ? user.id : null;
+}
+
+async function syncArtistAgenda(input: {
+    req: Request;
+    lead_id: string;
+    dj_user_id: string;
+    event_type: string;
+    event_date: string;
+    event_start_time: string;
+    event_end_time: string;
+    location: string;
+}): Promise<{ ok: boolean; event_id?: string; error?: string }> {
+    try {
+        if (!UUID_RE.test(input.lead_id)) return { ok: false, error: "lead_id_invalido" };
+        if (!UUID_RE.test(input.dj_user_id)) return { ok: false, error: "dj_user_id_invalido" };
+        const staffUserId = await staffUserIdFromReq(input.req);
+        if (!staffUserId) return { ok: false, error: "staff_session_missing" };
+        const span = assignmentWindow(input.event_date, input.event_start_time, input.event_end_time);
+        if (!span) return { ok: false, error: "rango_invalido" };
+        const title = (input.event_type || "Evento asignado").slice(0, 200);
+        const body = [input.event_date, input.location].filter(Boolean).join(" · ").slice(0, 2000) || null;
+        const { data: eventId, error } = await sb.rpc("artist_agenda_record_from_assignment", {
+            p_dj_user_id: input.dj_user_id,
+            p_starts_at: span.starts_at,
+            p_ends_at: span.ends_at,
+            p_title: title,
+            p_body: body,
+            p_lead_id: input.lead_id,
+            p_staff_user_id: staffUserId,
+            p_agent_id: "notify-dj-assignment",
+        });
+        if (error || !eventId) {
+            console.error("[notify-dj-assignment] artist_agenda error:", error?.message ?? "rpc");
+            return { ok: false, error: error?.message ?? "agenda_rpc" };
+        }
+        return { ok: true, event_id: String(eventId) };
+    } catch (e) {
+        console.error("[notify-dj-assignment] artist_agenda error:", e);
+        return { ok: false, error: "agenda_sync_failed" };
+    }
 }
 
 async function sendEmail(to: string, subject: string, html: string) {
