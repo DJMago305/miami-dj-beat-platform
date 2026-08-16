@@ -4,6 +4,7 @@
   "scripts": {
     "build": "exit 0",
     "gallery:manifest": "node scripts/generate-gallery-manifest.mjs",
-    "serve": "npx --yes serve@14 . -l tcp://127.0.0.1:8000"
+    "serve": "npx --yes serve@14 . -l tcp://127.0.0.1:8000",
+    "test:financial": "cd .. && node web/js/mdj-financial-local-services.local-selftest.mjs && node web/js/mdj-accounting-financial-runtime.local-selftest.mjs && node web/js/mdj-financial-legacy-readonly-adapter.local-selftest.mjs && node web/js/mdj-financial-canonical-shadow-writer.local-selftest.mjs && node web/js/mdj-financial-domain-events.local-selftest.mjs && node web/js/mdj-financial-projection-sync.local-selftest.mjs && node web/js/mdj-financial-equivalence-harness.mjs && node web/js/mdj-financial-canonical-equivalence-harness-007C.mjs && node web/js/mdj-financial-adapter-cross-validation-harness-007D.mjs"
   }
 }

@@ -1,0 +1,21 @@
+# R7 / V7 — financial local-selftest and harness suite on every push/PR to main.
+name: Financial selftests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  financial-selftests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run financial selftests and harnesses
+        run: npm run test:financial --prefix web
