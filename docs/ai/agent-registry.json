@@ -1,0 +1,42 @@
+{
+  "schema": "mdj.agent-registry.v1",
+  "note": "R4 / IA rule 2. Declarative catalog only. ELIXIS runtime still reads its tool list from elixis-chat until a later ticket wires this file.",
+  "agents": [
+    {
+      "id": "elixis",
+      "name": "ELIXIS",
+      "version": "1.0.0",
+      "mission": "Staff/office executive assistant: read authoritative data, calculate via approved adapters, and draft copy for a human to send. Does not send messages, move money, or mutate records.",
+      "role_required": ["is_staff", "office"],
+      "tools": [
+        {
+          "name": "consultar_finanzas",
+          "mode": "read",
+          "target": "financial-engine",
+          "metrics": [
+            "getNetCash",
+            "getCashInflow",
+            "getCashOutflow",
+            "getAccountsReceivable",
+            "getAccountsPayable"
+          ]
+        }
+      ],
+      "approval_policy": "none",
+      "data_scope": {
+        "read": [
+          "financial-engine metrics",
+          "residency_schedule",
+          "public_dj_profiles roster",
+          "event_builder_orders bookings",
+          "leads pipeline"
+        ],
+        "write": []
+      },
+      "memory": "stateless",
+      "memory_detail": "conversation-only; context is rebuilt each turn; no agent_memory table",
+      "triggers": ["staff authenticated POST to elixis-chat"],
+      "write_tools": []
+    }
+  ]
+}
