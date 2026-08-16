@@ -1282,7 +1282,9 @@
       "sot": "supabase/migrations/20260816180000_artist_agenda.sql",
       "impl": [
         "supabase/migrations/20260816180000_artist_agenda.sql",
-        "supabase/functions/elixis-chat"
+        "supabase/migrations/20260816190000_artist_agenda_assignment_sync.sql",
+        "supabase/functions/elixis-chat",
+        "supabase/functions/notify-dj-assignment"
       ],
       "tests": [],
       "docs": [
@@ -1298,7 +1300,7 @@
         "cap-artist-portal"
       ],
       "unknowns": [
-        "La asignación de un lead todavía no escribe automáticamente en artist_agenda (fase 2: notify-dj-assignment)."
+        "El portal del artista (dj-dashboard.html) todavía no consume artist_agenda."
       ]
     },
     {
