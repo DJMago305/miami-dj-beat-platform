@@ -132,7 +132,7 @@ const git = (c, f = "—") => { try { return execSync(`git ${c}`, { cwd: ROOT, e
 function gitLog(paths, n = 3) {
     const ps = paths.filter((p) => existsSync(join(ROOT, p)));
     if (!ps.length) return [];
-    const out = git(`log -n ${n} --format=%h|%cs|%s -- ${ps.map((p) => `"${p}"`).join(" ")}`, "");
+    const out = git(`log -n ${n} --format='%h|%cs|%s' -- ${ps.map((p) => `"${p}"`).join(" ")}`, "");
     return out === "—" || !out ? [] : out.split("\n").filter(Boolean).map((l) => {
         const parts = l.split("|");
         return { h: parts[0], d: parts[1], s: parts.slice(2).join("|") };
@@ -619,7 +619,8 @@ const idxHtml = idx.map((i) => i.g
 
 /* ═══ página ═════════════════════════════════════════════════════════════ */
 
-const html = `<title>Road Master Map</title>
+const html = `<meta charset="utf-8">
+<title>Road Master Map</title>
 <style>
 :root{
   --ground:#f2f4f8;--panel:#fff;--panel2:#f7f8fb;--rail:#eceff4;--line:#dbdfe8;--edge:#c6ccd8;
