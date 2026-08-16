@@ -7,6 +7,7 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { approval_gate } from "../_shared/approval-gate.ts";
 
 // ─── MODELO ──────────────────────────────────────────────────────────────────
 // Haiku 4.5 = el más barato/rápido para pruebas. Para subir de nivel (más
@@ -607,9 +608,18 @@ serve(async (req: Request) => {
             convo.push({ role: "assistant", content: blocks });
             const results: unknown[] = [];
             for (const b of blocks.filter((b) => b?.type === "tool_use")) {
-                const out = b.name === "consultar_finanzas"
+                const toolName = String(b.name ?? "");
+                const gate = approval_gate({
+                    tool: toolName,
+                    policy: "none",
+                    mode: toolName === "consultar_finanzas" ? "read" : "write",
+                });
+                const out = gate.allowed && toolName === "consultar_finanzas"
                     ? await runFinancialTool(String((b.input as Record<string, unknown>)?.metrica ?? ""))
-                    : JSON.stringify({ error: "herramienta desconocida" });
+                    : JSON.stringify({
+                        error: gate.requires_approval ? "approval_required" : "herramienta desconocida",
+                        requires_approval: gate.requires_approval,
+                    });
                 results.push({ type: "tool_result", tool_use_id: b.id, content: out });
             }
             convo.push({ role: "user", content: results });
