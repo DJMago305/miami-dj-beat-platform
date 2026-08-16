@@ -4624,20 +4624,28 @@
     if(!isStaff()) return false;                                     // artistas conservan SoundForTips
     var strip=document.getElementById('owner-tabs'); if(!strip) return false;
     if(!force && !reorderDone(strip)) return false;                  // esperar al reorden
-    var sft=strip.querySelector('[data-i18n="nav-soundfortips"]') || strip.querySelector('[data-tab="sft"]');
-    if(!sft) return false;
-    sft.setAttribute('data-mdj-nav','fenix');
-    sft.removeAttribute('data-i18n');                                // que i18n no reescriba el texto
-    sft.removeAttribute('data-tab'); sft.removeAttribute('onclick');
-    sft.title='FÉNIX AI — asistente del owner (acceso restringido)';
-    if(sft.tagName==='A'){ sft.setAttribute('href','./elixis-console.html'); sft.removeAttribute('target'); sft.removeAttribute('rel'); }
-    else { try{ sft.type='button'; }catch(e){} sft.onclick=function(ev){ if(ev){ ev.preventDefault(); ev.stopPropagation(); } window.location.href='./elixis-console.html'; }; }
-    sft.innerHTML='FÉNIX AI <span class="dj-tab-lock-icon" aria-hidden="true" style="font-size:.82em;opacity:.85;margin-left:3px;">🔒</span>';
+    // La tira puede estar clonada: dj-owner-tabs--marquee duplica su contenido para el
+    // desplazamiento continuo, y clona a ciegas. querySelector sólo alcanzaba la PRIMERA
+    // copia, así que el clon se quedaba con SoundForTips y la pestaña cambiaba sola al
+    // pasar el marquee. Se parchean TODAS las coincidencias.
+    var sfts=[].slice.call(strip.querySelectorAll('[data-i18n="nav-soundfortips"],[data-tab="sft"]'));
+    if(!sfts.length) return false;
+    sfts.forEach(function(sft){
+      sft.setAttribute('data-mdj-nav','fenix');
+      sft.removeAttribute('data-i18n');                              // que i18n no reescriba el texto
+      sft.removeAttribute('data-tab'); sft.removeAttribute('onclick');
+      sft.title='FÉNIX AI — asistente del owner (acceso restringido)';
+      if(sft.tagName==='A'){ sft.setAttribute('href','./elixis-console.html'); sft.removeAttribute('target'); sft.removeAttribute('rel'); }
+      else { try{ sft.type='button'; }catch(e){} sft.onclick=function(ev){ if(ev){ ev.preventDefault(); ev.stopPropagation(); } window.location.href='./elixis-console.html'; }; }
+      sft.innerHTML='FÉNIX AI <span class="dj-tab-lock-icon" aria-hidden="true" style="font-size:.82em;opacity:.85;margin-left:3px;">🔒</span>';
+    });
     return true;
   }
   function boot(){
-    if(apply(false)) return;
-    var n=0, iv=setInterval(function(){ n++; if(apply(n>=12) || n>=18){ clearInterval(iv); } }, 350);
+    // apply() es idempotente (tras parchear, el nodo deja de casar el selector), así que se
+    // repasa toda la ventana en vez de parar al primer éxito: el marquee puede clonar después.
+    apply(false);
+    var n=0, iv=setInterval(function(){ n++; apply(n>=12); if(n>=18){ clearInterval(iv); } }, 350);
   }
   if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', boot); } else { boot(); }
 })();
