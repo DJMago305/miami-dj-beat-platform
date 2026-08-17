@@ -3203,3 +3203,17 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
   padding-right: 10px !important;
 }
 #mainHeader.header.mdj-header-unified .header-nav .container { overflow: visible !important; }
+
+/* Acabado de la barra: columnas al tamaño de su texto, sobrante repartido entre
+   ellas. Los separadores y el subrayado de la activa quedan alineados porque
+   todas las celdas comparten línea base y altura. */
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] {
+  grid-template-columns: repeat(9, max-content) !important;
+  justify-content: space-between !important;
+  column-gap: 0 !important;
+}
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] {
+  justify-self: center !important;
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+}

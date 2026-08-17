@@ -186,7 +186,12 @@
        devuelven display:flex, y sin display:grid las nueve columnas no existen
        aunque grid-template-columns esté declarado. Inline gana a toda hoja. */
     nav.style.setProperty('display', 'grid', 'important');
-    nav.style.setProperty('grid-template-columns', 'repeat(9, minmax(max-content, 1fr))', 'important');
+    /* max-content en vez de 1fr: cada pestaña ocupa EXACTAMENTE lo que mide su
+       texto y el espacio sobrante se reparte ENTRE ellas, no dentro. Con 1fr,
+       "INICIO" recibía la misma columna que "SERVICIOS" y la barra se veía
+       descompensada aunque la geometría fuese correcta. */
+    nav.style.setProperty('grid-template-columns', 'repeat(9, max-content)', 'important');
+    nav.style.setProperty('justify-content', 'space-between', 'important');
     nav.style.setProperty('grid-auto-rows', '0', 'important');
     nav.style.setProperty('align-items', 'center', 'important');
 
