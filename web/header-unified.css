@@ -2953,3 +2953,253 @@ body.mdj-staff-nav.page-admin-dashboard
     column-gap: 2px !important;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MDJB 2026-08-16 · REJILLA CANÓNICA DE 8 COLUMNAS — Zero Layout Shift
+   Depende de data-mdj-slot="1..8", que pone el normalizador de
+   mdj-shared-header.js. Sin esos atributos esta sección no hace nada, así que
+   no puede romper una página que aún no haya pasado por el normalizador.
+
+   Por qué grid-column explícito y no un flujo automático: el puesto 8 tiene dos
+   ocupantes que la lógica de rol alterna — MI PORTAL y MI PERFIL. Con colocación
+   automática ocuparían dos celdas y la barra se descuadraría al cambiar de rol.
+   Anclados los dos a la columna 8, se apilan en la misma celda y la geometría es
+   idéntica en invitado, artista, staff y owner.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] {
+  display: grid !important;
+  /* minmax(max-content, 1fr): la columna nunca es más estrecha que su etiqueta.
+     Con 1fr a secas, un contenedor angosto daba columnas de 37px para textos de
+     68-115px y las pestañas se solapaban unas sobre otras. */
+  grid-template-columns: repeat(9, minmax(max-content, 1fr)) !important;
+  align-items: center !important;
+  justify-items: center !important;
+  width: 100% !important;
+  max-width: 1320px !important;
+  margin: 0 auto !important;
+  padding: 0 24px !important;
+  box-sizing: border-box !important;
+  gap: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Cada slot a su columna. Los dos ocupantes del 8 comparten celda. */
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="1"] { grid-area: 1 / 1; }
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="2"] { grid-area: 1 / 2; }
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="3"] { grid-area: 1 / 3; }
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="4"] { grid-area: 1 / 4; }
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="5"] { grid-area: 1 / 5; }
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="6"] { grid-area: 1 / 6; }
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="7"] { grid-area: 1 / 7; }
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="8"] { grid-area: 1 / 8; }
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="9"] { grid-area: 1 / 9; }
+
+/* Nada puede salirse de su celda ni empujar a los vecinos. */
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] {
+  white-space: nowrap !important;
+  min-width: max-content !important;
+  overflow: visible !important;
+  text-align: center !important;
+}
+
+/* CONFIG oculto al invitado CONSERVA su columna: visibility, nunca display.
+   Un display:none aquí colapsaría la celda y movería las otras siete. */
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-mainnav-reserved-slot {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot]:not(.mdj-mainnav-reserved-slot) {
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+/* Fila 1 y Fila 2 comparten exactamente el mismo riel: sin desalineación. */
+#mainHeader.header.mdj-header-unified .header-top .container,
+#mainHeader.header.mdj-header-unified .header-nav .container {
+  width: 100% !important;
+  max-width: 1320px !important;
+  margin: 0 auto !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  box-sizing: border-box !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MDJB 2026-08-16 · OPCIÓN A — CABECERA ÚNICA
+   Decisión del PO: el header es sagrado e idéntico para todos los roles, con
+   los 8 slots canónicos de #mainNav. La barra secundaria de owner desaparece.
+
+   Las cinco herramientas que vivían aquí (Academia, DJ Tools, Staff, Cash Flow,
+   Fénix AI) NO se pierden: las cinco ya existen dentro de staff.html, que pasa a
+   ser el destino de MI PERFIL para owner/staff. Verificado antes de ocultarla.
+
+   Se oculta en CSS y no se borra del DOM a propósito: los ~70 pases del header y
+   el marquee siguen encontrando el nodo y no lanzan errores. Revertir = borrar
+   esta regla.
+   ══════════════════════════════════════════════════════════════════════════ */
+#owner-tabs,
+#mainHeader #owner-tabs,
+.dj-owner-tabs,
+.dj-owner-tabs--marquee {
+  display: none !important;
+}
+
+/* La cabecera única es SAGRADA: si #mainNav es ahora la única barra, no puede
+   quedar oculta en ninguna página. styles.css la escondía en body.dj-profile,
+   body.mdj-from-profile y body.mdj-academia-hub — justo las que usaban
+   #owner-tabs. Al destruir esa barra, esas páginas se quedaban sin navegación.
+   Esta regla restituye el riel en todas ellas. */
+#mainHeader.header.mdj-header-unified .header-nav {
+  display: block !important;
+}
+#mainHeader.header.mdj-header-unified .header-nav .container {
+  display: flex !important;
+  justify-content: center !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MDJB 2026-08-16 · ELIMINACIÓN DEL PARCHE DORADO DETRÁS DE LA MARCA
+   styles.css pintaba un cuadrado dorado (rgba(197,160,89,.95), radius 10px)
+   con ::before detrás del logo, y lo redefinía en SEIS reglas distintas con
+   tamaños 40, 44, 50, 58, 82 px y una por variable. Al cambiar el ancho de
+   ventana ganaba una regla u otra y el cuadro bailaba detrás del emblema.
+
+   `content: none` desactiva el pseudo-elemento entero: no queda caja que
+   dimensionar, así que ninguna de las seis reglas puede volver a aplicarse.
+   Queda el emblema redondo oficial sobre el fondo del header.
+   Revertir = borrar este bloque.
+   ══════════════════════════════════════════════════════════════════════════ */
+.brand::before,
+#mainHeader .brand::before,
+#mainHeader.header .brand::before,
+#mainHeader.header.mdj-header-unified .brand::before,
+#mainHeader:not(.mdj-header-unified) .brand::before {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  box-shadow: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Sol / luna al final del riel. Posicionado absoluto a la derecha para que la
+   rejilla de 9 columnas siga centrada y ninguna pestaña pierda su columna. */
+#mainHeader.header.mdj-header-unified .header-nav .container { position: relative !important; }
+#mainHeader.header.mdj-header-unified .mdj-daynight {
+  position: absolute !important;
+  right: 10px; top: 50%; transform: translateY(-50%);
+  width: 30px; height: 30px; padding: 5px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid rgba(197,160,89,.35); border-radius: 50%;
+  color: #c5a059; cursor: pointer; line-height: 0;
+  transition: border-color .15s, color .15s, background .15s;
+}
+#mainHeader.header.mdj-header-unified .mdj-daynight:hover {
+  border-color: #c5a059; background: rgba(197,160,89,.12);
+}
+#mainHeader.header.mdj-header-unified .mdj-daynight svg { width: 100%; height: 100%; }
+@media (max-width: 700px){ #mainHeader.header.mdj-header-unified .mdj-daynight { right: 4px; width: 26px; height: 26px; } }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ZERO LAYOUT SHIFT · la columna oculta CONSERVA su ancho
+   minmax(max-content, 1fr) mide como cero el contenido de un elemento con
+   visibility:hidden, así que su columna colapsaba y las siguientes se corrían
+   al iniciar o cerrar sesión. Con min-width fijo en el propio slot, la celda
+   mantiene su tamaño esté visible o no: la barra no se mueve nunca.
+   ══════════════════════════════════════════════════════════════════════════ */
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="5"] {
+  min-width: 104px !important;   /* ancho de "⚙️ CONFIG" */
+}
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="8"] {
+  min-width: 96px !important;    /* ancho de "MI PERFIL" */
+}
+
+/* El colapso no venía de visibility sino de reglas anteriores de este mismo
+   archivo que ponían display:none + width:0 + flex-basis:0 a los slots
+   reservados — herencia de cuando la barra era flex. En una rejilla eso hace
+   desaparecer la columna entera. Se restituyen aquí, al final, para ganar por
+   orden: el slot ocupa SIEMPRE su celda; sólo se oculta su contenido. */
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] {
+  display: inline-flex !important;
+  width: auto !important;
+  flex-basis: auto !important;
+}
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-mainnav-reserved-slot {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ZERO LAYOUT SHIFT · la celda se conserva SIEMPRE
+   Medido: quien colapsaba la columna era una regla de especificidad 392 con
+   !important, heredada de cuando la barra era flex:
+     body:not(.mdj-buyer-session):not(.mdj-is-client) #mainHeader… { display:none }
+   Escondía CONFIG a quien no fuese cliente. En flex eso sólo quitaba un ítem;
+   en una rejilla elimina la columna entera y corre las siguientes.
+
+   Esta regla la supera repitiendo su misma raíz y añadiendo el atributo de slot,
+   sin tocar la original: el slot mantiene su celda y sólo se oculta su contenido.
+   ══════════════════════════════════════════════════════════════════════════ */
+body:not(.mdj-buyer-session):not(.mdj-is-client) #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot],
+body.mdj-buyer-session #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot],
+body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] {
+  display: inline-flex !important;
+  width: auto !important;
+  flex-basis: auto !important;
+  min-width: max-content !important;
+}
+body:not(.mdj-buyer-session):not(.mdj-is-client) #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-mainnav-reserved-slot,
+body #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-mainnav-reserved-slot {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* El contenedor también necesita blindaje: había reglas de la era flex que le
+   devolvían display:flex, y sin display:grid las nueve columnas no existen
+   aunque grid-template-columns esté declarado. Se reafirma con la misma raíz
+   de alta especificidad que usan aquellas. */
+body:not(.mdj-buyer-session):not(.mdj-is-client) #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"],
+body.mdj-buyer-session #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"],
+body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"],
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] {
+  display: grid !important;
+  grid-template-columns: repeat(9, minmax(max-content, 1fr)) !important;
+  grid-auto-flow: column !important;
+  grid-auto-rows: 0 !important;      /* nada puede caer a una segunda fila */
+  align-items: center !important;
+  justify-items: center !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   OPCIÓN A · UNA SOLA BARRA A CUALQUIER ANCHO
+   Al reducir la ventana entraba #mainNav-artist (y en móvil #mobile-nav), que
+   traían DJ Tools y Staff — dos pestañas que la Opción A sacó del header. El PO
+   además no quiere una versión compacta: quiere la barra grande siempre.
+
+   Se eliminan los rieles alternativos y #mainNav se queda como único, a tamaño
+   completo. Si no cabe, se desplaza en horizontal en vez de encogerse o de
+   partirse en dos filas.
+   ══════════════════════════════════════════════════════════════════════════ */
+#mainNav-artist,
+#mobile-nav,
+#mainHeader #mainNav-artist,
+#mainHeader #mobile-nav {
+  display: none !important;
+}
+
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  justify-content: start !important;
+  scrollbar-width: none;
+}
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"]::-webkit-scrollbar { display: none; }
+
+/* La barra no se encoge: cada pestaña conserva su tamaño de lectura. */
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] {
+  font-size: clamp(13px, 1.15vw, 16px) !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+#mainHeader.header.mdj-header-unified .header-nav .container { overflow: visible !important; }

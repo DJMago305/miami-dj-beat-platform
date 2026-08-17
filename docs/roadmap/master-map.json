@@ -7,17 +7,27 @@
     {
       "id": "cliente",
       "label": "Cliente",
-      "blurb": "Quien contrata una noche: qué pide, qué firma, qué paga y qué ve."
+      "blurb": "Quien contrata: cómo pedir, qué firma, qué paga y qué recibe."
     },
     {
       "id": "artista",
       "label": "Artista",
-      "blurb": "Quien toca: su perfil, su agenda, sus asignaciones y su dinero."
+      "blurb": "Quien toca: su perfil, su agenda, su dinero, y qué gana siendo PRO."
     },
     {
-      "id": "staff",
-      "label": "Staff",
-      "blurb": "Quien opera el negocio: leads, agenda, asignaciones, cobros y gobierno."
+      "id": "vendedor",
+      "label": "Vendedor",
+      "blurb": "Quien vende: cómo entra un lead, cómo se cotiza y cómo se cierra."
+    },
+    {
+      "id": "manager",
+      "label": "Manager",
+      "blurb": "Quien coordina: agenda, asignaciones y operación del evento."
+    },
+    {
+      "id": "owner",
+      "label": "Owner",
+      "blurb": "Visión completa del negocio, incluidas finanzas y gobierno."
     }
   ],
   "layers": [
@@ -382,7 +392,9 @@
       "audience": [
         "cliente",
         "artista",
-        "staff"
+        "vendedor",
+        "manager",
+        "owner"
       ],
       "lead": "Miami DJ Beat no es un sitio web con una base de datos detrás: son diez capas apiladas, cada una con un trabajo distinto y con permiso para hablar solo con sus vecinas.",
       "graphic": "map",
@@ -399,7 +411,9 @@
       "title": "Quién es quién",
       "audience": [
         "artista",
-        "staff"
+        "vendedor",
+        "manager",
+        "owner"
       ],
       "lead": "Antes de que nada funcione, el sistema tiene que saber quién eres. No hay una sola cuenta con superpoderes: hay categorías, y cada una vive en su propio portal.",
       "graphic": "roles",
@@ -425,7 +439,9 @@
       "title": "El viaje del cliente",
       "audience": [
         "cliente",
-        "staff"
+        "vendedor",
+        "manager",
+        "owner"
       ],
       "lead": "Desde que alguien busca un DJ en Miami hasta que la noche termina y queda la factura pagada. Este es el recorrido que más veces se repite en la plataforma.",
       "graphic": "journey-cliente",
@@ -454,7 +470,8 @@
       "title": "El viaje del artista",
       "audience": [
         "artista",
-        "staff"
+        "manager",
+        "owner"
       ],
       "lead": "Un artista no es un recurso que el sistema asigna: es un usuario con su propio portal, su propia agenda y su propio dinero.",
       "graphic": "journey-artista",
@@ -481,7 +498,9 @@
       "id": "cap-5",
       "title": "El día del staff",
       "audience": [
-        "staff"
+        "vendedor",
+        "manager",
+        "owner"
       ],
       "lead": "El portal de staff es el puesto de mando: aquí se ve lo que los otros dos portales no pueden ver, y aquí se toman las decisiones que mueven dinero y fechas.",
       "graphic": "journey-staff",
@@ -509,7 +528,9 @@
       "audience": [
         "cliente",
         "artista",
-        "staff"
+        "vendedor",
+        "manager",
+        "owner"
       ],
       "lead": "Un solo motor calcula. Todo lo demás lo consulta. Esa es la única regla que el núcleo financiero no negocia.",
       "graphic": "money",
@@ -533,7 +554,8 @@
       "id": "cap-7",
       "title": "ELIXIS, la capa de inteligencia",
       "audience": [
-        "staff"
+        "manager",
+        "owner"
       ],
       "lead": "La capa más joven del ecosistema y la que se vigila más de cerca. ELIXIS lee, calcula, anota, agenda y cotiza en borrador. No envía mensajes ni mueve dinero.",
       "graphic": "ai",
@@ -558,7 +580,7 @@
       "id": "cap-8",
       "title": "Datos, gobierno y cómo evoluciona",
       "audience": [
-        "staff"
+        "owner"
       ],
       "lead": "La parte que nadie ve y que decide si la plataforma envejece bien o se contradice a sí misma.",
       "graphic": "governance",
