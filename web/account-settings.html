@@ -2179,6 +2179,46 @@
         </div>
       </div>
 
+      <!-- ── TARJETA FÉNIX: Plan e Inteligencia (Bloque 2A · autónoma: lee dj_profiles.plan + plan_entitlements + ai_usage_events) ── -->
+      <div class="acct-card" id="fx-intel-card" style="margin-bottom:14px;border:1px solid rgba(197,160,89,0.28);">
+        <div style="padding:14px 20px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="acct-sub-icon acct-sub-icon--star" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4 2.5 5.3.7.7 1.5 1.6 1.5 2.7v1h6v-1c0-1.1.8-2 1.5-2.7C17.8 13 19 11.4 19 9a7 7 0 0 0-7-7z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:800;letter-spacing:0.14em;color:rgba(255,255,255,0.35);text-transform:uppercase;">Inteligencia FÉNIX · ELIXIR</div>
+              <div style="display:flex;align-items:baseline;gap:6px;margin-top:3px;">
+                <span style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:600;">Plan:</span>
+                <div style="font-size:15px;font-weight:800;color:#f0cc80;" id="fx-plan">—</div>
+              </div>
+            </div>
+          </div>
+          <div id="fx-mode" title="Modo de operación de la IA" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:5px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.3);letter-spacing:0.08em;">—</div>
+        </div>
+        <div class="acct-row" style="flex-direction:column;align-items:stretch;gap:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div class="acct-lbl">Consumo de IA este mes</div>
+            <div class="acct-val" id="fx-usage-text" style="font-variant-numeric:tabular-nums;">—</div>
+          </div>
+          <div style="height:8px;border-radius:6px;background:rgba(255,255,255,0.08);overflow:hidden;">
+            <div id="fx-usage-bar" style="height:100%;width:0%;border-radius:6px;background:linear-gradient(90deg,#c5a059,#f0cc80);transition:width .4s ease;"></div>
+          </div>
+        </div>
+        <div class="acct-row" style="flex-direction:column;align-items:flex-start;gap:8px;border-top:1px solid rgba(255,255,255,0.04);">
+          <div class="acct-lbl">Herramientas de ELIXIR incluidas en tu plan</div>
+          <div id="fx-caps" style="display:flex;flex-wrap:wrap;gap:6px;">
+            <span class="fx-cap" data-cap="gmail" data-label="Gmail" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.35);border:1px solid rgba(255,255,255,0.1);">Gmail</span>
+            <span class="fx-cap" data-cap="calendar" data-label="Calendar" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.35);border:1px solid rgba(255,255,255,0.1);">Calendar</span>
+            <span class="fx-cap" data-cap="campaign" data-label="Campañas" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.35);border:1px solid rgba(255,255,255,0.1);">Campañas</span>
+          </div>
+        </div>
+        <div class="acct-row" style="border-top:1px solid rgba(255,255,255,0.04);">
+          <div class="acct-row-info"><div class="acct-lbl" id="fx-note" style="color:rgba(255,255,255,0.4);line-height:1.4;">Los conectores reales (Gmail/Calendar) se activan en una fase posterior. Aquí ves tu capacidad y consumo.</div></div>
+          <a id="fx-upgrade-btn" class="acct-edit" href="#panel-billing" style="display:none;">Mejorar plan →</a>
+        </div>
+      </div>
+
       <!-- ── TARJETA 2: MDJPRO Desktop — dinámica (PRO: licencia snapshot / LITE: PRÓXIMAMENTE) ── -->
       <div class="acct-card" style="margin-bottom:14px;" id="billing-mdjpro-card">
         <div style="padding:14px 20px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.05);">
@@ -5167,12 +5207,82 @@
         }
       }
 
+      /* ── Plan e Inteligencia (Bloque 2A) — autónomo: lee dj_profiles.plan + plan_entitlements + ai_usage_events.
+         Reconoce la LICENCIA DJ FUNDADOR / VITALICIA (role=owner o plan founder/super = acceso total ilimitado).
+         No depende del billing "portado" (que espera columnas inexistentes). Fuente de verdad = dj_profiles.plan. ── */
+      async function hydrateFenixIntelligence(sb, session) {
+        var card = document.getElementById('fx-intel-card');
+        if (!card || !sb || !session || !session.user) return;
+        var uid = session.user.id;
+        /* 1) Plan del usuario (SoT: dj_profiles.plan, default 'free'). */
+        var prof = null;
+        try { var rp = await sb.from('dj_profiles').select('role, plan').eq('user_id', uid).maybeSingle(); prof = rp && rp.data; } catch (e) { void e; }
+        var role = prof && prof.role ? String(prof.role).toLowerCase() : '';
+        var planKey = prof && prof.plan ? String(prof.plan).toLowerCase() : 'free';
+        /* La cuenta matriz (owner) SIEMPRE es Fundadora (acceso total), aun si el SQL no corrió todavía. */
+        if (role === 'owner') planKey = 'founder';
+        var isFounder = (planKey === 'founder' || planKey === 'super' || role === 'owner');
+        /* 2) Entitlements del plan (plan_entitlements: SELECT permitido a authenticated) */
+        var ent = null;
+        try { var re = await sb.from('plan_entitlements').select('*').eq('plan', planKey).maybeSingle(); ent = re && re.data; } catch (e2) { void e2; }
+        if (!ent) ent = isFounder
+          ? { monthly_ai_capacity: -1, gmail_read: true, gmail_compose: true, gmail_send: true, calendar_read: true, calendar_write: true, campaign_prepare: true }
+          : { monthly_ai_capacity: 0, gmail_read: false, calendar_read: false, campaign_prepare: false };
+        /* 3) Consumo de IA del mes en curso (ai_usage_events: self-read). Vacío hasta que el governor registre. */
+        var used = 0;
+        try {
+          var d = new Date();
+          var monthStart = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)).toISOString();
+          var ru = await sb.from('ai_usage_events').select('input_tokens, output_tokens').eq('user_id', uid).gte('created_at', monthStart);
+          var rows = (ru && ru.data) || [];
+          used = rows.reduce(function (a, r) { return a + (Number(r.input_tokens) || 0) + (Number(r.output_tokens) || 0); }, 0);
+        } catch (e3) { void e3; }
+        /* Capacidad en unidades internas; -1 (o Fundador) = ILIMITADO. Consumo aproximado por miles de tokens. */
+        var cap = Number(ent.monthly_ai_capacity); if (isNaN(cap)) cap = 0;
+        var unlimited = isFounder || cap < 0;
+        var usedUnits = Math.round(used / 1000);
+        var pct = unlimited ? 100 : (cap > 0 ? Math.min(100, Math.round((usedUnits / cap) * 100)) : 0);
+        /* 4) Modo (el governor real lo fijará server-side después). Fundador = siempre COMPLETO. */
+        var mode = unlimited ? 'COMPLETO' : (pct >= 100 ? 'ESENCIAL' : (pct >= 80 ? 'AHORRO' : 'COMPLETO'));
+        var modeColor = mode === 'ESENCIAL' ? '#ef4444' : (mode === 'AHORRO' ? '#f59e0b' : '#22c55e');
+        /* Poblar */
+        var planEl = document.getElementById('fx-plan'); if (planEl) planEl.textContent = isFounder ? 'DJ FUNDADOR' : planKey.toUpperCase();
+        var modeEl = document.getElementById('fx-mode');
+        if (modeEl) {
+          if (isFounder) { modeEl.textContent = '★ LICENCIA VITALICIA'; modeEl.style.color = '#f0cc80'; modeEl.style.background = 'rgba(197,160,89,0.16)'; }
+          else { modeEl.textContent = mode; modeEl.style.color = modeColor; modeEl.style.background = 'rgba(255,255,255,0.06)'; }
+        }
+        var utext = document.getElementById('fx-usage-text');
+        if (utext) utext.textContent = unlimited ? 'Ilimitado ∞' : (usedUnits.toLocaleString('es') + ' / ' + cap.toLocaleString('es'));
+        var ubar = document.getElementById('fx-usage-bar');
+        if (ubar) {
+          ubar.style.width = pct + '%';
+          if (isFounder) ubar.style.background = 'linear-gradient(90deg,#c5a059,#f7e4b0,#c5a059)';
+          else if (mode !== 'COMPLETO') ubar.style.background = (mode === 'ESENCIAL' ? '#ef4444' : '#f59e0b');
+        }
+        var capMap = { gmail: !!ent.gmail_read, calendar: !!ent.calendar_read, campaign: !!ent.campaign_prepare };
+        Array.prototype.forEach.call(card.querySelectorAll('.fx-cap'), function (chip) {
+          var k = chip.getAttribute('data-cap'); var on = !!capMap[k];
+          chip.textContent = (on ? '✓ ' : '✗ ') + (chip.getAttribute('data-label') || k);
+          chip.style.color = on ? '#f0cc80' : 'rgba(255,255,255,0.35)';
+          chip.style.borderColor = on ? 'rgba(197,160,89,0.4)' : 'rgba(255,255,255,0.1)';
+          chip.style.background = on ? 'rgba(197,160,89,0.1)' : 'rgba(255,255,255,0.04)';
+        });
+        var up = document.getElementById('fx-upgrade-btn'); if (up) up.style.display = (!isFounder && planKey === 'free') ? '' : 'none';
+        var noteEl = document.getElementById('fx-note');
+        if (noteEl) noteEl.textContent = isFounder
+          ? 'Licencia DJ Fundador · Acceso total de por vida · sin límites ni pasarelas de pago.'
+          : 'Los conectores reales (Gmail/Calendar) se activan en una fase posterior. Aquí ves tu capacidad y consumo.';
+      }
+      window.hydrateFenixIntelligence = hydrateFenixIntelligence;
+
       async function refreshBillingPanel() {
         try {
           var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
           if (!sb) return;
           var { data: { session } } = await sb.auth.getSession();
           if (!session) return;
+          try { await hydrateFenixIntelligence(sb, session); } catch (eFx) { console.warn('[fenix-intel]', eFx); }
           var { data: p } = await sb.from('dj_profiles')
             .select('role, plan, subscription_status, next_renewal, billing_period, card_last4, card_brand, card_holder')
             .eq('user_id', session.user.id).single();
