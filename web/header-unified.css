@@ -3217,3 +3217,16 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
   padding-left: 4px !important;
   padding-right: 4px !important;
 }
+
+/* El sol vive DENTRO del riel, en su propia columna (la décima). Deja de estar
+   posicionado en absoluto sobre la barra, que era lo que lo solapaba con MRM IA. */
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] {
+  grid-template-columns: repeat(9, max-content) 40px !important;
+}
+#mainHeader.header.mdj-header-unified .mdj-daynight {
+  position: static !important;
+  transform: none !important;
+  grid-area: 1 / 10 !important;
+  justify-self: end !important;
+  margin-left: 12px;
+}

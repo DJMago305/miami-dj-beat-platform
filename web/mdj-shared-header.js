@@ -199,8 +199,16 @@
       el.style.setProperty('display', 'inline-flex', 'important');
       el.style.setProperty('width', 'auto', 'important');
       el.style.setProperty('min-width', 'max-content', 'important');
-      var oculto = el.classList.contains('mdj-mainnav-reserved-slot');
+      /* La visibilidad la decide el header, no las clases heredadas:
+           slot 5 (CONFIG) — reservado sin sesión, visible con ella
+           slot 8 (MI PERFIL) — SIEMPRE visible (decisión PO)
+           resto — siempre visible
+         Se fija también la opacidad: había reglas que dejaban el slot 8 con
+         opacity:0, visible y ocupando sitio pero transparente. */
+      var slot = el.getAttribute('data-mdj-slot');
+      var oculto = (slot === '8') ? false : el.classList.contains('mdj-mainnav-reserved-slot');
       el.style.setProperty('visibility', oculto ? 'hidden' : 'visible', 'important');
+      el.style.setProperty('opacity', oculto ? '0' : '1', 'important');
       el.style.setProperty('pointer-events', oculto ? 'none' : 'auto', 'important');
     });
 
@@ -308,6 +316,13 @@
       mdjApplyTheme(nuevo);
     });
     riel.appendChild(b);
+    /* Reserva su carril para no solaparse con la última pestaña. */
+    /* El botón está fuera del riel y anclado al contenedor, así que el padding
+       del riel no lo aparta: hay que estrechar el propio riel para dejarle sitio. */
+    var navEl = document.getElementById('mainNav');
+    /* El sol pasa a ser el ÚLTIMO hijo del riel, no un absoluto sobre él: así la
+       rejilla le da su propia columna y no puede solaparse con MRM IA. */
+    if (navEl && b.parentNode !== navEl) navEl.appendChild(b);
     var guardado = '';
     try { guardado = localStorage.getItem('mdjStaffTheme') || ''; } catch (e) {}
     mdjApplyTheme(guardado === 'light' ? 'day' : 'night');
