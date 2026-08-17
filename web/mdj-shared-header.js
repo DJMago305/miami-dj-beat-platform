@@ -80,6 +80,84 @@
   var MDJ_RIELES = ['mainNav'];
   var MDJ_RIELES_MUERTOS = ['mainNav-artist', 'mobile-nav', 'owner-tabs'];
 
+
+  /* ══ DESTINO DE MI PERFIL · RESOLUCIÓN EN EL CLIC ═══════════════════════════
+     Calcularlo al cargar es inherentemente frágil: el rol y el uid llegan cuando
+     la sesión resuelve, después de las primeras pasadas del header. Si el enlace
+     se congela antes, apunta a dj-profile.html SIN ?id=, y el guard del perfil
+     —que trata la ausencia de id como "perfil propio"— expulsa al login aunque
+     la cabecera ya muestre al usuario dentro.
+
+     Aquí se resuelve EN EL MOMENTO DEL CLIC, consultando la sesión y el rol en
+     vivo. En ese instante la sesión existe con certeza, así que no hay carrera
+     posible. El href estático se mantiene como respaldo para "abrir en pestaña
+     nueva" y se refresca en segundo plano cuando la sesión cambia.
+
+     Para artista se incluye SIEMPRE ?id=<uid>: con ese parámetro el guard del
+     perfil hace short-circuit y no vuelve a comprobar sesión. */
+  /* Estado de sesión cacheado. CONFIG debe verse en cuanto hay sesión, y su
+     visibilidad no puede depender de la clase heredada mdj-mainnav-reserved-slot,
+     que otros pases reponen. Se consulta en vivo y se recuerda. */
+  var _mdjHaySesion = null;                       // null = aún no se sabe
+  function mdjRefrescarSesion() {
+    var supa = (typeof window.getSupabaseClient === 'function') ? window.getSupabaseClient() : null;
+    if (!supa) return;
+    try {
+      supa.auth.getSession().then(function (r) {
+        var hay = !!(r && r.data && r.data.session);
+        if (hay !== _mdjHaySesion) { _mdjHaySesion = hay; _mdjSlotRuns = 0; mdjAssertNavSlots(); }
+      }).catch(function () {});
+      if (!window.__mdjSesionHook) {
+        window.__mdjSesionHook = true;
+        supa.auth.onAuthStateChange(function (_e, ses) {
+          _mdjHaySesion = !!ses; _mdjSlotRuns = 0;
+          setTimeout(mdjAssertNavSlots, 40);
+          setTimeout(mdjAssertNavSlots, 500);
+        });
+      }
+    } catch (e) {}
+  }
+
+  async function mdjDestinoMiPerfilEnVivo() {
+    var supa = (typeof window.getSupabaseClient === 'function') ? window.getSupabaseClient() : null;
+    if (!supa) return './login.html';
+    var ses = null;
+    try { var r = await supa.auth.getSession(); ses = r && r.data ? r.data.session : null; } catch (e) {}
+    if (!ses) return './login.html';
+    var uid = ses.user && ses.user.id ? String(ses.user.id) : '';
+    var rol = '';
+    try {
+      var pr = await supa.from('dj_profiles').select('role').eq('user_id', uid).maybeSingle();
+      rol = String(((pr && pr.data) || {}).role || '').toLowerCase().trim();
+    } catch (e) {}
+    if (rol === 'owner' || rol === 'admin' || rol === 'manager' || rol === 'management' || rol === 'seller') {
+      return './staff.html';
+    }
+    if (rol) {                                   // cualquier otro rol con perfil = artista
+      return uid ? './dj-profile.html?id=' + encodeURIComponent(uid) : './dj-profile.html?view=public';
+    }
+    return uid ? './client-portal.html' : './login.html';
+  }
+
+  function mdjEngancharMiPerfil(el) {
+    if (!el || el.__mdjPerfilHook) return;
+    el.__mdjPerfilHook = true;
+    el.addEventListener('click', function (ev) {
+      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return;  // abrir en pestaña nueva
+      ev.preventDefault();
+      ev.stopPropagation();
+      var previo = el.getAttribute('href');
+      el.setAttribute('aria-busy', 'true');
+      mdjDestinoMiPerfilEnVivo().then(function (dest) {
+        el.removeAttribute('aria-busy');
+        window.location.href = dest;
+      }).catch(function () {
+        el.removeAttribute('aria-busy');
+        window.location.href = previo || './login.html';
+      });
+    }, true);
+  }
+
   function mdjNormalizeMainNavSlots(idRiel) {
     var nav = document.getElementById(idRiel || 'mainNav');
     if (!nav) return false;
@@ -126,8 +204,12 @@
     });
 
     // Retirar todo lo que no sea canónico (DJ Tools, STAFF, booth, flow-dash…).
+    /* El botón de día/noche vive dentro del riel (columna 10) y NO es un slot
+       canónico: hay que exceptuarlo del barrido o el normalizador lo borra en
+       cada pasada y el sol desaparece. */
     var fuera = [];
     [].slice.call(nav.querySelectorAll('a,button')).forEach(function (el) {
+      if (el.id === 'mdj-daynight') return;
       if (canonicos.indexOf(el) === -1) fuera.push(el);
     });
     fuera.forEach(function (el) { if (el.parentNode) el.parentNode.removeChild(el); });
@@ -148,7 +230,11 @@
       el.removeAttribute('tabindex');
       el.style.removeProperty('display');
       el.style.removeProperty('visibility');
-      if (!/MI PERFIL|MY PROFILE/i.test(el.textContent || '')) el.textContent = 'MI PERFIL';
+      if (!/MI PERFIL|MY PROFILE/i.test(el.textContent || '')) {
+        var sepPrevio = el.querySelector(':scope > .mdj-slash');
+        el.textContent = 'MI PERFIL';
+        if (sepPrevio) el.insertBefore(sepPrevio, el.firstChild);
+      }
     });
 
     // Slot 9 · MRM IA — visible para TODOS los roles, incluido invitado.
@@ -167,7 +253,8 @@
     // que ningún pase posterior lo devuelva a la plantilla vieja.
     var destino = mdjResolveMiPerfilHref();
     [].slice.call(nav.querySelectorAll('[data-mdj-slot="8"]')).forEach(function (el) {
-      if (el.tagName === 'A') el.setAttribute('href', destino);
+      if (el.tagName === 'A') el.setAttribute('href', destino);   // respaldo estático
+      mdjEngancharMiPerfil(el);                                    // la verdad, en el clic
     });
 
     /* Blindaje final del Zero Layout Shift. Las reglas heredadas de la era flex
@@ -190,8 +277,12 @@
        texto y el espacio sobrante se reparte ENTRE ellas, no dentro. Con 1fr,
        "INICIO" recibía la misma columna que "SERVICIOS" y la barra se veía
        descompensada aunque la geometría fuese correcta. */
-    nav.style.setProperty('grid-template-columns', 'repeat(9, max-content)', 'important');
+    /* Columna 10 para el sol. Sin ella, el riel desbordaba 15 px y overflow:hidden
+       mordía el final de MRM IA. */
+    nav.style.setProperty('grid-template-columns', 'repeat(9, max-content) 40px', 'important');
     nav.style.setProperty('justify-content', 'space-between', 'important');
+    nav.style.setProperty('padding-right', '0', 'important');
+    nav.style.setProperty('overflow', 'visible', 'important');
     nav.style.setProperty('grid-auto-rows', '0', 'important');
     nav.style.setProperty('align-items', 'center', 'important');
 
@@ -206,10 +297,44 @@
          Se fija también la opacidad: había reglas que dejaban el slot 8 con
          opacity:0, visible y ocupando sitio pero transparente. */
       var slot = el.getAttribute('data-mdj-slot');
-      var oculto = (slot === '8') ? false : el.classList.contains('mdj-mainnav-reserved-slot');
+      var oculto;
+      if (slot === '8') oculto = false;                       // MI PERFIL: siempre
+      else if (slot === '5') oculto = (_mdjHaySesion === false);  // CONFIG: con sesión, visible
+      else oculto = el.classList.contains('mdj-mainnav-reserved-slot');
+      el.classList.toggle('mdj-mainnav-reserved-slot', !!oculto);
       el.style.setProperty('visibility', oculto ? 'hidden' : 'visible', 'important');
       el.style.setProperty('opacity', oculto ? '0' : '1', 'important');
       el.style.setProperty('pointer-events', oculto ? 'none' : 'auto', 'important');
+    });
+
+    /* Ritmo de separadores con un NODO REAL, no ::before.
+       El pseudo-elemento perdía contra reglas heredadas que ponían content:none
+       y no había forma razonable de ganarles: la clase se aplicaba, las reglas
+       con "/" casaban, y el computado seguía en none. Un <span> dentro del propio
+       enlace no depende de esa cascada y siempre se pinta.
+       Regla: separador delante de toda pestaña salvo la primera y las que siguen
+       a un slot oculto — así el hueco de un reservado queda limpio. */
+    var enOrden = [].slice.call(nav.querySelectorAll('[data-mdj-slot]'));
+    enOrden.forEach(function (el, i) {
+      var previo = enOrden[i - 1];
+      var previoOculto = previo && getComputedStyle(previo).opacity === '0';
+      var lleva = i > 0 && !previoOculto;
+      /* El separador nativo (::before) funciona en casi todas las pestañas: sólo
+         MI PERFIL lo pierde contra una regla heredada. Así que el span se añade
+         ÚNICAMENTE donde el pseudo no pinta nada — si no, salían dos barras. */
+      var pseudo = getComputedStyle(el, '::before').content || 'none';
+      var yaTieneNativo = pseudo !== 'none' && pseudo.indexOf('/') >= 0;
+      var sep = el.querySelector(':scope > .mdj-slash');
+      if (yaTieneNativo && sep) { sep.remove(); sep = null; }
+      if (lleva && !yaTieneNativo && !sep) {
+        sep = document.createElement('span');
+        sep.className = 'mdj-slash';
+        sep.setAttribute('aria-hidden', 'true');
+        sep.textContent = '/';
+        el.insertBefore(sep, el.firstChild);
+      } else if (!lleva && sep) {
+        sep.remove();
+      }
     });
 
     nav.setAttribute('data-mdj-slots', '9');
@@ -276,6 +401,37 @@
     document.addEventListener('DOMContentLoaded', function () { mdjAssertNavSlots(); mdjWatchNavSlots(); });
   }
   window.addEventListener('load', function () { mdjAssertNavSlots(); mdjWatchNavSlots(); });
+
+  /* CLAVE: el destino de MI PERFIL depende del rol y del uid, y ninguno de los dos
+     existe cuando corren las primeras pasadas — la sesión resuelve después. Sin
+     esto, MI PERFIL quedaba apuntando a dj-profile.html SIN ?id=, el guard del
+     perfil lo tomaba por "perfil propio", no encontraba sesión y expulsaba al
+     login aunque la cabecera ya mostrara al usuario dentro.
+     Se reafirma cuando la sesión cambia y en una segunda ventana más larga. */
+  function mdjReasertarTrasSesion() {
+    try {
+      var supa = (typeof window.getSupabaseClient === 'function') ? window.getSupabaseClient() : null;
+      if (!supa || window.__mdjSlotAuthHook) return;
+      window.__mdjSlotAuthHook = true;
+      supa.auth.onAuthStateChange(function () {
+        _mdjSlotRuns = 0;                       // el cambio de sesión reabre el cupo
+        setTimeout(mdjAssertNavSlots, 60);
+        setTimeout(mdjAssertNavSlots, 400);
+        setTimeout(mdjAssertNavSlots, 1200);
+      });
+      supa.auth.getSession().then(function () {
+        _mdjSlotRuns = 0;
+        mdjAssertNavSlots();
+      }).catch(function () {});
+    } catch (e) {}
+  }
+  mdjRefrescarSesion();
+  var _mdjHookTries = 0;
+  var _mdjHookIv = setInterval(function () {
+    mdjReasertarTrasSesion();
+    mdjRefrescarSesion();
+    if ((window.__mdjSlotAuthHook && _mdjHaySesion !== null) || ++_mdjHookTries > 40) clearInterval(_mdjHookIv);
+  }, 150);
 
 
   /* ══ MDJB 2026-08-16 · SOL / LUNA AL FINAL DE LA BARRA ══════════════════════

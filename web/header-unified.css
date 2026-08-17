@@ -3230,3 +3230,52 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
   justify-self: end !important;
   margin-left: 12px;
 }
+
+/* Separadores con ritmo uniforme: una "/" delante de cada pestaña salvo la
+   primera y las que siguen a un slot reservado. El separador es del riel, no de
+   la pestaña, así que no hereda su opacidad ni su visibilidad. */
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot]::before {
+  content: none !important;
+}
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-sep::before {
+  content: "/" !important;
+  color: rgba(197, 160, 89, .38) !important;
+  font-weight: 400 !important;
+  margin-right: 14px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: inline !important;
+}
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-sin-sep::before {
+  content: none !important;
+}
+
+/* El separador de MI PERFIL lo pisaba una regla más específica. Se repite con la
+   misma raíz de alta especificidad que usan las heredadas, para los tres estados
+   de body. Sin esto, MI PERFIL era la única pestaña sin "/" delante y rompía el
+   ritmo de toda la barra. */
+body:not(.mdj-buyer-session):not(.mdj-is-client) #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-sep::before,
+body.mdj-buyer-session #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-sep::before,
+body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-sep::before,
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] > [data-mdj-slot].mdj-sep::before {
+  content: "/" !important;
+  color: rgba(197, 160, 89, .38) !important;
+  margin-right: 14px !important;
+  display: inline !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Separador como nodo real dentro del enlace: inmune a la cascada heredada que
+   anulaba los ::before. Se excluye del subrayado y del color de la pestaña. */
+#mainHeader.header.mdj-header-unified #mainNav .mdj-slash {
+  color: rgba(197, 160, 89, .38) !important;
+  font-weight: 400 !important;
+  margin-right: 13px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: none;
+  text-decoration: none !important;
+}
+
+
