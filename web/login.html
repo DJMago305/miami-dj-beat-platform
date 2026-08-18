@@ -1136,7 +1136,50 @@
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+    /* TICKET P2.2 — Safari/WebKit legacy compat (Mac de estudio).
+       @supabase/supabase-js@2's CDN UMD bundle ships native optional
+       chaining (?.), nullish coalescing (??), and private class fields
+       (#x) — a raw SyntaxError on Safari < 13.1/14.1 that kills
+       getSupabaseClient() silently (supabase-config.js) and surfaces as
+       "Supabase no está disponible" in auth.js. Feature-detect via the
+       Function constructor (a parse error there IS catchable, unlike a
+       <script> tag's own parse error) and load a transpiled ES2017 build
+       only when needed. Modern browsers keep the exact original CDN path,
+       byte for byte — this only changes behavior for engines that cannot
+       parse the standard bundle at all. */
+    (function () {
+      var supportsModernSyntax = true;
+      try {
+        new Function('return ({})?.a ?? 1;');
+      } catch (e) {
+        supportsModernSyntax = false;
+      }
+
+      if (supportsModernSyntax) {
+        document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');
+      } else {
+        /* Dynamically-inserted <script type="module"> defaults to async
+           (fetch-and-run whenever ready, no ordering guarantee against the
+           plain <script src> tags that follow). Force deterministic,
+           in-document-order execution instead — the same guarantee the
+           document.write() branch above gets naturally — so this fallback
+           never becomes a real race even under a slow/first connection.
+           Belt-and-suspenders: even without this, auth.js only calls
+           getSupabaseClient() inside waitForSupabase() (10 attempts ×
+           300ms = 3s), and only on login-form submit, not at page load —
+           by then the user has already spent time typing credentials. */
+        var legacyModule = document.createElement('script');
+        legacyModule.type = 'module';
+        legacyModule.async = false;
+        legacyModule.text =
+          'import { createClient } from "https://esm.sh/@supabase/supabase-js@2?target=es2017";' +
+          'window.supabase = window.supabase || {};' +
+          'window.supabase.createClient = createClient;';
+        document.currentScript.parentNode.insertBefore(legacyModule, document.currentScript.nextSibling);
+      }
+    })();
+    </script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
     <script src="./translations.js?v=20260817-nav-miperfil"></script>
     <script src="./i18n.js?v=20260513-outlined-hold-skip"></script>
