@@ -46,7 +46,11 @@
   var RADIO_TUBO = 0.075;
   var PARTICULAS = 700;
   var CHISPAS = 320;              // micro-partículas por los conductos radiales
-  var ENVERGADURA = 3.1;          // media ala del Fénix, en unidades de mundo
+  /* El nodo del núcleo mide 1.25 de radio; un Fénix de 6 unidades de punta a
+     punta lo tapaba a él y a media escena. A 0.58 el ave enmarca el núcleo en
+     vez de sustituirlo, que es lo que se le pide a un emblema. */
+  var ESCALA_FENIX = 0.58;
+  var ENVERGADURA = 3.1;          // media ala, ANTES de aplicar ESCALA_FENIX
   var SEGMENTOS_ALA = 10;         // pasos a lo largo del ala: manda la suavidad del aleteo
 
   /* ─── LAS 5 ESTACIONES DEL SISTEMA ───────────────────────────────────────
@@ -320,6 +324,11 @@
         [ desp * 1.9,  -1.55 - largo, -0.18, 3, 1.0, lc]);
     }
 
+    /* La escala se aplica aquí y no en el shader para que las puntas de ala
+       que las chispas usan como origen coincidan con las de verdad. */
+    for (var q = 0; q < v.length; q += 6) {
+      v[q] *= ESCALA_FENIX; v[q+1] *= ESCALA_FENIX; v[q+2] *= ESCALA_FENIX;
+    }
     conteoVerticesFenix = v.length / 6;
     return new Float32Array(v);
   }
@@ -337,9 +346,9 @@
       var e = ESTACIONES[destino].pos;
       var lado = (i % 2) ? 1 : -1;
       /* Origen: punta del ala, con dispersión para que no salgan en fila. */
-      var ox = lado * ENVERGADURA * (0.82 + Math.random() * 0.18);
-      var oy = -0.30 + Math.random() * 0.5;
-      var oz = -0.85 + (Math.random() - 0.5) * 0.3;
+      var ox = lado * ENVERGADURA * ESCALA_FENIX * (0.82 + Math.random() * 0.18);
+      var oy = (-0.30 + Math.random() * 0.5) * ESCALA_FENIX;
+      var oz = (-0.85 + (Math.random() - 0.5) * 0.3) * ESCALA_FENIX;
       /* Control: a medio camino y elevado, para que la chispa describa un
          arco y no una recta — sigue la comba de su conducto. */
       var cx = (ox + e[0]) * 0.5, cy = (oy + e[1]) * 0.5 + 1.6, cz = (oz + e[2]) * 0.5;
@@ -596,7 +605,10 @@
     '  vec3 c = mix(oro, cian, m);',
     '  float brillo = (0.55 + vFuego * 0.55) * (1.0 + uPulso * 0.9);',
     /* Las puntas se desvanecen: el ala termina en llama, no en un borde. */
-    '  float alfa = (0.75 - vTramo * 0.42) * (0.6 + vFuego * 0.5);',
+    /* 0.40 y no 0.75: con mezcla aditiva y sin prueba de profundidad, una
+       superficie grande a alfa media se vuelve una cinta sólida que tapa las
+       estaciones. Aquí el ave se lee por su silueta encendida. */
+    '  float alfa = (0.40 - vTramo * 0.26) * (0.6 + vFuego * 0.5);',
     '  gl_FragColor = vec4(c * brillo, clamp(alfa, 0.0, 1.0));',
     '}'
   ].join('\n');
