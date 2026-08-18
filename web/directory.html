@@ -255,6 +255,19 @@
 
     <!-- Supabase client + config -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+    /* P2.3 · rollout global del fallback verificado en login.html (Ticket P2.2 / PR #173).
+       El CDN de arriba queda intacto para navegadores modernos; si el motor no soporta
+       ?./?? (WebKit legacy), se inyecta -- mismo origen, sin el aviso de document.write
+       cross-site de Chrome -- la copia local transpilada ya vendorizada y verificada. */
+    (function () {
+        var mdjModernSyntaxOk = true;
+        try { new Function('return (null)?.x ?? 1;'); } catch (eDetect) { mdjModernSyntaxOk = false; }
+        if (!mdjModernSyntaxOk) {
+            document.write('<script src="./vendor/supabase-js-2.112.3.legacy.js?v=20260818-safari-legacy"><\/script>');
+        }
+    })();
+    </script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
     <script src="./translations.js?v=20260817-nav-miperfil"></script>
     <script src="./i18n.js?v=20260411-14"></script>
