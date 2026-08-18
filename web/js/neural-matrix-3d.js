@@ -555,7 +555,7 @@
            Los aros siguen ahí, con su dorado y su filamento cian, pero dejan de
            competir con el emblema y de quemar en proyector. */
     '    float aA = clamp((a1 + a2) * 0.85, 0.0, 1.0) * vIntensidad * corte;',
-    '    gl_FragColor = vec4(cA * (0.50 + uPulso * 0.30), aA);',
+    '    gl_FragColor = vec4(cA * (0.38 + uPulso * 0.22), aA);',
     '    return;',
     '  }',
     /* SLOT DE ELIXIS: anillos de onda sonora saliendo de los audífonos. Se
