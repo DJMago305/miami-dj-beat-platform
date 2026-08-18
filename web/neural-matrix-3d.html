@@ -19,7 +19,7 @@
     un redimensionado de framebuffer.
   -->
 
-  <link rel="stylesheet" href="./neural-matrix-3d.css?v=20260818-voztour">
+  <link rel="stylesheet" href="./neural-matrix-3d.css?v=20260818-split">
 </head>
 <body class="nm3d-pagina">
 
@@ -101,6 +101,43 @@
     <span data-nm3d-vozestado data-estado="apagado"></span>
   </section>
 
+  <!--
+    FEAT-3D-11 · MODO OPERADOR DIVIDIDO.
+    La consola vive FUERA de #neural-matrix-viewport a propósito: si fuera hija,
+    heredaría su `contain: layout paint` y su capa de composición, y cada línea
+    de texto nueva obligaría al navegador a repintar la capa donde vive el
+    lienzo WebGL. Separadas, el texto y los 3D no se estorban.
+  -->
+  <aside class="nm3d-consola" data-nm3d-consola hidden aria-label="Consola del recorrido guiado">
+    <header class="nm3d-consola__cab">
+      <span class="nm3d-consola__rol" data-nm3d-rol>—</span>
+      <span class="nm3d-consola__paso" data-nm3d-paso></span>
+    </header>
+
+    <!-- aria-live polite y no assertive: el registro se actualiza palabra a
+         palabra, y en assertive un lector de pantalla interrumpiría al usuario
+         en cada una. -->
+    <div class="nm3d-consola__log" data-nm3d-log aria-live="polite"></div>
+
+    <footer class="nm3d-consola__pie">
+      <i class="nm3d-consola__punto" data-nm3d-consola-punto aria-hidden="true"></i>
+      <span class="nm3d-consola__estado" data-nm3d-consola-estado></span>
+      <button type="button" class="nm3d-consola__boton" data-nm3d-siguiente>Siguiente ▸</button>
+    </footer>
+  </aside>
+
+  <!--
+    Selector de rol. Es la puerta del recorrido: cada rol ve SOLO sus módulos.
+    Existe además porque esta página no tiene sesión —es autónoma y sin
+    cabecera—, así que no hay identidad autenticada de la que deducir el rol.
+    Si algún día la hubiera, este panel se saltaría solo.
+  -->
+  <section class="nm3d-roles" data-nm3d-roles hidden aria-label="Elegir rol del recorrido">
+    <h2 class="nm3d-roles__titulo">¿Desde qué papel quieres ver la plataforma?</h2>
+    <p class="nm3d-roles__ayuda">Cada rol recorre solo los módulos que le tocan.</p>
+    <div class="nm3d-roles__rejilla" data-nm3d-roles-rejilla></div>
+  </section>
+
   <aside class="nm3d-teclas" aria-label="Controles de escenario">
     <b>Espacio</b> pausa · <b>1-5</b> estación · <b>← →</b> anterior/siguiente · <b>V</b> explicar · <b>M</b> micrófono · <b>R</b> órbita libre · <b>F</b> pantalla completa · <b>G</b> guiado por voz · <b>Esc / 0</b> recorrido
   </aside>
@@ -134,12 +171,12 @@
   <!-- El motor de voz va PRIMERO: el motor 3D comprueba window.elixisSpeak en
        cada llamada, no solo al arrancar, pero cargarlo antes evita que la
        primera narración llegue a un hueco vacío. -->
-  <script src="./js/elixis-voice-engine.js?v=20260818-feat3d07"></script>
+  <script src="./js/elixis-voice-engine.js?v=20260818-split"></script>
   <!-- El Q&A en vivo llama a booth-chat a traves de los ayudantes de esta
        config (mdbSupabaseFunctionUrl / mdjSupabaseAnonInvokeHeaders). Va
        ANTES del motor porque el motor los busca al construir la URL.
        Sin sesion ni cabecera compartida: solo la clave publicable. -->
   <script src="./supabase-config.js?v=20260818-voztour"></script>
-  <script src="./js/neural-matrix-3d.js?v=20260818-semantico"></script>
+  <script src="./js/neural-matrix-3d.js?v=20260818-split4"></script>
 </body>
 </html>
