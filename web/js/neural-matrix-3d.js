@@ -45,6 +45,9 @@
   var LADOS_TUBO = 6;
   var RADIO_TUBO = 0.075;
   var PARTICULAS = 700;
+  var CHISPAS = 320;              // micro-partículas por los conductos radiales
+  var ENVERGADURA = 3.1;          // media ala del Fénix, en unidades de mundo
+  var SEGMENTOS_ALA = 10;         // pasos a lo largo del ala: manda la suavidad del aleteo
 
   /* ─── LAS 5 ESTACIONES DEL SISTEMA ───────────────────────────────────────
      El núcleo emite; los cuatro periféricos forman un anillo a su alrededor.
@@ -92,6 +95,9 @@
   var progTubos = null, progInstancias = null;
   var bufTubos = null, bufIndices = null, bufQuad = null, bufNodos = null, bufParticulas = null;
   var indicesTubos = 0, conteoVerticesTubos = 0;
+  var progFenix = null, bufFenix = null, conteoVerticesFenix = 0;
+  var progChispas = null, bufChispas = null;
+  var aFenix = {}, uFenix = {}, aChispa = {}, uChispa = {};
   var nodos = [], datosNodos = null, datosParticulas = null;
 
   var aTubos = {}, uTubos = {}, aInst = {}, uInst = {};
@@ -226,6 +232,125 @@
       var l = Math.sqrt(p[0]*p[0] + p[2]*p[2]) || 1;
       WAYPOINTS.push([ p[0] + (p[0]/l)*5.0, p[1] + 2.6, p[2] + (p[2]/l)*5.0 ]);
     }
+  }
+
+  /* ─── HUB FÉNIX PROCEDURAL ────────────────────────────────────────────────
+     Malla vectorial simétrica generada en el arranque. No hay modelo externo
+     ni textura: son triángulos colocados a mano y un shader que los enciende.
+
+     Cada vértice lleva, además de su posición:
+       · parte  0 cuerpo · 1 ala · 2 cresta · 3 cola
+       · tramo  0 en el eje del cuerpo → 1 en la punta. Gobierna a la vez el
+                degradado dorado→cian, la amplitud del aleteo y la respuesta
+                al pulso. Un solo número para las tres cosas: así el brillo,
+                el movimiento y el latido no pueden desincronizarse.
+       · lado   -1 izquierda · +1 derecha (el aleteo es simétrico)
+
+     El aleteo y el latido viven en el VERTEX SHADER, no en JS: mover 900
+     vértices por cuadro desde la CPU costaría más que todo el resto junto. */
+
+  function empujarTri(v, a, b, c) {
+    for (var i = 0; i < 3; i++) {
+      var t = i === 0 ? a : (i === 1 ? b : c);
+      v.push(t[0], t[1], t[2], t[3], t[4], t[5]);
+    }
+  }
+
+  function construirFenix() {
+    var v = [];
+
+    /* CUERPO — huso vertical. El pecho (tramo bajo) es lo que late con el
+       bombo, así que se subdivide más que la cola. */
+    var cuerpo = [
+      [0.00,  1.55], [0.30, 1.05], [0.42, 0.45], [0.38, -0.20],
+      [0.26, -0.85], [0.10, -1.45], [0.00, -1.80]
+    ];
+    for (var i = 0; i < cuerpo.length - 1; i++) {
+      var y0 = cuerpo[i][1], r0 = cuerpo[i][0];
+      var y1 = cuerpo[i+1][1], r1 = cuerpo[i+1][0];
+      for (var lado = -1; lado <= 1; lado += 2) {
+        var A = [0, y0, 0, 0, 0.05, lado];
+        var B = [r0*lado, y0, 0.06, 0, 0.30, lado];
+        var C = [r1*lado, y1, 0.06, 0, 0.30, lado];
+        var D = [0, y1, 0, 0, 0.05, lado];
+        empujarTri(v, A, B, C);
+        empujarTri(v, A, C, D);
+      }
+    }
+
+    /* ALAS — se abren desde el hombro y barren hacia atrás. Dos filas
+       (borde de ataque y de salida) unidas en tiras. */
+    for (var lado2 = -1; lado2 <= 1; lado2 += 2) {
+      for (var seg = 0; seg < SEGMENTOS_ALA; seg++) {
+        var u0 = seg / SEGMENTOS_ALA, u1 = (seg + 1) / SEGMENTOS_ALA;
+        var perfil = function (u) {
+          var x = lado2 * ENVERGADURA * Math.pow(u, 0.82);
+          var yAtaque = 0.72 - u * 0.55 - Math.pow(u, 3) * 0.55;
+          var cuerda = 0.95 * (1 - Math.pow(u, 1.7)) + 0.10;
+          var z = -u * 0.85;                     // barrido hacia atrás
+          return { x: x, ya: yAtaque, yc: yAtaque - cuerda, z: z };
+        };
+        var a0 = perfil(u0), a1 = perfil(u1);
+        var P0 = [a0.x, a0.ya, a0.z, 1, u0, lado2];
+        var P1 = [a1.x, a1.ya, a1.z, 1, u1, lado2];
+        var P2 = [a1.x, a1.yc, a1.z, 1, u1, lado2];
+        var P3 = [a0.x, a0.yc, a0.z, 1, u0, lado2];
+        empujarTri(v, P0, P1, P2);
+        empujarTri(v, P0, P2, P3);
+      }
+    }
+
+    /* CRESTA — tres púas sobre la cabeza. */
+    for (var c = 0; c < 3; c++) {
+      var inc = (c - 1) * 0.26;
+      var alto = 2.15 - Math.abs(c - 1) * 0.32;
+      empujarTri(v,
+        [inc - 0.11, 1.42, 0, 2, 0.35, c === 0 ? -1 : 1],
+        [inc + 0.11, 1.42, 0, 2, 0.35, c === 0 ? -1 : 1],
+        [inc + inc * 0.5, alto, -0.05, 2, 1.0, c === 0 ? -1 : 1]);
+    }
+
+    /* COLA — tres serpentinas que caen del cuerpo. */
+    for (var k = 0; k < 3; k++) {
+      var desp = (k - 1) * 0.30, largo = 2.5 - Math.abs(k - 1) * 0.7;
+      var lc = k === 0 ? -1 : 1;
+      empujarTri(v,
+        [-0.13 + desp, -1.55, 0, 3, 0.2, lc],
+        [ 0.13 + desp, -1.55, 0, 3, 0.2, lc],
+        [ desp * 1.9,  -1.55 - largo, -0.18, 3, 1.0, lc]);
+    }
+
+    conteoVerticesFenix = v.length / 6;
+    return new Float32Array(v);
+  }
+
+  /* ─── CHISPAS ─────────────────────────────────────────────────────────────
+     Nacen en las puntas de las alas y viajan por los cuatro conductos
+     radiales hasta las estaciones periféricas. Cada chispa lleva su propia
+     curva cuadrática (origen, control, destino) como atributos de instancia:
+     así la trayectoria se evalúa en el shader y la CPU no toca ni una. */
+  function construirChispas() {
+    var d = new Float32Array(CHISPAS * 12);
+    for (var i = 0; i < CHISPAS; i++) {
+      var o = i * 12;
+      var destino = 1 + (i % 4);                       // reparto entre las 4 estaciones
+      var e = ESTACIONES[destino].pos;
+      var lado = (i % 2) ? 1 : -1;
+      /* Origen: punta del ala, con dispersión para que no salgan en fila. */
+      var ox = lado * ENVERGADURA * (0.82 + Math.random() * 0.18);
+      var oy = -0.30 + Math.random() * 0.5;
+      var oz = -0.85 + (Math.random() - 0.5) * 0.3;
+      /* Control: a medio camino y elevado, para que la chispa describa un
+         arco y no una recta — sigue la comba de su conducto. */
+      var cx = (ox + e[0]) * 0.5, cy = (oy + e[1]) * 0.5 + 1.6, cz = (oz + e[2]) * 0.5;
+      d[o]=ox; d[o+1]=oy; d[o+2]=oz;
+      d[o+3]=cx; d[o+4]=cy; d[o+5]=cz;
+      d[o+6]=e[0]; d[o+7]=e[1]; d[o+8]=e[2];
+      d[o+9]=Math.random();                            // fase: reparte la salida
+      d[o+10]=0.020 + Math.random() * 0.028;           // tamaño
+      d[o+11]=destino;                                 // color de la estación destino
+    }
+    return d;
   }
 
   /* ─── Conductos (una sola vez, fundidos, indexados) ───────────────────── */
@@ -377,9 +502,12 @@
     'attribute float iIntensidad; attribute float iIndice;',
     'uniform mat4 uProy; uniform mat4 uVista; uniform float uTiempo;',
     'uniform float uPulso; uniform float uActivo;',
-    'varying vec2 vQuad; varying vec3 vColor; varying float vIntensidad;',
+    'varying vec2 vQuad; varying vec3 vColor; varying float vIntensidad; varying float vSlot;',
     'void main(){',
     '  vec3 p = iPos;',
+    /* El slot se deduce del índice de instancia: 2 es ELIXIS. Sin atributo
+       nuevo y sin cambiar el paso del buffer. */
+    '  vSlot = (abs(iIndice - 2.0) < 0.5) ? 1.0 : 0.0;',
     '  p.y += sin(uTiempo * 0.5 + iIndice * 0.37) * 0.18;',
     '  vec4 posVista = uVista * vec4(p, 1.0);',
     /* Billboard: el cuadrilátero se expande en espacio de VISTA, así que
@@ -396,7 +524,8 @@
 
   var FRAG_INST = [
     'precision mediump float;',
-    'varying vec2 vQuad; varying vec3 vColor; varying float vIntensidad;',
+    'uniform float uTiempo;',
+    'varying vec2 vQuad; varying vec3 vColor; varying float vIntensidad; varying float vSlot;',
     'void main(){',
     '  float d = length(vQuad);',
     '  if (d > 1.0) discard;',
@@ -404,7 +533,113 @@
     '  float nucleo = smoothstep(0.55, 0.0, d);',
     '  float halo = smoothstep(1.0, 0.0, d) * 0.45;',
     '  float a = (nucleo + halo) * vIntensidad;',
+    /* SLOT DE ELIXIS: anillos de onda sonora saliendo de los audífonos. Se
+       resuelven aquí y no con geometría nueva — son un seno sobre la distancia
+       al centro, así que la estación sigue costando lo mismo y no añade ni un
+       vértice ni una llamada de dibujo. */
+    '  if (vSlot > 0.5) {',
+    '    float onda = sin(d * 16.0 - uTiempo * 3.4) * 0.5 + 0.5;',
+    '    float anillo = pow(onda, 6.0) * smoothstep(1.0, 0.25, d) * step(0.28, d);',
+    '    a += anillo * vIntensidad * 0.85;',
+    '  }',
     '  gl_FragColor = vec4(vColor * (0.6 + nucleo), a);',
+    '}'
+  ].join('\n');
+
+  /* ─── Shaders del Fénix ───────────────────────────────────────────────── */
+
+  var VERT_FENIX = [
+    'precision mediump float;',
+    'attribute vec3 aPos; attribute float aParte; attribute float aTramo; attribute float aLado;',
+    'uniform mat4 uProy; uniform mat4 uVista; uniform float uTiempo; uniform float uPulso;',
+    'varying float vTramo; varying float vParte; varying float vFuego;',
+    'void main(){',
+    '  vec3 p = aPos;',
+    /* ALETEO PARAMÉTRICO. La amplitud crece con el cubo del tramo: el hombro
+       casi no se mueve y la punta barre — como bate un ala de verdad. El
+       desfase por tramo hace que la onda RECORRA el ala en vez de subirla y
+       bajarla en bloque, que es lo que delata a una animación barata. */
+    '  float bate = sin(uTiempo * 1.9 - aTramo * 2.1);',
+    '  float amp = pow(aTramo, 3.0);',
+    '  if (aParte > 0.5 && aParte < 1.5) {',
+    '    p.y += bate * amp * 1.15;',
+    '    p.z += cos(uTiempo * 1.9 - aTramo * 2.1) * amp * 0.28;',
+    '    p.x *= 1.0 - amp * 0.10 * abs(bate);',
+    '  }',
+    /* La cola ondea con retardo respecto a las alas: va detrás, no a la vez. */
+    '  if (aParte > 2.5) {',
+    '    p.x += sin(uTiempo * 1.5 - aTramo * 3.0) * aTramo * 0.42;',
+    '    p.z += cos(uTiempo * 1.2 - aTramo * 2.0) * aTramo * 0.22;',
+    '  }',
+    /* REACTIVIDAD uPulso: el pecho se expande con el bombo y las alas lo
+       acompañan a la mitad, para que el latido salga del centro hacia fuera. */
+    '  float pecho = (aParte < 0.5) ? 1.0 : 0.45;',
+    '  p *= 1.0 + uPulso * 0.16 * pecho;',
+    '  vTramo = aTramo; vParte = aParte;',
+    /* Turbulencia de plasma: dos senos cruzados bastan. Una textura de ruido
+       costaría una lectura por fragmento y aquí no se notaría. */
+    '  vFuego = sin(uTiempo * 3.1 + aTramo * 7.0 + aLado * 1.7) * 0.5 + 0.5;',
+    '  gl_Position = uProy * uVista * vec4(p, 1.0);',
+    '}'
+  ].join('\n');
+
+  var FRAG_FENIX = [
+    'precision mediump float;',
+    'uniform float uPulso;',
+    'varying float vTramo; varying float vParte; varying float vFuego;',
+    'void main(){',
+    /* #FFD700 en el cuerpo → cian en las puntas, con el fuego moviendo el
+       punto de mezcla para que el degradado respire en vez de quedarse fijo. */
+    '  vec3 oro  = vec3(1.0, 0.843, 0.0);',
+    '  vec3 cian = vec3(0.30, 0.95, 1.0);',
+    '  float m = clamp(vTramo * 0.9 + vFuego * 0.22 - 0.06, 0.0, 1.0);',
+    '  vec3 c = mix(oro, cian, m);',
+    '  float brillo = (0.55 + vFuego * 0.55) * (1.0 + uPulso * 0.9);',
+    /* Las puntas se desvanecen: el ala termina en llama, no en un borde. */
+    '  float alfa = (0.75 - vTramo * 0.42) * (0.6 + vFuego * 0.5);',
+    '  gl_FragColor = vec4(c * brillo, clamp(alfa, 0.0, 1.0));',
+    '}'
+  ].join('\n');
+
+  /* ─── Shaders de las chispas ──────────────────────────────────────────── */
+
+  var VERT_CHISPA = [
+    'precision mediump float;',
+    'attribute vec2 aQuad;',
+    'attribute vec3 iOrigen; attribute vec3 iControl; attribute vec3 iDestino;',
+    'attribute float iFase; attribute float iTam; attribute float iEstacion;',
+    'uniform mat4 uProy; uniform mat4 uVista; uniform float uTiempo; uniform float uPulso;',
+    'varying vec2 vQuad; varying float vVida; varying float vEstacion;',
+    'void main(){',
+    /* La chispa recorre su curva una y otra vez. fract() la devuelve al ala
+       sin coste y sin que la CPU tenga que reciclar nada. */
+    '  float t = fract(uTiempo * (0.19 + uPulso * 0.10) + iFase);',
+    '  float u = 1.0 - t;',
+    '  vec3 p = u*u*iOrigen + 2.0*u*t*iControl + t*t*iDestino;',
+    '  vec4 posVista = uVista * vec4(p, 1.0);',
+    /* Nace y muere con suavidad: sin esto aparecen y desaparecen de golpe. */
+    '  vVida = smoothstep(0.0, 0.10, t) * smoothstep(1.0, 0.82, t);',
+    '  posVista.xy += aQuad * iTam * (1.0 + uPulso * 0.7) * (0.5 + vVida);',
+    '  vQuad = aQuad; vEstacion = iEstacion;',
+    '  gl_Position = uProy * posVista;',
+    '}'
+  ].join('\n');
+
+  var FRAG_CHISPA = [
+    'precision mediump float;',
+    'varying vec2 vQuad; varying float vVida; varying float vEstacion;',
+    'void main(){',
+    '  float d = length(vQuad);',
+    '  if (d > 1.0) discard;',
+    /* La chispa vira del dorado del Fénix al color de la estación a la que va:
+       el ojo sigue el trayecto sin que nadie tenga que explicarlo. */
+    '  vec3 oro = vec3(1.0, 0.85, 0.45);',
+    '  vec3 destino = vEstacion < 1.5 ? vec3(0.45,0.85,1.0)',
+    '               : (vEstacion < 2.5 ? vec3(0.70,0.55,1.0)',
+    '               : (vEstacion < 3.5 ? vec3(0.40,1.00,0.70) : vec3(1.00,0.55,0.45)));',
+    '  vec3 c = mix(oro, destino, 0.55);',
+    '  float m = smoothstep(1.0, 0.0, d);',
+    '  gl_FragColor = vec4(c, m * m * vVida * 0.85);',
     '}'
   ].join('\n');
 
@@ -516,6 +751,7 @@
     uInst.tiempo = gl.getUniformLocation(progInstancias, 'uTiempo');
     uInst.pulso = gl.getUniformLocation(progInstancias, 'uPulso');
     uInst.activo = gl.getUniformLocation(progInstancias, 'uActivo');
+    uInst.tiempoFrag = uInst.tiempo;   // el fragment comparte el uniform del vertex
 
     var tubos = construirTubos();
     bufTubos = gl.createBuffer();
@@ -537,23 +773,55 @@
     gl.bindBuffer(gl.ARRAY_BUFFER, bufParticulas);
     gl.bufferData(gl.ARRAY_BUFFER, construirParticulas(), gl.STATIC_DRAW);
 
+    progFenix = enlazar(VERT_FENIX, FRAG_FENIX);
+    aFenix.pos = gl.getAttribLocation(progFenix, 'aPos');
+    aFenix.parte = gl.getAttribLocation(progFenix, 'aParte');
+    aFenix.tramo = gl.getAttribLocation(progFenix, 'aTramo');
+    aFenix.lado = gl.getAttribLocation(progFenix, 'aLado');
+    uFenix.proy = gl.getUniformLocation(progFenix, 'uProy');
+    uFenix.vista = gl.getUniformLocation(progFenix, 'uVista');
+    uFenix.tiempo = gl.getUniformLocation(progFenix, 'uTiempo');
+    uFenix.pulso = gl.getUniformLocation(progFenix, 'uPulso');
+    bufFenix = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufFenix);
+    gl.bufferData(gl.ARRAY_BUFFER, construirFenix(), gl.STATIC_DRAW);
+
+    progChispas = enlazar(VERT_CHISPA, FRAG_CHISPA);
+    aChispa.quad = gl.getAttribLocation(progChispas, 'aQuad');
+    aChispa.origen = gl.getAttribLocation(progChispas, 'iOrigen');
+    aChispa.control = gl.getAttribLocation(progChispas, 'iControl');
+    aChispa.destino = gl.getAttribLocation(progChispas, 'iDestino');
+    aChispa.fase = gl.getAttribLocation(progChispas, 'iFase');
+    aChispa.tam = gl.getAttribLocation(progChispas, 'iTam');
+    aChispa.estacion = gl.getAttribLocation(progChispas, 'iEstacion');
+    uChispa.proy = gl.getUniformLocation(progChispas, 'uProy');
+    uChispa.vista = gl.getUniformLocation(progChispas, 'uVista');
+    uChispa.tiempo = gl.getUniformLocation(progChispas, 'uTiempo');
+    uChispa.pulso = gl.getUniformLocation(progChispas, 'uPulso');
+    bufChispas = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufChispas);
+    gl.bufferData(gl.ARRAY_BUFFER, construirChispas(), gl.STATIC_DRAW);
+
     gl.clearColor(0.02, 0.03, 0.06, 1.0);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
     gl.disable(gl.DEPTH_TEST);   // aditivo: el orden no importa y evita ordenar
 
-    stats.vertices = conteoVerticesTubos;
-    stats.instancias = ESTACIONES.length + PARTICULAS;
+    stats.vertices = conteoVerticesTubos + conteoVerticesFenix;
+    stats.instancias = ESTACIONES.length + PARTICULAS + CHISPAS;
   }
 
   function liberarEscena() {
     if (!gl) return;
     try {
-      [bufTubos, bufIndices, bufQuad, bufNodos, bufParticulas].forEach(function (b) { if (b) gl.deleteBuffer(b); });
+      [bufTubos, bufIndices, bufQuad, bufNodos, bufParticulas, bufFenix, bufChispas].forEach(function (b) { if (b) gl.deleteBuffer(b); });
       if (progTubos) gl.deleteProgram(progTubos);
       if (progInstancias) gl.deleteProgram(progInstancias);
+      if (progFenix) gl.deleteProgram(progFenix);
+      if (progChispas) gl.deleteProgram(progChispas);
     } catch (e) { /* contexto ya muerto */ }
     bufTubos = bufIndices = bufQuad = bufNodos = bufParticulas = progTubos = progInstancias = null;
+    bufFenix = bufChispas = progFenix = progChispas = null;
   }
 
   /* ─── Audio ───────────────────────────────────────────────────────────── */
@@ -719,6 +987,47 @@
 
     dibujarLote(bufParticulas, PARTICULAS, -1);
     dibujarLote(bufNodos, ESTACIONES.length, nodoEnfocado);
+
+    /* 4 · HUB FÉNIX — malla estática; el aleteo y el latido viven en el
+       vertex shader, así que la CPU no toca un solo vértice. */
+    gl.useProgram(progFenix);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufFenix);
+    var zf = 6*4;
+    gl.enableVertexAttribArray(aFenix.pos);   gl.vertexAttribPointer(aFenix.pos, 3, gl.FLOAT, false, zf, 0);
+    gl.enableVertexAttribArray(aFenix.parte); gl.vertexAttribPointer(aFenix.parte, 1, gl.FLOAT, false, zf, 12);
+    gl.enableVertexAttribArray(aFenix.tramo); gl.vertexAttribPointer(aFenix.tramo, 1, gl.FLOAT, false, zf, 16);
+    gl.enableVertexAttribArray(aFenix.lado);  gl.vertexAttribPointer(aFenix.lado, 1, gl.FLOAT, false, zf, 20);
+    fijarDivisor(aFenix.pos, 0); fijarDivisor(aFenix.parte, 0);
+    fijarDivisor(aFenix.tramo, 0); fijarDivisor(aFenix.lado, 0);
+    gl.uniformMatrix4fv(uFenix.proy, false, _proy);
+    gl.uniformMatrix4fv(uFenix.vista, false, _vista);
+    gl.uniform1f(uFenix.tiempo, t);
+    gl.uniform1f(uFenix.pulso, pulso);
+    gl.drawArrays(gl.TRIANGLES, 0, conteoVerticesFenix);
+    stats.llamadasDibujo++;
+
+    /* 5 · CHISPAS — instanciadas sobre el mismo cuadrilátero base. Una sola
+       llamada para las 320, y su trayectoria se evalúa en el shader. */
+    gl.useProgram(progChispas);
+    gl.uniformMatrix4fv(uChispa.proy, false, _proy);
+    gl.uniformMatrix4fv(uChispa.vista, false, _vista);
+    gl.uniform1f(uChispa.tiempo, t);
+    gl.uniform1f(uChispa.pulso, pulso);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufQuad);
+    gl.enableVertexAttribArray(aChispa.quad);
+    gl.vertexAttribPointer(aChispa.quad, 2, gl.FLOAT, false, 0, 0);
+    fijarDivisor(aChispa.quad, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufChispas);
+    var zc = 12*4;
+    gl.enableVertexAttribArray(aChispa.origen);   gl.vertexAttribPointer(aChispa.origen, 3, gl.FLOAT, false, zc, 0);
+    gl.enableVertexAttribArray(aChispa.control);  gl.vertexAttribPointer(aChispa.control, 3, gl.FLOAT, false, zc, 12);
+    gl.enableVertexAttribArray(aChispa.destino);  gl.vertexAttribPointer(aChispa.destino, 3, gl.FLOAT, false, zc, 24);
+    gl.enableVertexAttribArray(aChispa.fase);     gl.vertexAttribPointer(aChispa.fase, 1, gl.FLOAT, false, zc, 36);
+    gl.enableVertexAttribArray(aChispa.tam);      gl.vertexAttribPointer(aChispa.tam, 1, gl.FLOAT, false, zc, 40);
+    gl.enableVertexAttribArray(aChispa.estacion); gl.vertexAttribPointer(aChispa.estacion, 1, gl.FLOAT, false, zc, 44);
+    fijarDivisor(aChispa.origen,1); fijarDivisor(aChispa.control,1); fijarDivisor(aChispa.destino,1);
+    fijarDivisor(aChispa.fase,1); fijarDivisor(aChispa.tam,1); fijarDivisor(aChispa.estacion,1);
+    if (dibujarInstanciado(gl.TRIANGLE_STRIP, 0, 4, CHISPAS)) stats.llamadasDibujo++;
   }
 
   function dibujarLote(buf, cuantas, activo) {
@@ -1051,7 +1360,10 @@
     alternarRotacionLibre: alternarRotacionLibre,
     estaciones: function () {
       return ESTACIONES.map(function (e) {
-        return { id: e.id, nombre: e.nombre, subtitulo: e.subtitulo, hub: e.hub, slot: e.slot, ocupado: false };
+        /* ocupado: el núcleo lo llena el Fénix procedural y ELIXIS sus anillos
+           de onda. Los otros tres siguen reservados. */
+        var ocupado = (e.id === 'nucleo' || e.id === 'elixis');
+        return { id: e.id, nombre: e.nombre, subtitulo: e.subtitulo, hub: e.hub, slot: e.slot, ocupado: ocupado };
       });
     },
     reiniciarSaltoMax: function () { stats.saltoCamaraMax = 0; },
