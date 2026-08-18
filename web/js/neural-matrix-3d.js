@@ -118,7 +118,18 @@
      la posición directamente — ver la nota de cabecera. */
   var cam = { x: 0, y: 3, z: 26, mx: 0, my: 0, mz: 0 };
   var obj = { x: 0, y: 3, z: 26, mx: 0, my: 0, mz: 0 };
-  var recorrido = { s: 0, activo: true, velocidad: 0.055 };
+  /* 0.0275 y no 0.055: a la velocidad anterior el vuelo daba la vuelta a las
+     cuatro estaciones en ~27 s y se sentía a 128 BPM — ritmo de pista, no de
+     ponencia. A la mitad el recorrido dura ~54 s y deja hablar encima. */
+  var recorrido = { s: 0, activo: true, velocidad: 0.0275 };
+
+  /* ENCUADRE 60/40. La estación enfocada no va centrada: se coloca al 60 %
+     del ancho, dejando libre el 40 % izquierdo para el holograma de la
+     llamada. Se consigue desplazando el PUNTO MIRADO hacia la izquierda de la
+     estación; la cámara gira un poco y la estación se va a la derecha sola.
+     0.2 en coordenadas normalizadas es exactamente ese 10 % de desvío desde
+     el centro (de 50 % a 60 %). */
+  var DESVIO_ENCUADRE = 0.20;
   var nodoEnfocado = -1;
   var orbita = 0;
   var rotacionLibre = false, giroRaton = { yaw: 0, pitch: 0 };
@@ -1012,10 +1023,30 @@
       var e = ESTACIONES[nodoEnfocado];
       orbita += dt * (recorrido.activo ? 0.22 : 0.06);
       var radio = e.hub ? 15.0 : 11.0;
-      obj.x = e.pos[0] + Math.cos(orbita) * radio;
-      obj.y = e.pos[1] + 2.6;
-      obj.z = e.pos[2] + Math.sin(orbita) * radio;
-      obj.mx = e.pos[0]; obj.my = e.pos[1]; obj.mz = e.pos[2];
+      var px = e.pos[0] + Math.cos(orbita) * radio;
+      var py = e.pos[1] + 2.6;
+      var pz = e.pos[2] + Math.sin(orbita) * radio;
+      obj.x = px; obj.y = py; obj.z = pz;
+
+      /* Vector DERECHA de la cámara = normalizar(frente × arriba). Desplazando
+         el punto mirado en sentido contrario, la estación se corre a la
+         derecha del encuadre sin tocar la posición de la cámara ni el zoom. */
+      var fx = e.pos[0] - px, fy = e.pos[1] - py, fz = e.pos[2] - pz;
+      var lf = Math.sqrt(fx*fx + fy*fy + fz*fz) || 1;
+      fx /= lf; fy /= lf; fz /= lf;
+      var rx = -fz, rz = fx;                    // (f × arriba) con arriba = (0,1,0)
+      var lr = Math.sqrt(rx*rx + rz*rz) || 1;
+      rx /= lr; rz /= lr;
+
+      /* Cuánto desplazar: media anchura del plano a esa distancia, por el
+         desvío pedido. Depende del aspecto, así que un monitor 21:9 y uno 16:9
+         dejan el mismo 40 % libre en vez de encuadres distintos. */
+      var aspectoActual = lienzo ? (lienzo.width / Math.max(1, lienzo.height)) : 1.777;
+      var desplazamiento = DESVIO_ENCUADRE * radio * Math.tan(1.15 / 2) * aspectoActual;
+
+      obj.mx = e.pos[0] - rx * desplazamiento;
+      obj.my = e.pos[1];
+      obj.mz = e.pos[2] - rz * desplazamiento;
     } else {
       /* RECORRIDO: el parámetro crece sin límite y solo el índice da la
          vuelta, así que no hay discontinuidad posible al cerrar el ciclo. */
@@ -1319,6 +1350,13 @@
       if (k === ' ' || ev.code === 'Space') { ev.preventDefault(); alternarPausaRecorrido(); return; }
       if (k === 'ArrowRight') { ev.preventDefault(); siguienteNodo(1); return; }
       if (k === 'ArrowLeft')  { ev.preventDefault(); siguienteNodo(-1); return; }
+      /* 1-5 saltan directo a su estación. El «lerp» ya lo hace perseguir():
+         solo se mueve el objetivo y el estado lo alcanza con suavizado. */
+      if (k >= '1' && k <= '5') {
+        ev.preventDefault();
+        irANodo(parseInt(k, 10) - 1);
+        return;
+      }
       if (k === 'm' || k === 'M') { alternarMicrofono(); return; }
       if (k === 'r' || k === 'R') { alternarRotacionLibre(); return; }
       if (k === 'f' || k === 'F') { alternarPantallaCompleta(); return; }
