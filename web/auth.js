@@ -6,9 +6,13 @@
  * tras index.html?ref= o gotoAffiliateWeb() desde dj-profile.
  */
 /** Supabase GoTrue: duplicate signup / email already in use */
+/** Legacy-Safari-safe helpers (sin optional chaining / nullish coalescing --
+    ese motor lanza SyntaxError al parsear ?. y ?? antes de ejecutar nada). */
+function mdjGet(o, k) { return o ? o[k] : undefined; }
+function mdjElVal(id) { var el = document.getElementById(id); return el ? el.value : ''; }
 function mdjIsUserAlreadyRegisteredError(err) {
-    const code = String(err?.code || err?.status || '').toLowerCase();
-    const msg = String(err?.message || err?.error_description || '').toLowerCase();
+    const code = String(mdjGet(err, 'code') || mdjGet(err, 'status') || '').toLowerCase();
+    const msg = String(mdjGet(err, 'message') || mdjGet(err, 'error_description') || '').toLowerCase();
     if (code === 'user_already_registered' || code === 'email_exists') return true;
     return (
         msg.includes('user already registered') ||
@@ -136,9 +140,9 @@ function mdjGuessPlatformLabel() {
  */
 function mdjResolveEffectiveUserRole(user) {
     if (!user) return 'client';
-    const appR = String(user.app_metadata?.role || '').toLowerCase();
+    const appR = String(mdjGet(user.app_metadata, 'role') || '').toLowerCase();
     if (appR === 'admin' || appR === 'manager' || appR === 'seller' || appR === 'owner') return appR;
-    const ut = String(user.user_metadata?.user_type || '').toLowerCase();
+    const ut = String(mdjGet(user.user_metadata, 'user_type') || '').toLowerCase();
     if (ut === 'client') return 'client';
     if (ut === 'talent' || ut === 'dj' || ut === 'artist') {
         return ut === 'artist' ? 'artist' : 'talent';
@@ -276,8 +280,8 @@ function mdjBuildLegalFullNameFromSignupParts(firstRaw, middleRaw, lastRaw) {
 
 /** Wrong password / bad credentials on signInWithPassword */
 function mdjIsInvalidCredentialsError(err) {
-    const code = String(err?.code || err?.name || '').toLowerCase();
-    const msg = String(err?.message || err?.error_description || '').toLowerCase();
+    const code = String(mdjGet(err, 'code') || mdjGet(err, 'name') || '').toLowerCase();
+    const msg = String(mdjGet(err, 'message') || mdjGet(err, 'error_description') || '').toLowerCase();
     if (code === 'invalid_credentials' || code === 'invalid_grant') return true;
     return msg.includes('invalid login credentials') || msg.includes('invalid_credentials');
 }
@@ -295,8 +299,8 @@ function mdjBuildPostAuthReturnUrlFromQuery(search, user) {
         /* Evita bucle: ?redirect=login → ./login.html tras auth */
         if (raw === 'login') return null;
 
-        const ut = user ? String(user.user_metadata?.user_type || '').toLowerCase() : '';
-        const appR = user ? String(user.app_metadata?.role || '').toLowerCase() : '';
+        const ut = user ? String(mdjGet(user.user_metadata, 'user_type') || '').toLowerCase() : '';
+        const appR = user ? String(mdjGet(user.app_metadata, 'role') || '').toLowerCase() : '';
         const isArtistJwt = ut === 'talent' || ut === 'dj' || appR === 'artist';
         /* Destinos de cliente / perfil / manager prohibidos para JWT de artista (no abrir admin con sesión de DJ). */
         if (
@@ -315,8 +319,8 @@ function mdjBuildPostAuthReturnUrlFromQuery(search, user) {
             const signup = (qp.get('signup') || '').toLowerCase();
             const isNewFreeJobsSignup = signup === 'free';
             if (!isNewFreeJobsSignup) {
-                const ut = String(user.user_metadata?.user_type || '').toLowerCase();
-                const appR = String(user.app_metadata?.role || '').toLowerCase();
+                const ut = String(mdjGet(user.user_metadata, 'user_type') || '').toLowerCase();
+                const appR = String(mdjGet(user.app_metadata, 'role') || '').toLowerCase();
                 const isTalent = ut === 'talent' || ut === 'dj' || appR === 'artist';
                 if (isTalent) {
                     return './dj-dashboard.html?from_auth=1&source=jobs';
@@ -386,7 +390,7 @@ function mdjPerformPostAuthRedirect(db, user) {
                 ? window.mdjClassifyPlatformIdentity({ user, djRow, clientRow })
                 : null;
         let rawRole = mdjResolveEffectiveUserRole(user);
-        const utExplicit = String(user.user_metadata?.user_type || '').toLowerCase();
+        const utExplicit = String(mdjGet(user.user_metadata, 'user_type') || '').toLowerCase();
         if (rawRole === 'client' && db && utExplicit !== 'client') {
             try {
                 const r = djRow ? String(djRow.role || '').toLowerCase() : '';
@@ -421,7 +425,7 @@ function mdjPerformPostAuthRedirect(db, user) {
         } else if (role === 'client') {
             targetUrl = './client-portal.html';
             try {
-                const utNav = String(user.user_metadata?.user_type || '').toLowerCase();
+                const utNav = String(mdjGet(user.user_metadata, 'user_type') || '').toLowerCase();
                 if (utNav !== 'client' && djRow && djRow.role !== 'client') {
                     targetUrl = './dj-profile.html?id=' + encodeURIComponent(user.id);
                 }
@@ -705,7 +709,7 @@ function withTimeout(promise, ms, label) {
 function mdjLoginSafeFallbackUrl(user) {
     if (!user) return './index.html';
     const raw = String(mdjResolveEffectiveUserRole(user) || '').toLowerCase();
-    const ut = String(user.user_metadata?.user_type || '').toLowerCase();
+    const ut = String(mdjGet(user.user_metadata, 'user_type') || '').toLowerCase();
     if (raw === 'owner') return './staff.html';
     if (raw === 'client' || ut === 'client') return './client-portal.html';
     if (raw === 'admin' || raw === 'manager' || raw === 'seller') return './admin-dashboard.html';
@@ -730,7 +734,7 @@ function mdjForceAuthNavigation(url) {
 
 /** Signup intent: only explicit client|talent from #signup-usertype — no URL fallback. */
 function mdjReadValidatedSignupUserType() {
-    const raw = String(document.getElementById('signup-usertype')?.value || '').trim().toLowerCase();
+    const raw = String(mdjElVal('signup-usertype') || '').trim().toLowerCase();
     if (raw === 'client' || raw === 'talent') return raw;
     return null;
 }
@@ -913,7 +917,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert(`🚨 ¡NUEVO DISPOSITIVO DETECTADO!\n\nHemos enviado una alerta a tu ${channel} (${securityCheck.email || securityCheck.phone}).\nDebes aprobar este acceso antes de continuar.`);
 
                     // En un sistema real aquí invocaríamos la Edge Function para disparar el mensaje.
-                    await window.MDJPRO_SECURITY.registerDevice(user.id, user.user_metadata?.user_type || 'client', db);
+                    await window.MDJPRO_SECURITY.registerDevice(user.id, mdjGet(user.user_metadata, 'user_type') || 'client', db);
                 }
                 */
 
@@ -988,26 +992,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 const db = await waitForSupabase();
 
                 // Collect all fields — nombre legal: nombre + (opcional) segundo nombre o inicial + apellido
-                const firstName = document.getElementById('signup-first-name')?.value.trim() || '';
-                const middleName = document.getElementById('signup-middle-name')?.value.trim() || '';
-                const lastName = document.getElementById('signup-last-name')?.value.trim() || '';
+                const firstName = mdjElVal('signup-first-name').trim();
+                const middleName = mdjElVal('signup-middle-name').trim();
+                const lastName = mdjElVal('signup-last-name').trim();
                 const fullName = mdjBuildLegalFullNameFromSignupParts(firstName, middleName, lastName);
-                const artisticName = document.getElementById('signup-name')?.value.trim() || '';
+                const artisticName = mdjElVal('signup-name').trim();
                 const name = artisticName || fullName; // artistic name used as stage, fallback to legal full name
-                const email = document.getElementById('signup-email')?.value.trim() || '';
-                const password = document.getElementById('signup-password')?.value || '';
-                const confirmPassword = document.getElementById('signup-password-confirm')?.value || '';
-                const phoneRaw = document.getElementById('signup-phone')?.value.trim() || '';
+                const email = mdjElVal('signup-email').trim();
+                const password = mdjElVal('signup-password');
+                const confirmPassword = mdjElVal('signup-password-confirm');
+                const phoneRaw = mdjElVal('signup-phone').trim();
                 const phoneDigits =
                     typeof window.mdjNANPDigitsFromTel === 'function'
                         ? window.mdjNANPDigitsFromTel(phoneRaw)
                         : String(phoneRaw).replace(/\D/g, '').replace(/^1(\d{10})$/, '$1').slice(0, 10);
                 const phone = phoneRaw;
-                const addrStreet = document.getElementById('signup-address-line1')?.value.trim() || '';
-                const addrApt = document.getElementById('signup-address-line2')?.value.trim() || '';
-                const addrCity = document.getElementById('signup-address-city')?.value.trim() || '';
-                const addrState = document.getElementById('signup-address-state')?.value.trim() || '';
-                const addrZip = document.getElementById('signup-address-zip')?.value.trim() || '';
+                const addrStreet = mdjElVal('signup-address-line1').trim();
+                const addrApt = mdjElVal('signup-address-line2').trim();
+                const addrCity = mdjElVal('signup-address-city').trim();
+                const addrState = mdjElVal('signup-address-state').trim();
+                const addrZip = mdjElVal('signup-address-zip').trim();
                 const addrCountryEl = document.getElementById('signup-address-country');
                 const addrCountry = addrCountryEl ? String(addrCountryEl.value || '').trim() : '';
                 const locationOneLine = mdjFormatSignupAddressOneLine(
@@ -1018,7 +1022,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     addrZip,
                     addrCountry
                 );
-                const instagram = document.getElementById('signup-instagram')?.value.trim().replace(/^@/, '') || '';
+                const instagram = mdjElVal('signup-instagram').trim().replace(/^@/, '');
                 const planParam = new URLSearchParams(window.location.search).get('plan') || 'LITE';
 
                 const userType = mdjReadValidatedSignupUserType();
@@ -1141,17 +1145,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 if (authErr) throw authErr;
 
-                const user = data?.user;
+                const user = mdjGet(data, 'user');
                 if (!user) throw new Error('No se pudo crear el usuario. Intenta de nuevo.');
 
                 // 2. Sesión JWT antes de INSERT en tablas con RLS (anon → 403 en dj_profiles / client_profiles)
                 let userForRedirect = user;
                 if (!data.session) {
                     const { data: siData, error: siErr } = await db.auth.signInWithPassword({ email, password });
-                    if (!siErr && siData?.user) {
+                    if (!siErr && mdjGet(siData, 'user')) {
                         userForRedirect = siData.user;
                     } else {
-                        const emLow = String(siErr?.message || '').toLowerCase();
+                        const emLow = String(mdjGet(siErr, 'message') || '').toLowerCase();
                         if (emLow.includes('email not confirmed') || emLow.includes('not confirmed')) {
                             showError(
                                 mdjAuthT(
@@ -1279,7 +1283,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } catch (err) {
                 if (mdjIsUserAlreadyRegisteredError(err)) {
-                    const em = document.getElementById('signup-email')?.value.trim() || '';
+                    const em = mdjElVal('signup-email').trim();
                     const loginEmailEl = document.getElementById('login-email');
                     if (loginEmailEl) loginEmailEl.value = em;
                     showError(
@@ -1368,7 +1372,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Robust Avatar Sync (Live Fetch from user object) — VIP slot + legacy .avatar
                 const targetUser = liveUser || session.user;
-                const sessionAvatar = targetUser?.user_metadata?.avatar_url;
+                const sessionAvatar = mdjGet(mdjGet(targetUser, 'user_metadata'), 'avatar_url');
                 const applyHeaderPhoto = (url) => {
                     if (!url || !String(url).trim()) return;
                     let u = String(url).trim();
@@ -1390,7 +1394,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     applyHeaderPhoto(sessionAvatar);
                 } else {
                     db.from('dj_profiles').select('photo_url').eq('user_id', session.user.id).maybeSingle().then(({ data }) => {
-                        if (data?.photo_url) applyHeaderPhoto(data.photo_url);
+                        if (mdjGet(data, 'photo_url')) applyHeaderPhoto(data.photo_url);
                     }).catch(e => console.warn('[AUTH] Error loading avatar:', e.message));
                 }
                 }
@@ -1429,7 +1433,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     authZone.style.pointerEvents = 'none';
                 }
                 }
-                document.getElementById('manager-link')?.remove();
+                { var mlEl = document.getElementById('manager-link'); if (mlEl) mlEl.remove(); }
             }
             if (typeof window.updateAuthButtons === 'function') {
                 window.updateAuthButtons();
@@ -1463,7 +1467,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Keep watching for dynamic disconnections 
         db.auth.onAuthStateChange(async (event, sessionObj) => {
-            if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && sessionObj?.user) {
+            if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && mdjGet(sessionObj, 'user')) {
                 try {
                     await mdjEnsureAuthProfileRows(db, sessionObj.user);
                 } catch (ensureErr) {
