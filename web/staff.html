@@ -37,6 +37,10 @@
     .staff-brand .tx small{display:block;font-size:8.5px;font-weight:700;letter-spacing:.16em;
       text-transform:uppercase;color:rgba(232,201,135,.72);}
     .staff-actions{display:flex;align-items:center;gap:12px;}
+    #staff-mrm-link{font-size:9.5px;font-weight:900;letter-spacing:.16em;color:var(--gold-lt);
+      border:1px solid rgba(197,160,89,.55);border-radius:999px;padding:4px 11px;text-transform:uppercase;
+      text-decoration:none;white-space:nowrap;transition:background .2s,border-color .2s;}
+    #staff-mrm-link:hover{background:rgba(197,160,89,.12);border-color:var(--gold);}
     #role-badge{font-size:9.5px;font-weight:900;letter-spacing:.16em;color:var(--gold);
       border:1px solid rgba(197,160,89,.55);border-radius:999px;padding:4px 11px;text-transform:uppercase;}
     #staff-name{font-size:12.5px;font-weight:700;color:rgba(255,255,255,.85);max-width:180px;
@@ -346,6 +350,7 @@
     </div>
     <div class="staff-actions">
       <button type="button" id="ofm-daynight" class="ofm-daynight" title="Modo día / noche" aria-label="Modo día / noche (global)"></button>
+      <a href="./road-map.html" id="staff-mrm-link" title="Road Master Map IA">MRM IA</a>
       <span id="role-badge">◆ Staff</span>
       <span id="staff-name"></span>
       <button id="staff-logout" type="button">SALIR</button>
