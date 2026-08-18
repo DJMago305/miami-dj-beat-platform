@@ -581,7 +581,18 @@
     } catch (e) { /* ignore */ }
   }
 
+  /** FIX-AUDIO-01: música ambiental exclusiva de la raíz ('/' o 'index.html'). Ninguna otra ruta la carga. */
+  function mdjIsAmbientMusicRoute() {
+    try {
+      var path = (window.location.pathname || '').toLowerCase();
+      return path === '/' || path === '' || path === '/index.html' || /\/index\.html$/.test(path);
+    } catch (eRoute) {
+      return false;
+    }
+  }
+
   function mdjLoadAmbientMusicScript() {
+    if (!mdjIsAmbientMusicRoute()) return;
     if (typeof window !== 'undefined' && window.MDJ_SKIP_AMBIENT_MUSIC) return;
     if (document.getElementById('mdj-ambient-music-script')) return;
     try {
@@ -594,7 +605,7 @@
       if (document.getElementById('mdj-ambient-music-script')) return;
       var s = document.createElement('script');
       s.id = 'mdj-ambient-music-script';
-      s.src = './js/mdj-ambient-music.js?v=20260513-cash-flow-no-ambient';
+      s.src = './js/mdj-ambient-music.js?v=20260818-fix-audio-01-home-only';
       s.async = true;
       (document.head || document.documentElement).appendChild(s);
     }
