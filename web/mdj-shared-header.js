@@ -4145,7 +4145,19 @@
 
   function whenSupabaseReady(cb, tries) {
     tries = tries || 50;
-    if (typeof window.getSupabaseClient === 'function' && window.getSupabaseClient()) return cb();
+    /* P0 · 2026-08-18 — getSupabaseClient() puede LANZAR, no solo devolver null.
+       Sin este try, una excepción aquí escalaba hasta mdjInitSharedHeader() y
+       abortaba el arranque completo del header. Es el punto exacto por el que,
+       con el bundle de Supabase caído en Safari legacy, el DOM quedaba a medias.
+       Un fallo se trata igual que «todavía no está»: se reintenta, y al agotar
+       los intentos se llama al callback de todos modos para que la UI siga. */
+    var listo = false;
+    try {
+      listo = (typeof window.getSupabaseClient === 'function') && !!window.getSupabaseClient();
+    } catch (e) {
+      listo = false;
+    }
+    if (listo) return cb();
     if (tries <= 0) return cb();
     setTimeout(function () { whenSupabaseReady(cb, tries - 1); }, 40);
   }
@@ -4224,31 +4236,58 @@
     })();
   }
 
-  window.mdjInitSharedHeader = function () {
-    /* BOOT MASK — apply before any nav mutations if prior session exists in localStorage */
-    mdjApplyAuthBootMask();
-    window.showMyArtisticProfileMainNav = false;
-    mdjInstallMainNavStaticMode();
-    mdjEnsureGuestMiPerfilMainNavLink();
-    mdjHideGuestMiPerfilMainNavSlot();
-    mdjStripPublicEventsFromMainNav();
-    mdjNormalizePublicHomeMainNav();
-    void mdjAutodetectArtistMiPerfilNav();
-    mdjHeaderHideMonetizationCtasPending();
-    mdjApplyShopHeaderCartVisibility();
+  /* P0 · 2026-08-18 — CADA PASO DEL ARRANQUE ES INDEPENDIENTE.
+     Antes, mdjInitSharedHeader() era una fila de doce llamadas sin proteger:
+     si UNA lanzaba, las siguientes no se ejecutaban y el header quedaba a
+     medio construir — pestañas que no aparecen, CONFIG y MI PERFIL ausentes.
+     Es el modo de fallo que se ve en Safari legacy cuando el bundle de
+     Supabase no parsea: mdjAutodetectArtistMiPerfilNav() toca identidad, y al
+     reventar se llevaba por delante bindHeaderChrome(), mdjNavHighlight() y el
+     resto de la UI, que no dependen de Supabase para nada.
+
+     Con paso() cada llamada falla sola. El header pierde lo que dependa de la
+     sesión — y muestra las pestañas públicas — pero se termina de montar.
+     El error se registra una vez, en warn: si esto se traga en silencio total,
+     un fallo real se vuelve invisible. */
+  function mdjPasoArranqueSeguro(nombre, fn) {
     try {
-      mdjMountGlobalEventCartIfNeeded();
-    } catch (eCartEarly) {
-      void eCartEarly;
+      fn();
+    } catch (e) {
+      try {
+        console.warn('[mdj-header] el paso «' + nombre + '» falló y se omitió; el resto del header continúa.', e);
+      } catch (eLog) { void eLog; }
     }
-    mdjEnsureDesktopAuditCss();
-    mdjSetHeaderAuthPillsPending(true);
-    mdjEnsureAuthLangObserver();
-    if (typeof window.updateAuthButtons === 'function') window.updateAuthButtons();
-    bindHeaderChrome();
-    mdjNavHighlight();
+  }
+
+  window.mdjInitSharedHeader = function () {
+    var paso = mdjPasoArranqueSeguro;
+    /* BOOT MASK — apply before any nav mutations if prior session exists in localStorage */
+    paso('bootMask', mdjApplyAuthBootMask);
+    window.showMyArtisticProfileMainNav = false;
+    paso('mainNavStaticMode', mdjInstallMainNavStaticMode);
+    paso('guestMiPerfilLink', mdjEnsureGuestMiPerfilMainNavLink);
+    paso('hideGuestMiPerfilSlot', mdjHideGuestMiPerfilMainNavSlot);
+    paso('stripPublicEvents', mdjStripPublicEventsFromMainNav);
+    paso('normalizePublicHome', mdjNormalizePublicHomeMainNav);
+    /* Es una promesa: además del try, se le engancha un catch para que un
+       rechazo asíncrono tampoco escale a unhandledrejection. */
+    paso('autodetectArtistMiPerfil', function () {
+      var r = mdjAutodetectArtistMiPerfilNav();
+      if (r && typeof r.catch === 'function') r.catch(function (e) { void e; });
+    });
+    paso('hideMonetizationCtas', mdjHeaderHideMonetizationCtasPending);
+    paso('shopCartVisibility', mdjApplyShopHeaderCartVisibility);
+    paso('mountGlobalEventCart', mdjMountGlobalEventCartIfNeeded);
+    paso('desktopAuditCss', mdjEnsureDesktopAuditCss);
+    paso('authPillsPending', function () { mdjSetHeaderAuthPillsPending(true); });
+    paso('authLangObserver', mdjEnsureAuthLangObserver);
+    paso('updateAuthButtons', function () {
+      if (typeof window.updateAuthButtons === 'function') window.updateAuthButtons();
+    });
+    paso('bindHeaderChrome', bindHeaderChrome);
+    paso('navHighlight', mdjNavHighlight);
     window.addEventListener('hashchange', mdjNavHighlight);
-    window.updateHeaderCartCount();
+    paso('updateHeaderCartCount', function () { window.updateHeaderCartCount(); });
     whenSupabaseReady(function () {
       try {
         var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
@@ -4287,7 +4326,20 @@
               }
             }
           }).catch(function (eChain) {
-            void eChain;
+            /* P2.2 failsafe: si checkSessionForNav() rechaza (ej. Supabase nunca
+               resolvió — waitForSupabase() en auth.js hace throw tras 10 intentos),
+               la cadena se saltaba ENTERA sin haber llamado mdjAutodetectArtistMiPerfilNav()
+               — el finally de abajo solo quita la máscara de carga, revelando un menú
+               a medio pintar (CONFIG/MI PERFIL/submenús podían quedar reservados/ocultos).
+               Se reintenta aquí, en modo público/base — mdjAutodetectArtistMiPerfilNav()
+               ya maneja sesión ausente con gracia (mdjHydrateArtistSessionIdFromSupabase
+               devuelve '' de forma segura si Supabase falló). */
+            console.warn('[mdj-shared-header] checkSessionForNav falló; renderizando menú base:', eChain);
+            try {
+              mdjAutodetectArtistMiPerfilNav().catch(function (eFallback) { void eFallback; });
+            } catch (eSync) {
+              void eSync;
+            }
           }).finally(function () {
             /* BOOT MASK safety net — chain failed but mask must not persist */
             mdjClearAuthBootMask();
