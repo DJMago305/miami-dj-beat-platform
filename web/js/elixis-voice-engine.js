@@ -163,6 +163,21 @@
         _dispatch('elixis:speak:start', { text: text });
       }
       utter.onstart = markStarted;
+      /* LÍMITES DE PALABRA. Se reenvían para que un consumidor pueda imprimir
+         texto EN SINCRONÍA REAL con la voz, en vez de estimar el ritmo. Es
+         puramente aditivo: quien no escuche este evento no nota diferencia.
+
+         Aviso para quien lo consuma: onboundary NO dispara con voces remotas
+         o de red en varios navegadores. Cualquier consumidor serio necesita un
+         plan B por tiempo si en ~600 ms no ha llegado ningún límite. */
+      utter.onboundary = function (ev) {
+        if (!ev || ev.name === 'sentence') return;
+        _dispatch('elixis:speak:boundary', {
+          charIndex: ev.charIndex || 0,
+          charLength: ev.charLength || 0,
+          text: text
+        });
+      };
       utter.onend = function () {
         _dispatch('elixis:speak:end', { text: text });
         done(null);

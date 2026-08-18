@@ -1993,6 +1993,17 @@
       if (k === 'd' || k === 'D') { document.body.classList.toggle('nm3d-depurar'); return; }
     });
 
+    /* Observa el ANCHO REAL del contenedor. Cubre los tres casos de una vez:
+       redimensionar la ventana, entrar/salir del modo dividido y cualquier
+       cambio de layout futuro. Y a diferencia de rAF, notifica también con la
+       pestaña en segundo plano, que es justo cuando el modo dividido se activa
+       en una demo mientras el ponente mira otra cosa. */
+    if (typeof ResizeObserver === 'function') {
+      try {
+        new ResizeObserver(function () { redimensionar(); }).observe(contenedor);
+      } catch (eRO) { void eRO; }
+    }
+
     contenedor.addEventListener('pointermove', function (e) {
       if (!rotacionLibre) return;
       var r = contenedor.getBoundingClientRect();
@@ -2001,6 +2012,14 @@
       giroRaton.yaw = nx * 1.6;
       giroRaton.pitch = -ny * 0.8;
     }, { passive: true });
+
+    var bSig = document.querySelector('[data-nm3d-siguiente]');
+    if (bSig) bSig.addEventListener('click', function () {
+      /* Mismo camino que el comando de voz: un solo sitio decide qué es
+         "avanzar", así el botón y la voz no pueden divergir. */
+      if (vozHablando && typeof window.elixisStopSpeaking === 'function') window.elixisStopSpeaking();
+      navAvanzar();
+    });
 
     var botones = document.querySelectorAll('[data-nm3d-fps-set]');
     for (var i = 0; i < botones.length; i++) {
@@ -2310,6 +2329,7 @@
 
   function navFijarEstado(e) {
     nav.estado = e;
+    opEstado(e);
     var el = document.querySelector('[data-nm3d-vozestado]');
     if (el) {
       el.textContent = NAV_ROTULO[e] || '';
@@ -2410,6 +2430,21 @@
        la estación. Un plano que sigue viajando mientras se habla obliga a la
        sala a elegir entre mirar o escuchar. */
     recorrido.activo = false;
+
+    /* Con rol activo manda el guion del MÓDULO, no la narración genérica del
+       nodo: es lo que este rol necesita oír. Sin rol, se conserva el
+       comportamiento anterior intacto. */
+    var guion = op.rol ? opGuionActual() : null;
+    if (guion) {
+      var m = op.modulos[op.paso];
+      if (m && m.titulo) opBurbuja('elixis', '▸ ' + m.titulo, false);
+      opEscribir(guion);
+      if (vozDisponible()) { window.elixisSpeak(guion); return; }
+      opCerrarEscritura();
+      navEsperar();
+      return;
+    }
+
     var r = narrarEstacion(nodoEnfocado);
     if (r !== 'narrando') navEsperar();   // sin voz, no se queda colgado
   }
@@ -2422,6 +2457,11 @@
   }
 
   function navAvanzar() {
+    /* Con rol activo el recorrido es la LISTA DE MÓDULOS, no la vuelta a las 5
+       estaciones: dos módulos seguidos pueden compartir nodo (la captura de
+       leads y la Agenda IA viven las dos en la estación 1) y avanzar por
+       geometría se los saltaría. */
+    if (op.rol && op.modulos.length) { opSiguienteModulo(); return; }
     var sig = (nodoEnfocado + 1) % ESTACIONES.length;
     navIrAEstacion(sig);
   }
@@ -2487,8 +2527,9 @@
         nav.historial.push({ role: 'user', content: texto });
         nav.historial.push({ role: 'assistant', content: respuesta });
         navFijarEstado(NAV_ESTADO.EXPLICANDO);
+        opEscribir(respuesta);
         if (vozDisponible()) window.elixisSpeak(respuesta);
-        else navEsperar();
+        else { opCerrarEscritura(); navEsperar(); }
       })
       .catch(function () { navResponderLocal(e); });
   }
@@ -2500,8 +2541,9 @@
     var texto = (e.narracion || e.nombre) +
       ' ¿Quieres saber más sobre esto o avanzamos a la siguiente zona?';
     navFijarEstado(NAV_ESTADO.EXPLICANDO);
+    opEscribir(texto);
     if (vozDisponible()) window.elixisSpeak(texto);
-    else navEsperar();
+    else { opCerrarEscritura(); navEsperar(); }
   }
 
   /* ─── Enrutado de lo que se oye ─────────────────────────────────────────── */
@@ -2530,6 +2572,7 @@
 
     /* No era una orden: es una pregunta del público. */
     nav.ultimaPregunta = bruto;
+    opBurbuja('usuario', bruto, false);
     navPreguntar(bruto);
   }
 
@@ -2543,6 +2586,14 @@
     /* Se reintenta el permiso en cada arranque: el ponente puede haberlo
        concedido entre una prueba y la función. */
     nav.sttBloqueado = false;
+    /* Sin rol elegido, el recorrido no arranca: el selector ES el primer paso.
+       Con rol ya elegido (p. ej. tras detener y reanudar) se retoma donde iba. */
+    if (!op.rol) {
+      opPintarRoles();
+      var sel = document.querySelector('[data-nm3d-roles]');
+      if (sel) sel.hidden = false;
+      return 'elige un rol para empezar';
+    }
     navIrAEstacion(nodoEnfocado >= 0 ? nodoEnfocado : 0);
     return 'navegador de voz activo';
   }
@@ -2563,12 +2614,270 @@
   window.addEventListener('elixis:speak:start', function () {
     if (nav.activo) navSuspender();
   });
+  window.addEventListener('elixis:speak:boundary', function (ev) {
+    if (ev && ev.detail) opBoundary(ev.detail.charIndex || 0);
+  });
   window.addEventListener('elixis:speak:end', function () {
+    opCerrarEscritura();
     if (!nav.activo) return;
     /* Al callar Elixis siempre se vuelve a esperar confirmación: es la regla de
        retorno obligatorio al recorrido. */
     navEsperar();
   });
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     FEAT-3D-11 · MODO OPERADOR DIVIDIDO Y ONBOARDING POR ROL
+     ───────────────────────────────────────────────────────────────────────────
+     Ni un shader ni una geometría cambian: esto es composición y guion. El
+     recorrido deja de ser "las 5 estaciones en orden" y pasa a ser "los módulos
+     que a ESTE rol le tocan", cada uno anclado a la estación que lo aloja.
+
+     IDENTIDAD — limitación real, no pereza: el ticket pide saludar por nombre y
+     rol autenticado, pero esta página es autónoma y NO monta sesión ni cabecera
+     (es su diseño desde FEAT-3D-03). Sin sesión no hay nombre que leer. Así que
+     el rol se ELIGE al entrar, que además es lo que el propio ticket exige para
+     el rol owner ("switch libre de roles"). Si algún día la página llevara
+     sesión, navIdentidad() la usaría y el selector se saltaría solo.
+     ═══════════════════════════════════════════════════════════════════════════ */
+
+  /* Cada módulo declara la estación que lo ALOJA. Los módulos no son nodos: son
+     lo que se cuenta parado en un nodo. Por eso varios comparten estación —la
+     Agenda IA y la captura de leads viven las dos en la 1— y por eso el orden lo
+     manda el rol, no la geometría. */
+  var NAV_ROLES = {
+    artista: {
+      nombre: 'Artista DJ',
+      resumen: 'Perfil, propinas y tu Mac',
+      modulos: [
+        { estacion: 0, titulo: 'Perfil y tarifas en el Talent Selector',
+          guion: 'Empezamos por tu escaparate. Tu perfil es lo que ve el cliente antes de contratarte: tu tarifa, tu especialidad y tus reseñas. Cuanto más completo, menos tienes que negociar por mensaje.' },
+        { estacion: 3, titulo: 'Cobro de propinas con SoundForTips',
+          guion: 'SoundForTips convierte al público en una segunda fuente de ingreso. La gente pide su canción y deja propina desde el móvil, sin efectivo y sin interrumpirte en cabina.' },
+        { estacion: 4, titulo: 'Vincula tu Mac con MDJPRO',
+          guion: 'MDJPRO se descarga a tu ordenador y queda ligado a tu Mac por su número de serie. Eso protege tu licencia: nadie más puede usarla, y tu librería queda ordenada y lista antes de cada evento.' }
+      ]
+    },
+    manager: {
+      nombre: 'Manager / Venue',
+      resumen: 'Talento, contratos y liquidaciones',
+      modulos: [
+        { estacion: 0, titulo: 'Calendario y disponibilidad de talento',
+          guion: 'Ves en un solo sitio qué artistas tienes disponibles y cuándo. Se acabó perseguir por WhatsApp quién puede el sábado.' },
+        { estacion: 1, titulo: 'Gestión de contratos y fechas de sala',
+          guion: 'Cada fecha de tu sala queda con su contrato firmado y versionado detrás. Si algo se discute después, la versión que se firmó está guardada.' },
+        { estacion: 3, titulo: 'Reporte de liquidaciones',
+          guion: 'Al cerrar el evento, el reparto se liquida solo y queda el reporte. Tú ves cuánto entró, cuánto salió y a quién, sin rehacer cuentas a mano.' }
+      ]
+    },
+    vendedor: {
+      nombre: 'Vendedor / Promotor',
+      resumen: 'Leads, agenda IA y comisiones',
+      modulos: [
+        { estacion: 1, titulo: 'Captura de leads y prospección',
+          guion: 'Cada solicitud entra, se clasifica sola y recibe una cotización automática según el tipo de evento. Tú entras cuando ya hay interés, no antes.' },
+        { estacion: 1, titulo: 'Agenda Inteligente IA',
+          guion: 'La Agenda IA vigila los cumpleaños y aniversarios de tus clientes y te avisa antes de la fecha para que propongas el evento. Es prospección que trabaja sola y convierte un cliente de una vez en un cliente que vuelve cada año.' },
+        { estacion: 3, titulo: 'Comisiones por evento',
+          guion: 'Tu comisión se calcula sobre el evento cerrado y se liquida con el resto del reparto. Sabes lo que has ganado sin pedírselo a nadie.' }
+      ]
+    },
+    cliente: {
+      nombre: 'Cliente / Anfitrión',
+      resumen: 'Contratar y pagar seguro',
+      modulos: [
+        { estacion: 0, titulo: 'Selección y contratación de DJs',
+          guion: 'Eliges por estilo, ciudad y disponibilidad, ves reseñas reales y contratas desde ahí mismo. Sin cadenas de correos.' },
+        { estacion: 3, titulo: 'Pagos en custodia y seguridad',
+          guion: 'Tu depósito queda en custodia hasta el evento. El artista sabe que el dinero está, y tú sabes que no se libera hasta que se cumple.' }
+      ]
+    },
+    owner: {
+      nombre: 'Owner (master)',
+      resumen: 'Recorrido 360° de los 5 nodos',
+      modulos: [
+        { estacion: 0, titulo: 'Hub Fénix · red de artistas y ecosistema' },
+        { estacion: 1, titulo: 'CRM y Agenda IA · entrada de negocio' },
+        { estacion: 2, titulo: 'ELIXIS · inteligencia conversacional' },
+        { estacion: 3, titulo: 'Motor financiero · cobros y SoundForTips' },
+        { estacion: 4, titulo: 'MDJPRO · app de escritorio y librerías' }
+      ]
+    }
+  };
+
+  var ORDEN_ROLES = ['artista', 'manager', 'vendedor', 'cliente', 'owner'];
+
+  var op = { rol: null, modulos: [], paso: -1, escribiendo: null, temporizador: 0 };
+
+  function opEl(sel) { return document.querySelector(sel); }
+
+  /* ─── Registro de conversación ──────────────────────────────────────────── */
+
+  function opBurbuja(quien, texto, escribiendo) {
+    var log = opEl('[data-nm3d-log]');
+    if (!log) return null;
+    var b = document.createElement('div');
+    b.className = 'nm3d-burbuja nm3d-burbuja--' + quien + (escribiendo ? ' nm3d-burbuja--escribiendo' : '');
+    var t = document.createElement('span');
+    t.className = 'nm3d-burbuja__quien';
+    t.textContent = quien === 'elixis' ? 'ELIXIS' : 'Tú';
+    var c = document.createElement('span');
+    c.textContent = escribiendo ? '' : texto;
+    b.appendChild(t); b.appendChild(c);
+    log.appendChild(b);
+    log.scrollTop = log.scrollHeight;
+    return c;
+  }
+
+  /* ─── Typewriter sincronizado con la voz ────────────────────────────────── */
+
+  /* Se imprime con los LÍMITES DE PALABRA reales del sintetizador cuando llegan.
+     Pero onboundary no dispara con voces remotas en varios navegadores, así que
+     si en 600 ms no ha llegado ninguno se pasa a ritmo por tiempo. Sin ese plan
+     B, en esos navegadores el panel derecho se quedaría en blanco mientras
+     Elixis habla — el fallo más visible posible en una demo. */
+  function opEscribir(texto) {
+    opCancelarEscritura();
+    var destino = opBurbuja('elixis', texto, true);
+    if (!destino) return;
+    op.escribiendo = { destino: destino, texto: texto, hubBoundary: false };
+
+    var log = opEl('[data-nm3d-log]');
+    var porTiempo = function () {
+      var e = op.escribiendo;
+      if (!e || e.hubBoundary) return;
+      var palabras = texto.split(' ');
+      var i = 0;
+      /* ~165 palabras por minuto es el ritmo de una locución natural. */
+      e.intervalo = setInterval(function () {
+        if (!op.escribiendo) return;
+        i++;
+        destino.textContent = palabras.slice(0, i).join(' ');
+        if (log) log.scrollTop = log.scrollHeight;
+        if (i >= palabras.length) clearInterval(e.intervalo);
+      }, 364);
+    };
+    op.temporizador = setTimeout(porTiempo, 600);
+  }
+
+  function opBoundary(charIndex) {
+    var e = op.escribiendo;
+    if (!e) return;
+    if (!e.hubBoundary) {
+      e.hubBoundary = true;
+      clearTimeout(op.temporizador);
+      if (e.intervalo) clearInterval(e.intervalo);
+    }
+    /* Se corta por el límite REAL que reporta el sintetizador, luego se extiende
+       hasta el fin de la palabra en curso para no dejarla partida a la mitad. */
+    var fin = e.texto.indexOf(' ', charIndex);
+    if (fin < 0) fin = e.texto.length;
+    e.destino.textContent = e.texto.slice(0, fin);
+    var log = opEl('[data-nm3d-log]');
+    if (log) log.scrollTop = log.scrollHeight;
+  }
+
+  function opCerrarEscritura() {
+    var e = op.escribiendo;
+    if (!e) return;
+    clearTimeout(op.temporizador);
+    if (e.intervalo) clearInterval(e.intervalo);
+    /* Al terminar la voz se vuelca el texto ENTERO: si el sintetizador se cortó
+       o el ritmo estimado se quedó atrás, el lector no debe quedarse a medias. */
+    e.destino.textContent = e.texto;
+    if (e.destino.parentNode) e.destino.parentNode.classList.remove('nm3d-burbuja--escribiendo');
+    op.escribiendo = null;
+  }
+
+  function opCancelarEscritura() {
+    if (op.escribiendo) opCerrarEscritura();
+  }
+
+  /* ─── Estado de la consola ──────────────────────────────────────────────── */
+
+  var OP_ROTULO = {
+    volando: 'Volando al módulo…', explicando: 'Explicando…',
+    esperando: '¿Dudas o continuamos? Di «siguiente»',
+    sin_micro: '¿Dudas o continuamos? Pulsa Siguiente',
+    escuchando: '● Escuchando tu consulta…', consultando: 'Consultando a ELIXIS…',
+    apagado: ''
+  };
+
+  function opEstado(e) {
+    var r = opEl('[data-nm3d-consola-estado]'); if (r) r.textContent = OP_ROTULO[e] || '';
+    var p = opEl('[data-nm3d-consola-punto]'); if (p) p.setAttribute('data-estado', e);
+  }
+
+  function opPaso() {
+    var el = opEl('[data-nm3d-paso]');
+    if (el) el.textContent = op.paso >= 0 ? 'Módulo ' + (op.paso + 1) + ' de ' + op.modulos.length : '';
+  }
+
+  /* ─── Selector de rol ───────────────────────────────────────────────────── */
+
+  function opPintarRoles() {
+    var g = opEl('[data-nm3d-roles-rejilla]'); if (!g || g.childNodes.length) return;
+    ORDEN_ROLES.forEach(function (k) {
+      var r = NAV_ROLES[k];
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'nm3d-rol-boton'; b.setAttribute('data-rol', k);
+      var t = document.createElement('b'); t.textContent = r.nombre;
+      var s = document.createElement('span');
+      s.textContent = r.resumen + ' · ' + r.modulos.length + (r.modulos.length === 1 ? ' módulo' : ' módulos');
+      b.appendChild(t); b.appendChild(s);
+      b.addEventListener('click', function () { opElegirRol(k); });
+      g.appendChild(b);
+    });
+  }
+
+  function opElegirRol(k) {
+    var r = NAV_ROLES[k]; if (!r) return;
+    op.rol = k; op.modulos = r.modulos; op.paso = -1;
+    var sel = opEl('[data-nm3d-roles]'); if (sel) sel.hidden = true;
+    var rot = opEl('[data-nm3d-rol]'); if (rot) rot.textContent = r.nombre;
+    document.body.classList.add('nm3d-dividido');
+    var con = opEl('[data-nm3d-consola]'); if (con) con.hidden = false;
+    /* El redimensionado lo dispara el ResizeObserver de abajo, no una llamada
+       de aquí: al añadir .nm3d-dividido el layout aún no se ha recalculado, y
+       medir ahora daría el ancho ANTERIOR. Tampoco vale requestAnimationFrame
+       —no dispara con la pestaña oculta y el framebuffer se quedaría desajustado
+       hasta que alguien mirase—.
+
+       RED DE SEGURIDAD POR TEMPORIZADOR: resulta que el ResizeObserver TAMPOCO
+       basta por sí solo. Sus notificaciones se entregan dentro de los «pasos de
+       renderizado», y el navegador se los salta con el documento oculto — el
+       mismo muro que rAF, solo que más abajo. Un setTimeout no depende del
+       renderizado y sí dispara. En una demo real la página está visible y manda
+       el observador; esto cubre el caso de activar el modo dividido con la
+       pestaña en segundo plano, que es exactamente como se probó. */
+    setTimeout(redimensionar, 0);
+    opBurbuja('elixis', '¡Hola! Soy ELIXIS. Te voy a enseñar la plataforma desde el papel de ' +
+      r.nombre + ', solo los módulos que te tocan. Son ' + r.modulos.length + '. Vamos con el primero.', false);
+    opSiguienteModulo();
+  }
+
+  function opSiguienteModulo() {
+    if (!op.modulos.length) return;
+    op.paso++;
+    if (op.paso >= op.modulos.length) { opFinal(); return; }
+    opPaso();
+    var m = op.modulos[op.paso];
+    navIrAEstacion(m.estacion);
+  }
+
+  function opFinal() {
+    op.paso = op.modulos.length - 1;
+    var cierre = 'Con esto termina tu recorrido. Puedes preguntarme lo que quieras sobre cualquier módulo, o decir «ve a» y el nombre de una zona para volver.';
+    opEscribir(cierre);
+    if (vozDisponible()) window.elixisSpeak(cierre); else { opCerrarEscritura(); navEsperar(); }
+  }
+
+  function opGuionActual() {
+    var m = op.modulos[op.paso];
+    if (!m) return null;
+    /* El guion del módulo manda sobre la narración de la estación: es lo que
+       este ROL necesita oír, no la descripción genérica del nodo. */
+    return m.guion || (ESTACIONES[m.estacion] && ESTACIONES[m.estacion].narracion) || null;
+  }
 
   window.mdjNeuralMatrix3D = {
     stats: function () {
@@ -2618,6 +2927,24 @@
     detenerNavegadorVoz: navDetener,
     alternarNavegadorVoz: navAlternar,
     simularVoz: function (texto) { navProcesar(texto); return nav.estado; },
+    /* FEAT-3D-11 · modo operador. Expuesto para poder verificar el recorrido por
+       rol sin micrófono ni síntesis de voz. */
+    roles: function () {
+      return ORDEN_ROLES.map(function (k) {
+        return { id: k, nombre: NAV_ROLES[k].nombre, modulos: NAV_ROLES[k].modulos.length };
+      });
+    },
+    elegirRol: opElegirRol,
+    estadoOperador: function () {
+      var m = op.modulos[op.paso];
+      return {
+        rol: op.rol, paso: op.paso, total: op.modulos.length,
+        modulo: m ? m.titulo : null, estacion: m ? m.estacion : null,
+        dividido: document.body.classList.contains('nm3d-dividido'),
+        escribiendo: !!op.escribiendo,
+        burbujas: document.querySelectorAll('[data-nm3d-log] .nm3d-burbuja').length
+      };
+    },
     estadoVoz: function () {
       return {
         activo: nav.activo, estado: nav.estado, reconociendo: nav.reconociendo,
