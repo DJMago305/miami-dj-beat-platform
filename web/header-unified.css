@@ -3374,6 +3374,26 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
   max-width: 1600px !important;
 }
 
+/* P2.2 · #mainNav y su .container quedaban con height:0 por DEBAJO de
+   1001px. La única regla que fija su altura (height/min-height/max-height:
+   var(--mdj-header-unified-r2), 72px) vive DENTRO de @media (min-width:
+   1001px) — línea ~347 para .container, ~382 para #mainNav — porque antes
+   del riel estático, mobile tenía su propia altura vía el carrusel
+   (mdj-mainnav-infinite.js). Ese carrusel está apagado GLOBALMENTE, en
+   cualquier ancho (MDJ_DISABLE_MAINNAV_INFINITE=true, sin condición, en
+   mdj-shared-header.js) — el riel es "estático" en TODOS los anchos desde
+   entonces, pero nadie extendió su altura a los anchos que quedaron sin
+   carrusel. .header-nav (el abuelo) sí tiene altura en todos los anchos
+   (regla ajena a este bloque) — .container y #mainNav no. Misma variable,
+   sin @media, para no duplicar el valor en dos sitios ni tocar nada de
+   escritorio (mismos 72px, cero cambio ahí). NO se toca display:grid — el
+   grid ya funciona bien en cualquier ancho (Δx=0px, scroll horizontal
+   correcto); el único vacío era la altura. */
+#mainHeader.header.mdj-header-unified .header-nav .container {
+  min-height: var(--mdj-header-unified-r2) !important;
+  max-height: var(--mdj-header-unified-r2) !important;
+}
+
 /* Selector reforzado (empata la especificidad de .header-nav .container >
    #mainNav.mdj-mainnav-flex.nav.top-nav, la regla max-width:100% activa en
    @media min-width:1001px que le ganaba a esta — verificado en vivo a
@@ -3388,6 +3408,9 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
   justify-content: center !important;
   align-items: center !important;
   max-width: 1600px !important;
+  height: var(--mdj-header-unified-r2) !important;
+  min-height: var(--mdj-header-unified-r2) !important;
+  max-height: var(--mdj-header-unified-r2) !important;
   margin: 0 auto !important;
   box-sizing: border-box !important;
   gap: 0 !important;

@@ -4,71 +4,21 @@
  */
 (function () {
     /**
-     * Operar / configurar / ingresos / admin → sin barra social.
-     * Vender / promocionar / visitantes → barra visible (no listar aquí).
+     * P2.2 · decisión de producto (2026-08-19): interfaz limpia y libre de
+     * distracciones en navegación/catálogo. La barra vive ÚNICAMENTE en
+     * contact.html — whitelist estricta, no blacklist. Antes: visible en
+     * todo el sitio salvo ~13 páginas operativas (dashboard/admin/config).
      */
-    var MDJ_SOCIAL_BAR_PRIVATE_PAGES = [
-        'dj-dashboard.html',
-        'account-settings.html',
-        'account-profile.html',
-        'admin-dashboard.html',
-        'admin.html',
-        'client-portal.html',
-        'client-billing.html',
-        'admin-quick-invoice.html',
-        'manual-invoice-generator.html',
-        'invoice-now.html',
-        'weather-lab.html',
-        'autofill.html',
-        'practical-evaluation.html'
-    ];
-
-    function isDjProfileOperationalTab() {
-        try {
-            var qs = new URLSearchParams(window.location.search || '');
-            var tab = (qs.get('tab') || '').toLowerCase();
-            if (tab === 'flow' || tab === 'sft') return true;
-            var body = document.body;
-            if (body && body.classList.contains('mdj-profile-op-tab')) return true;
-            var flow = document.getElementById('tab-flow');
-            var sft = document.getElementById('tab-sft');
-            if (flow && flow.classList.contains('active')) return true;
-            if (sft && sft.classList.contains('active')) return true;
-            return false;
-        } catch (e) {
-            return false;
-        }
-    }
-
     function mdjSocialBarShouldHide() {
         try {
-            var body = document.body;
-            if (!body) return false;
-            if (body.classList.contains('mdj-account-settings')) return true;
-            if (body.classList.contains('mdj-private-dashboard')) return true;
-            if (body.classList.contains('mdj-from-profile')) return true;
-            /* Perfil DJ completo: contacto en bloque RESERVAR; sin barra lateral en ninguna pestaña. */
-            if (body.classList.contains('dj-profile')) {
-                return true;
-            }
-            var qs = new URLSearchParams(window.location.search || '');
-            var tab = (qs.get('tab') || '').toLowerCase();
-            if (tab === 'flow' || tab === 'sft') return true;
             var file = ((window.location.pathname || '').split('/').pop() || '').toLowerCase();
-            if ((qs.get('mdj_nav') || '').toLowerCase() === 'profile') {
-                if (
-                    file === 'jobs.html' || file === 'shop.html' || file === 'dj-tools.html' ||
-                    file === 'academia.html' || file === 'courses.html' || file === 'dj-knowledge.html'
-                ) return true;
-            }
-            return MDJ_SOCIAL_BAR_PRIVATE_PAGES.indexOf(file) !== -1;
+            return file !== 'contact.html' && file !== 'contact';
         } catch (e) {
-            return false;
+            /* Fallo al detectar la página: por defecto OCULTA — coherente con
+               "libre de distracciones" (antes, con la lógica vieja, el fallback
+               seguro era mostrarla; con whitelist el fallback seguro es ocultarla). */
+            return true;
         }
-    }
-
-    function mdjSocialBarIsPrivateDashboardContext() {
-        return mdjSocialBarShouldHide();
     }
 
     function mdjSocialBarApplyVisibility() {
@@ -312,9 +262,11 @@
 
     function injectMdjSocialBar() {
         if (mdjSocialBarShouldHide()) {
-            try {
-                document.body.classList.add('mdj-private-dashboard');
-            } catch (e2) { /* noop */ }
+            /* P2.2: ya NO se agrega 'mdj-private-dashboard' al body — esa clase
+               también dispara column-gap:2px en el nav para clientes logueados
+               (header-unified.css), pensado para ~13 páginas operativas. Con la
+               whitelist nueva, "ocultar" pasa en ~99% del sitio; heredar ese efecto
+               secundario en todas esas páginas no es parte de este cambio. */
             mdjSocialBarApplyVisibility();
             return;
         }
