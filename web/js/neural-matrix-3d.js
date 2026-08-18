@@ -61,6 +61,7 @@
       pos: [0, 0, 0],         color: [1.00, 0.84, 0.45], hub: true,
       telemetria: 'Orquestando 4 subsistemas · enlace estable',
       slot: 'fenix-en-vuelo',
+      narracion: 'El núcleo de la plataforma. Desde aquí Miami DJ Beat orquesta los cuatro subsistemas del negocio: la captura de clientes, el agente ejecutivo, el motor financiero y la cabina inteligente.',
       hud: { titulo: 'NÚCLEO FÉNIX', lineas: [
         ['MOTOR',      'procedural · aleteo en GPU'],
         ['SUBSISTEMAS','4 enlazados · 8 conductos'],
@@ -70,6 +71,7 @@
       pos: [-9.5, 2.2, -3.5], color: [0.45, 0.85, 1.00], hub: false,
       telemetria: 'Sobres de correo energético en tránsito · termómetro de oportunidad',
       slot: 'paquetes-correo',
+      narracion: 'Captura y gestión de clientes. Cada solicitud entra, se clasifica y recibe una cotización automática según el tipo de evento, sin que nadie tenga que teclearla.',
       hud: { titulo: 'CRM & CONTRATACIONES', lineas: [
         ['FLUJO',      'eventos entrantes en tránsito'],
         ['COTIZACIÓN', 'automática por tipo de evento'],
@@ -79,6 +81,7 @@
       pos: [9.0, 3.4, -2.0],  color: [0.70, 0.55, 1.00], hub: false,
       telemetria: 'Negociación asistida · aprobación humana en el lazo',
       slot: 'avatar-audifonos',
+      narracion: 'Soy Elixis, el agente ejecutivo. Negocio, preparo propuestas y coordino la cabina, pero ninguna decisión sensible se ejecuta sin aprobación humana.',
       hud: { titulo: 'ELIXIS AI CORE', lineas: [
         ['ASISTENTE', 'autónomo · negociación asistida'],
         ['CABINA',    'gestión y turnos'],
@@ -88,6 +91,7 @@
       pos: [7.2, -3.8, 5.5],  color: [0.40, 1.00, 0.70], hub: false,
       telemetria: 'Pulsos de liquidación y contratos · escrow con reparto automático',
       slot: 'contratos',
+      narracion: 'Motor financiero. Los depósitos quedan en custodia hasta el evento y el reparto se liquida solo, con el contrato firmado y versionado detrás.',
       hud: { titulo: 'SMART CONTRACTS & STRIPE', lineas: [
         ['DEPÓSITOS', 'en custodia (escrow)'],
         ['REPARTO',   'automático al cierre'],
@@ -97,6 +101,7 @@
       pos: [-7.8, -3.2, 5.0], color: [1.00, 0.55, 0.45], hub: false,
       telemetria: 'Sonido, luz y clima en vivo · rider por venue',
       slot: 'rider-telemetria',
+      narracion: 'Telemetría de cabina. Sonido, luz y clima se leen en vivo durante el evento, y cada local guarda su propio rider técnico.',
       hud: { titulo: 'BOOTH TELEMETRY', lineas: [
         ['AUDIO',  'monitoreo en vivo'],
         ['SERATO', 'sincronización de cabina'],
@@ -160,6 +165,11 @@
 
   var audioEl = null, ctxAudio = null, analizador = null, datosFrecuencia = null;
   var fuenteMusica = null, fuenteMic = null, micStream = null, micActivo = false;
+  /* Ganancia propia de la música: es la que se agacha cuando se abre el micro.
+     Va en un GainNode y no en audioEl.volume porque las rampas de Web Audio
+     son exactas al sample; con volume habría que animarlas desde un temporizador
+     de JS, que ni suena igual ni cae en el mismo reloj que el audio. */
+  var ganMusica = null, vozActiva = 0, vozHablando = false;
   var pulso = 0, banda = { graves: 0, medios: 0, agudos: 0 }, audioActivo = false;
 
   var stats = {
@@ -928,8 +938,16 @@
     try {
       if (!fuenteMusica) {
         fuenteMusica = ctxAudio.createMediaElementSource(audioEl);
-        fuenteMusica.connect(analizador);          // para medir
-        fuenteMusica.connect(ctxAudio.destination); // para oírse
+        ganMusica = ctxAudio.createGain();
+        ganMusica.gain.value = 1;
+        fuenteMusica.connect(ganMusica);
+        /* La ganancia alimenta las DOS ramas. Al agacharla, la música deja de
+           oírse Y deja de medirse a la vez: durante el modo micrófono el pulso
+           lo gobierna solo la voz, que es lo que se quiere. Si la rama del
+           analizador no pasara por aquí, el Fénix seguiría latiendo con una
+           música que nadie oye. */
+        ganMusica.connect(analizador);
+        ganMusica.connect(ctxAudio.destination);
       }
     } catch (e) {
       return Promise.resolve('no se pudo enrutar la pista');
@@ -968,6 +986,7 @@
       return ctxAudio.resume();
     }).then(function () {
       micActivo = true;
+      agacharMusica(true);          // fuera la música antes de la primera sílaba
       if (contenedor) contenedor.classList.add('nm3d--con-mic');
       actualizarHud();
       return 'micrófono en marcha';
@@ -979,8 +998,25 @@
     });
   }
 
+  /* DUCKING. 0,1 s para bajar y 0,5 s para subir: la bajada tiene que ganarle
+     al primer sílaba del ponente —si no, el altavoz ya está sonando cuando el
+     micro abre y hay realimentación—, y la subida tiene que ser lo bastante
+     lenta para no sonar a interruptor. Asimetría deliberada. */
+  function agacharMusica(agachar) {
+    if (!ganMusica || !ctxAudio) return;
+    try {
+      var ahora = ctxAudio.currentTime;
+      ganMusica.gain.cancelScheduledValues(ahora);
+      /* Se ancla el valor actual antes de la rampa: sin esto, una rampa que
+         empieza a mitad de otra salta al valor de partida de la anterior. */
+      ganMusica.gain.setValueAtTime(ganMusica.gain.value, ahora);
+      ganMusica.gain.linearRampToValueAtTime(agachar ? 0.0 : 1.0, ahora + (agachar ? 0.1 : 0.5));
+    } catch (e) { /* contexto cerrado */ }
+  }
+
   function desactivarMicrofono() {
     micActivo = false;
+    agacharMusica(false);           // vuelve la música, sin sonar a interruptor
     try { if (fuenteMic) fuenteMic.disconnect(); } catch (e) { /* nada */ }
     /* Parar las pistas apaga el indicador de grabación del sistema. Dejarlas
        vivas mantendría el punto rojo del navegador durante toda la ponencia. */
@@ -1034,6 +1070,54 @@
     var pesoMedios = micActivo ? 0.95 : 0.35;
     var objetivo = Math.min(1.4, banda.graves * 1.9 + banda.medios * pesoMedios);
     pulso += (objetivo - pulso) * (objetivo > pulso ? 0.5 : 0.06);
+  }
+
+  /* ─── VOZ DE ELIXIS ──────────────────────────────────────────────────────
+     El motor vive en web/js/elixis-voice-engine.js (Web Speech API) y expone
+     elixisSpeak / elixisStopSpeaking más los eventos elixis:speak:start y
+     elixis:speak:end. Aquí solo se dispara y se escucha: la síntesis, la
+     elección de voz y el rescate de los fallos de Chrome son suyos.
+
+     Se comprueba en cada llamada y no una sola vez al arrancar, porque el
+     script podría cargar después que este si alguien reordena las etiquetas. */
+
+  function vozDisponible() {
+    return typeof window.elixisSpeak === 'function';
+  }
+
+  function narrarEstacion(i) {
+    if (!vozDisponible()) return 'motor de voz no disponible';
+    var e = ESTACIONES[i];
+    if (!e || !e.narracion) return 'sin narración para esa estación';
+    window.elixisSpeak(e.narracion);
+    return 'narrando';
+  }
+
+  function alternarNarracion() {
+    if (!vozDisponible()) return;
+    /* Si ya está hablando, la tecla la calla. Un botón de explicar que no sabe
+       callarse obliga a esperar la locución entera en mitad de una ponencia. */
+    if (vozHablando) { window.elixisStopSpeaking(); return; }
+    if (nodoEnfocado < 0) return;
+    narrarEstacion(nodoEnfocado);
+  }
+
+  function instalarEscuchaVoz() {
+    window.addEventListener('elixis:speak:start', function () {
+      vozHablando = true;
+      actualizarBotonVoz();
+    });
+    window.addEventListener('elixis:speak:end', function () {
+      vozHablando = false;
+      actualizarBotonVoz();
+    });
+  }
+
+  function actualizarBotonVoz() {
+    var b = document.querySelector('[data-nm3d-explicar]');
+    if (!b) return;
+    b.textContent = vozHablando ? '⏹ DETENER' : '🔊 EXPLICAR';
+    b.setAttribute('aria-pressed', vozHablando ? 'true' : 'false');
   }
 
   /* ─── CÁMARA: se declara el objetivo, nunca se asigna la posición ─────── */
@@ -1187,7 +1271,9 @@
       gl.uniform2f(uHolo.centro, -0.60, 0.34);
       gl.uniform2f(uHolo.tam, 0.28, 0.34);
       gl.uniform1f(uHolo.tiempo, t);
-      gl.uniform1f(uHolo.pulso, pulso);
+      /* La voz suma al pulso del audio: si ELIXIS habla mientras suena la
+         música, los anillos responden a las dos cosas. */
+      gl.uniform1f(uHolo.pulso, Math.min(1.6, pulso + vozActiva * 0.85));
       gl.uniform1f(uHolo.visible, visHolograma);
       gl.uniform1f(uHolo.aspecto, 0.28 * aspecto / 0.34);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -1273,6 +1359,11 @@
          misma suavidad que la cámara. 3.2 ≈ un cuarto de segundo. */
       var objetivoHolo = (nodoEnfocado >= 0) ? 1 : 0;
       visHolograma += (objetivoHolo - visHolograma) * Math.min(1, dt * 3.2);
+      /* Los anillos reaccionan a la síntesis además de al audio. Se suaviza en
+         vez de conmutar: al terminar la frase la onda se apaga sola en lugar de
+         cortarse en seco, que es lo que delata a un interruptor. */
+      var objetivoVoz = vozHablando ? 1 : 0;
+      vozActiva += (objetivoVoz - vozActiva) * Math.min(1, dt * 5.0);
       dibujarEscena(t);
       colocarEtiquetas();
     } catch (e) {
@@ -1331,9 +1422,14 @@
   /* ─── CONTROLES DE ESCENARIO ──────────────────────────────────────────── */
 
   function irANodo(i) {
+    var previo = nodoEnfocado;
     nodoEnfocado = ((i % ESTACIONES.length) + ESTACIONES.length) % ESTACIONES.length;
     orbita = 0;
     actualizarHud();
+    /* Solo al CAMBIAR de estación. Repetir la misma tecla no relanza la
+       locución: en escena se pulsa de más, y volver a empezar la frase cada
+       vez sería peor que no narrar. */
+    if (nodoEnfocado !== previo) narrarEstacion(nodoEnfocado);
   }
 
   function siguienteNodo(paso) {
@@ -1341,7 +1437,13 @@
     irANodo(nodoEnfocado + paso);
   }
 
-  function volverAlRecorrido() { nodoEnfocado = -1; actualizarHud(); }
+  function volverAlRecorrido() {
+    nodoEnfocado = -1;
+    /* Se calla al salir del foco: la narración pertenece a la estación, y
+       seguir hablando sobre el vuelo orbital no tendría sentido. */
+    if (vozDisponible() && vozHablando) window.elixisStopSpeaking();
+    actualizarHud();
+  }
 
   function alternarPausaRecorrido() {
     recorrido.activo = !recorrido.activo;
@@ -1388,6 +1490,7 @@
         irANodo(parseInt(k, 10) - 1);
         return;
       }
+      if (k === 'v' || k === 'V') { alternarNarracion(); return; }
       if (k === 'm' || k === 'M') { alternarMicrofono(); return; }
       if (k === 'r' || k === 'R') { alternarRotacionLibre(); return; }
       if (k === 'f' || k === 'F') { alternarPantallaCompleta(); return; }
@@ -1415,6 +1518,9 @@
         actualizarHud();
       });
     }
+
+    var btnExplicar = document.querySelector('[data-nm3d-explicar]');
+    if (btnExplicar) btnExplicar.addEventListener('click', alternarNarracion);
 
     var btnAudio = document.querySelector('[data-nm3d-audio-toggle]');
     if (btnAudio) {
@@ -1535,6 +1641,7 @@
     redimensionar();
     construirEtiquetas();
     instalarControles();
+    instalarEscuchaVoz();
 
     /* La cámara nace ya sobre el primer waypoint: si naciera lejos, el primer
        cuadro sería un barrido largo que parece un fallo de carga. */
@@ -1564,6 +1671,8 @@
       c.estaciones = ESTACIONES.length; c.nodoEnfocado = nodoEnfocado;
       c.recorridoActivo = recorrido.activo; c.rotacionLibre = rotacionLibre;
     c.visHolograma = +visHolograma.toFixed(3);
+    c.vozHablando = vozHablando; c.vozActiva = +vozActiva.toFixed(3);
+    c.vozDisponible = vozDisponible();
       c.camara = { x: +cam.x.toFixed(3), y: +cam.y.toFixed(3), z: +cam.z.toFixed(3) };
       return c;
     },
@@ -1580,6 +1689,8 @@
     volverAlRecorrido: volverAlRecorrido,
     alternarPausaRecorrido: alternarPausaRecorrido,
     alternarRotacionLibre: alternarRotacionLibre,
+    narrarEstacion: narrarEstacion,
+    alternarNarracion: alternarNarracion,
     estaciones: function () {
       return ESTACIONES.map(function (e) {
         /* ocupado: el núcleo lo llena el Fénix procedural y ELIXIS sus anillos

@@ -113,7 +113,10 @@ body.nm3d-pagina {
 
 .nm3d-keynote {
   position: fixed;
-  left: max(2.5rem, env(safe-area-inset-left, 0px));
+  /* 24px pegado al borde: el bloque de keynote —con la insignia MIC ACTIVE y
+     la barra de pulso dentro— se retira del campo visual central, que es
+     donde vive la escena. El max() conserva el margen en pantallas con muesca. */
+  left: max(24px, env(safe-area-inset-left, 0px));
   bottom: max(2.5rem, env(safe-area-inset-bottom, 0px));
   z-index: 6;
   max-width: min(46rem, 60vw);
@@ -378,7 +381,7 @@ body.nm3d-depurar .nm3d-tecnico { display: grid; }
    por segundo con un lienzo WebGL a pantalla completa al lado. */
 .nm3d-tarjeta {
   position: fixed;
-  left: max(2.5rem, env(safe-area-inset-left, 0px));
+  left: max(24px, env(safe-area-inset-left, 0px));
   /* 64 % y no 50 %: centrada chocaba con el holograma, que ocupa la mitad
      alta de la misma banda. Arriba la figura, aquí los datos, y debajo queda
      libre el HUD de keynote. */
@@ -445,3 +448,29 @@ body.nm3d-depurar .nm3d-tecnico { display: grid; }
   /* En pantalla estrecha no hay 40 % que reservar: la tarjeta estorbaría. */
   .nm3d-tarjeta { display: none; }
 }
+
+/* ─── FEAT-3D-07 · botón de narración ────────────────────────────────────── */
+
+.nm3d-explicar {
+  margin-top: 0.9rem;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--nm3d-neon);
+  border-radius: 999px;
+  background: rgba(115, 217, 255, 0.10);
+  color: var(--nm3d-neon);
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  /* Solo transiciona el color: el fondo y el borde cambian de golpe para que
+     el estado se lea al instante desde el escenario. */
+  transition: color 120ms ease;
+}
+
+.nm3d-explicar[aria-pressed='true'] {
+  border-color: var(--nm3d-acento);
+  background: rgba(197, 160, 89, 0.14);
+  color: var(--nm3d-acento);
+}
+
+.nm3d-explicar:hover { color: var(--nm3d-tinta); }
