@@ -49,11 +49,6 @@
      banda luminosa que se come el encuadre. */
   var RADIO_TUBO = 0.038;
   var PARTICULAS = 700;
-  /* El Fénix vuelve al núcleo: es la matrix, y una imagen plana no puede
-     sostener el centro de la escena. */
-  var ESCALA_FENIX = 0.58;
-  var ENVERGADURA = 3.1;          // media ala, ANTES de aplicar ESCALA_FENIX
-  var SEGMENTOS_ALA = 10;         // pasos a lo largo del ala: manda la suavidad del aleteo
   /* El nodo del núcleo mide 1.25 de radio; un Fénix de 6 unidades de punta a
      punta lo tapaba a él y a media escena. A 0.58 el ave enmarca el núcleo en
      vez de sustituirlo, que es lo que se le pide a un emblema. */
@@ -165,8 +160,7 @@
   /* Visibilidad del holograma: 0 oculto, 1 presente. No es un booleano porque
      la aparición y el fundido tienen que ser continuos como todo lo demás. */
   var visHolograma = 0;
-  var progFenix = null, bufFenix = null, conteoVerticesFenix = 0;
-  var aFenix = {}, uFenix = {};
+  var progLogo = null, texLogo = null, texLogoLista = false, aLogo = {}, uLogo = {};
   var progHolo = null, bufHolo = null, aHolo = {}, uHolo = {};
 
   var audioEl = null, ctxAudio = null, analizador = null, datosFrecuencia = null;
@@ -291,101 +285,6 @@
       var l = Math.sqrt(p[0]*p[0] + p[2]*p[2]) || 1;
       WAYPOINTS.push([ p[0] + (p[0]/l)*5.0, p[1] + 2.6, p[2] + (p[2]/l)*5.0 ]);
     }
-  }
-
-  /* ─── HUB FÉNIX PROCEDURAL ────────────────────────────────────────────────
-     Malla vectorial simétrica generada en el arranque. No hay modelo externo
-     ni textura: son triángulos colocados a mano y un shader que los enciende.
-
-     Cada vértice lleva, además de su posición:
-       · parte  0 cuerpo · 1 ala · 2 cresta · 3 cola
-       · tramo  0 en el eje del cuerpo → 1 en la punta. Gobierna a la vez el
-                degradado dorado→cian, la amplitud del aleteo y la respuesta
-                al pulso. Un solo número para las tres cosas: así el brillo,
-                el movimiento y el latido no pueden desincronizarse.
-       · lado   -1 izquierda · +1 derecha (el aleteo es simétrico)
-
-     El aleteo y el latido viven en el VERTEX SHADER, no en JS: mover 900
-     vértices por cuadro desde la CPU costaría más que todo el resto junto. */
-
-  function empujarTri(v, a, b, c) {
-    for (var i = 0; i < 3; i++) {
-      var t = i === 0 ? a : (i === 1 ? b : c);
-      v.push(t[0], t[1], t[2], t[3], t[4], t[5]);
-    }
-  }
-
-  function construirFenix() {
-    var v = [];
-
-    /* CUERPO — huso vertical. El pecho (tramo bajo) es lo que late con el
-       bombo, así que se subdivide más que la cola. */
-    var cuerpo = [
-      [0.00,  1.55], [0.30, 1.05], [0.42, 0.45], [0.38, -0.20],
-      [0.26, -0.85], [0.10, -1.45], [0.00, -1.80]
-    ];
-    for (var i = 0; i < cuerpo.length - 1; i++) {
-      var y0 = cuerpo[i][1], r0 = cuerpo[i][0];
-      var y1 = cuerpo[i+1][1], r1 = cuerpo[i+1][0];
-      for (var lado = -1; lado <= 1; lado += 2) {
-        var A = [0, y0, 0, 0, 0.05, lado];
-        var B = [r0*lado, y0, 0.06, 0, 0.30, lado];
-        var C = [r1*lado, y1, 0.06, 0, 0.30, lado];
-        var D = [0, y1, 0, 0, 0.05, lado];
-        empujarTri(v, A, B, C);
-        empujarTri(v, A, C, D);
-      }
-    }
-
-    /* ALAS — se abren desde el hombro y barren hacia atrás. Dos filas
-       (borde de ataque y de salida) unidas en tiras. */
-    for (var lado2 = -1; lado2 <= 1; lado2 += 2) {
-      for (var seg = 0; seg < SEGMENTOS_ALA; seg++) {
-        var u0 = seg / SEGMENTOS_ALA, u1 = (seg + 1) / SEGMENTOS_ALA;
-        var perfil = function (u) {
-          var x = lado2 * ENVERGADURA * Math.pow(u, 0.82);
-          var yAtaque = 0.72 - u * 0.55 - Math.pow(u, 3) * 0.55;
-          var cuerda = 0.95 * (1 - Math.pow(u, 1.7)) + 0.10;
-          var z = -u * 0.85;                     // barrido hacia atrás
-          return { x: x, ya: yAtaque, yc: yAtaque - cuerda, z: z };
-        };
-        var a0 = perfil(u0), a1 = perfil(u1);
-        var P0 = [a0.x, a0.ya, a0.z, 1, u0, lado2];
-        var P1 = [a1.x, a1.ya, a1.z, 1, u1, lado2];
-        var P2 = [a1.x, a1.yc, a1.z, 1, u1, lado2];
-        var P3 = [a0.x, a0.yc, a0.z, 1, u0, lado2];
-        empujarTri(v, P0, P1, P2);
-        empujarTri(v, P0, P2, P3);
-      }
-    }
-
-    /* CRESTA — tres púas sobre la cabeza. */
-    for (var c = 0; c < 3; c++) {
-      var inc = (c - 1) * 0.26;
-      var alto = 2.15 - Math.abs(c - 1) * 0.32;
-      empujarTri(v,
-        [inc - 0.11, 1.42, 0, 2, 0.35, c === 0 ? -1 : 1],
-        [inc + 0.11, 1.42, 0, 2, 0.35, c === 0 ? -1 : 1],
-        [inc + inc * 0.5, alto, -0.05, 2, 1.0, c === 0 ? -1 : 1]);
-    }
-
-    /* COLA — tres serpentinas que caen del cuerpo. */
-    for (var k = 0; k < 3; k++) {
-      var desp = (k - 1) * 0.30, largo = 2.5 - Math.abs(k - 1) * 0.7;
-      var lc = k === 0 ? -1 : 1;
-      empujarTri(v,
-        [-0.13 + desp, -1.55, 0, 3, 0.2, lc],
-        [ 0.13 + desp, -1.55, 0, 3, 0.2, lc],
-        [ desp * 1.9,  -1.55 - largo, -0.18, 3, 1.0, lc]);
-    }
-
-    /* La escala se aplica aquí y no en el shader para que las puntas de ala
-       que las chispas usan como origen coincidan con las de verdad. */
-    for (var q = 0; q < v.length; q += 6) {
-      v[q] *= ESCALA_FENIX; v[q+1] *= ESCALA_FENIX; v[q+2] *= ESCALA_FENIX;
-    }
-    conteoVerticesFenix = v.length / 6;
-    return new Float32Array(v);
   }
 
   /* ─── Conductos (una sola vez, fundidos, indexados) ───────────────────── */
@@ -602,6 +501,18 @@
     '  float nucleo = smoothstep(0.55, 0.0, d);',
     '  float halo = smoothstep(1.0, 0.0, d) * 0.45;',
     '  float a = (nucleo + halo) * vIntensidad;',
+    /* EL NÚCLEO ES UN ANILLO, NO UN ORBE. La esfera central llevaba su núcleo
+       relleno igual que las demás, y con el emblema encima el resplandor lo
+       lavaba por el centro justo donde está el ave. Aquí la energía se calcula
+       por RADIO: se apaga hacia dentro y solo vive en el perímetro, dejando el
+       centro transparente para que el logo se lea limpio. */
+    '  if (vIdx < 0.5) {',
+    '    float aro = 1.0 - smoothstep(0.055, 0.30, abs(d - 0.80));',
+    '    float centro = smoothstep(0.30, 0.78, d);',
+    '    a = (aro * 0.85 + halo * 0.30) * vIntensidad * centro;',
+    '    gl_FragColor = vec4(vColor * (0.75 + aro * 0.6), a);',
+    '    return;',
+    '  }',
     /* SLOT DE ELIXIS: anillos de onda sonora saliendo de los audífonos. Se
        resuelven aquí y no con geometría nueva — son un seno sobre la distancia
        al centro, así que la estación sigue costando lo mismo y no añade ni un
@@ -664,61 +575,47 @@
     '}'
   ].join('\n');
 
-  /* ─── Shaders del Fénix ───────────────────────────────────────────────── */
+  /* ─── LOGO OFICIAL EN EL NÚCLEO ──────────────────────────────────────────
+     Sustituye a la malla procedural del Fénix. Se pierde el aleteo y el
+     plasma, y se gana la marca de verdad: en un keynote ante directores de
+     venue, el emblema real pesa más que una animación bonita.
 
-  var VERT_FENIX = [
+     Se usa fenix-emblem-160.png (145×160 RGBA, 48 KB) por decisión del PO:
+     entra al instante y a la escala en que se dibuja no se distingue del de
+     1920×1920, que pesa 3 MB. Descartados por inservibles mdjpro-fenix-gold.png
+     y mdjpro-cdj-gold.png: son color type 0x02 —RGB SIN ALFA— y su damero está
+     rasterizado dentro de la imagen, así que traerían un cuadro opaco. */
+
+  var VERT_LOGO = [
     'precision mediump float;',
-    'attribute vec3 aPos; attribute float aParte; attribute float aTramo; attribute float aLado;',
-    'uniform mat4 uProy; uniform mat4 uVista; uniform float uTiempo; uniform float uPulso;',
-    'varying float vTramo; varying float vParte; varying float vFuego;',
+    'attribute vec2 aQuad;',
+    'uniform mat4 uProy; uniform mat4 uVista;',
+    'uniform vec3 uPos; uniform float uTam; uniform float uTiempo; uniform float uPulso;',
+    'varying vec2 vUV;',
     'void main(){',
-    '  vec3 p = aPos;',
-    /* ALETEO PARAMÉTRICO. La amplitud crece con el cubo del tramo: el hombro
-       casi no se mueve y la punta barre — como bate un ala de verdad. El
-       desfase por tramo hace que la onda RECORRA el ala en vez de subirla y
-       bajarla en bloque, que es lo que delata a una animación barata. */
-    '  float bate = sin(uTiempo * 1.9 - aTramo * 2.1);',
-    '  float amp = pow(aTramo, 3.0);',
-    '  if (aParte > 0.5 && aParte < 1.5) {',
-    '    p.y += bate * amp * 1.15;',
-    '    p.z += cos(uTiempo * 1.9 - aTramo * 2.1) * amp * 0.28;',
-    '    p.x *= 1.0 - amp * 0.10 * abs(bate);',
-    '  }',
-    /* La cola ondea con retardo respecto a las alas: va detrás, no a la vez. */
-    '  if (aParte > 2.5) {',
-    '    p.x += sin(uTiempo * 1.5 - aTramo * 3.0) * aTramo * 0.42;',
-    '    p.z += cos(uTiempo * 1.2 - aTramo * 2.0) * aTramo * 0.22;',
-    '  }',
-    /* REACTIVIDAD uPulso: el pecho se expande con el bombo y las alas lo
-       acompañan a la mitad, para que el latido salga del centro hacia fuera. */
-    '  float pecho = (aParte < 0.5) ? 1.0 : 0.45;',
-    '  p *= 1.0 + uPulso * 0.16 * pecho;',
-    '  vTramo = aTramo; vParte = aParte;',
-    /* Turbulencia de plasma: dos senos cruzados bastan. Una textura de ruido
-       costaría una lectura por fragmento y aquí no se notaría. */
-    '  vFuego = sin(uTiempo * 3.1 + aTramo * 7.0 + aLado * 1.7) * 0.5 + 0.5;',
-    '  gl_Position = uProy * uVista * vec4(p, 1.0);',
+    '  vec4 pv = uVista * vec4(uPos, 1.0);',
+    /* Respiración senoidal + latido del audio. El billboard se expande en
+       espacio de VISTA, así que encara a la cámara sin matriz propia. */
+    '  float resp = 1.0 + sin(uTiempo * 0.9) * 0.05 + uPulso * 0.16;',
+    '  pv.xy += aQuad * uTam * resp;',
+    '  vUV = aQuad * 0.5 + 0.5;',
+    '  gl_Position = uProy * pv;',
     '}'
   ].join('\n');
 
-  var FRAG_FENIX = [
+  var FRAG_LOGO = [
     'precision mediump float;',
-    'uniform float uPulso;',
-    'varying float vTramo; varying float vParte; varying float vFuego;',
+    'uniform sampler2D uTex; uniform float uTiempo; uniform float uPulso;',
+    'varying vec2 vUV;',
     'void main(){',
-    /* #FFD700 en el cuerpo → cian en las puntas, con el fuego moviendo el
-       punto de mezcla para que el degradado respire en vez de quedarse fijo. */
-    '  vec3 oro  = vec3(1.0, 0.843, 0.0);',
-    '  vec3 cian = vec3(0.30, 0.95, 1.0);',
-    '  float m = clamp(vTramo * 0.9 + vFuego * 0.22 - 0.06, 0.0, 1.0);',
-    '  vec3 c = mix(oro, cian, m);',
-    '  float brillo = (0.55 + vFuego * 0.55) * (1.0 + uPulso * 0.9);',
-    /* Las puntas se desvanecen: el ala termina en llama, no en un borde. */
-    /* 0.40 y no 0.75: con mezcla aditiva y sin prueba de profundidad, una
-       superficie grande a alfa media se vuelve una cinta sólida que tapa las
-       estaciones. Aquí el ave se lee por su silueta encendida. */
-    '  float alfa = (0.40 - vTramo * 0.26) * (0.6 + vFuego * 0.5);',
-    '  gl_FragColor = vec4(c * brillo, clamp(alfa, 0.0, 1.0));',
+    /* La V se invierte: las imágenes llegan con el origen arriba y WebGL lo
+       quiere abajo. Sin esto el emblema sale del revés. */
+    '  vec4 t = texture2D(uTex, vec2(vUV.x, 1.0 - vUV.y));',
+    '  if (t.a < 0.02) discard;',
+    '  float halo = 0.85 + sin(uTiempo * 0.9) * 0.10 + uPulso * 0.45;',
+    /* Se multiplica el alfa por el color y no se toca el matiz: el dorado del
+       emblema es el de la marca y no lo decide este shader. */
+    '  gl_FragColor = vec4(t.rgb * halo, t.a);',
     '}'
   ].join('\n');
 
@@ -913,18 +810,16 @@
     gl.bindBuffer(gl.ARRAY_BUFFER, bufParticulas);
     gl.bufferData(gl.ARRAY_BUFFER, construirParticulas(), gl.STATIC_DRAW);
 
-    progFenix = enlazar(VERT_FENIX, FRAG_FENIX);
-    aFenix.pos = gl.getAttribLocation(progFenix, 'aPos');
-    aFenix.parte = gl.getAttribLocation(progFenix, 'aParte');
-    aFenix.tramo = gl.getAttribLocation(progFenix, 'aTramo');
-    aFenix.lado = gl.getAttribLocation(progFenix, 'aLado');
-    uFenix.proy = gl.getUniformLocation(progFenix, 'uProy');
-    uFenix.vista = gl.getUniformLocation(progFenix, 'uVista');
-    uFenix.tiempo = gl.getUniformLocation(progFenix, 'uTiempo');
-    uFenix.pulso = gl.getUniformLocation(progFenix, 'uPulso');
-    bufFenix = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufFenix);
-    gl.bufferData(gl.ARRAY_BUFFER, construirFenix(), gl.STATIC_DRAW);
+    progLogo = enlazar(VERT_LOGO, FRAG_LOGO);
+    aLogo.quad = gl.getAttribLocation(progLogo, 'aQuad');
+    uLogo.proy = gl.getUniformLocation(progLogo, 'uProy');
+    uLogo.vista = gl.getUniformLocation(progLogo, 'uVista');
+    uLogo.pos = gl.getUniformLocation(progLogo, 'uPos');
+    uLogo.tam = gl.getUniformLocation(progLogo, 'uTam');
+    uLogo.tiempo = gl.getUniformLocation(progLogo, 'uTiempo');
+    uLogo.pulso = gl.getUniformLocation(progLogo, 'uPulso');
+    uLogo.tex = gl.getUniformLocation(progLogo, 'uTex');
+    cargarTexturaLogo();
 
     progHolo = enlazar(VERT_HOLO, FRAG_HOLO);
     aHolo.quad = gl.getAttribLocation(progHolo, 'aQuad');
@@ -941,21 +836,53 @@
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
     gl.disable(gl.DEPTH_TEST);   // aditivo: el orden no importa y evita ordenar
 
-    stats.vertices = conteoVerticesTubos + conteoVerticesFenix;
+    stats.vertices = conteoVerticesTubos;
     stats.instancias = ESTACIONES.length + PARTICULAS;
+  }
+
+  /* La textura se sube cuando la imagen llega, no antes: el motor arranca sin
+     ella y el núcleo simplemente no dibuja su emblema durante esos milisegundos.
+     Bloquear el arranque por una imagen sería cambiar un fallo visual pequeño
+     por una pantalla negra. */
+  function cargarTexturaLogo() {
+    texLogo = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texLogo);
+    /* Píxel transparente de relleno: si se dibujara antes de tener la imagen,
+       no pinta nada en vez de basura. */
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,0]));
+
+    var img = new Image();
+    img.onload = function () {
+      try {
+        gl.bindTexture(gl.TEXTURE_2D, texLogo);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+        /* 145×160 no es potencia de dos. En WebGL1 eso obliga a CLAMP_TO_EDGE
+           y a nada de mipmaps, o la textura sale en negro sin avisar. Se fija
+           igual en WebGL2 —donde no haría falta— para que el mismo código
+           valga en los dos niveles. */
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        texLogoLista = true;
+      } catch (e) { texLogoLista = false; }
+    };
+    img.onerror = function () { texLogoLista = false; };
+    img.src = './assets/branding/fenix-emblem-160.png';
   }
 
   function liberarEscena() {
     if (!gl) return;
     try {
-      [bufTubos, bufIndices, bufQuad, bufNodos, bufParticulas, bufFenix].forEach(function (b) { if (b) gl.deleteBuffer(b); });
+      [bufTubos, bufIndices, bufQuad, bufNodos, bufParticulas].forEach(function (b) { if (b) gl.deleteBuffer(b); });
       if (progTubos) gl.deleteProgram(progTubos);
       if (progInstancias) gl.deleteProgram(progInstancias);
-      if (progFenix) gl.deleteProgram(progFenix);
+      if (progLogo) gl.deleteProgram(progLogo);
+      if (texLogo) gl.deleteTexture(texLogo);
       if (progHolo) gl.deleteProgram(progHolo);
     } catch (e) { /* contexto ya muerto */ }
     bufTubos = bufIndices = bufQuad = bufNodos = bufParticulas = progTubos = progInstancias = null;
-    bufFenix = null; progFenix = null;
+    progLogo = null; texLogo = null; texLogoLista = false;
     progHolo = null; bufHolo = null;
   }
 
@@ -1304,23 +1231,29 @@
     dibujarLote(bufParticulas, PARTICULAS, -1);
     dibujarLote(bufNodos, ESTACIONES.length, nodoEnfocado);
 
-    /* 4 · HUB FÉNIX — malla estática; el aleteo y el latido viven en el
-       vertex shader, así que la CPU no toca un solo vértice. */
-    gl.useProgram(progFenix);
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufFenix);
-    var zf = 6*4;
-    gl.enableVertexAttribArray(aFenix.pos);   gl.vertexAttribPointer(aFenix.pos, 3, gl.FLOAT, false, zf, 0);
-    gl.enableVertexAttribArray(aFenix.parte); gl.vertexAttribPointer(aFenix.parte, 1, gl.FLOAT, false, zf, 12);
-    gl.enableVertexAttribArray(aFenix.tramo); gl.vertexAttribPointer(aFenix.tramo, 1, gl.FLOAT, false, zf, 16);
-    gl.enableVertexAttribArray(aFenix.lado);  gl.vertexAttribPointer(aFenix.lado, 1, gl.FLOAT, false, zf, 20);
-    fijarDivisor(aFenix.pos, 0); fijarDivisor(aFenix.parte, 0);
-    fijarDivisor(aFenix.tramo, 0); fijarDivisor(aFenix.lado, 0);
-    gl.uniformMatrix4fv(uFenix.proy, false, _proy);
-    gl.uniformMatrix4fv(uFenix.vista, false, _vista);
-    gl.uniform1f(uFenix.tiempo, t);
-    gl.uniform1f(uFenix.pulso, pulso);
-    gl.drawArrays(gl.TRIANGLES, 0, conteoVerticesFenix);
-    stats.llamadasDibujo++;
+
+    /* 4 · EMBLEMA DEL NÚCLEO. Sustituye a la malla procedural del Fénix: un
+       billboard con el PNG oficial, flotando en el corazón de la esfera
+       central con halo aditivo y respiración senoidal. Solo se dibuja cuando
+       la textura ya llegó. */
+    if (texLogoLista) {
+      gl.useProgram(progLogo);
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufQuad);
+      gl.enableVertexAttribArray(aLogo.quad);
+      gl.vertexAttribPointer(aLogo.quad, 2, gl.FLOAT, false, 0, 0);
+      fijarDivisor(aLogo.quad, 0);
+      gl.uniformMatrix4fv(uLogo.proy, false, _proy);
+      gl.uniformMatrix4fv(uLogo.vista, false, _vista);
+      gl.uniform3f(uLogo.pos, ESTACIONES[0].pos[0], ESTACIONES[0].pos[1], ESTACIONES[0].pos[2]);
+      gl.uniform1f(uLogo.tam, 1.35);
+      gl.uniform1f(uLogo.tiempo, t);
+      gl.uniform1f(uLogo.pulso, pulso);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, texLogo);
+      gl.uniform1i(uLogo.tex, 0);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      stats.llamadasDibujo++;
+    }
 
     /* 5 · HOLOGRAMA DE ELIXIS. Se omite entero cuando está oculto: sin foco no
        se paga ni una llamada ni un fragmento. */
