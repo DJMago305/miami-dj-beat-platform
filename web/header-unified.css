@@ -3491,3 +3491,193 @@ body #mainHeader.header.mdj-header-unified
   width: 100% !important;
   min-width: 0 !important;
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   P0 · 2026-08-18 — RESPONSIVE: en ≤1000px NO quedaba navegación alguna.
+   Medido en 375×812 sobre origin/main, antes de este bloque:
+     · .header-nav → display:block, alto 1px, overflow-y:hidden
+       → 0 de 9 pestañas dentro de la banda.
+     · .mobile-menu-btn → las tres barras a 0px de alto: INVISIBLE.
+     · .header-top .container → scrollWidth 843px en 375px.
+     · la hamburguesa caía en x=374..404 (fuera) y el carrito en x=388..498
+       (fuera entero). .header-top recorta con overflow-x:hidden.
+   Resultado para el usuario de móvil: ni riel, ni hamburguesa, ni carrito.
+
+   TRES causas independientes:
+
+   1) LA BANDA FANTASMA. styles.css la oculta en móvil (@media ≤1000px →
+      .header-nav{display:none} + :root{--header-nav-band:0px}), pero este
+      archivo la resucita con «.header-nav{display:block !important}» SIN
+      @media: más específica y con !important, gana en todos los anchos.
+      La ALTURA, en cambio, sí está encerrada en @media (min-width:1001px),
+      así que fuera de ahí resuelve var(--header-nav-band) = 0px. El fallback
+      «, 72px» no salta: la variable existe, solo que vale cero — el caso
+      exacto que advierte el comentario de la línea 92 de este archivo.
+
+   2) LA HAMBURGUESA APLASTADA (bug de modelo de caja, el más grave por ser
+      el único acceso al menú en móvil). En styles.css:
+         .mobile-menu-btn { width:30px; height:20px; padding:0; box-sizing:border-box }
+         @media (≤1000px) { .mobile-menu-btn { padding:12px } }
+      24px de relleno vertical dentro de una caja de 20px dejan la caja de
+      contenido en 0px de alto; los tres <span> (height:2px, encogibles por
+      defecto) se comprimen a 0. En horizontal igual: 30−24 = 6px. El botón
+      seguía siendo clicable —por eso no salta en pruebas de existencia—,
+      pero no se veía nada. Se arregla sin quitar el relleno: la zona táctil
+      de 12px es correcta, lo que faltaba era que la caja la contabilizara.
+
+   3) LA FILA 1 NO ENCOGE. Las correcciones de ancho de la marca
+      (min-width:0, width:auto, flex:0 1 auto) viven en @media (min-width:1001px).
+      Debajo sigue vigente la geometría previa a la cabecera unificada:
+      .brand con flex-shrink:0 y .brand-letters-wrapper con
+      min-width:min(300px,48vw) (=180px a 375). La marca no cede, la fila
+      desborda y expulsa al resto por la derecha.
+
+   El patrón común de (1) y (3): la cabecera unificada puso su GEOMETRÍA
+   detrás de @media (min-width:1001px) pero dejó sus VISIBILIDADES sin
+   guardia. Escritorio quedó coherente; móvil quedó a medio camino entre dos
+   diseños.
+
+   NO se toca nada de ≥1001px: la rejilla rígida de #166/#167 queda intacta.
+   ════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 1000px) {
+  /* 1 · la banda vuelve a estar oculta, como manda styles.css */
+  #mainHeader.header.mdj-header-unified .header-nav {
+    display: none !important;
+  }
+
+  /* 2 · la hamburguesa recupera sus barras y gana zona táctil de 44px
+         (content-box: 30×20 de contenido + 12 de relleno = 54×44). */
+  #mainHeader.header.mdj-header-unified .mobile-menu-btn {
+    box-sizing: content-box !important;
+    width: 30px !important;
+    height: 20px !important;
+    flex: 0 0 auto !important;
+    margin-left: auto !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .mobile-menu-btn span {
+    flex: 0 0 2px !important;
+    height: 2px !important;
+    width: 100% !important;
+  }
+
+  /* 3 · marca: en móvil el bloqueo es el ÁGUILA SOLA.
+         ⚠ DECISIÓN VISIBLE, sujeta a tu visto bueno. Presupuesto real a
+         375px: relleno 24 + águila 72 + ES|EN 100 + carrito 106 +
+         hamburguesa 54 + huecos 24 = 380. El wordmark necesita ~123px más y
+         no existen. Antes «cabía» solo porque expulsaba a la hamburguesa y
+         al carrito fuera de la pantalla. Alternativas si prefieres el
+         wordmark: quitar el segundo carrito (.mdj-eb-header-cart, duplicado,
+         −52px) y/o llevar ES|EN al panel (−100px); ni las dos juntas dan los
+         123px, así que haría falta un wordmark compacto aparte para móvil. */
+  #mainHeader.header.mdj-header-unified .header-top .container > .brand {
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .brand .brand-letters-wrapper {
+    display: none !important;
+  }
+
+  /* 4 · el bloque de acciones deja de CRECER (flex:1 1 auto), que era lo que
+         empujaba a la hamburguesa fuera de la pantalla. No se le pone
+         overflow:hidden: recortaría el carrito por la mitad, que es peor que
+         apretar. El aire sale de (4b). */
+  #mainHeader.header.mdj-header-unified .header-top .container > .header-actions {
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+  }
+
+  /* 4b · AJUSTE DE HUECOS. Medido a 375px: el contenido pide 370px
+          (águila 72 + hueco 8 + acciones 228 + hueco 8 + hamburguesa 54) y
+          el área útil son 351px (375 − 12 − 12 de relleno). Sobran 19px.
+          Se recortan de espacios muertos, sin encoger ni ocultar ningún
+          control: relleno izquierdo de .header-actions (12 → 0), su hueco
+          interno (10 → 6) y el hueco de la fila (8 → 4, dos veces).
+          Total liberado: 24px. Margen final: 5px. */
+  #mainHeader.header.mdj-header-unified .header-top .container {
+    column-gap: 4px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-top .container > .header-actions {
+    padding-left: 0 !important;
+    gap: 6px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-actions .header-avatar-cart-row {
+    gap: 8px !important;
+  }
+
+  /* 5 · el relleno lateral vuelve a ser el de móvil. Este archivo impone
+         «padding: 0 24px !important» a .header-top .container SIN @media,
+         pisando el escalonado de styles.css (max(12px, safe-area+8) a
+         ≤768px). Mismo patrón que (1) y (3): geometría de escritorio
+         aplicada a todos los anchos. Devuelve 24px de ancho útil. */
+  #mainHeader.header.mdj-header-unified .header-top .container {
+    padding-left: max(12px, calc(env(safe-area-inset-left, 0px) + 8px)) !important;
+    padding-right: max(12px, calc(env(safe-area-inset-right, 0px) + 8px)) !important;
+  }
+
+  /* 6 · fuera de la fila 1 lo que el panel móvil YA ofrece. No se pierde
+         ninguna función: .mobile-nav lista ENTRAR, GRATIS y MI PERFIL
+         (verificado en el DOM). El pastillo ENTRAR (95px) y el avatar
+         .account (60px) son duplicados del panel y entre los dos consumían
+         175px de los 375 disponibles, que es lo que dejaba al carrito
+         fuera de pantalla. El selector ES|EN SÍ se conserva: es la única
+         forma de cambiar idioma en móvil, el panel no lo incluye. */
+  #mainHeader.header.mdj-header-unified .header-actions .mdj-header-r1-auth-cluster .btn-pill,
+  #mainHeader.header.mdj-header-unified .header-actions .mdj-header-r1-auth-cluster .account {
+    display: none !important;
+  }
+
+  /* 6b · el pill del clúster se ajusta a lo que le queda dentro. Estaba
+          dimensionado para tres elementos (idioma + ENTRAR + avatar); con
+          solo ES|EN, sus 20px de relleno lateral son los que dejaban la
+          hamburguesa 7px fuera del viewport (382 > 375). */
+  #mainHeader.header.mdj-header-unified .header-actions .mdj-header-r1-auth-cluster {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    gap: 0 !important;
+  }
+
+  /* 7 · el buscador de fila 1 tampoco cabe: su contenedor
+         (.header-search-wrap) queda con ancho 0 y el <input> se desborda de
+         x=339 a x=415 — encima de la hamburguesa y 40px fuera de la pantalla.
+         No está oculto ni es usable: es un resto de escritorio pisando el
+         único control de navegación. Se retira solo en ≤1000px. */
+  #mainHeader.header.mdj-header-unified .header-actions .header-search-wrap {
+    display: none !important;
+  }
+
+  /* 8 · la hamburguesa no queda pegada al filo: su relleno derecho de 12px
+         se apoyaba justo en el borde del viewport. */
+  #mainHeader.header.mdj-header-unified .header-top .container > .mobile-menu-btn {
+    margin-right: 0 !important;
+  }
+
+  /* 9 · EL PANEL MÓVIL SE ABRÍA DE 84px DE ALTO. Defecto preexistente que
+         no se veía porque la hamburguesa era inalcanzable; al arreglarla
+         quedó a la vista, así que entra en el mismo P0: sin esto el menú
+         sigue sin servir.
+         #mobileMenu.mobile-overlay es «position:fixed; top:0; height:100%»,
+         pero #mainHeader lleva backdrop-filter: blur(14px), y un ancestro
+         con filtro se convierte en el BLOQUE CONTENEDOR de sus descendientes
+         fixed. El 100% dejaba de referirse al viewport y pasaba a los 85px
+         del header: el overlay medía 375×84 y su lista de 466px se salía por
+         arriba (y=-191) sin fondo detrás — texto flotando sobre la página.
+         Se cambia el porcentaje por unidades de viewport, que no dependen
+         del bloque contenedor. El header está pegado arriba, así que el
+         overlay sigue naciendo en y=0 y ahora cubre la pantalla entera. */
+  #mainHeader.header.mdj-header-unified #mobileMenu.mobile-overlay {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow-y: auto !important;
+  }
+
+  @supports (height: 100dvh) {
+    #mainHeader.header.mdj-header-unified #mobileMenu.mobile-overlay {
+      height: 100dvh !important;
+      max-height: 100dvh !important;
+    }
+  }
+}
