@@ -1982,6 +1982,10 @@
         return;
       }
       if (k === 'v' || k === 'V') { alternarNarracion(); return; }
+      /* G de «guiado». No se usa V porque ya es la narración suelta, ni M porque
+         es el micrófono del analizador de audio: son tres cosas distintas y
+         reutilizar una tecla las habría fundido. */
+      if (k === 'g' || k === 'G') { navAlternar(); return; }
       if (k === 'm' || k === 'M') { alternarMicrofono(); return; }
       if (k === 'r' || k === 'R') { alternarRotacionLibre(); return; }
       if (k === 'f' || k === 'F') { alternarPantallaCompleta(); return; }
@@ -2152,6 +2156,420 @@
     actualizarHud();
   }
 
+  /* ═══════════════════════════════════════════════════════════════════════════
+     FEAT-3D-10 · NAVEGADOR DE VOZ, RECORRIDO GUIADO Y Q&A EN VIVO
+     ───────────────────────────────────────────────────────────────────────────
+     No toca ni un shader ni una geometría: se monta ENCIMA de lo que ya existe
+     —WAYPOINTS, irANodo(), narrarEstacion(), los eventos elixis:speak:*— y solo
+     decide CUÁNDO se dispara cada cosa.
+
+     ELECCIÓN DE ENDPOINT, y no es un detalle: el Q&A va contra `booth-chat`, no
+     contra `elixis-chat`. `elixis-chat` valida `Authorization: Bearer <token de
+     usuario>` con auth.getUser(), y esta página está DESACOPLADA a propósito —no
+     monta cabecera ni sesión—, así que allí todo Q&A moriría en un 401.
+     `booth-chat` declara `verify_jwt = false` en config.toml, acepta el mismo
+     body `{ message, history }` y devuelve el mismo `{ reply }`. Mismo contrato,
+     y funciona sin sesión. Si algún día el ponente va autenticado, cambiar de
+     endpoint es una constante.
+
+     EL RIESGO REAL DE ESTE MÓDULO ES LA REALIMENTACIÓN: escucha continua + voz
+     sintetizada por los mismos altavoces = el micro transcribe a Elixis y el
+     recorrido se auto-ordena "siguiente" solo. Por eso el reconocimiento se
+     SUSPENDE mientras se habla, colgado de elixis:speak:start / :end.
+     ═══════════════════════════════════════════════════════════════════════════ */
+
+  var NAV_ENDPOINT = 'booth-chat';
+
+  var NAV_ESTADO = {
+    APAGADO:     'apagado',
+    VOLANDO:     'volando',
+    EXPLICANDO:  'explicando',
+    ESPERANDO:   'esperando',
+    ESCUCHANDO:  'escuchando',
+    CONSULTANDO: 'consultando'
+  };
+
+  /* Rótulos de sala. Son los que se proyectan, así que van en el idioma del
+     público y no en el del código. */
+  var NAV_ROTULO = {
+    apagado:     '',
+    volando:     'Volando a la zona…',
+    explicando:  'Explicando…',
+    esperando:   '¿Continuamos? Di «siguiente»',
+    sin_micro:   '¿Continuamos? Pulsa → o G',
+    escuchando:  'Escuchando…',
+    consultando: 'Consultando a ELIXIS…'
+  };
+
+  /* ─── MAPEO SEMÁNTICO DE LAS 5 ESTACIONES (decisión del PO) ───────────────
+     La escena se queda en CINCO nodos macro a propósito: añadir uno por cada
+     concepto la ensuciaría. Así que cada estación ABARCA más de lo que dice su
+     rótulo, y ese alcance tiene que viajar a la IA — si no, ELIXIS contesta
+     sobre la etiqueta y no sobre el negocio. La Agenda IA no tiene nodo propio:
+     vive en la estación 1, y sin este mapa nadie se lo diría.
+
+     'alias' es lo que la sala PUEDE NOMBRAR en voz alta. Un director de venue
+     va a decir «SoundForTips» o «la agenda», no «motor financiero»; sin alias,
+     esos saltos fallarían aunque el concepto exista en la escena. */
+  var NAV_CONTEXTO = {
+    nucleo: {
+      slug: 'hub_fenix',
+      alcance: 'Red de artistas y ecosistema: el roster de DJs, cómo se descubren y se contratan, y la plataforma que lo orquesta todo.',
+      alias: ['artistas', 'roster', 'red de artistas', 'ecosistema', 'hub', 'fenix', 'plataforma']
+    },
+    crm: {
+      slug: 'crm_leads',
+      alcance: 'Captura de clientes y AGENDA IA: entrada de solicitudes, cotización automática, seguimiento de eventos, prospección activa y recordatorios de cumpleaños para generar reservas recurrentes y fidelizar al cliente.',
+      alias: ['agenda', 'agenda ia', 'leads', 'clientes', 'crm', 'cumpleanos', 'prospeccion', 'seguimiento']
+    },
+    elixis: {
+      slug: 'elixis_ai',
+      alcance: 'Inteligencia conversacional y soporte: el agente que atiende, negocia, prepara propuestas y acompaña al cliente y al DJ, siempre con aprobación humana en las decisiones sensibles.',
+      alias: ['elixis', 'inteligencia', 'agente', 'soporte', 'asistente', 'ia']
+    },
+    finanzas: {
+      slug: 'motor_financiero',
+      alcance: 'Cobros, suscripciones y SOUNDFORTIPS: depósitos en custodia, reparto automático al cierre, contratos firmados, suscripciones recurrentes y propinas del público en vivo.',
+      alias: ['finanzas', 'financiero', 'cobros', 'pagos', 'suscripciones', 'soundfortips', 'sound for tips', 'propinas', 'stripe', 'escrow']
+    },
+    mdjpro: {
+      slug: 'mdjpro',
+      alcance: 'MDJPRO (Magic DJ Pro), la app de escritorio para macOS que el DJ descarga a su ordenador: organiza y audita la librería musical, limpia metadatos y deja la cabina lista antes del evento.',
+      alias: ['mdjpro', 'magic dj pro', 'libreria', 'librerias', 'app', 'escritorio', 'cabina', 'booth', 'serato']
+    }
+  };
+
+  function navCtx(i) {
+    var e = ESTACIONES[i];
+    if (!e) return null;
+    return NAV_CONTEXTO[e.id] || { slug: e.id, alcance: e.narracion || '', alias: [] };
+  }
+
+  var nav = {
+    activo: false,
+    estado: NAV_ESTADO.APAGADO,
+    rec: null,
+    reconociendo: false,
+    suspendido: false,
+    historial: [],
+    ultimaPregunta: '',
+    pendienteAvance: false,
+    /* Se marca cuando el navegador deniega el micrófono. NO apaga el recorrido:
+       solo desactiva la ENTRADA de voz. Ver el onerror del reconocimiento. */
+    sttBloqueado: false
+  };
+
+  /* Acentos y mayúsculas fuera: "Dale" y "dále" tienen que valer lo mismo. */
+  function navNormalizar(s) {
+    return String(s || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[¿?¡!.,;:]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  var NAV_AVANZAR = ['avanzar', 'avanza', 'siguiente', 'continuar', 'continua',
+                     'dale', 'proximo', 'proxima', 'sigue', 'adelante', 'vamos'];
+  var NAV_REPETIR = ['repite', 'repetir', 'repitelo', 'otra vez', 'de nuevo',
+                     'no entendi', 'puedes repetir'];
+  var NAV_PARAR   = ['para', 'pausa', 'pausar', 'detente', 'alto', 'espera',
+                     'silencio', 'callate'];
+
+  function navContiene(txt, lista) {
+    for (var i = 0; i < lista.length; i++) {
+      /* Palabra suelta o frase, pero delimitada: sin esto "vamos" dispararía
+         dentro de "vamos a ver qué pasa si...", que es una pregunta, no una
+         orden de avance. */
+      var re = new RegExp('(^| )' + lista[i].replace(/ /g, ' ') + '( |$)');
+      if (re.test(txt)) return true;
+    }
+    return false;
+  }
+
+  /* "ve a mdjpro", "vamos al hub", "llévame a finanzas". Se busca contra el
+     nombre, el subtítulo y el id de cada estación. */
+  function navBuscarEstacion(txt) {
+    var m = txt.match(/(?:ve|vete|vamos|llevame|salta|ir)\s+(?:a|al|hacia)\s+(.+)$/);
+    var aguja = m ? m[1] : null;
+    if (!aguja) return -1;
+    for (var i = 0; i < ESTACIONES.length; i++) {
+      var e = ESTACIONES[i];
+      var ctx = NAV_CONTEXTO[e.id];
+      var alias = ctx && ctx.alias ? ctx.alias.join(' ') : '';
+      /* Los alias son la mitad importante: la sala nombra conceptos
+         ("soundfortips", "la agenda"), no rótulos de estación. */
+      var campos = navNormalizar(e.nombre + ' ' + e.subtitulo + ' ' + e.id + ' ' + alias);
+      var palabras = aguja.split(' ');
+      for (var k = 0; k < palabras.length; k++) {
+        if (palabras[k].length >= 4 && campos.indexOf(palabras[k]) >= 0) return i;
+      }
+    }
+    return -1;
+  }
+
+  function navFijarEstado(e) {
+    nav.estado = e;
+    var el = document.querySelector('[data-nm3d-vozestado]');
+    if (el) {
+      el.textContent = NAV_ROTULO[e] || '';
+      el.setAttribute('data-estado', e);
+    }
+    var caja = document.querySelector('[data-nm3d-vozcaja]');
+    if (caja) caja.hidden = (e === NAV_ESTADO.APAGADO);
+  }
+
+  /* ─── Reconocimiento de voz ─────────────────────────────────────────────── */
+
+  function navSttDisponible() {
+    return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  }
+
+  function navCrearRec() {
+    var C = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!C) return null;
+    var r = new C();
+    r.lang = document.documentElement.lang || 'es-ES';
+    r.continuous = true;
+    /* Sin resultados intermedios: en una sala con ruido, los parciales cambian
+       de opinión tres veces por frase y disparaban comandos a medio oír. */
+    r.interimResults = false;
+    r.maxAlternatives = 1;
+
+    r.onresult = function (ev) {
+      for (var i = ev.resultIndex; i < ev.results.length; i++) {
+        if (!ev.results[i].isFinal) continue;
+        navProcesar(ev.results[i][0].transcript || '');
+      }
+    };
+    /* Chrome CIERRA el reconocimiento tras unos segundos de silencio, aunque
+       continuous sea true. Sin este reenganche la escucha "continua" dura menos
+       de un minuto y luego el navegador se queda mudo sin avisar. */
+    r.onend = function () {
+      nav.reconociendo = false;
+      if (nav.activo && !nav.suspendido) navEscuchar();
+    };
+    r.onerror = function (ev) {
+      nav.reconociendo = false;
+      /* 'no-speech' y 'aborted' son rutina, no fallos: no merecen apagar nada. */
+      if (ev && (ev.error === 'not-allowed' || ev.error === 'service-not-allowed')) {
+        /* EL PERMISO DENEGADO NO MATA EL RECORRIDO. Antes ponía activo = false y
+           ahí estaba el fallo: el recorrido guiado —vuelo de cámara, bloqueo en
+           estación, narración— no necesita micrófono para nada, y un permiso
+           denegado lo apagaba entero. Ahora solo se marca la ENTRADA de voz como
+           bloqueada: el ponente sigue conduciendo con teclado y la sala sigue
+           oyendo a Elixis. Degrada, no muere.
+           Y se deja de reintentar: sin esto, onend reengancha en bucle y Chrome
+           acumula errores cada pocos cientos de milisegundos. */
+        nav.sttBloqueado = true;
+        navFijarEstado(NAV_ESTADO.ESPERANDO);
+      }
+    };
+    return r;
+  }
+
+  function navEscuchar() {
+    if (!nav.activo || nav.suspendido || nav.reconociendo) return;
+    if (nav.sttBloqueado) return;   // permiso denegado: no se insiste en bucle
+    if (!nav.rec) nav.rec = navCrearRec();
+    if (!nav.rec) return;
+    try { nav.rec.start(); nav.reconociendo = true; }
+    catch (e) { nav.reconociendo = false; }   // ya estaba arrancado
+  }
+
+  function navSuspender() {
+    nav.suspendido = true;
+    if (nav.rec && nav.reconociendo) { try { nav.rec.abort(); } catch (e) {} }
+    nav.reconociendo = false;
+  }
+
+  function navReanudar() {
+    nav.suspendido = false;
+    if (nav.activo) navEscuchar();
+  }
+
+  /* ─── Máquina de estados del recorrido ──────────────────────────────────── */
+
+  function navIrAEstacion(i) {
+    if (i < 0 || i >= ESTACIONES.length) return;
+    navFijarEstado(NAV_ESTADO.VOLANDO);
+    irANodo(i);
+    /* El vuelo es una persecución exponencial, no una animación con final
+       declarado, así que no hay evento de "llegué". Se le da el tiempo que la
+       cámara tarda en asentarse y entonces se explica. */
+    setTimeout(function () {
+      if (!nav.activo) return;
+      navExplicar();
+    }, 2600);
+  }
+
+  function navExplicar() {
+    if (nodoEnfocado < 0) return;
+    navFijarEstado(NAV_ESTADO.EXPLICANDO);
+    /* Recorrido detenido durante la explicación: la cámara se queda clavada en
+       la estación. Un plano que sigue viajando mientras se habla obliga a la
+       sala a elegir entre mirar o escuchar. */
+    recorrido.activo = false;
+    var r = narrarEstacion(nodoEnfocado);
+    if (r !== 'narrando') navEsperar();   // sin voz, no se queda colgado
+  }
+
+  function navEsperar() {
+    /* Sin micrófono el rótulo no puede decir "di siguiente": pedirle a la sala
+       un comando de voz que el navegador no va a oír es peor que no pedir nada. */
+    navFijarEstado(nav.sttBloqueado ? 'sin_micro' : NAV_ESTADO.ESPERANDO);
+    navReanudar();
+  }
+
+  function navAvanzar() {
+    var sig = (nodoEnfocado + 1) % ESTACIONES.length;
+    navIrAEstacion(sig);
+  }
+
+  /* ─── Puente con la IA ──────────────────────────────────────────────────── */
+
+  function navUrlFuncion() {
+    if (typeof window.mdbSupabaseFunctionUrl === 'function') {
+      return window.mdbSupabaseFunctionUrl(NAV_ENDPOINT);
+    }
+    return null;
+  }
+
+  function navCabeceras() {
+    var h = { 'Content-Type': 'application/json' };
+    if (typeof window.mdjSupabaseAnonInvokeHeaders === 'function') {
+      var extra = window.mdjSupabaseAnonInvokeHeaders() || {};
+      for (var k in extra) if (Object.prototype.hasOwnProperty.call(extra, k)) h[k] = extra[k];
+    }
+    return h;
+  }
+
+  function navPreguntar(texto) {
+    var url = navUrlFuncion();
+    var idx = nodoEnfocado >= 0 ? nodoEnfocado : 0;
+    var e = ESTACIONES[idx];
+    var ctx = navCtx(idx);
+    var slug = ctx.slug;
+
+    if (!url) { navResponderLocal(e); return; }
+
+    navFijarEstado(NAV_ESTADO.CONSULTANDO);
+    navSuspender();   // no se escucha mientras se consulta ni mientras se responde
+
+    /* El contexto de la zona viaja EN el mensaje. booth-chat tiene su propia
+       persona y su propio system prompt: no se le sobreescribe, se le da el
+       dato de dónde está parado el recorrido y con qué criterio contestar. */
+    var mensaje =
+      'CONTEXTO DE ESCENA — recorrido 3D en vivo ante directores de venue.\n' +
+      'active_node: ' + slug + '\n' +
+      'zona: ' + e.nombre + ' · ' + e.subtitulo + '\n' +
+      'qué hace esta zona: ' + (e.narracion || '') + '\n' +
+      /* El ALCANCE es lo que evita que ELIXIS conteste solo sobre el rótulo: la
+         Agenda IA y SoundForTips no tienen nodo propio y sin esta línea nadie
+         le diría que existen ni dónde viven. */
+      'ALCANCE COMPLETO DE ESTA ZONA (puede abarcar más que su rótulo): ' + ctx.alcance + '\n\n' +
+      'PREGUNTA DEL PÚBLICO: "' + texto + '"\n\n' +
+      'CÓMO RESPONDER: directo y humano, 2 o 3 frases, en el idioma de la ' +
+      'pregunta. Orientado al BENEFICIO DE NEGOCIO —más reservas, automatización, ' +
+      'ahorro de tiempo, fidelización—, no a la arquitectura técnica. Nada de ' +
+      'jerga ni de nombres de tablas. Cierra SIEMPRE con esta pregunta literal: ' +
+      '"¿Quieres saber más sobre esto o avanzamos a la siguiente zona?"';
+
+    fetch(url, {
+      method: 'POST',
+      headers: navCabeceras(),
+      body: JSON.stringify({ message: mensaje, history: nav.historial.slice(-8) })
+    })
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (data) {
+        var respuesta = data && typeof data.reply === 'string' ? data.reply : '';
+        if (!respuesta) { navResponderLocal(e); return; }
+        nav.historial.push({ role: 'user', content: texto });
+        nav.historial.push({ role: 'assistant', content: respuesta });
+        navFijarEstado(NAV_ESTADO.EXPLICANDO);
+        if (vozDisponible()) window.elixisSpeak(respuesta);
+        else navEsperar();
+      })
+      .catch(function () { navResponderLocal(e); });
+  }
+
+  /* Plan B sin red. Una pregunta que se queda sin respuesta en mitad de una
+     ponencia es peor que una respuesta corta: se contesta con lo que la propia
+     estación ya sabe decir de sí misma y se devuelve el turno. */
+  function navResponderLocal(e) {
+    var texto = (e.narracion || e.nombre) +
+      ' ¿Quieres saber más sobre esto o avanzamos a la siguiente zona?';
+    navFijarEstado(NAV_ESTADO.EXPLICANDO);
+    if (vozDisponible()) window.elixisSpeak(texto);
+    else navEsperar();
+  }
+
+  /* ─── Enrutado de lo que se oye ─────────────────────────────────────────── */
+
+  function navProcesar(bruto) {
+    if (!nav.activo) return;
+    var txt = navNormalizar(bruto);
+    if (!txt) return;
+
+    if (navContiene(txt, NAV_PARAR)) {
+      if (vozHablando && typeof window.elixisStopSpeaking === 'function') window.elixisStopSpeaking();
+      navEsperar();
+      return;
+    }
+    if (navContiene(txt, NAV_REPETIR)) { navExplicar(); return; }
+
+    /* EL DESTINO CONCRETO SE COMPRUEBA ANTES QUE EL AVANCE GENÉRICO, y el orden
+       no es cosmético: "vamos" está en la lista de avance, así que "vamos al
+       motor financiero" disparaba un «siguiente» y saltaba a la estación
+       equivocada. Un destino nombrado es siempre más específico que un
+       "continuar", así que gana. */
+    var destino = navBuscarEstacion(txt);
+    if (destino >= 0) { navIrAEstacion(destino); return; }
+
+    if (navContiene(txt, NAV_AVANZAR)) { navAvanzar(); return; }
+
+    /* No era una orden: es una pregunta del público. */
+    nav.ultimaPregunta = bruto;
+    navPreguntar(bruto);
+  }
+
+  /* ─── Arranque / parada ─────────────────────────────────────────────────── */
+
+  function navIniciar() {
+    if (nav.activo) return 'ya activo';
+    if (!navSttDisponible()) return 'este navegador no reconoce voz';
+    nav.activo = true;
+    nav.historial = [];
+    /* Se reintenta el permiso en cada arranque: el ponente puede haberlo
+       concedido entre una prueba y la función. */
+    nav.sttBloqueado = false;
+    navIrAEstacion(nodoEnfocado >= 0 ? nodoEnfocado : 0);
+    return 'navegador de voz activo';
+  }
+
+  function navDetener() {
+    nav.activo = false;
+    navSuspender();
+    if (vozHablando && typeof window.elixisStopSpeaking === 'function') window.elixisStopSpeaking();
+    navFijarEstado(NAV_ESTADO.APAGADO);
+    return 'navegador de voz detenido';
+  }
+
+  function navAlternar() { return nav.activo ? navDetener() : navIniciar(); }
+
+  /* Los dos eventos que evitan la realimentación. Van aquí y no dentro del
+     reconocimiento porque el motor de voz es un módulo aparte y este es el
+     único punto donde ambos se cruzan. */
+  window.addEventListener('elixis:speak:start', function () {
+    if (nav.activo) navSuspender();
+  });
+  window.addEventListener('elixis:speak:end', function () {
+    if (!nav.activo) return;
+    /* Al callar Elixis siempre se vuelve a esperar confirmación: es la regla de
+       retorno obligatorio al recorrido. */
+    navEsperar();
+  });
+
   window.mdjNeuralMatrix3D = {
     stats: function () {
       var c = {};
@@ -2192,6 +2610,25 @@
     alternarRotacionLibre: alternarRotacionLibre,
     narrarEstacion: narrarEstacion,
     alternarNarracion: alternarNarracion,
+    /* FEAT-3D-10 · navegador de voz. Se expone entero para poder probarlo SIN
+       micrófono: simularVoz() acepta un transcript escrito, que es la única
+       forma de verificar el enrutado de comandos y el Q&A de forma
+       determinista. Con micro real la prueba depende del ruido de la sala. */
+    iniciarNavegadorVoz: navIniciar,
+    detenerNavegadorVoz: navDetener,
+    alternarNavegadorVoz: navAlternar,
+    simularVoz: function (texto) { navProcesar(texto); return nav.estado; },
+    estadoVoz: function () {
+      return {
+        activo: nav.activo, estado: nav.estado, reconociendo: nav.reconociendo,
+        suspendido: nav.suspendido, sttDisponible: navSttDisponible(),
+        endpoint: NAV_ENDPOINT, urlFuncion: navUrlFuncion(),
+        nodo: nodoEnfocado,
+        activeNode: nodoEnfocado >= 0 ? navCtx(nodoEnfocado).slug : null,
+        alcance: nodoEnfocado >= 0 ? navCtx(nodoEnfocado).alcance : null,
+        turnosHistorial: nav.historial.length
+      };
+    },
     estaciones: function () {
       return ESTACIONES.map(function (e) {
         /* ocupado: el núcleo lo llena el Fénix procedural y ELIXIS sus anillos
