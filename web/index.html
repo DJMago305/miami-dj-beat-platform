@@ -1795,8 +1795,11 @@
         };
       }
 
-      /* Configuración de volumen del Hero Video */
-      if (video && isHomeActive) {
+      /* Configuración de volumen del Hero Video — reutilizable: re-sincroniza mute/volumen
+         cada vez que el video se pausa/reanuda (visibilitychange), respetando siempre la
+         configuración real (nunca fuerza audio que el navegador no autorizaría sin gesto). */
+      function enforceHeroMute() {
+        if (!video || !isHomeActive) return;
         const configVol = parseFloat(settings.home_hero_video_volume || '0') || 0;
         if (configVol > 0) {
           video.setAttribute('data-mdj-allow-audio', '1');
@@ -1811,6 +1814,7 @@
           video.setAttribute('muted', '');
         }
       }
+      enforceHeroMute();
 
         document.addEventListener('visibilitychange', function () {
           if (!video) return;
