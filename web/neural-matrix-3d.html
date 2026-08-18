@@ -19,7 +19,7 @@
     un redimensionado de framebuffer.
   -->
 
-  <link rel="stylesheet" href="./neural-matrix-3d.css?v=20260818-split">
+  <link rel="stylesheet" href="./neural-matrix-3d.css?v=20260818-hudplus">
 </head>
 <body class="nm3d-pagina">
 
@@ -112,6 +112,11 @@
     <header class="nm3d-consola__cab">
       <span class="nm3d-consola__rol" data-nm3d-rol>—</span>
       <span class="nm3d-consola__paso" data-nm3d-paso></span>
+      <!-- Minimiza SIN tocar el audio: el tour sigue hablando con la tarjeta
+           plegada. Se necesita para poder enseñar la escena limpia a mitad de
+           una explicación sin cortar a Elixis. -->
+      <button type="button" class="nm3d-consola__plegar" data-nm3d-plegar
+              aria-expanded="true" title="Minimizar panel (H)">—</button>
     </header>
 
     <!-- aria-live polite y no assertive: el registro se actualiza palabra a
@@ -122,6 +127,14 @@
     <footer class="nm3d-consola__pie">
       <i class="nm3d-consola__punto" data-nm3d-consola-punto aria-hidden="true"></i>
       <span class="nm3d-consola__estado" data-nm3d-consola-estado></span>
+      <!-- Indicador de MICRÓFONO REAL. Va aparte del estado del recorrido a
+           propósito: el estado dice "te toca hablar", esto dice "el micro está
+           abierto de verdad". No son lo mismo — con el permiso denegado el
+           recorrido sigue esperando turno pero nadie está capturando nada, y
+           en escena esa diferencia decide si el ponente repite la frase. -->
+      <span class="nm3d-consola__mic" data-nm3d-consola-mic hidden>
+        <i aria-hidden="true"></i>Escuchando…
+      </span>
       <button type="button" class="nm3d-consola__boton" data-nm3d-siguiente>Siguiente ▸</button>
     </footer>
   </aside>
@@ -139,7 +152,7 @@
   </section>
 
   <aside class="nm3d-teclas" aria-label="Controles de escenario">
-    <b>Espacio</b> pausa · <b>1-5</b> estación · <b>← →</b> anterior/siguiente · <b>V</b> explicar · <b>M</b> micrófono · <b>R</b> órbita libre · <b>F</b> pantalla completa · <b>G</b> guiado por voz · <b>Esc / 0</b> recorrido
+    <b>Espacio</b> pausa · <b>1-5</b> estación · <b>← →</b> anterior/siguiente · <b>V</b> explicar · <b>M</b> micrófono · <b>R</b> órbita libre · <b>F</b> pantalla completa · <b>G</b> guiado por voz · <b>H</b> plegar panel · <b>Esc / 0</b> recorrido
   </aside>
 
   <!-- Panel técnico: oculto por defecto, se conmuta con D. En escenario no se
@@ -177,6 +190,6 @@
        ANTES del motor porque el motor los busca al construir la URL.
        Sin sesion ni cabecera compartida: solo la clave publicable. -->
   <script src="./supabase-config.js?v=20260818-voztour"></script>
-  <script src="./js/neural-matrix-3d.js?v=20260818-split4"></script>
+  <script src="./js/neural-matrix-3d.js?v=20260818-hudplus"></script>
 </body>
 </html>
