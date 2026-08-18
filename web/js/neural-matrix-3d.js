@@ -658,9 +658,15 @@
     '  vec4 t = texture2D(uTex, vec2(vUV.x, 1.0 - vUV.y));',
     '  if (t.a < 0.02) discard;',
     '  float halo = 0.85 + sin(uTiempo * 0.9) * 0.10 + uPulso * 0.45;',
+    /* El emblema deja de ser una calcomanía opaca y pasa a leerse como energía
+       proyectada: se le baja la opacidad y se le da respiración propia con el
+       pulso. Se multiplica el alfa DE LA TEXTURA, no se pone un valor fijo, para
+       que el recorte del PNG siga mandando — el fondo transparente sigue
+       transparente y solo el trazo dorado se vuelve translúcido. */
+    '  float energia = 0.62 + uPulso * 0.20 + sin(uTiempo * 1.3) * 0.05;',
     /* Se multiplica el alfa por el color y no se toca el matiz: el dorado del
        emblema es el de la marca y no lo decide este shader. */
-    '  gl_FragColor = vec4(t.rgb * halo, t.a);',
+    '  gl_FragColor = vec4(t.rgb * halo, t.a * clamp(energia, 0.0, 1.0));',
     '}'
   ].join('\n');
 
