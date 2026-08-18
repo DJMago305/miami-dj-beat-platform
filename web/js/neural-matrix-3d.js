@@ -124,6 +124,7 @@
   var rotacionLibre = false, giroRaton = { yaw: 0, pitch: 0 };
 
   var audioEl = null, ctxAudio = null, analizador = null, datosFrecuencia = null;
+  var fuenteMusica = null, fuenteMic = null, micStream = null, micActivo = false;
   var pulso = 0, banda = { graves: 0, medios: 0, agudos: 0 }, audioActivo = false;
 
   var stats = {
@@ -845,25 +846,56 @@
 
   /* ─── Audio ───────────────────────────────────────────────────────────── */
 
-  function activarAudio() {
-    if (audioActivo) return Promise.resolve('ya activo');
+  /* ─── AUDIO DUAL: pista + voz en un solo analizador ───────────────────────
+
+     ┌─ EL ENRUTADO IMPORTA MÁS QUE EL CÓDIGO ─────────────────────────────┐
+     │ Antes el grafo era:  pista → analizador → altavoces.                │
+     │ Enchufar el micrófono a ese analizador lo habría mandado también a  │
+     │ los altavoces: en una sala con PA, el micro capta los altavoces que │
+     │ reproducen el micro y el sistema se pone a aullar en mitad de la    │
+     │ ponencia. Es el fallo clásico de sonido en directo, y aquí lo       │
+     │ habríamos construido a propósito.                                   │
+     │                                                                      │
+     │ El grafo nuevo desacopla análisis de reproducción:                   │
+     │     pista ─┬─> analizador   (sin salida: solo mide)                 │
+     │            └─> altavoces                                            │
+     │     micro ───> analizador   (JAMÁS a los altavoces)                 │
+     │                                                                      │
+     │ Un AnalyserNode no necesita estar conectado a la salida para medir. │
+     │ Sigue habiendo UN solo FFT, como pide el ticket: las dos fuentes se │
+     │ suman en su entrada y uPulso sale ya mezclado.                       │
+     └──────────────────────────────────────────────────────────────────────┘ */
+
+  function asegurarContextoAudio() {
+    if (analizador) return true;
     var Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!Ctx) return Promise.resolve('este navegador no expone Web Audio API');
-    audioEl = document.querySelector('[data-nm3d-audio]');
-    if (!audioEl) return Promise.resolve('falta el elemento de audio');
+    if (!Ctx) return false;
     try {
-      ctxAudio = new Ctx();
-      var fuente = ctxAudio.createMediaElementSource(audioEl);
+      if (!ctxAudio) ctxAudio = new Ctx();
       analizador = ctxAudio.createAnalyser();
       analizador.fftSize = 512;
       /* El suavizado del propio analizador evita el parpadeo de un cuadro a
-         otro; la envolvente de abajo se encarga del carácter del golpe. */
+         otro; la envolvente de leerAudio() se encarga del carácter del golpe. */
       analizador.smoothingTimeConstant = 0.72;
-      fuente.connect(analizador);
-      analizador.connect(ctxAudio.destination);
+      /* Deliberadamente SIN analizador.connect(destination). Ver el recuadro. */
       datosFrecuencia = new Uint8Array(analizador.frequencyBinCount);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function activarAudio() {
+    if (audioActivo) return Promise.resolve('ya activo');
+    audioEl = document.querySelector('[data-nm3d-audio]');
+    if (!audioEl) return Promise.resolve('falta el elemento de audio');
+    if (!asegurarContextoAudio()) return Promise.resolve('este navegador no expone Web Audio API');
+    try {
+      if (!fuenteMusica) {
+        fuenteMusica = ctxAudio.createMediaElementSource(audioEl);
+        fuenteMusica.connect(analizador);          // para medir
+        fuenteMusica.connect(ctxAudio.destination); // para oírse
+      }
     } catch (e) {
-      return Promise.resolve('no se pudo abrir el analizador: ' + (e && e.message ? e.message : e));
+      return Promise.resolve('no se pudo enrutar la pista');
     }
     return ctxAudio.resume().then(function () {
       return audioEl.play();
@@ -872,9 +904,58 @@
       if (contenedor) contenedor.classList.add('nm3d--con-audio');
       actualizarHud();
       return 'audio en marcha';
+    })['catch'](function () { return 'el navegador bloqueó la reproducción'; });
+  }
+
+  /* ─── MICRÓFONO ───────────────────────────────────────────────────────────
+     NUNCA en la carga: getUserMedia sin gesto previo lo bloquean los
+     navegadores y, peor, quema el permiso — si el usuario deniega por reflejo
+     al abrir la página, recuperarlo exige entrar en la configuración del
+     sitio. Va solo por la tecla M, cuando el ponente lo decide. */
+  function activarMicrofono() {
+    if (micActivo) return Promise.resolve('el micrófono ya está activo');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      return Promise.resolve('este navegador no expone getUserMedia');
+    }
+    if (!asegurarContextoAudio()) return Promise.resolve('este navegador no expone Web Audio API');
+    /* Cancelación de eco y supresión de ruido activadas: el ponente habla
+       delante de unos altavoces, y sin esto el analizador leería la propia
+       música por el micro y contaría el bombo dos veces. */
+    return navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      video: false
+    }).then(function (stream) {
+      micStream = stream;
+      fuenteMic = ctxAudio.createMediaStreamSource(stream);
+      fuenteMic.connect(analizador);   // solo al analizador; nunca a la salida
+      return ctxAudio.resume();
+    }).then(function () {
+      micActivo = true;
+      if (contenedor) contenedor.classList.add('nm3d--con-mic');
+      actualizarHud();
+      return 'micrófono en marcha';
     })['catch'](function (e) {
-      return 'el navegador bloqueó la reproducción: ' + (e && e.message ? e.message : e);
+      var n = (e && e.name) ? e.name : '';
+      if (n === 'NotAllowedError') return 'permiso de micrófono denegado';
+      if (n === 'NotFoundError') return 'no hay micrófono disponible';
+      return 'no se pudo abrir el micrófono';
     });
+  }
+
+  function desactivarMicrofono() {
+    micActivo = false;
+    try { if (fuenteMic) fuenteMic.disconnect(); } catch (e) { /* nada */ }
+    /* Parar las pistas apaga el indicador de grabación del sistema. Dejarlas
+       vivas mantendría el punto rojo del navegador durante toda la ponencia. */
+    try {
+      if (micStream) {
+        var t = micStream.getTracks();
+        for (var i = 0; i < t.length; i++) t[i].stop();
+      }
+    } catch (e2) { /* nada */ }
+    fuenteMic = null; micStream = null;
+    if (contenedor) contenedor.classList.remove('nm3d--con-mic');
+    actualizarHud();
   }
 
   function desactivarAudio() {
@@ -887,7 +968,9 @@
   /* Lee el espectro y lo convierte en un solo número: uPulso.
      getByteFrequencyData escribe en un array ya reservado — cero basura. */
   function leerAudio() {
-    if (!audioActivo || !analizador) {
+    /* Basta con que HAYA analizador y alguna fuente viva: el micrófono solo,
+       sin pista, también tiene que mover al Fénix. */
+    if (!analizador || (!audioActivo && !micActivo)) {
       /* Sin audio, un latido sintético lento para que la escena no esté muerta. */
       var objetivoSin = 0.16 + 0.16 * Math.sin(performance.now() / 900);
       pulso += (objetivoSin - pulso) * 0.05;
@@ -907,7 +990,12 @@
 
     /* Envolvente asimétrica: sube de golpe con el bombo y baja despacio. Con
        un suavizado simétrico el pulso se convierte en una media aburrida. */
-    var objetivo = Math.min(1.4, banda.graves * 1.9 + banda.medios * 0.35);
+    /* La voz vive en los medios (≈300-3000 Hz) y el bombo en los graves. Con
+       el micro abierto se sube el peso de los medios: si no, el ponente puede
+       hablar y el Fénix ni se entera, porque su energía cae justo en la banda
+       que menos pesaba. Es la «suma acústica» del ticket, hecha donde importa. */
+    var pesoMedios = micActivo ? 0.95 : 0.35;
+    var objetivo = Math.min(1.4, banda.graves * 1.9 + banda.medios * pesoMedios);
     pulso += (objetivo - pulso) * (objetivo > pulso ? 0.5 : 0.06);
   }
 
@@ -1199,6 +1287,13 @@
     actualizarHud();
   }
 
+  function alternarMicrofono() {
+    if (micActivo) { desactivarMicrofono(); return; }
+    activarMicrofono().then(function (r) {
+      if (!micActivo) { stats.estado = r; actualizarHud(); }
+    });
+  }
+
   function alternarRotacionLibre() {
     rotacionLibre = !rotacionLibre;
     if (!rotacionLibre) { giroRaton.yaw = 0; giroRaton.pitch = 0; }
@@ -1224,6 +1319,7 @@
       if (k === ' ' || ev.code === 'Space') { ev.preventDefault(); alternarPausaRecorrido(); return; }
       if (k === 'ArrowRight') { ev.preventDefault(); siguienteNodo(1); return; }
       if (k === 'ArrowLeft')  { ev.preventDefault(); siguienteNodo(-1); return; }
+      if (k === 'm' || k === 'M') { alternarMicrofono(); return; }
       if (k === 'r' || k === 'R') { alternarRotacionLibre(); return; }
       if (k === 'f' || k === 'F') { alternarPantallaCompleta(); return; }
       if (k === 'Escape') { volverAlRecorrido(); return; }
@@ -1276,6 +1372,9 @@
     pon('[data-nm3d-subtitulo]', e ? e.subtitulo : 'Sistema de booking 2026-2030');
     pon('[data-nm3d-telemetria]', e ? e.telemetria : '5 estaciones · 8 conductos activos');
     pon('[data-nm3d-conexion]', audioActivo ? 'En vivo' : 'Enlace estable');
+
+    var insignia = document.querySelector('[data-nm3d-mic]');
+    if (insignia) insignia.hidden = !micActivo;
 
     var modo = document.querySelector('[data-nm3d-modo]');
     if (modo) {
@@ -1360,7 +1459,7 @@
       var c = {};
       for (var k in stats) { if (Object.prototype.hasOwnProperty.call(stats, k)) c[k] = stats[k]; }
       c.topeFps = topeFps; c.capaz = capaz; c.corriendo = corriendo; c.degradado = degradado;
-      c.instancing = modoInstancing; c.audioActivo = audioActivo; c.pulso = pulso;
+      c.instancing = modoInstancing; c.audioActivo = audioActivo; c.micActivo = micActivo; c.pulso = pulso;
       c.banda = { graves: banda.graves, medios: banda.medios, agudos: banda.agudos };
       c.estaciones = ESTACIONES.length; c.nodoEnfocado = nodoEnfocado;
       c.recorridoActivo = recorrido.activo; c.rotacionLibre = rotacionLibre;
@@ -1372,6 +1471,9 @@
     reanudar: reanudarMotor,
     activarAudio: activarAudio,
     desactivarAudio: desactivarAudio,
+    activarMicrofono: activarMicrofono,
+    desactivarMicrofono: desactivarMicrofono,
+    alternarMicrofono: alternarMicrofono,
     irANodo: irANodo,
     siguienteNodo: siguienteNodo,
     volverAlRecorrido: volverAlRecorrido,

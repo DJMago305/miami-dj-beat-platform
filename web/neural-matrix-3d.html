@@ -19,7 +19,7 @@
     un redimensionado de framebuffer.
   -->
 
-  <link rel="stylesheet" href="./neural-matrix-3d.css?v=20260818-feat3d03">
+  <link rel="stylesheet" href="./neural-matrix-3d.css?v=20260818-feat3d05">
 </head>
 <body class="nm3d-pagina">
 
@@ -66,12 +66,17 @@
     <h1 class="nm3d-keynote__titulo" data-nm3d-estacion>Recorrido completo</h1>
     <p class="nm3d-keynote__subtitulo" data-nm3d-subtitulo>Sistema de booking 2026-2030</p>
     <p class="nm3d-keynote__telemetria" data-nm3d-telemetria>5 estaciones · 8 conductos activos</p>
-    <p class="nm3d-keynote__enlace"><i></i><span data-nm3d-conexion>Enlace estable</span></p>
+    <p class="nm3d-keynote__enlace">
+      <i></i><span data-nm3d-conexion>Enlace estable</span>
+      <!-- Solo aparece con el micrófono concedido y abierto. Sutil a propósito:
+           en escena informa al ponente sin robarle protagonismo a la estación. -->
+      <b class="nm3d-insignia-mic" data-nm3d-mic hidden>MIC ACTIVE</b>
+    </p>
     <div class="nm3d-keynote__pulso"><i data-nm3d-barra></i></div>
   </section>
 
   <aside class="nm3d-teclas" aria-label="Controles de escenario">
-    <b>Espacio</b> pausa · <b>← →</b> estación · <b>R</b> órbita libre · <b>F</b> pantalla completa · <b>Esc</b> recorrido
+    <b>Espacio</b> pausa · <b>← →</b> estación · <b>M</b> micrófono · <b>R</b> órbita libre · <b>F</b> pantalla completa · <b>Esc</b> recorrido
   </aside>
 
   <!-- Panel técnico: oculto por defecto, se conmuta con D. En escenario no se
@@ -100,6 +105,6 @@
   <audio data-nm3d-audio loop preload="none"
          src="./assets/Musica_Miamidjbeat/JungleIn_My_Head_DJMago305.mp3"></audio>
 
-  <script src="./js/neural-matrix-3d.js?v=20260818-feat3d03"></script>
+  <script src="./js/neural-matrix-3d.js?v=20260818-feat3d05"></script>
 </body>
 </html>

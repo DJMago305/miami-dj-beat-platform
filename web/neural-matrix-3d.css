@@ -330,3 +330,41 @@ body.nm3d-depurar .nm3d-tecnico { display: grid; }
   .nm3d-etiqueta b { font-size: 0.9rem; }
   .nm3d-etiqueta[data-activa='si'] b { font-size: 1.05rem; }
 }
+
+/* ─── FEAT-3D-05 · insignia de micrófono ─────────────────────────────────── */
+
+/* Verde y con punto latiendo: en escena el ponente necesita saber de un
+   vistazo si el micro está abierto, sin apartar la vista de la sala. */
+.nm3d-insignia-mic {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: 0.6rem;
+  padding: 0.12rem 0.5rem;
+  border: 1px solid rgba(102, 255, 178, 0.55);
+  border-radius: 999px;
+  background: rgba(102, 255, 178, 0.10);
+  color: #66ffb2;
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+}
+
+.nm3d-insignia-mic[hidden] { display: none; }
+
+.nm3d-insignia-mic::before {
+  content: '';
+  width: 0.4rem; height: 0.4rem;
+  border-radius: 50%;
+  background: #66ffb2;
+  box-shadow: 0 0 0.5rem #66ffb2;
+  animation: nm3d-latido 1.6s ease-in-out infinite;
+}
+
+@keyframes nm3d-latido { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* Con movimiento reducido el punto se queda encendido: la información sigue
+   ahí, sin la animación. */
+@media (prefers-reduced-motion: reduce) {
+  .nm3d-insignia-mic::before { animation: none; }
+}
