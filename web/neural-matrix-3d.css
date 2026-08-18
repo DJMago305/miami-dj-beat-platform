@@ -368,3 +368,80 @@ body.nm3d-depurar .nm3d-tecnico { display: grid; }
 @media (prefers-reduced-motion: reduce) {
   .nm3d-insignia-mic::before { animation: none; }
 }
+
+/* ─── FEAT-3D-06 · tarjeta lateral de telemetría ─────────────────────────── */
+
+/* Ocupa el 40 % izquierdo que libera el encuadre 60/40, por encima del
+   holograma. Solo se anima OPACITY y TRANSFORM: las dos las compone la GPU,
+   así que entrar y salir no dispara ni un reflujo mientras el motor dibuja.
+   Animar width, left o height aquí sería invalidar el layout treinta veces
+   por segundo con un lienzo WebGL a pantalla completa al lado. */
+.nm3d-tarjeta {
+  position: fixed;
+  left: max(2.5rem, env(safe-area-inset-left, 0px));
+  /* 64 % y no 50 %: centrada chocaba con el holograma, que ocupa la mitad
+     alta de la misma banda. Arriba la figura, aquí los datos, y debajo queda
+     libre el HUD de keynote. */
+  top: 64%;
+  z-index: 5;
+  width: min(22rem, 34vw);
+  padding: 1.1rem 1.3rem;
+  border: 1px solid var(--nm3d-borde);
+  border-left: 2px solid var(--nm3d-neon);
+  border-radius: 0.5rem;
+  background: rgba(10, 14, 26, 0.62);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  font-family: 'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace;
+
+  /* Estado oculto. translateY(-50%) es el centrado vertical y viaja dentro de
+     la misma transformación para no pelearse con la animación. */
+  opacity: 0;
+  transform: translate(-1.5rem, -50%);
+  pointer-events: none;
+  transition: opacity 260ms ease, transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nm3d-tarjeta--visible {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+
+.nm3d-tarjeta__titulo {
+  margin: 0 0 0.7rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--nm3d-neon);
+}
+
+.nm3d-tarjeta__lineas { display: grid; gap: 0.45rem; }
+
+.nm3d-tarjeta__lineas > div {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.nm3d-tarjeta__lineas b {
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--nm3d-tinta-suave);
+  opacity: 0.75;
+}
+
+.nm3d-tarjeta__lineas span { color: var(--nm3d-tinta); }
+
+/* Con movimiento reducido se mantiene el fundido y se quita el deslizamiento:
+   la información sigue llegando, sin desplazamiento lateral. */
+@media (prefers-reduced-motion: reduce) {
+  .nm3d-tarjeta { transition: opacity 200ms ease; transform: translate(0, -50%); }
+}
+
+@media (max-width: 900px) {
+  /* En pantalla estrecha no hay 40 % que reservar: la tarjeta estorbaría. */
+  .nm3d-tarjeta { display: none; }
+}

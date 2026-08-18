@@ -45,10 +45,6 @@
   var LADOS_TUBO = 6;
   var RADIO_TUBO = 0.075;
   var PARTICULAS = 700;
-  /* 180 y no 320: a 320 el coste por cuadro subía a 0,30 ms en pico, un 50 %
-     por encima del techo de 0,20 ms fijado para este módulo. El flujo se sigue
-     leyendo igual — lo que cuenta es la cadencia, no la densidad. */
-  var CHISPAS = 180;              // micro-partículas por los conductos radiales
   /* El nodo del núcleo mide 1.25 de radio; un Fénix de 6 unidades de punta a
      punta lo tapaba a él y a media escena. A 0.58 el ave enmarca el núcleo en
      vez de sustituirlo, que es lo que se le pide a un emblema. */
@@ -64,23 +60,48 @@
     { id: 'nucleo',   nombre: 'MIAMI DJ BEAT — Hub Fénix',            subtitulo: 'Núcleo de Plataforma',
       pos: [0, 0, 0],         color: [1.00, 0.84, 0.45], hub: true,
       telemetria: 'Orquestando 4 subsistemas · enlace estable',
-      slot: 'fenix-en-vuelo' },
+      slot: 'fenix-en-vuelo',
+      hud: { titulo: 'NÚCLEO FÉNIX', lineas: [
+        ['MOTOR',      'procedural · aleteo en GPU'],
+        ['SUBSISTEMAS','4 enlazados · 8 conductos'],
+        ['ESTADO',     'nominal']
+      ] } },
     { id: 'crm',      nombre: 'Captura & CRM de Leads',              subtitulo: 'Entrada de Booking',
       pos: [-9.5, 2.2, -3.5], color: [0.45, 0.85, 1.00], hub: false,
       telemetria: 'Sobres de correo energético en tránsito · termómetro de oportunidad',
-      slot: 'paquetes-correo' },
+      slot: 'paquetes-correo',
+      hud: { titulo: 'CRM & CONTRATACIONES', lineas: [
+        ['FLUJO',      'eventos entrantes en tránsito'],
+        ['COTIZACIÓN', 'automática por tipo de evento'],
+        ['SEGUIMIENTO','termómetro de oportunidad']
+      ] } },
     { id: 'elixis',   nombre: 'ELIXIS — Agente Ejecutivo',           subtitulo: 'Orquestación IA',
       pos: [9.0, 3.4, -2.0],  color: [0.70, 0.55, 1.00], hub: false,
       telemetria: 'Negociación asistida · aprobación humana en el lazo',
-      slot: 'avatar-audifonos' },
+      slot: 'avatar-audifonos',
+      hud: { titulo: 'ELIXIS AI CORE', lineas: [
+        ['ASISTENTE', 'autónomo · negociación asistida'],
+        ['CABINA',    'gestión y turnos'],
+        ['CONTROL',   'aprobación humana en el lazo']
+      ] } },
     { id: 'finanzas', nombre: 'Motor Financiero & Stripe',           subtitulo: 'Fintech & Escrow',
       pos: [7.2, -3.8, 5.5],  color: [0.40, 1.00, 0.70], hub: false,
       telemetria: 'Pulsos de liquidación y contratos · escrow con reparto automático',
-      slot: 'contratos' },
+      slot: 'contratos',
+      hud: { titulo: 'SMART CONTRACTS & STRIPE', lineas: [
+        ['DEPÓSITOS', 'en custodia (escrow)'],
+        ['REPARTO',   'automático al cierre'],
+        ['CONTRATOS', 'firmados y versionados']
+      ] } },
     { id: 'booth',    nombre: 'Booth IA & Inteligencia Atmosférica', subtitulo: 'Telemetría de Escenario',
       pos: [-7.8, -3.2, 5.0], color: [1.00, 0.55, 0.45], hub: false,
       telemetria: 'Sonido, luz y clima en vivo · rider por venue',
-      slot: 'rider-telemetria' }
+      slot: 'rider-telemetria',
+      hud: { titulo: 'BOOTH TELEMETRY', lineas: [
+        ['AUDIO',  'monitoreo en vivo'],
+        ['SERATO', 'sincronización de cabina'],
+        ['RIDERS', 'técnicos por venue']
+      ] } }
   ];
 
   /* SLOTS DE BRANDING — preparados, no ocupados.
@@ -103,8 +124,7 @@
   var bufTubos = null, bufIndices = null, bufQuad = null, bufNodos = null, bufParticulas = null;
   var indicesTubos = 0, conteoVerticesTubos = 0;
   var progFenix = null, bufFenix = null, conteoVerticesFenix = 0;
-  var progChispas = null, bufChispas = null;
-  var aFenix = {}, uFenix = {}, aChispa = {}, uChispa = {};
+  var aFenix = {}, uFenix = {};
   var nodos = [], datosNodos = null, datosParticulas = null;
 
   var aTubos = {}, uTubos = {}, aInst = {}, uInst = {};
@@ -133,6 +153,10 @@
   var nodoEnfocado = -1;
   var orbita = 0;
   var rotacionLibre = false, giroRaton = { yaw: 0, pitch: 0 };
+  /* Visibilidad del holograma: 0 oculto, 1 presente. No es un booleano porque
+     la aparición y el fundido tienen que ser continuos como todo lo demás. */
+  var visHolograma = 0;
+  var progHolo = null, bufHolo = null, aHolo = {}, uHolo = {};
 
   var audioEl = null, ctxAudio = null, analizador = null, datosFrecuencia = null;
   var fuenteMusica = null, fuenteMic = null, micStream = null, micActivo = false;
@@ -348,35 +372,6 @@
     return new Float32Array(v);
   }
 
-  /* ─── CHISPAS ─────────────────────────────────────────────────────────────
-     Nacen en las puntas de las alas y viajan por los cuatro conductos
-     radiales hasta las estaciones periféricas. Cada chispa lleva su propia
-     curva cuadrática (origen, control, destino) como atributos de instancia:
-     así la trayectoria se evalúa en el shader y la CPU no toca ni una. */
-  function construirChispas() {
-    var d = new Float32Array(CHISPAS * 12);
-    for (var i = 0; i < CHISPAS; i++) {
-      var o = i * 12;
-      var destino = 1 + (i % 4);                       // reparto entre las 4 estaciones
-      var e = ESTACIONES[destino].pos;
-      var lado = (i % 2) ? 1 : -1;
-      /* Origen: punta del ala, con dispersión para que no salgan en fila. */
-      var ox = lado * ENVERGADURA * ESCALA_FENIX * (0.82 + Math.random() * 0.18);
-      var oy = (-0.30 + Math.random() * 0.5) * ESCALA_FENIX;
-      var oz = (-0.85 + (Math.random() - 0.5) * 0.3) * ESCALA_FENIX;
-      /* Control: a medio camino y elevado, para que la chispa describa un
-         arco y no una recta — sigue la comba de su conducto. */
-      var cx = (ox + e[0]) * 0.5, cy = (oy + e[1]) * 0.5 + 1.6, cz = (oz + e[2]) * 0.5;
-      d[o]=ox; d[o+1]=oy; d[o+2]=oz;
-      d[o+3]=cx; d[o+4]=cy; d[o+5]=cz;
-      d[o+6]=e[0]; d[o+7]=e[1]; d[o+8]=e[2];
-      d[o+9]=Math.random();                            // fase: reparte la salida
-      d[o+10]=0.020 + Math.random() * 0.028;           // tamaño
-      d[o+11]=destino;                                 // color de la estación destino
-    }
-    return d;
-  }
-
   /* ─── Conductos (una sola vez, fundidos, indexados) ───────────────────── */
 
   function puntosDeEnlace(a, b) {
@@ -478,7 +473,7 @@
     'attribute vec3 aPos; attribute vec3 aNormal; attribute vec3 aColor;',
     'attribute float aRecorrido; attribute float aEnlace;',
     'uniform mat4 uProy; uniform mat4 uVista; uniform float uTiempo; uniform float uPulso;',
-    'varying vec3 vColor; varying float vBrillo; varying float vBorde;',
+    'varying vec3 vColor; varying float vBrillo; varying float vBorde; varying float vSoliton;',
     'void main(){',
     '  vec4 posVista = uVista * vec4(aPos, 1.0);',
     /* Normal en espacio de vista: su componente Z dice cuánto mira hacia la
@@ -486,19 +481,33 @@
        material translúcido se ve más denso. Es un Fresnel de dos líneas. */
     '  vec3 nVista = normalize((uVista * vec4(aNormal, 0.0)).xyz);',
     '  vBorde = 1.0 - abs(nVista.z);',
-    /* FLUJO DE PAQUETES, no un solo destello. Antes viajaba UNA gaussiana por
-       conducto y leía como un parpadeo; multiplicando el recorrido por
-       PAQUETES antes de tomar la fracción salen varios paquetes equiespaciados
-       recorriendo la fibra a la vez, que es lo que parece tráfico de datos
-       yendo hacia las estaciones. Los ocho conductos van desfasados: si laten
-       a la vez, el conjunto parpadea como una bombilla. */
+    /* ─── AXON FLOW · solitón bioeléctrico ──────────────────────────────
+       Antes esto era una gaussiana SIMÉTRICA y, junto al emisor de partículas
+       que ya se ha retirado, leía como un proyectil: aparecía y desaparecía
+       igual de rápido por los dos lados — que es lo que hace una bala, no una
+       señal recorriendo un axón.
+
+       Un solitón real es ASIMÉTRICO: frente corto y estela larga. Se consigue
+       con dos smoothstep sobre la posición dentro del paquete: uno que sube en
+       el primer tercio y otro que baja durante los dos restantes. Ni un borde
+       duro en ninguno de los extremos.
+
+       La LONGITUD respira — un seno lento cruzado con uPulso la alarga y la
+       acorta. Es la reactividad orgánica pedida: el pulso late, no se dispara
+       hacia fuera. Y la velocidad baja de 0.22 a 0.12, para que el ojo lea
+       "corriente por un cable" y no "disparo". */
     '  const float PAQUETES = 3.0;',
-    '  float fase = fract(uTiempo * 0.22 + aEnlace * 0.17);',
-    '  float d = abs(fract(aRecorrido * PAQUETES - fase * PAQUETES + 0.5) - 0.5);',
-    '  float halo = exp(-d * d * 22.0);',
-    '  float nucleo = exp(-d * d * 300.0);',
-    '  float p = halo * 0.45 + nucleo;',
-    '  vBrillo = 0.26 + p * (1.95 + uPulso * 2.1);',
+    '  float fase = fract(uTiempo * 0.12 + aEnlace * 0.17);',
+    '  float sp = fract(aRecorrido * PAQUETES - fase * PAQUETES);',
+    '  float largo = 0.36 + 0.09 * sin(uTiempo * 0.65 + aEnlace * 1.3) + uPulso * 0.14;',
+    '  float frente = smoothstep(0.0, largo * 0.34, sp);',
+    '  float estela = 1.0 - smoothstep(largo * 0.34, largo, sp);',
+    '  float p = frente * estela;',
+    /* Un rescoldo tenue detrás del solitón: sin él la fibra se apaga del todo
+       entre pulso y pulso y el conjunto parpadea en vez de fluir. */
+    '  p += (1.0 - smoothstep(largo, largo * 2.4, sp)) * 0.12;',
+    '  vSoliton = clamp(p, 0.0, 1.0);',
+    '  vBrillo = 0.24 + p * (1.55 + uPulso * 1.25);',
     '  vColor = aColor;',
     '  gl_Position = uProy * posVista;',
     '}'
@@ -506,20 +515,23 @@
 
   var FRAG_TUBOS = [
     'precision mediump float;',
-    'varying vec3 vColor; varying float vBrillo; varying float vBorde;',
+    'varying vec3 vColor; varying float vBrillo; varying float vBorde; varying float vSoliton;',
     'void main(){',
-    /* El borde manda en la opacidad: el centro del tubo queda casi vidrio y
-       la silueta se marca. Es lo que lo hace leer como translúcido y no como
-       un cilindro pintado. */
-    /* El núcleo casi no aporta y el borde sí: con mezcla aditiva, una
-       superficie grande a alfa media se acumula en una mancha sólida. Aquí
-       el tubo es casi invisible de frente y solo se marca su silueta. */
-    /* Alfa a la mitad (0.44 → 0.22). El Fénix y las chispas añadieron luz
-       aditiva a la escena, y con la calibración anterior los conductos vistos
-       de cerca desde la cámara cinemática se acumulaban en bandas blancas
-       gruesas que cruzaban el encuadre. Menos alfa por fibra, misma lectura. */
-    '  float alfa = (0.015 + vBorde * 0.22) * min(1.0, vBrillo * 1.35);',
-    '  gl_FragColor = vec4(vColor * vBrillo, alfa);',
+    /* El color de energía NO se pinta encima: se funde con el material del
+       conducto en proporción al solitón. En reposo la fibra conserva el color
+       de sus dos estaciones; al pasar la onda vira a cian y, en el corazón del
+       pulso, a dorado. Así el conducto sigue diciendo de dónde sale y adónde
+       llega incluso mientras conduce energía. */
+    '  vec3 cian = vec3(0.0, 0.961, 1.0);',
+    '  vec3 oro  = vec3(1.0, 0.843, 0.0);',
+    '  vec3 energia = mix(cian, oro, smoothstep(0.35, 0.95, vSoliton));',
+    '  vec3 c = mix(vColor, energia, vSoliton * 0.85);',
+    /* El borde manda en la opacidad —el centro del tubo queda casi vidrio y la
+       silueta se marca— y el solitón la engorda donde pasa: el pulso se ve por
+       su color y porque la fibra se vuelve más densa ahí. Con mezcla aditiva,
+       una superficie grande a alfa media se acumularía en una mancha sólida. */
+    '  float alfa = (0.015 + vBorde * 0.22 + vSoliton * 0.16) * min(1.0, vBrillo * 1.35);',
+    '  gl_FragColor = vec4(c * vBrillo, alfa);',
     '}'
   ].join('\n');
 
@@ -632,45 +644,64 @@
     '}'
   ].join('\n');
 
-  /* ─── Shaders de las chispas ──────────────────────────────────────────── */
+  /* ─── HOLOGRAMA DE ELIXIS ─────────────────────────────────────────────────
+     Se dibuja en COORDENADAS DE PANTALLA, no en el mundo: sus vértices van
+     directos a clip space sin pasar por la vista, así que se queda clavado en
+     el 40 % izquierdo pase lo que pase con la cámara. Es lo que se espera de
+     un holograma de llamada — no orbita con la escena, acompaña al ponente.
 
-  var VERT_CHISPA = [
+     Toda la figura vive en el FRAGMENT: anillos resonantes y silueta se
+     resuelven con distancias, sin geometría. Cuatro vértices en total, y el
+     cuadrilátero se acota a la caja donde de verdad aparece algo en vez de
+     cubrir el 40 % entero: cada píxel de más es relleno pagado por nada. */
+
+  var VERT_HOLO = [
     'precision mediump float;',
     'attribute vec2 aQuad;',
-    'attribute vec3 iOrigen; attribute vec3 iControl; attribute vec3 iDestino;',
-    'attribute float iFase; attribute float iTam; attribute float iEstacion;',
-    'uniform mat4 uProy; uniform mat4 uVista; uniform float uTiempo; uniform float uPulso;',
-    'varying vec2 vQuad; varying float vVida; varying float vEstacion;',
+    'uniform vec2 uCentro; uniform vec2 uTam;',
+    'varying vec2 vUV;',
     'void main(){',
-    /* La chispa recorre su curva una y otra vez. fract() la devuelve al ala
-       sin coste y sin que la CPU tenga que reciclar nada. */
-    '  float t = fract(uTiempo * (0.19 + uPulso * 0.10) + iFase);',
-    '  float u = 1.0 - t;',
-    '  vec3 p = u*u*iOrigen + 2.0*u*t*iControl + t*t*iDestino;',
-    '  vec4 posVista = uVista * vec4(p, 1.0);',
-    /* Nace y muere con suavidad: sin esto aparecen y desaparecen de golpe. */
-    '  vVida = smoothstep(0.0, 0.10, t) * smoothstep(1.0, 0.82, t);',
-    '  posVista.xy += aQuad * iTam * (1.0 + uPulso * 0.7) * (0.5 + vVida);',
-    '  vQuad = aQuad; vEstacion = iEstacion;',
-    '  gl_Position = uProy * posVista;',
+    '  vUV = aQuad;',
+    '  gl_Position = vec4(uCentro + aQuad * uTam, 0.0, 1.0);',
     '}'
   ].join('\n');
 
-  var FRAG_CHISPA = [
+  var FRAG_HOLO = [
     'precision mediump float;',
-    'varying vec2 vQuad; varying float vVida; varying float vEstacion;',
+    'uniform float uTiempo; uniform float uPulso; uniform float uVisible;',
+    'uniform float uAspecto;',
+    'varying vec2 vUV;',
     'void main(){',
-    '  float d = length(vQuad);',
-    '  if (d > 1.0) discard;',
-    /* La chispa vira del dorado del Fénix al color de la estación a la que va:
-       el ojo sigue el trayecto sin que nadie tenga que explicarlo. */
-    '  vec3 oro = vec3(1.0, 0.85, 0.45);',
-    '  vec3 destino = vEstacion < 1.5 ? vec3(0.45,0.85,1.0)',
-    '               : (vEstacion < 2.5 ? vec3(0.70,0.55,1.0)',
-    '               : (vEstacion < 3.5 ? vec3(0.40,1.00,0.70) : vec3(1.00,0.55,0.45)));',
-    '  vec3 c = mix(oro, destino, 0.55);',
-    '  float m = smoothstep(1.0, 0.0, d);',
-    '  gl_FragColor = vec4(c, m * m * vVida * 0.85);',
+    '  if (uVisible < 0.01) discard;',
+    /* Se corrige el aspecto para que los anillos salgan circulares y no
+       ovalados en pantallas panorámicas. */
+    '  vec2 p = vec2(vUV.x * uAspecto, vUV.y);',
+    '  float r = length(p);',
+    /* ANILLOS RESONANTES: se abren hacia fuera y su separación se comprime con
+       uPulso — cuando ELIXIS habla o entra el bombo, la onda se acelera. */
+    '  float vel = 1.1 + uPulso * 1.5;',
+    '  float onda = sin(r * 9.0 - uTiempo * vel);',
+    '  float anillos = pow(max(onda, 0.0), 8.0);',
+    /* Se desvanecen con la distancia: nacen en el pecho, no en el borde. */
+    '  anillos *= smoothstep(1.25, 0.15, r) * (0.35 + uPulso * 0.65);',
+    /* SILUETA VECTORIAL con distancias: cabeza (círculo) y hombros (arco
+       achatado por debajo). Sin geometría. */
+    '  float cabeza = length((p - vec2(0.0, 0.34)) * vec2(1.0, 0.92)) - 0.20;',
+    '  vec2 h = p - vec2(0.0, -0.30);',
+    '  float hombros = length(h * vec2(0.62, 1.35)) - 0.44;',
+    '  float silueta = min(cabeza, hombros);',
+    /* Solo el CONTORNO, no el relleno: un holograma es luz en los bordes. */
+    '  float borde = 1.0 - smoothstep(0.0, 0.030, abs(silueta));',
+    '  borde *= 0.55 + uPulso * 0.45;',
+    /* Barrido de escaneo: el tic visual que dice "esto es una proyección". */
+    '  float escaneo = 0.5 + 0.5 * sin(vUV.y * 42.0 - uTiempo * 2.2);',
+    '  borde *= 0.75 + escaneo * 0.25;',
+    /* Cian abajo → magenta arriba. */
+    '  vec3 cian    = vec3(0.30, 0.95, 1.00);',
+    '  vec3 magenta = vec3(1.00, 0.35, 0.85);',
+    '  vec3 c = mix(cian, magenta, clamp(vUV.y * 0.5 + 0.5, 0.0, 1.0));',
+    '  float a = (anillos * 0.55 + borde) * uVisible;',
+    '  gl_FragColor = vec4(c * (0.7 + uPulso * 0.6), clamp(a, 0.0, 1.0));',
     '}'
   ].join('\n');
 
@@ -817,21 +848,15 @@
     gl.bindBuffer(gl.ARRAY_BUFFER, bufFenix);
     gl.bufferData(gl.ARRAY_BUFFER, construirFenix(), gl.STATIC_DRAW);
 
-    progChispas = enlazar(VERT_CHISPA, FRAG_CHISPA);
-    aChispa.quad = gl.getAttribLocation(progChispas, 'aQuad');
-    aChispa.origen = gl.getAttribLocation(progChispas, 'iOrigen');
-    aChispa.control = gl.getAttribLocation(progChispas, 'iControl');
-    aChispa.destino = gl.getAttribLocation(progChispas, 'iDestino');
-    aChispa.fase = gl.getAttribLocation(progChispas, 'iFase');
-    aChispa.tam = gl.getAttribLocation(progChispas, 'iTam');
-    aChispa.estacion = gl.getAttribLocation(progChispas, 'iEstacion');
-    uChispa.proy = gl.getUniformLocation(progChispas, 'uProy');
-    uChispa.vista = gl.getUniformLocation(progChispas, 'uVista');
-    uChispa.tiempo = gl.getUniformLocation(progChispas, 'uTiempo');
-    uChispa.pulso = gl.getUniformLocation(progChispas, 'uPulso');
-    bufChispas = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufChispas);
-    gl.bufferData(gl.ARRAY_BUFFER, construirChispas(), gl.STATIC_DRAW);
+    progHolo = enlazar(VERT_HOLO, FRAG_HOLO);
+    aHolo.quad = gl.getAttribLocation(progHolo, 'aQuad');
+    uHolo.centro = gl.getUniformLocation(progHolo, 'uCentro');
+    uHolo.tam = gl.getUniformLocation(progHolo, 'uTam');
+    uHolo.tiempo = gl.getUniformLocation(progHolo, 'uTiempo');
+    uHolo.pulso = gl.getUniformLocation(progHolo, 'uPulso');
+    uHolo.visible = gl.getUniformLocation(progHolo, 'uVisible');
+    uHolo.aspecto = gl.getUniformLocation(progHolo, 'uAspecto');
+    bufHolo = bufQuad;   // reutiliza el cuadrilátero base: cero memoria nueva
 
     gl.clearColor(0.02, 0.03, 0.06, 1.0);
     gl.enable(gl.BLEND);
@@ -839,20 +864,21 @@
     gl.disable(gl.DEPTH_TEST);   // aditivo: el orden no importa y evita ordenar
 
     stats.vertices = conteoVerticesTubos + conteoVerticesFenix;
-    stats.instancias = ESTACIONES.length + PARTICULAS + CHISPAS;
+    stats.instancias = ESTACIONES.length + PARTICULAS;
   }
 
   function liberarEscena() {
     if (!gl) return;
     try {
-      [bufTubos, bufIndices, bufQuad, bufNodos, bufParticulas, bufFenix, bufChispas].forEach(function (b) { if (b) gl.deleteBuffer(b); });
+      [bufTubos, bufIndices, bufQuad, bufNodos, bufParticulas, bufFenix].forEach(function (b) { if (b) gl.deleteBuffer(b); });
       if (progTubos) gl.deleteProgram(progTubos);
       if (progInstancias) gl.deleteProgram(progInstancias);
       if (progFenix) gl.deleteProgram(progFenix);
-      if (progChispas) gl.deleteProgram(progChispas);
+      if (progHolo) gl.deleteProgram(progHolo);
     } catch (e) { /* contexto ya muerto */ }
     bufTubos = bufIndices = bufQuad = bufNodos = bufParticulas = progTubos = progInstancias = null;
-    bufFenix = bufChispas = progFenix = progChispas = null;
+    bufFenix = null; progFenix = null;
+    progHolo = null; bufHolo = null;
   }
 
   /* ─── Audio ───────────────────────────────────────────────────────────── */
@@ -1144,28 +1170,29 @@
     gl.drawArrays(gl.TRIANGLES, 0, conteoVerticesFenix);
     stats.llamadasDibujo++;
 
-    /* 5 · CHISPAS — instanciadas sobre el mismo cuadrilátero base. Una sola
-       llamada para las 320, y su trayectoria se evalúa en el shader. */
-    gl.useProgram(progChispas);
-    gl.uniformMatrix4fv(uChispa.proy, false, _proy);
-    gl.uniformMatrix4fv(uChispa.vista, false, _vista);
-    gl.uniform1f(uChispa.tiempo, t);
-    gl.uniform1f(uChispa.pulso, pulso);
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufQuad);
-    gl.enableVertexAttribArray(aChispa.quad);
-    gl.vertexAttribPointer(aChispa.quad, 2, gl.FLOAT, false, 0, 0);
-    fijarDivisor(aChispa.quad, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufChispas);
-    var zc = 12*4;
-    gl.enableVertexAttribArray(aChispa.origen);   gl.vertexAttribPointer(aChispa.origen, 3, gl.FLOAT, false, zc, 0);
-    gl.enableVertexAttribArray(aChispa.control);  gl.vertexAttribPointer(aChispa.control, 3, gl.FLOAT, false, zc, 12);
-    gl.enableVertexAttribArray(aChispa.destino);  gl.vertexAttribPointer(aChispa.destino, 3, gl.FLOAT, false, zc, 24);
-    gl.enableVertexAttribArray(aChispa.fase);     gl.vertexAttribPointer(aChispa.fase, 1, gl.FLOAT, false, zc, 36);
-    gl.enableVertexAttribArray(aChispa.tam);      gl.vertexAttribPointer(aChispa.tam, 1, gl.FLOAT, false, zc, 40);
-    gl.enableVertexAttribArray(aChispa.estacion); gl.vertexAttribPointer(aChispa.estacion, 1, gl.FLOAT, false, zc, 44);
-    fijarDivisor(aChispa.origen,1); fijarDivisor(aChispa.control,1); fijarDivisor(aChispa.destino,1);
-    fijarDivisor(aChispa.fase,1); fijarDivisor(aChispa.tam,1); fijarDivisor(aChispa.estacion,1);
-    if (dibujarInstanciado(gl.TRIANGLE_STRIP, 0, 4, CHISPAS)) stats.llamadasDibujo++;
+    /* 5 · HOLOGRAMA DE ELIXIS. Se omite entero cuando está oculto: sin foco no
+       se paga ni una llamada ni un fragmento. */
+    if (visHolograma > 0.01) {
+      gl.useProgram(progHolo);
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufHolo);
+      gl.enableVertexAttribArray(aHolo.quad);
+      gl.vertexAttribPointer(aHolo.quad, 2, gl.FLOAT, false, 0, 0);
+      fijarDivisor(aHolo.quad, 0);
+      /* Centro en x=-0.60: el corazón del 40 % izquierdo, justo el hueco que
+         el encuadre 60/40 deja libre. */
+      /* Sube a la mitad ALTA de la banda izquierda. Centrado en y=0.06 se
+         comía el mismo espacio que la tarjeta de telemetría y esta le tapaba
+         la silueta justo por el centro: se veían los anillos y no la figura.
+         Arriba el holograma, debajo los datos. */
+      gl.uniform2f(uHolo.centro, -0.60, 0.34);
+      gl.uniform2f(uHolo.tam, 0.28, 0.34);
+      gl.uniform1f(uHolo.tiempo, t);
+      gl.uniform1f(uHolo.pulso, pulso);
+      gl.uniform1f(uHolo.visible, visHolograma);
+      gl.uniform1f(uHolo.aspecto, 0.28 * aspecto / 0.34);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      stats.llamadasDibujo++;
+    }
   }
 
   function dibujarLote(buf, cuantas, activo) {
@@ -1242,6 +1269,10 @@
       leerAudio();
       actualizarObjetivoCamara(dt);
       perseguir(dt);
+      /* Fundido continuo, no un interruptor: el holograma entra y sale con la
+         misma suavidad que la cámara. 3.2 ≈ un cuarto de segundo. */
+      var objetivoHolo = (nodoEnfocado >= 0) ? 1 : 0;
+      visHolograma += (objetivoHolo - visHolograma) * Math.min(1, dt * 3.2);
       dibujarEscena(t);
       colocarEtiquetas();
     } catch (e) {
@@ -1360,7 +1391,7 @@
       if (k === 'm' || k === 'M') { alternarMicrofono(); return; }
       if (k === 'r' || k === 'R') { alternarRotacionLibre(); return; }
       if (k === 'f' || k === 'F') { alternarPantallaCompleta(); return; }
-      if (k === 'Escape') { volverAlRecorrido(); return; }
+      if (k === 'Escape' || k === '0') { ev.preventDefault(); volverAlRecorrido(); return; }
       if (k === 'd' || k === 'D') { document.body.classList.toggle('nm3d-depurar'); return; }
     });
 
@@ -1410,6 +1441,30 @@
     pon('[data-nm3d-subtitulo]', e ? e.subtitulo : 'Sistema de booking 2026-2030');
     pon('[data-nm3d-telemetria]', e ? e.telemetria : '5 estaciones · 8 conductos activos');
     pon('[data-nm3d-conexion]', audioActivo ? 'En vivo' : 'Enlace estable');
+
+    /* Tarjeta lateral de telemetría. La clase manda la transición; el
+       contenido solo se reescribe cuando hay estación, para no vaciar el texto
+       a mitad del fundido de salida. */
+    var tarjeta = document.querySelector('[data-nm3d-tarjeta]');
+    if (tarjeta) {
+      tarjeta.classList.toggle('nm3d-tarjeta--visible', !!e);
+      if (e && e.hud) {
+        var tit = tarjeta.querySelector('[data-nm3d-tarjeta-titulo]');
+        if (tit) tit.textContent = e.hud.titulo;
+        var cuerpo = tarjeta.querySelector('[data-nm3d-tarjeta-lineas]');
+        if (cuerpo && cuerpo.getAttribute('data-estacion') !== e.id) {
+          cuerpo.setAttribute('data-estacion', e.id);
+          cuerpo.textContent = '';
+          for (var li = 0; li < e.hud.lineas.length; li++) {
+            var fila = document.createElement('div');
+            var cl = document.createElement('b'); cl.textContent = e.hud.lineas[li][0];
+            var vl = document.createElement('span'); vl.textContent = e.hud.lineas[li][1];
+            fila.appendChild(cl); fila.appendChild(vl);
+            cuerpo.appendChild(fila);
+          }
+        }
+      }
+    }
 
     var insignia = document.querySelector('[data-nm3d-mic]');
     if (insignia) insignia.hidden = !micActivo;
@@ -1467,7 +1522,14 @@
 
     construirWaypoints();
     try { construirEscena(); }
-    catch (e) { mostrarFallback('no se pudo compilar el motor gráfico'); return; }
+    catch (e) {
+      /* El mensaje incluye la causa real. Antes decía siempre "no se pudo
+         compilar el motor gráfico" pasara lo que pasara dentro, y eso convertía
+         cualquier fallo de construcción —un buffer, un uniform, una referencia
+         suelta— en una adivinanza. El fallback debe informar, no tranquilizar. */
+      mostrarFallback('el motor no arrancó: ' + (e && e.message ? e.message : e));
+      return;
+    }
 
     capaz = true;
     redimensionar();
@@ -1501,6 +1563,7 @@
       c.banda = { graves: banda.graves, medios: banda.medios, agudos: banda.agudos };
       c.estaciones = ESTACIONES.length; c.nodoEnfocado = nodoEnfocado;
       c.recorridoActivo = recorrido.activo; c.rotacionLibre = rotacionLibre;
+    c.visHolograma = +visHolograma.toFixed(3);
       c.camara = { x: +cam.x.toFixed(3), y: +cam.y.toFixed(3), z: +cam.z.toFixed(3) };
       return c;
     },
