@@ -273,23 +273,29 @@
        devuelven display:flex, y sin display:grid las nueve columnas no existen
        aunque grid-template-columns esté declarado. Inline gana a toda hoja. */
     nav.style.setProperty('display', 'grid', 'important');
-    /* max-content en vez de 1fr: cada pestaña ocupa EXACTAMENTE lo que mide su
-       texto y el espacio sobrante se reparte ENTRE ellas, no dentro. Con 1fr,
-       "INICIO" recibía la misma columna que "SERVICIOS" y la barra se veía
-       descompensada aunque la geometría fuese correcta. */
-    /* Columna 10 para el sol. Sin ella, el riel desbordaba 15 px y overflow:hidden
-       mordía el final de MRM IA. */
-    nav.style.setProperty('grid-template-columns', 'repeat(9, max-content) 40px', 'important');
-    nav.style.setProperty('justify-content', 'space-between', 'important');
+    /* REJILLA · 2026-08-18 — la anchura de las columnas YA NO SE ESCRIBE AQUÍ.
+       Durante meses este archivo impuso `repeat(9, max-content) 40px` en línea y
+       con !important, lo que ganaba a las cuatro reglas que header-unified.css
+       declaraba para lo mismo. Resultado: cinco definiciones de la misma
+       propiedad y la que mandaba era esta, la última en ejecutarse.
+       Y max-content ataba el ancho al texto: medido en vivo el 2026-08-18,
+       pulsar ES|EN desplazaba el último slot 85 px, y por debajo de ~1050 px
+       los slots 8 y 9 desaparecían bajo overflow:hidden.
+       La rejilla vive ahora en UN SOLO SITIO: header-unified.css, bloque
+       «REJILLA RÍGIDA · PARIDAD BILINGÜE». Si hay que cambiar un ancho, se
+       cambia allí y en ningún otro lugar. */
+    /* justify-content y overflow TAMPOCO se escriben aquí. Los gobierna el
+       mismo bloque de header-unified.css. En línea impedían que el media
+       query de contención por debajo de 1172px pudiera cambiarlos: inline
+       con !important gana también a un media query. */
     nav.style.setProperty('padding-right', '0', 'important');
-    nav.style.setProperty('overflow', 'visible', 'important');
     nav.style.setProperty('grid-auto-rows', '0', 'important');
     nav.style.setProperty('align-items', 'center', 'important');
 
     [].slice.call(nav.querySelectorAll('[data-mdj-slot]')).forEach(function (el) {
       el.style.setProperty('display', 'inline-flex', 'important');
-      el.style.setProperty('width', 'auto', 'important');
-      el.style.setProperty('min-width', 'max-content', 'important');
+      el.style.setProperty('width', '100%', 'important');
+      el.style.setProperty('min-width', '0', 'important');
       /* La visibilidad la decide el header, no las clases heredadas:
            slot 5 (CONFIG) — reservado sin sesión, visible con ella
            slot 8 (MI PERFIL) — SIEMPRE visible (decisión PO)
@@ -3908,8 +3914,8 @@
                       el.removeAttribute('aria-hidden');
                       el.removeAttribute('tabindex');
                       el.style.setProperty('display', 'inline-flex', 'important');
-                      el.style.setProperty('width', 'auto', 'important');
-                      el.style.setProperty('min-width', 'max-content', 'important');
+                      el.style.setProperty('width', '100%', 'important');
+                      el.style.setProperty('min-width', '0', 'important');
                       el.style.setProperty('flex', '0 0 auto', 'important');
                       el.style.setProperty('pointer-events', 'auto', 'important');
                       el.style.removeProperty('visibility');
@@ -3921,8 +3927,8 @@
                 _ownerMp.removeAttribute('aria-hidden');
                 _ownerMp.removeAttribute('tabindex');
                 _ownerMp.style.setProperty('display', 'inline-flex', 'important');
-                _ownerMp.style.setProperty('width', 'auto', 'important');
-                _ownerMp.style.setProperty('min-width', 'max-content', 'important');
+                _ownerMp.style.setProperty('width', '100%', 'important');
+                _ownerMp.style.setProperty('min-width', '0', 'important');
                 _ownerMp.style.setProperty('flex', '0 0 auto', 'important');
                 _ownerMp.style.setProperty('pointer-events', 'auto', 'important');
                 _ownerMp.style.removeProperty('visibility');
@@ -3936,9 +3942,9 @@
                 _ownerMp.removeAttribute('aria-hidden');
                 _ownerMp.removeAttribute('tabindex');
                 _ownerMp.style.setProperty('display', 'inline-flex', 'important');
-                _ownerMp.style.setProperty('min-width', 'max-content', 'important');
+                _ownerMp.style.setProperty('min-width', '0', 'important');
                 _ownerMp.style.setProperty('max-width', 'none', 'important');
-                _ownerMp.style.setProperty('width', 'auto', 'important');
+                _ownerMp.style.setProperty('width', '100%', 'important');
                 _ownerMp.style.setProperty('flex', '0 0 auto', 'important');
                 _ownerMp.style.setProperty('pointer-events', 'auto', 'important');
                 _ownerMp.style.removeProperty('visibility');
@@ -4270,9 +4276,9 @@
                 _mpFinal.removeAttribute('aria-hidden');
                 _mpFinal.removeAttribute('tabindex');
                 _mpFinal.style.setProperty('display', 'inline-flex', 'important');
-                _mpFinal.style.setProperty('min-width', 'max-content', 'important');
+                _mpFinal.style.setProperty('min-width', '0', 'important');
                 _mpFinal.style.setProperty('max-width', 'none', 'important');
-                _mpFinal.style.setProperty('width', 'auto', 'important');
+                _mpFinal.style.setProperty('width', '100%', 'important');
                 _mpFinal.style.setProperty('flex', '0 0 auto', 'important');
                 _mpFinal.style.setProperty('pointer-events', 'auto', 'important');
                 _mpFinal.style.removeProperty('visibility');
@@ -4299,9 +4305,9 @@
               _mpFinal2.removeAttribute('aria-hidden');
               _mpFinal2.removeAttribute('tabindex');
               _mpFinal2.style.setProperty('display', 'inline-flex', 'important');
-              _mpFinal2.style.setProperty('min-width', 'max-content', 'important');
+              _mpFinal2.style.setProperty('min-width', '0', 'important');
               _mpFinal2.style.setProperty('max-width', 'none', 'important');
-              _mpFinal2.style.setProperty('width', 'auto', 'important');
+              _mpFinal2.style.setProperty('width', '100%', 'important');
               _mpFinal2.style.setProperty('flex', '0 0 auto', 'important');
               _mpFinal2.style.setProperty('pointer-events', 'auto', 'important');
               _mpFinal2.style.removeProperty('visibility');
@@ -4368,9 +4374,9 @@
         _mp.removeAttribute('aria-hidden');
         _mp.removeAttribute('tabindex');
         _mp.style.setProperty('display', 'inline-flex', 'important');
-        _mp.style.setProperty('min-width', 'max-content', 'important');
+        _mp.style.setProperty('min-width', '0', 'important');
         _mp.style.setProperty('max-width', 'none', 'important');
-        _mp.style.setProperty('width', 'auto', 'important');
+        _mp.style.setProperty('width', '100%', 'important');
         _mp.style.setProperty('flex', '0 0 auto', 'important');
         _mp.style.setProperty('pointer-events', 'auto', 'important');
         _mp.style.removeProperty('visibility');

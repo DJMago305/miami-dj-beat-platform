@@ -2972,7 +2972,8 @@ body.mdj-staff-nav.page-admin-dashboard
   /* minmax(max-content, 1fr): la columna nunca es más estrecha que su etiqueta.
      Con 1fr a secas, un contenedor angosto daba columnas de 37px para textos de
      68-115px y las pestañas se solapaban unas sobre otras. */
-  grid-template-columns: repeat(9, minmax(max-content, 1fr)) !important;
+  /* UNIFICADO 2026-08-18 → ver bloque «REJILLA RÍGIDA» al final del archivo: */
+  /* grid-template-columns: repeat(9, minmax(max-content, 1fr)) !important; */
   align-items: center !important;
   justify-items: center !important;
   width: 100% !important;
@@ -3164,7 +3165,8 @@ body.mdj-buyer-session #mainHeader.header.mdj-header-unified #mainNav[data-mdj-s
 body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"],
 body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] {
   display: grid !important;
-  grid-template-columns: repeat(9, minmax(max-content, 1fr)) !important;
+  /* UNIFICADO 2026-08-18 → ver bloque «REJILLA RÍGIDA» al final del archivo: */
+  /* grid-template-columns: repeat(9, minmax(max-content, 1fr)) !important; */
   grid-auto-flow: column !important;
   grid-auto-rows: 0 !important;      /* nada puede caer a una segunda fila */
   align-items: center !important;
@@ -3208,7 +3210,8 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
    ellas. Los separadores y el subrayado de la activa quedan alineados porque
    todas las celdas comparten línea base y altura. */
 #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] {
-  grid-template-columns: repeat(9, max-content) !important;
+  /* UNIFICADO 2026-08-18 → ver bloque «REJILLA RÍGIDA» al final del archivo: */
+  /* grid-template-columns: repeat(9, max-content) !important; */
   justify-content: space-between !important;
   column-gap: 0 !important;
 }
@@ -3221,7 +3224,8 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
 /* El sol vive DENTRO del riel, en su propia columna (la décima). Deja de estar
    posicionado en absoluto sobre la barra, que era lo que lo solapaba con MRM IA. */
 #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] {
-  grid-template-columns: repeat(9, max-content) 40px !important;
+  /* UNIFICADO 2026-08-18 → ver bloque «REJILLA RÍGIDA» al final del archivo: */
+  /* grid-template-columns: repeat(9, max-content) 40px !important; */
 }
 #mainHeader.header.mdj-header-unified .mdj-daynight {
   position: static !important;
@@ -3279,3 +3283,136 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
 }
 
 
+
+/* ══════════════════════════════════════════════════════════════════════════
+   REJILLA RÍGIDA · PARIDAD BILINGÜE ES/EN · 2026-08-18
+   FUENTE ÚNICA DE VERDAD de la geometría del riel principal.
+   ──────────────────────────────────────────────────────────────────────────
+   QUÉ SUSTITUYE
+   Hasta hoy el ancho de las columnas se declaraba en CINCO sitios: cuatro
+   reglas de este archivo (líneas ~2975, ~3167, ~3211, ~3224, ahora comentadas
+   y apuntando aquí) y una escritura en línea desde mdj-shared-header.js con
+   !important, que ganaba a las cuatro. La que mandaba era la última en
+   ejecutarse, no la que alguien hubiera decidido.
+
+   QUÉ CORRIGE
+   Las cinco usaban max-content: el ancho de cada columna lo fijaba su texto.
+   Medido en vivo el 2026-08-18 sobre rentals.html, pulsando ES|EN:
+
+     slot 2 Servicios/Services   +5.9 px      slot 6 Trabajos/Jobs   +26.1 px
+     slot 3 Eventos/Events      +13.5 px      slot 7 Contacto/Contact +72.6 px
+     slot 9 MRM IA              +85.0 px  ← deriva acumulada
+
+   Y con overflow:hidden en el riel, por debajo de ~1050 px los slots 8 y 9 no
+   se recortaban: desaparecían, sin scroll con el que alcanzarlos.
+
+   CÓMO SE CALCULARON LOS ANCHOS
+   Máximo entre la etiqueta española y la inglesa, medido renderizado en el DOM
+   real (no estimado), más holgura para diferencias de fuente entre sistemas:
+
+     1 Inicio / Home ......  80   (medido 75.0 / 69.1)
+     2 Servicios / Services  140  (medido 132.8 / 125.2)
+     3 Eventos / Events ...  122  (medido 114.8 / 102.3)
+     4 Shop ...............   90  (medido  82.0 /  82.0)
+     5 ⚙️ CONFIG ..........  126  (medido 120.3 / 120.3)
+     6 Trabajos / Jobs ....  134  (medido 127.0 /  80.5)  ← mayor asimetría
+     7 Contacto / Contact .  136  (medido 128.0 / 115.5)
+     8 MI PERFIL ..........  146  (medido 139.6 en su estado más ancho)
+     9 MRM IA .............  110  (medido 102.1 / 102.1)
+    10 sol (día/noche) ....   40
+                             ────
+                             1124 px de riel + 48 de padding = 1172 px
+
+   SI HAY QUE CAMBIAR UN ANCHO, SE CAMBIA AQUÍ Y EN NINGÚN OTRO SITIO.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] {
+  display: grid !important;
+  grid-template-columns:
+    80px 140px 122px 90px 126px 134px 136px 146px 110px 40px !important;
+  /* center y no space-between: con columnas fijas, space-between reparte el
+     sobrante ENTRE ellas, así que su posición pasaría a depender del ancho del
+     contenedor — es decir, volvería a derivar entre páginas. */
+  justify-content: center !important;
+  align-items: center !important;
+  max-width: 1172px !important;
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
+  gap: 0 !important;
+  /* visible a ancho completo: el riel cabe entero y nada debe recortarse.
+     Por debajo del umbral, el media query de más abajo lo pasa a auto. */
+  overflow: visible !important;
+}
+
+/* El slot ocupa su celda y nada más. `min-width: max-content` —que este archivo
+   declaraba en dos sitios y el JS inyectaba desde siete— re-expandía la celda y
+   anulaba el ancho fijo. */
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* CONTENCIÓN, NO AMPUTACIÓN.
+   overflow:hidden hacía desaparecer los dos últimos slots sin aviso ni forma de
+   llegar a ellos. Se sustituye por desplazamiento horizontal: las nueve
+   pestañas siguen existiendo y son alcanzables. Los anchos no cambian, así que
+   Δx sigue siendo 0 también por debajo del umbral. */
+@media (max-width: 1172px) {
+  #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] {
+    justify-content: start !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"]::-webkit-scrollbar {
+    display: none !important;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   REJILLA RÍGIDA · anulación de los colapsos por max-width
+   ──────────────────────────────────────────────────────────────────────────
+   POR QUÉ HACE FALTA
+   De la era «MI PORTAL» quedan reglas que esconden un slot ENCOGIÉNDOLO a
+   max-width:0 en vez de ocultarlo. La que gana sobre el slot 8 es:
+
+     body:not(.mdj-buyer-session):not(.mdj-is-client) #mainHeader… 
+       #mainNav… > a#mainNav-guest-mi-perfil-link { max-width: 0 !important }
+
+   Nunca se notó porque el JS inyectaba min-width:max-content en el mismo
+   elemento, y en CSS min-width gana a max-width: la anulaba sin que nadie
+   supiera que estaba ahí. Al retirar esa inyección para poder fijar la rejilla,
+   la regla afloró y colapsó los slots 5 y 8 a ancho 0.
+
+   Con rejilla fija, encoger es la forma equivocada de ocultar: mueve la
+   geometría. El ocultamiento correcto —y el que este archivo ya declaraba como
+   intención para el slot reservado— es `visibility`, que conserva la celda.
+   Aquí se devuelve el ancho; quien deba estar oculto lo sigue estando por
+   visibility/opacity, que estas líneas no tocan.
+
+   Especificidad: 3 ids + 7 clases/atributos, para empatar con la regla que
+   gana y resolverse por orden de aparición (esta va al final del archivo).
+   ────────────────────────────────────────────────────────────────────────── */
+
+body #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] > a[data-mdj-slot]#mainNav-guest-mi-perfil-link,
+body #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] > a[data-mdj-slot]#mainNav-mi-portal-link,
+body #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] > a[data-mdj-slot]#mainNav-config-link,
+body #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] > a[data-mdj-slot]#mainNav-staff-or-profile,
+body #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] > a[data-mdj-slot]#mainNav-staff-link,
+body #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] > a[data-mdj-slot]#mainNav-roadmap-link {
+  max-width: 100% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
