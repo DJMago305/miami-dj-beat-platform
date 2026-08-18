@@ -1,39 +1,36 @@
 /* ============================================================================
-   NEURAL MATRIX 3D · sinapsis, instancing y audio-reactividad (FEAT-3D-02)
+   NEURAL MATRIX 3D · Modo Keynote (FEAT-3D-03)
    ----------------------------------------------------------------------------
-   Sobre el andamiaje de FEAT-3D-01 se añaden tres cosas:
-     · TUBOS TRANSLÚCIDOS — malla estática indexada, las cuatro rutas fundidas
-       en un solo buffer. Una llamada de dibujo para todo el tejido neuronal.
-     · NODOS DE SINAPSIS E INSTANCING — un cuadrilátero base instanciado para
-       los nodos y otro para las micropartículas. Dos llamadas, no dos mil.
-     · uPulso REAL — un AnalyserNode de la Web Audio API alimenta el brillo de
-       los pulsos con la energía de graves de la pista.
+   La matriz deja de ser escenografía de academia y pasa a ser el simulador del
+   sistema de negocio que se presenta en escena: 5 estaciones, cámara cinemática
+   continua, controles de escenario y HUD de proyector.
 
-   ┌─ LAS LLAMADAS DE DIBUJO BAJAN, NO SUBEN ────────────────────────────────┐
-   │ FEAT-3D-01 gastaba 5 (una por ruta + partículas). Esta versión dibuja    │
-   │ MÁS geometría con 3: tubos fundidos (1) + nodos instanciados (1) +       │
-   │ partículas instanciadas (1). El requisito era no elevarlas.              │
+   ┌─ CÓMO SE MATA EL TELETRANSPORTE, DE VERDAD ─────────────────────────────┐
+   │ La versión anterior calculaba z = ((t*2.2) % 46) - 34: cada 20,9 s el    │
+   │ módulo saltaba 45,8 unidades y la escena daba un corte seco a mitad de   │
+   │ frase. Quitar ese módulo no basta: cualquier cambio de modo o de nodo    │
+   │ volvería a asignar una posición nueva de golpe.                          │
+   │                                                                          │
+   │ Aquí la cámara NUNCA se asigna. Se declara un OBJETIVO (posición y punto │
+   │ mirado) y el estado real lo persigue con suavizado exponencial ajustado  │
+   │ por dt. Cambiar de modo, saltar de estación o entrar en órbita libre     │
+   │ solo mueve el objetivo — el camino hasta él siempre es continuo. Es una  │
+   │ garantía estructural, no una corrección puntual.                         │
+   │                                                                          │
+   │ Y el recorrido usa una Catmull-Rom CERRADA: da la vuelta el ÍNDICE de    │
+   │ los puntos de control, no el parámetro. Al pasar del último waypoint al  │
+   │ primero la curva ya es continua por construcción.                        │
    └──────────────────────────────────────────────────────────────────────────┘
 
-   ┌─ POR QUÉ NO SE PIDE EL MICRÓFONO ───────────────────────────────────────┐
-   │ El análisis se hace sobre la pista del propio sitio, servida del mismo   │
-   │ origen. Pedir el micrófono para decorar un fondo dispara un permiso del  │
-   │ sistema y mete audio del entorno del usuario en la página. No compensa.  │
-   │ La Web Audio API exige además un gesto: hay un botón, no autoplay.       │
-   └──────────────────────────────────────────────────────────────────────────┘
-
-   ┌─ POR QUÉ ESTE ARCHIVO EVITA ?. Y ?? ─────────────────────────────────────┐
-   │ Lección del ticket P2.2: un SyntaxError ocurre al PARSEAR, antes de que  │
-   │ corra una sola línea. El código que dibuja el mensaje de "no puedo"      │
-   │ tiene que poder parsearse en el motor que no puede.                      │
-   └──────────────────────────────────────────────────────────────────────────┘
-
-   SALVAGUARDAS DE GPU (intactas desde FEAT-3D-01, ver directriz WindowServer):
-     · Tope determinista por vencimiento acumulado: 30 fps por defecto, 60 opt-in.
+   SALVAGUARDAS DE GPU (intactas desde FEAT-3D-01):
+     · Tope determinista por vencimiento acumulado: 30 fps por defecto.
      · webglcontextlost / webglcontextrestored con reinicio controlado.
      · Pausa por visibilitychange Y por blur.
      · devicePixelRatio acotado a 1.75.
      · Cero creación de geometría, buffers o programas dentro del bucle.
+
+   Sin `?.` ni `??` a propósito (lección P2.2): el código que muestra el
+   mensaje de "no puedo" tiene que parsearse en el motor que no puede.
    ========================================================================== */
 
 (function () {
@@ -44,17 +41,48 @@
   var ID_VIEWPORT = 'neural-matrix-viewport';
   var FPS_POR_DEFECTO = 30;
   var DPR_MAXIMO = 1.75;
-  var MUESTRAS_POR_RUTA = 120;   // puntos a lo largo de cada curva
-  var LADOS_TUBO = 6;            // vértices por anillo: 6 basta para leerse redondo
-  var RADIO_TUBO = 0.085;   // conducto, no tubería: la cámara los atraviesa
-  var PARTICULAS = 900;
+  var MUESTRAS_CONDUCTO = 64;
+  var LADOS_TUBO = 6;
+  var RADIO_TUBO = 0.075;
+  var PARTICULAS = 700;
 
-  var RUTAS = [
-    { nombre: 'DJ',         color: [1.00, 0.78, 0.35], puntos: [[-6,-1.5,-30],[-3, 1.0,-20],[-1,-0.5,-10],[ 1, 1.5,  0],[ 3,-1.0, 10],[ 5, 0.5, 20]] },
-    { nombre: 'Producción', color: [0.45, 0.85, 1.00], puntos: [[ 6, 1.5,-30],[ 3,-1.0,-20],[ 1, 0.8,-10],[-1,-1.2,  0],[-3, 1.0, 10],[-5,-0.6, 20]] },
-    { nombre: 'Acústica',   color: [0.70, 0.55, 1.00], puntos: [[ 0, 4.0,-30],[ 2, 2.0,-20],[-2, 3.0,-10],[ 2, 1.5,  0],[-1, 3.5, 10],[ 1, 2.0, 20]] },
-    { nombre: 'Negocio',    color: [0.40, 1.00, 0.70], puntos: [[ 0,-4.0,-30],[-2,-2.5,-20],[ 2,-3.0,-10],[-2,-1.8,  0],[ 1,-3.5, 10],[-1,-2.0, 20]] }
+  /* ─── LAS 5 ESTACIONES DEL SISTEMA ───────────────────────────────────────
+     El núcleo emite; los cuatro periféricos forman un anillo a su alrededor.
+     Las posiciones están elegidas para que ninguna etiqueta tape a otra desde
+     los waypoints del recorrido. */
+  var ESTACIONES = [
+    { id: 'nucleo',   nombre: 'MIAMI DJ BEAT — Hub Fénix',            subtitulo: 'Núcleo de Plataforma',
+      pos: [0, 0, 0],         color: [1.00, 0.84, 0.45], hub: true,
+      telemetria: 'Orquestando 4 subsistemas · enlace estable',
+      slot: 'fenix-en-vuelo' },
+    { id: 'crm',      nombre: 'Captura & CRM de Leads',              subtitulo: 'Entrada de Booking',
+      pos: [-9.5, 2.2, -3.5], color: [0.45, 0.85, 1.00], hub: false,
+      telemetria: 'Sobres de correo energético en tránsito · termómetro de oportunidad',
+      slot: 'paquetes-correo' },
+    { id: 'elixis',   nombre: 'ELIXIS — Agente Ejecutivo',           subtitulo: 'Orquestación IA',
+      pos: [9.0, 3.4, -2.0],  color: [0.70, 0.55, 1.00], hub: false,
+      telemetria: 'Negociación asistida · aprobación humana en el lazo',
+      slot: 'avatar-audifonos' },
+    { id: 'finanzas', nombre: 'Motor Financiero & Stripe',           subtitulo: 'Fintech & Escrow',
+      pos: [7.2, -3.8, 5.5],  color: [0.40, 1.00, 0.70], hub: false,
+      telemetria: 'Pulsos de liquidación y contratos · escrow con reparto automático',
+      slot: 'contratos' },
+    { id: 'booth',    nombre: 'Booth IA & Inteligencia Atmosférica', subtitulo: 'Telemetría de Escenario',
+      pos: [-7.8, -3.2, 5.0], color: [1.00, 0.55, 0.45], hub: false,
+      telemetria: 'Sonido, luz y clima en vivo · rider por venue',
+      slot: 'rider-telemetria' }
   ];
+
+  /* SLOTS DE BRANDING — preparados, no ocupados.
+     Cada estación declara qué holograma le corresponde (el Fénix en vuelo del
+     núcleo, el avatar con audífonos de ELIXIS…). Hoy el motor solo reserva el
+     campo y lo expone en la API: montar texturas o vídeo holográfico es un
+     ticket propio, con su presupuesto de GPU y su medición. Declararlo aquí
+     evita que mañana cada slot se invente en un sitio distinto. */
+
+  /* Conductos: el núcleo con cada periférico, y el anillo entre periféricos.
+     Cuatro radiales + cuatro perimetrales = ocho fibras. */
+  var ENLACES = [ [0,1],[0,2],[0,3],[0,4], [1,2],[2,3],[3,4],[4,1] ];
 
   /* ─── Estado ──────────────────────────────────────────────────────────── */
 
@@ -70,26 +98,35 @@
 
   var corriendo = false, degradado = false, capaz = false;
   var topeFps = FPS_POR_DEFECTO, msPorCuadro = 1000 / FPS_POR_DEFECTO;
-  var ultimoDibujo = 0, proximoDibujo = 0, t0 = 0;
-  var camYaw = 0, camPitch = 0, yawObjetivo = 0, pitchObjetivo = 0;
+  var proximoDibujo = 0, t0 = 0, ultimoT = 0;
   var reducirMovimiento = false;
-  var raton = { x: -1, y: -1 }, nodoActivo = -1;
 
-  /* Audio */
+  /* Cámara: estado real (persigue) y objetivo (se declara). Nunca se asigna
+     la posición directamente — ver la nota de cabecera. */
+  var cam = { x: 0, y: 3, z: 26, mx: 0, my: 0, mz: 0 };
+  var obj = { x: 0, y: 3, z: 26, mx: 0, my: 0, mz: 0 };
+  var recorrido = { s: 0, activo: true, velocidad: 0.055 };
+  var nodoEnfocado = -1;
+  var orbita = 0;
+  var rotacionLibre = false, giroRaton = { yaw: 0, pitch: 0 };
+
   var audioEl = null, ctxAudio = null, analizador = null, datosFrecuencia = null;
   var pulso = 0, banda = { graves: 0, medios: 0, agudos: 0 }, audioActivo = false;
 
   var stats = {
     cuadros: 0, saltados: 0, fps: 0, msCuadroJS: 0, msCuadroMax: 0,
     llamadasDibujo: 0, vertices: 0, instancias: 0,
-    contextosPerdidos: 0, contextosRestaurados: 0, pausas: 0, estado: 'arrancando'
+    contextosPerdidos: 0, contextosRestaurados: 0, pausas: 0,
+    estado: 'arrancando', saltoCamaraMax: 0
   };
   var ventanaFps = [], ultimoFpsCalc = 0;
 
   /* Vectores reutilizados en el bucle: asignarlos aquí y no dentro del cuadro
      es la diferencia entre cero basura y 30 recolecciones por segundo. */
   var _proy = new Float32Array(16), _vista = new Float32Array(16), _mvp = new Float32Array(16);
-  var _tmpA = new Float32Array(16), _tmpB = new Float32Array(16);
+  /* Punto reutilizado por las curvas. Asignarlo aquí y no dentro del cuadro es
+     la diferencia entre cero basura y treinta recolecciones por segundo. */
+  var _p = [0, 0, 0];
 
   /* ─── Matrices ────────────────────────────────────────────────────────── */
 
@@ -102,102 +139,150 @@
     return o;
   }
 
+  /* COLUMNA-MAYOR, como manda WebGL y como las construyen perspectivaEn() y
+     miraEn(). La versión anterior multiplicaba como si fueran fila-mayor: el
+     render no se enteraba —el shader recibe uProy y uVista por separado y
+     multiplica la GPU— pero _mvp salía transpuesta, y _mvp es justo lo único
+     que se usa en JS para proyectar mundo → pantalla. Resultado medido:
+     etiquetas en x=2474 sobre un viewport de 1920, o descartadas por estar
+     "detrás de la cámara". El error se auto-confirmaba en FEAT-3D-02 porque
+     la selección de nodos usaba la MISMA proyección para poner y para medir. */
   function multiplicarEn(o, a, b) {
-    for (var i = 0; i < 4; i++) {
-      var a0=a[i*4], a1=a[i*4+1], a2=a[i*4+2], a3=a[i*4+3];
-      o[i*4]   = a0*b[0] + a1*b[4] + a2*b[8]  + a3*b[12];
-      o[i*4+1] = a0*b[1] + a1*b[5] + a2*b[9]  + a3*b[13];
-      o[i*4+2] = a0*b[2] + a1*b[6] + a2*b[10] + a3*b[14];
-      o[i*4+3] = a0*b[3] + a1*b[7] + a2*b[11] + a3*b[15];
+    for (var c = 0; c < 4; c++) {
+      var b0=b[c*4], b1=b[c*4+1], b2=b[c*4+2], b3=b[c*4+3];
+      o[c*4]   = a[0]*b0 + a[4]*b1 + a[8]*b2  + a[12]*b3;
+      o[c*4+1] = a[1]*b0 + a[5]*b1 + a[9]*b2  + a[13]*b3;
+      o[c*4+2] = a[2]*b0 + a[6]*b1 + a[10]*b2 + a[14]*b3;
+      o[c*4+3] = a[3]*b0 + a[7]*b1 + a[11]*b2 + a[15]*b3;
     }
     return o;
   }
 
-  function vistaEn(o, yaw, pitch, z) {
-    var cy=Math.cos(yaw), sy=Math.sin(yaw), cx=Math.cos(pitch), sx=Math.sin(pitch);
-    _tmpA[0]=1;_tmpA[1]=0;_tmpA[2]=0;_tmpA[3]=0;
-    _tmpA[4]=0;_tmpA[5]=cx;_tmpA[6]=sx;_tmpA[7]=0;
-    _tmpA[8]=0;_tmpA[9]=-sx;_tmpA[10]=cx;_tmpA[11]=0;
-    _tmpA[12]=0;_tmpA[13]=0;_tmpA[14]=0;_tmpA[15]=1;
-    _tmpB[0]=cy;_tmpB[1]=0;_tmpB[2]=-sy;_tmpB[3]=0;
-    _tmpB[4]=0;_tmpB[5]=1;_tmpB[6]=0;_tmpB[7]=0;
-    _tmpB[8]=sy;_tmpB[9]=0;_tmpB[10]=cy;_tmpB[11]=0;
-    _tmpB[12]=0;_tmpB[13]=0;_tmpB[14]=z;_tmpB[15]=1;
-    return multiplicarEn(o, _tmpA, _tmpB);
+  /* Mirar-hacia. Con giro libre se desvía el vector de vista sin mover la
+     posición: se pasea la mirada sin perder el ancla del recorrido. */
+  function miraEn(o, px, py, pz, tx, ty, tz, yawExtra, pitchExtra) {
+    var fx = tx-px, fy = ty-py, fz = tz-pz;
+    var lf = Math.sqrt(fx*fx+fy*fy+fz*fz) || 1; fx/=lf; fy/=lf; fz/=lf;
+    if (yawExtra || pitchExtra) {
+      var cy = Math.cos(yawExtra), sy = Math.sin(yawExtra);
+      var rx = fx*cy + fz*sy, rz = -fx*sy + fz*cy;
+      fx = rx; fz = rz; fy += pitchExtra;
+      var l2 = Math.sqrt(fx*fx+fy*fy+fz*fz) || 1; fx/=l2; fy/=l2; fz/=l2;
+    }
+    var ux = 0, uy = 1, uz = 0;
+    var sx = fy*uz - fz*uy, sy2 = fz*ux - fx*uz, sz = fx*uy - fy*ux;
+    var ls = Math.sqrt(sx*sx+sy2*sy2+sz*sz) || 1; sx/=ls; sy2/=ls; sz/=ls;
+    var vx = sy2*fz - sz*fy, vy = sz*fx - sx*fz, vz = sx*fy - sy2*fx;
+    o[0]=sx; o[1]=vx; o[2]=-fx; o[3]=0;
+    o[4]=sy2;o[5]=vy; o[6]=-fy; o[7]=0;
+    o[8]=sz; o[9]=vz; o[10]=-fz;o[11]=0;
+    o[12]=-(sx*px+sy2*py+sz*pz);
+    o[13]=-(vx*px+vy*py+vz*pz);
+    o[14]=  (fx*px+fy*py+fz*pz);
+    o[15]=1;
+    return o;
   }
 
-  /* ─── Curva ───────────────────────────────────────────────────────────── */
+  /* ─── Catmull-Rom ─────────────────────────────────────────────────────── */
 
-  function catmullRom(p0, p1, p2, p3, t, salida) {
-    var t2 = t * t, t3 = t2 * t;
-    for (var i = 0; i < 3; i++) {
-      salida[i] = 0.5 * ((2 * p1[i]) + (-p0[i] + p2[i]) * t +
-        (2 * p0[i] - 5 * p1[i] + 4 * p2[i] - p3[i]) * t2 +
-        (-p0[i] + 3 * p1[i] - 3 * p2[i] + p3[i]) * t3);
-    }
+  function crEje(p0, p1, p2, p3, t) {
+    var t2 = t*t, t3 = t2*t;
+    return 0.5 * ((2*p1) + (-p0+p2)*t + (2*p0-5*p1+4*p2-p3)*t2 + (-p0+3*p1-3*p2+p3)*t3);
+  }
+
+  /* CERRADA: da la vuelta el índice, no el parámetro. Por eso el paso del
+     último punto al primero no tiene costura ni salto. */
+  function curvaCerrada(pts, s, salida) {
+    var n = pts.length;
+    var i = Math.floor(s) % n; if (i < 0) i += n;
+    var t = s - Math.floor(s);
+    var p0 = pts[(i-1+n)%n], p1 = pts[i], p2 = pts[(i+1)%n], p3 = pts[(i+2)%n];
+    salida[0] = crEje(p0[0], p1[0], p2[0], p3[0], t);
+    salida[1] = crEje(p0[1], p1[1], p2[1], p3[1], t);
+    salida[2] = crEje(p0[2], p1[2], p2[2], p3[2], t);
     return salida;
   }
 
-  /* Evalúa la ruta entera con u en [0,1] y devuelve el punto. */
-  function puntoEnRuta(pts, u, salida) {
+  function curvaAbierta(pts, u, salida) {
     var tramos = pts.length - 1;
     var f = Math.min(u, 0.999999) * tramos;
     var i = Math.floor(f), t = f - i;
-    var p0 = pts[i > 0 ? i - 1 : 0], p1 = pts[i], p2 = pts[i + 1];
-    var p3 = pts[i + 2 < pts.length ? i + 2 : pts.length - 1];
-    return catmullRom(p0, p1, p2, p3, t, salida);
+    var p0 = pts[i>0?i-1:0], p1 = pts[i], p2 = pts[i+1];
+    var p3 = pts[i+2<pts.length?i+2:pts.length-1];
+    salida[0] = crEje(p0[0], p1[0], p2[0], p3[0], t);
+    salida[1] = crEje(p0[1], p1[1], p2[1], p3[1], t);
+    salida[2] = crEje(p0[2], p1[2], p2[2], p3[2], t);
+    return salida;
   }
 
-  /* ─── Geometría de tubos (una sola vez, fundida, indexada) ────────────── */
+  /* Un waypoint por estación periférica. 5.0 y no 9.0 de empuje: más lejos la
+     red cabía en el tercio central del encuadre —una maqueta, no un sistema
+     que recorres— y las etiquetas se solapaban entre sí. */
+  var WAYPOINTS = [];
+  function construirWaypoints() {
+    WAYPOINTS = [];
+    for (var i = 1; i < ESTACIONES.length; i++) {
+      var p = ESTACIONES[i].pos;
+      var l = Math.sqrt(p[0]*p[0] + p[2]*p[2]) || 1;
+      WAYPOINTS.push([ p[0] + (p[0]/l)*5.0, p[1] + 2.6, p[2] + (p[2]/l)*5.0 ]);
+    }
+  }
+
+  /* ─── Conductos (una sola vez, fundidos, indexados) ───────────────────── */
+
+  function puntosDeEnlace(a, b) {
+    var pa = ESTACIONES[a].pos, pb = ESTACIONES[b].pos;
+    /* Un punto medio desplazado convierte la recta en fibra: los conductos
+       rectos leen como diagrama técnico, no como tejido vivo. */
+    var mx = (pa[0]+pb[0])/2, my = (pa[1]+pb[1])/2, mz = (pa[2]+pb[2])/2;
+    var d = Math.sqrt(Math.pow(pb[0]-pa[0],2) + Math.pow(pb[1]-pa[1],2) + Math.pow(pb[2]-pa[2],2));
+    var comba = d * 0.16;
+    return [pa, [mx, my + comba, mz], [mx - comba*0.35, my + comba*0.5, mz + comba*0.35], pb];
+  }
 
   function construirTubos() {
     var vert = [], idx = [], a = [0,0,0], b = [0,0,0], base = 0;
 
-    for (var r = 0; r < RUTAS.length; r++) {
-      var pts = RUTAS[r].puntos, col = RUTAS[r].color;
+    for (var e = 0; e < ENLACES.length; e++) {
+      var pts = puntosDeEnlace(ENLACES[e][0], ENLACES[e][1]);
+      var ca = ESTACIONES[ENLACES[e][0]].color, cb = ESTACIONES[ENLACES[e][1]].color;
 
-      for (var m = 0; m < MUESTRAS_POR_RUTA; m++) {
-        var u = m / (MUESTRAS_POR_RUTA - 1);
-        puntoEnRuta(pts, u, a);
-        /* Tangente por diferencia adelantada; en el último punto se mira atrás
-           para no salirse del dominio de la curva. */
-        puntoEnRuta(pts, Math.min(0.9999, u + 0.004), b);
+      for (var m = 0; m < MUESTRAS_CONDUCTO; m++) {
+        var u = m / (MUESTRAS_CONDUCTO - 1);
+        curvaAbierta(pts, u, a);
+        curvaAbierta(pts, Math.min(0.9999, u + 0.006), b);
         var tx = b[0]-a[0], ty = b[1]-a[1], tz = b[2]-a[2];
-        if (m === MUESTRAS_POR_RUTA - 1) { tx = -tx; ty = -ty; tz = -tz; }
-        var lt = Math.sqrt(tx*tx + ty*ty + tz*tz) || 1;
-        tx/=lt; ty/=lt; tz/=lt;
+        if (m === MUESTRAS_CONDUCTO - 1) { tx=-tx; ty=-ty; tz=-tz; }
+        var lt = Math.sqrt(tx*tx+ty*ty+tz*tz) || 1; tx/=lt; ty/=lt; tz/=lt;
 
-        /* Marco del anillo. Si la tangente casi coincide con el "arriba" del
-           mundo, el producto vectorial degenera y el tubo se retuerce: se
-           cambia de referencia en ese caso. */
         var ux = 0, uy = 1, uz = 0;
         if (Math.abs(ty) > 0.94) { ux = 1; uy = 0; uz = 0; }
         var nx = ty*uz - tz*uy, ny = tz*ux - tx*uz, nz = tx*uy - ty*ux;
-        var ln = Math.sqrt(nx*nx + ny*ny + nz*nz) || 1; nx/=ln; ny/=ln; nz/=ln;
+        var ln = Math.sqrt(nx*nx+ny*ny+nz*nz) || 1; nx/=ln; ny/=ln; nz/=ln;
         var bx = ty*nz - tz*ny, by = tz*nx - tx*nz, bz = tx*ny - ty*nx;
+
+        /* El color viaja de una estación a la otra: el conducto dice de dónde
+           sale y adónde llega sin necesidad de leyenda. */
+        var cr = ca[0]+(cb[0]-ca[0])*u, cg = ca[1]+(cb[1]-ca[1])*u, cz = ca[2]+(cb[2]-ca[2])*u;
 
         for (var k = 0; k < LADOS_TUBO; k++) {
           var ang = (k / LADOS_TUBO) * Math.PI * 2;
-          var ca = Math.cos(ang), sa = Math.sin(ang);
-          var dx = nx*ca + bx*sa, dy = ny*ca + by*sa, dz = nz*ca + bz*sa;
-          vert.push(
-            a[0] + dx*RADIO_TUBO, a[1] + dy*RADIO_TUBO, a[2] + dz*RADIO_TUBO,
-            dx, dy, dz,                    // normal del anillo → término de borde
-            col[0], col[1], col[2],
-            u, r
-          );
+          var cs = Math.cos(ang), sn = Math.sin(ang);
+          var dx = nx*cs + bx*sn, dy = ny*cs + by*sn, dz = nz*cs + bz*sn;
+          vert.push(a[0]+dx*RADIO_TUBO, a[1]+dy*RADIO_TUBO, a[2]+dz*RADIO_TUBO,
+                    dx, dy, dz, cr, cg, cz, u, e);
         }
       }
 
-      for (var s = 0; s < MUESTRAS_POR_RUTA - 1; s++) {
+      for (var sg = 0; sg < MUESTRAS_CONDUCTO - 1; sg++) {
         for (var q = 0; q < LADOS_TUBO; q++) {
-          var q2 = (q + 1) % LADOS_TUBO;
-          var f0 = base + s*LADOS_TUBO + q,  f1 = base + s*LADOS_TUBO + q2;
-          var f2 = base + (s+1)*LADOS_TUBO + q, f3 = base + (s+1)*LADOS_TUBO + q2;
-          idx.push(f0, f2, f1,  f1, f2, f3);
+          var q2 = (q+1) % LADOS_TUBO;
+          var f0 = base + sg*LADOS_TUBO + q,     f1 = base + sg*LADOS_TUBO + q2;
+          var f2 = base + (sg+1)*LADOS_TUBO + q, f3 = base + (sg+1)*LADOS_TUBO + q2;
+          idx.push(f0, f2, f1, f1, f2, f3);
         }
       }
-      base += MUESTRAS_POR_RUTA * LADOS_TUBO;
+      base += MUESTRAS_CONDUCTO * LADOS_TUBO;
     }
 
     conteoVerticesTubos = vert.length / 11;
@@ -205,64 +290,36 @@
     return { vertices: new Float32Array(vert), indices: new Uint16Array(idx) };
   }
 
-  /* ─── Nodos de sinapsis ───────────────────────────────────────────────── */
-
-  /* Un nodo al final de cada tramo de cada ruta: son los puntos de decisión y
-     el acceso a las lecciones. El estado (desbloqueado) queda preparado para
-     la persistencia en user_learning_paths; hoy es local. */
   function construirNodos() {
-    nodos = [];
-    var p = [0,0,0];
-    for (var r = 0; r < RUTAS.length; r++) {
-      var pts = RUTAS[r].puntos, tramos = pts.length - 1;
-      for (var i = 1; i <= tramos; i++) {
-        var u = i / tramos;
-        puntoEnRuta(pts, u, p);
-        nodos.push({
-          x: p[0], y: p[1], z: p[2],
-          ruta: r, leccion: i,
-          nombre: RUTAS[r].nombre + ' · lección ' + i,
-          color: RUTAS[r].color,
-          desbloqueado: i <= 2,          // dos primeras abiertas por defecto
-          pantalla: { x: -1, y: -1, visible: false }
-        });
-      }
+    var d = new Float32Array(ESTACIONES.length * 9);
+    for (var i = 0; i < ESTACIONES.length; i++) {
+      var o = i*9, e = ESTACIONES[i];
+      d[o]=e.pos[0]; d[o+1]=e.pos[1]; d[o+2]=e.pos[2];
+      d[o+3]=e.color[0]; d[o+4]=e.color[1]; d[o+5]=e.color[2];
+      d[o+6]= e.hub ? 1.25 : 0.80;      // el núcleo domina la escena
+      d[o+7]= e.hub ? 1.30 : 1.00;
+      d[o+8]= i;
     }
-    var d = new Float32Array(nodos.length * 9);
-    for (var n = 0; n < nodos.length; n++) {
-      var o = n * 9, nd = nodos[n];
-      d[o]=nd.x; d[o+1]=nd.y; d[o+2]=nd.z;
-      d[o+3]=nd.color[0]; d[o+4]=nd.color[1]; d[o+5]=nd.color[2];
-      d[o+6]=nd.desbloqueado ? 0.42 : 0.26;    // radio
-      d[o+7]=nd.desbloqueado ? 1.0 : 0.35;     // intensidad
-      d[o+8]=n;                                 // índice, para resaltar el activo
-    }
-    datosNodos = d;
     return d;
   }
 
   function construirParticulas() {
     var d = new Float32Array(PARTICULAS * 9);
     for (var i = 0; i < PARTICULAS; i++) {
-      var o = i * 9;
-      d[o]   = (Math.random() - 0.5) * 26;
-      d[o+1] = (Math.random() - 0.5) * 16;
-      d[o+2] = -32 + Math.random() * 56;
+      var o = i*9;
+      d[o]   = (Math.random()-0.5) * 34;
+      d[o+1] = (Math.random()-0.5) * 20;
+      d[o+2] = (Math.random()-0.5) * 34;
       d[o+3] = 0.75; d[o+4] = 0.85; d[o+5] = 1.0;
-      /* JERARQUÍA VISUAL (decisión de keynote): estaciones → conductos →
-         fondo. Las partículas son ambiente y nada más; con la intensidad
-         anterior competían en brillo con los nodos y la audiencia no podía
-         distinguir una estación de una mota de polvo en pantalla gigante. */
-      d[o+6] = 0.028 + Math.random() * 0.032;  // radio
-      d[o+7] = 0.030 + Math.random() * 0.065;  // intensidad
-      d[o+8] = -1;                             // nunca es el nodo activo
+      d[o+6] = 0.026 + Math.random()*0.030;
+      /* Ambiente y solo ambiente: jamás compite en brillo con las estaciones.
+         Jerarquía de keynote — estaciones → conductos → fondo. */
+      d[o+7] = 0.028 + Math.random()*0.060;
+      d[o+8] = -1;
     }
-    datosParticulas = d;
     return d;
   }
 
-  /* Cuadrilátero base compartido por nodos y partículas: 4 vértices, y todas
-     las instancias se construyen desplazándolo en espacio de vista. */
   var QUAD = new Float32Array([-1,-1,  1,-1,  -1,1,  1,1]);
 
   /* ─── Shaders ─────────────────────────────────────────────────────────── */
@@ -270,7 +327,7 @@
   var VERT_TUBOS = [
     'precision mediump float;',
     'attribute vec3 aPos; attribute vec3 aNormal; attribute vec3 aColor;',
-    'attribute float aRecorrido; attribute float aRuta;',
+    'attribute float aRecorrido; attribute float aEnlace;',
     'uniform mat4 uProy; uniform mat4 uVista; uniform float uTiempo; uniform float uPulso;',
     'varying vec3 vColor; varying float vBrillo; varying float vBorde;',
     'void main(){',
@@ -280,8 +337,15 @@
        material translúcido se ve más denso. Es un Fresnel de dos líneas. */
     '  vec3 nVista = normalize((uVista * vec4(aNormal, 0.0)).xyz);',
     '  vBorde = 1.0 - abs(nVista.z);',
-    '  float fase = fract(uTiempo * 0.18 + aRuta * 0.25);',
-    '  float d = abs(fract(aRecorrido - fase + 0.5) - 0.5);',
+    /* FLUJO DE PAQUETES, no un solo destello. Antes viajaba UNA gaussiana por
+       conducto y leía como un parpadeo; multiplicando el recorrido por
+       PAQUETES antes de tomar la fracción salen varios paquetes equiespaciados
+       recorriendo la fibra a la vez, que es lo que parece tráfico de datos
+       yendo hacia las estaciones. Los ocho conductos van desfasados: si laten
+       a la vez, el conjunto parpadea como una bombilla. */
+    '  const float PAQUETES = 3.0;',
+    '  float fase = fract(uTiempo * 0.22 + aEnlace * 0.17);',
+    '  float d = abs(fract(aRecorrido * PAQUETES - fase * PAQUETES + 0.5) - 0.5);',
     '  float halo = exp(-d * d * 22.0);',
     '  float nucleo = exp(-d * d * 300.0);',
     '  float p = halo * 0.45 + nucleo;',
@@ -434,7 +498,7 @@
     aTubos.normal = gl.getAttribLocation(progTubos, 'aNormal');
     aTubos.color = gl.getAttribLocation(progTubos, 'aColor');
     aTubos.recorrido = gl.getAttribLocation(progTubos, 'aRecorrido');
-    aTubos.ruta = gl.getAttribLocation(progTubos, 'aRuta');
+    aTubos.enlace = gl.getAttribLocation(progTubos, 'aEnlace');
     uTubos.proy = gl.getUniformLocation(progTubos, 'uProy');
     uTubos.vista = gl.getUniformLocation(progTubos, 'uVista');
     uTubos.tiempo = gl.getUniformLocation(progTubos, 'uTiempo');
@@ -479,7 +543,7 @@
     gl.disable(gl.DEPTH_TEST);   // aditivo: el orden no importa y evita ordenar
 
     stats.vertices = conteoVerticesTubos;
-    stats.instancias = nodos.length + PARTICULAS;
+    stats.instancias = ESTACIONES.length + PARTICULAS;
   }
 
   function liberarEscena() {
@@ -560,74 +624,80 @@
     pulso += (objetivo - pulso) * (objetivo > pulso ? 0.5 : 0.06);
   }
 
-  /* ─── Selección de nodos (proyección, no raycast) ─────────────────────── */
+  /* ─── CÁMARA: se declara el objetivo, nunca se asigna la posición ─────── */
 
-  /* Con 20 nodos, proyectarlos y medir distancia en pantalla cuesta
-     microsegundos y es exacto para esferas. Un raycast contra geometría sería
-     más código y más lento para el mismo resultado. */
-  function actualizarNodoActivo() {
-    var w = contenedor.clientWidth, h = contenedor.clientHeight;
-    var mejor = -1, mejorDist = 44;   // radio de agarre en píxeles CSS
-    for (var i = 0; i < nodos.length; i++) {
-      var nd = nodos[i];
-      var x = nd.x, y = nd.y, z = nd.z;
-      var cx = _mvp[0]*x + _mvp[4]*y + _mvp[8]*z  + _mvp[12];
-      var cy = _mvp[1]*x + _mvp[5]*y + _mvp[9]*z  + _mvp[13];
-      var cw = _mvp[3]*x + _mvp[7]*y + _mvp[11]*z + _mvp[15];
-      if (cw <= 0.0001) { nd.pantalla.visible = false; continue; }
-      var sx = (cx / cw * 0.5 + 0.5) * w;
-      var sy = (1 - (cy / cw * 0.5 + 0.5)) * h;
-      nd.pantalla.x = sx; nd.pantalla.y = sy; nd.pantalla.visible = true;
-      if (raton.x < 0) continue;
-      var dx = sx - raton.x, dy = sy - raton.y;
-      var d = Math.sqrt(dx*dx + dy*dy);
-      if (d < mejorDist) { mejorDist = d; mejor = i; }
+  function actualizarObjetivoCamara(dt) {
+    if (nodoEnfocado >= 0) {
+      /* ENFOQUE: órbita lenta alrededor de la estación elegida. Manda el
+         discurso, así que la cámara se mueve lo justo para dar volumen.
+         15/11 y no 13/8,5: más cerca, el nodo llenaba el encuadre y los
+         conductos vistos casi de canto se saturaban a blanco con la mezcla
+         aditiva. Desde aquí la estación se lee entera, con su color, y el
+         resto del sistema queda de contexto detrás. */
+      var e = ESTACIONES[nodoEnfocado];
+      orbita += dt * (recorrido.activo ? 0.22 : 0.06);
+      var radio = e.hub ? 15.0 : 11.0;
+      obj.x = e.pos[0] + Math.cos(orbita) * radio;
+      obj.y = e.pos[1] + 2.6;
+      obj.z = e.pos[2] + Math.sin(orbita) * radio;
+      obj.mx = e.pos[0]; obj.my = e.pos[1]; obj.mz = e.pos[2];
+    } else {
+      /* RECORRIDO: el parámetro crece sin límite y solo el índice da la
+         vuelta, así que no hay discontinuidad posible al cerrar el ciclo. */
+      if (recorrido.activo) {
+        /* DESACELERACIÓN CINEMÁTICA. Los waypoints caen en los enteros de s,
+           así que la fracción dice a qué distancia estamos de una estación:
+           cerca de 0 o de 1 vamos llegando, en 0,5 estamos de paso. Un seno
+           sobre esa fracción frena la llegada y acelera el tránsito, que es
+           como se mueve una cámara de cine — y da tiempo a leer la etiqueta
+           de la estación mientras se habla de ella. */
+        var f = recorrido.s - Math.floor(recorrido.s);
+        var factor = 0.30 + 0.70 * Math.sin(Math.PI * f);
+        recorrido.s += dt * recorrido.velocidad * WAYPOINTS.length * factor;
+      }
+      curvaCerrada(WAYPOINTS, recorrido.s, _p);
+      obj.x = _p[0]; obj.y = _p[1]; obj.z = _p[2];
+      /* Se mira siempre al núcleo: ancla estable, sin el mareo de un punto de
+         mira que va saltando de objeto en objeto. */
+      obj.mx = 0; obj.my = 0; obj.mz = 0;
     }
-    if (mejor !== nodoActivo) { nodoActivo = mejor; mostrarEtiquetaNodo(); }
   }
 
-  function mostrarEtiquetaNodo() {
-    var et = document.querySelector('[data-nm3d-nodo]');
-    if (!et) return;
-    if (nodoActivo < 0) { et.hidden = true; contenedor.style.cursor = 'crosshair'; return; }
-    var nd = nodos[nodoActivo];
-    et.hidden = false;
-    et.style.left = Math.round(nd.pantalla.x) + 'px';
-    et.style.top = Math.round(nd.pantalla.y) + 'px';
-    et.setAttribute('data-estado', nd.desbloqueado ? 'abierto' : 'bloqueado');
-    var t = et.querySelector('[data-nm3d-nodo-titulo]');
-    var s = et.querySelector('[data-nm3d-nodo-estado]');
-    if (t) t.textContent = nd.nombre;
-    if (s) s.textContent = nd.desbloqueado ? 'Abrir lección' : 'Bloqueada';
-    contenedor.style.cursor = nd.desbloqueado ? 'pointer' : 'not-allowed';
+  /* Suavizado exponencial ajustado por dt: el mismo recorrido a 30 y a 60 fps.
+     Sin el ajuste, subir el tope aceleraría la cámara. */
+  function perseguir(dt) {
+    var k = 1 - Math.pow(0.0025, dt);
+    var aX = cam.x, aY = cam.y, aZ = cam.z;
+    cam.x += (obj.x - cam.x) * k;
+    cam.y += (obj.y - cam.y) * k;
+    cam.z += (obj.z - cam.z) * k;
+    cam.mx += (obj.mx - cam.mx) * k;
+    cam.my += (obj.my - cam.my) * k;
+    cam.mz += (obj.mz - cam.mz) * k;
+    var salto = Math.sqrt(Math.pow(cam.x-aX,2) + Math.pow(cam.y-aY,2) + Math.pow(cam.z-aZ,2));
+    if (salto > stats.saltoCamaraMax) stats.saltoCamaraMax = salto;
   }
 
   /* ─── Dibujo ──────────────────────────────────────────────────────────── */
 
   function dibujarEscena(t) {
     var aspecto = lienzo.width / Math.max(1, lienzo.height);
-    perspectivaEn(_proy, 1.15, aspecto, 0.1, 120.0);
-
-    camYaw += (yawObjetivo - camYaw) * 0.06;
-    camPitch += (pitchObjetivo - camPitch) * 0.06;
-    var z = reducirMovimiento ? -6.0 : (((t * 2.2) % 46) - 34);
-    vistaEn(_vista, camYaw, camPitch, z);
+    perspectivaEn(_proy, 1.15, aspecto, 0.1, 200.0);
+    miraEn(_vista, cam.x, cam.y, cam.z, cam.mx, cam.my, cam.mz, giroRaton.yaw, giroRaton.pitch);
     multiplicarEn(_mvp, _proy, _vista);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
     stats.llamadasDibujo = 0;
 
-    /* 1 · TUBOS — las cuatro rutas en una sola llamada indexada.
-       11 floats por vértice: pos3, normal3, color3, recorrido1, ruta1 */
     gl.useProgram(progTubos);
     gl.bindBuffer(gl.ARRAY_BUFFER, bufTubos);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufIndices);
-    var zt = 11 * 4;
+    var zt = 11*4;
     gl.enableVertexAttribArray(aTubos.pos);       gl.vertexAttribPointer(aTubos.pos, 3, gl.FLOAT, false, zt, 0);
     gl.enableVertexAttribArray(aTubos.normal);    gl.vertexAttribPointer(aTubos.normal, 3, gl.FLOAT, false, zt, 12);
     gl.enableVertexAttribArray(aTubos.color);     gl.vertexAttribPointer(aTubos.color, 3, gl.FLOAT, false, zt, 24);
     gl.enableVertexAttribArray(aTubos.recorrido); gl.vertexAttribPointer(aTubos.recorrido, 1, gl.FLOAT, false, zt, 36);
-    gl.enableVertexAttribArray(aTubos.ruta);      gl.vertexAttribPointer(aTubos.ruta, 1, gl.FLOAT, false, zt, 40);
+    gl.enableVertexAttribArray(aTubos.enlace);    gl.vertexAttribPointer(aTubos.enlace, 1, gl.FLOAT, false, zt, 40);
     gl.uniformMatrix4fv(uTubos.proy, false, _proy);
     gl.uniformMatrix4fv(uTubos.vista, false, _vista);
     gl.uniform1f(uTubos.tiempo, t);
@@ -635,37 +705,74 @@
     gl.drawElements(gl.TRIANGLES, indicesTubos, gl.UNSIGNED_SHORT, 0);
     stats.llamadasDibujo++;
 
-    if (modoInstancing === 'ninguno') return;   // sin instancing, solo tubos
+    if (modoInstancing === 'ninguno') return;
 
-    /* 2 y 3 · PARTÍCULAS y NODOS — mismo programa, mismo cuadrilátero base,
-       distinto buffer de instancias. 9 floats por instancia. */
     gl.useProgram(progInstancias);
     gl.uniformMatrix4fv(uInst.proy, false, _proy);
     gl.uniformMatrix4fv(uInst.vista, false, _vista);
     gl.uniform1f(uInst.tiempo, t);
     gl.uniform1f(uInst.pulso, pulso);
-
     gl.bindBuffer(gl.ARRAY_BUFFER, bufQuad);
     gl.enableVertexAttribArray(aInst.quad);
     gl.vertexAttribPointer(aInst.quad, 2, gl.FLOAT, false, 0, 0);
     fijarDivisor(aInst.quad, 0);
 
-    dibujarLoteInstanciado(bufParticulas, PARTICULAS, -1);
-    dibujarLoteInstanciado(bufNodos, nodos.length, nodoActivo);
+    dibujarLote(bufParticulas, PARTICULAS, -1);
+    dibujarLote(bufNodos, ESTACIONES.length, nodoEnfocado);
   }
 
-  function dibujarLoteInstanciado(buf, cuantas, activo) {
-    var zi = 9 * 4;
+  function dibujarLote(buf, cuantas, activo) {
+    var zi = 9*4;
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.enableVertexAttribArray(aInst.pos);        gl.vertexAttribPointer(aInst.pos, 3, gl.FLOAT, false, zi, 0);
     gl.enableVertexAttribArray(aInst.color);      gl.vertexAttribPointer(aInst.color, 3, gl.FLOAT, false, zi, 12);
     gl.enableVertexAttribArray(aInst.radio);      gl.vertexAttribPointer(aInst.radio, 1, gl.FLOAT, false, zi, 24);
     gl.enableVertexAttribArray(aInst.intensidad); gl.vertexAttribPointer(aInst.intensidad, 1, gl.FLOAT, false, zi, 28);
     gl.enableVertexAttribArray(aInst.indice);     gl.vertexAttribPointer(aInst.indice, 1, gl.FLOAT, false, zi, 32);
-    fijarDivisor(aInst.pos, 1); fijarDivisor(aInst.color, 1); fijarDivisor(aInst.radio, 1);
-    fijarDivisor(aInst.intensidad, 1); fijarDivisor(aInst.indice, 1);
+    fijarDivisor(aInst.pos,1); fijarDivisor(aInst.color,1); fijarDivisor(aInst.radio,1);
+    fijarDivisor(aInst.intensidad,1); fijarDivisor(aInst.indice,1);
     gl.uniform1f(uInst.activo, activo);
     if (dibujarInstanciado(gl.TRIANGLE_STRIP, 0, 4, cuantas)) stats.llamadasDibujo++;
+  }
+
+  /* ─── Etiquetas permanentes ───────────────────────────────────────────── */
+
+  var etiquetas = [];
+
+  function construirEtiquetas() {
+    var capa = document.querySelector('[data-nm3d-etiquetas]');
+    if (!capa) return;
+    capa.innerHTML = '';
+    etiquetas = [];
+    for (var i = 0; i < ESTACIONES.length; i++) {
+      var e = ESTACIONES[i];
+      var el = document.createElement('div');
+      el.className = 'nm3d-etiqueta' + (e.hub ? ' nm3d-etiqueta--nucleo' : '');
+      var b = document.createElement('b'); b.textContent = e.nombre;
+      var sp = document.createElement('span'); sp.textContent = e.subtitulo;
+      el.appendChild(b); el.appendChild(sp);
+      el.style.setProperty('--color', 'rgb(' + Math.round(e.color[0]*255) + ',' + Math.round(e.color[1]*255) + ',' + Math.round(e.color[2]*255) + ')');
+      capa.appendChild(el);
+      etiquetas.push(el);
+    }
+  }
+
+  function colocarEtiquetas() {
+    if (!etiquetas.length) return;
+    var w = contenedor.clientWidth, h = contenedor.clientHeight;
+    for (var i = 0; i < ESTACIONES.length; i++) {
+      var p = ESTACIONES[i].pos, el = etiquetas[i];
+      var cx = _mvp[0]*p[0] + _mvp[4]*p[1] + _mvp[8]*p[2]  + _mvp[12];
+      var cy = _mvp[1]*p[0] + _mvp[5]*p[1] + _mvp[9]*p[2]  + _mvp[13];
+      var cw = _mvp[3]*p[0] + _mvp[7]*p[1] + _mvp[11]*p[2] + _mvp[15];
+      if (cw <= 0.05) { el.style.opacity = '0'; continue; }   // detrás de la cámara
+      var sx = (cx/cw * 0.5 + 0.5) * w, sy = (1 - (cy/cw * 0.5 + 0.5)) * h;
+      /* Se coloca con transform y no con left/top: left/top invalidan el
+         layout en cada cuadro; transform solo compone. */
+      el.style.transform = 'translate3d(' + Math.round(sx) + 'px,' + Math.round(sy) + 'px,0) translate(-50%,-150%)';
+      var op = Math.max(0.30, Math.min(1, 26 / cw));
+      el.style.opacity = (i === nodoEnfocado ? 1 : op).toFixed(2);
+    }
   }
 
   /* ─── Bucle ───────────────────────────────────────────────────────────── */
@@ -674,23 +781,25 @@
     if (!capaz || !corriendo) return;
     requestAnimationFrame(cuadro);
 
-    /* VENCIMIENTO ACUMULADO, no «hace cuánto que dibujé». La versión ingenua
-       —if (ahora - ultimoDibujo < msPorCuadro)— acumula retraso y come cuadros:
-       medido, daba 25,4 fps con tope 30 en un monitor de 60Hz. */
     if (ahora < proximoDibujo) { stats.saltados++; return; }
     proximoDibujo += msPorCuadro;
     if (proximoDibujo < ahora) proximoDibujo = ahora + msPorCuadro;
-    ultimoDibujo = ahora;
+
+    var t = (ahora - t0) / 1000;
+    var dt = Math.min(0.1, Math.max(0.001, t - ultimoT));
+    ultimoT = t;
 
     var inicio = performance.now();
     try {
       if (gl.isContextLost && gl.isContextLost()) return;
       leerAudio();
-      dibujarEscena((ahora - t0) / 1000);
-      actualizarNodoActivo();
+      actualizarObjetivoCamara(dt);
+      perseguir(dt);
+      dibujarEscena(t);
+      colocarEtiquetas();
     } catch (e) {
       corriendo = false;
-      stats.estado = 'error de dibujo: ' + (e && e.message ? e.message : e);
+      stats.estado = 'error de dibujo';
       mostrarFallback('el motor falló durante el render');
       return;
     }
@@ -704,25 +813,21 @@
     if (ahora - ultimoFpsCalc > 250) { stats.fps = ventanaFps.length; ultimoFpsCalc = ahora; actualizarHud(); }
   }
 
-  /* ─── Pausa ───────────────────────────────────────────────────────────── */
-
-  function pausar(motivo) {
+  function pausarMotor(motivo) {
     if (!corriendo) return;
     corriendo = false; stats.pausas++; stats.estado = 'en pausa (' + motivo + ')';
     actualizarHud();
   }
 
-  function reanudar() {
+  function reanudarMotor() {
     if (!capaz || corriendo || degradado) return;
     if (document.hidden) return;
     corriendo = true; stats.estado = 'en marcha';
-    ultimoDibujo = 0;
     proximoDibujo = performance.now();
+    ultimoT = (performance.now() - t0) / 1000;
     requestAnimationFrame(cuadro);
     actualizarHud();
   }
-
-  /* ─── Contexto ────────────────────────────────────────────────────────── */
 
   function alPerderContexto(e) {
     e.preventDefault();
@@ -734,99 +839,86 @@
   }
 
   function alRestaurarContexto() {
-    stats.contextosRestaurados++;
-    stats.estado = 'restaurando';
+    stats.contextosRestaurados++; stats.estado = 'restaurando';
     try {
-      construirEscena();
-      redimensionar();
+      construirEscena(); redimensionar();
       degradado = false;
       if (contenedor) contenedor.classList.remove('nm3d--degradado');
-      t0 = performance.now();
-      reanudar();
-    } catch (err) {
-      mostrarFallback('no se pudo reinicializar tras recuperar el contexto');
-    }
+      t0 = performance.now(); ultimoT = 0;
+      reanudarMotor();
+    } catch (err) { mostrarFallback('no se pudo reinicializar tras recuperar el contexto'); }
     actualizarHud();
   }
 
-  /* ─── Interacción ─────────────────────────────────────────────────────── */
+  /* ─── CONTROLES DE ESCENARIO ──────────────────────────────────────────── */
 
-  function instalarInteraccion() {
-    contenedor.addEventListener('pointermove', function (e) {
-      var r = contenedor.getBoundingClientRect();
-      raton.x = e.clientX - r.left; raton.y = e.clientY - r.top;
-      yawObjetivo = (raton.x / Math.max(1, r.width) - 0.5) * 1.2;
-      pitchObjetivo = (raton.y / Math.max(1, r.height) - 0.5) * 0.6;
-    }, { passive: true });
-
-    contenedor.addEventListener('pointerleave', function () {
-      raton.x = -1; raton.y = -1;
-      if (nodoActivo !== -1) { nodoActivo = -1; mostrarEtiquetaNodo(); }
-    }, { passive: true });
-
-    contenedor.addEventListener('click', function () {
-      if (nodoActivo < 0) return;
-      var nd = nodos[nodoActivo];
-      /* El andamiaje no navega todavía: emite el evento y deja que quien
-         monte las lecciones decida. Así la ruta de datos queda probada sin
-         acoplar el motor 3D a la academia. */
-      try {
-        contenedor.dispatchEvent(new CustomEvent('nm3d:nodo', {
-          bubbles: true,
-          detail: { ruta: RUTAS[nd.ruta].nombre, leccion: nd.leccion, desbloqueado: nd.desbloqueado }
-        }));
-      } catch (e) { /* navegador sin CustomEvent constructor */ }
-    });
-
-    if (typeof DeviceOrientationEvent !== 'undefined' &&
-        typeof DeviceOrientationEvent.requestPermission !== 'function') {
-      window.addEventListener('deviceorientation', function (e) {
-        if (e.gamma === null || e.beta === null) return;
-        yawObjetivo = Math.max(-1.2, Math.min(1.2, (e.gamma || 0) / 45));
-        pitchObjetivo = Math.max(-0.6, Math.min(0.6, ((e.beta || 0) - 45) / 90));
-      }, { passive: true });
-    }
+  function irANodo(i) {
+    nodoEnfocado = ((i % ESTACIONES.length) + ESTACIONES.length) % ESTACIONES.length;
+    orbita = 0;
+    actualizarHud();
   }
 
-  /* ─── HUD ─────────────────────────────────────────────────────────────── */
+  function siguienteNodo(paso) {
+    if (nodoEnfocado < 0) { irANodo(paso > 0 ? 0 : ESTACIONES.length - 1); return; }
+    irANodo(nodoEnfocado + paso);
+  }
 
-  function actualizarHud() {
-    var hud = document.querySelector('[data-nm3d-hud]');
-    if (!hud) return;
-    var campos = {
-      fps: stats.fps + ' / ' + topeFps,
-      estado: stats.estado,
-      dibujo: stats.llamadasDibujo + ' llamadas',
-      vertices: stats.vertices.toLocaleString('es'),
-      instancias: stats.instancias.toLocaleString('es'),
-      js: stats.msCuadroJS.toFixed(2) + ' ms',
-      /* la clave se llama 'audio-estado' y no 'audio' a propósito: el selector
-         se compone como [data-nm3d-<clave>], y [data-nm3d-audio] ya es el
-         <audio> de la página — escribiríamos el texto dentro del reproductor */
-      'audio-estado': audioActivo ? ('pulso ' + pulso.toFixed(2)) : 'sin audio'
-    };
-    for (var k in campos) {
-      if (!Object.prototype.hasOwnProperty.call(campos, k)) continue;
-      var el = hud.querySelector('[data-nm3d-' + k + ']');
-      if (el) el.textContent = campos[k];
-    }
-    var barra = hud.querySelector('[data-nm3d-barra]');
-    if (barra) barra.style.transform = 'scaleX(' + Math.min(1, pulso / 1.2).toFixed(3) + ')';
+  function volverAlRecorrido() { nodoEnfocado = -1; actualizarHud(); }
+
+  function alternarPausaRecorrido() {
+    recorrido.activo = !recorrido.activo;
+    stats.estado = recorrido.activo ? 'en marcha' : 'recorrido en pausa';
+    actualizarHud();
+  }
+
+  function alternarRotacionLibre() {
+    rotacionLibre = !rotacionLibre;
+    if (!rotacionLibre) { giroRaton.yaw = 0; giroRaton.pitch = 0; }
+    if (contenedor) contenedor.classList.toggle('nm3d--giro-libre', rotacionLibre);
+    actualizarHud();
+  }
+
+  function alternarPantallaCompleta() {
+    try {
+      if (!document.fullscreenElement) {
+        var pr = document.documentElement.requestFullscreen();
+        if (pr && pr['catch']) pr['catch'](function () { /* el navegador puede negarlo */ });
+      } else { document.exitFullscreen(); }
+    } catch (e) { /* sin API de pantalla completa */ }
   }
 
   function instalarControles() {
+    /* El listener va en window, no en el lienzo: en escenario el foco puede
+       estar en cualquier parte del documento y el clicker manda pulsaciones
+       sin que nadie haya hecho clic antes en el visor. */
+    window.addEventListener('keydown', function (ev) {
+      var k = ev.key;
+      if (k === ' ' || ev.code === 'Space') { ev.preventDefault(); alternarPausaRecorrido(); return; }
+      if (k === 'ArrowRight') { ev.preventDefault(); siguienteNodo(1); return; }
+      if (k === 'ArrowLeft')  { ev.preventDefault(); siguienteNodo(-1); return; }
+      if (k === 'r' || k === 'R') { alternarRotacionLibre(); return; }
+      if (k === 'f' || k === 'F') { alternarPantallaCompleta(); return; }
+      if (k === 'Escape') { volverAlRecorrido(); return; }
+      if (k === 'd' || k === 'D') { document.body.classList.toggle('nm3d-depurar'); return; }
+    });
+
+    contenedor.addEventListener('pointermove', function (e) {
+      if (!rotacionLibre) return;
+      var r = contenedor.getBoundingClientRect();
+      var nx = (e.clientX - r.left) / Math.max(1, r.width) - 0.5;
+      var ny = (e.clientY - r.top) / Math.max(1, r.height) - 0.5;
+      giroRaton.yaw = nx * 1.6;
+      giroRaton.pitch = -ny * 0.8;
+    }, { passive: true });
+
     var botones = document.querySelectorAll('[data-nm3d-fps-set]');
     for (var i = 0; i < botones.length; i++) {
       botones[i].addEventListener('click', function (e) {
         var v = parseInt(e.currentTarget.getAttribute('data-nm3d-fps-set'), 10);
         if (v !== 30 && v !== 60) return;
-        topeFps = v; msPorCuadro = 1000 / v;
-        proximoDibujo = performance.now();
-        stats.msCuadroMax = 0;
+        topeFps = v; msPorCuadro = 1000/v; proximoDibujo = performance.now(); stats.msCuadroMax = 0;
         var todos = document.querySelectorAll('[data-nm3d-fps-set]');
-        for (var j = 0; j < todos.length; j++) {
-          todos[j].setAttribute('aria-pressed', todos[j] === e.currentTarget ? 'true' : 'false');
-        }
+        for (var j = 0; j < todos.length; j++) todos[j].setAttribute('aria-pressed', todos[j] === e.currentTarget ? 'true' : 'false');
         actualizarHud();
       });
     }
@@ -834,15 +926,50 @@
     var btnAudio = document.querySelector('[data-nm3d-audio-toggle]');
     if (btnAudio) {
       btnAudio.addEventListener('click', function () {
-        if (audioActivo) { desactivarAudio(); btnAudio.setAttribute('aria-pressed', 'false'); btnAudio.textContent = 'Activar audio'; return; }
+        if (audioActivo) { desactivarAudio(); btnAudio.setAttribute('aria-pressed','false'); btnAudio.textContent = 'Audio'; return; }
         btnAudio.disabled = true;
         activarAudio().then(function (r) {
           btnAudio.disabled = false;
           btnAudio.setAttribute('aria-pressed', audioActivo ? 'true' : 'false');
-          btnAudio.textContent = audioActivo ? 'Silenciar' : 'Activar audio';
+          btnAudio.textContent = audioActivo ? 'Silenciar' : 'Audio';
           if (!audioActivo) { stats.estado = r; actualizarHud(); }
         });
       });
+    }
+  }
+
+  /* ─── HUD ─────────────────────────────────────────────────────────────── */
+
+  function actualizarHud() {
+    var e = nodoEnfocado >= 0 ? ESTACIONES[nodoEnfocado] : null;
+    var pon = function (sel, txt) { var n = document.querySelector(sel); if (n) n.textContent = txt; };
+
+    pon('[data-nm3d-estacion]', e ? e.nombre : 'Recorrido completo');
+    pon('[data-nm3d-subtitulo]', e ? e.subtitulo : 'Sistema de booking 2026-2030');
+    pon('[data-nm3d-telemetria]', e ? e.telemetria : '5 estaciones · 8 conductos activos');
+    pon('[data-nm3d-conexion]', audioActivo ? 'En vivo' : 'Enlace estable');
+
+    var modo = document.querySelector('[data-nm3d-modo]');
+    if (modo) {
+      modo.textContent = rotacionLibre ? 'Órbita libre'
+        : (!recorrido.activo ? 'Pausado'
+        : (nodoEnfocado >= 0 ? 'Enfoque' : 'Recorrido'));
+    }
+
+    /* Depuración: solo con la tecla D. En escenario no se proyecta. */
+    pon('[data-nm3d-fps]', stats.fps + ' / ' + topeFps);
+    pon('[data-nm3d-dibujo]', stats.llamadasDibujo + ' llamadas');
+    pon('[data-nm3d-vertices]', stats.vertices.toLocaleString('es'));
+    pon('[data-nm3d-instancias]', stats.instancias.toLocaleString('es'));
+    pon('[data-nm3d-js]', stats.msCuadroJS.toFixed(2) + ' ms');
+    pon('[data-nm3d-salto]', stats.saltoCamaraMax.toFixed(3) + ' u');
+    pon('[data-nm3d-estadotec]', stats.estado);
+
+    var barra = document.querySelector('[data-nm3d-barra]');
+    if (barra) barra.style.transform = 'scaleX(' + Math.min(1, pulso/1.2).toFixed(3) + ')';
+
+    for (var i = 0; i < etiquetas.length; i++) {
+      etiquetas[i].setAttribute('data-activa', i === nodoEnfocado ? 'si' : 'no');
     }
   }
 
@@ -852,9 +979,9 @@
     contenedor = document.getElementById(ID_VIEWPORT);
     if (!contenedor) return;
 
-    try {
-      reducirMovimiento = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    } catch (e) { reducirMovimiento = false; }
+    try { reducirMovimiento = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+    catch (e) { reducirMovimiento = false; }
+    if (reducirMovimiento) recorrido.activo = false;
 
     if (equipoModesto()) { mostrarFallback('equipo por debajo del mínimo para 3D'); return; }
 
@@ -873,54 +1000,61 @@
     lienzo.addEventListener('webglcontextlost', alPerderContexto, false);
     lienzo.addEventListener('webglcontextrestored', alRestaurarContexto, false);
 
+    construirWaypoints();
     try { construirEscena(); }
     catch (e) { mostrarFallback('no se pudo compilar el motor gráfico'); return; }
 
     capaz = true;
     redimensionar();
-    instalarInteraccion();
+    construirEtiquetas();
     instalarControles();
+
+    /* La cámara nace ya sobre el primer waypoint: si naciera lejos, el primer
+       cuadro sería un barrido largo que parece un fallo de carga. */
+    curvaCerrada(WAYPOINTS, 0, _p);
+    cam.x = obj.x = _p[0]; cam.y = obj.y = _p[1]; cam.z = obj.z = _p[2];
+    cam.mx = obj.mx = 0; cam.my = obj.my = 0; cam.mz = obj.mz = 0;
 
     window.addEventListener('resize', redimensionar, { passive: true });
     document.addEventListener('visibilitychange', function () {
-      if (document.hidden) pausar('pestaña oculta'); else reanudar();
+      if (document.hidden) pausarMotor('pestaña oculta'); else reanudarMotor();
     });
-    window.addEventListener('blur', function () { pausar('ventana en segundo plano'); });
-    window.addEventListener('focus', reanudar);
+    window.addEventListener('blur', function () { pausarMotor('ventana en segundo plano'); });
+    window.addEventListener('focus', reanudarMotor);
 
-    t0 = performance.now();
-    reanudar();
+    t0 = performance.now(); ultimoT = 0;
+    reanudarMotor();
+    actualizarHud();
   }
 
   window.mdjNeuralMatrix3D = {
     stats: function () {
-      var copia = {};
-      for (var k in stats) { if (Object.prototype.hasOwnProperty.call(stats, k)) copia[k] = stats[k]; }
-      copia.topeFps = topeFps; copia.capaz = capaz; copia.corriendo = corriendo;
-      copia.degradado = degradado; copia.instancing = modoInstancing;
-      copia.audioActivo = audioActivo; copia.pulso = pulso;
-      copia.banda = { graves: banda.graves, medios: banda.medios, agudos: banda.agudos };
-      copia.nodos = nodos.length; copia.nodoActivo = nodoActivo;
-      return copia;
+      var c = {};
+      for (var k in stats) { if (Object.prototype.hasOwnProperty.call(stats, k)) c[k] = stats[k]; }
+      c.topeFps = topeFps; c.capaz = capaz; c.corriendo = corriendo; c.degradado = degradado;
+      c.instancing = modoInstancing; c.audioActivo = audioActivo; c.pulso = pulso;
+      c.banda = { graves: banda.graves, medios: banda.medios, agudos: banda.agudos };
+      c.estaciones = ESTACIONES.length; c.nodoEnfocado = nodoEnfocado;
+      c.recorridoActivo = recorrido.activo; c.rotacionLibre = rotacionLibre;
+      c.camara = { x: +cam.x.toFixed(3), y: +cam.y.toFixed(3), z: +cam.z.toFixed(3) };
+      return c;
     },
-    fijarFps: function (v) { if (v === 30 || v === 60) { topeFps = v; msPorCuadro = 1000 / v; proximoDibujo = performance.now(); stats.msCuadroMax = 0; } },
-    pausar: function () { pausar('petición externa'); },
-    reanudar: reanudar,
+    fijarFps: function (v) { if (v === 30 || v === 60) { topeFps = v; msPorCuadro = 1000/v; proximoDibujo = performance.now(); stats.msCuadroMax = 0; } },
+    pausar: function () { pausarMotor('petición externa'); },
+    reanudar: reanudarMotor,
     activarAudio: activarAudio,
     desactivarAudio: desactivarAudio,
-    /* Para pruebas: coloca el cursor virtual sobre un nodo por índice. */
-    apuntarANodo: function (i) {
-      if (i < 0 || i >= nodos.length) return 'fuera de rango';
-      var nd = nodos[i];
-      if (!nd.pantalla.visible) return 'ese nodo no está en pantalla ahora';
-      raton.x = nd.pantalla.x; raton.y = nd.pantalla.y;
-      return 'cursor sobre ' + nd.nombre;
-    },
-    nodos: function () {
-      return nodos.map(function (n) {
-        return { nombre: n.nombre, ruta: RUTAS[n.ruta].nombre, leccion: n.leccion, desbloqueado: n.desbloqueado, visible: n.pantalla.visible };
+    irANodo: irANodo,
+    siguienteNodo: siguienteNodo,
+    volverAlRecorrido: volverAlRecorrido,
+    alternarPausaRecorrido: alternarPausaRecorrido,
+    alternarRotacionLibre: alternarRotacionLibre,
+    estaciones: function () {
+      return ESTACIONES.map(function (e) {
+        return { id: e.id, nombre: e.nombre, subtitulo: e.subtitulo, hub: e.hub, slot: e.slot, ocupado: false };
       });
     },
+    reiniciarSaltoMax: function () { stats.saltoCamaraMax = 0; },
     simularPerdidaContexto: function () {
       if (!extPerdidaContexto) return 'WEBGL_lose_context no disponible';
       extPerdidaContexto.loseContext(); return 'contexto perdido a propósito';

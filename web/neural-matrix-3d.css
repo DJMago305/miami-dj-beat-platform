@@ -1,25 +1,30 @@
 /* ============================================================================
-   NEURAL MATRIX 3D · disposición del visor (FEAT-3D-01)
+   NEURAL MATRIX 3D · Modo Keynote (FEAT-3D-03)
    ----------------------------------------------------------------------------
-   El visor ocupa la ventana entera y vive AISLADO del flujo del documento:
-   position:fixed + contain, para que ningún reflujo de la página empuje al
-   lienzo y provoque un redimensionado de framebuffer — que en WebGL no es un
-   layout shift barato, es reasignar memoria de GPU en mitad del render.
+   Tipografía pensada para PROYECTOR, no para escritorio. La referencia: el
+   texto proyectado necesita al menos un 2 % de la altura de pantalla para
+   leerse en sala, y 3-4 % para las últimas filas. El HUD anterior estaba a
+   0,93 % (10-12px sobre 1080) — entre tres y cuatro veces por debajo.
+
+   La escala vive en el :root en rem y crece con la altura del viewport, así
+   que la misma página sirve en un portátil de 1080p y en una pantalla de
+   escenario de 4K sin tocar una línea.
    ========================================================================== */
 
 :root {
+  /* 1rem ≈ 16,7px a 1080p y sube con la pantalla. Todo lo demás va en rem, así
+     que basta esta línea para reescalar el keynote entero. */
+  font-size: clamp(16px, 1.55vh, 26px);
+
   --nm3d-tinta:        #f4f6fb;
-  --nm3d-tinta-suave:  rgba(244, 246, 251, 0.62);
+  --nm3d-tinta-suave:  rgba(244, 246, 251, 0.66);
   --nm3d-fondo:        #05060c;
-  --nm3d-panel:        rgba(10, 14, 26, 0.82);
+  --nm3d-panel:        rgba(10, 14, 26, 0.78);
   --nm3d-borde:        rgba(150, 180, 255, 0.22);
   --nm3d-acento:       #c5a059;
+  --nm3d-neon:         #73d9ff;
   --nm3d-alerta:       #ffb27a;
 }
-
-/* El módulo se compromete con un look oscuro: es un interior de circuito. No
-   hay variante clara — un fondo blanco destruiría el contraste de los pulsos.
-   Aun así se declara todo explícitamente, sin heredar del anfitrión. */
 
 html.nm3d-pagina,
 body.nm3d-pagina {
@@ -29,7 +34,7 @@ body.nm3d-pagina {
   background: var(--nm3d-fondo);
   color: var(--nm3d-tinta);
   font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
-  overflow: hidden;                 /* el recorrido es la navegación, no el scroll */
+  overflow: hidden;
   overscroll-behavior: none;
 }
 
@@ -39,11 +44,14 @@ body.nm3d-pagina {
   position: fixed;
   inset: 0;
   background: radial-gradient(ellipse at 50% 45%, #0b1020 0%, #05060c 70%);
-  /* contain aísla el subárbol: su layout y su pintado no invalidan el resto */
-  contain: strict;
-  touch-action: none;               /* el paneo por gesto no debe hacer scroll */
-  cursor: crosshair;
+  /* contain: layout paint — NO 'strict'. La capa de etiquetas es hija, y con
+     contención de TAMAÑO el navegador la mediría como si estuviera vacía. */
+  contain: layout paint;
+  touch-action: none;
+  cursor: default;
 }
+
+#neural-matrix-viewport.nm3d--giro-libre { cursor: grab; }
 
 #neural-matrix-viewport .nm3d-lienzo {
   display: block;
@@ -51,62 +59,229 @@ body.nm3d-pagina {
   height: 100%;
 }
 
-/* El selector lleva el #id a propósito: la regla de arriba que muestra el
-   lienzo también lo lleva (0-1-1-1), y sin empatarla esta nunca ganaría —
-   el lienzo se quedaría vivo debajo del panel de fallback. */
+/* El #id empata la especificidad de la regla que muestra el lienzo; sin eso
+   esta nunca ganaría y el lienzo quedaría vivo bajo el panel de fallback. */
 #neural-matrix-viewport.nm3d--sin-webgl .nm3d-lienzo { display: none; }
 
-/* ─── HUD ───────────────────────────────────────────────────────────────── */
+/* ─── Etiquetas permanentes de las estaciones ──────────────────────────── */
 
-.nm3d-hud {
-  position: fixed;
-  left: max(16px, env(safe-area-inset-left, 0px));
-  bottom: max(16px, env(safe-area-inset-bottom, 0px));
-  z-index: 5;
-  display: grid;
-  grid-template-columns: auto auto;
-  gap: 2px 14px;
-  padding: 12px 16px;
-  border: 1px solid var(--nm3d-borde);
-  border-radius: 12px;
-  background: var(--nm3d-panel);
-  backdrop-filter: blur(10px);
-  font-size: 12px;
-  line-height: 1.5;
-  letter-spacing: 0.04em;
-  font-variant-numeric: tabular-nums;   /* los números no bailan al actualizarse */
-  color: var(--nm3d-tinta-suave);
-  pointer-events: auto;
+.nm3d-capa-etiquetas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
 }
 
-.nm3d-hud dt { margin: 0; text-transform: uppercase; font-size: 10px; letter-spacing: 0.12em; opacity: 0.7; }
-.nm3d-hud dd { margin: 0; color: var(--nm3d-tinta); }
+.nm3d-etiqueta {
+  position: absolute;
+  top: 0; left: 0;
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.4rem 0.85rem;
+  border-left: 2px solid var(--color, var(--nm3d-neon));
+  background: linear-gradient(90deg, rgba(10,14,26,0.86) 0%, rgba(10,14,26,0.35) 100%);
+  white-space: nowrap;
+  /* will-change avisa al compositor: estas cajas se mueven en cada cuadro y
+     no queremos que recalcule su capa treinta veces por segundo. */
+  will-change: transform, opacity;
+}
 
-.nm3d-hud__fps {
+.nm3d-etiqueta b {
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--nm3d-tinta);
+  text-shadow: 0 0 12px rgba(0,0,0,0.9);
+}
+
+.nm3d-etiqueta span {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--color, var(--nm3d-neon));
+}
+
+.nm3d-etiqueta--nucleo b { font-size: 1.3rem; letter-spacing: 0.1em; }
+
+.nm3d-etiqueta[data-activa='si'] {
+  background: linear-gradient(90deg, rgba(10,14,26,0.95) 0%, rgba(10,14,26,0.5) 100%);
+  border-left-width: 3px;
+}
+.nm3d-etiqueta[data-activa='si'] b { font-size: 1.5rem; }
+
+/* ─── HUD de keynote ───────────────────────────────────────────────────── */
+
+.nm3d-keynote {
+  position: fixed;
+  left: max(2.5rem, env(safe-area-inset-left, 0px));
+  bottom: max(2.5rem, env(safe-area-inset-bottom, 0px));
+  z-index: 6;
+  max-width: min(46rem, 60vw);
+  display: grid;
+  gap: 0.25rem;
+}
+
+.nm3d-keynote__modo {
+  margin: 0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  color: var(--nm3d-acento);
+}
+
+/* 2rem ≈ 33px a 1080p = 3,1 % de la altura. Es el extremo alto del rango
+   pedido, porque es lo único que la última fila de la sala leerá seguro. */
+.nm3d-keynote__titulo {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: 0.02em;
+  color: var(--nm3d-tinta);
+  text-shadow: 0 0 2rem rgba(0,0,0,0.95);
+}
+
+.nm3d-keynote__subtitulo {
+  margin: 0;
+  font-size: 1.125rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--nm3d-neon);
+}
+
+.nm3d-keynote__telemetria {
+  margin: 0.35rem 0 0;
+  /* 1.2rem ≈ 20px a 1080p — dentro del rango 18-22px pedido para datos.
+     A 1rem (16,7px) quedaba por debajo del mínimo legible en sala. */
+  font-size: 1.2rem;
+  line-height: 1.5;
+  color: var(--nm3d-tinta-suave);
+}
+
+.nm3d-keynote__enlace {
+  margin: 0.2rem 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--nm3d-tinta-suave);
+}
+
+.nm3d-keynote__enlace i {
+  width: 0.5rem; height: 0.5rem;
+  border-radius: 50%;
+  background: #66ffb2;
+  box-shadow: 0 0 0.75rem #66ffb2;
+}
+
+.nm3d-keynote__pulso {
+  margin-top: 0.5rem;
+  width: 14rem; max-width: 100%;
+  height: 0.18rem;
+  border-radius: 0.18rem;
+  background: rgba(150, 180, 255, 0.16);
+  overflow: hidden;
+}
+
+.nm3d-keynote__pulso i {
+  display: block; height: 100%;
+  border-radius: 0.18rem;
+  background: linear-gradient(90deg, var(--nm3d-acento), var(--nm3d-neon));
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+/* ─── Recordatorio de teclas ───────────────────────────────────────────── */
+
+.nm3d-teclas {
+  position: fixed;
+  right: max(2rem, env(safe-area-inset-right, 0px));
+  bottom: max(2rem, env(safe-area-inset-bottom, 0px));
+  z-index: 6;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--nm3d-borde);
+  border-radius: 999px;
+  background: var(--nm3d-panel);
+  backdrop-filter: blur(10px);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--nm3d-tinta-suave);
+}
+
+.nm3d-teclas b { color: var(--nm3d-acento); font-weight: 500; }
+
+/* ─── Volver ────────────────────────────────────────────────────────────── */
+
+.nm3d-volver {
+  position: fixed;
+  top: max(1.5rem, env(safe-area-inset-top, 0px));
+  left: max(1.5rem, env(safe-area-inset-left, 0px));
+  z-index: 6;
+  padding: 0.45rem 1rem;
+  border: 1px solid var(--nm3d-borde);
+  border-radius: 999px;
+  background: var(--nm3d-panel);
+  backdrop-filter: blur(10px);
+  color: var(--nm3d-tinta-suave);
+  text-decoration: none;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.nm3d-volver:hover, .nm3d-volver:focus-visible { color: var(--nm3d-acento); border-color: var(--nm3d-acento); }
+
+/* ─── Panel técnico: OCULTO salvo con la tecla D ───────────────────────── */
+
+.nm3d-tecnico {
+  position: fixed;
+  top: max(1.5rem, env(safe-area-inset-top, 0px));
+  right: max(1.5rem, env(safe-area-inset-right, 0px));
+  z-index: 6;
+  display: none;                  /* modo minimalista por defecto */
+  grid-template-columns: auto auto;
+  gap: 0.1rem 0.9rem;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--nm3d-borde);
+  border-radius: 0.6rem;
+  background: var(--nm3d-panel);
+  backdrop-filter: blur(10px);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--nm3d-tinta-suave);
+}
+
+body.nm3d-depurar .nm3d-tecnico { display: grid; }
+
+.nm3d-tecnico dt { margin: 0; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.7; }
+.nm3d-tecnico dd { margin: 0; color: var(--nm3d-tinta); }
+
+.nm3d-tecnico__botones {
   grid-column: 1 / -1;
-  margin-top: 8px;
-  padding-top: 8px;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
   border-top: 1px solid var(--nm3d-borde);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.4rem;
 }
 
-.nm3d-hud__fps span { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.7; }
+.nm3d-tecnico__botones span { text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.7; }
 
 .nm3d-boton {
-  min-width: 44px;
-  min-height: 28px;
-  padding: 4px 12px;
+  min-width: 2.4rem;
+  min-height: 1.6rem;
+  padding: 0.2rem 0.6rem;
   border: 1px solid var(--nm3d-borde);
   border-radius: 999px;
   background: transparent;
   color: var(--nm3d-tinta-suave);
   font: inherit;
-  font-size: 11px;
-  letter-spacing: 0.08em;
   cursor: pointer;
-  transition: none;                 /* sin animaciones: es una herramienta de medida */
 }
 
 .nm3d-boton[aria-pressed='true'] {
@@ -114,50 +289,6 @@ body.nm3d-pagina {
   color: var(--nm3d-acento);
   background: rgba(197, 160, 89, 0.12);
 }
-
-/* ─── Rutas de aprendizaje (leyenda) ───────────────────────────────────── */
-
-.nm3d-leyenda {
-  position: fixed;
-  right: max(16px, env(safe-area-inset-right, 0px));
-  bottom: max(16px, env(safe-area-inset-bottom, 0px));
-  z-index: 5;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px 16px;
-  border: 1px solid var(--nm3d-borde);
-  border-radius: 12px;
-  background: var(--nm3d-panel);
-  backdrop-filter: blur(10px);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.nm3d-leyenda b { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; color: var(--nm3d-tinta-suave); }
-.nm3d-leyenda i { width: 18px; height: 2px; border-radius: 2px; background: currentColor; }
-
-/* ─── Volver ────────────────────────────────────────────────────────────── */
-
-.nm3d-volver {
-  position: fixed;
-  top: max(16px, env(safe-area-inset-top, 0px));
-  left: max(16px, env(safe-area-inset-left, 0px));
-  z-index: 5;
-  padding: 8px 16px;
-  border: 1px solid var(--nm3d-borde);
-  border-radius: 999px;
-  background: var(--nm3d-panel);
-  backdrop-filter: blur(10px);
-  color: var(--nm3d-tinta-suave);
-  text-decoration: none;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.nm3d-volver:hover, .nm3d-volver:focus-visible { color: var(--nm3d-acento); border-color: var(--nm3d-acento); }
 
 /* ─── Fallback y degradado ─────────────────────────────────────────────── */
 
@@ -167,11 +298,11 @@ body.nm3d-pagina {
   z-index: 4;
   display: grid;
   place-content: center;
-  gap: 14px;
-  padding: 32px;
+  gap: 0.9rem;
+  padding: 2rem;
   text-align: center;
-  /* Un cielo estático en vez de un rectángulo negro: si no podemos animar, al
-     menos que no parezca que la página se rompió. */
+  /* Un cielo estático en vez de un rectángulo negro: si no podemos animar,
+     que al menos no parezca que la página se rompió. */
   background:
     radial-gradient(circle at 30% 25%, rgba(120, 150, 255, 0.16) 0%, transparent 45%),
     radial-gradient(circle at 72% 70%, rgba(197, 160, 89, 0.14) 0%, transparent 42%),
@@ -179,84 +310,23 @@ body.nm3d-pagina {
 }
 
 .nm3d-fallback[hidden] { display: none; }
+.nm3d-fallback h2 { margin: 0; font-size: 1.9rem; font-weight: 500; letter-spacing: 0.03em; }
+.nm3d-fallback p { margin: 0; max-width: 46ch; color: var(--nm3d-tinta-suave); font-size: 1rem; line-height: 1.65; }
+.nm3d-fallback code { color: var(--nm3d-alerta); font-size: 0.85rem; }
 
-.nm3d-fallback h2 {
-  margin: 0;
-  font-size: clamp(20px, 3.4vw, 30px);
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: var(--nm3d-tinta);
-}
-
-.nm3d-fallback p { margin: 0; max-width: 46ch; color: var(--nm3d-tinta-suave); font-size: 14px; line-height: 1.65; }
-.nm3d-fallback code { color: var(--nm3d-alerta); font-size: 12px; letter-spacing: 0.02em; }
-
-/* Contexto perdido: el lienzo sigue ahí pero ya no pinta; se avisa sin gritar. */
 .nm3d--degradado .nm3d-lienzo { opacity: 0.25; }
 
 /* ─── Accesibilidad y pantallas pequeñas ───────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  /* El motor ya congela el avance por su cuenta; aquí se acompaña en la UI. */
-  .nm3d-boton { transition: none; }
+  /* El motor arranca ya con el recorrido detenido; aquí solo se acompaña. */
+  .nm3d-keynote__pulso i { transition: none; }
 }
 
-@media (max-width: 700px) {
-  .nm3d-leyenda { display: none; }          /* la pantalla es para el recorrido */
-  .nm3d-hud { font-size: 11px; padding: 10px 12px; }
-}
-
-/* ─── FEAT-3D-02 · nodos de sinapsis, pulso y audio ───────────────────────── */
-
-/* Etiqueta del nodo bajo el cursor. Se posiciona con left/top desde el motor,
-   y se centra sobre el nodo con translate para no tener que restar su tamaño
-   en JS (que obligaría a leer el layout en cada cuadro). */
-.nm3d-nodo {
-  position: absolute;
-  z-index: 6;
-  transform: translate(-50%, calc(-100% - 18px));
-  display: grid;
-  gap: 2px;
-  padding: 8px 14px;
-  border: 1px solid var(--nm3d-borde);
-  border-radius: 10px;
-  background: var(--nm3d-panel);
-  backdrop-filter: blur(10px);
-  white-space: nowrap;
-  pointer-events: none;      /* nunca roba el clic destinado al nodo */
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.nm3d-nodo[hidden] { display: none; }
-.nm3d-nodo strong { font-weight: 500; color: var(--nm3d-tinta); letter-spacing: 0.04em; }
-.nm3d-nodo span { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--nm3d-acento); }
-.nm3d-nodo[data-estado='bloqueado'] span { color: var(--nm3d-tinta-suave); }
-
-/* Barra de pulso: escala en X desde la izquierda. Se anima con transform y no
-   con width para que no dispare relayout treinta veces por segundo. */
-.nm3d-hud__pulso {
-  grid-column: 1 / -1;
-  height: 3px;
-  margin-top: 8px;
-  border-radius: 3px;
-  background: rgba(150, 180, 255, 0.14);
-  overflow: hidden;
-}
-
-.nm3d-hud__pulso i {
-  display: block;
-  height: 100%;
-  border-radius: 3px;
-  background: linear-gradient(90deg, var(--nm3d-acento), #73d9ff);
-  transform: scaleX(0);
-  transform-origin: left center;
-}
-
-.nm3d-boton--audio { min-width: 96px; margin-left: auto; }
-
-.nm3d--con-audio .nm3d-boton--audio { border-color: var(--nm3d-acento); color: var(--nm3d-acento); }
-
-@media (prefers-reduced-motion: reduce) {
-  .nm3d-hud__pulso i { transition: none; }
+@media (max-width: 900px) {
+  .nm3d-teclas { display: none; }            /* sin teclado que recordar */
+  .nm3d-keynote { max-width: 88vw; left: 1.2rem; bottom: 1.2rem; }
+  .nm3d-keynote__titulo { font-size: 1.5rem; }
+  .nm3d-etiqueta b { font-size: 0.9rem; }
+  .nm3d-etiqueta[data-activa='si'] b { font-size: 1.05rem; }
 }
