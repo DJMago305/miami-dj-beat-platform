@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es" class="nm3d-pagina">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <title>Neural Matrix 3D — Miami DJ Beat</title>
+
+  <!--
+    FEAT-3D-01 · andamiaje del simulador 3D/360°.
+
+    RUTA ANTI-COLISIÓN: este módulo NO usa el nombre "road master map". Ese
+    espacio pertenece al mapa forense autogenerado de docs/roadmap/, que no se
+    toca ni se reutiliza. De ahí "neural-matrix-3d" en las tres piezas.
+
+    ESTRUCTURA DESACOPLADA: la página no monta la cabecera compartida. Un visor
+    a pantalla completa con la barra unificada encima obligaría al lienzo a
+    convivir con un DOM que se reordena en el arranque (máscara de auth, slots
+    de nav), y cada reordenación es un redimensionado de framebuffer. Se entra
+    y se sale por el enlace "volver". Si más adelante se decide integrar la
+    cabecera, ese es un ticket propio y con su medición.
+  -->
+
+  <link rel="stylesheet" href="./neural-matrix-3d.css?v=20260818-feat3d01">
+</head>
+<body class="nm3d-pagina">
+
+  <a class="nm3d-volver" href="./index.html">← Volver</a>
+
+  <main id="neural-matrix-viewport" aria-label="Recorrido 3D por la ruta de aprendizaje">
+    <canvas class="nm3d-lienzo" role="img"
+            aria-label="Circuitos y conexiones neuronales que representan las rutas de aprendizaje"></canvas>
+
+    <!--
+      Fallback: visible por defecto NO; lo enciende el motor cuando no puede
+      arrancar. Va en el HTML y no lo inyecta el JS a propósito — si el script
+      muriera al parsear en un motor antiguo, un fallback inyectado por ese
+      mismo script no existiría nunca. El <noscript> cubre el caso extremo.
+    -->
+    <section class="nm3d-fallback" hidden>
+      <h2>Esta experiencia necesita aceleración gráfica</h2>
+      <p>
+        Tu navegador no puede ejecutar el recorrido en 3D. El contenido de los
+        cursos sigue disponible al completo desde la academia; esto es solo la
+        capa visual.
+      </p>
+      <p><code data-nm3d-motivo>—</code></p>
+    </section>
+
+    <noscript>
+      <section class="nm3d-fallback">
+        <h2>Esta experiencia necesita JavaScript</h2>
+        <p>Actívalo para recorrer la matriz, o entra a la academia directamente.</p>
+      </section>
+    </noscript>
+  </main>
+
+  <!-- Telemetría del andamiaje: es la prueba de que el tope de fps y las
+       salvaguardas hacen lo que dicen. Se retirará cuando el módulo pase a
+       producción; hoy es el instrumento de medida del ticket. -->
+  <dl class="nm3d-hud" data-nm3d-hud>
+    <dt>FPS</dt>        <dd data-nm3d-fps>—</dd>
+    <dt>Estado</dt>     <dd data-nm3d-estado>arrancando</dd>
+    <dt>Dibujo</dt>     <dd data-nm3d-dibujo>—</dd>
+    <dt>Vértices</dt>   <dd data-nm3d-vertices>—</dd>
+    <dt>JS/cuadro</dt>  <dd data-nm3d-js>—</dd>
+    <div class="nm3d-hud__fps">
+      <span>Tope</span>
+      <button type="button" class="nm3d-boton" data-nm3d-fps-set="30" aria-pressed="true">30</button>
+      <button type="button" class="nm3d-boton" data-nm3d-fps-set="60" aria-pressed="false">60</button>
+    </div>
+  </dl>
+
+  <aside class="nm3d-leyenda" aria-label="Rutas de aprendizaje">
+    <b style="color:#ffc759"><i></i>DJ</b>
+    <b style="color:#73d9ff"><i></i>Producción</b>
+    <b style="color:#b38cff"><i></i>Acústica</b>
+    <b style="color:#66ffb2"><i></i>Negocio</b>
+  </aside>
+
+  <script src="./js/neural-matrix-3d.js?v=20260818-feat3d01"></script>
+</body>
+</html>
