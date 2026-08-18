@@ -3360,6 +3360,20 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
    SI HAY QUE CAMBIAR UN ANCHO, SE CAMBIA AQUÍ Y EN NINGÚN OTRO SITIO.
    ══════════════════════════════════════════════════════════════════════════ */
 
+/* P1.6 · el max-width del riel (arriba) no bastaba: su contenedor padre,
+   .header-nav .container, tiene su PROPIO max-width:1320px (línea ~3026,
+   compartido con .header-top .container — "Fila 1 y Fila 2 comparten el
+   mismo riel"). Un hijo nunca es más ancho que su padre: #mainNav quedaba
+   topado en 1320px sin importar su propio max-width. Regla NUEVA y
+   separada, solo para .header-nav .container (deja .header-top .container
+   intacto en 1320px, a propósito — no se toca la clase global .container
+   ni la fila del branding, solo la fila del menú). Mismo selector que la
+   regla de 1320px para empatar su especificidad (1 ID + 4 clases) y
+   ganarle por ir después en el archivo. */
+#mainHeader.header.mdj-header-unified .header-nav .container {
+  max-width: 1600px !important;
+}
+
 /* Selector reforzado (empata la especificidad de .header-nav .container >
    #mainNav.mdj-mainnav-flex.nav.top-nav, la regla max-width:100% activa en
    @media min-width:1001px que le ganaba a esta — verificado en vivo a
