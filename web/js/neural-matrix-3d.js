@@ -43,7 +43,11 @@
   var DPR_MAXIMO = 1.75;
   var MUESTRAS_CONDUCTO = 64;
   var LADOS_TUBO = 6;
-  var RADIO_TUBO = 0.075;
+  /* 0.038, la mitad de 0.075. A ese grosor los conductos leían como mangueras;
+     ahora son filamentos. Con el rescoldo al 25 % y el solitón largo, la fibra
+     delgada mantiene la sensación de corriente continua sin convertirse en una
+     banda luminosa que se come el encuadre. */
+  var RADIO_TUBO = 0.038;
   var PARTICULAS = 700;
   /* El Fénix vuelve al núcleo: es la matrix, y una imagen plana no puede
      sostener el centro de la escena. */
