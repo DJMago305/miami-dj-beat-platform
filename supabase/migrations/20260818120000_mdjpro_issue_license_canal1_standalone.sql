@@ -1,6 +1,17 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  ENTORNO DE DESTINO:  ⚠️  PRUEBA — proyecto «mdjb-ensayo» (rtbsovavmtnjpbbpwsin)
---  NO EJECUTAR EN PRODUCCIÓN (hkuvuqupbxwkiykxvqdr) hasta validación del PO.
+--  ENTORNO:  ✅ APLICADA EN PRODUCCIÓN (hkuvuqupbxwkiykxvqdr) el 2026-08-18,
+--            con autorización expresa del PO.
+--
+--  CÓMO SE APLICÓ, y por qué así: con `supabase db query --linked --file`, NO con
+--  `supabase db push`. El push habría intentado aplicar TODAS las migraciones
+--  pendientes del repo contra una base con datos de facturación reales, y el
+--  historial local no está alineado con producción. Esta vía ejecuta solo este
+--  archivo, dentro de su BEGIN/COMMIT.
+--
+--  VERIFICADO DESPUÉS: pg_proc devuelve una sola firma,
+--  mdjpro_issue_license(uuid, mdjpro_plan_source, text, text, timestamptz), y la
+--  antigua de dos parámetros ya no existe. Antes de aplicar había 1 licencia viva
+--  (miamidjbeat_pro/active); el canal de artista no se tocó.
 -- ═══════════════════════════════════════════════════════════════════════════
 --
 --  CANAL 1 · RENTA INDEPENDIENTE DE MDJPRO (19,99 USD/mes)
