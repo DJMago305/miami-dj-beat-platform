@@ -45,7 +45,10 @@
   var LADOS_TUBO = 6;
   var RADIO_TUBO = 0.075;
   var PARTICULAS = 700;
-  var CHISPAS = 320;              // micro-partículas por los conductos radiales
+  /* 180 y no 320: a 320 el coste por cuadro subía a 0,30 ms en pico, un 50 %
+     por encima del techo de 0,20 ms fijado para este módulo. El flujo se sigue
+     leyendo igual — lo que cuenta es la cadencia, no la densidad. */
+  var CHISPAS = 180;              // micro-partículas por los conductos radiales
   /* El nodo del núcleo mide 1.25 de radio; un Fénix de 6 unidades de punta a
      punta lo tapaba a él y a media escena. A 0.58 el ave enmarca el núcleo en
      vez de sustituirlo, que es lo que se le pide a un emblema. */
@@ -499,7 +502,11 @@
     /* El núcleo casi no aporta y el borde sí: con mezcla aditiva, una
        superficie grande a alfa media se acumula en una mancha sólida. Aquí
        el tubo es casi invisible de frente y solo se marca su silueta. */
-    '  float alfa = (0.030 + vBorde * 0.44) * min(1.0, vBrillo * 1.35);',
+    /* Alfa a la mitad (0.44 → 0.22). El Fénix y las chispas añadieron luz
+       aditiva a la escena, y con la calibración anterior los conductos vistos
+       de cerca desde la cámara cinemática se acumulaban en bandas blancas
+       gruesas que cruzaban el encuadre. Menos alfa por fibra, misma lectura. */
+    '  float alfa = (0.015 + vBorde * 0.22) * min(1.0, vBrillo * 1.35);',
     '  gl_FragColor = vec4(vColor * vBrillo, alfa);',
     '}'
   ].join('\n');
