@@ -3,6 +3,9 @@
  * Handles device fingerprinting and login verification.
  */
 
+/** Legacy-Safari-safe optional access (ese motor lanza SyntaxError al parsear "?."). */
+function mdjGet(o, k) { return o ? o[k] : undefined; }
+
 const MIAMI_DJ_SECURITY = {
     /** Generates a simple device fingerprint based on browser environment. */
     getDeviceFingerprint: () => {
@@ -20,7 +23,7 @@ const MIAMI_DJ_SECURITY = {
     /** Checks if the current device is known for the user. */
     checkDevice: async (user, db) => {
         const fingerprint = MIAMI_DJ_SECURITY.getDeviceFingerprint();
-        const userType = user.user_metadata?.user_type || 'client';
+        const userType = mdjGet(user.user_metadata, 'user_type') || 'client';
         const table = userType === 'talent' ? 'dj_profiles' : 'client_profiles';
 
         const { data: profile, error } = await db.from(table)
@@ -53,7 +56,7 @@ const MIAMI_DJ_SECURITY = {
         const table = userType === 'talent' ? 'dj_profiles' : 'client_profiles';
 
         const { data: profile } = await db.from(table).select('known_devices').eq('user_id', userId).single();
-        const devices = profile?.known_devices || [];
+        const devices = mdjGet(profile, 'known_devices') || [];
 
         if (!devices.includes(fingerprint)) {
             devices.push(fingerprint);

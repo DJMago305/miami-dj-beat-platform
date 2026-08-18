@@ -1,4 +1,6 @@
 // I18n Global Manager
+/** Legacy-Safari-safe nullish coalescing (ese motor lanza SyntaxError al parsear "??"). */
+function mdjNvl(v, d) { return (v === null || v === undefined) ? d : v; }
 const i18n = {
     currentLang: (function(){ try { return localStorage.getItem('mdjpro_lang') || 'en'; } catch(e) { return 'en'; } }()),
 
@@ -22,7 +24,7 @@ const i18n = {
         const primary = translations[this.currentLang];
         const fallback = this.currentLang === 'es' ? translations.en : translations.es;
         if (!primary) return fallback[key] || '';
-        return primary[key] ?? fallback[key] ?? '';
+        return mdjNvl(primary[key], mdjNvl(fallback[key], ''));
     },
 
     updateUI() {
