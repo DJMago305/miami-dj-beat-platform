@@ -531,16 +531,19 @@
     /*     Potencias crecientes: cuanto más fino el aro, más alta la potencia.
            Con la misma para los tres, los tres pesarían igual y el conjunto
            volvería a leerse como una trama regular. */
-    '    float anillos = pow(max(o1, 0.0),  8.0) * 0.90',
-    '                  + pow(max(o2, 0.0), 10.0) * 0.65',
-    '                  + pow(max(o3, 0.0), 14.0) * 0.45;',
+    '    float anillos = pow(max(o1, 0.0),  8.0) * 1.00',
+    '                  + pow(max(o2, 0.0), 10.0) * 0.80',
+    '                  + pow(max(o3, 0.0), 14.0) * 0.60;',
     /*     Se apagan hacia el borde del quad: nacen del emblema, no del vacío. */
     '    anillos *= smoothstep(1.00, 0.50, d);',
     /*     CORTE INTERIOR, intacto: nada por dentro de 0.42 y transición hasta
            0.60. El emblema queda sobre transparencia real. Va al final para que
            ninguna suma posterior lo invada. */
     '    float corte = smoothstep(0.42, 0.60, d);',
-    '    float aA = anillos * vIntensidad * corte * (0.45 + uPulso * 0.75);',
+    /*     OPACIDAD CON CUERPO. La base sube de 0.45 a 0.75 —dentro del rango
+           0.65-0.85 pedido— para que las bandas tengan presencia de energía
+           densa y no de niebla. El pulso sigue sumando por encima. */
+    '    float aA = anillos * vIntensidad * corte * (0.75 + uPulso * 0.55);',
     /*     Dorado dentro → cian fuera, PASANDO POR BLANCO CÁLIDO. Interpolar
            #ffd700 y #00f5ff en línea recta cruza por verde en el punto medio:
            aparecía un tercer color que nadie había pedido y que ensuciaba la
@@ -551,7 +554,14 @@
     '    vec3 blanco = vec3(1.0, 0.97, 0.90);',
     '    float t2 = clamp(d * 1.20 - 0.18, 0.0, 1.0);',
     '    vec3 cA = (t2 < 0.5) ? mix(oroA, blanco, t2 * 2.0) : mix(blanco, cianA, (t2 - 0.5) * 2.0);',
-    '    gl_FragColor = vec4(cA * (0.85 + anillos * 0.70), min(1.0, aA));',
+    /*     DESTELLO EN LAS CRESTAS. El multiplicador de emisión pasa de 0.70 a
+           1.90: donde el aro está en su punto alto, quema. Y ahí mismo el color
+           vira a cian eléctrico, que es el destello que pedía el ticket — el
+           dorado queda como cuerpo de la banda y el cian como chispazo.
+           El alfa se satura antes que el color a propósito: con mezcla aditiva,
+           dejar crecer los dos a la vez convierte el aro en un disco blanco. */
+    '    vec3 cCresta = mix(cA, vec3(0.35, 0.98, 1.0), clamp(anillos * 0.65, 0.0, 0.85));',
+    '    gl_FragColor = vec4(cCresta * (0.95 + anillos * 1.90), min(1.0, aA));',
     '    return;',
     '  }',
     /* SLOT DE ELIXIS: anillos de onda sonora saliendo de los audífonos. Se
