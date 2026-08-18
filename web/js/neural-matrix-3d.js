@@ -507,61 +507,51 @@
        por RADIO: se apaga hacia dentro y solo vive en el perímetro, dejando el
        centro transparente para que el logo se lea limpio. */
     '  if (vIdx < 0.5) {',
-    /* ─── AROS CONCÉNTRICOS, LA FÓRMULA DEL HOLOGRAMA DE ELIXIS ───────────
-       La corona de filamentos deformados se sustituye por el mismo sistema que
-       ya funciona en el holograma: anillos finos que nacen en el centro y
-       viajan hacia fuera. Allí la fórmula es
-           pow(max(sin(r * k - t * vel), 0.0), 8.0)
-       — un seno sobre el RADIO, elevado a una potencia alta para que solo
-       sobrevivan las crestas y queden aros delgados en vez de bandas.
+    /* ─── CLON DEL MOTOR DE ENERGÍA DE ELIXIS ────────────────────────────
+       Estructura copiada del fragment del holograma, no reinventada. La regla
+       que lo gobierna todo, y que yo había roto en el intento anterior, es
+       esta línea suya:
 
-       Aquí se instancian TRES trenes con distinta frecuencia espacial, distinta
-       velocidad y distinto desfase. Al no ser múltiplos entre sí, los anillos
-       se cruzan sin formar patrón, que es lo que da la lectura orgánica.
+           gl_FragColor = vec4(c * (0.7 + uPulso * 0.6), clamp(a, 0.0, 1.0));
 
-       RESPIRACIÓN: el pulso no cambia solo el brillo — divide el radio, así que
-       el sistema entero se dilata y se contrae. Es lo que pedía el ticket:
-       los aros expanden y contraen su radio, no solo parpadean. */
-    '    float respira = 1.0 + uPulso * 0.18 + 0.04 * sin(uTiempo * 0.70);',
-    '    float rr = d / respira;',
-    '    float vel = 1.0 + uPulso * 1.40;',
-    '    float o1 = sin(rr * 16.0 - uTiempo * vel);',
-    '    float o2 = sin(rr * 11.0 - uTiempo * vel * 0.72 + 1.7);',
-    '    float o3 = sin(rr * 23.0 - uTiempo * vel * 1.35 + 3.4);',
-    /*     Potencias crecientes: cuanto más fino el aro, más alta la potencia.
-           Con la misma para los tres, los tres pesarían igual y el conjunto
-           volvería a leerse como una trama regular. */
-    '    float anillos = pow(max(o1, 0.0),  8.0) * 1.00',
-    '                  + pow(max(o2, 0.0), 10.0) * 0.80',
-    '                  + pow(max(o3, 0.0), 14.0) * 0.60;',
-    /*     Se apagan hacia el borde del quad: nacen del emblema, no del vacío. */
-    '    anillos *= smoothstep(1.00, 0.50, d);',
-    /*     CORTE INTERIOR, intacto: nada por dentro de 0.42 y transición hasta
-           0.60. El emblema queda sobre transparencia real. Va al final para que
-           ninguna suma posterior lo invada. */
+       El COLOR solo se escala con el pulso. NUNCA con la intensidad de los
+       anillos. Toda la estructura —crestas, ondas, parpadeo— vive en el ALFA.
+       Multiplicar el color por el valor del aro, como hacía yo, sube los tres
+       canales a la vez en las crestas y lo quema todo a blanco plano: se pierde
+       el dorado y con él la marca. Aquí el brillo sale de la opacidad. */
+    '    float vel = 1.1 + uPulso * 1.5;',
+    /*     ONDAS DE CHOQUE: nacen en el centro y se expanden. Dos trenes con
+           distinta frecuencia y velocidad, como en el holograma. */
+    '    float onda1 = sin(d * 14.0 - uTiempo * vel);',
+    '    float onda2 = sin(d *  9.0 - uTiempo * vel * 0.68 + 1.7);',
+    '    float a1 = pow(max(onda1, 0.0),  8.0) * 0.90;',
+    '    float a2 = pow(max(onda2, 0.0), 12.0) * 0.65;',
+    /*     Desvanecido con la distancia y respuesta al pulso: idénticos a
+           smoothstep(1.25, 0.15, r) * (0.35 + uPulso * 0.65) del original,
+           reajustados al radio de la esfera. */
+    '    float caida = smoothstep(1.05, 0.30, d) * (0.45 + uPulso * 0.65);',
+    '    a1 *= caida; a2 *= caida;',
+    /*     MICRO-PARPADEO. El holograma usa una línea de escaneo
+           0.5 + 0.5 * sin(coord * 42.0 - t * 2.2); aquí es radial. Encima, un
+           estrobo rápido ligado al pulso: es lo que da la textura granular de
+           plasma en vez de un degradado liso. */
+    '    float escaneo = 0.5 + 0.5 * sin(d * 42.0 - uTiempo * 2.2);',
+    '    float estrobo = 0.82 + 0.18 * sin(uTiempo * (14.0 + uPulso * 22.0) + d * 7.0);',
+    '    float textura = (0.75 + escaneo * 0.25) * estrobo;',
+    '    a1 *= textura; a2 *= textura;',
+    /*     CORTE INTERIOR: alfa 0 en el área del emblema. */
     '    float corte = smoothstep(0.42, 0.60, d);',
-    /*     OPACIDAD CON CUERPO. La base sube de 0.45 a 0.75 —dentro del rango
-           0.65-0.85 pedido— para que las bandas tengan presencia de energía
-           densa y no de niebla. El pulso sigue sumando por encima. */
-    '    float aA = anillos * vIntensidad * corte * (0.75 + uPulso * 0.55);',
-    /*     Dorado dentro → cian fuera, PASANDO POR BLANCO CÁLIDO. Interpolar
-           #ffd700 y #00f5ff en línea recta cruza por verde en el punto medio:
-           aparecía un tercer color que nadie había pedido y que ensuciaba la
-           paleta. Con una parada intermedia en blanco, el ojo lee dorado y
-           lee cian, y entre medias lee incandescencia. */
+    /*     COLOR POR TREN, no por degradado radial: el tren grueso es el CUERPO
+           DORADO y el fino son los FILAMENTOS CIAN. Así nunca aparece el verde
+           que sale de interpolar #ffd700 con #00f5ff, y cada color ocupa lo que
+           le toca en vez de promediarse. */
     '    vec3 oroA  = vec3(1.0, 0.843, 0.0);',
     '    vec3 cianA = vec3(0.0, 0.961, 1.0);',
-    '    vec3 blanco = vec3(1.0, 0.97, 0.90);',
-    '    float t2 = clamp(d * 1.20 - 0.18, 0.0, 1.0);',
-    '    vec3 cA = (t2 < 0.5) ? mix(oroA, blanco, t2 * 2.0) : mix(blanco, cianA, (t2 - 0.5) * 2.0);',
-    /*     DESTELLO EN LAS CRESTAS. El multiplicador de emisión pasa de 0.70 a
-           1.90: donde el aro está en su punto alto, quema. Y ahí mismo el color
-           vira a cian eléctrico, que es el destello que pedía el ticket — el
-           dorado queda como cuerpo de la banda y el cian como chispazo.
-           El alfa se satura antes que el color a propósito: con mezcla aditiva,
-           dejar crecer los dos a la vez convierte el aro en un disco blanco. */
-    '    vec3 cCresta = mix(cA, vec3(0.35, 0.98, 1.0), clamp(anillos * 0.65, 0.0, 0.85));',
-    '    gl_FragColor = vec4(cCresta * (0.95 + anillos * 1.90), min(1.0, aA));',
+    '    vec3 cA = (oroA * a1 + cianA * a2) / max(0.0001, a1 + a2);',
+    /*     Densidad: el alfa se empuja al rango pedido (0.65-0.85 en cresta)
+           sin tocar el color. */
+    '    float aA = clamp((a1 + a2) * 1.60, 0.0, 1.0) * vIntensidad * corte;',
+    '    gl_FragColor = vec4(cA * (0.75 + uPulso * 0.60), aA);',
     '    return;',
     '  }',
     /* SLOT DE ELIXIS: anillos de onda sonora saliendo de los audífonos. Se
