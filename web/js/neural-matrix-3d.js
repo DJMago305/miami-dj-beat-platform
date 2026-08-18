@@ -51,22 +51,34 @@
      Las posiciones están elegidas para que ninguna etiqueta tape a otra desde
      los waypoints del recorrido. */
   var ESTACIONES = [
-    { id: 'nucleo',   nombre: 'MIAMI DJ BEAT',                       subtitulo: 'Núcleo de Plataforma',
+    { id: 'nucleo',   nombre: 'MIAMI DJ BEAT — Hub Fénix',            subtitulo: 'Núcleo de Plataforma',
       pos: [0, 0, 0],         color: [1.00, 0.84, 0.45], hub: true,
-      telemetria: 'Orquestando 4 subsistemas · enlace estable' },
+      telemetria: 'Orquestando 4 subsistemas · enlace estable',
+      slot: 'fenix-en-vuelo' },
     { id: 'crm',      nombre: 'Captura & CRM de Leads',              subtitulo: 'Entrada de Booking',
       pos: [-9.5, 2.2, -3.5], color: [0.45, 0.85, 1.00], hub: false,
-      telemetria: 'Respuesta media a lead · termómetro de oportunidad' },
+      telemetria: 'Sobres de correo energético en tránsito · termómetro de oportunidad',
+      slot: 'paquetes-correo' },
     { id: 'elixis',   nombre: 'ELIXIS — Agente Ejecutivo',           subtitulo: 'Orquestación IA',
       pos: [9.0, 3.4, -2.0],  color: [0.70, 0.55, 1.00], hub: false,
-      telemetria: 'Negociación asistida · aprobación humana en el lazo' },
+      telemetria: 'Negociación asistida · aprobación humana en el lazo',
+      slot: 'avatar-audifonos' },
     { id: 'finanzas', nombre: 'Motor Financiero & Stripe',           subtitulo: 'Fintech & Escrow',
       pos: [7.2, -3.8, 5.5],  color: [0.40, 1.00, 0.70], hub: false,
-      telemetria: 'Escrow y reparto automático · liquidación programada' },
+      telemetria: 'Pulsos de liquidación y contratos · escrow con reparto automático',
+      slot: 'contratos' },
     { id: 'booth',    nombre: 'Booth IA & Inteligencia Atmosférica', subtitulo: 'Telemetría de Escenario',
       pos: [-7.8, -3.2, 5.0], color: [1.00, 0.55, 0.45], hub: false,
-      telemetria: 'Sonido, luz y clima en vivo · lectura por venue' }
+      telemetria: 'Sonido, luz y clima en vivo · rider por venue',
+      slot: 'rider-telemetria' }
   ];
+
+  /* SLOTS DE BRANDING — preparados, no ocupados.
+     Cada estación declara qué holograma le corresponde (el Fénix en vuelo del
+     núcleo, el avatar con audífonos de ELIXIS…). Hoy el motor solo reserva el
+     campo y lo expone en la API: montar texturas o vídeo holográfico es un
+     ticket propio, con su presupuesto de GPU y su medición. Declararlo aquí
+     evita que mañana cada slot se invente en un sitio distinto. */
 
   /* Conductos: el núcleo con cada periférico, y el anillo entre periféricos.
      Cuatro radiales + cuatro perimetrales = ocho fibras. */
@@ -325,8 +337,15 @@
        material translúcido se ve más denso. Es un Fresnel de dos líneas. */
     '  vec3 nVista = normalize((uVista * vec4(aNormal, 0.0)).xyz);',
     '  vBorde = 1.0 - abs(nVista.z);',
+    /* FLUJO DE PAQUETES, no un solo destello. Antes viajaba UNA gaussiana por
+       conducto y leía como un parpadeo; multiplicando el recorrido por
+       PAQUETES antes de tomar la fracción salen varios paquetes equiespaciados
+       recorriendo la fibra a la vez, que es lo que parece tráfico de datos
+       yendo hacia las estaciones. Los ocho conductos van desfasados: si laten
+       a la vez, el conjunto parpadea como una bombilla. */
+    '  const float PAQUETES = 3.0;',
     '  float fase = fract(uTiempo * 0.22 + aEnlace * 0.17);',
-    '  float d = abs(fract(aRecorrido - fase + 0.5) - 0.5);',
+    '  float d = abs(fract(aRecorrido * PAQUETES - fase * PAQUETES + 0.5) - 0.5);',
     '  float halo = exp(-d * d * 22.0);',
     '  float nucleo = exp(-d * d * 300.0);',
     '  float p = halo * 0.45 + nucleo;',
@@ -625,7 +644,17 @@
     } else {
       /* RECORRIDO: el parámetro crece sin límite y solo el índice da la
          vuelta, así que no hay discontinuidad posible al cerrar el ciclo. */
-      if (recorrido.activo) recorrido.s += dt * recorrido.velocidad * WAYPOINTS.length;
+      if (recorrido.activo) {
+        /* DESACELERACIÓN CINEMÁTICA. Los waypoints caen en los enteros de s,
+           así que la fracción dice a qué distancia estamos de una estación:
+           cerca de 0 o de 1 vamos llegando, en 0,5 estamos de paso. Un seno
+           sobre esa fracción frena la llegada y acelera el tránsito, que es
+           como se mueve una cámara de cine — y da tiempo a leer la etiqueta
+           de la estación mientras se habla de ella. */
+        var f = recorrido.s - Math.floor(recorrido.s);
+        var factor = 0.30 + 0.70 * Math.sin(Math.PI * f);
+        recorrido.s += dt * recorrido.velocidad * WAYPOINTS.length * factor;
+      }
       curvaCerrada(WAYPOINTS, recorrido.s, _p);
       obj.x = _p[0]; obj.y = _p[1]; obj.z = _p[2];
       /* Se mira siempre al núcleo: ancla estable, sin el mareo de un punto de
@@ -1021,7 +1050,9 @@
     alternarPausaRecorrido: alternarPausaRecorrido,
     alternarRotacionLibre: alternarRotacionLibre,
     estaciones: function () {
-      return ESTACIONES.map(function (e) { return { nombre: e.nombre, subtitulo: e.subtitulo, hub: e.hub }; });
+      return ESTACIONES.map(function (e) {
+        return { id: e.id, nombre: e.nombre, subtitulo: e.subtitulo, hub: e.hub, slot: e.slot, ocupado: false };
+      });
     },
     reiniciarSaltoMax: function () { stats.saltoCamaraMax = 0; },
     simularPerdidaContexto: function () {
