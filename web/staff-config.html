@@ -7,7 +7,7 @@
   <title>Account Settings — Miami DJ Beat</title>
   <meta name="description" content="Manage your account settings and preferences." />
   <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260817-header-canonico" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260818-staffnav" />
   <link rel="stylesheet" href="./mdj-outlined-fields.css?v=20260421-account-forms" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -1258,7 +1258,7 @@
 if (window.self === window.top) { window.location.replace('./staff.html'); }</script>
 </head>
 
-<body class="notranslate mdj-account-settings mdj-from-profile mdj-nav-booting">
+<body class="mdj-staff-portal notranslate mdj-account-settings mdj-from-profile mdj-nav-booting">
     <!-- ── Embed en el portal STAFF: oculta SOLO el menú viejo + footer; deja el contenido de Config ── -->
     <style id="mdj-staff-embed">
       #mainHeader, #owner-tabs, #mainNav, .footer { display: none !important; }
@@ -1386,18 +1386,26 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
          mutilado). Con CONFIG activo. Reversible. -->
     <nav class="dj-owner-tabs" id="owner-tabs" aria-label="Navegación de cuenta">
         <div class="container">
-            <a href="./index.html" class="dj-tab-btn dj-tab-btn--home" data-i18n="nav-home">Home</a>
-            <a href="./jobs.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-jobs">Jobs</a>
-            <a href="./shop.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-shop">Shop</a>
-            <a href="./dj-dashboard.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="dash-your-profile">Agenda</a>
-            <a href="./account-settings.html?mdj_nav=profile" class="dj-tab-btn active" data-i18n="nav-settings">⚙️ CONFIG</a>
-            <a href="./academia.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-academia">Academia</a>
-            <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-tools">DJ Tools</a>
-            <a href="./dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="flow-dash">CASH FLOW</a>
-            <a href="./dj-profile.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="menu-account">Mi Perfil</a>
-            <a href="./admin-dashboard.html" class="dj-tab-btn dj-tab-btn--staff-only" data-mdj-nav="staff" data-i18n="nav-staff">STAFF</a>
-            <a href="./dj-profile.html?tab=sft&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-soundfortips">SoundForTips™</a>
-        </div>
+        <!-- ══ TIRA OFICIAL DEL PORTAL STAFF/OWNER (FIX-NAV-02) ══════════════
+             Excepción EXPLÍCITA del PO a la Ley de la Barra de Menú, acotada a
+             staff.html, staff-config.html, staff-admin.html y admin-dashboard.html.
+             Los enlaces públicos (Home/Jobs/Shop/SoundForTips) se retiran: este
+             portal es para quien ya entró, y mezclarlos era lo que hacía que un
+             owner acabara en vistas de artista.
+             SIN ?mdj_nav=profile a propósito: ese parámetro activa el contexto de
+             ARTISTA y su tira, que es precisamente de lo que hay que separarse.
+             Los nueve destinos verificados: HTTP 200 y ninguno es redirección. -->
+        <a href="./academia.html" class="dj-tab-btn" data-mdj-staffnav="academia" data-i18n="nav-academia">ACADEMIA</a>
+        <a href="./staff-agenda.html" class="dj-tab-btn" data-mdj-staffnav="agenda" data-i18n="nav-agenda">AGENDA</a>
+        <a href="./staff-config.html" class="dj-tab-btn active" data-mdj-staffnav="config" data-i18n="nav-config">⚙ CONFIG</a>
+        <a href="./dj-tools.html" class="dj-tab-btn" data-mdj-staffnav="tools" data-i18n="nav-tools">DJ TOOLS</a>
+        <a href="./cash-flow.html" class="dj-tab-btn" data-mdj-staffnav="flow" data-i18n="flow-dash">CASH FLOW</a>
+        <a href="./account-settings.html" class="dj-tab-btn" data-mdj-staffnav="perfil" data-i18n="menu-account">MI PERFIL</a>
+        <a href="./admin-dashboard.html" class="dj-tab-btn" data-mdj-staffnav="staff" data-i18n="nav-staff">STAFF</a>
+        <a href="./elixis-console.html" class="dj-tab-btn" data-mdj-staffnav="fenix" data-i18n="nav-fenix">FÉNIX AI</a>
+        <!-- Botón destacado: acceso al simulador 3D del ecosistema. -->
+        <a href="./neural-matrix-3d.html" class="dj-tab-btn dj-tab-btn--mrm" data-mdj-staffnav="mrm">MRM IA</a>
+      </div>
     </nav>
 
   <main class="account-layout mdj-settings-has-split mdj-has-sidebar">
