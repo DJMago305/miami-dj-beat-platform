@@ -2,6 +2,67 @@
 // IMPORTANT: anon key only (safe for browser). NEVER put service_role here.
 // Un solo origen de proyecto → Storage y Edge Functions se derivan de MDB_SUPABASE_URL.
 
+/**
+ * FIX-AUTH-LEGACY: polyfill de crypto.randomUUID() para Safari/WebKit < 15.4.
+ * GoTrueClient (auth interno de supabase-js) lo usa al generar el estado del
+ * flujo PKCE — sin él, createClient()/signIn* lanzan TypeError y el usuario
+ * ve "Supabase no disponible" aunque el bundle sí haya cargado y parseado.
+ * Debe correr ANTES de instanciar cualquier cliente, de ahí que viva al
+ * inicio de este archivo (único punto de entrada de getSupabaseClient()).
+ */
+(function mdjCryptoRandomUUIDPolyfill() {
+    try {
+        if (typeof window === 'undefined') return;
+        if (!window.crypto) window.crypto = {};
+        if (typeof window.crypto.randomUUID === 'function') return;
+        window.crypto.randomUUID = function () {
+            var hasSubtleRandom = window.crypto && typeof window.crypto.getRandomValues === 'function';
+            var bytes = new Uint8Array(16);
+            if (hasSubtleRandom) {
+                window.crypto.getRandomValues(bytes);
+            } else {
+                for (var i = 0; i < 16; i++) bytes[i] = Math.floor(Math.random() * 256);
+            }
+            bytes[6] = (bytes[6] & 0x0f) | 0x40;
+            bytes[8] = (bytes[8] & 0x3f) | 0x80;
+            var hex = [];
+            for (var j = 0; j < 256; j++) hex[j] = (j < 16 ? '0' : '') + j.toString(16);
+            var b = bytes;
+            return hex[b[0]] + hex[b[1]] + hex[b[2]] + hex[b[3]] + '-' +
+                hex[b[4]] + hex[b[5]] + '-' + hex[b[6]] + hex[b[7]] + '-' +
+                hex[b[8]] + hex[b[9]] + '-' +
+                hex[b[10]] + hex[b[11]] + hex[b[12]] + hex[b[13]] + hex[b[14]] + hex[b[15]];
+        };
+    } catch (ePoly) {
+        void ePoly;
+    }
+})();
+
+/**
+ * FIX-AUTH-LEGACY: adaptador de storage seguro para GoTrueClient. Safari en
+ * modo privado / lockdown puede lanzar SecurityError con solo TOCAR
+ * localStorage (no solo al llenarse la cuota) — createClient() lo prueba al
+ * construirse. Se sondea una vez; si falla, todo el sitio usa un Map en
+ * memoria para esa pestaña (la sesión no persiste entre recargas, pero el
+ * login dentro de la misma pestaña sigue funcionando en vez de romperse).
+ */
+function mdjSafeAuthStorage() {
+    try {
+        var probeKey = '__mdj_storage_probe__';
+        window.localStorage.setItem(probeKey, '1');
+        window.localStorage.removeItem(probeKey);
+        return window.localStorage;
+    } catch (eProbe) {
+        void eProbe;
+        var mem = {};
+        return {
+            getItem: function (k) { return Object.prototype.hasOwnProperty.call(mem, k) ? mem[k] : null; },
+            setItem: function (k, v) { mem[k] = String(v); },
+            removeItem: function (k) { delete mem[k]; }
+        };
+    }
+}
+
 /** Earliest auth boot mask — before paint of nav / owner-tabs on logged-in navigation. */
 (function mdjAuthBootEarly() {
     try {
@@ -292,7 +353,18 @@ window.getSupabaseClient = function () {
         // una vez, cuando los 5 intentos se agotan de verdad.
         return null;
     }
-    _supabaseClient = lib.createClient(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY);
+    // FIX-AUTH-LEGACY: createClient() puede lanzar en motores viejos (storage
+    // bloqueado, crypto.randomUUID ausente sin el polyfill de arriba, etc.) —
+    // antes esa excepción escapaba sin capturar a cada uno de los ~87
+    // llamadores de getSupabaseClient() en el sitio.
+    try {
+        _supabaseClient = lib.createClient(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY, {
+            auth: { storage: mdjSafeAuthStorage() }
+        });
+    } catch (eCreate) {
+        console.error('[supabase-config] createClient() falló (motor legacy):', eCreate);
+        return null;
+    }
     return _supabaseClient;
 };
 
