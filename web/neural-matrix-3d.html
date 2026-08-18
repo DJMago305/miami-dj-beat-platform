@@ -21,7 +21,7 @@
     cabecera, ese es un ticket propio y con su medición.
   -->
 
-  <link rel="stylesheet" href="./neural-matrix-3d.css?v=20260818-feat3d01">
+  <link rel="stylesheet" href="./neural-matrix-3d.css?v=20260818-feat3d02">
 </head>
 <body class="nm3d-pagina">
 
@@ -47,6 +47,14 @@
       <p><code data-nm3d-motivo>—</code></p>
     </section>
 
+    <!-- Etiqueta del nodo bajo el cursor. Va en HTML y no en el lienzo: el
+         texto tiene que ser seleccionable, legible por lector de pantalla y
+         nítido a cualquier DPR, tres cosas que un glifo pintado en WebGL no da. -->
+    <div class="nm3d-nodo" data-nm3d-nodo hidden>
+      <strong data-nm3d-nodo-titulo>—</strong>
+      <span data-nm3d-nodo-estado>—</span>
+    </div>
+
     <noscript>
       <section class="nm3d-fallback">
         <h2>Esta experiencia necesita JavaScript</h2>
@@ -63,13 +71,25 @@
     <dt>Estado</dt>     <dd data-nm3d-estado>arrancando</dd>
     <dt>Dibujo</dt>     <dd data-nm3d-dibujo>—</dd>
     <dt>Vértices</dt>   <dd data-nm3d-vertices>—</dd>
+    <dt>Instancias</dt> <dd data-nm3d-instancias>—</dd>
     <dt>JS/cuadro</dt>  <dd data-nm3d-js>—</dd>
+    <dt>Audio</dt>      <dd data-nm3d-audio-estado>sin audio</dd>
+    <div class="nm3d-hud__pulso"><i data-nm3d-barra></i></div>
     <div class="nm3d-hud__fps">
       <span>Tope</span>
       <button type="button" class="nm3d-boton" data-nm3d-fps-set="30" aria-pressed="true">30</button>
       <button type="button" class="nm3d-boton" data-nm3d-fps-set="60" aria-pressed="false">60</button>
+      <button type="button" class="nm3d-boton nm3d-boton--audio" data-nm3d-audio-toggle aria-pressed="false">Activar audio</button>
     </div>
   </dl>
+
+  <!--
+    La pista es del propio sitio y del mismo origen: sin CORS, sin micrófono y
+    sin meter el entorno sonoro del usuario en la página. La Web Audio API
+    exige un gesto para arrancar, de ahí el botón del HUD: nada de autoplay.
+  -->
+  <audio data-nm3d-audio loop preload="none"
+         src="./assets/Musica_Miamidjbeat/JungleIn_My_Head_DJMago305.mp3"></audio>
 
   <aside class="nm3d-leyenda" aria-label="Rutas de aprendizaje">
     <b style="color:#ffc759"><i></i>DJ</b>
@@ -78,6 +98,6 @@
     <b style="color:#66ffb2"><i></i>Negocio</b>
   </aside>
 
-  <script src="./js/neural-matrix-3d.js?v=20260818-feat3d01"></script>
+  <script src="./js/neural-matrix-3d.js?v=20260818-feat3d02"></script>
 </body>
 </html>

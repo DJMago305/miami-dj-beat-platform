@@ -205,3 +205,58 @@ body.nm3d-pagina {
   .nm3d-leyenda { display: none; }          /* la pantalla es para el recorrido */
   .nm3d-hud { font-size: 11px; padding: 10px 12px; }
 }
+
+/* ─── FEAT-3D-02 · nodos de sinapsis, pulso y audio ───────────────────────── */
+
+/* Etiqueta del nodo bajo el cursor. Se posiciona con left/top desde el motor,
+   y se centra sobre el nodo con translate para no tener que restar su tamaño
+   en JS (que obligaría a leer el layout en cada cuadro). */
+.nm3d-nodo {
+  position: absolute;
+  z-index: 6;
+  transform: translate(-50%, calc(-100% - 18px));
+  display: grid;
+  gap: 2px;
+  padding: 8px 14px;
+  border: 1px solid var(--nm3d-borde);
+  border-radius: 10px;
+  background: var(--nm3d-panel);
+  backdrop-filter: blur(10px);
+  white-space: nowrap;
+  pointer-events: none;      /* nunca roba el clic destinado al nodo */
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.nm3d-nodo[hidden] { display: none; }
+.nm3d-nodo strong { font-weight: 500; color: var(--nm3d-tinta); letter-spacing: 0.04em; }
+.nm3d-nodo span { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--nm3d-acento); }
+.nm3d-nodo[data-estado='bloqueado'] span { color: var(--nm3d-tinta-suave); }
+
+/* Barra de pulso: escala en X desde la izquierda. Se anima con transform y no
+   con width para que no dispare relayout treinta veces por segundo. */
+.nm3d-hud__pulso {
+  grid-column: 1 / -1;
+  height: 3px;
+  margin-top: 8px;
+  border-radius: 3px;
+  background: rgba(150, 180, 255, 0.14);
+  overflow: hidden;
+}
+
+.nm3d-hud__pulso i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--nm3d-acento), #73d9ff);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.nm3d-boton--audio { min-width: 96px; margin-left: auto; }
+
+.nm3d--con-audio .nm3d-boton--audio { border-color: var(--nm3d-acento); color: var(--nm3d-acento); }
+
+@media (prefers-reduced-motion: reduce) {
+  .nm3d-hud__pulso i { transition: none; }
+}
