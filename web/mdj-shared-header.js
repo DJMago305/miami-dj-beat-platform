@@ -10,7 +10,7 @@
  */
 (function () {
   'use strict';
-  console.info('[Header] build 20260603-buyer-nav-html-only');
+  console.info('[Header] build 20260817-header-canonico');
 
   /* ══ MDJB 2026-08-16 · NORMALIZADOR DE SLOTS CANÓNICOS ══════════════════════
      #mainNav se declara a mano en 44 páginas y había derivado a 5 variantes con
