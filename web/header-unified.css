@@ -2972,12 +2972,19 @@ body.mdj-staff-nav.page-admin-dashboard
   /* minmax(max-content, 1fr): la columna nunca es más estrecha que su etiqueta.
      Con 1fr a secas, un contenedor angosto daba columnas de 37px para textos de
      68-115px y las pestañas se solapaban unas sobre otras. */
-  /* UNIFICADO 2026-08-18 → ver bloque «REJILLA RÍGIDA» al final del archivo: */
+  /* UNIFICADO 2026-08-18 → ver bloque «REJILLA RÍGIDA» al final del archivo.
+     AJUSTE 2026-08-19: esta max-width se quedó sin comentar por descuido —
+     grid-template-columns sí se comentó, max-width no. Nunca tuvo efecto real
+     (una regla de mayor especificidad más abajo en el archivo, .header-nav
+     .container > #mainNav…, activa en @media min-width:1001px, siempre le
+     ganó), pero es la misma clase de fuente-múltiple que el bloque de abajo
+     existe para eliminar — se comenta también, por prolijidad y para que
+     nadie la reactive por error. */
   /* grid-template-columns: repeat(9, minmax(max-content, 1fr)) !important; */
   align-items: center !important;
   justify-items: center !important;
   width: 100% !important;
-  max-width: 1320px !important;
+  /* max-width: 1320px !important; -- ver nota arriba */
   margin: 0 auto !important;
   padding: 0 24px !important;
   box-sizing: border-box !important;
@@ -3323,19 +3330,50 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
                              ────
                              1124 px de riel + 48 de padding = 1172 px
 
+   AJUSTE 2026-08-19 · TOLERANCIA TIPOGRÁFICA + ULTRAWIDE (bugfix de campo,
+   Safari macOS antiguo a 2560px: el motor de fuentes rinde más ancho que en
+   el entorno de medición y el texto se solapaba; en 2.5K/4K el bloque de
+   1172px se veía comprimido en el centro). Cada columna de TEXTO sube ~16-19%
+   (dentro del 15-20% pedido; la columna del sol, ícono fijo sin texto, queda
+   igual — no hay fuente que tolerar ahí):
+
+     1 Inicio / Home ......  80 →  95   6 Trabajos / Jobs .... 134 → 160
+     2 Servicios/Services . 140 → 165   7 Contacto / Contact . 136 → 160
+     3 Eventos / Events ... 122 → 145   8 MI PERFIL .......... 146 → 170
+     4 Shop ................ 90 → 105   9 MRM IA .............. 110 → 130
+     5 ⚙️ CONFIG .......... 126 → 150  10 sol (sin cambio) .... 40 →  40
+                                                                 ────
+                                                    nueva suma de riel = 1320 px
+
+   max-width sube de 1172 → 1600px (Acción A): con columnas fijas y
+   justify-content:center, esto NO agranda el texto — reparte el sobrante
+   como margen a los lados del bloque, para que respire en pantallas grandes
+   sin cambiar Δx=0px en ningún ancho.
+
+   El punto de quiebre del media query de scroll (más abajo) TAMBIÉN sube de
+   1172 a 1360px — no es parte de las dos acciones pedidas, pero es necesario:
+   ese valor no marca el "respiro" de max-width, marca "cuándo el contenido ya
+   no cabe sin scroll". Con la suma de columnas en 1320px, dejarlo en 1172
+   activaría el scroll de emergencia ANTES de que el contenido realmente lo
+   necesite, en la franja 1172-1320px de ancho de pantalla.
+
    SI HAY QUE CAMBIAR UN ANCHO, SE CAMBIA AQUÍ Y EN NINGÚN OTRO SITIO.
    ══════════════════════════════════════════════════════════════════════════ */
 
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] {
+/* Selector reforzado (empata la especificidad de .header-nav .container >
+   #mainNav.mdj-mainnav-flex.nav.top-nav, la regla max-width:100% activa en
+   @media min-width:1001px que le ganaba a esta — verificado en vivo a
+   2560px: sin este refuerzo, max-width nunca aplicaba, en ningún valor. */
+#mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] {
   display: grid !important;
   grid-template-columns:
-    80px 140px 122px 90px 126px 134px 136px 146px 110px 40px !important;
+    95px 165px 145px 105px 150px 160px 160px 170px 130px 40px !important;
   /* center y no space-between: con columnas fijas, space-between reparte el
      sobrante ENTRE ellas, así que su posición pasaría a depender del ancho del
      contenedor — es decir, volvería a derivar entre páginas. */
   justify-content: center !important;
   align-items: center !important;
-  max-width: 1172px !important;
+  max-width: 1600px !important;
   margin: 0 auto !important;
   box-sizing: border-box !important;
   gap: 0 !important;
@@ -3362,8 +3400,8 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
    llegar a ellos. Se sustituye por desplazamiento horizontal: las nueve
    pestañas siguen existiendo y son alcanzables. Los anchos no cambian, así que
    Δx sigue siendo 0 también por debajo del umbral. */
-@media (max-width: 1172px) {
-  #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] {
+@media (max-width: 1360px) {
+  #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] {
     justify-content: start !important;
     overflow-x: auto !important;
     overflow-y: hidden !important;
