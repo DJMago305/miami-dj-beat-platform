@@ -3307,7 +3307,6 @@
                 brand.innerHTML='<span class="ofm-brand-mk">◆</span><span class="ofm-brand-tx">Miami DJ Beat<small>Financial Intelligence</small></span>';
 
                 var ctrls=document.createElement('div'); ctrls.className='ofm-ctrls';
-                var tag=document.createElement('span'); tag.className='ofm-tag'; tag.textContent='◆ OWNER';
                 var lbl=document.createElement('span'); lbl.className='ofm-lbl';
                 var tog=document.createElement('button');
                 tog.type='button'; tog.className='ofm-toggle';
@@ -3323,13 +3322,8 @@
                 dtog.type='button'; dtog.className='ofm-daynight';
                 dtog.setAttribute('aria-label','Modo día / noche del Matrix');
 
-                // botón pantalla completa (entra) — en la barra, solo visible en modo business
-                var expand=document.createElement('button');
-                expand.type='button'; expand.id='ofm-expand'; expand.className='ofm-expand';
-                expand.setAttribute('aria-label','Pantalla completa'); expand.innerHTML='⛶ Pantalla completa';
-
-                ctrls.appendChild(tag); ctrls.appendChild(lbl); ctrls.appendChild(tog);
-                ctrls.appendChild(sep); ctrls.appendChild(dtog); ctrls.appendChild(expand);
+                ctrls.appendChild(lbl); ctrls.appendChild(tog);
+                ctrls.appendChild(sep); ctrls.appendChild(dtog);
                 bar.appendChild(brand); bar.appendChild(ctrls);
                 flow.insertBefore(bar, flow.firstChild);
 
@@ -3343,7 +3337,6 @@
                   if(section) section.style.display = on ? 'none' : '';
                   if(card) card.style.display = 'none';   // el switch reemplaza la tarjeta de acceso
                   if(biz)  biz.style.display  = on ? 'block' : 'none';
-                  if(expand) expand.style.display = on ? '' : 'none';  // fullscreen solo aplica al Matrix
                   if(on && frame && !frame.getAttribute('src')){    // lazy-load del Matrix
                     frame.setAttribute('src', frame.getAttribute('data-src'));
                   }
@@ -3377,17 +3370,10 @@
                   biz.classList.toggle('ofm-full', full);
                   document.body.style.overflow = full ? 'hidden' : '';
                 }
-                function goFull(){
-                  var req = biz.requestFullscreen || biz.webkitRequestFullscreen;
-                  if(req){ try{ var p = req.call(biz); if(p && p.catch) p.catch(function(){ paintFull(true); }); }
-                           catch(e){ paintFull(true); } }
-                  else paintFull(true);              // navegador sin API -> modo CSS
-                }
                 function leaveFull(){
                   if(fsEl()){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); }
                   paintFull(false);
                 }
-                if(expand) expand.addEventListener('click', goFull);
                 if(exitBtn) exitBtn.addEventListener('click', leaveFull);
                 function onFsChange(){ paintFull(fsEl()===biz); }   // sincroniza con F11/Esc del navegador
                 document.addEventListener('fullscreenchange', onFsChange);
