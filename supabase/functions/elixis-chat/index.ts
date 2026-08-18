@@ -667,6 +667,23 @@ serve(async (req: Request) => {
         },
     };
 
+    const CLIENT_SEARCH_TOOL = {
+        name: "buscar_cliente",
+        description:
+            "Busca un cliente/comprador registrado en Miami DJ Beat LLC por nombre, email o teléfono. " +
+            "Devuelve datos de contacto básicos. NO inventes un cliente que no aparezca en el resultado.",
+        input_schema: {
+            type: "object",
+            properties: {
+                query: {
+                    type: "string",
+                    description: "Texto a buscar: nombre completo (o parcial), email o teléfono.",
+                },
+            },
+            required: ["query"],
+        },
+    };
+
     const QUOTE_WRITE_TOOL = {
         name: "generar_cotizacion_evento",
         description:
@@ -741,6 +758,7 @@ serve(async (req: Request) => {
             toolName === "consultar_finanzas"
             || toolName === "consultar_agenda_artista"
             || toolName === "consultar_catalogo_precios"
+            || toolName === "buscar_cliente"
         ) {
             return { tool: toolName, policy: "none", mode: "read" };
         }
@@ -905,6 +923,23 @@ serve(async (req: Request) => {
         });
     }
 
+    async function runClientSearchTool(input: Record<string, unknown>): Promise<string> {
+        const query = String(input?.query ?? "").trim();
+        if (!query || query.length < 2) {
+            return JSON.stringify({ error: "query debe tener al menos 2 caracteres" });
+        }
+        const like = `%${query}%`;
+        const { data, error } = await ADMIN
+            .from("client_profiles")
+            .select("user_id, full_name, company_name, email, phone, city, tier_level")
+            .or(`full_name.ilike.${like},email.ilike.${like},phone.ilike.${like},company_name.ilike.${like}`)
+            .limit(10);
+        if (error) {
+            return JSON.stringify({ error: `client_profiles: ${error.message}` });
+        }
+        return JSON.stringify({ ok: true, count: data?.length ?? 0, clientes: data ?? [] });
+    }
+
     function parseEventDate(value: unknown): string | null {
         const raw = String(value ?? "").trim();
         if (!raw) return null;
@@ -1046,7 +1081,7 @@ serve(async (req: Request) => {
                     max_tokens: govMaxTokens, // Governor: FULL=MAX_TOKENS · SAVER=640 · ESSENTIAL=384 (founder siempre FULL)
                     temperature: 0.7,
                     system: systemContent,
-                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, CATALOG_READ_TOOL, QUOTE_WRITE_TOOL],
+                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, CATALOG_READ_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL],
                     messages: convo,
                 }),
             });
@@ -1129,6 +1164,16 @@ serve(async (req: Request) => {
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
                 } else if (toolName === "consultar_catalogo_precios") {
                     out = await runCatalogReadTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "buscar_cliente") {
+                    out = await runClientSearchTool((b.input as Record<string, unknown>) ?? {});
                     let failed = true;
                     try {
                         const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
