@@ -507,10 +507,50 @@
        por RADIO: se apaga hacia dentro y solo vive en el perímetro, dejando el
        centro transparente para que el logo se lea limpio. */
     '  if (vIdx < 0.5) {',
-    '    float aro = 1.0 - smoothstep(0.055, 0.30, abs(d - 0.80));',
-    '    float centro = smoothstep(0.30, 0.78, d);',
-    '    a = (aro * 0.85 + halo * 0.30) * vIntensidad * centro;',
-    '    gl_FragColor = vec4(vColor * (0.75 + aro * 0.6), a);',
+    /* ─── CORONA DE PLASMA ────────────────────────────────────────────────
+       El aro anterior era una circunferencia de radio fijo con los bordes
+       difuminados: leía como un disco desenfocado, no como energía. Lo que
+       le faltaba no era brillo, era que el RADIO dejara de ser constante.
+
+       Aquí cada filamento tiene su propio radio deformado por el ÁNGULO y por
+       el tiempo. Como los tres usan armónicos distintos (3, 5 y 4 lóbulos) y
+       giran a velocidades distintas —1.30, −0.95 y 1.75—, se cruzan y se
+       separan sin repetirse: eso es lo que el ojo lee como arco voltaico y no
+       como anillo girando. Un solo filamento, por muy deformado que esté,
+       seguiría pareciendo un aro. */
+    '    float ang = atan(vQuad.y, vQuad.x);',
+    '    float r1 = 0.78 + 0.045 * sin(ang * 3.0 + uTiempo * 1.30) + 0.022 * sin(ang * 7.0 - uTiempo * 2.10);',
+    '    float r2 = 0.85 + 0.038 * sin(ang * 5.0 - uTiempo * 0.95 + 2.1) + 0.018 * sin(ang * 11.0 + uTiempo * 3.00);',
+    '    float r3 = 0.71 + 0.030 * sin(ang * 4.0 + uTiempo * 1.75 + 4.2);',
+    /*     Grosores distintos: el filamento grueso da cuerpo, los finos dan
+           el chisporroteo. Iguales, volverían a leer como un aro triple. */
+    '    float f1 = 1.0 - smoothstep(0.0, 0.048, abs(d - r1));',
+    '    float f2 = 1.0 - smoothstep(0.0, 0.028, abs(d - r2));',
+    '    float f3 = 1.0 - smoothstep(0.0, 0.022, abs(d - r3));',
+    '    float arco = f1 * 0.90 + f2 * 0.70 + f3 * 0.55;',
+    /*     CHISPAS: dos trenes de alta frecuencia recorriendo el perímetro en
+           sentidos opuestos. La potencia 12 y 16 los deja en puntos secos en
+           vez de ondas suaves — sin eso serían dos filamentos más. */
+    /*     Frecuencias NO armónicas (19.7 y 13.3, no 23 y 17): con enteros los
+           dos trenes se alineaban cada pocos grados y el perímetro salía como
+           una esfera de reloj. Con decimales nunca coinciden dos vueltas
+           seguidas. Y una envolvente lenta apaga tramos enteros del anillo,
+           para que las chispas nazcan por zonas en vez de repartirse a
+           intervalos iguales — es la diferencia entre plasma y engranaje. */
+    '    float densidad = 0.30 + 0.70 * sin(ang * 2.0 + uTiempo * 0.80);',
+    '    float chispa = pow(max(0.0, sin(ang * 19.7 - uTiempo * 5.2)), 12.0)',
+    '                 + pow(max(0.0, sin(ang * 13.3 + uTiempo * 3.7)), 16.0);',
+    '    chispa *= max(0.0, densidad);',
+    '    arco += chispa * 0.55 * (1.0 - smoothstep(0.62, 0.95, abs(d - 0.80)));',
+    /*     CORTE INTERIOR LIMPIO. Nada se dibuja por dentro de 0.42 y la
+           transición termina en 0.60: el emblema queda con fondo transparente
+           de verdad, no con un velo tenue encima. Es la condición que hace
+           legible el logo, y va al final para que ninguna suma la sobrescriba. */
+    '    float corte = smoothstep(0.42, 0.60, d);',
+    '    a = arco * vIntensidad * corte * (0.70 + uPulso * 0.80);',
+    /*     Hacia el blanco cálido en los picos: el plasma quema, no tiñe. */
+    '    vec3 c = mix(vColor, vec3(1.0, 0.95, 0.78), min(1.0, arco * 0.55));',
+    '    gl_FragColor = vec4(c * (0.80 + arco * 0.70), min(1.0, a));',
     '    return;',
     '  }',
     /* SLOT DE ELIXIS: anillos de onda sonora saliendo de los audífonos. Se
