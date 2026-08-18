@@ -1986,6 +1986,9 @@
          es el micrófono del analizador de audio: son tres cosas distintas y
          reutilizar una tecla las habría fundido. */
       if (k === 'g' || k === 'G') { navAlternar(); return; }
+      /* H de «HUD». No corta el audio a propósito: se pliega el panel y Elixis
+         sigue hablando. */
+      if (k === 'h' || k === 'H') { opPlegar(); return; }
       if (k === 'm' || k === 'M') { alternarMicrofono(); return; }
       if (k === 'r' || k === 'R') { alternarRotacionLibre(); return; }
       if (k === 'f' || k === 'F') { alternarPantallaCompleta(); return; }
@@ -2012,6 +2015,9 @@
       giroRaton.yaw = nx * 1.6;
       giroRaton.pitch = -ny * 0.8;
     }, { passive: true });
+
+    var bPleg = document.querySelector('[data-nm3d-plegar]');
+    if (bPleg) bPleg.addEventListener('click', function () { opPlegar(); });
 
     var bSig = document.querySelector('[data-nm3d-siguiente]');
     if (bSig) bSig.addEventListener('click', function () {
@@ -2395,12 +2401,14 @@
     if (!nav.rec) return;
     try { nav.rec.start(); nav.reconociendo = true; }
     catch (e) { nav.reconociendo = false; }   // ya estaba arrancado
+    opMic();
   }
 
   function navSuspender() {
     nav.suspendido = true;
     if (nav.rec && nav.reconociendo) { try { nav.rec.abort(); } catch (e) {} }
     nav.reconociendo = false;
+    opMic();
   }
 
   function navReanudar() {
@@ -2803,8 +2811,37 @@
   };
 
   function opEstado(e) {
+    opMic();
     var r = opEl('[data-nm3d-consola-estado]'); if (r) r.textContent = OP_ROTULO[e] || '';
     var p = opEl('[data-nm3d-consola-punto]'); if (p) p.setAttribute('data-estado', e);
+  }
+
+  /* PLEGAR NO TOCA EL AUDIO. Solo cambia una clase: la síntesis vive en
+     elixis-voice-engine y sigue su curso, y el reconocimiento tampoco se
+     suspende. Es puramente visual — enseñar la escena limpia a mitad de una
+     explicación sin cortar a Elixis. */
+  function opPlegar(forzar) {
+    var c = opEl('[data-nm3d-consola]'); if (!c) return false;
+    var plegada = typeof forzar === 'boolean'
+      ? forzar
+      : !c.classList.contains('nm3d-consola--plegada');
+    c.classList.toggle('nm3d-consola--plegada', plegada);
+    var b = opEl('[data-nm3d-plegar]');
+    if (b) {
+      b.textContent = plegada ? '+' : '—';
+      b.setAttribute('aria-expanded', plegada ? 'false' : 'true');
+      b.title = (plegada ? 'Restaurar' : 'Minimizar') + ' panel (H)';
+    }
+    return plegada;
+  }
+
+  /* El indicador refleja el MICRÓFONO REAL (nav.reconociendo), no el estado del
+     recorrido. Con el permiso denegado el recorrido sigue esperando turno pero
+     no hay captura, y en escena esa diferencia decide si el ponente repite la
+     frase al aire. */
+  function opMic() {
+    var m = opEl('[data-nm3d-consola-mic]');
+    if (m) m.hidden = !(nav.activo && nav.reconociendo && !nav.suspendido);
   }
 
   function opPaso() {
@@ -2836,19 +2873,12 @@
     var rot = opEl('[data-nm3d-rol]'); if (rot) rot.textContent = r.nombre;
     document.body.classList.add('nm3d-dividido');
     var con = opEl('[data-nm3d-consola]'); if (con) con.hidden = false;
-    /* El redimensionado lo dispara el ResizeObserver de abajo, no una llamada
-       de aquí: al añadir .nm3d-dividido el layout aún no se ha recalculado, y
-       medir ahora daría el ancho ANTERIOR. Tampoco vale requestAnimationFrame
-       —no dispara con la pestaña oculta y el framebuffer se quedaría desajustado
-       hasta que alguien mirase—.
-
-       RED DE SEGURIDAD POR TEMPORIZADOR: resulta que el ResizeObserver TAMPOCO
-       basta por sí solo. Sus notificaciones se entregan dentro de los «pasos de
-       renderizado», y el navegador se los salta con el documento oculto — el
-       mismo muro que rAF, solo que más abajo. Un setTimeout no depende del
-       renderizado y sí dispara. En una demo real la página está visible y manda
-       el observador; esto cubre el caso de activar el modo dividido con la
-       pestaña en segundo plano, que es exactamente como se probó. */
+    /* Desde FEAT-3D-12 el lienzo YA NO cambia de tamaño al abrir la consola: la
+       tarjeta flota encima y la escena sigue a pantalla completa. Este ajuste
+       deja de ser crítico —antes había que sincronizarlo con el layout y costó
+       tres intentos— pero se conserva por barato y por si el ancho cambia por
+       otra vía. El ResizeObserver de abajo sigue cubriendo el redimensionado de
+       ventana, que es el caso que de verdad queda. */
     setTimeout(redimensionar, 0);
     opBurbuja('elixis', '¡Hola! Soy ELIXIS. Te voy a enseñar la plataforma desde el papel de ' +
       r.nombre + ', solo los módulos que te tocan. Son ' + r.modulos.length + '. Vamos con el primero.', false);
@@ -2935,6 +2965,7 @@
       });
     },
     elegirRol: opElegirRol,
+    plegarHud: opPlegar,
     estadoOperador: function () {
       var m = op.modulos[op.paso];
       return {
