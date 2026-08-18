@@ -98,7 +98,7 @@
       pos: [-7.8, -3.2, 5.0], color: [1.00, 0.55, 0.45], hub: false,
       telemetria: 'Sonido, luz y clima en vivo · rider por venue',
       slot: 'rider-telemetria',
-      narracion: 'Telemetría de cabina. Sonido, luz y clima se leen en vivo durante el evento, y cada local guarda su propio rider técnico.',
+      narracion: 'Cabina y herramientas. Aquí vive MDJPRO, la aplicación que los DJ rentan para trabajar: sonido, luz y clima se leen en vivo durante el evento, y cada local guarda su propio rider técnico.',
       hud: { titulo: 'BOOTH TELEMETRY', lineas: [
         ['AUDIO',  'monitoreo en vivo'],
         ['SERATO', 'sincronización de cabina'],
@@ -407,16 +407,16 @@
        acorta. Es la reactividad orgánica pedida: el pulso late, no se dispara
        hacia fuera. Y la velocidad baja de 0.22 a 0.12, para que el ojo lea
        "corriente por un cable" y no "disparo". */
-    '  const float PAQUETES = 3.0;',
-    '  float fase = fract(uTiempo * 0.12 + aEnlace * 0.17);',
+    '  const float PAQUETES = 2.0;',
+    '  float fase = fract(uTiempo * 0.085 + aEnlace * 0.17);',
     '  float sp = fract(aRecorrido * PAQUETES - fase * PAQUETES);',
-    '  float largo = 0.36 + 0.09 * sin(uTiempo * 0.65 + aEnlace * 1.3) + uPulso * 0.14;',
-    '  float frente = smoothstep(0.0, largo * 0.34, sp);',
+    '  float largo = 0.72 + 0.10 * sin(uTiempo * 0.65 + aEnlace * 1.3) + uPulso * 0.12;',
+    '  float frente = smoothstep(0.0, largo * 0.42, sp);',
     '  float estela = 1.0 - smoothstep(largo * 0.34, largo, sp);',
     '  float p = frente * estela;',
     /* Un rescoldo tenue detrás del solitón: sin él la fibra se apaga del todo
        entre pulso y pulso y el conjunto parpadea en vez de fluir. */
-    '  p += (1.0 - smoothstep(largo, largo * 2.4, sp)) * 0.12;',
+    '  p += (1.0 - smoothstep(largo, largo * 1.9, sp)) * 0.25;',
     '  vSoliton = clamp(p, 0.0, 1.0);',
     '  vBrillo = 0.24 + p * (1.55 + uPulso * 1.25);',
     '  vColor = aColor;',
@@ -519,26 +519,33 @@
     '      f = min(f, length(g - vec2(-0.24, -0.10)) - 0.075);',
     '      f = min(f, length(g - vec2( 0.20, -0.10)) - 0.075);',
     '    } else if (vIdx < 2.5) {',
-    /*     CEREBRO: bóveda y dos surcos. */
-    '      f = abs(length(g * vec2(0.86, 1.0)) - 0.56) - trazo;',
-    '      f = min(f, segmento(g, vec2(-0.30, 0.18), vec2(0.06, -0.02)) - trazo * 0.85);',
-    '      f = min(f, segmento(g, vec2(0.06, -0.02), vec2(-0.14, -0.34)) - trazo * 0.85);',
+    /*     CHIP: encapsulado, núcleo interior y patillas a los cuatro lados. */
+    '      f = abs(caja(g, vec2(0.46, 0.46))) - trazo;',
+    '      f = min(f, abs(caja(g, vec2(0.20, 0.20))) - trazo * 0.85);',
+    '      f = min(f, segmento(g, vec2(-0.62, 0.22), vec2(-0.46, 0.22)) - trazo * 0.7);',
+    '      f = min(f, segmento(g, vec2(-0.62,-0.22), vec2(-0.46,-0.22)) - trazo * 0.7);',
+    '      f = min(f, segmento(g, vec2( 0.46, 0.22), vec2( 0.62, 0.22)) - trazo * 0.7);',
+    '      f = min(f, segmento(g, vec2( 0.46,-0.22), vec2( 0.62,-0.22)) - trazo * 0.7);',
+    '      f = min(f, segmento(g, vec2(-0.22, 0.46), vec2(-0.22, 0.62)) - trazo * 0.7);',
+    '      f = min(f, segmento(g, vec2( 0.22, 0.46), vec2( 0.22, 0.62)) - trazo * 0.7);',
     '    } else if (vIdx < 3.5) {',
-    /*     BANCO: frontón, base y tres columnas. */
-    '      f = segmento(g, vec2(-0.66, 0.20), vec2(0.66, 0.20)) - trazo;',
-    '      f = min(f, segmento(g, vec2(-0.66, 0.20), vec2(0.0, 0.58)) - trazo);',
-    '      f = min(f, segmento(g, vec2(0.66, 0.20), vec2(0.0, 0.58)) - trazo);',
-    '      f = min(f, segmento(g, vec2(-0.70, -0.52), vec2(0.70, -0.52)) - trazo);',
-    '      f = min(f, segmento(g, vec2(-0.36, 0.14), vec2(-0.36, -0.46)) - trazo * 0.8);',
-    '      f = min(f, segmento(g, vec2(0.0, 0.14), vec2(0.0, -0.46)) - trazo * 0.8);',
-    '      f = min(f, segmento(g, vec2(0.36, 0.14), vec2(0.36, -0.46)) - trazo * 0.8);',
+    /*     ESCUDO CON CERRADURA: silueta que converge abajo y candado dentro. */
+    '      f = segmento(g, vec2(-0.50, 0.42), vec2(0.50, 0.42)) - trazo;',
+    '      f = min(f, segmento(g, vec2(-0.50, 0.42), vec2(-0.44,-0.16)) - trazo);',
+    '      f = min(f, segmento(g, vec2( 0.50, 0.42), vec2( 0.44,-0.16)) - trazo);',
+    '      f = min(f, segmento(g, vec2(-0.44,-0.16), vec2(0.0,-0.60)) - trazo);',
+    '      f = min(f, segmento(g, vec2( 0.44,-0.16), vec2(0.0,-0.60)) - trazo);',
+    '      f = min(f, abs(caja(g - vec2(0.0,-0.06), vec2(0.15, 0.12))) - trazo * 0.8);',
+    '      f = min(f, abs(length(g - vec2(0.0, 0.13)) - 0.11) - trazo * 0.7 + step(0.0, -g.y + 0.13) * 9.0);',
     '    } else {',
-    /*     AURICULARES: diadema y dos cascos. */
-    '      float arco = abs(length(g - vec2(0.0, -0.06)) - 0.52) - trazo;',
-    '      arco = max(arco, -g.y - 0.06);',
-    '      f = arco;',
-    '      f = min(f, caja(g - vec2(-0.52, -0.30), vec2(0.13, 0.22)) - 0.05);',
-    '      f = min(f, caja(g - vec2( 0.52, -0.30), vec2(0.13, 0.22)) - 0.05);',
+    /*     FADERS: tres recorridos verticales con sus mandos a distinta altura,
+           el gesto de una mesa de mezclas. */
+    '      f = segmento(g, vec2(-0.42, 0.52), vec2(-0.42,-0.52)) - trazo * 0.6;',
+    '      f = min(f, segmento(g, vec2(0.0, 0.52), vec2(0.0,-0.52)) - trazo * 0.6);',
+    '      f = min(f, segmento(g, vec2(0.42, 0.52), vec2(0.42,-0.52)) - trazo * 0.6);',
+    '      f = min(f, abs(caja(g - vec2(-0.42, 0.16), vec2(0.17, 0.075))) - trazo * 0.7);',
+    '      f = min(f, abs(caja(g - vec2( 0.0, -0.22), vec2(0.17, 0.075))) - trazo * 0.7);',
+    '      f = min(f, abs(caja(g - vec2( 0.42, 0.02), vec2(0.17, 0.075))) - trazo * 0.7);',
     '    }',
     '    float respira = 0.72 + 0.20 * sin(uTiempo * 1.15 + vIdx) + uPulso * 0.5;',
     '    float glyph = (1.0 - smoothstep(0.0, 0.045, f)) * respira;',
@@ -557,10 +564,11 @@
      plasma, y se gana la marca de verdad: en un keynote ante directores de
      venue, el emblema real pesa más que una animación bonita.
 
-     Se usa fenix-emblem-160.png (145×160 RGBA, 48 KB) y no logo-transparent.png
-     (1920×1920, 3 MB) ni mdjpro-fenix-gold.png — este último es RGB SIN ALFA,
-     así que habría traído un rectángulo negro al centro de la esfera. A la
-     escala en que se dibuja, 145 px de origen sobran. */
+     Se usa logo-transparent.png (1920×1920 RGBA), el emblema oficial en alta
+     resolución. Descartados: mdjpro-fenix-gold.png y mdjpro-cdj-gold.png son
+     color type 0x02 —RGB SIN ALFA— y traerían un cuadro opaco al centro de la
+     esfera; fenix-emblem-160.png sirve pero a 145 px se nota en proyector.
+     Pesa 3 MB y se carga en diferido: el motor arranca sin él. */
 
   var VERT_LOGO = [
     'precision mediump float;',
@@ -844,7 +852,7 @@
       } catch (e) { texLogoLista = false; }
     };
     img.onerror = function () { texLogoLista = false; };
-    img.src = './assets/branding/fenix-emblem-160.png';
+    img.src = './assets/branding/logo-transparent.png';
   }
 
   function liberarEscena() {
