@@ -683,12 +683,15 @@ async function mdjEnsureAuthProfileRows(db, user) {
 
 window.mdjEnsureAuthProfileRows = mdjEnsureAuthProfileRows;
 
-/** Wait for the Supabase client to be ready (max ~3 sec). */
-async function waitForSupabase(maxAttempts = 10) {
+/**
+ * FIX-AUTH-LEGACY: espera al cliente de Supabase con 3 reintentos y backoff
+ * de 500ms (500/1000/1500ms, ~3s totales) antes de mostrar el banner de error.
+ */
+async function waitForSupabase(maxAttempts = 3) {
     for (let i = 0; i < maxAttempts; i++) {
         const db = window.getSupabaseClient();
         if (db) return db;
-        await new Promise(r => setTimeout(r, 300));
+        await new Promise(r => setTimeout(r, 500 * (i + 1)));
     }
     throw new Error('Supabase no está disponible. Recarga la página.');
 }
