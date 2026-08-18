@@ -19,7 +19,7 @@
     un redimensionado de framebuffer.
   -->
 
-  <link rel="stylesheet" href="./neural-matrix-3d.css?v=20260818-feat3d07">
+  <link rel="stylesheet" href="./neural-matrix-3d.css?v=20260818-voztour">
 </head>
 <body class="nm3d-pagina">
 
@@ -91,8 +91,18 @@
     <button type="button" class="nm3d-explicar" data-nm3d-explicar aria-pressed="false">🔊 EXPLICAR</button>
   </section>
 
+  <!--
+    FEAT-3D-10 · Indicador de estado del navegador de voz. Oculto hasta que se
+    active con G: en escenario, un rótulo permanente que dice "apagado" es ruido.
+    aria-live para que un lector de pantalla anuncie los cambios de turno.
+  -->
+  <section class="nm3d-voz" data-nm3d-vozcaja hidden aria-live="polite">
+    <i class="nm3d-voz__punto" aria-hidden="true"></i>
+    <span data-nm3d-vozestado data-estado="apagado"></span>
+  </section>
+
   <aside class="nm3d-teclas" aria-label="Controles de escenario">
-    <b>Espacio</b> pausa · <b>1-5</b> estación · <b>← →</b> anterior/siguiente · <b>V</b> explicar · <b>M</b> micrófono · <b>R</b> órbita libre · <b>F</b> pantalla completa · <b>Esc / 0</b> recorrido
+    <b>Espacio</b> pausa · <b>1-5</b> estación · <b>← →</b> anterior/siguiente · <b>V</b> explicar · <b>M</b> micrófono · <b>R</b> órbita libre · <b>F</b> pantalla completa · <b>G</b> guiado por voz · <b>Esc / 0</b> recorrido
   </aside>
 
   <!-- Panel técnico: oculto por defecto, se conmuta con D. En escenario no se
@@ -125,6 +135,11 @@
        cada llamada, no solo al arrancar, pero cargarlo antes evita que la
        primera narración llegue a un hueco vacío. -->
   <script src="./js/elixis-voice-engine.js?v=20260818-feat3d07"></script>
-  <script src="./js/neural-matrix-3d.js?v=20260818-feat3d07"></script>
+  <!-- El Q&A en vivo llama a booth-chat a traves de los ayudantes de esta
+       config (mdbSupabaseFunctionUrl / mdjSupabaseAnonInvokeHeaders). Va
+       ANTES del motor porque el motor los busca al construir la URL.
+       Sin sesion ni cabecera compartida: solo la clave publicable. -->
+  <script src="./supabase-config.js?v=20260818-voztour"></script>
+  <script src="./js/neural-matrix-3d.js?v=20260818-semantico"></script>
 </body>
 </html>

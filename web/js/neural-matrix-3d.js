@@ -47,7 +47,11 @@
      ahora son filamentos. Con el rescoldo al 25 % y el solitón largo, la fibra
      delgada mantiene la sensación de corriente continua sin convertirse en una
      banda luminosa que se come el encuadre. */
-  var RADIO_TUBO = 0.038;
+  /* Adelgazados "un chin" más (0.038 → 0.030, un 21 % menos) por decisión del
+     PO: los conductos del sistema y los filamentos de la red neuronal exterior
+     no deben leerse del mismo calibre. Estos bajan un poco, aquellos suben un
+     poco, y la diferencia entre ambos se mantiene — no se igualan. */
+  var RADIO_TUBO = 0.030;
   var PARTICULAS = 700;
   /* El nodo del núcleo mide 1.25 de radio; un Fénix de 6 unidades de punta a
      punta lo tapaba a él y a media escena. A 0.58 el ave enmarca el núcleo en
@@ -98,15 +102,34 @@
         ['REPARTO',   'automático al cierre'],
         ['CONTRATOS', 'firmados y versionados']
       ] } },
-    { id: 'booth',    nombre: 'Booth IA & Inteligencia Atmosférica', subtitulo: 'Telemetría de Escenario',
+    /* NOMBRE REAL, NO INVENTADO. Esta estación se llamó durante un tiempo
+       «Booth IA & Inteligencia Atmosférica», que no era el nombre de nada:
+       fundía dos zonas distintas de la plataforma —The AI Booth (booth.html)
+       y DJ Tools (dj-tools.html)— y encima añadía un término que no existe.
+
+       Rótulo fijado por el PO: título MDJPRO, y debajo «espacio de trabajo
+       para DJ». El producto da nombre a la estación; DJ Tools es el slot de la
+       barra donde se llega a él, no el rótulo de escenario.
+
+       El texto de apoyo sigue tomado de la propia dj-tools.html: Load Root,
+       Library Cleaning, Smart Crates y Booth Assistant son funciones que la
+       página anuncia de verdad.
+
+       Regla que deja esto: los rótulos de escenario se COPIAN de la plataforma
+       o los dicta el PO. Inventarlos delante de directores de venue es peor que
+       dejarlos vacíos. */
+    { id: 'mdjpro',   nombre: 'MDJPRO',                             subtitulo: 'Espacio de Trabajo para DJ',
       pos: [-7.8, -3.2, 5.0], color: [1.00, 0.55, 0.45], hub: false,
-      telemetria: 'Sonido, luz y clima en vivo · rider por venue',
-      slot: 'rider-telemetria',
-      narracion: 'Cabina y herramientas. Aquí vive MDJPRO, la aplicación que los DJ rentan para trabajar: sonido, luz y clima se leen en vivo durante el evento, y cada local guarda su propio rider técnico.',
-      hud: { titulo: 'BOOTH TELEMETRY', lineas: [
-        ['AUDIO',  'monitoreo en vivo'],
-        ['SERATO', 'sincronización de cabina'],
-        ['RIDERS', 'técnicos por venue']
+      telemetria: 'Load Root · Library Cleaning · Smart Crates · Booth Assistant',
+      slot: 'mdjpro-herramientas',
+      /* El nombre completo se dice una vez, en voz alta, la primera vez que se
+         nombra: en un keynote la sigla sola no significa nada para quien no la
+         conoce. Es el nombre oficial del manual, no una glosa mía. */
+      narracion: 'MDJPRO, Magic DJ Pro: el espacio de trabajo para DJ. Es la aplicación que el DJ descarga a su propio ordenador para agilizar el trabajo: limpia la librería, ordena los crates y deja la cabina lista antes del evento.',
+      hud: { titulo: 'MDJPRO', lineas: [
+        ['LIBRERÍA', 'Load Root · limpieza'],
+        ['CRATES',   'Smart Crates'],
+        ['CABINA',   'Booth Assistant']
       ] } }
   ];
 
@@ -129,6 +152,7 @@
   var progTubos = null, progInstancias = null;
   var bufTubos = null, bufIndices = null, bufQuad = null, bufNodos = null, bufParticulas = null;
   var indicesTubos = 0, conteoVerticesTubos = 0;
+  var progRed = null, bufRed = null, aRed = {}, uRed = {}, conteoVerticesRed = 0;
   var nodos = [], datosNodos = null, datosParticulas = null;
 
   var aTubos = {}, uTubos = {}, aInst = {}, uInst = {};
@@ -160,7 +184,50 @@
   /* Visibilidad del holograma: 0 oculto, 1 presente. No es un booleano porque
      la aparición y el fundido tienen que ser continuos como todo lo demás. */
   var visHolograma = 0;
-  var progLogo = null, texLogo = null, texLogoLista = false, aLogo = {}, uLogo = {};
+  var progLogo = null, aLogo = {}, uLogo = {};
+
+  /* ─── EMBLEMAS DE MARCA ANCLADOS A ESTACIONES ────────────────────────────
+     Antes había un solo emblema y su estación iba cableada a fuego en el pase
+     de dibujo. Se convierte en tabla porque ya son dos y el criterio de cuál
+     va dónde es de NEGOCIO, no de render: cada marca se pone donde vive.
+
+       · núcleo (0) → emblema Fénix corporativo.
+       · booth  (4) → MDJPRO, que es la app que los DJ rentan para trabajar.
+                      La narración de esa estación ya lo decía; faltaba verlo.
+
+     'tam' es el semiancho en unidades de mundo. El núcleo va más grande a
+     propósito: es el hub y tiene que dominar el encuadre.
+
+     ─── JERARQUÍA DE MARCA (regla del PO, no negociable) ──────────────────
+     EL CENTRO ES EL CEREBRO FÉNIX Y NO LO DISPUTA NADIE. Un segundo emblema
+     encendido al mismo brillo las 24 horas convierte la escena en dos centros
+     compitiendo, que es exactamente lo que esta regla prohíbe. MDJPRO vive en
+     reposo y SOLO cobra protagonismo cuando el recorrido llega a su estación.
+
+     La regla se codifica en dos números por emblema, no en un 'if' suelto:
+       · 'base'   — presencia en reposo, sin que nadie lo mire.
+       · 'realce' — cuánto SUMA al recibir el foco. base + realce ≤ 1.
+       · 'crece'  — cuánto engorda el billboard al recibir el foco.
+
+     El núcleo lleva realce 0 y crece 0 a propósito: es constante, no respira
+     con el foco ni se encoge cuando miras a otro lado. Ese cero ES la regla.
+     MDJPRO arranca en 0.38 y solo alcanza el 1.0 cuando le toca su turno. */
+  var EMBLEMAS = [
+    { estacion: 0, archivo: './assets/branding/fenix-emblem-160.png',
+      tam: 1.35, base: 1.00, realce: 0.00, crece: 0.00, prom: 1, tex: null, lista: false },
+    /* Este es el ICONO OFICIAL de la app nativa, copiado del proyecto macOS
+       (Assets.xcassets/AppIcon.appiconset/icon_512x512@2x.png). Se prefiere al
+       antiguo mdj_logo.png por dos razones medidas, no de gusto:
+         · aquel llevaba un bloque de texto «MDJPRO» diminuto en una esquina,
+           ilegible a escala de billboard y puro ruido en proyector;
+         · la marca ocupa más lienzo (78 % transparente frente a 72 %), así que
+           se lee más grande sin subir 'tam'.
+       Alfa verificado: esquinas a 0, borde verde (78,207,76), sin mate blanco
+       —que en mezcla aditiva se convertiría en resplandor. Se conserva el 1024
+       y no el 512 porque en un proyector 4K el billboard ronda los 500 px. */
+    { estacion: 4, archivo: './assets/branding/mdjpro-appicon-1024.png',
+      tam: 0.95, base: 0.38, realce: 0.62, crece: 0.30, prom: 0, tex: null, lista: false }
+  ];
   var progHolo = null, bufHolo = null, aHolo = {}, uHolo = {};
 
   var audioEl = null, ctxAudio = null, analizador = null, datosFrecuencia = null;
@@ -369,14 +436,128 @@
       d[o]   = (Math.random()-0.5) * 34;
       d[o+1] = (Math.random()-0.5) * 20;
       d[o+2] = (Math.random()-0.5) * 34;
-      d[o+3] = 0.75; d[o+4] = 0.85; d[o+5] = 1.0;
-      d[o+6] = 0.026 + Math.random()*0.030;
-      /* Ambiente y solo ambiente: jamás compite en brillo con las estaciones.
-         Jerarquía de keynote — estaciones → conductos → fondo. */
-      d[o+7] = 0.028 + Math.random()*0.060;
+      /* PALETA DORADO/CIAN POR FAMILIAS, NO POR INTERPOLACIÓN. Mezclar
+         #ffd700 con #00f5ff pasa por el VERDE en el punto medio, y un cielo
+         de puntos verdosos rompe el idioma cromático de la escena. Así que
+         cada partícula pertenece a una de las dos familias y solo varía
+         dentro de ella. Es el mismo criterio que ya rige los conductos. */
+      /* COLORES DE MARCA EXACTOS, sin desviación. Antes llevaban un jitter que
+         metía 0.30 de rojo en el cian y 0.38 de azul en el oro: eso lava el
+         tono y los deja lechosos en vez de nítidos. La variación se consigue
+         con la intensidad, no ensuciando el matiz. */
+      if (Math.random() < 0.58) {
+        d[o+3] = 0.0;  d[o+4] = 0.961; d[o+5] = 1.0;    // cian  #00f5ff
+      } else {
+        d[o+3] = 1.0;  d[o+4] = 0.843; d[o+5] = 0.0;    // oro   #ffd700
+      }
+      /* CUERPO. Las estaciones van a 0.80-1.25 de radio, así que a 0.075-0.210
+         las partículas siguen siendo entre 4 y 10 veces más pequeñas: hay sitio
+         de sobra para darles volumen sin que discutan el primer plano. */
+      d[o+6] = 0.075 + Math.random()*0.135;
+      /* EMISIÓN. Historia de este número: nació en 0.028-0.088 (3-9 %, o sea
+         invisible), subió a 0.14-0.34 y seguía leyéndose apagado. Ahora
+         0.34-0.70.
+         Con mezcla aditiva lo percibido es alfa POR color, así que subir el
+         alfa ES subir el glow: no hace falta tocar el shader para que brillen.
+         Las estaciones están en 1.00-1.30, de modo que el cielo sigue por
+         debajo y la jerarquía del keynote aguanta: estaciones → conductos →
+         cielo. Ese orden no se rompe, solo deja de ser invisible el último. */
+      d[o+7] = 0.34 + Math.random()*0.36;
       d[o+8] = -1;
     }
     return d;
+  }
+
+  /* Teje la red a partir de las posiciones YA generadas de las partículas, no
+     de posiciones nuevas: si inventara sus propios puntos, la telaraña no
+     tocaría el cielo que dice enlazar.
+
+     Se calcula UNA vez en el arranque y viaja al buffer como STATIC_DRAW. El
+     coste es un O(n²) de 245 000 comparaciones de distancia —milisegundos, y
+     solo al iniciar—; a cambio, en cada cuadro no se recalcula nada.
+
+     Dos topes gobiernan la densidad, y los dos importan:
+       · MAX_POR_PARTICULA evita el apelmazamiento. Sin él, las zonas donde el
+         azar juntó muchas partículas se convierten en manchas sólidas y el
+         resto del cielo queda vacío: la red saldría a grumos.
+       · MAX_ENLACES acota el gasto total pase lo que pase con el azar. */
+  function construirRedFilamentos(part) {
+    /* DENSIDAD. Con radio 3.6 y 2 enlaces por partícula la malla salía
+       demasiado suelta para leerse como red: eran hilos sueltos, no tejido.
+       Radio a 4.4 y tercer enlace permitido —la separación media entre
+       partículas es de unas 3.3 unidades, así que 4.4 alcanza al vecino de
+       vecino y empieza a cerrar triángulos, que es lo que el ojo lee como
+       "red" en vez de "líneas". El tope sube en proporción. */
+    var RADIO2 = 4.4 * 4.4;          // al cuadrado: nos ahorra la raíz
+    var MAX_POR_PARTICULA = 3;
+    var MAX_ENLACES = 900;
+    var ENLACES_A_ESTACION = 46;
+
+    var grado = new Uint8Array(PARTICULAS);
+    var v = [];
+    var enlaces = 0;
+    var i, j, o, p, dx, dy, dz;
+
+    for (i = 0; i < PARTICULAS && enlaces < MAX_ENLACES; i++) {
+      if (grado[i] >= MAX_POR_PARTICULA) continue;
+      o = i * 9;
+      for (j = i + 1; j < PARTICULAS && enlaces < MAX_ENLACES; j++) {
+        if (grado[j] >= MAX_POR_PARTICULA) continue;
+        p = j * 9;
+        dx = part[o] - part[p]; dy = part[o+1] - part[p+1]; dz = part[o+2] - part[p+2];
+        if (dx*dx + dy*dy + dz*dz > RADIO2) continue;
+        var s = Math.random() < 0.58 ? 0.0 : 1.0;   // familia cian u oro
+        cinta(v, part[o], part[o+1], part[o+2], -1,
+                 part[p], part[p+1], part[p+2], -1, s);
+        grado[i]++; grado[j]++; enlaces++;
+        if (grado[i] >= MAX_POR_PARTICULA) break;
+      }
+    }
+
+    /* Amarres al negocio: unas pocas partículas se enganchan a su estación más
+       cercana. Sin esto la telaraña flota como decoración ajena; con esto el
+       cielo de clientes queda visiblemente conectado a la estructura, que es
+       lo que la escena tiene que contar.
+       El extremo que toca la estación guarda SU índice (0-4), así se mece con
+       ella y no con las partículas. */
+    var paso = Math.max(1, Math.floor(PARTICULAS / ENLACES_A_ESTACION));
+    for (i = 0; i < PARTICULAS; i += paso) {
+      o = i * 9;
+      var mejor = -1, mejorD = Infinity;
+      for (j = 0; j < ESTACIONES.length; j++) {
+        var e = ESTACIONES[j].pos;
+        dx = part[o] - e[0]; dy = part[o+1] - e[1]; dz = part[o+2] - e[2];
+        var d2 = dx*dx + dy*dy + dz*dz;
+        if (d2 < mejorD) { mejorD = d2; mejor = j; }
+      }
+      if (mejor < 0 || mejorD > 190) continue;   // demasiado lejos: no ata nada
+      var se = Math.random() < 0.5 ? 0.0 : 1.0;
+      var ep = ESTACIONES[mejor].pos;
+      /* Aquí los dos extremos tienen índices DISTINTOS: la partícula mece con
+         -1 y la estación con el suyo. Por eso el vértice guarda ambos. */
+      cinta(v, part[o], part[o+1], part[o+2], -1,
+               ep[0], ep[1], ep[2], mejor, se);
+    }
+
+    conteoVerticesRed = v.length / 11;
+    return new Float32Array(v);
+  }
+
+  /* Un enlace = un quad de dos triángulos = 6 vértices. Cada vértice repite los
+     dos extremos del segmento y se distingue por (aAlong, aLado): aAlong dice en
+     cuál de los dos extremos se apoya, aLado a qué costado se desplaza. Toda la
+     geometría se resuelve luego en el vértice, en espacio de pantalla.
+
+     Se repiten los extremos en los 6 vértices —11 floats por vértice— porque la
+     alternativa sería un uniform por línea, o sea 940 llamadas de dibujo en vez
+     de una. 248 KB de buffer estático a cambio de una sola llamada es el
+     canje correcto. */
+  function cinta(v, ax, ay, az, ia, bx, by, bz, ib, s) {
+    /* along, lado — dos triángulos que cubren la cinta completa. */
+    var esquinas = [0,-1,  1,-1,  0,1,   0,1,  1,-1,  1,1];
+    for (var k = 0; k < 12; k += 2) {
+      v.push(ax, ay, az, bx, by, bz, ia, ib, esquinas[k+1], esquinas[k], s);
+    }
   }
 
   var QUAD = new Float32Array([-1,-1,  1,-1,  -1,1,  1,1]);
@@ -506,7 +687,16 @@
        lavaba por el centro justo donde está el ave. Aquí la energía se calcula
        por RADIO: se apaga hacia dentro y solo vive en el perímetro, dejando el
        centro transparente para que el logo se lea limpio. */
-    '  if (vIdx < 0.5) {',
+    /* ¡OJO CON EL SIGNO! Esta comparación era 'vIdx < 0.5' y ahí estaba el bug
+       que hizo "desaparecer" el cielo desde FEAT-3D-08: las PARTÍCULAS llevan
+       iIndice = -1, y -1 también es menor que 0.5. Las 700 entraban en la rama
+       del núcleo —aros concéntricos con corte interior, calibrados para un hub
+       de radio 1.25— y hacían return antes de llegar a su propio código. En un
+       punto de radio 0.1 ese corte interior le borra el centro, así que por
+       mucho que se les subiera tamaño y opacidad seguían sin verse.
+       Con abs() la rama captura SOLO la estación 0, que es lo que siempre
+       quiso decir. Mismo idioma que el 'abs(vIdx - 4.0)' de más abajo. */
+    '  if (abs(vIdx) < 0.5) {',
     /* ─── CLON DEL MOTOR DE ENERGÍA DE ELIXIS ────────────────────────────
        Estructura copiada del fragment del holograma, no reinventada. La regla
        que lo gobierna todo, y que yo había roto en el intento anterior, es
@@ -536,8 +726,14 @@
            estrobo rápido ligado al pulso: es lo que da la textura granular de
            plasma en vez de un degradado liso. */
     '    float escaneo = 0.5 + 0.5 * sin(d * 42.0 - uTiempo * 2.2);',
-    '    float estrobo = 0.82 + 0.18 * sin(uTiempo * (14.0 + uPulso * 22.0) + d * 7.0);',
-    '    float textura = (0.75 + escaneo * 0.25) * estrobo;',
+    /*     DESTELLO CASI IMPERCEPTIBLE (petición del PO). El estrobo iba a
+           0.82 ± 0.18 y a 14-36 Hz: eso es un centelleo del 22 % a velocidad
+           de flash, y con el cielo de partículas ya encendido se convertía en
+           lo primero que pesca el ojo. Se baja la amplitud a ± 0.06 y se
+           ralentiza a la mitad. Sigue habiendo vida —no es una constante— pero
+           deja de llamar la atención sobre el emblema. */
+    '    float estrobo = 0.94 + 0.06 * sin(uTiempo * (7.0 + uPulso * 9.0) + d * 7.0);',
+    '    float textura = (0.88 + escaneo * 0.12) * estrobo;',
     '    a1 *= textura; a2 *= textura;',
     /*     CORTE INTERIOR: alfa 0 en el área del emblema. */
     '    float corte = smoothstep(0.42, 0.60, d);',
@@ -554,8 +750,29 @@
            a 0.50 — en conjunto queda en torno a un tercio del brillo anterior.
            Los aros siguen ahí, con su dorado y su filamento cian, pero dejan de
            competir con el emblema y de quemar en proyector. */
-    '    float aA = clamp((a1 + a2) * 0.85, 0.0, 1.0) * vIntensidad * corte;',
-    '    gl_FragColor = vec4(cA * (0.38 + uPulso * 0.22), aA);',
+    /*     Y el calibre general de los aros, tercera bajada de esta línea: el
+           empuje de alfa pasa de 0.85 a 0.40 y la escala de color de 0.38 a
+           0.28. En aditivo lo percibido es alfa POR color, así que recortar
+           ambos multiplica el efecto: queda en torno a un tercio de lo que
+           había. Los aros NO se retiran —siguen ahí, con su oro y su filamento
+           cian— simplemente dejan de destellar. */
+    '    float aA = clamp((a1 + a2) * 0.40, 0.0, 1.0) * vIntensidad * corte;',
+    '    gl_FragColor = vec4(cA * (0.28 + uPulso * 0.14), aA);',
+    '    return;',
+    '  }',
+    /* ESTACIÓN CON EMBLEMA DE MARCA (booth → MDJPRO). Es el mismo problema que
+       tuvo el núcleo y se le da la misma cura: el relleno interior lavaba el
+       logo justo por el centro, que es donde está la M. Se vacía el disco por
+       radio y queda solo el perímetro, así la estación se sigue leyendo como
+       estación y el emblema se lee limpio encima.
+
+       Además se renuncia al glifo de faders. No es una pérdida: el glifo era el
+       marcador de posición de una marca que no teníamos: es exactamente el
+       mismo cambio que hizo el Fénix al sustituir su malla procedural. Un
+       emblema real pesa más en un keynote que un icono dibujado. */
+    '  if (abs(vIdx - 4.0) < 0.5) {',
+    '    a *= smoothstep(0.34, 0.62, d);',
+    '    gl_FragColor = vec4(vColor * (0.6 + nucleo), a);',
     '    return;',
     '  }',
     /* SLOT DE ELIXIS: anillos de onda sonora saliendo de los audífonos. Se
@@ -620,6 +837,100 @@
     '}'
   ].join('\n');
 
+  /* ─── RED DE FILAMENTOS (PLEXUS / CONSTELACIÓN) ──────────────────────────
+     Telaraña bioeléctrica que entrelaza el cielo de partículas con las
+     estaciones. Se dibuja con gl.LINES: una sola llamada, sin geometría de
+     tubo y sin coste de relleno — un filamento de un píxel no paga fragmentos
+     apenas, que es justo lo que permite tener cientos sin despeinar el cuadro.
+
+     LA CLAVE ESTÁ EN EL VAIVÉN. Las partículas se mecen en el vértice con
+     'p.y += sin(uTiempo*0.5 + iIndice*0.37)*0.18'. Si la red no repitiera esa
+     fórmula EXACTA, los filamentos flotarían sueltos y se despegarían de los
+     puntos que dicen unir. Por eso cada extremo guarda el índice de aquello a
+     lo que se ancla —-1 si es partícula, 0-4 si es estación— y aplica el mismo
+     desplazamiento. La red queda COSIDA, no superpuesta. */
+
+  /* ─── ANCHO REAL: CINTAS, NO LÍNEAS ──────────────────────────────────────
+     Esta red se dibujaba con gl.LINES y ahí topaba con un muro de la
+     plataforma: gl.lineWidth() por encima de 1.0 lo IGNORA Chrome/ANGLE. Es un
+     no-op, no una limitación de estilo. Para que un filamento pueda ser más
+     gordo hay que dejar de pedirlo y construirlo: cada enlace pasa a ser un
+     QUAD de dos triángulos orientado a la cámara.
+
+     El ensanchado se hace en ESPACIO DE PANTALLA, no de mundo. Si se ensanchara
+     en mundo, un filamento cercano saldría como una cinta y el mismo filamento
+     al fondo desaparecería; midiendo en píxeles, el grosor es el que se pide
+     pase lo que pase con la distancia. Cuesta un uniform de resolución.
+
+     Cada vértice lleva LOS DOS extremos del segmento (aPosA/aPosB) porque la
+     perpendicular necesita la dirección completa, y lleva los DOS índices
+     (aIndA/aIndB) para poder mecer cada extremo con SU fase — un extremo puede
+     ser partícula (-1) y el otro una estación (0-4). */
+
+  var VERT_RED = [
+    'precision mediump float;',
+    'attribute vec3 aPosA; attribute vec3 aPosB;',
+    'attribute float aIndA; attribute float aIndB;',
+    'attribute float aLado; attribute float aAlong; attribute float aSemilla;',
+    'uniform mat4 uProy; uniform mat4 uVista; uniform float uTiempo;',
+    'uniform vec2 uResolucion; uniform float uSemiGrosorPx;',
+    'varying float vSemilla; varying float vLejos;',
+    'void main(){',
+    /* Mismo vaivén que las partículas, aplicado a cada extremo con su índice:
+       así la cinta sigue cosida a los dos puntos que une. */
+    '  vec3 pa = aPosA; pa.y += sin(uTiempo * 0.5 + aIndA * 0.37) * 0.18;',
+    '  vec3 pb = aPosB; pb.y += sin(uTiempo * 0.5 + aIndB * 0.37) * 0.18;',
+    '  vec4 va = uVista * vec4(pa, 1.0);',
+    '  vec4 vb = uVista * vec4(pb, 1.0);',
+    '  vec4 ca = uProy * va;',
+    '  vec4 cb = uProy * vb;',
+    /* Guardia contra w ≈ 0: un extremo justo en el plano de la cámara haría
+       explotar la división y llenaría el buffer de NaN, que en pantalla se ve
+       como triángulos gigantes atravesando la escena. */
+    '  float wa = max(1e-4, ca.w); float wb = max(1e-4, cb.w);',
+    '  vec2 na = ca.xy / wa; vec2 nb = cb.xy / wb;',
+    /* NDC → píxeles: el NDC abarca [-1,1], o sea resolución/2 por unidad. */
+    '  vec2 dPix = (nb - na) * uResolucion * 0.5;',
+    '  float largo = max(1e-5, length(dPix));',
+    '  vec2 dir = dPix / largo;',
+    '  vec2 perp = vec2(-dir.y, dir.x);',
+    '  vec4 c = mix(ca, cb, aAlong);',
+    /* De vuelta a NDC y multiplicado por w: gl_Position se divide por w después,
+       así que el desplazamiento sobrevive intacto a la proyección. */
+    '  c.xy += perp * aLado * uSemiGrosorPx * 2.0 / uResolucion * c.w;',
+    /* Desvanecido por profundidad: la malla se disuelve al fondo en lugar de
+       cortarse en seco contra el plano lejano. Sin esto se ve el borde del
+       volumen y la ilusión de "cielo" se cae. */
+    '  vLejos = 1.0 - smoothstep(16.0, 40.0, mix(-va.z, -vb.z, aAlong));',
+    '  vSemilla = aSemilla;',
+    '  gl_Position = c;',
+    '}'
+  ].join('\n');
+
+  var FRAG_RED = [
+    'precision mediump float;',
+    'uniform float uTiempo; uniform float uPulso;',
+    'varying float vSemilla; varying float vLejos;',
+    'void main(){',
+    /* Dos familias, sin interpolar entre ellas: interpolar oro y cian produce
+       verde a mitad de camino. Cada filamento es de un color o del otro. */
+    '  vec3 cian = vec3(0.0, 0.961, 1.0);',
+    '  vec3 oro  = vec3(1.0, 0.843, 0.0);',
+    '  vec3 c = (vSemilla < 0.5) ? cian : oro;',
+    /* Latido lento y desfasado por filamento: la red respira por zonas en vez
+       de parpadear entera, que es lo que la hace parecer viva y no un overlay. */
+    '  float latido = 0.55 + 0.45 * sin(uTiempo * 0.75 + vSemilla * 37.0);',
+    /* CALIBRE. 0.028-0.075 resultó indistinguible del negro: técnicamente se
+       dibujaba y en pantalla no existía. Se subió a 0.10-0.23 y AQUÍ SE QUEDA:
+       el PO pidió más grosor "con la misma opacidad", así que el alfa POR PÍXEL
+       no se toca. Lo que cambió es cuántos píxeles cubre cada filamento, que
+       ahora se resuelve con geometría de cinta en el vértice y no pidiendo un
+       lineWidth que Chrome ignora. */
+    '  float a = (0.10 + uPulso * 0.13) * latido * vLejos;',
+    '  gl_FragColor = vec4(c, a);',
+    '}'
+  ].join('\n');
+
   /* ─── LOGO OFICIAL EN EL NÚCLEO ──────────────────────────────────────────
      Sustituye a la malla procedural del Fénix. Se pierde el aleteo y el
      plasma, y se gana la marca de verdad: en un keynote ante directores de
@@ -651,6 +962,7 @@
   var FRAG_LOGO = [
     'precision mediump float;',
     'uniform sampler2D uTex; uniform float uTiempo; uniform float uPulso;',
+    'uniform float uPresencia;',
     'varying vec2 vUV;',
     'void main(){',
     /* La V se invierte: las imágenes llegan con el origen arriba y WebGL lo
@@ -664,6 +976,12 @@
        que el recorte del PNG siga mandando — el fondo transparente sigue
        transparente y solo el trazo dorado se vuelve translúcido. */
     '  float energia = 0.62 + uPulso * 0.20 + sin(uTiempo * 1.3) * 0.05;',
+    /* JERARQUÍA DE MARCA. uPresencia vale 1.0 fijo en el núcleo —el cerebro no
+       se atenúa jamás— y en un emblema subordinado sube desde su reposo solo
+       cuando el recorrido llega a su estación. Se aplica al ALFA y no al color
+       por la misma razón que en los aros: en mezcla aditiva lo percibido es
+       alfa POR color, así que tocar el alfa atenúa sin desteñir la marca. */
+    '  energia *= uPresencia;',
     /* Se multiplica el alfa por el color y no se toca el matiz: el dorado del
        emblema es el de la marca y no lo decide este shader. */
     '  gl_FragColor = vec4(t.rgb * halo, t.a * clamp(energia, 0.0, 1.0));',
@@ -857,9 +1175,31 @@
     gl.bindBuffer(gl.ARRAY_BUFFER, bufNodos);
     gl.bufferData(gl.ARRAY_BUFFER, construirNodos(), gl.STATIC_DRAW);
 
+    /* Las posiciones se guardan en una variable en vez de ir directas al
+       buffer: la red de filamentos se teje a partir de ELLAS. Si se generaran
+       aparte, la telaraña no tocaría las partículas que dice unir. */
+    var datosParticulas = construirParticulas();
     bufParticulas = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, bufParticulas);
-    gl.bufferData(gl.ARRAY_BUFFER, construirParticulas(), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, datosParticulas, gl.STATIC_DRAW);
+
+    progRed = enlazar(VERT_RED, FRAG_RED);
+    aRed.posA    = gl.getAttribLocation(progRed, 'aPosA');
+    aRed.posB    = gl.getAttribLocation(progRed, 'aPosB');
+    aRed.indA    = gl.getAttribLocation(progRed, 'aIndA');
+    aRed.indB    = gl.getAttribLocation(progRed, 'aIndB');
+    aRed.lado    = gl.getAttribLocation(progRed, 'aLado');
+    aRed.along   = gl.getAttribLocation(progRed, 'aAlong');
+    aRed.semilla = gl.getAttribLocation(progRed, 'aSemilla');
+    uRed.proy    = gl.getUniformLocation(progRed, 'uProy');
+    uRed.vista   = gl.getUniformLocation(progRed, 'uVista');
+    uRed.tiempo  = gl.getUniformLocation(progRed, 'uTiempo');
+    uRed.pulso   = gl.getUniformLocation(progRed, 'uPulso');
+    uRed.resolucion = gl.getUniformLocation(progRed, 'uResolucion');
+    uRed.grosor     = gl.getUniformLocation(progRed, 'uSemiGrosorPx');
+    bufRed = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufRed);
+    gl.bufferData(gl.ARRAY_BUFFER, construirRedFilamentos(datosParticulas), gl.STATIC_DRAW);
 
     progLogo = enlazar(VERT_LOGO, FRAG_LOGO);
     aLogo.quad = gl.getAttribLocation(progLogo, 'aQuad');
@@ -870,7 +1210,8 @@
     uLogo.tiempo = gl.getUniformLocation(progLogo, 'uTiempo');
     uLogo.pulso = gl.getUniformLocation(progLogo, 'uPulso');
     uLogo.tex = gl.getUniformLocation(progLogo, 'uTex');
-    cargarTexturaLogo();
+    uLogo.presencia = gl.getUniformLocation(progLogo, 'uPresencia');
+    cargarTexturasEmblemas();
 
     progHolo = enlazar(VERT_HOLO, FRAG_HOLO);
     aHolo.quad = gl.getAttribLocation(progHolo, 'aQuad');
@@ -895,9 +1236,17 @@
      ella y el núcleo simplemente no dibuja su emblema durante esos milisegundos.
      Bloquear el arranque por una imagen sería cambiar un fallo visual pequeño
      por una pantalla negra. */
-  function cargarTexturaLogo() {
-    texLogo = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texLogo);
+  function esPotenciaDeDos(v) { return v > 0 && (v & (v - 1)) === 0; }
+
+  function cargarTexturasEmblemas() {
+    for (var i = 0; i < EMBLEMAS.length; i++) cargarEmblema(EMBLEMAS[i]);
+  }
+
+  /* Cada emblema carga por su cuenta y marca su propia bandera. Si uno falla,
+     los demás siguen dibujándose: un 404 en una marca no debe apagar la otra. */
+  function cargarEmblema(em) {
+    em.tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, em.tex);
     /* Píxel transparente de relleno: si se dibujara antes de tener la imagen,
        no pinta nada en vez de basura. */
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,0]));
@@ -905,21 +1254,35 @@
     var img = new Image();
     img.onload = function () {
       try {
-        gl.bindTexture(gl.TEXTURE_2D, texLogo);
+        gl.bindTexture(gl.TEXTURE_2D, em.tex);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-        /* 145×160 no es potencia de dos. En WebGL1 eso obliga a CLAMP_TO_EDGE
-           y a nada de mipmaps, o la textura sale en negro sin avisar. Se fija
-           igual en WebGL2 —donde no haría falta— para que el mismo código
-           valga en los dos niveles. */
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        texLogoLista = true;
-      } catch (e) { texLogoLista = false; }
+        /* El tamaño manda sobre el filtrado, y aquí conviven dos casos muy
+           distintos:
+
+           · fenix-emblem-160 es 145×160 — NO es potencia de dos. En WebGL1 eso
+             obliga a CLAMP_TO_EDGE y a nada de mipmaps, o la textura sale en
+             negro sin avisar. Como se dibuja casi a su tamaño nativo, no pierde
+             nada por no tenerlos.
+           · mdj_logo es 1024×1024 y se dibuja a ~100 px. Eso es una reducción
+             de 10×: con LINEAR a secas cada cuadro muestrea téxeles distintos
+             y el borde del círculo HIERVE al moverse la cámara. Siendo potencia
+             de dos sí admite mipmaps, que es justo lo que mata ese centelleo.
+
+           De ahí que se decida por imagen y no por una constante global. */
+        if (esPotenciaDeDos(img.width) && esPotenciaDeDos(img.height)) {
+          gl.generateMipmap(gl.TEXTURE_2D);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        } else {
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        }
+        em.lista = true;
+      } catch (e) { em.lista = false; }
     };
-    img.onerror = function () { texLogoLista = false; };
-    img.src = './assets/branding/fenix-emblem-160.png';
+    img.onerror = function () { em.lista = false; };
+    img.src = em.archivo;
   }
 
   function liberarEscena() {
@@ -929,11 +1292,21 @@
       if (progTubos) gl.deleteProgram(progTubos);
       if (progInstancias) gl.deleteProgram(progInstancias);
       if (progLogo) gl.deleteProgram(progLogo);
-      if (texLogo) gl.deleteTexture(texLogo);
+      for (var i = 0; i < EMBLEMAS.length; i++) if (EMBLEMAS[i].tex) gl.deleteTexture(EMBLEMAS[i].tex);
       if (progHolo) gl.deleteProgram(progHolo);
+      if (progRed) gl.deleteProgram(progRed);
+      if (bufRed) gl.deleteBuffer(bufRed);
     } catch (e) { /* contexto ya muerto */ }
     bufTubos = bufIndices = bufQuad = bufNodos = bufParticulas = progTubos = progInstancias = null;
-    progLogo = null; texLogo = null; texLogoLista = false;
+    /* conteoVerticesRed a 0 además de soltar el buffer: el pase de dibujo lo
+       consulta antes de dibujar, así que un contexto perdido no deja una
+       llamada apuntando a un buffer que ya no existe. */
+    progRed = null; bufRed = null; conteoVerticesRed = 0;
+    /* Las banderas se bajan SIEMPRE, aunque el borrado de arriba haya saltado
+       por contexto muerto: si quedaran en true, el primer cuadro tras recuperar
+       el contexto dibujaría con texturas de un contexto que ya no existe. */
+    for (var j = 0; j < EMBLEMAS.length; j++) { EMBLEMAS[j].tex = null; EMBLEMAS[j].lista = false; }
+    progLogo = null;
     progHolo = null; bufHolo = null;
   }
 
@@ -1251,6 +1624,42 @@
     gl.clear(gl.COLOR_BUFFER_BIT);
     stats.llamadasDibujo = 0;
 
+    /* 0 · RED DE FILAMENTOS. Va la PRIMERA, al fondo de todo. Con mezcla
+       aditiva el orden no altera el color —la suma es conmutativa— pero sí
+       ordena la lectura del código: esto es trasfondo, y lo que venga después
+       se dibuja encima. Una sola llamada para toda la telaraña. */
+    if (progRed && conteoVerticesRed > 0) {
+      gl.useProgram(progRed);
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufRed);
+      /* 11 floats por vértice = 44 bytes:
+         posA(3) posB(3) indA(1) indB(1) lado(1) along(1) semilla(1) */
+      var PASO = 44;
+      var att = [
+        [aRed.posA, 3,  0], [aRed.posB, 3, 12], [aRed.indA, 1, 24],
+        [aRed.indB, 1, 28], [aRed.lado, 1, 32], [aRed.along, 1, 36],
+        [aRed.semilla, 1, 40]
+      ];
+      for (var ia = 0; ia < att.length; ia++) {
+        gl.enableVertexAttribArray(att[ia][0]);
+        gl.vertexAttribPointer(att[ia][0], att[ia][1], gl.FLOAT, false, PASO, att[ia][2]);
+        fijarDivisor(att[ia][0], 0);
+      }
+      gl.uniformMatrix4fv(uRed.proy, false, _proy);
+      gl.uniformMatrix4fv(uRed.vista, false, _vista);
+      gl.uniform1f(uRed.tiempo, t);
+      gl.uniform1f(uRed.pulso, pulso);
+      /* Resolución del FRAMEBUFFER, no del CSS: en una pantalla Retina son el
+         doble. Si se pasara la del CSS, los filamentos saldrían a la mitad de
+         grosor exactamente en las pantallas donde se va a presentar. */
+      gl.uniform2f(uRed.resolucion, lienzo.width, lienzo.height);
+      /* SEMI-grosor: el quad se abre a los dos lados, así que 0.9 son ~1.8 px
+         de ancho total. Un poco más que la línea de 1 px de antes, que es lo
+         que se pidió — "un chin más gruesas", no el doble. */
+      gl.uniform1f(uRed.grosor, 0.9);
+      gl.drawArrays(gl.TRIANGLES, 0, conteoVerticesRed);
+      stats.llamadasDibujo++;
+    }
+
     gl.useProgram(progTubos);
     gl.bindBuffer(gl.ARRAY_BUFFER, bufTubos);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufIndices);
@@ -1283,11 +1692,20 @@
     dibujarLote(bufNodos, ESTACIONES.length, nodoEnfocado);
 
 
-    /* 4 · EMBLEMA DEL NÚCLEO. Sustituye a la malla procedural del Fénix: un
-       billboard con el PNG oficial, flotando en el corazón de la esfera
-       central con halo aditivo y respiración senoidal. Solo se dibuja cuando
-       la textura ya llegó. */
-    if (texLogoLista) {
+    /* 4 · EMBLEMAS DE MARCA. Billboards con los PNG oficiales, flotando en el
+       corazón de su estación con halo aditivo y respiración senoidal. Cada uno
+       se dibuja solo cuando SU textura ya llegó, de forma independiente.
+
+       El programa, el buffer, el atributo y las dos matrices se fijan UNA vez
+       fuera del bucle: son idénticos para todos los emblemas y volver a
+       enviarlos por cada uno sería trabajo de GPU regalado. Dentro del bucle
+       solo cambia lo que de verdad cambia — posición, tamaño y textura. */
+    var dibujaAlguno = false;
+    for (var ie = 0; ie < EMBLEMAS.length; ie++) {
+      if (EMBLEMAS[ie].lista) { dibujaAlguno = true; break; }
+    }
+
+    if (dibujaAlguno) {
       gl.useProgram(progLogo);
       gl.bindBuffer(gl.ARRAY_BUFFER, bufQuad);
       gl.enableVertexAttribArray(aLogo.quad);
@@ -1295,15 +1713,25 @@
       fijarDivisor(aLogo.quad, 0);
       gl.uniformMatrix4fv(uLogo.proy, false, _proy);
       gl.uniformMatrix4fv(uLogo.vista, false, _vista);
-      gl.uniform3f(uLogo.pos, ESTACIONES[0].pos[0], ESTACIONES[0].pos[1], ESTACIONES[0].pos[2]);
-      gl.uniform1f(uLogo.tam, 1.35);
       gl.uniform1f(uLogo.tiempo, t);
       gl.uniform1f(uLogo.pulso, pulso);
       gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, texLogo);
       gl.uniform1i(uLogo.tex, 0);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      stats.llamadasDibujo++;
+
+      for (var je = 0; je < EMBLEMAS.length; je++) {
+        var emb = EMBLEMAS[je];
+        if (!emb.lista) continue;
+        var pe = ESTACIONES[emb.estacion].pos;
+        gl.uniform3f(uLogo.pos, pe[0], pe[1], pe[2]);
+        /* Con crece = 0 y realce = 0 estas dos líneas dan exactamente el mismo
+           valor de siempre, así que el emblema del núcleo se dibuja idéntico a
+           antes de existir la jerarquía. Era el requisito. */
+        gl.uniform1f(uLogo.tam, emb.tam * (1 + emb.crece * emb.prom));
+        gl.uniform1f(uLogo.presencia, emb.base + emb.realce * emb.prom);
+        gl.bindTexture(gl.TEXTURE_2D, emb.tex);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        stats.llamadasDibujo++;
+      }
     }
 
     /* 5 · HOLOGRAMA DE ELIXIS. Se omite entero cuando está oculto: sin foco no
@@ -1416,6 +1844,17 @@
          cortarse en seco, que es lo que delata a un interruptor. */
       var objetivoVoz = vozHablando ? 1 : 0;
       vozActiva += (objetivoVoz - vozActiva) * Math.min(1, dt * 5.0);
+      /* PROTAGONISMO DE LOS EMBLEMAS SUBORDINADOS. Sube mientras el recorrido
+         LLEGA a la estación, no de golpe al aterrizar: por eso es un fundido y
+         a 2.2 —más lento que el holograma— para que se lea como algo que se
+         enciende al acercarse y no como un interruptor. Los emblemas de realce
+         0, o sea el núcleo, ni se tocan: su presencia es constante por regla. */
+      for (var ke = 0; ke < EMBLEMAS.length; ke++) {
+        var eb = EMBLEMAS[ke];
+        if (eb.realce <= 0 && eb.crece <= 0) continue;
+        var objProm = (nodoEnfocado === eb.estacion) ? 1 : 0;
+        eb.prom += (objProm - eb.prom) * Math.min(1, dt * 2.2);
+      }
       dibujarEscena(t);
       colocarEtiquetas();
     } catch (e) {
@@ -1543,6 +1982,10 @@
         return;
       }
       if (k === 'v' || k === 'V') { alternarNarracion(); return; }
+      /* G de «guiado». No se usa V porque ya es la narración suelta, ni M porque
+         es el micrófono del analizador de audio: son tres cosas distintas y
+         reutilizar una tecla las habría fundido. */
+      if (k === 'g' || k === 'G') { navAlternar(); return; }
       if (k === 'm' || k === 'M') { alternarMicrofono(); return; }
       if (k === 'r' || k === 'R') { alternarRotacionLibre(); return; }
       if (k === 'f' || k === 'F') { alternarPantallaCompleta(); return; }
@@ -1713,6 +2156,420 @@
     actualizarHud();
   }
 
+  /* ═══════════════════════════════════════════════════════════════════════════
+     FEAT-3D-10 · NAVEGADOR DE VOZ, RECORRIDO GUIADO Y Q&A EN VIVO
+     ───────────────────────────────────────────────────────────────────────────
+     No toca ni un shader ni una geometría: se monta ENCIMA de lo que ya existe
+     —WAYPOINTS, irANodo(), narrarEstacion(), los eventos elixis:speak:*— y solo
+     decide CUÁNDO se dispara cada cosa.
+
+     ELECCIÓN DE ENDPOINT, y no es un detalle: el Q&A va contra `booth-chat`, no
+     contra `elixis-chat`. `elixis-chat` valida `Authorization: Bearer <token de
+     usuario>` con auth.getUser(), y esta página está DESACOPLADA a propósito —no
+     monta cabecera ni sesión—, así que allí todo Q&A moriría en un 401.
+     `booth-chat` declara `verify_jwt = false` en config.toml, acepta el mismo
+     body `{ message, history }` y devuelve el mismo `{ reply }`. Mismo contrato,
+     y funciona sin sesión. Si algún día el ponente va autenticado, cambiar de
+     endpoint es una constante.
+
+     EL RIESGO REAL DE ESTE MÓDULO ES LA REALIMENTACIÓN: escucha continua + voz
+     sintetizada por los mismos altavoces = el micro transcribe a Elixis y el
+     recorrido se auto-ordena "siguiente" solo. Por eso el reconocimiento se
+     SUSPENDE mientras se habla, colgado de elixis:speak:start / :end.
+     ═══════════════════════════════════════════════════════════════════════════ */
+
+  var NAV_ENDPOINT = 'booth-chat';
+
+  var NAV_ESTADO = {
+    APAGADO:     'apagado',
+    VOLANDO:     'volando',
+    EXPLICANDO:  'explicando',
+    ESPERANDO:   'esperando',
+    ESCUCHANDO:  'escuchando',
+    CONSULTANDO: 'consultando'
+  };
+
+  /* Rótulos de sala. Son los que se proyectan, así que van en el idioma del
+     público y no en el del código. */
+  var NAV_ROTULO = {
+    apagado:     '',
+    volando:     'Volando a la zona…',
+    explicando:  'Explicando…',
+    esperando:   '¿Continuamos? Di «siguiente»',
+    sin_micro:   '¿Continuamos? Pulsa → o G',
+    escuchando:  'Escuchando…',
+    consultando: 'Consultando a ELIXIS…'
+  };
+
+  /* ─── MAPEO SEMÁNTICO DE LAS 5 ESTACIONES (decisión del PO) ───────────────
+     La escena se queda en CINCO nodos macro a propósito: añadir uno por cada
+     concepto la ensuciaría. Así que cada estación ABARCA más de lo que dice su
+     rótulo, y ese alcance tiene que viajar a la IA — si no, ELIXIS contesta
+     sobre la etiqueta y no sobre el negocio. La Agenda IA no tiene nodo propio:
+     vive en la estación 1, y sin este mapa nadie se lo diría.
+
+     'alias' es lo que la sala PUEDE NOMBRAR en voz alta. Un director de venue
+     va a decir «SoundForTips» o «la agenda», no «motor financiero»; sin alias,
+     esos saltos fallarían aunque el concepto exista en la escena. */
+  var NAV_CONTEXTO = {
+    nucleo: {
+      slug: 'hub_fenix',
+      alcance: 'Red de artistas y ecosistema: el roster de DJs, cómo se descubren y se contratan, y la plataforma que lo orquesta todo.',
+      alias: ['artistas', 'roster', 'red de artistas', 'ecosistema', 'hub', 'fenix', 'plataforma']
+    },
+    crm: {
+      slug: 'crm_leads',
+      alcance: 'Captura de clientes y AGENDA IA: entrada de solicitudes, cotización automática, seguimiento de eventos, prospección activa y recordatorios de cumpleaños para generar reservas recurrentes y fidelizar al cliente.',
+      alias: ['agenda', 'agenda ia', 'leads', 'clientes', 'crm', 'cumpleanos', 'prospeccion', 'seguimiento']
+    },
+    elixis: {
+      slug: 'elixis_ai',
+      alcance: 'Inteligencia conversacional y soporte: el agente que atiende, negocia, prepara propuestas y acompaña al cliente y al DJ, siempre con aprobación humana en las decisiones sensibles.',
+      alias: ['elixis', 'inteligencia', 'agente', 'soporte', 'asistente', 'ia']
+    },
+    finanzas: {
+      slug: 'motor_financiero',
+      alcance: 'Cobros, suscripciones y SOUNDFORTIPS: depósitos en custodia, reparto automático al cierre, contratos firmados, suscripciones recurrentes y propinas del público en vivo.',
+      alias: ['finanzas', 'financiero', 'cobros', 'pagos', 'suscripciones', 'soundfortips', 'sound for tips', 'propinas', 'stripe', 'escrow']
+    },
+    mdjpro: {
+      slug: 'mdjpro',
+      alcance: 'MDJPRO (Magic DJ Pro), la app de escritorio para macOS que el DJ descarga a su ordenador: organiza y audita la librería musical, limpia metadatos y deja la cabina lista antes del evento.',
+      alias: ['mdjpro', 'magic dj pro', 'libreria', 'librerias', 'app', 'escritorio', 'cabina', 'booth', 'serato']
+    }
+  };
+
+  function navCtx(i) {
+    var e = ESTACIONES[i];
+    if (!e) return null;
+    return NAV_CONTEXTO[e.id] || { slug: e.id, alcance: e.narracion || '', alias: [] };
+  }
+
+  var nav = {
+    activo: false,
+    estado: NAV_ESTADO.APAGADO,
+    rec: null,
+    reconociendo: false,
+    suspendido: false,
+    historial: [],
+    ultimaPregunta: '',
+    pendienteAvance: false,
+    /* Se marca cuando el navegador deniega el micrófono. NO apaga el recorrido:
+       solo desactiva la ENTRADA de voz. Ver el onerror del reconocimiento. */
+    sttBloqueado: false
+  };
+
+  /* Acentos y mayúsculas fuera: "Dale" y "dále" tienen que valer lo mismo. */
+  function navNormalizar(s) {
+    return String(s || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[¿?¡!.,;:]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  var NAV_AVANZAR = ['avanzar', 'avanza', 'siguiente', 'continuar', 'continua',
+                     'dale', 'proximo', 'proxima', 'sigue', 'adelante', 'vamos'];
+  var NAV_REPETIR = ['repite', 'repetir', 'repitelo', 'otra vez', 'de nuevo',
+                     'no entendi', 'puedes repetir'];
+  var NAV_PARAR   = ['para', 'pausa', 'pausar', 'detente', 'alto', 'espera',
+                     'silencio', 'callate'];
+
+  function navContiene(txt, lista) {
+    for (var i = 0; i < lista.length; i++) {
+      /* Palabra suelta o frase, pero delimitada: sin esto "vamos" dispararía
+         dentro de "vamos a ver qué pasa si...", que es una pregunta, no una
+         orden de avance. */
+      var re = new RegExp('(^| )' + lista[i].replace(/ /g, ' ') + '( |$)');
+      if (re.test(txt)) return true;
+    }
+    return false;
+  }
+
+  /* "ve a mdjpro", "vamos al hub", "llévame a finanzas". Se busca contra el
+     nombre, el subtítulo y el id de cada estación. */
+  function navBuscarEstacion(txt) {
+    var m = txt.match(/(?:ve|vete|vamos|llevame|salta|ir)\s+(?:a|al|hacia)\s+(.+)$/);
+    var aguja = m ? m[1] : null;
+    if (!aguja) return -1;
+    for (var i = 0; i < ESTACIONES.length; i++) {
+      var e = ESTACIONES[i];
+      var ctx = NAV_CONTEXTO[e.id];
+      var alias = ctx && ctx.alias ? ctx.alias.join(' ') : '';
+      /* Los alias son la mitad importante: la sala nombra conceptos
+         ("soundfortips", "la agenda"), no rótulos de estación. */
+      var campos = navNormalizar(e.nombre + ' ' + e.subtitulo + ' ' + e.id + ' ' + alias);
+      var palabras = aguja.split(' ');
+      for (var k = 0; k < palabras.length; k++) {
+        if (palabras[k].length >= 4 && campos.indexOf(palabras[k]) >= 0) return i;
+      }
+    }
+    return -1;
+  }
+
+  function navFijarEstado(e) {
+    nav.estado = e;
+    var el = document.querySelector('[data-nm3d-vozestado]');
+    if (el) {
+      el.textContent = NAV_ROTULO[e] || '';
+      el.setAttribute('data-estado', e);
+    }
+    var caja = document.querySelector('[data-nm3d-vozcaja]');
+    if (caja) caja.hidden = (e === NAV_ESTADO.APAGADO);
+  }
+
+  /* ─── Reconocimiento de voz ─────────────────────────────────────────────── */
+
+  function navSttDisponible() {
+    return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  }
+
+  function navCrearRec() {
+    var C = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!C) return null;
+    var r = new C();
+    r.lang = document.documentElement.lang || 'es-ES';
+    r.continuous = true;
+    /* Sin resultados intermedios: en una sala con ruido, los parciales cambian
+       de opinión tres veces por frase y disparaban comandos a medio oír. */
+    r.interimResults = false;
+    r.maxAlternatives = 1;
+
+    r.onresult = function (ev) {
+      for (var i = ev.resultIndex; i < ev.results.length; i++) {
+        if (!ev.results[i].isFinal) continue;
+        navProcesar(ev.results[i][0].transcript || '');
+      }
+    };
+    /* Chrome CIERRA el reconocimiento tras unos segundos de silencio, aunque
+       continuous sea true. Sin este reenganche la escucha "continua" dura menos
+       de un minuto y luego el navegador se queda mudo sin avisar. */
+    r.onend = function () {
+      nav.reconociendo = false;
+      if (nav.activo && !nav.suspendido) navEscuchar();
+    };
+    r.onerror = function (ev) {
+      nav.reconociendo = false;
+      /* 'no-speech' y 'aborted' son rutina, no fallos: no merecen apagar nada. */
+      if (ev && (ev.error === 'not-allowed' || ev.error === 'service-not-allowed')) {
+        /* EL PERMISO DENEGADO NO MATA EL RECORRIDO. Antes ponía activo = false y
+           ahí estaba el fallo: el recorrido guiado —vuelo de cámara, bloqueo en
+           estación, narración— no necesita micrófono para nada, y un permiso
+           denegado lo apagaba entero. Ahora solo se marca la ENTRADA de voz como
+           bloqueada: el ponente sigue conduciendo con teclado y la sala sigue
+           oyendo a Elixis. Degrada, no muere.
+           Y se deja de reintentar: sin esto, onend reengancha en bucle y Chrome
+           acumula errores cada pocos cientos de milisegundos. */
+        nav.sttBloqueado = true;
+        navFijarEstado(NAV_ESTADO.ESPERANDO);
+      }
+    };
+    return r;
+  }
+
+  function navEscuchar() {
+    if (!nav.activo || nav.suspendido || nav.reconociendo) return;
+    if (nav.sttBloqueado) return;   // permiso denegado: no se insiste en bucle
+    if (!nav.rec) nav.rec = navCrearRec();
+    if (!nav.rec) return;
+    try { nav.rec.start(); nav.reconociendo = true; }
+    catch (e) { nav.reconociendo = false; }   // ya estaba arrancado
+  }
+
+  function navSuspender() {
+    nav.suspendido = true;
+    if (nav.rec && nav.reconociendo) { try { nav.rec.abort(); } catch (e) {} }
+    nav.reconociendo = false;
+  }
+
+  function navReanudar() {
+    nav.suspendido = false;
+    if (nav.activo) navEscuchar();
+  }
+
+  /* ─── Máquina de estados del recorrido ──────────────────────────────────── */
+
+  function navIrAEstacion(i) {
+    if (i < 0 || i >= ESTACIONES.length) return;
+    navFijarEstado(NAV_ESTADO.VOLANDO);
+    irANodo(i);
+    /* El vuelo es una persecución exponencial, no una animación con final
+       declarado, así que no hay evento de "llegué". Se le da el tiempo que la
+       cámara tarda en asentarse y entonces se explica. */
+    setTimeout(function () {
+      if (!nav.activo) return;
+      navExplicar();
+    }, 2600);
+  }
+
+  function navExplicar() {
+    if (nodoEnfocado < 0) return;
+    navFijarEstado(NAV_ESTADO.EXPLICANDO);
+    /* Recorrido detenido durante la explicación: la cámara se queda clavada en
+       la estación. Un plano que sigue viajando mientras se habla obliga a la
+       sala a elegir entre mirar o escuchar. */
+    recorrido.activo = false;
+    var r = narrarEstacion(nodoEnfocado);
+    if (r !== 'narrando') navEsperar();   // sin voz, no se queda colgado
+  }
+
+  function navEsperar() {
+    /* Sin micrófono el rótulo no puede decir "di siguiente": pedirle a la sala
+       un comando de voz que el navegador no va a oír es peor que no pedir nada. */
+    navFijarEstado(nav.sttBloqueado ? 'sin_micro' : NAV_ESTADO.ESPERANDO);
+    navReanudar();
+  }
+
+  function navAvanzar() {
+    var sig = (nodoEnfocado + 1) % ESTACIONES.length;
+    navIrAEstacion(sig);
+  }
+
+  /* ─── Puente con la IA ──────────────────────────────────────────────────── */
+
+  function navUrlFuncion() {
+    if (typeof window.mdbSupabaseFunctionUrl === 'function') {
+      return window.mdbSupabaseFunctionUrl(NAV_ENDPOINT);
+    }
+    return null;
+  }
+
+  function navCabeceras() {
+    var h = { 'Content-Type': 'application/json' };
+    if (typeof window.mdjSupabaseAnonInvokeHeaders === 'function') {
+      var extra = window.mdjSupabaseAnonInvokeHeaders() || {};
+      for (var k in extra) if (Object.prototype.hasOwnProperty.call(extra, k)) h[k] = extra[k];
+    }
+    return h;
+  }
+
+  function navPreguntar(texto) {
+    var url = navUrlFuncion();
+    var idx = nodoEnfocado >= 0 ? nodoEnfocado : 0;
+    var e = ESTACIONES[idx];
+    var ctx = navCtx(idx);
+    var slug = ctx.slug;
+
+    if (!url) { navResponderLocal(e); return; }
+
+    navFijarEstado(NAV_ESTADO.CONSULTANDO);
+    navSuspender();   // no se escucha mientras se consulta ni mientras se responde
+
+    /* El contexto de la zona viaja EN el mensaje. booth-chat tiene su propia
+       persona y su propio system prompt: no se le sobreescribe, se le da el
+       dato de dónde está parado el recorrido y con qué criterio contestar. */
+    var mensaje =
+      'CONTEXTO DE ESCENA — recorrido 3D en vivo ante directores de venue.\n' +
+      'active_node: ' + slug + '\n' +
+      'zona: ' + e.nombre + ' · ' + e.subtitulo + '\n' +
+      'qué hace esta zona: ' + (e.narracion || '') + '\n' +
+      /* El ALCANCE es lo que evita que ELIXIS conteste solo sobre el rótulo: la
+         Agenda IA y SoundForTips no tienen nodo propio y sin esta línea nadie
+         le diría que existen ni dónde viven. */
+      'ALCANCE COMPLETO DE ESTA ZONA (puede abarcar más que su rótulo): ' + ctx.alcance + '\n\n' +
+      'PREGUNTA DEL PÚBLICO: "' + texto + '"\n\n' +
+      'CÓMO RESPONDER: directo y humano, 2 o 3 frases, en el idioma de la ' +
+      'pregunta. Orientado al BENEFICIO DE NEGOCIO —más reservas, automatización, ' +
+      'ahorro de tiempo, fidelización—, no a la arquitectura técnica. Nada de ' +
+      'jerga ni de nombres de tablas. Cierra SIEMPRE con esta pregunta literal: ' +
+      '"¿Quieres saber más sobre esto o avanzamos a la siguiente zona?"';
+
+    fetch(url, {
+      method: 'POST',
+      headers: navCabeceras(),
+      body: JSON.stringify({ message: mensaje, history: nav.historial.slice(-8) })
+    })
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (data) {
+        var respuesta = data && typeof data.reply === 'string' ? data.reply : '';
+        if (!respuesta) { navResponderLocal(e); return; }
+        nav.historial.push({ role: 'user', content: texto });
+        nav.historial.push({ role: 'assistant', content: respuesta });
+        navFijarEstado(NAV_ESTADO.EXPLICANDO);
+        if (vozDisponible()) window.elixisSpeak(respuesta);
+        else navEsperar();
+      })
+      .catch(function () { navResponderLocal(e); });
+  }
+
+  /* Plan B sin red. Una pregunta que se queda sin respuesta en mitad de una
+     ponencia es peor que una respuesta corta: se contesta con lo que la propia
+     estación ya sabe decir de sí misma y se devuelve el turno. */
+  function navResponderLocal(e) {
+    var texto = (e.narracion || e.nombre) +
+      ' ¿Quieres saber más sobre esto o avanzamos a la siguiente zona?';
+    navFijarEstado(NAV_ESTADO.EXPLICANDO);
+    if (vozDisponible()) window.elixisSpeak(texto);
+    else navEsperar();
+  }
+
+  /* ─── Enrutado de lo que se oye ─────────────────────────────────────────── */
+
+  function navProcesar(bruto) {
+    if (!nav.activo) return;
+    var txt = navNormalizar(bruto);
+    if (!txt) return;
+
+    if (navContiene(txt, NAV_PARAR)) {
+      if (vozHablando && typeof window.elixisStopSpeaking === 'function') window.elixisStopSpeaking();
+      navEsperar();
+      return;
+    }
+    if (navContiene(txt, NAV_REPETIR)) { navExplicar(); return; }
+
+    /* EL DESTINO CONCRETO SE COMPRUEBA ANTES QUE EL AVANCE GENÉRICO, y el orden
+       no es cosmético: "vamos" está en la lista de avance, así que "vamos al
+       motor financiero" disparaba un «siguiente» y saltaba a la estación
+       equivocada. Un destino nombrado es siempre más específico que un
+       "continuar", así que gana. */
+    var destino = navBuscarEstacion(txt);
+    if (destino >= 0) { navIrAEstacion(destino); return; }
+
+    if (navContiene(txt, NAV_AVANZAR)) { navAvanzar(); return; }
+
+    /* No era una orden: es una pregunta del público. */
+    nav.ultimaPregunta = bruto;
+    navPreguntar(bruto);
+  }
+
+  /* ─── Arranque / parada ─────────────────────────────────────────────────── */
+
+  function navIniciar() {
+    if (nav.activo) return 'ya activo';
+    if (!navSttDisponible()) return 'este navegador no reconoce voz';
+    nav.activo = true;
+    nav.historial = [];
+    /* Se reintenta el permiso en cada arranque: el ponente puede haberlo
+       concedido entre una prueba y la función. */
+    nav.sttBloqueado = false;
+    navIrAEstacion(nodoEnfocado >= 0 ? nodoEnfocado : 0);
+    return 'navegador de voz activo';
+  }
+
+  function navDetener() {
+    nav.activo = false;
+    navSuspender();
+    if (vozHablando && typeof window.elixisStopSpeaking === 'function') window.elixisStopSpeaking();
+    navFijarEstado(NAV_ESTADO.APAGADO);
+    return 'navegador de voz detenido';
+  }
+
+  function navAlternar() { return nav.activo ? navDetener() : navIniciar(); }
+
+  /* Los dos eventos que evitan la realimentación. Van aquí y no dentro del
+     reconocimiento porque el motor de voz es un módulo aparte y este es el
+     único punto donde ambos se cruzan. */
+  window.addEventListener('elixis:speak:start', function () {
+    if (nav.activo) navSuspender();
+  });
+  window.addEventListener('elixis:speak:end', function () {
+    if (!nav.activo) return;
+    /* Al callar Elixis siempre se vuelve a esperar confirmación: es la regla de
+       retorno obligatorio al recorrido. */
+    navEsperar();
+  });
+
   window.mdjNeuralMatrix3D = {
     stats: function () {
       var c = {};
@@ -1721,6 +2578,13 @@
       c.instancing = modoInstancing; c.audioActivo = audioActivo; c.micActivo = micActivo; c.pulso = pulso;
       c.banda = { graves: banda.graves, medios: banda.medios, agudos: banda.agudos };
       c.estaciones = ESTACIONES.length; c.nodoEnfocado = nodoEnfocado;
+      /* Diagnóstico de la red de filamentos: sin esto, "no la veo" y "no se
+         está dibujando" son indistinguibles desde fuera. */
+      /* /6 y no /2: desde que los filamentos son cintas, cada enlace son dos
+         triángulos = 6 vértices. Con el divisor viejo el contador inflaba los
+         enlaces por tres y hacía creer que la malla había triplicado. */
+      c.red = { vertices: conteoVerticesRed, enlaces: conteoVerticesRed / 6, programa: !!progRed };
+      c.particulas = PARTICULAS;
       c.recorridoActivo = recorrido.activo; c.rotacionLibre = rotacionLibre;
     c.visHolograma = +visHolograma.toFixed(3);
     c.vozHablando = vozHablando; c.vozActiva = +vozActiva.toFixed(3);
@@ -1746,6 +2610,25 @@
     alternarRotacionLibre: alternarRotacionLibre,
     narrarEstacion: narrarEstacion,
     alternarNarracion: alternarNarracion,
+    /* FEAT-3D-10 · navegador de voz. Se expone entero para poder probarlo SIN
+       micrófono: simularVoz() acepta un transcript escrito, que es la única
+       forma de verificar el enrutado de comandos y el Q&A de forma
+       determinista. Con micro real la prueba depende del ruido de la sala. */
+    iniciarNavegadorVoz: navIniciar,
+    detenerNavegadorVoz: navDetener,
+    alternarNavegadorVoz: navAlternar,
+    simularVoz: function (texto) { navProcesar(texto); return nav.estado; },
+    estadoVoz: function () {
+      return {
+        activo: nav.activo, estado: nav.estado, reconociendo: nav.reconociendo,
+        suspendido: nav.suspendido, sttDisponible: navSttDisponible(),
+        endpoint: NAV_ENDPOINT, urlFuncion: navUrlFuncion(),
+        nodo: nodoEnfocado,
+        activeNode: nodoEnfocado >= 0 ? navCtx(nodoEnfocado).slug : null,
+        alcance: nodoEnfocado >= 0 ? navCtx(nodoEnfocado).alcance : null,
+        turnosHistorial: nav.historial.length
+      };
+    },
     estaciones: function () {
       return ESTACIONES.map(function (e) {
         /* ocupado: el núcleo lo llena el Fénix procedural y ELIXIS sus anillos
