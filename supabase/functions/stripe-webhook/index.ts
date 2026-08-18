@@ -361,14 +361,52 @@ serve(async (req) => {
 
                 // ── MDJPRO App standalone — does NOT grant MDJ Platform PRO ──
                 if (productLine === "mdjpro_app") {
+                    // ── CANAL 1 · RENTA INDEPENDIENTE ($19.99/mes) ───────────
+                    // Antes emitía con plan_source="manual" como parche, y ESO
+                    // NO FUNCIONABA: 'manual' no activa nada. Ni
+                    // _mdjpro_standalone_active (exige 'mdjpro_standalone') ni
+                    // _mdjpro_miamidjbeat_pro_active (exige plan PRO en
+                    // dj_profiles, que aquí NO se toca a propósito). Resultado:
+                    // effective_premium=false y la puerta marcaba la licencia
+                    // SUSPENDIDA. El cliente pagaba y el Library Wizard seguía
+                    // cerrado — recibía una clave que no servía.
+                    //
+                    // Ahora se emite con su plan_source real y se le entrega la
+                    // suscripción de Stripe, que es lo que la función usa como
+                    // prueba de pago (no puede usar effective_status: sería
+                    // circular). Con eso quedan además ligados el kill-switch y
+                    // la caducidad al periodo facturado.
+                    const STRIPE_KEY_APP = Deno.env.get("STRIPE_SECRET_KEY")!;
+                    let periodEndIso: string | null = null;
+                    let customerId: string | null =
+                        typeof session.customer === "string" ? session.customer : null;
+                    try {
+                        const r = await fetch(`https://api.stripe.com/v1/subscriptions/${subId}`, {
+                            headers: { Authorization: `Bearer ${STRIPE_KEY_APP}` },
+                        });
+                        const s = await r.json();
+                        if (s?.current_period_end) {
+                            periodEndIso = new Date(s.current_period_end * 1000).toISOString();
+                        }
+                        if (!customerId && typeof s?.customer === "string") customerId = s.customer;
+                    } catch (e) {
+                        // Si Stripe no responde, se emite igual: dejar sin licencia a
+                        // quien ya pagó es peor que emitirla sin fecha de caducidad.
+                        // El heartbeat y el kill-switch siguen gobernando el acceso.
+                        console.error(`[Webhook] mdjpro_app: no se pudo leer la suscripción ${subId}`, e);
+                    }
+
                     console.log(
-                        `[Webhook] mdjpro_app checkout | user=${userId} | subId=${subId} — issuing MDJPRO license (plan_source=manual)`,
+                        `[Webhook] mdjpro_app checkout | user=${userId} | subId=${subId} — issuing MDJPRO license (plan_source=mdjpro_standalone)`,
                     );
                     // SECURITY WALL: intentionally no dj_profiles.plan update here.
                     // App-only purchase does not grant MDJ Platform PRO Artist tier.
                     const licenseResult = await supabase.rpc("mdjpro_issue_license", {
                         p_uid: userId,
-                        p_plan_source: "manual",
+                        p_plan_source: "mdjpro_standalone",
+                        p_stripe_subscription_id: subId,
+                        p_stripe_customer_id: customerId,
+                        p_period_end: periodEndIso,
                     });
                     if (licenseResult.error) {
                         console.error(
