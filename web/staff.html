@@ -59,14 +59,14 @@
       letter-spacing:.10em;text-transform:uppercase;color:var(--gold-lt);white-space:nowrap;}
 
     /* ── Menú PRINCIPAL (tira dorada grande, réplica del estilo del perfil artista) ── */
-    .staff-topnav{display:flex;align-items:stretch;justify-content:center;gap:0;padding:4px clamp(16px,4vw,56px) 8px;
+    .staff-topnav{display:flex;align-items:stretch;justify-content:space-between;gap:0;padding:4px clamp(12px,2vw,32px) 8px;
       background:transparent;border-bottom:none;
       overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;
       overscroll-behavior-x:contain;}
     .staff-topnav button{background:none;border:none;color:rgba(255,255,255,.88);
-      font-size:clamp(16px,1.4vw,20px);font-weight:800;letter-spacing:.14em;cursor:pointer;text-transform:uppercase;
+      font-size:clamp(13px,1.05vw,16px);font-weight:800;letter-spacing:.07em;cursor:pointer;text-transform:uppercase;
       position:relative;transition:color .2s ease;display:flex;align-items:center;justify-content:center;
-      padding:4px clamp(4px,0.45vw,7px) 8px;white-space:nowrap;flex-shrink:0;min-width:12ch;font-family:inherit;}
+      padding:4px clamp(4px,0.45vw,7px) 8px;white-space:nowrap;flex-shrink:0;font-family:inherit;}
     .staff-topnav button + button::before{content:"/";color:rgba(197,160,89,.4);font-weight:500;margin-right:.68em;line-height:1;}
     .staff-topnav .tab-help{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;
       border:1.5px solid currentColor;border-radius:50%;font-size:9px;font-weight:800;letter-spacing:0;margin-left:7px;line-height:1;}
@@ -78,7 +78,7 @@
     .staff-topnav button.active::after{opacity:1;}
     @media (max-width:768px){
       .staff-topnav{justify-content:flex-start;padding:4px 10px 6px;}
-      .staff-topnav button{font-size:13px;letter-spacing:.10em;padding:4px 8px 8px;min-width:12ch;}
+      .staff-topnav button{font-size:13px;letter-spacing:.10em;padding:4px 8px 8px;}
     }
 
     /* ── Main + módulos/vistas ── */
@@ -672,9 +672,7 @@
 
     function staffTopnavHtml(role){
       var start=
-        '<button type="button" data-href="./index.html">Inicio</button>'+
-        '<button type="button" data-href="./academia.html">Academia</button>'+
-        '<button type="button" data-href="./shop.html">Shop</button>';
+        '<button type="button" data-href="./academia.html">Academia</button>';
       if(role==='owner'){
         return start+
           '<button type="button" data-top="agenda">Agenda</button>'+
@@ -683,8 +681,7 @@
           '<button type="button" data-top="cashflow">Cash Flow</button>'+
           '<button type="button" data-top="miperfil">Mi Perfil <span class="tab-help">?</span></button>'+
           '<button type="button" data-top="gobernanza" class="active">Staff</button>'+
-          '<button type="button" data-top="elixis">Fénix AI</button>'+
-          '<button type="button" class="tab-sealed" disabled>Road Map <span class="tab-lock">🔒</span></button>';
+          '<button type="button" data-top="elixis">Fénix AI</button>';
       }
       if(role==='seller'){
         return start+

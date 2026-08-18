@@ -12,6 +12,483 @@
   'use strict';
   console.info('[Header] build 20260603-buyer-nav-html-only');
 
+  /* ══ MDJB 2026-08-16 · NORMALIZADOR DE SLOTS CANÓNICOS ══════════════════════
+     #mainNav se declara a mano en 44 páginas y había derivado a 5 variantes con
+     entre 0 y 12 hijos: 17 páginas con 8, una con 9, veinte con 10, cinco con 12.
+     Eso es la causa real de que la barra cambie al navegar, y lo que impide una
+     rejilla fija — los sobrantes caen a una segunda fila que overflow:hidden tapa.
+
+     A partir de aquí el header GOBIERNA la barra: deja exactamente los 8 slots
+     canónicos, en orden, cada uno marcado con data-mdj-slot="1..8" para que el CSS
+     pueda direccionarlos por posición sin depender del HTML de cada página.
+
+     No reescribe los <a> existentes: los reutiliza tal cual (conserva href, clases
+     e ids propios de cada página) y sólo los reordena. Crea los que falten y retira
+     los que no son canónicos. Idempotente: correr dos veces no cambia nada.
+     Corre antes que cualquier otro pase de navegación. */
+  var MDJ_NAV_SLOTS = [
+    { s: 1, key: 'nav-home',     nav: 'home',      href: './index.html',   txt: 'Inicio' },
+    { s: 2, key: 'nav-services', nav: 'services',  href: './rentals.html', txt: 'Servicios' },
+    { s: 3, key: 'nav-rentals',  nav: 'venues',    href: './events.html',  txt: 'Eventos' },
+    { s: 4, key: 'nav-shop',     nav: 'shop',      href: './shop.html',    txt: 'Shop',
+      alias: ['shop'] },
+    { s: 5, key: 'nav-config',   nav: 'config',    href: './account-profile.html', txt: '⚙️ CONFIG',
+      id: 'mainNav-config-link', cls: 'mdj-config-mainnav mdj-mainnav-reserved-slot', reserved: true },
+    { s: 6, key: 'nav-jobs',     nav: 'jobs',      href: './jobs.html',    txt: 'Trabajos' },
+    { s: 7, key: 'nav-contact',  nav: 'contact',   href: './contact.html', txt: 'Contacto' },
+    /* Decisión PO 2026-08-16: MI PERFIL es la etiqueta ÚNICA del slot 8 para todos
+       los roles. MI PORTAL se elimina del producto. El texto nunca cambia; cambia el
+       destino: cliente→su cuenta, artista→su portal, staff→staff, invitado→login. */
+    { s: 8, key: 'nav-my-profile', nav: 'mi-portal', href: './login.html',  txt: 'MI PERFIL',
+      id: 'mainNav-mi-portal-link', cls: 'mdj-mi-portal-mainnav mdj-mi-portal-gold',
+      alias: ['mi-portal', 'header-mi-portal'], navAlias: ['my-profile', 'profile'] },
+    /* Slot 9 · MRM IA — Master Road Map IA (decisión PO 2026-08-16). Visible para
+       todos los roles:
+       el mapa se adapta a quien entra y enseña sólo lo que a ese rol le compete. */
+    { s: 9, key: 'nav-roadmap',  nav: 'roadmap',   href: './road-map.html', txt: 'MRM IA',
+      id: 'mainNav-roadmap-link', cls: 'mdj-roadmap-mainnav' }
+  ];
+
+  /* ── Resolvedor ÚNICO del destino de MI PERFIL (decisión PO 2026-08-16) ──
+     El texto del slot 8 nunca cambia; cambia a dónde lleva:
+       owner / staff  → ./staff.html         (ahí viven Academia, DJ Tools,
+                                              Staff, Cash Flow y Fénix AI)
+       artista        → ./dj-profile.html?id=<uid>
+       cliente        → ./client-portal.html
+       invitado       → ./login.html
+     Un solo punto de verdad: cambiar el destino es cambiar esta función. */
+  function mdjResolveMiPerfilHref() {
+    var b = document.body;
+    var role = (b && b.getAttribute('data-mdj-nav-role') || '').toLowerCase().trim();
+    var uid = String(window.__mdjNavOwnUserId || '').trim();
+    var esStaff = role === 'management' || role === 'seller' ||
+      (b && b.classList.contains('mdj-staff-nav') && !b.classList.contains('mdj-artist-nav'));
+    var esArtista = !!(b && b.classList.contains('mdj-artist-nav'));
+    if (esStaff) return './staff.html';
+    if (esArtista) return uid ? './dj-profile.html?id=' + encodeURIComponent(uid) : './dj-profile.html';
+    if (uid) return './client-portal.html';
+    return './login.html';
+  }
+
+  /* Se normaliza CUALQUIER riel de navegación, no sólo #mainNav. En ventanas
+     estrechas entra en juego #mainNav-artist, que traía DJ Tools y Staff — dos
+     pestañas que la Opción A sacó del header. Si sólo se gobierna #mainNav, al
+     reducir la ventana reaparecen. */
+  /* CORRECCIÓN: sólo se NORMALIZA #mainNav. Al normalizar también los rieles
+     alternativos, el blindaje inline les ponía display:grid y los resucitaba —
+     de ahí el doble menú. Los alternativos no se normalizan: se ocultan. */
+  var MDJ_RIELES = ['mainNav'];
+  var MDJ_RIELES_MUERTOS = ['mainNav-artist', 'mobile-nav', 'owner-tabs'];
+
+
+  /* ══ DESTINO DE MI PERFIL · RESOLUCIÓN EN EL CLIC ═══════════════════════════
+     Calcularlo al cargar es inherentemente frágil: el rol y el uid llegan cuando
+     la sesión resuelve, después de las primeras pasadas del header. Si el enlace
+     se congela antes, apunta a dj-profile.html SIN ?id=, y el guard del perfil
+     —que trata la ausencia de id como "perfil propio"— expulsa al login aunque
+     la cabecera ya muestre al usuario dentro.
+
+     Aquí se resuelve EN EL MOMENTO DEL CLIC, consultando la sesión y el rol en
+     vivo. En ese instante la sesión existe con certeza, así que no hay carrera
+     posible. El href estático se mantiene como respaldo para "abrir en pestaña
+     nueva" y se refresca en segundo plano cuando la sesión cambia.
+
+     Para artista se incluye SIEMPRE ?id=<uid>: con ese parámetro el guard del
+     perfil hace short-circuit y no vuelve a comprobar sesión. */
+  /* Estado de sesión cacheado. CONFIG debe verse en cuanto hay sesión, y su
+     visibilidad no puede depender de la clase heredada mdj-mainnav-reserved-slot,
+     que otros pases reponen. Se consulta en vivo y se recuerda. */
+  var _mdjHaySesion = null;                       // null = aún no se sabe
+  function mdjRefrescarSesion() {
+    var supa = (typeof window.getSupabaseClient === 'function') ? window.getSupabaseClient() : null;
+    if (!supa) return;
+    try {
+      supa.auth.getSession().then(function (r) {
+        var hay = !!(r && r.data && r.data.session);
+        if (hay !== _mdjHaySesion) { _mdjHaySesion = hay; _mdjSlotRuns = 0; mdjAssertNavSlots(); }
+      }).catch(function () {});
+      if (!window.__mdjSesionHook) {
+        window.__mdjSesionHook = true;
+        supa.auth.onAuthStateChange(function (_e, ses) {
+          _mdjHaySesion = !!ses; _mdjSlotRuns = 0;
+          setTimeout(mdjAssertNavSlots, 40);
+          setTimeout(mdjAssertNavSlots, 500);
+        });
+      }
+    } catch (e) {}
+  }
+
+  async function mdjDestinoMiPerfilEnVivo() {
+    var supa = (typeof window.getSupabaseClient === 'function') ? window.getSupabaseClient() : null;
+    if (!supa) return './login.html';
+    var ses = null;
+    try { var r = await supa.auth.getSession(); ses = r && r.data ? r.data.session : null; } catch (e) {}
+    if (!ses) return './login.html';
+    var uid = ses.user && ses.user.id ? String(ses.user.id) : '';
+    var rol = '';
+    try {
+      var pr = await supa.from('dj_profiles').select('role').eq('user_id', uid).maybeSingle();
+      rol = String(((pr && pr.data) || {}).role || '').toLowerCase().trim();
+    } catch (e) {}
+    if (rol === 'owner' || rol === 'admin' || rol === 'manager' || rol === 'management' || rol === 'seller') {
+      return './staff.html';
+    }
+    if (rol) {                                   // cualquier otro rol con perfil = artista
+      return uid ? './dj-profile.html?id=' + encodeURIComponent(uid) : './dj-profile.html?view=public';
+    }
+    return uid ? './client-portal.html' : './login.html';
+  }
+
+  function mdjEngancharMiPerfil(el) {
+    if (!el || el.__mdjPerfilHook) return;
+    el.__mdjPerfilHook = true;
+    el.addEventListener('click', function (ev) {
+      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return;  // abrir en pestaña nueva
+      ev.preventDefault();
+      ev.stopPropagation();
+      var previo = el.getAttribute('href');
+      el.setAttribute('aria-busy', 'true');
+      mdjDestinoMiPerfilEnVivo().then(function (dest) {
+        el.removeAttribute('aria-busy');
+        window.location.href = dest;
+      }).catch(function () {
+        el.removeAttribute('aria-busy');
+        window.location.href = previo || './login.html';
+      });
+    }, true);
+  }
+
+  function mdjNormalizeMainNavSlots(idRiel) {
+    var nav = document.getElementById(idRiel || 'mainNav');
+    if (!nav) return false;
+
+    function buscar(def) {
+      var sel = [];
+      if (def.id) sel.push('#' + def.id);
+      sel.push('[data-i18n="' + def.key + '"]');
+      (def.alias || []).forEach(function (a) { sel.push('[data-i18n="' + a + '"]'); });
+      sel.push('[data-mdj-nav="' + def.nav + '"]');
+      (def.navAlias || []).forEach(function (a) { sel.push('[data-mdj-nav="' + a + '"]'); });
+      for (var i = 0; i < sel.length; i++) {
+        var el = nav.querySelector(sel[i]);
+        if (el && (el.tagName === 'A' || el.tagName === 'BUTTON')) return el;
+      }
+      return null;
+    }
+
+    function crear(def) {
+      var a = document.createElement('a');
+      a.setAttribute('href', def.href);
+      a.setAttribute('data-i18n', def.key);
+      a.setAttribute('data-mdj-nav', def.nav);
+      if (def.id) a.id = def.id;
+      if (def.cls) a.className = def.cls;
+      if (def.reserved) { a.setAttribute('aria-hidden', 'true'); a.setAttribute('tabindex', '-1'); }
+      a.textContent = def.txt;
+      return a;
+    }
+
+    /* Decisión PO: MI PERFIL es la ÚNICA etiqueta y el ÚNICO nodo del puesto 8.
+       MI PORTAL desaparece del producto. Los nodos duplicados que otros pases
+       crean (#mainNav-guest-mi-perfil-link, #mainNav-artist-dashboard-link) se
+       RETIRAN en cada pasada: sobra el que no sea el canónico. */
+    var DUPLICADOS_8 = ['mainNav-guest-mi-perfil-link', 'mainNav-artist-dashboard-link'];
+
+    var canonicos = [];
+    MDJ_NAV_SLOTS.forEach(function (def) {
+      var el = buscar(def) || crear(def);
+      el.setAttribute('data-mdj-slot', String(def.s));
+      el.setAttribute('data-mdj-nav', def.nav);          // unifica alias de clave
+      if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', def.key);
+      canonicos.push(el);
+    });
+
+    // Retirar todo lo que no sea canónico (DJ Tools, STAFF, booth, flow-dash…).
+    /* El botón de día/noche vive dentro del riel (columna 10) y NO es un slot
+       canónico: hay que exceptuarlo del barrido o el normalizador lo borra en
+       cada pasada y el sol desaparece. */
+    var fuera = [];
+    [].slice.call(nav.querySelectorAll('a,button')).forEach(function (el) {
+      if (el.id === 'mdj-daynight') return;
+      if (canonicos.indexOf(el) === -1) fuera.push(el);
+    });
+    fuera.forEach(function (el) { if (el.parentNode) el.parentNode.removeChild(el); });
+
+    // Orden canónico. appendChild mueve el nodo si ya estaba dentro: sin clonar,
+    // así que no se pierden listeners ya enganchados.
+    canonicos.forEach(function (el) { nav.appendChild(el); });
+
+    // Puesto 8: un solo nodo, etiqueta fija MI PERFIL, visible también en invitado.
+    // Los duplicados que crean otros pases caen con el barrido de no-canónicos.
+    DUPLICADOS_8.forEach(function (id) {
+      var d = document.getElementById(id);
+      if (d && d.parentNode === nav && canonicos.indexOf(d) === -1) d.parentNode.removeChild(d);
+    });
+    [].slice.call(nav.querySelectorAll('[data-mdj-slot="8"]')).forEach(function (el) {
+      el.classList.remove('mdj-mainnav-reserved-slot');
+      el.removeAttribute('aria-hidden');
+      el.removeAttribute('tabindex');
+      el.style.removeProperty('display');
+      el.style.removeProperty('visibility');
+      if (!/MI PERFIL|MY PROFILE/i.test(el.textContent || '')) {
+        var sepPrevio = el.querySelector(':scope > .mdj-slash');
+        el.textContent = 'MI PERFIL';
+        if (sepPrevio) el.insertBefore(sepPrevio, el.firstChild);
+      }
+    });
+
+    // Slot 9 · MRM IA — visible para TODOS los roles, incluido invitado.
+    // No es una herramienta de owner: es un mapa que se adapta a quien entra.
+    // El owner ve el recorrido completo; el manager sólo lo que le compete; el
+    // vendedor la parte comercial; el artista su modelo de pago y sus ventajas;
+    // el cliente cómo contratar. Quien decide el alcance es la página destino
+    // según el rol de la sesión, no esta barra.
+    [].slice.call(nav.querySelectorAll('[data-mdj-slot="9"]')).forEach(function (el) {
+      el.classList.remove('mdj-mainnav-reserved-slot');
+      el.removeAttribute('aria-hidden');
+      el.removeAttribute('tabindex');
+    });
+
+    // Slot 8: un solo destino, decidido por rol. Se reafirma en cada pasada para
+    // que ningún pase posterior lo devuelva a la plantilla vieja.
+    var destino = mdjResolveMiPerfilHref();
+    [].slice.call(nav.querySelectorAll('[data-mdj-slot="8"]')).forEach(function (el) {
+      if (el.tagName === 'A') el.setAttribute('href', destino);   // respaldo estático
+      mdjEngancharMiPerfil(el);                                    // la verdad, en el clic
+    });
+
+    /* Blindaje final del Zero Layout Shift. Las reglas heredadas de la era flex
+       colapsan los slots reservados con display:none e !important y especificidad
+       392 — imposible de superar razonablemente desde una hoja. Un estilo inline
+       con !important gana a cualquier hoja, así que la celda se garantiza aquí:
+       el slot SIEMPRE ocupa su columna; sólo se oculta su contenido. */
+    /* Opción A: una sola barra. Los rieles alternativos se ocultan inline porque
+       por CSS los gana una regla más específica en algunas páginas (academia). */
+    MDJ_RIELES_MUERTOS.forEach(function (id) {
+      var alt = document.getElementById(id);
+      if (alt && alt !== nav) alt.style.setProperty('display', 'none', 'important');
+    });
+
+    /* El propio riel también se blinda inline: hay reglas de la era flex que le
+       devuelven display:flex, y sin display:grid las nueve columnas no existen
+       aunque grid-template-columns esté declarado. Inline gana a toda hoja. */
+    nav.style.setProperty('display', 'grid', 'important');
+    /* max-content en vez de 1fr: cada pestaña ocupa EXACTAMENTE lo que mide su
+       texto y el espacio sobrante se reparte ENTRE ellas, no dentro. Con 1fr,
+       "INICIO" recibía la misma columna que "SERVICIOS" y la barra se veía
+       descompensada aunque la geometría fuese correcta. */
+    /* Columna 10 para el sol. Sin ella, el riel desbordaba 15 px y overflow:hidden
+       mordía el final de MRM IA. */
+    nav.style.setProperty('grid-template-columns', 'repeat(9, max-content) 40px', 'important');
+    nav.style.setProperty('justify-content', 'space-between', 'important');
+    nav.style.setProperty('padding-right', '0', 'important');
+    nav.style.setProperty('overflow', 'visible', 'important');
+    nav.style.setProperty('grid-auto-rows', '0', 'important');
+    nav.style.setProperty('align-items', 'center', 'important');
+
+    [].slice.call(nav.querySelectorAll('[data-mdj-slot]')).forEach(function (el) {
+      el.style.setProperty('display', 'inline-flex', 'important');
+      el.style.setProperty('width', 'auto', 'important');
+      el.style.setProperty('min-width', 'max-content', 'important');
+      /* La visibilidad la decide el header, no las clases heredadas:
+           slot 5 (CONFIG) — reservado sin sesión, visible con ella
+           slot 8 (MI PERFIL) — SIEMPRE visible (decisión PO)
+           resto — siempre visible
+         Se fija también la opacidad: había reglas que dejaban el slot 8 con
+         opacity:0, visible y ocupando sitio pero transparente. */
+      var slot = el.getAttribute('data-mdj-slot');
+      var oculto;
+      if (slot === '8') oculto = false;                       // MI PERFIL: siempre
+      else if (slot === '5') oculto = (_mdjHaySesion === false);  // CONFIG: con sesión, visible
+      else oculto = el.classList.contains('mdj-mainnav-reserved-slot');
+      el.classList.toggle('mdj-mainnav-reserved-slot', !!oculto);
+      el.style.setProperty('visibility', oculto ? 'hidden' : 'visible', 'important');
+      el.style.setProperty('opacity', oculto ? '0' : '1', 'important');
+      el.style.setProperty('pointer-events', oculto ? 'none' : 'auto', 'important');
+    });
+
+    /* Ritmo de separadores con un NODO REAL, no ::before.
+       El pseudo-elemento perdía contra reglas heredadas que ponían content:none
+       y no había forma razonable de ganarles: la clase se aplicaba, las reglas
+       con "/" casaban, y el computado seguía en none. Un <span> dentro del propio
+       enlace no depende de esa cascada y siempre se pinta.
+       Regla: separador delante de toda pestaña salvo la primera y las que siguen
+       a un slot oculto — así el hueco de un reservado queda limpio. */
+    var enOrden = [].slice.call(nav.querySelectorAll('[data-mdj-slot]'));
+    enOrden.forEach(function (el, i) {
+      var previo = enOrden[i - 1];
+      var previoOculto = previo && getComputedStyle(previo).opacity === '0';
+      var lleva = i > 0 && !previoOculto;
+      /* El separador nativo (::before) funciona en casi todas las pestañas: sólo
+         MI PERFIL lo pierde contra una regla heredada. Así que el span se añade
+         ÚNICAMENTE donde el pseudo no pinta nada — si no, salían dos barras. */
+      var pseudo = getComputedStyle(el, '::before').content || 'none';
+      var yaTieneNativo = pseudo !== 'none' && pseudo.indexOf('/') >= 0;
+      var sep = el.querySelector(':scope > .mdj-slash');
+      if (yaTieneNativo && sep) { sep.remove(); sep = null; }
+      if (lleva && !yaTieneNativo && !sep) {
+        sep = document.createElement('span');
+        sep.className = 'mdj-slash';
+        sep.setAttribute('aria-hidden', 'true');
+        sep.textContent = '/';
+        el.insertBefore(sep, el.firstChild);
+      } else if (!lleva && sep) {
+        sep.remove();
+      }
+    });
+
+    nav.setAttribute('data-mdj-slots', '9');
+    return true;
+  }
+
+  /* Correr una vez no basta: hay ~70 pases posteriores en este mismo archivo que
+     inyectan o sustituyen nodos (SCHEDULE, Cash Flow, STAFF, DJ Tools…). El header
+     sólo gobierna de verdad si REAFIRMA los 8 slots cuando alguien los altera.
+     El observador se ignora a sí mismo con un candado y sólo actúa si detecta un
+     nodo no canónico o un slot sin marcar — así no entra en bucle. */
+  /* El observador vigila que nadie deshaga los slots. Tres protecciones contra el
+     bucle infinito, porque los callbacks de MutationObserver son ASÍNCRONOS: las
+     mutaciones que provoca la propia normalización llegan DESPUÉS de terminarla.
+       1. El candado se libera en un setTimeout, no al salir de la función: así las
+          mutaciones propias encuentran el candado todavía puesto y se descartan.
+       2. Tope duro de reafirmaciones: pasado el límite, el observador se desconecta.
+       3. La ventana de vigilancia se cierra a los 15 s, cuando ya corrieron todos
+          los pases del header. Después la barra queda como esté. */
+  var _mdjSlotLock = false, _mdjSlotRuns = 0, _mdjSlotObs = null;
+  var MDJ_SLOT_MAX = 40;
+
+  function mdjAssertNavSlots() {
+    if (_mdjSlotLock) return;
+    if (_mdjSlotRuns++ > MDJ_SLOT_MAX) { mdjStopWatch(); return; }
+    _mdjSlotLock = true;
+    try { MDJ_RIELES.forEach(function (id) { mdjNormalizeMainNavSlots(id); }); } catch (e) {}
+    setTimeout(function () { _mdjSlotLock = false; }, 0);   // clave: liberar en la siguiente vuelta
+  }
+
+  function mdjStopWatch() {
+    if (_mdjSlotObs) { try { _mdjSlotObs.disconnect(); } catch (e) {} _mdjSlotObs = null; }
+  }
+
+  function mdjWatchNavSlots() {
+    MDJ_RIELES.forEach(mdjWatchOne);
+    MDJ_RIELES_MUERTOS.forEach(mdjWatchOne);   // vigilar que no resuciten
+  }
+  function mdjWatchOne(idRiel) {
+    var nav = document.getElementById(idRiel);
+    if (!nav || nav.__mdjSlotWatch) return;
+    nav.__mdjSlotWatch = true;
+    try {
+      _mdjSlotObs = new MutationObserver(function () {
+        if (_mdjSlotLock) return;
+        var hijos = [].slice.call(nav.querySelectorAll('a,button'));
+        var sucio = false, prev = 0;
+        for (var i = 0; i < hijos.length; i++) {
+          var sl = parseInt(hijos[i].getAttribute('data-mdj-slot') || '0', 10);
+          if (!sl || sl < prev) { sucio = true; break; }
+          prev = sl;
+        }
+        if (!sucio && hijos.length < 9) sucio = true;
+        if (sucio) mdjAssertNavSlots();
+      });
+      _mdjSlotObs.observe(nav, { childList: true });
+      setTimeout(mdjStopWatch, 15000);
+    } catch (e) {}
+  }
+
+  mdjAssertNavSlots();
+  mdjWatchNavSlots();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { mdjAssertNavSlots(); mdjWatchNavSlots(); });
+  }
+  window.addEventListener('load', function () { mdjAssertNavSlots(); mdjWatchNavSlots(); });
+
+  /* CLAVE: el destino de MI PERFIL depende del rol y del uid, y ninguno de los dos
+     existe cuando corren las primeras pasadas — la sesión resuelve después. Sin
+     esto, MI PERFIL quedaba apuntando a dj-profile.html SIN ?id=, el guard del
+     perfil lo tomaba por "perfil propio", no encontraba sesión y expulsaba al
+     login aunque la cabecera ya mostrara al usuario dentro.
+     Se reafirma cuando la sesión cambia y en una segunda ventana más larga. */
+  function mdjReasertarTrasSesion() {
+    try {
+      var supa = (typeof window.getSupabaseClient === 'function') ? window.getSupabaseClient() : null;
+      if (!supa || window.__mdjSlotAuthHook) return;
+      window.__mdjSlotAuthHook = true;
+      supa.auth.onAuthStateChange(function () {
+        _mdjSlotRuns = 0;                       // el cambio de sesión reabre el cupo
+        setTimeout(mdjAssertNavSlots, 60);
+        setTimeout(mdjAssertNavSlots, 400);
+        setTimeout(mdjAssertNavSlots, 1200);
+      });
+      supa.auth.getSession().then(function () {
+        _mdjSlotRuns = 0;
+        mdjAssertNavSlots();
+      }).catch(function () {});
+    } catch (e) {}
+  }
+  mdjRefrescarSesion();
+  var _mdjHookTries = 0;
+  var _mdjHookIv = setInterval(function () {
+    mdjReasertarTrasSesion();
+    mdjRefrescarSesion();
+    if ((window.__mdjSlotAuthHook && _mdjHaySesion !== null) || ++_mdjHookTries > 40) clearInterval(_mdjHookIv);
+  }, 150);
+
+
+  /* ══ MDJB 2026-08-16 · SOL / LUNA AL FINAL DE LA BARRA ══════════════════════
+     Reutiliza el mismo mecanismo que ya existía en el portal STAFF: mismos iconos
+     SVG, misma clave de almacenamiento (mdjStaffTheme) y el mismo data-theme en
+     <html>, para que el modo elegido sea el mismo en toda la plataforma.
+     Va FUERA de #mainNav a propósito: la rejilla canónica sigue teniendo 9 slots.
+     El botón se ancla a la derecha del riel sin robar columna a ninguna pestaña. */
+  var MDJ_SUN  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  var MDJ_MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+
+  function mdjApplyTheme(modo) {
+    var r = document.documentElement;
+    if (modo === 'day') { r.setAttribute('data-theme', 'day'); }
+    else { r.removeAttribute('data-theme'); }
+    var b = document.getElementById('mdj-daynight');
+    if (b) {
+      b.innerHTML = (modo === 'day') ? MDJ_MOON : MDJ_SUN;
+      b.setAttribute('aria-pressed', String(modo === 'day'));
+      b.title = (modo === 'day') ? 'Cambiar a modo noche' : 'Cambiar a modo día';
+    }
+  }
+
+  function mdjMountDayNight() {
+    var nav = document.getElementById('mainNav');
+    if (!nav || document.getElementById('mdj-daynight')) return;
+    var riel = nav.parentNode;                 // .container del .header-nav
+    if (!riel) return;
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.id = 'mdj-daynight';
+    b.className = 'mdj-daynight';
+    b.setAttribute('aria-label', 'Modo día / noche');
+    b.addEventListener('click', function () {
+      var actual = document.documentElement.getAttribute('data-theme') === 'day' ? 'day' : 'night';
+      var nuevo = actual === 'day' ? 'night' : 'day';
+      try { localStorage.setItem('mdjStaffTheme', nuevo === 'day' ? 'light' : 'dark'); } catch (e) {}
+      mdjApplyTheme(nuevo);
+    });
+    riel.appendChild(b);
+    /* Reserva su carril para no solaparse con la última pestaña. */
+    /* El botón está fuera del riel y anclado al contenedor, así que el padding
+       del riel no lo aparta: hay que estrechar el propio riel para dejarle sitio. */
+    var navEl = document.getElementById('mainNav');
+    /* El sol pasa a ser el ÚLTIMO hijo del riel, no un absoluto sobre él: así la
+       rejilla le da su propia columna y no puede solaparse con MRM IA. */
+    if (navEl && b.parentNode !== navEl) navEl.appendChild(b);
+    var guardado = '';
+    try { guardado = localStorage.getItem('mdjStaffTheme') || ''; } catch (e) {}
+    mdjApplyTheme(guardado === 'light' ? 'day' : 'night');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mdjMountDayNight);
+  } else { mdjMountDayNight(); }
+  window.addEventListener('load', mdjMountDayNight);
+
   var MDJ_ARTIST_RAIL_VARIANT_CORE = 'mdj-artist-rail-core-v2';
   var MDJ_ARTIST_RAIL_VARIANT_FULL = 'mdj-artist-rail-full-v2';
 
@@ -478,6 +955,11 @@
       var _isClientHome = !!window.__mdjLastNavIsClient || window.__mdjLastBuyerSession === true;
       if (!_isClientHome) {
         nav.querySelectorAll('a[data-mdj-nav="mi-portal"]').forEach(function (a) {
+          /* Decisión PO 2026-08-16: MI PERFIL es la única etiqueta del puesto 8 y se ve
+             SIEMPRE, también en invitado (lleva a login.html). Este bloque venía de cuando
+             había dos etiquetas y reservaba MI PORTAL a quien no fuese cliente; hoy dejaría
+             el puesto canónico invisible. Se salta el slot canónico. */
+          if (a.getAttribute('data-mdj-slot') === '8') return;
           a.classList.add('mdj-mainnav-reserved-slot');
           a.setAttribute('aria-hidden', 'true');
           a.setAttribute('tabindex', '-1');

@@ -1215,6 +1215,155 @@ console.log(`  truth mode: ${nVer} verified · ${nProp} proposed · ${nUnk} unkn
 console.log(`  IA ${aiMet}/${aiRules.length} · integridad ${integrity.length - openV.length}/${integrity.length}`);
 for (const v of openV) console.log(`  ABIERTO ${v.id} — ${v.title}`);
 
+
+/* ═══ MODO PÚBLICO — web/road-map.html ═══════════════════════════════════
+   Regla de seguridad del PO: todo el mundo ve CÓMO funciona el sistema, nunca
+   la arquitectura ni los secretos. Por eso esta salida es un artefacto DISTINTO
+   del mapa interno: publica sólo la narrativa por capítulos y sus gráficos, y
+   NO publica rutas de archivo, nombres de funciones o tablas, inventario,
+   sondas, hallazgos ni el inspector de evidencia.
+   Detecta el rol de la sesión y abre sola la ruta que le corresponde.        */
+if (process.argv.includes("--public")) {
+    const AUD = MAP.audiences.map((a) => a.id);
+
+    /* El gráfico de capas del mapa interno dibuja cada ARCHIVO real. Aquí se
+       sustituye por una versión que sólo muestra las capas y su función: misma
+       idea, cero interioridades. Y se retiran del texto las referencias técnicas
+       entre <code>, que citaban funciones y tablas por su nombre. */
+    function graphicMapPublico() {
+        const W = 1100, PAD = 20, BH = 62, GAP = 10;
+        let y = 46, out = "";
+        layers.forEach((l) => {
+            out += `<g><rect class="band-bg" x="${PAD}" y="${y}" width="${W - PAD * 2}" height="${BH}" rx="9"/>`
+                + `<rect class="band-edge" x="${PAD}" y="${y}" width="4" height="${BH}"/>`
+                + `<text class="band-id" x="${PAD + 18}" y="${y + 26}">${l.id}</text>`
+                + `<text class="band-name" x="${PAD + 56}" y="${y + 26}">${esc(l.name)}</text>`
+                + `<text class="band-meta" x="${PAD + 18}" y="${y + 46}">${esc(l.responsibility)}</text></g>`;
+            y += BH + GAP;
+        });
+        return `<svg class="gr" viewBox="0 0 ${W} ${y + 10}" role="img" aria-label="Las ${layers.length} capas de la plataforma y de qué se ocupa cada una.">`
+            + `<text class="band-meta" x="${PAD}" y="26" style="letter-spacing:1.6px">LAS CAPAS DE LA PLATAFORMA</text>${out}</svg>`;
+    }
+    /* Saneado del texto público. Además de vaciar los <code>, retira identificadores
+       técnicos sueltos (snake_case, kebab-case de funciones) y las frases que remiten
+       a secciones que sólo existen en el mapa interno. */
+    const IDENT = /\b[a-z][a-z0-9]*(?:[_-][a-z0-9]+){1,}\b/g;
+    const limpiar = (t) => String(t)
+        .replace(/<code>[\s\S]*?<\/code>/g, "el motor correspondiente")
+        .replace(/[^.]*\bsondas\b[^.]*\./gi, "")
+        .replace(/[^.]*\b(auditoría|migración|migraciones|tabla)\b[^.]*\./gi, "")
+        .replace(IDENT, (m) => (/^(mdj|road|master|zero|layout|sound|for|tips)/i.test(m) ? m : "el sistema"))
+        .replace(/\s{2,}/g, " ").trim();
+
+    const capsPub = chapters.map((c) => `
+    <section class="chapter" id="${c.id}" data-aud="${c.audience.join(" ")}">
+      <div class="cap-head"><span class="cap-n">Capítulo ${c.n}</span><h2>${esc(c.title)}</h2></div>
+      <p class="cap-lead">${esc(limpiar(c.lead))}</p>
+      <figure>${c.graphic === "map" ? graphicMapPublico() : renderGraphic(c.graphic, c.title)}</figure>
+      <div class="cap-body">${c.body.map((p) => `<p>${limpiar(p)}</p>`).join("")}</div>
+    </section>`).join("");
+
+    const pub = `<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Road Map IA — ${esc(MAP.meta.org)}</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./supabase-config.js"></script>
+${html.slice(html.indexOf("<style>"), html.indexOf("</style>") + 8)}
+<style>
+  .rm-open{max-width:900px;margin:0 auto;padding:56px 0 8px}
+  .rm-open h1{font:800 clamp(30px,5vw,46px)/1.04 system-ui,sans-serif;letter-spacing:-.024em;margin:12px 0 14px}
+  .rm-open p{color:var(--soft);font-size:17px;max-width:70ch}
+  .rm-who{display:flex;gap:8px;flex-wrap:wrap;margin:26px 0 0}
+  .rm-deck{position:sticky;top:0;z-index:20;max-width:900px;margin:26px auto 0;padding:10px 13px;
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .chapter{max-width:900px;margin:44px auto 0}
+  .chapter.hide{display:none}
+</style>
+
+<div class="rm-open">
+  <p class="eyebrow">${esc(MAP.meta.org)} · Road Map IA</p>
+  <h1>Cómo funciona esta plataforma</h1>
+  <p>Humanos y agentes de inteligencia artificial trabajando en equipo: las personas deciden, los agentes preparan el terreno. Este recorrido te enseña la parte que te toca a ti — y lo conduce el propio sistema, que es la mejor forma de demostrar que funciona.</p>
+  <div class="rm-who" id="rmWho"></div>
+</div>
+
+<div class="rm-deck">
+  <button class="play" id="play">▶&nbsp; Recorrido</button>
+  <button id="prev" disabled>←</button>
+  <button id="next" disabled>→</button>
+  <span class="pos" id="pos">— / 0</span>
+  <span class="cap" id="cap"><b>Tu recorrido</b><span>Pulsa Recorrido y te lo explico paso a paso.</span></span>
+</div>
+${capsPub}
+
+<script>
+(function(){
+  var AUD = ${JSON.stringify(AUD)};
+  var LBL = ${JSON.stringify(Object.fromEntries(MAP.audiences.map((a) => [a.id, a.label])))};
+  var ruta = 'cliente';
+
+  function pinta(){
+    document.querySelectorAll('.chapter').forEach(function(el){
+      el.classList.toggle('hide', el.dataset.aud.split(' ').indexOf(ruta) < 0);
+    });
+    var n = document.querySelectorAll('.chapter:not(.hide)').length;
+    document.getElementById('pos').textContent = '— / ' + n;
+    document.getElementById('rmWho').innerHTML =
+      '<span class="tag t-ok">Tu ruta: ' + (LBL[ruta]||ruta) + '</span>' +
+      '<span class="tiny">' + n + ' capítulos seleccionados para ti</span>';
+    document.getElementById('next').disabled = n === 0;
+  }
+
+  /* Rol de la sesión → ruta. Sin sesión, ruta de cliente: es la que explica la
+     plataforma a alguien que llega de fuera. Nunca se expone nada interno. */
+  (async function(){
+    try{
+      var supa = (typeof window.getSupabaseClient === 'function') ? window.getSupabaseClient() : null;
+      if (supa) {
+        var r = await supa.auth.getSession();
+        var ses = r && r.data ? r.data.session : null;
+        if (ses) {
+          var pr = await supa.from('dj_profiles').select('role').eq('user_id', ses.user.id).maybeSingle();
+          var rol = String(((pr && pr.data) || {}).role || '').toLowerCase().trim();
+          if (rol === 'owner' || rol === 'admin') ruta = 'owner';
+          else if (rol === 'manager' || rol === 'management') ruta = 'manager';
+          else if (rol === 'seller') ruta = 'vendedor';
+          else if (rol) ruta = 'artista';
+        }
+      }
+    }catch(e){}
+    if (AUD.indexOf(ruta) < 0) ruta = 'cliente';
+    pinta();
+  })();
+
+  var i=-1, t=null, run=false;
+  function lista(){ return [].slice.call(document.querySelectorAll('.chapter:not(.hide)')); }
+  function show(n){
+    var L=lista(); if(!L.length) return;
+    i=n; var el=L[i];
+    document.querySelectorAll('.chapter').forEach(function(x){x.classList.remove('on')});
+    el.classList.add('on'); el.scrollIntoView({behavior:'smooth',block:'start'});
+    document.getElementById('pos').textContent=(i+1)+' / '+L.length;
+    document.getElementById('cap').innerHTML='<b>'+el.querySelector('h2').textContent+'</b><span>'+
+      el.querySelector('.cap-lead').textContent.slice(0,140)+'</span>';
+    document.getElementById('prev').disabled=i<=0;
+    document.getElementById('next').disabled=i>=L.length-1;
+  }
+  function stop(){ run=false; clearTimeout(t); document.getElementById('play').textContent='▶  Recorrido'; }
+  function tick(){ if(!run) return; var L=lista(); if(i>=L.length-1){stop();return;} show(i+1); t=setTimeout(tick,7000); }
+  document.getElementById('play').addEventListener('click',function(){
+    if(run){stop();return;} run=true; this.textContent='❚❚  Pausa';
+    if(i>=lista().length-1) i=-1; show(i+1); t=setTimeout(tick,7000);
+  });
+  document.getElementById('prev').addEventListener('click',function(){stop(); if(i>0) show(i-1);});
+  document.getElementById('next').addEventListener('click',function(){stop(); if(i<lista().length-1) show(i+1);});
+})();
+<\/script>
+`;
+    writeFileSync(join(ROOT, "web/road-map.html"), pub, "utf8");
+    console.log(`✓ web/road-map.html (${(pub.length / 1024).toFixed(1)} KB) — público, ${MAP.audiences.length} rutas, sin interioridades`);
+}
+
 if (process.argv.includes("--pdf")) {
     const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
     const pdf = join(HERE, "Road-Master-Map.pdf");
