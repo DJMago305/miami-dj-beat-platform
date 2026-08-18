@@ -3681,3 +3681,41 @@ body #mainHeader.header.mdj-header-unified
     }
   }
 }
+
+/* ═══ FIX-NAV-02 · PORTAL STAFF/OWNER: FUERA LA NAV PÚBLICA ══════════════════
+   Excepción EXPLÍCITA del PO a la Ley de la Barra de Menú, acotada a las cuatro
+   páginas del portal Staff/Owner.
+
+   EL PROBLEMA QUE ESTO RESUELVE, y por qué el intento anterior no bastó: en
+   estas páginas conviven TRES navegaciones. La tira `.dj-owner-tabs` es la de
+   abajo, pero la barra que el usuario ve ARRIBA es `#mainHeader .header-nav`
+   —Home, Jobs, Shop— y además el menú móvil repite los mismos enlaces públicos.
+   Cambiar solo la tira dejaba intacto justo lo que se veía, que es lo que hacía
+   que un owner terminara navegando como visitante.
+
+   Se replica el mecanismo que la plataforma YA usa para el contexto de artista
+   (`body.mdj-from-profile` ocultando la fila pública), en vez de inventar otro.
+   Ese vive en styles.css, que está en la lista de archivos bloqueados, así que
+   la regla del portal staff se declara aquí, que es el archivo de la cabecera.
+
+   No se BORRA el marcado: se oculta. Quitar los enlaces del HTML rompería los
+   scripts compartidos que los buscan por `data-mdj-nav` al arrancar. */
+
+body.mdj-staff-portal #mainHeader .header-nav { display: none !important; }
+
+/* El menú móvil repite los enlaces públicos: se ocultan los que no pertenecen
+   a este portal, uno por uno y por su atributo de slot — no por posición, que
+   se rompería en cuanto alguien reordene algo. */
+body.mdj-staff-portal #mobileMenu a[data-mdj-nav="home"],
+body.mdj-staff-portal #mobileMenu a[data-mdj-nav="jobs"],
+body.mdj-staff-portal #mobileMenu a[data-mdj-nav="shop"],
+body.mdj-staff-portal #mobileMenu a[data-mdj-nav="services"],
+body.mdj-staff-portal #mobileMenu a[data-mdj-nav="venues"] { display: none !important; }
+
+/* La tira del portal pasa a ser la navegación principal, así que se le da el
+   peso visual que tenía la de arriba. */
+body.mdj-staff-portal .dj-owner-tabs { border-top: 1px solid rgba(197,160,89,0.20); }
+body.mdj-staff-portal .dj-tab-btn--mrm {
+  color: #73d9ff; border: 1px solid rgba(115,217,255,0.45); border-radius: 999px;
+  padding-left: 14px; padding-right: 14px; font-weight: 800;
+}
