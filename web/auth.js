@@ -457,7 +457,7 @@ function mdjPerformPostAuthRedirect(db, user) {
                         ? String(idn.dbRole || '').toLowerCase().trim()
                         : dr0;
                     if (dbRole === 'owner') {
-                        window.location.assign('./account-profile.html');
+                        window.location.assign('./staff.html');
                         return true;
                     }
                     window.location.assign(nextUrl);
