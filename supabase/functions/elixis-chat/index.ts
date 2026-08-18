@@ -999,6 +999,41 @@ serve(async (req: Request) => {
         { role: "user", content: userMessage },
     ];
 
+    // ─── AI COST GOVERNOR (Pieza B) — plan → cuota → modo → router. Founder/owner = ILIMITADO.
+    // Quirúrgico: NO toca las 6 herramientas ni el flujo; solo ajusta max_tokens por modo y acumula consumo.
+    let govPlan = "free";
+    if (gate.role === "owner") {
+        govPlan = "founder";
+    } else {
+        try {
+            const { data: pr } = await ADMIN.from("dj_profiles").select("plan").eq("user_id", gate.userId).maybeSingle();
+            if (pr?.plan) govPlan = String(pr.plan).toLowerCase();
+        } catch (_) { /* default free */ }
+    }
+    const govUnlimited = govPlan === "founder" || govPlan === "super" || gate.role === "owner";
+    let govUsedUnits = 0, govCap = 0;
+    if (!govUnlimited) {
+        try {
+            const { data: ent } = await ADMIN.from("plan_entitlements").select("monthly_ai_capacity").eq("plan", govPlan).maybeSingle();
+            if (ent && typeof ent.monthly_ai_capacity === "number") govCap = ent.monthly_ai_capacity;
+        } catch (_) { /* */ }
+        if (govCap > 0) {
+            try {
+                const monthStart = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)).toISOString();
+                const { data: rows } = await ADMIN.from("ai_usage_events")
+                    .select("input_tokens,output_tokens").eq("user_id", gate.userId).gte("created_at", monthStart);
+                const tk = ((rows ?? []) as Array<Record<string, unknown>>).reduce(
+                    (a, r) => a + (Number(r.input_tokens) || 0) + (Number(r.output_tokens) || 0), 0);
+                govUsedUnits = Math.round(tk / 1000);
+            } catch (_) { /* */ }
+        }
+    }
+    const govPct = govUnlimited ? 0 : (govCap > 0 ? Math.min(100, Math.round((govUsedUnits / govCap) * 100)) : 100);
+    const govMode = govUnlimited ? "FULL" : (govPct >= 100 ? "ESSENTIAL" : (govPct >= 80 ? "SAVER" : "FULL"));
+    // Router: haiku ya es el modelo económico; el gobernador ajusta el techo de tokens según el modo.
+    const govMaxTokens = govMode === "ESSENTIAL" ? 384 : (govMode === "SAVER" ? 640 : MAX_TOKENS);
+    let usInput = 0, usOutput = 0, usToolCalls = 0; // acumuladores para el ledger de consumo (ai_usage_events)
+
     let reply = "";
     for (let round = 0; round < 3; round++) {
         let cRes: Response;
@@ -1008,7 +1043,7 @@ serve(async (req: Request) => {
                 headers: { "x-api-key": apiKey, "anthropic-version": ANTHROPIC_VERSION, "Content-Type": "application/json" },
                 body: JSON.stringify({
                     model: MODEL,
-                    max_tokens: MAX_TOKENS,
+                    max_tokens: govMaxTokens, // Governor: FULL=MAX_TOKENS · SAVER=640 · ESSENTIAL=384 (founder siempre FULL)
                     temperature: 0.7,
                     system: systemContent,
                     tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, CATALOG_READ_TOOL, QUOTE_WRITE_TOOL],
@@ -1027,11 +1062,13 @@ serve(async (req: Request) => {
                 { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
         }
         const data = await cRes.json();
+        if (data.usage) { usInput += Number(data.usage.input_tokens) || 0; usOutput += Number(data.usage.output_tokens) || 0; }
         const blocks: Array<Record<string, unknown>> = Array.isArray(data.content) ? data.content : [];
         const text = blocks.filter((b) => b?.type === "text").map((b) => String(b.text ?? "")).join("").trim();
 
         if (data.stop_reason === "tool_use") {
             convo.push({ role: "assistant", content: blocks });
+            usToolCalls += blocks.filter((b) => b?.type === "tool_use").length;
             const results: unknown[] = [];
             for (const b of blocks.filter((b) => b?.type === "tool_use")) {
                 const toolName = String(b.name ?? "");
@@ -1125,6 +1162,22 @@ serve(async (req: Request) => {
     if (!reply) {
         return new Response(JSON.stringify({ error: "Empty response from AI" }),
             { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+    }
+
+    // ─── LEDGER DE CONSUMO (Pieza B) — best-effort; nunca rompe la respuesta al usuario.
+    try {
+        const estCents = Math.round(usInput / 10000 + usOutput / 2000); // proxy haiku (~$1/$5 Mtok); calibrar con claude-api
+        await ADMIN.from("ai_usage_events").insert({
+            user_id: gate.userId,
+            plan: govPlan,
+            model: MODEL,
+            input_tokens: usInput,
+            output_tokens: usOutput,
+            tool_calls: usToolCalls,
+            estimated_cost_cents: estCents,
+        });
+    } catch (e) {
+        console.warn("[elixis-chat] ai_usage_events log:", (e as Error)?.message ?? e);
     }
 
     return new Response(JSON.stringify({ reply }),
