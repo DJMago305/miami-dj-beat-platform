@@ -379,7 +379,10 @@ body.nm3d-depurar .nm3d-tecnico { display: grid; }
 .nm3d-tarjeta {
   position: fixed;
   left: max(2.5rem, env(safe-area-inset-left, 0px));
-  top: 50%;
+  /* 64 % y no 50 %: centrada chocaba con el holograma, que ocupa la mitad
+     alta de la misma banda. Arriba la figura, aquí los datos, y debajo queda
+     libre el HUD de keynote. */
+  top: 64%;
   z-index: 5;
   width: min(22rem, 34vw);
   padding: 1.1rem 1.3rem;

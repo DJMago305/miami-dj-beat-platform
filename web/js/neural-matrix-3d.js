@@ -1284,12 +1284,16 @@
       fijarDivisor(aHolo.quad, 0);
       /* Centro en x=-0.60: el corazón del 40 % izquierdo, justo el hueco que
          el encuadre 60/40 deja libre. */
-      gl.uniform2f(uHolo.centro, -0.60, 0.06);
-      gl.uniform2f(uHolo.tam, 0.30, 0.42);
+      /* Sube a la mitad ALTA de la banda izquierda. Centrado en y=0.06 se
+         comía el mismo espacio que la tarjeta de telemetría y esta le tapaba
+         la silueta justo por el centro: se veían los anillos y no la figura.
+         Arriba el holograma, debajo los datos. */
+      gl.uniform2f(uHolo.centro, -0.60, 0.34);
+      gl.uniform2f(uHolo.tam, 0.28, 0.34);
       gl.uniform1f(uHolo.tiempo, t);
       gl.uniform1f(uHolo.pulso, pulso);
       gl.uniform1f(uHolo.visible, visHolograma);
-      gl.uniform1f(uHolo.aspecto, 0.30 * aspecto / 0.42);
+      gl.uniform1f(uHolo.aspecto, 0.28 * aspecto / 0.34);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       stats.llamadasDibujo++;
     }
