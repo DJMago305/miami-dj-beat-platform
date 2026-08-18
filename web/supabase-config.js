@@ -233,20 +233,63 @@ window.MDJ_FORMSPREE_ENDPOINT = "https://formspree.io/f/mqakvjge";
  * Namespace del bundle UMD `@supabase/supabase-js` (tiene .createClient).
  * En consola, window.supabase suele ser ESTO; la instancia devuelta por createClient es la que tiene .from / .auth / .rpc.
  */
-window.__mdbSupabaseLib =
-    typeof window.supabase !== 'undefined' &&
-    window.supabase &&
-    typeof window.supabase.createClient === 'function'
+function mdjResolveSupabaseLib() {
+    return (typeof window.supabase !== 'undefined' &&
+        window.supabase &&
+        typeof window.supabase.createClient === 'function')
         ? window.supabase
         : null;
+}
+window.__mdbSupabaseLib = mdjResolveSupabaseLib();
+
+/**
+ * P2.1 — Failsafe Safari/WebKit legacy: en algunos motores el CDN no define
+ * window.supabase a tiempo (o nunca). Antes, getSupabaseClient() no reintentaba
+ * nada por sí sola — el único reintento vivía en llamadores externos (ej.
+ * waitForSupabase() en auth.js, 10 intentos), y CADA intento de CADA uno de
+ * los ~87 llamadores de getSupabaseClient() en el sitio repetía el mismo
+ * console.error sin freno: con varios pollers activos a la vez en la misma
+ * carga de página, eso escalaba a miles de líneas.
+ *
+ * El reintento vive aquí, UNA sola vez, en segundo plano: máximo 5 intentos
+ * de 200ms (~1s). getSupabaseClient() sigue siendo SÍNCRONA (no puede
+ * volverse async sin tocar los ~87 llamadores existentes) — mientras el
+ * reintento sigue en curso, simplemente devuelve null en silencio. El
+ * console.error solo se emite UNA vez, si los 5 intentos se agotan.
+ */
+var _supabaseInitAttempts = 0;
+var _supabaseInitMaxAttempts = 5;
+var _supabaseInitDelayMs = 200;
+window.__mdbSupabaseInitFailed = false;
+
+function mdjTrySupabaseInit() {
+    window.__mdbSupabaseLib = mdjResolveSupabaseLib();
+    if (window.__mdbSupabaseLib) return; // listo, no hace falta seguir
+    _supabaseInitAttempts++;
+    if (_supabaseInitAttempts >= _supabaseInitMaxAttempts) {
+        window.__mdbSupabaseInitFailed = true;
+        console.error(
+            '[supabase-config] @supabase/supabase-js no definió window.supabase tras ' +
+            _supabaseInitAttempts + ' intentos (~' + (_supabaseInitAttempts * _supabaseInitDelayMs) +
+            'ms). Probable incompatibilidad del motor JS (Safari/WebKit antiguo) con el bundle del CDN.'
+        );
+        return;
+    }
+    setTimeout(mdjTrySupabaseInit, _supabaseInitDelayMs);
+}
+if (!window.__mdbSupabaseLib) {
+    setTimeout(mdjTrySupabaseInit, _supabaseInitDelayMs);
+}
 
 // Singleton — mismo cliente para todo el sitio. getSupabaseClient() debe poder llamarse tras cargar el CDN en <head>.
 let _supabaseClient = null;
 window.getSupabaseClient = function () {
     if (_supabaseClient) return _supabaseClient;
-    var lib = window.__mdbSupabaseLib || window.supabase;
+    var lib = window.__mdbSupabaseLib || mdjResolveSupabaseLib();
     if (!lib || typeof lib.createClient !== 'function') {
-        console.error('[supabase-config] supabase.createClient no disponible (¿CDN @supabase/supabase-js antes de este archivo?)');
+        // Sin spam: si el reintento de arriba sigue en curso, null es el estado
+        // normal y esperado; el único console.error vive en mdjTrySupabaseInit,
+        // una vez, cuando los 5 intentos se agotan de verdad.
         return null;
     }
     _supabaseClient = lib.createClient(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY);
