@@ -1456,6 +1456,17 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
           Redes Sociales
         </button>
         <!-- Crear Perfiles y Promociones movidos al panel de Staff (admin-dashboard.html) -->
+        <!-- FIX-NAV-01 · Config de plataforma. Ocultos salvo owner/admin/manager
+             por _cfgGateSistema(); nacen con hidden para que un artista no los
+             vea parpadear antes de que el JS resuelva el rol. -->
+        <button class="acct-side-link" data-cfg-sistema hidden onclick="showPanel('sistema',this)">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="14" x2="16" y2="14"/></svg>
+          Ajustes de Sistema
+        </button>
+        <button class="acct-side-link" data-cfg-sistema hidden onclick="showPanel('pasarelas',this)">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><circle cx="17" cy="15" r="1.6"/></svg>
+          Pasarelas &amp; Licencias
+        </button>
         <button class="acct-side-link danger" onclick="showPanel('danger',this)">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           Zona de riesgo
@@ -2749,6 +2760,90 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
     </div><!-- /panel-create-profile -->
 
     <!-- PANEL: ZONA DE RIESGO ─────────────────────────────────── -->
+    <!-- ── FIX-NAV-01 · AJUSTES DE SISTEMA ──────────────────────────────────
+         REGLA DE ESTE PANEL: muestra ESTADO, nunca valores. Las variables de
+         plataforma viven en secretos de Edge Functions y en RLS, no en el
+         navegador; cualquier cosa que se pintara aquí como "valor" sería o una
+         invención o una filtración. Lo que no está cableado se dice, no se
+         maquilla con un número bonito. -->
+    <div id="panel-sistema" class="acct-panel">
+      <h2 class="acct-h2">Ajustes de Sistema</h2>
+      <p class="acct-sub">Variables de plataforma, roles y mantenimiento. Solo lectura desde aquí.</p>
+
+      <div class="acct-card">
+        <h3 class="acct-h3">Identidad y rol</h3>
+        <div class="acct-row"><span>Rol activo</span><b data-cfg-rol>—</b></div>
+        <div class="acct-row"><span>Plan de plataforma</span><b data-cfg-plan>—</b></div>
+        <div class="acct-row"><span>ID público de cuenta</span><b data-cfg-mdjbid>—</b></div>
+      </div>
+
+      <div class="acct-card">
+        <h3 class="acct-h3">Matriz de roles</h3>
+        <p class="acct-hint">
+          La fuente de verdad operativa es <code>public.is_staff()</code> /
+          <code>is_staff_management()</code> en Postgres, no el navegador. Esta
+          tabla es referencia; cambiar un rol se hace en la base, nunca aquí.
+        </p>
+        <div class="acct-row"><span>Owner / Admin / Manager</span><b>Staff pleno</b></div>
+        <div class="acct-row"><span>Seller</span><b>Staff limitado</b></div>
+        <div class="acct-row"><span>Artista</span><b>LITE · PRO · ELITE</b></div>
+        <div class="acct-row"><span>Cliente</span><b>Comprador · VIP</b></div>
+      </div>
+
+      <div class="acct-card">
+        <h3 class="acct-h3">Mantenimiento</h3>
+        <p class="acct-hint">
+          Sin acciones cableadas todavía. Se declara vacío a propósito: un botón
+          de mantenimiento que no hace nada es peor que su ausencia, porque
+          alguien lo pulsará en producción creyendo que sí actúa.
+        </p>
+      </div>
+    </div>
+
+    <!-- ── FIX-NAV-01 · PASARELAS &amp; LICENCIAS ─────────────────────────────
+         Ni una clave, ni un secreto, ni un fragmento de ellos se pinta aquí.
+         Las llaves de Stripe y los secretos de webhook viven en los secretos de
+         Edge Functions y NO son legibles desde el navegador — que es justo la
+         propiedad que los mantiene a salvo. Se muestra si están configurados y
+         nada más. -->
+    <div id="panel-pasarelas" class="acct-panel">
+      <h2 class="acct-h2">Pasarelas &amp; Licencias</h2>
+      <p class="acct-sub">Estado de las conexiones de cobro y de la licencia MDJPRO.</p>
+
+      <div class="acct-card">
+        <h3 class="acct-h3">Stripe</h3>
+        <div class="acct-row"><span>Suscripción de la cuenta</span><b data-cfg-stripe-sub>—</b></div>
+        <div class="acct-row"><span>Estado de cobro</span><b data-cfg-stripe-estado>—</b></div>
+        <div class="acct-row"><span>Próxima renovación</span><b data-cfg-stripe-renov>—</b></div>
+        <p class="acct-hint">
+          Las llaves y el secreto de webhook se guardan como secretos de Edge
+          Function. No se leen ni se muestran desde el navegador por diseño.
+        </p>
+      </div>
+
+      <div class="acct-card">
+        <h3 class="acct-h3">MDJPRO · licencia y Hardware ID</h3>
+        <div class="acct-row"><span>Estado de la licencia</span><b data-cfg-lic-estado>—</b></div>
+        <div class="acct-row"><span>Origen del plan</span><b data-cfg-lic-origen>—</b></div>
+        <div class="acct-row"><span>Equipos vinculados</span><b data-cfg-lic-equipos>—</b></div>
+        <p class="acct-hint">
+          El Hardware ID identifica una máquina física concreta, así que se trata
+          igual que la huella de dispositivo: se cuenta cuántos equipos hay
+          vinculados, nunca cuál es su número de serie. Para desvincular un
+          equipo, usa el panel <b>Dispositivos</b>.
+        </p>
+      </div>
+
+      <div class="acct-card">
+        <h3 class="acct-h3">Webhooks</h3>
+        <div class="acct-row"><span>Receptor de Stripe</span><b>Edge Function <code>stripe-webhook</code></b></div>
+        <p class="acct-hint">
+          Verifica la firma de cada evento antes de actuar. Su secreto no es
+          visible aquí ni debe serlo.
+        </p>
+      </div>
+    </div>
+
     <div id="panel-danger" class="acct-panel">
       <h1 class="acct-h1" style="color:#ff5555;">Danger Zone</h1>
       <div class="acct-card" style="border-color:rgba(255,60,60,0.2);">
@@ -5193,8 +5288,45 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
          BILLING PANEL — funciones portadas de dj-dashboard.html
       ══════════════════════════════════════════════════════════════════ */
 
+      /* ── FIX-NAV-01 · Ajustes de Sistema y Pasarelas ──────────────────────
+         Este gate es de INTERFAZ, no de seguridad. Ocultar un enlace no protege
+         nada: lo que de verdad decide es RLS y is_staff_management() en
+         Postgres. Sirve para que un artista no vea dos pestañas que no le
+         incumben, no para guardar secretos — por eso los paneles no muestran
+         ni una clave, y así el gate no tiene nada que guardar. */
+      var _CFG_ROLES_SISTEMA = ['owner', 'admin', 'manager'];
+
+      function _cfgTexto(sel, valor) {
+        var el = document.querySelector(sel);
+        if (el) el.textContent = (valor === null || valor === undefined || valor === '') ? '—' : String(valor);
+      }
+
+      function _cfgHidratarSistema(p) {
+        if (!p) return;
+        var rol = p.role ? String(p.role).toLowerCase() : '';
+        var puede = _CFG_ROLES_SISTEMA.indexOf(rol) >= 0;
+
+        var enlaces = document.querySelectorAll('[data-cfg-sistema]');
+        for (var i = 0; i < enlaces.length; i++) enlaces[i].hidden = !puede;
+        if (!puede) return;
+
+        _cfgTexto('[data-cfg-rol]', rol ? rol.toUpperCase() : null);
+        _cfgTexto('[data-cfg-plan]', p.plan ? String(p.plan).toUpperCase() : null);
+        _cfgTexto('[data-cfg-mdjbid]', p.mdjb_id || null);
+
+        /* Stripe: se dice si HAY suscripción, no cuál es. El identificador de
+           suscripción es un dato de facturación de una persona concreta y no
+           pinta nada en una pantalla que puede quedar proyectada. */
+        _cfgTexto('[data-cfg-stripe-sub]', p.subscription_id ? 'Vinculada' : 'Sin vincular');
+        _cfgTexto('[data-cfg-stripe-estado]', p.subscription_status || null);
+        _cfgTexto('[data-cfg-stripe-renov]',
+          p.next_renewal ? new Date(p.next_renewal).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
+                         : (rol === 'owner' ? 'Sin vencimiento' : null));
+      }
+
       function hydrateBillingPanelFromProfile(p) {
         if (!p) return;
+        _cfgHidratarSistema(p);
         var planEl = document.getElementById('billing-plan');
         if (planEl) {
           var pl = p.plan != null ? String(p.plan).trim() : '';
