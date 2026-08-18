@@ -64,23 +64,48 @@
     { id: 'nucleo',   nombre: 'MIAMI DJ BEAT — Hub Fénix',            subtitulo: 'Núcleo de Plataforma',
       pos: [0, 0, 0],         color: [1.00, 0.84, 0.45], hub: true,
       telemetria: 'Orquestando 4 subsistemas · enlace estable',
-      slot: 'fenix-en-vuelo' },
+      slot: 'fenix-en-vuelo',
+      hud: { titulo: 'NÚCLEO FÉNIX', lineas: [
+        ['MOTOR',      'procedural · aleteo en GPU'],
+        ['SUBSISTEMAS','4 enlazados · 8 conductos'],
+        ['ESTADO',     'nominal']
+      ] } },
     { id: 'crm',      nombre: 'Captura & CRM de Leads',              subtitulo: 'Entrada de Booking',
       pos: [-9.5, 2.2, -3.5], color: [0.45, 0.85, 1.00], hub: false,
       telemetria: 'Sobres de correo energético en tránsito · termómetro de oportunidad',
-      slot: 'paquetes-correo' },
+      slot: 'paquetes-correo',
+      hud: { titulo: 'CRM & CONTRATACIONES', lineas: [
+        ['FLUJO',      'eventos entrantes en tránsito'],
+        ['COTIZACIÓN', 'automática por tipo de evento'],
+        ['SEGUIMIENTO','termómetro de oportunidad']
+      ] } },
     { id: 'elixis',   nombre: 'ELIXIS — Agente Ejecutivo',           subtitulo: 'Orquestación IA',
       pos: [9.0, 3.4, -2.0],  color: [0.70, 0.55, 1.00], hub: false,
       telemetria: 'Negociación asistida · aprobación humana en el lazo',
-      slot: 'avatar-audifonos' },
+      slot: 'avatar-audifonos',
+      hud: { titulo: 'ELIXIS AI CORE', lineas: [
+        ['ASISTENTE', 'autónomo · negociación asistida'],
+        ['CABINA',    'gestión y turnos'],
+        ['CONTROL',   'aprobación humana en el lazo']
+      ] } },
     { id: 'finanzas', nombre: 'Motor Financiero & Stripe',           subtitulo: 'Fintech & Escrow',
       pos: [7.2, -3.8, 5.5],  color: [0.40, 1.00, 0.70], hub: false,
       telemetria: 'Pulsos de liquidación y contratos · escrow con reparto automático',
-      slot: 'contratos' },
+      slot: 'contratos',
+      hud: { titulo: 'SMART CONTRACTS & STRIPE', lineas: [
+        ['DEPÓSITOS', 'en custodia (escrow)'],
+        ['REPARTO',   'automático al cierre'],
+        ['CONTRATOS', 'firmados y versionados']
+      ] } },
     { id: 'booth',    nombre: 'Booth IA & Inteligencia Atmosférica', subtitulo: 'Telemetría de Escenario',
       pos: [-7.8, -3.2, 5.0], color: [1.00, 0.55, 0.45], hub: false,
       telemetria: 'Sonido, luz y clima en vivo · rider por venue',
-      slot: 'rider-telemetria' }
+      slot: 'rider-telemetria',
+      hud: { titulo: 'BOOTH TELEMETRY', lineas: [
+        ['AUDIO',  'monitoreo en vivo'],
+        ['SERATO', 'sincronización de cabina'],
+        ['RIDERS', 'técnicos por venue']
+      ] } }
   ];
 
   /* SLOTS DE BRANDING — preparados, no ocupados.
@@ -133,6 +158,10 @@
   var nodoEnfocado = -1;
   var orbita = 0;
   var rotacionLibre = false, giroRaton = { yaw: 0, pitch: 0 };
+  /* Visibilidad del holograma: 0 oculto, 1 presente. No es un booleano porque
+     la aparición y el fundido tienen que ser continuos como todo lo demás. */
+  var visHolograma = 0;
+  var progHolo = null, bufHolo = null, aHolo = {}, uHolo = {};
 
   var audioEl = null, ctxAudio = null, analizador = null, datosFrecuencia = null;
   var fuenteMusica = null, fuenteMic = null, micStream = null, micActivo = false;
@@ -674,6 +703,72 @@
     '}'
   ].join('\n');
 
+  /* ─── HOLOGRAMA DE ELIXIS ─────────────────────────────────────────────────
+     Se dibuja en COORDENADAS DE PANTALLA, no en el mundo: sus vértices van
+     directos a clip space sin pasar por la vista, así que se queda clavado en
+     el 40 % izquierdo pase lo que pase con la cámara. Es lo que se quiere de
+     un holograma de llamada — no orbita con la escena, acompaña al ponente.
+
+     Toda la figura vive en el FRAGMENT: anillos resonantes y silueta se
+     resuelven con distancias, sin geometría. Cuatro vértices en total. El
+     cuadrilátero se acota a la caja donde de verdad aparece algo y no al 40 %
+     entero: cada píxel de más es relleno de GPU pagado por nada. */
+
+  var VERT_HOLO = [
+    'precision mediump float;',
+    'attribute vec2 aQuad;',
+    'uniform vec2 uCentro; uniform vec2 uTam;',
+    'varying vec2 vUV;',
+    'void main(){',
+    '  vUV = aQuad;',
+    '  gl_Position = vec4(uCentro + aQuad * uTam, 0.0, 1.0);',
+    '}'
+  ].join('\n');
+
+  var FRAG_HOLO = [
+    'precision mediump float;',
+    'uniform float uTiempo; uniform float uPulso; uniform float uVisible;',
+    'uniform float uAspecto;',
+    'varying vec2 vUV;',
+    'void main(){',
+    '  if (uVisible < 0.01) discard;',
+    /* Se corrige el aspecto para que los anillos sean circulares y no óvalos
+       en pantallas panorámicas. */
+    '  vec2 p = vec2(vUV.x * uAspecto, vUV.y);',
+    '  float r = length(p);',
+    '',
+    /* ANILLOS RESONANTES. Se abren hacia fuera y su separación se comprime con
+       uPulso: cuando ELIXIS habla o entra el bombo, la onda se acelera. */
+    '  float vel = 1.1 + uPulso * 1.5;',
+    '  float onda = sin(r * 9.0 - uTiempo * vel);',
+    '  float anillos = pow(max(onda, 0.0), 8.0);',
+    /* Se desvanecen con la distancia: nacen en el pecho, no en el borde. */
+    '  anillos *= smoothstep(1.25, 0.15, r) * (0.35 + uPulso * 0.65);',
+    '',
+    /* SILUETA VECTORIAL: cabeza y hombros con distancias, sin geometría.',
+    '     cabeza  = círculo   ·  hombros = arco achatado por debajo */
+    '  float cabeza = length((p - vec2(0.0, 0.34)) * vec2(1.0, 0.92)) - 0.20;',
+    '  vec2 h = p - vec2(0.0, -0.30);',
+    '  float hombros = length(h * vec2(0.62, 1.35)) - 0.44;',
+    '  float silueta = min(cabeza, hombros);',
+    /* Solo el CONTORNO, no el relleno: un holograma es luz en los bordes. */
+    '  float borde = 1.0 - smoothstep(0.0, 0.030, abs(silueta));',
+    '  borde *= 0.55 + uPulso * 0.45;',
+    '',
+    /* Barrido de escaneo, el tic visual que dice "esto es una proyección". */
+    '  float escaneo = 0.5 + 0.5 * sin(vUV.y * 42.0 - uTiempo * 2.2);',
+    '  borde *= 0.75 + escaneo * 0.25;',
+    '',
+    /* Cian abajo → magenta arriba, mezclado por altura. */
+    '  vec3 cian    = vec3(0.30, 0.95, 1.00);',
+    '  vec3 magenta = vec3(1.00, 0.35, 0.85);',
+    '  vec3 c = mix(cian, magenta, clamp(vUV.y * 0.5 + 0.5, 0.0, 1.0));',
+    '',
+    '  float a = (anillos * 0.55 + borde) * uVisible;',
+    '  gl_FragColor = vec4(c * (0.7 + uPulso * 0.6), clamp(a, 0.0, 1.0));',
+    '}'
+  ].join('\n');
+
   function compilar(tipo, fuente) {
     var s = gl.createShader(tipo);
     gl.shaderSource(s, fuente); gl.compileShader(s);
@@ -833,6 +928,16 @@
     gl.bindBuffer(gl.ARRAY_BUFFER, bufChispas);
     gl.bufferData(gl.ARRAY_BUFFER, construirChispas(), gl.STATIC_DRAW);
 
+    progHolo = enlazar(VERT_HOLO, FRAG_HOLO);
+    aHolo.quad = gl.getAttribLocation(progHolo, 'aQuad');
+    uHolo.centro = gl.getUniformLocation(progHolo, 'uCentro');
+    uHolo.tam = gl.getUniformLocation(progHolo, 'uTam');
+    uHolo.tiempo = gl.getUniformLocation(progHolo, 'uTiempo');
+    uHolo.pulso = gl.getUniformLocation(progHolo, 'uPulso');
+    uHolo.visible = gl.getUniformLocation(progHolo, 'uVisible');
+    uHolo.aspecto = gl.getUniformLocation(progHolo, 'uAspecto');
+    bufHolo = bufQuad;   // reutiliza el cuadrilátero base: cero memoria nueva
+
     gl.clearColor(0.02, 0.03, 0.06, 1.0);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
@@ -850,9 +955,11 @@
       if (progInstancias) gl.deleteProgram(progInstancias);
       if (progFenix) gl.deleteProgram(progFenix);
       if (progChispas) gl.deleteProgram(progChispas);
+      if (progHolo) gl.deleteProgram(progHolo);
     } catch (e) { /* contexto ya muerto */ }
     bufTubos = bufIndices = bufQuad = bufNodos = bufParticulas = progTubos = progInstancias = null;
     bufFenix = bufChispas = progFenix = progChispas = null;
+    progHolo = null; bufHolo = null;
   }
 
   /* ─── Audio ───────────────────────────────────────────────────────────── */
@@ -1166,6 +1273,26 @@
     fijarDivisor(aChispa.origen,1); fijarDivisor(aChispa.control,1); fijarDivisor(aChispa.destino,1);
     fijarDivisor(aChispa.fase,1); fijarDivisor(aChispa.tam,1); fijarDivisor(aChispa.estacion,1);
     if (dibujarInstanciado(gl.TRIANGLE_STRIP, 0, 4, CHISPAS)) stats.llamadasDibujo++;
+
+    /* 6 · HOLOGRAMA DE ELIXIS. Se omite entero cuando está oculto: sin foco no
+       se paga ni una llamada ni un fragmento. */
+    if (visHolograma > 0.01) {
+      gl.useProgram(progHolo);
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufHolo);
+      gl.enableVertexAttribArray(aHolo.quad);
+      gl.vertexAttribPointer(aHolo.quad, 2, gl.FLOAT, false, 0, 0);
+      fijarDivisor(aHolo.quad, 0);
+      /* Centro en x=-0.60: el corazón del 40 % izquierdo, justo el hueco que
+         el encuadre 60/40 deja libre. */
+      gl.uniform2f(uHolo.centro, -0.60, 0.06);
+      gl.uniform2f(uHolo.tam, 0.30, 0.42);
+      gl.uniform1f(uHolo.tiempo, t);
+      gl.uniform1f(uHolo.pulso, pulso);
+      gl.uniform1f(uHolo.visible, visHolograma);
+      gl.uniform1f(uHolo.aspecto, 0.30 * aspecto / 0.42);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      stats.llamadasDibujo++;
+    }
   }
 
   function dibujarLote(buf, cuantas, activo) {
@@ -1242,6 +1369,10 @@
       leerAudio();
       actualizarObjetivoCamara(dt);
       perseguir(dt);
+      /* Fundido continuo, no un interruptor: el holograma entra y sale con la
+         misma suavidad que la cámara. 3.2 ≈ un cuarto de segundo. */
+      var objetivoHolo = (nodoEnfocado >= 0) ? 1 : 0;
+      visHolograma += (objetivoHolo - visHolograma) * Math.min(1, dt * 3.2);
       dibujarEscena(t);
       colocarEtiquetas();
     } catch (e) {
@@ -1360,7 +1491,7 @@
       if (k === 'm' || k === 'M') { alternarMicrofono(); return; }
       if (k === 'r' || k === 'R') { alternarRotacionLibre(); return; }
       if (k === 'f' || k === 'F') { alternarPantallaCompleta(); return; }
-      if (k === 'Escape') { volverAlRecorrido(); return; }
+      if (k === 'Escape' || k === '0') { ev.preventDefault(); volverAlRecorrido(); return; }
       if (k === 'd' || k === 'D') { document.body.classList.toggle('nm3d-depurar'); return; }
     });
 
@@ -1410,6 +1541,30 @@
     pon('[data-nm3d-subtitulo]', e ? e.subtitulo : 'Sistema de booking 2026-2030');
     pon('[data-nm3d-telemetria]', e ? e.telemetria : '5 estaciones · 8 conductos activos');
     pon('[data-nm3d-conexion]', audioActivo ? 'En vivo' : 'Enlace estable');
+
+    /* Tarjeta lateral de telemetría. La clase manda la transición; el
+       contenido solo se reescribe cuando hay estación, para no vaciar el texto
+       a mitad del fundido de salida. */
+    var tarjeta = document.querySelector('[data-nm3d-tarjeta]');
+    if (tarjeta) {
+      tarjeta.classList.toggle('nm3d-tarjeta--visible', !!e);
+      if (e && e.hud) {
+        var tit = tarjeta.querySelector('[data-nm3d-tarjeta-titulo]');
+        if (tit) tit.textContent = e.hud.titulo;
+        var cuerpo = tarjeta.querySelector('[data-nm3d-tarjeta-lineas]');
+        if (cuerpo && cuerpo.getAttribute('data-estacion') !== e.id) {
+          cuerpo.setAttribute('data-estacion', e.id);
+          cuerpo.textContent = '';
+          for (var li = 0; li < e.hud.lineas.length; li++) {
+            var fila = document.createElement('div');
+            var cl = document.createElement('b'); cl.textContent = e.hud.lineas[li][0];
+            var vl = document.createElement('span'); vl.textContent = e.hud.lineas[li][1];
+            fila.appendChild(cl); fila.appendChild(vl);
+            cuerpo.appendChild(fila);
+          }
+        }
+      }
+    }
 
     var insignia = document.querySelector('[data-nm3d-mic]');
     if (insignia) insignia.hidden = !micActivo;
@@ -1501,6 +1656,7 @@
       c.banda = { graves: banda.graves, medios: banda.medios, agudos: banda.agudos };
       c.estaciones = ESTACIONES.length; c.nodoEnfocado = nodoEnfocado;
       c.recorridoActivo = recorrido.activo; c.rotacionLibre = rotacionLibre;
+    c.visHolograma = +visHolograma.toFixed(3);
       c.camara = { x: +cam.x.toFixed(3), y: +cam.y.toFixed(3), z: +cam.z.toFixed(3) };
       return c;
     },

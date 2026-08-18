@@ -19,7 +19,7 @@
     un redimensionado de framebuffer.
   -->
 
-  <link rel="stylesheet" href="./neural-matrix-3d.css?v=20260818-feat3d05b">
+  <link rel="stylesheet" href="./neural-matrix-3d.css?v=20260818-feat3d06">
 </head>
 <body class="nm3d-pagina">
 
@@ -75,8 +75,20 @@
     <div class="nm3d-keynote__pulso"><i data-nm3d-barra></i></div>
   </section>
 
+  <!--
+    TARJETA LATERAL DE TELEMETRÍA. Vive en el 40 % izquierdo que el encuadre
+    60/40 deja libre, por encima del holograma. Se muestra y se oculta solo con
+    clases: la transición es de opacidad y translateX, ambas compuestas por la
+    GPU, así que aparecer y desaparecer no provoca ni un reflujo del documento
+    mientras el motor 3D está dibujando.
+  -->
+  <section class="nm3d-tarjeta" data-nm3d-tarjeta aria-live="polite">
+    <h2 class="nm3d-tarjeta__titulo" data-nm3d-tarjeta-titulo>—</h2>
+    <div class="nm3d-tarjeta__lineas" data-nm3d-tarjeta-lineas></div>
+  </section>
+
   <aside class="nm3d-teclas" aria-label="Controles de escenario">
-    <b>Espacio</b> pausa · <b>1-5</b> estación · <b>← →</b> anterior/siguiente · <b>M</b> micrófono · <b>R</b> órbita libre · <b>F</b> pantalla completa · <b>Esc</b> recorrido
+    <b>Espacio</b> pausa · <b>1-5</b> estación · <b>← →</b> anterior/siguiente · <b>M</b> micrófono · <b>R</b> órbita libre · <b>F</b> pantalla completa · <b>Esc / 0</b> recorrido
   </aside>
 
   <!-- Panel técnico: oculto por defecto, se conmuta con D. En escenario no se
@@ -105,6 +117,6 @@
   <audio data-nm3d-audio loop preload="none"
          src="./assets/Musica_Miamidjbeat/JungleIn_My_Head_DJMago305.mp3"></audio>
 
-  <script src="./js/neural-matrix-3d.js?v=20260818-feat3d05b"></script>
+  <script src="./js/neural-matrix-3d.js?v=20260818-feat3d06"></script>
 </body>
 </html>
