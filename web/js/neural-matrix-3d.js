@@ -112,7 +112,9 @@
   /* Vectores reutilizados en el bucle: asignarlos aquí y no dentro del cuadro
      es la diferencia entre cero basura y 30 recolecciones por segundo. */
   var _proy = new Float32Array(16), _vista = new Float32Array(16), _mvp = new Float32Array(16);
-  var _tmpA = new Float32Array(16), _tmpB = new Float32Array(16);
+  /* Punto reutilizado por las curvas. Asignarlo aquí y no dentro del cuadro es
+     la diferencia entre cero basura y treinta recolecciones por segundo. */
+  var _p = [0, 0, 0];
 
   /* ─── Matrices ────────────────────────────────────────────────────────── */
 
