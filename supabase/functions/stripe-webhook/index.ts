@@ -10,6 +10,39 @@ type MdjproAutoIssueOutcome =
     | { outcome: "error"; reason: string };
 
 /**
+ * Resuelve a QUIÉN pertenece una suscripción de Stripe para los eventos de
+ * morosidad.
+ *
+ * Existe por un agujero real: las ramas de impago buscan al usuario en
+ * dj_profiles.subscription_id, y el comprador INDEPENDIENTE no tiene esa fila
+ * — el SECURITY WALL del checkout mdjpro_app impide escribirla a propósito,
+ * porque comprar la app no otorga Artist PRO. Consecuencia: un standalone que
+ * dejaba de pagar conservaba el acceso para siempre.
+ *
+ * La licencia standalone sí guarda su stripe_subscription_id, así que ese es el
+ * segundo sitio donde mirar. Primero dj_profiles (canal artista, el camino
+ * habitual) y solo si no hay nada, la tabla de licencias.
+ */
+async function mdjproUsuarioDeSuscripcion(
+    supabase: SupabaseClient,
+    subId: string | null | undefined,
+    uidPerfil: string | null | undefined,
+): Promise<string | null> {
+    if (uidPerfil) return uidPerfil;
+    if (!subId) return null;
+    const { data, error } = await supabase
+        .from("mdjpro_license_keys")
+        .select("user_id")
+        .eq("stripe_subscription_id", subId)
+        .maybeSingle();
+    if (error) {
+        console.error(`[MDJPRO] no se pudo resolver el dueño de ${subId}: ${error.message}`);
+        return null;
+    }
+    return (data?.user_id as string | undefined) ?? null;
+}
+
+/**
  * Auto-issue MDJPRO license after Artist PRO checkout.
  * Pre-check is mandatory: mdjpro_issue_license rotates keys when a row already exists.
  */
@@ -516,9 +549,10 @@ serve(async (req) => {
                     next_renewal: periodEnd,
                 }).eq("subscription_id", subId);
 
-                if (paidProfile?.user_id) {
+                const uidPagado = await mdjproUsuarioDeSuscripcion(supabase, subId, paidProfile?.user_id);
+                if (uidPagado) {
                     const restore = await supabase.rpc("mdjpro_apply_subscription_restored", {
-                        p_uid: paidProfile.user_id,
+                        p_uid: uidPagado,
                     });
                     console.log(`[MDJPRO] subscription restored | user=${String(paidProfile.user_id).slice(0, 8)} | ok=${restore.error ? "error" : "ok"}`);
                 }
@@ -540,9 +574,10 @@ serve(async (req) => {
                     subscription_status: "past_due",
                 }).eq("subscription_id", subId);
 
-                if (pastProfile?.user_id) {
+                const uidMoroso = await mdjproUsuarioDeSuscripcion(supabase, subId, pastProfile?.user_id);
+                if (uidMoroso) {
                     const lapse = await supabase.rpc("mdjpro_apply_subscription_lapse", {
-                        p_uid: pastProfile.user_id,
+                        p_uid: uidMoroso,
                         p_mode: "pause",
                     });
                     console.log(`[MDJPRO] subscription paused | user=${String(pastProfile.user_id).slice(0, 8)} | ok=${lapse.error ? "error" : "ok"}`);
@@ -567,9 +602,10 @@ serve(async (req) => {
                     next_renewal: null,
                 }).eq("subscription_id", sub.id);
 
-                if (cancelledProfile?.user_id) {
+                const uidCancelado = await mdjproUsuarioDeSuscripcion(supabase, sub.id, cancelledProfile?.user_id);
+                if (uidCancelado) {
                     const lapse = await supabase.rpc("mdjpro_apply_subscription_lapse", {
-                        p_uid: cancelledProfile.user_id,
+                        p_uid: uidCancelado,
                         p_mode: "revoke",
                     });
                     console.log(`[MDJPRO] subscription revoked | user=${String(cancelledProfile.user_id).slice(0, 8)} | ok=${lapse.error ? "error" : "ok"}`);
@@ -593,20 +629,25 @@ serve(async (req) => {
                     subscription_status: sub.status,
                 }).eq("subscription_id", sub.id);
 
-                if (updatedProfile?.user_id) {
+                /* Misma resolución que en las otras tres ramas: sin esto un
+                   standalone cuyo estado cambie por 'subscription.updated'
+                   —fin de prueba, recuperación de past_due— se quedaría fuera
+                   del kill-switch y reabriría la fuga por otra puerta. */
+                const uidActualizado = await mdjproUsuarioDeSuscripcion(supabase, sub.id, updatedProfile?.user_id);
+                if (uidActualizado) {
                     const st = String(sub.status || "").toLowerCase();
                     if (st === "active" || st === "trialing") {
                         await supabase.rpc("mdjpro_apply_subscription_restored", {
-                            p_uid: updatedProfile.user_id,
+                            p_uid: uidActualizado,
                         });
                     } else if (st === "past_due" || st === "unpaid") {
                         await supabase.rpc("mdjpro_apply_subscription_lapse", {
-                            p_uid: updatedProfile.user_id,
+                            p_uid: uidActualizado,
                             p_mode: "pause",
                         });
                     } else if (st === "canceled" || st === "cancelled" || st === "incomplete_expired") {
                         await supabase.rpc("mdjpro_apply_subscription_lapse", {
-                            p_uid: updatedProfile.user_id,
+                            p_uid: uidActualizado,
                             p_mode: "revoke",
                         });
                     }
