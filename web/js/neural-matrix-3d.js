@@ -372,6 +372,98 @@
     return new Float32Array(v);
   }
 
+  /* ─── Conductos (una sola vez, fundidos, indexados) ───────────────────── */
+
+  function puntosDeEnlace(a, b) {
+    var pa = ESTACIONES[a].pos, pb = ESTACIONES[b].pos;
+    /* Un punto medio desplazado convierte la recta en fibra: los conductos
+       rectos leen como diagrama técnico, no como tejido vivo. */
+    var mx = (pa[0]+pb[0])/2, my = (pa[1]+pb[1])/2, mz = (pa[2]+pb[2])/2;
+    var d = Math.sqrt(Math.pow(pb[0]-pa[0],2) + Math.pow(pb[1]-pa[1],2) + Math.pow(pb[2]-pa[2],2));
+    var comba = d * 0.16;
+    return [pa, [mx, my + comba, mz], [mx - comba*0.35, my + comba*0.5, mz + comba*0.35], pb];
+  }
+
+  function construirTubos() {
+    var vert = [], idx = [], a = [0,0,0], b = [0,0,0], base = 0;
+
+    for (var e = 0; e < ENLACES.length; e++) {
+      var pts = puntosDeEnlace(ENLACES[e][0], ENLACES[e][1]);
+      var ca = ESTACIONES[ENLACES[e][0]].color, cb = ESTACIONES[ENLACES[e][1]].color;
+
+      for (var m = 0; m < MUESTRAS_CONDUCTO; m++) {
+        var u = m / (MUESTRAS_CONDUCTO - 1);
+        curvaAbierta(pts, u, a);
+        curvaAbierta(pts, Math.min(0.9999, u + 0.006), b);
+        var tx = b[0]-a[0], ty = b[1]-a[1], tz = b[2]-a[2];
+        if (m === MUESTRAS_CONDUCTO - 1) { tx=-tx; ty=-ty; tz=-tz; }
+        var lt = Math.sqrt(tx*tx+ty*ty+tz*tz) || 1; tx/=lt; ty/=lt; tz/=lt;
+
+        var ux = 0, uy = 1, uz = 0;
+        if (Math.abs(ty) > 0.94) { ux = 1; uy = 0; uz = 0; }
+        var nx = ty*uz - tz*uy, ny = tz*ux - tx*uz, nz = tx*uy - ty*ux;
+        var ln = Math.sqrt(nx*nx+ny*ny+nz*nz) || 1; nx/=ln; ny/=ln; nz/=ln;
+        var bx = ty*nz - tz*ny, by = tz*nx - tx*nz, bz = tx*ny - ty*nx;
+
+        /* El color viaja de una estación a la otra: el conducto dice de dónde
+           sale y adónde llega sin necesidad de leyenda. */
+        var cr = ca[0]+(cb[0]-ca[0])*u, cg = ca[1]+(cb[1]-ca[1])*u, cz = ca[2]+(cb[2]-ca[2])*u;
+
+        for (var k = 0; k < LADOS_TUBO; k++) {
+          var ang = (k / LADOS_TUBO) * Math.PI * 2;
+          var cs = Math.cos(ang), sn = Math.sin(ang);
+          var dx = nx*cs + bx*sn, dy = ny*cs + by*sn, dz = nz*cs + bz*sn;
+          vert.push(a[0]+dx*RADIO_TUBO, a[1]+dy*RADIO_TUBO, a[2]+dz*RADIO_TUBO,
+                    dx, dy, dz, cr, cg, cz, u, e);
+        }
+      }
+
+      for (var sg = 0; sg < MUESTRAS_CONDUCTO - 1; sg++) {
+        for (var q = 0; q < LADOS_TUBO; q++) {
+          var q2 = (q+1) % LADOS_TUBO;
+          var f0 = base + sg*LADOS_TUBO + q,     f1 = base + sg*LADOS_TUBO + q2;
+          var f2 = base + (sg+1)*LADOS_TUBO + q, f3 = base + (sg+1)*LADOS_TUBO + q2;
+          idx.push(f0, f2, f1, f1, f2, f3);
+        }
+      }
+      base += MUESTRAS_CONDUCTO * LADOS_TUBO;
+    }
+
+    conteoVerticesTubos = vert.length / 11;
+    indicesTubos = idx.length;
+    return { vertices: new Float32Array(vert), indices: new Uint16Array(idx) };
+  }
+
+  function construirNodos() {
+    var d = new Float32Array(ESTACIONES.length * 9);
+    for (var i = 0; i < ESTACIONES.length; i++) {
+      var o = i*9, e = ESTACIONES[i];
+      d[o]=e.pos[0]; d[o+1]=e.pos[1]; d[o+2]=e.pos[2];
+      d[o+3]=e.color[0]; d[o+4]=e.color[1]; d[o+5]=e.color[2];
+      d[o+6]= e.hub ? 1.25 : 0.80;      // el núcleo domina la escena
+      d[o+7]= e.hub ? 1.30 : 1.00;
+      d[o+8]= i;
+    }
+    return d;
+  }
+
+  function construirParticulas() {
+    var d = new Float32Array(PARTICULAS * 9);
+    for (var i = 0; i < PARTICULAS; i++) {
+      var o = i*9;
+      d[o]   = (Math.random()-0.5) * 34;
+      d[o+1] = (Math.random()-0.5) * 20;
+      d[o+2] = (Math.random()-0.5) * 34;
+      d[o+3] = 0.75; d[o+4] = 0.85; d[o+5] = 1.0;
+      d[o+6] = 0.026 + Math.random()*0.030;
+      /* Ambiente y solo ambiente: jamás compite en brillo con las estaciones.
+         Jerarquía de keynote — estaciones → conductos → fondo. */
+      d[o+7] = 0.028 + Math.random()*0.060;
+      d[o+8] = -1;
+    }
+    return d;
+  }
+
   var QUAD = new Float32Array([-1,-1,  1,-1,  -1,1,  1,1]);
 
   /* ─── Shaders ─────────────────────────────────────────────────────────── */
@@ -549,6 +641,67 @@
        estaciones. Aquí el ave se lee por su silueta encendida. */
     '  float alfa = (0.40 - vTramo * 0.26) * (0.6 + vFuego * 0.5);',
     '  gl_FragColor = vec4(c * brillo, clamp(alfa, 0.0, 1.0));',
+    '}'
+  ].join('\n');
+
+  /* ─── HOLOGRAMA DE ELIXIS ─────────────────────────────────────────────────
+     Se dibuja en COORDENADAS DE PANTALLA, no en el mundo: sus vértices van
+     directos a clip space sin pasar por la vista, así que se queda clavado en
+     el 40 % izquierdo pase lo que pase con la cámara. Es lo que se espera de
+     un holograma de llamada — no orbita con la escena, acompaña al ponente.
+
+     Toda la figura vive en el FRAGMENT: anillos resonantes y silueta se
+     resuelven con distancias, sin geometría. Cuatro vértices en total, y el
+     cuadrilátero se acota a la caja donde de verdad aparece algo en vez de
+     cubrir el 40 % entero: cada píxel de más es relleno pagado por nada. */
+
+  var VERT_HOLO = [
+    'precision mediump float;',
+    'attribute vec2 aQuad;',
+    'uniform vec2 uCentro; uniform vec2 uTam;',
+    'varying vec2 vUV;',
+    'void main(){',
+    '  vUV = aQuad;',
+    '  gl_Position = vec4(uCentro + aQuad * uTam, 0.0, 1.0);',
+    '}'
+  ].join('\n');
+
+  var FRAG_HOLO = [
+    'precision mediump float;',
+    'uniform float uTiempo; uniform float uPulso; uniform float uVisible;',
+    'uniform float uAspecto;',
+    'varying vec2 vUV;',
+    'void main(){',
+    '  if (uVisible < 0.01) discard;',
+    /* Se corrige el aspecto para que los anillos salgan circulares y no
+       ovalados en pantallas panorámicas. */
+    '  vec2 p = vec2(vUV.x * uAspecto, vUV.y);',
+    '  float r = length(p);',
+    /* ANILLOS RESONANTES: se abren hacia fuera y su separación se comprime con
+       uPulso — cuando ELIXIS habla o entra el bombo, la onda se acelera. */
+    '  float vel = 1.1 + uPulso * 1.5;',
+    '  float onda = sin(r * 9.0 - uTiempo * vel);',
+    '  float anillos = pow(max(onda, 0.0), 8.0);',
+    /* Se desvanecen con la distancia: nacen en el pecho, no en el borde. */
+    '  anillos *= smoothstep(1.25, 0.15, r) * (0.35 + uPulso * 0.65);',
+    /* SILUETA VECTORIAL con distancias: cabeza (círculo) y hombros (arco
+       achatado por debajo). Sin geometría. */
+    '  float cabeza = length((p - vec2(0.0, 0.34)) * vec2(1.0, 0.92)) - 0.20;',
+    '  vec2 h = p - vec2(0.0, -0.30);',
+    '  float hombros = length(h * vec2(0.62, 1.35)) - 0.44;',
+    '  float silueta = min(cabeza, hombros);',
+    /* Solo el CONTORNO, no el relleno: un holograma es luz en los bordes. */
+    '  float borde = 1.0 - smoothstep(0.0, 0.030, abs(silueta));',
+    '  borde *= 0.55 + uPulso * 0.45;',
+    /* Barrido de escaneo: el tic visual que dice "esto es una proyección". */
+    '  float escaneo = 0.5 + 0.5 * sin(vUV.y * 42.0 - uTiempo * 2.2);',
+    '  borde *= 0.75 + escaneo * 0.25;',
+    /* Cian abajo → magenta arriba. */
+    '  vec3 cian    = vec3(0.30, 0.95, 1.00);',
+    '  vec3 magenta = vec3(1.00, 0.35, 0.85);',
+    '  vec3 c = mix(cian, magenta, clamp(vUV.y * 0.5 + 0.5, 0.0, 1.0));',
+    '  float a = (anillos * 0.55 + borde) * uVisible;',
+    '  gl_FragColor = vec4(c * (0.7 + uPulso * 0.6), clamp(a, 0.0, 1.0));',
     '}'
   ].join('\n');
 
@@ -1369,7 +1522,14 @@
 
     construirWaypoints();
     try { construirEscena(); }
-    catch (e) { mostrarFallback('no se pudo compilar el motor gráfico'); return; }
+    catch (e) {
+      /* El mensaje incluye la causa real. Antes decía siempre "no se pudo
+         compilar el motor gráfico" pasara lo que pasara dentro, y eso convertía
+         cualquier fallo de construcción —un buffer, un uniform, una referencia
+         suelta— en una adivinanza. El fallback debe informar, no tranquilizar. */
+      mostrarFallback('el motor no arrancó: ' + (e && e.message ? e.message : e));
+      return;
+    }
 
     capaz = true;
     redimensionar();
