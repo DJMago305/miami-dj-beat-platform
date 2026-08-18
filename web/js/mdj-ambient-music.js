@@ -16,6 +16,19 @@
   if (window.__MDJ_AMBIENT_BOOTED) return;
   window.__MDJ_AMBIENT_BOOTED = true;
 
+  /** FIX-AUDIO-01: defensa en profundidad — aunque este script se cargue directo (bypass del
+   * gate en mdj-shared-header.js), ninguna llamada a new Audio()/AudioContext ocurre fuera
+   * de la raíz ('/' o 'index.html'). */
+  function mdjAmbientIsHomeRoute() {
+    try {
+      var path = (window.location.pathname || '').toLowerCase();
+      return path === '/' || path === '' || path === '/index.html' || /\/index\.html$/.test(path);
+    } catch (eRoute) {
+      return false;
+    }
+  }
+  if (!mdjAmbientIsHomeRoute()) return;
+
   if (typeof window !== 'undefined' && window.MDJ_SKIP_AMBIENT_MUSIC) return;
   try {
     if (document.documentElement && document.documentElement.getAttribute('data-mdj-no-ambient') === '1') return;
@@ -311,6 +324,29 @@
       void e;
     }
   });
+
+  /** FIX-AUDIO-01: desmontaje limpio — al salir de home (bfcache o navegación real) se pausa
+   * y se libera la fuente de inmediato, para que nada quede sonando de fondo en el panel destino. */
+  window.addEventListener(
+    'pagehide',
+    function () {
+      running = false;
+      armBusy = false;
+      detachFallback();
+      try {
+        audio.pause();
+      } catch (ePh) {
+        void ePh;
+      }
+      try {
+        audio.removeAttribute('src');
+        audio.load();
+      } catch (eRm) {
+        void eRm;
+      }
+    },
+    false
+  );
 
   window.addEventListener(
     'pageshow',
