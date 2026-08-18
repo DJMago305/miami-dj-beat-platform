@@ -529,7 +529,7 @@
     /*     Desvanecido con la distancia y respuesta al pulso: idénticos a
            smoothstep(1.25, 0.15, r) * (0.35 + uPulso * 0.65) del original,
            reajustados al radio de la esfera. */
-    '    float caida = smoothstep(1.05, 0.30, d) * (0.45 + uPulso * 0.65);',
+    '    float caida = smoothstep(1.05, 0.30, d) * (0.34 + uPulso * 0.42);',
     '    a1 *= caida; a2 *= caida;',
     /*     MICRO-PARPADEO. El holograma usa una línea de escaneo
            0.5 + 0.5 * sin(coord * 42.0 - t * 2.2); aquí es radial. Encima, un
@@ -548,10 +548,14 @@
     '    vec3 oroA  = vec3(1.0, 0.843, 0.0);',
     '    vec3 cianA = vec3(0.0, 0.961, 1.0);',
     '    vec3 cA = (oroA * a1 + cianA * a2) / max(0.0001, a1 + a2);',
-    /*     Densidad: el alfa se empuja al rango pedido (0.65-0.85 en cresta)
-           sin tocar el color. */
-    '    float aA = clamp((a1 + a2) * 1.60, 0.0, 1.0) * vIntensidad * corte;',
-    '    gl_FragColor = vec4(cA * (0.75 + uPulso * 0.60), aA);',
+    /*     BAJADA DE INTENSIDAD. Con mezcla aditiva, lo que se percibe es alfa
+           POR color, así que subir los dos multiplica el deslumbre. Se recortan
+           ambos: el empuje de alfa de 1.60 a 0.85 y la escala de color de 0.75
+           a 0.50 — en conjunto queda en torno a un tercio del brillo anterior.
+           Los aros siguen ahí, con su dorado y su filamento cian, pero dejan de
+           competir con el emblema y de quemar en proyector. */
+    '    float aA = clamp((a1 + a2) * 0.85, 0.0, 1.0) * vIntensidad * corte;',
+    '    gl_FragColor = vec4(cA * (0.50 + uPulso * 0.30), aA);',
     '    return;',
     '  }',
     /* SLOT DE ELIXIS: anillos de onda sonora saliendo de los audífonos. Se
