@@ -74,10 +74,20 @@
             return key === tab ? ' active' : '';
         }
 
-        var hrefProfile = uid
-            ? './dj-profile.html?id=' + encodeURIComponent(uid) + '&' + PARAM + '=' + VALUE
-            : './dj-profile.html?' + PARAM + '=' + VALUE;
-        var hrefFlow = withProfileNav('./dj-dashboard.html?tab=flow');
+        /* Management real (admin/owner/manager) -> acordeón staff.html, mismo criterio que
+           mdjBuildArtistStaffMainNavHref (mdj-shared-header.js). Artista fundador y seller puro
+           (misma barra, sin managementInDb) conservan sus hojas legacy, para no romper su
+           navegación (scope founder != owner; seller aún sin módulo propio en staff.html). */
+        var idn = window.__mdjLastPlatformIdentity;
+        var isStaffCtx = !!(idn && idn.managementInDb);
+
+        var hrefProfile = isStaffCtx
+            ? './staff.html#miperfil'
+            : (uid
+                ? './dj-profile.html?id=' + encodeURIComponent(uid) + '&' + PARAM + '=' + VALUE
+                : './dj-profile.html?' + PARAM + '=' + VALUE);
+        var hrefAgenda = isStaffCtx ? './staff.html#agenda' : withProfileNav('./dj-dashboard.html');
+        var hrefFlow = isStaffCtx ? './staff.html#cashflow' : withProfileNav('./dj-dashboard.html?tab=flow');
         var hrefSft = uid
             ? './dj-profile.html?id=' + encodeURIComponent(uid) + '&tab=sft&' + PARAM + '=' + VALUE
             : './dj-profile.html?tab=sft&' + PARAM + '=' + VALUE;
@@ -95,7 +105,7 @@
             '<a href="./index.html" class="dj-tab-btn dj-tab-btn--home" data-i18n="nav-home">Home</a>' +
             '<a href="' + withProfileNav('./jobs.html') + '" class="dj-tab-btn' + active('jobs') + '" data-i18n="nav-jobs">Jobs</a>' +
             '<a href="' + withProfileNav('./shop.html') + '" class="dj-tab-btn' + active('shop') + '" data-i18n="nav-shop">Shop</a>' +
-            '<a href="' + withProfileNav('./dj-dashboard.html') + '" class="dj-tab-btn" data-i18n="dash-your-profile">Agenda</a>' +
+            '<a href="' + hrefAgenda + '" class="dj-tab-btn" data-i18n="dash-your-profile">Agenda</a>' +
             '<a href="' + withProfileNav('./account-settings.html') + '" class="dj-tab-btn' + active('config') + '" data-i18n="nav-settings">⚙️ CONFIG</a>' +
             '<a href="' + withProfileNav('./academia.html') + '" class="dj-tab-btn" data-i18n="nav-academia">Academia</a>' +
             '<a href="' + withProfileNav('./dj-tools.html') + '" class="dj-tab-btn' + active('tools') + '" data-i18n="nav-tools">DJ Tools</a>' +
