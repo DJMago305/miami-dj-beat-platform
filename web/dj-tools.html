@@ -5,8 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>DJ Tools — Miami DJ Beat</title>
+  <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra caia en la
+       sustituta del sistema y el texto salia ~2% mas ancho, desplazando el eje X. -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260817-header-canonico" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260819-homolog2" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
     <style>
         /* Pro Features — equal-height tiles; CTAs aligned on bottom row with breathing room */
@@ -214,7 +217,7 @@
         <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️CONFIG</a>
         <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
         <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
-        <a href="./login.html" id="mainNav-guest-mi-perfil-link" class="mdj-guest-mi-perfil-mainnav" data-mdj-nav="my-profile" data-i18n="nav-my-profile">MI PERFIL</a>
+        <a href="./login.html" id="mainNav-guest-mi-perfil-link" data-mdj-slot="8" class="mdj-guest-mi-perfil-mainnav" data-mdj-nav="my-profile" data-i18n="nav-my-profile">MI PERFIL</a>
       </nav>
     </div>
   </div>
@@ -576,7 +579,7 @@
 
 
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-      <script src="./mdj-shared-header.js?v=20260817-header-canonico"></script>
+      <script src="./mdj-shared-header.js?v=20260819-maestra"></script>
   <script id="mdj-vista-cero-guest-nav-restore">
 (function () {
   function mdjVistaCeroGuest() {
@@ -632,6 +635,13 @@
     el.style.removeProperty('pointer-events');
   }
   function mdjRunVistaCeroGuestNavRestore() {
+    /* Vista Cero restaura la barra de INVITADO. Cuando la pagina monta el juego
+       interno del sistema no debe intervenir: quitaba los puestos tools,
+       mi-portal y staff (5, 8 y 9) e inyectaba Eventos y un segundo MI PERFIL,
+       dejando un hibrido de 8. Y como corre en siete temporizadores hasta 4s y
+       en dos MutationObserver, siempre ganaba al normalizador.
+       La ultima palabra sobre el riel la tiene mdj-shared-header.js. */
+    if (typeof window.mdjUsaJuegoInterno === 'function' && window.mdjUsaJuegoInterno()) return;
     if (!mdjVistaCeroGuest()) return;
     var nav = document.getElementById('mainNav');
     mdjStripRemovedPublicTabs(nav);

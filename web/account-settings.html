@@ -6,8 +6,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Account Settings — Miami DJ Beat</title>
   <meta name="description" content="Manage your account settings and preferences." />
+  <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra caia en la
+       sustituta del sistema y el texto salia ~2% mas ancho, desplazando el eje X. -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260817-header-canonico" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260819-homolog2" />
   <link rel="stylesheet" href="./mdj-outlined-fields.css?v=20260421-account-forms" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -1228,6 +1231,7 @@
 </head>
 
 <body class="notranslate mdj-account-settings mdj-from-profile mdj-nav-booting">
+
   <!-- CABECERA ESTÁNDAR GLOBAL -->
   <!-- MDJ canonical site header — keep in sync with index #mainHeader; use ./index.html# anchors for subpages -->
 <header class="header mdj-header-unified" id="mainHeader">
@@ -1312,7 +1316,7 @@
         <a href="./dj-dashboard.html?tab=flow" id="mainNav-flow-link" class="mdj-flow-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="flow" data-i18n="flow-dash" aria-hidden="true" tabindex="-1">Cash Flow</a>
         <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
         <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
-        <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" data-i18n="header-mi-portal" aria-hidden="true" tabindex="-1">MI PORTAL</a>
+        <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" data-mdj-slot="8" data-i18n="header-mi-portal" aria-hidden="true" tabindex="-1">MI PORTAL</a>
         <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
       </nav>
     </div>
@@ -1324,18 +1328,25 @@
          mutilado). Con CONFIG activo. Reversible. -->
     <nav class="dj-owner-tabs" id="owner-tabs" aria-label="Navegación de cuenta">
         <div class="container">
-            <a href="./index.html" class="dj-tab-btn dj-tab-btn--home" data-i18n="nav-home">Home</a>
-            <a href="./jobs.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-jobs">Jobs</a>
-            <a href="./shop.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-shop">Shop</a>
-            <a href="./dj-dashboard.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="dash-your-profile">Agenda</a>
-            <a href="./account-settings.html?mdj_nav=profile" class="dj-tab-btn active" data-i18n="nav-settings">⚙️ CONFIG</a>
-            <a href="./academia.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-academia">Academia</a>
-            <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-tools">DJ Tools</a>
-            <a href="./dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="flow-dash">CASH FLOW</a>
-            <a href="./dj-profile.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="menu-account">Mi Perfil</a>
-            <a href="./admin-dashboard.html" class="dj-tab-btn dj-tab-btn--staff-only" data-mdj-nav="staff" data-i18n="nav-staff">STAFF</a>
-            <a href="./dj-profile.html?tab=sft&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-soundfortips">SoundForTips™</a>
-        </div>
+        <!-- ══ TIRA CANÓNICA DEL PORTAL OWNER (FIX-NAV-04) ══════════════════
+             Nueve elementos dictados por el PO + conmutador día/noche.
+             MRM IA NO va aquí: vive en el riel superior compartido, y
+             duplicarlo era parte del desorden que este ticket corrige.
+             SoundForTips va marcado con data-mdj-solo-artista, no borrado:
+             el CSS lo reserva al perfil de DJ/Artista. -->
+        <a href="./index.html" class="dj-tab-btn" data-mdj-portalnav="inicio" data-i18n="nav-home">Inicio</a>
+        <a href="./academia.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="academia" data-i18n="nav-academia">Academia</a>
+        <a href="./dj-dashboard.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="agenda" data-i18n="nav-agenda">Agenda</a>
+        <a href="./staff-config.html" class="dj-tab-btn" data-mdj-portalnav="config" data-i18n="nav-config">⚙ Config</a>
+        <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="tools" data-i18n="nav-tools">DJ Tools</a>
+        <a href="./dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="flow" data-i18n="flow-dash">Cash Flow</a>
+        <a href="./account-settings.html" class="dj-tab-btn active" data-mdj-portalnav="perfil" data-i18n="menu-account">Mi Perfil</a>
+        <a href="./admin-dashboard.html" class="dj-tab-btn" data-mdj-portalnav="staff" data-i18n="nav-staff">Staff</a>
+        <a href="./elixis-console.html" class="dj-tab-btn" data-mdj-portalnav="fenix" data-i18n="nav-fenix">Fénix AI</a>
+        <a href="./dj-profile.html?tab=sft&amp;mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="sft" data-i18n="nav-soundfortips" data-mdj-solo-artista="1">SoundForTips™</a>
+        <!-- Conmutador día/noche: cierra la tira, como pidió el PO. -->
+        <button type="button" class="dj-tab-btn dj-tab-btn--tema" data-mdj-portalnav="tema" data-mdj-tema-toggle aria-label="Cambiar modo día / noche" title="Modo día / noche">☀️</button>
+      </div>
     </nav>
 
   <main class="account-layout mdj-settings-has-split mdj-has-sidebar">
@@ -7511,7 +7522,7 @@
     </script>
     <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-      <script src="./mdj-shared-header.js?v=20260817-header-canonico"></script>
+      <script src="./mdj-shared-header.js?v=20260818-rigida9"></script>
   <script src="./mdj-profile-nav-context.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
@@ -7559,6 +7570,7 @@
       }
     })();
   </script>
+  <script src="./js/mdj-tema-portal.js?v=20260819-tema"></script>
 </body>
 
 </html>

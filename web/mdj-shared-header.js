@@ -49,6 +49,92 @@
       id: 'mainNav-roadmap-link', cls: 'mdj-roadmap-mainnav' }
   ];
 
+  /* ══ JUEGO INTERNO DEL SISTEMA (decisión PO 2026-08-19) ══════════════════════
+     Las vistas internas no son la vitrina: no deben ofrecer Servicios, Eventos,
+     Shop, Trabajos ni Contacto, sino las herramientas del sistema.
+
+     Ni los rótulos ni las rutas se inventan: se copian de la tira que staff.html
+     ya pinta para el rol owner. Las cuatro entradas que allí son conmutadores de
+     vista sin URL propia (Agenda, Cash Flow, Fénix AI, Staff) apuntan aquí al
+     archivo literal que ese portal carga en cada una — staff.html no admite
+     enlace profundo, así que no hay forma de apuntar a la vista, solo al origen.
+
+     MI PERFIL SE QUEDA EN EL PUESTO 8, y es deliberado: el resolvedor de su
+     destino y el bloque que fija su etiqueta direccionan por número de slot.
+     Moverlo al 7 —el orden que pedía la lista original— obligaría a desacoplar
+     ese punto único de verdad en las once vistas a la vez. Se difiere a la fase
+     de atributos semánticos (data-nav-action), ya acordada.
+
+     Consecuencia conocida: para owner el resolvedor manda MI PERFIL a
+     staff.html, el mismo destino que el puesto 9. Para artista y cliente no hay
+     solape (van a su perfil o a su cuenta), y a ellos el puesto 9 ni se les
+     muestra. Se acepta hasta el desacoplamiento.
+
+     Las claves nav-agenda, nav-flow y nav-fenix NO existen en translations.js;
+     esas tres entradas van sin data-i18n a propósito, para que i18n no les vacíe
+     el rótulo al pasar. ════════════════════════════════════════════════════════ */
+  var MDJ_NAV_SLOTS_INTERNO = [
+    { s: 1, key: 'nav-home',       nav: 'home',      href: './index.html',        txt: 'Inicio' },
+    { s: 2, key: 'nav-academia',   nav: 'academia',  href: './academia.html',     txt: 'Academia' },
+    { s: 3, key: null,             nav: 'agenda',    href: './staff-agenda.html', txt: 'Agenda' },
+    { s: 4, key: 'nav-config',     nav: 'config',    href: './staff-config.html', txt: '⚙ Config',
+      id: 'mainNav-config-link', cls: 'mdj-config-mainnav' },
+    { s: 5, key: 'nav-tools',      nav: 'tools',     href: './dj-tools.html',     txt: 'DJ Tools' },
+    { s: 6, key: null,             nav: 'flow',      href: './staff-agenda.html?tab=flow', txt: 'Cash Flow' },
+    { s: 7, key: null,             nav: 'fenix',     href: './elixis-console.html', txt: 'Fénix AI' },
+    { s: 8, key: 'nav-my-profile', nav: 'mi-portal', href: './account-settings.html', txt: 'MI PERFIL',
+      id: 'mainNav-mi-portal-link', cls: 'mdj-mi-portal-mainnav mdj-mi-portal-gold',
+      alias: ['mi-portal', 'header-mi-portal'], navAlias: ['my-profile', 'profile'] },
+    /* Puesto 9 · STAFF. Lleva la clase del gate determinista por rol que ya usa
+       la tira de owner: artista, cliente e invitado no lo ven. Sigue pendiente
+       el requisito pleno de la ley RBAC —sacarlo del DOM, no solo ocultarlo. */
+    { s: 9, key: 'nav-staff',      nav: 'staff',     href: './staff.html',        txt: 'Staff',
+      id: 'mainNav-staff-or-profile', cls: 'mdj-staff-mainnav dj-tab-btn--staff-only' }
+  ];
+
+  /* Vistas que montan el juego interno. Lista explícita y no por rol: el owner
+     también navega la vitrina pública (index, shop, contacto) y allí la barra
+     debe seguir siendo la pública. Una página puede además pedirlo por su
+     cuenta con <body data-mdj-contexto="interno">.
+
+     La lista son los DESTINOS DEL PROPIO JUEGO INTERNO. Si la barra interna
+     lleva a una página que a su vez pinta la vitrina pública, el usuario sale
+     del portal sin haberlo pedido: es la inconsistencia que reportó el PO en
+     dj-tools.html. Cada puesto debe aterrizar en una vista que conserve la
+     misma barra. staff.html no entra porque no tiene #mainHeader: usa su tira
+     nativa #staff-topnav, que ya es este mismo juego.
+
+     Quedan fuera a conciencia:
+       · staff-agenda.html y staff-config.html — se incrustan como iframe en el
+         portal y no pintan #mainHeader; no hay barra que cambiar.
+       · elixis-console.html — sin verificar en vivo. */
+  var MDJ_VISTAS_INTERNAS = {
+    'academia.html': 1,
+    'dj-tools.html': 1
+  };
+
+  function mdjTablaDeSlots() {
+    try {
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (MDJ_VISTAS_INTERNAS[pagina]) return MDJ_NAV_SLOTS_INTERNO;
+      if (document.body && document.body.getAttribute('data-mdj-contexto') === 'interno') {
+        return MDJ_NAV_SLOTS_INTERNO;
+      }
+    } catch (eTabla) { /* noop */ }
+    return MDJ_NAV_SLOTS;
+  }
+
+  /* Señal pública para los pases propios de cada página. El bloque en linea
+     "Vista Cero" que viven en dj-tools, login y services restaura la barra de
+     INVITADO: quita tools / mi-portal / staff e inyecta Eventos y un segundo
+     MI PERFIL. Contra el juego interno eso desmonta los puestos 5, 8 y 9, y
+     como se reejecuta en siete temporizadores y dos MutationObserver, siempre
+     ganaba al normalizador. Con esto puede apartarse solo, sin que haya que
+     duplicar aqui la lista de vistas internas. */
+  window.mdjUsaJuegoInterno = function () {
+    return mdjTablaDeSlots() === MDJ_NAV_SLOTS_INTERNO;
+  };
+
   /* ── Resolvedor ÚNICO del destino de MI PERFIL (decisión PO 2026-08-16) ──
      El texto del slot 8 nunca cambia; cambia a dónde lleva:
        owner / staff  → ./staff.html         (ahí viven Academia, DJ Tools,
@@ -179,7 +265,9 @@
     function crear(def) {
       var a = document.createElement('a');
       a.setAttribute('href', def.href);
-      a.setAttribute('data-i18n', def.key);
+      /* Sin clave no se pone data-i18n: un key inexistente hace que el pase de
+         i18n deje el rótulo vacío. */
+      if (def.key) a.setAttribute('data-i18n', def.key);
       a.setAttribute('data-mdj-nav', def.nav);
       if (def.id) a.id = def.id;
       if (def.cls) a.className = def.cls;
@@ -195,13 +283,52 @@
     var DUPLICADOS_8 = ['mainNav-guest-mi-perfil-link', 'mainNav-artist-dashboard-link'];
 
     var canonicos = [];
-    MDJ_NAV_SLOTS.forEach(function (def) {
+    /* La tabla ya no es única: las vistas internas montan el juego del sistema
+       en vez del público. La elección es por página, no por rol. */
+    var tabla = mdjTablaDeSlots();
+    var esInterno = (tabla === MDJ_NAV_SLOTS_INTERNO);
+    tabla.forEach(function (def) {
       var el = buscar(def) || crear(def);
       el.setAttribute('data-mdj-slot', String(def.s));
       el.setAttribute('data-mdj-nav', def.nav);          // unifica alias de clave
-      if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', def.key);
+      /* SOLO en el juego interno se reescribe el nodo reutilizado. En el público
+         se mantiene la regla histórica de esta función: conservar href, clases e
+         id propios de cada página y limitarse a reordenar.
+         En el interno hay que imponerlo: los nodos que se reciclan vienen del
+         HTML viejo de la vitrina y, si no se reescriben, "Servicios" o "Eventos"
+         reaparecen dentro del portal. */
+      if (esInterno) {
+        if (def.txt && (el.textContent || '').trim() !== def.txt) {
+          var sepPrevio = el.querySelector(':scope > .mdj-slash');
+          el.textContent = def.txt;
+          if (sepPrevio) el.insertBefore(sepPrevio, el.firstChild);
+        }
+        if (def.href && el.tagName === 'A') el.setAttribute('href', def.href);
+        if (def.cls) el.className = def.cls;
+        /* Un slot reservado del juego público no puede llegar oculto al interno. */
+        el.classList.remove('mdj-mainnav-reserved-slot');
+        el.removeAttribute('aria-hidden');
+        el.removeAttribute('tabindex');
+        if (!def.key) el.removeAttribute('data-i18n');
+      }
+      if (def.key && !el.getAttribute('data-i18n')) el.setAttribute('data-i18n', def.key);
       canonicos.push(el);
     });
+
+    /* Indicador de puesto activo. Solo en el juego interno: la barra pública es
+       la misma vitrina en todas partes y allí no señala página. Se compara el
+       archivo del href con el de la URL, así que Academia queda marcada en
+       academia.html y nunca INICIO. */
+    if (esInterno) {
+      var aqui = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      canonicos.forEach(function (el) {
+        var destino = String(el.getAttribute('href') || '').split('?')[0].split('/').pop().toLowerCase();
+        var activo = !!destino && destino === aqui;
+        el.classList.toggle('active', activo);
+        if (activo) el.setAttribute('aria-current', 'page');
+        else el.removeAttribute('aria-current');
+      });
+    }
 
     // Retirar todo lo que no sea canónico (DJ Tools, STAFF, booth, flow-dash…).
     /* El botón de día/noche vive dentro del riel (columna 10) y NO es un slot
@@ -292,26 +419,47 @@
     nav.style.setProperty('grid-auto-rows', '0', 'important');
     nav.style.setProperty('align-items', 'center', 'important');
 
-    [].slice.call(nav.querySelectorAll('[data-mdj-slot]')).forEach(function (el) {
-      el.style.setProperty('display', 'inline-flex', 'important');
-      el.style.setProperty('width', '100%', 'important');
-      el.style.setProperty('min-width', '0', 'important');
-      /* La visibilidad la decide el header, no las clases heredadas:
-           slot 5 (CONFIG) — reservado sin sesión, visible con ella
-           slot 8 (MI PERFIL) — SIEMPRE visible (decisión PO)
-           resto — siempre visible
-         Se fija también la opacidad: había reglas que dejaban el slot 8 con
-         opacity:0, visible y ocupando sitio pero transparente. */
-      var slot = el.getAttribute('data-mdj-slot');
-      var oculto;
-      if (slot === '8') oculto = false;                       // MI PERFIL: siempre
-      else if (slot === '5') oculto = (_mdjHaySesion === false);  // CONFIG: con sesión, visible
-      else oculto = el.classList.contains('mdj-mainnav-reserved-slot');
-      el.classList.toggle('mdj-mainnav-reserved-slot', !!oculto);
-      el.style.setProperty('visibility', oculto ? 'hidden' : 'visible', 'important');
-      el.style.setProperty('opacity', oculto ? '0' : '1', 'important');
-      el.style.setProperty('pointer-events', oculto ? 'none' : 'auto', 'important');
-    });
+    /* ── NORMALIZACIÓN CANÓNICA DE LOS 9 PUESTOS ─────────────────────────
+       Estándar inmutable (PO 2026-08-18), idéntico en TODAS las vistas:
+         1 HOME · 2 SERVICES · 3 EVENTS · 4 SHOP · 5 ⚙ CONFIG ·
+         6 JOBS · 7 CONTACT · 8 MI PERFIL · 9 MRM IA
+
+       Por qué hace falta esto: el puesto 8 llega con DOS identidades según la
+       página —#mainNav-mi-perfil-link con sesión y #mainNav-guest-mi-perfil-link
+       sin ella— y la variante de invitado venía SIN data-mdj-slot. Sin ese
+       atributo la rejilla no la coloca, su columna 8 se queda vacía y aparece
+       el hueco de 170 px antes de MRM IA que se veía en login.html.
+       Aquí se le pone el puesto que le toca y se fijan los destinos canónicos.
+       No se crea ningún enlace: solo se etiqueta el que ya existe. */
+    (function normalizarPuestos() {
+      var perfil = nav.querySelector('#mainNav-mi-perfil-link, #mainNav-guest-mi-perfil-link, [data-mdj-nav="my-profile"]');
+      if (perfil && !perfil.getAttribute('data-mdj-slot')) perfil.setAttribute('data-mdj-slot', '8');
+      if (perfil) perfil.setAttribute('href', './account-settings.html');
+
+      var cfg = nav.querySelector('#mainNav-config-link, [data-mdj-nav="config"]');
+      if (cfg && !cfg.getAttribute('data-mdj-slot')) cfg.setAttribute('data-mdj-slot', '5');
+      /* CONFIG apunta a la fuente de verdad de configuración, donde viven los
+         paneles de Ajustes de Sistema y Pasarelas & Licencias. */
+      if (cfg) cfg.setAttribute('href', './staff-config.html');
+    })();
+
+    /* ── GEOMETRÍA: LA DECIDE EL CSS, NO ESTE ARCHIVO ────────────────────
+       Aquí había un bucle que escribía en cada puesto, EN LÍNEA y con
+       !important, display / width / min-width / visibility / opacity /
+       pointer-events. Se ha retirado por tres razones medidas:
+
+       1. Un inline con !important gana a CUALQUIER hoja, así que ninguna regla
+          de header-unified.css podía corregir un puesto — ni las que ya existían
+          en el proyecto. Se diagnosticó en login.html: cuatro reglas distintas
+          decían display:none para el slot 5 y el computado seguía en flex.
+       2. Escribir geometría después de pintar es exactamente lo que produce el
+          salto de maquetación (CLS) que esta barra debe tener en cero.
+       3. La rejilla ya está declarada de fábrica en header-unified.css con sus
+          nueve columnas y el grid-column de cada puesto. Duplicarla aquí creaba
+          dos fuentes de verdad, y mandaba la que se ejecutaba la última.
+
+       Este archivo se queda con lo funcional —destinos, estado activo, sesión—
+       y no vuelve a tocar la geometría. Regla permanente. */
 
     /* Ritmo de separadores con un NODO REAL, no ::before.
        El pseudo-elemento perdía contra reglas heredadas que ponían content:none
@@ -1530,6 +1678,12 @@
   function mdjEnsureGuestMiPerfilMainNavLink() {
     var nav = document.getElementById('mainNav');
     if (!nav) return null;
+    /* En el juego interno el puesto 8 YA es Mi Perfil y se ve siempre, así que
+       este nodo de respaldo para invitado no tiene función: solo añadía un
+       segundo «MI PERFIL» al riel (academia salía con 10 puestos). El
+       normalizador lo retira por DUPLICADOS_8, pero esta inyección corre
+       DESPUÉS de su barrido y el duplicado sobrevivía. */
+    if (mdjTablaDeSlots() === MDJ_NAV_SLOTS_INTERNO) return null;
     var el = document.getElementById('mainNav-guest-mi-perfil-link');
     var legacy = document.getElementById('mainNav-artist-dashboard-link');
     if (legacy && !el) {
