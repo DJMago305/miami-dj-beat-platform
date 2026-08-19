@@ -32,6 +32,8 @@
     { s: 3, key: 'nav-rentals',  nav: 'venues',    href: './events.html',  txt: 'Eventos' },
     { s: 4, key: 'nav-shop',     nav: 'shop',      href: './shop.html',    txt: 'Shop',
       alias: ['shop'] },
+    /* href = respaldo para el rol mas comun de la vitrina (artista). El destino
+       real lo fija mdjResolveConfigHref() en cada pasada; ver FIX-NAV-CONFIG-01. */
     { s: 5, key: 'nav-config',   nav: 'config',    href: './account-profile.html', txt: '⚙️ CONFIG',
       id: 'mainNav-config-link', cls: 'mdj-config-mainnav mdj-mainnav-reserved-slot', reserved: true },
     { s: 6, key: 'nav-jobs',     nav: 'jobs',      href: './jobs.html',    txt: 'Trabajos' },
@@ -244,6 +246,78 @@
     }, true);
   }
 
+  /* ══ DESTINO DE ⚙ CONFIG · UN SOLO PUNTO DE VERDAD ═════════════════════════
+     FIX-NAV-CONFIG-01 (2026-08-19). El destino de este puesto se escribia en
+     CUATRO sitios de este mismo archivo: las dos tablas de slots, una
+     sobreescritura sin condicion mas abajo, y el creador del enlace cuando
+     falta. Mandaba la ultima en ejecutarse —la sobreescritura—, que apuntaba a
+     staff-config.html sin mirar rol ni pagina. Consecuencia: artista y cliente
+     aterrizaban en territorio de owner, que ademas rebota a staff.html, y se
+     quedaban sin sus ajustes.
+
+     Misma cura que ya se aplico al puesto 8: resolvedor unico y decision EN EL
+     CLIC. Lo segundo no es adorno — el rol llega cuando resuelve la sesion,
+     despues de las primeras pasadas del header, asi que congelar el href al
+     cargar da el destino equivocado.
+
+     Los cuatro destinos no se inventan: son los que ya declaraba el marcado de
+     cada portal (index y client-portal para cliente, academia y dj-tools para
+     artista, la tabla interna para owner). */
+  function mdjResolveConfigHref() {
+    var b = document.body;
+    var rol = (b && b.getAttribute('data-mdj-nav-role') || '').toLowerCase().trim();
+    var uid = String(window.__mdjNavOwnUserId || '').trim();
+    var esStaff = rol === 'management' || rol === 'seller' ||
+      (b && b.classList.contains('mdj-staff-nav') && !b.classList.contains('mdj-artist-nav'));
+    var esArtista = !!(b && b.classList.contains('mdj-artist-nav'));
+    if (esStaff) return './staff-config.html';
+    /* Directo a account-settings: account-profile.html son 11 lineas de
+       redireccion a esa misma pagina, asi que apuntar alli hacia dar un salto
+       de mas a cada artista. */
+    if (esArtista) return './account-settings.html';
+    if (uid) return './client-account.html';
+    return './login.html';
+  }
+  window.mdjResolveConfigHref = mdjResolveConfigHref;
+
+  async function mdjDestinoConfigEnVivo() {
+    var supa = (typeof window.getSupabaseClient === 'function') ? window.getSupabaseClient() : null;
+    if (!supa) return './login.html';
+    var ses = null;
+    try { var r = await supa.auth.getSession(); ses = r && r.data ? r.data.session : null; } catch (e) {}
+    if (!ses) return './login.html';
+    var uid = ses.user && ses.user.id ? String(ses.user.id) : '';
+    var rol = '';
+    try {
+      var pr = await supa.from('dj_profiles').select('role').eq('user_id', uid).maybeSingle();
+      rol = String(((pr && pr.data) || {}).role || '').toLowerCase().trim();
+    } catch (e) {}
+    if (rol === 'owner' || rol === 'admin' || rol === 'manager' || rol === 'management' || rol === 'seller') {
+      return './staff-config.html';
+    }
+    if (rol) return './account-settings.html';       // cualquier otro rol con perfil = artista
+    return uid ? './client-account.html' : './login.html';
+  }
+
+  function mdjEngancharConfig(el) {
+    if (!el || el.__mdjConfigHook) return;
+    el.__mdjConfigHook = true;
+    el.addEventListener('click', function (ev) {
+      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return;   // abrir en pestaña nueva
+      ev.preventDefault();
+      ev.stopPropagation();
+      var previo = el.getAttribute('href');
+      el.setAttribute('aria-busy', 'true');
+      mdjDestinoConfigEnVivo().then(function (dest) {
+        el.removeAttribute('aria-busy');
+        window.location.href = dest;
+      }).catch(function () {
+        el.removeAttribute('aria-busy');
+        window.location.href = previo || './login.html';
+      });
+    }, true);
+  }
+
   function mdjNormalizeMainNavSlots(idRiel) {
     var nav = document.getElementById(idRiel || 'mainNav');
     if (!nav) return false;
@@ -438,9 +512,14 @@
 
       var cfg = nav.querySelector('#mainNav-config-link, [data-mdj-nav="config"]');
       if (cfg && !cfg.getAttribute('data-mdj-slot')) cfg.setAttribute('data-mdj-slot', '5');
-      /* CONFIG apunta a la fuente de verdad de configuración, donde viven los
-         paneles de Ajustes de Sistema y Pasarelas & Licencias. */
-      if (cfg) cfg.setAttribute('href', './staff-config.html');
+      /* FIX-NAV-CONFIG-01: aquí había un href fijo a './staff-config.html', sin
+         mirar rol ni página, que ganaba a las otras tres definiciones por ser la
+         última en correr. El destino lo decide ahora el resolvedor único, y en
+         el clic se reconfirma contra la sesión en vivo. */
+      if (cfg) {
+        cfg.setAttribute('href', mdjResolveConfigHref());   // respaldo estático
+        mdjEngancharConfig(cfg);                            // la verdad, en el clic
+      }
     })();
 
     /* ── GEOMETRÍA: LA DECIDE EL CSS, NO ESTE ARCHIVO ────────────────────
@@ -1930,7 +2009,10 @@
     a.setAttribute('data-mdj-nav', 'config');
     a.setAttribute('data-i18n', 'nav-config');
     a.className = 'mdj-config-mainnav mdj-mainnav-reserved-slot';
-    a.href = './account-settings.html?mdj_nav=profile';
+    /* FIX-NAV-CONFIG-01: era la tercera definicion del mismo destino, y encima
+       apuntaba a una cuarta pagina distinta. Se pide al resolvedor unico. */
+    a.href = mdjResolveConfigHref();
+    mdjEngancharConfig(a);
     a.setAttribute('aria-hidden', 'true');
     a.setAttribute('tabindex', '-1');
     a.textContent = '⚙️ CONFIG';
