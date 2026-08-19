@@ -286,6 +286,7 @@
      visibilidad no puede depender de la clase heredada mdj-mainnav-reserved-slot,
      que otros pases reponen. Se consulta en vivo y se recuerda. */
   var _mdjHaySesion = null;                       // null = aún no se sabe
+  var _mdjOrigenBuscador = null;                  // hueco del buscador antes de moverlo
   function mdjRefrescarSesion() {
     var supa = (typeof window.getSupabaseClient === 'function') ? window.getSupabaseClient() : null;
     if (!supa) return;
@@ -658,9 +659,14 @@
       if (logo) casa.appendChild(logo.cloneNode(true));
       caja.appendChild(casa);
 
-      /* Buscador: se MUEVE el original, con sus escuchas intactas. */
+      /* Buscador: se MUEVE el original, con sus escuchas intactas. Se apunta de
+         donde salio: si la sesion resuelve tarde y resulta que es el dueño, hay
+         que devolverlo a su hueco exacto, no dejarlo colgando. */
       var envoltura = document.querySelector('#mainHeader .header-search-wrap');
-      if (envoltura) caja.appendChild(envoltura);
+      if (envoltura) {
+        _mdjOrigenBuscador = { padre: envoltura.parentNode, siguiente: envoltura.nextSibling };
+        caja.appendChild(envoltura);
+      }
 
       document.body.appendChild(caja);
       document.body.classList.add('mdj-perfil-visitante');
@@ -674,6 +680,44 @@
     } catch (eMontar) { /* noop */ }
   }
   window.mdjMontarFlotanteVisitante = mdjMontarFlotanteVisitante;
+
+  /* EL MONTAJE TIENE QUE PODER DESHACERSE. La decision de «visitante» se toma con
+     lo que se sabe en ese instante, y la sesion puede resolver despues: medido en
+     un perfil propio, convivian data-mdj-slots="10" (o sea, el dueño ya estaba
+     reconocido) con la franja de visitante puesta y la cabecera apagada. Sin esta
+     vuelta atras, quien restaura sesion despacio se queda sin su estacion. */
+  function mdjDesmontarFlotanteVisitante() {
+    try {
+      var caja = document.getElementById('mdj-flotante-visitante');
+      if (!caja) return false;
+
+      /* El buscador vuelve a su hueco exacto: es el original movido, con sus
+         escuchas, no una copia. */
+      var envoltura = caja.querySelector('.header-search-wrap');
+      if (envoltura) {
+        if (_mdjOrigenBuscador && _mdjOrigenBuscador.padre && _mdjOrigenBuscador.padre.isConnected) {
+          _mdjOrigenBuscador.padre.insertBefore(envoltura, _mdjOrigenBuscador.siguiente || null);
+        } else {
+          /* Sin hueco registrado —franja de un pase anterior, u otra instancia del
+             guion— el buscador NO puede irse con la franja: se devuelve a la
+             cabecera aunque sea al final. Perderlo deja la pagina sin buscar. */
+          var destino = document.getElementById('mainHeader');
+          if (destino) destino.appendChild(envoltura);
+        }
+      }
+      _mdjOrigenBuscador = null;
+
+      caja.parentNode && caja.parentNode.removeChild(caja);
+      document.body.classList.remove('mdj-perfil-visitante');
+
+      /* Se retira el display:none EN LINEA que puso el montaje; la hoja vuelve a
+         mandar sobre la cabecera. */
+      var cab = document.getElementById('mainHeader');
+      if (cab) cab.style.removeProperty('display');
+      return true;
+    } catch (eDesmontar) { return false; }
+  }
+  window.mdjDesmontarFlotanteVisitante = mdjDesmontarFlotanteVisitante;
 
   function mdjNormalizeMainNavSlots(idRiel) {
     var nav = document.getElementById(idRiel || 'mainNav');
@@ -872,7 +916,8 @@
     /* Visitante en un perfil ajeno: el logo y el buscador flotantes sustituyen a
        la barra de marketing. Se monta despues del riel para poder mover el
        buscador ya inicializado. */
-    mdjMontarFlotanteVisitante();
+    if (mdjEsVisitanteDePerfil()) mdjMontarFlotanteVisitante();
+    else mdjDesmontarFlotanteVisitante();   /* si ya no es visitante, se le devuelve su estacion */
 
     /* El propio riel también se blinda inline: hay reglas de la era flex que le
        devuelven display:flex, y sin display:grid las nueve columnas no existen
