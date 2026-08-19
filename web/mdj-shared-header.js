@@ -173,7 +173,17 @@
     var uid = String(window.__mdjNavOwnUserId || '').trim();
     var esStaff = role === 'management' || role === 'seller' ||
       (b && b.classList.contains('mdj-staff-nav') && !b.classList.contains('mdj-artist-nav'));
-    var esArtista = !!(b && b.classList.contains('mdj-artist-nav'));
+    /* DOS SENALES PARA LO MISMO, y aqui solo se escuchaba una. El artista se
+       reconoce por la clase mdj-artist-nav O por data-mdj-nav-role, que trae
+       'artist' | 'dj' | 'talent' segun de donde venga resuelto el rol.
+       Mirando solo la clase, una sesion de artista con el atributo puesto pero
+       sin la clase caia en la rama de CLIENTE: medido en vivo con djmago305
+       (rol dj/PRO), CONFIG apuntaba a client-account.html y MI PERFIL a
+       client-portal.html en las seis vistas. Destinos de otra categoria.
+       El roster es el mismo —artist, dj y talent son la misma persona— tal y
+       como ya lo trata role-guard.js. */
+    var esArtista = !!(b && (b.classList.contains('mdj-artist-nav') ||
+      role === 'artist' || role === 'dj' || role === 'talent'));
     /* Aterriza en la vista de perfil del portal, no en su portada. Antes caia en
        'gobernanza' y el owner no veia su ficha por ningun lado, aunque estuviera
        cargada y oculta ahi mismo. */
@@ -294,7 +304,17 @@
     var uid = String(window.__mdjNavOwnUserId || '').trim();
     var esStaff = rol === 'management' || rol === 'seller' ||
       (b && b.classList.contains('mdj-staff-nav') && !b.classList.contains('mdj-artist-nav'));
-    var esArtista = !!(b && b.classList.contains('mdj-artist-nav'));
+    /* DOS SENALES PARA LO MISMO, y aqui solo se escuchaba una. El artista se
+       reconoce por la clase mdj-artist-nav O por data-mdj-nav-role, que trae
+       'artist' | 'dj' | 'talent' segun de donde venga resuelto el rol.
+       Mirando solo la clase, una sesion de artista con el atributo puesto pero
+       sin la clase caia en la rama de CLIENTE: medido en vivo con djmago305
+       (rol dj/PRO), CONFIG apuntaba a client-account.html y MI PERFIL a
+       client-portal.html en las seis vistas. Destinos de otra categoria.
+       El roster es el mismo —artist, dj y talent son la misma persona— tal y
+       como ya lo trata role-guard.js. */
+    var esArtista = !!(b && (b.classList.contains('mdj-artist-nav') ||
+      rol === 'artist' || rol === 'dj' || rol === 'talent'));
     if (esStaff) return './account-settings.html';
     /* Directo a account-settings: account-profile.html son 11 lineas de
        redireccion a esa misma pagina, asi que apuntar alli hacia dar un salto

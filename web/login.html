@@ -1989,8 +1989,19 @@
   <script id="mdj-vista-cero-guest-nav-restore">
 (function () {
   function mdjVistaCeroGuest() {
-    if (document.body.classList.contains('mdj-buyer-session') || document.body.classList.contains('mdj-is-client')) return false;
+    /* Vista Cero es para INVITADOS. Esta guarda decia «todo el que no sea
+       cliente», asi que tambien daba por invitado a un ARTISTA con sesion
+       abierta: le arrancaba el puesto 8 canonico y le inyectaba su MI PERFIL de
+       invitado hacia login.html. Medido con djmago305 (rol dj/PRO) en dj-tools:
+       puesto 8 sin data-mdj-slot y apuntando a login estando dentro.
+       Ahora basta con que haya un rol resuelto —o las clases de artista o
+       staff— para que Vista Cero se aparte. El invitado real no tiene ninguna
+       de las dos cosas, asi que para el nada cambia. */
+    var b = document.body;
+    if (b.classList.contains('mdj-buyer-session') || b.classList.contains('mdj-is-client')) return false;
     if (window.__mdjLastBuyerSession === true) return false;
+    if (b.classList.contains('mdj-artist-nav') || b.classList.contains('mdj-staff-nav')) return false;
+    if ((b.getAttribute('data-mdj-nav-role') || '').trim()) return false;
     return true;
   }
   function mdjEnsureVenuesInNav(nav) {
