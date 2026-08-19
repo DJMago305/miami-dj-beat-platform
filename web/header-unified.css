@@ -4174,3 +4174,113 @@ html body #mainHeader.header.mdj-header-unified #mainNav > a#mainNav-mi-perfil-l
     display: none !important;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PANEL PREMIUM DE LA HAMBURGUESA
+   ──────────────────────────────────────────────────────────────────────────
+   Implementa docs/design/premium-settings-tabs-pattern.md sobre el desplegable
+   movil: fila de icono + etiqueta + UN solo contenido final, agrupadas en
+   tarjetas de esquinas redondeadas, hairline entre filas y NINGUNA bajo la
+   ultima, encabezado de seccion FUERA y arriba, y aire generoso entre grupos.
+
+   El marcado lo construye mdj-shared-header.js desde los mismos puestos del
+   riel, asi que barra y panel no pueden discrepar.
+
+   La paleta no es la clara del documento: este panel se abre sobre el portal
+   oscuro, asi que se trasladan los MISMOS roles —fondo un escalon por encima
+   del de pagina, texto primario, secundario y acento dorado de la casa— en vez
+   de meter una superficie blanca dentro de una interfaz oscura.
+   ══════════════════════════════════════════════════════════════════════════ */
+#mobileMenu .mobile-nav[data-mdj-panel-premium] {
+  display: block;
+  padding: 18px 16px 32px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Encabezado de seccion: fuera y arriba de la tarjeta, nunca dentro. */
+#mobileMenu .mobile-nav .mdj-panel-titulo {
+  margin: 28px 0 9px 16px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .45);
+}
+#mobileMenu .mobile-nav .mdj-panel-titulo:first-child { margin-top: 4px; }
+
+#mobileMenu .mobile-nav .mdj-panel-tarjeta {
+  background: rgba(255, 255, 255, .045);   /* un escalon sobre el fondo del panel */
+  border: 1px solid rgba(197, 160, 89, .14);
+  border-radius: 12px;
+  overflow: hidden;
+}
+#mobileMenu .mobile-nav .mdj-panel-tarjeta--sola { margin-top: 28px; }
+
+#mobileMenu .mobile-nav a.mdj-panel-fila {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 50px;
+  padding: 11px 18px;                       /* padding horizontal constante */
+  border-bottom: 1px solid rgba(255, 255, 255, .07);   /* hairline, no borde grueso */
+  color: #f2f4f8;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: .2px;
+  text-transform: none;                     /* el patron es de utilidad, no de marca */
+}
+
+/* La ultima fila de la tarjeta no lleva divisoria. */
+#mobileMenu .mobile-nav a.mdj-panel-fila:last-child { border-bottom: 0; }
+
+#mobileMenu .mobile-nav a.mdj-panel-fila:active {
+  background: rgba(197, 160, 89, .10);
+}
+
+#mobileMenu .mobile-nav .mdj-panel-ico {
+  width: 21px;
+  height: 21px;
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, .58);          /* icono monolineal, un solo color plano */
+}
+
+#mobileMenu .mobile-nav .mdj-panel-etiqueta {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+#mobileMenu .mobile-nav .mdj-panel-chevron {
+  flex: 0 0 auto;
+  font-size: 20px;
+  line-height: 1;
+  color: rgba(255, 255, 255, .32);
+}
+
+/* Fila de salida: aislada en su mini-tarjeta y en rojo, como marca el patron. */
+#mobileMenu .mobile-nav a.mdj-panel-fila--salida { color: #ff6961; }
+#mobileMenu .mobile-nav a.mdj-panel-fila--salida .mdj-panel-ico { color: #ff6961; }
+
+/* Modo dia: los mismos roles sobre superficie clara. */
+html[data-theme="day"] #mobileMenu .mobile-nav .mdj-panel-tarjeta {
+  background: #ffffff;
+  border-color: rgba(60, 60, 67, .14);
+}
+html[data-theme="day"] #mobileMenu .mobile-nav a.mdj-panel-fila {
+  color: #1d1d1f;
+  border-bottom-color: rgba(60, 60, 67, .12);
+}
+html[data-theme="day"] #mobileMenu .mobile-nav .mdj-panel-ico,
+html[data-theme="day"] #mobileMenu .mobile-nav .mdj-panel-chevron { color: #8e8e93; }
+html[data-theme="day"] #mobileMenu .mobile-nav .mdj-panel-titulo { color: #6b6b70; }
+
+/* Enlaces que otros pases inyectan sueltos en el panel despues de construirlo
+   —#header-artist-dashboard-mobile, por ejemplo— y que duplican puestos que el
+   juego canonico ya trae. No se borran del DOM: el pase que los pone los
+   repondria tras cada reconstruccion y se abriria un bucle. Se ocultan, que es
+   estable y no pelea con nadie. Solo dentro del panel premium: fuera de el, el
+   desplegable clasico sigue funcionando como siempre. */
+#mobileMenu .mobile-nav[data-mdj-panel-premium] > a:not(.mdj-panel-fila) {
+  display: none !important;
+}

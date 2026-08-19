@@ -363,6 +363,147 @@
     }, true);
   }
 
+  /* ══ PANEL PREMIUM DE LA HAMBURGUESA ═══════════════════════════════════════
+     Decision PO 2026-08-20. El desplegable era una lista plana de diez enlaces
+     —cero encabezados de seccion, cero iconos— y debe seguir el patron
+     documentado en docs/design/premium-settings-tabs-pattern.md: filas de
+     icono + etiqueta agrupadas en tarjetas, encabezado FUERA y arriba, hairline
+     entre filas y ninguna bajo la ultima.
+
+     Se construye AQUI y no en el marcado porque el panel vive en 42 paginas.
+     Reescribirlo alli serian 42 copias listas para divergir — el mal que
+     llevamos dias desmontando con staff-config.html y las tres variantes del
+     heroe. Y se alimenta de la MISMA tabla que gobierna el riel, asi que el
+     desplegable no puede quedarse con puestos distintos a la barra.
+
+     Los iconos son SVG de trazo, con la convencion que ya usa la plataforma en
+     352 sitios: viewBox 24, fill none, stroke currentColor, width 2.5, linecap
+     round. No se inventa un estilo nuevo. */
+  var MDJ_ICONOS_PANEL = {
+    home:     'M3 11l9-8 9 8M5 10v10h14V10',
+    services: 'M4 7h16M4 12h16M4 17h10',
+    venues:   'M8 3v4M16 3v4M3 10h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z',
+    shop:     'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0',
+    /* Engranaje con dientes, NO un circulo con rayos: eso se lee como SOL, y el
+       sol ya significa otra cosa en la plataforma (conmutador dia/noche). */
+    config:   'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+    jobs:     'M20 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2',
+    contact:  'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM2 7l10 6 10-6',
+    'mi-portal': 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+    roadmap:  'M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14',
+    staff:    'M12 21.5s7.5-3.75 7.5-9.5V5.25L12 2.5 4.5 5.25V12c0 5.75 7.5 9.5 7.5 9.5z',
+    academia: 'M22 9 12 4 2 9l10 5 10-5zM6 11v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5',
+    agenda:   'M8 3v4M16 3v4M3 10h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z',
+    tools:    'M5 21v-6M5 11V3M12 21v-9M12 8V3M19 21v-4M19 13V3M2.5 15h5M9.5 12h5M16.5 17h5',
+    flow:     'M3 3v16a2 2 0 0 0 2 2h16M7 14.5l3.5-3.5 3 3L20 7M15.5 7H20v4.5',
+    fenix:    'M12 2s4 3 4 7a4 4 0 0 1-8 0c0-4 4-7 4-7zM8 14c-2 2-3 4-3 6h14c0-2-1-4-3-6'
+  };
+
+  /* Que puestos van en cada grupo. El orden dentro del grupo lo marca el riel;
+     esto solo dice a que tarjeta pertenece cada uno. Lo que no este listado cae
+     en «Navegacion», asi que un puesto nuevo aparece solo en vez de perderse. */
+  var MDJ_GRUPOS_PANEL = [
+    { titulo: 'Navegación', claves: ['home', 'services', 'venues', 'shop', 'jobs', 'contact', 'academia', 'agenda', 'tools', 'flow'] },
+    { titulo: 'Tu cuenta',  claves: ['config', 'mi-portal'] },
+    { titulo: 'Sistema',    claves: ['roadmap', 'fenix', 'staff'] }
+  ];
+
+  function mdjIconoPanel(clave) {
+    var d = MDJ_ICONOS_PANEL[clave] || MDJ_ICONOS_PANEL.home;
+    return '<svg class="mdj-panel-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+           'stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+           '<path d="' + d + '"/></svg>';
+  }
+
+  function mdjConstruirPanelMovil() {
+    try {
+      var panel = document.querySelector('#mobileMenu .mobile-nav');
+      var riel = document.getElementById('mainNav');
+      if (!panel || !riel) return;
+
+      var puestos = [].slice.call(riel.querySelectorAll('a[data-mdj-slot]'));
+      if (!puestos.length) return;
+
+      /* Idempotente: si ya se construyo con estos mismos puestos, no se rehace.
+         El header hace ~70 pasadas y reconstruir en cada una robaria el foco a
+         quien estuviera navegando el panel con el teclado. */
+      /* Otros pases inyectan enlaces sueltos en el panel DESPUES de construirlo
+         —#header-artist-dashboard-mobile, por ejemplo— y quedaban fuera de las
+         tarjetas, colgando bajo la ultima. Entran en la firma para que su
+         aparicion dispare una reconstruccion que los absorba. */
+      var sueltos = [].slice.call(panel.children).filter(function (c) {
+        return c.tagName === 'A' && !c.classList.contains('mdj-panel-fila');
+      });
+      var firma = puestos.map(function (a) {
+        return a.getAttribute('data-mdj-nav') + ':' + a.getAttribute('href');
+      }).join('|') + '#' + sueltos.map(function (a) {
+        return (a.id || a.textContent || '').trim();
+      }).join(',');
+      if (panel.getAttribute('data-mdj-panel-firma') === firma) return;
+
+      var usados = {};
+      var html = '';
+
+      MDJ_GRUPOS_PANEL.forEach(function (grupo, i) {
+        var delGrupo = puestos.filter(function (a) {
+          var k = a.getAttribute('data-mdj-nav');
+          if (grupo.claves.indexOf(k) === -1) return false;
+          usados[k] = true;
+          return true;
+        });
+        /* Ultimo grupo: recoge lo que no encajo en ninguno, para que un puesto
+           nuevo nunca desaparezca del panel. */
+        if (i === MDJ_GRUPOS_PANEL.length - 1) {
+          puestos.forEach(function (a) {
+            if (!usados[a.getAttribute('data-mdj-nav')]) delGrupo.push(a);
+          });
+          /* Los sueltos NO se absorben: duplicaban puestos que el juego canonico ya
+             trae —#header-artist-dashboard-mobile es otro MI PERFIL— y absorberlos
+             abria un bucle, porque el pase que los inyecta los repone tras cada
+             reconstruccion. Se quedan en el DOM y se ocultan por CSS: sin guerra
+             de nodos y sin duplicados. */
+        }
+        if (!delGrupo.length) return;
+
+        html += '<h2 class="mdj-panel-titulo">' + grupo.titulo + '</h2>' +
+                '<div class="mdj-panel-tarjeta">';
+        delGrupo.forEach(function (a) {
+          var k = a.getAttribute('data-mdj-nav');
+          /* Sin el emoji de cabeza: el icono ya lo dice, y repetirlo deja «⚙️ CONFIG»
+             con dos engranajes en la misma fila. El patron pide UN icono lider. */
+          var texto = (a.textContent || '').replace('/', '')
+            .replace(/^[\u2699\u2600-\u27BF\uFE0F\u2190-\u21FF\u2B00-\u2BFF]+\s*/, '').trim();
+          html += '<a class="mdj-panel-fila" href="' + (a.getAttribute('href') || '#') + '"' +
+                  ' data-mdj-panel-nav="' + k + '">' +
+                  mdjIconoPanel(k) +
+                  '<span class="mdj-panel-etiqueta">' + texto + '</span>' +
+                  '<span class="mdj-panel-chevron" aria-hidden="true">›</span>' +
+                  '</a>';
+        });
+        html += '</div>';
+      });
+
+      /* La fila de sesion va aislada en su propia mini-tarjeta al final, como
+         manda el patron para las filas de salida. Se reutiliza el boton que ya
+         existe en la cabecera en vez de inventar otro estado de sesion. */
+      var sesion = document.getElementById('header-login-btn');
+      if (sesion) {
+        var esSalir = /salir|log ?out|cerrar/i.test(sesion.textContent || '');
+        html += '<div class="mdj-panel-tarjeta mdj-panel-tarjeta--sola">' +
+                '<a class="mdj-panel-fila' + (esSalir ? ' mdj-panel-fila--salida' : '') + '"' +
+                ' href="' + (sesion.getAttribute('href') || './login.html') + '">' +
+                mdjIconoPanel('mi-portal') +
+                '<span class="mdj-panel-etiqueta">' + (sesion.textContent || 'Entrar').trim() + '</span>' +
+                '</a></div>';
+      }
+
+      panel.innerHTML = html;
+      panel.setAttribute('data-mdj-panel-firma', firma);
+      panel.setAttribute('data-mdj-panel-premium', '1');
+    } catch (ePanel) { /* noop */ }
+  }
+  window.mdjConstruirPanelMovil = mdjConstruirPanelMovil;
+
   function mdjNormalizeMainNavSlots(idRiel) {
     var nav = document.getElementById(idRiel || 'mainNav');
     if (!nav) return false;
@@ -520,6 +661,11 @@
       var alt = document.getElementById(id);
       if (alt && alt !== nav) alt.style.setProperty('display', 'none', 'important');
     });
+
+    /* El panel de la hamburguesa se reconstruye desde los mismos puestos que
+       acaban de fijarse, para que barra y desplegable no puedan discrepar. Es
+       idempotente: solo rehace si la firma de puestos cambio. */
+    mdjConstruirPanelMovil();
 
     /* El propio riel también se blinda inline: hay reglas de la era flex que le
        devuelven display:flex, y sin display:grid las nueve columnas no existen
