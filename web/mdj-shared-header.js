@@ -1755,27 +1755,34 @@
     var fromProfile = mdjBodyHasProfileNavContext();
 
     if (enabled) {
+      /* ══ LA CABECERA UNICA APLICA TAMBIEN AL ARTISTA ══════════════════════
+         Esta rama venia del modelo viejo de DOS barras: apagaba #mainNav
+         —aria-hidden + data-mdj-guest-nav-suppressed, que lo colapsa a 1px
+         absoluto— para cederle el sitio a #mainNav-artist, la fila 2.
+
+         Pero #mainNav-artist murio con la consolidacion de 9 puestos: esta en
+         MDJ_RIELES_MUERTOS y header-unified.css le pone display:none. Con las
+         dos vias apagadas a la vez, una cuenta de artista se quedaba SIN
+         NINGUNA barra: medido, #mainNav con 1px de ancho y su contenido
+         derramandose a X=-690 en dj-profile, account-settings, jobs y contact.
+         Solo le pasaba a los artistas.
+
+         La decision ya estaba tomada en header-unified.css:3054 — «la cabecera
+         unica es SAGRADA... no puede quedar oculta en ninguna pagina». Esta
+         funcion nunca se actualizo para respetarla. Ahora no apaga nada: el
+         artista usa el MISMO #mainNav que el resto, con los mismos puestos y en
+         la misma posicion. No hay barra especial de artista.
+
+         La clase se conserva porque no gobierna la barra: estiliza el boton de
+         sesion de la fila superior. */
       document.body.classList.add('mdj-artist-header-mode');
-      if (!fromProfile) {
-        if (guestNav) {
-          guestNav.setAttribute('aria-hidden', 'true');
-          guestNav.setAttribute('data-mdj-guest-nav-suppressed', '1');
-        }
-        if (artistNav) {
-          artistNav.hidden = false;
-          artistNav.removeAttribute('aria-hidden');
-          mdjRenderArtistNav(artistNav, !!window.showMyArtisticProfileMainNav);
-        }
-        mdjNavHighlightArtist();
-      } else {
-        if (guestNav) {
-          guestNav.setAttribute('aria-hidden', 'true');
-          guestNav.setAttribute('data-mdj-guest-nav-suppressed', '1');
-        }
-        if (artistNav) {
-          artistNav.hidden = true;
-          artistNav.setAttribute('aria-hidden', 'true');
-        }
+      if (guestNav) {
+        guestNav.removeAttribute('aria-hidden');
+        guestNav.removeAttribute('data-mdj-guest-nav-suppressed');
+      }
+      if (artistNav) {
+        artistNav.hidden = true;
+        artistNav.setAttribute('aria-hidden', 'true');
       }
       return;
     }
