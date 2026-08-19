@@ -690,7 +690,12 @@
     }
 
     function staffTopnavHtml(role){
+      /* INICIO abre la tira, igual que en el resto del portal: sin él no hay
+         vuelta a la vitrina desde dentro. Va como <a> y no como <button>
+         porque navega fuera; paintStaffTopnav solo engancha clics a <button>,
+         así que un ancla se basta sola y no necesita el pintor. */
       var start=
+        '<a href="./index.html" data-top="inicio">Inicio</a>'+
         '<button type="button" data-href="./academia.html">Academia</button>';
       if(role==='owner'){
         return start+

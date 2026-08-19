@@ -20,7 +20,7 @@
         document.documentElement.classList.add('mdj-admin-gate-pending');
     </script>
     <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260818-staffnav" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260819-portal" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
     <!-- Idioma: mismos scripts que el resto del sitio (sin esto, ES/EN no reciben listeners). -->
     <script src="./translations.js?v=20260817-nav-miperfil"></script>
@@ -1682,25 +1682,25 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
 
     <nav class="dj-owner-tabs" id="owner-tabs" data-mdj-no-marquee="1" aria-label="Artist navigation">
         <div class="container">
-        <!-- ══ TIRA OFICIAL DEL PORTAL STAFF/OWNER (FIX-NAV-02) ══════════════
-             Excepción EXPLÍCITA del PO a la Ley de la Barra de Menú, acotada a
-             staff.html, staff-config.html, staff-admin.html y admin-dashboard.html.
-             Los enlaces públicos (Home/Jobs/Shop/SoundForTips) se retiran: este
-             portal es para quien ya entró, y mezclarlos era lo que hacía que un
-             owner acabara en vistas de artista.
-             SIN ?mdj_nav=profile a propósito: ese parámetro activa el contexto de
-             ARTISTA y su tira, que es precisamente de lo que hay que separarse.
-             Los nueve destinos verificados: HTTP 200 y ninguno es redirección. -->
-        <a href="./academia.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-staffnav="academia" data-i18n="nav-academia">ACADEMIA</a>
-        <a href="./dj-dashboard.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-staffnav="agenda" data-i18n="nav-agenda">AGENDA</a>
-        <a href="./staff-config.html" class="dj-tab-btn" data-mdj-staffnav="config" data-i18n="nav-config">⚙ CONFIG</a>
-        <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-staffnav="tools" data-i18n="nav-tools">DJ TOOLS</a>
-        <a href="./dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-mdj-staffnav="flow" data-i18n="flow-dash">CASH FLOW</a>
-        <a href="./account-settings.html" class="dj-tab-btn" data-mdj-staffnav="perfil" data-i18n="menu-account">MI PERFIL</a>
-        <a href="./admin-dashboard.html" class="dj-tab-btn active" data-mdj-staffnav="staff" data-i18n="nav-staff">STAFF</a>
-        <a href="./elixis-console.html" class="dj-tab-btn" data-mdj-staffnav="fenix" data-i18n="nav-fenix">FÉNIX AI</a>
-        <!-- Botón destacado: acceso al simulador 3D del ecosistema. -->
-        <a href="./neural-matrix-3d.html" class="dj-tab-btn dj-tab-btn--mrm" data-mdj-staffnav="mrm">MRM IA</a>
+        <!-- ══ TIRA CANÓNICA DEL PORTAL (FIX-NAV-03) ═══════════════════════
+             Misma secuencia, misma tipografía y mismos elementos en las cuatro
+             vistas del portal. INICIO abre la lista: faltaba, y sin él no se
+             podía volver a la vitrina desde dentro del portal.
+             SoundForTips va MARCADO, no borrado: data-mdj-solo-artista lo
+             reserva al perfil de DJ/Artista y el CSS lo oculta a staff/owner,
+             que es a quien no le aplica. La arquitectura queda intacta para
+             cuando se active el perfil de artista. -->
+        <a href="./index.html" class="dj-tab-btn" data-mdj-portalnav="inicio" data-i18n="nav-home">INICIO</a>
+        <a href="./academia.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="academia" data-i18n="nav-academia">ACADEMIA</a>
+        <a href="./dj-dashboard.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="agenda" data-i18n="nav-agenda">AGENDA</a>
+        <a href="./staff-config.html" class="dj-tab-btn" data-mdj-portalnav="config" data-i18n="nav-config">⚙ CONFIG</a>
+        <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="tools" data-i18n="nav-tools">DJ TOOLS</a>
+        <a href="./dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="flow" data-i18n="flow-dash">CASH FLOW</a>
+        <a href="./account-settings.html" class="dj-tab-btn" data-mdj-portalnav="perfil" data-i18n="menu-account">MI PERFIL</a>
+        <a href="./admin-dashboard.html" class="dj-tab-btn active" data-mdj-portalnav="staff" data-i18n="nav-staff">STAFF</a>
+        <a href="./elixis-console.html" class="dj-tab-btn" data-mdj-portalnav="fenix" data-i18n="nav-fenix">FÉNIX AI</a>
+        <a href="./dj-profile.html?tab=sft&amp;mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="sft" data-i18n="nav-soundfortips" data-mdj-solo-artista="1">SoundForTips™</a>
+        <a href="./neural-matrix-3d.html" class="dj-tab-btn dj-tab-btn--mrm" data-mdj-portalnav="mrm">MRM IA</a>
       </div>
     </nav>
 

@@ -3823,3 +3823,65 @@ html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > a#
   transform: none !important;
 }
 html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > a[data-mdj-slot] > .mdj-slash { display: none !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ★ TIPOGRAFÍA ÚNICA DEL PORTAL + AISLAMIENTO OWNER / ARTISTA (FIX-NAV-03)
+   ═══════════════════════════════════════════════════════════════════════════
+   Antes convivían TRES tiras distintas en páginas por las que el owner navega:
+   la del portal (mayúsculas, sin Inicio), la de account-settings (Home/Jobs/
+   Shop, minúsculas, con SoundForTips) y la de dj-dashboard (otro orden más).
+   Distinto orden, distinta caja tipográfica y elementos que no aplicaban.
+
+   Aquí se declara UNA sola tipografía para toda la navegación interna, con los
+   mismos valores que ya usa el riel superior, para que no haya salto visual al
+   pasar de la barra pública a las pestañas del portal.
+
+   dj-dashboard.html queda FUERA a propósito: está en la lista de archivos
+   bloqueados del proyecto y su nav no se toca sin autorización expresa.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+html body .dj-owner-tabs .dj-tab-btn,
+html body .staff-topnav a,
+html body .staff-topnav button {
+  font-family:    Inter, system-ui, -apple-system, "Segoe UI", sans-serif !important;
+  font-size:      0.78rem !important;
+  font-weight:    700     !important;
+  letter-spacing: 0.12em  !important;
+  text-transform: uppercase !important;
+  text-decoration: none   !important;
+  color:          rgba(255, 255, 255, 0.66) !important;
+  line-height:    1       !important;
+  transition:     color .18s ease, border-color .18s ease !important;
+}
+
+html body .dj-owner-tabs .dj-tab-btn:hover,
+html body .staff-topnav a:hover,
+html body .staff-topnav button:hover { color: #ffffff !important; }
+
+html body .dj-owner-tabs .dj-tab-btn.active,
+html body .staff-topnav a.active,
+html body .staff-topnav button.active { color: var(--nm3d-acento, #c5a059) !important; }
+
+/* El botón MRM IA conserva su realce: es acceso a otra herramienta, no una
+   pestaña más, y perder esa distinción lo escondería entre las demás. */
+html body .dj-owner-tabs .dj-tab-btn.dj-tab-btn--mrm {
+  color: #73d9ff !important;
+  border: 1px solid rgba(115, 217, 255, 0.45) !important;
+  border-radius: 999px !important;
+  padding-left: 0.9rem !important;
+  padding-right: 0.9rem !important;
+}
+
+/* ── AISLAMIENTO DE CONTEXTO ────────────────────────────────────────────────
+   SoundForTips son PROPINAS DEL PÚBLICO A UN DJ: no aplica a quien administra
+   el sistema. Se oculta en el portal de staff/owner y se conserva intacto para
+   el perfil de artista. No se borra nada — el marcador data-mdj-solo-artista
+   deja la arquitectura lista para cuando se active ese perfil.
+   La marca de rol (body.mdj-staff-nav) ya la pone el header al resolver que la
+   cuenta es staff; no se inventa ninguna señal nueva. */
+html body.mdj-staff-nav [data-mdj-solo-artista="1"],
+html body.mdj-staff-nav .dj-tab-btn[data-mdj-portalnav="sft"],
+html body.mdj-staff-nav #panel-soundfortips,
+html body.mdj-staff-nav .acct-side-link[onclick*="soundfortips"] {
+  display: none !important;
+}
