@@ -2901,7 +2901,20 @@ a.residency-card--map:focus-visible {
   color: var(--gold);
 }
 
-@media (max-width: 1000px) {
+/* ══ CORTE HIBRIDO · ANCHO **Y** PUNTERO TACTIL ═══════════════════════════════
+   Decision PO 2026-08-20: la hamburguesa es exclusiva de TABLETS Y TELEFONOS
+   reales. Un portatil con la ventana angosta —media pantalla, por ejemplo— NO
+   debe recibirla: se queda con la barra deslizable, que ya cubre cualquier
+   ancho gracias a `safe center` + overflow-x.
+
+   Por eso no basta el ancho. `pointer: coarse` mira el puntero PRIMARIO del
+   dispositivo: en tablet y telefono es el dedo; en portatil es el trackpad,
+   fino, aunque la pantalla sea tactil. Asi un portatil tactil de Windows se
+   queda con la barra, que es lo pedido.
+
+   1024px cubre el iPad mas grande en vertical; en apaisado sobra ancho para la
+   barra. ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) and (pointer: coarse) {
   :root {
     --header-nav-band: 0px;
   }
@@ -5658,7 +5671,10 @@ svg {
   }
 }
 
-@media (max-width: 1000px) {
+/* Mismo corte hibrido: esta regla aplasta la banda del menu a 0px de alto.
+   Con el corte solo por ancho, un portatil angosto —que ahora conserva la
+   barra deslizable— se quedaba con la banda a cero y la barra sin sitio. */
+@media (max-width: 1024px) and (pointer: coarse) {
   html:not(:has(body.page-home)):has(body.dj-profile),
   html:not(:has(body.page-home)):has(body.mdj-from-profile) {
     --header-height: 80px;

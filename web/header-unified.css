@@ -1261,7 +1261,20 @@
 }
 
 /* ≤1000px: una sola fila; #mainNav hace el scroll (evita doble franja de scrollbar). */
-@media (max-width: 1000px) {
+/* ══ CORTE HIBRIDO · ANCHO **Y** PUNTERO TACTIL ═══════════════════════════════
+   Decision PO 2026-08-20: la hamburguesa es exclusiva de TABLETS Y TELEFONOS
+   reales. Un portatil con la ventana angosta —media pantalla, por ejemplo— NO
+   debe recibirla: se queda con la barra deslizable, que ya cubre cualquier
+   ancho gracias a `safe center` + overflow-x.
+
+   Por eso no basta el ancho. `pointer: coarse` mira el puntero PRIMARIO del
+   dispositivo: en tablet y telefono es el dedo; en portatil es el trackpad,
+   fino, aunque la pantalla sea tactil. Asi un portatil tactil de Windows se
+   queda con la barra, que es lo pedido.
+
+   1024px cubre el iPad mas grande en vertical; en apaisado sobra ancho para la
+   barra. ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) and (pointer: coarse) {
   #mainHeader.header.mdj-header-unified .header-nav {
     overflow-x: visible !important;
     overflow-y: hidden !important;
@@ -3563,9 +3576,29 @@ body #mainHeader.header.mdj-header-unified
 
    NO se toca nada de ≥1001px: la rejilla rígida de #166/#167 queda intacta.
    ════════════════════════════════════════════════════════════════════════ */
-@media (max-width: 1000px) {
-  /* 1 · la banda vuelve a estar oculta, como manda styles.css */
-  #mainHeader.header.mdj-header-unified .header-nav {
+/* ══ CORTE HIBRIDO · ANCHO **Y** PUNTERO TACTIL ═══════════════════════════════
+   Decision PO 2026-08-20: la hamburguesa es exclusiva de TABLETS Y TELEFONOS
+   reales. Un portatil con la ventana angosta —media pantalla, por ejemplo— NO
+   debe recibirla: se queda con la barra deslizable, que ya cubre cualquier
+   ancho gracias a `safe center` + overflow-x.
+
+   Por eso no basta el ancho. `pointer: coarse` mira el puntero PRIMARIO del
+   dispositivo: en tablet y telefono es el dedo; en portatil es el trackpad,
+   fino, aunque la pantalla sea tactil. Asi un portatil tactil de Windows se
+   queda con la barra, que es lo pedido.
+
+   1024px cubre el iPad mas grande en vertical; en apaisado sobra ancho para la
+   barra. ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) and (pointer: coarse) {
+  /* 1 · la banda se oculta: en tablet y telefono manda la hamburguesa.
+         Se repite el selector CON el peso completo —html body … > .header-nav—
+         porque la regla que fija la geometria de la banda usa ese mismo camino
+         y display:flex, y por especificidad le ganaba a la version corta: la
+         banda seguia visible junto a la hamburguesa. Es el mismo mal de siempre,
+         dos definiciones de una propiedad; aqui la de mayor peso tiene que estar
+         dentro del corte para que el intercambio ocurra. */
+  #mainHeader.header.mdj-header-unified .header-nav,
+  html body #mainHeader.header.mdj-header-unified > .header-nav {
     display: none !important;
   }
 
@@ -4117,4 +4150,27 @@ html body #mainHeader.header.mdj-header-unified #mainNav > a#mainNav-mi-perfil-l
   display: inline-flex !important;
   visibility: visible !important;
   opacity: 1 !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   INTERCAMBIO BARRA ⇄ HAMBURGUESA · AL FINAL DEL ARCHIVO A PROPOSITO
+   ──────────────────────────────────────────────────────────────────────────
+   La ocultacion de la banda vivia dentro del bloque movil, mas arriba, y la
+   pisaba una regla posterior —html body #mainHeader… > .header-nav { flex }—
+   con la misma especificidad: en igualdad, manda la ultima. Resultado: en
+   tablet y telefono se veian LAS DOS, barra y hamburguesa.
+
+   Se coloca aqui, cerrando el archivo, para que ninguna regla posterior pueda
+   volver a resucitarla. No se borra la de arriba: sigue siendo correcta y
+   documenta la intencion; esta solo garantiza que se cumpla.
+
+   Corte hibrido —ancho Y puntero tactil— por decision del PO: la hamburguesa
+   es exclusiva de tablets y telefonos reales. El portatil, a cualquier ancho,
+   conserva la barra deslizable.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) and (pointer: coarse) {
+  html body #mainHeader.header.mdj-header-unified > .header-nav,
+  html body #mainHeader.header.mdj-header-unified .header-nav {
+    display: none !important;
+  }
 }
