@@ -4671,10 +4671,15 @@ body.mdj-perfil-visitante #mainHeader {
 #mdj-flotante-visitante.mdj-franja-bajo-barra {
   top: 96px;   /* 84 de cabecera ya sin .header-top, mas 12 de aire */
 }
-/* La franja necesita SU banda: sin esto el hero arranca en 84 y su insignia PLAN
-   PRO queda debajo del sello —medido, ambos en y~107— y el avatar bajo el
-   buscador. Se baja el contenido lo justo para que nada se pise. */
-body.mdj-perfil-estacion { padding-top: 190px !important; }
+/* El hero arranca DONDE LA BARRA, a tamaño real: la banda solida que lo empujaba
+   190px abajo cortaba la cabeza de la foto. En su lugar no se mueve el hero, se
+   aparta solo lo que chocaba: la insignia PLAN PRO, que nace en lo alto del hero
+   justo bajo la franja flotante. */
+body.mdj-perfil-estacion #pub-hero-top-stack { transform: translateY(88px); }
+/* El avatar circular nace en y=140 y el buscador termina en y=156: se pisaban en
+   una franja de 102x16. Se baja el avatar en vez de acortar el buscador, que el
+   PO lo quiere largo y pegado a la derecha. */
+body.mdj-perfil-estacion .dj-hero-inset { transform: translateY(30px); }
 
 #mdj-flotante-visitante .mdj-flotante-marca {
   display: inline-flex;
@@ -4688,10 +4693,15 @@ body.mdj-perfil-estacion { padding-top: 190px !important; }
 /* El PNG de letras es 1920x1920 CUADRADO con el rotulo en una banda central y
    transparencia arriba y abajo. Sin object-fit se aplasta a un cuadradito
    ilegible; con contain y altura suficiente se lee igual que en la cabecera. */
+/* El PNG de letras es 1920x1920 CUADRADO: el rotulo ocupa una banda central y el
+   resto es transparencia. Con 'contain' mandaba el lado vacio y el texto salia
+   diminuto al lado del sello. Con una caja apaisada y 'cover' se recorta el aire
+   de arriba y abajo, y el rotulo llena su sitio a la altura del aguila. */
 #mdj-flotante-visitante .mdj-flotante-marca .mdj-flotante-letras {
-  height: 76px;
-  width: auto;
-  object-fit: contain;
+  width: 186px;
+  height: 46px;
+  object-fit: cover;
+  object-position: center;
   display: block;
 }
 #mdj-flotante-visitante .mdj-flotante-marca img {
@@ -4750,7 +4760,7 @@ body.mdj-perfil-estacion { padding-top: 190px !important; }
 @media (max-width: 600px) {
   #mdj-flotante-visitante { top: 10px; left: 10px; right: 10px; gap: 10px; padding: 8px 11px; }
   #mdj-flotante-visitante .mdj-flotante-marca img { height: 30px; }
-  #mdj-flotante-visitante .mdj-flotante-marca .mdj-flotante-letras { height: 18px; }
+  #mdj-flotante-visitante .mdj-flotante-marca .mdj-flotante-letras { width: 124px; height: 30px; }
   #mdj-flotante-visitante .mdj-flotante-marca { gap: 7px; }
   /* En pantalla estrecha el buscador si toma el resto: con 380px fijos no cabria
      junto al logo y se saldria de la franja. */
