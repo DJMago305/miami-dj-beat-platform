@@ -292,26 +292,47 @@
     nav.style.setProperty('grid-auto-rows', '0', 'important');
     nav.style.setProperty('align-items', 'center', 'important');
 
-    [].slice.call(nav.querySelectorAll('[data-mdj-slot]')).forEach(function (el) {
-      el.style.setProperty('display', 'inline-flex', 'important');
-      el.style.setProperty('width', '100%', 'important');
-      el.style.setProperty('min-width', '0', 'important');
-      /* La visibilidad la decide el header, no las clases heredadas:
-           slot 5 (CONFIG) — reservado sin sesión, visible con ella
-           slot 8 (MI PERFIL) — SIEMPRE visible (decisión PO)
-           resto — siempre visible
-         Se fija también la opacidad: había reglas que dejaban el slot 8 con
-         opacity:0, visible y ocupando sitio pero transparente. */
-      var slot = el.getAttribute('data-mdj-slot');
-      var oculto;
-      if (slot === '8') oculto = false;                       // MI PERFIL: siempre
-      else if (slot === '5') oculto = (_mdjHaySesion === false);  // CONFIG: con sesión, visible
-      else oculto = el.classList.contains('mdj-mainnav-reserved-slot');
-      el.classList.toggle('mdj-mainnav-reserved-slot', !!oculto);
-      el.style.setProperty('visibility', oculto ? 'hidden' : 'visible', 'important');
-      el.style.setProperty('opacity', oculto ? '0' : '1', 'important');
-      el.style.setProperty('pointer-events', oculto ? 'none' : 'auto', 'important');
-    });
+    /* ── NORMALIZACIÓN CANÓNICA DE LOS 9 PUESTOS ─────────────────────────
+       Estándar inmutable (PO 2026-08-18), idéntico en TODAS las vistas:
+         1 HOME · 2 SERVICES · 3 EVENTS · 4 SHOP · 5 ⚙ CONFIG ·
+         6 JOBS · 7 CONTACT · 8 MI PERFIL · 9 MRM IA
+
+       Por qué hace falta esto: el puesto 8 llega con DOS identidades según la
+       página —#mainNav-mi-perfil-link con sesión y #mainNav-guest-mi-perfil-link
+       sin ella— y la variante de invitado venía SIN data-mdj-slot. Sin ese
+       atributo la rejilla no la coloca, su columna 8 se queda vacía y aparece
+       el hueco de 170 px antes de MRM IA que se veía en login.html.
+       Aquí se le pone el puesto que le toca y se fijan los destinos canónicos.
+       No se crea ningún enlace: solo se etiqueta el que ya existe. */
+    (function normalizarPuestos() {
+      var perfil = nav.querySelector('#mainNav-mi-perfil-link, #mainNav-guest-mi-perfil-link, [data-mdj-nav="my-profile"]');
+      if (perfil && !perfil.getAttribute('data-mdj-slot')) perfil.setAttribute('data-mdj-slot', '8');
+      if (perfil) perfil.setAttribute('href', './account-settings.html');
+
+      var cfg = nav.querySelector('#mainNav-config-link, [data-mdj-nav="config"]');
+      if (cfg && !cfg.getAttribute('data-mdj-slot')) cfg.setAttribute('data-mdj-slot', '5');
+      /* CONFIG apunta a la fuente de verdad de configuración, donde viven los
+         paneles de Ajustes de Sistema y Pasarelas & Licencias. */
+      if (cfg) cfg.setAttribute('href', './staff-config.html');
+    })();
+
+    /* ── GEOMETRÍA: LA DECIDE EL CSS, NO ESTE ARCHIVO ────────────────────
+       Aquí había un bucle que escribía en cada puesto, EN LÍNEA y con
+       !important, display / width / min-width / visibility / opacity /
+       pointer-events. Se ha retirado por tres razones medidas:
+
+       1. Un inline con !important gana a CUALQUIER hoja, así que ninguna regla
+          de header-unified.css podía corregir un puesto — ni las que ya existían
+          en el proyecto. Se diagnosticó en login.html: cuatro reglas distintas
+          decían display:none para el slot 5 y el computado seguía en flex.
+       2. Escribir geometría después de pintar es exactamente lo que produce el
+          salto de maquetación (CLS) que esta barra debe tener en cero.
+       3. La rejilla ya está declarada de fábrica en header-unified.css con sus
+          nueve columnas y el grid-column de cada puesto. Duplicarla aquí creaba
+          dos fuentes de verdad, y mandaba la que se ejecutaba la última.
+
+       Este archivo se queda con lo funcional —destinos, estado activo, sesión—
+       y no vuelve a tocar la geometría. Regla permanente. */
 
     /* Ritmo de separadores con un NODO REAL, no ::before.
        El pseudo-elemento perdía contra reglas heredadas que ponían content:none

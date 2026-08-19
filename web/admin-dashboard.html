@@ -20,7 +20,7 @@
         document.documentElement.classList.add('mdj-admin-gate-pending');
     </script>
     <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260818-staffnav" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260818-simetria2" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
     <!-- Idioma: mismos scripts que el resto del sitio (sin esto, ES/EN no reciben listeners). -->
     <script src="./translations.js?v=20260817-nav-miperfil"></script>
@@ -1537,7 +1537,8 @@
     </style>
 </head>
 
-<body class="mdj-staff-portal notranslate page-admin-dashboard mdj-artist-academy">
+<body class="notranslate page-admin-dashboard mdj-artist-academy">
+
     <!-- MDJ canonical site header — keep in sync with index #mainHeader; use ./index.html# anchors for subpages -->
 <header class="header mdj-header-unified" id="mainHeader">
   <div class="header-top">
@@ -1637,11 +1638,11 @@
              SIN ?mdj_nav=profile a propósito: ese parámetro activa el contexto de
              ARTISTA y su tira, que es precisamente de lo que hay que separarse.
              Los nueve destinos verificados: HTTP 200 y ninguno es redirección. -->
-        <a href="./academia.html" class="dj-tab-btn" data-mdj-staffnav="academia" data-i18n="nav-academia">ACADEMIA</a>
-        <a href="./staff-agenda.html" class="dj-tab-btn" data-mdj-staffnav="agenda" data-i18n="nav-agenda">AGENDA</a>
+        <a href="./academia.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-staffnav="academia" data-i18n="nav-academia">ACADEMIA</a>
+        <a href="./dj-dashboard.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-staffnav="agenda" data-i18n="nav-agenda">AGENDA</a>
         <a href="./staff-config.html" class="dj-tab-btn" data-mdj-staffnav="config" data-i18n="nav-config">⚙ CONFIG</a>
-        <a href="./dj-tools.html" class="dj-tab-btn" data-mdj-staffnav="tools" data-i18n="nav-tools">DJ TOOLS</a>
-        <a href="./cash-flow.html" class="dj-tab-btn" data-mdj-staffnav="flow" data-i18n="flow-dash">CASH FLOW</a>
+        <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-staffnav="tools" data-i18n="nav-tools">DJ TOOLS</a>
+        <a href="./dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-mdj-staffnav="flow" data-i18n="flow-dash">CASH FLOW</a>
         <a href="./account-settings.html" class="dj-tab-btn" data-mdj-staffnav="perfil" data-i18n="menu-account">MI PERFIL</a>
         <a href="./admin-dashboard.html" class="dj-tab-btn active" data-mdj-staffnav="staff" data-i18n="nav-staff">STAFF</a>
         <a href="./elixis-console.html" class="dj-tab-btn" data-mdj-staffnav="fenix" data-i18n="nav-fenix">FÉNIX AI</a>
@@ -6367,7 +6368,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
     <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
     <script src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
-    <script src="./mdj-shared-header.js?v=20260817-header-canonico"></script>
+    <script src="./mdj-shared-header.js?v=20260818-rigida9"></script>
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
 
 <!-- ══════════════════════════════════════════════════════════════════════
@@ -6575,6 +6576,7 @@ window.fsConfirmAssign = async function () {
     if (modal) modal.addEventListener('click', function(e) { if (e.target === modal) fsCloseAssignModal(); });
 })();
 </script>
+  <script src="./js/mdj-owner-strip.js?v=20260818-p0"></script>
 </body>
 
 </html>
