@@ -271,7 +271,10 @@
       (b && b.classList.contains('mdj-staff-nav') && !b.classList.contains('mdj-artist-nav'));
     var esArtista = !!(b && b.classList.contains('mdj-artist-nav'));
     if (esStaff) return './staff-config.html';
-    if (esArtista) return './account-profile.html';
+    /* Directo a account-settings: account-profile.html son 11 lineas de
+       redireccion a esa misma pagina, asi que apuntar alli hacia dar un salto
+       de mas a cada artista. */
+    if (esArtista) return './account-settings.html';
     if (uid) return './client-account.html';
     return './login.html';
   }
@@ -292,7 +295,7 @@
     if (rol === 'owner' || rol === 'admin' || rol === 'manager' || rol === 'management' || rol === 'seller') {
       return './staff-config.html';
     }
-    if (rol) return './account-profile.html';        // cualquier otro rol con perfil = artista
+    if (rol) return './account-settings.html';       // cualquier otro rol con perfil = artista
     return uid ? './client-account.html' : './login.html';
   }
 
