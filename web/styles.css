@@ -2914,7 +2914,53 @@ a.residency-card--map:focus-visible {
 
    1024px cubre el iPad mas grande en vertical; en apaisado sobra ancho para la
    barra. ═══════════════════════════════════════════════════════════════════ */
-@media (max-width: 1024px) and (pointer: coarse) {
+/* Refinamiento PO 2026-08-20: la hamburguesa es EXCLUSIVA DE TELEFONO. Las
+   tablets se quedan con la barra completa, la misma de escritorio, aprovechando
+   el deslizamiento horizontal que ya funciona.
+
+   600px, y no una cifra al azar: los telefonos mas grandes en retrato llegan a
+   430-448px (iPhone Pro Max); la tablet mas pequena, la iPad mini, empieza en
+   744-768. El hueco es limpio y 600 cae en medio. Ademas es el umbral que el
+   propio Android usa para declarar tablet (sw600dp), asi que no es un numero
+   inventado aqui.
+
+   Sigue haciendo falta `pointer: coarse`: sin el, un portatil con la ventana a
+   500px recibiria la hamburguesa, que es justo lo que se descarto. */
+@media (max-width: 600px) and (pointer: coarse) {
+  :root {
+    --header-nav-band: 0px;
+  }
+
+  .header-nav {
+    display: none;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+  }
+
+  .header-top .container {
+    padding: 0 24px;
+  }
+
+  .brand-name {
+    font-size: 24px;
+  }
+
+  .logo-img {
+    height: 70px;
+  }
+}
+
+/* Telefono en APAISADO. Girado, un telefono mide 844-932px de ancho y se
+   escaparia del corte de 600px, quedandose con la barra. Pero sigue siendo un
+   telefono. Lo que no cambia al girar es que la pantalla es CORTA: 390-430px de
+   alto. Esa es la senal fiable. Una tablet apaisada tiene 768px o mas de alto,
+   asi que no entra aqui.
+   Va en bloque aparte y no con `or` en la misma consulta: la sintaxis `or` de
+   Media Queries 4 no la entienden los motores antiguos, y este proyecto
+   arrastra Safari viejos —lo comprobamos hoy mismo con el bundle de Supabase. */
+@media (orientation: landscape) and (max-height: 480px) and (pointer: coarse) {
   :root {
     --header-nav-band: 0px;
   }
@@ -5674,7 +5720,35 @@ svg {
 /* Mismo corte hibrido: esta regla aplasta la banda del menu a 0px de alto.
    Con el corte solo por ancho, un portatil angosto —que ahora conserva la
    barra deslizable— se quedaba con la banda a cero y la barra sin sitio. */
-@media (max-width: 1024px) and (pointer: coarse) {
+/* Refinamiento PO 2026-08-20: la hamburguesa es EXCLUSIVA DE TELEFONO. Las
+   tablets se quedan con la barra completa, la misma de escritorio, aprovechando
+   el deslizamiento horizontal que ya funciona.
+
+   600px, y no una cifra al azar: los telefonos mas grandes en retrato llegan a
+   430-448px (iPhone Pro Max); la tablet mas pequena, la iPad mini, empieza en
+   744-768. El hueco es limpio y 600 cae en medio. Ademas es el umbral que el
+   propio Android usa para declarar tablet (sw600dp), asi que no es un numero
+   inventado aqui.
+
+   Sigue haciendo falta `pointer: coarse`: sin el, un portatil con la ventana a
+   500px recibiria la hamburguesa, que es justo lo que se descarto. */
+@media (max-width: 600px) and (pointer: coarse) {
+  html:not(:has(body.page-home)):has(body.dj-profile),
+  html:not(:has(body.page-home)):has(body.mdj-from-profile) {
+    --header-height: 80px;
+    --header-nav-band: 0px;
+  }
+}
+
+/* Telefono en APAISADO. Girado, un telefono mide 844-932px de ancho y se
+   escaparia del corte de 600px, quedandose con la barra. Pero sigue siendo un
+   telefono. Lo que no cambia al girar es que la pantalla es CORTA: 390-430px de
+   alto. Esa es la senal fiable. Una tablet apaisada tiene 768px o mas de alto,
+   asi que no entra aqui.
+   Va en bloque aparte y no con `or` en la misma consulta: la sintaxis `or` de
+   Media Queries 4 no la entienden los motores antiguos, y este proyecto
+   arrastra Safari viejos —lo comprobamos hoy mismo con el bundle de Supabase. */
+@media (orientation: landscape) and (max-height: 480px) and (pointer: coarse) {
   html:not(:has(body.page-home)):has(body.dj-profile),
   html:not(:has(body.page-home)):has(body.mdj-from-profile) {
     --header-height: 80px;

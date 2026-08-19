@@ -1274,7 +1274,75 @@
 
    1024px cubre el iPad mas grande en vertical; en apaisado sobra ancho para la
    barra. ═══════════════════════════════════════════════════════════════════ */
-@media (max-width: 1024px) and (pointer: coarse) {
+/* Refinamiento PO 2026-08-20: la hamburguesa es EXCLUSIVA DE TELEFONO. Las
+   tablets se quedan con la barra completa, la misma de escritorio, aprovechando
+   el deslizamiento horizontal que ya funciona.
+
+   600px, y no una cifra al azar: los telefonos mas grandes en retrato llegan a
+   430-448px (iPhone Pro Max); la tablet mas pequena, la iPad mini, empieza en
+   744-768. El hueco es limpio y 600 cae en medio. Ademas es el umbral que el
+   propio Android usa para declarar tablet (sw600dp), asi que no es un numero
+   inventado aqui.
+
+   Sigue haciendo falta `pointer: coarse`: sin el, un portatil con la ventana a
+   500px recibiria la hamburguesa, que es justo lo que se descarto. */
+@media (max-width: 600px) and (pointer: coarse) {
+  #mainHeader.header.mdj-header-unified .header-nav {
+    overflow-x: visible !important;
+    overflow-y: hidden !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-nav .container {
+    overflow-x: visible !important;
+    overflow-y: hidden !important;
+  }
+
+  /* ══ FIX-NAV-ANCHOS-01 · ESTE BLOQUE ERA DE LA ERA FLEX ═══════════════════
+     Se escribio cuando el riel era flex: flex-wrap, row-gap, justify-content
+     flex-start. El riel es hoy una REJILLA, y esas declaraciones no la
+     gobiernan — dejaban los puestos cayendo en filas implicitas de 0px (el
+     grid-auto-rows que fija el guion), asi que se pintaban FUERA de su fila y,
+     como la fila superior tiene mas z-index (110 frente a 101), quedaban
+     medio tapados por ella. Medido a 1000px: el riel en 85→157 y el primer
+     puesto en 68→101, o sea 17px metido debajo de la barra de arriba.
+     Se conserva lo unico que sigue teniendo sentido —ancho completo y
+     deslizamiento— y la rejilla la define la regla maestra, igual que en
+     escritorio. */
+  #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+  }
+
+  /* Los puestos, con la MISMA tipografia institucional que en escritorio.
+     Aqui se encogian a clamp(13px..16px) con letter-spacing 0.2em, que
+     contradice la regla de barra grande siempre: la decision del PO es que
+     los nueve conserven su tamano y quien no tenga ancho DESLICE.
+     De la era flex quedaban ademas flex/flex-shrink/min-width:10ch, que en una
+     rejilla no hacen nada salvo estorbar al calculo de las columnas. */
+  #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a {
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .brand .brand-letters-wrapper {
+    transform: translateX(-188px) scale(1.18) !important;
+  }
+}
+
+/* Telefono en APAISADO. Girado, un telefono mide 844-932px de ancho y se
+   escaparia del corte de 600px, quedandose con la barra. Pero sigue siendo un
+   telefono. Lo que no cambia al girar es que la pantalla es CORTA: 390-430px de
+   alto. Esa es la senal fiable. Una tablet apaisada tiene 768px o mas de alto,
+   asi que no entra aqui.
+   Va en bloque aparte y no con `or` en la misma consulta: la sintaxis `or` de
+   Media Queries 4 no la entienden los motores antiguos, y este proyecto
+   arrastra Safari viejos —lo comprobamos hoy mismo con el bundle de Supabase. */
+@media (orientation: landscape) and (max-height: 480px) and (pointer: coarse) {
   #mainHeader.header.mdj-header-unified .header-nav {
     overflow-x: visible !important;
     overflow-y: hidden !important;
@@ -3589,7 +3657,177 @@ body #mainHeader.header.mdj-header-unified
 
    1024px cubre el iPad mas grande en vertical; en apaisado sobra ancho para la
    barra. ═══════════════════════════════════════════════════════════════════ */
-@media (max-width: 1024px) and (pointer: coarse) {
+/* Refinamiento PO 2026-08-20: la hamburguesa es EXCLUSIVA DE TELEFONO. Las
+   tablets se quedan con la barra completa, la misma de escritorio, aprovechando
+   el deslizamiento horizontal que ya funciona.
+
+   600px, y no una cifra al azar: los telefonos mas grandes en retrato llegan a
+   430-448px (iPhone Pro Max); la tablet mas pequena, la iPad mini, empieza en
+   744-768. El hueco es limpio y 600 cae en medio. Ademas es el umbral que el
+   propio Android usa para declarar tablet (sw600dp), asi que no es un numero
+   inventado aqui.
+
+   Sigue haciendo falta `pointer: coarse`: sin el, un portatil con la ventana a
+   500px recibiria la hamburguesa, que es justo lo que se descarto. */
+@media (max-width: 600px) and (pointer: coarse) {
+  /* 1 · la banda se oculta: en tablet y telefono manda la hamburguesa.
+         Se repite el selector CON el peso completo —html body … > .header-nav—
+         porque la regla que fija la geometria de la banda usa ese mismo camino
+         y display:flex, y por especificidad le ganaba a la version corta: la
+         banda seguia visible junto a la hamburguesa. Es el mismo mal de siempre,
+         dos definiciones de una propiedad; aqui la de mayor peso tiene que estar
+         dentro del corte para que el intercambio ocurra. */
+  #mainHeader.header.mdj-header-unified .header-nav,
+  html body #mainHeader.header.mdj-header-unified > .header-nav {
+    display: none !important;
+  }
+
+  /* 2 · la hamburguesa recupera sus barras y gana zona táctil de 44px
+         (content-box: 30×20 de contenido + 12 de relleno = 54×44). */
+  #mainHeader.header.mdj-header-unified .mobile-menu-btn {
+    box-sizing: content-box !important;
+    width: 30px !important;
+    height: 20px !important;
+    flex: 0 0 auto !important;
+    margin-left: auto !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .mobile-menu-btn span {
+    flex: 0 0 2px !important;
+    height: 2px !important;
+    width: 100% !important;
+  }
+
+  /* 3 · marca: en móvil el bloqueo es el ÁGUILA SOLA.
+         ⚠ DECISIÓN VISIBLE, sujeta a tu visto bueno. Presupuesto real a
+         375px: relleno 24 + águila 72 + ES|EN 100 + carrito 106 +
+         hamburguesa 54 + huecos 24 = 380. El wordmark necesita ~123px más y
+         no existen. Antes «cabía» solo porque expulsaba a la hamburguesa y
+         al carrito fuera de la pantalla. Alternativas si prefieres el
+         wordmark: quitar el segundo carrito (.mdj-eb-header-cart, duplicado,
+         −52px) y/o llevar ES|EN al panel (−100px); ni las dos juntas dan los
+         123px, así que haría falta un wordmark compacto aparte para móvil. */
+  #mainHeader.header.mdj-header-unified .header-top .container > .brand {
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .brand .brand-letters-wrapper {
+    display: none !important;
+  }
+
+  /* 4 · el bloque de acciones deja de CRECER (flex:1 1 auto), que era lo que
+         empujaba a la hamburguesa fuera de la pantalla. No se le pone
+         overflow:hidden: recortaría el carrito por la mitad, que es peor que
+         apretar. El aire sale de (4b). */
+  #mainHeader.header.mdj-header-unified .header-top .container > .header-actions {
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+  }
+
+  /* 4b · AJUSTE DE HUECOS. Medido a 375px: el contenido pide 370px
+          (águila 72 + hueco 8 + acciones 228 + hueco 8 + hamburguesa 54) y
+          el área útil son 351px (375 − 12 − 12 de relleno). Sobran 19px.
+          Se recortan de espacios muertos, sin encoger ni ocultar ningún
+          control: relleno izquierdo de .header-actions (12 → 0), su hueco
+          interno (10 → 6) y el hueco de la fila (8 → 4, dos veces).
+          Total liberado: 24px. Margen final: 5px. */
+  #mainHeader.header.mdj-header-unified .header-top .container {
+    column-gap: 4px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-top .container > .header-actions {
+    padding-left: 0 !important;
+    gap: 6px !important;
+  }
+
+  #mainHeader.header.mdj-header-unified .header-actions .header-avatar-cart-row {
+    gap: 8px !important;
+  }
+
+  /* 5 · el relleno lateral vuelve a ser el de móvil. Este archivo impone
+         «padding: 0 24px !important» a .header-top .container SIN @media,
+         pisando el escalonado de styles.css (max(12px, safe-area+8) a
+         ≤768px). Mismo patrón que (1) y (3): geometría de escritorio
+         aplicada a todos los anchos. Devuelve 24px de ancho útil. */
+  #mainHeader.header.mdj-header-unified .header-top .container {
+    padding-left: max(12px, calc(env(safe-area-inset-left, 0px) + 8px)) !important;
+    padding-right: max(12px, calc(env(safe-area-inset-right, 0px) + 8px)) !important;
+  }
+
+  /* 6 · fuera de la fila 1 lo que el panel móvil YA ofrece. No se pierde
+         ninguna función: .mobile-nav lista ENTRAR, GRATIS y MI PERFIL
+         (verificado en el DOM). El pastillo ENTRAR (95px) y el avatar
+         .account (60px) son duplicados del panel y entre los dos consumían
+         175px de los 375 disponibles, que es lo que dejaba al carrito
+         fuera de pantalla. El selector ES|EN SÍ se conserva: es la única
+         forma de cambiar idioma en móvil, el panel no lo incluye. */
+  #mainHeader.header.mdj-header-unified .header-actions .mdj-header-r1-auth-cluster .btn-pill,
+  #mainHeader.header.mdj-header-unified .header-actions .mdj-header-r1-auth-cluster .account {
+    display: none !important;
+  }
+
+  /* 6b · el pill del clúster se ajusta a lo que le queda dentro. Estaba
+          dimensionado para tres elementos (idioma + ENTRAR + avatar); con
+          solo ES|EN, sus 20px de relleno lateral son los que dejaban la
+          hamburguesa 7px fuera del viewport (382 > 375). */
+  #mainHeader.header.mdj-header-unified .header-actions .mdj-header-r1-auth-cluster {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    gap: 0 !important;
+  }
+
+  /* 7 · el buscador de fila 1 tampoco cabe: su contenedor
+         (.header-search-wrap) queda con ancho 0 y el <input> se desborda de
+         x=339 a x=415 — encima de la hamburguesa y 40px fuera de la pantalla.
+         No está oculto ni es usable: es un resto de escritorio pisando el
+         único control de navegación. Se retira solo en ≤1000px. */
+  #mainHeader.header.mdj-header-unified .header-actions .header-search-wrap {
+    display: none !important;
+  }
+
+  /* 8 · la hamburguesa no queda pegada al filo: su relleno derecho de 12px
+         se apoyaba justo en el borde del viewport. */
+  #mainHeader.header.mdj-header-unified .header-top .container > .mobile-menu-btn {
+    margin-right: 0 !important;
+  }
+
+  /* 9 · EL PANEL MÓVIL SE ABRÍA DE 84px DE ALTO. Defecto preexistente que
+         no se veía porque la hamburguesa era inalcanzable; al arreglarla
+         quedó a la vista, así que entra en el mismo P0: sin esto el menú
+         sigue sin servir.
+         #mobileMenu.mobile-overlay es «position:fixed; top:0; height:100%»,
+         pero #mainHeader lleva backdrop-filter: blur(14px), y un ancestro
+         con filtro se convierte en el BLOQUE CONTENEDOR de sus descendientes
+         fixed. El 100% dejaba de referirse al viewport y pasaba a los 85px
+         del header: el overlay medía 375×84 y su lista de 466px se salía por
+         arriba (y=-191) sin fondo detrás — texto flotando sobre la página.
+         Se cambia el porcentaje por unidades de viewport, que no dependen
+         del bloque contenedor. El header está pegado arriba, así que el
+         overlay sigue naciendo en y=0 y ahora cubre la pantalla entera. */
+  #mainHeader.header.mdj-header-unified #mobileMenu.mobile-overlay {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow-y: auto !important;
+  }
+
+  @supports (height: 100dvh) {
+    #mainHeader.header.mdj-header-unified #mobileMenu.mobile-overlay {
+      height: 100dvh !important;
+      max-height: 100dvh !important;
+    }
+  }
+}
+
+/* Telefono en APAISADO. Girado, un telefono mide 844-932px de ancho y se
+   escaparia del corte de 600px, quedandose con la barra. Pero sigue siendo un
+   telefono. Lo que no cambia al girar es que la pantalla es CORTA: 390-430px de
+   alto. Esa es la senal fiable. Una tablet apaisada tiene 768px o mas de alto,
+   asi que no entra aqui.
+   Va en bloque aparte y no con `or` en la misma consulta: la sintaxis `or` de
+   Media Queries 4 no la entienden los motores antiguos, y este proyecto
+   arrastra Safari viejos —lo comprobamos hoy mismo con el bundle de Supabase. */
+@media (orientation: landscape) and (max-height: 480px) and (pointer: coarse) {
   /* 1 · la banda se oculta: en tablet y telefono manda la hamburguesa.
          Se repite el selector CON el peso completo —html body … > .header-nav—
          porque la regla que fija la geometria de la banda usa ese mismo camino
@@ -4168,7 +4406,34 @@ html body #mainHeader.header.mdj-header-unified #mainNav > a#mainNav-mi-perfil-l
    es exclusiva de tablets y telefonos reales. El portatil, a cualquier ancho,
    conserva la barra deslizable.
    ══════════════════════════════════════════════════════════════════════════ */
-@media (max-width: 1024px) and (pointer: coarse) {
+/* Refinamiento PO 2026-08-20: la hamburguesa es EXCLUSIVA DE TELEFONO. Las
+   tablets se quedan con la barra completa, la misma de escritorio, aprovechando
+   el deslizamiento horizontal que ya funciona.
+
+   600px, y no una cifra al azar: los telefonos mas grandes en retrato llegan a
+   430-448px (iPhone Pro Max); la tablet mas pequena, la iPad mini, empieza en
+   744-768. El hueco es limpio y 600 cae en medio. Ademas es el umbral que el
+   propio Android usa para declarar tablet (sw600dp), asi que no es un numero
+   inventado aqui.
+
+   Sigue haciendo falta `pointer: coarse`: sin el, un portatil con la ventana a
+   500px recibiria la hamburguesa, que es justo lo que se descarto. */
+@media (max-width: 600px) and (pointer: coarse) {
+  html body #mainHeader.header.mdj-header-unified > .header-nav,
+  html body #mainHeader.header.mdj-header-unified .header-nav {
+    display: none !important;
+  }
+}
+
+/* Telefono en APAISADO. Girado, un telefono mide 844-932px de ancho y se
+   escaparia del corte de 600px, quedandose con la barra. Pero sigue siendo un
+   telefono. Lo que no cambia al girar es que la pantalla es CORTA: 390-430px de
+   alto. Esa es la senal fiable. Una tablet apaisada tiene 768px o mas de alto,
+   asi que no entra aqui.
+   Va en bloque aparte y no con `or` en la misma consulta: la sintaxis `or` de
+   Media Queries 4 no la entienden los motores antiguos, y este proyecto
+   arrastra Safari viejos —lo comprobamos hoy mismo con el bundle de Supabase. */
+@media (orientation: landscape) and (max-height: 480px) and (pointer: coarse) {
   html body #mainHeader.header.mdj-header-unified > .header-nav,
   html body #mainHeader.header.mdj-header-unified .header-nav {
     display: none !important;
