@@ -44,9 +44,14 @@
       min-height:100vh;display:flex;flex-direction:column;}
 
     /* ── Topbar (logo + badge de rol + salir) ── */
+    /* Nivelacion 2026-08-19: staff.html no monta #mainHeader, usa esta cabecera
+       propia. Para que el owner no vea un brinco al entrar o salir del portal,
+       sus dos filas adoptan la geometria del riel maestro: 84px la del logo y
+       72px la del menu, igual que .header-top y .header-nav del resto. */
     .staff-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;
-      padding:12px 22px;background:linear-gradient(180deg,#0a0e16,#070a11);
-      border-bottom:1px solid var(--line);flex-wrap:wrap;}
+      flex:0 0 84px;height:84px;min-height:84px;max-height:84px;
+      padding:0 22px;background:linear-gradient(180deg,#0a0e16,#070a11);
+      border-bottom:1px solid var(--line);flex-wrap:nowrap;}
     .staff-brand{display:flex;align-items:center;gap:11px;min-width:0;}
     .staff-brand .mk{width:34px;height:34px;flex:none;object-fit:contain;display:block;}
     .staff-brand .tx{font-size:15px;font-weight:900;letter-spacing:.02em;line-height:1.1;white-space:nowrap;}
@@ -79,14 +84,20 @@
       letter-spacing:.10em;text-transform:uppercase;color:var(--gold-lt);white-space:nowrap;}
 
     /* ── Menú PRINCIPAL (tira dorada grande, réplica del estilo del perfil artista) ── */
-    .staff-topnav{display:flex;align-items:stretch;justify-content:space-between;gap:0;padding:4px clamp(12px,2vw,32px) 8px;
+    .staff-topnav{display:flex;align-items:center;justify-content:center;gap:0;
+      flex:0 0 72px;height:72px;min-height:72px;max-height:72px;padding:0 clamp(12px,2vw,32px);
       background:transparent;border-bottom:none;
       overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;
       overscroll-behavior-x:contain;}
     .staff-topnav button,.staff-topnav a{background:none;border:none;text-decoration:none;color:rgba(255,255,255,.88);
-      font-size:clamp(13px,1.05vw,16px);font-weight:800;letter-spacing:.07em;cursor:pointer;text-transform:uppercase;
+      /* Tipografia institucional del menu, identica a la del riel maestro.
+         Antes: clamp(13px,1.05vw,16px), ls .07em y font-family:inherit — o sea,
+         la de sistema del body, no Inter. La barra del owner era la unica del
+         ecosistema con otra letra y otro tamano. */
+      font-size:20px;font-weight:800;letter-spacing:2.8px;cursor:pointer;text-transform:uppercase;
+      font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
       position:relative;transition:color .2s ease;display:flex;align-items:center;justify-content:center;
-      padding:4px clamp(4px,0.45vw,7px) 8px;white-space:nowrap;flex-shrink:0;font-family:inherit;}
+      padding:4px clamp(4px,0.45vw,7px) 8px;white-space:nowrap;flex-shrink:0;}
     .staff-topnav button + button::before,.staff-topnav a + button::before,.staff-topnav button + a::before,.staff-topnav a + a::before{content:"/";color:rgba(197,160,89,.4);font-weight:500;margin-right:.68em;line-height:1;}
     .staff-topnav .tab-help{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;
       border:1.5px solid currentColor;border-radius:50%;font-size:9px;font-weight:800;letter-spacing:0;margin-left:7px;line-height:1;}
