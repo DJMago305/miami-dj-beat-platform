@@ -26,17 +26,17 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260817-header-canonico" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260819-homolog2" />
   <link rel="stylesheet" href="./profile.css?v=20260226-1" />
   <style>
     /*
-     * BOOTH — Misma arquitectura de header que index (home): 140px total = 90px + 50px #mainNav.
+     * BOOTH — Misma arquitectura de header que index (home): 156px total = 84px + 72px #mainNav.
      * Fuente de verdad visual: web/index.html (body.page-home); aquí body.page-booth con las mismas reglas.
      */
     html body.page-booth {
-      --header-height: 90px;
-      --header-nav-band: 50px;
-      --mdj-index-header-total: 140px;
+      --header-height: 84px;
+      --header-nav-band: 72px;
+      --mdj-index-header-total: 156px;
       padding-top: calc(var(--mdj-index-header-total) + env(safe-area-inset-top, 0px));
       scroll-padding-top: calc(var(--mdj-index-header-total) + env(safe-area-inset-top, 0px));
     }
@@ -51,10 +51,10 @@
     }
 
     body.page-booth #mainHeader .header-top {
-      flex: 0 0 90px;
-      height: 90px;
-      min-height: 90px;
-      max-height: 90px;
+      flex: 0 0 84px;
+      height: 84px;
+      min-height: 84px;
+      max-height: 84px;
       display: flex;
       flex-direction: column;
       align-items: stretch;
@@ -68,8 +68,8 @@
     body.page-booth #mainHeader .header-top .container {
       flex: 1 1 auto;
       height: 100%;
-      min-height: 90px;
-      max-height: 90px;
+      min-height: 84px;
+      max-height: 84px;
       display: flex;
       flex-direction: row;
       flex-wrap: nowrap;
@@ -101,7 +101,7 @@
       box-sizing: border-box;
       height: auto;
       min-height: 0;
-      max-height: 90px;
+      max-height: 84px;
       margin: 0 !important;
       padding: 0;
       overflow: visible;
@@ -128,7 +128,7 @@
       display: flex;
       align-items: center;
       align-self: center;
-      max-height: 90px;
+      max-height: 84px;
       flex-shrink: 0;
       min-width: min(280px, 42vw);
       width: min(640px, 58vw);
@@ -208,7 +208,7 @@
       flex: 0 0 50px;
       height: 50px;
       min-height: 50px;
-      max-height: 50px;
+      max-height: 72px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -222,7 +222,7 @@
 
     body.page-booth #mainHeader .header-nav .container {
       height: 100%;
-      max-height: 50px;
+      max-height: 72px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -233,24 +233,21 @@
     body.page-booth #mainHeader #mainNav.nav.top-nav {
       box-sizing: border-box;
       height: 100%;
-      max-height: 50px;
+      max-height: 72px;
       min-height: 0;
       width: 100%;
       margin: 0 auto;
-      padding: 10px 12px !important;
       align-items: center;
-      justify-content: center !important;
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      overflow-y: hidden;
-      font-size: 16px !important;
-      line-height: 1.25 !important;
+      /* padding, font-size y line-height retirados 2026-08-19: los fija ahora el riel
+         maestro de header-unified.css. Eran de la especificacion vieja (90+50=140px). */
     }
 
     body.page-booth #mainHeader #mainNav.nav.top-nav a {
-      font-size: 16px !important;
-      line-height: 1.25 !important;
-      padding: 0 clamp(8px, 1vw, 14px) !important;
+      /* font-size retirado 2026-08-19: la tipografía institucional (Inter 20px 800
+         ls 2.8px) la fija header-unified.css. Este 16px venía de la especificación
+         vieja del header (90+50=140px) y ganaba a la hoja maestra por !important. */
+      /* padding retirado 2026-08-19: el unico origen de separacion es el "/" del
+         riel maestro; este clamp rompia la dispersion 0px. */
       box-sizing: border-box;
     }
 
@@ -536,7 +533,7 @@
     </div>
     <div class="header-nav">
       <div class="container">
-        <nav class="nav top-nav" id="mainNav">
+        <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" aria-label="Navegación principal">
           <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
           <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
           <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
@@ -1155,7 +1152,7 @@
   </script>
   <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
   <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-    <script src="./mdj-shared-header.js?v=20260817-header-canonico"></script>
+    <script src="./mdj-shared-header.js?v=20260819-maestra"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>

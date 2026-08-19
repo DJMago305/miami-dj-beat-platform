@@ -143,10 +143,15 @@
     }
 
     function hideSiteMainNavRow() {
-        try {
-            var hb = document.querySelector('#mainHeader .header-nav');
-            if (hb) hb.style.setProperty('display', 'none', 'important');
-        } catch (e) { /* noop */ }
+        /* MDJB nav 2026-08-19 · Decisión PO «Opción B: header único universal».
+           Esta función escondía la fila del menú porque en la arquitectura vieja
+           la sustituía la tira #owner-tabs. Esa tira es hoy riel muerto, así que
+           ocultar la fila dejaba la página SIN NINGUNA navegación: era el caso de
+           account-settings.html (siempre) y de las otras diez páginas que cargan
+           este guion cuando se abren con ?mdj_nav=profile.
+           El estilo se inyectaba en línea y con !important, así que ganaba a la
+           regla de header-unified.css que ya intentaba restituir el riel. */
+        return;
     }
 
     function isEventsPublicHomePage() {

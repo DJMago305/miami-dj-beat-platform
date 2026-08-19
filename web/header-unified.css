@@ -174,9 +174,13 @@
     filter: none !important;
   }
 
-  /* Fila 2 (#mainNav) solo Inicio: menos aire muerto bajo el subtítulo del PNG. */
+  /* Fila 2 (#mainNav) solo Inicio.
+     El `margin-top: -6px` que cerraba el aire bajo el subtítulo del PNG se retira
+     el 2026-08-19 por decisión PO (CLS = 0 absoluto): subía la fila de la portada
+     a Y=78 mientras las satélites la tienen en Y=84, y ese desnivel se veía como
+     un brinco de 6px al navegar entre home y el resto. La coordenada Y es ahora
+     idéntica en todo el sistema. */
   body.page-home #mainHeader.header.mdj-header-unified .header-nav {
-    margin-top: -6px !important;
     overflow: visible !important;
     overflow-x: visible !important;
     overflow-y: visible !important;
@@ -2658,18 +2662,12 @@ body.mdj-account-settings:not(.mdj-from-profile) #mainHeader.header.mdj-header-u
 /* ── ACCOUNT-SETTINGS Owner Config — #owner-tabs 10 pilares (paridad producción)
    Suprime fila #mainNav 8-pillar cuando mdj-profile-nav-context activa el strip.
    Sin carrusel / clip en STAFF u otras etiquetas. v20260705-config-owner-strip-parity-1 */
-body.mdj-account-settings.mdj-from-profile #mainHeader.header.mdj-header-unified .header-nav {
-  display:        none    !important;
-  visibility:     hidden  !important;
-  height:         0       !important;
-  min-height:     0       !important;
-  max-height:     0       !important;
-  overflow:       hidden  !important;
-  pointer-events: none    !important;
-  flex:           0 0 0   !important;
-  margin:         0       !important;
-  padding:        0       !important;
-}
+/* MDJB nav 2026-08-19 · Decisión PO «Opción B: header único universal».
+   Este bloque colapsaba la fila del menú a altura cero en Owner Config para
+   ceder el sitio a los 10 pilares de #owner-tabs. Con esa tira convertida en
+   riel muerto, account-settings.html y staff-config.html —que reutiliza sus
+   clases de body— cargaban sin ninguna barra. Se retira el colapso; los nueve
+   puestos canónicos son la navegación de estas dos pantallas. */
 
 body.mdj-account-settings.mdj-from-profile #owner-tabs,
 body.mdj-account-settings.mdj-from-profile .dj-owner-tabs {
@@ -3884,4 +3882,184 @@ html body.mdj-staff-nav .dj-tab-btn[data-mdj-portalnav="sft"],
 html body.mdj-staff-nav #panel-soundfortips,
 html body.mdj-staff-nav .acct-side-link[onclick*="soundfortips"] {
   display: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ★ CABECERA MAESTRA PERSISTENTE — CERO BRINCO (FIX-NAV-04)
+   ═══════════════════════════════════════════════════════════════════════════
+   Principio rector del PO: al navegar entre index, login, staff, staff-config y
+   dashboard, la tira debe quedarse en la MISMA coordenada, con la misma altura,
+   la misma tipografía y los mismos separadores. Nada de saltos entre páginas.
+
+   EL PROBLEMA QUE RESUELVE. Coexistían tres tipografías —Outfit 20px en el riel
+   público, -apple-system 15px en la tira nativa de staff, Inter 12px en una tira
+   inyectada que ya se ha eliminado— y dos contenedores distintos (.dj-owner-tabs
+   y .staff-topnav) con alturas y paddings propios. Cambiar de página movía la
+   barra y cambiaba el tamaño del texto.
+
+   POR QUÉ ESTA ESPECIFICIDAD. Cada página trae su propio bloque <style> interno,
+   que carga DESPUÉS de esta hoja y gana a igualdad de peso. Sin el prefijo
+   html body y los #id repetidos, estas reglas no llegarían a aplicarse — es
+   exactamente lo que ocurrió en los intentos anteriores.
+
+   ALTURA FIJA Y NO auto: una altura declarada es lo que garantiza que la fila
+   ocupe lo mismo antes y después de que el JS pinte su contenido. Con auto, la
+   tira nace con 0 y empuja la página al rellenarse: eso es el brinco.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+html body .dj-owner-tabs,
+html body #staff-topnav.staff-topnav {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  padding: 0 clamp(12px, 2vw, 32px) !important;
+  margin: 0 !important;
+  gap: 0 !important;
+  overflow-x: auto !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
+}
+
+/* Tipografía única de las pestañas del portal, en las dos variantes. */
+html body .dj-owner-tabs .dj-tab-btn,
+html body #staff-topnav.staff-topnav > a,
+html body #staff-topnav.staff-topnav > button {
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: none !important;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif !important;
+  font-size: 0.82rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  text-decoration: none !important;
+  line-height: 1 !important;
+  color: rgba(255, 255, 255, 0.62) !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+  transition: color .18s ease !important;
+}
+
+html body .dj-owner-tabs .dj-tab-btn:hover,
+html body #staff-topnav.staff-topnav > a:hover,
+html body #staff-topnav.staff-topnav > button:hover { color: #fff !important; }
+
+html body .dj-owner-tabs .dj-tab-btn.active,
+html body #staff-topnav.staff-topnav > a.active,
+html body #staff-topnav.staff-topnav > button.active { color: #c5a059 !important; }
+
+/* Separador «/» idéntico en las dos variantes: es la ÚNICA fuente de espaciado,
+   con margen simétrico, para que la distancia texto→«/»→texto sea la misma en
+   todos los saltos. En rem y no em: con em, una pestaña de fuente mayor abriría
+   más hueco que sus vecinas. */
+html body .dj-owner-tabs .dj-tab-btn::before,
+html body #staff-topnav.staff-topnav > a::before,
+html body #staff-topnav.staff-topnav > button::before { content: none !important; }
+
+html body .dj-owner-tabs .dj-tab-btn + .dj-tab-btn::before,
+html body #staff-topnav.staff-topnav > a + a::before,
+html body #staff-topnav.staff-topnav > a + button::before,
+html body #staff-topnav.staff-topnav > button + a::before,
+html body #staff-topnav.staff-topnav > button + button::before {
+  content: "/" !important;
+  display: inline-block !important;
+  margin: 0 0.95rem !important;
+  opacity: .32 !important;
+  font-weight: 400 !important;
+  color: inherit !important;
+}
+
+/* El conmutador día/noche cierra la tira y se separa del resto: es un control,
+   no una pestaña más, y llevarlo pegado lo haría parecer una. */
+html body .dj-owner-tabs .dj-tab-btn--tema,
+html body #staff-topnav.staff-topnav > button.dj-tab-btn--tema {
+  margin-left: auto !important;
+  font-size: 1rem !important;
+  letter-spacing: 0 !important;
+  opacity: .85 !important;
+}
+html body .dj-owner-tabs .dj-tab-btn--tema::before,
+html body #staff-topnav.staff-topnav > button.dj-tab-btn--tema::before { content: none !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ★ HOMOLOGACIÓN FINAL DE LA BARRA — MISMA X, MISMA FUENTE, MISMOS 9 PUESTOS
+   ═══════════════════════════════════════════════════════════════════════════
+   Medido en vivo sobre index, booth, dj-tools y dj-knowledge. Los cuatro tienen
+   el mismo contenedor (pad 24px, maxW 1600px) y los mismos diez hijos, pero
+   divergían en tres cosas, cada una con su causa:
+
+   1 · PADDING DEL RIEL. booth.html resolvía 21.54px y el resto 5.744px, de ahí
+       que su primera pestaña arrancara en X=57 y las demás en 41 o 32. El valor
+       venía heredado, no declarado; aquí se fija.
+
+   2 · FUENTE HEREDADA. Las pestañas no declaraban font-family, así que tomaban
+       la del <body>: Outfit en casi todas, pero Inter en dj-knowledge.html. La
+       tipografía institucional no puede depender de qué fuente tenga el body de
+       cada página — se declara explícita.
+
+   3 · PUESTO 8 CON DOS IDENTIDADES. Según la página, el octavo enlace es
+       data-mdj-nav="mi-portal" o "my-profile", y en dj-tools.html llegaba SIN
+       data-mdj-slot: por eso allí se contaban 8 puestos y no 9. Se le asigna su
+       columna a las dos variantes.
+
+   Alcance: solo la barra. No se toca ninguna otra zona de la página.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 1 · Riel con el mismo origen horizontal en todas las vistas. */
+html body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav {
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+}
+
+/* 2 · Fuente declarada, nunca heredada del body. */
+html body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a {
+  /* INTER, no Outfit. La fuente institucional se declara aquí y no se hereda
+     del <body>, que cambia por página (Outfit en casi todas, Inter en
+     dj-knowledge) y arrastraba la barra con él. */
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  letter-spacing: 2.8px !important;
+  text-transform: uppercase !important;
+}
+
+/* ── BLOQUEO DE COORDENADA Y ─────────────────────────────────────────────────
+   Medido: la fila del menú valía 72px en index, 50 en booth y CERO en
+   dj-tools —colapsada, que es por lo que allí la barra no se veía—; y la fila
+   superior 84px salvo booth con 90. Con tres alturas distintas, la barra cae en
+   una Y distinta en cada pantalla y salta al navegar.
+   Se fijan las dos filas. Altura declarada y no auto: una fila que nace en 0 y
+   crece al pintarse es exactamente el brinco que hay que eliminar. */
+html body #mainHeader.header.mdj-header-unified > .header-top {
+  height: 84px !important;
+  min-height: 84px !important;
+  box-sizing: border-box !important;
+}
+html body #mainHeader.header.mdj-header-unified > .header-nav {
+  height: 72px !important;
+  min-height: 72px !important;
+  display: flex !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+}
+
+/* 3 · El puesto 8 tiene dos identidades según la página; ambas a la columna 8
+       y siempre presentes, que es lo que evita el hueco cuando falta el
+       atributo de puesto. */
+html body #mainHeader.header.mdj-header-unified #mainNav > a[data-mdj-nav="mi-portal"],
+html body #mainHeader.header.mdj-header-unified #mainNav > a[data-mdj-nav="my-profile"],
+html body #mainHeader.header.mdj-header-unified #mainNav > a#mainNav-mi-portal-link,
+html body #mainHeader.header.mdj-header-unified #mainNav > a#mainNav-guest-mi-perfil-link,
+html body #mainHeader.header.mdj-header-unified #mainNav > a#mainNav-mi-perfil-link {
+  grid-column: 8 !important;
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }

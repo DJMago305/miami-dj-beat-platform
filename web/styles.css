@@ -6466,12 +6466,11 @@ body.dj-profile #mainHeader.header.mdj-header-unified .header-actions #header-ti
   display: none !important;
 }
 
-body.dj-profile #mainHeader .header-nav,
-body.mdj-from-profile #mainHeader .header-nav,
-body.mdj-academia-hub #mainHeader .header-nav,
-body.mdj-artist-academy #mainHeader .header-nav {
-  display: none !important;
-}
+/* MDJB nav 2026-08-19 · Decisión PO «Opción B: header único universal».
+   Aquí se ocultaba la fila del menú en perfil, hubs de academia y páginas con
+   ?mdj_nav=profile, porque en la arquitectura vieja la sustituía #owner-tabs.
+   Retirada esa tira, la regla dejaba pantallas sin ninguna navegación.
+   La cabecera canónica es ahora la única barra y no se oculta en ningún rol. */
 
 /* Barra artística: tipografía legible; 2ª línea solo si falta ancho */
 body.dj-profile .dj-owner-tabs,

@@ -12,6 +12,9 @@
   </style>
   <script>document.documentElement.classList.add('mdj-staff-gate-pending');</script>
 
+  <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra caia en la
+       sustituta del sistema y el texto salia ~2% mas ancho, desplazando el eje X. -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -716,7 +719,11 @@
           /* MI PERFIL, mismo caso: enlace directo a los ajustes de cuenta. */
           '<a href="./account-settings.html" data-top="miperfil">Mi Perfil</a>'+
           '<button type="button" data-top="gobernanza" class="active">Staff</button>'+
-          '<button type="button" data-top="elixis">Fénix AI</button>';
+          '<button type="button" data-top="elixis">Fénix AI</button>'+
+          /* Cierra la tira igual que en el resto del portal. Reutiliza el
+             conmutador de tema que esta página YA tiene cableado (applyTheme);
+             no se crea un segundo mecanismo. */
+          '<button type="button" class="dj-tab-btn--tema" data-mdj-tema-toggle aria-label="Cambiar modo dia / noche" title="Modo dia / noche">☀️</button>';
       }
       if(role==='seller'){
         return start+
@@ -1052,6 +1059,6 @@
     }
   })();
   </script>
-  <script src="./js/mdj-owner-strip.js?v=20260818-p0"></script>
+  <script src="./js/mdj-tema-portal.js?v=20260819-tema"></script>
 </body>
 </html>
