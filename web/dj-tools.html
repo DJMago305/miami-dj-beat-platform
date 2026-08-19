@@ -635,6 +635,13 @@
     el.style.removeProperty('pointer-events');
   }
   function mdjRunVistaCeroGuestNavRestore() {
+    /* Vista Cero restaura la barra de INVITADO. Cuando la pagina monta el juego
+       interno del sistema no debe intervenir: quitaba los puestos tools,
+       mi-portal y staff (5, 8 y 9) e inyectaba Eventos y un segundo MI PERFIL,
+       dejando un hibrido de 8. Y como corre en siete temporizadores hasta 4s y
+       en dos MutationObserver, siempre ganaba al normalizador.
+       La ultima palabra sobre el riel la tiene mdj-shared-header.js. */
+    if (typeof window.mdjUsaJuegoInterno === 'function' && window.mdjUsaJuegoInterno()) return;
     if (!mdjVistaCeroGuest()) return;
     var nav = document.getElementById('mainNav');
     mdjStripRemovedPublicTabs(nav);

@@ -104,17 +104,14 @@
      misma barra. staff.html no entra porque no tiene #mainHeader: usa su tira
      nativa #staff-topnav, que ya es este mismo juego.
 
-     Por ahora SOLO academia.html, que es la que el PO ordenó cerrar y la única
-     verificada en vivo. Las demás quedan fuera a conciencia:
-       · dj-tools.html — un pase posterior al normalizador le reconstruye la
-         barra: pierde los puestos 5, 8 y 9 y le reaparecen dos nodos sin slot
-         («Eventos» nav=venues y un segundo «MI PERFIL» nav=my-profile). Da un
-         híbrido de 8 puestos, peor que la barra pública que tenía. No se activa
-         hasta localizar ese pase.
+     Quedan fuera a conciencia:
        · staff-agenda.html y staff-config.html — se incrustan como iframe en el
          portal y no pintan #mainHeader; no hay barra que cambiar.
        · elixis-console.html — sin verificar en vivo. */
-  var MDJ_VISTAS_INTERNAS = { 'academia.html': 1 };
+  var MDJ_VISTAS_INTERNAS = {
+    'academia.html': 1,
+    'dj-tools.html': 1
+  };
 
   function mdjTablaDeSlots() {
     try {
@@ -126,6 +123,17 @@
     } catch (eTabla) { /* noop */ }
     return MDJ_NAV_SLOTS;
   }
+
+  /* Señal pública para los pases propios de cada página. El bloque en linea
+     "Vista Cero" que viven en dj-tools, login y services restaura la barra de
+     INVITADO: quita tools / mi-portal / staff e inyecta Eventos y un segundo
+     MI PERFIL. Contra el juego interno eso desmonta los puestos 5, 8 y 9, y
+     como se reejecuta en siete temporizadores y dos MutationObserver, siempre
+     ganaba al normalizador. Con esto puede apartarse solo, sin que haya que
+     duplicar aqui la lista de vistas internas. */
+  window.mdjUsaJuegoInterno = function () {
+    return mdjTablaDeSlots() === MDJ_NAV_SLOTS_INTERNO;
+  };
 
   /* ── Resolvedor ÚNICO del destino de MI PERFIL (decisión PO 2026-08-16) ──
      El texto del slot 8 nunca cambia; cambia a dónde lleva:
