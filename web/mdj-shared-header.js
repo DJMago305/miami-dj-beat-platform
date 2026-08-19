@@ -79,7 +79,7 @@
     { s: 1, key: 'nav-home',       nav: 'home',      href: './index.html',        txt: 'Inicio' },
     { s: 2, key: 'nav-academia',   nav: 'academia',  href: './academia.html',     txt: 'Academia' },
     { s: 3, key: null,             nav: 'agenda',    href: './staff-agenda.html', txt: 'Agenda' },
-    { s: 4, key: 'nav-config',     nav: 'config',    href: './staff-config.html', txt: '⚙ Config',
+    { s: 4, key: 'nav-config',     nav: 'config',    href: './account-settings.html', txt: '⚙ Config',
       id: 'mainNav-config-link', cls: 'mdj-config-mainnav' },
     { s: 5, key: 'nav-tools',      nav: 'tools',     href: './dj-tools.html',     txt: 'DJ Tools' },
     { s: 6, key: null,             nav: 'flow',      href: './staff-agenda.html?tab=flow', txt: 'Cash Flow' },
@@ -93,6 +93,66 @@
     { s: 9, key: 'nav-staff',      nav: 'staff',     href: './staff.html',        txt: 'Staff',
       id: 'mainNav-staff-or-profile', cls: 'mdj-staff-mainnav dj-tab-btn--staff-only' }
   ];
+
+  /* ══ ESTACION DE TRABAJO DEL ARTISTA ═══════════════════════════════════════
+     Ley constitucional PO 2026-08-20: MI PERFIL lleva a la estacion de trabajo
+     PROPIA DEL ROL, nunca a la barra publica. Staff tiene la suya; el artista
+     tiene ESTA, separada, y SoundForTips vive aqui. Unica salida: Log Out o
+     Inicio.
+
+     Ni un rotulo ni una ruta se inventan: se recuperan literalmente del
+     #owner-tabs que ya vivia en dj-profile.html —incluidos Jobs y Shop— porque
+     la orden fue recuperar lo que ya estaba pensado, no rehacerlo de cero. Se
+     conserva ademas el sufijo ?mdj_nav=profile de cada enlace, que es lo que
+     mantiene al artista «dentro» al saltar de pagina.
+
+     UNICA baja respecto al set viejo: STAFF. La ley RBAC prohibe que ese puesto
+     exista siquiera en el DOM de una cuenta de artista, asi que se retira por
+     regla, no por criterio.
+
+     Tres puestos no son paginas sino PESTAÑAS de la propia vista (flow, sft,
+     public). No se reimplementa su logica: el puesto delega el clic en el boton
+     que ya existe en #owner-tabs, que sigue en el DOM aunque este oculto. Asi la
+     franja se queda congelada e intacta, como exige .cursorrules. */
+  var MDJ_NAV_SLOTS_ARTISTA = [
+    { s: 1,  key: 'nav-home',       nav: 'home',      href: './index.html', txt: 'Inicio' },
+    { s: 2,  key: 'nav-academia',   nav: 'academia',  href: './academia.html?mdj_nav=profile', txt: 'Academia' },
+    { s: 3,  key: null,             nav: 'agenda',    href: './dj-dashboard.html?mdj_nav=profile', txt: 'Agenda' },
+    { s: 4,  key: 'nav-config',     nav: 'config',    href: './account-settings.html?mdj_nav=profile', txt: '⚙ Config',
+      id: 'mainNav-config-link', cls: 'mdj-config-mainnav' },
+    { s: 5,  key: 'nav-tools',      nav: 'tools',     href: './dj-tools.html?mdj_nav=profile', txt: 'DJ Tools' },
+    { s: 6,  key: null,             nav: 'flow',      href: '#', txt: 'Cash Flow',      tab: 'flow' },
+    { s: 7,  key: null,             nav: 'sft',       href: '#', txt: 'SoundForTips™',  tab: 'sft'  },
+    /* MI PERFIL se queda en el puesto 8: su resolvedor de destino y el bloque que
+       fija su etiqueta direccionan por numero de slot. */
+    { s: 8,  key: 'nav-my-profile', nav: 'mi-portal', href: '#', txt: 'MI PERFIL',      tab: 'public',
+      id: 'mainNav-mi-portal-link', cls: 'mdj-mi-portal-mainnav mdj-mi-portal-gold',
+      alias: ['mi-portal', 'header-mi-portal'], navAlias: ['my-profile', 'profile'] },
+    { s: 9,  key: 'nav-jobs',       nav: 'jobs',      href: './jobs.html?mdj_nav=profile', txt: 'Trabajos' },
+    { s: 10, key: 'nav-shop',       nav: 'shop',      href: './shop.html?mdj_nav=profile', txt: 'Shop' }
+  ];
+
+  /* Dueño del perfil que se esta mirando. Se calcula con senales que el header
+     ya tiene, sin pedirle nada a la pagina: hay sesion, no es la vista de QR, y
+     o no viene ?id= —perfil propio— o el ?id= coincide con el uid propio. */
+  function mdjEsDuenoDelPerfil() {
+    try {
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (pagina !== 'dj-profile.html') return false;
+      var q = new URLSearchParams(window.location.search || '');
+      if (q.get('view') === 'public') return false;          // QR de SoundForTips: caso aparte
+      /* El owner NO monta estaciones de DJ. Aunque su perfil sea «suyo», pertenece
+         al edificio Staff y no debe inicializar nada del lado del catalogo de
+         artistas. Esto es el cinturon; el tirante es el redirect de abajo, que se
+         lo lleva de aqui. Si el redirect tardara —la sesion resuelve tarde—, esta
+         linea garantiza que entretanto no se le monte la estacion equivocada. */
+      if (mdjEsStaffEnVivo()) return false;
+      var uid = String(window.__mdjNavOwnUserId || '').trim();
+      if (!uid) return false;                                 // sin sesion no hay dueño
+      var id = (q.get('id') || '').trim();
+      return !id || id === uid;
+    } catch (eDueno) { return false; }
+  }
 
   /* Vistas que montan el juego interno. Lista explícita y no por rol: el owner
      también navega la vitrina pública (index, shop, contacto) y allí la barra
@@ -115,8 +175,34 @@
     'dj-tools.html': 1
   };
 
+  /* El juego interno exige DOS condiciones, no una: que la pagina sea interna
+     Y que quien mira sea staff.
+
+     Faltaba la segunda, y en Vista Cero se veia el fallo: un INVITADO abria
+     academia.html o dj-tools.html y recibia la barra del sistema entera, con
+     Staff, Agenda, Cash Flow y Fenix AI. Rutas de staff ofrecidas a quien no
+     ha iniciado sesion. Ademas descuadraba la barra: 116px de sangria frente
+     a los 85 del resto, o sea un brinco visible al cambiar de pantalla.
+
+     El rol llega cuando resuelve la sesion, asi que en la primera pasada un
+     owner vera el juego publico y en la siguiente el interno. Se acepta a
+     proposito: es preferible que un owner note un cambio a que un invitado
+     vea rutas que no le pertenecen. */
+  function mdjEsStaffEnVivo() {
+    var b = document.body;
+    if (!b) return false;
+    var rol = (b.getAttribute('data-mdj-nav-role') || '').toLowerCase().trim();
+    if (rol === 'management' || rol === 'seller') return true;
+    return b.classList.contains('mdj-staff-nav') && !b.classList.contains('mdj-artist-nav');
+  }
+
   function mdjTablaDeSlots() {
     try {
+      /* El artista en SU perfil recibe su estacion de trabajo. Va ANTES del
+         filtro de staff: un artista no es staff, y con esa comprobacion por
+         delante nunca llegaria aqui. */
+      if (mdjEsDuenoDelPerfil()) return MDJ_NAV_SLOTS_ARTISTA;
+      if (!mdjEsStaffEnVivo()) return MDJ_NAV_SLOTS;
       var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
       if (MDJ_VISTAS_INTERNAS[pagina]) return MDJ_NAV_SLOTS_INTERNO;
       if (document.body && document.body.getAttribute('data-mdj-contexto') === 'interno') {
@@ -151,7 +237,17 @@
     var uid = String(window.__mdjNavOwnUserId || '').trim();
     var esStaff = role === 'management' || role === 'seller' ||
       (b && b.classList.contains('mdj-staff-nav') && !b.classList.contains('mdj-artist-nav'));
-    var esArtista = !!(b && b.classList.contains('mdj-artist-nav'));
+    /* DOS SENALES PARA LO MISMO, y aqui solo se escuchaba una. El artista se
+       reconoce por la clase mdj-artist-nav O por data-mdj-nav-role, que trae
+       'artist' | 'dj' | 'talent' segun de donde venga resuelto el rol.
+       Mirando solo la clase, una sesion de artista con el atributo puesto pero
+       sin la clase caia en la rama de CLIENTE: medido en vivo con djmago305
+       (rol dj/PRO), CONFIG apuntaba a client-account.html y MI PERFIL a
+       client-portal.html en las seis vistas. Destinos de otra categoria.
+       El roster es el mismo —artist, dj y talent son la misma persona— tal y
+       como ya lo trata role-guard.js. */
+    var esArtista = !!(b && (b.classList.contains('mdj-artist-nav') ||
+      role === 'artist' || role === 'dj' || role === 'talent'));
     /* Aterriza en la vista de perfil del portal, no en su portada. Antes caia en
        'gobernanza' y el owner no veia su ficha por ningun lado, aunque estuviera
        cargada y oculta ahi mismo. */
@@ -272,8 +368,18 @@
     var uid = String(window.__mdjNavOwnUserId || '').trim();
     var esStaff = rol === 'management' || rol === 'seller' ||
       (b && b.classList.contains('mdj-staff-nav') && !b.classList.contains('mdj-artist-nav'));
-    var esArtista = !!(b && b.classList.contains('mdj-artist-nav'));
-    if (esStaff) return './staff-config.html';
+    /* DOS SENALES PARA LO MISMO, y aqui solo se escuchaba una. El artista se
+       reconoce por la clase mdj-artist-nav O por data-mdj-nav-role, que trae
+       'artist' | 'dj' | 'talent' segun de donde venga resuelto el rol.
+       Mirando solo la clase, una sesion de artista con el atributo puesto pero
+       sin la clase caia en la rama de CLIENTE: medido en vivo con djmago305
+       (rol dj/PRO), CONFIG apuntaba a client-account.html y MI PERFIL a
+       client-portal.html en las seis vistas. Destinos de otra categoria.
+       El roster es el mismo —artist, dj y talent son la misma persona— tal y
+       como ya lo trata role-guard.js. */
+    var esArtista = !!(b && (b.classList.contains('mdj-artist-nav') ||
+      rol === 'artist' || rol === 'dj' || rol === 'talent'));
+    if (esStaff) return './account-settings.html';
     /* Directo a account-settings: account-profile.html son 11 lineas de
        redireccion a esa misma pagina, asi que apuntar alli hacia dar un salto
        de mas a cada artista. */
@@ -296,7 +402,7 @@
       rol = String(((pr && pr.data) || {}).role || '').toLowerCase().trim();
     } catch (e) {}
     if (rol === 'owner' || rol === 'admin' || rol === 'manager' || rol === 'management' || rol === 'seller') {
-      return './staff-config.html';
+      return './account-settings.html';
     }
     if (rol) return './account-settings.html';       // cualquier otro rol con perfil = artista
     return uid ? './client-account.html' : './login.html';
@@ -320,6 +426,254 @@
       });
     }, true);
   }
+
+  /* ══ PANEL PREMIUM DE LA HAMBURGUESA ═══════════════════════════════════════
+     Decision PO 2026-08-20. El desplegable era una lista plana de diez enlaces
+     —cero encabezados de seccion, cero iconos— y debe seguir el patron
+     documentado en docs/design/premium-settings-tabs-pattern.md: filas de
+     icono + etiqueta agrupadas en tarjetas, encabezado FUERA y arriba, hairline
+     entre filas y ninguna bajo la ultima.
+
+     Se construye AQUI y no en el marcado porque el panel vive en 42 paginas.
+     Reescribirlo alli serian 42 copias listas para divergir — el mal que
+     llevamos dias desmontando con staff-config.html y las tres variantes del
+     heroe. Y se alimenta de la MISMA tabla que gobierna el riel, asi que el
+     desplegable no puede quedarse con puestos distintos a la barra.
+
+     Los iconos son SVG de trazo, con la convencion que ya usa la plataforma en
+     352 sitios: viewBox 24, fill none, stroke currentColor, width 2.5, linecap
+     round. No se inventa un estilo nuevo. */
+  var MDJ_ICONOS_PANEL = {
+    home:     'M3 11l9-8 9 8M5 10v10h14V10',
+    services: 'M4 7h16M4 12h16M4 17h10',
+    venues:   'M8 3v4M16 3v4M3 10h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z',
+    shop:     'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0',
+    /* Engranaje con dientes, NO un circulo con rayos: eso se lee como SOL, y el
+       sol ya significa otra cosa en la plataforma (conmutador dia/noche). */
+    config:   'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+    jobs:     'M20 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2',
+    contact:  'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM2 7l10 6 10-6',
+    'mi-portal': 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+    roadmap:  'M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14',
+    staff:    'M12 21.5s7.5-3.75 7.5-9.5V5.25L12 2.5 4.5 5.25V12c0 5.75 7.5 9.5 7.5 9.5z',
+    academia: 'M22 9 12 4 2 9l10 5 10-5zM6 11v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5',
+    agenda:   'M8 3v4M16 3v4M3 10h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z',
+    tools:    'M5 21v-6M5 11V3M12 21v-9M12 8V3M19 21v-4M19 13V3M2.5 15h5M9.5 12h5M16.5 17h5',
+    flow:     'M3 3v16a2 2 0 0 0 2 2h16M7 14.5l3.5-3.5 3 3L20 7M15.5 7H20v4.5',
+    fenix:    'M12 2s4 3 4 7a4 4 0 0 1-8 0c0-4 4-7 4-7zM8 14c-2 2-3 4-3 6h14c0-2-1-4-3-6'
+  };
+
+  /* Que puestos van en cada grupo. El orden dentro del grupo lo marca el riel;
+     esto solo dice a que tarjeta pertenece cada uno. Lo que no este listado cae
+     en «Navegacion», asi que un puesto nuevo aparece solo en vez de perderse. */
+  var MDJ_GRUPOS_PANEL = [
+    { titulo: 'Navegación', claves: ['home', 'services', 'venues', 'shop', 'jobs', 'contact', 'academia', 'agenda', 'tools', 'flow'] },
+    { titulo: 'Tu cuenta',  claves: ['config', 'mi-portal'] },
+    { titulo: 'Sistema',    claves: ['roadmap', 'fenix', 'staff'] }
+  ];
+
+  function mdjIconoPanel(clave) {
+    var d = MDJ_ICONOS_PANEL[clave] || MDJ_ICONOS_PANEL.home;
+    return '<svg class="mdj-panel-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+           'stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+           '<path d="' + d + '"/></svg>';
+  }
+
+  function mdjConstruirPanelMovil() {
+    try {
+      var panel = document.querySelector('#mobileMenu .mobile-nav');
+      var riel = document.getElementById('mainNav');
+      if (!panel || !riel) return;
+
+      var puestos = [].slice.call(riel.querySelectorAll('a[data-mdj-slot]'));
+      if (!puestos.length) return;
+
+      /* Idempotente: si ya se construyo con estos mismos puestos, no se rehace.
+         El header hace ~70 pasadas y reconstruir en cada una robaria el foco a
+         quien estuviera navegando el panel con el teclado. */
+      /* Otros pases inyectan enlaces sueltos en el panel DESPUES de construirlo
+         —#header-artist-dashboard-mobile, por ejemplo— y quedaban fuera de las
+         tarjetas, colgando bajo la ultima. Entran en la firma para que su
+         aparicion dispare una reconstruccion que los absorba. */
+      var sueltos = [].slice.call(panel.children).filter(function (c) {
+        return c.tagName === 'A' && !c.classList.contains('mdj-panel-fila');
+      });
+      var firma = puestos.map(function (a) {
+        return a.getAttribute('data-mdj-nav') + ':' + a.getAttribute('href');
+      }).join('|') + '#' + sueltos.map(function (a) {
+        return (a.id || a.textContent || '').trim();
+      }).join(',');
+      if (panel.getAttribute('data-mdj-panel-firma') === firma) return;
+
+      var usados = {};
+      var html = '';
+
+      MDJ_GRUPOS_PANEL.forEach(function (grupo, i) {
+        var delGrupo = puestos.filter(function (a) {
+          var k = a.getAttribute('data-mdj-nav');
+          if (grupo.claves.indexOf(k) === -1) return false;
+          usados[k] = true;
+          return true;
+        });
+        /* Ultimo grupo: recoge lo que no encajo en ninguno, para que un puesto
+           nuevo nunca desaparezca del panel. */
+        if (i === MDJ_GRUPOS_PANEL.length - 1) {
+          puestos.forEach(function (a) {
+            if (!usados[a.getAttribute('data-mdj-nav')]) delGrupo.push(a);
+          });
+          /* Los sueltos NO se absorben: duplicaban puestos que el juego canonico ya
+             trae —#header-artist-dashboard-mobile es otro MI PERFIL— y absorberlos
+             abria un bucle, porque el pase que los inyecta los repone tras cada
+             reconstruccion. Se quedan en el DOM y se ocultan por CSS: sin guerra
+             de nodos y sin duplicados. */
+        }
+        if (!delGrupo.length) return;
+
+        html += '<h2 class="mdj-panel-titulo">' + grupo.titulo + '</h2>' +
+                '<div class="mdj-panel-tarjeta">';
+        delGrupo.forEach(function (a) {
+          var k = a.getAttribute('data-mdj-nav');
+          /* Sin el emoji de cabeza: el icono ya lo dice, y repetirlo deja «⚙️ CONFIG»
+             con dos engranajes en la misma fila. El patron pide UN icono lider. */
+          var texto = (a.textContent || '').replace('/', '')
+            .replace(/^[\u2699\u2600-\u27BF\uFE0F\u2190-\u21FF\u2B00-\u2BFF]+\s*/, '').trim();
+          html += '<a class="mdj-panel-fila" href="' + (a.getAttribute('href') || '#') + '"' +
+                  ' data-mdj-panel-nav="' + k + '">' +
+                  mdjIconoPanel(k) +
+                  '<span class="mdj-panel-etiqueta">' + texto + '</span>' +
+                  '<span class="mdj-panel-chevron" aria-hidden="true">›</span>' +
+                  '</a>';
+        });
+        html += '</div>';
+      });
+
+      /* La fila de sesion va aislada en su propia mini-tarjeta al final, como
+         manda el patron para las filas de salida. Se reutiliza el boton que ya
+         existe en la cabecera en vez de inventar otro estado de sesion. */
+      var sesion = document.getElementById('header-login-btn');
+      if (sesion) {
+        var esSalir = /salir|log ?out|cerrar/i.test(sesion.textContent || '');
+        html += '<div class="mdj-panel-tarjeta mdj-panel-tarjeta--sola">' +
+                '<a class="mdj-panel-fila' + (esSalir ? ' mdj-panel-fila--salida' : '') + '"' +
+                ' href="' + (sesion.getAttribute('href') || './login.html') + '">' +
+                mdjIconoPanel('mi-portal') +
+                '<span class="mdj-panel-etiqueta">' + (sesion.textContent || 'Entrar').trim() + '</span>' +
+                '</a></div>';
+      }
+
+      panel.innerHTML = html;
+      panel.setAttribute('data-mdj-panel-firma', firma);
+      panel.setAttribute('data-mdj-panel-premium', '1');
+    } catch (ePanel) { /* noop */ }
+  }
+  window.mdjConstruirPanelMovil = mdjConstruirPanelMovil;
+
+  /* ══ VISITANTE EN UN PERFIL AJENO · BRANDING Y BUSCADOR FLOTANTES ══════════
+     Decision PO 2026-08-20. Un visitante en el perfil de un artista no recibe la
+     barra de marketing completa: recibe el logo —para saber donde esta y poder
+     ir al sitio— y el buscador —para explorar otros DJ sin salir del perfil—,
+     los dos flotando sobre el contenido.
+
+     Antes de esto un visitante sin sesion no tenia NINGUNA invitacion a recorrer
+     el resto del sitio desde un perfil, que es donde suele aterrizar por un
+     enlace o un QR compartido.
+
+     Ni el logo ni el buscador se inventan: el logo se clona del que ya trae la
+     cabecera, y el buscador se MUEVE —no se clona— porque header-smart-search.js
+     se engancha por id (#header-smart-search) y un clon perderia sus escuchas.
+
+     NO aplica a la vista de QR de SoundForTips (?view=public): esa tiene su
+     propio blindaje, mas antiguo, y no se toca. */
+  /* ══ EL OWNER NO ATERRIZA EN dj-profile.html ══════════════════════════════
+     Decision del Capitan 2026-08-20: «El owner pertenece estrictamente al
+     edificio Staff y nunca debe inicializar estaciones de DJ ni mezclarse con el
+     catalogo de artistas.»
+
+     Su MI PERFIL real ya no pasa por aqui —el resolvedor manda a staff a
+     ./staff.html?vista=miperfil—, asi que un owner solo llega a dj-profile.html
+     sin ?id= por accidente: navegacion manual o un enlace viejo. Se le devuelve
+     a su edificio.
+
+     SOLO su propio perfil. Con ?id=<otro-artista> NO se redirige: ahi el owner
+     esta visitando a alguien, que es legitimo y no toca su estacion.
+
+     Se usa replace y no href para no dejar el aterrizaje accidental en el
+     historial: el boton «atras» devolveria al mismo sitio y rebotaria otra vez.
+
+     Corre en cada pasada del header porque el rol llega cuando resuelve la
+     sesion; antes de eso no se sabe que es owner y no se puede decidir. */
+  var _mdjRedirigidoFueraDelPerfil = false;
+
+  function mdjSacarOwnerDelPerfilAjeno() {
+    try {
+      if (_mdjRedirigidoFueraDelPerfil) return;
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (pagina !== 'dj-profile.html') return;
+      var q = new URLSearchParams(window.location.search || '');
+      if (q.get('view') === 'public') return;          // QR: blindaje propio, no se toca
+      if (!mdjEsStaffEnVivo()) return;                 // solo staff/owner
+      var uid = String(window.__mdjNavOwnUserId || '').trim();
+      var id = (q.get('id') || '').trim();
+      if (id && id !== uid) return;                    // visitando a otro artista: legitimo
+      _mdjRedirigidoFueraDelPerfil = true;
+      window.location.replace('./staff.html?vista=miperfil');
+    } catch (eSacar) { /* noop */ }
+  }
+
+  function mdjEsVisitanteDePerfil() {
+    try {
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (pagina !== 'dj-profile.html') return false;
+      var q = new URLSearchParams(window.location.search || '');
+      if (q.get('view') === 'public') return false;     // QR: blindaje propio
+
+      /* SOLO SE RESPONDE CUANDO SE SABE. El montaje corre en la primera pasada
+         del header, y ahi la sesion todavia no ha resuelto: __mdjNavOwnUserId
+         llega vacio. Con un simple !esDueño, el DUEÑO era tratado como visitante
+         y se le apagaba su propia estacion — medido, el artista en su perfil
+         salia con header=none y cero puestos.
+         Ante la duda no se monta nada: es preferible que el flotante aparezca una
+         fraccion de segundo mas tarde a robarle la estacion a su dueño. */
+      var uid = String(window.__mdjNavOwnUserId || '').trim();
+      if (!uid && _mdjHaySesion !== false) return false;   // aun no se sabe
+      return !mdjEsDuenoDelPerfil();
+    } catch (eVis) { return false; }
+  }
+
+  function mdjMontarFlotanteVisitante() {
+    try {
+      if (!mdjEsVisitanteDePerfil()) return;
+      if (document.getElementById('mdj-flotante-visitante')) return;   // ya montado
+
+      var caja = document.createElement('div');
+      caja.id = 'mdj-flotante-visitante';
+
+      /* Logo: clonado, y envuelto en un enlace al inicio. Es tambien la salida
+         del perfil hacia la cabecera completa, donde vive SALIR. */
+      var logo = document.querySelector('#mainHeader .brand .logo-img-eagle');
+      var casa = document.createElement('a');
+      casa.href = './index.html';
+      casa.className = 'mdj-flotante-marca';
+      casa.setAttribute('title', 'Miami DJ Beat — ir al inicio');
+      if (logo) casa.appendChild(logo.cloneNode(true));
+      caja.appendChild(casa);
+
+      /* Buscador: se MUEVE el original, con sus escuchas intactas. */
+      var envoltura = document.querySelector('#mainHeader .header-search-wrap');
+      if (envoltura) caja.appendChild(envoltura);
+
+      document.body.appendChild(caja);
+      document.body.classList.add('mdj-perfil-visitante');
+
+      /* La cabecera se apaga EN LINEA, no solo por hoja: algun pase le escribe
+         display:flex en el propio elemento, y un estilo en linea gana a
+         cualquier regla por especifica que sea. Medido: con la clase puesta y la
+         regla aplicando, el computado seguia en flex. */
+      var cab = document.getElementById('mainHeader');
+      if (cab) cab.style.setProperty('display', 'none', 'important');
+    } catch (eMontar) { /* noop */ }
+  }
+  window.mdjMontarFlotanteVisitante = mdjMontarFlotanteVisitante;
 
   function mdjNormalizeMainNavSlots(idRiel) {
     var nav = document.getElementById(idRiel || 'mainNav');
@@ -363,7 +717,10 @@
     /* La tabla ya no es única: las vistas internas montan el juego del sistema
        en vez del público. La elección es por página, no por rol. */
     var tabla = mdjTablaDeSlots();
-    var esInterno = (tabla === MDJ_NAV_SLOTS_INTERNO);
+    /* «Interno» son las DOS estaciones, la de staff y la del artista: en ambas
+       hay que reescribir los nodos reciclados del HTML viejo, o «Servicios» y
+       «Eventos» reaparecen dentro de la estacion. */
+    var esInterno = (tabla === MDJ_NAV_SLOTS_INTERNO || tabla === MDJ_NAV_SLOTS_ARTISTA);
     tabla.forEach(function (def) {
       var el = buscar(def) || crear(def);
       el.setAttribute('data-mdj-slot', String(def.s));
@@ -381,6 +738,30 @@
           if (sepPrevio) el.insertBefore(sepPrevio, el.firstChild);
         }
         if (def.href && el.tagName === 'A') el.setAttribute('href', def.href);
+        /* Puestos que son PESTAÑA de la propia vista, no pagina. No se
+           reimplementa el conmutador: se delega el clic en el boton que ya existe
+           en #owner-tabs, que sigue en el DOM aunque la franja este oculta. Asi la
+           franja se queda congelada e intacta —como exige .cursorrules— y no hay
+           dos logicas de pestañas que puedan discrepar. */
+        if (def.tab) {
+          el.setAttribute('data-mdj-tab', def.tab);
+          if (!el.__mdjTabHook) {
+            el.__mdjTabHook = true;
+            el.addEventListener('click', function (ev) {
+              /* Se llama al conmutador GLOBAL de la pagina, no se simula un clic
+                 sobre el boton de #owner-tabs: la franja esta oculta y ese camino
+                 no conmutaba —medido, pulsarlo directamente dejaba tab-public—.
+                 switchProfileTab si es global (los botones de la franja lo invocan
+                 por onclick en linea) y responde: flow→tab-flow, sft→tab-sft,
+                 public→tab-public. No se reimplementa nada: se usa el conmutador
+                 que la pagina ya tiene, con sus propios candados de plan dentro. */
+              if (typeof window.switchProfileTab !== 'function') return;  // el href manda
+              ev.preventDefault();
+              ev.stopPropagation();
+              window.switchProfileTab(def.tab);
+            }, true);
+          }
+        }
         if (def.cls) el.className = def.cls;
         /* Un slot reservado del juego público no puede llegar oculto al interno. */
         el.classList.remove('mdj-mainnav-reserved-slot');
@@ -434,7 +815,13 @@
       el.removeAttribute('tabindex');
       el.style.removeProperty('display');
       el.style.removeProperty('visibility');
-      if (!/MI PERFIL|MY PROFILE/i.test(el.textContent || '')) {
+      /* La etiqueta UNICA del puesto 8 es MI PERFIL, decision PO 2026-08-16.
+         Aqui se aceptaba tambien «MY PROFILE» como valida, asi que la variante
+         inglesa del marcado viejo sobrevivia en rentals.html y cash-flow.html:
+         dos pantallas con etiqueta distinta a las demas y, por ser mas larga,
+         la barra centrada se corria 14px al pasar por ellas. Se compara
+         ignorando el separador «/» que este pase puede haber insertado. */
+      if ((el.textContent || '').replace('/', '').trim().toUpperCase() !== 'MI PERFIL') {
         var sepPrevio = el.querySelector(':scope > .mdj-slash');
         el.textContent = 'MI PERFIL';
         if (sepPrevio) el.insertBefore(sepPrevio, el.firstChild);
@@ -472,6 +859,20 @@
       var alt = document.getElementById(id);
       if (alt && alt !== nav) alt.style.setProperty('display', 'none', 'important');
     });
+
+    /* El panel de la hamburguesa se reconstruye desde los mismos puestos que
+       acaban de fijarse, para que barra y desplegable no puedan discrepar. Es
+       idempotente: solo rehace si la firma de puestos cambio. */
+    mdjConstruirPanelMovil();
+
+    /* El owner no se queda en dj-profile.html: se le devuelve a su edificio. Va
+       lo primero de los pases de perfil, para que no llegue a montarse nada. */
+    mdjSacarOwnerDelPerfilAjeno();
+
+    /* Visitante en un perfil ajeno: el logo y el buscador flotantes sustituyen a
+       la barra de marketing. Se monta despues del riel para poder mover el
+       buscador ya inicializado. */
+    mdjMontarFlotanteVisitante();
 
     /* El propio riel también se blinda inline: hay reglas de la era flex que le
        devuelven display:flex, y sin display:grid las nueve columnas no existen
@@ -583,7 +984,9 @@
       }
     });
 
-    nav.setAttribute('data-mdj-slots', '9');
+    /* El numero REAL de puestos, no un 9 fijo: la estacion del artista tiene
+       diez, y el CSS de la rejilla se apoya en este atributo. */
+    nav.setAttribute('data-mdj-slots', String(mdjTablaDeSlots().length));
     return true;
   }
 
@@ -1727,27 +2130,34 @@
     var fromProfile = mdjBodyHasProfileNavContext();
 
     if (enabled) {
+      /* ══ LA CABECERA UNICA APLICA TAMBIEN AL ARTISTA ══════════════════════
+         Esta rama venia del modelo viejo de DOS barras: apagaba #mainNav
+         —aria-hidden + data-mdj-guest-nav-suppressed, que lo colapsa a 1px
+         absoluto— para cederle el sitio a #mainNav-artist, la fila 2.
+
+         Pero #mainNav-artist murio con la consolidacion de 9 puestos: esta en
+         MDJ_RIELES_MUERTOS y header-unified.css le pone display:none. Con las
+         dos vias apagadas a la vez, una cuenta de artista se quedaba SIN
+         NINGUNA barra: medido, #mainNav con 1px de ancho y su contenido
+         derramandose a X=-690 en dj-profile, account-settings, jobs y contact.
+         Solo le pasaba a los artistas.
+
+         La decision ya estaba tomada en header-unified.css:3054 — «la cabecera
+         unica es SAGRADA... no puede quedar oculta en ninguna pagina». Esta
+         funcion nunca se actualizo para respetarla. Ahora no apaga nada: el
+         artista usa el MISMO #mainNav que el resto, con los mismos puestos y en
+         la misma posicion. No hay barra especial de artista.
+
+         La clase se conserva porque no gobierna la barra: estiliza el boton de
+         sesion de la fila superior. */
       document.body.classList.add('mdj-artist-header-mode');
-      if (!fromProfile) {
-        if (guestNav) {
-          guestNav.setAttribute('aria-hidden', 'true');
-          guestNav.setAttribute('data-mdj-guest-nav-suppressed', '1');
-        }
-        if (artistNav) {
-          artistNav.hidden = false;
-          artistNav.removeAttribute('aria-hidden');
-          mdjRenderArtistNav(artistNav, !!window.showMyArtisticProfileMainNav);
-        }
-        mdjNavHighlightArtist();
-      } else {
-        if (guestNav) {
-          guestNav.setAttribute('aria-hidden', 'true');
-          guestNav.setAttribute('data-mdj-guest-nav-suppressed', '1');
-        }
-        if (artistNav) {
-          artistNav.hidden = true;
-          artistNav.setAttribute('aria-hidden', 'true');
-        }
+      if (guestNav) {
+        guestNav.removeAttribute('aria-hidden');
+        guestNav.removeAttribute('data-mdj-guest-nav-suppressed');
+      }
+      if (artistNav) {
+        artistNav.hidden = true;
+        artistNav.setAttribute('aria-hidden', 'true');
       }
       return;
     }

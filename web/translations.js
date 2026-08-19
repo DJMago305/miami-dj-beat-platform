@@ -2627,7 +2627,7 @@ const translations = {
         "nav-tools-client-gate-cta": "Create artist account",
         "nav-tools-client-gate-portal": "Go to my client portal",
         "nav-artist-dashboard": "Artist Dashboard",
-        "nav-my-profile": "MY PROFILE",
+        "nav-my-profile": "MI PERFIL",   /* Decision PO 2026-08-16: MI PERFIL es la etiqueta UNICA del puesto 8 en TODOS los idiomas. Es un rotulo de producto, como MRM IA o Cash Flow: el texto nunca cambia, cambia el destino. Traducirlo partia la barra en dos variantes y, por ser mas largo, corria 14px la barra centrada al pasar por rentals y cash-flow. */
         "nav-config": "⚙️ CONFIG",
         "nav-client-settings": "⚙️ CONFIG",
         "nav-tier-status-buyer": "The Buyer",

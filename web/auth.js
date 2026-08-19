@@ -419,7 +419,12 @@ function mdjPerformPostAuthRedirect(db, user) {
 
         let targetUrl = './dj-profile.html';
         if (ownerRoleForRedirect) {
-            targetUrl = './staff.html';
+            /* Con ?vista=miperfil: el owner aterriza en SU FICHA, no en la pestana por
+               defecto del portal (Equipo/Gobernanza). auth.js decide el destino al enviar
+               el formulario y corre antes que el header, asi que si aqui falta el
+               parametro da igual que el enlace MI PERFIL si lo lleve. Este es uno de los
+               TRES caminos que resuelven el mismo destino; los tres van igualados. */
+            targetUrl = './staff.html?vista=miperfil';
         } else if (isStaffForRedirect) {
             targetUrl = './admin-dashboard.html';
         } else if (role === 'client') {
@@ -461,7 +466,7 @@ function mdjPerformPostAuthRedirect(db, user) {
                         ? String(idn.dbRole || '').toLowerCase().trim()
                         : dr0;
                     if (dbRole === 'owner') {
-                        window.location.assign('./staff.html');
+                        window.location.assign('./staff.html?vista=miperfil');   /* mismo destino que arriba */
                         return true;
                     }
                     window.location.assign(nextUrl);
@@ -713,7 +718,7 @@ function mdjLoginSafeFallbackUrl(user) {
     if (!user) return './index.html';
     const raw = String(mdjResolveEffectiveUserRole(user) || '').toLowerCase();
     const ut = String(mdjGet(user.user_metadata, 'user_type') || '').toLowerCase();
-    if (raw === 'owner') return './staff.html';
+    if (raw === 'owner') return './staff.html?vista=miperfil';   /* mismo destino que arriba */
     if (raw === 'client' || ut === 'client') return './client-portal.html';
     if (raw === 'admin' || raw === 'manager' || raw === 'seller') return './admin-dashboard.html';
     if (raw === 'talent' || raw === 'dj' || raw === 'artist' || ut === 'talent' || ut === 'artist' || ut === 'dj') {

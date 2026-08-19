@@ -1299,7 +1299,7 @@
           <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
           <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
           <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
-          <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+          <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
           <a href="./login.html?signup=free" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free"
             style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
           <a href="./login.html" id="header-login-btn-mobile" data-i18n="btn-login"
@@ -1315,14 +1315,14 @@
       <nav class="nav top-nav mdj-mainnav-flex" id="mainNav">
         <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
         <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
-        <a href="./index.html#experience" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
+        <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
         <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
         <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
         <a href="./dj-dashboard.html?tab=dashboard" id="mainNav-agenda-link" class="mdj-agenda-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="agenda" data-i18n="dash-your-profile" aria-hidden="true" tabindex="-1">SCHEDULE</a>
         <a href="./account-settings.html?mdj_nav=profile" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
         <a href="./dj-dashboard.html?tab=flow" id="mainNav-flow-link" class="mdj-flow-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="flow" data-i18n="flow-dash" aria-hidden="true" tabindex="-1">Cash Flow</a>
         <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
-        <a href="./index.html#contact" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+        <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
         <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" data-mdj-slot="8" data-i18n="header-mi-portal" aria-hidden="true" tabindex="-1">MI PORTAL</a>
         <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
       </nav>
@@ -1344,7 +1344,7 @@
         <a href="./index.html" class="dj-tab-btn" data-mdj-portalnav="inicio" data-i18n="nav-home">Inicio</a>
         <a href="./academia.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="academia" data-i18n="nav-academia">Academia</a>
         <a href="./dj-dashboard.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="agenda" data-i18n="nav-agenda">Agenda</a>
-        <a href="./staff-config.html" class="dj-tab-btn" data-mdj-portalnav="config" data-i18n="nav-config">⚙ Config</a>
+        <a href="./account-settings.html" class="dj-tab-btn" data-mdj-portalnav="config" data-i18n="nav-config">⚙ Config</a>
         <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="tools" data-i18n="nav-tools">DJ Tools</a>
         <a href="./dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="flow" data-i18n="flow-dash">Cash Flow</a>
         <a href="./account-settings.html" class="dj-tab-btn active" data-mdj-portalnav="perfil" data-i18n="menu-account">Mi Perfil</a>
@@ -2783,8 +2783,8 @@
   <!-- AUTH LOGIC & COMPATIBILITY -->
   <script src="./js/mdj-account-forms.js?v=20260421-account-forms"></script>
   <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-  <script src="./auth.js?v=20260422-landing-staff-roles-1"></script>
-  <script src="./translations.js?v=20260817-nav-miperfil"></script>
+  <script src="./auth.js?v=20260820-unificacion"></script>
+  <script src="./translations.js?v=20260820-unificacion"></script>
   <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
   <script src="./account-billing.js?v=20260415-CORE-CONNECTIONS"></script>
   <script src="./account-address-data.js?v=20260429"></script>
@@ -4559,7 +4559,12 @@
     (function () {
       /* ── Panel switcher ── */
       function showPanel(id, btn) {
-        document.querySelectorAll('#panel-account,#panel-categoria,#panel-agenda,#panel-rewards,#panel-products,#panel-notifications,#panel-billing,#panel-soundfortips,#panel-devices,#panel-socials,#panel-create-profile,#panel-danger,#panel-campaign').forEach(function (p) {
+        /* POR CLASE, NO POR LISTA A MANO. Esta enumeracion de trece #id no
+           conoce los paneles que se anadan despues: al conmutar de pestana no
+           se ocultarian y quedarian apilados encima del siguiente. Le paso ya
+           al trasplante con panel-sistema y panel-pasarelas. Por clase, un
+           panel nuevo entra solo. */
+        document.querySelectorAll('.acct-panel').forEach(function (p) {
           p.classList.remove('active');
         });
         var target = document.getElementById('panel-' + id);
@@ -5186,8 +5191,184 @@
          BILLING PANEL — funciones portadas de dj-dashboard.html
       ══════════════════════════════════════════════════════════════════ */
 
+
+      /* ══ AJUSTES DE SISTEMA Y PASARELAS · EXCLUSIVOS DE OWNER ════════════════
+         Trasplantados desde staff-config.html, que era una copia de esta misma
+         hoja con estos dos paneles de mas. Al convivir las dos, llevaban 94
+         lineas divergiendo. Se unifica aqui y aquella se retira.
+
+         RBAC ESTRICTO (ley PO): para artista, DJ, manager, vendedor y cliente
+         estos paneles no se ocultan — NO EXISTEN EN EL DOM. El marcado se
+         construye en JavaScript y solo se inserta si el rol es owner, asi que
+         para cualquier otro rol no hay nodo: querySelector('#panel-sistema')
+         devuelve null y no hay nada que revelar con el inspector.
+         Precision honesta: las cadenas SI se leen en el codigo fuente de la
+         pagina — lo que la ley exige es que no se renderice, y eso se cumple.
+         Da igual porque no contienen ni un dato: son rotulos, y los valores se
+         piden a la base despues, ya con el rol resuelto.
+         Ocultar con `hidden` no cumplia la ley; el gate de origen admitia ademas
+         owner/admin/manager, y aqui se estrecha a owner solo.
+
+         Este gate es de INTERFAZ, no de seguridad — lo que decide de verdad es
+         RLS e is_staff_management() en Postgres. Puede serlo sin riesgo porque
+         los paneles no pintan ni una clave: las de Stripe y el secreto de
+         webhook viven en secretos de Edge Function y no son legibles desde el
+         navegador. Solo se dice SI estan configuradas, nunca cuales. */
+      var _CFG_PANELES_MONTADOS = false;
+
+      function _cfgTexto(sel, valor) {
+        var el = document.querySelector(sel);
+        if (el) el.textContent = (valor === null || valor === undefined || valor === '') ? '—' : String(valor);
+      }
+
+      function _cfgMarcadoSistema() {
+        return '' +
+          '<div id="panel-sistema" class="acct-panel">' +
+            '<h2 class="acct-h2">Ajustes de Sistema</h2>' +
+            '<p class="acct-sub">Variables de plataforma, roles y mantenimiento. Solo lectura desde aquí.</p>' +
+            '<div class="acct-card">' +
+              '<h3 class="acct-h3">Identidad y rol</h3>' +
+              '<div class="acct-row"><span>Rol activo</span><b data-cfg-rol>—</b></div>' +
+              '<div class="acct-row"><span>Plan de plataforma</span><b data-cfg-plan>—</b></div>' +
+              '<div class="acct-row"><span>ID público de cuenta</span><b data-cfg-mdjbid>—</b></div>' +
+            '</div>' +
+            '<div class="acct-card">' +
+              '<h3 class="acct-h3">Matriz de roles</h3>' +
+              '<p class="acct-hint">La fuente de verdad operativa es <code>public.is_staff()</code> / ' +
+                '<code>is_staff_management()</code> en Postgres, no el navegador. Esta tabla es ' +
+                'referencia; cambiar un rol se hace en la base, nunca aquí.</p>' +
+              '<div class="acct-row"><span>Owner / Admin / Manager</span><b>Staff pleno</b></div>' +
+              '<div class="acct-row"><span>Seller</span><b>Staff limitado</b></div>' +
+              '<div class="acct-row"><span>Artista</span><b>LITE · PRO · ELITE</b></div>' +
+              '<div class="acct-row"><span>Cliente</span><b>Comprador · VIP</b></div>' +
+            '</div>' +
+            '<div class="acct-card">' +
+              '<h3 class="acct-h3">Mantenimiento</h3>' +
+              '<p class="acct-hint">Sin acciones cableadas todavía. Se declara vacío a propósito: un ' +
+                'botón de mantenimiento que no hace nada es peor que su ausencia, porque alguien lo ' +
+                'pulsará en producción creyendo que sí actúa.</p>' +
+            '</div>' +
+          '</div>';
+      }
+
+      function _cfgMarcadoPasarelas() {
+        return '' +
+          '<div id="panel-pasarelas" class="acct-panel">' +
+            '<h2 class="acct-h2">Pasarelas &amp; Licencias</h2>' +
+            '<p class="acct-sub">Estado de las conexiones de cobro y de la licencia MDJPRO.</p>' +
+            '<div class="acct-card">' +
+              '<h3 class="acct-h3">Stripe</h3>' +
+              '<div class="acct-row"><span>Suscripción de la cuenta</span><b data-cfg-stripe-sub>—</b></div>' +
+              '<div class="acct-row"><span>Estado de cobro</span><b data-cfg-stripe-estado>—</b></div>' +
+              '<div class="acct-row"><span>Próxima renovación</span><b data-cfg-stripe-renov>—</b></div>' +
+              '<p class="acct-hint">Las llaves y el secreto de webhook se guardan como secretos de Edge ' +
+                'Function. No se leen ni se muestran desde el navegador por diseño.</p>' +
+            '</div>' +
+            '<div class="acct-card">' +
+              '<h3 class="acct-h3">MDJPRO · licencia y Hardware ID</h3>' +
+              '<div class="acct-row"><span>Estado de la licencia</span><b data-cfg-lic-estado>—</b></div>' +
+              '<div class="acct-row"><span>Origen del plan</span><b data-cfg-lic-origen>—</b></div>' +
+              '<div class="acct-row"><span>Equipos vinculados</span><b data-cfg-lic-equipos>—</b></div>' +
+              '<p class="acct-hint">El Hardware ID identifica una máquina física concreta, así que se ' +
+                'trata igual que la huella de dispositivo: se cuenta cuántos equipos hay vinculados, ' +
+                'nunca cuál es su número de serie. Para desvincular un equipo, usa el panel ' +
+                '<b>Dispositivos</b>.</p>' +
+            '</div>' +
+            '<div class="acct-card">' +
+              '<h3 class="acct-h3">Webhooks</h3>' +
+              '<div class="acct-row"><span>Receptor de Stripe</span><b>Edge Function <code>stripe-webhook</code></b></div>' +
+              '<p class="acct-hint">Verifica la firma de cada evento antes de actuar. Su secreto no es ' +
+                'visible aquí ni debe serlo.</p>' +
+            '</div>' +
+          '</div>';
+      }
+
+      function _cfgEnlaceLateral(id, texto) {
+        var b = document.createElement('button');
+        b.className = 'acct-side-link';
+        b.setAttribute('type', 'button');
+        b.setAttribute('data-cfg-owner', '1');
+        b.textContent = texto;
+        b.onclick = function () { showPanel(id, b); };
+        return b;
+      }
+
+      function _cfgMontarPanelesOwner(p) {
+        if (_CFG_PANELES_MONTADOS || !p) return;
+        var rol = p.role ? String(p.role).toLowerCase().trim() : '';
+        if (rol !== 'owner') return;          // cualquier otro rol: no se crea nada
+
+        var refPanel = document.querySelector('.acct-panel');
+        var refEnlace = document.querySelector('.acct-side-link');
+        if (!refPanel || !refPanel.parentNode || !refEnlace || !refEnlace.parentNode) return;
+
+        var caja = document.createElement('div');
+        caja.innerHTML = _cfgMarcadoSistema() + _cfgMarcadoPasarelas();
+        while (caja.firstChild) refPanel.parentNode.appendChild(caja.firstChild);
+
+        refEnlace.parentNode.appendChild(_cfgEnlaceLateral('sistema', '⚙ Ajustes de Sistema'));
+        refEnlace.parentNode.appendChild(_cfgEnlaceLateral('pasarelas', '⛁ Pasarelas & Licencias'));
+
+        _CFG_PANELES_MONTADOS = true;
+        _cfgHidratarSistema(p);
+      }
+
+      function _cfgHidratarSistema(p) {
+        if (!p || !_CFG_PANELES_MONTADOS) return;
+        var rol = p.role ? String(p.role).toLowerCase().trim() : '';
+        _cfgTexto('[data-cfg-rol]', rol ? rol.toUpperCase() : null);
+        _cfgTexto('[data-cfg-plan]', p.plan ? String(p.plan).toUpperCase() : null);
+        /* El ID publico NO vive en dj_profiles: esta en mdjb_account_ids. El
+           trasplante lo leia de p.mdjb_id y por eso esa fila salia siempre
+           vacia. Se pide a su tabla, con el mismo patron que ya usa esta hoja
+           mas abajo. */
+        try {
+          var _sbId = window.getSupabaseClient ? window.getSupabaseClient() : null;
+          if (_sbId && p.user_id) {
+            _sbId.from('mdjb_account_ids').select('mdjb_id').eq('user_id', p.user_id).maybeSingle()
+              .then(function (r) { _cfgTexto('[data-cfg-mdjbid]', (r && r.data && r.data.mdjb_id) || null); })
+              .catch(function () {});
+          }
+        } catch (eId) { /* noop */ }
+        /* Stripe: se dice si HAY suscripcion, no cual es. El identificador es un
+           dato de facturacion de una persona y no pinta nada en una pantalla que
+           puede quedar proyectada. */
+        _cfgTexto('[data-cfg-stripe-sub]', p.subscription_id ? 'Vinculada' : 'Sin vincular');
+        _cfgTexto('[data-cfg-stripe-estado]', p.subscription_status || null);
+        _cfgTexto('[data-cfg-stripe-renov]',
+          p.next_renewal
+            ? new Date(p.next_renewal).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
+            : (rol === 'owner' ? 'Sin vencimiento' : null));
+      }
+
+      /* ARRANQUE PROPIO. hydrateBillingPanelFromProfile solo corre cuando el
+         usuario abre la pestana «Facturacion» (showPanel id==='billing'), asi
+         que colgar de ella el montaje de los paneles de owner los dejaba sin
+         aparecer nunca al cargar. Aqui se resuelve la sesion y el rol por su
+         cuenta, una sola vez, en cuanto la pagina esta lista. */
+      function _cfgArrancarPanelesOwner() {
+        try {
+          var sb = window.getSupabaseClient ? window.getSupabaseClient() : null;
+          if (!sb) return;
+          sb.auth.getSession().then(function (r) {
+            var ses = r && r.data ? r.data.session : null;
+            if (!ses) return;
+            return sb.from('dj_profiles').select('role, plan, subscription_status, next_renewal, user_id')
+              .eq('user_id', ses.user.id).maybeSingle()
+              .then(function (pr) { if (pr && pr.data) _cfgMontarPanelesOwner(pr.data); });
+          }).catch(function () {});
+        } catch (eArr) { /* noop */ }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () { setTimeout(_cfgArrancarPanelesOwner, 400); });
+      } else {
+        setTimeout(_cfgArrancarPanelesOwner, 400);
+      }
+
       function hydrateBillingPanelFromProfile(p) {
         if (!p) return;
+        _cfgMontarPanelesOwner(p);
         var planEl = document.getElementById('billing-plan');
         if (planEl) {
           var pl = p.plan != null ? String(p.plan).trim() : '';
@@ -7529,7 +7710,7 @@
     </script>
     <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-      <script src="./mdj-shared-header.js?v=20260818-rigida9"></script>
+      <script src="./mdj-shared-header.js?v=20260820-unificacion"></script>
   <script src="./mdj-profile-nav-context.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>

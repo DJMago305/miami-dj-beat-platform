@@ -13,6 +13,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Miami DJ Beat — Iniciar Sesión</title>
+  <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra cae en la
+       sustituta del sistema y el texto sale ~2% mas estrecho, desplazando el eje X. -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
   <link rel="stylesheet" href="./header-unified.css?v=20260819-homolog2" />
     <link rel="stylesheet" href="./mdj-outlined-fields.css?v=20260513-outlined-float" />
@@ -1159,13 +1162,13 @@
     })();
     </script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
-    <script src="./translations.js?v=20260817-nav-miperfil"></script>
+    <script src="./translations.js?v=20260820-unificacion"></script>
     <script src="./i18n.js?v=20260513-outlined-hold-skip"></script>
     <script src="./security-shield.js?v=20260305-1"></script>
     <script src="./js/mdj-account-forms.js?v=20260513-outlined-float"></script>
     <script src="./account-address-data.js?v=20260422-country-select-only"></script>
     <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-    <script src="./auth.js?v=20260702-onboarding-intent-001"></script>
+    <script src="./auth.js?v=20260820-unificacion"></script>
 
     <script>
         (function syncReferralFromUrl() {
@@ -1982,12 +1985,23 @@
     </div>
 
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-      <script src="./mdj-shared-header.js?v=20260818-rigida9"></script>
+      <script src="./mdj-shared-header.js?v=20260820-unificacion"></script>
   <script id="mdj-vista-cero-guest-nav-restore">
 (function () {
   function mdjVistaCeroGuest() {
-    if (document.body.classList.contains('mdj-buyer-session') || document.body.classList.contains('mdj-is-client')) return false;
+    /* Vista Cero es para INVITADOS. Esta guarda decia «todo el que no sea
+       cliente», asi que tambien daba por invitado a un ARTISTA con sesion
+       abierta: le arrancaba el puesto 8 canonico y le inyectaba su MI PERFIL de
+       invitado hacia login.html. Medido con djmago305 (rol dj/PRO) en dj-tools:
+       puesto 8 sin data-mdj-slot y apuntando a login estando dentro.
+       Ahora basta con que haya un rol resuelto —o las clases de artista o
+       staff— para que Vista Cero se aparte. El invitado real no tiene ninguna
+       de las dos cosas, asi que para el nada cambia. */
+    var b = document.body;
+    if (b.classList.contains('mdj-buyer-session') || b.classList.contains('mdj-is-client')) return false;
     if (window.__mdjLastBuyerSession === true) return false;
+    if (b.classList.contains('mdj-artist-nav') || b.classList.contains('mdj-staff-nav')) return false;
+    if ((b.getAttribute('data-mdj-nav-role') || '').trim()) return false;
     return true;
   }
   function mdjEnsureVenuesInNav(nav) {
