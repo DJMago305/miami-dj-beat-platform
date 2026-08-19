@@ -641,10 +641,14 @@
     } catch (eVis) { return false; }
   }
 
-  function mdjMontarFlotanteVisitante() {
+  /* DOS MODOS, UNA SOLA FRANJA.
+     · 'visitante': la franja sustituye a la cabecera entera.
+     · 'artista'  : la barra de tools se queda ARRIBA y la franja baja debajo de
+       ella. Se retira .header-top (idioma, SALIR, avatar, carrito): por orden del
+       PO esa fila se va, y la salida queda en la pestaña Inicio del riel. */
+  function mdjMontarFranjaFlotante(modo) {
     try {
-      if (!mdjEsVisitanteDePerfil()) return;
-      if (document.getElementById('mdj-flotante-visitante')) return;   // ya montado
+      if (document.getElementById('mdj-flotante-visitante')) return;   // ya montada
 
       var caja = document.createElement('div');
       caja.id = 'mdj-flotante-visitante';
@@ -652,11 +656,22 @@
       /* Logo: clonado, y envuelto en un enlace al inicio. Es tambien la salida
          del perfil hacia la cabecera completa, donde vive SALIR. */
       var logo = document.querySelector('#mainHeader .brand .logo-img-eagle');
+      /* Solo el PNG, no su envoltorio: el wrapper de la cabecera arrastra una caja
+         de 340x112 con margen negativo y estiraba la franja a 134px de alto. */
+      var letras = document.querySelector('#mainHeader .brand .brand-letters-wrapper img');
       var casa = document.createElement('a');
       casa.href = './index.html';
       casa.className = 'mdj-flotante-marca';
       casa.setAttribute('title', 'Miami DJ Beat — ir al inicio');
       if (logo) casa.appendChild(logo.cloneNode(true));
+      /* La marca es el aguila MAS el PNG de letras: con el aguila sola la franja
+         no dice de quien es la casa. Se clona, no se mueve: la cabecera conserva
+         la suya para cuando el dueño recupere su estacion. */
+      if (letras) {
+        var copiaLetras = letras.cloneNode(true);
+        copiaLetras.className = 'mdj-flotante-letras';
+        casa.appendChild(copiaLetras);
+      }
       caja.appendChild(casa);
 
       /* Buscador: se MUEVE el original, con sus escuchas intactas. Se apunta de
@@ -668,18 +683,40 @@
         caja.appendChild(envoltura);
       }
 
+      caja.classList.add(modo === 'artista' ? 'mdj-franja-bajo-barra' : 'mdj-franja-sola');
       document.body.appendChild(caja);
-      document.body.classList.add('mdj-perfil-visitante');
+      document.body.classList.add(modo === 'artista' ? 'mdj-perfil-estacion' : 'mdj-perfil-visitante');
 
-      /* La cabecera se apaga EN LINEA, no solo por hoja: algun pase le escribe
-         display:flex en el propio elemento, y un estilo en linea gana a
-         cualquier regla por especifica que sea. Medido: con la clase puesta y la
-         regla aplicando, el computado seguia en flex. */
+      /* Se apaga EN LINEA, no solo por hoja: algun pase escribe display:flex en el
+         propio elemento, y un estilo en linea gana a cualquier regla por
+         especifica que sea. Medido: con la clase puesta y la regla aplicando, el
+         computado seguia en flex. */
       var cab = document.getElementById('mainHeader');
-      if (cab) cab.style.setProperty('display', 'none', 'important');
+      if (!cab) return;
+      if (modo === 'artista') {
+        var arriba = cab.querySelector('.header-top');
+        if (arriba) arriba.style.setProperty('display', 'none', 'important');
+      } else {
+        cab.style.setProperty('display', 'none', 'important');
+      }
     } catch (eMontar) { /* noop */ }
   }
+
+  function mdjMontarFlotanteVisitante() {
+    if (mdjEsVisitanteDePerfil()) mdjMontarFranjaFlotante('visitante');
+  }
   window.mdjMontarFlotanteVisitante = mdjMontarFlotanteVisitante;
+  window.mdjMontarFranjaFlotante = mdjMontarFranjaFlotante;
+
+  /* El artista en SU perfil: barra de tools arriba, franja debajo. */
+  function mdjArtistaEnSuPerfil() {
+    try {
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (pagina !== 'dj-profile.html') return false;
+      if (new URLSearchParams(window.location.search || '').get('view') === 'public') return false;
+      return mdjEsDuenoDelPerfil();
+    } catch (eArt) { return false; }
+  }
 
   /* EL MONTAJE TIENE QUE PODER DESHACERSE. La decision de «visitante» se toma con
      lo que se sabe en ese instante, y la sesion puede resolver despues: medido en
@@ -709,11 +746,16 @@
 
       caja.parentNode && caja.parentNode.removeChild(caja);
       document.body.classList.remove('mdj-perfil-visitante');
+      document.body.classList.remove('mdj-perfil-estacion');
 
       /* Se retira el display:none EN LINEA que puso el montaje; la hoja vuelve a
          mandar sobre la cabecera. */
       var cab = document.getElementById('mainHeader');
-      if (cab) cab.style.removeProperty('display');
+      if (cab) {
+        cab.style.removeProperty('display');
+        var arriba = cab.querySelector('.header-top');
+        if (arriba) arriba.style.removeProperty('display');
+      }
       return true;
     } catch (eDesmontar) { return false; }
   }
@@ -917,7 +959,8 @@
        la barra de marketing. Se monta despues del riel para poder mover el
        buscador ya inicializado. */
     if (mdjEsVisitanteDePerfil()) mdjMontarFlotanteVisitante();
-    else mdjDesmontarFlotanteVisitante();   /* si ya no es visitante, se le devuelve su estacion */
+    else if (mdjArtistaEnSuPerfil()) mdjMontarFranjaFlotante('artista');
+    else mdjDesmontarFlotanteVisitante();   /* fuera del perfil, todo vuelve a su sitio */
 
     /* El propio riel también se blinda inline: hay reglas de la era flex que le
        devuelven display:flex, y sin display:grid las nueve columnas no existen

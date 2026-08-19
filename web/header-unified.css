@@ -4655,19 +4655,44 @@ body.mdj-perfil-visitante #mainHeader {
   gap: 14px;
   padding: 10px 14px;
   border-radius: 14px;
-  background: rgba(10, 14, 22, .92);
-  border: 1px solid rgba(197, 160, 89, .22);
-  backdrop-filter: blur(18px) saturate(120%);
-  -webkit-backdrop-filter: blur(18px) saturate(120%);
+  /* SIN FONDO por orden del PO: el sello y el buscador flotan sobre el hero, no
+     sobre un panel. La legibilidad se resuelve en cada pieza, no con una caja. */
+  background: transparent;
+  border: 0;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   box-shadow: 0 6px 26px rgba(0, 0, 0, .34);
   pointer-events: auto;
 }
 
+/* MODO ARTISTA: la barra de tools manda arriba y la franja se cuelga justo
+   debajo. 72px es el alto del riel una vez retirada .header-top, mas 12 de aire.
+   Ambas son fixed, asi que ninguna se mueve al hacer scroll. */
+#mdj-flotante-visitante.mdj-franja-bajo-barra {
+  top: 96px;   /* 84 de cabecera ya sin .header-top, mas 12 de aire */
+}
+/* La franja necesita SU banda: sin esto el hero arranca en 84 y su insignia PLAN
+   PRO queda debajo del sello —medido, ambos en y~107— y el avatar bajo el
+   buscador. Se baja el contenido lo justo para que nada se pise. */
+body.mdj-perfil-estacion { padding-top: 190px !important; }
+
 #mdj-flotante-visitante .mdj-flotante-marca {
   display: inline-flex;
   align-items: center;
+  gap: 10px;
   flex: 0 0 auto;
   text-decoration: none;
+}
+/* Las letras no llevan la altura del aguila: son una marca apaisada y con 38px
+   quedarian desproporcionadas al lado del sello. */
+/* El PNG de letras es 1920x1920 CUADRADO con el rotulo en una banda central y
+   transparencia arriba y abajo. Sin object-fit se aplasta a un cuadradito
+   ilegible; con contain y altura suficiente se lee igual que en la cabecera. */
+#mdj-flotante-visitante .mdj-flotante-marca .mdj-flotante-letras {
+  height: 76px;
+  width: auto;
+  object-fit: contain;
+  display: block;
 }
 #mdj-flotante-visitante .mdj-flotante-marca img {
   height: 38px;
@@ -4679,7 +4704,7 @@ body.mdj-perfil-visitante #mainHeader {
    de lado a lado —se ancla al borde derecho con margin-left:auto— y se le pone
    un ancho maximo para que no invada la franja entera en pantallas anchas. */
 #mdj-flotante-visitante .header-search-wrap {
-  flex: 0 1 380px;
+  flex: 0 1 520px;
   margin-left: auto;
   min-width: 0;
   display: block !important;
@@ -4691,17 +4716,42 @@ body.mdj-perfil-visitante #mainHeader {
 #mdj-flotante-visitante .header-smart-search {
   width: 100% !important;
   max-width: none !important;
-  background: rgba(255, 255, 255, .07) !important;
-  border: 1px solid rgba(255, 255, 255, .16) !important;
-  color: #f2f4f8 !important;
+  /* El campo NO dibuja caja: se escribe directamente sobre la franja. Lo unico
+     que se ve dentro es la lupa y el texto. */
+  /* Transparente por dentro, pero con su contorno: sin panel detras, la pastilla
+     es lo unico que le dice a la gente que ahi se escribe. */
+  background: transparent !important;
+  border: 1px solid rgba(197, 160, 89, .55) !important;
+  border-radius: 999px !important;
+  height: 48px !important;
+  color: #f7f9fc !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .85) !important;
 }
+/* Al escribir si conviene una pista de donde esta el campo, pero apenas. */
+#mdj-flotante-visitante .header-smart-search:focus {
+  border-color: rgba(197, 160, 89, .45) !important;
+  background: rgba(255, 255, 255, .05) !important;
+}
+/* «Bien claro dentro»: el rotulo sube de .55 a .82 — sobre el fondo reforzado de
+   la franja se lee sin pelear con la foto del hero. */
 #mdj-flotante-visitante .header-smart-search::placeholder {
-  color: rgba(255, 255, 255, .55) !important;
+  color: rgba(255, 255, 255, .92) !important;
+}
+/* El sello y la lupa se apoyan sobre la foto: una sombra corta los separa del
+   fondo sin ensuciar el dibujo. */
+#mdj-flotante-visitante .mdj-flotante-marca img {
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .9));
+}
+#mdj-flotante-visitante .header-search-wrap::before {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .85);
+  opacity: 1;
 }
 
 @media (max-width: 600px) {
   #mdj-flotante-visitante { top: 10px; left: 10px; right: 10px; gap: 10px; padding: 8px 11px; }
   #mdj-flotante-visitante .mdj-flotante-marca img { height: 30px; }
+  #mdj-flotante-visitante .mdj-flotante-marca .mdj-flotante-letras { height: 18px; }
+  #mdj-flotante-visitante .mdj-flotante-marca { gap: 7px; }
   /* En pantalla estrecha el buscador si toma el resto: con 380px fijos no cabria
      junto al logo y se saldria de la franja. */
   #mdj-flotante-visitante .header-search-wrap { flex: 1 1 auto; }
