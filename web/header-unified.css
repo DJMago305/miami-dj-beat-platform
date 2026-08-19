@@ -4665,6 +4665,27 @@ body.mdj-perfil-visitante #mainHeader {
   pointer-events: auto;
 }
 
+/* AIRE EN LOS EXTREMOS DEL RIEL. Medido a 1703px: 6.8px de margen a la izquierda
+   y CERO a la derecha; al desplazar hasta el final la ultima pestaña quedaba
+   pegada al borde de la pantalla. Se le da el mismo aire a los dos lados, y
+   scroll-padding para que al llegar a un extremo la pestaña no se pegue. */
+html body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots] {
+  /* El aire se da con MARGEN, no con relleno: el padding derecho de un contenedor
+     con scroll no entra en el area desplazable —medido, al llegar al final el
+     aire volvia a ser 0—, y un margen en el ultimo hijo tampoco la extiende.
+     Metiendo el riel hacia dentro el aire existe en cualquier posicion. */
+  margin-left: 26px !important;
+  margin-right: 26px !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+@media (max-width: 600px) {
+  html body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots] {
+    margin-left: 14px !important;
+    margin-right: 14px !important;
+  }
+}
+
 /* MODO ARTISTA: la barra de tools manda arriba y la franja se cuelga justo
    debajo. 72px es el alto del riel una vez retirada .header-top, mas 12 de aire.
    Ambas son fixed, asi que ninguna se mueve al hacer scroll. */

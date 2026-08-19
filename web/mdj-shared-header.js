@@ -981,7 +981,10 @@
        mismo bloque de header-unified.css. En línea impedían que el media
        query de contención por debajo de 1172px pudiera cambiarlos: inline
        con !important gana también a un media query. */
-    nav.style.setProperty('padding-right', '0', 'important');
+    /* El padding TAMPOCO se escribe aqui. Escribirlo en linea con !important
+       ganaba a la hoja y a los media queries, y dejaba la ultima pestaña
+       pegada al borde de la pantalla: medido a 1703px, 0px de aire a la
+       derecha. Vive en header-unified.css, como la rejilla. */
     nav.style.setProperty('grid-auto-rows', '0', 'important');
     nav.style.setProperty('align-items', 'center', 'important');
 
