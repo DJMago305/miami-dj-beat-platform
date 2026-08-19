@@ -630,12 +630,18 @@
             color: var(--gold);
         }
 
-        .dj-hero-name #pub-name-badge {
+        /* El indicador es HERMANO del nombre, no hijo: dentro del <h1> lo borraba
+           la reescritura del nombre. El selector viejo (.dj-hero-name #pub-name-badge)
+           exigia que fuese hijo, asi que nunca habria pintado. */
+        #pub-name-badge {
+            display: none;
             font-style: normal;
-            font-size: 0.55em;
+            font-size: 22px;
+            line-height: 1;
             vertical-align: middle;
-            margin-left: 4px;
+            margin-left: 8px;
         }
+        #pub-name-badge[data-mdj-estado] { display: inline-block; }
 
         /* Fila de íconos sociales */
         .dj-social-row {
@@ -755,16 +761,22 @@
             align-items: flex-start;
         }
 
+        /* TICKET C · legibilidad. Estaba a 9px sobre un fondo al 58% de opacidad,
+           encima de una foto: el dato del plan no se leia a un brazo de
+           distancia. Sube a 12px y el fondo a 72%, que es lo que hace falta para
+           separar el texto de una foto con zonas claras. Se conserva el borde y
+           el color de cada estado; no cambia la forma ni el sitio. */
         .dj-hero-plan-pill {
             display: inline-flex;
             align-items: center;
-            padding: 6px 13px;
+            gap: 6px;
+            padding: 7px 15px;
             border-radius: 50px;
-            background: rgba(0, 0, 0, 0.58);
+            background: rgba(0, 0, 0, 0.72);
             backdrop-filter: blur(8px);
-            font-size: 9px;
+            font-size: 12px;
             font-weight: 800;
-            letter-spacing: 1.5px;
+            letter-spacing: 1.4px;
             line-height: 1;
             white-space: nowrap;
         }
@@ -3200,6 +3212,12 @@
 
                     <!-- Nombre + punto dorado -->
                     <h1 id="pub-name" class="dj-hero-name">DJMago305<span class="dot">.</span></h1>
+                    <!-- TICKET C · indicador de verificacion. Existia el CSS (.dj-hero-name
+                         #pub-name-badge) y el JS que lo buscaba, pero el ELEMENTO no estaba
+                         en el marcado: getElementById devolvia null y el indicador no se ha
+                         visto nunca. Va FUERA del <h1> a proposito: dentro, la linea que
+                         reescribe el nombre con textContent lo borraria en cada pintada. -->
+                    <span id="pub-name-badge" class="dj-hero-name-badge" title=""></span>
 
                     <!-- Fila social icons -->
                     <div class="dj-social-row">
@@ -3995,7 +4013,12 @@
             const isPro = mdbProfileIsVipPro(profile);
             /* Texto diferenciado: solo owner recibe badge de plataforma exclusivo */
             var _role = String(profile.role != null ? profile.role : '').toLowerCase().trim();
-            var _label = (_role === 'owner') ? '✦ OWNER · VERIFICADO' : (isPro ? '⭐ PLAN PRO' : 'PLAN BÁSICO');
+            /* La pastilla habla SOLO del plan. Antes el rotulo de owner decia
+               «✦ OWNER · VERIFICADO», mezclando plan y certificacion en el mismo
+               sitio — y ademas daba por verificado a quien no hubiera pasado la
+               certificacion, solo por ser owner. La verificacion la anuncia
+               #pub-name-badge, junto al nombre, leyendo p.verified. */
+            var _label = (_role === 'owner') ? '✦ OWNER' : (isPro ? '⭐ PLAN PRO' : 'PLAN BÁSICO');
             planPillEl.textContent = _label;
             planPillEl.classList.toggle('dj-hero-plan-pill--pro', isPro);
             planPillEl.classList.toggle('dj-hero-plan-pill--lite', !isPro);
@@ -4696,14 +4719,33 @@
             // ── Badge after name: diamond=verified, star=PRO-unverified, dot=lite ──
             const badge = document.getElementById('pub-name-badge');
             if (badge) {
+                /* TICKET C · DOS BANDERAS INDEPENDIENTES, no una escala.
+                   PRO es el nivel de PAGO; VERIFICADO es haber pasado la
+                   certificacion de MDJB. Un artista puede tener una, otra, las
+                   dos o ninguna, asi que este indicador habla SOLO de
+                   verificacion: el plan lo dice la pastilla, y mezclarlos hacia
+                   que un PRO sin certificar apareciera como escalon intermedio
+                   de algo que no es una escala.
+                   El atributo data-mdj-estado es lo que lo hace visible: sin el,
+                   el CSS lo deja en display:none y no queda un punto suelto
+                   flotando junto al nombre cuando no hay nada que decir. */
                 if (p.verified === true) {
                     badge.textContent = '💎';
-                    badge.title = 'DJ Verificado por MDJPRO';
-                } else if (mdbProfileIsVipPro(p) && p.verified !== true) {
-                    badge.textContent = '⭐';
-                    badge.title = 'Miembro PRO — Verificación pendiente';
+                    badge.title = 'DJ verificado — certificación MDJB superada';
+                    badge.setAttribute('data-mdj-estado', 'verificado');
+                    /* Se mete DENTRO del <h1> aqui, no en el marcado: el <h1> es
+                       bloque y ocupa todo el ancho, asi que como hermano caia a la
+                       linea de abajo — medido, aparecia en (64,340) con el nombre
+                       acabando en (1384,267). Y no puede vivir dentro desde el
+                       principio porque la linea que escribe el nombre con
+                       textContent lo borraria. Este bloque corre DESPUES de esa
+                       linea, asi que aqui ya es seguro. */
+                    var _h1 = document.getElementById('pub-name');
+                    if (_h1 && badge.parentNode !== _h1) _h1.appendChild(badge);
                 } else {
-                    badge.textContent = '·';
+                    badge.textContent = '';
+                    badge.title = '';
+                    badge.removeAttribute('data-mdj-estado');
                 }
             }
 
