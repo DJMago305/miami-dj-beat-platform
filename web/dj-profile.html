@@ -4261,10 +4261,29 @@
             'verified,plan,plan_status,plan_expires_at,plan_type,is_premium,subscription_status,available,role,' +
             'rating,review_count,soundfortips_active,city,region,roles';
 
+        /* ══ ESPERA AL CLIENTE SUPABASE · REBOTE EN MOTORES ANTIGUOS ══════════
+           Aquí había 20 intentos de 40ms = 800ms fijos. El problema es que el
+           failsafe legacy de supabase-config.js necesita 5 intentos de 200ms —
+           1000ms— antes siquiera de declararse vencido, y el respaldo
+           supabase-js-2.112.3.legacy.js entra DESPUÉS de que el bundle del CDN
+           falle.
+
+           En un Mac antiguo, donde ese bundle no se parsea, esta función se
+           rendía a los 800ms con el rescate todavía en marcha, devolvía null, y
+           el guard de más abajo expulsaba al login. De ahí el rebote: la sesión
+           existía, pero nadie había terminado de construir el cliente.
+           En una máquina moderna el CDN resuelve en <100ms y no se nota nunca.
+
+           Ya no se espera contra un cronómetro: se espera al VEREDICTO del
+           failsafe (__mdbSupabaseInitFailed). El tope de 2400ms es solo un
+           seguro por si ese indicador no llegara a escribirse. */
         async function mdjProfileResolveDb() {
-            for (var i = 0; i < 20; i++) {
+            var TOPE = 60;                 // 60 x 40ms = 2400ms, muy por encima del failsafe
+            for (var i = 0; i < TOPE; i++) {
                 var db0 = window.getSupabaseClient ? window.getSupabaseClient() : null;
                 if (db0) return db0;
+                /* El failsafe ya se dio por vencido: seguir esperando no cambia nada. */
+                if (window.__mdbSupabaseInitFailed === true) break;
                 await new Promise(function (r) { setTimeout(r, 40); });
             }
             return window.getSupabaseClient ? window.getSupabaseClient() : null;
