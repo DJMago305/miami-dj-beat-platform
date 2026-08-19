@@ -94,6 +94,60 @@
       id: 'mainNav-staff-or-profile', cls: 'mdj-staff-mainnav dj-tab-btn--staff-only' }
   ];
 
+  /* ══ ESTACION DE TRABAJO DEL ARTISTA ═══════════════════════════════════════
+     Ley constitucional PO 2026-08-20: MI PERFIL lleva a la estacion de trabajo
+     PROPIA DEL ROL, nunca a la barra publica. Staff tiene la suya; el artista
+     tiene ESTA, separada, y SoundForTips vive aqui. Unica salida: Log Out o
+     Inicio.
+
+     Ni un rotulo ni una ruta se inventan: se recuperan literalmente del
+     #owner-tabs que ya vivia en dj-profile.html —incluidos Jobs y Shop— porque
+     la orden fue recuperar lo que ya estaba pensado, no rehacerlo de cero. Se
+     conserva ademas el sufijo ?mdj_nav=profile de cada enlace, que es lo que
+     mantiene al artista «dentro» al saltar de pagina.
+
+     UNICA baja respecto al set viejo: STAFF. La ley RBAC prohibe que ese puesto
+     exista siquiera en el DOM de una cuenta de artista, asi que se retira por
+     regla, no por criterio.
+
+     Tres puestos no son paginas sino PESTAÑAS de la propia vista (flow, sft,
+     public). No se reimplementa su logica: el puesto delega el clic en el boton
+     que ya existe en #owner-tabs, que sigue en el DOM aunque este oculto. Asi la
+     franja se queda congelada e intacta, como exige .cursorrules. */
+  var MDJ_NAV_SLOTS_ARTISTA = [
+    { s: 1,  key: 'nav-home',       nav: 'home',      href: './index.html', txt: 'Inicio' },
+    { s: 2,  key: 'nav-academia',   nav: 'academia',  href: './academia.html?mdj_nav=profile', txt: 'Academia' },
+    { s: 3,  key: null,             nav: 'agenda',    href: './dj-dashboard.html?mdj_nav=profile', txt: 'Agenda' },
+    { s: 4,  key: 'nav-config',     nav: 'config',    href: './account-settings.html?mdj_nav=profile', txt: '⚙ Config',
+      id: 'mainNav-config-link', cls: 'mdj-config-mainnav' },
+    { s: 5,  key: 'nav-tools',      nav: 'tools',     href: './dj-tools.html?mdj_nav=profile', txt: 'DJ Tools' },
+    { s: 6,  key: null,             nav: 'flow',      href: '#', txt: 'Cash Flow',      tab: 'flow' },
+    { s: 7,  key: null,             nav: 'sft',       href: '#', txt: 'SoundForTips™',  tab: 'sft'  },
+    /* MI PERFIL se queda en el puesto 8: su resolvedor de destino y el bloque que
+       fija su etiqueta direccionan por numero de slot. */
+    { s: 8,  key: 'nav-my-profile', nav: 'mi-portal', href: '#', txt: 'MI PERFIL',      tab: 'public',
+      id: 'mainNav-mi-portal-link', cls: 'mdj-mi-portal-mainnav mdj-mi-portal-gold',
+      alias: ['mi-portal', 'header-mi-portal'], navAlias: ['my-profile', 'profile'] },
+    { s: 9,  key: 'nav-jobs',       nav: 'jobs',      href: './jobs.html?mdj_nav=profile', txt: 'Trabajos' },
+    { s: 10, key: 'nav-shop',       nav: 'shop',      href: './shop.html?mdj_nav=profile', txt: 'Shop' }
+  ];
+
+  /* Dueño del perfil que se esta mirando. Se calcula con senales que el header
+     ya tiene, sin pedirle nada a la pagina: hay sesion, no es la vista de QR, y
+     o no viene ?id= —perfil propio— o el ?id= coincide con el uid propio. */
+  function mdjEsDuenoDelPerfil() {
+    try {
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (pagina !== 'dj-profile.html') return false;
+      var q = new URLSearchParams(window.location.search || '');
+      if (q.get('view') === 'public') return false;          // QR de SoundForTips: caso aparte
+      var uid = String(window.__mdjNavOwnUserId || '').trim();
+      if (!uid) return false;                                 // sin sesion no hay dueño
+      var id = (q.get('id') || '').trim();
+      return !id || id === uid;
+    } catch (eDueno) { return false; }
+  }
+
   /* Vistas que montan el juego interno. Lista explícita y no por rol: el owner
      también navega la vitrina pública (index, shop, contacto) y allí la barra
      debe seguir siendo la pública. Una página puede además pedirlo por su
@@ -138,6 +192,10 @@
 
   function mdjTablaDeSlots() {
     try {
+      /* El artista en SU perfil recibe su estacion de trabajo. Va ANTES del
+         filtro de staff: un artista no es staff, y con esa comprobacion por
+         delante nunca llegaria aqui. */
+      if (mdjEsDuenoDelPerfil()) return MDJ_NAV_SLOTS_ARTISTA;
       if (!mdjEsStaffEnVivo()) return MDJ_NAV_SLOTS;
       var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
       if (MDJ_VISTAS_INTERNAS[pagina]) return MDJ_NAV_SLOTS_INTERNO;
@@ -546,7 +604,10 @@
     /* La tabla ya no es única: las vistas internas montan el juego del sistema
        en vez del público. La elección es por página, no por rol. */
     var tabla = mdjTablaDeSlots();
-    var esInterno = (tabla === MDJ_NAV_SLOTS_INTERNO);
+    /* «Interno» son las DOS estaciones, la de staff y la del artista: en ambas
+       hay que reescribir los nodos reciclados del HTML viejo, o «Servicios» y
+       «Eventos» reaparecen dentro de la estacion. */
+    var esInterno = (tabla === MDJ_NAV_SLOTS_INTERNO || tabla === MDJ_NAV_SLOTS_ARTISTA);
     tabla.forEach(function (def) {
       var el = buscar(def) || crear(def);
       el.setAttribute('data-mdj-slot', String(def.s));
@@ -564,6 +625,30 @@
           if (sepPrevio) el.insertBefore(sepPrevio, el.firstChild);
         }
         if (def.href && el.tagName === 'A') el.setAttribute('href', def.href);
+        /* Puestos que son PESTAÑA de la propia vista, no pagina. No se
+           reimplementa el conmutador: se delega el clic en el boton que ya existe
+           en #owner-tabs, que sigue en el DOM aunque la franja este oculta. Asi la
+           franja se queda congelada e intacta —como exige .cursorrules— y no hay
+           dos logicas de pestañas que puedan discrepar. */
+        if (def.tab) {
+          el.setAttribute('data-mdj-tab', def.tab);
+          if (!el.__mdjTabHook) {
+            el.__mdjTabHook = true;
+            el.addEventListener('click', function (ev) {
+              /* Se llama al conmutador GLOBAL de la pagina, no se simula un clic
+                 sobre el boton de #owner-tabs: la franja esta oculta y ese camino
+                 no conmutaba —medido, pulsarlo directamente dejaba tab-public—.
+                 switchProfileTab si es global (los botones de la franja lo invocan
+                 por onclick en linea) y responde: flow→tab-flow, sft→tab-sft,
+                 public→tab-public. No se reimplementa nada: se usa el conmutador
+                 que la pagina ya tiene, con sus propios candados de plan dentro. */
+              if (typeof window.switchProfileTab !== 'function') return;  // el href manda
+              ev.preventDefault();
+              ev.stopPropagation();
+              window.switchProfileTab(def.tab);
+            }, true);
+          }
+        }
         if (def.cls) el.className = def.cls;
         /* Un slot reservado del juego público no puede llegar oculto al interno. */
         el.classList.remove('mdj-mainnav-reserved-slot');
@@ -777,7 +862,9 @@
       }
     });
 
-    nav.setAttribute('data-mdj-slots', '9');
+    /* El numero REAL de puestos, no un 9 fijo: la estacion del artista tiene
+       diez, y el CSS de la rejilla se apoya en este atributo. */
+    nav.setAttribute('data-mdj-slots', String(mdjTablaDeSlots().length));
     return true;
   }
 

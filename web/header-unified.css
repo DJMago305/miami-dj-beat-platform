@@ -4549,3 +4549,20 @@ html[data-theme="day"] #mobileMenu .mobile-nav .mdj-panel-titulo { color: #6b6b7
 #mobileMenu .mobile-nav[data-mdj-panel-premium] > a:not(.mdj-panel-fila) {
   display: none !important;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ESTACIONES DE TRABAJO · REJILLA DE ANCHO VARIABLE
+   ──────────────────────────────────────────────────────────────────────────
+   La rejilla maestra fija repeat(9, max-content) porque la barra publica tiene
+   nueve puestos. La estacion del artista tiene DIEZ, asi que el decimo caia en
+   una fila implicita de 0px y se derramaba, igual que paso con align-content.
+
+   Se deriva del atributo que el guion ya escribe con el numero real de puestos.
+   No se toca la regla de los nueve: la publica sigue exactamente igual.
+   ══════════════════════════════════════════════════════════════════════════ */
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] {
+  grid-template-columns: repeat(10, max-content) !important;
+}
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="1"] {
+  grid-template-columns: max-content !important;
+}
