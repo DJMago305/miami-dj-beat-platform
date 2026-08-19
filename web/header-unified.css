@@ -2451,6 +2451,14 @@ body:not([data-mdj-nav-role="management"]):not([data-mdj-nav-role="seller"])
   display: none !important;
 }
 
+/* El mismo gate para el puesto 9 (STAFF) del juego interno en el riel canónico.
+   Se replica la regla de arriba en lugar de inventar un segundo mecanismo.
+   Sigue pendiente el requisito pleno de la ley RBAC: sacarlo del DOM. */
+body:not([data-mdj-nav-role="management"]):not([data-mdj-nav-role="seller"])
+  #mainHeader.header.mdj-header-unified #mainNav > a.dj-tab-btn--staff-only {
+  display: none !important;
+}
+
 /* ============================================================
    STAFF — SERVICES & EVENTS: compact nav + no carousel
    Applies when body.mdj-staff-nav is present (Owner/Manager/Seller)
