@@ -4661,7 +4661,10 @@ body.mdj-perfil-visitante #mainHeader {
   border: 0;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  box-shadow: 0 6px 26px rgba(0, 0, 0, .34);
+  /* SIN sombra de caja: la franja no tiene fondo, pero la sombra seguia
+     dibujando el contorno del rectangulo y se veia como una linea tenue
+     cruzando la foto del hero. Cada pieza lleva su propia drop-shadow. */
+  box-shadow: none;
   pointer-events: auto;
 }
 
