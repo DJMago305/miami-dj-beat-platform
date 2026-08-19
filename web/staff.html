@@ -417,10 +417,13 @@
         <iframe id="cashflow-frame" data-src="./staff-agenda.html?tab=flow" title="Cash Flow" referrerpolicy="same-origin"></iframe>
       </section>
 
-      <!-- ═══ Vista CONFIG — transplante de account-settings al tronco nuevo (staff-config.html) ═══ -->
+      <!-- ═══ Vista CONFIG — empotra account-settings.html, la hoja UNICA de ajustes.
+           Antes empotraba staff-config.html, que era una copia de esa misma hoja con
+           dos paneles de owner de mas; las dos llevaban 94 lineas divergiendo. Los
+           paneles viven ya en la hoja unica y solo se montan para owner. ═══ -->
       <section id="view-config" class="staff-view">
         <div id="config-loading" class="agenda-loading">Cargando Config…</div>
-        <iframe id="config-frame" data-src="./staff-config.html" title="Config" referrerpolicy="same-origin"></iframe>
+        <iframe id="config-frame" data-src="./account-settings.html" title="Config" referrerpolicy="same-origin"></iframe>
       </section>
 
       <!-- ═══ Vista MI PERFIL — TRANSPORTE NATIVO del perfil al tronco nuevo (sin iframe/link al viejo) ═══ -->
@@ -657,7 +660,7 @@
           <!-- Inbox · Tickets: staff-config en modo bare -->
           <div class="sc3-panel" id="sc3-inbox">
             <div class="sc3-loading" id="sc3-inbox-loading"><span class="acc-spin"></span> Cargando Inbox…</div>
-            <iframe id="sc3-inbox-iframe" class="sc3-frame" data-src="./staff-config.html?panel=notifications&bare=1" title="Inbox · Tickets" loading="lazy"></iframe>
+            <iframe id="sc3-inbox-iframe" class="sc3-frame" data-src="./account-settings.html?panel=notifications&bare=1" title="Inbox · Tickets" loading="lazy"></iframe>
           </div>
         </div><!-- /staff-content3 -->
        </div><!-- /staff-shell -->
@@ -723,20 +726,26 @@
           '<button type="button" data-top="agenda">Agenda</button>'+
           /* ⚙ CONFIG pasa de botón interno a ENLACE REAL. Antes era data-top,
              o sea un conmutador de vista dentro de esta misma página: NO tenía
-             href, así que era imposible que llevara a staff-config.html por
+             href, así que era imposible que llevara a la hoja de config por
              mucho que se arreglara el renderizado — fallaba el criterio (c) por
              diseño, no por un fallo visual. La fuente de verdad de
-             configuración y pasarelas es staff-config.html, donde viven los dos
+             configuración y pasarelas es account-settings.html, la hoja unica
              paneles nuevos; mantener aquí un botón que abría otra cosa partía
              el flujo en dos.
              Se deja como <a>: paintStaffTopnav solo engancha clics a <button>,
              y un ancla navega sola, así que el pintor no necesita cambios. */
-          '<a href="./staff-config.html" data-top="config">⚙ Config</a>'+
+          '<a href="./account-settings.html" data-top="config">⚙ Config</a>'+
           '<button type="button" data-href="./dj-tools.html">DJ Tools</button>'+
           '<button type="button" data-top="cashflow">Cash Flow</button>'+
-          /* MI PERFIL, mismo caso: enlace directo a los ajustes de cuenta. */
-          '<a href="./account-settings.html" data-top="miperfil">Mi Perfil</a>'+
-          '<button type="button" data-top="gobernanza" class="active">Staff</button>'+
+          /* MI PERFIL abre la FICHA, que vive aqui dentro (#view-miperfil): banner,
+             foto, identidad y valoracion. Antes era un <a> hacia account-settings.html
+             — el MISMO destino que ⚙ Config, o sea dos botones distintos llevando a la
+             misma pagina y ninguno llevando al perfil. Ese es el sintoma que reporto el
+             PO: pulsar MI PERFIL y aterrizar en configuraciones.
+             Como <button> con data-top engancha con paintStaffTopnav y con
+             sincronizarTira, igual que Agenda, Cash Flow y Fenix AI. */
+          '<button type="button" data-top="miperfil">Mi Perfil</button>'+
+          '<button type="button" data-top="gobernanza">Staff</button>'+
           '<button type="button" data-top="elixis">Fénix AI</button>'+
           /* Cierra la tira igual que en el resto del portal. Reutiliza el
              conmutador de tema que esta página YA tiene cableado (applyTheme);
@@ -798,9 +807,24 @@
       // switch de vistas (Financiero ⇄ ELIXIS)
       var btns=document.querySelectorAll('#staff-nav [data-view]');
       var views=document.querySelectorAll('#module-owner .staff-view');
+      /* La tira de arriba (#staff-topnav) usa data-top; la nav aislada usa
+         data-view y vive en #staff-nav. showView solo sincronizaba la segunda,
+         asi que el resaltado de la tira solo se movia AL HACER CLIC y nunca al
+         aterrizar con ?vista=. Por eso marcaba «Staff» aunque el contenido
+         fuese tu ficha. Se sincronizan las dos aqui, que es la unica forma de
+         que no vuelvan a discrepar. */
+      function sincronizarTira(v){
+        var bar=el('staff-topnav');
+        if(!bar) return;
+        bar.querySelectorAll('[data-top]').forEach(function(b){
+          b.classList.toggle('active', b.getAttribute('data-top')===v);
+        });
+      }
+
       function showView(v){
         views.forEach(function(s){ s.classList.toggle('active', s.id==='view-'+v); });
         btns.forEach(function(b){ b.classList.toggle('active', b.dataset.view===v); });
+        sincronizarTira(v);
         var lbl=el('staff-section');
         if(lbl) lbl.textContent = v==='financiero' ? '◆ Financial Matrix IA' : v==='elixis' ? '◆ ELIXIS' : v==='gobernanza' ? '◆ Gobernanza' : v==='miperfil' ? '◆ Mi Perfil' : v==='agenda' ? '◆ Agenda' : v==='cashflow' ? '◆ Cash Flow' : v==='config' ? '◆ Config' : '';
         if(v==='elixis'){ var f=el('elixis-frame'); if(f&&!f.getAttribute('src')) f.setAttribute('src', f.getAttribute('data-src')); }

@@ -79,7 +79,7 @@
     { s: 1, key: 'nav-home',       nav: 'home',      href: './index.html',        txt: 'Inicio' },
     { s: 2, key: 'nav-academia',   nav: 'academia',  href: './academia.html',     txt: 'Academia' },
     { s: 3, key: null,             nav: 'agenda',    href: './staff-agenda.html', txt: 'Agenda' },
-    { s: 4, key: 'nav-config',     nav: 'config',    href: './staff-config.html', txt: '⚙ Config',
+    { s: 4, key: 'nav-config',     nav: 'config',    href: './account-settings.html', txt: '⚙ Config',
       id: 'mainNav-config-link', cls: 'mdj-config-mainnav' },
     { s: 5, key: 'nav-tools',      nav: 'tools',     href: './dj-tools.html',     txt: 'DJ Tools' },
     { s: 6, key: null,             nav: 'flow',      href: './staff-agenda.html?tab=flow', txt: 'Cash Flow' },
@@ -115,8 +115,30 @@
     'dj-tools.html': 1
   };
 
+  /* El juego interno exige DOS condiciones, no una: que la pagina sea interna
+     Y que quien mira sea staff.
+
+     Faltaba la segunda, y en Vista Cero se veia el fallo: un INVITADO abria
+     academia.html o dj-tools.html y recibia la barra del sistema entera, con
+     Staff, Agenda, Cash Flow y Fenix AI. Rutas de staff ofrecidas a quien no
+     ha iniciado sesion. Ademas descuadraba la barra: 116px de sangria frente
+     a los 85 del resto, o sea un brinco visible al cambiar de pantalla.
+
+     El rol llega cuando resuelve la sesion, asi que en la primera pasada un
+     owner vera el juego publico y en la siguiente el interno. Se acepta a
+     proposito: es preferible que un owner note un cambio a que un invitado
+     vea rutas que no le pertenecen. */
+  function mdjEsStaffEnVivo() {
+    var b = document.body;
+    if (!b) return false;
+    var rol = (b.getAttribute('data-mdj-nav-role') || '').toLowerCase().trim();
+    if (rol === 'management' || rol === 'seller') return true;
+    return b.classList.contains('mdj-staff-nav') && !b.classList.contains('mdj-artist-nav');
+  }
+
   function mdjTablaDeSlots() {
     try {
+      if (!mdjEsStaffEnVivo()) return MDJ_NAV_SLOTS;
       var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
       if (MDJ_VISTAS_INTERNAS[pagina]) return MDJ_NAV_SLOTS_INTERNO;
       if (document.body && document.body.getAttribute('data-mdj-contexto') === 'interno') {
@@ -273,7 +295,7 @@
     var esStaff = rol === 'management' || rol === 'seller' ||
       (b && b.classList.contains('mdj-staff-nav') && !b.classList.contains('mdj-artist-nav'));
     var esArtista = !!(b && b.classList.contains('mdj-artist-nav'));
-    if (esStaff) return './staff-config.html';
+    if (esStaff) return './account-settings.html';
     /* Directo a account-settings: account-profile.html son 11 lineas de
        redireccion a esa misma pagina, asi que apuntar alli hacia dar un salto
        de mas a cada artista. */
@@ -296,7 +318,7 @@
       rol = String(((pr && pr.data) || {}).role || '').toLowerCase().trim();
     } catch (e) {}
     if (rol === 'owner' || rol === 'admin' || rol === 'manager' || rol === 'management' || rol === 'seller') {
-      return './staff-config.html';
+      return './account-settings.html';
     }
     if (rol) return './account-settings.html';       // cualquier otro rol con perfil = artista
     return uid ? './client-account.html' : './login.html';
@@ -434,7 +456,13 @@
       el.removeAttribute('tabindex');
       el.style.removeProperty('display');
       el.style.removeProperty('visibility');
-      if (!/MI PERFIL|MY PROFILE/i.test(el.textContent || '')) {
+      /* La etiqueta UNICA del puesto 8 es MI PERFIL, decision PO 2026-08-16.
+         Aqui se aceptaba tambien «MY PROFILE» como valida, asi que la variante
+         inglesa del marcado viejo sobrevivia en rentals.html y cash-flow.html:
+         dos pantallas con etiqueta distinta a las demas y, por ser mas larga,
+         la barra centrada se corria 14px al pasar por ellas. Se compara
+         ignorando el separador «/» que este pase puede haber insertado. */
+      if ((el.textContent || '').replace('/', '').trim().toUpperCase() !== 'MI PERFIL') {
         var sepPrevio = el.querySelector(':scope > .mdj-slash');
         el.textContent = 'MI PERFIL';
         if (sepPrevio) el.insertBefore(sepPrevio, el.firstChild);
