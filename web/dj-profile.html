@@ -1153,6 +1153,44 @@
             }
         }
 
+        /* ══ FIX-HERO-MOBILE-01 · MOVIL HORIZONTAL ════════════════════════════
+           En vertical el hero ocupa la parte de arriba y debajo sigue el resto
+           —bio, opiniones, codigo QR—, que es lo que ya hacia con su altura fija.
+
+           En HORIZONTAL se comporta como su propia pagina: ocupa el alto REAL de
+           la ventana y lo que sigue se revela al desplazar. La altura fija de
+           vertical no sirve aqui — en apaisado el alto util cae a la mitad, asi
+           que 352px se comerian casi toda la pantalla y a la vez dejarian franjas
+           muertas en pantallas mas altas.
+
+           Se usa svh, no vh: en moviles vh cuenta la barra del navegador aunque
+           este visible, y el hero quedaba mas alto que la pantalla. vh queda de
+           respaldo para motores que no entiendan svh.
+
+           No se toca el degradado del hero, validado por el PO, ni la foto ni su
+           object-fit: solo la altura de la caja. */
+        @media (max-width: 950px) and (orientation: landscape) {
+            .dj-hero {
+                height: 100vh;
+                height: 100svh;
+                min-height: 320px;
+            }
+
+            /* El bloque de identidad se apoya en el borde inferior, que en
+               apaisado queda lejos del texto si se conserva el padding vertical
+               de retrato. */
+            #tab-public .dj-hero .dj-hero-content {
+                padding-bottom: 24px;
+            }
+
+            /* Aire de separacion con lo que viene despues, para que se lea como
+               «pagina siguiente» y no como continuacion pegada. */
+            #tab-public > .dj-body {
+                padding-top: 28px;
+            }
+        }
+
+
         @media (max-width: 640px) {
             body.dj-profile-sft-client-view .dj-hero {
                 height: 320px;
@@ -3232,6 +3270,39 @@
             <!-- Columna principal (valoración → Bio → venues; opiniones hero arriba) -->
             <div class="dj-main-col">
                 <a href="./dj-dashboard.html" class="back-btn" id="back-dashboard-btn" style="display:none;">← Volver al panel</a>
+
+                <!-- ══ NOTA DE FUTURO · RESENAS CON INICIO DE SESION DE GOOGLE ═══════
+                     NO CONSTRUIR. Es solo la pista de aterrizaje, dejada a peticion
+                     del PO para cuando se retome.
+
+                     La idea: que un cliente pueda entrar con su cuenta de Google y
+                     dejar resena en el perfil de un artista, en vez de tener que
+                     crear cuenta en la plataforma.
+
+                     Forma de entrada esperada, como referencia (placeholder, ningun
+                     campo esta cableado):
+
+                         {
+                           proveedor:   'google',
+                           id_externo:  '<sub del token de Google>',
+                           nombre:      'Nombre visible',
+                           avatar_url:  'https://…',
+                           dj_id:       '<uuid del artista>',
+                           puntuacion:  1..5,
+                           comentario:  'texto libre',
+                           creado_en:   '<ISO 8601>',
+                           verificado:  true    // token validado en el servidor
+                         }
+
+                     Dos cosas que no se pueden olvidar el dia que se construya:
+                     el token se valida EN EL SERVIDOR —nunca fiarse de lo que
+                     mande el navegador— y la insercion pasa por RLS como todo lo
+                     demas, con una politica propia para resenas externas.
+
+                     OJO, no confundir con el otro proyecto ya registrado: traer al
+                     perfil el rating REAL de Google Places. Ese es leer lo que
+                     Google ya tiene, sigue diferido hasta que llegue la
+                     monetizacion, y no cambia con esta nota. -->
 
                 <!-- Opiniones de clientes (primero visible tras hero) -->
                 <div id="pub-reviews-wrap" class="pub-reviews-wrap pub-reviews-section">
