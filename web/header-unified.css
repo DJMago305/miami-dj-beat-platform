@@ -4566,3 +4566,68 @@ html[data-theme="day"] #mobileMenu .mobile-nav .mdj-panel-titulo { color: #6b6b7
 #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="1"] {
   grid-template-columns: max-content !important;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   VISITANTE EN UN PERFIL AJENO · BRANDING Y BUSCADOR FLOTANTES
+   ──────────────────────────────────────────────────────────────────────────
+   Decision PO 2026-08-20: en vez de la barra de marketing completa, el visitante
+   recibe el logo —para saber donde esta y poder ir al sitio— y el buscador
+   —para explorar otros DJ sin salir del perfil—. Transparente pero SOLIDO: se
+   apoya sobre la foto del hero, asi que necesita fondo propio y desenfoque, o el
+   texto se pierde sobre las zonas claras.
+
+   El logo es ademas la salida: lleva al inicio, donde esta la cabecera completa
+   con SALIR. No hace falta un boton de salida propio aqui.
+
+   No aplica a la vista de QR (?view=public), que tiene su propio blindaje.
+   ══════════════════════════════════════════════════════════════════════════ */
+body.mdj-perfil-visitante #mainHeader {
+  display: none !important;      /* fuera la barra de marketing */
+}
+
+#mdj-flotante-visitante {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 3000;                 /* por encima del hero, por debajo de modales */
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(10, 14, 22, .62);
+  border: 1px solid rgba(197, 160, 89, .22);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 6px 26px rgba(0, 0, 0, .34);
+  pointer-events: auto;
+}
+
+#mdj-flotante-visitante .mdj-flotante-marca {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  text-decoration: none;
+}
+#mdj-flotante-visitante .mdj-flotante-marca img {
+  height: 38px;
+  width: auto;
+  display: block;
+}
+
+/* El buscador ocupa el resto y se estira: es la invitacion a explorar. */
+#mdj-flotante-visitante .header-search-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: block !important;
+}
+#mdj-flotante-visitante .header-smart-search {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+@media (max-width: 600px) {
+  #mdj-flotante-visitante { top: 10px; left: 10px; right: 10px; gap: 10px; padding: 8px 11px; }
+  #mdj-flotante-visitante .mdj-flotante-marca img { height: 30px; }
+}

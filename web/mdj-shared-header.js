@@ -562,6 +562,77 @@
   }
   window.mdjConstruirPanelMovil = mdjConstruirPanelMovil;
 
+  /* ══ VISITANTE EN UN PERFIL AJENO · BRANDING Y BUSCADOR FLOTANTES ══════════
+     Decision PO 2026-08-20. Un visitante en el perfil de un artista no recibe la
+     barra de marketing completa: recibe el logo —para saber donde esta y poder
+     ir al sitio— y el buscador —para explorar otros DJ sin salir del perfil—,
+     los dos flotando sobre el contenido.
+
+     Antes de esto un visitante sin sesion no tenia NINGUNA invitacion a recorrer
+     el resto del sitio desde un perfil, que es donde suele aterrizar por un
+     enlace o un QR compartido.
+
+     Ni el logo ni el buscador se inventan: el logo se clona del que ya trae la
+     cabecera, y el buscador se MUEVE —no se clona— porque header-smart-search.js
+     se engancha por id (#header-smart-search) y un clon perderia sus escuchas.
+
+     NO aplica a la vista de QR de SoundForTips (?view=public): esa tiene su
+     propio blindaje, mas antiguo, y no se toca. */
+  function mdjEsVisitanteDePerfil() {
+    try {
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (pagina !== 'dj-profile.html') return false;
+      var q = new URLSearchParams(window.location.search || '');
+      if (q.get('view') === 'public') return false;     // QR: blindaje propio
+
+      /* SOLO SE RESPONDE CUANDO SE SABE. El montaje corre en la primera pasada
+         del header, y ahi la sesion todavia no ha resuelto: __mdjNavOwnUserId
+         llega vacio. Con un simple !esDueño, el DUEÑO era tratado como visitante
+         y se le apagaba su propia estacion — medido, el artista en su perfil
+         salia con header=none y cero puestos.
+         Ante la duda no se monta nada: es preferible que el flotante aparezca una
+         fraccion de segundo mas tarde a robarle la estacion a su dueño. */
+      var uid = String(window.__mdjNavOwnUserId || '').trim();
+      if (!uid && _mdjHaySesion !== false) return false;   // aun no se sabe
+      return !mdjEsDuenoDelPerfil();
+    } catch (eVis) { return false; }
+  }
+
+  function mdjMontarFlotanteVisitante() {
+    try {
+      if (!mdjEsVisitanteDePerfil()) return;
+      if (document.getElementById('mdj-flotante-visitante')) return;   // ya montado
+
+      var caja = document.createElement('div');
+      caja.id = 'mdj-flotante-visitante';
+
+      /* Logo: clonado, y envuelto en un enlace al inicio. Es tambien la salida
+         del perfil hacia la cabecera completa, donde vive SALIR. */
+      var logo = document.querySelector('#mainHeader .brand .logo-img-eagle');
+      var casa = document.createElement('a');
+      casa.href = './index.html';
+      casa.className = 'mdj-flotante-marca';
+      casa.setAttribute('title', 'Miami DJ Beat — ir al inicio');
+      if (logo) casa.appendChild(logo.cloneNode(true));
+      caja.appendChild(casa);
+
+      /* Buscador: se MUEVE el original, con sus escuchas intactas. */
+      var envoltura = document.querySelector('#mainHeader .header-search-wrap');
+      if (envoltura) caja.appendChild(envoltura);
+
+      document.body.appendChild(caja);
+      document.body.classList.add('mdj-perfil-visitante');
+
+      /* La cabecera se apaga EN LINEA, no solo por hoja: algun pase le escribe
+         display:flex en el propio elemento, y un estilo en linea gana a
+         cualquier regla por especifica que sea. Medido: con la clase puesta y la
+         regla aplicando, el computado seguia en flex. */
+      var cab = document.getElementById('mainHeader');
+      if (cab) cab.style.setProperty('display', 'none', 'important');
+    } catch (eMontar) { /* noop */ }
+  }
+  window.mdjMontarFlotanteVisitante = mdjMontarFlotanteVisitante;
+
   function mdjNormalizeMainNavSlots(idRiel) {
     var nav = document.getElementById(idRiel || 'mainNav');
     if (!nav) return false;
@@ -751,6 +822,11 @@
        acaban de fijarse, para que barra y desplegable no puedan discrepar. Es
        idempotente: solo rehace si la firma de puestos cambio. */
     mdjConstruirPanelMovil();
+
+    /* Visitante en un perfil ajeno: el logo y el buscador flotantes sustituyen a
+       la barra de marketing. Se monta despues del riel para poder mover el
+       buscador ya inicializado. */
+    mdjMontarFlotanteVisitante();
 
     /* El propio riel también se blinda inline: hay reglas de la era flex que le
        devuelven display:flex, y sin display:grid las nueve columnas no existen
