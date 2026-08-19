@@ -128,13 +128,69 @@
     { s: 8,  key: 'nav-my-profile', nav: 'mi-portal', href: '#', txt: 'MI PERFIL',      tab: 'public',
       id: 'mainNav-mi-portal-link', cls: 'mdj-mi-portal-mainnav mdj-mi-portal-gold',
       alias: ['mi-portal', 'header-mi-portal'], navAlias: ['my-profile', 'profile'] },
-    { s: 9,  key: 'nav-jobs',       nav: 'jobs',      href: './jobs.html?mdj_nav=profile', txt: 'Trabajos' },
-    { s: 10, key: 'nav-shop',       nav: 'shop',      href: './shop.html?mdj_nav=profile', txt: 'Shop' }
+    /* Trabajos NO vive aqui (orden del PO 2026-08-19): pertenece al menu de
+       Inicio, la vitrina publica, donde ya ocupa su puesto 6. Shop sube del 10 al
+       9, con lo que la estacion queda en NUEVE puestos y MI PERFIL no se mueve
+       del 8 — que es donde su resolvedor de destino y su etiqueta lo buscan, por
+       numero de slot. */
+    { s: 9,  key: 'nav-shop',       nav: 'shop',      href: './shop.html?mdj_nav=profile', txt: 'Shop' }
   ];
 
   /* Dueño del perfil que se esta mirando. Se calcula con senales que el header
      ya tiene, sin pedirle nada a la pagina: hay sesion, no es la vista de QR, y
      o no viene ?id= —perfil propio— o el ?id= coincide con el uid propio. */
+  /* EL ROSTER DEL ARTISTA, EN UN SOLO SITIO. Mismo criterio que role-guard.js:
+     artist, dj y talent son la misma persona. Se mira tambien la clase porque una
+     sesion puede traer el atributo sin ella. */
+  function mdjEsArtistaEnVivo() {
+    try {
+      var b = document.body;
+      if (!b) return false;
+      var rol = (b.getAttribute('data-mdj-nav-role') || '').toLowerCase().trim();
+      return !!(b.classList.contains('mdj-artist-nav') ||
+                rol === 'artist' || rol === 'dj' || rol === 'talent');
+    } catch (eArt) { return false; }
+  }
+  window.mdjEsArtistaEnVivo = mdjEsArtistaEnVivo;
+
+  /* LAS VISTAS DEL PORTAL DEL ARTISTA. Lista explicita, igual que la del staff:
+     son los DESTINOS DEL PROPIO RIEL, las pantallas donde el artista sigue dentro
+     de su estacion de trabajo.
+
+     index.html queda FUERA a proposito (orden del PO): Inicio es la salida a la
+     vitrina publica y conserva su cabecera completa. */
+  var MDJ_VISTAS_ARTISTA = {
+    'dj-profile.html': 1,
+    'academia.html': 1,
+    'dj-dashboard.html': 1,
+    'account-settings.html': 1,
+    'dj-tools.html': 1,
+    'shop.html': 1
+  };
+
+  /* UNA SOLA FUENTE DE VERDAD PARA EL MENU. Antes la estacion existia en UNA sola
+     pantalla —mdjEsDuenoDelPerfil() devuelve false en cuanto la pagina no es
+     dj-profile.html—, asi que en academia, dj-tools y las demas al artista le
+     servian la barra publica: 9 puestos con Servicios, Eventos, Contacto y MRM IA,
+     y Shop en el puesto 4 en vez del 10. Dos barras distintas para la misma
+     persona, medido en vivo el 2026-08-19.
+
+     Se exige rol de ARTISTA, no solo sesion: con «hay sesion y no es staff» un
+     cliente recibiria DJ Tools, Cash Flow y SoundForTips. */
+  function mdjEnPortalArtista() {
+    try {
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (!MDJ_VISTAS_ARTISTA[pagina]) return false;
+      if (new URLSearchParams(window.location.search || '').get('view') === 'public') return false;
+      if (mdjEsStaffEnVivo()) return false;
+      if (!mdjEsArtistaEnVivo()) return false;
+      if (!String(window.__mdjNavOwnUserId || '').trim()) return false;   // sin sesion resuelta, nada
+      if (pagina === 'dj-profile.html') return mdjEsDuenoDelPerfil();     // en el de otro, es visitante
+      return true;
+    } catch (ePortal) { return false; }
+  }
+  window.mdjEnPortalArtista = mdjEnPortalArtista;
+
   function mdjEsDuenoDelPerfil() {
     try {
       var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
@@ -201,7 +257,7 @@
       /* El artista en SU perfil recibe su estacion de trabajo. Va ANTES del
          filtro de staff: un artista no es staff, y con esa comprobacion por
          delante nunca llegaria aqui. */
-      if (mdjEsDuenoDelPerfil()) return MDJ_NAV_SLOTS_ARTISTA;
+      if (mdjEnPortalArtista()) return MDJ_NAV_SLOTS_ARTISTA;
       if (!mdjEsStaffEnVivo()) return MDJ_NAV_SLOTS;
       var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
       if (MDJ_VISTAS_INTERNAS[pagina]) return MDJ_NAV_SLOTS_INTERNO;
@@ -708,15 +764,9 @@
   window.mdjMontarFlotanteVisitante = mdjMontarFlotanteVisitante;
   window.mdjMontarFranjaFlotante = mdjMontarFranjaFlotante;
 
-  /* El artista en SU perfil: barra de tools arriba, franja debajo. */
-  function mdjArtistaEnSuPerfil() {
-    try {
-      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
-      if (pagina !== 'dj-profile.html') return false;
-      if (new URLSearchParams(window.location.search || '').get('view') === 'public') return false;
-      return mdjEsDuenoDelPerfil();
-    } catch (eArt) { return false; }
-  }
+  /* El artista en su portal: barra de tools arriba, franja debajo. Mismo trato en
+     todas las vistas de la lista, para que no haya saltos al cambiar de pestaña. */
+  function mdjArtistaEnSuPerfil() { return mdjEnPortalArtista(); }
 
   /* EL MONTAJE TIENE QUE PODER DESHACERSE. La decision de «visitante» se toma con
      lo que se sabe en ese instante, y la sesion puede resolver despues: medido en
