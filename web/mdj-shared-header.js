@@ -152,7 +152,10 @@
     var esStaff = role === 'management' || role === 'seller' ||
       (b && b.classList.contains('mdj-staff-nav') && !b.classList.contains('mdj-artist-nav'));
     var esArtista = !!(b && b.classList.contains('mdj-artist-nav'));
-    if (esStaff) return './staff.html';
+    /* Aterriza en la vista de perfil del portal, no en su portada. Antes caia en
+       'gobernanza' y el owner no veia su ficha por ningun lado, aunque estuviera
+       cargada y oculta ahi mismo. */
+    if (esStaff) return './staff.html?vista=miperfil';
     if (esArtista) return uid ? './dj-profile.html?id=' + encodeURIComponent(uid) : './dj-profile.html';
     if (uid) return './client-portal.html';
     return './login.html';
@@ -219,7 +222,7 @@
       rol = String(((pr && pr.data) || {}).role || '').toLowerCase().trim();
     } catch (e) {}
     if (rol === 'owner' || rol === 'admin' || rol === 'manager' || rol === 'management' || rol === 'seller') {
-      return './staff.html';
+      return './staff.html?vista=miperfil';
     }
     if (rol) {                                   // cualquier otro rol con perfil = artista
       return uid ? './dj-profile.html?id=' + encodeURIComponent(uid) : './dj-profile.html?view=public';
@@ -508,7 +511,17 @@
     (function normalizarPuestos() {
       var perfil = nav.querySelector('#mainNav-mi-perfil-link, #mainNav-guest-mi-perfil-link, [data-mdj-nav="my-profile"]');
       if (perfil && !perfil.getAttribute('data-mdj-slot')) perfil.setAttribute('data-mdj-slot', '8');
-      if (perfil) perfil.setAttribute('href', './account-settings.html');
+      /* Aquí había un href fijo a './account-settings.html' — que es, literalmente,
+         «Account Settings»: configuraciones. Corría DESPUÉS del bloque del slot 8,
+         así que pisaba el destino que el resolvedor ya había puesto bien, y MI
+         PERFIL llevaba a configuraciones siempre que el clic no pasara por el
+         enganche: al abrir en pestaña nueva, o al pulsar antes de que se atara.
+         Mismo mal que tenía CONFIG —dos escrituras, gana la última— y misma cura:
+         una sola fuente de verdad. */
+      if (perfil) {
+        perfil.setAttribute('href', mdjResolveMiPerfilHref());   // respaldo estático
+        mdjEngancharMiPerfil(perfil);                            // la verdad, en el clic
+      }
 
       var cfg = nav.querySelector('#mainNav-config-link, [data-mdj-nav="config"]');
       if (cfg && !cfg.getAttribute('data-mdj-slot')) cfg.setAttribute('data-mdj-slot', '5');

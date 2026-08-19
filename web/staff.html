@@ -818,7 +818,19 @@
           setTimeout(function(){ if(xld) xld.classList.add('hidden'); }, 8000); } }
       }
       paintStaffTopnav(staffTopnavHtml('owner'), showView);
-      showView('gobernanza');  // FINANCIERO fusionado en CASH FLOW; aterrizaje por defecto = Gobernanza
+      /* Aterrizaje. Por defecto Gobernanza (FINANCIERO quedo fusionado en CASH
+         FLOW), pero se puede pedir una vista concreta con ?vista=.
+         Lo usa MI PERFIL de la cabecera: para owner/staff ese puesto trae aqui, y
+         sin el parametro caia en Gobernanza — el owner no veia su ficha por ningun
+         lado, aunque estuviera cargada y oculta en esta misma pagina.
+         Lista blanca a proposito: un valor inventado en la URL no puede dejar el
+         portal sin ninguna vista activa. */
+      var MDJ_VISTAS_VALIDAS = { financiero:1, elixis:1, gobernanza:1, miperfil:1, agenda:1, cashflow:1, config:1 };
+      var mdjVistaPedida = '';
+      try {
+        mdjVistaPedida = (new URLSearchParams(window.location.search).get('vista') || '').toLowerCase().trim();
+      } catch (eVista) { mdjVistaPedida = ''; }
+      showView(MDJ_VISTAS_VALIDAS[mdjVistaPedida] ? mdjVistaPedida : 'gobernanza');
 
       // ── DÍA/NOCHE GLOBAL del portal (botón central ÚNICO). Alterna data-theme en <html> + DIFUNDE a los marcos (base lista para adaptar los secundarios). ──
       var dtog=el('ofm-daynight');
