@@ -3057,7 +3057,8 @@ body.mdj-staff-nav.page-admin-dashboard
    idéntica en invitado, artista, staff y owner.
    ══════════════════════════════════════════════════════════════════════════ */
 
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] {
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"]{
   display: grid !important;
   /* minmax(max-content, 1fr): la columna nunca es más estrecha que su etiqueta.
      Con 1fr a secas, un contenedor angosto daba columnas de 37px para textos de
@@ -3083,18 +3084,32 @@ body.mdj-staff-nav.page-admin-dashboard
 }
 
 /* Cada slot a su columna. Los dos ocupantes del 8 comparten celda. */
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="1"] { grid-area: 1 / 1; }
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="2"] { grid-area: 1 / 2; }
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="3"] { grid-area: 1 / 3; }
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="4"] { grid-area: 1 / 4; }
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="5"] { grid-area: 1 / 5; }
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="6"] { grid-area: 1 / 6; }
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="7"] { grid-area: 1 / 7; }
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="8"] { grid-area: 1 / 8; }
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="9"] { grid-area: 1 / 9; }
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="1"] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot="1"]{ grid-area: 1 / 1; }
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="2"] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot="2"]{ grid-area: 1 / 2; }
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="3"] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot="3"]{ grid-area: 1 / 3; }
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="4"] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot="4"]{ grid-area: 1 / 4; }
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="5"] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot="5"]{ grid-area: 1 / 5; }
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="6"] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot="6"]{ grid-area: 1 / 6; }
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="7"] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot="7"]{ grid-area: 1 / 7; }
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="8"] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot="8"]{ grid-area: 1 / 8; }
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="9"] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot="9"]{ grid-area: 1 / 9; }
+/* El decimo puesto solo existe en la estacion del artista: SoundForTips lleva la
+   tabla a diez. Sin esta linea el navegador lo coloca por su cuenta, cae a una
+   segunda fila y queda tapado por la barra superior fija. */
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot="10"]{ grid-area: 1 / 10; }
 
 /* Nada puede salirse de su celda ni empujar a los vecinos. */
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] {
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot]{
   white-space: nowrap !important;
   min-width: max-content !important;
   overflow: visible !important;
@@ -3103,11 +3118,13 @@ body.mdj-staff-nav.page-admin-dashboard
 
 /* CONFIG oculto al invitado CONSERVA su columna: visibility, nunca display.
    Un display:none aquí colapsaría la celda y movería las otras siete. */
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-mainnav-reserved-slot {
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-mainnav-reserved-slot ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot].mdj-mainnav-reserved-slot{
   visibility: hidden !important;
   pointer-events: none !important;
 }
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot]:not(.mdj-mainnav-reserved-slot) {
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot]:not(.mdj-mainnav-reserved-slot) ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot]:not(.mdj-mainnav-reserved-slot){
   visibility: visible !important;
   pointer-events: auto !important;
 }
@@ -3206,10 +3223,12 @@ body.mdj-staff-nav.page-admin-dashboard
    al iniciar o cerrar sesión. Con min-width fijo en el propio slot, la celda
    mantiene su tamaño esté visible o no: la barra no se mueve nunca.
    ══════════════════════════════════════════════════════════════════════════ */
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="5"] {
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="5"] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot="5"]{
   min-width: 104px !important;   /* ancho de "⚙️ CONFIG" */
 }
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="8"] {
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="8"] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot="8"]{
   min-width: 96px !important;    /* ancho de "MI PERFIL" */
 }
 
@@ -3218,12 +3237,14 @@ body.mdj-staff-nav.page-admin-dashboard
    reservados — herencia de cuando la barra era flex. En una rejilla eso hace
    desaparecer la columna entera. Se restituyen aquí, al final, para ganar por
    orden: el slot ocupa SIEMPRE su celda; sólo se oculta su contenido. */
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] {
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot]{
   display: inline-flex !important;
   width: auto !important;
   flex-basis: auto !important;
 }
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-mainnav-reserved-slot {
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-mainnav-reserved-slot ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot].mdj-mainnav-reserved-slot{
   visibility: hidden !important;
   pointer-events: none !important;
 }
@@ -3240,15 +3261,20 @@ body.mdj-staff-nav.page-admin-dashboard
    sin tocar la original: el slot mantiene su celda y sólo se oculta su contenido.
    ══════════════════════════════════════════════════════════════════════════ */
 body:not(.mdj-buyer-session):not(.mdj-is-client) #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot],
+body:not(.mdj-buyer-session):not(.mdj-is-client) #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot],
 body.mdj-buyer-session #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot],
-body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] {
+body.mdj-buyer-session #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot],
+body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] ,
+body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot]{
   display: inline-flex !important;
   width: auto !important;
   flex-basis: auto !important;
   min-width: max-content !important;
 }
 body:not(.mdj-buyer-session):not(.mdj-is-client) #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-mainnav-reserved-slot,
-body #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-mainnav-reserved-slot {
+body:not(.mdj-buyer-session):not(.mdj-is-client) #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot].mdj-mainnav-reserved-slot,
+body #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-mainnav-reserved-slot ,
+body #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot].mdj-mainnav-reserved-slot{
   visibility: hidden !important;
   pointer-events: none !important;
 }
@@ -3258,9 +3284,13 @@ body #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-
    aunque grid-template-columns esté declarado. Se reafirma con la misma raíz
    de alta especificidad que usan aquellas. */
 body:not(.mdj-buyer-session):not(.mdj-is-client) #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"],
+body:not(.mdj-buyer-session):not(.mdj-is-client) #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"],
 body.mdj-buyer-session #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"],
+body.mdj-buyer-session #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"],
 body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"],
-body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] {
+body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"],
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] ,
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="10"]{
   display: grid !important;
   /* UNIFICADO 2026-08-18 → ver bloque «REJILLA RÍGIDA» al final del archivo: */
   /* grid-template-columns: repeat(9, minmax(max-content, 1fr)) !important; */
@@ -3287,16 +3317,19 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
   display: none !important;
 }
 
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] {
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"]{
   overflow-x: auto !important;
   overflow-y: hidden !important;
   justify-content: start !important;
   scrollbar-width: none;
 }
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"]::-webkit-scrollbar { display: none; }
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"]::-webkit-scrollbar ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"]::-webkit-scrollbar{ display: none; }
 
 /* La barra no se encoge: cada pestaña conserva su tamaño de lectura. */
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] {
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot]{
   /* Era un clamp que encogia de 16px a 13px justo debajo del comentario que
      dice «la barra no se encoge». Contradecia la regla del PO —barra grande
      siempre, quien no tenga ancho DESLIZA— y partia la tipografia: 20px en
@@ -3310,13 +3343,15 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
 /* Acabado de la barra: columnas al tamaño de su texto, sobrante repartido entre
    ellas. Los separadores y el subrayado de la activa quedan alineados porque
    todas las celdas comparten línea base y altura. */
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] {
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"]{
   /* UNIFICADO 2026-08-18 → ver bloque «REJILLA RÍGIDA» al final del archivo: */
   /* grid-template-columns: repeat(9, max-content) !important; */
   justify-content: space-between !important;
   column-gap: 0 !important;
 }
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] {
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot]{
   justify-self: center !important;
   padding-left: 4px !important;
   padding-right: 4px !important;
@@ -3324,7 +3359,8 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
 
 /* El sol vive DENTRO del riel, en su propia columna (la décima). Deja de estar
    posicionado en absoluto sobre la barra, que era lo que lo solapaba con MRM IA. */
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] {
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"]{
   /* UNIFICADO 2026-08-18 → ver bloque «REJILLA RÍGIDA» al final del archivo: */
   /* grid-template-columns: repeat(9, max-content) 40px !important; */
 }
@@ -3339,10 +3375,12 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
 /* Separadores con ritmo uniforme: una "/" delante de cada pestaña salvo la
    primera y las que siguen a un slot reservado. El separador es del riel, no de
    la pestaña, así que no hereda su opacidad ni su visibilidad. */
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot]::before {
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot]::before ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot]::before{
   content: none !important;
 }
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-sep::before {
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-sep::before ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot].mdj-sep::before{
   content: "/" !important;
   color: rgba(197, 160, 89, .38) !important;
   font-weight: 400 !important;
@@ -3351,7 +3389,8 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
   visibility: visible !important;
   display: inline !important;
 }
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-sin-sep::before {
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-sin-sep::before ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot].mdj-sin-sep::before{
   content: none !important;
 }
 
@@ -3360,9 +3399,13 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
    de body. Sin esto, MI PERFIL era la única pestaña sin "/" delante y rompía el
    ritmo de toda la barra. */
 body:not(.mdj-buyer-session):not(.mdj-is-client) #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-sep::before,
+body:not(.mdj-buyer-session):not(.mdj-is-client) #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot].mdj-sep::before,
 body.mdj-buyer-session #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-sep::before,
+body.mdj-buyer-session #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot].mdj-sep::before,
 body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot].mdj-sep::before,
-body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] > [data-mdj-slot].mdj-sep::before {
+body.mdj-is-client #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot].mdj-sep::before,
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] > [data-mdj-slot].mdj-sep::before ,
+body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="10"] > [data-mdj-slot].mdj-sep::before{
   content: "/" !important;
   color: rgba(197, 160, 89, .38) !important;
   margin-right: 14px !important;
@@ -3492,7 +3535,8 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
    #mainNav.mdj-mainnav-flex.nav.top-nav, la regla max-width:100% activa en
    @media min-width:1001px que le ganaba a esta — verificado en vivo a
    2560px: sin este refuerzo, max-width nunca aplicaba, en ningún valor. */
-#mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] {
+#mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] ,
+#mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="10"]{
   display: grid !important;
   grid-template-columns:
     /* NUEVE COLUMNAS CANÓNICAS · reestructurado 2026-08-18.
@@ -3527,7 +3571,8 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
 /* El slot ocupa su celda y nada más. `min-width: max-content` —que este archivo
    declaraba en dos sitios y el JS inyectaba desde siete— re-expandía la celda y
    anulaba el ancho fijo. */
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] {
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot]{
   min-width: 0 !important;
   width: 100% !important;
   max-width: 100% !important;
@@ -3543,14 +3588,16 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
    pestañas siguen existiendo y son alcanzables. Los anchos no cambian, así que
    Δx sigue siendo 0 también por debajo del umbral. */
 @media (max-width: 1360px) {
-  #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] {
+  #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] ,
+#mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="10"]{
     justify-content: start !important;
     overflow-x: auto !important;
     overflow-y: hidden !important;
     scrollbar-width: none !important;
     -webkit-overflow-scrolling: touch !important;
   }
-  #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"]::-webkit-scrollbar {
+  #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"]::-webkit-scrollbar ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"]::-webkit-scrollbar{
     display: none !important;
   }
 }
@@ -3583,15 +3630,27 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
 body #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] > a[data-mdj-slot]#mainNav-guest-mi-perfil-link,
 body #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="10"] > a[data-mdj-slot]#mainNav-guest-mi-perfil-link,
+body #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] > a[data-mdj-slot]#mainNav-mi-portal-link,
+body #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="10"] > a[data-mdj-slot]#mainNav-mi-portal-link,
 body #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] > a[data-mdj-slot]#mainNav-config-link,
 body #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="10"] > a[data-mdj-slot]#mainNav-config-link,
+body #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] > a[data-mdj-slot]#mainNav-staff-or-profile,
+body #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="10"] > a[data-mdj-slot]#mainNav-staff-or-profile,
 body #mainHeader.header.mdj-header-unified
   #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] > a[data-mdj-slot]#mainNav-staff-link,
 body #mainHeader.header.mdj-header-unified
-  #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] > a[data-mdj-slot]#mainNav-roadmap-link {
+  #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="10"] > a[data-mdj-slot]#mainNav-staff-link,
+body #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] > a[data-mdj-slot]#mainNav-roadmap-link ,
+body #mainHeader.header.mdj-header-unified
+  #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="10"] > a[data-mdj-slot]#mainNav-roadmap-link{
   max-width: 100% !important;
   width: 100% !important;
   min-width: 0 !important;
