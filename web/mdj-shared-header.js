@@ -164,8 +164,10 @@
     'academia.html': 1,
     'dj-dashboard.html': 1,
     'account-settings.html': 1,
-    'dj-tools.html': 1,
-    'shop.html': 1
+    'dj-tools.html': 1
+    /* shop.html NO figura: no es una vista nuestra, redirige a la tienda de
+       Shopify. Comprobado en vivo — el riel sale de la plataforma por ese puesto,
+       igual que por Inicio. La lista solo admite destinos que conserven la barra. */
   };
 
   /* UNA SOLA FUENTE DE VERDAD PARA EL MENU. Antes la estacion existia en UNA sola
@@ -190,6 +192,30 @@
     } catch (ePortal) { return false; }
   }
   window.mdjEnPortalArtista = mdjEnPortalArtista;
+
+  /* EL MISMO TRATO PARA EL STAFF (orden del PO 2026-08-19): mismo proceso, mismo
+     diseño. Las vistas internas ya estaban declaradas en MDJ_VISTAS_INTERNAS; lo
+     que faltaba era que tambien recibieran la estacion —barra arriba sola, marca
+     y buscador flotando debajo— en vez de la cabecera de dos filas.
+
+     staff.html NO entra: no tiene #mainHeader, usa su tira nativa #staff-topnav.
+     Aplicarle esto exigiria rehacer esa tira, que es otro trabajo. */
+  function mdjEnPortalStaff() {
+    try {
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (!MDJ_VISTAS_INTERNAS[pagina]) return false;
+      if (new URLSearchParams(window.location.search || '').get('view') === 'public') return false;
+      if (!mdjEsStaffEnVivo()) return false;
+      return !!String(window.__mdjNavOwnUserId || '').trim();
+    } catch (eSt) { return false; }
+  }
+  window.mdjEnPortalStaff = mdjEnPortalStaff;
+
+  /* Una sola puerta para el trato de estacion, sea de artista o de staff. */
+  function mdjEnEstacionDeTrabajo() {
+    return mdjEnPortalArtista() || mdjEnPortalStaff();
+  }
+  window.mdjEnEstacionDeTrabajo = mdjEnEstacionDeTrabajo;
 
   function mdjEsDuenoDelPerfil() {
     try {
@@ -764,9 +790,9 @@
   window.mdjMontarFlotanteVisitante = mdjMontarFlotanteVisitante;
   window.mdjMontarFranjaFlotante = mdjMontarFranjaFlotante;
 
-  /* El artista en su portal: barra de tools arriba, franja debajo. Mismo trato en
-     todas las vistas de la lista, para que no haya saltos al cambiar de pestaña. */
-  function mdjArtistaEnSuPerfil() { return mdjEnPortalArtista(); }
+  /* Barra arriba, franja debajo. Mismo trato en todas las vistas de estacion
+     —artista y staff—, para que no haya saltos al cambiar de pestaña. */
+  function mdjArtistaEnSuPerfil() { return mdjEnEstacionDeTrabajo(); }
 
   /* EL MONTAJE TIENE QUE PODER DESHACERSE. La decision de «visitante» se toma con
      lo que se sabe en ese instante, y la sesion puede resolver despues: medido en
