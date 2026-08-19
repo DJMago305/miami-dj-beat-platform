@@ -1136,7 +1136,7 @@
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
     <script>
     /* P2.2 · WebKit legacy no puede ni PARSEAR el bundle del CDN de arriba
        (?. y ??, 133 veces en la build 2.112.3 -- se resuelve sola, sin
@@ -1151,9 +1151,9 @@
        el mismo comportamiento). No se toca el <script> del CDN: en un motor
        moderno esta deteccion es un try/catch barato y no hace nada mas. */
     (function () {
-        var mdjModernSyntaxOk = true;
-        try { new Function('return (null)?.x ?? 1;'); } catch (eDetect) { mdjModernSyntaxOk = false; }
-        if (!mdjModernSyntaxOk) {
+        var mdjLibAusente = !(window.supabase &&
+            typeof window.supabase.createClient === 'function');
+        if (mdjLibAusente) {
             document.write('<script src="./vendor/supabase-js-2.112.3.legacy.js?v=20260818-safari-legacy"><\/script>');
         }
     })();

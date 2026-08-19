@@ -1,16 +1,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Road Map IA — MIAMI DJ BEAT LLC</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
 <script>
-/* P2.3 · rollout global del fallback verificado en login.html (Ticket P2.2 / PR #173).
-   El CDN de arriba queda intacto para navegadores modernos; si el motor no soporta
-   ?./?? (WebKit legacy), se inyecta -- mismo origen, sin el aviso de document.write
-   cross-site de Chrome -- la copia local transpilada ya vendorizada y verificada. */
+    /* FIX-LEGACY-SUPABASE-01 (2026-08-19) · el respaldo entra cuando falta la
+       LIBRERIA, no cuando falta la sintaxis.
+       Antes la puerta era una sonda de `?.` y `??`. Eso solo cubre el motor que no
+       sabe parsear: si el bundle del CDN muere por CUALQUIER otra razon —una v2 mas
+       nueva con sintaxis que el motor no soporta, red caida, TLS, bloqueo— la sonda
+       pasa, el respaldo NO se inyecta y la pagina se queda sin cliente Supabase.
+       Sin cliente no hay sesion, y el guard del perfil expulsa al login: ese era el
+       rebote en Mac antiguas. Ahora se pregunta lo unico que importa, si la libreria
+       esta aqui. En un navegador moderno no hace nada, porque ya esta.
+       El CDN ademas se clava a 2.112.3, la misma version que la copia vendorizada:
+       `@2` era flotante y podia cambiar bajo nuestros pies sin tocar el repo. */
 (function () {
-    var mdjModernSyntaxOk = true;
-    try { new Function('return (null)?.x ?? 1;'); } catch (eDetect) { mdjModernSyntaxOk = false; }
-    if (!mdjModernSyntaxOk) {
+    var mdjLibAusente = !(window.supabase &&
+        typeof window.supabase.createClient === 'function');
+    if (mdjLibAusente) {
         document.write('<script src="./vendor/supabase-js-2.112.3.legacy.js?v=20260818-safari-legacy"><\/script>');
     }
 })();
