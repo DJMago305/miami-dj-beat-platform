@@ -141,6 +141,12 @@
       if (pagina !== 'dj-profile.html') return false;
       var q = new URLSearchParams(window.location.search || '');
       if (q.get('view') === 'public') return false;          // QR de SoundForTips: caso aparte
+      /* El owner NO monta estaciones de DJ. Aunque su perfil sea «suyo», pertenece
+         al edificio Staff y no debe inicializar nada del lado del catalogo de
+         artistas. Esto es el cinturon; el tirante es el redirect de abajo, que se
+         lo lleva de aqui. Si el redirect tardara —la sesion resuelve tarde—, esta
+         linea garantiza que entretanto no se le monte la estacion equivocada. */
+      if (mdjEsStaffEnVivo()) return false;
       var uid = String(window.__mdjNavOwnUserId || '').trim();
       if (!uid) return false;                                 // sin sesion no hay dueño
       var id = (q.get('id') || '').trim();
@@ -578,6 +584,42 @@
 
      NO aplica a la vista de QR de SoundForTips (?view=public): esa tiene su
      propio blindaje, mas antiguo, y no se toca. */
+  /* ══ EL OWNER NO ATERRIZA EN dj-profile.html ══════════════════════════════
+     Decision del Capitan 2026-08-20: «El owner pertenece estrictamente al
+     edificio Staff y nunca debe inicializar estaciones de DJ ni mezclarse con el
+     catalogo de artistas.»
+
+     Su MI PERFIL real ya no pasa por aqui —el resolvedor manda a staff a
+     ./staff.html?vista=miperfil—, asi que un owner solo llega a dj-profile.html
+     sin ?id= por accidente: navegacion manual o un enlace viejo. Se le devuelve
+     a su edificio.
+
+     SOLO su propio perfil. Con ?id=<otro-artista> NO se redirige: ahi el owner
+     esta visitando a alguien, que es legitimo y no toca su estacion.
+
+     Se usa replace y no href para no dejar el aterrizaje accidental en el
+     historial: el boton «atras» devolveria al mismo sitio y rebotaria otra vez.
+
+     Corre en cada pasada del header porque el rol llega cuando resuelve la
+     sesion; antes de eso no se sabe que es owner y no se puede decidir. */
+  var _mdjRedirigidoFueraDelPerfil = false;
+
+  function mdjSacarOwnerDelPerfilAjeno() {
+    try {
+      if (_mdjRedirigidoFueraDelPerfil) return;
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (pagina !== 'dj-profile.html') return;
+      var q = new URLSearchParams(window.location.search || '');
+      if (q.get('view') === 'public') return;          // QR: blindaje propio, no se toca
+      if (!mdjEsStaffEnVivo()) return;                 // solo staff/owner
+      var uid = String(window.__mdjNavOwnUserId || '').trim();
+      var id = (q.get('id') || '').trim();
+      if (id && id !== uid) return;                    // visitando a otro artista: legitimo
+      _mdjRedirigidoFueraDelPerfil = true;
+      window.location.replace('./staff.html?vista=miperfil');
+    } catch (eSacar) { /* noop */ }
+  }
+
   function mdjEsVisitanteDePerfil() {
     try {
       var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
@@ -822,6 +864,10 @@
        acaban de fijarse, para que barra y desplegable no puedan discrepar. Es
        idempotente: solo rehace si la firma de puestos cambio. */
     mdjConstruirPanelMovil();
+
+    /* El owner no se queda en dj-profile.html: se le devuelve a su edificio. Va
+       lo primero de los pases de perfil, para que no llegue a montarse nada. */
+    mdjSacarOwnerDelPerfilAjeno();
 
     /* Visitante en un perfil ajeno: el logo y el buscador flotantes sustituyen a
        la barra de marketing. Se monta despues del riel para poder mover el
