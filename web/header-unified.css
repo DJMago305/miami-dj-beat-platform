@@ -18,7 +18,12 @@
   --mdj-nav-link-py-t:      4px;                       /* padding top */
   --mdj-nav-link-py-b:      8px;                       /* padding bottom */
   --mdj-nav-gap:            clamp(3px, 0.35vw, 6px);   /* gap entre links — compactado globalmente */
-  --mdj-nav-font-size:      clamp(16px, 1.4vw, 20px);
+  /* 20px FIJO. Era clamp(16px, 1.4vw, 20px), que encogia la barra entre 1143 y
+     1428px de ventana: 18,2px a 1300 y 16,8px a 1200, frente a los 20px del
+     resto de anchos. Contradecia la regla del PO —barra grande siempre, quien
+     no tenga ancho DESLIZA— y partia la tipografia institucional en tres
+     tamanos segun el monitor. */
+  --mdj-nav-font-size:      20px;
   --mdj-nav-font-weight:    800;
   --mdj-nav-letter-spacing: 0.14em;
   /* legacy aliases */
@@ -1267,30 +1272,36 @@
     overflow-y: hidden !important;
   }
 
+  /* ══ FIX-NAV-ANCHOS-01 · ESTE BLOQUE ERA DE LA ERA FLEX ═══════════════════
+     Se escribio cuando el riel era flex: flex-wrap, row-gap, justify-content
+     flex-start. El riel es hoy una REJILLA, y esas declaraciones no la
+     gobiernan — dejaban los puestos cayendo en filas implicitas de 0px (el
+     grid-auto-rows que fija el guion), asi que se pintaban FUERA de su fila y,
+     como la fila superior tiene mas z-index (110 frente a 101), quedaban
+     medio tapados por ella. Medido a 1000px: el riel en 85→157 y el primer
+     puesto en 68→101, o sea 17px metido debajo de la barra de arriba.
+     Se conserva lo unico que sigue teniendo sentido —ancho completo y
+     deslizamiento— y la rejilla la define la regla maestra, igual que en
+     escritorio. */
   #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav {
     width: 100% !important;
     max-width: 100% !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
-    justify-content: flex-start !important;
-    flex-wrap: nowrap !important;
-    row-gap: 0 !important;
-    column-gap: 0 !important;
-    min-height: 0 !important;
     overflow-x: auto !important;
     overflow-y: hidden !important;
-    scrollbar-width: thin !important;
+    scrollbar-width: none !important;
   }
 
+  /* Los puestos, con la MISMA tipografia institucional que en escritorio.
+     Aqui se encogian a clamp(13px..16px) con letter-spacing 0.2em, que
+     contradice la regla de barra grande siempre: la decision del PO es que
+     los nueve conserven su tamano y quien no tenga ancho DESLICE.
+     De la era flex quedaban ademas flex/flex-shrink/min-width:10ch, que en una
+     rejilla no hacen nada salvo estorbar al calculo de las columnas. */
   #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a {
-    flex: 0 0 auto !important;
     width: auto !important;
-    min-width: max(10ch, max-content) !important;
     max-width: none !important;
-    flex-shrink: 0 !important;
-    padding: 4px var(--mdj-mainnav-pad-x-sm) 5px !important;
-    font-size: clamp(13px, 1.05vw, 16px) !important;
-    letter-spacing: 0.2em !important;
   }
 
   #mainHeader.header.mdj-header-unified .brand .brand-letters-wrapper {
@@ -3205,7 +3216,11 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
 
 /* La barra no se encoge: cada pestaña conserva su tamaño de lectura. */
 #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] {
-  font-size: clamp(13px, 1.15vw, 16px) !important;
+  /* Era un clamp que encogia de 16px a 13px justo debajo del comentario que
+     dice «la barra no se encoge». Contradecia la regla del PO —barra grande
+     siempre, quien no tenga ancho DESLIZA— y partia la tipografia: 20px en
+     casi todos los anchos y 16,8px a 1200px. Se fija a la institucional. */
+  font-size: 20px !important;
   padding-left: 10px !important;
   padding-right: 10px !important;
 }
@@ -3781,6 +3796,15 @@ html body #mainHeader#mainHeader.header.mdj-header-unified
   scrollbar-width: none !important;
   column-gap: 0 !important;
   align-items: center !important;
+  /* La fila de la rejilla mide 0px (grid-auto-rows, que fija el guion). Con
+     align-content: center esa fila queda centrada en los 72px de la banda y los
+     puestos caen donde deben. Con `normal` —lo que habia por debajo de 1001px,
+     porque el center vivia en un @media de escritorio— la fila se pega arriba y
+     los puestos, centrados sobre una fila sin altura, se derraman 17px HACIA
+     ARRIBA: se metian debajo de la fila superior, que tiene mas z-index (110
+     frente a 101), y se veian cortados por la mitad. Medido a 1000px: fila
+     84→156 y enlace 67→102. Se declara aqui, que aplica en TODOS los anchos. */
+  align-content: center !important;
 }
 
 #mainNav#mainNav.mdj-mainnav-flex.nav.top-nav::-webkit-scrollbar {
