@@ -3759,9 +3759,32 @@ html body #mainHeader#mainHeader.header.mdj-header-unified
      columnas fijas en píxeles existían para reservar sitio a slots que podían
      aparecer, y eso ya no ocurre. La barra sigue sin temblar. */
   grid-template-columns: repeat(9, max-content) !important;
-  justify-content: center !important;
+  /* ══ FIX-NAV-ANCHOS-01 · SAFE CENTER + DESLIZAMIENTO ══════════════════════
+     `center` a secas centra TAMBIEN cuando el contenido no cabe, y entonces el
+     desbordamiento se reparte a los dos lados: el inicio de la barra sale fuera
+     de la ventana por la izquierda y esos puestos se vuelven inalcanzables.
+     Medido con los nueve puestos (1338px fijos): a 1200px el primero quedaba en
+     X=-68, a 1000px en -170, a 885px en -227 y a 760px en -290.
+
+     `safe center` es exactamente la palabra que CSS tiene para esto: centra
+     mientras quepa y, en cuanto desborda, alinea al inicio en vez de recortar.
+     Ningun puesto queda inalcanzable.
+
+     Y el riel se vuelve deslizable, que es la decision del PO: los nueve
+     conservan su tamano completo —nada de tipografia encogida, la barra grande
+     manda— y quien no tenga ancho desliza. La barra de desplazamiento se oculta
+     como ya se hace en los otros rieles del header (ver linea 396). */
+  justify-content: safe center !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none !important;
   column-gap: 0 !important;
   align-items: center !important;
+}
+
+#mainNav#mainNav.mdj-mainnav-flex.nav.top-nav::-webkit-scrollbar {
+  display: none !important;   /* mismo criterio que los demas rieles del header */
 }
 
 /* Presencia plena de los nueve, sin condición de sesión ni de página. */
