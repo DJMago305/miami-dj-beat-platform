@@ -566,7 +566,7 @@
 
   /* ───── demo data ───── */
   var state={
-    screen:'command', params:{}, stack:[], online:true, voiceMode:'voice',
+    screen:'command', params:{}, stack:[], online:true, voiceMode:'text',
     avatar:'idle', missionCreated:false, decisionReady:false,
   };
   var MISSION=null;
@@ -1092,7 +1092,11 @@
       apagar();
       linea(T('Canal de voz cerrado.','Voice channel closed.'),'sys');
       rotulo('');
-      if(!silencioso) setAvatar('idle');
+      /* Al colgar, el tablero se despide del avatar y vuelve al chat: es el
+         estado natural del agente, no una pantalla vacia esperando. */
+      state.voiceMode='text';
+      state.avatar='idle';
+      render();
     }
 
     window.addEventListener('beforeunload', liquidar);
@@ -1101,9 +1105,10 @@
 
   /* continuous dialogue: the agent keeps listening & answering until the human ends it */
   function startListening(){
-    /* Antes: dictado del navegador. Ahora: canal de voz en tiempo real.
-       La diferencia que se nota es que ahora se le puede interrumpir. */
+    /* Es un agente con rostro: el chat es la casa y el avatar se presenta
+       cuando lo llamas. Llamar a ELIXIS trae al avatar al tablero. */
     state.agentLine=null; state.agentReply=null;
+    state.voiceMode='voice'; render();
     RT.start();
   }
   function startTranscribe(text){
