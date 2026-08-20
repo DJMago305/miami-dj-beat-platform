@@ -15,6 +15,19 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Fail safe: If we are not on a page with weather, abort.
+/* ── PUENTE AL TIEMPO ────────────────────────────────────────────────
+   La clave YA NO viaja al navegador: vive solo en la funcion mdj-weather.
+   Antes estaba incrustada aqui y este archivo se sirve publico, asi que
+   cualquiera la leia. Una variable de navegador la habria sacado de git
+   pero no de la vista. */
+function mdjPuenteClima(params) {
+    var base = (typeof window !== 'undefined' && typeof window.mdbSupabaseFunctionUrl === 'function')
+        ? window.mdbSupabaseFunctionUrl('mdj-weather') : '';
+    if (!base) return '';
+    var u = new URL(base);
+    Object.keys(params).forEach(function (k) { u.searchParams.set(k, params[k]); });
+    return u.toString();
+}
     if (!elements.location) return;
 
     // La clave se inyecta desde fuera; NUNCA se escribe aqui. Habia un literal
@@ -22,8 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // la clave quedaba a la vista de cualquiera. Sin reserva: si no hay clave,
     // no se llama a la API y se dice por que.
     const CONFIG = {
-        apiKey:
-            (typeof window !== 'undefined' && window.OPENWEATHER_API_KEY && String(window.OPENWEATHER_API_KEY).trim()) || '',
         lat: localStorage.getItem('mdj_weather_lat') || '25.8576', // Dynamic via UI or Hialeah Fallback
         lon: localStorage.getItem('mdj_weather_lon') || '-80.2781', // Dynamic via UI or Hialeah Fallback
         units: 'imperial', // Using Fahrenheit/Miles as per current UI
@@ -85,12 +96,9 @@ document.addEventListener('DOMContentLoaded', () => {
      * Main Data Fetch Sequence
      */
     async function fetchWeatherData() {
-        if (!CONFIG.apiKey) {
-            console.warn('[weather] Sin clave: define window.OPENWEATHER_API_KEY antes de cargar weather-api.js. No se llama a la API.');
-            return;
-        }
         try {
-            const url = `https://api.openweathermap.org/data/2.5/weather?lat=${CONFIG.lat}&lon=${CONFIG.lon}&units=${CONFIG.units}&lang=${CONFIG.lang}&appid=${CONFIG.apiKey}`;
+            const url = mdjPuenteClima({ recurso: 'weather', lat: CONFIG.lat, lon: CONFIG.lon, units: CONFIG.units, lang: CONFIG.lang });
+            if (!url) { console.warn('[weather] Puente no disponible: falta supabase-config.js.'); return; }
             const response = await fetch(url);
 
             if (!response.ok) {

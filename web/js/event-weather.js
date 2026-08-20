@@ -14,14 +14,7 @@ setTimeout(function () {
     }
 }, 1200);
 
-/** En producción definir `window.OPENWEATHER_API_KEY` antes de cargar este script (Vercel env → inline o Edge). */
-function mdjOpenWeatherApiKey() {
-    if (typeof window !== 'undefined' && window.OPENWEATHER_API_KEY && String(window.OPENWEATHER_API_KEY).trim()) {
-        return String(window.OPENWEATHER_API_KEY).trim();
-    }
-    /* Sin reserva a proposito: un literal aqui es un secreto publicado. */
-    return '';
-}
+/* La clave ya no vive en el navegador: la lleva mdj-weather. */
 
 let currentDuration = 220;
 let _carouselLerpRaf = null;
@@ -69,9 +62,9 @@ const __mdjGeocodeCache = {};
 async function mdjGeocodeCityForWeather(cityLabel) {
     const key = String(cityLabel).toLowerCase();
     if (__mdjGeocodeCache[key]) return __mdjGeocodeCache[key];
-    const API_KEY = mdjOpenWeatherApiKey();
     const q = encodeURIComponent(`${cityLabel},FL,US`);
-    const url = `https://api.openweathermap.org/geo/1.0/direct?q=${q}&limit=1&appid=${API_KEY}`;
+    const url = mdjPuenteClima({ recurso: 'geo', q: cityLabel + ',FL,US' });
+    if (!url) return null;
     try {
         const res = await fetch(url);
         if (!res.ok) return null;
@@ -121,9 +114,9 @@ async function getWeatherForecast(city, eventDateStr, lat = null, lon = null) {
             }
         }
     }
-    const API_KEY = mdjOpenWeatherApiKey();
     const params = `&appid=${API_KEY}&units=imperial&lang=es&t=${Date.now()}`;
-    const urlCurrent = `https://api.openweathermap.org/data/2.5/weather?lat=${useLat}&lon=${useLon}${params}`;
+    const urlCurrent = mdjPuenteClima({ recurso: 'weather', lat: useLat, lon: useLon, units: 'imperial', lang: 'es' });
+    if (!urlCurrent) return null;
 
     // TEMP diagnóstico: confirmar Hialeah vs Miami vs geocoding (quitar al cerrar)
     const _owmHasGpsOrEventCoords = lat != null && lon != null && !isNaN(Number(lat)) && !isNaN(Number(lon));
@@ -143,7 +136,7 @@ async function getWeatherForecast(city, eventDateStr, lat = null, lon = null) {
     // La Manguera API está abierta al 100%. No hay filtros ni overrides alterando el clima real.
 
     // Forecast misma grilla (Miami)
-    const urlForecast = `https://api.openweathermap.org/data/2.5/forecast?lat=${useLat}&lon=${useLon}${params}`;
+    const urlForecast = mdjPuenteClima({ recurso: 'forecast', lat: useLat, lon: useLon, units: 'imperial', lang: 'es' });
 
     const resForecast = await fetch(urlForecast);
     let forecastData = null;
