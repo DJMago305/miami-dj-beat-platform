@@ -1411,6 +1411,13 @@ serve(async (req: Request) => {
     const cuerpo: Record<string, unknown> = { reply };
     if (smsPendiente) cuerpo.sms_pendiente = smsPendiente;
     if (herramientasUsadas.length) cuerpo.herramientas_usadas = herramientasUsadas;
+    /* EL MODO DEL GOBERNADOR, visible por fin. Se calcula desde hace tiempo
+       para acortarle la cuerda a ELIXIS cuando baja el presupuesto, pero NO
+       salia de aqui: el Capitan estaba siendo protegido A CIEGAS, sin ver que
+       su agente iba mas escueto. Ahora lo dice la pastilla de la consola.
+       Solo el modo y el porcentaje gastado -- ni cifras de gasto ni topes. */
+    cuerpo.modo = govUnlimited ? "ILIMITADO" : govMode;
+    cuerpo.modo_pct = govUnlimited ? 0 : govPct;
     return new Response(JSON.stringify(cuerpo),
         { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
 });

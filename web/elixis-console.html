@@ -162,6 +162,12 @@
   }
   .dot{width:8px;height:8px;border-radius:50%;background:#3ecb7f;box-shadow:0 0 10px #3ecb7f;flex:none}
   .pill.off .dot{background:var(--danger);box-shadow:0 0 10px var(--danger)}
+  /* El modo se lee por color antes que por texto: si el Gobernador te esta
+     apretando la cuerda, se tiene que notar de un vistazo. */
+  .pill.ahorro{color:#e8b23a;border-color:rgba(232,178,58,.42)}
+  .pill.ahorro .dot{background:#e8b23a;box-shadow:0 0 10px #e8b23a}
+  .pill.esencial{color:var(--danger);border-color:rgba(224,101,79,.45)}
+  .pill.esencial .dot{background:var(--danger);box-shadow:0 0 10px var(--danger)}
 
   /* ── Message stream ────────────────────────────────── */
   .stream{
@@ -1288,6 +1294,30 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
     });
   })();
 
+  /* ═══ EL MODO DEL GOBERNADOR ═══════════════════════════════════════
+     Cuando el presupuesto baja, ELIXIS no se apaga: se le acorta la cuerda y
+     responde mas escueto. Eso pasaba EN SILENCIO. Ahora se ve.
+     La pastilla solo dice lo que el backend confirma; antes de la primera
+     respuesta dice si hay conexion, que es lo unico que sabe. */
+  var MODOS = {
+    ILIMITADO: { txt: "Modo full",  clase: "" },
+    FULL:      { txt: "Modo full",  clase: "" },
+    SAVER:     { txt: "Ahorro",     clase: "ahorro" },
+    ESSENTIAL: { txt: "Esencial",   clase: "esencial" }
+  };
+  function pintarModo(modo, pct){
+    var p = document.getElementById("statusPill");
+    if(!p) return;
+    var m = MODOS[modo];
+    if(!m) return;                      /* modo desconocido: no se inventa nada */
+    p.classList.remove("ahorro", "esencial");
+    if(m.clase) p.classList.add(m.clase);
+    p.innerHTML = '<i class="dot"></i> ' + m.txt;
+    p.title = (typeof pct === "number" && pct > 0)
+      ? m.txt + " · " + pct + "% del presupuesto usado"
+      : m.txt;
+  }
+
   var volRange = document.getElementById("volRange");
   var _volumen = 1;
   try { var g = localStorage.getItem("elixis_volumen"); if (g !== null) _volumen = Math.min(1, Math.max(0, Number(g))); } catch (e) {}
@@ -1437,6 +1467,7 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
       /* FASE 1 en accion: esto es lo que ELIXIS hizo de verdad, reportado por
          el backend. Sin este campo, la ventana estaria adivinando. */
       if(data.herramientas_usadas) dibujarProceso(data.herramientas_usadas);
+      if(data.modo) pintarModo(data.modo, data.modo_pct);
       /* Si en este turno quedo un SMS en cola, la tarjeta sale justo debajo de
          lo que dijo ELIXIS, para que la decision este donde esta el contexto. */
       if(data.sms_pendiente) addSmsCard(data.sms_pendiente);
