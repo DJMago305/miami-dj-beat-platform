@@ -260,6 +260,29 @@
       if (typeof window.switchProfileTab === 'function' && !window.switchProfileTab.__mdjMarca) {
         var original = window.switchProfileTab;
         var envuelto = function () {
+          /* LEY DE ESTABILIDAD VISUAL · ANTI-BRINCO.
+             Medido en el perfil: con la vista desplazada a 300 y el panel corto
+             entrando, el documento pasaba de 1561 a 1000 px y el navegador
+             CLAMPABA el scroll de 300 a 0 en el mismo instante. Ese tiron
+             involuntario es el «disparo» que reporta el PO.
+             switchProfileTab no desplaza a proposito: el salto lo provoca el
+             propio navegador al quedarse la pagina mas corta que la posicion
+             actual. Y con el panel corto el scroll maximo es 0, asi que el
+             clampeo es inevitable si no se coloca la vista ANTES.
+             Se sube al inicio del area de pestañas antes de conmutar. El
+             movimiento pasa a ser deliberado y previo; en el instante del cambio
+             el desplazamiento involuntario es cero. No se toca el tamaño de
+             ningun contenedor. */
+          try {
+            if (window.pageYOffset > 0) {
+              /* INSTANTANEO, nunca suave. Una animacion de scroll corriendo a la
+                 vez que el panel cambia de alto es precisamente la carrera que
+                 produce el acordeon: el documento encoge a mitad de animacion y
+                 el navegador vuelve a clampar. Colocar primero y de golpe deja
+                 el cambio de contenido sin ningun movimiento pendiente. */
+              window.scrollTo(0, 0);
+            }
+          } catch (eScroll) { void eScroll; }
           var r = original.apply(this, arguments);
           setTimeout(mdjMarcarPuestoActivo, 0);
           return r;

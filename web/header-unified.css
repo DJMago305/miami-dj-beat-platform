@@ -4743,19 +4743,6 @@ html.mdj-estacion-previa #booth-hero-container { margin-top: 84px !important; }
 html.mdj-estacion-previa .acct-body { padding-top: 104px !important; }
 html.mdj-estacion-previa .acct-side { top: 188px !important; }
 
-/* ── EL ACORDEON AL CAMBIAR DE PESTAÑA ────────────────────────────────────────
-   Medido en el perfil: el documento pasaba de 1279 a 1000 px y volvia a 1279 al
-   conmutar —279px de encogimiento y estirado. Los paneles cuelgan directamente
-   del body, asi que el que se oculta se lleva su alto consigo.
-   No se igualan todos al mas alto, que dejaria huecos enormes en los cortos: se
-   les da un suelo de una pantalla, de modo que ninguno pueda encoger la pagina
-   por debajo de lo que ya se ve. Lo que quede por encima es contenido real. */
-body.dj-profile #tab-public,
-body.dj-profile #tab-flow,
-body.dj-profile #tab-sft {
-  min-height: calc(100svh - 210px);
-}
-
 #mdj-flotante-visitante .mdj-flotante-marca {
   display: inline-flex;
   align-items: center;
