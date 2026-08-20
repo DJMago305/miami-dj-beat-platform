@@ -277,10 +277,27 @@
   .mic.rec{background:linear-gradient(180deg,#ff6b6b,var(--red));color:#fff;box-shadow:0 0 0 6px rgba(240,97,114,.18),0 0 44px rgba(240,97,114,.4)}
 
   /* text input */
-  .cmd-input{display:flex;gap:8px;margin-top:12px}
-  .cmd-input input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line2);border-radius:14px;padding:14px 14px;color:var(--text);font-size:15px;font-family:inherit}
-  .cmd-input input:focus{outline:none;border-color:var(--gold2)}
-  .cmd-input .send{width:52px;flex:none;border-radius:14px;background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1a1405;display:grid;place-items:center}
+  /* ── Compositor de espacio de trabajo ─────────────────────────────
+     Convenciones de Apple: la fuente del sistema, correccion y mayuscula
+     automatica de frase, y 16px CLAVADOS -- por debajo de eso Safari en iOS
+     hace zoom al enfocar y descoloca la pantalla entera. Crece solo hasta
+     seis lineas, como cualquier chat serio, y respeta el area segura para
+     no quedar debajo del indicador de inicio. */
+  .cmd-input{display:flex;gap:8px;margin-top:12px;align-items:flex-end;
+    padding-bottom:env(safe-area-inset-bottom,0px)}
+  .cmd-input textarea{
+    flex:1;min-width:0;resize:none;overflow-y:auto;
+    min-height:52px;max-height:9.5em;
+    background:var(--bg);border:1px solid var(--line2);border-radius:14px;
+    padding:15px 14px;color:var(--text);
+    font-size:16px;line-height:1.45;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+    -webkit-appearance:none;appearance:none;
+  }
+  .cmd-input textarea:focus{outline:none;border-color:var(--gold2)}
+  .cmd-input textarea::placeholder{color:var(--faint)}
+  .cmd-input .send{width:52px;height:52px;flex:none;border-radius:14px;background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1a1405;display:grid;place-items:center;transition:opacity .15s}
+  .cmd-input .send[disabled]{opacity:.35}
 
   .chips{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
   .chip{font-size:12px;padding:7px 12px;border:1px solid var(--line2);border-radius:999px;background:var(--elev);color:var(--muted)}
@@ -609,25 +626,78 @@
   function mountFX(canvas,state){
     if(!canvas)return;FX.canvas=canvas;FX.ctx=canvas.getContext('2d');fxSize();
     var m=FXMAP[state]||FXMAP.idle;FX.target=m[0];FX.hue=m[1];
-    if(!FX.pts){FX.pts=[];for(var i=0;i<28;i++)FX.pts.push({x:Math.random()*FX.W,y:Math.random()*FX.H,vx:(Math.random()-.5)*.32,vy:(Math.random()-.5)*.32,r:Math.random()*1.5+.7,ph:Math.random()*6.28});}
+    if(!FX.pts){FX.pts=[];for(var i=0;i<44;i++)FX.pts.push({x:Math.random()*FX.W,y:Math.random()*FX.H,vx:(Math.random()-.5)*.32,vy:(Math.random()-.5)*.32,r:Math.random()*1.5+.7,ph:Math.random()*6.28});}
     if(FX.reduce){FX.intensity=FX.target;fxDraw();return;}
     if(!FX.raf)fxLoop();
   }
+  /* La red tiene que LEERSE como una red: hilos visibles con su propio
+     resplandor, nodos con nucleo y halo, y pulsos de energia recorriendo las
+     conexiones. Antes eran puntos y rayas planas; ahora se ve la corriente. */
   function fxDraw(){
     var ctx=FX.ctx,c=FX.canvas;if(!ctx||!c||!document.body.contains(c))return;
     FX.intensity+=(FX.target-FX.intensity)*0.05;
-    /* voice-reactive: the particles (not the mic) move with a simulated audio envelope while listening/speaking */
     var voiceOn=(state.avatar==='listening'||state.avatar==='speaking'||state.avatar==='transcribing');
     var t=Date.now()/1000;
-    var s=0.5*Math.sin(t*7.3)+0.28*Math.sin(t*13.1+1)+0.22*Math.sin(t*19.7+2);
-    var raw=voiceOn?(0.5+0.5*s):0;
+    var sMix=0.5*Math.sin(t*7.3)+0.28*Math.sin(t*13.1+1)+0.22*Math.sin(t*19.7+2);
+    var raw=voiceOn?(0.5+0.5*sMix):0;
     FX.level=(FX.level||0)+(raw-(FX.level||0))*0.3; var lvl=FX.level;
-    var W=FX.W,H=FX.H,pts=FX.pts,inten=FX.intensity*(1+lvl*0.7);ctx.clearRect(0,0,W,H);
-    for(var i=0;i<pts.length;i++){var p=pts[i];p.x+=p.vx*inten;p.y+=p.vy*inten;if(p.x<-4)p.x+=W+8;if(p.x>W+4)p.x-=W+8;if(p.y<-4)p.y+=H+8;if(p.y>H+4)p.y-=H+8;}
-    var D=Math.min(W,H)*0.46*(1+lvl*0.14);
-    for(var i=0;i<pts.length;i++)for(var j=i+1;j<pts.length;j++){var a=pts[i],b=pts[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);
-      if(d<D){var al=(1-d/D)*0.26*Math.min(1.7,inten)*(1+lvl*0.9);ctx.strokeStyle=fxCol(al);ctx.lineWidth=.7+lvl*.5;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}}
-    for(var i=0;i<pts.length;i++){var p=pts[i];var pr=(p.r+Math.sin(Date.now()/600+p.ph)*.3)*(1+lvl*1.05);ctx.fillStyle=fxCol(.6+lvl*.4);ctx.beginPath();ctx.arc(p.x,p.y,Math.max(.4,pr),0,6.283);ctx.fill();}
+    var W=FX.W,H=FX.H,pts=FX.pts,inten=FX.intensity*(1+lvl*0.7);
+    ctx.clearRect(0,0,W,H);
+
+    for(var i=0;i<pts.length;i++){var p=pts[i];p.x+=p.vx*inten;p.y+=p.vy*inten;
+      if(p.x<-4)p.x+=W+8;if(p.x>W+4)p.x-=W+8;if(p.y<-4)p.y+=H+8;if(p.y>H+4)p.y-=H+8;}
+
+    var D=Math.min(W,H)*0.42*(1+lvl*0.14);
+
+    /* Los hilos, con resplandor propio. El grosor y el brillo caen con la
+       distancia, que es lo que da sensacion de profundidad. */
+    /* SIN shadowBlur en los hilos: son cientos de trazos por frame y el
+       desenfoque de sombra es lo mas caro del canvas -- fundiria la GPU en
+       movil. El brillo se consigue con alfa y grosor, que no cuesta nada.
+       La sombra se reserva para los pulsos, que son diez arcos pequenos. */
+    ctx.lineCap='round';
+    var enlaces=[];
+    for(var i=0;i<pts.length;i++)for(var j=i+1;j<pts.length;j++){
+      var a=pts[i],b=pts[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<D){
+        var k=1-d/D;
+        ctx.strokeStyle=fxCol((k*k*0.42*Math.min(1.7,inten)*(1+lvl*0.9)).toFixed(3));
+        ctx.lineWidth=(0.45+k*1.05+lvl*0.5);
+        ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+        if(k>0.55) enlaces.push([a,b]);
+      }
+    }
+
+    /* Pulsos de energia: chispas que recorren las conexiones mas fuertes.
+       Es lo que convierte una malla estatica en una red con corriente. */
+    if(!FX.pulsos) FX.pulsos=[];
+    while(FX.pulsos.length<10 && enlaces.length)
+      FX.pulsos.push({e:enlaces[(Math.random()*enlaces.length)|0], t:Math.random(), v:0.006+Math.random()*0.012});
+    for(var i=FX.pulsos.length-1;i>=0;i--){
+      var pu=FX.pulsos[i];
+      pu.t += pu.v*(1+lvl*1.6)*inten;
+      if(pu.t>=1){
+        if(!enlaces.length){ FX.pulsos.splice(i,1); continue; }
+        pu.e=enlaces[(Math.random()*enlaces.length)|0]; pu.t=0; continue;
+      }
+      var A=pu.e[0], B=pu.e[1];
+      var px=A.x+(B.x-A.x)*pu.t, py=A.y+(B.y-A.y)*pu.t;
+      var brillo=Math.sin(pu.t*Math.PI);
+      ctx.shadowColor=fxCol(.9); ctx.shadowBlur=10*brillo;
+      ctx.fillStyle=fxCol((0.55+lvl*0.45)*brillo);
+      ctx.beginPath();ctx.arc(px,py,1.5+lvl*1.2,0,6.283);ctx.fill();
+      ctx.shadowBlur=0;
+    }
+
+    /* Nodos: nucleo solido con halo, no un punto plano. */
+    for(var i=0;i<pts.length;i++){
+      var p=pts[i];
+      var pr=(p.r+Math.sin(Date.now()/600+p.ph)*.3)*(1+lvl*1.05);
+      ctx.fillStyle=fxCol((0.12+lvl*0.14).toFixed(3));
+      ctx.beginPath();ctx.arc(p.x,p.y,Math.max(.6,pr*2.6),0,6.283);ctx.fill();
+      ctx.fillStyle=fxCol(.72+lvl*.28);
+      ctx.beginPath();ctx.arc(p.x,p.y,Math.max(.4,pr),0,6.283);ctx.fill();
+    }
   }
   function fxLoop(){fxDraw();FX.raf=requestAnimationFrame(fxLoop);}
   window.addEventListener('resize',function(){if(FX.canvas&&document.body.contains(FX.canvas))fxSize();});
@@ -773,9 +843,28 @@
         body=$('#cmdBody');
         body.innerHTML='<div class="convo-state" id="convoState"></div>'+
           '<div class="convo" id="convo"></div>'+
-          '<div class="cmd-input"><input id="cmdText" placeholder="'+T('Escribe tu comando…','Type your command…')+'" autocomplete="off"><button class="send" id="cmdSend">'+svg('send','width="18"')+'</button></div>'+exampleChips();
-        $('#cmdSend').onclick=sendText;
-        $('#cmdText').addEventListener('keydown',function(e){if(e.key==='Enter')sendText();});
+          '<div class="cmd-input">'+
+            '<textarea id="cmdText" rows="1" placeholder="'+T('Escribe a ELIXIS…','Write to ELIXIS…')+'" '+
+              'enterkeyhint="send" inputmode="text" autocapitalize="sentences" '+
+              'autocorrect="on" spellcheck="true" autocomplete="off"></textarea>'+
+            '<button class="send" id="cmdSend" disabled>'+svg('send','width="20"')+'</button></div>';
+        var ta=$('#cmdText'), btn=$('#cmdSend');
+        function crecer(){ ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,152)+'px'; }
+        function listo(){ btn.disabled = !ta.value.trim(); }
+        ta.addEventListener('input',function(){ crecer(); listo(); });
+        btn.onclick=function(){ sendText(); crecer(); listo(); };
+        ta.addEventListener('keydown',function(e){
+          /* Escritorio: Enter envia, Shift+Enter salta de linea -- lo que
+             espera cualquiera que venga de ChatGPT o Cursor. En movil el
+             teclado trae boton de enviar (enterkeyhint) y hace lo mismo. */
+          if(e.key==='Enter' && !e.shiftKey && !e.isComposing){
+            e.preventDefault(); sendText(); crecer(); listo();
+          }
+        });
+        listo();
+        /* En escritorio el cursor ya esta puesto; en tactil NO se enfoca solo,
+           que abriria el teclado encima de la conversacion sin pedirlo. */
+        if(!('ontouchstart' in window)) setTimeout(function(){ try{ ta.focus(); }catch(e){} }, 80);
       } else {
         /* El saludo "Hola, soy ELIXIS, tu agente ejecutivo / Que necesitas que
            haga?" se elimino por decision del PO. La cara ya dice quien es. */
@@ -1117,7 +1206,16 @@
     if(cap){typeInto('#voiceCaption',text,function(){setTimeout(function(){startUnderstanding(text);},450);});}
     else{setTimeout(function(){startUnderstanding(text);},400);}
   }
-  function sendText(){var i=$('#cmdText');if(!i||!i.value.trim())return;if(!state.online){toast(T('Sin conexión · borrador guardado','Offline · draft saved'),'warn');return;}startUnderstanding(i.value.trim());}
+  function sendText(){
+    var i=$('#cmdText'); if(!i||!i.value.trim()) return;
+    if(!state.online){ toast(T('Sin conexión · borrador guardado','Offline · draft saved'),'warn'); return; }
+    var txt=i.value.trim();
+    /* Se vacia y se encoge ANTES de enviar: en un chat, el campo que se queda
+       con lo que acabas de mandar es un error que se nota en el primer uso. */
+    i.value=''; i.style.height='auto';
+    var b=$('#cmdSend'); if(b) b.disabled=true;
+    startUnderstanding(txt);
+  }
   function startUnderstanding(text){
     state.avatar='understanding';state.agentReply=null;render();haptic('light');
     askElixis(text).then(function(reply){
