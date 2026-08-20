@@ -17,12 +17,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fail safe: If we are not on a page with weather, abort.
     if (!elements.location) return;
 
-    // TODO: Replace with real production API key and endpoint.
-    // For this lab environment, we define a quick OpenWeatherMap config.
+    // La clave se inyecta desde fuera; NUNCA se escribe aqui. Habia un literal
+    // de reserva y este archivo se sirve publico (200 desde internet), asi que
+    // la clave quedaba a la vista de cualquiera. Sin reserva: si no hay clave,
+    // no se llama a la API y se dice por que.
     const CONFIG = {
         apiKey:
-            (typeof window !== 'undefined' && window.OPENWEATHER_API_KEY && String(window.OPENWEATHER_API_KEY).trim()) ||
-            'dd8223bfcc6f68da9fc28ca245fe0201',
+            (typeof window !== 'undefined' && window.OPENWEATHER_API_KEY && String(window.OPENWEATHER_API_KEY).trim()) || '',
         lat: localStorage.getItem('mdj_weather_lat') || '25.8576', // Dynamic via UI or Hialeah Fallback
         lon: localStorage.getItem('mdj_weather_lon') || '-80.2781', // Dynamic via UI or Hialeah Fallback
         units: 'imperial', // Using Fahrenheit/Miles as per current UI
@@ -84,6 +85,10 @@ document.addEventListener('DOMContentLoaded', () => {
      * Main Data Fetch Sequence
      */
     async function fetchWeatherData() {
+        if (!CONFIG.apiKey) {
+            console.warn('[weather] Sin clave: define window.OPENWEATHER_API_KEY antes de cargar weather-api.js. No se llama a la API.');
+            return;
+        }
         try {
             const url = `https://api.openweathermap.org/data/2.5/weather?lat=${CONFIG.lat}&lon=${CONFIG.lon}&units=${CONFIG.units}&lang=${CONFIG.lang}&appid=${CONFIG.apiKey}`;
             const response = await fetch(url);

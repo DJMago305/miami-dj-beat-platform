@@ -20,8 +20,10 @@ const WeatherGeoEngine = {
     },
 
     fetchProfessionalWeather: async function(lat, lon, realCityName) {
-        // La API KEY Profesional rescatada de la arquitectura original
-        const API_KEY = window.OPENWEATHER_API_KEY || 'dd8223bfcc6f68da9fc28ca245fe0201';
+        // La clave se inyecta desde fuera; NUNCA se escribe aqui: este archivo
+        // se sirve publico. Sin clave no se llama a la API.
+        const API_KEY = (window.OPENWEATHER_API_KEY || '').trim();
+        if (!API_KEY) { console.warn('[weather-engine] Sin OPENWEATHER_API_KEY; no se consulta el tiempo.'); return null; }
         const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=imperial&lang=es`;
         
         try {
