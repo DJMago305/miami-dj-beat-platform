@@ -46,19 +46,32 @@ h1{margin:0;font-size:clamp(24px,4vw,34px);font-weight:800;letter-spacing:-.03em
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
 .panel h2{margin:0 0 14px;font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
 
-/* ── Estado + medidor ── */
+/* ── Avatar + anillo holográfico ── */
 .stage{display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center;padding:8px 0 4px}
-.orb{
-  width:104px;height:104px;border-radius:50%;flex:none;
-  background:radial-gradient(circle at 35% 30%,#2A3342,#161C25);
-  border:2px solid var(--line); position:relative;
-  display:grid;place-items:center; transition:border-color .18s ease, box-shadow .18s ease;
+
+.avatar{position:relative;width:240px;height:240px;flex:none;display:grid;place-items:center}
+#audioVisualizerRing{position:absolute;inset:0;width:240px;height:240px;pointer-events:none}
+
+.avatar-core{
+  position:relative;z-index:1;
+  width:138px;height:138px;border-radius:50%;
+  background:radial-gradient(circle at 34% 28%,#232C3A,#11161D 70%);
+  border:2px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  transition:border-color .2s ease, box-shadow .2s ease;
 }
-.orb::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px solid transparent;transition:border-color .18s ease}
-.orb .glyph{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--muted)}
-body.is-listening .orb{border-color:var(--live);box-shadow:0 0 0 6px rgba(76,195,138,.10)}
-body.is-thinking  .orb{border-color:var(--info);box-shadow:0 0 0 6px rgba(85,180,216,.10)}
-body.is-speaking  .orb{border-color:var(--accent);box-shadow:0 0 0 6px rgba(224,163,69,.12)}
+.avatar-mark{
+  font-family:var(--sans);font-size:13px;font-weight:800;letter-spacing:.22em;
+  color:var(--ink-2);padding-left:.22em;
+}
+.avatar-state{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--muted)}
+
+body.is-listening .avatar-core{border-color:var(--live);box-shadow:0 0 22px -4px rgba(76,195,138,.55)}
+body.is-listening .avatar-mark{color:#BFEBD5}
+body.is-thinking  .avatar-core{border-color:var(--info);box-shadow:0 0 22px -4px rgba(85,180,216,.55)}
+body.is-thinking  .avatar-mark{color:#C2E6F4}
+body.is-speaking  .avatar-core{border-color:var(--accent);box-shadow:0 0 30px -3px rgba(224,163,69,.7)}
+body.is-speaking  .avatar-mark{color:#FFE0AE}
 
 .state{font-size:17px;font-weight:650;letter-spacing:-.01em;min-height:1.5em}
 .state small{display:block;font-weight:400;font-size:12.5px;color:var(--muted);letter-spacing:0}
@@ -129,7 +142,7 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
 <div class="wrap">
 
   <header>
-    <div class="eyebrow">FÉNIX AI · Paso 2 — Laboratorio aislado</div>
+    <div class="eyebrow">FÉNIX AI · Pasos 2–3 — Laboratorio aislado</div>
     <h1>Laboratorio de voz de ELIXIS</h1>
     <p class="sub">Arnés de pruebas para el canal de voz en tiempo real. Verifica el candado JWT, la captura de micrófono y la latencia real de conversación.</p>
     <div class="who" id="who">Verificando sesión…</div>
@@ -141,7 +154,13 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
     <div class="panel">
       <h2>Canal de voz</h2>
       <div class="stage">
-        <div class="orb"><span class="glyph" id="orbGlyph">OFF</span></div>
+        <div class="avatar" id="avatar">
+          <canvas id="audioVisualizerRing" width="240" height="240" aria-hidden="true"></canvas>
+          <div class="avatar-core">
+            <div class="avatar-mark">ELIXIS</div>
+            <div class="avatar-state" id="orbGlyph">OFF</div>
+          </div>
+        </div>
         <div class="state" id="stateText">Desconectado<small id="stateHint">Pulsa Conectar y concede el micrófono.</small></div>
 
         <div class="meter" aria-hidden="true"><i id="micBar"></i></div>
@@ -235,6 +254,7 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
     el("stateHint").textContent = hint || "";
     el("orbGlyph").textContent = glyph || "OFF";
     document.body.className = cls ? ("is-"+cls) : "";
+    VIZ.setMode(cls || "idle");
   }
 
   function addAgentLine(){
@@ -330,37 +350,192 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
     }catch(e){}
   }
 
-  // ── Medidor de micrófono ───────────────────────────────────────────
-  function startMeter(stream){
-    try{
+  // ── MOTOR DE EXPRESIÓN VISUAL ──────────────────────────────────────
+  // El anillo lee audio REAL en sus dos fases, nunca una animación decorativa:
+  //   · Fase escucha   → AnalyserNode sobre el micrófono local.
+  //   · Fase respuesta → AnalyserNode sobre el MediaStream remoto.
+  // En WebRTC el PCM de ELIXIS viaja por la pista de media, NO por el
+  // DataChannel (los eventos response.output_audio.delta son del modo
+  // WebSocket). La pista es, por tanto, la única fuente fiel de su voz.
+  var VIZ = (function(){
+    var cv=null, g=null, raf=0, running=false;
+    var ac=null, sink=null, micAn=null, remAn=null, freq=null, time=null;
+    var mode="idle", level=0, phase=0, size=240, dpr=1;
+    var reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+    var SPOKES = 76;
+    // a = color en silencio, b = color a todo volumen. La fase de escucha
+    // recorre verde→dorado con tu voz; la de respuesta arranca ya en dorado.
+    var COLORS = {
+      idle:      { a:[ 56, 66, 79], b:[ 56, 66, 79] },
+      listening: { a:[ 76,195,138], b:[224,163, 69] },
+      thinking:  { a:[ 85,180,216], b:[138,205,230] },
+      speaking:  { a:[224,163, 69], b:[255,215,154] }
+    };
+
+    function mix(c,t){
+      return "rgb(" + Math.round(c.a[0]+(c.b[0]-c.a[0])*t) + ","
+                    + Math.round(c.a[1]+(c.b[1]-c.a[1])*t) + ","
+                    + Math.round(c.a[2]+(c.b[2]-c.a[2])*t) + ")";
+    }
+
+    function init(){
+      cv = el("audioVisualizerRing");
+      if(!cv) return;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = size*dpr; cv.height = size*dpr;
+      g = cv.getContext("2d");
+      g.scale(dpr,dpr);
+      draw();                       // estado idle visible desde el arranque
+    }
+
+    function ensureCtx(){
+      if(ac) return ac;
       var AC = window.AudioContext || window.webkitAudioContext;
-      if(!AC) return;
-      audioCtx = new AC();
-      var src = audioCtx.createMediaStreamSource(stream);
-      analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 512;
-      src.connect(analyser);
-      var buf = new Uint8Array(analyser.frequencyBinCount);
-      var bar = el("micBar");
-      (function tick(){
-        analyser.getByteTimeDomainData(buf);
-        var peak = 0;
-        for(var i=0;i<buf.length;i++){
-          var v = Math.abs(buf[i]-128)/128;
-          if(v > peak) peak = v;
+      if(!AC) return null;
+      ac = new AC();
+      // Sumidero mudo: garantiza que el grafo se bombee en todos los
+      // navegadores sin emitir un solo decibelio extra.
+      sink = ac.createGain(); sink.gain.value = 0; sink.connect(ac.destination);
+      freq = new Uint8Array(256);
+      time = new Uint8Array(256);
+      return ac;
+    }
+
+    function makeAnalyser(stream){
+      if(!ensureCtx() || !stream) return null;
+      try{
+        var src = ac.createMediaStreamSource(stream);
+        var an  = ac.createAnalyser();
+        an.fftSize = 512;
+        an.smoothingTimeConstant = 0.72;
+        src.connect(an); an.connect(sink);
+        return an;
+      }catch(e){ log("Analizador no disponible: " + e.message, "e"); return null; }
+    }
+
+    function attachMic(stream){
+      micAn = makeAnalyser(stream);
+      if(micAn){ log("Analizador de micrófono acoplado.", "g"); el("micLabel").textContent = "MICRÓFONO · CAPTURANDO"; }
+      start();
+    }
+
+    function attachRemote(stream){
+      remAn = makeAnalyser(stream);
+      if(remAn) log("Analizador de la voz de ELIXIS acoplado a la pista remota.", "g");
+      start();
+    }
+
+    function active(){
+      if(mode === "speaking")  return remAn || micAn;
+      if(mode === "listening") return micAn;
+      return null;               // pensando / idle no se modulan con audio
+    }
+
+    function readLevel(an){
+      if(!an) return 0;
+      an.getByteTimeDomainData(time);
+      var sum=0;
+      for(var i=0;i<time.length;i++){ var v=(time[i]-128)/128; sum += v*v; }
+      return Math.min(1, Math.sqrt(sum/time.length) * 3.2);
+    }
+
+    function draw(){
+      if(!g) return;
+      var an = active();
+      var target = readLevel(an);
+      level += (target - level) * 0.28;          // suavizado
+      if(level < 0.001) level = 0;
+
+      if(an) an.getByteFrequencyData(freq);
+      else if(freq) freq.fill(0);
+
+      var c = COLORS[mode] || COLORS.idle;
+      var cx = size/2, cy = size/2, R = 92;
+      g.clearRect(0,0,size,size);
+
+      // Aro base
+      g.beginPath();
+      g.arc(cx,cy,R,0,Math.PI*2);
+      g.strokeStyle = mix(c, level*0.9);
+      g.lineWidth = 1.5;
+      g.globalAlpha = mode === "idle" ? 0.5 : 0.85;
+      g.shadowBlur = mode === "idle" ? 0 : (6 + level*26);
+      g.shadowColor = mix(c, 1);
+      g.stroke();
+      g.shadowBlur = 0; g.globalAlpha = 1;
+
+      // Radios reactivos
+      g.lineWidth = 2.2;
+      g.lineCap = "round";
+      for(var i=0;i<SPOKES;i++){
+        var ang = (i/SPOKES)*Math.PI*2 - Math.PI/2;
+        var v;
+        if(an){
+          // Las primeras ~96 bandas cubren el rango de voz; el resto es aire.
+          v = freq[Math.floor((i/SPOKES)*96)] / 255;
+        }else if(mode === "thinking"){
+          // Sin audio que leer: barrido lento, la señal de que está razonando.
+          v = 0.16 + 0.16*Math.sin(phase*2 + i*0.35);
+        }else{
+          v = 0.05;
         }
-        bar.style.width = Math.min(100, Math.round(peak*180)) + "%";
-        meterRAF = requestAnimationFrame(tick);
-      })();
-      el("micLabel").textContent = "MICRÓFONO · CAPTURANDO";
-    }catch(e){ log("Medidor de micrófono no disponible: " + e.message, "e"); }
-  }
-  function stopMeter(){
-    if(meterRAF){ cancelAnimationFrame(meterRAF); meterRAF = 0; }
-    if(audioCtx){ try{ audioCtx.close(); }catch(e){} audioCtx = null; }
-    el("micBar").style.width = "0%";
-    el("micLabel").textContent = "MICRÓFONO · INACTIVO";
-  }
+        var len = 4 + v*40*(0.3 + 0.7*level) + (mode === "thinking" ? v*18 : 0);
+        var co = Math.cos(ang), si = Math.sin(ang);
+        g.beginPath();
+        g.moveTo(cx+co*(R+3), cy+si*(R+3));
+        g.lineTo(cx+co*(R+3+len), cy+si*(R+3+len));
+        g.strokeStyle = mix(c, Math.min(1, v*1.25));
+        g.globalAlpha = 0.35 + v*0.65;
+        g.stroke();
+      }
+      g.globalAlpha = 1;
+    }
+
+    function loop(){
+      phase += 0.016;
+      draw();
+      raf = requestAnimationFrame(loop);
+    }
+
+    function start(){
+      if(running || reduced) { draw(); return; }   // reducir movimiento → sin bucle
+      running = true;
+      raf = requestAnimationFrame(loop);
+    }
+
+    function setMode(m){
+      if(mode === m) return;
+      mode = m;
+      // Un cambio de estado se ve YA, no en el proximo frame. Delegar el
+      // repintado al bucle deja pixeles viejos en pantalla cuando el bucle no
+      // corre: antes de acoplar el primer stream, o cuando el navegador
+      // estrangula requestAnimationFrame con la pestana en segundo plano.
+      draw();
+      if(!reduced && !running && m !== "idle") start();
+    }
+
+    function stop(){
+      if(raf){ cancelAnimationFrame(raf); raf = 0; }
+      running = false;
+      micAn = remAn = null;
+      if(ac){ try{ ac.close(); }catch(e){} ac = null; sink = null; }
+      mode = "idle"; level = 0;
+      el("micBar").style.width = "0%";
+      el("micLabel").textContent = "MICRÓFONO · INACTIVO";
+      draw();
+    }
+
+    // El medidor numérico se conserva: es la prueba explícita de captura.
+    setInterval(function(){
+      if(!running && !reduced) return;
+      var pct = Math.min(100, Math.round(readLevel(micAn)*140));
+      el("micBar").style.width = pct + "%";
+    }, 90);
+
+    return { init:init, attachMic:attachMic, attachRemote:attachRemote,
+             setMode:setMode, stop:stop };
+  })();
 
   // ── Latencia ───────────────────────────────────────────────────────
   function noteLatency(){
@@ -390,6 +565,14 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
       case "input_audio_buffer.speech_stopped":
         turnStart = Date.now();
         setState("Pensando", "Turno cerrado, esperando respuesta.", "thinking", "···");
+        break;
+
+      // Defensivo: si el transporte cambiara a WebSocket, el audio llegaría
+      // como deltas. En WebRTC no aparecen, pero marcarlos cuesta dos líneas.
+      case "response.output_audio.delta":
+      case "response.audio.delta":
+        if(!agentLine){ noteLatency(); agentLine = addAgentLine(); }
+        setState("ELIXIS habla", "Puedes interrumpirlo cuando quieras.", "speaking", "TX");
         break;
 
       case "response.output_audio_transcript.delta":
@@ -440,13 +623,16 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
       }
       mark("mic","ok","concedido");
       log("Micrófono concedido.", "g");
-      startMeter(localStream);
+      VIZ.attachMic(localStream);
 
       // 2 · Peer connection
       pc = new RTCPeerConnection();
       audioEl = document.createElement("audio");
       audioEl.autoplay = true;
-      pc.ontrack = function(ev){ audioEl.srcObject = ev.streams[0]; };
+      pc.ontrack = function(ev){
+        audioEl.srcObject = ev.streams[0];      // reproducción
+        VIZ.attachRemote(ev.streams[0]);        // análisis para el anillo
+      };
       localStream.getAudioTracks().forEach(function(t){ pc.addTrack(t, localStream); });
 
       dc = pc.createDataChannel("oai-events");
@@ -517,7 +703,7 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
 
   // ── Cortar ─────────────────────────────────────────────────────────
   function cleanup(){
-    stopMeter();
+    VIZ.stop();
     if(dc){ try{ dc.close(); }catch(e){} dc = null; }
     if(pc){ try{ pc.close(); }catch(e){} pc = null; }
     if(localStream){ localStream.getTracks().forEach(function(t){ try{ t.stop(); }catch(e){} }); localStream = null; }
@@ -538,7 +724,8 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
   el("disconnectBtn").addEventListener("click", disconnect);
   window.addEventListener("beforeunload", cleanup);
 
-  log("Laboratorio de voz iniciado.");
+  VIZ.init();
+  log("Laboratorio de voz iniciado. Motor visual listo.");
   initAuth();
 })();
 </script>
