@@ -851,7 +851,10 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
          rotulo el que manda. -->
     <nav class="cuentas" id="cuentas" aria-label="Cuentas">
       <a href="./staff.html?vista=miperfil" data-vista="miperfil">Mi Perfil</a>
-      <a href="./staff.html?vista=gobernanza" data-vista="gobernanza">Staff</a>
+      <!-- STAFF NO ESTA AQUI A PROPOSITO. Se inyecta por codigo solo si el rol
+           pertenece al personal. Si estuviera en el HTML y la poda fallara,
+           una cuenta de artista se lo encontraria en el DOM: eso es fallar
+           ABIERTO, y en RBAC hay que fallar CERRADO. -->
       <a href="./staff.html?vista=elixis" data-vista="elixis" class="aqui" aria-current="page">Fénix AI</a>
     </nav>
 
@@ -1069,6 +1072,7 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
       userName = String(p.stage_name || p.dj_name || p.full_name || "").trim();
       userRole = String(p.role || "").toLowerCase().trim();
     }catch(e){}
+    podarTiraPorRol();
     showGreeting();
     try{
       supa.auth.onAuthStateChange(function(_ev, s){
@@ -1537,18 +1541,48 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
      portal YA lee ?vista= al arrancar, con su propia lista blanca: si el valor
      no existe cae en gobernanza, asi que una URL torcida no puede dejarlo sin
      vista. Por eso este menu NO necesita tocar staff.html. */
+  /* ═══ LA TIRA SE PODA POR ROL ══════════════════════════════════════
+     Ley RBAC del PO: la entrada a STAFF no le corresponde a una cuenta de
+     artista, y no basta con ocultarla -- tiene que salir DEL DOM. Ocultar por
+     CSS deja el enlace ahi para quien mire el codigo o navegue con el teclado.
+
+     Ojo con el nombre: "Staff" aqui es la PESTAÑA (estacion de trabajo,
+     internamente `gobernanza`), no la categoria. Quien la ve es quien pertenece
+     a la categoria: owner, manager o vendedor. */
+  var ROLES_STAFF = ["owner", "admin", "manager", "management", "seller"];
+  function podarTiraPorRol(){
+    /* AÑADIR, no quitar. El puesto de Staff nace fuera del DOM y solo entra si
+       el rol confirmado pertenece al personal. Asi, si esta funcion no llegara
+       a ejecutarse -- sin sesion, error de red, perfil sin leer -- la entrada
+       simplemente NO existe, en vez de quedarse expuesta.
+       Probado: la version anterior quitaba el nodo y, sin sesion, seguia en el
+       DOM porque este camino no se recorria. */
+    if(ROLES_STAFF.indexOf(userRole) === -1) return;
+    var nav = document.getElementById("cuentas");
+    if(!nav || nav.querySelector('[data-vista="gobernanza"]')) return;
+    var a = document.createElement("a");
+    a.href = "./staff.html?vista=gobernanza";
+    a.setAttribute("data-vista", "gobernanza");
+    a.textContent = "Staff";                 /* rotulo visible; la vista se llama gobernanza */
+    a.addEventListener("click", saltarFuera);
+    nav.insertBefore(a, nav.querySelector('[data-vista="elixis"]'));
+  }
+
+  /* Sale del iframe. Compartido por los puestos fijos y por el que se inyecta. */
+  function saltarFuera(ev){
+    ev.preventDefault();
+    var destino = ev.currentTarget.getAttribute("href");
+    try{
+      if(window.top && window.top !== window.self){ window.top.location.href = destino; return; }
+    }catch(_){ /* si el marco fuera de otro origen, se navega aqui */ }
+    window.location.href = destino;
+  }
+
   (function tiraDeCuentas(){
     var nav = document.getElementById("cuentas");
     if(!nav) return;
     nav.querySelectorAll("a[data-vista]").forEach(function(a){
-      a.addEventListener("click", function(ev){
-        ev.preventDefault();
-        var destino = a.getAttribute("href");
-        try{
-          if(window.top && window.top !== window.self){ window.top.location.href = destino; return; }
-        }catch(_){ /* si otro origen lo bloqueara, se navega aqui */ }
-        window.location.href = destino;
-      });
+      a.addEventListener("click", saltarFuera);
     });
   })();
 
