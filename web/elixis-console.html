@@ -284,6 +284,35 @@
   .icon-btn svg{width:20px;height:20px;display:block}
   /* El contenedor es aire; las piezas si atrapan el raton. */
   .topbar > *{pointer-events:auto}
+
+  /* ═══ TIRA DE CUENTAS ═══════════════════════════════════════════════
+     El tratamiento se copia de .staff-topnav del portal: mayusculas,
+     espaciado ancho y una barra "/" separando. Asi la consola no inventa
+     un lenguaje propio -- se reconoce como parte del mismo portal.
+     Barra PROPIA de esta pagina, no un componente compartido: cada portal
+     implementa el suyo, por ley del PO. */
+  .cuentas{
+    display:flex;align-items:center;gap:0;min-width:0;
+    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+  }
+  .cuentas a{
+    position:relative;text-decoration:none;color:var(--muted);
+    font-size:12.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+    padding:6px 12px 8px;white-space:nowrap;transition:color .15s ease;
+  }
+  .cuentas a + a::before{
+    content:"/";position:absolute;left:-2px;color:var(--line);
+    font-weight:500;letter-spacing:0;
+  }
+  .cuentas a.aqui{color:var(--gold)}
+  .cuentas a.aqui::after{
+    content:"";position:absolute;left:12px;right:12px;bottom:2px;height:2px;
+    background:var(--gold);border-radius:2px;
+  }
+  .cuentas a:focus-visible{outline:2px solid var(--gold-2);outline-offset:2px;border-radius:4px}
+  @media (hover:hover) and (pointer:fine){ .cuentas a:not(.aqui):hover{color:var(--text)} }
+  /* En pantalla estrecha la tira estorba mas de lo que ayuda. */
+  @media (max-width:900px){ .cuentas{display:none} }
   /* Cada pieza flota con su propio cristal, no sobre una franja comun. */
   .brand,.status > *{
     -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
@@ -816,6 +845,16 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
         <div class="sub">Agente Ejecutivo · FÉNIX AI</div>
       </div>
     </div>
+    <!-- ═══ TIRA DE CUENTAS ═══ Los rotulos se COPIAN del portal, no se
+         inventan: "Mi Perfil", "Staff", "Fénix AI". Ojo -- la vista interna de
+         Staff se llama `gobernanza`, pero el rotulo visible es Staff y es el
+         rotulo el que manda. -->
+    <nav class="cuentas" id="cuentas" aria-label="Cuentas">
+      <a href="./staff.html?vista=miperfil" data-vista="miperfil">Mi Perfil</a>
+      <a href="./staff.html?vista=gobernanza" data-vista="gobernanza">Staff</a>
+      <a href="./staff.html?vista=elixis" data-vista="elixis" class="aqui" aria-current="page">Fénix AI</a>
+    </nav>
+
     <div class="status">
       <!-- MODO. Hoy solo puede decir la verdad que conoce: si hay conexion.
            El modo real de presupuesto (FULL / SAVER / GRATIS) lo calcula
@@ -1489,6 +1528,30 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
      si no, la estacion de staff, que es a donde el resolvedor manda al owner.
      target=_top a proposito: la consola vive dentro de un iframe en
      staff.html, y sin eso cargaria el portal DENTRO de si mismo. */
+  /* ═══ LA TIRA SALE DEL IFRAME ══════════════════════════════════════
+     La consola vive dentro de un iframe en staff.html. Sin window.top, pulsar
+     "Mi Perfil" cargaria el portal DENTRO de si mismo -- un portal anidado.
+
+     Se navega por URL y no llamando al conmutador del portal porque showView
+     vive dentro de un closure (mountOwner) y desde aqui es inalcanzable. El
+     portal YA lee ?vista= al arrancar, con su propia lista blanca: si el valor
+     no existe cae en gobernanza, asi que una URL torcida no puede dejarlo sin
+     vista. Por eso este menu NO necesita tocar staff.html. */
+  (function tiraDeCuentas(){
+    var nav = document.getElementById("cuentas");
+    if(!nav) return;
+    nav.querySelectorAll("a[data-vista]").forEach(function(a){
+      a.addEventListener("click", function(ev){
+        ev.preventDefault();
+        var destino = a.getAttribute("href");
+        try{
+          if(window.top && window.top !== window.self){ window.top.location.href = destino; return; }
+        }catch(_){ /* si otro origen lo bloqueara, se navega aqui */ }
+        window.location.href = destino;
+      });
+    });
+  })();
+
   var salirBtn = document.getElementById("salirBtn");
   if (salirBtn) salirBtn.addEventListener("click", function () {
     var destino = "./staff.html";
