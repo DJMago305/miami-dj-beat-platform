@@ -376,6 +376,90 @@
 /* Todo lo demas flota POR ENCIMA de la red. */
 .topbar,.settings-panel,.stream,.composer,.hint{position:relative;z-index:1}
 .stream{background:none;border-left:0}
+
+/* ═══ LAS DOS VENTANAS LATERALES ══════════════════════════════════════
+   Viven en los margenes que deja la columna de lectura (920px centrados),
+   asi que no le quitan ni un pixel a la conversacion. Por debajo de 1240px
+   no hay margen que ocupar y se retiran: apretarlas seria peor que no
+   tenerlas. */
+.lado{
+  position:absolute; top:96px; bottom:96px; width:232px;
+  display:none; flex-direction:column; gap:10px; z-index:1;
+  pointer-events:none; opacity:0; transition:opacity .45s ease, transform .45s ease;
+}
+.lado-izq{left:max(16px, calc(50% - 460px - 248px)); transform:translateX(-14px)}
+.lado-der{right:max(16px, calc(50% - 460px - 248px)); transform:translateX(14px)}
+.lado.abierta{opacity:1; transform:translateX(0)}
+@media (min-width:1240px){ .lado{display:flex} }
+
+.lado-h{
+  font-family:var(--mono); font-size:10px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--muted); padding-left:2px; flex:none;
+}
+.lado-cuerpo{
+  flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:9px;
+  scrollbar-width:none;
+}
+.lado-cuerpo::-webkit-scrollbar{display:none}
+
+/* ── Derecha: la palabra ── */
+.tl{
+  font-size:12.5px; line-height:1.45; padding:8px 10px; border-radius:11px;
+  -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);
+  text-shadow:0 1px 3px rgba(0,0,0,.85);
+}
+.tl b{display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:.14em;
+  text-transform:uppercase; opacity:.72; margin-bottom:3px; font-weight:600}
+.tl.yo{background:rgba(212,175,55,.13); border:1px solid rgba(212,175,55,.34); color:#f0e6cc}
+.tl.el{background:rgba(63,185,230,.10); border:1px solid rgba(63,185,230,.30); color:#dcecf4}
+
+/* ── Izquierda: el proceso ── */
+.pz{
+  border:1px solid rgba(255,255,255,.12); border-radius:13px; padding:11px 12px;
+  background:rgba(20,24,30,.20);
+  -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);
+  display:flex; flex-direction:column; gap:9px;
+}
+.pz-n{font-family:var(--mono); font-size:10.5px; letter-spacing:.10em;
+  text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:7px}
+.pz-n .punto{width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none}
+.pz.ok .pz-n .punto{background:#3ecb7f;box-shadow:0 0 8px #3ecb7f}
+.pz.mal .pz-n .punto{background:var(--danger);box-shadow:0 0 8px var(--danger)}
+
+/* El SOBRE y la chispa que lo alcanza. La energia recorre un circuito y el
+   simbolo se enciende AL LLEGAR -- mismo lenguaje que los pulsos del fondo. */
+.pz-escena{position:relative; height:74px; display:grid; place-items:center}
+.pz-hilo{position:absolute; left:8px; right:8px; top:50%; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(212,175,55,.45),transparent)}
+.pz-chispa{
+  position:absolute; top:50%; left:8px; width:7px; height:7px; margin-top:-3.5px;
+  border-radius:50%; background:#fff4d0; box-shadow:0 0 12px 3px rgba(244,201,93,.85);
+  animation:pz-viaja 1.5s cubic-bezier(.4,0,.6,1) forwards;
+}
+@keyframes pz-viaja{
+  0%  {left:8px;  opacity:0}
+  12% {opacity:1}
+  88% {opacity:1}
+  100%{left:calc(50% - 3.5px); opacity:0}
+}
+.pz-simbolo{
+  position:relative; z-index:1; width:42px; height:42px; color:var(--muted);
+  display:grid; place-items:center; border-radius:12px;
+  border:1px solid rgba(255,255,255,.14); background:rgba(0,0,0,.34);
+  transition:color .4s ease, border-color .4s ease, box-shadow .4s ease;
+}
+.pz-simbolo svg{width:22px;height:22px}
+.pz.encendido .pz-simbolo{
+  color:var(--gold-2); border-color:rgba(212,175,55,.6);
+  box-shadow:0 0 22px rgba(212,175,55,.45), inset 0 0 14px rgba(212,175,55,.18);
+}
+.pz-cartel{
+  font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  text-align:center; color:var(--muted); opacity:0; transition:opacity .4s ease .2s;
+}
+.pz.encendido .pz-cartel{opacity:1}
+.pz.enviado .pz-cartel{color:#3ecb7f}
+@media (prefers-reduced-motion:reduce){ .pz-chispa{animation:none;opacity:0} }
 /* A 1440px las burbujas se pegaban a los bordes y la lectura se rompia. La
    columna se acota y se centra -- la red sigue ocupando el ancho completo. */
 .stream > *, .composer{max-width:920px;width:100%;margin-left:auto;margin-right:auto}
@@ -512,6 +596,18 @@
     <div class="face-glow"></div>
     <img class="face-fig" src="./assets/elixis-avatar.webp?v=20260820-rostro" alt="" decoding="async">
   </div>
+
+  <!-- ═══ LAS DOS VENTANAS ═══ Dos oficios distintos, no un espejo:
+       la izquierda ensena EL PROCESO (que esta haciendo ELIXIS por dentro),
+       la derecha LA PALABRA (lo que se dijo). En reposo, cerradas. -->
+  <aside class="lado lado-izq" id="ladoProceso" aria-label="Proceso de ELIXIS" aria-hidden="true">
+    <div class="lado-h">Proceso</div>
+    <div class="lado-cuerpo" id="procesoCuerpo"></div>
+  </aside>
+  <aside class="lado lado-der" id="ladoPalabra" aria-label="Transcripción" aria-hidden="true">
+    <div class="lado-h">Transcripción</div>
+    <div class="lado-cuerpo" id="palabraCuerpo"></div>
+  </aside>
 
   <main class="stream" id="stream" aria-live="polite"></main>
 
@@ -734,6 +830,10 @@
             return;
           }
           cerrar(accion === "enviar" ? "✓ Enviado a "+(d.destinatario||sms.destinatario) : "Cancelado. No salió nada.");
+          /* La ventana del proceso solo puede decir ENVIADO cuando el
+             despachador lo confirma. Hasta aqui era "en cola", que es la
+             verdad: encolar no es enviar. */
+          if(accion === "enviar"){ marcarSmsEnviado(); } else { marcarSmsCancelado(); }
         }catch(e){
           cerrar("Sin conexión con el despachador.");
           botones.forEach(function(x){ x.disabled = false; });
@@ -799,6 +899,105 @@
     return h;
   }
 
+
+  /* ═══ LAS DOS VENTANAS ═════════════════════════════════════════════
+     Izquierda EL PROCESO, derecha LA PALABRA. Se abren cuando ELIXIS se
+     activa y se quedan abiertas mientras haya conversacion. */
+  var ladoProceso = document.getElementById("ladoProceso");
+  var ladoPalabra = document.getElementById("ladoPalabra");
+  var procesoCuerpo = document.getElementById("procesoCuerpo");
+  var palabraCuerpo = document.getElementById("palabraCuerpo");
+
+  function abrirLados(){
+    [ladoProceso, ladoPalabra].forEach(function(l){
+      if(!l) return;
+      l.classList.add("abierta");
+      l.setAttribute("aria-hidden","false");
+    });
+  }
+
+  /* LA PALABRA: transcripcion breve. No repite el chat entero -- recorta,
+     porque una ventana lateral con parrafos completos no se lee de un
+     vistazo, que es justo para lo que sirve. */
+  function transcribir(quien, texto){
+    if(!palabraCuerpo || !texto) return;
+    var d = document.createElement("div");
+    d.className = "tl " + (quien === "yo" ? "yo" : "el");
+    var t = String(texto).replace(/\s+/g, " ").trim();
+    if(t.length > 150) t = t.slice(0, 149) + "…";
+    var e = document.createElement("b");
+    e.textContent = quien === "yo" ? "Capitán" : "ELIXIS";
+    d.appendChild(e);
+    d.appendChild(document.createTextNode(t));
+    palabraCuerpo.appendChild(d);
+    palabraCuerpo.scrollTop = palabraCuerpo.scrollHeight;
+  }
+
+  /* EL PROCESO. Por ahora SOLO enviar_sms tiene escena propia: es la unica
+     que se ha validado de punta a punta. Las otras siete se anuncian con su
+     nombre y si salieron bien -- honesto y sin simbolo inventado. Cada una
+     ira ganando su escena cuando el PO la apruebe. */
+  var SOBRE = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='2.5' y='5' width='19' height='14' rx='2.5'/><path d='m3 7 9 6 9-6'/></svg>";
+  var NOMBRES = {
+    consultar_finanzas:"Consultó finanzas", consultar_agenda_artista:"Consultó agenda",
+    consultar_catalogo_precios:"Consultó precios", buscar_cliente:"Buscó al cliente",
+    crear_nota_lead:"Dejó nota en el lead", registrar_evento_agenda:"Bloqueó la agenda",
+    generar_cotizacion_evento:"Preparó cotización", enviar_sms:"Dejó un SMS en cola"
+  };
+
+  function piezaSimple(h){
+    var d = document.createElement("div");
+    d.className = "pz " + (h.ok ? "ok" : "mal");
+    var n = document.createElement("div");
+    n.className = "pz-n";
+    var p = document.createElement("span"); p.className = "punto";
+    n.appendChild(p);
+    n.appendChild(document.createTextNode(NOMBRES[h.nombre] || h.nombre));
+    d.appendChild(n);
+    return d;
+  }
+
+  /* La escena del SMS: la chispa recorre el circuito, el sobre se enciende al
+     llegar, y el cartel dice LA VERDAD -- en cola no es enviado. Solo pasa a
+     ENVIADO cuando el despachador confirma. */
+  var escenaSms = null;
+  function piezaSms(h){
+    var d = piezaSimple(h);
+    var esc = document.createElement("div");
+    esc.className = "pz-escena";
+    esc.innerHTML = "<div class='pz-hilo'></div><div class='pz-chispa'></div>" +
+                    "<div class='pz-simbolo'>" + SOBRE + "</div>";
+    var cartel = document.createElement("div");
+    cartel.className = "pz-cartel";
+    cartel.textContent = "En cola · espera aprobación";
+    d.appendChild(esc); d.appendChild(cartel);
+    setTimeout(function(){ d.classList.add("encendido"); }, 1450);
+    escenaSms = d;
+    return d;
+  }
+
+  function marcarSmsEnviado(){
+    if(!escenaSms) return;
+    escenaSms.classList.add("enviado");
+    var c = escenaSms.querySelector(".pz-cartel");
+    if(c) c.textContent = "Enviado";
+    escenaSms = null;
+  }
+  function marcarSmsCancelado(){
+    if(!escenaSms) return;
+    var c = escenaSms.querySelector(".pz-cartel");
+    if(c) c.textContent = "Cancelado";
+    escenaSms = null;
+  }
+
+  function dibujarProceso(lista){
+    if(!procesoCuerpo || !lista || !lista.length) return;
+    lista.forEach(function(h){
+      procesoCuerpo.appendChild(h.nombre === "enviar_sms" ? piezaSms(h) : piezaSimple(h));
+    });
+    procesoCuerpo.scrollTop = procesoCuerpo.scrollHeight;
+  }
+
   async function askElixis(message){
     var url = functionUrl();
     if(!url){
@@ -806,6 +1005,8 @@
       return;
     }
     showTyping();
+    abrirLados();
+    transcribir("yo", message);
     try{
       var res = await fetch(url, {
         method:"POST",
@@ -822,6 +1023,10 @@
         return;
       }
       addRow("elixis", data.reply);
+      transcribir("elixis", data.reply);
+      /* FASE 1 en accion: esto es lo que ELIXIS hizo de verdad, reportado por
+         el backend. Sin este campo, la ventana estaria adivinando. */
+      if(data.herramientas_usadas) dibujarProceso(data.herramientas_usadas);
       /* Si en este turno quedo un SMS en cola, la tarjeta sale justo debajo de
          lo que dijo ELIXIS, para que la decision este donde esta el contexto. */
       if(data.sms_pendiente) addSmsCard(data.sms_pendiente);
