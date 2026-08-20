@@ -173,6 +173,13 @@
     display:flex;align-items:center;justify-content:center;
     transition:transform .12s, opacity .15s;
   }
+  #send svg,.mic-btn svg{width:21px;height:21px;display:block}
+  /* El boton de enviar deja de ser un bloque de oro solido: en el diseno
+     nuevo nada pesa mas que la red que pasa por detras. */
+  #send{background:rgba(212,175,55,.18);border:1.6px solid rgba(212,175,55,.5);color:var(--gold-2);
+    border-radius:24px;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+  .mic-btn{background:rgba(20,24,30,.18);border:1.6px solid rgba(255,255,255,.20);
+    border-radius:24px;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
   #send:hover{transform:translateY(-1px)}
   #send:active{transform:translateY(0)}
   #send:disabled{opacity:.4;cursor:not-allowed;transform:none}
@@ -290,27 +297,117 @@
    ELIXIS arrinconado arriba. En rejilla, la cara ocupa su propia columna y
    respira, y el chat -- que es lo provisional mientras la voz manda -- se va
    al lado derecho. Por debajo de 900px vuelve a apilarse como estaba. */
+/* ═══ TRANSPORTE DEL DISENO DE FENIX ════════════════════════════════
+   Antes esto era una rejilla de dos columnas: la cara en una caja a la
+   izquierda y el chat arrinconado a la derecha. Se sustituye por el diseno
+   del centro de comando movil: la red a SANGRE por detras de todo, y la
+   conversacion y el compositor FLOTANDO encima. Es la misma pieza, no un
+   parecido -- mismos colores, misma translucidez, mismas medidas.
+   La cabecera no se toca. */
+.app{position:relative}
 @media (min-width:900px){
-  .app{
-    max-width:1180px;
-    display:grid;
-    grid-template-columns:minmax(300px,440px) 1fr;
-    grid-template-rows:auto auto 1fr auto auto;
-    grid-template-areas:
-      "top      top"
-      "settings settings"
-      "face     chat"
-      "face     composer"
-      "face     hint";
-    column-gap:8px;
-  }
-  .topbar        {grid-area:top}
-  .settings-panel{grid-area:settings}
-  .face-stage    {grid-area:face; align-self:center; width:min(400px,90%); height:min(430px,52vh); margin:0 auto}
-  .stream        {grid-area:chat; border-left:1px solid var(--line-soft)}
-  .composer      {grid-area:composer}
-  .hint          {grid-area:hint}
+  .app{max-width:none}
 }
+/* La red deja de vivir en una caja y pasa a ser el fondo de la pagina. */
+.face-stage{
+  position:absolute; inset:0; width:100%; height:100%; margin:0;
+  z-index:0; pointer-events:none;
+}
+.face-fx{opacity:.85}
+/* El rostro se retira mientras se escribe -- igual que en el telefono, donde
+   el avatar se va en modo escritura y vuelve cuando ELIXIS habla. Ademas
+   evita que la figura se estire a pantalla completa. */
+.face-fig{
+  inset:auto; left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  width:min(300px,42vw); height:min(340px,46vh);
+  opacity:0; transition:opacity .5s ease;
+}
+.face-glow{opacity:0}
+.face-stage.thinking .face-fig,
+.face-stage.speaking .face-fig{opacity:1}
+.face-stage.speaking .face-glow{opacity:.9}
+
+/* BOLA DE ENERGIA: la fuente que late en el centro cuando el rostro no esta.
+   Mismo lenguaje que el orbe del telefono -- halo radial de oro y aros que
+   se abren -- para que se lea como la misma energia. */
+.face-stage::after{
+  content:""; position:absolute; left:50%; top:50%;
+  width:210px; height:210px; transform:translate(-50%,-50%);
+  border-radius:50%; pointer-events:none;
+  background:radial-gradient(circle,
+    rgba(212,175,55,.20) 0%, rgba(212,175,55,.075) 44%, transparent 70%);
+  animation:fenix-respira 4.6s ease-in-out infinite;
+}
+.face-stage.thinking::after,
+.face-stage.speaking::after{
+  background:radial-gradient(circle,
+    rgba(212,175,55,.34) 0%, rgba(212,175,55,.13) 44%, transparent 72%);
+  animation-duration:2.1s;
+}
+@keyframes fenix-respira{
+  0%,100%{transform:translate(-50%,-50%) scale(1)}
+  50%    {transform:translate(-50%,-50%) scale(1.08)}
+}
+@media (prefers-reduced-motion:reduce){ .face-stage::after{animation:none} }
+
+/* Todo lo demas flota POR ENCIMA de la red. */
+.topbar,.settings-panel,.stream,.composer,.hint{position:relative;z-index:1}
+.stream{background:none;border-left:0}
+/* A 1440px las burbujas se pegaban a los bordes y la lectura se rompia. La
+   columna se acota y se centra -- la red sigue ocupando el ancho completo. */
+.stream > *, .composer{max-width:920px;width:100%;margin-left:auto;margin-right:auto}
+.composer{box-sizing:content-box}
+
+/* Burbujas translucidas: oro para el Capitan, cian para ELIXIS. El
+   desenfoque es minimo A PROPOSITO -- uno fuerte convierte la red en papilla
+   y lo que se quiere es verla pasar por detras. La lectura la sostiene la
+   sombra del propio texto. */
+.row.elixis .bubble,
+.row.user .bubble{
+  -webkit-backdrop-filter:blur(2px) saturate(150%);
+  backdrop-filter:blur(2px) saturate(150%);
+  box-shadow:0 8px 22px rgba(0,0,0,.30);
+  text-shadow:0 1px 3px rgba(0,0,0,.85), 0 0 12px rgba(0,0,0,.6);
+  border-radius:17px;
+}
+.row.elixis .bubble{
+  background:rgba(63,185,230,.12);
+  border:1px solid rgba(63,185,230,.34);
+  border-top-left-radius:5px;
+}
+.row.user .bubble{
+  background:rgba(212,175,55,.16);
+  border:1px solid rgba(212,175,55,.46);
+  border-top-right-radius:5px;
+}
+
+/* En el telefono no hay iniciales ni rotulos sobre cada burbuja: el color ya
+   dice quien habla. Se ocultan, no se borran -- volver atras es una linea. */
+.ava,.name{display:none}
+
+/* COMPOSITOR FLOTANTE: el contenedor no pinta nada, es aire. Lo que flota es
+   el campo. */
+.composer{
+  background:none; border-top:0;
+  padding:10px 16px calc(18px + env(safe-area-inset-bottom));
+  pointer-events:none;
+}
+.composer > *{pointer-events:auto}
+#input{
+  background:rgba(20,24,30,.18);
+  -webkit-backdrop-filter:blur(2px) saturate(150%);
+  backdrop-filter:blur(2px) saturate(150%);
+  border:1.6px solid rgba(255,255,255,.20);
+  border-radius:24px; padding:14px 18px;
+  box-shadow:0 8px 24px rgba(0,0,0,.34);
+  text-shadow:0 1px 3px rgba(0,0,0,.85), 0 0 12px rgba(0,0,0,.6);
+}
+#input:focus{
+  border-color:rgba(212,175,55,.58);
+  background:rgba(24,29,36,.26);
+}
+#input::placeholder{text-shadow:0 1px 3px rgba(0,0,0,.85)}
 
 /* ═══ TARJETA DE APROBACION DE SMS ══════════════════════════════════════
    Un SMS a un cliente es irreversible, asi que la decision tiene que verse
@@ -319,19 +416,26 @@
    Mientras despacha, los dos botones se bloquean: un doble clic nervioso no
    puede mandar el mensaje dos veces. */
 .sms-card{
-  border:1px solid var(--gold);border-radius:14px;background:var(--panel);
+  /* Misma familia translucida que las burbujas, pero en AMBAR: no es una
+     respuesta, es una DECISION que espera por ti. Se lee distinta a proposito
+     y la red se ve pasar por detras, como todo lo demas. */
+  border:1.6px solid rgba(232,178,58,.46);border-radius:17px;
+  background:rgba(232,178,58,.12);
+  -webkit-backdrop-filter:blur(2px) saturate(150%);
+  backdrop-filter:blur(2px) saturate(150%);
   padding:16px 16px 14px;margin:4px 0;display:flex;flex-direction:column;gap:12px;
   box-shadow:0 8px 26px rgba(0,0,0,.35);
+  text-shadow:0 1px 3px rgba(0,0,0,.85);
 }
 .sms-card .sms-h{
   display:flex;align-items:center;gap:8px;font-family:var(--mono);
-  font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);
+  font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#e8b23a;
 }
 .sms-card .sms-dest{font-size:14px;color:var(--text)}
 .sms-card .sms-dest b{color:var(--text)}
 .sms-card .sms-tel{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
 .sms-card .sms-msg{
-  background:var(--bg);border:1px solid var(--line-soft);border-radius:10px;
+  background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.10);border-radius:11px;
   padding:12px 13px;font-size:14.5px;line-height:1.5;color:var(--text);
   white-space:pre-wrap;word-break:break-word;
 }
@@ -390,9 +494,9 @@
   <main class="stream" id="stream" aria-live="polite"></main>
 
   <footer class="composer">
-    <button id="mic" class="mic-btn" aria-label="Hablar con ELIXIS" title="Hablar (dictado por voz)">🎤</button>
+    <button id="mic" class="mic-btn" aria-label="Hablar con ELIXIS" title="Hablar (dictado por voz)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg></button>
     <textarea id="input" placeholder="Escribe o dicta a ELIXIS, Capitán…" rows="1" aria-label="Mensaje para ELIXIS"></textarea>
-    <button id="send" aria-label="Enviar">➤</button>
+    <button id="send" aria-label="Enviar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></button>
   </footer>
   <div class="hint">ELIXIS · Miami DJ Beat LLC — responde con Claude. Enter envía · Shift+Enter salto de línea.</div>
 </div>
@@ -427,10 +531,10 @@
         if(p.x<-4)p.x+=W+8; if(p.x>W+4)p.x-=W+8;
         if(p.y<-4)p.y+=H+8; if(p.y>H+4)p.y-=H+8;
       }
-      var D=Math.min(W,H)*0.46;
+      var D=Math.min(W,H)*0.34;   /* a sangre, un alcance de .46 unia media pantalla */
       for(var i=0;i<pts.length;i++) for(var j=i+1;j<pts.length;j++){
         var a=pts[i], b=pts[j], dx=a.x-b.x, dy=a.y-b.y, d=Math.sqrt(dx*dx+dy*dy);
-        if(d<D){ ctx.strokeStyle=color((1-d/D)*0.26*Math.min(1.7,inten)); ctx.lineWidth=.7;
+        if(d<D){ ctx.strokeStyle=color((1-d/D)*(1-d/D)*0.62*Math.min(1.7,inten)); ctx.lineWidth=.9;
           ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
       }
       for(var i=0;i<pts.length;i++){
@@ -444,7 +548,10 @@
       cv=document.getElementById('faceFX');
       if(!cv) return;
       ctx=cv.getContext('2d'); medir();
-      pts=[]; for(var i=0;i<28;i++) pts.push({
+      /* La densidad depende del AREA: 28 puntos llenaban una caja de 400px,
+         pero sobre un monitor entero dejaban la red casi vacia. */
+      var objetivo = Math.max(28, Math.min(78, Math.round((W*H)/16000)));
+      pts=[]; for(var i=0;i<objetivo;i++) pts.push({
         x:Math.random()*W, y:Math.random()*H,
         vx:(Math.random()-.5)*.32, vy:(Math.random()-.5)*.32,
         r:Math.random()*1.5+.7, ph:Math.random()*6.28 });
@@ -735,6 +842,11 @@
   // ── VOZ DE SALIDA — TTS del navegador (gratis) ─────
   var voiceToggle = document.getElementById("voiceToggle");
   var micBtn = document.getElementById("mic");
+  /* Los dos estados del dictado, en trazo de linea del mismo banco que el
+     resto. Antes se reponian con textContent y un emoji, lo que borraba el
+     SVG del boton en cuanto terminabas de dictar. */
+  var MIC_LINEA = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z'/><path d='M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8'/></svg>";
+  var MIC_PARAR = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='6' y='6' width='12' height='12' rx='2.5'/></svg>";
   var settingsBtn = document.getElementById("settingsBtn");
   var settingsPanel = document.getElementById("settingsPanel");
   var voiceSelect = document.getElementById("voiceSelect");
@@ -831,7 +943,7 @@
   var rec = null, listening = false;
   function stopListening(){
     listening = false;
-    if(micBtn){ micBtn.classList.remove("listening"); micBtn.textContent = "🎤"; }
+    if(micBtn){ micBtn.classList.remove("listening"); micBtn.innerHTML = MIC_LINEA; }
   }
   if(SR && micBtn){
     rec = new SR();
@@ -854,7 +966,7 @@
       try{
         stopAudio();   // no escucharse a sí mismo
         rec.start(); listening = true;
-        micBtn.classList.add("listening"); micBtn.textContent = "⏹";
+        micBtn.classList.add("listening"); micBtn.innerHTML = MIC_PARAR;
       }catch(e){ stopListening(); }
     });
   } else if(micBtn){
