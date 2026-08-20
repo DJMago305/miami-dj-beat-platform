@@ -160,6 +160,19 @@
   .state-label{text-align:center;color:var(--muted);font-size:13px;margin-top:14px;min-height:20px;font-weight:500}
   .cmd-prompt{text-align:center;font-size:17px;font-weight:600;margin:6px 0 2px}
 
+  /* ── Chat escrito: lo que ELIXIS va diciendo ─────────────────────
+     Traido del laboratorio de voz, que es donde estaba funcionando. Debajo
+     del avatar, no encima: la cara manda y el texto acompana. */
+  .convo{display:flex;flex-direction:column;gap:10px;margin:6px 2px 0;
+    max-height:34vh;overflow-y:auto;padding:2px 2px 6px}
+  .convo .line{font-size:14.5px;line-height:1.5;color:var(--text)}
+  .convo .line b{color:var(--gold2);font-weight:700}
+  .convo .sys{font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.02em}
+  .convo:empty{display:none}
+  .convo-state{display:flex;align-items:center;justify-content:center;gap:8px;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--muted);margin-top:10px;min-height:16px}
+
   /* waveform */
   .waveform{display:flex;align-items:center;justify-content:center;gap:3px;height:32px;margin:6px 0}
   .waveform i{width:3px;height:20%;border-radius:3px;background:var(--gold);opacity:.85;animation:wv 1s ease-in-out infinite}
@@ -685,8 +698,10 @@
              retiraron por decision del PO: la pantalla es la presencia de
              ELIXIS, no un panel de mandos. El conmutador a texto sigue vivo
              en el modo texto, para no dejar a nadie atrapado. */
-          '';   /* El microfono del centro era placeholder. El boton pasa a ser
-                     el branding del centro de la barra inferior. */
+          /* El motor ya vivia dentro; lo que faltaba era donde verlo.
+             Estado de la conversacion + lo que ELIXIS va diciendo. */
+          '<div class="convo-state" id="convoState"></div>'+
+          '<div class="convo" id="convo"></div>';
       }
       document.querySelectorAll('[data-vm]').forEach(function(b){b.onclick=function(){state.voiceMode=b.getAttribute('data-vm');setAvatar('idle');};});
       document.querySelectorAll('[data-chip]').forEach(function(b){b.onclick=function(){state.voiceMode='text';state.avatar='idle';render();setTimeout(function(){var i=$('#cmdText');if(i){i.value=b.getAttribute('data-chip');i.focus();}},60);};});
@@ -781,18 +796,31 @@
       dc.send(JSON.stringify({ type:'response.create' }));   /* sin esto se queda mudo */
     }
 
+    function linea(txt, cls){
+      var c=document.getElementById('convo'); if(!c) return null;
+      var d=document.createElement('div'); d.className=cls||'line';
+      if(cls==='sys') d.textContent=txt; else d.innerHTML='<b>'+AGENT+':</b> '+esc(txt);
+      c.appendChild(d); c.scrollTop=c.scrollHeight; return d;
+    }
+    function rotulo(t){ var e=document.getElementById('convoState'); if(e) e.textContent=t||''; }
+
     function evento(m){
       switch(m.type){
         case 'input_audio_buffer.speech_started':
           hablando=false; state.agentReply=null; state.agentLine=null;
+          rotulo(T('Te escucho','Listening'));
           setAvatar('listening'); break;
 
         case 'input_audio_buffer.speech_stopped':
+          rotulo(T('Pensando','Thinking'));
           setAvatar('understanding'); break;
 
         case 'response.output_audio_transcript.delta':
-          if(!hablando){ hablando=true; state.agentReply=''; state.agentLine='real'; }
+          if(!hablando){ hablando=true; state.agentReply=''; state.agentLine='real';
+            RT._fila = linea('', 'line'); rotulo(T('Hablando','Speaking')); }
           state.agentReply += (m.delta||'');
+          if(RT._fila) RT._fila.innerHTML='<b>'+AGENT+':</b> '+esc(state.agentReply);
+          var c=document.getElementById('convo'); if(c) c.scrollTop=c.scrollHeight;
           setAvatar('speaking'); break;
 
         case 'response.done':
@@ -801,7 +829,8 @@
           var salida = (m.response && m.response.output) || [];
           var llamadas = salida.filter(function(i){ return i && i.type==='function_call'; });
           if(llamadas.length){ llamadas.forEach(herramienta); break; }
-          hablando=false; setAvatar('listening'); break;
+          hablando=false; RT._fila=null; rotulo(T('Te escucho','Listening'));
+          setAvatar('listening'); break;
 
         case 'error':
           toast(T('Error en el canal de voz','Voice channel error'),'warn'); break;
@@ -830,7 +859,11 @@
       mic.getAudioTracks().forEach(function(t){ pc.addTrack(t, mic); });
 
       dc = pc.createDataChannel('oai-events');
-      dc.onopen = function(){ setAvatar('listening'); haptic('light'); };
+      dc.onopen = function(){
+        linea(T('Canal de voz conectado. Habla con normalidad.','Voice channel connected. Speak normally.'),'sys');
+        rotulo(T('Te escucho','Listening'));
+        setAvatar('listening'); haptic('light');
+      };
       dc.onmessage = function(ev){ var m; try{ m=JSON.parse(ev.data); }catch(_){ return; } evento(m); };
       pc.onconnectionstatechange = function(){
         if(pc && ['failed','disconnected','closed'].indexOf(pc.connectionState)!==-1) stop(true);
@@ -891,6 +924,8 @@
       if(mic){ mic.getTracks().forEach(function(t){ try{ t.stop(); }catch(_){ } }); mic=null; }
       if(spk){ try{ spk.pause(); spk.srcObject=null; }catch(_){ } }
       hablando=false;
+      linea(T('Canal de voz cerrado.','Voice channel closed.'),'sys');
+      rotulo('');
       if(!silencioso) setAvatar('idle');
     }
 
