@@ -36,10 +36,40 @@
     --text:#ffffff; --muted:#9ea4ad; --faint:#6a7079;
     --cyan:#3fb9e6; --green:#3ecf8e; --magenta:#c77bff; --amber:#e8b23a; --red:#f0616a;
     --shell:430px; --nav-h:64px; --top-h:52px;
+    /* El orbe sobresale de la barra y la pastilla de escribir tiene que
+       librarlo. Ambas medidas cuelgan de aqui para que no se vuelvan a
+       cruzar si una cambia. */
+    --orbe-d:64px; --orbe-alza:22px; --orbe-aire:12px;
     --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+    /* Cristal: todo lo translucido (burbujas, compositor) sale de aqui.
+       Antes estaba escrito a mano en grafito y por eso no podia haber
+       modo claro: un fondo oscuro fijo sobre papel blanco es ilegible. */
+    --vidrio:rgba(20,24,30,.18);
+    --vidrio-borde:rgba(255,255,255,.20);
+    --vidrio-foco:rgba(24,29,36,.26);
+    --sombra-texto:0 1px 3px rgba(0,0,0,.85), 0 0 12px rgba(0,0,0,.6);
+    --hilos:212,175,55;          /* la red, en RGB crudo para el canvas */
     --sans:-apple-system,system-ui,"SF Pro Display","Segoe UI",Roboto,sans-serif;
     --mono:ui-monospace,"SF Mono",Menlo,monospace;
   }
+  /* ═══ MODO DIA ═══════════════════════════════════════════════════
+     El oro se OSCURECE a bronce: el oro claro sobre papel blanco no tiene
+     contraste y se lee gris. Es el mismo oro de la marca, bajado de brillo
+     para que siga mandando sin cegar. */
+  :root[data-tema="claro"]{
+    --bg:#eef0f4; --surface:#ffffff; --elev:#ffffff; --elev2:#f2f4f7; --elev3:#e8ebf0;
+    --line:#dfe3ea; --line2:#c9cfda;
+    --gold:#8a6d14; --gold2:#a8871f; --gold-dim:rgba(138,109,20,.13); --gold-glow:rgba(138,109,20,.26);
+    --text:#0e1116; --muted:#535b69; --faint:#858d9b;
+    --cyan:#1d7fa8; --green:#1f8f5f; --magenta:#8b4fc4; --amber:#a1741a; --red:#c23c48;
+    --vidrio:rgba(255,255,255,.52);
+    --vidrio-borde:rgba(0,0,0,.16);
+    --vidrio-foco:rgba(255,255,255,.72);
+    --sombra-texto:none;
+    --hilos:138,109,20;
+  }
+  :root[data-tema="claro"] body{background:var(--bg)}
+
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%}
   body{background:#000;color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;overflow:hidden}
@@ -91,7 +121,7 @@
   .navb.on::before{content:"";position:absolute;top:0;width:26px;height:2.5px;border-radius:0 0 3px 3px;background:var(--gold)}
   .navb .nb-badge{position:absolute;top:8px;right:calc(50% - 20px);min-width:15px;height:15px;border-radius:8px;background:var(--red);color:#fff;font-size:9px;display:grid;place-items:center;padding:0 3px;font-weight:700}
   .navb.center{flex:0 0 64px}
-  .nav-orb{position:relative;width:72px;height:72px;margin-top:-26px;border-radius:50%;
+  .nav-orb{position:relative;width:var(--orbe-d);height:var(--orbe-d);margin-top:calc(var(--orbe-alza) * -1);border-radius:50%;
     background:linear-gradient(180deg,var(--gold2),var(--gold));display:grid;place-items:center;
     /* Sin el anillo de 5px que lo separaba de la barra: el PO lo queria sin
        tanto borde. Queda solo la sombra que lo despega del fondo. */
@@ -100,9 +130,9 @@
   /* Desconectado invita a hablar: dentro del circulo va el microfono. En
      sesion, el circulo pasa a ser la fuente de energia y muestra el fenix.
      El simbolo dice en que momento estas sin necesidad de leer nada. */
-  .nav-orb img{width:64px;height:64px;display:none}
+  .nav-orb img{width:56px;height:56px;display:none}
   .nav-orb .orb-mic{display:grid;place-items:center;color:#1a1405}
-  .nav-orb .orb-mic svg{width:32px;height:32px}
+  .nav-orb .orb-mic svg{width:28px;height:28px}
   .nav-orb.live img{display:block}
   .nav-orb.live .orb-mic{display:none}
 
@@ -134,8 +164,60 @@
   }
   .pad-centro.escritura .avatar-fig,
   .pad-centro.escritura .avatar-baseglow{opacity:0}
-  .pad-centro.escritura .avatar-fx{opacity:.42}
+  /* La red se atenuaba al 42% para no competir con el texto. Ya no hace
+     falta: los mensajes llevan fondo propio y la pastilla su desenfoque. */
+  .pad-centro.escritura .avatar-fx{opacity:.85}
   .avatar-fig,.avatar-baseglow{transition:opacity .55s ease}
+
+  /* ── BOLA DE ENERGIA ────────────────────────────────────────────
+     Al escribir, el avatar se va y el centro queda hueco. Aqui vive la
+     fuente: el MISMO lenguaje del orbe de abajo -- halo radial de oro y
+     aros que se abren -- para que se lea como la misma energia, no como
+     un adorno nuevo. Respira sola en reposo y se enciende cuando ELIXIS
+     esta pensando, ejecutando o hablando. */
+  .bola-energia{
+    position:absolute;left:50%;top:50%;width:190px;height:190px;
+    transform:translate(-50%,-50%);border-radius:50%;
+    z-index:1;pointer-events:none;opacity:0;
+    transition:opacity .55s ease;
+    background:radial-gradient(circle,
+      rgba(212,175,55,.20) 0%, rgba(212,175,55,.075) 44%, transparent 70%);
+    animation:bola-respira 4.6s ease-in-out infinite;
+  }
+  .pad-centro.escritura .bola-energia{opacity:1}
+  .bola-energia::before,.bola-energia::after{
+    content:"";position:absolute;inset:0;border-radius:50%;
+    border:1.5px solid rgba(212,175,55,.30);opacity:0;
+    animation:bola-aro 4.6s cubic-bezier(.15,.6,.35,1) infinite;
+  }
+  .bola-energia::after{animation-delay:2.3s}
+  @keyframes bola-respira{
+    0%,100%{transform:translate(-50%,-50%) scale(1)}
+    50%    {transform:translate(-50%,-50%) scale(1.08)}
+  }
+  @keyframes bola-aro{
+    0%  {transform:scale(.72);opacity:.34}
+    100%{transform:scale(1.7); opacity:0}
+  }
+  /* ELIXIS trabajando: misma luz, mas fuerza y mas rapida. */
+  .pad-centro.escritura .avatar-stage.understanding .bola-energia,
+  .pad-centro.escritura .avatar-stage.executing .bola-energia,
+  .pad-centro.escritura .avatar-stage.speaking .bola-energia{
+    background:radial-gradient(circle,
+      rgba(212,175,55,.34) 0%, rgba(212,175,55,.13) 44%, transparent 72%);
+    animation-duration:2.1s;
+  }
+  .pad-centro.escritura .avatar-stage.understanding .bola-energia::before,
+  .pad-centro.escritura .avatar-stage.understanding .bola-energia::after,
+  .pad-centro.escritura .avatar-stage.executing .bola-energia::before,
+  .pad-centro.escritura .avatar-stage.executing .bola-energia::after,
+  .pad-centro.escritura .avatar-stage.speaking .bola-energia::before,
+  .pad-centro.escritura .avatar-stage.speaking .bola-energia::after{
+    border-color:rgba(212,175,55,.52);animation-duration:2.1s;
+  }
+  @media (prefers-reduced-motion:reduce){
+    .bola-energia,.bola-energia::before,.bola-energia::after{animation:none}
+  }
 
   .pad-centro.escritura #cmdBody{
     position:relative;z-index:1;flex:1;display:flex;flex-direction:column;min-height:0;
@@ -161,7 +243,7 @@
   .cmd-input{
     position:sticky;bottom:0;z-index:2;
     display:flex;gap:10px;align-items:flex-end;margin:0;
-    padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px));
+    padding:10px 14px calc(var(--orbe-alza) + var(--orbe-aire) + env(safe-area-inset-bottom,0px));
     background:none;border-top:0;
     -webkit-backdrop-filter:none;backdrop-filter:none;
     pointer-events:none;           /* el aire de los lados no atrapa toques */
@@ -170,12 +252,16 @@
   .cmd-input textarea{
     flex:1;min-width:0;resize:none;overflow-y:auto;
     min-height:48px;max-height:9.5em;
-    background:rgba(23,27,34,.52);
-    -webkit-backdrop-filter:blur(22px) saturate(170%);
-    backdrop-filter:blur(22px) saturate(170%);
-    border:1px solid rgba(255,255,255,.11);
+    background:var(--vidrio);
+    /* Desenfoque casi nulo A PROPOSITO: blur(22px) volvia papilla la red que
+       pasa por detras. Con 2px se ve el fondo nitido y la lectura la sostiene
+       la sombra del texto, igual que en las burbujas. */
+    -webkit-backdrop-filter:blur(2px) saturate(150%);
+    backdrop-filter:blur(2px) saturate(150%);
+    text-shadow:var(--sombra-texto);
+    border:1.6px solid var(--vidrio-borde);
     border-radius:24px;
-    box-shadow:0 10px 30px rgba(0,0,0,.42);
+    box-shadow:0 8px 24px rgba(0,0,0,.34);
     padding:13px 18px;color:var(--text);
     font-size:16px;line-height:1.45;
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
@@ -183,30 +269,84 @@
     transition:border-color .2s ease, background .2s ease, box-shadow .2s ease;
   }
   .cmd-input textarea:focus{
-    outline:none;border-color:rgba(212,175,55,.55);
-    background:rgba(28,33,41,.62);
-    box-shadow:0 10px 32px rgba(0,0,0,.5), 0 0 0 3px rgba(212,175,55,.10);
+    outline:none;border-color:rgba(212,175,55,.58);
+    background:var(--vidrio-foco);
+    box-shadow:0 8px 26px rgba(0,0,0,.4), 0 0 0 3px rgba(212,175,55,.10);
   }
-  .cmd-input textarea::placeholder{color:var(--faint)}
+  .cmd-input textarea::placeholder{color:var(--faint);text-shadow:var(--sombra-texto)}
   /* Sin boton de enviar: Enter manda en escritorio y el teclado tactil trae
      su propia tecla de enviar (enterkeyhint). Una flecha ahi solo anadia
      ruido y quitaba ancho al campo. */
 
-  /* ── Mensajes: columna de trabajo, no lista plana ── */
-  .escritura .convo .line{
-    align-self:flex-start;max-width:86%;
-    background:var(--elev);border:1px solid var(--line);
-    border-radius:16px 16px 16px 5px;padding:12px 14px;
+  /* ── Mensajes: burbujas FLOTANTES Y TRANSLUCIDAS ────────────────
+     Como la pastilla de escribir: la red neuronal se ve pasar por detras y
+     el desenfoque es lo unico que sostiene la lectura. Dos bandos por COLOR,
+     no por posicion: los tuyos en oro -- que es la homogeneidad de la marca
+     y manda -- y los de ELIXIS en grafito frio. Mismo criterio que ya usa
+     msgBubble() en el resto del archivo: oro para ti, neutro para el. */
+  .escritura .convo .line,
+  .escritura .convo .yo{
+    max-width:86%;padding:12px 15px;
     font-size:15px;line-height:1.52;color:var(--text);
+    -webkit-backdrop-filter:blur(2px) saturate(150%);
+    backdrop-filter:blur(2px) saturate(150%);
+    box-shadow:0 8px 22px rgba(0,0,0,.30);
+    /* Con las burbujas casi transparentes, la legibilidad ya no la da el
+       fondo sino el contorno del propio texto. */
+    text-shadow:var(--sombra-texto);
+  }
+  /* ELIXIS responde en CIAN -- el mismo --cyan que ya usa la paleta para el
+     estado de transcripcion, no un color inventado. Alfa bajo a proposito:
+     tiene que leerse el tono sin tapar la red que pasa por detras. */
+  .escritura .convo .line{
+    align-self:flex-start;
+    background:color-mix(in srgb, var(--cyan) 13%, transparent);
+    border:1px solid color-mix(in srgb, var(--cyan) 36%, transparent);
+    border-radius:17px 17px 17px 5px;
   }
   .escritura .convo .line b{display:none}
+  /* Tuyos: oro translucido. Mismo oro de la marca, sin peso solido. */
   .escritura .convo .yo{
-    align-self:flex-end;max-width:86%;
-    background:linear-gradient(180deg,var(--elev3),var(--elev2));
-    border:1px solid var(--line2);
-    border-radius:16px 16px 5px 16px;padding:12px 14px;
-    font-size:15px;line-height:1.52;color:var(--text);
+    align-self:flex-end;
+    background:color-mix(in srgb, var(--gold) 17%, transparent);
+    border:1px solid color-mix(in srgb, var(--gold) 48%, transparent);
+    border-radius:17px 17px 5px 17px;
   }
+  /* ── Tarjeta de aprobacion de SMS ──────────────────────────────
+     Misma familia translucida que las burbujas, pero en AMBAR: no es una
+     respuesta, es una decision que espera por ti. Se lee distinta a proposito. */
+  .escritura .convo .sms-card{
+    align-self:flex-start;max-width:92%;
+    background:color-mix(in srgb, var(--amber) 12%, transparent);
+    border:1.6px solid color-mix(in srgb, var(--amber) 46%, transparent);
+    border-radius:17px 17px 17px 5px;padding:13px 15px;
+    -webkit-backdrop-filter:blur(2px) saturate(150%);
+    backdrop-filter:blur(2px) saturate(150%);
+    box-shadow:0 8px 22px rgba(0,0,0,.34);
+    text-shadow:var(--sombra-texto);
+  }
+  .escritura .convo .sms-card.resuelta{
+    background:rgba(20,24,30,.22);border-color:rgba(255,255,255,.14);opacity:.72;
+  }
+  .sms-h{display:flex;align-items:center;gap:7px;font-family:var(--mono);
+    font-size:10.5px;letter-spacing:.10em;text-transform:uppercase;color:var(--amber);margin-bottom:8px}
+  .sms-h svg{width:14px;height:14px;flex:none}
+  .sms-dest{font-size:13.5px;color:var(--muted);margin-bottom:7px;display:flex;flex-wrap:wrap;gap:6px}
+  .sms-dest b{color:var(--text);font-weight:700}
+  .sms-tel{font-family:var(--mono);font-size:12px;color:var(--faint)}
+  .sms-msg{font-size:14.5px;line-height:1.5;color:var(--text);
+    background:rgba(0,0,0,.28);border-radius:11px;padding:10px 12px;margin-bottom:11px;
+    white-space:pre-wrap;word-break:break-word}
+  .sms-acc{display:flex;gap:9px;flex-wrap:wrap}
+  .sms-acc button{flex:1;min-width:118px;min-height:42px;border-radius:12px;
+    font-size:14px;font-weight:700;font-family:var(--sans);cursor:pointer;
+    border:1px solid var(--line2);background:rgba(23,27,34,.6);color:var(--text)}
+  .sms-acc .sms-ok{border:none;background:linear-gradient(180deg,#4fdca0,var(--green));
+    color:#04231a;box-shadow:0 6px 18px rgba(62,207,142,.28)}
+  .sms-acc button:disabled{opacity:.5;cursor:default}
+  .sms-estado{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:9px}
+  .sms-estado:empty{margin-top:0}
+
   .escritura .convo .sys{
     align-self:center;font-family:var(--mono);font-size:11px;
     letter-spacing:.06em;color:var(--faint);padding:2px 0;
@@ -401,6 +541,20 @@
   .lrow{display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)}
   .lrow:last-child{border:none}
   .lrow .l-ico{width:40px;height:40px;border-radius:12px;flex:none;display:grid;place-items:center;background:var(--elev2);color:var(--gold);overflow:hidden}
+  /* ── Ajustes: iconos de LINEA, sin azulejo ──────────────────────
+     Los trazos ya eran Lucide; lo que los hacia parecer emoji era el
+     envoltorio: un azulejo relleno de 40x40 con esquinas redondeadas y
+     color oro. Quitado el relleno y bajado a monocromo, se leen como
+     Ajustes de ChatGPT o Preferencias del Sistema. El azulejo sigue
+     intacto en el resto de pantallas: aqui solo cambia .ajustes. */
+  .ajustes .lrow .l-ico{
+    width:22px;height:22px;border-radius:0;background:none;
+    /* !important porque la fila de Conexion trae color en linea. El estado
+       ya lo dice la insignia ON/OFF; el icono no tiene que repetirlo. */
+    color:var(--muted)!important;
+  }
+  .ajustes .lrow .l-ico svg{width:20px;height:20px;stroke-width:1.6}
+  .ajustes .lrow{gap:15px}
   .lrow .l-ico img{width:100%;height:100%;object-fit:cover}
   .lrow .l-t{font-size:14.5px;font-weight:600}
   .lrow .l-s{font-size:12px;color:var(--muted);margin-top:1px}
@@ -453,14 +607,76 @@
 
   .conf-note{font-size:11px;color:var(--faint);text-align:center;margin-top:10px;line-height:1.5}
 
+  /* ── RATON, no dedo ─────────────────────────────────────────────
+     En celular y tableta se toca; en computadora se apunta. (hover:hover) y
+     (pointer:fine) es lo que separa las dos: un tactil NUNCA entra aqui, asi
+     que no se queda ningun estado de hover pegado despues de tocar -- que es
+     el defecto clasico de poner :hover a secas. */
+  @media (hover:hover) and (pointer:fine){
+    .navb:hover{color:var(--muted)}
+    .navb.on:hover{color:var(--gold2)}
+    .nav-orb:hover{box-shadow:0 6px 22px var(--gold-glow),0 0 0 4px rgba(212,175,55,.14)}
+    .icon-btn:hover,.modo-btn:hover{background:rgba(255,255,255,.07)}
+    .cmd-input textarea:hover:not(:focus){border-color:rgba(255,255,255,.28)}
+    .sms-acc button:hover:not(:disabled){filter:brightness(1.1)}
+    .sms-acc button:not(.sms-ok):hover:not(:disabled){border-color:var(--gold);background:rgba(212,175,55,.10)}
+    .btn:hover{filter:brightness(1.08)}
+    .lrow:hover,.card:hover{border-color:var(--line2)}
+  }
+  /* El pulsado si vale para los dos: el dedo tambien lo nota. */
+  .nav-orb:active{transform:scale(.94)}
+  .sms-acc button:active:not(:disabled){transform:scale(.97)}
+  .navb:active{opacity:.7}
+
   /* splash */
   .splash{position:absolute;inset:0;z-index:80;background:radial-gradient(600px 500px at 50% 35%,rgba(212,175,55,.09),transparent 60%),var(--bg);
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .5s ease}
   .splash.hide{opacity:0;pointer-events:none}
   .splash img{width:96px;height:96px;filter:drop-shadow(0 0 24px var(--gold-glow));animation:sfloat 3s ease-in-out infinite}
   @keyframes sfloat{50%{transform:translateY(-6px)}}
-  .splash h1{margin:0;font-size:24px;font-weight:800;letter-spacing:.16em;background:linear-gradient(95deg,var(--gold2),var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .splash .sp-sub{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+  /* ── OPENING: solo el nombre. ────────────────────────────────────
+     Oro translucido -- no relleno solido -- con el resplandor haciendo el
+     trabajo, y un filo de neon que DA LA VUELTA al marco. El giro se hace
+     con un angulo animado y una mascara que solo deja ver el borde, no el
+     relleno: por eso la luz recorre el contorno en vez de girar el fondo. */
+  @property --giro{syntax:'<angle>';initial-value:0deg;inherits:false}
+  .sp-nombre{
+    position:relative;padding:16px 30px;border-radius:16px;
+    display:grid;place-items:center;
+    background:rgba(212,175,55,.03);
+  }
+  .sp-nombre::before{
+    content:"";position:absolute;inset:0;border-radius:inherit;padding:1.6px;
+    background:
+      conic-gradient(from var(--giro),
+        rgba(212,175,55,.16) 0deg, rgba(212,175,55,.16) 250deg,
+        rgba(244,201,93,.55) 300deg, #fff4d0 340deg,
+        rgba(244,201,93,.55) 352deg, rgba(212,175,55,.16) 360deg);
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude;
+    animation:giro-neon 2.9s linear infinite;
+    pointer-events:none;
+  }
+  /* El halo que despega el marco del negro. */
+  .sp-nombre::after{
+    content:"";position:absolute;inset:-14px;border-radius:26px;pointer-events:none;
+    background:radial-gradient(circle,rgba(212,175,55,.13),transparent 68%);
+  }
+  @keyframes giro-neon{to{--giro:360deg}}
+  .splash h1{
+    margin:0;position:relative;z-index:1;
+    font-size:34px;font-weight:300;letter-spacing:.44em;text-indent:.44em;
+    color:rgba(244,201,93,.60);
+    text-shadow:0 0 10px rgba(212,175,55,.6), 0 0 30px rgba(212,175,55,.32),
+                0 0 62px rgba(212,175,55,.16);
+  }
+  /* Navegadores sin angulos animables: el marco se queda quieto pero sigue
+     siendo un filo de neon, no desaparece. */
+  @supports not (background:conic-gradient(from 0deg,red,blue)){
+    .sp-nombre::before{background:rgba(244,201,93,.5);animation:none}
+  }
+  @media (prefers-reduced-motion:reduce){ .sp-nombre::before{animation:none} }
   .splash .sp-auth{margin-top:26px;display:flex;flex-direction:column;align-items:center;gap:10px}
   .faceid{width:56px;height:56px;border-radius:16px;border:1.5px solid var(--gold);display:grid;place-items:center;color:var(--gold)}
 </style>
@@ -484,8 +700,7 @@
     <!-- splash -->
     <div class="splash" id="splash">
       <img id="splashLogo" alt="Phoenix">
-      <h1>MDJ COMMANDER</h1>
-      <div class="sp-sub">AI Executive Command</div>
+      <div class="sp-nombre"><h1>ELIXIS</h1></div>
       <div class="sp-auth">
         <div class="faceid"><svg viewBox="0 0 24 24" width="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1M15 10v1M12 9v4l-1 1M9.5 15c1.5 1 3.5 1 5 0"/></svg></div>
         <div style="font-size:12px;color:var(--muted)" id="authTxt">Autenticación segura…</div>
@@ -579,11 +794,14 @@
       var res = await fetch(url,{ method:'POST', headers:_invokeHeaders(), body:JSON.stringify({ message:text, history:_elixisHistory.slice(-20) }) });
       if(res.status===401){ _goLogin(); return ''; }
       var d={}; try{ d=await res.json(); }catch(_){}
-      if(!res.ok||!d.reply) return (d.error==='forbidden_not_staff') ? 'Tu cuenta no tiene acceso de staff/owner.' : 'Tuve un problema ('+res.status+').';
+      if(!res.ok||!d.reply) return {reply:(d.error==='forbidden_not_staff') ? 'Tu cuenta no tiene acceso de staff/owner.' : 'Tuve un problema ('+res.status+').'};
       _elixisHistory.push({role:'user',content:text});
       _elixisHistory.push({role:'assistant',content:d.reply});
-      return d.reply;
-    }catch(e){ return 'No pude conectar. Revisa tu conexión.'; }
+      /* sms_pendiente viaja desde elixis-chat y el orquestador lo reenvia
+         entero. Antes se perdia aqui: ELIXIS encolaba el mensaje y el Capitan
+         no llegaba a verlo nunca, asi que el SMS se quedaba en la cola. */
+      return {reply:d.reply, sms:d.sms_pendiente||null};
+    }catch(e){ return {reply:'No pude conectar. Revisa tu conexión.'}; }
   }
   /* Desbloqueo de audio: un solo elemento "armado" con el primer gesto del usuario,
      para que la voz natural (OpenAI) SIEMPRE suene y nunca caiga a algo robótico. */
@@ -609,6 +827,34 @@
   }
   var AGENT="ELIXIS"; /* agentic name — introduced only in the greeting, not as a persistent label */
 
+  /* ═══ DIA / NOCHE ════════════════════════════════════════════════
+     El sol de la cabecera abria Ajustes, que ya vive dentro de "Mas": dos
+     puertas a lo mismo. Por orden del PO -- "lo nuevo reemplaza a lo viejo
+     redundante" -- el sol queda EXCLUSIVO para el tema y Ajustes se queda
+     donde estaba. El icono anuncia lo que vas a OBTENER, no donde estas:
+     de noche muestra el sol, de dia la luna. */
+  function temaActual(){ return document.documentElement.getAttribute('data-tema')==='claro' ? 'claro' : 'oscuro'; }
+  function ponerTema(t){
+    if(t==='claro') document.documentElement.setAttribute('data-tema','claro');
+    else            document.documentElement.removeAttribute('data-tema');
+    try{ localStorage.setItem('mdjc_tema', t); }catch(e){}
+    _hilos=null;                       /* la red recalcula su oro */
+    /* El arranque corre ANTES de que se declare FX: sin esta guarda,
+       FX.canvas revienta con TypeError y la app no monta. */
+    if(typeof FX!=='undefined' && FX && FX.canvas && document.body.contains(FX.canvas)) fxDraw();
+  }
+  function alternarTema(){
+    ponerTema(temaActual()==='claro' ? 'oscuro' : 'claro');
+    haptic('light');
+    render();                          /* el icono cambia de sol a luna */
+  }
+  /* Arranque: lo que elegiste manda; si nunca elegiste, manda el sistema. */
+  (function(){
+    var g=null; try{ g=localStorage.getItem('mdjc_tema'); }catch(e){}
+    if(g==='claro'||g==='oscuro'){ ponerTema(g); return; }
+    if(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ponerTema('claro');
+  })();
+
   /* ───── icons ───── */
   var IC={
     command:'<path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
@@ -623,7 +869,7 @@
     agents:'<circle cx="12" cy="7" r="3.5"/><path d="M5 20c0-3.6 3-6 7-6s7 2.4 7 6"/><path d="M12 1.5v1.5M9 4l-1-1M15 4l1-1"/>',
     studio:'<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4M7 11l3-3 2 2 3-3"/>',
     profile:'<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/>',
-    settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
+    settings:'<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>', sol:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/>', luna:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
     back:'<path d="M15 18l-6-6 6-6"/>', chev:'<path d="M9 6l6 6-6 6"/>', close:'<path d="M18 6 6 18M6 6l12 12"/>',
     search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>', keyboard:'<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h12"/>',
     mic:'<path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/>',
@@ -682,13 +928,26 @@
   /* ───── AI particle / circuit field (behind the agent) ───── */
   var FX={pts:null,canvas:null,ctx:null,W:0,H:0,intensity:0.8,target:0.8,hue:'gold',raf:null,
     reduce:(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches)};
-  var FXMAP={idle:[0.7,'gold'],listening:[1.5,'gold'],transcribing:[1.3,'cyan'],understanding:[2.1,'magenta'],confirmation:[1,'gold'],executing:[2.4,'magenta'],speaking:[1.5,'gold']};
+  var FXMAP={idle:[0.95,'gold'],listening:[1.5,'gold'],transcribing:[1.3,'cyan'],understanding:[2.1,'magenta'],confirmation:[1,'gold'],executing:[2.4,'magenta'],speaking:[1.5,'gold']};
   function fxSize(){var c=FX.canvas;if(!c)return;var r=c.getBoundingClientRect();var dpr=Math.min(2,window.devicePixelRatio||1);FX.W=Math.max(60,r.width);FX.H=Math.max(60,r.height);c.width=FX.W*dpr;c.height=FX.H*dpr;FX.ctx.setTransform(dpr,0,0,dpr,0,0);}
-  function fxCol(a){return FX.hue==='magenta'?'rgba(199,123,255,'+a+')':FX.hue==='cyan'?'rgba(63,185,230,'+a+')':'rgba(212,175,55,'+a+')';}
+  /* El oro de la red sale del tema (--hilos, RGB crudo): en modo dia baja a
+     bronce, porque oro claro sobre papel blanco se lee gris. Se cachea: esto
+     corre cientos de veces por fotograma. */
+  var _hilos=null;
+  function hilosRGB(){
+    if(_hilos) return _hilos;
+    _hilos=(getComputedStyle(document.documentElement).getPropertyValue('--hilos')||'').trim()||'212,175,55';
+    return _hilos;
+  }
+  function fxCol(a){return FX.hue==='magenta'?'rgba(199,123,255,'+a+')':FX.hue==='cyan'?'rgba(63,185,230,'+a+')':'rgba('+hilosRGB()+','+a+')';}
   function mountFX(canvas,state){
     if(!canvas)return;FX.canvas=canvas;FX.ctx=canvas.getContext('2d');fxSize();
     var m=FXMAP[state]||FXMAP.idle;FX.target=m[0];FX.hue=m[1];
-    if(!FX.pts){FX.pts=[];for(var i=0;i<44;i++)FX.pts.push({x:Math.random()*FX.W,y:Math.random()*FX.H,vx:(Math.random()-.5)*.32,vy:(Math.random()-.5)*.32,r:Math.random()*1.5+.7,ph:Math.random()*6.28});}
+    if(!FX.pts){FX.pts=[];for(var i=0;i<56;i++)FX.pts.push({x:Math.random()*FX.W,y:Math.random()*FX.H,vx:(Math.random()-.5)*.32,vy:(Math.random()-.5)*.32,r:Math.random()*1.5+.7,ph:Math.random()*6.28,
+      /* z = plano de profundidad. Los de delante van mas gruesos, brillantes
+         y rapidos; los del fondo se apagan. Sin esto la red es un dibujo
+         plano por muy brillante que se ponga. */
+      z:0.42+Math.random()*0.58});}
     if(FX.reduce){FX.intensity=FX.target;fxDraw();return;}
     if(!FX.raf)fxLoop();
   }
@@ -706,10 +965,10 @@
     var W=FX.W,H=FX.H,pts=FX.pts,inten=FX.intensity*(1+lvl*0.7);
     ctx.clearRect(0,0,W,H);
 
-    for(var i=0;i<pts.length;i++){var p=pts[i];p.x+=p.vx*inten;p.y+=p.vy*inten;
+    for(var i=0;i<pts.length;i++){var p=pts[i];var pz=p.z||1;p.x+=p.vx*inten*pz;p.y+=p.vy*inten*pz;
       if(p.x<-4)p.x+=W+8;if(p.x>W+4)p.x-=W+8;if(p.y<-4)p.y+=H+8;if(p.y>H+4)p.y-=H+8;}
 
-    var D=Math.min(W,H)*0.42*(1+lvl*0.14);
+    var D=Math.min(W,H)*0.46*(1+lvl*0.14);
 
     /* Los hilos, con resplandor propio. El grosor y el brillo caen con la
        distancia, que es lo que da sensacion de profundidad. */
@@ -723,8 +982,9 @@
       var a=pts[i],b=pts[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);
       if(d<D){
         var k=1-d/D;
-        ctx.strokeStyle=fxCol((k*k*0.42*Math.min(1.7,inten)*(1+lvl*0.9)).toFixed(3));
-        ctx.lineWidth=(0.45+k*1.05+lvl*0.5);
+        var zz=((a.z||1)+(b.z||1))*0.5;   /* hilo del fondo = hilo apagado */
+        ctx.strokeStyle=fxCol((k*k*0.92*zz*Math.min(1.7,inten)*(1+lvl*0.9)).toFixed(3));
+        ctx.lineWidth=(0.7+k*1.8+lvl*0.6)*zz;
         ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
         if(k>0.55) enlaces.push([a,b]);
       }
@@ -733,7 +993,7 @@
     /* Pulsos de energia: chispas que recorren las conexiones mas fuertes.
        Es lo que convierte una malla estatica en una red con corriente. */
     if(!FX.pulsos) FX.pulsos=[];
-    while(FX.pulsos.length<10 && enlaces.length)
+    while(FX.pulsos.length<18 && enlaces.length)
       FX.pulsos.push({e:enlaces[(Math.random()*enlaces.length)|0], t:Math.random(), v:0.006+Math.random()*0.012});
     for(var i=FX.pulsos.length-1;i>=0;i--){
       var pu=FX.pulsos[i];
@@ -745,19 +1005,20 @@
       var A=pu.e[0], B=pu.e[1];
       var px=A.x+(B.x-A.x)*pu.t, py=A.y+(B.y-A.y)*pu.t;
       var brillo=Math.sin(pu.t*Math.PI);
-      ctx.shadowColor=fxCol(.9); ctx.shadowBlur=10*brillo;
-      ctx.fillStyle=fxCol((0.55+lvl*0.45)*brillo);
-      ctx.beginPath();ctx.arc(px,py,1.5+lvl*1.2,0,6.283);ctx.fill();
+      ctx.shadowColor=fxCol(1); ctx.shadowBlur=15*brillo;
+      ctx.fillStyle=fxCol(Math.min(1,(0.85+lvl*0.15)*brillo).toFixed(3));
+      ctx.beginPath();ctx.arc(px,py,2.2+lvl*1.4,0,6.283);ctx.fill();
       ctx.shadowBlur=0;
     }
 
     /* Nodos: nucleo solido con halo, no un punto plano. */
     for(var i=0;i<pts.length;i++){
       var p=pts[i];
-      var pr=(p.r+Math.sin(Date.now()/600+p.ph)*.3)*(1+lvl*1.05);
-      ctx.fillStyle=fxCol((0.12+lvl*0.14).toFixed(3));
-      ctx.beginPath();ctx.arc(p.x,p.y,Math.max(.6,pr*2.6),0,6.283);ctx.fill();
-      ctx.fillStyle=fxCol(.72+lvl*.28);
+      var pz=p.z||1;
+      var pr=(p.r+Math.sin(Date.now()/600+p.ph)*.3)*(1+lvl*1.05)*(0.55+pz*0.65);
+      ctx.fillStyle=fxCol((0.20*pz+lvl*0.16).toFixed(3));
+      ctx.beginPath();ctx.arc(p.x,p.y,Math.max(.6,pr*2.9),0,6.283);ctx.fill();
+      ctx.fillStyle=fxCol(((0.42+pz*0.46)+lvl*.22).toFixed(3));
       ctx.beginPath();ctx.arc(p.x,p.y,Math.max(.4,pr),0,6.283);ctx.fill();
     }
   }
@@ -813,10 +1074,13 @@
     });
     // notifications quick access via more? add a bell into command topbar instead
   }
-  function renderFab(show){
-    var old=$('#fabMic');if(old)old.remove();
-    if(show){var f=el('button','fab-mic',svg('mic'));f.id='fabMic';f.onclick=function(){openVoice(true);};$('#device').appendChild(f);}
-  }
+  /* #fabMic RETIRADO por orden del PO (2026-08-20): "lo nuevo reemplaza a lo
+     viejo redundante". Era un microfono flotante anterior al rediseno del
+     orbe; desde que el fenix del centro enciende y cuelga la voz DESDE
+     CUALQUIER pantalla, este boton solo ponia un segundo microfono en
+     pantalla y se solapaba con el pie en Ajustes. Se deja la funcion vacia
+     para no romper a quien la llame. */
+  function renderFab(){ var old=$('#fabMic'); if(old) old.remove(); }
 
   /* ───── MORE sheet ───── */
   function openMore(){
@@ -895,8 +1159,8 @@
     renderTopbar({title:'', right: voice
       ? '<button class="icon-btn" id="voiceEnd" title="Terminar">'+svg('close')+'</button>'
       : '<button class="modo-btn'+(state.voiceMode==='text'?' on':'')+'" id="modoBtn" title="'+(state.voiceMode==='text'?T('Volver a voz','Back to voice'):T('Escribir','Write'))+'">'+svg(state.voiceMode==='text'?'mic':'keyboard')+'</button>'+
-        '<span class="row" style="gap:6px;margin-right:6px;font-size:11px;font-family:var(--mono);color:var(--green)"><span class="dot d-green"></span>ONLINE</span><button class="icon-btn" id="goSettings">'+svg('settings')+'</button>'});
-    var avatarHTML='<div class="avatar-stage '+st+(voice?' big':'')+'" id="avatarStage"><canvas class="avatar-fx" id="avatarFX"></canvas><div class="avatar-baseglow"></div>'+
+        '<span class="row" style="gap:6px;margin-right:6px;font-size:11px;font-family:var(--mono);color:var(--green)"><span class="dot d-green"></span>ONLINE</span><button class="icon-btn" id="temaBtn" title="'+T('Día / noche','Day / night')+'" aria-label="'+T('Día o noche','Day or night')+'">'+svg(temaActual()==='claro'?'luna':'sol')+'</button>'});
+    var avatarHTML='<div class="avatar-stage '+st+(voice?' big':'')+'" id="avatarStage"><canvas class="avatar-fx" id="avatarFX"></canvas><i class="bola-energia"></i><div class="avatar-baseglow"></div>'+
       '<img class="avatar-fig" src="'+AVATAR+'" alt="'+AGENT+' · AI Agent"></div>';
     if(voice){
       /* immersive: only avatar + particles + subtitles — like talking to a human, no chat cards */
@@ -908,7 +1172,7 @@
       var e=$('#voiceEnd');if(e)e.onclick=endVoice;
       wireVoice(st);
     } else {
-      $('#goSettings').onclick=function(){go('settings');};
+      $('#temaBtn').onclick=function(){ alternarTema(); };
       var body;
       if(state.voiceMode==='text'){
         v.style.display='flex'; v.style.flexDirection='column';
@@ -1030,12 +1294,76 @@
     c.innerHTML='';
     for(var i=0;i<state.chat.length;i++){
       var m=state.chat[i];
+      if(m.q==='sms'){ c.appendChild(tarjetaSms(m)); continue; }
       var d=document.createElement('div');
       d.className = m.q==='yo' ? 'yo' : (m.q==='sys' ? 'sys' : 'line');
       d.textContent = m.t;
       c.appendChild(d);
     }
     c.scrollTop=c.scrollHeight;
+  }
+
+  /* ═══ CONSTITUCION DEL ARTEFACTO · aprobacion humana de SMS ═══
+     ELIXIS NUNCA envia. Solo deja el borrador en la cola. El envio real lo
+     hace elixis-sms-dispatch, una funcion que el modelo ni siquiera tiene en
+     su inventario de herramientas y que exige JWT de owner/staff mas una fila
+     que ya estuviera encolada. El telefono y el texto se leen DE LA FILA, no
+     de lo que se pida aqui: asi un numero dictado al vuelo no puede colarse.
+     El candado esta en la cerradura, no en el prompt. */
+  function encolarSms(sms){
+    state.chat.push({q:'sms', sms:sms, estado:'pendiente', nota:''});
+    pintarChat();
+  }
+  function tarjetaSms(m){
+    var sms=m.sms;
+    var card=document.createElement('div');
+    card.className='sms-card'+(m.estado!=='pendiente'?' resuelta':'');
+    card.innerHTML =
+      '<div class="sms-h">'+svg('shield','width="14"')+' SMS listo para aprobar</div>'+
+      '<div class="sms-dest">Para <b>'+esc(sms.destinatario||'(sin nombre)')+'</b>'+
+        '<span class="sms-tel">'+esc(sms.telefono||'')+'</span></div>'+
+      '<div class="sms-msg"></div>'+
+      (m.estado==='pendiente'
+        ? '<div class="sms-acc"><button class="sms-ok" data-a="enviar">Aprobar y enviar</button>'+
+          '<button class="sms-no" data-a="cancelar">Cancelar</button></div>'
+        : '')+
+      '<div class="sms-estado"></div>';
+    card.querySelector('.sms-msg').textContent = sms.mensaje||'';
+    card.querySelector('.sms-estado').textContent = m.nota||'';
+    var botones=card.querySelectorAll('button');
+    Array.prototype.forEach.call(botones,function(b){
+      b.onclick=function(){ despacharSms(m,b.getAttribute('data-a'),botones,card); };
+    });
+    return card;
+  }
+  async function despacharSms(m, accion, botones, card){
+    Array.prototype.forEach.call(botones,function(x){ x.disabled=true; });  /* nada de doble clic */
+    card.querySelector('.sms-estado').textContent = accion==='enviar'?'Enviando…':'Cancelando…';
+    var base = (typeof window.mdbSupabaseFunctionUrl==='function')
+      ? window.mdbSupabaseFunctionUrl('elixis-sms-dispatch') : null;
+    function cerrar(txt, resuelto){
+      m.nota=txt; if(resuelto) m.estado=accion==='enviar'?'enviado':'cancelado';
+      pintarChat();
+    }
+    function reabrir(txt){ m.nota=txt; pintarChat(); }
+    if(!base){ cerrar('No pude ubicar el despachador.',false); return; }
+    var url = base + (base.indexOf('?')===-1?'?':'&') + 'id=' + encodeURIComponent(m.sms.id)
+            + (accion==='cancelar'?'&accion=cancelar':'');
+    try{
+      var res = await fetch(url,{ method:'POST', headers:_invokeHeaders() });
+      var d={}; try{ d=await res.json(); }catch(_){}
+      if(res.status===401){ _goLogin(); return; }
+      if(res.status===403){ cerrar('Tu cuenta no puede enviar SMS de la empresa.',true); return; }
+      if(res.status===409){ cerrar('Este mensaje ya estaba resuelto ('+(d.estado||'?')+').',true); return; }
+      if(!res.ok || d.ok!==true){
+        reabrir('No se pudo '+(accion==='enviar'?'enviar':'cancelar')+'. Inténtalo de nuevo.');
+        return;
+      }
+      cerrar(accion==='enviar' ? '✓ Enviado a '+(d.destinatario||m.sms.destinatario) : 'Cancelado. No salió nada.', true);
+      haptic('light');
+    }catch(e){
+      reabrir('Sin conexión con el despachador.');
+    }
   }
   function decir(quien, texto){
     if(!texto) return;
@@ -1334,11 +1662,15 @@
        que solo se ve una de las dos voces no es un chat. */
     decir('yo', text);
     state.avatar='understanding';state.agentReply=null;render();haptic('light');
-    askElixis(text).then(function(reply){
-      if(!reply) return; /* 401 ya redirigió al login */
-      state.agentReply=reply; state.agentLine='real'; state.avatar='speaking';
-      decir('elixis', reply);
-      speakReal(reply);
+    askElixis(text).then(function(r){
+      if(!r||!r.reply) return; /* 401 ya redirigió al login */
+      state.agentReply=r.reply; state.agentLine='real'; state.avatar='speaking';
+      decir('elixis', r.reply);
+      /* La constitucion: ELIXIS solo ENCOLA. Aqui aparece el borrador para que
+         lo apruebes tu. El envio real lo hace otra funcion que ELIXIS ni
+         conoce, y que exige rol owner/staff. */
+      if(r.sms && r.sms.id) encolarSms(r.sms);
+      speakReal(r.reply);
     });
   }
   function agentRespondAndCreate(){ /* creaba una mision falsa y hacia hablar a ELIXIS con frases escritas a mano */ }
@@ -1530,13 +1862,13 @@
   /* SETTINGS */
   SCREENS.settings=function(v){
     renderTopbar({back:true,title:T('Ajustes','Settings')});
-    v.innerHTML='<div class="pad screen-anim">'+
+    v.innerHTML='<div class="pad screen-anim ajustes">'+
       '<div class="sec-h">'+T('Idioma','Language')+'</div><div class="card" style="padding:8px"><div class="tabs" style="margin:0"><button class="'+(lang==='es'?'on':'')+'" data-lang="es">Español</button><button class="'+(lang==='en'?'on':'')+'" data-lang="en">English</button></div></div>'+
       '<div class="sec-h">'+T('Modo de voz','Voice mode')+'</div><div class="card">'+
       [['ptt','Push to talk',true],['cont',T('Conversación continua','Continuous conversation'),false],['text',T('Solo texto','Text only'),false]].map(function(r){return '<div class="lrow"><span class="l-t" style="flex:1">'+r[1]+'</span>'+(r[2]?'<span class="badge b-green">'+T('ACTIVO','ACTIVE')+'</span>':'<span class="muted" style="font-size:12px">'+T('Tocar','Tap')+'</span>')+'</div>';}).join('')+'</div>'+
       '<div class="sec-h">'+T('Conexión','Connection')+'</div><div class="card"><button class="lrow tap" id="offToggle" style="width:100%;text-align:left"><span class="l-ico" style="color:'+(state.online?'var(--green)':'var(--red)')+'">'+svg(state.online?'shield':'warn')+'</span><div style="flex:1"><div class="l-t">'+(state.online?T('En línea','Online'):'OFFLINE')+'</div><div class="l-s">'+T('Toca para simular offline','Tap to simulate offline')+'</div></div><span class="badge '+(state.online?'b-green':'b-red')+'">'+(state.online?'ON':'OFF')+'</span></button></div>'+
       '<div class="sec-h">'+T('Privacidad','Privacy')+'</div><div class="card"><div class="lrow"><span class="l-ico">'+svg('mic')+'</span><span class="l-t" style="flex:1">'+T('Micrófono','Microphone')+'</span><span class="badge b-muted">'+T('INACTIVO','OFF')+'</span></div><div class="lrow"><span class="l-ico">'+svg('lock')+'</span><span class="l-t" style="flex:1">'+T('Datos cifrados','Encrypted data')+'</span><span class="badge b-green">ON</span></div></div>'+
-      '<div class="conf-note">MDJ COMMANDER v0.1 · Miami DJ Beat LLC · '+T('Prototipo demo · sin backend real','Demo prototype · no real backend')+'</div></div>';
+      '<div class="conf-note">ELIXIS v0.1 · Miami DJ Beat LLC</div></div>';
     document.querySelectorAll('[data-lang]').forEach(function(b){b.onclick=function(){lang=b.getAttribute('data-lang');localStorage.setItem('mdjc_lang',lang);render();};});
     $('#offToggle').onclick=function(){state.online=!state.online;render();renderOffline();};
   };
@@ -1567,9 +1899,7 @@
     renderTopbar({title:''}); // reset; screen sets it
     (SCREENS[state.screen]||SCREENS.command)(v);
     renderNav();
-    renderFab(state.screen!=='command'&&state.screen!=='conversation'&&MAIN.indexOf(state.screen)<0? true : (state.screen!=='command'));
-    // FAB on all except command
-    renderFab(state.screen!=='command');
+    renderFab();   /* solo limpia un resto si quedara alguno */
   }
   function renderOffline(){
     var b=$('#offlineBanner');
