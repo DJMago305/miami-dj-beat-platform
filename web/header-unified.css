@@ -4724,6 +4724,11 @@ body.mdj-perfil-estacion #booth-hero-container {
    contenido arranque en 188, con 20 de aire. Anclado a la banda de cabecera
    —determinista— y no al alto de la ventana. */
 body.mdj-perfil-estacion .acct-body { padding-top: 104px !important; }
+/* La barra lateral es pegajosa con top:156px, doce pixeles POR DEBAJO del final
+   de la franja (168): su borde superior entraba en la banda. Se lleva a 188, la
+   misma altura a la que arranca el contenido, para que ambas columnas empiecen
+   a la par. */
+body.mdj-perfil-estacion .acct-side { top: 188px !important; }
 
 #mdj-flotante-visitante .mdj-flotante-marca {
   display: inline-flex;

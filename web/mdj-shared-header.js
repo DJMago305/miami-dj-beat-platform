@@ -221,6 +221,57 @@
   }
   window.mdjEnEstacionDeTrabajo = mdjEnEstacionDeTrabajo;
 
+  /* LA MARCA DEBE SEÑALAR DONDE ESTAS. Auditado puesto por puesto: index marca
+     Inicio, academia marca Academia, dj-tools marca DJ Tools, la agenda marca
+     Agenda y config marca CONFIG. El unico que no marcaba NADA era el propio
+     perfil, donde ademas el dorado caia en Shop, que no es la pagina actual.
+
+     El perfil no navega entre paginas sino entre pestañas internas, asi que la
+     marca sigue a la pestaña visible: publica → MI PERFIL, flow → Cash Flow,
+     sft → SoundForTips. Se lee el panel que esta a la vista, no la URL, porque
+     dentro del perfil se conmuta sin tocar la direccion. */
+  function mdjMarcarPuestoActivo() {
+    try {
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (pagina !== 'dj-profile.html' || !mdjEnPortalArtista()) return;
+      var nav = document.getElementById('mainNav');
+      if (!nav) return;
+      var visible = null;
+      ['public', 'flow', 'sft'].forEach(function (t) {
+        var p = document.getElementById('tab-' + t);
+        if (p && getComputedStyle(p).display !== 'none') visible = t;
+      });
+      if (!visible) return;
+      var puestos = nav.querySelectorAll('[data-mdj-slot]');
+      for (var i = 0; i < puestos.length; i++) {
+        var esteTab = puestos[i].getAttribute('data-mdj-tab');
+        if (esteTab === visible) puestos[i].classList.add('active');
+        else puestos[i].classList.remove('active');
+      }
+    } catch (eMarca) { /* noop */ }
+  }
+  window.mdjMarcarPuestoActivo = mdjMarcarPuestoActivo;
+
+  /* Y que la marca acompañe al usuario cuando conmuta dentro del perfil: se
+     envuelve el conmutador de la pagina en vez de duplicar su logica. */
+  (function engancharConmutador() {
+    var intentos = 0;
+    var iv = setInterval(function () {
+      if (typeof window.switchProfileTab === 'function' && !window.switchProfileTab.__mdjMarca) {
+        var original = window.switchProfileTab;
+        var envuelto = function () {
+          var r = original.apply(this, arguments);
+          setTimeout(mdjMarcarPuestoActivo, 0);
+          return r;
+        };
+        envuelto.__mdjMarca = true;
+        window.switchProfileTab = envuelto;
+        clearInterval(iv);
+      }
+      if (++intentos > 60) clearInterval(iv);
+    }, 100);
+  })();
+
   /* DESTINO DE UN PUESTO. Los puestos-PESTAÑA (Cash Flow, SoundForTips) traen
      href '#' porque dentro del perfil conmutan sin navegar. Fuera del perfil ese
      '#' dejaba el clic muerto: medido en dj-tools.html, pulsarlos solo añadia '#'
@@ -1072,6 +1123,7 @@
     if (mdjEsVisitanteDePerfil()) mdjMontarFlotanteVisitante();
     else if (mdjArtistaEnSuPerfil()) mdjMontarFranjaFlotante('artista');
     else mdjDesmontarFlotanteVisitante();   /* fuera del perfil, todo vuelve a su sitio */
+    mdjMarcarPuestoActivo();
 
     /* El propio riel también se blinda inline: hay reglas de la era flex que le
        devuelven display:flex, y sin display:grid las nueve columnas no existen
