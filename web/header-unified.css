@@ -4705,6 +4705,19 @@ body.mdj-perfil-estacion #pub-hero-top-stack { transform: translateY(88px); }
    PO lo quiere largo y pegado a la derecha. */
 body.mdj-perfil-estacion .dj-hero-inset { transform: translateY(30px); }
 
+/* AGENDA · la tarjeta del clima arrancaba en y=100 y la franja ocupa 96→168: se
+   montaba sobre su titulo «CLIMA EN VIVO · 3D» y sobre la columna izquierda
+   (MEDICIONES, PRONOSTICO, EVENTO DE HOY).
+
+   El desplazamiento se ancla a la BANDA DE CABECERA, que es determinista —84 de
+   barra + 12 de aire + 72 de franja—, no a la altura de la ventana: en local el
+   cromo del navegador roba alto y en produccion no, y un valor atado al viewport
+   descuadraria en una de las dos. */
+body.mdj-perfil-estacion #tab-dashboard #booth-hero-container,
+body.mdj-perfil-estacion #booth-hero-container {
+  margin-top: 84px !important;
+}
+
 #mdj-flotante-visitante .mdj-flotante-marca {
   display: inline-flex;
   align-items: center;
@@ -4721,17 +4734,35 @@ body.mdj-perfil-estacion .dj-hero-inset { transform: translateY(30px); }
    resto es transparencia. Con 'contain' mandaba el lado vacio y el texto salia
    diminuto al lado del sello. Con una caja apaisada y 'cover' se recorta el aire
    de arriba y abajo, y el rotulo llena su sitio a la altura del aguila. */
+/* Medido sobre los PNG (ambos 1920x1920, muestreo del canal alfa):
+     aguila  · contenido 83.8% x 85.4% · centro vertical 49.2% (centrado)
+     letras  · contenido 83.8% x 17.1% · centro vertical 52.5% (BAJO)
+   Dos correcciones, las dos calculadas:
+   · Proporcion: con 186px de ancho el rotulo medía ~32px de alto frente a los
+     ~44px visibles del aguila. A 210px sube a ~36px y la pareja se equilibra.
+   · Alineacion: el texto vive 2.5% por debajo del centro del archivo, asi que el
+     recorte centrado lo dejaba ~5px bajo. object-position al 52.5% mueve la
+     ventana de recorte hasta centrar la banda real del texto. */
 #mdj-flotante-visitante .mdj-flotante-marca .mdj-flotante-letras {
-  width: 186px;
+  width: 210px;
   height: 46px;
   object-fit: cover;
-  object-position: center;
+  object-position: 50% 52.5%;
   display: block;
 }
 #mdj-flotante-visitante .mdj-flotante-marca img {
   height: 38px;
   width: auto;
   display: block;
+}
+/* EL SELLO, UN SOLO TAMAÑO EN TODAS LAS VISTAS. La regla de arriba lo dejaba en
+   38px, pero en el perfil otra regla lo subia a 52: medido, la pareja cambiaba de
+   proporcion al pasar de una pestaña a otra. Su contenido util es el 85.4% del
+   archivo, asi que 52px de caja dan ~44px de aguila visible, a juego con los
+   ~36px de alto del rotulo. */
+#mdj-flotante-visitante .mdj-flotante-marca .logo-img-eagle {
+  height: 52px !important;
+  width: 52px !important;
 }
 
 /* REPARTO: logo a la IZQUIERDA, buscador a la DERECHA. El buscador no se estira
@@ -4795,7 +4826,7 @@ body.mdj-perfil-estacion .dj-hero-inset { transform: translateY(30px); }
 @media (max-width: 600px) {
   #mdj-flotante-visitante { top: 10px; left: 10px; right: 10px; gap: 10px; padding: 8px 11px; }
   #mdj-flotante-visitante .mdj-flotante-marca img { height: 30px; }
-  #mdj-flotante-visitante .mdj-flotante-marca .mdj-flotante-letras { width: 124px; height: 30px; }
+  #mdj-flotante-visitante .mdj-flotante-marca .mdj-flotante-letras { width: 140px; height: 30px; }
   #mdj-flotante-visitante .mdj-flotante-marca { gap: 7px; }
   /* En pantalla estrecha el buscador si toma el resto: con 380px fijos no cabria
      junto al logo y se saldria de la franja. */
