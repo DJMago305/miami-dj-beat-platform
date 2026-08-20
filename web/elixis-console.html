@@ -1869,7 +1869,17 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
           if(!hablando){ hablando=true; state.agentReply=''; state.agentLine='real';
             RT._fila = linea('', 'line'); rotulo(T('Hablando','Speaking')); }
           state.agentReply += (m.delta||'');
-          if(RT._fila) RT._fila.textContent = state.agentReply;   /* la burbuja crece mientras habla */
+          if(RT._fila){
+            RT._fila.textContent = state.agentReply;   /* la burbuja crece mientras habla */
+            /* Y el hilo BAJA con ella. Sin esto la respuesta crecia fuera de
+               la vista y habia que arrastrar a mano para leerla. Solo se
+               arrastra si el Capitan ya estaba al final: si subio a releer
+               algo, no se le tira la vista hacia abajo. */
+            try{
+              var st = document.getElementById('stream');
+              if(st && (st.scrollHeight - st.scrollTop - st.clientHeight) < 160) st.scrollTop = st.scrollHeight;
+            }catch(_){}
+          }
           var c=document.getElementById('convo'); if(c) c.scrollTop=c.scrollHeight;
           setAvatar('speaking'); break;
 
