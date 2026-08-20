@@ -185,15 +185,29 @@
   #send:disabled{opacity:.4;cursor:not-allowed;transform:none}
   #send:focus-visible,#input:focus-visible{outline:2px solid var(--gold-2);outline-offset:2px}
 
+  /* Se retira en cuanto ya sabes el atajo: util la primera vez, ruido a
+     partir de la segunda. Colapsa en vez de esconderse para no dejar hueco. */
+  .hint.aprendido{
+    opacity:0;max-height:0;padding-top:0;padding-bottom:0;overflow:hidden;
+    transition:opacity .4s ease, max-height .4s ease, padding .4s ease;
+  }
   .hint{
+    max-height:60px;transition:opacity .4s ease, max-height .4s ease, padding .4s ease;
     text-align:center;font-size:11px;color:#5b616b;padding:0 16px 10px;
   }
   /* voz — botones */
   .icon-btn{
-    flex:none;width:38px;height:38px;border-radius:10px;cursor:pointer;
-    border:1px solid var(--line-soft);background:var(--panel-2);color:var(--gold-2);
-    font-size:16px;display:flex;align-items:center;justify-content:center;transition:.15s;
+    /* Eran 38px pegados, con emoji y poco contraste: de un vistazo no se
+       distinguian uno de otro. Mas tamano, mas aire y un trazo que si se lee
+       sobre el fondo negro. */
+    flex:none;width:42px;height:42px;border-radius:12px;cursor:pointer;
+    border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);
+    color:#cbd1da;
+    display:flex;align-items:center;justify-content:center;transition:.15s;
   }
+  .icon-btn svg{width:20px;height:20px;display:block}
+  .icon-btn.off{color:var(--danger);border-color:rgba(224,101,79,.4)}
+  .status{gap:12px}
   .icon-btn:hover{border-color:var(--line)}
   .icon-btn.off{color:#5f656e;opacity:.75}
   .mic-btn{
@@ -473,6 +487,16 @@
    desenfoque es minimo A PROPOSITO -- uno fuerte convierte la red en papilla
    y lo que se quiere es verla pasar por detras. La lectura la sostiene la
    sombra del propio texto. */
+/* ANCHO DE LAS BURBUJAS. El 78% del CSS original se resolvia contra el
+   envoltorio, que a su vez se encoge a su contenido: circular. Con texto largo
+   colaba, pero con "hola" colapsaba a una letra por linea. El tope pasa al
+   ENVOLTORIO, que si tiene de que agarrarse -- la fila mide 920px fijos -- y la
+   burbuja llena lo que le den. */
+.row > div{min-width:0}
+.row > div:not(.ava){max-width:min(78%,620px)}
+.bubble{max-width:100%}
+.sms-card{min-width:min(100%,300px)}
+
 .row.elixis .bubble,
 .row.user .bubble{
   -webkit-backdrop-filter:blur(2px) saturate(150%);
@@ -576,8 +600,8 @@
       </div>
     </div>
     <div class="status">
-      <button class="icon-btn" id="voiceToggle" aria-label="Voz de ELIXIS" title="Voz de ELIXIS: activada">🔊</button>
-      <button class="icon-btn" id="settingsBtn" aria-label="Elegir voz" title="Elegir voz">⚙️</button>
+      <button class="icon-btn" id="voiceToggle" aria-label="Voz de ELIXIS" title="Voz de ELIXIS: activada"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M11 5 6 9H2v6h4l5 4z'/><path d='M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13'/></svg></button>
+      <button class="icon-btn" id="settingsBtn" aria-label="Elegir voz" title="Elegir voz"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg></button>
       <span class="model-badge">Claude · Haiku 4.5</span>
       <span class="pill" id="statusPill"><i class="dot"></i> En línea</span>
     </div>
@@ -1037,6 +1061,7 @@
       return;
     }
     showTyping();
+    retirarPie();
     abrirLados();
     transcribir("yo", message);
     try{
@@ -1084,6 +1109,20 @@
     });
   })();
 
+  /* El atajo se aprende una vez. Se recuerda entre sesiones para que no
+     reaparezca cada vez que abres la consola. */
+  function retirarPie(){
+    var h = document.querySelector(".hint");
+    if(h) h.classList.add("aprendido");
+    try{ localStorage.setItem("elixis_pie_aprendido", "1"); }catch(e){}
+  }
+  try{
+    if(localStorage.getItem("elixis_pie_aprendido") === "1"){
+      var _h = document.querySelector(".hint");
+      if(_h){ _h.classList.add("aprendido"); _h.style.transition = "none"; }
+    }
+  }catch(e){}
+
   function send(){
     if(busy) return;
     var msg = (input.value || "").trim();
@@ -1120,6 +1159,10 @@
   var settingsPanel = document.getElementById("settingsPanel");
   var voiceSelect = document.getElementById("voiceSelect");
   var voiceOn = true;
+  /* Trazos de linea, no emoji. Se reponian con textContent y un emoji, lo
+     que habria borrado el SVG del boton al silenciar. */
+  var ICO_ALTAVOZ = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M11 5 6 9H2v6h4l5 4z'/><path d='M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13'/></svg>";
+  var ICO_MUDO    = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M11 5 6 9H2v6h4l5 4z'/><path d='m16 9 5 6M21 9l-5 6'/></svg>";
   var esVoice = null;
   var synth = window.speechSynthesis || null;
   var selectedVoice = "ash";
@@ -1181,14 +1224,14 @@
   if(voiceToggle){
     voiceToggle.addEventListener("click", function(){
       voiceOn = !voiceOn;
-      voiceToggle.textContent = voiceOn ? "🔊" : "🔇";
+      voiceToggle.innerHTML = voiceOn ? ICO_ALTAVOZ : ICO_MUDO;
       voiceToggle.classList.toggle("off", !voiceOn);
       voiceToggle.title = voiceOn ? "Voz de ELIXIS: activada" : "Voz de ELIXIS: silenciada";
       if(!voiceOn){ stopAudio(); }
     });
   }
 
-  // Selector de voz (⚙️) — persiste en localStorage y se envía a elixis-tts
+  // Selector de voz — persiste en localStorage y se envía a elixis-tts
   if(settingsBtn && settingsPanel){
     settingsBtn.addEventListener("click", function(e){
       e.stopPropagation();
