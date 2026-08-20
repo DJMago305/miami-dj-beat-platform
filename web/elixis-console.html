@@ -172,6 +172,12 @@
   .pill.ahorro .dot{background:#e8b23a;box-shadow:0 0 10px #e8b23a}
   .pill.esencial{color:var(--danger);border-color:rgba(224,101,79,.45)}
   .pill.esencial .dot{background:var(--danger);box-shadow:0 0 10px var(--danger)}
+  /* CONVERSACION ABIERTA. El PO no tenia forma de saber si el modo continuo
+     estaba encendido ni QUE motor le contestaba. Ahora se ve. */
+  .pill.voz{color:#3ecb7f;border-color:rgba(62,203,127,.45)}
+  .pill.voz .dot{background:#3ecb7f;box-shadow:0 0 12px #3ecb7f;animation:voz-late 1.5s ease-in-out infinite}
+  @keyframes voz-late{50%{opacity:.35}}
+  @media (prefers-reduced-motion:reduce){ .pill.voz .dot{animation:none} }
 
   /* ── Message stream ────────────────────────────────── */
   .stream{
@@ -455,11 +461,11 @@ body.modo-voz .face-fig{
    sigue registrando por dentro, solo deja de ocupar pantalla. */
 body.modo-voz .lado-der{opacity:0; pointer-events:none}
 
-/* Y la conversacion se va A LA IZQUIERDA: el centro es del rostro. */
-body.modo-voz .stream > *{margin-left:0; margin-right:auto; max-width:min(420px,34vw)}
+/* Y la conversacion se va A LA DERECHA: el centro es del rostro. */
+body.modo-voz .stream > *{margin-left:auto; margin-right:0; max-width:min(420px,34vw)}
 body.modo-voz .stream{opacity:.62; transition:opacity .5s ease}
 body.modo-voz .stream:hover{opacity:1}
-body.modo-voz .composer{max-width:min(560px,46vw); margin-left:0; margin-right:auto}
+body.modo-voz .composer{max-width:min(560px,46vw); margin-left:auto; margin-right:0}
 body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
 
 /* BOLA DE ENERGIA: la fuente que late en el centro cuando el rostro no esta.
@@ -517,8 +523,10 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
    translucidos, como si el cable de la red los trajera al frente, y al
    terminar se alejan igual. */
 .opera{
+  /* A la izquierda: la conversacion ocupa la derecha en modo voz, asi que el
+     escenario de operacion se queda con el lado libre. */
   position:absolute; top:96px; bottom:96px;
-  right:max(16px, calc(50% - 460px - 248px)); width:232px;
+  left:max(16px, calc(50% - 460px - 248px)); width:232px;
   display:none; flex-direction:column; gap:12px; z-index:2;
   pointer-events:none; opacity:0; transition:opacity .4s ease;
 }
@@ -1380,6 +1388,19 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
     SAVER:     { txt: "Ahorro",     clase: "ahorro" },
     ESSENTIAL: { txt: "Esencial",   clase: "esencial" }
   };
+  /* Dice si la conversacion esta abierta y con QUE motor. "Realtime" es el
+     casi humano; "Reserva" es el del navegador, que entra si no hay cuota o
+     falla el canal. Si no se dice, no hay forma de saberlo. */
+  function pintarVoz(motor){
+    var p = document.getElementById("statusPill");
+    if(!p) return;
+    if(!motor){ p.classList.remove("voz"); return; }
+    p.classList.remove("ahorro", "esencial");
+    p.classList.add("voz");
+    p.innerHTML = '<i class="dot"></i> Escuchando · ' + motor;
+    p.title = "Conversación abierta. Pulsa el micrófono para cerrarla.";
+  }
+
   function pintarModo(modo, pct){
     var p = document.getElementById("statusPill");
     if(!p) return;
@@ -2236,20 +2257,23 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
         try{ RT.stop(true); }catch(e){}
         try{ rec.stop(); }catch(e){}
         stopListening();
+        pintarVoz(null);        /* la pastilla vuelve a decir el modo */
         return;
       }
       stopAudio();         // no escucharse a sí mismo
       entrarModoVoz();     /* el avatar toma la pantalla */
       micBtn.classList.add("listening"); micBtn.innerHTML = MIC_PARAR;
+      pintarVoz("conectando…");
       try{
         await RT.start();
-        if(RT.activa()) return;        /* Realtime al mando */
+        if(RT.activa()){ pintarVoz("Realtime"); return; }   /* el casi humano */
       }catch(e){ /* cae a la reserva */ }
       /* RESERVA: el reconocimiento del navegador. */
       try{
         sesionVoz = true;
         rec.start(); listening = true;
-      }catch(e){ sesionVoz = false; stopListening(); }
+        pintarVoz("Reserva");
+      }catch(e){ sesionVoz = false; stopListening(); pintarVoz(null); }
     });
   } else if(micBtn){
     micBtn.style.display = "none";   // navegador sin reconocimiento de voz
