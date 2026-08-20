@@ -104,3 +104,56 @@ Geometría correcta ya en la **primera muestra**, sin variación durante 2.6 s:
 ## 7 · Riesgo residual
 
 El alto del documento sigue cambiando al conmutar, porque el contenido de cada pestaña es de largo distinto. Lo que se elimina es el **movimiento involuntario de la vista**, que es lo que se percibe como salto. Si se quisiera además un alto de página constante, exigiría igualar los paneles — con el coste visual descrito en el punto 6, y requeriría orden expresa.
+
+---
+
+## 8 · Addendum · Tamaño oficial de Opiniones y Bio, y modelo único de contenedor
+
+**Orden del PO.** Los contenedores de **Opiniones** y **Bio** no pueden cambiar de forma según lo largo o corto que alguien escriba; solo deben cambiar cuando cambia la resolución. Debe existir un límite de caracteres. Además, la tarjeta de reseña tenía un borde interior agresivo: se retira y se adopta **el modelo de la Bio**, para que no convivan dos diseños de caja distintos.
+
+### Medición previa
+
+| caracteres | alto del contenedor de Opiniones |
+|---|---|
+| 40 | 164 px |
+| 174 | 223 px |
+| 300 | 252 px |
+| 900 | 458 px |
+
+**294 px de variación** provocada solo por el texto.
+
+### Solución
+
+El tamaño oficial **no se inventó**: es el que ya tenía el diseño.
+
+- **reseña** — 118 px = 4 líneas de 29.45 → se fija en **4 líneas**
+- **bio** — 257 px = 9 líneas de 28.5 → se fija en **9 líneas**
+
+Se declara en **líneas, no en píxeles**, de modo que la caja acompaña a la tipografía de cada punto de ruptura: cambia con la resolución y nunca con el contenido. Se añade respaldo para motores sin la unidad `lh`.
+
+Un matiz que apareció al verificar: el recorte por líneas pone **techo pero no suelo**. Con solo recortar, un comentario de 40 caracteres seguía encogiendo la caja a 164 px — **88 px de variación residual**. Hizo falta fijar también la altura.
+
+La Bio usa **desplazamiento interno** en lugar de recorte: una biografía larga se sigue leyendo entera sin deformar la tarjeta.
+
+### Límite de caracteres
+
+El campo de reseña tenía `maxlength="500"`, que da 341 px frente a los 252 de 300 caracteres: el límite existía y aun así permitía crecer. Se ajusta a **300**, que es exactamente lo que cabe en las 4 líneas oficiales.
+
+### Modelo único de contenedor
+
+| | Bio | Reseña (antes) | Reseña (ahora) |
+|---|---|---|---|
+| borde | `rgba(255,255,255,.08)` | `rgba(197,160,89,.28)` | `rgba(255,255,255,.08)` |
+| fondo | `rgba(255,255,255,.03)` | `rgba(0,0,0,.42)` | `rgba(255,255,255,.03)` |
+| radio | 16 px | 14 px | 16 px |
+| relleno | 28 px | 26/28/22 | 28 px |
+
+### Verificación
+
+| | antes | tras el recorte | final |
+|---|---|---|---|
+| variación de Opiniones | 294 px | 88 px | **0 px** |
+| variación de Bio | — | — | **0 px** (375 px con 200, 600, 1092 y 3000 caracteres) |
+| modelos de caja coincidentes | no | no | **sí** |
+
+Opiniones queda en 260 px constantes con 40, 120, 174, 300, 500 y 900 caracteres.
