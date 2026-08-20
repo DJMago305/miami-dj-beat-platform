@@ -39,6 +39,7 @@
     --line:rgba(138,109,20,.30); --line-soft:rgba(0,0,0,.10);
     --gold:#8a6d14; --gold-2:#a8871f;
     --text:#0e1116; --muted:#535b69; --user:#e6e9ef; --danger:#c23c48;
+    --hilos:120,94,16;      /* bronce: el oro claro sobre blanco se lee gris */
   }
   :root[data-tema="claro"] body{background:var(--bg)}
   :root{
@@ -53,6 +54,7 @@
     --muted:#888f99;
     --user:#1b2029;
     --danger:#e0654f;
+    --hilos:212,175,55;      /* la red, en RGB crudo para el canvas */
     --radius:16px;
   --gold-glow:rgba(212,175,55,.32);
   }
@@ -74,7 +76,10 @@
      250px abierto / 60px contraido / transicion .18s / etiquetas fuera al
      contraer / grupos en acordeon. Se copia el patron, no se reinventa. */
   .cfg-riel{
-    width:250px;flex:none;background:#0a0e16;border-right:1px solid var(--line);
+    /* SIN BARRA. Antes tenia fondo #0a0e16 clavado, y en modo dia se veia una
+       franja NEGRA sobre papel blanco. Ahora solo se nota la linea que limita,
+       igual que el resto de la consola: todo flota sobre la red. */
+    width:250px;flex:none;background:none;border-right:1px solid var(--line);
     overflow-y:auto;overflow-x:hidden;padding:10px 0 44px;transition:width .18s ease;
   }
   .cfg-riel.contraido{width:60px}
@@ -792,7 +797,17 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
     var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     var MAPA = { idle:[0.7,'gold'], thinking:[2.1,'magenta'], speaking:[1.5,'gold'] };
 
-    function color(a){ return tono==='magenta' ? 'rgba(199,123,255,'+a+')' : 'rgba(212,175,55,'+a+')'; }
+    /* El oro sale del tema: sobre papel blanco el oro claro se lee gris y la
+       red practicamente desaparecia. En dia baja a bronce. Se cachea porque
+       esto corre cientos de veces por fotograma, y se limpia al cambiar tema. */
+    var _hilos = null;
+    window.mdjOlvidarHilos = function(){ _hilos = null; };
+    function hilos(){
+      if(_hilos) return _hilos;
+      _hilos = (getComputedStyle(document.documentElement).getPropertyValue('--hilos') || '').trim() || '212,175,55';
+      return _hilos;
+    }
+    function color(a){ return tono==='magenta' ? 'rgba(199,123,255,'+a+')' : 'rgba('+hilos()+','+a+')'; }
     function medir(){
       if(!cv) return;
       var r=cv.getBoundingClientRect(), dpr=Math.min(2, window.devicePixelRatio||1);
@@ -809,10 +824,13 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
         if(p.x<-4)p.x+=W+8; if(p.x>W+4)p.x-=W+8;
         if(p.y<-4)p.y+=H+8; if(p.y>H+4)p.y-=H+8;
       }
-      var D=Math.min(W,H)*0.34;   /* a sangre, un alcance de .46 unia media pantalla */
+      /* En monitor la malla quedaba fina y dispersa. Se ensancha con la
+         pantalla: mas alcance en grande, sin pasarse en pequeno. */
+      var grande = Math.min(1, Math.max(0, (Math.min(W,H) - 600) / 900));
+      var D=Math.min(W,H)*(0.34 + grande*0.10);
       for(var i=0;i<pts.length;i++) for(var j=i+1;j<pts.length;j++){
         var a=pts[i], b=pts[j], dx=a.x-b.x, dy=a.y-b.y, d=Math.sqrt(dx*dx+dy*dy);
-        if(d<D){ ctx.strokeStyle=color((1-d/D)*(1-d/D)*0.62*Math.min(1.7,inten)); ctx.lineWidth=.9;
+        if(d<D){ ctx.strokeStyle=color((1-d/D)*(1-d/D)*0.86*Math.min(1.7,inten)); ctx.lineWidth=.9+grande*0.7;
           ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
       }
       for(var i=0;i<pts.length;i++){
@@ -828,7 +846,7 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
       ctx=cv.getContext('2d'); medir();
       /* La densidad depende del AREA: 28 puntos llenaban una caja de 400px,
          pero sobre un monitor entero dejaban la red casi vacia. */
-      var objetivo = Math.max(28, Math.min(78, Math.round((W*H)/16000)));
+      var objetivo = Math.max(34, Math.min(96, Math.round((W*H)/13000)));
       pts=[]; for(var i=0;i<objetivo;i++) pts.push({
         x:Math.random()*W, y:Math.random()*H,
         vx:(Math.random()-.5)*.32, vy:(Math.random()-.5)*.32,
@@ -1229,6 +1247,8 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
     if(t === "claro") document.documentElement.setAttribute("data-tema", "claro");
     else document.documentElement.removeAttribute("data-tema");
     try{ localStorage.setItem("elixis_tema", t); }catch(e){}
+    /* La red cachea su color: hay que decirle que lo recalcule. */
+    try{ if(typeof window.mdjOlvidarHilos === "function") window.mdjOlvidarHilos(); }catch(e){}
     var b = document.getElementById("temaBtn");
     if(b) b.innerHTML = (t === "claro") ? ICO_LUNA : ICO_SOL;
   }
