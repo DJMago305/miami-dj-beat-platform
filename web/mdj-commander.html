@@ -91,8 +91,25 @@
   .navb.on::before{content:"";position:absolute;top:0;width:26px;height:2.5px;border-radius:0 0 3px 3px;background:var(--gold)}
   .navb .nb-badge{position:absolute;top:8px;right:calc(50% - 20px);min-width:15px;height:15px;border-radius:8px;background:var(--red);color:#fff;font-size:9px;display:grid;place-items:center;padding:0 3px;font-weight:700}
   .navb.center{flex:0 0 64px}
-  .nav-orb{position:relative;width:88px;height:88px;margin-top:-34px;border-radius:50%;background:linear-gradient(180deg,var(--gold2),var(--gold));display:grid;place-items:center;box-shadow:0 8px 22px var(--gold-glow),0 0 0 5px var(--bg)}
-  .nav-orb img{width:76px;height:76px}
+  .nav-orb{position:relative;width:72px;height:72px;margin-top:-26px;border-radius:50%;
+    background:linear-gradient(180deg,var(--gold2),var(--gold));display:grid;place-items:center;
+    /* Sin el anillo de 5px que lo separaba de la barra: el PO lo queria sin
+       tanto borde. Queda solo la sombra que lo despega del fondo. */
+    box-shadow:0 6px 18px var(--gold-glow);
+    transition:opacity .1s linear}
+  /* Desconectado invita a hablar: dentro del circulo va el microfono. En
+     sesion, el circulo pasa a ser la fuente de energia y muestra el fenix.
+     El simbolo dice en que momento estas sin necesidad de leer nada. */
+  .nav-orb img{width:64px;height:64px;display:none}
+  .nav-orb .orb-mic{display:grid;place-items:center;color:#1a1405}
+  .nav-orb .orb-mic svg{width:32px;height:32px}
+  .nav-orb.live img{display:block}
+  .nav-orb.live .orb-mic{display:none}
+
+  /* Con el saludo, los chips y el microfono fuera, el avatar quedaba pegado
+     arriba y con un hueco debajo. Ahora la pantalla de comando centra su
+     contenido en el alto disponible. */
+  .pad-centro{min-height:100%;display:flex;flex-direction:column;justify-content:center}
 
   /* ── MODO AGENTE: el branding como fuente de energia ──────────────
      En sesion viva el fenix deja de ser un boton y emite. Los anillos son
@@ -100,8 +117,8 @@
      animacion fija: los mueve la amplitud real de la voz (--pulso), de tu
      microfono mientras escuchas y de la pista de ELIXIS mientras habla. */
   .nav-orb.live{
-    box-shadow:0 8px 22px var(--gold-glow),0 0 0 5px var(--bg),
-      0 0 calc(16px + var(--pulso,0) * 46px) rgba(212,175,55,calc(.35 + var(--pulso,0) * .5));
+    box-shadow:0 6px 18px var(--gold-glow),
+      0 0 calc(14px + var(--pulso,0) * 40px) rgba(212,175,55,calc(.35 + var(--pulso,0) * .5));
     /* La escala la pone el bucle en JS: transform:scale(calc(...)) con una
        variable dentro salia identidad, medido en el navegador. */
   }
@@ -112,14 +129,20 @@
   }
   .nav-orb.live::after{animation-delay:.95s}
   @keyframes orbe-radar{
-    0%  {transform:scale(1);   opacity:calc(.20 + var(--pulso,0) * .55)}
+    0%  {transform:scale(1);   opacity:calc(.22 + var(--pulso,0) * .58)}
     100%{transform:scale(2.35);opacity:0}
   }
-  /* Escuchando el radar es verde: la energia viene de ti, no de el. */
-  .nav-orb.live.rx::before,.nav-orb.live.rx::after{border-color:var(--green)}
+  /* El oro es la homogeneidad de la marca y manda siempre. Escuchar y hablar
+     NO se distinguen por color -- eso rompia la identidad -- sino por
+     INTENSIDAD: escuchando el radar es tenue y el resplandor corto; hablando
+     se abre del todo. Misma luz, distinta fuerza. */
+  .nav-orb.live.rx::before,.nav-orb.live.rx::after{
+    border-color:var(--gold);
+    animation-duration:2.6s;
+  }
   .nav-orb.live.rx{
-    box-shadow:0 8px 22px var(--gold-glow),0 0 0 5px var(--bg),
-      0 0 calc(16px + var(--pulso,0) * 46px) rgba(62,207,142,calc(.35 + var(--pulso,0) * .5));
+    box-shadow:0 6px 18px var(--gold-glow),
+      0 0 calc(10px + var(--pulso,0) * 26px) rgba(212,175,55,calc(.22 + var(--pulso,0) * .38));
   }
 
   /* headings / text */
@@ -603,7 +626,7 @@
       ['decisions',T('Decisiones','Decisions'),'decisions'],['more',T('Más','More'),'more']];
     n.innerHTML='';
     items.forEach(function(it){
-      if(it[0]==='__center__'){var c=el('button','navb center','<div class="nav-orb"><img src="'+LOGO+'" alt=""></div>');c.onclick=function(){
+      if(it[0]==='__center__'){var c=el('button','navb center','<div class="nav-orb"><img src="'+LOGO+'" alt=""><span class="orb-mic">'+svg('mic')+'</span></div>');c.onclick=function(){
           /* El branding ES el boton. Si no estas en Comando, te lleva alli;
              si ya estas, abre la conversacion. Asi sigue sirviendo de vuelta
              a casa y ademas es lo que enciende la voz. */
@@ -708,7 +731,7 @@
       $('#goSettings').onclick=function(){go('settings');};
       var body;
       if(state.voiceMode==='text'){
-        v.innerHTML='<div class="pad fade-anim">'+avatarHTML+'<div id="cmdBody"></div></div>';
+        v.innerHTML='<div class="pad fade-anim pad-centro">'+avatarHTML+'<div id="cmdBody"></div></div>';
         body=$('#cmdBody');
         body.innerHTML='<div class="mic-wrap"><div class="mic-side" data-vm="voice"><button class="icon-btn">'+svg('mic')+'</button></div>'+
           '<div class="mic-side on" data-vm="text"><button class="icon-btn">'+svg('keyboard')+'</button>TEXTO</div></div>'+
@@ -719,7 +742,7 @@
         /* El saludo "Hola, soy ELIXIS, tu agente ejecutivo / Que necesitas que
            haga?" se elimino por decision del PO. La cara ya dice quien es. */
         var greet='';
-        v.innerHTML='<div class="pad fade-anim">'+avatarHTML+'<div id="cmdBody"></div></div>';
+        v.innerHTML='<div class="pad fade-anim pad-centro">'+avatarHTML+'<div id="cmdBody"></div></div>';
         body=$('#cmdBody');
         body.innerHTML=greet+
           /* Solo el avatar y su microfono. Los dos botones laterales se
@@ -819,28 +842,39 @@
       var s=0; for(var i=0;i<buf.length;i++){ var v=(buf[i]-128)/128; s+=v*v; }
       return Math.min(1, Math.sqrt(s/buf.length)*3.2);
     }
-    var pulso=0;
+    var pulso=0, vivo=false;
     function latir(){
       var o=orbe();
       if(o){
+        /* La barra inferior se vuelve a dibujar cuando cambia el estado, y el
+           orbe pasa a ser OTRO elemento. Si solo se marcara al encender, la
+           clase se perderia en el primer redibujado y el radar se apagaria
+           solo. Se reafirma cada frame: sale barato y no se pierde nunca. */
+        if(vivo && !o.classList.contains('live')) o.classList.add('live');
         var an = hablando ? (anRem||anMic) : anMic;
         var objetivo = nivel(an);
         pulso += (objetivo - pulso) * 0.3;
         if(pulso < 0.002) pulso = 0;
         o.style.setProperty('--pulso', pulso.toFixed(3));
         o.style.transform = 'scale(' + (1 + pulso * 0.09).toFixed(4) + ')';
+        /* La opacidad respira con la voz: en silencio se atenua, en los picos
+           se enciende del todo. Es lo que le da la pulsacion al boton. */
+        o.style.opacity = (0.62 + pulso * 0.38).toFixed(3);
         o.classList.toggle('rx', !hablando);
       }
       rafPulso = requestAnimationFrame(latir);
     }
     function encender(){
-      var o=orbe(); if(o){ o.classList.add('live'); o.classList.add('rx'); }
+      vivo=true;
+      var o=orbe(); if(o){ o.classList.add('live','rx'); }
       if(!rafPulso) rafPulso = requestAnimationFrame(latir);
     }
     function apagar(){
+      vivo=false;
       if(rafPulso){ cancelAnimationFrame(rafPulso); rafPulso=0; }
       var o=orbe(); if(o){ o.classList.remove('live','rx');
-        o.style.removeProperty('--pulso'); o.style.removeProperty('transform'); }
+        o.style.removeProperty('--pulso'); o.style.removeProperty('transform');
+        o.style.removeProperty('opacity'); }
       pulso=0; anMic=null; anRem=null;
       if(ac){ try{ ac.close(); }catch(e){} ac=null; sink=null; }
     }
