@@ -2,6 +2,15 @@
 <html lang="en">
 
 <head>
+<script>/* SEMILLA DE ESTACION · antes del primer pintado.
+   El guion del header va con defer y al final del documento: cuando decide que
+   esta es una estacion de trabajo, la pagina YA se pinto con la cabecera de dos
+   filas, y al retirarla todo daba un salto hacia arriba —el «acordeon» que
+   reporto el PO. Aqui se recuerda la ultima decision conocida y se aplica de
+   inmediato, asi el primer pintado ya tiene la geometria final. Si luego resulta
+   que no es estacion (sesion cerrada), el propio guion retira la marca. */
+(function(){try{if(localStorage.getItem('mdj_estacion')==='1')document.documentElement.classList.add('mdj-estacion-previa');}catch(e){}})();</script>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
     <script>
     /* FIX-LEGACY-SUPABASE-01 (2026-08-19) · el respaldo entra cuando falta la
@@ -37,8 +46,8 @@
   <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra caia en la
        sustituta del sistema y el texto salia ~2% mas ancho, desplazando el eje X. -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260820-marcaje" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260820-marcaje" />
+    <link rel="stylesheet" href="./styles.css?v=20260820-antisalto2" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260820-antisalto2" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
     <style>
         .mdj-academia-hub {
@@ -362,7 +371,7 @@
     <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
   <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-      <script src="./mdj-shared-header.js?v=20260820-marcaje"></script>
+      <script src="./mdj-shared-header.js?v=20260820-antisalto2"></script>
       <script src="./js/mdj-profile-owner-link.js?v=20260516-perf-ab-1"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>

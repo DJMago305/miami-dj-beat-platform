@@ -2,6 +2,15 @@
 <html lang="en">
 
 <head>
+<script>/* SEMILLA DE ESTACION · antes del primer pintado.
+   El guion del header va con defer y al final del documento: cuando decide que
+   esta es una estacion de trabajo, la pagina YA se pinto con la cabecera de dos
+   filas, y al retirarla todo daba un salto hacia arriba —el «acordeon» que
+   reporto el PO. Aqui se recuerda la ultima decision conocida y se aplica de
+   inmediato, asi el primer pintado ya tiene la geometria final. Si luego resulta
+   que no es estacion (sesion cerrada), el propio guion retira la marca. */
+(function(){try{if(localStorage.getItem('mdj_estacion')==='1')document.documentElement.classList.add('mdj-estacion-previa');}catch(e){}})();</script>
+
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Miami DJ Beat — Agenda y Control</title>
@@ -14,8 +23,8 @@
         rel="stylesheet">
     <!-- FullCalendar CSS -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260820-marcaje" />
-    <link rel="stylesheet" href="./header-unified.css?v=20260820-marcaje" />
+    <link rel="stylesheet" href="./styles.css?v=20260820-antisalto2" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260820-antisalto2" />
     <link rel="stylesheet" href="./profile.css?v=20260226-1" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260411-booth-policy" />
     <link rel="stylesheet" href="./weather-effects.css" />
@@ -7352,7 +7361,7 @@
     </script>
 
     <script src="./header-smart-search.js?v=20260421-smartsearch-dj-directory"></script>
-    <script src="./mdj-shared-header.js?v=20260820-marcaje"></script>
+    <script src="./mdj-shared-header.js?v=20260820-antisalto2"></script>
     <script src="./js/mdj-profile-owner-link.js?v=20260516-perf-ab-1"></script>
   <script src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>

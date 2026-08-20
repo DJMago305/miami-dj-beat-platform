@@ -854,6 +854,9 @@
          propio elemento, y un estilo en linea gana a cualquier regla por
          especifica que sea. Medido: con la clase puesta y la regla aplicando, el
          computado seguia en flex. */
+      /* Se recuerda la decision para el proximo pintado: la semilla del <head> la
+         leera antes de que el navegador dibuje, y no habra salto. */
+      try { if (modo === 'artista') localStorage.setItem('mdj_estacion', '1'); } catch (eLS) { void eLS; }
       var cab = document.getElementById('mainHeader');
       if (!cab) return;
       if (modo === 'artista') {
@@ -1122,7 +1125,29 @@
        buscador ya inicializado. */
     if (mdjEsVisitanteDePerfil()) mdjMontarFlotanteVisitante();
     else if (mdjArtistaEnSuPerfil()) mdjMontarFranjaFlotante('artista');
-    else mdjDesmontarFlotanteVisitante();   /* fuera del perfil, todo vuelve a su sitio */
+    else {
+      mdjDesmontarFlotanteVisitante();   /* fuera del perfil, todo vuelve a su sitio */
+      /* Y si esta pagina NO es estacion para quien mira, se borra la memoria y se
+         retira la marca temprana: mas vale una correccion puntual que arrastrar
+         una cabecera oculta a quien le corresponde verla. */
+      try {
+        /* SOLO CUANDO SE SABE. En las primeras pasadas la sesion aun no ha
+           resuelto y mdjEnEstacionDeTrabajo() devuelve false por falta de datos,
+           no por ser falso: sin esta guarda, la limpieza borraba la semilla en
+           cada carga y el acordeon volvia intacto. */
+        var uidLS = String(window.__mdjNavOwnUserId || '').trim();
+        /* El ROL llega despues que el uid. Con solo el uid habia una ventana en la
+           que la sesion ya existia pero data-mdj-nav-role aun estaba vacio: ahi
+           mdjEnEstacionDeTrabajo() decia false por falta de dato y la limpieza se
+           llevaba la semilla por delante. Se exige rol resuelto. */
+        var rolPuesto = document.body ? (document.body.getAttribute('data-mdj-nav-role') || '').trim() : '';
+        var seSabe = (!!uidLS && !!rolPuesto) || _mdjHaySesion === false;
+        if (seSabe && !mdjEnEstacionDeTrabajo() && !mdjEsVisitanteDePerfil()) {
+          localStorage.removeItem('mdj_estacion');
+          document.documentElement.classList.remove('mdj-estacion-previa');
+        }
+      } catch (eLS2) { void eLS2; }
+    }
     mdjMarcarPuestoActivo();
 
     /* El propio riel también se blinda inline: hay reglas de la era flex que le

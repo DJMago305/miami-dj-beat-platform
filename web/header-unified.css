@@ -4730,6 +4730,32 @@ body.mdj-perfil-estacion .acct-body { padding-top: 104px !important; }
    a la par. */
 body.mdj-perfil-estacion .acct-side { top: 188px !important; }
 
+/* ── LA MISMA GEOMETRIA, PERO DESDE EL PRIMER PINTADO ─────────────────────────
+   html.mdj-estacion-previa la pone la semilla del <head> con la ultima decision
+   conocida, antes de que el navegador pinte nada. Sin esto, la pagina nacia con
+   la cabecera de dos filas (157px) y al aplicarse la estacion encogia a 84: un
+   salto de 73px hacia arriba en cada carga. Se declaran los mismos valores que
+   la version por clase de body, para que ambas coincidan al milimetro y no haya
+   un segundo reacomodo cuando el guion confirma la decision. */
+html.mdj-estacion-previa #mainHeader .header-top { display: none !important; }
+html.mdj-estacion-previa #tab-dashboard #booth-hero-container,
+html.mdj-estacion-previa #booth-hero-container { margin-top: 84px !important; }
+html.mdj-estacion-previa .acct-body { padding-top: 104px !important; }
+html.mdj-estacion-previa .acct-side { top: 188px !important; }
+
+/* ── EL ACORDEON AL CAMBIAR DE PESTAÑA ────────────────────────────────────────
+   Medido en el perfil: el documento pasaba de 1279 a 1000 px y volvia a 1279 al
+   conmutar —279px de encogimiento y estirado. Los paneles cuelgan directamente
+   del body, asi que el que se oculta se lleva su alto consigo.
+   No se igualan todos al mas alto, que dejaria huecos enormes en los cortos: se
+   les da un suelo de una pantalla, de modo que ninguno pueda encoger la pagina
+   por debajo de lo que ya se ve. Lo que quede por encima es contenido real. */
+body.dj-profile #tab-public,
+body.dj-profile #tab-flow,
+body.dj-profile #tab-sft {
+  min-height: calc(100svh - 210px);
+}
+
 #mdj-flotante-visitante .mdj-flotante-marca {
   display: inline-flex;
   align-items: center;
@@ -4860,4 +4886,10 @@ html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > a[
   left: auto !important;
   right: 0 !important;
   width: calc(100% - 2.1rem - .5em) !important;
+  /* SIN LA TRANSFORMACION NO SIRVE DE NADA. Una regla anterior centra la marca
+     con left:50% + translateX(-50%). Al reanclarla a la derecha, ese translate
+     seguia vivo y dibujaba CADA subrayado medio ancho a su izquierda: medido en
+     Cash Flow, 145.4px de ancho y un translate de -72.7. Es lo que el PO veia
+     como «el marcador corrido hacia la izquierda». */
+  transform: none !important;
 }
