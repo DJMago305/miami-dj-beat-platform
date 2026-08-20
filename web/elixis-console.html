@@ -1824,16 +1824,38 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
       dc.send(JSON.stringify({ type:'response.create' }));   /* sin esto se queda mudo */
     }
 
+    /* ── ADAPTADO A LA CARCASA DE LA CONSOLA ──────────────────────────
+       El original escribia en #convo y #convoState, que son elementos DEL
+       TELEFONO y aqui no existen: por eso lo hablado no aparecia en ningun
+       sitio. Aqui la conversacion vive en #stream via addRow, que ademas
+       devuelve la burbuja -- lo que permite ir ESCRIBIENDO dentro de ella
+       mientras ELIXIS habla, en vez de esperar a que termine. */
     function linea(txt, cls){
-      var c=document.getElementById('convo'); if(!c) return null;
-      var d=document.createElement('div'); d.className=cls||'line';
-      if(cls==='sys') d.textContent=txt; else d.innerHTML='<b>'+AGENT+':</b> '+esc(txt);
-      c.appendChild(d); c.scrollTop=c.scrollHeight; return d;
+      if(cls === 'sys'){                       /* avisos del canal, discretos */
+        var d = addRow('elixis', txt);
+        if(d) d.style.opacity = '.6';
+        return d;
+      }
+      var b = addRow('elixis', txt);
+      try{ transcribir('elixis', txt); }catch(_){}
+      return b;
     }
-    function rotulo(t){ var e=document.getElementById('convoState'); if(e) e.textContent=t||''; }
+    /* El rotulo de estado del telefono no tiene sitio aqui: el estado ya lo
+       canta la pastilla de la esquina ("Escuchando · Realtime"). */
+    function rotulo(){}
 
     function evento(m){
       switch(m.type){
+        /* LO QUE DICE EL CAPITAN, por escrito. Sin esto el chat enseñaba
+           media conversacion: solo las respuestas. */
+        case 'conversation.item.input_audio_transcription.completed': {
+          var dicho = (m.transcript || '').trim();
+          if(dicho){
+            var b = addRow('user', dicho);
+            try{ transcribir('yo', dicho); }catch(_){}
+          }
+          break;
+        }
         case 'input_audio_buffer.speech_started':
           hablando=false; state.agentReply=null; state.agentLine=null;
           rotulo(T('Te escucho','Listening'));
@@ -1847,7 +1869,7 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
           if(!hablando){ hablando=true; state.agentReply=''; state.agentLine='real';
             RT._fila = linea('', 'line'); rotulo(T('Hablando','Speaking')); }
           state.agentReply += (m.delta||'');
-          if(RT._fila) RT._fila.innerHTML='<b>'+AGENT+':</b> '+esc(state.agentReply);
+          if(RT._fila) RT._fila.textContent = state.agentReply;   /* la burbuja crece mientras habla */
           var c=document.getElementById('convo'); if(c) c.scrollTop=c.scrollHeight;
           setAvatar('speaking'); break;
 
@@ -1892,6 +1914,17 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
 
       dc = pc.createDataChannel('oai-events');
       dc.onopen = function(){
+        /* PEDIR LA TRANSCRIPCION DEL CAPITAN. La sesion viene sin ella, asi
+           que solo llegaba lo que decia ELIXIS y el chat mostraba media
+           conversacion. Se pide desde AQUI y no en la funcion para no tener
+           que desplegar: es una preferencia de la sesion, no del candado. */
+        try{
+          dc.send(JSON.stringify({
+            type: "session.update",
+            session: { type: "realtime",
+              audio: { input: { transcription: { model: "whisper-1" } } } }
+          }));
+        }catch(_){}
         linea(T('Canal de voz conectado. Habla con normalidad.','Voice channel connected. Speak normally.'),'sys');
         rotulo(T('Te escucho','Listening'));
         encender();                          /* modo agente: el fenix emite */
