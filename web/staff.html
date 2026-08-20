@@ -1114,5 +1114,111 @@
   })();
   </script>
   <script src="./js/mdj-tema-portal.js?v=20260819-tema"></script>
+
+  <!-- ══ ESTACION DE TRABAJO DEL OWNER ═══════════════════════════════════════
+       Mismo proceso que la estacion del artista, con las diferencias que marco
+       el PO: aqui no hay SoundForTips —hay Staff y Fenix AI— y la fila superior
+       no se pierde: sus piezas BAJAN a la franja flotante.
+         izquierda  marca Miami DJ Beat (PNG)
+         centro     buscador calibrado, para paridad con el artista
+         derecha    MRM IA · selector de tema · pildora [◆ OWNER | nombre | SALIR]
+       Geometria identica a la del artista: riel de 84, franja en 96. -->
+  <style id="mdj-estacion-owner">
+    /* La fila superior se retira: sus piezas viven ahora en la franja. */
+    .staff-topbar { display: none !important; }
+
+    /* El riel manda arriba, fijo e inmutable, con la MISMA banda que el artista. */
+    .staff-topnav {
+      position: fixed !important; top: 0; left: 0; right: 0; z-index: 2980;
+      height: 84px !important; min-height: 84px !important; max-height: 84px !important;
+      contain: layout style;
+    }
+    body { padding-top: 188px !important; }   /* 84 riel + 12 aire + 72 franja + 20 */
+
+    /* La franja: sin fondo ni sombra, como decidio el PO para el artista. */
+    #mdj-franja-owner {
+      position: fixed; top: 96px; left: 16px; right: 16px; z-index: 3000;
+      display: flex; align-items: center; gap: 14px;
+      padding: 10px 14px; background: transparent; border: 0; box-shadow: none;
+    }
+    #mdj-franja-owner .mdj-of-marca { display: inline-flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+    #mdj-franja-owner .mdj-of-marca img { display: block; filter: drop-shadow(0 2px 6px rgba(0,0,0,.9)); }
+    #mdj-franja-owner .mdj-of-sello  { height: 52px; width: 52px; }
+    /* El PNG de letras es 1920x1920 cuadrado: caja apaisada + cover recorta el aire. */
+    #mdj-franja-owner .mdj-of-letras { width: 210px; height: 46px; object-fit: cover; object-position: 50% 52.5%; }
+
+    /* Buscador al centro, con la calibracion ya aprobada en la estacion del artista. */
+    #mdj-franja-owner .header-search-wrap { flex: 1 1 520px; max-width: 520px; margin: 0 auto; position: relative; }
+    #mdj-franja-owner .header-smart-search {
+      width: 100%; height: 48px; padding-left: 44px; padding-right: 14px;
+      background: transparent; border: 1px solid rgba(197,160,89,.55); border-radius: 999px;
+      color: #f7f9fc; font-size: 14px; text-shadow: 0 1px 3px rgba(0,0,0,.85); outline: none;
+    }
+    #mdj-franja-owner .header-smart-search::placeholder { color: rgba(255,255,255,.62); letter-spacing: .04em; }
+    #mdj-franja-owner .header-smart-search:focus::placeholder { color: transparent; }
+    #mdj-franja-owner .header-search-wrap::before {
+      content: ""; position: absolute; left: 16px; top: 50%; width: 18px; height: 18px; margin-top: -9px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c5a059' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") no-repeat center/contain;
+      pointer-events: none;
+    }
+
+    /* Grupo derecho: MRM IA, tema y la pildora de usuario. */
+    #mdj-franja-owner .mdj-of-derecha { display: inline-flex; align-items: center; gap: 10px; flex: 0 0 auto; margin-left: auto; }
+    #mdj-franja-owner .mdj-of-pildora {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 6px 12px; border-radius: 999px;
+      background: rgba(10,14,22,.55); border: 1px solid rgba(197,160,89,.28);
+    }
+    @media (max-width: 900px) {
+      #mdj-franja-owner { flex-wrap: wrap; }
+      #mdj-franja-owner .header-search-wrap { order: 3; flex: 1 1 100%; max-width: none; }
+    }
+  </style>
+  <script>
+  (function () {
+    var topbar = document.querySelector('.staff-topbar');
+    if (!topbar || document.getElementById('mdj-franja-owner')) return;
+
+    var caja = document.createElement('div');
+    caja.id = 'mdj-franja-owner';
+
+    /* Marca: enlace al inicio, igual que en la estacion del artista. */
+    var casa = document.createElement('a');
+    casa.className = 'mdj-of-marca';
+    casa.href = './index.html';
+    casa.title = 'Miami DJ Beat — ir al inicio';
+    casa.innerHTML =
+      '<img class="mdj-of-sello" src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat">' +
+      '<img class="mdj-of-letras" src="./assets/branding/logo-transparent%20Letras.png" alt="MIAMI DJ BEAT LLC">';
+    caja.appendChild(casa);
+
+    /* Buscador: el MISMO componente de la plataforma, no una copia inerte.
+       header-smart-search.js lo engancha por #header-smart-search. */
+    var busc = document.createElement('div');
+    busc.className = 'header-search-wrap';
+    busc.innerHTML = '<input type="search" id="header-smart-search" class="header-smart-search" ' +
+                     'placeholder="Search" autocomplete="off" enterkeyhint="search">';
+    caja.appendChild(busc);
+
+    /* Derecha: se MUEVEN los originales, con sus escuchas intactas. */
+    var der = document.createElement('div');
+    der.className = 'mdj-of-derecha';
+    ['staff-mrm-link', 'ofm-daynight'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) der.appendChild(el);
+    });
+    var pil = document.createElement('div');
+    pil.className = 'mdj-of-pildora';
+    ['role-badge', 'staff-name', 'staff-logout'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) pil.appendChild(el);
+    });
+    if (pil.children.length) der.appendChild(pil);
+    caja.appendChild(der);
+
+    document.body.appendChild(caja);
+  })();
+  </script>
+  <script src="./header-smart-search.js?v=20260820-owner"></script>
 </body>
 </html>
