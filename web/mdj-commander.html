@@ -697,7 +697,7 @@
   SCREENS.command=function(v){
     var st=state.avatar;
     var voice=VCONVO.indexOf(st)>=0;
-    renderTopbar({title:'MDJ COMMANDER', right: voice
+    renderTopbar({title:'', right: voice
       ? '<button class="icon-btn" id="voiceEnd" title="Terminar">'+svg('close')+'</button>'
       : '<span class="row" style="gap:6px;margin-right:6px;font-size:11px;font-family:var(--mono);color:var(--green)"><span class="dot d-green"></span>ONLINE</span><button class="icon-btn" id="goSettings">'+svg('settings')+'</button>'});
     var avatarHTML='<div class="avatar-stage '+st+(voice?' big':'')+'" id="avatarStage"><canvas class="avatar-fx" id="avatarFX"></canvas><div class="avatar-baseglow"></div>'+
@@ -719,25 +719,20 @@
         body=$('#cmdBody');
         body.innerHTML='<div class="mic-wrap"><div class="mic-side" data-vm="voice"><button class="icon-btn">'+svg('mic')+'</button>VOZ</div>'+
           '<div class="mic-side on" data-vm="text"><button class="icon-btn">'+svg('keyboard')+'</button>TEXTO</div></div>'+
-          '<div class="cmd-input"><input id="cmdText" placeholder="'+T('Escribe tu comando…','Type your command…')+'" autocomplete="off"><button class="send" id="cmdSend">'+svg('send','width="18"')+'</button></div>'+exampleChips();
+          '<div class="cmd-input"><input id="cmdText" placeholder="'+T('Escribe tu comando…','Type your command…')+'" autocomplete="off"><button class="send" id="cmdSend">'+svg('send','width="18"')+'</button></div>';
         $('#cmdSend').onclick=sendText;
         $('#cmdText').addEventListener('keydown',function(e){if(e.key==='Enter')sendText();});
       } else {
-        var greet;
-        if(!state.introDone){state.introDone=true;
-          greet='<div class="cmd-prompt" style="font-size:16px;line-height:1.4">'+T('Hola, soy ','Hi, I\'m ')+'<b style="color:var(--gold2)">'+AGENT+'</b>'+T(', tu agente ejecutivo.','— your executive agent.')+'</div>'+
-                '<div class="cmd-prompt" style="margin-top:2px">'+T('¿Qué necesitas que haga?','What would you like me to do?')+'</div>';
-        } else { greet='<div class="cmd-prompt">'+T('¿Qué necesitas que haga?','What would you like me to do?')+'</div>'; }
+        var greet='';
         v.innerHTML='<div class="pad fade-anim">'+avatarHTML+'<div id="cmdBody"></div></div>';
         body=$('#cmdBody');
         body.innerHTML=greet+
           '<div class="mic-wrap"><div class="mic-side '+(state.voiceMode==='voice'?'on':'')+'" data-vm="voice"><button class="icon-btn">'+svg('mic')+'</button>VOZ</div>'+
           '<button class="mic" id="micBtn">'+svg('mic')+'</button>'+
-          '<div class="mic-side" data-vm="text"><button class="icon-btn">'+svg('keyboard')+'</button>TEXTO</div></div>'+exampleChips();
+          '<div class="mic-side" data-vm="text"><button class="icon-btn">'+svg('keyboard')+'</button>TEXTO</div></div>';
         $('#micBtn').onclick=function(){ if(!state.online){toast(T('Sin conexión · orden guardada como borrador','Offline · order saved as draft'),'warn');return;} startListening(); };
       }
       document.querySelectorAll('[data-vm]').forEach(function(b){b.onclick=function(){state.voiceMode=b.getAttribute('data-vm');setAvatar('idle');};});
-      document.querySelectorAll('[data-chip]').forEach(function(b){b.onclick=function(){state.voiceMode='text';state.avatar='idle';render();setTimeout(function(){var i=$('#cmdText');if(i){i.value=b.getAttribute('data-chip');i.focus();}},60);};});
     }
     mountFX($('#avatarFX'), st);
   };
@@ -766,10 +761,6 @@
       '<div class="voice-hint">'+T('Diálogo continuo · toca el micrófono o despídete para terminar','Continuous dialogue · tap the mic or say goodbye to end')+'</div>';
   }
   function wireVoice(st){ var mic=$('#vMic');if(mic)mic.onclick=endVoice; }
-  function exampleChips(){
-    var ex=[T('Analiza mojitoscalle8.com','Analyze mojitoscalle8.com'),T('¿Qué tengo pendiente hoy?','What\'s pending today?'),T('Muéstrame los pagos atrasados','Show overdue payments'),T('Genera un flyer para Sundowners','Generate a flyer for Sundowners')];
-    return '<div class="sec-h" style="justify-content:center;margin-top:22px">'+T('Comandos de ejemplo','Example commands')+'</div><div class="chips">'+ex.map(function(x){return '<button class="chip" data-chip="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div>';
-  }
   function setAvatar(s){state.avatar=s;if(state.screen==='command')render();}
   function demoOrder(){return T('Analiza la web mojitoscalle8.com, dime qué le falta y prepárame una propuesta comercial.','Analyze mojitoscalle8.com, tell me what it\'s missing and prepare me a commercial proposal.');}
   /* ═══════════════════════════════════════════════════════════════════
