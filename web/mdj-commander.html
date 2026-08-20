@@ -116,6 +116,29 @@
      un radar que sale del centro; el resplandor y su tamano NO son una
      animacion fija: los mueve la amplitud real de la voz (--pulso), de tu
      microfono mientras escuchas y de la pista de ELIXIS mientras habla. */
+  /* ── MODO ESCRITURA ───────────────────────────────────────────────
+     La pantalla se despide del avatar y llama al chat. La figura se va
+     desvaneciendo pero la RED NEURONAL se queda: pasa a ser el fondo vivo
+     sobre el que escribes, no un adorno que se apaga con el. */
+  .pad-centro{position:relative}
+  .pad-centro.escritura .avatar-stage{
+    position:absolute;inset:0;width:100%;height:100%;margin:0;z-index:0;
+    pointer-events:none;
+  }
+  .pad-centro.escritura .avatar-fig,
+  .pad-centro.escritura .avatar-baseglow{opacity:0}
+  .pad-centro.escritura .avatar-fx{opacity:.55}
+  .avatar-fig,.avatar-baseglow{transition:opacity .55s ease}
+  .pad-centro.escritura #cmdBody{position:relative;z-index:1;min-height:52vh;
+    display:flex;flex-direction:column;justify-content:flex-end}
+
+  /* el teclado que enciende el modo escritura, y el microfono que vuelve */
+  .modo-btn{width:38px;height:38px;display:grid;place-items:center;border-radius:11px;
+    color:var(--muted);flex:none}
+  .modo-btn:active{background:var(--elev)}
+  .modo-btn svg{width:20px;height:20px}
+  .modo-btn.on{color:var(--gold)}
+
   /* EN ACTIVO EL AMARILLO NO ES SOLIDO. El disco desaparece y lo que queda
      son AROS DE ENERGIA latiendo alrededor del fenix: el relleno se sustituye
      por un halo radial que respira con la voz. Energia, no boton. */
@@ -729,7 +752,8 @@
     var voice=VCONVO.indexOf(st)>=0;
     renderTopbar({title:'MDJ COMMANDER', right: voice
       ? '<button class="icon-btn" id="voiceEnd" title="Terminar">'+svg('close')+'</button>'
-      : '<span class="row" style="gap:6px;margin-right:6px;font-size:11px;font-family:var(--mono);color:var(--green)"><span class="dot d-green"></span>ONLINE</span><button class="icon-btn" id="goSettings">'+svg('settings')+'</button>'});
+      : '<button class="modo-btn'+(state.voiceMode==='text'?' on':'')+'" id="modoBtn" title="'+(state.voiceMode==='text'?T('Volver a voz','Back to voice'):T('Escribir','Write'))+'">'+svg(state.voiceMode==='text'?'mic':'keyboard')+'</button>'+
+        '<span class="row" style="gap:6px;margin-right:6px;font-size:11px;font-family:var(--mono);color:var(--green)"><span class="dot d-green"></span>ONLINE</span><button class="icon-btn" id="goSettings">'+svg('settings')+'</button>'});
     var avatarHTML='<div class="avatar-stage '+st+(voice?' big':'')+'" id="avatarStage"><canvas class="avatar-fx" id="avatarFX"></canvas><div class="avatar-baseglow"></div>'+
       '<img class="avatar-fig" src="'+AVATAR+'" alt="'+AGENT+' · AI Agent"></div>';
     if(voice){
@@ -745,10 +769,10 @@
       $('#goSettings').onclick=function(){go('settings');};
       var body;
       if(state.voiceMode==='text'){
-        v.innerHTML='<div class="pad fade-anim pad-centro">'+avatarHTML+'<div id="cmdBody"></div></div>';
+        v.innerHTML='<div class="pad fade-anim pad-centro escritura">'+avatarHTML+'<div id="cmdBody"></div></div>';
         body=$('#cmdBody');
-        body.innerHTML='<div class="mic-wrap"><div class="mic-side" data-vm="voice"><button class="icon-btn">'+svg('mic')+'</button></div>'+
-          '<div class="mic-side on" data-vm="text"><button class="icon-btn">'+svg('keyboard')+'</button>TEXTO</div></div>'+
+        body.innerHTML='<div class="convo-state" id="convoState"></div>'+
+          '<div class="convo" id="convo"></div>'+
           '<div class="cmd-input"><input id="cmdText" placeholder="'+T('Escribe tu comando…','Type your command…')+'" autocomplete="off"><button class="send" id="cmdSend">'+svg('send','width="18"')+'</button></div>'+exampleChips();
         $('#cmdSend').onclick=sendText;
         $('#cmdText').addEventListener('keydown',function(e){if(e.key==='Enter')sendText();});
@@ -768,6 +792,16 @@
           '<div class="convo-state" id="convoState"></div>'+
           '<div class="convo" id="convo"></div>';
       }
+      /* El teclado de la barra superior enciende y apaga el modo escritura.
+         Al entrar, si habia sesion de voz viva, se cuelga: escribir y hablar
+         son dos modos, no dos canales a la vez. */
+      var mb=$('#modoBtn');
+      if(mb) mb.onclick=function(){
+        var aTexto = state.voiceMode!=='text';
+        if(aTexto && RT.activa()) RT.stop();
+        state.voiceMode = aTexto ? 'text' : 'voice';
+        setAvatar('idle'); render();
+      };
       document.querySelectorAll('[data-vm]').forEach(function(b){b.onclick=function(){state.voiceMode=b.getAttribute('data-vm');setAvatar('idle');};});
       document.querySelectorAll('[data-chip]').forEach(function(b){b.onclick=function(){state.voiceMode='text';state.avatar='idle';render();setTimeout(function(){var i=$('#cmdText');if(i){i.value=b.getAttribute('data-chip');i.focus();}},60);};});
     }
