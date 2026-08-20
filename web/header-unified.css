@@ -4936,3 +4936,37 @@ html.mdj-nav-lista #mainHeader.header.mdj-header-unified #mainNav > * {
   visibility: visible;
   animation: none;
 }
+
+
+/* ═══ CONTENCION GEOMETRICA DURA · directiva del PO ═══════════════════════════
+   Altura FIJA e inmutable, en las dos formas que la Constitucion reconoce:
+     · barra publica   84 (marca) + 72 (menu) = 156
+     · estacion        72 de menu + su borde  =  84   ← la fila superior se retiro
+   Se declaran height/min/max iguales: ninguna regla posterior puede cambiarla.
+
+   NO se aplica `overflow: hidden` ni `contain: size`: #mainHeader CONTIENE el
+   panel movil (.mobile-nav), y recortarlo lo dejaria inservible en telefono.
+   Se usa `contain: layout style`, que aisla el reflujo sin recortar nada. */
+#mainHeader.header.mdj-header-unified {
+  height: calc(var(--mdj-header-unified-r1) + var(--mdj-header-unified-r2)) !important;
+  min-height: calc(var(--mdj-header-unified-r1) + var(--mdj-header-unified-r2)) !important;
+  max-height: calc(var(--mdj-header-unified-r1) + var(--mdj-header-unified-r2)) !important;
+  contain: layout style;
+}
+/* La estacion mide 84, no 72: el riel son 72 mas los 12 de aire propios de la
+   cabecera. Ese 84 es el numero contra el que estan calibradas TODAS las piezas
+   de la estacion —franja en top:96, agenda con margen 84, config con relleno 104
+   y la lateral en 188—, medido asi durante toda la sesion. Fijarlo en 72 metia un
+   desfase de 12px en cascada. */
+html.mdj-estacion-previa #mainHeader.header.mdj-header-unified,
+body.mdj-perfil-estacion #mainHeader.header.mdj-header-unified {
+  height: 84px !important;
+  min-height: 84px !important;
+  max-height: 84px !important;
+}
+
+/* Los puestos no parten palabra ni ceden ancho bajo presion. */
+#mainHeader.header.mdj-header-unified #mainNav > [data-mdj-slot] {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
