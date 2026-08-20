@@ -887,7 +887,10 @@
        una frase escrita. Escribiendo se escribe; los estados del avatar solo
        animan el fondo. */
     var voice = state.voiceMode!=='text' && VCONVO.indexOf(st)>=0;
-    renderTopbar({title:'MDJ COMMANDER', right: voice
+    /* Sin titulo arriba en la pantalla de comando: ya se sabe donde estas, y
+       el rotulo solo restaba aire a la conversacion. Las otras pantallas SI
+       conservan el suyo, porque ahi el titulo dice a que llegaste. */
+    renderTopbar({title:'', right: voice
       ? '<button class="icon-btn" id="voiceEnd" title="Terminar">'+svg('close')+'</button>'
       : '<button class="modo-btn'+(state.voiceMode==='text'?' on':'')+'" id="modoBtn" title="'+(state.voiceMode==='text'?T('Volver a voz','Back to voice'):T('Escribir','Write'))+'">'+svg(state.voiceMode==='text'?'mic':'keyboard')+'</button>'+
         '<span class="row" style="gap:6px;margin-right:6px;font-size:11px;font-family:var(--mono);color:var(--green)"><span class="dot d-green"></span>ONLINE</span><button class="icon-btn" id="goSettings">'+svg('settings')+'</button>'});
